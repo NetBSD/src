@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.10 2003/03/27 01:21:52 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.10.2.1 2004/08/03 10:37:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.10 2003/03/27 01:21:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.10.2.1 2004/08/03 10:37:38 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -219,7 +219,6 @@ aumac_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 aumac_attach(struct device *parent, struct device *self, void *aux)
 {
-	char prop_name[sizeof("0xffffffff:mac-addr") + 1];
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	struct aumac_softc *sc = (void *) self;
 	struct aubus_attach_args *aa = aux;
@@ -236,9 +235,9 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = aa->aa_st;
 
 	/* Get the MAC address. */
-	snprintf(prop_name, sizeof(prop_name), "%p:mac-addr", self);
-	if (alchemy_info_get(prop_name, enaddr, sizeof(enaddr)) == -1) {
-		printf("%s: unable to determine MAC address\n",
+	if (prop_get(dev_propdb, &sc->sc_dev, "mac-addr", enaddr,
+		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
+		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}

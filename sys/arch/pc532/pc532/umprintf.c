@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.5 2001/09/24 13:22:33 wiz Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.5.18.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,6 +31,9 @@
  *      hacked out from ..
  *	@(#)subr_prf.c	7.30 (Berkeley) 6/29/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.5.18.1 2004/08/03 10:38:57 skrll Exp $");
 
 #include <machine/stdarg.h>
 static char *ksprintn __P((u_long num, int base, int *len));

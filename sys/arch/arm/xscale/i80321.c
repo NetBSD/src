@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.13 2003/06/15 23:08:57 fvdl Exp $	*/
+/*	$NetBSD: i80321.c,v 1.13.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Autoconfiguration support for the Intel i80321 I/O Processor.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.13.2.1 2004/08/03 10:32:58 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -72,9 +75,11 @@ static const struct iopxs_device {
 	bus_size_t id_size;
 } iopxs_devices[] = {
 	{ "iopaau",	VERDE_AAU_BASE,		VERDE_AAU_SIZE },
-	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },
-	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },
-	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
+/*	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },	*/
+/*	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },	*/
+	{ "iopiic",	VERDE_I2C_BASE0,	VERDE_I2C_CHSIZE },
+	{ "iopiic",	VERDE_I2C_BASE1,	VERDE_I2C_CHSIZE },
+/*	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },	*/
 	{ "iopmu",	VERDE_MU_BASE,		VERDE_MU_SIZE },
 	{ "iopwdog",	0,			0 },
 	{ NULL,		0,			0 }

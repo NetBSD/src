@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.3 1997/10/09 08:57:12 jtc Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3.50.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 
 #include <sys/param.h>
 
+#include <lib/libsa/stand.h>
+
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/kbdvar.h>
 
@@ -58,7 +60,7 @@ int
 kbdgetc()
 {
 
-	return ((selected_kbd != NULL) ? (*selected_kbd->k_getc)() : 0);
+	return (selected_kbd != NULL) ? (*selected_kbd->k_getc)() : 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.9 2003/06/15 23:09:03 fvdl Exp $	*/
+/*	$NetBSD: firepower.c,v 1.9.2.1 2004/08/03 10:38:40 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Support routines for Firepower systems.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.9.2.1 2004/08/03 10:38:40 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,14 +56,13 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/ic/wdcvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+#include <powerpc/oea/bat.h>
 #include <powerpc/pio.h>
 
 #include <ofppc/firepower/firepowerreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.3 2002/07/04 16:44:10 thorpej Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3.8.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -83,7 +83,7 @@ ENTRY_NOPROFILE(sigcode,0)
 	depi	0, 31, 2, %arg3			; zero L bit in PLABEL pointer
 	ldw	4(%arg3), %r19			; load shared library linkage
 	ldw	0(%arg3), %arg3			; load real catcher address
-L$sigcode_bounce
+L$sigcode_bounce:
 	/*
 	 * This blr puts the address of the following nop in rp.
 	 * It also schedules the nop for execution, which is why
@@ -91,33 +91,33 @@ L$sigcode_bounce
 	 * instruction only meant to execute once the signal handler 
 	 * returns.
 	 */
-	blr	r0, rp
+	blr	%r0, %rp
 	/*
 	 * This bv schedules the instruction pointed to by arg3
 	 * for execution.  So, arg3 is the address of the signal
 	 * handler.
 	 */
-	bv,n	r0(arg3)
+	bv,n	%r0(%arg3)
 	nop
 	/*
-	 * The signal handler has returned.  Since r3 is on the list
+	 * The signal handler has returned.  Since %r3 is on the list
 	 * of callee-saved registers, it's whatever the sendsig
 	 * code wanted it set to.  Since we copy it into arg0, 
-	 * it looks like sendsig leaves r3 holding the desired
+	 * it looks like sendsig leaves %r3 holding the desired
 	 * single argument to sys___sigreturn14, i.e., the
 	 * struct sigcontext *.
 	 */
 	/* Make a SYS___sigreturn14 system call. */
-	copy	r3, arg0
-	ldil	L%SYSCALLGATE, r1
+	copy	%r3, %arg0
+	ldil	L%SYSCALLGATE, %r1
 	.call
-	ble	4(sr7, r1)
-	ldi	SYS___sigreturn14, t1
+	ble	4(%sr7, %r1)
+	ldi	SYS_compat_16___sigreturn14, %t1
 	/* Make a SYS_exit system call. */
-	copy	ret0, arg0
-	ldil	L%SYSCALLGATE, r1
+	copy	%ret0, %arg0
+	ldil	L%SYSCALLGATE, %r1
 	.call
-	ble	4(sr7, r1)
-	ldi	SYS_exit, t1
+	ble	4(%sr7, %r1)
+	ldi	SYS_exit, %t1
 ALTENTRY(esigcode)
 EXIT(sigcode)

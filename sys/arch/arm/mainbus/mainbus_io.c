@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.12 2002/09/27 15:35:48 provos Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.12.8.1 2004/08/03 10:32:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,6 +35,9 @@
 /*
  * bus_space I/O functions for mainbus
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.12.8.1 2004/08/03 10:32:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,11 +134,11 @@ struct bus_space mainbus_bs_tag = {
 /* bus space functions */
 
 int
-mainbus_bs_map(t, bpa, size, cacheable, bshp)
+mainbus_bs_map(t, bpa, size, flags, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	u_long startpa, endpa, pa;
@@ -161,8 +164,8 @@ mainbus_bs_map(t, bpa, size, cacheable, bshp)
 
 	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		pte = vtopte(va);
-		if (cacheable == 0) {
+		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
+			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;
 			PTE_SYNC(pte);
 		}
@@ -217,7 +220,7 @@ mainbus_bs_subregion(t, bsh, offset, size, nbshp)
 	bus_space_handle_t *nbshp;
 {
 
-	*nbshp = bsh + offset;
+	*nbshp = bsh + (offset << 2);
 	return (0);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: installboot.c,v 1.3 2002/03/17 23:45:57 nonaka Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3.12.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*
- * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
+ * Copyright (c) 2000 NONAKA Kimihiro (nonaka@NetBSD.org).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,14 @@
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
+#include <string.h>
 
 int nowrite, verbose;
 char *boot, *dev;
@@ -187,17 +188,17 @@ load_prep_partition(int devfd, struct mbr_partition *ppp)
 
 	if (devread(devfd, mbr, MBR_BBSECTOR, DEV_BSIZE, "MBR") != 0)
 		return 1;
-	if (*(u_int16_t *)&mbr[MBR_MAGICOFF] != htole16(MBR_MAGIC)) {
+	if (*(u_int16_t *)&mbr[MBR_MAGIC_OFFSET] != htole16(MBR_MAGIC)) {
 		warn("no MBR_MAGIC");
 		return 1;
 	}
 
-	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
-	for (i = 0; i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYPE_PREP)
+	mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (mbrp[i].mbrp_type == MBR_PTYPE_PREP)
 			break;
 	}
-	if (i == NMBRPART) {
+	if (i == MBR_PART_COUNT) {
 		warn("no PReP partition.");
 		return 1;
 	}

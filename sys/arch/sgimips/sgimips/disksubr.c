@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2003/05/10 23:12:38 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11.2.1 2004/08/03 10:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -17,7 +17,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.11.2.1 2004/08/03 10:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14 2003/03/05 05:27:25 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,31 +43,26 @@ struct faultbuf {
 	register_t fb_fixreg[19];	/* R13-R31 */
 };
 
-struct fpu {
-	double fpr[32];
-	double fpscr;	/* FPSCR stored as double for easier access */
-};
-
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
-	struct pmap *pcb_pmreal; /* real address of above */
 	register_t pcb_sp;	/* saved SP */
-	int pcb_spl;		/* saved SPL */
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */
 #define	PCB_ALTIVEC	2	/* Process had AltiVec initialized */
+#define	PCB_FE1		PSL_FE1	/* 0x100 */
+#define	PCB_FE0		PSL_FE0	/* 0x800 */
 	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
 	struct cpu_info * __volatile pcb_veccpu;/* CPU with our VECTOR state */
 	struct faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	vaddr_t pcb_kmapsr;	/* where to map user segment in kernel */
 	vaddr_t pcb_umapsr;	/* the user segment mapped in kernel */
-	struct fpu pcb_fpu;	/* Floating point processor */
+	struct fpreg pcb_fpu;	/* Floating point processor */
 	struct vreg pcb_vr __attribute__((aligned(16)));
 };
 
 struct md_coredump {
 	struct trapframe frame;
-	struct fpu fpstate;
+	struct fpreg fpstate;
 	struct vreg vstate;
 };
 

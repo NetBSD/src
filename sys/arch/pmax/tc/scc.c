@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.81 2003/06/29 22:28:47 fvdl Exp $	*/
+/*	$NetBSD: scc.c,v 1.81.2.1 2004/08/03 10:39:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81 2003/06/29 22:28:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81.2.1 2004/08/03 10:39:21 skrll Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -165,7 +161,7 @@ struct scc_softc {
  *
  * Speed selections with Pclk=7.3728Mhz, clock x16
  */
-struct speedtab sccspeedtab[] = {
+const struct speedtab sccspeedtab[] = {
 	{ 0,		0,	},
 	{ 50,		4606,	},
 	{ 75,		3070,	},
@@ -265,6 +261,8 @@ static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NULL, NULL,
 	NODEV, 0
 };
+
+static boolean_t scc_getc_dotimeout;
 
 void
 scc_cnattach(base, offset)
@@ -418,7 +416,6 @@ sccattach(parent, self, aux)
 	 */
 	sccreset(sc);
 
-
 	/*
 	 * Special handling for consoles.
 	 */
@@ -426,7 +423,7 @@ sccattach(parent, self, aux)
 		/*
 		 * We were using PROM callbacks for console I/O,
 		 * and we just reset the chip under the console.
-		 * Re-wire  this unit up as console ASAP.
+		 * Re-wire this unit up as console ASAP.
 		 */
 		sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
 		scc_tty_init(sc, cn_tab->cn_dev);
@@ -438,7 +435,7 @@ sccattach(parent, self, aux)
 	printf("\n");
 
 
-	/* Wire up any childre, like keyboards or mice. */
+	/* Wire up any children, like keyboards or mice. */
 #if NRASTERCONSOLE > 0
 	if (systype != DS_MAXINE) {
 		int maj;
@@ -536,7 +533,9 @@ scc_mouse_init(sc, dev)
 		goto done;
 
 	DELAY(10000);
+	scc_getc_dotimeout = TRUE;
 	lk_mouseinit(ctty.t_dev, sccPutc, sccGetc);
+	scc_getc_dotimeout = FALSE;
 	DELAY(10000);
 
 done:
@@ -1414,9 +1413,8 @@ sccGetc(dev)
 	dev_t dev;
 {
 	scc_regmap_t *regs;
-	int c, line;
+	int s, c, line, timeout;
 	u_char value;
-	int s;
 
 	line = SCCLINE(dev);
 	if (cold && scc_cons_addr) {
@@ -1431,6 +1429,7 @@ sccGetc(dev)
 		return (0);
 	/*s = spltty(); */	/* XXX  why different spls? */
 	s = splhigh();
+	timeout = 500000;
 	for (;;) {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
 		if (value & ZSRR0_RX_READY) {
@@ -1447,8 +1446,14 @@ sccGetc(dev)
 				splx(s);
 				return (c & 0xff);
 			}
-		} else
+			timeout = 500000;
+		} else {
 			DELAY(10);
+			if (scc_getc_dotimeout && --timeout == 0) {
+				splx(s);
+				return (-1);
+			}
+		}
 	}
 }
 

@@ -1,9 +1,9 @@
-/* $NetBSD: bus_dma.c,v 1.8.2.1 2003/07/02 15:25:23 darrenr Exp $ */
+/* $NetBSD: bus_dma.c,v 1.8.2.2 2004/08/03 10:36:59 skrll Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
  * should probably be re-synced when needed.
- * Darrin B. Jewell <dbj@netbsd.org> Sat Jul 31 06:11:33 UTC 1999
+ * Darrin B. Jewell <dbj@NetBSD.org> Sat Jul 31 06:11:33 UTC 1999
  * original cvs id: NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp 
  */
 
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.1 2003/07/02 15:25:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.2 2004/08/03 10:36:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ _bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
 	int flags;
 {
 	/* @@@ This routine doesn't enforce map boundary requirement
-	 * @@@ perhaps it should return an error instead of panicing
+	 * @@@ perhaps it should return an error instead of panicking
 	 */
 
 #ifdef DIAGNOSTIC

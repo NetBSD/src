@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.15 2003/06/14 17:01:13 thorpej Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.15.2.1 2004/08/03 10:35:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.15.2.1 2004/08/03 10:35:28 skrll Exp $");
 
 #include "opt_kgdb.h"
 

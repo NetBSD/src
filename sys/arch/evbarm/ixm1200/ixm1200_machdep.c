@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.25 2003/05/22 05:47:10 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.25.2.1 2004/08/03 10:34:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.25 2003/05/22 05:47:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.25.2.1 2004/08/03 10:34:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -300,6 +300,53 @@ cpu_reboot(howto, bootstr)
 	for (;;);
 }
 
+/* Static device mappings. */
+static const struct pmap_devmap ixm1200_devmap[] = {
+	/* StrongARM System and Peripheral Registers */
+	{
+		IXP12X0_SYS_VBASE,
+		IXP12X0_SYS_HWBASE,
+		IXP12X0_SYS_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Registers Accessible Through StrongARM Core */
+	{
+		IXP12X0_PCI_VBASE, IXP12X0_PCI_HWBASE,
+		IXP12X0_PCI_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Registers Accessible Through I/O Cycle Access */
+	{
+		IXP12X0_PCI_IO_VBASE, IXP12X0_PCI_IO_HWBASE,
+		IXP12X0_PCI_IO_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Type0 Configuration Space */
+	{
+		IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
+		IXP12X0_PCI_TYPE0_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Type1 Configuration Space */
+	{
+		IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
+		IXP12X0_PCI_TYPE1_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	{
+		0,
+		0,
+		0,
+		0,
+		0
+	},
+};
+
 /*
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -339,7 +386,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/* XXX overwrite bootconfig to hardcoded values */
 	bootconfig.dram[0].address = 0xc0000000;
@@ -562,11 +609,8 @@ initarm(void *arg)
 	       systempage.pv_pa, vector_page);
 #endif
 
-	/*
-	 * Map the PCI I/O spaces and IXP12x0 registers
-	 */
-
-	ixp12x0_pmap_io_reg(l1pagetable);
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, ixm1200_devmap);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
@@ -736,7 +780,6 @@ initarm(void *arg)
 void
 consinit(void)
 {
-	extern struct bus_space ixpsip_bs_tag;
 	static int consinit_called = 0;
 
 	if (consinit_called != 0)
@@ -744,7 +787,9 @@ consinit(void)
 
 	consinit_called = 1;
 
-	if (ixpcomcnattach(&ixpsip_bs_tag,
+	pmap_devmap_register(ixm1200_devmap);
+
+	if (ixpcomcnattach(&ixp12x0_bs_tag,
 			   IXPCOM_UART_HWBASE, IXPCOM_UART_VBASE,
 			   CONSPEED, CONMODE))
 		panic("can't init serial console @%lx", IXPCOM_UART_HWBASE);

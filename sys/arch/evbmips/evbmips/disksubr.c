@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.5 2003/05/10 23:12:32 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.5.2.1 2004/08/03 10:34:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -32,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5.2.1 2004/08/03 10:34:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_mb.c,v 1.11 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.11.6.1 2004/08/03 10:33:12 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.11.6.1 2004/08/03 10:33:12 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +72,9 @@ static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanptr;
-	struct  channel_softc wdc_channel;
+	struct	wdc_channel *wdc_chanlist[1];
+	struct  wdc_channel wdc_channel;
+	struct	ata_queue wdc_chqueue;
 	void	*sc_ih;
 };
 
@@ -87,7 +91,7 @@ wdc_mb_probe(parent, cfp, aux)
 	void *aux;
 {
 	static int	wdc_matched = 0;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	int	result = 0;
 	u_char	sv_ierb;
 
@@ -104,9 +108,10 @@ wdc_mb_probe(parent, cfp, aux)
 	ch.cmd_iot->stride = 2;
 	ch.cmd_iot->wo_1   = 1;
 
-	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_ioh))
+	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_baseioh))
 		return 0;
-	if (bus_space_subregion(ch.cmd_iot, ch.cmd_ioh, 0x38, 1, &ch.ctl_ioh))
+	if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, 0x38, 1,
+	    &ch.ctl_ioh))
 		return 0;
 
 	/*
@@ -125,7 +130,7 @@ wdc_mb_probe(parent, cfp, aux)
 
 	MFP->mf_ierb = sv_ierb;
 
-	bus_space_unmap(ch.cmd_iot,  ch.cmd_ioh, 0x40);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, 0x40);
 	mb_free_bus_space_tag(ch.cmd_iot);
 
 	if (result)
@@ -149,13 +154,13 @@ wdc_mb_attach(parent, self, aux)
 	sc->wdc_channel.cmd_iot->abs_rms_2 = read_multi_2_swap;
 	sc->wdc_channel.cmd_iot->abs_wms_2 = write_multi_2_swap;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, 0xfff00000, 0x40, 0,
-			  &sc->wdc_channel.cmd_ioh)) {
+			  &sc->wdc_channel.cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
 	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-	    sc->wdc_channel.cmd_ioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
+	    sc->wdc_channel.cmd_baseioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
 		return;
 
 	/*
@@ -170,19 +175,12 @@ wdc_mb_attach(parent, self, aux)
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.channel = 0;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
-	}
-	wdcattach(&sc->wdc_channel);
+	sc->wdc_channel.ch_channel = 0;
+	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 
 	/*
 	 * Setup & enable disk related interrupts.
@@ -190,6 +188,8 @@ wdc_mb_attach(parent, self, aux)
 	MFP->mf_ierb |= IB_DINT;
 	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
 	MFP->mf_imrb |= IB_DINT;
+
+	wdcattach(&sc->wdc_channel);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.1 2001/06/13 06:01:47 simonb Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.1.24.1 2004/08/03 10:39:22 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,6 +44,9 @@
  * FPU subroutines: `implode' internal format numbers into the machine's
  * `packed binary' format.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.1.24.1 2004/08/03 10:39:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -422,66 +421,6 @@ done:
 }
 
 /*
- * fpn -> extended (32 bit high-order result returned; low-order fraction
- * words left in res[1]..res[3]).  Like ftod, which is like ftos ... but
- * our internal format *is* extended precision, plus 2 bits for guard/round,
- * so we can avoid a small bit of work.
- */
-u_int
-fpu_ftoq(struct fpemu *fe, struct fpn *fp, u_int *res)
-{
-	u_int sign = fp->fp_sign << 31;
-	int exp;
-
-#define	EXT_EXP(e)	((e) << (EXT_FRACBITS & 31))
-#define	EXT_MASK	(EXT_EXP(1) - 1)
-
-	if (ISNAN(fp)) {
-		(void) fpu_shr(fp, 2);	/* since we are not rounding */
-		exp = EXT_EXP_INFNAN;
-		goto done;
-	}
-	if (ISINF(fp)) {
-		sign |= EXT_EXP(EXT_EXP_INFNAN);
-		goto zero;
-	}
-	if (ISZERO(fp)) {
-zero:		res[1] = res[2] = res[3] = 0;
-		return (sign);
-	}
-
-	if ((exp = fp->fp_exp + EXT_EXP_BIAS) <= 0) {
-		(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[0] == EXT_EXP(1)) {
-			res[1] = res[2] = res[3] = 0;
-			return (sign | EXT_EXP(1) | 0);
-		}
-		if ((fe->fe_cx & FPSCR_FI) ||
-		    (fe->fe_fpscr & FPSCR_UX))
-			fe->fe_cx |= FPSCR_UX;
-		exp = 0;
-		goto done;
-	}
-	/* Since internal == extended, no need to shift here. */
-	if (round(fe, fp) && fp->fp_mant[0] == EXT_EXP(2))
-		exp++;
-	if (exp >= EXT_EXP_INFNAN) {
-		fe->fe_cx |= FPSCR_OX | FPSCR_UX;
-		if (toinf(fe, sign)) {
-			res[1] = res[2] = res[3] = 0;
-			return (sign | EXT_EXP(EXT_EXP_INFNAN) | 0);
-		}
-		res[1] = res[2] = res[3] = ~0;
-		return (sign | EXT_EXP(EXT_EXP_INFNAN) | EXT_MASK);
-	}
-done:
-	res[1] = fp->fp_mant[1];
-	res[2] = fp->fp_mant[2];
-	res[3] = fp->fp_mant[3];
-	return (sign | EXT_EXP(exp) | (fp->fp_mant[0] & EXT_MASK));
-}
-
-/*
  * Implode an fpn, writing the result into the given space.
  */
 void
@@ -513,13 +452,6 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 		space[0] = fpu_ftod(fe, fp, space);
 		DPRINTF(FPE_REG, ("fpu_implode: double %x %x\n",
 			space[0], space[1]));
-		break;		break;
-
-	case FTYPE_EXT:
-		/* funky rounding precision options ?? */
-		space[0] = fpu_ftoq(fe, fp, space);
-		DPRINTF(FPE_REG, ("fpu_implode: long double %x %x %x %x\n",
-			space[0], space[1], space[2], space[3]));
 		break;		break;
 
 	default:

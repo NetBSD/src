@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.1 2002/12/09 12:16:23 scw Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.1.8.1 2004/08/03 10:34:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -37,6 +37,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.1.8.1 2004/08/03 10:34:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -69,7 +72,7 @@ static u_char ds1743_lock(struct dsrtc_softc *, u_char);
 static void ds1743_unlock(struct dsrtc_softc *, u_char);
 
 /* device and attach structures */
-CFATTACH_DECL(dsrtc, sizeof(struct dsrtc_softc),
+CFATTACH_DECL(ds1743rtc, sizeof(struct dsrtc_softc),
     dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*
@@ -93,29 +96,29 @@ dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(paa->pb_name, cf->cf_name) != 0)
 		return 0;
 
-	if (bus_space_map(0, paa->pb_addr, DS_SIZE, 0, &h)) {
+	if (bus_space_map(paa->pb_bt, paa->pb_addr, DS_SIZE, 0, &h)) {
 		printf("%s: can't map i/o space\n", paa->pb_name);
 		return 0;
 	}
 
 	/* Read one byte of what's supposed to be NVRAM */
-	x = bus_space_read_1(0, h, DS_SCRATCH_ADDR);
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0xAA);
-	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0xAA) {
+	x = bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR);
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, 0xAA);
+	if (bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR) != 0xAA) {
 		retval = 0;
 		goto done;
 	}
 	
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0x55);
-	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0x55) {
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, 0x55);
+	if (bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR) != 0x55) {
 		retval = 0;
 		goto done;
 	}
 
 	/* Restore scratch byte value */
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, x);
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, x);
   done:	
-	bus_space_unmap(0, h, DS_SIZE);
+	bus_space_unmap(paa->pb_bt, h, DS_SIZE);
 	  
 	return retval;
 }
@@ -135,14 +138,13 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 
 	ds1743found = 1;
 	
-	sc->sc_iot = 0;
-	sc->sc_ioh = paa->pb_addr;
+	sc->sc_iot = paa->pb_bt;
 	if (bus_space_map(sc->sc_iot, paa->pb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	ds1743_unlock(sc,0);	/* Make sure the clock is running */
+	ds1743_unlock(sc, 0);	/* Make sure the clock is running */
 	if ((ds1743_read(sc, DS_DAY) & DS_CTL_BF) == 0)
 		printf(": lithium cell is dead, RTC unreliable");
 	printf("\n");
@@ -150,7 +152,7 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 	{
 		rtc_t rtc;
-		dsrtc_read(sc,&rtc);
+		dsrtc_read(sc, &rtc);
 		printf("RTC: %d/%d/%02d%02d %d:%02d:%02d\n",
 			rtc.rtc_mon, rtc.rtc_day, rtc.rtc_cen, rtc.rtc_year,
 			rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec);
@@ -197,21 +199,21 @@ ds1743_ram_write(struct dsrtc_softc *sc, int addr, u_char val)
 
 	if (addr >= DS_RAM_SIZE)
 		return (-1);
-	ds1743_write(sc,addr,val);
+	ds1743_write(sc, addr, val);
 }
 #endif
 
-#define BCD(x)	((((x)/10)<<4)|(x%10))
-#define unBCD(v,x)	v=x; v = ((v>>4) & 0xf)*10+(v & 0xf) 
+#define BCD(x)		((((x) / 10) << 4) | (x % 10))
+#define unBCD(v, x)	v = x; v = ((v >> 4) & 0xf) * 10 + (v & 0xf) 
 
 static u_char
 ds1743_lock(struct dsrtc_softc *sc, u_char mode)
 {
-	u_char octl,ctl;
+	u_char octl, ctl;
 
-	octl = ds1743_read(sc,DS_CENTURY);
+	octl = ds1743_read(sc, DS_CENTURY);
 	ctl = octl | (mode & DS_CTL_RW);
-	ds1743_write(sc,DS_CENTURY, ctl);	/* Lock RTC for both reading and writing */
+	ds1743_write(sc, DS_CENTURY, ctl);	/* Lock RTC for both reading and writing */
 	return octl;
 }
 
@@ -220,9 +222,9 @@ ds1743_unlock(struct dsrtc_softc *sc, u_char key)
 {
 	int ctl;
 
-	ctl = ds1743_read(sc,DS_CENTURY);
+	ctl = ds1743_read(sc, DS_CENTURY);
 	ctl = (ctl & 0x3f) | (key & DS_CTL_RW);
-	ds1743_write(sc,DS_CENTURY, ctl);	/* Enable updates */
+	ds1743_write(sc, DS_CENTURY, ctl);	/* Enable updates */
 }
 
 static int
@@ -231,7 +233,7 @@ dsrtc_write(void * arg, rtc_t * rtc)
 	struct dsrtc_softc *sc = arg;
 	u_char key;
 
-	key = ds1743_lock(sc,DS_CTL_W);
+	key = ds1743_lock(sc, DS_CTL_W);
 	
 	ds1743_write(sc, DS_SECONDS, BCD(rtc->rtc_sec) & 0x7f);
 	ds1743_write(sc, DS_MINUTES, BCD(rtc->rtc_min) & 0x7f);
@@ -239,11 +241,11 @@ dsrtc_write(void * arg, rtc_t * rtc)
 	ds1743_write(sc, DS_DATE, BCD(rtc->rtc_day)    & 0x3f);
 	ds1743_write(sc, DS_MONTH, BCD(rtc->rtc_mon)   & 0x1f);
 	ds1743_write(sc, DS_YEAR, BCD(rtc->rtc_year));
-	ds1743_write(sc, DS_CENTURY, ((ds1743_read(sc,DS_CENTURY) & DS_CTL_RW)
+	ds1743_write(sc, DS_CENTURY, ((ds1743_read(sc, DS_CENTURY) & DS_CTL_RW)
 				      | BCD(rtc->rtc_cen)));
 
-	ds1743_unlock(sc,key);
-	dsrtc_read(arg,rtc);
+	ds1743_unlock(sc, key);
+	dsrtc_read(arg, rtc);
 	return(1);
 }
 
@@ -253,17 +255,17 @@ dsrtc_read(void *arg, rtc_t *rtc)
 	struct dsrtc_softc *sc = arg;
 	u_char key;
 	
-	key = ds1743_lock(sc,DS_CTL_R);
+	key = ds1743_lock(sc, DS_CTL_R);
 	rtc->rtc_micro = 0;
 	rtc->rtc_centi = 0;
-	unBCD(rtc->rtc_sec,ds1743_read(sc, DS_SECONDS) & 0x7f);
-	unBCD(rtc->rtc_min,ds1743_read(sc, DS_MINUTES) & 0x7f);
+	unBCD(rtc->rtc_sec, ds1743_read(sc, DS_SECONDS) & 0x7f);
+	unBCD(rtc->rtc_min, ds1743_read(sc, DS_MINUTES) & 0x7f);
 	unBCD(rtc->rtc_hour, ds1743_read(sc, DS_HOURS) & 0x3f);
 	unBCD(rtc->rtc_day, ds1743_read(sc, DS_DATE)   & 0x3f);
-	unBCD(rtc->rtc_mon,ds1743_read(sc, DS_MONTH)   & 0x1f);
+	unBCD(rtc->rtc_mon, ds1743_read(sc, DS_MONTH)   & 0x1f);
 	unBCD(rtc->rtc_year, ds1743_read(sc, DS_YEAR));
 	unBCD(rtc->rtc_cen, ds1743_read(sc, DS_CENTURY) & ~DS_CTL_RW); 
 
-	ds1743_unlock(sc,key);
+	ds1743_unlock(sc, key);
 	return(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.13 2001/09/04 08:47:00 sato Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.13.22.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -701,9 +701,9 @@ extern platid_t platid_mask_MACH_HP_JORNADA_680JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_680JP ((int)&platid_mask_MACH_HP_JORNADA_680JP)
 #endif
-extern platid_t platid_mask_MACH_HP_JORNADA_680HU;
+extern platid_t platid_mask_MACH_HP_JORNADA_680EU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define HP_JORNADA_680HU ((int)&platid_mask_MACH_HP_JORNADA_680HU)
+#  define HP_JORNADA_680EU ((int)&platid_mask_MACH_HP_JORNADA_680EU)
 #endif
 extern platid_t platid_mask_MACH_HP_JORNADA_680DE;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -717,13 +717,29 @@ extern platid_t platid_mask_MACH_HP_JORNADA_690JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690JP ((int)&platid_mask_MACH_HP_JORNADA_690JP)
 #endif
-extern platid_t platid_mask_MACH_HP_JORNADA_690HU;
+extern platid_t platid_mask_MACH_HP_JORNADA_690EU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define HP_JORNADA_690HU ((int)&platid_mask_MACH_HP_JORNADA_690HU)
+#  define HP_JORNADA_690EU ((int)&platid_mask_MACH_HP_JORNADA_690EU)
 #endif
 extern platid_t platid_mask_MACH_HP_JORNADA_690DE;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690DE ((int)&platid_mask_MACH_HP_JORNADA_690DE)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_680FR;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_680FR ((int)&platid_mask_MACH_HP_JORNADA_680FR)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_690FR;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_690FR ((int)&platid_mask_MACH_HP_JORNADA_690FR)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_680SV;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_680SV ((int)&platid_mask_MACH_HP_JORNADA_680SV)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_690SV;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_690SV ((int)&platid_mask_MACH_HP_JORNADA_690SV)
 #endif
 #endif /* hpcsh */
 #ifdef hpcarm
@@ -768,6 +784,10 @@ extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC;
 extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW50PAD;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HITACHI_PERSONA_HPW50PAD ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW200EC;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA_HPW200EC ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW200EC)
 #endif
 extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW650PA;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

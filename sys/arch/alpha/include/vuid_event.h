@@ -1,4 +1,4 @@
-/* $NetBSD: vuid_event.h,v 1.2 1997/04/06 08:47:47 cgd Exp $ */
+/* $NetBSD: vuid_event.h,v 1.2.56.1 2004/08/03 10:31:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,6 +40,8 @@
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _ALPHA_VUID_EVENT_H_
+#define _ALPHA_VUID_EVENT_H_
 /*
  * The following is a minimal emulation of Sun's `Firm_event' structures
  * and related operations necessary to make X11 happy (i.e., make it
@@ -85,3 +83,5 @@ typedef struct firm_event {
 #define	VUIDSFORMAT	_IOW('v', 1, int)
 #define	VUIDGFORMAT	_IOR('v', 2, int)
 #define	VUID_FIRM_EVENT	1	/* the only format we support */
+
+#endif /* _ALPHA_VUID_EVENT_H_ */

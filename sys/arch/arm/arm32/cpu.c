@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.51.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -36,7 +36,7 @@
  *
  * cpu.c
  *
- * Probing and configuration for the master cpu
+ * Probing and configuration for the master CPU
  *
  * Created      : 10/10/95
  */
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51.2.1 2004/08/03 10:32:29 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -85,7 +85,7 @@ cpu_attach(struct device *dv)
 	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
 	    NULL, dv->dv_xname, "arm700swibug");
 	
-	/* Get the cpu ID from coprocessor 15 */
+	/* Get the CPU ID from coprocessor 15 */
 
 	curcpu()->ci_arm_cpuid = cpu_id();
 	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
@@ -169,9 +169,9 @@ enum cpu_class {
 	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
+	CPU_CLASS_ARM10E,
 	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE,
-	CPU_CLASS_ARM10E
+	CPU_CLASS_XSCALE
 };
 
 static const char * const generic_steppings[16] = {
@@ -225,9 +225,20 @@ static const char * const i80321_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+/* Steppings for PXA2[15]0 */
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"step B-2",	"step C-0",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+/* Steppings for PXA255/26x.
+ * rev 5: PXA26x B0, rev 6: PXA255 A0  
+ */
+static const char * const pxa255_steppings[16] = {
+	"rev 0",	"rev 1",	"rev 2",	"step A-0",
+	"rev 4",	"step B-0",	"step A-0",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
@@ -296,6 +307,13 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
 	  generic_steppings },
+	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
+	  generic_steppings },
+
+	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
+	  generic_steppings },
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
+	  generic_steppings },
 
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
 	  sa110_steppings },
@@ -327,8 +345,8 @@ const struct cpuidtab cpuids[] = {
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
-	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
+	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA255/26x",
+	  pxa255_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
 
@@ -338,9 +356,6 @@ const struct cpuidtab cpuids[] = {
 	  ixp425_steppings },
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
-
-	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
-	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -361,15 +376,15 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
-	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
 /*
  * Report the type of the specified arm processor. This uses the generic and
- * arm specific information in the cpu structure to identify the processor.
- * The remaining fields in the cpu structure are filled in appropriately.
+ * arm specific information in the CPU structure to identify the processor.
+ * The remaining fields in the CPU structure are filled in appropriately.
  */
 
 static const char * const wtnames[] = {
@@ -395,7 +410,7 @@ void
 identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 {
 	u_int cpuid;
-	enum cpu_class cpu_class;
+	enum cpu_class cpu_class = CPU_CLASS_NONE;
 	int i;
 
 	cpuid = ci->ci_arm_cpuid;
@@ -435,6 +450,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			aprint_normal(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
+	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
@@ -509,6 +525,9 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
+#endif
+#ifdef CPU_ARM10
+	case CPU_CLASS_ARM10E:
 #endif
 #if defined(CPU_SA110) || defined(CPU_SA1100) || \
     defined(CPU_SA1110) || defined(CPU_IXP12X0)

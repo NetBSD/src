@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.18 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: awacs.c,v 1.18.2.1 2004/08/03 10:37:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.18.2.1 2004/08/03 10:37:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -249,7 +252,7 @@ awacs_attach(parent, self, aux)
 		int node, intr[6];
 
 		node = OF_child(ca->ca_node);
-		if (node == NULL) {
+		if (node == 0) {
 			printf("no i2s-a child\n");
 			return;
 		}
@@ -494,7 +497,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	struct audio_params *play, *rec;
 {
 	struct awacs_softc *sc = h;
-	struct audio_params *p;
+	struct audio_params *p = NULL;
 	int mode;
 
 	/*
@@ -595,7 +598,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	}
 
 	/* Set the speed */
-	if (awacs_set_rate(sc, p))
+	if (p != NULL && awacs_set_rate(sc, p))
 		return EINVAL;
 
 	return 0;

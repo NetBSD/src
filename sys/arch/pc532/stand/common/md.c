@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1997/11/18 01:19:22 phil Exp $	*/
+/*	$NetBSD: md.c,v 1.2.46.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -30,11 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+#include <machine/stdarg.h>
 
 #include <sys/param.h>
 
@@ -42,43 +38,35 @@
 
 #include <pc532/stand/common/samachdep.h>
 
+
 #ifndef MD_START
 extern u_char stext[];
-#define MD_START ((void *)((((int)stext) & 0xffffff00) - 2800 * 512))
+#define	MD_START ((void *)((((int)stext) & 0xffffff00) - 2800 * 512))
 #endif
 
 int
-#if __STDC__
 mdopen(struct open_file *f, ...)
-#else
-mdopen(f, va_alist)
-	struct open_file *f;
-	va_dcl
-#endif
 {
+
 	f->f_devdata = MD_START;
 	return(0);
 }
 
 int
-mdclose(f)
-	struct open_file *f;
+mdclose(struct open_file *f)
 {
+
 	f->f_devdata = NULL;
 
 	return (0);
 }
 
 int
-mdstrategy(ss, func, dblk, size, buf, rsize)
-	void *ss;
-	int func;
-	daddr_t dblk;		/* block number */
-	u_int size;		/* request size in bytes */
-	void *buf;
-	u_int *rsize;		/* out: bytes transferred */
+mdstrategy(void *ss, int func, daddr_t dblk, u_int size, void *buf,
+    u_int *rsize)
 {
-	memcpy(buf, ss + (dblk << DEV_BSHIFT), size);
+
+	memcpy(buf, (char *)ss + (dblk << DEV_BSHIFT), size);
 	*rsize = size;
 	return(0);
 }

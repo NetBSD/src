@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.1 2003/04/16 22:17:44 dsl Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.1.2.1 2004/08/03 10:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Code linked to 0xa00 and copied to sectors 2+ of the netbsd boot
@@ -54,12 +54,12 @@
 	.code16
 ENTRY(bootxx)
 	jmp	1f
-	.align	4
+	.balign	4
 ENTRY(bootxx_magic)
 	.long	X86_BOOT_MAGIC_1	/* checked by installboot & pbr code */
 bootparams:				/* space for patchable variables */
 	.long	1f - bootparams		/* length of this data area */
-#include "boot_params.S"
+#include <boot_params.S>
 	.space	4 * 4			/* some spare */
 
 1:	call	gdt_fixup
@@ -77,6 +77,7 @@ bootparams:				/* space for patchable variables */
 
 	and	$0xff, %edx
 	push	%esi			/* save args for secondary bootstrap */
+	movl	%esp, %esi		/* address of sector number */
 	push	%edx
 	push	%esi			/* args for boot1 */
 	push	%edx
@@ -94,13 +95,22 @@ bootparams:				/* space for patchable variables */
 	lcall	$SECONDARY_LOAD_ADDRESS/16, $0
 
 boot_fail:
-	push	%ax
-	movw	$1f, %si
-	call	message
+	push	%ax			/* error string from boot1 */
+	movw	errno, %ax
+	aam				/* largest errno is < 100 */
+	addw	$('0' << 8) | '0', %ax	/* to ascii */
+	rorw	$8, %ax
+	cmpb	$'0', %al		/* supress leading zero */
+	jne	10f
+	movb	$' ', %al
+10:	movw	%ax, 12f
+	movw	$11f, %si
+	call	message			/* output boot failed message */
 	pop	%si
-	call	message
+	call	message			/* and text from boot1 */
 	jmp	loopstop
-1:	.asciz	"Boot failed: "
+11:	.ascii	"Boot failed (errno "
+12:	.asciz	"xx): "
 
 ENTRY(_rtt)
 	.code32
@@ -111,7 +121,7 @@ loopstop:
 	movw	$16, %cx
 	int	$0x15
 	int	$0x18			/* might be a boot fail entry */
-1:	sti
+1:	sti				/* if not loopstop */
 	hlt
 	jmp	1b
 

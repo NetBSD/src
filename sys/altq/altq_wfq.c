@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.5 2001/11/15 06:37:15 lukem Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.5.16.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.5 2001/11/15 06:37:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.5.16.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -140,14 +140,14 @@ wfq_ifattach(ifacep)
 	       M_DEVBUF, M_WAITOK);
 	if (new_wfqp == NULL)
 		return (ENOMEM);
-	bzero(new_wfqp, sizeof(wfq_state_t));
+	(void)memset(new_wfqp, 0, sizeof(wfq_state_t));
 	MALLOC(queue, wfq *, sizeof(wfq) * DEFAULT_QSIZE,
 	       M_DEVBUF, M_WAITOK);
 	if (queue == NULL) {
 		FREE(new_wfqp, M_DEVBUF);
 		return (ENOMEM);
 	}
-	bzero(queue, sizeof(wfq) * DEFAULT_QSIZE);
+	(void)memset(queue, 0, sizeof(wfq) * DEFAULT_QSIZE);
 
 	/* keep the ifq */
 	new_wfqp->ifq = &ifp->if_snd;
@@ -586,7 +586,7 @@ wfq_config(cf)
 		       M_DEVBUF, M_WAITOK);
 		if (queue == NULL)
 			return (ENOMEM);
-		bzero(queue, sizeof(wfq) * cf->nqueues);
+		(void)memset(queue, 0, sizeof(wfq) * cf->nqueues);
 
 		wfqp->nums = cf->nqueues;
 		wfqp->bytes = 0;

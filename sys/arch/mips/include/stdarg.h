@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.23 2003/04/28 23:16:21 bjh21 Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.23.2.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,9 +46,20 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-#define	__builtin_next_arg(t) ((t) ? 0 : 0)
-#define	__alignof__(t) (4)
-#endif
+
+#define va_start(ap, last)	((ap) = *(va_list *)0)
+#define va_arg(ap, type)	(*(type *)(void *)&(ap))
+#define va_end(ap)
+#define __va_copy(dest, src)	((dest) = (src))
+
+#elif __GNUC_PREREQ__(3, 0)
+
+#define va_start(ap, last)	__builtin_stdarg_start((ap), last)
+#define va_arg(ap, type)	__builtin_va_arg((ap), type)
+#define va_end(ap)		__builtin_va_end((ap))
+#define __va_copy(dest, src)	__builtin_va_copy((dest), (src))
+
+#else
 
 #define	va_start(ap, last) \
 	((ap) = (va_list)__builtin_next_arg(last))
@@ -73,13 +80,16 @@ typedef _BSD_VA_LIST_	va_list;
  	))[-1])
 #endif
 
+#define	va_end(ap)
+
+#define	__va_copy(dest, src)	((dest) = (src))
+
+#endif
+
 #if !defined(_ANSI_SOURCE) &&						\
     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
      defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src)						\
-	((dest) = (src))
+#define	va_copy(dest, src)	__va_copy((dest), (src))
 #endif
-
-#define	va_end(ap)
 
 #endif /* !_MIPS_STDARG_H_ */

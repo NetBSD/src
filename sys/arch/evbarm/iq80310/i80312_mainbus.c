@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.10 2002/10/03 01:35:28 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.10.6.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  * of setting up the i80312 memory map, PCI interrupt routing, etc.,
  * which are all specific to the board the i80312 is wired up to.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.10.6.1 2004/08/03 10:34:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +118,7 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 	/*
-	 * We have mapped the the PCI I/O windows in the early
-	 * bootstrap phase.
+	 * We have mapped the PCI I/O windows in the early bootstrap phase.
 	 */
 	sc->sc_piow_vaddr = IQ80310_PIOW_VBASE;
 	sc->sc_siow_vaddr = IQ80310_SIOW_VBASE;

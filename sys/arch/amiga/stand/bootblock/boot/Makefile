@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 2003/04/01 16:50:52 he Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2004/08/03 10:32:09 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:
 
@@ -25,7 +27,7 @@ COBJS+=  divdi3.o moddi3.o qdivrem.o snprintf.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o memcmp.o strerror.o sprintf.o subr_prf.o
-SOBJS += libstubs.o memset.o strncmp.o
+SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
@@ -37,7 +39,7 @@ SOBJS += inffast.o infutil.o
 #DEFS += -DBOOT_ELF32 -DBOOT_AOUT
 SOBJS += loadfile.o loadfile_aout.o loadfile_elf32.o
 
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 ### main target: ###
@@ -57,7 +59,7 @@ INCPATH += -I${.CURDIR}/../aout2bb -I${DESTDIR}/usr/include
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
-COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:
@@ -86,7 +88,7 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/version
-	sh ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
 
 machine:
 	-rm -f $@

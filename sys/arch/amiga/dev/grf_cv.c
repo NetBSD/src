@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.35 2003/05/31 03:05:45 kristerw Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.35.2.1 2004/08/03 10:31:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.35 2003/05/31 03:05:45 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.35.2.1 2004/08/03 10:31:52 skrll Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -597,15 +597,15 @@ cv_boardinit(struct grf_softc *gp)
 
 	/*
 	 * bit 1=1: enable enhanced mode functions
-	 * bit 4=1: enable linear adressing
+	 * bit 4=1: enable linear addressing
 	 * bit 5=1: enable MMIO
 	 */
 	vgaw(ba, ECR_ADV_FUNC_CNTL, 0x31);
 
-	/* enable color mode (bit0), cpu acess (bit1), high 64k page (bit5) */
+	/* enable color mode (bit0), CPU access (bit1), high 64k page (bit5) */
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);
 
-	/* Cpu base addr */
+	/* CPU base addr */
 	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x00);
 
 	/* Reset. This does nothing, but everyone does it:) */
@@ -684,7 +684,7 @@ cv_boardinit(struct grf_softc *gp)
 	WCrt(ba, CRT_ID_CURSOR_START, 0x00);
 	WCrt(ba, CRT_ID_CURSOR_END, 0x00);
 
-	/* Display start adress */
+	/* Display start address */
 	WCrt(ba, CRT_ID_START_ADDR_HIGH, 0x00);
 	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
 
@@ -1617,7 +1617,7 @@ cv_inittextmode(struct grf_softc *gp)
 
 	/* load text font into beginning of display memory.
 	 * Each character cell is 32 bytes long (enough for 4 planes)
-	 * In linear adressing text mode, the memory is organized
+	 * In linear addressing text mode, the memory is organized
 	 * so, that the Bytes of all 4 planes are interleaved.
 	 * 1st byte plane 0, 1st byte plane 1, 1st byte plane 2,
 	 * 1st byte plane 3, 2nd byte plane 0, 2nd byte plane 1,...

@@ -1,7 +1,7 @@
-/*	$NetBSD: mkbootimage.c,v 1.5 2002/05/04 20:47:48 kleink Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.5.10.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*-
- * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
+ * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)
  * Copyright (C) 1996, 1997, 1998, 1999 Cort Dougan (cort@fsmlasb.com)
  * Copyright (C) 1996, 1997, 1998, 1999 Paul Mackeras (paulus@linuxcare.com)
  * All rights reserved.
@@ -32,17 +32,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <elf.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/disklabel_mbr.h>
+
+/* BFD ELF headers */
+#include <elf/common.h>
+#include <elf/external.h>
 
 #include "byteorder.h"
 #include "magic.h"
@@ -51,10 +60,18 @@
 #define	MBR_PTYPE_PREP		0x41
 #endif
 
-#ifndef	MBR_FLAGS_ACTIVE
-#define	MBR_FLAGS_ACTIVE	0x80
+#ifndef	MBR_PFLAG_ACTIVE
+#define	MBR_PFLAG_ACTIVE	0x80
 #endif
 
+/*
+ * Macros to get values from multi-byte ELF header fields.  These assume
+ * a big-endian image.
+ */
+#define	ELFGET16(x)	(((x)[0] << 8) | (x)[1])
+
+#define	ELFGET32(x)	(((x)[0] << 24) | ((x)[1] << 16) |		\
+			 ((x)[2] <<  8) |  (x)[3])
 
 int
 main(argc, argv)
@@ -69,9 +86,9 @@ main(argc, argv)
 	unsigned char mbr[512];
 	unsigned long entry;
 	unsigned long length;
-	Elf32_Ehdr hdr;
-	Elf32_Phdr phdr;
-	struct mbr_partition *mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	Elf32_External_Ehdr hdr;
+	Elf32_External_Phdr phdr;
+	struct mbr_partition *mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
 
 	switch (argc) { 
 	case 4:
@@ -112,19 +129,26 @@ main(argc, argv)
 			argv[1], strerror(errno));
 		exit(3);
 	}
-	if (memcmp(hdr.e_ident, ELFMAG, SELFMAG) != 0 ||
+	if (hdr.e_ident[EI_MAG0] != ELFMAG0 ||
+	    hdr.e_ident[EI_MAG1] != ELFMAG1 ||
+	    hdr.e_ident[EI_MAG2] != ELFMAG2 ||
+	    hdr.e_ident[EI_MAG3] != ELFMAG3 ||
 	    hdr.e_ident[EI_CLASS] != ELFCLASS32) {
 		fprintf(stderr, "input '%s' is not ELF32 format\n", argv[1]);
 		exit(3);
 	}
-	if (sa_be16toh(hdr.e_machine) != EM_PPC) {
+	if (hdr.e_ident[EI_DATA] != ELFDATA2MSB) {
+		fprintf(stderr, "input '%s' is not big-endian\n", argv[1]);
+		exit(3);
+	}
+	if (ELFGET16(hdr.e_machine) != EM_PPC) {
 		fprintf(stderr, "input '%s' is not PowerPC exec binary\n",
 			argv[1]);
 		exit(3);
 	}
 
-	for (i = 0; i < sa_be16toh(hdr.e_phnum); i++) {
-		lseek(elf_fd, sa_be32toh(hdr.e_phoff) + sizeof(phdr) * i,
+	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
+		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
 			SEEK_SET);
 		if (read(elf_fd, &phdr, sizeof(phdr)) != sizeof(phdr)) {
 			fprintf(stderr, "Can't read input '%s' phdr : %s\n",
@@ -132,13 +156,13 @@ main(argc, argv)
 			exit(3);
                 }
 
-		if ((sa_be32toh(phdr.p_type) != PT_LOAD) ||
-		    !(sa_be32toh(phdr.p_flags) & PF_X))
+		if ((ELFGET32(phdr.p_type) != PT_LOAD) ||
+		    !(ELFGET32(phdr.p_flags) & PF_X))
 			continue;
 
 		fstat(elf_fd, &elf_stat);
-		elf_img_len = elf_stat.st_size - sa_be32toh(phdr.p_offset);
-		lseek(elf_fd, sa_be32toh(phdr.p_offset), SEEK_SET);
+		elf_img_len = elf_stat.st_size - ELFGET32(phdr.p_offset);
+		lseek(elf_fd, ELFGET32(phdr.p_offset), SEEK_SET);
 
 		break;
 	}
@@ -152,14 +176,14 @@ main(argc, argv)
 	/*
 	 * Set magic number for msdos partition
 	 */
-	*(unsigned short *)&mbr[MBR_MAGICOFF] = sa_htole16(MBR_MAGIC);
+	*(unsigned short *)&mbr[MBR_MAGIC_OFFSET] = sa_htole16(MBR_MAGIC);
   
 	/*
 	 * Build a "PReP" partition table entry in the boot record
 	 *  - "PReP" may only look at the system_indicator
 	 */
-	mbrp->mbrp_flag = MBR_FLAGS_ACTIVE;
-	mbrp->mbrp_typ  = MBR_PTYPE_PREP;
+	mbrp->mbrp_flag = MBR_PFLAG_ACTIVE;
+	mbrp->mbrp_type  = MBR_PTYPE_PREP;
 
 	/*
 	 * The first block of the diskette is used by this "boot record" which

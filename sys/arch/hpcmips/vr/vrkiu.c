@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.33 2002/10/02 05:26:56 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.33.6.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -35,6 +35,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.33.6.1 2004/08/03 10:35:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
@@ -63,7 +66,6 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #include <dev/hpc/pckbd_encode.h>
 #endif
@@ -141,7 +143,7 @@ vrkiuattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
 		    va->va_size, &ioh);
 	else

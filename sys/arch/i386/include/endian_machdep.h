@@ -1,4 +1,4 @@
-/*	$NetBSD: endian_machdep.h,v 1.1 2000/03/17 00:09:20 mycroft Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.1.32.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
 
@@ -6,9 +6,9 @@
 
 #include <machine/byte_swap.h>
 
-#define	ntohl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
-#define	ntohs(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))
-#define	htonl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
-#define	htons(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))
+#define	ntohl(x)	((uint32_t)__byte_swap_long((uint32_t)(x)))
+#define	ntohs(x)	((uint16_t)__byte_swap_word((uint16_t)(x)))
+#define	htonl(x)	((uint32_t)__byte_swap_long((uint32_t)(x)))
+#define	htons(x)	((uint16_t)__byte_swap_word((uint16_t)(x)))
 
 #endif

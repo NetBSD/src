@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.11 2002/10/02 05:26:52 thorpej Exp $	*/
+/*	$NetBSD: cmu.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

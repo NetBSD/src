@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.24 2003/06/14 16:15:16 tsutsui Exp $
+#	$NetBSD: files.dreamcast,v 1.24.2.1 2004/08/03 10:33:53 skrll Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -18,7 +18,8 @@ file	arch/dreamcast/dreamcast/autoconf.c
 file	arch/dreamcast/dreamcast/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c				disk
 
-file	arch/dreamcast/dreamcast/kloader.c		kloader
+file	dev/kloader.c					kloader
+file	arch/dreamcast/dreamcast/kloader_machdep.c	kloader
 defflag	opt_kloader.h	KLOADER
 defflag	debug_kloader.h	KLOADER_DEBUG
 
@@ -98,5 +99,9 @@ file	arch/dreamcast/dev/g2/gapspci_pci.c		gapspci
 # LAN Adapter
 attach	mbe at g2bus with mbe_g2bus
 file	arch/dreamcast/dev/g2/if_mbe_g2.c		mbe_g2bus
+
+device	aica: audiobus, auconv, mulaw
+attach	aica at g2bus
+file	arch/dreamcast/dev/g2/aica.c			aica	needs-flag
 
 include "arch/dreamcast/conf/majors.dreamcast"

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2003/04/28 23:16:18 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.3.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,6 +53,15 @@ typedef int sig_atomic_t;
 #endif
 
 #if defined(_NETBSD_SOURCE)
+
+#ifdef _KERNEL
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
+#endif
+
 #ifndef _LOCORE
 /*
  * Information pushed on stack when a signal is delivered.
@@ -88,6 +97,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#ifdef COMPAT_16
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
@@ -113,29 +123,7 @@ struct sigcontext {
 	
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
-
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_spsr = (uc)->uc_mcontext.__gregs[_REG_CPSR];		\
-	memcpy(&(sc)->sc_r0, (uc)->uc_mcontext.__gregs,			\
-	    15 * sizeof(unsigned int));					\
-	(sc)->sc_svc_lr = 0;		/* XXX */			\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_CPSR] = (sc)->sc_spsr;		\
-	memcpy((uc)->uc_mcontext.__gregs, &(sc)->sc_r0,			\
-	    15 * sizeof(unsigned int));					\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_pc;		\
-} while (/*CONSTCOND*/0)
+#endif
 
 #endif /* !_LOCORE */
 

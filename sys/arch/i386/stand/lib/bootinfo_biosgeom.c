@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.11 2003/04/16 14:22:29 dsl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.11.2.1 2004/08/03 10:36:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -174,8 +168,8 @@ void bi_getbiosgeom()
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
 			cksum += buf[j];
 		bibg->disk[nvalid].cksum = cksum;
-		memcpy(bibg->disk[nvalid].dosparts, &buf[MBR_PARTOFF],
-		      sizeof(bibg->disk[nvalid].dosparts));
+		memcpy(bibg->disk[nvalid].dosparts, &buf[MBR_PART_OFFSET],
+		    sizeof(bibg->disk[nvalid].dosparts));
 		nvalid++;
 	}
 

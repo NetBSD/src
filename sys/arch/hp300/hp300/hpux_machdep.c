@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.35.2.1 2003/07/02 15:25:18 darrenr Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.35.2.2 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,38 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -78,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.1 2003/07/02 15:25:18 darrenr Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.2 2004/08/03 10:34:37 skrll Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.1 2003/07/02 15:25:18 darren
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/poll.h> 
-#include <sys/proc.h> 
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -104,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.1 2003/07/02 15:25:18 darren
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/wait.h> 
+#include <sys/wait.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -248,7 +277,7 @@ hpux_sys_advise(l, v, retval)
 
 	switch (SCARG(uap, arg)) {
 	case 0:
-		l->l_proc->p_md.mdp_flags |= MDP_HPUXMMAP; 
+		l->l_proc->p_md.mdp_flags |= MDP_HPUXMMAP;
 		break;
 
 	case 1:
@@ -273,14 +302,14 @@ hpux_sys_advise(l, v, retval)
  */
 int
 hpux_sys_getcontext(lp, v, retval)
-	struct lwp *lp; 
+	struct lwp *lp;
 	void *v;
-	register_t *retval; 
+	register_t *retval;
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	const char *str;
 	int l, i, error = 0;
-	int len; 
+	int len;
 
 	if (SCARG(uap, len) <= 0)
 		return (EINVAL);
@@ -311,11 +340,11 @@ hpux_sys_getcontext(lp, v, retval)
  */
 int
 hpux_to_bsd_uoff(off, isps, l)
-	int *off, *isps; 
+	int *off, *isps;
 	struct lwp *l;
 {
 	int *ar0 = l->l_md.md_regs;
-	struct hpux_fp *hp; 
+	struct hpux_fp *hp;
 	struct bsdfp *bp;
 	u_int raddr;
 
@@ -323,7 +352,7 @@ hpux_to_bsd_uoff(off, isps, l)
 
 	/* u_ar0 field; procxmt puts in U_ar0 */
 	if ((int)off == HPUOFF(hpuxu_ar0))
-		return(UOFF(U_ar0)); 
+		return(UOFF(U_ar0));
 
 	if (fputype) {
 		/* FP registers from PCB */
@@ -423,34 +452,18 @@ int hpuxsigpid = 0;
  * Send an interrupt to process.
  */
 void
-hpux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	u_long code = KSI_TRAPCODE(ksi);
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct hpuxsigframe *fp, kf;
-	struct frame *frame;
-	short ft;
-	int onstack, fsize;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	int onstack;
+	struct hpuxsigframe *fp = getframe(l, sig, &onstack), kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	short ft = frame->f_format;
 
-	frame = (struct frame *)l->l_md.md_regs;
-	ft = frame->f_format;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	fsize = sizeof(struct hpuxsigframe);
-	if (onstack)
-		fp = (struct hpuxsigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct hpuxsigframe *)(frame->f_regs[SP]);
 	fp--;
 
 #ifdef DEBUG
@@ -532,7 +545,7 @@ hpux_sendsig(sig, mask, code)
 	kf.hsf_sc._hsc_pad	= 0;
 	kf.hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
 
-	if (copyout(&kf, fp, fsize)) {
+	if (copyout(&kf, fp, sizeof(kf))) {
 #ifdef DEBUG
 		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
 			printf("hpux_sendsig(%d): copyout failed on sig %d\n",
@@ -554,9 +567,7 @@ hpux_sendsig(sig, mask, code)
 	}
 #endif
 
-	/* Set up the registers to return to sigcode. */
-	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	buildcontext(l, p->p_sigctx.ps_sigcode, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

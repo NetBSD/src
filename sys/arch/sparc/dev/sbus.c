@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.56 2003/01/01 02:20:47 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.56.2.1 2004/08/03 10:40:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -84,6 +80,9 @@
  * Sbus stuff.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.56.2.1 2004/08/03 10:40:45 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -102,7 +101,6 @@
 
 void sbusreset __P((int));
 
-static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct openprom_intr **, int *));
 static void *sbus_intr_establish __P((
@@ -296,7 +294,7 @@ sbus_attach_mainbus(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -336,7 +334,7 @@ sbus_attach_iommu(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -364,7 +362,7 @@ sbus_attach_xbox(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_attach_common(sc, "sbus", node, NULL);
@@ -383,12 +381,16 @@ sbus_attach_common(sc, busname, busnode, specials)
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
-	sbt = sbus_alloc_bustag(sc);
+	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, sc)) == NULL) {
+		printf("%s: attach: out of memory\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	sbt->sparc_intr_establish = sbus_intr_establish;
 
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = PROM_getpropint(busnode, "burst-sizes", 0);
+	sc->sc_burst = prom_getpropint(busnode, "burst-sizes", 0);
 
 
 	if (CPU_ISSUN4M) {
@@ -404,8 +406,8 @@ sbus_attach_common(sc, busname, busnode, specials)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
-			&sbt->nranges, (void **) &sbt->ranges);
+	error = prom_getprop(busnode, "ranges", sizeof(struct rom_range),
+			&sbt->nranges, &sbt->ranges);
 	switch (error) {
 	case 0:
 		break;
@@ -441,7 +443,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 		for (ssp = specials, sp = NULL;
 		     ssp != NULL && (sp = *ssp) != NULL;
 		     ssp++)
@@ -473,7 +475,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n, error;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -483,13 +485,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			&sa->sa_nreg, (void **)&sa->sa_reg);
+	error = prom_getprop(node, "reg", sizeof(struct openprom_addr),
+			&sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
+		    strcmp(prom_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -505,8 +507,8 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	error = PROM_getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+	error = prom_getprop(node, "address", sizeof(u_int32_t),
+			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
 
@@ -617,8 +619,8 @@ sbus_get_intr(sc, node, ipp, np)
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	if (PROM_getprop(node, "interrupts", sizeof(int), np,
-			 (void **)&ipl) == 0) {
+	if (prom_getprop(node, "interrupts", sizeof(int), np,
+			 &ipl) == 0) {
 		/* Change format to an `struct openprom_intr' array */
 		struct openprom_intr *ip;
 		ip = malloc(*np * sizeof(struct openprom_intr), M_DEVBUF,
@@ -640,8 +642,8 @@ sbus_get_intr(sc, node, ipp, np)
 	 * Fall back on `intr' property.
 	 */
 	*ipp = NULL;
-	error = PROM_getprop(node, "intr", sizeof(struct openprom_intr),
-			np, (void **)ipp);
+	error = prom_getprop(node, "intr", sizeof(struct openprom_intr),
+			np, ipp);
 	switch (error) {
 	case 0:
 		for (n = *np; n-- > 0;) {
@@ -691,26 +693,6 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	ih->ih_arg = arg;
 	intr_establish(pil, level, ih, fastvec);
 	return (ih);
-}
-
-static bus_space_tag_t
-sbus_alloc_bustag(sc)
-	struct sbus_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (sbt == NULL)
-		return (NULL);
-
-	bzero(sbt, sizeof *sbt);
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
-	sbt->sparc_bus_map = sc->sc_bustag->sparc_bus_map;
-	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
-	sbt->sparc_intr_establish = sbus_intr_establish;
-	return (sbt);
 }
 
 int

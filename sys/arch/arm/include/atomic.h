@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1 2002/10/19 12:22:34 bsh Exp $ */
+/* $NetBSD: atomic.h,v 1.1.10.1 2004/08/03 10:32:36 skrll Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -96,7 +96,7 @@ inline_atomic_clear_bit( u_int *address, u_int clearmask )
 
 #endif /* __PROG32 */
 
-#undef __with_interrutps_disabled
+#undef __with_interrupts_disabled
 
 #endif /* _LOCORE */
 #endif /* _ARM_ATOMIC_H_ */

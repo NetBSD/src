@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,6 +42,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -123,9 +122,6 @@ cpu_configure()
 
 	spl0();
 	lcr8(0);
-
-	/* XXX Finish deferred buffer cache allocation. */
-	x86_64_bufinit();
 }
 
 void
@@ -244,8 +240,8 @@ matchbiosdisks()
 				if (be->flags & BI_GEOM_INVALID)
 					continue;
 				if (be->cksum == ck &&
-				    !memcmp(&mbr[MBR_PARTOFF], be->dosparts,
-					NMBRPART *
+				    !memcmp(&mbr[MBR_PART_OFFSET], be->dosparts,
+					MBR_PART_COUNT *
 					    sizeof (struct mbr_partition))) {
 #ifdef GEOM_DEBUG
 					printf("matched bios disk %x with %s\n",

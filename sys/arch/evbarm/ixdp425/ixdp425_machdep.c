@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.4 2003/06/01 01:49:57 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.4.2.1 2004/08/03 10:34:02 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -69,6 +69,9 @@
  * boards using RedBoot firmware.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.4.2.1 2004/08/03 10:34:02 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -102,9 +105,15 @@
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
-
 #include <arm/xscale/ixp425_sipvar.h>
-#include <arm/xscale/ixp425_comvar.h>
+
+#include <evbarm/ixdp425/ixdp425reg.h>
+
+#include "com.h"
+#if NCOM > 0
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
@@ -148,11 +157,6 @@ vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
-
-/*int debug_flags;*/
-#ifndef PMAP_STATIC_L1S
-int max_processes = 64;			/* Default number */
-#endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
@@ -245,6 +249,8 @@ int kgdb_devmode = KGDB_DEVMODE;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	u_int32_t reg;
+
 #ifdef DIAGNOSTIC
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
@@ -300,37 +306,82 @@ cpu_reboot(int howto, char *bootstr)
 	 * Make really really sure that all interrupts are disabled,
 	 */
 	(void) disable_interrupts(I32_bit|F32_bit);
-/*
- * XXX system reset routine
- */
-	(void) disable_interrupts(I32_bit|F32_bit);
+	IXPREG(IXP425_INT_ENABLE) = 0;
+
+	/*
+	 * Map the boot Flash device down at physical address 0.
+	 * This is safe since NetBSD runs out of an alias of
+	 * SDRAM at 0x10000000.
+	 */
+	reg = EXP_CSR_READ_4(ixpsip_softc, EXP_CNFG0_OFFSET);
+	reg |= EXP_CNFG0_MEM_MAP;
+	EXP_CSR_WRITE_4(ixpsip_softc, EXP_CNFG0_OFFSET, reg);
+
+	/*
+	 * Jump into the bootcode's reset vector
+	 *
+	 * XXX:
+	 * Redboot doesn't like the state in which we leave the PCI
+	 * ethernet card, and so fails to detect it on reboot. This
+	 * pretty much necessitates a hard reset/power cycle to be
+	 * able to download a new kernel image over ethernet.
+	 *
+	 * I suspect this is due to a bug in Redboot's i82557 driver.
+	 */
+	cpu_reset();
+
 	/* ...and if that didn't work, just croak. */
 	printf("RESET FAILED!\n");
 	for (;;);
 }
 
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	vm_prot_t prot;
-	int cache;
-} l1_sec_table[] = {
-    /*
-     * Map the on-board devices VA == PA so that we can access them
-     * with the MMU on or off.
-     */
+/* Static device mappings. */
+static const struct pmap_devmap ixp425_devmap[] = {
+	/* Physical/Virtual address for I/O space */
     {
-	IXP425_UART0_HWBASE,
-	IXP425_UART0_HWBASE,
-	IXP425_REG_SIZE * 2,
+	IXP425_IO_VBASE,
+	IXP425_IO_HWBASE,
+	IXP425_IO_SIZE,
 	VM_PROT_READ|VM_PROT_WRITE,
 	PTE_NOCACHE,
     },
+
+	/* Expansion Bus */
+    {
+	IXP425_EXP_VBASE,
+	IXP425_EXP_HWBASE,
+	IXP425_EXP_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
+	/* IXP425 PCI Configuration */
+    {
+	IXP425_PCI_VBASE,
+	IXP425_PCI_HWBASE,
+	IXP425_PCI_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
+	/* SDRAM Controller */
+    {
+	IXP425_MCU_VBASE,
+	IXP425_MCU_HWBASE,
+	IXP425_MCU_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
+	/* PCI Memory Space */
+    {
+	IXP425_PCI_MEM_VBASE,
+	IXP425_PCI_MEM_HWBASE,
+	IXP425_PCI_MEM_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
     {
 	0,
 	0,
@@ -362,14 +413,10 @@ initarm(void *arg)
 #endif
 	int loop;
 	int loop1;
-	u_int kerneldatasize, symbolsize;
+	u_int kerneldatasize;
 	u_int l1pagetable;
 	u_int freemempos;
 	pv_addr_t kernel_l1pt;
-#if 0
-	paddr_t memstart;
-	psize_t memsize;
-#endif
 
 	/*
 	 * Since we map v0xf0000000 == p0xc8000000, it's possible for
@@ -379,7 +426,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (IXP425) booting ...\n");
+	printf("\nNetBSD/evbarm (Intel IXDP425) booting ...\n");
 #endif
 
 	/*
@@ -391,14 +438,13 @@ initarm(void *arg)
 	/* XXX overwrite bootconfig to hardcoded values */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0x10000000;
-	bootconfig.dram[0].pages = 0x04000000 / PAGE_SIZE; /* SDRAM 64MB */
+	bootconfig.dram[0].pages = ixp425_sdram_size() / PAGE_SIZE;
 
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
 #ifdef VERBOSE_INIT_ARM
         printf("kernsize=0x%x\n", kerneldatasize);
 #endif
-        kerneldatasize += symbolsize;
         kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
 	/*
@@ -434,7 +480,6 @@ initarm(void *arg)
 	freemempos = 0x10000000;
 
 #ifdef VERBOSE_INIT_ARM
-        printf("CP15 Register1 = 0x%08x\n", cpu_get_control());
         printf("physical_start = 0x%08lx, physical_end = 0x%08lx\n",
                 physical_start, physical_end);
 #endif
@@ -478,7 +523,7 @@ initarm(void *arg)
 		panic("initarm: Failed to align the kernel page directory");
 
 	/*
-	 * Allocate a page for the system page mapped to V0x00000000
+	 * Allocate a page for the system page.
 	 * This page will just contain the system vectors and can be
 	 * shared by all processes.
 	 */
@@ -602,30 +647,7 @@ initarm(void *arg)
         /*
          * Map the IXP425 registers
          */
-
-	ixp425_pmap_io_reg(l1pagetable);
-
-	/*
-	 * Map devices we can map w/ section mappings.
-	 */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
-
+	pmap_devmap_bootstrap(l1pagetable, ixp425_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
@@ -777,14 +799,19 @@ initarm(void *arg)
 void
 consinit(void)
 {
-	extern struct bus_space ixpsip_bs_tag;
 	static int consinit_called;
+	static const bus_addr_t addrs[2] = {
+		IXP425_UART0_HWBASE, IXP425_UART1_HWBASE
+	};
 
 	if (consinit_called != 0)
 		return;
 
 	consinit_called = 1;
-	if (ixdp_ixp4xx_comcnattach(&ixpsip_bs_tag, comcnunit,
-				comcnspeed, FREQ, comcnmode))
+
+	pmap_devmap_register(ixp425_devmap);
+
+	if (comcnattach(&ixp425_a4x_bs_tag, addrs[comcnunit],
+	    comcnspeed, IXP425_UART_FREQ, COM_TYPE_PXA2x0, comcnmode))
 		panic("can't init serial console (UART%d)", comcnunit);
 }

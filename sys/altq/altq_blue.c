@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.5 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.5.14.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5 2002/03/05 04:12:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5.14.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -100,14 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5 2002/03/05 04:12:57 itojun Exp $")
 /*
  * Blue is proposed and implemented by Wu-chang Feng <wuchang@eecs.umich.edu>.
  * more information on Blue is available from
- * http://www.eecs.umich.edu/~wuchang/blue/
+ * http://www.thefengs.com/wuchang/work/blue/
  */
 
 /* fixed-point uses 12-bit decimal places */
 #define	FP_SHIFT	12	/* fixed-point shift */
 
-#define	BLUE_LIMIT	200	/* default max queue lenght */
-#define	BLUE_STATS		/* collect statistics */
+#define	BLUE_LIMIT	200	/* default max queue length */
 
 /* blue_list keeps all blue_state_t's allocated. */
 static blue_queue_t *blue_list = NULL;
@@ -212,14 +211,14 @@ blueioctl(dev, cmd, addr, flag, p)
 
 		/* allocate and initialize blue_state_t */
 		MALLOC(rqp, blue_queue_t *, sizeof(blue_queue_t), M_DEVBUF, M_WAITOK);
-		bzero(rqp, sizeof(blue_queue_t));
+		(void)memset(rqp, 0, sizeof(blue_queue_t));
 
 		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
 		       M_DEVBUF, M_WAITOK);
-		bzero(rqp->rq_q, sizeof(class_queue_t));
+		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		MALLOC(rqp->rq_blue, blue_t *, sizeof(blue_t), M_DEVBUF, M_WAITOK); 
-		bzero(rqp->rq_blue, sizeof(blue_t));
+		(void)memset(rqp->rq_blue, 0, sizeof(blue_t));
 
 		rqp->rq_ifq = &ifp->if_snd;
 		qtail(rqp->rq_q) = NULL;

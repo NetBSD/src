@@ -1,7 +1,7 @@
-/*	$NetBSD: if_mcvar.h,v 1.7 2003/04/09 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.7.2.1 2004/08/03 10:37:06 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2003/05/22 19:18:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.1 2004/08/03 10:32:29 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,11 +36,17 @@
 
 include <sys/param.h>
 include <sys/systm.h>
+include <sys/mbuf.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
 include <sys/signal.h>
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip6.h>
+include <netinet/ip_var.h>
 
 include <uvm/uvm_extern.h>
 
@@ -51,6 +57,8 @@ include <machine/frame.h>
 include <machine/vmparam.h>
 
 include "opt_multiprocessor.h"
+include "opt_compat_netbsd.h"
+include "opt_execfmt.h"
 
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
@@ -80,7 +88,7 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 
 # Process status constants
 define	LSONPROC		LSONPROC
@@ -102,6 +110,7 @@ define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_UND_SP		offsetof(struct pcb, pcb_un.un_32.pcb32_und_sp)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
 define	USER_SIZE		sizeof(struct user)
 
@@ -141,9 +150,20 @@ define	CF_DCACHE_WB_RANGE	offsetof(struct cpu_functions, cf_dcache_wb_range)
 define	CF_TLB_FLUSHID_SE	offsetof(struct cpu_functions, cf_tlb_flushID_SE)
 define	CF_CONTEXT_SWITCH	offsetof(struct cpu_functions, cf_context_switch)
 define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
+define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 endif
+if defined(COMPAT_15) && defined(EXEC_AOUT)
+define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
+endif
+
+# Constants required for in_cksum() and friends.
+define	M_LEN				offsetof(struct mbuf, m_len)
+define	M_DATA				offsetof(struct mbuf, m_data)
+define	M_NEXT				offsetof(struct mbuf, m_next)
+define	IP_SRC				offsetof(struct ip, ip_src)
+define	IP_DST				offsetof(struct ip, ip_dst)

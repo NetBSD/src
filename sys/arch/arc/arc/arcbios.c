@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.11 2003/03/21 04:35:02 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.11.2.1 2004/08/03 10:32:10 skrll Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.11.2.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13 2003/01/01 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13.2.1 2004/08/03 10:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2003/01/01 00:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -160,7 +160,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int i;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
@@ -333,7 +333,7 @@ pcib_bridge_callback(self)
 int
 pcib_print(void *aux, const char *pnp)
 {
-	struct isabus_attach_args *iba;
+	struct isabus_attach_args *iba = aux;
 
 	if (pnp)
 		aprint_normal("%s at %s", iba->iba_busname, pnp);

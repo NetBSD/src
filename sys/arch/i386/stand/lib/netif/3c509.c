@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.6 1999/02/19 19:30:46 drochner Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.6.44.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -40,7 +40,7 @@ Author: Martin Renters.
 #include "etherdrv.h"
 #include "3c509.h"
 
-int ether_medium;
+unsigned ether_medium;
 unsigned short eth_base;
 
 extern void epreset __P((void));

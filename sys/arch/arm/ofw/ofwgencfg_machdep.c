@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.6 2003/04/26 11:05:08 ragge Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.6.2.1 2004/08/03 10:32:50 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  *  Kernel setup for the OFW Generic Configuration
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.6.2.1 2004/08/03 10:32:50 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subyte.c,v 1.2 2000/06/09 14:05:47 kleink Exp $	*/
+/*	$NetBSD: subyte.c,v 1.2.26.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subyte.c,v 1.2.26.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include <sys/systm.h>
 
 /*
@@ -38,10 +41,9 @@
  */
 
 int
-subyte(addr,c)
-	void *addr;
-	unsigned char c;
+subyte(void *addr, int v)
 {
+	unsigned char c = v;
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;
 	return 0;

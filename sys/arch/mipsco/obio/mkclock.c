@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.4 2002/10/02 05:38:11 thorpej Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.4.6.1 2004/08/03 10:38:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.4.6.1 2004/08/03 10:38:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,30 +1,30 @@
-/*	$NetBSD: asm.h,v 1.14 1998/12/02 21:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.14.42.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON AND HELSINKI UNIVERSITY OF TECHNOLOGY ALLOW FREE USE
  * OF THIS SOFTWARE IN ITS "AS IS" CONDITION.  CARNEGIE MELLON AND
  * HELSINKI UNIVERSITY OF TECHNOLOGY DISCLAIM ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -36,17 +36,17 @@
  *	Helsinki University of Technology 1992.
  */
 
-#ifndef _MACHINE_ASM_H_ 
-#define _MACHINE_ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define	_MACHINE_ASM_H_
 
-#ifdef __STDC__
-#define CAT(a, b)	a ## b
+#if __STDC__
+#define	CAT(a, b)	a ## b
 #else
-#define CAT(a, b)	a/**/b
+#define	CAT(a, b)	a/**/b
 #endif
 
-#define _C_LABEL(name)		CAT(_,name)
-#define _ASM_LABEL(name)	name
+#define	_C_LABEL(name)		CAT(_,name)
+#define	_ASM_LABEL(name)	name
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
@@ -57,51 +57,51 @@
 # define _ALIGN_DATA .align 2
 #endif
 
-#define S_ARG0	4(sp)
-#define S_ARG1	8(sp)
-#define S_ARG2	12(sp)
-#define S_ARG3	16(sp)
+#define	S_ARG0	4(sp)
+#define	S_ARG1	8(sp)
+#define	S_ARG2	12(sp)
+#define	S_ARG3	16(sp)
 
-#define B_ARG0	 8(fp)
-#define B_ARG1	12(fp)
-#define B_ARG2	16(fp)
-#define B_ARG3	20(fp)
+#define	B_ARG0	 8(fp)
+#define	B_ARG1	12(fp)
+#define	B_ARG2	16(fp)
+#define	B_ARG3	20(fp)
 
 #ifdef PIC
-#define PIC_PROLOGUE						\
+#define	PIC_PROLOGUE						\
 		sprd	sb,tos				; 	\
 		addr	_C_LABEL(_GLOBAL_OFFSET_TABLE_)(pc),r1;	\
 		lprd	sb,r1
 
-#define PIC_EPILOGUE						\
+#define	PIC_EPILOGUE						\
 		lprd	sb,tos
 
-#define PIC_GOT(name)	0(name(sb))
+#define	PIC_GOT(name)	0(name(sb))
 
-#define PIC_S_ARG0	8(sp)
-#define PIC_S_ARG1	12(sp)
-#define PIC_S_ARG2	16(sp)
-#define PIC_S_ARG3	20(sp)
+#define	PIC_S_ARG0	8(sp)
+#define	PIC_S_ARG1	12(sp)
+#define	PIC_S_ARG2	16(sp)
+#define	PIC_S_ARG3	20(sp)
 #else
-#define PIC_PROLOGUE
-#define PIC_EPILOGUE
+#define	PIC_PROLOGUE
+#define	PIC_EPILOGUE
 #define	PIC_GOT(name)	name(pc)
 
-#define PIC_S_ARG0	4(sp)
-#define PIC_S_ARG1	8(sp)
-#define PIC_S_ARG2	12(sp)
-#define PIC_S_ARG3	16(sp)
+#define	PIC_S_ARG0	4(sp)
+#define	PIC_S_ARG1	8(sp)
+#define	PIC_S_ARG2	12(sp)
+#define	PIC_S_ARG3	16(sp)
 #endif
 
 #if defined(_KERNEL) && defined(MRTD)
-#define _SETARGS(args)						\
+#define	_SETARGS(args)						\
 		.set	ARGS,args
 #else
-#define _SETARGS(args)						\
+#define	_SETARGS(args)						\
 		.set	ARGS,0
 #endif
 
-#define _ENTRY(name, args)					\
+#define	_ENTRY(name, args)					\
 		.text					;	\
 		_ALIGN_TEXT				;	\
 		.globl name				;	\
@@ -128,7 +128,7 @@
 #define	ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name), 0)
 #define	ASENTRY_NOPROFILE(name)	_ENTRY(_ASM_LABEL(name), 0)
 
-#define ALTENTRY(name, rname)					\
+#define	ALTENTRY(name, rname)					\
 		.globl _C_LABEL(name)			;	\
 		.type _C_LABEL(name),@function		;	\
 		.set _C_LABEL(name),_C_LABEL(rname)
@@ -136,18 +136,18 @@
 #define	ASMSTR							\
 		.asciz
 
-#define RCSID(string)						\
+#define	RCSID(string)						\
 		.text					;	\
 		ASMSTR string
 
 /*
  * Global variables of whatever sort.
  */
-#define GLOBAL(name)						\
+#define	GLOBAL(name)						\
 		.globl	_C_LABEL(name)			;	\
-	_C_LABEL(name):	
+	_C_LABEL(name):
 
-#define ASGLOBAL(name)						\
+#define	ASGLOBAL(name)						\
 		.globl	_ASM_LABEL(name)		;	\
 	_ASM_LABEL(name):
 
@@ -164,7 +164,7 @@
  * Items in the DATA segment.
  */
 
-#define _DATA(name, pseudo, init)				\
+#define	_DATA(name, pseudo, init)				\
 		.data					;	\
 		.globl	name				;	\
 		.type	name,@object			;	\
@@ -175,12 +175,12 @@
 #define	DATA_D(name, init) _DATA(_C_LABEL(name), .long, init)
 #define	DATA_W(name, init) _DATA(_C_LABEL(name), .word, init)
 #define	DATA_B(name, init) _DATA(_C_LABEL(name), .byte, init)
-#define DATA_S(name, init) _DATA(_C_LABEL(name), .asciz, init) 
+#define	DATA_S(name, init) _DATA(_C_LABEL(name), .asciz, init)
 
 #define	ASDATA_D(name, init) _DATA(_ASM_LABEL(name), .long, init)
 #define	ASDATA_W(name, init) _DATA(_ASM_LABEL(name), .word, init)
 #define	ASDATA_B(name, init) _DATA(_ASM_LABEL(name), .byte, init)
-#define ASDATA_S(name, init) _DATA(_ASM_LABEL(name), .asciz, init) 
+#define	ASDATA_S(name, init) _DATA(_ASM_LABEL(name), .asciz, init)
 
 /*
  * Items in the BSS segment.
@@ -196,7 +196,7 @@
  * Shorthand for calling panic().
  * Note the side-effect: it uses up the 9: label, so be careful!
  */
-#define PANIC(message)						\
+#define	PANIC(message)						\
 		addr	9f,tos				;	\
 		bsr	_C_LABEL(panic) 		;	\
 	9:	.asciz	message
@@ -214,6 +214,10 @@
 		.long	0
 
 #endif
+
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
 
 #ifdef __STDC__
 #define	__STRING(x)			#x

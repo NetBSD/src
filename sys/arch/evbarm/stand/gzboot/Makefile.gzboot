@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.8 2003/04/29 05:32:41 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.8.2.1 2004/08/03 10:34:08 skrll Exp $
 
 NOMAN=  # defined
 
@@ -86,7 +86,7 @@ LIBSA=		${SALIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LDFLAGS= -M -T ${LDSCRIPT}
 
@@ -94,7 +94,7 @@ LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
 	    ${NEWVERSWHAT}
 
 ${PROG}: ${PROGSYM}

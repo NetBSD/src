@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.13.2.1 2004/08/03 10:39:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13.2.1 2004/08/03 10:39:37 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -61,50 +61,20 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_thread.h>
+#include <compat/mach/mach_vm.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/vmparam.h>
+#include <machine/mach_machdep.h>
 #include <machine/macho_machdep.h>
 
 #include <uvm/uvm_extern.h>
 
-void mach_trap __P((struct trapframe *));
-
-/*
- * Fast syscall gate trap...
- */
 void
-mach_trap(frame)
-	struct trapframe *frame;
-{
-	extern struct emul emul_mach;
-	struct lwp *l = curlwp;
-
-	if (l->l_proc->p_emul != &emul_mach) {
-		DPRINTF(("mach trap %d on bad emulation\n", frame->exc));
-		trapsignal(l, SIGBUS, 0);
-		return;
-	}
-
-	switch (frame->exc) {
-	case 0:
-		DPRINTF(("mach_pthread_self();\n"));
-		break;
-	case 1:
-		DPRINTF(("mach_pthread_set_self();\n"));
-		break;
-	default:
-		uprintf("unknown mach trap %d\n", frame->exc);
-		break;
-	}
-}
-
-void
-mach_host_basic_info(info)
-	struct mach_host_basic_info *info;
+mach_host_basic_info(struct mach_host_basic_info *info)
 {
 	/* XXX fill this  accurately */
 	info->max_cpus = 1; /* XXX */
@@ -115,8 +85,7 @@ mach_host_basic_info(info)
 }
 
 void
-mach_create_thread_child(arg)
-	void *arg;
+mach_create_thread_child(void *arg)
 {
 	struct mach_create_thread_child_args *mctc;
 	struct lwp *l;
@@ -139,9 +108,12 @@ mach_create_thread_child(arg)
 	tf = trapframe(l);
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
-	/* Security warning */
-	if ((regs->srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
-		uprintf("mach_create_thread_child: PSL_USERSTATIC change\n");		
+	/* 
+	 * Set the user static bits correctly, as the
+	 * requester might not do it.
+	 */
+	regs->srr1 |= PSL_USERSET;
+
 	/* 
 	 * Call upcallret before setting the register context as it
 	 * affects R3, R4 and CR.
@@ -150,8 +122,7 @@ mach_create_thread_child(arg)
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;
-	tf->srr1 = ((regs->srr1 & ~PSL_USERSTATIC) | 
-	    (tf->srr1 & PSL_USERSTATIC));
+	tf->srr1 = regs->srr1;
 	memcpy(tf->fixreg, &regs->r0, 32 * sizeof(register_t));
 	tf->cr = regs->cr;
 	tf->xer = regs->xer;
@@ -171,3 +142,133 @@ mach_create_thread_child(arg)
 #endif
 	return;
 }
+
+int
+mach_thread_get_state_machdep(l, flavor, state, size)
+	struct lwp *l;
+	int flavor;
+	void *state;
+	int *size;
+{
+	struct trapframe *tf;
+
+	tf = trapframe(l);
+
+	switch (flavor) {
+	case MACH_PPC_THREAD_STATE: {
+		struct mach_ppc_thread_state *mpts;
+
+		mpts = (struct mach_ppc_thread_state *)state;
+		mpts->srr0 = tf->srr0;
+		mpts->srr1 = tf->srr1 & PSL_USERSRR1;
+		memcpy(mpts->gpreg, tf->fixreg, 32 * sizeof(register_t));
+		mpts->cr = tf->cr;
+		mpts->xer = tf->xer;
+		mpts->lr = tf->lr;
+		mpts->ctr = tf->ctr;
+		mpts->mq = 0; /* XXX */
+		mpts->vrsave = 0; /* XXX */
+
+		*size = sizeof(*mpts);
+		break;
+	}
+
+	case MACH_THREAD_STATE_NONE:
+		*size = 0;
+		break;
+		
+	case MACH_PPC_FLOAT_STATE: 
+	case MACH_PPC_EXCEPTION_STATE:
+	case MACH_PPC_VECTOR_STATE:
+	default: 
+		printf("Unimplemented thread state flavor %d\n", flavor);
+		return EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int
+mach_thread_set_state_machdep(l, flavor, state)
+	struct lwp *l;
+	int flavor;
+	void *state;
+{
+	struct trapframe *tf;
+
+	tf = trapframe(l);
+
+	switch (flavor) {
+	case MACH_PPC_THREAD_STATE: {
+		struct mach_ppc_thread_state *mpts;
+
+		mpts = (struct mach_ppc_thread_state *)state;
+		tf->srr0 = mpts->srr0;
+		tf->srr1 = mpts->srr1;
+		memcpy(tf->fixreg, mpts->gpreg, 32 * sizeof(register_t));
+		tf->cr = mpts->cr;
+		tf->xer = mpts->xer;
+		tf->lr = mpts->lr;
+		tf->ctr = mpts->ctr;
+  
+  		break;
+  	}
+
+	case MACH_THREAD_STATE_NONE:
+		break;
+		
+	case MACH_PPC_FLOAT_STATE: 
+	case MACH_PPC_EXCEPTION_STATE:
+	case MACH_PPC_VECTOR_STATE:
+	default: 
+		printf("Unimplemented thread state flavor %d\n", flavor);
+		return EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int 
+mach_vm_machine_attribute_machdep(l, addr, size, valp)
+	struct lwp *l;
+	vaddr_t addr;
+	size_t size;
+	int *valp;
+{
+	int error = 0;
+
+	switch (*valp) {
+	case MACH_MATTR_VAL_CACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_CACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_DCACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_DCACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_ICACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_ICACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_CACHE_SYNC:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_CACHE_SYNC\n");
+#endif
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Real Time Clock/Calendar Device
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +111,7 @@ rtcattach(struct device *parent, struct device *self, void *args)
 
 	printf(" Real-time Clock\n");
 
-	clock_rtc_config(&sc->sc_todr);
+	todr_attach(&sc->sc_todr);
 }
 
 static int

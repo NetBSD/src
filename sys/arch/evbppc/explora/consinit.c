@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2003/06/14 17:01:11 thorpej Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -56,6 +59,8 @@
 #include <dev/ic/pckbcvar.h>
 #endif
 #include "pckbd.h"
+
+#include <evbppc/explora/dev/elbvar.h>
 
 #include "opt_explora.h"
 
@@ -78,7 +83,7 @@ consinit(void)
 	done = 1;
 
 #ifdef COM_IS_CONSOLE
-	tag = MAKE_BUS_TAG(BASE_COM);
+	tag = elb_get_bus_space_tag(BASE_COM);
 	comcnattach(tag, BASE_COM, COM_CONSOLE_SPEED,
 	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
@@ -86,9 +91,9 @@ consinit(void)
 	/* Clear VRam */
 	memset((void *)BASE_FB, 0, SIZE_FB);
 
-	tag = MAKE_BUS_TAG(BASE_FB);
+	tag = elb_get_bus_space_tag(BASE_FB);
 	fb_cnattach(tag, BASE_FB2, (void *)BASE_FB);
-	tag = MAKE_BUS_TAG(BASE_PCKBC);
+	tag = elb_get_bus_space_tag(BASE_PCKBC);
 	pckbc_cnattach(tag, BASE_PCKBC, BASE_PCKBC2-BASE_PCKBC, PCKBC_KBD_SLOT);
 #endif
 }

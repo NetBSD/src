@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/01/22 13:35:55 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,11 +58,7 @@
 #define	_REG_SP		_REG_R(15)
 
 #ifndef __ASSEMBLER__
-#ifdef _LP64
-typedef	long		__greg_t;
-#else
-typedef long long	__greg_t;
-#endif
+typedef	__int64_t	__greg_t;
 typedef __greg_t	__gregset_t[_NGREG];
 
 /*
@@ -95,13 +91,28 @@ typedef struct {
 	__fpregset_t	__fpregs;
 } mcontext_t;
 
+#define mcontext32_t mcontext_t
+#define	cpu_getmcontext32	cpu_getmcontext
+#define	cpu_setmcontext32	cpu_setmcontext
+
 #endif 	/* !__ASSEMBLER__ */
 
 /*
  * Note: no additional padding required in ucontext_t
  */
 
-#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_UCONTEXT_ALIGN	(~0x7)
+
+#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R(2)])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+/*
+ * Machine dependent uc_flags
+ */
+#define	_UC_SETSTACK		0x10000
+#define	_UC_CLRSTACK		0x20000
 
 #endif /* _SH5_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2003/01/19 19:49:57 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,6 +60,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +135,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 #endif
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do */
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -139,15 +149,12 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
  * switch to another LWP thus we never return.
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_exit(struct lwp *l)
 {
 	extern volatile void switch_exit(struct lwp *, void (*)(struct lwp *));
 
-	pmap_deactivate(l);
-
 	(void) splhigh();
-	uvmexp.swtch++;
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 	/* NOTREACHED */
 }
 

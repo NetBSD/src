@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.14 2003/06/15 17:33:45 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.14.2.1 2004/08/03 10:34:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -104,6 +104,9 @@
  * Machine dependant functions for kernel setup for Samsung SMDK2800
  * derived from integrator_machdep.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.14.2.1 2004/08/03 10:34:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -402,7 +405,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	LEDSTEP();
 
@@ -437,7 +440,7 @@ initarm(void *arg)
 	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
 	    INTCTL_INTMSK, 0);
 
-	s3c2800_clock_freq(&temp_softc);
+	s3c2800_clock_freq(s3c2xx0_softc);
 
 	consinit();
 #ifdef VERBOSE_INIT_ARM

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2003/02/02 20:43:22 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,9 @@
  * as defined section 3.6.4.1, `Generating Configuration Cycles'.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,6 +70,17 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
 
+/*
+ * Address conversion as seen from a PCI master.
+ * XXX Shouldn't use 0x80000000, the actual value
+ * should come from the BAR.
+ */
+#define PHYS_TO_PCI_MEM(x)	((x) + 0x80000000)
+#define PCI_MEM_TO_PHYS(x)	((x) - 0x80000000)
+
+static bus_addr_t phys_to_pci(bus_dma_tag_t, bus_addr_t);
+static bus_addr_t pci_to_phys(bus_dma_tag_t, bus_addr_t);
+
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -82,7 +96,20 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	phys_to_pci,
+	pci_to_phys,
 };
+
+static bus_addr_t
+phys_to_pci(bus_dma_tag_t t, bus_addr_t a)
+{
+	return PHYS_TO_PCI_MEM(a);
+}
+
+static bus_addr_t pci_to_phys(bus_dma_tag_t t, bus_addr_t a)
+{
+	return PCI_MEM_TO_PHYS(a);
+}
 
 void
 pci_attach_hook(struct device *parent, struct device *self,
@@ -243,6 +270,14 @@ void
 pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
 {
-	/*printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d\n", bus, dev, pin, swiz);*/
-	*iline = (swiz + dev) & 3;
+	int line;
+
+	line = (swiz + dev) & 3;
+	/* XXX UGLY UGLY, figure out the real interrupt mapping */
+	if (bus==3&&dev==2&&pin==1&&swiz==3) line=2;
+/*
+	printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d => line=%d\n",
+		bus, dev, pin, swiz, line);
+*/
+	*iline = line;
 }

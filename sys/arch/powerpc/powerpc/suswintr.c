@@ -1,4 +1,4 @@
-/*	$NetBSD: suswintr.c,v 1.2 2000/06/09 14:05:48 kleink Exp $	*/
+/*	$NetBSD: suswintr.c,v 1.2.26.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.2.26.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include <sys/systm.h>
 
 /*
@@ -39,9 +42,7 @@
  * Simply return fault for all cases
  */
 int
-suswintr(addr,s)
-	void *addr;
-	short s;
+suswintr(void *addr, short s)
 {
 	return -1;
 }

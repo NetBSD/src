@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23 2002/09/18 02:43:56 lukem Exp $
+#	$NetBSD: INSTALL,v 1.23.6.1 2004/08/03 10:33:36 skrll Exp $
 #
 # First try for BEBOX config file
 #
@@ -32,6 +32,7 @@ options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 #options 	KTRACE
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -130,7 +131,8 @@ fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wd*	at wdc? drive ?
+atabus* at ata?
+wd*	at atabus? drive ?
 
 ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 #ipkdbif0 at ne?
@@ -140,3 +142,5 @@ ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

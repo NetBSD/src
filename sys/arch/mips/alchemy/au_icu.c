@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.6 2003/05/25 14:08:21 tsutsui Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.6.2.1 2004/08/03 10:37:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * The Alchemy Semiconductor Au1x00's interrupts are wired to two internal
  * interrupt controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.6.2.1 2004/08/03 10:37:31 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -248,7 +251,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	/*
 	 * First, link it into the tables.
 	 * XXX do we want a separate list (really, should only be one item, not
-	 *     a list anyway) per irq, not per cpu interrupt?
+	 *     a list anyway) per irq, not per CPU interrupt?
 	 */
 	cpu_intr = (irq < 32 ? 0 : 2);
 	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_intr].cintr_list, ih, ih_q);
@@ -345,7 +348,7 @@ au_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct evbmips_intrhand *ih;
 	int level;
-	u_int32_t icu_base, irqmask;
+	u_int32_t icu_base = 0, irqmask = 0;	/* Both XXX gcc */
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)

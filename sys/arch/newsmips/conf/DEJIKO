@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.8 2002/09/18 02:44:04 lukem Exp $
+# 	$NetBSD: DEJIKO,v 1.8.6.1 2004/08/03 10:38:29 skrll Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -10,7 +10,6 @@ maxusers	16
 
 options 	news5000
 options 	MIPS3			# R4x00 support
-options 	MIPS3_L2CACHE_PRESENT
 options 	CPU_SINGLE		# no I/O processor
 
 # Debugging options
@@ -19,6 +18,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
 options 	DIAGNOSTIC		# extra kernel sanity checking
 options 	USERCONF		# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Filesystem options
 file-system	FFS			# Berkeley Fast Filesystem
@@ -36,6 +36,7 @@ options 	NFS_BOOTPARAM_NOGATEWAY
 # Compatibility options
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation

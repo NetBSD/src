@@ -1,6 +1,6 @@
-/*	$NetBSD: endian_machdep.h,v 1.1 2000/03/17 00:09:24 mycroft Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.1.28.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-#define _BYTE_ORDER _LITTLE_ENDIAN
+#define	_BYTE_ORDER _LITTLE_ENDIAN
 
 #ifdef __GNUC__
 

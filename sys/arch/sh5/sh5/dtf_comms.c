@@ -1,4 +1,4 @@
-/*	$NetBSD: dtf_comms.c,v 1.3 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: dtf_comms.c,v 1.3.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,6 +41,9 @@
  *
  * XXX: This is not reliable. Please avoid using it!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dtf_comms.c,v 1.3.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

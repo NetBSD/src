@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.31 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: vm86.c,v 1.31.2.1 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.31 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.31.2.1 2004/08/03 10:35:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.31 2003/01/17 23:10:32 thorpej Exp $");
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void fast_intxx __P((struct lwp *, int));
-static __inline int is_bitset __P((int, caddr_t));
+static void fast_intxx(struct lwp *, int);
+static __inline int is_bitset(int, caddr_t);
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
@@ -96,10 +96,10 @@ static __inline int is_bitset __P((int, caddr_t));
 
 #define getword(base, ptr, word) \
 	do { \
-		u_long w1, w2; \
-		getbyte(base, ptr, w1); \
-		getbyte(base, ptr, w2); \
-		word = w1 | w2 << 8; \
+		u_long b1, b2; \
+		getbyte(base, ptr, b1); \
+		getbyte(base, ptr, b2); \
+		word = b1 | b2 << 8; \
 	} while (0)
 
 #define getdword(base, ptr, dword) \
@@ -180,7 +180,7 @@ fast_intxx(l, intrno)
 		 * int.  Some applications rely on this (i.e. dynamically
 		 * emulate an IDT), and those that don't will crash in a
 		 * spectacular way, I suppose.
-		 *	--thorpej@netbsd.org
+		 *	--thorpej@NetBSD.org
 		 */
 		goto vector;
 	}
@@ -232,9 +232,14 @@ vm86_return(l, retval)
 		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
+	} else {
+		ksiginfo_t ksi;
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGURG;
+		ksi.ksi_trap = retval;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 	}
-	
-	(*p->p_emul->e_trapsignal)(l, SIGURG, retval);
 }
 
 #define	CLI	0xFA
@@ -353,8 +358,16 @@ vm86_gpfault(l, type)
 		goto bad;
 	}
 
-	if (trace && tf->tf_eflags & PSL_VM)
-		(*p->p_emul->e_trapsignal)(l, SIGTRAP, T_TRCTRAP);
+	if (trace && tf->tf_eflags & PSL_VM) {
+		ksiginfo_t ksi;
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = T_TRCTRAP;
+		ksi.ksi_addr = (void *)tf->tf_eip;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
+	}
 	return;
 
 bad:
@@ -402,24 +415,24 @@ i386_vm86(l, args, retval)
 		return (EINVAL);
 	}
 
-#define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
-#define DOREG(reg) tf->tf_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
+#define DOVREG(reg,REG) tf->tf_vm86_##reg = (u_short) vm86s.regs[_REG_##REG]
+#define DOREG(reg,REG) tf->tf_##reg = (u_short) vm86s.regs[_REG_##REG]
 
-	DOVREG(ds);
-	DOVREG(es);
-	DOVREG(fs);
-	DOVREG(gs);
-	DOREG(edi);
-	DOREG(esi);
-	DOREG(ebp);
-	DOREG(eax);
-	DOREG(ebx);
-	DOREG(ecx);
-	DOREG(edx);
-	DOREG(eip);
-	DOREG(cs);
-	DOREG(esp);
-	DOREG(ss);
+	DOVREG(ds,GS);
+	DOVREG(es,ES);
+	DOVREG(fs,FS);
+	DOVREG(gs,GS);
+	DOREG(edi,EDI);
+	DOREG(esi,ESI);
+	DOREG(ebp,EBP);
+	DOREG(eax,EAX);
+	DOREG(ebx,EBX);
+	DOREG(ecx,ECX);
+	DOREG(edx,EDX);
+	DOREG(eip,EIP);
+	DOREG(cs,CS);
+	DOREG(esp,ESP);
+	DOREG(ss,SS);
 
 #undef	DOVREG
 #undef	DOREG
@@ -427,7 +440,7 @@ i386_vm86(l, args, retval)
 	/* Going into vm86 mode jumps off the signal stack. */
 	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	set_vflags(l, vm86s.regs.vmsc.sc_eflags | PSL_VM);
+	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);
 
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2003/01/17 23:36:08 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.2.2.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,6 +65,11 @@ struct saframe {
 	void *		sa_arg;
 	sa_upcall_t	sa_upcall;
 };
+
+void *getframe(struct lwp *, int, int *);
+#ifdef COMPAT_16
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
 
 #endif /* _LOCORE */
 

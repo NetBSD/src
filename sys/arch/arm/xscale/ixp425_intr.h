@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.1 2003/05/23 00:57:25 ichiro Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ ixp425_set_intrmask(void)
 
 #define INT_SWMASK						\
 	((1U << IXP425_INT_bit31) | (1U << IXP425_INT_bit30) |	\
-	 (1U << IXP425_INT_bit29) | (1U << IXP425_INT_bit22))
+	 (1U << IXP425_INT_bit14) | (1U << IXP425_INT_bit11))
 
 static __inline void __attribute__((__unused__))
 ixp425_splx(int new)
@@ -71,6 +71,9 @@ ixp425_splx(int new)
 	extern __volatile int ixp425_ipending;
 	extern void ixp425_do_pending(void);
 	int oldirqstate, hwpend;
+
+	/* Don't let the compiler re-order this code with preceding code */
+	__insn_barrier();
 
 	current_spl_level = new;
 
@@ -95,6 +98,9 @@ ixp425_splraise(int ipl)
 
 	old = current_spl_level;
 	current_spl_level |= ixp425_imask[ipl];
+
+	/* Don't let the compiler re-order this code with subsequent code */
+	__insn_barrier();
 
 	return (old);
 }
@@ -128,4 +134,4 @@ void	_setsoftintr(int);
 
 #endif /* _LOCORE */
 
-#endif _IXP425_INTR_H_
+#endif /* _IXP425_INTR_H_ */

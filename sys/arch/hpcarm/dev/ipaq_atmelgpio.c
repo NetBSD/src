@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.5 2002/10/02 05:18:51 thorpej Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.5.6.1 2004/08/03 10:35:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -38,6 +38,9 @@
  * iPAQ uses Atmel microcontroller to service a few of peripheral devices.
  * This controller connect to UART1 of SA11x0.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.5.6.1 2004/08/03 10:35:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

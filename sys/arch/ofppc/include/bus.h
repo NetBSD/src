@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/06/23 20:12:19 aymeric Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.2.1 2004/08/03 10:38:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -682,6 +682,8 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
+bus_addr_t _bus_dma_phys_to_bus_mem_generic(bus_dma_tag_t, bus_addr_t);
+bus_addr_t _bus_dma_bus_mem_to_phys_generic(bus_dma_tag_t, bus_addr_t);
 #endif /* _POWERPC_BUS_DMA_PRIVATE */
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.1 1997/05/17 13:56:05 matthias Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.1.54.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -33,9 +33,9 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
- 
+
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 };
- 
+
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);

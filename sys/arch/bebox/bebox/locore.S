@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2003/04/27 10:42:49 ragge Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.2.1 2004/08/03 10:33:36 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
@@ -110,7 +111,7 @@ __start:
 	isync
 
 /*
- * Cpu detect.
+ * CPU detect.
  * 
  */
 	lis	8, 0x7FFF

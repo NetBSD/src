@@ -1,4 +1,4 @@
-/*	$NetBSD: vconsole.h,v 1.1.24.1 2003/07/03 00:40:19 wrstuden Exp $	*/
+/*	$NetBSD: vconsole.h,v 1.1.24.2 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -46,6 +46,9 @@
  * Hopefully this file has a short life with the new console coming just
  * round the corner
  */
+
+#ifndef _ACORN32_VCONSOLE_H
+#define _ACORN32_VCONSOLE_H
 
 #ifdef _KERNEL
 #define LOSSY           1
@@ -294,4 +297,4 @@ struct console_palette {
 #define CONSOLE_IOCTL_COMPAT_N	_IO( 'n', 107 )
 #define CONSOLE_IOCTL_COMPAT_T	_IO( 't', 107 )
 
-/* End of vconsole.h */
+#endif /* _ACORN32_VCONSOLE_H */

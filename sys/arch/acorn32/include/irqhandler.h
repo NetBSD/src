@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.4 2003/02/08 17:45:49 chris Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.4.2.1 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -63,19 +63,28 @@
 /* Only for ARM7500 : */
 
 /*#define IRQ_PRINTER	0x00*/
+#define IRQ_INT2	0x00
 /*#define IRQ_RESERVED0	0x01*/
 #define IRQ_BUTTON	0x02
+#define IRQ_NINT1	0x02
 #define IRQ_FLYBACK	0x03
-#define IRQ_POR		0x04
+#define IRQ_NPOR	0x04
 #define IRQ_TIMER0	0x05
 #define IRQ_TIMER1 	0x06
+#define IRQ_SOFTINT	0x07
 
 #define IRQ_DREQ3	0x08
+#define IRQ_NINT8	0x08
 /*#define IRQ_HD1	0x09*/
+#define IRQ_INT7	0x09
 /*#define IRQ_HD	IRQ_HD1*/
 #define IRQ_DREQ2	0x0A
+#define	IRQ_NINT6	0x0A
+#define IRQ_INT5	0x0B
 /*#define IRQ_FLOPPY	0x0C*/
+#define IRQ_NINT4	0x0C
 /*#define IRQ_SERIAL	0x0D*/
+#define IRQ_NINT3	0x0D
 #define IRQ_KBDTX	0x0E
 #define IRQ_KBDRX	0x0F
 
@@ -88,12 +97,21 @@
 #define IRQ_IRQ10	0x16
 #define IRQ_IRQ11	0x17
 
+#define IRQ_IOP0	0x10
+#define IRQ_IOP1	0x11
+#define IRQ_IOP2	0x12
+#define IRQ_IOP3	0x13
+#define IRQ_IOP4	0x14
+#define IRQ_IOP5	0x15
+#define IRQ_IOP6	0x16
+#define IRQ_IOP7	0x17
+
 #define IRQ_MSDRX	0x18
 #define IRQ_MSDTX	0x19
 #define IRQ_ATOD	0x1A
-#define IRQ_NEVENT1	0x1A
+#define IRQ_NEVENT1	0x1B
 #define IRQ_CLOCK	0x1B
-#define IRQ_NEVENT2	0x1B
+#define IRQ_NEVENT2	0x1C
 #define IRQ_PANIC	0x1C
 /*#define IRQ_RESERVED2	0x1D*/
 /*#define IRQ_RESERVED3	0x1E*/

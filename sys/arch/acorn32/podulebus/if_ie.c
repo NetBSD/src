@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $ */
+/* $NetBSD: if_ie.c,v 1.11.2.1 2004/08/03 10:30:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -52,6 +52,9 @@
  *	version.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.11.2.1 2004/08/03 10:30:55 skrll Exp $");
+
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
 /* Standard podule includes */
@@ -61,7 +64,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.11.2.1 2004/08/03 10:30:55 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,7 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.1 2003/05/11 21:39:41 fvdl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

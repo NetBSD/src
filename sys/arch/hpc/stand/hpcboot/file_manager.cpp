@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.2.24.1 2004/08/03 10:34:58 skrll Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001 The NetBSD Foundation, Inc.
@@ -196,6 +196,46 @@ FileManager::close()
 	return _file->close();
 }
 
+size_t
+FileManager::_skip_compressed(off_t toskip)
+{
+#define DUMMYBUFSIZE 256
+	char dummybuf[DUMMYBUFSIZE];
+
+	size_t skipped = 0;
+
+	while (toskip > 0) {
+		size_t toread = toskip;
+		if (toread > DUMMYBUFSIZE)
+			toread = DUMMYBUFSIZE;
+
+		size_t nread = _read(dummybuf, toread);
+		if ((int)nread < 0)
+			return nread;
+
+		toskip  -= nread;
+		skipped += nread;
+
+		if (nread != toread)
+			break;
+	}
+
+	return skipped;
+}
+
+size_t
+FileManager::realsize()
+{
+	if (!_compressed)
+		return size();
+
+	off_t pos = _stream->total_out;
+	size_t sz = _skip_compressed(INT_MAX);
+	seek(pos);
+
+	return sz;
+}
+
 BOOL
 FileManager::seek(off_t offset)
 {
@@ -221,17 +261,10 @@ FileManager::seek(off_t offset)
 	/* to seek forwards, throw away data */
 	if (offset > _stream->total_out) {
 		off_t toskip = offset - _stream->total_out;
+		size_t skipped = _skip_compressed(toskip);
 
-		while (toskip > 0) {
-#define DUMMYBUFSIZE 256
-			char dummybuf[DUMMYBUFSIZE];
-			off_t len = toskip;
-			if (len > DUMMYBUFSIZE)
-				len = DUMMYBUFSIZE;
-			if (_read(dummybuf, len) != len)
-				return FALSE;
-			toskip -= len;
-		}
+		if (skipped != toskip)
+			return FALSE;
 	}
 
 	return TRUE;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.46 2003/06/14 19:14:52 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.46.2.1 2004/08/03 10:32:21 skrll Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -70,7 +70,6 @@ file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c
 file	arch/arc/arc/timer.c
 file	arch/arc/arc/todclock.c
-file	dev/clock_subr.c
 file	arch/arc/arc/arc_trap.c
 file	arch/arc/arc/bus_space.c
 file	arch/arc/arc/bus_space_sparse.c
@@ -96,7 +95,7 @@ include "dev/wsfont/files.wsfont"
 #
 include "dev/wscons/files.wscons"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 #
 #	System BUS types
@@ -218,10 +217,9 @@ file	arch/arc/jazz/timer_jazzio.c	timer & timer_jazzio needs-flag
 file	arch/arc/isa/timer_isa.c	timer & timer_isa needs-flag
 
 #	Real time clock, must have one..
-device	mcclock
+device	mcclock: mc146818
 attach	mcclock at jazzio with mcclock_jazzio
 attach	mcclock at isa with mcclock_isa
-file	arch/arc/dev/mcclock.c		mcclock needs-flag
 file	arch/arc/jazz/mcclock_jazzio.c	mcclock & mcclock_jazzio needs-flag
 file	arch/arc/isa/mcclock_isa.c	mcclock & mcclock_isa needs-flag
 
@@ -251,18 +249,6 @@ file	arch/arc/dti/btl.c		btl needs-flag
 #	NS16450/16550 Serial line driver
 attach	com at jazzio with com_jazzio
 file	arch/arc/jazz/com_jazzio.c	com & com_jazzio
-
-# Game adapter (joystick)
-file	arch/arc/isa/joy_timer.c	joy
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-## XXX: should fix conflict with files.isa
-#device	ed: ether, ifnet
-#attach	ed at isa with ed_isa
-#attach	ed at pcmcia with ed_pcmcia
-#file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 #	Parallel printer port driver
 attach	lpt at jazzio with lpt_jazzio

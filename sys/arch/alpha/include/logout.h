@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.4 2002/09/29 23:23:57 wiz Exp $ */
+/* $NetBSD: logout.h,v 1.4.6.1 2004/08/03 10:31:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -51,7 +51,7 @@
 typedef struct {
 	unsigned int	la_frame_size;		/* frame size */
 	unsigned int	la_flags;		/* flags; see alpha_cpu.h */
-	unsigned int	la_cpu_offset;		/* offset to cpu area */
+	unsigned int	la_cpu_offset;		/* offset to CPU area */
 	unsigned int	la_system_offset;	/* offset to system area */
 	unsigned long	mcheck_code;		/* machine check code */
 } mc_hdr_avanti;
@@ -172,7 +172,7 @@ typedef struct {
 typedef struct {
 	unsigned int	la_frame_size;		/* frame size */
 	unsigned int	la_flags;		/* flags; see alpha_cpu.h */
-	unsigned int	la_cpu_offset;		/* offset to cpu area */
+	unsigned int	la_cpu_offset;		/* offset to CPU area */
 	unsigned int	la_system_offset;	/* offset to system area */
 	unsigned long	mcheck_code;		/* machine check code */
 } mc_hdr_ev5;
@@ -185,7 +185,7 @@ typedef struct {
  * EV5 Specific Machine Check logout frame for uncorrectable errors.
  * This is used to log uncorrectable errors such as double bit ECC errors.
  *
- * This typically resides in the cpu offset area of the logout frame.
+ * This typically resides in the CPU offset area of the logout frame.
  */
 
 typedef struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.7 2003/06/29 22:28:12 fvdl Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.7.2.1 2004/08/03 10:32:58 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,6 +70,14 @@
 /*
  * FFFF FFFF ---------------------------
  *
+ * FC00 0000 ---------------------------
+ *           PCI Data (memory space)
+ * F800 0000 ---------------------------
+ *
+ * F020 1000 ---------------------------
+ *           SDRAM Controller
+ * F020 0000 ---------------------------
+ *
  * F001 2000 ---------------------------
  *           PCI Configuration and Status Registers
  * F001 1000 ---------------------------
@@ -121,101 +129,18 @@
 #define	IXP425_UART1_VBASE	(IXP425_IO_VBASE + IXP425_UART1_OFFSET)
 						/* 0xf0001000 */
 
-/* registers */
-/* Buffer and Divisor */
-#define	IXP425_UART_DATA	0x0000
-#define	IXP425_UART_DLL		0x0000	/* Divisor Latch Low */
-#define	IXP425_UART_DLH		0x0004	/* Divisor Latch High */
+#define	IXP425_UART_FREQ	14745600
 
-/* Interrupt Enable Register */
-#define	IXP425_UART_IER		0x0004
-#define	 IER_DMAE		(1U << 7)	/* Enable DMA Requests */
-#define	 IER_UUE		(1U << 6)	/* Enable UART UNIT */
-#define	 IER_NRZE		(1U << 5)	/* Enable NRZ coding */
-#define	 IER_RTOIE		(1U << 4)	/* Enable receiver T/O interrupt */
-#define	 IER_RIE		(1U << 3)	/* Enable modem interrupt */
-#define	 IER_RLSE		(1U << 2)	/* Enable line status interrupt */
-#define	 IER_TIE		(1U << 1)	/* Enable transmitter interrupt */
-#define	 IER_RAVIE		(1U << 0)	/* Enable receiver interrupt */
-
-/* Interrupt Identification Register */
-#define	IXP425_UART_IIR		0x0008
-#define	 IIR_NOPEND		(1U << 0)	/* No pending interrupts */
-#define	 IIR_MLSC		(0U << 1)	/* Modem status */
-#define	 IIR_TXRDY		(1U << 1)	/* Transmitter ready */
-#define	 IIR_RXRDY		(2U << 1)	/* Receiver ready */
-#define	 IIR_RXERR		(2U << 1)	/* Receiver error */
-#define	 IIR_TOD		(1U << 3)	/* Time Out interrupt pending */
-#define	 IIR_FIFOS		(3U << 6)	/* FIFO mode enable */
-
-/* FIFO control */
-#define	IXP425_UART_FCR		0x0008
-#define	 FCR_TRIGGER_1		(0U << 6)	/* ITL 0 */
-#define	 FCR_TRIGGER_8		(1U << 6)	/* ITL 0 */
-#define	 FCR_TRIGGER_16		(2U << 6)	/* ITL 0 */
-#define	 FCR_TRIGGER_32		(3U << 6)	/* ITL 0 */
-#define	 FCR_RESETTF		(1U << 2)	/* Reset TX FIFO */
-#define	 FCR_RESETRF		(1U << 1)	/* Reset RX FIFO */
-#define	 FCR_ENABLE		(1U << 0)	/* Enable FIFO */
-
-/* Line control */
-#define	IXP425_UART_LCR		0x000c
-#define	 LCR_DLAB		(1U << 7)	/* Divisor latch access enable */
-#define	 LCR_SBREAK		(1U << 6) 	/* Break Control */
-#define	 LCR_PEVEN		(1U << 4)	/* Even-Parity */
-#define	 LCR_PODD		(0U << 4)	/* Even-Parity */
-#define	 LCR_PENE		(1U << 3)	/* Enable parity */
-#define	 LCR_PNONE		(0U << 3)	/* No parity */
-#define	 LCR_1STOP		(0U << 2)	/* 1 Stop Bit  */
-#define	 LCR_2STOP		(1U << 2)	/* 2 Stop Bit  */
-#define	 LCR_8BITS		(3U << 0)	/* 8 bits per serial word */
-#define	 LCR_7BITS		(2U << 0)	/* 7 bits per serial word */
-#define	 LCR_6BITS		(1U << 0)	/* 6 bits per serial word */
-#define	 LCR_5BITS		(0U << 0)	/* 5 bits per serial word */
-
-/* Modem control */
-#define	IXP425_UART_MCR		0x0010
-#define	 MCR_LOOPBACK		(1U << 4)	/* Loop test */
-#define	 MCR_IENABLE		(1U << 3)	/* Out2: enables UART interrupts */
-#define	 MCR_DRS		(1U << 2)	/* Out1: resets some internal modems */
-#define	 MCR_RTS		(1U << 1)	/* Request To Send */
-#define	 MCR_DTR		(1U << 0)	/* Data Terminal Ready */
-
-/* Line Status Register */
-#define	IXP425_UART_LSR		0x0014
-#define	 LSR_FIFOE		(1U << 7)
-#define	 LSR_TEMT		(1U << 6)	/* Transmitter empty: byte sent */
-#define	 LSR_TDRQ		(1U << 5)	/* Transmitter buffer empty */
-#define	 LSR_BI			(1U << 4)	/* Break detected */
-#define	 LSR_FE			(1U << 3)	/* Framing error: bad stop bit */
-#define	 LSR_PE			(1U << 2)	/* Parity error */
-#define	 LSR_OE			(1U << 1)	/* Overrun, lost incoming byte */
-#define	 LSR_DR			(1U << 0)	/* Byte ready in Receive Buffer */
-
-/* Modem Status Register */
-#define	IXP425_UART_MSR		0x0018
-#define	 MSR_DCD		(1U << 7)	/* Current Data Carrier Detect */
-#define	 MSR_RI			(1U << 6)	/* Current Ring Indicator */
-#define	 MSR_DSR		(1U << 5)	/* Current Data Set Ready */
-#define	 MSR_CTS		(1U << 4)	/* Current Clear to Send */
-#define	 MSR_DDCD		(1U << 3)	/* DCD has changed state */
-#define	 MSR_TERI		(1U << 2)	/* RI has toggled low to high */
-#define	 MSR_DDSR		(1U << 1)	/* DSR has changed state */
-#define	 MSR_DCTS		(1U << 0)	/* CTS has changed state */
-
-/* Scratch Pad Status Register */
-#define	IXP425_UART_SPR		0x001C
-
-/* Slow Infrared Select Status Register */
-#define	IXP425_UART_ISR		0x0020
-
-#define	IXP4XX_COM_NPORTS	8
+/*#define	IXP4XX_COM_NPORTS	8*/
 
 /*
  * Timers
  *
  */
+#define	IXP425_TIMER_HWBASE	(IXP425_IO_HWBASE + IXP425_TIMER_OFFSET)
+#define	IXP425_TIMER_VBASE	(IXP425_IO_VBASE + IXP425_TIMER_OFFSET)
 
+#define	IXP425_OST_TS		0x0000
 #define	IXP425_OST_TIM0		0x0004
 #define	IXP425_OST_TIM1		0x000C
 
@@ -231,6 +156,14 @@
 #define	OST_TS_INT		(1U << 2)
 #define	OST_TIM1_INT		(1U << 1)
 #define	OST_TIM0_INT		(1U << 0)
+
+#define	IXP425_OST_WDOG		0x0014
+#define	IXP425_OST_WDOG_ENAB	0x0018
+#define	IXP425_OST_WDOG_KEY	0x001c
+#define	OST_WDOG_KEY_MAJICK	0x482e
+#define	OST_WDOG_ENAB_RST_ENA	(1u << 0)
+#define	OST_WDOG_ENAB_INT_ENA	(1u << 1)
+#define	OST_WDOG_ENAB_CNT_ENA	(1u << 2)
 
 /*
  * Interrupt Controller Unit.
@@ -289,14 +222,52 @@
  */
 #define	IXP425_INT_bit31	31
 #define	IXP425_INT_bit30	30
-#define	IXP425_INT_bit29	29
-#define	IXP425_INT_bit22	22
+#define	IXP425_INT_bit14	14
+#define	IXP425_INT_bit11	11
 
 #define	IXP425_INT_HWMASK	(0xffffffff & \
 					~((1 << IXP425_INT_bit31) | \
 					  (1 << IXP425_INT_bit30) | \
-					  (1 << IXP425_INT_bit29) | \
-					  (1 << IXP425_INT_bit22)))
+					  (1 << IXP425_INT_bit14) | \
+					  (1 << IXP425_INT_bit11)))
+#define	IXP425_INT_GPIOMASK	(0x3ff800c0u)
+
+/*
+ * GPIO
+ */
+#define	IXP425_GPIO_HWBASE	IXP425_IO_HWBASE + IXP425_GPIO_OFFSET
+#define IXP425_GPIO_VBASE	IXP425_IO_VBASE  + IXP425_GPIO_OFFSET
+					/* 0xf0004000 */
+#define IXP425_GPIO_SIZE	0x00000020UL
+
+#define	IXP425_GPIO_GPOUTR	0x00
+#define	IXP425_GPIO_GPOER	0x04
+#define	IXP425_GPIO_GPINR	0x08
+#define	IXP425_GPIO_GPISR	0x0c
+#define	IXP425_GPIO_GPIT1R	0x10
+#define	IXP425_GPIO_GPIT2R	0x14
+#define	IXP425_GPIO_GPCLKR	0x18
+# define GPCLKR_MUX14	(1U << 8)
+# define GPCLKR_CLK0TC_SHIFT	4
+# define GPCLKR_CLK0DC_SHIFT	0
+
+/* GPIO Output */
+#define	GPOUT_ON		0x1
+#define	GPOUT_OFF		0x0
+
+/* GPIO direction */
+#define	GPOER_INPUT		0x1
+#define	GPOER_OUTPUT		0x0
+
+/* GPIO Type bits */
+#define	GPIO_TYPE_ACT_HIGH	0x0
+#define	GPIO_TYPE_ACT_LOW	0x1
+#define	GPIO_TYPE_EDG_RISING	0x2
+#define	GPIO_TYPE_EDG_FALLING	0x3
+#define	GPIO_TYPE_TRANSITIONAL	0x4
+#define	GPIO_TYPE_MASK		0x7
+#define	GPIO_TYPE(b,v)		((v) << (((b) & 0x7) * 3))
+#define	GPIO_TYPE_REG(b)	(((b)&8)?IXP425_GPIO_GPIT2R:IXP425_GPIO_GPIT1R)
 
 /*
  * Expansion Bus
@@ -315,6 +286,8 @@
 #define	EXP_TIMING_CS5_OFFSET		0x0014
 #define	EXP_TIMING_CS6_OFFSET		0x0018
 #define	EXP_TIMING_CS7_OFFSET		0x001c
+#define EXP_CNFG0_OFFSET		0x0020
+#define EXP_CNFG1_OFFSET		0x0024
 
 #define IXP425_EXP_RECOVERY_SHIFT	16
 #define IXP425_EXP_HOLD_SHIFT		20
@@ -392,16 +365,39 @@
 /* PCI_INTERRUPT_REG		0x3c */
 #define	PCI_RTOTTO		0x40
 
+/* PCI Controller CSR Base Address */
+#define	IXP425_PCI_CSR_BASE	IXP425_PCI_VBASE
+
+/* PCI Memory Space */
+#define	IXP425_PCI_MEM_HWBASE	0x48000000UL
+#define	IXP425_PCI_MEM_VBASE	0xf8000000UL
+#define	IXP425_PCI_MEM_SIZE	0x04000000UL	/* 64MB */
+
+/* PCI I/O Space */
+#define	IXP425_PCI_IO_HWBASE	0x00000000UL
+#define	IXP425_PCI_IO_SIZE	0x00100000UL    /* 1Mbyte */
+
 /* PCI Controller Configuration Offset */
 #define	PCI_NP_AD		0x00
 #define	PCI_NP_CBE		0x04
+# define NP_CBE_SHIFT		4
 #define	PCI_NP_WDATA		0x08
 #define	PCI_NP_RDATA		0x0c
 #define	PCI_CRP_AD_CBE		0x10
 #define	PCI_CRP_AD_WDATA	0x14
 #define	PCI_CRP_AD_RDATA	0x18
 #define	PCI_CSR			0x1c
+# define CSR_PRST		(1U << 16)
+# define CSR_IC			(1U << 15)
+# define CSR_ABE		(1U << 4)
+# define CSR_PDS		(1U << 3)
+# define CSR_ADS		(1U << 2)
+# define CSR_HOST		(1U << 0)
 #define	PCI_ISR			0x20
+# define ISR_AHBE		(1U << 3)
+# define ISR_PPE		(1U << 2)
+# define ISR_PFE		(1U << 1)
+# define ISR_PSE		(1U << 0)
 #define	PCI_INTEN		0x24
 #define	PCI_DMACTRL		0x28
 #define	PCI_AHBMEMBASE		0x2c
@@ -422,15 +418,42 @@
 #define	PCI_PTADMA1_PCIADDR	0x68
 #define	PCI_PTADMA1_LENGTH	0x6c
 
-/* PCI target(T)/initiator(I) Interface Commands */
-#define	COMMAND_IA		0x0	/* Interrupt Acknowledge   (I)*/
-#define	COMMAND_SC		0x1	/* Special Cycle	   (I)*/
-#define	COMMAND_IO_READ		0x2	/* I/O Read		(T)(I) */
-#define	COMMAND_IO_WRITE	0x3	/* I/O Write		(T)(I) */
-#define	COMMAND_MEM_READ	0x6	/* Memory Read		(T)(I) */
-#define	COMMAND_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
-#define	COMMAND_CONF_READ	0xa	/* Configuration Read	(T)(I) */
-#define	COMMAND_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
+/* PCI target(T)/initiator(I) Interface Commands for PCI_NP_CBE register */
+#define	COMMAND_NP_IA		0x0	/* Interrupt Acknowledge   (I)*/
+#define	COMMAND_NP_SC		0x1	/* Special Cycle	   (I)*/
+#define	COMMAND_NP_IO_READ	0x2	/* I/O Read		(T)(I) */
+#define	COMMAND_NP_IO_WRITE	0x3	/* I/O Write		(T)(I) */
+#define	COMMAND_NP_MEM_READ	0x6	/* Memory Read		(T)(I) */
+#define	COMMAND_NP_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
+#define	COMMAND_NP_CONF_READ	0xa	/* Configuration Read	(T)(I) */
+#define	COMMAND_NP_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
+
+/* PCI byte enables */
+#define	BE_8BIT(a)		((0x10u << ((a) & 0x03)) ^ 0xf0)
+#define	BE_16BIT(a)		((0x30u << ((a) & 0x02)) ^ 0xf0)
+#define	BE_32BIT(a)		0x00
+
+/* PCI byte selects */
+#define	READ_8BIT(v,a)		((u_int8_t)((v) >> (((a) & 3) * 8)))
+#define	READ_16BIT(v,a)		((u_int16_t)((v) >> (((a) & 2) * 8)))
+#define	WRITE_8BIT(v,a)		(((u_int32_t)(v)) << (((a) & 3) * 8))
+#define	WRITE_16BIT(v,a)	(((u_int32_t)(v)) << (((a) & 2) * 8))
+
+/* PCI Controller Configuration Commands for PCI_CRP_AD_CBE */
+#define COMMAND_CRP_READ	0x00
+#define COMMAND_CRP_WRITE	(1U << 16)
+
+/*
+ * SDRAM Configuration Register
+ */
+#define	IXP425_MCU_HWBASE	0xcc000000UL
+#define IXP425_MCU_VBASE	0xf0200000UL
+#define	IXP425_MCU_SIZE		0x1000		/* Actually only 256 bytes */
+#define	MCU_SDR_CONFIG		0x00
+#define  MCU_SDR_CONFIG_MCONF(x) ((x) & 0x7)
+#define  MCU_SDR_CONFIG_64MBIT	(1u << 5)
+#define	MCU_SDR_REFRESH		0x04
+#define	MCU_SDR_IR		0x08
 
 /*
  * Performance Monitoring Unit          (CP14)

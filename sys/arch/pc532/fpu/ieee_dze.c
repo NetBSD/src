@@ -1,21 +1,21 @@
-/*	$NetBSD: ieee_dze.c,v 1.1 1996/04/04 06:36:16 phil Exp $	*/
+/*	$NetBSD: ieee_dze.c,v 1.1.62.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-/* 
+/*
  * IEEE floating point support for NS32081 and NS32381 fpus.
  * Copyright (c) 1995 Ian Dall
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * IAN DALL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.
  * IAN DALL DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
  * WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  */
-/* 
+/*
  *	File:	ieee_dze.c
  *	Author:	Ian Dall
  *	Date:	November 1995
@@ -27,6 +27,9 @@
  *	First release.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee_dze.c,v 1.1.62.1 2004/08/03 10:38:47 skrll Exp $");
 
 #include "ieee_internal.h"
 

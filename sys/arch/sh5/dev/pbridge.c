@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.8 2003/01/01 02:11:57 thorpej Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.8.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Peripheral Bridge Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pbridge.c,v 1.8.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include "opt_sh5_debug.h"
 

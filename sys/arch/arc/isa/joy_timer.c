@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:38 jdolecek Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1.20.1 2004/08/03 10:32:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.20.1 2004/08/03 10:32:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

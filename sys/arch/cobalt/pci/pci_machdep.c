@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2002/01/13 23:02:35 augustss Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.16.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.16.1 2004/08/03 10:33:46 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -35,7 +38,6 @@
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -46,7 +48,7 @@
  * the generic versions of these functions.
  */
 struct cobalt_bus_dma_tag pci_bus_dma_tag = {
-	_bus_dmamap_create, 
+	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
 	_bus_dmamap_load_mbuf,
@@ -112,7 +114,7 @@ pci_conf_read(pc, tag, reg)
 {
 	pcireg_t data;
 	int bus, dev, func;
-	
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	/*

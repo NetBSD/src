@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2002/09/27 15:35:41 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5.6.1 2004/08/03 10:32:10 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.6.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.6 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbjcn.c,v 1.6.2.1 2004/08/03 10:37:51 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,8 +31,6 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	SBJCN_DEBUG
 
 /* from: $NetBSD: com.c,v 1.172 2000/05/03 19:19:04 thorpej Exp */
 
@@ -84,11 +82,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -114,6 +108,11 @@
  *  if there's a matching program outside to communicate with.
  *  If nobody is there, things will be very quiet.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.6.2.1 2004/08/03 10:37:51 skrll Exp $");
+
+#define	SBJCN_DEBUG
 
 #include "opt_ddb.h"
 

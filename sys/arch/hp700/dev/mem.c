@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2002/11/17 17:10:46 chs Exp $	*/
+/*	$NetBSD: mem.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -77,6 +77,9 @@
  * the rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -101,14 +104,54 @@
 #include <hp700/dev/cpudevs.h>
 #include <hp700/dev/viper.h>
 
+/* registers on the PCXL2 MIOC */
+struct l2_mioc {
+	uint32_t	pad[0x20];	/* 0x000 */
+	uint32_t	mioc_control;	/* 0x080 MIOC control bits */
+	uint32_t	mioc_status;	/* 0x084 MIOC status bits */
+	uint32_t	pad1[6];	/* 0x088 */
+	uint32_t	sltcv;		/* 0x0a0 L2 cache control */
+#define SLTCV_AVWL	0x00002000	/* extra cycle for addr valid write low */
+#define SLTCV_UP4COUT	0x00001000	/* update cache on CPU castouts */
+#define SLTCV_EDCEN	0x08000000	/* enable error correction */
+#define SLTCV_EDTAG	0x10000000	/* enable diagtag */
+#define SLTCV_CHKTP	0x20000000	/* enable parity checking */
+#define SLTCV_LOWPWR	0x40000000	/* low power mode */
+#define SLTCV_ENABLE	0x80000000	/* enable L2 cache */
+#define SLTCV_BITS	"\020\15avwl\16up4cout\24edcen\25edtag\26chktp\27lowpwr\30l2ena"
+	uint32_t	tagmask;	/* 0x0a4 L2 cache tag mask */
+	uint32_t	diagtag;	/* 0x0a8 L2 invalidates tag */
+	uint32_t	sltestat;	/* 0x0ac L2 last logged tag read */
+	uint32_t	slteadd;	/* 0x0b0 L2 pa of -- " -- */
+	uint32_t	pad2[3];	/* 0x0b4 */
+	uint32_t	mtcv;		/* 0x0c0 MIOC timings */
+	uint32_t	ref;		/* 0x0cc MIOC refresh timings */
+	uint32_t	pad3[4];	/* 0x0d0 */
+	uint32_t	mderradd;	/* 0x0e0 addr of most evil mem error */
+	uint32_t	pad4;		/* 0x0e4 */
+	uint32_t	dmaerr;		/* 0x0e8 addr of most evil dma error */
+	uint32_t	dioerr;		/* 0x0ec addr of most evil dio error */
+	uint32_t	gsc_timeout;	/* 0x0f0 1-compl of GSC timeout delay */
+	uint32_t	hidmamem;	/* 0x0f4 amount of phys mem installed */
+	uint32_t	pad5[2];	/* 0x0f8 */
+	uint32_t	memcomp[16];	/* 0x100 memory address comparators */
+	uint32_t	memmask[16];	/* 0x140 masks for -- " -- */
+	uint32_t	memtest;	/* 0x180 test address decoding */
+	uint32_t	pad6[0xf];	/* 0x184 */
+	uint32_t	outchk;		/* 0x1c0 address decoding output */
+	uint32_t	pad7[0x168];	/* 0x200 */
+	uint32_t	gsc15x_config;	/* 0x7a0 writev enable */
+};
+
 struct mem_softc {
 	struct device sc_dev;
 
 	volatile struct vi_trs *sc_vp;
+	volatile struct l2_mioc *sc_l2;
 };
 
-int	memmatch __P((struct device *, struct cfdata *, void *));
-void	memattach __P((struct device *, struct device *, void *));
+int	memmatch(struct device *, struct cfdata *, void *);
+void	memattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mem, sizeof(struct mem_softc),
     memmatch, memattach, NULL, NULL);
@@ -127,15 +170,12 @@ const struct cdevsw mem_cdevsw = {
 static caddr_t zeropage;
 
 /* A lock for the vmmap, 16-byte aligned as PA-RISC semaphores must be. */
-static int32_t vmmap_lock __attribute__ ((aligned (16))) = 1;
+static __cpu_simple_lock_t vmmap_lock;
 
 int
-memmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_MEMORY ||
 	    ca->ca_type.iodc_sv_model != HPPA_MEMORY_PDEP)
@@ -144,16 +184,13 @@ memmatch(parent, cf, aux)
 }
 
 void
-memattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+memattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
-	register struct confargs *ca = aux;
-	register struct mem_softc *sc = (struct mem_softc *)self;
-	int err;
-	int pagezero_cookie;
+	struct confargs *ca = aux;
+	struct mem_softc *sc = (struct mem_softc *)self;
+	int s, err, pagezero_cookie;
+	char bits[128];
 
 	printf (":");
 
@@ -161,29 +198,33 @@ memattach(parent, self, aux)
 
 	/* XXX check if we are dealing w/ Viper */
 	if (ca->ca_hpa == (hppa_hpa_t)VIPER_HPA) {
-		int s;
-		char bits[128];
 
 		sc->sc_vp = (struct vi_trs *)
-			&((struct iomod *)ca->ca_hpa)->priv_trs;
+		    &((struct iomod *)ca->ca_hpa)->priv_trs;
 
-		bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, sizeof(bits));
-		printf (" viper rev %x, ctrl %s",
-			sc->sc_vp->vi_status.hw_rev,
-			bits);
+		/* XXX other values seem to blow it up */
+		if (sc->sc_vp->vi_status.hw_rev == 0) {
+			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
+			    sizeof(bits));
+			printf (" viper rev %x, ctrl %s",
+			    sc->sc_vp->vi_status.hw_rev,
+			    bits);
 
-		s = splhigh();
-		VI_CTRL |= VI_CTRL_ANYDEN;
-		((struct vi_ctrl *)&VI_CTRL)->core_den = 0;
-		((struct vi_ctrl *)&VI_CTRL)->sgc0_den = 0;
-		((struct vi_ctrl *)&VI_CTRL)->sgc1_den = 0;
-		((struct vi_ctrl *)&VI_CTRL)->core_prf = 1;
-		sc->sc_vp->vi_control = VI_CTRL;
-		splx(s);
+			s = splhigh();
+			VI_CTRL |= VI_CTRL_ANYDEN;
+			((struct vi_ctrl *)&VI_CTRL)->core_den = 0;
+			((struct vi_ctrl *)&VI_CTRL)->sgc0_den = 0;
+			((struct vi_ctrl *)&VI_CTRL)->sgc1_den = 0;
+			((struct vi_ctrl *)&VI_CTRL)->core_prf = 1;
+			sc->sc_vp->vi_control = VI_CTRL;
+			splx(s);
 #ifdef DEBUG
-		bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, sizeof(bits));
-		printf (" >> %s", bits);
+			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
+			    sizeof(bits));
+			printf (" >> %s", bits);
 #endif
+		} else
+			sc->sc_vp = NULL;
 	} else
 		sc->sc_vp = NULL;
 
@@ -196,14 +237,31 @@ memattach(parent, self, aux)
 	printf (" size %d", pdc_minit.max_spa / (1024*1024));
 	if (pdc_minit.max_spa % (1024*1024))
 		printf (".%d", pdc_minit.max_spa % (1024*1024));
-	printf ("MB\n");
+	printf ("MB");
+
+	/* L2 cache controller is a part of the memory controller on PCXL2 */
+	if (HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hppa_cpu_info_pa_spec) == 1 &&
+	    HPPA_PA_SPEC_MINOR(hppa_cpu_info->hppa_cpu_info_pa_spec) == 1 &&
+	    HPPA_PA_SPEC_LETTER(hppa_cpu_info->hppa_cpu_info_pa_spec) == 'e') {
+		sc->sc_l2 = (struct l2_mioc *)ca->ca_hpa;
+#ifdef DEBUG
+		bitmask_snprintf(sc->sc_l2->sltcv, SLTCV_BITS, bits,
+				 sizeof(bits));
+		printf(", sltcv %s", bits);
+#endif
+		/* sc->sc_l2->sltcv |= SLTCV_UP4COUT; */
+		if (sc->sc_l2->sltcv & SLTCV_ENABLE) {
+			uint32_t tagmask = sc->sc_l2->tagmask >> 20;
+			printf(", %dMB L2 cache", tagmask + 1);
+		}
+	}
+	printf("\n");
 }
 
 void
-viper_setintrwnd(mask)
-	u_int32_t mask;
+viper_setintrwnd(uint32_t mask)
 {
-	register struct mem_softc *sc;
+	struct mem_softc *sc;
 
 	sc = mem_cd.cd_devs[0];
 
@@ -212,9 +270,9 @@ viper_setintrwnd(mask)
 }
 
 void
-viper_eisa_en()
+viper_eisa_en(void)
 {
-	register struct mem_softc *sc;
+	struct mem_softc *sc;
 	int pagezero_cookie;
 
 	sc = mem_cd.cd_devs[0];
@@ -226,17 +284,14 @@ viper_eisa_en()
 }
 
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register u_int	 	c;
-	register struct iovec 	*iov;
-	int 			error = 0;
-	int32_t lockheld = 0;
+	struct iovec *iov;
 	vaddr_t	v, o;
 	vm_prot_t prot;
+	int32_t lockheld = 0;
+	u_int c;
+	int error = 0;
 	int rw;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -274,11 +329,7 @@ mmrw(dev, uio, flags)
 			 * acquire it.
 			 */
 			while (!lockheld) {
-				__asm __volatile(
-			"	ldcw		%1, %0		\n"
-			"	comb,=,n	%%r0, %0, 0	\n"
-			"	sync				\n"
-			: "=r" (lockheld), "+m" (vmmap_lock));
+				lockheld = __cpu_simple_lock_try(&vmmap_lock);
 				if (lockheld)
 					break;
 				error = tsleep((caddr_t)&vmmap_lock, 
@@ -347,10 +398,7 @@ use_kmem:
 
 	/* If we hold the vmmap lock, release it. */
 	if (lockheld) {
-		__asm __volatile(
-		"	sync			\n"
-		"	stw	%1, %0		\n"
-		: "+m" (vmmap_lock) : "r" (1));
+		__cpu_simple_unlock(&vmmap_lock);
 		wakeup((caddr_t)&vmmap_lock);
 	}
 
@@ -358,11 +406,9 @@ use_kmem:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;  
+mmmmap(dev_t dev, off_t off, int prot)
 {
+
 	if (minor(dev) != 0)
 		return (-1);
 

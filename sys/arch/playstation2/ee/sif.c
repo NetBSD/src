@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.1 2001/10/16 15:38:39 uch Exp $	*/
+/*	$NetBSD: sif.c,v 1.1.22.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.1.22.1 2004/08/03 10:39:06 skrll Exp $");
+
 #include "debug_playstation2.h"
 
 #include <sys/param.h>
@@ -111,7 +115,7 @@ iopdma_allocate_buffer(struct iopdma_segment *seg, size_t size)
 
 	seg->iop_paddr = iopmem_alloc(seg->size);
 
-	if (seg->iop_paddr == NULL) {
+	if (seg->iop_paddr == 0) {
 		printf("%s: can't allocate IOP memory.\n", __FUNCTION__);
 		DPRINTF("request = %d byte, current total = %#x\n",
 		    size, __spd_total_alloc);

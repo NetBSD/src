@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.5 2003/04/29 01:07:31 thorpej Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.5.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Watchdog timer support for the Intel i80321 I/O processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.5.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

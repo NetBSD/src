@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.7 2002/03/16 06:20:08 gmcgarry Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.7.12.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <machine/hp300spu.h>
 
 #define	NHPIB		4
@@ -60,21 +56,54 @@
 #define MHZ_33		4
 #define MHZ_50		6
 
-extern	int cpuspeed, machineid, mmuid;
-extern	int howto;
+/* autoconf.c */
+extern struct hp_hw sc_table[];
+extern int cpuspeed;
+#ifdef PRINTROMINFO
+void printrominvo(void);
+#endif
+void configure(void);
+int sctoaddr(int);
+
+/* clock.c */
+void read_bbc(void);
+u_char read_bbc_reg(int);
+
+/* cons.c */
 extern	int cons_scode;
+void cninit(void);
+int cngetc(void);
+int cnputc(int);
+
+/* devopen.c */
 extern	u_int opendev;
-extern	u_int bootdev;
-char	*getmachineid __P((void));
+int atoi(char *);
 
+/* exec.c */
+void exec_hp300(char *, u_long, int);
+
+/* machdep.c */
 extern	int userom;
-void	romputchar __P((int));
+char *getmachineid(void);
+void romputchar(int);
+void transfer(char *, int, int, int, char *, char *);
+int trap(struct trapframe *);
 
-void	exec_hp300 __P((char *, u_long, int));
-void	transfer __P((char *entry, int howto, int opendev, int conscode,
-	    char *lowram, char *esym));
-void	_transfer __P((char *entry, int howto, int opendev, int conscode,
-	    char *lowram, char *esym));
+/* prf.c */
+int tgetchar(void);
+
+/* srt0.S */
+extern	u_int bootdev;
+extern	int machineid, mmuid;
+extern	int howto;
+int badaddr(caddr_t);
+void call_req_reboot(void);
+void romout(int, char *);
+void _transfer(char *, int, int, int, char *, char *);
+
+/* tget.c */
+int tgets(char *);
+
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
@@ -87,7 +116,7 @@ struct grfinfo {
  * Switch we use to set punit in devopen.
  */
 struct punitsw {
-	int	(*p_punit) __P((int, int, int *));
+	int	(*p_punit)(int, int, int *);
 };
 extern	struct punitsw punitsw[];
 extern	int npunit;

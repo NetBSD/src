@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.8 2003/03/08 04:43:25 rafal Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.8.2.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.8.2.1 2004/08/03 10:37:47 skrll Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.19.2.1 2003/07/02 15:25:30 darrenr Exp $	*/
+/*	$NetBSD: bus.c,v 1.19.2.2 2004/08/03 10:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.19.2.2 2004/08/03 10:40:08 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -50,12 +53,15 @@
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/machtype.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 #include <mips/cache.h>
+
+#include <sgimips/mace/macereg.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
@@ -68,13 +74,41 @@ struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	NULL,	
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+void
+sgimips_bus_dma_init(void)
+{
+	switch (mach_type) {
+#ifdef MIPS1
+	/* R2000/R3000 */
+	case MACH_SGI_IP12:
+		sgimips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_mips1;
+		break;
+#endif
+
+#ifdef MIPS3
+	/* >=R4000*/
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
+	case MACH_SGI_IP32:
+		sgimips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_mips3;
+		break;
+#endif
+
+	default:
+		panic("sgimips_bus_dma_init: unsupported mach type IP%d\n",
+		    mach_type);
+	}
+}
 
 u_int8_t
 bus_space_read_1(t, h, o)
@@ -85,14 +119,14 @@ bus_space_read_1(t, h, o)
 	wbflush(); /* XXX ? */
 
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return *(volatile u_int8_t *)(h + o);
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		return *(volatile u_int8_t *)(h + (o << 2) + 3);
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		return *(volatile u_int8_t *)(h + (o | 3) - (o & 3));
-	case 3: /* mace devices */
+	case SGIMIPS_BUS_SPACE_MACE:
 		return *(volatile u_int8_t *)(h + (o << 8) + 7);
 	default:
 		panic("no bus tag");
@@ -107,17 +141,17 @@ bus_space_write_1(t, h, o, v)
 	u_int8_t v;
 {
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		*(volatile u_int8_t *)(h + o) = v;
 		break;
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		*(volatile u_int8_t *)(h + (o << 2) + 3) = v;
 		break;
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		*(volatile u_int8_t *)(h + (o | 3) - (o & 3)) = v;
 		break;
-	case 3: /* mace devices */
+	case SGIMIPS_BUS_SPACE_MACE:
 		*(volatile u_int8_t *)(h + (o << 8) + 7) = v;
 		break;
 	default:
@@ -136,12 +170,12 @@ bus_space_read_2(t, h, o)
 	wbflush(); /* XXX ? */
 
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return *(volatile u_int16_t *)(h + o);
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		return *(volatile u_int16_t *)(h + (o << 2) + 1);
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		return *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
 	default:
 		panic("no bus tag");
@@ -156,14 +190,14 @@ bus_space_write_2(t, h, o, v)
 	u_int16_t v;
 {
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		*(volatile u_int16_t *)(h + o) = v;
 		break;
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		*(volatile u_int16_t *)(h + (o << 2) + 1) = v;
 		break;
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
 		break;
 	default:
@@ -172,6 +206,90 @@ bus_space_write_2(t, h, o, v)
 
 	wbflush();	/* XXX */
 }
+
+u_int32_t
+bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
+{
+	u_int32_t reg;
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			delay(10);
+			splx(s);
+			break;
+		default:
+			wbflush();
+			reg = (*(volatile u_int32_t *)(bsh + o));
+			break;
+	}
+	return reg;
+}
+
+void
+bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int32_t v)
+{
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			delay(10);
+			splx(s);
+			break;
+		default:
+			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush(); /* XXX */
+			break;
+	}
+}
+
+#ifdef MIPS3
+u_int64_t
+bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
+{
+	u_int64_t reg;
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			reg = mips3_ld( (u_int64_t *)(bsh + o));
+			delay(10);
+			splx(s);
+			break;
+		default:
+			reg = mips3_ld( (u_int64_t *)(bsh + o));
+			break;
+	}
+	return reg;
+}
+
+void
+bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int64_t v)
+{
+	int s;
+
+	switch (tag) {
+		case SGIMIPS_BUS_SPACE_MACE:
+			s = splhigh();
+			delay(10);
+			mips3_sd( (u_int64_t *)(bsh + o), v);
+			delay(10);
+			splx(s);
+			break;
+		default:
+			mips3_sd( (u_int64_t *)(bsh + o), v);
+			break;
+	}
+}
+#endif /* MIPS3 */
 
 int
 bus_space_map(t, bpa, size, flags, bshp)
@@ -191,15 +309,12 @@ bus_space_map(t, bpa, size, flags, bshp)
 /*
  * XXX
  */
-
-#define PCI_LOW_MEMORY		0x1A000000
-#define PCI_LOW_IO		0x18000000
-
 	/* XXX O2 */
 	if (bpa > 0x80000000 && bpa < 0x82000000)
-		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_MEMORY + (bpa & 0xfffffff));
+		*bshp = MIPS_PHYS_TO_KSEG1(MACE_PCI_LOW_MEMORY +
+		    (bpa & 0xfffffff));
 	if (bpa < 0x00010000)
-		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_IO + bpa);
+		*bshp = MIPS_PHYS_TO_KSEG1(MACE_PCI_LOW_IO + bpa);
 
 	return 0;
 }
@@ -252,16 +367,16 @@ bus_space_vaddr(t, bsh)
 	bus_space_handle_t bsh;
 {
 	switch(t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return ((void *)bsh);
 
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		panic("bus_space_vaddr not supported on HPC space!");
 
-	case 2: /* mem */
+	case SGIMIPS_BUS_SPACE_MEM:
 		return ((void *)bsh);
 
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_IO:
 		panic("bus_space_vaddr not supported on I/O space!");
 
 	default:
@@ -312,6 +427,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -458,6 +574,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -511,6 +628,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 	return error;
 }
@@ -569,6 +687,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return error;
 }
@@ -608,12 +727,14 @@ _bus_dmamap_unload(t, map)
 	map->_dm_flags &= ~SGIMIPS_DMAMAP_COHERENT;
 }
 
-/*
- * Common function for DMA map synchronization.  May be called
+#ifdef MIPS1
+/* Common function from DMA map synchronization. May be called
  * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R3000 version.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
+_bus_dmamap_sync_mips1(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_addr_t offset;
@@ -623,6 +744,114 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t minlen;
 	bus_addr_t addr;
 	int i;
+
+	/*
+	 * Mixing PRE and POST operations is not allowed.
+	 */
+	 if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	     (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		 panic("_bus_dmamap_sync_mips1: mix PRE and POST");
+
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("_bus_dmamap_sync_mips1: bad offset %lu (map size is %lu)"
+		    , offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("_bus_dmamap_sync_mips1: bad length");
+#endif
+
+	/*
+	 * The R3000 cache is write-through. Therefore, we only need
+	 * to drain the write buffer on PREWRITE. The cache is not
+	 * coherent, however, so we need to invalidate the data cache
+	 * on PREREAD (should we do it POSTREAD instead?).
+	 *
+	 * POSTWRITE (and POSTREAD, currently) are noops.
+	 */
+
+	if (ops & BUS_DMASYNC_PREWRITE) {
+		/*
+		 * Flush the write buffer.
+		 */
+		 wbflush();
+	 }
+
+	/*
+	 * If we're not doing PREREAD, nothing more to do.
+	 */
+	if ((ops & BUS_DMASYNC_PREREAD) == 0)
+		return;
+
+	/*
+	 * No cache invalidation is necessary if the DMA map covers
+	 * COHERENT DMA-safe memory (which is mapped un-cached).
+	 */
+	if (map->_dm_flags & SGIMIPS_DMAMAP_COHERENT)
+		return;
+
+	/*
+	 * If we are going to hit something as large or larger
+	 * than the entire data cache, just nail the whole thing.
+	 *
+	 * NOTE: Even though this is `wbinv_all', since the cache is
+	 * write-through, it just invalidates it.
+	 */
+	if (len >= mips_pdcache_size) {
+		mips_dcache_wbinv_all();
+		return;
+	}
+
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find the beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i].ds_addr;
+
+#ifdef BUS_DMA_DEBUG
+		printf("bus_dmamap_sync_mips1: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
+#endif
+		mips_dcache_inv_range(
+		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
+#ifdef BUS_DMA_DEBUG
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
+	}
+}	
+#endif /* MIPS1 */
+
+#ifdef MIPS3
+/*
+ * Common function for DMA map synchronization.  May be called
+ * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R4x00/R5k version.
+ */
+void
+_bus_dmamap_sync_mips3(t, map, offset, len, ops)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
+	int ops;
+{
+	bus_size_t minlen;
+	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
+	int i, useindex;
 
 	/*
 	 * Mising PRE and POST operations is not allowed.
@@ -640,9 +869,36 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 
 	/*
+	 * Since we're dealing with a virtually-indexed, write-back
+	 * cache, we need to do the following things:
+	 *
+	 *      PREREAD -- Invalidate D-cache.  Note we might have
+	 *      to also write-back here if we have to use an Index
+	 *      op, or if the buffer start/end is not cache-line aligned.
+ 	 *
+	 *      PREWRITE -- Write-back the D-cache.  If we have to use
+	 *      an Index op, we also have to invalidate.  Note that if
+	 *      we are doing PREREAD|PREWRITE, we can collapse everything
+	 *      into a single op.
+	 *
+	 *      POSTREAD -- Nothing.
+	 *
+	 *      POSTWRITE -- Nothing.
+	 */
+
+	/*
 	 * Flush the write buffer.
+	 * XXX Is this always necessary?
 	 */
 	wbflush();
+
+	/*
+	 * No cache flushes are necessary if we're only doing
+	 * POSTREAD or POSTWRITE (i.e. not doing PREREAD or PREWRITE).
+	 */
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
 
 	/*
 	 * If the mapping is of COHERENT DMA-safe memory, no cache
@@ -652,23 +908,17 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		return;
 
 	/*
-	 * No cache flushes are necessary if we're only doing
-	 * POSTREAD or POSTWRITE (i.e. not doing PREREAD or PREWRITE).
-	 */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) == 0)
-		return;
-
-	/*
-	 * Flush data cache for PREREAD.  This has the side-effect
-	 * of invalidating the cache.  Done at PREREAD since it
-	 * causes the cache line(s) to be written back to memory.
+	 * If the mapping belongs to the kernel, or it belongs
+	 * to the currently-running process (XXX actually, vmspace),
+	 * then we can use Hit ops.  Otherwise, Index ops.
 	 *
-	 * Flush data cache for PREWRITE, so that the contents of
-	 * the data buffer in memory reflect reality.
-	 *
-	 * Given the test above, we know we're doing one of these
-	 * two operations, so no additional tests are necessary.
+	 * This should be true the vast majority of the time.
 	 */
+	if (__predict_true(map->_dm_proc == NULL ||
+		map->_dm_proc == curlwp->l_proc))
+		useindex = 0;
+	else
+		useindex = 1;
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
@@ -692,16 +942,50 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
 		    addr, offset, addr, offset + minlen - 1, len);
 #endif
-#if 0
-		MachFlushDCache(addr + offset, minlen);
-#endif
-#if 1
-		mips_dcache_wbinv_range(addr + offset, minlen);
-#endif
-#if 0
-		MachFlushCache();
-#endif
 
+		/*
+		 * If we are forced to use Index ops, it's always a
+		 * Write-back,Invalidate, so just do one test.
+		 */
+		if (__predict_false(useindex)) {
+			mips_dcache_wbinv_range_index(addr + offset, minlen);
+#ifdef BUS_DMA_DEBUG
+			printf("\n");
+#endif
+			offset = 0;
+			len -= minlen;
+			continue;
+ 		}
+
+		/* The code that follows is more correct than that in
+		   mips/bus_dma.c. */
+		start = addr + offset;
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			mips_dcache_wbinv_range(start, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+			end = start + minlen;
+			preboundary = start & ~mips_dcache_align_mask;
+			firstboundary = (start + mips_dcache_align_mask)
+			    & ~mips_dcache_align_mask;
+			lastboundary = end & ~mips_dcache_align_mask;
+			if (preboundary < start && preboundary < lastboundary)
+				mips_dcache_wbinv_range(preboundary,
+				    mips_dcache_align);
+			if (firstboundary < lastboundary)
+				mips_dcache_inv_range(firstboundary,
+				    lastboundary - firstboundary);
+			if (lastboundary < end)
+				mips_dcache_wbinv_range(lastboundary,
+				    mips_dcache_align);
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			mips_dcache_wb_range(start, minlen);
+			break;
+		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
@@ -709,6 +993,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		len -= minlen;
 	}
 }
+#endif /* MIPS3 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called

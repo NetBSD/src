@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54 2003/02/26 21:29:02 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.54.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -80,13 +76,22 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#ifndef _LOCORE
-#define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
-#else
-#define	KERNBASE	0xc0000000	/* start of kernel virtual space */
+/*
+ * Unfortunately the assembler does not understand 0xf00UL, so we
+ * have KERNBASE_LOCORE
+ */
+#ifdef KERNBASE
+#error "You should only re-define KERNBASE_LOCORE"
 #endif
-#define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
+
+#ifndef	KERNBASE_LOCORE
+#define	KERNBASE_LOCORE	0xc0000000	/* start of kernel virtual space */
+#endif
+
+#define	KERNBASE	((u_long)KERNBASE_LOCORE)
+
+#define	KERNTEXTOFF	(KERNBASE_LOCORE + 0x100000) /* start of kernel text */
+#define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)

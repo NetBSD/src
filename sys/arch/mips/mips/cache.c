@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19 2003/03/08 05:18:25 rafal Exp $	*/
+/*	$NetBSD: cache.c,v 1.19.2.1 2004/08/03 10:37:46 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,11 @@
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.1 2004/08/03 10:37:46 skrll Exp $");
+
 #include "opt_cputype.h"
+#include "opt_mips_cache.h"
 
 #include <sys/param.h>
 
@@ -83,6 +87,9 @@
 #ifdef MIPS3_PLUS
 #include <mips/cache_r4k.h>
 #include <mips/cache_r5k.h>
+#ifdef ENABLE_MIPS4_CACHE_R10K
+#include <mips/cache_r10k.h>
+#endif
 #endif
 
 #if defined(MIPS32) || defined(MIPS64)
@@ -161,6 +168,9 @@ void	tx39_cache_config_write_through(void);
 #include <mips/cache_r5900.h>
 #endif /* MIPS3_5900 */
 void	mips3_get_cache_config(int);
+#ifdef ENABLE_MIPS4_CACHE_R10K
+void	mips4_get_cache_config(int);
+#endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
 
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
@@ -597,6 +607,34 @@ primary_cache_is_2way:
 		    r5900_pdcache_wb_range_64;
 		break;
 #endif /* MIPS3_5900 */
+#ifdef ENABLE_MIPS4_CACHE_R10K
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		mips_picache_ways = 2;
+		mips_pdcache_ways = 2;
+		mips_sdcache_ways = 2;
+
+		mips4_get_cache_config(csizebase);
+
+		mips_cache_ops.mco_icache_sync_all =
+		    r10k_icache_sync_all;
+		mips_cache_ops.mco_icache_sync_range =
+		    r10k_icache_sync_range;
+		mips_cache_ops.mco_icache_sync_range_index =
+		    r10k_icache_sync_range_index;
+		mips_cache_ops.mco_pdcache_wbinv_all =
+		    r10k_pdcache_wbinv_all;
+		mips_cache_ops.mco_pdcache_wbinv_range =
+		    r10k_pdcache_wbinv_range;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    r10k_pdcache_wbinv_range_index;
+		mips_cache_ops.mco_pdcache_inv_range =
+		    r10k_pdcache_inv_range;
+		mips_cache_ops.mco_pdcache_wb_range =
+		    r10k_pdcache_wb_range;
+		break;
+#endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
 
 	default:
@@ -638,8 +676,6 @@ primary_cache_is_2way:
 			(MIPS3_MAX_PCACHE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
 		/* FALLTHROUGH */
-	case MIPS_R4100:
-	case MIPS_R4300:
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700
 	case MIPS_R4700:
@@ -713,6 +749,22 @@ primary_cache_is_2way:
 		mips_cache_ops.mco_sdcache_wb_range =
 		    r5k_sdcache_wb_range;
 		break;
+#ifdef ENABLE_MIPS4_CACHE_R10K
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		mips_cache_ops.mco_sdcache_wbinv_all =
+		    r10k_sdcache_wbinv_all;
+		mips_cache_ops.mco_sdcache_wbinv_range =
+		    r10k_sdcache_wbinv_range;
+		mips_cache_ops.mco_sdcache_wbinv_range_index =
+		    r10k_sdcache_wbinv_range_index;
+		mips_cache_ops.mco_sdcache_inv_range =
+		    r10k_sdcache_inv_range;
+		mips_cache_ops.mco_sdcache_wb_range =
+		    r10k_sdcache_wb_range;
+		break;
+#endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
 
 	default:
@@ -855,6 +907,27 @@ mips3_get_cache_config(int csizebase)
 		}
 	}
 }
+
+#ifdef ENABLE_MIPS4_CACHE_R10K
+void
+mips4_get_cache_config(int csizebase)
+{
+	uint32_t config = mips3_cp0_config_read();
+
+	mips_picache_size = MIPS4_CONFIG_CACHE_SIZE(config,
+	    MIPS4_CONFIG_IC_MASK, csizebase, MIPS4_CONFIG_IC_SHIFT);
+	mips_picache_line_size = 64;	/* 64 Byte */
+
+	mips_pdcache_size = MIPS4_CONFIG_CACHE_SIZE(config,
+	    MIPS4_CONFIG_DC_MASK, csizebase, MIPS4_CONFIG_DC_SHIFT);
+	mips_pdcache_line_size = 32;	/* 32 Byte */
+
+	mips_cache_alias_mask =
+	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~(PAGE_SIZE - 1);
+	mips_cache_prefer_mask =
+	    max(mips_pdcache_size, mips_picache_size) - 1;
+}
+#endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
 #endif /* MIPS1 || MIPS3 || MIPS4 */
 

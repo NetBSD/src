@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.15 2003/01/20 01:26:14 soren Exp $
+#	$NetBSD: files.cobalt,v 1.15.2.1 2004/08/03 10:33:46 skrll Exp $
 
 maxpartitions 16
 
@@ -30,16 +30,18 @@ file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/machdep.c
 
+file arch/mips/mips/softintr.c
+
 file dev/md_root.c			memory_disk_hooks
 
-file dev/clock_subr.c
 file dev/cons.c
+file dev/cninit.c
 
 include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file arch/cobalt/pci/pci_machdep.c	pci
-file arch/cobalt/pci/pciide_machdep.c	pciide
+file arch/cobalt/pci/pciide_machdep.c	pciide_common
 
 device pchb
 attach pchb at pci

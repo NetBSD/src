@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -44,24 +47,18 @@
 #include <ddb/db_access.h>
 
 void
-db_read_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char *src = (char*)addr;
+	char *src = (char *)addr;
 
 	while (size--)
 		*data++ = *src++;
 }
 
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	char *data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char *dst = (char *)addr;
+	char *dst = (char *)addr;
 	extern int etext;
 
 	/*

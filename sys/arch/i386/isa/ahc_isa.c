@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.23 2003/05/03 18:10:49 wiz Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.23.2.1 2004/08/03 10:36:05 skrll Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -112,12 +112,12 @@
  * Note: there isn't any #ifdef for FreeBSD in this file, since the
  * FreeBSD EISA driver handles all cases of the 284X.
  *
- *	-- Jason R. Thorpe <thorpej@NetBSD.ORG>
+ *	-- Jason R. Thorpe <thorpej@NetBSD.org>
  *	   July 12, 1996
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23 2003/05/03 18:10:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23.2.1 2004/08/03 10:36:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

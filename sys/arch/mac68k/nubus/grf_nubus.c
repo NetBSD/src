@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.66 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.66.6.1 2004/08/03 10:37:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -28,6 +28,9 @@
 /*
  * Device-specific routines for handling Nubus-based video cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.66.6.1 2004/08/03 10:37:11 skrll Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2003/06/23 20:14:33 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85.2.1 2004/08/03 10:38:40 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.2.1 2004/08/03 10:38:40 skrll Exp $");
+
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 
@@ -62,12 +65,12 @@
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-
 #include <machine/platform.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <dev/cons.h>
 

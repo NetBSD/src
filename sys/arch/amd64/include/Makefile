@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 18:39:36 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $
 
 INCSDIR= /usr/include/amd64
 
@@ -12,6 +12,7 @@ INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h intrdefs.h \
+	joystick.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mtrr.h \
@@ -22,6 +23,7 @@ INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	segments.h setjmp.h signal.h specialreg.h stdarg.h sysarch.h \
 	trap.h tss.h types.h \
 	userret.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

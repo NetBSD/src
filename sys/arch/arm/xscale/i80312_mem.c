@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mem.c,v 1.2 2001/12/18 02:52:00 thorpej Exp $	*/
+/*	$NetBSD: i80312_mem.c,v 1.2.20.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Intel i80312 Companion I/O memory controller support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_mem.c,v 1.2.20.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2002/09/11 02:17:14 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.7.6.1 2004/08/03 10:38:39 skrll Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -112,7 +112,7 @@ main(char *boot_arg)
 #endif
 
 	strcpy(kernel, boot_arg);
-	entry_point = NULL;
+	entry_point = 0;
 
 	for (;;) {
 		marks[MARK_START] = (u_long)KERN_LOADADDR;
@@ -125,7 +125,7 @@ main(char *boot_arg)
 		printf("boot: ");
 		gets(kernel);
 		if (kernel[0] == '\0')
-			return NULL;
+			return 0;
 
 #ifdef PROCESS_ARGS
 		kernel_args = strchr(kernel, ')');

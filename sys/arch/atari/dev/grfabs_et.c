@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.21 2003/02/02 18:12:25 thomas Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.21.2.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,6 +44,10 @@
  * Thanks guys!
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.21.2.1 2004/08/03 10:33:11 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
@@ -524,7 +528,7 @@ et_sv_reg_t		*regs;
 
 	regs->seq[SEQ_ID_RESET]           = 0x03; /* reset off		*/
 	regs->seq[SEQ_ID_CLOCKING_MODE]   = 0x21; /* Turn off screen	*/
-	regs->seq[SEQ_ID_MAP_MASK]        = 0xff; /* Cpu writes all planes*/
+	regs->seq[SEQ_ID_MAP_MASK]        = 0xff; /* CPU writes all planes*/
 	regs->seq[SEQ_ID_CHAR_MAP_SELECT] = 0x00; /* Char. generator 0	*/
 	regs->seq[SEQ_ID_MEMORY_MODE]     = 0x0e; /* Seq. Memory mode	*/
 

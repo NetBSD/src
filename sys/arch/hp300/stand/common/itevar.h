@@ -1,9 +1,43 @@
-/*	$NetBSD: itevar.h,v 1.1 1997/02/04 03:52:38 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.1.60.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: itevar.h 1.15 92/12/20$
+ *
+ *	@(#)itevar.h	8.1 (Berkeley) 6/10/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -82,14 +116,14 @@ struct ite_data {
 
 struct itesw {
 	int	ite_hwid;
-	void	(*ite_init) __P((struct ite_data *));
-	void	(*ite_deinit) __P((struct ite_data *));
-	void	(*ite_clear) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_putc) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_cursor) __P((struct ite_data *, int));
-	void	(*ite_scroll) __P((struct ite_data *, int, int, int, int));
-	u_char	(*ite_readbyte) __P((struct ite_data *, int));
-	void	(*ite_writeglyph) __P((struct ite_data *, u_char *, u_char *));
+	void	(*ite_init)(struct ite_data *);
+	void	(*ite_deinit)(struct ite_data *);
+	void	(*ite_clear)(struct ite_data *, int, int, int, int);
+	void	(*ite_putc)(struct ite_data *, int, int, int, int);
+	void	(*ite_cursor)(struct ite_data *, int);
+	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
+	u_char	(*ite_readbyte)(struct ite_data *, int);
+	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
 };
 
 /* Flags */
@@ -194,38 +228,40 @@ extern	int nitesw;
 /*
  * Prototypes.
  */
-u_char	ite_readbyte __P((struct ite_data *, int));
-void	ite_writeglyph __P((struct ite_data *, u_char *, u_char *));
+u_char ite_readbyte(struct ite_data *, int);
+void ite_writeglyph(struct ite_data *, u_char *, u_char *);
+void ite_fontinfo(struct ite_data *);
+void ite_fontinit(struct ite_data *);
 
 /*
  * Framebuffer-specific ITE prototypes.
  */
-void	topcat_init __P((struct ite_data *));
-void	topcat_clear __P((struct ite_data *, int, int, int, int));
-void	topcat_putc __P((struct ite_data *, int, int, int, int));
-void	topcat_cursor __P((struct ite_data *, int));
-void	topcat_scroll __P((struct ite_data *, int, int, int, int));
+void topcat_init(struct ite_data *);
+void topcat_clear(struct ite_data *, int, int, int, int);
+void topcat_putc(struct ite_data *, int, int, int, int);
+void topcat_cursor(struct ite_data *, int);
+void topcat_scroll(struct ite_data *, int, int, int, int);
 
-void	gbox_init __P((struct ite_data *));
-void	gbox_clear __P((struct ite_data *, int, int, int, int));
-void	gbox_putc __P((struct ite_data *, int, int, int, int));
-void	gbox_cursor __P((struct ite_data *, int));
-void	gbox_scroll __P((struct ite_data *, int, int, int, int));
+void gbox_init(struct ite_data *);
+void gbox_clear(struct ite_data *, int, int, int, int);
+void gbox_putc(struct ite_data *, int, int, int, int);
+void gbox_cursor(struct ite_data *, int);
+void gbox_scroll(struct ite_data *, int, int, int, int);
 
-void	rbox_init __P((struct ite_data *));
-void	rbox_clear __P((struct ite_data *, int, int, int, int));
-void	rbox_putc __P((struct ite_data *, int, int, int, int));
-void	rbox_cursor __P((struct ite_data *, int));
-void	rbox_scroll __P((struct ite_data *, int, int, int, int));
+void rbox_init(struct ite_data *);
+void rbox_clear(struct ite_data *, int, int, int, int);
+void rbox_putc(struct ite_data *, int, int, int, int);
+void rbox_cursor(struct ite_data *, int);
+void rbox_scroll(struct ite_data *, int, int, int, int);
 
-void	dvbox_init __P((struct ite_data *));
-void	dvbox_clear __P((struct ite_data *, int, int, int, int));
-void	dvbox_putc __P((struct ite_data *, int, int, int, int));
-void	dvbox_cursor __P((struct ite_data *, int));
-void	dvbox_scroll __P((struct ite_data *, int, int, int, int));
+void dvbox_init(struct ite_data *);
+void dvbox_clear(struct ite_data *, int, int, int, int);
+void dvbox_putc(struct ite_data *, int, int, int, int);
+void dvbox_cursor(struct ite_data *, int);
+void dvbox_scroll(struct ite_data *, int, int, int, int);
 
-void	hyper_init __P((struct ite_data *));
-void	hyper_clear __P((struct ite_data *, int, int, int, int));
-void	hyper_putc __P((struct ite_data *, int, int, int, int));
-void	hyper_cursor __P((struct ite_data *, int));
-void	hyper_scroll __P((struct ite_data *, int, int, int, int));
+void hyper_init(struct ite_data *);
+void hyper_clear(struct ite_data *, int, int, int, int);
+void hyper_putc(struct ite_data *, int, int, int, int);
+void hyper_cursor(struct ite_data *, int);
+void hyper_scroll(struct ite_data *, int, int, int, int);

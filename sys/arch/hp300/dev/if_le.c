@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.53 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.53.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -75,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -104,13 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53 2003/05/24 06:21:22 gmcgarry Exp $");
 
 struct  le_softc {
 	struct  am7990_softc sc_am7990; /* glue to MI code */
- 
-	bus_space_tag_t sc_bst; 
- 
+
+	bus_space_tag_t sc_bst;
+
 	bus_space_handle_t sc_bsh0;	/* DIO registers */
 	bus_space_handle_t sc_bsh1;	/* LANCE registers */
 	bus_space_handle_t sc_bsh2;	/* buffer area */
-};    
+};
 
 int	lematch(struct device *, struct cfdata *, void *);
 void	leattach(struct device *, struct device *, void *);
@@ -140,7 +136,7 @@ hide void le_zerobuf(struct lance_softc *, int, int);
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
 hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);  
+hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
 
 hide void
 lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)

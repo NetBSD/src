@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.1 1997/02/04 03:52:55 thorpej Exp $	*/
+/*	$NetBSD: tgets.c,v 1.1.60.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,58 +31,64 @@
  *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/param.h>
+
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/common/samachdep.h>
+
 int
 tgets(buf)
-    char *buf;
+	char *buf;
 {
-    register int c;
-    int i;
-    register char *lp = buf;
+	int c;
+	int i;
+	char *lp = buf;
 
-    for (i = 240000; i > 0; i--) {
-        c = tgetchar() & 0177;
-        if (c) {
-            for (;;) {
-                switch (c) {
-                case '\n':
-                case '\r':
-                    *lp = '\0';
-                    putchar('\n');
-                    return (1);
-                case '\b':
-                case '\177':
-                    if (lp > buf) {
-                        lp--;
-                        putchar('\b');
-                        putchar(' ');
-                        putchar('\b');
-                    }
-                    break;
-                case '#':
-                    if (lp > buf)
-                        --lp;
-                    break;
-                case 'r'&037: {
-                    register char *p;
+	for (i = 240000; i > 0; i--) {
+		c = tgetchar() & 0177;
+		if (c) {
+			for (;;) {
+				switch (c) {
+				case '\n':
+				case '\r':
+					*lp = '\0';
+					putchar('\n');
+					return 1;
+				case '\b':
+				case '\177':
+					if (lp > buf) {
+						lp--;
+						putchar('\b');
+						putchar(' ');
+						putchar('\b');
+					}
+					break;
+				case '#':
+					if (lp > buf)
+						--lp;
+					break;
+				case 'r' & 037: {
+					char *p;
 
-                    putchar('\n');
-                    for (p = buf; p < lp; ++p)
-                        putchar(*p);
-                    break;
-                }
-                case '@':
-                case 'u'&037:
-                case 'w'&037:
-                    lp = buf;
-                    putchar('\n');
-                    break;
-                default:
-                    *lp++ = c;
-                    putchar(c);
-                }
-                c = getchar() & 0177;
-            }
-        }
-    }
-    return (0);
+					putchar('\n');
+					for (p = buf; p < lp; ++p)
+						putchar(*p);
+					break;
+				}
+				case '@':
+				case 'u'&037:
+				case 'w'&037:
+					lp = buf;
+					putchar('\n');
+					break;
+				default:
+					*lp++ = c;
+					putchar(c);
+				}
+				c = getchar() & 0177;
+			}
+		}
+	}
+	return 0;
 }

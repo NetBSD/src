@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.10 2003/01/02 23:54:41 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.10.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -65,13 +65,13 @@
 	.word	_C_LABEL(xscale_pmc_dispatch)
 #endif
 
-.Lastpending:
-	.word	_C_LABEL(astpending)
+AST_ALIGNMENT_FAULT_LOCALS
 
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
+	ENABLE_ALIGNMENT_FAULTS
 
 	/*
 	 * Note that we have entered the IRQ handler.  We are
@@ -128,34 +128,7 @@ ASENTRY_NP(irq_entry)
 	sub	r1, r1, #1
 	str	r1, [r0]
 
-	/*
-	 * If we're returning to user mode, check for pending ASTs.
-	 */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	bne	.Lirqout		/* Nope, get out now */
-
-.Lastloop:
-	ldr	r0, .Lastpending	/* Do we have an AST pending? */
-	ldr	r1, [r0]
-	teq	r1, #0x00000000
-	beq	.Lirqout		/* Nope, get out now */
-
-	mov	r1, #0x00000000
-	str	r1, [r0]		/* Clear astpending */
-
-	mrs	r4, cpsr		/* save CPSR */
-	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_c, r0
-
-	mov	r0, sp
-	bl	_C_LABEL(ast)		/* ast(frame) */
-
-	msr	cpsr_c, r4		/* Disable IRQs */
-	b	.Lastloop		/* Check for more ASTs */
-
-.Lirqout:
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.4 2003/04/25 21:10:52 ragge Exp $
+#	$NetBSD: majors.evbsh3,v 1.4.2.1 2004/08/03 10:34:21 skrll Exp $
 #
 # Device majors for evbsh3
 #
@@ -47,3 +47,7 @@ device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 19	cgd
 device-major	ksyms		char 55			ksyms
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

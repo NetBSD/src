@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.165.2.1 2003/07/03 02:01:20 wrstuden Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.165.2.2 2004/08/03 10:37:49 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.1 2003/07/03 02:01:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.2 2004/08/03 10:37:49 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -263,7 +263,7 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
 	/*
-	 * rev 0x00 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
+	 * rev 0x00, 0x22 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
 	 * should we allow ranges and use 0x00 - 0x3f for R4000 and
 	 * 0x40 - 0xff for R4400?
 	 */
@@ -271,6 +271,9 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4000_B, -1,	CPU_ARCH_MIPS3, 48,
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4000 CPU"	},
+	{ 0, MIPS_R4000, MIPS_REV_R4000_C, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_A, -1,	CPU_ARCH_MIPS3, 48,
@@ -409,11 +412,11 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 2 core)" 	},
 
-	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
+	/* The SB-1 CPU uses a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT |
 	  CPU_MIPS_HAVE_SPECIAL_CCA | (5 << CPU_MIPS_CACHED_CCA_SHIFT),
-						"SB1"			},
+						"SB-1"			},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0,					NULL			}
@@ -757,7 +760,7 @@ mips64_vector_init(void)
  *
  * The principal purpose of this function is to examine the
  * variable cpu_id, into which the kernel locore start code
- * writes the cpu ID register, and to then copy appropriate
+ * writes the CPU ID register, and to then copy appropriate
  * code into the CPU exception-vector entries and the jump tables
  * used to hide the differences in cache and TLB handling in
  * different MIPS CPUs.
@@ -843,7 +846,7 @@ mips_vector_init(void)
 		panic("Unknown number of TLBs for CPU type 0x%x", cpu_id);
 
 	/*
-	 * Check cpu-specific flags.
+	 * Check CPU-specific flags.
 	 */
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
@@ -941,7 +944,7 @@ mips_set_wbflush(flush_fn)
 }
 
 /*
- * Identify product revision IDs of cpu and fpu.
+ * Identify product revision IDs of CPU and FPU.
  */
 void
 cpu_identify(void)
@@ -1014,7 +1017,7 @@ cpu_identify(void)
 	    MIPS_PRID_RSVD(cpu_id) != 0) {
 		printf("%s: NOTE: top 8 bits of prehistoric PRID not 0!\n",
 		    label);
-		printf("%s: Please mail port-mips@netbsd.org with cpu0 "
+		printf("%s: Please mail port-mips@NetBSD.org with cpu0 "
 		    "dmesg lines.\n", label);
 	}
 
@@ -1087,10 +1090,10 @@ setregs(l, pack, stack)
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
-	f->f_regs[SP] = (int)stack;
-	f->f_regs[PC] = (int)pack->ep_entry & ~3;
-	f->f_regs[T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
-	f->f_regs[SR] = PSL_USERSET;
+	f->f_regs[_R_SP] = (int)stack;
+	f->f_regs[_R_PC] = (int)pack->ep_entry & ~3;
+	f->f_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
+	f->f_regs[_R_SR] = PSL_USERSET;
 	/*
 	 * Set up arguments for _start():
 	 *	_start(stack, obj, cleanup, ps_strings);
@@ -1100,10 +1103,10 @@ setregs(l, pack, stack)
 	 *	  vectors.  They are fixed up by ld.elf_so.
 	 *	- ps_strings is a NetBSD extension.
 	 */
-	f->f_regs[A0] = (int)stack;
-	f->f_regs[A1] = 0;
-	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)l->l_proc->p_psstr;
+	f->f_regs[_R_A0] = (int)stack;
+	f->f_regs[_R_A1] = 0;
+	f->f_regs[_R_A2] = 0;
+	f->f_regs[_R_A3] = (int)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = (struct lwp *)0;
@@ -1112,54 +1115,59 @@ setregs(l, pack, stack)
 	l->l_md.md_ss_addr = 0;
 }
 
+#ifdef __HAVE_BOOTINFO_H
 /*
  * Machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 {
-#ifdef __HAVE_BOOTINFO_H
 	struct btinfo_bootpath *bibp;
-#endif
-	dev_t consdev;
+	struct sysctlnode node;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return(ENOENT); /* ??? */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-#ifdef __HAVE_BOOTINFO_H
-	case CPU_BOOTED_KERNEL:
-		bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-		if (!bibp)
-			return (ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-#endif
-	case CPU_LLSC:
-		return (sysctl_rdint(oldp, oldlenp, newp, MIPS_HAS_LLSC));
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    root_device->dv_xname));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
+#endif
 
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+#ifdef __HAVE_BOOTINFO_H
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "root_device", NULL,
+		       sysctl_root_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+                       CTLTYPE_INT, "llsc", NULL,
+                       NULL, MIPS_HAS_LLSC, NULL, 0,
+                       CTL_MACHDEP, CPU_LLSC, CTL_EOL);
+}
 
 /*
  * These are imported from platform-specific code.
@@ -1485,7 +1493,7 @@ savefpregs(l)
 	 * this process yielded FPA.
 	 */
 	f = (struct frame *)l->l_md.md_regs;
-	f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+	f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 
 	/*
 	 * save FPCSR and 32bit FP register values.
@@ -1669,15 +1677,15 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		/* NOTREACHED */
 	}
 
-	f->f_regs[PC] = (u_int32_t)upcall;
-	f->f_regs[SP] = (u_int32_t)sf;
-	f->f_regs[A0] = type;
-	f->f_regs[A1] = (u_int32_t)sas;
-	f->f_regs[A2] = nevents;
-	f->f_regs[A3] = ninterrupted;
-	f->f_regs[S8] = 0;
-	f->f_regs[RA] = 0;
-	f->f_regs[T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
+	f->f_regs[_R_PC] = (u_int32_t)upcall;
+	f->f_regs[_R_SP] = (u_int32_t)sf;
+	f->f_regs[_R_A0] = type;
+	f->f_regs[_R_A1] = (u_int32_t)sas;
+	f->f_regs[_R_A2] = nevents;
+	f->f_regs[_R_A3] = ninterrupted;
+	f->f_regs[_R_S8] = 0;
+	f->f_regs[_R_RA] = 0;
+	f->f_regs[_R_T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
 }
 
 
@@ -1692,13 +1700,13 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t ras_pc;
 
 	/* Save register context. Dont copy R0 - it is always 0 */
-	memcpy(&gr[_REG_AT], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
+	memcpy(&gr[_REG_AT], &f->f_regs[_R_AST], sizeof(mips_reg_t) * 31);
 
-	gr[_REG_MDLO]  = f->f_regs[MULLO];
-	gr[_REG_MDHI]  = f->f_regs[MULHI];
-	gr[_REG_CAUSE] = f->f_regs[CAUSE];
-	gr[_REG_EPC]   = f->f_regs[PC];
-	gr[_REG_SR]    = f->f_regs[SR];
+	gr[_REG_MDLO]  = f->f_regs[_R_MULLO];
+	gr[_REG_MDHI]  = f->f_regs[_R_MULHI];
+	gr[_REG_CAUSE] = f->f_regs[_R_CAUSE];
+	gr[_REG_EPC]   = f->f_regs[_R_PC];
+	gr[_REG_SR]    = f->f_regs[_R_SR];
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (caddr_t) gr[_REG_EPC])) != -1)
@@ -1711,12 +1719,18 @@ cpu_getmcontext(l, mcp, flags)
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
-		 * XXX:  FP regs may be written to wrong location XXX
 		 */
 		if (l == fpcurlwp)
 			savefpregs(l);
-		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs.r_regs,
-		    sizeof (mcp->__fpregs));
+
+		/*
+		 * The PCB FP regs struct includes the FP CSR, so use the
+		 * size of __fpregs.__fp_r when copying.
+		 */
+		memcpy(&mcp->__fpregs.__fp_r,
+		    &l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		    sizeof(mcp->__fpregs.__fp_r));
+		mcp->__fpregs.__fp_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
 		*flags |= _UC_FPU;
 	}
 }
@@ -1734,22 +1748,36 @@ cpu_setmcontext(l, mcp, flags)
 	if (flags & _UC_CPU) {
 		/* Save register context. */
 		/* XXX:  Do we validate the addresses?? */
-		memcpy(&f->f_regs[AST], &gr[_REG_AT], sizeof(mips_reg_t) * 31);
+		memcpy(&f->f_regs[_R_AST], &gr[_REG_AT],
+		       sizeof(mips_reg_t) * 31);
 
-		f->f_regs[MULLO] = gr[_REG_MDLO];
-		f->f_regs[MULHI] = gr[_REG_MDHI];
-		f->f_regs[CAUSE] = gr[_REG_CAUSE];
-		f->f_regs[PC]    = gr[_REG_EPC];
+		f->f_regs[_R_MULLO] = gr[_REG_MDLO];
+		f->f_regs[_R_MULHI] = gr[_REG_MDHI];
+		f->f_regs[_R_CAUSE] = gr[_REG_CAUSE];
+		f->f_regs[_R_PC]    = gr[_REG_EPC];
 		/* Do not restore SR. */
 	}
 
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
-		/* XXX:  FP regs may be read from wrong location XXX */
-		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs, &mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
-		/* XXX:  Do we restore here?? */
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
+		if (l == fpcurlwp)
+			fpcurlwp = NULL;
+
+		/*
+		 * The PCB FP regs struct includes the FP CSR, so use the
+		 * size of __fpregs.__fp_r when copying.
+		 */
+		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		    &mcp->__fpregs.__fp_r, sizeof(mcp->__fpregs.__fp_r));
+		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
 	}
+
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2003/05/25 14:02:48 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -148,10 +148,11 @@ void news3400_intr __P((u_int, u_int, u_int, u_int));
 #ifdef news5000
 void news5000_intr __P((u_int, u_int, u_int, u_int));
 #endif
-void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
+extern void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
 
-void (*enable_intr) __P((void));
-void (*disable_intr) __P((void));
+extern void (*enable_intr) __P((void));
+extern void (*disable_intr) __P((void));
+extern void (*enable_timer) __P((void));
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.1 2001/02/09 18:35:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.1.26.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,10 +51,14 @@ public:
 	TabWindow	*_main;
 	TabWindow	*_option;
 	TabWindow	*_console;
+
+	int _button_width;
 	int _button_height;
-	int _cmdbar_height;
 
 private:
+	HWND _saved_focus;
+	void SaveFocus();
+	void RestoreFocus();
 	void WMCreate(HWND, LPCREATESTRUCT);
 	void WMPaint(HWND, LPCREATESTRUCT);
 
@@ -66,6 +70,10 @@ public:
 
 	void disableTimer(void);
 	BOOL isDialogMessage(MSG &);
+	BOOL focusManagerHook(MSG &, HWND);
+
+	void progress();
+	void unprogress();
 };
 
 class BootButton : public Window

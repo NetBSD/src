@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.2 2001/09/27 16:31:25 uch Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2.20.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /* Windows CE architecture */
 
@@ -8,5 +8,3 @@
 #define NAMESPACE_BEGIN(x)	namespace x {
 #define NAMESPACE_END		}
 #define USING_NAMESPACE(x)	using namespace x;
-
-#include <sys/cdefs.h>

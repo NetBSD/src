@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_machdep.c,v 1.1 2001/09/16 02:09:47 thorpej Exp $	*/
+/*	$NetBSD: agp_machdep.c,v 1.1.24.1 2004/08/03 10:31:20 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.1.24.1 2004/08/03 10:31:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

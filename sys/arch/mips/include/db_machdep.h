@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.15 2003/04/29 17:06:05 scw Exp $ */
+/* $NetBSD: db_machdep.h,v 1.15.2.1 2004/08/03 10:37:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -49,18 +49,18 @@ typedef struct frame db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[PC])
+#define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[_R_PC])
 
 #define PC_ADVANCE(regs) do {						\
-	if ((db_get_value((regs)->f_regs[PC], sizeof(int), FALSE) &	\
+	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) &\
 	     0xfc00003f) == 0xd)					\
-		(regs)->f_regs[PC] += BKPT_SIZE;			\
+		(regs)->f_regs[_R_PC] += BKPT_SIZE;			\
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
 #define PC_BREAK_ADVANCE(regs) do {					 \
-	if (db_get_value((regs)->f_regs[PC], sizeof(int), FALSE) == 0xd) \
-		(regs)->f_regs[PC] += BKPT_SIZE;			 \
+	if (db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) == 0xd) \
+		(regs)->f_regs[_R_PC] += BKPT_SIZE;			 \
 } while(0)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */

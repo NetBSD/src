@@ -1,10 +1,44 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2003/06/23 13:06:58 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.2.1 2004/08/03 10:38:57 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1982, 1986 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ */
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 Philip A. Nelson.
- * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
  *
@@ -43,6 +77,9 @@
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.2.1 2004/08/03 10:38:57 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -66,7 +103,7 @@ void	setredzone __P((u_short *, caddr_t));
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -158,7 +195,7 @@ cpu_setfunc(l, func, arg)
 /*
  * cpu_swapout is called immediately before a process's 'struct user'
  * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
+ * after its P_INMEM flag is cleared).  If the process is the
  * current owner of the floating point unit, the FP state has to be
  * saved, so that it goes out with the pcb, which is in the user area.
  */
@@ -175,6 +212,15 @@ cpu_swapout(l)
 	fpu_lwp = 0;
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* If we were using the FPU, forget about it. */
+	if (fpu_lwp == l)
+		fpu_lwp = 0;
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -183,20 +229,14 @@ cpu_swapout(l)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(arg, proc)
+cpu_exit(arg)
 	struct lwp *arg;
-	int proc;
 {
 	extern struct user *proc0paddr;
 	register struct lwp *l __asm("r3");
-	uvmexp.swtch++;
 
 	/* Copy arg into a register. */
 	movd(arg, l);
-
-	/* If we were using the FPU, forget about it. */
-	if (fpu_lwp == l)
-		fpu_lwp = 0;
 
 	/* Switch to temporary stack and address space. */
 	lprd(sp, INTSTACK);
@@ -204,10 +244,7 @@ cpu_exit(arg, proc)
 
 	/* Schedule the vmspace and stack to be freed. */
 	(void) splhigh();
-	if (proc)		/* XXXJRT FRAGILE!  USE A REGISTER! */
-		exit2(l);
-	else
-		lwp_exit2(l);
+	lwp_exit2(l);		/* XXXJRT FRAGILE!  USE A REGISTER! */
 
 	/* Don't update pcb in cpu_switch. */
 	curlwp = NULL;
@@ -217,7 +254,7 @@ cpu_exit(arg, proc)
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
@@ -349,7 +386,7 @@ kvtop(addr)
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -370,7 +407,7 @@ vmapbuf(bp, len)
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 * XXX: unwise to expect this in a multithreaded environment.
-	 * anything can happen to a pmap between the time we lock a 
+	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
 	 * the pmap_extract().
 	 *

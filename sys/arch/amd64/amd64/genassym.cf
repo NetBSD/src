@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2003/05/04 23:46:41 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ define		PAGE_SIZE		PAGE_SIZE
 define		MDP_IRET		MDP_IRET
 
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)

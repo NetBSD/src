@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.15 2003/05/31 03:05:45 kristerw Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.15.2.1 2004/08/03 10:31:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.15 2003/05/31 03:05:45 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.15.2.1 2004/08/03 10:31:52 skrll Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -534,7 +534,7 @@ cv3d_boardinit(struct grf_softc *gp)
 
 	/*
 	 * bit 0=1: enable enhanced mode functions
-	 * bit 4=1: enable linear adressing
+	 * bit 4=1: enable linear addressing
 	 */
 	vgaw32(cv3d_memory_io_base, MR_ADVANCED_FUNCTION_CONTROL, 0x00000011);
 
@@ -620,7 +620,7 @@ cv3d_boardinit(struct grf_softc *gp)
 	WCrt(ba, CRT_ID_CURSOR_START, 0x00);
 	WCrt(ba, CRT_ID_CURSOR_END, 0x00);
 
-	/* Display start adress */
+	/* Display start address */
 	WCrt(ba, CRT_ID_START_ADDR_HIGH, 0x00);
 	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
 
@@ -1494,7 +1494,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 
 	/* load text font into beginning of display memory.
 	 * Each character cell is 32 bytes long (enough for 4 planes)
-	 * In linear adressing text mode, the memory is organized
+	 * In linear addressing text mode, the memory is organized
 	 * so, that the Bytes of all 4 planes are interleaved.
 	 * 1st byte plane 0, 1st byte plane 1, 1st byte plane 2,
 	 * 1st byte plane 3, 2nd byte plane 0, 2nd byte plane 1,...

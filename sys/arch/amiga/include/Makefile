@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/01/17 22:17:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2004/08/03 10:32:08 skrll Exp $
 
 INCSDIR= /usr/include/amiga
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

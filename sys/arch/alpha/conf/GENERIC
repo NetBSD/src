@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2003/05/04 01:19:17 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.230.2.1 2004/08/03 10:31:19 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.230.2.1 $"
 
 maxusers 32
 
@@ -108,6 +108,19 @@ options 	INET6		# IPV6
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43
 
@@ -118,7 +131,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
-
+options		COMPAT_16
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 
@@ -139,6 +152,9 @@ options 	SYSVSEM
 options 	SYSVSHM
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 
+# p1003.1b semaphore support
+options 	P1003_1B_SEMAPHORE
+
 # Loadable Kernel Modules
 options 	LKM
 
@@ -155,6 +171,7 @@ options 	TCVERBOSE		# recognize "unknown" TC devices
 #options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
@@ -267,6 +284,11 @@ pci*	at	ttwopci?
 agp*	at	irongate?
 
 # PCI devices
+
+# PCI cryptographic devices
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
+
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
@@ -294,15 +316,29 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+esiop*	at	pci? dev ? function ?		# Symbios 53c875 SCSI and newer
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
-pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?		# Acard IDE controllers
+aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
+cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
+cypide* at pci? dev ? function ?		# Cypress IDE controllers
+hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?		# Opti IDE controllers
+piixide* at pci? dev ? function ?		# Intel IDE controllers
+pdcide* at pci? dev ? function ?		# Promise IDE controllers
+satalink* at pci? dev ? function ?		# SiI SATALink controllers
+siside* at pci? dev ? function ?		# SiS IDE controllers
+slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 stge*	at	pci? dev ? function ?		# Sundance/Tamarack TC9021 GigE
@@ -431,33 +467,21 @@ ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 wi*	at	pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE
 
 # SCSI bus support
-scsibus* at	adv?
-scsibus* at	adw?
-scsibus* at	aha?
-scsibus* at	ahb?
-scsibus* at	ahc?
-scsibus* at	aic?
-scsibus* at	asc?
-scsibus* at	bha?
-scsibus* at	dpt?
-scsibus* at	iha?
-scsibus* at	isp?
-scsibus* at	siop?
-scsibus* at	pcscp?
-scsibus* at	uha?
+scsibus* at	scsi?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
-# ST506/ESDI/IDE devices
-wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
+wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+atapibus* at	atapi?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -501,7 +525,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB Ethernet adapters
@@ -510,6 +534,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
@@ -543,6 +568,8 @@ wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
+
+pseudo-device 	crypto			# opencrypto framework
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
@@ -578,3 +605,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.19 2003/06/16 20:01:00 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.19.2.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.19.2.1 2004/08/03 10:34:02 skrll Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE

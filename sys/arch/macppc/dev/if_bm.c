@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.20 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.20.2.1 2004/08/03 10:37:20 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -26,6 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.20.2.1 2004/08/03 10:37:20 skrll Exp $");
+
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
@@ -42,6 +45,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
@@ -52,6 +56,11 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #include <dev/ofw/openfirm.h>

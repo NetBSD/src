@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.12 2003/04/11 14:55:40 drochner Exp $
+# $NetBSD: GENERIC_ISDN,v 1.12.2.1 2004/08/03 10:35:47 skrll Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -43,7 +43,7 @@ options 	ISICPNP_ELSA_PCC16	# later variant of ELSA QuickStep
 options 	ISICPNP_SEDLBAUER	# Sedlbauer WinSpeed
 options 	ISICPNP_DYNALINK	# Dynalink IS64PH
 options 	ISICPNP_SIEMENS_ISURF2	# Siemens I-Surf
-options		ISICPNP_ITKIX		# ITK IX PnP cards
+options 	ISICPNP_ITKIX		# ITK IX PnP cards
 isic* at isapnp?
 #
 #---------------------------------------------------------------------
@@ -59,6 +59,9 @@ ifpci* at pci?
 
 # AVM Fritz!PCI V2 card
 ifritz* at pci?
+
+# AVM B1/T1 PCI card
+iavc*	at pci?
 
 #
 #---------------------------------------------------------------------

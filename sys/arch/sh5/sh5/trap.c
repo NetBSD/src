@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2003/03/27 20:21:27 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,9 +35,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: trap.c 1.32 91/04/06
+ *
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -76,6 +110,9 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.2.1 2004/08/03 10:40:24 skrll Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -85,8 +122,11 @@
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <sh5/fpu.h>
 
 #include <machine/cpu.h>
 #include <machine/trap.h>
@@ -108,19 +148,9 @@ int sh5_trap_debug;
 void
 userret(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	int sig;
 
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	l->l_md.md_flags &= ~MDP_FPSAVED;
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
@@ -136,8 +166,7 @@ trap(struct lwp *l, struct trapframe *tf)
 	u_int traptype;
 	vaddr_t vaddr;
 	vm_prot_t ftype;
-	int sig = 0;
-	u_long ucode = 0;
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -176,8 +205,12 @@ trap(struct lwp *l, struct trapframe *tf)
 		    (uintptr_t)tf->tf_caller.r15);
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
 		if (traptype & T_USER) {
-			sig = SIGSEGV;
-			ucode = vaddr;
+			/* This shouldn't happen ... */
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_ILLTRP;
+			ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+			ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 			break;
 		}
 #if defined(DDB)
@@ -192,15 +225,21 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	case T_EXECPROT|T_USER:
 	case T_READPROT|T_USER:
-		sig = SIGSEGV;
-		ucode = vaddr;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_IADDERR|T_USER:
 	case T_RADDERR|T_USER:
 	case T_WADDERR|T_USER:
-		sig = SIGBUS;
-		ucode = vaddr;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_ADRERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_WRITEPROT:
@@ -236,7 +275,8 @@ trap(struct lwp *l, struct trapframe *tf)
 	case T_RTLBMISS:
 	case T_WTLBMISS:
 	case T_ITLBMISS:
-		ftype = (traptype == T_WTLBMISS) ? VM_PROT_WRITE : VM_PROT_READ;
+		ftype = (traptype == T_WTLBMISS) ? VM_PROT_WRITE :
+		    ((traptype == T_ITLBMISS) ? VM_PROT_EXECUTE : VM_PROT_READ);
 		if (vaddr >= VM_MIN_KERNEL_ADDRESS)
 			goto kernelfault;
 
@@ -245,12 +285,16 @@ trap(struct lwp *l, struct trapframe *tf)
 		goto pagefault;
 
 	case T_RTLBMISS|T_USER:
-	case T_ITLBMISS|T_USER:
 		ftype = VM_PROT_READ;
+		goto pagefault;
+
+	case T_ITLBMISS|T_USER:
+		ftype = VM_PROT_EXECUTE;
 		goto pagefault;
 
 	case T_WTLBMISS|T_USER:
 		ftype = VM_PROT_WRITE;
+		/*FALLTHROUGH*/
 
 	pagefault:
 	    {
@@ -262,6 +306,10 @@ trap(struct lwp *l, struct trapframe *tf)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(map, va, 0, ftype);
 
 		/*
@@ -283,6 +331,8 @@ trap(struct lwp *l, struct trapframe *tf)
 				rv = EFAULT;
 		}
 
+		l->l_flag &= ~L_SA_PAGEFAULT;
+
 		if (rv == 0) {
 			if (traptype & T_USER)
 				userret(l);
@@ -292,15 +342,21 @@ trap(struct lwp *l, struct trapframe *tf)
 		if ((traptype & T_USER) == 0)
 			goto copyfault;
 
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_MAPERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
 			    (p->p_cred && p->p_ucred) ?
 			    p->p_ucred->cr_uid : -1);
-			sig = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
 		} else
-			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
-		ucode = vaddr;
+		if (rv == EACCES)
+			ksi.ksi_code = SEGV_ACCERR;
 		break;
 	    }
 
@@ -331,22 +387,76 @@ trap(struct lwp *l, struct trapframe *tf)
 		return;
 
 	case T_BREAK|T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+		break;
+
 	case T_RESINST|T_USER:
-	case T_ILLSLOT|T_USER:
 	case T_FPUDIS|T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+		break;
+
+	case T_ILLSLOT|T_USER:
 	case T_SLOTFPUDIS|T_USER:
-		sig = SIGILL;
-		ucode = vaddr;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC; /* XXX: Could do with ILL_DELAYSLOT */
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_FPUEXC|T_USER:
-		sig = SIGFPE;
-		ucode = vaddr;	/* XXX: "code" should probably be FPSCR */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = T_FPUEXC;
+
 #ifdef DEBUG
-		sh5_fpsave((u_int)tf->tf_state.sf_usr, &l->l_addr->u_pcb);
-		printf("trap: FPUEXC - fpscr = 0x%x\n",
-		    (u_int)l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
+		printf("trap: FPUEXC - fpscr = 0x%x\n", ksi.ksi_trap);
 #endif
+
+		switch (sh5_getfpscr() & SH5_FPSCR_CAUSE_MASK) {
+		case SH5_FPSCR_CAUSE_I:
+			ksi.ksi_code = FPE_FLTRES;
+			break;
+
+		case SH5_FPSCR_CAUSE_I | SH5_FPSCR_CAUSE_U:
+			ksi.ksi_code = FPE_FLTUND;
+			break;
+
+		case SH5_FPSCR_CAUSE_I | SH5_FPSCR_CAUSE_O:
+			ksi.ksi_code = FPE_FLTOVF;
+			break;
+
+		case SH5_FPSCR_CAUSE_Z:
+			ksi.ksi_code = FPE_FLTDIV;
+			break;
+
+		case SH5_FPSCR_CAUSE_V:
+		case SH5_FPSCR_CAUSE_E:
+		default:
+			ksi.ksi_code = FPE_FLTINV;
+			break;
+		}
+
+		/*
+		 * An FPUEXC leaves the PC pointing to the FP instruction
+		 * which caused the exception. To avoid an endless loop if
+		 * the user is ignoring or catching SIGFPE, adjust the saved
+		 * PC to skip over the offending instruction.
+		 *
+		 * XXX: The whole business of supporting IEEE754 on Sh5 needs
+		 * to be re-visited. We currently don't do anywhere near
+		 * enough work in the kernel to deal with FPU exceptions.
+		 */
+		tf->tf_state.sf_spc += 4;
 		break;
 
 	case T_AST|T_USER:
@@ -355,7 +465,7 @@ trap(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 		if (curcpu()->ci_want_resched)
-			preempt(NULL);
+			preempt(0);
 		userret(l);
 		return;
 
@@ -365,6 +475,22 @@ trap(struct lwp *l, struct trapframe *tf)
 		sh5_nmi_clear();
 		/*FALLTHROUGH*/
 
+	case T_TRAP|T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLTRP;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_tra;	/* XXX */
+		break;
+
+	case T_DIVZERO|T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = T_DIVZERO;
+		break;
+
 #ifdef DDB
 	case T_BREAK:
 		if (kdb_trap(traptype, tf))
@@ -373,7 +499,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		goto dopanic;
 	}
 
-	trapsignal(l, sig, ucode);
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
 
@@ -384,44 +510,46 @@ void
 trapa(struct lwp *l, struct trapframe *tf)
 {
 
-#ifdef DIAGNOSTIC
-	if (!USERMODE(tf) || l == NULL) {
-		const char *pstr;
-
-		if (l == NULL)
-			pstr = "trapa: NULL lwp!";
-		else
-			pstr = "trapa: TRAPA in kernel mode!";
-
-		if (l != NULL)
-			printf("pid=%d cmd=%s, usp=0x%lx ",
-			    l->l_proc->p_pid, l->l_proc->p_comm,
-			    (uintptr_t)tf->tf_caller.r15);
-		else
-			printf("curlwp == NULL ");
-		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n",
-		    (uintptr_t)tf->tf_state.sf_spc,
-		    (u_int)tf->tf_state.sf_ssr, (u_int)tf->tf_state.sf_tra);
-		dump_trapframe(printf, "\n", tf);
-		panic(pstr);
-		/*NOTREACHED*/
-	}
-#endif
-
 	uvmexp.traps++;
 	l->l_md.md_regs = tf;
 
 	switch (tf->tf_state.sf_tra) {
 	case TRAPA_SYSCALL:
+#ifdef DIAGNOSTIC
+		if (!USERMODE(tf) || l == NULL) {
+			const char *pstr;
+
+			if (l == NULL)
+				pstr = "trapa: syscall with NULL lwp!";
+			else
+				pstr = "trapa: syscall trap in kernel mode!";
+
+			if (l != NULL)
+				printf("pid=%d cmd=%s, usp=0x%lx ",
+				    l->l_proc->p_pid, l->l_proc->p_comm,
+				    (uintptr_t)tf->tf_caller.r15);
+			else
+				printf("curlwp == NULL ");
+			printf("trapa: SPC=0x%lx, SSR=0x%x\n",
+			    (uintptr_t)tf->tf_state.sf_spc,
+			    (u_int)tf->tf_state.sf_ssr);
+			dump_trapframe(printf, "\n", tf);
+			panic(pstr);
+			/*NOTREACHED*/
+		}
+#endif
 		(l->l_proc->p_md.md_syscall)(l, tf);
+		userret(l);
 		break;
+
+	case TRAPA_DIVZERO:
+		tf->tf_state.sf_expevt = T_DIVZERO;
+		/*FALLTHROUGH*/
 
 	default:
-		trapsignal(l, SIGILL, (u_long) tf->tf_state.sf_spc);
+		trap(l, tf);
 		break;
 	}
-
-	userret(l);
 }
 
 void
@@ -658,6 +786,9 @@ trap_type(int traptype)
 		break;
 	case T_NMI:
 		t = "NMI";
+		break;
+	case T_DIVZERO:
+		t = "Integer Divide by Zero";
 		break;
 	default:
 		t = "Unknown Exception";

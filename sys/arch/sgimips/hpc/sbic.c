@@ -1,11 +1,43 @@
-/*	$NetBSD: sbic.c,v 1.13 2003/06/18 08:58:40 drochner Exp $	*/
+/*	$NetBSD: sbic.c,v 1.13.2.1 2004/08/03 10:40:07 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Van Jacobson of Lawrence Berkeley Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *  @(#)scsi.c  7.5 (Berkeley) 5/4/91
+ */
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
  * Changes Copyright (c) 1996 Steve Woodford
  * Original Copyright (c) 1994 Christian E. Hopps
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory.
@@ -45,6 +77,10 @@
  * This version of the driver is pretty well generic, so should work with
  * any flavour of WD33C93 chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13.2.1 2004/08/03 10:40:07 skrll Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -81,36 +117,36 @@
  */
 #define SBIC_WAIT(regs, until, timeo) wd33c93_wait(regs, until, timeo, __LINE__)
 
-void	wd33c93_init __P((struct wd33c93_softc *));
-void	wd33c93_reset __P((struct wd33c93_softc *));
-int	wd33c93_go __P((struct wd33c93_softc *, struct wd33c93_acb *));
-int	wd33c93_dmaok __P((struct wd33c93_softc *, struct scsipi_xfer *));
-int	wd33c93_wait __P((struct wd33c93_softc *, u_char, int , int));
-u_char	wd33c93_selectbus __P((struct wd33c93_softc *, struct wd33c93_acb *));
-int	wd33c93_xfout __P((struct wd33c93_softc *, int, void *));
-int	wd33c93_xfin __P((struct wd33c93_softc *, int, void *));
-int	wd33c93_poll __P((struct wd33c93_softc *, struct wd33c93_acb *));
-int	wd33c93_nextstate __P((struct wd33c93_softc *, struct wd33c93_acb *,
-				u_char, u_char));
-int	wd33c93_abort __P((struct wd33c93_softc *, struct wd33c93_acb *, char *));
-void	wd33c93_xferdone __P((struct wd33c93_softc *));
-void	wd33c93_error __P((struct wd33c93_softc *, struct wd33c93_acb *));
-void	wd33c93_scsidone __P((struct wd33c93_softc *, struct wd33c93_acb *, int));
-void	wd33c93_sched __P((struct wd33c93_softc *));
-void	wd33c93_dequeue __P((struct wd33c93_softc *, struct wd33c93_acb *));
-void	wd33c93_dma_stop __P((struct wd33c93_softc *));
-void	wd33c93_dma_setup __P((struct wd33c93_softc *, int));
-int	wd33c93_msgin_phase __P((struct wd33c93_softc *, int));
-void	wd33c93_msgin __P((struct wd33c93_softc *, u_char *, int));
-void	wd33c93_reselect __P((struct wd33c93_softc *, int, int, int, int));
-void	wd33c93_sched_msgout __P((struct wd33c93_softc *, u_short));
-void	wd33c93_msgout __P((struct wd33c93_softc *));
-void	wd33c93_timeout __P((void *arg));
-void	wd33c93_watchdog __P((void *arg));
-int	wd33c93_div2stp __P((struct wd33c93_softc *, int));
-int	wd33c93_stp2div __P((struct wd33c93_softc *, int));
-void	wd33c93_setsync __P((struct wd33c93_softc *, struct wd33c93_tinfo *ti));
-void	wd33c93_update_xfer_mode __P((struct wd33c93_softc *, int));
+void	wd33c93_init (struct wd33c93_softc *);
+void	wd33c93_reset (struct wd33c93_softc *);
+int	wd33c93_go (struct wd33c93_softc *, struct wd33c93_acb *);
+int	wd33c93_dmaok (struct wd33c93_softc *, struct scsipi_xfer *);
+int	wd33c93_wait (struct wd33c93_softc *, u_char, int , int);
+u_char	wd33c93_selectbus (struct wd33c93_softc *, struct wd33c93_acb *);
+int	wd33c93_xfout (struct wd33c93_softc *, int, void *);
+int	wd33c93_xfin (struct wd33c93_softc *, int, void *);
+int	wd33c93_poll (struct wd33c93_softc *, struct wd33c93_acb *);
+int	wd33c93_nextstate (struct wd33c93_softc *, struct wd33c93_acb *,
+				u_char, u_char);
+int	wd33c93_abort (struct wd33c93_softc *, struct wd33c93_acb *, char *);
+void	wd33c93_xferdone (struct wd33c93_softc *);
+void	wd33c93_error (struct wd33c93_softc *, struct wd33c93_acb *);
+void	wd33c93_scsidone (struct wd33c93_softc *, struct wd33c93_acb *, int);
+void	wd33c93_sched (struct wd33c93_softc *);
+void	wd33c93_dequeue (struct wd33c93_softc *, struct wd33c93_acb *);
+void	wd33c93_dma_stop (struct wd33c93_softc *);
+void	wd33c93_dma_setup (struct wd33c93_softc *, int);
+int	wd33c93_msgin_phase (struct wd33c93_softc *, int);
+void	wd33c93_msgin (struct wd33c93_softc *, u_char *, int);
+void	wd33c93_reselect (struct wd33c93_softc *, int, int, int, int);
+void	wd33c93_sched_msgout (struct wd33c93_softc *, u_short);
+void	wd33c93_msgout (struct wd33c93_softc *);
+void	wd33c93_timeout (void *arg);
+void	wd33c93_watchdog (void *arg);
+int	wd33c93_div2stp (struct wd33c93_softc *, int);
+int	wd33c93_stp2div (struct wd33c93_softc *, int);
+void	wd33c93_setsync (struct wd33c93_softc *, struct wd33c93_tinfo *);
+void	wd33c93_update_xfer_mode (struct wd33c93_softc *, int);
 
 static struct pool wd33c93_pool;		/* Adapter Control Blocks */
 static int wd33c93_pool_initialized = 0;
@@ -135,8 +171,8 @@ int	wd33c93_notags		= 0;	/* No Tags */
 
 int	wd33c93_debug	= 0;		/* Debug flags */
 
-void	wd33c93_print_csr __P((u_char));
-void	wd33c93_hexdump __P((u_char *, int));
+void	wd33c93_print_csr (u_char);
+void	wd33c93_hexdump (u_char *, int);
 
 #else
 #define QPRINTF(a)  /* */
@@ -148,8 +184,7 @@ static const char *wd33c93_chip_names[] = SBIC_CHIP_LIST;
  * Attach instance of driver and probe for sub devices
  */
 void
-wd33c93_attach(dev)
-	struct wd33c93_softc *dev;
+wd33c93_attach(struct wd33c93_softc *dev)
 {
 	struct scsipi_adapter *adapt = &dev->sc_adapter;
 	struct scsipi_channel *chan = &dev->sc_channel;
@@ -197,8 +232,7 @@ wd33c93_attach(dev)
  * Initialize driver-private structures
  */
 void
-wd33c93_init(dev)
-	struct wd33c93_softc *dev;
+wd33c93_init(struct wd33c93_softc *dev)
 {
 	u_int i;
 
@@ -244,8 +278,7 @@ wd33c93_init(dev)
 }
 
 void
-wd33c93_reset(dev)
-	struct wd33c93_softc *dev;
+wd33c93_reset(struct wd33c93_softc *dev)
 {
 	u_int	my_id, s;
 	u_char	csr, reg;
@@ -319,9 +352,7 @@ wd33c93_reset(dev)
 }
 
 void
-wd33c93_error(dev, acb)
-	struct wd33c93_softc *dev;
-	struct wd33c93_acb *acb;
+wd33c93_error(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 
@@ -338,9 +369,7 @@ wd33c93_error(dev, acb)
  * Setup sync mode for given target
  */
 void
-wd33c93_setsync(dev, ti)
-	struct wd33c93_softc *dev;
-	struct wd33c93_tinfo *ti;
+wd33c93_setsync(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
 {
 	u_char offset, period;
 
@@ -363,9 +392,7 @@ wd33c93_setsync(dev, ti)
  * returns 1 if DMA OK, 0 for polled I/O transfer
  */
 int
-wd33c93_dmaok(dev, xs)
-	struct wd33c93_softc *dev;
-	struct scsipi_xfer *xs;
+wd33c93_dmaok(struct wd33c93_softc *dev, struct scsipi_xfer *xs)
 {
 	if (wd33c93_nodma || (xs->xs_control & XS_CTL_POLL) || xs->datalen == 0)
 		return (0);
@@ -376,9 +403,7 @@ wd33c93_dmaok(dev, xs)
  * Setup for DMA transfer
  */
 void
-wd33c93_dma_setup(dev, datain)
-	struct wd33c93_softc *dev;
-	int datain;
+wd33c93_dma_setup(struct wd33c93_softc *dev, int datain)
 {
 	struct wd33c93_acb *acb = dev->sc_nexus;
 	int s;
@@ -401,11 +426,10 @@ wd33c93_dma_setup(dev, datain)
  * Save DMA pointers.  Take into account partial transfer. Shut down DMA.
  */
 void
-wd33c93_dma_stop(dev)
-	struct wd33c93_softc *dev;
+wd33c93_dma_stop(struct wd33c93_softc *dev)
 {
 	size_t count;
- 	int asr;
+	int asr;
 
 	/* Wait until WD chip is idle */
 	do {
@@ -414,7 +438,7 @@ wd33c93_dma_stop(dev)
 			printf("wd33c93_dma_stop: asr %02x canceled!\n", asr);
 			break;
 		}
-	} while(asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
+	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
 
 	/* Only need to save pointers if DMA was active */
 	if (dev->sc_flags & SBICF_INDMA) {
@@ -454,10 +478,7 @@ wd33c93_dma_stop(dev)
  * Handle new request from scsipi layer
  */
 void
-wd33c93_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct wd33c93_softc *dev = (void *)chan->chan_adapter->adapt_dev;
 	struct scsipi_xfer *xs;
@@ -568,8 +589,7 @@ wd33c93_scsi_request(chan, req, arg)
  * attempt to start the next available command
  */
 void
-wd33c93_sched(dev)
-	struct wd33c93_softc *dev;
+wd33c93_sched(struct wd33c93_softc *dev)
 {
 	struct scsipi_periph *periph = NULL; /* Gag the compiler */
 	struct wd33c93_acb *acb;
@@ -678,10 +698,7 @@ wd33c93_sched(dev)
 }
 
 void
-wd33c93_scsidone(dev, acb, status)
-	struct wd33c93_softc	*dev;
-	struct wd33c93_acb	*acb;
-	int			status;
+wd33c93_scsidone(struct wd33c93_softc *dev, struct wd33c93_acb *acb, int status)
 {
 	struct scsipi_xfer	*xs = acb->xs;
 	struct wd33c93_tinfo	*ti;
@@ -751,9 +768,7 @@ wd33c93_scsidone(dev, acb, status)
 }
 
 void
-wd33c93_dequeue(dev, acb)
-	struct wd33c93_softc *dev;
-	struct wd33c93_acb *acb;
+wd33c93_dequeue(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 {
 	struct wd33c93_tinfo *ti = &dev->sc_tinfo[acb->xs->xs_periph->periph_target];
 	struct wd33c93_linfo *li;
@@ -784,11 +799,7 @@ wd33c93_dequeue(dev, acb)
 
 
 int
-wd33c93_wait(dev, until, timeo, line)
-	struct wd33c93_softc	*dev;
-	u_char			until;
-	int			timeo;
-	int			line;
+wd33c93_wait(struct wd33c93_softc *dev, u_char until, int timeo, int line)
 {
 	u_char val;
 
@@ -814,10 +825,7 @@ wd33c93_wait(dev, until, timeo, line)
 }
 
 int
-wd33c93_abort(dev, acb, where)
-	struct wd33c93_softc	*dev;
-	struct wd33c93_acb	*acb;
-	char			*where;
+wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb, char *where)
 {
 	u_char csr, asr;
 
@@ -898,9 +906,7 @@ wd33c93_abort(dev, acb, where)
  * If the return value is 0, some error happened.
  */
 u_char
-wd33c93_selectbus(dev, acb)
-	struct wd33c93_softc *dev;
-	struct wd33c93_acb *acb;
+wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	struct wd33c93_tinfo *ti;
@@ -1072,10 +1078,7 @@ wd33c93_selectbus(dev, acb)
  * since we don't allow disconnection for them (yet).
  */
 int
-wd33c93_xfout(dev, len, bp)
-	struct wd33c93_softc	*dev;
-	int			len;
-	void			*bp;
+wd33c93_xfout(struct wd33c93_softc *dev, int len, void *bp)
 {
 	int wait = wd33c93_data_wait;
 	u_char asr, *buf = bp;
@@ -1128,10 +1131,7 @@ wd33c93_xfout(dev, len, bp)
  * returns # bytes left to read
  */
 int
-wd33c93_xfin(dev, len, bp)
-	struct wd33c93_softc	*dev;
-	int			len;
-	void			*bp;
+wd33c93_xfin(struct wd33c93_softc *dev, int len, void *bp)
 {
 	int     wait = wd33c93_data_wait;
 	u_char  *buf = bp;
@@ -1184,8 +1184,7 @@ wd33c93_xfin(dev, len, bp)
  * programmed i/o.
  */
 void
-wd33c93_xferdone(dev)
-	struct wd33c93_softc *dev;
+wd33c93_xferdone(struct wd33c93_softc *dev)
 {
 	u_char	phase, csr;
 	int	s;
@@ -1225,9 +1224,7 @@ wd33c93_xferdone(dev)
 
 
 int
-wd33c93_go(dev, acb)
-	struct wd33c93_softc *dev;
-	struct wd33c93_acb *acb;
+wd33c93_go(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer	*xs = acb->xs;
 	int			i, dmaok;
@@ -1296,8 +1293,7 @@ wd33c93_go(dev, acb)
 
 
 int
-wd33c93_intr(dev)
-	struct wd33c93_softc *dev;
+wd33c93_intr(struct wd33c93_softc *dev)
 {
 	u_char	asr, csr;
 	int	i;
@@ -1341,9 +1337,7 @@ wd33c93_intr(dev)
  * Polled I/O is very processor intensive
  */
 int
-wd33c93_poll(dev, acb)
-	struct wd33c93_softc *dev;
-	struct wd33c93_acb *acb;
+wd33c93_poll(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 {
 	u_char			asr, csr=0;
 	int			i, count;
@@ -1401,9 +1395,7 @@ __verify_msg_format(u_char *p, int len)
  * Handle message_in phase
  */
 int
-wd33c93_msgin_phase(dev, reselect)
-	struct wd33c93_softc *dev;
-	int reselect;
+wd33c93_msgin_phase(struct wd33c93_softc *dev, int reselect)
 {
 	int len;
 	u_char asr, csr, *msg;
@@ -1455,10 +1447,7 @@ wd33c93_msgin_phase(dev, reselect)
 }
 
 
-void wd33c93_msgin(dev, msgaddr, msglen)
-	struct wd33c93_softc *dev;
-	u_char *msgaddr;
-	int msglen;
+void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 {
 	struct wd33c93_acb    *acb = dev->sc_nexus;
 	struct wd33c93_tinfo  *ti = &dev->sc_tinfo[dev->target];
@@ -1691,9 +1680,7 @@ void wd33c93_msgin(dev, msgaddr, msglen)
 }
 
 void
-wd33c93_sched_msgout(dev, msg)
-	struct wd33c93_softc *dev;
-	u_short msg;
+wd33c93_sched_msgout(struct wd33c93_softc *dev, u_short msg)
 {
 	u_char	asr;
 
@@ -1717,8 +1704,7 @@ wd33c93_sched_msgout(dev, msg)
  * Send the highest priority, scheduled message
  */
 void
-wd33c93_msgout(dev)
-	struct wd33c93_softc *dev;
+wd33c93_msgout(struct wd33c93_softc *dev)
 {
 	struct wd33c93_tinfo *ti;
 	struct wd33c93_acb *acb = dev->sc_nexus;
@@ -1805,10 +1791,7 @@ wd33c93_msgout(dev)
  *	SBIC_STATE_ERROR	== error
  */
 int
-wd33c93_nextstate(dev, acb, csr, asr)
-	struct wd33c93_softc	*dev;
-	struct wd33c93_acb	*acb;
-	u_char			csr, asr;
+wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr, u_char asr)
 {
 	SBIC_DEBUG(PHASE, ("next[a=%02x,c=%02x]: ",asr,csr));
 
@@ -2081,12 +2064,7 @@ wd33c93_nextstate(dev, acb, csr, asr)
 
 
 void
-wd33c93_reselect(dev, target, lun, tag_type, tag_id)
-	struct wd33c93_softc *dev;
-	int target;
-	int lun;
-	int tag_type;
-	int tag_id;
+wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, int tag_id)
 {
 
 	struct wd33c93_tinfo *ti;
@@ -2167,9 +2145,7 @@ abort:
 }
 
 void
-wd33c93_update_xfer_mode(sc, target)
-	struct wd33c93_softc *sc;
-	int target;
+wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 {
 	struct wd33c93_tinfo *ti = &sc->sc_tinfo[target];
 	struct scsipi_xfer_mode xm;
@@ -2201,9 +2177,7 @@ wd33c93_update_xfer_mode(sc, target)
  * best we can do is 200ns at 20Mhz, 2 cycles
  */
 int
-wd33c93_div2stp(dev, div)
-	struct wd33c93_softc *dev;
-	int div;
+wd33c93_div2stp(struct wd33c93_softc *dev, int div)
 {
 	unsigned int fs;
 
@@ -2220,9 +2194,7 @@ wd33c93_div2stp(dev, div)
  * WD33c93 divisor value
  */
 int
-wd33c93_stp2div(dev, stp)
-	struct wd33c93_softc *dev;
-	int stp;
+wd33c93_stp2div(struct wd33c93_softc *dev, int stp)
 {
 	unsigned fs, div;
 
@@ -2243,8 +2215,7 @@ wd33c93_stp2div(dev, stp)
 }
 
 void
-wd33c93_timeout(arg)
-	void *arg;
+wd33c93_timeout(void *arg)
 {
 	struct wd33c93_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
@@ -2275,8 +2246,7 @@ wd33c93_timeout(arg)
 
 
 void
-wd33c93_watchdog(arg)
-	void *arg;
+wd33c93_watchdog(void *arg)
 {
 	struct wd33c93_softc *dev = arg;
 	struct wd33c93_tinfo *ti;
@@ -2304,9 +2274,7 @@ wd33c93_watchdog(arg)
 
 #ifdef DEBUG
 void
-wd33c93_hexdump(buf, len)
-	u_char *buf;
-	int len;
+wd33c93_hexdump(u_char *buf, int len)
 {
 	printf("{%d}:", len);
 	while (len--)
@@ -2316,8 +2284,7 @@ wd33c93_hexdump(buf, len)
 
 
 void
-wd33c93_print_csr(csr)
-	u_char csr;
+wd33c93_print_csr(u_char csr)
 {
 	switch (SCSI_PHASE(csr)) {
 	case CMD_PHASE:

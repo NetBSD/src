@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.11 2003/02/28 05:24:56 matt Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.11.2.1 2004/08/03 10:37:31 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/bat.h>
+#include <powerpc/oea/bat.h>
 
 #include <sys/bootblock.h>
 
@@ -52,7 +52,7 @@ struct shared_bbinfo bbinfo = {
 };
 
 #ifndef DEFAULT_ENTRY_POINT
-#define	DEFAULT_ENTRY_POINT	0x600000
+#define	DEFAULT_ENTRY_POINT	0xE00000
 #endif
 
 void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;

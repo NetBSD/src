@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.8 2003/04/01 20:48:27 thorpej Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.8.2.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -40,6 +40,10 @@
  * 2. 712 I/O Subsystem ERS Rev 1.0
  *    Hewlett-Packard, June 17 1992, Dwg No. A-A2263-66510-31
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.8.2.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -120,8 +124,8 @@ struct ie_gsc_softc {
 #define	IEGSC_GECKO	(1 << 0)
 }; 
 
-int	ie_gsc_probe __P((struct device *, struct cfdata *, void *));
-void	ie_gsc_attach __P((struct device *, struct device *, void *));
+int	ie_gsc_probe(struct device *, struct cfdata *, void *);
+void	ie_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ie_gsc, sizeof(struct ie_gsc_softc),
     ie_gsc_probe, ie_gsc_attach, NULL, NULL);
@@ -131,25 +135,23 @@ static int ie_gsc_media[] = {
 };
 #define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))
 
-void ie_gsc_reset __P((struct ie_softc *sc, int what));
-void ie_gsc_attend __P((struct ie_softc *, int));
-void ie_gsc_run __P((struct ie_softc *sc));
-void ie_gsc_port __P((struct ie_softc *sc, u_int));
-u_int16_t ie_gsc_read16 __P((struct ie_softc *sc, int offset));
-void ie_gsc_write16 __P((struct ie_softc *sc, int offset, u_int16_t v));
-void ie_gsc_write24 __P((struct ie_softc *sc, int offset, int addr));
-void ie_gsc_memcopyin __P((struct ie_softc *sc, void *p, int offset, size_t));
-void ie_gsc_memcopyout __P((struct ie_softc *sc, const void *p, int, size_t));
+void ie_gsc_reset(struct ie_softc *, int);
+void ie_gsc_attend(struct ie_softc *, int);
+void ie_gsc_run(struct ie_softc *);
+void ie_gsc_port(struct ie_softc *, u_int);
+uint16_t ie_gsc_read16(struct ie_softc *, int);
+void ie_gsc_write16(struct ie_softc *, int, uint16_t);
+void ie_gsc_write24(struct ie_softc *, int, int);
+void ie_gsc_memcopyin(struct ie_softc *, void *, int, size_t);
+void ie_gsc_memcopyout(struct ie_softc *, const void *, int, size_t);
 
 
 /* Reset the adapter. */
 void
-ie_gsc_reset(sc, what)
-	struct ie_softc *sc;
-	int what;
+ie_gsc_reset(struct ie_softc *sc, int what)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
-	register int i;
+	int i;
 	
 	switch (what) {
 	case CHIP_PROBE:
@@ -192,26 +194,22 @@ ie_gsc_reset(sc, what)
 
 /* Do a channel attention on the adapter. */
 void
-ie_gsc_attend(sc, why)
-	struct ie_softc *sc;
-	int why;
+ie_gsc_attend(struct ie_softc *sc, int why)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+
 	bus_space_write_4(gsc->iot, gsc->ioh, IE_GSC_REG_ATTN, 0);
 }
 
 /* Enable the adapter. */
 void
-ie_gsc_run(sc)
-	struct ie_softc *sc;
+ie_gsc_run(struct ie_softc *sc)
 {
 }
 
 /* Run an i82596 PORT command on the adapter. */
 void
-ie_gsc_port(sc, cmd)
-	struct ie_softc *sc;
-	u_int cmd;
+ie_gsc_port(struct ie_softc *sc, u_int cmd)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
@@ -244,12 +242,11 @@ ie_gsc_port(sc, cmd)
 	}
 }
 
-u_int16_t
-ie_gsc_read16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+uint16_t
+ie_gsc_read16(struct ie_softc *sc, int offset)
 {
-	u_int16_t val;
+	uint16_t val;
+
 	__asm __volatile(
 	"	ldh	0(%1), %0	\n"
 	"	fdc	%%r0(%1)	\n"
@@ -259,11 +256,9 @@ ie_gsc_read16(sc, offset)
 }
 
 void
-ie_gsc_write16(sc, offset, v)
-	struct ie_softc *sc;	
-	int offset;
-	u_int16_t v;
+ie_gsc_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
+
 	__asm __volatile(
 	"	sth	%0, 0(%1)	\n"
 	"	fdc	%%r0(%1)	\n"
@@ -272,10 +267,7 @@ ie_gsc_write16(sc, offset, v)
 }
 
 void
-ie_gsc_write24(sc, offset, addr)
-	struct ie_softc *sc;	
-	int offset;
-	int addr;
+ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 {
 
 	/*
@@ -296,30 +288,22 @@ ie_gsc_write24(sc, offset, addr)
 }
 
 void
-ie_gsc_memcopyin(sc, p, offset, size)
-	struct ie_softc	*sc;
-	void *p;
-	int offset;
-	size_t size;
+ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy (p, (void *)((caddr_t)sc->sc_maddr + offset), size);
+	memcpy(p, (caddr_t)sc->sc_maddr + offset, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETRCV);
 }
 
 void
-ie_gsc_memcopyout(sc, p, offset, size)
-	struct ie_softc	*sc;
-	const void *p;
-	int offset;
-	size_t size;
+ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy ((void *)((caddr_t)sc->sc_maddr + offset), p, size);
+	memcpy((caddr_t)sc->sc_maddr + offset, p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETSND);
@@ -328,10 +312,9 @@ ie_gsc_memcopyout(sc, p, offset, size)
 /*
  * i82596 probe routine
  */
-int i82596_probe __P((struct ie_softc *));
+int i82596_probe(struct ie_softc *);
 int
-i82596_probe(sc)
-	struct ie_softc *sc;
+i82596_probe(struct ie_softc *sc)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 	int i;
@@ -381,12 +364,9 @@ i82596_probe(sc)
 }
 
 int
-ie_gsc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ie_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_LAN &&
@@ -397,17 +377,15 @@ ie_gsc_probe(parent, match, aux)
 }
 
 void
-ie_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	u_int8_t myaddr[ETHER_ADDR_LEN];
-	register struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
-	register struct ie_softc *sc = &gsc->ie;
-	register struct gsc_attach_args *ga = aux;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
+	struct ie_softc *sc = &gsc->ie;
+	struct gsc_attach_args *ga = aux;
 	bus_dma_segment_t seg;
 	int rseg;
 	int rv;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;

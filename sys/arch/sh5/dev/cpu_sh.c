@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_sh.c,v 1.5 2003/03/13 13:44:17 scw Exp $	*/
+/*	$NetBSD: cpu_sh.c,v 1.5.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 CPU Module
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_sh.c,v 1.5.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,9 +123,9 @@ cpu_shattach(struct device *parent, struct device *self, void *args)
 		break;
 	}
 
-	printf("\n%s: %s, Version %d, %d.%02d MHz\n", self->dv_xname, cpustr,
-	    version, bootparams.bp_cpu[0].speed / 1000000,
-	    (bootparams.bp_cpu[0].speed % 1000000) / 10000);
+	printf("\n%s: %s, Version %d, %ld.%02ld MHz\n", self->dv_xname, cpustr,
+	    version, (long)(bootparams.bp_cpu[0].speed / 1000000),
+	    (long)(bootparams.bp_cpu[0].speed % 1000000) / 10000);
 
 	if (sh5_cache_ops.iinfo.type == SH5_CACHE_INFO_TYPE_NONE) {
 		/* Unified cache. */

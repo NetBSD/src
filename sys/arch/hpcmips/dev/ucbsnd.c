@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.14 2002/10/23 09:11:16 jdolecek Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.14.6.1 2004/08/03 10:35:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  * /dev/ucbsnd0 : sampling rate 22.154kHz monoral 16bit straight PCM device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.14.6.1 2004/08/03 10:35:07 skrll Exp $");
 
 #include "opt_use_poll.h"
 

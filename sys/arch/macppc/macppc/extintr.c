@@ -1,11 +1,43 @@
-/*	$NetBSD: extintr.c,v 1.38 2003/06/23 11:01:28 martin Exp $	*/
+/*	$NetBSD: extintr.c,v 1.38.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
- * Copyright (c) 1995 Per Fogelstrom
- * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz and Don Ahn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)isa.c	7.2 (Berkeley) 5/12/91
+ */
+
+/*-
+ * Copyright (c) 1995 Per Fogelstrom
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz and Don Ahn.
@@ -40,6 +72,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.38.2.1 2004/08/03 10:37:30 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -691,7 +726,11 @@ again:
 		splsoftserial();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTSERIAL);
+#else
 		softserial();
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -699,14 +738,22 @@ again:
 		goto again;
 	}
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		int pisr;
+#endif
 		ci->ci_ipending &= ~(1 << SIR_NET);
 		splsoftnet();
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		pisr = netisr;
 		netisr = 0;
+#endif
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTNET);
+#else
 		softnet(pisr);
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -718,7 +765,11 @@ again:
 		splsoftclock();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTCLOCK);
+#else
 		softclock(NULL);
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -811,7 +862,7 @@ openpic_init()
 	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
 	openpic_write(OPENPIC_CONFIG, x);
 
-	/* send all interrupts to cpu 0 */
+	/* send all interrupts to CPU 0 */
 	for (irq = 0; irq < ICU_LEN; irq++)
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 
@@ -891,9 +942,19 @@ init_interrupt()
 	heathrow_FCR = (void *)(obio_base + HEATHROW_FCR_OFFSET);
 
 	memset(type, 0, sizeof(type));
-	chosen = OF_finddevice("/chosen");
-	if (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) == 4)
-		OF_getprop(ictlr, "device_type", type, sizeof(type));
+	ictlr = -1;
+
+	/* 
+	 * Look for The interrupt controller. It used to be referenced
+	 * by the "interrupt-controller" property of device "/chosen",
+	 * but this is not true anymore on newer machines (e.g.: iBook G4)
+	 * Device "mpic" is the interrupt controller on theses machines.
+	 */
+	if (((chosen = OF_finddevice("/chosen")) == -1)  ||
+	    (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) != 4))
+		ictlr = OF_finddevice("mpic");
+
+	OF_getprop(ictlr, "device_type", type, sizeof(type));
 
 	if (strcmp(type, "open-pic") != 0) {
 		/*

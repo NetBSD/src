@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.5 2002/10/02 05:07:44 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.5.6.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.5.6.1 2004/08/03 10:33:46 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -42,12 +45,14 @@
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 #include <machine/bus.h>
+#include <machine/nvram.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+
+extern int console_present;
 
 struct com_mainbus_softc {
 	struct com_softc sc_com;
@@ -66,9 +71,8 @@ com_mainbus_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	/* XXX probe */
 
-	return 1;
+	return (console_present != 0);
 }
 
 struct com_softc *com0; /* XXX */

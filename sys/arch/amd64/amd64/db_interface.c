@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 2003/06/23 11:01:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -283,25 +283,25 @@ db_mach_cpu(addr, have_addr, count, modif)
 	}
 
 	if ((addr < 0) || (addr >= X86_MAXPROCS)) {
-		db_printf("%ld: cpu out of range\n", addr);
+		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}
 	ci = cpu_info[addr];
 	if (ci == NULL) {
-		db_printf("cpu %ld not configured\n", addr);
+		db_printf("CPU %ld not configured\n", addr);
 		return;
 	}
 	if (ci != curcpu()) {
 		if (!(ci->ci_flags & CPUF_PAUSE)) {
-			db_printf("cpu %ld not paused\n", addr);
+			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}
 	}
 	if (ci->ci_ddb_regs == 0) {
-		db_printf("cpu %ld has no saved regs\n", addr);
+		db_printf("CPU %ld has no saved regs\n", addr);
 		return;
 	}
-	db_printf("using cpu %ld", addr);
+	db_printf("using CPU %ld", addr);
 	ddb_regp = ci->ci_ddb_regs;
 }
 

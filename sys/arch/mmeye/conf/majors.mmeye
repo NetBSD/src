@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mmeye,v 1.4 2003/04/25 21:10:56 ragge Exp $
+#	$NetBSD: majors.mmeye,v 1.4.2.1 2004/08/03 10:38:02 skrll Exp $
 #
 # Device majors for mmeye
 #
@@ -16,7 +16,7 @@ device-major	com		char 8			com
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
 device-major	cd		char 15  block 6	cd
-
+device-major	ses		char 16			ses
 device-major	ch		char 17			ch
 device-major	ccd		char 18  block 16	ccd
 device-major	ss		char 19			ss
@@ -44,3 +44,7 @@ device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 19	cgd
 device-major	ksyms		char 55			ksyms
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

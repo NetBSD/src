@@ -1,9 +1,9 @@
-/* $NetBSD: bus_dma.h,v 1.2 2003/01/28 01:08:01 kent Exp $ */
+/* $NetBSD: bus_dma.h,v 1.2.2.1 2004/08/03 10:36:40 skrll Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
  * and should probably be resynced when needed.
- * Darrin B. Jewell <dbj@netbsd.org> Sat Jul 31 06:11:33 UTC 1999
+ * Darrin B. Jewell <dbj@NetBSD.org> Sat Jul 31 06:11:33 UTC 1999
  * original cvs id: NetBSD: bus.h,v 1.29 1999/06/18 04:49:24 cgd Exp
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17 2002/09/27 15:36:32 provos Exp $ */
+/*	$NetBSD: isr.c,v 1.17.6.1 2004/08/03 10:38:38 skrll Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -46,6 +46,9 @@
 /*
  * Link and dispatch interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.6.1 2004/08/03 10:38:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +275,14 @@ isrdispatch_autovec(frame)
 	int handled, ipl;
 	void *arg;
 	static int straycount, unexpected;
+#ifdef INTRLOG
+	static int logptr = 0;
+	static struct {
+		int ipl;
+		u_long intrstat, intrmask;
+		int handled;
+	} log[256];
+#endif
 
 	ipl = (frame->vec >> 2) - ISRAUTOVEC;
 
@@ -283,6 +294,11 @@ isrdispatch_autovec(frame)
 	intrcnt[ipl]++; /* XXXSCW: Will go away soon */
 	next68k_irq_evcnt[ipl].ev_count++;
 	uvmexp.intrs++;
+#ifdef INTRLOG
+	log[logptr].ipl = ipl;
+	log[logptr].intrstat = *intrstat;
+	log[logptr].intrmask = *intrmask;
+#endif
 
 	list = &isr_autovec[ipl];
 	if (list->lh_first == NULL) {
@@ -303,6 +319,21 @@ isrdispatch_autovec(frame)
 		}
 	}
 
+#ifdef INTRLOG
+	log[logptr].handled = handled;
+	logptr = (logptr + 1) & 255;
+	if (!handled && ++straycount >= 10) {
+		int n, m;
+		printf("%d stray interrupts, level %d\n", straycount, ipl);
+		for (n = 20; n; n--) {
+			m = (logptr - n) & 255;
+			printf("%02d: %d %08lx %08lx %d\n", n, log[m].ipl,
+			    log[m].intrstat, log[m].intrmask, log[m].handled);
+		}
+		Debugger();
+		straycount = 0;
+	}
+#else
 	if (handled)
 		straycount = 0;
 	else if (++straycount > 50)
@@ -320,6 +351,7 @@ isrdispatch_autovec(frame)
 				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
 		printf("  *intrmask = 0x%s\n", sbuf);
 	}
+#endif
 }
 
 /*

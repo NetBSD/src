@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2003/03/20 17:45:14 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.8.2.1 2004/08/03 10:40:16 skrll Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,10 +76,6 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 
 define	L_MD_UPTE		offsetof(struct lwp, l_md.md_upte)
 define	L_MD_PCB		offsetof(struct lwp, l_md.md_pcb)
-
-#define	P_MD			offsetof(struct proc, p_md)
-#define	MD_UPTE			offsetof(struct mdproc, md_upte)
-#define	MD_PCB			offsetof(struct mdproc,	md_pcb)
 
 define	SF_SIZE			sizeof(struct switchframe)
 define	SF_SR			offsetof(struct switchframe, sf_sr)

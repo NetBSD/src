@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.19 2002/10/02 05:26:52 thorpej Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.19.6.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.19.6.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +83,7 @@ static bus_addr_t vrbcu_addr(void);
 static bus_addr_t
 vrbcu_addr()
 {
-	static bus_addr_t addr = NULL;
+	static bus_addr_t addr = 0;
 	static struct platid_data addrs[] = {
 		{ &platid_mask_CPU_MIPS_VR_4102, (void *)VR4102_BCU_ADDR },
 		{ &platid_mask_CPU_MIPS_VR_4111, (void *)VR4102_BCU_ADDR },
@@ -92,7 +95,7 @@ vrbcu_addr()
 	};
 	struct platid_data *p;
 
-	if (addr == NULL) {
+	if (addr == 0) {
 		if ((p = platid_search_data(&platid, addrs)) == NULL)
 			panic("%s: can't find VR BCU address", __FUNCTION__);
 		addr = (bus_addr_t)p->data;
@@ -145,7 +148,7 @@ vrbcu_dump_regs()
 	struct vrbcu_softc *sc = the_bcu_sc;
 	int cpuclock = 0, tclock = 0, vtclock = 0, cpuid;
 #if !defined(ONLY_VR4102)
-	int spdreg;
+	int spdreg = 0;	/* XXX gcc doesn't stand a chance of tracking this! */
 #endif
 #ifdef VRBCUDEBUG
 	int reg;
@@ -250,13 +253,13 @@ vrbcu_dump_regs()
 		break;
 	}
 	if (tclock)
-		printf("%s: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
+		printf("%s: CPU %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
 		    sc->sc_dev.dv_xname,
 		    cpuclock/1000000, (cpuclock%1000000)/1000,
 		    tclock/1000000, (tclock%1000000)/1000,
 		    vtclock/1000000, (vtclock%1000000)/1000);
 	else {
-		printf("%s: cpu %d.%03dMHz\n",
+		printf("%s: CPU %d.%03dMHz\n",
 		    sc->sc_dev.dv_xname,
 		    cpuclock/1000000, (cpuclock%1000000)/1000);
 		printf("%s: UNKNOWN BUS CLOCK SPEED:"
@@ -406,7 +409,7 @@ vrbcu_vrip_getcpuminor(void)
 int
 vrbcu_vrip_getcpuclock(void)
 {
-	u_int16_t clksp;
+	u_int16_t clksp = 0;
 	int cpuid, cpuclock;
 
 	cpuid = vrbcu_vrip_getcpuid();

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.240 2003/06/02 04:02:20 gmcgarry Exp $
+#	$NetBSD: files.i386,v 1.240.2.1 2004/08/03 10:35:48 skrll Exp $
 #
 # new style config file for i386 architecture
 #
@@ -31,9 +31,6 @@ defflag			MATH_EMULATE
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
 
-# Speed hack; make NOPs dummies (might break on some machines)
-defflag			DUMMY_NOPS
-
 # X server support in console drivers
 defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
@@ -64,13 +61,16 @@ defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT
 defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
 
+# Enhanced SpeedStep
+defflag			ENHANCED_SPEEDSTEP
+
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
-file	arch/i386/i386/disksubr.c	disk
+file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -100,7 +100,7 @@ file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
 
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
-file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
+file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish & !i386_cpu
 
 #
 # Machine-independent SCSI drivers
@@ -162,8 +162,15 @@ file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defparam		PCI_CONF_MODE
-file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
+
+device 	aapic
+attach 	aapic at pci
+file 	arch/x86/pci/aapic.c			aapic
+
+# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
+include	"dev/pci/files.ath"
+object	/athhal-elf.o	ath
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
@@ -185,7 +192,12 @@ file	arch/i386/pci/pceb.c		pceb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib
+file	arch/i386/pci/pcib.c		pcib | ichlpcib
+
+# PCI-LPC bridges
+device	ichlpcib: isabus, sysmon_wdog
+attach	ichlpcib at pci
+file	arch/i386/pci/ichlpcib.c	ichlpcib
 
 # PCI-MCA bridges
 device	pcmb: mcabus
@@ -197,27 +209,14 @@ attach	p64h2apic at pci
 file	arch/i386/pci/p64h2apic.c	p64h2apic
 
 
-
-# Game adapter (joystick)
-file	arch/i386/isa/joy_timer.c	joy
-
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 
 include	"dev/isa/files.isa"
 
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-attach	lpt at puc with lpt_puc
-file	dev/pci/lpt_puc.c	lpt_puc
-
 # PC clock
 file	arch/i386/isa/clock.c		isa
-file	dev/clock_subr.c		isa
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
@@ -229,8 +228,8 @@ file	arch/i386/isa/npx_isa.c		npx_isa
 # PC console support a la "pccons"
 device	pc: tty
 attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
+device	pcconskbd: pckbport_machdep_cnattach
+attach	pcconskbd at pckbport
 file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice: Logitech-style and Microsoft-style
@@ -244,7 +243,7 @@ file	arch/i386/isa/mms.c		mms
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-include	"dev/pckbc/files.pckbc"
+include	"dev/pckbport/files.pckbport"
 
 device	sysbeep
 attach	sysbeep at pcppi
@@ -322,6 +321,7 @@ file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
+file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
@@ -334,6 +334,7 @@ include	"compat/mach/files.mach"
 file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
 file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
 file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
+file	arch/i386/i386/darwin_commpage_machdep.S compat_darwin
 file	arch/i386/i386/macho_machdep.c		exec_macho
 
 # DARWIN binary compatibility (COMPAT_DARWIN)
@@ -468,5 +469,9 @@ file	arch/i386/bios/vesa_raster8.c	vesarasterviii
 device vesatext
 attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
+
+# Enhanced SpeedStep
+file	arch/i386/i386/est.c		enhanced_speedstep
+defflag	opt_est.h	EST_FREQ_USERWRITE
 
 include "arch/i386/conf/majors.i386"

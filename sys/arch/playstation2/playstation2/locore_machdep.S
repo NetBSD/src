@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3 2001/11/23 16:09:11 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3.18.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 	
-#include "opt_kloader_kernel_path.h"
+#include "opt_kloader.h"
 
 #include <mips/asm.h>
 #include <mips/cache_r5900.h>	
@@ -121,28 +121,28 @@ NESTED_NOPROFILE(spllowersofthigh, CALLFRAME_SIZ, ra)
 	addu	sp, sp, CALLFRAME_SIZ
 END(spllowersofthigh)
 
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
 /*
- * kloader_boot(vaddr_t entry_addr, struct kloader_page_tag *p)	
+ * kloader_playstation2_boot(struct kloader_bootinfo *,
+ *		struct kloader_page_tag *)	
  *	must be PIC.
  */
-EXPORT(kloader_boot_start)	
-LEAF_NOPROFILE(kloader_boot)
-	di			# disable cache
+LEAF_NOPROFILE(kloader_playstation2_boot)
+	lui	t0, 0x1040	# Cu0 | BEV
+	mtc0	t0, $12
+	sync.p
 	/*
 	 * 1. load kernel image.
 	 */
 	move	t6, a1		# p
-1:
-	beqz	t6, 3f
+1:	beqz	t6, 3f
 	 move	t7, t6
 	lw	t6, 0(t7)	# p = next
 	lw	t0, 4(t7)	# src
 	lw	t4, 8(t7)	# dst
 	lw	t2, 12(t7)	# sz
 	addu	t5, t4, t2	# dst + sz
-2:
-	lw	t3, 0(t0)	# copy
+2:	lw	t3, 0(t0)	# copy
 	sw	t3, 0(t4)
 	addiu	t4, t4, 4
 	addiu	t0, t0, 4
@@ -150,18 +150,15 @@ LEAF_NOPROFILE(kloader_boot)
 	 nop
 	b	1b
 	 nop
-3:
-	nop
+3:	nop
 
 	/* 
 	 * 2. Cache flush
 	 */
-	li	t1, CACHE_R5900_SIZE_I
-	li	t2, CACHE_R5900_SIZE_D
-
 	/*
 	 * Flush the data cache.
 	 */
+	li	t2, CACHE_R5900_SIZE_D
 	li	t0, MIPS_KSEG0_START
 	srl	t2, 1		# Two way set assoc
 	addu	t1, t0, t2	# End address
@@ -187,6 +184,7 @@ LEAF_NOPROFILE(kloader_boot)
 	/*
 	 * Flush the instruction cache.
 	 */
+	li	t1, CACHE_R5900_SIZE_I
 	li	t0, MIPS_KSEG0_START
 	srl	t1, 1			# Two way set assoc
 	addu	t1, t0, t1		# End address
@@ -214,13 +212,17 @@ LEAF_NOPROFILE(kloader_boot)
 	/* 
 	 * 3. jump to kernel entry 
 	 */
-	jr	a0
+	lw	a0, 0(a0)
+1:	jr	a0
+ 	 move	sp, a0
 	nop
+	nop
+	nop
+	b	1b
+	 nop
 	/* NOTREACHED */
-END(kloader_boot)
-EXPORT(kloader_boot_end)	
-	
-#endif /* KLOADER_KERNEL_PATH */
+END(kloader_playstation2_boot)
+#endif /* KLOADER */
 
 /*
  * Unused. but for vmstat(8)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.6 2003/01/01 01:50:32 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.6.2.1 2004/08/03 10:38:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -35,6 +35,9 @@
  *  T.Horiuichi
  *  Brains Corp. 1998.8.25
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.6.2.1 2004/08/03 10:38:02 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -865,9 +868,10 @@ mmeyepcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offse
 
 	/* XXX wtf is this doing here? */
 
-	printf(" port 0x%lx", (u_long) ioaddr);
+	printf("%s: port 0x%lx", h->sc->dev.dv_xname, (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
+	printf("\n");
 
 	h->io[win].addr = ioaddr;
 	h->io[win].size = size;

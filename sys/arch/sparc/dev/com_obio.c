@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.14 2003/06/14 17:01:15 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.14.2.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -70,6 +66,9 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.14.2.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,13 +121,14 @@ com_obio_match(parent, cf, aux)
 	int tadpole = 0;
 	int need_probe = 0;
 	int rv = 0;
-	u_int8_t auxregval;
+	uint8_t auxregval = 0;
 
 	if (uoba->uoba_isobio4 != 0) {
 		return (0);
 	}
 
-	/* Tadpole 3GX/3GS uses "modem" for a 16450 port
+	/*
+	 * Tadpole 3GX/3GS uses "modem" for a 16450 port
 	 * (We need to enable it before probing)
 	 */
 	if (strcmp("modem", sa->sa_name) == 0) {
@@ -139,7 +139,8 @@ com_obio_match(parent, cf, aux)
 		need_probe = 1;
 	}
 
-	/* Sun JavaStation 1 uses "su" for a 16550 port
+	/*
+	 * Sun JavaStation 1 uses "su" for a 16550 port
 	 */
 	if (strcmp("su", sa->sa_name) == 0) {
 		need_probe = 1;

@@ -1,9 +1,40 @@
-/*	$NetBSD: clock.c,v 1.2 2003/06/23 11:01:04 martin Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz and Don Ahn.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)clock.c	7.2 (Berkeley) 5/12/91
+ */
+/*-
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz and Don Ahn.
@@ -90,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/06/23 11:01:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2.2.1 2004/08/03 10:31:36 skrll Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -393,7 +424,7 @@ startrtclock()
 int
 clockintr(void *arg, struct intrframe frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 	
@@ -754,7 +785,7 @@ inittodr(base)
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	struct cpu_info *ci = curcpu();
 #endif
 	/*
@@ -819,7 +850,7 @@ inittodr(base)
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	if (ci->ci_feature_flags & CPUID_TSC) {
 		cc_microset_time = time;
 		cc_microset(ci);

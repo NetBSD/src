@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2002/04/28 17:10:35 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.12.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ extern struct intc_intrhand __intc_intrhand[];
 void intc_init(void);
 void *intc_intr_establish(int, int, int, int (*)(void *), void *);
 void intc_intr_disestablish(void *);
+void intc_intr_enable(int);
+void intc_intr_disable(int);
 void intc_intr(int, int, int);
 
 /*

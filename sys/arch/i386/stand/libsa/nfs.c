@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.6 2003/03/19 17:27:43 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.6.2.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -101,7 +101,8 @@ struct nfs_iodesc {
 };
 
 int	nfs_getrootfh __P((struct iodesc *, char *, u_char *));
-int	nfs_lookupfh __P((struct nfs_iodesc *, char *, struct nfs_iodesc *));
+int	nfs_lookupfh __P((struct nfs_iodesc *, const char *, int,
+	    struct nfs_iodesc *));
 #ifndef NFS_NOSYMLINK
 int	nfs_readlink __P((struct nfs_iodesc *, char *));
 #endif
@@ -117,7 +118,7 @@ nfs_getrootfh(d, path, fhp)
 	char *path;
 	u_char *fhp;
 {
-	int len;
+	size_t len;
 	struct args {
 		n_long	len;
 		char	path[FNAME_SIZE];
@@ -134,7 +135,7 @@ nfs_getrootfh(d, path, fhp)
 		n_long	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -171,12 +172,13 @@ nfs_getrootfh(d, path, fhp)
  * Return zero or error number.
  */
 int
-nfs_lookupfh(d, name, newfd)
+nfs_lookupfh(d, name, len, newfd)
 	struct nfs_iodesc *d;
-	char *name;
+	const char *name;
+	int len;
 	struct nfs_iodesc *newfd;
 {
-	int len, rlen;
+	int rlen;
 	struct args {
 		u_char	fh[NFS_FHSIZE];
 		n_long	len;
@@ -207,8 +209,7 @@ nfs_lookupfh(d, name, newfd)
 
 	memset(args, 0, sizeof(*args));
 	memcpy(args->fh, d->fh, sizeof(args->fh));
-	len = strlen(name);
-	if (len > sizeof(args->name))
+	if ((size_t)len > sizeof(args->name))
 		len = sizeof(args->name);
 	memcpy(args->name, name, len);
 	args->len = htonl(len);
@@ -300,7 +301,7 @@ nfs_readdata(d, off, addr, len)
 		n_long	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	long x;
 	int hlen, rlen;
 
@@ -347,17 +348,17 @@ nfs_readdata(d, off, addr, len)
  */
 int
 nfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	static struct nfs_iodesc nfs_root_node;
 	struct iodesc *desc;
 	struct nfs_iodesc *currfd;
-	char *cp;
+	const char *cp;
 #ifndef NFS_NOSYMLINK
 	struct nfs_iodesc *newfd;
 	struct nfsv2_fattrs *fa;
-	char *ncp;
+	const char *ncp;
 	int c;
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
@@ -431,12 +432,10 @@ nfs_open(path, f)
 				}
 				cp++;
 			}
-			*cp = '\0';
 		}
 		
 		/* lookup a file handle */
-		error = nfs_lookupfh(currfd, ncp, newfd);
-		*cp = c;
+		error = nfs_lookupfh(currfd, ncp, cp - ncp, newfd);
 		if (error)
 			goto out;
 		
@@ -505,7 +504,7 @@ out:
 
 	/* XXX: Check for empty path here? */
 
-        error = nfs_lookupfh(&nfs_root_node, cp, currfd);
+        error = nfs_lookupfh(&nfs_root_node, cp, strlen(cp), currfd);
 #endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;

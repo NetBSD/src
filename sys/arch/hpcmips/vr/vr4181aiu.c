@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.1 2003/05/01 07:02:04 igy Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -359,18 +362,6 @@ vr4181aiuread(dev_t dev, struct uio *uio, int flag)
 
 int
 vr4181aiuwrite(dev_t dev, struct uio *uio, int flag)
-{
-	return 0;
-}
-
-int
-vr4181aiupoll(dev_t dev, int events, struct proc *p)
-{
-	return 0;
-}
-
-int
-vr4181aiuioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	return 0;
 }

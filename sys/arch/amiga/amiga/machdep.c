@@ -1,9 +1,44 @@
-/*	$NetBSD: machdep.c,v 1.184.2.1 2003/07/02 15:25:14 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184.2.2 2004/08/03 10:31:37 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: machdep.c 1.63 91/04/24$
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -50,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.1 2003/07/02 15:25:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.2 2004/08/03 10:31:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,20 +256,18 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()
 {
-	caddr_t v;
-	u_int i, base, residual;
 	char pbuf[9];
+	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	paddr_t minaddr, maxaddr;
-	paddr_t size = 0;
+	vaddr_t minaddr, maxaddr;
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -265,59 +298,8 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	size = (vm_size_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != size)
-		panic("startup: table size inconsistency");
 
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t) buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
+	minaddr = 0;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -344,8 +326,6 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * display memory configuration passed from loadbsd
@@ -366,15 +346,6 @@ cpu_startup()
 
 #ifdef DEBUG_KERNEL_START
 	printf("survived initcpu...\n");
-#endif
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-
-#ifdef DEBUG_KERNEL_START
-	printf("survived bufinit...\n");
 #endif
 }
 
@@ -507,34 +478,20 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return(ENOTDIR);               /* overloaded */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return(sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof(consdev)));
-	default:
-		return(EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 static int waittime = -1;

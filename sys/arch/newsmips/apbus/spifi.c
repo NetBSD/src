@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.10 2003/05/03 18:10:54 wiz Exp $	*/
+/*	$NetBSD: spifi.c,v 1.10.2.1 2004/08/03 10:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.10.2.1 2004/08/03 10:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

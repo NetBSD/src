@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: userret.h,v 1.3.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,7 +69,9 @@
  *
  */
 
-static __inline void userret __P((register struct lwp *));
+#include <sys/userret.h>
+
+static __inline void userret(register struct lwp *);
 
 /*
  * Define the code needed before returning to user mode, for
@@ -83,21 +81,9 @@ static __inline void
 userret(l)
 	register struct lwp *l;
 {
-	int sig;
 
-	struct proc *p = l->l_proc;
-
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

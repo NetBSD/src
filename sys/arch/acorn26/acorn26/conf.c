@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $ */
+/* $NetBSD: conf.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * conf.c -- Device switch tables and related gumf.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: conf.c,v 1.6 2002/10/26 13:50:18 jdolecek Exp $");
-
 #include <sys/conf.h>
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.12 2003/02/24 00:49:43 atatat Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.12.2.1 2004/08/03 10:37:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -30,6 +30,9 @@
 /*
  * macfb compatibility with legacy grf devices
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.12.2.1 2004/08/03 10:37:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

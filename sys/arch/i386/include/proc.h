@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.20 2003/06/23 12:56:07 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.20.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -54,19 +50,16 @@ struct mdlwp {
 };
 
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define	MDL_USEDFPU	0x0001	/* has used the FPU */
 
 struct mdproc {
-					/* Syscall handling function */
 	int	md_flags;
-	void	(*md_syscall) __P((struct trapframe));
+	void	(*md_syscall)(struct trapframe *);
+					/* Syscall handling function */
 	__volatile int md_astpending;	/* AST pending for this process */
 };
 
-#endif /* _I386_PROC_H_ */
-
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
 
 /* kernel stack params */
@@ -77,3 +70,5 @@ struct mdproc {
 #define	KSTACK_SIZE	\
 	(USPACE - PAGE_SIZE*2)
 #endif
+
+#endif /* _I386_PROC_H_ */

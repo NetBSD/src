@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.55 2003/06/14 18:57:38 uwe Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.55.2.1 2004/08/03 10:38:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -38,6 +38,9 @@
  *
  * Created      : 24/11/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.55.2.1 2004/08/03 10:38:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -432,7 +435,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/*
 	 * We are currently running with the MMU enabled and the

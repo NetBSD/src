@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/03 11:03:43 scw Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2004/08/03 10:38:16 skrll Exp $
 
 SRCS=   boot.c conf.c devopen.c
-PROG=	boot.tmp
+PROG=	boot.elf
 LIBS=	${LIBSA}
 DPADD=	${LIBS}
 CLEANFILES+= boot.bin
 
 boot.bin: ${PROG}
-	${OBJCOPY} -O binary ${.OBJDIR}/boot.tmp $@
+	${OBJCOPY} -O binary ${.OBJDIR}/boot.elf $@
 
 .include "../Makefile.booters"
 

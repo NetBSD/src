@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.70 2002/07/09 12:55:47 simonb Exp $
+#	$NetBSD: Makefile.pc532,v 1.70.6.1 2004/08/03 10:38:46 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -50,14 +50,22 @@ MD_SFILES=	${PC532}/pc532/locore.s
 # egcs-1.1.2 bug fix; see doc/HACKS - egcs-pc532-ip6_mroute
 CC_OPT1=	${NORMAL_C:C/-O[0-9]+/-O1/}
 
+# gcc-3.3.2 bug fix; see doc/HACKS - gcc-pc532-duffs_device
+CC_NOERROR=	${NORMAL_C:C/-Werror/-Wno-error/}
+
 locore.o: ${PC532}/pc532/locore.s assym.h
 	${NORMAL_S}
 
 ##
 ## (5) link settings
 ##
-LINKFORMAT=	-z
-TEXTADDR?=	E0002000
+CHECK!= ${LD} --version 2>&1; :
+.if ${CHECK:Minvalid} == ""
+TEXTADDR?=      E0002020
+.else
+LINKFORMAT=     -z
+TEXTADDR?=      E0002000
+.endif
 
 ##
 ## (6) port specific target dependencies
@@ -86,3 +94,8 @@ TEXTADDR?=	E0002000
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

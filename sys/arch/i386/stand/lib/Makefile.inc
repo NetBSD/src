@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/11/22 00:04:55 dillo Exp $
+#	$NetBSD: Makefile.inc,v 1.11.18.1 2004/08/03 10:36:19 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -44,7 +44,7 @@ cleandiri386lib:	.NOTMAIN
 	@echo cleandiring the i386 library objects
 	@if [ -d "${I386DST}" ]; then ${I386MAKE} cleandir; fi
 
-depend:			.NOTMAIN dependi386lib
+dependall depend:	.NOTMAIN dependi386lib
 dependi386lib:		.NOTMAIN __always_make_i386lib
 	@echo depending the i386 library objects
 	@${I386MAKE} depend

@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.5 2002/10/02 05:17:47 thorpej Exp $	*/
+/*	$NetBSD: asp.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -39,6 +39,9 @@
  *    Hewlett-Packard
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +135,8 @@ struct asp_softc {
 	volatile struct asp_trs *sc_trs;
 };
 
-int	aspmatch __P((struct device *, struct cfdata *, void *));
-void	aspattach __P((struct device *, struct device *, void *));
+int	aspmatch(struct device *, struct cfdata *, void *);
+void	aspattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(asp, sizeof(struct asp_softc),
     aspmatch, aspattach, NULL, NULL);
@@ -141,7 +144,7 @@ CFATTACH_DECL(asp, sizeof(struct asp_softc),
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.
  */
-static void asp_fix_args __P((void *, struct gsc_attach_args *)); 
+static void asp_fix_args(void *, struct gsc_attach_args *);
 static void
 asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 {
@@ -164,10 +167,7 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 }      
 
 int
-aspmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+aspmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -189,17 +189,14 @@ aspmatch(parent, cf, aux)
 }
 
 void
-aspattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+aspattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct confargs *ca = aux;
-	register struct asp_softc *sc = (struct asp_softc *)self;
+	struct confargs *ca = aux;
+	struct asp_softc *sc = (struct asp_softc *)self;
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
-	register u_int32_t irr;
-	register int s;
+	uint32_t irr;
+	int s;
 
 	/*
 	 * Map the ASP interrupt registers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6040.c,v 1.2 2003/01/21 22:01:57 jdolecek Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.2.2.1 2004/08/03 10:39:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.2.2.1 2004/08/03 10:39:48 skrll Exp $");
 
 #include <sys/param.h>
 

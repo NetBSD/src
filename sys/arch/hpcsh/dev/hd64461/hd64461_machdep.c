@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461_machdep.c,v 1.1 2002/03/03 14:34:02 uch Exp $	*/
+/*	$NetBSD: hd64461_machdep.c,v 1.1.18.1 2004/08/03 10:35:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd64461_machdep.c,v 1.1.18.1 2004/08/03 10:35:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

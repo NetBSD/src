@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.5 2003/04/23 03:45:07 uwe Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.5.2.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.5.2.1 2004/08/03 10:34:55 skrll Exp $");
+
 #include <stdio.h>
 #include <strings.h>
 #include <unistd.h>

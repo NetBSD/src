@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.43 2000/03/19 07:44:58 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.43.28.1 2004/08/03 10:37:05 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.43.28.1 2004/08/03 10:37:05 skrll Exp $");
 
 #include "opt_adb.h"
 

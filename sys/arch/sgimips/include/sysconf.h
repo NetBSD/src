@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.3 2001/11/11 17:21:40 rafal Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.3.18.1 2004/08/03 10:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,17 +58,27 @@ struct platform {
 	 * Platform Specific Function Hooks
 	 *	bus_reset	-	clear memory error condition
 	 *	cons_init	-	console initialization
-	 *	iointr		-	I/O interrupt handler
 	 *	intr_establish	-	establish interrupt handler
-	 *	intr_disestablish -	disestablish interrupt handler
 	 *	clkread		-	interporate HZ with hi-resolution timer
+	 *	watchdog_reset	-	reset watchdog timer
+	 *	watchdog_disable-	disable watchdog timer
+	 *	watchdog_enable	-	enable watchdog timer
+	 *	intr0-intr5	-	CPU interrupt handler
 	 */
 
 	void	(*bus_reset)(void);
 	void	(*cons_init)(void);
-	void	(*iointr)(unsigned, unsigned, unsigned, unsigned);
-	void	(*intr_establish)(int , int, int (*)(void *), void *);
-	unsigned long (*clkread) __P((void));
+	void	*(*intr_establish)(int , int, int (*)(void *), void *);
+	unsigned long (*clkread) (void);
+	void	(*watchdog_reset)(void);
+	void	(*watchdog_disable)(void);
+	void	(*watchdog_enable)(void);
+	void	(*intr0)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr1)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr2)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr3)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr4)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr5)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 };
 
 extern struct platform platform;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.8 2001/12/09 23:05:58 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.8.16.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
@@ -86,10 +86,16 @@
 #define DT_MIPS_HIPAGENO	0x70000014
 #define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
 
-/*
- * Tell the kernel ELF exec code not to try relocating the interpreter
- * (ld.so) for dynamically-linked ELF binaries.
- */
 #ifdef _KERNEL
-#define ELF_INTERP_NON_RELOCATABLE
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
 #endif
+#ifdef COMPAT_16
+/*
+ * Up to 1.6, the ELF dynamic loader (ld.elf_so) was not relocatable.
+ * Tell the kernel ELF exec code not to try relocating the interpreter
+ * for dynamically-linked ELF binaries.
+ */
+#define ELF_INTERP_NON_RELOCATABLE
+#endif /* COMPAT_16 */
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.2 2001/11/14 18:26:23 thorpej Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.2.20.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.2.20.1 2004/08/03 10:37:47 skrll Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2003/06/23 11:01:15 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.1 2004/08/03 10:34:54 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -112,10 +112,31 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
  */
 
 /*
+ * COPR/SFUs
+ */
+#define	HPPA_FPUVER(w)	(((w) & 0x003ff800) >> 11)
+#define	HPPA_FPU_OP(w)	((w) >> 26)
+#define	HPPA_FPU_UNMPL	0x01	/* exception reg, the rest is << 1 */
+#define	HPPA_FPU_ILL	0x80	/* software-only */
+#define	HPPA_FPU_I	0x01
+#define	HPPA_FPU_U	0x02
+#define	HPPA_FPU_O	0x04
+#define	HPPA_FPU_Z	0x08
+#define	HPPA_FPU_V	0x10
+#define	HPPA_FPU_D	0x20
+#define	HPPA_FPU_T	0x40
+#define	HPPA_FPU_XMASK	0x7f
+#define	HPPA_FPU_T_POS	25
+#define	HPPA_FPU_RM	0x00000600
+#define	HPPA_FPU_CQ	0x00fff800
+#define	HPPA_FPU_C	0x04000000
+#define	HPPA_FPU_INIT	(0)
+#define	HPPA_FPU_FORK(s) ((s) & ~((uint64_t)(HPPA_FPU_XMASK) << 32))
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#undef	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000
@@ -136,7 +157,9 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
 #ifndef _LOCORE
 #ifdef _KERNEL
 
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#endif
 
 /*
  * External definitions unique to PA-RISC cpu support.
@@ -184,8 +207,9 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+
+#define cpu_proc_fork(p1, p2)
 
 #define MD_CACHE_FLUSH 0
 #define MD_CACHE_PURGE 1
@@ -205,21 +229,21 @@ kvtop (const caddr_t va)
 	return ret;
 }
 
-extern int (*cpu_desidhash) __P((void));
+extern int (*cpu_desidhash)(void);
 
-void	delay __P((u_int us));
-void	hppa_init __P((paddr_t start));
-void	trap __P((int type, struct trapframe *frame));
-int	dma_cachectl __P((caddr_t p, int size));
-int	spcopy __P((pa_space_t ssp, const void *src,
-		    pa_space_t dsp, void *dst, size_t size));
-int	spstrcpy __P((pa_space_t ssp, const void *src,
-		      pa_space_t dsp, void *dst, size_t size, size_t *rsize));
-int	copy_on_fault __P((void));
-void	switch_trampoline __P((void));
-void	switch_exit __P((struct proc *p));
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((void));
+void	delay(u_int);
+void	hppa_init(paddr_t);
+void	trap(int, struct trapframe *);
+void	hppa_ras(struct lwp *);
+int	dma_cachectl(caddr_t, int);
+int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
+int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
+		 size_t *);
+int	copy_on_fault(void);
+void	switch_trampoline(void);
+void	switch_exit(struct lwp *, void (*)(struct lwp *));
+int	cpu_dumpsize(void);
+int	cpu_dump(void);
 #endif
 
 /*

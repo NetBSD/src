@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.2 2002/10/05 17:01:51 chs Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.2.8.1 2004/08/03 10:32:50 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -63,6 +63,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.2.8.1 2004/08/03 10:32:50 skrll Exp $");
+
 #include <sys/param.h>
 
 #include <machine/stdarg.h>

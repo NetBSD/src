@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10 2003/01/28 22:19:27 wiz Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.2.1 2004/08/03 10:40:34 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -100,6 +100,9 @@
 **  INCLUDE FILES
 **
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.10.2.1 2004/08/03 10:40:34 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -595,7 +598,7 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 */
 
 /* configure routines */
-int     scrprobe    __P((struct device *, void *, void *));
+int     scrprobe    __P((struct device *, struct cfdata *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
 static void   initStates           __P((struct scr_softc * sc)); 
@@ -651,7 +654,7 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 CFATTACH_DECL(scr, sizeof(struct scr_softc),
-    (cfmatch_t)scrprobe, scrattach, NULL, NULL);
+    scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
 
@@ -700,7 +703,7 @@ const struct cdevsw scr_cdevsw = {
 */
 int scrprobe(parent, match, aux)
     struct  device  *parent;
-    void            *match;
+    struct cfdata   *match;
     void            *aux;
 {
     struct isa_attach_args  *ia = aux;
@@ -2176,7 +2179,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     /* decide if we have all data */
                     if (sc->dataCount >= sc->dataMax)
                     {
-                        KERN_DEBUG (scrdebug, T0_RECV_SM_DEBUG_INFO,("\t\tt0RecvSM: changing state to t0rsRecvSW1\n",sc->dataByte));
+                        KERN_DEBUG (scrdebug, T0_RECV_SM_DEBUG_INFO,("\t\tt0RecvSM: changing state to t0rsRecvSW1\n"));
                         ASSERT(sc->dataCount == sc->dataMax);
                         sc->t0RecvS = t0rsRecvSW1;
                     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.1 2003/05/23 00:57:26 ichiro Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1 2003/05/23 00:57:26 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1 2003/05/23 00:57:26 ichiro Exp 
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/device.h>
+
+#include <dev/clock_subr.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -71,10 +73,10 @@ struct ixpclk_softc {
         bus_space_handle_t      sc_ioh;
 };
 
-#define	COUNTS_PER_SEC		66000000	/* 66MHz */
-#define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
+#define	COUNTS_PER_SEC		66666600	/* 66MHz */
+#define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
-static struct ixpclk_softc *ixpclk_sc = NULL;
+static struct ixpclk_softc *ixpclk_sc;
 
 CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 		ixpclk_match, ixpclk_attach, NULL, NULL);
@@ -82,6 +84,9 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
 						  (sc)->sc_ioh,		\
 						  IXP425_OST_TIM0))
+
+#define GET_TS_VALUE(sc)	(*(volatile u_int32_t *) \
+				  (IXP425_TIMER_VBASE + IXP425_OST_TS))
 
 static int
 ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
@@ -97,17 +102,16 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	ixpclk_sc = sc;
+
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
 
-	/* using first timer for system ticks */
-	if (ixpclk_sc == NULL)
-		ixpclk_sc = sc;
 	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
 
-	 aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
+	aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
 }
 
 /*
@@ -254,32 +258,47 @@ microtime(struct timeval *tvp)
 void
 delay(u_int n)
 {
-	struct ixpclk_softc* sc = ixpclk_sc;
-	uint32_t cur, last, delta, usecs;
+	u_int32_t first, last;
+	int usecs;
+
+	if (n == 0)
+		return;
 
 	/*
-	 * This works by polling the timer and counting the
-	 * number of microseconds that go by.
+	 * Clamp the timeout at a maximum value (about 32 seconds with
+	 * a 66MHz clock). *Nobody* should be delay()ing for anywhere
+	 * near that length of time and if they are, they should be hung
+	 * out to dry.
 	 */
-	last = GET_TIMER_VALUE(sc);
-	delta = usecs = 0;
+	if (n >= (0x80000000U / COUNTS_PER_USEC))
+		usecs = (0x80000000U / COUNTS_PER_USEC) - 1;
+	else
+		usecs = n * COUNTS_PER_USEC;
 
-	while (n > usecs) {
-		cur = GET_TIMER_VALUE(sc);
+	/* Note: Timestamp timer counts *up*, unlike the other timers */
+	first = GET_TS_VALUE();
 
-		/* Check to see if the timer has wrapped around. */
-		if (last < cur)
-			delta += (last + (counts_per_hz - cur));
-		else
-			delta += (last - cur);
-
-		last = cur;
-
-		if (delta >= COUNTS_PER_USEC) {
-			usecs += delta / COUNTS_PER_USEC;
-			delta %= COUNTS_PER_USEC;
-		}
+	while (usecs > 0) {
+		last = GET_TS_VALUE();
+		usecs -= (int)(last - first);
+		first = last;
 	}
+}
+
+todr_chip_handle_t todr_handle;
+
+/*
+ * todr_attach:
+ *
+ *	Set the specified time-of-day register as the system real-time clock.
+ */
+void
+todr_attach(todr_chip_handle_t todr)
+{
+
+	if (todr_handle)
+		panic("todr_attach: rtc already configured");
+	todr_handle = todr;
 }
 
 /*
@@ -287,12 +306,53 @@ delay(u_int n)
  *
  *	Initialize time from the time-of-day register.
  */
+#define	MINYEAR		2003	/* minimum plausible year */
 void
 inittodr(time_t base)
 {
+	time_t deltat;
+	int badbase;
 
-	time.tv_sec = base;
-	time.tv_usec = 0;
+	if (base < (MINYEAR - 1970) * SECYR) {
+		printf("WARNING: preposterous time in file system");
+		/* read the system clock anyway */
+		base = (MINYEAR - 1970) * SECYR;
+		badbase = 1;
+	} else
+		badbase = 0;
+
+	if (todr_handle == NULL ||
+	    todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the TODR.
+		 */
+		time.tv_sec = base;
+		time.tv_usec = 0;
+		if (todr_handle != NULL && !badbase) {
+			printf("WARNING: preposterous clock chip time\n");
+			resettodr();
+		}
+		goto bad;
+	}
+
+	if (!badbase) {
+		/*
+		 * See if we tained/lost two or more days; if
+		 * so, assume something is amiss.
+		 */
+		deltat = time.tv_sec - base;
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat < 2 * SECDAY)
+			return;		/* all is well */
+		printf("WARNING: clock %s %ld days\n",
+		    time.tv_sec < base ? "lost" : "gained",
+		    (long)deltat / SECDAY);
+	}
+ bad:
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
 /*
@@ -303,6 +363,13 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+
+	if (time.tv_sec == 0)
+		return;
+
+	if (todr_handle != NULL &&
+	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: failed to set time\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2003/06/16 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,6 +41,9 @@
  *
  * Created      : 08/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $");
 
 #include "opt_md.h"
 

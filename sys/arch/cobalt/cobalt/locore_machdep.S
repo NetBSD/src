@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3 2000/03/31 14:51:49 soren Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3.30.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -37,12 +37,7 @@
 	.globl _C_LABEL(eintrnames)
 
 _C_LABEL(intrnames):
-	.asciiz	"softclock"
-	.asciiz	"softnet"
-
 _C_LABEL(eintrnames):
-	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0
 _C_LABEL(eintrcnt):
 	.word	0

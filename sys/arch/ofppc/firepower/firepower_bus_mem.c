@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_bus_mem.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: firepower_bus_mem.c,v 1.1.20.1 2004/08/03 10:38:40 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower_bus_mem.c,v 1.1.20.1 2004/08/03 10:38:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

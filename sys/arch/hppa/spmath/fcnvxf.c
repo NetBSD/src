@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvxf.c,v 1.1 2002/06/05 01:04:25 fredette Exp $	*/
+/*	$NetBSD: fcnvxf.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	*/
 
 /*	$OpenBSD: fcnvxf.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -40,6 +40,9 @@
  * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fcnvxf.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.6 2003/04/22 11:37:28 bjh21 Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.6.2.1 2004/08/03 10:39:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.6.2.1 2004/08/03 10:39:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -63,6 +66,11 @@
 #include <dev/ic/cs89x0var.h>
 
 #include <sys/callout.h>
+
+#define ATSN_EEPROM_MAC_OFFSET           0x20
+
+
+static void	cs_check_eeprom(struct cs_softc *sc);
 
 static int	cs_mainbus_match(struct device *, struct cfdata *, void *);
 static void	cs_mainbus_attach(struct device *, struct device *, void *);
@@ -255,6 +263,7 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	cs_check_eeprom(sc);
 
 	sc->sc_ih = intr_establish(sc->sc_irq, IST_LEVEL, IPL_NET, cs_intr, sc);
 	if (!sc->sc_ih) {
@@ -292,4 +301,160 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
  fail:
 	/* XXX disestablish, unmap */
 	return;
+}
+
+
+/*
+ * EEPROM initialization code.
+ */
+
+static uint16_t default_eeprom_cfg[] = 
+{ 0xA100, 0x2020, 0x0300, 0x0000, 0x0000,
+  0x102C, 0x1000, 0x0008, 0x2158, 0x0000,
+  0x0000, 0x0000 };
+
+static uint16_t
+cs_readreg(struct cs_softc *sc, uint pp_offset)
+{
+	cs_io_write_2(sc, PORT_PKTPG_PTR, pp_offset);
+	(void)cs_io_read_2(sc, PORT_PKTPG_PTR);
+	return (cs_io_read_2(sc, PORT_PKTPG_DATA));
+}
+
+static void
+cs_writereg(struct cs_softc *sc, uint pp_offset, uint16_t value)
+{
+	cs_io_write_2(sc, PORT_PKTPG_PTR, pp_offset);
+	(void)cs_io_read_2(sc, PORT_PKTPG_PTR);
+	cs_io_write_2(sc, PORT_PKTPG_DATA, value);
+	(void)cs_io_read_2(sc, PORT_PKTPG_DATA);
+}
+
+static int
+cs_wait_eeprom_ready(struct cs_softc *sc)
+{
+	int ms;
+	
+	/*
+	 * Check to see if the EEPROM is ready, a timeout is used -
+	 * just in case EEPROM is ready when SI_BUSY in the
+	 * PP_SelfST is clear.
+	 */
+	ms = 0;
+	while(cs_readreg(sc, PKTPG_SELF_ST) & SELF_ST_SI_BUSY) {
+		delay(1000);
+		if (ms++ > 20)
+			return 0;
+	}
+	return 1;
+}
+
+static void
+cs_wr_eeprom(struct cs_softc *sc, uint16_t offset, uint16_t data)
+{
+
+	/* Check to make sure EEPROM is ready. */
+	if (!cs_wait_eeprom_ready(sc)) {
+		printf("%s: write EEPROM not ready\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Enable writing. */
+	cs_writereg(sc, PKTPG_EEPROM_CMD, EEPROM_WRITE_ENABLE);
+
+	/* Wait for WRITE_ENABLE command to complete. */
+	if (!cs_wait_eeprom_ready(sc)) {
+		printf("%s: EEPROM WRITE_ENABLE timeout", sc->sc_dev.dv_xname);
+	} else {
+		/* Write data into EEPROM_DATA register. */
+		cs_writereg(sc, PKTPG_EEPROM_DATA, data);
+		delay(1000);
+		cs_writereg(sc, PKTPG_EEPROM_CMD, EEPROM_CMD_WRITE | offset);
+    
+		/* Wait for WRITE_REGISTER command to complete. */
+		if (!cs_wait_eeprom_ready(sc)) {
+			printf("%s: EEPROM WRITE_REGISTER timeout\n",
+			       sc->sc_dev.dv_xname);
+		} 
+	}
+
+	/* Disable writing. */
+	cs_writereg(sc, PKTPG_EEPROM_CMD, EEPROM_WRITE_DISABLE);
+
+	/* Wait for WRITE_DISABLE command to complete. */
+	if (!cs_wait_eeprom_ready(sc)) {
+		printf("%s: WRITE_DISABLE timeout\n", sc->sc_dev.dv_xname);
+	}
+}
+
+static uint16_t
+cs_rd_eeprom(struct cs_softc *sc, uint16_t offset)
+{
+
+	if (!cs_wait_eeprom_ready(sc)) {
+		printf("%s: read EEPROM not ready\n", sc->sc_dev.dv_xname);
+		return 0;
+	}
+	cs_writereg(sc, PKTPG_EEPROM_CMD, EEPROM_CMD_READ | offset);
+
+	if (!cs_wait_eeprom_ready(sc)) {
+		printf("%s: EEPROM_READ timeout\n", sc->sc_dev.dv_xname);
+		return 0;
+	}
+	return cs_readreg(sc, PKTPG_EEPROM_DATA);
+}
+
+static void
+cs_check_eeprom(struct cs_softc *sc)
+{
+	uint8_t checksum;
+	int i;
+        uint16_t tmp;
+
+	/*
+	 * If the SELFST[EEPROMOK] is set, then assume EEPROM configuration
+	 * is valid.
+	 */
+	if (cs_readreg(sc, PKTPG_SELF_ST) & SELF_ST_EEP_OK) {
+		printf("%s: EEPROM OK, skipping initialization\n", 
+		       sc->sc_dev.dv_xname);
+		return;
+	}
+	printf("%s: updating EEPROM\n", sc->sc_dev.dv_xname);
+
+	/*
+	 * Calculate the size (in bytes) of the default config array and write
+	 * it to the lower byte of the array itself.
+	 */
+	default_eeprom_cfg[0] |= sizeof(default_eeprom_cfg);
+
+	/*
+	 * Read the MAC address from its Artesyn-specified offset in the EEPROM.
+	 */
+	for (i = 0; i < 3; i++) {
+		tmp = cs_rd_eeprom(sc, ATSN_EEPROM_MAC_OFFSET + i);
+		default_eeprom_cfg[EEPROM_MAC + i] = bswap16(tmp);
+	}
+
+	/* 
+	 * Program the EEPROM with our default configuration,
+	 * calculating checksum as we proceed.
+	 */
+	checksum = 0;
+	for (i = 0; i < sizeof(default_eeprom_cfg)/2 ; i++) {
+		tmp = default_eeprom_cfg[i];
+		cs_wr_eeprom(sc, i, tmp);
+		checksum += tmp >> 8;
+		checksum += tmp & 0xff;
+	}
+
+	/*
+	 * The CS8900a datasheet calls for the two's complement of the checksum
+	 * to be prgrammed in the most significant byte of the last word of the
+	 * header.
+	 */
+	checksum = ~checksum + 1;
+	cs_wr_eeprom(sc, i++, checksum << 8);
+	/* write "end of data" flag */
+	cs_wr_eeprom(sc, i, 0xffff);
 }

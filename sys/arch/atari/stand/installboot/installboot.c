@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.17 2003/04/01 14:27:44 he Exp $	*/
+/*	$NetBSD: installboot.c,v 1.17.2.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -69,10 +69,13 @@ static void	install_wd __P((char *, struct disklabel *));
 static struct bootblock	bootarea;
 static struct ahdi_root ahdiboot;
 static const char	mdecpath[] = PATH_MDEC;
+static const char	stdpath[] = PATH_STD;
+static const char	milanpath[] = PATH_MILAN;
 static int		nowrite = 0;
 static int		verbose = 0;
 static int		trackpercyl = 0;
 static int		secpertrack = 0;
+static int		milan = 0;
 
 static void
 usage ()
@@ -81,6 +84,7 @@ usage ()
 		"usage: installboot [options] device\n"
 		"where options are:\n"
 		"\t-N  do not actually write anything on the disk\n"
+		"\t-m  use Milan boot blocks\n"
 		"\t-t  number of tracks per cylinder (IDE disk)\n"
 		"\t-u  number of sectors per track (IDE disk)\n"
 		"\t-v  verbose mode\n");
@@ -100,10 +104,13 @@ main (argc, argv)
 	oscheck();
 
 	/* parse options */
-	while ((c = getopt(argc, argv, "Nt:u:v")) != -1) {
+	while ((c = getopt(argc, argv, "Nmt:u:v")) != -1) {
 		switch (c) {
 		  case 'N':
 			nowrite = 1;
+			break;
+		  case 'm':
+			milan = 1;
 			break;
 		  case 't':
 			trackpercyl = atoi(optarg);
@@ -201,6 +208,7 @@ install_fd (devnm, label)
 	char		 *devnm;
 	struct disklabel *label;
 {
+	const char	 *machpath;
 	char		 *xxboot, *bootxx;
 	struct partition *rootpart;
 
@@ -212,10 +220,14 @@ install_fd (devnm, label)
 		errx(EXIT_FAILURE,
 		     "%s: Single sided floppy not supported.", devnm);
 
-	xxboot = alloca(strlen(mdecpath) + 8);
-	sprintf(xxboot, "%sfdboot", mdecpath);
-	bootxx = alloca(strlen(mdecpath) + 8);
-	sprintf(bootxx, "%sbootxx", mdecpath);
+	if (milan)
+		machpath = milanpath;
+	else
+		machpath = stdpath;
+	xxboot = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+	sprintf(xxboot, "%s%sfdboot", mdecpath, machpath);
+	bootxx = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+	sprintf(bootxx, "%s%sbootxx", mdecpath, machpath);
 
 	/* first used partition (a, b or c) */		/* XXX */
 	for (rootpart = label->d_partitions; ; ++rootpart) {
@@ -252,6 +264,7 @@ install_sd (devnm, label)
 	char		 *devnm;
 	struct disklabel *label;
 {
+	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
 	daddr_t		 bbsec;
@@ -269,20 +282,24 @@ install_sd (devnm, label)
 	if (memcmp(label, &rawlabel, sizeof(*label)))
 		errx(EXIT_FAILURE, "%s: Invalid NetBSD boot block.", devnm);
 
+	if (milan)
+		machpath = milanpath;
+	else
+		machpath = stdpath;
 	if (bbsec) {
-		xxb00t = alloca(strlen(mdecpath) + 14);
-		sprintf(xxb00t, "%ssdb00t.ahdi", mdecpath);
-		xxboot = alloca(strlen(mdecpath) + 14);
-		sprintf(xxboot, "%sxxboot.ahdi", mdecpath);
+		xxb00t = alloca(strlen(mdecpath) + strlen(machpath) + 14);
+		sprintf(xxb00t, "%s%ssdb00t.ahdi", mdecpath, machpath);
+		xxboot = alloca(strlen(mdecpath) + strlen(machpath) + 14);
+		sprintf(xxboot, "%s%sxxboot.ahdi", mdecpath, machpath);
 		magic = AHDIMAGIC;
 	} else {
 		xxb00t = NULL;
-		xxboot = alloca(strlen(mdecpath) + 8);
-		sprintf(xxboot, "%ssdboot", mdecpath);
+		xxboot = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+		sprintf(xxboot, "%s%ssdboot", mdecpath, machpath);
 		magic = NBDAMAGIC;
 	}
-	bootxx = alloca(strlen(mdecpath) + 8);
-	sprintf(bootxx, "%sbootxx", mdecpath);
+	bootxx = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+	sprintf(bootxx, "%s%sbootxx", mdecpath, machpath);
 
 	trackpercyl = secpertrack = 0;
 	if (xxb00t)
@@ -300,7 +317,7 @@ install_sd (devnm, label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (%u)\n", devnm,
+			printf("Boot block installed on %s (sector %d)\n", devnm,
 								    bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
@@ -321,6 +338,7 @@ install_wd (devnm, label)
 	char		 *devnm;
 	struct disklabel *label;
 {
+	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
 	daddr_t		 bbsec;
@@ -338,20 +356,24 @@ install_wd (devnm, label)
 	if (memcmp(label, &rawlabel, sizeof(*label)))
 		errx(EXIT_FAILURE, "%s: Invalid NetBSD boot block.", devnm);
 
+	if (milan)
+		machpath = milanpath;
+	else
+		machpath = stdpath;
 	if (bbsec) {
-		xxb00t = alloca(strlen(mdecpath) + 14);
-		sprintf(xxb00t, "%swdb00t.ahdi", mdecpath);
-		xxboot = alloca(strlen(mdecpath) + 14);
-		sprintf(xxboot, "%sxxboot.ahdi", mdecpath);
+		xxb00t = alloca(strlen(mdecpath) + strlen(machpath) + 14);
+		sprintf(xxb00t, "%s%swdb00t.ahdi", mdecpath, machpath);
+		xxboot = alloca(strlen(mdecpath) + strlen(machpath) + 14);
+		sprintf(xxboot, "%s%sxxboot.ahdi", mdecpath, machpath);
 		magic = AHDIMAGIC;
 	} else {
 		xxb00t = NULL;
-		xxboot = alloca(strlen(mdecpath) + 8);
-		sprintf(xxboot, "%swdboot", mdecpath);
+		xxboot = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+		sprintf(xxboot, "%s%swdboot", mdecpath, machpath);
 		magic = NBDAMAGIC;
 	}
-	bootxx = alloca(strlen(mdecpath) + 8);
-	sprintf(bootxx, "%sbootxx", mdecpath);
+	bootxx = alloca(strlen(mdecpath) + strlen(machpath) + 8);
+	sprintf(bootxx, "%s%sbootxx", mdecpath, machpath);
 
 	if (xxb00t)
 		mkahdiboot(&ahdiboot, xxb00t, devnm, bbsec);
@@ -369,7 +391,7 @@ install_wd (devnm, label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (%u)\n", devnm,
+			printf("Boot block installed on %s (sector %d)\n", devnm,
 								    bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
@@ -378,7 +400,7 @@ install_wd (devnm, label)
 							!= sizeof(ahdiboot))
 				err(EXIT_FAILURE, "%s", devnm);
 			if (verbose)
-				printf("AHDI root  installed on %s (0)\n",
+				printf("AHDI root  installed on %s (sector 0)\n",
 									devnm);
 		}
 		if (close(fd))

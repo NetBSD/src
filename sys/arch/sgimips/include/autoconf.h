@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2002/03/13 13:12:28 simonb Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.12.1 2004/08/03 10:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.

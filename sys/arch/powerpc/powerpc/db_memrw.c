@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5 2001/12/27 10:25:41 dbj Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5.16.1 2004/08/03 10:39:37 skrll Exp $	*/
 /*	$OpenBSD: db_memrw.c,v 1.2 1996/12/28 06:21:52 rahnds Exp $	*/
 
 /* 
@@ -38,6 +38,9 @@
  * make sure to do the correct sized pointer access.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5.16.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 
@@ -51,12 +54,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*src = (char*)addr;
+	char	*src = (char*)addr;
 
 	if (size == 4) {
 		*((int*)data) = *((int*)src);
@@ -78,12 +78,9 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*dst = (char *)addr;
+	char *dst = (char *)addr;
 
 	if (size == 4) {
 
@@ -104,4 +101,3 @@ db_write_bytes(addr, size, data)
 
 	__syncicache((void *)addr, size);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2002/09/27 15:36:18 provos Exp $	*/
+/*	$NetBSD: intr.c,v 1.18.6.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Link and dispatch interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18.6.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

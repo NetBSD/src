@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2002/11/08 14:58:25 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.6.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27.6.1 2004/08/03 10:40:16 skrll Exp $");
+
 #include "opt_pclock.h"
+#include "opt_hz.h"
 #include "wdog.h"
 
 #include <sys/param.h>

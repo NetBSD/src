@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.7 2003/06/29 22:28:35 fvdl Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.7.2.1 2004/08/03 10:37:38 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.7.2.1 2004/08/03 10:37:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,7 +90,7 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_irq = aa->aa_irq[0];
 
 	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, UART_SIZE, 0,
 			  &sc->sc_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
@@ -101,6 +104,7 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
+	sc->sc_type = COM_TYPE_AU1x00;
 	sc->enable = aucom_aubus_enable;
 	sc->disable = aucom_aubus_disable;
 

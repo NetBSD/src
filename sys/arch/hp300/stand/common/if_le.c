@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 2003/03/13 13:37:15 drochner Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6.2.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -38,7 +38,11 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <hp300/stand/common/device.h>
 #include <hp300/stand/common/if_lereg.h>
@@ -48,25 +52,47 @@
 #define NLE 1
 #endif
 
+struct le_softc {
+	struct	lereg0 *sc_r0;	/* DIO registers */
+	struct	lereg1 *sc_r1;	/* LANCE registers */
+	void	*sc_mem;
+	struct	init_block *sc_init;
+	struct	mds *sc_rd, *sc_td;
+	u_char	*sc_rbuf, *sc_tbuf;
+	int	sc_next_rd, sc_next_td;
+	u_char	sc_addr[ETHER_ADDR_LEN];
+};
+
+struct le_sel {
+	int	le_id;
+	int	le_regs;
+	int	le_mem;
+	int	le_nvram;
+	int	le_heat;
+	int	le_bonus;
+};
+
+int le_probe(struct netif *, void *);
+int le_match(struct netif *, void *);
+void le_init(struct iodesc *, void *);
+int le_get(struct iodesc *, void *, size_t, time_t);
+int le_put(struct iodesc *, void *, size_t);
+void le_end(struct netif *);
+
+static inline void lewrcsr(struct le_softc *, uint16_t, uint16_t);
+static inline uint16_t lerdcsr(struct le_softc *, uint16_t);
+
+static void leinit(void);
+static void le_error(int, char *, uint16_t);
+static void lememinit(struct le_softc *);
+static void le_reset(int, u_char *);
+static int le_poll(struct iodesc *, void *, int);
+
 #ifdef LE_DEBUG
 int le_debug = 0;
 #endif
 
-int le_probe();
-int le_match();
-void le_init();
-int le_get();
-int le_put();
-void le_end();
-
-struct le_sel {
-        int	le_id;
-        int	le_regs;
-        int	le_mem;
-        int	le_nvram;
-        int	le_heat;
-        int	le_bonus;
-} le0conf[] = {
+struct le_sel le0conf[] = {
 /* offsets for:	   ID   REGS     MEM   NVRAM	le_heat	le_bonus*/
 {		    0,	0x4000, 0x8000, 0xC008,	1,	10   }
 };
@@ -94,25 +120,16 @@ struct netif_driver le_driver = {
 	NLE_IFS			/* netif_nifs */
 };
 
-struct le_softc {
-	struct	lereg0 *sc_r0;	/* DIO registers */
-	struct	lereg1 *sc_r1;	/* LANCE registers */
-	void	*sc_mem;
-	struct	init_block *sc_init;
-	struct	mds *sc_rd, *sc_td;
-	u_char	*sc_rbuf, *sc_tbuf;
-	int	sc_next_rd, sc_next_td;
-	u_char	sc_addr[ETHER_ADDR_LEN];
-} le_softc[NLE];
+struct le_softc le_softc[NLE];
 
 static inline void
 lewrcsr(sc, port, val)
 	struct le_softc *sc;
-	register u_short port;
-	register u_short val;
+	uint16_t port;
+	uint16_t val;
 {
-	register struct lereg0 *ler0 = sc->sc_r0;
-	register struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg0 *ler0 = sc->sc_r0;
+	struct lereg1 *ler1 = sc->sc_r1;
 
 	do {
 		ler1->ler1_rap = port;
@@ -122,14 +139,14 @@ lewrcsr(sc, port, val)
 	} while ((ler0->ler0_status & LE_ACK) == 0);
 }
 
-static inline u_short
+static inline uint16_t
 lerdcsr(sc, port)
 	struct le_softc *sc;
-	register u_short port;
+	uint16_t port;
 {
-	register struct lereg0 *ler0 = sc->sc_r0;
-	register struct lereg1 *ler1 = sc->sc_r1;
-	register u_short val;
+	struct lereg0 *ler0 = sc->sc_r0;
+	struct lereg1 *ler1 = sc->sc_r1;
+	uint16_t val;
 
 	do {
 		ler1->ler1_rap = port;
@@ -137,18 +154,18 @@ lerdcsr(sc, port)
 	do {
 		val = ler1->ler1_rdp;
 	} while ((ler0->ler0_status & LE_ACK) == 0);
-	return (val);
+	return val;
 }
 
+static void
 leinit()
 {
-	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
+	struct hp_hw *hw;
 	struct le_softc *sc;
 	struct le_sel *sels;
-	register int i, n;
+	int i, n;
 	char *cp;
-	
+
 	i = 0;
 
 	for (hw = sc_table; i < NLE && hw < &sc_table[MAXCTLRS]; hw++) {
@@ -162,23 +179,23 @@ leinit()
 			continue;
 #endif
 
-                sels = (struct le_sel *)le_ifs[i].dif_private;
+		sels = (struct le_sel *)le_ifs[i].dif_private;
 
 		sc = &le_softc[i];
-                sc->sc_r0 = (struct lereg0 *)(sels->le_id + (int)hw->hw_kva);
+		sc->sc_r0 = (struct lereg0 *)(sels->le_id + (int)hw->hw_kva);
 
-                if (sc->sc_r0->ler0_id != LEID)
-                        continue;
+		if (sc->sc_r0->ler0_id != LEID)
+			continue;
 
-                sc->sc_r1 = (struct lereg1 *)(sels->le_regs + (int)hw->hw_kva);
-                sc->sc_mem = (struct lereg2 *)(sels->le_mem + (int)hw->hw_kva);
+		sc->sc_r1 = (struct lereg1 *)(sels->le_regs + (int)hw->hw_kva);
+		sc->sc_mem = (struct lereg2 *)(sels->le_mem + (int)hw->hw_kva);
 
 #ifdef LE_DEBUG
 		if (le_debug)
 			printf("le%d: DIO=%x regs=%x mem=%x\n",
 				i, sc->sc_r0, sc->sc_r1, sc->sc_mem);
 #endif
-		
+
 		/*
 		 * Read the ethernet address off the board, one nibble at a time.
 		 */
@@ -222,12 +239,15 @@ le_match(nif, machdep_hint)
 	return rv;
 }
 
+int
 le_probe(nif, machdep_hint)
 	struct netif *nif;
 	void *machdep_hint;
 {
+#if 0
 	char *cp;
 	int i;
+#endif
 
 	/* the set unit is the current unit */
 #ifdef LE_DEBUG
@@ -239,15 +259,17 @@ le_probe(nif, machdep_hint)
 }
 
 #ifdef MEM_SUMMARY
-void le_mem_summary(unit)
+void
+le_mem_summary(unit)
+	int unit;
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
-	register int i;
-	
+	int i;
+
 	printf("le%d: ler1 = %x\n", unit, ler1);
 	printf("le%d: ler2 = %x\n", unit, ler2);
-    
+
 #if 0
 	ler1->ler1_rap = LE_CSR0;
 	ler1->ler1_rdp = LE_STOP;
@@ -263,7 +285,7 @@ void le_mem_summary(unit)
 	printf("le%d: ladrf[1] = %x\n", unit, ler2->ler2_ladrf[1]);
 	printf("le%d: ler2_rdra = %x\n", unit, ler2->ler2_rdra);
 	printf("le%d: ler2_rlen = %x\n", unit, ler2->ler2_rlen);
-	printf("le%d: ler2_tdra = %x\n", unit, ler2->ler2_tdra);	
+	printf("le%d: ler2_tdra = %x\n", unit, ler2->ler2_tdra);
 	printf("le%d: ler2_tlen = %x\n", unit, ler2->ler2_tlen);
 
 	for (i = 0; i < LERBUF; i++) {
@@ -299,7 +321,7 @@ void
 le_error(unit, str, stat)
 	int unit;
 	char *str;
-	u_short stat;
+	uint16_t stat;
 {
 
 	if (stat & LE_BABL)
@@ -308,7 +330,7 @@ le_error(unit, str, stat)
 		le_stats[unit].collision_error++;
 	if (stat & LE_MISS)
 		le_stats[unit].missed++;
-	if (stat & LE_MERR) { 
+	if (stat & LE_MERR) {
 		printf("le%d: memory error in '%s'\n", unit, str);
 		le_mem_summary(unit);
 		panic("bye");
@@ -321,10 +343,10 @@ le_error(unit, str, stat)
 /* LANCE initialization block set up. */
 void
 lememinit(sc)
-	register struct le_softc *sc;
+	struct le_softc *sc;
 {
 	int i;
-	void *mem;
+	u_char *mem;
 	u_long a;
 
 	/*
@@ -334,26 +356,26 @@ lememinit(sc)
 	 */
 	mem = sc->sc_mem;
 
-	sc->sc_init = mem;
+	sc->sc_init = (void *)mem;
 	sc->sc_init->mode = LE_NORMAL;
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_init->padr[i] = sc->sc_addr[i^1];
 	sc->sc_init->ladrf[0] = sc->sc_init->ladrf[1] = 0;
 	mem += sizeof(struct init_block);
 
-	sc->sc_rd = mem;
+	sc->sc_rd = (void *)mem;
 	a = LANCE_ADDR(sc, mem);
 	sc->sc_init->rdra = a;
 	sc->sc_init->rlen = ((a >> 16) & 0xff) | (RLEN << 13);
 	mem += NRBUF * sizeof(struct mds);
 
-	sc->sc_td = mem;
+	sc->sc_td = (void *)mem;
 	a = LANCE_ADDR(sc, mem);
 	sc->sc_init->tdra = a;
 	sc->sc_init->tlen = ((a >> 16) & 0xff) | (TLEN << 13);
 	mem += NTBUF * sizeof(struct mds);
 
-	/* 
+	/*
 	 * Set up receive ring descriptors.
 	 */
 	sc->sc_rbuf = mem;
@@ -366,7 +388,7 @@ lememinit(sc)
 		mem += BUFSIZE;
 	}
 
-	/* 
+	/*
 	 * Set up transmit ring descriptors.
 	 */
 	sc->sc_tbuf = mem;
@@ -387,7 +409,7 @@ le_reset(unit, myea)
 {
 	struct le_softc *sc = &le_softc[unit];
 	u_long a;
-	int timo = 100000, stat, i;
+	int timo = 100000;
 
 #ifdef LE_DEBUG
 	if (le_debug) {
@@ -402,12 +424,12 @@ le_reset(unit, myea)
 	for (timo = 1000; timo; timo--);
 
 	sc->sc_next_rd = sc->sc_next_td = 0;
-	
+
 	/* Set up LANCE init block. */
 	lememinit(sc);
 
 	if (myea)
-		bcopy(sc->sc_addr, myea, ETHER_ADDR_LEN);
+		memcpy(myea, sc->sc_addr, ETHER_ADDR_LEN);
 
 	/* Turn on byte swapping. */
 	lewrcsr(sc, 3, LE_BSWP);
@@ -450,14 +472,11 @@ le_poll(desc, pkt, len)
 	void *pkt;
 	int len;
 {
-	struct netif *nif = desc->io_netif;
 	int unit = /*nif->nif_unit*/0;
 	struct le_softc *sc = &le_softc[unit];
-	volatile struct lereg0 *ler0 = sc->sc_r0;
-	volatile struct lereg1 *ler1 = sc->sc_r1;
 	int length;
 	volatile struct mds *cdm;
-	register int stat;
+	int stat;
 
 #ifdef LE_DEBUG
 	if (/*le_debug*/0)
@@ -509,7 +528,7 @@ le_poll(desc, pkt, len)
 		if (length > len)
 			length = len;
 
-		bcopy(sc->sc_rbuf + (BUFSIZE * sc->sc_next_rd), pkt, length);
+		memcpy(pkt, sc->sc_rbuf + (BUFSIZE * sc->sc_next_rd), length);
 	}
 
 cleanup:
@@ -529,13 +548,10 @@ int
 le_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
-	struct netif *nif = desc->io_netif;
 	int unit = /*nif->nif_unit*/0;
 	struct le_softc *sc = &le_softc[unit];
-	volatile struct lereg0 *ler0 = sc->sc_r0;
-	volatile struct lereg1 *ler1 = sc->sc_r1;
 	volatile struct mds *cdm;
 	int timo, i, stat;
 
@@ -551,7 +567,7 @@ le_put(desc, pkt, len)
 	if (stat & (LE_BABL | LE_CERR | LE_MISS | LE_MERR))
 		le_error(unit, "le_put(way before xmit)", stat);
 	cdm = &sc->sc_td[sc->sc_next_td];
-        i = 0;
+	i = 0;
 #if 0
 	while (cdm->flags & LE_OWN) {
 		if ((i % 100) == 0)
@@ -564,10 +580,10 @@ le_put(desc, pkt, len)
 #else
 	while (cdm->flags & LE_OWN);
 #endif
-	bcopy(pkt, sc->sc_tbuf + (BUFSIZE * sc->sc_next_td), len);
+	memcpy(sc->sc_tbuf + (BUFSIZE * sc->sc_next_td), pkt, len);
 	if (len < ETHER_MIN_LEN)
 		cdm->bcnt = -ETHER_MIN_LEN;
-	else 
+	else
 		cdm->bcnt = -len;
 	cdm->mcnt = 0;
 	cdm->flags |= LE_OWN | LE_STP | LE_ENP;
@@ -585,9 +601,9 @@ le_put(desc, pkt, len)
 			if (stat & LE_SERR)
 				le_error(unit, "le_put(timeout)", stat);
 			if (stat & LE_INIT) {
-				printf("le%d: reset and retry packet\n");
+				printf("le%d: reset and retry packet\n", unit);
 				lewrcsr(sc, 0, LE_TINT);	/* sanity */
-				le_init();
+				leinit();
 				goto le_put_loop;
 			}
 			break;
@@ -634,7 +650,7 @@ int
 le_get(desc, pkt, len, timeout)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 	time_t timeout;
 {
 	time_t t;

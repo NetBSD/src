@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.1 1997/02/04 03:52:45 thorpej Exp $	*/
+/*	$NetBSD: prf.c,v 1.1.60.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,11 +31,15 @@
  *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <lib/libsa/stand.h>
+#include <hp300/stand/common/samachdep.h>
+
+int
 getchar()
 {
-	register int c;
+	int c;
 
-	while((c = cngetc()) == 0)
+	while ((c = cngetc()) == 0)
 		;
 	if (c == '\r')
 		c = '\n';
@@ -47,15 +47,16 @@ getchar()
 		panic("^C");
 		/* NOTREACHED */
 	}
-	return(c);
+	return c;
 }
 
+int
 tgetchar()
 {
-	register int c;
+	int c;
 
 	if ((c = cngetc()) == 0)
-        	return(0);
+        	return 0;
         
 	if (c == '\r')
 		c = '\n';
@@ -63,11 +64,12 @@ tgetchar()
 		panic("^C");
 		/* NOTREACHED */
 	}
-	return(c);
+	return c;
 }
 
+void
 putchar(c)
-	register int c;
+	int c;
 {
 	cnputc(c);
 	if (c == '\n')

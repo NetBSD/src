@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.2 2001/04/26 16:25:24 kleink Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.2.24.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _NS32K_INT_MWGWTYPES_H_
-#define _NS32K_INT_MWGWTYPES_H_
+#define	_NS32K_INT_MWGWTYPES_H_
 
 /*
  * 7.18.1 Integer types

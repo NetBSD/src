@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.68 2002/11/26 18:51:13 thorpej Exp $
+#	$NetBSD: Makefile.atari,v 1.68.6.1 2004/08/03 10:33:10 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -92,3 +92,8 @@ locore.o pmap.o sys_machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

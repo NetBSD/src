@@ -1,8 +1,42 @@
-/*	$NetBSD: vm_machdep.c,v 1.110.2.1 2003/07/02 15:25:22 darrenr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.110.2.2 2004/08/03 10:35:52 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1982, 1986 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
- * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
  *
@@ -46,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110.2.1 2003/07/02 15:25:22 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110.2.2 2004/08/03 10:35:52 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -75,12 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110.2.1 2003/07/02 15:25:22 darrenr
 #include "npx.h"
 
 #ifndef NOREDZONE
-static void setredzone __P((struct lwp *l));
+static void setredzone(struct lwp *l);
 #endif
 
 void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
+cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -105,12 +138,8 @@ cpu_proc_fork(p1, p2)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -176,10 +205,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -193,8 +219,7 @@ cpu_setfunc(l, func, arg)
 }	
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 #ifndef NOREDZONE
 	setredzone(l);
@@ -202,8 +227,7 @@ cpu_swapin(l)
 }
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 
 #if NNPX > 0
@@ -215,18 +239,12 @@ cpu_swapout(l)
 }
 
 /*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
- * jumps into switch() to wait for another process to wake up.
- * 
- * If proc==0, we're an exiting lwp, and call switch_lwp_exit() instead of 
- * switch_exit(), and only do LWP-appropriate cleanup (e.g. don't deactivate
- * the pmap).
+ * cpu_lwp_free is called from exit() to let machine-dependent
+ * code free machine-dependent resources that should be cleaned
+ * while we can still block and have process associated with us
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
 
 #if NNPX > 0
@@ -240,35 +258,11 @@ cpu_exit(struct lwp *l, int proc)
 		mtrr_clean(l->l_proc);
 #endif
 
-	/*
-	 * No need to do user LDT cleanup here; it's handled in
-	 * pmap_destroy().
-	 */
-
-	/*
-	 * Deactivate the address space before the vmspace is
-	 * freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to the idle process
-	 * in switch_exit().
-	 */
-	pmap_deactivate(l);
-
-	uvmexp.swtch++;
-	switch_exit(l, proc ? exit2 : lwp_exit2);
-}
-
-/*
- * cpu_wait is called from reaper() to let machine-dependent
- * code free machine-dependent resources that couldn't be freed
- * in cpu_exit().
- */
-void
-cpu_wait(l)
-	struct lwp *l;
-{
-
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);
+#ifdef DEBUG
+	l->l_md.md_tss_sel = 0xfeedbeed;
+#endif
 }
 
 /*
@@ -278,12 +272,10 @@ struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
 };
+
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
@@ -342,9 +334,7 @@ setredzone(struct lwp *l)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(register caddr_t from, register caddr_t to, size_t size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 	int32_t cpumask = 0;
@@ -382,14 +372,13 @@ pagemove(from, to, size)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	register caddr_t addr;
+kvtop(register caddr_t addr)
 {
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)pa);
+	return (int)pa;
 }
 
 /*
@@ -398,9 +387,7 @@ kvtop(addr)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	struct proc *p;
@@ -441,9 +428,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

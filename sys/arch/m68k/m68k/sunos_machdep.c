@@ -1,9 +1,43 @@
-/*	$NetBSD: sunos_machdep.c,v 1.22 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.22.2.1 2004/08/03 10:37:00 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: machdep.c 1.63 91/04/24$
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -41,6 +75,9 @@
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.22.2.1 2004/08/03 10:37:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,26 +132,17 @@ struct sunos_sigframe {
  * SIG_DFL for "dangerous" signals.
  */
 void
-sunos_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	u_long code = KSI_TRAPCODE(ksi);
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct sunos_sigframe *fp, kf;
-	struct frame *frame;
-	short ft;
-	int onstack, fsize;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	int onstack;
+	struct sunos_sigframe *fp = getframe(l, sig, &onstack), kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	frame = (struct frame *)l->l_md.md_regs;
-	ft = frame->f_format;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	short ft = frame->f_format;
 
 	/*
 	 * if this is a hardware fault (ft >= FMT9), sunos_sendsig
@@ -130,13 +158,6 @@ sunos_sendsig(sig, mask, code)
 		return;
 	}
 
-	/* Allocate space for the signal handler context. */
-	fsize = sizeof(struct sunos_sigframe);
-	if (onstack)
-		fp = (struct sunos_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sunos_sigframe *)(frame->f_regs[SP]);
 	fp--;
 
 #ifdef DEBUG
@@ -162,7 +183,7 @@ sunos_sendsig(sig, mask, code)
 	/* Save signal mask. */
 	native_sigset_to_sigset13(mask, &kf.sf_sc.sc_mask);
 
-	if (copyout(&kf, fp, fsize) != 0) {
+	if (copyout(&kf, fp, sizeof(kf)) != 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): copyout failed on sig %d\n",
@@ -181,10 +202,7 @@ sunos_sendsig(sig, mask, code)
 		       p->p_pid, sig, &fp->sf_sc,kf.sf_sc.sc_sp);
 #endif
 
-	/* have the user-level trampoline code sort out what registers it
-	   has to preserve. */
-	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (u_int) catcher;
+	buildcontext(l, catcher, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

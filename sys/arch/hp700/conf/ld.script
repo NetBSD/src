@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.3 2002/11/28 05:56:51 chs Exp $	*/
+/*	$NetBSD: ld.script,v 1.3.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -13,6 +13,7 @@ SECTIONS
 	{
 		kernel_text = . ;
 		*(.text)
+		*(.text.*)
 		*(.rodata) *(.rodata1)
 		*(.reginfo)
 		*(.init)

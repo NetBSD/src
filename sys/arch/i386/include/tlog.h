@@ -1,7 +1,7 @@
-/*	$NetBSD: tlog.h,v 1.3 2002/10/11 14:22:56 fvdl Exp $	*/
+/*	$NetBSD: tlog.h,v 1.3.8.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*
- * Trap log.  Per-cpu ring buffer containing a log of the last 2**N
+ * Trap log.  Per-CPU ring buffer containing a log of the last 2**N
  * traps.
  */
 

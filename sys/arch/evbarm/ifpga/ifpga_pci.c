@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.5 2002/09/27 15:35:59 provos Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.5.6.1 2004/08/03 10:33:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -61,17 +61,20 @@
  * SUCH DAMAGE.
  */
 
+#define _ARM32_BUS_DMA_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.1 2004/08/03 10:33:55 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#define _ARM32_BUS_DMA_PRIVATE
 #include <evbarm/integrator/int_bus_dma.h>
 
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -120,6 +123,7 @@ struct arm32_pci_chipset ifpga_pci_chipset = {
 struct arm32_bus_dma_tag ifpga_pci_bus_dma_tag = {
 	0,
 	0,
+	NULL,
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
@@ -345,7 +349,6 @@ ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 {
 	void *intr;
 	int length;
-	char *string;
 
 #ifdef PCI_DEBUG
 	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
@@ -354,9 +357,7 @@ ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 
 	/* Copy the interrupt string to a private buffer */
 	length = strlen(ifpga_pci_intr_string(pcv, ih));
-	string = malloc(length + 1, M_DEVBUF, M_WAITOK);
-	strcpy(string, ifpga_pci_intr_string(pcv, ih));
-	intr = intr_claim(ih, level, string, func, arg);
+	intr = ifpga_intr_establish(ih, level, func, arg);
 
 	return intr;
 }
@@ -370,5 +371,5 @@ ifpga_pci_intr_disestablish(void *pcv, void *cookie)
 #endif
 	/* XXXX Need to free the string */
 
-	intr_release(cookie);
+	ifpga_intr_disestablish(cookie);
 }

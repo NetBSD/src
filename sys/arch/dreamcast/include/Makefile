@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/01/17 22:43:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2004/08/03 10:33:54 skrll Exp $
 
 INCSDIR= /usr/include/dreamcast
 
@@ -17,6 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

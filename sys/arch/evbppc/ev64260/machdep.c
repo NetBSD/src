@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/06/14 17:01:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.1 2004/08/03 10:34:16 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -86,13 +89,6 @@
 #include "isa.h"
 #if (NISA > 0)
 void isa_intr_init(void);
-#endif
-
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/isa/isareg.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
 #endif
 
 #include "com.h"
@@ -277,7 +273,7 @@ void
 gt_find_memory(bus_space_tag_t memt, bus_space_handle_t memh,
 	paddr_t endkernel)
 {
-	paddr_t start, end;
+	paddr_t start = ~0, end = 0;
 	int i, j = 0, first = 1;
 
 	/*
@@ -358,22 +354,6 @@ consinit(void)
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #endif
 }
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(pckbc_tag_t kbctag, pckbc_slot_t kbcslot)
-{
-#if (NPC > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
-	return (ENXIO);
-#endif
-}
-#endif
 
 /*
  * Stray interrupts.

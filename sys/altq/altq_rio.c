@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.4 2001/11/12 23:14:22 lukem Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.4 2001/11/12 23:14:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -149,8 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.4 2001/11/12 23:14:22 lukem Exp $");
 #define	TH_MIN		 5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RIO_LIMIT	60	/* default max queue lenght */
-#define	RIO_STATS		/* collect statistics */
+#define	RIO_LIMIT	60	/* default max queue length */
 
 #define	TV_DELTA(a, b, delta) {					\
 	register int	xxs;					\
@@ -285,7 +284,7 @@ rioioctl(dev, cmd, addr, flag, p)
 			error = ENOMEM;
 			break;
 		}
-		bzero(rqp, sizeof(rio_queue_t));
+		(void)memset(rqp, 0, sizeof(rio_queue_t));
 
 		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
 		       M_DEVBUF, M_WAITOK);
@@ -294,7 +293,7 @@ rioioctl(dev, cmd, addr, flag, p)
 			error = ENOMEM;
 			break;
 		}
-		bzero(rqp->rq_q, sizeof(class_queue_t));
+		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		rqp->rq_rio = rio_alloc(0, NULL, 0, 0);
 		if (rqp->rq_rio == NULL) {
@@ -358,8 +357,8 @@ rioioctl(dev, cmd, addr, flag, p)
 
 			for (i = 0; i < RIO_NDROPPREC; i++) {
 				q_stats->q_len[i] = rp->rio_precstate[i].qlen;
-				bcopy(&rp->q_stats[i], &q_stats->q_stats[i],
-				      sizeof(struct redstats));
+				(void)memcpy(&q_stats->q_stats[i],
+				    &rp->q_stats[i], sizeof(struct redstats));
 				q_stats->q_stats[i].q_avg =
 				    rp->rio_precstate[i].avg >> rp->rio_wshift;
 
@@ -503,7 +502,7 @@ rio_alloc(weight, params, flags, pkttime)
 	MALLOC(rp, rio_t *, sizeof(rio_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
 		return (NULL);
-	bzero(rp, sizeof(rio_t));
+	(void)memset(rp, 0, sizeof(rio_t));
 
 	rp->rio_flags = flags;
 	if (pkttime == 0)
@@ -599,7 +598,7 @@ rio_getstats(rp, sp)
 	int i;
 	
 	for (i = 0; i < RIO_NDROPPREC; i++) {
-		bcopy(&rp->q_stats[i], sp, sizeof(struct redstats));
+		(void)memcpy(sp, &rp->q_stats[i], sizeof(struct redstats));
 		sp->q_avg = rp->rio_precstate[i].avg >> rp->rio_wshift;
 		sp++;
 	}

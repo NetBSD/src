@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.24 2002/11/03 21:43:32 chris Exp $
+#	$NetBSD: files.cats,v 1.24.6.1 2004/08/03 10:33:40 skrll Exp $
 #
 # CATS-specific configuration info
 #
@@ -11,6 +11,9 @@ defflag	IRQSTATS
 
 # X server support in console drivers
 defflag	XSERVER
+
+# ABLE booting ELF kernels
+defflag ABLEELF
 
 define todservice {}
 
@@ -36,9 +39,6 @@ file	arch/arm/footbridge/todclock.c			todclock	needs-count
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
-
-# Game adapter (joystick)
-file	arch/arm/footbridge/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
@@ -73,9 +73,10 @@ device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
 file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
-device dsrtc: todservice
-attach dsrtc at isa
-file	arch/arm/footbridge/isa/dsrtc.c			dsrtc
+device ds1687rtc: todservice
+attach ds1687rtc at isa
+file	arch/arm/footbridge/isa/dsrtc.c			ds1687rtc
+
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
 
@@ -90,23 +91,15 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/cats/pci/pcib.c			pcib
 
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-attach	lpt at puc with lpt_puc
-file	dev/pci/lpt_puc.c	lpt_puc
-
-file	arch/cats/pci/pciide_machdep.c	pciide
-
-# Include USB stuff
-include "dev/usb/files.usb"
+file	arch/cats/pci/pciide_machdep.c	pciide_common
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
+
+# Include USB stuff
+include "dev/usb/files.usb"
 
 include "arch/arm/conf/majors.arm32"

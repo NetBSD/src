@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.5 2002/05/30 20:56:26 thorpej Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.5.6.1 2004/08/03 10:36:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -27,6 +27,9 @@
  *
  *	@(#)fpu_int.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.5.6.1 2004/08/03 10:36:40 skrll Exp $");
 
 #include <sys/types.h>
 

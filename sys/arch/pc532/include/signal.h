@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2003/04/28 23:16:21 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.9.2.1 2004/08/03 10:38:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,11 +32,19 @@
  */
 
 #ifndef _MACHINE_SIGNAL_H_
-#define _MACHINE_SIGNAL_H_
+#define	_MACHINE_SIGNAL_H_
 
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
+
+#ifdef _KERNEL
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
+#else
+#define	SIGTRAMP_VALID(vers) ((vers) == 2)
+#endif
+#endif
 
 #if defined(_NETBSD_SOURCE)
 /*

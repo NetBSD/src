@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.1 1997/05/17 13:56:09 matthias Exp $	*/
+/*	$NetBSD: scn.c,v 1.1.54.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.
@@ -41,48 +41,52 @@
 #include <sys/types.h>
 #include <dev/cons.h>
 
-#define DUART	0x28000000
+#include <pc532/stand/common/consdefs.h>
+
+#define	DUART	0x28000000
 
 /* registers */
-#define SCN_STAT 1
-#define SCN_DATA 3
+#define	SCN_STAT 1
+#define	SCN_DATA 3
 
 /* status bits */
-#define STAT_RXRDY 0x01
-#define STAT_TXRDY 0x04
+#define	STAT_RXRDY 0x01
+#define	STAT_TXRDY 0x04
 
 #ifndef SCNCNUNIT
-#define SCNCNUNIT 0
+#define	SCNCNUNIT 0
 #endif
 
 u_char * volatile scncnaddr = (u_char *) DUART + 8 * SCNCNUNIT;
 
-scnprobe(cp)
-	struct consdev *cp;
+void
+scnprobe(struct consdev *cp)
 {
+
 	/* the only game in town */
 	cp->cn_pri = CN_NORMAL;		/* XXX remote? */
 }
 
-scninit(cp)
-	struct consdev *cp;
+void
+scninit(struct consdev *cp)
 {
+
 	/* leave things the way the PROM set them */
 }
 
-scngetchar(cp)
-	struct consdev *cp;
+int
+scngetchar(dev_t dev)
 {
+
 	if ((scncnaddr[SCN_STAT] & STAT_RXRDY) == 0)
 		return(0);
 	return(scncnaddr[SCN_DATA]);
 }
 
-scnputchar(cp, c)
-	struct consdev *cp;
-	register int c;
+void
+scnputchar(dev_t dev, int c)
 {
-	register int timo;
+	int timo;
 	short stat;
 
 	/* wait a reasonable time for the transmitter to come ready */

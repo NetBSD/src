@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.51 2003/04/01 21:26:33 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.51.2.1 2004/08/03 10:31:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.51 2003/04/01 21:26:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.51.2.1 2004/08/03 10:31:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ static struct aconfdata aconftab[] = {
 	/* Village Tronic Ariadne II */
 	{ "ne",		2167,	202},
 	/* bsc/Alf Data */
-	{ "Tandem", 2092,    6 },	/* Tandem AT disk controler */
+	{ "Tandem", 2092,    6 },	/* Tandem AT disk controller */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
 	{ "mfc",	2092,	18 },
@@ -180,7 +180,9 @@ static struct aconfdata aconftab[] = {
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
 	{ "hyper3Z",	5001,	3},	/* Hypercom3-Zbus */
 	{ "hyper4+",	5001,	6},	/* Hypercom4+ */
-	{ "hyper3+",	5001,	7}	/* Hypercom3+ */
+	{ "hyper3+",	5001,	7},	/* Hypercom3+ */
+	/* Matay Grzegorz Kraszewski */
+	{ "Prometheus",	44359,	1}	/* Prometheus PCI bridge */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -378,7 +380,7 @@ zbusmap(caddr_t pa, u_int size)
 #elif defined(__m68k__)
 	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
 #else
-ERROR no support for this target cpu yet.
+ERROR no support for this target CPU yet.
 #endif
 	return((caddr_t)kva);
 }

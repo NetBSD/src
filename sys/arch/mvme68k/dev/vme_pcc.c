@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.17 2002/10/02 05:28:15 thorpej Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.17.6.1 2004/08/03 10:38:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * For a manual on the MVME-147, call: 408.991.8634.  (Yes, this
  * is the Sunnyvale sales office.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.17.6.1 2004/08/03 10:38:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,7 +264,7 @@ vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
 	struct vme_pcc_softc *sc = csc;
 
 	if (prior != level)
-		panic("vme_pcc_intr_establish: cpu priority != VMEbus irq level");
+		panic("vme_pcc_intr_establish: CPU priority != VMEbus irq level");
 
 	isrlink_vectored(func, arg, prior, vector, evcnt);
 

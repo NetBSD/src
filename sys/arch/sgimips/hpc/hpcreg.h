@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.5 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.5.12.1 2004/08/03 10:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -30,12 +30,24 @@
 #ifndef _ARCH_SGIMIPS_HPC_HPCREG_H_
 #define	_ARCH_SGIMIPS_HPC_HPCREG_H_
 
+/*
+ * HPC3 descriptor layout.
+ */
 struct hpc_dma_desc {
 	u_int32_t	hdd_bufptr;	/* Physical address of buffer */
 	u_int32_t	hdd_ctl;	/* Control flags and byte count */
 	u_int32_t	hdd_descptr;	/* Physical address of next descr. */
 	u_int32_t	hdd_pad;	/* Pad out to quadword alignment */
 };
+
+/*
+ * The hdd_bufptr and hdd_ctl fields are swapped between HPC1 and
+ * HPC3. These fields are referenced by macro for readability.
+ */
+#define hpc1_hdd_ctl	hdd_bufptr	
+#define hpc1_hdd_bufptr	hdd_ctl
+#define hpc3_hdd_ctl	hdd_ctl
+#define hpc3_hdd_bufptr	hdd_bufptr
 
 /*
  * Control flags
@@ -63,36 +75,36 @@ struct hpc_dma_desc {
 #define HPC_PBUS_DMAREGS	0x00000000	/* DMA registers for PBus */
 #define HPC_PBUS_DMAREGS_SIZE	0x0000ffff	/* channels 0 - 7 */
 
-#define HPC_PBUS_CH0_BP		0x00000004	/* Chan 0 Buffer Ptr */
-#define HPC_PBUS_CH0_DP		0x00000008	/* Chan 0 Descriptor Ptr */
+#define HPC_PBUS_CH0_BP		0x00000000	/* Chan 0 Buffer Ptr */
+#define HPC_PBUS_CH0_DP		0x00000004	/* Chan 0 Descriptor Ptr */
 #define HPC_PBUS_CH0_CTL	0x00001000	/* Chan 0 Control Register */
 
-#define HPC_PBUS_CH1_BP		0x00002004	/* Chan 1 Buffer Ptr */
-#define HPC_PBUS_CH1_DP		0x00002008	/* Chan 1 Descriptor Ptr */
+#define HPC_PBUS_CH1_BP		0x00002000	/* Chan 1 Buffer Ptr */
+#define HPC_PBUS_CH1_DP		0x00002004	/* Chan 1 Descriptor Ptr */
 #define HPC_PBUS_CH1_CTL	0x00003000	/* Chan 1 Control Register */
 
-#define HPC_PBUS_CH2_BP		0x00004004	/* Chan 2 Buffer Ptr */
-#define HPC_PBUS_CH2_DP		0x00004008	/* Chan 2 Descriptor Ptr */
+#define HPC_PBUS_CH2_BP		0x00004000	/* Chan 2 Buffer Ptr */
+#define HPC_PBUS_CH2_DP		0x00004004	/* Chan 2 Descriptor Ptr */
 #define HPC_PBUS_CH2_CTL	0x00005000	/* Chan 2 Control Register */
 
-#define HPC_PBUS_CH3_BP		0x00006004	/* Chan 3 Buffer Ptr */
-#define HPC_PBUS_CH3_DP		0x00006008	/* Chan 3 Descriptor Ptr */
+#define HPC_PBUS_CH3_BP		0x00006000	/* Chan 3 Buffer Ptr */
+#define HPC_PBUS_CH3_DP		0x00006004	/* Chan 3 Descriptor Ptr */
 #define HPC_PBUS_CH3_CTL	0x00007000	/* Chan 3 Control Register */
 
-#define HPC_PBUS_CH4_BP		0x00008004	/* Chan 4 Buffer Ptr */
-#define HPC_PBUS_CH4_DP		0x00008008	/* Chan 4 Descriptor Ptr */
+#define HPC_PBUS_CH4_BP		0x00008000	/* Chan 4 Buffer Ptr */
+#define HPC_PBUS_CH4_DP		0x00008004	/* Chan 4 Descriptor Ptr */
 #define HPC_PBUS_CH4_CTL	0x00009000	/* Chan 4 Control Register */
 
-#define HPC_PBUS_CH5_BP		0x0000a004	/* Chan 5 Buffer Ptr */
-#define HPC_PBUS_CH5_DP		0x0000a008	/* Chan 5 Descriptor Ptr */
+#define HPC_PBUS_CH5_BP		0x0000a000	/* Chan 5 Buffer Ptr */
+#define HPC_PBUS_CH5_DP		0x0000a004	/* Chan 5 Descriptor Ptr */
 #define HPC_PBUS_CH5_CTL	0x0000b000	/* Chan 5 Control Register */
 
-#define HPC_PBUS_CH6_BP		0x0000c004	/* Chan 6 Buffer Ptr */
-#define HPC_PBUS_CH6_DP		0x0000c008	/* Chan 6 Descriptor Ptr */
+#define HPC_PBUS_CH6_BP		0x0000c000	/* Chan 6 Buffer Ptr */
+#define HPC_PBUS_CH6_DP		0x0000c004	/* Chan 6 Descriptor Ptr */
 #define HPC_PBUS_CH6_CTL	0x0000d000	/* Chan 6 Control Register */
 
-#define HPC_PBUS_CH7_BP		0x0000e004	/* Chan 7 Buffer Ptr */
-#define HPC_PBUS_CH7_DP		0x0000e008	/* Chan 7 Descriptor Ptr */
+#define HPC_PBUS_CH7_BP		0x0000e000	/* Chan 7 Buffer Ptr */
+#define HPC_PBUS_CH7_DP		0x0000e004	/* Chan 7 Descriptor Ptr */
 #define HPC_PBUS_CH7_CTL	0x0000f000	/* Chan 7 Control Register */
 
 #define HPC_SCSI0_REGS		0x00010000	/* SCSI channel 0 registers */
@@ -121,6 +133,7 @@ struct hpc_dma_desc {
 #define HPC_SCSI1_DMACFG	0x00001010	/* DMA configururation */
 #define HPC_SCSI1_PIOCFG	0x00001014	/* PIO configururation */
 
+/* These are only valid for SCSI/ENETR, PBUS uses different definitions */
 #define HPC_DMACTL_IRQ    0x01 /* IRQ asserted, either dma done or parity */
 #define HPC_DMACTL_ENDIAN 0x02 /* DMA endian mode, 0=BE, 1=LE */
 #define HPC_DMACTL_DIR    0x04 /* DMA direction, 0=dev->mem, 1=mem->dev */
@@ -130,6 +143,19 @@ struct hpc_dma_desc {
 #define HPC_DMACTL_RESET  0x40 /* Resets dma channel and external controller */
 #define HPC_DMACTL_PERR   0x80 /* Parity error on interface to controller */
 
+/* HPC_PBUS_CHx_CTL read: */
+#define HPC_PBUS_DMACTL_IRQ	0x01 /* IRQ asserted, DMA done */
+#define HPC_PBUS_DMACTL_ISACT	0x02 /* DMA channel is active */
+/* HPC_PBUS_CHx_CTL write: */
+#define HPC_PBUS_DMACTL_ENDIAN	0x02 /* DMA endianness, 0=BE 1=LE */
+#define HPC_PBUS_DMACTL_RECEIVE	0x04 /* DMA direction, 1=dev->mem, 0=mem->dev */
+#define HPC_PBUS_DMACTL_FLUSH	0x08 /* Flush DMA FIFO */
+#define HPC_PBUS_DMACTL_ACT	0x10 /* Activate DMA channel */
+#define HPC_PBUS_DMACTL_ACT_LD	0x20 /* Load enable for ACT */
+#define HPC_PBUS_DMACTL_RT	0x40 /* Enable real time GIO service for DMA */
+#define HPC_PBUS_DMACTL_HIGHWATER_SHIFT	8
+#define HPC_PBUS_DMACTL_FIFOBEG_SHIFT	16
+#define HPC_PBUS_DMACTL_FIFOEND_SHIFT	24
 
 #define HPC_ENET_REGS		0x00014000	/* Ethernet registers */
 #define HPC_ENET_REGS_SIZE	0x00003fff
@@ -343,4 +369,89 @@ struct hpc_dma_desc {
 #define HPC_PBUS_BBRAM		0x00060000	/* PBus battery-backed RAM
 						 * external registers
 						 */
+
+/* HPC1/HPC1.5 differs from HPC3 in several details. */
+
+#define HPC1_HDD_CTL_EOCHAIN	0x80000000	/* End of descriptor chain */
+#define HPC1_HDD_CTL_EOPACKET	0x80000000	/* Ethernet: end of packet */
+#define HPC1_HDD_CTL_INTR	0x00008000	/* Interrupt when finished */
+#define HPC1_HDD_CTL_OWN	0x40000000	/* CPU owns this frame */
+#define HPC1_HDD_CTL_BYTECNT(x)	((x) & 0x1fff)	/* Byte count: for ethernet */
+#define HPC1_BIGENDIAN		0x000000c0	/* Endianness:5 revision:2 */
+#define	HPC1_REVSHIFT		0x00000006	/* Revision rshft */
+#define	HPC1_REVMASK		0x00000003	/* Revision mask */
+#define HPC1_REV15		0x00000001	/* HPC Revision 1.5 */
+#define HPC1_SCSI0_REGS		0x00000088
+#define HPC1_SCSI0_REGS_SIZE	0x00000018
+#define HPC1_SCSI0_CBP		0x00000004	/* Current buffer ptr */
+#define HPC1_SCSI0_NDBP		0x00000008	/* Next descriptor ptr */
+#define HPC1_SCSI0_BC		0x00000000	/* DMA byte count & flags */
+#define HPC1_SCSI0_CTL		0x0000000c	/* DMA control flags */
+#define HPC1_SCSI0_DEV		0x00000014	/* Device DMA FIFO pointer */
+#define HPC1_SCSI0_DMACFG	0x00000010	/* DMA configuration */
+#define HPC1_SCSI0_GIO		0x00001008	/* GIO DMA FIFO pointer */
+#define HPC1_SCSI0_PIOCFG	0x00001014	/* PIO configuration */
+#define HPC1_SCSI1_REGS		0x00012000	/* SCSI channel 1 registers */
+#define HPC1_SCSI1_REGS_SIZE	0x00001fff
+#define HPC1_SCSI1_CBP		0x00000000	/* Current buffer ptr */
+#define HPC1_SCSI1_NDBP		0x00000004	/* Next descriptor ptr */
+#define HPC1_SCSI1_BC		0x00001000	/* DMA byte count & flags */
+#define HPC1_SCSI1_CTL		0x00001004	/* DMA control flags */
+#define HPC1_SCSI1_GIO		0x00001008	/* GIO DMA FIFO pointer */
+#define HPC1_SCSI1_DEV		0x0000100c	/* Device DMA FIFO pointer */
+#define HPC1_SCSI1_DMACFG	0x00001010	/* DMA configuration */
+#define HPC1_SCSI1_PIOCFG	0x00001014	/* PIO configuration */
+#define HPC1_DMACTL_RESET  0x01 /* Resets dma channel and external controller */
+#define HPC1_DMACTL_FLUSH  0x02 /* Flush DMA FIFO's */
+#define HPC1_DMACTL_DIR	  0x10 /* DMA direction ~HPC3: 1=dev->mem, 0=mem->dev */
+#define HPC1_DMACTL_ACTIVE 0x80 /* DMA channel is active */
+#define HPC1_ENET_REGS		0x00000000	/* Ethernet registers */
+#define HPC1_ENET_REGS_SIZE	0x00000100
+#define HPC1_ENET_INTDELAY	0x0000002c	/* Interrupt Delay Count */
+#define HPC1_ENET_INTDELAYVAL	0x01000000
+#define HPC1_ENETR_CBP		0x00000054	/* Recv: Current buffer ptr */
+#define HPC1_ENETR_NDBP		0x00000050	/* Recv: Next descriptor ptr */
+#define HPC1_ENETR_BC		0x00000048	/* Recv: DMA byte cnt/flags */
+#define HPC1_ENETR_CTL		0x00000038	/* Recv: DMA control flags */
+#define HPC1_ENETR_CTL_ACTIVE	0x00004000	/* DMA channel active? */
+#define HPC1_ENETR_RESET	0x0000003c	/* Recv: Ethernet chip reset */
+#define HPC1_ENETR_RESET_CH	0x0001		/* Reset controller & chan */
+#define HPC1_ENETR_RESET_CLRINT	0x0002		/* Clear channel interrupt */
+#define HPC1_ENETR_RESET_LOOPBK	0x0004		/* External loopback enable */
+#define HPC1_ENETR_RESET_CLRRBO	0x0008		/* Clear RBO condition (??) */
+#define HPC1_ENETR_PIOCFG	0x0000101c	/* Recv: PIO configuration */
+#define HPC1_ENETX_CBP		0x00000020	/* Xmit: Current buffer ptr */
+#define HPC1_ENETX_NDBP		0x00000010	/* Xmit: Next descriptor ptr */
+#define HPC1_ENETX_CFXBP	0x00000024	/* Xmit: Current first buf */
+#define	HPC1_ENETX_PFXBP	0x00000028	/* Xmit: Prev. first buf */
+#define HPC1_ENETX_BC		0x00000014	/* Xmit: DMA byte cnt/flags */
+#define HPC1_ENETX_CTL		0x00000034	/* Xmit: DMA control flags */
+#define HPC1_ENETX_CTL_ACTIVE	0x00400000
+#define HPC1_ENETX_GIO		0x00003008	/* Xmit: GIO DMA FIFO ptr */
+#define HPC1_ENETX_DEV		0x0000300c	/* Xmit: Device DMA FIFO ptr */
+#define HPC1_PBUS_FIFO		0x00020000	/* PBus DMA FIFO */
+#define HPC1_PBUS_FIFO_SIZE	0x00007fff	/* PBus DMA FIFO size */
+#define HPC1_ENETR_FIFO		0x0002c000	/* Ether recv DMA FIFO */
+#define HPC1_ENETR_FIFO_SIZE	0x00001fff	/* Ether recv DMA FIFO size */
+#define HPC1_ENETX_FIFO		0x0002e000	/* Ether xmit DMA FIFO */
+#define HPC1_ENETX_FIFO_SIZE	0x00001fff	/* Ether xmit DMA FIFO size */
+#define HPC1_SCSI0_DEVREGS	0x0000011f
+#define HPC1_SCSI0_DEVREGS_SIZE	0x00000008
+#define HPC1_ENET_DEVREGS	0x00000100	/* Ethernet chip registers */
+#define HPC1_ENET_DEVREGS_SIZE	0x00000020	/* Size of chip registers */
+#define HPC1_PBUS_BBRAM		0x00000e00	/* PBus battery-backed RAM */
+#define	HPC1_LPT_REGS		0x000000a8	/* LPT HPC Registers */
+#define	HPC1_LPT_REGS_SIZE	0x00000018
+#define	HPC1_LPT_BC		0x00000000	/* Byte Count */
+#define	HPC1_LPT_CBP		0x00000004	/* Current Buffer Ptr */
+#define HPC1_LPT_NDBP		0x00000008	/* Next Buffer Ptr */
+#define	HPC1_LPT_CTL		0x0000000c	/* DMA Control Flags */
+#define HPC1_LPT_DEV		0x00000010	/* DMA Fifo Ptr */
+#define HPC1_LPT_DMACFG		0x00000014	/* DMA Configuration */
+#define HPC1_LPT_DEVREGS	0x00000132	/* Ext. Parallel Registers */
+#define	HPC1_LPT_DEVREGS_SIZE	0x00000001	/* Size of External Registers */
+#define HPC1_AUX_REGS		0x1fb801bc	/* Serial EEPROM/LED Control */
+#define HPC1_AUX_REGS_SIZE	0x00000001	/* One Byte */
+#define HPC1_AUX_CONSLED	0x01		/* Console LED */
+
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

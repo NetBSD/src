@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_pci.c,v 1.1 2002/11/20 18:06:26 bsh Exp $ */
+/*	$NetBSD: smdk2800_pci.c,v 1.1.8.1 2004/08/03 10:34:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -36,6 +36,9 @@
  * Platform specific part for S3C2800 PCI support on SMDK2800
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.1.8.1 2004/08/03 10:34:03 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -55,6 +58,8 @@ static struct arm32_dma_range smdk2800_dma_ranges[1];
 static struct arm32_bus_dma_tag smdk2800_bus_dma = {
 	NULL,			/* _ranges: set by init routine */
 	0,			/* _nranges */
+
+	NULL,			/* _cookie */
 
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,

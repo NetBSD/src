@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.11 2003/04/01 02:13:53 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11.2.1 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -40,6 +40,9 @@
  * Thanks to Mike <mcsmike@knipp.de> at MCS for loaning a card.
  * Thanks to Andreas Gandor <andi@knipp.de> for some technical information
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.11.2.1 2004/08/03 10:30:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

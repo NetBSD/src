@@ -1,9 +1,43 @@
-/*	$NetBSD: ite_subr.c,v 1.1 1997/02/04 03:52:36 thorpej Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.1.60.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: ite_subr.c 1.2 92/01/20$
+ *
+ *	@(#)ite_subr.c	8.1 (Berkeley) 6/10/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -51,6 +85,7 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
+void
 ite_fontinfo(ip)
 	struct ite_data *ip;
 {
@@ -83,8 +118,9 @@ ite_fontinfo(ip)
 	}
 }
 
+void
 ite_fontinit(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
@@ -115,16 +151,17 @@ ite_readbyte(ip, disp)
 	struct ite_data *ip;
 	int disp;
 {
-	return((u_char) *(((u_char *)ip->regbase) + disp));
+
+	return (u_char)*(((u_char *)ip->regbase) + disp);
 }
 
 void
 ite_writeglyph(ip, fbmem, glyphp)
-	register struct ite_data *ip;
-	register u_char *fbmem, *glyphp;
+	struct ite_data *ip;
+	u_char *fbmem, *glyphp;
 {
-	register int bn;
-	int c, l, b;
+	int bn;
+	int l, b;
 
 	for (l = 0; l < ip->ftheight; l++) {
 		bn = 7;

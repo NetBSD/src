@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.2 2002/09/27 15:36:45 provos Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.2.6.1 2004/08/03 10:40:34 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,6 +38,9 @@
 **  INCLUDE FILES
 **
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.2.6.1 2004/08/03 10:40:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

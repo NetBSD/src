@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.6 2003/06/18 10:56:35 bsh Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.6.2.1 2004/08/03 10:32:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -98,6 +98,9 @@
 /*
  * PCI configuration support for Samsung s3c2800.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.6.2.1 2004/08/03 10:32:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +299,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 		class_reg = bus_space_read_4(iot,
 		    sc->sc_reg_ioh, PCI_CLASS_REG);
 
-		pci_devinfo(id_reg, class_reg, 1, buf);
+		pci_devinfo(id_reg, class_reg, 1, buf, sizeof(buf));
 		printf("%s: %s\n", self->dv_xname, buf);
 	}
 

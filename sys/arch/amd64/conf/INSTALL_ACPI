@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.1 2003/05/15 14:02:00 fvdl Exp $
+# $NetBSD: INSTALL_ACPI,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.1 $"
+#ident 		"INSTALL-$Revision: 1.1.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -37,13 +37,13 @@ options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
-options 	SYSVMSG		# System V-like message queues
-options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
-options 	SYSVSHM		# System V-like memory sharing
+#options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 #options 	LKM		# loadable kernel modules
@@ -109,13 +109,13 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
-options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -325,7 +325,20 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+satalink* at pci? dev ? function ?	# SiI SATALink controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
@@ -336,6 +349,9 @@ pciide* at pci? dev ? function ? flags 0x0000
 # Some controllers pass the initial 32bit test, but will fail later.
 #wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1	at isa? port 0x170 irq 15 flags 0x00
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -348,8 +364,7 @@ pciide* at pci? dev ? function ? flags 0x0000
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-#wd*	at wdc? channel ? drive ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -606,7 +621,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 #pseudo-device	clockctl		# user control of clock subsystem
 

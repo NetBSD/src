@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.2 2003/06/28 09:30:26 he Exp $
+#	$NetBSD: Makefile.xxboot,v 1.2.2.1 2004/08/03 10:33:26 skrll Exp $
 
 BINDIR=		/usr/mdec/${BTYPE:tl}
 BINMODE=	${NONBINMODE}
@@ -17,11 +17,11 @@ afterinstall:
 
 .s.o: ../${BTYPE}_LOADADDR
 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
-	@if nm ${.TARGET} | grep -q "00000200 t end";	\
+	@if ${NM} ${.TARGET} | grep -q "00000200 t end";	\
 	 then						\
 		true;					\
 	 else						\
-		nm ${.TARGET} | grep " end";		\
+		${NM} ${.TARGET} | grep " end";		\
 		rm -f ${.TARGET};			\
 		false;					\
 	 fi

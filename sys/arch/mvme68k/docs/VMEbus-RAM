@@ -1,4 +1,4 @@
-	$NetBSD: VMEbus-RAM,v 1.1 2002/01/12 19:29:49 scw Exp $
+	$NetBSD: VMEbus-RAM,v 1.1.20.1 2004/08/03 10:38:08 skrll Exp $
 
 NetBSD/mvme68k: VMEbus RAM card configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,8 +10,8 @@ This file describes where to configure your VMEbus RAM and how to
 point the kernel in the direction of it.
 
 The MVME147 board has a fairly primitive VMEbus controller chip. The
-mapping of cpu address to VMEbus address is hardwired and so dictates
-what can be seen where by the 68030. From the cpu's perspective, A24
+mapping of CPU address to VMEbus address is hardwired and so dictates
+what can be seen where by the 68030. From the CPU's perspective, A24
 space spans 0x00000000 to 0x00ffffff. However, onboard RAM also spans
 this space. With 8Mb of onboard RAM, only the top 8Mb of VMEbus A24
 space can be seen. With 16Mb onboard, there is no easy way to get at
@@ -85,4 +85,4 @@ Anyhow, hopefully the above instructions have finally put to rest
 the most asked question about the mvme68k port.
 
 Cheers,
-Steve Woodford: scw@netbsd.org
+Steve Woodford: scw@NetBSD.org

@@ -1,8 +1,42 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1982, 1986 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
- * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
  *
@@ -45,6 +79,9 @@
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
+
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 
@@ -67,6 +104,8 @@
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
+
+extern char x86_64_doubleflt_stack[];
 
 static void setredzone __P((struct lwp *));
 
@@ -144,6 +183,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + PAGE_SIZE - 16;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
+	    + PAGE_SIZE - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -207,6 +248,20 @@ cpu_swapout(l)
 	fpusave_lwp(l, 1);
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+	/* If we were using the FPU, forget about it. */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l, 0);
+
+	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(l->l_proc);
+
+	/* Nuke the TSS. */
+	tss_free(l->l_md.md_tss_sel);
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -215,37 +270,10 @@ cpu_swapout(l)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_exit(struct lwp *l)
 {
 
-	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
-
-	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
-		mtrr_clean(l->l_proc);
-
-	/*
-	 * No need to do user LDT cleanup here; it's handled in
-	 * pmap_destroy().
-	 */
-
-	pmap_deactivate(l);
-
-	uvmexp.swtch++;
-	switch_exit(l, proc ? exit2 : lwp_exit2);
-}
-
-/*
- * cpu_wait is called from reaper() to let machine-dependent
- * code free machine-dependent resources that couldn't be freed
- * in cpu_exit().
- */
-void
-cpu_wait(struct lwp *l)
-{
-	/* Nuke the TSS. */
-	tss_free(l->l_md.md_tss_sel);
+	switch_exit(l, lwp_exit2);
 }
 
 /*

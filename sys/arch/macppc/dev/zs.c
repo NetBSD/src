@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2003/02/15 02:28:22 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.26.2.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -44,7 +44,7 @@
  * With NetBSD 1.1, port-mac68k started using a port of the port-sparc
  * (port-sun3?) zs.c driver (which was in turn based on code in the
  * Berkeley 4.4 Lite release). Bill Studenmund did the port, with
- * help from Allen Briggs and Gordon Ross <gwr@netbsd.org>. Noud de
+ * help from Allen Briggs and Gordon Ross <gwr@NetBSD.org>. Noud de
  * Brouwer field-tested the driver at a local ISP.
  *
  * Bill Studenmund and Gordon Ross then ported the machine-independant
@@ -52,6 +52,9 @@
  * intermediate version (mac68k using a local, patched version of
  * the m.i. drivers), with NetBSD 1.3 containing a full version.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.1 2004/08/03 10:37:21 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -392,6 +395,11 @@ zsc_attach(parent, self, aux)
 	intr_establish(intr[1][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)1);
 #endif
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
+		(void (*)(void *)) zsc_intr_soft, zsc);
+#endif
+
 	/*
 	 * Set the master interrupt enable and interrupt vector.
 	 * (common to both channels, do it on A)
@@ -452,7 +460,9 @@ zsmd_setclock(cs)
 #endif
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 static int zssoftpending;
+#endif
 
 /*
  * Our ZS chips all share a common, autovectored interrupt,
@@ -474,17 +484,22 @@ zshard(arg)
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
 			(zsc->zsc_cs[1]->cs_softreq))
 		{
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+			softintr_schedule(zsc->zsc_si);
+#else
 			/* zsc_req_softint(zsc); */
 			/* We are at splzs here, so no need to lock. */
 			if (zssoftpending == 0) {
 				zssoftpending = 1;
 				setsoftserial();
 			}
+#endif
 		}
 	}
 	return (rval);
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 /*
  * Similar scheme as for zshard (look at all of them)
  */
@@ -513,6 +528,7 @@ zssoft(arg)
 	}
 	return (1);
 }
+#endif
 
 #ifdef ZS_TXDMA
 int
@@ -532,10 +548,14 @@ zs_txdma_int(arg)
 	zstty_txdma_int(cs);
 
 	if (cs->cs_softreq) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr_schedule(zsc->zsc_si);
+#else
 		if (zssoftpending == 0) {
 			zssoftpending = 1;
 			setsoftserial();
 		}
+#endif
 	}
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $"
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>
 
 #include "locators.h"
@@ -59,7 +60,7 @@ static int	ixpsip_print(void *, const char *);
 CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
 		ixpsip_match, ixpsip_attach, NULL, NULL);
 
-extern struct bus_space ixpsip_bs_tag;
+struct ixpsip_softc *ixpsip_softc;
 
 int
 ixpsip_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -71,9 +72,18 @@ void
 ixpsip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixpsip_softc *sc = (void *) self;
-	sc->sc_iot = &ixpsip_bs_tag;
+	sc->sc_iot = &ixp425_bs_tag;
+
+	ixpsip_softc = sc;
 
 	printf("\n");
+
+	if (bus_space_map(sc->sc_iot, IXP425_EXP_HWBASE, IXP425_EXP_SIZE,
+	    0, &sc->sc_ioh)) {
+		printf("%s: Can't map expansion bus control registers!\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/*
 	 *  Attach each devices

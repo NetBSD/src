@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.44 2003/01/01 00:16:47 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.44.2.1 2004/08/03 10:37:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.1 2004/08/03 10:37:05 skrll Exp $");
 
 #include "opt_adb.h"
 

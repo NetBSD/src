@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.4 2002/09/27 15:35:51 provos Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.4.8.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * bus_space functions for i80321 I/O Processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.4.8.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +99,7 @@ const struct bus_space i80321_bs_tag_template = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -114,7 +117,7 @@ const struct bus_space i80321_bs_tag_template = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
@@ -310,7 +313,8 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.2 2002/10/05 17:16:37 chs Exp $	*/
+/*	$NetBSD: vt220.c,v 1.2.8.1 2004/08/03 10:32:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,6 +42,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.2.8.1 2004/08/03 10:32:49 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -55,10 +57,6 @@
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/console/vt220.h>
-
-#ifdef DIAGNOSTIC
-#include "qms.h"
-#endif
 
 static char vt220_name[] = "vt100";
 
@@ -90,7 +88,13 @@ char console_proc[41];	/* Is this debugging ? */
 
 extern struct vconsole *vconsole_master;
 
-extern void sysbeep(int, int);	/* XXX elsewhere ? */
+/*
+ * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * is found, it attaches itself into the pckbd driver here.
+ */
+static void	(*vt_bell_fn)(void *, u_int, u_int, u_int, int);
+static void	*vt_bell_fn_arg;
+extern void vt_hookup_bell(void (*)(void *, u_int, u_int, u_int, int), void *);
 
 static int default_beepstate = 0;
 
@@ -106,9 +110,6 @@ int mapped_cls(struct vconsole *);
 void do_scrollup(struct vconsole *);
 void do_scrolldown(struct vconsole *);
 void vt_ris(struct vconsole *);
-#if defined(DIAGNOSTIC) && NQMS > 0
-void qms_console_freeze(void);	/* XXX */
-#endif /* DIAGNOSTIC && NQMS */
 
 void clr_params(struct vt220_info *);
 void respond(struct vconsole *);
@@ -157,6 +158,24 @@ void vt_sgr(struct vconsole *);
 void vt_clreos(struct vconsole *);
 void vt_set_ansi(struct vconsole *);
 void vt_reset_ansi(struct vconsole *);
+
+void
+vt_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+
+	if (vt_bell_fn == NULL) {
+		vt_bell_fn = fn;
+		vt_bell_fn_arg = arg;
+	}
+}
+
+static void
+sysbeep(int pitch, int period)
+{
+
+	if (vt_bell_fn != NULL)
+		(*vt_bell_fn)(vt_bell_fn_arg, pitch, period, 50, FALSE);
+}
 
 void
 clr_params(cdata)
@@ -1323,10 +1342,6 @@ TERMTYPE_PUTSTRING(string, length, vc)
 
     if ( ( c == 0x0a ) || ( c== 0x0d ) )
 	cdata->flags &= ~F_LASTCHAR;
-
-#if defined(DIAGNOSTIC) && NQMS > 0
-	qms_console_freeze();
-#endif /* DIAGNOSTIC && NQMS */
 
 /* Always process characters in the range of 0x00 to 0x1f */
 

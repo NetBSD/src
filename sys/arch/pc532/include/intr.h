@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2003/06/16 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -135,7 +131,7 @@ splraise(ncpl)
 }
 
 /*
- * Restore a value to Cur_pl (cpu interrupts will get unmasked).
+ * Restore a value to Cur_pl (CPU interrupts will get unmasked).
  *
  * NOTE: We go to the trouble of returning the old value of cpl for
  * the benefit of some splsoftclock() callers.  This extra work is

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 2003/05/01 23:25:52 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.2.1 2004/08/03 10:38:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
 /*
  * news68k/dev/zs.c - based on {newsmips,x68k,mvme68k}/dev/zs.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17.2.1 2004/08/03 10:38:22 skrll Exp $");
 
 #include "opt_ddb.h"
 

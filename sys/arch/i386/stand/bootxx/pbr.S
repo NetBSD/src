@@ -1,7 +1,7 @@
-/*	$NetBSD: pbr.S,v 1.3 2003/05/15 08:50:53 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.3.2.1 2004/08/03 10:36:19 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,7 +47,7 @@
  * The job of this code is to read in the phase 1 bootstrap.
  *
  * Makefile supplies:
- * PRIMARY_LOAD_ADDRESS:	Address we load code toi (0x600).
+ * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x600).
  * BOOTXX_SECTORS:		Number of sectors we load (15).
  * X86_BOOT_MAGIC_1:		A random magic number.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define	OURADDR		0x7c00		/* our address */
 #define BOOTADDR	PRIMARY_LOAD_ADDRESS
@@ -69,8 +69,14 @@
 #define errcod R(_errcod)
 #define newline R(_newline)
 
-#define TABENTRYSIZE	(PARTNAMESIZE + 1)
+#define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
 #define NAMETABSIZE	(4 * TABENTRYSIZE)
+
+#ifdef BOOT_FROM_FAT
+#define MBR_AFTERBPB	90		/* BPB size in FAT32 partition BR */
+#else
+#define MBR_AFTERBPB	62		/* BPB size in floppy master BR */
+#endif
 
 #ifdef TERSE_ERROR
 /*
@@ -94,7 +100,7 @@
  * and can load the subsequent blocks (that load boot) to an address
  * of our choosing. 0:600 is a not unreasonable choice.
  *
- * On entry the bios drive number is in %dl and %esi may contain the
+ * On entry the BIOS drive number is in %dl and %esi may contain the
  * sector we were loaded from (if we were loaded by NetBSD mbr code).
  * In any case we have to re-read sector zero of the disk and hunt
  * through the BIOS partition table for the NetBSD partition.
@@ -104,28 +110,32 @@
 	.code16
 ENTRY(start)
 	/*
-	 * The PC BIOS architecture defines a 'Boot Parameter Block' here.
-	 * The actual format varies between different dos versions, but
+	 * The PC BIOS architecture defines a Boot Parameter Block (BPB) here.
+	 * The actual format varies between different MS-DOS versions, but
 	 * apparantly some system BIOS insist on patching this area
-	 * (especially on LS120 drives).
+	 * (especially on LS120 drives - which I thought had an MBR...).
 	 * The initial jmp and nop are part of the standard and may be
 	 * tested for by the system BIOS.
 	 */
 	jmp	start0
 	nop
-	.ascii	"NetBSD20"		/* OS name and version */
+	.ascii	"NetBSD20"		/* oemname (8 bytes) */
 
-	. = start + 0x25		/* rest all zeros for now */
+	. = start + MBR_BPB_OFFSET	/* move to start of BPB */
+					/* (ensures oemname doesn't overflow) */
+
+	. = start + MBR_AFTERBPB	/* skip BPB */
 start0:
-	mov	%cs, %ax		/* don't trust values of ds, es or ss */
+	xor	%ax, %ax		/* don't trust values of ds, es or ss */
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %ss
 	mov	$0xfffc, %sp
 
 	/* A 'reset disk system' request is traditional here... */
-	xor	%ax, %ax		/* in particular ah = 0 */
-	int	$0x13
+	push	%dx			/* some BIOS zap %dl here :-( */
+	int	$0x13			/* ah == 0 from code above */
+	pop	%dx
 
 	/* Read from start of disk */
 	movw	$0x0001, %cx		/* track zero sector 1 */
@@ -135,22 +145,37 @@ start0:
 /* See if this is our code, if so we have already loaded the next stage */
 
 	xorl	%ebp, %ebp		/* pass sector 0 to next stage */
-	movl	(%bx), %eax		/* mbr code shouldn't even have ... */
+	movl	(%bx), %eax		/* MBR code shouldn't even have ... */
 	cmpl	R(start), %eax		/* ... a jmp at the start. */
-	je	pbr_read_ok
+	je	pbr_read_ok1
 
-/* Now scan the mbr partition table for a netbsd partition */
+/* Now scan the MBR partition table for a netbsd partition */
 	
 	xorl	%ebx, %ebx		/* for base extended ptn chain */
 scan_ptn_tbl:
 	xorl	%ecx, %ecx		/* for next extended ptn */
-	movw	$BOOTADDR + MBR_PARTOFF, %di
-1:	movb	4(%di), %al		/* mbrp_typ */
+	movw	$BOOTADDR + MBR_PART_OFFSET, %di
+1:	movb	4(%di), %al		/* mbrp_type */
 	movl	8(%di), %ebp		/* mbrp_start == LBA sector */
 	addl	lba_sector, %ebp	/* add base of extended partition */
+#ifdef BOOT_FROM_FAT
+	cmpb	$MBR_PTYPE_FAT12, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16S, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16B, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT32, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT32L, %al
+	je	5f
+	cmpb	$MBR_PTYPE_FAT16L, %al
+	je	5f
+#else
 	cmpb	$MBR_PTYPE_NETBSD, %al
+#endif
 	jne	10f
-	testl	%esi, %esi		/* looking for a specific sector? */
+5:	testl	%esi, %esi		/* looking for a specific sector? */
 	je	boot
 	cmpl	%ebp, %esi		/* ptn we wanted? */
 	je	boot
@@ -163,7 +188,7 @@ scan_ptn_tbl:
 	jne	20f
 15:	movl	8(%di), %ecx		/* sector of next ext. ptn */
 20:	add	$0x10, %di
-	cmp	$BOOTADDR + MBR_MAGICOFF, %di
+	cmp	$BOOTADDR + MBR_MAGIC_OFFSET, %di
 	jne	1b
 
 	/* not in base partitions, check extended ones */
@@ -176,38 +201,27 @@ scan_ptn_tbl:
 	call	read_lba
 	jmp	scan_ptn_tbl
 
-/*
- * Something went wrong,
- * Output error code,
- */
-
-read_err:
-	set_err(ERR_READ)
-error:
-#ifdef TERSE_ERROR
-	movb	%al, errcod
-	movw	$errtxt, %si
-	call	message
-#else
-	push	%ax
-	movw	$errtxt, %si
-	call	message
-	pop	%si
-	call	message
-	movw	$newline, %si
-	call	message
-#endif
-1:	sti
-	hlt
-	jmp	1b
-
 no_netbsd_ptn:
 	/* Specific sector not found: try again looking for first NetBSD ptn */
 	testl	%esi, %esi
 	set_err(ERR_PTN)
 	jz	error
 	xorl	%esi, %esi
+	movl	%esi, lba_sector
 	jmp	start
+
+/*
+ * Sector below CHS limit
+ * Do a cylinder-head-sector read instead
+ * I believe the BIOS should do reads that cross track boundaries.
+ * (but the read should start at the beginning of a track...)
+ */
+read_chs:
+	movb	1(%di), %dh			/* head */
+	movw	2(%di), %cx			/* ch=cyl, cl=sect */
+	call	chs_read
+pbr_read_ok1:
+	jmp	pbr_read_ok
 
 /*
  * Active partition pointed to by di.
@@ -215,8 +229,8 @@ no_netbsd_ptn:
  * We can either do a CHS (Cylinder Head Sector) or an LBA (Logical
  * Block Address) read.  Always doing the LBA one
  * would be nice - unfortunately not all systems support it.
- * Also some may contain a separate (eg SCSI) bios that doesn't
- * support it even when the main bios does.
+ * Also some may contain a separate (eg SCSI) BIOS that doesn't
+ * support it even when the main BIOS does.
  *
  * The safest thing seems to be to find out whether the sector we
  * want is inside the CHS sector count.  If it is we use CHS, if
@@ -225,16 +239,13 @@ no_netbsd_ptn:
  * Actually we check that the CHS values reference the LBA sector,
  * if not we assume that the LBA sector is above the limit, or that
  * the geometry used (by fdisk) isn't correct.
- *
- * There isn't much point checking if LBA support is present!  We
- * only try to use it if it is necessary.
  */
 boot:
 	movl	%ebp, lba_sector	/* to control block */
 	testl	%ebx, %ebx		/* was it an extended ptn? */
 	jnz	boot_lba		/* yes - boot with LBA reads */
 
-/* get maximum (bios) sector */
+/* get maximum (BIOS) sector */
 	push	%dx				/* save drive number */
 	movb	$8, %ah
 	int	$0x13				/* chs info */
@@ -265,35 +276,21 @@ boot:
 	pop	%dx				/* recover drive nmber */
 
 	cmp	%bp, %ax
-	jne	check_lba
-
-/* Read using CHS */
-
-/*
- * Sector below CHS limit
- * Do a cylinder-head-sector read instead
- * I believe the bios should do reads that cross track boundaries.
- * (but the read should start at the beginning of a track...)
- */
-read_chs:
-	movb	1(%di), %dh			/* head */
-	movw	2(%di), %cx			/* ch=cyl, cl=sect */
-	call	chs_read
-	jmp	pbr_read_ok
-
-chs_read:
-	movw	$BOOTADDR, %bx			/* es:bx is buffer */
-	movw	$0x200 + BOOTXX_SECTORS, %ax	/* command 2, xx sectors */
-	int	$0x13
-	jc	read_err
-	ret
-
+	je	read_chs
 
 check_lba:
-#ifndef NO_LBA_CHECK
-/* Determine whether we have int13-extensions, by calling
+#ifdef NO_LBA_CHECK
+	jmp	boot_lba
+#else
+/*
+ * Determine whether we have int13-extensions, by calling
  * int 13, function 41. Check for the magic number returned,
  * and the disk packet capability.
+ *
+ * This is actually relatively pointless:
+ * 1) we only use LBA reads if CHS ones would fail
+ * 2) the MBR code managed to read the same sectors
+ * 3) the BIOS will (ok should) reject the LBA read as a bad BIOS call
  */
 	movw	$0x55aa, %bx
 	movb	$0x41, %ah
@@ -304,8 +301,30 @@ check_lba:
 	testb	$1, %cl
 	jnz	boot_lba
 1:	set_err(ERR_NO_LBA)
-	jmp	error
 #endif	/* NO_LBA_CHECK */
+
+/*
+ * Something went wrong,
+ * Output error code,
+ */
+
+error:
+#ifdef TERSE_ERROR
+	movb	%al, errcod
+	movw	$errtxt, %si
+	call	message
+#else
+	push	%ax
+	movw	$errtxt, %si
+	call	message
+	pop	%si
+	call	message
+	movw	$newline, %si
+	call	message
+#endif
+1:	sti
+	hlt
+	jmp	1b
 
 boot_lba:
 	call	read_lba
@@ -320,18 +339,53 @@ pbr_read_ok:
 	jnz	error
 
 	movl	%ebp, %esi			/* %esi ptn base, %dl disk id */
-	jmp	bootxx + BOOTADDR - OURADDR
+	jmp	$0, $bootxx			/* our %cs may not be zero */
 
 /* Read disk using int13-extension parameter block */
 read_lba:
-	push	%si
+	pusha
 	movw	$lba_info, %si			/* ds:si is ctl block */
 	movb	$0x42, %ah
+do_read:
 	int	$0x13
-	pop	%si
+	popa
 
-	jc	read_err
+	set_err(ERR_READ)
+	jc	error
 	ret
+
+/* Read using CHS */
+
+chs_read:
+	movw	$BOOTADDR, %bx			/* es:bx is buffer */
+	pusha
+	movw	$0x200 + BOOTXX_SECTORS, %ax	/* command 2, xx sectors */
+	jmp	do_read
+
+_errtxt: .ascii	"Error "			/* runs into newline... */
+_errcod: .byte	0				/* ... if errcod set */
+_newline:
+	.asciz	"\r\n"
+
+#ifndef TERSE_ERROR
+ERR_READ:	.asciz	"Disk read"
+ERR_NO_BOOTXX:	.asciz	"Not a bootxx image"
+ERR_PTN:	.asciz	"No NetBSD partition"
+#ifndef NO_LBA_CHECK
+ERR_NO_LBA:	.asciz	"Invalid CHS read"
+#endif
+#endif
+
+/*
+ * I hate #including source files, but pbr_magic below has to be at
+ * the correct absolute address.
+ * Clearly this could be done with a linker script.
+ */
+
+#include <message.S>
+#if 0
+#include <dump_eax.S>
+#endif
 
 /* Control block for int-13 LBA read. */
 _lba_info:
@@ -343,30 +397,36 @@ _lba_sector:
 	.long	0x0000				/* sector # goes here... */
 	.long	0x0000
 
-_errtxt: .ascii	"Error "			/* runs into newline... */
-_errcod: .byte	0				/* ... if errcod set */
-_newline:
-	.asciz	"\r\n"
+/* Drive Serial Number */
+	. = _C_LABEL(start) + MBR_DSN_OFFSET
+	.long	0
 
-#ifndef TERSE_ERROR
-ERR_READ:	.asciz	"Disk read error"
-ERR_NO_BOOTXX:	.asciz	"Not a bootxx image"
-ERR_PTN:	.asciz	"No NetBSD partition"
-#ifndef NO_LBA_CHECK
-ERR_NO_LBA:	.asciz	"Invalid CHS read"
-#endif
-#endif
+/* mbr_bootsel_magic (not used here) */
+	. = _C_LABEL(start) + MBR_BS_MAGIC_OFFSET
+	.word	0
 
 /*
- * I hate #including source files, but the stuff below has to be at
- * the correct absolute address.
- * Clearly this could be done with a linker script.
+ * Provide empty MBR partition table.
+ * If this is installed as an MBR, the user can use fdisk(8) to create
+ * the correct partition table ...
  */
+	. = _C_LABEL(start) + MBR_PART_OFFSET
+_pbr_part0:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part1:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part2:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
+_pbr_part3:
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.long	0, 0
 
-#include <message.S>
-#if 0
-#include <dump_eax.S>
-#endif
-
-	. = _C_LABEL(start) + MBR_MAGICOFF
+/*
+ * The magic comes last
+ */
+	. = _C_LABEL(start) + MBR_MAGIC_OFFSET
+pbr_magic:
 	.word	MBR_MAGIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.4 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.4.2.1 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -119,6 +115,14 @@ IDTVEC(svr4_fasttrap)
 	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
-1:	INTRFASTEXIT
+1:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
+	INTRFASTEXIT
+9:	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	2b

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2003/04/26 14:10:08 ragge Exp $
+# $NetBSD: GENERIC,v 1.111.2.1 2004/08/03 10:39:10 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,10 +19,11 @@
 # device.
 
 include		"arch/pmax/conf/std.pmax"
+include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.111 $"
+#ident		"GENERIC-$Revision: 1.111.2.1 $"
 
 maxusers	64
 
@@ -60,11 +61,13 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM			# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -124,12 +127,26 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 # NetBSD backwards compatibility
 #options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
 #options 	COMPAT_11	# NetBSD 1.1, EXEC_ELF_NOTELESS
-options 	COMPAT_12	# Netbsd 1.2 reboot(), EXEC_ELF_NOTELESS
-options 	COMPAT_13	# Netbsd 1.3
-options 	COMPAT_14	# Netbsd 1.4
+options 	COMPAT_12	# NetBSD 1.2 reboot(), EXEC_ELF_NOTELESS
+options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_16	# NetBSD 1.6
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
@@ -226,7 +243,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 pseudo-device	vnd		 4	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks
@@ -234,13 +251,13 @@ pseudo-device	ccd		 4	# concatenated disks
 pseudo-device	raid		 8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 3	# up to 3 framebuffers
@@ -248,3 +265,5 @@ pseudo-device	fb		 3	# up to 3 framebuffers
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

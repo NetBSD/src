@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2002/03/28 15:27:05 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.12.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,14 @@
 
 #include <sh3/intr.h>
 
-#define _INTR_N		8	/* TMU0, TMU1, TMU2, SCIF * 4, HD6446x */
+/*
+ * See sys/arch/sh3/sh3/interrupt.c
+ * This was 8 for TMU0, TMU1, TMU2, SCIF * 4, HD6446x.
+ *
+ * For now bump this to 16 so that it's possible to do experiments
+ * with new drivers without hitting this limit.
+ */
+#define _INTR_N		16
 
 #define	IPL_BIO		9	/* block I/O */
 #define	IPL_NET		10	/* network */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.29 2003/06/15 18:43:50 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.29.2.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * Machine dependant functions for kernel setup for Intel IQ80321 evaluation
  * boards using RedBoot firmware.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.29.2.1 2004/08/03 10:34:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -422,7 +425,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/*
 	 * We are currently running with the MMU enabled and the

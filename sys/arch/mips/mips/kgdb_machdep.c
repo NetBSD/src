@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.6 2003/04/02 03:27:35 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:37:47 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,11 +170,11 @@ kgdb_signal(type)
 	case T_TLB_ST_MISS+T_USER:
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
-	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
+	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
-	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
-	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
+	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to CPU */
+	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
 		return (SIGSEGV);
 
 	case T_BREAK:
@@ -205,41 +208,41 @@ kgdb_getregs(regs, gdb_regs)
 	struct frame *f = (struct frame *)regs;
 
 	memset(gdb_regs, 0, KGDB_NUMREGS * sizeof(kgdb_reg_t));
-	gdb_regs[ 1] = f->f_regs[AST];     /* AT */
-	gdb_regs[ 2] = f->f_regs[V0];      /* V0 */
-	gdb_regs[ 3] = f->f_regs[V1];      /* V1 */
-	gdb_regs[ 4] = f->f_regs[A0];      /* A0 */
-	gdb_regs[ 5] = f->f_regs[A1];      /* A1 */
-	gdb_regs[ 6] = f->f_regs[A2];      /* A2 */
-	gdb_regs[ 7] = f->f_regs[A3];      /* A3 */
-	gdb_regs[ 8] = f->f_regs[T0];      /* T0 */
-	gdb_regs[ 9] = f->f_regs[T1];      /* T1 */
-	gdb_regs[10] = f->f_regs[T2];      /* T2 */
-	gdb_regs[11] = f->f_regs[T3];	   /* T3 */
-	gdb_regs[12] = f->f_regs[T4];	   /* T4 */
-	gdb_regs[13] = f->f_regs[T5];	   /* T5 */
-	gdb_regs[14] = f->f_regs[T6];	   /* T6 */
-	gdb_regs[15] = f->f_regs[T7];	   /* T7 */
-	gdb_regs[16] = f->f_regs[S0];      /* S0 */
-	gdb_regs[17] = f->f_regs[S1];      /* S1 */
-	gdb_regs[18] = f->f_regs[S2];      /* S2 */
-	gdb_regs[19] = f->f_regs[S3];      /* S3 */
-	gdb_regs[20] = f->f_regs[S4];      /* S4 */
-	gdb_regs[21] = f->f_regs[S5];      /* S5 */
-	gdb_regs[22] = f->f_regs[S6];      /* S6 */
-	gdb_regs[23] = f->f_regs[S7];      /* S7 */
-	gdb_regs[24] = f->f_regs[T8];	   /* T8 */
-	gdb_regs[25] = f->f_regs[T9];	   /* T9 */
-	gdb_regs[28] = f->f_regs[GP];      /* GP */
-	gdb_regs[29] = f->f_regs[SP];      /* SP */
-	gdb_regs[30] = f->f_regs[S8];      /* S8 */
-	gdb_regs[31] = f->f_regs[RA];	   /* RA */
-	gdb_regs[32] = f->f_regs[SR];	   /* SR */
-	gdb_regs[33] = f->f_regs[MULLO];   /* MULLO */
-	gdb_regs[34] = f->f_regs[MULHI];   /* MULHI */
-	gdb_regs[35] = kgdb_vaddr;         /* BAD VADDR */
-	gdb_regs[36] = kgdb_cause;         /* CAUSE */
-	gdb_regs[37] = f->f_regs[PC];	   /* PC */
+	gdb_regs[ 1] = f->f_regs[_R_AST];	/* AT */
+	gdb_regs[ 2] = f->f_regs[_R_V0];	/* V0 */
+	gdb_regs[ 3] = f->f_regs[_R_V1];	/* V1 */
+	gdb_regs[ 4] = f->f_regs[_R_A0];	/* A0 */
+	gdb_regs[ 5] = f->f_regs[_R_A1];	/* A1 */
+	gdb_regs[ 6] = f->f_regs[_R_A2];	/* A2 */
+	gdb_regs[ 7] = f->f_regs[_R_A3];	/* A3 */
+	gdb_regs[ 8] = f->f_regs[_R_T0];	/* T0 */
+	gdb_regs[ 9] = f->f_regs[_R_T1];	/* T1 */
+	gdb_regs[10] = f->f_regs[_R_T2];	/* T2 */
+	gdb_regs[11] = f->f_regs[_R_T3];	/* T3 */
+	gdb_regs[12] = f->f_regs[_R_T4];	/* T4 */
+	gdb_regs[13] = f->f_regs[_R_T5];	/* T5 */
+	gdb_regs[14] = f->f_regs[_R_T6];	/* T6 */
+	gdb_regs[15] = f->f_regs[_R_T7];	/* T7 */
+	gdb_regs[16] = f->f_regs[_R_S0];	/* S0 */
+	gdb_regs[17] = f->f_regs[_R_S1];	/* S1 */
+	gdb_regs[18] = f->f_regs[_R_S2];	/* S2 */
+	gdb_regs[19] = f->f_regs[_R_S3];	/* S3 */
+	gdb_regs[20] = f->f_regs[_R_S4];	/* S4 */
+	gdb_regs[21] = f->f_regs[_R_S5];	/* S5 */
+	gdb_regs[22] = f->f_regs[_R_S6];	/* S6 */
+	gdb_regs[23] = f->f_regs[_R_S7];	/* S7 */
+	gdb_regs[24] = f->f_regs[_R_T8];	/* T8 */
+	gdb_regs[25] = f->f_regs[_R_T9];	/* T9 */
+	gdb_regs[28] = f->f_regs[_R_GP];	/* GP */
+	gdb_regs[29] = f->f_regs[_R_SP];	/* SP */
+	gdb_regs[30] = f->f_regs[_R_S8];	/* S8 */
+	gdb_regs[31] = f->f_regs[_R_RA];	/* RA */
+	gdb_regs[32] = f->f_regs[_R_SR];	/* SR */
+	gdb_regs[33] = f->f_regs[_R_MULLO];	/* MULLO */
+	gdb_regs[34] = f->f_regs[_R_MULHI];	/* MULHI */
+	gdb_regs[35] = kgdb_vaddr;		/* BAD VADDR */
+	gdb_regs[36] = kgdb_cause;		/* CAUSE */
+	gdb_regs[37] = f->f_regs[_R_PC];	/* PC */
 }
 
 /*
@@ -252,7 +255,7 @@ kgdb_setregs(regs, gdb_regs)
 {
 	struct frame *f = (struct frame *)regs;
 	
-	f->f_regs[PC] = gdb_regs[37];   /* PC */
+	f->f_regs[_R_PC] = gdb_regs[37];   /* PC */
 }	
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.1 2002/03/07 14:44:02 simonb Exp $	*/
+/*	$NetBSD: yamon.h,v 1.1.18.1 2004/08/03 10:34:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,7 +58,8 @@
 #define	YAMON_FUNC(ofs)		(*(uint32_t *)(MIPS_PHYS_TO_KSEG0(ofs)))
 
 typedef void (*t_yamon_print_count)(uint32_t port, char *s, uint32_t count);
-#define	YAMON_PRINT_COUNT(s, count) ((t_yamon_print_count)(YAMON_FUNC(YAMON_PRINT_COUNT_OFS)))(0, s, count)
+#define	YAMON_PRINT_COUNT(s, count) \
+	((t_yamon_print_count)(YAMON_FUNC(YAMON_PRINT_COUNT_OFS)))(0, s, count)
 
 typedef void (*t_yamon_exit)(uint32_t rc);
 #define	YAMON_EXIT(rc) ((t_yamon_exit)(YAMON_FUNC(YAMON_EXIT_OFS)))(rc)
@@ -67,16 +68,28 @@ typedef void (*t_yamon_print)(uint32_t port, char *s);
 #define	YAMON_PRINT(s) ((t_yamon_print)(YAMON_FUNC(YAMON_PRINT_OFS)))(0, s)
 
 typedef int (*t_yamon_getchar)(uint32_t port, char *ch);
-#define	YAMON_GETCHAR(ch) ((t_yamon_getchar)(YAMON_FUNC(YAMON_GETCHAR_OFS)))(0, ch)
+#define	YAMON_GETCHAR(ch) \
+	((t_yamon_getchar)(YAMON_FUNC(YAMON_GETCHAR_OFS)))(0, ch)
+
+typedef int t_yamon_syscon_id;
+typedef int (*t_yamon_syscon_read)(t_yamon_syscon_id id, void *param, uint32_t size);
+#define	YAMON_SYSCON_READ(id, param, size) \
+	((t_yamon_syscon_read)(YAMON_FUNC(YAMON_SYSCON_READ_OFS)))\
+	(id, param, size)
 
 typedef struct {
 	char *name;
 	char *val;
 } yamon_env_var;
 
+#define	SYSCON_BOARD_CPU_CLOCK_FREQ_ID	34		/* UINT32 */
+#define	SYSCON_BOARD_BUS_CLOCK_FREQ_ID	35		/* UINT32 */
+#define	SYSCON_BOARD_PCI_FREQ_KHZ_ID	36		/* UINT32 */
+
 char *yamon_getenv(char *);
 void yamon_print(char *);
 void yamon_exit(uint32_t);
+int yamon_setcpufreq(int);
 
 extern yamon_env_var *yamon_envp;
 extern struct consdev yamon_promcd;

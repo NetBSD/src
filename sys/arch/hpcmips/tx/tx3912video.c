@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.33 2002/10/02 05:26:49 thorpej Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.33.6.1 2004/08/03 10:35:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.33.6.1 2004/08/03 10:35:20 skrll Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -514,38 +517,34 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    !LEGAL_CLUT_INDEX(idx) ||
-		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    !LEGAL_CLUT_INDEX(idx + cnt - 1)) {
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, rgb);
-			return  (ENOMEM);
-		}
+		if (error)
+			goto out;
 		tx3912video_clut_get(sc, rgb, idx, cnt);
 		rgb24_decompose(rgb, r, g, b, cnt);
 
-		copyout(r, cmap->red, cnt);
-		copyout(g, cmap->green,cnt);
-		copyout(b, cmap->blue, cnt);
+		error = copyout(r, cmap->red, cnt);
+		if (error)
+			goto out;
+		error = copyout(g, cmap->green,cnt);
+		if (error)
+			goto out;
+		error = copyout(b, cmap->blue, cnt);
 
+out:
 		cmap_work_free(r, g, b, rgb);
-
-		return (0);
+		return error;
 		
 	case WSDISPLAYIO_PUTCMAP:
 		/*

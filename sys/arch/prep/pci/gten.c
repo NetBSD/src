@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.8 2002/10/02 15:52:29 thorpej Exp $	*/
+/*	$NetBSD: gten.c,v 1.8.6.1 2004/08/03 10:39:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.8.6.1 2004/08/03 10:39:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -175,7 +178,7 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 	}
 	gt->gt_psize = gt->gt_memsize - GTEN_VRAM_OFFSET;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 	format_bytes(pbuf, sizeof(pbuf), gt->gt_psize);
 	printf("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
@@ -420,30 +423,24 @@ gten_putcmap(gt, cm)
 {
 	int index = cm->index;
 	int count = cm->count;
-	int i;
-	u_char *r, *g, *b;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
 
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
-	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
-	    !uvm_useracc(cm->green, cm->count, B_READ) ||
-	    !uvm_useracc(cm->blue, cm->count, B_READ))
-		return EFAULT;
-	copyin(cm->red,   &gt->gt_cmap_red[index],   count);
-	copyin(cm->green, &gt->gt_cmap_green[index], count);
-	copyin(cm->blue,  &gt->gt_cmap_blue[index],  count);
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
 
-	r = &gt->gt_cmap_red[index];
-	g = &gt->gt_cmap_green[index];
-	b = &gt->gt_cmap_blue[index];
-
-#if 0
-	for (i = 0; i < count; i++) {
-		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
-		r++, g++, b++, index++;
-	}
-#endif
-
+	memcpy(&gt->gt_cmap_red[index], &rbuf[index], count);
+	memcpy(&gt->gt_cmap_green[index], &gbuf[index], count);
+	memcpy(&gt->gt_cmap_blue[index], &bbuf[index], count);
 	return 0;
 }

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.32 2003/04/10 22:06:54 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.32.2.1 2004/08/03 10:33:10 skrll Exp $
 #
 # Generic atari
 #
@@ -79,6 +79,19 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
 #endif
 
 # File systems
@@ -130,6 +143,8 @@ options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
 options 	COMPAT_14	# Compatibility to NetBSD1.4
+options 	COMPAT_15	# Compatibility to NetBSD1.5
+options 	COMPAT_16	# Compatibility to NetBSD1.6
 #ifndef INSTALL_KERNEL
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
@@ -150,6 +165,7 @@ options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10		# number of semaphore identifiers
 #options 	SEMUME=10		# max number of undo entries per proc.
 #options 	SEMMNU=30		# number of undo structures in system
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #endif
 
 #ifndef INSTALL_KERNEL
@@ -161,6 +177,7 @@ options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #else /* INSTALL_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
@@ -246,6 +263,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 #endif
 
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)

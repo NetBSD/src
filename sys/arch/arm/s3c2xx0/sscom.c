@@ -1,8 +1,8 @@
-/*	$NetBSD: sscom.c,v 1.7 2003/06/29 22:28:10 fvdl Exp $ */
+/*	$NetBSD: sscom.c,v 1.7.2.1 2004/08/03 10:32:50 skrll Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,11 +80,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -107,6 +103,9 @@
  * Support integrated UARTs of Samsung S3C2800/2400X/2410X
  * Derived from sys/dev/ic/com.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7.2.1 2004/08/03 10:32:50 skrll Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -154,6 +153,11 @@
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/s3c2xx0var.h>
+#if defined(SSCOM_S3C2410) || defined(SSCOM_S3C2400)
+#include <arm/s3c2xx0/s3c24x0reg.h>
+#elif defined(SSCOM_S3C2800)
+#include <arm/s3c2xx0/s3c2800reg.h>
+#endif
 #include <arm/s3c2xx0/sscom_var.h>
 #include <dev/cons.h>
 
@@ -276,15 +280,14 @@ void	sscom_kgdb_putc (void *, int);
 
 
 static __inline void
-sscom_output_chunk( struct sscom_softc *sc )
+__sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 {
 	int n, space;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	n = sc->sc_tbc;
-	space = 16 - ((bus_space_read_2(iot, ioh, SSCOM_UFSTAT) &
-	    UFSTAT_TXCOUNT) >> UFSTAT_TXCOUNT_SHIFT);
+	space = 16 - ((ufstat & UFSTAT_TXCOUNT) >> UFSTAT_TXCOUNT_SHIFT);
 
 	if (n > space)
 		n = space;
@@ -296,7 +299,14 @@ sscom_output_chunk( struct sscom_softc *sc )
 	}
 }
 
+static void
+sscom_output_chunk(struct sscom_softc *sc)
+{
+	int ufstat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SSCOM_UFSTAT);
 
+	if (!(ufstat & UFSTAT_TXFULL))
+		__sscom_output_chunk(sc, ufstat);
+}
 
 int
 sscomspeed(long speed, long frequency)
@@ -946,7 +956,7 @@ tiocm_to_sscom(struct sscom_softc *sc, u_long how, int ttybits)
 		break;
 
 	case TIOCMSET:
-		CLR(sc->sc_umcon, UMCON_DTR|UMCON_RTS);
+		CLR(sc->sc_umcon, UMCON_DTR);
 		SET(sc->sc_umcon, sscombits);
 		break;
 	}
@@ -1545,7 +1555,7 @@ sscomsoft(void *arg)
 
 
 int
-sscomintr(void *arg)
+sscomrxintr(void *arg)
 {
 	struct sscom_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1573,6 +1583,7 @@ sscomintr(void *arg)
 
 		if ( (ufstat & (UFSTAT_RXCOUNT|UFSTAT_RXFULL)) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
+
 			while (cc > 0) {
 				int cn_trapped = 0;
 
@@ -1644,11 +1655,12 @@ sscomintr(void *arg)
 			}
 		}
 
+
 		msts = sc->read_modem_status(sc);
 		delta = msts ^ sc->sc_msts;
 		sc->sc_msts = msts;
 
-#if 0
+#ifdef notyet
 		/*
 		 * Pulse-per-second (PSS) signals on edge of DCD?
 		 * Process these even if line discipline is ignoring DCD.
@@ -1736,32 +1748,72 @@ sscomintr(void *arg)
 		}
 
 
-		/*
-		 * See if data can be transmitted as well. Schedule tx
-		 * done event if no data left and tty was marked busy.
+	} while (0);
+
+	SSCOM_UNLOCK(sc);
+
+	/* Wake up the poller. */
+	softintr_schedule(sc->sc_si);
+
+#if NRND > 0 && defined(RND_COM)
+	rnd_add_uint32(&sc->rnd_source, iir | rsr);
+#endif
+
+	return 1;
+}
+
+int
+sscomtxintr(void *arg)
+{
+	struct sscom_softc *sc = arg;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	uint16_t ufstat;
+
+	if (SSCOM_ISALIVE(sc) == 0)
+		return 0;
+
+	SSCOM_LOCK(sc);
+
+	ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+
+	/*
+	 * If we've delayed a parameter change, do it
+	 * now, and restart * output.
+	 */
+	if (sc->sc_heldchange && (ufstat & UFSTAT_TXCOUNT) == 0) {
+		/* XXX: we should check transmitter empty also */
+		sscom_loadchannelregs(sc);
+		sc->sc_heldchange = 0;
+		sc->sc_tbc = sc->sc_heldtbc;
+		sc->sc_heldtbc = 0;
+	}
+
+	/*
+	 * See if data can be transmitted as well. Schedule tx
+	 * done event if no data left and tty was marked busy.
+	 */
+	if (!ISSET(ufstat,UFSTAT_TXFULL)) {
+		/* 
+		 * Output the next chunk of the contiguous
+		 * buffer, if any.
 		 */
-		if (!ISSET(ufstat,UFSTAT_TXFULL)) {
-			/* 
-			 * Output the next chunk of the contiguous
-			 * buffer, if any.
+		if (sc->sc_tbc > 0) {
+			__sscom_output_chunk(sc, ufstat);
+		}
+		else {
+			/*
+			 * Disable transmit sscompletion
+			 * interrupts if necessary.
 			 */
-			if (sc->sc_tbc > 0) {
-				sscom_output_chunk(sc);
-			}
-			else {
-				/*
-				 * Disable transmit sscompletion
-				 * interrupts if necessary.
-				 */
-				if (sc->sc_hwflags & SSCOM_HW_TXINT)
-					sscom_disable_txint(sc);
-				if (sc->sc_tx_busy) {
-					sc->sc_tx_busy = 0;
-					sc->sc_tx_done = 1;
-				}
+			if (sc->sc_hwflags & SSCOM_HW_TXINT)
+				sscom_disable_txint(sc);
+			if (sc->sc_tx_busy) {
+				sc->sc_tx_busy = 0;
+				sc->sc_tx_done = 1;
 			}
 		}
-	} while (0);
+	}
 
 	SSCOM_UNLOCK(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.5 2002/10/02 05:17:47 thorpej Exp $	*/
+/*	$NetBSD: lasi.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -76,16 +79,19 @@ struct lasi_softc {
 	struct lasi_trs volatile *sc_trs;
 };
 
-int	lasimatch __P((struct device *, struct cfdata *, void *));
-void	lasiattach __P((struct device *, struct device *, void *));
+int	lasimatch(struct device *, struct cfdata *, void *);
+void	lasiattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
+CFATTACH_DECL(lasi_mainbus, sizeof(struct lasi_softc),
+    lasimatch, lasiattach, NULL, NULL);
+
+CFATTACH_DECL(lasi_phantomas, sizeof(struct lasi_softc),
     lasimatch, lasiattach, NULL, NULL);
 
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.
  */
-static void lasi_fix_args __P((void *, struct gsc_attach_args *));
+static void lasi_fix_args(void *, struct gsc_attach_args *);
 static void
 lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 {
@@ -122,12 +128,9 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 }
 
 int
-lasimatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lasimatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
@@ -147,13 +150,10 @@ lasimatch(parent, cf, aux)
 }
 
 void
-lasiattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+lasiattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct confargs *ca = aux;
-	register struct lasi_softc *sc = (struct lasi_softc *)self;
+	struct confargs *ca = aux;
+	struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	int s, in;

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.10 2003/04/10 22:06:56 christos Exp $
+# 	$NetBSD: LROUTER,v 1.10.2.1 2004/08/03 10:35:05 skrll Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -14,10 +14,10 @@ maxusers	32
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
+makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	VR4122			# NEC VR4122
-options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -30,6 +30,7 @@ options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=16384	# dmesg buffer size
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN
@@ -140,16 +141,19 @@ fxp*	at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 
 # IDE and related devices
-pciide* at pci? dev ? function ? flags 0x0000
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
-#wd*	at pciide? channel ? drive ? flags 0x0ffa	# PIO mode 2
-wd*	at pciide? channel ? drive ? flags 0x0ffb	# PIO mode 3
-#wd*	at pciide? channel ? drive ? flags 0x0ff0	# PIO mode 4
-#wd*	at pciide? channel ? drive ? flags 0x0000	# UDMA mode 2
+#wd*	at atabus? drive ? flags 0x0ffa	# PIO mode 2
+wd*	at atabus? drive ? flags 0x0ffb	# PIO mode 3
+#wd*	at atabus? drive ? flags 0x0ff0	# PIO mode 4
+#wd*	at atabus? drive ? flags 0x0000	# UDMA mode 2
 
 # ATAPI bus support
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ? flags 0x0ff0 # ATAPI CD-ROM drives

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpudispatch.c,v 1.1 2002/06/05 01:04:25 fredette Exp $	 */
+/*	$NetBSD: fpudispatch.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	 */
 
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
@@ -20,6 +20,9 @@
  * State: Exp    	Locker:  
  * Date: 1994/07/21 17:36:35 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

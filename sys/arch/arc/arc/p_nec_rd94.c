@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_rd94.c,v 1.1 2001/06/13 15:33:27 soda Exp $	*/
+/*	$NetBSD: p_nec_rd94.c,v 1.1.26.1 2004/08/03 10:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p_nec_rd94.c,v 1.1.26.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.7 2003/06/14 19:32:54 thorpej Exp $
+#	$NetBSD: ZAO425,v 1.7.2.1 2004/08/03 10:33:55 skrll Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -28,6 +28,7 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 # Board Type
 makeoptions	BOARDTYPE="zao425"
+options 	EVBARM_BOARDTYPE=zao425
 
 # File systems
 
@@ -81,6 +82,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_13	# NetBSD 1.3 compatibility.
@@ -123,6 +125,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
@@ -131,11 +134,11 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=210000
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=250000
 
 config		netbsd		root on ? type ?
 
@@ -155,11 +158,88 @@ ixpclk*		at ixpsip? addr 0xc8005000 size 0x30
 ixdpled*	at ixpsip? addr 0x52000000 size 0x1000
 
 # On-board device support
-ixpcom0		at ixpsip? addr 0xc8000000 size 0x1000 index 0
-ixpcom1		at ixpsip? addr 0xc8001000 size 0x1000 index 1
+com0		at ixpsip? addr 0xc8000000 size 0x1000 index 0
+com1		at ixpsip? addr 0xc8001000 size 0x1000 index 1
 
 # IXP425 fast bus
 ixpio0		at mainbus?
+
+# PCI bus
+pci0		at ixpio? bus ?
+
+#
+# Networking devices
+#
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+esh*	at pci? dev ? function ?	# Essential HIPPI card
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+
+# MII/PHY support
+acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+gentbi*	at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# CardBus bridge support
+#cbb*            at pci? dev ? function ?
+#cardslot*       at cbb?
+
+# CardBus bus support
+#cardbus*        at cardslot?
+#pcmcia*         at cardslot?
+
+# PCI USB controllers
+#ohci*   at pci? dev ? function ?        # Open Host Controller
+
+# USB bus support
+#usb*    at ohci?
+
+# USB Hubs
+#uhub*   at usb?
+#uhub*   at uhub? port ? configuration ? interface ?
 
 # Pseudo-Devices
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.1 2003/07/02 15:25:22 darrenr Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.2 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.1 2003/07/02 15:25:22 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.2 2004/08/03 10:35:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,12 +78,6 @@ procfs_getcpuinfstr(char *buf, int *len)
 {
 	int left, l, i;
 	char featurebuf[256], *p;
-	u_int64_t freq, fraq;
-
-	if (cpu_info_list->ci_tsc_freq != 0) {
-		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
-		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
-	}
 
 	p = featurebuf;
 	left = sizeof featurebuf;
@@ -131,10 +125,14 @@ procfs_getcpuinfstr(char *buf, int *len)
 		return 0;
 
 		
-	if (cpu_info_list->ci_tsc_freq != 0)
+	if (cpu_info_list->ci_tsc_freq != 0) {
+		u_int64_t freq, fraq;
+
+		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
+		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
 		l = snprintf(p, left, "cpu MHz\t\t: %qd.%qd\n",
 		    freq, fraq);
-	else
+	} else
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
 	left -= l;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.11 2002/12/08 21:31:37 leo Exp $
+#	$NetBSD: MILAN.in,v 1.11.6.1 2004/08/03 10:33:10 skrll Exp $
 #
 # Milan
 #
@@ -73,15 +73,26 @@ fdisa0 		at fdcisa0 drive 0
 # wdc on ISA with flags = WDC_OPTIONS_ATA_NOSTREAM!
 wdc0 		at isa? port 0x1f0 irq 14 flags 0x04	# 1st IDE controller
 wdc1 		at isa? port 0x170 irq 15 flags 0x04	# 2nd IDE controller
-wd* 		at wdc? channel ? drive ?
-atapibus* 	at wdc?	channel ?			# ATAPI bus support
 #endif
 
 #if defined(MILAN_PCIIDE)
-pciide* 	at pci? dev ? function ? flags 0x0000	# 2 PCIIDE channels
-wd* 		at pciide? channel ? drive ? flags 0x0000
-atapibus* 	at pciide? channel ?			# ATAPI bus support
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 #endif
+
+atabus*		at ata? channel ?
 
 #
 # The Milan uses wscons
@@ -94,5 +105,8 @@ pckbc0 		at isa? 			# PC keyboard controller
 pckbd* 		at pckbc?			# PC keyboard
 wskbd* 		at pckbd? console ?		# wscons keyboard
 
+# ATA devices
+wd*		at atabus? drive ?
+atapibus* 	at atabus?				# ATAPI bus support
 # ATAPI devices
 cd* 		at atapibus? drive ?		# ATAPI CD-ROM drives

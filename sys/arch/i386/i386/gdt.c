@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.30 2003/06/23 11:01:18 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.30.2.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.30 2003/06/23 11:01:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.30.2.1 2004/08/03 10:35:49 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -144,17 +144,26 @@ gdt_init()
 }
 
 /*
- * Allocate shadow GDT for a slave cpu.
+ * Allocate shadow GDT for a slave CPU.
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
 	int max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	int min_len = MINGDTSIZ * sizeof(gdt[0]);
+	struct vm_page *pg;
+	vaddr_t va;
 
 	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
-	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-	    (vaddr_t)ci->ci_gdt + min_len, FALSE, FALSE);
+	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
+	    va += PAGE_SIZE) {
+		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
+		    == NULL) {
+			uvm_wait("gdt_alloc_cpu");
+		}
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ | VM_PROT_WRITE);
+	}
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdt, gdt_count * sizeof(gdt[0]));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
@@ -164,7 +173,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 /*
  * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a cpu knows who it is).
+ * (for the most part, this is how a CPU knows who it is).
  */
 void
 gdt_init_cpu(struct cpu_info *ci)

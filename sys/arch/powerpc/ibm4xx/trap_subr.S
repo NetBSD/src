@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.7 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.7.2.1 2004/08/03 10:39:28 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -273,7 +273,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	3,FRAME_PID+8(1);					\
 	lwz	4,FRAME_SRR1+8(1);					\
 	bl	_C_LABEL(ctx_setup);					\
-	TRAP_IF_ZERO(r3);						\
+	TRAP_IF_ZERO(3);						\
 	stw	3,FRAME_PID+8(1);					\
 	lmw	26,FRAME_LR+8(1);					\
 	mtlr	26;							\
@@ -294,7 +294,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtcr	29;							\
 	mtmsr	31;							\
 	isync;								\
-	TRAP_IF_ZERO(r30);						\
+	TRAP_IF_ZERO(30);						\
 	mtpid	30;							\
 	lmw	29,savearea(0)
 
@@ -340,7 +340,7 @@ _C_LABEL(trapexit):
 
 
 
-	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
 	STANDARD_PROLOG(tempsave);
 	bla	s_sctrap
@@ -358,6 +358,7 @@ s_sctrap:
 	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl
+_C_LABEL(sctrapexit):
 /* Disable interrupts: */
 	wrteei	0
 /* Test AST pending: */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.2 2003/03/29 18:08:42 matt Exp $	*/
+/*	$NetBSD: hid.h,v 1.2.2.1 2004/08/03 10:39:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -80,7 +80,7 @@
     "\010SGE\007b25\006BTIC\005LRSTK\004FOLD\003BHT\002NOPDST\001NOPTI"
 
 /*
- *  HID0 bit definitions per cpu model
+ *  HID0 bit definitions per CPU model
  *
  * bit	603	604	750	7400	7410	7450
  *   0	EMCP	EMCP	EMCP	EMCP	EMCP	-

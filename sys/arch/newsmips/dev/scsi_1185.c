@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.11 2003/04/19 14:56:06 tsutsui Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.11.2.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@
  *
  *	CXD1185Q
  *	SCSI bus low level common routines
- *				for one cpu machine
+ *				for one CPU machine
  *
  * MODIFY HISTORY:
  *
@@ -55,6 +51,9 @@
  *				tuzukete access suru-baai,
  *				kanarazu wait wo ireru-beshi !
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.11.2.1 2004/08/03 10:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2003/01/01 01:31:04 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:34:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:34:09 skrll Exp $");
 
 #include "opt_pci.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.6 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.6.14.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.6 2002/03/05 04:12:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.6.14.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -160,8 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.6 2002/03/05 04:12:57 itojun Exp $");
 #define	TH_MIN		5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RED_LIMIT	60	/* default max queue lenght */
-#define	RED_STATS		/* collect statistics */
+#define	RED_LIMIT	60	/* default max queue length */
 
 /*
  * our default policy for forced-drop is drop-tail.
@@ -310,7 +309,7 @@ redioctl(dev, cmd, addr, flag, p)
 			error = ENOMEM;
 			break;
 		}
-		bzero(rqp, sizeof(red_queue_t));
+		(void)memset(rqp, 0, sizeof(red_queue_t));
 
 		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
 		       M_DEVBUF, M_WAITOK);
@@ -319,7 +318,7 @@ redioctl(dev, cmd, addr, flag, p)
 			error = ENOMEM;
 			break;
 		}
-		bzero(rqp->rq_q, sizeof(class_queue_t));
+		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		rqp->rq_red = red_alloc(0, 0, 0, 0, 0, 0);
 		if (rqp->rq_red == NULL) {
@@ -522,7 +521,7 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
 		return (NULL);
-	bzero(rp, sizeof(red_t));
+	(void)memset(rp, 0, sizeof(red_t));
 
 	rp->red_avg = 0;
 	rp->red_idle = 1;
@@ -1006,7 +1005,7 @@ wtab_alloc(weight)
 	MALLOC(w, struct wtab *, sizeof(struct wtab), M_DEVBUF, M_WAITOK);
 	if (w == NULL)
 		panic("wtab_alloc: malloc failed!");
-	bzero(w, sizeof(struct wtab));
+	(void)memset(w, 0, sizeof(struct wtab));
 	w->w_weight = weight;
 	w->w_refcount = 1;
 	w->w_next = wtab_list;
@@ -1089,8 +1088,6 @@ pow_w(w, n)
 #define	FV_BACKOFFTHRESH	1  /* backoff threshold interval in second */
 #define	FV_TTHRESH		3  /* time threshold to delete fve */  
 #define	FV_ALPHA		5  /* extra packet count */
-
-#define	FV_STATS
 
 #if (__FreeBSD_version > 300000)
 #define	FV_TIMESTAMP(tp)	getmicrotime(tp)
@@ -1274,7 +1271,7 @@ fv_alloc(rp)
 	       M_DEVBUF, M_WAITOK);
 	if (fv == NULL)
 		return (NULL);
-	bzero(fv, sizeof(struct flowvalve));
+	(void)memset(fv, 0, sizeof(struct flowvalve));
 
 	MALLOC(fv->fv_fves, struct fve *, sizeof(struct fve) * num,
 	       M_DEVBUF, M_WAITOK);
@@ -1282,7 +1279,7 @@ fv_alloc(rp)
 		FREE(fv, M_DEVBUF);
 		return (NULL);
 	}
-	bzero(fv->fv_fves, sizeof(struct fve) * num);
+	(void)memset(fv->fv_fves, 0, sizeof(struct fve) * num);
 
 	fv->fv_flows = 0;
 	TAILQ_INIT(&fv->fv_flowlist);

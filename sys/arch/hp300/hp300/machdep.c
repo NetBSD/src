@@ -1,9 +1,43 @@
-/*	$NetBSD: machdep.c,v 1.172.2.1 2003/07/02 15:25:19 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172.2.2 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: machdep.c 1.74 92/12/20$
+ *
+ *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -43,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.1 2003/07/02 15:25:19 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.2 2004/08/03 10:34:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -119,10 +153,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.1 2003/07/02 15:25:19 darrenr Ex
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -181,7 +215,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
  * and 68030 systems.  See clock.c for the delay
  * calibration algorithm.
  */
-int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
+int	cpuspeed;		/* relative CPU speed; XXX skewed on 68040 */
 int	delay_divisor;		/* delay constant */
 
 /*
@@ -281,16 +315,13 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu
+ * initialize CPU
  */
 void
 cpu_startup()
 {
 	extern char *etext;
-	caddr_t v;
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -315,56 +346,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and the give everything true virtual addresses.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
-		panic("startup: no room for tables");
-	if ((allocsys(v, NULL) - v) != size)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) 
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -390,8 +372,6 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Tell the VM system that page 0 isn't mapped.
@@ -417,11 +397,6 @@ cpu_startup()
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 
 	/* Safe to use malloc for extio_ex now. */
 	extio_ex_malloc_safe = 1;
@@ -667,34 +642,20 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 int	waittime = -1;
@@ -1316,8 +1277,8 @@ done:
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- * 
+ *	CPU-dependent a.out format hook for execve().
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *

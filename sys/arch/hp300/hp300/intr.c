@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2002/09/27 15:36:02 provos Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.6.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2002/09/27 15:36:02 provos Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.6.1 2004/08/03 10:34:37 skrll Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -238,7 +238,7 @@ intr_establish(func, arg, ipl, priority)
 	 * higher) priority.
 	 */
 
-        for (curih = LIST_FIRST(&hp300_intr_list[ipl].hi_q);
+	for (curih = LIST_FIRST(&hp300_intr_list[ipl].hi_q);
 	    LIST_NEXT(curih,ih_q) != NULL;
 	    curih = LIST_NEXT(curih,ih_q)) {
 		if (newih->ih_priority > curih->ih_priority) {

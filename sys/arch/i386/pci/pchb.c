@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.43 2003/06/15 23:09:01 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.43.2.1 2004/08/03 10:36:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.43 2003/06/15 23:09:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.43.2.1 2004/08/03 10:36:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
-	u_char bdnum, pbnum;
+	u_char bdnum, pbnum = 0; /* XXX: gcc */
 	pcitag_t tag;
 	int doattach, attachflags, has_agp;
 
@@ -125,7 +125,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 * have auxiliary PCI buses.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
@@ -139,19 +139,45 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		 * This host bridge has a second PCI bus.
 		 * Configure it.
 		 */
-		doattach = 1;
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_SERVERWORKS_XX5:
-		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
-		case PCI_PRODUCT_SERVERWORKS_CNB20LE:
-		case PCI_PRODUCT_SERVERWORKS_CIOB20:
+		case PCI_PRODUCT_SERVERWORKS_CSB5:
+		case PCI_PRODUCT_SERVERWORKS_CSB6:
+			/* These devices show up as host bridges, but are
+			   really southbridges. */
+			break;
 		case PCI_PRODUCT_SERVERWORKS_CMIC_HE:
 		case PCI_PRODUCT_SERVERWORKS_CMIC_LE:
-		case PCI_PRODUCT_SERVERWORKS_CIOBX2:
-			if ((attachflags &
-			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
-			    PCI_FLAGS_MEM_ENABLED)
+		case PCI_PRODUCT_SERVERWORKS_CMIC_SL:
+			/* CNBs and CIOBs are connected to these using a
+			   private bus.  The bus number register is that of
+			   the first PCI bus hanging off the CIOB.  We let
+			   the CIOB attachment handle configuring the PCI
+			   buses. */
+			break;
+		default:
+			printf("%s: unknown ServerWorks chip ID 0x%04x; trying to attach PCI buses behind it\n", self->dv_xname, PCI_PRODUCT(pa->pa_id));
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP:
+		case PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI:
+		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_PCI:
+		case PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI:
+		case PCI_PRODUCT_SERVERWORKS_CNB20_HE_AGP:
+		case PCI_PRODUCT_SERVERWORKS_CIOB_X:
+		case PCI_PRODUCT_SERVERWORKS_CNB30_HE:
+		case PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2:
+		case PCI_PRODUCT_SERVERWORKS_CIOB_X2:
+		case PCI_PRODUCT_SERVERWORKS_CIOB_E:
+			switch (attachflags & (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) {
+			case 0:
+				/* Doesn't smell like there's anything there. */
+				break;
+			case PCI_FLAGS_MEM_ENABLED:
 				attachflags |= PCI_FLAGS_IO_ENABLED;
+				/* FALLTHROUGH */
+			default:
+				doattach = 1;
+				break;
+			}
 			break;
 		}
 		break;
@@ -274,6 +300,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
 		case PCI_PRODUCT_INTEL_82830MP_IO_1:
 		case PCI_PRODUCT_INTEL_82845G_DRAM:
+		case PCI_PRODUCT_INTEL_82855GM_MCH:
+		case PCI_PRODUCT_INTEL_82865_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend
@@ -330,7 +358,7 @@ pchb_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (pnp)
+	if (pnp != NULL)
 		aprint_normal("%s at %s", pba->pba_busname, pnp);
 	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
@@ -340,7 +368,8 @@ int
 agp_print(void *aux, const char *pnp)
 {
 	struct agpbus_attach_args *apa = aux;
-	if (pnp)
+
+	if (pnp != NULL)
 		aprint_normal("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);
 }

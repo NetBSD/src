@@ -1,8 +1,9 @@
-/*	$NetBSD: cpu.c,v 1.13 2003/01/03 09:09:22 rafal Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13.2.1 2004/08/03 10:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001 Jason R. Thorpe.
+ * Copyright (c) 2004 Christopher SEKIYA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +17,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -33,48 +34,130 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_machtypes.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.1 2004/08/03 10:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
+#include <machine/sysconf.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
+void		cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void *cpu_intr_establish(int, int, int (*func)(void *), void *);
+
+static struct evcnt mips_int0_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0");
+
+static struct evcnt mips_int1_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 1");
+
+static struct evcnt mips_int2_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 2");
+
+static struct evcnt mips_int3_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 3");
+
+static struct evcnt mips_int4_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 4");
+
+static struct evcnt mips_int5_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5");
+
+static struct evcnt mips_spurint_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
 
 static void
-cpu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	printf(": ");
 	cpu_identify();
+}
 
-#ifdef IP22
-	if (mach_type == MACH_SGI_IP22) {		/* XXX Indy */
-		extern void ip22_cache_init(struct device *);
-		ip22_cache_init(self);
+/*
+ * NB: Do not re-enable interrupts here -- reentrancy here can cause all
+ * sorts of Bad Things(tm) to happen, including kernel stack overflows.
+ */
+void
+cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+	uvmexp.intrs++;
+
+	(void)(*platform.watchdog_reset)();
+
+	if (ipending & MIPS_HARD_INT_MASK) {
+        	if (ipending & MIPS_INT_MASK_5) {
+               		(void)(*platform.intr5)(status, cause, pc, ipending);
+			mips_int5_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_5;
+        	}
+
+		if (ipending & MIPS_INT_MASK_4) {
+			(void)(*platform.intr4)(status, cause, pc, ipending);
+			mips_int4_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_4;
+		}
+
+		if (ipending & MIPS_INT_MASK_3) {
+			(void)(*platform.intr3)(status, cause, pc, ipending);
+			mips_int3_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_3;
+		}
+
+	        if (ipending & MIPS_INT_MASK_2) {
+			(void)(*platform.intr2)(status, cause, pc, ipending);
+			mips_int2_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_2;
+		}
+
+		if (ipending & MIPS_INT_MASK_1) {
+			(void)(*platform.intr1)(status, cause, pc, ipending);
+			mips_int1_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_1;
+		}
+
+		if (ipending & MIPS_INT_MASK_0) {  
+			(void)(*platform.intr0)(status, cause, pc, ipending);
+			mips_int0_evcnt.ev_count++;
+			cause &= ~MIPS_INT_MASK_0;
+		}
+
+		if (cause & status & MIPS_HARD_INT_MASK)
+			mips_spurint_evcnt.ev_count++;
 	}
-#endif
+
+	/* software interrupt */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
+
+	_clrsoftintr(ipending);
+
+	softintr_dispatch(ipending);
+}
+
+void *
+cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
+{
+	(*platform.intr_establish)(level, ipl, func, arg);
+	return (void *) -1;
 }

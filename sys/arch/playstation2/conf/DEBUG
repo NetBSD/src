@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.9 2003/02/16 17:35:17 augustss Exp $
+# 	$NetBSD: DEBUG,v 1.9.2.1 2004/08/03 10:39:06 skrll Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -14,6 +14,8 @@ config		netbsd		root on ? type ?
 makeoptions	DEFGP="-G 0"
 
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+options 	KLOADER
+
 options 	NMBCLUSTERS=4096 # Max. number of mbuf clusters
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -36,6 +38,7 @@ options 	GPROF		# kernel profiling
 makeoptions	PROF="-pg"
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.13 2003/04/01 23:19:09 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.13.2.1 2004/08/03 10:32:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -39,6 +39,9 @@
  *
  * Created      : 17/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.13.2.1 2004/08/03 10:32:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

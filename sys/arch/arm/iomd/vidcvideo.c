@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.17.2.1 2004/08/03 10:32:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17.2.1 2004/08/03 10:32:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,20 +766,19 @@ get_cmap(sc, p)
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
+	int error;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-
-	copyout(&sc->sc_dc->dc_cmap.r[index], p->red, count);
-	copyout(&sc->sc_dc->dc_cmap.g[index], p->green, count);
-	copyout(&sc->sc_dc->dc_cmap.b[index], p->blue, count);
-
-	return (0);
+	error = copyout(&sc->sc_dc->dc_cmap.r[index], p->red, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_dc->dc_cmap.g[index], p->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_dc->dc_cmap.b[index], p->blue, count);
+	return error;
 }
 
 
@@ -789,19 +788,25 @@ set_cmap(sc, p)
 	struct wsdisplay_cmap *p;
 {
     	struct fb_devconfig *dc = sc->sc_dc;
+	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
+	int error;
 
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-
-	copyin(p->red, &dc->dc_cmap.r[index], count);
-	copyin(p->green, &dc->dc_cmap.g[index], count);
-	copyin(p->blue, &dc->dc_cmap.b[index], count);
+	error = copyin(p->red, &cmap.r[index], count);
+	if (error)
+		return error;
+	error = copyin(p->green, &cmap.g[index], count);
+	if (error)
+		return error;
+	error = copyin(p->blue, &cmap.b[index], count);
+	if (error)
+		return error;
+	memcpy(&dc->dc_cmap.r[index], &cmap.r[index], count);
+	memcpy(&dc->dc_cmap.g[index], &cmap.g[index], count);
+	memcpy(&dc->dc_cmap.b[index], &cmap.b[index], count);
 	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
@@ -814,26 +819,41 @@ set_cursor(sc, p)
 {
 #define	cc (&dc->dc_cursor)
     	struct fb_devconfig *dc = sc->sc_dc;
-	u_int v, index, count, icount;
+	u_int v, index = 0, count = 0, icount = 0;
+	uint8_t r[2], g[2], b[2], image[512], mask[512];
+	int error;
+
+	/* XXX gcc does not detect identical conditions */
+	index = count = icount = 0;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= CURSOR_MAX_COLOURS || (index + count) > CURSOR_MAX_COLOURS)
+		if (index >= CURSOR_MAX_COLOURS ||
+		    (index + count) > CURSOR_MAX_COLOURS)
 			return (EINVAL);
-		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
-		    !uvm_useracc(p->cmap.green, count, B_READ) ||
-		    !uvm_useracc(p->cmap.blue, count, B_READ))
-			return (EFAULT);
+		error = copyin(p->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.blue, &b[index], count);
+		if (error)
+			return error;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		if (p->size.x > CURSOR_MAX_WIDTH || p->size.y > CURSOR_MAX_HEIGHT)
+		if (p->size.x > CURSOR_MAX_WIDTH ||
+		    p->size.y > CURSOR_MAX_HEIGHT)
 			return (EINVAL);
 		icount = sizeof(u_int32_t) * p->size.y;
-		if (!uvm_useracc(p->image, icount, B_READ) ||
-		    !uvm_useracc(p->mask, icount, B_READ))
-			return (EFAULT);
+		error = copyin(p->image, &image, icount);
+		if (error)
+			return error;
+		error = copyin(p->mask, &mask, icount);
+		if (error)
+			return error;
 	}
 
 	if (v & WSDISPLAY_CURSOR_DOCUR) 
@@ -843,16 +863,16 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOHOT)
 		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		copyin(p->cmap.red, &cc->cc_color[index], count);
-		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
-		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
+		memcpy(&cc->cc_color[index], &r[index], count);
+		memcpy(&cc->cc_color[index + 2], &g[index], count);
+		memcpy(&cc->cc_color[index + 4], &b[index], count);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
+		memcpy(cc->cc_image, image, icount);
 		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
-		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_mask, icount);
+		memcpy(cc->cc_mask, mask, icount);
 	}
 	dc->dc_changed |= v;
 
@@ -914,7 +934,7 @@ static void vv_copyrows(id, srcrow, dstrow, nrows)
 		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
 
 		/* wipe out remains of the screen if nessisary */
-		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, NULL);
+		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, 0);
 		return;
 	};
 

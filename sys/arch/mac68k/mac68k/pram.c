@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.18 1999/06/28 01:56:58 briggs Exp $	*/
+/*	$NetBSD: pram.c,v 1.18.36.1 2004/08/03 10:37:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.1 2004/08/03 10:37:10 skrll Exp $");
 
 #include "opt_adb.h"
 

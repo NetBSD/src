@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.4 2002/10/02 15:52:39 thorpej Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.4.6.1 2004/08/03 10:40:33 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  *  OFW Glue for Smart Card Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.4.6.1 2004/08/03 10:40:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

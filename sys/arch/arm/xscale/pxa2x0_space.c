@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.3 2003/06/06 09:05:42 scw Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -74,6 +74,9 @@
  * bus_space functions for Intel PXA2[51]0 application processor.
  * Derived from i80321_space.c.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +215,10 @@ void
 pxa2x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	/* Nothing to do. */
+	if (bsh > (u_long)KERNEL_BASE) 
+		return;
+
+	uvm_km_free(kernel_map, bsh, size);
 }
 
 

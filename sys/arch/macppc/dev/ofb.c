@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.35 2003/06/29 22:28:33 fvdl Exp $	*/
+/*	$NetBSD: ofb.c,v 1.35.2.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,9 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.35.2.1 2004/08/03 10:37:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -50,10 +53,11 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
-#include <machine/bat.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/grfioctl.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <macppc/dev/ofbvar.h>
 
@@ -191,7 +195,7 @@ ofbattach(parent, self, aux)
 		return;
 	}
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 	printf("%s: %d x %d, %dbpp\n", self->dv_xname,
 	       dc->dc_ri.ri_width, dc->dc_ri.ri_height, dc->dc_ri.ri_depth);
@@ -559,28 +563,33 @@ ofb_putcmap(sc, cm)
 	struct ofb_devconfig *dc = sc->sc_dc;
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int i;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
 	u_char *r, *g, *b;
 
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
-	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
-	    !uvm_useracc(cm->green, cm->count, B_READ) ||
-	    !uvm_useracc(cm->blue, cm->count, B_READ))
-		return EFAULT;
-	copyin(cm->red,   &sc->sc_cmap_red[index],   count);
-	copyin(cm->green, &sc->sc_cmap_green[index], count);
-	copyin(cm->blue,  &sc->sc_cmap_blue[index],  count);
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
 
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
-
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
-
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.9 2002/03/25 17:23:19 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.9.10.1 2004/08/03 10:34:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -274,8 +274,10 @@ __END_MACRO
 
 	if ((ptr = (char *)malloc(len)) == NULL) {
 		MessageBox(_root->_window,
-		    L"Couldn't allocate memory for extra kernel options.",
-		    TEXT("WARNING"), 0);
+		    L"Can't allocate memory for extra kernel options.",
+		    TEXT("WARNING"),
+		    MB_ICONWARNING | MB_OK);
+		UpdateWindow(_root->_window);
 
 		return argc;  
 	}
@@ -292,7 +294,9 @@ __END_MACRO
 		if (argc == MAX_KERNEL_ARGS || locp + len + 1 > p + sz) {
 			MessageBox(_root->_window,
 			    L"Too many extra kernel options.",
-			    TEXT("WARNING"), 0);
+			    TEXT("WARNING"),
+			    MB_ICONWARNING | MB_OK);
+			UpdateWindow(_root->_window);
 			break;
 		}
 		argv[argc++] = ptokv(locp);
@@ -335,7 +339,13 @@ HpcMenuInterface::setup_bootinfo(struct bootinfo &bi)
 void
 HpcMenuInterface::progress()
 {
-	SendMessage(_root->_progress_bar->_window, PBM_STEPIT, 0, 0);
+	_root->progress();
+}
+
+void
+HpcMenuInterface::unprogress()
+{
+	_root->unprogress();
 }
 
 // Boot kernel.
@@ -351,8 +361,9 @@ HpcMenuInterface::boot()
 			if (tab->cpu == cpu && tab->machine == machine) {
 				MessageBox(_root->_window,
 				    tab->cause ? tab->cause :
-				    L"not supported yet.",
-				    TEXT("BOOT FAILED"), 0);
+				    L"Not supported yet.",
+				    TEXT("BOOT FAILED"),
+				    MB_ICONERROR | MB_OK);
 				return;
 			}
 		}

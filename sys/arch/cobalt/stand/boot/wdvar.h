@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.1 2003/06/25 17:24:23 cdi Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
 #include <mips/cpuregs.h>
 
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define WDC_TIMEOUT		2000000
 #define PCIIDE_CHANNEL_NDEV	2
 #define NUNITS			(PCIIDE_CHANNEL_NDEV * PCIIDE_NUM_CHANNELS)
 
-struct channel_softc {
+struct wdc_channel {
 	volatile u_int8_t *c_base;
 	volatile u_int16_t *c_data;
 
@@ -58,14 +58,14 @@ struct wd_softc {
 #define WDF_LBA48	0x0002
 	u_int16_t sc_flags;
 
-	u_int8_t sc_part;
-	u_int8_t sc_unit;
+	u_int sc_part;
+	u_int sc_unit;
 
 	u_int64_t sc_capacity;
 
 	struct ataparams sc_params;
 	struct disklabel sc_label;
-	struct channel_softc sc_channel;
+	struct wdc_channel sc_channel;
 };
 
 struct wdc_command {
@@ -84,12 +84,12 @@ struct wdc_command {
 	u_int64_t r_blkno;
 };
 
-int	wdc_init		(struct wd_softc*, u_int8_t*);
+int	wdc_init		(struct wd_softc*, u_int*);
 int	wdccommand		(struct wd_softc*, struct wdc_command*);
 int	wdccommandext		(struct wd_softc*, struct wdc_command*);
 int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
-int	pciide_init		(struct channel_softc*, u_int8_t*);
+int	pciide_init		(struct wdc_channel*, u_int*);
 
 #endif /* _STAND_WDVAR_H */

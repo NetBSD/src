@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2003/04/01 20:50:12 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3.2.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -33,6 +33,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3.2.1 2004/08/03 10:35:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +60,10 @@
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, core)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *core;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *core)
 {
+	struct proc *p = l->l_proc;
 	struct md_coredump md_core;
 	struct coreseg cseg;
 	off_t off;
@@ -74,7 +74,7 @@ cpu_coredump(p, vp, cred, core)
 	core->c_seghdrsize = ALIGN(sizeof(cseg));
 	core->c_cpusize = sizeof(md_core);
 
-	process_read_regs(p, &md_core.md_reg);
+	process_read_regs(l, &md_core.md_reg);
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ZERO, CORE_CPU);
 	cseg.c_addr = 0;
@@ -101,9 +101,7 @@ cpu_coredump(p, vp, cred, core)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	paddr_t pa;
 	boolean_t rv;
@@ -125,44 +123,38 @@ pagemove(from, to, size)
 }
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(struct lwp *l)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	/*
 	 * Stash the physical for the pcb of U for later perusal
 	 */
-	p->p_addr->u_pcb.pcb_uva = (vaddr_t)p->p_addr;
-	tf->tf_cr30 = kvtop((caddr_t)p->p_addr);
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr, sizeof(p->p_addr->u_pcb));
+	l->l_addr->u_pcb.pcb_uva = (vaddr_t)l->l_addr;
+	tf->tf_cr30 = kvtop((caddr_t)l->l_addr);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sizeof(l->l_addr->u_pcb));
 
 #ifdef HPPA_REDZONE
 	/* Create the kernel stack red zone. */
-	pmap_redzone((vaddr_t)p->p_addr + HPPA_REDZONE,
-		(vaddr_t)p->p_addr + USPACE, 1);
+	pmap_redzone((vaddr_t)l->l_addr + HPPA_REDZONE,
+		(vaddr_t)l->l_addr + USPACE, 1);
 #endif
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(struct lwp *l)
 {
 
-	/* Flush this process out of the FPU. */
-	hppa_fpu_flush(p);
+	/* Flush this LWP out of the FPU. */
+	hppa_fpu_flush(l);
 }
 
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
-	register struct pcb *pcbp;
-	register struct trapframe *tf;
+	struct pcb *pcbp;
+	struct trapframe *tf;
 	register_t sp, osp;
 
 #ifdef DIAGNOSTIC
@@ -171,25 +163,32 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	/* Flush the parent process out of the FPU. */
-	hppa_fpu_flush(p1);
+	hppa_fpu_flush(l1);
 
 	/* Now copy the parent PCB into the child. */
-	pcbp = &p2->p_addr->u_pcb;
-	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
+	pcbp = &l2->l_addr->u_pcb;
+	bcopy(&l1->l_addr->u_pcb, pcbp, sizeof(*pcbp));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l1->l_addr->u_pcb,
+		sizeof(pcbp->pcb_fpregs));
+	/* reset any of the pending FPU exceptions from parent */
+	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
+	pcbp->pcb_fpregs[1] = 0;
+	pcbp->pcb_fpregs[2] = 0;
+	pcbp->pcb_fpregs[3] = 0;
 
-	sp = (register_t)p2->p_addr + PAGE_SIZE;
-	p2->p_md.md_regs = tf = (struct trapframe *)sp;
+	sp = (register_t)l2->l_addr + PAGE_SIZE;
+	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
-	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
+	bcopy(l1->l_md.md_regs, tf, sizeof(*tf));
 
 	/*
 	 * cpu_swapin() is supposed to fill out all the PAs
 	 * we gonna need in locore
 	 */
-	cpu_swapin(p2);
+	cpu_swapin(l2);
 
 	/* Activate this process' pmap. */
-	pmap_activate(p2);
+	pmap_activate(l2);
 
 	/*
 	 * theoretically these could be inherited from the father,
@@ -203,7 +202,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Set up return value registers as libc:fork() expects
 	 */
-	tf->tf_ret0 = p1->p_pid;
+	tf->tf_ret0 = l1->l_proc->p_pid;
 	tf->tf_ret1 = 1;	/* ischild */
 	tf->tf_t1 = 0;		/* errno */
 
@@ -218,70 +217,73 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	osp = sp;
 	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
-	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) =
-		(register_t)switch_trampoline;
-	tf->tf_sp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
+	pcbp->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
 }
 
-#if 0
 void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct trapframe *tf = p->p_md.md_regs;
-	register_t sp = tf->tf_sp;
+	struct pcb *pcbp;
+	struct trapframe *tf;
+	register_t sp, osp;
+
+	pcbp = &l->l_addr->u_pcb;
+	sp = (register_t)pcbp + PAGE_SIZE;
+	l->l_md.md_regs = tf = (struct trapframe *)sp;
+	sp += sizeof(struct trapframe);
+
+	cpu_swapin(l);
+
+	osp = sp;
+	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
+	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
+	pcbp->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
+}
+
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
 
 	/*
-	 * Overwrite normally stashed there &child_return(p)
+	 * If this thread was using the FPU, disable the FPU and record
+	 * that it's unused.
 	 */
-	*HPPA_FRAME_CARG(1, sp) = (register_t)pc;
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)sp, HPPA_FRAME_SIZE);
+
+	if (fpu_cur_uspace == l->l_md.md_regs->tf_cr30) {
+		fpu_cur_uspace = 0;
+		mtctl(0, CR_CCR);
+	}
 }
-#endif
 
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct lwp *l)
 {
 	(void) splsched();
-	uvmexp.swtch++;
-
-	/* Flush the process out of the FPU. */
-	hppa_fpu_flush(p);
-	curproc = NULL;
-	switch_exit(p);
+	switch_exit(l, lwp_exit2);
 }
-
-#if 0
-void
-cpu_wait(p)
-	struct proc *p;
-{
-}
-#endif
 
 /*
  * Map an IO request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
-	vaddr_t addr, kva;
+	vaddr_t uva, kva;
 	paddr_t pa;
 	vsize_t size, off;
 	int npf;
 	struct proc *p;
 	struct vm_map *map;
+	struct pmap *upmap, *kpmap;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -289,53 +291,36 @@ vmapbuf(bp, len)
 #endif
 	p = bp->b_proc;
 	map = &p->p_vmspace->vm_map;
+	upmap = vm_map_pmap(map);
+	kpmap = vm_map_pmap(phys_map);
 	bp->b_saveaddr = bp->b_data;
-	addr = (vaddr_t)bp->b_saveaddr;
-	off = addr & PGOFSET;
-	size = round_page(bp->b_bcount + off);
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + len);
 
-	/*
-	 * Note that this is an expanded version of:
-	 *   kva = uvm_km_valloc_wait(kernel_map, size);
-	 * We do it on our own here to be able to specify an offset to uvm_map
-	 * so that we can get all benefits of PMAP_PREFER.
-	 * - art@
-	 */
-	while (1) {
-		kva = vm_map_min(phys_map);
-		if (uvm_map(phys_map, &kva, size, NULL, addr, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)
-			break;
-		tsleep(phys_map, PVM, "vallocwait", 0);
-	}
-
+	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
 	bp->b_data = (caddr_t)(kva + off);
-	addr = trunc_page(addr);
 	npf = btoc(size);
 	while (npf--) {
-		/* not needed, thanks to PMAP_PREFER() */
-		/* fdcache(vm_map_pmap(map)->pmap_space, addr, PAGE_SIZE); */
-
-		if (pmap_extract(vm_map_pmap(map), addr, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-
-		addr += PAGE_SIZE;
+		pmap_enter(kpmap, kva, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
+	pmap_update(kpmap);
 }
 
 /*
  * Unmap IO request from the kernel virtual address space.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
-	vaddr_t addr, off;
+	struct pmap *pmap;
+	vaddr_t addr;
+	vsize_t off;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -344,6 +329,9 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap = vm_map_pmap(phys_map);
+	pmap_remove(pmap, addr, addr + len);
+	pmap_update(pmap);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

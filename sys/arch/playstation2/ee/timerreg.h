@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.2 2003/05/08 13:33:46 shin Exp $	*/
+/*	$NetBSD: timerreg.h,v 1.2.2.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 	TIMER_OFS * (x) + 0x20))
 /* 
  * timer0, timer1 have `hold register'. 
- * (save T_COUNT when SBUS interrupt occured)
+ * (save T_COUNT when SBUS interrupt occurred)
  */
 #define T_HOLD_REG(x)	(TIMER_REGBASE + TIMER_OFS * (x) + 0x30)
 

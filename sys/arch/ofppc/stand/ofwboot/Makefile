@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/21 01:18:40 chs Exp $
+#	$NetBSD: Makefile,v 1.14.6.1 2004/08/03 10:38:46 skrll Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
-CFLAGS+=	-msoft-float -Wno-main
+CFLAGS+=	-msoft-float -Wno-main -ffreestanding
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 DBG=		-Os -mmultiple
@@ -18,6 +18,12 @@ SRCS+=		byteorder.c
 NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 
@@ -33,9 +39,11 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.endif
 .NOPATH: machine powerpc
 CLEANFILES+= machine powerpc
 
@@ -57,7 +65,7 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \

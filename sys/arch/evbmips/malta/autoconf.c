@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2002/09/27 02:24:13 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.6.1 2004/08/03 10:34:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.6.1 2004/08/03 10:34:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

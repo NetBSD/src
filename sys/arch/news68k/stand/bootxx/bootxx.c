@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 2002/05/20 14:05:22 lukem Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4.8.1 2004/08/03 10:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -47,9 +47,9 @@ void (*entry_point)(u_int32_t, u_int32_t, u_int32_t, u_int32_t) =
     (void *)DEFAULT_ENTRY_POINT;
 
 #ifdef BOOTXX_DEBUG
-# define DPRINTF(x) printf x
+# define DPRINTF printf
 #else
-# define DPRINTF(x)
+# define DPRINTF while (0) printf
 #endif
 
 char *devs[] = { "hd", "fh", "fd", NULL, NULL, "rd", "st" };
@@ -67,15 +67,15 @@ bootxx(d4, d5, d6, d7)
 
 	printf("NetBSD/news68k Primary Boot\n");
 
-	DPRINTF(("\n"));
-	DPRINTF(("d4 %x\n", d4));
-	DPRINTF(("d5 %x (%s)\n", d5, (char *)d5));
-	DPRINTF(("d6 %x\n", d6));
-	DPRINTF(("d7 %x\n", d7));
+	DPRINTF("\n");
+	DPRINTF("d4 %x\n", d4);
+	DPRINTF("d5 %x (%s)\n", d5, (char *)d5);
+	DPRINTF("d6 %x\n", d6);
+	DPRINTF("d7 %x\n", d7);
 
-	DPRINTF(("block_size  = %d\n", bbinfo.bbi_block_size));
-	DPRINTF(("block_count = %d\n", bbinfo.bbi_block_count));
-	DPRINTF(("entry_point = %p\n", entry_point));
+	DPRINTF("block_size  = %d\n", bbinfo.bbi_block_size);
+	DPRINTF("block_count = %d\n", bbinfo.bbi_block_count);
+	DPRINTF("entry_point = %p\n", entry_point);
 
 	/* sd(ctlr, lun, part, bus?, host) */
 
@@ -99,19 +99,19 @@ bootxx(d4, d5, d6, d7)
 
 	addr = (char *)entry_point;
 	bs = bbinfo.bbi_block_size;
-	DPRINTF(("reading block:"));
+	DPRINTF("reading block:");
 	for (i = 0; i < bbinfo.bbi_block_count; i++) {
 		blk = bbinfo.bbi_block_table[i];
 
-		DPRINTF((" %d", blk));
+		DPRINTF(" %d", blk);
 
 		rom_lseek(fd, blk * 512, 0);
 		rom_read(fd, addr, bs);
 		addr += bs;
 	}
-	DPRINTF((" done\n"));
+	DPRINTF(" done\n");
 	rom_close(fd);
 
 	(*entry_point)(d4, d5, d6, d7);
-	DPRINTF(("bootxx returned?\n"));
+	DPRINTF("bootxx returned?\n");
 }
