@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 1999/03/13 22:15:25 ragge Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2000/05/28 01:53:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ int md_convert_textreloc(struct relocation_info *);
 
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
-#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(0)
 #define	RELOC_EXTERNAL_DATA_THROUGH_GOT_P(r)	(md_convert_textreloc(r))
 #define JMPSLOT_NONEXTERN_ARE_INTERMODULE	(1)
 #define JMPSLOT_NEEDS_RELOC			(0)
