@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.34 1998/07/06 02:43:38 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.35 1998/08/31 06:52:18 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -116,14 +116,10 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${ARM32}/arm32/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${ARM32}/arm32/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${ARM32}/arm32/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
