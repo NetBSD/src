@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 1999/01/13 07:30:10 ross Exp $	
+.\"	$NetBSD: hardware,v 1.6 1999/04/01 14:09:22 minoura Exp $	
 .
 NetBSD/x68k \*V runs on the Sharp X68030 series PCs with a
 .Em true
@@ -32,13 +32,13 @@ and to run X or compile the system, more RAM is recommended.
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent local\ (/local) Advised With\ X Needed With\ X
 .It Partition   Ta Advised      Ta With\ X      Ta Needed       Ta With\ X
-.It root\ (/)   Ta 20M  Ta 20M  Ta 15M  Ta 15M
-.It user\ (/usr)        Ta 95M  Ta 125M Ta 75M  Ta 105M
+.It root\ (/)   Ta 25M  Ta 25M  Ta 20M  Ta 20M
+.It user\ (/usr)        Ta 150M  Ta 200M Ta 100M  Ta 125M
 .It swap                Ta 2*RAM...
 .It local\ (/local)     Ta up\ to\ you...
 .El
 .Pp
-As you may note the recommended size of /usr is 20M greater than
+As you may note the recommended size of /usr is 70M greater than
 needed. This is to leave room for a kernel source and compile tree
 as you will probably want to compile your own kernel. (ALL is
 large and bulky to accommodate all people).
