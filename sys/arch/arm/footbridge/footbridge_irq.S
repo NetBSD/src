@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.4 2002/11/03 21:43:31 chris Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.5 2003/01/02 23:54:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -55,7 +55,6 @@
 
 .Lcurrent_intr_depth: 
 	.word	_C_LABEL(current_intr_depth)
-	.word	_C_LABEL(prev_intr_depth)
 
 .Lastpending:
 	.word	_C_LABEL(astpending)
@@ -72,9 +71,7 @@ ASENTRY_NP(irq_entry)
 	 * each time the interrupt handler is nested.
 	 */
 	ldr	r0, .Lcurrent_intr_depth
-	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
-	str	r1, [r2]
 	add	r1, r1, #1
 	str	r1, [r0]
 	
@@ -84,9 +81,7 @@ ASENTRY_NP(irq_entry)
  	 
 	/* Decremement the nest count. */
 	ldr	r0, .Lcurrent_intr_depth 
-	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
-	str	r1, [r2]
 	sub	r1, r1, #1
 	str	r1, [r0]
 
@@ -130,10 +125,6 @@ _C_LABEL(astpending):
 
 	.global	_C_LABEL(current_intr_depth)
 _C_LABEL(current_intr_depth):
-	.word	0
-
-	.global	_C_LABEL(prev_intr_depth)
-_C_LABEL(prev_intr_depth):
 	.word	0
 
 	/*
