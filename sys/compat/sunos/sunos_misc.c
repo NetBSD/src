@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.86 1997/10/21 00:58:41 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.87 1998/02/19 00:43:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,8 @@
  * SunOS system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
