@@ -7,7 +7,7 @@ aha			compiles
 ahb			compiles
 ahc			broken
 aic			compiles
-asc
+asc			OK (pmax, as MI SCSI xasc)
 bha			compiles
 dpt			compiles
 esp			compiles
@@ -28,13 +28,13 @@ usscanner		compiles
 wds			compiles
 
 
-Port			Status of		comments
-			GENERIC kernel
-alpha			compiles		asc untested
+Port		Status of		comments
+		GENERIC kernel
+alpha		compiles		asc untested
 
-amiga			not yet
+amiga		not yet
 
-amigappc		depends on amiga I guess
+amigappc	depends on amiga I guess
 
 arc
 
@@ -86,7 +86,7 @@ ofppc
 
 pc532
 
-pmax
+pmax		compiles		xasc works, asc,sii,xsii untested
 
 prep
 
