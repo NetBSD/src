@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.27 2004/11/06 23:22:43 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.28 2005/02/25 07:20:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.27 2004/11/06 23:22:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28 2005/02/25 07:20:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,8 @@ sys_sysarch(l, v, retval)
 		struct mips_cacheflush_args cfua;
 
 		error = copyin(SCARG(uap, parms), &cfua, sizeof(cfua));
-		if (error != 0) return (error);
+		if (error != 0)
+			return (error);
 		error =  mips_user_cacheflush(p, cfua.va, cfua.nbytes,
 		     cfua.whichcache);
 		break;
@@ -84,7 +85,8 @@ sys_sysarch(l, v, retval)
 		struct mips_cachectl_args ccua;
 
 		error = copyin(SCARG(uap, parms), &ccua, sizeof(ccua));
-		if (error != 0) return (error);
+		if (error != 0)
+			return (error);
 		error = mips_user_cachectl(p, ccua.va, ccua.nbytes, ccua.ctl);
 		break;
 	}
