@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/09/12 22:56:29 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2002/09/13 05:45:46 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -102,21 +102,12 @@ _rtld_relocate_nonplt_objects(obj, self)
 #endif
 
 		case R_TYPE(ABS32):	/* word32 B + S + A */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-			*where += (Elf_Addr)defobj->relocbase + def->st_value;
-			rdbg(("ABS32 %s in %s --> %p @ %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, where, defobj->path));
-			break;
-
 		case R_TYPE(GLOB_DAT):	/* word32 B + S */
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
-			*where = (Elf_Addr)(defobj->relocbase + def->st_value);
-			rdbg(("GLOB_DAT %s in %s --> %p @ %p in %s",
+			*where += (Elf_Addr)defobj->relocbase + def->st_value;
+			rdbg(("ABS32/GLOB_DAT %s in %s --> %p @ %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, where, defobj->path));
 			break;
