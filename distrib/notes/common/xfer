@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.48 2004/08/24 22:42:17 hubertf Exp $
+.\"	$NetBSD: xfer,v 1.49 2004/08/24 22:53:18 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -625,7 +625,8 @@ file from
 into files named
 .Pa base.aa ,
 .Pa base.ab ,
-and so on. Repeat this for all
+and so on.
+Repeat this for all
 .Pa set_name.tgz
 files, splitting them into
 .Pa set_name. Ns Ar xx
