@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1995/04/22 20:24:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 1995/06/28 02:45:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,6 +39,10 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+
+#ifdef COMPAT_OSF1
+#include <compat/osf1/osf1_syscall.h>
+#endif
 
 struct proc *fpcurproc;		/* current user of the FPU */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1995/04/10 10:01:40 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1995/06/28 02:45:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -90,10 +90,10 @@ cdev_decl(ctty);
 #define	mmwrite mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
@@ -116,6 +116,10 @@ cdev_decl(scc);
 #define	NLKM	0
 #endif
 cdev_decl(lkm);
+#include "audio.h"
+cdev_decl(audio);
+
+cdev_decl(prom);			/* XXX XXX XXX */
 
 struct cdevsw	cdevsw[] =
 {
@@ -142,6 +146,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 20 */
 	cdev_lkm_dummy(),		/* 21 */
 	cdev_lkm_dummy(),		/* 22 */
+	cdev_tty_init(1,prom),          /* 23: XXX prom console */
+	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

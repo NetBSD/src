@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 1995/03/08 00:38:48 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 1995/06/28 02:45:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,6 +39,8 @@ static void	cpuattach(struct device *, struct device *, void *);
 struct cfdriver cpucd =
     { NULL, "cpu", cpumatch, cpuattach, DV_DULL, sizeof (struct device) };
 
+static int	cpuprint __P((void *, char *pnp));
+
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
@@ -64,16 +66,16 @@ cpuattach(parent, dev, aux)
         struct pcs *p;
 	char *cpu_major[] = {
 		"UNKNOWN MAJOR TYPE (0)",
-		"EV3",
-		"EV4 (21064)",
-		"UNKNOWN MAJOR TYPE (3)",
-		"LCA4 (21066/21068)",
+		"EV3",				/* PCS_PROC_EV3 */
+		"EV4 (21064)",			/* PCS_PROC_EV4 */
+		"Simulator",			/* PCS_PROC_SIMULATOR */
+		"LCA4 (21066/21068)",		/* PCS_PROC_LCA4 */
+		"EV5 (21164)",			/* PCS_PROC_EV5 */
+		"EV45 (21064A)",		/* PCS_PROC_EV45 */
 	};
 	char *cpu_minor[] = {
 		"Pass 2 or 2.1",
 		"Pass 3",
-		"UNKOWN MINOR TYPE (2)",
-		"Simulated",
 	};
 	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
 	int ncpu_minor = sizeof(cpu_minor) / sizeof(cpu_minor[0]);
@@ -121,9 +123,40 @@ cpuattach(parent, dev, aux)
 			printf("%sIEEE FP support", needcomma ? ", " : "");
 			needcomma = 1;
 		}
+		if (p->pcs_proc_var & PCS_VAR_IOACCESS) {
+			printf("%shas I/O access", needcomma ? ", " : "");
+			needcomma = 1;
+		}
 		if (p->pcs_proc_var & PCS_VAR_RESERVED)
 			printf("%sreserved bits: 0x%lx", needcomma ? ", " : "",
 			    p->pcs_proc_var & PCS_VAR_RESERVED);
 		printf("\n");
 	}
+
+	if (major == PCS_PROC_LCA4) {
+		struct confargs nca;
+
+		/*
+		 * If the processor is an LCA, then it's got the PCI
+		 * bus interface built in.  Attach it here. (!!!)
+		 */
+		nca.ca_name = "lca";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = NULL;
+		if (!config_found(dev, &nca, cpuprint))
+			panic("cpuattach: couldn't attach LCA bus interface");
+	}
+}
+
+static int
+cpuprint(aux, pnp)
+	void *aux;
+	char *pnp;
+{
+	register struct confargs *ca = aux;
+
+	if (pnp)
+		printf("%s at %s", ca->ca_name, pnp);
+	return (UNCONF);
 }
