@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.11 2000/10/30 20:57:01 jdolecek Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.11 2000/10/30 20:57:01 jdolecek Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,13 @@ __RCSID("$NetBSD: mount_procfs.c,v 1.11 2000/10/30 20:57:01 jdolecek Exp $");
 #include <stdlib.h>
 #include <string.h>
 
+#include <miscfs/procfs/procfs.h>
+
 #include "mntopts.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	{ "linux", 0, PROCFSMNT_LINUXCOMPAT, 1},
 	{ NULL }
 };
 
@@ -86,13 +89,14 @@ mount_procfs(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, mntflags;
+	int ch, mntflags, altflags;
+	struct procfs_args args;
 
-	mntflags = 0;
+	mntflags = altflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			getmntopts(optarg, mopts, &mntflags, &altflags);
 			break;
 		case '?':
 		default:
@@ -104,7 +108,10 @@ mount_procfs(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL))
+	args.version = PROCFS_ARGSVERSION;
+	args.flags = altflags;
+
+	if (mount(MOUNT_PROCFS, argv[1], mntflags, &args))
 		err(1, "procfs on %s", argv[1]);
 	exit(0);
 }
