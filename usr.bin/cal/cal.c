@@ -1,6 +1,8 @@
+/*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kim Letkeman.
@@ -35,21 +37,28 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cal.c	5.2 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: cal.c,v 1.5 1995/01/16 19:06:47 ws Exp $";
+#if 0
+static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <string.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #define	THURSDAY		4		/* for reformation */
 #define	SATURDAY 		6		/* 1 Jan 1 was a Saturday */
@@ -115,14 +124,24 @@ char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 
 int julian;
 
+void	ascii_day __P((char *, int));
+void	center __P((char *, int, int));
+void	day_array __P((int, int, int *));
+int	day_in_week __P((int, int, int));
+int	day_in_year __P((int, int, int));
+void	j_yearly __P((int));
+void	monthly __P((int, int));
+void	trim_trailing_spaces __P((char *));
+void	usage __P((void));
+void	yearly __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	struct tm *local_time;
-	time_t now, time();
+	time_t now;
 	int ch, month, year, yflag;
 
 	yflag = 0;
@@ -144,18 +163,12 @@ main(argc, argv)
 	month = 0;
 	switch(argc) {
 	case 2:
-		if ((month = atoi(*argv++)) <= 0 || month > 12) {
-			(void)fprintf(stderr,
-			    "cal: illegal month value: use 0-12\n");
-			exit(1);
-		}
+		if ((month = atoi(*argv++)) < 1 || month > 12)
+			errx(1, "illegal month value: use 1-12");
 		/* FALLTHROUGH */
 	case 1:
-		if ((year = atoi(*argv)) <= 0 || year > 9999) {
-			(void)fprintf(stderr,
-			    "cal: illegal year value: use 0-9999\n");
-			exit(1);
-		}
+		if ((year = atoi(*argv)) < 1 || year > 9999)
+			errx(1, "illegal year value: use 1-9999");
 		break;
 	case 0:
 		(void)time(&now);
@@ -184,13 +197,12 @@ main(argc, argv)
 #define	HEAD_SEP	2		/* spaces between day headings */
 #define	J_HEAD_SEP	2
 
+void
 monthly(month, year)
 	int month, year;
 {
-	register int col, row;
-	register char *p;
-	int len, days[MAXDAYS];
-	char lineout[30];
+	int col, row, len, days[MAXDAYS];
+	char *p, lineout[30];
 
 	day_array(month, year, days);
 	len = sprintf(lineout, "%s %d", month_names[month - 1], year);
@@ -207,13 +219,13 @@ monthly(month, year)
 	}
 }
 
+void
 j_yearly(year)
 	int year;
 {
-	register int col, *dp, i, month, row, which_cal;
-	register char *p;
+	int col, *dp, i, month, row, which_cal;
 	int days[12][MAXDAYS];
-	char lineout[80];
+	char *p, lineout[80];
 
 	(void)sprintf(lineout, "%d", year);
 	center(lineout, J_WEEK_LEN * 2 + J_HEAD_SEP, 0);
@@ -242,13 +254,13 @@ j_yearly(year)
 	(void)printf("\n");
 }
 
+void
 yearly(year)
 	int year;
 {
-	register int col, *dp, i, month, row, which_cal;
-	register char *p;
+	int col, *dp, i, month, row, which_cal;
 	int days[12][MAXDAYS];
-	char lineout[80];
+	char *p, lineout[80];
 
 	(void)sprintf(lineout, "%d", year);
 	center(lineout, WEEK_LEN * 3 + HEAD_SEP * 2, 0);
@@ -285,18 +297,19 @@ yearly(year)
  *	out end to end.  You would have 42 numbers or spaces.  This routine
  *	builds that array for any month from Jan. 1 through Dec. 9999.
  */
+void
 day_array(month, year, days)
-	register int *days;
 	int month, year;
+	int *days;
 {
-	register int i, day, dw, dm;
+	int day, dw, dm;
 
 	if (month == 9 && year == 1752) {
-		bcopy(julian ? j_sep1752 : sep1752,
-		    days, MAXDAYS * sizeof(int));
+		memmove(days,
+			julian ? j_sep1752 : sep1752, MAXDAYS * sizeof(int));
 		return;
 	}
-	bcopy(empty, days, MAXDAYS * sizeof(int));
+	memmove(days, empty, MAXDAYS * sizeof(int));
 	dm = days_in_month[leap_year(year)][month];
 	dw = day_in_week(1, month, year);
 	day = julian ? day_in_year(1, month, year) : 1;
@@ -308,16 +321,16 @@ day_array(month, year, days)
  * day_in_year --
  *	return the 1 based day number within the year
  */
+int
 day_in_year(day, month, year)
-	register int day, month;
-	int year;
+	int day, month, year;
 {
-	register int i, leap;
+	int i, leap;
 
 	leap = leap_year(year);
 	for (i = 1; i < month; i++)
 		day += days_in_month[leap][i];
-	return(day);
+	return (day);
 }
 
 /*
@@ -327,6 +340,7 @@ day_in_year(day, month, year)
  *	3 Sep. 1752 through 13 Sep. 1752.  Returns Thursday for all
  *	missing days.
  */
+int
 day_in_week(day, month, year)
 	int day, month, year;
 {
@@ -335,17 +349,18 @@ day_in_week(day, month, year)
 	temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
 	    + day_in_year(day, month, year);
 	if (temp < FIRST_MISSING_DAY)
-		return((temp - 1 + SATURDAY) % 7);
+		return ((temp - 1 + SATURDAY) % 7);
 	if (temp >= (FIRST_MISSING_DAY + NUMBER_MISSING_DAYS))
-		return(((temp - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
-	return(THURSDAY);
+		return (((temp - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
+	return (THURSDAY);
 }
 
+void
 ascii_day(p, day)
-	register char *p;
-	register int day;
+	char *p;
+	int day;
 {
-	register int display, val;
+	int display, val;
 	static char *aday[] = {
 		"",
 		" 1", " 2", " 3", " 4", " 5", " 6", " 7",
@@ -381,31 +396,38 @@ ascii_day(p, day)
 	*p = ' ';
 }
 
+void
 trim_trailing_spaces(s)
-	register char *s;
+	char *s;
 {
-	register char *p;
+	char *p;
 
-	for (p = s; *p; ++p);
-	while (p > s && isspace(*--p));
+	for (p = s; *p; ++p)
+		continue;
+	while (p > s && isspace(*--p))
+		continue;
 	if (p > s)
 		++p;
 	*p = '\0';
 }
 
+void
 center(str, len, separate)
 	char *str;
-	register int len;
+	int len;
 	int separate;
 {
+
 	len -= strlen(str);
 	(void)printf("%*s%s%*s", len / 2, "", str, len / 2 + len % 2, "");
 	if (separate)
 		(void)printf("%*s", separate, "");
 }
 
+void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: cal [-jy] [[month] year]\n");
 	exit(1);
 }
