@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.31 2000/03/30 12:45:30 augustss Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.32 2000/05/12 15:22:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1191,7 +1191,6 @@ ex_intr(arg)
 			rxmap = rxd->rx_dmamap;
 			m = rxd->rx_mbhead;
 			upd = rxd->rx_upd;
-			pktstat = le32toh(upd->upd_pktstatus);
 
 			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
 			    rxmap->dm_mapsize,
@@ -1200,6 +1199,7 @@ ex_intr(arg)
 			    ((caddr_t)upd - (caddr_t)sc->sc_upd), 
 			    sizeof (struct ex_upd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			pktstat = le32toh(upd->upd_pktstatus);
 
 			if (pktstat & EX_UPD_COMPLETE) {
 				/*
