@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.120 2004/05/26 02:59:15 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.121 2004/05/31 04:29:01 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.120 2004/05/26 02:59:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.121 2004/05/31 04:29:01 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2307,6 +2307,8 @@ key_spddump(so, m, mhp)
 	int cnt;
 	u_int dir;
 	struct mbuf *n;
+	struct keycb *kp;
+	int error = 0, needwait = 0;
 
 	/* sanity check */
 	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
@@ -2329,11 +2331,18 @@ key_spddump(so, m, mhp)
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt,
 			    mhp->msg->sadb_msg_pid);
 
-			if (n)
-				key_sendup_mbuf(so, n,
+			if (n) {
+				error = key_sendup_mbuf(so, n,
 				    KEY_SENDUP_ONE | KEY_SENDUP_CANWAIT);
+				if (error == EAGAIN)
+					needwait = 1;
+			}
 		}
 	}
+
+	kp = (struct keycb *)sotorawcb(so);
+	while (needwait && kp->kp_queue)
+		sbwait(&so->so_rcv);
 
 	m_freem(m);
 	return 0;
@@ -6757,7 +6766,8 @@ key_dump(so, m, mhp)
 	u_int stateidx;
 	u_int8_t satype;
 	u_int8_t state;
-	int cnt;
+	int cnt, error = 0, needwait = 0;
+	struct keycb *kp;
 	struct mbuf *n;
 
 	/* sanity check */
@@ -6812,11 +6822,17 @@ key_dump(so, m, mhp)
 				if (!n)
 					return key_senderror(so, m, ENOBUFS);
 
-				key_sendup_mbuf(so, n,
+				error = key_sendup_mbuf(so, n,
 				    KEY_SENDUP_ONE | KEY_SENDUP_CANWAIT);
+				if (error == EAGAIN)
+					needwait = 1;
 			}
 		}
 	}
+
+	kp = (struct keycb *)sotorawcb(so);
+	while (needwait && kp->kp_queue)
+		sbwait(&so->so_rcv);
 
 	m_freem(m);
 	return 0;
