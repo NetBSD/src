@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.13 2001/12/01 16:43:28 wiz Exp $
+.\"	$NetBSD: whois.1,v 1.14 2001/12/08 19:26:19 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ searches for an object in the RIPE Network Management database.
 The key can be either a name (such as "Karrenberg"),a nic-handle
 (such as "DK58"),
 a network number ("192.87.45.0/24") or a domain name ("ripe.net").
-
+.Pp
 This version of the whois client works with a version of the RIPE
 database whois server that supports classless IP addresses.
 All IP network numbers are considered classless IP network numbers of
@@ -67,7 +67,7 @@ the form prefix/length, like 192.87.45.0/24 for a class C sized network
 number and 128.86.0.0/16 for a class B sized network number. Any
 length can be given. If no length is given, the server assumes a host
 lookup (ie length 32).
-
+.Pp
 By default, the server will return the first less specific network
 number, which can be an exact match if available in the database.
 .Sh OPTIONS
