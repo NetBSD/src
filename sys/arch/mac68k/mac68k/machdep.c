@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.8 1999/11/28 10:21:13 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.9 1999/12/12 22:04:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,7 +121,7 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 #include <net/netisr.h>
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -447,7 +447,7 @@ cpu_startup(void)
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -489,7 +489,7 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -778,7 +778,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space in
+ * Dumps always skip the first NBPG of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -810,7 +810,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first CLBYTES in case there is a disk label there.
+	 * first NBPG in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;

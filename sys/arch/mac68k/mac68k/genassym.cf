@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11.6.2 1999/11/01 06:19:13 scottr Exp $
+#	$NetBSD: genassym.cf,v 1.11.6.3 1999/12/12 22:04:18 scottr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,6 @@ define	FPU_68040		FPU_68040
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	P1PAGES 		P1PAGES
-define	CLSIZE			CLSIZE
 define	NBPG			NBPG
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
