@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.9 1994/01/11 19:19:05 brezak Exp $
+ *	$Id: sys_machdep.c,v 1.10 1994/04/24 22:49:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -293,7 +293,8 @@ i386_set_ldt(p, args, retval)
 	}
 	if (!error) {
 		*retval = uap->start;
-		need_resched();
+		if (p == curproc)
+			set_user_ldt(pcb);
 	}
 
 	splx(s);
