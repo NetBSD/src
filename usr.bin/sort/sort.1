@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.15 2001/02/19 21:06:57 jdolecek Exp $
+.\"	$NetBSD: sort.1,v 1.16 2001/03/16 07:37:58 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,9 +136,11 @@ option.)
 .It Fl r
 Reverse the sense of comparisons.
 .It Fl S
-Don't use stable sort. Default is to use stable sort.
+Don't use stable sort.
+Default is to use stable sort.
 .It Fl s
-Use stable sort. This is the default.
+Use stable sort.
+This is the default.
 Provided for compatiblity with other
 .Nm
 implementations only.
@@ -240,7 +242,8 @@ Fields are specified
 by the
 .Fl k
 .Ar field1 Ns Op \&, Ns Ar field2
-argument. A missing
+argument.
+A missing
 .Ar field2
 argument defaults to the end of a line.
 .Pp
@@ -298,10 +301,10 @@ character (including separators) of the
 field.
 A missing
 .Li \&. Ns Ar n
-indicates the last character of the 
+indicates the last character of the
 .Ar m Ns th
 field;
-.Ar m 
+.Ar m
 = \&0
 designates the end of a line.
 Thus the option
@@ -326,7 +329,7 @@ is omitted,
 .Sm on
 is synonymous with
 .Sm off
-.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1 
+.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1
 .Fl Ar w+1 Li \&.0 .
 .Sm on
 The obsolescent
@@ -367,8 +370,8 @@ Default temporary files.
 .It Pa Ar output Ns NUMBER
 Temporary file which is used for output if
 .Ar output
-already exists. Once sorting is finished, this file
-replaces
+already exists.
+Once sorting is finished, this file replaces
 .Ar output
 (via
 .Xr link 2
@@ -378,7 +381,9 @@ and
 .Sh SEE ALSO
 .Xr comm 1 ,
 .Xr uniq 1 ,
-.Xr join 1
+.Xr join 1 ,
+.Xr qsort 3 ,
+.Xr radixsort 3
 .Sh HISTORY
 A
 .Nm
@@ -410,8 +415,8 @@ and
 .Xr unlink 2 ,
 and thus fails on protected directories.
 .Pp
-Input files should be text files. If file doesn't end with record separator
-(which is typically newline), the
+Input files should be text files.
+If file doesn't end with record separator (which is typically newline), the
 .Nm
 utility silently supplies one.
 .Pp
