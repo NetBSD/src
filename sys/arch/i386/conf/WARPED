@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.6 1996/03/16 06:09:15 thorpej Exp $
+#	$NetBSD: WARPED,v 1.7 1996/07/14 00:10:14 explorer Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -62,7 +62,7 @@ pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 fdc0    at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
 fd*     at fdc? drive ?
 
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
