@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.10 1999/08/16 15:52:05 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.11 1999/09/05 11:09:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,38 +164,30 @@ ntfs_read(ap)
 	register struct ntnode *ip = FTONT(fp);
 	struct uio *uio = ap->a_uio;
 	struct ntfsmount *ntmp = ip->i_mp;
-	u_int8_t *data;
 	u_int64_t toread;
 	int error;
 
 	dprintf(("ntfs_read: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
 
-	toread = fp->f_size;
+	dprintf(("ntfs_read: filesize: %d",(u_int32_t)fp->f_size));
 
-	dprintf(("ntfs_read: filesize: %d",(u_int32_t)toread));
-
-	toread = min( uio->uio_resid, toread - uio->uio_offset );
+	/* don't allow reading after end of file */
+	if (uio->uio_offset > fp->f_size)
+		toread = 0;
+	else
+		toread = min( uio->uio_resid, fp->f_size - uio->uio_offset );
 
 	dprintf((", toread: %d\n",(u_int32_t)toread));
 
-	MALLOC(data, u_int8_t *, toread, M_TEMP,M_WAITOK);
+	if (toread == 0)
+		return (0);
 
 	error = ntfs_readattr(ntmp, ip, fp->f_attrtype,
-		fp->f_attrname, uio->uio_offset, toread, data);
-	if(error) {
+		fp->f_attrname, uio->uio_offset, toread, NULL, uio);
+	if (error) {
 		printf("ntfs_read: ntfs_readattr failed: %d\n",error);
-		FREE(data, M_TEMP);
 		return (error);
 	}
-
-	error = uiomove(data, (int) toread, uio);
-	if(error) {
-		printf("ntfs_read: uiomove failed: %d\n",error);
-		FREE(data, M_TEMP);
-		return (error);
-	}
-
-	FREE(data, M_TEMP);
 
 	return (0);
 }
@@ -384,7 +376,7 @@ ntfs_strategy(ap)
 
 			error = ntfs_readattr(ntmp, ip, fp->f_attrtype,
 				fp->f_attrname, ntfs_cntob(bp->b_blkno),
-				toread, bp->b_data);
+				toread, bp->b_data, NULL);
 
 			if (error) {
 				printf("ntfs_strategy: ntfs_readattr failed\n");
@@ -410,7 +402,7 @@ ntfs_strategy(ap)
 
 			error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,	
 				fp->f_attrname, ntfs_cntob(bp->b_blkno),towrite,
-				bp->b_data, &tmp);
+				bp->b_data, &tmp, NULL);
 
 			if (error) {
 				printf("ntfs_strategy: ntfs_writeattr fail\n");
@@ -437,45 +429,28 @@ ntfs_write(ap)
 	register struct ntnode *ip = FTONT(fp);
 	struct uio *uio = ap->a_uio;
 	struct ntfsmount *ntmp = ip->i_mp;
-	u_int8_t *data;
 	u_int64_t towrite;
-	off_t off;
 	size_t written;
 	int error;
 
 	dprintf(("ntfs_write: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
+	dprintf(("ntfs_write: filesize: %d",(u_int32_t)fp->f_size));
 
-	towrite = fp->f_size;
-
-	dprintf(("ntfs_write: filesize: %d",(u_int32_t)towrite));
-
-	if (uio->uio_resid + uio->uio_offset > towrite) {
+	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
 		printf("ntfs_write: CAN'T WRITE BEYOND OF FILE\n");
 		return (EFBIG);
 	}
 
-	towrite = min(uio->uio_resid, towrite - uio->uio_offset);
-	off = uio->uio_offset;
+	towrite = min(uio->uio_resid, fp->f_size - uio->uio_offset);
 
 	dprintf((", towrite: %d\n",(u_int32_t)towrite));
 
-	MALLOC(data, u_int8_t *, towrite, M_TEMP,M_WAITOK);
-
-	error = uiomove(data, (int) towrite, uio);
-	if(error) {
-		FREE(data, M_TEMP);
-		return (error);
-	}
-
 	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
-		fp->f_attrname, off, towrite, data, &written);
-	if(error) {
+		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
+	if (error) {
 		printf("ntfs_write: ntfs_writeattr failed: %d\n",error);
-		FREE(data, M_TEMP);
 		return (error);
 	}
-
-	FREE(data, M_TEMP);
 
 	return (0);
 }
@@ -810,31 +785,31 @@ ntfs_readdir(ap)
 		if( NULL == iep )
 			break;
 
-		while( !(iep->ie_flag & NTFS_IEFLAG_LAST) && (uio->uio_resid >= sizeof(struct dirent)) ) {
+		for(; !(iep->ie_flag & NTFS_IEFLAG_LAST) && (uio->uio_resid >= sizeof(struct dirent));
+			iep = NTFS_NEXTREC(iep, struct attr_indexentry *))
+		{
+			if(!ntfs_isnamepermitted(ntmp,iep))
+				continue;
 
-			if( ntfs_isnamepermitted(ntmp,iep) ) {
-				dprintf(("ntfs_readdir: elem: %d, fname:[",num));
-				for(i=0;i<iep->ie_fnamelen;i++) {
-					cde.d_name[i] = (char)iep->ie_fname[i];
-					dprintf(("%c", cde.d_name[i]));
-				}
-				dprintf(("] type: %d, flag: %d, ",iep->ie_fnametype, iep->ie_flag));
-				cde.d_name[i] = '\0';
-				cde.d_namlen = iep->ie_fnamelen;
-				cde.d_fileno = iep->ie_number;
-				cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
-				cde.d_reclen = sizeof(struct dirent);
-				dprintf(("%s\n", (cde.d_type == DT_DIR) ? "dir":"reg"));
-
-				error = uiomove((char *)&cde, sizeof(struct dirent), uio);
-				if(error)
-					return (error);
-
-				ncookies++;
-				num++;
+			for(i=0; i<iep->ie_fnamelen; i++) {
+				cde.d_name[i] = ntfs_u28(iep->ie_fname[i]);
 			}
+			cde.d_name[i] = '\0';
+			dprintf(("ntfs_readdir: elem: %d, fname:[%s] type: %d, flag: %d, ",
+				num, cde.d_name, iep->ie_fnametype,
+				iep->ie_flag));
+			cde.d_namlen = iep->ie_fnamelen;
+			cde.d_fileno = iep->ie_number;
+			cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
+			cde.d_reclen = sizeof(struct dirent);
+			dprintf(("%s\n", (cde.d_type == DT_DIR) ? "dir":"reg"));
 
-			iep = NTFS_NEXTREC(iep,struct attr_indexentry *);
+			error = uiomove((char *)&cde, sizeof(struct dirent), uio);
+			if(error)
+				return (error);
+
+			ncookies++;
+			num++;
 		}
 	}
 
