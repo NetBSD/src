@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.27 2001/03/10 13:30:55 briggs Exp $	*/
+/*	$NetBSD: dpt.c,v 1.28 2001/03/25 14:48:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.27 2001/03/10 13:30:55 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.28 2001/03/25 14:48:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -817,6 +817,7 @@ dpt_scsi_cmd(xs)
 		 * older firmware revisions don't even support it.
 		 */
 		if ((flags & XS_CTL_RESET) != 0) {
+			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
 		}
