@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.12 2003/12/18 18:30:18 christos Exp $
+# $NetBSD: named,v 1.13 2004/05/21 15:40:22 christos Exp $
 #
 
 # PROVIDE: named
@@ -49,11 +49,15 @@ named_precmd()
 		;;
 	esac
 
+	for i in null random
+	do
+		if [ ! -c "${named_chrootdir}/dev/$i" ]; then
+			rm -f "${named_chrootdir}/dev/$i"
+			(cd /dev && 
+			    /bin/pax -rw -pe "$i" "${named_chrootdir}/dev")
+		fi
+	done
 
-	if [ ! -c "${named_chrootdir}/dev/null" ]; then
-		rm -f "${named_chrootdir}/dev/null"
-		( cd /dev ; /bin/pax -rw -pe null "${named_chrootdir}/dev" )
-	fi
 	if [ -f /etc/localtime ]; then
 		cmp -s /etc/localtime "${named_chrootdir}/etc/localtime" || \
 		    cp -p /etc/localtime "${named_chrootdir}/etc/localtime"
