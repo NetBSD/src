@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.6 2002/03/08 01:20:44 itojun Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.6.2.1 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -40,7 +40,7 @@ dispatch_fn *dispatch[DISPATCH_MAX];
 void
 dispatch_protocol_error(int type, u_int32_t seq, void *ctxt)
 {
-	log("dispatch_protocol_error: type %d seq %u", type, seq);
+	logit("dispatch_protocol_error: type %d seq %u", type, seq);
 	if (!compat20)
 		fatal("protocol error");
 	packet_start(SSH2_MSG_UNIMPLEMENTED);
@@ -51,7 +51,7 @@ dispatch_protocol_error(int type, u_int32_t seq, void *ctxt)
 void
 dispatch_protocol_ignore(int type, u_int32_t seq, void *ctxt)
 {
-	log("dispatch_protocol_ignore: type %d seq %u", type, seq);
+	logit("dispatch_protocol_ignore: type %d seq %u", type, seq);
 }
 void
 dispatch_init(dispatch_fn *dflt)

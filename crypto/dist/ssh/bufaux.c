@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.7.2.1 2002/06/26 16:53:00 tv Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.1.1.7.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -120,7 +120,7 @@ buffer_put_bignum2(Buffer *buffer, BIGNUM *value)
 		/**XXX should be two's-complement */
 		int i, carry;
 		u_char *uc = buf;
-		log("negativ!");
+		logit("negativ!");
 		for (i = bytes-1, carry = 1; i>=0; i--) {
 			uc[i] ^= 0xff;
 			if (carry)

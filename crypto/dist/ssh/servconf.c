@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.19.2.1 2002/06/26 16:53:46 tv Exp $	*/
+/*	$NetBSD: servconf.c,v 1.19.2.2 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -871,7 +871,7 @@ parse_flag:
 		goto parse_int;
 
 	case sDeprecated:
-		log("%s line %d: Deprecated option %s",
+		logit("%s line %d: Deprecated option %s",
 		    filename, linenum, arg);
 		while (arg)
 		    arg = strdelim(&cp);

@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: rates.c,v 1.3.2.1 2004/07/23 15:03:58 tron Exp $ 
  *
  * $FreeBSD$
  *
@@ -155,7 +155,7 @@ readrates(char *filename)
 		{
 			indx = *bp - '0';
 
-			DBGL(DL_RATES, (log(LL_DBG, "rates: index = %d", indx)));
+			DBGL(DL_RATES, (logit(LL_DBG, "rates: index = %d", indx)));
 		}
 		else
 		{
@@ -355,14 +355,14 @@ readrates(char *filename)
 					rt = rates [j][i];
 					for (; rt; rt = rt->next)
 					{
-						log(LL_DBG, "rates: index %d day %d = %d.%2.2d-%d.%2.2d:%d",
+						logit(LL_DBG, "rates: index %d day %d = %d.%2.2d-%d.%2.2d:%d",
 							j, i, rt->start_time/60, rt->start_time%60,
 							rt->end_time/60,rt->end_time%60,rt->rate);
 					}
 				}
 				else
 				{
-					log(LL_DBG, "rates: NO entry for day %d !!\n", i);
+					logit(LL_DBG, "rates: NO entry for day %d !!\n", i);
 				}
 			}
 		}
@@ -383,52 +383,52 @@ rate_error:
  *	get unit length time from configured source
  *---------------------------------------------------------------------------*/
 int
-get_current_rate(struct cfg_entry *cep, int logit)
+get_current_rate(struct cfg_entry *cep, int dolog)
 {
 	int rt;
 	
 	switch(cep->unitlengthsrc)
 	{
 		case ULSRC_CMDL:	/* specified on commandline     */
-			if(logit)
-				log(LL_CHD, "%05d %s rate %d sec/unit (cmdl)",
+			if(dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (cmdl)",
 					cep->cdid, cep->name, unit_length);
 			return(unit_length);
 			break;
 
 		case ULSRC_CONF:	/* get it from config file      */
-			if(logit)
-				log(LL_CHD, "%05d %s rate %d sec/unit (conf)",
+			if(dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (conf)",
 					cep->cdid, cep->name, cep->unitlength);
 			return(cep->unitlength);
 
 		case ULSRC_RATE:	/* get it dynamic from ratesfile*/
 			if(!got_rate)	/* got valid rates struct ?? */
 			{
-				if(logit)
-					log(LL_CHD, "%05d %s rate %d sec/unit (no ratefile)",
+				if(dolog)
+					logit(LL_CHD, "%05d %s rate %d sec/unit (no ratefile)",
 						cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 				return(UNITLENGTH_DEFAULT);
 			}
 			if((cep->ratetype >= NRATES) ||
 			   (cep->ratetype == INVALID_RATE))
 			{
-				if(logit)
-					log(LL_CHD, "%05d %s rate %d sec/unit (rate out of range)",
+				if(dolog)
+					logit(LL_CHD, "%05d %s rate %d sec/unit (rate out of range)",
 						cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 				return(UNITLENGTH_DEFAULT);
 			}
 			
 			if((rt = getrate(cep->ratetype)) != -1)
 			{
-				if(logit)
-					log(LL_CHD, "%05d %s rate %d sec/unit (rate)",
+				if(dolog)
+					logit(LL_CHD, "%05d %s rate %d sec/unit (rate)",
 						cep->cdid, cep->name, rt);
 				return(rt);
 			}
 
-			if(logit)			
-				log(LL_CHD, "%05d %s rate %d sec/unit (ratescan fail)",
+			if(dolog)			
+				logit(LL_CHD, "%05d %s rate %d sec/unit (ratescan fail)",
 					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 
 			return(UNITLENGTH_DEFAULT);
@@ -437,21 +437,21 @@ get_current_rate(struct cfg_entry *cep, int logit)
 		case ULSRC_DYN:	/* dynamically calculated from AOC */
 			if((rt = getrate(cep->ratetype)) != -1)
 			{
-				if(logit)
-					log(LL_CHD, "%05d %s rate %d sec/unit (aocd, rate)",
+				if(dolog)
+					logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, rate)",
 						cep->cdid, cep->name, rt);
 				return(rt);
 			}
-			if(logit)
-				log(LL_CHD, "%05d %s rate %d sec/unit (aocd, default)",
+			if(dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (aocd, default)",
 					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 
 			return(UNITLENGTH_DEFAULT);
 			break;
 
 		default:
-			if(logit)
-				log(LL_CHD, "%05d %s rate %d sec/unit (unitlen unknown)",
+			if(dolog)
+				logit(LL_CHD, "%05d %s rate %d sec/unit (unitlen unknown)",
 					cep->cdid, cep->name, UNITLENGTH_DEFAULT);
 
 			return(UNITLENGTH_DEFAULT);
@@ -493,7 +493,7 @@ getrate(int rate_type )
 		if((time_now >= hd->start_time ) &&
 		   (time_now < hd->end_time ))
 		{
-			DBGL(DL_RATES, (log(LL_DBG, "rate=%d sec/unit (day=%d, beg=%d:%2.2d, end=%d:2.2d, current=%d:%2.2d)",
+			DBGL(DL_RATES, (logit(LL_DBG, "rate=%d sec/unit (day=%d, beg=%d:%2.2d, end=%d:2.2d, current=%d:%2.2d)",
 				hd->rate,
 				ptr->tm_wday,
 				hd->start_time/60, hd->start_time%60,

@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.16.2.1 2002/06/26 16:53:32 tv Exp $	*/
+/*	$NetBSD: packet.c,v 1.16.2.2 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -709,7 +709,7 @@ packet_send2(void)
 #endif
 	/* increment sequence number for outgoing packets */
 	if (++send_seqnr == 0)
-		log("outgoing seqnr wraps around");
+		logit("outgoing seqnr wraps around");
 	buffer_clear(&outgoing_packet);
 
 	if (type == SSH2_MSG_NEWKEYS)
@@ -777,7 +777,7 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 		/* Read data from the socket. */
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			log("Connection closed by %.200s", get_remote_ipaddr());
+			logit("Connection closed by %.200s", get_remote_ipaddr());
 			fatal_cleanup();
 		}
 		if (len < 0)
@@ -970,7 +970,7 @@ packet_read_poll2(u_int32_t *seqnr_p)
 	if (seqnr_p != NULL)
 		*seqnr_p = read_seqnr;
 	if (++read_seqnr == 0)
-		log("incoming seqnr wraps around");
+		logit("incoming seqnr wraps around");
 
 	/* get padlen */
 	cp = buffer_ptr(&incoming_packet);
@@ -1034,7 +1034,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %u: %.400s",
+				logit("Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
 				xfree(msg);
 				fatal_cleanup();
@@ -1060,7 +1060,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %.400s",
+				logit("Received disconnect from %s: %.400s",
 				    get_remote_ipaddr(), msg);
 				fatal_cleanup();
 				xfree(msg);
@@ -1235,7 +1235,7 @@ packet_disconnect(const char *fmt,...)
 	packet_close();
 
 	/* Display the error locally and exit. */
-	log("Disconnecting: %.100s", buf);
+	logit("Disconnecting: %.100s", buf);
 	fatal_cleanup();
 }
 
@@ -1359,12 +1359,12 @@ packet_set_maxsize(int s)
 {
 	static int called = 0;
 	if (called) {
-		log("packet_set_maxsize: called twice: old %d new %d",
+		logit("packet_set_maxsize: called twice: old %d new %d",
 		    max_packet_size, s);
 		return -1;
 	}
 	if (s < 4 * 1024 || s > 1024 * 1024) {
-		log("packet_set_maxsize: bad size %d", s);
+		logit("packet_set_maxsize: bad size %d", s);
 		return -1;
 	}
 	called = 1;

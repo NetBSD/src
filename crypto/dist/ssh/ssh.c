@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.21.2.2 2002/07/03 23:01:31 lukem Exp $	*/
+/*	$NetBSD: ssh.c,v 1.21.2.3 2004/07/23 15:03:57 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -230,7 +230,7 @@ main(int ac, char **av)
 	/* Get user data. */
 	pw = getpwuid(original_real_uid);
 	if (!pw) {
-		log("You don't exist, go away!");
+		logit("You don't exist, go away!");
 		exit(1);
 	}
 	/* Take a copy of the returned structure. */
@@ -546,7 +546,7 @@ again:
 	/* Do not allocate a tty if stdin is not a tty. */
 	if (!isatty(fileno(stdin)) && !force_tty_flag) {
 		if (tty_flag)
-			log("Pseudo-terminal will not be allocated because stdin is not a terminal.");
+			logit("Pseudo-terminal will not be allocated because stdin is not a terminal.");
 		tty_flag = 0;
 	}
 
@@ -830,7 +830,7 @@ ssh_session(void)
 		if (type == SSH_SMSG_SUCCESS)
 			packet_start_compression(options.compression_level);
 		else if (type == SSH_SMSG_FAILURE)
-			log("Warning: Remote host refused compression.");
+			logit("Warning: Remote host refused compression.");
 		else
 			packet_disconnect("Protocol error waiting for compression response.");
 	}
@@ -869,7 +869,7 @@ ssh_session(void)
 			interactive = 1;
 			have_tty = 1;
 		} else if (type == SSH_SMSG_FAILURE)
-			log("Warning: Remote host failed or refused to allocate a pseudo tty.");
+			logit("Warning: Remote host failed or refused to allocate a pseudo tty.");
 		else
 			packet_disconnect("Protocol error waiting for pty request response.");
 	}
@@ -887,7 +887,7 @@ ssh_session(void)
 		if (type == SSH_SMSG_SUCCESS) {
 			interactive = 1;
 		} else if (type == SSH_SMSG_FAILURE) {
-			log("Warning: Remote host denied X11 forwarding.");
+			logit("Warning: Remote host denied X11 forwarding.");
 		} else {
 			packet_disconnect("Protocol error waiting for X11 forwarding");
 		}
@@ -906,7 +906,7 @@ ssh_session(void)
 		type = packet_read();
 		packet_check_eom();
 		if (type != SSH_SMSG_SUCCESS)
-			log("Warning: Remote host denied authentication agent forwarding.");
+			logit("Warning: Remote host denied authentication agent forwarding.");
 	}
 
 	/* Initiate port forwardings. */
@@ -974,7 +974,7 @@ client_global_request_reply(int type, u_int32_t seq, void *ctxt)
 	    options.remote_forwards[i].host,
 	    options.remote_forwards[i].host_port);
 	if (type == SSH2_MSG_REQUEST_FAILURE)
-		log("Warning: remote port forwarding failed for listen port %d",
+		logit("Warning: remote port forwarding failed for listen port %d",
 		    options.remote_forwards[i].port);
 }
 

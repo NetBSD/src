@@ -1,4 +1,4 @@
-/*	$NetBSD: groupaccess.c,v 1.4 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: groupaccess.c,v 1.4.2.1 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright (c) 2001 Kevin Steves.  All rights reserved.
  *
@@ -50,7 +50,7 @@ ga_init(const char *user, gid_t base)
 
 	ngroups = sizeof(groups_bygid) / sizeof(gid_t);
 	if (getgrouplist(user, base, groups_bygid, &ngroups) == -1)
-		log("getgrouplist: groups list too small");
+		logit("getgrouplist: groups list too small");
 	for (i = 0, j = 0; i < ngroups; i++)
 		if ((gr = getgrgid(groups_bygid[i])) != NULL)
 			groups_byname[j++] = xstrdup(gr->gr_name);

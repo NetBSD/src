@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.10.2.1 2002/06/26 16:52:38 tv Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.10.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -203,7 +203,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			if (match_host_and_ip(remote_host, remote_ip,
 			    patterns) != 1) {
 				xfree(patterns);
-				log("Authentication tried for %.100s with "
+				logit("Authentication tried for %.100s with "
 				    "correct key but not from a permitted "
 				    "host (host=%.200s, ip=%.200s).",
 				    pw->pw_name, remote_host, remote_ip);
@@ -289,7 +289,7 @@ next_option:
 	return 1;
 
 bad_option:
-	log("Bad options in %.100s file, line %lu: %.50s",
+	logit("Bad options in %.100s file, line %lu: %.50s",
 	    file, linenum, opts);
 	auth_debug_add("Bad options in %.100s file, line %lu: %.50s",
 	    file, linenum, opts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.8 1999/09/08 21:45:26 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.8.10.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.8 1999/09/08 21:45:26 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.8.10.1 2004/07/23 15:03:57 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ scorehand(hand, starter, n, crb, do_explain)
 	CARD h[(CINHAND + 1)];
 	char buf[32];
 
-	expl[0] = '\0';		/* initialize explanation */
+	explan[0] = '\0';	/* initialize explanation */
 	score = 0;
 	flag = TRUE;
 	k = hand[0].suit;
@@ -132,29 +132,29 @@ scorehand(hand, starter, n, crb, do_explain)
 			if (hand[i].suit == starter.suit) {
 				score++;
 				if (do_explain)
-					strcat(expl, "His Nobs");
+					strcat(explan, "His Nobs");
 			}
 		h[i] = hand[i];
 	}
 
 	if (flag && n >= CINHAND) {
-		if (do_explain && expl[0] != '\0')
-			strcat(expl, ", ");
+		if (do_explain && explan[0] != '\0')
+			strcat(explan, ", ");
 		if (starter.suit == k) {
 			score += 5;
 			if (do_explain)
-				strcat(expl, "Five-flush");
+				strcat(explan, "Five-flush");
 		} else
 			if (!crb) {
 				score += 4;
-				if (do_explain && expl[0] != '\0')
-					strcat(expl, ", Four-flush");
+				if (do_explain && explan[0] != '\0')
+					strcat(explan, ", Four-flush");
 				else
-					strcpy(expl, "Four-flush");
+					strcpy(explan, "Four-flush");
 			}
 	}
-	if (do_explain && expl[0] != '\0')
-		strcat(expl, ", ");
+	if (do_explain && explan[0] != '\0')
+		strcat(explan, ", ");
 	h[n] = starter;
 	sorthand(h, n + 1);	/* sort by rank */
 	i = 2 * fifteens(h, n + 1);
@@ -162,9 +162,9 @@ scorehand(hand, starter, n, crb, do_explain)
 	if (do_explain) {
 		if (i > 0) {
 			(void) sprintf(buf, "%d points in fifteens", i);
-			strcat(expl, buf);
+			strcat(explan, buf);
 		} else
-			strcat(expl, "No fifteens");
+			strcat(explan, "No fifteens");
 	}
 	i = pairuns(h, n + 1);
 	score += i;
@@ -172,9 +172,9 @@ scorehand(hand, starter, n, crb, do_explain)
 		if (i > 0) {
 			(void) sprintf(buf, ", %d points in pairs, %d in runs",
 			    pairpoints, runpoints);
-			strcat(expl, buf);
+			strcat(explan, buf);
 		} else
-			strcat(expl, ", No pairs/runs");
+			strcat(explan, ", No pairs/runs");
 	}
 	return (score);
 }

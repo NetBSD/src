@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $	*/
+/*	$NetBSD: server.c,v 1.22.2.1 2004/07/23 15:03:58 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $");
+__RCSID("$NetBSD: server.c,v 1.22.2.1 2004/07/23 15:03:58 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ sendf(rname, opts)
 
 	if (pw == NULL || pw->pw_uid != stb.st_uid)
 		if ((pw = getpwuid(stb.st_uid)) == NULL) {
-			log(lfp, "%s: no password entry for uid %d \n",
+			dolog(lfp, "%s: no password entry for uid %d \n",
 				target, stb.st_uid);
 			pw = NULL;
 			(void)snprintf(user, sizeof(user), ":%lu",
@@ -355,7 +355,7 @@ sendf(rname, opts)
 		}
 	if (gr == NULL || gr->gr_gid != stb.st_gid)
 		if ((gr = getgrgid(stb.st_gid)) == NULL) {
-			log(lfp, "%s: no name for group %d\n",
+			dolog(lfp, "%s: no name for group %d\n",
 				target, stb.st_gid);
 			gr = NULL;
 			(void)snprintf(group, sizeof(group), ":%lu",
@@ -363,10 +363,10 @@ sendf(rname, opts)
 		}
 	if (u == 1) {
 		if (opts & VERIFY) {
-			log(lfp, "need to install: %s\n", target);
+			dolog(lfp, "need to install: %s\n", target);
 			goto dospecial;
 		}
-		log(lfp, "installing: %s\n", target);
+		dolog(lfp, "installing: %s\n", target);
 		opts &= ~(COMPARE|REMOVE);
 	}
 
@@ -473,10 +473,10 @@ sendf(rname, opts)
 
 	if (u == 2) {
 		if (opts & VERIFY) {
-			log(lfp, "need to update: %s\n", target);
+			dolog(lfp, "need to update: %s\n", target);
 			goto dospecial;
 		}
-		log(lfp, "updating: %s\n", target);
+		dolog(lfp, "updating: %s\n", target);
 	}
 
 	if (stb.st_nlink > 1) {
@@ -541,7 +541,7 @@ dospecial:
 			continue;
 		if (sc->sc_args != NULL && !inlist(sc->sc_args, target))
 			continue;
-		log(lfp, "special \"%s\"\n", sc->sc_name);
+		dolog(lfp, "special \"%s\"\n", sc->sc_name);
 		if (opts & VERIFY)
 			continue;
 		(void) snprintf(buf, sizeof(buf), "SFILE=%s;%s\n", target,
@@ -568,7 +568,7 @@ savelink(stp)
 		}
 	lp = (struct linkbuf *) malloc(sizeof(*lp));
 	if (lp == NULL)
-		log(lfp, "out of memory, link information lost\n");
+		dolog(lfp, "out of memory, link information lost\n");
 	else {
 		lp->nextp = ihead;
 		ihead = lp;
@@ -639,7 +639,7 @@ again:
 	case '\3':
 		*--cp = '\0';
 		if (lfp != NULL) 
-			log(lfp, "update: note: %s\n", s);
+			dolog(lfp, "update: note: %s\n", s);
 		goto again;
 
 	default:
@@ -675,7 +675,8 @@ again:
 		if (stp->st_mtime == mtime)
 			return(0);
 		if (stp->st_mtime < mtime) {
-			log(lfp, "Warning: %s: remote copy is newer\n", target);
+			dolog(lfp, "Warning: %s: remote copy is newer\n",
+			    target);
 			return(0);
 		}
 	} else if (stp->st_mtime == mtime && stp->st_size == size)
@@ -1186,7 +1187,7 @@ rmchk(opts)
 		case '\0':
 			*--cp = '\0';
 			if (*s != '\0')
-				log(lfp, "%s\n", s);
+				dolog(lfp, "%s\n", s);
 			break;
 
 		case 'E':
@@ -1438,7 +1439,7 @@ dospecial(cmd)
 
 void
 #if __STDC__
-log(FILE *fp, const char *fmt, ...)
+dolog(FILE *fp, const char *fmt, ...)
 #else
 log(fp, fmt, va_alist)
 	FILE *fp;
@@ -1581,13 +1582,13 @@ response()
 	case '\0':
 		*--cp = '\0';
 		if (*s != '\0') {
-			log(lfp, "%s\n", s);
+			dolog(lfp, "%s\n", s);
 			return(1);
 		}
 		return(0);
 	case '\3':
 		*--cp = '\0';
-		log(lfp, "Note: %s\n",s);
+		dolog(lfp, "Note: %s\n",s);
 		return(response());
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2.2.2 2002/12/07 00:35:23 he Exp $	*/
+/*	$NetBSD: main.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.2.2.2 2002/12/07 00:35:23 he Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $");
 #endif
 
 #include <err.h>
@@ -75,7 +75,7 @@ static void resetlogging(void *);
 
 /* To shut up gcc -Wstrict-prototypes */
 int main(int argc, char *argv[]);
-void log(int severity, int syserr, const char *format, ...)
+void logit(int severity, int syserr, const char *format, ...)
 	__attribute__((__format__(__printf__, 3, 4)));
 
 int
@@ -170,7 +170,7 @@ usage:	fprintf(stderr,
     sprintf(versionstring, "mrouted version %d.%d",
 			PROTOCOL_VERSION, MROUTED_VERSION);
 
-    log(LOG_NOTICE, 0, "%s", versionstring);
+    logit(LOG_NOTICE, 0, "%s", versionstring);
 
 #ifdef SYSV
     srand48(time(NULL));
@@ -211,7 +211,7 @@ usage:	fprintf(stderr,
      */
     if ((((vers >> 8) & 0xff) != 3) ||
 	 ((vers & 0xff) != 5))
-	log(LOG_ERR, 0, "kernel (v%d.%d)/mrouted (v%d.%d) version mismatch",
+	logit(LOG_ERR, 0, "kernel (v%d.%d)/mrouted (v%d.%d) version mismatch",
 		(vers >> 8) & 0xff, vers & 0xff,
 		PROTOCOL_VERSION, MROUTED_VERSION);
 #endif
@@ -258,12 +258,12 @@ usage:	fprintf(stderr,
 
     FD_ZERO(&readers);
     if (igmp_socket >= FD_SETSIZE)
-	log(LOG_ERR, 0, "descriptor too big");
+	logit(LOG_ERR, 0, "descriptor too big");
     FD_SET(igmp_socket, &readers);
     nfds = igmp_socket + 1;
     for (i = 0; i < nhandlers; i++) {
 	if (ihandlers[i].fd >= FD_SETSIZE)
-	    log(LOG_ERR, 0, "descriptor too big");
+	    logit(LOG_ERR, 0, "descriptor too big");
 	FD_SET(ihandlers[i].fd, &readers);
 	if (ihandlers[i].fd >= nfds)
 	    nfds = ihandlers[i].fd + 1;
@@ -320,7 +320,7 @@ usage:	fprintf(stderr,
 #endif
    {
             if (errno != EINTR) /* SIGALRM is expected */
-                log(LOG_WARNING, errno, "select failed");
+                logit(LOG_WARNING, errno, "select failed");
             continue;
         }
 
@@ -328,14 +328,14 @@ usage:	fprintf(stderr,
 	    recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
 			       0, NULL, &dummy);
 	    if (recvlen < 0) {
-		if (errno != EINTR) log(LOG_ERR, errno, "recvfrom");
+		if (errno != EINTR) logit(LOG_ERR, errno, "recvfrom");
 		continue;
 	    }
 #ifdef SYSV
 	    (void)sigemptyset(&block);
 	    (void)sigaddset(&block, SIGALRM);
 	    if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
-		    log(LOG_ERR, errno, "sigprocmask");
+		    logit(LOG_ERR, errno, "sigprocmask");
 #else
 	    omask = sigblock(sigmask(SIGALRM));
 #endif
@@ -486,7 +486,7 @@ timer(void)
 static void
 done(int i)
 {
-    log(LOG_NOTICE, 0, "%s exiting", versionstring);
+    logit(LOG_NOTICE, 0, "%s exiting", versionstring);
     cleanup();
     _exit(1);
 }
@@ -563,7 +563,7 @@ restart(int i)
     sigset_t block, oblock;
 #endif
 
-    log(LOG_NOTICE, 0, "%s restart", versionstring);
+    logit(LOG_NOTICE, 0, "%s restart", versionstring);
 
     /*
      * reset all the entries
@@ -572,7 +572,7 @@ restart(int i)
     (void)sigemptyset(&block);
     (void)sigaddset(&block, SIGALRM);
     if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
-	log(LOG_ERR, errno, "sigprocmask");
+	logit(LOG_ERR, errno, "sigprocmask");
 #else
     omask = sigblock(sigmask(SIGALRM));
 #endif
@@ -631,7 +631,7 @@ resetlogging(void *arg)
  * For errors of severity LOG_ERR or worse, terminate the program.
  */
 void
-log(int severity, int syserr, const char *format, ...)
+logit(int severity, int syserr, const char *format, ...)
 {
     va_list ap;
     static char fmt[211] = "warning - ";
@@ -686,7 +686,7 @@ md_log(int what, u_int32_t origin, u_int32_t mcastgrp)
 
     if (!f) {
 	if ((f = fopen("/tmp/mrouted.clog", "w")) == NULL) {
-	    log(LOG_ERR, errno, "open /tmp/mrouted.clog");
+	    logit(LOG_ERR, errno, "open /tmp/mrouted.clog");
 	}
     }
 

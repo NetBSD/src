@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.16.2.2 2002/06/26 16:54:24 tv Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.16.2.3 2004/07/23 15:03:57 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -304,7 +304,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			} else {
 				if (errno == ECONNREFUSED)
 					full_failure = 0;
-				log("ssh: connect to address %s port %s: %s",
+				logit("ssh: connect to address %s port %s: %s",
 				    sockaddr_ntop(ai->ai_addr, ai->ai_addrlen),
 				    strport, strerror(errno));
 				/*
@@ -425,7 +425,7 @@ ssh_exchange_identification(void)
 			enable_compat13();
 			minor1 = 3;
 			if (options.forward_agent) {
-				log("Agent forwarding disabled for protocol 1.3");
+				logit("Agent forwarding disabled for protocol 1.3");
 				options.forward_agent = 0;
 			}
 		}
@@ -612,16 +612,16 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		debug("Found key in %s:%d", host_file, host_line);
 		if (options.check_host_ip && ip_status == HOST_NEW) {
 			if (readonly)
-				log("%s host key for IP address "
+				logit("%s host key for IP address "
 				    "'%.128s' not in list of known hosts.",
 				    type, ip);
 			else if (!add_host_to_hostfile(user_hostfile, ip,
 			    host_key))
-				log("Failed to add the %s host key for IP "
+				logit("Failed to add the %s host key for IP "
 				    "address '%.128s' to the list of known "
 				    "hosts (%.30s).", type, ip, user_hostfile);
 			else
-				log("Warning: Permanently added the %s host "
+				logit("Warning: Permanently added the %s host "
 				    "key for IP address '%.128s' to the list "
 				    "of known hosts.", type, ip);
 		}
@@ -663,10 +663,10 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		 * local known_hosts file.
 		 */
 		if (!add_host_to_hostfile(user_hostfile, hostp, host_key))
-			log("Failed to add the host to the list of known "
+			logit("Failed to add the host to the list of known "
 			    "hosts (%.500s).", user_hostfile);
 		else
-			log("Warning: Permanently added '%.200s' (%s) to the "
+			logit("Warning: Permanently added '%.200s' (%s) to the "
 			    "list of known hosts.", hostp, type);
 		break;
 	case HOST_CHANGED:
@@ -766,7 +766,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			    host_file, host_line);
 		}
 		if (options.strict_host_key_checking == 1) {
-			log(msg);
+			logit(msg);
 			error("Exiting, you have requested strict checking.");
 			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
@@ -775,7 +775,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			if (!confirm(msg))
 				goto fail;
 		} else {
-			log(msg);
+			logit(msg);
 		}
 	}
 

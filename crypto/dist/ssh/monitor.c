@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.3.2.1 2002/06/26 16:53:20 tv Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3.2.2 2004/07/23 15:03:56 tron Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -819,7 +819,7 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 		fail++;
 	p = buffer_get_string(&b, NULL);
 	if (strcmp(authctxt->user, p) != 0) {
-		log("wrong user name passed to monitor: expected %s != %.100s",
+		logit("wrong user name passed to monitor: expected %s != %.100s",
 		    authctxt->user, p);
 		fail++;
 	}
@@ -867,7 +867,7 @@ monitor_valid_hostbasedblob(u_char *data, u_int datalen, u_char *cuser,
 		fail++;
 	p = buffer_get_string(&b, NULL);
 	if (strcmp(authctxt->user, p) != 0) {
-		log("wrong user name passed to monitor: expected %s != %.100s",
+		logit("wrong user name passed to monitor: expected %s != %.100s",
 		    authctxt->user, p);
 		fail++;
 	}

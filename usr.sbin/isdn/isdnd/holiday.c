@@ -27,7 +27,7 @@
  *	isdnd - holiday file handling
  *      =============================
  *
- *      $Id: holiday.c,v 1.1.1.1 2001/01/06 13:00:14 martin Exp $
+ *      $Id: holiday.c,v 1.1.1.1.2.1 2004/07/23 15:03:58 tron Exp $
  *
  * $FreeBSD$
  *
@@ -79,7 +79,7 @@ init_holidays(char *filename)
 	
 	if((fp = fopen(filename, "r")) == NULL)
 	{
-		log(LL_ERR, "init_holiday: error opening holidayfile %s: %s!", filename, strerror(errno));
+		logit(LL_ERR, "init_holiday: error opening holidayfile %s: %s!", filename, strerror(errno));
 		exit(1);
 	}
 
@@ -98,7 +98,7 @@ init_holidays(char *filename)
 			ret = sscanf(buffer, "%d.%d", &day, &month);
 			if(ret != 2)
 			{
-				log(LL_ERR, "init_holiday: parse error for string [%s]!", buffer);
+				logit(LL_ERR, "init_holiday: parse error for string [%s]!", buffer);
 				exit(1);
 			}
 			year = 0;
@@ -106,17 +106,17 @@ init_holidays(char *filename)
 
 		if((newh = (struct holiday *) malloc(sizeof(struct holiday))) == NULL)
 		{
-			log(LL_ERR, "init_holiday: malloc failed for struct holiday!\n");
+			logit(LL_ERR, "init_holiday: malloc failed for struct holiday!\n");
 			exit(1);
 		}
 
 		if(year)
 		{
-			DBGL(DL_MSG, (log(LL_DBG, "init_holidays: add %d.%d.%d", day, month, year)));
+			DBGL(DL_MSG, (logit(LL_DBG, "init_holidays: add %d.%d.%d", day, month, year)));
 		}
 		else
 		{
-			DBGL(DL_MSG, (log(LL_DBG, "init_holidays: add %d.%d", day, month)));
+			DBGL(DL_MSG, (logit(LL_DBG, "init_holidays: add %d.%d", day, month)));
 		}
 		
 		newh->day = day;
@@ -181,12 +181,12 @@ isholiday(int d, int m, int y)
 		{
 			if(ch->year == 0)
 			{
-				DBGL(DL_MSG, (log(LL_DBG, "isholiday: %d.%d is a holiday!", d, m)));
+				DBGL(DL_MSG, (logit(LL_DBG, "isholiday: %d.%d is a holiday!", d, m)));
 				return(1);
 			}
 			else if(ch->year == y)
 			{
-				DBGL(DL_MSG, (log(LL_DBG, "isholiday: %d.%d.%d is a holiday!", d, m, y)));
+				DBGL(DL_MSG, (logit(LL_DBG, "isholiday: %d.%d.%d is a holiday!", d, m, y)));
 				return(1);
 			}
 		}

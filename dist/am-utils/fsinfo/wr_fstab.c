@@ -1,4 +1,4 @@
-/*	$NetBSD: wr_fstab.c,v 1.1.1.4 2001/05/13 17:50:30 veego Exp $	*/
+/*	$NetBSD: wr_fstab.c,v 1.1.1.4.2.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -328,7 +328,7 @@ write_fstab(qelem *q)
 	  if (hp->h_disk_fs)
 	    errors += write_dkfstab(ef, hp->h_disk_fs, op->op_fstab);
 	  else
-	    log("No local disk mounts on %s", hp->h_hostname);
+	    logit("No local disk mounts on %s", hp->h_hostname);
 
 	  if (hp->h_mount)
 	    errors += write_dkrmount(ef, hp->h_mount, hp->h_hostname, op->op_mount);

@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.5 1999/09/08 21:17:47 jsm Exp $	*/
+/*	$NetBSD: support.c,v 1.5.10.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.5 1999/09/08 21:17:47 jsm Exp $");
+__RCSID("$NetBSD: support.c,v 1.5.10.1 2004/07/23 15:03:57 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ plyrhand(hand, s)
 			msg("You should have taken %d, not %d!", i, j);
 		}
 		if (explain)
-			msg("Explanation: %s", expl);
+			msg("Explanation: %s", explan);
 		do_wait();
 	} else
 		win = chkscr(&pscore, i);

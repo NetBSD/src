@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.1.1.1.2.2 2002/06/26 16:52:54 tv Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.1.1.1.2.3 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -79,7 +79,7 @@ userauth_pubkey(Authctxt *authctxt)
 	pktype = key_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
-		log("userauth_pubkey: unsupported public key algorithm: %s",
+		logit("userauth_pubkey: unsupported public key algorithm: %s",
 		    pkalg);
 		goto done;
 	}
@@ -196,7 +196,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 	if (options.strict_modes &&
 	    secure_filename(f, file, pw, line, sizeof(line)) != 0) {
 		fclose(f);
-		log("Authentication refused: %s", line);
+		logit("Authentication refused: %s", line);
 		restore_uid();
 		return 0;
 	}

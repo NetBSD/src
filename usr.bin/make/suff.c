@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.38.2.1 2004/07/23 15:03:58 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.38.2.1 2004/07/23 15:03:58 tron Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.38.2.1 2004/07/23 15:03:58 tron Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1575,7 +1575,7 @@ SuffExpandChildren(prevLN, pgn)
 	}
 	return(1);
     } else if (Dir_HasWildcards(cgn->name)) {
-	Lst 	exp;	    /* List of expansions */
+	Lst 	explist;    /* List of expansions */
 	Lst 	path;	    /* Search path along which to expand */
 	SuffixCmpData sd;   /* Search string data */
 
@@ -1612,14 +1612,14 @@ SuffExpandChildren(prevLN, pgn)
 	/*
 	 * Expand the word along the chosen path
 	 */
-	exp = Lst_Init(FALSE);
-	Dir_Expand(cgn->name, path, exp);
+	explist = Lst_Init(FALSE);
+	Dir_Expand(cgn->name, path, explist);
 
-	while (!Lst_IsEmpty(exp)) {
+	while (!Lst_IsEmpty(explist)) {
 	    /*
 	     * Fetch next expansion off the list and find its GNode
 	     */
-	    cp = (char *)Lst_DeQueue(exp);
+	    cp = (char *)Lst_DeQueue(explist);
 
 	    if (DEBUG(SUFF)) {
 		printf("%s...", cp);
@@ -1641,7 +1641,7 @@ SuffExpandChildren(prevLN, pgn)
 	/*
 	 * Nuke what's left of the list
 	 */
-	Lst_Destroy(exp, NOFREE);
+	Lst_Destroy(explist, NOFREE);
 
 	/*
 	 * Now the source is expanded, remove it from the list of children to

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.2.2.2 2002/12/07 00:35:25 he Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.2.2.2 2002/12/07 00:35:25 he Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -165,7 +165,7 @@ void			check_vif_state(void);
 void			passive_mode(void);
 
 int			main(int argc, char *argv[]);
-/* log() prototyped in defs.h */
+/* logit() prototyped in defs.h */
 
 
 char   *
@@ -1163,7 +1163,7 @@ main(int argc, char **argv)
     }
     init_igmp();
     if (setuid(getuid()) == -1)
-	log(LOG_ERR, errno, "setuid");
+	logit(LOG_ERR, errno, "setuid");
 
     argv++, argc--;
     if (argc == 0) goto usage;
@@ -1669,7 +1669,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 void
 check_vif_state(void)
 {
-    log(LOG_WARNING, errno, "sendto");
+    logit(LOG_WARNING, errno, "sendto");
 }
 
 /*
@@ -1678,7 +1678,7 @@ check_vif_state(void)
  * LOG_ERR or worse, terminate the program.
  */
 void
-log(int severity, int syserr, const char *format, ...)
+logit(int severity, int syserr, const char *format, ...)
 {
     va_list ap;
 

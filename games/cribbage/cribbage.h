@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.7 1999/09/30 18:01:32 jsm Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.7.8.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -59,7 +59,7 @@ extern  BOOLEAN		rflag;			/* if all cuts random */
 extern  BOOLEAN		quiet;			/* if suppress random mess */
 extern	BOOLEAN		playing;		/* currently playing game */
 
-extern  char		expl[];			/* string for explanation */
+extern  char		explan[];		/* string for explanation */
 
 void	 addmsg __P((const char *, ...));
 int	 adjust __P((const CARD [], CARD));

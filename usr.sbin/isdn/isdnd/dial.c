@@ -27,7 +27,7 @@
  *	i4b daemon - dial handling routines
  *	-----------------------------------
  *
- *	$Id: dial.c,v 1.2 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: dial.c,v 1.2.2.1 2004/07/23 15:03:58 tron Exp $ 
  *
  * $FreeBSD$
  *
@@ -48,14 +48,14 @@ select_first_dialno(struct cfg_entry *cep)
 
 	if(cep->remote_numbers_count < 1)
 	{
-		log(LL_ERR, "select_first_dialno: remote_numbers_count < 1!");
+		logit(LL_ERR, "select_first_dialno: remote_numbers_count < 1!");
 		return;
 	}
 
 	if(cep->remote_numbers_count == 1)
 	{
 		strcpy(cep->remote_phone_dialout, cep->remote_numbers[0].number);
-		DBGL(DL_DIAL, (log(LL_DBG, "select_first_dialno: only one no, no = %s", cep->remote_phone_dialout)));
+		DBGL(DL_DIAL, (logit(LL_DBG, "select_first_dialno: only one no, no = %s", cep->remote_phone_dialout)));
 		cep->last_remote_number = 0;
 		return;
 	}
@@ -63,7 +63,7 @@ select_first_dialno(struct cfg_entry *cep)
 	if(cep->remote_numbers_handling == RNH_FIRST)
 	{
 		strcpy(cep->remote_phone_dialout, cep->remote_numbers[0].number);
-		DBGL(DL_DIAL, (log(LL_DBG, "select_first_dialno: use first, no = %s", cep->remote_phone_dialout)));
+		DBGL(DL_DIAL, (logit(LL_DBG, "select_first_dialno: use first, no = %s", cep->remote_phone_dialout)));
 		cep->last_remote_number = 0;
 		return;
 	}
@@ -77,7 +77,7 @@ select_first_dialno(struct cfg_entry *cep)
 			if(cep->remote_numbers_handling == RNH_LAST)
 			{
 				strcpy(cep->remote_phone_dialout, cep->remote_numbers[i].number);
-				DBGL(DL_DIAL, (log(LL_DBG, "select_first_dialno: use last, no = %s", cep->remote_phone_dialout)));
+				DBGL(DL_DIAL, (logit(LL_DBG, "select_first_dialno: use last, no = %s", cep->remote_phone_dialout)));
 				cep->last_remote_number = i;
 				return;
 			}
@@ -87,7 +87,7 @@ select_first_dialno(struct cfg_entry *cep)
 					i = 0;
 
 				strcpy(cep->remote_phone_dialout, cep->remote_numbers[i].number);
-				DBGL(DL_DIAL, (log(LL_DBG, "select_first_dialno: use next, no = %s", cep->remote_phone_dialout)));
+				DBGL(DL_DIAL, (logit(LL_DBG, "select_first_dialno: use next, no = %s", cep->remote_phone_dialout)));
 				cep->last_remote_number = i;
 				return;
 			}
@@ -97,7 +97,7 @@ select_first_dialno(struct cfg_entry *cep)
 			i = 0;
 	}
 	strcpy(cep->remote_phone_dialout, cep->remote_numbers[0].number);
-	DBGL(DL_DIAL, (log(LL_DBG, "select_first_dialno: no last found (use 0), no = %s", cep->remote_phone_dialout)));
+	DBGL(DL_DIAL, (logit(LL_DBG, "select_first_dialno: no last found (use 0), no = %s", cep->remote_phone_dialout)));
 	cep->last_remote_number = 0;	
 }									
 
@@ -109,14 +109,14 @@ select_next_dialno(struct cfg_entry *cep)
 {
 	if(cep->remote_numbers_count < 1)
 	{
-		log(LL_ERR, "select_next_dialno: remote_numbers_count < 1!");
+		logit(LL_ERR, "select_next_dialno: remote_numbers_count < 1!");
 		return;
 	}
 
 	if(cep->remote_numbers_count == 1)
 	{
 		strcpy(cep->remote_phone_dialout, cep->remote_numbers[0].number);
-		DBGL(DL_DIAL, (log(LL_DBG, "select_next_dialno: only one no, no = %s", cep->remote_phone_dialout)));
+		DBGL(DL_DIAL, (logit(LL_DBG, "select_next_dialno: only one no, no = %s", cep->remote_phone_dialout)));
 		cep->last_remote_number = 0;
 		return;
 	}
@@ -134,7 +134,7 @@ select_next_dialno(struct cfg_entry *cep)
 
 	strcpy(cep->remote_phone_dialout, cep->remote_numbers[cep->last_remote_number].number);
 	
-	DBGL(DL_DIAL, (log(LL_DBG, "select_next_dialno: index=%d, no=%s",
+	DBGL(DL_DIAL, (logit(LL_DBG, "select_next_dialno: index=%d, no=%s",
 		cep->last_remote_number,
 		cep->remote_numbers[cep->last_remote_number].number)));
 }									
@@ -147,7 +147,7 @@ select_this_dialno(struct cfg_entry *cep)
 {
 	cep->remote_numbers[cep->last_remote_number].flag = RNF_SUCC;
 	
-	DBGL(DL_DIAL, (log(LL_DBG, "select_this_dialno: index = %d, no = %s",
+	DBGL(DL_DIAL, (logit(LL_DBG, "select_this_dialno: index = %d, no = %s",
 		cep->last_remote_number,
 		cep->remote_numbers[cep->last_remote_number].number)));
 }

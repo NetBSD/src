@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.1.1.1.2.2 2002/06/26 16:52:48 tv Exp $	*/
+/*	$NetBSD: auth2-hostbased.c,v 1.1.1.1.2.3 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -78,7 +78,7 @@ userauth_hostbased(Authctxt *authctxt)
 	pktype = key_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
-		log("userauth_hostbased: unsupported "
+		logit("userauth_hostbased: unsupported "
 		    "public key algorithm: %s", pkalg);
 		goto done;
 	}
@@ -153,7 +153,7 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 			chost[len - 1] = '\0';
 		}
 		if (strcasecmp(resolvedname, chost) != 0)
-			log("userauth_hostbased mismatch: "
+			logit("userauth_hostbased mismatch: "
 			    "client sends %s, but we resolve %s to %s",
 			    chost, ipaddr, resolvedname);
 		if (auth_rhosts2(pw, cuser, resolvedname, ipaddr) == 0)
