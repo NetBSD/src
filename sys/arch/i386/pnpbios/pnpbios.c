@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $ */
+/* $NetBSD: pnpbios.c,v 1.38 2003/10/28 11:17:14 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.38 2003/10/28 11:17:14 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,12 +91,13 @@ struct pnpbios_softc {
 	struct device		sc_dev;
 	isa_chipset_tag_t	sc_ic;
 	struct proc		*sc_evthread;
-
-	u_int8_t	*sc_evaddr;
 	int		sc_version;
 	int		sc_control;
+#ifdef PNPBIOSEVENTS
+	u_int8_t	*sc_evaddr;
 	int		sc_threadrun;
 	int		sc_docked;
+#endif
 };
 
 #define	PNPGET4(p)	((p)[0] + ((p)[1] << 8) + \
@@ -110,12 +111,13 @@ static int	pnpbios_setnode		__P((int flags, int idx,
     const u_int8_t *buf, size_t len));
 #endif
 
-static int	pnpbios_getdockinfo	__P((struct pnpdockinfo *di));
 static int	pnpbios_getnode		__P((int flags, int *idxp,
     u_int8_t *buf, size_t len));
 static int	pnpbios_getnumnodes	__P((int *nump, size_t *sizep));
 
 #ifdef PNPBIOSEVENTS
+static int	pnpbios_getdockinfo	__P((struct pnpdockinfo *di));
+
 static void	pnpbios_create_event_thread	__P((void *arg));
 static int	pnpbios_getevent		__P((u_int16_t *event));
 static void	pnpbios_event_thread		__P((void *arg));
@@ -143,7 +145,9 @@ static int	pnpbios_submatch	__P((struct device *parent,
 extern int	pnpbioscall		__P((int));
 
 static void	pnpbios_enumerate(struct pnpbios_softc *sc);
+#ifdef PNPBIOSEVENTS
 static int	pnpbios_update_dock_status __P((struct pnpbios_softc *sc));
+#endif
 
 /* scanning functions */
 static int pnp_compatid __P((struct pnpresources *, const void *, size_t));
@@ -362,11 +366,11 @@ pnpbios_attach(parent, self, aux)
 #ifdef PNPBIOSEVENTS
 	EDPRINTF(("%s: event flag vaddr 0x%08x\n", sc->sc_dev.dv_xname,
 	    (int)sc->sc_evaddr));
-#endif
 
 	/* Set initial dock status. */
 	sc->sc_docked = -1;
 	(void) pnpbios_update_dock_status(sc);
+#endif
 
 	/* Enumerate the device nodes. */
 	pnpbios_enumerate(sc);
@@ -472,6 +476,7 @@ pnpbios_enumerate(sc)
 	free(buf, M_DEVBUF);
 }
 
+#ifdef PNPBIOSEVENTS
 static int
 pnpbios_update_dock_status(sc)
 	struct pnpbios_softc *sc;
@@ -527,6 +532,7 @@ pnpbios_update_dock_status(sc)
 
 	return (odocked);
 }
+#endif
 
 static int
 pnpbios_getnumnodes(nump, sizep)
@@ -636,7 +642,6 @@ pnpbios_sendmessage(msg)
 
 	return (pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf));
 }
-#endif /* PNPBIOSEVENTS */
 
 static int
 pnpbios_getdockinfo(di)
@@ -654,6 +659,7 @@ pnpbios_getdockinfo(di)
 	memcpy(di, pnpbios_scratchbuf, sizeof(*di));
 	return (res);
 }
+#endif /* PNPBIOSEVENTS */
 
 #if 0
 /* XXX - pnpbios_getapmtable() is not called. */
