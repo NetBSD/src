@@ -126,9 +126,6 @@ int	want_resched;		/* resched() was called */
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
 
-/* what is this supposed to do? i.e. how is it different than startrtclock? */
-#define	enablertclock()
-
 #endif
 
 /* 680X0 function codes */
@@ -144,4 +141,5 @@ extern	char *intiobase, *intiolimit;
 #define	IC_FREEZE	0x0002	/* freeze instruction cache */
 #define	IC_CE		0x0004	/* clear instruction cache entry */
 #define	IC_CLR		0x0008	/* clear entire instruction cache */
+
 
