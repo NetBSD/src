@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.4 1999/09/08 21:17:56 jsm Exp $	*/
+/*	$NetBSD: auto.c,v 1.5 2002/01/31 17:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ move_towards(dx, dy)
 
 	(void)strcpy(ok_moves, find_moves());
 	best_move = ok_moves[0]; 
-	if (best_move != 'F') {
+	if (best_move != 't') {
 		mvx = xinc(best_move);
 		mvy = yinc(best_move);
 		move_judge = ABS(mvx - dx) + ABS(mvy - dy);
