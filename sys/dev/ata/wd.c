@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.220.10.2 2002/07/22 04:45:32 lukem Exp $ */
+/*	$NetBSD: wd.c,v 1.220.10.3 2003/06/30 02:57:01 grant Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.2 2002/07/22 04:45:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.3 2003/06/30 02:57:01 grant Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -218,6 +218,8 @@ void  wdrestart __P((void*));
 int   wd_get_params __P((struct wd_softc *, u_int8_t, struct ataparams *));
 void  wd_flushcache __P((struct wd_softc *, int));
 void  wd_shutdown __P((void*));
+int   wd_getcache __P((struct wd_softc *, int *));
+int   wd_setcache __P((struct wd_softc *, int));
 
 struct dkdriver wddkdriver = { wdstrategy };
 
@@ -1131,6 +1133,11 @@ wdioctl(dev, xfer, addr, flag, p)
 		return error;
 		}
 #endif
+	case DIOCGCACHE:
+		return wd_getcache(wd, (int *)addr);
+
+	case DIOCSCACHE:
+		return wd_setcache(wd, *(int *)addr);
 
 	case ATAIOCCOMMAND:
 		/*
@@ -1416,6 +1423,73 @@ wd_get_params(wd, flags, params)
 		panic("wd_get_params: bad return code from ata_get_params");
 		/* NOTREACHED */
 	}
+}
+
+int
+wd_getcache(wd, bitsp)
+	struct wd_softc *wd;
+	int *bitsp;
+{
+	struct ataparams params;
+
+	if (wd_get_params(wd, AT_WAIT, &params) != 0)
+		return EIO;
+	if (params.atap_cmd_set1 == 0x0000 ||
+	    params.atap_cmd_set1 == 0xffff ||
+	    (params.atap_cmd_set1 & WDC_CMD1_CACHE) == 0) {
+		*bitsp = 0;
+		return 0;
+	}
+	*bitsp = DKCACHE_WCHANGE | DKCACHE_READ;
+	if (params.atap_cmd1_en & WDC_CMD1_CACHE)
+		*bitsp |= DKCACHE_WRITE;
+
+	return 0;
+}
+
+int
+wd_setcache(wd, bits)
+	struct wd_softc *wd;
+	int bits;
+{
+	struct ataparams params;
+	struct wdc_command wdc_c;
+
+	if (wd_get_params(wd, AT_WAIT, &params) != 0)
+		return EIO;
+
+	if (params.atap_cmd_set1 == 0x0000 ||
+	    params.atap_cmd_set1 == 0xffff ||
+	    (params.atap_cmd_set1 & WDC_CMD1_CACHE) == 0)
+		return EOPNOTSUPP;
+
+	if ((bits & DKCACHE_READ) == 0 ||
+	    (bits & DKCACHE_SAVE) != 0)
+		return EOPNOTSUPP;
+
+	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	wdc_c.r_command = SET_FEATURES;
+	wdc_c.r_st_bmask = 0;
+	wdc_c.r_st_pmask = 0;
+	wdc_c.timeout = 30000; /* 30s timeout */
+	wdc_c.flags = AT_WAIT;
+	if (bits & DKCACHE_WRITE)
+		wdc_c.r_precomp = WDSF_WRITE_CACHE_EN;
+	else
+		wdc_c.r_precomp = WDSF_WRITE_CACHE_DS;
+	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		printf("%s: wd_setcache command not complete\n",
+		    wd->sc_dev.dv_xname);
+		return EIO;
+	}
+	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		printf("%s: wd_setcache command error 0x%x\n",
+		    wd->sc_dev.dv_xname, wdc_c.flags);
+		return EIO;
+	}
+	if (wdc_c.flags & ERR_NODEV)
+		return ENODEV;
+	return 0;
 }
 
 void
