@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.111 2004/04/21 03:23:19 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.112 2004/04/21 03:58:38 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1100,3 +1100,21 @@ distrib/sets/Makefile				1.45
 	* Convert to getopts a la the other scripts in this directory
 	* if ${MKX11} != no, call makesrctars with '-x ${X11SRCDIR}'
 	[lukem, ticket #166]
+
+dist/dhcp/common/bpf.c				1.7
+usr.sbin/mopd/common/pf.c			1.9
+usr.sbin/ndbootd/config/ndbootd-bpf.c		1.7
+usr.sbin/rarpd/rarpd.c				1.50
+usr.sbin/rbootd/bpf.c				1.16
+sys/net/bpf.c					1.91-1.95
+sys/net/bpf.h					1.34-1.36
+sys/net/bpfdesc.h				1.17-1.18
+
+	Reduce bpf buffer to 32k from 1M to reduce kernel memory usage from 
+	userland binaries. 
+	Fix bpf so that select will return for a timeout.
+	Fix the behaviour of BIOCIMMEDIATE.
+	In bpf_mtap(), optimise the calling of bpf_filter() and catchpacket()
+	based on whether or not the entire packet is in one mbuf.
+	Various other bpf fixes, including PR#8674, PR#12170
+	[darrenr, ticket #167]
