@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/18 14:00:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/09/26 13:05:55 itojun Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.15 2002/09/18 14:00:40 lukem Exp $
+#	$Id: Makefile,v 1.16 2002/09/26 13:05:55 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -51,6 +51,12 @@ CPPFLAGS+= -DNO_IDEA
 .else
 LDADD+=	-lcrypto_idea
 DPADD+=	${LIBCRYPTO_IDEA}
+.endif
+.if ${MKCRYPTO_MDC2} == "no"
+CPPFLAGS+= -DNO_MDC2
+.else
+LDADD+=	-lcrypto_mdc2
+DPADD+=	${LIBCRYPTO_MDC2}
 .endif
 
 # this must be _after_ the libcrypto_rc5/libcrypto_idea entries.
