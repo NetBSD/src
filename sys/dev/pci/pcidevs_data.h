@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.259 2000/09/07 23:26:41 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.260 2000/09/13 13:48:44 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.255 2000/09/07 23:26:28 soren Exp 
+ *	NetBSD: pcidevs,v 1.256 2000/09/13 13:48:09 tron Exp 
  */
 
 /*
@@ -1604,6 +1604,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Diamond Computer Systems",
 	    "Viper/PCI",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TX,
+	    0,
+	    "D-Link Systems",
+	    "",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX,
@@ -4418,6 +4424,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C686A AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
+	    0,
+	    "VIA Technologies",
+	    "VT6102 (Rhine II) 10/100BaseTX",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
