@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.8 2001/03/11 21:11:58 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.9 2001/04/04 17:14:31 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -268,6 +268,15 @@ icmp6_error(m, type, code, param)
 	icmp6->icmp6_type = type;
 	icmp6->icmp6_code = code;
 	icmp6->icmp6_pptr = htonl((u_int32_t)param);
+
+	/*
+	 * icmp6_reflect() is designed to be in the input path.
+	 * icmp6_error() can be called from both input and outut path,
+	 * and if we are in output path rcvif could contain bogus value.
+	 * clear m->m_pkthdr.rcvif for safety, we should have enough scope
+	 * information in ip header (nip6).
+	 */
+	m->m_pkthdr.rcvif = NULL;
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
