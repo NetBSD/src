@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.40 1994/05/13 00:50:44 cgd Exp $
+ *	$Id: trap.c,v 1.41 1994/05/16 09:46:10 cgd Exp $
  */
 
 /*
@@ -78,7 +78,7 @@ static inline void
 userret(p, pc, oticks)
 	register struct proc *p;
 	int pc;
-	struct timeval oticks;
+	u_quad_t oticks;
 {
 	int sig;
 
@@ -104,26 +104,14 @@ userret(p, pc, oticks)
 			postsig(sig);
 	}
 
-#ifdef notdef
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
 
-		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
-			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
-#else
-			addupc(pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-#endif
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+	}                   
 
 	curpriority = p->p_priority;
 }
@@ -166,7 +154,7 @@ trap(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	int type, code;
-	struct timeval sticks;
+	u_quad_t sticks;
 	extern char fusubail[];
 
 	cnt.v_trap++;
@@ -200,9 +188,7 @@ trap(frame)
 
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
-#ifdef notdef
-		sticks = p->p_stime;
-#endif
+		sticks = p->p_sticks;
 		p->p_md.md_regs = (int *)&frame;
 	}
 
@@ -466,15 +452,13 @@ syscall(frame)
 	u_int argsize;
 	int args[8], rval[2];
 	int code;
-	struct timeval sticks;
+	u_quad_t sticks;
 
 	cnt.v_syscall++;
 	if (ISPL(frame.tf_cs) != SEL_UPL)
 		panic("syscall");
 	p = curproc;
-#ifdef notdef
-	sticks = p->p_stime;
-#endif
+	sticks = p->p_sticks;
 	p->p_md.md_regs = (int *)&frame;
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
