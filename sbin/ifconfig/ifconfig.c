@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.85 2000/07/19 04:43:34 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.86 2000/07/19 06:01:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.85 2000/07/19 04:43:34 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.86 2000/07/19 06:01:24 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1103,7 +1103,7 @@ setifnwid(val, d)
 		val += 2;
 		p = nwid.i_nwid;
 		while (isxdigit((u_char)val[0]) && isxdigit((u_char)val[1])) {
-			if (p > nwid.i_nwid + sizeof(nwid.i_nwid)) {
+			if (p >= nwid.i_nwid + sizeof(nwid.i_nwid)) {
 				warnx("SIOCS80211NWID: Too long nwid.");
 				return;
 			}
@@ -1145,7 +1145,7 @@ ieee80211_status()
 	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) != 0)
 		return;
 	if (nwid.i_len > IEEE80211_NWID_LEN) {
-		warnx("SIOCS80211NWID: wrong length of nwid (%d)", nwid.i_len);
+		warnx("SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
 		return;
 	}
 	i = 0;
