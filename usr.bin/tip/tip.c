@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.14 1997/05/14 00:20:05 mellon Exp $	*/
+/*	$NetBSD: tip.c,v 1.14.2.1 1997/12/17 22:39:59 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.14 1997/05/14 00:20:05 mellon Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.14.2.1 1997/12/17 22:39:59 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -77,6 +77,7 @@ main(argc, argv)
 	register int i;
 	register char *p;
 	char sbuf[12];
+	int fcarg;
 
 	gid = getgid();
 	egid = getegid();
@@ -195,6 +196,21 @@ notnumber:
 	}
 	if (!HW)
 		ttysetup(i);
+
+	/*
+	 * Direct connections with no carrier require using O_NONBLOCK on
+	 * open, but we don't want to keep O_NONBLOCK after open because it
+	 * will cause busy waits.
+	 */
+	if (DC &&
+	    ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
+	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
+		printf("tip: can't clear O_NONBLOCK: %s", strerror (errno));
+		daemon_uid();
+		(void)uu_unlock (uucplock);
+		exit(1);
+	}
+		
 cucommon:
 	/*
 	 * From here down the code is shared with
