@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.40 1994/10/20 14:09:13 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.41 1994/10/20 16:54:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -169,14 +169,9 @@ sdattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	sd_get_parms(sd, SCSI_NOSLEEP | SCSI_NOMASK);
-	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-	    sd->sc_dk.dk_label.d_ncylinders *
-	    sd->sc_dk.dk_label.d_secpercyl /
-	    (1048576 / sd->sc_dk.dk_label.d_secsize),
-	    sd->sc_dk.dk_label.d_ncylinders,
-	    sd->sc_dk.dk_label.d_ntracks,
-	    sd->sc_dk.dk_label.d_nsectors,
-	    sd->sc_dk.dk_label.d_secsize);
+        printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+            dp->disksize / (1048576 / dp->blksize), dp->cyls,
+            dp->heads, dp->sectors, dp->blksize);
 }
 
 /*
