@@ -1,4 +1,4 @@
-/*	$NetBSD: icmpcode.c,v 1.2 2004/11/13 15:18:41 he Exp $	*/
+/*	$NetBSD: icmpcode.c,v 1.3 2004/11/13 18:44:43 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -34,7 +34,7 @@ char *str;
 
 	if ((s = strrchr(str, ')')))
 		*s = '\0';
-	if (isdigit((unsigned char)*str)) {
+	if (isdigit(*str)) {
 		if (!ratoi(str, &i, 0, 255))
 			return -1;
 		else
