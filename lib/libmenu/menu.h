@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.10 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: menu.h,v 1.11 2002/02/04 13:02:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -33,27 +33,28 @@
 #include <eti.h>
 
 /* requests for the menu_driver call */
-#define REQ_BASE_NUM      (0x100)
-#define REQ_LEFT_ITEM     (0x101)
-#define REQ_RIGHT_ITEM    (0x102)
-#define REQ_UP_ITEM       (0x103)
-#define REQ_DOWN_ITEM     (0x104)
-#define REQ_SCR_ULINE     (0x105)
-#define REQ_SCR_DLINE     (0x106)
-#define REQ_SCR_DPAGE     (0x107)
-#define REQ_SCR_UPAGE     (0x108)
-#define REQ_FIRST_ITEM    (0x109)
-#define REQ_LAST_ITEM     (0x10a)
-#define REQ_NEXT_ITEM     (0x10b)
-#define REQ_PREV_ITEM     (0x10c)
-#define REQ_TOGGLE_ITEM   (0x10d)
-#define REQ_CLEAR_PATTERN (0x10e)
-#define REQ_BACK_PATTERN  (0x10f)
-#define REQ_NEXT_MATCH    (0x110)
-#define REQ_PREV_MATCH    (0x111)
+#define REQ_BASE_NUM      (KEY_MAX + 0x100)
+#define REQ_LEFT_ITEM     (KEY_MAX + 0x101)
+#define REQ_RIGHT_ITEM    (KEY_MAX + 0x102)
+#define REQ_UP_ITEM       (KEY_MAX + 0x103)
+#define REQ_DOWN_ITEM     (KEY_MAX + 0x104)
+#define REQ_SCR_ULINE     (KEY_MAX + 0x105)
+#define REQ_SCR_DLINE     (KEY_MAX + 0x106)
+#define REQ_SCR_DPAGE     (KEY_MAX + 0x107)
+#define REQ_SCR_UPAGE     (KEY_MAX + 0x108)
+#define REQ_FIRST_ITEM    (KEY_MAX + 0x109)
+#define REQ_LAST_ITEM     (KEY_MAX + 0x10a)
+#define REQ_NEXT_ITEM     (KEY_MAX + 0x10b)
+#define REQ_PREV_ITEM     (KEY_MAX + 0x10c)
+#define REQ_TOGGLE_ITEM   (KEY_MAX + 0x10d)
+#define REQ_CLEAR_PATTERN (KEY_MAX + 0x10e)
+#define REQ_BACK_PATTERN  (KEY_MAX + 0x10f)
+#define REQ_NEXT_MATCH    (KEY_MAX + 0x110)
+#define REQ_PREV_MATCH    (KEY_MAX + 0x111)
 
-#define MAX_COMMAND       (0x111) /* last menu driver request - for application
-				     defined commands */
+#define MAX_COMMAND       (KEY_MAX + 0x111) /* last menu driver request
+					       - for application defined
+					       commands */
 
 /* Menu options */
 typedef unsigned int OPTIONS;
@@ -131,7 +132,7 @@ struct __menu {
 				       before current item changes */
         WINDOW *menu_win; /* the menu window */
         WINDOW *menu_subwin; /* the menu subwindow */
-	int we_created;
+	WINDOW *scrwin; /* the window to write to */
 };
 
 
