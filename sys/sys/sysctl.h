@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.7 2002/04/23 03:30:47 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.8 2002/04/23 04:05:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -440,7 +440,6 @@ struct kinfo_lwp {
 	u_int64_t l_forw;		/* PTR: linked run/sleep queue. */
 	u_int64_t l_back;
 	u_int64_t l_addr;		/* PTR: Kernel virtual addr of u-area */
-	int8_t	l_stat;			/* CHAR: S* process status. */
 	int32_t	l_lid;			/* LWPID_T: LWP identifier */
 	int32_t	l_flag;			/* INT: L_* flags. */
 	u_int32_t l_swtime;		/* U_INT: Time swapped in or out. */
@@ -449,6 +448,9 @@ struct kinfo_lwp {
 	int32_t	l_holdcnt;              /* INT: If non-zero, don't swap. */
 	u_int8_t l_priority;		/* U_CHAR: Process priority. */
 	u_int8_t l_usrpri;		/* U_CHAR: User-priority based on l_cpu and p_nice. */
+	int8_t	l_stat;			/* CHAR: S* process status. */
+	int8_t	l_pad1;			/* fill out to 4-byte boundary */
+	int32_t	l_pad2;			/* .. and then to an 8-byte boundary */
 	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
 	u_int64_t l_wchan;		/* PTR: sleep address. */
 	u_int64_t l_cpuid;		/* LONG: cpu id */
