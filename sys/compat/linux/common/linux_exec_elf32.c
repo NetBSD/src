@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.34 1998/10/04 00:02:32 fvdl Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.35 1998/10/04 09:40:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ ELFNAME2(linux,signature)(p, epp, eh)
 
 		testp = (char *)notep;
 		testp[16] = '\0';
-		if (strncmp(&testp[8], "linux", 5) != 0)  {
+		if (!strncmp(&testp[8], "linux", 5) != 0)  {
 			error = 0;
 			goto out3;
 		}
