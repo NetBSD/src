@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2000/09/13 15:00:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2001/01/13 11:31:04 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -704,6 +704,9 @@ pmap_init()
 		DCIS();
 	}
 #endif
+
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
 }
 
 struct pv_entry *
