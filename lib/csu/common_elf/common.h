@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.8 2003/07/26 19:24:26 salo Exp $ */
+/* $NetBSD: common.h,v 1.9 2003/08/12 09:18:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -74,8 +74,6 @@ extern void	_fini __P((void));
 
 #ifdef DYNAMIC
 void	_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
-
-const Obj_Entry *__mainprog_obj;
 
 /*
  * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up

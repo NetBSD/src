@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.32 2003/08/05 19:41:53 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.33 2003/08/12 09:18:50 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -52,6 +52,29 @@
 
 #include "debug.h"
 #include "rtld.h"
+
+static bool
+_rtld_is_exported(const Elf_Sym *def)
+{
+	static Elf_Addr _rtld_exports[] = {
+		(Elf_Addr)dlopen,
+		(Elf_Addr)dlclose,
+		(Elf_Addr)dlsym,
+		(Elf_Addr)dlerror,
+		(Elf_Addr)dladdr,
+		NULL
+	};
+	int i;
+
+	Elf_Addr value;
+	value = (Elf_Addr)(_rtld_objself.relocbase + def->st_value);
+
+	for (i = 0; _rtld_exports[i] != NULL; i++) {
+		if (value == _rtld_exports[i])
+			return true;
+	}
+	return false;
+}
 
 /*
  * Hash function for symbol table lookup.  Don't even think about changing
@@ -226,6 +249,20 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	}
 	
 	/*
+	 * Search the dynamic linker itself, and possibly resolve the
+	 * symbol from there.  This is how the application links to
+	 * dynamic linker services such as dlopen.  Only the values listed
+	 * in the "_rtld_exports" array can be resolved from the dynamic linker.
+	 */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
+		if (symp != NULL && _rtld_is_exported(symp)) {
+			def = symp;
+			defobj = &_rtld_objself;
+		}
+	}
+	
+	/*
 	 * If we found no definition and the reference is weak, treat the
 	 * symbol as having the value zero.
 	 */
@@ -234,7 +271,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		def = &_rtld_sym_zero;
 		defobj = _rtld_objmain;
 	}
-	
+
 	if (def != NULL)
 		*defobj_out = defobj;
 	else {
