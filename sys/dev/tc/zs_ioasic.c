@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.19 2002/10/02 16:53:10 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.20 2003/01/01 00:10:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.19 2002/10/02 16:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.20 2003/01/01 00:10:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -379,10 +379,10 @@ zs_ioasic_print(aux, name)
 	struct zsc_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s:", name);
+		aprint_normal("%s:", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		aprint_normal(" channel %d", args->channel);
 
 	return (UNCONF);
 }

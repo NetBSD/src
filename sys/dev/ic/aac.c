@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.6 2002/11/25 20:29:14 fvdl Exp $	*/
+/*	$NetBSD: aac.c,v 1.7 2003/01/01 00:10:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.6 2002/11/25 20:29:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.7 2003/01/01 00:10:18 thorpej Exp $");
 
 #include "locators.h"
 
@@ -291,8 +291,8 @@ aac_print(void *aux, const char *pnp)
 	aaca = aux;
 
 	if (pnp != NULL)
-		printf("block device at %s", pnp);
-	printf(" unit %d", aaca->aaca_unit);
+		aprint_normal("block device at %s", pnp);
+	aprint_normal(" unit %d", aaca->aaca_unit);
 	return (UNCONF);
 }
 

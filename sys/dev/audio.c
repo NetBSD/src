@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.171 2002/12/31 00:33:10 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.172 2003/01/01 00:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.171 2002/12/31 00:33:10 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.172 2003/01/01 00:10:15 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3354,7 +3354,7 @@ audioprint(void *aux, const char *pnp)
 		default:
 			panic("audioprint: unknown type %d", arg->type);
 		}
-		printf("%s at %s", type, pnp);
+		aprint_normal("%s at %s", type, pnp);
 	}
 	return (UNCONF);
 }

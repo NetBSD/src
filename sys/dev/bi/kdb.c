@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.29 2002/10/02 16:33:38 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.30 2003/01/01 00:10:16 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.29 2002/10/02 16:33:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.30 2003/01/01 00:10:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -116,7 +116,7 @@ kdbprint(aux, name)
 	const char	*name;
 {
 	if (name)
-		printf("%s: mscpbus", name);
+		aprint_normal("%s: mscpbus", name);
 	return UNCONF;
 }
 

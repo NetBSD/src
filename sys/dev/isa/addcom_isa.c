@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.7 2002/10/02 03:10:45 thorpej Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.8 2003/01/01 00:10:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.7 2002/10/02 03:10:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.8 2003/01/01 00:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ addcomprint(void *aux, const char *pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		aprint_normal("com at %s", pnp);
+	aprint_normal(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 

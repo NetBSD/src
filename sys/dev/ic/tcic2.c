@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.11 2002/09/27 03:18:13 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.11 2002/09/27 03:18:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $");
 
 #undef	TCICDEBUG
 
@@ -580,14 +580,14 @@ tcic_print(arg, pnp)
 
 	/* Only "pcmcia"s can attach to "tcic"s... easy. */
 	if (pnp)
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 
 	switch (h->sock) {
 	case 0:
-		printf(" socket 0");
+		aprint_normal(" socket 0");
 		break;
 	case 1:
-		printf(" socket 1");
+		aprint_normal(" socket 1");
 		break;
 	default:
 		panic("unknown tcic socket");

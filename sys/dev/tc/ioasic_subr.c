@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.4 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.3 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.4 2003/01/01 00:10:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ ioasicprint(aux, pnp)
 	struct ioasicdev_attach_args *d = aux;
 
 	if (pnp)
-		printf("%s at %s", d->iada_modname, pnp);
-	printf(" offset 0x%lx", (long)d->iada_offset);
+		aprint_normal("%s at %s", d->iada_modname, pnp);
+	aprint_normal(" offset 0x%lx", (long)d->iada_offset);
 	return (UNCONF);
 }
 

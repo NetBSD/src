@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.22 2002/09/27 03:18:11 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.23 2003/01/01 00:10:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.22 2002/09/27 03:18:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.23 2003/01/01 00:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,8 +222,8 @@ cac_print(void *aux, const char *pnp)
 	caca = (struct cac_attach_args *)aux;
 
 	if (pnp != NULL)
-		printf("block device at %s", pnp);
-	printf(" unit %d", caca->caca_unit);
+		aprint_normal("block device at %s", pnp);
+	aprint_normal(" unit %d", caca->caca_unit);
 	return (UNCONF);
 }
 

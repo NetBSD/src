@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.9 2002/10/02 16:53:08 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.10 2003/01/01 00:10:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.9 2002/10/02 16:53:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.10 2003/01/01 00:10:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -342,9 +342,9 @@ tcdsprint(aux, pnp)
 
 	/* Only ASCs can attach to TCDSs; easy. */
 	if (pnp)
-		printf("asc at %s", pnp);
+		aprint_normal("asc at %s", pnp);
 
-	printf(" chip %d", tcdsdev->tcdsda_chip);
+	aprint_normal(" chip %d", tcdsdev->tcdsda_chip);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.28 2003/01/01 00:10:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.28 2003/01/01 00:10:17 thorpej Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $";
+    "$NetBSD: hpcfb.c,v 1.28 2003/01/01 00:10:17 thorpej Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ int
 hpcfbprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		printf("hpcfb at %s", pnp);
+		aprint_normal("hpcfb at %s", pnp);
 
 	return (UNCONF);
 }

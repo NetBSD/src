@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $	*/
+/*	$NetBSD: xmi.c,v 1.3 2003/01/01 00:10:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.3 2003/01/01 00:10:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,13 +71,13 @@ xmi_print(void *aux, const char *name)
 
 	if (name) {
 		if (xl->xl_nr == 0)
-			printf("unknown device 0x%x",
+			aprint_normal("unknown device 0x%x",
 			    bus_space_read_2(xa->xa_iot, xa->xa_ioh, 0));
 		else
 			printf(xl->xl_name);
-		printf(" at %s", name);
+		aprint_normal(" at %s", name);
 	}
-	printf(" node %d", xa->xa_nodenr);
+	aprint_normal(" node %d", xa->xa_nodenr);
 	return xl->xl_havedriver ? UNCONF : UNSUPP;
 }
 

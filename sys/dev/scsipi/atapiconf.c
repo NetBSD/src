@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.54 2002/10/04 18:58:45 soren Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.55 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.54 2002/10/04 18:58:45 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.55 2003/01/01 00:10:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ atapiprint(aux, pnp)
 {
 	struct scsipi_channel *chan = aux;
 	if (pnp)
-		printf("atapibus at %s", pnp);
-	printf(" channel %d", chan->chan_channel);
+		aprint_normal("atapibus at %s", pnp);
+	aprint_normal(" channel %d", chan->chan_channel);
 	return (UNCONF);
 }
 
@@ -340,12 +340,12 @@ atapibusprint(aux, pnp)
 	char *dtype;
 
 	if (pnp != NULL)
-		printf("%s", pnp);
+		aprint_normal("%s", pnp);
 
 	inqbuf = &sa->sa_inqbuf;
 
 	dtype = scsipi_dtype(inqbuf->type & SID_TYPE);
-	printf(" drive %d: <%s, %s, %s> %s %s",
+	aprint_normal(" drive %d: <%s, %s, %s> %s %s",
 	    sa->sa_periph->periph_target, inqbuf->vendor,
 	    inqbuf->product, inqbuf->revision, dtype,
 	    inqbuf->removable ? "removable" : "fixed");

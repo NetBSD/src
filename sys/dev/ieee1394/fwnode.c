@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.18 2002/11/22 16:20:17 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.19 2003/01/01 00:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.18 2002/11/22 16:20:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.19 2003/01/01 00:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -289,7 +289,7 @@ static int
 fwnode_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		printf("Unknown device at %s", pnp);
+		aprint_normal("Unknown device at %s", pnp);
 	
 	return UNCONF;
 }

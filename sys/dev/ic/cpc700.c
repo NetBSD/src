@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.4 2002/09/27 03:18:11 thorpej Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.5 2003/01/01 00:10:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -99,11 +99,11 @@ cpc_print(void *aux, const char *pnp)
 	struct cpcbus_attach_args *caa = aux;
 
 	if (pnp)
-		printf("%s at %s", caa->cpca_name, pnp);
+		aprint_normal("%s at %s", caa->cpca_name, pnp);
 
-	printf(" addr 0x%08x", caa->cpca_addr);
+	aprint_normal(" addr 0x%08x", caa->cpca_addr);
 	if (caa->cpca_irq != CPCBUSCF_IRQ_DEFAULT)
-		printf(" irq %d", caa->cpca_irq);
+		aprint_normal(" irq %d", caa->cpca_irq);
 
 	return (UNCONF);
 }
@@ -114,7 +114,7 @@ cpcpci_print(void *aux, const char *pnp)
 	union attach_args *aa = aux;
 
 	if (pnp)
-		printf("%s at %s", aa->busname, pnp);
+		aprint_normal("%s at %s", aa->busname, pnp);
 
 	return (UNCONF);
 }

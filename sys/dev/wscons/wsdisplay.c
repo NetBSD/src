@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.70 2002/10/23 09:14:06 jdolecek Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.71 2003/01/01 00:10:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.70 2002/10/23 09:14:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.71 2003/01/01 00:10:27 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -514,9 +514,9 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 #endif
 
 	if (pnp)
-		printf("wsdisplay at %s", pnp);
+		aprint_normal("wsdisplay at %s", pnp);
 #if 0 /* don't bother; it's ugly */
-	printf(" console %d", ap->console);
+	aprint_normal(" console %d", ap->console);
 #endif
 
 	return (UNCONF);
@@ -553,7 +553,7 @@ wsdisplaydevprint(void *aux, const char *pnp)
 #endif
 
 	if (pnp)
-		printf("wsdisplay at %s", pnp);
+		aprint_normal("wsdisplay at %s", pnp);
 
 	return (UNCONF);
 }

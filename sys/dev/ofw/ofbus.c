@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.16 2002/10/02 16:34:32 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.17 2003/01/01 00:10:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.16 2002/10/02 16:34:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.17 2003/01/01 00:10:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ ofbus_print(aux, pnp)
 	struct ofbus_attach_args *oba = aux;
 
 	if (pnp)
-		printf("%s at %s", oba->oba_ofname, pnp);
+		aprint_normal("%s at %s", oba->oba_ofname, pnp);
 	else
-		printf(" (%s)", oba->oba_ofname);
+		aprint_normal(" (%s)", oba->oba_ofname);
 	return UNCONF;
 }
 

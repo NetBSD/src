@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.63 2002/09/27 03:18:18 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.64 2003/01/01 00:10:24 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.63 2002/09/27 03:18:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.64 2003/01/01 00:10:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -301,7 +301,7 @@ ubaprint(void *aux, const char *uba)
 {
 	struct uba_attach_args *ua = aux;
 
-	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
+	aprint_normal(" csr %o vec %o ipl %x", ua->ua_iaddr,
 	    ua->ua_cvec & 511, ua->ua_br);
 	return UNCONF;
 }
