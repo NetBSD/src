@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.719 2004/07/23 11:56:59 tron Exp $
+#	$NetBSD: mi,v 1.720 2004/07/24 18:15:01 cube Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -955,6 +955,7 @@
 ./usr/include/netinet/ip_nat.h			comp-c-include
 ./usr/include/netinet/ip_pool.h			comp-c-include
 ./usr/include/netinet/ip_proxy.h		comp-c-include
+./usr/include/netinet/ip_rules.h		comp-obsolete		obsolete
 ./usr/include/netinet/ip_scan.h			comp-c-include
 ./usr/include/netinet/ip_state.h		comp-c-include
 ./usr/include/netinet/ip_sync.h			comp-c-include
