@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.55 2000/06/04 08:50:28 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.55.2.1 2000/10/09 02:41:28 toshii Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -466,11 +466,13 @@ struct omsghdr {
 };
 #endif
 
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 int	__cmsg_alignbytes __P((void));
+__END_DECLS
 
 #ifndef	_KERNEL
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	accept __P((int, struct sockaddr *, socklen_t *));
