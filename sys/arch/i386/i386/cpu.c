@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2002/10/01 12:56:49 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2002/10/02 05:47:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,7 +117,8 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc), cpu_match, cpu_attach, NULL, NULL)
+CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL);
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only

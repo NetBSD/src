@@ -1,4 +1,4 @@
-/* $NetBSD: vesa_text.c,v 1.3 2002/10/01 12:56:37 fvdl Exp $ */
+/* $NetBSD: vesa_text.c,v 1.4 2002/10/02 05:47:11 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,8 +20,8 @@ struct vesatextsc {
 	int sc_nmodes;
 };
 
-CFATTACH_DECL(vesatext, sizeof(struct vesatextsc), vesatext_match,
-    vesatext_attach, NULL, NULL)
+CFATTACH_DECL(vesatext, sizeof(struct vesatextsc),
+    vesatext_match, vesatext_attach, NULL, NULL);
 
 static int
 vesatext_match(parent, match, aux)

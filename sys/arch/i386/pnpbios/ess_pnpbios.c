@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.8 2002/10/01 12:57:17 fvdl Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.9 2002/10/02 05:47:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.8 2002/10/01 12:57:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.9 2002/10/02 05:47:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.8 2002/10/01 12:57:17 fvdl Exp $")
 int ess_pnpbios_match __P((struct device *, struct cfdata *, void *));
 void ess_pnpbios_attach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(ess_pnpbios, sizeof(struct ess_softc), ess_pnpbios_match,
-    ess_pnpbios_attach, NULL, NULL)
+CFATTACH_DECL(ess_pnpbios, sizeof(struct ess_softc),
+    ess_pnpbios_match, ess_pnpbios_attach, NULL, NULL);
 
 int
 ess_pnpbios_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.5 2002/10/01 12:57:18 fvdl Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.6 2002/10/02 05:47:17 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.5 2002/10/01 12:57:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.6 2002/10/02 05:47:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ struct lpt_pnpbios_softc {
 int lpt_pnpbios_match __P((struct device *, struct cfdata *, void *));
 void lpt_pnpbios_attach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(lpt_pnpbios, sizeof(struct lpt_pnpbios_softc), lpt_pnpbios_match,
-    lpt_pnpbios_attach, NULL, NULL)
+CFATTACH_DECL(lpt_pnpbios, sizeof(struct lpt_pnpbios_softc),
+    lpt_pnpbios_match, lpt_pnpbios_attach, NULL, NULL);
 
 int
 lpt_pnpbios_match(parent, match, aux)

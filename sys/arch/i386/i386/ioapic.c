@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.2 2002/10/01 12:56:52 fvdl Exp $ */
+/* $NetBSD: ioapic.c,v 1.3 2002/10/02 05:47:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -176,8 +176,8 @@ void ioapic_print_redir (struct ioapic_softc *sc, char *why, int pin)
 	apic_format_redir(sc->sc_dev.dv_xname, why, pin, redirhi, redirlo);
 }
 
-CFATTACH_DECL(ioapic, sizeof(struct ioapic_softc), ioapic_match, ioapic_attach,
-    NULL, NULL)
+CFATTACH_DECL(ioapic, sizeof(struct ioapic_softc),
+    ioapic_match, ioapic_attach, NULL, NULL);
 
 int
 ioapic_match(parent, match, aux)
