@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.1 2004/05/24 23:48:36 tsarna Exp $	*/
+/*	$NetBSD: uep.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,8 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  eGalax USB touchpanel controller driver.
+ *
+ *  For Programming Documentation, see:
+ *
+ *  http://www.egalax.com/SoftwareProgrammingGuide_1.1.pdf
+ */
+ 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.1 2004/05/24 23:48:36 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.1 2004/05/24 23:48:36 tsarna Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+#include <dev/wscons/tpcalibvar.h>
+
+#define UIDSTR	"eGalax USB SN000000"
 
 struct uep_softc {
 	USBBASEDEVICE sc_dev;
@@ -68,9 +79,15 @@ struct uep_softc {
 	int			sc_isize;
 
 	device_ptr_t		sc_wsmousedev;	/* wsmouse device */
+	struct tpcalib_softc	sc_tpcalib;	/* calibration */
 
 	u_char sc_enabled;
 	u_char sc_dying;
+};
+
+static struct wsmouse_calibcoords default_calib = {
+	0, 0, 2047, 2047,
+	WSMOUSE_CALIBCOORDS_RESET,
 };
 
 Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -193,6 +210,10 @@ USB_ATTACH(uep)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	
+	tpcalib_init(&sc->sc_tpcalib);
+	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+		(caddr_t)&default_calib, 0, 0);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -210,6 +231,9 @@ USB_DETACH(uep)
 
 	sc->sc_dying = 1;
 
+	/* save current calib as defaults */
+	default_calib = sc->sc_tpcalib.sc_saved;
+	
 	if (sc->sc_wsmousedev != NULL) {
 		rv = config_detach(sc->sc_wsmousedev, flags);
 		sc->sc_wsmousedev = NULL;
@@ -298,10 +322,31 @@ uep_disable(void *v)
 Static int
 uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
+	struct uep_softc *sc = v;
+	struct wsmouse_id *id;
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
+		return 0;
+
+	case WSMOUSEIO_GETID:
+		/*
+		 * return unique ID string
+		 * "<vendor> <model> <serial number>"
+		 * unfortunately we have no serial number...
+		 */
+		 id = (struct wsmouse_id *)data;
+		 if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
+		 	return EINVAL;
+		 
+		strcpy(id->data, UIDSTR);
+		id->length = strlen(UIDSTR);
+		return 0;
+
+	case WSMOUSEIO_SCALIBCOORDS:
+	case WSMOUSEIO_GCALIBCOORDS:
+		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 	}
 
 	return EPASSTHROUGH;
@@ -340,13 +385,32 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	}
 
 	if (sc->sc_wsmousedev != NULL) {
+                /*
+                 * Packet format is 5 bytes:
+                 *
+                 * 1000000T
+                 * 0000AAAA
+                 * 0AAAAAAA
+                 * 0000BBBB
+                 * 0BBBBBBB
+                 *
+                 * T: 1=touched 0=not touched 
+                 * A: bits of axis A position, MSB to LSB
+                 * B: bits of axis B position, MSB to LSB
+                 *
+                 * For the unit I have, A = Y and B = X.
+                 * I don't know if units exist with A=X and B=Y,
+                 * if so we'll cross that bridge when we come to it.
+                 *
+                 * The controller sends a stream of T=1 events while the
+                 * panel is touched, followed by a single T=0 event.
+                 * 
+                 */
+
 		x = (p[3] << 7) | p[4];
 		y = (p[1] << 7) | p[2];
-
-#if 0
-		printf("%s: b=%d x=%d y=%d\n", USBDEVNAME(sc->sc_dev),
-			p[0] & 0x01, x, y);
-#endif
+		
+		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 
 		s = spltty();
 		wsmouse_input(sc->sc_wsmousedev, p[0] & 0x01, x, y, 0,

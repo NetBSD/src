@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,9 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $");
 #include <sys/kernel.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/tpcalibvar.h>
-
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
 
 #define TPCALIBDEBUG
 #ifdef TPCALIBDEBUG
@@ -92,8 +89,6 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
 	struct wsmouse_calibcoords *d;
-	struct wsmouse_id *id;
-	char *idstr;
 	int s;
 
 	switch (cmd) {
@@ -136,23 +131,6 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 	case WSMOUSEIO_GCALIBCOORDS:
 		d = (struct wsmouse_calibcoords *)data;
 		*d = sc->sc_saved;
-		break;
-
-	case WSMOUSEIO_GETID:
-		/*
-		 * return unique ID string,
-		 * "<vendor> <model> <serial number>"
-		 */
-		id = (struct wsmouse_id *)data;
-		if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
-			return (EINVAL);
-		idstr = platid_name(&platid);
-		s = strlen(idstr);
-		if (WSMOUSE_ID_MAXLEN - 10 < s)
-			s = WSMOUSE_ID_MAXLEN - 10;
-		memcpy(id->data, idstr, s);
-		strcpy(&id->data[s], " SN000000");
-		id->length = s + 9;
 		break;
 
 	default:
