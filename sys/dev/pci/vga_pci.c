@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.5 2001/09/14 01:10:12 thorpej Exp $ */
+/* $NetBSD: vga_pci.c,v 1.6 2001/09/14 06:46:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciio.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
@@ -49,6 +50,7 @@
 struct vga_pci_softc {
 	struct vga_softc sc_vga;
 
+	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 };
 
@@ -57,6 +59,14 @@ void	vga_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
+};
+
+int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	vga_pci_mmap(void *, off_t, int);
+
+const struct vga_funcs vga_pci_funcs = {
+	vga_pci_ioctl,
+	vga_pci_mmap,
 };
 
 int
@@ -113,6 +123,7 @@ vga_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
+	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
@@ -120,7 +131,7 @@ vga_pci_attach(parent, self, aux)
 	    PCI_REVISION(pa->pa_class));
 
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
-	    NULL);
+	    &vga_pci_funcs);
 }
 
 int
@@ -130,4 +141,30 @@ vga_pci_cnattach(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
+}
+
+int
+vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct vga_config *vc = v;
+	struct vga_pci_softc *psc = (void *) vc->softc;
+
+	switch (cmd) {
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(psc->sc_pc, psc->sc_pcitag,
+		    cmd, data, flag, p));
+
+	default:
+		return (ENOTTY);
+	}
+}
+
+paddr_t
+vga_pci_mmap(void *v, off_t offset, int prot)
+{
+
+	/* XXX Fill me in. */
+	return (-1);
 }
