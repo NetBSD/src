@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmureg.h,v 1.2 1999/12/08 01:51:56 sato Exp $	*/
+/*	$NetBSD: vrpmureg.h,v 1.3 1999/12/13 06:53:01 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -145,9 +145,9 @@
 #define		PMUCNT_GPIO9U		(0<<8)		/* GPIO9 Raise */
 
 
-#define	PMUWAIT_REG_W	0x008	/* PMU Wait Control Register */
+#define	PMUWAIT_REG_W	0x008	/* PMU Wait Control Register (>= vr4111) */
 #define		PMUWAIT_DEFAULT		0x2c00		/* 343.75ms */
 
-#define	PMUDIV_REG_W	0x00C	/* PMU Div Mode Register (vr4121) */ 
+#define	PMUDIV_REG_W	0x00C	/* PMU Div Mode Register (>= vr4121) */ 
 
 /* END vrpmureg.h */
