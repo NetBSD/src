@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.22 1997/10/16 16:49:32 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -292,14 +292,14 @@ oss_ioctl_audio(p, uap, retval)
 		if (error)
 			return error;
 		if (idat == 0)
-			idat = tmpinfo.buffersize / tmpinfo.blocksize;
-		idat = (tmpinfo.buffersize / idat) & -4;
+			idat = tmpinfo.play.buffer_size / tmpinfo.blocksize;
+		idat = (tmpinfo.play.buffer_size / idat) & -4;
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.blocksize = idat;
 		error = ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			return error;
-		idat = tmpinfo.buffersize / tmpinfo.blocksize;
+		idat = tmpinfo.play.buffer_size / tmpinfo.blocksize;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
@@ -392,8 +392,8 @@ oss_ioctl_audio(p, uap, retval)
 		setblocksize(fp, &tmpinfo, p);
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.buffersize / bufinfo.fragsize;
-		bufinfo.bytes = tmpinfo.buffersize;
+		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
+		bufinfo.bytes = tmpinfo.play.buffer_size;
 		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETxSPACE = %d %d %d %d\n",
 			 bufinfo.fragsize, bufinfo.fragments, 
 			 bufinfo.fragstotal, bufinfo.bytes));

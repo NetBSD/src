@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.75 1997/10/16 23:34:57 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.76 1997/10/19 07:42:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -199,8 +199,8 @@ sb_printsc(sc)
 	printf("irate %d itc %x orate %d otc %x\n",
 	    sc->sc_i.rate, sc->sc_i.tc,
 	    sc->sc_o.rate, sc->sc_o.tc);
-	printf("outport %u inport %u spkron %u nintr %lu\n",
-	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
+	printf("spkron %u nintr %lu\n",
+	    sc->spkr_state, sc->sc_interrupts);
 	printf("intr8 %p arg8 %p\n",
 	    sc->sc_intr8, sc->sc_arg16);
 	printf("intr16 %p arg16 %p\n",
@@ -348,8 +348,7 @@ sbdsp_attach(sc)
 	rparams = audio_default;
         sbdsp_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
-	sbdsp_set_in_port(sc, SB_MIC_VOL);
-	sbdsp_set_out_port(sc, SB_MASTER_VOL);
+	sbdsp_set_in_ports(sc, 1 << SB_MIC_VOL);
 
 	if (sc->sc_mixer_model != SBM_NONE) {
         	/* Reset the mixer.*/
@@ -735,43 +734,12 @@ sbdsp_get_ifilter(addr)
 }
 
 int
-sbdsp_set_out_port(addr, port)
-	void *addr;
-	int port;
-{
-	struct sbdsp_softc *sc = addr;
-	
-	sc->out_port = port; /* Just record it */
-
-	return 0;
-}
-
-int
-sbdsp_get_out_port(addr)
-	void *addr;
-{
-	struct sbdsp_softc *sc = addr;
-
-	return sc->out_port;
-}
-
-
-int
-sbdsp_set_in_port(addr, port)
-	void *addr;
-	int port;
-{
-	return sbdsp_set_in_ports(addr, 1 << port);
-}
-
-int
 sbdsp_set_in_ports(sc, mask)
 	struct sbdsp_softc *sc;
 	int mask;
 {
 	int bitsl, bitsr;
 	int sbport;
-	int i;
 
 	DPRINTF(("sbdsp_set_in_ports: model=%d, mask=%x\n",
 		 sc->sc_mixer_model, mask));
@@ -820,28 +788,8 @@ sbdsp_set_in_ports(sc, mask)
 
 	sc->in_mask = mask;
 
-	/* XXX 
-	 * We have to fake a single port since the upper layer
-	 * expects one.
-	 */
-	for(i = 0; i < SB_NPORT; i++) {
-		if (mask & (1 << i)) {
-			sc->in_port = i;
-			break;
-		}
-	}
 	return 0;
 }
-
-int
-sbdsp_get_in_port(addr)
-	void *addr;
-{
-	struct sbdsp_softc *sc = addr;
-
-	return sc->in_port;
-}
-
 
 int
 sbdsp_speaker_ctl(addr, newstate)
@@ -1133,8 +1081,7 @@ sbversion(sc)
 }
 
 /*
- * Halt a DMA in progress.  A low-speed transfer can be
- * resumed with sbdsp_contdma().
+ * Halt a DMA in progress.
  */
 int
 sbdsp_haltdma(addr)
@@ -1145,19 +1092,6 @@ sbdsp_haltdma(addr)
 	DPRINTF(("sbdsp_haltdma: sc=%p\n", sc));
 
 	sbdsp_reset(sc);
-	return 0;
-}
-
-int
-sbdsp_contdma(addr)
-	void *addr;
-{
-	struct sbdsp_softc *sc = addr;
-
-	DPRINTF(("sbdsp_contdma: sc=%p\n", sc));
-
-	/* XXX how do we reinitialize the DMA controller state?  do we care? */
-	(void)sbdsp_wdsp(sc, SB_DSP_CONT);
 	return 0;
 }
 
@@ -1854,7 +1788,8 @@ sbdsp_mixer_set_port(addr, cp)
 		} else {
 			if (cp->type != AUDIO_MIXER_ENUM)
 				return EINVAL;
-			return sbdsp_set_in_port(sc, cp->un.ord);
+			sc->in_port = cp->un.ord;
+			return sbdsp_set_in_ports(sc, 1 << cp->un.ord);
 		}
 		break;
 

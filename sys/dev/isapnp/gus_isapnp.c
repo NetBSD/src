@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.2 1997/10/09 07:50:22 jtc Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.3 1997/10/19 07:42:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,11 +84,6 @@ static struct audio_hw_if guspnp_hw_if = {
 	
 	iw_round_blocksize,
 	
-	iw_set_out_port,
-	iw_get_out_port,
-	iw_set_in_port,
-	iw_get_in_port,
-	
 	iw_commit_settings,
 	
 	iw_init_output,
@@ -97,8 +92,6 @@ static struct audio_hw_if guspnp_hw_if = {
 	iw_start_input,
 	iw_halt_output,
 	iw_halt_input,
-	iw_cont_output,
-	iw_cont_input,
 	
 	iw_speaker_ctl,
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.16 1997/08/19 23:49:58 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.17 1997/10/19 07:42:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -70,6 +70,19 @@ struct audio_ringbuffer {
 	char	mmapped;	/* device is mmap()-ed */
 };
 
+#define AUDIO_N_PORTS 4
+
+struct au_mixer_ports {
+	int	index;
+	int	master;
+	int	nports;
+	u_char	isenum;
+	u_int	allports;
+	u_int	aumask[AUDIO_N_PORTS];
+	u_int	misel [AUDIO_N_PORTS];
+	u_int	miport[AUDIO_N_PORTS];
+};
+
 /*
  * Software state, per audio device.
  */
@@ -115,6 +128,9 @@ struct audio_softc {
 	u_long	sc_playdrop;
 
 	int	sc_full_duplex;	/* device in full duplex mode */
+
+	struct	au_mixer_ports sc_inports, sc_outports;
+	int	sc_monitor_port;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a xmit interrupt */
