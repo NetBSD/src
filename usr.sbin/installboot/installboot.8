@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.28 2003/04/20 00:38:31 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.29 2003/08/16 18:42:53 martin Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -426,6 +426,18 @@ Remove the primary bootstrap from disk
 .Sq sd1 :
 .Dl Ic installboot -c /dev/rsd1c
 .
+.Ss NetBSD/i386
+Create a bootable floppy disk with UFS file system for a small custom
+kernel (note: bigger kernels needing multiple disks are handled with
+the ustarfs file system):
+.Dl Ic newfs -s 1440k /dev/rfd0a
+Ignore the warnings this spews (it can not write a disklabel, which is no
+problem for a floppy disk)
+.Dl Ic mount /dev/fd0a /mnt
+.Dl Ic cp /usr/mdec/biosboot /mnt/boot
+.Dl Ic gzip -9 < sys/arch/i386/compile/mykernel/netbsd > /mnt/netbsd.gz
+.Dl Ic umount /mnt
+.Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ufs
 .Ss NetBSD/pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
