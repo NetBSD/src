@@ -1,5 +1,5 @@
-/*	$NetBSD: keydb.c,v 1.13 2003/08/22 06:22:26 itojun Exp $	*/
-/*	$KAME: keydb.c,v 1.75 2003/07/01 01:20:18 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.14 2003/09/07 15:59:39 itojun Exp $	*/
+/*	$KAME: keydb.c,v 1.81 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.13 2003/08/22 06:22:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.14 2003/09/07 15:59:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -52,13 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.13 2003/08/22 06:22:26 itojun Exp $");
 
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
+#include <netkey/key.h>
 #include <netinet6/ipsec.h>
 
 #include <net/net_osdep.h>
-
-extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
-
-static void keydb_delsecasvar __P((struct secasvar *));
 
 MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 
@@ -163,48 +160,45 @@ keydb_delsecashead(p)
 struct secasvar *
 keydb_newsecasvar()
 {
-	struct secasvar *p;
+	struct secasvar *p, *q;
+	static u_int32_t said = 0;
 
 	p = (struct secasvar *)malloc(sizeof(*p), M_SECA, M_NOWAIT);
 	if (!p)
 		return p;
+
+again:
+	said++;
+	if (said == 0)
+		said++;
+	TAILQ_FOREACH(q, &satailq, tailq) {
+		if (q->id == said)
+			goto again;
+		if (TAILQ_NEXT(q, tailq)) {
+			if (q->id < said && said < TAILQ_NEXT(q, tailq)->id)
+				break;
+			if (q->id + 1 < TAILQ_NEXT(q, tailq)->id) {
+				said = q->id + 1;
+				break;
+			}
+		}
+	}
+
 	bzero(p, sizeof(*p));
-	p->refcnt = 1;
+	p->id = said;
+	if (q)
+		TAILQ_INSERT_AFTER(&satailq, q, p, tailq);
+	else
+		TAILQ_INSERT_TAIL(&satailq, p, tailq);
 	return p;
 }
 
 void
-keydb_refsecasvar(p)
-	struct secasvar *p;
-{
-	int s;
-
-	s = splsoftnet();
-	p->refcnt++;
-	splx(s);
-}
-
-void
-keydb_freesecasvar(p)
-	struct secasvar *p;
-{
-	int s;
-
-	s = splsoftnet();
-	p->refcnt--;
-	/* negative refcnt will cause panic intentionally */
-	if (p->refcnt <= 0)
-		keydb_delsecasvar(p);
-	splx(s);
-}
-
-static void
 keydb_delsecasvar(p)
 	struct secasvar *p;
 {
 
-	if (p->refcnt)
-		panic("keydb_delsecasvar called with refcnt != 0");
+	TAILQ_REMOVE(&satailq, p, tailq);
 
 	free(p, M_SECA);
 }
