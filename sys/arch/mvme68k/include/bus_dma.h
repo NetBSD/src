@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.7 2001/03/07 22:42:19 thorpej Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.8 2001/05/16 19:06:46 scw Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -123,7 +123,7 @@ struct mvme68k_bus_dma_segment {
 
 	/* PRIVATE */
 	bus_addr_t	_ds_cpuaddr;	/* CPU-relative phys addr of segment */
-	int		_ds_padding;
+	int		_ds_flags;
 };
 typedef struct mvme68k_bus_dma_segment	bus_dma_segment_t;
 
