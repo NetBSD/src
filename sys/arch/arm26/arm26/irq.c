@@ -1,7 +1,7 @@
-/* $NetBSD: irq.c,v 1.8 2001/01/07 15:56:01 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.9 2001/01/07 17:01:54 bjh21 Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.8 2001/01/07 15:56:01 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.9 2001/01/07 17:01:54 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -52,9 +52,13 @@ __RCSID("$NetBSD: irq.c,v 1.8 2001/01/07 15:56:01 bjh21 Exp $");
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
 
+#include "opt_ddb.h"
 #include "ioeb.h"
 #include "unixbp.h"
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
 #if NIOEB > 0
 #include <arch/arm26/ioc/ioebvar.h>
 #endif
@@ -91,7 +95,7 @@ struct irq_handler {
 	int	irqnum;
 	int	ipl;
 	int	enabled;
-	char	const *name;
+	struct	evcnt ev;
 };
 
 volatile static int current_spl = IPL_HIGH;
@@ -160,6 +164,7 @@ irq_handler(struct irqframe *irqf)
 				result = (h->func)(h->arg);
 			if (result == IRQ_HANDLED) {
 				stray = 0;
+				h->ev.ev_count++;
 				break; /* XXX handle others? */
 			}
 			if (result == IRQ_MAYBE_HANDLED)
@@ -200,7 +205,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
-	new->name = name;
+	evcnt_attach_dynamic(&new->ev, EVCNT_TYPE_INTR, NULL, "irq", name);
 	new->enabled = 1;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)
@@ -319,3 +324,24 @@ hardsplx(int s)
 	current_spl = s;
 	return was; /* Restore interrupt state */
 }
+
+#ifdef DDB
+void
+irq_stat(void (*pr)(const char *, ...))
+{
+	struct irq_handler *h;
+	int i;
+	u_int32_t last;
+
+	for (h = irq_list_head.lh_first; h != NULL; h = h->link.le_next)
+		(*pr)("%12s: ipl %2d, IRQ %2d, mask 0x%05x, count %llu\n",
+		    h->ev.ev_name, h->ipl, h->irqnum, h->mask, h->ev.ev_count);
+	(*pr)("\n");
+	last = -1;
+	for (i = 0; i < NIPL; i++)
+		if (irqmask[i] != last) { 
+			(*pr)("ipl %2d: mask 0x%05x\n", i, irqmask[i]);
+			last = irqmask[i];
+		}
+}
+#endif
