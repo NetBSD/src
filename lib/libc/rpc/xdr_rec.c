@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.18.4.1 2003/01/06 04:46:06 jmc Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.18.4.2 2003/01/28 05:54:28 jmc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.18.4.1 2003/01/06 04:46:06 jmc Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.18.4.2 2003/01/28 05:54:28 jmc Exp $");
 #endif
 #endif
 
@@ -621,6 +621,7 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 			rstrm->fbtbc = rstrm->in_reclen;
 			rstrm->in_boundry = rstrm->in_base + rstrm->in_reclen;
 			rstrm->in_finger = rstrm->in_base;
+			rstrm->in_reclen = rstrm->in_received = 0;
 			*statp = XPRT_MOREREQS;
 			return TRUE;
 		}
@@ -699,7 +700,7 @@ get_input_bytes(rstrm, addr, len)
 	size_t current;
 
 	if (rstrm->nonblock) {
-		if (len > rstrm->in_reclen)
+		if (len > (int)(rstrm->in_boundry - rstrm->in_finger))
 			return FALSE;
 		memcpy(addr, rstrm->in_finger, (size_t)len);
 		rstrm->in_finger += len;
