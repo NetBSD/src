@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.83 1998/03/04 09:13:48 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.84 1998/04/26 18:58:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1984,17 +1984,7 @@ void
 vfs_shutdown()
 {
 	register struct buf *bp;
-	int iter, nbusy, unmountem;
-
-	/*
-	 * If we've panic'd, don't make the situation potentially
-	 * worse by unmounting the file systems; just attempt to
-	 * sync.
-	 */
-	if (panicstr != NULL)
-		unmountem = 0;
-	else
-		unmountem = 1;
+	int iter, nbusy;
 
 	printf("syncing disks... ");
 
@@ -2016,21 +2006,26 @@ vfs_shutdown()
 	}
 	if (nbusy) {
 		printf("giving up\n");
-		unmountem = 0;
+		return;
 	} else
 		printf("done\n");
 
-	if (unmountem) {
-		/* Release inodes held by texts before update. */
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by unmounting the file systems.
+	 */
+	if (panicstr != NULL)
+		return;
+
+	/* Release inodes held by texts before update. */
 #if !defined(UVM)
-		vnode_pager_umount(NULL);
+	vnode_pager_umount(NULL);
 #endif
 #ifdef notdef
-		vnshutdown();
+	vnshutdown();
 #endif
-		/* Unmount file systems. */
-		vfs_unmountall();
-	}
+	/* Unmount file systems. */
+	vfs_unmountall();
 }
 
 /*
