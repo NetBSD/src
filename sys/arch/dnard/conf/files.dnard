@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.18 2001/12/11 06:00:16 briggs Exp $
+#	$NetBSD: files.dnard,v 1.19 2002/01/13 20:20:12 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -100,9 +100,9 @@ file	arch/arm/arm32/spl.S
 # Shark specific files
 file	arch/dnard/dnard/autoconf.c
 file	arch/dnard/dnard/conf.c
+file	arch/dnard/dnard/dnard_fiq.S
 file	arch/dnard/dnard/dnard_machdep.c
 file	arch/dnard/dnard/sequoia.c
-file	arch/dnard/dnard/fiq.S
 file	arch/dnard/dnard/hat.c
 file	arch/dnard/dnard/db_ofw_machdep.c	ddb
 file	arch/arm32/isa/isa_irqhandler.c
