@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.10 1998/02/12 01:57:30 lukem Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.11 1998/02/13 05:52:15 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.10 1998/02/12 01:57:30 lukem Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.11 1998/02/13 05:52:15 lukem Exp $");
 #endif
 #endif
 
@@ -43,11 +43,15 @@ __RCSID("$NetBSD: clnt_generic.c,v 1.10 1998/02/12 01:57:30 lukem Exp $");
  * Copyright (C) 1987, Sun Microsystems, Inc.
  */
 #include "namespace.h"
-#include <string.h>
-#include <rpc/rpc.h>
+
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
+
+#include <errno.h>
 #include <netdb.h>
+#include <string.h>
+
+#include <rpc/rpc.h>
 
 #ifdef __weak_alias
 __weak_alias(clnt_create,_clnt_create);
@@ -89,7 +93,7 @@ clnt_create(hostname, prog, vers, proto)
 	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = h->h_addrtype;
 	sin.sin_port = 0;
-	bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);
+	memmove((char*)&sin.sin_addr, h->h_addr, h->h_length);
 	p = getprotobyname(proto);
 	if (p == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;

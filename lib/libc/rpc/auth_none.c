@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.8 1998/02/12 01:57:27 lukem Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.9 1998/02/13 05:52:11 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.8 1998/02/12 01:57:27 lukem Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.9 1998/02/13 05:52:11 lukem Exp $");
 #endif
 #endif
 
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: auth_none.c,v 1.8 1998/02/12 01:57:27 lukem Exp $");
  */
 
 #include "namespace.h"
+
 #include <stdlib.h>
+
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
@@ -86,9 +88,9 @@ static struct authnone_private {
 AUTH *
 authnone_create()
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
-	register XDR *xdrs;
+	XDR *xdrs;
 
 	if (ap == 0) {
 		ap = (struct authnone_private *)calloc(1, sizeof (*ap));
@@ -116,7 +118,7 @@ authnone_marshal(client, xdrs)
 	AUTH *client;
 	XDR *xdrs;
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 
 	if (ap == 0)
 		return (0);

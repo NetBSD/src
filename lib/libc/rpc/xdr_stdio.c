@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.8 1998/02/12 01:57:56 lukem Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.9 1998/02/13 05:52:45 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.8 1998/02/12 01:57:56 lukem Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.9 1998/02/13 05:52:45 lukem Exp $");
 #endif
 #endif
 
@@ -50,8 +50,10 @@ __RCSID("$NetBSD: xdr_stdio.c,v 1.8 1998/02/12 01:57:56 lukem Exp $");
  */
 
 #include "namespace.h"
-#include <rpc/types.h>
+
 #include <stdio.h>
+
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 
 #ifdef __weak_alias
@@ -88,7 +90,7 @@ static struct xdr_ops	xdrstdio_ops = {
  */
 void
 xdrstdio_create(xdrs, file, op)
-	register XDR *xdrs;
+	XDR *xdrs;
 	FILE *file;
 	enum xdr_op op;
 {
@@ -106,7 +108,7 @@ xdrstdio_create(xdrs, file, op)
  */
 static void
 xdrstdio_destroy(xdrs)
-	register XDR *xdrs;
+	XDR *xdrs;
 {
 	(void)fflush((FILE *)xdrs->x_private);
 	/* xx should we close the file ?? */
@@ -115,7 +117,7 @@ xdrstdio_destroy(xdrs)
 static bool_t
 xdrstdio_getlong(xdrs, lp)
 	XDR *xdrs;
-	register long *lp;
+	long *lp;
 {
 
 	if (fread((caddr_t)lp, sizeof(int32_t), 1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.13 1998/02/12 01:57:41 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.14 1998/02/13 05:52:28 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.13 1998/02/12 01:57:41 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.14 1998/02/13 05:52:28 lukem Exp $");
 #endif
 #endif
 
@@ -48,21 +48,26 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.13 1998/02/12 01:57:41 lukem Exp $");
  */
 
 #include "namespace.h"
+
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/poll.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_rmt.h>
-#include <sys/socket.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
 
 #ifdef __weak_alias
 __weak_alias(clnt_broadcast,_clnt_broadcast);
@@ -94,7 +99,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	u_long *port_ptr;
 {
 	int socket = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	enum clnt_stat stat;
@@ -128,8 +133,8 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
  */
 bool_t
 xdr_rmtcall_args(xdrs, cap)
-	register XDR *xdrs;
-	register struct rmtcallargs *cap;
+	XDR *xdrs;
+	struct rmtcallargs *cap;
 {
 	u_int lenposition, argposition, position;
 
@@ -159,8 +164,8 @@ xdr_rmtcall_args(xdrs, cap)
  */
 bool_t
 xdr_rmtcallres(xdrs, crp)
-	register XDR *xdrs;
-	register struct rmtcallres *crp;
+	XDR *xdrs;
+	struct rmtcallres *crp;
 {
 	caddr_t port_ptr;
 
@@ -195,7 +200,7 @@ getbroadcastnets(addrs, sock, buf)
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;
         if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-                perror("broadcast: ioctl (get interface configuration)");
+                warnx("getbroadcastnets: ioctl (get interface configuration)");
                 return (0);
         }
 #define max(a, b) (a > b ? a : b)
@@ -208,7 +213,7 @@ getbroadcastnets(addrs, sock, buf)
 			continue;
 		ifreq = *ifr;
                 if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-                        perror("broadcast: ioctl (get interface flags)");
+                        warnx("getbroadcastnets: ioctl (get interface flags)");
                         continue;
                 }
                 if ((ifreq.ifr_flags & IFF_BROADCAST) &&
@@ -248,14 +253,14 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	enum clnt_stat stat;
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
-	register XDR *xdrs = &xdr_stream;
+	XDR *xdrs = &xdr_stream;
 	int outlen, inlen, fromlen, nets;
-	register int sock;
+	int sock;
 	int on = 1;
 	struct pollfd fd;
-	register int i;
+	int i;
 	bool_t done = FALSE;
-	register u_long xid;
+	u_long xid;
 	u_long port;
 	struct in_addr addrs[20];
 	struct sockaddr_in baddr, raddr; /* broadcast and response addresses */
@@ -271,13 +276,13 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	 * preserialize the arguments into a send buffer.
 	 */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		perror("Cannot create socket for broadcast rpc");
+		warnx("Cannot create socket for broadcast rpc");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
 #ifdef SO_BROADCAST
 	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0) {
-		perror("Cannot set socket option SO_BROADCAST");
+		warnx("Cannot set socket option SO_BROADCAST");
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
@@ -326,7 +331,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			if (sendto(sock, outbuf, outlen, 0,
 				(struct sockaddr *)&baddr,
 				sizeof (struct sockaddr)) != outlen) {
-				perror("Cannot send broadcast packet");
+				warnx("Cannot send broadcast packet");
 				stat = RPC_CANTSEND;
 				goto done_broad;
 			}
@@ -349,7 +354,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		case -1:  /* some kind of error */
 			if (errno == EINTR)
 				goto recv_again;
-			perror("Broadcast poll problem");
+			warnx("Broadcast poll problem");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 
@@ -361,7 +366,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		if (inlen < 0) {
 			if (errno == EINTR)
 				goto try_again;
-			perror("Cannot receive reply to broadcast");
+			warnx("Cannot receive reply to broadcast");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}

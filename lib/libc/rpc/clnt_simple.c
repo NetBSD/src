@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.11 1998/02/12 01:57:32 lukem Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.12 1998/02/13 05:52:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.11 1998/02/12 01:57:32 lukem Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.12 1998/02/13 05:52:18 lukem Exp $");
 #endif
 #endif
 
@@ -47,13 +47,17 @@ __RCSID("$NetBSD: clnt_simple.c,v 1.11 1998/02/12 01:57:32 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
 #ifdef __weak_alias
 __weak_alias(callrpc,_callrpc);
@@ -73,7 +77,7 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	xdrproc_t inproc, outproc;
 	char *in, *out;
 {
-	register struct callrpc_private *crp = callrpc_private;
+	struct callrpc_private *crp = callrpc_private;
 	struct sockaddr_in server_addr;
 	enum clnt_stat clnt_stat;
 	struct hostent *hp;
@@ -106,7 +110,8 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		timeout.tv_usec = 0;
 		timeout.tv_sec = 5;
 		memset(&server_addr, 0, sizeof(server_addr));
-		bcopy(hp->h_addr, (char *)&server_addr.sin_addr, hp->h_length);
+		memmove((char *)&server_addr.sin_addr, hp->h_addr,
+		    hp->h_length);
 		server_addr.sin_len = sizeof(struct sockaddr_in);
 		server_addr.sin_family = AF_INET;
 		server_addr.sin_port =  0;
