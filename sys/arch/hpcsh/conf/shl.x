@@ -2,11 +2,11 @@ OUTPUT_FORMAT("coff-shl")
 OUTPUT_ARCH(sh)
 MEMORY
 {
-  ram : o = 0x8C010000, l = 16M
+  ram : o = 0x8C001000, l = 16M
 }
 SECTIONS
 {
-  ROM = 0x80010000;
+  ROM = 0x80001000;
 
   .text :
   AT (ROM)
