@@ -1,4 +1,4 @@
-/*	$Id: sysdep.h,v 1.1 1994/01/28 12:38:26 pk Exp $ */
+/*	$Id: sysdep.h,v 1.2 1994/02/23 04:48:33 chopps Exp $ */
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
@@ -17,15 +17,16 @@
 #define SEEK_SET 0
 #define SEEK_CUR 1
 
-#define	NO_CORE_COMMAND			/* Core files don't have command name */
-
-
 #define	HOST_PAGE_SIZE		NBPG
 #define	HOST_SEGMENT_SIZE	NBPG	/* Data seg start addr rounds to NBPG */
 #define	HOST_MACHINE_ARCH	bfd_arch_m68k
 /* #define	HOST_MACHINE_MACHINE	 */
 
 #define	HOST_TEXT_START_ADDR		0
-#define	HOST_STACK_END_ADDR		0xfff00000
+#define	HOST_STACK_END_ADDR		USRSTACK
 
 #include "fopen-same.h"
+
+#define TRAD_UNIX_CORE_FILE_FAILING_SIGNAL(core_bfd) \
+  ((core_bfd)->tdata.trad_core_data->u.u_sig)
+#define u_comm u_kproc.kp_proc.p_comm
