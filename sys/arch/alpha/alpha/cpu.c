@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.51 2000/06/12 23:35:11 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.52 2000/06/29 09:02:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2000/06/12 23:35:11 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2000/06/29 09:02:53 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2000/06/12 23:35:11 sommerfeld Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/autoconf.h>
