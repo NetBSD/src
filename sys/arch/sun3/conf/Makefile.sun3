@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.45 1996/06/18 16:18:34 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.46 1996/06/20 03:47:27 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -35,29 +35,26 @@ SUN3=	../..
 
 # Override CPP defaults entirely, so cross-compilation works.
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-DEFINES=	-undef -D__NetBSD__ -D_KERNEL -Dmc68020 -Dsun3
-CPPFLAGS=	${INCLUDES} ${DEFINES} ${IDENT}
+XDEFS= 		-undef -D__NetBSD__ -Dm68k -Dmc68000
+DEFINES=	-D_KERNEL -Dmc68020 -Dsun3
+CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT}
 # Make it easy to override this on the command line...
 WFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS= 	${DEBUG} -O2 -msoft-float ${WFLAGS}
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 
-# What to use for libkern:
-.include "$S/lib/libkern/Makefile.inc"
+# What to use for libkern: (see ../compile/libkern)
+# Note, this can be shared by all kernel configs.
 .ifndef PROF
-LIBKERN=	${KERNLIB}
+LIBKERN=	../libkern/libkern.o
 .else
-LIBKERN=	${KERNLIB_PROF}
+LIBKERN=	../libkern/libkern.po
 .endif
 
 # What to use for libcompat:
-.include "$S/compat/common/Makefile.inc"
-.ifndef PROF
-LIBCOMPAT=	${COMPATLIB}
-.else
-LIBCOMPAT=	${COMPATLIB_PROF}
-.endif
+# Would like to share this too, but it's config dependent.
+LIBCOMPAT=	libcompat.a
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
@@ -83,6 +80,8 @@ NORMAL_S_C=	${CPP} ${APPFLAGS} ${PARAM} $< > $*.s ;\
 
 %SFILES
 
+# OBJS, CFILES, SFILES done.
+
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
@@ -106,7 +105,19 @@ SYSTEM_LD_TAIL+=; \
 LINKFLAGS+=	-S
 .endif
 
+# LOAD+
+
 %LOAD
+
+# LOAD-
+
+.include "../libcompat/Makefile.inc"
+
+${LIBKERN} : .NOTMAIN .FORCE
+	@echo "making sure libkern is up-to-date..."
+	@(cd ../libkern ; ${MAKE})
+
+.FORCE:
 
 assym.h: genassym
 	./genassym >assym.h
@@ -157,9 +168,10 @@ SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend:: .depend
-.depend: ${SRCS} assym.h param.c
+.depend: ${SRCS} assym.h param.c ${COMPAT_DEPENDS}
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
+	${MKDEP} -a ${CPPFLAGS} ${COMPAT_DEPENDS}
 
 # XXX - see below
 #	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
