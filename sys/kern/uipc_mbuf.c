@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_mbuf.c	7.19 (Berkeley) 4/20/91
- *	$Id: uipc_mbuf.c,v 1.7 1994/01/08 05:32:20 mycroft Exp $
+ *	$Id: uipc_mbuf.c,v 1.8 1994/04/14 21:34:17 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -380,6 +380,7 @@ m_cat(m, n)
 
 m_adj(mp, req_len)
 	struct mbuf *mp;
+	int req_len;
 {
 	register int len = req_len;
 	register struct mbuf *m;
@@ -423,8 +424,8 @@ m_adj(mp, req_len)
 		}
 		if (m->m_len >= len) {
 			m->m_len -= len;
-			if ((mp = m)->m_flags & M_PKTHDR)
-				m->m_pkthdr.len -= len;
+			if (mp->m_flags & M_PKTHDR)
+				mp->m_pkthdr.len -= len;
 			return;
 		}
 		count -= len;
