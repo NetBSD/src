@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.30 1999/05/23 22:37:03 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.31 1999/05/24 20:11:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -288,6 +288,32 @@ pmap_l3pte(pmap, v, l2pte)
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
 	return (&lev3map[l3pte_index(v)]);
 }
+
+/*
+ * Macros for locking pmap structures.
+ *
+ * Note that the kernel pmap can be accessed from interrupt context,
+ * so when we have the kernel pmap lock asserted, we must block any
+ * interrupts that can cause memory allocation, otherwise we can deadlock
+ * if an interrupt occurs and causes us to recurse into the pmap and
+ * attempt to try to assert the lock while it is already held.
+ *
+ * No other pmap can be accessed from interrupt context, so we do not
+ * need to block interrupts in any other case.
+ */
+#define	PMAP_LOCK(pmap, s)						\
+do {									\
+	if ((pmap) == pmap_kernel())					\
+		(s) = splimp();						\
+	simple_lock(&(pmap)->pm_slock);					\
+} while (0)
+
+#define	PMAP_UNLOCK(pmap, s)						\
+do {									\
+	simple_unlock(&(pmap)->pm_slock);				\
+	if ((pmap) == pmap_kernel())					\
+		splx((s));						\
+} while (0)
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.99 1999/05/24 01:35:54 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.100 1999/05/24 20:11:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 1999/05/24 01:35:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 1999/05/24 20:11:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,10 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	* pm_slock (per-pmap) - This lock protects all of the members
  *	  of the pmap structure itself.  This lock will be asserted
  *	  in pmap_activate() and pmap_deactivate() from a critical
- *	  section of cpu_switch(), and must never sleep.
+ *	  section of cpu_switch(), and must never sleep.  Note that
+ *	  in the case of the kernel pmap, interrupts which cause
+ *	  memory allocation *must* be blocked while this lock is
+ *	  asserted.
  *
  *	* pvh_slock (per-pv_head) - This lock protects the PV list
  *	  for a specified managed page.
@@ -1174,7 +1177,7 @@ void
 pmap_destroy(pmap)
 	pmap_t pmap;
 {
-	int refs;
+	int ps, refs;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1183,9 +1186,9 @@ pmap_destroy(pmap)
 	if (pmap == NULL)
 		return;
 
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 	refs = --pmap->pm_count;
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 
 	if (refs > 0)
 		return;
@@ -1230,14 +1233,16 @@ void
 pmap_reference(pmap)
 	pmap_t	pmap;
 {
+	int ps;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
 	if (pmap != NULL) {
-		simple_lock(&pmap->pm_slock);
+		PMAP_LOCK(pmap, ps);
 		pmap->pm_count++;
-		simple_unlock(&pmap->pm_slock);
+		PMAP_UNLOCK(pmap, ps);
 	}
 }
 
@@ -1260,6 +1265,7 @@ pmap_remove(pmap, sva, eva)
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1285,7 +1291,7 @@ pmap_remove(pmap, sva, eva)
 #endif
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	while (sva < eva) {
 		/*
@@ -1319,7 +1325,7 @@ pmap_remove(pmap, sva, eva)
 	if (needisync)
 		alpha_pal_imb();
 
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
@@ -1343,7 +1349,7 @@ pmap_page_protect(pa, prot)
 {
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
-	int s;
+	int s, ps;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
 #if defined(PMAP_NEW)
@@ -1401,7 +1407,7 @@ pmap_page_protect(pa, prot)
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
 		nextpv = LIST_NEXT(pv, pv_list);
 
-		simple_lock(&pv->pv_pmap->pm_slock);
+		PMAP_LOCK(pv->pv_pmap, ps);
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
 		    pmap_pte_pa(pv->pv_pte) != pa)
@@ -1420,7 +1426,7 @@ pmap_page_protect(pa, prot)
 			}
 		}
 #endif
-		simple_unlock(&pv->pv_pmap->pm_slock);
+		PMAP_UNLOCK(pv->pv_pmap, ps);
 	}
 	splx(s);
 
@@ -1448,6 +1454,7 @@ pmap_protect(pmap, sva, eva, prot)
 	boolean_t hadasm;
 	vaddr_t l1eva, l2eva;
 	long cpu_id = alpha_pal_whami();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1466,7 +1473,7 @@ pmap_protect(pmap, sva, eva, prot)
 	if (prot & VM_PROT_WRITE)
 		return;
 
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	bits = pte_prot(pmap, prot);
 	isactive = PMAP_ISACTIVE(pmap);
@@ -1518,7 +1525,7 @@ pmap_protect(pmap, sva, eva, prot)
 #endif
 	}
 
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 }
 
 /*
@@ -1552,6 +1559,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	boolean_t needisync;
 	boolean_t isactive;
 	long cpu_id = alpha_pal_whami();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1566,7 +1574,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	needisync = isactive && (prot & VM_PROT_EXECUTE) != 0;
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	if (pmap == pmap_kernel()) {
 #ifdef DIAGNOSTIC
@@ -1801,7 +1809,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #endif
 	}
 
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
@@ -1823,7 +1831,8 @@ pmap_kenter_pa(va, pa, prot)
 	pt_entry_t *pte, npte;
 	long cpu_id = alpha_pal_whami();
 	boolean_t needisync = FALSE;
-	int s;
+	pmap_t pmap = pmap_kernel();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1844,16 +1853,14 @@ pmap_kenter_pa(va, pa, prot)
 	/*
 	 * Update stats; must lock the kernel pmap to do this.
 	 */
-	s = splimp();
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	if (pmap_pte_v(pte) == 0)
-		pmap_kernel()->pm_stats.resident_count++;
+		pmap->pm_stats.resident_count++;
 	if (pmap_pte_w(pte) == 0)
-		pmap_kernel()->pm_stats.wired_count++;
+		pmap->pm_stats.wired_count++;
 
-	simple_unlock(&pmap->pm_slock);
-	splx(s);
+	PMAP_UNLOCK(pmap, ps);
 
 	if ((prot & VM_PROT_EXECUTE) != 0 || pmap_pte_exec(pte))
 		needisync = TRUE;
@@ -1931,6 +1938,7 @@ pmap_kremove(va, size)
 	pt_entry_t *pte;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
+	pmap_t pmap = pmap_kernel();
 	int s;
 
 #ifdef DEBUG
@@ -1944,21 +1952,26 @@ pmap_kremove(va, size)
 		panic("pmap_kremove: user address");
 #endif
 
+	/*
+	 * XXX WE MUST FIND AND FIX WHY WE ARE CALLED TO REMOVE MAPPINGS
+	 * XXX WITH PG_PVENT SET!
+	 */
+
 	s = splimp();
 	PMAP_MAP_TO_HEAD_LOCK();
-	simple_lock(&pmap_kernel()->pm_slock);
+	simple_lock(&pmap->pm_slock);
 
 	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pte = PMAP_KERNEL_PTE(va);
 		if (pmap_pte_v(pte))
-			needisync |= pmap_remove_mapping(pmap_kernel(), va,
-			    pte, TRUE, cpu_id, NULL);
+			needisync |= pmap_remove_mapping(pmap, va, pte,
+			    TRUE, cpu_id, NULL);
 	}
 
 	if (needisync)
 		alpha_pal_imb();
 
-	simple_unlock(&pmap_kernel()->pm_slock);
+	simple_unlock(&pmap->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	splx(s);
 }
@@ -1977,6 +1990,7 @@ pmap_change_wiring(pmap, va, wired)
 	boolean_t	wired;
 {
 	pt_entry_t *pte;
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1985,7 +1999,7 @@ pmap_change_wiring(pmap, va, wired)
 	if (pmap == NULL)
 		return;
 
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	pte = pmap_l3pte(pmap, va, NULL);
 #ifdef DEBUG
@@ -2021,7 +2035,7 @@ pmap_change_wiring(pmap, va, wired)
 			pmap->pm_stats.wired_count--;
 	}
 
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 }
 
 /*
@@ -2037,6 +2051,7 @@ pmap_extract(pmap, va)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	paddr_t pa;
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2044,7 +2059,7 @@ pmap_extract(pmap, va)
 #endif
 	pa = 0;
 
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	l1pte = pmap_l1pte(pmap, va);
 	if (pmap_pte_v(l1pte) == 0)
@@ -2061,7 +2076,7 @@ pmap_extract(pmap, va)
 	pa = pmap_pte_pa(l3pte) | (va & PGOFSET);
 
  out:
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("0x%lx\n", pa);
@@ -2159,6 +2174,7 @@ pmap_activate(p)
 {
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 	long cpu_id = alpha_pal_whami();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2178,7 +2194,7 @@ pmap_activate(p)
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	/*
 	 * Allocate an ASN.
@@ -2187,7 +2203,7 @@ pmap_activate(p)
 
 	PMAP_ACTIVATE(pmap, p, cpu_id);
 
-	simple_unlock(&pmap->pm_slock);
+	PMAP_UNLOCK(pmap, ps);
 }
 
 /*
@@ -2733,7 +2749,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 	vaddr_t va;
 	boolean_t hadasm, isactive;
 	boolean_t needisync = FALSE;
-	int s;
+	int s, ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2760,7 +2776,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 				continue;
 		}
 
-		simple_lock(&pv->pv_pmap->pm_slock);
+		PMAP_LOCK(pv->pv_pmap, ps);
 
 		pte = pv->pv_pte;
 		npte = (*pte | set) & mask;
@@ -2776,7 +2792,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 			    hadasm ? PG_ASM : 0);
 #endif
 		}
-		simple_unlock(&pv->pv_pmap->pm_slock);
+		PMAP_UNLOCK(pv->pv_pmap, ps);
 	}
 	splx(s);
 
@@ -2805,6 +2821,7 @@ pmap_emulate_reference(p, v, user, write)
 	struct pv_head *pvh;
 	boolean_t didlock = FALSE;
 	long cpu_id = alpha_pal_whami();
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2829,7 +2846,7 @@ pmap_emulate_reference(p, v, user, write)
 		if (p->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		simple_lock(&p->p_vmspace->vm_map.pmap->pm_slock);
+		PMAP_LOCK(p->p_vmspace->vm_map.pmap, ps);
 		didlock = TRUE;
 		pte = pmap_l3pte(p->p_vmspace->vm_map.pmap, v, NULL);
 		/*
@@ -2872,7 +2889,7 @@ pmap_emulate_reference(p, v, user, write)
 	 * it now.
 	 */
 	if (didlock)
-		simple_unlock(&p->p_vmspace->vm_map.pmap->pm_slock);
+		PMAP_UNLOCK(p->p_vmspace->vm_map.pmap, ps);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -3142,6 +3159,11 @@ pmap_pv_alloc()
 				if (pvpmap == pmap_kernel())
 					continue;
 
+				/*
+				 * XXX We know we're not going to try and
+				 * XXX lock the kernel pmap, so we don't
+				 * XXX have to block interrupts here.
+				 */
 				if (simple_lock_try(&pvpmap->pm_slock) == 0)
 					continue;
 
