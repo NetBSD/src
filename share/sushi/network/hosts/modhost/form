@@ -1,0 +1,4 @@
+req-escript:40,script2,2,@@@1@@@	Hostname
+req-ipv4script:script2,1,@@@1@@@	IPV4 address
+escript:40,script2,3,@@@1@@@		Optional Aliases (space separated)
+invis:@@@1@@@ 

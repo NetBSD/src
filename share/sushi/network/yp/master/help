@@ -1,0 +1,5 @@
+This form will initialize your machine as a NIS master.  See the ypinit(8)
+manpage for more details.  The domainname is the NIS domain you wish to
+bind to. 
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:37 garbled Exp $

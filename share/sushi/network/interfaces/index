@@ -1,0 +1,3 @@
+# $NetBSD: index,v 1.1 2001/04/25 03:43:33 garbled Exp $
+listif		listif		List all network adapters
+interface	interface	Configure a network adapter

@@ -1,0 +1,7 @@
+You may use this menu to modify an allready configured interface, or
+configure a new network interface for your machine.  Please consult the
+ifconfig(8) manpage for more information on the various options.  In most
+cases, if you aren't sure what an option does, it should be OK to leave
+that option blank, and accept the default.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:33 garbled Exp $

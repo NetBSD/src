@@ -1,0 +1,11 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:32 garbled Exp $
+
+IFS=" "
+HOSTS=`cat /etc/hosts`
+echo $HOSTS | sed -e "s/$4.*/$2      $1 $3/" | >/etc/hosts
+if [ "$?" = "0" ]; then
+	echo "Modified host $1"
+else
+	echo "Failed to modify host $1"
+fi

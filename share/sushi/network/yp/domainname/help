@@ -1,0 +1,6 @@
+After setting the NIS domainname of this machine, choose where you want
+to make the modification.  Setting it at boot-time only will require a reboot
+to take effect.  By setting the domainname now, it will not be preserved on
+the next boot.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:36 garbled Exp $
