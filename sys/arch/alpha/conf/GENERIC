@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 1996/06/12 01:42:49 cgd Exp $
+#	$NetBSD: GENERIC,v 1.18 1996/06/12 01:44:31 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -51,7 +51,9 @@ options		LKM
 # Misc. options
 options		PCIVERBOSE	# recognize "unknown" PCI devices
 
-config		netbsd		swap generic
+config		netbsd	swap generic
+#config		netbsd	root on sd0 swap on sd0
+#config		netbsd	root nfs swap nfs
 
 mainbus0 at	root
 cpu*	at	mainbus0
