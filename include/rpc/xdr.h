@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.15 1998/11/16 12:07:43 christos Exp $	*/
+/*	$NetBSD: xdr.h,v 1.16 1999/12/01 18:34:21 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -246,6 +246,8 @@ extern bool_t	xdr_int16_t	__P((XDR *, int16_t *));
 extern bool_t	xdr_u_int16_t	__P((XDR *, u_int16_t *));
 extern bool_t	xdr_int32_t	__P((XDR *, int32_t *));
 extern bool_t	xdr_u_int32_t	__P((XDR *, u_int32_t *));
+extern bool_t	xdr_int64_t	__P((XDR *, int64_t *));
+extern bool_t	xdr_u_int64_t	__P((XDR *, u_int64_t *));
 extern bool_t	xdr_bool	__P((XDR *, bool_t *));
 extern bool_t	xdr_enum	__P((XDR *, enum_t *));
 extern bool_t	xdr_array	__P((XDR *, char **, u_int *, u_int, u_int, xdrproc_t));
@@ -262,6 +264,10 @@ extern bool_t	xdr_reference	__P((XDR *, char **, u_int, xdrproc_t));
 extern bool_t	xdr_pointer	__P((XDR *, char **, u_int, xdrproc_t));
 extern bool_t	xdr_wrapstring	__P((XDR *, char **));
 extern void	xdr_free 	__P((xdrproc_t, char *));
+extern bool_t	xdr_hyper	__P((XDR *, longlong_t *));
+extern bool_t	xdr_u_hyper	__P((XDR *, u_longlong_t *));
+extern bool_t	xdr_longlong_t	__P((XDR *, longlong_t *));
+extern bool_t	xdr_u_longlong_t __P((XDR *, u_longlong_t *));
 __END_DECLS
 
 /*
