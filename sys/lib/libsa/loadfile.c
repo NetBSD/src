@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.21 2002/12/11 09:55:20 pk Exp $ */
+/* $NetBSD: loadfile.c,v 1.22 2003/02/24 10:51:05 pk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,6 +104,35 @@ loadfile(fname, marks, flags)
 	u_long *marks;
 	int flags;
 {
+	int fd, error;
+
+	/* Open the file. */
+	if ((fd = open(fname, 0)) < 0) {
+		WARN(("open %s", fname ? fname : "<default>"));
+		return (-1);
+	}
+
+	/* Load it; save the value of errno across the close() call */
+	if ((error = fdloadfile(fd, marks, flags)) != 0) {
+		(void)close(fd);
+		errno = error;
+		return (-1);
+	}
+
+	return (fd);
+}
+
+/*
+ * Read in program from the given file descriptor.
+ * Return error code (0 on success).
+ * Fill in marks.
+ */
+int
+fdloadfile(fd, marks, flags)
+	int fd;
+	u_long *marks;
+	int flags;
+{
 	union {
 #ifdef BOOT_ECOFF
 		struct ecoff_exechdr coff;
@@ -119,15 +148,11 @@ loadfile(fname, marks, flags)
 #endif
 	} hdr;
 	ssize_t nr;
-	int fd, rval;
-
-	/* Open the file. */
-	if ((fd = open(fname, 0)) < 0) {
-		WARN(("open %s", fname ? fname : "<default>"));
-		return -1;
-	}
+	int rval;
 
 	/* Read the exec header. */
+	if (lseek(fd, 0, SEEK_SET) == (off_t)-1)
+		goto err;
 	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
 		WARN(("read header"));
 		goto err;
@@ -162,16 +187,14 @@ loadfile(fname, marks, flags)
 	{
 		rval = 1;
 		errno = EFTYPE;
-		WARN(("%s", fname ? fname : "<default>"));
 	}
 
 	if (rval == 0) {
 		if ((flags & LOAD_ALL) != 0)
 			PROGRESS(("=0x%lx\n",
 				  marks[MARK_END] - marks[MARK_START]));
-		return fd;
+		return (0);
 	}
 err:
-	(void)close(fd);
-	return -1;
+	return (errno);
 }
