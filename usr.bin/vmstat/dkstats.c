@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.2 1998/04/01 16:41:31 kleink Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.3 1998/07/05 08:02:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -110,11 +110,12 @@ static void deref_kptr __P((void *, void *, size_t));
 void
 dkswap()
 {
-#define SWAP(fld)		tmp = cur.fld;				\
-				cur.fld -= last.fld;			\
-				last.fld = tmp
 	u_int64_t tmp;
 	int	i;
+
+#define SWAP(fld)	tmp = cur.fld;		\
+			cur.fld -= last.fld;	\
+			last.fld = tmp
 
 	for (i = 0; i < dk_ndrive; i++) {
 		struct timeval	tmp_timer;
@@ -174,7 +175,7 @@ dkreadstats()
  */
 int
 dkinit(select)
-int	select;
+	int	select;
 {
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
@@ -184,7 +185,7 @@ int	select;
 	int		i;
 
 	if (once)
-		return(1);
+		return (1);
 
 	/* Open the kernel. */
         if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
@@ -265,8 +266,8 @@ deref_kptr(kptr, ptr, len)
 
 	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
 		bzero(buf, sizeof(buf));
-		snprintf(buf, (sizeof(buf) - 1),
-		     "can't dereference kptr 0x%lx", (u_long)kptr);
+		snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
+		    (u_long)kptr);
 		KVM_ERROR(buf);
 	}
 }
