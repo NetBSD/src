@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/08/29 18:08:30 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1999/08/29 19:41:53 mycroft Exp $
 
 SRCS+=	alloca.S fabs.S frexp.c infinity.c isinf.c isnan.c modf.S
 SRCS+=	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S fpsetmask.S \
@@ -14,13 +14,12 @@ SRCS+=	setjmp.S __setjmp14.S
 SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 
-.ifdef(M68040)
-SRCS+=	ldexp.c
-.elifdef(M68060)
-SRCS+=	ldexp.c
+.ifdef M68040
+SRCS+=	ldexp_040.c
+.elifdef M68060
+SRCS+=	ldexp_040.c
 .else
-SRCS+=	ldexp.S 
+SRCS+=	ldexp_881.c
 .endif
-
 LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
 DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
