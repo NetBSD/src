@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.7.4.1 1997/01/26 05:25:43 rat Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.7.4.2 1997/03/12 22:46:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -334,7 +334,8 @@ rmremote()
 	for (i = 0; i < requests; i++) {
 		len += snprintf(line, sizeof(line), " %d", requ[i]);
 	}
-	len += 1;
+	/* newline nul */
+	len += 2;
 	if (len > sizeof(line))
 		s = malloc(len);
 	else	
@@ -348,7 +349,7 @@ rmremote()
 		cp += strlen(cp);
 	}
 	for (i = 0; i < requests; i++) {
-		(void)snprintf(cp, len - (cp - s) - 2, " %d", requ[i]);
+		(void)snprintf(cp, len - (cp - s) - 1, " %d", requ[i]);
 		cp += strlen(cp);
 	}
 	cp[0] = '\n';
@@ -360,7 +361,7 @@ rmremote()
 			printf("%s: ", host);
 		printf("connection to %s is down\n", RM);
 	} else {
-		if (write(rem, s, len) != i)
+		if (write(rem, s, len) != len)
 			fatal("Lost connection");
 		if (len > sizeof(line))
 			(void)free(s);
