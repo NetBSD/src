@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.36 2001/12/28 17:32:36 augustss Exp $
+#	$NetBSD: files.usb,v 1.37 2001/12/29 10:50:55 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -8,7 +8,6 @@ defflag	USBVERBOSE
 
 device	usb { }
 attach	usb at usbus
-file	dev/usb/hid.c			usb
 file	dev/usb/usb.c			usb			needs-flag
 file	dev/usb/usbdi.c			usb
 file	dev/usb/usbdi_util.c		usb
@@ -26,9 +25,6 @@ attach	uhub at uhub with uhub_uhub
 
 # Modem and com serial port "bus"
 define	ucombus {[ portno = -1 ]}
-
-# HID "bus"
-define	uhidbus {[ reportid = -1 ]}
 
 # EZ-USB firmware loader
 define	ezload
@@ -58,24 +54,31 @@ file	dev/usb/ugen.c			ugen			needs-flag
 
 
 # HID
+# HID "bus"
+define	uhidbus {[ reportid = -1 ]}
+
+# HID processing
+define	hid
+file	dev/usb/hid.c			hid
+
 # HID root device for multiple report IDs
-device	uhidev: uhidbus
+device	uhidev: hid, uhidbus
 attach	uhidev at uhub
 file	dev/usb/uhidev.c		uhidev
 
 # Generic HID devices
-device	uhid
+device	uhid: hid
 attach	uhid at uhidbus
 file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
-device	ukbd: wskbddev
+device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
 file	dev/usb/ukbdmap.c		ukbd
 
 # Mice
-device	ums: wsmousedev
+device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 
