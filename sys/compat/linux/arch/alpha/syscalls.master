@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 1999/10/04 16:55:54 tron Exp $
+	$NetBSD: syscalls.master,v 1.13 1999/12/05 21:24:28 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -510,10 +510,10 @@
 346	UNIMPL		pciconfig_write
 347	UNIMPL		query_module
 348	UNIMPL		prctl
-349	NOARGS		{ int sys_pread(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
-350	NOARGS		{ int sys_pwrite(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
+340	STD		{ int linux_sys_pread(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
+350	STD		{ int linux_sys_pwrite(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
 351	STD		{ int linux_sys_rt_sigreturn( \
 				struct linux_rt_sigframe *sfp); }
 352	STD		{ int linux_sys_rt_sigaction(int signum, \
