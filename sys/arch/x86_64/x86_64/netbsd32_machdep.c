@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.4 2002/06/03 18:23:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -83,8 +83,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	p->p_flag |= P_32;
 
 	tf = p->p_md.md_regs;
+#if 0
 	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
+#endif
 
 	/*
 	 * XXXfvdl needs to be revisited
@@ -189,8 +191,10 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
+#if 0
 	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
+#endif
 #if 1
 	/* XXXX */
 	__asm("movl %0,%%es" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
