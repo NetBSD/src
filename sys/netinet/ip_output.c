@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.47 1998/03/24 03:10:02 kml Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.48 1998/04/28 15:26:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ ip_output(m0, va_alist)
 	struct route *ro;
 	int flags;
 	int *mtu_p;
+	int mtu;
 	struct ip_moptions *imo;
 	va_list ap;
 #ifdef PFIL_HOOKS
@@ -205,6 +206,7 @@ ip_output(m0, va_alist)
 			goto bad;
 		}
 		ifp = ia->ia_ifp;
+		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
 	} else {
 		if (ro->ro_rt == 0)
@@ -216,6 +218,8 @@ ip_output(m0, va_alist)
 		}
 		ia = ifatoia(ro->ro_rt->rt_ifa);
 		ifp = ro->ro_rt->rt_ifp;
+		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+			mtu = ifp->if_mtu;
 		ro->ro_rt->rt_use++;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
@@ -235,8 +239,10 @@ ip_output(m0, va_alist)
 		 */
 		if (imo != NULL) {
 			ip->ip_ttl = imo->imo_multicast_ttl;
-			if (imo->imo_multicast_ifp != NULL)
+			if (imo->imo_multicast_ifp != NULL) {
 				ifp = imo->imo_multicast_ifp;
+				mtu = ifp->if_mtu;
+			}
 		} else
 			ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
 		/*
@@ -355,9 +361,9 @@ ip_output(m0, va_alist)
 #endif /* PFIL_HOOKS */
 sendit:
 	/*
-	 * If small enough for interface, can just send directly.
+	 * If small enough for mtu of path, can just send directly.
 	 */
-	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+	if ((u_int16_t)ip->ip_len <= mtu) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		ip->ip_sum = 0;
@@ -371,12 +377,12 @@ sendit:
 	 */
 	if (ip->ip_off & IP_DF) {
 		if (flags & IP_RETURNMTU)
-			*mtu_p = ifp->if_mtu;
+			*mtu_p = mtu;
 		error = EMSGSIZE;
 		ipstat.ips_cantfrag++;
 		goto bad;
 	}
-	len = (ifp->if_mtu - hlen) &~ 7;
+	len = (mtu - hlen) &~ 7;
 	if (len < 8) {
 		error = EMSGSIZE;
 		goto bad;
@@ -385,6 +391,8 @@ sendit:
     {
 	int mhlen, firstlen = len;
 	struct mbuf **mnext = &m->m_nextpkt;
+	int fragments = 0;
+	int s;
 
 	/*
 	 * Loop through length of segment after first fragment,
@@ -429,6 +437,7 @@ sendit:
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		ipstat.ips_ofragments++;
+		fragments++;
 	}
 	/*
 	 * Update first fragment by trimming what's been copied out
@@ -442,6 +451,14 @@ sendit:
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m, hlen);
 sendorfree:
+	/*
+	 * If there is no room for all the fragments, don't queue
+	 * any of them.
+	 */
+	s = splimp();
+	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments)
+		error = ENOBUFS;
+	splx(s);
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
