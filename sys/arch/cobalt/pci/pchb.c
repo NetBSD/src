@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 2000/05/29 15:43:50 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -65,9 +65,13 @@ pchb_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
+	int major, minor;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
-					PCI_REVISION(pa->pa_class));
+	major = PCI_REVISION(pa->pa_class) >> 4;
+	minor = PCI_REVISION(pa->pa_class) & 0x0f;
+
+	if (major == 0)
+		printf(": Galileo GT-64011 System Controller, rev %d\n", minor);
+	else
+		printf(": Galileo GT-64111 System Controller, rev %d\n", minor);
 }
