@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.24 2000/01/23 23:46:11 hubertf Exp $
+# 	$NetBSD: GENERIC,v 1.25 2000/01/27 06:55:26 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	8
 
@@ -33,6 +33,8 @@ options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	RTC_OFFSET=-540		# JST-9
 #options 	RTC_OFFSET=480		# PST8
+					# In NO RTC_OFFSET , inherit RTC_OFFSET
+					# from Windows CE.
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 
@@ -134,6 +136,9 @@ button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
 button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
 button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
 button1 at vrgiu? platform NEC_MCR_500 id BTN_COVER port 6
+button0 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
+button0 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_5XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
