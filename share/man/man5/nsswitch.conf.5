@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.6 1999/01/18 12:12:05 lukem Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.7 1999/01/19 08:26:14 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -51,13 +51,6 @@ Each database comes from a source (such as local files, DNS, and
 .Tn NIS ),
 and the order to look up the sources is specified in
 .Nm nsswitch.conf .
-.Pp
-If, for any reason, if the file doesn't exist, or has missing or corrupt
-entries,
-.Xr nsdispatch 3
-will default to an entry of
-.Sq files
-for the requested database.
 .Pp
 Each entry in 
 .Nm
@@ -203,6 +196,22 @@ specified.
 To ensure compatibility with previous and current implementations, the
 .Dq compat
 source must appear alone for a given database.
+.Ss Default source lists
+.Pp
+If, for any reason,
+.Nm nsswitch.conf
+doesn't exist, or it has missing or corrupt entries, it
+will default to an entry of
+.Sq files
+for the requested database.
+Exceptions are:
+.Bd -
+.Bl -column passwd_compat "dns files" -offset indent
+.Sy Database	Default source list
+.It hosts	dns files
+.It passwd	compat
+.It passwd_compat	nis
+.El
 .Sh FILES
 .Bl -tag -width /etc/nsswitch.conf -compact
 .It Pa /etc/nsswitch.conf
