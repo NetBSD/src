@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.8 1996/12/09 09:57:42 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.9 1997/03/08 22:50:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -334,7 +334,8 @@ rmremote()
 	for (i = 0; i < requests; i++) {
 		len += snprintf(line, sizeof(line), " %d", requ[i]);
 	}
-	len += 1;
+	/* newline nul */
+	len += 2;
 	if (len > sizeof(line))
 		s = malloc(len);
 	else	
@@ -360,7 +361,7 @@ rmremote()
 			printf("%s: ", host);
 		printf("connection to %s is down\n", RM);
 	} else {
-		if (write(rem, s, len) != i)
+		if (write(rem, s, len) != len)
 			fatal("Lost connection");
 		if (len > sizeof(line))
 			(void)free(s);
