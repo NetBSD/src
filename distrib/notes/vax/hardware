@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8 2002/03/31 18:18:23 matt Exp $
+.\"	$NetBSD: hardware,v 1.8.4.1 2004/08/12 04:21:35 jmc Exp $
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -8,6 +8,8 @@ VAX 11/750
 .It
 VAX 11/78{0,5}
 .It
+VAX 4000 model 100(A),105A,106A,108,200,300,400,500(A),505A,600(A),700
+.It
 VAX 8200/8250/8300/8350
 .It
 VAX 8600/8650
@@ -15,6 +17,8 @@ VAX 8600/8650
 MicroVAX/VAXstation II
 .It
 MicroVAX III
+.It
+MicroVAX 3100 model 10,10e,20,20e,30,40,80,85,90,95
 .It
 MicroVAX 3300/3400
 .It
@@ -26,11 +30,15 @@ MicroVAX 2000/VAXstation 2000
 .It
 VAXstation 3100 model 30,38,40,48,76
 .It
-MicroVAX 3100 (partly)
+VAXserver 3100 KA41-B and KA41-E
+.It
+VAXserver 3600
+.It
+VAXserver 3900
 .It
 VAXstation 3200/3500
 .It
-VAXstation 4000/60
+VAXstation 4000 models 60,90,90A,96 and VLC
 .bullet)
 .It
 Networking
@@ -46,7 +54,8 @@ SGEC chip (where available)
 .It
 Serial lines
 .(bullet -compact
-DHU11/DHV11/DL11/DLV11/DZ11/DZQ11/DZV11 Unibus/Q22 bus asynchronous lines
+DHU11/DHV11/DL11/DLV11/DZ11/DZQ11/DZV11 Unibus/Q22 bus asynchronous
+lines
 .It
 DZ11-compatible lines on VAXstations.
 .bullet)
