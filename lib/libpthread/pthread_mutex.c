@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.13 2003/04/18 21:36:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.14 2003/04/23 19:36:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.13 2003/04/18 21:36:38 nathanw Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.14 2003/04/23 19:36:12 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -98,8 +98,8 @@ pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 	struct mutexattr_private *map;
 	struct mutex_private *mp;
 
-	pthread__assert((attr == NULL) ||
-	    (attr->ptma_magic == _PT_MUTEXATTR_MAGIC));
+	pthread__error(EINVAL, "Invalid mutex attribute",
+	    (attr == NULL) || (attr->ptma_magic == _PT_MUTEXATTR_MAGIC));
 
 	if (attr != NULL && (map = attr->ptma_private) != NULL &&
 	    memcmp(map, &mutexattr_private_default, sizeof(*map)) != 0) {
@@ -129,8 +129,10 @@ int
 pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
 
-	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
-	pthread__assert(mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
+	pthread__error(EINVAL, "Invalid mutex",
+	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__error(EBUSY, "Destroying locked mutex",
+	    mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
 
 	mutex->ptm_magic = _PT_MUTEX_DEAD;
 	if (mutex->ptm_private != NULL &&
@@ -188,7 +190,8 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 {
 	pthread_t self;
 
-	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex",
+	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	self = pthread__self();
 
@@ -266,7 +269,8 @@ int
 pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
 
-	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex",
+	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
@@ -304,7 +308,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	pthread_t self, blocked; 
 	int weown;
 
-	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex",
+	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
@@ -329,7 +334,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		if (!weown)
 			return EPERM;
 	default:
-		pthread__assert(weown);
+		pthread__error(EPERM,
+		    "Unlocking mutex owned by another thread", weown);
 		break;
 	}
 
@@ -384,7 +390,8 @@ int
 pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
 
-	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex attribute",
+	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
 	if (attr->ptma_private != NULL)
@@ -399,7 +406,8 @@ pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 {
 	struct mutexattr_private *map;
 
-	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex attribute",
+	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	map = attr->ptma_private;
 
@@ -414,7 +422,8 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
 	struct mutexattr_private *map;
 
-	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+	pthread__error(EINVAL, "Invalid mutex attribute",
+	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	map = attr->ptma_private;
 
