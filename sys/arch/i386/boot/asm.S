@@ -54,10 +54,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "asm.h"
 
 
-CR0_PE_ON	=	0x1
-CR0_PE_OFF	=	0xfffffffe
+CR0_PE	=	0x1
 
-.globl	_ouraddr
+.globl	EXT(ouraddr)
 	.text
 
 /*
@@ -76,11 +75,11 @@ ENTRY(real_to_prot)
 	lgdt	EXT(Gdtr)
 
 	# set the PE bit of CR0
-	mov	%cr0, %eax
+	movl	%cr0, %eax
 
 	data32
-	or	$CR0_PE_ON, %eax
-	mov	%eax, %cr0 
+	orl	$CR0_PE, %eax
+	movl	%eax, %cr0 
 
 	# make intrasegment jump to flush the processor pipeline and
 	# reload CS register
@@ -90,10 +89,10 @@ ENTRY(real_to_prot)
 xprot:
 	# we are in USE32 mode now
 	# set up the protected mode segment registers : DS, SS, ES
-	mov	$0x20, %eax
-	movw	%ax, %ds
-	movw	%ax, %ss
-	movw	%ax, %es
+	movl	$0x20, %eax
+	movl	%ax, %ds
+	movl	%ax, %ss
+	movl	%ax, %es
 
 	# load idtr so we can debug
 	lidt	EXT(Idtr_prot)
@@ -113,7 +112,7 @@ ENTRY(prot_to_real)
 	movl 	_ouraddr, %eax
 	sarl	$4, %eax
 	pushw	%ax
-	movw	$xreal, %ax	# gas botches pushw $xreal - extra bytes 0, 0
+	movl	$xreal, %eax	# gas botches pushw $xreal - extra bytes 0, 0
 	pushw	%ax		# decode to add %al, (%eax) (%al usually 0)
 
 	# Change to use16 mode.
@@ -121,10 +120,10 @@ ENTRY(prot_to_real)
 
 x16:
 	# clear the PE bit of CR0
-	mov	%cr0, %eax
+	movl	%cr0, %eax
 	data32
-	and 	$CR0_PE_OFF, %eax
-	mov	%eax, %cr0
+	andl 	$~CR0_PE, %eax
+	movl	%eax, %cr0
 
 	# make intersegment jmp to flush the processor pipeline
 	# using the fake stack frame set up earlier
@@ -134,10 +133,10 @@ x16:
 xreal:
 	# we are in real mode now
 	# set up the real mode segment registers : DS, SS, ES
-	movw	%cs, %ax
-	movw	%ax, %ds
-	movw	%ax, %ss
-	movw	%ax, %es
+	movl	%cs, %ax
+	movl	%ax, %ds
+	movl	%ax, %ss
+	movl	%ax, %es
 
 	# load idtr so we can debug
 	addr32
@@ -155,15 +154,15 @@ xreal:
 */
 
 ENTRY(startprog)
-	push	%ebp
-	mov	%esp, %ebp
+	pushl	%ebp
+	movl	%esp, %ebp
 
 	# get things we need into registers
 	movl	0x8(%ebp), %ecx		# entry offset 
 	movl	0x0c(%ebp), %eax	# &argv
 
 	# make a new stack at 0:0xa0000 (big segs)
-	mov	$0x10, %ebx
+	movl	$0x10, %ebx
 	movw	%bx, %ss
 	movl	$0xa0000, %ebx
 	movl	%ebx, %esp
@@ -178,14 +177,14 @@ ENTRY(startprog)
 	pushl	$0			# dummy 'return' address
 	
 	# push on our entry address
-	mov	$0x08, %ebx		# segment
+	movl	$0x08, %ebx		# segment
 	pushl	%ebx
 	pushl	%ecx
 
 	# convert over the other data segs
-	mov	$0x10, %ebx
-	movw	%bx, %ds
-	movw	%bx, %es
+	movl	$0x10, %ebx
+	movl	%bx, %ds
+	movl	%bx, %es
 
 	# convert the PC (and code seg)
 	lret
@@ -196,29 +195,29 @@ ENTRY(startprog)
 */
 
 ENTRY(pbzero)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%es
-	push	%edi
-	push	%ecx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+	pushl	%edi
+	pushl	%ecx
 
 	cld
 
 	# set %es to point at the flat segment
-	mov	$0x10, %eax
-	movw	%ax, %es
+	movl	$0x10, %eax
+	movl	%ax, %es
 
-	mov	0x8(%ebp), %edi		# destination
-	mov	0xc(%ebp), %ecx		# count
-	mov	$0x0, %eax		# value
+	movl	0x8(%ebp), %edi		# destination
+	movl	0xc(%ebp), %ecx		# count
+	movl	$0x0, %eax		# value
 
 	rep
 	stosb
 
-	pop	%ecx
-	pop	%edi
-	pop	%es
-	pop	%ebp
+	popl	%ecx
+	popl	%edi
+	popl	%es
+	popl	%ebp
 
 	ret
 /*
@@ -229,31 +228,30 @@ ENTRY(pbzero)
 */
 
 ENTRY(pcpy)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%es
-	push	%esi
-	push	%edi
-	push	%ecx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+	pushl	%esi
+	pushl	%edi
+	pushl	%ecx
 
 	cld
 
 	# set %es to point at the flat segment
-	mov	$0x10, %eax
-	movw	%ax, %es
+	movl	$0x10, %eax
+	movl	%ax, %es
 
-	mov	0x8(%ebp), %esi		# source
-	mov	0xc(%ebp), %edi		# destination
-	mov	0x10(%ebp), %ecx	# count
+	movl	0x8(%ebp), %esi		# source
+	movl	0xc(%ebp), %edi		# destination
+	movl	0x10(%ebp), %ecx	# count
 
 	rep
 	movsb
 
-	pop	%ecx
-	pop	%edi
-	pop	%esi
-	pop	%es
-	pop	%ebp
+	popl	%ecx
+	popl	%edi
+	popl	%esi
+	popl	%es
+	popl	%ebp
 
 	ret
-
