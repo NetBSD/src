@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.231 2003/02/27 00:39:40 fvdl Exp $
+#	$NetBSD: files.i386,v 1.232 2003/02/27 01:49:29 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -62,7 +62,6 @@ defflag			NOREDZONE
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 file	arch/i386/i386/autoconf.c
-file	arch/i386/i386/consinit.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
