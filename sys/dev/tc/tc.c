@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.4 1996/02/27 03:19:43 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.5 1996/02/27 03:22:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -141,7 +141,7 @@ tcattach(parent, self, aux)
 		if ((match = config_search(tcsubmatch, self, &ta)) != NULL)
 	                config_attach(self, match, &ta, tcprint);
 		else {
-			tcprint(aux, parent->dv_xname);
+			tcprint(aux, self->dv_xname);
 			printf(" not configured\n");
 		}
 	}
@@ -185,7 +185,7 @@ tcattach(parent, self, aux)
 		if ((match = config_search(tcsubmatch, self, &ta)) != NULL)
 	                config_attach(self, match, &ta, tcprint);
 		else {
-			tcprint(aux, parent->dv_xname);
+			tcprint(aux, self->dv_xname);
 			printf(" not configured\n");
 		}
 	}
