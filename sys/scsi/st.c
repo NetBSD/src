@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.27 1994/04/11 03:54:12 mycroft Exp $
+ *	$Id: st.c,v 1.28 1994/04/13 05:43:21 mycroft Exp $
  */
 
 /*
@@ -105,7 +105,7 @@ struct rogues {
 #define	ST_Q_NEEDS_PAGE_0	0x00001
 #define	ST_Q_FORCE_FIXED_MODE	0x00002
 #define	ST_Q_FORCE_VAR_MODE	0x00004
-#define	ST_Q_SNS_HLP		0x00008	/* must do READ for good MODE SENSE */
+#define	ST_Q_SENSE_HELP		0x00008	/* must do READ for good MODE SENSE */
 #define	ST_Q_IGNORE_LOADS	0x00010
 #define	ST_Q_BLKSIZ		0x00020	/* variable-block media_blksiz > 0 */
 
@@ -136,8 +136,8 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
     {"ARCHIVE ", "VIPER 2525 25462", "????",
 	0,
 	{
-	    {0, ST_Q_SNS_HLP, 0},			/* minor 0-3 */
-	    {0, ST_Q_SNS_HLP, QIC_525},			/* minor 4-7 */
+	    {0, ST_Q_SENSE_HELP, 0},			/* minor 0-3 */
+	    {0, ST_Q_SENSE_HELP, QIC_525},		/* minor 4-7 */
 	    {0, 0, QIC_150},				/* minor 8-11 */
 	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
@@ -177,12 +177,12 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	0,
 	{
 	    {0, 0, 0},					/* minor 0-3 */
-	    {512, ST_Q_FORCE_FIXED_MODE, 0x13},		/* minor 4-7 */
-	    {1024, ST_Q_FORCE_FIXED_MODE, 0x13},	/* minor 8-11 */
-	    {0, ST_Q_FORCE_VAR_MODE, 0x13}		/* minor 12-15 */
+	    {512, ST_Q_FORCE_FIXED_MODE, DDS},		/* minor 4-7 */
+	    {1024, ST_Q_FORCE_FIXED_MODE, DDS},		/* minor 8-11 */
+	    {0, ST_Q_FORCE_VAR_MODE, DDS}		/* minor 12-15 */
 	}
     },
-    {(char *) 0}
+    {0}
 };
 
 #define NOEJECT 0
@@ -232,17 +232,17 @@ struct cfdriver stcd = {
 };
 
 int	st_space __P((struct st_data *, int number, u_int what, int flags));
-int	st_rewind __P((struct st_data *, boolean immed, int flags));
+int	st_rewind __P((struct st_data *, u_int immediate, int flags));
 int	st_mode_sense __P((struct st_data *, int flags));
 int	st_decide_mode __P((struct st_data *, boolean first_read));
-int	st_rd_blk_lim __P((struct st_data *, int flags));
+int	st_read_block_limits __P((struct st_data *, int flags));
 int	st_touch_tape __P((struct st_data *));
 int	st_write_filemarks __P((struct st_data *, int number, int flags));
 int	st_load __P((struct st_data *, u_int type, int flags));
 int	st_mode_select __P((struct st_data *, int flags));
 void    ststrategy();
 void    stminphys();
-int	st_chkeod();
+int	st_check_eod();
 void    ststart();
 void	st_unmount();
 int	st_mount_tape();
@@ -625,14 +625,14 @@ st_mount_tape(dev, flags)
 	 * Some devices can't tell you much until they have been
 	 * asked to look at the media. This quirk does this.
 	 */
-	if (st->quirks & ST_Q_SNS_HLP)
+	if (st->quirks & ST_Q_SENSE_HELP)
 		if (error = st_touch_tape(st))
 			return error;
 	/*
 	 * Load the physical device parameters
 	 * loads: blkmin, blkmax
 	 */
-	if (error = st_rd_blk_lim(st, 0))
+	if (error = st_read_block_limits(st, 0))
 		return error;
 	/*
 	 * Load the media dependent parameters
@@ -694,8 +694,8 @@ st_unmount(st, eject)
 	if (!(st->flags & ST_MOUNTED))
 		return;
 	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
-	st_chkeod(st, FALSE, &nmarks, SCSI_SILENT);
-	st_rewind(st, FALSE, SCSI_SILENT);
+	st_check_eod(st, FALSE, &nmarks, SCSI_SILENT);
+	st_rewind(st, 0, SCSI_SILENT);
 	scsi_prevent(sc_link, PR_ALLOW, SCSI_SILENT);
 	if (eject)
 		st_load(st, LD_UNLOAD, SCSI_SILENT);
@@ -1027,29 +1027,31 @@ ststart(unit)
 				continue;	/* seek more work */
 			}
 		}
+
 		/*
 		 *  Fill out the scsi command
 		 */
 		bzero(&cmd, sizeof(cmd));
 		if ((bp->b_flags & B_READ) == B_WRITE) {
-			cmd.op_code = WRITE_COMMAND_TAPE;
+			cmd.op_code = WRITE;
 			st->flags &= ~ST_FM_WRITTEN;
 			st->flags |= ST_WRITTEN;
 			flags = SCSI_DATA_OUT;
 		} else {
-			cmd.op_code = READ_COMMAND_TAPE;
+			cmd.op_code = READ;
 			flags = SCSI_DATA_IN;
 		}
+
 		/*
 		 * Handle "fixed-block-mode" tape drives by using the
 		 * block count instead of the length.
 		 */
 		if (st->flags & ST_FIXEDBLOCKS) {
-			cmd.byte2 |= SRWT_FIXED;
+			cmd.byte2 |= SRW_FIXED;
 			lto3b(bp->b_bcount / st->blksiz, cmd.len);
-		} else {
+		} else
 			lto3b(bp->b_bcount, cmd.len);
-		}
+
 		/*
 		 * go ask the adapter to do all this for us
 		 */
@@ -1129,7 +1131,7 @@ stioctl(dev, cmd, arg, flag)
 		case MTBSF:	/* backward space file */
 			number = -number;
 		case MTFSF:	/* forward space file */
-			error = st_chkeod(st, FALSE, &nmarks, flags);
+			error = st_check_eod(st, FALSE, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number - nmarks,
 				    SP_FILEMARKS, flags);
@@ -1137,12 +1139,12 @@ stioctl(dev, cmd, arg, flag)
 		case MTBSR:	/* backward space record */
 			number = -number;
 		case MTFSR:	/* forward space record */
-			error = st_chkeod(st, TRUE, &nmarks, flags);
+			error = st_check_eod(st, TRUE, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
 		case MTREW:	/* rewind */
-			error = st_rewind(st, FALSE, flags);
+			error = st_rewind(st, 0, flags);
 			break;
 		case MTOFFL:	/* rewind and put the drive offline */
 			st_unmount(st, EJECT);
@@ -1150,12 +1152,12 @@ stioctl(dev, cmd, arg, flag)
 		case MTNOP:	/* no operation, sets status only */
 			break;
 		case MTRETEN:	/* retension the tape */
-			error = st_load(st, LD_RETEN, flags);
+			error = st_load(st, LD_RETENSION, flags);
 			if (!error)
 				error = st_load(st, LD_LOAD, flags);
 			break;
 		case MTEOM:	/* forward space to end of media */
-			error = st_chkeod(st, FALSE, &nmarks, flags);
+			error = st_check_eod(st, FALSE, &nmarks, flags);
 			if (!error)
 				error = st_space(st, 1, SP_EOM, flags);
 			break;
@@ -1257,23 +1259,23 @@ st_read(st, buf, size, flags)
 	int flags;
 	char *buf;
 {
-	struct scsi_rw_tape scsi_cmd;
+	struct scsi_rw_tape cmd;
 
 	/*
 	 * If it's a null transfer, return immediatly
 	 */
 	if (size == 0)
 		return 0;
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = READ_COMMAND_TAPE;
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
-		scsi_cmd.byte2 |= SRWT_FIXED;
+		cmd.byte2 |= SRW_FIXED;
 		lto3b(size / (st->blksiz ? st->blksiz : DEF_FIXED_BSIZE),
-		    scsi_cmd.len);
+		    cmd.len);
 	} else
-		lto3b(size, scsi_cmd.len);
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) buf, size, 0, 100000, NULL,
+		lto3b(size, cmd.len);
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_IN);
 }
 
@@ -1287,14 +1289,14 @@ st_read(st, buf, size, flags)
  * Ask the drive what it's min and max blk sizes are.
  */
 int 
-st_rd_blk_lim(st, flags)
+st_read_block_limits(st, flags)
 	struct st_data *st;
 	int flags;
 {
-	struct scsi_blk_limits scsi_cmd;
-	struct scsi_blk_limits_data scsi_blkl;
-	int error;
+	struct scsi_block_limits cmd;
+	struct scsi_block_limits_data block_limits;
 	struct scsi_link *sc_link = st->sc_link;
+	int error;
 
 	/*
 	 * First check if we have it all loaded
@@ -1305,19 +1307,19 @@ st_rd_blk_lim(st, flags)
 	/*
 	 * do a 'Read Block Limits'
 	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = READ_BLK_LIMITS;
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = READ_BLOCK_LIMITS;
 
 	/*
 	 * do the command, update the global values
 	 */
-	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) & scsi_blkl, sizeof(scsi_blkl),
+	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) &block_limits, sizeof(block_limits),
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN))
 		return error;
 
-	st->blkmin = b2tol(scsi_blkl.min_length);
-	st->blkmax = _3btol(&scsi_blkl.max_length_2);
+	st->blkmin = b2tol(block_limits.min_length);
+	st->blkmax = _3btol(&block_limits.max_length_2);
 
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("(%d <= blksiz <= %d)\n", st->blkmin, st->blkmax));
@@ -1342,7 +1344,7 @@ st_mode_sense(st, flags)
 	u_int scsi_sense_len;
 	int error;
 	char *scsi_sense_ptr;
-	struct scsi_mode_sense scsi_cmd;
+	struct scsi_mode_sense cmd;
 	struct scsi_sense {
 		struct scsi_mode_header header;
 		struct blk_desc blk_desc;
@@ -1375,9 +1377,9 @@ st_mode_sense(st, flags)
 	/*
 	 * Set up a mode sense 
 	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = MODE_SENSE;
-	scsi_cmd.length = scsi_sense_len;
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = MODE_SENSE;
+	cmd.length = scsi_sense_len;
 
 	/*
 	 * do the command, but we don't need the results
@@ -1385,8 +1387,8 @@ st_mode_sense(st, flags)
 	 * or if we need it as a template for the mode select
 	 * store it away.
 	 */
-	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) scsi_sense_ptr, scsi_sense_len,
+	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) scsi_sense_ptr, scsi_sense_len,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN))
 		return error;
 
@@ -1422,8 +1424,8 @@ st_mode_select(st, flags)
 	int flags;
 {
 	u_int dat_len;
-	char   *dat_ptr;
-	struct scsi_mode_select scsi_cmd;
+	char *dat_ptr;
+	struct scsi_mode_select cmd;
 	struct dat {
 		struct scsi_mode_header header;
 		struct blk_desc blk_desc;
@@ -1447,10 +1449,11 @@ st_mode_select(st, flags)
 	/*
 	 * Set up for a mode select
 	 */
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = MODE_SELECT;
+	cmd.length = dat_len;
+
 	bzero(dat_ptr, dat_len);
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = MODE_SELECT;
-	scsi_cmd.length = dat_len;
 	((struct dat *) dat_ptr)->header.blk_desc_len = sizeof(struct blk_desc);
 	((struct dat *) dat_ptr)->header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
 	((struct dat *) dat_ptr)->blk_desc.density = st->density;
@@ -1463,11 +1466,12 @@ st_mode_select(st, flags)
 		/* the Tandberg tapes need the block size to */
 		/* be set on each mode sense/select. */
 	}
+
 	/*
 	 * do the command
 	 */
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) dat_ptr, dat_len, ST_RETRIES, 5000,
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) dat_ptr, dat_len, ST_RETRIES, 5000,
 	    NULL, flags | SCSI_DATA_OUT);
 }
 
@@ -1481,8 +1485,8 @@ st_space(st, number, what, flags)
 	int flags;
 	int number;
 {
+	struct scsi_space cmd;
 	int error;
-	struct scsi_space scsi_cmd;
 
 	switch (what) {
 	case SP_BLKS:
@@ -1543,12 +1547,14 @@ st_space(st, number, what, flags)
 	}
 	if (number == 0)
 		return 0;
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = SPACE;
-	scsi_cmd.byte2 = what & SS_CODE;
-	lto3b(number, scsi_cmd.number);
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, 0, 600000, NULL, flags);
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = SPACE;
+	cmd.byte2 = what;
+	lto3b(number, cmd.number);
+
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), 0, 0, 0, 600000, NULL, flags);
 }
 
 /*
@@ -1560,7 +1566,7 @@ st_write_filemarks(st, number, flags)
 	int flags;
 	int number;
 {
-	struct scsi_write_filemarks scsi_cmd;
+	struct scsi_write_filemarks cmd;
 
 	/*
 	 * It's hard to write a negative number of file marks.
@@ -1581,11 +1587,13 @@ st_write_filemarks(st, number, flags)
 	default:
 		st->flags &= ~(ST_PER_ACTION | ST_WRITTEN);
 	}
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = WRITE_FILEMARKS;
-	lto3b(number, scsi_cmd.number);
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, 0, 100000, NULL, flags);
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = WRITE_FILEMARKS;
+	lto3b(number, cmd.number);
+
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), 0, 0, 0, 100000, NULL, flags);
 }
 
 /*
@@ -1597,7 +1605,7 @@ st_write_filemarks(st, number, flags)
  * true, which were skipped) to get back original position.
  */
 int 
-st_chkeod(st, position, nmarks, flags)
+st_check_eod(st, position, nmarks, flags)
 	struct st_data *st;
 	boolean position;
 	int *nmarks;
@@ -1631,48 +1639,51 @@ st_load(st, type, flags)
 	u_int type;
 	int flags;
 {
-	struct scsi_load scsi_cmd;
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_load cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	if (type != LD_LOAD) {
 		int error;
 		int nmarks;
 
-		error = st_chkeod(st, FALSE, &nmarks, flags);
+		error = st_check_eod(st, FALSE, &nmarks, flags);
 		if (error)
 			return error;
 	}
 	if (st->quirks & ST_Q_IGNORE_LOADS)
 		return 0;
-	scsi_cmd.op_code = LOAD_UNLOAD;
-	scsi_cmd.how |= type;
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, ST_RETRIES, 300000, NULL, flags);
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = LOAD;
+	cmd.how = type;
+
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), 0, 0, ST_RETRIES, 300000, NULL, flags);
 }
 
 /*
  *  Rewind the device
  */
 int 
-st_rewind(st, immed, flags)
+st_rewind(st, immediate, flags)
 	struct st_data *st;
+	u_int immediate;
 	int flags;
-	boolean immed;
 {
-	struct scsi_rewind scsi_cmd;
+	struct scsi_rewind cmd;
 	int error;
 	int nmarks;
 
-	error = st_chkeod(st, FALSE, &nmarks, flags);
+	error = st_check_eod(st, FALSE, &nmarks, flags);
 	if (error)
 		return error;
 	st->flags &= ~ST_PER_ACTION;
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = REWIND;
-	scsi_cmd.byte2 = immed ? SR_IMMED : 0;
-	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, ST_RETRIES, immed ? 5000 : 300000, NULL,
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.op_code = REWIND;
+	cmd.byte2 = immediate;
+
+	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), 0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL,
 	    flags);
 }
 
@@ -1730,7 +1741,7 @@ st_interpret_sense(xs)
 			 * drives to return proper MODE SENSE
 			 * information.
 			 */
-			if ((st->quirks & ST_Q_SNS_HLP) &&
+			if ((st->quirks & ST_Q_SENSE_HELP) &&
 			    !(sc_link->flags & SDEV_MEDIA_LOADED))
 				st->blksiz -= 512;
 		}
@@ -1780,7 +1791,7 @@ st_interpret_sense(xs)
 		 * is required for these drives to return proper
 		 * MODE SENSE information.
 		 */
-		if ((st->quirks & ST_Q_SNS_HLP) &&
+		if ((st->quirks & ST_Q_SENSE_HELP) &&
 		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
 			/* still starting */
 			st->blksiz -= 512;
@@ -1842,7 +1853,7 @@ st_touch_tape(st)
 		if (error = st_mode_select(st, 0))
 			goto bad;
 		st_read(st, buf, readsiz, SCSI_SILENT);
-		if (error = st_rewind(st, FALSE, 0)) {
+		if (error = st_rewind(st, 0, 0)) {
 bad:			free(buf, M_TEMP);
 			return error;
 		}
