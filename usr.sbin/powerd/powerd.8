@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.1 2003/04/18 04:54:50 thorpej Exp $
+.\"	$NetBSD: powerd.8,v 1.2 2003/04/18 15:15:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -57,7 +57,8 @@ defined by the system administrator.
 supports the following options:
 .Bl -tag -width xxxx
 .It Fl d
-Enable debugging mode.  Verbose messages will be sent to stderr and
+Enable debugging mode.
+Verbose messages will be sent to stderr and
 .Nm
 will stay in the foreground of the controlling terminal.
 .El
@@ -67,12 +68,13 @@ All of
 configuration is encapsulated into scripts that are run when power
 management events occur.
 .Nm
-will look for these scripts in two locations.  The first location is
-.Pa /etc/powerd/scripts/<power_type> ,
+will look for these scripts in two locations.
+The first location is
+.Pa /etc/powerd/scripts/\*[Lt]power_type\*[Gt] ,
 where
-.Pa <power_type>
+.Pa \*[Lt]power_type\*[Gt]
 is defined by the power management mechanism supported by the system,
-e.g.
+e.g.,
 .Dq apm
 or
 .Dq acpi .
@@ -82,7 +84,8 @@ looks in
 .Pa /etc/powerd/scripts .
 .Pp
 Configuration scripts are called with different arguments, depending on
-the script class.  These classes are described in the following sections.
+the script class.
+These classes are described in the following sections.
 .Ss POWER SWITCH SCRIPTS
 Power switch scripts are called when a state change event occurs on
 a power switch device.
