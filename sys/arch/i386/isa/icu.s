@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.8 1993/10/13 01:18:19 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.9 1993/10/15 03:18:03 mycroft Exp $
  */
 
 /*
@@ -100,7 +100,7 @@ INTRLOCAL(unpend_v):
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
-	movl    Vresume(,%eax,4),%eax
+	movl    _Xresume(,%eax,4),%eax
 	jmp     %eax
   
 	ALIGN_TEXT
@@ -264,7 +264,7 @@ INTRLOCAL(unpend_V):
  * We would prefer to call the intr handler directly here but that doesn't
  * work for badly behaved handlers that want the interrupt frame.
  *
- *	movl    Vresume(,%eax,4),%edx
+ *	movl    _Xresume(,%eax,4),%edx
  */
 	jmp     *vec(,%eax,4)
 
