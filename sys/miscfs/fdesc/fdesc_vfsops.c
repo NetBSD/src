@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.28 1999/07/08 01:26:26 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.29 2000/03/16 18:08:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -345,6 +345,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
+	fdesc_done,
 	fdesc_sysctl,
 	NULL,				/* vfs_mountroot */
 	fdesc_checkexp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.41 1999/11/15 20:55:48 tron Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.42 2000/03/16 18:08:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,6 +53,7 @@
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
+void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct proc *));
 int adosfs_start __P((struct mount *, int, struct proc *));
@@ -794,6 +795,12 @@ adosfs_init()
 	    M_ANODE);
 }
 
+void
+adosfs_done()
+{
+	pool_destroy(&adosfs_node_pool);
+}
+
 int
 adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -831,6 +838,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
+	adosfs_done,
 	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	adosfs_checkexp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.66 2000/02/01 10:33:19 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.67 2000/03/16 18:08:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -120,6 +120,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_fhtovp,
 	msdosfs_vptofh,
 	msdosfs_init,
+	msdosfs_done,
 	msdosfs_sysctl,
 	msdosfs_mountroot,
 	msdosfs_checkexp,

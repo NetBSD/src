@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.39 2000/02/26 17:25:17 sommerfeld Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.40 2000/03/16 18:08:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -90,6 +90,13 @@ msdosfs_init()
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_MSDOSFSNODE);
+}
+
+void
+msdosfs_done()
+{
+	hashdone(dehashtbl, M_MSDOSFSMNT);
+	pool_destroy(&msdosfs_denode_pool);
 }
 
 static struct denode *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.7 1999/02/26 23:44:48 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.8 2000/03/16 18:08:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -76,7 +76,6 @@ int ext2fs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
 int ext2fs_bmap __P((void *));
 
 /* ext2fs_inode.c */
-void ext2fs_init __P((void));
 int ext2fs_update __P((void *));
 int ext2fs_truncate __P((void *));
 int ext2fs_inactive __P((void *));
@@ -100,6 +99,8 @@ void	ext2fs_checkoverlap __P((struct buf *, struct inode *));
 #endif
 
 /* ext2fs_vfsops.c */
+void ext2fs_init __P((void));
+void ext2fs_done __P((void));
 int ext2fs_mountroot __P((void));
 int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		   struct proc *));

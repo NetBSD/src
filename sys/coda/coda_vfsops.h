@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.5 2000/03/16 18:08:21 jdolecek Exp $	*/
 
 /*
  * 
@@ -59,6 +59,7 @@ int coda_fhtovp(struct mount *, struct fid *, struct mbuf *, struct vnode **,
 		       int *, struct ucred **);
 int coda_vptofh(struct vnode *, struct fid *);
 void coda_init(void);
+void coda_done(void);
 int coda_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int getNewVnode(struct vnode **vpp);

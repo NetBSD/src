@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.30 2000/02/25 22:33:43 fvdl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.31 2000/03/16 18:08:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -319,6 +319,15 @@ procfs_hashinit()
 	pfs_hashtbl = hashinit(desiredvnodes / 4, M_UFSMNT, M_WAITOK,
 	    &pfs_ihash);
 	simple_lock_init(&pfs_hash_slock);
+}
+
+/*
+ * Free pfsnode hash table.
+ */
+void
+procfs_hashdone()
+{
+	hashdone(pfs_hashtbl, M_UFSMNT);
 }
 
 struct vnode *

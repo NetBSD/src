@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.4 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.5 2000/03/16 18:08:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -73,13 +73,22 @@ int prtactive;	/* 1 => print out reclaim of active vnodes */
 void
 filecore_init()
 {
-
 	filecorehashtbl = hashinit(desiredvnodes, M_FILECOREMNT, M_WAITOK,
 	    &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
 	    0, 0, 0, "filecrnopl", 0, pool_page_alloc_nointr,
 	    pool_page_free_nointr, M_FILECORENODE);
+}
+
+/*
+ * Destroy node pool and hash table.
+ */
+void
+filecore_done()
+{
+	pool_destroy(&filecore_node_pool);
+	hashdone(filecorehashtbl, M_FILECOREMNT);
 }
 
 /*

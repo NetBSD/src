@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.35 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.36 2000/03/16 18:08:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -62,6 +62,7 @@
 dev_t rrootdev = NODEV;
 
 void	kernfs_init __P((void));
+void	kernfs_done __P((void));
 void	kernfs_get_rrootdev __P((void));
 int	kernfs_mount __P((struct mount *, const char *, void *,
 	    struct nameidata *, struct proc *));
@@ -82,6 +83,11 @@ int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 
 void
 kernfs_init()
+{
+}
+
+void
+kernfs_done()
 {
 }
 
@@ -375,6 +381,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	kernfs_done,
 	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	kernfs_checkexp,

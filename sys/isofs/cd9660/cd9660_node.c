@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.21 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.22 2000/03/16 18:08:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -85,7 +85,6 @@ static u_int cd9660_chars2ui __P((u_char *, int));
 void
 cd9660_init()
 {
-
 	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
 #ifdef ISODEVMAP
@@ -95,6 +94,19 @@ cd9660_init()
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
 	    "cd9660nopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_ISOFSNODE);
+}
+
+/*
+ * Destroy node pool and hash table.
+ */
+void
+cd9660_done()
+{
+	hashdone(isohashtbl, M_ISOFSMNT);
+#ifdef ISODEVMAP
+	hashdone(idvhashtbl, M_ISOFSMNT);
+#endif
+	pool_destroy(&cd9660_node_pool);
 }
 
 #ifdef ISODEVMAP

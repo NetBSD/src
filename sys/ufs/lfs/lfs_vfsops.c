@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.46 2000/01/19 00:03:05 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.47 2000/03/16 18:08:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ struct vfsops lfs_vfsops = {
 	lfs_fhtovp,
 	lfs_vptofh,
 	lfs_init,
+	lfs_done,
 	lfs_sysctl,
 	lfs_mountroot,
 	ufs_check_export,
@@ -152,6 +153,13 @@ lfs_init()
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 		  M_LFSNODE);
+}
+
+void
+lfs_done()
+{
+	ufs_done();
+	pool_destroy(&lfs_inode_pool);
 }
 
 /*

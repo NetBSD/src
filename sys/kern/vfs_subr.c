@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.120 2000/03/15 16:28:45 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.121 2000/03/16 18:08:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2504,6 +2504,11 @@ vfs_detach(vfs)
 
 	if (v == NULL)
 		return (ESRCH);
+
+	/*
+	 * Now run the file system-specific cleanups.
+	 */
+	(*vfs->vfs_done)();
 
 	/*
 	 * Free the vnode operations vector.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.24 2000/02/08 16:17:59 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.25 2000/03/16 18:08:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -96,6 +96,7 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 int *, struct ucred **));
 #elif defined(__NetBSD__)
 static void	ntfs_init __P((void));
+static void	ntfs_done __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 struct vnode **));
 static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
@@ -196,10 +197,16 @@ ntfs_mountroot()
 }
 
 static void
-ntfs_init ()
+ntfs_init()
 {
 	ntfs_nthashinit();
 	ntfs_toupper_init();
+}
+
+static void
+ntfs_done()
+{
+	ntfs_nthashdone();
 }
 
 #elif defined(__FreeBSD__)
@@ -1031,26 +1038,12 @@ struct vfsops ntfs_vfsops = {
 	ntfs_fhtovp,
 	ntfs_vptofh,
 	ntfs_init,
+	ntfs_done,
 	ntfs_sysctl,
 	ntfs_mountroot,
 	ntfs_checkexp,
 	ntfs_vnodeopv_descs,
 };
-#else /* !NetBSD && !FreeBSD */
-static struct vfsops ntfs_vfsops = {
-	ntfs_mount,
-	ntfs_start,
-	ntfs_unmount,
-	ntfs_root,
-	ntfs_quotactl,
-	ntfs_statfs,
-	ntfs_sync,
-	ntfs_vget,
-	ntfs_fhtovp,
-	ntfs_vptofh,
-	ntfs_init,
-};
-VFS_SET(ntfs_vfsops, ntfs, MOUNT_NTFS, 0);
 #endif
 
 
