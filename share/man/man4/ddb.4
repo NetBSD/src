@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.34 1999/03/18 22:04:23 ross Exp $
+.\"	$NetBSD: ddb.4,v 1.35 1999/05/31 07:05:56 ross Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -254,7 +254,11 @@ examine bytes (8 bits).
 .It Cm h
 examine half-words (16 bits).
 .It Cm l
-examine long-words (32 bits).
+examine words (legacy
+.Dq long ,
+32 bits).
+.It Cm L
+examine long words (implementation dependent)
 .It Cm a
 print the location being examined.
 .It Cm A
