@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.15 1999/09/05 09:48:48 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.16 1999/10/29 16:50:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.15 1999/09/05 09:48:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.16 1999/10/29 16:50:23 drochner Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.15 1999/09/05 09:48:48 nisimu
 #include <dev/ic/z8530sc.h>
 #include <pmax/tc/zs_ioasicvar.h>	/* console */
 
-#include "wsdisplay.h"
+#include "zskbd.h"
 
 void dec_3maxplus_init __P((void));
 void dec_3maxplus_bus_reset __P((void));
@@ -228,11 +228,11 @@ dec_3maxplus_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NWSDISPLAY > 0
+#if NZSKBD > 0
 		zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
+#endif
 		if (tc_fb_cnattach(crt) > 0)
 			return;
-#endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
 	}
