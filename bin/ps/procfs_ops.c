@@ -1,4 +1,4 @@
-/*  $NetBSD: procfs_ops.c,v 1.3 1999/03/27 21:38:08 bgrayson Exp $ */
+/*  $NetBSD: procfs_ops.c,v 1.4 1999/03/28 00:46:47 bgrayson Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,8 +66,32 @@
 	}				\
 }
 
+static int		verify_procfs_fd __P((int, const char *));
 static int		parsekinfo __P((const char *, struct kinfo_proc *));
 struct kinfo_proc *	procfs_getprocs __P((int, int, int *));
+
+static int
+verify_procfs_fd (fd, path)
+	int fd;
+	const char *path;
+{
+	struct statfs procfsstat;
+
+	/*  If the fstatfs fails, die immediately.  Since we
+	 *  already have the FD open, any error is probably one
+	 *  that can't be worked around.  */
+	if (fstatfs(fd, &procfsstat)) {
+		err(1, "fstatfs on %s", path);
+	}
+	/*  Now verify that the open file is truly on a procfs
+	 *  filesystem.  */
+	if (strcmp(procfsstat.f_fstypename, MOUNT_PROCFS)) {
+		warnx("%s is on a '%s' filesystem, not 'procfs'???", path,
+				procfsstat.f_fstypename);
+		return -1;
+	}
+	return 0;
+}
 
 static int
 parsekinfo (path, kp)
@@ -75,19 +99,41 @@ parsekinfo (path, kp)
 	struct kinfo_proc *kp;
 {
 	char fullpath[MAXPATHLEN];
-	int fd, nbytes, devmajor, devminor;
+	int dirfd, fd, nbytes, devmajor, devminor;
 	struct timeval usertime, systime, starttime;
 	char buff[STATUS_SIZE];
 	char flagstr[256];
 
+	/*  Verify that /proc/<pid> is a procfs file (and that no
+	 *  one has mounted anything on top of it).  If we didn't
+	 *  do this, an intruder could hide processes by simply
+	 *  mount_null'ing /tmp on top of the /proc/<pid>
+	 *  directory.  (And we can't just print warnings if we fail
+	 *  to open /proc/<pid>/status, because the process may
+	 *  have died since our getdents() call.)  */
+	snprintf(fullpath, MAXPATHLEN, "/proc/%s", path);
+	dirfd=open(fullpath, O_RDONLY, 0);
+	if (verify_procfs_fd(dirfd, fullpath)) {
+		close(dirfd);
+		return -1;
+	}
 	/*  Open /proc/"path"/status, and parse it into the kinfo_proc.  */
 	snprintf(fullpath, MAXPATHLEN, "/proc/%s/status", path);
 	fd=open(fullpath, O_RDONLY, 0);
+	close(dirfd);
 	if (fd == -1) {
 	  	/*  Don't print warning, as the process may have
 		 *  died since our scan of the directory entries.  */
 		/*warn("Open failed for %s", fullpath);*/
+		close(fd);
 		return -1;  /*  Process may no longer exist.  */
+	}
+	/*  Bail out for this process attempt if it isn't on a
+	 *  procfs.  Some intruder could have mounted something
+	 *  on top of portions of /proc.  */
+	if (verify_procfs_fd(fd, fullpath)) {
+		close(fd);
+		return -1;
 	}
 	nbytes=read(fd, buff, STATUS_SIZE);
 	close(fd);
@@ -155,12 +201,18 @@ procfs_getprocs(op, arg, cnt)
 	procdirfd = open("/proc", O_RDONLY, 0);
 	if (procdirfd == -1) {
 		warn("open of /proc directory");
+		close(procdirfd);
+		return 0;
+	}
+	if (verify_procfs_fd(procdirfd, "/proc")) {
+		close(procdirfd);
 		return 0;
 	}
 
 	direntbuff = malloc(statbuf.st_blksize);
 	if (direntbuff == NULL) {
 		warn("malloc() of %d bytes", statbuf.st_blksize);
+		close(procdirfd);
 		return 0;
 	}
 	/* Use sysctl to find out the total number of processes.
