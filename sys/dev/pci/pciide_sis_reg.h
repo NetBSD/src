@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.6 2000/05/15 08:46:01 bouyer Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.7 2001/10/16 08:10:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -41,7 +41,7 @@
 #define SIS_TIM(channel) (0x40 + (channel * 4))
 #define SIS_TIM_REC_OFF(drive) (16 * (drive))
 #define SIS_TIM_ACT_OFF(drive) (8 + 16 * (drive))
-#define SIS_TIM_UDMA_TIME_OFF(drive) (13 + 16 * (drive))
+#define SIS_TIM_UDMA_TIME_OFF(drive) (12 + 16 * (drive))
 #define SIS_TIM_UDMA_EN(drive) (1 << (15 + 16 * (drive)))
 
 /* IDE general control register 0 (8 bits) */
@@ -69,4 +69,4 @@ static int8_t sis_pio_rec[] = {7, 0, 5, 3, 1};
 static int8_t sis_dma_act[] = {0, 3, 3};
 static int8_t sis_dma_rec[] = {0, 2, 1};
 #endif
-static int8_t sis_udma_tim[] = {3, 2, 1};
+static int8_t sis_udma_tim[] = {14, 12, 10, 10, 9, 8};
