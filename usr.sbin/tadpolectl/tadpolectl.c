@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.2 1999/12/20 09:51:53 jdc Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.3 2000/02/23 11:33:58 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include <sys/envsys.h>
 #include <machine/apmvar.h>
 #include <machine/tctrl.h>
+
+#define TCTRL_DEV	"/dev/tctrl0"
 
 int aflag, nflag, wflag, dev;
 
@@ -747,7 +749,8 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	dev = open("/dev/tctrl0", O_RDONLY, NULL);
+	if ((dev = open(TCTRL_DEV, O_RDONLY, NULL)) == -1)
+		err(1, "%s", TCTRL_DEV);
 
 	if (aflag) {
 		for (j=0; j < NUM_MIBS; j++) {
