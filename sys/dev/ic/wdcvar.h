@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.71 2004/08/12 22:39:41 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.72 2004/08/13 02:10:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -191,7 +191,6 @@ void	wdcattach(struct wdc_channel *);
 int	wdcdetach(struct device *, int);
 int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
-void	wdc_exec_xfer(struct wdc_channel *, struct ata_xfer *);
 
 void	wdcstart(struct wdc_channel *);
 void	wdcrestart(void*);
