@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.21 2003/06/03 11:54:52 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.22 2003/06/06 14:31:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,36 +92,6 @@ message dobootblks
 {Installation des block de démarrage sur %s ...
 }
 
-message askfsroot
-{Je vais vous demander la taille et le point de montage de quelque partitions.
-
-Et tout d'abord la partition racine. Il vous reste %d %s de libre sur
-votre disque.
-Taille de la partition racine ? }
-
-message askfsswap
-{
-Et maintenant la taille de swap. Il vous reste %d %s de libre sur
-votre disque.
-Taille du swap ? }
-
-message askfsusr
-{
-Et maintenant la taille de /usr. Il vous reste %d %s de libre sur
-votre disque.
-Taille du /usr ? }
-
-message otherparts
-{Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la
-taille et le point de " montage " des partitions suivantes.
-
-}
-
-message askfspart
-{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur
-votre disque.
-Taille de la partition ? }
-
 message cyl1024
 { Le label (liste des partitions) que vous avez entré a une partition racine
 qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
@@ -189,11 +159,12 @@ ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
 
-message emulbackup	/* XXX translate */
-{Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted file system. It has been given a '.old' extension.
-Once you bring your upgraded system back up, you may need to take care
-of merging the newly created /emul/aout directory with the old one.
+message emulbackup
+{Ou /emul/aout ou répertoire d' /emul sur votre système était un lien symbolique
+se dirigeant à un file system non-monté. Il a été donné une extension d' 'old'. Une
+fois que vous apportez votre copie de sauvegarde améliorée de système, vous
+pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
+d' /emul/aout avec le vieil.
 }
 
 message Change_a

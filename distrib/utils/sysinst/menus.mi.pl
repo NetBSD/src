@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.17 2003/06/04 20:05:13 dsl Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.18 2003/06/06 14:31:23 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -92,16 +92,7 @@ menu ok, title "Nacisnij enter aby kontynuowac";
 menu layout, title  "Wybierz swoja instalacje";
 	option "Standardowa", 	  exit, action { layoutkind = 1; md_set_no_x(); };
 	option "Standardowa z X", exit, action { layoutkind = 2; };
-	option "Inna", 	  exit, action { layoutkind = 3; };
 	option "Istniejaca", 	  exit, action { layoutkind = 4; };
-
-menu layoutparts, exit, title "Wybierz systemy plikow";
-	display action { show_cur_filesystems (); };
-	option "swap",		  action { layout_swap = (layout_swap & 1) - 1; };
-	option "/usr",		  action { layout_usr = (layout_usr & 1) - 1; };
-	option "/var",	 	  action { layout_var = (layout_var & 1) - 1; };
-	option "/home",		  action { layout_home = (layout_home & 1) - 1; };
-	option "/tmp (mfs)",	  action { layout_tmp = (layout_tmp & 1) - 1; };
 
 menu sizechoice, title  "Wybierz specyfikator rozmiaru";
 	option "Megabajty", exit, action 
