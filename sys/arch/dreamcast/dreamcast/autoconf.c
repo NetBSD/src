@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2003/07/15 01:31:40 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2005/02/19 15:42:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2003/07/15 01:31:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/02/19 15:42:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2003/07/15 01:31:40 lukem Exp $");
 #include <sys/conf.h>
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/* Start configuration */
 	splhigh();
@@ -56,7 +56,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	/* No boot information */
