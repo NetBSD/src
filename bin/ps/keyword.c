@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.9 1995/05/08 23:11:31 cgd Exp $	*/
+/*	$NetBSD: keyword.c,v 1.10 1995/08/14 05:00:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: keyword.c,v 1.9 1995/05/08 23:11:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: keyword.c,v 1.10 1995/08/14 05:00:03 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ VAR var[] = {
 	{"pmem", "", "%mem"},
 	{"ppid", "PPID", NULL, 0, evar, PIDLEN, EOFF(e_ppid), LONG, PIDFMT},
 	{"pri", "PRI", NULL, 0, pri, 3},
-	{"re", "RE", NULL, 0, pvar, 3, POFF(p_swtime), ULONG, "d"},
+	{"re", "RE", NULL, TWODGT, pvar, 3, POFF(p_swtime), ULONG, "d"},
 	{"rgid", "RGID", NULL, 0, evar, UIDLEN, EOFF(e_pcred.p_rgid),
 		ULONG, UIDFMT},
 	{"rlink", "RLINK", NULL, 0, pvar, 8, POFF(p_back), KPTR, "x"},
@@ -152,7 +152,7 @@ VAR var[] = {
 	{"sigignore", "IGNORED",
 		NULL, 0, pvar, 8, POFF(p_sigignore), LONG, "x"},
 	{"sigmask", "BLOCKED", NULL, 0, pvar, 8, POFF(p_sigmask), LONG, "x"},
-	{"sl", "SL", NULL, 0, pvar, 3, POFF(p_slptime), ULONG, "d"},
+	{"sl", "SL", NULL, TWODGT, pvar, 3, POFF(p_slptime), ULONG, "d"},
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, 0, state, 4},
