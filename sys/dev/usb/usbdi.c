@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.24 1999/06/14 17:09:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.25 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 	if (r != USBD_NORMAL_COMPLETION)
 		goto bad2;
 	ipipe->intrreqh = reqh;
+	ipipe->repeat = 1;
 	r = usbd_transfer(reqh);
 	*pipe = ipipe;
 	if (r != USBD_IN_PROGRESS)
@@ -148,6 +149,7 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 
  bad3:
 	ipipe->intrreqh = 0;
+	ipipe->repeat = 0;
  bad2:
 	usbd_close_pipe(ipipe);
  bad1:
@@ -234,6 +236,7 @@ usbd_alloc_request()
 	if (!reqh)
 		return (0);
 	memset(reqh, 0, sizeof *reqh);
+	DPRINTFN(1,("usbd_alloc_request() = %p\n", reqh));
 	return (reqh);
 }
 
@@ -241,6 +244,7 @@ usbd_status
 usbd_free_request(reqh)
 	usbd_request_handle reqh;
 {
+	DPRINTFN(1,("usbd_free_request: %p\n", reqh));
 	SIMPLEQ_INSERT_HEAD(&usbd_free_requests, reqh, next);
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -537,7 +541,10 @@ usbd_ar_pipe(pipe)
 			reqh->callback(reqh, reqh->priv, reqh->status);
 	}
 #else
+	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
 	while ((reqh = SIMPLEQ_FIRST(&pipe->queue))) {
+		DPRINTFN(2,("usbd_ar_pipe: reqh=%p (methods=%p)\n", 
+			    pipe, pipe->methods));
 		pipe->methods->abort(reqh);
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 	}
@@ -776,16 +783,6 @@ usbd_get_quirks(dev)
 	usbd_device_handle dev;
 {
 	return (dev->quirks);
-}
-
-void
-usbd_set_disco(p, hdl, data)
-	usbd_pipe_handle p;
-	void (*hdl) __P((void *));
-	void *data;
-{
-	p->disco = hdl;
-	p->discoarg = data;
 }
 
 /* XXX do periodic free() of free list */

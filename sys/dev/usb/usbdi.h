@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.19 1999/06/14 17:09:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.20 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -243,7 +243,6 @@ struct usb_attach_arg {
 
 void usbd_devinfo __P((usbd_device_handle, int, char *));
 struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
-void usbd_set_disco __P((usbd_pipe_handle, void (*)(void *), void *));
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
 
