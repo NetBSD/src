@@ -42,7 +42,7 @@
 
 	.data
 randseed:
-	.word	1
+	.long	1
 	.text
 ENTRY(random)
 	movl	$16807,%eax
