@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.13 2001/12/01 19:20:32 wiz Exp $
+.\"	$NetBSD: getopt.1,v 1.14 2002/09/30 11:09:02 grant Exp $
 .Dd November 9, 2000
 .Dt GETOPT 1
 .Os
@@ -78,15 +78,15 @@ cmd \-a \-carg \-\- file file
 .St -p1003.2
 mandates that the
 .Xr sh 1
-set command return the value of 0 for the exit status.  Therefore,
-the exit status of the
+set command return the value of 0 for the exit status.
+Therefore, the exit status of the
 .Nm
 command is lost when
 .Nm
 and the
 .Xr sh 1
-set command are used on the same line.  The example given
-is one way to detect errors found by
+set command are used on the same line.
+The example given is one way to detect errors found by
 .Nm "" .
 .Sh DIAGNOSTICS
 .Nm

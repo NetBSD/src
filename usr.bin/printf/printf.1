@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.15 2002/02/08 01:36:31 ross Exp $
+.\"	$NetBSD: printf.1,v 1.16 2002/09/30 11:09:09 grant Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,16 +131,19 @@ For
 .Cm d ,
 and
 .Cm s  ,
-formats, this option has no effect.  For the
+formats, this option has no effect.
+For the
 .Cm o
 formats the precision of the number is increased to force the first
-character of the output string to a zero.  For the
+character of the output string to a zero.
+For the
 .Cm x
 .Pq Cm X
 format, a non-zero result has the string
 .Li 0x
 .Pq Li 0X
-prepended to it.  For
+prepended to it.
+For
 .Cm e  ,
 .Cm E ,
 .Cm f  ,
@@ -149,7 +152,8 @@ and
 .Cm G  ,
 formats, the result will always contain a decimal point, even if no
 digits follow the point (normally, a decimal point only appears in the
-results of those formats if a digit follows the decimal point).  For
+results of those formats if a digit follows the decimal point).
+For
 .Cm g
 and
 .Cm G
@@ -164,10 +168,12 @@ A `+' character specifying that there should always be
 a sign placed before the number when using signed formats.
 .It Sq \&\ \&
 A space specifying that a blank should be left before a positive number
-for a signed format.  A `+' overrides a space if both are used;
+for a signed format.
+A `+' overrides a space if both are used;
 .It Cm \&0
 A zero `0' character indicating that zero-padding should be used
-rather than blank-padding.  A `\-' overrides a `0' if both are used;
+rather than blank-padding.
+A `\-' overrides a `0' if both are used;
 .El
 .It "Field Width:"
 An optional digit string specifying a
