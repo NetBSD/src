@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.75 2004/01/26 02:21:30 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.76 2004/04/22 01:39:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.75 2004/01/26 02:21:30 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.76 2004/04/22 01:39:20 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -459,7 +459,7 @@ main(int argc, char *argv[])
 			opack_icmp.icmp_data[i] = i;
 	}
 
-	ident = htons(getpid()) & 0xFFFF;
+	ident = htons(arc4random() & 0xFFFF);
 
 	if ((s = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
