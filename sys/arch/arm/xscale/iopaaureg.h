@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaaureg.h,v 1.2 2002/08/02 06:52:17 thorpej Exp $	*/
+/*	$NetBSD: iopaaureg.h,v 1.3 2002/08/03 21:58:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -68,11 +68,71 @@ struct aau_desc_4 {
 	uint32_t	d_dc;		/* descriptor control */
 } __attribute__((__packed__));
 
+struct aau_desc_8 {
+	struct aau_desc_8 *d_next;	/* pointer to next (va) */
+	uint32_t d_pa;			/* our physical address */
+
+	/* Hardware portion -- must be 32-byte aligned. */
+	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_sar[4];	/* source address */
+	uint32_t	d_dar;		/* destination address */
+	uint32_t	d_bc;		/* byte count */
+	uint32_t	d_dc;		/* descriptor control */
+	/* Mini Descriptor */
+	uint32_t	d_sar5_8[4];	/* source address */
+} __attribute__((__packed__));
+
+struct aau_desc_16 {
+	struct aau_desc_16 *d_next;	/* pointer to next (va) */
+	uint32_t d_pa;			/* our physical address */
+
+	/* Hardware portion -- must be 32-byte aligned. */
+	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_sar[4];	/* source address */
+	uint32_t	d_dar;		/* destination address */
+	uint32_t	d_bc;		/* byte count */
+	uint32_t	d_dc;		/* descriptor control */
+	/* Mini Descriptor */
+	uint32_t	d_sar5_8[4];	/* source address */
+	/* Extended Descriptor 0 */
+	uint32_t	d_edc0;		/* ext. descriptor control */
+	uint32_t	d_sar9_16[8];	/* source address */
+} __attribute__((__packed__));
+
+struct aau_desc_32 {
+	struct aau_desc_32 *d_next;	/* pointer to next (va) */
+	uint32_t d_pa;			/* our physical address */
+
+	/* Hardware portion -- must be 32-byte aligned. */
+	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_sar[4];	/* source address */
+	uint32_t	d_dar;		/* destination address */
+	uint32_t	d_bc;		/* byte count */
+	uint32_t	d_dc;		/* descriptor control */
+	/* Mini Descriptor */
+	uint32_t	d_sar5_8[4];	/* source address */
+	/* Extended Descriptor 0 */
+	uint32_t	d_edc0;		/* ext. descriptor control */
+	uint32_t	d_sar9_16[8];	/* source address */
+	/* Extended Descriptor 1 */
+	uint32_t	d_edc1;		/* ext. descriptor control */
+	uint32_t	d_sar17_24[8];	/* source address */
+	/* Extended Descriptor 2 */
+	uint32_t	d_edc2;		/* ext. descriptor control */
+	uint32_t	d_sar25_32[8];	/* source address */
+} __attribute__((__packed__));
+
+#define	AAU_DESC_SIZE(ninputs)						\
+	((ninputs > 16) ? sizeof(struct aau_desc_32) :			\
+	 (ninputs > 8) ? sizeof(struct aau_desc_16) :			\
+	 (ninputs > 4) ? sizeof(struct aau_desc_8) :			\
+	 sizeof(struct aau_desc_4))
+
 #define	SYNC_DESC_4_OFFSET	offsetof(struct aau_desc_4, d_nda)
 #define	SYNC_DESC_4_SIZE	(sizeof(struct aau_desc_4) - SYNC_DESC_4_OFFSET)
-#define	SYNC_DESC_4(d)							\
-	cpu_dcache_wbinv_range(((vaddr_t)(d)) + SYNC_DESC_4_OFFSET,	\
-	    SYNC_DESC_4_SIZE)
+
+#define	SYNC_DESC(d, size)						\
+	cpu_dcache_wbinv_range(((vaddr_t)(d)) + SYNC_DESC_4_OFFSET, (size))
 
 /* Descriptor control */
 #define	AAU_DC_IE		(1U << 0)	/* interrupt enable */
@@ -96,6 +156,16 @@ struct aau_desc_4 {
 #define	AAU_DC_CC_XOR		1U		/* XOR command */
 #define	AAU_DC_CC_FILL		2U		/* fill command */
 #define	AAU_DC_CC_DIRECT_FILL	7U		/* direct fill (copy) */
+
+/* Extended descriptor control */
+#define	AAU_EDC_B1_CC(x)	((x) << 1)	/* block command/control */
+#define	AAU_EDC_B2_CC(x)	((x) << 4)	/* block command/control */
+#define	AAU_EDC_B3_CC(x)	((x) << 7)	/* block command/control */
+#define	AAU_EDC_B4_CC(x)	((x) << 10)	/* block command/control */
+#define	AAU_EDC_B5_CC(x)	((x) << 13)	/* block command/control */
+#define	AAU_EDC_B6_CC(x)	((x) << 16)	/* block command/control */
+#define	AAU_EDC_B7_CC(x)	((x) << 19)	/* block command/control */
+#define	AAU_EDC_B8_CC(x)	((x) << 22)	/* block command/control */
 
 /* Hardware registers */
 #define	AAU_ACR		0x00		/* accelerator control */
