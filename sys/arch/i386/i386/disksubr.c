@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 1998/02/27 18:57:40 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 1998/03/17 21:27:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -102,8 +102,9 @@ readdisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (!osdep || (dp = osdep->dosparts) == NULL)
+	if (!osdep)
 		goto nombrpart;
+	dp = osdep->dosparts;
 
 	/* read master boot record */
 	bp->b_blkno = DOSBBSECTOR;
@@ -211,9 +212,10 @@ nombrpart:
 		goto done;
 
 	/* obtain bad sector table if requested and present */
-	if (osdep && (bdp = &osdep->bad) != NULL && (lp->d_flags & D_BADSECT)) {
+	if (osdep && (lp->d_flags & D_BADSECT)) {
 		struct dkbad *db;
 
+		bdp = &osdep->bad;
 		i = 0;
 		do {
 			/* read a bad sector table */
@@ -330,8 +332,9 @@ writedisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (!osdep || (dp = osdep->dosparts) == NULL)
+	if (!osdep)
 		goto nombrpart;
+	dp = osdep->dosparts;
 
 	/* read master boot record */
 	bp->b_blkno = DOSBBSECTOR;
