@@ -1,5 +1,0 @@
-#!/bin/sh -
-../ed - <<\EOT
-r \p.d
-w \p.o
-EOT

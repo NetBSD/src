@@ -1,3 +1,0 @@
-# $Header
-
-BINDIR?=	/usr/bin
