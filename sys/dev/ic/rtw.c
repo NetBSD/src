@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.18 2004/12/23 06:03:09 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.18 2004/12/23 06:03:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2530,10 +2530,11 @@ rtw_start(struct ifnet *ifp)
 
 		wh = mtod(m0, struct ieee80211_frame *);
 
-		if (ieee80211_compute_duration(wh,
-		    m0->m_pkthdr.len - sizeof(wh),
+		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
 		    ic->ic_flags, ic->ic_fragthreshold,
-		    rate, &stx->stx_d0, &stx->stx_dn, &npkt) == -1) {
+		    rate, &stx->stx_d0, &stx->stx_dn, &npkt,
+		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
+		    (IFF_DEBUG|IFF_LINK2)) == -1) {
 			DPRINTF2(sc, ("%s: fail compute duration\n", __func__));
 			goto post_load_err;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.6 2004/12/19 08:08:06 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.7 2004/12/23 06:08:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -80,7 +80,7 @@ extern	int ieee80211_ibss_merge(struct ieee80211com *,
 		struct ieee80211_node *, u_int64_t);
 extern	int ieee80211_compute_duration(struct ieee80211_frame *, int,
 		uint32_t, int, int, struct ieee80211_duration *,
-		struct ieee80211_duration *, int *);
+		struct ieee80211_duration *, int *, int);
 
 extern	const char *ieee80211_state_name[IEEE80211_S_MAX];
 #endif /* _NET80211_IEEE80211_PROTO_H_ */
