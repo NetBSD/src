@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 1999/07/02 17:41:24 itojun Exp $
+# $NetBSD: Makefile,v 1.2 1999/07/10 11:31:28 tron Exp $
 
 PROG=	setkey
 SRCS=	setkey.c parse.y token.l
 LDADD+=	-ll -ly
-CLEANFILES+=	y.tab.c y.tab.h key_test.o keytest
+CLEANFILES+=	parse.c parse.h key_test.o keytest
 YFLAGS+=
 
 CPPFLAGS+=-DIPSEC_DEBUG -DYY_NO_UNPUT -DINET6
