@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_conf.c,v 1.24 1997/06/11 10:40:23 bouyer Exp $	*/
+/*	$NetBSD: vfs_conf.c,v 1.25 1997/10/06 09:25:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,6 +33,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)vfs_conf.c	8.8 (Berkeley) 3/31/94
+ */
+
+/*
+ * XXX This file needs to die.
  */
 
 #include <sys/param.h>
@@ -78,11 +82,11 @@ extern	struct vfsops portal_vfsops;
 #endif
 
 #ifdef NULLFS
-extern	struct vfsops null_vfsops;
+extern	struct vfsops nullfs_vfsops;
 #endif
 
 #ifdef UMAPFS
-extern	struct vfsops umap_vfsops;
+extern	struct vfsops umapfs_vfsops;
 #endif
 
 #ifdef KERNFS
@@ -113,92 +117,54 @@ extern 	struct vfsops adosfs_vfsops;
 extern struct vfsops ext2fs_vfsops;
 #endif
 
-/*
- * XXX ORDERING MATTERS, for COMPAT_09.  when that goes away, 
- * empty slots can go away.
- */
 struct vfsops *vfssw[] = {
-	NULL,		/* 0 = MOUNT_NONE */
 #ifdef FFS
-	&ffs_vfsops,		/* 1 = MOUNT_FFS */
-#else
-	NULL,
+	&ffs_vfsops,
 #endif
 #ifdef NFS
-	&nfs_vfsops,		/* 2 = MOUNT_NFS */
-#else
-	NULL,
+	&nfs_vfsops,
 #endif
 #ifdef MFS
-	&mfs_vfsops,		/* 3 = MOUNT_MFS */
-#else
-	NULL,
+	&mfs_vfsops,
 #endif
 #ifdef MSDOSFS
-	&msdosfs_vfsops,	/* 4 = MOUNT_MSDOS */
-#else
-	NULL,
+	&msdosfs_vfsops,
 #endif
 #ifdef LFS
-	&lfs_vfsops,		/* 5 = MOUNT_LFS */
-#else
-	NULL,
+	&lfs_vfsops,
 #endif
-	NULL,			/* 6 = MOUNT_LOFS */
 #ifdef FDESC
-	&fdesc_vfsops,		/* 7 = MOUNT_FDESC */
-#else
-	NULL,
+	&fdesc_vfsops,
 #endif
 #ifdef PORTAL
-	&portal_vfsops,		/* 8 = MOUNT_PORTAL */
-#else
-	NULL,
+	&portal_vfsops,
 #endif
 #ifdef NULLFS
-	&null_vfsops,		/* 9 = MOUNT_NULL */
-#else
-	NULL,
+	&nullfs_vfsops,
 #endif
 #ifdef UMAPFS
-	&umap_vfsops,		/* 10 = MOUNT_UMAP */
-#else
-	NULL,
+	&umapfs_vfsops,
 #endif
 #ifdef KERNFS
-	&kernfs_vfsops,		/* 11 = MOUNT_KERNFS */
-#else
-	NULL,
+	&kernfs_vfsops,
 #endif
 #ifdef PROCFS
-	&procfs_vfsops,		/* 12 = MOUNT_PROCFS */
-#else
-	NULL,
+	&procfs_vfsops,
 #endif
 #ifdef AFS
-	&afs_vfsops,		/* 13 = MOUNT_AFS */
-#else
-	NULL,
+	&afs_vfsops,
 #endif
 #ifdef CD9660
-	&cd9660_vfsops,		/* 14 = MOUNT_ISOFS */
-#else
-	NULL,
+	&cd9660_vfsops,
 #endif
 #ifdef UNION
-	&union_vfsops,		/* 15 = MOUNT_UNION */
-#else
-	NULL,
+	&union_vfsops,
 #endif
 #ifdef ADOSFS
-	&adosfs_vfsops,		/* 16 = MOUNT_ADOSFS */
-#else
-	NULL,
+	&adosfs_vfsops,
 #endif
 #ifdef EXT2FS
-	&ext2fs_vfsops,		 /* 17 = MOUNT_EXT2FS */
-#else
-	NULL,
+	&ext2fs_vfsops,
 #endif
 #ifdef LKM			/* for LKM's.  add new FS's before these */
 	NULL,
@@ -230,8 +196,8 @@ extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
 extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
 extern struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 extern struct vnodeopv_desc portal_vnodeop_opv_desc;
-extern struct vnodeopv_desc null_vnodeop_opv_desc;
-extern struct vnodeopv_desc umap_vnodeop_opv_desc;
+extern struct vnodeopv_desc nullfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc umapfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
@@ -281,10 +247,10 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 	&portal_vnodeop_opv_desc,
 #endif
 #ifdef NULLFS
-	&null_vnodeop_opv_desc,
+	&nullfs_vnodeop_opv_desc,
 #endif
 #ifdef UMAPFS
-	&umap_vnodeop_opv_desc,
+	&umapfs_vnodeop_opv_desc,
 #endif
 #ifdef KERNFS
 	&kernfs_vnodeop_opv_desc,
