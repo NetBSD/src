@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.9 2002/06/02 15:25:42 itojun Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.10 2002/07/03 07:35:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -253,7 +253,7 @@ mrt6_stats(mrpaddr, mstaddr)
 	p(mrt6s_mfc_lookups, " %10llu multicast forwarding cache lookup%s\n");
 	pes(mrt6s_mfc_misses, " %10llu multicast forwarding cache miss%s\n");
 	p(mrt6s_upcalls, " %10llu upcall%s to mrouted\n");
-	p(mrt6s_upq_ovflw, " %10llu upcall llueue overflow%s\n");
+	p(mrt6s_upq_ovflw, " %10llu upcall queue overflow%s\n");
 	p(mrt6s_upq_sockfull,
 	    " %10llu upcall%s dropped due to full socket buffer\n");
 	p(mrt6s_cache_cleanups, " %10llu cache cleanup%s\n");
@@ -263,7 +263,7 @@ mrt6_stats(mrpaddr, mstaddr)
 	p(mrt6s_wrong_if, " %10llu datagram%s arrived on wrong interface\n");
 	p(mrt6s_drop_sel, " %10llu datagram%s selectively dropped\n");
 	p(mrt6s_q_overflow,
-	    " %10llu datagram%s dropped due to llueue overflow\n");
+	    " %10llu datagram%s dropped due to queue overflow\n");
 	p(mrt6s_pkt2large, " %10llu datagram%s dropped for being too large\n");
 #undef p
 #undef pes
