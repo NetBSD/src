@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 2000/05/26 00:36:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 2000/05/26 05:27:29 thorpej Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7039,7 +7039,6 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
  * Apparently cpu_switch() is called with curproc as the first argument,
  * but no port seems to make use of that parameter.
  */
-	.globl	_C_LABEL(runtime)
 	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
 	/*
@@ -7108,17 +7107,6 @@ swdebug:	.word 0
 	wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
 
 Lsw_scan:
-	/*
-	 * We're about to run a (possibly) new process.  Set runtime
-	 * to indicate its start time.
-	 */
-	sethi	%hi(_C_LABEL(time)), %o0
-	LDPTR	[%o0 + %lo(_C_LABEL(time))], %o2! Need to do this in 2 steps cause time may not be aligned
-	LDPTR	[%o0 + %lo(_C_LABEL(time)+PTRSZ)], %o3
-	sethi	%hi(_C_LABEL(runtime)), %o0
-	STPTR	%o2, [%o0 + %lo(_C_LABEL(runtime))]
-	STPTR	%o3, [%o0 + %lo(_C_LABEL(runtime)+PTRSZ)]
-	
 	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 
 #ifndef POPC
