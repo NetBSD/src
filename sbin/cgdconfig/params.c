@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.2 2002/10/12 21:02:18 elric Exp $ */
+/* $NetBSD: params.c,v 1.3 2002/11/30 03:10:53 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@ __RCSID("$NetBSD");
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 
 /* include the resolver gunk in order that we can use b64 routines */
 #include <netinet/in.h>
