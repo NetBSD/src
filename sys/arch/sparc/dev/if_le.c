@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.8 1994/05/17 17:27:06 deraadt Exp $
+ * $Id: if_le.c,v 1.9 1994/07/02 01:10:05 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -368,7 +368,7 @@ lereset(dev)
 		ler2->ler2_rmd[i].rmd0 = a;
 		ler2->ler2_rmd[i].rmd1_hadr = a >> 16;
 		ler2->ler2_rmd[i].rmd1_bits = LE_R1_OWN;
-		ler2->ler2_rmd[i].rmd2 = -LEMTU;
+		ler2->ler2_rmd[i].rmd2 = -LEMTU | LE_XMD2_ONES;
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
@@ -376,7 +376,7 @@ lereset(dev)
 		ler2->ler2_tmd[i].tmd0 = a;
 		ler2->ler2_tmd[i].tmd1_hadr = a >> 16;
 		ler2->ler2_tmd[i].tmd1_bits = 0;
-		ler2->ler2_tmd[i].tmd2 = 0;
+		ler2->ler2_tmd[i].tmd2 = LE_XMD2_ONES;
 		ler2->ler2_tmd[i].tmd3 = 0;
 	}
 
@@ -470,7 +470,7 @@ lestart(ifp)
 #endif
 	tmd = sc->sc_r2->ler2_tmd;
 	tmd->tmd3 = 0;
-	tmd->tmd2 = -len;
+	tmd->tmd2 = -len | LE_XMD2_ONES;
 	tmd->tmd1_bits = LE_T1_OWN | LE_T1_STP | LE_T1_ENP;
 	sc->sc_if.if_flags |= IFF_OACTIVE;
 	return (0);
@@ -963,7 +963,7 @@ lexerror(sc)
 	tmd = sc->sc_r2->ler2_tmd;
 	tmd3 = tmd->tmd3;
 	tdr = tmd3 & LE_T3_TDR_MASK;
-	len = -tmd->tmd2;
+	len = -(tmd->tmd2 & ~LE_XMD2_ONES);
 	log(LOG_WARNING,
     "%s: oerror: to %s: buf=%d, len=%d, tmd1=%b, tmd3=%b, tdr=%d (%d nsecs)\n",
 	    sc->sc_dev.dv_xname, len > 5 ?
