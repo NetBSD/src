@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.144 1999/07/25 06:30:35 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.145 1999/07/26 19:20:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2957,7 +2957,7 @@ sys_revoke(p, v, retval)
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
-	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
