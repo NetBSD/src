@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.12 1998/03/30 01:45:27 mrg Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.12 1998/03/30 01:45:27 mrg Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,8 @@ oldman(pathname, name)
 		if ((line = fgetln(stdin, &len)) == NULL)
 			break;
 		if (line[0] == '.') {
+			if (line[1] == '\\' && line[2] == '"')
+				continue;	/* [nt]roff comment */
 			if (line[1] == 'S' && line[2] == 'H')
 				break;
 			if (line[1] == 's' && line[2] == 'h')
@@ -259,6 +261,8 @@ newman(pathname, name)
 			break;
 
 		if (line[0] == '.') {
+			if (line[1] == '\\' && line[2] == '"')
+				continue;	/* [nt]roff comment */
 			if (line[1] == 'S' && line[2] == 'h')
 				break;
 		}
