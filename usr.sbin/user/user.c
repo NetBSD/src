@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.73 2004/01/05 23:23:39 jmmv Exp $ */
+/* $NetBSD: user.c,v 1.74 2004/01/14 08:25:30 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.73 2004/01/05 23:23:39 jmmv Exp $");
+__RCSID("$NetBSD: user.c,v 1.74 2004/01/14 08:25:30 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1255,7 +1255,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	char		newdir[MaxFileNameLen];
 	char	       *buf;
 	char	       *colon;
-	char	       *line;
 	int		masterfd;
 	int		ptmpfd;
 	int		error;
@@ -1372,15 +1371,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 #endif
 	}
 	loginc = strlen(login_name);
-	while ((line = fgetln(master, &len)) != NULL) {
-		if ((colon = strchr(line, ':')) == NULL) {
-			warnx("Malformed entry `%s'. Skipping", line);
+	while (fgets(buf, sizeof(buf), master) != NULL) {
+		if ((colon = strchr(buf, ':')) == NULL) {
+			warnx("Malformed entry `%s'. Skipping", buf);
 			continue;
 		}
-		colonc = (size_t)(colon - line);
-		if (strncmp(login_name, line, loginc) == 0 && loginc == colonc) {
+		colonc = (size_t)(colon - buf);
+		if (strncmp(login_name, buf, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
-				len = (int)asprintf(&buf, "%s:%s:%d:%d:"
+				len = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:"
 #ifdef EXTENSIONS
 									 "%s" 
 #endif
@@ -1404,13 +1403,16 @@ moduser(char *login_name, char *newlogin, user_t *up)
 				}
 				(void) free(buf);
 			}
-		} else if ((cc = write(ptmpfd, line, len)) != len) {
-			(void) close(masterfd);
-			(void) close(ptmpfd);
-			pw_abort();
-			err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
-				(long long)cc,
-				(long long)len);
+		} else {
+			len = strlen(buf);
+			if ((cc = write(ptmpfd, buf, len)) != len) {
+				(void) close(masterfd);
+				(void) close(ptmpfd);
+				pw_abort();
+				err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
+					(long long)cc,
+					(long long)len);
+			}
 		}
 	}
 	if (up != NULL) {
