@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty_ring.c,v 1.9 1993/07/02 03:04:54 mycroft Exp $
+ *	$Id: tty_ring.c,v 1.10 1993/07/08 22:53:05 mycroft Exp $
  */
 
 #include "param.h"
@@ -282,7 +282,7 @@ size_t nfrom;
 		nfrom = nright;
 		goto noleft;
 	}
-	rbpack(buf, to->rb_tl, nright);
+	bcopy(buf, to->rb_tl, nright * sizeof(rbchar));
 	nfrom -= nright;
 	if (nfrom > nleft)
 		nfrom = nleft;
