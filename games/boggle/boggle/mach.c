@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.6 1997/10/10 12:04:31 lukem Exp $	*/
+/*	$NetBSD: mach.c,v 1.7 1997/10/11 02:12:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.6 1997/10/10 12:04:31 lukem Exp $");
+__RCSID("$NetBSD: mach.c,v 1.7 1997/10/11 02:12:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,8 @@ char *
 getline(q)
 	char *q;
 {
-	register int ch, done;
-	register char *p;
+	int ch, done;
+	char *p;
 	int row, col;
 
 	p = q;
@@ -662,7 +662,7 @@ static void
 tty_showboard(b)
 	char *b;
 {
-	register int i;
+	int i;
 	int line;
 
 	clear();
