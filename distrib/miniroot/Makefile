@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1998/11/16 23:43:58 jonathan Exp $
+#	$NetBSD: Makefile,v 1.20 1999/04/18 21:01:57 is Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,7 @@ all: ${CBIN}
 	${PRELABEL}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	mount -o async ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
