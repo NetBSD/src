@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.106 2003/03/25 13:29:39 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.107 2003/05/02 03:15:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.106 2003/03/25 13:29:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.107 2003/05/02 03:15:23 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -281,7 +281,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
-		switch(ntohs(ah->ar_op)) {
+		switch (ntohs(ah->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			etype = htons(ETHERTYPE_REVARP);

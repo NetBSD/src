@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.60 2003/05/01 07:52:59 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.61 2003/05/02 03:15:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.60 2003/05/01 07:52:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.61 2003/05/02 03:15:24 itojun Exp $");
 
 #include "tun.h"
 
@@ -372,7 +372,7 @@ tun_ioctl(ifp, cmd, data)
 	simple_lock(&tp->tun_lock);
 
 	s = splnet();
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCSIFADDR:
 		tuninit((struct tun_softc *)(ifp->if_softc));
 		TUNDEBUG("%s: address set\n", ifp->if_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.41 2003/01/19 23:13:46 simonb Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.42 2003/05/02 03:15:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.41 2003/01/19 23:13:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.42 2003/05/02 03:15:23 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -209,8 +209,7 @@ arc_output(ifp, m0, dst, rt0)
 
 		arph->ar_hrd = htons(ARPHRD_ARCNET);
 
-		switch(ntohs(arph->ar_op)) {
-
+		switch (ntohs(arph->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			if (!(ifp->if_flags & IFF_LINK0)) {
