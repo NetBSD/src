@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.35 1999/09/05 21:22:39 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.36 1999/09/09 12:26:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,11 +50,13 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <dev/usb/usb.h>
+#include <machine/bus.h>
 
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 
 #if defined(__FreeBSD__)
 #include "usb_if.h"
@@ -145,60 +147,30 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 	usbd_request_handle reqh;
 	usbd_pipe_handle ipipe;
 
-	reqh = usbd_alloc_request();
-	if (reqh == 0)
-		return (USBD_NOMEM);
 	r = usbd_open_pipe(iface, address, USBD_EXCLUSIVE_USE, &ipipe);
 	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	reqh = usbd_alloc_request(iface->device);
+	if (reqh == 0) {
+		r = USBD_NOMEM;
 		goto bad1;
-	r = usbd_setup_request(reqh, ipipe, priv, buffer, length, 
-			       USBD_XFER_IN | flags, USBD_NO_TIMEOUT, cb);
-	if (r != USBD_NORMAL_COMPLETION)
-		goto bad2;
+	}
+	usbd_setup_request(reqh, ipipe, priv, buffer, length, 
+			   USBD_XFER_IN | flags, USBD_NO_TIMEOUT, cb);
 	ipipe->intrreqh = reqh;
 	ipipe->repeat = 1;
 	r = usbd_transfer(reqh);
 	*pipe = ipipe;
 	if (r != USBD_IN_PROGRESS)
-		goto bad3;
+		goto bad2;
 	return (USBD_NORMAL_COMPLETION);
 
- bad3:
+ bad2:
 	ipipe->intrreqh = 0;
 	ipipe->repeat = 0;
- bad2:
-	usbd_close_pipe(ipipe);
- bad1:
 	usbd_free_request(reqh);
-	return r;
-}
-
-usbd_status 
-usbd_open_pipe_iso(iface, address, flags, pipe, priv, bufsize, nbuf)
-	usbd_interface_handle iface;
-	u_int8_t address;
-	u_int8_t flags;
-	usbd_pipe_handle *pipe;
-	usbd_private_handle priv;
-	u_int32_t bufsize;
-	u_int32_t nbuf;
-{
-	usbd_status r;
-	usbd_pipe_handle p;
-
-	r = usbd_open_pipe(iface, address, USBD_EXCLUSIVE_USE, &p);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (r);
-	if (!p->methods->isobuf) {
-		usbd_close_pipe(p);
-		return (USBD_INVAL);
-	}
-	r = p->methods->isobuf(p, bufsize, nbuf);
-	if (r != USBD_NORMAL_COMPLETION) {
-		usbd_close_pipe(p);
-		return (r);
-	}	
-	*pipe = p;
+ bad1:
+	usbd_close_pipe(ipipe);
 	return r;
 }
 
@@ -244,7 +216,7 @@ usbd_transfer(reqh)
 
 	r = pipe->methods->transfer(reqh);
 	if (!(reqh->flags & USBD_SYNCHRONOUS))
-		return r;
+		return (r);
 
 	/* Sync transfer, wait for completion. */
 	if (r != USBD_IN_PROGRESS)
@@ -268,8 +240,30 @@ usbd_sync_transfer(reqh)
 	return (usbd_transfer(reqh));
 }
 
+void *
+usbd_alloc_buffer(reqh, size)
+	usbd_request_handle reqh;
+	u_int32_t size;
+{
+	usbd_status r;
+	r = reqh->dev->bus->methods->allocm(reqh->dev->bus, &reqh->dmabuf, size);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (0);
+	reqh->rqflags |= URQ_USRDMABUF;
+	return (KERNADDR(&reqh->dmabuf));
+}
+
+void
+usbd_free_buffer(reqh)
+	usbd_request_handle reqh;
+{
+	reqh->rqflags &= ~(URQ_USRDMABUF | URQ_SYSDMABUF);
+	reqh->dev->bus->methods->freem(reqh->dev->bus, &reqh->dmabuf);
+}
+
 usbd_request_handle 
-usbd_alloc_request()
+usbd_alloc_request(dev)
+	usbd_device_handle dev;
 {
 	usbd_request_handle reqh;
 
@@ -281,6 +275,7 @@ usbd_alloc_request()
 	if (!reqh)
 		return (0);
 	memset(reqh, 0, sizeof *reqh);
+	reqh->dev = dev;
 	DPRINTFN(1,("usbd_alloc_request() = %p\n", reqh));
 	return (reqh);
 }
@@ -290,11 +285,13 @@ usbd_free_request(reqh)
 	usbd_request_handle reqh;
 {
 	DPRINTFN(1,("usbd_free_request: %p\n", reqh));
+	if (reqh->rqflags & (URQ_USRDMABUF | URQ_SYSDMABUF))
+		usbd_free_buffer(reqh);
 	SIMPLEQ_INSERT_HEAD(&usbd_free_requests, reqh, next);
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status 
+void
 usbd_setup_request(reqh, pipe, priv, buffer, length, flags, timeout, callback)
 	usbd_request_handle reqh;
 	usbd_pipe_handle pipe;
@@ -316,11 +313,11 @@ usbd_setup_request(reqh, pipe, priv, buffer, length, flags, timeout, callback)
 	reqh->timeout = timeout;
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
-	reqh->isreq = 0;
-	return (USBD_NORMAL_COMPLETION);
+	reqh->rqflags &= ~URQ_REQUEST;
+	reqh->nframes = 0;
 }
 
-usbd_status 
+void
 usbd_setup_default_request(reqh, dev, priv, timeout, req, buffer, 
 			   length, flags, callback)
 	usbd_request_handle reqh;
@@ -345,8 +342,31 @@ usbd_setup_default_request(reqh, dev, priv, timeout, req, buffer,
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
 	reqh->request = *req;
-	reqh->isreq = 1;
-	return (USBD_NORMAL_COMPLETION);
+	reqh->rqflags |= URQ_REQUEST;
+	reqh->nframes = 0;
+}
+
+void
+usbd_setup_isoc_request(reqh, pipe, priv, frlengths, nframes, callback)
+	usbd_request_handle reqh;
+	usbd_pipe_handle pipe;
+	usbd_private_handle priv;
+	u_int16_t *frlengths;
+	u_int32_t nframes;
+	usbd_callback callback;
+{
+	reqh->pipe = pipe;
+	reqh->priv = priv;
+	reqh->buffer = 0;
+	reqh->length = 0;
+	reqh->actlen = 0;
+	reqh->flags = 0;
+	reqh->timeout = USBD_NO_TIMEOUT;
+	reqh->status = USBD_NOT_STARTED;
+	reqh->callback = callback;
+	reqh->rqflags &= ~URQ_REQUEST;
+	reqh->frlengths = frlengths;
+	reqh->nframes = nframes;
 }
 
 void
@@ -509,6 +529,13 @@ usbd_device2interface_handle(dev, ifaceno, iface)
 		return (USBD_INVAL);
 	*iface = &dev->ifaces[ifaceno];
 	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_device_handle
+usbd_pipe2device_handle(pipe)
+	usbd_pipe_handle pipe;
+{
+	return (pipe->device);
 }
 
 /* XXXX use altno */
@@ -754,14 +781,11 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 	}
 #endif
 
-	reqh = usbd_alloc_request();
+	reqh = usbd_alloc_request(dev);
 	if (reqh == 0)
 		return (USBD_NOMEM);
-	r = usbd_setup_default_request(
-		reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
-		UGETW(req->wLength), flags, 0);
-	if (r != USBD_NORMAL_COMPLETION)
-		goto bad;
+	usbd_setup_default_request(reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
+				   UGETW(req->wLength), flags, 0);
 	r = usbd_sync_transfer(reqh);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
@@ -791,11 +815,9 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 		USETW(treq.wValue, 0);
 		USETW(treq.wIndex, 0);
 		USETW(treq.wLength, sizeof(usb_status_t));
-		nr = usbd_setup_default_request(
-			reqh, dev, 0, USBD_DEFAULT_TIMEOUT, &treq, &status, 
-			sizeof(usb_status_t), 0, 0);
-		if (nr != USBD_NORMAL_COMPLETION)
-			goto bad;
+		usbd_setup_default_request(reqh, dev, 0, USBD_DEFAULT_TIMEOUT,
+					   &treq, &status, sizeof(usb_status_t),
+					   0, 0);
 		nr = usbd_sync_transfer(reqh);
 		if (nr != USBD_NORMAL_COMPLETION)
 			goto bad;
@@ -808,11 +830,8 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 		USETW(treq.wValue, UF_ENDPOINT_HALT);
 		USETW(treq.wIndex, 0);
 		USETW(treq.wLength, 0);
-		nr = usbd_setup_default_request(
-			reqh, dev, 0, USBD_DEFAULT_TIMEOUT, &treq, &status, 
-			0, 0, 0);
-		if (nr != USBD_NORMAL_COMPLETION)
-			goto bad;
+		usbd_setup_default_request(reqh, dev, 0, USBD_DEFAULT_TIMEOUT,
+					   &treq, &status, 0, 0, 0);
 		nr = usbd_sync_transfer(reqh);
 		if (nr != USBD_NORMAL_COMPLETION)
 			goto bad;
@@ -856,19 +875,17 @@ usbd_do_request_async(dev, req, data)
 	usbd_request_handle reqh;
 	usbd_status r;
 
-	reqh = usbd_alloc_request();
+	reqh = usbd_alloc_request(dev);
 	if (reqh == 0)
 		return (USBD_NOMEM);
-	r = usbd_setup_default_request(
-		reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
-		UGETW(req->wLength), 0, usbd_do_request_async_cb);
-	if (r != USBD_NORMAL_COMPLETION) {
+	usbd_setup_default_request(reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
+				   UGETW(req->wLength), 0, 
+				   usbd_do_request_async_cb);
+	r = usbd_transfer(reqh);
+	if (r != USBD_IN_PROGRESS) {
 		usbd_free_request(reqh);
 		return (r);
 	}
-	r = usbd_transfer(reqh);
-	if (r != USBD_IN_PROGRESS)
-		return (r);
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -888,7 +905,7 @@ void
 usbd_dopoll(iface)
 	usbd_interface_handle iface;
 {
-	iface->device->bus->do_poll(iface->device->bus);
+	iface->device->bus->methods->do_poll(iface->device->bus);
 }
 
 void

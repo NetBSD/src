@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.13 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.14 1999/09/09 12:26:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -321,7 +321,6 @@ umodemstart(tp)
 	struct tty *tp;
 {
 	struct umodem_softc *sc = umodem_cd.cd_devs[UMODEMUNIT(tp->t_dev)];
-	usbd_status r;
 	int s;
 	u_char *data;
 	int cnt;
@@ -359,11 +358,9 @@ umodemstart(tp)
 
 	DPRINTFN(4,("umodemstart: %d chars\n", cnt));
 	/* XXX what can we do on error? */
-	r = usbd_setup_request(sc->sc_oreqh, sc->sc_bulkout_pipe, 
-			       (usbd_private_handle)sc, data, cnt,
-			       USBD_XFER_OUT, USBD_NO_TIMEOUT, umodemwritecb);
-	if (r != USBD_NORMAL_COMPLETION)
-		return;
+	usbd_setup_request(sc->sc_oreqh, sc->sc_bulkout_pipe, 
+			   (usbd_private_handle)sc, data, cnt,
+			   USBD_XFER_OUT, USBD_NO_TIMEOUT, umodemwritecb);
 	(void)usbd_transfer(sc->sc_oreqh);
 
 out:
@@ -568,13 +565,13 @@ umodemopen(dev, flag, mode, p)
 		}
 		
 		/* Allocate a request and an input buffer and start reading. */
-		sc->sc_ireqh = usbd_alloc_request();
+		sc->sc_ireqh = usbd_alloc_request(sc->sc_udev);
 		if (sc->sc_ireqh == 0) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_oreqh = usbd_alloc_request();
+		sc->sc_oreqh = usbd_alloc_request(sc->sc_udev);
 		if (sc->sc_oreqh == 0) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
@@ -617,14 +614,12 @@ umodemstartread(sc)
 	usbd_status r;
 
 	DPRINTFN(5,("umodemstartread: start\n"));
-	r = usbd_setup_request(sc->sc_ireqh, sc->sc_bulkin_pipe, 
-			       (usbd_private_handle)sc, 
-			       sc->sc_ibuf,
-			       UMODEMIBUFSIZE, 
-			       USBD_XFER_IN | USBD_SHORT_XFER_OK, 
-			       USBD_NO_TIMEOUT, umodemreadcb);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (r);
+	usbd_setup_request(sc->sc_ireqh, sc->sc_bulkin_pipe, 
+			   (usbd_private_handle)sc, 
+			   sc->sc_ibuf,
+			   UMODEMIBUFSIZE, 
+			   USBD_XFER_IN | USBD_SHORT_XFER_OK, 
+			   USBD_NO_TIMEOUT, umodemreadcb);
 	r = usbd_transfer(sc->sc_ireqh);
 	if (r != USBD_IN_PROGRESS)
 		return (r);

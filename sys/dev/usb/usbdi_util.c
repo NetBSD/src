@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.20 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.21 1999/09/09 12:26:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -512,10 +512,8 @@ usbd_bulk_transfer(reqh, pipe, flags, timeout, buf, size, lbl)
 	usbd_status r;
 	int s, error;
 
-	r = usbd_setup_request(reqh, pipe, 0, buf, *size,
-			       flags, timeout, usbd_bulk_transfer_cb);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (r);
+	usbd_setup_request(reqh, pipe, 0, buf, *size,
+			   flags, timeout, usbd_bulk_transfer_cb);
 	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
 	s = splusb();		/* don't want callback until tsleep() */
 	r = usbd_transfer(reqh);

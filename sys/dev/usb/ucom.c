@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.9 1999/08/14 14:49:31 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.10 1999/09/09 12:26:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <dev/usb/usb_port.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +95,7 @@ USB_MATCH(ucom)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id &&
 	    id->bInterfaceClass != UCLASS_CDC ||
-	    id->bInterfaceSubClass != USUBCLASS_MODEM)
+	    id->bInterfaceSubClass != USUBCLASS_ABSTRACT_CONTROL_MODEL)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_IFACESUBCLASS);
 }

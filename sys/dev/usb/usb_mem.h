@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.6 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.7 1999/09/09 12:26:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,11 +49,6 @@ typedef struct usb_dma_block {
 	int fullblock;
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
-
-typedef struct {
-	struct usb_dma_block *block;
-	u_int offs;
-} usb_dma_t;
 
 #define DMAADDR(dma) ((dma)->block->segs[0].ds_addr + (dma)->offs)
 #define KERNADDR(dma) ((void *)((dma)->block->kaddr + (dma)->offs))

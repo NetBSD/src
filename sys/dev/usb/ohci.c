@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.41 1999/09/05 21:22:38 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.42 1999/09/09 12:26:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,9 @@ void		ohci_hash_add_td __P((ohci_softc_t *, ohci_soft_td_t *));
 void		ohci_hash_rem_td __P((ohci_softc_t *, ohci_soft_td_t *));
 ohci_soft_td_t *ohci_hash_find_td __P((ohci_softc_t *, ohci_physaddr_t));
 
+usbd_status	ohci_allocm __P((struct usbd_bus *, usb_dma_t *, u_int32_t));
+void		ohci_freem __P((struct usbd_bus *, usb_dma_t *));
+
 usbd_status	ohci_root_ctrl_transfer __P((usbd_request_handle));
 usbd_status	ohci_root_ctrl_start __P((usbd_request_handle));
 void		ohci_root_ctrl_abort __P((usbd_request_handle));
@@ -210,54 +213,56 @@ struct ohci_pipe {
 
 #define OHCI_INTR_ENDPT 1
 
-struct usbd_methods ohci_root_ctrl_methods = {	
+struct usbd_bus_methods ohci_bus_methods = {
+	ohci_open,
+	ohci_poll,
+	ohci_allocm,
+	ohci_freem,
+};
+
+struct usbd_pipe_methods ohci_root_ctrl_methods = {	
 	ohci_root_ctrl_transfer,
 	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
 	ohci_noop,
 	0,
-	0,
 };
 
-struct usbd_methods ohci_root_intr_methods = {	
+struct usbd_pipe_methods ohci_root_intr_methods = {	
 	ohci_root_intr_transfer,
 	ohci_root_intr_start,
 	ohci_root_intr_abort,
 	ohci_root_intr_close,
 	ohci_noop,
 	ohci_root_intr_done,
-	0,
 };
 
-struct usbd_methods ohci_device_ctrl_methods = {	
+struct usbd_pipe_methods ohci_device_ctrl_methods = {	
 	ohci_device_ctrl_transfer,
 	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
 	ohci_device_ctrl_close,
 	ohci_noop,
 	ohci_device_ctrl_done,
-	0,
 };
 
-struct usbd_methods ohci_device_intr_methods = {	
+struct usbd_pipe_methods ohci_device_intr_methods = {	
 	ohci_device_intr_transfer,
 	ohci_device_intr_start,
 	ohci_device_intr_abort,
 	ohci_device_intr_close,
 	ohci_device_clear_toggle,
 	ohci_device_intr_done,
-	0,
 };
 
-struct usbd_methods ohci_device_bulk_methods = {	
+struct usbd_pipe_methods ohci_device_bulk_methods = {	
 	ohci_device_bulk_transfer,
 	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
 	ohci_device_bulk_close,
 	ohci_device_clear_toggle,
 	ohci_device_bulk_done,
-	0,
 };
 
 ohci_soft_ed_t *
@@ -513,9 +518,8 @@ ohci_init(sc)
 #endif
 	
 	/* Set up the bus struct. */
-	sc->sc_bus.open_pipe = ohci_open;
+	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
-	sc->sc_bus.do_poll = ohci_poll;
 
 	powerhook_establish(ohci_power, sc);
 
@@ -528,6 +532,27 @@ ohci_init(sc)
  bad1:
 	usb_freemem(sc->sc_dmatag, &sc->sc_hccadma);
 	return (r);
+}
+
+usbd_status
+ohci_allocm(bus, dma, size)
+	struct usbd_bus *bus;
+	usb_dma_t *dma;
+	u_int32_t size;
+{
+	struct ohci_softc *sc = (struct ohci_softc *)bus;
+
+	return (usb_allocmem(sc->sc_dmatag, size, 0, dma));
+}
+
+void
+ohci_freem(bus, dma)
+	struct usbd_bus *bus;
+	usb_dma_t *dma;
+{
+	struct ohci_softc *sc = (struct ohci_softc *)bus;
+
+	usb_freemem(sc->sc_dmatag, dma);
 }
 
 #if !defined(__OpenBSD__)
@@ -792,7 +817,7 @@ ohci_device_ctrl_done(reqh)
 	DPRINTFN(10,("ohci_ctrl_done: reqh=%p\n", reqh));
 
 #ifdef DIAGNOSTIC
-	if (!reqh->isreq) {
+	if (!(reqh->rqflags & URQ_REQUEST)) {
 		panic("ohci_ctrl_done: not a request\n");
 	}
 #endif
@@ -1566,9 +1591,11 @@ ohci_root_ctrl_start(reqh)
 	usbd_status r;
 	u_int32_t v;
 
-	if (!reqh->isreq)
+#ifdef DIAGNOSTIC
+	if (!(reqh->rqflags & URQ_REQUEST))
 		/* XXX panic */
 		return (USBD_INVAL);
+#endif
 	req = &reqh->request;
 	buf = reqh->buffer;
 
@@ -1946,11 +1973,13 @@ ohci_device_ctrl_start(reqh)
 	ohci_softc_t *sc = (ohci_softc_t *)reqh->pipe->device->bus;
 	usbd_status r;
 
-	if (!reqh->isreq) {
+#ifdef DIAGNOSTIC
+	if (!(reqh->rqflags & URQ_REQUEST)) {
 		/* XXX panic */
 		printf("ohci_device_ctrl_transfer: not a request\n");
 		return (USBD_INVAL);
 	}
+#endif
 
 	r = ohci_device_request(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
@@ -2029,7 +2058,7 @@ ohci_device_bulk_start(reqh)
 	int s, len, isread, endpt;
 
 #ifdef DIAGNOSTIC
-	if (reqh->isreq) {
+	if (reqh->rqflags & URQ_REQUEST) {
 		/* XXX panic */
 		printf("ohci_device_bulk_start: a request\n");
 		return (USBD_INVAL);
@@ -2184,8 +2213,10 @@ ohci_device_intr_start(reqh)
 		     "flags=%d priv=%p\n",
 		 reqh, reqh->buffer, reqh->length, reqh->flags, reqh->priv));
 
-	if (reqh->isreq)
+#ifdef DIAGNOSTIC
+	if (reqh->rqflags & URQ_REQUEST)
 		panic("ohci_device_intr_transfer: a request\n");
+#endif
 
 	len = reqh->length;
 	dmap = &opipe->u.intr.datadma;

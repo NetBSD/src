@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.11 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.12 1999/09/09 12:26:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/device.h>		/* for usbdivar.h */
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
@@ -58,6 +59,7 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>	/* just for usb_dma_t */
 #include <dev/usb/usb_mem.h>
 
 #ifdef USB_DEBUG

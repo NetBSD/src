@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.20 1999/09/05 19:32:18 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.21 1999/09/09 12:26:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -419,7 +419,7 @@ ulpt_do_write(sc, uio, flags)
 	usbd_status r;
 
 	DPRINTF(("ulptwrite\n"));
-	reqh = usbd_alloc_request();
+	reqh = usbd_alloc_request(sc->sc_udev);
 	if (reqh == 0)
 		return (ENOMEM);
 	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
@@ -449,6 +449,9 @@ ulptwrite(dev, uio, flags)
 {
 	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
 	int error;
+
+	if (sc->sc_dying)
+		return (EIO);
 
 	sc->sc_refcnt++;
 	error = ulpt_do_write(sc, uio, flags);
