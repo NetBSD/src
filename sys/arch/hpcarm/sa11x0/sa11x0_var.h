@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $        */
+/*      $NetBSD: sa11x0_var.h,v 1.3 2001/03/10 15:34:38 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -45,6 +45,7 @@ struct sa11x0_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_gpioh;
 	int sc_pri; /* attaching device priority */
 	u_int32_t sc_intrmask;
 };

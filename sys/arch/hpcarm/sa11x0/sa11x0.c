@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.5 2001/03/10 13:34:34 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.6 2001/03/10 15:34:38 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -67,6 +67,7 @@
 #include <arm/mainbus/mainbus.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
+#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 
 #include "locators.h"
 
@@ -155,6 +156,11 @@ sa11x0_attach(parent, self, aux)
 			0, &sc->sc_ioh))
 		panic("%s: Cannot map registers\n", self->dv_xname);
 	saipic_base = sc->sc_ioh;
+
+	/* Map the GPIO registers */
+	if (bus_space_map(sc->sc_iot, SAGPIO_BASE, SAGPIO_NPORTS,
+			  0, &sc->sc_gpioh))
+		panic("%s: unable to map GPIO registers\n", self->dv_xname);
 
 	printf("\n");
 
