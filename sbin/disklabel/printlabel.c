@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.10 2003/12/29 19:13:19 jdc Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.11 2004/02/28 18:19:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.10 2003/12/29 19:13:19 jdc Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.11 2004/02/28 18:19:00 dsl Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -70,20 +70,20 @@ showinfo(FILE *f, struct disklabel *lp, const char *specialname)
 	if (lp->d_flags & D_BADSECT)
 		(void)fprintf(f, " badsect");
 	(void)fprintf(f, "\n");
-	(void)fprintf(f, "bytes/sector: %ld\n", (long) lp->d_secsize);
-	(void)fprintf(f, "sectors/track: %ld\n", (long) lp->d_nsectors);
-	(void)fprintf(f, "tracks/cylinder: %ld\n", (long) lp->d_ntracks);
-	(void)fprintf(f, "sectors/cylinder: %ld\n", (long) lp->d_secpercyl);
-	(void)fprintf(f, "cylinders: %ld\n", (long) lp->d_ncylinders);
-	(void)fprintf(f, "total sectors: %ld\n", (long) lp->d_secperunit);
-	(void)fprintf(f, "rpm: %ld\n", (long) lp->d_rpm);
-	(void)fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
-	(void)fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
-	(void)fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
-	(void)fprintf(f, "headswitch: %ld\t\t# microseconds\n",
-	    (long)lp->d_headswitch);
-	(void)fprintf(f, "track-to-track seek: %ld\t# microseconds\n",
-	    (long)lp->d_trkseek);
+	(void)fprintf(f, "bytes/sector: %" PRIu32 "\n", lp->d_secsize);
+	(void)fprintf(f, "sectors/track: %" PRIu32 "\n", lp->d_nsectors);
+	(void)fprintf(f, "tracks/cylinder: %" PRIu32 "\n", lp->d_ntracks);
+	(void)fprintf(f, "sectors/cylinder: %" PRIu32 "\n", lp->d_secpercyl);
+	(void)fprintf(f, "cylinders: %" PRIu32 "\n", lp->d_ncylinders);
+	(void)fprintf(f, "total sectors: %" PRIu32 "\n", lp->d_secperunit);
+	(void)fprintf(f, "rpm: %" PRIu32 "\n", lp->d_rpm);
+	(void)fprintf(f, "interleave: %" PRIu32 "\n", lp->d_interleave);
+	(void)fprintf(f, "trackskew: %" PRIu32 "\n", lp->d_trackskew);
+	(void)fprintf(f, "cylinderskew: %" PRIu32 "\n", lp->d_cylskew);
+	(void)fprintf(f, "headswitch: %" PRIu32 "\t\t# microseconds\n",
+	    lp->d_headswitch);
+	(void)fprintf(f, "track-to-track seek: %" PRIu32 "\t# microseconds\n",
+	    lp->d_trkseek);
 	(void)fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
 		if (lp->d_drivedata[i])
@@ -130,29 +130,29 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 
 	switch (pp->p_fstype) {
 	case FS_UNUSED:				/* XXX */
-		(void)fprintf(f, "  %5d %5d %5.5s ",
+		(void)fprintf(f, "  %5u %5u %5.5s ",
 		    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
 		break;
 
 	case FS_BSDFFS:
 	case FS_ADOS:
 	case FS_APPLEUFS:
-		(void)fprintf(f, "  %5d %5d %5d ",
+		(void)fprintf(f, "  %5u %5u %5u ",
 		    pp->p_fsize, pp->p_fsize * pp->p_frag, pp->p_cpg);
 		break;
 
 	case FS_BSDLFS:
-		(void)fprintf(f, "  %5d %5d %5d ",
+		(void)fprintf(f, "  %5u %5u %5u ",
 		    pp->p_fsize, pp->p_fsize * pp->p_frag, pp->p_sgs);
 		break;
 
 	case FS_EX2FS:
-		(void)fprintf(f, "  %5d %5d       ",
+		(void)fprintf(f, "  %5u %5u       ",
 		    pp->p_fsize, pp->p_fsize * pp->p_frag);
 		break;
 
 	case FS_ISO9660:
-		(void)fprintf(f, "  %6d            ", pp->p_cdsession);
+		(void)fprintf(f, "  %6u            ", pp->p_cdsession);
 		break;
 
 	default:
