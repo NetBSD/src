@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.9 2000/04/15 21:57:37 soda Exp $
+$NetBSD: TODO,v 1.10 2000/05/09 07:30:14 soda Exp $
 
 To do list (not in any particular order).
 
@@ -80,12 +80,16 @@ To do list (not in any particular order).
 	    also, _clearsoftintr() should be called before `ssir' access.
 	    currently this is not real problem due to above overblocking.
 
+	-   INT_MASK_REAL_DEV should be removed
+
     o	it is better to always disable MIPS_INT_MASK_CLOCK.
 	those are the points which should be fixed:
 	mips_idle: li t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	machdep.c: curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE;
 	spl0()
 	splnone()
+
+	-   MIPS_INT_MASK_CLOCK should be removed in someway
 
     o	fix kernel start address
 
