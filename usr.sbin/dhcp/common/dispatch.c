@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.7 1999/02/18 21:48:49 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.8 1999/02/19 21:58:14 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -140,7 +140,7 @@ void discover_interfaces (state)
 		   except don't skip down interfaces if we're trying to
 		   get a list of configurable interfaces. */
 		if ((ifr.ifr_flags & IFF_LOOPBACK) ||
-#ifdef IFF_POINTOPOINT
+#ifdef HAVE_IFF_POINTOPOINT
 		    (ifr.ifr_flags & IFF_POINTOPOINT) ||
 #endif
 		    (!(ifr.ifr_flags & IFF_UP) &&
@@ -168,7 +168,7 @@ void discover_interfaces (state)
 
 		/* If we have the capability, extract link information
 		   and record it in a linked list. */
-#ifdef AF_LINK
+#ifdef HAVE_AF_LINK
 		if (ifp -> ifr_addr.sa_family == AF_LINK) {
 			struct sockaddr_dl *foo = ((struct sockaddr_dl *)
 						   (&ifp -> ifr_addr));
@@ -328,7 +328,7 @@ void discover_interfaces (state)
 
 	/* Now cycle through all the interfaces we found, looking for
 	   hardware addresses. */
-#if defined (SIOCGIFHWADDR) && !defined (AF_LINK)
+#if defined (HAVE_SIOCGIFHWADDR) && !defined (HAVE_AF_LINK)
 	for (tmp = interfaces; tmp; tmp = tmp -> next) {
 		struct ifreq ifr;
 		struct sockaddr sa;
@@ -352,7 +352,11 @@ void discover_interfaces (state)
 		sa = *(struct sockaddr *)&ifr.ifr_hwaddr;
 		
 		switch (sa.sa_family) {
-#ifdef ARPHRD_LOOPBACK
+#ifdef HAVE_ARPHRD_TUNNEL
+		      case ARPHRD_TUNNEL:
+			/* ignore tunnel interfaces. */
+#endif
+#ifdef HAVE_ARPHRD_LOOPBACK
 		      case ARPHRD_LOOPBACK:
 			/* ignore loopback interface */
 			break;
@@ -382,7 +386,7 @@ void discover_interfaces (state)
 			memcpy (tmp -> hw_address.haddr, sa.sa_data, 16);
 			break;
 
-#ifdef ARPHRD_METRICOM
+#ifdef HAVE_ARPHRD_METRICOM
 		      case ARPHRD_METRICOM:
 			tmp -> hw_address.hlen = 6;
 			tmp -> hw_address.htype = ARPHRD_METRICOM;
@@ -395,7 +399,7 @@ void discover_interfaces (state)
 			       ifr.ifr_name, sa.sa_family);
 		}
 	}
-#endif /* defined (SIOCGIFHWADDR) && !defined (AF_LINK) */
+#endif /* defined (HAVE_SIOCGIFHWADDR) && !defined (HAVE_AF_LINK) */
 
 	/* If we're just trying to get a list of interfaces that we might
 	   be able to configure, we can quit now. */
