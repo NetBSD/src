@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1997/02/02 08:01:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1997/03/18 13:01:07 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -908,7 +908,7 @@ pmap_remove(pmap, sva, eva)
 	 *	   it won't be there
 	 */
 	if (pmap_aliasmask &&
-	    (pmap == pmap_kernel() || pmap != curproc->p_vmspace->vm_map.pmap))
+	    !(curproc && pmap == curproc->p_vmspace->vm_map.pmap))
 		needcflush = FALSE;
 #ifdef DEBUG
 	if (pmap_aliasmask && (pmapvacflush & PVF_REMOVE)) {
@@ -1998,7 +1998,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * flush the VAC.  Note that the kernel side was flushed
 		 * above so we don't worry about non-CI kernel mappings.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap &&
+		if (curproc && pmap == curproc->p_vmspace->vm_map.pmap &&
 		    !pmap_pte_ci(pte)) {
 			DCIU();
 #ifdef PMAPSTATS
@@ -2176,7 +2176,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if (curproc != NULL &&
+				if (curproc &&
 				    ptpmap == curproc->p_vmspace->vm_map.pmap)
 					PMAP_ACTIVATE(ptpmap,
 					    &curproc->p_addr->u_pcb, 1);
@@ -2421,7 +2421,7 @@ pmap_enter_ptpage(pmap, va)
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
+		if (curproc && pmap == curproc->p_vmspace->vm_map.pmap)
 			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
