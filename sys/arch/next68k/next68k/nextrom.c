@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.5 1998/07/19 21:41:17 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.6 1998/08/04 19:08:23 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -93,6 +93,16 @@ next68k_bootargs(args)
 	ROM_PUTX(MONRELOC(char,MG_machine_type));
 	ROM_PUTS("\r\nboard rev = 0x");
 	ROM_PUTX(MONRELOC(char,MG_board_rev));
+	ROM_PUTS("\r\ndmachip = 0x");
+	ROM_PUTX(MONRELOC(int,MG_dmachip)>>24&0xff);
+	ROM_PUTX(MONRELOC(int,MG_dmachip)>>16&0xff);
+	ROM_PUTX(MONRELOC(int,MG_dmachip)>>8&0xff);
+	ROM_PUTX(MONRELOC(int,MG_dmachip)>>0&0xff);
+	ROM_PUTS("\r\ndiskchip = 0x");
+	ROM_PUTX(MONRELOC(int,MG_diskchip)>>24&0xff);
+	ROM_PUTX(MONRELOC(int,MG_diskchip)>>16&0xff);
+	ROM_PUTX(MONRELOC(int,MG_diskchip)>>8&0xff);
+	ROM_PUTX(MONRELOC(int,MG_diskchip)>>0&0xff);
 	ROM_PUTS("\r\n");
 
 
@@ -112,13 +122,18 @@ next68k_bootargs(args)
 		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9C) {
 			msize16 = 0x800000;
 			msize4  = 0x200000;
-			msize1  = 0x80000;			/* ? */
+			msize1  = 0x80000;				/* ? */
 			ROM_PUTS("Looks like a NeXT_WARP9C\r\n");
 		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9) {
 			msize16 = 0x1000000;
 			msize4  = 0x400000;
 			msize1  = 0x100000;
 			ROM_PUTS("Looks like a NeXT_WARP9\r\n");
+		} else if (MONRELOC(char,MG_machine_type) == NeXT_TURBO_COLOR) {
+			msize16 = 0x2000000;
+			msize4  = 0x800000;
+			msize1  = 0x200000;
+			ROM_PUTS("Looks like a NeXT_TURBO_COLOR\r\n");
 		} else {
 			msize16 = 0x100000;
 			msize4  = 0x100000;
