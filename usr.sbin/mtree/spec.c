@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.48 2002/11/30 03:10:57 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.49 2002/12/23 04:40:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
  */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.48 2002/11/30 03:10:57 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.49 2002/12/23 04:40:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: spec.c,v 1.48 2002/11/30 03:10:57 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "extern.h"
 #include "pack_dev.h"
@@ -273,10 +274,12 @@ noparent:		mtree_err("no parent node");
 
 /*
  * dump_nodes --
- *	dump the NODEs from `cur', based in the directory `dir'
+ *	dump the NODEs from `cur', based in the directory `dir'.
+ *	if pathlast is none zero, print the path last, otherwise print
+ *	it first.
  */
 void
-dump_nodes(const char *dir, NODE *root)
+dump_nodes(const char *dir, NODE *root, int pathlast)
 {
 	NODE	*cur;
 	char	path[MAXPATHLEN];
@@ -290,6 +293,9 @@ dump_nodes(const char *dir, NODE *root)
 		    dir, *dir ? "/" : "", cur->name)
 		    >= sizeof(path))
 			mtree_err("Pathname too long.");
+
+		if (!pathlast)
+			printf("%s ", vispath(path));
 
 #define MATCHFLAG(f)	((keys & (f)) && (cur->flags & (f)))
 		if (MATCHFLAG(F_TYPE))
@@ -339,12 +345,29 @@ dump_nodes(const char *dir, NODE *root)
 			printf("optional ");
 		if (MATCHFLAG(F_TAGS))
 			printf("tags=%s ", cur->tags);
-		puts(path);
+		puts(pathlast ? vispath(path) : "");
 
 		if (cur->child)
-			dump_nodes(path, cur->child);
+			dump_nodes(path, cur->child, pathlast);
 	}
 }
+
+/*
+ * vispath --
+ *	strsvis(3) encodes path, which must not be longer than MAXPATHLEN
+ *	characters long, and returns a pointer to a static buffer containing
+ *	the result.
+ */
+char *
+vispath(const char *path)
+{
+	const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
+	static char pathbuf[4*MAXPATHLEN + 1];
+
+	strsvis(pathbuf, path, VIS_CSTYLE, extra);
+	return(pathbuf);
+}
+
 
 static dev_t
 parsedev(char *arg)
