@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.16 1999/03/15 00:18:24 chs Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.17 1999/07/03 18:40:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,6 @@
 #include <machine/vmparam.h>
 
 #include <ufs/mfs/mfsnode.h>
-#include <ufs/mfs/mfsiom.h>
 #include <ufs/mfs/mfs_extern.h>
 
 /*
