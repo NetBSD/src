@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.54 1994/03/02 06:46:11 mycroft Exp $
+ *	$Id: pccons.c,v 1.55 1994/03/02 08:03:02 mycroft Exp $
  */
 
 /*
@@ -158,11 +158,28 @@ kbd_wait()
 	return 0;
 }
 
+#if 0
 /*
- * Pass command to keyboard controller (8042).
+ * Get the current command byte.
+ */
+static u_char
+kbc_get8042cmd()
+{
+
+	if (!kbd_wait())
+		return -1;
+	outb(KBCMDP, K_RDCMDBYTE);
+	if (!kbd_wait())
+		return -1;
+	return inb(KBDATAP);
+}
+#endif
+
+/*
+ * Pass command byte to keyboard controller (8042).
  */
 static int
-kbc_8042cmd(val)
+kbc_put8042cmd(val)
 	u_char val;
 {
 
@@ -317,7 +334,7 @@ pcprobe(dev)
 	u_char c;
 
 	/* Enable interrupts and keyboard, etc. */
-	if (!kbc_8042cmd(CMDBYTE)) {
+	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
 		return 0;
 	}
@@ -325,24 +342,32 @@ pcprobe(dev)
 #if 0
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
-		printf("pcprobe: reset error 1\n");
+		printf("pcprobe: reset error %d\n", 1);
 		goto lose;
 	}
 	while ((inb(KBSTATP) & KBS_DIB) == 0);
 	if (inb(KBDATAP) != KBR_RSTDONE) {
-		printf("pcprobe: reset error 2\n");
+		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
 	/* Just to be safe. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
-		printf("pcprobe: reset error 3\n");
+		printf("pcprobe: reset error %d\n", 3);
 		goto lose;
 	}
-#endif
-	/* We need the old XT scancodes. */
-	if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(1, 1)) {
-		printf("pcprobe: reset error 4\n");
-		goto lose;
+
+	if (kbc_get8042cmd() & KC8_TRANS) {
+		/* The 8042 is translating for us; use AT codes. */
+		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(2, 1)) {
+			printf("pcprobe: reset error %d\n", 4);
+			goto lose;
+		}
+	} else {
+		/* Stupid 8042; set keyboard to XT codes. */
+		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(1, 1)) {
+			printf("pcprobe: reset error %d\n", 5);
+			goto lose;
+		}
 	}
 
 lose:
@@ -350,6 +375,7 @@ lose:
 	 * Technically, we should probably fail the probe.  But we'll be nice
 	 * and allow keyboard-less machines to boot with the console.
 	 */
+#endif
 
 	return 16;
 }
