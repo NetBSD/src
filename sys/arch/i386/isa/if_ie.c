@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.23 1995/01/02 21:27:27 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.24 1995/01/02 21:57:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -268,7 +268,6 @@ static int command_and_wait __P((struct ie_softc *, int,
     void volatile *, int));
 /*static*/ void ierint __P((struct ie_softc *));
 /*static*/ void ietint __P((struct ie_softc *));
-static void start_receiver __P((struct ie_softc *));
 static int ieget __P((struct ie_softc *, struct mbuf **,
 		      struct ether_header *, int *));
 void iememinit __P((void *, struct ie_softc *));
@@ -379,6 +378,12 @@ sl_probe(sc, ia)
 
 	sc->hard_vers = SL_REV(c);
 
+	if (ia->ia_irq == IRQUNK || ia->ia_maddr == MADDRUNK) {
+		printf("%s: %s does not have soft configuration\n",
+		    sc->sc_dev.dv_xname, ie_hardware_names[sc->hard_type]);
+		return 0;
+	}
+
 	/*
 	 * Divine memory size on-board the card.  Ususally 16k.
 	 */
@@ -446,26 +451,32 @@ el_probe(sc, ia)
 
 	outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 
-	c = inb(PORT + IE507_IRQ) & 0x0f;
-
-	if (ia->ia_irq != c) {
-		printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-		    sc->sc_dev.dv_xname, ia->ia_irq, c);
-		return 0;
-	}
-
-	c = (inb(PORT + IE507_MADDR) & 0x1c) + 0xc0;
-
-	if (ia->ia_maddr != ((int)c << 12)) {
-		printf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
-		    sc->sc_dev.dv_xname, ia->ia_maddr, (int)c << 12);
-		return 0;
-	}
-
-	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
-
 	sc->hard_type = IE_3C507;
 	sc->hard_vers = 0;	/* 3C507 has no version number. */
+
+	i = inb(PORT + IE507_IRQ) & 0x0f;
+
+	if (ia->ia_irq != IRQUNK) {
+		if (ia->ia_irq != i) {
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			    sc->sc_dev.dv_xname, ia->ia_irq, i);
+			return 0;
+		}
+	} else
+		ia->ia_irq = i;
+
+	i = ((inb(PORT + IE507_MADDR) & 0x1c) << 12) + 0xc0000;
+
+	if (ia->ia_maddr != MADDRUNK) {
+		if (ia->ia_maddr != i) {
+			printf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
+			    sc->sc_dev.dv_xname, ia->ia_maddr, i);
+			return 0;
+		}
+	} else
+		ia->ia_maddr = i;
+
+	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
 
 	/*
 	 * Divine memory size on-board the card.
@@ -1420,17 +1431,18 @@ iereset(sc)
 	int s = splimp();
 	
 	printf("%s: reset\n", sc->sc_dev.dv_xname);
+
 	sc->sc_arpcom.ac_if.if_flags &= ~IFF_UP;
 	ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, 0);
 	
 	/*
 	 * Stop i82586 dead in its tracks.
 	 */
-	if (command_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
-		printf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
-	
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
+	
+	if (command_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
+		printf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
 	
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
@@ -1557,20 +1569,6 @@ run_tdr(sc, cmd)
 		    sc->sc_dev.dv_xname, result);
 }
 
-static void
-start_receiver(sc)
-	struct ie_softc *sc;
-{
-	int s = splimp();
-	
-	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0);
-	
-	ie_ack(sc, IE_ST_WHENCE);
-	
-	splx(s);
-}
-
 #define	_ALLOC(p, n)	(bzero(p, n), p += n, p - n)
 #define	ALLOC(p, n)	_ALLOC(p, ALIGN(n))
 
@@ -1692,16 +1690,17 @@ ieinit(sc)
 	{
 		volatile struct ie_config_cmd *cmd = ptr;
 		
-		ie_setup_config(cmd, sc->promisc, sc->hard_type == IE_STARLAN10);
+		scb->ie_command_list = MK_16(MEM, cmd);
 		cmd->com.ie_cmd_status = 0;
 		cmd->com.ie_cmd_cmd = IE_CMD_CONFIG | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = 0xffff;
 		
-		scb->ie_command_list = MK_16(MEM, cmd);
+		ie_setup_config(cmd, sc->promisc, sc->hard_type == IE_STARLAN10);
 		
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-			printf("%s: configure command failed\n", sc->sc_dev.dv_xname);
+			printf("%s: configure command failed\n",
+			    sc->sc_dev.dv_xname);
 			return 0;
 		}
 	}
@@ -1711,14 +1710,14 @@ ieinit(sc)
 	{
 		volatile struct ie_iasetup_cmd *cmd = ptr;
 		
+		scb->ie_command_list = MK_16(MEM, cmd);
 		cmd->com.ie_cmd_status = 0;
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = 0xffff;
 		
 		bcopy(sc->sc_arpcom.ac_enaddr, (caddr_t)&cmd->ie_address,
 		    sizeof cmd->ie_address);
-		
-		scb->ie_command_list = MK_16(MEM, cmd);
+
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 			printf("%s: individual address setup command failed\n",
@@ -1743,7 +1742,12 @@ ieinit(sc)
 	iememinit(ptr, sc);
 	
 	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING; /* tell higher levels that we are here */
-	start_receiver(sc);
+
+	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
+	command_and_wait(sc, IE_RU_START, 0, 0);
+	
+	ie_ack(sc, IE_ST_WHENCE);
+
 	return 0;
 }
 
