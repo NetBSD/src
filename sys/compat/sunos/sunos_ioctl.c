@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.17 1995/04/02 10:43:29 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.18 1995/05/04 19:46:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -710,6 +710,7 @@ sunos_ioctl(p, uap, retval)
 		aui.hiwat = ~0;
 		aui.lowat = ~0;
 		aui.backlog = ~0;
+		aui.mode = ~0;
 		/*
 		 * The bsd driver does not distinguish between paused and
 		 * active. (In the sun driver, not active means samples are
