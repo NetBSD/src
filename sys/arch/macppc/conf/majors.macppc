@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.18 2003/11/13 14:39:38 christos Exp $
+#	$NetBSD: majors.macppc,v 1.19 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for macppc
 #
@@ -79,4 +79,4 @@ device-major	ksyms		char 74			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

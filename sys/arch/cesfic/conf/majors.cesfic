@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.11 2003/10/24 08:18:36 jdolecek Exp $
+#	$NetBSD: majors.cesfic,v 1.12 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for cesfic
 #
@@ -30,4 +30,4 @@ device-major	ksyms		char 25			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

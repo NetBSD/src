@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.12 2003/10/24 08:17:34 jdolecek Exp $
+#	$NetBSD: majors.dreamcast,v 1.13 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for dreamcast
 #
@@ -60,4 +60,4 @@ device-major	wsfont		char 65			wsfont
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.
