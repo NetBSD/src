@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -253,7 +253,7 @@ static int ParseAddDir __P((ClientData, ClientData));
 static int ParseClearPath __P((ClientData, ClientData));
 static void ParseDoDependency __P((char *));
 static int ParseAddCmd __P((ClientData, ClientData));
-static int ParseReadc __P((void));
+static __inline int ParseReadc __P((void));
 static void ParseUnreadc __P((int));
 static void ParseHasCommands __P((ClientData));
 static void ParseDoInclude __P((char *));
@@ -2071,7 +2071,7 @@ ParseEOF (opened)
  * Side Effects:
  *---------------------------------------------------------------------
  */
-static int
+static __inline int 
 ParseReadc()
 {
     if (curFILE)
