@@ -2,7 +2,7 @@
 # site-specific startup actions, daemons
 #
 #	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
-#	$Id: rc.local,v 1.7 1994/05/12 08:13:54 cgd Exp $
+#	$Id: rc.local,v 1.8 1994/06/03 05:02:12 jtc Exp $
 #
 
 T=/tmp/_motd
@@ -22,3 +22,6 @@ if [ X${kerberos_server} = X"YES" ]; then
 fi
 
 echo '.'
+
+echo 'runtime link editor directory cache'
+ldconfig
