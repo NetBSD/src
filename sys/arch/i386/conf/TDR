@@ -12,7 +12,7 @@ options		"TCP_COMPAT_42"
 options		SCSI,ISOFS
 options 	DDB
 
-config		vmunix	root on wd0 swap on wd0
+config		bsd	root on wd0 swap on wd0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr

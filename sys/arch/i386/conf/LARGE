@@ -10,7 +10,7 @@ options		INET,NFSSERVER,NFSCLIENT,MFS,HSFS,DIAGNOSTIC # OSI real soon
 options		"COMPAT_43","TCP_COMPAT_42"
 options 	DDB
 
-config		"bsd"	root on dk0 swap on dk0
+config		bsd	root on dk0 swap on dk0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
