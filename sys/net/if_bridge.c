@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.5.4.1 2002/06/10 16:28:33 tv Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.5.4.2 2003/06/30 03:13:39 grant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.5.4.1 2002/06/10 16:28:33 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.5.4.2 2003/06/30 03:13:39 grant Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -216,6 +216,7 @@ int	bridge_ioctl_sfd(struct bridge_softc *, void *);
 int	bridge_ioctl_gma(struct bridge_softc *, void *);
 int	bridge_ioctl_sma(struct bridge_softc *, void *);
 int	bridge_ioctl_sifprio(struct bridge_softc *, void *);
+int	bridge_ioctl_sifcost(struct bridge_softc *, void *);
 
 struct bridge_control {
 	int	(*bc_func)(struct bridge_softc *, void *);
@@ -283,6 +284,9 @@ const struct bridge_control bridge_control_table[] = {
 	  BC_F_COPYIN|BC_F_SUSER },
 
 	{ bridge_ioctl_sifprio,		sizeof(struct ifbreq),
+	  BC_F_COPYIN|BC_F_SUSER },
+
+	{ bridge_ioctl_sifcost,		sizeof(struct ifbreq),
 	  BC_F_COPYIN|BC_F_SUSER },
 };
 const int bridge_control_table_size =
@@ -633,6 +637,7 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 	req->ifbr_ifsflags = bif->bif_flags;
 	req->ifbr_state = bif->bif_state;
 	req->ifbr_priority = bif->bif_priority;
+	req->ifbr_path_cost = bif->bif_path_cost;
 	req->ifbr_portno = bif->bif_ifp->if_index & 0xff;
 
 	return (0);
@@ -716,6 +721,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 		breq.ifbr_ifsflags = bif->bif_flags;
 		breq.ifbr_state = bif->bif_state;
 		breq.ifbr_priority = bif->bif_priority;
+		breq.ifbr_path_cost = bif->bif_path_cost;
 		breq.ifbr_portno = bif->bif_ifp->if_index & 0xff;
 		error = copyout(&breq, bifc->ifbic_req + count, sizeof(breq));
 		if (error)
@@ -933,6 +939,24 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 	return (0);
 }
 
+int
+bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
+{
+	struct ifbreq *req = arg;
+	struct bridge_iflist *bif;
+
+	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
+	if (bif == NULL)
+		return (ENOENT);
+
+	bif->bif_path_cost = req->ifbr_path_cost;
+
+	if (sc->sc_if.if_flags & IFF_RUNNING)
+		bstp_initialization(sc);
+
+	return (0);
+}
+
 /*
  * bridge_ifdetach:
  *
@@ -968,6 +992,7 @@ bridge_init(struct ifnet *ifp)
 	    bridge_timer, sc);
 
 	ifp->if_flags |= IFF_RUNNING;
+	bstp_initialization(sc);
 	return (0);
 }
 
