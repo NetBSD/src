@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.294 2004/04/27 11:26:43 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.295 2004/05/01 08:20:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2004/04/27 11:26:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2004/05/01 08:20:11 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6590,7 +6590,13 @@ pmap_kremove4m(va, len)
 	struct segmap *sp;
 	vaddr_t endva, nva;
 	int vr, vs;
-	int tpte, perpage, npg;
+	int tpte, perpage, npg, s;
+
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * in updatepte() requires interrupt protection.
+	 */
+	s = splvm();
 
 	endva = va + len;
 	for (; va < endva; va = nva) {
@@ -6634,6 +6640,7 @@ pmap_kremove4m(va, len)
 				 SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
 		}
 	}
+	splx(s);
 }
 
 /*
@@ -6643,12 +6650,18 @@ void
 pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 {
 	struct pmap *pm = pmap_kernel();
-	int pte, newprot;
+	int pte, newprot, s;
 	struct regmap *rp;
 	struct segmap *sp;
 
 	size = roundup(size,NBPG);
 	newprot = pte_kprot4m(prot);
+
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * in updatepte() requires interrupt protection.
+	 */
+	s = splvm();
 
 	while (size > 0) {
 		rp = &pm->pm_regmap[VA_VREG(va)];
@@ -6670,6 +6683,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 		va += NBPG;
 		size -= NBPG;
 	}
+	splx(s);
 }
 #endif /* SUN4M || SUN4D */
 
@@ -6790,8 +6804,14 @@ pmap_extract4m(pm, va, pap)
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * requires interrupt protection.
+	 */
 	s = splvm();
-	simple_lock(&pm->pm_lock);
+	if (pm != pmap_kernel())
+		simple_lock(&pm->pm_lock);
+
 	rp = &pm->pm_regmap[vr];
 	if (rp->rg_segmap == NULL) {
 #ifdef DEBUG
@@ -6839,7 +6859,8 @@ pmap_extract4m(pm, va, pap)
 
 	v = TRUE;
 out:
-	simple_unlock(&pm->pm_lock);
+	if (pm != pmap_kernel())
+		simple_unlock(&pm->pm_lock);
 	splx(s);
 	return (v);
 }
