@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.105 1999/08/03 20:19:20 wrstuden Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.106 1999/09/05 14:28:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -752,9 +752,18 @@ nfs_lookup(v)
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	nmp = VFSTONFS(dvp->v_mount);
 	np = VTONFS(dvp);
-	if ((error = cache_lookup(dvp, vpp, cnp)) != 0) {
+
+	/*
+	 * Before tediously performing a linear scan of the directory,
+	 * check the name cache to see if the directory/name pair
+	 * we are looking for is known already.
+	 * If the directory/name pair is found in the name cache,
+	 * we have to ensure the directory has not changed from
+	 * the time the cache entry has been created. If it has,
+	 * the cache entry has to be ignored 
+	 */
+	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
 		struct vattr vattr;
-		int vpid;
 
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
@@ -765,34 +774,25 @@ nfs_lookup(v)
 			np->n_nctime = 0;
 			goto dorpc;
 		}
+		else if (error > 0)
+			return error;
 
 		newvp = *vpp;
-		vpid = newvp->v_id;
-		/*
-		 * See the comment starting `Step through' in ufs/ufs_lookup.c
-		 * for an explanation of the locking protocol
-		 */
-		if (dvp == newvp) {
-			VREF(newvp);
-			error = 0;
-		} else
-			error = vget(newvp, LK_EXCLUSIVE);
-		if (!error) {
-			if (vpid == newvp->v_id) {
-			   if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
-			    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
-				nfsstats.lookupcache_hits++;
-				if (cnp->cn_nameiop != LOOKUP &&
-				    (flags & ISLASTCN))
-					cnp->cn_flags |= SAVENAME;
-				if (!lockparent || !(flags & ISLASTCN))
-					cnp->cn_flags |= PDIRUNLOCK;
-				return (0);
-			   }
-			   cache_purge(newvp);
-			}
-			vrele(newvp);
+		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
+			&& vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime)
+		{
+			nfsstats.lookupcache_hits++;
+			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
+				cnp->cn_flags |= SAVENAME;
+			return (0);
 		}
+		/* XXX cache_lookup() returns the vnode locked; if nfs
+		 * would have real vnode locking, we should call VOP_UNLOCK()
+		 * here; as it has no real locking, don't bother to do
+		 * anything */
+		/* VOP_UNLOCK(newvp, 0); */
+		cache_purge(newvp);
+		vrele(newvp);
 		*vpp = NULLVP;
 	}
 dorpc:
