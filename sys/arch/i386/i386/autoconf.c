@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2000/03/21 19:38:24 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2000/03/23 13:49:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -160,7 +160,8 @@ matchbiosdisks()
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
 		if (dv->dv_class == DV_DISK &&
 		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")))
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")))
 			i386_ndisks++;
 
 	if (i386_ndisks == 0)
@@ -196,7 +197,8 @@ matchbiosdisks()
 		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
 #endif
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
