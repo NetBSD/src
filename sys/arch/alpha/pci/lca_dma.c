@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.6 1998/01/17 22:46:56 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.7 1998/02/04 07:37:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.6 1998/01/17 22:46:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.7 1998/02/04 07:37:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ lca_dma_init(lcp)
 	t->_dmamap_load_uio = lca_bus_dmamap_load_uio_direct;
 	t->_dmamap_load_raw = lca_bus_dmamap_load_raw_direct;
 	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = NULL;		/* Nothing to do. */
+	t->_dmamap_sync = _bus_dmamap_sync;
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
 	t->_dmamem_free = _bus_dmamem_free;
@@ -145,7 +145,7 @@ lca_dma_init(lcp)
 	t->_dmamap_load_uio = lca_bus_dmamap_load_uio_sgmap;
 	t->_dmamap_load_raw = lca_bus_dmamap_load_raw_sgmap;
 	t->_dmamap_unload = lca_bus_dmamap_unload_sgmap;
-	t->_dmamap_sync = NULL;		/* Nothing to do. */
+	t->_dmamap_sync = _bus_dmamap_sync;
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
 	t->_dmamem_free = _bus_dmamem_free;
