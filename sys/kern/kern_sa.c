@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.27 2002/07/17 22:14:29 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.28 2002/07/18 23:23:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,26 +117,26 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		syscallarg(sa_upcall_t *) old;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sadata *s;
+	struct sadata *sa;
 	sa_upcall_t prev;
 	int error;
 
 	if (p->p_sa == NULL) {
 		/* Allocate scheduler activations data structure */
-		s = pool_get(&sadata_pool, PR_WAITOK);
+		sa = pool_get(&sadata_pool, PR_WAITOK);
 		/* Initialize. */
-		memset(s, 0, sizeof(*s));
-		simple_lock_init(&s->sa_lock);
-		s->sa_flag = 0;
-		s->sa_vp = NULL;
-		s->sa_idle = NULL;
-		s->sa_concurrency = 1;
-		s->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
+		memset(sa, 0, sizeof(*sa));
+		simple_lock_init(&sa->sa_lock);
+		sa->sa_flag = 0;
+		sa->sa_vp = NULL;
+		sa->sa_idle = NULL;
+		sa->sa_concurrency = 1;
+		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
-		s->sa_nstackentries = SA_NUMSTACKS;
-		LIST_INIT(&s->sa_lwpcache);
-		SIMPLEQ_INIT(&s->sa_upcalls);
-		p->p_sa = s;
+		sa->sa_nstackentries = SA_NUMSTACKS;
+		LIST_INIT(&sa->sa_lwpcache);
+		SIMPLEQ_INIT(&sa->sa_upcalls);
+		p->p_sa = sa;
 		sa_newcachelwp(l);
 	}
 
@@ -160,23 +160,23 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) num;
 		syscallarg(stack_t *) stacks;
 	} */ *uap = v;
-	struct sadata *s = l->l_proc->p_sa;
+	struct sadata *sa = l->l_proc->p_sa;
 	int error, count;
 
 	/* We have to be using scheduler activations */
-	if (s == NULL)
+	if (sa == NULL)
 		return (EINVAL);
 
 	count = SCARG(uap, num);
 	if (count < 0)
 		return (EINVAL);
-	count = min(count, s->sa_nstackentries - s->sa_nstacks);
+	count = min(count, sa->sa_nstackentries - sa->sa_nstacks);
 
-	error = copyin(SCARG(uap, stacks), s->sa_stacks + s->sa_nstacks,
+	error = copyin(SCARG(uap, stacks), sa->sa_stacks + sa->sa_nstacks,
 	    sizeof(stack_t) * count);
 	if (error)
 		return (error);
-	s->sa_nstacks += count;
+	sa->sa_nstacks += count;
 	
 	*retval = count;
 	return (0);
@@ -187,13 +187,14 @@ int
 sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *s = p->p_sa;
+	struct sadata *sa = p->p_sa;
 	int error;
 
-	DPRINTF(("sys_sa_enable(pid: %d lid: %d)\n", l->l_proc->p_pid, l->l_lid));
+	DPRINTF(("sys_sa_enable(pid: %d lid: %d)\n", l->l_proc->p_pid,
+	    l->l_lid));
 
 	/* We have to be using scheduler activations */
-	if (s == NULL)
+	if (sa == NULL)
 		return (EINVAL);
 	
 	if (p->p_flag & P_SA) /* Already running! */
@@ -207,7 +208,7 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	l->l_flag |= L_SA; /* We are now an activation LWP */
 
 	/* Assign this LWP to the virtual processor */
-	s->sa_vp = l;
+	sa->sa_vp = l;
 
 	/* This will not return to the place in user space it came from. */
 	return (0);
@@ -220,25 +221,26 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	struct sys_sa_setconcurrency_args /* {
 		syscallarg(int) concurrency;
 	} */ *uap = v;
-	struct sadata *s = l->l_proc->p_sa;
+	struct sadata *sa = l->l_proc->p_sa;
 
-	DPRINTF(("sys_sa_concurrency(pid: %d lid: %d)\n", l->l_proc->p_pid, l->l_lid));
+	DPRINTF(("sys_sa_concurrency(pid: %d lid: %d)\n", l->l_proc->p_pid,
+	    l->l_lid));
 
 	/* We have to be using scheduler activations */
-	if (s == NULL)
+	if (sa == NULL)
 		return (EINVAL);
 
 	if (SCARG(uap, concurrency) < 1)
 		return (EINVAL);
 
-	*retval = s->sa_concurrency;
+	*retval = sa->sa_concurrency;
 	/*
 	 * Concurrency greater than the number of physical CPUs does 
 	 * not make sense. 
 	 * XXX Should we ever support hot-plug CPUs, this will need 
 	 * adjustment.
 	 */
-	s->sa_concurrency = min(SCARG(uap, concurrency), 1 /* XXX ncpus */);
+	sa->sa_concurrency = min(SCARG(uap, concurrency), 1 /* XXX ncpus */);
 	    
 	return (0);
 }
@@ -324,54 +326,54 @@ int
 sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	size_t argsize, void *arg)
 {
-	struct sadata_upcall *s;
+	struct sadata_upcall *sau;
 
 	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
 			      memory */
-	s = sadata_upcall_alloc(1);
+	sau = sadata_upcall_alloc(1);
 	l->l_flag |= L_SA;
 
-	return (sa_upcall0(l, type, event, interrupted, argsize, arg, s));
+	return (sa_upcall0(l, type, event, interrupted, argsize, arg, sau));
 }
 
 int
 sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
-    size_t argsize, void *arg, struct sadata_upcall *s)
+    size_t argsize, void *arg, struct sadata_upcall *sau)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *sd = p->p_sa;
+	struct sadata *sa = p->p_sa;
 
 	KDASSERT((event == NULL) || (event != interrupted));
 
-	s->sau_type = type;
-	s->sau_argsize = argsize;
-	s->sau_arg = arg;
-	s->sau_event.sa_context = NULL;
-	s->sau_interrupted.sa_context = NULL;
+	sau->sau_type = type;
+	sau->sau_argsize = argsize;
+	sau->sau_arg = arg;
+	sau->sau_event.sa_context = NULL;
+	sau->sau_interrupted.sa_context = NULL;
 
 	/* Grab a stack */
-	if (!sd->sa_nstacks) {
-		sadata_upcall_free(s);
+	if (!sa->sa_nstacks) {
+		sadata_upcall_free(sau);
 		return (ENOMEM);
 	}
-	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
+	sau->sau_stack = sa->sa_stacks[--sa->sa_nstacks];
 
 	if (event) {
-		getucontext(event, &s->sau_e_ctx);
-		s->sau_event.sa_context = (ucontext_t *)
-		    (_UC_MACHINE_SP(&s->sau_e_ctx) - sizeof(ucontext_t));
-		s->sau_event.sa_id = event->l_lid;
-		s->sau_event.sa_cpu = 0; /* XXX extract from l_cpu */
+		getucontext(event, &sau->sau_e_ctx);
+		sau->sau_event.sa_context = (ucontext_t *)
+		    (_UC_MACHINE_SP(&sau->sau_e_ctx) - sizeof(ucontext_t));
+		sau->sau_event.sa_id = event->l_lid;
+		sau->sau_event.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
 	if (interrupted) {
-		getucontext(interrupted, &s->sau_i_ctx);
-		s->sau_interrupted.sa_context = (ucontext_t *)
-		    (_UC_MACHINE_SP(&s->sau_i_ctx) - sizeof(ucontext_t));
-		s->sau_interrupted.sa_id = interrupted->l_lid;
-		s->sau_interrupted.sa_cpu = 0; /* XXX extract from l_cpu */
+		getucontext(interrupted, &sau->sau_i_ctx);
+		sau->sau_interrupted.sa_context = (ucontext_t *)
+		    (_UC_MACHINE_SP(&sau->sau_i_ctx) - sizeof(ucontext_t));
+		sau->sau_interrupted.sa_id = interrupted->l_lid;
+		sau->sau_interrupted.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
 
-	SIMPLEQ_INSERT_TAIL(&sd->sa_upcalls, s, sau_next);
+	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 	l->l_flag |= L_SA_UPCALL;
 	
 	return (0);
@@ -389,12 +391,13 @@ void
 sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *s = p->p_sa;
-	struct sadata_upcall *sd;
+	struct sadata *sa = p->p_sa;
+	struct sadata_upcall *sau;
 	struct lwp *l2;
 	int error;
 
-	DPRINTFN(4,("sa_switch(type: %d pid: %d.%d)\n", type, p->p_pid, l->l_lid));
+	DPRINTFN(4,("sa_switch(type: %d pid: %d.%d)\n", type, p->p_pid,
+	    l->l_lid));
 	SCHED_ASSERT_LOCKED();
 
 	if (l->l_flag & L_SA_BLOCKING) {
@@ -406,7 +409,7 @@ sa_switch(struct lwp *l, int type)
 		 * Instead, simply let the LWP that was running before
 		 * we woke up have another go.
 		 */
-		l2 = s->sa_vp;
+		l2 = sa->sa_vp;
 	} else {
 		/* Get an LWP */
 		/* The process of allocating a new LWP could cause
@@ -438,13 +441,13 @@ sa_switch(struct lwp *l, int type)
 		 * XXX allocate the sadata_upcall structure on the stack, here.
 		 */
 
-		sd = sadata_upcall_alloc(0);
-		if (sd == NULL)
+		sau = sadata_upcall_alloc(0);
+		if (sau == NULL)
 			goto sa_upcall_failed;
 
 		cpu_setfunc(l2, sa_switchcall, NULL);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, 
-		    sd);
+		    sau);
 		if (error) {
 		sa_upcall_failed:
 			/* Put the lwp back */
@@ -465,14 +468,14 @@ sa_switch(struct lwp *l, int type)
 		KDASSERT(l2 != l);
 	}
 
-	if (s->sa_idle) {
+	if (sa->sa_idle) {
 		DPRINTFN(4,("sa_switch(%d.%d) switching to NULL (idle)\n",
 		    p->p_pid, l->l_lid));
 		mi_switch(l, NULL);
 	} else {
 		DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d(%x).\n",
 		    p->p_pid, l->l_lid, l2->l_lid, l2->l_flag));
-		s->sa_vp = l2;
+		sa->sa_vp = l2;
 		mi_switch(l, l2);
 	}
 
