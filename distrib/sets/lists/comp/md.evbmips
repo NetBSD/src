@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.2 2002/07/10 19:58:02 jdolecek Exp $
+# $NetBSD: md.evbmips,v 1.3 2002/07/29 15:55:43 simonb Exp $
 ./usr/include/evbmips	comp-c-include
 ./usr/include/evbmips/_G_config.h	comp-c-include
 ./usr/include/evbmips/ansi.h	comp-c-include
@@ -22,8 +22,6 @@
 ./usr/include/evbmips/int_limits.h	comp-c-include
 ./usr/include/evbmips/int_mwgwtypes.h	comp-c-include
 ./usr/include/evbmips/int_types.h	comp-c-include
-./usr/include/evbmips/intr.h	comp-c-include
-./usr/include/evbmips/isa_machdep.h	comp-c-include
 ./usr/include/evbmips/kcore.h	comp-c-include
 ./usr/include/evbmips/kdbparam.h	comp-c-include
 ./usr/include/evbmips/limits.h	comp-c-include
@@ -33,7 +31,6 @@
 ./usr/include/evbmips/mips_opcode.h	comp-c-include
 ./usr/include/evbmips/param.h	comp-c-include
 ./usr/include/evbmips/pcb.h	comp-c-include
-./usr/include/evbmips/pci_machdep.h	comp-c-include
 ./usr/include/evbmips/pmap.h	comp-c-include
 ./usr/include/evbmips/proc.h	comp-c-include
 ./usr/include/evbmips/profile.h	comp-c-include
@@ -44,7 +41,6 @@
 ./usr/include/evbmips/regdef.h	comp-c-include
 ./usr/include/evbmips/regnum.h	comp-c-include
 ./usr/include/evbmips/reloc.h	comp-c-include
-./usr/include/evbmips/rnd.h	comp-c-include
 ./usr/include/evbmips/setjmp.h	comp-c-include
 ./usr/include/evbmips/signal.h	comp-c-include
 ./usr/include/evbmips/stdarg.h	comp-c-include
