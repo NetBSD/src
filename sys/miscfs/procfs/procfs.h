@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.2 1994/01/05 11:08:07 cgd Exp $
+ *	$Id: procfs.h,v 1.3 1994/01/09 19:44:03 ws Exp $
  */
 
 /*
@@ -94,7 +94,7 @@ struct pfsdent {
 #define UIO_MX sizeof(struct pfsdent)
 #define PROCFS_FILENO(pid, type) \
 	(((type) == Proot) ? \
-			2 : \
+			((pid) + 2) : \
 			((((pid)+1) << 3) + ((int) (type))))
 
 /*
@@ -242,10 +242,10 @@ int	procfs_readdir __P((
 		int *eofflagp,
 		u_int *cookies,
 		int ncookies));
-#define procfs_readlink ((int (*) __P(( \
+int	procfs_readlink __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \
-		struct ucred *cred))) procfs_badop)
+		struct ucred *cred));
 int	procfs_abortop __P((
 		struct nameidata *ndp));
 int	procfs_inactive __P((

@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.11 1994/01/05 21:56:02 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.12 1994/01/09 19:44:10 ws Exp $
  */
 
 /*
@@ -76,6 +76,8 @@ static struct pfsnames {
 } procent[] = {
 #define N(s) sizeof(s)-1, s
 	/* namlen, nam, type */
+	{  N("."),	Pproc },
+	{  N(".."),	Proot },
 	{  N("file"),   Pfile },
 	{  N("mem"),    Pmem },
 	{  N("regs"),   Pregs },
@@ -86,6 +88,8 @@ static struct pfsnames {
 #undef N
 };
 #define Nprocent (sizeof(procent)/sizeof(procent[0]))
+
+#define	PROCFS_XFILES	3	/* number of other entries, like "curproc" */
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -297,13 +301,6 @@ procfs_getattr(vp, vap, cred, p)
 	struct proc *procp;
 	int error;
 
-	/* first check the process still exists */
-	procp = PFIND(pfs->pfs_pid);
-	if (procp == 0)
-		return (ENOENT);
-
-	error = 0;
-
 	/* start by zeroing out the attributes */
 	VATTR_NULL(vap);
 
@@ -326,6 +323,19 @@ procfs_getattr(vp, vap, cred, p)
 	microtime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
+	error = 0;
+
+	if (pfs->pfs_type != Proot) {
+		/* check the process still exists */
+		procp = PFIND(pfs->pfs_pid);
+		if (procp == 0)
+			return (ENOENT);
+		/* most of the time we want these values */
+		vap->va_nlink = 1;
+		vap->va_uid = procp->p_ucred->cr_uid;
+		vap->va_gid = procp->p_ucred->cr_gid;
+	}
+
 	/*
 	 * now do the object specific fields
 	 *
@@ -338,45 +348,53 @@ procfs_getattr(vp, vap, cred, p)
 
 	switch (pfs->pfs_type) {
 	case Proot:
-		vap->va_nlink = 2;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
+		switch ((int)pfs->pfs_pid) {
+		case 0:		/* /proc */
+			vap->va_nlink = 2;
+			vap->va_uid = 0;
+			vap->va_gid = 0;
+			vap->va_bytes = vap->va_size
+				= (maxproc + 1 + PROCFS_XFILES) * UIO_MX;
+			break;
+		case 1:		/* /proc/curproc */
+			vap->va_nlink = 1;
+			vap->va_uid = 0;
+			vap->va_gid = 0;
+			break;
+		default:
+			panic("procfs_getattr root");
+		}
 		break;
 
 	case Pproc:
 		vap->va_nlink = 2;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
-		break;
-
-	case Pfile:
-		error = EOPNOTSUPP;
+		vap->va_bytes = vap->va_size = Nprocent * UIO_MX;
 		break;
 
 	case Pmem:
-		vap->va_nlink = 1;
 		vap->va_bytes = vap->va_size =
 			ctob(procp->p_vmspace->vm_tsize +
 				    procp->p_vmspace->vm_dsize +
 				    procp->p_vmspace->vm_ssize);
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
 		break;
 
 	case Pregs:
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
-		/* fall through */
-	case Pctl:
+		break;
+
 	case Pstatus:
+		vap->va_bytes = vap->va_size = 256;	/* only a maximum */
+		break;
+
+	case Pctl:
+		break;
+
 	case Pnote:
 	case Pnotepg:
-		vap->va_nlink = 1;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
 		break;
 
 	default:
-		panic("procfs_getattr");
+		panic("procfs_getattr type");
 	}
 
 	return (error);
@@ -508,10 +526,14 @@ procfs_lookup(dvp, ndp, p)
 		if (ndp->ni_isdotdot)
 			return (EIO);
 
-		if (NDEQ(ndp, "curproc", 7))
-			pid = p->p_pid;
-		else
-			pid = atopid(pname, ndp->ni_namelen);
+		if (NDEQ(ndp, "curproc", 7)) {
+			if (error = procfs_allocvp(dvp->v_mount, &nvp, 1, Proot))
+				return error;
+			ndp->ni_vp = nvp;
+			return 0;
+		}
+
+		pid = atopid(pname, ndp->ni_namelen);
 		if (pid == NO_PID)
 			return (ENOENT);
 
@@ -522,9 +544,6 @@ procfs_lookup(dvp, ndp, p)
 		error = procfs_allocvp(dvp->v_mount, &nvp, pid, Pproc);
 		if (error)
 			return (error);
-
-		nvp->v_type = VDIR;
-		pfs = VTOPFS(nvp);
 
 		ndp->ni_vp = nvp;
 		return (0);
@@ -566,7 +585,6 @@ procfs_lookup(dvp, ndp, p)
 			if (error)
 				return (error);
 
-			nvp->v_type = VREG;
 			pfs = VTOPFS(nvp);
 		}
 		ndp->ni_vp = nvp;
@@ -624,8 +642,9 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	 * from the procent[] table (top of this file).
 	 */
 	case Pproc: {
-		while (uio->uio_resid >= UIO_MX) {
+		while (uio->uio_resid >= UIO_MX && (!cookies || ncookies > 0)) {
 			struct pfsnames *dt;
+			pid_t pid = pfs->pfs_pid;
 
 			if (i >= Nprocent) {
 				*eofflagp = 1;
@@ -634,7 +653,10 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 
 			dt = &procent[i];
 			dp->d_reclen = UIO_MX;
-			dp->d_fileno = PROCFS_FILENO(pfs->pfs_pid, dt->d_pfstype);
+
+			if (dt->d_pfstype == Proot)
+				pid = 0;
+			dp->d_fileno = PROCFS_FILENO(pid, dt->d_pfstype);
 			dp->d_namlen = dt->d_namlen;
 			bcopy(dt->d_name, dp->d_name, sizeof(dt->d_name)-1);
 			error = uiomove((caddr_t) dp, UIO_MX, uio);
@@ -642,6 +664,10 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				break;
 			count += UIO_MX;
 			i++;
+			if (cookies) {
+				*cookies++ = i * UIO_MX;
+				ncookies--;
+			}
 		}
 
 	    	break;
@@ -666,17 +692,23 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 
 		p = (struct proc *) allproc;
 
-#define PROCFS_XFILES	1	/* number of other entries, like "curproc" */
 		pcnt = PROCFS_XFILES;
 
-		while (p && uio->uio_resid >= UIO_MX) {
+		while (p && uio->uio_resid >= UIO_MX && (!cookies || ncookies > 0)) {
 			bzero((char *) dp, UIO_MX);
 			dp->d_reclen = UIO_MX;
 
 			switch (i) {
-			case 0:
+			case 0:		/* `.' */
+			case 1:		/* `..' */
+				dp->d_fileno = PROCFS_FILENO(0, Proot);
+				bcopy("..",dp->d_name,3);
+				dp->d_namlen = i + 1;
+				dp->d_name[i + 1] = 0;
+				break;
+			case 2:
 				/* ship out entry for "curproc" */
-				dp->d_fileno = PROCFS_FILENO(PID_MAX+1, Pproc);
+				dp->d_fileno = PROCFS_FILENO(1, Proot);
 				dp->d_namlen = 7;
 				bcopy("curproc", dp->d_name, dp->d_namlen+1);
 				break;
@@ -706,6 +738,10 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				break;
 			count += UIO_MX;
 			i++;
+			if (cookies) {
+				*cookies++ = i * UIO_MX;
+				ncookies--;
+			}
 		}
 
 		break;
@@ -722,6 +758,26 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 		*eofflagp = 1;
 
 	return (error);
+}
+
+/*
+ * readlink reads the link of "curproc"
+ */
+procfs_readlink(vp, uio, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	struct ucred *cred;
+{
+	struct pfsnode *pfs = VTOPFS(vp);
+	char buf[16];		/* should be enough */
+	int len;
+
+	if (pfs->pfs_fileno != PROCFS_FILENO(1,Proot))
+		return EINVAL;
+
+	len = sprintf(buf,"%ld",(long)curproc->p_pid);
+
+	return uiomove(buf, len, uio);
 }
 
 /*
