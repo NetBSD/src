@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.69 1995/06/26 05:15:33 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.70 1995/07/04 07:21:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -374,23 +374,6 @@ cdclose(dev, flag, fmt)
 }
 
 /*
- * trim the size of the transfer if needed,
- * called by physio
- * basically the smaller of our max and the scsi driver's
- * minphys (note we have no max ourselves)
- *
- * Trim buffer length if buffer-size is bigger than page size
- */
-void 
-cdminphys(bp)
-	struct buf *bp;
-{
-	register struct cd_softc *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
-
-	(cd->sc_link->adapter->scsi_minphys) (bp);
-}
-
-/*
  * Actually translate the requested transfer into one the physical driver can
  * understand.  The transfer is described by a buf and will include only one
  * physical transfer.
@@ -405,7 +388,6 @@ cdstrategy(bp)
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_link, SDEV_DB1,
 	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
-	cdminphys(bp);
 	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed
@@ -554,6 +536,33 @@ cdstart(cd)
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
 			printf("%s: not queued", cd->sc_dev.dv_xname);
 	}
+}
+
+void 
+cdminphys(bp)
+	struct buf *bp;
+{
+	register struct cd_softc *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
+
+	(cd->sc_link->adapter->scsi_minphys)(bp);
+}
+
+int
+cdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
+}
+
+int
+cdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
 
 /*
