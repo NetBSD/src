@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 1997/10/05 02:15:48 carrel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 1997/10/12 18:47:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,6 +156,7 @@ void	cpu_init_kcore_hdr __P((void));
 
 /* functions called from locore.s */
 void    dumpsys __P((void));
+void	hp300_init __P((void));
 void    straytrap __P((int, u_short));
 void	nmihand __P((struct frame));
 
@@ -182,6 +183,30 @@ int	conforced;		/* console has been forced */
  */
 int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
 int	delay_divisor;		/* delay constant */
+
+/*
+ * Early initialization, before main() is called.
+ */
+void
+hp300_init()
+{
+	int i;
+
+	/* Initialize the interrupt handlers. */
+	intr_init();
+
+	/* Calibrate the delay loop. */
+	hp300_calibrate_delay();
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
+	 */
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+}
 
 /*
  * Console initialization: called early on from main,
@@ -244,15 +269,6 @@ cpu_startup()
 	 * Initialize the kernel crash dump header.
 	 */
 	cpu_init_kcore_hdr();
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
