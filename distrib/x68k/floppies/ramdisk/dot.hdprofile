@@ -1,4 +1,4 @@
-#	$NetBSD: dot.hdprofile,v 1.1 1997/10/19 15:29:08 oki Exp $
+#	$NetBSD: dot.hdprofile,v 1.1.2.1 1998/10/24 01:04:54 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -31,7 +31,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=x68k
 export TERM
 
 umask 022
