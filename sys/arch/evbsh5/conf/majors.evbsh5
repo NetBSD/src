@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh5,v 1.5 2003/10/05 09:00:19 jdolecek Exp $
+#	$NetBSD: majors.evbsh5,v 1.6 2003/10/10 21:21:26 jdolecek Exp $
 #
 # Devices majors specific to evbsh5
 #
@@ -7,6 +7,6 @@ include "arch/sh5/conf/majors.sh5"
 
 device-major	alphaled	char 9			alphaled
 
-# Majors up to 191 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
 # sys/dev/majors.
