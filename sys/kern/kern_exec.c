@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.192 2005/02/11 02:12:03 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.193 2005/02/12 09:38:25 jmc Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.192 2005/02/11 02:12:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.193 2005/02/12 09:38:25 jmc Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1338,7 +1338,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	 * which causes the above calculation to put the sigcode at
 	 * an invalid address.  Put it just below the text instead.
 	 */
-	if (va == (vaddr_t)vm_map_max(p->p_vmspace->vm_map)) {
+	if (va == (vaddr_t)vm_map_max(&p->p_vmspace->vm_map)) {
 		va = (vaddr_t)p->p_vmspace->vm_taddr - round_page(sz);
 	}
 #endif
