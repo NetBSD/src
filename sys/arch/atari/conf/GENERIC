@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.32 1997/06/02 20:40:57 leo Exp $
+#	$NetBSD: GENERIC,v 1.33 1997/07/30 15:43:26 leo Exp $
 #
 # Generic atari
 #
@@ -135,7 +135,7 @@ fd1	at fdc0 unit 1		# external floppy drive
 ser0	at mainbus0		# Serial support through 68901 (modem1)
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer
 
 ch*	at scsibus? target ? lun ?	# SCSI changer
 ss*	at scsibus? target ? lun ?	# SCSI scanner
