@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.49 2000/10/02 18:52:47 abs Exp $	*/
+/*	$NetBSD: mount.c,v 1.50 2000/10/10 20:24:52 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.49 2000/10/02 18:52:47 abs Exp $");
+__RCSID("$NetBSD: mount.c,v 1.50 2000/10/10 20:24:52 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ prmount(sfp)
 		(void)printf("%swrites: sync %ld async %ld)\n",
 		    !f++ ? " (" : ", ", sfp->f_syncwrites, sfp->f_asyncwrites);
 	else
-		(void)printf(f ? ")\n" : "\n");
+		(void)printf("%s", f ? ")\n" : "\n");
 }
 
 struct statfs *
