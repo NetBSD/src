@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.4 2003/09/27 10:07:57 tsutsui Exp $
+# $NetBSD: RPC44,v 1.5 2003/10/08 11:04:56 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.4 $"
+#ident		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -182,6 +182,7 @@ com3		at isa? port 0x2e8 irq 3
 wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1		at isa? port 0x170 irq 15 flags 0x00
 #wdc*		at isapnp?
+atabus* 	at wdc? channel ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -195,11 +196,11 @@ wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
 # XXX - should be configured
-wd*		at wdc? channel ? drive ? flags 0x0000
+wd*		at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 # XXX - should be configured
-#atapibus*	at wdc? channel ?
+#atapibus*	at atabus?
 
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
