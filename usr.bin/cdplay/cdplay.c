@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.27 2003/09/12 00:39:38 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.28 2004/09/10 05:36:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.27 2003/09/12 00:39:38 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.28 2004/09/10 05:36:00 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -199,7 +199,6 @@ main(int argc, char **argv)
 	}
 
 	opencd();
-	srandom(time(NULL));
 	
 	if (argc > 0) {
 		interactive = 0;
@@ -712,7 +711,7 @@ skip(int dir, int fromuser)
 		if (fromuser || (rv != CD_AS_PLAY_IN_PROGRESS &&
 		    rv != CD_AS_PLAY_PAUSED))
 			trk = h.starting_track +
-			    random() % (h.ending_track - h.starting_track + 1);
+			    arc4random() % (h.ending_track - h.starting_track + 1);
 		else
 			return (0);
 	} else {
