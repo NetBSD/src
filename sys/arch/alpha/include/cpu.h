@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.32 1999/08/10 23:35:46 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.33 1999/08/15 18:32:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
  * Exported definitions unique to Alpha cpu support.
  */
 
+#ifdef _KERNEL
 #include <machine/frame.h>
 
 #if defined(MULTIPROCESSOR)
@@ -182,11 +183,9 @@ struct clockframe {
 
 #define	aston()		(astpending = 1)
 
-#ifdef _KERNEL
 u_int64_t astpending;		/* need to trap before returning to user mode */
 u_int64_t want_resched;		/* resched() was called */
-#endif
-
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
