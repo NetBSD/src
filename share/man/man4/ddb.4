@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.49 2000/11/26 00:44:16 mrg Exp $
+.\"	$NetBSD: ddb.4,v 1.50 2001/02/12 04:04:37 jhawk Exp $
 .\"
-.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd November 26, 2000
+.Dd February 11, 2001
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -555,6 +555,17 @@ command.
 show each process' PID, command, system call emulation, wait channel
 address, and wait channel message.
 .El
+.It Ic "show breaks"
+Display all breakpoints.
+.It Xo
+.Ic "show buf" Ns Op Cm /f
+.Ar address
+.Xc
+Print the struct buf at
+.Ar address .
+The
+.Cm /f
+does nothing at this time.
 .It Xo
 .Ic "show map" Ns Op Cm /f
 .Ar address
@@ -563,7 +574,10 @@ Print the vm_map at
 .Ar address .
 If
 .Cm /f
-is specified the complete map is printed.
+is specified, the complete map is printed.
+.It Ic "show ncache" Ar address
+Dump the namecache list associated with vnode at
+.Ar address .
 .It Xo
 .Ic "show object" Ns Op Cm /f
 .Ar address
@@ -572,7 +586,31 @@ Print the vm_object at
 .Ar address .
 If
 .Cm /f
-is specified the complete object is printed.
+is specified, the complete object is printed.
+.It Xo
+.Ic "show page" Ns Op Cm /f
+.Ar address
+.Xc
+Print the vm_page at
+.Ar address .
+If
+.Cm /f
+is specified, the complete page is printed.
+.It Xo
+.Ic "show pool" Ns Op Cm /clp
+.Ar address
+.Xc
+Print the pool at
+.Ar address .
+Valid modifiers:
+.Bl -tag -width 4n -compact
+.It Cm /c
+Print the cachelist and its statistics for this pool.
+.It Cm /l
+Print the log entries for this pool.
+.It Cm /p
+Print the pagelist for this pool.
+.El
 .It Ic "show registers" Ns Op Cm /u
 Display the register set.
 If
@@ -584,6 +622,17 @@ Warning: support for
 .Cm /u
 is machine dependent.
 If not supported, incorrect information will be displayed.
+.It Ic "show uvmexp"
+Print a selection of UVM counters and statistics.
+.It Xo
+.Ic "show vnode" Ns Op Cm /f
+.Ar address
+.Xc
+Print the vnode at
+.Ar address .
+If
+.Cm /f
+is specified, the complete vnode is printed.
 .It Ic "show watches"
 Display all watchpoints.
 .It Xo
