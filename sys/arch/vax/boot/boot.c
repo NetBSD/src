@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1995/03/29 21:24:03 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.3 1995/06/16 15:06:50 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -150,7 +150,7 @@ copyunix(howto, devtype, aio)
 	for (i = 0; i < 128*512; i++)	/* slop */
 		*addr++ = 0;
 	printf(" start 0x%x\n", (x.a_entry&0x7fffffff));
-	hoppabort((x.a_entry&0x7fffffff),howto,devtype);
+	hoppabort((x.a_entry&0x7fffffff),howto,devtype,esym);
 	return;
 shread:
 	printf("Short read\n");
