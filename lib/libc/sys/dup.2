@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.5 1997/05/16 15:19:40 kleink Exp $
+.\"	$NetBSD: dup.2,v 1.6 1997/06/06 04:03:19 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ The argument
 is a small non-negative integer index in
 the per-process descriptor table.  The value must be less
 than the size of the table, which is returned by
-.Xr getdtablesize 2 .
+.Xr getdtablesize 3 .
 The new descriptor returned by the call
 is the lowest numbered descriptor
 currently not in use by the process.
@@ -124,7 +124,7 @@ Too many descriptors are active.
 .Xr pipe 2 ,
 .Xr socket 2 ,
 .Xr socketpair 2 ,
-.Xr getdtablesize 2
+.Xr getdtablesize 3
 .Sh STANDARDS
 .Fn Dup
 and
