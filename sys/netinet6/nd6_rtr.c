@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.34 2002/07/13 21:04:55 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.35 2002/07/30 23:24:21 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.34 2002/07/13 21:04:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.35 2002/07/30 23:24:21 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,6 +653,11 @@ defrouter_delreq(dr)
 	struct sockaddr_in6 def, mask, gw;
 	struct rtentry *oldrt = NULL;
 
+#ifdef DIAGNOSTIC
+	if (!dr)
+		panic("dr == NULL in defrouter_delreq");
+#endif
+
 	Bzero(&def, sizeof(def));
 	Bzero(&mask, sizeof(mask));
 	Bzero(&gw, sizeof(gw));	/* for safety */
@@ -666,7 +671,7 @@ defrouter_delreq(dr)
 #endif
 
 	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
-	    dr ? (struct sockaddr *)&gw : NULL,
+	    (struct sockaddr *)&gw,
 	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
@@ -680,8 +685,7 @@ defrouter_delreq(dr)
 		}
 	}
 
-	if (dr)
-		dr->installed = 0;
+	dr->installed = 0;
 }
 
 /*
