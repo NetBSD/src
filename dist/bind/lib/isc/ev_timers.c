@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.4 2001/05/17 23:00:20 itojun Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.4.2.1 2002/06/28 11:55:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.30 2001/02/12 23:13:48 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.32 2001/11/01 05:35:47 marka Exp";
 #endif
 
 /* Import. */
@@ -203,7 +203,7 @@ evClearTimer(evContext opaqueCtx, evTimerID id) {
 	}
 
 	if (heap_element(ctx->timers, del->index) != del)
-		ERR(ENOENT);
+		EV_ERR(ENOENT);
 
 	if (heap_delete(ctx->timers, del->index) < 0)
 		return (-1);
@@ -231,7 +231,7 @@ evResetTimer(evContext opaqueCtx,
 	int result=0;
 
 	if (heap_element(ctx->timers, timer->index) != timer)
-		ERR(ENOENT);
+		EV_ERR(ENOENT);
 
 	old_due = timer->due;
 
@@ -334,6 +334,9 @@ evTouchIdleTimer(evContext opaqueCtx, evTimerID id) {
 
 heap_context
 evCreateTimers(const evContext_p *ctx) {
+
+	UNUSED(ctx);
+
 	return (heap_new(due_sooner, set_index, 2048));
 }
 
@@ -365,6 +368,9 @@ set_index(void *what, int index) {
 static void
 free_timer(void *what, void *uap) {
 	evTimer *t = what;
+
+	UNUSED(uap);
+
 	FREE(t);
 }
 
@@ -390,6 +396,9 @@ idle_timeout(evContext opaqueCtx,
 	evContext_p *ctx = opaqueCtx.opaque;
 	idle_timer *this = uap;
 	struct timespec idle;
+
+	UNUSED(due);
+	UNUSED(inter);
 	
 	idle = evSubTime(ctx->lastEventTime, this->lastTouched);
 	if (evCmpTime(idle, this->max_idle) >= 0) {
