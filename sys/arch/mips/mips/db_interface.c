@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 1997/07/07 03:54:37 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 1997/07/07 04:55:27 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -84,6 +84,7 @@ kdbpoke(vm_offset_t addr, int newval)
 	wbflush();
 	if (CPUISMIPS3) {
 #ifdef MIPS3
+		mips3_HitFlushDCache((vm_offset_t) addr, sizeof(int));
 		mips3_FlushICache((vm_offset_t) addr, sizeof(int));
 #endif
 	} else {
@@ -197,9 +198,10 @@ db_write_bytes(addr, size, data)
 	register size_t	   size;
 	register char *data;
 {
-/*XXX*/	printf("db_write_bytes(%lx, %d, %p, val %x)\n", addr, size, data,
+#ifdef DEBUG_DDB
+	printf("db_write_bytes(%lx, %d, %p, val %x)\n", addr, size, data,
 	       	(addr &3 ) == 0? *(u_int*)addr: -1);
-	
+#endif
 
 	while (size >= 4)
 		kdbpoke(addr++, *(int*)data), addr += 4, size -= 4;
