@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: greptests.sh,v 1.1.1.1 2003/09/14 13:47:48 cjep Exp $
+# $NetBSD: greptests.sh,v 1.2 2003/09/14 15:10:49 cjep Exp $
 #
 #
 # Regression tests for grep. Some of these tests are based on those
@@ -143,3 +143,16 @@ echo ""
 echo "15. Ignore non-existent files (-s)"
 ${grep} -s foobar $p/notexistent | diff /dev/null -
 echo ""
+
+# Test 16: Context output with -z
+#
+echo "16. Context output with -z"
+tmpdir=`mktemp -d /tmp/greptest.XXXXXX` || exit 1;
+printf "haddock\000cod\000plaice\000" > ${tmpdir}/test1
+printf "mackeral\000cod\000crab\000" > ${tmpdir}/test2
+(cd ${tmpdir} && ${grep} -z -A1 cod test1 test2) | diff $p/test16a.gnu.out -
+(cd ${tmpdir} && ${grep} -z -B1 cod test1 test2) | diff $p/test16b.gnu.out -
+(cd ${tmpdir} && ${grep} -z -C1 cod test1 test2) | diff $p/test16c.gnu.out -
+rm -rf ${tmpdir}
+echo ""
+
