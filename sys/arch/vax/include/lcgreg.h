@@ -1,4 +1,4 @@
-/* $NetBSD: lcgreg.h,v 1.1 2000/04/24 17:09:03 matt Exp $ */
+/* $NetBSD: lcgreg.h,v 1.2 2004/06/10 18:32:20 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -129,8 +129,8 @@
 #define	LCG_REG_FIFO_BASE2		0x000578
 #define	LCG_REG_FIFO_TAIL		0x000578
 #define	LCG_REG_CLIP_LIST_SAVE_OFFSET	0x000ce4
-#define	LCG_REG_FIFO_RESIDUE_LW0	0x000d00
-#define	LCG_REG_FIFO_RESIDUE_LW1	0x000d04
+#define	LCG_REG_FIFO_RESIDUE_LW0	0x000d04
+#define	LCG_REG_FIFO_RESIDUE_LW1	0x000d08
 #define	LCG_REG_FIFO_RESIDUE_LW2	0x000d0c
 #define	LCG_REG_FIFO_LENGTH		0x000d70
 #define	LCG_REG_FIFO_SAVE_HEAD_OFFSET	0x000d74
