@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.71 2004/01/06 00:23:01 wrstuden Exp $
+#	$NetBSD: services,v 1.72 2004/04/04 12:53:03 mrg Exp $
 #
 # Network services, Internet style
 #
@@ -135,6 +135,8 @@ isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
 isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
 ripng		521/tcp			# RIP for IPv6
 ripng		521/udp			# RIP for IPv6
+submission	587/tcp			# Message Submission
+submission	587/udp			# Message Submission
 acap		674/tcp		# Application Configuration Access Protocol
 acap		674/udp		# Application Configuration Access Protocol
 silc		706/tcp			# Secure Internet Live Conferencing
