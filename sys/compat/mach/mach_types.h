@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_types.h,v 1.12 2003/03/03 22:07:40 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.13 2003/03/29 11:04:12 manu Exp $	 */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,6 +62,15 @@ typedef unsigned long mach_vm_offset_t;
 typedef int mach_vm_region_flavor_t;
 typedef int mach_vm_behavior_t;
 typedef int mach_vm_sync_t;
+typedef int mach_exception_type_t;
+typedef int mach_exception_behavior_t;
+typedef unsigned int mach_exception_mask_t;
+typedef int mach_port_flavor_t;
+typedef mach_natural_t mach_port_seqno_t; 
+typedef mach_natural_t mach_port_mscount_t;
+typedef mach_natural_t mach_port_msgcount_t;
+typedef mach_natural_t mach_port_rights_t;
+
 
 /* 
  * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to 

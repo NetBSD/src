@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.5 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.6 2003/03/29 11:04:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,8 +92,66 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_task_set_special_port_reply_t;
 
+/* task_threads */
+
+typedef struct {
+	 mach_msg_header_t req_msgh;
+} mach_task_threads_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_ool_ports_descriptor_t rep_list;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_threads_reply_t;
+
+/* task_get_exception_ports */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_exception_mask_t req_mask;
+} mach_task_get_exception_ports_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_old_handler[32];
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_masks_count;
+	mach_exception_mask_t rep_masks[32];
+	mach_exception_behavior_t rep_old_behaviors[32];
+	mach_thread_state_flavor_t rep_old_flavors[32];
+	mach_msg_trailer_t rep_trailer;
+} mach_task_get_exception_ports_reply_t;
+
+/* task_set_exception_ports */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_new_port;
+	mach_ndr_record_t req_ndr;
+	mach_exception_mask_t req_mask;
+	mach_exception_behavior_t req_behavior;
+	mach_thread_state_flavor_t req_new_flavor;
+} mach_task_set_exception_ports_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_set_exception_ports_reply_t;
+
+
 int mach_task_get_special_port(struct mach_trap_args *);
 int mach_ports_lookup(struct mach_trap_args *);
 int mach_task_set_special_port(struct mach_trap_args *);
+int mach_task_threads(struct mach_trap_args *);
+int mach_task_get_exception_ports(struct mach_trap_args *);
+int mach_task_set_exception_ports(struct mach_trap_args *);
 
 #endif /* _MACH_TASK_H_ */

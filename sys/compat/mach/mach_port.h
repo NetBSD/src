@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.23 2003/02/28 09:30:23 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.24 2003/03/29 11:04:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -130,11 +130,6 @@ typedef struct {
 
 /* port_get_attributes */
 
-typedef int mach_port_flavor_t;
-typedef mach_natural_t mach_port_seqno_t; 
-typedef mach_natural_t mach_port_mscount_t;
-typedef mach_natural_t mach_port_msgcount_t;
-typedef mach_natural_t mach_port_rights_t;
 #define MACH_PORT_LIMITS_INFO 1
 typedef struct mach_port_status {
 	mach_port_name_t	mps_pset;
@@ -227,14 +222,14 @@ typedef struct {
 	mach_port_name_t req_name;
 	mach_msg_id_t req_msgid;
 	mach_port_mscount_t req_count;
-} port_request_notification_request_t;
+} mach_port_request_notification_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_previous;
 	mach_msg_trailer_t rep_trailer;
-} port_request_notification_reply_t;
+} mach_port_request_notification_reply_t;
 
 int mach_port_deallocate(struct mach_trap_args *);
 int mach_port_allocate(struct mach_trap_args *);
@@ -244,6 +239,7 @@ int mach_port_set_attributes(struct mach_trap_args *);
 int mach_port_insert_member(struct mach_trap_args *);
 int mach_port_move_member(struct mach_trap_args *);
 int mach_port_destroy(struct mach_trap_args *);
+int mach_port_request_notification(struct mach_trap_args *);
 
 extern struct mach_port *mach_clock_port;
 extern struct mach_port *mach_io_master_port;
@@ -257,6 +253,9 @@ struct mach_right {
 	int mr_type;			/* right type (recv, send, sendonce) */
 	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
 	int mr_refcount;		/* Reference count */
+	struct mach_right *mr_notify_destroyed;		/* notify destroyed */
+	struct mach_right *mr_notify_dead_name;		/* notify dead name */
+	struct mach_right *mr_notify_no_senders;	/* notify no senders */
 
 	/* Revelant only if the right is on a port set */
 	LIST_HEAD(mr_set, mach_right) mr_set;
@@ -300,6 +299,8 @@ struct mach_port {
 #define MACH_MP_DEVICE		0x1	/* struct device */
 #define MACH_MP_DEVICE_ITERATOR	0x2	/* struct mach_device_iterator */
 #define MACH_MP_IOKIT_DEVCLASS	0x3	/* (struct mach_iokit_devclass *) */
+#define MACH_MP_PROC		0x4	/* (struct proc *) */
+#define MACH_MP_NOTIFY_SYNC	0x5	/* int */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);

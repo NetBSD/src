@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.17 2003/01/21 04:06:07 matt Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.18 2003/03/29 11:04:09 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.17 2003/01/21 04:06:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.18 2003/03/29 11:04:09 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,18 +154,6 @@ int
 mach_sys_init_process(struct lwp *l, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_init_process();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_task_for_pid(struct lwp *l, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_task_for_pid_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_task_for_pid(0x%x, %d, %p);\n",
-	    SCARG(ap, target_tport), SCARG(ap, pid), SCARG(ap, t)));
 	return 0;
 }
 

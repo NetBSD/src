@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.21 2003/01/24 21:37:03 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.22 2003/03/29 11:04:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.21 2003/01/24 21:37:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.22 2003/03/29 11:04:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -268,5 +269,161 @@ mach_task_set_special_port(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_task_threads(args)
+	struct mach_trap_args *args;
+{
+	mach_task_threads_request_t *req = args->smsg;
+	mach_task_threads_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct mach_emuldata *med;
+	int error;
+	vaddr_t va;
+	size_t size;
+	int i;
+	struct mach_right *mr;
+	mach_msg_port_descriptor_t *mpd;
+
+	med = l->l_proc->p_emuldata;
+
+	size = l->l_proc->p_nlwps * sizeof(*mpd);
+	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
+
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
+	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL, UVM_INH_COPY, 
+	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
+		return mach_msg_error(args, error);
+
+	mpd = malloc(size, M_TEMP, M_WAITOK);
+	for (i = 0; i < l->l_proc->p_nlwps; i++) {
+		/* XXX each thread should have a kernel port */
+		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+		mpd[i].name = mr->mr_name;
+		mpd[i].disposition = 0x11;
+	}
+	if ((error = copyout(mpd, (void *)va, size)) != 0) {
+		free(mpd, M_TEMP);
+		return mach_msg_error(args, error);
+	}
+	free(mpd, M_TEMP);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_list.address = (void *)va;
+	rep->rep_list.count = l->l_proc->p_nlwps;
+	rep->rep_list.disposition = 0x11;
+	rep->rep_count = l->l_proc->p_nlwps;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_task_get_exception_ports(args)
+	struct mach_trap_args *args;
+{
+	mach_task_get_exception_ports_request_t *req = args->smsg;
+	mach_task_get_exception_ports_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
+	size_t *msglen = args->rsize;
+	struct mach_emuldata *med;
+
+	med = l->l_proc->p_emuldata;
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+int
+mach_task_set_exception_ports(args)
+	struct mach_trap_args *args;
+{
+	mach_task_set_exception_ports_request_t *req = args->smsg;
+	mach_task_set_exception_ports_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
+	size_t *msglen = args->rsize;
+	struct mach_emuldata *med;
+
+	med = l->l_proc->p_emuldata;
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+int
+mach_sys_task_for_pid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct mach_sys_task_for_pid_args /* {
+		syscallarg(mach_port_t) target_tport;
+		syscallarg(int) pid;
+		syscallarg(mach_port_t) *t;
+	} */ *uap = v;
+	struct mach_right *mr;
+	struct mach_emuldata *med;
+	struct lwp *tl;
+	struct proc *tp;
+	struct proc *p;
+	int error;
+
+	if ((mr = mach_right_check(SCARG(uap, target_tport), 
+	    l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return EPERM;
+
+	if (mr->mr_port->mp_datatype != MACH_MP_PROC)	
+		return EINVAL;
+	tp = (struct proc *)mr->mr_port->mp_data;
+	tl = LIST_FIRST(&tp->p_lwps);
+
+	if ((p = pfind(SCARG(uap, pid))) == NULL)
+		return ESRCH;
+
+	/* This will only work on a Mach process */
+	if ((p->p_emul != &emul_mach) &&
+#ifdef COMPAT_DARWIN
+	    (p->p_emul != &emul_darwin) &&
+#endif
+	    1)
+		return EINVAL;
+
+	med = p->p_emuldata;
+
+	if ((mr = mach_right_get(med->med_kernel, tl, 
+	    MACH_PORT_TYPE_SEND, 0)) == NULL)
+		return EINVAL;
+
+	if ((error = copyout(&mr->mr_name, SCARG(uap, t), 
+	    sizeof(mr->mr_name))) != 0)
+		return error;
+
 	return 0;
 }

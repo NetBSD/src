@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.27 2003/02/05 23:58:09 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.28 2003/03/29 11:04:08 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.27 2003/02/05 23:58:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.28 2003/03/29 11:04:08 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.27 2003/02/05 23:58:09 manu Exp $");
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_semaphore.h>
+#include <compat/mach/mach_notify.h>
 #include <compat/mach/mach_exec.h>
 
 static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
@@ -240,19 +241,24 @@ mach_e_proc_init(p, vmspace)
 
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
-	med->med_exception = mach_port_get();
 
 	med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
 	med->med_host->mp_flags |= MACH_MP_INKERNEL;
-	med->med_exception->mp_flags |= MACH_MP_INKERNEL;
+
+	med->med_kernel->mp_data = (void *)p;
+	med->med_host->mp_data = (void *)p;
+
+	med->med_kernel->mp_datatype = MACH_MP_PROC;
+	med->med_host->mp_datatype = MACH_MP_PROC;
 
 	/* Make sure they will not be deallocated */
 	med->med_kernel->mp_refcount++;
 	med->med_host->mp_refcount++;
-	med->med_exception->mp_refcount++;
 
 	med->med_bootstrap = mach_bootstrap_port;
 	med->med_bootstrap->mp_refcount++;
+
+	bzero(med->med_exc, sizeof(med->med_exc));
 
 	med->med_dirty_thid = 1;
 	return;
@@ -281,8 +287,6 @@ mach_e_proc_exit(p)
 		mach_port_put(med->med_kernel);
 	if (--med->med_host->mp_refcount == 0)  
 		mach_port_put(med->med_host);  
-	if (--med->med_exception->mp_refcount == 0)
-		mach_port_put(med->med_exception);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;

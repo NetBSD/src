@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.15 2003/02/02 19:07:17 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.16 2003/03/29 11:04:09 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 #include <uvm/uvm_extern.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_notify.h>
+
 
 struct mach_emuldata {
 	int med_thpri;			/* Saved priority */
@@ -52,9 +56,10 @@ struct mach_emuldata {
 	struct mach_port *med_bootstrap;/* task bootstrap port */
 	struct mach_port *med_kernel;	/* task kernel port */
 	struct mach_port *med_host;	/* task host port */
-	struct mach_port *med_exception;/* task exception port */
+	struct mach_port *med_exc[MACH_EXC_MAX];	/* Exception ports */
 
 	int med_dirty_thid;		/* Thread id not yet initialized */
+
 };
 
 int exec_mach_copyargs(struct proc *, struct exec_package *, 
