@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.25 2003/02/25 10:36:02 wiz Exp $
+.\" $NetBSD: lint.1,v 1.26 2003/04/08 17:25:15 jmmv Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -435,7 +435,7 @@ first pass reads standard C source files.
 recognizes the following C comments as commands.
 .Bl -tag -width Fl
 .It Li /* ARGSUSED Ns Ar n Li */
-makes
+Makes
 .Nm
 check only the first
 .Ar n
@@ -451,11 +451,11 @@ is an integer type, and suppress non-portable bitfield type warnings.
 .Li /* CONSTANTCOND */ No or
 .Li /* CONSTANTCONDITION */
 .Xc
-suppress complaints about constant operands for the next expression.
+Suppress complaints about constant operands for the next expression.
 .It Li /*\ FALLTHRU\ */ No or Xo
 .Li /* FALLTHROUGH */
 .Xc
-suppress complaints about fall through to a
+Suppress complaints about fall through to a
 .Sy case
 or
 .Sy default
@@ -485,7 +485,7 @@ At appropriate points, inhibit complaints about unreachable code.
 like
 .Xr exit 3 ) .
 .It Li /* PRINTFLIKE Ns Ar n Li */
-makes
+Makes
 .Nm
 check the first
 .Pq Ar n Ns No -1
@@ -496,7 +496,7 @@ argument is interpreted as a
 .Sy printf
 format string that is used to check the remaining arguments.
 .It Li /* PROTOLIB Ns Ar n Li */
-causes
+Causes
 .Nm
 to treat function declaration prototypes as function definitions
 if
@@ -504,12 +504,12 @@ if
 is non-zero.
 This directive can only be used in conjunction with the
 .Li /* LINTLIBRARY */
-directive.
+Directive.
 If
 .Ar n
 is zero, function prototypes will be treated normally.
 .It Li /* SCANFLIKE Ns Ar n Li */
-makes
+Makes
 .Nm
 check the first
 .Pq Ar n Ns No -1
@@ -569,14 +569,14 @@ time the set of source files were
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev LIBDIR
-the directory where the lint libraries specified by the
+The directory where the lint libraries specified by the
 .Fl l Ns Ar library
 option must exist.
 If this environment variable is undefined, then the default path
 .Pa /usr/libdata/lint
 will be used to search for the libraries.
 .It Ev TMPDIR
-usually the path for temporary files can be redefined by setting
+Usually the path for temporary files can be redefined by setting
 this environment variable.
 .It Ev CC
 Location of the C compiler program.
