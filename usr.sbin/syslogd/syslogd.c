@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.72 2004/11/19 18:48:18 wiz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.73 2004/11/23 14:19:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.72 2004/11/19 18:48:18 wiz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.73 2004/11/23 14:19:57 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1939,7 +1939,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 					return;
 				}
 				f->f_pmask[i >> 3] = pri;
-				f->f_pmask[i >> 3] = pri_cmp;
+				f->f_pcmp[i >> 3] = pri_cmp;
 			}
 			while (*p == ',' || *p == ' ')
 				p++;
