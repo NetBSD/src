@@ -260,6 +260,6 @@ int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
 
-#endif /* KERNEL */
+#endif /* !KERNEL */
 
 #endif /* !_SYS_SOCKET_H_ */
