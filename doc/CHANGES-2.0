@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.28 2004/04/01 23:36:30 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.29 2004/04/02 14:05:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -285,3 +285,29 @@ sys/dev/ic/i82557.c				1.82
 	        fxp0: WARNING: SCB timed out!
 	messages on the console, often followed by device timeouts.
 	[briggs, ticket #45]
+
+sys/netinet/fil.c				1.62
+sys/netinet/ip_lookup.c				1.2
+
+	A few more ioctl vs. copyin changes, spotted by Bill Studenmund.
+	[martin, ticket #46]
+
+sys/arch/i386/stand/misc/Makefile		1.3
+sys/arch/i386/stand/misc/pfdisk.doc.uue		1.1
+sys/arch/i386/stand/misc/pfdisk.exe.uue		1.1
+sys/arch/i386/stand/misc/pfdisk.gze		delete
+sys/arch/i386/stand/misc/pfdisk.txt		delete
+sys/arch/i386/stand/misc/pfdisktc.zip		delete
+sys/arch/i386/stand/misc/pfdisktc.zip.uue	1.1
+sys/arch/i386/stand/misc/rawr32.zip		delete
+sys/arch/i386/stand/misc/rawr32.zip.uue		1.1
+sys/arch/i386/stand/misc/rawr32src.zip		delete
+sys/arch/i386/stand/misc/rawr32src.zip.uue	1.1
+sys/arch/i386/stand/misc/rawrite.doc.uue	1.1
+sys/arch/i386/stand/misc/rawrite.exe.uue	1.1
+sys/arch/i386/stand/misc/rawrite.gze		delete
+sys/arch/i386/stand/misc/rawrite.txt		delete
+
+	Convert to using UUDECODE_FILES instead of using -kb in the repository.
+	[lukem, ticket #47]
+
