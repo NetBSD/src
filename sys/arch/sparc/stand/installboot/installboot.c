@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.10 2001/10/30 05:52:30 thorpej Exp $ */
+/*	$NetBSD: installboot.c,v 1.11 2001/10/30 23:39:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #include <unistd.h>
 
 #include "loadfile.h"
+#include "byteorder.h"
 #include "common/bbinfo.h"
 
 int	verbose, nowrite, sparc64, uflag, hflag = 1;
@@ -259,7 +260,7 @@ loadprotoblocks(fname, size)
 		return NULL;
 	}
 
-	max_block_count = ntohl(bbinfop->bbi_block_count);
+	max_block_count = sa_be32toh(bbinfop->bbi_block_count);
 
 	if (verbose) {
 		printf("%s: entry point %#lx\n", fname, en);
@@ -363,7 +364,7 @@ int	devfd;
 	/*
 	 * Register filesystem block size.
 	 */
-	bbinfop->bbi_block_size = htonl(fs->fs_bsize);
+	bbinfop->bbi_block_size = sa_htobe32(fs->fs_bsize);
 
 	/*
 	 * Get the block numbers; we don't handle fragments
@@ -375,14 +376,14 @@ int	devfd;
 	/*
 	 * Register block count.
 	 */
-	bbinfop->bbi_block_count = htonl(ndb);
+	bbinfop->bbi_block_count = sa_htobe32(ndb);
 
 	if (verbose)
 		printf("%s: block numbers: ", boot);
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->bbi_block_table[i] = htonl(blk);
+		bbinfop->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d ", blk);
 	}
@@ -403,7 +404,7 @@ int	devfd;
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		bbinfop->bbi_block_table[i] = htonl(blk);
+		bbinfop->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d ", blk);
 	}
