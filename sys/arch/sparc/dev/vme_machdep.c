@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.9 1998/07/30 22:29:34 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.10 1998/08/20 20:46:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -63,7 +64,7 @@
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/vmereg.h>
 
-struct vmebus_softc { 
+struct vmebus_softc {
 	struct device	 sc_dev;	/* base device */
 	bus_space_tag_t	 sc_bustag;
 	bus_dma_tag_t	 sc_dmatag;
@@ -175,6 +176,8 @@ struct rom_range vmebus_translations[] = {
 	{ VMEMOD_A32|VMEMOD_D32|_DS, 0, PMAP_VME32, 0x00000000, 0 }
 #undef _DS
 };
+
+struct extent *vme_dvmamap;
 
 struct sparc_bus_space_tag sparc_vme_bus_tag = {
 	NULL, /* cookie */
@@ -326,6 +329,9 @@ vmeattach_mainbus(parent, self, aux)
 	sc->sc_range = vmebus_translations;
 	sc->sc_nrange =
 		sizeof(vmebus_translations)/sizeof(vmebus_translations[0]);
+
+	vme_dvmamap = extent_create("vmedvma", DVMA_BASE, DVMA_END,
+					M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	printf("\n");
 	(void)config_search(vmesearch, self, &vba);
@@ -787,12 +793,56 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+	bus_addr_t dvmaddr;
+	bus_size_t sgsize;
+	vaddr_t vaddr;
+	pmap_t pmap;
+	int pagesz = PAGE_SIZE;
 	int error;
 
-	error = bus_dmamap_load(sc->sc_dmatag, map, buf, buflen, p, flags);
+	error = extent_alloc(vme_dvmamap, round_page(buflen), NBPG,
+			     map->_dm_boundary,
+			     (flags & BUS_DMA_NOWAIT) == 0
+					? EX_WAITOK
+					: EX_NOWAIT,
+			     (u_long *)&dvmaddr);
 	if (error != 0)
 		return (error);
+
+	vaddr = (vaddr_t)buf;
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_len = buflen;
+
+	pmap = (p == NULL) ? pmap_kernel() : p->p_vmspace->vm_map.pmap;
+
+	for (; buflen > 0; ) {
+		paddr_t pa;
+		/*
+		 * Get the physical address for this page.
+		 */
+		pa = pmap_extract(pmap, vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = pagesz - ((u_long)vaddr & (pagesz - 1));
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+#ifdef notyet
+		if (have_iocache)
+			curaddr |= PG_IOC;
+#endif
+		pmap_enter(pmap_kernel(), dvmaddr,
+			   (pa & ~(pagesz-1)) | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+
+		dvmaddr += pagesz;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
 
 	/* Adjust DVMA address to VME view */
 	map->dm_segs[0].ds_addr -= DVMA_BASE;
@@ -804,10 +854,25 @@ sparc_vme4_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+	bus_addr_t addr;
+	bus_size_t len;
 
+	/* Go from VME to CPU view */
 	map->dm_segs[0].ds_addr += DVMA_BASE;
-	bus_dmamap_unload(sc->sc_dmatag, map);
+
+	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
+	len = round_page(map->dm_segs[0].ds_len);
+
+	/* Remove double-mapping in DVMA space */
+	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	/* Release DVMA space */
+	if (extent_free(vme_dvmamap, addr, len, EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
+
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 }
 
 int
@@ -819,15 +884,45 @@ sparc_vme4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+	bus_addr_t dvmaddr;
+	struct pglist *mlist;
+	vm_page_t m;
+	paddr_t pa;
 	int error;
 
-	error = bus_dmamem_alloc(sc->sc_dmatag, size, alignment, boundary,
-				  segs, nsegs, rsegs, flags);
+	size = round_page(size);
+	error = _bus_dmamem_alloc_common(t, size, alignment, boundary,
+					 segs, nsegs, rsegs, flags);
 	if (error != 0)
 		return (error);
 
-	segs[0].ds_addr -= DVMA_BASE;
+	if (extent_alloc(vme_dvmamap, size, alignment, boundary,
+			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
+			 (u_long *)&dvmaddr) != 0)
+		return (ENOMEM);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	segs[0].ds_addr = dvmaddr - DVMA_BASE;
+	segs[0].ds_len = size;
+	*rsegs = 1;
+
+	/* Map memory into DVMA space */
+	mlist = segs[0]._ds_mlist;
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		pa = VM_PAGE_TO_PHYS(m);
+
+#ifdef notyet
+		if (have_iocache)
+			pa |= PG_IOC;
+#endif
+		pmap_enter(pmap_kernel(), dvmaddr, pa | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		dvmaddr += PAGE_SIZE;
+	}
+
 	return (0);
 }
 
@@ -837,10 +932,23 @@ sparc_vme4_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+	bus_addr_t addr;
+	bus_size_t len;
 
-	segs[0].ds_addr += DVMA_BASE;
-	bus_dmamem_free(sc->sc_dmatag, segs, nsegs);
+	addr = segs[0].ds_addr + DVMA_BASE;
+	len = round_page(segs[0].ds_len);
+
+	/* Remove DVMA kernel map */
+	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	/* Release DVMA address range */
+	if (extent_free(vme_dvmamap, addr, len, EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
+
+	/*
+	 * Return the list of pages back to the VM system.
+	 */
+	_bus_dmamem_free_common(t, segs, nsegs);
 }
 
 void
@@ -854,6 +962,7 @@ sparc_vme4_dmamap_sync(t, map, offset, len, ops)
 
 	/*
 	 * XXX Should perform cache flushes as necessary (e.g. 4/200 W/B).
+	 *     Currently the cache is flushed in bus_dma_load()...
 	 */
 }
 #endif /* SUN4 */
@@ -870,15 +979,21 @@ sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	bus_dmamap_t *dmamp;
 {
 	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
-	int align;
-
-	/* VME DVMA addresses must always be 8K aligned */
-	align = 8192;
+	int error;
 
 	/* XXX - todo: allocate DVMA addresses from assigned ranges:
 		 upper 8MB for A32 space; upper 1MB for A24 space */
-	return (bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
-				    boundary, /*align,*/ flags, dmamp));
+	error = bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
+				  boundary, flags, dmamp);
+	if (error != 0)
+		return (error);
+
+#if 0
+	/* VME DVMA addresses must always be 8K aligned */
+	(*dmamp)->_dm_align = 8192;
+#endif
+
+	return (0);
 }
 
 int
