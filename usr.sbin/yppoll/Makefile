@@ -2,6 +2,6 @@
 
 PROG=	yppoll
 NOMAN=
-DESTDIR=/usr/bin
+DESTDIR=/usr/sbin
 
 .include <bsd.prog.mk>
