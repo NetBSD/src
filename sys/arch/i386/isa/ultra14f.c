@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.13 1993/07/28 02:21:32 cgd Exp $
+ *	$Id: ultra14f.c,v 1.14 1993/12/07 12:52:01 deraadt Exp $
  */
  
 #include <sys/types.h>
@@ -46,7 +46,7 @@
 #endif  OSF
 #endif  MACH    /* end of MACH specific */
 
-#ifdef  __386BSD__      /* 386BSD specific */
+#ifdef  __NetBSD__      /* NetBSD specific */
 #define isa_dev isa_device
 #define dev_unit id_unit
 #define dev_addr id_iobase
@@ -55,7 +55,7 @@
 #include <i386/isa/isa_device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#endif  __386BSD__
+#endif  __NetBSD__
 
 /**/
 
@@ -79,10 +79,10 @@ extern physaddr kvtophys();
 #define KVTOPHYS(x)   kvtophys(x)
 #endif MACH
 
-#ifdef        __386BSD__
+#ifdef        __NetBSD__
 #define PHYSTOKV(x)   (x | 0xFE000000)
 #define KVTOPHYS(x)   vtophys(x)
-#endif        __386BSD__
+#endif        __NetBSD__
 
 extern int delaycount;  /* from clock setup code */
 #define NUM_CONCURRENT	16	/* number of concurrent ops per board */
@@ -277,9 +277,9 @@ struct  isa_driver      uhadriver = { uhaprobe, 0, uha_attach, "uha", 0, 0, 0};
 int (*uhaintrs[])() = {uhaintr, 0};
 #endif  MACH
 
-#ifdef  __386BSD__
+#ifdef  __NetBSD__
 struct  isa_driver      uhadriver = { uhaprobe, uha_attach, "uha"};
-#endif  __386BSD__
+#endif  __NetBSD__
 
 static	uha_unit = 0;
 int     uha_debug = 0;
