@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.55 1999/07/12 13:20:35 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.56 1999/09/21 11:18:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.55 1999/07/12 13:20:35 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.56 1999/09/21 11:18:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1239,22 +1239,24 @@ setupsockbufsize(sock)
 	 */
 	if (sndbuf_default == 0) {
 		len = sizeof(sndbuf_default);
-		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sndbuf_default,
-		    &len) < 0)
+		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF,
+		    (void *) &sndbuf_default, &len) < 0)
 			err(1, "unable to get default sndbuf size");
 		len = sizeof(rcvbuf_default);
-		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &rcvbuf_default,
-		    &len) < 0)
+		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
+		    (void *) &rcvbuf_default, &len) < 0)
 			err(1, "unable to get default rcvbuf size");
 
 	}
 
 	size = sndbuf_size ? sndbuf_size : sndbuf_default;
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *) &size,
+	    sizeof(size)) < 0)
 		warn("unable to set sndbuf size %d", size);
 
 	size = rcvbuf_size ? rcvbuf_size : rcvbuf_default;
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) < 0)
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (void *) &size,
+	    sizeof(size)) < 0)
 		warn("unable to set rcvbuf size %d", size);
 }
 
