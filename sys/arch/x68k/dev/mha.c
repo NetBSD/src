@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.1 1997/10/19 09:29:31 oki Exp $	*/
+/*	$NetBSD: mha.c,v 1.2 1997/10/19 20:45:17 oki Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -1681,18 +1681,21 @@ int
 mhaintr(unit)
 	int unit;
 {
-	register struct mha_softc *sc = mha_cd.cd_devs[unit]; /* XXX */
+	struct mha_softc *sc = mha_cd.cd_devs[unit]; /* XXX */
 	u_char ints;
-	register struct acb *acb;
-	register struct scsipi_link *sc_link;
+	struct acb *acb;
+	struct scsipi_link *sc_link;
 	struct spc_tinfo *ti;
 	u_char ph;
 	u_short r;
 	int n;
 
+	/* return if not configured */
+	if (sc == NULL)
+		return;
+
 #if 1	/* XXX */
-	if (tmpsc != NULL && tmpsc != sc)
-	  {
+	if (tmpsc != NULL && tmpsc != sc) {
 	    SPC_MISC(("[%x %x]\n", mha_cd.cd_devs, sc));
 	    sc = tmpsc;
 	  }
