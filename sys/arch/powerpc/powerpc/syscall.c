@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2002/10/30 07:39:40 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2002/10/30 18:34:15 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -35,14 +35,11 @@
 #include "opt_altivec.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_mach.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #ifdef KTRACE
@@ -69,6 +66,7 @@
 #endif
 
 #ifdef COMPAT_MACH
+#include <sys/syscall.h>
 #include <compat/mach/mach_syscall.h>
 extern struct sysent mach_sysent[];
 #endif
@@ -78,11 +76,40 @@ extern struct sysent mach_sysent[];
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
 
 #ifndef EMULNAME
+#include <sys/syscall.h>
+
 #define EMULNAME(x)	(x)
+#define EMULNAMEU(x)	(x)
+
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2002/10/30 18:34:15 matt Exp $");
+
+void
+child_return(void *arg)
+{
+	struct proc * const p = arg;
+	struct trapframe * const tf = trapframe(p);
+
+	KERNEL_PROC_UNLOCK(p);
+
+	tf->fixreg[FIRSTARG] = 0;
+	tf->fixreg[FIRSTARG + 1] = 1;
+	tf->cr &= ~0x10000000;
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
+					   be them. */
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+#ifdef	KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
+#endif
+	/* Profiling?							XXX */
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+}
 #endif
 
-void EMULNAME(syscall_plain)(struct trapframe *frame);
-void EMULNAME(syscall_fancy)(struct trapframe *frame);
+static void EMULNAME(syscall_plain)(struct trapframe *);
 
 void
 EMULNAME(syscall_plain)(struct trapframe *frame)
@@ -95,10 +122,13 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	register_t args[10];
 	int error;
 	int n;
+	int nsysent;
 
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
+	params = frame->fixreg + FIRSTARG;
+	n = NARGREG;
 
 #ifdef MACH_SYSCALL
 	if (code < 0) {
@@ -107,31 +137,35 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 #endif /* DEBUG_MACH */
 		code = -code;
 		callp = mach_sysent;
+		nsysent = MACH_SYS_NSYSENT;
 	} else
 #endif /* MACH_SYSCALL */
+	{
 		callp = p->p_emul->e_sysent;
-	params = frame->fixreg + FIRSTARG;
-	n = NARGREG;
+		nsysent = p->p_emul->e_nsysent;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * code is first argument,
-		 * followed by actual args.
-		 */
-		code = *params++;
-		n -= 1;
-		break;
-	case SYS___syscall:
-		params++;
-		code = *params++;
-		n -= 2;
-		break;
-	default:
-		break;
+		switch (code) {
+		case EMULNAMEU(SYS_syscall):
+			/*
+			 * code is first argument,
+			 * followed by actual args.
+			 */
+			code = *params++;
+			n -= 1;
+			break;
+#if !defined(COMPAT_LINUX)
+		case EMULNAMEU(SYS___syscall):
+			params++;
+			code = *params++;
+			n -= 2;
+			break;
+#endif
+		default:
+			break;
+		}
 	}
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (nsysent - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 
@@ -186,6 +220,9 @@ syscall_bad:
 	userret(p, frame);
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
+static void EMULNAME(syscall_fancy)(struct trapframe *);
+
 void
 EMULNAME(syscall_fancy)(struct trapframe *frame)
 {
@@ -197,11 +234,15 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	register_t args[10];
 	int error;
 	int n;
+	int nsysent;
 
 	KERNEL_PROC_LOCK(p);
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
+	params = frame->fixreg + FIRSTARG;
+	n = NARGREG;
+
 #ifdef MACH_SYSCALL
 	if (code < 0) {
 #ifdef DEBUG_MACH
@@ -209,31 +250,35 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 #endif /* DEBUG_MACH */
 		code = -code;
 		callp = mach_sysent;
+		nsysent = MACH_SYS_NSYSENT;
 	} else 
 #endif /* MACH_SYSCALL */
+	{
 		callp = p->p_emul->e_sysent;
-	params = frame->fixreg + FIRSTARG;
-	n = NARGREG;
+		nsysent = p->p_emul->e_nsysent;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * code is first argument,
-		 * followed by actual args.
-		 */
-		code = *params++;
-		n -= 1;
-		break;
-	case SYS___syscall:
-		params++;
-		code = *params++;
-		n -= 2;
-		break;
-	default:
-		break;
+		switch (code) {
+		case EMULNAMEU(SYS_syscall):
+			/*
+			 * code is first argument,
+			 * followed by actual args.
+			 */
+			code = *params++;
+			n -= 1;
+			break;
+#if !defined(COMPAT_LINUX)
+		case EMULNAMEU(SYS___syscall):
+			params++;
+			code = *params++;
+			n -= 2;
+			break;
+#endif
+		default:
+			break;
+		}
 	}
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (nsysent - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 
@@ -281,6 +326,9 @@ syscall_bad:
 	trace_exit(p, code, params, rval, error);
 	userret(p, frame);
 }
+#endif /* KTRACE || SYSTRACE */
+
+void EMULNAME(syscall_intern)(struct proc *);
 
 void
 EMULNAME(syscall_intern)(struct proc *p)

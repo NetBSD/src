@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.1 2002/10/30 06:41:45 manu Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.2 2002/10/30 18:34:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,18 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1 2002/10/30 06:41:45 manu Exp $");
-
-#include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/types.h>
-#include <sys/proc.h>
-
-void mach_syscall_intern __P((struct proc *));
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.2 2002/10/30 18:34:15 matt Exp $");
 
 #define EMULNAME(x)	__CONCAT(mach_,x)
+#define EMULNAMEU(x)	(x)	/* COMPAT_MACH uses the native syscalls */
 #define MACH_SYSCALL
 
 #include "syscall.c"

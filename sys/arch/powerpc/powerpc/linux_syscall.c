@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2 2002/10/30 07:39:40 manu Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.3 2002/10/30 18:34:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,22 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_linux.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2002/10/30 07:39:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3 2002/10/30 18:34:15 matt Exp $");
 
-#include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/types.h>
-#include <sys/proc.h>
+#define EMULNAME(x)	__CONCAT(linux_,x)
+#define EMULNAMEU(x)	__CONCAT(LINUX_,x)
 
-#include <machine/frame.h>
-
-void syscall_fancy __P((struct trapframe *frame));
-void linux_syscall_intern __P((struct proc *p));
-
-void
-linux_syscall_intern(struct proc *p)
-{
-	p->p_md.md_syscall = syscall_fancy;
-}
+#include "syscall.c"
