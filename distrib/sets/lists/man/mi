@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153 1999/07/28 01:56:04 enami Exp $
+# $NetBSD: mi,v 1.154 1999/08/01 18:22:54 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -419,6 +419,7 @@
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mixer.0
+./usr/share/man/cat4/mpu.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/netintro.0
@@ -1557,6 +1558,7 @@
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mixer.4
+./usr/share/man/man4/mpu.4
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/netintro.4
