@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.11 2000/03/27 23:15:57 thorpej Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.12 2000/09/13 03:37:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -246,3 +246,143 @@
 #define NCR_SIZE_32M	14
 #define NCR_SIZE_4G	15
 
+/*
+ * Performance monitor events.
+ *
+ * Note that 586-class and 686-class CPUs have different performance
+ * monitors available, and they are accessed differently:
+ *
+ *	686-class: `rdpmc' instruction
+ *	586-class: `rdmsr' instruction, CESR MSR
+ *
+ * The descriptions of these events are too lenghy to include here.
+ * See Appendix A of "Intel Architecture Software Developer's
+ * Manual, Volume 3: System Programming" for more information.
+ */
+
+/*
+ * 686-class Event Selector MSR format.
+ */
+
+#define	PMC6_EVTSEL_EVENT		0x000000ff
+#define	PMC6_EVTSEL_UNIT		0x0000ff00
+#define	PMC6_EVTSEL_UNIT_SHIFT		8
+#define	PMC6_EVTSEL_USR			(1 << 16)
+#define	PMC6_EVTSEL_OS			(1 << 17)
+#define	PMC6_EVTSEL_E			(1 << 18)
+#define	PMC6_EVTSEL_PC			(1 << 19)
+#define	PMC6_EVTSEL_INT			(1 << 20)
+#define	PMC6_EVTSEL_EN			(1 << 22)	/* PerfEvtSel0 only */
+#define	PMC6_EVTSEL_INV			(1 << 23)
+#define	PMC6_EVTSEL_COUNTER_MASK	0xff000000
+#define	PMC6_EVTSEL_COUNTER_MASK_SHIFT	24
+
+/* Data Cache Unit */
+#define	PMC6_DATA_MEM_REFS		0x43
+#define	PMC6_DCU_LINES_IN		0x45
+#define	PMC6_DCU_M_LINES_IN		0x46
+#define	PMC6_DCU_M_LINES_OUT		0x47
+#define	PMC6_DCU_MISS_OUTSTANDING	0x48
+
+/* Instruction Fetch Unit */
+#define	PMC6_IFU_IFETCH			0x80
+#define	PMC6_IFU_IFETCH_MISS		0x81
+#define	PMC6_ITLB_MISS			0x85
+#define	PMC6_IFU_MEM_STALL		0x86
+#define	PMC6_ILD_STALL			0x87
+
+/* L2 Cache */
+#define	PMC6_L2_IFETCH			0x28
+#define	PMC6_L2_LD			0x29
+#define	PMC6_L2_ST			0x2a
+#define	PMC6_L2_LINES_IN		0x24
+#define	PMC6_L2_LINES_OUT		0x26
+#define	PMC6_L2_M_LINES_INM		0x25
+#define	PMC6_L2_M_LINES_OUTM		0x27
+#define	PMC6_L2_RQSTS			0x2e
+#define	PMC6_L2_ADS			0x21
+#define	PMC6_L2_DBUS_BUSY		0x22
+#define	PMC6_L2_DBUS_BUSY_RD		0x23
+
+/* External Bus Logic */
+#define	PMC6_BUS_DRDY_CLOCKS		0x62
+#define	PMC6_BUS_LOCK_CLOCKS		0x63
+#define	PMC6_BUS_REQ_OUTSTANDING	0x60
+#define	PMC6_BUS_TRAN_BRD		0x65
+#define	PMC6_BUS_TRAN_RFO		0x66
+#define	PMC6_BUS_TRANS_WB		0x67
+#define	PMC6_BUS_TRAN_IFETCH		0x68
+#define	PMC6_BUS_TRAN_INVAL		0x69
+#define	PMC6_BUS_TRAN_PWR		0x6a
+#define	PMC6_BUS_TRANS_P		0x6b
+#define	PMC6_BUS_TRANS_IO		0x6c
+#define	PMC6_BUS_TRAN_DEF		0x6d
+#define	PMC6_BUS_TRAN_BURST		0x6e
+#define	PMC6_BUS_TRAN_ANY		0x70
+#define	PMC6_BUS_TRAN_MEM		0x6f
+#define	PMC6_BUS_DATA_RCV		0x64
+#define	PMC6_BUS_BNR_DRV		0x61
+#define	PMC6_BUS_HIT_DRV		0x7a
+#define	PMC6_BUS_HITM_DRDV		0x7b
+#define	PMC6_BUS_SNOOP_STALL		0x7e
+
+/* Floating Point Unit */
+#define	PMC6_FLOPS			0xc1
+#define	PMC6_FP_COMP_OPS_EXE		0x10
+#define	PMC6_FP_ASSIST			0x11
+#define	PMC6_MUL			0x12
+#define	PMC6_DIV			0x12
+#define	PMC6_CYCLES_DIV_BUSY		0x14
+
+/* Memory Ordering */
+#define	PMC6_LD_BLOCKS			0x03
+#define	PMC6_DB_DRAINS			0x04
+#define	PMC6_MISALIGN_MEM_REF		0x05
+#define	PMC6_EMON_KNI_PREF_DISPATCHED	0x07	/* P-III only */
+#define	PMC6_EMON_KNI_PREF_MISS		0x4b	/* P-III only */
+
+/* Instruction Decoding and Retirement */
+#define	PMC6_INST_RETIRED		0xc0
+#define	PMC6_UOPS_RETIRED		0xc2
+#define	PMC6_INST_DECODED		0xd0
+#define	PMC6_EMON_KNI_INST_RETIRED	0xd8
+#define	PMC6_EMON_KNI_COMP_INST_RET	0xd9
+
+/* Interrupts */
+#define	PMC6_HW_INT_RX			0xc8
+#define	PMC6_CYCLES_INT_MASKED		0xc6
+#define	PMC6_CYCLES_INT_PENDING_AND_MASKED 0xc7
+
+/* Branches */
+#define	PMC6_BR_INST_RETIRED		0xc4
+#define	PMC6_BR_MISS_PRED_RETIRED	0xc5
+#define	PMC6_BR_TAKEN_RETIRED		0xc9
+#define	PMC6_BR_MISS_PRED_TAKEN_RET	0xca
+#define	PMC6_BR_INST_DECODED		0xe0
+#define	PMC6_BTB_MISSES			0xe2
+#define	PMC6_BR_BOGUS			0xe4
+#define	PMC6_BACLEARS			0xe6
+
+/* Stalls */
+#define	PMC6_RESOURCE_STALLS		0xa2
+#define	PMC6_PARTIAL_RAT_STALLS		0xd2
+
+/* Segment Register Loads */
+#define	PMC6_SEGMENT_REG_LOADS		0x06
+
+/* Clocks */
+#define	PMC6_CPU_CLK_UNHALTED		0x79
+
+/* MMX Unit */
+#define	PMC6_MMX_INSTR_EXEC		0xb0	/* Celeron, P-II, P-IIX only */
+#define	PMC6_MMX_SAT_INSTR_EXEC		0xb1	/* P-II and P-III only */
+#define	PMC6_MMX_UOPS_EXEC		0xb2	/* P-II and P-III only */
+#define	PMC6_MMX_INSTR_TYPE_EXEC	0xb3	/* P-II and P-III only */
+#define	PMC6_FP_MMX_TRANS		0xcc	/* P-II and P-III only */
+#define	PMC6_MMX_ASSIST			0xcd	/* P-II and P-III only */
+#define	PMC6_MMX_INSTR_RET		0xc3	/* P-II only */
+
+/* Segment Register Renaming */
+#define	PMC6_SEG_RENAME_STALLS		0xd4	/* P-II and P-III only */
+#define	PMC6_SEG_REG_RENAMES		0xd5	/* P-II and P-III only */
+#define	PMC6_RET_SEG_RENAMES		0xd6	/* P-II and P-III only */
