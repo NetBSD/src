@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.5 2000/03/25 15:27:55 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.6 2000/10/02 15:24:09 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -118,7 +118,7 @@ attach si at hb
 
 # memory disk
 major {md = 2}
-file	arch/news68k/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c				memory_disk_hooks
 
 # RAIDframe
 major {raid = 32}
