@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.59 2002/09/05 18:25:45 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.60 2002/09/05 20:08:14 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -306,37 +306,8 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 				return -1;
 			}
 		}
-		if (obj->rel != NULL) {
-			/* Process the non-PLT relocations. */
-			const Elf_Rel  *rel;
-			for (rel = obj->rel; rel < obj->rellim; ++rel) {
-				Elf_Rela        ourrela;
-				ourrela.r_info = rel->r_info;
-				ourrela.r_offset = rel->r_offset;
-#if defined(__mips__)
-				/* rel->r_offset is not valid on mips? */
-				if (ELF_R_TYPE(ourrela.r_info) == R_TYPE(NONE))
-					ourrela.r_addend = 0;
-				else
-#endif
-					ourrela.r_addend =
-					    *(Elf_Word *)(obj->relocbase +
-					    rel->r_offset);
-
-				if (_rtld_relocate_nonplt_object(obj, &ourrela,
-				    dodebug) < 0)
-					ok = 0;
-			}
-		}
-		if (obj->rela != NULL) {
-			/* Process the non-PLT relocations. */
-			const Elf_Rela *rela;
-			for (rela = obj->rela; rela < obj->relalim; ++rela) {
-				if (_rtld_relocate_nonplt_object(obj, rela,
-				    dodebug) < 0)
-					ok = 0;
-			}
-		}
+		if (_rtld_relocate_nonplt_objects(obj, dodebug) < 0)
+			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,
 				     PROT_READ | PROT_EXEC) == -1) {
