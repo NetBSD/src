@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.8 1998/08/12 20:46:47 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.9 1998/08/12 20:56:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,7 +389,7 @@ tlphy_auto(sc)
 		printf("%s: autonegotiation failed to complete\n",
 		    sc->sc_mii.mii_dev.dv_xname);
 #endif
-		goto default;
+		goto dflt;
 	}
 
 	/*
@@ -408,7 +408,7 @@ tlphy_auto(sc)
 		}
 	}
 
- default:
+ dflt:
 	/*
 	 * Just assume we're not in full-duplex mode.
 	 * XXX Check link and try AUI/BNC?

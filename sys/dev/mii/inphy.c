@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.2 1998/08/12 20:46:47 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.3 1998/08/12 20:56:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -307,6 +307,11 @@ inphy_status(sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
 		scr = INPHY_READ(sc, MII_INPHY_SCR);
 		if (scr & SCR_T4)
 			mii->mii_media_active |= IFM_100_T4;
