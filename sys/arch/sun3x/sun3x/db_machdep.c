@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 1997/01/23 22:37:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,11 +46,12 @@
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pte.h>
+
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 
-#include <machine/pte.h>
-#include "machdep.h"
+#include <sun3/sun3/sunmon.h>
 
 static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
@@ -88,7 +89,7 @@ db_mach_abort(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	sun3x_mon_abort();
+	sunmon_abort();
 }
 
 static void
@@ -98,7 +99,7 @@ db_mach_halt(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	sun3x_mon_halt();
+	sunmon_halt();
 }
 
 static void
@@ -108,5 +109,5 @@ db_mach_reboot(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	sun3x_mon_reboot("");
+	sunmon_reboot("");
 }
