@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.1 1997/04/09 19:21:47 thorpej Exp $	*/
+/*	$NetBSD: regdump.c,v 1.1.8.1 1997/10/22 01:43:02 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,10 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/reg.h>
+#include <m68k/m68k.h>
+#include <m68k/frame.h>
+#include <m68k/reg.h>
+
 #include <machine/psl.h>
 
 static void dumpmem __P((int *, int, int));
@@ -72,8 +73,8 @@ regdump(tf, sbytes)
 	printf("pid = %d, pc = %s, ",
 	       curproc ? curproc->p_pid : -1, hexstr(tf->tf_pc, 8));
 	printf("ps = %s, ", hexstr(tf->tf_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
+	printf("sfc = %d, ", getsfc() & 7);
+	printf("dfc = %d\n", getdfc() & 7);
 	printf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
 		printf("        %d", i);
