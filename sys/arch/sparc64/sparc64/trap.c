@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 1998/08/13 02:10:48 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.7 1998/08/26 12:41:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -167,6 +167,7 @@ int	trapdebug = 0;
 #endif
 #else
 #define DEBUGGER(t,f)
+#define Debugger()
 #endif
 
 /*
