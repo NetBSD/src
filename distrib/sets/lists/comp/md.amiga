@@ -1,8 +1,0 @@
-./usr/include/machine/bus.h
-./usr/include/machine/conf.h
-./usr/include/machine/cpufunc.h
-./usr/include/machine/fbio.h
-./usr/include/machine/intr.h
-./usr/include/machine/kcore.h
-./usr/include/machine/mtpr.h
-./usr/lib/c++rt0.o
