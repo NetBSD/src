@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.9 2003/04/04 01:08:25 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.10 2003/05/27 15:24:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.9 2003/04/04 01:08:25 nathanw Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.10 2003/05/27 15:24:24 christos Exp $");
 
 #include <ucontext.h>
 
@@ -136,8 +136,8 @@ pthread__sched(pthread_t self, pthread_t thread)
 
 	SDPRINTF(("(sched %p) scheduling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
-	pthread__assert (thread->pt_type == PT_THREAD_NORMAL);
-	pthread__assert (thread->pt_spinlocks == 0);
+	pthread__assert(thread->pt_type == PT_THREAD_NORMAL);
+	pthread__assert(thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
 	thread->rescheds++;
 #endif
@@ -156,8 +156,8 @@ pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq)
 	PTQ_FOREACH(thread, threadq, pt_sleep) {
 		SDPRINTF(("(sched_sleepers %p) scheduling %p\n", self, thread));
 		thread->pt_state = PT_STATE_RUNNABLE;
-		pthread__assert (thread->pt_type == PT_THREAD_NORMAL);
-		pthread__assert (thread->pt_spinlocks == 0);
+		pthread__assert(thread->pt_type == PT_THREAD_NORMAL);
+		pthread__assert(thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
 		thread->rescheds++;
 #endif
@@ -225,7 +225,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
-		pthread__assert (qhead->pt_spinlocks == 0);
+		pthread__assert(qhead->pt_spinlocks == 0);
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;
