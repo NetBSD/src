@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.3 1998/05/03 10:01:00 drochner Exp $ */
+/* $NetBSD: psm.c,v 1.4 1998/07/27 22:34:30 drochner Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -287,7 +287,7 @@ int data;
 
 		if (sc->dx || dy || changed)
 			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, sc->dx, dy);
+				      sc->buttons, sc->dx, dy, 0);
 		break;
 	}
 
