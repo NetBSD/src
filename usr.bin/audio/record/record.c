@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.19 2002/01/15 17:02:52 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.20 2002/01/15 17:17:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -462,19 +462,28 @@ write_header_wav(hdrp, lenp, leftp)
 	/*
 	 * we could try to support RIFX but it seems to be more portable
 	 * to output little-endian data for WAV files.
-	 *
-	 * XXX signed vs unsigned matters probably!  cope!
 	 */
 	case AUDIO_ENCODING_ULINEAR_BE:
+		if (bps == 16)
+			conv_func = change_sign16_swap_bytes_be;
+		else if (bps == 32)
+			conv_func = change_sign32_swap_bytes_be;
+		goto fmt_pcm;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (bps == 16)
 			conv_func = swap_bytes;
 		else if (bps == 32)
 			conv_func = swap_bytes32;
-		/* FALLTHROUGH */
-	case AUDIO_ENCODING_PCM16:
+		goto fmt_pcm;
 	case AUDIO_ENCODING_ULINEAR_LE:
+		if (bps == 16)
+			conv_func = change_sign16_le;
+		else if (bps == 32)
+			conv_func = change_sign32_le;
+		/* FALLTHROUGH */
 	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_PCM16:
+fmt_pcm:
 		fmttag = WAVE_FORMAT_PCM;
 		fmtsz = 16;
 		align = channels * (bps / 8);
