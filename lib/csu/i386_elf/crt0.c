@@ -1,6 +1,7 @@
-/*	$NetBSD: crt0.c,v 1.1 1999/01/10 17:16:06 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 1999/01/10 18:20:13 christos Exp $	*/
 
 /*
+ * Copyright (c) 1998 Christos Zoulas
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
  *
@@ -98,9 +99,9 @@ __asm("
 	.align	2
 	.globl	__start
 __start:
-	pushl	%eax			# obj
 	pushl	%ebx			# ps_strings
-	pushl	%ecx			# cleanup
+	pushl	%ecx			# obj
+	pushl	%edx			# cleanup
 	movl	12(%esp),%eax
 	leal	20(%esp,%eax,4),%ecx
 	leal	16(%esp),%edx
@@ -122,6 +123,8 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
 	char *namep;
 
 	environ = envp;
+
+	miniprintf("argc = %d argv = %p envp = %p cleanup = %p obj = %p ps_strings = %p\n", argc, argv, envp, cleanup, obj, ps_strings);
 
 	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
 		if ((__progname = _strrchr(__progname, '/')) == NULL)
@@ -153,7 +156,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 1999/01/10 17:16:06 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 1999/01/10 18:20:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
