@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.11 1995/02/01 04:49:40 mellon Exp $
+#	$NetBSD: files.pmax,v 1.12 1995/04/12 20:08:40 mellon Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -6,6 +6,7 @@ arch/pmax/pmax/cons.c			standard
 arch/pmax/pmax/disksubr.c		standard
 arch/pmax/pmax/kadb.c			optional kadb
 arch/pmax/pmax/machdep.c		standard config-dependent
+arch/pmax/pmax/cpu_exec.c		standard
 arch/pmax/pmax/mem.c			standard
 arch/pmax/pmax/pmap.c			standard
 arch/pmax/pmax/process_machdep.c	standard
@@ -16,6 +17,7 @@ arch/pmax/stand/libsa/callvec.c		standard
 arch/pmax/pmax/elf.c			standard
 arch/pmax/dev/fb.c			standard
 arch/pmax/dev/scsi.c			standard
+arch/pmax/dev/rcons.c			optional rcons device-driver
 arch/pmax/dev/asc.c			optional asc device-driver
 arch/pmax/dev/dc.c			optional dc device-driver
 arch/pmax/dev/dtop.c			optional dtop device-driver
