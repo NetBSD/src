@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.4.6.2 2005/01/18 14:05:22 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.4.6.3 2005/01/21 10:21:58 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -334,11 +334,24 @@ IDTVEC(intr_/**/name/**/num)						;\
 	unmask(num)							;\
 	jmp	6b
 
+#ifdef DOM0OPS
+#define hypervisor_asm_unmask(num)			\
+	movl	irq_to_evtchn + (num) * 4,%ecx		;\
+	movl	HYPERVISOR_shared_info,%eax		;\
+	lock						;\
+	btrl	%ecx,EVENTS_MASK(%eax)			;\
+	movl	%ebx, %ecx				;\
+	movl	$physdev_op_notify, %ebx		;\
+	movl	$__HYPERVISOR_physdev_op, %eax		;\
+	int	$0x82					;\
+	movl	%ecx, %ebx
+#else
 #define hypervisor_asm_unmask(num)			\
 	movl	irq_to_evtchn + (num) * 4,%ecx		;\
 	movl	HYPERVISOR_shared_info,%eax		;\
 	lock						;\
 	btrl	%ecx,EVENTS_MASK(%eax)
+#endif
 
 XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,1,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
