@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97.2.1 2005/02/12 12:26:27 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.2.2 2005/02/27 13:27:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.1 2005/02/12 12:26:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.2 2005/02/27 13:27:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -251,7 +251,7 @@ cpu_startup(void)
 	/*
 	 * Get scratch page for dumpsys().
 	 */
-	dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE, UVM_KMF_WIRED);
+	dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
 	if (dumppage == 0)
 		panic("startup: alloc dumppage");
 
