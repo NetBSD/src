@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.439 2003/11/25 06:28:54 dyoung Exp $
+# $NetBSD: mi,v 1.440 2003/12/04 18:24:39 drochner Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -846,12 +846,12 @@
 ./usr/sbin/ndp			base-netutil-bin
 ./usr/sbin/netgroup_mkdb	base-nis-bin
 ./usr/sbin/nfsd			base-nfsserver-bin
+./usr/sbin/ntp-keygen		base-ntp-bin
 ./usr/sbin/ntpd			base-ntp-bin
 ./usr/sbin/ntpdate		base-ntp-bin
 ./usr/sbin/ntpdc		base-ntp-bin
 ./usr/sbin/ntpq			base-ntp-bin
 ./usr/sbin/ntptime		base-ntp-bin
-./usr/sbin/ntptimeset		base-ntp-bin
 ./usr/sbin/ntptrace		base-ntp-bin
 ./usr/sbin/omshell		base-dhcpd-bin
 ./usr/sbin/pac			base-sysutil-bin
@@ -978,8 +978,6 @@
 ./usr/share/doc			base-sys-share
 ./usr/share/doc/html		base-htmldoc-share
 ./usr/share/doc/html/bzip2		base-htmldoc-share
-./usr/share/doc/html/ntp		base-htmldoc-share
-./usr/share/doc/html/ntp/hints		base-htmldoc-share
 ./usr/share/doc/html/postfix		base-htmldoc-share
 ./usr/share/doc/psd			base-psd-share
 ./usr/share/doc/psd/01.cacm		base-psd-share
