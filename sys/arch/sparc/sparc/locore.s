@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153 2002/02/04 08:36:36 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.4.1 2002/03/18 16:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -95,6 +95,16 @@
  * area at times anyway.
  */
 #define	CCFSZ	96
+
+/*
+ * Storage for proc0.  This must be aligned to a 16-byte boundary.
+ */
+	.section .bss
+	.align	16
+	.globl	_C_LABEL(proc0)
+OTYPE(_C_LABEL(proc0))
+_C_LABEL(proc0):
+	.space	PROC_SIZEOF
 
 /*
  * A handy macro for maintaining instrumentation counters.
