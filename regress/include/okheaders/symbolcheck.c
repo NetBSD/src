@@ -66,9 +66,8 @@
 #include <sys/ioctl_compat.h>
 #include <sys/ipc.h>
 #include <sys/kcore.h>
-#ifdef XXX
-#include <sys/kernel.h>
-#include <sys/kgdb.h>
+#ifdef notdef
+#include <sys/kgdb.h>	/* machine/db_machdep.h does not exist everywhere */
 #endif
 #include <sys/ksem.h>
 #include <sys/ksyms.h>
@@ -92,9 +91,8 @@
 #include <sys/namei.h>
 #include <sys/null.h>
 #include <sys/param.h>
-#ifdef XXX
-#include <sys/pipe.h>
-#include <sys/pmc.h>
+#ifdef notdef
+#include <sys/pipe.h>	/* voff_t is undefined on pmppc */
 #endif
 #include <sys/poll.h>
 #include <sys/pool.h>
@@ -188,9 +186,6 @@
 #include <net/if_gre.h>		/* Needs <netinet> stuff */
 #include <net/if_hippi.h>
 #include <net/if_ieee1394.h>
-#ifdef XXX
-#include <net/if_ieee80211.h>
-#endif
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/ppp_defs.h>	/* Moved */
@@ -286,9 +281,6 @@
 #include <pcap-namedb.h>
 #include <pcap.h>
 #include <pci.h>
-#ifdef XXX
-#include <pmc.h>
-#endif
 #include <poll.h>
 #include <pthread.h>
 #include <pthread_dbg.h>
