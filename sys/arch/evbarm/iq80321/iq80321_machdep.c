@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.8 2002/07/31 00:20:53 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.9 2002/08/17 19:19:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -346,7 +346,9 @@ u_int
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
+#ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size;
+#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;
