@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.1 2004/08/26 14:13:46 itohy Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.1 2004/08/26 14:13:46 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,143 +96,103 @@ __KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.1 2004/08/26 14:13:46 itohy Exp $"
 		printf x;					\
 	} while (/* CONSTCOND */ 0)
 
-void	njsc32_scsipi_request __P((struct scsipi_channel *,
-    scsipi_adapter_req_t, void *));
-void	njsc32_scsipi_minphys __P((struct buf *buf));
-int	njsc32_scsipi_ioctl __P((struct scsipi_channel *, u_long, caddr_t,
-    int, struct proc *));
+static void	njsc32_scsipi_request(struct scsipi_channel *,
+		    scsipi_adapter_req_t, void *);
+static void	njsc32_scsipi_minphys(struct buf *buf);
+static int	njsc32_scsipi_ioctl(struct scsipi_channel *, u_long, caddr_t,
+		    int, struct proc *);
 
-static void njsc32_init __P((struct njsc32_softc *, int nosleep));
-static int njsc32_init_cmds __P((struct njsc32_softc *));
-static void njsc32_target_async __P((struct njsc32_softc *,
-    struct njsc32_target *));
-static void njsc32_init_targets __P((struct njsc32_softc *));
-static __inline void njsc32_cmd_init __P((struct njsc32_cmd *));
-static __inline void njsc32_init_msgout __P((struct njsc32_softc *));
-static void njsc32_add_msgout __P((struct njsc32_softc *, int));
-static u_int32_t njsc32_get_auto_msgout __P((struct njsc32_softc *));
+static void	njsc32_init(struct njsc32_softc *, int nosleep);
+static int	njsc32_init_cmds(struct njsc32_softc *);
+static void	njsc32_target_async(struct njsc32_softc *,
+		    struct njsc32_target *);
+static void	njsc32_init_targets(struct njsc32_softc *);
+static void	njsc32_add_msgout(struct njsc32_softc *, int);
+static u_int32_t njsc32_get_auto_msgout(struct njsc32_softc *);
 #ifdef NJSC32_DUALEDGE
-static void njsc32_msgout_wdtr __P((struct njsc32_softc *, int));
+static void	njsc32_msgout_wdtr(struct njsc32_softc *, int);
 #endif
-static void njsc32_msgout_sdtr __P((struct njsc32_softc *, int period,
-    int offset));
-static void njsc32_negotiate_xfer __P((struct njsc32_softc *,
-    struct njsc32_target *));
-static __inline void njsc32_led_on __P((struct njsc32_softc *));
-static __inline void njsc32_led_off __P((struct njsc32_softc *));
-static void njsc32_arbitration_failed __P((struct njsc32_softc *));
-static __inline void njsc32_cmd_load __P((struct njsc32_softc *,
-    struct njsc32_cmd *));
-static void njsc32_start __P((struct njsc32_softc *));
-static void njsc32_run_xfer __P((struct njsc32_softc *, struct scsipi_xfer *));
-static void njsc32_end_cmd __P((struct njsc32_softc *, struct njsc32_cmd *,
-    scsipi_xfer_result_t));
-static void njsc32_reset_bus __P((struct njsc32_softc *));
-static void njsc32_clear_cmds __P((struct njsc32_softc *,
-    scsipi_xfer_result_t));
-static void njsc32_reset_detected __P((struct njsc32_softc *));
-static __inline void njsc32_set_cur_ptr __P((struct njsc32_cmd *, u_int32_t));
-static void njsc32_set_ptr __P((struct njsc32_softc *, struct njsc32_cmd *,
-    u_int32_t));
-static __inline void njsc32_save_ptr __P((struct njsc32_cmd *));
-static void njsc32_assert_ack __P((struct njsc32_softc *));
-static void njsc32_negate_ack __P((struct njsc32_softc *));
-static void njsc32_wait_req_negate __P((struct njsc32_softc *));
-static void njsc32_reconnect __P((struct njsc32_softc *, struct njsc32_cmd *));
+static void	njsc32_msgout_sdtr(struct njsc32_softc *, int period,
+		    int offset);
+static void	njsc32_negotiate_xfer(struct njsc32_softc *,
+		    struct njsc32_target *);
+static void	njsc32_arbitration_failed(struct njsc32_softc *);
+static void	njsc32_start(struct njsc32_softc *);
+static void	njsc32_run_xfer(struct njsc32_softc *, struct scsipi_xfer *);
+static void	njsc32_end_cmd(struct njsc32_softc *, struct njsc32_cmd *,
+		    scsipi_xfer_result_t);
+static void	njsc32_reset_bus(struct njsc32_softc *);
+static void	njsc32_clear_cmds(struct njsc32_softc *,
+		    scsipi_xfer_result_t);
+static void	njsc32_reset_detected(struct njsc32_softc *);
+static void	njsc32_set_ptr(struct njsc32_softc *, struct njsc32_cmd *,
+		    u_int32_t);
+static void	njsc32_assert_ack(struct njsc32_softc *);
+static void	njsc32_negate_ack(struct njsc32_softc *);
+static void	njsc32_wait_req_negate(struct njsc32_softc *);
+static void	njsc32_reconnect(struct njsc32_softc *, struct njsc32_cmd *);
 enum njsc32_reselstat {
 	NJSC32_RESEL_ERROR,		/* to be rejected */
 	NJSC32_RESEL_COMPLETE,		/* reselection is just complete */
 	NJSC32_RESEL_THROUGH		/* this message is OK (no reply) */
 };
-static enum njsc32_reselstat njsc32_resel_identify __P((struct njsc32_softc *,
-    int lun, struct njsc32_cmd **));
-static enum njsc32_reselstat njsc32_resel_tag __P((struct njsc32_softc *,
-    int tag, struct njsc32_cmd **));
-static void njsc32_cmd_reload __P((struct njsc32_softc *, struct njsc32_cmd *,
-    int));
-static void njsc32_update_xfer_mode __P((struct njsc32_softc *,
-    struct njsc32_target *));
-static void njsc32_msgin __P((struct njsc32_softc *));
-static void njsc32_msgout __P((struct njsc32_softc *));
-static void njsc32_cmdtimeout __P((void *));
-static void njsc32_reseltimeout __P((void *));
-static __inline void njsc32_end_auto __P((struct njsc32_softc *,
-    struct njsc32_cmd *, int));
-
-static __inline unsigned njsc32_read_1 __P((struct njsc32_softc *, int));
-static __inline unsigned njsc32_read_2 __P((struct njsc32_softc *, int));
-static __inline u_int32_t njsc32_read_4 __P((struct njsc32_softc *, int));
-static __inline void njsc32_write_1 __P((struct njsc32_softc *, int, int));
-static __inline void njsc32_write_2 __P((struct njsc32_softc *, int, int));
-static __inline void njsc32_write_4 __P((struct njsc32_softc *, int,
-    u_int32_t));
-static __inline unsigned njsc32_ireg_read_1 __P((struct njsc32_softc *, int));
-static __inline unsigned njsc32_ireg_read_2 __P((struct njsc32_softc *, int));
-static __inline u_int32_t njsc32_ireg_read_4 __P((struct njsc32_softc *, int));
-static __inline void njsc32_ireg_write_1 __P((struct njsc32_softc *, int, int));
-static __inline void njsc32_ireg_write_2 __P((struct njsc32_softc *, int, int));
-static __inline void njsc32_ireg_write_4 __P((struct njsc32_softc *, int,
-    u_int32_t));
+static enum njsc32_reselstat njsc32_resel_identify(struct njsc32_softc *,
+		    int lun, struct njsc32_cmd **);
+static enum njsc32_reselstat njsc32_resel_tag(struct njsc32_softc *,
+		    int tag, struct njsc32_cmd **);
+static void	njsc32_cmd_reload(struct njsc32_softc *, struct njsc32_cmd *,
+		    int);
+static void	njsc32_update_xfer_mode(struct njsc32_softc *,
+		    struct njsc32_target *);
+static void	njsc32_msgin(struct njsc32_softc *);
+static void	njsc32_msgout(struct njsc32_softc *);
+static void	njsc32_cmdtimeout(void *);
+static void	njsc32_reseltimeout(void *);
 
 static __inline unsigned
-njsc32_read_1(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_read_1(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_1(sc->sc_regt, sc->sc_regh, no);
 }
 
 static __inline unsigned
-njsc32_read_2(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_read_2(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_2(sc->sc_regt, sc->sc_regh, no);
 }
 
 static __inline u_int32_t
-njsc32_read_4(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_read_4(struct njsc32_softc *sc, int no)
 {
 
 	return bus_space_read_4(sc->sc_regt, sc->sc_regh, no);
 }
 
 static __inline void
-njsc32_write_1(sc, no, val)
-	struct njsc32_softc *sc;
-	int no, val;
+njsc32_write_1(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, no, val);
 }
 
 static __inline void
-njsc32_write_2(sc, no, val)
-	struct njsc32_softc *sc;
-	int no, val;
+njsc32_write_2(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_2(sc->sc_regt, sc->sc_regh, no, val);
 }
 
 static __inline void
-njsc32_write_4(sc, no, val)
-	struct njsc32_softc *sc;
-	int no;
-	u_int32_t val;
+njsc32_write_4(struct njsc32_softc *sc, int no, u_int32_t val)
 {
 
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, no, val);
 }
 
 static __inline unsigned
-njsc32_ireg_read_1(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_ireg_read_1(struct njsc32_softc *sc, int no)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
@@ -240,9 +200,7 @@ njsc32_ireg_read_1(sc, no)
 }
 
 static __inline unsigned
-njsc32_ireg_read_2(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_ireg_read_2(struct njsc32_softc *sc, int no)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
@@ -250,9 +208,7 @@ njsc32_ireg_read_2(sc, no)
 }
 
 static __inline u_int32_t
-njsc32_ireg_read_4(sc, no)
-	struct njsc32_softc *sc;
-	int no;
+njsc32_ireg_read_4(struct njsc32_softc *sc, int no)
 {
 	u_int32_t val;
 
@@ -264,9 +220,7 @@ njsc32_ireg_read_4(sc, no)
 }
 
 static __inline void
-njsc32_ireg_write_1(sc, no, val)
-	struct njsc32_softc *sc;
-	int no, val;
+njsc32_ireg_write_1(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
@@ -274,9 +228,7 @@ njsc32_ireg_write_1(sc, no, val)
 }
 
 static __inline void
-njsc32_ireg_write_2(sc, no, val)
-	struct njsc32_softc *sc;
-	int no, val;
+njsc32_ireg_write_2(struct njsc32_softc *sc, int no, int val)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
@@ -284,10 +236,7 @@ njsc32_ireg_write_2(sc, no, val)
 }
 
 static __inline void
-njsc32_ireg_write_4(sc, no, val)
-	struct njsc32_softc *sc;
-	int no;
-	u_int32_t val;
+njsc32_ireg_write_4(struct njsc32_softc *sc, int no, u_int32_t val)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
@@ -378,9 +327,7 @@ static const struct njsc32_sync_param njsc32_synct_pci[NJSC32_NSYNCT] = {
 
 /* initialize device */
 static void
-njsc32_init(sc, nosleep)
-	struct njsc32_softc *sc;
-	int nosleep;
+njsc32_init(struct njsc32_softc *sc, int nosleep)
 {
 	u_int16_t intstat;
 
@@ -507,8 +454,7 @@ njsc32_init(sc, nosleep)
 }
 
 static int
-njsc32_init_cmds(sc)
-	struct njsc32_softc *sc;
+njsc32_init_cmds(struct njsc32_softc *sc)
 {
 	struct njsc32_cmd *cmd;
 	bus_addr_t dmaaddr;
@@ -589,9 +535,7 @@ fail1:	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmdpg_seg, sc->sc_cmdpg_nsegs);
 }
 
 static void
-njsc32_target_async(sc, target)
-	struct njsc32_softc *sc;
-	struct njsc32_target *target;
+njsc32_target_async(struct njsc32_softc *sc, struct njsc32_target *target)
 {
 
 	target->t_sync =
@@ -603,8 +547,7 @@ njsc32_target_async(sc, target)
 }
 
 static void
-njsc32_init_targets(sc)
-	struct njsc32_softc *sc;
+njsc32_init_targets(struct njsc32_softc *sc)
 {
 	int id, lun;
 	struct njsc32_lu *lu;
@@ -633,8 +576,7 @@ njsc32_init_targets(sc)
 }
 
 void
-njsc32_attach(sc)
-	struct njsc32_softc *sc;
+njsc32_attach(struct njsc32_softc *sc)
 {
 	const char *str;
 #if 1	/* test */
@@ -764,9 +706,7 @@ njsc32_attach(sc)
 }
 
 int
-njsc32_detach(sc, flags)
-	struct njsc32_softc *sc;
-	int flags;
+njsc32_detach(struct njsc32_softc *sc, int flags)
 {
 	int rv = 0;
 	int i, s;
@@ -812,8 +752,7 @@ njsc32_detach(sc, flags)
 }
 
 static __inline void
-njsc32_cmd_init(cmd)
-	struct njsc32_cmd *cmd;
+njsc32_cmd_init(struct njsc32_cmd *cmd)
 {
 
 	cmd->c_flags = 0;
@@ -828,8 +767,7 @@ njsc32_cmd_init(cmd)
 }
 
 static __inline void
-njsc32_init_msgout(sc)
-	struct njsc32_softc *sc;
+njsc32_init_msgout(struct njsc32_softc *sc)
 {
 
 	sc->sc_msgoutlen = 0;
@@ -837,9 +775,7 @@ njsc32_init_msgout(sc)
 }
 
 static void
-njsc32_add_msgout(sc, byte)
-	struct njsc32_softc *sc;
-	int byte;
+njsc32_add_msgout(struct njsc32_softc *sc, int byte)
 {
 
 	if (sc->sc_msgoutlen >= NJSC32_MSGOUT_LEN) {
@@ -850,8 +786,7 @@ njsc32_add_msgout(sc, byte)
 }
 
 static u_int32_t
-njsc32_get_auto_msgout(sc)
-	struct njsc32_softc *sc;
+njsc32_get_auto_msgout(struct njsc32_softc *sc)
 {
 	u_int32_t val;
 	u_int8_t *p;
@@ -882,9 +817,7 @@ njsc32_get_auto_msgout(sc)
 #ifdef NJSC32_DUALEDGE
 /* add Wide Data Transfer Request to the next Message Out */
 static void
-njsc32_msgout_wdtr(sc, width)
-	struct njsc32_softc *sc;
-	int width;
+njsc32_msgout_wdtr(struct njsc32_softc *sc, int width)
 {
 
 	njsc32_add_msgout(sc, MSG_EXTENDED);
@@ -896,9 +829,7 @@ njsc32_msgout_wdtr(sc, width)
 
 /* add Synchronous Data Transfer Request to the next Message Out */
 static void
-njsc32_msgout_sdtr(sc, period, offset)
-	struct njsc32_softc *sc;
-	int period, offset;
+njsc32_msgout_sdtr(struct njsc32_softc *sc, int period, int offset)
 {
 
 	njsc32_add_msgout(sc, MSG_EXTENDED);
@@ -909,9 +840,7 @@ njsc32_msgout_sdtr(sc, period, offset)
 }
 
 static void
-njsc32_negotiate_xfer(sc, target)
-	struct njsc32_softc *sc;
-	struct njsc32_target *target;
+njsc32_negotiate_xfer(struct njsc32_softc *sc, struct njsc32_target *target)
 {
 
 	/* initial negotiation state */
@@ -963,8 +892,7 @@ njsc32_negotiate_xfer(sc, target)
 
 /* turn LED on */
 static __inline void
-njsc32_led_on(sc)
-	struct njsc32_softc *sc;
+njsc32_led_on(struct njsc32_softc *sc)
 {
 
 	njsc32_ireg_write_1(sc, NJSC32_IREG_EXT_PORT, NJSC32_EXTPORT_LED_ON);
@@ -972,16 +900,14 @@ njsc32_led_on(sc)
 
 /* turn LED off */
 static __inline void
-njsc32_led_off(sc)
-	struct njsc32_softc *sc;
+njsc32_led_off(struct njsc32_softc *sc)
 {
 
 	njsc32_ireg_write_1(sc, NJSC32_IREG_EXT_PORT, NJSC32_EXTPORT_LED_OFF);
 }
 
 static void
-njsc32_arbitration_failed(sc)
-	struct njsc32_softc *sc;
+njsc32_arbitration_failed(struct njsc32_softc *sc)
 {
 	struct njsc32_cmd *cmd;
 
@@ -1000,9 +926,7 @@ njsc32_arbitration_failed(sc)
 }
 
 static __inline void
-njsc32_cmd_load(sc, cmd)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
+njsc32_cmd_load(struct njsc32_softc *sc, struct njsc32_cmd *cmd)
 {
 	struct njsc32_target *target;
 	struct scsipi_xfer *xs;
@@ -1123,8 +1047,7 @@ njsc32_cmd_load(sc, cmd)
 
 /* Note: must be called at splbio() */
 static void
-njsc32_start(sc)
-	struct njsc32_softc *sc;
+njsc32_start(struct njsc32_softc *sc)
 {
 	struct njsc32_cmd *cmd;
 
@@ -1170,9 +1093,7 @@ out:	njsc32_write_2(sc, NJSC32_REG_TRANSFER, 0);
 }
 
 static void
-njsc32_run_xfer(sc, xs)
-	struct njsc32_softc *sc;
-	struct scsipi_xfer *xs;
+njsc32_run_xfer(struct njsc32_softc *sc, struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph;
 	int control;
@@ -1304,10 +1225,8 @@ njsc32_run_xfer(sc, xs)
 }
 
 static void
-njsc32_end_cmd(sc, cmd, result)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
-	scsipi_xfer_result_t result;
+njsc32_end_cmd(struct njsc32_softc *sc, struct njsc32_cmd *cmd,
+    scsipi_xfer_result_t result)
 {
 	struct scsipi_xfer *xs;
 	int s;
@@ -1360,11 +1279,9 @@ njsc32_end_cmd(sc, cmd, result)
 /*
  * request from scsipi layer
  */
-void
-njsc32_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+static void
+njsc32_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct njsc32_softc *sc;
 	struct scsipi_xfer_mode *xm;
@@ -1407,9 +1324,8 @@ njsc32_scsipi_request(chan, req, arg)
 	}
 }
 
-void
-njsc32_scsipi_minphys(bp)
-	struct buf *bp;
+static void
+njsc32_scsipi_minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > NJSC32_MAX_XFER)
@@ -1418,8 +1334,7 @@ njsc32_scsipi_minphys(bp)
 }
 
 static void
-njsc32_reset_bus(sc)
-	struct njsc32_softc *sc;
+njsc32_reset_bus(struct njsc32_softc *sc)
 {
 	int s;
 
@@ -1440,9 +1355,7 @@ njsc32_reset_bus(sc)
  * clear running/disconnected commands
  */
 static void
-njsc32_clear_cmds(sc, cmdresult)
-	struct njsc32_softc *sc;
-	scsipi_xfer_result_t cmdresult;
+njsc32_clear_cmds(struct njsc32_softc *sc, scsipi_xfer_result_t cmdresult)
 {
 	struct njsc32_cmd *cmd;
 	int id, lun;
@@ -1474,8 +1387,7 @@ njsc32_clear_cmds(sc, cmdresult)
 }
 
 static void
-njsc32_reset_detected(sc)
-	struct njsc32_softc *sc;
+njsc32_reset_detected(struct njsc32_softc *sc)
 {
 
 	njsc32_clear_cmds(sc, XS_RESET);
@@ -1485,13 +1397,9 @@ njsc32_reset_detected(sc)
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 }
 
-int
-njsc32_scsipi_ioctl(chan, cmd, addr, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+static int
+njsc32_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr,
+    int flag, struct proc *p)
 {
 	struct njsc32_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 
@@ -1510,9 +1418,7 @@ njsc32_scsipi_ioctl(chan, cmd, addr, flag, p)
  * set current data pointer
  */
 static __inline void
-njsc32_set_cur_ptr(cmd, pos)
-	struct njsc32_cmd *cmd;
-	u_int32_t pos;
+njsc32_set_cur_ptr(struct njsc32_cmd *cmd, u_int32_t pos)
 {
 
 	/* new current data pointer */
@@ -1527,10 +1433,7 @@ njsc32_set_cur_ptr(cmd, pos)
  * set data pointer for the next transfer
  */
 static void
-njsc32_set_ptr(sc, cmd, pos)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
-	u_int32_t pos;
+njsc32_set_ptr(struct njsc32_softc *sc, struct njsc32_cmd *cmd, u_int32_t pos)
 {
 	struct njsc32_sgtable *sg;
 	unsigned sgte;
@@ -1595,16 +1498,14 @@ njsc32_set_ptr(sc, cmd, pos)
  * save data pointer
  */
 static __inline void
-njsc32_save_ptr(cmd)
-	struct njsc32_cmd *cmd;
+njsc32_save_ptr(struct njsc32_cmd *cmd)
 {
 
 	cmd->c_dp_saved = cmd->c_dp_cur;
 }
 
 static void
-njsc32_assert_ack(sc)
-	struct njsc32_softc *sc;
+njsc32_assert_ack(struct njsc32_softc *sc)
 {
 	u_int8_t reg;
 
@@ -1617,8 +1518,7 @@ njsc32_assert_ack(sc)
 }
 
 static void
-njsc32_negate_ack(sc)
-	struct njsc32_softc *sc;
+njsc32_negate_ack(struct njsc32_softc *sc)
 {
 	u_int8_t reg;
 
@@ -1632,8 +1532,7 @@ njsc32_negate_ack(sc)
 }
 
 static void
-njsc32_wait_req_negate(sc)
-	struct njsc32_softc *sc;
+njsc32_wait_req_negate(struct njsc32_softc *sc)
 {
 	int cnt;
 
@@ -1647,9 +1546,7 @@ njsc32_wait_req_negate(sc)
 }
 
 static void
-njsc32_reconnect(sc, cmd)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
+njsc32_reconnect(struct njsc32_softc *sc, struct njsc32_cmd *cmd)
 {
 	struct scsipi_xfer *xs;
 
@@ -1666,10 +1563,8 @@ njsc32_reconnect(sc, cmd)
 }
 
 static enum njsc32_reselstat
-njsc32_resel_identify(sc, lun, pcmd)
-	struct njsc32_softc *sc;
-	int lun;
-	struct njsc32_cmd **pcmd;
+njsc32_resel_identify(struct njsc32_softc *sc, int lun,
+    struct njsc32_cmd **pcmd)
 {
 	int targetid;
 	struct njsc32_lu *plu;
@@ -1722,10 +1617,7 @@ njsc32_resel_identify(sc, lun, pcmd)
 }
 
 static enum njsc32_reselstat
-njsc32_resel_tag(sc, tag, pcmd)
-	struct njsc32_softc *sc;
-	int tag;
-	struct njsc32_cmd **pcmd;
+njsc32_resel_tag(struct njsc32_softc *sc, int tag, struct njsc32_cmd **pcmd)
 {
 	struct njsc32_cmd_head *head;
 	struct njsc32_cmd *cmd;
@@ -1760,10 +1652,7 @@ njsc32_resel_tag(sc, tag, pcmd)
  * XXX autoparam doesn't work as expected and we can't use it here.
  */
 static void
-njsc32_cmd_reload(sc, cmd, cctl)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
-	int cctl;
+njsc32_cmd_reload(struct njsc32_softc *sc, struct njsc32_cmd *cmd, int cctl)
 {
 	struct njsc32_target *target;
 
@@ -1791,9 +1680,7 @@ njsc32_cmd_reload(sc, cmd, cctl)
 }
 
 static void
-njsc32_update_xfer_mode(sc, target)
-	struct njsc32_softc *sc;
-	struct njsc32_target *target;
+njsc32_update_xfer_mode(struct njsc32_softc *sc, struct njsc32_target *target)
 {
 	struct scsipi_xfer_mode xm;
 
@@ -1810,8 +1697,7 @@ njsc32_update_xfer_mode(sc, target)
 }
 
 static void
-njsc32_msgin(sc)
-	struct njsc32_softc *sc;
+njsc32_msgin(struct njsc32_softc *sc)
 {
 	u_int8_t msg0, msg;
 	int msgcnt;
@@ -2209,8 +2095,7 @@ restart:
 }
 
 static void
-njsc32_msgout(sc)
-	struct njsc32_softc *sc;
+njsc32_msgout(struct njsc32_softc *sc)
 {
 	int cctl;
 	u_int8_t bus;
@@ -2276,8 +2161,7 @@ njsc32_msgout(sc)
 }
 
 static void
-njsc32_cmdtimeout(arg)
-	void *arg;
+njsc32_cmdtimeout(void *arg)
 {
 	struct njsc32_cmd *cmd = arg;
 	struct njsc32_softc *sc;
@@ -2304,8 +2188,7 @@ njsc32_cmdtimeout(arg)
 }
 
 static void
-njsc32_reseltimeout(arg)
-	void *arg;
+njsc32_reseltimeout(void *arg)
 {
 	struct njsc32_cmd *cmd = arg;
 	struct njsc32_softc *sc;
@@ -2337,10 +2220,7 @@ njsc32_reseltimeout(arg)
 }
 
 static __inline void
-njsc32_end_auto(sc, cmd, auto_phase)
-	struct njsc32_softc *sc;
-	struct njsc32_cmd *cmd;
-	int auto_phase;
+njsc32_end_auto(struct njsc32_softc *sc, struct njsc32_cmd *cmd, int auto_phase)
 {
 	struct scsipi_xfer *xs;
 
@@ -2425,8 +2305,7 @@ njsc32_end_auto(sc, cmd, auto_phase)
 }
 
 int
-njsc32_intr(arg)
-	void *arg;
+njsc32_intr(void *arg)
 {
 	struct njsc32_softc *sc = arg;
 	u_int16_t intr;
