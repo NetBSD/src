@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.1 2001/04/10 12:50:18 fredette Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.2 2001/07/07 16:13:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ mm58167_attach(sc)
 	printf(": mm58167");
 
 	handle = &sc->_mm58167_todr_handle;
-	bzero(handle, sizeof(handle));
+	memset(handle, 0, sizeof(handle));
 	handle->cookie = sc;
 	handle->todr_gettime = mm58167_gettime;
 	handle->todr_settime = mm58167_settime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.27 2001/07/07 15:53:21 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.28 2001/07/07 16:13:51 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -276,7 +276,7 @@ uha_create_mscps(sc, mscpstore, count)
 	struct uha_mscp *mscp;
 	int i, error;
 
-	bzero(mscpstore, sizeof(struct uha_mscp) * count);
+	memset(mscpstore, 0, sizeof(struct uha_mscp) * count);
 	for (i = 0; i < count; i++) {
 		mscp = &mscpstore[i];
 		if ((error = uha_init_mscp(sc, mscp)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.25 2001/07/07 15:59:38 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26 2001/07/07 16:13:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ eshconfig(sc)
 		goto bad_dmamap_load;
 	}
     
-	bzero(sc->sc_dma_addr, sc->sc_dma_size);
+	memset(sc->sc_dma_addr, 0, sc->sc_dma_size);
 
 	sc->sc_gen_info_dma = sc->sc_dma->dm_segs->ds_addr;
 	sc->sc_gen_info = (struct rr_gen_info *) sc->sc_dma_addr;
@@ -632,7 +632,7 @@ eshinit(sc)
 
 	/* Initialize the general ring information */
 
-	bzero(sc->sc_recv_ring_table, 
+	memset(sc->sc_recv_ring_table, 0,
 	      sizeof(struct rr_ring_ctl) * RR_ULP_COUNT);
 
 	ring = &sc->sc_gen_info->ri_event_ring_ctl;
@@ -794,7 +794,7 @@ esh_fpopen(dev, oflags, devtype, p)
 	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK);
 	if (recv == NULL)
 		return(ENOMEM);
-	bzero(recv, sizeof(*recv));
+	memset(recv, 0, sizeof(*recv));
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
@@ -838,7 +838,7 @@ esh_fpopen(dev, oflags, devtype, p)
 		goto bad_fp_dmamap_load;
 	}
 
-	bzero(recv->ec_descr, size);
+	memset(recv->ec_descr, 0, size);
 
 	/* 
 	 * Create the ring:
@@ -901,7 +901,7 @@ bad_fp_ring_create:
 	printf("esh_fpopen:  bad ring create\n");
 #endif
 	sc->sc_fp_recv[ulp] = NULL;
-	bzero(ring_ctl, sizeof(*ring_ctl));
+	memset(ring_ctl, 0, sizeof(*ring_ctl));
 	bus_dmamap_unload(sc->sc_dmat, recv->ec_dma);
 bad_fp_dmamap_load:
 	bus_dmamap_destroy(sc->sc_dmat, recv->ec_dma);
@@ -981,7 +981,7 @@ esh_fpclose(dev, fflag, devtype, p)
 			 RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr));
 	bus_dmamem_free(sc->sc_dmat, &ring->ec_dmaseg, ring->ec_dma->dm_nsegs);
 	free(ring, M_DEVBUF);
-	bzero(ring_ctl, sizeof(*ring_ctl));
+	memset(ring_ctl, 0, sizeof(*ring_ctl));
 	sc->sc_fp_recv[ulp] = NULL;
 	sc->sc_fp_recv_index[index] = NULL;
 
@@ -1698,7 +1698,7 @@ eshintr(arg)
 			if (event->re_ring == HIPPI_ULP_802) {
 				struct rr_ring_ctl *ring = 
 					sc->sc_recv_ring_table + HIPPI_ULP_802;
-				bzero(ring, sizeof(*ring));
+				memset(ring, 0, sizeof(*ring));
 				sc->sc_flags &= ~ESH_FL_CLOSING_SNAP;
 				sc->sc_flags &= ~ESH_FL_SNAP_RING_UP;
 				while (sc->sc_snap_recv.ec_consumer 
@@ -3452,7 +3452,7 @@ eshstop(sc)
 	 * when we restart.
 	 */
 
-	bzero(sc->sc_fp_recv_index, 
+	memset(sc->sc_fp_recv_index, 0,
 	      sizeof(struct esh_fp_ring_ctl *) * RR_MAX_RECV_RING);
 
 	/* Be sure to wake up any other processes waiting on driver action. */
@@ -3710,7 +3710,7 @@ esh_new_dmainfo(sc)
 
 	di = (struct esh_dmainfo *) malloc(sizeof(*di), M_DEVBUF, M_WAITOK);
 	assert(di != NULL);
-	bzero(di, sizeof(*di));
+	memset(di, 0, sizeof(*di));
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
 			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 

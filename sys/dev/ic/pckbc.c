@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.12 2001/07/07 15:53:21 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.13 2001/07/07 16:13:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -640,7 +640,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	if ((len > 4) || (responselen > 4))
 		return (EINVAL);
 
-	bzero(&nc, sizeof(nc));
+	memset(&nc, 0, sizeof(nc));
 	memcpy(nc.cmd, cmd, len);
 	nc.cmdlen = len;
 	nc.responselen = responselen;
@@ -832,7 +832,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 	if (!nc)
 		return (ENOMEM);
 
-	bzero(nc, sizeof(*nc));
+	memset(nc, 0, sizeof(*nc));
 	memcpy(nc->cmd, cmd, len);
 	nc->cmdlen = len;
 	nc->responselen = responselen;

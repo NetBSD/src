@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.15 2001/07/07 15:53:21 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.16 2001/07/07 16:13:51 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -139,7 +139,7 @@ sgec_attach(sc)
 	/*
 	 * Zero the newly allocated memory.
 	 */
-	bzero(sc->sc_zedata, sizeof(struct ze_cdata));
+	memset(sc->sc_zedata, 0, sizeof(struct ze_cdata));
 	/*
 	 * Create the transmit descriptor DMA maps.
 	 */
