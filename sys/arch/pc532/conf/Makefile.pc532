@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.9 1994/10/26 08:24:00 cgd Exp $
+#	$NetBSD: Makefile.pc532,v 1.10 1994/12/22 03:23:20 phil Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -99,7 +99,7 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: ${PC532}/pc532/genassym.c
-	${CC} ${INCLUDES} -DKERNEL ${IDENT} ${PARAM} \
+	${CC} -static ${INCLUDES} -DKERNEL ${IDENT} ${PARAM} \
 		 ${PC532}/pc532/genassym.c -o genassym
 
 depend: assym.h param.c vnode_if.h
