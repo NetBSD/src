@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.45 2004/03/19 22:21:36 snj Exp $
+.\"	$NetBSD: fdisk.8,v 1.46 2004/03/20 18:49:33 wiz Exp $
 .\"
 .Dd March 19, 2004
 .Dt FDISK 8
@@ -199,17 +199,17 @@ is a regular file.
 Unless the geometry of
 .Ar device
 is told to
-.Nm fdisk
+.Nm
 by
 .Fl T Ar disktype ,
-.Nm fdisk
+.Nm
 will count the 512-byte sectors in
 .Ar device
 and produce a fake geometry.
 .It Fl i
 Explicitly request initialisation of the master boot code
 (similar to what
-.Nm fdisk /mbr
+.Ic fdisk /mbr
 does under
 .Tn MS-DOS ) ,
 even if the magic number in the first sector is ok.
