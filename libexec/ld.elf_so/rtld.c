@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.5 1997/10/08 08:55:37 mrg Exp $	*/
+/*	$NetBSD: rtld.c,v 1.5.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -138,7 +138,12 @@ _rtld_init(
     _rtld_objself.path = _rtld_path;
     _rtld_objself.rtld = true;
     _rtld_objself.mapbase = mapbase;
+#ifdef __mips__
+    /* mips ld.so currently linked at load address, so no relocation needed */
+    _rtld_objself.relocbase = 0;
+#else
     _rtld_objself.relocbase = mapbase;
+#endif
     _rtld_objself.pltgot = NULL;
 #ifdef OLD_GOT
     _rtld_objself.dynamic = (Elf_Dyn *) _GLOBAL_OFFSET_TABLE_[0];
@@ -152,7 +157,9 @@ _rtld_init(
 _rtld_objself.pltgot = NULL;
 #endif
     assert(_rtld_objself.needed == NULL);
+#ifndef __mips__	/* no relocation for mips */
     assert(!_rtld_objself.textrel);
+#endif
 
     /* Set up the _rtld_objlist pointer, so that rtld symbols can be found. */
     _rtld_objlist = &_rtld_objself;
@@ -252,8 +259,10 @@ _rtld(
 #ifdef RTLD_DEBUG
     xprintf("_ctype_ is %p\n", _ctype_);
 #endif
+#ifdef DEBUG
     if (aux_info[AUX_debug] != NULL)	/* Set debugging level */
 	debug = aux_info[AUX_debug]->au_v;
+#endif
 
     __progname = _rtld_objself.path;
     environ = env;
@@ -264,9 +273,11 @@ _rtld(
     if (ld_bind_now != NULL && *ld_bind_now != '\0')
 	bind_now = true;
     if (_rtld_trust) {
+#ifdef DEBUG
 	const char *ld_debug = getenv("LD_DEBUG");
 	if (ld_debug != NULL && *ld_debug != '\0')
 	    debug = 1;
+#endif
 	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
     }
 
@@ -543,6 +554,10 @@ _rtld_linkmap_add(
     obj->linkmap.l_name = obj->path;
     obj->linkmap.l_addr = obj->mapbase;
     obj->linkmap.l_ld = obj->dynamic;
+#ifdef __mips__
+    /* GDB needs load offset on MIPS to use the symbols */
+    obj->linkmap.l_offs = obj->relocbase;
+#endif
 
     if (_rtld_debug.r_map == NULL) {
 	_rtld_debug.r_map = l;
@@ -571,4 +586,3 @@ _rtld_linkmap_delete(
     if ((l->l_prev->l_next = l->l_next) != NULL)
 	l->l_next->l_prev = l->l_prev;
 }
-

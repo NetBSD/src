@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.7.2.3 1997/11/08 07:25:48 lukem Exp $
-
-.if ${MACHINE} == "alpha"
-PROG=	ld.elf_so
-.endif
+#	$NetBSD: Makefile,v 1.7.2.4 1998/05/08 17:39:12 mycroft Exp $
 
 .if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") 
+PROG=	ld.elf_so
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.

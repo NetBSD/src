@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.1 1996/12/16 20:38:02 cgd Exp $	*/
+/*	$NetBSD: reloc.c,v 1.1.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -52,6 +52,7 @@
 #include "debug.h"
 #include "rtld.h"
 
+#ifdef __alpha__
 static int
 _rtld_do_copy_relocation(
     const Obj_Entry *dstobj,
@@ -80,6 +81,7 @@ _rtld_do_copy_relocation(
     memcpy(dstaddr, srcaddr, size);
     return 0;
 }
+#endif /* __alpha__ */
 
 /*
  * Process the special R_xxx_COPY relocations in the main program.  These
@@ -94,6 +96,7 @@ _rtld_do_copy_relocations(
 {
     assert(dstobj->mainprog);	/* COPY relocations are invalid elsewhere */
 
+#ifdef __alpha__ /* jrs */
     if (dstobj->rel != NULL) {
 	const Elf_Rel *rel;
 	for (rel = dstobj->rel;  rel < dstobj->rellim;  ++rel) {
@@ -117,6 +120,7 @@ _rtld_do_copy_relocations(
 	    }
 	}
     }
+#endif /* jrs */
 
     return 0;
 }
@@ -182,7 +186,7 @@ _rtld_relocate_nonplt_object(
 	    *where = tmp_value;
 	break;
     }
-#endif
+/*#endif*/
 
     case R_TYPE(GLOB_DAT):
     {
@@ -209,7 +213,6 @@ _rtld_relocate_nonplt_object(
 	break;
     }
 
-
     case R_TYPE(COPY): {
 	/*
 	 * These are deferred until all other relocations have
@@ -224,6 +227,33 @@ _rtld_relocate_nonplt_object(
 	}
 	break;
     }
+#endif /* __alpha__ */
+
+#ifdef __mips__
+    case R_TYPE(REL32): {
+    		/* 32-bit PC-relative reference */
+
+        const Elf_Sym *def;
+        const Obj_Entry *defobj;
+
+	def = obj->symtab + ELF_R_SYM(rela->r_info);
+
+        if (ELF_SYM_BIND(def->st_info) == Elf_estb_local &&
+          (ELF_SYM_TYPE(def->st_info) == Elf_estt_section ||
+           ELF_SYM_TYPE(def->st_info) == Elf_estt_notype)) {
+            *where += (Elf_Addr) obj->relocbase;
+        } else {
+/* XXX maybe do something re: bootstrapping? */
+            def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+	        &defobj, false);
+            if (def == NULL)
+                return -1;
+	    *where += (Elf_Addr)(defobj->relocbase + def->st_value);
+        }
+        break;
+    }
+ 
+#endif /* mips */
 
     default: {
 	const Elf_Sym *def;
@@ -252,6 +282,8 @@ _rtld_relocate_plt_object(
     Elf_Addr new_value;
 
     /* Fully resolve procedure addresses now */
+
+#if defined(__alpha__)	/* (jrs) */
     if (bind_now || obj->pltgot == NULL) {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
@@ -268,7 +300,9 @@ _rtld_relocate_plt_object(
 	    defobj->strtab + def->st_name, obj->path,
 	    new_value, defobj->path);
 #endif
-    } else if (!obj->mainprog) {
+    } else
+#endif	/* __alpha__ (jrs) */
+     if (!obj->mainprog) {
 	/* Just relocate the GOT slots pointing into the PLT */
 	new_value = *where + (Elf_Addr) (obj->relocbase);
     } else {
@@ -352,6 +386,12 @@ _rtld_relocate_objects(
 		Elf_RelA ourrela;
 		ourrela.r_info   = rel->r_info;
 		ourrela.r_offset = rel->r_offset;
+#if defined(__mips__)
+		/* rel->r_offset is not valid on mips? */
+		if (ELF_R_TYPE(ourrela.r_info) == R_TYPE(NONE))
+		    ourrela.r_addend = 0;
+		else
+#endif
 		ourrela.r_addend = *(Elf_Word *) (obj->relocbase + rel->r_offset);
 
 		if (_rtld_relocate_nonplt_object(obj, &ourrela) < 0)
@@ -423,6 +463,13 @@ _rtld_relocate_objects(
 	    obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
 	    /* Identify this shared object */
 	    obj->pltgot[3] = (Elf_Addr) obj;
+#endif
+#if defined(__mips__)
+	    _rtld_relocate_mips_got(obj);
+
+	    obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
+	    /* XXX only if obj->pltgot[1] & 0x80000000 ?? */
+	    obj->pltgot[1] |= (Elf_Addr) obj;
 #endif
 	}
     }
