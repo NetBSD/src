@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.102 1998/06/11 08:29:33 leo Exp $	*/
+/*	$NetBSD: isa.c,v 1.103 1998/07/30 18:03:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -44,6 +44,12 @@
 
 #include "isadma.h"
 
+#include "isapnp.h"
+#ifdef NISAPNP
+#include <dev/isapnp/isapnpreg.h>
+#include <dev/isapnp/isapnpvar.h>
+#endif
+
 int isamatch __P((struct device *, struct cfdata *, void *));
 void isaattach __P((struct device *, struct device *, void *));
 int isaprint __P((void *, const char *));
@@ -85,6 +91,13 @@ isaattach(parent, self, aux)
 	sc->sc_memt = iba->iba_memt;
 	sc->sc_dmat = iba->iba_dmat;
 	sc->sc_ic = iba->iba_ic;
+
+#if NISAPNP > 0
+	/*
+	 * Reset isapnp cards that the bios configured for us
+	 */
+	isapnp_isa_attach_hook(sc);
+#endif
 
 #if NISADMA > 0
 	/*
