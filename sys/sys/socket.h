@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.41 1998/12/18 13:18:42 drochner Exp $	*/
+/*	$NetBSD: socket.h,v 1.42 1999/02/10 17:57:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -43,7 +43,12 @@
  */
 
 /*
- * Types
+ * Data types.
+ */
+typedef	unsigned int	socklen_t;
+
+/*
+ * Socket types.
  */
 #define	SOCK_STREAM	1		/* stream socket */
 #define	SOCK_DGRAM	2		/* datagram socket */
@@ -115,20 +120,28 @@ struct	linger {
 #define	AF_APPLETALK	16		/* Apple Talk */
 #define	AF_ROUTE	17		/* Internal Routing Protocol */
 #define	AF_LINK		18		/* Link layer interface */
+#if !defined(_XOPEN_SOURCE)
 #define	pseudo_AF_XTP	19		/* eXpress Transfer Protocol (no AF) */
+#endif
 #define	AF_COIP		20		/* connection-oriented IP, aka ST II */
 #define	AF_CNT		21		/* Computer Network Technology */
+#if !defined(_XOPEN_SOURCE)
 #define pseudo_AF_RTIP	22		/* Help Identify RTIP packets */
+#endif
 #define	AF_IPX		23		/* Novell Internet Protocol */
 #define	AF_INET6	24		/* IP version 6 */
+#if !defined(_XOPEN_SOURCE)
 #define pseudo_AF_PIP	25		/* Help Identify PIP packets */
+#endif
 #define AF_ISDN		26		/* Integrated Services Digital Network*/
 #define AF_E164		AF_ISDN		/* CCITT E.164 recommendation */
 #define AF_NATM		27		/* native ATM access */
 #define AF_ARP		28		/* (rev.) addr. res. prot. (RFC 826) */
+#if !defined(_XOPEN_SOURCE)
 #define pseudo_AF_KEY	29		/* Internal key management protocol  */
 #define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
 					   in interface output routine */
+#endif
 
 #define	AF_MAX		31
 
@@ -142,6 +155,7 @@ struct sockaddr {
 	char	sa_data[14];		/* actually longer; address value */
 };
 
+#if defined(_KERNEL)
 /*
  * Structure used by kernel to pass protocol
  * information in raw sockets.
@@ -150,6 +164,7 @@ struct sockproto {
 	u_short	sp_family;		/* address family */
 	u_short	sp_protocol;		/* protocol */
 };
+#endif /* _KERNEL */
 
 /*
  * Protocol families, same as address families for now.
@@ -175,21 +190,28 @@ struct sockproto {
 #define	PF_APPLETALK	AF_APPLETALK
 #define	PF_ROUTE	AF_ROUTE
 #define	PF_LINK		AF_LINK
+#if !defined(_XOPEN_SOURCE)
 #define	PF_XTP		pseudo_AF_XTP	/* really just proto family, no AF */
+#endif
 #define	PF_COIP		AF_COIP
 #define	PF_CNT		AF_CNT
 #define	PF_INET6	AF_INET6
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
+#if !defined(_XOPEN_SOURCE)
 #define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
+#endif
 #define PF_ISDN		AF_ISDN		/* same as E164 */
 #define PF_E164		AF_E164
 #define PF_NATM		AF_NATM
 #define PF_ARP		AF_ARP
+#if !defined(_XOPEN_SOURCE)
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
+#endif
 
 #define	PF_MAX		AF_MAX
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * Socket credentials.
  */
@@ -207,6 +229,7 @@ struct sockcred {
  */
 #define	SOCKCREDSIZE(ngrps) \
 	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
+#endif /* !_XOPEN_SOURCE */
 
 
 #if !defined(_XOPEN_SOURCE)
@@ -287,13 +310,13 @@ struct sockcred {
  * Used value-result for recvmsg, value only for sendmsg.
  */
 struct msghdr {
-	caddr_t	msg_name;		/* optional address */
-	u_int	msg_namelen;		/* size of address */
-	struct	iovec *msg_iov;		/* scatter/gather array */
-	u_int	msg_iovlen;		/* # elements in msg_iov */
-	caddr_t	msg_control;		/* ancillary data, see below */
-	u_int	msg_controllen;		/* ancillary data buffer len */
-	int	msg_flags;		/* flags on received message */
+	void		*msg_name;	/* optional address */
+	socklen_t	msg_namelen;	/* size of address */
+	struct iovec	*msg_iov;	/* scatter/gather array */
+	int		msg_iovlen;	/* # elements in msg_iov */
+	void		*msg_control;	/* ancillary data, see below */
+	socklen_t	msg_controllen;	/* ancillary data buffer len */
+	int		msg_flags;	/* flags on received message */
 };
 
 #define	MSG_OOB		0x1		/* process out-of-band data */
@@ -314,9 +337,9 @@ struct msghdr {
  * of message elements headed by cmsghdr structures.
  */
 struct cmsghdr {
-	u_int	cmsg_len;		/* data byte count, including hdr */
-	int	cmsg_level;		/* originating protocol */
-	int	cmsg_type;		/* protocol-specific type */
+	socklen_t	cmsg_len;	/* data byte count, including hdr */
+	int		cmsg_level;	/* originating protocol */
+	int		cmsg_type;	/* protocol-specific type */
 /* followed by	u_char  cmsg_data[]; */
 };
 
@@ -334,8 +357,10 @@ struct cmsghdr {
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
+#if !defined(_XOPEN_SOURCE)
 #define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
-#define	SCM_CREDS	0x04		/* credientials (struct sockcred) */
+#define	SCM_CREDS	0x04		/* credentials (struct sockcred) */
+#endif
 
 /*
  * Types of socket shutdown(2).
@@ -344,6 +369,7 @@ struct cmsghdr {
 #define	SHUT_WR		1		/* Disallow further sends. */
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * 4.3 compat sockaddr, move to compat file later
  */
@@ -363,27 +389,29 @@ struct omsghdr {
 	caddr_t	msg_accrights;		/* access rights sent/received */
 	int	msg_accrightslen;
 };
+#endif
 
 #ifndef	_KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	accept __P((int, struct sockaddr *, int *));
-int	bind __P((int, const struct sockaddr *, int));
-int	connect __P((int, const struct sockaddr *, int));
-int	getpeername __P((int, struct sockaddr *, int *));
-int	getsockname __P((int, struct sockaddr *, int *));
-int	getsockopt __P((int, int, int, void *, int *));
+int	accept __P((int, struct sockaddr *, socklen_t *));
+int	bind __P((int, const struct sockaddr *, socklen_t));
+int	connect __P((int, const struct sockaddr *, socklen_t));
+int	getpeername __P((int, struct sockaddr *, socklen_t *));
+int	getsockname __P((int, struct sockaddr *, socklen_t *));
+int	getsockopt __P((int, int, int, void *, socklen_t *));
 int	listen __P((int, int));
 ssize_t	recv __P((int, void *, size_t, int));
-ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *, int *));
+ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *,
+	    socklen_t *));
 ssize_t	recvmsg __P((int, struct msghdr *, int));
 ssize_t	send __P((int, const void *, size_t, int));
 ssize_t	sendto __P((int, const void *,
-	    size_t, int, const struct sockaddr *, int));
+	    size_t, int, const struct sockaddr *, socklen_t));
 ssize_t	sendmsg __P((int, const struct msghdr *, int));
-int	setsockopt __P((int, int, int, const void *, int));
+int	setsockopt __P((int, int, int, const void *, socklen_t));
 int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
