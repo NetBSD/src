@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.74 2003/08/21 14:55:03 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.75 2003/09/03 17:08:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.74 2003/08/21 14:55:03 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.75 2003/09/03 17:08:58 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,25 +660,22 @@ initcg(int cylno, const struct timeval *tv)
 		}
 	}
 	memset(&acg, 0, sblock.fs_cgsize);
-	acg.cg_time = tv->tv_sec;
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
-	acg.cg_niblk = sblock.fs_ipg;
-	acg.cg_initediblk = sblock.fs_ipg < 2 * INOPB(&sblock) ?
-	    sblock.fs_ipg : 2 * INOPB(&sblock);
 	acg.cg_ndblk = dmax - cbase;
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk >> sblock.fs_fragshift;
 	start = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
 	if (Oflag == 2) {
+		acg.cg_time = tv->tv_sec;
+		acg.cg_niblk = sblock.fs_ipg;
+		acg.cg_initediblk = sblock.fs_ipg < 2 * INOPB(&sblock) ?
+		    sblock.fs_ipg : 2 * INOPB(&sblock);
 		acg.cg_iusedoff = start;
 	} else {
 		acg.cg_old_ncyl = sblock.fs_old_cpg;
-		acg.cg_old_time = acg.cg_time;
-		acg.cg_time = 0;
-		acg.cg_old_niblk = acg.cg_niblk;
-		acg.cg_niblk = 0;
-		acg.cg_initediblk = 0;
+		acg.cg_old_time = tv->tv_sec;
+		acg.cg_old_niblk = sblock.fs_ipg;
 		acg.cg_old_btotoff = start;
 		acg.cg_old_boff = acg.cg_old_btotoff +
 		    sblock.fs_old_cpg * sizeof(int32_t);
@@ -802,7 +799,7 @@ initcg(int cylno, const struct timeval *tv)
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);
-	for (i = 0; i < acg.cg_initediblk; i++) {
+	for (i = MIN(sblock.fs_ipg, 2) * INOPB(&sblock); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			/* No need to swap, it'll stay random */
 			dp1->di_gen = random();
@@ -834,7 +831,6 @@ initcg(int cylno, const struct timeval *tv)
 /*
  * initialize the file system
  */
-union dinode node;
 
 #ifdef LOSTDIR
 #define	PREDEFDIR 3
@@ -879,6 +875,7 @@ static void copy_dir(struct direct *, struct direct *);
 int
 fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
+	union dinode node;
 #ifdef LOSTDIR
 	int i;
 	int dirblksiz = DIRBLKSIZ;
@@ -889,12 +886,12 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	/*
 	 * initialize the node
 	 */
-	memset(&node, 0, sizeof(node));
 
 #ifdef LOSTDIR
 	/*
 	 * create the lost+found directory
 	 */
+	memset(&node, 0, sizeof(node));
 	if (Oflag == 0) {
 		(void)makedir((struct direct *)olost_found_dir, 2);
 		for (i = dirblksiz; i < sblock.fs_bsize; i += dirblksiz)
@@ -951,6 +948,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	/*
 	 * create the root directory
 	 */
+	memset(&node, 0, sizeof(node));
 	if (Oflag <= 1) {
 		if (mfs) {
 			node.dp1.di_mode = IFDIR | mfsmode;
@@ -1122,25 +1120,25 @@ iput(union dinode *ip, ino_t ino)
 	rdfs(d, sblock.fs_bsize, (char *)iobuf);
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
 		dp1 = (struct ufs1_dinode *)iobuf;
+		dp1 += ino_to_fsbo(&sblock, ino);
 		if (needswap) {
-			ffs_dinode1_swap(&ip->dp1,
-			    &dp1[ino_to_fsbo(&sblock, ino)]);
+			ffs_dinode1_swap(&ip->dp1, dp1);
 			/* ffs_dinode1_swap() doesn't swap blocks addrs */
 			for (i=0; i<NDADDR + NIADDR; i++)
-			    (&dp1[ino_to_fsbo(&sblock, ino)])->di_db[i] = 
-				bswap32(ip->dp1.di_db[i]);
+			    dp1->di_db[i] = bswap32(ip->dp1.di_db[i]);
 		} else
-			dp1[ino_to_fsbo(&sblock, ino)] = ip->dp1;
+			*dp1 = ip->dp1;
+		dp1->di_gen = random();
 	} else {
 		dp2 = (struct ufs2_dinode *)iobuf;
+		dp2 += ino_to_fsbo(&sblock, ino);
 		if (needswap) {
-			ffs_dinode2_swap(&ip->dp2,	
-			    &dp2[ino_to_fsbo(&sblock, ino)]);
+			ffs_dinode2_swap(&ip->dp2, dp2);
 			for (i=0; i<NDADDR + NIADDR; i++)
-			    (&dp2[ino_to_fsbo(&sblock, ino)])->di_db[i] = 
-				bswap32(ip->dp2.di_db[i]);
+			    dp2->di_db[i] = bswap32(ip->dp2.di_db[i]);
 		} else
-			dp2[ino_to_fsbo(&sblock, ino)] = ip->dp2;
+			*dp2 = ip->dp2;
+		dp2->di_gen = random();
 	}
 	wtfs(d, sblock.fs_bsize, iobuf);
 }
