@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.83 2004/04/25 18:50:44 dbj Exp $ */
+/*	$NetBSD: disks.c,v 1.84 2004/04/28 20:59:32 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -555,7 +555,8 @@ fixsb(const char *prog, const char *disk, char ptn)
 	} sblk;
 	struct fs *fs = &sblk.fs;
 
-	snprintf(sblk.buf, sizeof(sblk.buf), "/dev/r%s%c", disk, ptn);
+	snprintf(sblk.buf, sizeof(sblk.buf), "/dev/r%s%c",
+		disk, ptn == ' ' ? 0 : ptn);
 	fd = open(sblk.buf, O_RDONLY);
 	if (fd == -1)
 		return;
