@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.88 2003/10/30 01:43:09 simonb Exp $	*/
+/*	$NetBSD: nd6.c,v 1.89 2004/02/11 10:37:33 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.88 2003/10/30 01:43:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.89 2004/02/11 10:37:33 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -798,7 +798,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * XXX: a link does not necessarily specify a single interface.
 	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr) &&
-	    ntohs(*(u_int16_t *)&addr->sin6_addr.s6_addr[2]) == ifp->if_index)
+	    ntohs(addr->sin6_addr.s6_addr16[1]) == ifp->if_index)
 		return (1);
 
 	/*
