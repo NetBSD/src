@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.12 2001/08/28 15:36:54 ad Exp $	*/
+/*	$NetBSD: atactl.c,v 1.13 2001/09/07 02:17:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 struct command {
 	const char *cmd_name;
 	const char *arg_names;
-	void (*cmd_func) __P((int, char *[]));
+	void (*cmd_func)(int, char *[]);
 };
 
 struct bitinfo {
@@ -66,10 +66,10 @@ struct bitinfo {
 	const char *string;
 };
 
-int	main __P((int, char *[]));
-void	usage __P((void));
-void	ata_command __P((struct atareq *));
-void	print_bitinfo __P((const char *, const char *, u_int, struct bitinfo *));
+int	main(int, char *[]);
+void	usage(void);
+void	ata_command(struct atareq *);
+void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
@@ -77,10 +77,10 @@ char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
 const	char *argnames;			/* helpstring: expected arguments */
 
-void	device_identify __P((int, char *[]));
-void	device_setidle __P((int, char *[]));
-void	device_idle __P((int, char *[]));
-void	device_checkpower __P((int, char *[]));
+void	device_identify(int, char *[]);
+void	device_setidle(int, char *[]);
+void	device_idle(int, char *[]);
+void	device_checkpower(int, char *[]);
 
 struct command commands[] = {
 	{ "identify",	"",			device_identify },
@@ -141,9 +141,7 @@ struct bitinfo ata_cmd_set2[] = {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int i;
 
@@ -197,7 +195,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	int i;
 
@@ -217,8 +215,7 @@ usage()
  */
 
 void
-ata_command(req)
-	struct atareq *req;
+ata_command(struct atareq *req)
 {
 	int error;
 
@@ -257,10 +254,7 @@ ata_command(req)
  */
 
 void
-print_bitinfo(bf, af, bits, binfo)
-	const char *bf, *af;
-	u_int bits;
-	struct bitinfo *binfo;
+print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != NULL; binfo++)
@@ -278,9 +272,7 @@ print_bitinfo(bf, af, bits, binfo)
  *	Display the identity of the device
  */
 void
-device_identify(argc, argv)
-	int argc;
-	char *argv[];
+device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
 	struct atareq req;
@@ -413,9 +405,7 @@ device_identify(argc, argv)
  */
 
 void
-device_idle(argc, argv)
-	int argc;
-	char *argv[];
+device_idle(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -445,9 +435,7 @@ device_idle(argc, argv)
  */
 
 void
-device_setidle(argc, argv)
-	int argc;
-	char *argv[];
+device_setidle(int argc, char *argv[])
 {
 	unsigned long idle;
 	struct atareq req;
@@ -495,9 +483,7 @@ device_setidle(argc, argv)
  */
 
 void
-device_checkpower(argc, argv)
-	int argc;
-	char *argv[];
+device_checkpower(int argc, char *argv[])
 {
 	struct atareq req;
 
