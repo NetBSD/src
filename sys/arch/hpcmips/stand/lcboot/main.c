@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2003/06/15 08:49:09 igy Exp $ */
+/* $NetBSD: main.c,v 1.3 2003/06/24 12:27:04 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -793,6 +793,13 @@ awaitkey(void)
 out:
 	printf("0\n");
 	return(c);
+}
+
+__dead void
+_rtt(void)
+{
+	for (;;)
+		;
 }
 
 int
