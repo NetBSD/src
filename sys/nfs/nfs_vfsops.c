@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.9 1993/12/18 00:45:41 mycroft Exp $
+ *	$Id: nfs_vfsops.c,v 1.10 1993/12/21 07:49:30 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -522,7 +522,9 @@ nfs_root(mp, vpp)
 	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
 		return (error);
 	vp = NFSTOV(np);
-	vp->v_type = VDIR;
+	if (error = nfs_getattr(vp, &va, p->p_ucred, p))
+		return (error);
+	vp->v_type = va.va_type;
 	vp->v_flag = VROOT;
 	*vpp = vp;
 	return (0);
