@@ -1,4 +1,4 @@
-/* $NetBSD: setproctitle.c,v 1.18 2000/06/29 06:31:44 mrg Exp $ */
+/* $NetBSD: setproctitle.c,v 1.19 2001/02/19 22:22:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.18 2000/06/29 06:31:44 mrg Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.19 2001/02/19 22:22:16 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,8 +58,6 @@ __weak_alias(setproctitle,_setproctitle)
 #endif
 
 #define	MAX_PROCTITLE	2048
-
-extern char *__progname;		/* Program name, from crt0. */
 
 /*
  * For compatibility with old versions of crt0 that didn't define __ps_strings,
@@ -86,11 +84,12 @@ setproctitle(fmt, va_alist)
 	va_start(ap);
 #endif
 	if (fmt != NULL) {
-		used = snprintf(buf, (size_t)MAX_PROCTITLE, "%s: ", __progname);
+		used = snprintf(buf, (size_t)MAX_PROCTITLE, "%s: ",
+		    getprogname());
 		(void)vsnprintf(buf + used, (size_t)(MAX_PROCTITLE - used),
 		    fmt, ap);
 	} else
-		(void)snprintf(buf, MAX_PROCTITLE, "%s", __progname);
+		(void)snprintf(buf, MAX_PROCTITLE, "%s", getprogname());
 	va_end(ap);
 
 	bufp = buf;

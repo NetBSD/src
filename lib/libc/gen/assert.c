@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.12 2001/01/03 12:44:53 lukem Exp $	*/
+/*	$NetBSD: assert.c,v 1.13 2001/02/19 22:22:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.12 2001/01/03 12:44:53 lukem Exp $");
+__RCSID("$NetBSD: assert.c,v 1.13 2001/02/19 22:22:16 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: assert.c,v 1.12 2001/01/03 12:44:53 lukem Exp $");
 #include <stdlib.h>
 #include <syslog.h>
 
-extern char *__progname;
+#include "namespace.h"
 
 void
 __assert13(file, line, function, failedexpr)
@@ -129,7 +129,7 @@ __diagassert13(file, line, function, failedexpr)
 	    function ? function : "",
 	    function ? "\"" : "");
 	if (diagassert_flags & DIAGASSERT_STDERR)
-		(void)fprintf(stderr, "%s: %s\n", __progname, buf);
+		(void)fprintf(stderr, "%s: %s\n", getprogname(), buf);
 	if (diagassert_flags & DIAGASSERT_SYSLOG)
 		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
 	if (diagassert_flags & DIAGASSERT_ABORT)
