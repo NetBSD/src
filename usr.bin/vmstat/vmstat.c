@@ -133,7 +133,7 @@ struct nlist nl[] = {
 #define X_UBDINIT	(X_END+2)
 	{ "_ubdinit" },
 #endif
-#ifdef __386BSD__
+#ifdef i386
 #define	X_FREE		(X_END+1)
 	{ "_vm_page_free_count" },
 #define	X_ACTIVE	(X_END+2)
@@ -145,8 +145,8 @@ struct nlist nl[] = {
 #define	X_PAGESIZE	(X_END+5)
 	{ "_page_size" },
 #define	X_ISA_BIO	(X_END+6)
-	{ "_isa_devtab_bio" },
-#endif /* __386BSD__ */
+	{ "_isa_subdev" },
+#endif i386
 	{ "" },
 };
 
