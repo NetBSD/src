@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.65 2002/09/20 03:39:22 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.66 2002/09/21 05:24:17 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -408,7 +408,7 @@ _rtld(sp, relocbase)
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
 	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
-	dbg(("%s is initialized, mapbase=%p, relocbase=%p", __progname,
+	dbg(("dynamic linker is initialized, mapbase=%p, relocbase=%p",
 	     _rtld_objself.mapbase, _rtld_objself.relocbase));
 
 	/*
@@ -456,6 +456,7 @@ _rtld(sp, relocbase)
 		free(_rtld_objself.path);
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
 	}
+	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 	
 	_rtld_digest_dynamic(_rtld_objmain);
 
