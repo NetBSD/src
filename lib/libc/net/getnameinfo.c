@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.5 1999/12/13 14:18:32 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.6 1999/12/13 16:22:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -43,6 +43,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif 
+#else
+#define HAVE_SA_LEN
 #endif
 
 #include <sys/types.h>
@@ -124,7 +126,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (sa == NULL)
 		return ENI_NOSOCKET;
 
-#ifdef HAVE_SA_LEN	/*XXX*/
+#ifdef HAVE_SA_LEN
 	if (sa->sa_len != salen)
 		return ENI_SALEN;
 #endif
