@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.56 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.57 2000/03/30 12:13:31 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -101,7 +101,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	vput(ndp->ni_vp);
 	return (EINVAL);
 #else
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct iso_node *ip;
 	struct iso_dnode *dp;
 	int error;
@@ -192,7 +192,7 @@ cd9660_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vattr *vap = ap->a_vap;
 
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
@@ -262,9 +262,9 @@ cd9660_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
-	register struct iso_node *ip = VTOI(vp);
-	register struct iso_mnt *imp;
+	struct uio *uio = ap->a_uio;
+	struct iso_node *ip = VTOI(vp);
+	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
@@ -432,7 +432,7 @@ cd9660_readdir(v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
 	struct vnode *vdp = ap->a_vp;
 	struct iso_node *dp;
@@ -751,9 +751,9 @@ cd9660_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct vnode *vp = bp->b_vp;
-	register struct iso_node *ip;
+	struct buf *bp = ap->a_bp;
+	struct vnode *vp = bp->b_vp;
+	struct iso_node *ip;
 	int error;
 
 	ip = VTOI(vp);
