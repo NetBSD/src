@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.14 1996/12/23 09:09:53 veego Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.15 1997/01/21 05:44:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -184,6 +184,7 @@ bzscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.adapter = &bzsc_scsiswitch;
 	sc->sc_softc.sc_link.device = &bzsc_scsidev;
 	sc->sc_softc.sc_link.openings = 1;
+	sc->sc_softc.sc_link.max_target = 7;
 
 	printf("\n");
 
