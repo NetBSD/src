@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.1 1997/03/10 06:28:30 scottr Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.2 1997/10/17 16:02:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -32,6 +32,11 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: stat_proc.c,v 1.2 1997/10/17 16:02:59 lukem Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
