@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.72 2000/09/07 22:20:45 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.73 2000/11/01 20:56:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/ptrace.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -91,6 +90,9 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+
+#include <sys/ptrace.h>
+#include <machine/ptrace.h>
 
 #include <sys/syscallargs.h>
 
@@ -107,7 +109,7 @@
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 
-int linux_ptrace_request_map[] = {
+const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
 	LINUX_PTRACE_PEEKTEXT,	PT_READ_I,
 	LINUX_PTRACE_PEEKDATA,	PT_READ_D,
@@ -117,6 +119,9 @@ int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_KILL,	PT_KILL,
 	LINUX_PTRACE_ATTACH,	PT_ATTACH,
 	LINUX_PTRACE_DETACH,	PT_DETACH,
+#ifdef PT_STEP
+	LINUX_PTRACE_SINGLESTEP,	PT_STEP,
+#endif
 	-1
 };
 
@@ -1078,7 +1083,8 @@ linux_sys_ptrace(p, v, retval)
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */ *uap = v;
-	int *ptr, request;
+	const int *ptr;
+	int request;
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1094,6 +1100,15 @@ linux_sys_ptrace(p, v, retval)
 			SCARG(&pta, addr) = (caddr_t)SCARG(uap, addr);
 			SCARG(&pta, data) = SCARG(uap, data);
 
+			/*
+			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
+			 * to continue as the process left off previously,
+			 * i.e. same as if NetBSD ptrace called with
+			 * addr == (caddr_t) 1.
+			 */
+			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
+				SCARG(&pta, addr) = (caddr_t) 1;
+			
 			return sys_ptrace(p, &pta, retval);
 		}
 		else
