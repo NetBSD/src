@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.37 2004/04/06 03:54:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.38 2004/04/06 03:56:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -432,3 +432,11 @@ xfree/xc/programs/xdm/config/Imakefile		1.2
 
 	Provide a default tty under NetBSD-amd64, too. PR#25060
 	[tron, ticket #63]
+
+etc/rc.d/ipmon					1.11
+etc/defaults/rc.conf				1.57
+
+	Move ipmon's "-D" argument from "command_args" to "ipmon_flags" so that
+	passing an (optional) filename argument (that must come last) works fine
+	from $ipmon_flags. PR#25006
+	[mrg, ticket #66]
