@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/18 05:47:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 1997/11/08 06:52:27 lukem Exp $
 #
 # Makefile for uucico
 
@@ -12,7 +12,7 @@ SRCS=		uucico.c trans.c send.c rec.c xcmd.c prot.c protg.c protf.c \
 		conn.c copy.c log.c util.c
 LDADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
-CFLAGS+=	-I$(.CURDIR)/../common_sources\
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\" -DOWNER=\"$(owner)\" 
 
 MAN=		uucico.8

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/18 05:47:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 1997/11/08 06:52:21 lukem Exp $
 #
 # This is the Makefile for the Taylor UUCP uuconf library
 
@@ -16,7 +16,7 @@ SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
 		tport.c tportc.c tsinfo.c tsnams.c tsys.c tval.c ugtlin.c \
 		unk.c val.c vinit.c vport.c vsinfo.c vsnams.c vsys.c runuxq.c \
 		strip.c
-CFLAGS+=	-I$(.CURDIR)/../common_sources \
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DNEWCONFIGLIB=\"$(newconfigdir)\"\
 		-DOLDCONFIGLIB=\"$(oldconfigdir)\"
 

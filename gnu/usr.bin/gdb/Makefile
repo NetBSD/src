@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 1997/10/18 18:37:37 gwr Exp $
+# $NetBSD: Makefile,v 1.10.2.1 1997/11/08 06:53:22 lukem Exp $
 
 PROG=	gdb
 
@@ -12,7 +12,7 @@ srcdir= $(dist)/gdb
 TARGET_ARCH?=$(MACHINE_ARCH)
 
 # Debugging?
-# CFLAGS=-g
+# CPPFLAGS=-g
 
 # Find out where libreadline.a lives.
 RL_CURDIR=$(TOP)/lib/readline
@@ -38,7 +38,7 @@ INCLS+= -I$(dist)/include
 # KERNEL_DEBUG no longer used.  See ADDITIONAL_OPTIONS*
 DEFS= -DNO_MMALLOC
 
-CFLAGS+= $(INCLS) $(DEFS)
+CPPFLAGS+= $(INCLS) $(DEFS)
 
 .include "_$(TARGET_ARCH).mk"
 

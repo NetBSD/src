@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1997/09/19 01:02:08 jeremy Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 1997/11/08 06:52:56 lukem Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 
@@ -22,7 +22,7 @@ gas_objformat=aout
 .endif
 
 .if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
-CFLAGS+=	-DCROSS_COMPILE
+CPPFLAGS+=	-DCROSS_COMPILE
 .endif
 
 ADDINCLUDE=-I${.OBJDIR}
@@ -34,7 +34,7 @@ SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
 		listing.c messages.c obstack.c output-file.c read.c subsegs.c \
 		symbols.c version.c write.c xmalloc.c xrealloc.c \
 		obj-$(gas_objformat).c
-CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
+CPPFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DOLD_GAS -DSIGTY=void -Derror=as_fatal \
 		-DNETBSD_AOUT
 #LDADD+=		-lgnumalloc

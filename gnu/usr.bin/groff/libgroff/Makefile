@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/18 05:59:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/08 06:53:50 lukem Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
@@ -7,7 +7,7 @@ SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
 	 	progname.cc ptable.cc searchpath.cc string.cc strsave.cc\
 		tmpfile.cc illegal.cc version.cc
 SRCS+=		iftoa.c itoa.c matherr.c
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
 NOPROFILE=	noprofile	

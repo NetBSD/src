@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/14 03:58:13 phil Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 1997/11/08 06:52:47 lukem Exp $
 
 PROG=	bc
-CFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
+CPPFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
 LFLAGS+=-I8
 SRCS=	bc.y execute.c getopt.c getopt1.c global.c load.c main.c number.c \
 	scan.l storage.c util.c
-LDADD+=	-ll
+LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL}
 
 CLEANFILES+= bc.h
