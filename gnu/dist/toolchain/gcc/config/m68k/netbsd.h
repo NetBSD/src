@@ -17,7 +17,7 @@
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#define CPP_PREDEFINES "-Dunix -Dm68k -Dmc68000 -Dmc68020 -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(m68k) -Amachine(m68k)"
+#define CPP_PREDEFINES "-Dm68k -Dmc68000 -Dmc68020 -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(m68k) -Amachine(m68k)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -61,3 +61,5 @@
    and initialization stuff better.  */
 #define DWARF2_UNWIND_INFO 0
 
+/* NetBSD a.out allows more than 16-bit alignment of elements and data. */
+#define MAX_OFILE_ALIGNMENT 32
