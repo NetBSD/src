@@ -1,3 +1,5 @@
+/*	$NetBSD: su.c,v 1.12 1996/10/15 14:35:41 christos Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,8 +40,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.11 1996/10/12 23:54:39 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)su.c	5.26 (Berkeley) 7/6/91";*/
+#else
+static char rcsid[] = "$NetBSD: su.c,v 1.12 1996/10/15 14:35:41 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,7 +80,6 @@ static int koktologin __P((char *, char *, char *));
 int main __P((int, char **));
 
 static int chshell __P((char *));
-static char *catarg __P((char *, const char *));
 static char *ontty __P((void));
 
 
@@ -88,8 +92,6 @@ main(argc, argv)
 	extern char **environ;
 	register struct passwd *pwd;
 	register char *p, **g;
-	char *shargv[10];	/* shell [-m] [-f] [-c "command"] NULL */
-	int shargc;
 	struct group *gr;
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
@@ -140,7 +142,7 @@ main(argc, argv)
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL) {
-		fprintf(stderr, "su: who are you?\n");
+		(void)fprintf(stderr, "su: who are you?\n");
 		exit(1);
 	}
 	username = strdup(pwd->pw_name);
@@ -263,7 +265,12 @@ badlogin:
 		(void)setenv("SHELL", shell, 1);
 	}
 
-	shargc = 0;
+	if (iscsh == YES) {
+		if (fastlogin)
+			*np-- = "-f";
+		if (asme)
+			*np-- = "-m";
+	}
 
 	if (asthem) {
 		avshellbuf[0] = '-';
@@ -275,59 +282,18 @@ badlogin:
 		strcpy(avshellbuf+1, avshell);
 		avshell = avshellbuf;
 	}
-	shargv[shargc++] = avshell;
+	*np = avshell;
 
-	if (iscsh == YES) {
-		if (fastlogin)
-			shargv[shargc++] = "-f";
-		if (asme)
-			shargv[shargc++] = "-m";
-	}
-
-	/* if passed any additional arguments, shells need a "-c" */
-	if (*++np) {
-		char *arg = NULL;
-		shargv[shargc++] = "-c";
-		while (*np)
-			arg = catarg(arg, *np++);
-		shargv[shargc++] = arg;
-	}
-
-	shargv[shargc] = NULL;
-			
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
-	execv(shell, shargv);
+	execv(shell, np);
 	(void)fprintf(stderr, "su: %s not found.\n", shell);
 	exit(1);
 }
-
-static char *
-catarg(buf, arg)
-	char *buf;
-	const char *arg;
-{
-	char *cp;
-
-	if (buf && *buf) {
-		size_t i = strlen(buf) + strlen(arg) + 1 + 1;
-		if ((cp = malloc(i)) == NULL)
-			err(1, "%s", "");
-		(void)snprintf(cp, i, "%s %s", buf, arg);
-	}
-	else
-		if ((cp = strdup(arg)) == NULL)
-			err(1, "%s", "");
-	if (buf)
-		free(buf);
-
-	return cp;
-}
-
 
 static int
 chshell(sh)
