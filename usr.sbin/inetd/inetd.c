@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.13 1996/12/04 13:37:18 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.14 1996/12/06 00:45:48 mrg Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.13 1996/12/04 13:37:18 mrg Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.14 1996/12/06 00:45:48 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -427,7 +427,7 @@ main(argc, argv, envp)
 			service = buf;
 		} else
 			service = sp->s_name;
-		syslog(LOG_WARNING,
+		syslog(deny_severity,
 		    "refused connection from %.500s, service %s (%s)",
 		    eval_client(&req), service, sep->se_proto);
 		shutdown(ctrl, 2);
@@ -442,7 +442,7 @@ main(argc, argv, envp)
 			service = buf;
 		} else
 			service = sp->s_name;
-		syslog(LOG_INFO, "connection from %.500s, service %s (%s)",
+		syslog(allow_severity,"connection from %.500s, service %s (%s)",
 		    eval_client(&req), service, sep->se_proto);
 	}
 #endif /* LIBWRAP */
