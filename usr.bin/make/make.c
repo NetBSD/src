@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.55 2004/07/01 20:38:09 jmc Exp $	*/
+/*	$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.55 2004/07/01 20:38:09 jmc Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.55 2004/07/01 20:38:09 jmc Exp $");
+__RCSID("$NetBSD: make.c,v 1.56 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -208,7 +208,7 @@ Make_OODate(GNode *gn)
      * doesn't depend on their modification time...
      */
     if ((gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC)) == 0) {
-	(void) Dir_MTime (gn);
+	(void) Dir_MTime(gn);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
 		printf ("modified %s...", Targ_FmtTime(gn->mtime));
@@ -251,7 +251,7 @@ Make_OODate(GNode *gn)
 	 * always out of date if no children and :: target
 	 * or non-existent.
 	 */
-	oodate = (gn->mtime == 0 || Arch_LibOODate (gn) || 
+	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) || 
 		  (gn->cmtime == 0 && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
@@ -325,7 +325,7 @@ Make_OODate(GNode *gn)
      * thinking they're out-of-date.
      */
     if (!oodate) {
-	Lst_ForEach (gn->parents, MakeTimeStamp, (ClientData)gn);
+	Lst_ForEach(gn->parents, MakeTimeStamp, (ClientData)gn);
     }
 
     return (oodate);
@@ -434,20 +434,20 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 		 *	prepend the child's commands to the parent.
 		 */
 		Lst cmds = pgn->commands;
-		pgn->commands = Lst_Duplicate (cgn->commands, NOCOPY);
-		(void) Lst_Concat (pgn->commands, cmds, LST_CONCNEW);
-		Lst_Destroy (cmds, NOFREE);
+		pgn->commands = Lst_Duplicate(cgn->commands, NOCOPY);
+		(void) Lst_Concat(pgn->commands, cmds, LST_CONCNEW);
+		Lst_Destroy(cmds, NOFREE);
 	    } else {
 		/*
 		 * .USE or target has no commands --
 		 *	append the child's commands to the parent.
 		 */
-		(void) Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
+		(void) Lst_Concat(pgn->commands, cgn->commands, LST_CONCNEW);
 	    }
     }
 
-    if (Lst_Open (cgn->children) == SUCCESS) {
-	while ((ln = Lst_Next (cgn->children)) != NILLNODE) {
+    if (Lst_Open(cgn->children) == SUCCESS) {
+	while ((ln = Lst_Next(cgn->children)) != NILLNODE) {
 	    GNode *tgn, *gn = (GNode *)Lst_Datum (ln);
 
 	    /*
@@ -470,11 +470,11 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 		    gn = tgn;
 	    }
 
-	    (void) Lst_AtEnd (pgn->children, gn);
-	    (void) Lst_AtEnd (gn->parents, pgn);
+	    (void) Lst_AtEnd(pgn->children, gn);
+	    (void) Lst_AtEnd(gn->parents, pgn);
 	    pgn->unmade += 1;
 	}
-	Lst_Close (cgn->children);
+	Lst_Close(cgn->children);
     }
 
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
@@ -525,7 +525,7 @@ MakeHandleUse(ClientData cgnp, ClientData pgnp)
      * children the parent has. This is used by Make_Run to decide
      * whether to queue the parent or examine its children...
      */
-    if ((ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
+    if ((ln = Lst_Member(pgn->children, (ClientData) cgn)) != NILLNODE) {
 	Lst_Remove(pgn->children, ln);
 	pgn->unmade--;
     }
@@ -665,7 +665,7 @@ Make_Update(GNode *cgn)
     Lst		parents;
     GNode	*centurion;
 
-    cname = Var_Value (TARGET, cgn, &p1);
+    cname = Var_Value(TARGET, cgn, &p1);
     if (p1)
 	free(p1);
 
@@ -687,14 +687,14 @@ Make_Update(GNode *cgn)
 		Punt("%s: cohort has parents", cgn->name);
 	centurion->unmade_cohorts -= 1;
 	if (centurion->unmade_cohorts < 0)
-	    Error ("Graph cycles through centurion %s", centurion->name);
+	    Error("Graph cycles through centurion %s", centurion->name);
 	parents = centurion->parents;
     } else {
 	centurion = cgn;
 	parents = cgn->parents;
     }
-    if (Lst_Open (parents) == SUCCESS) {
-	while ((ln = Lst_Next (parents)) != NILLNODE) {
+    if (Lst_Open(parents) == SUCCESS) {
+	while ((ln = Lst_Next(parents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (mtime == 0)
 		pgn->flags |= FORCE;
@@ -728,10 +728,10 @@ Make_Update(GNode *cgn)
 		 */
 		(void)Lst_EnQueue (toBeMade, (ClientData)pgn);
 	    } else if (pgn->unmade < 0) {
-		Error ("Graph cycles through %s", pgn->name);
+		Error("Graph cycles through %s", pgn->name);
 	    }
 	}
-	Lst_Close (parents);
+	Lst_Close(parents);
     }
     /*
      * Deal with successor nodes. If any is marked for making and has an unmade
@@ -755,20 +755,20 @@ Make_Update(GNode *cgn)
      * Set the .PREFIX and .IMPSRC variables for all the implied parents
      * of this node.
      */
-    if (Lst_Open (cgn->iParents) == SUCCESS) {
+    if (Lst_Open(cgn->iParents) == SUCCESS) {
 	char	*cpref = Var_Value(PREFIX, cgn, &p1);
 
-	while ((ln = Lst_Next (cgn->iParents)) != NILLNODE) {
+	while ((ln = Lst_Next(cgn->iParents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (pgn->flags & REMAKE) {
-		Var_Set (IMPSRC, cname, pgn, 0);
+		Var_Set(IMPSRC, cname, pgn, 0);
 		if (cpref != NULL)
-		    Var_Set (PREFIX, cpref, pgn, 0);
+		    Var_Set(PREFIX, cpref, pgn, 0);
 	    }
 	}
 	if (p1)
 	    free(p1);
-	Lst_Close (cgn->iParents);
+	Lst_Close(cgn->iParents);
     }
 }
 
@@ -825,16 +825,16 @@ MakeAddAllSrc(ClientData cgnp, ClientData pgnp)
 	char *p1 = NULL, *p2 = NULL;
 
 	if (cgn->type & OP_ARCHV)
-	    child = Var_Value (MEMBER, cgn, &p1);
+	    child = Var_Value(MEMBER, cgn, &p1);
 	else
 	    child = cgn->path ? cgn->path : cgn->name;
 	if (cgn->type & OP_JOIN) {
-	    allsrc = Var_Value (ALLSRC, cgn, &p2);
+	    allsrc = Var_Value(ALLSRC, cgn, &p2);
 	} else {
 	    allsrc = child;
 	}
 	if (allsrc != NULL)
-		Var_Append (ALLSRC, allsrc, pgn);
+		Var_Append(ALLSRC, allsrc, pgn);
 	if (p2)
 	    free(p2);
 	if (pgn->type & OP_JOIN) {
@@ -893,19 +893,19 @@ MakeAddAllSrc(ClientData cgnp, ClientData pgnp)
 void
 Make_DoAllVar(GNode *gn)
 {
-    Lst_ForEach (gn->children, MakeUnmark, (ClientData) gn);
-    Lst_ForEach (gn->children, MakeAddAllSrc, (ClientData) gn);
+    Lst_ForEach(gn->children, MakeUnmark, (ClientData) gn);
+    Lst_ForEach(gn->children, MakeAddAllSrc, (ClientData) gn);
 
     if (!Var_Exists (OODATE, gn)) {
-	Var_Set (OODATE, "", gn, 0);
+	Var_Set(OODATE, "", gn, 0);
     }
     if (!Var_Exists (ALLSRC, gn)) {
-	Var_Set (ALLSRC, "", gn, 0);
+	Var_Set(ALLSRC, "", gn, 0);
     }
 
     if (gn->type & OP_JOIN) {
 	char *p1;
-	Var_Set (TARGET, Var_Value (ALLSRC, gn, &p1), gn, 0);
+	Var_Set(TARGET, Var_Value(ALLSRC, gn, &p1), gn, 0);
 	if (p1)
 	    free(p1);
     }
@@ -933,7 +933,7 @@ MakeStartJobs(void)
     GNode	*gn;
 
     while (!Lst_IsEmpty (toBeMade)) {
-	gn = (GNode *) Lst_DeQueue (toBeMade);
+	gn = (GNode *) Lst_DeQueue(toBeMade);
 	if (DEBUG(MAKE)) {
 	    printf ("Examining %s...", gn->name);
 	}
@@ -972,15 +972,15 @@ MakeStartJobs(void)
 	}
 
 	numNodes--;
-	if (Make_OODate (gn)) {
+	if (Make_OODate(gn)) {
 	    if (DEBUG(MAKE)) {
 		printf ("out-of-date\n");
 	    }
 	    if (queryFlag) {
 		return (TRUE);
 	    }
-	    Make_DoAllVar (gn);
-	    Job_Make (gn);
+	    Make_DoAllVar(gn);
+	    Job_Make(gn);
 	} else {
 	    if (DEBUG(MAKE)) {
 		printf ("up-to-date\n");
@@ -993,10 +993,10 @@ MakeStartJobs(void)
 		 * value for .TARGET when building up the context variables
 		 * of its parent(s)...
 		 */
-		Make_DoAllVar (gn);
+		Make_DoAllVar(gn);
 	    }
 	    Job_TokenReturn();
-	    Make_Update (gn);
+	    Make_Update(gn);
 	}
     }
     return (FALSE);
@@ -1082,7 +1082,7 @@ Make_ExpandUse(Lst targs)
     Lst    examine; 	/* List of targets to examine */
     Lst    ntargs;	/* List of new targets to be made */
 
-    ntargs = Lst_Init (FALSE);
+    ntargs = Lst_Init(FALSE);
 
     examine = Lst_Duplicate(targs, NOCOPY);
     numNodes = 0;
@@ -1096,12 +1096,12 @@ Make_ExpandUse(Lst targs)
      * and go on about our business.
      */
     while (!Lst_IsEmpty (examine)) {
-	gn = (GNode *) Lst_DeQueue (examine);
+	gn = (GNode *) Lst_DeQueue(examine);
 
 	if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts)) {
 	    Lst new;
-	    new = Lst_Duplicate (gn->cohorts, NOCOPY);
-	    Lst_Concat (new, examine, LST_CONCLINK);
+	    new = Lst_Duplicate(gn->cohorts, NOCOPY);
+	    Lst_Concat(new, examine, LST_CONCLINK);
 	    examine = new;
 	}
 	    
@@ -1123,36 +1123,36 @@ Make_ExpandUse(Lst targs)
 		    continue;
 		*eoa = '\0';
 		*eon = '\0';
-		Var_Set (MEMBER, eoa + 1, gn, 0);
-		Var_Set (ARCHIVE, gn->name, gn, 0);
+		Var_Set(MEMBER, eoa + 1, gn, 0);
+		Var_Set(ARCHIVE, gn->name, gn, 0);
 		*eoa = '(';
 		*eon = ')';
 	    }
 
 	    (void)Dir_MTime(gn);
-	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn, 0);
-	    Lst_ForEach (gn->children, MakeUnmark, (ClientData)gn);
-	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
+	    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
+	    Lst_ForEach(gn->children, MakeUnmark, (ClientData)gn);
+	    Lst_ForEach(gn->children, MakeHandleUse, (ClientData)gn);
 
 	    if ((gn->type & OP_MADE) == 0)
-		Suff_FindDeps (gn);
+		Suff_FindDeps(gn);
 	    else {
 		/* Pretend we made all this node's children */
-		Lst_ForEach (gn->children, MakeFindChild, (ClientData)gn);
+		Lst_ForEach(gn->children, MakeFindChild, (ClientData)gn);
 		if (gn->unmade != 0)
 			printf("Warning: %s still has %d unmade children\n",
 				gn->name, gn->unmade);
 	    }
 
 	    if (gn->unmade != 0) {
-		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
+		Lst_ForEach(gn->children, MakeAddChild, (ClientData)examine);
 	    } else {
 		(void)Lst_EnQueue (ntargs, (ClientData)gn);
 	    }
 	}
     }
 
-    Lst_Destroy (examine, NOFREE);
+    Lst_Destroy(examine, NOFREE);
     return ntargs; 
 }
 
@@ -1185,7 +1185,7 @@ Make_Run(Lst targs)
 {
     int	    	    errors; 	/* Number of errors the Job module reports */
 
-    toBeMade = Make_ExpandUse (targs);
+    toBeMade = Make_ExpandUse(targs);
 
     if (queryFlag) {
 	/*
@@ -1216,8 +1216,8 @@ Make_Run(Lst targs)
      * keepgoing flag was given.
      */
     while (!Lst_IsEmpty(toBeMade) || !Job_Empty ()) {
-	Job_CatchOutput ();
-	Job_CatchChildren (!usePipes);
+	Job_CatchOutput();
+	Job_CatchChildren(!usePipes);
 	(void)MakeStartJobs();
     }
 
