@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.44 2001/02/03 13:25:00 pk Exp $	 */
+/*	$NetBSD: rtld.c,v 1.45 2001/05/10 20:19:25 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -630,6 +630,7 @@ _rtld_unload_object(root, do_fini_funcs)
 				dbg(("unloading \"%s\"", obj->path));
 #endif
 				munmap(obj->mapbase, obj->mapsize);
+				_rtld_objlist_remove(&_rtld_list_global, obj);
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
 				_rtld_obj_free(obj);
