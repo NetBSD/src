@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pathnames.h,v 1.1 1994/04/27 22:37:13 cgd Exp $
+ *	$NetBSD: pathnames.h,v 1.2 1997/10/18 04:37:22 lukem Exp $
  */
 
 #define	_MAN_SECTIONS		"12345678"	/* l, n, o, and p, too? */

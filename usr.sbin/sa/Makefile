@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1994/12/22 11:41:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/10/18 04:38:06 lukem Exp $
 
 PROG=	sa
 MAN=	sa.8

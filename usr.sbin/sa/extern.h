@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: extern.h,v 1.2 1997/10/18 03:57:22 lukem Exp $
+ *	$NetBSD: extern.h,v 1.3 1997/10/18 04:38:08 lukem Exp $
  */
 
 #include <sys/types.h>

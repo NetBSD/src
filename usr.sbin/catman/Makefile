@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1994/12/22 11:33:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/18 04:37:17 lukem Exp $
 
 BINDIR=		/usr/sbin
 PROG=		catman
