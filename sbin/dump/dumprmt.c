@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.21 1998/07/30 18:14:00 thorpej Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.22 2001/02/04 21:33:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.21 1998/07/30 18:14:00 thorpej Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.22 2001/02/04 21:33:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,18 +87,14 @@ static	char *rmtpeer;
 
 static	int	okname __P((char *));
 static	int	rmtcall __P((char *, char *));
-	void	rmtclose __P((void));
 static	void	rmtconnaborted __P((int));
 static	int	rmtgetb __P((void));
 static	void	rmtgetconn __P((void));
 static	void	rmtgets __P((char *, int));
-	int	rmthost __P((char *));
 	int	rmtioctl __P((int, int));
-	int	rmtopen __P((char *, int));
 	int	rmtread __P((char *, int));
 static	int	rmtreply __P((char *));
 	int	rmtseek __P((int, int));
-	int	rmtwrite __P((char *, int));
 
 extern	int ntrec;		/* blocking factor on tape */
 

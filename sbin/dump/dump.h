@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.21 2000/12/13 22:44:44 scw Exp $	*/
+/*	$NetBSD: dump.h,v 1.22 2001/02/04 21:33:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -102,16 +102,17 @@ int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
 ino_t	curino;		/* current inumber; used globally */
 int	newtape;	/* new tape flag */
-int	density;	/* density in 0.1" units */
 long	tapesize;	/* estimated tape size, blocks */
 long	tsize;		/* tape size in 0.1" units */
 long	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
 int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
-int	notify;		/* notify operator flag */
-int	blockswritten;	/* number of blocks written on current tape */
-int	tapeno;		/* current tape number */
+extern int	density;	/* density in 0.1" units */
+extern int	notify;		/* notify operator flag */
+extern int	blockswritten;	/* number of blocks written on current tape */
+extern int	tapeno;		/* current tape number */
+
 time_t	tstart_writing;	/* when started writing the first tape block */
 int	xferrate;	/* averaged transfer rate of all volumes */
 char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
@@ -244,10 +245,12 @@ struct dumptime {
 	struct	dumpdates dt_value;
 	struct	dumptime *dt_next;
 };
-struct	dumptime *dthead;	/* head of the list version */
-int	nddates;		/* number of records (might be zero) */
-int	ddates_in;		/* we have read the increment file */
-struct	dumpdates **ddatev;	/* the arrayfied version */
+
+extern struct	dumptime *dthead;	/* head of the list version */
+extern int	nddates;		/* number of records (might be zero) */
+extern int	ddates_in;		/* we have read the increment file */
+extern struct	dumpdates **ddatev;	/* the arrayfied version */
+
 void	initdumptimes __P((void));
 void	getdumptime __P((void));
 void	putdumptime __P((void));
