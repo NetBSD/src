@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.2 2000/10/07 18:37:10 bjh21 Exp $
+.\"	$NetBSD: sort.1,v 1.3 2000/10/07 20:37:06 bjh21 Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,6 +134,9 @@ the
 option.)
 .It Fl r
 Reverse the sense of comparisons.
+.It Fl H
+Use a merge sort instead of a radix sort.  This option should be
+used for files larger than 60Mb.
 .El
 .Pp
 The treatment of field separators can be altered using the
@@ -306,6 +309,17 @@ option is still supported, except for
 which has no
 .Fl k
 equivalent.
+.Sh ENVIRONMENT
+If the following environment variable exists, it is utilized by
+.Nm sort .
+.Bl -tag -width Fl
+.It Ev TMPDIR
+.Nm Sort
+uses the contents of the
+.Ev TMPDIR
+environment variable as the path in which to store
+temporary files.
+.El
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /var/tmp/sort.*

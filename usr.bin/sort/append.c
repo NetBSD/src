@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.2 2000/10/07 18:37:09 bjh21 Exp $	*/
+/*	$NetBSD: append.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.2 2000/10/07 18:37:09 bjh21 Exp $");
+__RCSID("$NetBSD: append.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -54,20 +54,20 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 		radixsort(ppos, n, wts1, REC_D);			\
 		for (; ppos < cpos; ppos++) {				\
 			prec = (RECHEADER *) (*ppos - sizeof(TRECHEADER));\
-			put(prec, fd);					\
+			put(prec, fp);					\
 		}							\
-	} else put(prec, fd);						\
+	} else put(prec, fp);						\
 }
 
 /*
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(keylist, nelem, depth, fd, put, ftbl)
+append(keylist, nelem, depth, fp, put, ftbl)
 	const u_char **keylist;
 	int nelem;
 	register int depth;
-	FILE *fd;
+	FILE *fp;
 	void (*put)(RECHEADER *, FILE *);
 	struct field *ftbl;
 {
@@ -93,7 +93,7 @@ append(keylist, nelem, depth, fd, put, ftbl)
 		ppos = keylist;
 		prec = (RECHEADER *) (*ppos - depth);
 		if (UNIQUE)
-			put(prec, fd);
+			put(prec, fp);
 		for (cpos = keylist+1; cpos < lastkey; cpos++) {
 			crec = (RECHEADER *) (*cpos - depth);
 			if (crec->length  == prec->length) {
@@ -108,7 +108,7 @@ append(keylist, nelem, depth, fd, put, ftbl)
 					if (!UNIQUE) {
 						OUTPUT;
 					} else
-						put(crec, fd);
+						put(crec, fp);
 					ppos = cpos;
 					prec = crec;
 				}
@@ -116,7 +116,7 @@ append(keylist, nelem, depth, fd, put, ftbl)
 				if (!UNIQUE) {
 					OUTPUT;
 				} else
-					put(crec, fd);
+					put(crec, fp);
 				ppos = cpos;
 				prec = crec;
 			}
@@ -125,7 +125,7 @@ append(keylist, nelem, depth, fd, put, ftbl)
 	} else if (UNIQUE) {
 		ppos = keylist;
 		prec = (RECHEADER *) (*ppos - depth);
-		put(prec, fd);
+		put(prec, fp);
 		for (cpos = keylist+1; cpos < lastkey; cpos++) {
 			crec = (RECHEADER *) (*cpos - depth);
 			if (crec->offset == prec->offset) {
@@ -139,17 +139,17 @@ append(keylist, nelem, depth, fd, put, ftbl)
 				if (pend + 1 != *ppos) {
 					ppos = cpos;
 					prec = crec;
-					put(prec, fd);
+					put(prec, fp);
 				}
 			} else {
 				ppos = cpos;
 				prec = crec;
-				put(prec, fd);
+				put(prec, fp);
 			}
 		}
 	} else for (cpos = keylist; cpos < lastkey; cpos++) {
 		crec = (RECHEADER *) (*cpos - depth);
-		put(crec, fd);
+		put(crec, fp);
 	}
 }
 
@@ -157,20 +157,20 @@ append(keylist, nelem, depth, fd, put, ftbl)
  * output the already sorted eol bin.
  */
 void
-rd_append(binno, infl0, nfiles, outfd, buffer, bufend)
+rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
 	u_char *buffer, *bufend;
 	int binno, nfiles;
 	union f_handle infl0;
-	FILE *outfd;
+	FILE *outfp;
 {
 	struct recheader *rec;
 	rec = (RECHEADER *) buffer;
 	if (!getnext(binno, infl0, nfiles, (RECHEADER *) buffer, bufend, 0)) {
-		putline(rec, outfd);
+		putline(rec, outfp);
 		while (getnext(binno, infl0, nfiles, (RECHEADER *) buffer,
 			bufend, 0) == 0) {
 			if (!UNIQUE)
-				putline(rec, outfd);
+				putline(rec, outfp);
 		}
 	}
 }
