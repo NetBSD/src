@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1999/03/26 22:04:07 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 1999/06/06 19:05:21 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -171,7 +171,7 @@ cons_decl(smg);
 #include "smg.h"
 
 struct	consdev constab[]={
-#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630
+#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX670
 #define NGEN	1
 	cons_init(gen), /* Generic console type; mtpr/mfpr */
 #else
