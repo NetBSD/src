@@ -20,6 +20,10 @@ print: paper.${PRINTER}
 	lpr -P${PRINTER} paper.${PRINTER}
 .endif
 
+.if !target(obj)
+obj:
+.endif
+
 clean cleandir:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 	rm -rf obj
