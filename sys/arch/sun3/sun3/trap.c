@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 1995/03/26 19:38:28 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 1995/04/07 03:12:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -216,6 +216,10 @@ trap(type, code, v, frame)
 	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
 		p = &proc0;
+#ifdef	DIAGNOSTIC
+	if (p->p_addr == NULL)
+		panic("trap: no pcb");
+#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
