@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.3 2002/09/27 20:35:16 thorpej Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.4 2002/10/01 21:29:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -65,9 +65,8 @@ struct pckbc_mace_softc {
 static int	pckbc_mace_match(struct device *, struct cfdata *, void *);
 static void	pckbc_mace_attach(struct device *, struct device *, void *);
 
-const struct cfattach pckbc_mace_ca = {
-	sizeof(struct pckbc_mace_softc), pckbc_mace_match, pckbc_mace_attach
-};
+CFATTACH_DECL(pckbc_mace, sizeof(struct pckbc_mace_softc),
+    pckbc_mace_match, pckbc_mace_attach, NULL, NULL)
 
 static int
 pckbc_mace_match(parent, match, aux)
