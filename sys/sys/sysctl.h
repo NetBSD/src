@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.45 2000/04/15 17:51:27 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.46 2000/05/26 02:23:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -158,7 +158,12 @@ struct ctlname {
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
 #define	KERN_DEFCORENAME	45	/* old: sort core name format */
 #define	KERN_LOGSIGEXIT		46	/* int: log signalled processes */
-#define	KERN_MAXID		47	/* number of valid kern ids */
+#define	KERN_PROC2		47	/* struct: process entries */
+#define	KERN_PROC_ARGS		48	/* struct: process argv/env */
+#define	KERN_FSCALE		49	/* int: fixpt FSCALE */
+#define	KERN_CCPU		50	/* int: fixpt ccpu */
+#define	KERN_CP_TIME		51	/* struct: cpu time counters */
+#define	KERN_MAXID		52	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -208,7 +213,20 @@ struct ctlname {
 	{ "login_name_max", CTLTYPE_INT }, \
 	{ "defcorename", CTLTYPE_STRING }, \
 	{ "logsigexit", CTLTYPE_INT }, \
+	{ "proc2", CTLTYPE_STRUCT }, \
+	{ "proc_argv", CTLTYPE_STRING }, \
+	{ "fscale", CTLTYPE_INT }, \
+	{ "ccpu", CTLTYPE_INT }, \
+	{ "cp_time", CTLTYPE_STRUCT }, \
 }
+
+/*
+ * KERN_PROC_ARGS subtypes
+ */
+#define	KERN_PROC_ARGV		1	/* argv */
+#define	KERN_PROC_NARGV		2	/* number of strings in above */
+#define	KERN_PROC_ENV		3	/* environ */
+#define	KERN_PROC_NENV		4	/* number of strings in above */
 
 /*
  * KERN_PROC subtypes
@@ -258,6 +276,132 @@ struct kinfo_proc {
 		long	e_spare[3];
 	} kp_eproc;
 };
+
+/*
+ * KERN_PROC2 subtype ops return arrays of relatively fixed size
+ * structures of process info.   Use 8 byte alignment, and new
+ * elements should only be added to the end of this structure so
+ * binary compatibility can be preserved.
+ */
+#define	KI_NGROUPS	16
+#define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
+#define	KI_WMESGLEN	8
+#define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
+
+typedef struct {
+	u_int32_t	__bits[4];
+} ki_sigset_t;
+
+struct kinfo_proc2 {
+	u_int64_t p_forw;		/* PTR: linked run/sleep queue. */
+	u_int64_t p_back;
+	u_int64_t p_paddr;		/* PTR: address of proc */
+
+	u_int64_t p_addr;		/* PTR: Kernel virtual addr of u-area */
+	u_int64_t p_fd;			/* PTR: Ptr to open files structure. */
+	u_int64_t p_cwdi;		/* PTR: cdir/rdir/cmask info */
+	u_int64_t p_stats;		/* PTR: Accounting/statistics */
+	u_int64_t p_limit;		/* PTR: Process limits. */
+	u_int64_t p_vmspace;		/* PTR: Address space. */
+	u_int64_t p_sigacts;		/* PTR: Signal actions, state */
+	u_int64_t p_sess;		/* PTR: session pointer */
+	u_int64_t p_tsess;		/* PTR: tty session pointer */
+	u_int64_t p_ru;			/* PTR: Exit information. XXX */
+
+	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
+	int32_t	p_flag;			/* INT: P_* flags. */
+
+	int32_t	p_pid;			/* PID_T: Process identifier. */
+	int32_t	p_ppid;			/* PID_T: Parent process id */
+	int32_t	p_sid;			/* PID_T: session id */
+	int32_t	p__pgid;		/* PID_T: process group id */
+					/* XXX: <sys/proc.h> hijacks p_pgid */
+	int32_t	p_tpgid;		/* PID_T: tty process group id */
+
+	u_int32_t p_uid;		/* UID_T: effective user id */
+	u_int32_t p_ruid;		/* UID_T: real user id */
+	u_int32_t p_gid;		/* GID_T: effective group id */
+	u_int32_t p_rgid;		/* GID_T: real group id */
+
+	u_int32_t p_groups[KI_NGROUPS];	/* GID_T: groups */
+	int16_t	p_ngroups;		/* SHORT: number of groups */
+
+	int16_t	p_jobc;			/* SHORT: job control counter */
+	u_int32_t p_tdev;		/* DEV_T: controlling tty dev */
+
+	u_int32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
+	u_int32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
+	u_int32_t p_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
+	int32_t	p_cpticks;		/* INT: Ticks of cpu time. */
+	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process during p_swtime */
+	u_int32_t p_swtime;		/* U_INT: Time swapped in or out. */
+	u_int32_t p_slptime;		/* U_INT: Time since last blocked. */
+	int32_t	p_schedflags;		/* INT: PSCHED_* flags */
+
+	u_int64_t p_uticks;		/* U_QUAD_T: Statclock hits in user mode. */
+	u_int64_t p_sticks;		/* U_QUAD_T: Statclock hits in system mode. */
+	u_int64_t p_iticks;		/* U_QUAD_T: Statclock hits processing intr. */
+
+	u_int64_t p_tracep;		/* PTR: Trace to vnode or file */
+	int32_t	p_traceflag;		/* INT: Kernel trace points. */
+
+	int32_t	p_holdcnt;              /* INT: If non-zero, don't swap. */
+
+	ki_sigset_t p_siglist;		/* SIGSET_T: Signals arrived but not delivered. */
+	ki_sigset_t p_sigmask;		/* SIGSET_T: Current signal mask. */
+	ki_sigset_t p_sigignore;	/* SIGSET_T: Signals being ignored. */
+	ki_sigset_t p_sigcatch;		/* SIGSET_T: Signals being caught by user. */
+
+	int8_t	p_stat;			/* CHAR: S* process status. */
+	u_int8_t p_priority;		/* U_CHAR: Process priority. */
+	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
+	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
+
+	int16_t	p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
+	int16_t	p_acflag;		/* U_SHORT: Accounting flags. */
+
+	char	p_comm[KI_MAXCOMLEN];
+
+	char	p_wmesg[KI_WMESGLEN];	/* wchan message */
+	u_int64_t p_wchan;		/* PTR: sleep address. */
+
+	char	p_login[KI_MAXLOGNAME];	/* setlogin() name */
+
+	int32_t	p_vm_rssize;		/* SEGSZ_T: current resident set size in pages */
+	int32_t	p_vm_tsize;		/* SEGSZ_T: text size (pages) */
+	int32_t	p_vm_dsize;		/* SEGSZ_T: data size (pages) */
+	int32_t	p_vm_ssize;		/* SEGSZ_T: stack size (pages) */
+
+	int64_t	p_uvalid;		/* CHAR: following p_u* members from struct user are valid */
+					/* XXX 64 bits for alignment */
+	u_int32_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
+	u_int32_t p_ustart_usec;	/* STRUCT TIMEVAL: starting time. */
+
+	u_int32_t p_uutime_sec;		/* STRUCT TIMEVAL: user time. */
+	u_int32_t p_uutime_usec;	/* STRUCT TIMEVAL: user time. */
+	u_int32_t p_ustime_sec;		/* STRUCT TIMEVAL: system time. */
+	u_int32_t p_ustime_usec;	/* STRUCT TIMEVAL: system time. */
+
+	u_int64_t p_uru_maxrss;		/* LONG: max resident set size. */
+	u_int64_t p_uru_ixrss;		/* LONG: integral shared memory size. */
+	u_int64_t p_uru_idrss;		/* LONG: integral unshared data ". */
+	u_int64_t p_uru_isrss;		/* LONG: integral unshared stack ". */
+	u_int64_t p_uru_minflt;		/* LONG: page reclaims. */
+	u_int64_t p_uru_majflt;		/* LONG: page faults. */
+	u_int64_t p_uru_nswap;		/* LONG: swaps. */
+	u_int64_t p_uru_inblock;	/* LONG: block input operations. */
+	u_int64_t p_uru_oublock;	/* LONG: block output operations. */
+	u_int64_t p_uru_msgsnd;		/* LONG: messages sent. */
+	u_int64_t p_uru_msgrcv;		/* LONG: messages received. */
+	u_int64_t p_uru_nsignals;	/* LONG: signals received. */
+	u_int64_t p_uru_nvcsw;		/* LONG: voluntary context switches. */
+	u_int64_t p_uru_nivcsw;		/* LONG: involuntary ". */
+
+	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
+	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
+};
+
 
 /*
  * CTL_HW identifiers
@@ -472,7 +616,6 @@ int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_file __P((char *, size_t *));
-int sysctl_doeproc __P((int *, u_int, char *, size_t *));
 struct radix_node;
 struct walkarg;
 int sysctl_clockrate __P((char *, size_t *));
