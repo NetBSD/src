@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.4 1997/10/14 09:54:31 mark Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.5 1998/04/01 23:00:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -37,11 +37,6 @@
  *
  * Created      : 08/04/95
  */
-
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
 
 #include <machine/param.h>
 #include <machine/asm.h>

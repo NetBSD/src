@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.9 1997/10/14 09:54:32 mark Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.10 1998/04/01 23:00:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -60,11 +60,6 @@
  */
 
 #define USE_BCOPY	/* with bcopy.S 1.4 */
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
 .text
 Lcurpcb:
 	.word	_curpcb
