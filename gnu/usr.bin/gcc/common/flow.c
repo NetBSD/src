@@ -1878,14 +1878,16 @@ libcall_dead_p (x, needed, note, insn)
 
 /* Return 1 if register REGNO was used before it was set.
    In other words, if it is live at function entry.
-   Don't count global register variables, though.  */
+   Don't count global register variables or variables in registers
+   that can be used for function arg passing, though.  */
 
 int
 regno_uninitialized (regno)
      int regno;
 {
   if (n_basic_blocks == 0
-      || (regno < FIRST_PSEUDO_REGISTER && global_regs[regno]))
+      || (regno < FIRST_PSEUDO_REGISTER
+	  && (global_regs[regno] || FUNCTION_ARG_REGNO_P (regno))))
     return 0;
 
   return (basic_block_live_at_start[0][regno / REGSET_ELT_BITS]
@@ -2228,7 +2230,11 @@ find_auto_inc (needed, x, insn)
 	  else if (GET_CODE (q) == REG
 		   /* PREV_INSN used here to check the semi-open interval
 		      [insn,incr).  */
-		   && ! reg_used_between_p (q,  PREV_INSN (insn), incr))
+		   && ! reg_used_between_p (q,  PREV_INSN (insn), incr)
+		   /* We must also check for sets of q as q may be
+		      a call clobbered hard register and there may
+		      be a call between PREV_INSN (insn) and incr.  */
+		   && ! reg_set_between_p (q,  PREV_INSN (insn), incr))
 	    {
 	      /* We have *p followed sometime later by q = p+size.
 		 Both p and q must be live afterward,
@@ -2655,7 +2661,9 @@ mark_used_regs (needed, live, x, final, insn)
 
 #ifdef EXIT_IGNORE_STACK
       if (! EXIT_IGNORE_STACK
-	  || (! FRAME_POINTER_REQUIRED && flag_omit_frame_pointer))
+	  || (! FRAME_POINTER_REQUIRED
+	      && ! current_function_calls_alloca
+	      && flag_omit_frame_pointer))
 #endif
 	live[STACK_POINTER_REGNUM / REGSET_ELT_BITS]
 	  |= (REGSET_ELT_TYPE) 1 << (STACK_POINTER_REGNUM % REGSET_ELT_BITS);
