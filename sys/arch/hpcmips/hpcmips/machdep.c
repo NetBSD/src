@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2000/04/03 03:39:58 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2000/04/11 17:57:42 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2000/04/03 03:39:58 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2000/04/11 17:57:42 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -151,6 +151,8 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 struct splvec	splvec;			/* XXX will go XXX */
 
 void mach_init __P((int, char *[], struct bootinfo*));
+void cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+
 static struct bootinfo bi_copy;
 struct bootinfo *bootinfo = NULL;
 
@@ -171,7 +173,7 @@ void	unimpl_bus_reset __P((void));
 int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
 void	unimpl_cons_init __P((void));
 void	unimpl_device_register __P((struct device *, void *));
-void 	unimpl_iointr __P ((void *, u_long));
+int 	unimpl_iointr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 void	unimpl_clockintr __P ((void *));
 void    unimpl_fb_init __P((caddr_t*));
 void    unimpl_mem_init __P((paddr_t));
@@ -718,6 +720,61 @@ consinit()
 	return;
 }
 
+void
+cpu_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
+{
+	uvmexp.intrs++;
+
+#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
+	if (ipending & MIPS_INT_MASK_CLOCK) {
+		/*
+		 *  Writing a value to the Compare register,
+		 *  as a side effect, clears the timer interrupt request.
+		 */
+		mips3_write_compare(mips3_cycle_count());
+	}
+#endif /* MIPS3 && MIPS_INT_MASK_CLOCK */
+
+	/* device interrupts */
+	if (ipending & INT_MASK_REAL_DEV) {
+		_splset((*platform.iointr)(status, cause, pc, ipending));
+	}
+
+	/* software simulated interrupt */
+	if ((ipending & MIPS_SOFT_INT_MASK_1)
+	        || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+
+#define DO_SIR(bit, fn)						\
+	do {							\
+		if (n & (bit)) {				\
+			uvmexp.softs++;				\
+			fn;					\
+		}						\
+	} while (0)
+
+		unsigned n;
+		n = ssir; ssir = 0;
+		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
+
+		DO_SIR(SIR_NET, netintr());
+#undef DO_SIR
+		}
+
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
+	}
+
+	return;
+}
+
 /*
  * Wait "n" microseconds. (scsi code needs this).
  */
@@ -758,10 +815,9 @@ unimpl_device_register(sc, arg)
 
 }
 
-void
-unimpl_iointr(arg, arg2)
-	void *arg;
-	u_long arg2;
+int
+unimpl_iointr(arg, arg2, arg3, arg4)
+	u_int32_t arg, arg2, arg3, arg4;
 {
 	panic("sysconf.init didnt set iointr");
 }
@@ -810,3 +866,5 @@ nullclkread()
 {
 	return 0;
 }	
+
+
