@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "table.h"
@@ -326,12 +326,13 @@ struct options {
   int linesize;
   char delim[2];
   char tab_char;
+  char decimal_point_char;
 
   options();
 };
 
 options::options()
-: flags(0), tab_char('\t'), linesize(0)
+: flags(0), tab_char('\t'), decimal_point_char('.'), linesize(0)
 {
   delim[0] = delim[1] = '\0';
 }
@@ -465,6 +466,21 @@ options *process_options(table_input &in)
 	error("`allbox' option does not take a argument");
       opt->flags |= table::ALLBOX;
     }
+    else if (strieq(p, "nokeep")) {
+      if (arg)
+	error("`nokeep' option does not take a argument");
+      opt->flags |= table::NOKEEP;
+    }
+    else if (strieq(p, "decimalpoint")) {
+      if (!arg)
+	error("`decimalpoint' option requires argument in parentheses");
+      else {
+	if (arg[0] == '\0' || arg[1] != '\0')
+	  error("argument to `decimalpoint' option must be a single character");
+	else
+	  opt->decimal_point_char = arg[0];
+      }
+    }
     else {
       error("unrecognised global option `%1'", p);
       // delete opt;
@@ -486,7 +502,7 @@ entry_modifier::~entry_modifier()
 {
 }
 
-entry_format::entry_format() : type(LEFT)
+entry_format::entry_format() : type(FORMAT_LEFT)
 {
 }
 
@@ -497,31 +513,31 @@ entry_format::entry_format(format_type t) : type(t)
 void entry_format::debug_print() const
 {
   switch (type) {
-  case LEFT:
+  case FORMAT_LEFT:
     putc('l', stderr);
     break;
-  case CENTER:
+  case FORMAT_CENTER:
     putc('c', stderr);
     break;
-  case RIGHT:
+  case FORMAT_RIGHT:
     putc('r', stderr);
     break;
-  case NUMERIC:
+  case FORMAT_NUMERIC:
     putc('n', stderr);
     break;
-  case ALPHABETIC:
+  case FORMAT_ALPHABETIC:
     putc('a', stderr);
     break;
-  case SPAN:
+  case FORMAT_SPAN:
     putc('s', stderr);
     break;
-  case VSPAN:
+  case FORMAT_VSPAN:
     putc('^', stderr);
     break;
-  case HLINE:
+  case FORMAT_HLINE:
     putc('_', stderr);
     break;
-  case DOUBLE_HLINE:
+  case FORMAT_DOUBLE_HLINE:
     putc('=', stderr);
     break;
   default:
@@ -582,7 +598,7 @@ struct format {
 format::format(int nr, int nc) : nrows(nr), ncolumns(nc)
 {
   int i;
-  separation = new int[ncolumns - 1];
+  separation = ncolumns > 1 ? new int[ncolumns - 1] : 0;
   for (i = 0; i < ncolumns-1; i++)
     separation[i] = -1;
   width = new string[ncolumns];
@@ -607,7 +623,7 @@ void format::add_rows(int n)
   vline = new char*[nrows + n];
   for (i = 0; i < nrows; i++)
     vline[i] = old_vline[i];
-  delete old_vline;
+  a_delete old_vline;
   for (i = 0; i < n; i++) {
     vline[nrows + i] = new char[ncolumns + 1];
     for (int j = 0; j < ncolumns + 1; j++)
@@ -617,7 +633,7 @@ void format::add_rows(int n)
   entry = new entry_format *[nrows + n];
   for (i = 0; i < nrows; i++)
     entry[i] = old_entry[i];
-  delete old_entry;
+  a_delete old_entry;
   for (i = 0; i < n; i++)
     entry[nrows + i] = new entry_format[ncolumns];
   nrows += n;
@@ -625,15 +641,15 @@ void format::add_rows(int n)
 
 format::~format()
 {
-  delete separation;
-  delete [ncolumns] width;
-  delete equal;
+  a_delete separation;
+  ad_delete(ncolumns) width;
+  a_delete equal;
   for (int i = 0; i < nrows; i++) {
-    delete vline[i];
-    delete [ncolumns] entry[i];
+    a_delete vline[i];
+    ad_delete(ncolumns) entry[i];
   }
-  delete vline;
-  delete entry;
+  a_delete vline;
+  a_delete entry;
 }
 
 struct input_entry_format : entry_format {
@@ -645,6 +661,7 @@ struct input_entry_format : entry_format {
   int last_column;
   int equal;
   input_entry_format(format_type, input_entry_format * = 0);
+  ~input_entry_format();
   void debug_print();
 };
 
@@ -656,6 +673,10 @@ input_entry_format::input_entry_format(format_type t, input_entry_format *p)
   vline = 0;
   pre_vline = 0;
   equal = 0;
+}
+
+input_entry_format::~input_entry_format()
+{
 }
 
 void free_input_entry_format_list(input_entry_format *list)
@@ -688,10 +709,9 @@ void input_entry_format::debug_print()
     putc(',', stderr);
 }
 
-
-// return zero if we should give up on this table
-// if this is a continuation format line, current_format will be the current
-// format line
+// Return zero if we should give up on this table.
+// If this is a continuation format line, current_format will be the current
+// format line.
 
 format *process_format(table_input &in, options *opt,
 		       format *current_format = 0)
@@ -699,80 +719,89 @@ format *process_format(table_input &in, options *opt,
   input_entry_format *list = 0;
   int c = in.get();
   for (;;) {
-    while (c == ' ' || c == '\t' || c == opt->tab_char || c == '\n')
-      c = in.get();
     int pre_vline = 0;
-    if (c == '|') {
-      pre_vline = 1;
-      c = in.get();
-      while (c == ' ' || c == '\t' || c == opt->tab_char)
-	c = in.get();
-      if (c == '|') {
-	pre_vline = 2;
-	c = in.get();
-	while (c == ' ' || c == '\t' || c == opt->tab_char)
-	  c = in.get();
-      }
-    }
-    if (c == '.')
-      break;
-    if (c == EOF) {
-      error("end of input while processing format");
-      free_input_entry_format_list(list);
-      return 0;
-    }
-#if !defined(__GNUC__) || (__GNUC__ >= 2)
-    entry_format::format_type t;
-#else
+    int got_format = 0;
+    int got_period = 0;
     format_type t;
-#endif
-    switch (c) {
-    case 'n':
-    case 'N':
-      t = entry_format::NUMERIC;
-      break;
-    case 'a':
-    case 'A':
-      t = entry_format::ALPHABETIC;
-      break;
-    case 'c':
-    case 'C':
-      t = entry_format::CENTER;
-      break;
-    case 'l':
-    case 'L':
-      t = entry_format::LEFT;
-      break;
-    case 'r':
-    case 'R':
-      t = entry_format::RIGHT;
-      break;
-    case 's':
-    case 'S':
-      t = entry_format::SPAN;
-      break;
-    case '^':
-      t = entry_format::VSPAN;
-      break;
-    case '_':
-      t = entry_format::HLINE;
-      break;
-    case '=':
-      t = entry_format::DOUBLE_HLINE;
-      break;
-    default:
-      error("unrecognised format `%1'", char(c));
-      free_input_entry_format_list(list);
-      return 0;
+    for (;;) {
+      if (c == EOF) {
+	error("end of input while processing format");
+	free_input_entry_format_list(list);
+	return 0;
+      }
+      switch (c) {
+      case 'n':
+      case 'N':
+	t = FORMAT_NUMERIC;
+	got_format = 1;
+	break;
+      case 'a':
+      case 'A':
+	got_format = 1;
+	t = FORMAT_ALPHABETIC;
+	break;
+      case 'c':
+      case 'C':
+	got_format = 1;
+	t = FORMAT_CENTER;
+	break;
+      case 'l':
+      case 'L':
+	got_format = 1;
+	t = FORMAT_LEFT;
+	break;
+      case 'r':
+      case 'R':
+	got_format = 1;
+	t = FORMAT_RIGHT;
+	break;
+      case 's':
+      case 'S':
+	got_format = 1;
+	t = FORMAT_SPAN;
+	break;
+      case '^':
+	got_format = 1;
+	t = FORMAT_VSPAN;
+	break;
+      case '_':
+	got_format = 1;
+	t = FORMAT_HLINE;
+	break;
+      case '=':
+	got_format = 1;
+	t = FORMAT_DOUBLE_HLINE;
+	break;
+      case '.':
+	got_period = 1;
+	break;
+      case '|':
+	pre_vline++;
+	break;
+      case ' ':
+      case '\t':
+      case '\n':
+	break;
+      default:
+	if (c == opt->tab_char)
+	  break;
+	error("unrecognised format `%1'", char(c));
+	free_input_entry_format_list(list);
+	return 0;
+      }
+      if (got_period)
+	break;
+      c = in.get();
+      if (got_format)
+	break;
     }
-    c = in.get();
+    if (got_period)
+      break;
     list = new input_entry_format(t, list);
     if (pre_vline)
       list->pre_vline = pre_vline;
     int success = 1;
     do {
-      while (c == ' ' || c == '\t' || c == opt->tab_char)
-	c = in.get();
       switch (c) {
       case 't':
       case 'T':
@@ -804,12 +833,14 @@ format *process_format(table_input &in, options *opt,
       case '7':
       case '8':
       case '9':
-	int w = 0;
-	do {
-	  w = w*10 + (c - '0');
-	  c = in.get();
-	} while (c != EOF && csdigit(c));
-	list->separation = w;
+	{
+	  int w = 0;
+	  do {
+	    w = w*10 + (c - '0');
+	    c = in.get();
+	  } while (c != EOF && csdigit(c));
+	  list->separation = w;
+	}
 	break;
       case 'f':
       case 'F':
@@ -836,8 +867,10 @@ format *process_format(table_input &in, options *opt,
 	}
 	else {
 	  list->font = c;
+	  char cc = c;
 	  c = in.get();
-	  if (c != ' ' && c != '\t' && c != '.' && c != '\n') {
+	  if (!csdigit(cc)
+	      && c != EOF && c != ' ' && c != '\t' && c != '.' && c != '\n') {
 	    list->font += char(c);
 	    c = in.get();
 	  }
@@ -952,8 +985,15 @@ format *process_format(table_input &in, options *opt,
 	c = in.get();
 	list->font = "I";
 	break;
+      case ' ':
+      case '\t':
+	c = in.get();
+	break;
       default:
-	success = 0;
+	if (c == opt->tab_char)
+	  c = in.get();
+	else
+	  success = 0;
 	break;
       }
     } while (success);
@@ -1031,22 +1071,28 @@ format *process_format(table_input &in, options *opt,
   col = 0;
   for (tem = list; tem; tem = tem->next) {
     f->entry[row][col] = *tem;
-    if (!current_format) {
-      if (col < ncolumns-1) {
-	// use the greatest separation
-	if (tem->separation > f->separation[col])
+    if (col < ncolumns-1) {
+      // use the greatest separation
+      if (tem->separation > f->separation[col]) {
+	if (current_format)
+	  error("cannot change column separation in continued format");
+	else
 	  f->separation[col] = tem->separation;
       }
-      else if (tem->separation >= 0)
-	error("column separation specified for last column");
-      if (!tem->width.empty()) {
-	// use the last width
-	if (!f->width[col].empty() && f->width[col] != tem->width)
-	  error("multiple widths for column %1", col+1);
-	f->width[col] = tem->width;
-      }
-      if (tem->equal)
+    }
+    else if (tem->separation >= 0)
+      error("column separation specified for last column");
+    if (tem->equal && !f->equal[col]) {
+      if (current_format)
+	error("cannot change which columns are equal in continued format");
+      else
 	f->equal[col] = 1;
+    }
+    if (!tem->width.empty()) {
+      // use the last width
+      if (!f->width[col].empty() && f->width[col] != tem->width)
+	error("multiple widths for column %1", col+1);
+      f->width[col] = tem->width;
     }
     if (tem->pre_vline) {
       assert(col == 0);
@@ -1063,9 +1109,9 @@ format *process_format(table_input &in, options *opt,
   free_input_entry_format_list(list);
   for (col = 0; col < ncolumns; col++) {
     entry_format *e = f->entry[f->nrows-1] + col;
-    if (e->type != entry_format::HLINE
-	&& e->type != entry_format::DOUBLE_HLINE
-	&& e->type != entry_format::SPAN)
+    if (e->type != FORMAT_HLINE
+	&& e->type != FORMAT_DOUBLE_HLINE
+	&& e->type != FORMAT_SPAN)
       break;
   }
   if (col >= ncolumns) {
@@ -1076,7 +1122,6 @@ format *process_format(table_input &in, options *opt,
   return f;
 }
 
-
 table *process_data(table_input &in, format *f, options *opt)
 {
   char tab_char = opt->tab_char;
@@ -1085,16 +1130,8 @@ table *process_data(table_input &in, format *f, options *opt)
   int format_index = 0;
   int give_up = 0;
   enum { DATA_INPUT_LINE, TROFF_INPUT_LINE, SINGLE_HLINE, DOUBLE_HLINE } type;
-  table *tbl = new table(ncolumns, opt->flags, opt->linesize);
-  for (int i = 0; i < ncolumns - 1; i++)
-    if (f->separation[i] >= 0)
-      tbl->set_column_separation(i, f->separation[i]);
-  for (i = 0; i < ncolumns; i++)
-    if (!f->width[i].empty())
-      tbl->set_minimum_width(i, f->width[i]);
-  for (i = 0; i < ncolumns; i++)
-    if (f->equal[i])
-      tbl->set_equal_column(i);
+  table *tbl = new table(ncolumns, opt->flags, opt->linesize,
+			 opt->decimal_point_char);
   if (opt->delim[0] != '\0')
     tbl->set_delim(opt->delim[0], opt->delim[1]);
   for (;;) {
@@ -1139,10 +1176,10 @@ table *process_data(table_input &in, format *f, options *opt)
 	while (format_index < f->nrows - 1) {
 	  for (int c = 0; c < ncolumns; c++) {
 	    entry_format *e = f->entry[format_index] + c;
-	    if (e->type != entry_format::HLINE
-		&& e->type != entry_format::DOUBLE_HLINE
+	    if (e->type != FORMAT_HLINE
+		&& e->type != FORMAT_DOUBLE_HLINE
 		// Unfortunately tbl treats a span as needing data.
-		// && e->type != entry_format::SPAN
+		// && e->type != FORMAT_SPAN
 		)
 	      break;
 	  }
@@ -1164,7 +1201,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	    if (c == '\n')
 	      --ln;
 	    while (col < ncolumns
-		   && line_format[col].type == entry_format::SPAN) {
+		   && line_format[col].type == FORMAT_SPAN) {
 	      tbl->add_entry(current_row, col, "", &line_format[col],
 			     current_filename, ln);
 	      col++;
@@ -1175,7 +1212,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	      ln++;
 	      enum {
 		START, MIDDLE, GOT_T, GOT_RIGHT_BRACE, GOT_DOT,
-		GOT_l, GOT_lf, END,
+		GOT_l, GOT_lf, END
 	      } state = START;
 	      while (state != END) {
 		c = in.get();
@@ -1354,6 +1391,17 @@ table *process_data(table_input &in, format *f, options *opt)
     delete tbl;
     return 0;
   }
+  // Do this here rather than at the beginning in case continued formats
+  // change it.
+  for (int i = 0; i < ncolumns - 1; i++)
+    if (f->separation[i] >= 0)
+      tbl->set_column_separation(i, f->separation[i]);
+  for (i = 0; i < ncolumns; i++)
+    if (!f->width[i].empty())
+      tbl->set_minimum_width(i, f->width[i]);
+  for (i = 0; i < ncolumns; i++)
+    if (f->equal[i])
+      tbl->set_equal_column(i);
   return tbl;
 }
 
@@ -1418,11 +1466,11 @@ int main(int argc, char **argv)
       if (argv[i][0] == '-' && argv[i][1] == '\0') {
 	current_filename = "-";
 	current_lineno = 1;
-	if (i != 1)
-	  printf(".lf 1 -\n");
+	printf(".lf 1 -\n");
 	process_input_file(stdin);
       }
       else {
+	errno = 0;
 	FILE *fp = fopen(argv[i], "r");
 	if (fp == 0) {
 	  current_lineno = -1;
@@ -1439,6 +1487,7 @@ int main(int argc, char **argv)
   else {
     current_filename = "-";
     current_lineno = 1;
+    printf(".lf 1 -\n");
     process_input_file(stdin);
   }
   if (ferror(stdout) || fflush(stdout) < 0)
