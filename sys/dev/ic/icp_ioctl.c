@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.5 2003/06/29 22:30:12 fvdl Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.5.2.1 2003/08/19 19:53:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5 2003/06/29 22:30:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5.2.1 2003/08/19 19:53:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -109,7 +109,7 @@ static struct lock icp_ioctl_mutex =
     LOCK_INITIALIZER(PRIBIO|PCATCH, "icplk", 0, 0);
 
 static int
-icpopen(dev_t dev, int flag, int mode, struct proc *p)
+icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (securelevel > 1)
@@ -121,7 +121,7 @@ icpopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error;
 

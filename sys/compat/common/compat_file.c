@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.10.2.1 2003/07/02 15:25:39 darrenr Exp $ */
+/*	$NetBSD: compat_file.c,v 1.10.2.2 2003/08/19 19:53:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.1 2003/07/02 15:25:39 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.2 2003/08/19 19:53:47 skrll Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -474,7 +474,7 @@ bsd_sys_bind(l, v, retval)
 
 	so = (struct socket *)fp->f_data;
 	error = so->so_proto->pr_domain != &unixdomain;
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (error)
 		return sys_bind(l, uap, retval);
 
@@ -486,7 +486,7 @@ bsd_sys_bind(l, v, retval)
 
 	(void)strncpy(namebuf, sun.sun_path, sizeof(namebuf));
 	namebuf[sizeof(namebuf) - 1] = '\0';
-	if ((error = emul_find(p, NULL, p->p_emul->e_path, 
+	if ((error = emul_find(l, NULL, p->p_emul->e_path, 
 	    namebuf, &name, CHECK_ALT_FL_CREAT)) != 0)
 		return error;
 
