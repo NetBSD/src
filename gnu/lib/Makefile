@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.19 1999/02/02 20:46:37 tv Exp $
+#	$NetBSD: Makefile,v 1.20 1999/02/09 17:48:13 tv Exp $
 
-SUBDIR+= bfd libg2c libgcc libmalloc libobjc libstdc++
+SUBDIR+= libbfd libg2c libgcc libmalloc libobjc libstdc++
 
 .include <bsd.subdir.mk>
