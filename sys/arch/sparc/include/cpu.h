@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1995/04/22 20:28:23 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.14 1995/05/05 03:42:11 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,8 @@
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
+#define	BROKEN_SWAP
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * See syscall() for an explanation of the following.  Note that the

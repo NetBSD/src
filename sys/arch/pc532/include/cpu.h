@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1995/04/22 20:27:51 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1995/05/05 03:42:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,8 +53,11 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)		/* nothing */
-#define cpu_swapin(p)           /* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define cpu_swapin(p)           	/* nothing */
+#define cpu_set_init_frame(p,fp)	(p)->p_md.md_regs = fp
+#define	BROKEN_SWAP
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*  XXX needed?  PAN
  * function vs. inline configuration;
@@ -114,8 +117,5 @@ int	want_resched;	/* resched() was called */
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
-
-/* Support for init start up. */
-#define cpu_set_init_frame(p,fp) (p)->p_md.md_regs = fp
 
 #endif
