@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.28 2003/12/07 00:40:43 tsutsui Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.29 2004/01/11 18:42:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.28 2003/12/07 00:40:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.29 2004/01/11 18:42:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -279,10 +279,10 @@ sysctl_vm_updateminmax(SYSCTLFN_ARGS)
 		UPDATEMIN(anonmin, anonminpct, fileminpct, execminpct, t);
 		break;
 	case VM_EXECMIN:
-		UPDATEMIN(filemin, fileminpct, execminpct, anonminpct, t);
+		UPDATEMIN(execmin, execminpct, anonminpct, fileminpct, t);
 		break;
 	case VM_FILEMIN:
-		UPDATEMIN(execmin, execminpct, anonminpct, fileminpct, t);
+		UPDATEMIN(filemin, fileminpct, execminpct, anonminpct, t);
 		break;
 	case VM_ANONMAX:
 		UPDATEMAX(anonmax, anonmaxpct, t);
