@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.4 1998/10/20 17:00:25 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.5 1998/11/20 01:23:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -126,6 +126,9 @@ int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
 void wdc_probe_caps __P((struct ata_drive_datas*));
 
 void wdc_reset_channel __P((struct ata_drive_datas *));
+
+int wdc_ata_addref __P((struct ata_drive_datas *));
+void wdc_ata_delref __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
