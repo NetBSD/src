@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.24 2000/03/15 22:40:30 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.25 2000/03/27 12:33:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,27 +106,27 @@ struct umodem_softc {
 	u_char			sc_dying;	/* disconnecting */
 };
 
-static void	*umodem_get_desc
+Static void	*umodem_get_desc
 		__P((usbd_device_handle dev, int type, int subtype));
-static usbd_status umodem_set_comm_feature
+Static usbd_status umodem_set_comm_feature
 		__P((struct umodem_softc *sc, int feature, int state));
-static usbd_status umodem_set_line_coding
+Static usbd_status umodem_set_line_coding
 		__P((struct umodem_softc *sc, usb_cdc_line_state_t *state));
 
-static void	umodem_get_caps	__P((usbd_device_handle, int *, int *));
+Static void	umodem_get_caps	__P((usbd_device_handle, int *, int *));
 
-static void	umodem_get_status
+Static void	umodem_get_status
 		__P((void *, int portno, u_char *lsr, u_char *msr));
-static void	umodem_set	__P((void *, int, int, int));
-static void	umodem_dtr	__P((struct umodem_softc *, int));
-static void	umodem_rts	__P((struct umodem_softc *, int));
-static void	umodem_break	__P((struct umodem_softc *, int));
-static void	umodem_set_line_state __P((struct umodem_softc *));
-static int	umodem_param	__P((void *, int, struct termios *));
-static int	umodem_ioctl	__P((void *, int, u_long, caddr_t, int,
+Static void	umodem_set	__P((void *, int, int, int));
+Static void	umodem_dtr	__P((struct umodem_softc *, int));
+Static void	umodem_rts	__P((struct umodem_softc *, int));
+Static void	umodem_break	__P((struct umodem_softc *, int));
+Static void	umodem_set_line_state __P((struct umodem_softc *));
+Static int	umodem_param	__P((void *, int, struct termios *));
+Static int	umodem_ioctl	__P((void *, int, u_long, caddr_t, int,
 				     struct proc *));
 
-static struct ucom_methods umodem_methods = {
+Static struct ucom_methods umodem_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,

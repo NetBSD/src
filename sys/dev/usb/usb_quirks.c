@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.23 2000/03/25 17:30:00 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.24 2000/03/27 12:33:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 extern int usbdebug;
 #endif
 
-static struct usbd_quirk_entry {
+Static struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
 	u_int16_t bcdDevice;
