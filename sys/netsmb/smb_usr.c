@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.6 2003/03/23 12:17:50 jdolecek Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.7 2003/04/07 19:35:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.6 2003/03/23 12:17:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.7 2003/04/07 19:35:40 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -217,7 +217,7 @@ int
 smb_usr_simplerequest(struct smb_share *ssp, struct smbioc_rq *dp,
 	struct smb_cred *scred)
 {
-	struct smb_rq rq, *rqp = &rq;
+	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	struct mdchain *mdp;
 	u_int8_t wc;
@@ -236,7 +236,7 @@ smb_usr_simplerequest(struct smb_share *ssp, struct smbioc_rq *dp,
 	    case SMB_COM_TREE_CONNECT_ANDX:
 		return EPERM;
 	}
-	error = smb_rq_init(rqp, SSTOCP(ssp), dp->ioc_cmd, scred);
+	error = smb_rq_alloc(SSTOCP(ssp), dp->ioc_cmd, scred, &rqp);
 	if (error)
 		return error;
 	mbp = &rqp->sr_rq;
@@ -294,14 +294,14 @@ int
 smb_usr_t2request(struct smb_share *ssp, struct smbioc_t2rq *dp,
 	struct smb_cred *scred)
 {
-	struct smb_t2rq t2, *t2p = &t2;
+	struct smb_t2rq *t2p;
 	struct mdchain *mdp;
 	int error, len;
 
 	if (dp->ioc_tparamcnt > 0xffff || dp->ioc_tdatacnt > 0xffff ||
 	    dp->ioc_setupcnt > 3)
 		return EINVAL;
-	error = smb_t2_init(t2p, SSTOCP(ssp), dp->ioc_setup[0], scred);
+	error = smb_t2_alloc(SSTOCP(ssp), dp->ioc_setup[0], scred, &t2p);
 	if (error)
 		return error;
 	len = t2p->t2_setupcount = dp->ioc_setupcnt;
