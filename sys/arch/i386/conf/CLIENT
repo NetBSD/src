@@ -1,3 +1,8 @@
+#
+#	CLIENT -- an NFS client machine
+#
+#	$Id: CLIENT,v 1.6 1993/05/07 08:33:08 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		CLIENT

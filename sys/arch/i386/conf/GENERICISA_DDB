@@ -1,6 +1,8 @@
 #
 # GENERICISA_DDB -- Generic ISA machine, w/wd and the kernel debugger.
 #
+#	$Id: GENERICISA_DDB,v 1.3 1993/05/07 08:33:21 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i386"

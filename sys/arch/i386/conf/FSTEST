@@ -1,3 +1,8 @@
+#
+#	FSTEST -- filesystem testing kernel
+#
+#	$Id: FSTEST,v 1.8 1993/05/07 08:33:14 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		FSTEST

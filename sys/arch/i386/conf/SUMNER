@@ -1,6 +1,8 @@
 #
 # Thos Sumner's 50Mhz 486
 #
+#	$Id: SUMNER,v 1.9 1993/05/07 08:33:35 cgd Exp $
+#
 machine		"i386"
 cpu		"i486"
 ident		SUMNER

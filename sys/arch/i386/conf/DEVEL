@@ -1,6 +1,8 @@
 #
 # Developement config
 #
+#	$Id: DEVEL,v 1.6 1993/05/07 08:33:10 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		DEVEL

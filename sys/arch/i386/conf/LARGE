@@ -1,6 +1,8 @@
 #
 # Everthing sans OSI (need to get an ACCUNET connection -wfj)
 #
+#	$Id: LARGE,v 1.8 1993/05/07 08:33:25 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		LARGE

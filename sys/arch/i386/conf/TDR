@@ -1,6 +1,8 @@
 #
 # GENERICISA -- Generic ISA machine -- distribution floppy
 #
+#	$Id: TDR,v 1.7 1993/05/07 08:33:39 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		TDR

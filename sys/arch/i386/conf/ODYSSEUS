@@ -1,6 +1,8 @@
 #
 # Laptop 386SX Odysseus
 #
+#	$Id: ODYSSEUS,v 1.7 1993/05/07 08:33:28 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		ODYSSEUS

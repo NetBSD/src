@@ -1,3 +1,8 @@
+#
+#	SERVER -- an NFS server
+#
+#	$Id: SERVER,v 1.6 1993/05/07 08:33:32 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		SERVER

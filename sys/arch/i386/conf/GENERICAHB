@@ -1,6 +1,8 @@
 #
 # GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
 #
+#	$Id: GENERICAHB,v 1.11 1993/05/07 08:33:18 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i386"
