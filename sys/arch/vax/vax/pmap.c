@@ -1,6 +1,6 @@
-/*      $NetBSD: pmap.c,v 1.7 1995/02/23 17:53:58 ragge Exp $     */
-
-#undef DEBUG
+/*      $NetBSD: pmap.c,v 1.8 1995/03/30 21:25:28 ragge Exp $     */
+#undef	oldway
+#define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -350,7 +350,7 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	if(v<0x40000000){
 		patch=(int *)pmap->pm_pcb->P0BR;
 		i=(v>>PG_SHIFT);
-		if(i>=(pmap->pm_pcb->P0LR&~AST_MASK)) pmap_expandp0(pmap);
+		if(i>=(pmap->pm_pcb->P0LR&~AST_MASK)) pmap_expandp0(pmap,i);
 		patch=(int *)pmap->pm_pcb->P0BR;
 	} else if(v<(u_int)0x80000000){
 		patch=(int *)pmap->pm_pcb->P1BR;
@@ -366,14 +366,22 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 		if((patch[i]&PG_W)!=(pte&PG_W)){ /* wiring change */
 			pmap_change_wiring(pmap, v, wired);
 		} else if((patch[i]&PG_PROT)!=(pte&PG_PROT)){
+#ifdef oldway
 			VAXLOOP
 				patch[i+vaxloop]&= ~PG_PROT; /* Protection */
 				patch[i+vaxloop]|= prot_array[prot];
 				mtpr(v+vaxloop*NBPG,PR_TBIS);
-/*				mtpr(0,PR_TBIA); */
-				mtpr(v+vaxloop*NBPG,PR_TBIS);
 			VAXEND
+#else
+			patch[i]&= ~PG_PROT;
+			patch[i++]|= prot_array[prot];
+			patch[i]&= ~PG_PROT;
+			patch[i]|= prot_array[prot];
+			mtpr(v,PR_TBIS);
+			mtpr(v+NBPG,PR_TBIS);
+#endif
 		} else if((patch[i]&PG_V)==0) {
+#ifdef oldway
 			VAXLOOP
 				if(patch[i+vaxloop]&PG_SREF){
 					s=splhigh();
@@ -382,9 +390,21 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 				} else patch[i+vaxloop]|=PG_V;
 				splx(s);
 				mtpr(v+vaxloop*NBPG,PR_TBIS);
-/*				mtpr(0,PR_TBIA); */
 			VAXEND
+#else
+			if(patch[i]&PG_SREF){
+				patch[i]&=~PG_SREF;
+				patch[i]|=PG_V|PG_REF;
+			} else patch[i]|=PG_V;
+			if(patch[++i]&PG_SREF){
+				patch[i]&=~PG_SREF;
+				patch[i]|=PG_V|PG_REF;
+			} else patch[i]|=PG_V;
+			mtpr(v,PR_TBIS);
+			mtpr(v+NBPG,PR_TBIS);
+#endif
 		} /* else nothing to do */
+		splx(s);
 		return;
 	}
 
@@ -399,6 +419,7 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 		tmp->pv_va=v;
 		pv->pv_next=tmp;
 	}
+#ifdef oldway
 	splhigh();
 	VAXLOOP
 		patch[i]=pte;
@@ -406,6 +427,12 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 		mtpr(v+NBPG*vaxloop,PR_TBIS);
 	VAXEND
 	mtpr(0,PR_TBIA);
+#else
+	patch[i++]=pte++;
+	patch[i]=pte;
+	mtpr(v,PR_TBIS);
+	mtpr(v+NBPG,PR_TBIS);
+#endif
 	splx(s);
 }
 
@@ -482,7 +509,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 
 	if(end<0x40000000){
 		while((end>>PG_SHIFT)>(pmap->pm_pcb->P0LR&~AST_MASK))
-			pmap_expandp0(pmap);
+			pmap_expandp0(pmap,(end>>PG_SHIFT));
 	} else if(end<(u_int)0x80000000){
 		u_int i;
 		i=(start&0x3fffffff)>>PG_SHIFT;
@@ -560,9 +587,8 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 		if(!remove_pmap_from_mapping(pv,pmap)){
 			panic("pmap_remove: pmap not in pv_table");
 		}
-		*ptestart=0; /* XXX */
+		*ptestart=0;
 		*(ptestart+1)=0;
-/*	       mtpr(countup,PR_TBIS); */
 	}
 	mtpr(0,PR_TBIA);
 	splx(s);
@@ -616,7 +642,7 @@ pmap_copy_page(src, dst)
 if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 #endif
 	s=splimp();
-	
+#ifdef oldway
 	VAXLOOP
 		pte_cmap[0]=((src>>PGSHIFT)+vaxloop)|PG_V|PG_RO;
 		pte_cmap[1]=((dst>>PGSHIFT)+vaxloop)|PG_V|PG_KW;
@@ -625,7 +651,18 @@ if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 				mtpr(0,PR_TBIA);
 		bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
 	VAXEND
-		
+#else
+	pte_cmap[0]=(src>>PGSHIFT)|PG_V|PG_RO;
+	pte_cmap[1]=(dst>>PGSHIFT)|PG_V|PG_KW;
+	mtpr(v_cmap,PR_TBIS);
+	mtpr(v_cmap+NBPG,PR_TBIS);
+	bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
+	pte_cmap[0]=((src+NBPG)>>PGSHIFT)|PG_V|PG_RO;
+	pte_cmap[1]=((dst+NBPG)>>PGSHIFT)|PG_V|PG_RW;
+	mtpr(v_cmap,PR_TBIS);
+	mtpr(v_cmap+NBPG,PR_TBIS);
+	bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
+#endif
 	splx(s);
 }
 
@@ -635,7 +672,8 @@ alloc_pv_entry()
 	pv_entry_t temporary;
 
 	if(!pv_head) {
-		temporary=(pv_entry_t)malloc(sizeof(struct pv_entry), M_VMPVENT, M_NOWAIT);
+		temporary=(pv_entry_t)malloc(sizeof(struct pv_entry),
+			M_VMPVENT, M_NOWAIT);
 #ifdef DEBUG
 if(startpmapdebug) printf("alloc_pv_entry: %x\n",temporary);
 #endif
@@ -652,7 +690,7 @@ void
 free_pv_entry(entry)
 	pv_entry_t entry;
 {
-	if(pv_count>=50) {	 /* XXX Should be a define? */
+	if(pv_count>=100) {	 /* Should be a define? */
 		free(entry, M_VMPVENT);
 	} else {
 		entry->pv_next=pv_head;
@@ -673,11 +711,17 @@ pmap_is_referenced(pa)
 	if(!pv->pv_pmap) return 0;
 
 	do {
+#ifdef oldway
 		VAXLOOP
 			pte=(u_int *)pmap_virt2pte(pv->pv_pmap, 
 				pv->pv_va+vaxloop*NBPG);
 			spte|=*pte;
 		VAXEND
+#else
+		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
+		spte|=*pte++;
+		spte|=*pte;
+#endif
 	} while(pv=pv->pv_next);
 	return((spte&PG_REF)?1:0);
 }
@@ -692,11 +736,17 @@ pmap_is_modified(pa)
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return 0;
 	do {
+#ifdef	oldway
 		VAXLOOP
 			pte=(u_int *)pmap_virt2pte(pv->pv_pmap,
 				pv->pv_va+vaxloop*NBPG);
 			spte|=*pte;
 		VAXEND
+#else
+                pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
+                spte|=*pte++;
+                spte|=*pte;
+#endif
 	} while(pv=pv->pv_next);
 	return((spte&PG_M)?1:0);
 }
@@ -724,6 +774,7 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 	if(!pv->pv_pmap) return;
 
 	do {
+#ifdef oldway
 		VAXLOOP
 			pte=(int *)pmap_virt2pte(pv->pv_pmap, 
 				pv->pv_va+vaxloop*NBPG);
@@ -733,6 +784,13 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 			*pte|=PG_SREF;
 			splx(s);
 		VAXEND
+#else
+		pte=(int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
+		*pte&= ~(PG_REF|PG_V);
+		*pte++|=PG_SREF;
+		*pte&= ~(PG_REF|PG_V);
+		*pte|=PG_SREF;
+#endif
 	} while(pv=pv->pv_next);
 	mtpr(0,PR_TBIA);
 }
@@ -747,6 +805,7 @@ pmap_clear_modify(pa)
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return;
 	do {
+#ifdef oldway
 		s=splclock();
 		VAXLOOP
 			pte=(u_int *)pmap_virt2pte(pv->pv_pmap, 
@@ -754,6 +813,11 @@ pmap_clear_modify(pa)
 			*pte&= ~PG_M;
 		VAXEND
 		splx(s);
+#else
+		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
+		*pte++&= ~PG_M;
+		*pte&= ~PG_M;
+#endif
 	} while(pv=pv->pv_next);
 }
 
@@ -786,7 +850,7 @@ pmap_page_protect(pa, prot)
 	vm_prot_t       prot;
 {
 	pv_entry_t pv,opv;
-	u_int s,*pte,nyprot,kprot;
+	u_int s,*pte,*pte1,nyprot,kprot;
   
 #ifdef DEBUG
 if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
@@ -803,8 +867,9 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 		do {
-			pte=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
+			pte=pte1=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
 			s=splimp();
+#ifdef oldway
 			VAXLOOP
 				*(pte+vaxloop)&=~PG_PROT;
 				if(pv->pv_va>0x7fffffff)
@@ -812,6 +877,17 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 				else
 					*(pte+vaxloop)|=nyprot;
 			VAXEND
+#else
+			*pte1++&=~PG_PROT;
+			*pte1&=~PG_PROT;
+			if(pv->pv_va>0x7fffffff){
+				*pte|=kprot;
+				*pte1|=kprot;
+			} else{
+				*pte|=nyprot;
+				*pte1|=nyprot;
+			}
+#endif
 			splx(s);
 		} while(pv=pv->pv_next);
 		mtpr(0,PR_TBIA);
@@ -821,17 +897,27 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 
 		pte=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
 		s = splimp();
+#ifdef oldway
 		VAXLOOP
 			*(pte+vaxloop)=0;
 		VAXEND
+#else
+		*pte++=0;
+		*pte=0;
+#endif
 		opv=pv;
 		pv=pv->pv_next;
 		bzero(opv,sizeof(struct pv_entry));
 		while(pv){
 			pte=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
+#ifdef oldway
 			VAXLOOP
 				*(pte+vaxloop)=0;
 			VAXEND
+#else
+			*pte++=0;
+			*pte=0;
+#endif
 			opv=pv;
 			pv=pv->pv_next;
 			free_pv_entry(opv);
@@ -860,14 +946,22 @@ if(startpmapdebug)printf("pmap_zero_page(phys %x, v_cmap %x, pte_cmap %x\n",
 	phys,v_cmap,pte_cmap);
 #endif
 	s=splimp();
+#ifdef oldway
 	VAXLOOP
 		*pte_cmap=((phys+(NBPG*vaxloop))>>PG_SHIFT)|PG_V|PG_KW;
 		mtpr(v_cmap,PR_TBIA);
-		clearpage(v_cmap);
+		bzero(v_cmap,NBPG);
 	VAXEND
-	*pte_cmap=0;
-	mtpr(v_cmap,PR_TBIA);
-				mtpr(0,PR_TBIA);
+#else
+	pte_cmap[0]=(phys>>PG_SHIFT)|PG_V|PG_KW;
+	pte_cmap[1]=pte_cmap[0]+1;
+	mtpr(v_cmap,PR_TBIS);
+	mtpr(v_cmap+NBPG,PR_TBIS);
+	bzero(v_cmap,NBPG*2);
+#endif
+	pte_cmap[0]=pte_cmap[1]=0;
+	mtpr(v_cmap,PR_TBIS);
+	mtpr(v_cmap+NBPG,PR_TBIS);
 	splx(s);
 }
 
@@ -893,17 +987,23 @@ pmap_virt2pte(pmap,vaddr)
 	return((pt_entry_t *)&pte[vaddr>>PG_SHIFT]);
 }
 
-pmap_expandp0(pmap)
+pmap_expandp0(pmap,ny_storlek)
 	struct pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr,astlvl;
+	u_int tmp,s,size,osize,oaddr,astlvl,*i,j;
 
 	astlvl=pmap->pm_pcb->P0LR&AST_MASK;
 	osize=(pmap->pm_pcb->P0LR&~AST_MASK)*4;
-	size=osize+PAGE_SIZE;
+/*	size=osize+PAGE_SIZE; */
+	size=ny_storlek*4;
 	tmp=kmem_alloc_wait(pte_map, size);
 	s=splhigh();
+#if 0
+for(j=(u_int)tmp+size,i=tmp;i<j;i++)
+	if(*i!=0)
+		printf("Onollad pte\n");
 	blkclr((void*)tmp,size); /* Sanity */
+#endif
 	if(osize) blkcpy(pmap->pm_pcb->P0BR, (void*)tmp,osize);
 	oaddr=(u_int)pmap->pm_pcb->P0BR;
 	mtpr(tmp,PR_P0BR);
@@ -918,13 +1018,18 @@ pmap_expandp0(pmap)
 pmap_expandp1(pmap)
 	struct pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr;
+	u_int tmp,s,size,osize,oaddr,*i,j;
 
 	osize=0x800000-(pmap->pm_pcb->P1LR*4);
 	size=osize+PAGE_SIZE;
 	tmp=kmem_alloc_wait(pte_map, size);
 	s=splhigh();
+#if 0
+for(j=(u_int)tmp+size,i=tmp;i<j;i++)
+	if(*i!=0)
+		printf("Onollad pte\n");
 	blkclr((void*)tmp,size); /* Sanity */
+#endif
 	if(osize) blkcpy((void*)pmap->pm_stack, (void*)tmp+PAGE_SIZE,osize);
 	oaddr=pmap->pm_stack;
 	pmap->pm_pcb->P1BR=(void*)(tmp+size-0x800000);

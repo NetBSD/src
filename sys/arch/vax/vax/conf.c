@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1995/02/23 17:53:49 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1995/03/30 21:25:19 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -66,14 +66,6 @@ int rawread(), rawwrite(), swstrategy();
 	 (int(*)(dev_t, int, struct proc *))select, \
 	 (int(*)())mmap, \
 	 (void(*)(struct buf *))strat }
-
-
-
-
-
-
-
-
 
 #include "hp.h"
 #if NHP > 0
@@ -607,6 +599,14 @@ int	qdopen(), qdclose(), qdread(), qdwrite(), qdioctl(), qdstop(),
 #define qdcons_init	enxio
 #endif
 
+#ifdef LKM
+int	lkmopen(),lkmclose(),lkmioctl();
+#else
+#define	lkmopen		enodev
+#define	lkmclose	enodev
+#define	lkmioctl	enodev
+#endif
+
 #if defined(INGRES)
 int	iiioctl(), iiclose(), iiopen();
 #else
@@ -700,28 +700,28 @@ struct cdevsw	cdevsw[] =
 		tsreset,NULL,seltrue,enodev,tsstrategy),		/* 16 */
 	CHARDEV(utopen,utclose,rawread,rawwrite,utioctl,enodev,
 		utreset,NULL,seltrue,enodev,utstrategy),		/* 17 */
-	CHARDEV(ctopen,ctclose,enodev,ctwrite, enodev, enodev, nullop, NULL,
-		seltrue,enodev, NULL),				/*18*/
-	CHARDEV(mtopen,	 mtclose,rawread,rawwrite, /*19*/ mtioctl,enodev,
-		 enodev, NULL, seltrue,	enodev,	 mtstrategy),
+ 	CHARDEV(ctopen,ctclose,enodev,ctwrite, enodev, enodev, nullop, NULL,
+		seltrue,enodev, NULL),				/* ct 	18 */
+	CHARDEV(mtopen,	 mtclose,rawread,rawwrite, mtioctl,enodev,
+		 enodev, NULL, seltrue,	enodev,	 mtstrategy),	/* TU78 19 */
 	CHARDEV(ptsopen,ptsclose, ptsread,ptswrite, /*20*/ ptyioctl,
 	       ptsstop,	nullop, pt_tty, ttselect,enodev, NULL),
 	CHARDEV(ptcopen,ptcclose,ptcread,ptcwrite,/*21*/ ptyioctl,
 	       nullop, nullop, pt_tty, ptcselect,enodev,NULL),
-	CHARDEV(dmfopen,dmfclose,dmfread,dmfwrite,/*22*/ dmfioctl,
-		dmfstop,dmfreset, dmf_tty, ttselect,enodev,NULL),
+	CHARDEV(dmfopen,dmfclose,dmfread,dmfwrite, dmfioctl, dmfstop,
+		dmfreset, dmf_tty, ttselect,enodev,NULL),	/* DMF32 22 */
 	CHARDEV(idcopen,nullop, rawread,rawwrite, /*23*/ enodev, enodev,
 		 idcreset,NULL,seltrue,	enodev,	 idcstrategy),
-	CHARDEV(dnopen,	 dnclose,enodev, dnwrite,/*24*/ enodev,	 enodev,
-		 nullop, NULL, seltrue,	enodev,	 NULL),
-	CHARDEV(gencnopen,gencnclose,gencnread, gencnwrite,/*25*/ gencnioctl,
-	     nullop,nullop, gencntty, ttselect, enodev,	 NULL),
-	CHARDEV(lpaopen,lpaclose,lparead,lpawrite, /*26*/ lpaioctl,
-	       enodev,	 nullop, NULL, seltrue,	enodev,	 NULL),
-	CHARDEV(psopen,psclose,	psread,	pswrite,/*27*/ psioctl,	enodev,
-		psreset,NULL, seltrue,	enodev,	NULL),
-	CHARDEV(enodev,	enodev,	enodev,	enodev,	/*28*/ enodev,nullop,
-		nullop,	NULL, enodev,enodev,NULL),
+	CHARDEV(dnopen,dnclose,enodev,dnwrite,enodev,enodev,
+		 nullop, NULL,seltrue,enodev,NULL),		/* 24 */
+	CHARDEV(gencnopen,gencnclose,gencnread,gencnwrite,gencnioctl,
+	     nullop,nullop,gencntty,ttselect,enodev,NULL),	/* cons 25 */
+	CHARDEV(lpaopen,lpaclose,lparead,lpawrite,lpaioctl,
+	       enodev,nullop,NULL,seltrue,enodev,NULL),		/* 26 */
+	CHARDEV(psopen,psclose,	psread,	pswrite, psioctl,
+		enodev,psreset,NULL,seltrue,enodev,NULL),	/* 27 */
+	CHARDEV(lkmopen, lkmclose, enodev, enodev, lkmioctl,
+		enodev, nullop, NULL, enodev,enodev,NULL),	/* LKM 28 */
 	CHARDEV(adopen,	adclose,enodev,	enodev,	/*29*/ adioctl,	enodev,
 		adreset,NULL, seltrue,	enodev,	NULL),
 	CHARDEV(rxopen,	rxclose,rxread,	rxwrite,/*30*/ rxioctl,	enodev,

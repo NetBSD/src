@@ -1,4 +1,37 @@
-/*	$NetBSD: clock.c,v 1.5 1995/02/23 17:53:48 ragge Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1995/03/30 21:25:14 ragge Exp $	*/
+/*
+ * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *     This product includes software developed at Ludd, University of Lule}.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+ /* All bugs are subject to removal without further notice */
+		
+
 
 /******************************************************************************
 
@@ -18,28 +51,41 @@ extern int todrstopped;
 static unsigned long year;     /*  start of current year in seconds */
 static unsigned long year_len; /* length of current year in 100th of seconds */
 
+/*
+ * microtime() should return number of usecs in struct timeval.
+ * We may get wrap-arounds, but that will be fixed with lasttime
+ * check. This may fault within 10 msecs.
+ */
+void
+microtime(tvp)
+	register struct timeval *tvp;
+{
+	int s = splhigh(),i;
+	u_int int_time=mfpr(PR_TODR),tmp_year;
+	static struct timeval lasttime;
 
-/*******
-
-
-*******/
-
-void microtime(struct timeval *tod) {
-
-  unsigned long int_time=mfpr(PR_TODR);
-  unsigned long tmp_year;
-
-  if(int_time>year_len) {
-    mtpr(mfpr(PR_TODR)-year_len, PR_TODR);
-    year+=year_len/100;
-    tmp_year=year/SEC_PER_DAY/365+2;
-    year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
-  }
-
-  tod->tv_sec=year+(int_time/100);
-  tod->tv_usec=int_time%100;
+	bcopy(&time,tvp,sizeof(struct timeval));
+	i=mfpr(PR_ICR)+tick; /* Get current interval count */
+	tvp->tv_usec += i;
+	while (tvp->tv_usec > 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	bcopy(tvp,&lasttime,sizeof(struct timeval));
+	if(int_time>year_len) {
+		mtpr(mfpr(PR_TODR)-year_len, PR_TODR);
+		year+=year_len/100;
+		tmp_year=year/SEC_PER_DAY/365+2;
+		year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
+	}
+	splx(s);
 }
-
 
 /*
  * Sets year to the year in fs_time and then calculates the number of
@@ -93,10 +139,10 @@ void inittodr(time_t fs_time) {
     todrstopped=0;
   } else if(year_ticks/100>fs_time-year+SEC_PER_DAY*3) {
     printf("WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
-         (year_ticks/100-(fs_time-year))/SEC_PER_DAY);
+	 (year_ticks/100-(fs_time-year))/SEC_PER_DAY);
     sluttid=year+(year_ticks/100);
   } else if(year_ticks/100<fs_time-year) {
-    printf("WARNING: Clock has lost time! CHECK AND RESET THE DATE.\n");
+    printf("WARNING: Clock has lost time - CHECK AND RESET THE DATE.\n");
   } else sluttid=year+(year_ticks/100);
   time.tv_sec=sluttid;
 }
@@ -140,13 +186,13 @@ todr()
       static int todr_val;
 
       if (cpunumber != VAX_78032)
-              return (mfpr(PR_TODR));
+	      return (mfpr(PR_TODR));
 
       /*
        * Loop for approximately 10msec and then return todr_val + 1.
        */
       delaycnt = 5000;
       while (delaycnt > 0)
-              delaycnt = delaycnt - x + 3 + y - 4;
+	      delaycnt = delaycnt - x + 3 + y - 4;
       return (++todr_val);
 }

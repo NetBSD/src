@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.5 1995/02/23 17:54:05 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.6 1995/03/30 21:25:36 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -107,14 +107,6 @@ _physcopypage:	.word 0x7
 		ret
 
 
-# _clearpage should be inline assembler
-
-		.globl _clearpage
-_clearpage:	.word 0x0
-		movc5	$0, (sp), $0, $NBPG, *4(ap)
-		ret
-
-
 		.globl _badaddr
 _badaddr:	.word	0x0
 					# Called with addr,b/w/l
@@ -145,7 +137,7 @@ _badaddr:	.word	0x0
 5:		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
-
+#if 0
 		.align 2
 _mba_0:		.globl _mba_0
 		movl	$0,mbanum
@@ -166,13 +158,16 @@ _mba:		pushr	$0xffff
 		calls	$1,_mbainterrupt
 		popr	$0xffff
 		rei
-
+#endif
 #
 # copyin(from, to, len) copies from userspace to kernelspace.
 #
 
-	.globl	_copyin
-_copyin:.word	0x1c
+	.globl	_locopyin
+_locopyin:.word	0x1c
+	movl    16(ap),r0       # Get fault pointer flag
+	movl	$ci,(r0)
+
 	movl	4(ap),r0	# from
 	movl	8(ap),r1	# to
 	movl	12(ap),r2	# len
@@ -180,31 +175,26 @@ _copyin:.word	0x1c
 	movl	r0,r4
 	movl	r2,r3
 
-/* 3:	prober	$3,r3,(r4)	# Check access to all pages. */
-#	beql	1f
-#	cmpl	r3,$NBPG
-#	bleq	2f
-#	subl2	$NBPG,r3
-#	addl2	$NBPG,r4
-#	brb	3b
-
 	tstl	r2
 	beql	3f
 2:      movb    (r0)+,(r1)+       # XXX Should be done in a faster way.
         decl    r2              
         bneq    2b
-3:      clrl    r0
-        ret
-
-1:	movl	$EFAULT,r0	# Didnt work...
-	ret
+3:      movl	16(ap),r0
+	clrl	(r0)
+	clrl    r0
+ci:	ret
 
 #
-# copyout(from, to, len) in the same manner as copyin()
+# locopyout(from, to, len, addr) in the same manner as copyin()
+#	addr is iftrap addr for faulting.
 #
 
-	.globl	_copyout
-_copyout:.word   0x1c
+	.globl	_locopyout
+_locopyout:.word   0x1c
+	movl	16(ap),r0	# Get fault pointer flag
+	movl	$co,(r0)	# and save ret addr
+
         movl    4(ap),r0        # from
         movl    8(ap),r1        # to
         movl    12(ap),r2       # len
@@ -212,24 +202,18 @@ _copyout:.word   0x1c
         movl    r1,r4
         movl    r2,r3
 
-/*3:      probew  $3,r3,(r4)	# Check access to all pages. */
-#        beql    1b
-#        cmpl    r3,$NBPG
-#        bleq    2f
-#        subl2   $NBPG,r3
-#        addl2   $NBPG,r4
-#        brb     3b
-
 	tstl	r2
 	beql	3f
 2:	movb	(r0)+,(r1)+	# XXX Should be done in a faster way.
 	decl	r2
 	bneq	2b
-3:	clrl	r0
-	ret
+3:	movl    16(ap),r0
+	clrl	(r0)
+	clrl	r0
+co:	ret
 
 #
-# copystr(from, to, maxlen, *copied)
+# copystr(from, to, maxlen, *copied, addr)
 # Only used in kernel mode, doesnt check accessability.
 #
 
@@ -239,7 +223,6 @@ _copystr:	.word 0x7c
         movl    8(ap),r5        # to
         movl    12(ap),r2       # len
 	movl	16(ap),r3	# copied
-#	halt
 
 #if VAX630
         movl    r4, r1          # (3) string address == r1
@@ -259,35 +242,26 @@ Llocc_out:
 
 	subl3	r0, r2, r6	# Len to copy.
 	incl	r6
+	tstl	r3
+	beql	7f
 	movl	r6,(r3)
-#	pushl	r6
-#	pushl	r5
-#	pushl	r4
-	movc3	r6,(r4),(r5)
-#	calls	$3,_bcopy
+7:	movc3	r6,(r4),(r5)
 	movl	$0,r0
-	ret
+cs:	ret
 
-1:
-#	pushl	r2
-#	pushl	r5
-#	pushl	r4
-#	calls   $3,_bcopy
-	movc3	r2,(r4),(r5)
+1:	movc3	r2,(r4),(r5)
 	movl	$ENAMETOOLONG, r0
 	ret
 
 
 _loswtch:	.globl	_loswtch
-#		halt
-		mtpr	_curpcb,$PR_PCBB
-		svpctx
-		mtpr	_nypcb,$PR_PCBB
-		ldpctx
-#		halt
-		rei
+	mtpr	_curpcb,$PR_PCBB
+	svpctx
+	mtpr	_nypcb,$PR_PCBB
+	ldpctx
+	rei
 
-
+#if 0
 		.globl _savectx
 _savectx:
 		clrl	r0
@@ -306,7 +280,7 @@ _savectx:
                 movl    (sp),(r0)
                 movl    4(sp),4(r0)
                 rei
-
+#endif
 
 	.data
 

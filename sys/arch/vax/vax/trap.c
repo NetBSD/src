@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.7 1995/02/23 17:54:08 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.8 1995/03/30 21:25:45 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -105,7 +105,7 @@ arithflt(frame)
 	struct trapframe *frame;
 {
 	u_int	sig, type=frame->trap,trapsig=1,s;
-	u_int	rv, addr;
+	u_int	rv, addr,*i,j;
 	struct	proc *p=curproc;
 	struct	pmap *pm;
 	vm_map_t map;
@@ -119,9 +119,29 @@ arithflt(frame)
 	switch(type){
 
 	default:
+faulter:
+		if(frame->trap<12)
+			printf("\nKernel fault: %s. Stack dump:\n\n",
+				traptypes[frame->trap]);
+		else
+			printf("\nKernel fault: %d. Stack dump:\n\n",
+				frame->trap);
+		printf("FP %8x AP %8x R0 %8x R1 %8x\n",frame->fp,
+			frame->ap, frame->r0, frame->r1);
+		printf("R2 %8x R3 %8x R4 %8x R5 %8x\n",frame->r2,frame->r3,
+			frame->r4,frame->r5);
+		printf("TRAP %2x CODE %6x PC %8x PSL %8x\n",frame->trap,
+			frame->code, frame->pc, frame->psl);
+			i=(u_int*)&(frame->psl);
+		printf("(RET PC) %8x, (RET PSL) %8x\n",i[1],i[2]);
+		for(j=3;j<15;j+=4)
+			printf("%8x %8x %8x %8x\n",i[j],i[j+1],i[j+2],
+				i[j+3]);
+		asm("halt");
 		printf("trap type %x, code %x, pc %x, psl %x\n",
 			frame->trap, frame->code, frame->pc, frame->psl);
 		showstate(curproc);
+		asm("halt");
 		panic("trap");
 
 	case T_TRANSFLT|T_USER:
@@ -227,7 +247,14 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 
 		rv = vm_fault(map, addr, ftype, FALSE);
 		if (rv != KERN_SUCCESS) {
-			if(frame->pc>(u_int)0x80000000) panic("segv in kernel mode");
+			if(frame->pc>(u_int)0x80000000){
+				if(p->p_addr->u_pcb.iftrap){
+					frame->pc=p->p_addr->u_pcb.iftrap;
+					return;
+				}
+				printf("Segv in kernel mode: rv %d\n",rv);
+				goto faulter;
+			}
 			sig=SIGSEGV;
 		} else trapsig=0;
 		break;
@@ -238,9 +265,9 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 		if(frame->code<0x40000000){ /* P0 */
-			if((p->p_vmspace->vm_tsize+p->p_vmspace->vm_dsize)
-					>(frame->code>>PAGE_SHIFT)){
-				pmap_expandp0(pm);
+			int i=p->p_vmspace->vm_tsize+p->p_vmspace->vm_dsize;
+			if(i>(frame->code>>PAGE_SHIFT)){
+				pmap_expandp0(pm,i<<1);
 				trapsig=0;
 			} else {
 				sig=SIGSEGV;
@@ -248,7 +275,8 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 		} else if(frame->code>0x7fffffff){ /* System, segv */
 			sig=SIGSEGV;
 		} else { /* P1 */
-			if(frame->code<(u_int)(p->p_vmspace->vm_maxsaddr)){
+			int i=(u_int)(p->p_vmspace->vm_maxsaddr);
+			if(frame->code<i){
 				sig=SIGSEGV;
 			} else {
 				pmap_expandp1(pm);
@@ -293,6 +321,8 @@ if(p){
 } else {
 	printf("No process\n");
 }
+	printf("kernel stack: %x, interrupt stack %x\n",
+		mfpr(PR_KSP),mfpr(PR_ISP));
 	printf("P0BR %x, P0LR %x, P1BR %x, P1LR %x\n",
 		mfpr(PR_P0BR),mfpr(PR_P0LR),mfpr(PR_P1BR),mfpr(PR_P1LR));
 }
@@ -312,13 +342,28 @@ syscall(frame)
 	struct	trapframe *frame;
 {
 	struct sysent *callp;
-	int err,rval[2],args[8],narg,sig;
+	int err,rval[2],args[8],sig;
 	struct trapframe *exptr;
 	struct proc *p=curproc;
 
-if(startsysc)printf("trap syscall type %x, code %x, pc %x, psl %x\n",
-                        frame->trap, frame->code, frame->pc, frame->psl);
+if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d\n",
+               syscallnames[frame->code], frame->pc, frame->psl,frame->ap,
+		curproc->p_pid);
+
 	p->p_addr->u_pcb.framep=frame;
+
+	if(frame->code==SYS___syscall){
+		int g=*(int *)(frame->ap);
+
+		frame->code=*(int *)(frame->ap+4);
+		frame->ap+=8;
+		*(int *)(frame->ap)=g-2;
+if(startsysc){
+		printf("SYS___syscall: ap %x\n",frame->ap);
+		asm("halt");
+		}
+	}
+
 	if(frame->code<0||frame->code>=nsysent)
 		callp= &sysent[0];
 	else
@@ -326,12 +371,16 @@ if(startsysc)printf("trap syscall type %x, code %x, pc %x, psl %x\n",
 
 	rval[0]=0;
 	rval[1]=frame->r1;
-	narg=callp->sy_narg * sizeof(int);
-	if((narg=callp->sy_narg*4)!=0)
-		copyin((char*)frame->ap+4, args, narg);
+	if(callp->sy_narg)
+		copyin((char*)frame->ap+4, args, callp->sy_argsize);
 
 	err=(*callp->sy_call)(curproc,args,rval);
 	exptr=curproc->p_addr->u_pcb.framep;
+
+if(startsysc)
+	printf("retur %s pc %x, psl %x, ap %x, pid %d, v{rde %d r0 %d, r1 %d\n",
+               syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->ap,
+                curproc->p_pid,err,rval[0],rval[1]);
 
 	switch(err){
 	case 0:
@@ -354,4 +403,29 @@ if(startsysc)printf("trap syscall type %x, code %x, pc %x, psl %x\n",
 
 stray(scb, vec){
 	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
+}
+
+struct inta {
+	char pushr[2];	/* pushr $3f */
+	char pushl[2];	/* pushl $? */
+	char nop;	/* nop, for foolish gcc */
+	char calls[3];	/* $1,? */
+	u_int hoppaddr; /* jump for calls */
+	char popr[2];	/* popr $0x3f */
+	char rei;	/* rei */
+} intasm = {0xbb, 0x3f, 0xdd, 0, 1, 0xfb, 1, 0xef, 0, 0xba, 0x3f, 2};
+
+u_int
+settrap(plats, nyrut,arg)
+	u_int plats;  /* Pointer to place to copy interrupt routine */
+	u_int nyrut;  /* Pointer to new routine to jump to */
+	u_int arg;    /* arg number to pass to routine. */
+{
+	struct inta *introut;
+
+	introut=(void *)((plats&0xfffffffc)+4);
+	bcopy(&intasm, introut, sizeof(struct inta));
+	introut->pushl[1]=arg;
+	introut->hoppaddr=nyrut-(u_int)&introut->popr[0];
+	return (u_int)introut;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1995/02/13 00:46:12 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 1995/03/30 21:25:25 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,15 +34,19 @@
 		
 
 
-#include <sys/types.h>
-#include <sys/errno.h>
-#include <sys/uio.h>
 #include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/fcntl.h>
+#include <sys/errno.h>
 #include "lib/libkern/libkern.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
-#include "vax/include/pte.h"
-#include "vax/include/mtpr.h"
+#include "machine/pte.h"
+#include "machine/mtpr.h"
 
 #define TRUE 1
 
@@ -53,6 +57,7 @@ mmrw(dev_t dev, struct uio *uio, int flags) {
 
   unsigned long  b;
   unsigned long  c,o;
+	caddr_t zbuf = NULL;
 
   int error = 0;
   register struct iovec *iov;
@@ -84,12 +89,38 @@ mmrw(dev_t dev, struct uio *uio, int flags) {
       pmap_remove(pmap_kernel(), v_cmap, v_cmap+NBPG);
       continue;
 
+/* minor device 1 is kernel memory */
+                case 1:
+                        c = iov->iov_len;
+                        if (!kernacc((caddr_t)(long)uio->uio_offset, c,
+                            uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+                                return(EFAULT);
+                        error = uiomove((caddr_t)(long)uio->uio_offset,
+                            (int)c, uio);
+                        continue;
+
+
     case 2:   /* Minor dev 2 is EOF/RATHOLE ,ie /dev/null */
       if (uio->uio_rw == UIO_READ) {
 	return (0);
       }
       c = iov->iov_len;
       break;
+
+/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+                case 12:
+                        if (uio->uio_rw == UIO_WRITE) {
+                                c = iov->iov_len;
+                                break;
+                        }
+                        if (zbuf == NULL) {
+                                zbuf = (caddr_t)
+                                    malloc(CLBYTES, M_TEMP, M_WAITOK);
+                                bzero(zbuf, CLBYTES);
+                        }
+                        c = min(iov->iov_len, CLBYTES);
+                        error = uiomove(zbuf, (int)c, uio);
+                        continue;
 
     default:
       return (ENXIO);
@@ -101,5 +132,7 @@ mmrw(dev_t dev, struct uio *uio, int flags) {
     uio->uio_offset += c;
     uio->uio_resid -= c;
   }
+	if (zbuf)
+		free(zbuf, M_TEMP);
   return (error);
 }

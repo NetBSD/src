@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.9 1995/03/09 12:05:32 mycroft Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.10 1995/03/30 21:25:51 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -37,11 +37,13 @@
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
-#include "vax/include/vmparam.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/pmap.h"
-#include "vax/include/pte.h"
-#include "vax/include/macros.h"
+#include "machine/vmparam.h"
+#include "machine/mtpr.h"
+#include "machine/pmap.h"
+#include "machine/pte.h"
+#include "machine/macros.h"
+#include "machine/pcb.h"
+#include "machine/trap.h"
 #include "sys/param.h"
 #include "sys/proc.h"
 #include "sys/user.h"
@@ -75,12 +77,12 @@ pagemove(from, to, size)
 		(unsigned int)Sysmap))&0x1fffff)<<9)
 
 
-volatile unsigned int ustat,uofset,p0br,p0lr,p1br,p1lr,savpcb;
+volatile unsigned int ustat,p0br,p0lr,p1br,p1lr,savpcb;
 
 cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
-	unsigned int *i,ksp,uorig,uchld,j;
+	unsigned int *i,ksp,uorig,uchld,j,uofset;
 	struct pcb *nyproc;
 	struct pte *ptep;
 	extern int sigsida;
@@ -111,21 +113,41 @@ cpu_fork(p1, p2)
 			*i = *i+(uchld-uorig);
 
 
-/* Set up page table registers, map sigreturn page into user space */
-
 	nyproc->P0BR=nyproc->P1BR=0;
 	nyproc->P0LR=AST_PCB;
 	nyproc->P1LR=0x200000;
+	nyproc->USP = mfpr(PR_USP);
+	nyproc->iftrap=NULL;
+	(u_int)pmap->pm_pcb=uchld;
+/*
+ * %0 is child pcb. %1 is diff parent - child.
+ */
 
+asm("
+	addl3	%1,sp,(%0)	# stack offset
+	addl2	$16,%0		# offset for r1
+	movl	$1,(%0)+
+	movl	r1,(%0)+
+	movq	r2,(%0)+
+	movq	r4,(%0)+
+	movq	r6,(%0)+
+	movq	r8,(%0)+
+	movq	r10,(%0)+
+	movl	ap,(%0)+
+	movl	fp,(%0)
+	addl2	%1,(%0)+
+	movl	$Lre,(%0)+	# pc
+	movpsl	(%0)
+	clrl	r0
+Lre:	mtpr	$0,$18		# spl0();
+	ret
+":: "r"(nyproc),"r"(uofset));
+
+#if 0
 	/*
 	 * For the microvax, the stack registers PR_KSP,.. live in the PCB,
 	 * so we need to make sure they get copied to the new pcb.
 	 */
-	nyproc->KSP = mfpr(PR_KSP);
-	nyproc->SSP = mfpr(PR_SSP);
-	nyproc->USP = mfpr(PR_USP);
-	mtpr(0, PR_ESP); /* Clear in this pcb, then flip and set it */
-	(u_int)pmap->pm_pcb=uchld;
 	asm("
 		mfpr $8,_p0br
 		mfpr $9,_p0lr
@@ -153,6 +175,7 @@ cpu_fork(p1, p2)
 	}
 	spl0();
 	return (1);
+#endif
 }
 
 
@@ -239,10 +262,13 @@ idle:
 /* Should check that values is in bounds XXX */
 copyinstr(from, to, maxlen, lencopied)
 void *from, *to;
-size_t *lencopied,maxlen;
+u_int *lencopied,maxlen;
 {
 	u_int i;
+	void *addr=&curproc->p_addr->u_pcb.iftrap;
 	char *gfrom=from, *gto=to;
+
+	asm("movl $Lstr,(%0)":: "r"(addr));
 	for(i=0;i<maxlen;i++){
 		*(gto+i)=*(gfrom+i);
 		if(!(*(gto+i))) goto ok;
@@ -254,14 +280,18 @@ ok:
 	return(0);
 }
 
+asm("Lstr:	ret");
+
 /* Should check that values is in bounds XXX */
 copyoutstr(from, to, maxlen, lencopied)
 void *from, *to;
-size_t *lencopied,maxlen;
+u_int *lencopied,maxlen;
 {
 	u_int i;
 	char *gfrom=from, *gto=to;
+        void *addr=&curproc->p_addr->u_pcb.iftrap;
 
+        asm("movl $Lstr,(%0)":: "r"(addr));
 	for(i=0;i<maxlen;i++){
 		*(gto+i)=*(gfrom+i);
 		if(!(*(gto+i))) goto ok;
@@ -302,18 +332,7 @@ printf("Warning: reno_omagic\n");
 	return(error);
 }
 
-int
-sysarch(p, uap, retval)
-	struct proc *p,
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
-{
-
-	return(EINVAL);
-}
+sysarch(){return(EINVAL);}
 
 /*
  * 4.3BSD Reno programs have an 1K header first in the executable
@@ -383,11 +402,18 @@ suword(ptr,val)
 	void *ptr;
 	int val;
 {
+        void *addr=&curproc->p_addr->u_pcb.iftrap;
+
+        asm("movl $Lstr,(%0)":: "r"(addr));
 	*(int *)ptr=val;
+	return 0;
 }
 
 /*
  * Dump the machine specific header information at the start of a core dump.
+ * First put all regs in PCB for debugging purposes. This is not an good
+ * way to do this, but good for my purposes so far.
+ * XXX - registers r6-r11 are lost in coredump!
  */
 int
 cpu_coredump(p, vp, cred)
@@ -395,7 +421,39 @@ cpu_coredump(p, vp, cred)
 	struct vnode *vp;
 	struct ucred *cred;
 {
+	struct pcb *pb=&p->p_addr->u_pcb;
+	struct trapframe *exptr=pb->framep;
+
+	pb->R[0]=exptr->r0;
+	pb->R[1]=exptr->r1;
+	pb->R[2]=exptr->r2;
+	pb->R[3]=exptr->r3;
+	pb->R[4]=exptr->r4;
+	pb->R[5]=exptr->r5;
+	pb->FP=exptr->fp;
+	pb->AP=exptr->ap;
+	pb->PC=exptr->pc;
+	pb->PSL=exptr->psl;
+	pb->ESP=exptr->trap;
+	pb->SSP=exptr->code;
+
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
 	    p));
+}
+
+copyout(from, to, len)
+	void *from, *to;
+{
+	void *addr=&curproc->p_addr->u_pcb.iftrap;
+
+	return locopyout(from, to, len, addr);
+}
+
+copyin(from, to, len)
+	void *from, *to;
+{
+	void *addr=&curproc->p_addr->u_pcb.iftrap;
+
+	return locopyin(from, to, len, addr);
 }
