@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.6 2003/01/17 23:10:31 thorpej Exp $	*/
+/*	$NetBSD: pmc.c,v 1.7 2004/04/15 13:56:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.6 2003/01/17 23:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.7 2004/04/15 13:56:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,16 +67,25 @@ static void
 pmc_init(void)
 {
 	const char *cpu_vendor;
+	struct cpu_info *ci;
 
 	if (pmc_initialized)
 		return;
 
 	pmc_type = PMC_TYPE_NONE;
-	cpu_vendor = i386_nocpuid_cpus[cpu].cpu_vendorname;
+
+#ifdef MULTIPROCESSOR
+	/* XXX */
+	if (cpus_attached > 1)
+		goto done;
+#endif
+
+	ci = curcpu();
+	cpu_vendor = (char *)ci->ci_vendor;
 
 	switch (cpu_class) {
 	case CPUCLASS_586:
-		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+		if (strncmp(cpu_vendor, "GenuineIntel", 12) == 0) {
 			pmc_type = PMC_TYPE_I586;
 			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
@@ -85,12 +94,22 @@ pmc_init(void)
 		}
 
 	case CPUCLASS_686:
-		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+		if (strncmp(cpu_vendor, "GenuineIntel", 12) == 0) {
+
+			/*
+			 * Figure out what we support; right now
+			 * we're missing Pentium 4 support.
+			 */
+			if (ci->ci_cpuid_level == -1 ||
+			    CPUID2FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
+				break;
+
 			pmc_type = PMC_TYPE_I686;
 			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
 			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
-		} else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		} else if (strncmp(cpu_vendor, "AuthenticAMD",
+			   12) == 0) {
 			pmc_type = PMC_TYPE_K7;
 			pmc_ncounters = 4;
 			pmc_state[0].pmcs_ctrmsr = MSR_K7_PERFCTR0;
@@ -104,6 +123,9 @@ pmc_init(void)
 	if (pmc_type != PMC_TYPE_NONE && (cpu_feature & CPUID_TSC) != 0)
 		pmc_flags |= PMC_INFO_HASTSC;
 
+#ifdef MULTIPROCESSOR
+done:
+#endif
 	pmc_initialized = 1;
 }
 
