@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.7 1995/02/25 14:09:42 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.8 1995/02/25 17:17:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.7 1995/02/25 14:09:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.8 1995/02/25 17:17:42 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ getdiskbyname(name)
 	char	*cp, *cq;	/* can't be register */
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
-	u_in532_t *dx;
+	u_int32_t *dx;
 
 	if (cgetent(&buf, db_array, (char *) name) < 0)
 		return NULL;
