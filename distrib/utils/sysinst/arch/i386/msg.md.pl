@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.14 2003/07/07 12:30:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.15 2003/07/07 21:26:34 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -45,16 +45,6 @@ message md_hello
 
 }
 
-message Select_type
-{Wybierz typ}
-
-message Choose_an_option
-{Wybierz opcje}
-message Use_real_geometry
-{Uzyj prawdziwej geometrii}
-message Use_disklabel_geometry
-{Uzyj geometrii disklabel}
-
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }
@@ -79,13 +69,6 @@ message Use_serial_115200_bootblocks
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
-
-message Reedit_both_MBR_and_label
-{Zmien MBR i disklabel}
-message Reedit_the_label
-{Zmien disklabel}
-message Use_it_anyway
-{Uzyj, mimo to}
 
 message onebiosmatch
 {Ten dysk odpowiada ponizszemu dyskowi BIOS:

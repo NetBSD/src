@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.7 2003/07/07 12:55:48 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.8 2003/07/07 21:26:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,53 +96,16 @@ message biosguess
 {Uzywajac informacji z dysku, najlepsze parametry geometrii dysku z BIOS to
 %d cylindrow %d sektorow %d glowic\n}
 
-.if 0
-message confirmbiosgeom
-{Sprawdz czy geometria dysku z BIOS ponizej jest poprawna. Mozliwe ze
-ilosc cylindrow zostala zmniejszona do 1024. Jest to w porzadku o ile
-reszta parametrow jest poprawna; tylko 1024 cylindry moga byc podane
-w MBR, reszta zostanie odnaleziona przez NetBSD w inny sposob.
-
-Jesli poprawiles wartosci, upewnij sie ze sa one poprawne i odpowiadaja
-tym uzywanym przez inne systemy na tym dysku. Wartosci, ktore sa nie poprawne
-moga spowodowac utrate danych.
-
-}
-
-message badgeom
-{Aktualne wartosci dla geometrii twojego dysku to:
-
-}
-.endif
-
 message realgeom
 {praw. geo: %d cyl, %d glowic, %d sek  (tylko dla porownania)\n}
 
 message biosgeom
 {BIOS geom: %d cyl, %d glowic, %d sek\n}
 
-.if 0
-message reentergeom
-{Wartosci podane dla geometrii sa nieprawidlowe. Sprawdz i podaj
-je jeszcze raz.
-}
-.endif
-
 message ovrwrite
 {Twoj dysk aktualnie posiada partycje nie-NetBSD. Czy napewno chcesz ja
 nadpisac z NetBSD?
 }
-
-.if 0
-message parttable
-{Aktualnie tablica partycji na twoim dysku wyglada tak:
-}
-
-message editpart
-{Edytujesz partycje %d. Podswietlona partycja to ta, ktora edytujesz.
-
-}
-.endif
 
 message Partition_OK
 {Partycje OK}
