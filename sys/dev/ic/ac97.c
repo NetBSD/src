@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.54 2004/08/07 16:59:54 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.55 2004/08/07 17:37:31 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.54 2004/08/07 16:59:54 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.55 2004/08/07 17:37:31 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Analog Devices AD1886" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x68),
+	  0xffffffff,			"Analog Devices AD1888", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
 	  0xffffffff,			"Analog Devices AD1980", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
@@ -1470,37 +1472,33 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
  */
 
 #define	AD1980_REG_MISC	0x76
-#define		AD1980_MISC_MBG0	0x0001	/* 0 */
-#define		AD1980_MISC_MBG1	0x0002	/* 1 */
-#define		AD1980_MISC_VREFD	0x0004	/* 2 */
-#define		AD1980_MISC_VREFH	0x0008	/* 3 */
-#define		AD1980_MISC_SRU		0x0010	/* 4 */
-#define		AD1980_MISC_LOSEL	0x0020	/* 5 */
-#define		AD1980_MISC_2CMIC	0x0040	/* 6 */
-#define		AD1980_MISC_SPRD	0x0080	/* 7 */
-#define		AD1980_MISC_DMIX0	0x0100	/* 8 */
-#define		AD1980_MISC_DMIX1	0x0200	/* 9 */
-#define		AD1980_MISC_HPSEL	0x0400	/*10 */
-#define		AD1980_MISC_CLDIS	0x0800	/*11 */
-#define		AD1980_MISC_LODIS	0x1000	/*12 */
-#define		AD1980_MISC_MSPLT	0x2000	/*13 */
-#define		AD1980_MISC_AC97NC	0x4000	/*14 */
-#define		AD1980_MISC_DACZ	0x8000	/*15 */
+#define		AD1980_MISC_MBG0	0x0001	/* 0 1888/1980/1981 /1985 */
+#define		AD1980_MISC_MBG1	0x0002	/* 1 1888/1980/1981 /1985 */
+#define		AD1980_MISC_VREFD	0x0004	/* 2 1888/1980/1981 /1985 */
+#define		AD1980_MISC_VREFH	0x0008	/* 3 1888/1980/1981 /1985 */
+#define		AD1980_MISC_SRU		0x0010	/* 4 1888/1980      /1985 */
+#define		AD1980_MISC_LOSEL	0x0020	/* 5 1888/1980/1981 /1985 */
+#define		AD1980_MISC_2CMIC	0x0040	/* 6      1980/1981B/1985 */
+#define		AD1980_MISC_SPRD	0x0080	/* 7 1888/1980      /1985 */
+#define		AD1980_MISC_DMIX0	0x0100	/* 8 1888/1980      /1985 */
+#define		AD1980_MISC_DMIX1	0x0200	/* 9 1888/1980      /1985 */
+#define		AD1980_MISC_HPSEL	0x0400	/*10 1888/1980      /1985 */
+#define		AD1980_MISC_CLDIS	0x0800	/*11 1888/1980      /1985 */
+#define		AD1980_MISC_LODIS	0x1000	/*12 1888/1980/1981 /1985 */
+#define		AD1980_MISC_MSPLT	0x2000	/*13 1888/1980/1981 /1985 */
+#define		AD1980_MISC_AC97NC	0x4000	/*14 1888/1980      /1985 */
+#define		AD1980_MISC_DACZ	0x8000	/*15 1888/1980/1981 /1985 */
 #define	AD1981_REG_MISC	0x76
-#define		AD1981_MISC_MBG		0x0001  /* 0 */
-#define		AD1981_MISC_VREFD	0x0002  /* 1 */
-#define		AD1981_MISC_VREFH	0x0004  /* 2 */
-#define		AD1981_MISC_MADST	0x0008  /* 3 */
-#define		AD1981_MISC_MADPD	0x0020  /* 5 */
-#define		AD1981_MISC_FMXE	0x0100  /* 8 */
-#define		AD1981_MISC_DAM		0x0400  /*10 */
-#define		AD1981_MISC_MSPLT	0x1000  /*12 */
-#define		AD1981_MISC_DACZ	0x4000  /*14 */
+#define		AD1981_MISC_MADST	0x0010  /* 4 */
+#define		AD1981A_MISC_MADPD	0x0040  /* 6 */
+#define		AD1981B_MISC_MADPD	0x0080  /* 7 */
+#define		AD1981_MISC_FMXE	0x0200  /* 9 */
+#define		AD1981_MISC_DAM		0x0800  /*11 */
 static void
 ac97_ad198x_init(struct ac97_softc *as)
 {
 	int i;
-	unsigned short misc;
+	uint16_t misc;
 
 	ac97_read(as, AD1980_REG_MISC, &misc);
 	ac97_write(as, AD1980_REG_MISC,
@@ -1599,4 +1597,3 @@ ac97_vt1616_init(struct ac97_softc *as)
 	ac97_add_port(as, &sources[1]);
 	ac97_add_port(as, &sources[2]);
 }
-
