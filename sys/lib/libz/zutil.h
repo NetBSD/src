@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.h,v 1.5 1998/11/03 22:00:38 tron Exp $ */
+/* $NetBSD: zutil.h,v 1.6 1999/04/22 16:32:01 christos Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -196,7 +196,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 /* Diagnostic functions */
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(_KERNEL) && !defined(_STANDALONE)
 #  include <stdio.h>
    extern int z_verbose;
    extern void z_error    OF((char *m));
