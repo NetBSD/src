@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.25 2001/09/24 14:19:10 itohy Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.26 2001/10/25 20:20:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -838,7 +838,20 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			    tuple->length));
 			break;
 		}
-		if ((state->pf == NULL) || (state->gotmfc == 2)) {
+		if (state->pf) {
+			if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
+				/*
+				 * This looks like a opportunistic function
+				 * created by a CONFIG tuple.  Just keep it.
+				 */
+			} else {
+				/*
+				 * A function is being defined, end it.
+				 */
+				state->pf = NULL;
+			}
+		}
+		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
 			memset(state->pf, 0, sizeof(*state->pf));
