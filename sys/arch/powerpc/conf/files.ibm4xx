@@ -1,8 +1,11 @@
-#	$NetBSD: files.ibm4xx,v 1.5 2003/10/06 16:15:46 scw Exp $
+#	$NetBSD: files.ibm4xx,v 1.6 2005/01/17 17:13:49 shige Exp $
 #
 # IBM 4xx specific configuration info
 
 include "arch/powerpc/fpu/files.fpu"
+
+# Board Properties
+file	arch/powerpc/ibm4xx/board_prop.c
 
 # Processor Local Bus
 device	plb { [irq = -1] }
