@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.176 1998/08/17 21:16:10 augustss Exp $
+#	$NetBSD: GENERIC,v 1.177 1998/08/18 17:03:42 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -22,7 +22,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
-options		XSERVER_DDB	# PF12 gets you into DDB when X is running
+#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
