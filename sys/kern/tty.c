@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.61 1995/07/02 18:13:02 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.62 1995/09/22 00:11:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1866,13 +1866,23 @@ ttyinfo(tp)
 
 		calcru(pick, &utime, &stime, NULL);
 
-		/* Print user time. */
-		ttyprintf(tp, "%d.%02du ",
-		    utime.tv_sec, (utime.tv_usec + 5000) / 10000);
+		/* Round up and print user time. */
+		utime.tv_usec += 5000;
+		if (utime.tv_usec >= 1000000) {
+			utime.tv_sec += 1;
+			utime.tv_usec -= 1000000;
+		}
+		ttyprintf(tp, "%d.%02du ", utime.tv_sec,
+		    utime.tv_usec / 10000);
 
-		/* Print system time. */
-		ttyprintf(tp, "%d.%02ds ",
-		    stime.tv_sec, (stime.tv_usec + 5000) / 10000);
+		/* Round up and print system time. */
+		stime.tv_usec += 5000;
+		if (stime.tv_usec >= 1000000) {
+			stime.tv_sec += 1;
+			stime.tv_usec -= 1000000;
+		}
+		ttyprintf(tp, "%d.%02ds ", stime.tv_sec,
+		    stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((a) * NBPG) / 1024)
 		/* Print percentage cpu, resident set size. */
