@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.2 2001/01/24 09:30:30 garbled Exp $       */
+/*      $NetBSD: functions.c,v 1.3 2001/03/03 13:54:22 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ func_record func_map[] =
 	{(char *)NULL, (char **(*)(char *))NULL},
 };
 
+/*ARGSUSED*/
 char **
 log_do(char *what)
 {
@@ -83,19 +84,14 @@ log_do(char *what)
 
 	i = logging;
 
-	if (strcmp("off", what) == 0)
+	if (logging == 1)
 		logging = 0;
-	else if (strcmp("on", what) == 0)
+	else if (logging == 0)
 		logging = 1;
-	else if (strcmp("OFF", what) == 0)
-		logging = 0;
-	else if (strcmp("ON", what) == 0)
-		logging = 1;
-	else
-		bailout(catgets(catalog, 1, 1,
-		    "log_do arguments must be on or off"));
 
-	if (logging && i == 0) {
+	time(&tloc);
+
+	if (logging && i == 0) { /* open */
 		logfile = fopen(LOGFILE_NAME, "w");
 		if (logfile == NULL)
 			bailout("fopen %s: %s", LOGFILE_NAME,  strerror(errno));
@@ -103,11 +99,19 @@ log_do(char *what)
 			catgets(catalog, 4, 3, "Log started at"),
 			asctime(localtime(&tloc)));
 		fflush(logfile);
+	} else {  /* close */
+		if (logfile == NULL)
+			bailout("fopen %s: %s", LOGFILE_NAME,  strerror(errno));
+		fprintf(logfile, "%s: %s\n",
+			catgets(catalog, 4, 10, "Log ended at"),
+			asctime(localtime(&tloc)));
+		fflush(logfile);
+		fclose(logfile);
 	}
-
 	return(NULL); /* XXX */
 }
 
+/*ARGSUSED*/
 char **
 script_do(char *what)
 {
@@ -116,19 +120,14 @@ script_do(char *what)
 
 	i = scripting;
 
-	if (strcmp("off", what) == 0)
-		scripting = 0;
-	else if (strcmp("on", what) == 0)
+	if (scripting == 0)
 		scripting = 1;
-	else if (strcmp("OFF", what) == 0)
+	else if (scripting == 1)
 		scripting = 0;
-	else if (strcmp("ON", what) == 0)
-		scripting = 1;
-	else
-		bailout(catgets(catalog, 1, 2,
-		    "script_do arguments must be on or off"));
 
-	if (scripting && i == 0) {
+	time(&tloc);
+
+	if (scripting && i == 0) { /* open */
 		script = fopen(SCRIPTFILE_NAME, "w");
 		if (script == NULL)
 			bailout("fopen %s: %s", SCRIPTFILE_NAME,
@@ -138,8 +137,16 @@ script_do(char *what)
 			catgets(catalog, 4, 4, "Script started at"),
 			asctime(localtime(&tloc)));
 		fflush(script);
+	} else { /* close */
+		if (script == NULL)
+			bailout("fopen %s: %s", SCRIPTFILE_NAME,
+			    strerror(errno));
+		fprintf(script, "# %s: %s\n",
+			catgets(catalog, 4, 11, "Script ended at"),
+			asctime(localtime(&tloc)));
+		fflush(script);
+		fclose(script);
 	}
-
 	return(NULL); /* XXX */
 }
 

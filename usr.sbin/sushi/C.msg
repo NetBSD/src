@@ -33,6 +33,10 @@ $set 2 labels
 10 F10=Exit
 11 </5><OK><!5>
 12 Help
+13 Script:
+14 Log:
+15 ON 
+16 OFF
 $set 3 run.c stuff
 1 executing
 2 Status
@@ -59,3 +63,5 @@ $set 4 menu titles and stuff
 7 Data Entry: 
 8 Form Page:
 9 PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do.
+10 Log ended at
+11 Script ended at
