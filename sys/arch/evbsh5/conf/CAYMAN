@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.12 2002/11/23 09:05:04 scw Exp $
+#	$NetBSD: CAYMAN,v 1.13 2004/03/17 20:24:18 scw Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -10,7 +10,7 @@ maxusers	8
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"CAYMAN-$Revision: 1.12 $"
+#ident		"CAYMAN-$Revision: 1.13 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -25,6 +25,8 @@ options 	DDB
 #options 	PORTMASTER
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
+
+options 	COMPAT_16
 
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
