@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.1 2002/03/30 19:48:56 uwe Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.2 2002/07/21 02:56:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,8 @@
  */
 
 /*
- * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
+ * Integraphics Systems IGA 168x and CyberPro series.
+ * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #ifndef _DEV_IC_IGSFBREG_H_
 #define _DEV_IC_IGSFBREG_H_
@@ -37,18 +38,13 @@
  * Magic address decoding for memory space accesses in CyberPro.
  */
 #define IGS_MEM_MMIO_SELECT	0x00800000 /* memory mapped i/o */
-#define IGS_MEM_BE_SELECT	0x00400000 /* endian */
+#define IGS_MEM_BE_SELECT	0x00400000 /* endian select */
 
 /*
- * Registers in I/O space (could be memory-mapped i/o).
+ * Cursor sprite data in linear memory at IGS_EXT_SPRITE_DATA_{LO,HI}.
+ * 64x64 pixels, 2bpp = 1Kb
  */
-#define IGS_IO_SIZE		0x400
-#define IGS_COP_SIZE		0x400
-
-/*
- * Cursor sprite data: 64x64 pixels, 2bpp = 1Kb.
- */
-#define IGS_CURSOR_DATA_SIZE	0x0400
+#define IGS_CURSOR_DATA_SIZE	1024
 
 
 /*
@@ -65,6 +61,25 @@
 #define   IGS_VSE_ENABLE		0x01
 
 
+/*
+ * CRTC can be at 0x3b4/0x3b5 or 0x3d4/0x3d5
+ * controlled by misc register (r=0x3cc/w=0x3c2).
+ */
+#define IGS_CRTC_B_IDX		0x3b4
+#define IGS_CRTC_B_PORT		0x3b5
+#define IGS_CRTC_D_IDX		0x3d4
+#define IGS_CRTC_D_PORT		0x3d5
+
+
+/*
+ * We map only 16 bytes of actual IGS registers at 0x3c0..0x3cf.
+ * This macro helps to define register names using their "absolute"
+ * locations - it makes matching defines against docs easier.
+ */
+#define IGS_REG_BASE		0x3c0
+#define IGS_REG_SIZE		0x010
+#define IGS_REG_(x)		((x) - IGS_REG_BASE)
+
 
 /*
  * Palette Read/Write: write palette index to the index port.
@@ -72,24 +87,25 @@
  * After third access to data the index is autoincremented and you can
  * proceed with reading/writing data port for the next entry.
  * 
- * When MRS2 bit in sprite control is set, these registers are used to
- * access sprite (i.e. cursor) 2-color palette.  (NB: apparently, in
- * this mode index autoincrement doesn't work).
+ * When IGS_EXT_SPRITE_DAC_PEL bit in sprite control is set, these
+ * registers are used to access sprite (i.e. cursor) 2-color palette.
+ * (NB: apparently, in this mode index autoincrement doesn't work).
  */
-#define IGS_DAC_PEL_READ_IDX	0x3c7
-#define IGS_DAC_PEL_WRITE_IDX	0x3c8
-#define IGS_DAC_PEL_DATA	0x3c9
+#define IGS_DAC_PEL_READ_IDX	IGS_REG_(0x3c7)
+#define IGS_DAC_PEL_WRITE_IDX	IGS_REG_(0x3c8)
+#define IGS_DAC_PEL_DATA	IGS_REG_(0x3c9)
 
 
 /*
- * Extended Registers.  Indexed access via IGS_EXT_PORT.
+ * Indexed access to extended registers.
  */
-#define IGS_EXT_IDX		0x3ce
+#define IGS_EXT_IDX		IGS_REG_(0x3ce)
+#define IGS_EXT_PORT		IGS_REG_(0x3cf)
 
 
 /*
  * Sync Control.
- * Two bit combinations for h/v:
+ * Two-bit combinations for h/v:
  *     00 - normal, 01 - force 0, 1x - force 1
  */
 #define   IGS_EXT_SYNC_CTL		0x16
@@ -109,7 +125,7 @@
 
 /*
  * COPREN   - enable direct access to coprocessor registers
- * COPASELB - COP address select 0xbfc00..0xbffff
+ * COPASELB - select IGS_COP_BASE_B for COP address
  */
 #define   IGS_EXT_BIU_MISC_CTL		0x33
 #define     IGS_EXT_BIU_LINEAREN		0x01
@@ -120,14 +136,14 @@
 #define     IGS_EXT_BIU_SEG2MEM			0x20
 
 /*
- * Linear Address register
+ * Linear Address registers
  *   PCI: don't write directly, just use nomral PCI configuration
  *   ISA: only bits [23..20] are programmable, the rest MBZ
  */
 #define   IGS_EXT_LINA_LO		0x34	/* [3..0] -> [23..20] */
 #define   IGS_EXT_LINA_HI		0x35	/* [7..0] -> [31..24] */
 
-/* Hardware cursor (sprite) */
+/* Hardware cursor on-screen location and hot spot */
 #define   IGS_EXT_SPRITE_HSTART_LO	0x50
 #define   IGS_EXT_SPRITE_HSTART_HI	0x51	/* bits [2..0] */
 #define   IGS_EXT_SPRITE_HPRESET	0x52	/* bits [5..0] */
@@ -136,55 +152,183 @@
 #define   IGS_EXT_SPRITE_VSTART_HI	0x54	/* bits [2..0] */
 #define   IGS_EXT_SPRITE_VPRESET	0x55	/* bits [5..0] */
 
+/* Hardware cursor control */
 #define   IGS_EXT_SPRITE_CTL		0x56
 #define     IGS_EXT_SPRITE_VISIBLE		0x01
 #define     IGS_EXT_SPRITE_64x64		0x02
-#define     IGS_EXT_SPRITE_SELECT		0x04
+#define     IGS_EXT_SPRITE_DAC_PEL		0x04
+	  /* bits unrelated to sprite control */
+#define     IGS_EXT_COP_RESET			0x08
 
 /* Overscan R/G/B registers */
 #define   IGS_EXT_OVERSCAN_RED		0x58
 #define   IGS_EXT_OVERSCAN_GREEN	0x59
 #define   IGS_EXT_OVERSCAN_BLUE		0x5a
 
-/* Hardware cursor (sprite) data location */
+/* Hardware cursor data location in linear memory */
 #define   IGS_EXT_SPRITE_DATA_LO	0x7e
 #define   IGS_EXT_SPRITE_DATA_HI	0x7f	/* bits [3..0] */
 
 
+
 /*********************************************************************
- *		  Access sugar for indexed registers
+ *		       IGS Graphic Coprocessor
  */
 
-static __inline__ u_int8_t
-igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t);
+/*
+ * Coprocessor registers location in I/O space.
+ * Controlled by COPASELB bit in IGS_EXT_BIU_MISC_CTL.
+ */
+#define IGS_COP_BASE_A	0xafc00		/* COPASELB == 0 */
+#define IGS_COP_BASE_B	0xbfc00		/* COPASELB == 1 */
+#define IGS_COP_SIZE	0x00400
 
-static __inline__ u_int8_t
-igs_idx_read(t, h, idxport, idx)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	u_int8_t idx;
-{
-	bus_space_write_1(t, h, idxport, idx);
-	return (bus_space_read_1(t, h, idxport + 1));
-}
 
-static __inline__ void
-igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t, u_int8_t);
+/*
+ * NB: Loaded width values should be 1 less than the actual width!
+ */
 
-static __inline__ void
-igs_idx_write(t, h, idxport, idx, val)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	u_int8_t idx, val;
-{
-	bus_space_write_1(t, h, idxport, idx);
-	bus_space_write_1(t, h, idxport + 1, val);
-}
+/*
+ * Coprocessor control.
+ */
+#define IGS_COP_CTL_REG		0x011
+#define   IGS_COP_CTL_HBRDYZ		0x01
+#define   IGS_COP_CTL_HFEMPTZ		0x02
+#define   IGS_COP_CTL_CMDFF		0x04
+#define   IGS_COP_CTL_SOP		0x08 /* rw */
+#define   IGS_COP_CTL_OPS		0x10
+#define   IGS_COP_CTL_TER		0x20 /* rw */
+#define   IGS_COP_CTL_HBACKZ		0x40
+#define   IGS_COP_CTL_BUSY		0x80
 
-/* more sugar for extended registers */
-#define igs_ext_read(t,h,x)	(igs_idx_read((t),(h),IGS_EXT_IDX,(x)))
-#define igs_ext_write(t,h,x,v)	(igs_idx_write((t),(h),IGS_EXT_IDX,(x),(v)))
+
+/*
+ * Source(s) and destination widths.
+ * 16 bit registers.  Only bits [11..0] are used.
+ */
+#define IGS_COP_SRC_MAP_WIDTH_REG  0x018
+#define IGS_COP_SRC2_MAP_WIDTH_REG 0x118
+#define IGS_COP_DST_MAP_WIDTH_REG  0x218
+
+
+/*
+ * Bitmap depth.
+ */
+#define IGS_COP_MAP_FMT_REG	0x01c
+#define   IGS_COP_MAP_8BPP		0x00
+#define   IGS_COP_MAP_16BPP		0x01
+#define   IGS_COP_MAP_24BPP		0x02
+#define   IGS_COP_MAP_32BPP		0x03
+
+
+/* 
+ * Binary operations are defined below.  S - source, D - destination,
+ * N - not; a - and, o - or, x - xor.
+ *
+ * For ternary operations, foreground mix function is one of 256
+ * ternary raster operations defined by Win32 API; background mix is
+ * ignored.
+ */
+#define IGS_COP_FG_MIX_REG	0x048
+#define IGS_COP_BG_MIX_REG	0x049
+
+#define   IGS_COP_MIX_0			0x0
+#define   IGS_COP_MIX_SaD		0x1
+#define   IGS_COP_MIX_SaND		0x2
+#define   IGS_COP_MIX_S			0x3
+#define   IGS_COP_MIX_NSaD		0x4
+#define   IGS_COP_MIX_D			0x5
+#define   IGS_COP_MIX_SxD		0x6
+#define   IGS_COP_MIX_SoD		0x7
+#define   IGS_COP_MIX_NSaND		0x8
+#define   IGS_COP_MIX_SxND		0x9
+#define   IGS_COP_MIX_ND		0xa
+#define   IGS_COP_MIX_SoND		0xb
+#define   IGS_COP_MIX_NS		0xc
+#define   IGS_COP_MIX_NSoD		0xd
+#define   IGS_COP_MIX_NSoND		0xe
+#define   IGS_COP_MIX_1			0xf
+
+
+/*
+ * Foreground/background colours (24 bit).
+ * Selected by bits in IGS_COP_PIXEL_OP_3_REG.
+ */
+#define IGS_COP_FG_REG		0x058
+#define IGS_COP_BG_REG		0x05C
+
+
+/*
+ * Horizontal/vertical dimentions of pixel blit function.
+ * 16 bit registers.  Only [11..0] are used.
+ */
+#define IGS_COP_WIDTH_REG	0x060
+#define IGS_COP_HEIGHT_REG	0x062
+
+
+/*
+ * Only bits [21..0] are used.
+ */
+#define IGS_COP_SRC_BASE_REG	0x070 /* only for 24bpp Src Color Tiling */
+#define IGS_COP_SRC_START_REG	0x170
+#define IGS_COP_SRC2_START_REG	0x174
+#define IGS_COP_DST_START_REG	0x178
+
+/*
+ * Destination phase angle for 24bpp.
+ */
+#define IGS_COP_DST_X_PHASE_REG	0x078
+#define   IGS_COP_DST_X_PHASE_MASK	0x07
+
+
+/*
+ * Pixel operation: Direction and draw mode.
+ * When an octant bit is set, that axis is traversed backwards.
+ */
+#define IGS_COP_PIXEL_OP_0_REG	0x07c
+
+#define   IGS_COP_OCTANT_Y_NEG		0x02 /* 0: top down, 1: bottom up */
+#define   IGS_COP_OCTANT_X_NEG		0x04 /* 0: l2r, 1: r2l */
+
+#define   IGS_COP_DRAW_ALL		0x00
+#define   IGS_COP_DRAW_FIRST_NULL	0x10
+#define   IGS_COP_DRAW_LAST_NULL	0x20
+
+
+/*
+ * Pixel operation: Pattern operation.
+ */
+#define IGS_COP_PIXEL_OP_1_REG	0x07d
+
+#define   IGS_COP_PPM_TEXT		0x10
+#define   IGS_COP_PPM_TILE		0x20
+#define   IGS_COP_PPM_LINE		0x30
+#define   IGS_COP_PPM_TRANSPARENT	0x40 /* "or" with one of the above */
+		  
+#define   IGS_COP_PPM_FIXED_FG		0x80
+#define   IGS_COP_PPM_SRC_COLOR_TILE	0x90
+
+
+/*
+ * Pixel operation: Host CPU access (host blit) to graphics engine.
+ */
+#define IGS_COP_PIXEL_OP_2_REG	0x07e
+#define   IGS_COP_HBLTR			0x01 /* enable read from engine */
+#define   IGS_COP_HBLTW			0x02 /* enable write to engine  */
+
+
+/*
+ * Pixel operation: Operation function of graphic engine.
+ */
+#define IGS_COP_PIXEL_OP_3_REG	0x07f
+#define   IGS_COP_OP_STROKE		0x04 /* short stroke */
+#define   IGS_COP_OP_LINE		0x05 /* bresenham line draw */
+#define   IGS_COP_OP_PXBLT		0x08 /* pixel blit */
+#define   IGS_COP_OP_PXBLT_INV		0x09 /* invert pixel blit */
+#define   IGS_COP_OP_PXBLT_3		0x0a /* ternary pixel blit */
+
+/* select fg/bg source: 0 - fg/bg color reg, 1 - src1 map */
+#define   IGS_COP_OP_FG_FROM_SRC	0x20
+#define   IGS_COP_OP_BG_FROM_SRC	0x80
 
 #endif /* _DEV_IC_IGSFBREG_H_ */

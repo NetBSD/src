@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.2 2002/04/04 18:50:28 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.3 2002/07/21 02:56:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,10 +28,11 @@
  */
 
 /*
- * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
+ * Integraphics Systems IGA 168x and CyberPro series.
+ * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2 2002/04/04 18:50:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.3 2002/07/21 02:56:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,19 +105,18 @@ igsfb_pci_attach(parent, self, aux)
 	else
 		sc->sc_is2k = 1;
 
-
-#ifdef __sparc__
 	/*
-	 * We run javastation with PCIC doing byte-swapping on data
-	 * travelling to/from PCI, so compensate for that.
+	 * Enable the chip.  This always goes through i/o space
+	 * because that's the only way that is guaranteed to enable
+	 * completely uninitialized card.
 	 */
-	sc->sc_hwflags |= IGSFB_HW_BSWAP;
-#endif
+	if (igsfb_enable(pa->pa_iot) != 0)
+		return;
 
 	/*
-	 * Memory space.  Configure it first since for cyber2k we also
-	 * use memory-mapped i/o access.  Note that we are not mapping
-	 * any of it yet.
+	 * Configure memory space first since for CyberPro we use
+	 * memory-mapped i/o access.  Note that we are NOT mapping any
+	 * of it yet.  (XXX: search for memory BAR)
 	 */
 #define IGS_MEM_MAPREG (PCI_MAPREG_START + 0)
 
@@ -130,38 +130,46 @@ igsfb_pci_attach(parent, self, aux)
 	}
 
 	/*
-	 * I/O space.
+	 * Configure I/O space.  On CyberPro use MMIO.  IGS 168x
+	 * doesn't have a BAR for its i/o, so we have to hardcode it.
 	 */
-	if (sc->sc_is2k) {	/* XXX: untested */
+	if (sc->sc_is2k) {
 		sc->sc_iot = sc->sc_memt;
-		iobase = sc->sc_memaddr | IGS_MEM_MMIO_SELECT;
+		iobase = IGS_MEM_MMIO_SELECT | sc->sc_memaddr;
 		ioflags = sc->sc_memflags;
 	} else {
-		/* feh, 1682 denies having io space registers */
+		/* feh, 1682 config denies having io space registers */
 		sc->sc_iot = pa->pa_iot;
 		iobase = 0;
 		ioflags = 0;
 	}
 
-	if (bus_space_map(sc->sc_iot, iobase, IGS_IO_SIZE, ioflags,
+	/*
+	 * Map I/O registers.  This is done in bus glue, not in common
+	 * code because on e.g. ISA bus we'd need to access registers
+	 * to obtain/program linear memory location.
+	 */
+	if (bus_space_map(sc->sc_iot,
+			  iobase + IGS_REG_BASE, IGS_REG_SIZE, ioflags,
 			  &sc->sc_ioh) != 0)
 	{
-		printf("unable to map io registers\n");
+		printf("unable to map I/O registers\n");
 		return;
 	}
 
-	/* TODO: Graphic coprocessor registers. */
+	/* TODO: Map CRTC???  This simple driver doesn't use it so far. */
 
-	if (igsfb_io_enable(sc->sc_iot, iobase) != 0)
-		return;
+	/*
+	 * TODO: Map graphic coprocessor registers.  not sure if this
+	 * needs to be done in bus glue or can be moved to common
+	 * attach code.
+	 */
 
-	igsfb_mem_enable(sc);
-
-	/* XXX: sparc'ism */
+	isconsole = 0;
+#ifdef __sparc__  /* XXX: this doesn't belong here */
 	if (PCITAG_NODE(pa->pa_tag) == prom_instance_to_package(prom_stdout()))
 		isconsole = 1;
-	else
-		isconsole = 0;
+#endif
 
 	igsfb_common_attach(sc, isconsole);
 }
