@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -134,7 +134,6 @@ static char	varNoError[] = "";
  */
 GNode          *VAR_GLOBAL;   /* variables from the makefile */
 GNode          *VAR_CMD;      /* variables defined on the command-line */
-GNode	       *VAR_FOR;      /* iteration variables */
 
 #define FIND_CMD	0x1   /* look in VAR_CMD when searching */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
@@ -1583,12 +1582,11 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	name[0] = str[1];
 	name[1] = '\0';
 
-	v = VarFind (name, ctxt,
-		     ctxt == VAR_FOR ? 0 : FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if (v == (Var *)NIL) {
 	    *lengthPtr = 2;
 
-	    if ((ctxt == VAR_FOR) || (ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
+	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
 		/*
 		 * If substituting a local variable in a non-local context,
 		 * assume it's for dynamic source stuff. We have to handle
@@ -1667,10 +1665,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	str = Buf_GetAll(buf, (int *) NULL);
 	vlen = strlen(str);
 
-	v = VarFind (str, ctxt,
-		     ctxt == VAR_FOR ? 0 : FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if ((v == (Var *)NIL) &&
-	    (ctxt != VAR_FOR) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
+	v = VarFind (str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 	    (vlen == 2) && (str[1] == 'F' || str[1] == 'D'))
 	{
 	    /*
@@ -1727,7 +1723,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    if (((vlen == 1) ||
 		 (((vlen == 2) && (str[1] == 'F' ||
 					 str[1] == 'D')))) &&
-		((ctxt == VAR_FOR) || (ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
+		((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		/*
 		 * If substituting a local variable in a non-local context,
@@ -1748,7 +1744,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		}
 	    } else if ((vlen > 2) && (*str == '.') &&
 		       isupper((unsigned char) str[1]) &&
-		       ((ctxt == VAR_FOR) || (ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
+		       ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		int	len;
 
@@ -1947,28 +1943,26 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    termc = *--cp;
 		    delim = '\0';
 
-		    if (ctxt != VAR_FOR) {
-			switch (how) {
-			case '+':
-			    Var_Append(v->name, pattern.rhs, v_ctxt);
+		    switch (how) {
+		    case '+':
+			Var_Append(v->name, pattern.rhs, v_ctxt);
+			break;
+		    case '!':
+			newStr = Cmd_Exec (pattern.rhs, &emsg);
+			if (emsg)
+			    Error (emsg, str);
+			else
+			   Var_Set(v->name, newStr,  v_ctxt);
+			if (newStr)
+			    free(newStr);
+			break;
+		    case '?':
+			if ((v->flags & VAR_JUNK) == 0)
 			    break;
-			case '!':
-			    newStr = Cmd_Exec (pattern.rhs, &emsg);
-			    if (emsg)
-				Error (emsg, str);
-			    else
-				Var_Set(v->name, newStr,  v_ctxt);
-			    if (newStr)
-				free(newStr);
-			    break;
-			case '?':
-			    if ((v->flags & VAR_JUNK) == 0)
-				break;
-			    /* FALLTHROUGH */
-			default:
-			    Var_Set(v->name, pattern.rhs, v_ctxt);
-			    break;
-			}
+			/* FALLTHROUGH */
+		    default:
+			Var_Set(v->name, pattern.rhs, v_ctxt);
+			break;
 		    }
 		    if (v->flags & VAR_JUNK) {
 			free(v->name);
@@ -2560,8 +2554,8 @@ cleanup:
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst (junk, str, ctxt, undefErr)
-    char	  *junk;	    /* __DEAD__ */
+Var_Subst (var, str, ctxt, undefErr)
+    char	  *var;		    /* Named variable || NULL for all */
     char 	  *str;	    	    /* the string in which to substitute */
     GNode         *ctxt;	    /* the context wherein to find variables */
     Boolean 	  undefErr; 	    /* TRUE if undefineds are an error */
@@ -2578,7 +2572,7 @@ Var_Subst (junk, str, ctxt, undefErr)
     errorReported = FALSE;
 
     while (*str) {
-	if (ctxt != VAR_FOR && (*str == '$') && (str[1] == '$')) {
+	if (var == NULL && (*str == '$') && (str[1] == '$')) {
 	    /*
 	     * A dollar sign may be escaped either with another dollar sign.
 	     * In such a case, we skip over the escape character and store the
@@ -2598,6 +2592,61 @@ Var_Subst (junk, str, ctxt, undefErr)
 		continue;
 	    Buf_AddBytes(buf, str - cp, (Byte *)cp);
 	} else {
+	    if (var != NULL) {
+		int expand;
+		for (;;) {
+		    if (str[1] != '(' && str[1] != '{') {
+			if (str[1] != *var || strlen(var) > 1) {
+			    Buf_AddBytes(buf, 2, (Byte *) str);
+			    str += 2;
+			    expand = FALSE;
+			}
+			else
+			    expand = TRUE;
+			break;
+		    }
+		    else {
+			char *p;
+
+			/*
+			 * Scan up to the end of the variable name.
+			 */
+			for (p = &str[2]; *p &&
+			     *p != ':' && *p != ')' && *p != '}'; p++)
+			    if (*p == '$')
+				break;
+			/*
+			 * A variable inside the variable. We cannot expand
+			 * the external variable yet, so we try again with
+			 * the nested one
+			 */
+			if (*p == '$') {
+			    Buf_AddBytes(buf, p - str, (Byte *) str);
+			    str = p;
+			    continue;
+			}
+
+			if (strncmp(var, str + 2, p - str - 2) != 0 ||
+			    var[p - str - 2] != '\0') {
+			    /*
+			     * Not the variable we want to expand, scan
+			     * until the next variable
+			     */
+			    for (;*p != '$' && *p != '\0'; p++)
+				continue;
+			    Buf_AddBytes(buf, p - str, (Byte *) str);
+			    str = p;
+			    expand = FALSE;
+			}
+			else
+			    expand = TRUE;
+			break;
+		    }
+		}
+		if (!expand)
+		    continue;
+	    }
+
 	    val = Var_Parse (str, ctxt, undefErr, &length, &doFree);
 
 	    /*
@@ -2716,7 +2765,6 @@ Var_Init ()
 {
     VAR_GLOBAL = Targ_NewGN ("Global");
     VAR_CMD = Targ_NewGN ("Command");
-    VAR_FOR = Targ_NewGN ("For");
 
 }
 
