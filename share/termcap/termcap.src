@@ -11729,6 +11729,14 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 	:k8=\E[OR:k9=\E[OS:kd=\E[B:ke=\E>:kh=\E[H:kl=\E[D:kr=\E[C:\
 	:ks=\E=:ku=\E[A:le=^H:me=\E[m:nd=\E[C:se=\E[m:so=\E[7m:\
 	:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
+# `rasterconsole' provided by 4.4BSD, NetBSD and OpenBSD on SPARC, and 
+# DECstation/pmax.
+rcons|BSD rasterconsole:\
+	:tc=sun-il:
+# Color version of above. Color currenly only provided by NetBSD.
+rcons-color|BSD rasterconsole with ANSI color:\
+	:AF=\E[3%dm:AB=\E[4%dm:Co#8:pa#64:op=\E[m:ut:tc=rcons:
+
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
 # Some non-curses applications get confused if both ich/ich1 and rmir/smir
