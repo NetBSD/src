@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.46 1999/11/09 22:03:50 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.47 1999/11/11 02:53:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 #define	FTP_PRODUCT	"NetBSD-ftp"
 #endif
 #ifndef FTP_VERSION
-#define	FTP_VERSION	"19991110"
+#define	FTP_VERSION	"19991111"
 #endif
 
 #ifdef SMALL
@@ -186,6 +186,7 @@ struct option {
 #endif
 
 #define	DEFAULTPAGER	"more"	/* default pager if $PAGER isn't set */
+#define	DEFAULTPROMPT	"ftp> "	/* default prompt if `set prompt' is empty */
 
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
@@ -272,8 +273,10 @@ GLOBAL	off_t	restart_point;	/* offset to restart transfer */
 GLOBAL	char   *hostname;	/* name of host connected to */
 GLOBAL	int	unix_server;	/* server is unix, can use binary for ascii */
 GLOBAL	int	unix_proxy;	/* proxy is unix, can use binary for ascii */
+GLOBAL	char	remotepwd[MAXPATHLEN];	/* remote dir */
+GLOBAL	char   *username;	/* name of user logged in as. (dynamic) */
 
-GLOBAL	char 	*ftpport;	/* port number to use for FTP connections */
+GLOBAL	char	*ftpport;	/* port number to use for FTP connections */
 GLOBAL	char	*httpport;	/* port number to use for HTTP connections */
 GLOBAL	char	*gateport;	/* port number to use for gateftp connections */
 
@@ -304,8 +307,8 @@ GLOBAL	char	macbuf[4096];
 GLOBAL	char	 home[MAXPATHLEN];	/* home directory (for lcd) */
 GLOBAL	char	 reply_string[BUFSIZ];	/* first line of previous reply */
 
-GLOBAL	FILE   	*cin;
-GLOBAL	FILE   	*cout;
+GLOBAL	FILE	*cin;
+GLOBAL	FILE	*cout;
 GLOBAL	int	 data;
 
 extern	struct cmd	cmdtab[];
