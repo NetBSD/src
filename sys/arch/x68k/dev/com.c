@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.10 1998/01/12 21:13:42 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.11 1998/06/30 11:59:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -157,7 +157,8 @@ extern int kgdb_rate;
 extern int kgdb_debug_init;
 #endif
 
-#define	COMUNIT(x)	(minor(x))
+#define	COMUNIT(x)	(minor(x) & 0x7F)
+#define	COMDIALOUT(x)	(minor(x) & 0x80)
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -420,8 +421,15 @@ comopen(dev, flag, mode, p)
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_dev = dev;
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		SET(tp->t_state, TS_WOPEN);
+
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
+	s = spltty();
+
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -434,8 +442,6 @@ comopen(dev, flag, mode, p)
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
-
-		s = spltty();
 
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
@@ -502,28 +508,17 @@ comopen(dev, flag, mode, p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
-		return EBUSY;
-	else
-		s = spltty();
-
-	/* wait for carrier if necessary */
-	if (!ISSET(flag, O_NONBLOCK))
-		while (!ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON)) {
-			SET(tp->t_state, TS_WOPEN);
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    ttopen, 0);
-			if (error) {
-				/* XXX should turn off chip if we're the
-				   only waiter */
-				splx(s);
-				return error;
-			}
-		}
+	}
 	splx(s);
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+
+	if (!error)
+		error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+	/* XXX cleanup on error */
+
+	return error;
 }
  
 int
