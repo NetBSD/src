@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.5 1996/10/13 03:47:44 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.6 1996/12/17 21:00:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,6 +47,13 @@
 
 #include <dev/ic/z8530sc.h>
 
+struct zsc_softc {
+	struct	device zsc_dev;		/* required first: base device */
+	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	/* Machine-dependent part follows... */
+	struct zs_chanstate  zsc_cs_store[2];
+};
+
 /*
  * Functions to read and write individual registers in a channel.
  * The ZS chip requires a 1.6 uSec. recovery time between accesses,
@@ -63,20 +70,6 @@ void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
 void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
+/* Zilog Serial hardware interrupts (hard-wired at 6) */
+#define splzs()         spl6()
 
-/*
- * How to request a "soft" interrupt.
- * This could be a macro if you like.
- */
-void zsc_req_softint __P((struct zsc_softc *zsc));
-
-/* Handle user request to enter kernel debugger. */
-void zs_abort();
-
-/*
- * Some warts needed by z8530tty.c -
- * The default parity REALLY needs to be the same as the PROM uses,
- * or you can not see messages done with printf during boot-up...
- */
-#define	ZSTTY_MAJOR 	12		/* XXX */
-#define	ZSTTY_DEF_CFLAG 	(CREAD | CS8 | HUPCL)
