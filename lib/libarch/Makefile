@@ -1,7 +1,6 @@
 #	Makefile,v 1.6 1993/09/10 23:32:17 jtc Exp
 
 ARCH?=${MACHINE}
-LIB=	${ARCH}
 
 .if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
 .PATH:	${.CURDIR}/${MACHINE}
@@ -21,4 +20,10 @@ OBJS+= ${ASM}
 POBJS+=	${ASM:.o=.po}
 CLEANFILES+= ${ASM} ${POBJS}
 
+.if exists (${.CURDIR}/${ARCH})
+LIB=	${ARCH}
+
 .include <bsd.lib.mk>
+.else
+all:
+.endif
