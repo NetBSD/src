@@ -1,4 +1,4 @@
-/*	$NetBSD: buserr.h,v 1.4 1994/11/21 21:38:19 gwr Exp $	*/
+/*	$NetBSD: buserr.h,v 1.5 1995/02/11 21:02:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -31,11 +31,13 @@
  * SUCH DAMAGE.
  */
 
-#define BUSERR_WATCHDOG   0x01
-#define BUSERR_FPAENERR   0x04
-#define BUSERR_FPABERR    0x08
-#define BUSERR_VMEBERR    0x10 
-#define BUSERR_TIMEOUT    0x20
-#define BUSERR_PROTERR    0x40
-#define BUSERR_INVALID    0x80
+#define BUSERR_WATCHDOG  0x01		/* Watchdog or User reset */
+/* unused bit:           0x02 */
+#define BUSERR_FPAENERR  0x04		/* FPA Enable error */
+#define BUSERR_FPABERR   0x08		/* FPA Bus error */
+#define BUSERR_VMEBERR   0x10		/* VME Bus error */
+#define BUSERR_TIMEOUT   0x20		/* Timeout error */
+#define BUSERR_PROTERR   0x40		/* MMU protection error */
+#define BUSERR_INVALID   0x80		/* MMU invalid page error */
+#define BUSERR_MMU	(BUSERR_INVALID|BUSERR_PROTERR)
 
