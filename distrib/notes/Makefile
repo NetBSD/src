@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/06/29 09:39:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2002/12/09 14:03:52 scw Exp $
 #
 
 TARGETS+=	release
@@ -16,6 +16,7 @@ SUBDIR+= amiga
 SUBDIR+= atari
 SUBDIR+= cats
 SUBDIR+= evbarm
+SUBDIR+= evbppc
 SUBDIR+= hp300
 SUBDIR+= hpcmips
 SUBDIR+= hpcsh
@@ -38,7 +39,6 @@ SUBDIR+= sparc64
 SUBDIR+= sun2
 SUBDIR+= sun3
 SUBDIR+= vax
-SUBDIR+= walnut
 SUBDIR+= x68k
 .endif
 
