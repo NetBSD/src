@@ -1,10 +1,10 @@
-/*      $NetBSD: sushi.c,v 1.15 2003/10/16 06:19:11 itojun Exp $       */
+/*      $NetBSD: sushi.c,v 1.16 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

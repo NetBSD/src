@@ -1,11 +1,11 @@
-/*	$NetBSD: ifwatchd.c,v 1.16 2003/07/04 14:11:36 abs Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.17 2003/11/12 13:31:07 grant Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@NetBSD.ORG>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,7 +1,7 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.10 2002/07/31 14:41:56 bouyer Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.11 2003/11/12 13:31:07 grant Exp $	*/
 
 /*
- * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>
  * All rights reserved.
  *
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.10 2002/07/31 14:41:56 bouyer Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.11 2003/11/12 13:31:07 grant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

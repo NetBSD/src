@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.13 2002/11/30 03:10:58 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.14 2003/11/12 13:31:08 grant Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,12 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.13 2002/11/30 03:10:58 lukem Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.14 2003/11/12 13:31:08 grant Exp $");
 #endif
 
 /*
  * Originally written by Mats O Jansson <moj@stacken.kth.se>
- * Simplified a bit by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Simplified a bit by Jason R. Thorpe <thorpej@NetBSD.org>
  */
 
 #include <sys/param.h>

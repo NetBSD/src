@@ -1,7 +1,7 @@
-#	$NetBSD: README,v 1.2 1995/07/25 22:20:22 gwr Exp $
+#	$NetBSD: README,v 1.3 2003/11/12 13:31:07 grant Exp $
 
 
-July 1995 -  Ported to NetBSD by Gordon Ross <gwr@netbsd.org>
+July 1995 -  Ported to NetBSD by Gordon Ross <gwr@NetBSD.org>
 
 Note: to build clnt.pcnfsd use the command:
 	make -f Makefile.clnt

@@ -1,10 +1,10 @@
-/*      $NetBSD: run.c,v 1.10 2003/07/16 06:40:47 itojun Exp $       */
+/*      $NetBSD: run.c,v 1.11 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

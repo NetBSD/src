@@ -1,10 +1,10 @@
-/*      $NetBSD: blabel.c,v 1.9 2001/03/03 13:54:22 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.10 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
