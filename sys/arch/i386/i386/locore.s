@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.21 1993/07/02 08:15:32 andrew Exp $
+ *	$Id: locore.s,v 1.22 1993/07/04 05:49:17 andrew Exp $
  */
 
 
@@ -1654,9 +1654,9 @@ LF:	.asciz "swtch %x"
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
 #ifdef KGDB
-#define	BPTTRAP(a)	sti; SHOW_STI; pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	sti; pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	sti; SHOW_STI; TRAP(a)
+#define	BPTTRAP(a)	sti; TRAP(a)
 #endif
 
 	.text
