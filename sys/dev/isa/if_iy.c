@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.4 1997/02/26 21:39:59 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.5 1997/02/26 21:59:52 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -266,6 +266,7 @@ iyattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	u_int16_t eaddr[8];
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+	int eirq;
 
 	iot = ia->ia_iot;
 	
@@ -317,9 +318,15 @@ iyattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-	printf(": address %s, chip rev. %d, %d kB SRAM\n",
+	printf(": address %s, rev. %d, %d kB\n",
 	    ether_sprintf(myaddr),
 	    sc->hard_vers, sc->sram/1024);
+
+	eirq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
+	if (eirq != ia->ia_irq)
+		printf("%s: EEPROM irq setting %d ignored\n",
+		    sc->sc_dev.dv_xname, eirq);
+
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
