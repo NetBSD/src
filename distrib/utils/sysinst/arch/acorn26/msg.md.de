@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/02/29 21:48:09 dsl Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.3 2004/03/03 22:21:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,15 +41,15 @@
 
 
 message md_hello
-{Wenn Sie von einer Diskette gebootet haben, so können Sie diese jetzt
-entnehmen.
+{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
+enfernen.
 
 }
 
 message fullpart
-{Wir installieren jetzt NetBSD auf die Disk %s. Sie können NetBSD über die 
-ganze oder auf nur einen Teil der Festplatte installieren.
-Ihre Wahl?
+{NetBSD wird nun auf die Festplatte %s installiert. Möchten Sie die ganze
+oder nur einen Teil dieser Festplatte für NetBSD verwenden?
+
 }
 
 message badreadbb
@@ -81,6 +81,5 @@ message set_kernel_2
 
 
 message arm32fspart
-{Nachfolgend haben wir Ihre NetBSD Partitionen auf %s
-(Grösse und Offset in %s):
+{Dies sind die NetBSD Partitionen auf %s (Grösse und Offset in %s):
 }
