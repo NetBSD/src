@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.304 2003/12/10 11:40:11 hannken Exp $
+#	$NetBSD: Makefile,v 1.305 2003/12/14 01:00:20 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 adw.4 agp.4 \
@@ -27,7 +27,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 adw.4 agp.4 \
 	pcdisplay.4 pciide.4 pdcide.4 piixide.4 pckbc.4 pckbd.4 pcn.4 pcppi.4 \
 	pcscp.4 pcweasel.4 pms.4 pnaphy.4 ppp.4 pppoe.4 pty.4 puc.4 px.4 \
 	pxg.4  qsphy.4 raid.4 ray.4 rcons.4 rnd.4 route.4 \
-	rtk.4 sbus.4 scc.4 scsi.4 sd.4 se.4 ses.4 sf.4 sfb.4 siop.4 \
+	rtk.4 satalink.4 sbus.4 scc.4 scsi.4 sd.4 se.4 ses.4 sf.4 sfb.4 siop.4 \
 	sip.4 siside.4 sk.4 sl.4 slide.4 stpcide.4 sm.4 spc.4 \
 	speaker.4 spp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sv.4 strip.4 systrace.4 \
 	tb.4 tc.4 tcds.4 tcp.4 \
