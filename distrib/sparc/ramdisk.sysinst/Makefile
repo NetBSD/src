@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/07/04 16:07:00 abs Exp $
+#	$NetBSD: Makefile,v 1.4 1999/11/09 15:48:02 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -35,19 +35,19 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}${RAW_PART}
 VND_CRDEV=	/dev/r${VND}${RAW_PART}
 IMAGE?=		syramdisk-${REV}.fs
-CSIZE?=         2880
+CSIZE?=         3312
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE?=	floppy3
+DISKTYPE?=	floppyinstfs
 
 all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE}
+	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
