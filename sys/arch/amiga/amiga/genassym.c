@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.19 1995/04/02 20:38:20 chopps Exp $	*/
+/*	$NetBSD: genassym.c,v 1.20 1995/05/11 23:04:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -68,6 +68,7 @@ main()
 	register unsigned i;
 	struct CIA *cia = (struct CIA *)0;
 	struct isr *isr = (struct isr *)0;
+	struct mdproc *mdproc = (struct mdproc *)0;
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
 	printf("#define\tP_BACK %d\n", &p->p_back);
@@ -76,6 +77,9 @@ main()
 	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
+	printf("#define\tP_MD %d\n", &p->p_md);
+	printf("#define\tP_PID %d\n", &p->p_pid);
+	printf("#define\tMD_REGS %d\n", &mdproc->md_regs);
 	printf("#define\tSRUN %d\n", SRUN);
 	
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
@@ -84,6 +88,7 @@ main()
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	
 	printf("#define\tUPAGES %d\n", UPAGES);
+	printf("#define\tUSPACE %d\n", USPACE);
 	printf("#define\tNBPG %d\n", NBPG);
 	printf("#define\tPGSHIFT %d\n", PGSHIFT);
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
