@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2000/03/24 23:06:04 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2000/03/28 03:11:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -174,10 +174,12 @@ extern u_int32_t mips3_timer_delta;
 #endif /* MIPS3 */
 
 /*
- * Misc prototypes.
+ * Misc prototypes and variable declarations.
  */
 struct proc;
 struct user;
+
+extern struct proc *fpcurproc;
 
 /* trap.c */
 void	child_return __P((void *));

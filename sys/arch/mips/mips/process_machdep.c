@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2000/03/28 02:58:50 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2000/03/28 02:58:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2000/03/28 02:58:50 simonb 
 #include <mips/regnum.h>			/* symbolic register indices */
 #include <machine/psl.h>
 #include <machine/reg.h>
-
-extern struct proc *fpcurproc;			/* trap.c */
 
 #if !defined(NOFPU) && !defined(SOFTFLOAT)
 void savefpregs __P((struct proc *));
