@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lp.h	5.5 (Berkeley) 6/1/90
- *	$Id: lp.h,v 1.2 1993/08/01 17:59:09 mycroft Exp $
+ *	$Id: lp.h,v 1.3 1993/12/08 00:47:03 jtc Exp $
  */
 
 /*
@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/dir.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>

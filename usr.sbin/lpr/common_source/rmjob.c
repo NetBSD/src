@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmjob.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmjob.c,v 1.2 1993/08/01 17:59:11 mycroft Exp $";
+static char rcsid[] = "$Id: rmjob.c,v 1.3 1993/12/08 00:47:04 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ rmjob()
 {
 	register int i, nitems;
 	int assasinated = 0;
-	struct direct **files;
+	struct dirent **files;
 	char *cp;
 
 	if ((i = pgetent(line, printer)) < 0)
@@ -316,7 +316,7 @@ rmremote()
  * Return 1 if the filename begins with 'cf'
  */
 iscf(d)
-	struct direct *d;
+	struct dirent *d;
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');
 }

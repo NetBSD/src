@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmds.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmds.c,v 1.2 1993/08/01 17:59:00 mycroft Exp $";
+static char rcsid[] = "$Id: cmds.c,v 1.3 1993/12/08 00:50:06 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -209,7 +209,7 @@ clean(argc, argv)
 }
 
 select(d)
-struct direct *d;
+struct dirent *d;
 {
 	int c = d->d_name[0];
 
@@ -223,7 +223,7 @@ struct direct *d;
  * by `cf', `tf', or `df', then by the sequence letter A-Z, a-z.
  */
 sortq(d1, d2)
-struct direct **d1, **d2;
+struct dirent **d1, **d2;
 {
 	int c1, c2;
 
@@ -247,7 +247,7 @@ cleanpr()
 {
 	register int i, n;
 	register char *cp, *cp1, *lp;
-	struct direct **queue;
+	struct dirent **queue;
 	int nitems;
 
 	bp = pbuf;
@@ -696,7 +696,7 @@ prstat()
 {
 	struct stat stbuf;
 	register int fd, i;
-	register struct direct *dp;
+	register struct dirent *dp;
 	DIR *dirp;
 
 	bp = pbuf;
