@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.16 2003/07/24 10:12:27 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.17 2003/10/06 16:08:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ static Elf_Addr *hppa_got_cache_got;
 				  _rtld_fill_hppa_got_cache(obj))
 static Elf_Addr *_rtld_fill_hppa_got_cache(const Obj_Entry *);
 
+void _rtld_bootstrap_hppa_got(Elf_Dyn *, Elf_Addr, Elf_Addr, Elf_Addr);
+int _rtld_relocate_plt_object(const Obj_Entry *, const Elf_Rela *r, caddr_t *);
 /*
  * This bootstraps the dynamic linker by relocating its GOT.
  * On the hppa, unlike on other architectures, static strings
@@ -375,7 +377,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				    rela->r_addend);
 
 				/* This is the ...iffy hueristic. */
-				if (!self ||
+				if (/* !self || XXX */
 				    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
 				    (caddr_t)where >= (caddr_t)_GOT_END_) {
 					if (*where != tmp)
