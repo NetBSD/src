@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 2003/05/16 21:40:41 scw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5 2003/05/19 08:10:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -121,7 +121,7 @@ struct pci_chipset {
 #define	pci_intr_establish(pc, ih, ipl, func, arg) \
 	((*(pc)->pc_funcs->pcf_intr_establish)((pc), (ih), (ipl), (func), (arg)))
 #define	pci_intr_disestablish(pc, ih) \
-	((*(pc)->pc_funcs->pcf_intr_evcnt)((pc), (ih)))
+	((*(pc)->pc_funcs->pcf_intr_disestablish)((pc), (ih)))
 #define	pci_bus_devorder(pc, bus, devs) \
 	((*(pc)->pc_funcs->pcf_bus_devorder)((pc), (bus), (devs)))
 
