@@ -60,11 +60,9 @@ CR0_PE	=	0x1
 	.text
 
 /*
-#
-# real_to_prot()
-# 	transfer from real mode to protected mode.
-*/
-
+ * real_to_prot()
+ * 	transfer from real mode to protected mode.
+ */
 ENTRY(real_to_prot)
 	# guarantee that interrupt is disabled when in prot mode
 	cli
@@ -97,12 +95,9 @@ xprot:
 	ret
 
 /*
-#
-# prot_to_real()
-# 	transfer from protected mode to real mode
-# 
-*/
-
+ * prot_to_real()
+ * 	transfer from protected mode to real mode
+ */
 ENTRY(prot_to_real)
 
 	# set up a dummy stack frame for the second seg change.
@@ -139,19 +134,16 @@ xreal:
 	ret
 
 /*
-#
-# startprog(phyaddr)
-#	start the program on protected mode where phyaddr is the entry point
-#
-*/
-
+ * startprog(phyaddr)
+ *	start the program on protected mode where phyaddr is the entry point
+ */
 ENTRY(startprog)
 	pushl	%ebp
 	movl	%esp, %ebp
 
 	# get things we need into registers
 	movl	0x8(%ebp), %ecx		# entry offset 
-	movl	0x0c(%ebp), %eax	# &argv
+	movl	0xc(%ebp), %eax		# &argv
 
 	# make a new stack at 0:0xa0000 (big segs)
 	movl	$0x10, %ebx
@@ -169,7 +161,7 @@ ENTRY(startprog)
 	pushl	$0			# dummy 'return' address
 	
 	# push on our entry address
-	movl	$0x08, %ebx		# segment
+	movl	$0x8, %ebx		# segment
 	pushl	%ebx
 	pushl	%ecx
 
@@ -180,12 +172,11 @@ ENTRY(startprog)
 
 	# convert the PC (and code seg)
 	lret
-/*
-#
-# pbzero( dst, cnt)
-#	where src is a virtual address and dst is a physical address
-*/
 
+/*
+ * pbzero(dst, cnt)
+ *	where dst is a virtual address and cnt is the length
+ */
 ENTRY(pbzero)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -201,7 +192,7 @@ ENTRY(pbzero)
 
 	movl	0x8(%ebp), %edi		# destination
 	movl	0xc(%ebp), %ecx		# count
-	movl	$0x0, %eax		# value
+	xorl	%eax, %eax		# value
 
 	rep
 	stosb
@@ -212,13 +203,11 @@ ENTRY(pbzero)
 	popl	%ebp
 
 	ret
-/*
-#
-# pcpy(src, dst, cnt)
-#	where src is a virtual address and dst is a physical address
-#
-*/
 
+/*
+ * pcpy(src, dst, cnt)
+ *	where src is a virtual address and dst is a physical address
+ */
 ENTRY(pcpy)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -247,3 +236,39 @@ ENTRY(pcpy)
 	popl	%ebp
 
 	ret
+
+#ifdef CHECKSUM
+/*
+ * cksum(src, cnt)
+ *	where src is a virtual address and cnt is the length
+ */
+ENTRY(cksum)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+	pushl	%edi
+	pushl	%ecx
+
+	cld
+
+	# set %es to point at the flat segment
+	movl	$0x10, %eax
+	movl	%ax, %es
+
+	movl	0x8(%ebp), %edi		# destination
+	movl	0xc(%ebp), %ecx		# count
+	shrl	$2, %ecx
+	xorl	%edx, %edx		# value
+
+1:	es
+	lodsl
+	xorl	%eax, %edx
+	loop	1b
+
+	movl	%edx, %eax
+
+	popl	%ecx
+	popl	%edi
+	popl	%es
+	popl	%ebp
+#endif

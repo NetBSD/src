@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.19 1994/05/01 06:46:27 cgd Exp $
+ *	$Id: boot.c,v 1.20 1994/06/13 19:32:07 mycroft Exp $
  */
 
 /*
@@ -58,6 +58,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 struct exec head;
 int argv[9];
+#ifdef CHECKSUM
+int cflag;
+#endif
 char *name;
 char *names[] = {
 	"/netbsd", "/onetbsd", "/netbsd.old",
@@ -139,6 +142,10 @@ loadprog(howto)
 	/********************************************************/
 	printf("%d", head.a_text);
 	xread(addr, head.a_text);
+#ifdef CHECKSUM
+	if (cflag)
+		printf("(%x)", cksum(addr, head.a_text));
+#endif
 	addr += head.a_text;
 
 	/********************************************************/
@@ -154,6 +161,10 @@ loadprog(howto)
 
 	printf("+%d", head.a_data);
 	xread(addr, head.a_data);
+#ifdef CHECKSUM
+	if (cflag)
+		printf("(%x)", cksum(addr, head.a_data));
+#endif
 	addr += head.a_data;
 
 	/********************************************************/
@@ -176,6 +187,10 @@ loadprog(howto)
 	/********************************************************/
 	printf("+[%d", head.a_syms);
 	xread(addr, head.a_syms);
+#ifdef CHECKSUM
+	if (cflag)
+		printf("(%x)", cksum(addr, head.a_syms));
+#endif
 	addr += head.a_syms;
 	
 	/********************************************************/
@@ -189,6 +204,10 @@ loadprog(howto)
 		addr += sizeof(int);
 		printf("+%d", i);
 		xread(addr, i);
+#ifdef CHECKSUM
+		if (cflag)
+			printf("(%x)", cksum(addr, i));
+#endif
 		addr += i;
 	}
 
@@ -202,6 +221,11 @@ loadprog(howto)
 	/* and note the end address of all this			*/
 	/********************************************************/
 	printf("=0x%x\n", addr);
+
+#ifdef CHECKSUM
+	if (cflag)
+		return;
+#endif
 
 	/*
 	 *  We now pass the various bootstrap parameters to the loaded
@@ -243,6 +267,9 @@ getbootdev(howto)
 	char c, *ptr = namebuf;
 	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] :- ",
 	    devs[maj], unit, 'a'+part, name);
+#ifdef CHECKSUM
+	cflag = 0;
+#endif
 	if (gets(namebuf)) {
 		while (c = *ptr) {
 			while (c == ' ')
@@ -255,6 +282,10 @@ getbootdev(howto)
 						*howto |= RB_ASKNAME;
 					else if (c == 'b')
 						*howto |= RB_HALT;
+#ifdef CHECKSUM
+					else if (c == 'c')
+						cflag = 1;
+#endif
 					else if (c == 'd')
 						*howto |= RB_KDB;
 					else if (c == 'r')
