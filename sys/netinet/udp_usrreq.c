@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.31 1996/05/23 16:22:32 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.32 1996/05/23 17:03:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -494,11 +494,10 @@ udp_usrreq(so, req, m, nam, control, p)
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
-	if (control && control->m_len) {
-		m_freem(control);
-		error = EINVAL;
-		goto release;
-	}
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("udp_usrreq: unexpected control mbuf");
+#endif
 	if (inp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -566,6 +565,12 @@ udp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 	{
 		struct in_addr laddr;
 
@@ -573,15 +578,18 @@ udp_usrreq(so, req, m, nam, control, p)
 			laddr = inp->inp_laddr;
 			if ((so->so_state & SS_ISCONNECTED) != 0) {
 				error = EISCONN;
-				break;
+				goto die;
 			}
 			error = in_pcbconnect(inp, nam);
-			if (error)
+			if (error) {
+			die:
+				m_freem(m);
 				break;
+			}
 		} else {
 			if ((so->so_state & SS_ISCONNECTED) == 0) {
 				error = ENOTCONN;
-				break;
+				goto die;
 			}
 		}
 		error = udp_output(m, control, inp);
@@ -604,6 +612,7 @@ udp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SENDOOB:
+		m_freem(control);
 		m_freem(m);
 		error =  EOPNOTSUPP;
 		break;

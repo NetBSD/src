@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.27 1996/05/23 16:12:15 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.28 1996/05/23 17:03:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -312,11 +312,10 @@ rip_usrreq(so, req, m, nam, control, p)
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
-	if (control && control->m_len) {
-		m_freem(control);
-		error = EINVAL;
-		goto release;
-	}
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("rip_usrreq: unexpected control mbuf");
+#endif
 	if (inp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -415,32 +414,35 @@ rip_usrreq(so, req, m, nam, control, p)
 	 * routine handles any massaging necessary.
 	 */
 	case PRU_SEND:
-	    {
-		struct in_addr faddr;
-
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
+	{
 		if (nam) {
 			if ((so->so_state & SS_ISCONNECTED) != 0) {
-				m_freem(m);
 				error = EISCONN;
-				break;
+				goto die;
 			}
 			error = rip_connect(inp, nam);
 			if (error) {
+			die:
 				m_freem(m);
 				break;
 			}
 		} else {
 			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				m_freem(m);
 				error = ENOTCONN;
-				break;
+				goto die;
 			}
 		}
 		error = rip_output(m, inp);
 		if (nam)
 			rip_disconnect(inp);
+	}
 		break;
-	    }
 
 	case PRU_SENSE:
 		/*
@@ -454,6 +456,7 @@ rip_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SENDOOB:
+		m_freem(control);
 		m_freem(m);
 		error = EOPNOTSUPP;
 		break;
