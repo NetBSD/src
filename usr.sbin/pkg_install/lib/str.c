@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.40 2002/11/14 09:40:23 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.41 2002/11/26 14:46:45 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.40 2002/11/14 09:40:23 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.41 2002/11/26 14:46:45 agc Exp $");
 #endif
 #endif
 
@@ -153,6 +153,7 @@ static const test_t	modifiers[] = {
 	{	"beta",		4,	Beta	},
 	{	"rc",		2,	RC	},
 	{	"pl",		2,	Dot	},
+	{	"_",		1,	Dot	},
 	{	".",		1,	Dot	},
         {	NULL,		0,	0	}
 };
@@ -197,13 +198,6 @@ mkcomponent(arr_t *ap, char *num)
 		return 0;
 	}
 	ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
-	if (*num == '_') {
-		num += 1;
-		if (isdigit(*(num + 1))) {
-			ap->v[ap->c++] = Dot;
-			return 1;
-		}
-	}
 	if (isdigit(*num)) {
 		for (cp = num, n = 0 ; isdigit(*num) ; num++) {
 			n = (n * 10) + (*num - '0');
