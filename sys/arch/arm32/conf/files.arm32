@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.110 2001/05/06 18:31:15 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.111 2001/05/06 18:38:58 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -362,13 +362,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
-
-# files related to the shell
-file	arch/arm32/kshell/kshell_input.c	kshell
-file	arch/arm32/kshell/kshell_shell.c	kshell
-file	arch/arm32/kshell/kshell_disassem.c	kshell
-file	arch/arm32/kshell/kshell_dumphex.c	kshell
-file	arch/arm32/kshell/kshell_debug.c	kshell
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
