@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.58 2001/06/02 18:09:25 chs Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.59 2001/06/05 04:39:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -230,6 +230,10 @@ malloc(size, type, flags)
 
 	if (__predict_false(((unsigned long)type) > M_LAST))
 		panic("malloc - bogus type");
+#endif
+#ifdef LOCKDEBUG
+	if ((flags & M_NOWAIT) == 0)
+		simple_lock_only_held(NULL, "malloc");
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
@@ -569,6 +573,11 @@ realloc(curaddr, newsize, type, flags)
 		free(curaddr, type);
 		return (NULL);
 	}
+
+#ifdef LOCKDEBUG
+	if ((flags & M_NOWAIT) == 0)
+		simple_lock_only_held(NULL, "realloc");
+#endif
 
 	/*
 	 * Find out how large the old allocation was (and do some
