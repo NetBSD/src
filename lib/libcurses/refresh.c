@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.31 2000/05/19 01:05:44 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.32 2000/05/19 04:15:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.31 2000/05/19 01:05:44 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.32 2000/05/19 04:15:55 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -742,10 +742,11 @@ quickch(void)
 	 */
 	for (top = 0; top < __virtscr->maxy; top++)
 		if (__virtscr->lines[top]->flags & __FORCEPAINT ||
-		    __virtscr->lines[top]->hash != curscr->lines[top]->hash
-		    || memcmp(__virtscr->lines[top]->line,
-			curscr->lines[top]->line,
-			(size_t) __virtscr->maxx * __LDATASIZE) != 0)
+		    (__virtscr->lines[top]->flags & __ISDIRTY &&
+		     (__virtscr->lines[top]->hash != curscr->lines[top]->hash
+		      || memcmp(__virtscr->lines[top]->line,
+			  curscr->lines[top]->line,
+			  (size_t) __virtscr->maxx * __LDATASIZE) != 0)))
 			break;
 		else
 			__virtscr->lines[top]->flags &= ~__ISDIRTY;
@@ -754,10 +755,11 @@ quickch(void)
 	 */
 	for (bot = __virtscr->maxy - 1; bot >= 0; bot--)
 		if (__virtscr->lines[bot]->flags & __FORCEPAINT ||
-		    __virtscr->lines[bot]->hash != curscr->lines[bot]->hash
-		    || memcmp(__virtscr->lines[bot]->line,
-			curscr->lines[bot]->line,
-			(size_t) __virtscr->maxx * __LDATASIZE) != 0)
+		    (__virtscr->lines[bot]->flags & __ISDIRTY &&
+		     (__virtscr->lines[bot]->hash != curscr->lines[bot]->hash
+		      || memcmp(__virtscr->lines[bot]->line,
+			  curscr->lines[bot]->line,
+			  (size_t) __virtscr->maxx * __LDATASIZE) != 0)))
 			break;
 		else
 			__virtscr->lines[bot]->flags &= ~__ISDIRTY;
@@ -813,13 +815,17 @@ quickch(void)
 				    curs < starts + bsize; curw++, curs++)
 					if (__virtscr->lines[curw]->flags &
 					    __FORCEPAINT ||
-					    (__virtscr->lines[curw]->hash !=
-						curscr->lines[curs]->hash ||
-						memcmp(__virtscr->lines[curw]
-						    ->line,
-						    curscr->lines[curs]->line,
-						    (size_t) __virtscr->maxx *
-						    __LDATASIZE) != 0))
+					    __virtscr->lines[curw]->hash !=
+						curscr->lines[curs]->hash)
+						break;
+				if (curs != starts + bsize)
+					continue;
+				for (curw = startw, curs = starts;
+				    curs < starts + bsize; curw++, curs++)
+					if (memcmp(__virtscr->lines[curw]->line,
+					    curscr->lines[curs]->line,
+					    (size_t) __virtscr->maxx *
+					    __LDATASIZE) != 0)
 						break;
 				if (curs == starts + bsize)
 					goto done;
