@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.14 1999/01/30 17:45:42 christos Exp $	 */
+/* $NetBSD: installboot.c,v 1.15 1999/09/10 16:45:27 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <md5.h>
 #include <sys/ioctl.h>
 
 #include "loadfile.h"
@@ -77,12 +78,16 @@ struct fraglist *fraglist;
 
 struct nlist nl[] = {
 #define X_fraglist	0
+#define X_boottimeout	1
+#define X_bootpasswd	2
 #ifdef __ELF__
 	{{"fraglist"}},
-#define SYM_TYPE N_EXT
+	{{"boottimeout"}},
+	{{"bootpasswd"}},
 #else
 	{{"_fraglist"}},
-#define SYM_TYPE (N_TEXT|N_EXT)
+	{{"_boottimeout"}},
+	{{"_bootpasswd"}},
 #endif
 	{{NULL}}
 };
@@ -97,23 +102,20 @@ loadprotoblocks(fname, size)
 	size_t *size;
 {
 	int fd;
-	struct nlist *nlp;
 	u_long marks[MARK_MAX], bp;
 
 	fd = -1;
 
 	/* Locate block number array in proto file */
-	if (nlist(fname, nl) != 0) {
-		warnx("nlist: %s: symbols not found", fname);
+	if (nlist(fname, nl) < 0) {
+		warn("nlist: %s", fname);
 		return NULL;
 	}
-	/* Validate symbol types (global text!). */
-	for (nlp = nl; nlp->n_un.n_name; nlp++) {
-		if (nlp->n_type != SYM_TYPE) {
-			warnx("nlist: %s: wrong type %d", nlp->n_un.n_name,
-			    nlp->n_type);
-			return NULL;
-		}
+
+	if (nl[X_fraglist].n_value == 0) {
+		/* fraglist is mandatory, other stuff is optional */
+		warnx("nlist: no fraglist");
+		return NULL;
 	}
 
 	marks[MARK_START] = 0;
@@ -435,14 +437,24 @@ main(argc, argv)
 	char *bootblkname = DEFBBLKNAME;
 	int nowrite = 0;
 	int allok = 0;
+	int timeout = -1;
+	char *bootpasswd = 0;
 	ino_t (*save_func) __P((char *, char *, char *, unsigned int));
 
-	while ((c = getopt(argc, argv, "b:vnf")) != -1) {
+	while ((c = getopt(argc, argv, "b:vnft:p:")) != -1) {
 		switch (c) {
 		case 'b':
 			/* generic override, supply starting block # */
 			conblockmode = 1;
 			conblockstart = atoi(optarg);
+			break;
+		case 't':
+			/* boot timeout */
+			timeout = atoi(optarg);
+			break;
+		case 'p':
+			/* boot password */
+			bootpasswd = optarg;
 			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -468,6 +480,28 @@ main(argc, argv)
 	bp = loadprotoblocks(argv[optind], &size);
 	if (!bp)
 		errx(1, "error reading bootblocks");
+
+	if (timeout >= 0) {
+		if (nl[X_boottimeout].n_value != 0)
+			*((int *)(bp + nl[X_boottimeout].n_value)) = timeout;
+		else {
+			warnx("no timeout support in bootblock");
+			goto out;
+		}
+	}
+
+	if (bootpasswd) {
+		if (nl[X_bootpasswd].n_value != 0) {
+			MD5_CTX md5ctx;
+
+			MD5Init(&md5ctx);
+			MD5Update(&md5ctx, bootpasswd, strlen(bootpasswd));
+			MD5Final(bp + nl[X_bootpasswd].n_value, &md5ctx);
+		} else {
+			warnx("no password support in bootblock");
+			goto out;
+		}
+	}
 
 	fraglist->numentries = 0;
 
