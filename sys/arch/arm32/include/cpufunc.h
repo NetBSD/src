@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6 1998/01/19 23:51:01 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.7 1998/02/21 23:17:05 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -273,6 +273,19 @@ void	sa110_setup		__P((char *string));
 #define sync_caches	cpu_cache_syncI
 #define sync_icache	cpu_cache_syncI
 #define drain_writebuf	cpu_drain_writebuf
+
+/*
+ * Macros for manipulating CPU interrupts
+ */
+
+#define disable_interrupts(mask) \
+	(SetCPSR((mask) & (I32_bit | F32_bit), (mask) & (I32_bit | F32_bit)))
+
+#define enable_interrupts(mask) \
+	(SetCPSR((mask) & (I32_bit | F32_bit), 0))
+
+#define restore_interrupts(old_cpsr) \
+	(SetCPSR((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
 
 /*
  * Functions to manipulate the CPSR
