@@ -1,4 +1,4 @@
-/*	$NetBSD: wwterminfo.c,v 1.3 1997/12/31 06:56:04 thorpej Exp $	*/
+/*	$NetBSD: wwterminfo.c,v 1.4 1999/04/20 13:52:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwterminfo.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwterminfo.c,v 1.3 1997/12/31 06:56:04 thorpej Exp $");
+__RCSID("$NetBSD: wwterminfo.c,v 1.4 1999/04/20 13:52:36 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,8 @@ wwterminfoinit()
 
 		/* make the directory */
 	(void) sprintf(wwterminfopath, "%swwinXXXXXX", _PATH_TMP);
-	mktemp(wwterminfopath);
-	if (mkdir(wwterminfopath, 0755) < 0 ||
-	    chmod(wwterminfopath, 00755) < 0) {
+	if (mkdtemp(wwterminfopath) == NULL) ||
+	    chmod(wwterminfopath, 0755) < 0) {
 		wwerrno = WWE_SYS;
 		return -1;
 	}
