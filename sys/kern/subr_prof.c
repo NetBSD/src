@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.26 2003/01/18 10:06:33 thorpej Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.27 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.26 2003/01/18 10:06:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.27 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.26 2003/01/18 10:06:33 thorpej Exp $
 #ifdef GPROF
 #include <sys/malloc.h>
 #include <sys/gmon.h>
+
+MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
 
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.4 2001/11/15 09:48:11 lukem Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.4 2001/11/15 09:48:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.5 2003/02/01 06:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,8 @@ cs428x_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-cs428x_malloc(void *addr, int direction, size_t size, int pool, int flags)
+cs428x_malloc(void *addr, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct cs428x_softc *sc;
 	struct cs428x_dma   *p;
@@ -157,7 +158,7 @@ cs428x_malloc(void *addr, int direction, size_t size, int pool, int flags)
 }
 
 void
-cs428x_free(void *addr, void *ptr, int pool)
+cs428x_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct cs428x_softc *sc;
 	struct cs428x_dma **pp, *p;
@@ -311,7 +312,7 @@ cs428x_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
 /* Internal functions */
 int
 cs428x_allocmem(struct cs428x_softc *sc, 
-		size_t size, int pool, int flags,
+		size_t size, struct malloc_type *pool, int flags,
 		struct cs428x_dma *p)
 {
 	int error;

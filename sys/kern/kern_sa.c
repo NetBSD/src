@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.3 2003/01/19 12:59:59 scw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.4 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.3 2003/01/19 12:59:59 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.4 2003/02/01 06:23:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ static int sa_newcachelwp(struct lwp *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
 
 void sa_upcall_getstate(struct sadata_upcall *, struct lwp *, struct lwp *);
+
+MALLOC_DEFINE(M_SA, "sa", "Scheduler activations");
 
 #define SA_DEBUG
 

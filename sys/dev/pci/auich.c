@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.35 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.36 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.35 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.36 2003/02/01 06:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,8 @@ int	auich_getdev(void *, struct audio_device *);
 int	auich_set_port(void *, mixer_ctrl_t *);
 int	auich_get_port(void *, mixer_ctrl_t *);
 int	auich_query_devinfo(void *, mixer_devinfo_t *);
-void	*auich_allocm(void *, int, size_t, int, int);
-void	auich_freem(void *, void *, int);
+void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
+void	auich_freem(void *, void *, struct malloc_type *);
 size_t	auich_round_buffersize(void *, int, size_t);
 paddr_t	auich_mappage(void *, void *, off_t, int);
 int	auich_get_props(void *);
@@ -883,7 +883,8 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 void *
-auich_allocm(void *v, int direction, size_t size, int pool, int flags)
+auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
+    int flags)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
@@ -909,7 +910,7 @@ auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 }
 
 void
-auich_freem(void *v, void *ptr, int pool)
+auich_freem(void *v, void *ptr, struct malloc_type *pool)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p, **pp;

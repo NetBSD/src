@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.62 2003/01/31 04:55:52 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.63 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.62 2003/01/31 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.63 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,8 @@ static struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char mclpool_warnmsg[] =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
+
+MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 
 /*
  * Initialize the mbuf allcator.
