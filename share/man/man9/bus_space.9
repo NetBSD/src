@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.22 2002/02/11 22:05:13 eeh Exp $
+.\" $NetBSD: bus_space.9,v 1.23 2002/02/11 22:09:18 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -427,40 +427,40 @@ Because some architectures' memory systems use buffering to improve
 memory and device access performance, there is a mechanism which can be
 used to create
 .Dq barriers
-in the bus space read and write stream.  
-
-There are two types of barriers: ordering barriers and completion 
-barriers.  
+in the bus space read and write stream.
 .Pp
-Ordering barriers prevent some operations from bypassing other 
-operations.  They are relatively light weight and described in terms 
-of the operations they are intended to order.  The important thing 
-to note is that they create specific ordering constraint surrounding 
+There are two types of barriers: ordering barriers and completion
+barriers.
+.Pp
+Ordering barriers prevent some operations from bypassing other
+operations.  They are relatively light weight and described in terms
+of the operations they are intended to order.  The important thing
+to note is that they create specific ordering constraint surrounding
 bus accesses but do not necessarily force any synchronization themselves.
-So, if there is enough distance between the memory operations being 
-ordered, the preceeding ones could complete by themselves resulting 
+So, if there is enough distance between the memory operations being
+ordered, the preceeding ones could complete by themselves resulting
 in no performance penalty.
 .Pp
-For instance, a write before read barrier will force any writes 
-issued before the barrier instruction to complete before any reads 
+For instance, a write before read barrier will force any writes
+issued before the barrier instruction to complete before any reads
 after the barrier are issued.  This forces processors
 with write buffers to read data from memory rather than from the
-pending write in the write buffer.  
+pending write in the write buffer.
 .Pp
-Ordering barriers are usually sufficient for most circumstances, 
-and can be combined together.  For instance a read before write 
-barrier can be combined with a write before write barrier to force 
-all memory operations to complete before the next write is started. 
+Ordering barriers are usually sufficient for most circumstances,
+and can be combined together.  For instance a read before write
+barrier can be combined with a write before write barrier to force
+all memory operations to complete before the next write is started.
 .Pp
-Completion barriers force all memory operations and any pending 
+Completion barriers force all memory operations and any pending
 exceptions to be completed before any instructions after the
 barrier may be issued.  Completion barriers are extremely expensive
 and almost never required in device driver code.  A single completion
 barrier can force the processor to stall on memory for hundreds
 of cycles on some machines.
 .Pp
-Correctly-written drivers will include all appropriate barriers, 
-and assume only the read/write ordering imposed by the barrier 
+Correctly-written drivers will include all appropriate barriers,
+and assume only the read/write ordering imposed by the barrier
 operations.
 .Pp
 People trying to write portable drivers with the
@@ -1068,7 +1068,7 @@ argument controls what types of operations are to be ordered.
 Supported flags are:
 .Bl -tag -width BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE -offset indent
 .It Dv BUS_SPACE_BARRIER_READ_BEFORE_READ
-Force all reads before the barrier to complete before any reads 
+Force all reads before the barrier to complete before any reads
 after the barrier may be issued.
 .It Dv BUS_SPACE_BARRIER_READ_BEFORE_WRITE
 Force all reads before the barrier to complete before any writes
@@ -1080,11 +1080,11 @@ after the barrier may be issued.
 Force all writes before the barrier to complete before any writes
 after the barrier may be issued.
 .It Dv BUS_SPACE_BARRIER_SYNC
-Force all memory operations and any pending exceptions to be 
+Force all memory operations and any pending exceptions to be
 completed before any instructions after the barrier may be issued.
 .El
 .Pp
-Those flags can be combined (or-ed together) to enforce ordering on 
+Those flags can be combined (or-ed together) to enforce ordering on
 different combinations of read and write operations.
 .Pp
 All of the specified type(s) of operation which are done to the region
@@ -1119,7 +1119,7 @@ second write is issued, so that two writes to the input port are done
 in order and are not collapsed into a single write.  This ensures that
 the data bytes are written to the device correctly and in order.
 .Pp
-The second barrier forces the writes to the output port finish before 
+The second barrier forces the writes to the output port finish before
 any of the reads to the input port are issued, thereby making sure
 that all of the writes are finished before data is read.  This ensures
 that the first byte read from the device really is the last one that was
@@ -1134,7 +1134,7 @@ easier) to make barrier operations cover the device's whole range of bus
 space, that is, to specify an offset of zero and the size of the
 whole region.
 .Pp
-The following barrier operations are obsolete and should be removed 
+The following barrier operations are obsolete and should be removed
 from existing code:
 .Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
 .It Dv BUS_SPACE_BARRIER_READ
