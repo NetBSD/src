@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.1 2001/02/09 18:34:47 uch Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.2 2001/03/25 17:14:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -292,6 +292,7 @@ MemoryManager_VirtualCopy::MemoryManager_VirtualCopy(Console *&cons,
 						     size_t pagesize) 
 	: MemoryManager(cons, pagesize)
 {
+	_search_guess = 0;
 	DPRINTF((TEXT("use VirtualCopy method.\n")));
 }
 
@@ -307,11 +308,17 @@ MemoryManager_VirtualCopy::searchPage(vaddr_t vaddr)
 
 	// search all D-RAM bank.
 	setMagic(vaddr);
+ retry:
 	for (i = 0; i < _nbank; i++) {
 		paddr = searchBank(i);
 		if (paddr != ~0)
 			break;
 	}
+	if (_search_guess != 0 && paddr == ~0) {
+		_search_guess = 0;
+		goto retry;
+	}
+
 	clearMagic();
 
 	return paddr;
@@ -322,10 +329,17 @@ MemoryManager_VirtualCopy::searchBank(int banknum)
 {
 	LPVOID ref;
 	paddr_t paddr, pstart, pend, pfound = ~0;
+	paddr_t bstart, bend;
 	vaddr_t ofs;
 
-	pstart = _bank[banknum].addr;
-	pend = pstart + _bank[banknum].size;
+	bstart = _bank[banknum].addr;
+	bend = _bank[banknum].addr + _bank[banknum].size;
+
+	pstart = _search_guess ? _search_guess : bstart;
+	pend = bend;
+
+	if (pstart < bstart || pstart >= pend)
+		return pfound;
 
 	// reserve physical reference region
 	ref = VirtualAlloc(0, BLOCK_SIZE, MEM_RESERVE, PAGE_NOACCESS);
@@ -355,6 +369,7 @@ MemoryManager_VirtualCopy::searchBank(int banknum)
 
 		if (ofs != ~0) {
 			pfound = paddr + ofs;
+			_search_guess = paddr;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: memory.h,v 1.1 2001/02/09 18:34:48 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: memory.h,v 1.2 2001/03/25 17:14:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -156,6 +156,9 @@ public:
 //
 class MemoryManager_VirtualCopy : public MemoryManager {
 private:
+	// search guess
+	paddr_t _search_guess;
+	
 	// Memory marker
 	u_int32_t _magic0, _magic1;
 	volatile u_int32_t *_magic_addr;
