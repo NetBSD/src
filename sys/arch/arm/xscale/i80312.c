@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.5 2001/11/29 08:27:11 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.6 2001/11/30 19:29:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -258,17 +258,19 @@ i80312_attach(struct i80312_softc *sc)
 	i80312_pci_init(&sc->sc_pci_chipset, sc);
 
 	/*
-	 * Attach the PCI bus.  Note that if we're a host, we can
-	 * safely probe for devices on the Primary bus.  If we're
-	 * a slave, we must limit ourselves to our Secondary bus,
-	 * specifically, the private devices on the Secondary bus.
+	 * Attach the PCI bus.
+	 *
+	 * Note: We only probe the Secondary PCI bus, since that
+	 * is the only bus on which we can have a private device
+	 * space.
 	 */
+	preg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
-	pba.pba_bus = 1;	/* XXX for now */
+	pba.pba_bus = PPB_BUSINFO_SECONDARY(preg);
 	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED /* |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
