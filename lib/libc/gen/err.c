@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)err.c	5.2 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: err.c,v 1.5 1993/10/13 18:42:31 jtc Exp $";
+static char *rcsid = "$Id: err.c,v 1.6 1993/11/06 00:27:23 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -126,7 +126,6 @@ void
 warn(const char *fmt, ...)
 #else
 warn(fmt, va_alist)
-	int eval;
 	const char *fmt;
 	va_dcl
 #endif
@@ -162,7 +161,6 @@ void
 warnx(const char *fmt, ...)
 #else
 warnx(fmt, va_alist)
-	int eval;
 	const char *fmt;
 	va_dcl
 #endif
