@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 2001/09/08 11:14:33 thomas Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 2002/01/07 02:54:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -380,7 +380,7 @@ ENTRY_NOPROFILE(lev6intr)
 	clrw	%sp@-			|	padded to longword
 	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
 	movew	#0xffff,%a0@(PLX_PCICR)	| clear PCI_SR error bits
-	movel	a0@(PLX_CNTRL),%d0	| Change PCI command code from
+	movel	%a0@(PLX_CNTRL),%d0	| Change PCI command code from
 	andw	#0xf0ff,%d0
 	movw	%sr,%d2			| Block interrupts for now
 	oriw	#0x0700,%sr
