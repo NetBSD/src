@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.1.1.1 1997/05/27 22:18:16 thorpej Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.2 1997/05/28 03:04:44 thorpej Exp $	*/
 
 /*
  * ipsend.h (C) 1997 Darren Reed
@@ -27,7 +27,15 @@
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
+/*
+ * XXX use the version in <netinet/tcpip.h> right now; the ipfilter
+ * XXX version cannot be redistributed!
+ */
+#if 0
 #include "tcpip.h"
+#else
+#include <netinet/tcpip.h>
+#endif
 #include "ipt.h"
 
 extern	int	resolve __P((char *, char *));
