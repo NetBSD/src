@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.2 1994/06/24 08:17:42 deraadt Exp $
+ *	$Id: sprayd.c,v 1.3 1995/01/13 06:14:37 mycroft Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.2 1994/06/24 08:17:42 deraadt Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.3 1995/01/13 06:14:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,6 +69,7 @@ main(argc, argv)
 	/*
 	 * See if inetd started us
 	 */
+	fromlen = sizeof(from);
 	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		from_inetd = 0;
 		sock = RPC_ANYSOCK;

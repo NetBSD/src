@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusersd.c,v 1.6 1994/07/11 21:51:58 mycroft Exp $";
+static char rcsid[] = "$Id: rusersd.c,v 1.7 1995/01/13 06:14:32 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,6 +62,7 @@ main(argc, argv)
         /*
          * See if inetd started us
          */
+	fromlen = sizeof(from);
         if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
                 from_inetd = 0;
                 sock = RPC_ANYSOCK;

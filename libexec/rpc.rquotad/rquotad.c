@@ -60,19 +60,24 @@ main(argc, argv)
 	struct sockaddr_in from;
 	int     fromlen;
 
-	openlog("rquotad", LOG_PID, LOG_DAEMON);
-	if (getsockname(0, (struct sockaddr *) & from, &fromlen) < 0) {
+	fromlen = sizeof(from);
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		from_inetd = 0;
 		sock = RPC_ANYSOCK;
 		proto = IPPROTO_UDP;
 	}
+
 	if (!from_inetd) {
 		daemon(0, 0);
+
 		pmap_unset(RQUOTAPROG, RQUOTAVERS);
+
 		signal(SIGINT, exit_svc);	/* trap some signals */
 		signal(SIGQUIT, exit_svc);	/* to unregister the service */
 		signal(SIGTERM, exit_svc);	/* before exiting */
 	}
+
+	openlog("rpc.rquotad", LOG_PID, LOG_DAEMON);
 
 	/* create and register the service */
 	if ((transport = svcudp_create(sock)) == NULL) {
