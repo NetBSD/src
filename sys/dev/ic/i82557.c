@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.19 2000/02/12 03:55:49 enami Exp $	*/
+/*	$NetBSD: i82557.c,v 1.20 2000/02/12 04:05:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -871,7 +871,7 @@ fxp_intr(arg)
 	u_int8_t statack;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return 0;
+		return (0);
 	/*
 	 * If the interface isn't running, don't try to
 	 * service the interrupt.. just ack it and bail.
@@ -882,7 +882,7 @@ fxp_intr(arg)
 			claimed = 1;
 			CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
 		}
-		return claimed;
+		return (claimed);
 	}
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
@@ -1075,6 +1075,9 @@ fxp_tick(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct fxp_stats *sp = &sc->sc_control_data->fcd_stats;
 	int s;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
 
 	s = splnet();
 
@@ -1868,6 +1871,42 @@ fxp_disable(sc)
 	}
 }
 
+/*
+ * fxp_activate:
+ *
+ *	Handle device activation/deactivation requests.
+ */
+int
+fxp_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct fxp_softc *sc = (void *) self;
+	int s, error = 0;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_flags & FXPF_MII)
+			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
+			    MII_OFFSET_ANY);
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+
+	return (error);
+}
+
+/*
+ * fxp_detach:
+ *
+ *	Detach an i82557 interface.
+ */
 int
 fxp_detach(sc)
 	struct fxp_softc *sc;
