@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 2001/01/03 18:14:46 itojun Exp $
+#	$NetBSD: GENERIC,v 1.3 2001/01/16 00:33:50 marcus Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -9,27 +9,33 @@ include "arch/dreamcast/conf/std.dreamcast"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
+#options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
+options		MINIROOTSIZE=6000
 
 options 	DONT_INIT_BSC
+
+# wscons options
+options		RCONS_16BPP
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 maxusers	16		# estimated number of users
 
 # CPU support
 options 	SH7750
 options		SH4
+options		DREAMCAST
 # options		SH4_PCMCIA
 options 	EVBSH4
-options 	MMEYE
+#options 	MMEYE
 options		PCLOCK=50000000		# 50MHz
 options		IOM_ROM_BEGIN=0x00000000
 options		IOM_ROM_SIZE=0x00100000	#  1MB
 options		IOM_RAM_BEGIN=0x8c000000
 options		IOM_RAM_SIZE=0x01000000	# 16MB
-options		INITTODR_ALWAYS_USE_RTC
-options		BRAINS
-options		USE_RTCCLK
-options		SYNC_CLOCK_TO_RTC
+#options		INITTODR_ALWAYS_USE_RTC
+#options		BRAINS
+#options		USE_RTCCLK
+#options		SYNC_CLOCK_TO_RTC
 
 options		LED_ADDR=0xa8000000
 
@@ -100,10 +106,20 @@ mainbus0 at root
 
 shb*	at mainbus?
 
+maple0	at shb?
+
 # Serial Devices
 
 options	SCIFCN_SPEED=57600
 scif0 at shb? port 0xffe80000 irq 12
+
+pvr0    at shb?
+
+mkbd*	at maple?
+
+wsdisplay*      at pvr? console ?
+wskbd*          at mkbd? console ?
+
 
 # SH PCMCIA controllers
 #shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000

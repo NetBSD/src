@@ -1,9 +1,11 @@
-#	$NetBSD: files.dreamcast,v 1.1 2000/12/11 18:19:12 marcus Exp $
+#	$NetBSD: files.dreamcast,v 1.2 2001/01/16 00:33:50 marcus Exp $
 #
 # new style config file for sh3 architecture
 #
 
 include "arch/dreamcast/conf/files.shbus"
+
+include "dev/wscons/files.wscons"
 
 file	arch/dreamcast/dreamcast/conf.c
 file	arch/dreamcast/dreamcast/machdep.c
@@ -14,3 +16,17 @@ defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 			BSC_WCR3_VAL BSC_MCR_VAL BSC_SDMR2_VAL BSC_SDMR3_VAL
 			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
 			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL
+
+device maple { }
+attach maple at shb
+file	arch/dreamcast/dev/maple/maple.c	maple
+
+device	mkbd: wskbddev
+attach	mkbd at maple
+file	arch/dreamcast/dev/maple/mkbd.c		mkbd needs-flag
+
+
+device  pvr: wsemuldisplaydev, wsrasteremulops
+attach  pvr at shb
+file    arch/dreamcast/dev/pvr.c  pvr needs-flag
+
