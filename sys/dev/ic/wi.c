@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.77 2002/08/11 01:30:28 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.78 2002/08/11 01:35:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.77 2002/08/11 01:30:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.78 2002/08/11 01:35:10 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -319,10 +319,10 @@ wi_attach(sc)
 	    gen.wi_val != le16toh(0))
 		sc->wi_flags |= WI_FLAGS_HAS_WEP;
 
-	/* Find supported rates (Prism2 only). */
-	gen.wi_type = WI_RID_SUPPORT_RATE;
+	/* Find supported rates. */
+	gen.wi_type = WI_RID_DATA_RATES;
 	gen.wi_len = 2;
-	if (sc->sc_firmware_type != WI_INTERSIL || wi_read_record(sc, &gen))
+	if (wi_read_record(sc, &gen))
 		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
 		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
 	else
