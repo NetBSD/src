@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.18 1995/01/03 01:30:58 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.19 1995/01/07 22:48:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -55,9 +55,9 @@
 
 #include <i386/isa/isavar.h>
 
-#define	PMS_DATA	0       /* offset for data port, read-write */
-#define	PMS_CNTRL	4       /* offset for control port, write-only */
-#define	PMS_STATUS	4	/* offset for status port, read-only */
+#define	PMS_DATA	0x60	/* offset for data port, read-write */
+#define	PMS_CNTRL	0x64	/* offset for control port, write-only */
+#define	PMS_STATUS	0x64	/* offset for status port, read-only */
 #define	PMS_NPORTS	8
 
 /* status bits */
@@ -70,7 +70,6 @@
 #define	PMS_AUX_ENABLE	0xa7	/* enable auxiliary port */
 #define	PMS_AUX_DISABLE	0xa8	/* disable auxiliary port */
 #define	PMS_MAGIC_1	0xa9	/* XXX */
-#define	PMS_MAGIC_2	0xaa	/* XXX */
 
 #define	PMS_8042_CMD	0x65
 
@@ -94,7 +93,6 @@ struct pms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	PMS_OPEN	0x01	/* device is open */
 #define	PMS_ASLP	0x02	/* waiting for mouse data */
@@ -106,55 +104,55 @@ int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((struct pms_softc *));
 
-struct cfdriver pmscd = {\
+struct cfdriver pmscd = {
 	NULL, "pms", pmsprobe, pmsattach, DV_TTY, sizeof(struct pms_softc)
 };
 
 #define	PMSUNIT(dev)	(minor(dev))
 
 static inline void
-pms_flush(iobase)
-	int iobase;
+pms_flush()
 {
 	u_char c;
-	while (c = inb(iobase+PMS_STATUS) & 0x03)
+
+	while (c = inb(PMS_STATUS) & 0x03)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(iobase+PMS_DATA);
+			(void) inb(PMS_DATA);
 		}
 }
 
 static inline void
-pms_dev_cmd(iobase, value)
-	int iobase;
+pms_dev_cmd(value)
 	u_char value;
 {
-	pms_flush(iobase);
-	outb(iobase+PMS_CNTRL, 0xd4);
-	pms_flush(iobase);
-	outb(iobase+PMS_DATA, value);
+
+	pms_flush();
+	outb(PMS_CNTRL, 0xd4);
+	pms_flush();
+	outb(PMS_DATA, value);
 }
 
 static inline void
-pms_aux_cmd(iobase, value)
-	int iobase;
+pms_aux_cmd(value)
 	u_char value;
 {
-	pms_flush(iobase);
-	outb(iobase+PMS_CNTRL, value);
+
+	pms_flush();
+	outb(PMS_CNTRL, value);
 }
 
 static inline void
-pms_pit_cmd(iobase, value)
-	int iobase;
+pms_pit_cmd(value)
 	u_char value;
 {
-	pms_flush(iobase);
-	outb(iobase+PMS_CNTRL, 0x60);
-	pms_flush(iobase);
-	outb(iobase+PMS_DATA, value);
+
+	pms_flush();
+	outb(PMS_CNTRL, 0x60);
+	pms_flush();
+	outb(PMS_DATA, value);
 }
 
 int
@@ -163,14 +161,16 @@ pmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 	u_char x;
 
-	pms_dev_cmd(iobase, PMS_RESET);
-	pms_aux_cmd(iobase, PMS_MAGIC_1);
-	pms_aux_cmd(iobase, PMS_MAGIC_2);
-	x = inb(iobase+PMS_DATA);
-	pms_pit_cmd(iobase, PMS_INT_DISABLE);
+	if (ia->ia_iobase != 0x60)
+		return 0;
+
+	pms_dev_cmd(PMS_RESET);
+	pms_aux_cmd(PMS_MAGIC_1);
+	delay(1000);
+	x = inb(PMS_DATA);
+	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
 
@@ -186,12 +186,10 @@ pmsattach(parent, self, aux)
 {
 	struct pms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 
 	printf("\n");
 
 	/* Other initialization was done by pmsprobe. */
-	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
 	sc->sc_ih.ih_fun = pmsintr;
@@ -225,17 +223,17 @@ pmsopen(dev, flag)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	pms_dev_cmd(sc->sc_iobase, PMS_DEV_ENABLE);
-	pms_aux_cmd(sc->sc_iobase, PMS_AUX_ENABLE);
+	pms_dev_cmd(PMS_DEV_ENABLE);
+	pms_aux_cmd(PMS_AUX_ENABLE);
 #if 0
-	pms_dev_cmd(sc->sc_iobase, PMS_SET_RES);
-	pms_dev_cmd(sc->sc_iobase, 3);		/* 8 counts/mm */
-	pms_dev_cmd(sc->sc_iobase, PMS_SET_SCALE21);
-	pms_dev_cmd(sc->sc_iobase, PMS_SET_SAMPLE);
-	pms_dev_cmd(sc->sc_iobase, 100);	/* 100 samples/sec */
-	pms_dev_cmd(sc->sc_iobase, PMS_SET_STREAM);
+	pms_dev_cmd(PMS_SET_RES);
+	pms_dev_cmd(3);		/* 8 counts/mm */
+	pms_dev_cmd(PMS_SET_SCALE21);
+	pms_dev_cmd(PMS_SET_SAMPLE);
+	pms_dev_cmd(100);	/* 100 samples/sec */
+	pms_dev_cmd(PMS_SET_STREAM);
 #endif
-	pms_pit_cmd(sc->sc_iobase, PMS_INT_ENABLE);
+	pms_pit_cmd(PMS_INT_ENABLE);
 
 	return 0;
 }
@@ -248,9 +246,9 @@ pmsclose(dev, flag)
 	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	pms_dev_cmd(sc->sc_iobase, PMS_DEV_DISABLE);
-	pms_pit_cmd(sc->sc_iobase, PMS_INT_DISABLE);
-	pms_aux_cmd(sc->sc_iobase, PMS_AUX_DISABLE);
+	pms_dev_cmd(PMS_DEV_DISABLE);
+	pms_pit_cmd(PMS_INT_DISABLE);
+	pms_aux_cmd(PMS_AUX_DISABLE);
 
 	sc->sc_state &= ~PMS_OPEN;
 
@@ -367,7 +365,6 @@ int
 pmsintr(sc)
 	struct pms_softc *sc;
 {
-	int iobase = sc->sc_iobase;
 	static int state = 0;
 	static u_char buttons;
 	u_char changed;
@@ -376,27 +373,27 @@ pmsintr(sc)
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
-		(void) inb(iobase + PMS_DATA);
+		pms_flush();
 		return 0;
 	}
 
 	switch (state) {
 
 	case 0:
-		buttons = inb(iobase + PMS_DATA);
+		buttons = inb(PMS_DATA);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(iobase + PMS_DATA);
+		dx = inb(PMS_DATA);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(iobase + PMS_DATA);
+		dy = inb(PMS_DATA);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
