@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.2 1997/10/17 21:10:56 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,27 +81,25 @@ struct part_id {
 	{4, "Primary DOS, 16 bit FAT <32M"},
 	{5, "Extended DOS"},
 	{6, "Primary DOS, 16-bit FAT >32MB"},
+	{7, "NTFS"},
 	{165, "NetBSD"},
 	{-1, "Unknown"},
 };
-
 
 int partsoverlap(int i, int j)
 {
 	if (part[i][SIZE] == 0 || part[j][SIZE] == 0)
 		return 0;
 
-	return (part[i][START] >= part[j][START] &&
-		part[i][START] < part[j][START] + part[j][SIZE])
+	return 
+		(part[i][START] < part[j][START] &&
+		 part[i][START] + part[i][SIZE] > part[j][START])
 		||
-		(part[i][START]+part[i][SIZE] > part[j][START] &&
-		part[i][START]+part[i][SIZE] < part[j][START] + part[j][SIZE])
+		(part[i][START] > part[j][START] &&
+		 part[i][START] < part[j][START] + part[j][SIZE])
 		||
-		(part[j][START] >= part[i][START] &&
-		part[j][START] < part[i][START] + part[i][SIZE])
-		||
-		(part[j][START]+part[j][SIZE] > part[i][START] &&
-		part[j][START]+part[j][SIZE] < part[i][START] + part[i][SIZE]);
+		(part[i][START] == part[j][START]);
+
 }
 
 
