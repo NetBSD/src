@@ -1,5 +1,5 @@
 /*
-**	$Id: parse.c,v 1.6 1996/01/02 22:01:55 jtc Exp $
+**	$NetBSD: parse.c,v 1.7 1996/08/30 17:41:38 thorpej Exp $
 **
 ** parse.c                         This file contains the protocol parser
 **
