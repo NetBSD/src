@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.43 1996/03/17 02:01:00 thorpej Exp $ */
+/*	$NetBSD: esp.c,v 1.44 1996/03/23 21:09:04 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -832,8 +832,6 @@ esp_done(ecb)
 		printf("err=0x%02x ",xs->error);
 		if (xs->error == XS_SENSE) {
 			printf("sense=%2x; ", xs->sense.error_code);
-			if (xs->sense.error_code == 0x70)
-				printf("extcode: %x; ", xs->sense.extended_flags);
 		}
 	}
 	if ((xs->resid || xs->error > XS_SENSE) && esp_debug & ESP_SHOWMISC) {
