@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.8 2003/09/01 15:40:46 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.9 2004/01/24 15:33:43 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -107,7 +107,7 @@ are updated to the state just after the last successful conversion.
 .Pp
 If the string pointed to by
 .Fa *src
-contains a character which is valid unders the source codeset but
+contains a character which is valid under the source codeset but
 can not be converted to the destination codeset,
 the character is replaced by an
 .Dq invalid character
@@ -131,7 +131,7 @@ If both
 .Fa dst
 and
 .Fa *dst
-are 
+are
 .No non- Ns Dv NULL ,
 .Fn iconv
 stores the shift sequence for the destination switching to the initial state
@@ -180,7 +180,7 @@ returns (size_t)\-1 and sets errno to indicate the error.
 .Sh ERRORS
 The
 .Fn iconv_open
-function may causes an error in the following cases:
+function may cause an error in the following cases:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Memory is exhausted.
@@ -193,7 +193,7 @@ and
 .Pp
 The
 .Fn iconv_close
-function may causes an error in the following case:
+function may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The conversion descriptor specified by
@@ -203,7 +203,7 @@ is invalid.
 .Pp
 The
 .Fn iconv
-function may causes an error in the following cases:
+function may cause an error in the following cases:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The conversion descriptor specified by
