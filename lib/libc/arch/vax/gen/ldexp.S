@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/*.asciz "@(#)ldexp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ldexp.S,v 1.2 1995/06/01 01:11:41 ragge Exp $"
+	.asciz "$NetBSD: ldexp.S,v 1.2.12.1 2000/02/07 19:48:18 he Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -80,7 +80,14 @@ ENTRY(ldexp, 0)
 	jbc	$15,4(ap),1f	/* jump if argument was positive */
 	mnegd	r0,r0		/* if arg < 0, make result negative */
 1:
+#ifdef _REENTRANT
+	pushl	r0
+	calls	$0,___errno
+	movl	$ ERANGE,(r0)
+	movl	(sp)+,r0
+#else
 	movl	$ ERANGE,_errno
+#endif
 	ret
 
 	.data
