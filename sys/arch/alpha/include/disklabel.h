@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.6 2000/03/13 23:52:26 soren Exp $ */
+/* $NetBSD: disklabel.h,v 1.7 2002/04/03 06:16:01 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1999 Christopher G. Demetriou
@@ -45,39 +45,5 @@
 struct cpu_disklabel {
 	struct dkbad bad;			/* bad-sector information */
 };
-
-/*
- * Alpha (disk, but also tape) Boot Block.  See Section (III) 3.6.1 of the
- * Alpha Architecture Reference Manual.
- */
-
-struct boot_block {
-	u_int64_t bb_data[63];		/* data (disklabel, also as below) */
-	u_int64_t bb_cksum;		/* checksum of the boot block,
-					 * taken as u_int64_t's
-					 */
-};
-#define	bb_secsize	bb_data[60]	/* secondary size (blocks) */
-#define	bb_secstart	bb_data[61]	/* secondary start (blocks) */
-#define	bb_flags	bb_data[62]	/* unknown flags (set to zero) */
-
-#define	BOOT_BLOCK_OFFSET	0	/* offset of boot block. */
-#define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start,
-					 * and for boot block itself
-					 */
-
-#define	CHECKSUM_BOOT_BLOCK(bb,cksum)					\
-	do {								\
-		const struct boot_block *_bb = (bb);			\
-		u_int64_t _cksum;					\
-		int _i;							\
-									\
-		_cksum = 0;						\
-		for (_i = 0;						\
-		    _i < (sizeof _bb->bb_data / sizeof _bb->bb_data[0]); \
-		    _i++)						\
-			_cksum += _bb->bb_data[_i];			\
-		*(cksum) = _cksum;					\
-	} while (0)
 
 #endif /* _MACHINE_DISKLABEL_H_ */
