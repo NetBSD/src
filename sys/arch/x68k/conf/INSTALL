@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 1999/11/18 14:09:40 minoura Exp $
+#	$NetBSD: INSTALL,v 1.21 1999/12/05 15:40:17 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -307,7 +307,7 @@ pseudo-device	sl		1
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-#pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		2	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
