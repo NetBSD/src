@@ -1,8 +1,8 @@
-/*	$NetBSD: machdep.c,v 1.44 2003/01/03 06:26:06 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2003/01/03 09:09:22 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
- * Copyright (c) 2001, 2002 Rafal K. Boni
+ * Copyright (c) 2001, 2002, 2003 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,9 @@
 #include <machine/sysconf.h>
 #include <machine/intr.h>
 #include <machine/bootinfo.h>
+
 #include <mips/locore.h>
+#include <mips/cache.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -145,6 +147,8 @@ void zs_kgdb_init(void);
 void kgdb_connect(int);
 #endif
 
+void mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewalk_context *atc);
+
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
@@ -159,7 +163,7 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_iointr,
 	unimpl_intr_establish,
-	(void *)nullwork,
+	nullwork,
 };
 
 /*
@@ -900,3 +904,66 @@ void ddb_trap_hook(int where)
 }
 
 #endif
+
+/* XXXrkb: does this belong elsewhere??? */
+void mips_machdep_cache_config(void);
+extern void r5k_sdcache_wbinv_all(void);
+extern void sgimips_find_l2cache(struct arcbios_component *comp, 
+				 struct arcbios_treewalk_context *atc);
+
+void mips_machdep_cache_config(void)
+{
+	volatile u_int32_t cpu_config;
+
+	if (mach_type == MACH_SGI_IP32)
+	{
+#if 1
+		/* L2 cache does not work on IP32 (yet) */
+        	mips_sdcache_size = 0;
+		mips_sdcache_line_size = 0;
+
+		cpu_config = mips3_cp0_config_read();
+		cpu_config &= ~(MIPS3_CONFIG_SC_ENABLE);
+		mips3_cp0_config_write(cpu_config);
+#else
+		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
+
+		cpu_config = mips3_cp0_config_read();
+		printf("\nbefore mips_machdep_cache_config: SE = %x\n",
+				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+
+		r5k_enable_sdcache();
+
+		cpu_config = mips3_cp0_config_read();
+		printf("after mips_machdep_cache_config: SE = %x\n",
+				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+#endif
+	}
+	else /* IP22 works, maybe */
+	{
+		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
+	}
+}
+
+void
+mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewalk_context *atc)
+{
+        struct device *self = atc->atc_cookie;
+
+        if (comp->Class != COMPONENT_CLASS_CacheClass)
+                return;
+
+        switch (comp->Type) {
+        case COMPONENT_TYPE_SecondaryICache:
+                panic("%s: split L2 cache", self->dv_xname);
+        case COMPONENT_TYPE_SecondaryDCache:
+        case COMPONENT_TYPE_SecondaryCache:
+                mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+                mips_sdcache_line_size =
+                    COMPONENT_KEY_Cache_LineSize(comp->Key);
+                /* XXX */
+                mips_sdcache_ways = 1;
+                break;
+        }
+}
+

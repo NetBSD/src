@@ -1,8 +1,9 @@
-/*	$NetBSD: ip32.c,v 1.14 2002/12/28 16:44:36 pooka Exp $	*/
+/*	$NetBSD: ip32.c,v 1.15 2003/01/03 09:09:22 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001, 2002 Rafal K. Boni
+ * Copyright (c) 2002 Christopher Sekiya
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,24 +46,34 @@
 #include <machine/sysconf.h>
 #include <mips/locore.h>
 
-#include <sgimips/dev/crimereg.h>
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
-void	ip32_init(void);
-void	ip32_bus_reset(void);
-void 	ip32_intr(u_int, u_int, u_int, u_int);
-void	ip32_intr_establish(int, int, int (*)(void *), void *);
-int	crime_intr(void *);
-void	*crime_intr_establish(int, int, int, int (*)(void *), void *);
+#include <sgimips/dev/crimereg.h>
+#include <sgimips/dev/macereg.h>
+
+void		ip32_init(void);
+void		ip32_bus_reset(void);
+void 		ip32_intr(u_int, u_int, u_int, u_int);
+void		ip32_intr_establish(int, int, int (*)(void *), void *);
+unsigned long	ip32_clkread(void);
+
+void		crime_intr(u_int);
+void		*crime_intr_establish(int, int, int, int (*)(void *), void *);
+void		mace_intr(u_int);
 
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
 static unsigned long last_clk_intr;
 
+static struct evcnt mips_int0_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0 (CRIME)");
+
 static struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
 static struct evcnt mips_spurint_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
 void
 ip32_init(void)
@@ -70,9 +81,19 @@ ip32_init(void)
 	u_int64_t baseline;
 	u_int32_t cps;
 
-	/* XXXrkb: enable watchdog timer, clear it */
-	*(volatile u_int32_t *)0xb400000c |= 0x200;
-	*(volatile u_int32_t *)0xb4000034 = 0;
+	/* 
+	 * NB: don't enable watchdog here as we do on IP22, since the
+	 * fixed -- and overly short -- duration of the IP32 watchdog
+	 * means that more likely than not it will reset the machine
+	 * even before autoconfiguration is complete.  This is due to
+	 * the fact that the watchdog is only kept at bay by the IP32
+	 * interrupt handler and autoconfiguration is all done with
+	 * interrupts disabled.
+	 */
+
+	/* Reset CRIME CPU & memory error registers */
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT) = 0;
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT) = 0;
 
 #define WAIT_MS 50
 	baseline = *(volatile u_int64_t *)
@@ -93,14 +114,16 @@ ip32_init(void)
 	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	platform.iointr = ip32_intr;
+	platform.clkread = ip32_clkread;
 	platform.bus_reset = ip32_bus_reset;
 	platform.intr_establish = ip32_intr_establish;
 
-	biomask = 0x7f00;
-	netmask = 0x7f00;
-	ttymask = 0x7f00;
-	clockmask = 0xff00;
+	biomask = 0x0700;
+	netmask = 0x0700;
+	ttymask = 0x0700;
+	clockmask = 0x8700;
 
+	evcnt_attach_static(&mips_int0_evcnt);
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
 
@@ -112,7 +135,8 @@ ip32_init(void)
 void
 ip32_bus_reset(void)
 {
-	/* do nothing */
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT) = 0;
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT) = 0;
 }
 
 /*
@@ -126,34 +150,33 @@ ip32_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	int i;
 	u_int32_t newcnt;
 	struct clockframe cf;
+	u_int64_t crime_intstat, crime_intmask, crime_ipending;
 
-#if 0
-printf("crm: %llx %llx %llx %llx\n", *(volatile u_int64_t *)0xb4000010,
-				*(volatile u_int64_t *)0xb4000018,
-				*(volatile u_int64_t *)0xb4000020,
-				*(volatile u_int64_t *)0xb4000028);
-#endif
-
-#if 1
-	/* XXX soren Reset O2 watchdog timer */
-	*(volatile u_int32_t *)0xb4000034 = 0;
-#endif
+	/* enable watchdog timer, clear it */
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) |= 
+		CRIME_CONTROL_DOG_ENABLE;
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
 
 #if 1
-if ((*(volatile u_int32_t *)0xbf080004 & ~0x00100000) != 6)
-panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
-    *(volatile u_int32_t *)0xbf080000);
-#endif
-
-	*(volatile u_int64_t *)0xbf310018 = 0xffffffff;
-	*(volatile u_int64_t *)0xb4000018 = 0x000000000000ffff;
-
-#if 1
-	if (ipending & 0x7800)
-		panic("interesting cpu_intr, pending 0x%x", ipending);
+	/* 
+	 * XXXrkb: Even if this code makes sense (which I'm not sure of;
+	 * the magic number of "6" seems to correspond to capability bits
+	 * of the card/slot in question -- not 66 Mhz capable, fast B2B
+	 * capable and a medium DEVSEL timing -- and also seem to corres-
+	 * pond to on-reset values of this register), these errors should
+	 * be dealt with in the MACE PCI interrupt, not here!
+	 *
+	 * The 0x00100000 is MACE_PERR_CONFIG_ADDR, so this code should
+	 * panic on any other PCI errors except simple address errors on
+	 * config. space accesses.  This also seems wrong, but I lack the
+	 * PCI clue to figure out how to deal with other error ATM...
+	 */
+	if ((*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS) & ~0x00100000) != 6)
+		panic("pcierr: %x %x",
+				*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_ADDR),
+				*(volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS));
 #endif
 
 	if (ipending & MIPS_INT_MASK_5) {
@@ -179,22 +202,55 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 
 		hardclock(&cf);
 		mips_int5_evcnt.ev_count++;
-
 		cause &= ~MIPS_INT_MASK_5;
-	} else if (ipending & 0x7c00)
-		crime_intr(NULL);
+	}
 
-	for (i = 0; i < 5; i++) {
-		if (ipending & (MIPS_INT_MASK_0 << i))
-#if 0
-			if (intrtab[i].func != NULL)
-				if ((*intrtab[i].func)(intrtab[i].arg))
-#endif
-					cause &= ~(MIPS_INT_MASK_0 << i);
+	if (ipending & MIPS_INT_MASK_0) {
+		crime_intmask = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_INTMASK);
+		crime_intstat = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_INTSTAT);
+
+		crime_ipending = (crime_intstat & crime_intmask);
+
+		if (crime_ipending & 0xff)
+			mace_intr(crime_ipending & 0xff);
+
+		if (crime_ipending & 0xff00)
+			crime_intr((crime_ipending & 0xff00) >> 8);
+
+		if (crime_ipending & 0xffff0000) {
+			/*
+ 			 * CRIME interrupts for CPU and memory errors
+			 */
+			if (crime_ipending & CRIME_INT_MEMERR) {
+				u_int64_t address = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_ADDR);
+				u_int64_t status = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_MEM_ERROR_STAT);
+				printf("crime: memory error address %llx status %llx\n", address << 2, status);
+				ip32_bus_reset();
+			}
+
+			if (crime_ipending & CRIME_INT_CRMERR) {
+				u_int64_t stat = *(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CPU_ERROR_STAT);
+				printf("crime: cpu error %llx\n", stat);
+				ip32_bus_reset();
+			}
+		}
+
+		mips_int0_evcnt.ev_count++;
+		cause &= ~MIPS_INT_MASK_0;
 	}
 
 	if (cause & status & MIPS_HARD_INT_MASK) 
 		mips_spurint_evcnt.ev_count++;
+}
+
+unsigned long
+ip32_clkread(void)
+{
+	uint32_t res, count;
+
+	count = mips3_cp0_count_read() - last_clk_intr;
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
+	return (res);
 }
 
 void
