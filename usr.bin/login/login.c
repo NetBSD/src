@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.81 2005/01/20 15:41:14 xtraeme Exp $       */
+/*     $NetBSD: login.c,v 1.82 2005/02/28 16:13:02 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.81 2005/01/20 15:41:14 xtraeme Exp $");
+__RCSID("$NetBSD: login.c,v 1.82 2005/02/28 16:13:02 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -248,6 +248,10 @@ main(int argc, char *argv[])
 			if (uid)
 				errx(1, "-a option: %s", strerror(EPERM));
 			decode_ss(optarg);
+#ifdef notdef
+			(void)sockaddr_snprintf(optarg,
+			    sizeof(struct sockaddr_storage), "%a", (void *)&ss);
+#endif
 			break;
 		case 'F':
 			Fflag = 1;
@@ -277,6 +281,8 @@ main(int argc, char *argv[])
 			usage();
 			break;
 		}
+
+	setproctitle(NULL);
 	argc -= optind;
 	argv += optind;
 
@@ -286,15 +292,21 @@ main(int argc, char *argv[])
 	} else
 		ask = 1;
 
+#ifdef F_CLOSEM
+	(void)fcntl(3, F_CLOSEM, 0);
+#else
 	for (cnt = getdtablesize(); cnt > 2; cnt--)
 		(void)close(cnt);
+#endif
 
 	ttyn = ttyname(STDIN_FILENO);
 	if (ttyn == NULL || *ttyn == '\0') {
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
 		ttyn = tname;
 	}
-	if ((tty = strrchr(ttyn, '/')) != NULL)
+	if ((tty = strstr(ttyn, "/pts/")) != NULL)
+		++tty;
+	else if ((tty = strrchr(ttyn, '/')) != NULL)
 		++tty;
 	else
 		tty = ttyn;
