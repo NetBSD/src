@@ -2557,6 +2557,8 @@ ahd_reg_print_t ahd_scb_disconnected_lists_print;
 #define	SHORTTHRESH     		0x2f
 
 #define	LUNLEN          		0x30
+#define		TLUNLEN         	0xf0
+#define		ILUNLEN         	0x0f
 
 #define	CDBLIMIT        		0x31
 
@@ -3718,6 +3720,7 @@ ahd_reg_print_t ahd_scb_disconnected_lists_print;
 #define	BUS_32_BIT	0x02
 #define	SEEOP_EWEN_ADDR	0xc0
 #define	AHD_AMPLITUDE_MASK	0x07
+#define	LUNLEN_SINGLE_LEVEL_LUN	0x0f
 #define	DST_MODE_SHIFT	0x04
 #define	AHD_TIMER_MAX_TICKS	0xffff
 #define	STATUS_PKT_SENSE	0xff
