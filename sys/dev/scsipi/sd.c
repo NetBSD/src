@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.213 2003/10/29 21:26:43 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.214 2003/12/23 13:12:25 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.213 2003/10/29 21:26:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.214 2003/12/23 13:12:25 pk Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -607,7 +607,7 @@ bad4:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int 
+int
 sdclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
@@ -743,10 +743,10 @@ sdstrategy(bp)
 		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
- 
+
 	if (SDPART(bp->b_dev) != RAW_PART)
 		blkno += lp->d_partitions[SDPART(bp->b_dev)].p_offset;
- 
+
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
@@ -794,7 +794,7 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsipi_done
  */
-void 
+void
 sdstart(periph)
 	struct scsipi_periph *periph;
 {
@@ -1130,7 +1130,7 @@ bad:
 	case DIOCLOCK:
 		return (scsipi_prevent(periph,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
-	
+
 	case DIOCEJECT:
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
 			return (ENOTTY);
@@ -1650,7 +1650,7 @@ sd_get_simplifiedparms(sd, dp, flags)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _2btol(scsipi_sense.lbs);
-	if (dp->blksize == 0) 
+	if (dp->blksize == 0)
 		dp->blksize = 512;
 
 	/*
@@ -1776,6 +1776,7 @@ sd_get_parms(sd, dp, flags)
 	struct sd_mode_sense_data scsipi_sense;
 	int error;
 	int big;
+	int byte2;
 	union scsi_disk_pages *pages;
 #if 0
 	int i;
@@ -1796,17 +1797,31 @@ sd_get_parms(sd, dp, flags)
 	if (sd->type == T_OPTICAL)
 		goto page0;
 
+	/* Try MODE SENSE with `disable block descriptors' first */
+	byte2 = SMS_DBD;
+do_ms_again:
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
-	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	error = sd_mode_sense(sd, byte2, &scsipi_sense,
 	    sizeof(scsipi_sense.blk_desc) +
 	    sizeof(scsipi_sense.pages.rigid_geometry), 4,
 	    flags | XS_CTL_SILENT, &big);
-	if (!error) {
-		if (big)
-			pages = (void *)(&scsipi_sense.header.big + 1);
-		else
-			pages = (void *)(&scsipi_sense.header.small + 1);
+	if (error != 0 && byte2 == SMS_DBD) {
+		/* No result; try once more with DBD off */
+		byte2 = 0;
+		goto do_ms_again;
+	}
 
+	if (!error) {
+		int poffset;
+		if (big) {
+			poffset = sizeof scsipi_sense.header.big;
+			poffset += _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			poffset = sizeof scsipi_sense.header.small;
+			poffset += scsipi_sense.header.small.blk_desc_len;
+		}
+
+		pages = (void *)((u_long)&scsipi_sense + poffset);
 #if 0
 printf("page 4 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
 printf("page 4 pg_code=%d sense=%p/%p\n", pages->rigid_geometry.pg_code, &scsipi_sense, pages);
@@ -1814,7 +1829,7 @@ printf("page 4 pg_code=%d sense=%p/%p\n", pages->rigid_geometry.pg_code, &scsipi
 
 		if ((pages->rigid_geometry.pg_code & PGCODE_MASK) != 4)
 			goto page5;
-			
+
 		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(pages->rigid_geometry.ncyl),
@@ -1846,16 +1861,23 @@ printf("page 4 ok\n");
 	}
 
 page5:
-	memset(&scsipi_sense, SMS_DBD, sizeof(scsipi_sense));
+	/* XXX - Try with SMS_DBD first, like in the page 4 case? */
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, 0, &scsipi_sense,
 	    sizeof(scsipi_sense.blk_desc) +
 	    sizeof(scsipi_sense.pages.flex_geometry), 5,
 	    flags | XS_CTL_SILENT, &big);
 	if (!error) {
-		if (big)
-			pages = (void *)(&scsipi_sense.header.big + 1);
-		else
-			pages = (void *)(&scsipi_sense.header.small + 1);
+		int poffset;
+		if (big) {
+			poffset = sizeof scsipi_sense.header.big;
+			poffset += _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			poffset = sizeof scsipi_sense.header.small;
+			poffset += scsipi_sense.header.small.blk_desc_len;
+		}
+
+		pages = (void *)((u_long)&scsipi_sense + poffset);
 
 #if 0
 printf("page 5 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
@@ -1864,7 +1886,7 @@ printf("page 5 pg_code=%d sense=%p/%p\n", pages->flex_geometry.pg_code, &scsipi_
 
 		if ((pages->flex_geometry.pg_code & PGCODE_MASK) != 5)
 			goto page0;
-			
+
 		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d sec, %d bytes/sec\n",
 		    _3btol(pages->flex_geometry.ncyl),
@@ -2015,7 +2037,7 @@ sd_setcache(sd, bits)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big); 
+	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
 	if (error)
 		return (error);
 
