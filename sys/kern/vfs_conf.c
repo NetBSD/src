@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.16 1994/04/12 05:03:03 cgd Exp $
+ *	$Id: vfs_conf.c,v 1.17 1994/04/14 04:05:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -75,10 +75,6 @@ extern	struct vfsops fdesc_vfsops;
 extern	struct vfsops kernfs_vfsops;
 #endif
 
-#ifdef DEVFS
-extern	struct vfsops devfs_vfsops;
-#endif
-
 #ifdef PROCFS
 extern	struct vfsops procfs_vfsops;
 #endif
@@ -91,6 +87,10 @@ extern struct vfsops lofs_vfsops;
 extern struct vfsops portal_vfsops;
 #endif
 
+/*
+ * XXX ORDERING MATTERS, for COMPAT_09.  when that goes away, 
+ * empty slots can go away.
+ */
 struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 0 = MOUNT_NONE */
 #ifdef FFS
@@ -128,11 +128,7 @@ struct vfsops *vfssw[] = {
 #else
 	(struct vfsops *)0,
 #endif
-#ifdef DEVFS
-	&devfs_vfsops,		/* 8 = MOUNT_DEVFS */
-#else
-	(struct vfsops *)0,
-#endif
+	(struct vfsops *)0,	/* 8 = XXX CURRENTLY EMPTY */
 	(struct vfsops *)0,	/* 9 = XXX CURRENTLY EMPTY */
 #ifdef PROCFS
 	&procfs_vfsops,		/* 10 = MOUNT_PROCFS */
@@ -149,4 +145,10 @@ struct vfsops *vfssw[] = {
 #else
 	(struct vfsops *)0,
 #endif
+#ifdef LKM			/* for LKM's.  add new FS's before these */
+	(struct vfsops *)0,
+	(struct vfsops *)0,
+	(struct vfsops *)0,
+#endif
 };
+int nvfssw = sizeof(vfssw) / sizeof(struct vfsops *);
