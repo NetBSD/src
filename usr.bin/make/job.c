@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2754,13 +2754,12 @@ ReturnStatus
 Job_ParseShell(line)
     char	  *line;  /* The shell spec */
 {
-    char    	  **words;
-    int	    	  wordCount;
-    register char **argv;
-    register int  argc;
-    char    	  *path;
-    Shell   	  newShell;
-    Boolean 	  fullSpec = FALSE;
+    char	**words;
+    char	**argv;
+    int		argc;
+    char	*path;
+    Shell	newShell;
+    Boolean	fullSpec = FALSE;
 
     while (isspace((unsigned char)*line)) {
 	line++;
@@ -2769,16 +2768,14 @@ Job_ParseShell(line)
     if (shellArgv)
 	free(shellArgv);
 
-    words = brk_string(line, &wordCount, TRUE, &shellArgv);
-
     memset((Address)&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword
      */
-    for (path = NULL, argc = wordCount - 1, argv = words;
-	argc != 0;
-	argc--, argv++) {
+    words = brk_string(line, &argc, TRUE, &shellArgv);
+
+    for (path = NULL, argv = words; argc != 0; argc--, argv++) {
 	    if (strncmp(*argv, "path=", 5) == 0) {
 		path = &argv[0][5];
 	    } else if (strncmp(*argv, "name=", 5) == 0) {
