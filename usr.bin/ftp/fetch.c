@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.95 1999/11/10 07:34:41 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.96 1999/11/11 01:19:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.95 1999/11/10 07:34:41 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.96 1999/11/11 01:19:11 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -78,7 +78,7 @@ typedef enum {
 	CLASSIC_URL_T
 } url_t;
 
-void    	aborthttp __P((int));
+void		aborthttp __P((int));
 static int	auth_url __P((const char *, char **, const char *,
 				const char *));
 static void	base64_encode __P((const char *, size_t, char *));
@@ -460,7 +460,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	volatile sig_t		oldintr, oldintp;
 	volatile int		s;
 	struct stat		sb;
-	int 			ischunked, isproxy, rval, hcode;
+	int			ischunked, isproxy, rval, hcode;
 	size_t			len;
 	static size_t		bufsize;
 	static char		*xferbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.14 1999/10/24 12:31:37 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.15 1999/11/11 01:19:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.14 1999/10/24 12:31:37 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.15 1999/11/11 01:19:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ TOP:
 		cp2 = line;
 		while (*cp1 != '\0') {
 		      switch(*cp1) {
-		   	    case '\\':
+			    case '\\':
 				 *cp2++ = *++cp1;
 				 break;
 			    case '$':
