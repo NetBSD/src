@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.20 2000/10/27 17:55:18 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.21 2000/10/27 22:49:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,10 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <arch/i386/pci/pchbvar.h>
+
+#include "rnd.h"
+
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
 #define PCISET_TYPE_AUX		0x2
@@ -74,7 +78,7 @@ void	pchbattach __P((struct device *, struct device *, void *));
 int	pchb_print __P((void *, const char *));
 
 struct cfattach pchb_ca = {
-	sizeof(struct device), pchbmatch, pchbattach
+	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 
 int
@@ -98,6 +102,7 @@ pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct pchb_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
@@ -251,6 +256,13 @@ pchbattach(parent, self, aux)
 			break;
 		}
 	}
+
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_attach_rnd(sc, pa);
+#endif
 }
 
 int
