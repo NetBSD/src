@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.12 1997/07/09 02:39:38 jtk Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.13 1997/07/10 05:08:06 mikel Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: shutdown.c,v 1.12 1997/07/09 02:39:38 jtk Exp $";
+static char rcsid[] = "$NetBSD: shutdown.c,v 1.13 1997/07/10 05:08:06 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,10 @@ static char rcsid[] = "$NetBSD: shutdown.c,v 1.12 1997/07/09 02:39:38 jtk Exp $"
 struct interval {
 	int timeleft, timetowait;
 } tlist[] = {
-	10 H,  5 H,	 5 H,  3 H,	 2 H,  1 H,	1 H, 30 M,
-	30 M, 10 M,	20 M, 10 M,	10 M,  5 M,	5 M,  3 M,
-	 2 M,  1 M,	 1 M, 30 S,	30 S, 30 S,
-	 0, 0,
+	{ 10 H,  5 H },	{  5 H,  3 H },	{  2 H,  1 H },	{ 1 H, 30 M },
+	{ 30 M, 10 M },	{ 20 M, 10 M },	{ 10 M,  5 M },	{ 5 M,  3 M },
+	{  2 M,  1 M },	{  1 M, 30 S },	{ 30 S, 30 S },
+	{  0, 0 }
 };
 #undef H
 #undef M
@@ -229,6 +229,9 @@ main(argc, argv)
 	openlog("shutdown", LOG_CONS, LOG_AUTH);
 	loop();
 	/* NOTREACHED */
+#ifdef __GNUC__
+	return 1;
+#endif
 }
 
 void
@@ -254,7 +257,7 @@ loop()
 		 * Warn now, if going to sleep more than a fifth of
 		 * the next wait time.
 		 */
-		if (sltime = offset - tp->timeleft) {
+		if ((sltime = offset - tp->timeleft) != 0) {
 			if (sltime > tp->timetowait / 5)
 				timewarn(offset);
 			(void)sleep(sltime);
