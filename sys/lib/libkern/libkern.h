@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.17 1998/01/22 15:42:24 drochner Exp $	*/
+/*	$NetBSD: libkern.h,v 1.18 1998/01/23 12:56:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -154,8 +154,6 @@ void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
 void	*memchr __P((const void *, int, size_t));
 u_long	 random __P((void));
-char	*index __P((const char *, int));
-char	*rindex __P((const char *, int));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 size_t	 strlen __P((const char *));
