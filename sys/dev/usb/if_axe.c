@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.1 2004/10/23 13:38:26 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.2 2004/10/23 14:01:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.1 2004/10/23 13:38:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.2 2004/10/23 14:01:41 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -161,8 +161,8 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100}, 0 },
 	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
-	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120}, 0 },
 	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2KTX}, 0 },
+	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120}, 0 },
 	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 };
