@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.11 1996/02/09 19:06:38 christos Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.12 1996/02/13 17:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -106,7 +106,7 @@ adosfs_lookup(v)
 	 * cache lookup algorithm borrowed from ufs_lookup()
 	 * its not consistent with otherthings in this function..
 	 */
-	if (error = cache_lookup(vdp, vpp, cnp)) {
+	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
 		if (error == ENOENT)
 			return (error);
 
