@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2004/05/18 00:06:58 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/10 03:01:18 lukem Exp $
 
 LIB=isc
 
@@ -30,5 +30,10 @@ SRCS=		assertions.c base64.c bitstring.c buffer.c \
 		serial.c sha1.c sockaddr.c string.c strtoul.c symtab.c \
 		task.c taskpool.c timer.c version.c ${UNIX_SRCS} \
 		${NLS_SRCS} ${PTHREAD_SRCS}
+
+.if (${USE_INET6} == "no")
+CPPFLAGS.net.c=	-Wno-error
+SRCS+=		ipv6.c
+.endif
 
 .include <bsd.lib.mk>

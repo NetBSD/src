@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2004/05/23 03:16:40 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2005/01/10 03:01:18 lukem Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -28,6 +28,10 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 	-DNS_LOCALSTATEDIR=\"${LOCALSTATEDIR}\" \
 	-DNS_SYSCONFDIR=\"${SYSCONFDIR}\" \
 	-DVERSION=\"${VERSION}\"
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=	-DWANT_IPV6
+.endif
 
 .if !defined(LIB) || empty(LIB)						# {
 # NOTE: the order of these libraries is important...
