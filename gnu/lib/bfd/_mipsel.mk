@@ -1,4 +1,4 @@
-#	$NetBSD: _mipsel.mk,v 1.2 1998/08/22 19:02:10 tv Exp $
+#	$NetBSD: _mipsel.mk,v 1.3 1998/08/23 04:42:33 simonb Exp $
 
 BFD_ARCH_SRCS=	cpu-mips.c \
 		elf32-mips.c elf32.c elf.c elflink.c ecofflink.c \
@@ -6,7 +6,7 @@ BFD_ARCH_SRCS=	cpu-mips.c \
 		mips-dis.c mips-opc.c mips16-opc.c
 
 BFD_ARCH_DEFS=	-DARCH_mips \
-		-DSELECT_ARCHITECTURES='&bfd_mips_arch'
+		-DSELECT_ARCHITECTURES='&bfd_mips_arch' \
 		-DDEFAULT_VECTOR=bfd_elf32_littlemips_vec \
 		-DSELECT_VECS='&bfd_elf32_littlemips_vec, &bfd_elf32_bigmips_vec, &ecoff_little_vec, &ecoff_big_vec' \
 		-DHAVE_bfd_elf32_littlemips_vec \
