@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.4 1999/04/26 04:27:47 ad Exp $ */
+/* 	$NetBSD: rasops24.c,v 1.5 1999/04/26 04:29:12 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.4 1999/04/26 04:27:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.5 1999/04/26 04:29:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -465,10 +465,9 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 #endif
 
 	/* Recompute stamp? */
-	if (attr != stamp_attr) {
-		puts("putchar16 rms");
+	if (attr != stamp_attr)
 		rasops24_makestamp(ri, attr);
-	}
+
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
 	
