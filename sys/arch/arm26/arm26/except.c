@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.16 2000/12/10 01:18:52 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.17 2000/12/10 01:27:35 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.16 2000/12/10 01:18:52 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.17 2000/12/10 01:27:35 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -110,7 +110,7 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 	/* Mark trapframe as invalid. */
 	p->p_addr->u_pcb.pcb_tf = (void *)-1;
 	/* Check that the vectors are valid */
-	for (ptr = (u_int32_t *)0; ptr < 6; ptr++)
+	for (ptr = (u_int32_t *)0; ptr < (u_int32_t *)0x20; ptr++)
 		if (*ptr != 0xe59ff114)
 			panic("CPU vectors mangled");
 #endif
@@ -182,7 +182,7 @@ syscall(struct trapframe *tf)
 	struct proc *p;
 	vaddr_t pc;
 	int code, regparams, nextreg;
-	struct sysent *sy;
+	const struct sysent *sy;
 	size_t argsize, regargsize, stkargsize;
 	char args[32]; /* XXX just enough for mmap... */
 	register_t rval[2], or15;
