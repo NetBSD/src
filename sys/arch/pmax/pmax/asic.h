@@ -1,9 +1,9 @@
-/*	$NetBSD: asic.h,v 1.10 1999/03/14 23:59:03 jonathan Exp $	*/
+/*	$NetBSD: asic.h,v 1.11 1999/03/25 03:33:58 simonb Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Author: Jonathan Stone
  *
  * Permission to use, copy, modify and distribute this software and
@@ -11,11 +11,11 @@
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -112,7 +112,7 @@
 #define	IOASIC_SLOT_14_START		0x380000
 #define	IOASIC_SLOT_15_START		0x3c0000
 #define	IOASIC_SLOTS_END		0x3fffff
-	
+
 /*
  *  IOASIC register offsets (slot 1)
  */
@@ -233,7 +233,7 @@
  * with model-dependent meaning.
  * The following four bits  of the SIRM have the same meaning on
  * all three IOASIC Decstations and apparently on Alphas too.
- * 
+ *
  * the MAXINE (decstation 5000/xx) is weird; see below.
  */
 
