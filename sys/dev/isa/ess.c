@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.7 1998/08/07 00:51:06 matt Exp $	*/
+/*	$NetBSD: ess.c,v 1.8 1998/08/08 20:55:36 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1052,16 +1052,15 @@ ess_query_encoding(addr, fp)
 }
 
 int
-ess_set_params(addr, setmode, usemode, p, q)
+ess_set_params(addr, setmode, usemode, play, rec)
 	void *addr;
-	int setmode;
-	int usemode;
-	struct audio_params *p;
-	struct audio_params *q;
+	int setmode, usemode;
+	struct audio_params *play, *rec;
 {
 	struct ess_softc *sc = addr;
 	void (*swcode) __P((void *, u_char *buf, int cnt));
-	int mode = setmode; /* XXX */
+	struct audio_params *p;
+	int mode;
 
 	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
 
@@ -1071,6 +1070,7 @@ ess_set_params(addr, setmode, usemode, p, q)
 		if ((setmode & mode) == 0)
 			continue;
 
+		p = mode == AUMODE_PLAY ? play : rec;
 		switch (mode) {
 		case AUMODE_PLAY:
 			if (ess_set_out_sr(sc, p->sample_rate) != 0 ||
