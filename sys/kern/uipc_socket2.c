@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.19.8.2 1997/06/26 21:25:46 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.19.8.3 1997/06/28 02:51:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -146,9 +146,7 @@ soisdisconnected(so)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, or SS_ISCONFIRMING, or SS_ISCONNECTED.
- * If Connstatus also has SS_FORCE set, it means ignore the queue
- * limits.
+ * Connstatus may be 0, or SO_ISCONFIRMING, or SO_ISCONNECTED.
  *
  * Currently, sonewconn() is defined as sonewconn1() in socketvar.h
  * to catch calls that are missing the (new) second parameter.
@@ -161,10 +159,8 @@ sonewconn1(head, connstatus)
 	register struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
 
-	if ((head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2) &&
-	    (connstatus & SS_FORCE) == 0)
+	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return ((struct socket *)0);
-	connstatus &= ~SS_FORCE;
 	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_DONTWAIT);
 	if (so == NULL) 
 		return ((struct socket *)0);
