@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.56 2001/09/06 05:31:49 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.57 2001/09/06 06:18:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.56 2001/09/06 05:31:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57 2001/09/06 06:18:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -195,9 +195,10 @@ void		sccPutc __P((dev_t, int));
 void		sccPollc __P((dev_t, int));
 int		sccparam __P((struct tty *, struct termios *));
 void		sccstart __P((struct tty *));
-int		sccmctl __P((dev_t, int, int));
+
+static int	sccmctl __P((struct scc_softc *, int, int, int));
 static int	cold_sccparam __P((struct tty *, struct termios *,
-		    struct scc_softc *sc));
+		    struct scc_softc *sc, int line));
 
 #ifdef SCC_DEBUG
 static void	rr __P((char *, scc_regmap_t *));
@@ -350,11 +351,11 @@ sccattach(parent, self, aux)
 	 */
 	if (1 /* SCCUNIT(cn_tab.cn_dev) == sc->sc_dv.dv_unit */) {
 		s = spltty();
-		ctty.t_dev = makedev(SCCDEV,
-		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
 		cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 		cterm.c_ospeed = cterm.c_ispeed = 9600;
-		(void) sccparam(&ctty, &cterm);
+		(void) cold_sccparam(&ctty, &cterm, sc,
+		    SCCLINE((sc->sc_dv.dv_unit == 0) ?
+			    SCCCOMM2_PORT : SCCCOMM3_PORT));
 		DELAY(1000);
 		splx(s);
 	}
@@ -494,7 +495,7 @@ sccopen(dev, flag, mode, p)
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	(void) sccmctl(dev, DML_DTR, DMSET);
+	(void) sccmctl(sc, SCCLINE(dev), DML_DTR, DMSET);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
@@ -533,7 +534,7 @@ sccclose(dev, flag, mode, p)
 	(*tp->t_linesw->l_close)(tp, flag);
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
-		(void) sccmctl(dev, 0, DMSET);
+		(void) sccmctl(sc, line, 0, DMSET);
 	return (ttyclose(tp));
 }
 
@@ -629,27 +630,27 @@ sccioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) sccmctl(dev, DML_DTR|DML_RTS, DMBIS);
+		(void) sccmctl(sc, line, DML_DTR|DML_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) sccmctl(dev, DML_DTR|DML_RTS, DMBIC);
+		(void) sccmctl(sc, line, DML_DTR|DML_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) sccmctl(dev, *(int *)data, DMSET);
+		(void) sccmctl(sc, line, *(int *)data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) sccmctl(dev, *(int *)data, DMBIS);
+		(void) sccmctl(sc, line, *(int *)data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) sccmctl(dev, *(int *)data, DMBIC);
+		(void) sccmctl(sc, line, *(int *)data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = sccmctl(dev, 0, DMGET);
+		*(int *)data = sccmctl(sc, line, 0, DMGET);
 		break;
 
 	default:
@@ -672,7 +673,7 @@ sccparam(tp, t)
 
 	/* Extract the softc and call cold_sccparam to do all the work. */
 	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	return cold_sccparam(tp, t, sc);
+	return cold_sccparam(tp, t, sc, SCCLINE(tp->t_dev));
 }
 
 
@@ -680,13 +681,13 @@ sccparam(tp, t)
  * Do what sccparam() (t_param entry point) does, but callable when cold.
  */
 static int
-cold_sccparam(tp, t, sc)
+cold_sccparam(tp, t, sc, line)
 	register struct tty *tp;
 	register struct termios *t;
 	register struct scc_softc *sc;
+	register int line;
 {
 	register scc_regmap_t *regs;
-	register int line;
 	register u_char value, wvalue;
 	register int cflag = t->c_cflag;
 	int ospeed;
@@ -710,11 +711,10 @@ cold_sccparam(tp, t, sc)
 		ospeed = ttspeedtab(9600, sccspeedtab);
 	}
 	if (ospeed == 0) {
-		(void) sccmctl(tp->t_dev, 0, DMSET);	/* hang up line */
+		(void) sccmctl(sc, line, 0, DMSET);	/* hang up line */
 		return (0);
 	}
 
-	line = SCCLINE(tp->t_dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
 	/*
@@ -799,7 +799,7 @@ cold_sccparam(tp, t, sc)
 	value = sc->scc_wreg[line].wr14;
 	SCC_WRITE_REG(regs, line, SCC_WR14, value);
 
-	if (SCCUNIT(tp->t_dev) == 1) {
+	if (sc->sc_dv.dv_unit == 1) {
 		/* On unit one, on the flamingo, modem control is floating! */
 		value = ZSWR15_BREAK_IE;
 	} else
@@ -1028,18 +1028,15 @@ sccstop(tp, flag)
 }
 
 int
-sccmctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+sccmctl(sc, line, bits, how)
+	struct scc_softc *sc;
+	int line, bits, how;
 {
-	register struct scc_softc *sc;
 	register scc_regmap_t *regs;
-	register int line, mbits;
+	register int mbits;
 	register u_char value;
 	int s;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];
-	line = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	s = spltty();
 	/*
