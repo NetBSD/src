@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.49 2002/07/26 06:04:12 enami Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.50 2002/07/26 06:04:57 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.49 2002/07/26 06:04:12 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.50 2002/07/26 06:04:57 enami Exp $");
 
 #include "opt_kstack.h"
 
@@ -337,7 +337,8 @@ pgfind(pgid)
 {
 	struct pgrp *pgrp;
 
-	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
+	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != NULL;
+	    pgrp = pgrp->pg_hash.le_next)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
 	return (NULL);
@@ -564,7 +565,8 @@ pgrpdump()
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
-				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
+				printf("\tpgrp %p, pgid %d, sess %p, "
+				    "sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
 				    pgrp->pg_members.lh_first);
@@ -586,7 +588,8 @@ pgrpdump()
 
 /* XXX should be per process basis? */
 int kstackleftmin = KSTACK_SIZE;
-int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is less than this */
+int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
+					  less than this */
 
 void
 kstack_setup_magic(const struct proc *p)
@@ -644,7 +647,7 @@ kstack_check_magic(const struct proc *p)
 		kstackleftmin = stackleft;
 		if (stackleft < kstackleftthres)
 			printf("warning: kernel stack left %d bytes(pid %u)\n",
-				stackleft, p->p_pid);
+			    stackleft, p->p_pid);
 	}
 
 	if (stackleft <= 0) {
@@ -652,4 +655,4 @@ kstack_check_magic(const struct proc *p)
 		    "maybe kernel stack overflow\n", p->p_pid);
 	}
 }
-#endif /*KSTACK_CHECK_MAGIC*/
+#endif /* KSTACK_CHECK_MAGIC */
