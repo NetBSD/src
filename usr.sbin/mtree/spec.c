@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.7 1996/02/01 00:04:57 jtc Exp $	*/
+/*	$NetBSD: spec.c,v 1.8 1997/04/25 05:45:24 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: spec.c,v 1.7 1996/02/01 00:04:57 jtc Exp $";
+static char rcsid[] = "$NetBSD: spec.c,v 1.8 1997/04/25 05:45:24 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ set(t, ip)
 				err("invalid checksum %s", val);
 			break;
 		case F_GID:
-			ip->st_gid = strtoul(val, &ep, 10);
+			ip->st_gid = (gid_t)strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid gid %s", val);
 			break;
@@ -206,12 +206,12 @@ set(t, ip)
 			ip->st_mode = getmode(m, 0);
 			break;
 		case F_NLINK:
-			ip->st_nlink = strtoul(val, &ep, 10);
+			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid link count %s", val);
 			break;
 		case F_SIZE:
-			ip->st_size = strtouq(val, &ep, 10);
+			ip->st_size = (off_t)strtoq(val, &ep, 10);
 			if (*ep)
 				err("invalid size %s", val);
 			break;
@@ -220,11 +220,12 @@ set(t, ip)
 				err("%s", strerror(errno));
 			break;
 		case F_TIME:
-			ip->st_mtimespec.tv_sec = strtoul(val, &ep, 10);
+			ip->st_mtimespec.tv_sec =
+			    (time_t)strtoul(val, &ep, 10);
 			if (*ep != '.')
 				err("invalid time %s", val);
 			val = ep + 1;
-			ip->st_mtimespec.tv_nsec = strtoul(val, &ep, 10);
+			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
 			if (*ep)
 				err("invalid time %s", val);
 			break;
@@ -261,7 +262,7 @@ set(t, ip)
 			}
 			break;
 		case F_UID:
-			ip->st_uid = strtoul(val, &ep, 10);
+			ip->st_uid = (uid_t)strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid uid %s", val);
 			break;
