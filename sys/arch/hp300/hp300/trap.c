@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.19 1994/05/20 10:44:55 mycroft Exp $
+ *	$Id: trap.c,v 1.20 1994/05/21 09:22:40 cgd Exp $
  */
 
 #include "param.h"
@@ -52,7 +52,6 @@
 #ifdef KTRACE
 #include "ktrace.h"
 #endif
-#include "vmmeter.h"
 #include "syscall.h"
 
 #include "../include/psl.h"
