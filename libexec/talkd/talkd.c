@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.6 1997/06/29 19:13:05 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.7 1997/06/29 19:19:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.6 1997/06/29 19:13:05 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.7 1997/06/29 19:19:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,10 +92,6 @@ main(argc, argv)
 	CTL_MSG *mp = &request;
 	int cc;
 
-	if (getuid()) {
-		fprintf(stderr, "%s: getuid: not super-user\n", argv[0]);
-		exit(1);
-	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
 	if (gethostname(hostname, sizeof (hostname) - 1) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
