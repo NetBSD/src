@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.63 2001/07/27 00:25:18 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.63.10.1 2002/03/10 21:15:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.63 2001/07/27 00:25:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.63.10.1 2002/03/10 21:15:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ netintr()
 #undef DONETISR
 }
 
-struct alpha_soft_intr alpha_soft_intrs[IPL_NSOFT];
+struct alpha_soft_intr alpha_soft_intrs[SI_NQUEUES];
 __volatile unsigned long ssir;
 
 /* XXX For legacy software interrupts. */
@@ -532,15 +532,15 @@ spl0(void)
 void
 softintr_init()
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct alpha_soft_intr *asi;
 	int i;
 
-	for (i = 0; i < IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		asi = &alpha_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
 		simple_lock_init(&asi->softintr_slock);
-		asi->softintr_ipl = i;
+		asi->softintr_siq = i;
 		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
 	}
@@ -579,7 +579,7 @@ softintr_dispatch()
 #endif
 
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
-		for (i = 0; i < IPL_NSOFT; i++) {
+		for (i = 0; i < SI_NQUEUES; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;
 
@@ -624,7 +624,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
 
-	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
+	if (__predict_false(ipl >= SI_NQUEUES || ipl < 0))
 		panic("softintr_establish");
 
 	asi = &alpha_soft_intrs[ipl];
