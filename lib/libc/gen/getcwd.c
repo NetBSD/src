@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.27 2002/11/17 01:51:24 itojun Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.28 2002/11/17 20:49:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.27 2002/11/17 01:51:24 itojun Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.28 2002/11/17 20:49:33 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,7 @@ realpath(path, resolved)
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strcpy(resolved, ".");
+		(void)strlcpy(resolved, ".", MAXPATHLEN);
 		return (NULL);
 	}
 

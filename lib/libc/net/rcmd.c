@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.50 2002/11/17 01:51:25 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.51 2002/11/17 20:49:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.50 2002/11/17 01:51:25 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.51 2002/11/17 20:49:33 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -274,7 +274,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			warnx("rcmd: connect to address %s", hbuf);
 			errno = oerrno;
 			perror(0);
@@ -282,7 +282,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
 			continue;
 		}

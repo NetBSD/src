@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.14 2002/10/25 20:42:02 wiz Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.15 2002/11/17 20:49:33 itojun Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.14 2002/10/25 20:42:02 wiz Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.15 2002/11/17 20:49:33 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -338,7 +338,7 @@ utmpxname(const char *fname)
 	if (fname[len - 1] != 'x')
 		return 0;
 
-	(void)strcpy(utfile, fname);
+	(void)strlcpy(utfile, fname, sizeof(utfile));
 	endutxent();
 	return 1;
 }
@@ -393,7 +393,7 @@ lastlogxname(const char *fname)
 	if (fname[len - 1] != 'x')
 		return 0;
 
-	(void)strcpy(llfile, fname);
+	(void)strlcpy(llfile, fname, sizeof(llfile));
 	return 1;
 }
 
