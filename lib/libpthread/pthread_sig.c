@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.27 2003/01/14 02:42:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.28 2003/01/16 03:35:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,12 +39,15 @@
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
 
+#define	__PTHREAD_SIGNAL_PRIVATE
+
 #include <assert.h>
 #include <errno.h>
 #include <lwp.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>		/* for memcpy() */
 #include <ucontext.h>
 #include <unistd.h>
 #include <sys/cdefs.h>
@@ -532,7 +535,7 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
     struct pthread_queue_t *oldsleepq, pthread_spin_t *oldsleeplock)
 {
 	void (*handler)(int, int, struct sigcontext *);
-	struct sigcontext xxxsc;
+	struct pthread__sigcontext psc;
 	pthread_t self, next;
 
 	self = pthread__self();
@@ -549,16 +552,19 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	handler = (void (*)(int, int, struct sigcontext *)) act->sa_handler;
 
 	/*
-	 * XXX we don't support real sigcontext or siginfo here yet.
-	 * Ironically, siginfo is actually easier to deal with.
+	 * XXX we don't support siginfo here yet.
 	 */
-       	handler(sig, code, &xxxsc);
+	PTHREAD_UCONTEXT_TO_SIGCONTEXT(oldmask, uc, &psc);
+	handler(sig, code, &psc.psc_context);
+	PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
 
 	/*
 	 * We've finished the handler, so this thread can restore the
-	 * original signal mask.
+	 * original signal mask.  Note that traditional BSD behavior
+	 * allows for the handler to change the signal mask; we handle
+	 * that here.
 	 */
-       	pthread_sigmask(SIG_SETMASK, oldmask, NULL);
+	pthread_sigmask(SIG_SETMASK, &uc->uc_sigmask, NULL);
 
 	/*
 	 * Go back to whatever queue we were found on, unless SIGCATCH

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/09/10 23:46:18 petrov Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.4 2003/01/16 03:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,5 +79,8 @@ pthread__sp(void)
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
 
-#endif /* _LIB_PTHREAD_SPARC64_MD_H */
+#ifdef __PTHREAD_SIGNAL_PRIVATE
+#include <machine/psl.h>
+#endif
 
+#endif /* _LIB_PTHREAD_SPARC64_MD_H */

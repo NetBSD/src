@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.20 2003/01/13 22:50:09 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.21 2003/01/16 03:35:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,9 +43,7 @@
 
 #include <time.h>	/* For timespec */
 #include <sched.h>
-#include <signal.h>	/* For sigset_t. XXX pthread_sigmask should
-			 * be in signal.h instead of here.
-			 */
+
 #include "pthread_types.h"
 
 __BEGIN_DECLS
@@ -58,7 +56,6 @@ pthread_t	pthread_self(void);
 int	pthread_detach(pthread_t thread);
 
 int	pthread_kill(pthread_t thread, int sig);
-int	pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
 
 int	pthread_getrrtimer_np(void);
 int	pthread_setrrtimer_np(int);

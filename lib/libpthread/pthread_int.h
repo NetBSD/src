@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.38 2003/01/13 18:53:15 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.39 2003/01/16 03:35:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,15 +39,16 @@
 #ifndef _LIB_PTHREAD_INT_H
 #define _LIB_PTHREAD_INT_H
 
-#include <sa.h>
-#include <signal.h>
-
 #define PTHREAD__DEBUG
 #define ERRORCHECK
 
 #include "pthread_types.h"
 #include "pthread_queue.h"
 #include "pthread_debug.h"
+#include "pthread_md.h"
+
+#include <sa.h>
+#include <signal.h>
 
 /*
  * The size of this structure needs to be no larger than struct
@@ -259,8 +260,6 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 void	pthread__testcancel(pthread_t self);
 int	pthread__find(pthread_t self, pthread_t target);
 
-#include "pthread_md.h"
-
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
 #endif
@@ -273,6 +272,54 @@ int	pthread__find(pthread_t self, pthread_t target);
 	(ucp)->uc_flags = _UC_CPU | _UC_STACK;				\
 	_INITCONTEXT_U_MD(ucp)						\
 	} while (0)
+
+#ifdef __PTHREAD_SIGNAL_PRIVATE
+
+/*
+ * Macros for converting from ucontext to sigcontext and vice-versa.
+ * Note that going from sigcontext->ucontext is only safe for a
+ * sigcontext that was first created from a ucontext.
+ *
+ * Arch-specific code can override this, if necessary.  It may also
+ * be necessary for arch-specific code to include extra info along with
+ * the sigcontext.
+ */
+#ifndef PTHREAD_SIGCONTEXT_EXTRA
+#define	PTHREAD_SIGCONTEXT_EXTRA
+#endif
+
+struct pthread__sigcontext {
+	struct sigcontext	psc_context;
+	PTHREAD_SIGCONTEXT_EXTRA
+};
+
+#ifndef PTHREAD_UCONTEXT_TO_SIGCONTEXT
+#define	PTHREAD_UCONTEXT_TO_SIGCONTEXT(mask, uc, psc)			\
+do {									\
+	(uc)->uc_sigmask = *(mask);					\
+	/*								\
+	 * XXX We may want to check for _UC_USER here and do a		\
+	 * XXX _INITCONTEXT_U_MD() and clearing _UC_USER on such	\
+	 * XXX contexts before converting to a signcontext, thus	\
+	 * XXX allowing signal handlers to modify the non-_UC_USER	\
+	 * XXX registers.  Hazy territory; ignore it for now.		\
+	 */								\
+	_UCONTEXT_TO_SIGCONTEXT((uc), &(psc)->psc_context);		\
+} while (/*CONSTCOND*/0)
+
+#define	PTHREAD_SIGCONTEXT_TO_UCONTEXT(psc, uc)				\
+do {									\
+	_SIGCONTEXT_TO_UCONTEXT(&(psc)->psc_context, (uc));		\
+	(uc)->uc_flags &= ~_UC_SIGMASK;					\
+} while (/*CONSTCOND*/0)
+#else
+void	pthread__ucontext_to_sigcontext(const sigset_t *, ucontext_t *,
+	    struct pthread__sigcontext *);
+void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
+	    ucontext_t *);
+#endif /* PTHREAD_UCONTEXT_TO_SIGCONTEXT */
+
+#endif /* __PTHREAD_SIGNAL_PRIVATE */
 
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \

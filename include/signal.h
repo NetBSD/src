@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.21.2.1 2002/10/02 20:16:32 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.21.2.2 2003/01/16 03:35:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,8 @@ __BEGIN_DECLS
 int	raise __P((int));
 #ifndef	_ANSI_SOURCE
 int	kill __P((pid_t, int));
+
+int	pthread_sigmask __P((int, const sigset_t *, sigset_t *));
 
 #ifdef __LIBC12_SOURCE__
 int	sigaction __P((int, const struct sigaction13 *, struct sigaction13 *));
