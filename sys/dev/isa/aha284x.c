@@ -1,4 +1,4 @@
-/* $Id: aha284x.c,v 1.1 1996/01/13 02:05:14 thorpej Exp $ */
+/*	$NetBSD: aha284x.c,v 1.2 1996/01/13 02:06:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Graff.  All rights reserved.
