@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $	*/
+/*	$NetBSD: savecore.c,v 1.51 2001/05/06 13:36:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,13 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.51 2001/05/06 13:36:51 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/msgbuf.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $");
 #include <fcntl.h>
 #include <nlist.h>
 #include <paths.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,24 +70,30 @@ __RCSID("$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $");
 
 extern FILE *zopen(const char *fname, const char *mode);
 
-#define KREAD(kd, addr, p)\
+#define	KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 struct nlist current_nl[] = {	/* Namelist for currently running system. */
-#define X_DUMPDEV	0
+#define	X_DUMPDEV	0
 	{ "_dumpdev" },
-#define X_DUMPLO	1
+#define	X_DUMPLO	1
 	{ "_dumplo" },
-#define X_TIME		2
+#define	X_TIME		2
 	{ "_time" },
 #define	X_DUMPSIZE	3
 	{ "_dumpsize" },
-#define X_VERSION	4
+#define	X_VERSION	4
 	{ "_version" },
-#define X_PANICSTR	5
-	{ "_panicstr" },
-#define	X_DUMPMAG	6
+#define	X_DUMPMAG	5
 	{ "_dumpmag" },
+#define	X_PANICSTR	6
+	{ "_panicstr" },
+#define	X_PANICSTART	7
+	{ "_panicstart" },
+#define	X_PANICEND	8
+	{ "_panicend" },
+#define	X_MSGBUF	9
+	{ "_msgbufp" },
 	{ NULL },
 };
 int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
@@ -98,8 +105,11 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ "_time" },
 	{ "_dumpsize" },
 	{ "_version" },
-	{ "_panicstr" },
 	{ "_dumpmag" },
+	{ "_panicstr" },
+	{ "_panicstart" },
+	{ "_panicend" },
+	{ "_msgbufp" },
 	{ NULL },
 };
 
@@ -314,8 +324,9 @@ kmem_setup(void)
 void
 check_kmem(void)
 {
-	char *cp;
-	long panicloc;
+	char *cp, *bufdata;
+	struct kern_msgbuf msgbuf, *bufp;
+	long panicloc, panicstart, panicend;
 	char core_vers[1024];
 
 	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
@@ -327,6 +338,64 @@ check_kmem(void)
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    kernel, vers, core_vers);
 
+	panicstart = panicend = 0;
+	if (KREAD(kd_dump, dump_nl[X_PANICSTART].n_value, &panicstart) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		goto nomsguf;
+	}
+	if (KREAD(kd_dump, dump_nl[X_PANICEND].n_value, &panicend) != 0) {
+		if (verbose)
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		goto nomsguf;
+	}
+	if (panicstart != 0 && panicend != 0) {
+		if (KREAD(kd_dump, dump_nl[X_MSGBUF].n_value, &bufp)) {
+			if (verbose)
+				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			goto nomsguf;
+		}
+		if (kvm_read(kd_dump, (long)bufp, &msgbuf,
+		    offsetof(struct kern_msgbuf, msg_bufc)) !=
+		    offsetof(struct kern_msgbuf, msg_bufc)) {
+			if (verbose)
+				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			goto nomsguf;
+		}
+		if (msgbuf.msg_magic != MSG_MAGIC) {
+			if (verbose)
+				syslog(LOG_WARNING, "msgbuf magic incorrect");
+			goto nomsguf;
+		}
+		bufdata = malloc(msgbuf.msg_bufs);
+		if (bufdata == NULL) {
+			if (verbose)
+				syslog(LOG_WARNING, "couldn't allocate space for msgbuf data");
+			goto nomsguf;
+		}
+		if (kvm_read(kd_dump, (long)&bufp->msg_bufc, bufdata,
+		    msgbuf.msg_bufs) != msgbuf.msg_bufs) {
+			if (verbose)
+				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			goto nomsguf;
+		}
+		cp = panic_mesg;
+		while (panicstart != panicend && cp < &panic_mesg[sizeof(panic_mesg)-1]) {
+			*cp++ = bufdata[panicstart];
+			panicstart++;
+			if (panicstart >= msgbuf.msg_bufs)
+				panicstart = 0;
+		}
+		/* Don't end in a new-line */
+		cp = &panic_mesg[strlen(panic_mesg)] - 1;
+		if (*cp == '\n')
+			*cp = '\0';
+		panic_mesg[sizeof(panic_mesg) - 1] = '\0';
+
+		panicstr = 1;	/* anything not zero */
+		return;
+	}
+nomsguf:
 	if (KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
