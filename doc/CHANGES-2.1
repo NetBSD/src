@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.35 2005/03/16 19:17:53 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.36 2005/03/16 19:51:11 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -835,4 +835,19 @@ gnu/dist/binutils/bfd/elf64-sparc.c             1.4
 
 	Fix bug in "binutils" which broke Firefox under NetBSD-sparc64.
 	[skrll, ticket #1101]
+
+sys/dev/ata/ata_wdc.c				1.77
+
+	Move ata_dmaerr() so that it's called only when there really has been
+	an error (ata_bio->r_error doesn't containt anything meaningfull if
+	no error occured). Fix kern/28255 by Izumi Tsutsui, but with a
+	different patch.
+	[bouyer, ticket #1324]
+
+sys/dev/ata/ata_wdc.c				1.78
+
+	Also call ata_dmaerr() on DMA errors (as reported by the underlying
+	controller driver). We want to downgrade to PIO mode if DMA isn't
+	functionnal.
+	[bouyer, ticket #1325]
 
