@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.h,v 1.3 1997/01/09 20:19:55 tls Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.4 1997/07/11 06:28:26 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hexdump.h	5.4 (Berkeley) 6/1/90
- *	$NetBSD: hexdump.h,v 1.3 1997/01/09 20:19:55 tls Exp $
+ *	$NetBSD: hexdump.h,v 1.4 1997/07/11 06:28:26 mikel Exp $
  */
 
 typedef struct _pr {
@@ -73,7 +73,36 @@ typedef struct _fs {			/* format strings */
 	int bcnt;
 } FS;
 
-extern FS *fshead;			/* head of format strings list */
-extern int blocksize;			/* data block size */
 enum _vflag { ALL, DUP, FIRST, WAIT };	/* -v values */
-char *emalloc();
+
+extern int blocksize;			/* data block size */
+extern int deprecated;			/* od compatibility */
+extern FU *endfu;			/* format at end-of-data */
+extern int exitval;			/* final exit value */
+extern FS *fshead;			/* head of format strings list */
+extern int length;			/* max bytes to read */
+extern off_t skip;			/* bytes to skip */
+extern enum _vflag vflag;
+
+void	 add __P((char *));
+void	 addfile __P((char *));
+void	 badconv __P((char *));
+void	 badcnt __P((char *));
+void	 badfmt __P((char *));
+void	 badsfmt __P((void));
+void	 bpad __P((PR *));
+void	 conv_c __P((PR *, u_char *));
+void	 conv_u __P((PR *, u_char *));
+void	 display __P((void));
+void	 doskip __P((char *, int));
+char	*emalloc __P((int));
+void	 escape __P((char *));
+u_char	*get __P((void));
+void	 newsyntax __P((int, char ***));
+void	 odoffset __P((int, char ***));
+void	 oldsyntax __P((int, char ***));
+int	 next __P((char **));
+void	 nomem __P((void));
+void	 rewrite __P((FS *));
+int	 size __P((FS *));
+void	 usage __P((void));

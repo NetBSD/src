@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.4 1997/01/09 20:19:54 tls Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.5 1997/07/11 06:28:28 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,8 +40,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: hexdump.c,v 1.4 1997/01/09 20:19:54 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";
+#else
+static char rcsid[] = "$NetBSD: hexdump.c,v 1.5 1997/07/11 06:28:28 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +57,7 @@ int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
