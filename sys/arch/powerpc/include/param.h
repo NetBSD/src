@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 1998/05/28 08:19:49 sakamoto Exp $	*/
+/*	$NetBSD: param.h,v 1.5 1998/08/16 02:15:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,8 +138,3 @@
 #ifndef	NPMAPS
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif
-
-/*
- * Temporary kludge till we do (ov)bcopy in assembler
- */
-#define	ovbcopy	bcopy
