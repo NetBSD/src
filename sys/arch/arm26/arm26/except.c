@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.4 2001/11/23 00:19:08 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.38.4.5 2001/11/24 19:23:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.4 2001/11/23 00:19:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.5 2001/11/24 19:23:51 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -420,6 +420,11 @@ do_fault(struct trapframe *tf, struct lwp *l,
  */
 #define getreg(r) (((register_t *)&tf->tf_r0)[r])
 
+/* Macros to extract fields from instructions */
+#define Rn(insn) ((insn >> 16) & 0x0f)
+#define Rd(insn) ((insn >> 12) & 0x0f)
+#define Rm(insn) (insn & 0x0f)
+
 /*
  * Undo any effects of the aborted instruction that need to be undone
  * in order for us to restart it.  This is just a case of spotting
@@ -438,7 +443,7 @@ data_abort_fixup(struct trapframe *tf)
 	if ((insn & 0x0e000000) == 0x08000000 &&
 	    (insn & 1 << 21)) {
 		/* LDM/STM with writeback*/
-		rn = (insn >> 16) & 0x0f;
+		rn = Rn(insn);
 		if (rn == 15)
 			return; /* No writeback on R15 */
 		/* Count registers transferred */
@@ -472,7 +477,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 	if ((insn & 0x0c000000) == 0x04000000) {
 		/* Single data transfer */
 		*vsp = 1; /* or 4, but it doesn't really matter */
-		rn = (insn & 0x000f0000) >> 16;
+		rn = Rn(insn);
 		base = getreg(rn);
 		if (rn == 15)
 			base = (base & R15_PC) + 8;
@@ -490,7 +495,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 			else
 				return base + offset;
 		}
-		rm = insn & 0x0000000f;
+		rm = Rm(insn);
 		offset = getreg(rm);
 		if (rm == 15)
 			offset += 8;
@@ -523,7 +528,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 		int loop, count;
 
 		/* LDM/STM */
-		rn = (insn >> 16) & 0x0f;
+		rn = Rn(insn);
 		p = insn & 1 << 24;
 		u = insn & 1 << 23;
 		/* Count registers transferred */
@@ -547,7 +552,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 	} else if ((insn & 0x0fb00ff0) == 0x01000090) {
 		/* SWP */
 		*vsp = 1; /* or 4, but who cares? */
-		rn = insn & 0x000f0000;
+		rn = Rn(insn);
 		base = getreg(rn);
 		if (rn == 15)
 			return base + 8;
