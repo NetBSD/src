@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.13 1998/12/03 18:24:31 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.14 1998/12/16 12:46:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,9 @@ struct wdc_softc { /* Per controller state */
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
 	int            (*claim_hw) __P((void *, int));
 	void            (*free_hw) __P((void *));
+
+	/* if WDC_CAPABILITY_MODE set in 'cap' */
+	void 		(*set_modes) __P((struct channel_softc *));
 };
 
  /*
