@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_aout.c,v 1.9 1993/12/18 04:54:21 mycroft Exp $
+ *	$Id: db_aout.c,v 1.10 1994/06/03 01:58:32 gwr Exp $
  */
 
 #include <sys/types.h>
@@ -54,19 +54,14 @@
  *		-> strings
  */
 
-/*
- * Find pointers to the start and end of the symbol entries,
- * given a pointer to the start of the symbol table.
- */
-#define	db_get_aout_symtab(symtab, sp, ep) \
-	(sp = (struct nlist *)((symtab) + 1), \
-	 ep = (struct nlist *)((char *)sp + *(symtab)))
-
 #ifdef	SYMTAB_SPACE
 int db_symtabsize = SYMTAB_SPACE;
-char db_symtab[SYMTAB_SPACE] = { 1 };
+int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
 #endif
 
+/*
+ * Find the symbol table and strings; tell ddb about them.
+ */
 X_db_sym_init(symtab, esymtab, name)
 	int *	symtab;		/* pointer to start of symbol table */
 	char *	esymtab;	/* pointer to end of string table,
@@ -81,18 +76,30 @@ X_db_sym_init(symtab, esymtab, name)
 	char *		estrtab;
 
 #ifdef SYMTAB_SPACE
-	if (*symtab < 4) {
+	if (*symtab < sizeof(int)) {
 		printf ("DDB: no symbols\n");
 		return;
 	}
 #endif
-        
-	db_get_aout_symtab(symtab, sym_start, sym_end);
+
+	/*
+	 * Find pointers to the start and end of the symbol entries,
+	 * given a pointer to the start of the symbol table.
+	 */
+	sym_start = (struct nlist *)(symtab + 1);
+	sym_end   = (struct nlist *)((char *)sym_start + *symtab);
 
 	strtab = (char *)sym_end;
 	strlen = *(int *)strtab;
 
-#ifndef	SYMTAB_SPACE
+#ifdef	SYMTAB_SPACE
+	printf("DDB: found symbols [%d + %d bytes]\n",
+		   *symtab, strlen);
+	if ((*symtab + strlen) > db_symtabsize) {
+		printf("DDB: symbols larger than SYMTAB_SPACE?\n");
+		return;
+	}
+#else
 	estrtab = strtab + strlen;
 
 #define	round_to_size(x) \
