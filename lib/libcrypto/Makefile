@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2003/04/17 00:32:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 2003/04/26 00:53:17 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -85,7 +85,7 @@ INCS+=	rc5.h
 
 INCSDIR=/usr/include/openssl
 
-SYMLINKS+= ${INCSDIR}/des.h /usr/include/des.h
+SYMLINKS+= openssl/des.h /usr/include/des.h
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that the resulting `srcs.inc' file needs to be modified
