@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.48 1998/10/29 14:13:27 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.49 1998/11/01 18:30:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.48 1998/10/29 14:13:27 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.49 1998/11/01 18:30:26 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -191,11 +191,11 @@ static int do_mount __P((struct exportlist *, struct grouplist *, int,
 static int do_opt __P((char **, char **, struct exportlist *,
     struct grouplist *, int *, int *, struct ucred *));
 static struct exportlist *ex_search __P((fsid_t *));
-static struct exportlist *get_exp __P((void));
+static int parse_directory __P((const char *, size_t, struct grouplist *,
+    int, char *, struct exportlist **, struct statfs *));
 static int parse_host_netgroup __P((const char *, size_t, struct exportlist *,
     struct grouplist *, char *, int *, struct grouplist **));
-static int parse_directory __P((const char *, size_t, struct grouplist *,
-    int, char *, struct exportlist **));
+static struct exportlist *get_exp __P((void));
 static void free_dir __P((struct dirlist *));
 static void free_exp __P((struct exportlist *));
 static void free_grp __P((struct grouplist *));
@@ -721,17 +721,16 @@ parse_host_netgroup(line, lineno, ep, tgrp, cp, has_host, grp)
 }
 
 static int
-parse_directory(line, lineno, tgrp, got_nondir, cp, ep)
+parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 	const char *line;
 	size_t lineno;
 	struct grouplist *tgrp;
 	int got_nondir;
 	char *cp;
 	struct exportlist **ep;
+	struct statfs *fsp;
 {
-	struct statfs fsb;
-
-	if (!check_dirpath(cp) || statfs(cp, &fsb) == -1) {
+	if (!check_dirpath(cp) || statfs(cp, fsp) == -1) {
 		getexp_err(line, lineno, *ep, tgrp);
 		return 0;
 	}
@@ -741,8 +740,8 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep)
 		return 0;
 	}
 	if (*ep) {
-		if ((*ep)->ex_fs.val[0] != fsb.f_fsid.val[0] ||
-		    (*ep)->ex_fs.val[1] != fsb.f_fsid.val[1]) {
+		if ((*ep)->ex_fs.val[0] != fsp->f_fsid.val[0] ||
+		    (*ep)->ex_fs.val[1] != fsp->f_fsid.val[1]) {
 			getexp_err(line, lineno, *ep, tgrp);
 			return 0;
 		}
@@ -751,20 +750,20 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep)
 		 * See if this directory is already
 		 * in the list.
 		 */
-		*ep = ex_search(&fsb.f_fsid);
+		*ep = ex_search(&fsp->f_fsid);
 		if (*ep == NULL) {
 			*ep = get_exp();
-			(*ep)->ex_fs = fsb.f_fsid;
-			(*ep)->ex_fsdir = estrdup(fsb.f_mntonname);
+			(*ep)->ex_fs = fsp->f_fsid;
+			(*ep)->ex_fsdir = estrdup(fsp->f_mntonname);
 			if (debug)
 				(void)fprintf(stderr,
 				    "Making new ep fs=0x%x,0x%x\n",
-				    fsb.f_fsid.val[0], fsb.f_fsid.val[1]);
+				    fsp->f_fsid.val[0], fsp->f_fsid.val[1]);
 		} else {
 			if (debug)
 				(void)fprintf(stderr,
-				"Found ep fs=0x%x,0x%x\n",
-				fsb.f_fsid.val[0], fsb.f_fsid.val[1]);
+				    "Found ep fs=0x%x,0x%x\n",
+				    fsp->f_fsid.val[0], fsp->f_fsid.val[1]);
 		}
 	}
 
@@ -910,7 +909,7 @@ get_exportlist(n)
 				*endcp = '\0';
 
 				if (!parse_directory(line, lineno, tgrp,
-				    got_nondir, cp, &ep))
+				    got_nondir, cp, &ep, &fsb))
 					goto nextline;
 				/*
 				 * Add dirpath to export mount point.
