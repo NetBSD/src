@@ -1,0 +1,82 @@
+.\"	$NetBSD: hardware,v 1.1 2002/06/15 21:31:38 itojun Exp $
+.
+A H/PC machine contains a keyboard and a touch screen and
+generally has 8 MB or more of RAM.  The port supports the HPC
+form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
+form factors.
+.
+.Ss2 Supported WindowsCE machines
+.(bullet -offset indent
+Hewlett-Packard
+.(bullet -compact
+Jornada 680
+.It
+Jornada 690
+.It
+HP 620LX
+.bullet)
+.It
+Hitachi
+.(bullet -compact
+PERSONA HPW-50PAD
+.It
+PERSONA HPW-230JC
+.It
+PERSONA HPW-650PA (serial console only)
+.bullet)
+.bullet)
+.
+.Ss2 Supported WindowsCE devices
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+SH-3 SH7709
+.It
+SH-4 SH7709R
+.It
+SH-4 SH7709A
+.It
+SH-4 SH7750V
+.bullet)
+.It
+RAM requirements
+.(bullet -compact
+8 MB of RAM is required to run
+.Nx*M .
+4 MB is insufficient for most purposes.
+.bullet)
+.It
+Console devices
+.(bullet -compact
+built-in LCD screen
+.It
+built-in keyboard
+.It
+serial port (with boot option
+.Sq Li h )
+.bullet)
+.It
+Storage devices
+.(bullet -compact
+Flash ATA card, CF card (wd)
+.It
+Adaptec APA-1460[Slim SCSI](aic)
+.bullet)
+.It
+Network interfaces
+.(bullet -compact
+MB8696x based Ethernet (mbe)
+.It
+NE2000-compatible Ethernet (ne)
+.bullet)
+.It
+Input devices
+.(bullet -compact
+Keyboard.
+.bullet)
+.It
+Miscellaneous
+.(bullet -compact
+Battery-backed real-time clock.
+.bullet)
+.bullet)
