@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.17 2001/04/21 18:51:17 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.17 2001/04/21 18:51:17 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -97,6 +97,8 @@ struct irq_handler {
 };
 
 volatile static int current_spl = IPL_HIGH;
+
+__inline int hardsplx(int);
 
 void
 irq_init(void)
@@ -286,6 +288,24 @@ void irq_genmasks()
 	splx(s);
 }
 
+__inline int
+hardsplx(int s)
+{
+	int was;
+
+	int_off();
+	was = current_spl;
+	/* Don't try this till we've found the IOC */
+	if (the_ioc != NULL)
+		ioc_irq_setmask(irqmask[s]);
+#if NUNIXBP > 0
+	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
+#endif
+	current_spl = s;
+	int_on();
+	return was;
+}
+
 int
 raisespl(int s)
 {
@@ -304,24 +324,6 @@ lowerspl(int s)
 		dosoftints(s);
 		hardsplx(s);
 	}
-}
-
-int
-hardsplx(int s)
-{
-	int was;
-
-	int_off();
-	was = current_spl;
-	/* Don't try this till we've found the IOC */
-	if (the_ioc != NULL)
-		ioc_irq_setmask(irqmask[s]);
-#if NUNIXBP > 0
-	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
-#endif
-	current_spl = s;
-	int_on();
-	return was;
 }
 
 #ifdef DDB
