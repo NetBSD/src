@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.2 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: curses.c,v 1.3 2002/09/20 15:15:49 mycroft Exp $ 
  *
  * $FreeBSD$
  *
@@ -313,8 +313,7 @@ do_menu(void)
 	WINDOW *menu_w;
 	int c;
 	int mpos;
-	fd_set set;
-	struct timeval timeout;
+	struct pollfd set[1];
 
 	/* create a new window in the lower screen area */
 	
@@ -347,18 +346,15 @@ do_menu(void)
 
 	/* input loop */
 	
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
 	for(;;)
 	{
 		wrefresh(menu_w);
 
-		FD_ZERO(&set);
-		FD_SET(STDIN_FILENO, &set);
-		timeout.tv_sec = WMTIMEOUT;
-		timeout.tv_usec = 0;
-
 		/* if no char is available within timeout, exit menu*/
 		
-		if((select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout)) <= 0)
+		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			goto mexit;
 		
 		c = wgetch(menu_w);
@@ -485,8 +481,7 @@ display_chans(void)
 	int cnt = 0;
 	WINDOW *chan_w;
 	int nlines, ncols, pos_x, pos_y;
-	fd_set set;
-	struct timeval timeout;
+	struct pollfd set[1];
 
 	/* need this later to close the connection */
 	struct ctlr_chan {
@@ -578,18 +573,15 @@ display_chans(void)
 		}
 	}
 
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
 	for(;;)
 	{
 		wrefresh(chan_w);
 
-		FD_ZERO(&set);
-		FD_SET(STDIN_FILENO, &set);
-		timeout.tv_sec = WMTIMEOUT;
-		timeout.tv_usec = 0;
-
 		/* if no char is available within timeout, exit menu*/
 		
-		if((select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout)) <= 0)
+		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			break;
 		
 		ncols = wgetch(chan_w);

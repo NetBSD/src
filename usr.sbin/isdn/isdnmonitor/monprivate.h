@@ -27,7 +27,7 @@
  *	i4b remote monitor - private header
  *	-----------------------------------
  *
- *	$Id: monprivate.h,v 1.1.1.1 2001/01/06 13:00:29 martin Exp $
+ *	$Id: monprivate.h,v 1.2 2002/09/20 15:15:49 mycroft Exp $
  *
  * $FreeBSD$
  *
@@ -54,6 +54,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #endif
 
 /*---------------------------------------------------------------------------*

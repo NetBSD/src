@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering support
  *      ==============================================
  *
- *	$Id: defs.h,v 1.1.1.1 2001/01/06 13:00:35 martin Exp $ 
+ *	$Id: defs.h,v 1.2 2002/09/20 15:15:50 mycroft Exp $ 
  *
  * $FreeBSD$
  *
@@ -52,6 +52,7 @@
 #include <sys/dir.h>
 #endif
 #include <sys/param.h>
+#include <sys/poll.h>
 
 #include <netisdn/i4b_ioctl.h>
 
