@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.125 2005/03/09 03:38:33 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.126 2005/03/12 07:53:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.125 2005/03/09 03:38:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.126 2005/03/12 07:53:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -851,6 +851,9 @@ again:
 			 * stack (rather than big-small-big-small-...).
 			 */
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
+			if (len <= txsegsize) {
+				use_tso = 0;
+			}
 		} else
 			len = txsegsize;
 		flags &= ~TH_FIN;
