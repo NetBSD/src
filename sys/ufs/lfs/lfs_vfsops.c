@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.70 2001/11/23 21:44:28 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.71 2001/12/18 07:51:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.70 2001/11/23 21:44:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.71 2001/12/18 07:51:18 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -139,6 +139,12 @@ struct vfsops lfs_vfsops = {
 	lfs_mountroot,
 	ufs_check_export,
 	lfs_vnodeopv_descs,
+};
+
+struct genfs_ops lfs_genfsops = {
+	NULL,
+	NULL,
+	genfs_compat_gop_write,
 };
 
 struct pool lfs_inode_pool;
@@ -1413,6 +1419,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &lfs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
