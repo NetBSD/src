@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2003/01/18 06:23:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2003/01/22 21:05:50 kleink Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -197,6 +197,29 @@ mftb(void)
 "	bne- 1b"
 	    : "=r"(tb), "=r"(tmp) :: "cr0");
 	return tb;
+}
+
+static __inline uint32_t
+mfrtcl(void)
+{
+	uint32_t rtcl;
+
+	asm volatile ("mfrtcl %0" : "=r"(rtcl));
+	return rtcl;
+}
+
+static __inline void
+mfrtc(uint32_t *rtcp)
+{
+	uint32_t tmp;
+
+	asm volatile (
+"1:	mfrtcu	%0	\n"
+"	mfrtcl	%1	\n"
+"	mfrtcu	%2	\n"
+"	cmplw	%0,%2	\n"
+"	bne-	1b"
+	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp));
 }
 
 static __inline uint32_t
