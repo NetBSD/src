@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -137,7 +137,6 @@ Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
-Boolean			mkIncPath;	/* -m flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
 static char *		Check_Cwd_av __P((int, char **, int));
@@ -303,7 +302,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 			break;
 		case 'm':
-			mkIncPath = TRUE;
 			(void) Dir_AddDir(sysIncPath, optarg);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
@@ -711,7 +709,7 @@ main(argc, argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (!mkIncPath) {
+	if (Lst_IsEmpty(sysIncPath)) {
 		if (syspath == NULL || *syspath == '\0')
 			syspath = defsyspath;
 		else
