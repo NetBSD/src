@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.131 2004/01/04 00:54:18 lukem Exp $
+# $NetBSD: mi,v 1.132 2004/01/04 13:30:09 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -208,6 +208,7 @@
 ./etc/rc.shutdown			etc-sys-rc
 ./etc/rc.subr				etc-sys-rc
 ./etc/rc.wscons				etc-obsolete	obsolete
+./etc/release-info			etc-sys-etc
 ./etc/remote				etc-uucp-etc
 ./etc/rmt				etc-sysutil-etc
 ./etc/rpc				etc-net-etc
