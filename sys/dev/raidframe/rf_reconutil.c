@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.22 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.23 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.22 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.23 2004/03/18 16:54:54 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -245,6 +245,7 @@ rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 }
 
 #if RF_DEBUG_RECON
+XXXX IF you use this, you really want to fix the locking in here.
 /******************************************************************************
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.8 2004/03/08 02:25:27 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.9 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,10 +54,22 @@
  * descriptor. Note that we use just one lock for the whole hash chain.
  */
 #define RF_HASH_PSID(_raid_,_psid_) ( (_psid_) % ((_raid_)->pssTableSize) )	/* simple hash function */
-#define RF_LOCK_PSS_MUTEX(_raidPtr, _psid) \
-  RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
-#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _psid) \
-  RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
+#define RF_LOCK_PSS_MUTEX(_raidPtr, _psid)                                                      \
+  do {                                                                                          \
+     RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);   \
+     while((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock) {           \
+          ltsleep(&(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock,     \
+	          PRIBIO, "rflockpss", 0,                                                       \
+	          &(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);   \
+     }                                                                                          \
+     (_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock = 1;               \
+     RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex); \
+  } while (0);
+
+#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _psid)                                                    \
+  RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);      \
+  (_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock = 0;                  \
+  RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);
 
 struct RF_ReconParityStripeStatus_s {
 	RF_StripeNum_t parityStripeID;	/* the parity stripe ID */
@@ -87,6 +99,8 @@ struct RF_ReconParityStripeStatus_s {
 
 struct RF_PSStatusHeader_s {
 	RF_DECLARE_MUTEX(mutex)	/* mutex for this hash chain */
+	int lock;               /* 1 if this hash chain is locked,
+				   0 otherwise */
 	RF_ReconParityStripeStatus_t *chain;	/* the hash chain */
 };
 /* masks for the "flags" field above */
