@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.52 2000/03/28 23:57:33 simonb Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.53 2000/06/26 14:38:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>

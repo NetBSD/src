@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.30 1999/10/25 13:55:07 kleink Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.31 2000/06/26 14:38:55 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -50,8 +50,6 @@
 
 #include <sys/mman.h>
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

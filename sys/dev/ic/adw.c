@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.24 2000/06/26 14:38:51 mrg Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -54,8 +54,6 @@
 #include <machine/intr.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
