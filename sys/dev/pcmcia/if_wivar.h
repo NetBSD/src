@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.3 2000/02/04 07:48:29 explorer Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.4 2000/02/13 06:17:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.3 2000/02/04 07:48:29 explorer Exp $
+ *	$Id: if_wivar.h,v 1.4 2000/02/13 06:17:58 itojun Exp $
  */
 
 
@@ -79,4 +79,8 @@ struct wi_softc	{
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
+
+	int			wi_resource; /* Resources alloc'ed on attach */
+#define WI_RES_IO	1
+#define WI_RES_NET	2
 };
