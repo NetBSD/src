@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.5 1995/12/28 08:52:26 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.6 1996/01/17 02:45:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: malloc.c,v 1.5 1995/12/28 08:52:26 thorpej Exp $";
+static char *rcsid = "$NetBSD: malloc.c,v 1.6 1996/01/17 02:45:25 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -315,6 +315,10 @@ realloc(cp, nbytes)
 
   	if (cp == NULL)
   		return (malloc(nbytes));
+	if (nbytes == 0) {
+		free (cp);
+		return NULL;
+	}
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
 	if (op->ov_magic == MAGIC) {
 		was_alloced++;
