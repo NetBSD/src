@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.25 1997/11/01 18:15:12 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.26 1997/11/01 20:15:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -381,7 +381,7 @@ zsopen(dev, flags, mode, p)
 	register struct tty *tp;
 	register struct zs_chanstate *cs;
 	struct zstty_softc *zst;
-	int error, s, unit;
+	int error, s, s2, unit;
 
 	unit = minor(dev);
 	if (unit >= zstty_cd.cd_ndevs)
@@ -407,11 +407,15 @@ zsopen(dev, flags, mode, p)
 		/* First open. */
 		struct termios t;
 
+		s2 = splzs();
+
 		/* Turn on interrupts. */
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
 
 		/* Fetch the current modem control status, needed later. */
 		cs->cs_rr0 = zs_read_csr(cs);
+
+		splx(s2);
 
 		/*
 		 * Setup the "new" parameters in t.
@@ -443,6 +447,8 @@ zsopen(dev, flags, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
+		s2 = splzs();
+
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -456,11 +462,10 @@ zsopen(dev, flags, mode, p)
 		zs_iflush(cs);
 		zst->zst_rx_blocked = 0;
 		zs_hwiflow(zst);
+
+		splx(s2);
 	}
 	error = 0;
-
-	/* In this section, we may touch the chip. */
-	(void)splzs();
 
 	/* If we're doing a blocking open... */
 	if ((flags & O_NONBLOCK) == 0)
