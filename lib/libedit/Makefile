@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/01/11 06:47:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/24 22:11:53 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -20,6 +20,9 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 #SRCS=   ${OSRCS} tokenizer.c history.c
 # For protection
 SRCS=	editline.c tokenizer.c history.c
+
+INCS= histedit.h
+INCSDIR=/usr/include
 
 CLEANFILES+=common.h emacs.h fcns.h help.h vi.h help.c fcns.c editline.c
 CFLAGS+=-I. -I${.CURDIR} 
@@ -59,11 +62,5 @@ all: vi.h emacs.h common.h fcns.h help.h help.c
 
 test:	libedit.a test.o 
 	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
-
-includes:
-	-cd ${.CURDIR}; cmp -s histedit.h ${DESTDIR}/usr/include/histedit.h > \
-	    /dev/null 2>&1 || \
-	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 histedit.h \
-	    ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>

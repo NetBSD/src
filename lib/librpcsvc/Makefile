@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1996/10/18 05:45:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 1997/03/24 22:11:57 christos Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -8,6 +8,9 @@ SRCS=		${RPCSRCS:R:S/$/.c/g}
 HDRS=           ${RPCSRCS:R:S/$/.h/g}
 CLEANFILES+=	${SRCS} ${HDRS}
 
+INCS=${HDRS} ${RPCSRCS}
+INCSDIR=/usr/include/rpcsvc
+
 LIB=		rpcsvc
 NOMAN=
 NOPIC=
@@ -15,30 +18,15 @@ NOPIC=
 all:		${HDRS}
 beforedepend:	${HDRS}
 
-includes:	${HDRS}
-	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-	    ${DESTDIR}/usr/include/rpcsvc
-	@for i in $(HDRS); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include/rpcsvc"; \
-	    echo $$j; \
-	    eval "$$j"; \
-	done
-	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
-	    j="cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include/rpcsvc"; \
-	    echo $$j; \
-	    eval "$$j"; \
-	done
+# We don't use explicit suffix rules here to avoid dependencies in the
+# Installed files.
 
-# new suffixes have to go afterwards, because bsd.lib.mk clears them
+.for I in ${RPCSRCS}
+${I:S/.x/.c/}: $I
+	rpcgen -c ${.ALLSRC} -o ${.TARGET}
+
+${I:S/.x/.h/}: $I
+	rpcgen -h ${.ALLSRC} -o ${.TARGET}
+.endfor
+
 .include <bsd.lib.mk>
-.SUFFIXES: .x .c .h
-
-.x.c:
-	rpcgen -c ${.IMPSRC} -o ${.TARGET}
-
-.x.h:
-	rpcgen -h ${.IMPSRC} -o ${.TARGET}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/01/11 01:50:56 cjs Exp $
+#	$NetBSD: Makefile,v 1.5 1997/03/24 22:11:58 christos Exp $
 
 LIB=	wrap 
 
@@ -12,12 +12,9 @@ MLINKS+=hosts_access.3 hosts_ctl.3
 MLINKS+=hosts_access.3 request_init.3
 MLINKS+=hosts_access.3 request_set.3
 
-.include "Makefile.cflags"
+INCS= tcpd.h
+INCSDIR=/usr/include
 
-includes:
-	-cd ${.CURDIR}; cmp -s tcpd.h ${DESTDIR}/usr/include/tcpd.h > \
-	    /dev/null 2>&1 || \
-	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 tcpd.h \
-	    ${DESTDIR}/usr/include
+.include "Makefile.cflags"
 
 .include <bsd.lib.mk>
