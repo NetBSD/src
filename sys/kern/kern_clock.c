@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.67 2000/08/22 15:30:59 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.68 2000/08/22 16:44:51 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1245,7 +1245,7 @@ statclock(struct clockframe *frame)
 {
 #ifdef GPROF
 	struct gmonparam *g;
-	int i;
+	intptr_t i;
 #endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
