@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.44 2003/09/06 10:18:07 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.45 2003/09/06 10:21:19 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.44 2003/09/06 10:18:07 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.45 2003/09/06 10:21:19 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -707,10 +707,6 @@ initarm(void *arg)
 	 */
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	lwp0.l_addr = proc0paddr;
-
-#ifdef VERBOSE_INIT_ARM
-	printf("done!\n");
-#endif
 
 #ifdef PLCONSOLE
 	/*
