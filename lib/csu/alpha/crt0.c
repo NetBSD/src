@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.17 1999/03/08 10:49:08 kleink Exp $	*/
+/*	$NetBSD: crt0.c,v 1.18 1999/03/19 23:34:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -138,96 +138,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 1999/03/08 10:49:08 kleink Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.18 1999/03/19 23:34:49 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-static char *
-_strrchr(p, ch)
-char *p, ch;
-{
-	char *save;
-
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-/* NOTREACHED */
-}
-
-#ifdef MCRT0
-asm ("  .text");
-asm ("_eprol:");
-#endif
-
-#ifdef DYNAMIC
-void
-_rtld_setup(cleanup, obj)
-	void (*cleanup) __P((void));
-	const Obj_Entry *obj;
-{
-
-	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
-		_FATAL("Corrupt Obj_Entry pointer in GOT");
-	if (obj->version != RTLD_VERSION)
-		_FATAL("Dynamic linker version mismatch");
-
-	__mainprog_obj = obj;
-	atexit(cleanup);
-}
-
-void *
-dlopen(name, mode)
-	const char *name;
-	int mode;
-{
-
-	if (__mainprog_obj == NULL)
-		return NULL;
-	return (__mainprog_obj->dlopen)(name, mode);
-}
-
-int
-dlclose(fd)
-	void *fd;
-{
-
-	if (__mainprog_obj == NULL)
-		return -1;
-	return (__mainprog_obj->dlclose)(fd);
-}
-
-void *
-dlsym(fd, name)
-	void *fd;
-	const char *name;
-{
-
-	if (__mainprog_obj == NULL)
-		return NULL;
-	return (__mainprog_obj->dlsym)(fd, name);
-}
-
-#if 0 /* not supported for ELF shlibs, apparently */
-int
-dlctl(fd, cmd, arg)
-	void *fd, *arg;
-	int cmd;
-{
-
-	if (__mainprog_obj == NULL)
-		return -1;
-	return (__mainprog_obj->dlctl)(fd, cmd, arg);
-}
-#endif
-
-char *
-dlerror()
-{
-
-	if (__mainprog_obj == NULL)
-		return NULL;
-	return (__mainprog_obj->dlerror)();
-}
-#endif /* DYNAMIC */
+#include "common.c"
