@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2003/08/07 11:14:53 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2003/09/05 06:52:11 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.91 2003/08/07 11:14:53 agc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.92 2003/09/05 06:52:11 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.91 2003/08/07 11:14:53 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.92 2003/09/05 06:52:11 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -215,6 +215,10 @@ MainParseArgs(int argc, char **argv)
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
+		case 'B':
+			compatMake = TRUE;
+			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
+			break;
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL, 0);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
@@ -249,16 +253,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			    jobServer = TRUE;
 			}
 			break;
-		case 'V':
-			printVars = TRUE;
-			(void)Lst_AtEnd(variables, (ClientData)optarg);
-			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
-			break;
-		case 'B':
-			compatMake = TRUE;
-			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
-			break;
 #ifdef REMOTE
 		case 'L':
 			maxLocal = strtol(optarg, &p, 0);
@@ -287,6 +281,12 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		case 'T':
 			tracefile = estrdup(optarg);
 			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			break;
+		case 'V':
+			printVars = TRUE;
+			(void)Lst_AtEnd(variables, (ClientData)optarg);
+			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'W':
@@ -912,9 +912,14 @@ main(int argc, char **argv)
 
 		for (ln = Lst_First(variables); ln != NILLNODE;
 		    ln = Lst_Succ(ln)) {
-			char *value = Var_Value((char *)Lst_Datum(ln),
-					  VAR_GLOBAL, &p1);
-
+			char *var = (char *)Lst_Datum(ln);
+			char *value;
+			
+			if (strchr(var, '$')) {
+				value = p1 = Var_Subst(NULL, var, VAR_GLOBAL, 0);
+			} else {
+				value = Var_Value(var, VAR_GLOBAL, &p1);
+			}
 			printf("%s\n", value ? value : "");
 			if (p1)
 				free(p1);
