@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.23 1998/07/06 06:59:06 mrg Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.24 1998/07/17 23:45:24 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.23 1998/07/06 06:59:06 mrg Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.24 1998/07/17 23:45:24 is Exp $");
 #endif
 #endif
 
@@ -312,6 +312,30 @@ int docksum = 1;		/* calculate checksums */
 #endif
 int optlen;			/* length of ip options */
 
+int mtus[] = {
+        17914,
+         8166,
+         4464,  
+         4352,  
+         2048,
+         2002,  
+         1536,  
+         1500,  
+         1492,
+         1006,
+          576,
+          552,
+          544,
+          512,
+          508,
+          296, 
+           68, 
+            0
+};      
+int *mtuptr = &mtus[0];
+int mtudisc = 0;
+int nextmtu;   /* from ICMP error, set by packet_ok(), might be 0 */
+
 extern int optind;
 extern int opterr;
 extern char *optarg;
@@ -334,6 +358,8 @@ int	str2val(const char *, const char *, int, int);
 void	tvsub(struct timeval *, struct timeval *);
 __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+void	frag_err(void);
+
 
 int
 main(int argc, char **argv)
@@ -361,7 +387,7 @@ main(int argc, char **argv)
 		prog = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "dDFInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
+	while ((op = getopt(argc, argv, "dDFPInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
 		switch (op) {
 
 		case 'd':
@@ -448,6 +474,11 @@ main(int argc, char **argv)
 			waittime = str2val(optarg, "wait time", 2, -1);
 			break;
 
+		case 'P':
+			off = IP_DF;
+			mtudisc = 1;
+			break;
+
 		default:
 			usage();
 		}
@@ -476,6 +507,9 @@ main(int argc, char **argv)
 		    prog, minpacket, maxpacket);
 		exit(1);
 	}
+
+	if (mtudisc)
+		packlen = *mtuptr++;
 
 	/* Process destination and optional packet size */
 	switch (argc - optind) {
@@ -754,13 +788,13 @@ main(int argc, char **argv)
 		int got_there = 0;
 		int unreachable = 0;
 
+again:
 		Printf("%2d ", ttl);
 		for (probe = 0; probe < nprobes; ++probe) {
 			register int cc;
 			struct timeval t1, t2;
 			struct timezone tz;
 			register struct ip *ip;
-
 			(void)gettimeofday(&t1, &tz);
 			send_probe(++seq, ttl, &t1);
 			while ((cc = wait_for_reply(s, from, &t1)) != 0) {
@@ -795,6 +829,7 @@ main(int argc, char **argv)
 					++got_there;
 					break;
 				}
+
 				/* time exceeded in transit */
 				if (i == -1)
 					break;
@@ -825,8 +860,13 @@ main(int argc, char **argv)
 					break;
 
 				case ICMP_UNREACH_NEEDFRAG:
-					++unreachable;
-					Printf(" !F");
+					if (mtudisc) {
+						frag_err();
+						goto again;
+					} else {
+						++unreachable;
+						Printf(" !F");
+					}
 					break;
 
 				case ICMP_UNREACH_SRCFAIL:
@@ -916,6 +956,12 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 	register struct udpiphdr * ui;
 	struct ip tip;
 
+again:
+#ifdef BYTESWAP_IP_LEN
+	outip->ip_len = htons(packlen);
+#else
+	outip->ip_len = packlen;
+#endif
 	outip->ip_ttl = ttl;
 #ifndef __hpux
 	outip->ip_id = htons(ident + seq);
@@ -1016,8 +1062,26 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 #endif
 	if (cc < 0 || cc != packlen)  {
 		if (cc < 0)
-			Fprintf(stderr, "%s: sendto: %s\n",
-			    prog, strerror(errno));
+			/*
+			 * An errno of EMSGSIZE means we're writing too big a
+			 * datagram for the interface.  We have to just decrease
+			 * the packet size until we find one that works.
+			 *
+			 * XXX maybe we should try to read the outgoing if's 
+			 * mtu?
+			 */
+
+			if (errno == EMSGSIZE) {
+				packlen = *mtuptr++;
+#ifdef _NoLongerLooksUgly_
+                		Printf("\nmessage too big, "
+				    "trying new MTU = %d ", packlen);
+#endif
+				goto again;
+			} else
+				Fprintf(stderr, "%s: sendto: %s\n",
+				    prog, strerror(errno));
+		
 		Printf("%s: wrote %s %d chars, ret=%d\n",
 		    prog, hostname, packlen, cc);
 		(void)fflush(stdout);
@@ -1087,6 +1151,9 @@ packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
 
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
+
+		nextmtu = icp->icmp_nextmtu;	/* for frag_err() */
+			
 		if (useicmp) {
 			/* XXX */
 			if (type == ICMP_ECHOREPLY &&
@@ -1360,9 +1427,41 @@ usage(void)
 	extern char version[];
 
 	Fprintf(stderr, "Version %s\n", version);
-	Fprintf(stderr, "Usage: %s [-dDFIlnrvx] [-g gateway] [-i iface] \
+	Fprintf(stderr, "Usage: %s [-dDFPIlnrvx] [-g gateway] [-i iface] \
 [-f first_ttl] [-m max_ttl]\n\t[ -p port] [-q nqueries] [-s src_addr] [-t tos] \
 [-w waittime]\n\thost [packetlen]\n",
 	    prog);
 	exit(1);
 }
+
+/*
+ * Received ICMP unreachable (fragmentation required and DF set).
+ * If the ICMP error was from a "new" router, it'll contain the next-hop
+ * MTU that we should use next.  Otherwise we'll just keep going in the
+ * mtus[] table, trying until we hit a valid MTU.
+ */
+
+
+void
+frag_err()
+{
+        int i;
+
+        if (nextmtu > 0) {
+                Printf("\nfragmentation required and DF set, next hop MTU = %d\n
+",
+                        nextmtu);
+                packlen = nextmtu;
+                for (i = 0; mtus[i] > 0; i++) {
+                        if (mtus[i] < nextmtu) {
+                                mtuptr = &mtus[i];    /* next one to try */
+                                return;
+                        }
+                }
+        } else {
+                packlen = *mtuptr++;
+                Printf("fragmentation required and DF set, "
+		    "trying new MTU = %d ", packlen);
+        }
+}
+
