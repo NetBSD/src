@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.56 2002/09/25 11:49:55 martti Exp $
+#	$NetBSD: ALL,v 1.57 2002/10/14 19:42:34 elric Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.56 $"
+#ident 		"ALL-$Revision: 1.57 $"
 
 maxusers	32
 
@@ -384,6 +384,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 pseudo-device	ccd	4
+
+## Cryptographic disk devices.  See cgd(4).
+
+pseudo-device	cgd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
