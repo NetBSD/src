@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1999/05/05 13:46:20 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1999/05/13 14:23:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,8 +192,11 @@ void	intrhand __P((int));
  * On the 68020/68030, the value of delay_divisor is roughly
  * 2048 / cpuspeed (where cpuspeed is in MHz).
  *
- * On the 68040/68060(?), the value of delay_divisor is roughly
+ * On the 68040, the value of delay_divisor is roughly
  * 759 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68060, the value of delay_divisor is reported to be
+ * 128 / cpuspeed (where cpuspeed is in MHz).
  */
 int	delay_divisor = 140;	/* assume some reasonable value to start */
 static int cpuspeed;		/* MPU clock (in MHz) */
@@ -215,14 +218,6 @@ consinit()
 	 * bring graphics layer up.
 	 */
 	config_console();
-
-	/*
-	 * cpuspeed is now used only for print.
-	 */
-	if (mmutype == MMU_68040) /* 68040/060 */
-		cpuspeed = (759 / delay_divisor);
-	else			/* 68030 */
-		cpuspeed = (2048 / delay_divisor);
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -531,7 +526,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
+char	cpu_model[96];		/* max 85 chars */
 extern	char version[];
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -550,6 +545,7 @@ identifycpu()
 {
         /* there's alot of XXX in here... */
 	char *cpu_type, *mach, *mmu, *fpu;
+	char clock[16];
 
 	/*
 	 * check machine type constant
@@ -581,14 +577,20 @@ identifycpu()
 		break;
 	}
 
+	cpuspeed = 2048 / delay_divisor;
+	sprintf(clock, "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
 		cpu_type = "m68060";
 		mmu = "/MMU";
+		cpuspeed = 128 / delay_divisor;
+		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
+		cpuspeed = 759 / delay_divisor;
+		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
@@ -608,8 +610,8 @@ identifycpu()
 		fpu = fpu_descr[fputype];
 	else
 		fpu = ", unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s, %dMHz clock)",
-		mach, cpu_type, mmu, fpu, cpuspeed);
+	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)",
+		mach, cpu_type, mmu, fpu, clock);
 	printf("%s\n", cpu_model);
 }
 
@@ -1384,7 +1386,7 @@ asm("end_check_mem:");
 	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
 
-	DPRINTF ((" End."));
+	DPRINTF ((" End.\n"));
 
 	DPRINTF (("Returning from mem_exists. result = %d\n", exists));
 
