@@ -1,9 +1,9 @@
-.\"	$NetBSD: rc.conf.5,v 1.32.2.2 2000/07/03 22:59:28 thorpej Exp $
+.\"	$NetBSD: rc.conf.5,v 1.32.2.3 2000/08/09 19:15:32 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
 .\" Copyright (c) 1997 Michael W. Long
-.\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from works contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 23, 1999
+.Dd August 9, 2000
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -44,7 +44,7 @@
 The
 .Nm
 file specifies which services are enabled during system startup by
-the startup script
+the startup scripts invoked by
 .Pa /etc/rc .
 The
 .Nm
@@ -65,7 +65,10 @@ variables.
 Enabling variables, such as
 .Sy inetd ,
 are generally named after the program or the system they enable,
-and are set to "YES" or "NO".
+and are set to
+.Sq YES
+or
+.Sq NO .
 Flags variables, such as
 .Sy inetd_flags
 have the same name with "_flags" appended, and determine what
@@ -75,7 +78,19 @@ If a variable that
 .Pa /etc/rc
 expects to be set is not set, or the value is not one of the allowed
 values, a warning will be printed.
-.Pp
+.Ss Overall control:
+.Bl -tag -width net_interfaces
+.It Sy rc_configured
+If this is not set to
+.Sq YES
+then the system will drop into single-user mode during boot.
+.It Sy do_rcshutdown
+If set to
+.Sq NO ,
+.Xr shutdown 8
+will not run
+.Pa /etc/rc.shutdown .
+.El
 .Ss Basic network configuration:
 .Bl -tag -width net_interfaces
 .It Sy hostname
@@ -95,51 +110,58 @@ If empty or not set, then the contents of
 .Pa /etc/mygate
 (if it exists) are used.
 .El
-.Pp
 .Ss Boottime file-system and swap configuration:
-.Bl -tag -width critfs_require_network
-.It Sy critical_filesystems
-File systems mounted very early in the system boot, except for the
-.Pa /usr
-and
+.Bl -tag -width net_interfaces
+.It Sy critical_filesystems_beforenet
+File systems mounted very early in the system boot before networking
+services are available.
+Usually
 .Pa /var
-file-systems.
-.It Sy critfs_require_network
-YES or NO.
-Set the 
-.Sy critfs_require_network
-variable to YES if the network must be configured before critical filesystems
-can be mounted.
-This should be set to NO if you are using the DHCP client,
-because the DHCP client needs to store its lease database in the
-.Pa /var/db 
-directory.
+is part of this, because it is needed by services such as
+.Xr dhclient 1
+which may be required to get the network operational.
+.It Sy critical_filesystems
+File systems such as
+.Pa /usr
+that may require network services to be available to mount,
+that must be available early in the system boot for general services to use.
 .It Sy no_swap
 Set the
 .Sy no_swap
-variable to YES if you have configured your system with no swap on purpose.
-If not set, or set to anything other than YES, and no swap devices
+variable to
+.Sq YES
+if you have configured your system with no swap on purpose.
+If not set, or set to anything other than
+.Sq YES ,
+and no swap devices
 are configured, the system will warn you.
 .El
-.Pp
 .Ss One-time actions to perform or programs to run on boot-up:
 .Bl -tag -width net_interfaces
 .It Sy lkm
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Pa /etc/rc.lkm .
 .It Sy savecore
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs the
 .Xr savecore 8
 utility.
 Passes
 .Sy savecore_flags .
 .It Sy clear_tmp
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Clear /tmp after reboot.
 .It Sy update_motd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Updates the
 .Nx
 version string in the
@@ -148,7 +170,9 @@ file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
 .It Sy dmesg
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Create
 .Pa /var/run/dmesg.boot
 from the output of
@@ -156,16 +180,17 @@ from the output of
 Passes
 .Sy dmesg_flags .
 .It Sy accounting
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Enables process accounting with
 .Xr accton 8 .
 Requires
 .Pa /var/account/acct
 to exist.
 .El
-.Pp
 .Ss System security setting:
-.Bl -tag -width securelevel
+.Bl -tag -width net_interfaces
 .It Sy securelevel
 A number.
 The system securelevel is set to the specified value early
@@ -175,27 +200,51 @@ If set to nothing, the default action is taken, as described
 .Xr init 8 ,
 which contains definative information about the system securelevel.
 .El
-.Pp
 .Ss Networking startup:
 .Bl -tag -width net_interfaces
 .It Sy ipfilter
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ipf 8
 to load in packet filter specifications from
 .Pa /etc/ipf.conf
 at network boot time, before any interfaces are configured.
 See
-.Xr ipf 5 .
+.Xr ipf.conf 5 .
+.It Sy ipnat
+Runs
+.Xr ipnat 8
+to load in the IP network address translation (NAT) rules from
+.Pa /etc/ipnat.conf
+at network boot time, before any interfaces are configured.
+See
+.Xr ipnat.conf 5 .
 .It Sy ipsec
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr setkey 8
 to load in IPsec manual keys and policies from
 .Pa /etc/ipsec.conf
 at network boot time, before any interfaces are configured.
+.It Sy ipmon
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipmon 8
+to read
+.Xr ipf 8
+packet log information and log it to a file or the system log.
+Passes
+.Sy ipmon_flags .
 .It Sy auto_ifconfig
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Sets the
 .Sy net_interfaces
 variable (see below) to the output of
@@ -237,19 +286,31 @@ We recommend using
 .Pa /etc/ifconfig.xxN
 with multiple lines instead.
 .It Sy flushroutes
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Flushes the route table on networking startup.
 Useful when coming up to multiuser mode after going down to
 single-user mode.
 .It Sy dhclient
-YES or NO.
-Set to YES to configure some or all network interfaces using
+.Sq YES
+or
+.Sq NO .
+Set to
+.Sq YES
+to configure some or all network interfaces using
 the DHCP client.
 If you set
 .Sy dhclient
-to YES, you must either set 
-.Sy critfs_require_network
-to NO or direct the DHCP client to store the leases file on the root
+to
+.Sq YES ,
+you must either have
+.Pa /var
+in
+.Sy critical_filesystems_beforenet ,
+as part of
+.Pa / ,
+or direct the DHCP client to store the leases file on the root
 filesystem by modifying the
 .Sy dhclient_flags
 variable.
@@ -259,8 +320,10 @@ Interface aliases can be set up in the DHCP client configuration
 file if needed - see
 .Xr dhclient.conf 5
 for details.
-.It Sy dhclient_flags
-Flags to pass to the DHCP client.
+.Pp
+Passes
+.Sy dhclient_flags
+to the DHCP client.
 See
 .Xr dhclient 8
 for complete documentation.
@@ -275,7 +338,9 @@ file in the
 .Sy dhclient_flags
 variable - for example, "-lf /tmp/dhclient.leases".
 .It Sy ntpdate
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ntpdate 8
 to set the system time from one of the hosts in
@@ -323,7 +388,9 @@ and
 as well, if you set the variable to
 .Li autohost .
 .It Sy rtsol
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Run
 .Xr rtsol 8 ,
 router solicitation command for IPv6 host.
@@ -336,11 +403,12 @@ This is only for autoconfigured IPv6 host, so set
 .Sy ip6mode
 to autohost if you use it.
 .El
-.Pp
 .Ss Daemons required by other daemons:
 .Bl -tag -width net_interfaces
 .It Sy inetd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs the
 .Xr inetd 8
 daemon to start network server processes (as listed in
@@ -352,7 +420,9 @@ The
 .Ar -l
 flag turns on libwrap connection logging.
 .It Sy rpcbind
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 The
 .Xr rpcbind 8
 daemon is required for any
@@ -366,23 +436,34 @@ These include NFS,
 and
 .Xr rwalld 8 .
 .El
-.Pp
 .Ss Commonly used daemons:
 .Bl -tag -width net_interfaces
 .It Sy syslogd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr syslogd 8
 and passes
 .Sy syslogd_flags .
+.It Sy cron
+.Sq YES
+or
+.Sq NO .
+Run
+.Xr cron 8 .
 .It Sy named
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr named 8
 and passes
 .Sy named_flags .
 .It Sy timed
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr timed 8
 and passes
@@ -399,24 +480,32 @@ only one machine running both should have the
 flag given to
 .Xr timed 8 .
 .It Sy ntpd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ntpd 8
 and passes
 .Sy ntpd_flags .
 .It Sy sendmail
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
 .It Sy postfix
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Starts
 .Xr postfix 8
 mail system.
 .It Sy lpd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr lpd 8
 and passes
@@ -424,49 +513,81 @@ and passes
 The
 .Ar -l
 flag will turn on extra logging.
+.It Sy sshd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr sshd 8
+and passes
+.Sy sshd_flags .
+.Xr sshd 8
+is not included with the standard
+.Nx
+installation, although it is part of the optional
+.Nx
+package collection.
 .El
-.Pp
 .Ss Routing daemons:
 .Bl -tag -width net_interfaces
 .It Sy routed
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr routed 8 ,
 the RIP routing protocol daemon.
 Passes
 .Sy routed_flags .
-This should be NO if
+This should be
+.Sq NO
+if
 .Sy gated
-is YES.
+is
+.Sq YES .
 .It Sy gated
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr gated 8 ,
 the multiprotocol routing daemon.
 Passes
 .Sy gated_flags .
-This should be NO if
+This should be
+.Sq NO
+if
 .Sy routed
-is YES.
+is
+.Sq YES .
 .Xr gated 8
-is not included with
-.Nx .
+is not included with the standard
+.Nx
+installation, although it is part of the optional
+.Nx
+package collection.
 .It Sy mrouted
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr mrouted 8 ,
 the DVMRP multicast routing protocol daemon.
 Passes
 .Sy mrouted_flags .
 .It Sy route6d
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr route6d 8 ,
 the RIPng routing protocol daemon for IPv6.
 Passes
 .Sy route6d_flags .
 .It Sy rtsold
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rtsold 8 ,
 the IPv6 router solicitation daemon.
@@ -483,11 +604,12 @@ This is only for autoconfigured IPv6 host, so set
 .Sy ip6mode
 to autohost if you use it.
 .El
-.Pp
 .Ss Daemons used to boot other hosts over a network:
 .Bl -tag -width net_interfaces
 .It Sy rarpd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rarpd 8 ,
 the reverse ARP daemon, often used to boot
@@ -496,7 +618,9 @@ and Sun workstations.
 Passes
 .Sy rarpd_flags .
 .It Sy bootparamd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr bootparamd 8 ,
 the boot parameter server, with
@@ -508,15 +632,27 @@ and
 .Tn "SunOS 4.x"
 systems.
 .It Sy dhcpd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr dhcpd 8 ,
 the Dynamic Host Configuration Protocol (DHCP) daemon,
 for assigning IP addresses to hosts and passing boot information.
 Passes
 .Sy dhcpd_flags .
+.It Sy dhcrelay
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr dhcrelay 8 .
+Passes
+.Sy dhcrelay_flags .
 .It Sy rbootd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rbootd 8 ,
 the
@@ -527,7 +663,9 @@ workstations.
 Passes
 .Sy rbootd_flags .
 .It Sy mopd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr mopd 8 ,
 the
@@ -541,7 +679,9 @@ machines.
 Passes
 .Sy mopd_flags .
 .It Sy rtadvd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rtadvd 8 ,
 the IPv6 router advertisement daemon, which is used to advertise
@@ -550,13 +690,35 @@ Passes
 .Sy rtadvd_flags .
 This is only for IPv6 router, so set
 .Sy ip6forwarding
-to YES if you use it.
+to
+.Sq YES
+if you use it.
 .El
-.Pp
+.Ss X Window System daemons:
+.Bl -tag -width net_interfaces
+.It Sy xfs
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr xfs 1
+X11 font server, which supplies local X font files to X terminals.
+.It Sy xdm
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr xdm 1
+X display manager.
+These X daemons are available only with the optional X distribution of
+.Nx .
+.El
 .Ss NIS (YP) daemons:
 .Bl -tag -width net_interfaces
 .It Sy ypbind
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ypbind 8 ,
 which lets
@@ -567,7 +729,9 @@ server.
 Passes
 .Sy ypbind_flags .
 .It Sy ypserv
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ypserv 8 ,
 the
@@ -582,7 +746,9 @@ flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
 .It Sy yppasswdd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr yppasswdd 8 ,
 which allows remote
@@ -591,15 +757,18 @@ users to update password on master server.
 Passes
 .Sy yppasswdd_flags .
 .El
-.Pp
 .Ss NFS daemons and parameters:
 .Bl -tag -width net_interfaces
 .It Sy nfs_client
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 The number of local NFS asynchronous I/O server is now controlled via
 .Xr sysctl 8 .
 .It Sy nfs_server
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Sets up a host to be a NFS server by running
 .Xr mountd 8
 and
@@ -610,18 +779,23 @@ and
 .Sy nfsd_flags
 to them, respectively.
 .It Sy lockd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rpc.lockd 8
 if either
 .Sy nfs_server
 or
 .Sy nfs_client
-is (or both are) set to YES.
+is (or both are) set to
+.Sq YES .
 Passes
 .Sy lockd_flags .
 .It Sy statd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rpc.statd 8 ,
 a status monitoring daemon used when
@@ -630,11 +804,14 @@ is running, if either
 .Sy nfs_server
 or
 .Sy nfs_client
-is (or both are) set to YES.
+is (or both are) set to
+.Sq YES .
 Passes
 .Sy statd_flags .
 .It Sy amd
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr amd 8 ,
 the automounter daemon, which automatically mounts NFS file systems
@@ -647,42 +824,23 @@ The
 mount directory.
 Used only if
 .Sy amd
-is set to YES.
+is set to
+.Sq YES .
 .It Sy amd_master
 The
 .Xr amd 8
 automounter master map.
 Used only if
 .Sy amd
-is set to YES.
+is set to
+.Sq YES .
 .El
-.Pp
-.Ss X Window System daemons:
-.Bl -tag -width net_interfaces
-.It Sy xfs
-YES or NO.
-Runs the
-.Xr xfs 1
-X11 font server, which supplies local X font files to X terminals.
-.It Sy xdm
-YES or NO.
-Runs the
-.Xr xdm 1
-X display manager.
-These X daemons are available only with the optional X distribution of
-.Nx .
-.El
-.Pp
 .Ss Other daemons:
 .Bl -tag -width net_interfaces
-.It Sy apmd
-YES or NO.
-Runs
-.Xr apmd 8
-and passes
-.Sy apmd_flags .
 .It Sy rwhod
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr rwhod 8
 to support the
@@ -691,7 +849,9 @@ and
 .Xr ruptime 1
 commands.
 .It Sy kerberos
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs the kerberos server
 .Xr kerberos 8
 and the kerberos admininstration server,
@@ -699,14 +859,33 @@ and the kerberos admininstration server,
 This should only be run on the kerberos master server.
 Both servers implement version IV of the Kerberos protocol, not the
 newer Kerberos version 5.
-The kerberos server is only available with the USA distribution of
-.Nx .
+.El
+.Ss Hardware daemons:
+.Bl -tag -width net_interfaces
+.It Sy apmd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr apmd 8
+and passes
+.Sy apmd_flags .
 .It Sy screenblank
-YES or NO.
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr screenblank 1
 and passes
 .Sy screenblank_flags .
+.It Sy wscons
+.Sq YES
+or
+.Sq NO .
+Configures the
+.Xr wscons 4
+console driver, from the configuration file
+.Pa /etc/wscons.conf .
 .El
 .Sh FILES
 .Pa /etc/rc.conf
