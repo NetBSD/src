@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.68 1998/07/27 18:49:43 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.69 1998/08/03 11:43:14 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,10 @@
 #	mms*	Microsoft bus mouse
 #	lms*	Logitech bus mouse
 #	pms*	PS/2 mouse
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
 # 
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
@@ -188,7 +192,8 @@ ttyv*)
 
 wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 wms0
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
 	;;
 
 ttyE*)
@@ -198,24 +203,24 @@ ttyE*)
 	chown root.wheel ttyE$unit
 	;;
 
-wms*)
-	unit=${i#wms}
-	wms=wms$unit
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
 	major=49
-	rm -f $wms
-	mknod $wms c $major $unit
-	chown root.wheel $wms
-	chmod 600 $wms
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
 	;;
 
-wkbd*)
-	unit=${i#wkbd}
-	wkbd=wkbd$unit
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
 	major=48
-	rm -f $wkbd
-	mknod $wkbd c $major $unit
-	chown root.wheel $wkbd
-	chmod 600 $wkbd
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
 	;;
 
 fd)
