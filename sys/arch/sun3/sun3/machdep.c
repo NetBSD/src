@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 1997/12/04 15:33:46 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 1998/01/24 16:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -689,8 +689,11 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo <= 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
+	}
 	savectx(&dumppcb);
 
 	dsw = &bdevsw[major(dumpdev)];
@@ -700,8 +703,8 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev 0x%x, offset %d\n",
-		   (int) dumpdev, (int) dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	/*
 	 * Prepare the dump header, including MMU state.

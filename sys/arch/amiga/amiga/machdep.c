@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 1998/01/07 22:46:02 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 1998/01/24 16:46:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1159,11 +1159,15 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable.\n");
