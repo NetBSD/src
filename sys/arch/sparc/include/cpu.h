@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2003/01/18 06:44:57 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.63 2003/01/22 21:58:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -245,6 +245,9 @@ void mp_resume_cpus_ddb(void);
 #endif
 /* msiiep.c */
 void msiiep_swap_endian(int);
+/* intr.c */
+u_int setitr(u_int);
+u_int getitr(void);
 
 /*
  *
