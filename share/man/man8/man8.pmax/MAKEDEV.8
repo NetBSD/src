@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.3 2000/06/11 10:08:04 veego Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.4 2000/11/07 06:43:29 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Dt MAKEDEV 8 pc532
 .Os
 .Sh NAME
+.Nm MAKEDEV ,
 .Nm makedev
 .Nd create system and device special files
 .Sh SYNOPSIS
@@ -53,7 +54,7 @@
 .Op Ar ...
 .Sh DESCRIPTION
 The shell script
-.Nm MAKEDEV ,
+.Nm "" ,
 found in the
 .Pa /dev
 directory, is used to create
@@ -63,7 +64,7 @@ files.
 .\" .Xr special 8
 .\" for a more complete discussion of special files.
 .Pp
-.Nm MAKEDEV
+.Nm
 takes any number of device names as arguments,
 where the names are the common abbreviation for
 the device.  There are several special device names:

@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: com.4,v 1.5 1999/03/16 01:19:20 garbled Exp $
+.\"	$NetBSD: com.4,v 1.6 2000/11/07 06:43:26 lukem Exp $
 .\"
 .Dd July 28, 1995
 .Dt COM 4 arm32
@@ -88,9 +88,8 @@ with the code listed.
 .Sh HISTORY
 The
 .Nm
-driver was originally derived from the
-.Nm i386
-.Nm com
+driver was originally derived from the i386
+.Nm
 driver and is
 .Ud
 .Sh BUGS
@@ -98,4 +97,4 @@ Data loss is possible on busy systems with unbuffered UARTs at high speed.
 .Pp
 The name of this driver and the constants which define the locations
 of the various serial ports are holdovers from
-.Nm DOS .
+.Tn DOS .
