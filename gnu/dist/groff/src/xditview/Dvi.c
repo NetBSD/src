@@ -1,4 +1,4 @@
-/*	$NetBSD: Dvi.c,v 1.1.1.1 2001/04/19 12:52:29 wiz Exp $	*/
+/*	$NetBSD: Dvi.c,v 1.1.1.2 2004/07/30 14:45:08 wiz Exp $	*/
 
 #ifndef SABER
 #ifndef lint
@@ -95,6 +95,20 @@ static void		CloseFile (), OpenFile ();
 static void		FindPage ();
 
 static void		SaveToFile ();
+
+/* font.c */
+extern void ParseFontMap();
+extern void DestroyFontMap();
+extern void ForgetFonts();
+
+/* page.c */
+extern void DestroyFileMap();
+extern long SearchPagePosition();
+extern void FileSeek();
+extern void ForgetPagePositions();
+
+/* parse.c */
+extern int ParseInput();
 
 DviClassRec dviClassRec = {
 {
@@ -408,6 +422,7 @@ QueryGeometry (w, request, geometry_return)
 	return ret;
 }
 
+void
 SetDevice (dw, name)
 	DviWidget	dw;
 	char 		*name;

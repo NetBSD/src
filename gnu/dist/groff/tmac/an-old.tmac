@@ -77,9 +77,12 @@
 .if \n[an-html] .nr C 1
 .if r ps4html .nr C 1
 .
-.\" we redefine .ne to avoid page breaks; instead, the page length is
-.\" increased to the necessary amount (this is needed for tables)
-.if n \{\
+.\" we redefine .ne to avoid page breaks if cR is set; instead, the page
+.\" length is increased to the necessary amount (this is needed for tables)
+.\"
+.\" similarly, we redefine .bp if cR is set, adjusting the page length to
+.\" the current position so that no empty lines are inserted
+.if \n[cR] \{\
 .  de1 ne
 .    ie \\n[.$] \
 .      nr an-ne \\$*
@@ -87,6 +90,13 @@
 .      nr an-ne 1v
 .    if (\\n[an-ne] >= \\n[.t]) \
 .      pl +(\\n[an-ne]u - \\n[.t]u + 1v)
+.  .
+.
+.  rn bp an-bp
+.  de1 bp
+.    br
+.    pl \\n[nl]u
+.    an-bp \\$*
 .  .
 .\}
 .

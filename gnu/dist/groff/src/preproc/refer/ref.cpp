@@ -1,7 +1,8 @@
-/*	$NetBSD: ref.cpp,v 1.1.1.1 2003/06/30 17:52:14 wiz Exp $	*/
+/*	$NetBSD: ref.cpp,v 1.1.1.2 2004/07/30 14:45:02 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2003
+   Free Software Foundation, Inc.
 Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -422,8 +423,7 @@ void reference::compute_sort_key()
   sort_fields += '\0';
   const char *sf = sort_fields.contents();
   while (*sf != '\0') {
-    if (sf > sort_fields)
-      sort_key += SORT_SEP;
+    sort_key += SORT_SEP;
     char f = *sf++;
     int n = 1;
     if (*sf == '+') {

@@ -1,7 +1,7 @@
-/*	$NetBSD: ps.cpp,v 1.1.1.1 2003/06/30 17:52:15 wiz Exp $	*/
+/*	$NetBSD: ps.cpp,v 1.1.1.2 2004/07/30 14:45:04 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -43,6 +43,9 @@ extern "C" {
 #endif /* NEED_DECLARATION_PUTENV */
 
 extern "C" const char *Version_string;
+
+// search path defaults to the current directory
+search_path include_search_path(0, 0, 0, 1);
 
 static int landscape_flag = 0;
 static int manual_feed_flag = 0;
@@ -328,9 +331,14 @@ ps_output &ps_output::put_fix_number(int i)
 ps_output &ps_output::put_float(double d)
 {
   char buf[128];
-  sprintf(buf, "%.3g", d);
-  int len = strlen(buf);
-  if (col > 0 && col + len + need_space > max_line_length) {
+  sprintf(buf, "%.4f", d);
+  int last = strlen(buf) - 1;
+  while (buf[last] == '0')
+    last--;
+  if (buf[last] == '.')
+    last--;
+  buf[++last] = '\0';
+  if (col > 0 && col + last + need_space > max_line_length) {
     putc('\n', fp);
     col = 0;
     need_space = 0;
@@ -340,7 +348,7 @@ ps_output &ps_output::put_float(double d)
     col++;
   }
   fputs(buf, fp);
-  col += len;
+  col += last;
   need_space = 1;
   return *this;
 }
@@ -791,7 +799,7 @@ void ps_printer::define_encoding(const char *encoding, int encoding_index)
       p++;
     if (*p != '#' && *p != '\0' && (p = strtok(buf, WS)) != 0) {
       char *q = strtok(0, WS);
-      int n;
+      int n = 0;		// pacify compiler
       if (q == 0 || sscanf(q, "%d", &n) != 1 || n < 0 || n >= 256)
 	fatal_with_file_and_line(path, lineno, "bad second field");
       vec[n] = new char[strlen(p) + 1];
@@ -1792,7 +1800,7 @@ int main(int argc, char **argv)
     { "version", no_argument, 0, 'v' },
     { NULL, 0, 0, 0 }
   };
-  while ((c = getopt_long(argc, argv, "b:c:F:glmp:P:vw:", long_options, NULL))
+  while ((c = getopt_long(argc, argv, "b:c:F:gI:lmp:P:vw:", long_options, NULL))
 	 != EOF)
     switch(c) {
     case 'b':
@@ -1811,6 +1819,9 @@ int main(int argc, char **argv)
       break;
     case 'g':
       guess_flag = 1;
+      break;
+    case 'I':
+      include_search_path.command_line_dir(optarg);
       break;
     case 'l':
       landscape_flag = 1;
@@ -1866,6 +1877,7 @@ int main(int argc, char **argv)
 static void usage(FILE *stream)
 {
   fprintf(stream,
-    "usage: %s [-glmv] [-b n] [-c n] [-w n] [-P prologue] [-F dir] [files ...]\n",
+"usage: %s [-glmv] [-b n] [-c n] [-w n] [-I dir] [-P prologue]\n"
+"       [-F dir] [files ...]\n",
     program_name);
 }

@@ -6,30 +6,20 @@ OBJS=\
   dictionary.$(OBJEXT) \
   div.$(OBJEXT) \
   env.$(OBJEXT) \
-  glyphuni.$(OBJEXT) \
   input.$(OBJEXT) \
   majorminor.$(OBJEXT) \
   node.$(OBJEXT) \
   number.$(OBJEXT) \
-  reg.$(OBJEXT) \
-  symbol.$(OBJEXT) \
-  unicode.$(OBJEXT) \
-  uniglyph.$(OBJEXT) \
-  uniuni.$(OBJEXT)
+  reg.$(OBJEXT)
 CCSRCS=\
   $(srcdir)/dictionary.cpp \
   $(srcdir)/div.cpp \
   $(srcdir)/env.cpp \
-  $(srcdir)/glyphuni.cpp \
   $(srcdir)/input.cpp \
   majorminor.cpp \
   $(srcdir)/node.cpp \
   $(srcdir)/number.cpp \
-  $(srcdir)/reg.cpp \
-  $(srcdir)/symbol.cpp \
-  $(srcdir)/unicode.cpp \
-  $(srcdir)/uniglyph.cpp \
-  $(srcdir)/uniuni.cpp
+  $(srcdir)/reg.cpp
 HDRS=\
   $(srcdir)/charinfo.h \
   $(srcdir)/dictionary.h \
@@ -40,10 +30,8 @@ HDRS=\
   $(srcdir)/node.h \
   $(srcdir)/reg.h \
   $(srcdir)/request.h \
-  $(srcdir)/symbol.h \
   $(srcdir)/token.h \
-  $(srcdir)/troff.h \
-  $(srcdir)/unicode.h
+  $(srcdir)/troff.h
 GENSRCS=majorminor.cpp
 NAMEPREFIX=$(g)
 

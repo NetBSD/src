@@ -7,9 +7,103 @@ questions and suggestions, or contact me directly at:
 
     df191@ncf.ca
 
+If writing me directly, please include the word "groff" or "mom" in
+the Subject line or you risk my spam filter nuking your message.
+Also, please--no html email.  That, too, gets nuked.
+
 --Peter Schaffter
 
 ========================================================================
+
+Version 1.1.7-a
+===============
+
+Suite number in DOCTYPE LETTER not printing.
+---Fixed---
+
+Footer elements not always vertically aligning.
+---Fixed---
+
+Footer rule gap not always correctly observed.
+---Fixed---
+
+Page numbering, when at top of page, not always falling on
+HDRFTR_MARGIN.
+---Fixed---
+
+Default page numbering style for COPYSTYLE draft is DIGIT instead
+of roman.
+---Fixed---
+
+Hyphens around page numbering when style is DIGIT, ROMAN or ALPHA
+not vertically centered.
+---Fixed---
+
+EXT arg not working with DROPCAP.
+---Fixed---
+
+DOC_QUAD not automatically set immediately after START
+---Fixed--
+
+Tabs behaving erratically during document processing.
+---Fixed---
+
+Version 1.1.7
+=============
+
+When DOCHEADER OFF <distance> is given, if <distance> falls short
+of the top margin of running text, <distance> is not respected and
+bottom margin falls low.
+---Fixed---
+
+
+Version 1.1.6-e
+===============
+
+The " mark (doublequote), when entered while not in document
+processing mode (i.e. just straightforward typesetting), outputs
+nothing unless SMARTQUOTES is invoked explicitly.
+---Fixed---
+
+Version 1.1.6-c
+===============
+
+In document processing mode, docs that use *none* of the
+docprocessing tags being ignored.
+---Fixed---
+
+Version 1.1.6-b
+===============
+
+String tabs not picking up #L_MARGIN when #L_MARGIN not explicitly
+set with L_MARGIN, PAPER or PAGE.
+---Fixed---
+
+Infinite loop when B_MARGIN is set lower than FOOTER_MARGIN during
+doc processing.
+---Fixed---
+
+Version 1.1.6-a
+===============
+
+Mom partially broken when run with groff 1.19.1.  Don't know yet
+what this is, whether bad coding in mom, or a problem with 1.19.1.
+Only solution for now: run mom 1.1.6 with groff 1.18.
+----Fixed---
+
+Top margin of endnotes pages after the first endnotes page when
+PRINTSTYLE is TYPEWRITE and endnotes single-spacing is turned on
+falling one line too high.
+---Fixed---
+
+Version 1.1.6
+=============
+
+DOCHEADER OFF (distance) not being respected.
+---Fixed---
+
+FINIS killing ENDNOTES page numbering and heads.
+---Fixed---
 
 Version 1.1.5
 =============

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.cpp,v 1.1.1.1 2003/06/30 17:52:12 wiz Exp $	*/
+/*	$NetBSD: pic.cpp,v 1.1.1.2 2004/07/30 14:45:00 wiz Exp $	*/
 
 #ifndef lint
 static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93 (groff)";
@@ -16,7 +16,6 @@ static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93 (groff)";
 #include "object.h"
 
 extern int delim_flag;
-extern void do_copy(const char *);
 extern void copy_rest_thru(const char *, const char *);
 extern void copy_file_thru(const char *, const char *, const char *);
 extern void push_body(const char *);
@@ -53,7 +52,7 @@ const char *object_type_name(object_type type);
 char *format_number(const char *form, double n);
 char *do_sprintf(const char *form, const double *v, int nv);
 
-#line 66 "pic.y"
+#line 65 "pic.y"
 typedef union {
 	char *str;
 	int n;
@@ -72,7 +71,7 @@ typedef union {
 	graphics_state state;
 	object_type obtype;
 } YYSTYPE;
-#line 74 "y.tab.c"
+#line 73 "y.tab.c"
 #define LABEL 257
 #define VARIABLE 258
 #define NUMBER 259
@@ -3470,7 +3469,7 @@ YYSTYPE yylval;
 short yyss[YYSTACKSIZE];
 YYSTYPE yyvs[YYSTACKSIZE];
 #define yystacksize YYSTACKSIZE
-#line 1610 "pic.y"
+#line 1617 "pic.y"
 
 /* bison defines const to be empty unless __STDC__ is defined, which it
 isn't under cfront */
@@ -3727,7 +3726,7 @@ char *do_sprintf(const char *form, const double *v, int nv)
   result += '\0';
   return strsave(result.contents());
 }
-#line 3729 "y.tab.c"
+#line 3728 "y.tab.c"
 #define YYABORT goto yyabort
 #define YYREJECT goto yyabort
 #define YYACCEPT goto yyaccept
@@ -3873,26 +3872,26 @@ yyreduce:
     switch (yyn)
     {
 case 2:
-#line 279 "pic.y"
+#line 278 "pic.y"
 {
 		  if (olist.head)
 		    print_picture(olist.head);
 		}
 break;
 case 3:
-#line 288 "pic.y"
+#line 287 "pic.y"
 { yyval.pl = yyvsp[-1].pl; }
 break;
 case 4:
-#line 293 "pic.y"
+#line 292 "pic.y"
 { yyval.pl = yyvsp[0].pl; }
 break;
 case 5:
-#line 295 "pic.y"
+#line 294 "pic.y"
 { yyval.pl = yyvsp[-2].pl; }
 break;
 case 10:
-#line 310 "pic.y"
+#line 309 "pic.y"
 {
 		  a_delete graphname;
 		  graphname = new char[strlen(yyvsp[0].str) + 1];
@@ -3901,14 +3900,14 @@ case 10:
 		}
 break;
 case 11:
-#line 318 "pic.y"
+#line 317 "pic.y"
 {
 		  define_variable(yyvsp[-2].str, yyvsp[0].x);
 		  a_delete yyvsp[-2].str;
 		}
 break;
 case 12:
-#line 323 "pic.y"
+#line 322 "pic.y"
 {
 		  place *p = lookup_label(yyvsp[-3].str);
 		  if (!p) {
@@ -3922,37 +3921,37 @@ case 12:
 		}
 break;
 case 13:
-#line 335 "pic.y"
+#line 334 "pic.y"
 { current_direction = UP_DIRECTION; }
 break;
 case 14:
-#line 337 "pic.y"
+#line 336 "pic.y"
 { current_direction = DOWN_DIRECTION; }
 break;
 case 15:
-#line 339 "pic.y"
+#line 338 "pic.y"
 { current_direction = LEFT_DIRECTION; }
 break;
 case 16:
-#line 341 "pic.y"
+#line 340 "pic.y"
 { current_direction = RIGHT_DIRECTION; }
 break;
 case 17:
-#line 343 "pic.y"
+#line 342 "pic.y"
 {
 		  olist.append(make_command_object(yyvsp[0].lstr.str, yyvsp[0].lstr.filename,
 						   yyvsp[0].lstr.lineno));
 		}
 break;
 case 18:
-#line 348 "pic.y"
+#line 347 "pic.y"
 {
 		  olist.append(make_command_object(yyvsp[0].lstr.str, yyvsp[0].lstr.filename,
 						   yyvsp[0].lstr.lineno));
 		}
 break;
 case 19:
-#line 353 "pic.y"
+#line 352 "pic.y"
 {
 		  fprintf(stderr, "%s\n", yyvsp[0].lstr.str);
 		  a_delete yyvsp[0].lstr.str;
@@ -3960,11 +3959,11 @@ case 19:
 		}
 break;
 case 20:
-#line 359 "pic.y"
+#line 358 "pic.y"
 { delim_flag = 1; }
 break;
 case 21:
-#line 361 "pic.y"
+#line 360 "pic.y"
 {
 		  delim_flag = 0;
 		  if (safer_flag)
@@ -3975,7 +3974,7 @@ case 21:
 		}
 break;
 case 22:
-#line 370 "pic.y"
+#line 369 "pic.y"
 {
 		  if (yychar < 0)
 		    do_lookahead();
@@ -3984,15 +3983,15 @@ case 22:
 		}
 break;
 case 23:
-#line 377 "pic.y"
+#line 376 "pic.y"
 { delim_flag = 2; }
 break;
 case 24:
-#line 379 "pic.y"
+#line 378 "pic.y"
 { delim_flag = 0; }
 break;
 case 25:
-#line 381 "pic.y"
+#line 380 "pic.y"
 {
 		  if (yychar < 0)
 		    do_lookahead();
@@ -4003,15 +4002,15 @@ case 25:
 		}
 break;
 case 26:
-#line 390 "pic.y"
+#line 389 "pic.y"
 { delim_flag = 2; }
 break;
 case 27:
-#line 392 "pic.y"
+#line 391 "pic.y"
 { delim_flag = 0; }
 break;
 case 28:
-#line 394 "pic.y"
+#line 393 "pic.y"
 {
 		  if (yychar < 0)
 		    do_lookahead();
@@ -4021,11 +4020,11 @@ case 28:
 		}
 break;
 case 29:
-#line 402 "pic.y"
+#line 401 "pic.y"
 { delim_flag = 1; }
 break;
 case 30:
-#line 404 "pic.y"
+#line 403 "pic.y"
 {
 		  delim_flag = 0;
 		  if (yychar < 0)
@@ -4034,7 +4033,7 @@ case 30:
 		}
 break;
 case 31:
-#line 411 "pic.y"
+#line 410 "pic.y"
 {
 		  if (yychar < 0)
 		    do_lookahead();
@@ -4044,11 +4043,11 @@ case 31:
 		}
 break;
 case 32:
-#line 419 "pic.y"
+#line 418 "pic.y"
 { delim_flag = 1; }
 break;
 case 33:
-#line 421 "pic.y"
+#line 420 "pic.y"
 {
 		  delim_flag = 0;
 		  if (yychar < 0)
@@ -4062,36 +4061,36 @@ case 33:
 		}
 break;
 case 35:
-#line 434 "pic.y"
+#line 433 "pic.y"
 { define_variable("scale", 1.0); }
 break;
 case 38:
-#line 444 "pic.y"
+#line 443 "pic.y"
 {
 		  reset(yyvsp[0].str);
 		  a_delete yyvsp[0].str;
 		}
 break;
 case 39:
-#line 449 "pic.y"
+#line 448 "pic.y"
 {
 		  reset(yyvsp[0].str);
 		  a_delete yyvsp[0].str;
 		}
 break;
 case 40:
-#line 454 "pic.y"
+#line 453 "pic.y"
 {
 		  reset(yyvsp[0].str);
 		  a_delete yyvsp[0].str;
 		}
 break;
 case 41:
-#line 462 "pic.y"
+#line 461 "pic.y"
 { yyval.lstr = yyvsp[0].lstr; }
 break;
 case 42:
-#line 464 "pic.y"
+#line 463 "pic.y"
 {
 		  yyval.lstr.str = new char[strlen(yyvsp[-1].lstr.str) + strlen(yyvsp[0].lstr.str) + 1];
 		  strcpy(yyval.lstr.str, yyvsp[-1].lstr.str);
@@ -4109,7 +4108,7 @@ case 42:
 		}
 break;
 case 43:
-#line 483 "pic.y"
+#line 482 "pic.y"
 {
 		  yyval.lstr.str = new char[GDIGITS + 1];
 		  sprintf(yyval.lstr.str, "%g", yyvsp[0].x);
@@ -4118,11 +4117,11 @@ case 43:
 		}
 break;
 case 44:
-#line 490 "pic.y"
+#line 489 "pic.y"
 { yyval.lstr = yyvsp[0].lstr; }
 break;
 case 45:
-#line 492 "pic.y"
+#line 491 "pic.y"
 {
 		  yyval.lstr.str = new char[GDIGITS + 2 + GDIGITS + 1];
 		  sprintf(yyval.lstr.str, "%g, %g", yyvsp[0].pair.x, yyvsp[0].pair.y);
@@ -4131,11 +4130,11 @@ case 45:
 		}
 break;
 case 46:
-#line 502 "pic.y"
+#line 501 "pic.y"
 { delim_flag = 1; }
 break;
 case 47:
-#line 504 "pic.y"
+#line 503 "pic.y"
 {
 		  delim_flag = 0;
 		  yyval.if_data.x = yyvsp[-3].x;
@@ -4143,23 +4142,23 @@ case 47:
 		}
 break;
 case 48:
-#line 513 "pic.y"
+#line 512 "pic.y"
 { yyval.str = 0; }
 break;
 case 49:
-#line 515 "pic.y"
+#line 514 "pic.y"
 { yyval.str = yyvsp[0].lstr.str; }
 break;
 case 50:
-#line 520 "pic.y"
+#line 519 "pic.y"
 { yyval.x = yyvsp[0].x; }
 break;
 case 51:
-#line 522 "pic.y"
+#line 521 "pic.y"
 { yyval.x = yyvsp[0].x; }
 break;
 case 52:
-#line 527 "pic.y"
+#line 526 "pic.y"
 {
 		  yyval.x = strcmp(yyvsp[-2].lstr.str, yyvsp[0].lstr.str) == 0;
 		  a_delete yyvsp[-2].lstr.str;
@@ -4167,7 +4166,7 @@ case 52:
 		}
 break;
 case 53:
-#line 533 "pic.y"
+#line 532 "pic.y"
 {
 		  yyval.x = strcmp(yyvsp[-2].lstr.str, yyvsp[0].lstr.str) != 0;
 		  a_delete yyvsp[-2].lstr.str;
@@ -4175,56 +4174,56 @@ case 53:
 		}
 break;
 case 54:
-#line 539 "pic.y"
+#line 538 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 && yyvsp[0].x != 0.0); }
 break;
 case 55:
-#line 541 "pic.y"
+#line 540 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 && yyvsp[0].x != 0.0); }
 break;
 case 56:
-#line 543 "pic.y"
+#line 542 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 && yyvsp[0].x != 0.0); }
 break;
 case 57:
-#line 545 "pic.y"
+#line 544 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 || yyvsp[0].x != 0.0); }
 break;
 case 58:
-#line 547 "pic.y"
+#line 546 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 || yyvsp[0].x != 0.0); }
 break;
 case 59:
-#line 549 "pic.y"
+#line 548 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 || yyvsp[0].x != 0.0); }
 break;
 case 60:
-#line 551 "pic.y"
+#line 550 "pic.y"
 { yyval.x = (yyvsp[0].x == 0.0); }
 break;
 case 61:
-#line 557 "pic.y"
+#line 556 "pic.y"
 {
 		  yyval.by.val = 1.0;
 		  yyval.by.is_multiplicative = 0;
 		}
 break;
 case 62:
-#line 562 "pic.y"
+#line 561 "pic.y"
 {
 		  yyval.by.val = yyvsp[0].x;
 		  yyval.by.is_multiplicative = 0;
 		}
 break;
 case 63:
-#line 567 "pic.y"
+#line 566 "pic.y"
 {
 		  yyval.by.val = yyvsp[0].x;
 		  yyval.by.is_multiplicative = 1;
 		}
 break;
 case 64:
-#line 575 "pic.y"
+#line 574 "pic.y"
 {
 		  yyval.pl.obj = yyvsp[0].spec->make_object(&current_position,
 					   &current_direction);
@@ -4240,7 +4239,7 @@ case 64:
 		}
 break;
 case 65:
-#line 589 "pic.y"
+#line 588 "pic.y"
 {
 		  yyval.pl = yyvsp[0].pl;
 		  define_label(yyvsp[-3].str, & yyval.pl);
@@ -4248,7 +4247,7 @@ case 65:
 		}
 break;
 case 66:
-#line 595 "pic.y"
+#line 594 "pic.y"
 {
 		  yyval.pl.obj = 0;
 		  yyval.pl.x = yyvsp[0].pair.x;
@@ -4258,7 +4257,7 @@ case 66:
 		}
 break;
 case 67:
-#line 603 "pic.y"
+#line 602 "pic.y"
 {
 		  yyval.pl = yyvsp[0].pl;
 		  define_label(yyvsp[-3].str, & yyval.pl);
@@ -4266,7 +4265,7 @@ case 67:
 		}
 break;
 case 68:
-#line 609 "pic.y"
+#line 608 "pic.y"
 {
 		  yyval.state.x = current_position.x;
 		  yyval.state.y = current_position.y;
@@ -4274,7 +4273,7 @@ case 68:
 		}
 break;
 case 69:
-#line 615 "pic.y"
+#line 614 "pic.y"
 {
 		  current_position.x = yyvsp[-2].state.x;
 		  current_position.y = yyvsp[-2].state.y;
@@ -4282,13 +4281,13 @@ case 69:
 		}
 break;
 case 70:
-#line 621 "pic.y"
+#line 620 "pic.y"
 {
 		  yyval.pl = yyvsp[-3].pl;
 		}
 break;
 case 71:
-#line 625 "pic.y"
+#line 624 "pic.y"
 {
 		  yyval.pl.obj = 0;
 		  yyval.pl.x = current_position.x;
@@ -4296,34 +4295,34 @@ case 71:
 		}
 break;
 case 72:
-#line 634 "pic.y"
+#line 633 "pic.y"
 {}
 break;
 case 73:
-#line 636 "pic.y"
+#line 635 "pic.y"
 {}
 break;
 case 74:
-#line 641 "pic.y"
+#line 640 "pic.y"
 { yyval.spec = new object_spec(BOX_OBJECT); }
 break;
 case 75:
-#line 643 "pic.y"
+#line 642 "pic.y"
 { yyval.spec = new object_spec(CIRCLE_OBJECT); }
 break;
 case 76:
-#line 645 "pic.y"
+#line 644 "pic.y"
 { yyval.spec = new object_spec(ELLIPSE_OBJECT); }
 break;
 case 77:
-#line 647 "pic.y"
+#line 646 "pic.y"
 {
 		  yyval.spec = new object_spec(ARC_OBJECT);
 		  yyval.spec->dir = current_direction;
 		}
 break;
 case 78:
-#line 652 "pic.y"
+#line 651 "pic.y"
 {
 		  yyval.spec = new object_spec(LINE_OBJECT);
 		  lookup_variable("lineht", & yyval.spec->segment_height);
@@ -4332,7 +4331,7 @@ case 78:
 		}
 break;
 case 79:
-#line 659 "pic.y"
+#line 658 "pic.y"
 {
 		  yyval.spec = new object_spec(ARROW_OBJECT);
 		  lookup_variable("lineht", & yyval.spec->segment_height);
@@ -4341,7 +4340,7 @@ case 79:
 		}
 break;
 case 80:
-#line 666 "pic.y"
+#line 665 "pic.y"
 {
 		  yyval.spec = new object_spec(MOVE_OBJECT);
 		  lookup_variable("moveht", & yyval.spec->segment_height);
@@ -4350,7 +4349,7 @@ case 80:
 		}
 break;
 case 81:
-#line 673 "pic.y"
+#line 672 "pic.y"
 {
 		  yyval.spec = new object_spec(SPLINE_OBJECT);
 		  lookup_variable("lineht", & yyval.spec->segment_height);
@@ -4359,21 +4358,21 @@ case 81:
 		}
 break;
 case 82:
-#line 680 "pic.y"
+#line 679 "pic.y"
 {
 		  yyval.spec = new object_spec(TEXT_OBJECT);
 		  yyval.spec->text = new text_item(yyvsp[0].lstr.str, yyvsp[0].lstr.filename, yyvsp[0].lstr.lineno);
 		}
 break;
 case 83:
-#line 685 "pic.y"
+#line 684 "pic.y"
 {
 		  yyval.spec = new object_spec(TEXT_OBJECT);
 		  yyval.spec->text = new text_item(format_number(0, yyvsp[0].x), 0, -1);
 		}
 break;
 case 84:
-#line 690 "pic.y"
+#line 689 "pic.y"
 {
 		  yyval.spec = new object_spec(TEXT_OBJECT);
 		  yyval.spec->text = new text_item(format_number(yyvsp[0].lstr.str, yyvsp[-1].x),
@@ -4382,7 +4381,7 @@ case 84:
 		}
 break;
 case 85:
-#line 697 "pic.y"
+#line 696 "pic.y"
 {
 		  saved_state *p = new saved_state;
 		  yyval.pstate = p;
@@ -4399,7 +4398,7 @@ case 85:
 		}
 break;
 case 86:
-#line 712 "pic.y"
+#line 711 "pic.y"
 {
 		  current_position.x = yyvsp[-2].pstate->x;
 		  current_position.y = yyvsp[-2].pstate->y;
@@ -4413,7 +4412,7 @@ case 86:
 		}
 break;
 case 87:
-#line 724 "pic.y"
+#line 723 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->height = yyvsp[0].x;
@@ -4421,7 +4420,7 @@ case 87:
 		}
 break;
 case 88:
-#line 730 "pic.y"
+#line 729 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->radius = yyvsp[0].x;
@@ -4429,7 +4428,7 @@ case 88:
 		}
 break;
 case 89:
-#line 736 "pic.y"
+#line 735 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->width = yyvsp[0].x;
@@ -4437,7 +4436,7 @@ case 89:
 		}
 break;
 case 90:
-#line 742 "pic.y"
+#line 741 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->radius = yyvsp[0].x/2.0;
@@ -4445,7 +4444,7 @@ case 90:
 		}
 break;
 case 91:
-#line 748 "pic.y"
+#line 747 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= HAS_SEGMENT;
@@ -4466,7 +4465,7 @@ case 91:
 		}
 break;
 case 92:
-#line 767 "pic.y"
+#line 766 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->dir = UP_DIRECTION;
@@ -4475,7 +4474,7 @@ case 92:
 		}
 break;
 case 93:
-#line 774 "pic.y"
+#line 773 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->dir = UP_DIRECTION;
@@ -4484,7 +4483,7 @@ case 93:
 		}
 break;
 case 94:
-#line 781 "pic.y"
+#line 780 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->dir = DOWN_DIRECTION;
@@ -4493,7 +4492,7 @@ case 94:
 		}
 break;
 case 95:
-#line 788 "pic.y"
+#line 787 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->dir = DOWN_DIRECTION;
@@ -4502,7 +4501,7 @@ case 95:
 		}
 break;
 case 96:
-#line 795 "pic.y"
+#line 794 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->dir = RIGHT_DIRECTION;
@@ -4511,7 +4510,7 @@ case 96:
 		}
 break;
 case 97:
-#line 802 "pic.y"
+#line 801 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->dir = RIGHT_DIRECTION;
@@ -4520,7 +4519,7 @@ case 97:
 		}
 break;
 case 98:
-#line 809 "pic.y"
+#line 808 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->dir = LEFT_DIRECTION;
@@ -4529,7 +4528,7 @@ case 98:
 		}
 break;
 case 99:
-#line 816 "pic.y"
+#line 815 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->dir = LEFT_DIRECTION;
@@ -4538,7 +4537,7 @@ case 99:
 		}
 break;
 case 100:
-#line 823 "pic.y"
+#line 822 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_FROM;
@@ -4547,7 +4546,7 @@ case 100:
 		}
 break;
 case 101:
-#line 830 "pic.y"
+#line 829 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  if (yyval.spec->flags & HAS_SEGMENT)
@@ -4564,7 +4563,7 @@ case 101:
 		}
 break;
 case 102:
-#line 845 "pic.y"
+#line 844 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_AT;
@@ -4578,7 +4577,7 @@ case 102:
 		}
 break;
 case 103:
-#line 857 "pic.y"
+#line 856 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_WITH;
@@ -4586,7 +4585,7 @@ case 103:
 		}
 break;
 case 104:
-#line 863 "pic.y"
+#line 862 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_WITH;
@@ -4597,7 +4596,7 @@ case 104:
 		}
 break;
 case 105:
-#line 872 "pic.y"
+#line 871 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_SEGMENT;
@@ -4606,7 +4605,7 @@ case 105:
 		}
 break;
 case 106:
-#line 879 "pic.y"
+#line 878 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  if (yyval.spec->flags & HAS_SEGMENT) {
@@ -4620,13 +4619,13 @@ case 106:
 		}
 break;
 case 107:
-#line 891 "pic.y"
+#line 890 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;	/* nothing*/
 		}
 break;
 case 108:
-#line 895 "pic.y"
+#line 894 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_DOTTED;
@@ -4634,7 +4633,7 @@ case 108:
 		}
 break;
 case 109:
-#line 901 "pic.y"
+#line 900 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= IS_DOTTED;
@@ -4642,7 +4641,7 @@ case 109:
 		}
 break;
 case 110:
-#line 907 "pic.y"
+#line 906 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_DASHED;
@@ -4650,7 +4649,7 @@ case 110:
 		}
 break;
 case 111:
-#line 913 "pic.y"
+#line 912 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= IS_DASHED;
@@ -4658,14 +4657,14 @@ case 111:
 		}
 break;
 case 112:
-#line 919 "pic.y"
+#line 918 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_DEFAULT_FILLED;
 		}
 break;
 case 113:
-#line 924 "pic.y"
+#line 923 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= IS_FILLED;
@@ -4673,7 +4672,7 @@ case 113:
 		}
 break;
 case 114:
-#line 930 "pic.y"
+#line 929 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= (IS_SHADED | IS_FILLED);
@@ -4682,7 +4681,7 @@ case 114:
 		}
 break;
 case 115:
-#line 937 "pic.y"
+#line 936 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= (IS_SHADED | IS_OUTLINED | IS_FILLED);
@@ -4693,7 +4692,7 @@ case 115:
 		}
 break;
 case 116:
-#line 946 "pic.y"
+#line 945 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= IS_OUTLINED;
@@ -4702,7 +4701,7 @@ case 116:
 		}
 break;
 case 117:
-#line 953 "pic.y"
+#line 952 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  /* line chop chop means line chop 0 chop 0*/
@@ -4720,7 +4719,7 @@ case 117:
 		}
 break;
 case 118:
-#line 969 "pic.y"
+#line 968 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  if (yyval.spec->flags & IS_DEFAULT_CHOPPED) {
@@ -4739,56 +4738,56 @@ case 118:
 		}
 break;
 case 119:
-#line 986 "pic.y"
+#line 985 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_SAME;
 		}
 break;
 case 120:
-#line 991 "pic.y"
+#line 990 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_INVISIBLE;
 		}
 break;
 case 121:
-#line 996 "pic.y"
+#line 995 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= HAS_LEFT_ARROW_HEAD;
 		}
 break;
 case 122:
-#line 1001 "pic.y"
+#line 1000 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= HAS_RIGHT_ARROW_HEAD;
 		}
 break;
 case 123:
-#line 1006 "pic.y"
+#line 1005 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= (HAS_LEFT_ARROW_HEAD|HAS_RIGHT_ARROW_HEAD);
 		}
 break;
 case 124:
-#line 1011 "pic.y"
+#line 1010 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_CLOCKWISE;
 		}
 break;
 case 125:
-#line 1016 "pic.y"
+#line 1015 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags &= ~IS_CLOCKWISE;
 		}
 break;
 case 126:
-#line 1021 "pic.y"
+#line 1020 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  text_item **p;
@@ -4798,7 +4797,7 @@ case 126:
 		}
 break;
 case 127:
-#line 1029 "pic.y"
+#line 1028 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  if (yyval.spec->text) {
@@ -4810,7 +4809,7 @@ case 127:
 		}
 break;
 case 128:
-#line 1039 "pic.y"
+#line 1038 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  if (yyval.spec->text) {
@@ -4822,7 +4821,7 @@ case 128:
 		}
 break;
 case 129:
-#line 1049 "pic.y"
+#line 1048 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  if (yyval.spec->text) {
@@ -4834,7 +4833,7 @@ case 129:
 		}
 break;
 case 130:
-#line 1059 "pic.y"
+#line 1058 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  if (yyval.spec->text) {
@@ -4846,7 +4845,7 @@ case 130:
 		}
 break;
 case 131:
-#line 1069 "pic.y"
+#line 1068 "pic.y"
 {
 		  yyval.spec = yyvsp[-2].spec;
 		  yyval.spec->flags |= HAS_THICKNESS;
@@ -4854,18 +4853,18 @@ case 131:
 		}
 break;
 case 132:
-#line 1075 "pic.y"
+#line 1074 "pic.y"
 {
 		  yyval.spec = yyvsp[-1].spec;
 		  yyval.spec->flags |= IS_ALIGNED;
 		}
 break;
 case 133:
-#line 1083 "pic.y"
+#line 1082 "pic.y"
 { yyval.lstr = yyvsp[0].lstr; }
 break;
 case 134:
-#line 1085 "pic.y"
+#line 1084 "pic.y"
 {
 		  yyval.lstr.filename = yyvsp[-2].lstr.filename;
 		  yyval.lstr.lineno = yyvsp[-2].lstr.lineno;
@@ -4875,7 +4874,7 @@ case 134:
 		}
 break;
 case 135:
-#line 1096 "pic.y"
+#line 1095 "pic.y"
 {
 		  yyval.dv.v = 0;
 		  yyval.dv.nv = 0;
@@ -4883,7 +4882,7 @@ case 135:
 		}
 break;
 case 136:
-#line 1102 "pic.y"
+#line 1101 "pic.y"
 {
 		  yyval.dv = yyvsp[-2].dv;
 		  if (yyval.dv.nv >= yyval.dv.maxv) {
@@ -4894,8 +4893,16 @@ case 136:
 		    else {
 		      double *oldv = yyval.dv.v;
 		      yyval.dv.maxv *= 2;
+#if 0
 		      yyval.dv.v = new double[yyval.dv.maxv];
 		      memcpy(yyval.dv.v, oldv, yyval.dv.nv*sizeof(double));
+#else
+		      /* workaround for bug in Compaq C++ V6.5-033*/
+		      /* for Compaq Tru64 UNIX V5.1A (Rev. 1885)*/
+		      double *foo = new double[yyval.dv.maxv];
+		      memcpy(foo, oldv, yyval.dv.nv*sizeof(double));
+		      yyval.dv.v = foo;
+#endif
 		      a_delete oldv;
 		    }
 		  }
@@ -4904,11 +4911,11 @@ case 136:
 		}
 break;
 case 137:
-#line 1124 "pic.y"
+#line 1131 "pic.y"
 { yyval.pair = yyvsp[0].pair; }
 break;
 case 138:
-#line 1126 "pic.y"
+#line 1133 "pic.y"
 {
 		  position pos = yyvsp[0].pl;
 		  yyval.pair.x = pos.x;
@@ -4916,61 +4923,61 @@ case 138:
 		}
 break;
 case 139:
-#line 1135 "pic.y"
+#line 1142 "pic.y"
 { yyval.pair = yyvsp[0].pair; }
 break;
 case 140:
-#line 1137 "pic.y"
+#line 1144 "pic.y"
 {
 		  yyval.pair.x = yyvsp[-2].pair.x + yyvsp[0].pair.x;
 		  yyval.pair.y = yyvsp[-2].pair.y + yyvsp[0].pair.y;
 		}
 break;
 case 141:
-#line 1142 "pic.y"
+#line 1149 "pic.y"
 {
 		  yyval.pair.x = yyvsp[-2].pair.x - yyvsp[0].pair.x;
 		  yyval.pair.y = yyvsp[-2].pair.y - yyvsp[0].pair.y;
 		}
 break;
 case 142:
-#line 1147 "pic.y"
+#line 1154 "pic.y"
 {
 		  yyval.pair.x = yyvsp[-3].pair.x;
 		  yyval.pair.y = yyvsp[-1].pair.y;
 		}
 break;
 case 143:
-#line 1152 "pic.y"
+#line 1159 "pic.y"
 {
 		  yyval.pair.x = (1.0 - yyvsp[-4].x)*yyvsp[-2].pair.x + yyvsp[-4].x*yyvsp[0].pair.x;
 		  yyval.pair.y = (1.0 - yyvsp[-4].x)*yyvsp[-2].pair.y + yyvsp[-4].x*yyvsp[0].pair.y;
 		}
 break;
 case 144:
-#line 1157 "pic.y"
+#line 1164 "pic.y"
 {
 		  yyval.pair.x = (1.0 - yyvsp[-5].x)*yyvsp[-3].pair.x + yyvsp[-5].x*yyvsp[-1].pair.x;
 		  yyval.pair.y = (1.0 - yyvsp[-5].x)*yyvsp[-3].pair.y + yyvsp[-5].x*yyvsp[-1].pair.y;
 		}
 break;
 case 147:
-#line 1170 "pic.y"
+#line 1177 "pic.y"
 {
 		  yyval.pair.x = yyvsp[-2].x;
 		  yyval.pair.y = yyvsp[0].x;
 		}
 break;
 case 148:
-#line 1175 "pic.y"
+#line 1182 "pic.y"
 { yyval.pair = yyvsp[-1].pair; }
 break;
 case 149:
-#line 1181 "pic.y"
+#line 1188 "pic.y"
 { yyval.pl = yyvsp[0].pl; }
 break;
 case 150:
-#line 1183 "pic.y"
+#line 1190 "pic.y"
 {
 		  path pth(yyvsp[0].crn);
 		  if (!pth.follow(yyvsp[-1].pl, & yyval.pl))
@@ -4978,7 +4985,7 @@ case 150:
 		}
 break;
 case 151:
-#line 1189 "pic.y"
+#line 1196 "pic.y"
 {
 		  path pth(yyvsp[-1].crn);
 		  if (!pth.follow(yyvsp[0].pl, & yyval.pl))
@@ -4986,7 +4993,7 @@ case 151:
 		}
 break;
 case 152:
-#line 1195 "pic.y"
+#line 1202 "pic.y"
 {
 		  path pth(yyvsp[-2].crn);
 		  if (!pth.follow(yyvsp[0].pl, & yyval.pl))
@@ -4994,7 +5001,7 @@ case 152:
 		}
 break;
 case 153:
-#line 1201 "pic.y"
+#line 1208 "pic.y"
 {
 		  yyval.pl.x = current_position.x;
 		  yyval.pl.y = current_position.y;
@@ -5002,7 +5009,7 @@ case 153:
 		}
 break;
 case 154:
-#line 1210 "pic.y"
+#line 1217 "pic.y"
 {
 		  place *p = lookup_label(yyvsp[0].str);
 		  if (!p) {
@@ -5014,11 +5021,11 @@ case 154:
 		}
 break;
 case 155:
-#line 1220 "pic.y"
+#line 1227 "pic.y"
 { yyval.pl.obj = yyvsp[0].obj; }
 break;
 case 156:
-#line 1222 "pic.y"
+#line 1229 "pic.y"
 {
 		  path pth(yyvsp[0].str);
 		  if (!pth.follow(yyvsp[-2].pl, & yyval.pl))
@@ -5026,26 +5033,26 @@ case 156:
 		}
 break;
 case 157:
-#line 1231 "pic.y"
+#line 1238 "pic.y"
 { yyval.n = yyvsp[0].n; }
 break;
 case 158:
-#line 1233 "pic.y"
+#line 1240 "pic.y"
 {
 		  /* XXX Check for overflow (and non-integers?).*/
 		  yyval.n = (int)yyvsp[-1].x;
 		}
 break;
 case 159:
-#line 1241 "pic.y"
+#line 1248 "pic.y"
 { yyval.n = 1; }
 break;
 case 160:
-#line 1243 "pic.y"
+#line 1250 "pic.y"
 { yyval.n = yyvsp[-1].n; }
 break;
 case 161:
-#line 1248 "pic.y"
+#line 1255 "pic.y"
 {
 		  int count = 0;
 		  object *p;
@@ -5062,7 +5069,7 @@ case 161:
 		}
 break;
 case 162:
-#line 1263 "pic.y"
+#line 1270 "pic.y"
 {
 		  int count = 0;
 		  object *p;
@@ -5079,80 +5086,80 @@ case 162:
 		}
 break;
 case 163:
-#line 1281 "pic.y"
+#line 1288 "pic.y"
 { yyval.obtype = BOX_OBJECT; }
 break;
 case 164:
-#line 1283 "pic.y"
+#line 1290 "pic.y"
 { yyval.obtype = CIRCLE_OBJECT; }
 break;
 case 165:
-#line 1285 "pic.y"
+#line 1292 "pic.y"
 { yyval.obtype = ELLIPSE_OBJECT; }
 break;
 case 166:
-#line 1287 "pic.y"
+#line 1294 "pic.y"
 { yyval.obtype = ARC_OBJECT; }
 break;
 case 167:
-#line 1289 "pic.y"
+#line 1296 "pic.y"
 { yyval.obtype = LINE_OBJECT; }
 break;
 case 168:
-#line 1291 "pic.y"
+#line 1298 "pic.y"
 { yyval.obtype = ARROW_OBJECT; }
 break;
 case 169:
-#line 1293 "pic.y"
+#line 1300 "pic.y"
 { yyval.obtype = SPLINE_OBJECT; }
 break;
 case 170:
-#line 1295 "pic.y"
+#line 1302 "pic.y"
 { yyval.obtype = BLOCK_OBJECT; }
 break;
 case 171:
-#line 1297 "pic.y"
+#line 1304 "pic.y"
 { yyval.obtype = TEXT_OBJECT; }
 break;
 case 172:
-#line 1302 "pic.y"
+#line 1309 "pic.y"
 { yyval.pth = new path(yyvsp[0].str); }
 break;
 case 173:
-#line 1304 "pic.y"
+#line 1311 "pic.y"
 {
 		  yyval.pth = yyvsp[-2].pth;
 		  yyval.pth->append(yyvsp[0].str);
 		}
 break;
 case 174:
-#line 1312 "pic.y"
+#line 1319 "pic.y"
 { yyval.pth = new path(yyvsp[0].crn); }
 break;
 case 175:
-#line 1316 "pic.y"
+#line 1323 "pic.y"
 { yyval.pth = yyvsp[0].pth; }
 break;
 case 176:
-#line 1318 "pic.y"
+#line 1325 "pic.y"
 {
 		  yyval.pth = yyvsp[-1].pth;
 		  yyval.pth->append(yyvsp[0].crn);
 		}
 break;
 case 177:
-#line 1326 "pic.y"
+#line 1333 "pic.y"
 { yyval.pth = yyvsp[0].pth; }
 break;
 case 178:
-#line 1328 "pic.y"
+#line 1335 "pic.y"
 {
 		  yyval.pth = yyvsp[-3].pth;
 		  yyval.pth->set_ypath(yyvsp[-1].pth);
 		}
 break;
 case 179:
-#line 1334 "pic.y"
+#line 1341 "pic.y"
 {
 		  lex_warning("`%1%2 last %3' in `with' argument ignored",
 			      yyvsp[-3].n, ordinal_postfix(yyvsp[-3].n), object_type_name(yyvsp[-1].obtype));
@@ -5160,7 +5167,7 @@ case 179:
 		}
 break;
 case 180:
-#line 1340 "pic.y"
+#line 1347 "pic.y"
 {
 		  lex_warning("`last %1' in `with' argument ignored",
 			      object_type_name(yyvsp[-1].obtype));
@@ -5168,7 +5175,7 @@ case 180:
 		}
 break;
 case 181:
-#line 1346 "pic.y"
+#line 1353 "pic.y"
 {
 		  lex_warning("`%1%2 %3' in `with' argument ignored",
 			      yyvsp[-2].n, ordinal_postfix(yyvsp[-2].n), object_type_name(yyvsp[-1].obtype));
@@ -5176,7 +5183,7 @@ case 181:
 		}
 break;
 case 182:
-#line 1352 "pic.y"
+#line 1359 "pic.y"
 {
 		  lex_warning("initial `%1' in `with' argument ignored", yyvsp[-1].str);
 		  a_delete yyvsp[-1].str;
@@ -5184,135 +5191,135 @@ case 182:
 		}
 break;
 case 183:
-#line 1361 "pic.y"
+#line 1368 "pic.y"
 { yyval.crn = &object::north; }
 break;
 case 184:
-#line 1363 "pic.y"
+#line 1370 "pic.y"
 { yyval.crn = &object::east; }
 break;
 case 185:
-#line 1365 "pic.y"
+#line 1372 "pic.y"
 { yyval.crn = &object::west; }
 break;
 case 186:
-#line 1367 "pic.y"
+#line 1374 "pic.y"
 { yyval.crn = &object::south; }
 break;
 case 187:
-#line 1369 "pic.y"
+#line 1376 "pic.y"
 { yyval.crn = &object::north_east; }
 break;
 case 188:
-#line 1371 "pic.y"
+#line 1378 "pic.y"
 { yyval.crn = &object:: south_east; }
 break;
 case 189:
-#line 1373 "pic.y"
+#line 1380 "pic.y"
 { yyval.crn = &object::north_west; }
 break;
 case 190:
-#line 1375 "pic.y"
+#line 1382 "pic.y"
 { yyval.crn = &object::south_west; }
 break;
 case 191:
-#line 1377 "pic.y"
+#line 1384 "pic.y"
 { yyval.crn = &object::center; }
 break;
 case 192:
-#line 1379 "pic.y"
+#line 1386 "pic.y"
 { yyval.crn = &object::start; }
 break;
 case 193:
-#line 1381 "pic.y"
+#line 1388 "pic.y"
 { yyval.crn = &object::end; }
 break;
 case 194:
-#line 1383 "pic.y"
+#line 1390 "pic.y"
 { yyval.crn = &object::north; }
 break;
 case 195:
-#line 1385 "pic.y"
+#line 1392 "pic.y"
 { yyval.crn = &object::south; }
 break;
 case 196:
-#line 1387 "pic.y"
+#line 1394 "pic.y"
 { yyval.crn = &object::west; }
 break;
 case 197:
-#line 1389 "pic.y"
+#line 1396 "pic.y"
 { yyval.crn = &object::east; }
 break;
 case 198:
-#line 1391 "pic.y"
+#line 1398 "pic.y"
 { yyval.crn = &object::north_west; }
 break;
 case 199:
-#line 1393 "pic.y"
+#line 1400 "pic.y"
 { yyval.crn = &object::south_west; }
 break;
 case 200:
-#line 1395 "pic.y"
+#line 1402 "pic.y"
 { yyval.crn = &object::north_east; }
 break;
 case 201:
-#line 1397 "pic.y"
+#line 1404 "pic.y"
 { yyval.crn = &object::south_east; }
 break;
 case 202:
-#line 1399 "pic.y"
+#line 1406 "pic.y"
 { yyval.crn = &object::west; }
 break;
 case 203:
-#line 1401 "pic.y"
+#line 1408 "pic.y"
 { yyval.crn = &object::east; }
 break;
 case 204:
-#line 1403 "pic.y"
+#line 1410 "pic.y"
 { yyval.crn = &object::north_west; }
 break;
 case 205:
-#line 1405 "pic.y"
+#line 1412 "pic.y"
 { yyval.crn = &object::south_west; }
 break;
 case 206:
-#line 1407 "pic.y"
+#line 1414 "pic.y"
 { yyval.crn = &object::north_east; }
 break;
 case 207:
-#line 1409 "pic.y"
+#line 1416 "pic.y"
 { yyval.crn = &object::south_east; }
 break;
 case 208:
-#line 1411 "pic.y"
+#line 1418 "pic.y"
 { yyval.crn = &object::north; }
 break;
 case 209:
-#line 1413 "pic.y"
+#line 1420 "pic.y"
 { yyval.crn = &object::south; }
 break;
 case 210:
-#line 1415 "pic.y"
+#line 1422 "pic.y"
 { yyval.crn = &object::east; }
 break;
 case 211:
-#line 1417 "pic.y"
+#line 1424 "pic.y"
 { yyval.crn = &object::west; }
 break;
 case 212:
-#line 1419 "pic.y"
+#line 1426 "pic.y"
 { yyval.crn = &object::center; }
 break;
 case 213:
-#line 1421 "pic.y"
+#line 1428 "pic.y"
 { yyval.crn = &object::start; }
 break;
 case 214:
-#line 1423 "pic.y"
+#line 1430 "pic.y"
 { yyval.crn = &object::end; }
 break;
 case 215:
-#line 1428 "pic.y"
+#line 1435 "pic.y"
 {
 		  if (!lookup_variable(yyvsp[0].str, & yyval.x)) {
 		    lex_error("there is no variable `%1'", yyvsp[0].str);
@@ -5322,11 +5329,11 @@ case 215:
 		}
 break;
 case 216:
-#line 1436 "pic.y"
+#line 1443 "pic.y"
 { yyval.x = yyvsp[0].x; }
 break;
 case 217:
-#line 1438 "pic.y"
+#line 1445 "pic.y"
 {
 		  if (yyvsp[-1].pl.obj != 0)
 		    yyval.x = yyvsp[-1].pl.obj->origin().x;
@@ -5335,7 +5342,7 @@ case 217:
 		}
 break;
 case 218:
-#line 1445 "pic.y"
+#line 1452 "pic.y"
 {
 		  if (yyvsp[-1].pl.obj != 0)
 		    yyval.x = yyvsp[-1].pl.obj->origin().y;
@@ -5344,7 +5351,7 @@ case 218:
 		}
 break;
 case 219:
-#line 1452 "pic.y"
+#line 1459 "pic.y"
 {
 		  if (yyvsp[-1].pl.obj != 0)
 		    yyval.x = yyvsp[-1].pl.obj->height();
@@ -5353,7 +5360,7 @@ case 219:
 		}
 break;
 case 220:
-#line 1459 "pic.y"
+#line 1466 "pic.y"
 {
 		  if (yyvsp[-1].pl.obj != 0)
 		    yyval.x = yyvsp[-1].pl.obj->width();
@@ -5362,7 +5369,7 @@ case 220:
 		}
 break;
 case 221:
-#line 1466 "pic.y"
+#line 1473 "pic.y"
 {
 		  if (yyvsp[-1].pl.obj != 0)
 		    yyval.x = yyvsp[-1].pl.obj->radius();
@@ -5371,19 +5378,19 @@ case 221:
 		}
 break;
 case 222:
-#line 1473 "pic.y"
+#line 1480 "pic.y"
 { yyval.x = yyvsp[-2].x + yyvsp[0].x; }
 break;
 case 223:
-#line 1475 "pic.y"
+#line 1482 "pic.y"
 { yyval.x = yyvsp[-2].x - yyvsp[0].x; }
 break;
 case 224:
-#line 1477 "pic.y"
+#line 1484 "pic.y"
 { yyval.x = yyvsp[-2].x * yyvsp[0].x; }
 break;
 case 225:
-#line 1479 "pic.y"
+#line 1486 "pic.y"
 {
 		  if (yyvsp[0].x == 0.0) {
 		    lex_error("division by zero");
@@ -5393,7 +5400,7 @@ case 225:
 		}
 break;
 case 226:
-#line 1487 "pic.y"
+#line 1494 "pic.y"
 {
 		  if (yyvsp[0].x == 0.0) {
 		    lex_error("modulus by zero");
@@ -5403,7 +5410,7 @@ case 226:
 		}
 break;
 case 227:
-#line 1495 "pic.y"
+#line 1502 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = pow(yyvsp[-2].x, yyvsp[0].x);
@@ -5418,15 +5425,15 @@ case 227:
 		}
 break;
 case 228:
-#line 1508 "pic.y"
+#line 1515 "pic.y"
 { yyval.x = -yyvsp[0].x; }
 break;
 case 229:
-#line 1510 "pic.y"
+#line 1517 "pic.y"
 { yyval.x = yyvsp[-1].x; }
 break;
 case 230:
-#line 1512 "pic.y"
+#line 1519 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = sin(yyvsp[-1].x);
@@ -5437,7 +5444,7 @@ case 230:
 		}
 break;
 case 231:
-#line 1521 "pic.y"
+#line 1528 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = cos(yyvsp[-1].x);
@@ -5448,7 +5455,7 @@ case 231:
 		}
 break;
 case 232:
-#line 1530 "pic.y"
+#line 1537 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = atan2(yyvsp[-3].x, yyvsp[-1].x);
@@ -5463,7 +5470,7 @@ case 232:
 		}
 break;
 case 233:
-#line 1543 "pic.y"
+#line 1550 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = log10(yyvsp[-1].x);
@@ -5474,7 +5481,7 @@ case 233:
 		}
 break;
 case 234:
-#line 1552 "pic.y"
+#line 1559 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = pow(10.0, yyvsp[-1].x);
@@ -5485,7 +5492,7 @@ case 234:
 		}
 break;
 case 235:
-#line 1561 "pic.y"
+#line 1568 "pic.y"
 {
 		  errno = 0;
 		  yyval.x = sqrt(yyvsp[-1].x);
@@ -5496,23 +5503,23 @@ case 235:
 		}
 break;
 case 236:
-#line 1570 "pic.y"
+#line 1577 "pic.y"
 { yyval.x = yyvsp[-3].x > yyvsp[-1].x ? yyvsp[-3].x : yyvsp[-1].x; }
 break;
 case 237:
-#line 1572 "pic.y"
+#line 1579 "pic.y"
 { yyval.x = yyvsp[-3].x < yyvsp[-1].x ? yyvsp[-3].x : yyvsp[-1].x; }
 break;
 case 238:
-#line 1574 "pic.y"
+#line 1581 "pic.y"
 { yyval.x = floor(yyvsp[-1].x); }
 break;
 case 239:
-#line 1576 "pic.y"
+#line 1583 "pic.y"
 { yyval.x = 1.0 + floor(((rand()&0x7fff)/double(0x7fff))*yyvsp[-1].x); }
 break;
 case 240:
-#line 1578 "pic.y"
+#line 1585 "pic.y"
 {
 		  /* return a random number in the range [0,1) */
 		  /* portable, but not very random */
@@ -5520,49 +5527,49 @@ case 240:
 		}
 break;
 case 241:
-#line 1584 "pic.y"
+#line 1591 "pic.y"
 {
 		  yyval.x = 0;
 		  srand((unsigned int)yyvsp[-1].x);
 		}
 break;
 case 242:
-#line 1589 "pic.y"
+#line 1596 "pic.y"
 { yyval.x = (yyvsp[-2].x < yyvsp[0].x); }
 break;
 case 243:
-#line 1591 "pic.y"
+#line 1598 "pic.y"
 { yyval.x = (yyvsp[-2].x <= yyvsp[0].x); }
 break;
 case 244:
-#line 1593 "pic.y"
+#line 1600 "pic.y"
 { yyval.x = (yyvsp[-2].x > yyvsp[0].x); }
 break;
 case 245:
-#line 1595 "pic.y"
+#line 1602 "pic.y"
 { yyval.x = (yyvsp[-2].x >= yyvsp[0].x); }
 break;
 case 246:
-#line 1597 "pic.y"
+#line 1604 "pic.y"
 { yyval.x = (yyvsp[-2].x == yyvsp[0].x); }
 break;
 case 247:
-#line 1599 "pic.y"
+#line 1606 "pic.y"
 { yyval.x = (yyvsp[-2].x != yyvsp[0].x); }
 break;
 case 248:
-#line 1601 "pic.y"
+#line 1608 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 && yyvsp[0].x != 0.0); }
 break;
 case 249:
-#line 1603 "pic.y"
+#line 1610 "pic.y"
 { yyval.x = (yyvsp[-2].x != 0.0 || yyvsp[0].x != 0.0); }
 break;
 case 250:
-#line 1605 "pic.y"
+#line 1612 "pic.y"
 { yyval.x = (yyvsp[0].x == 0.0); }
 break;
-#line 5564 "y.tab.c"
+#line 5571 "y.tab.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xtotroff.c,v 1.1.1.1 2001/04/19 12:52:34 wiz Exp $	*/
+/*	$NetBSD: xtotroff.c,v 1.1.1.2 2004/07/30 14:45:09 wiz Exp $	*/
 
 /*
  * xtotroff
@@ -11,6 +11,7 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<fcntl.h>
 #include	"XFontName.h"
 #include	"DviChar.h"
@@ -20,6 +21,10 @@ char *malloc();
 #else 
 #include <stdlib.h>
 #endif
+
+/* XFontName.c */
+extern Bool XParseFontName();
+extern Bool XFormatFontName();
 
 #define charWidth(fi,c)	((fi)->per_char[(c) - (fi)->min_char_or_byte2].width)
 #define charHeight(fi,c)	((fi)->per_char[(c) - (fi)->min_char_or_byte2].ascent)
@@ -47,6 +52,7 @@ int charExists (fi, c)
 
 /* Canonicalize the font name by replacing scalable parts by *s. */
 
+static int
 CanonicalizeFontName (font_name, canon_font_name)
 	char *font_name, *canon_font_name;
 {
@@ -65,7 +71,8 @@ CanonicalizeFontName (font_name, canon_font_name)
 	return 1;
 }
 
-int FontNamesAmbiguous(font_name, names, count)
+static int
+FontNamesAmbiguous(font_name, names, count)
 char *font_name;
 char **names;
 int count;
@@ -92,6 +99,7 @@ int count;
 	return 0;
 }
 
+static int
 MapFont (font_name, troff_name)
 	char	*font_name;
 	char	*troff_name;
@@ -213,7 +221,8 @@ MapFont (font_name, troff_name)
 	return 1;
 }
 
-static usage(prog)
+static void
+usage(prog)
 	char	*prog;
 {
 	fprintf (stderr,
@@ -236,6 +245,7 @@ int n;
 	return p;
 }
 
+int
 main (argc, argv)
 	char	**argv;
 {

@@ -3,7 +3,7 @@
 
 s.tmac
 
-Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002
+Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004
   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -50,7 +50,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .de @nop
 ..
 .de @init
-.nr PO \\n(.o
+.if !rPO .nr PO \\n(.o
 .\" a non-empty environment
 .ev ne
 \c
@@ -160,6 +160,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .de RP
 .nr cov*rp-format 1
 .if \\n[.$] .if '\\$1'no' .nr cov*rp-no 1
+.if rPO .po \\n(POu
 .pn 0
 ..
 .de TL
@@ -872,6 +873,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .ds*end!\\n[\\n[.ev]:ds-type]
 .nr \\n[.ev]:ds-type 0
 ..
+.als De DE
 .de ds@auto-end
 .if \\n[\\n[.ev]:ds-type] \{\
 .	@error automatically terminating display
@@ -949,6 +951,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .	nr \\n[.ev]:ds-type 3
 .\}
 ..
+.als Ds DS
 .de ds@need
 .if '\\n(.z'' \{\
 .	while \\n[.t]<=(\\$1)&(\\n[nl]>\\n[pg@header-bottom]) \{\
@@ -1320,13 +1323,16 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\}
 .el \!.par*box-draw \\$1 \\$2
 ..
-.de @SH
+.de SH-NO-TAG
 .par@finish
 .\" Keep together the heading and the first two lines of the next paragraph.
 .ne 3v+\\n[\\n[.ev]:PD]u+\\n(.Vu
 .sp 1
 .ft B
-.HTML-TAG ".SH 1"
+..
+.de @SH
+.  SH-NO-TAG
+.  HTML-TAG ".SH 1"
 ..
 .\" TL, AU, and AI are aliased to these in cov*ab-init.
 .de par@TL
@@ -1449,7 +1455,6 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .nr nh*hl 0
 .\" numbered heading
 .de @NH
-.HTML-TAG ".NH \\$1"
 .ie '\\$1'S' \{\
 .	shift
 .	nr nh*hl 0
@@ -1490,7 +1495,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .	nr nh*i +1
 .	as SN \\n[H\\n[nh*i]].
 .\}
-.SH
+.SH-NO-TAG
+.HTML-TAG ".NH \\$1"
 \\*[SN]
 ..
 .\" ****************************
@@ -1528,7 +1534,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .	ev
 .	di
 .\}
-.el .@error XS without XE
+.el .@error XE without XS
 ..
 .de toc*end-entry
 \\a\\t\\*[toc*num]
