@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.15 2002/09/18 23:13:39 mycroft Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.16 2002/09/18 23:16:13 mycroft Exp $");
 #endif
 
 /*
@@ -510,8 +510,9 @@ main(int argc, char **argv)
 		}
 		if (nfound == 0) {
 			if (debug > 1)
-				report(LOG_INFO, "exiting after %d minutes of inactivity",
-					   actualtimeout / 60000);
+				report(LOG_INFO, "exiting after %d minute%s of inactivity",
+					   actualtimeout / 60000,
+					   actualtimeout == 60000 ? "" : "s");
 			exit(0);
 		}
 		ra_len = sizeof(recv_addr);
