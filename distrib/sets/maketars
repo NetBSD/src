@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.37 2003/01/06 20:30:42 wiz Exp $
+# $NetBSD: maketars,v 1.38 2003/01/21 19:07:05 erh Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -126,7 +126,16 @@ while true; do
 	SDIR_SERIAL=$((${SDIR_SERIAL} + 1))
 done    
 
-trap "/bin/rm -rf $SDIR ; exit 0" 0 2 3 13		# EXIT INT QUIT PIPE
+es=0
+cleanup()
+{
+	/bin/rm -rf $SDIR
+	if [ $es -gt 255 ] ; then
+		es=255
+	fi
+	exit $es
+}
+trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
 
 if [ -n "$metalog" ]; then
 	echo "Parsing $metalog"
@@ -140,7 +149,6 @@ fi
 GZIP=-9			# for pax -z
 export GZIP
 
-es=0
 for setname in $lists; do
 	out=$setname.tgz
 	if [ -n "$installdir" ]; then
@@ -172,4 +180,7 @@ for setname in $lists; do
 	fi
 	es=$(($es + $?))
 done
+if [ $es -gt 255 ] ; then
+	es=255
+fi
 exit $es
