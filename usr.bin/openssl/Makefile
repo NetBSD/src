@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2000/07/16 11:32:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2000/10/01 10:24:57 itojun Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.5 2000/07/16 11:32:07 mrg Exp $
+#	$Id: Makefile,v 1.6 2000/10/01 10:24:57 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -90,14 +90,12 @@ CRYPTODIST=	${.CURDIR}/../../crypto/dist
 #	openssl rc2-cfb \
 #	openssl rc2-ofb \
 
-.if (${MKCRYPTO_RSA} != "no")
 SRCS+=	rsa.c genrsa.c 
 #LINKS+=	openssl rsa \
 #	openssl rsa-cbc \
 #	openssl rsa-ecb \
 #	openssl rsa-cfb \
 #	openssl rsa-ofb
-.endif
 
 ssleay.o:	ssleay.c
 	${CC} ${CFLAGS} -UMONOLITH -o ${.TARGET} -c ${.IMPSRC}
