@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.52 2003/11/19 22:44:15 nathanw Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.53 2003/12/08 23:57:13 dmcmahill Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.52 2003/11/19 22:44:15 nathanw Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.53 2003/12/08 23:57:13 dmcmahill Exp $");
 #endif
 
 #include <stdlib.h>
@@ -922,9 +922,9 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 #ifdef NEW_TOOLCHAIN
 #ifdef RENAME_SYMS
     fprintf(outmk, "\t${NM} -ng %s.cro | grep -wv U | ", p->name);
-    fprintf(outmk, "egrep -vw _crunched_%s_stub | ", p->ident);
+    fprintf(outmk, "grep -vw _crunched_%s_stub | ", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
-	fprintf(outmk, "egrep -vw %s | ", lst->str);
+	fprintf(outmk, "grep -vw %s | ", lst->str);
     fprintf(outmk, "env CRO=%s.cro awk "
 	"'{ print $$3 \" _$$$$hide$$$$\" ENVIRON[\"CRO\"] \"$$$$\" $$3 }' "
 	"> %s.cro.syms\n", p->name, p->name);
