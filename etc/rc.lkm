@@ -1,4 +1,4 @@
-#	$NetBSD: rc.lkm,v 1.7 2000/10/07 07:36:56 lukem Exp $
+#	$NetBSD: rc.lkm,v 1.8 2003/01/05 22:47:13 christos Exp $
 #
 # this script loads or unloads LKMs (loadable kernel modules).
 
@@ -68,7 +68,7 @@ if [ -s /etc/lkm.conf ]; then
 			[A-Z]*)
 					;;
 			*)
-				echo "invalid \"when\" field in /etc/lkm.conf - $path not loaded!"
+				echo "invalid \"when\" field \`${when}' in /etc/lkm.conf - $path not loaded!"
 				continue
 				;;
 			esac
