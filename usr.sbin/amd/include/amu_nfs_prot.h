@@ -1,7 +1,5 @@
-/*	$NetBSD: amu_nfs_prot.h,v 1.10 2002/11/29 23:23:59 christos Exp $	*/
-
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_netbsd1_4.h,v 1.7 2002/06/22 23:06:23 ezk Exp
+ * Id: nfs_prot_netbsd1_4.h,v 1.8 2002/12/27 22:44:00 ezk Exp 
  *
  */
 
