@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.h,v 1.3 2000/12/01 20:31:13 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.4 2000/12/11 04:55:09 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,8 +103,5 @@ void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
 __END_DECLS
 #endif /* !_KERNEL */
-
-/* pass parent ID in getpid() and pass effective id in get[ug]id() */
-#define LINUX_MACHDEP_PASS_PPID_AND_EUID
 
 #endif /* _ALPHA_LINUX_MACHDEP_H */
