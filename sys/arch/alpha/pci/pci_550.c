@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.19 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_550.c,v 1.20 2001/03/25 06:38:50 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.19 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.20 2001/03/25 06:38:50 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -253,8 +253,7 @@ dec_550_intr_map(pa, ihp)
 #endif
 
 	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_map: dec 550 irq too large (%d)\n",
-		    line);
+		return (1);
 
 	*ihp = line;
 	return (0);
