@@ -16,9 +16,9 @@ DESCS=\
 .SUFFIXES: .desc
 
 .c.desc:
-	sed -e '/^$$/,$$d' -e 's,^[/ *]*,,' $< > $@
+	cd ${.CURDIR} ; sed -e '/^$$/,$$d' -e 's,^[/ *]*,,' $< > $@
 
 all: SYNOPSIS
 
 SYNOPSIS: $(DESCS)
-	grep SYNOPSIS: $(DESCS) | sed -e 's@^machine/m_@@' -e 's@.desc:.[^:]*: *@:@' >SYNOPSIS
+	cd ${.CURDIR} ; grep SYNOPSIS: $(DESCS) | sed -e 's@^machine/m_@@' -e 's@.desc:.[^:]*: *@:@' >SYNOPSIS
