@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 1998/01/15 19:47:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272 1998/01/15 22:25:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_cputype.h"
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
