@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.10 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.11 2000/03/30 13:02:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -75,7 +75,7 @@ int
 ns_err_x(c)
 	int c;
 {
-	register u_int16_t *w, *lim, *base = ns_errstat.ns_es_codes;
+	u_int16_t *w, *lim, *base = ns_errstat.ns_es_codes;
 	u_int16_t x = c;
 
 	/*
@@ -103,10 +103,10 @@ ns_error(om, type, param)
 	int type;
 	int param;
 {
-	register struct ns_epidp *ep;
+	struct ns_epidp *ep;
 	struct mbuf *m;
 	struct idp *nip;
-	register struct idp *oip = mtod(om, struct idp *);
+	struct idp *oip = mtod(om, struct idp *);
 	extern int idpcksum;
 
 	/*
@@ -179,7 +179,7 @@ freeit:
 
 void
 ns_printhost(p)
-register struct ns_addr *p;
+struct ns_addr *p;
 {
 
 	printf("<net:%x%x,host:%x%x%x,port:%x>",
@@ -199,11 +199,11 @@ void
 ns_err_input(m)
 	struct mbuf *m;
 {
-	register struct ns_errp *ep;
+	struct ns_errp *ep;
 #ifdef NS_ERRPRINTFS
-	register struct ns_epidp *epidp = mtod(m, struct ns_epidp *);
+	struct ns_epidp *epidp = mtod(m, struct ns_epidp *);
 #endif
-	register int i;
+	int i;
 	int type, code, param;
 
 	/*
@@ -315,8 +315,8 @@ int
 ns_echo(m)
 struct mbuf *m;
 {
-	register struct idp *idp = mtod(m, struct idp *);
-	register struct echo {
+	struct idp *idp = mtod(m, struct idp *);
+	struct echo {
 	    struct idp	ec_idp;
 	    u_int16_t		ec_op; /* Operation, 1 = request, 2 = reply */
 	} *ec = (struct echo *)idp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.55 2000/03/01 12:49:41 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.56 2000/03/30 13:25:06 augustss Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -296,19 +296,19 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
  */
 int
 tcp_output(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 	struct socket *so;
 	struct route *ro;
 	struct rtentry *rt;
 	long len, win;
 	int off, flags, error;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct ip *ip;
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
-	register struct tcphdr *th;
+	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
 	int idle, sendalot, txsegsize, rxsegsize;
@@ -1110,9 +1110,9 @@ out:
 
 void
 tcp_setpersist(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
-	register int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2);
+	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2);
 	int nticks;
 
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))

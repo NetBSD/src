@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.11 1996/10/13 02:04:18 christos Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.12 2000/03/30 13:10:07 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -192,9 +192,9 @@ clnp_output(m0, va_alist)
 	int             datalen;/* number of bytes of data in m0 */
 	int             flags;	/* flags */
 	int             error = 0;	/* return value of function */
-	register struct mbuf *m = m0;	/* mbuf for clnp header chain */
-	register struct clnp_fixed *clnp;	/* ptr to fixed part of hdr */
-	register caddr_t hoff;	/* offset into header */
+	struct mbuf *m = m0;		/* mbuf for clnp header chain */
+	struct clnp_fixed *clnp;	/* ptr to fixed part of hdr */
+	caddr_t hoff;			/* offset into header */
 	int             total_len;	/* total length of packet */
 	struct iso_addr *src;	/* ptr to source address */
 	struct iso_addr *dst;	/* ptr to destination address */

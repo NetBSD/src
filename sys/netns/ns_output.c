@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.9 1997/07/18 19:30:40 thorpej Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.10 2000/03/30 13:02:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -70,8 +70,8 @@ ns_output(m0, va_alist)
 {
 	struct route *ro;
 	int flags;
-	register struct idp *idp = mtod(m0, struct idp *);
-	register struct ifnet *ifp = 0;
+	struct idp *idp = mtod(m0, struct idp *);
+	struct ifnet *ifp = 0;
 	int error = 0;
 	struct route idproute;
 	struct sockaddr_ns *dst;

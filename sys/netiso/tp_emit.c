@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.12 2000/02/25 03:41:54 itojun Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -167,8 +167,8 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	u_int           eot;
 	struct mbuf    *data;
 {
-	register struct tpdu *hdr;
-	register struct mbuf *m;
+	struct tpdu *hdr;
+	struct mbuf *m;
 	int             csum_offset = 0;
 	int             datalen = 0;
 	int             error = 0;
@@ -540,7 +540,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 					 * tmp1 = number of pkts fewer than
 					 * the full window
 					 */
-					register int    tmp1 =
+					int    tmp1 =
 					(int) SEQ_SUB(tpcb, olduwe,
 						      tpcb->tp_rcvnxt);
 
@@ -791,7 +791,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 
 		if (tp_delay)
 			if (tpcb->tp_use_checksum == 0) {
-				register u_int  i = tp_delay;
+				u_int  i = tp_delay;
 				for (; i != 0; i--)
 					(void) iso_check_csum(m, datalen);
 			}
@@ -861,8 +861,8 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 {
 	int             dutype;
 	int             datalen = 0;
-	register struct tpdu *hdr;
-	register struct mbuf *m;
+	struct tpdu *hdr;
+	struct mbuf *m;
 	int             csum_offset;
 
 #ifdef TPPT
@@ -960,7 +960,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 	if (dutype == ER_TPDU_type) {
 		/* copy the errant tpdu into another 'variable part' */
-		register caddr_t P;
+		caddr_t P;
 
 #ifdef TPPT
 		if (tp_traceflags[D_ERROR_EMIT]) {
