@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 1997/12/23 23:57:22 tv Exp $ */
+/*	$NetBSD: conf.c,v 1.53 1998/05/20 00:04:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
 #include "kbd.h"
 #include "ms.h"
 #include "zstty.h"
+#include "magma.h"		/* has NMTTY and NMBPP */
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 
@@ -221,8 +222,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 97 */
 	cdev_notdef(),			/* 98 */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
-	cdev_notdef(),			/* 100 */
-	cdev_notdef(),			/* 101 */
+	cdev_tty_init(NMTTY,mtty),	/* 100 */
+	cdev_gen_init(NMBPP,mbpp),	/* 101 */
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
