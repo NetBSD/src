@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.1 1998/08/04 01:41:26 perry Exp $	*/
+/*	$NetBSD: memmove.S,v 1.2 2003/04/15 22:49:50 dsl Exp $	*/
 
 #define MEMMOVE
-#include "bcopy.S"
+#include "memcpy.S"
