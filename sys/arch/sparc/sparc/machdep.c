@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.19 1994/04/16 10:18:43 deraadt Exp $
+ * $Id: machdep.c,v 1.20 1994/05/05 09:58:39 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -386,16 +386,15 @@ sendsig(catcher, sig, mask, code)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_onstack;
+	oonstack = psp->ps_sigstk.ss_onstack;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if (!psp->ps_onstack && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigsp
-					- sizeof(struct sigframe));
-		psp->ps_onstack = 1;
+	if (!psp->ps_sigstk.ss_onstack && (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp -
+			sizeof(struct sigframe));
+		psp->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -528,7 +527,7 @@ sigreturn(p, uap, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 1;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }
