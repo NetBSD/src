@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.73 2002/06/28 13:48:17 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.74 2002/07/01 18:40:27 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2994,3 +2994,249 @@ crypto/dist/ssh/version.h			patch
   Pull in a point patch for the preauth security vulnerability,
   taken from http://www.openssh.com/txt/preauth.adv.  Fixes
   SA#2002-005.
+
+dist/bind/README				1.4-1.6
+dist/bind/Version				1.1.1.1-1.1.1.4 (new)
+dist/bind/bin/addr/addr.c			1.2
+dist/bind/bin/dig/dig.c				1.4-1.5
+dist/bind/bin/dnskeygen/dnskeygen.c		1.3-1.5
+dist/bind/bin/dnsquery/dnsquery.c		1.3-1.4
+dist/bind/bin/host/host.c			1.5-1.6
+dist/bind/bin/irpd/irpd.c			1.3-1.4
+dist/bind/bin/irpd/irs-irpd.conf		1.3
+dist/bind/bin/mkservdb/mkservdb.c		1.3
+dist/bind/bin/named-bootconf/named-bootconf.sh	1.3
+dist/bind/bin/named-bootconf/test.boot		1.1 (new)
+dist/bind/bin/named-xfer/named-xfer.c		1.4-1.6
+dist/bind/bin/named/db_defs.h			1.3-1.4
+dist/bind/bin/named/db_dump.c			1.4-1.6
+dist/bind/bin/named/db_func.h			1.3
+dist/bind/bin/named/db_glob.h			1.2
+dist/bind/bin/named/db_glue.c			1.4
+dist/bind/bin/named/db_ixfr.c			1.3-1.4
+dist/bind/bin/named/db_load.c			1.4-1.5
+dist/bind/bin/named/db_lookup.c			1.3
+dist/bind/bin/named/db_save.c			1.3
+dist/bind/bin/named/db_sec.c			1.3
+dist/bind/bin/named/db_tsig.c			1.3
+dist/bind/bin/named/db_update.c			1.4-1.5
+dist/bind/bin/named/named.conf			1.4
+dist/bind/bin/named/named.h			1.3-1.4
+dist/bind/bin/named/ns_config.c			1.5-1.7
+dist/bind/bin/named/ns_ctl.c			1.5-1.6
+dist/bind/bin/named/ns_defs.h			1.4-1.6
+dist/bind/bin/named/ns_forw.c			1.5
+dist/bind/bin/named/ns_func.h			1.6-1.7
+dist/bind/bin/named/ns_glob.h			1.4
+dist/bind/bin/named/ns_glue.c			1.4-1.6
+dist/bind/bin/named/ns_init.c			1.3-1.4
+dist/bind/bin/named/ns_ixfr.c			1.4-1.5
+dist/bind/bin/named/ns_lexer.c			1.4
+dist/bind/bin/named/ns_lexer.h			1.4
+dist/bind/bin/named/ns_main.c			1.9-1.13
+dist/bind/bin/named/ns_maint.c			1.4-1.6
+dist/bind/bin/named/ns_ncache.c			1.3
+dist/bind/bin/named/ns_notify.c			1.4-1.5
+dist/bind/bin/named/ns_parser.y			1.4-1.5
+dist/bind/bin/named/ns_parseutil.c		1.3
+dist/bind/bin/named/ns_parseutil.h		1.3
+dist/bind/bin/named/ns_req.c			1.4-1.5
+dist/bind/bin/named/ns_resp.c			1.5-1.7
+dist/bind/bin/named/ns_signal.c			1.3
+dist/bind/bin/named/ns_sort.c			1.4
+dist/bind/bin/named/ns_stats.c			1.4
+dist/bind/bin/named/ns_update.c			1.4-1.5
+dist/bind/bin/named/ns_xfr.c			1.3-1.4
+dist/bind/bin/ndc/ndc.c				1.4-1.7
+dist/bind/bin/nslookup/commands.l		1.3
+dist/bind/bin/nslookup/debug.c			1.4
+dist/bind/bin/nslookup/getinfo.c		1.4-1.5
+dist/bind/bin/nslookup/list.c			1.3
+dist/bind/bin/nslookup/main.c			1.3
+dist/bind/bin/nslookup/nslookup.help		1.4
+dist/bind/bin/nslookup/res.h			1.3
+dist/bind/bin/nslookup/send.c			1.4
+dist/bind/bin/nslookup/skip.c			1.2
+dist/bind/bin/nslookup/subr.c			1.3
+dist/bind/bin/nsupdate/nsupdate.c		1.3-1.4
+dist/bind/bin/probe_ipv6			1.4
+dist/bind/bind2netbsd				1.16-1.19
+dist/bind/doc/bog/files.me			1.2
+dist/bind/include/arpa/nameser.h		1.4
+dist/bind/include/arpa/nameser_compat.h		1.2
+dist/bind/include/irs.h				1.3
+dist/bind/include/isc/assertions.h		1.3
+dist/bind/include/isc/ctl.h			1.3
+dist/bind/include/isc/eventlib.h		1.2
+dist/bind/include/isc/irpmarshall.h		1.2
+dist/bind/include/isc/list.h			1.3
+dist/bind/include/isc/logging.h			1.4
+dist/bind/include/isc/memcluster.h		1.2
+dist/bind/include/isc/misc.h			1.3
+dist/bind/include/netdb.h			1.4
+dist/bind/include/netgroup.h			1.1 (new)
+dist/bind/include/port_after.h			1.4-1.5 via patch
+dist/bind/include/port_before.h			1.5
+dist/bind/include/port_ipv6.h			1.2
+dist/bind/include/prand_conf.h			1.2
+dist/bind/include/resolv.h			1.6-1.7
+dist/bind/lib/bsd/Makefile			1.1 (new)
+dist/bind/lib/bsd/daemon.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/ftruncate.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/gettimeofday.c		1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/mktemp.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/putenv.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/readv.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/setenv.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/setitimer.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strcasecmp.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strdup.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strerror.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strpbrk.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strsep.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/strtoul.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/utimes.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/bsd/writev.c			1.1.1.1-1.1.1.2 (new)
+dist/bind/lib/dst/bsafe_link.c			1.3-1.5
+dist/bind/lib/dst/cylink_link.c			1.3-1.4
+dist/bind/lib/dst/dst_api.c			1.4-1.5
+dist/bind/lib/dst/dst_internal.h		1.3
+dist/bind/lib/dst/eay_dss_link.c		1.3-1.4
+dist/bind/lib/dst/hmac_link.c			1.3
+dist/bind/lib/dst/md5.h				1.4
+dist/bind/lib/dst/md5_dgst.c			1.4
+dist/bind/lib/dst/prandom.c			1.3-1.4
+dist/bind/lib/dst/rsaref_link.c			1.3-1.4
+dist/bind/lib/dst/support.c			1.3-1.4
+dist/bind/lib/inet/inet_addr.c			1.2
+dist/bind/lib/inet/inet_cidr_ntop.c		1.2
+dist/bind/lib/inet/inet_cidr_pton.c		1.3
+dist/bind/lib/inet/inet_data.c			1.1 (new)
+dist/bind/lib/inet/inet_net_ntop.c		1.3
+dist/bind/lib/inet/inet_net_pton.c		1.2
+dist/bind/lib/inet/inet_network.c		1.2
+dist/bind/lib/inet/inet_ntop.c			1.3-1.4 via patch
+dist/bind/lib/inet/inet_pton.c			1.2
+dist/bind/lib/inet/nsap_addr.c			1.2-1.3
+dist/bind/lib/irs/dns.c				1.3
+dist/bind/lib/irs/dns_gr.c			1.2
+dist/bind/lib/irs/dns_ho.c			1.3-1.4
+dist/bind/lib/irs/dns_nw.c			1.2-1.4
+dist/bind/lib/irs/dns_pr.c			1.2
+dist/bind/lib/irs/dns_pw.c			1.2
+dist/bind/lib/irs/dns_sv.c			1.3
+dist/bind/lib/irs/gai_strerror.c		1.2
+dist/bind/lib/irs/gen.c				1.3
+dist/bind/lib/irs/gen_gr.c			1.3
+dist/bind/lib/irs/gen_ho.c			1.2
+dist/bind/lib/irs/gen_ng.c			1.2
+dist/bind/lib/irs/gen_p.h			1.2
+dist/bind/lib/irs/getaddrinfo.c			1.2-1.3
+dist/bind/lib/irs/getgrent.c			1.2
+dist/bind/lib/irs/getgrent_r.c			1.2
+dist/bind/lib/irs/gethostent.c			1.3-1.4
+dist/bind/lib/irs/gethostent_r.c		1.3
+dist/bind/lib/irs/getnameinfo.c			1.3-1.4
+dist/bind/lib/irs/getnetent.c			1.3
+dist/bind/lib/irs/getnetent_r.c			1.2
+dist/bind/lib/irs/getnetgrent.c			1.2
+dist/bind/lib/irs/getnetgrent_r.c		1.2
+dist/bind/lib/irs/getprotoent.c			1.2
+dist/bind/lib/irs/getprotoent_r.c		1.2
+dist/bind/lib/irs/getpwent_r.c			1.2
+dist/bind/lib/irs/getservent.c			1.2
+dist/bind/lib/irs/getservent_r.c		1.2
+dist/bind/lib/irs/hesiod.c			1.3
+dist/bind/lib/irs/irp.c				1.3-1.4
+dist/bind/lib/irs/irp_gr.c			1.2
+dist/bind/lib/irs/irp_ho.c			1.2
+dist/bind/lib/irs/irp_ng.c			1.2
+dist/bind/lib/irs/irp_p.h			1.3
+dist/bind/lib/irs/irp_pw.c			1.2
+dist/bind/lib/irs/irpmarshall.c			1.3
+dist/bind/lib/irs/irs_data.c			1.5
+dist/bind/lib/irs/lcl.c				1.3
+dist/bind/lib/irs/lcl_gr.c			1.2
+dist/bind/lib/irs/lcl_ho.c			1.2
+dist/bind/lib/irs/lcl_ng.c			1.2
+dist/bind/lib/irs/lcl_nw.c			1.2
+dist/bind/lib/irs/lcl_pw.c			1.2
+dist/bind/lib/irs/lcl_sv.c			1.2
+dist/bind/lib/irs/nis.c				1.3
+dist/bind/lib/irs/nis_gr.c			1.2
+dist/bind/lib/irs/nis_ho.c			1.2
+dist/bind/lib/irs/nis_ng.c			1.2
+dist/bind/lib/irs/nis_nw.c			1.2
+dist/bind/lib/irs/nis_pr.c			1.2
+dist/bind/lib/irs/nis_pw.c			1.2
+dist/bind/lib/irs/nis_sv.c			1.2
+dist/bind/lib/irs/nul_ng.c			1.2
+dist/bind/lib/irs/util.c			1.3
+dist/bind/lib/isc/assertions.c			1.2
+dist/bind/lib/isc/bitncmp.c			1.2
+dist/bind/lib/isc/ctl_clnt.c			1.4
+dist/bind/lib/isc/ctl_p.c			1.3
+dist/bind/lib/isc/ctl_p.h			1.2
+dist/bind/lib/isc/ctl_srvr.c			1.4
+dist/bind/lib/isc/ev_connects.c			1.3
+dist/bind/lib/isc/ev_files.c			1.3
+dist/bind/lib/isc/ev_streams.c			1.2
+dist/bind/lib/isc/ev_timers.c			1.4-1.5
+dist/bind/lib/isc/eventlib.c			1.4
+dist/bind/lib/isc/eventlib_p.h			1.4
+dist/bind/lib/isc/hex.c				1.1 (new)
+dist/bind/lib/isc/logging.c			1.3
+dist/bind/lib/isc/memcluster.c			1.2-1.3
+dist/bind/lib/isc/tree.c			1.2
+dist/bind/lib/nameser/ns_date.c			1.2
+dist/bind/lib/nameser/ns_name.c			1.4
+dist/bind/lib/nameser/ns_parse.c		1.3-1.4
+dist/bind/lib/nameser/ns_print.c		1.3-1.4
+dist/bind/lib/nameser/ns_sign.c			1.3
+dist/bind/lib/nameser/ns_verify.c		1.3
+dist/bind/lib/resolv/herror.c			1.2
+dist/bind/lib/resolv/res_debug.c		1.4-1.5
+dist/bind/lib/resolv/res_findzonecut.c		1.4
+dist/bind/lib/resolv/res_init.c			1.3-1.4
+dist/bind/lib/resolv/res_mkquery.c		1.2
+dist/bind/lib/resolv/res_mkupdate.c		1.3
+dist/bind/lib/resolv/res_private.h		1.1 (new)
+dist/bind/lib/resolv/res_query.c		1.3
+dist/bind/lib/resolv/res_send.c			1.4-1.5
+dist/bind/lib/resolv/res_update.c		1.4-1.5
+dist/bind/man/dig.1				1.3-1.6
+dist/bind/man/dnskeygen.1			1.3-1.4
+dist/bind/man/dnsquery.1			1.3-1.4
+dist/bind/man/host.1				1.5-1.9
+dist/bind/man/named-bootconf.8			1.2-1.3
+dist/bind/man/named-xfer.8			1.3-1.5
+dist/bind/man/named.8				1.6-1.11
+dist/bind/man/named.conf.5			1.4-1.7
+dist/bind/man/ndc.8				1.2-1.4
+dist/bind/man/nslookup.8			1.4-1.7
+dist/bind/man/nsupdate.8			1.4-1.6
+usr.sbin/bind/Makefile				1.10 via patch
+usr.sbin/bind/Makefile.inc			1.8-1.12
+usr.sbin/bind/doc/bog/Makefile			1.2
+usr.sbin/bind/lib/Makefile			1.12-1.20
+usr.sbin/bind/man/named.reload.8		1.2
+usr.sbin/bind/man/named.restart.8		1.2
+usr.sbin/bind/named-xfer/Makefile		1.8-1.10
+usr.sbin/bind/named/Makefile			1.11
+usr.sbin/bind/ndc/Makefile			1.6
+
+  Update BIND to version 8.3.3.
+  Fixes SA#2002-006 in the user utilities coming with BIND.
+
+sys/kern/kern_ktrace.c				1.58
+
+  Disallow ktrace on processes with P_SUGID set.
+
+lib/libc/net/getaddrinfo.c			1.58
+
+  Correct port range check.
+
+distrib/notes/common/main			patch
+
+  Note all fixes where we have issued advisories in the ``Major
+  Changes Between 1.5.2 and 1.5.3'' section.
