@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.3 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.4 2001/07/17 20:13:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,6 +157,8 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->rescheds++;
 			PTQ_INSERT_TAIL(&runqueue, qhead, pt_runq);
 		} else if (qhead->pt_type == PT_THREAD_IDLE) {
+			qhead->pt_state = PT_STATE_RUNNABLE;
+			qhead->pt_flags &= ~PT_FLAG_IDLED;
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
 			_getcontext_u(qhead->pt_uc);
