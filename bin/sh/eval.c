@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.61 2002/09/27 18:56:50 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.62 2002/09/27 20:24:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.61 2002/09/27 18:56:50 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.62 2002/09/27 20:24:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,6 +733,7 @@ evalcommand(cmd, flags, backcmd)
 	    && (cmdentry.cmdtype != CMDBUILTIN
 		 || cmdentry.u.index == DOTCMD
 		 || cmdentry.u.index == EVALCMD))) {
+		INTOFF;
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {
@@ -800,6 +801,7 @@ normal_fork:
 #endif
 			if (forkshell(jp, cmd, mode) != 0)
 				goto parent;	/* at end of routine */
+			INTON;
 #ifdef DO_SHAREDVFORK
 		}
 #endif
@@ -947,6 +949,7 @@ parent:	/* parent process gets here (if we forked) */
 		close(pip[1]);
 		backcmd->jp = jp;
 	}
+	INTON;
 
 out:
 	if (lastarg)
