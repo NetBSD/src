@@ -1,10 +1,8 @@
-.\" -*- nroff -*-
-.\"	$NetBSD: bc.1,v 1.5 1996/11/11 00:08:06 lukem Exp $
 .\"
 .\" bc.1 - the *roff document processor source for the bc manual
 .\"
-.\" This file is part of bc written initially for MINIX.
-.\" Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+.\" This file is part of GNU bc.
+.\" Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 .\"
 .\" This program is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -28,13 +26,13 @@
 .\" Bellingham, WA 98226-9062
 .\"
 .\"
-.TH bc 1 .\" "Command Manual" v1.03 "Nov 2, 1994"
+.TH bc 1 .\" "Command Manual" v1.04 "June 22, 1995"
 .SH NAME
 bc - An arbitrary precision calculator language
 .SH SYNTAX
-\fBbc\fR [ \fB-lws\fR ] [ \fI file ...\fR ]
+\fBbc\fR [ \fB-lwsqv\fR ] [long-options] [ \fI file ...\fR ]
 .SH VERSION
-This man page documents GNU bc version 1.03.
+This man page documents GNU bc version 1.04.
 .SH DESCRIPTION
 \fBbc\fR is a language that supports arbitrary precision numbers
 with interactive execution of statements.  There are some similarities
@@ -60,6 +58,20 @@ Define the standard math library.
 Give warnings for extensions to POSIX \fBbc\fR.
 .IP -s
 Process exactly the POSIX \fBbc\fR language.
+.IP -q
+Do not print the normal GNU bc welcome.
+.IP -v
+Print the version number and copyright and quit.
+.IP --mathlib
+Define the standard math library.
+.IP --warn
+Give warnings for extensions to POSIX \fBbc\fR.
+.IP --standard
+Process exactly the POSIX \fBbc\fR language.
+.IP --quiet
+Do not print the normal GNU bc welcome.
+.IP --version
+Print the version number and copyright and quit.
 .SS NUMBERS
 The most basic element in \fBbc\fR is the number.  Numbers are
 arbitrary precision numbers.  This precision is both in the integer
@@ -101,6 +113,11 @@ single space in the input.  (This causes comments to delimit other
 input items.  For example, a comment can not be found in the middle of
 a variable name.)  Comments include any newlines (end of line) between
 the start and the end of the comment.
+.PP
+To support the use of scripts for \fBbc\fR, a single line comment has been
+added as an extension.  A single line comment starts at a \fB#\fR
+character and continues to the next end of the line.  The end of line
+character is not part of the comment and is processed normally.
 .SS EXPRESSIONS
 The numbers are manipulated by expressions and statements.  Since
 the language was designed to be interactive, statements and expressions
@@ -111,7 +128,7 @@ detail later, are defined when encountered.)
 A simple expression is just a constant. \fBbc\fR converts constants
 into internal decimal numbers using the current input base, specified
 by the variable \fBibase\fR. (There is an exception in functions.)
-The legal values of \fBibase\fR are 2 through 16 (F).  Assigning a
+The legal values of \fBibase\fR are 2 through 16.  Assigning a
 value outside this range to \fBibase\fR will result in a value of 2
 or 16.  Input numbers may contain the characters 0-9 and A-F. (Note:
 They must be capitals.  Lower case letters are variable names.)
@@ -312,7 +329,7 @@ precision, some numbers may not be printable on a single output line.
 These long numbers will be split across lines using the "\e" as the
 last character on a line.  The maximum number of characters printed
 per line is 70.  Due to the interactive nature of \fBbc\fR printing
-a number cause the side effect of assigning the printed value the
+a number cause the side effect of assigning the printed value the the
 special variable \fBlast\fR. This allows the user to recover the
 last value printed without having to retype the expression that
 printed the number.  Assigning to \fBlast\fR is legal and will
@@ -331,7 +348,7 @@ The print statement (an extension) provides another method of output.
 The "list" is a list of strings and expressions separated by commas.
 Each string or expression is printed in the order of the list.  No
 terminating newline is printed.  Expressions are evaluated and their
-value is printed and assigned the variable \fBlast\fR. Strings
+value is printed and assigned the the variable \fBlast\fR. Strings
 in the print statement are printed to the output and may contain
 special characters.  Special characters start with the backslash
 character (\e).  The special characters recognized by \fBbc\fR are
@@ -341,7 +358,7 @@ Any other character following the backslash will be ignored.
 .IP "{ statement_list }"
 This is the compound statement.  It allows multiple statements to be
 grouped together for execution.
-.IP "\fBif\fR ( expression ) \fBthen\fR statement1 [\fBelse\fR statement2]"
+.IP "\fBif\fR ( expression ) statement1 [\fBelse\fR statement2]"
 The if statement evaluates the expression and executes statement1 or
 statement2 depending on the value of the expression.  If the expression
 is non-zero, statement1 is executed.  If statement2 is present and
@@ -433,7 +450,7 @@ A runtime error will also occur for the call to an undefined function.
 .PP
 The \fIauto_list\fR is an optional list of variables that are for
 "local" use.  The syntax of the auto list (if present) is "\fBauto
-\fIname \fR, ... ;".  (The semicolon is optional.)  Each \fIname\fR is
+\fIname\fR, ... ;".  (The semicolon is optional.)  Each \fIname\fR is
 the name of an auto variable.  Arrays may be specified by using the
 same notation as used in parameters.  These variables have their
 values pushed onto a stack at the start of the function.  The
@@ -470,11 +487,11 @@ and the default scale is set to 20.   The math functions will calculate their
 results to the scale set at the time of their call.  
 The math library defines the following functions:
 .IP "s (\fIx\fR)"
-The sine of x in radians.
+The sine of x, x is in radians.
 .IP "c (\fIx\fR)"
-The cosine of x in radians.
+The cosine of x, x is in radians.
 .IP "a (\fIx\fR)"
-The arctangent of x.
+The arctangent of x, arctangent returns radians.
 .IP "l (\fIx\fR)"
 The natural logarithm of x.
 .IP "e (\fIx\fR)"
@@ -577,6 +594,19 @@ define f (x) {
 \fR
 .RE
 .fi
+.SS READLINE OPTION
+GNU \fBbc\fR can be compiled (via a configure option) to use the
+GNU \fBreadline\fR input editor library.  This allows the user
+to do more editing of lines before sending them to \fBbc\fR.
+It also allows for a history of previous lines typed.  When this
+option is selected, \fBbc\fR has one more special variable.
+This special variable, \fBhistory\fR is the number of lines of
+history retained.  A value of -1 means that an unlimited number
+of history lines are retained.  This is the default value.
+Setting the value of \fBhistory\fR to a positive number restricts
+the number of history lines to the number given.  The value of
+0 disables the history feature.  For more information, read the
+user manuals for the GNU \fBreadline\fR and \fBhistory\fR libraries.
 .SS DIFFERENCES
 This version of 
 .B bc
@@ -628,8 +658,11 @@ POSIX \fBbc\fR does not have a print statement .
 .IP "continue statement"
 POSIX \fBbc\fR does not have a continue statement.
 .IP "array parameters"
-POSIX \fBbc\fR does not have array parameters.  Other implementations
-of \fBbc\fR may have call by value array parameters.
+POSIX \fBbc\fR does not (currently) support array parameters in full.
+The POSIX grammar allows for arrays in function definitions, but does
+not provide a method to specify an array as an actual parameter.  (This
+is most likely an oversight in the grammar.)  Traditional implementations
+of \fBbc\fR have only call by value array parameters.
 .IP "=+, =-, =*, =/, =%, =^"
 POSIX \fBbc\fR does not require these "old style" assignment operators to
 be defined.  This version may allow these "old style" assignments.  Use
@@ -710,6 +743,23 @@ to have more than 16 segments of 1024 bytes.
 .IP "variable names"
 The current limit on the number of unique names is 32767 for each of
 simple variables, arrays and functions.
+.SH ENVIRONMENT VARIABLES
+The following environment variables are processed by \fBbc\fR:
+.IP "POSIXLY_CORRECT"
+This is the same as the \fB-s\fR option.
+.IP "BC_ENV_ARGS"
+This is another mechanism to get arguments to \fBbc\fR.  The
+format is the same as the command line arguments.  These arguments
+are processed first, so any files listed in the environent arguments
+are processed before any command line argument files.  This allows
+the user to set up "standard" options and files to be processed
+at every invocation of \fBbc\fR.  The files in the environment
+variables would typically contain function definitions for functions
+the user wants defined every time \fBbc\fR is run.
+.IP "BC_LINE_LENGTH"
+This should be an integer specifing the number of characters in an
+output line for numbers. This includes the backslash and newline characters
+for long numbers.
 .SH FILES
 In most installations, \fBbc\fR is completely self-contained.
 Where executable size is of importance or the C compiler does
@@ -722,6 +772,10 @@ that the file is unavailable and terminate.  Also, there are compile
 and run time diagnostics that should be self-explanatory.
 .SH BUGS
 Error recovery is not very good yet.
+.PP
+Email bug reports to
+.BR bug-gnu-utils@prep.ai.mit.edu .
+Be sure to include the word ``bc'' somewhere in the ``Subject:'' field.
 .SH AUTHOR
 .nf
 Philip A. Nelson

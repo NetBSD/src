@@ -1,9 +1,7 @@
-/* 	$NetBSD: global.c,v 1.3 1994/12/02 00:43:31 phil Exp $  */
-
 /* global.c:  This defines the global variables. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

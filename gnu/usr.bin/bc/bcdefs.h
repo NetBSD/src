@@ -1,9 +1,7 @@
-/* 	$NetBSD: bcdefs.h,v 1.3 1994/12/02 00:43:25 phil Exp $  */
-
 /* bcdefs.h:  The single file to include all constants and type definitions. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +38,7 @@
 #else
 #include <string.h>
 #endif
-#ifndef NO_LIMITS
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 
@@ -66,15 +64,18 @@ typedef struct bc_label_group
       struct bc_label_group *l_next;
     } bc_label_group;
 
-
-/* Each function has its own code segments and labels.  There can be
-   no jumps between functions so labels are unique to a function. */
+/* Argument list.  Recorded in the function so arguments can
+   be checked at call time. */
 
 typedef struct arg_list
     {
       int av_name;
+      int arg_is_var;		/* Extension ... variable parameters. */
       struct arg_list *next;
     } arg_list;
+
+/* Each function has its own code segments and labels.  There can be
+   no jumps between functions so labels are unique to a function. */
 
 typedef struct 
     {
@@ -154,3 +155,12 @@ typedef struct id_rec {
         short balance;  /* For the balanced tree. */
 	struct id_rec *left, *right; /* Tree pointers. */
 } id_rec;
+
+
+/* A list of files to process. */
+
+typedef struct file_node {
+	char *name;
+	struct file_node *next;
+} file_node;
+

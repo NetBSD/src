@@ -1,13 +1,19 @@
-#	$NetBSD: Makefile,v 1.9 1994/12/02 00:43:17 phil Exp $
+#	$NetBSD: Makefile,v 1.10 1997/04/29 00:28:51 phil Exp $
 
 PROG=	bc
-CFLAGS+=-D_POSIX_SOURCE -DDOT_IS_LAST -I. -I${.CURDIR}
+CFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
 LFLAGS+=-I8
-SRCS=	bc.c scan.c util.c main.c number.c storage.c load.c execute.c global.c
+SRCS=	bc.c scan.c util.c main.c number.c storage.c load.c execute.c \
+	global.c getopt.c getopt1.c
 
 LDADD+=	-ll
 DPADD+=	${LIBL}
 
-CLEANFILES+= bc.c scan.c y.tab.h
+CLEANFILES+= bc.c scan.c bc.h
+
+bc.c bc.h: bc.y
+	$(YACC) -d bc.y
+	mv y.tab.c bc.c
+	mv y.tab.h bc.h
 
 .include <bsd.prog.mk>

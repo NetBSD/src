@@ -1,7 +1,7 @@
 /* number.h: Arbitrary precision numbers header file. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,11 @@ typedef struct
 
 typedef bc_struct *bc_num;
 
+/* The base used in storing the numbers in n_value above.
+   Currently this MUST be 10. */
+
+#define BASE 10
+
 /*  Some useful macros and constants. */
 
 #define CH_VAL(c)     (c - '0')
@@ -50,9 +55,9 @@ typedef bc_struct *bc_num;
 #undef MIN
 #undef MAX
 #endif
-#define MAX(a,b)      (a>b?a:b)
-#define MIN(a,b)      (a>b?b:a)
-#define ODD(a)        (a&1)
+#define MAX(a,b)      ((a)>(b)?(a):(b))
+#define MIN(a,b)      ((a)>(b)?(b):(a))
+#define ODD(a)        ((a)&1)
 
 #ifndef TRUE
 #define TRUE 1
