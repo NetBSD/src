@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.6 1994/12/22 01:07:03 jtc Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.7 1995/08/31 22:31:06 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lastcomm.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: lastcomm.c,v 1.6 1994/12/22 01:07:03 jtc Exp $";
+static char rcsid[] = "$NetBSD: lastcomm.c,v 1.7 1995/08/31 22:31:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,13 +188,10 @@ requested(argv, acp)
 	register char *argv[];
 	register struct acct *acp;
 {
-	register char *p;
-
 	do {
-		p = user_from_uid(acp->ac_uid, 0);
-		if (!strcmp(p, *argv)) 
+		if (!strcmp(user_from_uid(acp->ac_uid, 0), *argv))
 			return (1);
-		if ((p = getdev(acp->ac_tty)) && !strcmp(p, *argv))
+		if (!strcmp(getdev(acp->ac_tty), *argv))
 			return (1);
 		if (!strncmp(acp->ac_comm, *argv, fldsiz(acct, ac_comm)))
 			return (1);
@@ -214,7 +211,8 @@ getdev(dev)
 	if (dev == lastdev)			/* One-element cache. */
 		return (lastname);
 	lastdev = dev;
-	lastname = devname(dev, S_IFCHR);
+	if ((lastname = devname(dev, S_IFCHR)) == NULL)
+		lastname = "??";
 	return (lastname);
 }
 
