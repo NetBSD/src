@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2000/06/26 12:34:05 briggs Exp $
+#	$NetBSD: Makefile,v 1.4 2000/07/24 07:59:28 itojun Exp $
 
 PROG=	dhclient
 MKMAN=	no
+CPPFLAGS+=	-DCLIENT_PATH='"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
 
 LDSTATIC?=	-static
 
