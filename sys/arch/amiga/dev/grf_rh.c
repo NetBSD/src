@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.28 1998/01/12 10:39:37 thorpej Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.29 1999/03/25 23:19:59 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
+#include "opt_retina.h"
 #include "grfrh.h"
 #if NGRFRH > 0
 
