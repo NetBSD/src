@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.28 1998/09/15 05:06:30 lukem Exp $
+#	$NetBSD: daily,v 1.29 1999/01/06 03:24:06 abs Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -32,6 +32,9 @@ fi
 echo ""
 echo "Uptime: " `uptime`
 
+# Uncommenting any of the finds below would open up a race condition attack
+# based on symlinks, potentially allowing removal of any file on the system.
+#
 #echo ""
 #echo "Removing scratch and junk files:"
 #if [ -d /tmp -a ! -h /tmp ]; then
