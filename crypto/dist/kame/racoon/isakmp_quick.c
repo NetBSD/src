@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.93 2002/05/07 17:47:55 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.94 2003/06/27 07:32:38 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -213,7 +213,7 @@ quick_i1send(iph2, msg)
 	/*
 	 * we do not attach IDci nor IDcr, under the following condition:
 	 * - all proposals are transport mode
-	 * - no MIP6
+	 * - no MIP6 or proxy
 	 * - id payload suggests to encrypt all the traffic (no specific
 	 *   protocol type)
 	 */
@@ -221,8 +221,8 @@ quick_i1send(iph2, msg)
 	id_p = (struct ipsecdoi_id_b *)iph2->id_p->v;
 	if (id->proto_id == 0
 	 && id_p->proto_id == 0
-	 && iph2->ph1->rmconf->support_mip6 == 0
-	 && ipsecdoi_transportmode(iph2)) {
+	 && iph2->ph1->rmconf->support_proxy == 0
+	 && ipsecdoi_transportmode(iph2->proposal)) {
 		idci = idcr = 0;
 	} else
 		idci = idcr = 1;
@@ -1807,7 +1807,7 @@ get_sainfo_r(iph2)
 		goto end;
 	}
 
-	iph2->sainfo = getsainfo(idsrc, iddst);
+	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p);
 	if (iph2->sainfo == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get sainfo.\n");
