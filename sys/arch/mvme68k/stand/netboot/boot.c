@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2001/07/07 09:06:44 scw Exp $ */
+/*	$NetBSD: boot.c,v 1.9 2002/05/03 20:48:34 scw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,12 +45,12 @@
 #include "libsa.h"
 #include "config.h"
 
-void main(void);
+int main(void);
 
 extern	char bootprog_name[], bootprog_rev[];
 char	line[80];
 
-void
+int
 main()
 {
 	char *cp, *file;
