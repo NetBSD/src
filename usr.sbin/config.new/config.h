@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.2 (Berkeley) 4/18/93
- *	$Id: config.h,v 1.3 1993/12/04 06:06:01 cgd Exp $
+ *	$Id: config.h,v 1.4 1994/01/08 18:19:01 cgd Exp $
  */
 
 /*
@@ -197,7 +197,8 @@ struct hashtab;
 
 const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
 const char *confdirbase;	/* basename of compile directory, usu. same */
-const char *machine;		/* machine type, e.g., "sparc" */
+const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
+const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
 int	errors;			/* counts calls to error() */
 int	minmaxusers;		/* minimum "maxusers" parameter */
 int	defmaxusers;		/* default "maxusers" parameter */

@@ -42,13 +42,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gram.y	5.3 (Berkeley) 4/18/93
- *	$Id: gram.y,v 1.3 1993/12/04 06:06:06 cgd Exp $
+ *	$Id: gram.y,v 1.4 1994/01/08 18:19:36 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "config.h"
 #include "sem.h"
 
@@ -76,7 +77,7 @@ static	int	adepth;
 #define	new_p(p)	new0(NULL, NULL, p, 0)
 
 static	void	cleanup __P((void));
-static	void	setmachine __P((const char *));
+static	void	setmachine __P((const char *, const char *));
 
 %}
 
@@ -136,7 +137,8 @@ hdr:
 	'\n';
 
 machine_spec:
-	XMACHINE WORD			= { setmachine($2); } |
+	XMACHINE WORD			= { setmachine($2,NULL); } |
+	XMACHINE WORD WORD		= { setmachine($2,$3); } |
 	error = { stop("cannot proceed without machine specifier"); };
 
 dev_eof:
@@ -380,14 +382,21 @@ cleanup()
 }
 
 static void
-setmachine(mch)
+setmachine(mch, mcharch)
 	const char *mch;
+	const char *mcharch;
 {
-	char buf[MAXPATHLEN];
+	char buf[MAXPATHLEN], archbuf[MAXPATHLEN];
 
 	machine = mch;
-	(void)sprintf(buf, "files.%s.newconf", mch);
+	machinearch = mcharch;
+	if (machinearch != NULL)
+		(void)sprintf(archbuf, "../../%s/conf/files.%s.newconf",
+		    machinearch, machinearch);
+	(void)sprintf(buf, "files.%s.newconf", machine);
+
 	if (include(buf, ENDFILE) ||
+	    (machinearch != NULL && include(archbuf, '\n')) ||
 	    include("../../../conf/files.newconf", ENDFILE))
 		exit(1);
 }
