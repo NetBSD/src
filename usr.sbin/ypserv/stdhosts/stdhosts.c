@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.6 1997/11/01 14:25:09 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.7 1997/11/13 18:42:48 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.6 1997/11/01 14:25:09 lukem Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.7 1997/11/13 18:42:48 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,8 @@ main(argc, argv)
 {
 	struct in_addr host_addr;
 	FILE	*data_file;
-	int	 line_no, len;
+	int	 line_no;
+	size_t	 len;
 	char	*k, *v, *addr_string, *fname;
 
 	addr_string = NULL;		/* XXX gcc -Wuninitialized */
