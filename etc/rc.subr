@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.55 2003/01/05 22:59:35 lukem Exp $
+# $NetBSD: rc.subr,v 1.56 2003/06/03 14:00:45 christos Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,7 +74,7 @@ checkyesno()
 reverse_list()
 {
 	_revlist=
-	for _revfile in $*; do
+	for _revfile; do
 		_revlist="$_revfile $_revlist"
 	done
 	echo $_revlist
@@ -215,7 +215,7 @@ _find_processes()
 #
 wait_for_pids()
 {
-	_list=$*
+	_list="$@"
 	if [ -z "$_list" ]; then
 		return
 	fi
@@ -751,7 +751,7 @@ rc_usage()
 	echo -n 1>&2 "Usage: $0 [fast|force]("
 
 	_sep=
-	for _elem in $*; do
+	for _elem; do
 		echo -n 1>&2 "$_sep$_elem"
 		_sep="|"
 	done
