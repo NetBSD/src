@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2004/02/29 23:25:09 dsl Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.3 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,8 @@
 /* MD Message catalog -- German, i386 version */
 
 message md_hello
-{Wenn Sie von einer Diskette gebootet haben, so können Sie diese nun
-entnehmen.
+{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
+entfernen.
 
 }
 
@@ -49,12 +49,12 @@ message dobad144
 }
 
 message getboottype
-{Möchten Sie das normale Set der Bootblöcke oder serielle Bootblöcke
+{Möchten Sie normalen Bootblöcke oder Bootblöcke für serielle Konsolen
 installieren?
 
 Normale Bootblöcke benutzen die BIOS Konsolenschnittstelle als Konsole
 (meistens der Monitor und die Tastatur). Serielle Bootblöcke benutzen den
-ersten seriellen Anschluss als die Konsole.
+ersten seriellen Anschluss als Konsole.
 
 Selektierter Bootblock: }
 
@@ -113,7 +113,7 @@ message biosmultmatch_row
 
 message biosgeom_advise
 {
-Beachten Sie: sysinst hat bemerkt, dass die von Ihnen ausgewählte Disk einer
+Achtung: sysinst hat festgestellt, dass die von Ihnen ausgewählte Disk einer
 anderen - dem BIOS bekannten - entspricht; damit sind obige Werte mit höchster
 Wahrscheinlichkeit korrekt, sollten also nicht verändert werden (die Werte
 für Zylinder, Köpfe und Sektoren sind wahrscheinlich 1023, 255 und 63 - dies
@@ -127,33 +127,33 @@ message pickdisk
 
 message partabovechs
 {Der NetBSD Teil der Disk liegt ausserhalb der vom BIOS dieser Maschine
-adressierbaren Bereich. Davon zu booten mag nicht möglich sein. Sind Sie
-sicher, dass Sie fortfahren möchten?
+adressierbaren Bereich. Eventuell könne Sie von dieser Partition nicht
+booten. Sind Sie sicher, dass Sie fortfahren möchten?
 
-(Antworten sie mit 'nein' werden sie zum Menü der Partitioneneditierung
-zurückbefördert.)}
+(Antworten sie mit 'nein' um die Partitionen erneut zu editieren.)}
+
 
 message missing_bootmenu_text
 {Sie haben mehr als ein Betriebssystem auf dieser Disk; allerdings ist kein 
 'bootmenu' (Eintrag für den NetBSD Bootloader) für die aktive Partition und/oder
 der Partition vorhanden, auf die NetBSD installiert wird.
 
-Wollen Sie die Partition für das Hinzufügen eines 'bootmenu' Eintrages
+Wollen Sie die Partition zum Hinzufügen eines 'bootmenu' Eintrages
 editieren?}
 
 
 message no_extended_bootmenu
-{Sie haben darüber verfügt eine Erweiterte Partition in das 'bootmenu'
-einzutragen. Doch scheint Ihr BIOS System den 'read' (Lese-) Befehl für diese
+{Sie haben eine erweiterte Partition in das 'bootmenu' eingetragen.
+Doch scheint Ihr BIOS System den 'read' (Lese-) Befehl für diese
 Version des 'bootmenu' Codes nicht zu unterstützen.
-Sind Sie sicher, dass Sie diesen Schritt dennoch vollziehen möchten?
+Sind Sie sicher, dass Sie dennoch fortfahren möchten?
 
-(Antworten Sie 'nein' werden Sie zum Menü zur Partitioneneditierung
-zurückbefördert.)}
+(Antworten Sie 'nein' um zum Partitionierungsmenü zurück zu
+gelangen.)}
 
 message installbootsel
 {Ihre Konfiguration benötigt den NetBSD Bootselect (Bootauswahl) Code, um 
-auszuwählen welches Betriebssystem zu starten ist.
+das zu startende Betriebssystem beim Start des Computers zu wählen.
 
 Dieser ist gegenwärtig noch nicht installiert; wollen Sie dies jetzt tun?}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/03/04 15:26:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,23 +39,23 @@
 /* MD Message catalog -- German, sandpoint version */
 
 message md_hello
-{Wenn Sie von einer Diskette gebootet haben, so können Sie diese nun
-entnehmen.
+{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
+entfernen.
 
 }
 
 message diagcyl
 {Einige der älteren BIOS Chips oder Diagnoseprogrammen nutzen den letzten
 Zylinder der Disk für Testzwecke. Dies sollte bei moderneren Systemen nicht
-mehr der Fall sein. Wenn Sie ein altes System haben und sich nicht sicher sind,
-ob dieses so agiert, können Sie den letzten Zylinder Ihrer Festplatte
-ausschliessen. So wird dieser nicht genutzt.
+mehr der Fall sein. Wenn Sie ein altes System haben oder sich nicht sicher
+sind ob es betroffen ist, können Sie den letzten Zylinder Ihrer Festplatte 
+ausschliessen. Dieser wird dann nicht genutzt.
 
-Wenn Sie den letzten Zylinder ausschliessen, wird sowhl die reale als auch
+Wenn Sie den letzten Zylinder ausschliessen, wird sowohl die reale als auch
 die Geometrie des BIOS ihrer Disk angepasst; Sie brauchen diese somit nicht
 manuell einzugeben.
 
-Wollen Sie den letzten Zylinder ausschliessen?
+Wollen Sie den letzten Zylinder ausschliessen?  
 
 }
 
