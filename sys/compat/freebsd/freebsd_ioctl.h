@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.h,v 1.2 1997/04/04 15:35:55 augustss Exp $	*/
+/*	$NetBSD: freebsd_ioctl.h,v 1.3 1997/05/06 23:56:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -37,5 +37,11 @@
 #include "../linux/linux_ioctl.h"
 
 #define	FREEBSD_IOCGROUP(x)	(((x) >> 8) & 0xff)
+
+#define FREEBSD_IOC_DIRMASK	0xe0000000
+#define FREEBSD_IOC_VOID	0x20000000
+#define FREEBSD_IOC_OUT		0x40000000
+#define FREEBSD_IOC_IN		0x80000000
+#define FREEBSD_IOC_INOUT	(FREEBSD_IOC_IN|FREEBSD_IOC_OUT)
 
 #endif /* !_FREEBSD_IOCTL_H */
