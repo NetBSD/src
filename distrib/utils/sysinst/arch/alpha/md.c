@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9.2.1 1999/04/19 15:19:28 perry Exp $	*/
+/*	$NetBSD: md.c,v 1.9.2.2 1999/04/23 21:35:12 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -133,13 +133,10 @@ int	md_post_disklabel (void)
  */
 int	md_post_newfs (void)
 {
-
-	const char *bootfile = target_expand("/boot");	/*XXX*/
-
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	run_prog(0, 0, NULL, "/usr/mdec/installboot %s %s /dev/r%sc",
-	    bootfile,  "/usr/mdec/bootxx", diskdev);
+	run_prog(0, 1, "Warning: disk is probably not bootable",
+		"/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
 }
 
@@ -151,7 +148,8 @@ int	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog(0, 0, NULL, "pax -X -r -w -pe / /mnt") != 0)
+	if (run_prog(0, 0, "Warning: unexpected error",
+		"pax -X -r -w -pe / /mnt") != 0)
 		return 1;
 
 	/* Copy next-stage profile into target /.profile. */
