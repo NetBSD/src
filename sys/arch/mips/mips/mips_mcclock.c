@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.1 1997/08/09 05:51:57 jonathan Exp $	*/
+/*	$NetBSD: mips_mcclock.c,v 1.2 1997/08/14 00:15:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.1 1997/08/09 05:51:57 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.2 1997/08/14 00:15:37 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -117,7 +117,7 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	 */
 	cpu_mhz = mips_mcclock_to_mhz(iters);
 
-#if defined(DEBUG) || defined(DIAGNOSTIC) || 1
+#if defined(DEBUG) || defined(DIAGNOSTIC)
 	printf("mcclock: iters %d computed MHz %d, instrs per usec=%d\n",
 	       iters, cpu_mhz, cpuspeed);
 #endif
@@ -239,7 +239,15 @@ mips_mcclock_to_mhz(unsigned iters)
 
 #ifdef MIPS1
 	if (!CPUISMIPS3) {
-		if (iters < 8800) {
+		if (iters < 5100) {
+			/* assume memory-bound DS 2100 */
+			mhz = 12;	/* 12.5 MHz? */
+			cpuspeed = 8;
+		} else if (iters < 6700) {
+			/* assume memory-bound DS3100 */
+			mhz = 15;
+			cpuspeed = 8;
+		} else if (iters < 8800) {
 			mhz = 20;
 			cpuspeed = 11;
 		} else if (iters < 11300) {
