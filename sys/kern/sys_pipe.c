@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_pipe.c,v 1.2 2001/06/16 12:00:02 jdolecek Exp $	*/
+
 /*
  * Copyright (c) 1996 John S. Dyson
  * All rights reserved.
@@ -24,6 +26,9 @@
  * pipes scheme originally used in FreeBSD/4.4Lite.  It does not support
  * all features of sockets, but does do everything that pipes normally
  * do.
+ *
+ * Adaption for NetBSD UVM, including uvm_loan() based direct write, was
+ * written by Jaromir Dolecek.
  */
 
 /*
@@ -31,17 +36,20 @@
  * write mode.  The small write mode acts like conventional pipes with
  * a kernel buffer.  If the buffer is less than PIPE_MINDIRECT, then the
  * "normal" pipe buffering is done.  If the buffer is between PIPE_MINDIRECT
- * and PIPE_SIZE in size, it is fully mapped and wired into the kernel, and
- * the receiving process can copy it directly from the pages in the sending
- * process.
+ * and PIPE_SIZE in size, it is fully mapped into the kernel (on FreeBSD,
+ * those pages are also wired), and the receiving process can copy it directly
+ * from the pages in the sending process.
  *
  * If the sending process receives a signal, it is possible that it will
  * go away, and certainly its address space can change, because control
  * is returned back to the user-mode side.  In that case, the pipe code
- * arranges to copy the buffer supplied by the user process, to a pageable
- * kernel buffer, and the receiving process will grab the data from the
- * pageable kernel buffer.  Since signals don't happen all that often,
+ * arranges to copy the buffer supplied by the user process on FreeBSD, to
+ * a pageable kernel buffer, and the receiving process will grab the data
+ * from the pageable kernel buffer.  Since signals don't happen all that often,
  * the copy operation is normally eliminated.
+ * For NetBSD, the pages are mapped read-only, COW for kernel by uvm_loan(),
+ * so no explicit handling need to be done, all is handled by standard VM
+ * facilities.
  *
  * The constant PIPE_MINDIRECT is chosen to make sure that buffering will
  * happen for small transfers so that the system will not spend all of
@@ -49,46 +57,54 @@
  * amount of kernel virtual memory.
  */
 
+#ifdef __NetBSD__
+#include "opt_new_pipe.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/filio.h>
-#include <sys/lock.h>
-#include <sys/mutex.h>
 #include <sys/ttycom.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
-#include <sys/selinfo.h>
 #include <sys/signalvar.h>
-#include <sys/sysproto.h>
-#include <sys/pipe.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/uio.h>
-#include <sys/event.h>
+#include <sys/lock.h>
+#ifdef __FreeBSD__
+#include <sys/mutex.h>
+#include <sys/selinfo.h>
+#include <sys/sysproto.h>
+#elif defined(__NetBSD__)
+#include <sys/select.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+#include <uvm/uvm.h>
+#include <sys/sysctl.h>
+#endif /* NetBSD, FreeBSD */
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_object.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_extern.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_page.h>
-#include <vm/vm_zone.h>
+#include <sys/pipe.h>
+
+#ifdef __NetBSD__
+#define vfs_timestamp(tv) 	microtime(tv)
+#endif
 
 /*
  * Use this define if you want to disable *fancy* VM things.  Expect an
  * approx 30% decrease in transfer rate.  This could be useful for
- * NetBSD or OpenBSD.
+ * OpenBSD.
  */
 /* #define PIPE_NODIRECT */
 
 /*
  * interfaces to the outside world
  */
+#ifdef __FreeBSD__
 static int pipe_read __P((struct file *fp, struct uio *uio, 
 		struct ucred *cred, int flags, struct proc *p));
 static int pipe_write __P((struct file *fp, struct uio *uio, 
@@ -113,7 +129,24 @@ static struct filterops pipe_rfiltops =
 	{ 1, NULL, filt_pipedetach, filt_piperead };
 static struct filterops pipe_wfiltops =
 	{ 1, NULL, filt_pipedetach, filt_pipewrite };
+#endif /* FreeBSD */
 
+#ifdef __NetBSD__
+static int pipe_read __P((struct file *fp, off_t *offset, struct uio *uio, 
+		struct ucred *cred, int flags));
+static int pipe_write __P((struct file *fp, off_t *offset, struct uio *uio, 
+		struct ucred *cred, int flags));
+static int pipe_close __P((struct file *fp, struct proc *p));
+static int pipe_poll __P((struct file *fp, int events, struct proc *p));
+static int pipe_fcntl __P((struct file *fp, u_int com, caddr_t data,
+		struct proc *p));
+static int pipe_stat __P((struct file *fp, struct stat *sb, struct proc *p));
+static int pipe_ioctl __P((struct file *fp, u_long cmd, caddr_t data, struct proc *p));
+
+static struct fileops pipeops =
+    { pipe_read, pipe_write, pipe_ioctl, pipe_fcntl, pipe_poll,
+      pipe_stat, pipe_close };
+#endif /* NetBSD */
 
 /*
  * Default pipe buffer size(s), this can be kind-of large now because pipe
@@ -129,20 +162,26 @@ static struct filterops pipe_wfiltops =
  * is there so that on large systems, we don't exhaust it.
  */
 #define MAXPIPEKVA (8*1024*1024)
+static int maxpipekva = MAXPIPEKVA;
 
 /*
  * Limit for direct transfers, we cannot, of course limit
  * the amount of kva for pipes in general though.
  */
 #define LIMITPIPEKVA (16*1024*1024)
+static int limitpipekva = LIMITPIPEKVA;
 
 /*
  * Limit the number of "big" pipes
  */
-#define LIMITBIGPIPES	32
-static int nbigpipe;
+#define LIMITBIGPIPES  32
+static int maxbigpipes = LIMITBIGPIPES;
+static int nbigpipe = 0;
 
-static int amountpipekva;
+/*
+ * Amount of KVA consumed by pipe buffers.
+ */
+static int amountpipekva = 0;
 
 static void pipeclose __P((struct pipe *cpipe));
 static void pipe_free_kmem __P((struct pipe *cpipe));
@@ -150,46 +189,68 @@ static int pipe_create __P((struct pipe **cpipep));
 static __inline int pipelock __P((struct pipe *cpipe, int catch));
 static __inline void pipeunlock __P((struct pipe *cpipe));
 static __inline void pipeselwakeup __P((struct pipe *cpipe));
+static int pipespace __P((struct pipe *cpipe, int size));
+
+#ifdef __FreeBSD__
 #ifndef PIPE_NODIRECT
 static int pipe_build_write_buffer __P((struct pipe *wpipe, struct uio *uio));
 static void pipe_destroy_write_buffer __P((struct pipe *wpipe));
 static int pipe_direct_write __P((struct pipe *wpipe, struct uio *uio));
 static void pipe_clone_write_buffer __P((struct pipe *wpipe));
 #endif
-static int pipespace __P((struct pipe *cpipe, int size));
 
 static vm_zone_t pipe_zone;
+#endif /* FreeBSD */
+
+#ifdef __NetBSD__
+#ifndef PIPE_NODIRECT
+static __inline int pipe_direct_write __P((struct pipe *wpipe, struct uio *uio));
+static __inline int pipe_loan_alloc __P((struct pipe *wpipe, int npages,
+						vsize_t blen));
+static void pipe_loan_free __P((struct pipe *wpipe));
+#endif /* PIPE_NODIRECT */
+
+static struct pool pipe_pool;
+#endif /* NetBSD */
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
 
 /* ARGSUSED */
+#ifdef __FreeBSD__
 int
 pipe(p, uap)
 	struct proc *p;
 	struct pipe_args /* {
 		int	dummy;
 	} */ *uap;
+#elif defined(__NetBSD__)
+int
+sys_pipe(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+#endif
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
 
+#ifdef __FreeBSD__
 	if (pipe_zone == NULL)
 		pipe_zone = zinit("PIPE", sizeof(struct pipe), 0, 0, 4);
+#endif
 
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe) || pipe_create(&wpipe)) {
-		pipeclose(rpipe); 
-		pipeclose(wpipe); 
+		pipeclose(rpipe);
+		pipeclose(wpipe);
 		return (ENFILE);
 	}
-	
-	rpipe->pipe_state |= PIPE_DIRECTOK;
-	wpipe->pipe_state |= PIPE_DIRECTOK;
 
+#ifdef __FreeBSD__
 	error = falloc(p, &rf, &fd);
 	if (error) {
 		pipeclose(rpipe);
@@ -229,8 +290,53 @@ pipe(p, uap)
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 	fdrop(rf, p);
+#endif /* FreeBSD */
 
+#ifdef __NetBSD__
+	/*
+	 * Note: the file structure returned from falloc() is marked
+	 * as 'larval' initially. Unless we mark it as 'mature' by
+	 * FILE_SET_MATURE(), any attempt to do anything with it would
+	 * return EBADF, including e.g. dup(2) or close(2). This avoids
+	 * file descriptor races if we block in the second falloc().
+	 */
+
+	error = falloc(p, &rf, &fd);
+	if (error)
+		goto free2;
+	retval[0] = fd;
+	rf->f_flag = FREAD;
+	rf->f_type = DTYPE_PIPE;
+	rf->f_data = (caddr_t)rpipe;
+	rf->f_ops = &pipeops;
+
+	error = falloc(p, &wf, &fd);
+	if (error)
+		goto free3;
+	retval[1] = fd;
+	wf->f_flag = FWRITE;
+	wf->f_type = DTYPE_PIPE;
+	wf->f_data = (caddr_t)wpipe;
+	wf->f_ops = &pipeops;
+
+	rpipe->pipe_peer = wpipe;
+	wpipe->pipe_peer = rpipe;
+
+	FILE_SET_MATURE(rf);
+	FILE_SET_MATURE(wf);
+	FILE_UNUSE(rf, p);
+	FILE_UNUSE(wf, p);
 	return (0);
+free3:
+	FILE_UNUSE(rf, p);
+	ffree(rf);
+	fdremove(fdp, retval[0]);
+free2:
+	pipeclose(wpipe);
+	pipeclose(rpipe);
+#endif /* NetBSD */
+
+	return (error);
 }
 
 /*
@@ -244,15 +350,15 @@ pipespace(cpipe, size)
 	struct pipe *cpipe;
 	int size;
 {
-	struct vm_object *object;
 	caddr_t buffer;
+#ifdef __FreeBSD__
+	struct vm_object *object;
 	int npages, error;
 
 	npages = round_page(size)/PAGE_SIZE;
 	/*
 	 * Create an object, I don't like the idea of paging to/from
 	 * kernel_object.
-	 * XXX -- minor change needed here for NetBSD/OpenBSD VM systems.
 	 */
 	mtx_lock(&vm_mtx);
 	object = vm_object_allocate(OBJT_DEFAULT, npages);
@@ -261,7 +367,6 @@ pipespace(cpipe, size)
 	/*
 	 * Insert the object into the kernel map, and allocate kva for it.
 	 * The map entry is, by default, pageable.
-	 * XXX -- minor change needed here for NetBSD/OpenBSD VM systems.
 	 */
 	error = vm_map_find(kernel_map, object, 0,
 		(vm_offset_t *) &buffer, size, 1,
@@ -272,11 +377,24 @@ pipespace(cpipe, size)
 		mtx_unlock(&vm_mtx);
 		return (ENOMEM);
 	}
+#endif /* FreeBSD */
+
+#ifdef __NetBSD__
+	/*
+	 * Allocate pageable virtual address space. Physical memory is allocated
+	 * on demand.
+	 */
+	buffer = (caddr_t) uvm_km_valloc(kernel_map, round_page(size));
+	if (buffer == NULL)
+		return (ENOMEM);
+#endif /* NetBSD */
 
 	/* free old resources if we're resizing */
 	pipe_free_kmem(cpipe);
+#ifdef __FreeBSD__
 	mtx_unlock(&vm_mtx);
 	cpipe->pipe_buffer.object = object;
+#endif
 	cpipe->pipe_buffer.buffer = buffer;
 	cpipe->pipe_buffer.size = size;
 	cpipe->pipe_buffer.in = 0;
@@ -296,23 +414,28 @@ pipe_create(cpipep)
 	struct pipe *cpipe;
 	int error;
 
+#ifdef __FreeBSD__
 	*cpipep = zalloc(pipe_zone);
+#endif
+#ifdef __NetBSD__
+	*cpipep = pool_get(&pipe_pool, M_WAITOK);
+#endif
 	if (*cpipep == NULL)
 		return (ENOMEM);
 
 	cpipe = *cpipep;
-	
+
+#ifdef __FreeBSD__
 	/* so pipespace()->pipe_free_kmem() doesn't follow junk pointer */
 	cpipe->pipe_buffer.object = NULL;
-#ifndef PIPE_NODIRECT
-	cpipe->pipe_map.kva = NULL;
-#endif
+#endif /* FreeBSD */
 	/*
 	 * protect so pipeclose() doesn't follow a junk pointer
 	 * if pipespace() fails.
 	 */
+	cpipe->pipe_buffer.buffer = NULL;
 	bzero(&cpipe->pipe_sel, sizeof(cpipe->pipe_sel));
-	cpipe->pipe_state = 0;
+	cpipe->pipe_state = PIPE_SIGNALR;
 	cpipe->pipe_peer = NULL;
 	cpipe->pipe_busy = 0;
 
@@ -321,19 +444,24 @@ pipe_create(cpipep)
 	 * pipe data structure initializations to support direct pipe I/O
 	 */
 	cpipe->pipe_map.cnt = 0;
-	cpipe->pipe_map.kva = 0;
+	cpipe->pipe_map.kva = NULL;
 	cpipe->pipe_map.pos = 0;
 	cpipe->pipe_map.npages = 0;
-	/* cpipe->pipe_map.ms[] = invalid */
+#ifdef __NetBSD__
+	cpipe->pipe_map.ms = NULL;
 #endif
+#endif /* !PIPE_NODIRECT */
 
-	error = pipespace(cpipe, PIPE_SIZE);
-	if (error)
+	if ((error = pipespace(cpipe, PIPE_SIZE)))
 		return (error);
 
 	vfs_timestamp(&cpipe->pipe_ctime);
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
+#ifdef __NetBSD__
+	cpipe->pipe_pgid = NO_PID;
+	lockinit(&cpipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
+#endif
 
 	return (0);
 }
@@ -349,15 +477,24 @@ pipelock(cpipe, catch)
 {
 	int error;
 
+#ifdef __FreeBSD__
 	while (cpipe->pipe_state & PIPE_LOCK) {
 		cpipe->pipe_state |= PIPE_LWANT;
 		error = tsleep(cpipe, catch ? (PRIBIO | PCATCH) : PRIBIO,
 		    "pipelk", 0);
-		if (error != 0) 
+		if (error != 0)
 			return (error);
 	}
 	cpipe->pipe_state |= PIPE_LOCK;
 	return (0);
+#endif
+
+#ifdef __NetBSD__
+	do {
+		error = lockmgr(&cpipe->pipe_lock, LK_EXCLUSIVE, NULL);
+	} while (!catch && (error == EINTR || error == ERESTART));
+	return (error);
+#endif
 }
 
 /*
@@ -367,46 +504,84 @@ static __inline void
 pipeunlock(cpipe)
 	struct pipe *cpipe;
 {
-
+#ifdef __FreeBSD__
 	cpipe->pipe_state &= ~PIPE_LOCK;
 	if (cpipe->pipe_state & PIPE_LWANT) {
 		cpipe->pipe_state &= ~PIPE_LWANT;
 		wakeup(cpipe);
 	}
+#endif
+
+#ifdef __NetBSD__
+	lockmgr(&cpipe->pipe_lock, LK_RELEASE, NULL);
+#endif
 }
 
+/*
+ * Select/poll wakup. This also sends SIGIO to peer connected to
+ * 'sigpipe' side of pipe.
+ */
 static __inline void
 pipeselwakeup(cpipe)
 	struct pipe *cpipe;
 {
+	if (!cpipe)
+		return;
 
 	if (cpipe->pipe_state & PIPE_SEL) {
 		cpipe->pipe_state &= ~PIPE_SEL;
 		selwakeup(&cpipe->pipe_sel);
 	}
+#ifdef __FreeBSD__
 	if ((cpipe->pipe_state & PIPE_ASYNC) && cpipe->pipe_sigio)
 		pgsigio(cpipe->pipe_sigio, SIGIO, 0);
 	KNOTE(&cpipe->pipe_sel.si_note, 0);
+#endif
+
+#ifdef __NetBSD__
+	if (cpipe && (cpipe->pipe_state & PIPE_ASYNC)
+	    && cpipe->pipe_pgid != NO_PID){
+		struct proc *p;
+
+		if (cpipe->pipe_pgid < 0)
+			gsignal(-cpipe->pipe_pgid, SIGIO);
+		else if (cpipe->pipe_pgid > 0 && (p = pfind(cpipe->pipe_pgid)) != 0)
+			psignal(p, SIGIO);
+	}
+#endif /* NetBSD */
 }
 
 /* ARGSUSED */
+#ifdef __FreeBSD__
 static int
 pipe_read(fp, uio, cred, flags, p)
 	struct file *fp;
 	struct uio *uio;
 	struct ucred *cred;
-	struct proc *p;
 	int flags;
+	struct proc *p;
+#elif defined(__NetBSD__)
+static int
+pipe_read(fp, offset, uio, cred, flags)
+	struct file *fp;
+	off_t *offset;
+	struct uio *uio;
+	struct ucred *cred;
+	int flags;
+#endif
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	int error;
-	int nread = 0;
-	u_int size;
+	size_t nread = 0;
+	size_t size;
+	size_t ocnt;
 
 	++rpipe->pipe_busy;
 	error = pipelock(rpipe, 1);
 	if (error)
 		goto unlocked_error;
+
+	ocnt = rpipe->pipe_buffer.cnt;
 
 	while (uio->uio_resid) {
 		/*
@@ -416,8 +591,8 @@ pipe_read(fp, uio, cred, flags, p)
 			size = rpipe->pipe_buffer.size - rpipe->pipe_buffer.out;
 			if (size > rpipe->pipe_buffer.cnt)
 				size = rpipe->pipe_buffer.cnt;
-			if (size > (u_int) uio->uio_resid)
-				size = (u_int) uio->uio_resid;
+			if (size > uio->uio_resid)
+				size = uio->uio_resid;
 
 			error = uiomove(&rpipe->pipe_buffer.buffer[rpipe->pipe_buffer.out],
 					size, uio);
@@ -447,8 +622,8 @@ pipe_read(fp, uio, cred, flags, p)
 		} else if ((size = rpipe->pipe_map.cnt) &&
 			   (rpipe->pipe_state & PIPE_DIRECTW)) {
 			caddr_t	va;
-			if (size > (u_int) uio->uio_resid)
-				size = (u_int) uio->uio_resid;
+			if (size > uio->uio_resid)
+				size = uio->uio_resid;
 
 			va = (caddr_t) rpipe->pipe_map.kva +
 			    rpipe->pipe_map.pos;
@@ -461,6 +636,11 @@ pipe_read(fp, uio, cred, flags, p)
 			if (rpipe->pipe_map.cnt == 0) {
 				rpipe->pipe_state &= ~PIPE_DIRECTW;
 				wakeup(rpipe);
+#ifdef __NetBSD__
+				if (uio->uio_resid > 0 &&
+				    (rpipe->pipe_state & PIPE_MOREW))
+					goto waitformore;
+#endif /* NetBSD */
 			}
 #endif
 		} else {
@@ -486,25 +666,31 @@ pipe_read(fp, uio, cred, flags, p)
 				break;
 
 			/*
-			 * Unlock the pipe buffer for our remaining processing.  We
-			 * will either break out with an error or we will sleep and
-			 * relock to loop.
+			 * don't block on non-blocking I/O
+			 */
+			if (fp->f_flag & FNONBLOCK) {
+				error = EAGAIN;
+				break;
+			}
+
+#if defined(__NetBSD__) && !defined(PIPE_NODIRECT)
+		waitformore:
+#endif
+			/*
+			 * Unlock the pipe buffer for our remaining processing.
+			 * We will either break out with an error or we will
+			 * sleep and relock to loop.
 			 */
 			pipeunlock(rpipe);
 
 			/*
-			 * Handle non-blocking mode operation or
-			 * wait for more data.
+			 * We want to read more, wake up select/poll.
 			 */
-			if (fp->f_flag & FNONBLOCK) {
-				error = EAGAIN;
-			} else {
-				rpipe->pipe_state |= PIPE_WANTR;
-				if ((error = tsleep(rpipe, PRIBIO | PCATCH,
-				    "piperd", 0)) == 0)
-					error = pipelock(rpipe, 1);
-			}
-			if (error)
+			pipeselwakeup(rpipe->pipe_peer);
+
+			rpipe->pipe_state |= PIPE_WANTR;
+			error = tsleep(rpipe, PRIBIO | PCATCH, "piperd", 0);
+			if (error != 0 || (error = pipelock(rpipe, 1)))
 				goto unlocked_error;
 		}
 	}
@@ -516,10 +702,10 @@ unlocked_error:
 	--rpipe->pipe_busy;
 
 	/*
-	 * PIPE_WANT processing only makes sense if pipe_busy is 0.
+	 * PIPE_WANTCLOSE processing only makes sense if pipe_busy is 0.
 	 */
-	if ((rpipe->pipe_busy == 0) && (rpipe->pipe_state & PIPE_WANT)) {
-		rpipe->pipe_state &= ~(PIPE_WANT|PIPE_WANTW);
+	if ((rpipe->pipe_busy == 0) && (rpipe->pipe_state & PIPE_WANTCLOSE)) {
+		rpipe->pipe_state &= ~(PIPE_WANTCLOSE|PIPE_WANTW);
 		wakeup(rpipe);
 	} else if (rpipe->pipe_buffer.cnt < MINPIPESIZE) {
 		/*
@@ -531,12 +717,21 @@ unlocked_error:
 		}
 	}
 
-	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF)
-		pipeselwakeup(rpipe);
+	/*
+	 * If anything was read off the buffer, signal to the writer it's
+	 * possible to write more data. Also send signal if we are here for the
+	 * first time after last write.
+	 */
+	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF
+	    && (ocnt != rpipe->pipe_buffer.cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
+		pipeselwakeup(rpipe->pipe_peer);
+		rpipe->pipe_state &= ~PIPE_SIGNALR;
+	}
 
 	return (error);
 }
 
+#ifdef __FreeBSD__
 #ifndef PIPE_NODIRECT
 /*
  * Map the sending processes' buffer into kernel space and wire it.
@@ -547,11 +742,11 @@ pipe_build_write_buffer(wpipe, uio)
 	struct pipe *wpipe;
 	struct uio *uio;
 {
-	u_int size;
+	size_t size;
 	int i;
 	vm_offset_t addr, endaddr, paddr;
 
-	size = (u_int) uio->uio_iov->iov_len;
+	size = uio->uio_iov->iov_len;
 	if (size > wpipe->pipe_buffer.size)
 		size = wpipe->pipe_buffer.size;
 
@@ -626,7 +821,7 @@ pipe_destroy_write_buffer(wpipe)
 	if (wpipe->pipe_map.kva) {
 		pmap_qremove(wpipe->pipe_map.kva, wpipe->pipe_map.npages);
 
-		if (amountpipekva > MAXPIPEKVA) {
+		if (amountpipekva > maxpipekva) {
 			vm_offset_t kva = wpipe->pipe_map.kva;
 			wpipe->pipe_map.kva = 0;
 			kmem_free(kernel_map, kva,
@@ -754,15 +949,233 @@ error1:
 	wakeup(wpipe);
 	return (error);
 }
-#endif
-	
+#endif /* !PIPE_NODIRECT */
+#endif /* FreeBSD */
+
+#ifdef __NetBSD__
+#ifndef PIPE_NODIRECT
+/*
+ * Allocate structure for loan transfer.
+ */
+static __inline int
+pipe_loan_alloc(wpipe, npages, blen)
+	struct pipe *wpipe;
+	int npages;
+	vsize_t blen;
+{
+	wpipe->pipe_map.kva = uvm_km_valloc(kernel_map, blen);
+	if (wpipe->pipe_map.kva == NULL)
+		return (ENOMEM);
+
+	amountpipekva += blen;
+	wpipe->pipe_map.npages = npages;
+	wpipe->pipe_map.ms = (struct vm_page **) malloc(
+		npages * sizeof(struct vm_page *), M_PIPE, M_WAITOK);
+
+	return (0);
+}
+
+/*
+ * Free resources allocated for loan transfer.
+ */
+static void
+pipe_loan_free(wpipe)
+	struct pipe *wpipe;
+{
+	uvm_km_free(kernel_map, wpipe->pipe_map.kva,
+			wpipe->pipe_map.npages * PAGE_SIZE);
+	wpipe->pipe_map.kva = NULL;
+	amountpipekva -= wpipe->pipe_map.npages * PAGE_SIZE;
+	free(wpipe->pipe_map.ms, M_PIPE);
+	wpipe->pipe_map.ms = NULL;
+}
+
+/*
+ * NetBSD direct write, using uvm_loan() mechanism.
+ * This implements the pipe buffer write mechanism.  Note that only
+ * a direct write OR a normal pipe write can be pending at any given time.
+ * If there are any characters in the pipe buffer, the direct write will
+ * be deferred until the receiving process grabs all of the bytes from
+ * the pipe buffer.  Then the direct mapping write is set-up.
+ */
+static __inline int
+pipe_direct_write(wpipe, uio)
+	struct pipe *wpipe;
+	struct uio *uio;
+{
+	int error, i, npages, j;
+	struct vm_page **res;
+	vaddr_t bbase, kva, base, bend;
+	vsize_t blen, bcnt;
+	voff_t boff, bpos;
+	struct vm_map *wmap = &uio->uio_procp->p_vmspace->vm_map;
+retry:
+	while (wpipe->pipe_state & PIPE_DIRECTW) {
+		if (wpipe->pipe_state & PIPE_WANTR) {
+			wpipe->pipe_state &= ~PIPE_WANTR;
+			wakeup(wpipe);
+		}
+		wpipe->pipe_state |= PIPE_WANTW;
+		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdww", 0);
+		if (error)
+			goto error1;
+		if (wpipe->pipe_state & PIPE_EOF) {
+			error = EPIPE;
+			goto error1;
+		}
+	}
+	wpipe->pipe_map.cnt = 0;	/* transfer not ready yet */
+	if (wpipe->pipe_buffer.cnt > 0) {
+		if ( wpipe->pipe_state & PIPE_WANTR) {
+			wpipe->pipe_state &= ~PIPE_WANTR;
+			wakeup(wpipe);
+		}
+			
+		wpipe->pipe_state |= PIPE_WANTW;
+		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwc", 0);
+		if (error)
+			goto error1;
+		if (wpipe->pipe_state & PIPE_EOF) {
+			error = EPIPE;
+			goto error1;
+		}
+		goto retry;
+	}
+
+	/*
+	 * For each iovec:
+	 * 1. Loan the pages to kernel.
+	 * 2. Set up pipe structures.
+	 * 3. Wait until consumer reads it all or exits.
+	 */
+	boff = 0;
+	for(i=0; i < uio->uio_iovcnt; ) {
+		/*
+		 * Note: need to handle buffers not aligned to PAGE_SIZE.
+		 */
+		bbase = (vaddr_t)uio->uio_iov[i].iov_base;
+		base = trunc_page(bbase + boff);
+		bend = round_page(bbase + uio->uio_iov[i].iov_len);
+		blen = bend - base;
+
+		if (boff == 0)
+			bpos = bbase % PAGE_SIZE;
+		else
+			bpos = 0;
+
+		if (blen > PIPE_DIRECT_CHUNK) {
+			blen = PIPE_DIRECT_CHUNK;
+			boff += PIPE_DIRECT_CHUNK;
+			bend = base + blen;
+			bcnt = PIPE_DIRECT_CHUNK - bpos;
+			wpipe->pipe_state |= PIPE_MOREW;
+		} else {
+			if (boff == 0)
+				bcnt = uio->uio_iov[i].iov_len;
+			else
+				bcnt = ((bbase % PAGE_SIZE) +
+				    uio->uio_iov[i].iov_len) %PIPE_DIRECT_CHUNK;
+			boff = 0;
+			i++;
+			wpipe->pipe_state &= ~PIPE_MOREW;
+		}
+
+		npages = blen / PAGE_SIZE;
+
+		/*
+		 * Free the old kva if we need more pages than we have
+		 * allocated.
+		 */
+		if (wpipe->pipe_map.kva
+		    && npages > wpipe->pipe_map.npages)
+			pipe_loan_free(wpipe);
+
+		/* Allocate new kva. */
+		if (!wpipe->pipe_map.kva) {
+			if ((error = pipe_loan_alloc(wpipe,
+					npages, blen)))
+				goto error;
+		}
+		
+		/* Loan the write buffer memory from writer process */
+		res = wpipe->pipe_map.ms;
+		error = uvm_loan(wmap, base, blen,
+				(void **) res, UVM_LOAN_TOPAGE);
+		if (error)
+			goto cleanup;
+		
+		/* Enter the loaned pages to kva */
+		kva = wpipe->pipe_map.kva;
+		for(j=0; j < npages; j++, kva += PAGE_SIZE)
+			pmap_enter(pmap_kernel(), kva, res[j]->phys_addr,
+				VM_PROT_READ, 0);
+
+		wpipe->pipe_map.pos = bpos;
+		wpipe->pipe_map.cnt = bcnt;
+		wpipe->pipe_state |= PIPE_DIRECTW;
+
+		error = 0;
+		while (!error && (wpipe->pipe_state & PIPE_DIRECTW)) {
+			if (wpipe->pipe_state & PIPE_EOF) {
+				error = EPIPE;
+				break;
+			}
+			if (wpipe->pipe_state & PIPE_WANTR) {
+				wpipe->pipe_state &= ~PIPE_WANTR;
+				wakeup(wpipe);
+			}
+			pipeselwakeup(wpipe);
+			error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0);
+		}
+
+	cleanup:
+		pipelock(wpipe,0);
+		if (amountpipekva > maxpipekva)
+			pipe_loan_free(wpipe);
+		uvm_unloanpage(res, npages);
+		pipeunlock(wpipe);
+		if (error) {
+	error:
+			/* XXX update uio ? */
+			if (error == EPIPE)
+				pipeselwakeup(wpipe);
+
+			wpipe->pipe_state &= ~PIPE_MOREW;
+			goto error1;
+		}
+				
+		uio->uio_offset += bcnt;
+		uio->uio_resid  -= bcnt;
+
+	} /* for */
+
+	return (error);
+
+error1:
+	wakeup(wpipe);
+	return (error);
+}
+#endif /* !PIPE_NODIRECT */
+#endif /* NetBSD */
+
+#ifdef __FreeBSD__
 static int
 pipe_write(fp, uio, cred, flags, p)
 	struct file *fp;
+	off_t *offset;
 	struct uio *uio;
 	struct ucred *cred;
-	struct proc *p;
 	int flags;
+	struct proc *p;
+#elif defined(__NetBSD__)
+static int
+pipe_write(fp, offset, uio, cred, flags)
+	struct file *fp;
+	off_t *offset;
+	struct uio *uio;
+	struct ucred *cred;
+	int flags;
+#endif
 {
 	int error = 0;
 	int orig_resid;
@@ -774,9 +1187,9 @@ pipe_write(fp, uio, cred, flags, p)
 	/*
 	 * detect loss of pipe read side, issue SIGPIPE if lost.
 	 */
-	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
+	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF))
 		return (EPIPE);
-	}
+
 	++wpipe->pipe_busy;
 
 	/*
@@ -784,8 +1197,10 @@ pipe_write(fp, uio, cred, flags, p)
 	 * so.
 	 */
 	if ((uio->uio_resid > PIPE_SIZE) &&
-		(nbigpipe < LIMITBIGPIPES) &&
+		(nbigpipe < maxbigpipes) &&
+#ifndef PIPE_NODIRECT
 		(wpipe->pipe_state & PIPE_DIRECTW) == 0 &&
+#endif
 		(wpipe->pipe_buffer.size <= PIPE_SIZE) &&
 		(wpipe->pipe_buffer.cnt == 0)) {
 
@@ -793,27 +1208,27 @@ pipe_write(fp, uio, cred, flags, p)
 			if (pipespace(wpipe, BIG_PIPE_SIZE) == 0)
 				nbigpipe++;
 			pipeunlock(wpipe);
-		}
-	}
+		} else {
+			/*
+			 * If an error occured unbusy and return, waking up any
+			 * pending readers.
+			 */ 
+			--wpipe->pipe_busy;
+			if (wpipe->pipe_busy == 0
+			    && (wpipe->pipe_state & PIPE_WANTCLOSE)) {
+				wpipe->pipe_state &=
+				    ~(PIPE_WANTCLOSE | PIPE_WANTR);
+			}
 
-	/*
-	 * If an early error occured unbusy and return, waking up any pending
-	 * readers.
-	 */
-	if (error) {
-		--wpipe->pipe_busy;
-		if ((wpipe->pipe_busy == 0) && 
-		    (wpipe->pipe_state & PIPE_WANT)) {
-			wpipe->pipe_state &= ~(PIPE_WANT | PIPE_WANTR);
-			wakeup(wpipe);
+			return (error);
 		}
-		return(error);
 	}
 		
+#ifdef __FreeBSD__
 	KASSERT(wpipe->pipe_buffer.buffer != NULL, ("pipe buffer gone"));
+#endif
 
 	orig_resid = uio->uio_resid;
-
 	while (uio->uio_resid) {
 		int space;
 
@@ -829,14 +1244,13 @@ pipe_write(fp, uio, cred, flags, p)
 		 */
 		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
-			(wpipe->pipe_map.kva || (amountpipekva < LIMITPIPEKVA)) &&
-			(uio->uio_iov->iov_len >= PIPE_MINDIRECT)) {
-			error = pipe_direct_write( wpipe, uio);
+		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
+			error = pipe_direct_write(wpipe, uio);
 			if (error)
 				break;
 			continue;
 		}
-#endif
+#endif /* PIPE_NODIRECT */
 
 		/*
 		 * Pipe buffered writes cannot be coincidental with
@@ -869,85 +1283,92 @@ pipe_write(fp, uio, cred, flags, p)
 			space = 0;
 
 		if (space > 0 && (wpipe->pipe_buffer.cnt < PIPE_SIZE)) {
-			if ((error = pipelock(wpipe,1)) == 0) {
-				int size;	/* Transfer size */
-				int segsize;	/* first segment to transfer */
+			int size;	/* Transfer size */
+			int segsize;	/* first segment to transfer */
 
-				/*
-				 * It is possible for a direct write to
-				 * slip in on us... handle it here...
-				 */
-				if (wpipe->pipe_state & PIPE_DIRECTW) {
-					pipeunlock(wpipe);
-					goto retrywrite;
-				}
-				/* 
-				 * If a process blocked in uiomove, our
-				 * value for space might be bad.
-				 *
-				 * XXX will we be ok if the reader has gone
-				 * away here?
-				 */
-				if (space > wpipe->pipe_buffer.size - 
+			if ((error = pipelock(wpipe,1)) != 0)
+				break;
+
+			/*
+			 * It is possible for a direct write to
+			 * slip in on us... handle it here...
+			 */
+			if (wpipe->pipe_state & PIPE_DIRECTW) {
+				pipeunlock(wpipe);
+				goto retrywrite;
+			}
+			/* 
+			 * If a process blocked in uiomove, our
+			 * value for space might be bad.
+			 *
+			 * XXX will we be ok if the reader has gone
+			 * away here?
+			 */
+			if (space > wpipe->pipe_buffer.size - 
 				    wpipe->pipe_buffer.cnt) {
-					pipeunlock(wpipe);
-					goto retrywrite;
-				}
+				pipeunlock(wpipe);
+				goto retrywrite;
+			}
 
-				/*
-				 * Transfer size is minimum of uio transfer
-				 * and free space in pipe buffer.
-				 */
-				if (space > uio->uio_resid)
-					size = uio->uio_resid;
-				else
-					size = space;
-				/*
-				 * First segment to transfer is minimum of 
-				 * transfer size and contiguous space in
-				 * pipe buffer.  If first segment to transfer
-				 * is less than the transfer size, we've got
-				 * a wraparound in the buffer.
-				 */
-				segsize = wpipe->pipe_buffer.size - 
-					wpipe->pipe_buffer.in;
-				if (segsize > size)
-					segsize = size;
+			/*
+			 * Transfer size is minimum of uio transfer
+			 * and free space in pipe buffer.
+			 */
+			if (space > uio->uio_resid)
+				size = uio->uio_resid;
+			else
+				size = space;
+			/*
+			 * First segment to transfer is minimum of 
+			 * transfer size and contiguous space in
+			 * pipe buffer.  If first segment to transfer
+			 * is less than the transfer size, we've got
+			 * a wraparound in the buffer.
+			 */
+			segsize = wpipe->pipe_buffer.size - 
+				wpipe->pipe_buffer.in;
+			if (segsize > size)
+				segsize = size;
 				
-				/* Transfer first segment */
+			/* Transfer first segment */
 
-				error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
+			error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
 						segsize, uio);
 				
-				if (error == 0 && segsize < size) {
-					/* 
-					 * Transfer remaining part now, to
-					 * support atomic writes.  Wraparound
-					 * happened.
-					 */
-					if (wpipe->pipe_buffer.in + segsize != 
-					    wpipe->pipe_buffer.size)
-						panic("Expected pipe buffer wraparound disappeared");
+			if (error == 0 && segsize < size) {
+				/* 
+				 * Transfer remaining part now, to
+				 * support atomic writes.  Wraparound
+				 * happened.
+				 */
+#ifdef DEBUG
+				if (wpipe->pipe_buffer.in + segsize != 
+				    wpipe->pipe_buffer.size)
+					panic("Expected pipe buffer wraparound disappeared");
+#endif
 						
-					error = uiomove(&wpipe->pipe_buffer.buffer[0],
-							size - segsize, uio);
-				}
-				if (error == 0) {
-					wpipe->pipe_buffer.in += size;
-					if (wpipe->pipe_buffer.in >=
-					    wpipe->pipe_buffer.size) {
-						if (wpipe->pipe_buffer.in != size - segsize + wpipe->pipe_buffer.size)
-							panic("Expected wraparound bad");
-						wpipe->pipe_buffer.in = size - segsize;
-					}
-				
-					wpipe->pipe_buffer.cnt += size;
-					if (wpipe->pipe_buffer.cnt > wpipe->pipe_buffer.size)
-						panic("Pipe buffer overflow");
-				
-				}
-				pipeunlock(wpipe);
+				error = uiomove(&wpipe->pipe_buffer.buffer[0],
+						size - segsize, uio);
 			}
+			if (error == 0) {
+				wpipe->pipe_buffer.in += size;
+				if (wpipe->pipe_buffer.in >=
+				    wpipe->pipe_buffer.size) {
+#ifdef DEBUG
+					if (wpipe->pipe_buffer.in != size - segsize + wpipe->pipe_buffer.size)
+						panic("Expected wraparound bad");
+#endif
+					wpipe->pipe_buffer.in = size - segsize;
+				}
+	
+				wpipe->pipe_buffer.cnt += size;
+#ifdef DEBUG
+				if (wpipe->pipe_buffer.cnt > wpipe->pipe_buffer.size)
+					panic("Pipe buffer overflow");
+#endif
+				
+			}
+			pipeunlock(wpipe);
 			if (error)
 				break;
 
@@ -990,9 +1411,8 @@ pipe_write(fp, uio, cred, flags, p)
 	}
 
 	--wpipe->pipe_busy;
-
-	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANT)) {
-		wpipe->pipe_state &= ~(PIPE_WANT | PIPE_WANTR);
+	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANTCLOSE)) {
+		wpipe->pipe_state &= ~(PIPE_WANTCLOSE | PIPE_WANTR);
 		wakeup(wpipe);
 	} else if (wpipe->pipe_buffer.cnt > 0) {
 		/*
@@ -1008,21 +1428,25 @@ pipe_write(fp, uio, cred, flags, p)
 	/*
 	 * Don't return EPIPE if I/O was successful
 	 */
-	if ((wpipe->pipe_buffer.cnt == 0) &&
-	    (uio->uio_resid == 0) &&
-	    (error == EPIPE)) {
+	if ((error == EPIPE) && (wpipe->pipe_buffer.cnt == 0)
+	    && (uio->uio_resid == 0))
 		error = 0;
-	}
 
 	if (error == 0)
 		vfs_timestamp(&wpipe->pipe_mtime);
 
 	/*
-	 * We have something to offer,
-	 * wake up select/poll.
+	 * We have something to offer, wake up select/poll.
+	 * wpipe->pipe_map.cnt is always 0 in this point (direct write
+	 * is only done synchronously), so check wpipe->only pipe_buffer.cnt
 	 */
 	if (wpipe->pipe_buffer.cnt)
 		pipeselwakeup(wpipe);
+
+	/*
+	 * Arrange for next read(2) to do a signal.
+	 */
+	wpipe->pipe_state |= PIPE_SIGNALR;
 
 	return (error);
 }
@@ -1053,12 +1477,15 @@ pipe_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case FIONREAD:
+#ifndef PIPE_NODIRECT
 		if (mpipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = mpipe->pipe_map.cnt;
 		else
+#endif
 			*(int *)data = mpipe->pipe_buffer.cnt;
 		return (0);
 
+#ifdef __FreeBSD__
 	case FIOSETOWN:
 		return (fsetown(*(int *)data, &mpipe->pipe_sigio));
 
@@ -1074,16 +1501,25 @@ pipe_ioctl(fp, cmd, data, p)
 	case TIOCGPGRP:
 		*(int *)data = -fgetown(mpipe->pipe_sigio);
 		return (0);
+#endif /* FreeBSD */
+#ifdef __NetBSD__
+	case TIOCSPGRP:
+		mpipe->pipe_pgid = *(int *)data;
+		return (0);
+
+	case TIOCGPGRP:
+		*(int *)data = mpipe->pipe_pgid;
+		return (0);
+#endif /* NetBSD */
 
 	}
 	return (ENOTTY);
 }
 
 int
-pipe_poll(fp, events, cred, p)
+pipe_poll(fp, events, p)
 	struct file *fp;
 	int events;
-	struct ucred *cred;
 	struct proc *p;
 {
 	struct pipe *rpipe = (struct pipe *)fp->f_data;
@@ -1092,14 +1528,19 @@ pipe_poll(fp, events, cred, p)
 
 	wpipe = rpipe->pipe_peer;
 	if (events & (POLLIN | POLLRDNORM))
-		if ((rpipe->pipe_state & PIPE_DIRECTW) ||
-		    (rpipe->pipe_buffer.cnt > 0) ||
+		if ((rpipe->pipe_buffer.cnt > 0) ||
+#ifndef PIPE_NODIRECT
+		    (rpipe->pipe_state & PIPE_DIRECTW) ||
+#endif
 		    (rpipe->pipe_state & PIPE_EOF))
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
-		if (wpipe == NULL || (wpipe->pipe_state & PIPE_EOF) ||
-		    (((wpipe->pipe_state & PIPE_DIRECTW) == 0) &&
+		if (wpipe == NULL || (wpipe->pipe_state & PIPE_EOF)
+		    || (
+#ifndef PIPE_NODIRECT
+		     ((wpipe->pipe_state & PIPE_DIRECTW) == 0) &&
+#endif
 		     (wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt) >= PIPE_BUF))
 			revents |= events & (POLLOUT | POLLWRNORM);
 
@@ -1135,10 +1576,17 @@ pipe_stat(fp, ub, p)
 	ub->st_mode = S_IFIFO;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
-	ub->st_blocks = (ub->st_size + ub->st_blksize - 1) / ub->st_blksize;
+	ub->st_blocks = (ub->st_size) ? 1 : 0;
+#ifdef __FreeBSD__
 	ub->st_atimespec = pipe->pipe_atime;
 	ub->st_mtimespec = pipe->pipe_mtime;
 	ub->st_ctimespec = pipe->pipe_ctime;
+#endif /* FreeBSD */
+#ifdef __NetBSD__
+	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec)
+	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
+	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
+#endif /* NetBSD */
 	ub->st_uid = fp->f_cred->cr_uid;
 	ub->st_gid = fp->f_cred->cr_gid;
 	/*
@@ -1156,9 +1604,11 @@ pipe_close(fp, p)
 {
 	struct pipe *cpipe = (struct pipe *)fp->f_data;
 
+#ifdef __FreeBSD__
 	fp->f_ops = &badfileops;
-	fp->f_data = NULL;
 	funsetown(cpipe->pipe_sigio);
+#endif
+	fp->f_data = NULL;
 	pipeclose(cpipe);
 	return (0);
 }
@@ -1168,28 +1618,41 @@ pipe_free_kmem(cpipe)
 	struct pipe *cpipe;
 {
 
+#ifdef __FreeBSD__
 	mtx_assert(&vm_mtx, MA_OWNED);
+#endif
 	if (cpipe->pipe_buffer.buffer != NULL) {
 		if (cpipe->pipe_buffer.size > PIPE_SIZE)
 			--nbigpipe;
 		amountpipekva -= cpipe->pipe_buffer.size;
+#ifdef __FreeBSD__
 		kmem_free(kernel_map,
 			(vm_offset_t)cpipe->pipe_buffer.buffer,
 			cpipe->pipe_buffer.size);
+#elif defined(__NetBSD__)
+		uvm_km_free(kernel_map,
+			(vaddr_t)cpipe->pipe_buffer.buffer,
+			cpipe->pipe_buffer.size);
+#endif /* NetBSD */
+		
 		cpipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT
 	if (cpipe->pipe_map.kva != NULL) {
+#ifdef __FreeBSD__
 		amountpipekva -= cpipe->pipe_buffer.size + PAGE_SIZE;
 		kmem_free(kernel_map,
 			cpipe->pipe_map.kva,
 			cpipe->pipe_buffer.size + PAGE_SIZE);
+#elif defined(__NetBSD__)
+		pipe_loan_free(cpipe);
+#endif /* NetBSD */
 		cpipe->pipe_map.cnt = 0;
-		cpipe->pipe_map.kva = 0;
+		cpipe->pipe_map.kva = NULL;
 		cpipe->pipe_map.pos = 0;
 		cpipe->pipe_map.npages = 0;
 	}
-#endif
+#endif /* !PIPE_NODIRECT */
 }
 
 /*
@@ -1201,43 +1664,52 @@ pipeclose(cpipe)
 {
 	struct pipe *ppipe;
 
-	if (cpipe) {
-		
-		pipeselwakeup(cpipe);
+	if (!cpipe)
+		return;
 
-		/*
-		 * If the other side is blocked, wake it up saying that
-		 * we want to close it down.
-		 */
-		while (cpipe->pipe_busy) {
-			wakeup(cpipe);
-			cpipe->pipe_state |= PIPE_WANT | PIPE_EOF;
-			tsleep(cpipe, PRIBIO, "pipecl", 0);
-		}
+	pipeselwakeup(cpipe->pipe_peer);
 
-		/*
-		 * Disconnect from peer
-		 */
-		if ((ppipe = cpipe->pipe_peer) != NULL) {
-			pipeselwakeup(ppipe);
-
-			ppipe->pipe_state |= PIPE_EOF;
-			wakeup(ppipe);
-			ppipe->pipe_peer = NULL;
-		}
-		/*
-		 * free resources
-		 */
-		mtx_lock(&vm_mtx);
-		pipe_free_kmem(cpipe);
-		/* XXX: erm, doesn't zalloc already have its own locks and
-		 * not need the giant vm lock?
-		 */
-		zfree(pipe_zone, cpipe);
-		mtx_unlock(&vm_mtx);
+	/*
+	 * If the other side is blocked, wake it up saying that
+	 * we want to close it down.
+	 */
+	while (cpipe->pipe_busy) {
+		wakeup(cpipe);
+		cpipe->pipe_state |= PIPE_WANTCLOSE | PIPE_EOF;
+		tsleep(cpipe, PRIBIO, "pipecl", 0);
 	}
+
+	/*
+	 * Disconnect from peer
+	 */
+	if ((ppipe = cpipe->pipe_peer) != NULL) {
+		pipeselwakeup(ppipe);
+
+		ppipe->pipe_state |= PIPE_EOF;
+		wakeup(ppipe);
+		ppipe->pipe_peer = NULL;
+	}
+
+	/*
+	 * free resources
+	 */
+#ifdef _FreeBSD__
+	mtx_lock(&vm_mtx);
+#endif
+	pipe_free_kmem(cpipe);
+#ifdef __FreeBSD__
+	/* XXX: erm, doesn't zalloc already have its own locks and
+	 * not need the giant vm lock?
+	 */
+	zfree(pipe_zone, cpipe);
+	mtx_unlock(&vm_mtx);
+#endif /* FreeBSD */
+#ifdef __NetBSD__
+	pool_put(&pipe_pool, cpipe);
+#endif
 }
 
+#ifdef __FreeBSD__
 /*ARGSUSED*/
 static int
 pipe_kqfilter(struct file *fp, struct knote *kn)
@@ -1256,7 +1728,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		return (1);
 	}
 	kn->kn_hook = (caddr_t)cpipe;
-
+	
 	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);
 	return (0);
 }
@@ -1264,7 +1736,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 static void
 filt_pipedetach(struct knote *kn)
 {
-	struct pipe *cpipe = (struct pipe *)kn->kn_hook;
+	struct pipe *cpipe = (struct pipe *)kn->kn_fp->f_data;
 
 	SLIST_REMOVE(&cpipe->pipe_sel.si_note, kn, knote, kn_selnext);
 }
@@ -1306,3 +1778,63 @@ filt_pipewrite(struct knote *kn, long hint)
 
 	return (kn->kn_data >= PIPE_BUF);
 }
+#endif /* FreeBSD */
+
+#ifdef __NetBSD__
+static int
+pipe_fcntl(fp, cmd, data, p)
+	struct file *fp;
+	u_int cmd;
+	caddr_t data;
+	struct proc *p;
+{
+	if (cmd == F_SETFL)
+		return (0);
+	else
+		return (EOPNOTSUPP);
+}
+
+/*
+ * Handle pipe sysctls.
+ */
+int
+sysctl_dopipe(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case KERN_PIPE_MAXKVASZ:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxpipekva));
+	case KERN_PIPE_LIMITKVA:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &limitpipekva));
+	case KERN_PIPE_MAXBIGPIPES:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxbigpipes));
+	case KERN_PIPE_NBIGPIPES:
+		return (sysctl_rdint(oldp, oldlenp, newp, nbigpipe));
+	case KERN_PIPE_KVASIZE:
+		return (sysctl_rdint(oldp, oldlenp, newp, amountpipekva));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * Initialize pipe structs.
+ */
+void
+pipe_init(void)
+{
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
+		0, NULL, NULL, M_PIPE);
+}
+
+#endif /* __NetBSD __ */
