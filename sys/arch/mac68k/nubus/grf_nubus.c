@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.9 1996/05/06 01:08:30 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.10 1996/05/06 03:27:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -168,6 +168,8 @@ grfmv_match(pdp, match, aux)
 	 */
 
 	sc->card_id = slottype.drhw;
+
+	sc->sc_slot = *slot;
 
 	/* Need to load display info (and driver?), etc... */
 
