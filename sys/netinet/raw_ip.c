@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.11 1994/02/02 05:59:08 hpeyerl Exp $
+ *	$Id: raw_ip.c,v 1.12 1994/02/10 18:46:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -123,8 +123,8 @@ rip_output(m, so)
 		opts = rp->rinp_options;
 	}
 	return (ip_output(m, opts, &rp->rinp_route,
-	    (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
-	    , rp->rinp_rcb.rcb_moptions ));
+	    (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST,
+	    rp->rinp_rcb.rcb_moptions));
 }
 
 /*
@@ -166,7 +166,7 @@ rip_ctloutput(op, so, level, optname, m)
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
 			error = ip_setmoptions(optname,
-					       &rp->rinp_rcb.rcb_moptions, *m);
+			    &rp->rinp_rcb.rcb_moptions, *m);
 			break;
 		default:
 #ifdef MROUTING
