@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2002/03/05 21:53:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.37 2002/03/29 09:48:49 matt Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -31,7 +31,8 @@ $(PROG):
        (${MACHINE_ARCH} == "arm" || \
         ${MACHINE_ARCH} == "i386" || \
         ${MACHINE_ARCH} == "m68k" || \
-        ${MACHINE_ARCH} == "sparc"))
+        ${MACHINE_ARCH} == "sparc" || \
+        ${MACHINE_ARCH} == "vax"))
 
 FILES=		ld.so
 FILESDIR=	/usr/libexec
