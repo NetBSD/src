@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.14 2001/07/28 13:28:04 chris Exp $
+#	$NetBSD: files.netwinder,v 1.15 2001/09/03 01:50:01 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -74,13 +74,13 @@ major   {cd = 26}
 
 # Generic MD files
 file	arch/netwinder/netwinder/autoconf.c
-file	arch/netwinder/netwinder/conf.c
 file	arch/netwinder/netwinder/netwinder_machdep.c
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
+file	arch/arm/arm32/conf.c
 file	dev/cninit.c				!footbridge
 
 # ARM FPE
@@ -89,20 +89,20 @@ file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # ISA support.
-file	arch/netwinder/isa/isa_machdep.c		isa & netwinder
-file	arch/arm32/isa/isa_io.c				isa
-file	arch/arm32/isa/isa_io_asm.S			isa
+file	arch/netwinder/isa/isa_machdep.c	isa & netwinder
+file	arch/arm32/isa/isa_io.c			isa
+file	arch/arm32/isa/isa_io_asm.S		isa
 
 # ISA Plug 'n Play autoconfiguration glue.
-file	arch/arm32/isa/isapnp_machdep.c			isapnp
+file	arch/arm32/isa/isapnp_machdep.c		isapnp
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
-file	arch/arm32/isa/sysbeep_isa.c			sysbeep_isa
+file	arch/arm32/isa/sysbeep_isa.c		sysbeep_isa
 
 device dsrtc: todservice
 attach dsrtc at isa
-file	arch/arm32/isa/dsrtc.c				dsrtc
+file	arch/arm32/isa/dsrtc.c			dsrtc
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
