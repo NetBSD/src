@@ -1,7 +1,7 @@
-/*	$NetBSD: biosdisk.c,v 1.7 1997/10/13 09:26:29 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.8 1998/02/19 14:12:48 drochner Exp $	*/
 
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1996, 1998
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -193,13 +193,26 @@ biosdiskopen(struct open_file *f, ...)
 		error = EIO;
 		goto out;
 	}
-	dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
 	sector = -1;
+	dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
+	/* Look for NetBSD partition ID */
 	for (i = 0; i < NDOSPART; i++, dptr++)
 		if (dptr->dp_typ == DOSPTYP_NETBSD) {
 			sector = dptr->dp_start;
 			break;
 		}
+#ifdef COMPAT_386BSD_MBRPART
+	if (sector == -1) {
+		/* If we didn't find one, look for 386BSD partition ID */
+		dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
+		for (i = 0; i < NDOSPART; i++, dptr++)
+			if (dptr->dp_typ == DOSPTYP_386BSD) {
+				printf("old BSD partition ID!\n");
+				sector = dptr->dp_start;
+				break;
+			}
+	}
+#endif
 	if (sector == -1) {
 		/*
 		 * One of two things:
