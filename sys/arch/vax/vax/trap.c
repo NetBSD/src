@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2001/06/03 15:07:21 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.65 2001/06/04 15:33:07 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -342,7 +342,6 @@ syscall(struct trapframe *frame)
 	struct trapframe *exptr;
 	struct proc *p = curproc;
 
-	KERNEL_PROC_LOCK(p);
 
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
@@ -371,6 +370,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
+	KERNEL_PROC_LOCK(p);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
 		if (err) {
@@ -387,6 +387,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		ktrsyscall(p, frame->code, callp->sy_argsize, args);
 #endif
 	err = (*callp->sy_call)(curproc, args, rval);
+	KERNEL_PROC_UNLOCK(p);
 	exptr = curproc->p_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG
@@ -417,7 +418,6 @@ bad:
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(p);
 	userret(p, frame, oticks);
 
 #ifdef KTRACE
