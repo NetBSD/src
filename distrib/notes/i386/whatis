@@ -1,11 +1,11 @@
-.\"	$NetBSD: whatis,v 1.14 2000/11/13 01:22:41 hubertf Exp $
+.\"	$NetBSD: whatis,v 1.15 2001/05/20 23:29:58 jhawk Exp $
 .
 This is the eighth major release of
 .Nx
 for the \*M.
 .Pp
 As is usual between releases, the \*M port has had many improvements
-made to it - too many to detail all of them here.
+made to it\(emtoo many to detail all of them here.
 .Pp
 Numerous new drivers have been added.
 See the supported hardware list for details.
