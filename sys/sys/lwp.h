@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.23 2004/06/20 18:55:58 hannken Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.24 2004/07/18 21:26:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
 #include <sys/callout.h>
-#include <sys/ucontext.h>
 
 struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
