@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.518 2003/01/21 02:07:53 christos Exp $
+#	$NetBSD: mi,v 1.519 2003/01/21 02:33:48 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -5763,9 +5763,17 @@
 ./usr/share/man/man3/scrl.3		comp-c-man
 ./usr/share/man/man3/scroll.3		comp-c-man
 ./usr/share/man/man3/scrollok.3		comp-c-man
-./usr/share/man/man3/secure_path.3		comp-c-man
+./usr/share/man/man3/secure_path.3	comp-c-man
 ./usr/share/man/man3/seed48.3		comp-c-man
 ./usr/share/man/man3/seekdir.3		comp-c-man
+./usr/share/man/man3/sem_close.3	comp-c-man
+./usr/share/man/man3/sem_destroy.3	comp-c-man
+./usr/share/man/man3/sem_getvalue.3	comp-c-man
+./usr/share/man/man3/sem_open.3		comp-c-man
+./usr/share/man/man3/sem_post.3		comp-c-man
+./usr/share/man/man3/sem_trywait.3	comp-c-man
+./usr/share/man/man3/sem_wait.3		comp-c-man
+./usr/share/man/man3/sem_unlink.3	comp-c-man
 ./usr/share/man/man3/set_com_err_hook.3	comp-c-man
 ./usr/share/man/man3/set_current_field.3	comp-c-man
 ./usr/share/man/man3/set_field_back.3	comp-c-man
