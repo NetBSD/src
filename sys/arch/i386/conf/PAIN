@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.29 1994/05/09 23:10:42 cgd Exp $
+#	$Id: PAIN,v 1.30 1994/05/13 06:22:55 mycroft Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -20,6 +20,8 @@ options		ISO
 options		TPIP
 options		EON
 options		CCITT
+options		LLC
+options		HDLC
 # and even multicast support!
 options		MULTICAST
 
@@ -95,6 +97,7 @@ pseudo-device	log
 pseudo-device	pty		32
 
 pseudo-device	sl		4
+pseudo-device	ppp		4
 pseudo-device	bpfilter	4
 
 pseudo-device	vn		4
