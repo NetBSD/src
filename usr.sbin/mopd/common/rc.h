@@ -1,4 +1,4 @@
-/*	$NetBSD: rc.h,v 1.3 1997/10/16 23:25:05 lukem Exp $	*/
+/*	$NetBSD: rc.h,v 1.4 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: rc.h,v 1.3 1997/10/16 23:25:05 lukem Exp $
+ *	$NetBSD: rc.h,v 1.4 2001/01/16 02:50:32 cgd Exp $
  *
  */
 
@@ -39,4 +39,4 @@ __BEGIN_DECLS
 void	mopDumpRC        __P((FILE *, u_char *, int));
 __END_DECLS
 
-#endif _RC_H_
+#endif /* _RC_H_ */

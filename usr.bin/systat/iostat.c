@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.17 2000/12/01 02:19:43 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.18 2001/01/16 02:50:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,8 +38,8 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.17 2000/12/01 02:19:43 simonb Exp $");
-#endif not lint
+__RCSID("$NetBSD: iostat.c,v 1.18 2001/01/16 02:50:30 cgd Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 

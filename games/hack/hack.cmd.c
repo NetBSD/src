@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.4 1997/10/19 16:57:39 christos Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.5 2001/01/16 02:50:28 cgd Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.4 1997/10/19 16:57:39 christos Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.5 2001/01/16 02:50:28 cgd Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -19,7 +19,7 @@ struct func_tab cmdlist[] = {
 	{ '\024', dotele },
 #ifdef SUSPEND
 	{ '\032', dosuspend },
-#endif	{ /* SUSPEND */
+#endif	/* SUSPEND */
 	{ 'a', doapply },
 	/* 'A' : UNUSED */
 	/* 'b', 'B' : go sw */
@@ -62,7 +62,7 @@ struct func_tab cmdlist[] = {
 	{ '?', dohelp },
 #ifdef SHELL
 	{ '!', dosh },
-#endif	{ /* SHELL */
+#endif	/* SHELL */
 	{ '.', donull },
 	{ ' ', donull },
 	{ ',', dopickup },

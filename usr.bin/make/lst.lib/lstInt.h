@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.8 2001/01/16 02:50:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,4 +110,4 @@ typedef struct	{
  */
 #define LstIsEmpty(l)	(((List)l)->firstPtr == NilListNode)
 
-#endif _LSTINT_H_
+#endif /* _LSTINT_H_ */

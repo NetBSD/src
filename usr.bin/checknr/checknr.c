@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.6 1998/11/06 22:57:55 christos Exp $	*/
+/*	$NetBSD: checknr.c,v 1.7 2001/01/16 02:50:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.6 1998/11/06 22:57:55 christos Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.7 2001/01/16 02:50:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,7 @@ addmac(mac)
 	if (binsrch(mac) >= 0){	/* it's OK to redefine something */
 #ifdef DEBUG
 		printf("binsrch(%s) -> already in table\n", mac);
-#endif DEBUG
+#endif /* DEBUG */
 		return;
 	}
 	/* binsrch sets slot as a side effect */

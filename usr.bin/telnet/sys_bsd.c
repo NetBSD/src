@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.16 1999/11/26 07:33:52 msaitoh Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.17 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.16 1999/11/26 07:33:52 msaitoh Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.17 2001/01/16 02:50:31 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -676,9 +676,9 @@ TerminalNewMode(f)
 	(void) signal(SIGTSTP, SIG_DFL);
 # ifndef SOLARIS
 	(void) sigsetmask(sigblock(0) & ~(1<<(SIGTSTP-1)));
-# else	SOLARIS
+# else	/* SOLARIS */
 	(void) sigrelse(SIGTSTP);
-# endif	SOLARIS
+# endif	/* SOLARIS */
 #endif	/* SIGTSTP */
 #ifndef USE_TERMIO
 	ltc = oltc;

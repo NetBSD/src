@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.8 2001/01/15 06:14:05 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.9 2001/01/16 02:50:32 cgd Exp $	*/
 /*	$KAME: if.c,v 1.15 2000/10/25 04:30:44 jinmei Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 
 	return (char *)rtm;
 }
-#undef FILTER_MATCH(type, filter)
+#undef FILTER_MATCH
 
 struct in6_addr *
 get_addr(char *buf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.h,v 1.5 1999/04/12 20:48:08 pk Exp $	*/
+/*	$NetBSD: supmsg.h,v 1.6 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -112,13 +112,13 @@
 extern int	server;			/* true if we are the server */
 extern int	protver;		/* protocol version of partner */
 
-#else	MSGSUBR
+#else	/* MSGSUBR */
 
 #ifdef	MSGFILE
 #define	EXTERN
-#else	MSGFILE
+#else	/* MSGFILE */
 #define	EXTERN	extern
-#endif	MSGFILE
+#endif	/* MSGFILE */
 
 /* used in all msg routines */
 EXTERN	int	server;			/* true if we are the server */
@@ -183,4 +183,4 @@ EXTERN	char 	*donereason;		/* set if indicated by doneack */
 
 #undef	EXTERN
 
-#endif	MSGSUBR
+#endif	/* MSGSUBR */

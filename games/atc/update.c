@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $	*/
+/*	$NetBSD: update.c,v 1.11 2001/01/16 02:50:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,9 +50,9 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $");
+__RCSID("$NetBSD: update.c,v 1.11 2001/01/16 02:50:28 cgd Exp $");
 #endif
-#endif not lint
+#endif /* not lint */
 
 #include "include.h"
 

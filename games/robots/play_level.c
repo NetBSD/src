@@ -1,4 +1,4 @@
-/*	$NetBSD: play_level.c,v 1.4 1997/10/12 14:10:01 lukem Exp $	*/
+/*	$NetBSD: play_level.c,v 1.5 2001/01/16 02:50:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)play_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play_level.c,v 1.4 1997/10/12 14:10:01 lukem Exp $");
+__RCSID("$NetBSD: play_level.c,v 1.5 2001/01/16 02:50:28 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ play_level()
 	move(Max.y, Max.x);
 	addch(inch());
 	standend();
-# endif DEBUG
+# endif /* DEBUG */
 	setjmp(End_move);
 	flush_in();
 	while (!Dead && Num_robots > 0) {

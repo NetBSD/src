@@ -1,4 +1,4 @@
-/*	$NetBSD: process.h,v 1.3 1997/10/16 23:25:21 lukem Exp $	*/
+/*	$NetBSD: process.h,v 1.4 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: process.h,v 1.3 1997/10/16 23:25:21 lukem Exp $
+ *	$NetBSD: process.h,v 1.4 2001/01/16 02:50:32 cgd Exp $
  *
  */
 
@@ -42,4 +42,4 @@ void	mopProcessRC __P((FILE *, struct if_info *, u_char *, int *,
 			  u_char *, u_char *, int, u_short));
 __END_DECLS
 
-#endif _PROCESS_H_
+#endif /* _PROCESS_H_ */

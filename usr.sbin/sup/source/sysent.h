@@ -1,4 +1,4 @@
-/*	$NetBSD: sysent.h,v 1.3 1998/07/06 07:05:48 mrg Exp $	*/
+/*	$NetBSD: sysent.h,v 1.4 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -134,7 +134,7 @@ extern int iwrite(int, int, int, int, void *, int);
 extern int pioctl(const char *, unsigned long, struct ViceIoctl *, int);
 extern int setpag(void);
 #endif
-#else defined(__STDC__)
+#else /* defined(__STDC__) */
 extern gid_t getgid();
 extern gid_t getegid();
 extern long gethostid();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.14 1998/12/20 15:01:43 christos Exp $	*/
+/*	$NetBSD: ww.h,v 1.15 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -397,4 +397,4 @@ int	wwterminfoend __P((void));
 #define MIN(x, y)	((x) > (y) ? (y) : (x))
 #define MAX(x, y)	((x) > (y) ? (x) : (y))
 
-#endif __WW_H__
+#endif /* __WW_H__ */
