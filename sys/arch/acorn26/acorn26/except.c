@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.5 2003/10/26 13:19:30 jdolecek Exp $ */
+/* $NetBSD: except.c,v 1.6 2003/11/29 22:03:21 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.5 2003/10/26 13:19:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.6 2003/11/29 22:03:21 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.5 2003/10/26 13:19:30 jdolecek Exp $");
 #endif
 
 #ifdef DDB
+#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
 
@@ -120,11 +121,16 @@ prefetch_abort_handler(struct trapframe *tf)
 		l->l_addr->u_pcb.pcb_tf = tf;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+		db_printf("Prefetch abort in kernel mode\n");
+		kdb_trap(T_FAULT, tf);
+#else
 #ifdef DEBUG
 		printf("Prefetch abort:\n");
 		printregs(tf);
 #endif
 		panic("prefetch abort in kernel mode");
+#endif
 	}
 
 	/* User-mode prefetch abort */
@@ -442,6 +448,10 @@ address_exception_handler(struct trapframe *tf)
 	pc = tf->tf_r15 & R15_PC;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+		db_printf("Address exception in kernel mode\n");
+		kdb_trap(T_FAULT, tf);
+#else
 #ifdef DEBUG
 		printf("Address exception:\n");
 		printregs(tf);
@@ -449,6 +459,7 @@ address_exception_handler(struct trapframe *tf)
 		disassemble(pc);
 #endif
 		panic("address exception in kernel mode");
+#endif
 	}
 
 	KSI_INIT_TRAP(&ksi);
