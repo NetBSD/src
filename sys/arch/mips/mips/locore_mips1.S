@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.27 2000/04/11 01:32:19 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.28 2000/04/11 02:30:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -525,7 +525,7 @@ END(mips1_SystemCall)
  *
  * Handle an interrupt from kernel mode.
  * Build kernframe on stack to hold interrupted kernel context, then
- * call interrupt() to process it.
+ * call cpu_intr() to process it.
  *
  */
 NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
@@ -561,6 +561,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	sw	t9, TF_BASE+TF_REG_T9(sp)
 	sw	ra, TF_BASE+TF_REG_RA(sp)
 	sw	a0, TF_BASE+TF_REG_SR(sp)
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	sw	v0, TF_BASE+TF_REG_MULLO(sp)
 	sw	v1, TF_BASE+TF_REG_MULHI(sp)
 	sw	a2, TF_BASE+TF_REG_EPC(sp)
@@ -571,7 +572,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-	jal	_C_LABEL(interrupt)
+	jal	_C_LABEL(cpu_intr)
 	nop
 /*
  * Restore registers and return from the interrupt.
@@ -616,7 +617,7 @@ END(mips1_KernIntr)
  *	kernel stack since there has to be a u page if we came from user mode.
  *	If there is a pending software interrupt, then save the remaining state
  *	and call softintr(). This is all because if we call switch() inside
- *	interrupt(), not all the user registers have been saved in u.u_pcb.
+ *	cpu_intr(), not all the user registers have been saved in u.u_pcb.
  *
  * Results:
  * 	None.
@@ -664,6 +665,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	sw	a0, FRAME_SR(k1)
 	sw	v0, FRAME_MULLO(k1)
 	sw	v1, FRAME_MULHI(k1)
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	sw	a2, FRAME_EPC(k1)
 	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
@@ -679,7 +681,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-	jal	_C_LABEL(interrupt)
+	jal	_C_LABEL(cpu_intr)
 	mtc0	t0, MIPS_COP_0_STATUS
 /*
  * Check pending asynchoronous traps.
