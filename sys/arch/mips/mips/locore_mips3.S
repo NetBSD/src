@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.51 2000/09/13 01:53:01 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.52 2000/09/13 06:48:04 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -620,23 +620,23 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	#nop					# -slip-
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
-	REG_S	v0, FRAME_V0(k1)
-	REG_S	v1, FRAME_V1(k1)
+	REG_S	v0, FRAME_V0(k1)		# syscall #
+	REG_S	v1, FRAME_V1(k1)		# used by syscall()
 	mflo	v0
 	REG_S	a0, FRAME_A0(k1)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
 	mfhi	v1
-	REG_S	t0, FRAME_T0(k1)
-	REG_S	t1, FRAME_T1(k1)
-	REG_S	t2, FRAME_T2(k1)
-	REG_S	t3, FRAME_T3(k1)
+	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
+	#REG_S	t1, FRAME_T1(k1)
+	#REG_S	t2, FRAME_T2(k1)
+	#REG_S	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	t4, FRAME_T4(k1)
-	REG_S	t5, FRAME_T5(k1)
-	REG_S	t6, FRAME_T6(k1)
-	REG_S	t7, FRAME_T7(k1)
+	#REG_S	t4, FRAME_T4(k1)
+	#REG_S	t5, FRAME_T5(k1)
+	#REG_S	t6, FRAME_T6(k1)
+	#REG_S	t7, FRAME_T7(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
@@ -647,8 +647,8 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
 	REG_S	s7, FRAME_S7(k1)
-	REG_S	t8, FRAME_T8(k1)
-	REG_S	t9, FRAME_T9(k1)
+	#REG_S	t8, FRAME_T8(k1)
+	#REG_S	t9, FRAME_T9(k1)
 	REG_S	gp, FRAME_GP(k1)
 	REG_S	sp, FRAME_SP(k1)
 	REG_S	s8, FRAME_S8(k1)
