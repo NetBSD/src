@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $");
+__RCSID("$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -706,7 +706,7 @@ Suff_EndTransform(gnp, dummy)
 {
     GNode *gn = (GNode *) gnp;
 
-    if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (gn->cohorts))
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))

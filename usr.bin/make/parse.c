@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -437,7 +437,7 @@ ParseLinkSrc (pgnp, cgnp)
 {
     GNode          *pgn = (GNode *) pgnp;
     GNode          *cgn = (GNode *) cgnp;
-    if ((pgn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (pgn->cohorts))
+    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *) Lst_Datum (Lst_Last (pgn->cohorts));
     if (Lst_Member (pgn->children, (ClientData)cgn) == NILLNODE) {
 	(void)Lst_AtEnd (pgn->children, (ClientData)cgn);
@@ -1561,7 +1561,7 @@ ParseAddCmd(gnp, cmd)
 {
     GNode *gn = (GNode *) gnp;
     /* if target already supplied, ignore commands */
-    if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (gn->cohorts))
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
     if (!(gn->type & OP_HAS_COMMANDS))
 	(void)Lst_AtEnd(gn->commands, cmd);
