@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
+.\"	$NetBSD: rename.2,v 1.8 1998/05/24 19:09:23 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,14 @@ If the final component of
 is a symbolic link,
 the symbolic link is renamed,
 not the file or directory to which it points.
+.Pp
+If both
+.Fa from
+and
+.Fa to
+are pathnames of the same existing file in the file system's name space,
+.Fn return
+returns successfully and performs no other action.
 .Sh CAVEAT
 The system can deadlock if a loop in the file system graph is present.
 This loop takes the form of an entry in directory
@@ -194,10 +202,40 @@ or
 is a directory and is not empty.
 .El
 .Sh SEE ALSO
-.Xr open 2
+.Xr open 2 ,
 .Xr symlink 7
 .Sh STANDARDS
 The
 .Fn rename
-function conforms to 
-.St -p1003.1-88 .
+function deviates from the semantics defined in
+.St -p1003.1-90 ,
+which specifies that if both
+.Fa from
+and
+.Fa to
+.Em link
+to the same existing file,
+.Fn rename
+shall return successfully and performs no further action, whereas this
+implementation will remove the file specified by
+.Fa from
+unless both
+.Fa from
+and
+.Fa to
+are pathnames of the same file in the file system's name space.
+.Pp
+To retain conformance, a compatibility interface is provided by the
+.Lb libposix
+which is also be brought into scope if any of the
+.Dv _POSIX_SOURCE ,
+.Dv _POSIX_C_SOURCE
+or
+.Dv _XOPEN_SOURCE
+preprocessor symbols are defined at compile-time:
+the
+.Fn rename
+function conforms to
+.St -p1003.1-90
+and
+.St -xpg4.2 .
