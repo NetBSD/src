@@ -282,10 +282,6 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	}
 
 	/* Wait for a packet or a timeout... XXX */
-#if defined (__linux__)
-#define fds_bits __fds_bits
-#endif
-	log_error ("dispatch: %d %x %x", max, r.fds_bits [0], w.fds_bits [0]);
 	count = select (max + 1, &r, &w, &x, t ? &to : (struct timeval *)0);
 
 	/* Get the current time... */
