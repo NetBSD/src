@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.143 2004/04/28 06:05:23 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.144 2004/04/28 07:08:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1471,3 +1471,19 @@ lib/libcurses/PSD.doc/macros			1.8
 
 	Add trailing space that got lost from the string definition. PR#25340
 	[uwe, ticket #204]
+
+sys/dev/ic/i82557.c				1.83
+
+	Back out revision 1.82.  It seems to cause a number of device timeouts
+	on x86 boxes.  There must be a better way to deal with this that works
+	well for everyone.  In the meantime, back out to the version that works
+	for more people.
+	[briggs, ticket #218]
+
+sys/dev/pci/if_fxp_pci.c			1.38
+
+	Add a default case to the product ID attachment to print the chip
+	description and revision information if a chip is matched and this
+	switch statement isn't updated to match.  Addresses PR kern/18019.
+	[briggs, ticket #220]
+
