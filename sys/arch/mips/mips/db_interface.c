@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 1999/01/28 05:52:06 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 1999/03/06 02:45:54 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -56,10 +56,13 @@ mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 void db_halt_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_trapdump_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 extern int	kdbpeek __P((vaddr_t addr));
 extern void	kdbpoke __P((vaddr_t addr, int newval));
 extern vaddr_t	MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
+
+extern paddr_t kvtophys __P((vaddr_t));
 
 #ifdef DDB_TRACE
 int
@@ -328,11 +331,32 @@ db_trapdump_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	db_printf("trap history is not available.\n");
+#ifdef DEBUG_TRAP
+	extern void show_traplog __P((char*));
+	show_traplog("CPU exception log:");
+#else
+	db_printf("trap log only available with options DEBUG_TRAP.\n");
+#endif
+}
+
+void
+db_kvtophys_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	if (!have_addr)
+		return;
+	if (MIPS_KSEG2_START <= addr)
+		db_printf("0x%x -> 0x%x\n", addr, kvtophys(addr));
+	else
+		printf("not a kernel virtual address\n");
 }
 
 struct db_command mips_db_command_table[] = {
 	{ "halt",	db_halt_cmd,		0,	0 },
+	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
 	{ "trapdump",	db_trapdump_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ (char *)0, }
