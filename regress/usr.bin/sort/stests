@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.11 2001/02/15 17:23:20 itojun Exp $
+#	$NetBSD: stests,v 1.12 2001/04/18 02:25:38 itojun Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -984,3 +984,7 @@ xsort "B" -f
 #---------------------------------------------------------------
 TEST=41; echo $TEST	# sort -f empty item; previously bombed
 cat /dev/null | sort -f
+
+#---------------------------------------------------------------
+TEST=42; echo $TEST	# sort -H $dict - PR 12673, still bombs (18apr2001)
+sort -H $dict | cmp -s - $dict || echo $TEST failed - sort -f $dict
