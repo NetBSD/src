@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62.2.1 2000/08/10 03:42:04 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62.2.2 2000/08/11 01:19:18 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -372,10 +372,10 @@ message ftpsource
 {The following is the ftp site, directory, user, and password currently
 ready to use.  If "user" is "ftp", then the password is not needed.
 
-host:		%s
-directory:	%s
-user:		%s
-password:	%s
+host:		%s 
+directory:	%s 
+user:		%s 
+password:	%s 
 }
 
 message host
