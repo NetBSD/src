@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.89 2003/09/08 03:24:12 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.90 2003/09/08 03:33:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.89 2003/09/08 03:24:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.90 2003/09/08 03:33:32 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1248,13 +1248,14 @@ scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
 	struct scsipi_mode_select scsipi_cmd;
 	int error;
 
+#if 1
+	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
+		panic("scsipi_mode_select: what the Hell am I doing here?");
+#endif
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT;
 	scsipi_cmd.byte2 = byte2;
-	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
-		_lto2b(len, scsipi_cmd.u_len.atapi.length);
-	else
-		scsipi_cmd.u_len.scsi.length = len & 0xff;
+	scsipi_cmd.length = len & 0xff;
 	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_OUT);
