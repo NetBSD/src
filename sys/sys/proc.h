@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.25 2002/10/18 02:45:42 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.26 2002/10/18 03:30:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -406,22 +406,9 @@ void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p, struct proc *q);
 int	leavepgrp(struct proc *p);
 void	yield(void);
-void	preempt(struct lwp *);
-void	mi_switch(struct lwp *, struct lwp *);
 struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
-#ifndef remrunqueue
-void	remrunqueue(struct lwp *);
-#endif
-#ifndef setrunqueue
-void	setrunqueue(struct lwp *);
-#endif
-#ifndef nextrunqueue
-struct proc *nextrunqueue(void);
-#endif
-void	resetpriority(struct proc *);
-void	setrunnable(struct lwp *);
 void	suspendsched(void);
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
