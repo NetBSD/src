@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.21 2004/05/11 12:29:22 wiz Exp $
+.\"	$NetBSD: readlink.2,v 1.22 2004/05/11 17:38:18 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 10, 2004
+.Dd May 11, 2004
 .Dt READLINK 2
 .Os
 .Sh NAME
@@ -85,6 +85,21 @@ An I/O error occurred while reading from the file system.
 .Fa buf
 extends outside the process's allocated address space.
 .El
+.Sh EXAMPLES
+A typical use is illustrated in the following piece of code
+which reads the contents of a symbolic link named
+.Pa /symbolic/link
+and stores them as null-terminated string:
+.Bd -literal -offset indent
+#include <unistd.h>
+
+char buf[PATH_MAX];
+ssize_t len;
+
+if ((len = readlink("/symbolic/link", buf, sizeof(buf)-1)) == -1)
+	error handling;
+buf[len] = '\e0';
+.Ed
 .Sh SEE ALSO
 .Xr lstat 2 ,
 .Xr stat 2 ,
