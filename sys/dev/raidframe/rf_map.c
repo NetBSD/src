@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.8 2001/10/05 15:41:23 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.9 2001/11/13 07:11:14 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * map.c -- main code for mapping RAID addresses to physical disk addresses
  *
  **************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.9 2001/11/13 07:11:14 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

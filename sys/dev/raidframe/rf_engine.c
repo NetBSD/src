@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.11 2001/09/16 16:34:38 wiz Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.12 2001/11/13 07:11:14 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -53,6 +53,9 @@
  *   used.                                                                  *
  *                                                                          *
  ****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.12 2001/11/13 07:11:14 lukem Exp $");
 
 #include "rf_threadstuff.h"
 

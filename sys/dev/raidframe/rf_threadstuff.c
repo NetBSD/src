@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.6 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.7 2001/11/13 07:11:17 lukem Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -28,6 +28,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.7 2001/11/13 07:11:17 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
