@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11.2.5 2005/02/04 11:44:56 skrll Exp $
+#	$NetBSD: INSTALL,v 1.11.2.6 2005/02/15 21:32:51 skrll Exp $
 #
 #	Shark installation kernel
 #
@@ -60,6 +60,7 @@ file-system	KERNFS		# /kern
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 

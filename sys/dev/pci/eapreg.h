@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.6.6.4 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.6.6.5 2005/02/15 21:33:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@
 #define EAP_AUX_VOL		5
 #define EAP_MIC_VOL		6
 #define	EAP_RECORD_SOURCE	7
-#define EAP_OUTPUT_SELECT	8
+#define EAP_INPUT_SOURCE	8
 #define	EAP_MIC_PREAMP		9
 #define EAP_OUTPUT_CLASS	10
 #define EAP_RECORD_CLASS	11

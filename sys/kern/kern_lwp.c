@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.8.2.4 2004/10/19 15:58:04 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.8.2.5 2005/02/15 21:33:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.4 2004/10/19 15:58:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.5 2005/02/15 21:33:29 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -241,8 +241,8 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 			panic("_lwp_suspend: Stopped LWP in running process!");
 			break;
 		case LSONPROC:
-			panic("XXX multiprocessor LWPs? Implement me!");
-			break;
+			/* XXX multiprocessor LWPs? Implement me! */
+			return (EINVAL);
 		}
 	}
 

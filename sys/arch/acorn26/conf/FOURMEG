@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.10.6.5 2005/02/04 11:44:13 skrll Exp $
+# $NetBSD: FOURMEG,v 1.10.6.6 2005/02/15 21:32:31 skrll Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -53,6 +53,7 @@ file-system	FDESC		# /dev/fd
 options 	FFS_EI		# FFS endianness-independence support
 #options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Make a smaller NFS
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Executable format options
 options 	EXEC_ELF32

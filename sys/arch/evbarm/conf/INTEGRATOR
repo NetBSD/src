@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.14.2.7 2005/02/04 11:44:17 skrll Exp $
+#	$NetBSD: INTEGRATOR,v 1.14.2.8 2005/02/15 21:32:32 skrll Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -52,6 +52,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

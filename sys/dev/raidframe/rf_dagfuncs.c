@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.11.6.3 2004/09/21 13:32:51 skrll Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.11.6.4 2005/02/15 21:33:28 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11.6.3 2004/09/21 13:32:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11.6.4 2005/02/15 21:33:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -290,13 +290,13 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    node, NULL, 
+	    node,
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
              NULL,
 #endif
-	    (void *) (node->dagHdr->raidPtr), 0, b_proc);
+	    (void *) (node->dagHdr->raidPtr), 0, b_proc, PR_NOWAIT);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
@@ -330,14 +330,14 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    (void *) node, NULL,
+	    (void *) node,
 #if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
 #else
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    0, b_proc);
+	    0, b_proc, PR_NOWAIT);
 
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
@@ -364,14 +364,13 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, 
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
 	     NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL);
+	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
@@ -395,14 +394,13 @@ rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, 
 #if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
 #else
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL);
+	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {

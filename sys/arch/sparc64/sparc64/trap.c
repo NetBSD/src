@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.2.6 2005/02/04 11:44:57 skrll Exp $ */
+/*	$NetBSD: trap.c,v 1.91.2.7 2005/02/15 21:33:01 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.2.6 2005/02/04 11:44:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.2.7 2005/02/15 21:33:01 skrll Exp $");
 
 #define NEW_FPSTATE
 
@@ -1178,7 +1178,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			if (curlwp == NULL) {
 				panic("kernel data access fault accessing"
 				    " 0x%lx at pc 0x%lx\n",
-				    va, tf->tf_pc);
+				    va, (long)tf->tf_pc);
 			}
 #endif
 			rv = uvm_fault(kernel_map, va, 0, access_type);

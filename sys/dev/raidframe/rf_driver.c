@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.71.2.4 2004/11/29 07:24:32 skrll Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.71.2.5 2005/02/15 21:33:29 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.71.2.4 2004/11/29 07:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.71.2.5 2005/02/15 21:33:29 skrll Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -636,11 +636,10 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 int 
 rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 	    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
-	    caddr_t bufPtr, void *bp_in, RF_RaidAccessFlags_t flags)
+	    caddr_t bufPtr, struct buf *bp, RF_RaidAccessFlags_t flags)
 {
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
-	struct buf *bp = (struct buf *) bp_in;
 
 	raidAddress += rf_raidSectorOffset;
 

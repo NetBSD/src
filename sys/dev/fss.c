@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.9.2.5 2005/02/04 11:45:09 skrll Exp $	*/
+/*	$NetBSD: fss.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9.2.5 2005/02/04 11:45:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $");
 
 #include "fss.h"
 
@@ -499,7 +499,7 @@ static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct lwp *l)
 {
-	int error, fsbsize;
+	int error, bits, fsbsize;
 	struct timespec ts;
 	struct partinfo dpart;
 	struct vattr va;
@@ -541,16 +541,17 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		sc->sc_bs_vp = nd.ni_vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
-		if (fsbsize & (fsbsize-1))	/* No power of two */
-			return EINVAL;
-		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < 32;
+		bits = sizeof(sc->sc_bs_bshift)*NBBY;
+		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < bits;
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= 32)
+		if (sc->sc_bs_bshift >= bits) {
+			VOP_UNLOCK(sc->sc_bs_vp, 0);
 			return EINVAL;
-		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
+		}
 
+		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 		sc->sc_clshift = 0;
 
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.11.2.8 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.11.2.9 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.8 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.9 2005/02/15 21:33:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -713,5 +713,5 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&ds->ds_pending);
 	TAILQ_INIT(&ds->ds_complete);
 
-	return fdclone(l, fp, fd, &dmio_fileops, ds);
+	return fdclone(l, fp, fd, flag, &dmio_fileops, ds);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.1 2002/04/26 02:05:11 ad Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.1.14.1 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -281,7 +281,8 @@ struct FsaRevision {
 #define	CPUARM_xxx		6
 #define	CPUPPC_603e		7
 #define	CPUPPC_xxx		8
-#define	CPUSUBTYPE__last	9
+#define	CPUI80303		9
+#define	CPUSUBTYPE__last	10
 
 #define	PLAT_NTSIM		1
 #define	PLAT_V3ADU		2

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177.2.6 2005/02/04 11:44:57 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.177.2.7 2005/02/15 21:33:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3967,9 +3967,6 @@ return_from_syscall:
  * shift instead of multiply for address calculation).  It hunts for
  * any available slot at that level.  Available slots are NULL.
  *
- * NOTE: If no slots are available, we issue an un-vectored interrupt,
- * but it will probably be lost anyway.
- *
  * Then interrupt_vector uses the interrupt level in the intrhand
  * to issue a softint of the appropriate level.  The softint handler
  * figures out what level interrupt it's handling and pulls the first
@@ -4076,7 +4073,6 @@ setup_sparcintr:
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	sethi	%hi(intrpending), %g1
-	mov	8, %g7			! Number of slots to search
 	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
 	or	%g1, %lo(intrpending), %g1
 	 add	%g1, %g3, %g1
@@ -4174,9 +4170,6 @@ ENTRY(sparc64_ipi_flush_ctx)
  * %g2	- pointer to 'ipi_tlb_args' structure
  */
 ENTRY(sparc64_ipi_flush_all)
-	rdpr	%pstate, %g3
-	andn	%g3, PSTATE_IE, %g2			! disable interrupts
-	wrpr	%g2, 0, %pstate
 	set	(63 * 8), %g1				! last TLB entry
 	membar	#Sync
 
@@ -4217,7 +4210,6 @@ ENTRY(sparc64_ipi_flush_all)
 	sethi	%hi(KERNBASE), %g4
 	membar	#Sync
 	flush	%g4
-	wrpr	%g3, %pstate
 
 	ba,a	ret_from_intr_vector
 	 nop
@@ -4382,7 +4374,6 @@ ENTRY_NOPROFILE(sparc_interrupt)
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
-	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	sll	%l6, PTRSHFT+3, %l2
 	sethi	%hi(intrpending), %l4
 	or	%l4, %lo(intrpending), %l4
@@ -4401,15 +4392,18 @@ sparc_intr_retry:
 	bne,pn	%icc, 1b
 	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 2:
+	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
+	membar	#LoadStore
+	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
+	membar	#Sync
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
 
+	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	LDPTR	[%l2 + IH_PEND], %l7	! Clear pending flag
+	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	LDPTR	[%l2 + IH_CLR], %l1
-	membar	#LoadStore
-	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
 	membar	#Sync
 
 	brz,pn	%l1, 0f
@@ -4451,7 +4445,6 @@ intrcmplt:
 #endif
 
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
-	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	wrpr	%l3, 0, %pil
 
 	CHKPT(%o1,%o2,5)
@@ -11408,28 +11401,19 @@ ENTRY(ienab_bic)
  * send_softint(cpu, level, intrhand)
  *
  * Send a softint with an intrhand pointer so we can cause a vectored
- * interrupt instead of a polled interrupt.  This does pretty much the
- * same as interrupt_vector.  If intrhand is NULL then it just sends
- * a polled interrupt.  If cpu is -1 then send it to this CPU, if it's
- * -2 send it to any CPU, otherwise send it to a particular CPU.
+ * interrupt instead of a polled interrupt.  This does pretty much the same
+ * as interrupt_vector.  If cpu is -1 then send it to this CPU, if it's -2
+ * send it to any CPU, otherwise send it to a particular CPU.
  *
  * XXXX Dispatching to different CPUs is not implemented yet.
- *
- * XXXX We do not block interrupts here so it's possible that another
- *	interrupt of the same level is dispatched before we get to
- *	enable the softint, causing a spurious interrupt.
  */
 ENTRY(send_softint)
-	rdpr	%pil, %g1	! s = splx(level)
-	cmp	%g1, %o1
-	bge,pt	%icc, 1f
-	 nop
-	wrpr	%o1, 0, %pil
-1:
-	brz,pn	%o2, 1f
-	 set	intrpending, %o3
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g2	! clear PSTATE.IE
+	wrpr	%g2, 0, %pstate
+
+	set	intrpending, %o3
 	LDPTR	[%o2 + IH_PEND], %o5
-	mov	8, %o4			! Number of slots to search
 	brnz	%o5, 1f
 	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
@@ -11441,12 +11425,13 @@ ENTRY(send_softint)
 	cmp	%o4, %o5		! Did it work?
 	bne,pn	%xcc, 2b		! No, try again
 	 nop
-1:
+
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3
 	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
+1:
 	retl
-	 wrpr	%g1, 0, %pil		! restore IPL
+	 wrpr	%g1, 0, %pstate		! restore PSTATE.IE
 
 /*
  * Here is a very good random number generator.  This implementation is

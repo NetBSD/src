@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.33.2.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.33.2.4 2005/02/15 21:33:39 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,8 +105,12 @@ struct inpcb {
 #define	INP_LOWPORT		0x20	/* user wants "low" port binding */
 #define	INP_ANONPORT		0x40	/* port chosen for user */
 #define	INP_RECVIF		0x80	/* receive incoming interface */
+/* XXX should move to an UDP control block */
+#define INP_ESPINUDP		0x100	/* ESP over UDP for NAT-T */
+#define INP_ESPINUDP_NON_IKE	0x200	/* ESP over UDP for NAT-T */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF)
+#define INP_ESPINUDP_ALL	(INP_ESPINUDP|INP_ESPINUDP_NON_IKE)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 

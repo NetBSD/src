@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.6.2.3 2004/09/21 13:21:49 skrll Exp $	*/
+/*	$NetBSD: profile.c,v 1.6.2.4 2005/02/15 21:32:51 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.6.2.3 2004/09/21 13:21:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.6.2.4 2005/02/15 21:32:51 skrll Exp $");
 
 #include "profiler.h"
 
@@ -610,7 +610,7 @@ profEnter(struct profHashTable *table, unsigned int lr)
     do
     {
 	entries = entries << 1;
-	hashShift ++;
+	hashShift++;
     } while (!(entries & 0x80000000));
     
     /* enter the pc in the table. */

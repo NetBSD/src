@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.24.6.4 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.24.6.5 2005/02/15 21:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,8 +110,8 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->nentries = 0;
 	map->size = 0;
 	map->ref_count = 1;
-	map->min_offset = min;
-	map->max_offset = max;
+	vm_map_setmin(map, min);
+	vm_map_setmax(map, max);
 	map->flags = flags;
 	map->first_free = &map->header;
 	map->hint = &map->header;

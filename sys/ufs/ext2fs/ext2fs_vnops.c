@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.8 2004/10/29 06:55:20 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.9 2005/02/15 21:33:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.8 2004/10/29 06:55:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.9 2005/02/15 21:33:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,7 +1117,12 @@ ext2fs_mkdir(v)
 	if (VTOI(dvp)->i_e2fs->e2fs_bsize > dvp->v_mount->mnt_stat.f_bsize)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
-		ip->i_e2fs_size = VTOI(dvp)->i_e2fs->e2fs_bsize;
+		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
+		if (error) {
+			dp->i_e2fs_nlink--;
+			dp->i_flag |= IN_CHANGE;
+			goto bad;
+		}
 		ip->i_flag |= IN_CHANGE;
 	}
 
@@ -1258,12 +1263,15 @@ ext2fs_symlink(v)
 	ip = VTOI(vp);
 	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)ip->i_din.e2fs_din->e2di_shortlink, ap->a_target, len);
-		ip->i_e2fs_size = len;
+		error = ext2fs_setsize(ip, len);
+		if (error)
+			goto bad;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred,
 		    (size_t *)0, NULL);
+bad:
 	if (error)
 		vput(vp);
 	return (error);
@@ -1286,7 +1294,7 @@ ext2fs_readlink(v)
 	struct ufsmount	*ump = ip->i_ump;
 	int		isize;
 
-	isize = ip->i_e2fs_size;
+	isize = ext2fs_size(ip);
 	if (isize < ump->um_maxsymlinklen ||
 	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
@@ -1311,7 +1319,7 @@ ext2fs_advlock(v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 
-	return lf_advlock(ap, &ip->i_lockf, ip->i_e2fs_size);
+	return lf_advlock(ap, &ip->i_lockf, ext2fs_size(ip));
 }
 
 /*

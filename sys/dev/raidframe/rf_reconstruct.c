@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.56.2.8 2005/02/06 08:59:23 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.56.2.9 2005/02/15 21:33:29 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.8 2005/02/06 08:59:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.9 2005/02/15 21:33:29 skrll Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1184,15 +1184,13 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* should be ok to use a NULL proc pointer here, all the bufs we use
 	 * should be in kernel space */
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, ctrl->diskOffset, sectorsPerRU, ctrl->rbuf->buffer, psid, which_ru,
-	    ReconReadDoneProc, (void *) ctrl, NULL, 
+	    ReconReadDoneProc, (void *) ctrl,
 #if RF_ACC_TRACE > 0
 				     &raidPtr->recon_tracerecs[col],
 #else
 				     NULL,
 #endif
-				     (void *) raidPtr, 0, NULL);
-
-	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
+				     (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 	ctrl->rbuf->arg = (void *) req;
 	rf_DiskIOEnqueue(&raidPtr->Queues[col], req, RF_IO_RECON_PRIORITY);
@@ -1374,15 +1372,13 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, rbuf->spOffset,
 	    sectorsPerRU, rbuf->buffer,
 	    rbuf->parityStripeID, rbuf->which_ru,
-	    ReconWriteDoneProc, (void *) rbuf, NULL,
+	    ReconWriteDoneProc, (void *) rbuf,
 #if RF_ACC_TRACE > 0
 	    &raidPtr->recon_tracerecs[fcol],
 #else
 				     NULL, 
 #endif
-	    (void *) raidPtr, 0, NULL);
-
-	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
+	    (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 	rbuf->arg = (void *) req;
 	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
@@ -1705,11 +1701,8 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					/* use NULL b_proc b/c all addrs
 					 * should be in kernel space */
 					req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, offset + which_ru * sectorsPerRU, sectorsPerRU, new_rbuf->buffer,
-					    psid, which_ru, (int (*) (void *, int)) ForceReconReadDoneProc, (void *) new_rbuf, NULL,
-					    NULL, (void *) raidPtr, 0, NULL);
-
-					RF_ASSERT(req);	/* XXX -- fix this --
-							 * XXX */
+					    psid, which_ru, (int (*) (void *, int)) ForceReconReadDoneProc, (void *) new_rbuf,
+					    NULL, (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 					new_rbuf->arg = req;
 					rf_DiskIOEnqueue(&raidPtr->Queues[diskno], req, RF_IO_NORMAL_PRIORITY);	/* enqueue the I/O */

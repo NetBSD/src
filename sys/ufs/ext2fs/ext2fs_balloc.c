@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.3 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.4 2005/02/15 21:33:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.3 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.4 2005/02/15 21:33:41 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -392,10 +392,18 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		 * EOF be up-to-date before each call.
 		 */
 
-		if (ip->i_e2fs_size < off + bsize) {
-			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
-				    ip->i_e2fs_size, off + bsize,0,0);
-			ip->i_e2fs_size = off + bsize;
+		if (ext2fs_size(ip) < off + bsize) {
+			UVMHIST_LOG(ubchist, "old 0x%lx%8lx new 0x%lx%8lx",
+			    /* Note that arguments are always cast to u_long. */
+				    ext2fs_size(ip) >> 32,
+				    ext2fs_size(ip) & 0xffffffff,
+				    (off + bsize) >> 32,
+				    (off + bsize) & 0xffffffff);
+			error = ext2fs_setsize(ip, off + bsize);
+			if (error) {
+				UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
+				return error;
+			}
 		}
 
 		off += bsize;

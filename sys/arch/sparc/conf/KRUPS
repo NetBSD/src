@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.15.2.4 2004/11/14 08:15:25 skrll Exp $
+# $NetBSD: KRUPS,v 1.15.2.5 2005/02/15 21:33:01 skrll Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.15.2.4 $"
+#ident 		"KRUPS-$Revision: 1.15.2.5 $"
 
 maxusers	32
 
@@ -194,6 +194,7 @@ file-system	UNION		# union file system
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.21.6.4 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: ser.c,v 1.21.6.5 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.4 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.5 2005/02/15 21:32:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1010,8 +1010,8 @@ serstart(tp)
 
 	/* Output the first char */
 	MFP->mf_udr = *sc->sc_tba;
-	sc->sc_tbc --;
-	sc->sc_tba ++;
+	sc->sc_tbc--;
+	sc->sc_tba++;
 
 	splx(s);
 	return;
@@ -1352,8 +1352,8 @@ sertrintr(arg)
 		/* Output the next character, if any. */
 		if (sc->sc_tbc > 0) {
 			MFP->mf_udr = *sc->sc_tba;
-			sc->sc_tbc --;
-			sc->sc_tba ++;
+			sc->sc_tbc--;
+			sc->sc_tba++;
 		} else if (sc->sc_tx_busy) {
 			sc->sc_tx_busy = 0;
 			sc->sc_tx_done = 1;

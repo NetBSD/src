@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36.2.5 2005/02/04 11:44:46 skrll Exp $
+# $NetBSD: GENERIC,v 1.36.2.6 2005/02/15 21:32:50 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -71,6 +71,7 @@ file-system	PROCFS		# /proc
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_SNAPSHOT	# ffs snapshots
 options 	NFSSERVER
 options 	SOFTDEP
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

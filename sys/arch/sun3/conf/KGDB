@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.34.2.6 2005/02/04 11:45:07 skrll Exp $
+#	$NetBSD: KGDB,v 1.34.2.7 2005/02/15 21:33:01 skrll Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -75,6 +75,7 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

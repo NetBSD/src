@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23.2.6 2005/02/04 11:44:32 skrll Exp $
+#	$NetBSD: INSTALL,v 1.23.2.7 2005/02/15 21:32:42 skrll Exp $
 #
 # INSTALL
 
@@ -61,6 +61,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.18.2.5 2005/02/04 11:44:56 skrll Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.18.2.6 2005/02/15 21:33:01 skrll Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -147,6 +147,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

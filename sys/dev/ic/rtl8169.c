@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.6.4.2 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.6.4.3 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -598,10 +598,6 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 2;
 		} else
 			sc->sc_rev = 1;
-#if defined(DEBUG) || 1
-		aprint_normal("re_attach: MAC chip hwrev 0x%x softc %d\n",
-		    hwrev, sc->sc_rev);
-#endif
 
 		/* Set RX length mask */
 
@@ -1487,10 +1483,8 @@ re_intr(void *arg)
 		if ((status & RTK_INTRS_CPLUS) == 0)
 			break;
 
-		if (status & RTK_ISR_RX_OK)
-			re_rxeof(sc);
-
-		if (status & RTK_ISR_RX_ERR)
+		if ((status & RTK_ISR_RX_OK) ||
+		    (status & RTK_ISR_RX_ERR))
 			re_rxeof(sc);
 
 		if ((status & RTK_ISR_TIMEOUT_EXPIRED) ||
@@ -1801,24 +1795,20 @@ re_init(struct ifnet *ifp)
 	rxcfg |= RTK_RXCFG_RX_INDIV;
 
 	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		rxcfg |= RTK_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RTK_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
 
 	/*
 	 * Set capture broadcast bit to capture broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		rxcfg |= RTK_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RTK_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RTK_RXCFG, rxcfg);
 
 	/*
 	 * Program the multicast filter, if necessary.

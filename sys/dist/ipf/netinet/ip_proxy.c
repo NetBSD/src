@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.2.3 2005/02/09 08:26:14 skrll Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.2.4 2005/02/15 21:33:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -418,8 +418,8 @@ nat_t *nat;
 	KMALLOC(aps, ap_session_t *);
 	if (!aps) {
 		if (ipf_proxy_debug > 0)
-			printf("appr_new: malloc failed (%u)\n",
-				sizeof(ap_session_t));
+			printf("appr_new: malloc failed (%lu)\n",
+				(u_long)sizeof(ap_session_t));
 		return -1;
 	}
 

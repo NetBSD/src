@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.10.2.6 2005/02/04 11:46:40 skrll Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.10.2.7 2005/02/15 21:33:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,7 @@ struct pciide_softc {
 	/* for SiS */
 	u_int8_t sis_type;
 
-	/* For Silicon Image SATALink, and Promise SATA */
+	/* For Silicon Image SATALink, Artisea SATA and Promise SATA */
 	bus_space_tag_t sc_ba5_st;
 	bus_space_handle_t sc_ba5_sh;
 	int sc_ba5_en;

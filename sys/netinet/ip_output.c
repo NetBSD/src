@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.6 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.7 2005/02/15 21:33:39 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.6 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.7 2005/02/15 21:33:39 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -139,6 +139,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.6 2005/02/04 11:47:48 skrll Ex
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -182,6 +185,9 @@ ip_output(struct mbuf *m0, ...)
 	va_list ap;
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
+#ifdef IPSEC_NAT_T
+	int natt_frag = 0;
+#endif
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
@@ -504,6 +510,22 @@ sendit:
 		printf("ip_output: Invalid policy found. %d\n", sp->policy);
 	}
 
+#ifdef IPSEC_NAT_T
+	/*
+	 * NAT-T ESP fragmentation: don't do IPSec processing now, 
+	 * we'll do it on each fragmented packet. 
+	 */
+	if (sp->req->sav &&
+	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+	     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+			natt_frag = 1;
+			mtu = sp->req->sav->esp_frag;
+			goto skip_ipsec;
+		}
+	}
+#endif /* IPSEC_NAT_T */
+
 	/*
 	 * ipsec4_output() expects ip_len and ip_off in network
 	 * order.  They have been set to network order above.
@@ -777,6 +799,37 @@ spd_done:
 		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		} else if (ifp->if_csum_flags_tx & M_CSUM_NO_PSEUDOHDR &&
+			 m->m_pkthdr.csum_flags & (M_CSUM_UDPv4|M_CSUM_TCPv4)) {
+			/* add pseudo-header sum */
+			uint16_t sum;
+
+			ip = mtod(m, struct ip *);
+			hlen = ip->ip_hl << 2;
+			m->m_pkthdr.csum_data = (hlen << 16) |
+					(m->m_pkthdr.csum_data & 0xffff);
+
+			if (ip->ip_p == IPPROTO_TCP) {
+				sum = in_cksum_phdr(ip->ip_src.s_addr,
+					     ip->ip_dst.s_addr,
+					     htons(ntohs(ip->ip_len) - hlen +
+					     IPPROTO_TCP));
+				/* offset of TCP checksum field */
+				hlen += (m->m_pkthdr.csum_data & 0xffff);
+			} else if (ip->ip_p == IPPROTO_UDP) {
+				sum = in_cksum_phdr(ip->ip_src.s_addr,
+					     ip->ip_dst.s_addr,
+					     htons(ntohs(ip->ip_len) - hlen +
+					     IPPROTO_UDP));
+				/* offset of UDP checksum field */
+				hlen += (m->m_pkthdr.csum_data & 0xffff);
+			}
+			if ((hlen + sizeof(uint16_t)) > m->m_len) {
+				/* This happens when ip options were inserted */
+				m_copyback(m, hlen, sizeof(sum), (caddr_t)&sum);
+			} else
+				*(u_int16_t *)(mtod(m, caddr_t) + hlen) = sum;
+
 		}
 
 #ifdef IPSEC
@@ -828,11 +881,26 @@ spd_done:
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
-#endif
-			KASSERT((m->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
+
+#ifdef IPSEC_NAT_T
+			/* 
+			 * If we get there, the packet has not been handeld by
+			 * IPSec whereas it should have. Now that it has been 
+			 * fragmented, re-inject it in ip_output so that IPsec
+			 * processing can occur.
+			 */
+			if (natt_frag) {
+				error = ip_output(m, opt, 
+				    ro, flags, imo, so, mtu_p);
+			} else 
+#endif /* IPSEC_NAT_T */
+#endif /* IPSEC */
+			{
+				KASSERT((m->m_pkthdr.csum_flags &
+				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+				error = (*ifp->if_output)(ifp, m, sintosa(dst),
+				    ro->ro_rt);
+			}
 		} else
 			m_freem(m);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.9.2.5 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: aac.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9.2.5 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,16 +363,28 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	info = (struct aac_adapter_info *)&buf[0];
 
-	aprint_normal("%s: %s at %dMHz, %dMB cache, %s, kernel %d.%d-%d\n",
+	aprint_normal("%s: %s at %dMHz, %dMB mem (%dMB cache), %s\n",
 	    sc->sc_dv.dv_xname,
 	    aac_describe_code(aac_cpu_variant, le32toh(info->CpuVariant)),
 	    le32toh(info->ClockSpeed),
+	    le32toh(info->TotalMem) / (1024 * 1024),
 	    le32toh(info->BufferMem) / (1024 * 1024),
 	    aac_describe_code(aac_battery_platform,
-			      le32toh(info->batteryPlatform)),
+			      le32toh(info->batteryPlatform)));
+
+	aprint_verbose("%s: Kernel %d.%d-%d [Build %d], ",
+	    sc->sc_dv.dv_xname,
 	    info->KernelRevision.external.comp.major,
 	    info->KernelRevision.external.comp.minor,
-	    info->KernelRevision.external.comp.dash);
+	    info->KernelRevision.external.comp.dash,
+	    info->KernelRevision.buildNumber);
+
+	aprint_verbose("Monitor %d.%d-%d [Build %d], S/N %6X\n",
+	    info->MonitorRevision.external.comp.major,
+	    info->MonitorRevision.external.comp.minor,
+	    info->MonitorRevision.external.comp.dash,
+	    info->MonitorRevision.buildNumber,
+	    ((u_int32_t)info->SerialNumber & 0xffffff));
 
 	/* Save the kernel revision structure for later use. */
 	sc->sc_revision = info->KernelRevision;

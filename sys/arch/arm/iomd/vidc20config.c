@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.16.2.3 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.16.2.4 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.3 2004/09/21 13:13:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.4 2005/02/15 21:32:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -600,7 +600,7 @@ vidcvideo_cursor_init(int width, int height)
  	cursor_transparent += 32;					/* ALIGN */
 	cursor_transparent = (char *)((int)cursor_transparent & (~31) );
 
-	for ( line = 0; line<height; ++ line )
+	for ( line = 0; line<height; ++line )
 	{
 	    for ( counter=0; counter<width/4;counter++ )
 		cursor_normal[line * width + counter]=0x55;		/* why 0x55 ? */
@@ -608,7 +608,7 @@ vidcvideo_cursor_init(int width, int height)
 		cursor_normal[line * width + counter]=0;
 	}
 
-	for ( line = 0; line<height; ++ line )
+	for ( line = 0; line<height; ++line )
 	{
 	    for ( counter=0; counter<width/4;counter++ )
 		cursor_transparent[line * width + counter]=0x00;

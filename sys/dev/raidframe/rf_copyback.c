@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.25.2.4 2004/09/21 13:32:50 skrll Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.25.2.5 2005/02/15 21:33:28 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.25.2.4 2004/09/21 13:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.25.2.5 2005/02/15 21:33:28 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -338,11 +338,13 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	desc->readreq = rf_CreateDiskQueueData(RF_IO_TYPE_READ, spOffs,
 	    sectPerSU, desc->databuf, 0L, 0,
 	    (int (*) (void *, int)) rf_CopybackReadDoneProc, desc,
-	    NULL, NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
+	    PR_WAITOK);
 	desc->writereq = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, testOffs,
 	    sectPerSU, desc->databuf, 0L, 0,
 	    (int (*) (void *, int)) rf_CopybackWriteDoneProc, desc,
-	    NULL, NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
+	    PR_WAITOK);
 	desc->fcol = testCol;
 
 	/* enqueue the read.  the write will go out as part of the callback on

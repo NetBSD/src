@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.2.2.6 2005/02/04 11:44:18 skrll Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.2.2.7 2005/02/15 21:32:32 skrll Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -50,6 +50,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -176,8 +177,7 @@ dsrtc*		at iic1 addr 0x68
 
 # PCI IDE/S-ATA controllers and devices
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
-
-options 	PCIIDE_I31244_ENABLEDMA
+#options 	PCIIDE_I31244_DISABLEDMA
 
 # ATA (IDE) bus support
 atabus* at ata?

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.5 2004/11/29 07:24:06 skrll Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.6 2005/02/15 21:33:01 skrll Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -153,6 +153,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

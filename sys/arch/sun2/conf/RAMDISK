@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.16.2.5 2005/02/04 11:45:07 skrll Exp $
+# $NetBSD: RAMDISK,v 1.16.2.6 2005/02/15 21:33:01 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -73,6 +73,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

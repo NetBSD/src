@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.7.2.6 2005/02/04 11:44:32 skrll Exp $
+#	$NetBSD: SMALLRAM,v 1.7.2.7 2005/02/15 21:32:42 skrll Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.7.2.6 $"
+#ident 		"SMALLRAM-$Revision: 1.7.2.7 $"
 
 maxusers	8
 
@@ -109,6 +109,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
+#options 	FFS_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.7 2005/01/17 19:33:10 skrll Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.8 2005/02/15 21:33:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.7 2005/01/17 19:33:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.8 2005/02/15 21:33:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ ext2fs_read(v)
 		panic("%s: mode", "ext2fs_read");
 
 	if (vp->v_type == VLNK) {
-		if (ip->i_e2fs_size < ump->um_maxsymlinklen ||
+		if (ext2fs_size(ip) < ump->um_maxsymlinklen ||
 		    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0))
 			panic("%s: short symlink", "ext2fs_read");
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
@@ -139,12 +139,12 @@ ext2fs_read(v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
-	if (uio->uio_offset >= ip->i_e2fs_size)
+	if (uio->uio_offset >= ext2fs_size(ip))
 		goto out;
 
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
-			bytelen = MIN(ip->i_e2fs_size - uio->uio_offset,
+			bytelen = MIN(ext2fs_size(ip) - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
 				break;
@@ -161,7 +161,7 @@ ext2fs_read(v)
 	}
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
-		bytesinfile = ip->i_e2fs_size - uio->uio_offset;
+		bytesinfile = ext2fs_size(ip) - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
@@ -174,7 +174,7 @@ ext2fs_read(v)
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-		if (lblktosize(fs, nextlbn) >= ip->i_e2fs_size)
+		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else {
 			int nextsize = fs->e2fs_bsize;
@@ -239,7 +239,7 @@ ext2fs_write(v)
 	int blkoffset, error, flags, ioflag, resid, xfersize;
 	vsize_t bytelen;
 	void *win;
-	off_t oldoff;
+	off_t oldoff = 0;					/* XXX */
 	boolean_t async;
 	int extended = 0;
 
@@ -258,9 +258,9 @@ ext2fs_write(v)
 	switch (vp->v_type) {
 	case VREG:
 		if (ioflag & IO_APPEND)
-			uio->uio_offset = ip->i_e2fs_size;
+			uio->uio_offset = ext2fs_size(ip);
 		if ((ip->i_e2fs_flags & EXT2_APPEND) &&
-		    uio->uio_offset != ip->i_e2fs_size)
+		    uio->uio_offset != ext2fs_size(ip))
 			return (EPERM);
 		/* FALLTHROUGH */
 	case VLNK:
@@ -293,7 +293,7 @@ ext2fs_write(v)
 
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
-	osize = ip->i_e2fs_size;
+	osize = ext2fs_size(ip);
 
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
@@ -358,8 +358,10 @@ ext2fs_write(v)
 		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
 		if (error)
 			break;
-		if (ip->i_e2fs_size < uio->uio_offset + xfersize) {
-			ip->i_e2fs_size = uio->uio_offset + xfersize;
+		if (ext2fs_size(ip) < uio->uio_offset + xfersize) {
+			error = ext2fs_setsize(ip, uio->uio_offset + xfersize);
+			if (error)
+				break;
 		}
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 
@@ -402,6 +404,6 @@ out:
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
-	KASSERT(vp->v_size == ip->i_e2fs_size);
+	KASSERT(vp->v_size == ext2fs_size(ip));
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.2 2000/10/23 06:56:00 jdc Exp $	*/
+/*	$NetBSD: check.c,v 1.2.26.1 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,9 +131,9 @@ ahdi_checklabel (ptable)
 
 		/* Count partitions in root/auxiliary roots */
 		if (ptable->parts[i].root)
-			acount ++;
+			acount++;
 		else
-			rcount ++;
+			rcount++;
 
 	}
 	/* Check number of partitions in root sector */

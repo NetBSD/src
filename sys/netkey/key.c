@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.82.2.8 2005/01/17 19:32:55 skrll Exp $	*/
+/*	$NetBSD: key.c,v 1.82.2.9 2005/02/15 21:33:40 skrll Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82.2.8 2005/01/17 19:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82.2.9 2005/02/15 21:33:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -191,6 +191,11 @@ static const int minsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	sizeof(struct sadb_x_policy),	/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type), /* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port), /* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port), /* SADB_X_EXT_NAT_T_DPORT */
+	sizeof(struct sadb_address),	/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag),/* SADB_X_EXT_NAT_T_FRAG */
 #ifdef SADB_X_EXT_TAG
 	sizeof(struct sadb_x_tag),	/* SADB_X_TAG */
 #endif
@@ -216,6 +221,11 @@ static const int maxsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	0,				/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type), /* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port), /* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port), /* SADB_X_EXT_NAT_T_DPORT */
+	0,				/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag), /* SADB_X_EXT_NAT_T_FRAG */
 #ifdef SADB_X_EXT_TAG
 	sizeof(struct sadb_x_tag),	/* SADB_X_TAG */
 #endif
@@ -340,6 +350,10 @@ static int key_spdflush __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_spddump __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
+#ifdef IPSEC_NAT_T
+static int key_nat_map __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+#endif
 static struct mbuf *key_setspddump __P((int *));
 static u_int key_getspreqmsglen __P((struct secpolicy *));
 static int key_spdexpire __P((struct secpolicy *));
@@ -2347,6 +2361,71 @@ key_spddump(so, m, mhp)
 	return 0;
 }
 
+#ifdef IPSEC_NAT_T
+/* 
+ * SADB_X_NAT_T_NEW_MAPPING 
+ */
+static int
+key_nat_map(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+{
+	struct sadb_x_nat_t_type *type;
+	struct sadb_x_nat_t_port *sport;
+	struct sadb_x_nat_t_port *dport;
+	struct sadb_address *addr;
+	struct sadb_x_nat_t_frag *frag;
+
+	/* sanity check */
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+		panic("key_nat_map: NULL pointer is passed.");
+
+	if (mhp->ext[SADB_X_EXT_NAT_T_TYPE] == NULL ||
+	    mhp->ext[SADB_X_EXT_NAT_T_SPORT] == NULL ||
+	    mhp->ext[SADB_X_EXT_NAT_T_DPORT] == NULL) {
+		ipseclog((LOG_DEBUG, "key_nat_map: invalid message.\n"));
+		return key_senderror(so, m, EINVAL);
+	}
+	if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
+	    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
+	    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
+		ipseclog((LOG_DEBUG, "key_nat_map: invalid message.\n"));
+		return key_senderror(so, m, EINVAL);
+	}
+
+	if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+	    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
+		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
+		return key_senderror(so, m, EINVAL);
+	}
+
+	if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+	    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
+		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
+		return key_senderror(so, m, EINVAL);
+	}
+
+	type = (struct sadb_x_nat_t_type *)mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+	sport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+	dport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+	addr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OA];
+	frag = (struct sadb_x_nat_t_frag *) mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+
+	printf("sadb_nat_map: type %d, sport = %d, dport = %d\n", 
+		type->sadb_x_nat_t_type_type,
+		sport->sadb_x_nat_t_port_port,
+		dport->sadb_x_nat_t_port_port);
+
+	/* 
+	 * XXX handle that, it should also contain a SA, or anything 
+	 * that enable to update the SA information.
+	 */
+
+	return 0;
+}
+#endif /* IPSEC_NAT_T */
+
 static struct mbuf *
 key_setspddump(errorp)
 	int *errorp;
@@ -2961,6 +3040,10 @@ key_setsaval(sav, m, mhp)
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
+#ifdef IPSEC_NAT_T
+	sav->natt_type = 0;
+	sav->remote_ike_port = 0;
+#endif
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -5106,6 +5189,63 @@ key_update(so, m, mhp)
 		return key_senderror(so, m, error);
 	}
 
+#ifdef IPSEC_NAT_T
+	/* 
+	 * Handle NAT-T info if present
+	 */
+	if (mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL)
+		printf("update: NAT-T OA present\n");
+
+	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
+	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
+	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) { 
+		struct sadb_x_nat_t_type *type;
+		struct sadb_x_nat_t_port *sport;
+		struct sadb_x_nat_t_port *dport;
+		struct sadb_address *addr;
+		struct sadb_x_nat_t_frag *frag;
+
+		if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
+		    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
+		    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
+			ipseclog((LOG_DEBUG, "key_update: "
+			    "invalid message.\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+		    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
+			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+		    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
+			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		type = (struct sadb_x_nat_t_type *)
+		    mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+		sport = (struct sadb_x_nat_t_port *)
+		    mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+		dport = (struct sadb_x_nat_t_port *)
+		    mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+		addr = (struct sadb_address *)
+		    mhp->ext[SADB_X_EXT_NAT_T_OA];
+		frag = (struct sadb_x_nat_t_frag *)
+		    mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+	
+		sav->natt_type = type->sadb_x_nat_t_type_type;
+		sav->remote_ike_port = ntohs(dport->sadb_x_nat_t_port_port);
+		sav->local_ike_port = ntohs(sport->sadb_x_nat_t_port_port);
+		if (frag)
+			sav->esp_frag = frag->sadb_x_nat_t_frag_fraglen;
+		else
+			sav->esp_frag = IP_MAXPACKET;
+	}
+#endif /* IPSEC_NAT_T */
+
     {
 	struct mbuf *n;
 
@@ -5260,6 +5400,63 @@ key_add(so, m, mhp)
 		key_freesav(newsav);
 		return key_senderror(so, m, error);
 	}
+
+#ifdef IPSEC_NAT_T
+	/* 
+	 * Handle NAT-T info if present
+	 */
+	if (mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL)
+		printf("add: NAT-T OA present\n");
+	
+	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
+	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
+	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) { 
+		struct sadb_x_nat_t_type *type;
+		struct sadb_x_nat_t_port *sport;
+		struct sadb_x_nat_t_port *dport;
+		struct sadb_address *addr;
+		struct sadb_x_nat_t_frag *frag;
+
+		if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
+		    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
+		    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
+			ipseclog((LOG_DEBUG, "key_add: "
+			    "invalid message.\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		if ((mhp->ext[SADB_X_EXT_NAT_T_OA] != NULL) && 
+		    (mhp->extlen[SADB_X_EXT_NAT_T_OA] < sizeof(*addr))) {
+			ipseclog((LOG_DEBUG, "key_add: invalid message\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) && 
+		    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
+			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+
+		type = (struct sadb_x_nat_t_type *)
+		    mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+		sport = (struct sadb_x_nat_t_port *)
+		    mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+		dport = (struct sadb_x_nat_t_port *)
+		    mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+		addr = (struct sadb_address *)
+		    mhp->ext[SADB_X_EXT_NAT_T_OA];
+		frag = (struct sadb_x_nat_t_frag *)
+		    mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+	
+		newsav->natt_type = type->sadb_x_nat_t_type_type;
+		newsav->local_ike_port = ntohs(sport->sadb_x_nat_t_port_port);
+		newsav->remote_ike_port = ntohs(dport->sadb_x_nat_t_port_port);
+		if (frag)
+			newsav->esp_frag = frag->sadb_x_nat_t_frag_fraglen;
+		else
+			newsav->esp_frag = IP_MAXPACKET;
+	}
+#endif /* IPSEC_NAT_T */
 
 	/*
 	 * don't call key_freesav() here, as we would like to keep the SA
@@ -7068,6 +7265,11 @@ static int (*key_typesw[]) __P((struct socket *, struct mbuf *,
 	key_spdadd,	/* SADB_X_SPDSETIDX */
 	NULL,		/* SADB_X_SPDEXPIRE */
 	key_spddelete2,	/* SADB_X_SPDDELETE2 */
+#ifdef IPSEC_NAT_T
+	key_nat_map,	/* SADB_X_NAT_T_NEW_MAPPING */
+#else
+	NULL,
+#endif
 };
 
 /*
@@ -7404,6 +7606,13 @@ key_align(m, mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
+#ifdef IPSEC_NAT_T 
+		case SADB_X_EXT_NAT_T_TYPE:
+		case SADB_X_EXT_NAT_T_SPORT:
+		case SADB_X_EXT_NAT_T_DPORT:
+		case SADB_X_EXT_NAT_T_OA:
+		case SADB_X_EXT_NAT_T_FRAG:
+#endif
 #ifdef SADB_X_EXT_TAG
 		case SADB_X_EXT_TAG:
 #endif

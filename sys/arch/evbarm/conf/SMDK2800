@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.3.2.7 2005/02/04 11:44:17 skrll Exp $
+#	$NetBSD: SMDK2800,v 1.3.2.8 2005/02/15 21:32:32 skrll Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -56,6 +56,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
