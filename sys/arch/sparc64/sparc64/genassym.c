@@ -1,6 +1,7 @@
-/*	$NetBSD: genassym.c,v 1.22 2001/10/22 15:19:55 mrg Exp $ */
+/*	$NetBSD: genassym.c,v 1.23 2002/05/14 02:34:15 eeh Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -196,20 +197,16 @@ main()
 	off("TF_PC", struct trapframe64, tf_pc);
 	off("TF_NPC", struct trapframe64, tf_npc);
 	off("TF_FAULT", struct trapframe64, tf_fault);
-	off("TF_KSTACK", struct trapframe64, tf_kstack);
 	off("TF_Y", struct trapframe64, tf_y);
 	off("TF_PIL", struct trapframe64, tf_pil);
 	off("TF_OLDPIL", struct trapframe64, tf_oldpil);
 	off("TF_TT", struct trapframe64, tf_tt);
 	off("TF_GLOBAL", struct trapframe64, tf_global);
 	off("TF_OUT", struct trapframe64, tf_out);
+#ifdef DEBUG
 	off("TF_LOCAL", struct trapframe64, tf_local);
 	off("TF_IN", struct trapframe64, tf_in);
-	/* shortened versions */
-	off("TF_G", struct trapframe64, tf_global);
-	off("TF_O", struct trapframe64, tf_out);
-	off("TF_L", struct trapframe64, tf_local);
-	off("TF_I", struct trapframe64, tf_in);
+#endif
 	siz("TF_SIZE", struct trapframe64);
 
 #if 0
