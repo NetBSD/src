@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.6 2001/11/28 03:58:25 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.7 2001/12/08 15:01:41 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -44,11 +44,22 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
-CWARNFLAGS+=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
-		-Wpointer-arith -Wno-main
+DBG=		# might contain unwanted -Ofoo
+DEFWARNINGS?=	yes
+.if (${DEFWARNINGS} == "yes")
+CWARNFLAGS+=	-Werror -Wall -Wno-main
+WEAK_POINTERS?=	no
+.if !(${WEAK_POINTERS} == "yes")
+CWARNFLAGS+=	-Wpointer-arith
+.endif
+LOOSE_PROTOTYPES?= no
+.if !(${LOOSE_PROTOTYPES} == "yes")
+CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+.endif
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
+.endif
 CFLAGS+=	${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	-D_LOCORE
 
@@ -151,6 +162,7 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
 .else
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
@@ -193,9 +205,14 @@ assym.h machdep.o: Makefile
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	rm -f ${KERNELS} eddep tags *.[io] [a-z]*.s vers.c \
 	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
-	    ${EXTRA_CLEAN}
+	    ${EXTRA_KERNELS} ${EXTRA_CLEAN}
+.endif
+
+.if !target(kernelnames)
+kernelnames:
+	@echo "${KERNELS} ${EXTRA_KERNELS}"
 .endif
 
 .if !target(__CLEANDEPEND)
@@ -248,10 +265,10 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	rm -f /onetbsd
-	ln /netbsd /onetbsd
-	cp netbsd /nnetbsd
-	mv /nnetbsd /netbsd
+	rm -f ${DESTDIR}/onetbsd
+	ln ${DESTDIR}/netbsd ${DESTDIR}/onetbsd
+	cp netbsd ${DESTDIR}/nnetbsd
+	mv ${DESTDIR}/nnetbsd ${DESTDIR}/netbsd
 .endif
 .endif
 
