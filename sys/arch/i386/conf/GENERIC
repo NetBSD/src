@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.104 1997/10/14 23:31:00 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.105 1997/10/16 23:32:35 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -243,6 +243,19 @@ joy*	at isapnp?
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
+
+# PCMCIA controllers, sockets, and devices.
+
+pcic0	at isa? port 0x3E0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3E2 iomem 0xd4000 iosiz 0x4000
+
+pcmcia*	at pcic? controller ? socket ?
+
+ep*	at pcmcia? function ?
+ne*	at pcmcia? function ?
+sm*	at pcmcia? function ?
+com*	at pcmcia? function ?
+aic*	at pcmcia? function ?
 
 include	"arch/i386/conf/GENERIC.local"
 
