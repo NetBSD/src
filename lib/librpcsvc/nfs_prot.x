@@ -29,11 +29,11 @@
 
 #ifndef RPC_HDR
 %#include <sys/cdefs.h>
-%#ifndef lint
+%#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)nfs_prot.x 1.2 87/10/12 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: nfs_prot.x,v 1.6 2003/09/21 15:35:46 yamt Exp $");
-%#endif /* not lint */
+%__RCSID("$NetBSD: nfs_prot.x,v 1.6.2.1 2004/07/02 18:19:53 he Exp $");
+%#endif /* not __lint__ */
 #endif
 
 const NFS_PORT          = 2049;
