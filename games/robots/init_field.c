@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.4 1997/05/23 23:40:16 jtc Exp $	*/
+/*	$NetBSD: init_field.c,v 1.5 1997/10/12 14:09:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init_field.c,v 1.4 1997/05/23 23:40:16 jtc Exp $";
+__RCSID("$NetBSD: init_field.c,v 1.5 1997/10/12 14:09:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,11 +49,10 @@ static char rcsid[] = "$NetBSD: init_field.c,v 1.4 1997/05/23 23:40:16 jtc Exp $
  *	Lay down the initial pattern whih is constant across all levels,
  *	and initialize all the global variables.
  */
+void
 init_field()
 {
-	register int	i;
-	register WINDOW	*wp;
-	register int	j;
+	int		i;
 	static bool	first = TRUE;
 	static char	*desc[] = {
 				"Directions:",

@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
+/*	$NetBSD: robots.h,v 1.6 1997/10/12 14:10:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,17 @@
  *	@(#)robots.h	8.1 (Berkeley) 5/31/93
  */
 
+# include	<sys/ttydefaults.h>
+# include	<ctype.h>
 # include	<curses.h>
+# include	<fcntl.h>
+# include	<pwd.h>
 # include	<setjmp.h>
+# include	<signal.h>
+# include	<stdlib.h>
 # include	<string.h>
+# include	<termios.h>
+# include	<unistd.h>
 
 /*
  * miscellaneous constants
@@ -75,6 +83,14 @@ typedef struct {
 	int	y, x;
 } COORD;
 
+typedef struct {
+	int	s_uid;
+	int	s_score;
+	char	s_name[MAXNAME];
+} SCORE;
+
+typedef struct passwd	PASSWD;
+
 /*
  * global variables
  */
@@ -100,11 +116,25 @@ extern jmp_buf	End_move;
  * functions types
  */
 
-int	cmp_sc();
-void	move_robots();
-
-COORD	*rnd_pos();
-
-
-
-
+void	add_score __P((int));
+bool	another __P((void));
+int	cmp_sc __P((const void *, const void *));
+bool	do_move __P((int, int));
+bool	eaten __P((COORD *));
+void	flush_in __P((void));
+void	get_move __P((void));
+void	init_field __P((void));
+bool	jumping __P((void));
+void	make_level __P((void));
+void	move_robots __P((int));
+bool	must_telep __P((void));
+void	play_level __P((void));
+int	query __P((char *));
+void	quit __P((int));
+void	reset_count __P((void));
+int	rnd __P((int));
+COORD  *rnd_pos __P((void));
+void	score __P((void));
+void	set_name __P((SCORE *));
+void	show_score __P((void));
+int	sign __P((int));
