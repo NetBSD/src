@@ -148,7 +148,7 @@ setroot()
 #ifdef DOSWAP
 	dev_t temp;
 #endif
-#ifdef NFS
+#ifdef NFSCLIENT
 	extern int (*mountroot)(), nfs_mountroot();
 #endif
 
@@ -201,7 +201,7 @@ setroot()
 
 	switch (bootdv->dv_class) {
 
-#ifdef NFS
+#ifdef NFSCLIENT
 	    case DV_IFNET:
 		mountroot = nfs_mountroot;
 		return;
