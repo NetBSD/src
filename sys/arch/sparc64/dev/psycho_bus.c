@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.8 2000/04/08 04:35:01 mrg Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.9 2000/04/10 16:07:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -469,7 +469,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	ih->ih_number = ino;
+	ih->ih_number = ino | 0x7c0;
 	ih->ih_pil = pci_ino_to_ipl_table[ino];
 	DPRINTF(PDB_INTR, ("; installing handler %p with ino %u pil %u\n", handler, (u_int)ino, (u_int)ih->ih_pil));
 	intr_establish(ih->ih_pil, ih);
