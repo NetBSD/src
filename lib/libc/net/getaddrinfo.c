@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.42.4.4 2002/07/01 18:21:00 he Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.42.4.5 2002/09/04 02:30:49 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.42.4.4 2002/07/01 18:21:00 he Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.42.4.5 2002/09/04 02:30:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -90,15 +90,16 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.42.4.4 2002/07/01 18:21:00 he Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stddef.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <syslog.h>
 #include <stdarg.h>
@@ -193,11 +194,7 @@ static const ns_src default_dns_files[] = {
 	{ 0 }
 };
 
-#if PACKETSZ > 1024
-#define MAXPACKET	PACKETSZ
-#else
-#define MAXPACKET	1024
-#endif
+#define MAXPACKET	(64*1024)
 
 typedef union {
 	HEADER hdr;
@@ -233,7 +230,7 @@ static const struct afd *find_afd __P((int));
 static int addrconfig __P((const struct addrinfo *));
 #endif
 #ifdef INET6
-static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *, u_int32_t *));
 #endif
 
 static struct addrinfo *getanswer __P((const querybuf *, int, const char *, int,
@@ -343,9 +340,12 @@ str_isnumber(p)
 {
 	char *ep;
 
+	if (*p == '\0')
+		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -814,13 +814,13 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
+			if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
 				free(hostname2);
 				return(EAI_NODATA); /* XXX: is return OK? */
 			}
@@ -1005,13 +1005,20 @@ addrconfig(pai)
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
 static int
-ip6_str2scopeid(scope, sin6)
+ip6_str2scopeid(scope, sin6, scopeid)
 	char *scope;
 	struct sockaddr_in6 *sin6;
+	u_int32_t *scopeid;
 {
-	int scopeid;
-	struct in6_addr *a6 = &sin6->sin6_addr;
+	u_long lscopeid;
+	struct in6_addr *a6;
 	char *ep;
+
+	a6 = &sin6->sin6_addr;
+
+	/* empty scopeid portion is invalid */
+	if (*scope == '\0')
+		return -1;
 
 	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
 		/*
@@ -1019,10 +1026,10 @@ ip6_str2scopeid(scope, sin6)
 		 * and interfaces, so we simply use interface indices for
 		 * like-local scopes.
 		 */
-		scopeid = if_nametoindex(scope);
-		if (scopeid == 0)
+		*scopeid = if_nametoindex(scope);
+		if (*scopeid == 0)
 			goto trynumeric;
-		return(scopeid);
+		return 0;
 	}
 
 	/* still unclear about literal, allow numeric only - placeholder */
@@ -1035,9 +1042,11 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
   trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
-		return scopeid;
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	*scopeid = (u_int32_t)(lscopeid & 0xffffffffUL);
+	if (errno == 0 && ep && *ep == '\0' && *scopeid == lscopeid)
+		return 0;
 	else
 		return -1;
 }
@@ -1065,8 +1074,8 @@ getanswer(answer, anslen, qname, qtype, pai)
 	const u_char *cp;
 	int n;
 	const u_char *eom;
-	char *bp;
-	int type, class, buflen, ancount, qdcount;
+	char *bp, *ep;
+	int type, class, ancount, qdcount;
 	int haveanswer, had_error;
 	char tbuf[MAXDNAME];
 	int (*name_ok) __P((const char *));
@@ -1093,13 +1102,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 	ancount = ntohs(hp->ancount);
 	qdcount = ntohs(hp->qdcount);
 	bp = hostbuf;
-	buflen = sizeof hostbuf;
+	ep = hostbuf + sizeof hostbuf;
 	cp = answer->buf + HFIXEDSZ;
 	if (qdcount != 1) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
-	n = dn_expand(answer->buf, eom, cp, bp, buflen);
+	n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 	if ((n < 0) || !(*name_ok)(bp)) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
@@ -1117,14 +1126,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 		}
 		canonname = bp;
 		bp += n;
-		buflen -= n;
 		/* The qname can be abbreviated, but h_name is now absolute. */
 		qname = canonname;
 	}
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
-		n = dn_expand(answer->buf, eom, cp, bp, buflen);
+		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
 			continue;
@@ -1151,14 +1159,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 			cp += n;
 			/* Get canonical name. */
 			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > buflen || n >= MAXHOSTNAMELEN) {
+			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			strcpy(bp, tbuf);
 			canonname = bp;
 			bp += n;
-			buflen -= n;
 			continue;
 		}
 		if (qtype == T_ANY) {
@@ -1192,13 +1199,20 @@ getanswer(answer, anslen, qname, qtype, pai)
 				cp += n;
 				continue;
 			}
+			if (type == T_AAAA) {
+				struct in6_addr in6;
+				memcpy(&in6, cp, IN6ADDRSZ);
+				if (IN6_IS_ADDR_V4MAPPED(&in6)) {
+					cp += n;
+					continue;
+				}
+			}
 			if (!haveanswer) {
 				int nn;
 
 				canonname = bp;
 				nn = strlen(bp) + 1;	/* for the \0 */
 				bp += nn;
-				buflen -= nn;
 			}
 
 			/* don't overwrite pai */
@@ -1243,7 +1257,7 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	va_list	 ap;
 {
 	struct addrinfo *ai;
-	querybuf buf, buf2;
+	querybuf *buf, *buf2;
 	const char *name;
 	const struct addrinfo *pai;
 	struct addrinfo sentinel, *cur;
@@ -1257,47 +1271,70 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	buf2 = malloc(sizeof(*buf2));
+	if (buf2 == NULL) {
+		free(buf);
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
 		/* prefer IPv6 */
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		q.next = &q2;
+		q2.name = name;
 		q2.qclass = C_IN;
 		q2.qtype = T_A;
-		q2.answer = buf2.buf;
-		q2.anslen = sizeof(buf2);
+		q2.answer = buf2->buf;
+		q2.anslen = sizeof(buf2->buf);
 		break;
 	case AF_INET:
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_A;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		break;
 	case AF_INET6:
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		break;
 	default:
+		free(buf);
+		free(buf2);
 		return NS_UNAVAIL;
 	}
-	if (res_searchN(name, &q) < 0)
+	if (res_searchN(name, &q) < 0) {
+		free(buf);
+		free(buf2);
 		return NS_NOTFOUND;
-	ai = getanswer(&buf, q.n, q.name, q.qtype, pai);
+	}
+	ai = getanswer(buf, q.n, q.name, q.qtype, pai);
 	if (ai) {
 		cur->ai_next = ai;
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
 	}
 	if (q.next) {
-		ai = getanswer(&buf2, q2.n, q2.name, q2.qtype, pai);
+		ai = getanswer(buf2, q2.n, q2.name, q2.qtype, pai);
 		if (ai)
 			cur->ai_next = ai;
 	}
+	free(buf);
+	free(buf2);
 	if (sentinel.ai_next == NULL)
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
@@ -1314,6 +1351,7 @@ _dns_getaddrinfo(rv, cb_data, ap)
 static void
 _sethtent()
 {
+
 	if (!hostf)
 		hostf = fopen(_PATH_HOSTS, "r" );
 	else
@@ -1323,6 +1361,7 @@ _sethtent()
 static void
 _endhtent()
 {
+
 	if (hostf) {
 		(void) fclose(hostf);
 		hostf = NULL;
@@ -1574,9 +1613,6 @@ _yp_getaddrinfo(rv, cb_data, ap)
 
 /* resolver logic */
 
-extern const char *__hostalias __P((const char *));
-extern int h_errno;
-
 /*
  * Formulate a normal query, send, and await answer.
  * Returned answer is placed in supplied buffer "answer".
@@ -1651,7 +1687,7 @@ res_queryN(name, target)
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
-				printf(";; rcode = %d, ancount=%d\n", hp->rcode,
+				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 				    ntohs(hp->ancount));
 #endif
 			continue;
@@ -1854,7 +1890,7 @@ res_querydomainN(name, domain, target)
 		 * copy without '.' if present.
 		 */
 		n = strlen(name);
-		if (n >= MAXDNAME) {
+		if (n + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
@@ -1866,11 +1902,11 @@ res_querydomainN(name, domain, target)
 	} else {
 		n = strlen(name);
 		d = strlen(domain);
-		if (n + d + 1 >= MAXDNAME) {
+		if (n + 1 + d + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		sprintf(nbuf, "%s.%s", name, domain);
+		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return (res_queryN(longname, target));
 }
