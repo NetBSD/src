@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.27 1996/09/01 21:33:43 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.28 1996/09/01 23:54:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -391,7 +391,7 @@ audioioctl(dev, cmd, addr, flag, p)
 	case MIXER_DEVICE:
 		return (mixer_ioctl(dev, cmd, addr, flag, p));
 	default:
-		return (ENXIO;
+		return (ENXIO);
 	}
 }
 
