@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.21 2000/04/03 07:35:24 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.22 2000/05/28 10:21:55 drochner Exp $	*/
 
 /*
  *
@@ -131,7 +131,7 @@ struct uvm_object *
 udv_attach(arg, accessprot, off, size)
 	void *arg;
 	vm_prot_t accessprot;
-	vaddr_t off;			/* used only for access check */
+	voff_t off;			/* used only for access check */
 	vsize_t size;			/* used only for access check */
 {
 	dev_t device = *((dev_t *) arg);
@@ -150,6 +150,15 @@ udv_attach(arg, accessprot, off, size)
 			mapfn == (int (*) __P((dev_t, int, int))) enodev ||
 			mapfn == (int (*) __P((dev_t, int, int))) nullop)
 		return(NULL);
+
+	/*
+	 * As long as the device d_mmap interface gets an "int"
+	 * offset, we have to watch out not to overflow its
+	 * numeric range. (assuming it will be interpreted as
+	 * "unsigned")
+	 */
+	if (((off + size - 1) & (u_int)-1) != off + size - 1)
+		return (0);
 
 	/*
 	 * Check that the specified range of the device allows the
