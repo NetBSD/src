@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.173 2001/12/14 22:15:52 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.174 2001/12/27 18:57:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.173 2001/12/14 22:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.174 2001/12/27 18:57:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "INSITE", "I325VM",             ""},
 				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
 	{{T_DIRECT, T_REMOV,
-	 "OLYMPUS", "C-1",             ""},
+	 "OLYMPUS", "",             ""},
+				PQUIRK_ONLYBIG},
+	{{T_DIRECT, T_REMOV,
+	 "General", "Flash Disk Drive",             ""},
 				PQUIRK_ONLYBIG},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
