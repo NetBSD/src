@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 1996/10/13 03:35:33 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 1997/01/13 14:05:04 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,16 +65,33 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
+#ifdef FPU_EMULATE
+#include <m68k/fpe/fpu_emulate.h>
 #endif
 
-#ifdef M68040
+#ifdef COMPAT_HPUX
+#include <compat/hpux/hpux.h>
+extern struct emul emul_hpux;
+#endif
+
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
+
+int	writeback __P((struct frame *fp, int docachepush));
+void	trap __P((int type, u_int code, u_int v, struct frame frame));
+void	syscall __P((register_t code, struct frame frame));
+
+#if defined(M68040) || defined(M68060)
 #ifdef DEBUG
 static void dumpssw __P((u_short));
 static void dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
+
+static inline void userret __P((struct proc *p, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 char	*trap_type[] = {
 	"Bus error",
@@ -98,11 +115,11 @@ int	trap_types = sizeof trap_type / sizeof trap_type[0];
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
 short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
-	FMT4SIZE,	/* type 4 - access error (68060) */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
 	-1, -1,		/* type 5-6 - undefined */
 	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
@@ -112,17 +129,36 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
-#ifdef M68040
-#define KDFAULT(c)	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_TMMASK) == SSW4_TMKD : \
-			    ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c) 	(mmutype == MMU_68040 ? \
-			    ((c) & SSW4_RW) == 0 : \
-			    ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#ifdef M68060
+#define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
+#define	WRFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_RW_W))
 #else
-#define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define	KDFAULT_060(c)	0
+#define	WRFAULT_060(c)	0
 #endif
+
+#ifdef M68040
+#define	KDFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
+#define	WRFAULT_040(c)	(cputype == CPU_68040 && \
+			 ((c) & SSW4_RW) == 0)
+#else
+#define	KDFAULT_040(c)	0
+#define	WRFAULT_040(c)	0
+#endif
+
+#if defined(M68030) || defined(M68020)
+#define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
+			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#else
+#define	KDFAULT_OTH(c)	0
+#define	WRFAULT_OTH(c)	0
+#endif
+
+#define	KDFAULT(c)	(KDFAULT_060(c) || KDFAULT_040(c) || KDFAULT_OTH(c))
+#define	WRFAULT(c)	(WRFAULT_060(c) || WRFAULT_040(c) || WRFAULT_OTH(c))
 
 #ifdef DEBUG
 int mmudebug = 0;
@@ -130,7 +166,7 @@ int mmupid = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_ISPID(p)	(p) == mmupid
+#define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
 /*
@@ -191,7 +227,7 @@ again:
 	 * we just return to the user without sucessfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
-	if (mmutype == MMU_68040 && fp->f_format == FMT7) {
+	if (cputype == CPU_68040 && fp->f_format == FMT7) {
 		if (beenhere) {
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
@@ -225,20 +261,23 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
-#endif
 	register struct proc *p;
-	register int i;
+	register int i, s;
 	u_int ucode;
 	u_quad_t sticks;
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-#endif
 
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
+
+	/* I have verified that this DOES happen! -gwr */
+	if (p == NULL)
+		p = &proc0;
+#ifdef DIAGNOSTIC
+	if (p->p_addr == NULL)
+		panic("trap: no pcb");
+#endif
+
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -247,28 +286,51 @@ trap(type, code, v, frame)
 	switch (type) {
 
 	default:
-dopanic:
-		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-#ifdef DDB
-		if (kdb_trap(type, &frame))
-			return;
+	dopanic:
+		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
+		printf("%s program counter = 0x%x\n",
+		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
+		/*
+		 * Let the kernel debugger see the trap frame that
+		 * caused us to panic.  This is a convenience so
+		 * one can see registers at the point of failure.
+		 */
+		s = splhigh();
+#ifdef KGDB
+		/* If connected, step or cont returns 1 */
+		if (kgdb_trap(type, &frame))
+			goto kgdb_cont;
 #endif
+#ifdef DDB
+		(void) kdb_trap(type, &frame);
+#endif
+	kgdb_cont:
+		splx(s);
+		if (panicstr) {
+			printf("trap during panic!\n");
+#ifdef DEBUG
+			/* XXX should be a machine-dependent hook */
+			printf("(press a key)\n"); (void)cngetc();
+#endif
+		}
 		regdump(&frame, 128);
 		type &= ~T_USER;
-		if ((unsigned)type < trap_types)
+		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (p->p_addr->u_pcb.pcb_onfault == 0)
 			goto dopanic;
+		/* FALLTHROUGH */
+
+	copyfault:
 		/*
 		 * If we have arranged to catch this fault in any of the
 		 * copy to/from user space routines, set PC to return to
 		 * indicated location and set flag informing buserror code
 		 * that it may need to clean up stack frame.
 		 */
-copyfault:
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
 		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
@@ -323,9 +385,13 @@ copyfault:
 		break;
 #endif
 
-#ifdef M68040
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+#ifdef FPU_EMULATE
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+		break;
+#elif defined(M68040) || defined(M68060)
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
 		       p->p_pid, p->p_comm,
@@ -395,34 +461,39 @@ copyfault:
 	 * XXX: Trace traps are a nightmare.
 	 *
 	 *	HP-UX uses trap #1 for breakpoints,
-	 *	HPBSD uses trap #2,
+	 *	NetBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
-	 *	KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
+	 *	DDB and KGDB uses trap #15 (for kernel breakpoints;
+	 *	handled elsewhere).
 	 *
-	 * HPBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
+	 * NetBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
 	case T_TRACE:		/* kernel trace trap */
-	case T_TRAP15:		/* SUN trace trap */
-#ifdef DDB
-		if (type == T_TRAP15 ||
-		    ((caddr_t)frame.f_pc != trap0 &&
-		     (caddr_t)frame.f_pc != trap1 &&
-		     (caddr_t)frame.f_pc != trap2 &&
-		     (caddr_t)frame.f_pc != trap12 &&
-		     (caddr_t)frame.f_pc != trap15 &&
-		     (caddr_t)frame.f_pc != illinst)) {
-			if (kdb_trap(type, &frame))
-				return;
-		}
+	case T_TRAP15:		/* kernel breakpoint */
+#ifdef DEBUG
+		printf("unexpected kernel trace trap, type = %d\n", type);
+		printf("program counter = 0x%x\n", frame.f_pc);
 #endif
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
-		break;
+		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+#ifdef COMPAT_SUNOS
+		/*
+		 * XXX This comment/code is not consistent XXX
+		 * SunOS seems to use Trap #2 for some obscure 
+		 * fpu operations.  So far, just ignore it, but
+		 * DONT trap on it.. 
+		 */
+		if (p->p_emul == &emul_sunos)
+			goto out;
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -514,22 +585,26 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
+		if ((type & T_USER) == 0 &&
+		    ((p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
-			map = &vm->vm_map;
+			map = vm ? &vm->vm_map : kernel_map;
+
 		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
+
 		va = trunc_page((vm_offset_t)v);
-#ifdef DEBUG
+
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", v);
+			printf("trap: bad kernel %s access at 0x%x\n",
+			    (ftype & VM_PROT_WRITE) ? "read/write" :
+			    "read", v);
 			goto dopanic;
 		}
-#endif
+
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
 			vm_offset_t bva;
@@ -556,7 +631,8 @@ copyfault:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
+		    && map != kernel_map) {
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
@@ -569,7 +645,7 @@ copyfault:
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
-				if (mmutype == MMU_68040)
+				if (cputype == CPU_68040)
 					(void) writeback(&frame, 1);
 #endif
 				return;
@@ -912,9 +988,6 @@ syscall(code, frame)
 	size_t argsize;
 	register_t args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_SUNOS
-	extern struct emul emul_sunos;
-#endif
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.f_sr))

@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.7 1996/12/28 23:30:16 pk Exp $
+#	$NetBSD: ALL,v 1.8 1997/01/13 14:04:42 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -13,6 +13,7 @@ options		EXEC_AOUT		# a.out format executables
 # different CPU types; you must have at least the correct one; REQUIRED
 options		M68030
 options		M68040
+options 	M68060
 
 # time zone RTC is expected to be set in; REQUIRED
 options 	TIMEZONE=-540	# Set the timezone that the kernel will use
@@ -44,7 +45,7 @@ options 	COMPAT_44		# compatibility with 4.4BSD binaries
 options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options		COMPAT_12
+options		COMPAT_12		# compatibility with NetBSD 1.2
 options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
@@ -82,6 +83,8 @@ options 	TUN			# tunnelling
 #options 	INSECURE		# Disable kernel security.
 options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	DEBUG			# extra kernel debugging support
+options 	FPU_EMULATE		# software fpu emulation
+options 	M060SP			# int/fp emulation for MC68060
 options 	FPSP			# floating point emulation for MC68040
 options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
