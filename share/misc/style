@@ -1,4 +1,4 @@
-/*	$NetBSD: style,v 1.8 1998/09/01 06:51:09 simonb Exp $	*/
+/*	$NetBSD: style,v 1.9 1999/01/20 23:13:54 lukem Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
@@ -188,9 +188,10 @@ main(argc, argv)
 	/*
 	 * Unary operators don't require spaces, binary operators do. Don't
 	 * use parenthesis unless they're required for precedence, or the
-	 * statement is really confusing without them.
+	 * statement is really confusing without them, such as:
+	 * a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
 	 */
-	a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
+	a = ((b->c[0] + ~d == (e || f)) || (g && h)) ? i : (j >> 1);
 	k = !(l & FLAGS);
 
 	/*
@@ -258,6 +259,7 @@ function(a1, a2, fl, a4)
  *
  * ANSI function braces look like regular function braces.
  */
+void
 function(int a1, int a2)
 {
 	...
