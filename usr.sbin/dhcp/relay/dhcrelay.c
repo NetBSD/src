@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcrelay.c,v 1.1.1.2 1997/06/03 02:49:50 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.3 1997/11/22 09:14:30 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -55,6 +55,8 @@ TIME max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options [256];
 
 int log_perror = 1;
+
+char *path_dhcrelay_pid = _PATH_DHCRELAY_PID;
 
 #ifdef USE_FALLBACK
 struct interface_info fallback_interface;
@@ -75,8 +77,9 @@ int main (argc, argv, envp)
 {
 	int i;
 	struct servent *ent;
-	struct server_list *sp;
-	int no_daemon;
+	struct server_list *sp = (struct server_list *)0;
+	int no_daemon = 0;
+	int quiet = 0;
 
 #ifdef SYSLOG_4_2
 	openlog ("dhcrelay", LOG_NDELAY);
@@ -99,20 +102,23 @@ int main (argc, argv, envp)
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
- 		    struct interface_info *tmp =
- 			((struct interface_info *)
- 			 dmalloc (sizeof *tmp, "specified_interface"));
- 		    if (!tmp)
- 			error ("Insufficient memory to %s %s",
- 			       "record interface", argv [i]);
-		    if (++i == argc) {
-			    usage ();
-		    }
- 		    memset (tmp, 0, sizeof *tmp);
- 		    strcpy (tmp -> name, argv [i]);
- 		    tmp -> next = interfaces;
- 		    tmp -> flags = INTERFACE_REQUESTED;
- 		    interfaces = tmp;
+			struct interface_info *tmp =
+				((struct interface_info *)
+				 dmalloc (sizeof *tmp, "specified_interface"));
+			if (!tmp)
+				error ("Insufficient memory to %s %s",
+				       "record interface", argv [i]);
+			if (++i == argc) {
+				usage ();
+			}
+			memset (tmp, 0, sizeof *tmp);
+			strcpy (tmp -> name, argv [i]);
+			tmp -> next = interfaces;
+			tmp -> flags = INTERFACE_REQUESTED;
+			interfaces = tmp;
+		} else if (!strcmp (argv [i], "-q")) {
+			quiet = 1;
+			quiet_interface_discovery = 1;
  		} else if (argv [i][0] == '-') {
  		    usage ();
  		} else {
@@ -140,6 +146,7 @@ int main (argc, argv, envp)
 			}
  		}
 	}
+
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port) {
 		ent = getservbyname ("dhcps", "udp");
@@ -173,6 +180,41 @@ int main (argc, argv, envp)
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = relay;
+
+	/* Become a daemon... */
+	if (!no_daemon) {
+		int pid;
+		FILE *pf;
+		int pfdesc;
+
+		log_perror = 0;
+
+		if ((pid = fork()) < 0)
+			error ("can't fork daemon: %m");
+		else if (pid)
+			exit (0);
+
+		pfdesc = open (path_dhcrelay_pid,
+			       O_CREAT | O_TRUNC | O_WRONLY, 0644);
+
+		if (pfdesc < 0) {
+			warn ("Can't create %s: %m", path_dhcrelay_pid);
+		} else {
+			pf = fdopen (pfdesc, "w");
+			if (!pf)
+				warn ("Can't fdopen %s: %m",
+				      path_dhcrelay_pid);
+			else {
+				fprintf (pf, "%d\n", getpid ());
+				fclose (pf);
+			}	
+		}
+
+		close (0);
+		close (1);
+		close (2);
+		pid = setsid ();
+	}
 
 	/* Start dispatching packets and timeouts... */
 	dispatch ();
