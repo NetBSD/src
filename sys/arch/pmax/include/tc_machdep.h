@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.8.4.1 1998/10/15 02:38:13 nisimura Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.8.4.2 1999/01/22 04:13:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,7 +60,7 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
-#include <mips/cpuarch.h>		/* defines MIPS_PHYS_TO_KSEG1 */
+#include <mips/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;

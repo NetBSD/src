@@ -1,5 +1,5 @@
-/* $Id: intr.h,v 1.5.2.1 1998/10/15 02:38:13 nisimura Exp $ */
-/*	$NetBSD: intr.h,v 1.5.2.1 1998/10/15 02:38:13 nisimura Exp $	*/
+/* $Id: intr.h,v 1.5.2.2 1999/01/22 04:13:50 nisimura Exp $ */
+/*	$NetBSD: intr.h,v 1.5.2.2 1999/01/22 04:13:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -47,7 +47,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 
 extern int _splraise __P((int));
 extern int _spllower __P((int)); 
@@ -87,7 +87,7 @@ struct splvec {
 };
 extern struct splvec splvec;
 
-#if 0 /* NEWSPL */
+#ifdef NEWSPL
 
 #define	splhigh()	_splraise(MIPS_INT_MASK)
 #define	spl0()		(void)(*__spl->lower.func)(0)
@@ -99,7 +99,7 @@ extern struct splvec splvec;
 #define	splclock()	(*__spl->clock.func)(__spl->clock.arg)
 #define	splstatclock()	(*__spl->clock.func)(__spl->clock.arg)
 #define	splsoftclock()	(*__spl->lower.func)(MIPS_SOFT_INT_MASK_0)
-#define	splsoftnet()	_splraise(MIPS_SOFT_INT_MASK1)
+#define	splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1)
 
 #else
 

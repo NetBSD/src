@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18.4.1 1998/10/15 02:38:12 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18.4.2 1999/01/22 04:13:50 nisimura Exp $	*/
 
 #ifndef _PMAX_CPU_H_
 #define _PMAX_CPU_H_
@@ -7,7 +7,7 @@
  * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
  */
 #include <mips/cpu.h>
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 
 #define MIPS_INT_MASK_FPU	MIPS_INT_MASK_5
 
