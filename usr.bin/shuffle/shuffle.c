@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.5 1998/12/04 17:47:06 perry Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.6 1998/12/07 04:10:13 fair Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.5 1998/12/04 17:47:06 perry Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.6 1998/12/07 04:10:13 fair Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -208,7 +208,7 @@ main(argc, argv)
 {
 	int i, nflag = 0, pflag = 0, ch;
 	char *fname = NULL;
-	size_t *shuffle;
+	size_t *shuffle = NULL;
 	struct timeval tv;
 	char **lines = NULL;
 	size_t nlines = 0, pick = 0;
