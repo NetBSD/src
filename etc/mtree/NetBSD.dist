@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.56 1997/11/13 03:15:59 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.57 1997/11/13 09:48:06 veego Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -796,6 +796,11 @@ etc
 # ./usr/share/examples/emul
 ..
 
+# ./usr/share/examples/ipf
+ipf
+# ./usr/share/examples/ipf
+..
+
 # ./usr/share/examples/supfiles
 supfiles
 # ./usr/share/examples/supfiles
@@ -1551,17 +1556,6 @@ ms
 # ./usr/share/nls
 nls
 # ./usr/share/nls
-..
-
-# ./usr/share/samples
-samples
-
-# ./usr/share/samples/ipf
-ipf
-# ./usr/share/samples/ipf
-..
-
-# ./usr/share/samples
 ..
 
 # ./usr/share/sendmail
