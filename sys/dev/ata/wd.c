@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.82 1994/05/05 08:31:00 mycroft Exp $
+ *	$Id: wd.c,v 1.83 1994/06/09 20:00:13 pk Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1234,6 +1234,7 @@ wdioctl(dev, cmd, addr, flag, p)
 		auio.uio_segflg = 0;
 		auio.uio_offset =
 		    fop->df_startblk * wd->sc_label.d_secsize;
+		auio.uio_procp = p;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
