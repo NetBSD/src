@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.13 2000/01/25 13:56:23 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.14 2000/02/08 09:18:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -386,6 +386,9 @@ ucomopen(dev, flag, mode, p)
 			return (ENOMEM);
 		}
 
+		if (sc->sc_methods->ucom_open != NULL)
+			sc->sc_methods->ucom_open(sc->sc_parent, sc->sc_portno);
+
 		ucomstartread(sc);
 	}
 	sc->sc_opening = 0;
@@ -441,6 +444,9 @@ ucomclose(dev, flag, mode, p)
 		 */
 		ucom_cleanup(sc);
 	}
+
+	if (sc->sc_methods->ucom_close != NULL)
+		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
 
 	return (0);
 }
@@ -642,8 +648,9 @@ ucom_break(sc, onoff)
 {
 	DPRINTF(("ucom_break: onoff=%d\n", onoff));
 
-	sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
-				 UCOM_SET_BREAK, onoff);
+	if (sc->sc_methods->ucom_set != NULL)
+		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
+		    UCOM_SET_BREAK, onoff);
 }
 
 void
@@ -653,8 +660,9 @@ ucom_dtr(sc, onoff)
 {
 	DPRINTF(("ucom_dtr: onoff=%d\n", onoff));
 
-	sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
-				 UCOM_SET_DTR, onoff);
+	if (sc->sc_methods->ucom_set != NULL)
+		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
+		    UCOM_SET_DTR, onoff);
 }
 
 void
@@ -664,16 +672,22 @@ ucom_rts(sc, onoff)
 {
 	DPRINTF(("ucom_rts: onoff=%d\n", onoff));
 
-	sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
-				 UCOM_SET_RTS, onoff);
+	if (sc->sc_methods->ucom_set != NULL)
+		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
+		    UCOM_SET_RTS, onoff);
 }
 
 void
 ucom_status_change(sc)
 	struct ucom_softc *sc;
 {
-	sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
-					&sc->sc_lsr, &sc->sc_msr);
+	if (sc->sc_methods->ucom_get_status != NULL) {
+		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
+		    &sc->sc_lsr, &sc->sc_msr);
+	} else {
+		sc->sc_lsr = 0;
+		sc->sc_msr = 0;
+	}
 }
 
 int
@@ -682,6 +696,7 @@ ucomparam(tp, t)
 	struct termios *t;
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	int error;
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -715,7 +730,12 @@ ucomparam(tp, t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
-	sc->sc_methods->ucom_param(sc->sc_parent, sc->sc_portno, t);
+	if (sc->sc_methods->ucom_param != NULL) {
+		error = sc->sc_methods->ucom_param(sc->sc_parent, sc->sc_portno,
+			    t);
+		if (error)
+			return (error);
+	}
 
 	// XXX worry about CHWFLOW
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.1 2000/01/25 08:46:00 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.2 2000/02/08 09:18:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ struct ucom_methods {
 	int (*ucom_param)__P((void *sc, int portno, struct termios *));
 	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd, 
 			      caddr_t data, int flag, struct proc *p));
+	void (*ucom_open)__P((void *sc, int portno));
+	void (*ucom_close)__P((void *sc, int portno));
 };
 
 /* modem control register */
