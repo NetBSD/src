@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.13 2001/02/01 08:43:46 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.14 2001/03/07 10:10:20 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -206,6 +206,26 @@ scan_formindex(struct cqForm *cqf, char *row)
 		type = DATAT_ISCRIPT;
 	else if (strcmp(x, "req-iscript") == 0) {
 		type = DATAT_ISCRIPT;
+		req = 1;
+	} else if (strcmp(x, "ipv4") == 0)
+		type = DATAT_V4;
+	else if (strcmp(x, "req-ipv4") == 0) {
+		type = DATAT_V4;
+		req = 1;
+	} else if (strcmp(x, "ipv4script") == 0)
+		type = DATAT_V4SCRIPT;
+	else if (strcmp(x, "req-ipv4script") == 0) {
+		type = DATAT_V4SCRIPT;
+		req = 1;
+	} else if (strcmp(x, "ipv6") == 0)
+		type = DATAT_V6;
+	else if (strcmp(x, "req-ipv6") == 0) {
+		type = DATAT_V6;
+		req = 1;
+	} else if (strcmp(x, "ipv6script") == 0)
+		type = DATAT_V6SCRIPT;
+	else if (strcmp(x, "req-ipv6script") == 0) {
+		type = DATAT_V6SCRIPT;
 		req = 1;
 	} else
 		bailout("%s: %s",
@@ -596,6 +616,48 @@ STRING(FIELD_RECORD *x)
 }
 
 static FIELD *
+IPV4(FIELD_RECORD *x)
+{				/* create an IPV4 field */
+	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 0);
+
+	if (f) {
+		set_field_type(f, TYPE_IPV4);
+		set_field_back(f, A_UNDERLINE);
+		if (x->newpage == 1)
+			set_new_page(f, TRUE);
+		if (x->required == 1)
+			field_opts_off(f, O_NULLOK);
+		if (x->bigfield) {
+			field_opts_off(f, O_STATIC);
+			set_max_field(f, x->rcols);
+		}
+		set_field_buffer(f, 0, x->v);
+	}
+	return f;
+}
+
+static FIELD *
+IPV6(FIELD_RECORD *x)
+{				/* create an IPV6 field */
+	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 0);
+
+	if (f) {
+		set_field_type(f, TYPE_IPV6);
+		set_field_back(f, A_UNDERLINE);
+		if (x->newpage == 1)
+			set_new_page(f, TRUE);
+		if (x->required == 1)
+			field_opts_off(f, O_NULLOK);
+		if (x->bigfield) {
+			field_opts_off(f, O_STATIC);
+			set_max_field(f, x->rcols);
+		}
+		set_field_buffer(f, 0, x->v);
+	}
+	return f;
+}
+
+static FIELD *
 MULTI(FIELD_RECORD *x)
 {				/* create a MULTI field */
 	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 1);
@@ -910,6 +972,11 @@ strlen_data(FTREE_ENTRY *ftp)
 		break;
 	case DATAT_ENTRY:
 	case DATAT_ESCRIPT:
+	case DATAT_NESCRIPT:
+	case DATAT_V4:
+	case DATAT_V4SCRIPT:
+	case DATAT_V6:
+	case DATAT_V6SCRIPT:
 		return(ftp->elen);
 		/* NOTREACHED */
 		break;
@@ -927,7 +994,6 @@ strlen_data(FTREE_ENTRY *ftp)
 		break;
 	case DATAT_INVIS:
 	case DATAT_NOEDIT:
-	case DATAT_NESCRIPT:
 		return(strlen(ftp->data));
 		/* NOTREACHED */
 		break;
@@ -1353,10 +1419,47 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 				p = strsep(&ftp->data, ",");
 				ftp->elen = atoi(p);
 				F[i].v = gen_escript(ftp, basedir, max, args);
+				if (strlen(F[i].v) > ftp->elen)
+					ftp->elen = strlen(F[i].v);
 				break;
 			case DATAT_NESCRIPT:
 				F[i].type = NOEDIT;
 				F[i].v = gen_escript(ftp, basedir, max, args);
+				ftp->elen = strlen(F[i].v);
+				break;
+			case DATAT_V4SCRIPT:
+				F[i].type = IPV4;
+				F[i].v = gen_escript(ftp, basedir, max, args);
+				ftp->elen = 18;
+				break;
+			case DATAT_V4:
+				F[i].type = IPV4;
+				cur = tstring(max, ftp->data);
+				if (cur)
+					F[i].v = strdup(args[cur-1]);
+				else {
+					if (ftp->data == NULL)
+						ftp->data = strdup("");
+					F[i].v = strdup(ftp->data);
+				}
+				ftp->elen = 18;
+				break;
+			case DATAT_V6SCRIPT:
+				F[i].type = IPV6;
+				F[i].v = gen_escript(ftp, basedir, max, args);
+				ftp->elen = 48;
+				break;
+			case DATAT_V6:
+				F[i].type = IPV6;
+				cur = tstring(max, ftp->data);
+				if (cur)
+					F[i].v = strdup(args[cur-1]);
+				else {
+					if (ftp->data == NULL)
+						ftp->data = strdup("");
+					F[i].v = strdup(ftp->data);
+				}
+				ftp->elen = 48;
 				break;
 			}
 			F[i].rows = 1;
