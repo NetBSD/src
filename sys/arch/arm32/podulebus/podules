@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.11 2000/05/09 21:56:04 bjh21 Exp $
+$NetBSD: podules,v 1.12 2000/07/22 15:05:47 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -120,14 +120,15 @@ podule	ARXE		SCSI		0x0041	16 bit SCSI interface
 
 podule	ALEPH1		PCCARD		0x00ea	PC card
 
-podule	ICUBED		ETHERLAN600	0x00ec	etherlan 600 network slot interface
-podule	ICUBED		ETHERLAN600A	0x011e	etherlan 600A network slot interface
-podule	ICUBED		ETHERLAN500	0x00d4	etherlen 500 interface
-podule	ICUBED		ETHERLAN500A	0x011f	etherlen 500A interface
-podule	ICUBED		ETHERLAN200	0x00bd	etherlen 200 interface
-podule	ICUBED		ETHERLAN200A	0x011d	etherlen 200A interface
-podule	ICUBED		ETHERLAN100	0x00c4	etherlen 100 interface
-podule	ICUBED		ETHERLAN100A	0x011c	etherlen 100A interface
+podule	ICUBED		ETHERLAN600	0x00ec	EtherLan 600 network slot interface
+podule	ICUBED		ETHERLAN600A	0x011e	EtherLan 600A network slot interface
+podule	ICUBED		ETHERLAN500	0x00d4	EtherLan 500 interface
+podule	ICUBED		ETHERLAN500A	0x011f	EtherLan 500A interface
+podule	ICUBED		ETHERLAN200	0x00bd	EtherLan 200 interface
+podule	ICUBED		ETHERLAN200A	0x011d	EtherLan 200A interface
+podule	ICUBED		ETHERLAN100	0x00c4	EtherLan 100 interface
+podule	ICUBED		ETHERLAN100LK	0x00cf	EtherLan 100Lk interface
+podule	ICUBED		ETHERLAN100A	0x011c	EtherLan 100A interface
 
 podule	BRINI		PORT		0x0000	BriniPort intelligent I/O interface
 podule	BRINI		LINK		0x00df	BriniLink transputer link adapter
