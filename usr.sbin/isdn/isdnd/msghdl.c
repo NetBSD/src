@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.4 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: msghdl.c,v 1.5 2002/03/30 07:12:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -57,7 +57,7 @@
  *	handle incoming CONNECT_IND (=SETUP) message
  *---------------------------------------------------------------------------*/
 void
-msg_connect_ind(msg_connect_ind_t *mp)
+msg_connect_ind(msg_connect_ind_t *mp, int len)
 {
 	struct cfg_entry *cep;
 	char *src_tela = "ERROR-src_tela";
@@ -72,7 +72,7 @@ msg_connect_ind(msg_connect_ind_t *mp)
 		dst_tela = get_alias(mp->dst_telno);
 	}
 
-	if((cep = find_matching_entry_incoming(mp)) == NULL)
+	if((cep = find_matching_entry_incoming(mp, len)) == NULL)
 	{
 		/* log message generated in find_matching_entry_incoming() */
 		sendm_connect_resp(NULL, mp->header.cdid, SETUP_RESP_DNTCRE, 0);
@@ -1108,6 +1108,7 @@ msg_ctrl_ev_ind(msg_ctrl_ev_ind_t *mp)
 	if (mp->event) {
 		/* new, add to controller list */
 		init_new_controller(mp->controller);
+		init_single_controller_protocol(find_ctrl_state(mp->controller));
 	} else {
 		/* controller gone, remove */
 		remove_ctrl_state(mp->controller);

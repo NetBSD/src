@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.4 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: support.c,v 1.5 2002/03/30 07:12:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -324,9 +324,30 @@ get_cep_by_driver(int drivertype, int driverunit)
  *	- found/match: make entry in free cep, return address
  *---------------------------------------------------------------------------*/
 struct cfg_entry *
-find_matching_entry_incoming(msg_connect_ind_t *mp)
+find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 {
 	struct cfg_entry *cep = NULL;
+	static const char resvd_type[] = "reserverd";
+	static const char no_type[] = "no type";
+	static const char * const numbering_types[] = {
+		"unknown",
+		"international",
+		"national",
+		"network specific",
+		"subscriber",
+		"abbreviated",
+		resvd_type,
+		resvd_type,
+		resvd_type
+	};
+	const char * ntype;
+
+	/* older kernels do not deliver all the information */	
+	if (((u_int8_t*)&mp->type_plan - (u_int8_t*)mp + sizeof(mp->type_plan)) <= len) {
+		ntype = numbering_types[(mp->type_plan & 0x70)>>4];
+	} else {
+		ntype = no_type;
+	}
 
 	/* check for CW (call waiting) early */
 
@@ -340,13 +361,13 @@ find_matching_entry_incoming(msg_connect_ind_t *mp)
 	                src_tela = get_alias(mp->src_telno);
 	                dst_tela = get_alias(mp->dst_telno);
 	
-			log(LL_CHD, "%05d <unknown> CW from %s to %s (%s) (no channel free)",
-				mp->header.cdid, src_tela, dst_tela, mp->display);
+			log(LL_CHD, "%05d <unknown> CW from %s (%s) to %s (%s) (no channel free)",
+				mp->header.cdid, src_tela, ntype, dst_tela, mp->display);
 		}
 		else
 		{
-			log(LL_CHD, "%05d <unknown> call waiting from %s to %s (%s) (no channel free)",
-				mp->header.cdid, mp->src_telno, mp->dst_telno, mp->display);
+			log(LL_CHD, "%05d <unknown> call waiting from %s (%s) to %s (%s) (no channel free)",
+				mp->header.cdid, mp->src_telno, ntype, mp->dst_telno, mp->display);
 		}
 		return(NULL);
 	}
@@ -540,13 +561,13 @@ find_matching_entry_incoming(msg_connect_ind_t *mp)
                 src_tela = get_alias(mp->src_telno);
                 dst_tela = get_alias(mp->dst_telno);
 
-		log(LL_CHD, "%05d Call from %s to %s (%s)",
-			mp->header.cdid, src_tela, dst_tela, mp->display);
+		log(LL_CHD, "%05d Call from %s (%s) to %s (%s)",
+			mp->header.cdid, src_tela, ntype, dst_tela, mp->display);
 	}
 	else
 	{
-		log(LL_CHD, "%05d <unknown> incoming call from %s to %s (%s)",
-			mp->header.cdid, mp->src_telno, mp->dst_telno, mp->display);
+		log(LL_CHD, "%05d <unknown> incoming call from %s (%s) to %s (%s)",
+			mp->header.cdid, mp->src_telno, ntype, mp->dst_telno, mp->display);
 	}
 	return(NULL);
 }
