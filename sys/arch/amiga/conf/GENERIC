@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.94 1997/10/29 21:16:48 veego Exp $
+#	$NetBSD: GENERIC,v 1.95 1997/11/02 18:47:02 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -40,17 +40,17 @@ options 	INET		# IP networking support (Required)
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	MROUTING	# Multicast routing
-#options 	NS		# XNS
+options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
-#options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-#options 	IPFILTER_LOG	# ipmon(8) log support
+options 	ISO,TPIP	# OSI
+options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
@@ -100,7 +100,9 @@ options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
-#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	SCSIVERBOSE	# Verbose SCSI errors
+
+options		NTP		# NTP phase/frequency locked loop
 
 #
 # Misc. debuging options
@@ -282,14 +284,19 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
-#pseudo-device	tun		1	# network tunnel line discipline
+pseudo-device	tun		1	# network tunnel line discipline
 pseudo-device	bpfilter	16	# Berkeley packet filter
-#pseudo-device	ipfilter		# IP Filter package
+pseudo-device	ipfilter		# IP Filter package
 
 pseudo-device	view		10	# views
 pseudo-device	pty		16	# pseudo ptys
 
 pseudo-device	vnd		4	# vnode pseudo-disks
-#pseudo-device	ccd		4	# concatenated disk devices
+pseudo-device	ccd		4	# concatenated disk devices
+
+# rnd is EXPERIMENTAL at this point.
+#pseudo-device  rnd                     # /dev/random and in-kernel generator
+#options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
+
