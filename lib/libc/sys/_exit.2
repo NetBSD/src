@@ -1,4 +1,4 @@
-.\"	$NetBSD: _exit.2,v 1.14 2003/01/18 11:32:59 thorpej Exp $
+.\"	$NetBSD: _exit.2,v 1.15 2003/03/01 15:59:03 bjh21 Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,22 +33,28 @@
 .\"
 .\"     @(#)_exit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 23, 2002
 .Dt EXIT 2
 .Os
 .Sh NAME
-.Nm _exit
+.Nm _Exit, _exit
 .Nd terminate the calling process
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Fd #include \*[Lt]stdlib.h\*[Gt]
+.Ft void
+.Fn _Exit "int status"
 .Fd #include \*[Lt]unistd.h\*[Gt]
 .Ft void
 .Fn _exit "int status"
 .Sh DESCRIPTION
 The
+.Fn _Exit
+and
 .Fn _exit
-function terminates a process with the following consequences:
+functions are equivalent.
+They each terminate a process with the following consequences:
 .Bl -bullet
 .It
 All of the descriptors open in the calling process are closed.
@@ -101,6 +107,8 @@ before
 calling
 .Fn _exit .
 .Sh RETURN VALUES
+.Fn _Exit
+and
 .Fn _exit
 can never return.
 .Sh SEE ALSO
@@ -113,3 +121,7 @@ The
 .Fn _exit
 function conforms to
 .St -p1003.1-90 .
+The
+.Fn _Exit
+function conforms to
+.St -isoC99 .
