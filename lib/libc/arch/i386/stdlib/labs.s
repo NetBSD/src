@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)abs.s	5.2 (Berkeley) 12/17/90
- *	$Id: abs.s,v 1.2 1993/10/08 00:01:04 jtc Exp $
+ *	$Id: labs.s,v 1.1 1993/10/08 00:01:09 jtc Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: abs.s,v 1.2 1993/10/08 00:01:04 jtc Exp $"
+	.asciz "$Id: labs.s,v 1.1 1993/10/08 00:01:09 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
-ENTRY(abs)
+ENTRY(labs)
 	movl	4(%esp),%eax
 	cmpl	$0,%eax
 	jge	1f
