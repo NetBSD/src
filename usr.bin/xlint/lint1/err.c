@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.13 2001/02/24 00:43:51 cgd Exp $	*/
+/*	$NetBSD: err.c,v 1.14 2001/05/24 12:10:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: err.c,v 1.13 2001/02/24 00:43:51 cgd Exp $");
+__RCSID("$NetBSD: err.c,v 1.14 2001/05/24 12:10:39 lukem Exp $");
 #endif
 
 #define FD_SETSIZE 512
@@ -374,6 +374,7 @@ const	char *msgs[] = {
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
+	"%s C does not support // comments",			      /* 312 */
 };
 
 /*
