@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.70 2002/09/27 06:12:55 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.71 2002/09/27 06:30:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.70 2002/09/27 06:12:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.71 2002/09/27 06:30:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -351,8 +351,7 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 	/*
 	 * Check the parent device's name.
 	 */
-	if (pcd->cd_name[0] != cfp->cfp_parent[0] ||
-	    strcmp(pcd->cd_name, cfp->cfp_parent) != 0)
+	if (STREQ(pcd->cd_name, cfp->cfp_parent) == 0)
 		return (0);	/* not the same parent */
 
 	/*
