@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.h,v 1.6 2000/04/12 10:36:44 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.7 2001/10/16 04:57:38 itojun Exp $	*/
 /*	$KAME: in6_ifattach.h,v 1.8 2000/04/12 03:51:30 itojun Exp $	*/
 
 /*
@@ -37,11 +37,5 @@
 void in6_ifattach __P((struct ifnet *, struct ifnet *));
 void in6_ifdetach __P((struct ifnet *));
 #endif /* _KERNEL */
-
-#define IN6_IFT_LOOP	1
-#define IN6_IFT_P2P	2
-#define IN6_IFT_802	3
-#define IN6_IFT_P2P802	4
-#define IN6_IFT_ARCNET	5
 
 #endif /* _NETINET6_IN6_IFATTACH_H_ */

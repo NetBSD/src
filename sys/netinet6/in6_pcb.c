@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.41 2001/10/15 09:51:16 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.42 2001/10/16 04:57:38 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -174,8 +174,9 @@ in6_pcbbind(in6p, nam, p)
 
 		/*
 		 * since we do not check port number duplicate with IPv4 space,
-		 * we reject it at this moment.  If we leave it, we make normal
-		 * user to hijack port number from other users.
+		 * we reject it at this moment.  If we leave it, we would
+		 * mistakenly allow normal users to hijack tcp/udp ports from
+		 * other users.
 		 */
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 			return(EADDRNOTAVAIL);
@@ -253,7 +254,8 @@ in6_pcbbind(in6p, nam, p)
 				if (t && (reuseport & t->inp_socket->so_options) == 0)
 					return EADDRINUSE;
 #endif
-			} else {
+			} else
+			{
 				struct in6pcb *t;
 
 				t = in6_pcblookup(head, &zeroin6_addr, 0,
@@ -599,7 +601,7 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 
 		/*
 		 * Detect if we should notify the error. If no source and
-		 * destination ports are specifed, but non-zero flowinfo and
+		 * destination ports are specified, but non-zero flowinfo and
 		 * local address match, notify the error. This is the case
 		 * when the error is delivered with an encrypted buffer
 		 * by ESP. Otherwise, just compare addresses and ports
@@ -703,16 +705,17 @@ in6_losing(in6p)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-		if (rt->rt_flags & RTF_DYNAMIC)
+		if (rt->rt_flags & RTF_DYNAMIC) {
 			(void)rtrequest(RTM_DELETE, rt_key(rt),
 					rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 					(struct rtentry **)0);
-		else
-		/*
-		 * A new route can be allocated
-		 * the next time output is attempted.
-		 */
+		} else {
+			/*
+			 * A new route can be allocated
+			 * the next time output is attempted.
+			 */
 			rtfree(rt);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.30 2001/10/15 09:51:17 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.31 2001/10/16 04:57:38 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -106,7 +106,6 @@
 #include <netinet6/pim6_var.h>
 
 #include <netinet6/nd6.h>
-
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
