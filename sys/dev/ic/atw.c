@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.61 2004/07/15 07:22:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.61 2004/07/15 07:22:13 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -181,73 +181,100 @@ static void atw_si4126_print(struct atw_softc *);
 #define	DPRINTF3(sc, x)	/* nothing */
 #endif
 
-#ifdef ATW_STATS
-void	atw_print_stats(struct atw_softc *);
-#endif
-
+/* ifnet methods */
 void	atw_start(struct ifnet *);
 void	atw_watchdog(struct ifnet *);
 int	atw_ioctl(struct ifnet *, u_long, caddr_t);
 int	atw_init(struct ifnet *);
-void	atw_txdrain(struct atw_softc *);
 void	atw_stop(struct ifnet *, int);
 
-void	atw_reset(struct atw_softc *);
-int	atw_read_srom(struct atw_softc *);
+/* Device attachment */
+void	atw_attach(struct atw_softc *);
+int	atw_detach(struct atw_softc *);
 
-void	atw_shutdown(void *);
-
+/* Rx/Tx process */
 void	atw_rxdrain(struct atw_softc *);
+void	atw_txdrain(struct atw_softc *);
 int	atw_add_rxbuf(struct atw_softc *, int);
 void	atw_idle(struct atw_softc *, u_int32_t);
 
+/* Device (de)activation and power state */
 int	atw_enable(struct atw_softc *);
 void	atw_disable(struct atw_softc *);
 void	atw_power(int, void *);
+void	atw_shutdown(void *);
+void	atw_reset(struct atw_softc *);
 
+/* Interrupt handlers */
 void	atw_rxintr(struct atw_softc *);
 void	atw_txintr(struct atw_softc *);
 void	atw_linkintr(struct atw_softc *, u_int32_t);
 
-static int atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void atw_tsf(struct atw_softc *);
-static void atw_start_beacon(struct atw_softc *, int);
-static void atw_write_wep(struct atw_softc *);
-static void atw_write_bssid(struct atw_softc *);
-static void atw_write_ssid(struct atw_softc *);
-static void atw_write_sup_rates(struct atw_softc *);
-static void atw_clear_sram(struct atw_softc *);
-static void atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
-static int atw_media_change(struct ifnet *);
-static void atw_media_status(struct ifnet *, struct ifmediareq *);
-static void atw_filter_setup(struct atw_softc *);
-static void atw_frame_setdurs(struct atw_softc *, struct atw_frame *, int, int);
-static __inline u_int64_t atw_predict_beacon(u_int64_t, u_int32_t);
-static void atw_recv_beacon(struct ieee80211com *, struct mbuf *,
-    struct ieee80211_node *, int, int, u_int32_t);
-static void atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
-    struct ieee80211_node *, int, int, u_int32_t);
-static void atw_node_free(struct ieee80211com *, struct ieee80211_node *);
-static struct ieee80211_node *atw_node_alloc(struct ieee80211com *);
+/* 802.11 state machine */
+static int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static int	atw_tune(struct atw_softc *);
+static void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
+		              struct ieee80211_node *, int, int, u_int32_t);
 
-static int atw_tune(struct atw_softc *);
+/* Device initialization */
+static void	atw_wcsr_init(struct atw_softc *);
+static void	atw_cmdr_init(struct atw_softc *);
+static void	atw_tofs2_init(struct atw_softc *);
+static void	atw_txlmt_init(struct atw_softc *);
+static void	atw_test1_init(struct atw_softc *);
+static void	atw_rf_reset(struct atw_softc *);
+static void	atw_cfp_init(struct atw_softc *);
+static void	atw_tofs0_init(struct atw_softc *);
+static void	atw_ifs_init(struct atw_softc *);
+static void	atw_response_times_init(struct atw_softc *);
+static void	atw_bbp_io_init(struct atw_softc *);
 
-static void atw_rfio_enable(struct atw_softc *, int);
+/* RAM/ROM utilities */
+static void	atw_clear_sram(struct atw_softc *);
+static void	atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
+static int	atw_read_srom(struct atw_softc *);
+
+/* BSS setup */
+static void	atw_tsf(struct atw_softc *);
+static void	atw_start_beacon(struct atw_softc *, int);
+static void	atw_write_bssid(struct atw_softc *);
+static void	atw_write_ssid(struct atw_softc *);
+static void	atw_write_sup_rates(struct atw_softc *);
+static void	atw_write_wep(struct atw_softc *);
+
+/* Media */
+static int	atw_media_change(struct ifnet *);
+static void	atw_media_status(struct ifnet *, struct ifmediareq *);
+
+static void	atw_filter_setup(struct atw_softc *);
+
+/* 802.11 utilities */
+static void	atw_frame_setdurs(struct atw_softc *,
+		                  struct atw_frame *, int, int);
+static struct ieee80211_node	*atw_node_alloc(struct ieee80211com *);
+static void	atw_node_free(struct ieee80211com *,
+		              struct ieee80211_node *);
+static void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
+		                struct ieee80211_node *, int, int,
+		                u_int32_t);
+static __inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
+				                   uint32_t);
+static __inline void		atw_tsft(struct atw_softc *, uint32_t *,
+				         uint32_t *);
+
+/*
+ * Tuner/transceiver/modem
+ */
+static void	atw_bbp_io_enable(struct atw_softc *, int);
 
 /* RFMD RF3000 Baseband Processor */
 static int atw_rf3000_init(struct atw_softc *);
-static int atw_rf3000_tune(struct atw_softc *, u_int8_t);
+static int atw_rf3000_tune(struct atw_softc *, u_int);
 static int atw_rf3000_write(struct atw_softc *, u_int, u_int);
-#ifdef ATW_DEBUG
-static int atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
-#endif /* ATW_DEBUG */
 
 /* Silicon Laboratories Si4126 RF/IF Synthesizer */
-static int atw_si4126_tune(struct atw_softc *, u_int8_t);
-static int atw_si4126_write(struct atw_softc *, u_int, u_int);
-#ifdef ATW_DEBUG
-static int atw_si4126_read(struct atw_softc *, u_int, u_int *);
-#endif /* ATW_DEBUG */
+static void atw_si4126_tune(struct atw_softc *, u_int);
+static void atw_si4126_write(struct atw_softc *, u_int, u_int);
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
