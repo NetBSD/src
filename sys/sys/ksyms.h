@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.3 2003/04/26 10:24:59 ragge Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.4 2003/05/01 20:46:20 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -26,24 +26,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Definitions used in ksyms_getname() and ksyms_getval().
- */
-#define	KSYMS_CLOSEST	0001	/* Nearest lower match */
-#define	KSYMS_EXACT	0002	/* Only exact match allowed */
-#define KSYMS_EXTERN	0000	/* Only external symbols (pseudo) */
-#define KSYMS_PROC	0100	/* Procedures only */
-#define KSYMS_ANY	0200	/* Also local symbols (DDB use only) */
+#ifndef _SYS_KSYMS_H_
+#define _SYS_KSYMS_H_
 
-#ifdef notyet
 /*
  * Do a lookup of a symbol using the in-kernel lookup algorithm.
  */
-
 struct ksyms_gsymbol {
 	char *kg_name;
 	union {
-		Elf_Sym *ku_sym;
+		void *ku_sym;		 /* Normally Elf_Sym */
 		unsigned long *ku_value;
 	} _un;
 #define	kg_sym _un.ku_sym
@@ -53,7 +45,16 @@ struct ksyms_gsymbol {
 #define	KIOCGSYMBOL	_IOW('l', 1, struct ksyms_gsymbol)
 #define	KIOCGVALUE	_IOW('l', 2, struct ksyms_gsymbol)
 #define	KIOCGSIZE	_IOR('l', 3, int)
-#endif
+
+#ifdef _KERNEL
+/*
+ * Definitions used in ksyms_getname() and ksyms_getval().
+ */
+#define	KSYMS_CLOSEST	0001	/* Nearest lower match */
+#define	KSYMS_EXACT	0002	/* Only exact match allowed */
+#define KSYMS_EXTERN	0000	/* Only external symbols (pseudo) */
+#define KSYMS_PROC	0100	/* Procedures only */
+#define KSYMS_ANY	0200	/* Also local symbols (DDB use only) */
 
 /*
  * Prototypes
@@ -66,3 +67,5 @@ void ksyms_init(int, void *, void *);
 #ifdef DDB
 int ksyms_sift(char *mod, char *sym, int mode);
 #endif
+#endif /* _KERNEL */
+#endif /* _SYS_KSYMS_H_ */
