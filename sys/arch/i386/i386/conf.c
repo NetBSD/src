@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1994/11/04 00:40:17 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 1994/11/04 00:41:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -362,14 +362,14 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWDC,wd),	/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #define	fdopen	Fdopen
-	cdev_disk_init(NFD,fd),		/* 9: floppy diskette */
+	cdev_disk_init(NFDC,fd),	/* 9: floppy diskette */
 #undef	fdopen
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_notdef(),			/* 11: unused */
