@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_eb164.c,v 1.3 1996/11/19 05:08:38 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.4 1996/11/25 03:59:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -71,7 +71,7 @@ dec_eb164_cons_init()
 	extern struct cia_config cia_configuration;
 
 	ccp = &cia_configuration;
-	cia_init(ccp);
+	cia_init(ccp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 

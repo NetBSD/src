@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.15 1996/11/19 05:08:37 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.16 1996/11/25 03:59:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -74,7 +74,7 @@ dec_axppci_33_cons_init()
 	extern struct lca_config lca_configuration;
 
 	lcp = &lca_configuration;
-	lca_init(lcp);
+	lca_init(lcp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
