@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.24 2000/05/03 11:12:14 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.25 2000/05/21 18:45:55 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.24 2000/05/03 11:12:14 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.25 2000/05/21 18:45:55 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.5 2000/04/28 14:56:52 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.8 2000/05/19 15:54:43 darrenr Exp";
 #endif
 #endif
 
@@ -293,8 +293,12 @@ int mode;
 	case SIOCIPFFB :
 		if (!(mode & FWRITE))
 			error = EPERM;
-		else
-			*(int *)data = ipflog_clear(IPL_LOGSTATE);
+		else {
+			int tmp;
+
+			tmp = ipflog_clear(IPL_LOGSTATE);
+			IWCOPY((char *)&tmp, data, sizeof(tmp));
+		}
 		break;
 #endif
 	case SIOCGETFS :
@@ -918,7 +922,12 @@ ipstate_t *is;
 icmphdr_t *icmp;
 {
 	if (v == 4) {
-		if ((icmpreplytype4[is->is_type] == icmp->icmp_type) &&
+		/*
+		 * If we matched its type on the way in, then when going out
+		 * it will still be the same type.
+		 */
+		if (((icmp->icmp_type == is->is_type) ||
+		     (icmpreplytype4[is->is_type] == icmp->icmp_type)) &&
 		    (icmp->icmp_id == is->is_icmp.ics_id) &&
 		    (icmp->icmp_seq == is->is_icmp.ics_seq)) {
 			return 1;
@@ -937,7 +946,7 @@ icmphdr_t *icmp;
 	return 0;
 }
 
-frentry_t *fr_checkicmpmatchingstate(ip, fin)
+static frentry_t *fr_checkicmpmatchingstate(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.50 2000/05/11 19:46:05 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.51 2000/05/21 18:45:54 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,11 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.50 2000/05/11 19:46:05 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.51 2000/05/21 18:45:54 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.4 2000/05/09 22:43:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.6 2000/05/13 07:46:49 darrenr Exp";
 #endif
 #endif
 
@@ -1015,25 +1016,20 @@ struct ip *oip;
 # ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 # endif
+	bzero((char *)ip, sizeof(*tcp2) + hlen)
 	tcp2 = (struct tcphdr *)((char *)ip + hlen);
 
 	tcp2->th_sport = tcp->th_dport;
 	tcp2->th_dport = tcp->th_sport;
-	tcp2->th_seq = 0;
 	tcp2->th_ack = ntohl(tcp->th_seq);
 	tcp2->th_ack += tlen;
 	tcp2->th_ack = htonl(tcp2->th_ack);
-	tcp2->th_x2 = 0;
 	tcp2->th_off = sizeof(*tcp2) >> 2;
 	tcp2->th_flags = TH_RST|TH_ACK;
-	tcp2->th_win = 0;
-	tcp2->th_sum = 0;
 # ifdef	USE_INET6
 	if (fin->fin_v == 6) {
-		ip6->ip6_flow = 0;
 		ip6->ip6_plen = htons(sizeof(struct tcphdr));
 		ip6->ip6_nxt = IPPROTO_TCP;
-		ip6->ip6_hlim = 0;
 		ip6->ip6_src = oip6->ip6_dst;
 		ip6->ip6_dst = oip6->ip6_src;
 		tcp2->th_sum = in6_cksum(m, IPPROTO_TCP,
@@ -1071,6 +1067,7 @@ int len;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_len = len;
 		ip->ip_id = oip->ip_id;
+		ip->ip_off = 0;
 # if (BSD < 199306) || defined(__sgi)
 		ip->ip_ttl = tcp_ttl;
 # else
@@ -1388,7 +1385,10 @@ frdest_t *fdp;
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
 # if	BSD >= 199306
-		int i = m->m_flags & M_EXT;
+		int i = 0;
+
+		if ((m->m_flags & M_EXT) && MCLISREFERENCED(m))
+			i = 1;
 # endif
 # ifndef __NetBSD__
 		ip->ip_id = htons(ip->ip_id);

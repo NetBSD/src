@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.32 2000/05/11 19:46:06 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.33 2000/05/21 18:45:54 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,10 +11,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.32 2000/05/11 19:46:06 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.33 2000/05/21 18:45:54 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.4 2000/05/06 12:29:48 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.10 2000/05/19 15:54:44 darrenr Exp";
 #endif
 #endif
 
@@ -234,7 +234,7 @@ ipnat_t *n;
 }
 
 
-void nat_delrdr(n)
+static void nat_delrdr(n)
 ipnat_t *n;
 {
 	if (n->in_rnext)
@@ -434,11 +434,17 @@ int mode;
 	{
 #ifdef  IPFILTER_LOG
 	case SIOCIPFFB :
+	{
+		int tmp;
+
 		if (!(mode & FWRITE))
 			error = EPERM;
-		else
-			*(int *)data = ipflog_clear(IPL_LOGNAT);
+		else {
+			tmp = ipflog_clear(IPL_LOGNAT);
+			IWCOPY((char *)&tmp, (char *)data, sizeof(tmp));
+		}
 		break;
+	}
 #endif
 	case SIOCADNAT :
 		if (!(mode & FWRITE)) {
@@ -1095,8 +1101,10 @@ int direction;
 
 	/* Give me a new nat */
 	KMALLOC(nat, nat_t *);
-	if (nat == NULL)
+	if (nat == NULL) {
+		nat_stats.ns_memfail++;
 		return NULL;
+	}
 
 	bzero((char *)nat, sizeof(*nat));
 	nat->nat_flags = flags;
@@ -1168,7 +1176,7 @@ int direction;
 					port += MAPBLK_MINPORT;
 					port = htons(port);
 				}
-			} else if (!np->in_nip &&
+			} else if (!np->in_outip &&
 				   (np->in_outmsk == 0xffffffff)) {
 				/*
 				 * 0/32 - use the interface's IP address.
@@ -1177,7 +1185,7 @@ int direction;
 				    fr_ifpaddr(4, fin->fin_ifp, &in) == -1)
 					goto badnat;
 				in.s_addr = ntohl(in.s_addr);
-			} else if (!np->in_nip && !np->in_outmsk) {
+			} else if (!np->in_outip && !np->in_outmsk) {
 				/*
 				 * 0/0 - use the original source address/port.
 				 */
@@ -1398,6 +1406,7 @@ int direction;
 	np->in_use++;
 	return nat;
 badnat:
+	nat_stats.ns_badnat++;
 	if ((hm = nat->nat_hm) != NULL)
 		nat_hostmapdel(hm);
 	KFREE(nat);
@@ -1694,7 +1703,7 @@ natlookup_t *np;
 }
 
 
-int nat_match(fin, np, ip)
+static int nat_match(fin, np, ip)
 fr_info_t *fin;
 ipnat_t *np;
 ip_t *ip;
@@ -1890,8 +1899,8 @@ maskloop:
 				if (nat->nat_age < fr_defnaticmpage)
 					nat->nat_age = fr_defnaticmpage;
 #ifdef LARGE_NAT
-				else if (nat->nat_age > DEF_NAT_AGE)
-					nat->nat_age = DEF_NAT_AGE;
+				else if (nat->nat_age > fr_defnatage)
+					nat->nat_age = fr_defnatage;
 #endif
 				/*
 				 * Increase this because we may have
@@ -1976,7 +1985,8 @@ fr_info_t *fin;
 
 	READ_ENTER(&ipf_nat);
 
-	if ((ip->ip_p == IPPROTO_ICMP) && (nat = nat_icmp(ip, fin, &nflags, NAT_INBOUND)))
+	if ((ip->ip_p == IPPROTO_ICMP) &&
+	    (nat = nat_icmp(ip, fin, &nflags, NAT_INBOUND)))
 		;
 	else if ((ip->ip_off & IP_OFFMASK) &&
 		 (nat = ipfr_nat_knownfrag(ip, fin)))
@@ -2089,8 +2099,8 @@ maskloop:
 				if (nat->nat_age < fr_defnaticmpage)
 					nat->nat_age = fr_defnaticmpage;
 #ifdef LARGE_NAT
-				else if (nat->nat_age > DEF_NAT_AGE)
-					nat->nat_age = DEF_NAT_AGE;
+				else if (nat->nat_age > fr_defnatage)
+					nat->nat_age = fr_defnatage;
 #endif
 				/*
 				 * Increase this because we may have
