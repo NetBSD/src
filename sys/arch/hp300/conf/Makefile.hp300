@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.31 1996/02/02 20:08:59 mycroft Exp $
+#	$NetBSD: Makefile.hp300,v 1.32 1996/02/02 23:49:19 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -76,7 +76,7 @@ NORMAL_S_C=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %CFILES
 
-%SFILES
+#%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
