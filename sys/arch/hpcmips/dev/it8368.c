@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.1 1999/11/21 06:48:58 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.2 1999/11/29 17:23:04 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -533,6 +533,7 @@ it8368_chip_io_alloc(pch, start, size, align, pcihp)
 		DPRINTF(("it8368_chip_io_alloc map port %#x+%#x\n",
 			 start, size));
 	} else {
+#if notyet
 		if (bus_space_alloc(sc->sc_csiot, sc->sc_csiobase,
 				    sc->sc_csiobase + sc->sc_csiosize, size, 
 				    align, 0, 0, &pcihp->addr, &pcihp->ioh)) {
@@ -541,8 +542,11 @@ it8368_chip_io_alloc(pch, start, size, align, pcihp)
 		pcihp->flags = PCMCIA_IO_ALLOCATED;
 		DPRINTF(("it8368_chip_io_alloc alloc %#x from %#x\n",
 			 size, pcihp->addr));
-
+#else
+		return 1; /* XXX */
+#endif
 	}
+
 	pcihp->iot = sc->sc_csiot;
 	pcihp->size = size;
 	
