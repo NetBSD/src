@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nm.c	5.8 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: nm.c,v 1.2 1993/08/01 18:10:27 mycroft Exp $";
+static char rcsid[] = "$Id: nm.c,v 1.3 1993/12/01 08:56:58 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ int (*sfunc)() = fname;
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
-void *emalloc();
+void *emalloc(), *erealloc();
 
 /*
  * main()
@@ -196,8 +196,11 @@ show_archive(fname, fp)
 	int i, rval;
 	long last_ar_off;
 	char *p, *name;
+	int baselen, namelen;
 
-	name = emalloc(sizeof(ar_head.ar_name) + strlen(fname) + 3);
+	baselen = strlen(fname) + 3;
+	namelen = sizeof(ar_head.ar_name);
+	name = emalloc(baselen + namelen);
 
 	rval = 0;
 
@@ -226,6 +229,31 @@ show_archive(fname, fp)
 		p = name;
 		if (print_file_each_line)
 			p += sprintf(p, "%s:", fname);
+#ifdef AR_EFMT1
+		/*
+		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
+		 * first <namelen> bytes of the file
+		 */
+		if (		(ar_head.ar_name[0] == '#') &&
+				(ar_head.ar_name[1] == '1') &&
+				(ar_head.ar_name[2] == '/') && 
+				(isdigit(ar_head.ar_name[3]))) {
+
+			int len = atoi(&ar_head.ar_name[3]);
+			if (len > namelen) {
+				p -= (int)name;
+				name = (char *)erealloc(name, baselen+len);
+				namelen = len;
+				p += (int)name;
+			}
+			if (fread(p, len, 1, fp) != 1) {
+				(void)fprintf(stderr, "nm: %s: premature EOF.\n", name);
+				(void)free(name);
+				return 1;
+			}
+			p += len;
+		} else
+#endif
 		for (i = 0; i < sizeof(ar_head.ar_name); ++i)
 			if (ar_head.ar_name[i] && ar_head.ar_name[i] != ' ')
 				*p++ = ar_head.ar_name[i];
@@ -573,6 +601,18 @@ emalloc(size)
 
 	/* NOSTRICT */
 	if (p = malloc(size))
+		return(p);
+	(void)fprintf(stderr, "nm: %s\n", strerror(errno));
+	exit(1);
+}
+
+void *
+erealloc(p, size)
+	void   *p;
+	size_t size;
+{
+	/* NOSTRICT */
+	if (p = realloc(p, size))
 		return(p);
 	(void)fprintf(stderr, "nm: %s\n", strerror(errno));
 	exit(1);
