@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.430 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.431 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -222,3 +222,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	racoon(8): Switch to ipsec-tools' racoon [manu 20050216]
 	ipf(8): updated to version 4.1.6. [martti 20050219]
 	libradius(3): import libradius from FreeBSD [manu 20050220]
+	pppd(8): updated to version 2.4.3. [cube 20050220]
