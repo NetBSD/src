@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ns_main.c	4.55 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: ns_main.c,v 1.2 1993/08/01 17:57:44 mycroft Exp $";
+static char rcsid[] = "$Id: ns_main.c,v 1.3 1994/12/30 05:02:08 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -299,6 +299,11 @@ main(argc, argv, envp)
 	(void) listen(vs, 5);
 
 	/*
+	 * A start.  Will increase as appropriate later.
+	 */
+	nfds = vs + 1;
+
+	/*
 	 * Get list of local addresses and set up datagram sockets.
 	 */
 	getnetconf();
@@ -421,15 +426,6 @@ main(argc, argv, envp)
 		fprintf(ddt,"Ready to answer queries.\n");
 #endif
 	prime_cache();
-	nfds = getdtablesize();       /* get the number of file descriptors */
-	if (nfds > FD_SETSIZE) {
-		nfds = FD_SETSIZE;	/* Bulletproofing */
-		syslog(LOG_ERR, "Return from getdtablesize() > FD_SETSIZE");
-#ifdef DEBUG
-		if (debug)
-		      fprintf(ddt,"Return from getdtablesize() > FD_SETSIZE\n");
-#endif
-	}
 	FD_ZERO(&mask);
 	FD_SET(vs, &mask);
 	for (dqp = datagramq; dqp != QDATAGRAM_NULL; dqp = dqp->dq_next)
@@ -589,6 +585,8 @@ main(argc, argv, envp)
 				(void) close(rfd);
 				continue;
 			}
+			if (rfd >= nfds)
+				nfds = rfd + 1;
 			sp->s_rfd = rfd;	/* stream file descriptor */
 			sp->s_size = -1;	/* amount of data to receive */
 			gettime(&tt);
@@ -989,6 +987,8 @@ opensocket(dqp)
 		exit(1);
 #endif
 	}
+	if (dqp->dq_dfd >= nfds)
+		nfds = dqp->dq_dfd + 1;
 }
 
 /*
