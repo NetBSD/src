@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.22 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.23 1999/03/14 14:19:05 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,33 +102,33 @@ menu ok, title "  Hit enter to continue  ";
 
 menu scsigeom1, title "  Choose an option";
 	display action {
-		msg_display (MSG_scsigeom1, diskdev, disk->geom[4],
+		msg_display (MSG_scsigeom1, diskdev, disk->dd_totsec,
 			dlcyl, dlhead, dlsec, dlcyl*dlhead*dlsec, 
-			disk->geom[0], disk->geom[1], disk->geom[2],
-			disk->geom[0]*disk->geom[1]*disk->geom[2]);
+			disk->dd_cyl, disk->dd_head, disk->dd_sec,
+			disk->dd_cyl * disk->dd_head * disk->dd_sec);
 	};
 	option "Use real geometry", exit, action {
-			dlcyl  = disk->geom[0];
-			dlhead = disk->geom[1];
-			dlsec  = disk->geom[2];
+			dlcyl  = disk->dd_cyl;
+			dlhead = disk->dd_head;
+			dlsec  = disk->dd_sec;
 		};
 	option "Use disklabel geometry", exit, action {
-			disk->geom[0] = dlcyl;
-			disk->geom[1] = dlhead;
-			disk->geom[2] = dlsec;
+			disk->dd_cyl = dlcyl;
+			disk->dd_head = dlhead;
+			disk->dd_sec = dlsec;
 		};
 	option "Choose a fake geometry", action { scsi_fake ();}, exit;
 
 menu scsigeom2, title "  Choose an option";
 	display action {
-		msg_display (MSG_scsigeom2, diskdev, disk->geom[4],
-			disk->geom[0], disk->geom[1], disk->geom[2],
-			disk->geom[0]*disk->geom[1]*disk->geom[2]);
+		msg_display (MSG_scsigeom2, diskdev, disk->dd_totsec,
+			disk->dd_cyl, disk->dd_head, disk->dd_sec,
+			disk->dd_cyl * disk->dd_head * disk->dd_sec);
 	};
 	option "Use real geometry", exit, action {
-			dlcyl  = disk->geom[0];
-			dlhead = disk->geom[1];
-			dlsec  = disk->geom[2];
+			dlcyl  = disk->dd_cyl;
+			dlhead = disk->dd_head;
+			dlsec  = disk->dd_sec;
 		};
 	option "Choose a fake geometry", action { scsi_fake ();}, exit;
 
