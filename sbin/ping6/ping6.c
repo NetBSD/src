@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.41 2002/05/26 05:46:24 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.42 2002/05/26 12:56:57 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.153 2002/05/26 05:38:14 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.41 2002/05/26 05:46:24 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.42 2002/05/26 12:56:57 itojun Exp $");
 #endif
 #endif
 
@@ -2625,7 +2625,7 @@ setpolicy(so, policy)
 		errx(1, "%s", ipsec_strerror());
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf,
 	    ipsec_get_policylen(buf)) < 0)
-		warnx("Unable to set IPSec policy");
+		warnx("Unable to set IPsec policy");
 	free(buf);
 
 	return 0;
