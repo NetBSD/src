@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.3 1995/06/21 02:52:09 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.4 1995/06/30 05:21:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -203,6 +203,9 @@ grfmv_mode(gp, cmd, arg)
 	void *arg;
 {
 	switch (cmd) {
+	case GM_GRFON:
+	case GM_GRFOFF:
+		return 0;
 	case GM_CURRMODE:
 		break;
 	case GM_NEWMODE:
