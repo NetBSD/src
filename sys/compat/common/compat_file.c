@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.5 2003/06/04 19:34:32 manu Exp $ */
+/*	$NetBSD: compat_file.c,v 1.6 2003/06/05 12:26:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.5 2003/06/04 19:34:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.6 2003/06/05 12:26:27 manu Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -60,7 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.5 2003/06/04 19:34:32 manu Exp $")
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socketvar.h>
 #include <sys/sa.h>
+#include <sys/un.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 
@@ -435,6 +441,90 @@ bsd_compat_12_sys_swapon(l, v, retval)
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, name));
 	return compat_12_sys_swapon(l, uap, retval);
+}
+
+int
+bsd_sys_bind(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct sys_bind_args /* {
+		syscallarg(int) s;
+		syscallarg(struct sockaddr *) name;
+		syscallarg(unsigned int) namelen);
+	} */ *uap = v;
+	struct sys_bind_args cup;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct socket *so;
+	struct sockaddr_un *usun;
+	struct sockaddr_un *oksun;
+	struct sockaddr_un *nksun;
+	size_t namelen;
+	const char *name;
+	caddr_t sg; 
+	int error;
+	int family;
+
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+		return error;
+
+	so = (struct socket *)fp->f_data;
+	family = so->so_proto->pr_domain->dom_family;
+	FILE_UNUSE(fp, p);
+
+	if (family != AF_UNIX)
+		return sys_bind(l, uap, retval);
+
+	/*
+	 * Check for an alternate path.
+	 */
+	usun = (struct sockaddr_un *)SCARG(uap, name);
+	namelen = SCARG(uap, namelen);
+	if (namelen > PAGE_SIZE) 
+		return EINVAL;
+
+	oksun = malloc(namelen + 1, M_TEMP, M_WAITOK);
+	if ((error = copyin(usun, oksun, namelen + 1)) != 0)
+		goto out2;
+
+	name = oksun->sun_path;
+	if ((error = emul_find(p, NULL, p->p_emul->e_path, 
+	    name, &name, CHECK_ALT_FL_CREAT)) != 0)
+		goto out2;
+
+	namelen, strlen(oksun->sun_path), strlen(name));
+	/* 
+	 * Rebuild a new struct sockaddr_un and store it in userspace.
+	 */
+	namelen = namelen - strlen(oksun->sun_path) + strlen(name);
+	if (namelen > PAGE_SIZE) {
+		error = EINVAL;
+		goto out2;
+	}
+	nksun = malloc(namelen + 1, M_TEMP, M_WAITOK);
+	nksun->sun_len = namelen;
+	nksun->sun_family = family;
+	(void)strncpy(nksun->sun_path, name, strlen(name) + 1);
+
+	sg = stackgap_init(p, 0);
+	usun = stackgap_alloc(p, &sg, namelen);
+	if ((error = copyout(nksun, usun, namelen)) != 0)
+		goto out1;
+
+	SCARG(&cup, s) = SCARG(uap, s);
+	SCARG(&cup, name) = (struct sockaddr *)usun;
+	SCARG(&cup, namelen) = namelen;
+
+	error = sys_bind(l, &cup, retval);
+
+out1:
+	free((char *)name, M_TEMP);
+	free(nksun, M_TEMP);
+out2:
+	free(oksun, M_TEMP);
+	return error;
 }
 
 int
