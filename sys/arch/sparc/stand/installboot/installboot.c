@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 2000/08/10 13:29:40 mrg Exp $ */
+/*	$NetBSD: installboot.c,v 1.7 2000/08/20 14:56:30 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
-char		*loadprotoblocks __P((char *, long *));
+char		*loadprotoblocks __P((char *, size_t *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
@@ -117,7 +117,7 @@ main(argc, argv)
 	int	c;
 	int	devfd;
 	char	*protostore;
-	long	protosize;
+	size_t	protosize;
 	struct	utsname utsname;
 
 	/*
@@ -194,17 +194,24 @@ main(argc, argv)
 	} else {
 		struct stat sb;
 		int protofd;
+		size_t blanklen;
 
-		if ((protofd = open(dev, O_RDONLY)) < 0)
+		if ((protofd = open(proto, O_RDONLY)) < 0)
 			err(1, "open: %s", proto);
 
 		if (fstat(protofd, &sb) < 0)
 			err(1, "fstat: %s", proto);
 
-		protosize = sb.st_size;
-		if ((protostore = mmap(0, (size_t)protosize, PROT_READ,
-			    MAP_SHARED, protofd, 0)) == MAP_FAILED)
+		/* there must be a better way */
+		blanklen = DEV_BSIZE - ((sb.st_size + DEV_BSIZE) & (DEV_BSIZE - 1));
+		protosize = sb.st_size + blanklen;
+		if ((protostore = mmap(0, (size_t)protosize,
+		    PROT_READ|PROT_WRITE, MAP_PRIVATE,
+		    protofd, 0)) == MAP_FAILED)
 			err(1, "mmap: %s", proto);
+		/* and provide the rest of the block */
+		if (blanklen)
+			memset(protostore + sb.st_size, 0, blanklen);
 	}
 
 	if (nowrite)
@@ -232,7 +239,7 @@ main(argc, argv)
 char *
 loadprotoblocks(fname, size)
 	char *fname;
-	long *size;
+	size_t *size;
 {
 	int	fd, sz;
 	u_long	ap, bp, st, en;
