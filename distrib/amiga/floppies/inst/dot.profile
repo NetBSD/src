@@ -27,25 +27,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.profile,v 1.1 1994/10/06 20:25:46 chopps Exp $
+#       $Id: dot.profile,v 1.2 1995/10/02 12:58:42 chopps Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=vt100
 export TERM
 
-# set up some sane defaults
-echo 'erase ^?, werase ^H, kill ^U, intr ^C'
-stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
-echo ''
-
-# start running update, so that installed software is written as it goes.
-update
-
-# pull in the function definitions that people will use from the shell prompt.
-. /.commonutils
-. /.instutils
-
-# run the installation script.
 umask 022
-install
+
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
+
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	echo ''
+
+	# run update, so that installed software is written as it goes.
+	update
+
+	# pull in the functions that people will use from the shell prompt.
+	. /.commonutils
+	. /.instutils
+
+	# run the installation script.
+	install
+fi

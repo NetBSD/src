@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.instutils,v 1.1 1994/10/06 20:25:45 chopps Exp $
+#	$Id: dot.instutils,v 1.2 1995/10/02 12:58:41 chopps Exp $
 
 # Installation configuration utilites (functions), to get NetBSD configured
 # reasonably once it is installed on the hard disk.  These are meant to be
@@ -60,7 +60,7 @@ Configure()
 	fi
 
 	echo	""
-	if [ -e /mnt/sendmail.cf ]; then
+	if [ -e /mnt/etc/sendmail.cf ]; then
 		echo	"WARNING: A default sendmail.cf exists, and probably"
 		echo	"needs to be tuned and/or replaced, to work properly at"
 		echo	"your site!"
@@ -81,7 +81,7 @@ Configure()
 		intf=
 		while [ "$intf" = "" ]; do
 			echo -n "What is the primary interface name "
-			echo -n "(e.g. ed0, ep0, etc)? "
+			echo -n "(e.g. ae0, ed0, le0, or es0)? "
 			read intf
 		done
 		echo -n "What is the hostname for this interface? [$hname] "
@@ -132,13 +132,13 @@ Configure()
 		echo    ""
 		echo -n	"WARNING: if you have any more ethernet interfaces, "
 		echo	"you will have to configure"
-		echo -n "them by hand.  Read the comments in /etc/netstart to"
+		echo -n "them by hand.  Read the comments in /etc/netstart to "
 		echo	"learn how to do this."
 		;;
 	esac
 	
 	echo	""
-	echo -n	"Making device nodes..."
+	echo -n	"Making device nodes (may take a while)..."
 	cd ${DEV}
 	sh MAKEDEV all
 	echo	" done."
@@ -148,8 +148,5 @@ Configure()
 	echo	""
 	echo	"All that's left to do now is to install the NetBSD kernel on"
 	echo	"your hard disk.  You should now halt your machine using the"
-	echo	"'halt' command.  Once the machine is halted, replace the"
-	echo	"installation floppy with the kernel-copy floppy and hit any"
-	echo	"key to reboot.  Use the kernel-copy floppy to copy a kernel"
-	echo	"to your hard disk."
+	echo	"'halt' command.  Once the machine is halted, reboot it"
 }
