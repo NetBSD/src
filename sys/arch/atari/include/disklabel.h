@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1995/03/26 07:24:34 leo Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 1995/08/05 20:24:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,13 +33,41 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	 0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
+#define LABELSECTOR	0		/* start of boot block		*/
+#define LABELOFFSET	(7 * 1024)	/* offset of disklabel in bytes,
+					   relative to start of boot block */
 #define MAXPARTITIONS	16
-#define RAW_PART	 2			/* xx?c is raw part. */
+#define RAW_PART	 2		/* xx?c is raw partition	*/
+
+#define MK_PARTID(x,y,z)	(   ((u_int32_t)(x) << 16)	\
+				  | ((u_int32_t)(y) << 8)	\
+				  | ((u_int32_t)(z))		\
+				)
+/*
+ * Various `well known' AHDI partition identifiers.
+ */
+#define	CPU_PID_XGM	MK_PARTID('X','G','M')
+#define	CPU_PID_BGM	MK_PARTID('B','G','M')
+#define	CPU_PID_GEM	MK_PARTID('G','E','M')
+#define	CPU_PID_RAW	MK_PARTID('R','A','W')
+#define	CPU_PID_SWP	MK_PARTID('S','W','P')
+#define	CPU_PID_NBD	MK_PARTID('N','B','D')
+#define	CPU_PID_NBR	MK_PARTID('N','B','R')
+#define	CPU_PID_NBS	MK_PARTID('N','B','S')
+#define	CPU_PID_NBU	MK_PARTID('N','B','U')
+
+struct cpu_partition {			/* AHDI partition descriptor:	*/
+	u_int32_t	cp_id;		/* identifier (see above)	*/
+	u_int32_t	cp_st;		/* start and size in		*/
+	u_int32_t	cp_size;	/*  512 byte blocks		*/
+};
 
 struct cpu_disklabel {
-	int  filler;				/* must be something */
+   u_int32_t		cd_bslst;	/* start of AHDI bad sector list */
+   u_int32_t		cd_bslsize;	/* size of AHDI bad sector list  */
+   u_int32_t		cd_npartitions;	/* number of AHDI partitions     */
+   struct cpu_partition	*cd_partitions;	/* list of AHDI partitions       */
+   struct cpu_partition	*cd_labelpart;	/* AHDI partition with disklabel */
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */
