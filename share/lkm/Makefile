@@ -1,5 +1,5 @@
 #
-#	$Id: Makefile,v 1.1 1993/06/08 03:53:19 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/07/09 04:24:28 mycroft Exp $
 #
 
 FILES=	README syscall vfs misc
@@ -16,6 +16,7 @@ install:
         else \
                 true ; \
         fi
-	tar cf - ${FILES} | (cd ${DESTDIR}${BINDIR}/lkm ; tar xf -)
+	find ${FILES} -name CVS -prune -o -type f -print | cpio -pdum ${DESTDIR}${BINDIR}/lkm
+	find ${FILES} -name CVS -prune -o -type d -print | cpio -pdum ${DESTDIR}${BINDIR}/lkm
 
 .include <bsd.prog.mk>
