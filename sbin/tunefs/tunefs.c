@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.17 1998/08/25 19:18:17 ross Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.18 1999/01/15 13:32:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.17 1998/08/25 19:18:17 ross Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.18 1999/01/15 13:32:06 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: tunefs.c,v 1.17 1998/08/25 19:18:17 ross Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+#include <machine/bswap.h>
 
 #include <errno.h>
 #include <err.h>

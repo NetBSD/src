@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.18 1998/10/23 01:13:33 thorpej Exp $	*/
+/*	$NetBSD: fsck.h,v 1.19 1999/01/15 13:32:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,7 @@
  */
 
 #include <stdio.h>
+#include <machine/bswap.h>
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
 #define	MAXBAD		10	/* limit on bad blks (per inode) */
