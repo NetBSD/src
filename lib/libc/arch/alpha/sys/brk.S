@@ -1,4 +1,4 @@
-/* $NetBSD: brk.S,v 1.8 2000/06/26 06:25:36 kleink Exp $ */
+/* $NetBSD: brk.S,v 1.9 2001/05/07 17:19:17 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -51,4 +51,4 @@ L1:	LDGP(pv)
 	stq	a0, __curbrk
 	mov	zero, v0
 	RET
-END(brk)
+END(_brk)

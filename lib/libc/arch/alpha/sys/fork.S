@@ -1,4 +1,4 @@
-/* $NetBSD: fork.S,v 1.3 2000/06/26 06:32:54 kleink Exp $ */
+/* $NetBSD: fork.S,v 1.4 2001/05/07 17:19:18 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,4 +37,4 @@ LEAF(_fork, 0)
 	CALLSYS_ERROR(fork)
 	cmovne	a4, zero, v0		/* a4 (rv[1]) != 0, child */
 	RET
-END(fork)
+END(_fork)
