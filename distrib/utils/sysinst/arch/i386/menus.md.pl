@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:07 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2.2.1 2002/07/29 14:47:56 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.36 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -211,6 +211,14 @@ menu editfsparts, y=13, exit;
 	option "Zmien f", action { editpart = F;}, sub menu edfspart;
 	option "Zmien g", action { editpart = G;}, sub menu edfspart;
 	option "Zmien h", action { editpart = H;}, sub menu edfspart;
+	option "Zmien i", action { editpart = I;}, sub menu edfspart;
+	option "Zmien j", action { editpart = J;}, sub menu edfspart;
+	option "Zmien k", action { editpart = K;}, sub menu edfspart;
+	option "Zmien l", action { editpart = L;}, sub menu edfspart;
+	option "Zmien m", action { editpart = M;}, sub menu edfspart;
+	option "Zmien n", action { editpart = N;}, sub menu edfspart;
+	option "Zmien o", action { editpart = O;}, sub menu edfspart;
+	option "Zmien p", action { editpart = P;}, sub menu edfspart;
 	option "Ustaw nowy przydzial rozmiarow", action { reask_sizemult(dlcylsize); };
  
 
