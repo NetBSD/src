@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.4 1999/04/09 04:48:42 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.5 1999/04/29 05:36:41 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -564,12 +564,14 @@ uvn_flush(uobj, start, stop, flags)
 	if (uvn->u_size == VSIZENOTSET) {
 		void vp_name(void *);
 	      
+#ifdef DEBUG
 		printf("uvn_flush: size not set vp %p\n", uvn);
 		if ((flags & PGO_ALLPAGES) == 0)
 			printf("... and PGO_ALLPAGES not set: "
 			       "start 0x%lx end 0x%lx flags 0x%x\n",
 			       start, stop, flags);
 		vp_name(uvn);
+#endif
 		flags |= PGO_ALLPAGES;
 	}
 #if 0
@@ -1450,8 +1452,13 @@ uvm_vnp_sync(mp)
 		}
 #endif
 #endif
+		/*
+		 * XXX use PGO_SYNCIO for now to avoid problems with
+		 * uvmexp.paging.
+		 */
+
 		uvn_flush(&uvn->u_obj, 0, 0,
-		    PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST);
+		    PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST|PGO_SYNCIO);
 
 		/*
 		 * if we have the only reference and we just cleaned the uvn,
@@ -1534,11 +1541,15 @@ uvm_vnp_zerorange(vp, off, len)
 	void *win;
 
 	/*
-	 * XXX deal with multiple windows
 	 * XXX invent kzero() and use it
 	 */
 
-	win = ubc_alloc(&vp->v_uvm.u_obj, off, len, UBC_WRITE);
-	memset(win + (off & (MAXBSIZE - 1)), 0, len);
-	ubc_release(win, 0);
+	while (len) {
+		int byteoff = off & (MAXBSIZE - 1);
+		int bytelen = min(len, MAXBSIZE - byteoff);
+
+		win = ubc_alloc(&vp->v_uvm.u_obj, off, bytelen, UBC_WRITE);
+		memset(win + (off & (MAXBSIZE - 1)), 0, bytelen);
+		ubc_release(win, 0);
+	}
 }
