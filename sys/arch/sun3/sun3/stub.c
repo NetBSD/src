@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.9 1994/11/21 21:39:06 gwr Exp $	*/
+/*	$NetBSD: stub.c,v 1.10 1994/11/23 08:16:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -31,9 +31,12 @@
  * SUCH DAMAGE.
  */
 
-char	*memcpy(char *to, char *from, unsigned int size)
+char	*memcpy(dst, src, cnt)
+	char *dst;
+	const char *src;
+	unsigned cnt;
 {
-    bcopy(from, to, size);
-    return to;
+    bcopy(src, dst, cnt);
+    return dst;
 }
      
