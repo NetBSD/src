@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.18 1997/10/14 10:22:01 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.19 1998/01/20 01:18:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -74,6 +74,8 @@
 extern int msgbufmapped;
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
+
+int	savectx		__P((struct pcb *pcb));
 
 /* These queue functions are candiates for arm32/machdep.c */
 
@@ -282,33 +284,33 @@ beep_generate()
 #endif /* NBEEP */
 
 
-int current_spl_level = SPL_0;
-u_int spl_masks[SPL_LEVELS];
+int current_spl_level = _SPL_0;
+u_int spl_masks[_SPL_LEVELS];
 
-int safepri = SPL_0;
+int safepri = _SPL_0;
 
 void
 set_spl_masks()
 {
-	spl_masks[SPL_0]	= 0xffffffff;
-	spl_masks[SPL_SOFT]	= ~(IRQMASK_ALLSOFT);
-	spl_masks[SPL_BIO]	= irqmasks[IPL_BIO];
-	spl_masks[SPL_NET]	= irqmasks[IPL_NET];
-	spl_masks[SPL_TTY]	= irqmasks[IPL_TTY];
-	spl_masks[SPL_CLOCK]	= irqmasks[IPL_CLOCK];
-	spl_masks[SPL_IMP]	= irqmasks[IPL_IMP];
-	spl_masks[SPL_HIGH]	= 0x00000000;
+	spl_masks[_SPL_0]	= 0xffffffff;
+	spl_masks[_SPL_SOFT]	= ~(IRQMASK_ALLSOFT);
+	spl_masks[_SPL_BIO]	= irqmasks[IPL_BIO];
+	spl_masks[_SPL_NET]	= irqmasks[IPL_NET];
+	spl_masks[_SPL_TTY]	= irqmasks[IPL_TTY];
+	spl_masks[_SPL_CLOCK]	= irqmasks[IPL_CLOCK];
+	spl_masks[_SPL_IMP]	= irqmasks[IPL_IMP];
+	spl_masks[_SPL_HIGH]	= 0x00000000;
 }
 
 void
 dump_spl_masks()
 {
 	printf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
-	    spl_masks[SPL_0], spl_masks[SPL_SOFT], spl_masks[SPL_BIO],
-	    spl_masks[SPL_NET]);
+	    spl_masks[_SPL_0], spl_masks[_SPL_SOFT], spl_masks[_SPL_BIO],
+	    spl_masks[_SPL_NET]);
 	printf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
-	    spl_masks[SPL_TTY], spl_masks[SPL_CLOCK], spl_masks[SPL_IMP],
-	    spl_masks[SPL_HIGH]);
+	    spl_masks[_SPL_TTY], spl_masks[_SPL_CLOCK], spl_masks[_SPL_IMP],
+	    spl_masks[_SPL_HIGH]);
 }
 
 /* End of stubs.c */
