@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.3 2002/08/24 17:31:19 augustss Exp $	*/
+/*	$NetBSD: ubt.c,v 1.4 2003/01/05 03:48:18 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.3 2002/08/24 17:31:19 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.4 2003/01/05 03:48:18 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.3 2002/08/24 17:31:19 augustss Exp $");
 #include <dev/usb/usbdevs.h>
 
 #include <dev/bluetooth/bluetooth.h>
-
-#define UBT_DEBUG
 
 #ifdef UBT_DEBUG
 #define DPRINTF(x)	if (ubtdebug) logprintf x
