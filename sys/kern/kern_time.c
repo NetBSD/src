@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.13 1994/12/13 22:19:45 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.14 1995/03/21 13:33:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -107,13 +107,12 @@ settimeofday(p, uap, retval)
 		return (error);
 	if (SCARG(uap, tv)) {
 		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-		delta = atv;
 		s = splclock();
-		__timersub(&delta, &time);
+		timersub(&atv, &time, &delta);
 		time = atv;
 		(void) splsoftclock();
-		__timeradd(&boottime, &delta);
-		__timeradd(&runtime, &delta);
+		timeradd(&boottime, &delta, &boottime);
+		timeradd(&runtime, &delta, &runtime);
 # 		if defined(NFSCLIENT) || defined(NFSSERVER)
 			lease_updatetime(delta.tv_sec);
 #		endif
@@ -235,7 +234,7 @@ getitimer(p, uap, retval)
 			if (timercmp(&aitv.it_value, &time, <))
 				timerclear(&aitv.it_value);
 			else
-				__timersub(&aitv.it_value, &time);
+				timersub(&aitv.it_value, &time, &aitv.it_value);
 	} else
 		aitv = p->p_stats->p_timer[SCARG(uap, which)];
 	splx(s);
@@ -275,7 +274,7 @@ setitimer(p, uap, retval)
 	if (SCARG(uap, which) == ITIMER_REAL) {
 		untimeout(realitexpire, p);
 		if (timerisset(&aitv.it_value)) {
-			__timeradd(&aitv.it_value, &time);
+			timeradd(&aitv.it_value, &time, &aitv.it_value);
 			timeout(realitexpire, p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
@@ -308,8 +307,8 @@ realitexpire(arg)
 	}
 	for (;;) {
 		s = splclock();
-		__timeradd(&p->p_realtimer.it_value,
-		    &p->p_realtimer.it_interval);
+		timeradd(&p->p_realtimer.it_value,
+		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
 			timeout(realitexpire, p,
 			    hzto(&p->p_realtimer.it_value));

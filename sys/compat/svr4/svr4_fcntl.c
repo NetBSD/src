@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.7 1994/12/11 17:56:24 mycroft Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.8 1995/03/21 13:34:20 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -394,7 +394,7 @@ svr4_poll(p, uap, retval)
 			goto done;
 		}
 		s = splclock();
-		__timeradd(&atv, &time);
+		timeradd(&atv, &time, &atv);
 		timo = hzto(&atv);
 		/*
 		 * Avoid inadvertently sleeping forever.

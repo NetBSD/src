@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.26 1995/03/05 20:48:15 fvdl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.27 1995/03/21 13:33:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -461,8 +461,8 @@ ruadd(ru, ru2)
 	register long *ip, *ip2;
 	register int i;
 
-	__timeradd(&ru->ru_utime, &ru2->ru_utime);
-	__timeradd(&ru->ru_stime, &ru2->ru_stime);
+	timeradd(&ru->ru_utime, &ru2->ru_utime, &ru->ru_utime);
+	timeradd(&ru->ru_stime, &ru2->ru_stime, &ru->ru_stime);
 	if (ru->ru_maxrss < ru2->ru_maxrss)
 		ru->ru_maxrss = ru2->ru_maxrss;
 	ip = &ru->ru_first; ip2 = &ru2->ru_first;

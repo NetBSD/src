@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.34 1995/03/08 02:57:05 cgd Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.35 1995/03/21 13:34:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -407,10 +407,10 @@ sloutput(ifp, m, dst, rtp)
 		ifq = &sc->sc_fastq;
 	s = splimp();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv = time;
+		struct timeval tv;
 
 		/* if output's been stalled for too long, and restart */
-		__timersub(&tv, &sc->sc_if.if_lastchange);
+		timersub(&time, &sc->sc_if.if_lastchange, &tv);
 		if (tv.tv_sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);

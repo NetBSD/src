@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.1 1995/02/13 21:39:06 cgd Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.2 1995/03/21 13:34:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -246,9 +246,8 @@ osf1_usleep_thread(p, uap, retval)
 
 	if (SCARG(uap, slept) != NULL) {
 		s = splclock();
-		endtv = time;
+		timersub(&time, &tv, &endtv);
 		splx(s);
-		__timersub(&endtv, &tv);
 		if (tv.tv_sec < 0 || tv.tv_usec < 0)
 			tv.tv_sec = tv.tv_usec = 0;
 
