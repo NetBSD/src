@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
+.\"	$NetBSD: mount_null.8,v 1.5 1997/09/15 05:35:37 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,13 @@
 .Nm mount_null
 .Nd demonstrate the use of a null file system layer
 .Sh SYNOPSIS
-.Nm mount_null
+.Nm
 .Op Fl o Ar options
 .Ar target
 .Ar mount-point
 .Sh DESCRIPTION
 The
-.Nm mount_null
+.Nm
 command creates a
 null layer, duplicating a sub-tree of the file system
 name space under another part of the global file system namespace.
@@ -208,5 +208,5 @@ UCLA Technical Report CSD-910056,
 .Em "Stackable Layers: an Architecture for File System Development" .
 .Sh HISTORY
 The
-.Nm mount_null
+.Nm
 utility first appeared in 4.4BSD.
