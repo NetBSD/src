@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.7 1997/10/17 14:19:36 lukem Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.8 1999/09/10 03:26:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.7 1997/10/17 14:19:36 lukem Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.8 1999/09/10 03:26:49 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -387,7 +387,7 @@ ignoreack()
 }
 
 /*
- * `masterack' sends the necessary acknowledgments
+ * `masterack' sends the necessary acknowledgements
  * to the messages received by a master
  */
 void

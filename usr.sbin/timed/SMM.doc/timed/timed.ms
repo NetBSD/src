@@ -1,4 +1,4 @@
-.\"	$NetBSD: timed.ms,v 1.3 1998/01/09 08:11:55 perry Exp $
+.\"	$NetBSD: timed.ms,v 1.4 1999/09/10 03:26:49 simonb Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,7 +136,7 @@ most communication in TSP requires reliability not provided by the underlying
 protocol.
 Reliability is achieved by the use of acknowledgements, sequence numbers, and
 retransmission when message losses occur.
-When a message that requires acknowledgment is not acknowledged after
+When a message that requires acknowledgement is not acknowledged after
 multiple attempts,
 the time daemon that has sent the message will assume that the
 addressee is down.
@@ -195,17 +195,17 @@ the clock of the slave and
 the network time the master has just computed. 
 The slave will accordingly
 adjust the time of its machine.
-This message requires an acknowledgment.
+This message requires an acknowledgement.
 .sp 1
 .SH
-Acknowledgment Message
+Acknowledgement Message
 .so unused
 .LP
 Type: TSP_ACK (2)
 .sp 1
 .PP
 Both the master and the slaves use this message for
-acknowledgment only.
+acknowledgement only.
 It is used in several different contexts, for example
 in reply to an Adjtime message.
 .sp 1
@@ -218,7 +218,7 @@ Type: TSP_MASTERREQ (3)
 .PP
 A newly-started time daemon broadcasts this message to
 locate a master.  No other action is implied by this packet.
-It requires a Master Acknowledgment.
+It requires a Master Acknowledgement.
 .sp 1
 .SH
 Master Acknowledgement
@@ -241,7 +241,7 @@ The master sends this message to slave time daemons to set their time.
 This packet is sent to newly started time daemons and when the network
 date is changed.
 It contains the master's time as an approximation of the network time.
-It requires an acknowledgment.
+It requires an acknowledgement.
 The next
 synchronization round will eliminate the small time difference
 caused by the random delay in the communication channel.
@@ -360,13 +360,13 @@ A slave that has received a Set Date message will communicate the
 desired date to the master using this message.
 .sp 1
 .SH
-Set Date Acknowledgment Message
+Set Date Acknowledgement Message
 .so unused
 .LP
 Type: TSP_DATEACK (16)
 .sp 1
 .PP
-The master sends this message to a slave in acknowledgment of a
+The master sends this message to a slave in acknowledgement of a
 Set Date Request Message.
 The same message is sent by the local time daemon to the program
 \fIdate(1)\fP to confirm that the network date has been set by the

@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.20 1998/03/01 02:24:39 fvdl Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.21 1999/09/10 03:24:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1479,7 +1479,7 @@ spp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	/*
-	 * After a receive, possibly send acknowledgment
+	 * After a receive, possibly send acknowledgement
 	 * updating allocation.
 	 */
 	case PRU_RCVD:
