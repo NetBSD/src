@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.192 2003/04/16 21:44:20 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.193 2003/04/18 22:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.192 2003/04/16 21:44:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.193 2003/04/18 22:44:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2776,12 +2776,22 @@ vfs_reinit(void)
 void
 copy_statfs_info(struct statfs *sbp, const struct mount *mp)
 {
-	if (sbp == &mp->mnt_stat)
+	const struct statfs *mbp;
+
+	if (sbp == (mbp = &mp->mnt_stat))
 		return;
-	(void)strncpy(sbp->f_fstypename, mp->mnt_stat.f_fstypename,
+
+	sbp->f_oflags = mbp->f_oflags;
+	sbp->f_type = mbp->f_type;
+	(void)memcpy(&sbp->f_fsid, &mbp->f_fsid, sizeof(sbp->f_fsid));
+	sbp->f_owner = mbp->f_owner;
+	sbp->f_flags = mbp->f_flags;
+	sbp->f_syncwrites = mbp->f_syncwrites;
+	sbp->f_asyncwrites = mbp->f_asyncwrites;
+	sbp->f_spare[0] = mbp->f_spare[0];
+	(void)memcpy(sbp->f_fstypename, mbp->f_fstypename,
 	    sizeof(sbp->f_fstypename));
-	(void)memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-	(void)memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname,
+	(void)memcpy(sbp->f_mntonname, mbp->f_mntonname,
 	    sizeof(sbp->f_mntonname));
 	(void)memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname,
 	    sizeof(sbp->f_mntfromname));
