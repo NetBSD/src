@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.20 1999/10/25 19:08:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.21 1999/10/25 21:18:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -797,13 +797,13 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (VN_LOCK(dvp, LK_EXCLUSIVE | LK_RETRY, curproc) == 0)
+			if (VN_LOCK(dvp,LK_EXCLUSIVE|LK_RETRY,cnp->cn_proc)==0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return(error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = VN_LOCK(dvp, LK_EXCLUSIVE | LK_RETRY, curproc);
+			error = VN_LOCK(dvp,LK_EXCLUSIVE|LK_RETRY,cnp->cn_proc);
 			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);
