@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1994/12/22 09:35:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1995/04/22 08:23:28 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rain
 MAN=	rain.6
