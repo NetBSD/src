@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.10 1997/07/22 17:50:37 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.11 1997/12/10 20:19:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -196,6 +196,8 @@ static int
 net_getparams(sock)
 	int sock;
 {
+	char buf[MAXHOSTNAMELEN];
+	n_long smask;
 
 #ifdef	SUPPORT_BOOTP
 	/*
@@ -204,41 +206,50 @@ net_getparams(sock)
 	 * be initialized.  If any remain uninitialized, we will
 	 * use RARP and RPC/bootparam (the Sun way) to get them.
 	 */
-	if (try_bootp) {
+	if (try_bootp)
 		bootp(sock);
-		if ((myip.s_addr == 0) && debug)
-			printf("net_open: BOOTP failed, trying RARP/RPC...\n");
-	}
+	if (myip.s_addr != 0)
+		return (0);
+	if (debug)
+		printf("net_open: BOOTP failed, trying RARP/RPC...\n");
 #endif
 
-	/* Use RARP to get our IP address. (See rarp.c) */
-	if (myip.s_addr == 0) {
-		if (rarp_getipaddress(sock)) {
-			printf("net_open: RARP failed\n");
-			return (EIO);
-		}
+	/*
+	 * Use RARP to get our IP address.  This also sets our
+	 * netmask to the "natural" default for our address.
+	 */
+	if (rarp_getipaddress(sock)) {
+		printf("net_open: RARP failed\n");
+		return (EIO);
 	}
 	printf("net_open: client addr: %s\n", inet_ntoa(myip));
 
 	/* Get our hostname, server IP address, gateway. */
-	if (hostname[0] == '\0') {
-		if (bp_whoami(sock)) {
-			printf("net_open: bootparam/whoami RPC failed\n");
-			return (EIO);
-		}
+	if (bp_whoami(sock)) {
+		printf("net_open: bootparam/whoami RPC failed\n");
+		return (EIO);
 	}
 	printf("net_open: client name: %s\n", hostname);
-	if (gateip.s_addr) {
-		printf("net_open: subnet mask: %s\n", intoa(netmask));
-		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
+
+	/*
+	 * Ignore the gateway from whoami (unreliable).
+	 * Use the "gateway" parameter instead.
+	 */
+	smask = 0;
+	gateip.s_addr = 0;
+	if (bp_getfile(sock, "gateway", &gateip, buf) == 0) {
+		/* Got it!  Parse the netmask. */
+		smask = ip_convertaddr(buf);
 	}
+	if (smask)
+		printf("net_open: subnet mask: %s\n", intoa(netmask));
+	if (gateip.s_addr)
+		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
 
 	/* Get the root server and pathname. */
-	if (rootip.s_addr == 0) {
-		if (bp_getfile(sock, "root", &rootip, rootpath)) {
-			printf("net_open: bootparam/getfile RPC failed\n");
-			return (EIO);
-		}
+	if (bp_getfile(sock, "root", &rootip, rootpath)) {
+		printf("net_open: bootparam/getfile RPC failed\n");
+		return (EIO);
 	}
 
 	printf("net_open: server addr: %s\n", inet_ntoa(rootip));
