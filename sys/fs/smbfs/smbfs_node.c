@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.20 2004/02/29 11:47:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.21 2004/02/29 12:17:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.20 2004/02/29 11:47:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.21 2004/02/29 12:17:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.20 2004/02/29 11:47:08 jdolecek Exp
 MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 extern int (**smbfs_vnodeop_p) __P((void *));
+extern int prtactive;
 
 static struct genfs_ops smbfs_genfsops = {
 	NULL,
@@ -236,6 +237,9 @@ smbfs_reclaim(v)
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
 	
+	if (prtactive && vp->v_usecount != 0)
+		vprint("smbfs_reclaim(): pushing active", vp);
+
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 
 	KASSERT((np->n_flag & NOPEN) == 0);
@@ -275,6 +279,9 @@ smbfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
+
+	if (prtactive && vp->v_usecount != 0)
+		vprint("smbfs_inactive(): pushing active", vp);
 
 	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 	if ((np->n_flag & NOPEN) != 0) {
