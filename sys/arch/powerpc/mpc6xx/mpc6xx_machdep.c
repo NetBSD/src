@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.2 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.3 2002/07/09 19:05:00 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -424,10 +424,16 @@ mpc6xx_startup(const char *model)
         sz = round_page(MSGBUFSIZE);
 	v = (caddr_t) msgbuf_paddr;
 	if (msgbuf_paddr + sz > SEGMENT_LENGTH) {
-		v = (caddr_t)uvm_km_zalloc(kernel_map, sz);
+		minaddr = 0;
+		if (uvm_map(kernel_map, &minaddr, sz,
+				NULL, UVM_UNKNOWN_OFFSET, 0,
+				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
+			panic("startup: cannot allocate VM for msgbuf");
+		v = (caddr_t)minaddr;
 		for (i = 0; i < sz; i += NBPG) {
-			pmap_kenter_pa((vaddr_t) v + i, msgbuf_paddr + i,
-				VM_PROT_READ|VM_PROT_WRITE);
+			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
+			    VM_PROT_READ|VM_PROT_WRITE);
 		}
 		pmap_update(pmap_kernel());
 	}
