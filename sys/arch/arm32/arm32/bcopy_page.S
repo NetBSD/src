@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy_page.S,v 1.3 1996/10/15 01:52:01 mark Exp $ */
+/*	$NetBSD: bcopy_page.S,v 1.4 1997/10/14 09:54:31 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -44,6 +44,7 @@ lr	.req	r14
 pc	.req	r15
 
 #include <machine/param.h>
+#include <machine/asm.h>
 
 /*
  * bcopy_page(src, dest)
@@ -58,18 +59,11 @@ pc	.req	r15
  *   number of bytes per page (NBPG) is a multiple of 512
  */
 
-	.global	_bcopy_page
-_bcopy_page:
+ENTRY(bcopy_page)
 	stmfd	sp!, {r4-r10, lr}
-
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
-
 	mov	r2, #(NBPG >> 9)
 
-loopcopy:
+Lloopcopy:
 	ldmia	r0!, {r3-r10}
 	stmia	r1!, {r3-r10}
 	ldmia	r0!, {r3-r10}
@@ -107,7 +101,7 @@ loopcopy:
 	stmia	r1!, {r3-r10}
 
 	subs	r2, r2, #1
-	bne	loopcopy
+	bne	Lloopcopy
 
 	ldmfd	sp!, {r4-r10, pc}
 
@@ -123,15 +117,8 @@ loopcopy:
  *   number of bytes per page (NBPG) is a multiple of 512
  */
 
-	.global _bzero_page
-_bzero_page:
+ENTRY(bzero_page)
 	stmfd	sp!, {r4-r10, lr}
-
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
-
 	mov	r2, #(NBPG >> 9)
 
 	mov	r3, #0
@@ -143,7 +130,7 @@ _bzero_page:
 	mov	r9, #0
 	mov	r10, #0
 
-loopzero:
+Lloopzero:
 	stmia	r0!, {r3-r10}
 	stmia	r0!, {r3-r10}
 	stmia	r0!, {r3-r10}
@@ -165,6 +152,6 @@ loopzero:
 	stmia	r0!, {r3-r10}
 
 	subs	r2, r2, #1
-	bne	loopzero
+	bne	Lloopzero
 
 	ldmfd	sp!, {r4-r10, pc}

@@ -1,4 +1,4 @@
-/* $NetBSD: blockio.S,v 1.5 1997/01/17 00:56:24 mark Exp $ */
+/*	$NetBSD: blockio.S,v 1.6 1997/10/14 09:54:34 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,6 +43,8 @@
  * Created      : 08/10/94
  */
 
+#include <machine/asm.h>
+
 ip	.req	r12
 sp	.req	r13
 lr	.req	r14
@@ -50,7 +52,6 @@ pc	.req	r15
 
 .text
 
-	.global	_insw
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
  *
@@ -59,14 +60,7 @@ pc	.req	r15
  * r2 = length
  */
 
-_insw:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
-
+ENTRY(insw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -109,8 +103,6 @@ fastinswloop:
 	mov	pc, lr
 
 
-	.global	_outsw
-
 /*
  * Writes short ints (16 bits) from a block of memory to an I/O address
  *
@@ -119,13 +111,7 @@ fastinswloop:
  * r2 = length
  */
 
-_outsw:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(outsw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -176,7 +162,6 @@ fastoutswloop:
 
 	mov	pc, lr
 
-	.global	_insw16
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
  * with a length garenteed to be a multiple of 16 bytes
@@ -187,14 +172,7 @@ fastoutswloop:
  * r2 = length
  */
 
-_insw16:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
-
+ENTRY(insw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -244,7 +222,6 @@ insw16loop:
 	mov	pc, lr
 
 
-	.global	_outsw16
 /*
  * Writes short ints (16 bits) from a block of memory to an I/O address
  *
@@ -253,14 +230,7 @@ insw16loop:
  * r2 = length
  */
 
-_outsw16:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
-
+ENTRY(outsw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -318,7 +288,6 @@ outsw16loop:
 
 	mov	pc, lr
 
-	.global	_inswm8
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
  * The I/O address is assumed to be mapped multiple times in a block of
@@ -330,14 +299,7 @@ outsw16loop:
  * r2 = length
  */
 
-_inswm8:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
-
+ENTRY(inswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -422,7 +384,6 @@ inswm8_l1:
 
 	mov	pc, lr
 
-	.global	_outswm8
 /*
  * write short ints (16 bits) to an I/O address from a block of memory
  * The I/O address is assumed to be mapped multiple times in a block of
@@ -434,14 +395,7 @@ inswm8_l1:
  * r2 = length
  */
 
-_outswm8:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
-
+ENTRY(outswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr

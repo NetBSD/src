@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.8 1996/10/15 01:00:33 mark Exp $ */
+/*	$NetBSD: bcopyinout.S,v 1.9 1997/10/14 09:54:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -44,9 +44,23 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 #include <sys/errno.h>
 
-ip	.req	r12
+/*
+ * USE_BCOPY - Use bcopy() for the actual copy.
+ *
+ * USE WITH CAUTION. A number of contraints are imposed on the
+ * bcopy() function used due to the onfault handler used by
+ * copyin() / copyout() which means that on a fault execution
+ * will be passed directly to a copyin/copyout fault handler.
+ * These are
+ *   The stack pointer must not be changed
+ *   Only registers r0-r3 & r12 may be corrupted
+ */
+
+#define USE_BCOPY	/* with bcopy.S 1.4 */
+
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
@@ -65,18 +79,11 @@ Lcurproc:
  *
  * Copies bytes from user space to kernel space
  */
-	.global _copyin
 
-_copyin:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(copyin)
 	teq	r2, #0x00000000
 	moveq	r0, #0x000000000
-	moveq	pc,lr
+	moveq	pc, lr
 
 /* Validate addresses */
 
@@ -98,17 +105,23 @@ _copyin:
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	copyinoutpcbfault
-#endif
+	beq	Lcopyinoutpcbfault
+#endif	/* DIAGNOSTIC */
 
-	add	r3, pc, #copyinoutfault - . - 8
+	add	r3, pc, #Lcopyinoutfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
-copyin_loop:
+#ifdef USE_BCOPY
+	stmfd	sp!, {lr}
+	bl	_bcopy
+	ldmfd	sp!, {lr}
+#else	/* USE_BCOPY */
+Lcopyin_loop:
 	ldrb	r3, [r0], #0x0001
 	strb	r3, [r1], #0x0001
 	subs	r2, r2, #0x00000001
-	bne	copyin_loop
+	bne	Lcopyin_loop
+#endif	/* USE_BCOPY */
 
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
@@ -122,18 +135,11 @@ copyin_loop:
  *
  * Copies bytes from user space to kernel space
  */
-	.global _copyout
 
-_copyout:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(copyout)
 	teq	r2, #0x00000000
 	moveq	r0, #0x000000000
-	moveq	pc,lr
+	moveq	pc, lr
 
 /* Validate addresses */
 
@@ -155,17 +161,23 @@ _copyout:
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	copyinoutpcbfault
-#endif
+	beq	Lcopyinoutpcbfault
+#endif	/* DIAGNOSTIC */
 
-	add	r3, pc, #copyinoutfault - . - 8
+	add	r3, pc, #Lcopyinoutfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
-copyout_loop:
+#ifdef USE_BCOPY
+	stmfd	sp!, {lr}
+	bl	_bcopy
+	ldmfd	sp!, {lr}
+#else	/* USE_BCOPY */
+Lcopyout_loop:
 	ldrb	r3, [r0], #0x0001
 	strb	r3, [r1], #0x0001
 	subs	r2, r2, #0x00000001
-	bne	copyout_loop
+	bne	Lcopyout_loop
+#endif	/* USE_BCOPY */
 
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
@@ -179,7 +191,10 @@ Lvm_maxuser_address:
 Lvm_maxkern_address:
 	.word	VM_MAXKERN_ADDRESS
 
-copyinoutfault:
+Lcopyinoutfault:
+#ifdef	USE_BCOPY
+	ldmfd	sp!, {lr}
+#endif	/* USE_BCOPY */
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
 	ldmfd	sp!, {r4}
@@ -189,15 +204,15 @@ Lbadaddress:
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-copyinoutpcbfault:
+Lcopyinoutpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	ldr	r3, Lcurproc
 	ldr	r3, [r3]
-	add	r0, pc, #copyinouttext - . - 8
+	add	r0, pc, #Lcopyinouttext - . - 8
 	b	_panic
 
-copyinouttext:
+Lcopyinouttext:
 	.asciz	"Yikes - No valid PCB during copyinout() addr1=%08x addr2=%08x curproc=%08x\n"
 	.align	0
-#endif
+#endif	/* DIAGNOSTIC */
