@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1998/01/01 19:52:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 1998/01/05 23:16:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1217,51 +1217,18 @@ Lswnofpsave:
 	movl	a1,_curpcb
 	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a2	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	a2			| map == VM_MAP_NULL? 
-	jeq	Lbadsw			| panic 
-#endif
-	movl	a2@(VM_PMAP),a2		| pmap = vmspace->vm_map.pmap
-	tstl	a2@(PM_STCHG)		| pmap->st_changed? 
-	jeq	Lswnochg		| no, skip 
+	/*
+	 * Activate process's address space.
+	 * XXX Should remember the last USTP value loaded, and call this
+	 * XXX only if it has changed.
+	 */
 	pea	a0@			| push proc
 	jbsr	_pmap_activate		| pmap_activate(p) 
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr 
-Lswnochg:
+
 	lea	tmpstk,sp		| now goto a tmp stack for NMI 
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lres2
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s) 
-	pflusha				| flush entire TLB 
-	jra	Lres3
-Lres2:
-	.word	0xf518			| pflusha (68040)
-	movl	#CACHE40_ON,d0
-	movc	d0,cacr			| invalidate cache(s)
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype	| a 060?
-	jne	Lres3			| no
-	movc	cacr,d2
-	orl	#IC60_CUBC,d2		| clear user branch cache entries
-	movc	d2,cacr
-#endif
-Lres3:
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lres4
-	lea	_protorp,a0		| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-	jra	Lres5
-Lres4:
-	.word	0x4e7b,0x0806		| movc d0,URP
-Lres5:
+
 	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
@@ -1564,17 +1531,18 @@ ENTRY(loadustp)
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
 #if defined(M68060)
-	cmpl	#CPU_68060,_cputype	| a 060?
-	jeq	Lldustp060
+	cmpl	#CPU_68060,_cputype	| 68060?
+	jeq	Lldustp060		|  yes, skip
 #endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lldustp040
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jeq	Lldustp040		|  yes, skip
+	pflusha				| flush entire TLB
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
-	movl	#DC_CLEAR,d0
+	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts				|   since pmove flushes TLB
+	rts
 #if defined(M68060)
 Lldustp060:
 	movc	cacr,d1
@@ -1582,7 +1550,8 @@ Lldustp060:
 	movc	d1,cacr
 #endif
 Lldustp040:
-	.word	0x4e7b,0x0806		|  movec d0,URP
+	.word	0xf518			| pflusha
+	.word	0x4e7b,0x0806		| movec d0,URP
 	rts
 
 /*
