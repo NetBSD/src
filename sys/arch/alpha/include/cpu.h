@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1996/07/11 03:46:00 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 1996/07/11 05:31:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,10 +66,10 @@ struct clockframe {
 	struct trapframe	cf_tf;
 };
 #define	CLKF_USERMODE(framep)						\
-	(((framep)->cf_tf.tf_af.af_ps & ALPHA_PSL_USERMODE) != 0)
+	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0)
 #define	CLKF_BASEPRI(framep)						\
-	(((framep)->cf_tf.tf_af.af_ps & ALPHA_PSL_IPL_MASK) == 0)
-#define	CLKF_PC(framep)		((framep)->cf_tf.tf_af.af_pc)
+	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
 /*
  * XXX No way to accurately tell if we were in interrupt mode before taking
  * clock interrupt.
