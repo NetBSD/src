@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.4 1994/06/29 06:37:58 cgd Exp $	*/
+/*	$NetBSD: igmp.h,v 1.5 1995/04/13 06:26:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -45,9 +45,9 @@
  * IGMP packet format.
  */
 struct igmp {
-	u_char		igmp_type;	/* version & type of IGMP message  */
-	u_char		igmp_code;	/* unused, should be zero          */
-	u_short		igmp_cksum;	/* IP-style checksum               */
+	u_int8_t	igmp_type;	/* version & type of IGMP message  */
+	u_int8_t	igmp_code;	/* unused, should be zero          */
+	u_int16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
 };					/*  (zero for queries)             */
 
