@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_timer.c,v 1.9 2001/04/13 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: hd_timer.c,v 1.10 2001/11/13 00:12:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_timer.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_timer.c,v 1.10 2001/11/13 00:12:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
