@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.13 2004/05/27 02:56:38 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.14 2004/05/27 04:23:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -152,7 +152,7 @@ typedef char linedn_t[TTLINEDNAMELEN];
 
 #define TIOCPTMGET 	 _IOR('t', 70, struct ptmget)	/* get ptys */
 #define TIOCGRANTPT 	 _IO('t', 71) 			/* grantpt(3) */
-#define TIOCPTSNAME 	 _IOR('t', 72, struct ptmget)	 /* ptsname(3) */
+#define TIOCPTSNAME 	 _IOR('t', 72, struct ptmget)	/* ptsname(3) */
 
 
 #define	TTYDISC		0		/* termios tty line discipline */
