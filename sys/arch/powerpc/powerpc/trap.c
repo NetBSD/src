@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1999/03/24 05:51:10 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 1999/03/26 08:15:23 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,7 +103,7 @@ trap(frame)
 				ftype = VM_PROT_READ;
 			if (uvm_fault(map, trunc_page(va), 0, ftype)
 			    == KERN_SUCCESS)
-				break;
+				return;
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
