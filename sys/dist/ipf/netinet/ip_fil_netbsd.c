@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3 2004/12/06 02:59:23 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.8.1 2005/02/06 07:40:48 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
