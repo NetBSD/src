@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.16 1995/07/23 20:54:23 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.17 1995/07/23 21:14:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -184,11 +184,11 @@ egreadPCBstat(sc, statb)
 	int i;
 
 	for (i=0; i < 5000; i++) {
-		if (EG_PCB_STAT(inb(sc->eg_stat))) 
+		if ((inb(sc->eg_stat) & EG_PCB_STAT) != EG_PCB_NULL) 
 			break;
 		delay(10);
 	}
-	if (EG_PCB_STAT(inb(sc->eg_stat)) == statb)
+	if ((inb(sc->eg_stat) & EG_PCB_STAT) == statb) 
 		return 0;
 	return 1;
 }
@@ -215,7 +215,7 @@ egwritePCB(sc)
 	int i;
 	u_char len;
 
-	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)));
+	outb(sc->eg_ctl, (inb(sc->eg_ctl) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
 	len = sc->eg_pcb[1] + 2;
 	for (i = 0; i < len; i++)
@@ -226,7 +226,9 @@ egwritePCB(sc)
 			break;
 		delay(10);
 	}
-	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)) | EG_PCB_DONE);
+
+	outb(sc->eg_ctl, (inb(sc->eg_ctl) & ~EG_PCB_STAT) | EG_PCB_DONE);
+
 	egoutPCB(sc, len);
 
 	if (egreadPCBstat(sc, EG_PCB_ACCEPT))
@@ -241,7 +243,7 @@ egreadPCB(sc)
 	int i;
 	u_char b;
 	
-	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)));
+	outb(sc->eg_ctl, (inb(sc->eg_ctl) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
 	bzero(sc->eg_pcb, sizeof(sc->eg_pcb));
 
@@ -273,7 +275,9 @@ egreadPCB(sc)
 		dprintf(("%d != %d\n", b, sc->eg_pcb[1] + 2));
 		return 1;
 	}
-	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)) | EG_PCB_ACCEPT);
+
+	outb(sc->eg_ctl, (inb(sc->eg_ctl) & ~EG_PCB_STAT) | EG_PCB_ACCEPT);
+
 	return 0;
 }	
 
@@ -305,10 +309,10 @@ egprobe(parent, match, aux)
 	outb(sc->eg_ctl, 0);
 	for (i = 0; i < 5000; i++) {
 		delay(1000);
-		if (EG_PCB_STAT(inb(sc->eg_stat)) == 0)
+		if ((inb(sc->eg_stat) & EG_PCB_STAT) == EG_PCB_NULL) 
 			break;
 	}
-	if (EG_PCB_STAT(inb(sc->eg_stat)) != 0) {
+	if ((inb(sc->eg_stat) & EG_PCB_STAT) != EG_PCB_NULL) {
 		dprintf(("eg: Reset failed\n"));
 		return 0;
 	}
@@ -437,11 +441,11 @@ eginit(sc)
 		printf("%s: configure card command failed\n",
 		    sc->sc_dev.dv_xname);
 
-	if (sc->eg_inbuf == NULL)
+	if (sc->eg_inbuf == 0)
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 	sc->eg_incount = 0;
 
-	if (sc->eg_outbuf == NULL)
+	if (sc->eg_outbuf == 0)
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 
 	outb(sc->eg_ctl, EG_CTL_CMDE);

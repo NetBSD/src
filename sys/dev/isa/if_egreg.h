@@ -1,4 +1,4 @@
-/*	$NetBSD: if_egreg.h,v 1.2 1994/10/27 04:17:26 cgd Exp $	*/
+/*	$NetBSD: if_egreg.h,v 1.3 1995/07/23 21:14:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley (dean@fsa.ca)
@@ -82,11 +82,11 @@
 #define EG_STAT_ASF2 0x02
 #define EG_STAT_ASF1 0x01
 
-#define EG_PCB_ACCEPT	1 
-#define EG_PCB_REJECT	2
-#define EG_PCB_DONE	3
-#define EG_PCB_STAT(x)	((x)&3)
-#define EG_PCB_MASK(x)	((x)&~3)
+#define	EG_PCB_NULL	0x00
+#define EG_PCB_ACCEPT	0x01 
+#define EG_PCB_REJECT	0x02
+#define EG_PCB_DONE	0x03
+#define EG_PCB_STAT	0x03
 
 #define EG_CMD_CONFIG82586	0x02
 #define EG_CMD_GETEADDR		0x03
