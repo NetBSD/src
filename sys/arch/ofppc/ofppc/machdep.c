@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2000/09/24 12:32:37 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2000/11/16 01:56:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,6 +84,8 @@ char *bootpath;
 
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
+
+int	lcsplx(int);			/* called from locore.S */
 
 static int fake_spl __P((void));
 static int fake_splx __P((int));
@@ -670,6 +672,16 @@ callback(p)
 	void *p;
 {
 	panic("callback");	/* for now			XXX */
+}
+
+/*
+ * Perform an `splx()' for locore.
+ */
+int
+lcsplx(int ipl)
+{
+
+	return (splx(ipl));
 }
 
 /*
