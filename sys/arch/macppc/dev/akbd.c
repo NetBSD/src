@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.17 2001/07/26 11:36:41 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.18 2001/10/02 21:05:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -448,7 +448,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;		/* XXX */
+		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
