@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.16 2004/12/29 01:11:24 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.17 2005/01/02 04:23:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -110,8 +110,8 @@ struct rtw_regs {
     (RTW_SR_GET((sr), (ofs)) | (RTW_SR_GET((sr), (ofs) + 1) << 8))
 
 struct rtw_srom {
-	u_int16_t		*sr_content;
-	u_int16_t		sr_size;
+	uint16_t		*sr_content;
+	uint16_t		sr_size;
 };
 
 struct rtw_rxsoft {
@@ -221,12 +221,12 @@ struct rtw_descs {
 struct rtw_rx_radiotap_header {
 	struct ieee80211_radiotap_header	rr_ihdr;
 	uint64_t				rr_tsft;
-	u_int8_t				rr_flags;
-	u_int8_t				rr_rate;
-	u_int16_t				rr_chan_freq;
-	u_int16_t				rr_chan_flags;
+	uint8_t				rr_flags;
+	uint8_t				rr_rate;
+	uint16_t				rr_chan_freq;
+	uint16_t				rr_chan_flags;
 	uint16_t				rr_barker_lock;
-	u_int8_t				rr_antsignal;
+	uint8_t				rr_antsignal;
 } __attribute__((__packed__));
 
 #define RTW_TX_RADIOTAP_PRESENT				\
@@ -237,10 +237,10 @@ struct rtw_rx_radiotap_header {
 
 struct rtw_tx_radiotap_header {
 	struct ieee80211_radiotap_header	rt_ihdr;
-	u_int8_t				rt_flags;
-	u_int8_t				rt_rate;
-	u_int16_t				rt_chan_freq;
-	u_int16_t				rt_chan_flags;
+	uint8_t				rt_flags;
+	uint8_t				rt_rate;
+	uint16_t				rt_chan_freq;
+	uint16_t				rt_chan_flags;
 } __attribute__((__packed__));
 
 enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
@@ -259,7 +259,7 @@ struct rtw_mtbl {
 					enum ieee80211_state, int);
 	void			(*mt_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
-				    int, int, u_int32_t);
+				    int, int, uint32_t);
 	struct ieee80211_node	*(*mt_node_alloc)(struct ieee80211com *);
 	void			(*mt_node_free)(struct ieee80211com *,
 					struct ieee80211_node *);
@@ -292,14 +292,14 @@ struct rtw_bbpset {
 struct rtw_rf {
 	void	(*rf_destroy)(struct rtw_rf *);
 	/* args: frequency, txpower, power state */
-	int	(*rf_init)(struct rtw_rf *, u_int, u_int8_t,
+	int	(*rf_init)(struct rtw_rf *, u_int, uint8_t,
 	                  enum rtw_pwrstate);
 	/* arg: power state */
 	int	(*rf_pwrstate)(struct rtw_rf *, enum rtw_pwrstate);
 	/* arg: frequency */
 	int	(*rf_tune)(struct rtw_rf *, u_int);
 	/* arg: txpower */
-	int	(*rf_txpower)(struct rtw_rf *, u_int8_t);
+	int	(*rf_txpower)(struct rtw_rf *, uint8_t);
 	rtw_continuous_tx_cb_t	rf_continuous_tx_cb;
 	void			*rf_continuous_tx_arg;
 	struct rtw_bbpset	rf_bbpset;
@@ -312,7 +312,7 @@ rtw_rf_destroy(struct rtw_rf *rf)
 }
 
 static __inline int
-rtw_rf_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_rf_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	return (*rf->rf_init)(rf, freq, opaque_txpower, power);
@@ -331,13 +331,13 @@ rtw_rf_tune(struct rtw_rf *rf, u_int freq)
 }
 
 static __inline int
-rtw_rf_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_rf_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
 {
 	return (*rf->rf_txpower)(rf, opaque_txpower);
 }
 
 typedef int (*rtw_rf_write_t)(struct rtw_regs *, enum rtw_rfchipid, u_int,
-    u_int32_t);
+    uint32_t);
 
 struct rtw_rfbus {
 	struct rtw_regs		*b_regs;
@@ -346,7 +346,7 @@ struct rtw_rfbus {
 
 static __inline int
 rtw_rfbus_write(struct rtw_rfbus *bus, enum rtw_rfchipid rfchipid, u_int addr,
-    u_int32_t val)
+    uint32_t val)
 {
 	return (*bus->b_write)(bus->b_regs, rfchipid, addr, val);
 }
@@ -374,12 +374,12 @@ struct rtw_softc {
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;
 	bus_dma_tag_t		sc_dmat;
-	u_int32_t		sc_flags;
+	uint32_t		sc_flags;
 
 	enum rtw_attach_state	sc_attach_state;
 	enum rtw_rfchipid	sc_rfchipid;
 	enum rtw_locale		sc_locale;
-	u_int8_t		sc_phydelay;
+	uint8_t		sc_phydelay;
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];
@@ -403,7 +403,7 @@ struct rtw_softc {
 
 	struct rtw_rf		*sc_rf;
 
-	u_int16_t		sc_inten;
+	uint16_t		sc_inten;
 
 	/* interrupt acknowledge hook */
 	void (*sc_intr_ack) __P((struct rtw_regs *));
@@ -419,9 +419,9 @@ struct rtw_softc {
 	struct callout		sc_scan_ch;
 	u_int			sc_cur_chan;
 
-	u_int32_t		sc_tsfth;	/* most significant TSFT bits */
-	u_int32_t		sc_rcr;		/* RTW_RCR */
-	u_int8_t		sc_csthr;	/* carrier-sense threshold */
+	uint32_t		sc_tsfth;	/* most significant TSFT bits */
+	uint32_t		sc_rcr;		/* RTW_RCR */
+	uint8_t		sc_csthr;	/* carrier-sense threshold */
 
 	int			sc_do_tick;	/* indicate 1s ticks */
 	struct timeval		sc_tick0;	/* first tick */
@@ -432,11 +432,11 @@ struct rtw_softc {
 
 	union {
 		struct rtw_rx_radiotap_header	tap;
-		u_int8_t			pad[64];
+		uint8_t			pad[64];
 	} sc_rxtapu;
 	union {
 		struct rtw_tx_radiotap_header	tap;
-		u_int8_t			pad[64];
+		uint8_t			pad[64];
 	} sc_txtapu;
 	enum rtw_access		sc_access;
 };
