@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)stat_flags.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: stat_flags.c,v 1.2 1994/09/23 06:14:57 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)stat_flags.c	8.2 (Berkeley) 7/27/94";*/
+static char *rcsid = "$Id: stat_flags.c,v 1.3 1994/12/27 23:14:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,6 +70,8 @@ flags_to_string(flags, def)
 		SAPPEND("uchg");
 	if (flags & UF_NODUMP)
 		SAPPEND("nodump");
+	if (flags & UF_OPAQUE)
+		SAPPEND("opaque");
 	if (flags & SF_APPEND)
 		SAPPEND("sappnd");
 	if (flags & SF_ARCHIVED)
@@ -126,6 +128,9 @@ string_to_flags(stringp, setp, clrp)
 		case 'd':
 			clear = !clear;
 			TEST(p, "dump", UF_NODUMP);
+			return (1);
+		case 'o':
+			TEST(p, "opaque", UF_OPAQUE);
 			return (1);
 		case 's':
 			TEST(p, "sappnd", SF_APPEND);
