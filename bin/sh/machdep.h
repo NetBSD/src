@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 1995/05/11 21:29:21 christos Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 2002/10/04 13:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,11 +43,5 @@
  * in some way.  The following macro will get this right on many machines.
  */
 
-#ifndef ALIGN
-union align {
-	int i;
-	char *cp;
-};
-
-#define ALIGN(nbytes)	(((nbytes) + sizeof(union align) - 1) & ~(sizeof(union align) - 1))
-#endif
+#define SHELL_SIZE (sizeof(union {int i; char *cp; double d; }) - 1)
+#define SHELL_ALIGN(nbytes) (((nbytes) + SHELL_SIZE) & ~SHELL_SIZE)

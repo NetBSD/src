@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.19 2002/05/25 23:09:06 wiz Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.20 2002/10/04 13:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mknodes.c,v 1.19 2002/05/25 23:09:06 wiz Exp $";
+    "$NetBSD: mknodes.c,v 1.20 2002/10/04 13:15:51 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,8 @@ outsizes(cfile)
 
 	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
 	for (i = 0 ; i < ntypes ; i++) {
-		fprintf(cfile, "      ALIGN(sizeof (struct %s)),\n", nodestr[i]->tag);
+		fprintf(cfile, "      SHELL_ALIGN(sizeof (struct %s)),\n",
+		    nodestr[i]->tag);
 	}
 	fprintf(cfile, "};\n");
 }

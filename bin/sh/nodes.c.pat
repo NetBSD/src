@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c.pat,v 1.8 1997/04/11 23:03:09 christos Exp $	*/
+/*	$NetBSD: nodes.c.pat,v 1.9 2002/10/04 13:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ sizenodelist(lp)
 	struct nodelist *lp;
 {
 	while (lp) {
-		funcblocksize += ALIGN(sizeof(struct nodelist));
+		funcblocksize += SHELL_ALIGN(sizeof(struct nodelist));
 		calcsize(lp->n);
 		lp = lp->next;
 	}
@@ -129,7 +129,8 @@ copynodelist(lp)
 	lpp = &start;
 	while (lp) {
 		*lpp = funcblock;
-		funcblock = (char *) funcblock + ALIGN(sizeof(struct nodelist));
+		funcblock = (char *) funcblock +
+		    SHELL_ALIGN(sizeof(struct nodelist));
 		(*lpp)->n = copynode(lp->n);
 		lp = lp->next;
 		lpp = &(*lpp)->next;
