@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 2002/07/10 13:13:47 scw Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 2002/12/06 17:06:06 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,20 +38,14 @@
 #include "common.h"
 
 /*
- * SH5 needs no assembler trampoline for _start as the kernel sets up
+ * SH5 needs no assembler trampoline for __start as the kernel sets up
  * all the necessary parameters.
  */
-void	_start(int argc, char **argv, char **envp, void (*cleanup)(void),
+void	__start(int argc, char **argv, char **envp, void (*cleanup)(void),
 	    const Obj_Entry *obj, struct ps_strings *ps_strings);
 
-__asm(	"	.text			\n"
-	"	.align 3		\n"
-	"	.globl start		\n"
-	"start:	pta/l	__start, tr0	\n"
-	"	blink	tr0, r63");
-
 void
-_start(int argc, char **argv, char **envp, void (*cleanup)(void),
+__start(int argc, char **argv, char **envp, void (*cleanup)(void),
     const Obj_Entry *obj, struct ps_strings *ps_strings)
 {
 	char *pn;
@@ -90,7 +84,7 @@ _start(int argc, char **argv, char **envp, void (*cleanup)(void),
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
   */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 2002/07/10 13:13:47 scw Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.3 2002/12/06 17:06:06 scw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
