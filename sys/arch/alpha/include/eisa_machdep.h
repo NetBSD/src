@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.3 1999/03/19 02:59:49 cgd Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.4 2000/06/01 00:04:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,15 +36,14 @@ typedef int eisa_intr_handle_t;
 struct alpha_eisa_chipset {
 	void	*ec_v;
 
-	void	(*ec_attach_hook) __P((struct device *, struct device *,
-		    struct eisabus_attach_args *));
-	int	(*ec_maxslots) __P((void *));
-	int	(*ec_intr_map) __P((void *, u_int,
-		    eisa_intr_handle_t *));
-	const char *(*ec_intr_string) __P((void *, eisa_intr_handle_t));
-	void	*(*ec_intr_establish) __P((void *, eisa_intr_handle_t,
-		    int, int, int (*)(void *), void *));
-	void	(*ec_intr_disestablish) __P((void *, void *));
+	void	(*ec_attach_hook)(struct device *, struct device *,
+		    struct eisabus_attach_args *);
+	int	(*ec_maxslots)(void *);
+	int	(*ec_intr_map)(void *, u_int, eisa_intr_handle_t *);
+	const char *(*ec_intr_string)(void *, eisa_intr_handle_t);
+	void	*(*ec_intr_establish)(void *, eisa_intr_handle_t,
+		    int, int, int (*)(void *), void *);
+	void	(*ec_intr_disestablish)(void *, void *);
 };
 
 /*
