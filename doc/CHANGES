@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.54 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.55 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -203,3 +203,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		to DESTDIR=/.  [lukem 20021208]
 	Added arch/evbppc for PowerPC-based evaluation boards, with the
 		existing Walnut port as its first member. [scw 20021209]
+	db(1): Added.  Manipulates db(3) btree(3) and hash(3) databases.
+		[lukem 20021211]
