@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1996/04/12 01:39:34 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1996/04/18 05:47:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -69,6 +69,20 @@ struct alpha_bus_chipset {
 	u_int64_t	(*bc_ir8) __P((void *v, bus_io_handle_t ioh,
 			    bus_io_size_t off));
 
+	/* I/O-space read-multiple functions */
+	void		(*bc_irm1) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, u_int8_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_irm2) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, u_int16_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_irm4) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, u_int32_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_irm8) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, u_int64_t *addr,
+			    bus_io_size_t count));
+
 	/* I/O-space write functions */
 	void		(*bc_iw1) __P((void *v, bus_io_handle_t ioh,
 			    bus_io_size_t off, u_int8_t val));
@@ -78,6 +92,20 @@ struct alpha_bus_chipset {
 			    bus_io_size_t off, u_int32_t val));
 	void		(*bc_iw8) __P((void *v, bus_io_handle_t ioh,
 			    bus_io_size_t off, u_int64_t val));
+
+	/* I/O-space write-multiple functions */
+	void		(*bc_iwm1) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, const u_int8_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_iwm2) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, const u_int16_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_iwm4) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, const u_int32_t *addr,
+			    bus_io_size_t count));
+	void		(*bc_iwm8) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t off, const u_int64_t *addr,
+			    bus_io_size_t count));
 
 	/* Mem-space cookie */
 	void		*bc_m_v;
@@ -125,15 +153,36 @@ struct alpha_bus_chipset {
 #define bus_io_unmap(t, ioh, size)					\
     (*(t)->bc_i_unmap)((t)->bc_i_v, (ioh), (size))
 
+#define	__bc_io_multi(t, h, o, a, s, dir, sz)				\
+    (*(t)->__bc_ABCD(bc_i,dir,m,sz))((t)->bc_i_v, h, o, a, s)
+
 #define	bus_io_read_1(t, h, o)		__bc_rd((t),(h),(o),1,i)
 #define	bus_io_read_2(t, h, o)		__bc_rd((t),(h),(o),2,i)
 #define	bus_io_read_4(t, h, o)		__bc_rd((t),(h),(o),4,i)
 #define	bus_io_read_8(t, h, o)		__bc_rd((t),(h),(o),8,i)
 
+#define	bus_io_read_multi_1(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),r,1)
+#define	bus_io_read_multi_2(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),r,2)
+#define	bus_io_read_multi_4(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),r,4)
+#define	bus_io_read_multi_8(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),r,8)
+
 #define	bus_io_write_1(t, h, o, v)	__bc_wr((t),(h),(o),(v),1,i)
 #define	bus_io_write_2(t, h, o, v)	__bc_wr((t),(h),(o),(v),2,i)
 #define	bus_io_write_4(t, h, o, v)	__bc_wr((t),(h),(o),(v),4,i)
 #define	bus_io_write_8(t, h, o, v)	__bc_wr((t),(h),(o),(v),8,i)
+
+#define	bus_io_write_multi_1(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),w,1)
+#define	bus_io_write_multi_2(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),w,2)
+#define	bus_io_write_multi_4(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),w,4)
+#define	bus_io_write_multi_8(t, h, o, a, s)				\
+    __bc_io_multi((t),(h),(o),(a),(s),w,8)
 
 #define bus_mem_map(t, bpa, size, cacheable, mhp)			\
     (*(t)->bc_m_map)((t)->bc_m_v, (bpa), (size), (cacheable), (mhp))
