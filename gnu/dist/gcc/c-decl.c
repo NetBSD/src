@@ -819,11 +819,14 @@ c_decode_option (argc, argv)
     warn_unknown_pragmas = 0;
   else if (!strcmp (p, "-Wall"))
     {
+/* XXX FIXME: bogus warnings center around this.  Disable until next import. */
+#if 0
       /* We save the value of warn_uninitialized, since if they put
 	 -Wuninitialized on the command line, we need to generate a
 	 warning about not using it without also specifying -O.  */
       if (warn_uninitialized != 1)
 	warn_uninitialized = 2;
+#endif
       warn_implicit_int = 1;
       mesg_implicit_function_declaration = 1;
       warn_return_type = 1;
