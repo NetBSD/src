@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.68 1998/08/25 23:09:08 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.69 1998/08/28 19:22:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 1998/08/25 23:09:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 1998/08/28 19:22:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2612,8 +2612,8 @@ pmap_changebit(pa, set, mask)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
-		printf("pmap_changebit(%lx, %lx, %s)\n",
-		       pa, bit, setem ? "set" : "clear");
+		printf("pmap_changebit(0x%lx, 0x%lx, 0x%lx)\n",
+		    pa, set, mask);
 #endif
 	if (!PAGE_IS_MANAGED(pa))
 		return;
