@@ -1,5 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.1 2001/01/23 01:24:10 ichiro Exp $	*/
-#define UPLCOM_DEBUG
+/*	$NetBSD: uplcom.c,v 1.2 2001/01/23 02:25:02 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -190,8 +189,6 @@ USB_ATTACH(uplcom)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-		devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 	sc->sc_iface_number = id->bInterfaceNumber;
 
 	uca.bulkin = uca.bulkout = -1;
@@ -208,7 +205,8 @@ USB_ATTACH(uplcom)
 			uca.bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			DPRINTF(("interrupu endpoint addr = 0x%x\n", ed->bEndpointAddress));
+			DPRINTF(("interrupu endpoint addr = 0x%x\n",
+				 ed->bEndpointAddress));
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkout = ed->bEndpointAddress;
