@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.218 2001/11/15 13:05:35 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.219 2001/11/15 19:24:07 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -13,14 +13,14 @@ NEED_OWN_INSTALL_TARGET?=	yes
 
 # Temporary; this will become default when all platforms have migrated.
 .if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
-.undef USE_NEW_TOOLCHAIN	# unset
+.undef USE_NEW_TOOLCHAIN
 .else
 .if ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
-USE_NEW_TOOLCHAIN=yes	# set
+USE_NEW_TOOLCHAIN=nowarn
 .endif
 .endif
 
