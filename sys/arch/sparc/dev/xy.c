@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.12 1996/03/16 23:28:40 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.13 1996/03/17 02:01:22 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.12 1996/03/16 23:28:40 christos Exp $
+ * id: $NetBSD: xy.c,v 1.13 1996/03/17 02:01:22 thorpej Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -181,12 +181,20 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  * cfdrivers: device driver interface to autoconfig
  */
 
-struct cfdriver xyccd = {
-	NULL, "xyc", xycmatch, xycattach, DV_DULL, sizeof(struct xyc_softc)
+struct cfattach xyc_ca = {
+	sizeof(struct xyc_softc), xycmatch, xycattach
 };
 
-struct cfdriver xycd = {
-	NULL, "xy", xymatch, xyattach, DV_DISK, sizeof(struct xy_softc)
+struct cfdriver xyc_cd = {
+	NULL, "xyc", DV_DULL
+};
+
+struct cfattach xy_ca = {
+	sizeof(struct xy_softc), xymatch, xyattach
+};
+
+struct cfdriver xy_cd = {
+	NULL, "xy", DV_DISK
 };
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
@@ -703,7 +711,7 @@ xyclose(dev, flag, fmt, p)
 	struct proc *p;
 
 {
-	struct xy_softc *xy = xycd.cd_devs[DISKUNIT(dev)];
+	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -735,11 +743,11 @@ xydump(dev, blkno, va, size)
 	struct xy_softc *xy;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xycd.cd_ndevs)
+	if (unit >= xy_cd.cd_ndevs)
 		return ENXIO;
 	part = DISKPART(dev);
 
-	xy = xycd.cd_devs[unit];
+	xy = xy_cd.cd_devs[unit];
 
 	printf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
 	    'a' + part);
@@ -778,7 +786,7 @@ xyioctl(dev, command, addr, flag, p)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == NULL)
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -871,7 +879,7 @@ xyopen(dev, flag, fmt, p)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == NULL)
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -951,7 +959,7 @@ xysize(dev)
 
 	/* do it */
 
-	xysc = xycd.cd_devs[DISKUNIT(dev)];
+	xysc = xy_cd.cd_devs[DISKUNIT(dev)];
 	part = DISKPART(dev);
 	if (xysc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
@@ -979,7 +987,7 @@ xystrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xycd.cd_ndevs || (xy = xycd.cd_devs[unit]) == 0 ||
+	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.11 1996/03/14 19:44:44 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.12 1996/03/17 02:00:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,9 +99,12 @@ static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
-struct cfdriver cgtwocd = {
-	NULL, "cgtwo", cgtwomatch, cgtwoattach,
-	DV_DULL, sizeof(struct cgtwo_softc)
+struct cfattach cgtwo_ca = {
+	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
+};
+
+struct cfdriver cgtwo_cd = {
+	NULL, "cgtwo", DV_DULL
 };
 
 /* frame buffer generic driver */
@@ -250,7 +253,7 @@ cgtwoopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgtwocd.cd_ndevs || cgtwocd.cd_devs[unit] == NULL)
+	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -273,7 +276,7 @@ cgtwoioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgtwo_softc *sc = cgtwocd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 
 	switch (cmd) {
@@ -418,7 +421,7 @@ cgtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgtwo_softc *sc = cgtwocd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
 		panic("cgtwommap");

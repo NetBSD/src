@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_si.c,v 1.6 1996/02/22 03:22:52 gwr Exp $	*/
+/*	$NetBSD: ncr_si.c,v 1.7 1996/03/17 02:03:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -201,10 +201,12 @@ static struct scsi_device si_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
+struct cfattach ncr_si_ca = {
+	sizeof(struct si_softc), si_match, si_attach
+};
 
-struct cfdriver ncr_sicd = {
-	NULL, si_name, si_match, si_attach,
-	DV_DULL, sizeof(struct si_softc), NULL, 0,
+struct cfdriver ncr_si_cd = {
+	NULL, si_name, DV_DULL
 };
 
 static int

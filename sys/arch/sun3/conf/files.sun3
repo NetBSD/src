@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.19 1996/02/16 20:04:36 gwr Exp $
+#	$NetBSD: files.sun3,v 1.20 1996/03/17 02:03:32 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -37,12 +37,15 @@ file arch/m68k/m68k/copy.s
 file dev/cons.c
 
 # Declare our "catch-all" root node.
-device mainbus at root {}
+device mainbus {}
+attach mainbus at root
 # Misc. mainbus things (catch-all)
 # Control space hack
-device obctl at mainbus {addr = -1, [level = -1]}
+device obctl {addr = -1, [level = -1]}
+attach obctl at mainbus
 # Floating Point Unit
-device fpu at mainbus {}
+device fpu {}
+attach fpu at mainbus
 file arch/sun3/sun3/fpu.c		fpu
 
 # Bus types
@@ -51,13 +54,17 @@ file arch/sun3/sun3/fpu.c		fpu
 # requires these all to agree with <autoconf.h> struct bus_loc
 
 # On-board MEMory space
-device obmem at mainbus {addr = -1, [level = -1]}
+device obmem {addr = -1, [level = -1]}
+attach obmem at mainbus
 # On-board I/O space
-device obio  at mainbus {addr = -1, [level = -1]}
+device obio {addr = -1, [level = -1]}
+attach obio at mainbus
 # VME Short space (D16)
-device vmes  at mainbus {addr = -1, [level = -1], [vect = -1]}
+device vmes {addr = -1, [level = -1], [vect = -1]}
+attach vmes at mainbus
 # VME Long space (D32)
-device vmel  at mainbus {addr = -1, [level = -1], [vect = -1]}
+device vmel {addr = -1, [level = -1], [vect = -1]}
+attach vmel at mainbus
 
 file arch/sun3/dev/obctl.c		obctl
 file arch/sun3/dev/obio.c		obio
@@ -73,24 +80,30 @@ include "../../../scsi/files.scsi"
 # On-Board I/O (OBIO)
 #
 
-device eeprom at obio
+device eeprom
+attach eeprom at obio
 file arch/sun3/dev/eeprom.c		eeprom
 
-device clock at obio
+device clock
+attach clock at obio
 file arch/sun3/sun3/clock.c		clock
 
-device ie at obio, vmes: ifnet, ether
+device ie: ifnet, ether
+attach ie at obio, vmes
 file arch/sun3/dev/if_ie.c		ie
 file arch/sun3/dev/if_ie_subr.c		ie
 
-device le at obio: ifnet, ether
+device le: ifnet, ether
+attach le at obio
 file arch/sun3/dev/if_le.c		le
 file arch/sun3/dev/if_le_subr.c		le
 
-device si at obio, vmes: scsi
+device si: scsi
+attach si at obio, vmes
 file	arch/sun3/dev/si.c		si
 
-device ncr_si at obio, vmes: scsi, ncr5380sbc
+device ncr_si: scsi, ncr5380sbc
+attach ncr_si at obio, vmes
 file	arch/sun3/dev/ncr_si.c  	ncr_si
 
 #
@@ -102,13 +115,16 @@ file arch/sun3/dev/fb.c			sunfb
 #
 # On-Board MEMory (OBMEM)
 #
-device bwtwo at obmem: sunfb
+device bwtwo: sunfb
+attach bwtwo at obmem
 file arch/sun3/dev/bw2.c		bwtwo needs-flag
 
-device cgtwo at vmes: sunfb
+device cgtwo: sunfb
+attach bwtwo at vmes
 file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
-device cgfour at obmem: sunfb
+device cgfour: sunfb
+attach cgfour at obmem
 file arch/sun3/dev/cg4.c		cgfour needs-flag
 
 file	arch/sun3/dev/bt_subr.c 	cgfour
@@ -116,46 +132,56 @@ file	arch/sun3/dev/bt_subr.c 	cgfour
 #
 # VME
 #
-device	xdc at vmel {drive = -1}
-device	xd at xdc: disk
+device	xdc {drive = -1}
+attach	xdc at vmel
+device	xd: disk
+attach	xd at xdc
 file	arch/sun3/dev/xd.c		xd needs-flag
 
-device	xyc at vmes {drive = -1}
-device	xy at xyc: disk
+device	xyc {drive = -1}
+attach	xyc at vmes
+device	xy: disk
+attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy needs-flag
 
 
 #
 # On-Board Control (OBCTL)
 #
-device idprom at obctl
+device idprom
+attach idprom at obctl
 file arch/sun3/dev/idprom.c		idprom needs-count
 
 #
 # Console (zs) related stuff
 #
-device zsc at obio {channel = -1}
+device zsc {channel = -1}
+attach zsc at obio
 file arch/sun3/dev/zs.c 		zsc needs-flag
 file dev/ic/z8530sc.c			zsc
 
-device zstty at zsc: tty
+device zstty: tty
+attach zstty at zsc
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sun3/dev/zs_kgdb.c		kgdb
 
 define zsevent
 file dev/sun/event.c			zsevent
 
-device kbd at zsc: zsevent
+device kbd: zsevent
+attach kdb at zsc
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd
 
-device ms at zsc: zsevent
+device ms: zsevent
+attach ms at zsc
 file dev/sun/ms.c			ms needs-flag
 
 
 # RAM Disk for boot tape
-device	rd at mainbus
+device	rd
+attach	rd at mainbus
 file dev/ramdisk.c			rd needs-count
 file arch/sun3/dev/rd_root.c		ramdisk_hooks
 

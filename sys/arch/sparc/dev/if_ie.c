@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.20 1996/03/14 19:45:04 christos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.21 1996/03/17 02:01:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -344,8 +344,12 @@ int in_ietint = 0;
 int iematch __P((struct device *, void *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
-struct cfdriver iecd = {
-	NULL, "ie", iematch, ieattach, DV_IFNET, sizeof(struct ie_softc)
+struct cfattach ie_ca = {
+	sizeof(struct ie_softc), iematch, ieattach
+};
+
+struct cfdriver ie_cd = {
+	NULL, "ie", DV_IFNET
 };
 
 /*
@@ -648,7 +652,7 @@ ieattach(parent, self, aux)
 		return;
 	}
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = iecd.cd_name;
+	ifp->if_name = ie_cd.cd_name;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -700,7 +704,7 @@ void
 iewatchdog(unit)
 	int unit;
 {
-	struct ie_softc *sc = iecd.cd_devs[unit];
+	struct ie_softc *sc = ie_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1407,7 +1411,7 @@ void
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -1940,7 +1944,7 @@ ieioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.25 1996/01/12 23:08:57 chuck Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 1996/03/17 02:01:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,15 +68,19 @@
 #define	LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
 int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 int	leintr __P((void *));
 
-struct	cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc)
+struct cfattach le_ca = {
+	sizeof(struct le_softc), lematch, leattach
+};
+
+struct	cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 integrate void
@@ -162,7 +166,7 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	bp = ca->ca_ra.ra_bp;
@@ -186,14 +190,14 @@ leattach(parent, self, aux)
 			sbus_establish(&sc->sc_sd, &sc->sc_dev);
 		}
 
-		if (bp != NULL && strcmp(bp->name, lecd.cd_name) == 0 &&
+		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
 		    SAME_LANCE(bp, ca))
 			bootdv = &sc->sc_dev;
 		break;
 #endif /* SUN4C || SUN4M */
 
 	default:
-		if (bp != NULL && strcmp(bp->name, lecd.cd_name) == 0 &&
+		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
 		    sc->sc_dev.dv_unit == bp->val[1])
 			bootdv = &sc->sc_dev;
 		break;

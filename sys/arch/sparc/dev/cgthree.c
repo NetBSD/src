@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.24 1996/03/14 19:44:42 christos Exp $ */
+/*	$NetBSD: cgthree.c,v 1.25 1996/03/17 02:00:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,9 +95,12 @@ int		cgthreeioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgthreemmap __P((dev_t, int, int));
 static void	cgthreeunblank(struct device *);
 
-struct cfdriver cgthreecd = {
-	NULL, "cgthree", cgthreematch, cgthreeattach,
-	DV_DULL, sizeof(struct cgthree_softc)
+struct cfattach cgthree_ca = {
+	sizeof(struct cgthree_softc), cgthreematch, cgthreeattach
+};
+
+struct cfdriver cgthree_cd = {
+	NULL, "cgthree", DV_DULL
 };
 
 /* frame buffer generic driver */
@@ -242,7 +245,7 @@ cgthreeopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgthreecd.cd_ndevs || cgthreecd.cd_devs[unit] == NULL)
+	if (unit >= cgthree_cd.cd_ndevs || cgthree_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -265,7 +268,7 @@ cgthreeioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgthree_softc *sc = cgthreecd.cd_devs[minor(dev)];
+	register struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
 
@@ -386,7 +389,7 @@ cgthreemmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgthree_softc *sc = cgthreecd.cd_devs[minor(dev)];
+	register struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 #define START		(128*1024 + 128*1024)
 #define NOOVERLAY	(0x04000000)
 

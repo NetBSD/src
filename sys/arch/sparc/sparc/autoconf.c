@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1996/03/14 21:08:50 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.44 1996/03/17 02:01:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -689,13 +689,13 @@ configure()
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		extern struct cfdata cfdata[];
-		extern struct cfdriver memregcd, obiocd;
+		extern struct cfdriver memreg_cd, obio_cd;
 		struct cfdata *cf, *memregcf = NULL;
 		register short *p;
 		struct rom_reg rr;
 
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
-			if (cf->cf_driver != &memregcd)
+			if (cf->cf_driver != &memreg_cd)
 				continue;
 			/*
 			 * On the 4/100 obio addresses must be mapped at
@@ -710,7 +710,7 @@ configure()
 			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
 				continue;
 			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
-				if (cfdata[*p].cf_driver == &obiocd)
+				if (cfdata[*p].cf_driver == &obio_cd)
 					memregcf = cf;
 		}
 		if (memregcf==NULL)
@@ -1028,9 +1028,13 @@ mainbus_attach(parent, dev, aux)
 	}
 }
 
-struct cfdriver mainbuscd =
-    { NULL, "mainbus", mainbus_match, mainbus_attach,
-      DV_DULL, sizeof(struct device) };
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbus_match, mainbus_attach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
 
 /*
  * findzs() is called from the zs driver (which is, at least in theory,

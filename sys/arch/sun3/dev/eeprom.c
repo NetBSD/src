@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.6 1995/05/24 20:47:41 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.7 1996/03/17 02:03:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,9 +58,13 @@ static int ee_busy, ee_want;
 int eeprom_match __P((struct device *, void *vcf, void *args));
 void eeprom_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver eepromcd = {
-	NULL, "eeprom", eeprom_match, eeprom_attach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach eeprom_ca = {
+	sizeof(struct device), eeprom_match, eeprom_attach
+};
+
+struct cfdriver eeprom_cd = {
+	NULL, "eeprom", DV_DULL
+};
 
 /* Called very early by internal_configure. */
 void eeprom_init()

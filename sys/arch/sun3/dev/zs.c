@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 1996/02/16 18:00:33 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.34 1996/03/17 02:04:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -168,9 +168,12 @@ static u_char zs_init_reg[16] = {
 static int	zsc_match(struct device *, void *, void *);
 static void	zsc_attach(struct device *, struct device *, void *);
 
-struct cfdriver zsccd = {
-	NULL, "zsc", zsc_match, zsc_attach,
-	DV_DULL, sizeof(struct zsc_softc), NULL,
+struct cfattach zsc_ca = {
+	sizeof(struct zsc_softc), zsc_match, zsc_attach
+};
+
+struct cfdriver zsc_cd = {
+	NULL, "zsc", DV_DULL
 };
 
 static int zshard(void *);
@@ -332,9 +335,9 @@ zshard(arg)
 	
 	/* Do ttya/ttyb first, because they go faster. */
 	rval = 0;
-	unit = zsccd.cd_ndevs;
+	unit = zsc_cd.cd_ndevs;
 	while (--unit >= 0) {
-		zsc = zsccd.cd_devs[unit];
+		zsc = zsc_cd.cd_devs[unit];
 		if (zsc != NULL) {
 			rval |= zsc_intr_hard(zsc);
 		}
@@ -376,9 +379,9 @@ zssoft(arg)
 	zssoftpending = 0;
 
 	/* Do ttya/ttyb first, because they go faster. */
-	unit = zsccd.cd_ndevs;
+	unit = zsc_cd.cd_ndevs;
 	while (--unit >= 0) {
-		zsc = zsccd.cd_devs[unit];
+		zsc = zsc_cd.cd_devs[unit];
 		if (zsc != NULL) {
 			(void) zsc_intr_soft(zsc);
 		}

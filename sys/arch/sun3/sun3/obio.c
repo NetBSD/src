@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.16 1995/02/13 22:23:57 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.17 1996/03/17 02:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,9 +44,13 @@
 static void obio_attach __P((struct device *, struct device *, void *));
 static void obio_scan __P((struct device *, void *));
 
-struct cfdriver obiocd = {
-	NULL, "obio", always_match, obio_attach, DV_DULL,
-	sizeof(struct device), 0 };
+struct cfattach obio_ca = {
+	sizeof(struct device), always_match, obio_attach
+};
+
+struct cfdriver obio_cd = {
+	NULL, "obio", DV_DULL
+};
 
 static void
 obio_attach(parent, self, args)

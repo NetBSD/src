@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 1996/03/16 23:28:33 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.26 1996/03/17 02:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -131,9 +131,12 @@ extern	struct fdcio	*fdciop;
 int	fdcmatch __P((struct device *, void *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
+struct cfattach fdc_ca = {
+	sizeof(struct fdc_softc), fdcmatch, fdcattach
+};
 
-struct cfdriver fdccd = {
-	NULL, "fdc", fdcmatch, fdcattach, DV_DULL, sizeof(struct fdc_softc)
+struct cfdriver fdc_cd = {
+	NULL, "fdc", DV_DULL
 };
 
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
@@ -201,8 +204,12 @@ struct fd_softc {
 int	fdmatch __P((struct device *, void *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-struct cfdriver fdcd = {
-	NULL, "fd", fdmatch, fdattach, DV_DISK, sizeof(struct fd_softc)
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdmatch, fdattach
+};
+
+struct cfdriver fd_cd = {
+	NULL, "fd", DV_DISK
 };
 
 void fdgetdisklabel __P((dev_t));
@@ -611,8 +618,8 @@ fdstrategy(bp)
  	int s;
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fdcd.cd_ndevs ||
-	    (fd = fdcd.cd_devs[unit]) == 0 ||
+	if (unit >= fd_cd.cd_ndevs ||
+	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
@@ -847,9 +854,9 @@ fdopen(dev, flags, fmt, p)
 	struct fd_type *type;
 
 	unit = FDUNIT(dev);
-	if (unit >= fdcd.cd_ndevs)
+	if (unit >= fd_cd.cd_ndevs)
 		return ENXIO;
-	fd = fdcd.cd_devs[unit];
+	fd = fd_cd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
@@ -893,7 +900,7 @@ fdclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
@@ -1524,7 +1531,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int error;
 
 	switch (cmd) {
@@ -1614,7 +1621,7 @@ fdgetdisklabel(dev)
 	dev_t dev;
 {
 	int unit = FDUNIT(dev), i;
-	struct fd_softc *fd = fdcd.cd_devs[unit];
+	struct fd_softc *fd = fd_cd.cd_devs[unit];
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 

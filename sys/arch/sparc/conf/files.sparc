@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.15 1996/03/02 23:55:17 pk Exp $
+#	$NetBSD: files.sparc,v 1.16 1996/03/17 02:00:30 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -8,40 +8,56 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-device mainbus at root {}
+device mainbus {}
+attach mainbus at root
 
-device obio at mainbus { [addr = -1], [level = -1] }
-device vmel at mainbus { [addr = -1], [level = -1], [vect = -1] }
-device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
+device obio { [addr = -1], [level = -1] }
+attach obio at mainbus
+device vmel { [addr = -1], [level = -1], [vect = -1] }
+attach vmel at mainbus
+device vmes { [addr = -1], [level = -1], [vect = -1] }
+attach vmes at mainbus
 file	arch/sparc/dev/obio.c		obio vmel vmes
 
-device audio at mainbus
+device audio
+attach audio at mainbus
 file	arch/sparc/dev/amd7930.c		audio needs-flag
 
-device auxreg at mainbus
+device auxreg
+attach auxreg at mainbus
 file	arch/sparc/sparc/auxreg.c
 
-device clock at mainbus, obio
-device oclock at obio
-device timer at mainbus, obio
-device eeprom at obio
+device clock
+attach clock at mainbus, obio
+device oclock
+attach oclock at obio
+device timer
+attach timer at mainbus, obio
+device eeprom
+attach eeprom at obio
 file	arch/sparc/sparc/clock.c
 
-device cpu at mainbus
+device cpu
+attach cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
-device memreg at mainbus, obio
+device memreg
+attach memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs at mainbus, obio
+device zs
+attach zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-count
 
-device fdc at mainbus {}
-device fd at fdc: disk
+device fdc {}
+attach fdc at mainbus
+device fd: disk
+attach fd at fdc
 file	arch/sparc/dev/fd.c			fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fd
 
-device sbus at mainbus { slot = -1, offset = -1 }
+device sbus { slot = -1, offset = -1 }
+attach sbus at mainbus
 file	arch/sparc/dev/sbus.c		sbus
 
 #
@@ -53,52 +69,73 @@ major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
-device dma at sbus, obio
-device espdma at sbus	{ slot = -1, offset = -1 }
-device ledma at sbus	{ slot = -1, offset = -1 }
+device dma
+attach dma at sbus, obio
+device espdma { slot = -1, offset = -1 }
+attach espdma at sbus
+device ledma { slot = -1, offset = -1 }
+attach ledma at sbus
 file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
 
-device esp at sbus, espdma, obio: scsi
+device esp: scsi
+attach esp at sbus, espdma, obio
 file	arch/sparc/dev/esp.c		esp needs-flag
 
-device bwtwo at sbus, obio, vmes, vmel
+# Brooktree DAC attribute
+define bt_dac
+
+device bwtwo
+attach bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo at sbus, obio, vmes
+device cgtwo
+attach cgtwo at sbus, obio, vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree at sbus
+device cgthree: bt_dac
+attach cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgfour at obio
+device cgfour: bt_dac
+attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix at sbus, obio
+device cgsix: bt_dac
+attach cgsix at sbus, obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
-device cgeight at obio
+device cgeight: bt_dac
+attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-file	arch/sparc/dev/bt_subr.c	cgsix cgthree cgfour cgeight
+file	arch/sparc/dev/bt_subr.c	bt_dac
 
-device le at sbus, ledma, obio: ifnet, ether
+device le: ifnet, ether
+attach le at sbus, ledma, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie at obio, vmes, vmel: ifnet, ether
+device ie: ifnet, ether
+attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 
-device	xdc at vmel {drive = -1}
-device	xd at xdc: disk
+device xdc {drive = -1}
+attach xdc at vmel
+device xd: disk
+attach xd at xdc
 file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
 
-device	xyc at vmes {drive = -1}
-device	xy at xyc: disk
+device xyc {drive = -1}
+attach xyc at vmes
+device xy: disk
+attach xy at xyc
 file	arch/sparc/dev/xy.c		xy needs-flag
 major	{xy = 3}
 
-device	si at vmes: scsi, ncr5380sbc
-device	sw at obio: scsi, ncr5380sbc
+device si: scsi, ncr5380sbc
+attach si at vmes
+device sw: scsi, ncr5380sbc
+attach sw at obio
 file	arch/sparc/dev/si.c		si sw
 
 pseudo-device	kbd

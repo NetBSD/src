@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.1 1994/12/12 18:59:26 gwr Exp $	*/
+/*	$NetBSD: vme.c,v 1.2 1996/03/17 02:04:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,13 +43,21 @@ static void vme32attach __P((struct device *, struct device *, void *));
 static void vme16scan __P((struct device *, void *));
 static void vme32scan __P((struct device *, void *));
 
-struct cfdriver vmescd = {
-	NULL, "vmes", vme_match, vme16attach, DV_DULL,
-	sizeof(struct device), 0 };
+struct cfattach vmes_ca = {
+	sizeof(struct device), vme_match, vme16attach
+};
 
-struct cfdriver vmelcd = {
-	NULL, "vmel", vme_match, vme32attach, DV_DULL,
-	sizeof(struct device), 0 };
+struct cfdriver vmes_cd = {
+	NULL, "vmes", DV_DULL
+};
+
+struct cfattach vmel_ca = {
+	sizeof(struct device), vme_match, vme32attach
+};
+
+struct cfdriver vmel_cd = {
+	NULL, "vmel", DV_DULL
+};
 
 int vme_match(parent, vcf, aux)
 	struct device *parent;

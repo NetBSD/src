@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.19 1996/03/14 19:44:49 christos Exp $ */
+/*	$NetBSD: dma.c,v 1.20 1996/03/17 02:00:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -63,19 +63,28 @@ int dmaintr		__P((struct dma_softc *));
 int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
 void dma_go		__P((struct dma_softc *));
 
-struct cfdriver dmacd = {
-	NULL, "dma", dmamatch, dmaattach,
-	DV_DULL, sizeof(struct dma_softc)
+struct cfattach dma_ca = {
+	sizeof(struct dma_softc), dmamatch, dmaattach
 };
 
-struct cfdriver ledmacd = {
-	NULL, "ledma", matchbyname, dmaattach,
-	DV_DULL, sizeof(struct dma_softc)
+struct cfdriver dma_cd = {
+	NULL, "dma", DV_DULL
 };
 
-struct cfdriver espdmacd = {
-	NULL, "espdma", matchbyname, dmaattach,
-	DV_DULL, sizeof(struct dma_softc)
+struct cfattach ledma_ca = {
+	sizeof(struct dma_softc), matchbyname, dmaattach
+};
+
+struct cfdriver ledma_cd = {
+	NULL, "ledma", DV_DULL
+};
+
+struct cfattach espdma_ca = {
+	sizeof(struct dma_softc), matchbyname, dmaattach
+};
+
+struct cfdriver espdma_cd = {
+	NULL, "espdma", DV_DULL
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1996/03/17 00:56:24 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.35 1996/03/17 02:01:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,9 +120,14 @@ static void gmt_to_dt __P((long *, struct date_time *));
 
 static int oclockmatch __P((struct device *, void *, void *));
 static void oclockattach __P((struct device *, struct device *, void *));
-struct cfdriver oclockcd =
-    { NULL, "oclock", oclockmatch, oclockattach, DV_DULL,
-	sizeof(struct device) };
+
+struct cfattach oclock_ca = {
+	sizeof(struct device), oclockmatch, oclockattach
+};
+
+struct cfdriver oclock_cd = {
+	NULL, "oclock", DV_DULL
+};
 
 #endif /* SUN4 */
 
@@ -147,23 +152,35 @@ static int	eeprom_update __P((char *, int, int));
 
 static int	eeprom_match __P((struct device *, void *, void *));
 static void	eeprom_attach __P((struct device *, struct device *, void *));
-struct	cfdriver eepromcd = {
-	NULL, "eeprom", eeprom_match, eeprom_attach,
-	DV_DULL, sizeof(struct device)
+
+struct cfattach eeprom_ca = {
+	sizeof(struct device), eeprom_match, eeprom_attach
+};
+
+struct	cfdriver eeprom_cd = {
+	NULL, "eeprom", DV_DULL
 };
 
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach,
-	DV_DULL, sizeof(struct device)
+
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
 };
 
 static int	timermatch __P((struct device *, void *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
-struct cfdriver timercd = {
-	NULL, "timer", timermatch, timerattach,
-	DV_DULL, sizeof(struct device)
+
+struct cfattach timer_ca = {
+	sizeof(struct device), timermatch, timerattach
+};
+
+struct cfdriver timer_cd = {
+	NULL, "timer", DV_DULL
 };
 
 struct chiptime;
@@ -171,7 +188,6 @@ void clk_wenable __P((int));
 void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
-
 
 /*
  * old clock match routine
@@ -187,7 +203,7 @@ oclockmatch(parent, vcf, aux)
 
 	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_100 || cpumod == SUN4_200)
-			return (strcmp(oclockcd.cd_name, ca->ca_ra.ra_name) == 0);
+			return (strcmp(oclock_cd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
 	return (0); /* only sun4 has oclock */
@@ -236,7 +252,7 @@ eeprom_match(parent, vcf, aux)
 			return (0);
 
 		if (cpumod == SUN4_100 || cpumod == SUN4_200) {
-			if (strcmp(eepromcd.cd_name, ca->ca_ra.ra_name))
+			if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name))
 				return (0);
 			/*
 			 * Make sure there's something there...
@@ -282,7 +298,7 @@ clockmatch(parent, vcf, aux)
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
-			return (strcmp(clockcd.cd_name,
+			return (strcmp(clock_cd.cd_name,
 				       ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
@@ -497,7 +513,7 @@ delay(n)
 	if (timerok == 0)
 		return;
 
-	if (timercd.cd_ndevs == 0)
+	if (timer_cd.cd_ndevs == 0)
 		panic("delay");
 	c = TIMERREG->t_c10.t_counter;
 	while (n-- > 0) {
