@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.165 2002/08/23 16:02:32 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.166 2002/08/23 16:24:54 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.165 2002/08/23 16:02:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.166 2002/08/23 16:24:54 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -517,6 +517,11 @@ const struct pciide_product_desc pciide_triones_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  NULL,
 	  hpt_chip_map,
+	},
+	{ PCI_PRODUCT_TRIONES_HPT372,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  NULL,
+	  hpt_chip_map
 	},
 	{ PCI_PRODUCT_TRIONES_HPT374,
 	  IDE_PCI_CLASS_OVERRIDE,
@@ -3458,8 +3463,12 @@ hpt_chip_map(sc, pa)
 	printf(": Triones/Highpoint ");
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
 		printf("HPT374 IDE Controller\n");
+	else if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372)
+		printf("HPT372 IDE Controller\n");
 	else if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366) {
-		if (revision == HPT370_REV)
+		if (revision == HPT372_REV)
+			printf("HPT372 IDE Controller\n");
+		else if (revision == HPT370_REV)
 			printf("HPT370 IDE Controller\n");
 		else if (revision == HPT370A_REV)
 			printf("HPT370A IDE Controller\n");
@@ -3481,7 +3490,9 @@ hpt_chip_map(sc, pa)
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
 		if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
-		    (revision == HPT370_REV || revision == HPT370A_REV)) ||
+		    (revision == HPT370_REV || revision == HPT370A_REV ||
+		     revision == HPT372_REV)) ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372 ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
@@ -3522,7 +3533,10 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 1;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372 ||
+		    (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+		    revision == HPT372_REV))
 			sc->sc_wdcdev.UDMA_cap = 6;
 		else
 			sc->sc_wdcdev.UDMA_cap = 5;
@@ -3555,7 +3569,9 @@ hpt_chip_map(sc, pa)
 		hpt_setup_channel(&cp->wdc_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
-	    (revision == HPT370_REV || revision == HPT370A_REV)) || 
+	    (revision == HPT370_REV || revision == HPT370A_REV ||
+	     revision == HPT372_REV)) || 
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374) {
 		/*
 		 * HPT370_REV and highter has a bit to disable interrupts,
@@ -3565,8 +3581,11 @@ hpt_chip_map(sc, pa)
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL) &
 		    ~HPT_CSEL_IRQDIS);
 	}
-	/* set clocks, etc (mandatory on 374, optional otherwise) */
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
+	/* set clocks, etc (mandatory on 372/4, optional otherwise) */
+	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+	     revision == HPT372_REV ) ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_SC2,
 		    (pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_SC2) &
 		     HPT_SC2_MAEN) | HPT_SC2_OSC_EN);
@@ -3584,6 +3603,8 @@ hpt_setup_channel(chp)
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int revision =
+	     PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	cable = pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL);
 
@@ -3608,11 +3629,29 @@ hpt_setup_channel(chp)
 			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
-			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    ( (sc->sc_wdcdev.UDMA_cap == 6) ?
-			    hpt374_udma[drvp->UDMA_mode] :
-			    hpt370_udma[drvp->UDMA_mode]) :
-			    hpt366_udma[drvp->UDMA_mode];
+			switch (sc->sc_pp->ide_product) {
+			case PCI_PRODUCT_TRIONES_HPT374:
+				after = hpt374_udma[drvp->UDMA_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT372:
+				after = hpt372_udma[drvp->UDMA_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT366:
+			default:
+				switch(revision) {
+				case HPT372_REV:
+					after = hpt372_udma[drvp->UDMA_mode];
+					break;
+				case HPT370_REV:
+				case HPT370A_REV:
+					after = hpt370_udma[drvp->UDMA_mode];
+					break;
+				case HPT366_REV:
+				default:
+					after = hpt366_udma[drvp->UDMA_mode];
+					break;
+				}
+			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if (drvp->drive_flags & DRIVE_DMA) {
 			/*
@@ -3624,19 +3663,55 @@ hpt_setup_channel(chp)
 			    (drvp->DMA_mode + 2) > drvp->PIO_mode) {
 				drvp->DMA_mode = drvp->PIO_mode - 2;
 			}
-			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    ( (sc->sc_wdcdev.UDMA_cap == 6) ?
-			    hpt374_dma[drvp->DMA_mode] :
-			    hpt370_dma[drvp->DMA_mode]) :
-			    hpt366_dma[drvp->DMA_mode];
+			switch (sc->sc_pp->ide_product) {
+			case PCI_PRODUCT_TRIONES_HPT374:
+				after = hpt374_dma[drvp->DMA_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT372:
+				after = hpt372_dma[drvp->DMA_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT366:
+			default:
+				switch(revision) {
+				case HPT372_REV:
+					after = hpt372_dma[drvp->DMA_mode];
+					break;
+				case HPT370_REV:
+				case HPT370A_REV:
+					after = hpt370_dma[drvp->DMA_mode];
+					break;
+				case HPT366_REV:
+				default:
+					after = hpt366_dma[drvp->DMA_mode];
+					break;
+				}
+			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
-			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    ( (sc->sc_wdcdev.UDMA_cap == 6) ?
-			    hpt374_pio[drvp->PIO_mode] :
-			    hpt370_pio[drvp->PIO_mode]) :
-			    hpt366_pio[drvp->PIO_mode];
+			switch (sc->sc_pp->ide_product) {
+			case PCI_PRODUCT_TRIONES_HPT374:
+				after = hpt374_pio[drvp->PIO_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT372:
+				after = hpt372_pio[drvp->PIO_mode];
+				break;
+			case PCI_PRODUCT_TRIONES_HPT366:
+			default:
+				switch(revision) {
+				case HPT372_REV:
+					after = hpt372_pio[drvp->PIO_mode];
+					break;
+				case HPT370_REV:
+				case HPT370A_REV:
+					after = hpt370_pio[drvp->PIO_mode];
+					break;
+				case HPT366_REV:
+				default:
+					after = hpt366_pio[drvp->PIO_mode];
+					break;
+				}
+			}
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    HPT_IDETIM(chp->channel, drive), after);
