@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.717 2004/07/14 09:46:28 agc Exp $
+#	$NetBSD: mi,v 1.718 2004/07/16 03:11:39 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -896,12 +896,14 @@
 ./usr/include/net/slip.h			comp-c-include
 ./usr/include/net/zlib.h			comp-c-include
 ./usr/include/net80211/ieee80211.h		comp-c-include
+./usr/include/net80211/ieee80211_channel.h	comp-c-include
 ./usr/include/net80211/ieee80211_compat.h	comp-c-include
 ./usr/include/net80211/ieee80211_crypto.h	comp-c-include
 ./usr/include/net80211/ieee80211_ioctl.h	comp-c-include
 ./usr/include/net80211/ieee80211_node.h		comp-c-include
 ./usr/include/net80211/ieee80211_proto.h	comp-c-include
 ./usr/include/net80211/ieee80211_radiotap.h	comp-c-include
+./usr/include/net80211/ieee80211_sysctl.h	comp-c-include
 ./usr/include/net80211/ieee80211_var.h		comp-c-include
 ./usr/include/netatalk/aarp.h			comp-c-include
 ./usr/include/netatalk/at.h			comp-c-include
