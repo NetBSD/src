@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/02/13 23:53:56 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1999/03/06 11:31:51 drochner Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -51,3 +51,7 @@ echosrcs! ${SRCS}
 	@echo ${.ALLSRC}
 
 .PATH: ${.CURDIR}/../common
+
+# make the "afterdepend" rule happy
+.depend:
+	@touch $@
