@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.46 1996/10/02 18:05:09 ws Exp $	*/
+/*	$NetBSD: proc.h,v 1.47 1996/11/06 19:33:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -302,6 +302,7 @@ int	leavepgrp __P((struct proc *p));
 void	mi_switch __P((void));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
+void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
