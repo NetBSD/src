@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.63 2000/12/19 15:51:49 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.64 2001/01/02 04:28:37 simonb Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 # Support for various CPU types
 options 	HP320
@@ -89,11 +89,11 @@ options 	SE_KEYBOARD	# include Swedish HIL keymap
 #
 options 	COMPAT_HPUX	# HP-UX binary compatibility
 
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	COMPAT_SVR4	# SVR4 binary compatibility
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 # Debugging options
 options 	DIAGNOSTIC	# Extra kernel sanity checks
