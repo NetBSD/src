@@ -1,7 +1,7 @@
-/*	$NetBSD: freebsd_misc.c,v 1.3 1997/10/20 22:05:23 thorpej Exp $	*/
+/*	$NetBSD: stat.c,v 1.1 1997/10/20 22:05:28 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Frank van der Linden
+ * Copyright (c) 1997 Frank van der Linden
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,76 +31,83 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#undef stat
+#undef lstat
+#undef fstat
+
 /*
- * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
+ * Convert from a new to an old stat structure.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
+static void cvtstat __P((struct stat *, struct stat12 *));
 
-#include <sys/syscallargs.h>
-
-#include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
-#include <compat/freebsd/freebsd_rtprio.h>
-#include <compat/freebsd/freebsd_timex.h>
-
-int
-freebsd_sys_msync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+static void
+cvtstat(st, ost)
+	struct stat *st;
+	struct stat12 *ost;
 {
-	struct freebsd_sys_msync_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) flags;
-	} */ *uap = v;
-	struct sys___msync13_args bma;
 
-	/*
-	 * FreeBSD-2.0-RELEASE's msync(2) is compatible with NetBSD's.
-	 * FreeBSD-2.0.5-RELEASE's msync(2) has addtional argument `flags',
-	 * but syscall number is not changed. :-<
-	 */
-	SCARG(&bma, addr) = SCARG(uap, addr);
-	SCARG(&bma, len) = SCARG(uap, len);
-	SCARG(&bma, flags) = SCARG(uap, flags);
-	return sys___msync13(p, &bma, retval);
-}
-
-/* just a place holder */
-
-int
-freebsd_sys_rtprio(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef notyet
-	struct freebsd_sys_rtprio_args /* {
-		syscallarg(int) function;
-		syscallarg(pid_t) pid;
-		syscallarg(struct freebsd_rtprio *) rtp;
-	} */ *uap = v;
-#endif
-
-	return ENOSYS;	/* XXX */
+	ost->st_dev = st->st_dev;
+	ost->st_ino = st->st_ino;
+	ost->st_mode = st->st_mode;
+	if (st->st_nlink >= (1 << 15))
+		ost->st_nlink = (1 << 15) - 1;
+	else
+		ost->st_nlink = st->st_nlink;
+	ost->st_uid = st->st_uid;
+	ost->st_gid = st->st_gid;
+	ost->st_rdev = st->st_rdev;
+	ost->st_atimespec = st->st_atimespec;
+	ost->st_mtimespec = st->st_mtimespec;
+	ost->st_ctimespec = st->st_ctimespec;
+	ost->st_size = st->st_size;
+	ost->st_blocks = st->st_blocks;
+	ost->st_blksize = st->st_blksize;
+	ost->st_flags = st->st_flags;
+	ost->st_gen = st->st_gen;
 }
 
 int
-freebsd_ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+stat(file, ost)
+	const char *file;
+	struct stat12 *ost;
 {
-#ifdef notyet
-	struct freebsd_ntp_adjtime_args /* {
-		syscallarg(struct freebsd_timex *) tp;
-	} */ *uap = v;
-#endif
+	struct stat nst;
+	int ret;
 
-	return ENOSYS;	/* XXX */
+	if ((ret = __stat13(file, &nst)) < 0)
+		return ret;
+	cvtstat(&nst, ost);
+	return ret;
+}
+
+int
+fstat(f, ost)
+	int f;
+	struct stat12 *ost;
+{
+	struct stat nst;
+	int ret;
+
+	if ((ret = __fstat13(f, &nst)) < 0)
+		return ret;
+	cvtstat(&nst, ost);
+	return ret;
+}
+
+int
+lstat(file, ost)
+	const char *file;
+	struct stat12 *ost;
+{
+	struct stat nst;
+	int ret;
+
+	if ((ret = __lstat13(file, &nst)) < 0)
+		return ret;
+	cvtstat(&nst, ost);
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.23 1997/10/19 18:40:11 mycroft Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.24 1997/10/20 22:05:19 thorpej Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -251,7 +251,7 @@ clean_pipe(p, path)
 	struct proc *p;
 	const char *path;
 {
-	struct sys_lstat_args la;
+	struct sys___lstat13_args la;
 	struct sys_unlink_args ua;
 	register_t retval;
 	struct stat st;
@@ -268,7 +268,7 @@ clean_pipe(p, path)
 
 	SCARG(&la, path) = tpath;
 
-	if ((error = sys_lstat(p, &la, &retval)) != 0)
+	if ((error = sys___lstat13(p, &la, &retval)) != 0)
 		return 0;
 
 	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
@@ -277,7 +277,7 @@ clean_pipe(p, path)
 	/*
 	 * Make sure we are dealing with a mode 0 named pipe.
 	 */
-	if (!S_ISFIFO(st.st_mode))
+	if ((st.st_mode & S_IFMT) != S_IFIFO)
 		return 0;
 
 	if ((st.st_mode & ALLPERMS) != 0)

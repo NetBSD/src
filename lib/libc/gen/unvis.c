@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.8 1997/10/16 23:06:13 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.9 1997/10/20 22:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.8 1997/10/16 23:06:13 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.9 1997/10/20 22:05:32 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,11 +65,22 @@ __weak_alias(unvis,_unvis);
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 
+#undef unvis
+
+int
+unvis(cp, c, astate, flag)
+	char *cp;
+	char c;
+	int *astate, flag;
+{
+	return __unvis13(cp, (int)c, astate, flag);
+}
+
 /*
  * unvis - decode characters previously encoded by vis
  */
 int
-unvis(cp, c, astate, flag)
+__unvis13(cp, c, astate, flag)
 	char *cp;
 	int c;
 	int *astate, flag;
@@ -241,7 +252,7 @@ strunvis(dst, src)
 
 	while ((c = *src++) != '\0') {
 	again:
-		switch (unvis(dst, c, &state, 0)) {
+		switch (__unvis13(dst, c, &state, 0)) {
 		case UNVIS_VALID:
 			dst++;
 			break;
@@ -255,7 +266,7 @@ strunvis(dst, src)
 			return (-1);
 		}
 	}
-	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
+	if (__unvis13(dst, c, &state, UNVIS_END) == UNVIS_VALID)
 		dst++;
 	*dst = '\0';
 	return (dst - start);

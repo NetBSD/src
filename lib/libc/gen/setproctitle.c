@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.9 1997/10/16 23:05:33 christos Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.10 1997/10/20 22:05:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.9 1997/10/16 23:05:33 christos Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.10 1997/10/20 22:05:34 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,7 +59,12 @@ __weak_alias(setproctitle,_setproctitle);
 #define	MAX_PROCTITLE	2048
 
 extern char *__progname;		/* Program name, from crt0. */
-extern struct ps_strings *__ps_strings;	/* Ps strings, from crt0 */
+
+/*
+ * For compatibility with old versions of crt0 that didn't define __ps_strings,
+ * define it as a common here.
+ */
+struct ps_strings *__ps_strings;
 
 void
 #if __STDC__
@@ -85,6 +90,13 @@ setproctitle(fmt, va_alist)
 	} else
 		(void)snprintf(buf, MAX_PROCTITLE, "%s", __progname);
 	va_end(ap);
+
+	/*
+	 * For compatibility with old versions of crt0 and old kernels, set
+	 * __ps_strings to a default value if it's null.
+	 */
+	if (__ps_strings == 0)
+		__ps_strings = PS_STRINGS;
 
 	__ps_strings->ps_nargvstr = 1;
 	__ps_strings->ps_argvstr = &bufp;
