@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2000/12/28 22:59:08 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.29 2001/01/07 21:19:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -151,7 +151,7 @@ void		*auxp;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= BUS_PCI_DMA_TAG;
 	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
-	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[0]);
+	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);
 	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;
