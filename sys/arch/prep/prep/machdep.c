@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2002/02/24 13:19:09 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2002/03/02 14:25:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -269,29 +269,39 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * Set up initial BAT table
 	 */
 	/* map the lowest 256 MB area */
-	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
+	battable[0x00000000 >> 28].batl =
+	    BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0x00000000 >> 28].batu =
+	    BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA I/O 256 MB area */
-	battable[8].batl = BATL(PREP_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
-	battable[8].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
+	battable[PREP_BUS_SPACE_IO >> 28].batl =
+	    BATL(PREP_BUS_SPACE_IO, BAT_I | BAT_G, BAT_PP_RW);
+	battable[PREP_BUS_SPACE_IO >> 28].batu =
+	    BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[12].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
-	battable[12].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
+	battable[PREP_BUS_SPACE_MEM >> 28].batl =
+	    BATL(PREP_BUS_SPACE_MEM, BAT_I | BAT_G, BAT_PP_RW);
+	battable[PREP_BUS_SPACE_MEM >> 28].batu =
+	    BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
 	 */
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+		      :: "r"(battable[0x00000000 >> 28].batl),
+			 "r"(battable[0x00000000 >> 28].batu));
 
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+		      :: "r"(battable[0x00000000 >> 28].batl),
+			 "r"(battable[0x00000000 >> 28].batu));
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[8].batl), "r"(battable[8].batu));
+		      :: "r"(battable[PREP_BUS_SPACE_IO >> 28].batl),
+			 "r"(battable[PREP_BUS_SPACE_IO >> 28].batu));
 	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[12].batl), "r"(battable[12].batu));
+		      :: "r"(battable[PREP_BUS_SPACE_MEM >> 28].batl),
+			 "r"(battable[PREP_BUS_SPACE_MEM >> 28].batu));
 
 	asm volatile ("sync; isync");
 	/*
