@@ -132,6 +132,9 @@ CONFIGURATION
                  Default: Empty string if USETOOLS is ``yes''; unset other-
                  wise.
 
+                 Note: build.sh will provide a default of destdir.MACHINE (in
+                 the top-level .OBJDIR) unless run in `expert' mode
+
      MAKECONF    The name of the make(1) configuration file.  Only settable in
                  the process environment.
 
@@ -327,6 +330,9 @@ CONFIGURATION
                       layout will be written at the end of a ``make release''.
 
                       Default: Unset.
+
+                      Note: build.sh will provide a default of releasedir (in
+                      the top-level .OBJDIR) unless run in `expert' mode
 
      UPDATE           If set, then in addition to the effects described for
                       UPDATE above, this implies the effects of NOCLEANDIR
@@ -578,24 +584,25 @@ EXAMPLES
           Build a new toolchain, and use the new toolchain to configure and
           build a new GENERIC kernel.
 
-     2.   ./build.sh -U -D /path/to/destdir distribution
+     2.   ./build.sh -U distribution
 
-          Using unprivileged mode, build a complete distribution in
-          /path/to/destdir.
+          Using unprivileged mode, build a complete distribution to a DESTDIR
+          directory that build.sh selects (and will display).
 
-     3.   # ./build.sh -U -D /path/to/destdir install=/
+     3.   # ./build.sh -U install=/
 
           As root, install to / the distribution that was built by example 2.
           Even though this is run as root, -U is required so that the permis-
-          sions stored in /path/to/destdir/METALOG are correctly applied to
-          the files as they're copied to /.
+          sions stored in DESTDIR/METALOG are correctly applied to the files
+          as they're copied to /.
 
-     4.   ./build.sh -U -u -D /path/to/destdir -R /path/to/releasedir release
+     4.   ./build.sh -U -u release
 
-          Using unprivileged mode, build a complete release in
-          /path/to/dir/releasedir.  UPDATE (-u) is set to prevent the ``make
-          cleandir'', so that if this is run after example 2, it doesn't need
-          to redo that portion of the release build.
+          Using unprivileged mode, build a complete release to DESTDIR and
+          RELEASEDIR directories that build.sh selects (and will display).
+          UPDATE (-u) is set to prevent the ``make cleandir'', so that if this
+          is run after example 2, it doesn't need to redo that portion of the
+          release build.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.
@@ -614,4 +621,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         February 8, 2003                             10
+NetBSD                            May 8, 2003                               10
