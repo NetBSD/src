@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2004/02/17 22:03:52 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -55,7 +55,6 @@ struct cache_info {
 #include <sys/device.h>
 
 #include <sys/sched.h>
-#include <dev/sysmon/sysmonvar.h>
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -93,8 +92,7 @@ struct cpu_info {
 #define	DISISAVE_LEN	4
 	register_t ci_disisave[DISISAVE_LEN];
 	struct cache_info ci_ci;		
-	struct sysmon_envsys ci_sysmon;
-	struct envsys_tre_data ci_tau_info;
+	void *ci_sysmon_cookie;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
