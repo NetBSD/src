@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2001/07/27 23:13:49 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/03 23:07:25 bjh21 Exp $
 
-SUBDIR=	BBBB
-
-SUBDIR+= boot26
+SUBDIR= boot26
 
 .include <bsd.subdir.mk>
