@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.75 1997/09/19 13:55:29 leo Exp $ */
+/*	$NetBSD: autoconf.c,v 1.76 1997/09/22 15:03:58 leo Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,6 +61,7 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/msgbuf.h>
 
 #include <net/if.h>
 
@@ -181,7 +182,7 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 void
 bootstrap()
 {
-	extern int msgbufmapped;
+	extern caddr_t	msgbufaddr;
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
