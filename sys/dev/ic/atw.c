@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.31 2004/06/05 07:12:45 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.32 2004/06/06 04:38:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.31 2004/06/05 07:12:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.32 2004/06/06 04:38:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2899,20 +2899,10 @@ atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 		sc->sc_rescan_timer = 0;
 	} else if (linkstatus & ATW_INTR_LINKOFF) {
 		DPRINTF(sc, ("%s: link off\n", sc->sc_dev.dv_xname));
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_HOSTAP:
+		if (ic->ic_opmode != IEEE80211_M_STA)
 			return;
-		case IEEE80211_M_IBSS:
-			if (ic->ic_flags & IEEE80211_F_SIBSS)
-				return;
-			/*FALLTHROUGH*/
-		case IEEE80211_M_STA:
-			sc->sc_rescan_timer = 3;
-			ic->ic_if.if_timer = 1;
-			break;
-		default:
-			break;
-		}
+		sc->sc_rescan_timer = 3;
+		ic->ic_if.if_timer = 1;
 	}
 }
 
