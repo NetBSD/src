@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2000/05/02 00:30:55 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2000/06/11 10:08:03 veego Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -178,6 +178,8 @@ DEC 3000 ZS8530 (``scc'') serial ports
 AlphaStation NS16550 (``com'') serial ports
 . It Ar ttyE?
 Workstation console (``wscons'') glass-tty emulators
+. It Ar ttyCZ?
+Cyclades-Z multiport serial boards. Each ``unit'' makes 64 ports.
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
