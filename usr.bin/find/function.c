@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.34 2000/10/10 14:30:41 enami Exp $	*/
+/*	$NetBSD: function.c,v 1.35 2001/02/05 01:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.34 2000/10/10 14:30:41 enami Exp $");
+__RCSID("$NetBSD: function.c,v 1.35 2001/02/05 01:53:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,10 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 static	PLAN   *c_regex_common __P((char ***, int, enum ntype, int));
 static	PLAN   *palloc __P((enum ntype, int (*) __P((PLAN *, FTSENT *))));
 
+extern int dotfd;
+extern FTS *tree;
+extern time_t now;
+
 /*
  * find_parsenum --
  *	Parse a string of the form [+-]# and return the value.
@@ -177,8 +181,6 @@ f_amin(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_atime +
 	    SECSPERMIN - 1) / SECSPERMIN, plan->t_data);
 }
@@ -210,8 +212,6 @@ f_atime(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_atime +
 	    SECSPERDAY - 1) / SECSPERDAY, plan->t_data);
 }
@@ -243,8 +243,6 @@ f_cmin(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_ctime +
 	    SECSPERMIN - 1) / SECSPERMIN, plan->t_data);
 }
@@ -276,8 +274,6 @@ f_ctime(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_ctime +
 	    SECSPERDAY - 1) / SECSPERDAY, plan->t_data);
 }
@@ -342,7 +338,6 @@ f_exec(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern int dotfd;
 	int cnt;
 	pid_t pid;
 	int status;
@@ -734,8 +729,6 @@ f_mmin(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_mtime + SECSPERMIN - 1) /
 	    SECSPERMIN, plan->t_data);
 }
@@ -767,8 +760,6 @@ f_mtime(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern time_t now;
-
 	COMPARE((now - entry->fts_statp->st_mtime + SECSPERDAY - 1) /
 	    SECSPERDAY, plan->t_data);
 }
@@ -1072,8 +1063,6 @@ f_prune(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	extern FTS *tree;
-
 	if (fts_set(tree, entry, FTS_SKIP))
 		err(1, "%s", entry->fts_path);
 	return (1);
