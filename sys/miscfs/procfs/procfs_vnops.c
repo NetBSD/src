@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.86 2001/12/05 00:58:06 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.87 2001/12/06 04:27:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.86 2001/12/05 00:58:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.87 2001/12/06 04:27:42 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,7 @@ int	procfs_pathconf	__P((void *));
 #define	procfs_truncate	genfs_eopnotsupp
 #define	procfs_update	genfs_nullop
 #define	procfs_bwrite	genfs_eopnotsupp
+#define procfs_putpages	genfs_null_putpages
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -213,6 +214,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_vfree_desc, procfs_vfree },		/* vfree */
 	{ &vop_truncate_desc, procfs_truncate },	/* truncate */
 	{ &vop_update_desc, procfs_update },		/* update */
+	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc procfs_vnodeop_opv_desc =

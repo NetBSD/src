@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.41 2001/11/30 15:18:39 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.42 2001/12/06 04:27:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.41 2001/11/30 15:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.42 2001/12/06 04:27:41 chs Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1425,6 +1425,26 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	uvm_aio_aiodone(mbp);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
 	return error;
+}
+
+/*
+ * VOP_PUTPAGES() for vnodes which never have pages.
+ */
+
+int
+genfs_null_putpages(void *v)
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_uobj.uo_npages == 0);
+	simple_unlock(&vp->v_interlock);
+	return (0);
 }
 
 void
