@@ -1,11 +1,10 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2003/01/30 02:07:32 fvdl Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.1 2003/01/30 02:07:32 fvdl Exp $	*/
 
-/*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,16 +16,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -36,25 +35,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
 
-#include <sys/types.h>
-#include <signal.h>
+#include "SYS.h"
 
-#include "extern.h"
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: getcontext.S,v 1.1 2003/01/30 02:07:32 fvdl Exp $")
+#endif
 
- __weak_alias(__sigaction14, __libc_sigaction14)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(getcontext, _getcontext)
+#endif
 
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern int __sigtramp_sigcontext_1[];
+/*
+ * 56 == offsetof(ucontext_t, uc_mcontext)
+ * 14 == _REG_RAX
+ * 21 == _REG_RIP
+ * 24 == _REG_URSP
+ */
 
-	/*
-	 * Right here we should select the SA_SIGINFO trampoline
-	 * if SA_SIGINFO is set in the sigaction.
-	 */
-
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_sigcontext_1, 1));
-}
+_SYSCALL(_getcontext,getcontext)
+	movq	(%rsp),%r11
+	movq	%r11,(56 + 21 * 8)(%rdi)
+	leaq	8(%rsp),%r11
+	movq	%r11,(56 + 24 * 8)(%rdi)
+	movq	$0,(56 + 14 * 8)(%rdi)
+	xorl	%eax,%eax
+	ret
