@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_script.c,v 1.1 1994/01/16 03:10:03 cgd Exp $
+ *	$Id: exec_script.c,v 1.2 1994/01/22 06:15:54 cgd Exp $
  */
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
@@ -233,6 +233,9 @@ check_shell:
 		VOP_UNLOCK(scriptvp);
 		if ((epp->ep_flags & EXEC_HASFD) == 0)
 			vn_close(scriptvp, FREAD, p->p_ucred, p);
+
+		/* free the old pathname buffer */
+		FREE(oldpnbuf, M_NAMEI);
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
