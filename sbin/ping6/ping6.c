@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.15 2000/06/12 16:21:04 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.1 2000/07/27 16:12:35 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.55 2000/06/12 16:18:32 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15 2000/06/12 16:21:04 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.1 2000/07/27 16:12:35 itojun Exp $");
 #endif
 #endif
 
@@ -547,9 +547,9 @@ main(argc, argv)
 #ifdef IPSEC_POLICY_IPSEC
 	if (options & F_POLICY) {
 		if (setpolicy(s, policy_in) < 0)
-			errx(1, ipsec_strerror());
+			errx(1, "%s", ipsec_strerror());
 		if (setpolicy(s, policy_out) < 0)
-			errx(1, ipsec_strerror());
+			errx(1, "%s", ipsec_strerror());
 	}
 #else
 	if (options & F_AUTHHDR) {
@@ -1901,7 +1901,7 @@ setpolicy(so, policy)
 
 	buf = ipsec_set_policy(policy, strlen(policy));
 	if (buf == NULL)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
 			buf, ipsec_get_policylen(buf)) < 0)
 		warnx("Unable to set IPSec policy");
