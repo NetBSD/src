@@ -33,11 +33,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1 1993/06/07 19:52:10 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/06/08 03:07:11 cgd Exp $
 #
 
 PROG=	modload
 CFLAGS=-DKERNEL
-NOMAN=	noman
+MAN8=	modload.0
 
 .include <bsd.prog.mk>
