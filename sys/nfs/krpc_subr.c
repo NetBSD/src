@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.4.2.1 1994/08/11 23:48:26 mycroft Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.4.2.2 1994/08/12 06:41:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon Ross, Adam Glass 
@@ -358,7 +358,7 @@ krpc_call(sa, prog, vers, func, data)
 	/*
 	 * Pull as much as we can into first mbuf, to make
 	 * result buffer contiguous.  Note that if the entire
-	 * resulte won't fit into one mbuf, you're out of luck.
+	 * result won't fit into one mbuf, you're out of luck.
 	 * XXX - Should not rely on making the entire reply
 	 * contiguous (fix callers instead). -gwr
 	 */
