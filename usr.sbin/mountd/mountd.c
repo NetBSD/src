@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.45 1998/10/07 14:50:35 christos Exp $	*/
+/*	$NetBSD: mountd.c,v 1.46 1998/10/29 00:12:11 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.45 1998/10/07 14:50:35 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.46 1998/10/29 00:12:11 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -674,6 +674,12 @@ put_exlist(dp, xdrsp, adp, putdefp)
 	return (0);
 }
 
+static char *
+intern(char *str)
+{
+	return strcpy(malloc(strlen(str) + 1), str);
+}
+
 #define LINESIZ	10240
 char line[LINESIZ];
 FILE *exp_file;
@@ -908,7 +914,7 @@ get_exportlist(n)
 			hpe = (struct hostent *)malloc(sizeof(struct hostent));
 			if (hpe == (struct hostent *)NULL)
 				out_of_mem();
-			hpe->h_name = "Default";
+			hpe->h_name = intern("Default");
 			hpe->h_addrtype = AF_INET;
 			hpe->h_length = sizeof (u_int32_t);
 			hpe->h_addr_list = (char **)NULL;
@@ -2066,9 +2072,12 @@ free_grp(grp)
 	if (grp->gr_type == GT_HOST) {
 		if (grp->gr_ptr.gt_hostent->h_name) {
 			addrp = grp->gr_ptr.gt_hostent->h_addr_list;
-			while (addrp && *addrp)
-				free(*addrp++);
-			free((caddr_t)grp->gr_ptr.gt_hostent->h_addr_list);
+			if (addrp) {
+				while (*addrp) {
+					free(*addrp++);
+				}
+				free(grp->gr_ptr.gt_hostent->h_addr_list);
+			}
 			free(grp->gr_ptr.gt_hostent->h_name);
 		}
 		free((caddr_t)grp->gr_ptr.gt_hostent);
