@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 1996/12/20 17:24:45 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.25 1997/01/05 20:41:01 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -81,6 +81,7 @@
 #	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface.
+#	ipl	ip filter
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	ss*	SCSI scanner
@@ -103,7 +104,7 @@ all)
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 st0
 	sh MAKEDEV ss0 ch0 uk0 uk1 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm local
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl local
 	;;
 
 floppy)
@@ -398,6 +399,13 @@ lkm)
         chown root:kmem lkm
         chmod 640 lkm
         ;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 40 0
+	chown root.wheel ipl
+	chmod 600 ipl
+	;;
 
 local)
 	umask 0
