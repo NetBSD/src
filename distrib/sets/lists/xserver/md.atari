@@ -1,4 +1,5 @@
-# $NetBSD: md.atari,v 1.3.2.2 1999/09/10 21:50:35 he Exp $
+# $NetBSD: md.atari,v 1.3.2.3 2000/01/15 16:59:29 he Exp $
+# $NetBSD: md.atari,v 1.3.2.3 2000/01/15 16:59:29 he Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF68_SVGA
 ./usr/X11R6/bin/XF68_W32
