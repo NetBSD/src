@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.3 2002/05/03 00:26:06 eeh Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.4 2002/07/07 18:07:43 oki Exp $ */
 
 /*
  * System call argument lists.
@@ -155,6 +155,16 @@ struct pecoff_sys_lchown_args {
 struct pecoff_sys_lutimes_args {
 	syscallarg(const char *) path;
 	syscallarg(const struct timeval *) tptr;
+};
+
+struct pecoff_sys___stat13_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
+};
+
+struct pecoff_sys___lstat13_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
 };
 
 struct pecoff_sys___posix_chown_args {
@@ -376,9 +386,9 @@ int	pecoff_sys_lchmod(struct proc *, void *, register_t *);
 int	pecoff_sys_lchown(struct proc *, void *, register_t *);
 int	pecoff_sys_lutimes(struct proc *, void *, register_t *);
 int	sys___msync13(struct proc *, void *, register_t *);
-int	sys___stat13(struct proc *, void *, register_t *);
+int	pecoff_sys___stat13(struct proc *, void *, register_t *);
 int	sys___fstat13(struct proc *, void *, register_t *);
-int	sys___lstat13(struct proc *, void *, register_t *);
+int	pecoff_sys___lstat13(struct proc *, void *, register_t *);
 int	sys___sigaltstack14(struct proc *, void *, register_t *);
 int	sys___vfork14(struct proc *, void *, register_t *);
 int	pecoff_sys___posix_chown(struct proc *, void *, register_t *);

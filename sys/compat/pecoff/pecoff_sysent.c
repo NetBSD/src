@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.3 2002/05/03 00:26:07 eeh Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.4 2002/07/07 18:07:43 oki Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.3 2002/05/03 00:26:07 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.4 2002/07/07 18:07:43 oki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -698,12 +698,12 @@ struct sysent pecoff_sysent[] = {
 	    pecoff_sys_lutimes },		/* 276 = lutimes */
 	{ 3, s(struct sys___msync13_args), 0,
 	    sys___msync13 },			/* 277 = __msync13 */
-	{ 2, s(struct sys___stat13_args), 0,
-	    sys___stat13 },			/* 278 = __stat13 */
+	{ 2, s(struct pecoff_sys___stat13_args), 0,
+	    pecoff_sys___stat13 },		/* 278 = __stat13 */
 	{ 2, s(struct sys___fstat13_args), 0,
 	    sys___fstat13 },			/* 279 = __fstat13 */
-	{ 2, s(struct sys___lstat13_args), 0,
-	    sys___lstat13 },			/* 280 = __lstat13 */
+	{ 2, s(struct pecoff_sys___lstat13_args), 0,
+	    pecoff_sys___lstat13 },		/* 280 = __lstat13 */
 	{ 2, s(struct sys___sigaltstack14_args), 0,
 	    sys___sigaltstack14 },		/* 281 = __sigaltstack14 */
 	{ 0, 0, 0,
