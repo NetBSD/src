@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.7 1996/04/12 06:09:00 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.8 1996/04/13 00:23:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -71,9 +71,13 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-static int	sioprint __P((void *, char *pnp));
-static void	sio_isa_attach_hook __P((struct device *, struct device *,
-		    struct isabus_attach_args *));
+int	sioprint __P((void *, char *pnp));
+void	sio_isa_attach_hook __P((struct device *, struct device *,
+	    struct isabus_attach_args *));
+void	sio_eisa_attach_hook __P((struct device *, struct device *,
+	    struct eisabus_attach_args *));
+int	sio_eisa_maxslots __P((void *));
+int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
 
 int
 siomatch(parent, match, aux)
@@ -139,7 +143,14 @@ sioattach(parent, self, aux)
 #endif
 
 	if (haseisa) {
-		/* XXX SET UP EISA CHIPSET */
+		ec.ec_v = NULL;
+		ec.ec_attach_hook = sio_eisa_attach_hook;
+		ec.ec_maxslots = sio_eisa_maxslots;
+		ec.ec_intr_map = sio_eisa_intr_map;
+		ec.ec_intr_string = sio_intr_string;
+		ec.ec_intr_establish = sio_intr_establish;
+		ec.ec_intr_disestablish = sio_intr_disestablish;
+
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_bc = pa->pa_bc;
 		sa.sa_eba.eba_ec = &ec;
@@ -157,7 +168,7 @@ sioattach(parent, self, aux)
 	config_found(self, &sa.sa_iba, sioprint);
 }
 
-static int
+int
 sioprint(aux, pnp)
 	void *aux;
 	char *pnp;
@@ -169,11 +180,51 @@ sioprint(aux, pnp)
         return (UNCONF);
 }
 
-static void
+void
 sio_isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
 
 	/* Nothing to do. */
+}
+
+void
+sio_eisa_attach_hook(parent, self, eba)
+	struct device *parent, *self;
+	struct eisabus_attach_args *eba;
+{
+
+	/* Nothing to do. */
+}
+
+int
+sio_eisa_maxslots(v)
+	void *v;
+{
+
+	return 16;		/* as good a number as any.  only 8, maybe? */
+}
+
+int
+sio_eisa_intr_map(v, irq, ihp)
+	void *v;
+	u_int irq;
+	eisa_intr_handle_t *ihp;
+{
+
+#define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
+
+	if (irq >= ICU_LEN) {
+		printf("sio_eisa_intr_map: bad IRQ %d\n", irq);
+		*ihp = -1;
+		return 1;
+	}
+	if (irq == 2) {
+		printf("sio_eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		irq = 9;
+	}
+
+	*ihp = irq;
+	return 0;
 }
