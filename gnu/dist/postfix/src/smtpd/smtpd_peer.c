@@ -93,6 +93,11 @@ static int h_errno = TRY_AGAIN;
     )
 #endif
 
+#ifdef INET6
+#define GAI_STRERROR(error) \
+	((error = EAI_SYSTEM) ? gai_strerror(error) : strerror(errno))
+#endif
+
 
 /* Application-specific. */
 
@@ -198,7 +203,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	    error = getaddrinfo(state->name, NULL, &hints, &rnull);
 	    if (error) {
 		msg_warn("%s: hostname %s verification failed: %s",
-			 state->addr, state->name, gai_strerror(error));
+			 state->addr, state->name, GAI_STRERROR(error));
 		REJECT_PEER_NAME(state, (error == EAI_AGAIN ? 4 : 5));
 	    }
 	    /* memcmp() isn't needed if we use getaddrinfo */
