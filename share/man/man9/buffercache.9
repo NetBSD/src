@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.1 2003/09/06 18:12:39 yamt Exp $
+.\"     $NetBSD: buffercache.9,v 1.2 2003/09/06 18:41:44 yamt Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -320,3 +320,9 @@ The buffer cache subsystem is implemented within the file
 .%I "Addison Welley"
 .%D 1996
 .Re
+.\" ------------------------------------------------------------
+.Sh BUGS
+In the current implementation,
+.Fn bread
+and its variants
+don't use a specified credential.
