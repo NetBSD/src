@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.38 2000/09/02 00:48:20 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.39 2000/10/02 14:48:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -204,7 +204,7 @@ struct pci_class pci_subclass_wireless[] = {
 };
 
 struct pci_class pci_subclass_i2o[] = {
-	{ "1.0",		PCI_SUBCLASS_I2O_10,			},
+	{ "1.0",		PCI_SUBCLASS_I2O_STANDARD,		},
 	{ 0 },
 };
 
