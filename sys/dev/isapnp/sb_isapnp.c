@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.12 1997/11/18 11:27:04 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.13 1997/11/18 11:34:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -128,7 +128,8 @@ sb_isapnp_attach(parent, self, aux)
                         sc->sc_drq8 = ipa->ipa_drq[1].num;
                 } else
                 	sc->sc_drq16 = ipa->ipa_drq[1].num;
-        }
+        } else
+        	sc->sc_drq16 = DRQUNK;
 	/*
 	 * isapnp is a child if isa, and we needs isa for the dma
 	 * routines
