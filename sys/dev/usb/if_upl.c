@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.9 2000/10/24 14:53:59 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.10 2000/12/08 02:24:07 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -359,7 +359,6 @@ USB_DETACH(upl)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	ether_ifdetach(ifp);
 
 	if_detach(ifp);
 
