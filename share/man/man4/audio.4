@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.24 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: audio.4,v 1.24.2.1 1999/10/31 22:25:55 he Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,7 @@ argument.
 There is no information regarding when in the sample stream
 they were dropped.
 .It Dv AUDIO_WSEEK (int)
-This command fetches the count of samples are queued ahead of the
+This command fetches the count of samples that are queued ahead of the
 first sample in the most recent sample block written into its integer argument.
 .It Dv AUDIO_DRAIN
 This command suspends the calling process until all queued playback
