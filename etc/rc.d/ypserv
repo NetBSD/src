@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ypserv,v 1.6 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: ypserv,v 1.7 2004/10/11 15:00:51 christos Exp $
 #
 
 # PROVIDE: ypserv
@@ -16,7 +16,7 @@ start_precmd="ypserv_precmd"
 
 ypserv_precmd()
 {
-	_domain=`domainname`
+	_domain=$(domainname)
 	if [ -z "$_domain" ]; then
 		warn "domainname(1) is not set."
 		return 1
