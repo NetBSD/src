@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: procfs_mem.c,v 3.2 1993/12/15 09:40:17 jsp Exp
- *	from: @(#)procfs_mem.c	8.4 (Berkeley) 1/21/94
- *	$Id: procfs_mem.c,v 1.4 1994/06/08 11:33:36 mycroft Exp $
+ *	from: @(#)procfs_mem.c	8.5 (Berkeley) 6/15/94
+ *	$Id: procfs_mem.c,v 1.5 1994/06/15 22:59:06 mycroft Exp $
  */
 
 /*

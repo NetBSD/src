@@ -34,9 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: procfs_subr.c,v 3.2 1993/12/15 09:40:17 jsp Exp
- *	from: @(#)procfs_subr.c	8.4 (Berkeley) 1/27/94
- *	$Id: procfs_subr.c,v 1.11 1994/06/08 11:33:42 mycroft Exp $
+ *	from: @(#)procfs_subr.c	8.5 (Berkeley) 6/15/94
+ *	$Id: procfs_subr.c,v 1.12 1994/06/15 22:59:12 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -84,9 +83,9 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	long pid;
 	pfstype pfs_type;
 {
-	register struct pfsnode *pfs;
-	register struct vnode *vp;
-	register struct pfsnode **pp;
+	struct pfsnode *pfs;
+	struct vnode *vp;
+	struct pfsnode **pp;
 	int error;
 
 loop:
