@@ -15,7 +15,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: CursesW.h,v 1.2 1993/08/02 17:23:05 mycroft Exp $
+	$Id: CursesW.h,v 1.3 1993/11/12 00:27:26 cgd Exp $
 */
 
 #ifndef _CursesWindow_h
@@ -343,22 +343,22 @@ public:
 
 inline int CursesWindow::begx()
 {
-  return w->_begx;
+  return w->begx;
 }
 
 inline int CursesWindow::begy()
 {
-  return w->_begy;
+  return w->begy;
 }
 
 inline int CursesWindow::maxx()
 {
-  return w->_maxx;
+  return w->maxx;
 }
 
 inline int CursesWindow::maxy()
 {
-  return w->_maxy;
+  return w->maxy;
 }
 
 inline int CursesWindow::height()
