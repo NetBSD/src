@@ -33,13 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)recv.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: recv.c,v 1.4 1994/05/13 22:23:05 deraadt Exp $";
+static char *rcsid = "$Id: recv.c,v 1.5 1994/10/19 03:20:30 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
 
+ssize_t
 recv(s, buf, len, flags)
 	int s;
 	void *buf;
