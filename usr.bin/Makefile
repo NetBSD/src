@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.37 1994/01/28 01:09:58 mycroft Exp $
+#	$Id: Makefile,v 1.38 1994/02/18 03:09:10 cgd Exp $
 
 SUBDIR=	apropos ar asa at biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
@@ -18,6 +18,6 @@ SUBDIR=	apropos ar asa at biff basename cal calendar cap_mkdb \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vis vmstat w wall wc what whatis whereis \
 	which who whoami whois window write \
-	xargs xinstall xstr yacc yes
+	xargs xinstall xstr yacc yes ypcat ypmatch ypwhich
 
 .include <bsd.subdir.mk>
