@@ -94,7 +94,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CPP_SPEC
 #define CPP_SPEC \
-  "%{posix:-D_POSIX_SOURCE} %(cpp_cpu_spec) %(cpp_fpu_spec)"
+  "%{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS} %(cpp_cpu_spec) \
+   %(cpp_fpu_spec)"
 
 
 #undef ASM_SPEC
