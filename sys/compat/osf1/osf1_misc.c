@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.23 1999/04/26 06:10:37 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.24 1999/04/26 18:34:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -90,29 +90,6 @@ extern int scdebug;
 #endif
 
 const char osf1_emul_path[] = "/emul/osf1";
-
-/* XXX BEGIN BITS THAT DON'T BELONG HERE */
-extern struct sysent osf1_sysent[];
-extern char *osf1_syscallnames[];
-extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-					u_long));
-extern char sigcode[], esigcode[];
-
-struct emul emul_osf1 = {
-	"osf1",
-	netbsd_to_osf1_errno,
-	sendsig,
-	OSF1_SYS_syscall,
-	OSF1_SYS_MAXSYSCALL,
-	osf1_sysent,
-	osf1_syscallnames,
-	0,
-	copyargs,
-	cpu_exec_ecoff_setregs,
-	sigcode,
-	esigcode,
-};
-/* XXX END BITS THAT DON'T BELONG HERE */
 
 const struct emul_flags_xtab osf1_open_flags_xtab[] = {
     {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
