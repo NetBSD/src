@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/05/04 02:44:22 simonb Exp $
+#	$NetBSD: Makefile,v 1.7 1999/05/04 02:46:15 simonb Exp $
 
 BINDIR=		/installation/netboot
 
@@ -70,5 +70,4 @@ depend:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
-.include <bsd.sys.mk>
 .include "../Makefile.inc"
