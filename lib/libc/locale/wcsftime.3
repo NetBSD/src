@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsftime.3,v 1.1 2005/03/30 10:15:12 wiz Exp $
+.\" $NetBSD: wcsftime.3,v 1.2 2005/04/06 21:39:17 kleink Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -46,7 +46,8 @@ The
 .Fn wcsftime
 function is equivalent to the
 .Fn strftime
-function except for the types of its arguments.
+function except for the types of its arguments
+and the return value indicating the number of wide characters.
 Refer to
 .Xr strftime 3
 for a detailed description.
