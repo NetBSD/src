@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.17 2003/08/07 16:31:27 agc Exp $	*/
+/*	$NetBSD: sunms.c,v 1.18 2005/02/21 22:43:07 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.17 2003/08/07 16:31:27 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.18 2005/02/21 22:43:07 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ CFATTACH_DECL(ms_tty, sizeof(struct ms_softc),
     sunms_match, sunms_attach, NULL, NULL);
 
 struct  linesw sunms_disc =
-	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
+	{ "sunms", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
+	  sunmsinput, ttstart, nullmodem, ttpoll };
 
 int	sunms_enable(void *);
 int	sunms_ioctl(void *, u_long, caddr_t, int, struct proc *);
