@@ -1297,7 +1297,10 @@ elf_link_add_object_symbols (abfd, info)
 	    {
 	      if (h->type != STT_NOTYPE
 		  && h->type != ELF_ST_TYPE (sym.st_info)
-		  && ! type_change_ok)
+		  && ! type_change_ok
+		  /* Ignore  changes from data to text or _gp_disp */
+  		  && !(h->type == STT_OBJECT && 
+		       ELF_ST_TYPE (sym.st_info) <= STT_SECTION))
 		(*_bfd_error_handler)
 		  ("Warning: type of symbol `%s' changed from %d to %d in %s",
 		   name, h->type, ELF_ST_TYPE (sym.st_info),
