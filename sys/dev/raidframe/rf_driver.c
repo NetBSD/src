@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.54 2002/08/04 03:22:07 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.55 2002/08/08 02:55:36 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.54 2002/08/04 03:22:07 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.55 2002/08/08 02:55:36 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
 				 * stuff configged */
-RF_DECLARE_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
+RF_DECLARE_LKMGR_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 					 * stuff */
 static RF_ShutdownList_t *globalShutdown;	/* non array-specific
 						 * stuff */
@@ -172,7 +172,7 @@ rf_BootRaidframe()
 		return (EBUSY);
 	raidframe_booted = 1;
 
-	rc = rf_mutex_init(&configureMutex);
+	rc = rf_lkmgr_mutex_init(&configureMutex);
 	if (rc) {
 		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
 		    __LINE__, rc);
@@ -194,14 +194,14 @@ rf_UnbootRaidframe()
 {
 	int     rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	if (configureCount) {
-		RF_UNLOCK_MUTEX(configureMutex);
+		RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 		return (EBUSY);
 	}
 	raidframe_booted = 0;
-	RF_UNLOCK_MUTEX(configureMutex);
-	rc = rf_mutex_destroy(&configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
+	rc = rf_lkmgr_mutex_destroy(&configureMutex);
 	if (rc) {
 		RF_ERRORMSG3("Unable to destroy mutex file %s line %d rc=%d\n", __FILE__,
 		    __LINE__, rc);
@@ -217,7 +217,7 @@ rf_UnconfigureArray()
 {
 	int     rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	if (--configureCount == 0) {	/* if no active configurations, shut
 					 * everything down */
 		isconfigged = 0;
@@ -234,7 +234,7 @@ rf_UnconfigureArray()
 		if (rf_memDebug)
 			rf_print_unfreed();
 	}
-	RF_UNLOCK_MUTEX(configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 }
 
 /*
@@ -295,7 +295,7 @@ rf_Shutdown(raidPtr)
 		RF_ERRORMSG2("RAIDFRAME: failed %s with %d\n", RF_STRING(f), rc); \
 		rf_ShutdownList(&globalShutdown); \
 		configureCount--; \
-		RF_UNLOCK_MUTEX(configureMutex); \
+		RF_UNLOCK_LKMGR_MUTEX(configureMutex); \
 		return(rc); \
 	} \
 }
@@ -344,7 +344,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_RowCol_t row, col;
 	int     i, rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
 		rc = rf_create_managed_mutex(&globalShutdown, &rf_printf_mutex);
@@ -379,7 +379,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
 		isconfigged = 1;
 	}
-	RF_UNLOCK_MUTEX(configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
