@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.8 2002/05/15 02:36:12 matt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.9 2002/05/15 21:05:23 matt Exp $ */
 
 /*
  * 
@@ -187,12 +187,20 @@ struct gem_softc {
 #endif
 
 	struct evcnt sc_ev_intr;
+#ifdef GEM_COUNTERS
 	struct evcnt sc_ev_txint;
 	struct evcnt sc_ev_rxint;
 	struct evcnt sc_ev_rxnobuf;
 	struct evcnt sc_ev_rxfull;
 	struct evcnt sc_ev_rxhist[9];
+#endif
 };
+
+#ifdef GEM_COUNTERS
+#define	GEM_COUNTER_INCR(sc, ctr)	((void) (sc->ctr.ev_count++))
+#else
+#define	GEM_COUNTER_INCR(sc, ctr)	((void) sc)
+#endif
 
 
 #define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? le64toh(v) : be64toh(v))
