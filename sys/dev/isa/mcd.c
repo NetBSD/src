@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.24 1994/11/18 22:03:30 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.25 1994/12/14 15:23:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -53,7 +53,6 @@
 #include <sys/ioctl.h>
 #include <sys/cdio.h>
 #include <sys/errno.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>

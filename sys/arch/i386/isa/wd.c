@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.121 1994/12/01 10:45:26 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.122 1994/12/14 15:23:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,7 +60,6 @@
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
 
 #include <sys/param.h>
-#include <sys/dkbad.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>

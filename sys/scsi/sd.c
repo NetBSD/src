@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.48 1994/11/23 07:55:31 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.49 1994/12/14 15:20:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -48,7 +48,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/dkbad.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>

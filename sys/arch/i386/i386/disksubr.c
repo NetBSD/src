@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1994/12/13 15:31:54 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1994/12/14 15:17:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -38,7 +38,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.44 1994/11/23 07:55:25 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.45 1994/12/14 15:20:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -50,7 +50,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/dkbad.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
