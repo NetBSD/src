@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5 1996/03/27 22:08:25 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.6 1996/03/28 21:52:52 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -57,8 +57,6 @@
 #include <machine/io.h>
 #include <machine/katelib.h>
 
-#define inb ReadByte
-#define outb WriteByte
 extern int wdresethack;
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
