@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.1 2003/02/26 22:05:03 thorpej Exp $	*/
+/*	$NetBSD: name.c,v 1.2 2003/02/27 15:18:41 hannken Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 void *threadfunc(void *arg);
