@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.55 1996/02/27 00:31:30 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.56 1996/02/28 20:29:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -315,8 +315,8 @@ struct scsi_device ahb_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	ahbmatch();
-void	ahbattach();
+int	ahbmatch __P((struct device *, void *, void *));
+void	ahbattach __P((struct device *, struct device *, void *));
 
 struct cfdriver ahbcd = {
 	NULL, "ahb", ahbmatch, ahbattach, DV_DULL, sizeof(struct ahb_softc)
@@ -412,11 +412,10 @@ ahb_send_immed(ahb, target, cmd)
  * the actual probe routine to check it out.
  */
 int
-ahbmatch(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ahbmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct ahb_softc *ahb = (void *)self;
 	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
