@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.15 1998/08/25 08:05:47 lukem Exp $	*/
+/*	$NetBSD: iostat.c,v 1.16 1998/08/27 01:59:38 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.15 1998/08/25 08:05:47 lukem Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.16 1998/08/27 01:59:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -392,8 +392,8 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr,
-"usage: iostat [-CdDIT] [-c count] [-M core] [-N system] [-w wait] [drives]\n");
+	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] [-M core] \
+[-N system] [-w wait] [drives]\n");
 	exit(1);
 }
 
