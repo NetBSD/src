@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: auto.c,v 1.7 2004/08/27 09:06:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,17 +42,15 @@
  *	Algo : 
  *		IF scrapheaps don't exist THEN
  *			IF not in danger THEN 
- *				stay at current position;
- *		 	ELSE move away from the closest robot;
+ *				stay at current position
+ *		 	ELSE
+ *				move away from the closest robot
  *			FI
  *		ELSE 
- *			find closest heap;
- *			find closest robot;
- *			IF scrapheap is adjacenHEN
- *					move behind the scrapheap
- *				ELSE
- *					move away from the closest robot
- *				FI
+ *			find closest heap
+ *			find closest robot
+ *			IF scrapheap is adjacent THEN
+ *				move behind the scrapheap
  *			ELSE
  *				take the move that takes you away from the
  *				robots and closest to the heap
