@@ -1,4 +1,4 @@
-.\"	$NetBSD: ec.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
+.\"	$NetBSD: ec.4,v 1.5 1999/01/14 00:16:42 sommerfe Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,6 +78,28 @@ The memory test was unable to clear shared the interface's shared memory
 region.  This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
+.It ec0: warning - receiver ring buffer overrun
+The DP8390 Ethernet chip used by this board implements a shared-memory
+ring-buffer to store incoming packets.
+
+The 3c503 usually has only 8k bytes of shared memory.  This is only
+enough room for about 4 full-size (1500 byte) packets.  This can
+sometimes be a problem, especially on the original 3c503, because
+these boards' shared-memory access speed is quite slow; typically only
+about 1MB/second.  The overhead of this slow memory access, and the
+fact that there is only room for 4 full-sized packets means that the
+ring-buffer will occassionally overrun.  When this happens, the board
+must be reset to avoid a lockup problem in early revision 8390's.
+Resetting the board causes all of the data in the ring-buffer to be
+lost, requiring it to be retransmitted/received, congesting the board
+further.  Because of this, maximum throughput on these boards is only
+about 400-600k per second.
+.Pp
+This problem is exasperated by NFS because the 8bit boards lack
+sufficient memory to support the default 8k byte packets that NFS and
+other protocols use as their default.  If these cards must be used
+with NFS, use the NFS -r and -w options in /etc/fstab to limit NFS's
+packet size.  4096k byte packets generally work.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
