@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: GENERIC,v 1.47 1999/07/31 20:19:31 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -16,6 +16,7 @@ options 	HP360
 options 	HP370
 options 	HP375
 options 	HP380
+options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
