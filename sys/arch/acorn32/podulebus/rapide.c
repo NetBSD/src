@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.6 2002/10/02 02:23:52 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.7 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -126,7 +126,7 @@ void	rapide_shutdown	__P((void *arg));
 int	rapide_intr	__P((void *));
 
 CFATTACH_DECL(rapide, sizeof(struct rapide_softc),
-	rapide_probe, rapide_attach, NULL, NULL);
+    rapide_probe, rapide_attach, NULL, NULL);
 
 /*
  * We have a private bus space tag.
