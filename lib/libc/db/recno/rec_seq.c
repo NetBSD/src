@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_seq.c,v 1.9 1997/07/21 14:06:47 jtc Exp $	*/
+/*	$NetBSD: rec_seq.c,v 1.10 2000/09/13 22:32:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rec_seq.c	8.3 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_seq.c,v 1.9 1997/07/21 14:06:47 jtc Exp $");
+__RCSID("$NetBSD: rec_seq.c,v 1.10 2000/09/13 22:32:27 msaitoh Exp $");
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
