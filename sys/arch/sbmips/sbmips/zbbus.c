@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.4 2002/10/01 21:31:35 thorpej Exp $ */
+/* $NetBSD: zbbus.c,v 1.5 2002/10/02 15:52:31 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -45,7 +45,7 @@ static int	zbbus_match(struct device *, struct cfdata *, void *);
 static void	zbbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zbbus, sizeof(struct device),
-    zbbus_match, zbbus_attach, NULL, NULL)
+    zbbus_match, zbbus_attach, NULL, NULL);
 
 static int	zbbus_print(void *, const char *);
 static int	zbbus_submatch(struct device *, struct cfdata *, void *);

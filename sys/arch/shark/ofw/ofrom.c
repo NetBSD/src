@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.7 2002/10/01 19:18:57 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.8 2002/10/02 15:52:39 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -59,7 +59,7 @@ int ofromprobe __P((struct device *, struct cfdata *, void *));
 void ofromattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ofrom, sizeof(struct ofrom_softc),
-    ofromprobe, ofromattach, NULL, NULL)
+    ofromprobe, ofromattach, NULL, NULL);
 
 extern struct cfdriver ofrom_cd;
 
