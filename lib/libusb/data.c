@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.3 1999/05/12 00:04:49 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.4 1999/05/12 00:37:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -30,7 +30,7 @@
 #include "usb.h"
 
 int
-get_data(void *p, hid_item_t *h)
+hid_get_data(void *p, hid_item_t *h)
 {
 	unsigned char *buf = p;
 	unsigned int hpos = h->pos;	/* bit position of data */
@@ -56,7 +56,7 @@ get_data(void *p, hid_item_t *h)
 }
 
 void
-set_data(void *p, hid_item_t *h, int data)
+hid_set_data(void *p, hid_item_t *h, int data)
 {
 	unsigned char *buf = p;
 	unsigned int hpos = h->pos;	/* bit position of data */
