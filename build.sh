@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.118 2003/10/19 03:37:36 matt Exp $
+#	$NetBSD: build.sh,v 1.119 2003/10/25 03:46:09 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -345,9 +345,9 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
-                [-m mach] [-O obj] [-R release] [-T tools] [-V var=[value]]
-                [-w wrapper] [-Z var]   operation [...]
+Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
+		[-M obj] [-m mach] [-N noisy] [-O obj] [-R release] [-T tools]
+		[-V var=[value]] [-w wrapper] [-Z var]   operation [...]
 
  Build operations (all imply "obj" and "tools"):
     build               Run "make build"
@@ -371,18 +371,23 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
  Options:
     -a arch     Set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
     -B buildId  Set BUILDID to buildId
-    -D dest     Set DESTDIR to dest.  (Default: destdir.MACHINE)
+    -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system
     -j njob     Run up to njob jobs in parallel; see make(1)
     -M obj      Set obj root directory to obj (sets MAKEOBJDIRPREFIX)
                 Unsets MAKEOBJDIR.
     -m mach     Set MACHINE to mach (not required if NetBSD native)
+    -N noisy	Set the noisyness level of the build:
+		    0	Quiet
+		    1	Operations are described, commands are suppressed
+		    2	Full output
+		[Default: 2]
     -n          Show commands that would be executed, but do not execute them
     -O obj      Set obj root directory to obj (sets a MAKEOBJDIR pattern).
                 Unsets MAKEOBJDIRPREFIX.
     -o          Set MKOBJDIRS=no (do not create objdirs at start of build)
-    -R release  Set RELEASEDIR to release.  (Default: releasedir)
+    -R release  Set RELEASEDIR to release.  [Default: releasedir]
     -r          Remove contents of TOOLDIR and DESTDIR before building
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally
@@ -392,7 +397,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
 		Without this, everything is rebuilt, including the tools.
     -V v=[val]  Set variable \`v' to \`val'
     -w wrapper  Create ${toolprefix}make script as wrapper
-                (Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE})
+                [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
     -Z v        Unset ("zap") variable \`v'
 
 _usage_
@@ -401,7 +406,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuV:w:Z:'
+	opts='a:B:bD:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -483,6 +488,21 @@ parseoptions()
 			eval ${optargcmd}
 			MACHINE="${OPTARG}"
 			[ "${opt_a}" != "yes" ] && getarch
+			;;
+
+		-N)
+			eval ${optargcmd}
+			case "${OPTARG}" in
+			0|1)
+				MAKEFLAGS="${MAKEFLAGS} -s"
+				;;
+			2)
+				;;
+			*)
+				usage "'${OPTARG}' is not a valid value for -N"
+				;;
+			esac
+			setmakeenv MAKEVERBOSE "${OPTARG}"
 			;;
 
 		-n)
@@ -806,7 +826,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.118 2003/10/19 03:37:36 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.119 2003/10/25 03:46:09 lukem Exp $
 #
 
 EOF
