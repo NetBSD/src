@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.2 2002/02/17 20:58:03 uch Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #ifndef _CACHE_SH4_H_
 #define _CACHE_SH4_H_
+#include <sh3/devreg.h>
 #ifdef _KERNEL
 
 #define SH4_ICACHE_SIZE		8192
@@ -122,4 +123,4 @@ do {									\
 extern void sh4_cache_config(void);
 #endif
 #endif /* _KERNEL */
-#endif /* _CACHE_SH4_H_ */
+#endif /* !_CACHE_SH4_H_ */

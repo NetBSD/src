@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2002/02/19 17:22:34 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.10 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -183,11 +183,11 @@ void
 db_set_single_step(db_regs_t *regs)
 {
 
-	SHREG_BBRA = 0;		/* disable break */
-	SHREG_BARA = 0;		/* break address */
-	SHREG_BASRA = 0;	/* break ASID */
-	SHREG_BAMRA = 0x07;	/* break always */
-	SHREG_BRCR = 0x400;	/* break after each execution */
+	_reg_write_2(SH_(BBRA), 0);		/* disable break */
+	_reg_write_4(SH_(BARA), 0);		/* break address */
+	_reg_write_1(SH_(BASRA), 0);		/* break ASID */
+	_reg_write_1(SH_(BAMRA), 0x07);		/* break always */
+	_reg_write_2(SH_(BRCR),  0x400);	/* break after each execution */
 
 	regs->tf_ubc = 0x0014;	/* will be written to BBRA */
 }

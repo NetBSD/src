@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2002/02/22 19:44:04 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,50 +54,6 @@
 #include <sh3/wdtreg.h>
 
 #include <machine/shbvar.h>
-
-/* RTC */
-#if defined(SH3) && defined(SH4)
-int __sh_R64CNT;
-int __sh_RSECCNT;
-int __sh_RMINCNT;
-int __sh_RHRCNT;
-int __sh_RWKCNT;
-int __sh_RDAYCNT;
-int __sh_RMONCNT;
-int __sh_RYRCNT;
-int __sh_RSECAR;
-int __sh_RMINAR;
-int __sh_RHRAR;
-int __sh_RWKAR;
-int __sh_RDAYAR;
-int __sh_RMONAR;
-int __sh_RCR1;
-int __sh_RCR2;
-
-/* TMU */
-int __sh_TOCR;
-int __sh_TSTR;
-int __sh_TCOR0;
-int __sh_TCNT0;
-int __sh_TCR0;
-int __sh_TCOR1;
-int __sh_TCNT1;
-int __sh_TCR1;
-int __sh_TCOR2;
-int __sh_TCNT2;
-int __sh_TCR2;
-int __sh_TCPR2;
-
-static void clock_register_init(void);
-#endif /* SH3 && SH4 */
-
-#if defined(SH3) && defined(SH4)
-#define SH_(x)		__sh_ ## x
-#elif defined(SH3)
-#define SH_(x)		SH3_ ## x
-#elif defined(SH4)
-#define SH_(x)		SH4_ ## x
-#endif
 
 #ifndef HZ
 #define HZ		64
@@ -164,9 +120,6 @@ sh_clock_init(int flags, struct rtc_ops *rtc)
 	if (rtc != NULL)
 		sh_clock.rtc = *rtc;	/* structure copy */
 
-#if defined(SH3) && defined(SH4)
-	clock_register_init();
-#endif
 	/* Initialize TMU */
 	_reg_write_2(SH_(TCR0), 0);
 	_reg_write_2(SH_(TCR1), 0);
@@ -530,74 +483,3 @@ sh_rtc_set(void *cookie, struct clock_ymdhms *dt)
 	_reg_write_1(SH_(RCR2), r | SH_RCR2_START);
 }
 
-#if defined(SH3) && defined(SH4)
-#define SH3REG(x)	__sh_ ## x = SH3_ ## x
-#define SH4REG(x)	__sh_ ## x = SH4_ ## x
-static void
-clock_register_init()
-{
-	if (CPU_IS_SH3) {
-		SH3REG(R64CNT);
-		SH3REG(RSECCNT);
-		SH3REG(RMINCNT);
-		SH3REG(RHRCNT);
-		SH3REG(RWKCNT);
-		SH3REG(RDAYCNT);
-		SH3REG(RMONCNT);
-		SH3REG(RYRCNT);
-		SH3REG(RSECAR);
-		SH3REG(RMINAR);
-		SH3REG(RHRAR);
-		SH3REG(RWKAR);
-		SH3REG(RDAYAR);
-		SH3REG(RMONAR);
-		SH3REG(RCR1);
-		SH3REG(RCR2);
-		SH3REG(TOCR);
-		SH3REG(TSTR);
-		SH3REG(TCOR0);
-		SH3REG(TCNT0);
-		SH3REG(TCR0);
-		SH3REG(TCOR1);
-		SH3REG(TCNT1);
-		SH3REG(TCR1);
-		SH3REG(TCOR2);
-		SH3REG(TCNT2);
-		SH3REG(TCR2);
-		SH3REG(TCPR2);
-	}
-
-	if (CPU_IS_SH4) {
-		SH4REG(R64CNT);
-		SH4REG(RSECCNT);
-		SH4REG(RMINCNT);
-		SH4REG(RHRCNT);
-		SH4REG(RWKCNT);
-		SH4REG(RDAYCNT);
-		SH4REG(RMONCNT);
-		SH4REG(RYRCNT);
-		SH4REG(RSECAR);
-		SH4REG(RMINAR);
-		SH4REG(RHRAR);
-		SH4REG(RWKAR);
-		SH4REG(RDAYAR);
-		SH4REG(RMONAR);
-		SH4REG(RCR1);
-		SH4REG(RCR2);
-		SH4REG(TOCR);
-		SH4REG(TSTR);
-		SH4REG(TCOR0);
-		SH4REG(TCNT0);
-		SH4REG(TCR0);
-		SH4REG(TCOR1);
-		SH4REG(TCNT1);
-		SH4REG(TCR1);
-		SH4REG(TCOR2);
-		SH4REG(TCNT2);
-		SH4REG(TCR2);
-		SH4REG(TCPR2);
-	}
-}
-#undef SH3REG
-#undef SH4REG
-#endif /* SH3 && SH4 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2002/02/24 18:19:41 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -117,13 +117,11 @@
 #include <machine/psl.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
-#include <sh3/bscreg.h>
-#include <sh3/ccrreg.h>
 #include <sh3/cpgreg.h>
-#include <sh3/intcreg.h>
-#include <sh3/pfcreg.h>
-#include <sh3/wdtreg.h>
+#include <sh3/bscreg.h>
 #include <sh3/mmu.h>
+#include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
 
 #include <sys/termios.h>
 #include "sci.h"
@@ -176,20 +174,10 @@ static	int ioport_malloc_safe;
 
 void setup_bootinfo __P((void));
 void dumpsys __P((void));
-void identifycpu __P((void));
 void initSH3 __P((void *));
-void InitializeSci  __P((unsigned char));
-void sh3_cache_on __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
-void Sh3Reset __P((void));
 void cpu_reset(void);
-#ifdef SH4
-void sh4_cache_flush __P((vaddr_t));
-#endif
-
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
 
 void	consinit __P((void));
 
@@ -703,10 +691,6 @@ initSH3(pc)
 	 */
 	setup_bootinfo();
 
-#if 0
-	sh3_cache_on();
-#endif
-
 	/* setup proc0 stack */
 	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
 
@@ -774,7 +758,7 @@ cpu_reset()
 
 	_cpu_exception_suspend();
 
-	Sh3Reset();
+	goto *(u_int32_t *)0xa0000000;
 	for (;;)
 		;
 }
@@ -1044,7 +1028,11 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = Normal memory
 	 */
-	SHREG_BCR1 = BSC_BCR1_VAL;
+#if defined(SH3)
+	_reg_write_2(SH3_BCR1, BSC_BCR1_VAL);
+#elif defined(SH4)
+	_reg_write_4(SH4_BCR1, BSC_BCR1_VAL);
+#endif
 
 	/*
 	 * Bus Width
@@ -1053,14 +1041,18 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	SHREG_BCR2 = BSC_BCR2_VAL;
+	_reg_write_2(SH_(BCR2), BSC_BCR2_VAL);
 
 	/*
 	 * Idle cycle number in transition area and read to write
 	 * Area6 = 3, Area5 = 3, Area4 = 3, Area3 = 3, Area2 = 3
 	 * Area1 = 3, Area0 = 3
 	 */
-	SHREG_WCR1 = BSC_WCR1_VAL;
+#if defined(SH3)
+	_reg_write_2(SH3_WCR1, BSC_WCR1_VAL);
+#elif defined(SH4)
+	_reg_write_4(SH4_WCR1, BSC_WCR1_VAL);
+#endif
 
 	/*
 	 * Wait cycle
@@ -1071,10 +1063,14 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_WCR2 = BSC_WCR2_VAL;
+#if defined(SH3)
+	_reg_write_2(SH3_WCR2, BSC_WCR2_VAL);
+#elif defined(SH4)
+	_reg_write_4(SH4_WCR2, BSC_WCR2_VAL);
+#endif
 
 #if defined(SH4) && defined(BSC_WCR3_VAL)
-	SHREG_WCR3 = BSC_WCR3_VAL;
+	_reg_write_4(SH4_WCR3, BSC_WCR3_VAL);
 #endif
 
 	/*
@@ -1084,29 +1080,25 @@ InitializeBsc()
 	 * Disable burst, Bus size=32bit, Column Address=10bit, Refresh ON
 	 * CAS before RAS refresh ON, EDO DRAM
 	 */
-	SHREG_MCR = BSC_MCR_VAL;
+#if defined(SH3)
+	_reg_write_2(SH3_MCR, BSC_MCR_VAL);
+#elif defined(SH4)
+	_reg_write_4(SH4_MCR, BSC_MCR_VAL);
+#endif
 
 #if defined(BSC_SDMR2_VAL)
-#define SDMR2	(*(volatile unsigned char  *)BSC_SDMR2_VAL)
-
-	SDMR2 = 0;
+	_reg_write_1(BSC_SDMR2_VAL, 0);
 #endif
 
 #if defined(BSC_SDMR3_VAL)
 #if !(defined(COMPUTEXEVB) && defined(SH7709A))
-#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
-
-	SDMR3 = 0;
+	_reg_write_1(BSC_SDMR3_VAL, 0);
 #else
-#define ADDSET	(*(volatile unsigned short *)0x1A000000)
-#define ADDRST	(*(volatile unsigned short *)0x18000000)
-#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
-
-	ADDSET = 0;
-	SDMR3 = 0;
-	ADDRST = 0;
-#endif
-#endif
+	_reg_write_2(0x1a000000, 0);	/* ADDSET */
+	_reg_write_1(BSC_SDMR3_VAL, 0);
+	_reg_write_2(0x18000000, 0);	/* ADDRST */
+#endif /* !(COMPUTEXEVB && SH7709A) */
+#endif /* BSC_SDMR3_VAL */
 
 	/*
 	 * PCMCIA Control Register
@@ -1114,7 +1106,7 @@ InitializeBsc()
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
 #ifdef BSC_PCR_VAL
-	SHREG_PCR = BSC_PCR_VAL;
+	_reg_write_2(SH_(PCR), BSC_PCR_VAL);
 #endif
 
 	/*
@@ -1124,74 +1116,40 @@ InitializeBsc()
 	 * In following statement, the reason why high byte = 0xa5(a4 in RFCR)
 	 * is the rule of SH3 in writing these register.
 	 */
-	SHREG_RTCSR = BSC_RTCSR_VAL;
-
+	_reg_write_2(SH_(RTCSR), BSC_RTCSR_VAL);
 
 	/*
 	 * Refresh Timer Counter
 	 * Initialize to 0
 	 */
 #ifdef BSC_RTCNT_VAL
-	SHREG_RTCNT = BSC_RTCNT_VAL;
+	_reg_write_2(SH_(RTCNT), BSC_RTCNT_VAL);
 #endif
 
 	/* set Refresh Time Constant Register */
-	SHREG_RTCOR = BSC_RTCOR_VAL;
+	_reg_write_2(SH_(RTCOR), BSC_RTCOR_VAL);
 
 	/* init Refresh Count Register */
 #ifdef BSC_RFCR_VAL
-	SHREG_RFCR = BSC_RFCR_VAL;
+	_reg_write_2(SH_(RFCR), BSC_RFCR_VAL);
 #endif
 
+	/*
+	 * Clock Pulse Generator
+	 */
 	/* Set Clock mode (make internal clock double speed) */
+	_reg_write_2(SH_(FRQCR), FRQCR_VAL);
 
-	SHREG_FRQCR = FRQCR_VAL;
-
-#ifndef MMEYE_NO_CACHE
+	/*
+	 * Cache
+	 */
+#ifndef CACHE_DISABLE
 	/* Cache ON */
-	SHREG_CCR = CCR_CE;
+	_reg_write_4(SH_(CCR), 0x1);
 #endif
 }
-#endif
+#endif /* !DONT_INIT_BSC */
 
-void
-sh3_cache_on(void)
-{
-#ifndef MMEYE_NO_CACHE
-	/* Cache ON */
-	SHREG_CCR = CCR_CE;
-	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
-	SHREG_CCR = CCR_CE;		/* cache on */
-#endif
-}
-
-#ifdef SH4
-void
-sh4_cache_flush(addr)
-	vaddr_t addr;
-{
-#if 1
-#define SH_ADDR_ARRAY_BASE_ADDR 0xf4000000
-#define WRITE_ADDR_ARRAY( entry ) \
-	(*(volatile u_int32_t *)(SH_ADDR_ARRAY_BASE_ADDR|(entry)|0x00))
-
-	int entry;
-
-	entry = ((u_int32_t)addr) & 0x3fe0;
-
-	WRITE_ADDR_ARRAY(entry) = 0;
-#else
-	volatile int *p = (int *)IOM_RAM_BEGIN;
-	int i;
-	/* volatile */int d;
-
-	for(i = 0; i < 512; i++){
-		d = *p;
-		p += 8;
-	}
-#endif
-}
-#endif
 
  /* XXX This value depends on physical available memory */
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
