@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.4 2001/07/26 11:44:06 tsubai Exp $	*/
+/*	$NetBSD: spifi.c,v 1.5 2001/10/04 14:17:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -431,7 +431,7 @@ spifi_intr(v)
 
 	switch (dmac3_intr(sc->sc_dma)) {
 	case 0:
-		DPRINTF("sprious dma intr\n");
+		DPRINTF("spurious dma intr\n");
 		return 0;
 	case -1:
 		printf("DMAC parity error, data PAD\n");
@@ -449,7 +449,7 @@ spifi_intr(v)
 	intr = reg->intr & 0xff;
 	if (intr == 0) {
 		DMAC3_FASTACCESS(sc);
-		DPRINTF("sprious intr (not me)\n");
+		DPRINTF("spurious intr (not me)\n");
 		return 0;
 	}
 
