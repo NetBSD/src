@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/06 20:45:42 gwr Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/07 07:15:49 mycroft Exp $
 
 .include "../../Makefile.inc"
 
@@ -16,8 +16,7 @@ DEPSRCS += astosc.OUT map3270.c mset.c
 PROG = mset
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | \
-	${MAKE} -r -s -f - xxx | grep mkastosc
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -s -f-
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out

@@ -1,19 +1,16 @@
-# $Id: Makefile,v 1.11 1997/04/19 02:59:30 cgd Exp $
+# $Id: Makefile,v 1.12 1997/05/07 07:15:40 mycroft Exp $
 
 # Paths to libraries
 #
 PARALLEL=yes
 LIBBFD!=cd $(.CURDIR)/../bfd; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libbfd.a\n" | \
-	${MAKE} -r -s -f - xxx | grep libbfd
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libbfd.a\n" | ${MAKE} -s -f-
 
 LIBREADLINE!=cd $(.CURDIR)/../readline; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libreadline.a\n" | \
-	${MAKE} -r -s -f - xxx | grep libreadline
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libreadline.a\n" | ${MAKE} -s -f-
 
 LIBIBERTY!=cd $(.CURDIR)/../libiberty; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libiberty.a\n" | \
-	${MAKE} -r -s -f - xxx | grep libiberty
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libiberty.a\n" | ${MAKE} -s -f-
 
 
 PROG=		gdb

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 1996/05/17 20:52:47 chuck Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/05/07 07:15:47 mycroft Exp $
 
 LIB_SA_DIR=${S}/arch/${MACHINE}/stand/libsa
 
-LIBSA_DIR!= cd ${LIB_SA_DIR}; \
-     printf "xxx:\n\techo \$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxx
+LIBSA_DIR!=cd ${LIB_SA_DIR}; \
+     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 LIBSA=${LIBSA_DIR}/libsa.a
 SRTOBJ?= ${LIBSA_DIR}/SRT0.o 

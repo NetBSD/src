@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/10/15 06:59:51 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/05/07 07:15:43 mycroft Exp $
 
 LIBRCS!=cd $(.CURDIR)/../lib; \
-	printf "xxx:\n\techo \$${.OBJDIR}/librcs.a\n" | \
-	${MAKE} -r -s -f - xxx | grep librcs
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/librcs.a\n" | ${MAKE} -s -f-

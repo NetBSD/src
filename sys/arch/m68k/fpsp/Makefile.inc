@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.4 1996/10/29 00:11:27 scottr Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/05/07 07:15:44 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the `sys' tree
 
 FPSPSRCDIR=	$S/arch/m68k/fpsp
 
 FPSPOBJDIR!=	cd $(FPSPSRCDIR); \
-	printf "xxx:\n\techo \$${.OBJDIR}\n" | $(MAKE) -r -s -f - xxx
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | $(MAKE) -s -f-
 
 FPSPOBJ=	$(FPSPOBJDIR)/fpsp.o
 

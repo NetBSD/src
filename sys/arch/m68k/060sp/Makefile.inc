@@ -1,12 +1,12 @@
 #
-#	$NetBSD: Makefile.inc,v 1.1 1996/05/15 21:06:19 is Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/05/07 07:15:43 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the `sys' tree
 
 060SPSRCDIR=	$S/arch/m68k/060sp
 
 060SPOBJDIR!=	cd $(060SPSRCDIR); \
-	printf "xxx:\n\techo \$${.OBJDIR}\n" | $(MAKE) -r -s -f - xxx
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | $(MAKE) -s -f-
 
 060SPOBJ=	$(060SPOBJDIR)/060sp.o
 
