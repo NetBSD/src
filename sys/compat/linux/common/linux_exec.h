@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.30 2003/09/06 22:09:22 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.31 2003/09/25 22:00:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
 int linux_aout_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 #ifdef __HAVE_SIGINFO
-void linux_trapsignal __P((struct lwp *, ksiginfo_t *));
+void linux_trapsignal __P((struct lwp *, const ksiginfo_t *));
 #else
 void linux_trapsignal __P((struct lwp *, int, u_long));
 #endif
