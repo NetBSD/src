@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.4 2001/09/19 12:42:11 ad Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.5 2001/11/13 12:49:45 lukem Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.5 2001/11/13 12:49:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
