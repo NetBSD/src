@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.39 1996/02/29 23:33:48 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.40 1996/03/05 09:29:58 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1008,8 +1008,8 @@ gotit:
 			if (esp_debug & ESP_SHOWMSGS)
 				printf("%s: our msg rejected by target\n",
 				    sc->sc_dev.dv_xname);
-#if 0 /* XXX - must remember last message */
-printf("<<target%d: MSG_MESSAGE_REJECT>>", ecb->xs->sc_link->target);
+#if 1 /* XXX - must remember last message */
+sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 #endif
 			if (sc->sc_flags & ESP_SYNCHNEGO) {
 				ti->period = ti->offset = 0;
@@ -1169,9 +1169,15 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 				sc->sc_dleft = ecb->dleft;
 				sc->sc_tinfo[sc_link->target].lubusy
 					|= (1<<sc_link->lun);
-				ESP_WRITE_REG(sc, ESP_SYNCOFF, ti->offset);
-				ESP_WRITE_REG(sc, ESP_SYNCTP,
-				    esp_stp2cpb(sc, ti->period));
+				if (ti->flags & T_SYNCMODE) {
+					ESP_WRITE_REG(sc, ESP_SYNCOFF,
+						ti->offset);
+					ESP_WRITE_REG(sc, ESP_SYNCTP,
+						esp_stp2cpb(sc, ti->period));
+				} else {
+					ESP_WRITE_REG(sc, ESP_SYNCOFF, 0);
+					ESP_WRITE_REG(sc, ESP_SYNCTP, 0);
+				}
 				ESP_MISC(("... found ecb"));
 				sc->sc_state = ESP_HASNEXUS;
 			}
@@ -1475,8 +1481,14 @@ espintr(sc)
 			ESPCMD(sc, ESPCMD_ENSEL);
 			if (sc->sc_state != ESP_IDLE) {
 				if ((sc->sc_flags & ESP_SYNCHNEGO)) {
-					printf("%s: sync nego not completed!\n",
-						sc->sc_dev.dv_xname);
+#ifdef ESP_DEBUG
+					if (ecb)
+						sc_print_addr(ecb->xs->sc_link);
+					printf("sync nego not completed!\n");
+#endif
+					sc->sc_flags &= ~ESP_SYNCHNEGO;
+					sc->sc_tinfo[ecb->xs->sc_link->target].offset = 0;
+					sc->sc_tinfo[ecb->xs->sc_link->target].flags &= ~T_NEGOTIATE;
 				}
 			/*XXX*/sc->sc_msgpriq = sc->sc_msgout = 0;
 
@@ -1516,10 +1528,13 @@ if ((esp_debug & 0x10000) && ecb->dleft == 0) {
 		    sc->sc_phase != MESSAGE_OUT_PHASE) {
 			/* we have sent it */
 			if (sc->sc_msgout == SEND_SDTR &&
-			    (sc->sc_flags & ESP_SYNCHNEGO) == 0)
+			    (sc->sc_flags & ESP_SYNCHNEGO) == 0) {
 				/* We've just accepted new sync parameters */
 				sc->sc_tinfo[ecb->xs->sc_link->target].flags |=
 					T_SYNCMODE;
+if (ecb) sc_print_addr(ecb->xs->sc_link);else printf("NO nexus: ");
+printf("target put in SYNC mode\n");
+			}
 			sc->sc_msgpriq &= ~sc->sc_msgout;
 			sc->sc_msgout = 0;
 		}
