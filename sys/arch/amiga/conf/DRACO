@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.81 2003/10/08 11:03:55 bouyer Exp $
+# $NetBSD: DRACO,v 1.82 2004/02/23 21:18:50 jandberg Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.16 2003/10/08 11:02:45 bouyer Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.18 2004/02/23 21:14:08 jandberg Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 
 maxusers	8
@@ -318,6 +318,8 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+
+#pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
