@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.17 1993/10/22 19:11:36 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.18 1993/10/22 19:19:34 mycroft Exp $
  */
 
 /*
@@ -229,20 +229,6 @@ int isa_memcheck __P((u_int, u_int));
 void isa_portalloc __P((u_int, u_int));
 void isa_memalloc __P((u_int, u_int));
 */
-
-/*
- * Handle a NMI, possibly a machine check.
- * return true to panic system, false to ignore.
- *
- * This implementation is hist[oe]rical.
- */
-int
-isa_nmi()
-{
-
-	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-	return 0;
-}
 
 static int beeping;
 
