@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29.2.7 2000/01/31 20:57:06 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.29.2.8 2000/07/31 18:18:28 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29.2.7 2000/01/31 20:57:06 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29.2.8 2000/07/31 18:18:28 he Exp $");
 #endif
 #endif
 
@@ -310,17 +310,14 @@ pkg_do(char *pkg)
 
 	/* See if some other version of us is already installed */
 	{
-		char    buf[FILENAME_MAX];
-		char    installed[FILENAME_MAX];
 		char   *s;
 
 		if ((s = strrchr(PkgName, '-')) != NULL) {
-			int     l;
+			char    buf[FILENAME_MAX];
+			char    installed[FILENAME_MAX];
 
-			l = s - PkgName + 1;
-			(void) memcpy(buf, PkgName, l);
-			(void) strcpy(&buf[l], "[0-9]*");
-
+			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
+				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				warnx("other version '%s' already installed", installed);
 				code = 1;
@@ -341,10 +338,64 @@ pkg_do(char *pkg)
 		/* was: */
 		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
-			warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n", installed);
+			warnx("Conflicting package `%s'installed, please use\n"
+			      "\t\"pkg_delete %s\" first to remove it!\n", installed, installed);
 			++code;
 		}
 	}
+
+	/* Quick pre-check if any conflicting dependencies are installed
+	 * (e.g. version X is installed, but version Y is required)
+	 */
+	for (p = Plist.head; p; p = p->next) {
+		char installed[FILENAME_MAX];
+		
+		if (p->type != PLIST_PKGDEP)
+			continue;
+		if (Verbose)
+			printf("Depends pre-scan: `%s' required.\n", p->name);
+		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) <= 0) {
+			/* 
+			 * required pkg not found. look if it's available with a more liberal
+			 * pattern. If so, this will lead to problems later (check on "some
+			 * other version of us is already installed" will fail, see above),
+			 * and we better stop right now.
+			 */
+			char *s;
+			char *fmt = NULL;
+			int skip = -1;
+
+			/* doing this right required to parse the full version(s),
+			 * do a 99% solution here for now */
+			if ((s = strpbrk(p->name, "<>")) != NULL) {
+				fmt = "%.*s-[0-9]*";
+				skip = 0;
+			} else if ((s = strrchr(p->name, '-')) != NULL) {
+				fmt = "%.*s[0-9]*";
+				skip = 1;
+			}
+			
+			if (fmt != NULL) {
+				char    buf[FILENAME_MAX];
+		
+				(void) snprintf(buf, sizeof(buf), fmt,
+					(int)(s - p->name) + skip, p->name);
+				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
+					warnx("pkg `%s' required, but `%s' found installed.",
+					      p->name, installed);
+					if (Force) {
+						warnx("Proceeding anyways.");
+					} else {	
+						warnx("Please resolve this conflict!");
+						code = 1;
+						goto success; /* close enough */
+					}
+				}
+			}
+		}
+	}
+	
 
 	/* Now check the packing list for dependencies */
 	for (p = Plist.head; p; p = p->next) {
@@ -490,7 +541,6 @@ pkg_do(char *pkg)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			unlink(INSTALL_FNAME);
 			code = 1;
 			goto success;	/* nothing to uninstall yet */
 		}
@@ -498,7 +548,10 @@ pkg_do(char *pkg)
 
 	/* Now finally extract the entire show if we're not going direct */
 	if (!inPlace && !Fake)
-		extract_plist(".", &Plist);
+	    if (!extract_plist(".", &Plist)) {
+		code = 1;
+		goto fail;
+	    }
 
 	if (!Fake && fexists(MTREE_FNAME)) {
 		if (Verbose)
@@ -519,11 +572,9 @@ pkg_do(char *pkg)
 			printf("Running install with POST-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			unlink(INSTALL_FNAME);
 			code = 1;
 			goto fail;
 		}
-		unlink(INSTALL_FNAME); /* remove this line to tar up pkg later  - HF */
 	}
 
 	/* Time to record the deed? */
@@ -546,7 +597,7 @@ pkg_do(char *pkg)
 		if (make_hierarchy(LogDir)) {
 			warnx("can't record package into '%s', you're on your own!",
 			    LogDir);
-			memset(LogDir, 0, FILENAME_MAX);
+			memset(LogDir, 0, sizeof(LogDir));
 			code = 1;
 			goto success;	/* close enough for government work */
 		}
