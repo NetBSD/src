@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 1996/04/26 19:00:00 chuck Exp $ */
+/*	$NetBSD: if_le.c,v 1.8 1996/05/07 01:10:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -63,53 +63,41 @@
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
+#include <dev/ic/am7990reg.h>
+#include <dev/ic/am7990var.h>
+
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
 
-#include <dev/ic/am7990reg.h>
-#define	LE_NEED_BUF_CONTIG
-#include <dev/ic/am7990var.h>
-
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	DELAY(x)
-
 int	le_pcc_match __P((struct device *, void *, void *));
 void	le_pcc_attach __P((struct device *, struct device *, void *));
-int	leintr __P((void *));
 
 struct cfattach le_pcc_ca = {
 	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
 };
 
-struct	cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+hide void le_pcc_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_pcc_rdcsr __P((struct am7990_softc *, u_int16_t));
 
 void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
-
-integrate void
-lewrcsr(sc, port, val)
-	struct le_softc *sc;
+hide void
+le_pcc_wrcsr(sc, port, val)
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
-integrate u_int16_t
-lerdcsr(sc, port)
-	struct le_softc *sc;
+hide u_int16_t
+le_pcc_rdcsr(sc, port)
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;
@@ -137,14 +125,15 @@ le_pcc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *sc = (void *)self;
+	struct le_softc *lesc = (void *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct pcc_attach_args *pa = aux;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
 	/* Map control registers. */
-	sc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
+	lesc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
 
 	sc->sc_mem = ledatabuf;		/* XXX */
 	sc->sc_conf3 = LE_C3_BSWP;
@@ -159,11 +148,12 @@ le_pcc_attach(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	sc->sc_rdcsr = le_pcc_rdcsr;
+	sc->sc_wrcsr = le_pcc_wrcsr;
+	sc->sc_hwinit = NULL;
 
-	pccintr_establish(PCCV_LE, leintr, pa->pa_ipl, sc);
+	am7990_config(sc);
+
+	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
 	sys_pcc->le_int = pa->pa_ipl | PCC_IENABLE;
 }
-
-#include <dev/ic/am7990.c>
