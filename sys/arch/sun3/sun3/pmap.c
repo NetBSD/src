@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.34 1994/07/23 03:43:01 gwr Exp $
+ *	$Id: pmap.c,v 1.35 1994/07/29 04:04:31 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ vm_offset_t avail_start, avail_end;
  * locking issues:
  *
  */
-#if 1 /* def PMAP_DEBUG */
+#ifdef	PMAP_DEBUG
 int pmap_db_lock;
 #define	PMAP_DB_LOCK() do { \
     if (pmap_db_lock) panic("pmap_db_lock: line %d", __LINE__); \
@@ -140,7 +140,7 @@ int pmap_db_lock;
 #define	PMAP_DB_UNLK() XXX
 #endif	/* PMAP_DEBUG */
 
-#if 1 /* def PMAP_DEBUG */
+#ifdef	PMAP_DEBUG
 int pmeg_lock;
 #define	PMEG_LOCK() do { \
     if (pmeg_lock) panic("pmeg_lock: line %d", __LINE__); \
@@ -2035,7 +2035,7 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
 	/* XXX - Why is this happening? -gwr */
 #ifdef	PMAP_DEBUG
 	printf("pmap: pmap_enter_user() on pmap without a context\n");
-	Debugger();	/* XXX */
+	/* XXX - Why is this happening occasionally? -gwr */
 #endif
 	context_allocate(pmap);
     }
@@ -2111,6 +2111,7 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
 
 add_pte:
     /* if we did wiring on user pmaps, then the code would be here */
+    /* XXX - pv_link calls malloc which calls pmap_enter_kernel... */
     nflags = pv_link(pmap, pa, va, PG_TO_PV_FLAGS(pte_proto));
     if (nflags & PV_NC)
 	set_pte(va, pte_proto | PG_NC);
@@ -2164,12 +2165,14 @@ pmap_enter(pmap, va, pa, prot, wired)
      *
      */
     PMAP_LOCK();
-    PMAP_DB_LOCK();
-    if (pmap == kernel_pmap)
+    if (pmap == kernel_pmap) {
+	/* This can be called recursively through malloc. */
 	pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type);
-    else
+    } else {
+	PMAP_DB_LOCK();
 	pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type);
     PMAP_DB_UNLK();
+    }
     PMAP_UNLOCK();
 }
 
