@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.9 1999/04/27 02:53:30 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.10 1999/06/19 18:50:28 mjl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -77,6 +77,8 @@ struct aic_pcmcia_product {
 	  0,				PCMCIA_STR_ADAPTEC_APA1460_1 },
 	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_2,
 	  0,				PCMCIA_STR_ADAPTEC_APA1460_2 },
+	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
+	  0,				PCMCIA_STR_NEWMEDIA_BUSTOASTER },
 
 	{ 0,				0,
 	  0,				NULL },
@@ -130,6 +132,14 @@ aic_pcmcia_attach(parent, self, aux)
 	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 		if (cfe->num_memspace != 0 ||
 		    cfe->num_iospace != 1)
+			continue;
+
+		/* The bustoaster has a default config as first
+		 * entry, we don't want to use that. */
+
+		if (pa->manufacturer == PCMCIA_VENDOR_NEWMEDIA &&
+		    pa->product == PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER &&
+		    cfe->iospace[0].start == 0)
 			continue;
 
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
