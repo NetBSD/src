@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.24 1998/07/07 17:51:54 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.25 1998/08/08 23:39:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -287,8 +287,9 @@ set_spl_masks()
 	spl_masks[_SPL_BIO]	= irqmasks[IPL_BIO];
 	spl_masks[_SPL_NET]	= irqmasks[IPL_NET];
 	spl_masks[_SPL_TTY]	= irqmasks[IPL_TTY];
-	spl_masks[_SPL_CLOCK]	= irqmasks[IPL_CLOCK];
 	spl_masks[_SPL_IMP]	= irqmasks[IPL_IMP];
+	spl_masks[_SPL_AUDIO]	= irqmasks[IPL_AUDIO];
+	spl_masks[_SPL_CLOCK]	= irqmasks[IPL_CLOCK];
 	spl_masks[_SPL_HIGH]	= 0x00000000;
 }
 
@@ -298,8 +299,10 @@ dump_spl_masks()
 	printf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
 	    spl_masks[_SPL_0], spl_masks[_SPL_SOFT], spl_masks[_SPL_BIO],
 	    spl_masks[_SPL_NET]);
-	printf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
-	    spl_masks[_SPL_TTY], spl_masks[_SPL_CLOCK], spl_masks[_SPL_IMP],
+	printf("spltty=%08x splimp=%08x splaudio=%08x splclock=%08x\n",
+	    spl_masks[_SPL_TTY], spl_masks[_SPL_IMP], spl_masks[_SPL_AUDIO],
+	    spl_masks[_SPL_CLOCK]);
+	printf("splhigh=%08x\n",
 	    spl_masks[_SPL_HIGH]);
 }
 

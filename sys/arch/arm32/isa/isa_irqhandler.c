@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.2 1998/07/06 00:53:07 mark Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.3 1998/08/08 23:39:40 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -159,9 +159,10 @@ irq_init()
 	irqmasks[IPL_BIO]   = 0x00000000;
 	irqmasks[IPL_NET]   = 0x00000000;
 	irqmasks[IPL_TTY]   = 0x00000000;
-	irqmasks[IPL_CLOCK] = 0x00000000;
 	irqmasks[IPL_IMP]   = 0x00000000;
-	irqmasks[IPL_NONE]   = 0x00000000;
+	irqmasks[IPL_AUDIO] = 0x00000000;
+	irqmasks[IPL_CLOCK] = 0x00000000;
+	irqmasks[IPL_NONE]  = 0x00000000;
 
 	current_mask = 0x00000000;
 	actual_mask = 0x00000000;
@@ -371,32 +372,25 @@ irq_calculatemasks()
 	}
 
 	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, statclock > (tty | net | bio).
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
 	 */
-	irqmasks[IPL_CLOCK] &= (irqmasks[IPL_TTY] & irqmasks[IPL_NET] & 
-				irqmasks[IPL_BIO]);
+	irqmasks[IPL_NET] &= irqmasks[IPL_BIO];
+	irqmasks[IPL_TTY] &= irqmasks[IPL_NET];
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	irqmasks[IPL_IMP] &= (irqmasks[IPL_TTY] & irqmasks[IPL_NET] & 
-			      irqmasks[IPL_BIO]);
+	irqmasks[IPL_IMP] &= irqmasks[IPL_TTY];
+
+	irqmasks[IPL_AUDIO] &= irqmasks[IPL_IMP];
 
 	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and disk drivers, statclock > (tty | net | bio).
 	 */
-	irqmasks[IPL_TTY] &= irqmasks[IPL_NET] & irqmasks[IPL_BIO];
-	irqmasks[IPL_NET] &= irqmasks[IPL_BIO];
-
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-/* In the presence of SLIP or PPP, splimp > spltty. */
-	irqmasks[IPL_NET] &= irqmasks[IPL_TTY];
-#endif
+	irqmasks[IPL_CLOCK] &= irqmasks[IPL_AUDIO];
 
 	/*
 	 * We now need to update the irqblock array. This array indicates

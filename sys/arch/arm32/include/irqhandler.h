@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.13 1998/07/07 03:05:15 mark Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.14 1998/08/08 23:39:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -281,20 +281,6 @@ hardcoded for now.
 #define NIRQS		0x20
 
 #include <machine/intr.h>
-#if 0
-/* Define the various Interrupt Priority Levels */
-
-/* Interrupt Priority Levels are not mutually exclusive. */
-
-#define IPL_BIO        0	/* block I/O */
-#define IPL_NET        1	/* network */
-#define IPL_TTY        2	/* terminal */
-#define IPL_CLOCK      3	/* clock */
-#define IPL_IMP        4	/* memory allocation */
-#define IPL_NONE       5
-
-#define IPL_LEVELS     6
-#endif
 
 #ifndef _LOCORE
 typedef struct irqhandler {
