@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.72 2004/10/31 20:15:16 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.73 2004/11/01 06:25:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.72 2004/10/31 20:15:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.73 2004/11/01 06:25:35 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,23 +188,17 @@ struct auich_softc {
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
 	struct auich_cdata *sc_cdata;
-#define	dmalist_pcmo	sc_cdata->ic_dmalist_pcmo
-#define	dmalist_pcmi	sc_cdata->ic_dmalist_pcmi
-#define	dmalist_mici	sc_cdata->ic_dmalist_mici
 
-	int	ptr_pcmo,
-		ptr_pcmi,
-		ptr_mici;
+	struct auich_ring {
+		int qptr;
+		struct auich_dmalist *dmalist;
 
-	/* i/o buffer pointers */
-	u_int32_t pcmo_start, pcmo_p, pcmo_end;
-	int pcmo_blksize, pcmo_fifoe;
+		u_int32_t start, p, end;
+		int blksize;
 
-	u_int32_t pcmi_start, pcmi_p, pcmi_end;
-	int pcmi_blksize, pcmi_fifoe;
-
-	u_int32_t mici_start, mici_p, mici_end;
-	int mici_blksize, mici_fifoe;
+		void (*intr)(void *);
+		void *arg;
+	} pcmo, pcmi, mici;
 
 	struct auich_dma *sc_dmas;
 
@@ -218,11 +212,6 @@ struct auich_softc {
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
 
-	void (*sc_pintr)(void *);
-	void *sc_parg;
-
-	void (*sc_rintr)(void *);
-	void *sc_rarg;
 
 	/* Power Management */
 	void *sc_powerhook;
@@ -514,11 +503,11 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Set up DMA lists. */
-	sc->ptr_pcmo = sc->ptr_pcmi = sc->ptr_mici = 0;
+	sc->pcmo.qptr = sc->pcmi.qptr = sc->mici.qptr = 0;
 	auich_alloc_cdata(sc);
 
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
-	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
+	    sc->pcmo.dmalist, sc->pcmi.dmalist, sc->mici.dmalist));
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
@@ -955,7 +944,7 @@ auich_halt_output(void *v)
 	DPRINTF(ICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL, ICH_RR);
-	sc->sc_pintr = NULL;
+	sc->pcmo.intr = NULL;
 
 	return (0);
 }
@@ -972,7 +961,7 @@ auich_halt_input(void *v)
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, ICH_RR);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_MICI + ICH_CTRL, ICH_RR);
-	sc->sc_rintr = NULL;
+	sc->pcmi.intr = NULL;
 
 	return (0);
 }
@@ -1101,7 +1090,7 @@ int
 auich_intr(void *v)
 {
 	struct auich_softc *sc = v;
-	int ret = 0, sts, gsts, i;
+	int ret = 0, gsts;
 
 #ifdef DIAGNOSTIC
 	int csts;
@@ -1118,112 +1107,115 @@ auich_intr(void *v)
 	DPRINTF(ICH_DEBUG_INTR, ("auich_intr: gsts=0x%x\n", gsts));
 
 	if (gsts & ICH_POINT) {
+		int sts;
+
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    ICH_PCMO + sc->sc_sts_reg);
 		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: osts=0x%x\n", sts));
 
-		if (sts & ICH_FIFOE) {
-			printf("%s: fifo underrun # %u\n",
-			    sc->sc_dev.dv_xname, ++sc->pcmo_fifoe);
-		}
+		if (sts & ICH_FIFOE)
+			printf("%s: fifo underrun\n", sc->sc_dev.dv_xname);
 
-		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CIV);
-		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
+		if (sts & ICH_BCIS) {
 			struct auich_dmalist *q;
-			int blksize, qptr;
+			int blksize, qptr, i;
 
-			blksize = sc->pcmo_blksize;
-			qptr = sc->ptr_pcmo;
+			blksize = sc->pcmo.blksize;
+			qptr = sc->pcmo.qptr;
+			i = bus_space_read_1(sc->iot, sc->aud_ioh,
+			    ICH_PCMO + ICH_CIV);
 
 			while (qptr != i) {
-				q = &sc->dmalist_pcmo[qptr];
+				q = &sc->pcmo.dmalist[qptr];
 
-				q->base = sc->pcmo_p;
+				q->base = sc->pcmo.p;
 				q->len = (blksize >> sc->sc_sample_shift) |
 				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmo[i], q, q->len, q->base));
+				    &sc->pcmo.dmalist[i], q, q->len, q->base));
 
-				sc->pcmo_p += blksize;
-				if (sc->pcmo_p >= sc->pcmo_end)
-					sc->pcmo_p = sc->pcmo_start;
+				sc->pcmo.p += blksize;
+				if (sc->pcmo.p >= sc->pcmo.end)
+					sc->pcmo.p = sc->pcmo.start;
 
-				if (++qptr == ICH_DMALIST_MAX)
-					qptr = 0;
-				if (sc->sc_pintr)
-					sc->sc_pintr(sc->sc_parg);
+				qptr = (qptr + 1) & ICH_LVI_MASK;
+				if (sc->pcmo.intr)
+					sc->pcmo.intr(sc->pcmo.arg);
 			}
 
-			sc->ptr_pcmo = qptr;
+			sc->pcmo.qptr = qptr;
 			bus_space_write_1(sc->iot, sc->aud_ioh,
 			    ICH_PCMO + ICH_LVI, (qptr - 1) & ICH_LVI_MASK);
 		}
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO +
-		    sc->sc_sts_reg, sts & (ICH_CELV | ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
+		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
 		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
 		ret++;
 	}
 
 	if (gsts & ICH_PIINT) {
+		int sts;
+
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    ICH_PCMI + sc->sc_sts_reg);
 		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: ists=0x%x\n", sts));
 
-		if (sts & ICH_FIFOE) {
-			printf("%s: fifo overrun # %u\n",
-			    sc->sc_dev.dv_xname, ++sc->pcmi_fifoe);
-		}
+		if (sts & ICH_FIFOE)
+			printf("%s: fifo overrun\n", sc->sc_dev.dv_xname);
 
-		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CIV);
-		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
+		if (sts & ICH_BCIS) {
 			struct auich_dmalist *q;
-			int blksize, qptr;
+			int blksize, qptr, i;
 
-			blksize = sc->pcmi_blksize;
-			qptr = sc->ptr_pcmi;
+			blksize = sc->pcmi.blksize;
+			qptr = sc->pcmi.qptr;
+			i = bus_space_read_1(sc->iot, sc->aud_ioh,
+			    ICH_PCMI + ICH_CIV);
 
 			while (qptr != i) {
-				q = &sc->dmalist_pcmi[qptr];
+				q = &sc->pcmi.dmalist[qptr];
 
-				q->base = sc->pcmi_p;
+				q->base = sc->pcmi.p;
 				q->len = (blksize >> sc->sc_sample_shift) |
 				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmi[i], q, q->len, q->base));
+				    &sc->pcmi.dmalist[i], q, q->len, q->base));
 
-				sc->pcmi_p += blksize;
-				if (sc->pcmi_p >= sc->pcmi_end)
-					sc->pcmi_p = sc->pcmi_start;
+				sc->pcmi.p += blksize;
+				if (sc->pcmi.p >= sc->pcmi.end)
+					sc->pcmi.p = sc->pcmi.start;
 
-				if (++qptr == ICH_DMALIST_MAX)
-					qptr = 0;
-				if (sc->sc_rintr)
-					sc->sc_rintr(sc->sc_rarg);
+				qptr = (qptr + 1) & ICH_LVI_MASK;
+				if (sc->pcmi.intr)
+					sc->pcmi.intr(sc->pcmi.arg);
 			}
 
-			sc->ptr_pcmi = qptr;
+			sc->pcmi.qptr = qptr;
 			bus_space_write_1(sc->iot, sc->aud_ioh,
 			    ICH_PCMI + ICH_LVI, (qptr - 1) & ICH_LVI_MASK);
 		}
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI +
-		    sc->sc_sts_reg, sts & (ICH_CELV | ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
+		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
 		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
 		ret++;
 	}
 
 	if (gsts & ICH_MIINT) {
+		int sts;
+
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    ICH_MICI + sc->sc_sts_reg);
 		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: ists=0x%x\n", sts));
+
 		if (sts & ICH_FIFOE)
 			printf("%s: fifo overrun\n", sc->sc_dev.dv_xname);
 
@@ -1252,8 +1244,8 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	    ("auich_trigger_output(%p, %p, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
 
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
+	sc->pcmo.intr = intr;
+	sc->pcmo.arg = arg;
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
 	if (csts & PCI_STATUS_MASTER_ABORT) {
@@ -1275,30 +1267,30 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmo_start = DMAADDR(p);
-	sc->pcmo_p = sc->pcmo_start;
-	sc->pcmo_end = sc->pcmo_start + size;
-	sc->pcmo_blksize = blksize;
+	sc->pcmo.start = DMAADDR(p);
+	sc->pcmo.p = sc->pcmo.start;
+	sc->pcmo.end = sc->pcmo.start + size;
+	sc->pcmo.blksize = blksize;
 
 	for (qptr = 0; qptr < ICH_DMALIST_MAX; qptr++) {
-		q = &sc->dmalist_pcmo[qptr];
+		q = &sc->pcmo.dmalist[qptr];
 
-		q->base = sc->pcmo_p;
+		q->base = sc->pcmo.p;
 		q->len = (blksize >> sc->sc_sample_shift) | ICH_DMAF_IOC;
 
-		sc->pcmo_p += blksize;
-		if (sc->pcmo_p >= sc->pcmo_end)
-			sc->pcmo_p = sc->pcmo_start;
+		sc->pcmo.p += blksize;
+		if (sc->pcmo.p >= sc->pcmo.end)
+			sc->pcmo.p = sc->pcmo.start;
 	}
 
-	sc->ptr_pcmo = qptr = 0;
+	sc->pcmo.qptr = qptr = 0;
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_LVI,
 	    (qptr - 1) & ICH_LVI_MASK);
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMO_OFF(0));
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL,
-	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
+	    ICH_IOCE | ICH_FEIE | ICH_RPBM);
 
 	return (0);
 }
@@ -1325,8 +1317,8 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
 
-	sc->sc_rintr = intr;
-	sc->sc_rarg = arg;
+	sc->pcmi.intr = intr;
+	sc->pcmi.arg = arg;
 
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
@@ -1349,30 +1341,30 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmi_start = DMAADDR(p);
-	sc->pcmi_p = sc->pcmi_start;
-	sc->pcmi_end = sc->pcmi_start + size;
-	sc->pcmi_blksize = blksize;
+	sc->pcmi.start = DMAADDR(p);
+	sc->pcmi.p = sc->pcmi.start;
+	sc->pcmi.end = sc->pcmi.start + size;
+	sc->pcmi.blksize = blksize;
 
 	for (qptr = 0; qptr < ICH_DMALIST_MAX; qptr++) {
-		q = &sc->dmalist_pcmi[qptr];
+		q = &sc->pcmi.dmalist[qptr];
 
-		q->base = sc->pcmi_p;
+		q->base = sc->pcmi.p;
 		q->len = (blksize >> sc->sc_sample_shift) | ICH_DMAF_IOC;
 
-		sc->pcmi_p += blksize;
-		if (sc->pcmi_p >= sc->pcmi_end)
-			sc->pcmi_p = sc->pcmi_start;
+		sc->pcmi.p += blksize;
+		if (sc->pcmi.p >= sc->pcmi.end)
+			sc->pcmi.p = sc->pcmi.start;
 	}
 
-	sc->ptr_pcmi = qptr = 0;
+	sc->pcmi.qptr = qptr = 0;
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
 	    (qptr - 1) & ICH_LVI_MASK);
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMI_OFF(0));
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL,
-	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
+	    ICH_IOCE | ICH_FEIE | ICH_RPBM);
 
 	return (0);
 }
@@ -1469,6 +1461,10 @@ auich_alloc_cdata(struct auich_softc *sc)
 		goto fail_3;
 	}
 
+	sc->pcmo.dmalist = sc->sc_cdata->ic_dmalist_pcmo;
+	sc->pcmi.dmalist = sc->sc_cdata->ic_dmalist_pcmi;
+	sc->mici.dmalist = sc->sc_cdata->ic_dmalist_mici;
+
 	return (0);
 
  fail_3:
@@ -1554,8 +1550,8 @@ auich_calibrate(struct auich_softc *sc)
 		printf("auich_calibrate: bad address %p\n", temp_buffer);
 		return;
 	}
-	sc->dmalist_pcmi[0].base = DMAADDR(p);
-	sc->dmalist_pcmi[0].len = (bytes >> sc->sc_sample_shift);
+	sc->pcmi.dmalist[0].base = DMAADDR(p);
+	sc->pcmi.dmalist[0].len = (bytes >> sc->sc_sample_shift);
 
 	/*
 	 * our data format is stereo, 16 bit so each sample is 4 bytes.
