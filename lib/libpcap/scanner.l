@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.10 2000/04/14 14:25:40 itojun Exp $	*/
+/*	$NetBSD: scanner.l,v 1.11 2000/05/04 13:08:25 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.10 2000/04/14 14:25:40 itojun Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.11 2000/05/04 13:08:25 is Exp $");
 #endif
 #endif
 
@@ -235,7 +235,7 @@ outbound	return OUTBOUND;
 "=="			return '=';
 "<<"			return LSH;
 ">>"			return RSH;
-:{B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
+${B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
 			  return AID; }
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
