@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.6.2.2 2002/10/18 13:16:46 itojun Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.6.2.3 2002/11/27 08:35:20 itojun Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -28,7 +28,7 @@
 # include <sys/ioctl.h>
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.6.2.2 2002/10/18 13:16:46 itojun Exp $");
+__KERNEL_RCSID(4, "$NetBSD: ip_h323_pxy.c,v 1.6.2.3 2002/11/27 08:35:20 itojun Exp $");
 
 #define IPF_H323_PROXY
 
