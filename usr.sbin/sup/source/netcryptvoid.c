@@ -25,6 +25,12 @@
 /**********************************************************************
  * HISTORY
  * $Log: netcryptvoid.c,v $
+ * Revision 1.2  1996/12/23 19:42:07  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -47,7 +53,8 @@
  */
 
 #include <libc.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 #include "supmsg.h"
 
 /*********************************************

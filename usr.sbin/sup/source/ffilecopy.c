@@ -45,7 +45,8 @@
  */
 
 #include <stdio.h>
-int filecopy();
+#include "supcdefs.h"
+#include "supextern.h"
 
 int ffilecopy (here,there)
 FILE *here, *there;

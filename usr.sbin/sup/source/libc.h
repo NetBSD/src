@@ -26,6 +26,12 @@
  **********************************************************************
  * HISTORY
  * $Log: libc.h,v $
+ * Revision 1.2  1996/12/23 19:42:05  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -115,9 +121,6 @@ extern FILE *fwantwrite();
 extern char* foldup(char*, const char*);
 extern char* folddown(char*, const char*);
 extern char* sindex(const char*, const char*);
-extern char* skipto(const char*, const char*);
-extern char* skipover(const char*, const char*);
-extern char* nxtarg(char**, const char*);
 extern char _argbreak;
 extern char* getstr(const char*, char*, char*);
 extern int getstab(const char*, const char**, const char*);
@@ -148,9 +151,7 @@ extern unsigned int gethex(const char*, unsigned int, unsigned int,
 			   unsigned int);
 extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
-extern unsigned int atoo(const char*);
 extern unsigned int atoh(const char*);
-extern char *salloc(const char*);
 extern char *concat(const char*, int, ...);
 #else	/* __STDC__ */
 extern char *foldup(), *folddown();
@@ -188,7 +189,9 @@ extern long atot();
 
 /* 4.3 BSD standard library routines; taken from man(3) */
 #if defined(__STDC__)
+#if 0
 typedef int (*PFI)();
+#endif
 #if defined(c_plusplus)
 typedef int (*PFI2)(...);
 #endif /* c_plusplus */

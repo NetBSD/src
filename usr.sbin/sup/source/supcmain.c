@@ -174,6 +174,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.6  1996/12/23 19:42:17  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.5  1996/09/05 16:50:08  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -345,6 +351,7 @@
 #define SYS_rpause	(-5)
 #endif
 #endif
+#include "supextern.h"
 
 /*********************************************
  ***    G L O B A L   V A R I A B L E S    ***
@@ -367,17 +374,22 @@ int rpauseflag;				/* don't disable resource pausing */
 int xpatchflag;				/* crosspatched with remote system */
 int portdebug;				/* network debugging ports */
 
+int main __P((int, char **));
+static int checkcoll __P((TREE *, void *));
+static void doswitch __P((char *, TREE **, int *, int *));
+static char *init __P((int, char **));
+
 /*************************************
  ***    M A I N   R O U T I N E    ***
  *************************************/
 
-main (argc,argv)
+int
+main (argc, argv)
 int argc;
 char **argv;
 {
-	char *init ();
 	char *progname,*supfname;
-	int restart,sfdev,sfino,sfmtime;
+	int restart,sfdev = 0,sfino = 0, sfmtime = 0;
 	struct stat sbuf;
 	struct sigaction ign;
 
@@ -391,8 +403,9 @@ char **argv;
 	supfname = init (argc,argv);
 	restart = -1;			/* don't make restart checks */
 	if (*progname == '/' && *supfname == '/') {
-		if (stat (supfname,&sbuf) < 0)
+		if (stat (supfname,&sbuf) < 0) {
 			logerr ("Can't stat supfile %s",supfname);
+		}
 		else {
 			sfdev = sbuf.st_dev;
 			sfino = sbuf.st_ino;
@@ -437,7 +450,7 @@ char **argv;
 			logquit (1,"Restart failed");
 		}
 	}
-	while (thisC = firstC) {
+	while ((thisC = firstC) != NULL) {
 		firstC = firstC->Cnext;
 		free (thisC->Cname);
 		Tfree (&thisC->Chtree);
@@ -466,7 +479,7 @@ char **argv;
 #define Twant	Tuid
 #define Tcount	Tgid
 
-void doswitch (argp,collTp,oflagsp,aflagsp)
+static void doswitch (argp,collTp,oflagsp,aflagsp)
 char *argp;
 register TREE **collTp;
 int *oflagsp,*aflagsp;
@@ -589,7 +602,7 @@ int *oflagsp,*aflagsp;
 	}
 }
 
-char *init (argc,argv)
+static char *init (argc,argv)
 int argc;
 char **argv;
 {
@@ -603,7 +616,6 @@ char **argv;
 	register TREE *t;
 	TREE *collT;			/* collections we are interested in */
 	long timenow;			/* startup time */
-	int checkcoll ();
 	int oflags,aflags;
 	int cwant;
 #ifdef	MACH
@@ -613,7 +625,6 @@ char **argv;
 	int (*oldsigsys)();
 #endif
 #endif /* MACH */
-	char *fmttime();
 
 	sysflag = FALSE;		/* not system upgrade */
 	timeflag = FALSE;		/* don't print times */
@@ -672,7 +683,7 @@ char **argv;
 	firstC = NULL;
 	lastC = NULL;
 	bogus = FALSE;
-	while (p = fgets (buf,STRINGLENGTH,f)) {
+	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 		q = index (p,'\n');
 		if (q)  *q = '\0';
 		if (index ("#;:",*p))  continue;
@@ -698,7 +709,7 @@ char **argv;
 		}
 		c->Cflags |= oflags;
 		c->Cflags &= ~aflags;
-		if (t = Tsearch (collT,c->Cname)) {
+		if ((t = Tsearch (collT,c->Cname)) != NULL) {
 			c->Cflags |= t->Toflags;
 			c->Cflags &= ~t->Taflags;
 		}
@@ -715,7 +726,7 @@ char **argv;
 	}
 	if (bogus)  logquit (1,"Aborted due to supfile errors");
 	if (f != stdin)  (void) fclose (f);
-	if (cwant)  (void) Tprocess (collT,checkcoll);
+	if (cwant)  (void) Tprocess (collT,checkcoll, NULL);
 	Tfree (&collT);
 	if (firstC == NULL)  logquit (1,"No collections to upgrade");
 	timenow = time ((long *)NULL);
@@ -731,8 +742,10 @@ char **argv;
 	return (salloc (supfname));
 }
 
-checkcoll (t)
+static int
+checkcoll (t, dummy)
 register TREE *t;
+void *dummy;
 {
 	if (!t->Twant)  return (SCMOK);
 	if (t->Tcount == 0)

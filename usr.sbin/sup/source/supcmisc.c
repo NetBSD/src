@@ -27,6 +27,12 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmisc.c,v $
+ * Revision 1.4  1996/12/23 19:42:19  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.3  1996/09/05 16:50:10  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -73,12 +79,8 @@
  **********************************************************************
  */
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "supcdefs.h"
+#include "supextern.h"
 
 struct liststruct {		/* uid and gid lists */
 	char *Lname;		/* name */
@@ -96,20 +98,21 @@ static LIST *uidL[LISTSIZE];		/* uid and gid lists */
 static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;		/* collection list pointer */
-#if __STDC__
-int notify (char *, ...);
-#endif
+
+static int Lhash __P((char *));
+static void Linsert __P((LIST **, char *, int));
+static LIST *Llookup __P((LIST **, char *));
 
 /*************************************************
  ***    P R I N T   U P D A T E   T I M E S    ***
  *************************************************/
 
+void
 prtime ()
 {
 	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
 	long twhen;
-	int f;
 
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease)
 		(void) sprintf (relsufix,".%s",thisC->Crelease);
@@ -179,7 +182,7 @@ char *name;
 	return (((len&HASHMASK)<<HASHBITS)|(((int)c)&HASHMASK));
 }
 
-static
+static void
 Linsert (table,name,number)
 LIST **table;
 char *name;
@@ -207,7 +210,7 @@ char *name;
 	return (l);
 }
 
-ugconvert (uname,gname,uid,gid,mode)
+void ugconvert (uname,gname,uid,gid,mode)
 char *uname,*gname;
 int *uid,*gid,*mode;
 {
@@ -225,18 +228,18 @@ int *uid,*gid,*mode;
 		first = FALSE;
 	}
 	pw = NULL;
-	if (u = Llookup (uidL,uname))
+	if ((u = Llookup (uidL,uname)) != NULL)
 		*uid = u->Lnumber;
-	else if (pw = getpwnam (uname)) {
+	else if ((pw = getpwnam (uname)) != NULL) {
 		Linsert (uidL,salloc(uname),pw->pw_uid);
 		*uid = pw->pw_uid;
 	}
 	if (u || pw) {
-		if (g = Llookup (gidL,gname)) {
+		if ((g = Llookup (gidL,gname)) != NULL) {
 			*gid = g->Lnumber;
 			return;
 		}
-		if (gr = getgrnam (gname)) {
+		if ((gr = getgrnam (gname)) != NULL) {
 			Linsert (gidL,salloc(gname),gr->gr_gid);
 			*gid = gr->gr_gid;
 			return;
@@ -267,7 +270,8 @@ int *uid,*gid,*mode;
  ***    U T I L I T Y   R O U T I N E S    ***
  *********************************************/
 
-#if __STDC__
+void
+#ifdef __STDC__
 notify (char *fmt,...)		/* record error message */
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -275,18 +279,17 @@ notify (va_alist)		/* record error message */
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
 	long tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
@@ -323,6 +326,7 @@ va_dcl
 	(void) fflush (noteF);
 }
 
+void
 lockout (on)		/* lock out interrupts */
 int on;
 {
