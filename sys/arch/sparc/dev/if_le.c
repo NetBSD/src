@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.46 1997/03/23 22:54:27 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.47 1997/04/04 20:29:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -123,6 +123,7 @@ struct cfattach le_ca = {
 
 hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+hide void lehwreset __P((struct am7990_softc *));
 hide void lehwinit __P((struct am7990_softc *));
 hide void lenocarrier __P((struct am7990_softc *));
 
@@ -233,6 +234,24 @@ lemediastatus(sc, ifmr)
 		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
 }
 #endif /* SUN4M */
+
+hide void
+lehwreset(sc)
+	struct am7990_softc *sc;
+{
+#if defined(SUN4M) 
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	/*
+	 * Reset DMA channel.
+	 */
+	if (CPU_ISSUN4M && lesc->sc_dma) {
+		DMA_RESET(lesc->sc_dma);
+		lesc->sc_dma->sc_regs->en_bar = lesc->sc_laddr & 0xff000000;
+		DMA_ENINTR(lesc->sc_dma);
+	}
+#endif
+}
 
 hide void
 lehwinit(sc)
@@ -391,8 +410,7 @@ leattach(parent, self, aux)
 		if (dmachild) {
 			lesc->sc_dma = (struct dma_softc *)parent;
 			lesc->sc_dma->sc_le = lesc;
-			DMA_RESET(lesc->sc_dma);
-			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+			lesc->sc_laddr = laddr;
 		}
 #endif
 	}
@@ -438,6 +456,7 @@ leattach(parent, self, aux)
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = lehwinit;
 	sc->sc_nocarrier = lenocarrier;
+	sc->sc_hwreset = lehwreset;
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -460,7 +479,5 @@ leattach(parent, self, aux)
 	intr_establish(pri, &lesc->sc_ih);
 
 	/* now initialize DMA */
-	if (lesc->sc_dma) {
-		DMA_ENINTR(lesc->sc_dma);
-	}
+	lehwreset(sc);
 }
