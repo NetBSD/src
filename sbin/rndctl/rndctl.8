@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.12 2002/02/08 01:30:46 ross Exp $
+.\"	$NetBSD: rndctl.8,v 1.13 2002/10/01 14:39:51 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 12, 1997
+.Dd October 1, 2002
 .Dt RNDCTL 8
 .Os
 .Sh NAME
@@ -34,13 +34,13 @@
 .Nd in-kernel random number generator management tool
 .Sh SYNOPSIS
 .Nm
-.Fl CEce
-.Op Fl t Ar devtype
+.Fl CcEe
 .Op Fl d Ar devname
+.Op Fl t Ar devtype
 .Nm ""
 .Fl ls
-.Op Fl t Ar devtype
 .Op Fl d Ar devname
+.Op Fl t Ar devtype
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,7 +49,7 @@ program displays statistics on the current state of the
 pseudo-driver, and allows the administrator to control which sources
 are allowed to contribute to the randomness pool maintained by
 .Xr rnd 4 ,
-as well as whether a given source is counts as strongly random.
+as well as whether a given source counts as strongly random.
 .Pp
 The following options are available:
 .Bl -tag -width 123456
@@ -59,6 +59,12 @@ device name or device type.
 .It Fl c
 Enable collection of timing information for the given
 device name of device type.
+.It Fl d
+Only the device named
+.Ar devname
+is altered or displayed.
+See also
+.Fl t .
 .It Fl E
 Disable entropy estimation from the collected timing information for
 the given device name or device type.  If collection is still enabled,
@@ -67,8 +73,6 @@ entropy pool, but no entropy is assumed to be present.
 .It Fl e
 Enable entropy estimation using the collected timing information
 for the given device name or device type.
-.It Fl s
-Display statistics on the current state of the random collection pool.
 .It Fl l
 List all sources, or, if the
 .Fl t
@@ -79,21 +83,23 @@ flags are specified, only those specified by the
 or
 .Ar devname
 specified.
+.It Fl s
+Display statistics on the current state of the random collection pool.
 .It Fl t
 All devices of type
 .Ar devtype
 are altered or displayed.
-.It Fl d
-Only the device named
-.Ar devname
-is altered or displayed.
+See also
+.Fl d .
 .El
 .Sh FILES
 .Bl -tag -width /dev/urandomx -compact
 .It Pa /dev/random
-Returns ``good'' values only
+Returns
+.Dq good
+values only.
 .It Pa /dev/urandom
-Always returns data, degenerates to a pseudo-random generator
+Always returns data, degenerates to a pseudo-random generator.
 .El
 .Sh SEE ALSO
 .Xr rnd 4 ,
@@ -106,7 +112,9 @@ program was first made available in
 .Sh AUTHORS
 The
 .Nm
-program was written by Michael Graff \*[Lt]explorer@flame.org\*[Gt].
+program was written by
+.An Michael Graff 
+.Aq explorer@flame.org .
 .Sh BUGS
 Turning on entropy estimation from unsafe or predictable sources will
 weaken system security, while turning on entropy collection from such
