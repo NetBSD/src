@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.11 2003/02/25 10:14:29 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.12 2003/02/25 10:33:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.11 2003/02/25 10:14:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.12 2003/02/25 10:33:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,8 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	struct smb_cred scred;
 	struct proc *p;
 	int error = 0;
+	int extended = 0;
+	size_t resid = uiop->uio_resid;
 
 	/* vn types other than VREG unsupported */
 	KASSERT(vp->v_type == VREG);
@@ -282,8 +284,12 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		if (uiop->uio_offset > np->n_size) {
 			np->n_size = uiop->uio_offset;
 			uvm_vnp_setsize(vp, np->n_size);
+			extended = 1;
 		}
+	
 	}
+	if (resid > uiop->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	return error;
 }
 
