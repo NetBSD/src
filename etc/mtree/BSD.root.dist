@@ -1,5 +1,5 @@
 #	fs: /
-#	$Id: BSD.root.dist,v 1.4 1994/01/08 01:01:14 jtc Exp $
+#	$Id: BSD.root.dist,v 1.5 1994/01/10 17:26:28 mycroft Exp $
 
 # top-level files are owned by root.wheel
 # (else too easy to get root by compromising these)
@@ -27,7 +27,7 @@ etc	type=dir
 	master.passwd mode=0600
 	spwd.db	mode=0600
 	pwd.db	mode=0644
-	gname	mode=0644
+	group	mode=0644
 	crontab	mode=0644
 	dumpdates	gname=operator mode=0664
 
