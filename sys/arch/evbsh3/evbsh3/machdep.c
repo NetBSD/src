@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2002/02/28 16:54:29 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2002/03/03 14:28:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,6 @@
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
@@ -130,12 +129,6 @@
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
 
-#ifdef sh3_debug
-int cpu_debug_mode = 1;
-#else
-int cpu_debug_mode = 0;
-#endif
-
 char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
@@ -147,11 +140,6 @@ struct user *proc0paddr;
 
 extern int boothowto;
 extern paddr_t avail_start, avail_end;
-
-#ifdef	SYSCALL_DEBUG
-#define	SCDEBUG_ALL 0x0004
-extern int	scdebug;
-#endif
 
 #define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
@@ -192,10 +180,6 @@ cpu_startup()
 	/* Safe for i/o port allocation to use malloc now. */
 	ioport_malloc_safe = 1;
 
-#ifdef SYSCALL_DEBUG
-	scdebug |= SCDEBUG_ALL;
-#endif
-
 #ifdef FORCE_RB_SINGLE
 	boothowto |= RB_SINGLE;
 #endif
@@ -217,8 +201,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
-	struct btinfo_bootpath *bibp;
-	struct trapframe *tf;
 	char *osimage;
 
 	/* all sysctl names at this level are terminal */
@@ -233,28 +215,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
-
-	case CPU_NKPDE:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if (!bibp)
-			return (ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-
-	case CPU_SETPRIVPROC:
-		if (newp == NULL)
-			return (0);
-
-		/* set current process to priviledged process */
-		tf = p->p_md.md_regs;
-		tf->tf_ssr |= PSL_MD;
-		return (0);
-
-	case CPU_DEBUGMODE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &cpu_debug_mode));
 
 	case CPU_LOADANDRESET:
 		if (newp != NULL) {

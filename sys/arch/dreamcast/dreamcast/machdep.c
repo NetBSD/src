@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2002/03/02 22:26:25 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2002/03/03 14:28:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,94 +83,47 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
+
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/kcore.h>
+#include <sys/msgbuf.h>
+#include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #include <sh3/dev/scifvar.h>
 #endif
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <dev/cons.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
-
-#include <machine/cpu.h>
-#include <machine/bootinfo.h>
-#include <sh3/cpufunc.h>
+#include <sh3/cpu.h>
 #include <sh3/mmu.h>
-
-#include <sys/termios.h>
-
+#include <dev/cons.h>
+#include <machine/bootinfo.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
 
-#ifdef sh3_debug
-int cpu_debug_mode = 1;
-#else
-int cpu_debug_mode = 0;
-#endif
-
 char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
-int dumpmem_low;
-int dumpmem_high;
-vaddr_t atdevbase;	/* location of start of iomem in virtual */
 paddr_t msgbuf_paddr;
 struct user *proc0paddr;
 
-extern int boothowto;
 extern paddr_t avail_start, avail_end;
-
-#ifdef	SYSCALL_DEBUG
-#define	SCDEBUG_ALL 0x0004
-extern int	scdebug;
-#endif
+extern int nkpde;
+extern char start[], _etext[], _edata[], _end[];
 
 #define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
-
-/*
- * Extent maps to manage I/O and ISA memory hole space.  Allocate
- * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
- * will indicate that it's safe to use malloc() to dynamically allocate
- * region descriptors.
- *
- * N.B. At least two regions are _always_ allocated from the iomem
- * extent map; (0 -> ISA hole) and (end of ISA hole -> end of RAM).
- *
- * The extent maps are not static!  Machine-dependent ISA and EISA
- * routines need access to them for bus address space allocation.
- */
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct	extent *ioport_ex;
-struct	extent *iomem_ex;
-static	int ioport_malloc_safe;
 
 void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
@@ -188,13 +141,6 @@ cpu_startup()
 	sh3_startup();
 	printf("%s\n", cpu_model);
 
-	/* Safe for i/o port allocation to use malloc now. */
-	ioport_malloc_safe = 1;
-
-#ifdef SYSCALL_DEBUG
-	scdebug |= SCDEBUG_ALL;
-#endif
-
 #ifdef FORCE_RB_SINGLE
 	boothowto |= RB_SINGLE;
 #endif
@@ -204,67 +150,29 @@ cpu_startup()
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
-	dev_t consdev;
-	struct btinfo_bootpath *bibp;
-	struct trapframe *tf;
-
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-
-	case CPU_NKPDE:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if (!bibp)
-			return (ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-
-	case CPU_SETPRIVPROC:
-		if (newp == NULL)
-			return (0);
-
-		/* set current process to priviledged process */
-		tf = p->p_md.md_regs;
-		tf->tf_ssr |= PSL_MD;
-		return (0);
-
-	case CPU_DEBUGMODE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &cpu_debug_mode));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
+		    sizeof cn_tab->cn_dev));
 	default:
-		return (EOPNOTSUPP);
 	}
-	/* NOTREACHED */
-}
 
-int waittime = -1;
-struct pcb dumppcb;
+	return (EOPNOTSUPP);
+}
 
 void
 cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
+	static int waittime = -1;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -305,14 +213,6 @@ haltsys:
 		;
 	/*NOTREACHED*/
 }
-
-/*
- * Initialize segments and descriptor tables
- */
-#define VADDRSTART	VM_MIN_KERNEL_ADDRESS
-
-extern int nkpde;
-extern char start[], _etext[], _edata[], _end[];
 
 void
 dreamcast_startup()
@@ -362,7 +262,7 @@ dreamcast_startup()
 		0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
 	pte += NBPG;
 	for (x = 0; x < nkpde; x++) {
-		pagedir[(VADDRSTART >> PDSHIFT) + x] = pte;
+		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + x] = pte;
 		pte += NBPG;
 	}
 
@@ -392,28 +292,10 @@ dreamcast_startup()
 	/* avail_start is first available physical memory address */
 	avail_start = avail + NBPG + USPACE + NBPG + NBPG * nkpde;
 
-	/* atdevbase is first available logical memory address */
-	atdevbase = VADDRSTART;
-
 	proc0.p_addr = proc0paddr; /* page dir address */
 
 	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
 	curpcb = &proc0.p_addr->u_pcb;
-
-	/*
-	 * Initialize the I/O port and I/O mem extent maps.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, the two
-	 * extents of RAM are allocated from the map (0 -> ISA hole
-	 * and end of ISA hole -> end of RAM).
-	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
 
 	consinit();
 
@@ -429,56 +311,27 @@ dreamcast_startup()
 
 	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
 
-	printf("initSH3\r\n");
-
 	/*
 	 * Calculate check sum
 	 */
-    {
-	u_short *p, sum;
-	int size;
-
-	size = _etext - start;
-	p = (u_short *)start;
-	sum = 0;
-	size >>= 1;
-	while (size--)
-		sum += *p++;
-	printf("Check Sum = 0x%x\r\n", sum);
-    }
-	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
-	 * page rounded just to make sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, IOM_RAM_BEGIN,
-				(IOM_RAM_END-IOM_RAM_BEGIN) + 1,
-				EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE RAM MEMORY FROM IOMEM EXTENT MAP!\n");
+	{
+		u_short *p, sum;
+		int size;
+		
+		size = _etext - start;
+		p = (u_short *)start;
+		sum = 0;
+		size >>= 1;
+		while (size--)
+			sum += *p++;
+		printf("Check Sum = 0x%x\r\n", sum);
 	}
 
 	/* number of pages of physmem addr space */
 	physmem = btoc(IOM_RAM_END - IOM_RAM_BEGIN +1);
-#ifdef	TODO
-	dumpmem = physmem;
-#endif
-
-	/*
-	 * Initialize for pmap_free_pages and pmap_next_page.
-	 * These guys should be page-aligned.
-	 */
-	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("warning: too little memory available; "
-		       "have %d bytes, want %d bytes\n"
-		       "running in degraded mode\n"
-		       "press a key to confirm\n\n",
-		       ctob(physmem), 2*1024*1024);
-		cngetc();
-	}
 
 	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(atdevbase);
+	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -542,6 +395,6 @@ consinit()
 	cninit();
 
 #ifdef DDB
-	ddb_init(0, NULL, NULL);	/* XXX XXX XXX */
+	ddb_init(0, NULL, NULL);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2002/02/28 16:54:31 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2002/03/03 14:28:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -121,12 +121,6 @@
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
 
-#ifdef sh3_debug
-int cpu_debug_mode = 1;
-#else
-int cpu_debug_mode = 0;
-#endif
-
 char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
@@ -198,8 +192,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
-	struct btinfo_bootpath *bibp;
-	struct trapframe *tf;
 	char *osimage;
 
 	/* all sysctl names at this level are terminal */
@@ -214,28 +206,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
-
-	case CPU_NKPDE:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if (!bibp)
-			return(ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-
-	case CPU_SETPRIVPROC:
-		if (newp == NULL)
-			return (0);
-
-		/* set current process to priviledged process */
-		tf = p->p_md.md_regs;
-		tf->tf_ssr |= PSL_MD;
-		return (0);
-
-	case CPU_DEBUGMODE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &cpu_debug_mode));
 
 	case CPU_LOADANDRESET:
 		if (newp != NULL) {
