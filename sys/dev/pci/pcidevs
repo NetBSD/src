@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.295 2001/01/26 10:03:47 rh Exp $
+$NetBSD: pcidevs,v 1.296 2001/01/31 07:24:32 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -483,6 +483,7 @@ vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
 vendor AURAVISION	0x11d1 	Auravision
+vendor SEGA		0x11db	SEGA Enterprises
 vendor ZORAN		0x11de	Zoran Corporation
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
@@ -1508,6 +1509,9 @@ product	S3 SONICVIBES	0xca00	SonicVibes
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
+
+/* SEGA Enterprises products */
+product	SEGA	BROADBAND	0x1234	Broadband Adapter
 
 /* ServerWorks products */
 product	SERVERWORKS ROSB4	0x0200	ROSB4 SouthBridge
