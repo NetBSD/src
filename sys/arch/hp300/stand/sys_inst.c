@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_inst.c,v 1.2 1995/10/04 06:54:51 thorpej Exp $	*/
+/*	$NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -101,6 +101,7 @@ main()
 
 	printf("\n>> NetBSD INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
+	printf(">> $NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
