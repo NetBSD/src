@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780reg.h,v 1.1 2003/01/20 01:20:51 soren Exp $ */
+/* $NetBSD: hd44780reg.h,v 1.2 2005/01/08 20:19:08 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -39,9 +39,9 @@
 #define HD_ROW1_ADDR	0x00
 #define HD_ROW2_ADDR	0x40
 
-#define TIMEOUT_LONG	5000
-#define TIMEOUT_SHORT	100
-#define TIMEOUT_NORMAL	200
+#define HD_TIMEOUT_LONG	5000
+#define HD_TIMEOUT_SHORT	100
+#define HD_TIMEOUT_NORMAL	200
 
 #define	BUSY_FLAG	0x80
 
