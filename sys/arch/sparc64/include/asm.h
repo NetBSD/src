@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2000/06/23 12:18:50 kleink Exp $ */
+/*	$NetBSD: asm.h,v 1.11 2000/07/14 20:59:07 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -72,7 +72,7 @@
 	3: rd %pc, tmp; \
 	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
-	add tmp,%o7,dest
+	add dest,tmp,dest
 
 /*
  * PICCY_SET() does the equivalent of a `set var, %dest' instruction in
@@ -95,7 +95,7 @@
 #ifdef GPROF
 #define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
-	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
+	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
 #define _PROF_PROLOGUE
