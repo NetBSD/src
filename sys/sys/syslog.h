@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.16 1997/06/29 18:50:54 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.17 1997/06/29 18:55:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -85,7 +85,7 @@ CODE prioritynames[] = {
 	{ "panic", 	LOG_EMERG },		/* DEPRECATED */
 	{ "warn",	LOG_WARNING },		/* DEPRECATED */
 	{ "warning",	LOG_WARNING },
-	{ NULL,		-1,
+	{ NULL,		-1 }
 };
 #endif
 
@@ -142,7 +142,7 @@ CODE facilitynames[] = {
 	{ "local5",	LOG_LOCAL5 },
 	{ "local6",	LOG_LOCAL6 },
 	{ "local7",	LOG_LOCAL7 },
-	{ NULL,		-1 },
+	{ NULL,		-1 }
 };
 #endif
 
