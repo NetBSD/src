@@ -22,7 +22,7 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.11 1994/01/26 03:18:18 cgd Exp $
+#	$Id: Makefile,v 1.12 1994/01/28 08:21:24 cgd Exp $
 #
 
 all: biosboot bootbios
@@ -35,7 +35,7 @@ LIBS= -lc
 INC= -I${.CURDIR}/../..
 
 # start.o should be first
-OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
+OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
 .SUFFIXES: .S .c .o
 
