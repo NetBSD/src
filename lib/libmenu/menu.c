@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.7 2000/05/05 11:28:56 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.8 2000/05/07 12:14:44 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -558,6 +558,8 @@ set_top_row(MENU *param_menu, int row)
 	if (menu->in_init == 1)
 		return E_BAD_STATE;
 
+	cur_item = 0;
+	
 	for (i = 0; i < menu->item_count; i++) {
 		  /* search for first item that matches row - this will be
 		     the current item. */
