@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.7 2002/02/17 19:49:58 thorpej Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.8 2002/02/19 20:38:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -130,7 +130,7 @@ void
 ex_reset()
 {
 	CSR_WRITE_2(ELINK_COMMAND, GLOBAL_RESET);
-	delay(1000);
+	delay(100000);
 	ex_waitcmd();
 }
 
