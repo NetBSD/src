@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.58 2001/12/12 15:38:27 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.59 2001/12/24 21:36:15 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -201,6 +201,7 @@ const struct usb_devno *usb_match_device(const struct usb_devno *tbl,
 	u_int nentries, u_int sz, u_int16_t vendor, u_int16_t product);
 #define usb_lookup(tbl, vendor, product) \
 	usb_match_device((const struct usb_devno *)(tbl), sizeof (tbl) / sizeof ((tbl)[0]), sizeof ((tbl)[0]), (vendor), (product))
+#define	USB_PRODUCT_ANY		0xffff
 
 /* NetBSD attachment information */
 
