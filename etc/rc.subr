@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.57 2003/06/27 04:06:01 lukem Exp $
+# $NetBSD: rc.subr,v 1.58 2003/06/27 05:01:21 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,12 @@
 # rc.subr
 #	functions used by various rc scripts
 #
+
+if ${_rc_subr_loaded:-false}; then
+	return
+else
+	_rc_subr_loaded=true
+fi
 
 #
 #	functions
