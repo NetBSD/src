@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.23.2.3 1999/06/18 16:57:15 perry Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.23.2.4 1999/12/20 13:31:41 he Exp $	*/
 
 /*
  *
@@ -949,7 +949,8 @@ vaddr_t kva_start;
     uvm_page_physload(atop(avail_start), atop(hole_start),
 		      atop(avail_start), atop(hole_start), first16q);
 
-  if (first16q == VM_FREELIST_FIRST16) {
+  if (first16q != VM_FREELIST_DEFAULT &&
+      hole_end < 16 * 1024 * 1024) {
     uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
 		      atop(hole_end), atop(16 * 1024 * 1024), first16q);
     uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
@@ -957,7 +958,7 @@ vaddr_t kva_start;
 		      VM_FREELIST_DEFAULT);
   } else {
     uvm_page_physload(atop(hole_end), atop(avail_end), 
-		      atop(hole_end), atop(avail_end), first16q);
+		      atop(hole_end), atop(avail_end), VM_FREELIST_DEFAULT);
   }
   
   /*
