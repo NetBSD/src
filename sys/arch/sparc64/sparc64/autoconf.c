@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2003/05/17 01:38:39 nakayama Exp $ */
+/*	$NetBSD: autoconf.c,v 1.75 2003/05/18 22:11:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -215,34 +215,21 @@ bootstrap(nctx)
 #if (NKSYMS || defined(DDB) || defined(LKM))
 	extern void *ssym, *esym;
 #endif
-#ifndef	__arch64__
+#if !defined(__arch64__) && defined(DDB)
 	/* Assembly glue for the PROM */
 	extern void OF_sym2val32 __P((void *));
 	extern void OF_val2sym32 __P((void *));
 #endif
 
-	/* 
-	 * Initialize ddb first and register OBP callbacks.
-	 * We can do this because ksyms_init() does not allocate anything,
-	 * just initialze some pointers to important things
-	 * like the symtab.
-	 *
-	 * By doing this first and installing the OBP callbacks
-	 * we get to do symbolic debugging of pmap_bootstrap().
-	 */
-#ifdef KGDB
-/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
-	zs_kgdb_init();		/* XXX */
-#endif
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
+#ifdef DDB
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
 #else
-#if 1
 	OF_set_symbol_lookup(OF_sym2val32, OF_val2sym32);
 #endif
 #endif
