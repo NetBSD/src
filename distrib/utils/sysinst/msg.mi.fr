@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1 1997/11/27 10:10:09 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.2 1997/12/04 13:24:32 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -333,7 +333,7 @@ message dev
 
 message nfssource
 {Donnez le nom du serveur nfs et du répertoire où ce trouvent les distributions.
-Rappelez vous que le répertoire doit contenir les fichiers tar.gz et qu'il doit
+Rappelez vous que le répertoire doit contenir les fichiers .tgz et qu'il doit
 être "montable" par nfs.
 
 serveur:    %s
@@ -346,7 +346,7 @@ message nfsbadmount
 message cdromsource
 {Donnez le nom de device du CDROM a utiliser ainsi que le répertoire du CDROM
 contenant les distributions. Rappelez vous que le répertoire doit contenir les
-fichiers tar.gz .
+fichiers .tgz .
 
 device:    %s
 répertoire: %s
@@ -356,7 +356,7 @@ répertoire: %s
 message localfssource
 {Donnez le nom du device local a utiliser ainsi que le répertoire contenant les
 distributions. Rappelez vous que le répertoire doit contenir les fichiers 
-tar.gz .
+.tgz .
 
 device:               %s
 système de fichiers : %s
