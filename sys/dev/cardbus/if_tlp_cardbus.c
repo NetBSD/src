@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.13 2000/02/04 13:43:56 augustss Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.14 2000/03/01 20:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -460,11 +460,10 @@ tlp_cardbus_detach(self, flags)
 		/*
 		 * release bus space and close window
 		 */
-		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE) {
+		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE)
 			reg = TULIP_PCI_MMBA;
-		} else {
+		else
 			reg = TULIP_PCI_IOBA;
-		}
 
 		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, 
 		    csc->sc_mapsize);
