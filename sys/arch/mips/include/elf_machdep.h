@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 1997/03/03 00:19:29 jonathan Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4 1998/03/25 04:06:50 mhitch Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
 		case Elf_em_mips:					\
@@ -61,6 +61,25 @@
 #define R_MIPS_max		37
 #define R_TYPE(name)		__CONCAT(R_MIPS_,name)
 
+
+/* mips dynamic tags */
+
+#define DT_MIPS_RLD_VERSION	0x70000001
+#define DT_MIPS_TIME_STAMP	0x70000002
+#define DT_MIPS_ICHECKSUM	0x70000003
+#define DT_MIPS_IVERSION	0x70000004
+#define DT_MIPS_FLAGS		0x70000005
+#define DT_MIPS_BASE_ADDRESS	0x70000006
+#define DT_MIPS_CONFLICT	0x70000008
+#define DT_MIPS_LIBLIST		0x70000009
+#define DT_MIPS_CONFLICTNO	0x7000000b
+#define	DT_MIPS_LOCAL_GOTNO	0x7000000a	/* number of local got ents */
+#define DT_MIPS_LIBLISTNO	0x70000010
+#define	DT_MIPS_SYMTABNO	0x70000011	/* number of .dynsym entries */
+#define DT_MIPS_UNREFEXTNO	0x70000012
+#define	DT_MIPS_GOTSYM		0x70000013	/* first dynamic sym in got */
+#define DT_MIPS_HIPAGENO	0x70000014
+#define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
 
 /*
  * Tell the kernel ELF exec code not to try relocating the interpreter
