@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.45 1994/12/14 19:36:15 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.46 1994/12/15 19:46:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -246,6 +246,7 @@ update:
 		checkdirs(vp);
 		VOP_UNLOCK(vp);
 		vfs_unlock(mp);
+		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
 		error = VFS_START(mp, 0, p);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
