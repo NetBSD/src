@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.87 2003/09/08 07:00:10 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.88 2003/09/23 06:19:46 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.87 2003/09/08 07:00:10 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.88 2003/09/23 06:19:46 grant Exp $");
 #endif
 #endif
 
@@ -640,7 +640,7 @@ ignore_replace_depends_check:
 		if (Verbose)
 			printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
 		if (!Fake) {
-			if (vsystem("%s/mtree -U -f %s -d -e -p %s", BINDIR, MTREE_FNAME, p ? p->name : "/"))
+			if (vsystem("%s -U -f %s -d -e -p %s", MTREE_CMD, MTREE_FNAME, p ? p->name : "/"))
 				warnx("mtree returned a non-zero status - continuing");
 		}
 		unlink(MTREE_FNAME); /* remove this line to tar up pkg later  - HF */
