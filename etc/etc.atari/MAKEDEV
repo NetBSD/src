@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.55 2002/03/16 17:03:30 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.56 2002/06/12 19:36:31 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -68,6 +68,7 @@
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
+#	ttyE*	wscons
 #
 # Pointing devices:
 #	mouse*	Atari mice
@@ -156,6 +157,7 @@ all)
 	makedev audio audio0 audio1 audio2 audio3
 	makedev isdns
 	makedev clockctl
+	makedev wscons
 	;;
 
 floppy)
@@ -373,6 +375,17 @@ cd*)
 		echo bad unit for cd in: $i
 		;;
 	esac
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	;;
+
+ttyE*)
+	chr=41; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	chown root.wheel ttyE$unit
 	;;
 
 ttye*)
