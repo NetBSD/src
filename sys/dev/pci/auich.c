@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.15 2002/03/21 09:17:20 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.16 2002/03/23 17:17:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.15 2002/03/21 09:17:20 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.16 2002/03/23 17:17:11 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,13 +391,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	auich_read_codec(sc, AC97_REG_EXTENDED_ID, &ext_id);
-        if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
+	if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
 		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &ext_status);
-        	if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
-                	ext_status |= AC97_ENAB_VRA;
-        	if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
-                	ext_status |= AC97_ENAB_MICVRA;
-        	auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
+		if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
+			ext_status |= AC97_ENAB_VRA;
+		if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
+			ext_status |= AC97_ENAB_MICVRA;
+		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
 		sc->sc_fixed_rate = 0;
 	} else {
 		sc->sc_fixed_rate = 48000;
@@ -593,7 +593,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			continue;
 
 		inout = mode == AUMODE_PLAY ? ICH_PM_PCMO : ICH_PM_PCMI;
-		
+
 		if ((p->sample_rate !=  8000) &&
 		    (p->sample_rate != 11025) &&
 		    (p->sample_rate != 16000) &&
