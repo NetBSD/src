@@ -42,8 +42,8 @@
 .Fd #include <signal.h>
 .Bd -literal
 struct sigaltstack {
-	caddr_t ss_sp;
-	long	ss_size;
+	char   *ss_sp;
+	int	ss_size;
 	int     ss_flags;
 };
 .Ed
