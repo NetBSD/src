@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.21 2000/10/27 22:49:21 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.22 2000/10/28 13:30:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,9 @@ pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+#if NRND > 0
 	struct pchb_softc *sc = (void *) self;
+#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
