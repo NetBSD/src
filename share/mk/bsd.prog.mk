@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.28 1993/08/15 21:53:05 mycroft Exp $
+#	$Id: bsd.prog.mk,v 1.29 1993/08/17 17:00:39 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -119,7 +119,7 @@ realinstall:
 .endif
 .endif
 
-install: maninstall
+install: maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
