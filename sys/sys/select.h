@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.18 2003/08/07 16:34:13 agc Exp $	*/
+/*	$NetBSD: select.h,v 1.19 2005/02/25 19:56:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,8 +48,14 @@ struct selinfo {
 };
 
 #ifdef _KERNEL
-struct proc;
+#include <sys/signal.h>			/* for sigset_t */
 
+struct lwp;
+struct proc;
+struct timeval;
+
+int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
+	    fd_set *, struct timeval *, sigset_t *);
 void	selrecord(struct proc *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 
