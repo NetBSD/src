@@ -1,5 +1,72 @@
-.\"	$NetBSD: prep,v 1.3 2000/10/29 14:08:08 lukem Exp $
+.\"	$NetBSD: prep,v 1.4 2002/05/03 03:59:55 mbw Exp $
 .
-No preparation is necessary, since the
+.Ss2 Get to the ROM Monitor prompt
+.
+After the system performs its power-on self test, and while it tries to
+boot an operating system, press the 
+.Key COMMAND-`
+keys (the backquote is above 7 on the keypad on the right of the keyboard).
+You should see a prompt like this:
+.(disp
+                        NeXT ROM Monitor 2.5 (v66)
+
+CPU MC68040 25 MHz, memory 100 nS
+Backplane slot #0
+Ethernet address:  0:0:f:0:fb:90
+Memory size 40 MB
+NeXT\*>
+.disp)
+.Pp
+Write down the ethernet address.  You will need this later to configure
+the netboot server for your 
 .Nx*M
-sets must be installed on a server.
+system.
+.
+.Ss2 Change the configuration parameters to netboot
+.
+Press the
+.Key p
+key to modify the configuration parameters.  You will need to change the
+.Li "boot command"
+to 
+.Li "en()netbsd"
+which is to boot from the 
+.Li "en()"
+ethernet device the kernel named
+.Li netbsd .
+You should wite down what the original 
+.Li "boot command"
+was in case you wish to boot 
+.Tn NEXTSTEP
+in the future.  It will probably be
+.Li "sd()" .
+While modifying the parameters, you may wish to set the system to use
+.Li "verbose test mode"
+which will print detailed messages while it is attempting to load the
+kernel, as opposed to the normal graphic of a network cable.  You
+should not set the
+.Li "extended diagnostics"
+as the system will try to boot a diagnostic kernel.  Here is an
+example configuration session:
+.(disp
+.No "NeXT\*>" Ic p
+.No "boot command: sd()?" Ic "en()netbsd"
+.No "DRAM tests:  yes?" Ic "yes"
+.No "perform power-on system test:  yes?" Ic "yes"
+.No "        sound out tests:  yes?" Ic "yes"
+.No "        SCSI tests:  yes?" Ic "yes"
+.No "        loop until keypress:  no?" Ic "no"
+.No "        verbose test mode:  no?" Ic "yes"
+.No "boot extended diagnostics:  no?" Ic "no"
+.No "serial port A is alternate console:  no?" Ic "yes"
+.No "allow any ROM command even if password protected:  no?" Ic "no"
+.No "allow boot from any device even if password protected:  no?" Ic "no"
+.No "allow optical drive #0 eject even if password protected:  yes?" Ic "yes"
+.No "enable parity cehcking if parity memory is present:  no?" Ic "no"
+.disp)
+.Pp
+Now, whenever you reset or power on your system, it will attempt to
+netboot.  From the ROM Monitor prompt, you can simply type
+.Key b
+to netboot.  You can also press the power key (above the arrows) to turn
+off the system.
