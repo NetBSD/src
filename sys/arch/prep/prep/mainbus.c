@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2002/02/24 11:22:00 kleink Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2002/02/24 13:19:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,6 +44,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
+#include <machine/platform.h>
+
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -88,8 +90,11 @@ mainbus_attach(parent, self, aux)
 {
 	union mainbus_attach_args mba;
 	struct confargs ca;
+#if NPCI > 0
+	static struct prep_pci_chipset pc;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
+#endif
 #endif
 
 	mainbus_found = 1;
@@ -107,13 +112,15 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
+	(*platform->pci_get_chipset_tag)(&pc);
+
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
+	pci_configure_bus(&pc, ioext, memext, NULL, 0, CACHELINESIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
@@ -123,6 +130,7 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+	mba.mba_pba.pba_pc = &pc;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &mba.mba_pba, mainbus_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6050.c,v 1.1 2001/06/20 14:35:25 nonaka Exp $	*/
+/*	$NetBSD: ibm_6050.c,v 1.2 2002/02/24 13:19:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ static void ext_intr_ibm_6050(void);
 struct platform platform_ibm_6050 = {
 	"IBM PPS Model 6050/6070 (E)",		/* model */
 	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
 	pci_intr_fixup_ibm_6050,		/* pci_intr_fixup */
 	ext_intr_ibm_6050,			/* ext_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */

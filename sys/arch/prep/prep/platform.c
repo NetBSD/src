@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.2 2001/08/26 02:47:35 matt Exp $	*/
+/*	$NetBSD: platform.c,v 1.3 2002/02/24 13:19:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,17 +39,20 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <machine/intr.h>
 #include <machine/platform.h>
 #include <machine/residual.h>
 
 static struct platform platform_unknown = {
-	NULL,			/* model */
-	platform_generic_match,	/* match */
-	pci_intr_nofixup,	/* pci_intr_fixup */
-	ext_intr,		/* ext_intr */
-	cpu_setup_unknown,	/* cpu_setup */
-	reset_unknown,		/* reset */
+	NULL,					/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
+	pci_intr_nofixup,			/* pci_intr_fixup */
+	ext_intr,				/* ext_intr */
+	cpu_setup_unknown,			/* cpu_setup */
+	reset_unknown,				/* reset */
 };
 
 static struct plattab plattab_unknown = {

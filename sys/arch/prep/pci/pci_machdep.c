@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
+#include <sys/extent.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -53,21 +54,11 @@
 #include <machine/platform.h>
 
 #include <dev/isa/isavar.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
-#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
-
-#define	o2i(off)	((off)/sizeof(pcireg_t))
-
-#ifdef DEBUG
-#define	DPRF(x)	printf x
-#else
-#define	DPRF(x)
-#endif
+#include <dev/pci/pciconf.h>
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -90,16 +81,8 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
-{
-
-	/* Nothing to do. */
-}
-
 int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+prep_pci_bus_maxdevs(void *v, int busno)
 {
 
 	/*
@@ -109,54 +92,9 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	return (32);
 }
 
-pcitag_t
-pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
-{
-	pcitag_t tag;
-
-	if (bus >= 256 || device >= 32 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	tag = PCI_MODE1_ENABLE |
-		    (bus << 16) | (device << 11) | (function << 8);
-	return tag;
-}
-
-void
-pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
-	return;
-}
-
-pcireg_t
-pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	pcireg_t data;
-
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	data = in32rb(PCI_MODE1_DATA_REG);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
-	return data;
-}
-
-void
-pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
-{
-
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	out32rb(PCI_MODE1_DATA_REG, data);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
-}
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
@@ -208,7 +146,7 @@ bad:
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+prep_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
@@ -221,7 +159,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 }
 
 const struct evcnt *
-pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+prep_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -229,7 +167,7 @@ pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 }
 
 void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+prep_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
@@ -240,16 +178,31 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 }
 
 void
-pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
+prep_pci_intr_disestablish(void *v, void *cookie)
 {
 
 	isa_intr_disestablish(NULL, cookie);
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
+prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 
 	(*platform->pci_intr_fixup)(bus, dev, iline);
+}
+
+int
+prep_pci_conf_hook(void *v, int bus, int dev, int func, int id)
+{
+
+	/*
+	 * The P9100 board found in some IBM machines cannot be
+	 * over-configured.
+	 */
+	if (PCI_VENDOR(id) == PCI_VENDOR_WEITEK &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_WEITEK_P9100)
+		return 0;
+
+	return (PCI_CONF_ALL & ~PCI_CONF_MAP_ROM);
 }
