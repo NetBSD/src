@@ -1,3 +1,5 @@
+/*	$NetBSD: ifname.c,v 1.3 1999/07/04 00:43:43 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

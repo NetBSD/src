@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.17 1999/03/22 19:44:54 garbled Exp $
+.\"	$NetBSD: rcmd.3,v 1.18 1999/07/04 00:43:44 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 .Sh NAME
 .Nm rcmd ,
 .Nm rresvport ,
+.Nm rresvport_af ,
 .Nm iruserok ,
 .Nm ruserok ,
 .Nm orcmd
@@ -53,6 +54,8 @@
 .Fn orcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
 .Ft int
 .Fn rresvport "int *port"
+.Ft int
+.Fn rresvport_af "int *port" "int family"
 .Ft int
 .Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
 .Ft int
@@ -83,13 +86,24 @@ function
 returns a descriptor to a socket
 with an address in the privileged port space.
 The
+.Fn rresvport_af
+function is similar to
+.Fn rresvport ,
+but you can explicitly specify the address family to use.
+Calling
+.Fn rresvport_af
+with
+.Dv AF_INET
+has the same effect as
+.Fn rresvport .
+The
 .Fn iruserok
 and
 .Fn ruserok
 functions are used by servers
 to authenticate clients requesting service with
 .Fn rcmd .
-All five functions are present in the same file and are used
+All six functions are present in the same file and are used
 by the
 .Xr rshd 8
 server (among others).
@@ -145,7 +159,9 @@ The protocol is described in detail in
 .Pp
 The
 .Fn rresvport
-function is used to obtain a socket with a privileged
+and
+.Fn rresvport_af
+functions are used to obtain a socket with a privileged
 address bound to it.  This socket is suitable for use
 by 
 .Fn rcmd
@@ -200,9 +216,11 @@ It returns \-1 on error and prints a diagnostic message on the standard error.
 .Pp
 The
 .Fn rresvport
+and 
+.Fn rresvport_af
 function
-returns a valid, bound socket descriptor on success.
-It returns \-1 on error with the global value
+return a valid, bound socket descriptor on success.
+They return \-1 on error with the global value
 .Va errno
 set according to the reason for failure.
 The error code
@@ -244,6 +262,8 @@ The (newer)
 .Fn rcmd
 function appeared in
 .Nx 1.3 .
+.Fn rresvport_af
+was defined in RFC2292.
 .Sh BUGS
 As the
 .Nm
