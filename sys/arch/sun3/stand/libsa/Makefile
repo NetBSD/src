@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/01/23 17:04:12 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2002/02/09 21:18:52 he Exp $
 
 LIB=sa
 
@@ -27,7 +27,7 @@ SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 SRC_sa = alloc.c bcopy.c close.c getfile.c memcpy.c open.c \
 	 printf.c read.c sprintf.c strerror.c subr_prf.c twiddle.c
 
-SRC_kern= ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
+SRC_kern= ashldi3.c ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
 	strcmp.c strlen.c strncmp.c
 
 SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
