@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.12 1999/03/14 11:43:25 drochner Exp $	*/
+/*	$NetBSD: library.c,v 1.13 1999/08/25 00:14:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.12 1999/03/14 11:43:25 drochner Exp $");
+__RCSID("$NetBSD: library.c,v 1.13 1999/08/25 00:14:13 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,6 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	caddr_t s;
 	daddr_t pseg_addr, seg_addr;
 	int nelem, nblocks, nsegs, sumsize, i, ssize;
-	time_t timestamp;
 
 	i = 0;
 	lfsp = &fsp->fi_lfs;
@@ -360,7 +359,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 
 	*bcount = 0;
-	for (nsegs = 0, timestamp = 0; nsegs < sup->su_nsums; nsegs++) {
+	for (nsegs = 0; nsegs < sup->su_nsums; nsegs++) {
 		sp = (SEGSUM *)s;
 
 		nblocks = pseg_valid(fsp, sp, pseg_addr);
@@ -371,11 +370,6 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 			return -1;
 			/* break; */
 		}
-
-		/* Check if we have hit old data */
-		if (timestamp > sp->ss_create)
-			break;
-		timestamp = sp->ss_create;
 
 #ifdef DIAGNOSTIC
 		/* Verify size of summary block */
