@@ -1,4 +1,4 @@
-/*	$NetBSD: romboot.S,v 1.2 2002/01/03 11:22:17 shin Exp $	*/
+/*	$NetBSD: romboot.S,v 1.3 2002/01/03 11:23:29 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Takao Shinohara.
@@ -81,7 +81,7 @@ _start:
 	subu	t0, t1			# t0 = size of boot loader
 	addu	a0, t0			# a0 = kernel address in ROM
 	li	a1, KERNEL_LOADADDR
-	li	t2, (1024*1024*3)	# max kernel size = 3MB - boot
+	li	t2, (1024*1024*6)	# max kernel size = 6MB - boot
 	subu	t2, t0
 	addu	t2, a1			# kernel end address
 	or	a1, MIPS_KSEG1_START	# convert to kseg1 addr
