@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.31 1997/03/31 07:34:20 scottr Exp $	*/
+/*	$NetBSD: hil.c,v 1.32 1997/04/01 03:07:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,18 +108,11 @@ char hilin[] = "hilin";
 
 cdev_decl(hil);
 
-void	hilsoftinit __P((int, struct hil_dev *));
-void	hilinit __P((int, struct hil_dev *));
 void	hilinfo __P((int));
 void	hilconfig __P((struct hil_softc *));
 void	hilreset __P((struct hil_softc *));
 void	hilbeep __P((struct hil_softc *, struct _hilbell *));
 int	hiliddev __P((struct hil_softc *));
-void	send_hil_cmd __P((struct hil_dev *, u_char,
-				u_char *, u_char, u_char *));
-void	send_hildev_cmd __P((struct hil_softc *, char, char));
-void	polloff __P((struct hil_dev *));
-void	pollon __P((struct hil_dev *));
 
 void	hilint __P((int));
 void	hil_process_int __P((struct hil_softc *, u_char, u_char));
@@ -1288,18 +1281,13 @@ kbdcninit()
  * This seems to be needed, once is not always enough!?!
  */
 int
-kbdnmi(unit)
-	int unit;
+kbdnmi()
 {
-#ifdef hp300
 	struct hil_softc *hilp = &hil_softc[0]; /* XXX how do we know on 300? */
-#else
-	struct hil_softc *hilp = &hil_softc[unit];
-#endif
-#ifdef hp300
+
 	if ((*KBDNMISTAT & KBDNMI) == 0)
 		return(0);
-#endif
+
 	HILWAIT(hilp->hl_addr);
 	WRITEHILCMD(hilp->hl_addr, HIL_CNMT);
 	HILWAIT(hilp->hl_addr);
