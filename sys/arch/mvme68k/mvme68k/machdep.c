@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1998/02/08 09:33:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1998/02/19 04:18:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -953,7 +953,7 @@ dumpsys()
 	pg = 0;
 
 	/* Don't put dump messages in msgbuf. */
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)

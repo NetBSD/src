@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1998/02/05 04:57:59 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1998/02/19 04:18:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -709,7 +709,7 @@ dumpsys()
 	daddr_t blkno;
 	int error = 0;
 
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 

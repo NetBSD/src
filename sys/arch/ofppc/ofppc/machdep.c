@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1998/02/02 03:01:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1998/02/19 04:18:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,16 +72,6 @@ struct bat battable[16];
 int astpending;
 
 char *bootpath;
-
-/*
- * We use the page just above the interrupt vector as message buffer
- */
-#if 0
-struct msgbuf *msgbufp = (struct msgbuf *)0x3000;
-int msgbufmapped = 1;		/* message buffer is always mapped */
-#else
-int msgbufmapped = 0;
-#endif
 
 caddr_t allocsys __P((caddr_t));
 
@@ -270,6 +260,11 @@ initppc(startkernel, endkernel, args)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+
+	/*
+	 * Set the page size.
+	 */
+	vm_set_page_size();
 
 	/*
 	 * Initialize pmap module.

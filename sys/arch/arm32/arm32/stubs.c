@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.20 1998/01/24 16:46:29 mycroft Exp $	*/
+/*	$NetBSD: stubs.c,v 1.21 1998/02/19 04:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -54,6 +54,7 @@
 #include <sys/vnode.h>
 #include <sys/conf.h> 
 #include <sys/reboot.h> 
+#include <sys/msgbuf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -71,7 +72,6 @@
 #include "hydrabus.h"
 #endif
 
-extern int msgbufmapped;
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
 
@@ -192,7 +192,7 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
