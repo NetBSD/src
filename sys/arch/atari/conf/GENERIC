@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.27 1997/03/10 09:44:52 leo Exp $
+#	$NetBSD: GENERIC,v 1.28 1997/04/01 08:17:59 leo Exp $
 #
 # Generic atari
 #
@@ -138,3 +138,6 @@ lpt0	at mainbus0		# centronics printer
 ch*	at scsibus? target ? lun ?	# SCSI changer
 ss*	at scsibus? target ? lun ?	# SCSI scanner
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+idec0   at mainbus0             # IDE bus
+ide*    at idec? drive ?	#  ... and drives
