@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/03/24 15:47:26 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/05/05 10:02:17 bjh21 Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -30,22 +30,22 @@ RISCOSMAKE= \
 	    RISCOSMISCCPPFLAGS=${RISCOSMISCCPPFLAGS:Q} \
 	    ${RISCOSMISCMAKEFLAGS}
 
-${RISCOSLIB}:		.NOTMAIN __always_make_riscoslib
+${RISCOSLIB}:		.NOTMAIN .MAKE __always_make_riscoslib
 	@echo making sure the riscos library is up to date...
 	@${RISCOSMAKE} libriscos.a
 
 clean:			.NOTMAIN cleanriscoslib
-cleanriscoslib:		.NOTMAIN __always_make_riscoslib
+cleanriscoslib:		.NOTMAIN
 	@echo cleaning the riscos library objects
-	@${RISCOSMAKE} clean
+	@if [ -d "${RISCOSDST}" ]; then ${RISCOSMAKE} clean; fi
 
 cleandir distclean:	.NOTMAIN cleandirriscoslib
-cleandirriscoslib:		.NOTMAIN __always_make_riscoslib
+cleandirriscoslib:	.NOTMAIN
 	@echo cleandiring the riscos library objects
-	@${RISCOSMAKE} cleandir
+	@if [ -d "${RISCOSDST}" ]; then ${RISCOSMAKE} cleandir; fi
 
 depend:			.NOTMAIN dependriscoslib
-dependriscoslib:		.NOTMAIN __always_make_riscoslib
+dependriscoslib:	.NOTMAIN .MAKE __always_make_riscoslib
 	@echo depending the riscos library objects
 	@${RISCOSMAKE} depend
 
