@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.63 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.64 2000/05/08 16:30:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ static const char *findblkname __P((int));
 static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
-static int getstr __P((char *, int));
 
 int
 uiomove(buf, n, uio)
@@ -645,7 +644,7 @@ setroot(bootdv, bootpartition)
 				printf(")");
 			}
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
@@ -685,7 +684,7 @@ setroot(bootdv, bootpartition)
 				printf(" (default %sb)", defdumpdv->dv_xname);
 			}
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0) {
 				if (defdumpdv != NULL) {
 					ndumpdev = MAKEDISKDEV(major(nrootdev),
@@ -723,7 +722,7 @@ setroot(bootdv, bootpartition)
 
 		for (;;) {
 			printf("file system (default %s): ", deffsname);
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0)
 				break;
 			if (len == 4 && strcmp(buf, "halt") == 0)
@@ -1023,57 +1022,6 @@ parsedisk(str, len, defpart, devp)
 
 	*cp = c;
 	return (dv);
-}
-
-/*
- * XXX shouldn't this be a common function?
- */
-static int
-getstr(cp, size)
-	char *cp;
-	int size;
-{
-	char *lp;
-	int c, len;
-
-	cnpollc(1);
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = cngetc();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			cnpollc(0);
-			return (len);
-		case '\b':
-		case '\177':
-		case '#':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u'&037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
 }
 
 /*
