@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35 1999/12/11 20:48:25 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.1 2000/02/20 18:33:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,13 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 #include "opt_pci_conf_mode.h"
 
@@ -473,7 +480,11 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	int pin, line;
 	pci_intr_handle_t *ihp;
 {
-
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+	int bus, dev, func;
+#endif
+	
 	if (pin == 0) {
 		/* No IRQ used. */
 		goto bad;
@@ -511,7 +522,32 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 			line = 9;
 		}
 	}
-
+#if NIOAPIC > 0
+	pci_decompose_tag (pc, intrtag, &bus, &dev, &func);
+#if 0
+	printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+	    bus, dev, func, pin, line);
+#endif
+	if (mp_busses != NULL) {
+		/*
+		 * Assumes 1:1 mapping between PCI bus numbers and
+		 * the numbers given by the MP bios.
+		 * XXX Is this a valid assumption?
+		 */
+		int mpspec_pin = (dev<<2)|(pin-1);
+		
+		
+		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+			if (mip->bus_pin == mpspec_pin) {
+				*ihp = mip->ioapic_ih | line;
+				return 0;
+			}
+		}
+		if (mip == NULL)
+			printf("pci_intr_map: no MP mapping found\n");
+	}
+#endif
+	
 	*ihp = line;
 	return 0;
 
@@ -525,12 +561,24 @@ pci_intr_string(pc, ih)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[64];
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC)
+		sprintf(irqstr, "apic %d int %d (irq %d)",
+		    APIC_IRQ_APIC(ih),
+		    APIC_IRQ_PIN(ih),
+		    ih&0xff);
+	else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
+
+	sprintf(irqstr, "irq %d", ih&0xff);
+#endif
 	return (irqstr);
 	
 }
@@ -542,6 +590,14 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func) __P((void *));
 	void *arg;
 {
+	if (ih != -1) {
+#if NIOAPIC > 0
+		if (ih & APIC_INT_VIA_APIC) {
+			return apic_intr_establish(ih, IST_LEVEL, level,
+			    func, arg);
+		}
+#endif
+	}
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
