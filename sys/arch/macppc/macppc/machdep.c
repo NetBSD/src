@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2001/06/02 18:09:15 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2001/06/06 17:50:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,10 +58,10 @@
 
 #include <net/netisr.h>
 
-#include <machine/bat.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
+#include <powerpc/mpc6xx/bat.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -163,8 +163,8 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up BAT0 to only map the lowest 256 MB area
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
+	battable[0x0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0x0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map PCI memory space.
@@ -177,6 +177,9 @@ initppc(startkernel, endkernel, args)
 
 	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
 	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
+
+	battable[0xb].batl = BATL(0xb0000000, BAT_I, BAT_PP_RW);
+	battable[0xb].batu = BATU(0xb0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
@@ -445,7 +448,7 @@ cpu_startup()
 	printf("%s", version);
 	identifycpu(cpu_model);
 
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -490,9 +493,8 @@ cpu_startup()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -512,11 +514,15 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, FALSE, NULL);
 
+#ifndef PMAP_MAP_POOLPAGE
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
 	 * are allocated via the pool allocator, and we use direct-mapped
 	 * pool pages.
 	 */
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -744,8 +750,7 @@ mapiodev(pa, len)
 		return NULL;
 
 	for (; len > 0; len -= NBPG) {
-		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

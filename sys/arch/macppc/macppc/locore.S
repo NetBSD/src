@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 2001/06/06 17:50:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
+#include <machine/vmparam.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)

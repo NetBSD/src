@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.18 2001/03/15 19:48:04 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.19 2001/06/06 17:50:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,8 +48,8 @@
 
 #include <dev/ofw/ofw_pci.h>
 
-#include <machine/bat.h>
 #include <machine/bus.h>
+#include <powerpc/mpc6xx/bat.h>
 #include <machine/grfioctl.h>
 
 #include <macppc/dev/ofbvar.h>
@@ -553,10 +553,12 @@ ofb_putcmap(sc, cm)
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
 
+#if 0
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
+#endif
 
 	return 0;
 }

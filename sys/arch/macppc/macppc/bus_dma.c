@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2001/05/26 21:27:09 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2001/06/06 17:50:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -418,14 +418,18 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	paddr_t avail_start, avail_end;
+	paddr_t avail_start = 0xffffffff, avail_end = 0;
 	paddr_t curaddr, lastaddr, high;
 	struct vm_page *m;    
 	struct pglist mlist;
-	int curseg, error;
+	int curseg, error, bank;
 
-	avail_start = vm_physmem[0].avail_start << PGSHIFT;
-	avail_end = vm_physmem[vm_nphysseg - 1].avail_end << PGSHIFT;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		if (avail_start > vm_physmem[bank].avail_start << PGSHIFT)
+			avail_start = vm_physmem[bank].avail_start << PGSHIFT;
+		if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
+			avail_end = vm_physmem[bank].avail_end << PGSHIFT;
+	}
 
 	/* Always round the size. */
 	size = round_page(size);
@@ -538,9 +542,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 	pmap_update();
