@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2002/05/30 08:51:22 augustss Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/05/31 10:53:34 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define	IPL_SOFTSERIAL	4	/* software serial interrupt */
 #define	IPL_TTY		3	/* terminal */
 #define	IPL_IMP		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
+/*#define	IPL_AUDIO	2*/	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	1	/* everything */
 #define	IPL_SERIAL	0	/* serial */
