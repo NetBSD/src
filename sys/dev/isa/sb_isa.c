@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.21 1999/03/22 07:37:35 mycroft Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.22 1999/09/07 00:49:41 soren Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -105,11 +105,8 @@ sbfind(parent, sc, ia)
 	sc->sc_iot = ia->ia_iot;
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
-	    &sc->sc_ioh)) {
-		printf("sb: can't map i/o space 0x%x/%d in probe\n",
-		    ia->ia_iobase, SBP_NPORT);
+	    &sc->sc_ioh))
 		return 0;
-	}
 
 	/* XXX These are only for setting chip configuration registers. */
 	sc->sc_iobase = ia->ia_iobase;
