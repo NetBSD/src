@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.3 1997/07/17 16:56:44 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.3.2.1 1997/10/14 16:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -388,20 +388,21 @@ ext2fs_reload(mountp, cred, p)
 	if (error)
 		return (error);
 	newfs = (struct ext2fs *)bp->b_data;
-	if (newfs->e2fs_magic != E2FS_MAGIC || newfs->e2fs_rev != E2FS_REV) {
+	if (fs2h16(newfs->e2fs_magic) != E2FS_MAGIC ||
+		fs2h32(newfs->e2fs_rev) != E2FS_REV) {
 #ifdef DIAGNOSTIC
 		printf("Wrong magic number: %x (expected %x for ext2 fs)",
-					newfs->e2fs_magic, E2FS_MAGIC);
+					fs2h16(newfs->e2fs_magic), E2FS_MAGIC);
 		printf("or wrong revision number: %x (expected %x for ext2 fs)",
-					newfs->e2fs_rev, E2FS_REV);
+					fs2h32(newfs->e2fs_rev), E2FS_REV);
 #endif
 		brelse(bp);
 		return (EIO);		/* XXX needs translation */
 	}
-	if (newfs->e2fs_log_bsize > 2) { /* block size = 1024|2048|4096 */
+	if (fs2h32(newfs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
 		printf("wrong block size: %d (expected <=2 for ext2 fs)\n",
-			newfs->e2fs_log_bsize);
+			fs2h32(newfs->e2fs_log_bsize));
 #endif
 		brelse(bp);
 		return (EIO);	   /* XXX needs translation */
@@ -412,7 +413,7 @@ ext2fs_reload(mountp, cred, p)
 	/* 
 	 * copy in new superblock, and compute in-memory values
 	 */
-	bcopy(newfs, &fs->e2fs, SBSIZE);
+	e2fs_sbload(newfs, &fs->e2fs);
 	fs->e2fs_ncg = howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
 		fs->e2fs.e2fs_bpg);
 	/* XXX assume hw bsize = 512 */
@@ -435,7 +436,7 @@ ext2fs_reload(mountp, cred, p)
 				fs->e2fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
-		bcopy(bp->b_data,
+		e2fs_cgload((struct ext2_gd*)bp->b_data,
 			&fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
 			fs->e2fs_bsize);
 		brelse(bp);
@@ -468,9 +469,9 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		bcopy((struct ext2fs_dinode *)bp->b_data +
+		e2fs_iload((struct ext2fs_dinode *)bp->b_data +
 			ino_to_fsbo(fs, ip->i_number),
-			&ip->i_din.e2fs_din, sizeof(struct ext2fs_dinode));
+					&ip->i_din.e2fs_din);
 		brelse(bp);
 		vput(vp);
 		if (vp->v_mount != mountp)
@@ -533,21 +534,22 @@ ext2fs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	if (fs->e2fs_magic != E2FS_MAGIC || fs->e2fs_rev != E2FS_REV) {
+	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC ||
+		fs2h32(fs->e2fs_rev) != E2FS_REV) {
 #ifdef DIAGNOSTIC
 		printf("Wrong magic number: %x (expected %x for ext2 fs)",
-			fs->e2fs_magic, E2FS_MAGIC);
+			fs2h16(fs->e2fs_magic), E2FS_MAGIC);
 		printf(" or wrong revision number: %x (expected %x for ext2 fs)\n",
-			fs->e2fs_rev, E2FS_REV);
+			fs2h32(fs->e2fs_rev), E2FS_REV);
 #endif
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
 	}
 
-	if (fs->e2fs_log_bsize > 2) { /* block size = 1024|2048|4096 */
+	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
 		printf("wrong block size: %d (expected <2 for ext2 fs)\n",
-			fs->e2fs_log_bsize);
+			fs2h32(fs->e2fs_log_bsize));
 #endif
 		error = EINVAL;	 /* XXX needs translation */
 		goto out;
@@ -556,7 +558,7 @@ ext2fs_mountfs(devvp, mp, p)
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	bzero((caddr_t)ump, sizeof *ump);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, ump->um_e2fs, SBSIZE);
+	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp);
 	bp = NULL;
 	m_fs = ump->um_e2fs;
@@ -593,7 +595,7 @@ ext2fs_mountfs(devvp, mp, p)
 			free(m_fs->e2fs_gd, M_UFSMNT);
 			goto out;
 		}
-		bcopy(bp->b_data,
+		e2fs_cgload((struct ext2_gd*)bp->b_data,
 			&m_fs->e2fs_gd[i* m_fs->e2fs_bsize / sizeof(struct ext2_gd)],
 			m_fs->e2fs_bsize);
 		brelse(bp);
@@ -869,9 +871,8 @@ ext2fs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	bcopy(((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino)),
-				&ip->i_din, sizeof(struct ext2fs_dinode));
-
+	e2fs_iload((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino),
+				&ip->i_din.e2fs_din);
 	brelse(bp);
 
 	/*
@@ -968,7 +969,7 @@ ext2fs_sbupdate(mp, waitfor)
 	int error = 0;
 
 	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, 0);
-	bcopy((caddr_t)(&fs->e2fs), bp->b_data, SBSIZE);
+	e2fs_sbsave(&fs->e2fs, (struct ext2fs*)bp->b_data);
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else
@@ -989,8 +990,8 @@ ext2fs_cgupdate(mp, waitfor)
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
 		bp = getblk(mp->um_devvp, fsbtodb(fs, ((fs->e2fs_bsize>1024)?0:1)+i+1),
 			fs->e2fs_bsize, 0, 0);
-		bcopy(&fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
-		 bp->b_data, fs->e2fs_bsize);
+		e2fs_cgsave(&fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
+				(struct ext2_gd*)bp->b_data, fs->e2fs_bsize);
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);
 		else

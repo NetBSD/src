@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.14 1997/07/17 23:54:33 fvdl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.14.2.1 1997/10/14 15:58:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,6 +89,7 @@ struct	nfsmount {
 	short	nm_bufqwant;		/* process wants to add to the queue */
 	int	nm_bufqiods;		/* number of iods processing queue */
 	u_int64_t nm_maxfilesize;	/* maximum file size */
+	int	nm_iflag;		/* internal flags */
 };
 
 #ifdef _KERNEL
@@ -105,7 +106,7 @@ int	nfs_mount __P((struct mount *mp, const char *path, void *data,
 		struct nameidata *ndp, struct proc *p));
 int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
-		struct vnode **vpp));
+		struct vnode **vpp, struct proc *p));
 int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
 int	nfs_start __P((struct mount *mp, int flags, struct proc *p));

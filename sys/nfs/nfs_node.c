@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.22 1997/07/07 23:34:55 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.22.2.1 1997/10/14 15:58:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -237,7 +237,6 @@ nfs_reclaim(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	register struct nfsdmap *dp, *dp2;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -257,13 +256,9 @@ nfs_reclaim(v)
 	 * large file handle structures that might be associated with
 	 * this nfs node.
 	 */
-	if (vp->v_type == VDIR) {
-		dp = np->n_cookies.lh_first;
-		while (dp) {
-			dp2 = dp;
-			dp = dp->ndm_list.le_next;
-			FREE((caddr_t)dp2, M_NFSDIROFF);
-		}
+	if (vp->v_type == VDIR && np->n_dircache) {
+		nfs_invaldircache(vp);
+		FREE(np->n_dircache, M_NFSDIROFF);
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
 		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);

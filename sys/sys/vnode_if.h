@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp 
+ *	NetBSD: vnode_if.src,v 1.12 1997/10/10 02:07:00 fvdl Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.11 1997/07/07 20:17:36 cgd Exp 
  */
@@ -579,18 +579,18 @@ struct vop_readdir_args {
 	struct uio *a_uio;
 	struct ucred *a_cred;
 	int *a_eofflag;
-	u_long *a_cookies;
+	off_t *a_cookies;
 	int a_ncookies;
 };
 extern struct vnodeop_desc vop_readdir_desc;
 static __inline int VOP_READDIR __P((struct vnode *, struct uio *, 
-    struct ucred *, int *, u_long *, int)) __attribute__ ((unused));
+    struct ucred *, int *, off_t *, int)) __attribute__ ((unused));
 static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflag;
-	u_long *cookies;
+	off_t *cookies;
 	int ncookies;
 {
 	struct vop_readdir_args a;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 1997/07/06 22:53:14 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.3.2.1 1997/10/14 16:03:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -64,7 +64,7 @@ struct lock {
 	int	lk_waitcount;		/* # of processes sleeping for lock */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_prio;		/* priority at which to sleep */
-	char	*lk_wmesg;		/* resource sleeping (for tsleep) */
+	const char *lk_wmesg;		/* resource sleeping (for tsleep) */
 	int	lk_timo;		/* maximum sleep time (for tsleep) */
 	pid_t	lk_lockholder;		/* pid of exclusive lock holder */
 };
@@ -166,7 +166,7 @@ struct lock {
 
 struct proc;
 
-void	lockinit __P((struct lock *, int prio, char *wmesg, int timo,
+void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
 			int flags));
 int	lockmgr __P((__volatile struct lock *, u_int flags,
 			struct simplelock *, struct proc *p));

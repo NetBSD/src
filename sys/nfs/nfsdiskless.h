@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.11.4.3 1997/09/16 03:51:26 thorpej Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.11.4.4 1997/10/14 15:58:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,13 @@ struct nfs_diskless {
 };
 
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
+int nfs_boot_setrecvtimo __P((struct socket *));
+int nfs_boot_enbroadcast __P((struct socket *));
+int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t));
+int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
+			   int (*)(struct mbuf*, void*, int), struct mbuf*,
+			   int (*)(struct mbuf*, void*), struct mbuf**,
+			   struct mbuf**, void*));
 
 int nfs_bootdhcp  __P((struct ifnet *, struct nfs_diskless *, struct proc *));
 int nfs_bootparam __P((struct ifnet *, struct nfs_diskless *, struct proc *));

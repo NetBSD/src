@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.1 1997/06/11 09:33:44 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.1.4.1 1997/10/14 16:06:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -85,7 +85,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (bn < NDADDR) {
-		nb = ip->i_e2fs_blocks[bn];
+		nb = fs2h32(ip->i_e2fs_blocks[bn]);
 		if (nb != 0) {
 			error = bread(vp, bn, fs->e2fs_bsize, NOCRED, &bp);
 			if (error) {
@@ -107,7 +107,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 		}
-		ip->i_e2fs_blocks[bn] = dbtofsb(fs, bp->b_blkno);
+		ip->i_e2fs_blocks[bn] = h2fs32(dbtofsb(fs, bp->b_blkno));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
@@ -126,7 +126,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 * Fetch the first indirect block allocating if necessary.
 	 */
 	--num;
-	nb = ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
+	nb = fs2h32(ip->i_e2fs_blocks[NDADDR + indirs[0].in_off]);
 	if (nb == 0) {
 		pref = ext2fs_blkpref(ip, lbn, 0, (daddr_t *)0);
 			error = ext2fs_alloc(ip, lbn, pref,
@@ -146,7 +146,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			ext2fs_blkfree(ip, nb);
 			return (error);
 		}
-		ip->i_e2fs_blocks[NDADDR + indirs[0].in_off] = newb;
+		ip->i_e2fs_blocks[NDADDR + indirs[0].in_off] = h2fs32(newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
@@ -160,7 +160,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			return (error);
 		}
 		bap = (daddr_t *)bp->b_data;
-		nb = bap[indirs[i].in_off];
+		nb = fs2h32(bap[indirs[i].in_off]);
 		if (i == num)
 			break;
 		i += 1;
@@ -189,7 +189,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			brelse(bp);
 			return (error);
 		}
-		bap[indirs[i - 1].in_off] = nb;
+		bap[indirs[i - 1].in_off] = h2fs32(nb);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -218,7 +218,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
 			clrbuf(nbp);
-		bap[indirs[i].in_off] = nb;
+		bap[indirs[i].in_off] = h2fs32(nb);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.

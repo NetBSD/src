@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.25.4.1 1997/10/14 16:03:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,6 +76,7 @@ struct buf {
 	struct	ucred *b_wcred;		/* Write credentials reference. */
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
+	off_t	b_dcookie;		/* Offset cookie if dir block */
 };
 
 /*
@@ -157,7 +158,6 @@ int	bufpages;		/* Number of memory pages in the buffer pool. */
 struct	buf *swbuf;		/* Swap I/O buffer headers. */
 int	nswbuf;			/* Number of swap I/O buffer headers. */
 struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
-struct	buf *bclnlist;		/* Head of cleaned page list. */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.8.2.1 1997/09/01 21:02:57 thorpej Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.8.2.2 1997/10/14 15:58:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -59,9 +59,10 @@ struct componentname;
 struct nfsd_srvargs;
 struct nfsrv_descript;
 struct nfs_fattr;
+struct nfsdircache;
 
 /* nfs_bio.c */
-int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *));
+int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));
@@ -229,6 +230,10 @@ int nfsm_uiotombuf __P((struct uio *, struct mbuf **, int, caddr_t *));
 int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
 int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
+u_long nfs_dirhash __P((off_t));
+struct nfsdircache *nfs_lookdircache __P((struct vnode *, off_t, int, daddr_t,
+					  int));
+void nfs_invaldircache __P((struct vnode *));
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *));
@@ -251,12 +256,13 @@ int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
 			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
-nfsuint64 *nfs_getcookie __P((struct nfsnode *, off_t off, int));
-void nfs_invaldir __P((struct vnode *));
+void nfs_invaldircache __P((struct vnode *));
 void nfs_clearcommit __P((struct mount *));
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));
 void nfsrv_setcred __P((struct ucred *, struct ucred *));
+void nfs_cookieheuristic __P((struct vnode *, int *, struct proc *,
+			      struct ucred *));
 
 /* nfs_syscalls.c */
 int sys_getfh __P((struct proc *, void *, register_t *));

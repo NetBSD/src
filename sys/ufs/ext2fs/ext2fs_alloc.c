@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.1 1997/06/11 09:33:41 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.1.4.1 1997/10/14 16:06:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -263,7 +263,7 @@ ext2fs_blkpref(ip, lbn, indx, bap)
 	if (bap) {
 		for (i = indx; i >= 0 ; i--) {
 			if (bap[i]) {
-				return bap[i] + 1;
+				return fs2h32(bap[i]) + 1;
 			}
 		}
 	}
@@ -403,7 +403,7 @@ gotit:
 	if (isset(bbp, (long)bno)) {
 		printf("ext2fs_alloccgblk: cg=%d bno=%d fs=%s\n",
 			cg, bno, fs->e2fs_fsmnt);
-		panic("ext2fs_valloc: dup alloc");
+		panic("ext2fs_alloccg: dup alloc");
 	}
 #endif
 	setbit(bbp, (long)bno);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.2 1997/05/08 16:20:30 mycroft Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.2.4.1 1997/10/14 15:58:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -252,7 +252,7 @@ typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5,
  * NFS_SMALLFH should be in the range of 32 to 64 and be divisible by 4.
  */
 #ifndef NFS_SMALLFH
-#define NFS_SMALLFH	64
+#define NFS_SMALLFH	44
 #endif
 union nfsfh {
 	fhandle_t fh_generic;
