@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.12 1998/03/31 11:32:53 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.13 1999/01/16 07:05:05 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -473,17 +473,17 @@ fbmmap_fb(fi, dev, data, p)
 	struct proc *p;
 {
 	int error;
-	vm_offset_t addr;
-	vm_size_t len;
+	vaddr_t addr;
+	vsize_t len;
 	struct vnode vn;
 	struct specinfo si;
 	struct fbuaccess *fbp;
 	register struct fbuaccess *fbu = fi->fi_fbu;
 
-	len = mips_round_page(((vm_offset_t)fbu & PGOFSET) +
+	len = mips_round_page(((vaddr_t)fbu & PGOFSET) +
 			      sizeof(struct fbuaccess)) +
 		mips_round_page(fi->fi_type.fb_size);
-	addr = (vm_offset_t)0x20000000;		/* XXX */
+	addr = (vaddr_t)0x20000000;		/* XXX */
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
@@ -494,15 +494,15 @@ fbmmap_fb(fi, dev, data, p)
 #if defined(UVM)
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, len,
 		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
-		(vm_offset_t)0);
+		(vaddr_t)0);
 #else
 	error = vm_mmap(&p->p_vmspace->vm_map, &addr, len,
 		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
-		(vm_offset_t)0);
+		(vaddr_t)0);
 #endif
 	if (error)
 		return (error);
-	fbp = (struct fbuaccess *)(addr + ((vm_offset_t)fbu & PGOFSET));
+	fbp = (struct fbuaccess *)(addr + ((vaddr_t)fbu & PGOFSET));
 	*(PM_Info **)data = &fbp->scrInfo;
 	fbu->scrInfo.qe.events = fbp->events;
 	fbu->scrInfo.qe.tcs = fbp->tcs;
