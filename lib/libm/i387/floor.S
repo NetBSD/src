@@ -41,8 +41,9 @@ ENTRY(floor)
 	subl	$8,%esp
 
 	fstcw	-12(%ebp)		/* store fpu control word */
-	movw	-12(%ebp),%dx		/* set RC bit */
-	orw	$0x400,%dx
+	movw	-12(%ebp),%dx
+	orw	$0x0400,%dx		/* round towards -oo */
+	andw	$0xf7ff,%dx
 	movw	%dx,-16(%ebp)
 	fldcw	-16(%ebp)		/* load modfied control word */
 
