@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.7 2001/02/11 19:16:18 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.8 2001/02/18 18:27:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -319,18 +319,6 @@ atapi_probe_device(sc, target, periph, sa)
 		free(periph, M_DEVBUF);
 		return NULL;
 	}
-}
-
-int
-atapiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_atapi_attach *aa_link = aux;
-	if (pnp)
-		printf("atapibus at %s", pnp);
-	printf(" channel %d", aa_link->aa_channel);
-	return (UNCONF);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74.2.5 2001/01/18 09:23:21 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.6 2001/02/18 18:27:11 bouyer Exp $ */
 
 
 /*
@@ -145,6 +145,18 @@ wdprint(aux, pnp)
 		printf("drive at %s", pnp);
 	printf(" channel %d drive %d", aa_link->aa_channel,
 	    aa_link->aa_drv_data->drive);
+	return (UNCONF);
+}
+
+int
+atapiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct ata_atapi_attach *aa_link = aux;
+	if (pnp)
+		printf("atapibus at %s", pnp);
+	printf(" channel %d", aa_link->aa_channel);
 	return (UNCONF);
 }
 
