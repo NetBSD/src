@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.8 2002/11/10 14:01:57 fvdl Exp $	*/
+/*	$NetBSD: systrace.h,v 1.9 2003/03/30 00:40:05 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -87,6 +87,15 @@ struct str_message {
 	} msg_data;
 };
 
+struct str_process;
+struct str_msgcontainer {
+	TAILQ_ENTRY(str_msgcontainer) next;
+	struct str_process *strp;
+
+	struct str_message msg;
+};
+
+
 struct systrace_answer {
 	pid_t stra_pid;
 	u_int16_t stra_seqnr;
@@ -165,7 +174,6 @@ struct systrace_replace {
 #define	ISSET(t, f)	((t) & (f))
 #define	CLR(t, f)	((t) &= ~(f))
 
-struct str_process;
 struct fsystrace {
 	struct lock lock;
 	struct selinfo si;
@@ -175,7 +183,7 @@ struct fsystrace {
 
 	TAILQ_HEAD(strpolicyq, str_policy) policies;
 
-	struct strprocessq messages;
+	TAILQ_HEAD(strmessageq, str_msgcontainer) messages;
 
 	size_t npolicynr;
 	size_t npolicies;
