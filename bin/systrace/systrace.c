@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.13 2002/10/28 16:50:05 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.14 2002/12/06 01:43:18 thorpej Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -151,7 +151,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	const char *binname = NULL;
 	char output[_POSIX2_LINE_MAX];
 	pid_t ppid;
-	int log = 0;
+	int dolog = 0;
 
 	action = ICPOLICY_PERMIT;
 
@@ -213,7 +213,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		log = 1;
+		dolog = 1;
 		goto out;
 	}
 
@@ -232,7 +232,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	}
  replace:
 	if (ipid->uflags & SYSCALL_LOG)
-		log = 1;
+		dolog = 1;
 
 	if (action < ICPOLICY_NEVER) {
 		/* If we can not rewrite the arguments, system call fails */
@@ -240,7 +240,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 			action = ICPOLICY_NEVER;
 	}
  out:
-	if (log)
+	if (dolog)
 		syslog(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
@@ -258,7 +258,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	struct filterq *pflq = NULL;
 	short action = ICPOLICY_PERMIT;
 	short future;
-	int len, off, log = 0;
+	int len, off, dolog = 0;
 
 	if (policynr == -1)
 		goto out;
@@ -290,7 +290,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		log = 1;
+		dolog = 1;
 		goto out;
 	}
 
@@ -307,7 +307,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 		return (ICPOLICY_NEVER);
 	}
  out:
-	if (log)
+	if (dolog)
 		syslog(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
