@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.17 1996/12/20 19:41:30 cgd Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.18 1997/01/23 14:02:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.17 1996/12/20 19:41:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.18 1997/01/23 14:02:04 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -360,7 +360,7 @@ gethostbyaddr(addr, len, type)
 	
 	if (type != AF_INET)
 		return ((struct hostent *) NULL);
-	(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
+	(void)snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.in-addr.arpa",
 		((unsigned)addr[3] & 0xff),
 		((unsigned)addr[2] & 0xff),
 		((unsigned)addr[1] & 0xff),
@@ -621,7 +621,7 @@ _yp_gethtbyaddr(addr, len, type)
 		if (_yp_check(&__ypdomain) == 0)
 			return (hp);
 	}
-	sprintf(name, "%u.%u.%u.%u",
+	(void)snprintf(name, sizeof name, "%u.%u.%u.%u",
 		((unsigned)addr[0] & 0xff),
 		((unsigned)addr[1] & 0xff),
 		((unsigned)addr[2] & 0xff),

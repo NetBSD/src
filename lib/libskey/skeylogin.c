@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.6 1996/09/19 19:39:48 thorpej Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.7 1997/01/23 14:03:09 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -53,12 +53,14 @@ getskeyprompt(mp,name,prompt)
 
 	sevenbit(name);
 	rval = skeylookup(mp,name);
-	strcpy(prompt,"s/key 55 latour1\n");
+#if 0
+	strcpy(prompt, "s/key 55 latour1\n");
+#endif
 	switch (rval) {
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		sprintf(prompt,"s/key %d %s\n",mp->n - 1,mp->seed);
+		sprintf(prompt,"s/key %d %s\n",mp->n - 1,mp->seed);	/* XXX: sprintf (getskeyprompt()) appears unused */
 		return 0;
 	case 1:		/* User not found */
 		fclose(mp->keyfile);
@@ -75,10 +77,11 @@ getskeyprompt(mp,name,prompt)
  * record.
  */
 int
-skeychallenge(mp,name, ss)
+skeychallenge(mp,name, ss, sslen)
 	struct skey *mp;
 	char *name;
 	char *ss;
+	int sslen;
 {
 	int rval;
 
@@ -87,7 +90,7 @@ skeychallenge(mp,name, ss)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-                sprintf(ss, "s/key %d %s",mp->n - 1,mp->seed);
+                (void)snprintf(ss, sslen, "s/key %d %s",mp->n - 1,mp->seed);
 		return 0;
 	case 1:		/* User not found */
 		fclose(mp->keyfile);
@@ -289,7 +292,7 @@ skey_keyinfo (username)
 	static char str [50];
 	struct skey skey;
 
-	i = skeychallenge (&skey, username, str);
+	i = skeychallenge (&skey, username, str, sizeof str);
 	if (i == -1)
 		return 0;
 
@@ -342,7 +345,7 @@ skey_authenticate (username)
 	struct skey skey;
 
 	/* Attempt a S/Key challenge */
-	i = skeychallenge (&skey, username, skeyprompt);
+	i = skeychallenge (&skey, username, skeyprompt, sizeof skeyprompt);
 
 	if (i == -2)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.h,v 1.3 1996/09/19 19:39:45 thorpej Exp $	*/
+/*	$NetBSD: skey.h,v 1.4 1997/01/23 14:03:08 mrg Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.h)
@@ -58,7 +58,7 @@ char *btoe __ARGS ((char *engout, char *c));
 char *put8 __ARGS ((char *out, char *s));
 int etob __ARGS ((char *out, char *e));
 void rip __ARGS ((char *buf));
-int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss));
+int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss, int sslen));
 int skeylookup __ARGS ((struct skey * mp, char *name));
 int skeyverify __ARGS ((struct skey * mp, char *response));
 void sevenbit __ARGS ((char *s));

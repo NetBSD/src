@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.7 1996/12/19 07:56:32 cgd Exp $	*/
+/*	$NetBSD: gmon.c,v 1.8 1997/01/23 14:02:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.7 1996/12/19 07:56:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.8 1997/01/23 14:02:00 mrg Exp $";
 #endif
 #endif
 
@@ -226,7 +226,7 @@ _mcleanup()
 		perror("mcount: gmon.log");
 		return;
 	}
-	len = sprintf(buf, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	len = snprintf(buf, sizeof buf, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
 	write(log, buf, len);
 #endif
@@ -248,7 +248,7 @@ _mcleanup()
 		for (toindex = p->froms[fromindex]; toindex != 0;
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
-			len = sprintf(buf,
+			len = snprintf(buf, sizeof buf,
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);

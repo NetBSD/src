@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.5 1996/12/13 08:26:03 mikel Exp $	*/
+/*	$NetBSD: gencode.c,v 1.6 1997/01/23 14:02:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -90,7 +90,8 @@ bpf_error(fmt, va_alist)
 	va_start(ap);
 #endif
 	if (bpf_pcap != NULL)
-		(void)vsprintf(pcap_geterr(bpf_pcap), fmt, ap);
+		(void)vsnprintf(pcap_geterr(bpf_pcap), 
+		    PCAP_ERRBUF_SIZE, fmt, ap);
 	va_end(ap);
 	longjmp(top_ctx, 1);
 	/* NOTREACHED */
@@ -200,7 +201,7 @@ sdup(s)
 	int n = strlen(s) + 1;
 	char *cp = newchunk(n);
 
-	strcpy(cp, s);
+	strcpy(cp, s);	/* XXX strcpy is safe */
 	return (cp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.3 1996/09/10 22:04:35 jtc Exp $	*/
+/*	$NetBSD: zdump.c,v 1.4 1997/01/23 14:02:31 mrg Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -199,7 +199,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 					(void) exit(EXIT_FAILURE);
 		}
 		to = 0;
-		(void) strcpy(fakeenv[to++], "TZ=");
+		(void)strcpy(fakeenv[to++], "TZ=");	/* XXX strcpy is safe */
 		for (from = 0; environ[from] != NULL; ++from)
 			if (strncmp(environ[from], "TZ=", 3) != 0)
 				fakeenv[to++] = environ[from];
@@ -209,7 +209,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 	for (i = optind; i < argc; ++i) {
 		static char	buf[MAX_STRING_LENGTH];
 
-		(void) strcpy(&fakeenv[0][3], argv[i]);
+		(void) strcpy(&fakeenv[0][3], argv[i]);	/* XXX strcpy is safe */
 		if (!vflag) {
 			show(argv[i], now, FALSE);
 			continue;

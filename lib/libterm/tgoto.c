@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.6 1997/01/23 14:03:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $";
+static char rcsid[] = "$NetBSD: tgoto.c,v 1.6 1997/01/23 14:03:13 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,6 @@ setwhich:
 			goto toohard;
 		}
 	}
-	strcpy(dp, added);
+	(void)strncpy(dp, added, (sizeof(result) - (dp - result) - 1));
 	return (result);
 }

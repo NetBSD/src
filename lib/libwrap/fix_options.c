@@ -29,6 +29,7 @@ struct request_info *request;
     int     optsize = sizeof(optbuf), ipproto;
     struct protoent *ip;
     int     fd = request->fd;
+    int     len = sizeof lbuf;
 
     if ((ip = getprotobyname("ip")) != 0)
 	ipproto = ip->p_proto;
@@ -39,7 +40,7 @@ struct request_info *request;
 	&& optsize != 0) {
 	lp = lbuf;
 	for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-	    sprintf(lp, " %2.2x", *cp);
+	    len -= snprintf(lp, len, " %2.2x", *cp);
 	syslog(LOG_NOTICE,
 	       "connect from %s with IP options (ignored):%s",
 	       eval_client(request), lbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.7 1996/09/19 19:39:50 thorpej Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.8 1997/01/23 14:03:10 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -49,8 +49,8 @@ char *passwd;	/* Password, any length */
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
 		return -1;
-	strcpy(buf,seed);
-	strcat(buf,passwd);
+	strcpy(buf, seed);	/* XXX strcpy is safe */
+	strcat(buf, passwd);	/* XXX strcat is safe */
 
 	/* Crunch the key through MD4 */
 	sevenbit(buf);
@@ -242,7 +242,7 @@ btoa8(out, in)
 		return -1;
 
 	for (i=0;i<8;i++) {
-		sprintf(out,"%02x",*in++ & 0xff);
+		sprintf(out,"%02x",*in++ & 0xff);	/* XXX: sprintf() (btoa8() appears to be unused */
 		out += 2;
 	}
 	return 0;

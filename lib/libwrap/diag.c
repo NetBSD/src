@@ -38,10 +38,10 @@ va_list ap;
     char    fmt[BUFSIZ];
 
     if (tcpd_context.file)
-	sprintf(fmt, "%s: %s, line %d: %s",
+	(void)snprintf(fmt, sizeof fmt, "%s: %s, line %d: %s",
 		tag, tcpd_context.file, tcpd_context.line, format);
     else
-	sprintf(fmt, "%s: %s", tag, format);
+	(void)snprintf(fmt, sizeof fmt, "%s: %s", tag, format);
     vsyslog(severity, fmt, ap);
 }
 

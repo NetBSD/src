@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.4 1995/02/27 13:29:20 cgd Exp $	*/
+/*	$NetBSD: regerror.c,v 1.5 1997/01/23 14:02:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: regerror.c,v 1.4 1995/02/27 13:29:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: regerror.c,v 1.5 1997/01/23 14:02:12 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ extern "C" {
 #endif
 
 /* === regerror.c === */
-static char *regatoi __P((const regex_t *preg, char *localbuf));
+static char *regatoi __P((const regex_t *preg, char *localbuf, int buflen));
 
 #ifdef __cplusplus
 }
@@ -114,8 +114,8 @@ static struct rerr {
 };
 
 /*
- - regerror - the interface to error numbers
- = extern size_t regerror(int, const regex_t *, char *, size_t);
+ * regerror - the interface to error numbers
+ * extern size_t regerror(int, const regex_t *, char *, size_t);
  */
 /* ARGSUSED */
 size_t
@@ -132,7 +132,7 @@ size_t errbuf_size;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
-		s = regatoi(preg, convbuf);
+		s = regatoi(preg, convbuf, sizeof convbuf);
 	else {
 		for (r = rerrs; r->code != 0; r++)
 			if (r->code == target)
@@ -140,10 +140,10 @@ size_t errbuf_size;
 	
 		if (errcode&REG_ITOA) {
 			if (r->code != 0)
-				(void) strcpy(convbuf, r->name);
+				(void)strncpy(convbuf, r->name, sizeof convbuf);
 			else
-				sprintf(convbuf, "REG_0x%x", target);
-			assert(strlen(convbuf) < sizeof(convbuf));
+				(void)snprintf(convbuf, sizeof convbuf,
+				    "REG_0x%x", target);
 			s = convbuf;
 		} else
 			s = r->explain;
@@ -151,25 +151,22 @@ size_t errbuf_size;
 
 	len = strlen(s) + 1;
 	if (errbuf_size > 0) {
-		if (errbuf_size > len)
-			(void) strcpy(errbuf, s);
-		else {
-			(void) strncpy(errbuf, s, errbuf_size-1);
-			errbuf[errbuf_size-1] = '\0';
-		}
+		(void)strncpy(errbuf, s, errbuf_size - 1);
+		errbuf[errbuf_size-1] = '\0';
 	}
 
 	return(len);
 }
 
 /*
- - regatoi - internal routine to implement REG_ATOI
- == static char *regatoi(const regex_t *preg, char *localbuf);
+ * regatoi - internal routine to implement REG_ATOI
+ * static char *regatoi(const regex_t *preg, char *localbuf, int buflen);
  */
 static char *
-regatoi(preg, localbuf)
+regatoi(preg, localbuf, buflen)
 const regex_t *preg;
 char *localbuf;
+int buflen;
 {
 	register struct rerr *r;
 	register size_t siz;
@@ -181,6 +178,6 @@ char *localbuf;
 	if (r->code == 0)
 		return("0");
 
-	sprintf(localbuf, "%d", r->code);
+	(void)snprintf(localbuf, buflen, "%d", r->code);
 	return(localbuf);
 }

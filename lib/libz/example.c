@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.2 1996/09/13 00:30:04 cgd Exp $	*/
+/*	$NetBSD: example.c,v 1.3 1997/01/23 14:03:25 mrg Exp $	*/
 
 /* example.c -- usage example of the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -62,7 +62,7 @@ void test_compress(compr, comprLen, uncompr, uncomprLen)
     err = compress(compr, &comprLen, (const Bytef*)hello, len);
     CHECK_ERR(err, "compress");
 
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     err = uncompress(uncompr, &uncomprLen, compr, comprLen);
     CHECK_ERR(err, "uncompress");
@@ -102,7 +102,7 @@ void test_gzio(out, in, uncompr, uncomprLen)
     if (file == NULL) {
         fprintf(stderr, "gzopen error\n");
     }
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     uncomprLen = gzread(file, uncompr, (unsigned)uncomprLen);
     if (uncomprLen != len) {
@@ -165,7 +165,7 @@ void test_inflate(compr, comprLen, uncompr, uncomprLen)
     int err;
     z_stream d_stream; /* decompression stream */
 
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     d_stream.zalloc = (alloc_func)0;
     d_stream.zfree = (free_func)0;
@@ -257,7 +257,7 @@ void test_large_inflate(compr, comprLen, uncompr, uncomprLen)
     int err;
     z_stream d_stream; /* decompression stream */
 
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     d_stream.zalloc = (alloc_func)0;
     d_stream.zfree = (free_func)0;
@@ -333,7 +333,7 @@ void test_sync(compr, comprLen, uncompr, uncomprLen)
     int err;
     z_stream d_stream; /* decompression stream */
 
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     d_stream.zalloc = (alloc_func)0;
     d_stream.zfree = (free_func)0;
@@ -411,7 +411,7 @@ void test_dict_inflate(compr, comprLen, uncompr, uncomprLen)
     int err;
     z_stream d_stream; /* decompression stream */
 
-    strcpy((char*)uncompr, "garbage");
+    (void)strncpy((char*)uncompr, "garbage", uncomprLen - 1);
 
     d_stream.zalloc = (alloc_func)0;
     d_stream.zfree = (free_func)0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.7 1997/01/11 06:48:13 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: term.c,v 1.7 1997/01/11 06:48:13 lukem Exp $";
+static char rcsid[] = "$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -370,7 +370,7 @@ term_alloc(el, t, cap)
      * New string is shorter; no need to allocate space
      */
     if (clen <= tlen) {
-	(void) strcpy(*str, cap);
+	(void)strcpy(*str, cap);	/* XXX strcpy is safe */
 	return;
     }
 
@@ -378,7 +378,8 @@ term_alloc(el, t, cap)
      * New string is longer; see if we have enough space to append
      */
     if (el->el_term.t_loc + 3 < TC_BUFSIZE) {
-	(void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
+	/* XXX strcpy is safe */
+	(void)strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
 	el->el_term.t_loc += clen + 1;	/* one for \0 */
 	return;
     }
@@ -402,7 +403,8 @@ term_alloc(el, t, cap)
 	(void) fprintf(el->el_errfile, "Out of termcap string space.\n");
 	return;
     }
-    (void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
+    /* XXX strcpy is safe */
+    (void)strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
     el->el_term.t_loc += clen + 1;		/* one for \0 */
     return;
 } /* end term_alloc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.3 1996/09/10 22:04:29 jtc Exp $	*/
+/*	$NetBSD: asctime.c,v 1.4 1997/01/23 14:02:26 mrg Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -54,7 +54,7 @@ register const struct tm *	timeptr;
 	**	"%.3s %.3s%3d %02.2d:%02.2d:%02.2d %d\n"
 	** Since the .2 in 02.2d is ignored, we drop it.
 	*/
-	(void) sprintf(result, "%.3s %.3s%3d %02d:%02d:%02d %d\n",
+	(void)snprintf(result, sizeof result,"%.3s %.3s%3d %02d:%02d:%02d %d\n",
 		wn, mn,
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,

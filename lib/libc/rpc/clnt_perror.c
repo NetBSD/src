@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.8 1996/06/19 20:38:45 jtc Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.9 1997/01/23 14:02:15 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_perror.c,v 1.8 1996/06/19 20:38:45 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_perror.c,v 1.9 1997/01/23 14:02:15 mrg Exp $";
 #endif
 
 /*
@@ -52,6 +52,7 @@ static char *rcsid = "$NetBSD: clnt_perror.c,v 1.8 1996/06/19 20:38:45 jtc Exp $
 static char *auth_errmsg();
 
 static char *buf;
+static int buflen;
 
 static char *
 _buf()
@@ -59,6 +60,7 @@ _buf()
 
 	if (buf == 0)
 		buf = (char *)malloc(256);
+	buflen = 256;
 	return (buf);
 }
 
@@ -75,16 +77,20 @@ clnt_sperror(rpch, s)
 	char *err;
 	char *str = _buf();
 	char *strstart = str;
+	int len = buflen, i;
 
 	if (str == 0)
 		return (0);
 	CLNT_GETERR(rpch, &e);
 
-	(void) sprintf(str, "%s: ", s);  
-	str += strlen(str);
+	i = snprintf(str, len, "%s: ", s);  
+	str += i;
+	len -= i;
 
-	(void) strcpy(str, clnt_sperrno(e.re_status));  
-	str += strlen(str);
+	(void)strncpy(str, clnt_sperrno(e.re_status), len - 1);
+	i = strlen(str);
+	str += i;
+	len -= i;
 
 	switch (e.re_status) {
 	case RPC_SUCCESS:
@@ -104,44 +110,50 @@ clnt_sperror(rpch, s)
 
 	case RPC_CANTSEND:
 	case RPC_CANTRECV:
-		(void) sprintf(str, "; errno = %s",
+		i = snprintf(str, len, "; errno = %s",
 		    strerror(e.re_errno)); 
-		str += strlen(str);
+		str += i;
+		len -= i;
 		break;
 
 	case RPC_VERSMISMATCH:
-		(void) sprintf(str,
+		i = snprintf(str, len,
 			"; low version = %lu, high version = %lu", 
 			e.re_vers.low, e.re_vers.high);
-		str += strlen(str);
+		str += i;
+		len -= i;
 		break;
 
 	case RPC_AUTHERROR:
 		err = auth_errmsg(e.re_why);
-		(void) sprintf(str,"; why = ");
-		str += strlen(str);
+		i = snprintf(str, len, "; why = ");
+		str += i;
+		len -= i;
 		if (err != NULL) {
-			(void) sprintf(str, "%s",err);
+			i = snprintf(str, len, "%s",err);
 		} else {
-			(void) sprintf(str,
+			i = snprintf(str, len,
 				"(unknown authentication error - %d)",
 				(int) e.re_why);
 		}
-		str += strlen(str);
+		str += i;
+		len -= i;
 		break;
 
 	case RPC_PROGVERSMISMATCH:
-		(void) sprintf(str, 
+		i = snprintf(str, len,
 			"; low version = %lu, high version = %lu", 
 			e.re_vers.low, e.re_vers.high);
-		str += strlen(str);
+		str += i;
+		len -= i;
 		break;
 
 	default:	/* unknown */
-		(void) sprintf(str, 
+		i = snprintf(str, len,
 			"; s1 = %lu, s2 = %lu", 
 			e.re_lb.s1, e.re_lb.s2);
-		str += strlen(str);
+		str += i;
+		len -= i;
 		break;
 	}
 	return(strstart) ;
@@ -207,21 +219,24 @@ clnt_spcreateerror(s)
 	char *s;
 {
 	char *str = _buf();
+	int len = buflen, i;
 
 	if (str == 0)
 		return(0);
-	(void) sprintf(str, "%s: ", s);
-	(void) strcat(str, clnt_sperrno(rpc_createerr.cf_stat));
+	i = snprintf(str, len, "%s: ", s);
+	len -= i;
+	(void)strncat(str, clnt_sperrno(rpc_createerr.cf_stat), len - 1);
 	switch (rpc_createerr.cf_stat) {
 	case RPC_PMAPFAILURE:
-		(void) strcat(str, " - ");
-		(void) strcat(str,
-		    clnt_sperrno(rpc_createerr.cf_error.re_status));
+		(void) strncat(str, " - ", len - 1);
+		(void) strncat(str,
+		    clnt_sperrno(rpc_createerr.cf_error.re_status), len - 4);
 		break;
 
 	case RPC_SYSTEMERROR:
-		(void) strcat(str, " - ");
-		(void) strcat(str, strerror(rpc_createerr.cf_error.re_errno));
+		(void)strncat(str, " - ", len - 1);
+		(void)strncat(str, strerror(rpc_createerr.cf_error.re_errno),
+		    len - 4);
 		break;
 	}
 	return (str);

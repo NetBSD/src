@@ -99,7 +99,7 @@ setterm(type)
 	unknown = 0;
 	if (tgetent(genbuf, type) != 1) {
 		unknown++;
-		strcpy(genbuf, "xx|dumb:");
+		(void)strncpy(genbuf, "xx|dumb:", sizeof(genbuf) - 1);
 	}
 #ifdef DEBUG
 	__CTRACE("setterm: tty = %s\n", type);

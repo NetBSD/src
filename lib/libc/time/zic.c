@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.5 1996/09/10 22:04:36 jtc Exp $	*/
+/*	$NetBSD: zic.c,v 1.6 1997/01/23 14:02:32 mrg Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -100,7 +100,7 @@ static void	associate P((void));
 static int	ciequal P((const char * ap, const char * bp));
 static void	convert P((long val, char * buf));
 static void	dolink P((const char * fromfile, const char * tofile));
-static void	doabbr P((char * abbr, const char * format,
+static void	doabbr P((char * abbr, int abbrlen, const char * format,
 			const char * letters, int isdst));
 static void	eat P((const char * name, int num));
 static void	eats P((const char * name, int num,
@@ -943,7 +943,7 @@ const int		nfields;
 	}
 	if (strcmp(fields[ZF_NAME], TZDEFAULT) == 0 && lcltime != NULL) {
 		buf = erealloc(buf, (int) (132 + strlen(TZDEFAULT)));
-		(void) sprintf(buf,
+		(void)sprintf(buf,	/* XXX: sprintf is safe */
 _("\"Zone %s\" line and -l option are mutually exclusive"),
 			TZDEFAULT);
 		error(buf);
@@ -951,7 +951,7 @@ _("\"Zone %s\" line and -l option are mutually exclusive"),
 	}
 	if (strcmp(fields[ZF_NAME], TZDEFRULES) == 0 && psxrules != NULL) {
 		buf = erealloc(buf, (int) (132 + strlen(TZDEFRULES)));
-		(void) sprintf(buf,
+		(void)sprintf(buf,	/* XXX: sprintf is safe */
 _("\"Zone %s\" line and -p option are mutually exclusive"),
 			TZDEFRULES);
 		error(buf);
@@ -963,7 +963,7 @@ _("\"Zone %s\" line and -p option are mutually exclusive"),
 				buf = erealloc(buf, (int) (132 +
 					strlen(fields[ZF_NAME]) +
 					strlen(zones[i].z_filename)));
-				(void) sprintf(buf,
+				(void)sprintf(buf,	/* XXX: sprintf is safe */
 _("duplicate zone name %s (file \"%s\", line %d)"),
 					fields[ZF_NAME],
 					zones[i].z_filename,
@@ -1423,7 +1423,7 @@ const char * const	name;
 	}
 	fullname = erealloc(fullname,
 		(int) (strlen(directory) + 1 + strlen(name) + 1));
-	(void) sprintf(fullname, "%s/%s", directory, name);
+	(void)sprintf(fullname, "%s/%s", directory, name);	/* XXX: sprintf is safe */
 	if ((fp = fopen(fullname, "wb")) == NULL) {
 		if (mkdirs(fullname) != 0)
 			(void) exit(EXIT_FAILURE);
@@ -1500,20 +1500,22 @@ const char * const	name;
 }
 
 static void
-doabbr(abbr, format, letters, isdst)
+doabbr(abbr, abbrlen, format, letters, isdst)
 char * const		abbr;
+const int		abbrlen;
 const char * const	format;
 const char * const	letters;
 const int		isdst;
 {
 	if (strchr(format, '/') == NULL) {
 		if (letters == NULL)
-			(void) strcpy(abbr, format);
-		else	(void) sprintf(abbr, format, letters);
+			(void)strncpy(abbr, format, abbrlen - 1);
+		else	
+			(void)snprintf(abbr, abbrlen, format, letters);
 	} else if (isdst)
-		(void) strcpy(abbr, strchr(format, '/') + 1);
+		(void)strncpy(abbr, strchr(format, '/') + 1, abbrlen - 1);
 	else {
-		(void) strcpy(abbr, format);
+		(void)strncpy(abbr, format, abbrlen - 1);
 		*strchr(abbr, '/') = '\0';
 	}
 }
@@ -1567,7 +1569,7 @@ const int			zonecount;
 		startoff = zp->z_gmtoff;
 		if (zp->z_nrules == 0) {
 			stdoff = zp->z_stdoff;
-			doabbr(startbuf, zp->z_format,
+			doabbr(startbuf, sizeof startbuf, zp->z_format,
 				(char *) NULL, stdoff != 0);
 			type = addtype(oadd(zp->z_gmtoff, stdoff),
 				startbuf, stdoff != 0, startttisstd,
@@ -1653,7 +1655,8 @@ const int			zonecount;
 					if (ktime < starttime) {
 						startoff = oadd(zp->z_gmtoff,
 							stdoff);
-						doabbr(startbuf, zp->z_format,
+						doabbr(startbuf,sizeof startbuf,
+							zp->z_format,
 							rp->r_abbrvar,
 							rp->r_stdoff != 0);
 						continue;
@@ -1661,15 +1664,16 @@ const int			zonecount;
 					if (*startbuf == '\0' &&
 					    startoff == oadd(zp->z_gmtoff,
 					    stdoff)) {
-						doabbr(startbuf, zp->z_format,
+						doabbr(startbuf,sizeof startbuf,
+							zp->z_format,
 							rp->r_abbrvar,
 							rp->r_stdoff != 0);
 					}
 				}
 				eats(zp->z_filename, zp->z_linenum,
 					rp->r_filename, rp->r_linenum);
-				doabbr(buf, zp->z_format, rp->r_abbrvar,
-					rp->r_stdoff != 0);
+				doabbr(buf, sizeof buf, zp->z_format,
+					rp->r_abbrvar, rp->r_stdoff != 0);
 				offset = oadd(zp->z_gmtoff, rp->r_stdoff);
 				type = addtype(offset, buf, rp->r_stdoff != 0,
 					rp->r_todisstd, rp->r_todisgmt);
@@ -1681,7 +1685,8 @@ const int			zonecount;
 				zp->z_format != NULL &&
 				strchr(zp->z_format, '%') == NULL &&
 				strchr(zp->z_format, '/') == NULL)
-					(void) strcpy(startbuf, zp->z_format);
+					(void)strncpy(startbuf, zp->z_format,
+					    sizeof(startbuf) - 1);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
 error(_("can't determine time zone abbrevation to use just after until time"));
@@ -1837,7 +1842,7 @@ const char * const	type;
 	if (type == NULL || *type == '\0')
 		return TRUE;
 	buf = erealloc(buf, (int) (132 + strlen(yitcommand) + strlen(type)));
-	(void) sprintf(buf, "%s %d %s", yitcommand, year, type);
+	(void)sprintf(buf, "%s %d %s", yitcommand, year, type); /* XXX: sprintf is safe */
 	result = system(buf);
 	if (result == 0)
 		return TRUE;
@@ -2084,7 +2089,7 @@ const char * const	string;
 		error(_("too many, or too long, time zone abbreviations"));
 		(void) exit(EXIT_FAILURE);
 	}
-	(void) strcpy(&chars[charcnt], string);
+	(void)strncpy(&chars[charcnt], string, sizeof(chars) - charcnt - 1);
 	charcnt += eitol(i);
 }
 

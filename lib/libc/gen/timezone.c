@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.5 1995/02/27 05:54:24 cgd Exp $	*/
+/*	$NetBSD: timezone.c,v 1.6 1997/01/23 14:01:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: timezone.c,v 1.5 1995/02/27 05:54:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: timezone.c,v 1.6 1997/01/23 14:01:58 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,6 +135,7 @@ _tztab(zone,dst)
 	}
 	else
 		sign = '-';
-	(void)sprintf(czone,"GMT%c%d:%02d",sign,zone / 60,zone % 60);
+	(void)snprintf(czone, TZ_MAX_CHARS, "GMT%c%d:%02d", sign, zone / 60,
+	     zone % 60);
 	return(czone);
 }

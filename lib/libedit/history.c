@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.3 1997/01/11 06:47:57 lukem Exp $	*/
+/*	$NetBSD: history.c,v 1.4 1997/01/23 14:02:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -233,8 +233,8 @@ history_def_add(p, str)
 	return (history_def_enter(p, str));
     len = strlen(h->cursor->ev.str) + strlen(str) + 1;
     s = (char *) h_malloc(len);
-    (void) strcpy(s, h->cursor->ev.str);
-    (void) strcat(s, str);
+    (void)strcpy(s, h->cursor->ev.str);	/* XXX strcpy is safe */
+    (void)strcat(s, str);			/* XXX strcat is safe */
     h_free((ptr_t) h->cursor->ev.str);
     h->cursor->ev.str = s;
     return &h->cursor->ev;

@@ -46,7 +46,7 @@ char   *eval_user(request)
 struct request_info *request;
 {
     if (request->user[0] == 0) {
-	strcpy(request->user, unknown);
+	(void)strncpy(request->user, unknown, sizeof(request->user) - 1);
 	if (request->sink == 0 && request->client->sin && request->server->sin)
 	    rfc931(request->client->sin, request->server->sin, request->user);
     }
@@ -59,7 +59,7 @@ char   *eval_hostaddr(host)
 struct host_info *host;
 {
     if (host->addr[0] == 0) {
-	strcpy(host->addr, unknown);
+	(void)strncpy(host->addr, unknown, sizeof(host->addr) - 1);
 	if (host->request->hostaddr != 0)
 	    host->request->hostaddr(host);
     }
@@ -72,7 +72,7 @@ char   *eval_hostname(host)
 struct host_info *host;
 {
     if (host->name[0] == 0) {
-	strcpy(host->name, unknown);
+	(void)strncpy(host->name, unknown, sizeof(host->name) - 1);
 	if (host->request->hostname != 0)
 	    host->request->hostname(host);
     }
@@ -111,7 +111,7 @@ struct request_info *request;
 	return (hostinfo);
 #endif
     if (STR_NE(eval_user(request), unknown)) {
-	sprintf(both, "%s@%s", request->user, hostinfo);
+	(void)snprintf(both, sizeof both, "%s@%s", request->user, hostinfo);
 	return (both);
     } else {
 	return (hostinfo);
@@ -128,7 +128,7 @@ struct request_info *request;
     char   *daemon = eval_daemon(request);
 
     if (STR_NE(host, unknown)) {
-	sprintf(both, "%s@%s", daemon, host);
+	(void)snprintf(both, sizeof both, "%s@%s", daemon, host);
 	return (both);
     } else {
 	return (daemon);

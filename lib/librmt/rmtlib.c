@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.4 1996/08/13 20:09:50 thorpej Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.5 1997/01/23 14:03:05 mrg Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -278,7 +278,8 @@ int mode;
 
 	if (*(path - 1) == '@')
 	{
-		(void) strcpy (user, system);	/* saw user part of user@host */
+		(void)strncpy(user, system, sizeof(login) - 1);
+				/* saw user part of user@host */
 		sys = system;			/* start over */
 		while (*path != ':') {
 			*sys++ = *path++;
@@ -358,7 +359,7 @@ int mode;
  *	now attempt to open the tape device
  */
 
-	sprintf(buffer, "O%s\n%d\n", device, oflag);
+	(void)snprintf(buffer, sizeof(buffer), "O%s\n%d\n", device, oflag);
 	if (command(i, buffer) == -1 || status(i) == -1)
 		return(-1);
 
@@ -401,7 +402,7 @@ unsigned int nbyte;
 	int rc, i;
 	char buffer[BUFMAGIC];
 
-	sprintf(buffer, "R%d\n", nbyte);
+	(void)snprintf(buffer, sizeof buffer, "R%d\n", nbyte);
 	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
 		return(-1);
 
@@ -434,7 +435,7 @@ unsigned int nbyte;
 	char buffer[BUFMAGIC];
 	void (*pstat)();
 
-	sprintf(buffer, "W%d\n", nbyte);
+	(void)snprintf(buffer, sizeof buffer, "W%d\n", nbyte);
 	if (command(fildes, buffer) == -1)
 		return(-1);
 
@@ -464,7 +465,7 @@ int whence;
 {
 	char buffer[BUFMAGIC];
 
-	sprintf(buffer, "L%d\n%d\n", offset, whence);
+	(void)snprintf(buffer, sizeof buffer, "L%d\n%d\n", offset, whence);
 	if (command(fildes, buffer) == -1)
 		return(-1);
 
@@ -492,8 +493,9 @@ char *arg;
 
 	if (op == MTIOCTOP)
 	{
-		sprintf(buffer, "I%d\n%d\n", ((struct mtop *) arg)->mt_op,
-			((struct mtop *) arg)->mt_count);
+		(void)snprintf(buffer, sizeof buffer, "I%d\n%d\n",
+		    ((struct mtop *)arg)->mt_op,
+		    ((struct mtop *)arg)->mt_count);
 		if (command(fildes, buffer) == -1)
 			return(-1);
 		return(status(fildes));

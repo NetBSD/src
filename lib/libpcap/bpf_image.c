@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.3 1996/12/13 08:25:58 mikel Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.4 1997/01/23 14:02:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -279,8 +279,8 @@ bpf_image(p, n)
 		fmt = "";
 		break;
 	}
-	(void)sprintf(operand, fmt, v);
-	(void)sprintf(image,
+	(void)snprintf(operand, sizeof operand, fmt, v);
+	(void)snprintf(image, sizeof image,
 		      (BPF_CLASS(p->code) == BPF_JMP &&
 		       BPF_OP(p->code) != BPF_JA) ?
 		      "(%03d) %-8s %-16s jt %d\tjf %d"

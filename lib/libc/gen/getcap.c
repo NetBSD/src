@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $	*/
+/*	$NetBSD: getcap.c,v 1.11 1997/01/23 14:01:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: getcap.c,v 1.11 1997/01/23 14:01:54 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,7 +96,7 @@ cgetset(ent)
                 return (-1);
 	}
 	gottoprec = 0;
-        (void)strcpy(toprec, ent);
+        (void)strcpy(toprec, ent);	/* XXX: strcpy is safe */
         return (0);
 }
 
@@ -220,7 +220,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			errno = ENOMEM;
 			return (-2);
 		}
-		(void)strcpy(record, toprec);
+		(void)strcpy(record, toprec);	/* XXX: strcpy is safe */
 		myfd = 0;
 		db_p = db_array;
 		rp = record + topreclen + 1;

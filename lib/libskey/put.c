@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.3 1996/09/19 19:39:43 thorpej Exp $	*/
+/*	$NetBSD: put.c,v 1.4 1997/01/23 14:03:07 mrg Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -2176,7 +2176,7 @@ char *
   char *out;
   char *s;
 {
-  sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",
+  sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",	/* XXX: sprintf (put8()) appears to be unused */
 	   s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
 	   s[3] & 0xff, s[4] & 0xff, s[5] & 0xff,
 	   s[6] & 0xff, s[7] & 0xff);

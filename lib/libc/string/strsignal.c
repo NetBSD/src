@@ -33,18 +33,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strsignal.c,v 1.3 1994/10/06 18:16:18 jtc Exp $";
+static char *rcsid = "$Id: strsignal.c,v 1.4 1997/01/23 14:02:25 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 #include <limits.h>
 
-extern char *__strsignal __P((int, char *));
+extern char *__strsignal __P((int, char *, int));
 
 char *
 strsignal(sig)
 	int sig;
 {
 	static char buf[NL_TEXTMAX];
-	return __strsignal(sig, buf);
+
+	return __strsignal(sig, buf, NL_TEXTMAX);
 }

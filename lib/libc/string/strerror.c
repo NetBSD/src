@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strerror.c,v 1.5 1994/10/12 02:35:26 deraadt Exp $";
+static char *rcsid = "$Id: strerror.c,v 1.6 1997/01/23 14:02:23 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -45,12 +45,13 @@ static char *rcsid = "$Id: strerror.c,v 1.5 1994/10/12 02:35:26 deraadt Exp $";
  * internal function __strerror().
  */
 
-extern char *__strerror __P((int, char *));
+extern char *__strerror __P((int, char *, int));
 
 char *
 strerror(num)
 	int num;
 {
 	static char buf[NL_TEXTMAX];
-	return __strerror(num, buf);
+
+	return __strerror(num, buf, NL_TEXTMAX);
 }

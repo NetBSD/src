@@ -105,7 +105,8 @@ setlocale(category, locale)
 	 * Default to the current locale for everything.
 	 */
 	for (i = 1; i < _LC_LAST; ++i)
-		(void)strcpy(new_categories[i], current_categories[i]);
+		(void)strncpy(new_categories[i], current_categories[i],
+		    sizeof(new_categories[i]) - 1);
 
 	/*
 	 * Now go fill up new_categories from the locale argument
@@ -155,8 +156,9 @@ setlocale(category, locale)
 				while (*++r && *r != '/');
 			} while (*locale);
 			while (i < _LC_LAST)
-				(void)strcpy(new_categories[i],
-				    new_categories[i-1]);
+				(void)strncpy(new_categories[i],
+				    new_categories[i-1],
+				    sizeof(new_categories[i]) - 1);
 		}
 	}
 
@@ -177,7 +179,8 @@ currentlocale()
 {
 	int i;
 
-	(void)strcpy(current_locale_string, current_categories[1]);
+	(void)strncpy(current_locale_string, current_categories[1],
+	    sizeof(current_locale_string) - 1);
 
 	for (i = 2; i < _LC_LAST; ++i)
 		if (strcmp(current_categories[1], current_categories[i])) {
@@ -209,8 +212,9 @@ loadlocale(category)
 		 * C locale.  Since we have no way to change them as of yet,
 		 * there is no need to reset them.
 		 */
-		(void)strcpy(current_categories[category],
-		    new_categories[category]);
+		(void)strncpy(current_categories[category],
+		    new_categories[category],
+		    sizeof(current_categories[category]) - 1);
 		return (current_categories[category]);
 	}
 

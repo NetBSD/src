@@ -1,4 +1,4 @@
-/*	$NetBSD: realpath.c,v 1.2 1995/12/28 08:52:47 thorpej Exp $	*/
+/*	$NetBSD: realpath.c,v 1.3 1997/01/23 14:02:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "from: @(#)realpath.c	8.1 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: realpath.c,v 1.2 1995/12/28 08:52:47 thorpej Exp $";
+static char *rcsid = "$NetBSD: realpath.c,v 1.3 1997/01/23 14:02:19 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ realpath(path, resolved)
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strcpy(resolved, ".");
+		(void)strncpy(resolved, ".", MAXPATHLEN - 1);
 		return (NULL);
 	}
 
@@ -123,7 +123,7 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strcpy(wbuf, p);
+	(void)strncpy(wbuf, p, sizeof wbuf - 1);
 	if (getcwd(resolved, MAXPATHLEN) == 0)
 		goto err1;
 
@@ -142,8 +142,8 @@ loop:
 			goto err1;
 		}
 		if (rootd == 0)
-			(void)strcat(resolved, "/");
-		(void)strcat(resolved, wbuf);
+			(void)strcat(resolved, "/"); /* XXX: strcat is safe */
+		(void)strcat(resolved, wbuf);	/* XXX: strcat is safe */
 	}
 
 	/* Go back to where we came from. */

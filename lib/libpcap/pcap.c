@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.3 1996/12/13 08:26:13 mikel Exp $	*/
+/*	$NetBSD: pcap.c,v 1.4 1997/01/23 14:03:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -175,7 +175,7 @@ pcap_strerror(int errnum)
 
 	if ((unsigned int)errnum < sys_nerr)
 		return ((char *)sys_errlist[errnum]);
-	(void)sprintf(ebuf, "Unknown error: %d", errnum);
+	(void)snprintf(ebuf, sizeof ebuf, "Unknown error: %d", errnum);
 	return(ebuf);
 #endif
 }
