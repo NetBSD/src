@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.94 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: unistd.h,v 1.95 2003/11/18 00:56:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -307,6 +307,7 @@ int	 des_setkey __P((const char *));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchroot __P((int));
+int	 fsync_range __P((int, int, off_t, off_t));
 int	 getdomainname __P((char *, size_t));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 mode_t	 getmode __P((const void *, mode_t));

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.13 2003/08/07 16:43:57 agc Exp $
+.\"	$NetBSD: fsync.2,v 1.14 2003/11/18 00:56:57 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd November 14, 2003
 .Dt FSYNC 2
 .Os
 .Sh NAME
-.Nm fsync
+.Nm fsync ,
+.Nm fsync_range
 .Nd "synchronize a file's in-core state with that on disk"
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In unistd.h
 .Ft int
 .Fn fsync "int fd"
+.Ft int
+.Fn fsync_range "int fd" "int how" "off_t start" "off_t length"
 .Sh DESCRIPTION
 .Fn fsync
 causes all modified data and attributes of
@@ -53,13 +56,44 @@ of buffers for the associated file to be written to a disk.
 should be used by programs that require a file to be
 in a known state, for example, in building a simple transaction
 facility.
+.Pp
+.Fn fsync_range
+causes all modified data starting at
+.Fa start
+for length
+.Fa length
+of
+.Fa fd
+to be written to permanent storage.
+Note that
+.Fn fsync_range
+requires that the file
+.Fa fd
+must be open for writing.
+.Pp
+.Fn fsync_range
+may flush the file data in one of two manners:
+.Bl -tag -width FDATASYNC
+.It Dv FDATASYNC
+Synchronize the file data and sufficient meta-data to retrieve the
+data for te specified range.
+.It Dv FFILESYNC
+Synchronize all modified file data and meta-data for the specified range.
+.El
+.Pp
+If the
+.Fa length
+parameter is zero,
+.Fn fsync_range
+will synchronize all of the file data.
 .Sh RETURN VALUES
 A 0 value is returned on success.
-A -1 value indicates an error.
+A \-1 value indicates an error.
 .Sh ERRORS
-The
 .Fn fsync
-fails if:
+or
+.Fn fsync_range
+fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa fd
@@ -70,6 +104,31 @@ refers to a socket, not to a file.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .El
+.Pp
+Additionally,
+.Fn fsync_range
+fails if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa fd
+is not open for writing.
+.It Bq Er EINVAL
+.Fa start
++
+.Fa length
+is less than
+.Fa start .
+.El
+.Sh NOTES
+For optimal efficiency, the
+.Fn fsync_range
+call requires that the file system containing the file referenced by
+.Fa fd
+support partial synchronization of file data.
+For file systems which do
+not support partial synchronization, the entire file will be synchronized
+and the call will be the equivalent of calling
+.Fn fsync .
 .Sh SEE ALSO
 .Xr sync 2 ,
 .Xr sync 8
@@ -78,3 +137,9 @@ The
 .Fn fsync
 function call appeared in
 .Bx 4.2 .
+.Pp
+The
+.Fn fsync_range
+function call first appeared in
+.Nx 2.0
+and is modeled after the function available in AIX.
