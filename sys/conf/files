@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.353 2000/02/26 17:35:33 oster Exp $
+#	$NetBSD: files,v 1.354 2000/03/15 02:10:09 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -202,8 +202,10 @@ defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
 			AHC_SCBPAGING_ENABLE
 device	ahc: scsi
 define	ahc_seeprom
+define	ahc_aic77xx
 file	dev/ic/aic7xxx.c		ahc
 file	dev/ic/aic7xxx_seeprom.c	ahc_seeprom
+file	dev/ic/aic77xx.c		ahc_aic77xx
 
 # DPT EATA SCSI controllers
 device	dpt: scsi
