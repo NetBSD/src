@@ -16281,3 +16281,95 @@ since I first called my brother's father dad.
 %
 Zymurgy's Law of Volunteer Labor:
 	People are always available for work in the past tense.
+%
+        THE LAST BUG
+
+"But you're out of your mind,"
+They said with a shrug.
+"The customer's happy;
+What's one little bug?"
+
+But he was determined.
+The others went home.
+He spread out the program,
+Deserted, alone.
+
+The cleaning men came,
+The whole room was cluttered
+With memory-dumps, punch cards.
+"I'm close," he muttered.
+
+The mumbling got louder,
+Simple deduction,
+"I've got it, it's right,
+Just change one instruction."
+
+It still wasn't perfect,
+As year followed year,
+And strangers would comment,
+"Is that guy still here?"
+
+He died at the console,
+Of hunger and thirst.
+Next day he was buried,
+Face down, nine-edge first.
+
+And the last bug in sight,
+An ant passing by,
+Saluted his tombstone,
+And whispered, "Nice try."
+%
+Speaking of the philosophy involved in moving humanity into space:
+
+Furniture will be a largely obsolete concept. Take for example the dresser
+my mom bought for me when I was a kid. I still have it, and by the
+standards of its era, it's an admirable household fixture. It is a massive
+construction of maple wood, expertly joined with cunningly fit pieces,
+fitted and glued with the strength of iron. It is set with massive brass
+fixtures, and looks today -- discounting the dust -- as new as the day it
+was purchased, a quarter century ago. So far, so good; a fine piece of
+furniture, you might say. But let's look at it objectively, as a machine,
+as an object with a purpose. Here sit a hundred pounds of hardwood with
+a compressive strength of 1500 psi, jointed by an expert craftsman into
+a rigid box that would easily support a bull elephant. And what is the
+sole purpose of this massive crate, this monument to a dead tree? -- it
+holds my socks.
+
+Not only is it blind engineering overkill of epic proportions, it is also
+an environmental disaster. The home to generations of squirrels, a
+sentinel post for falcons, an autumnal banner of golden glory, a living
+creature, was chopped down to enshrine some underwear. This, my friends,
+is no way to run a planet.
+	        -- Marshall T. Savage, from The Millennial Project:
+		   Colonizing the Galaxy -- In Eight Easy Steps
+%
+        Letter to the Editor
+        CROSSTALK, Journal of Defense Software Engineering
+
+The mention of "a feast of spaghetti code" ("Computer Collectives", CrossTalk,
+April/May 1992) prompted this response:
+
+Nearly every software professional has heard the term spaghetti code as a
+pejorative description for complicated, difficult to understand, and impossible
+to maintain, software.  However, many people may not know the other two 
+elements of the complete Pasta Theory of Software.
+
+Lasagna code is used to describe software that has a simple, understandable,
+and layered structure.  Lasagna code, although structured, is unfortunately
+monolithic and not easy to modify.  An attempt to change one layer conceptually
+simple, is often very difficult in actual practice.
+
+The ideal software structure is one having components that are small and
+loosely coupled; this ideal structure is called ravioli code.  In ravioli 
+code, each of the components, or objects, is a package containing some meat
+or other nourishment for the system; any component can be modified or replaced
+without significantly affecting other components.
+
+We need to go beyond the condemnation of spaghetti code to the active
+encouragement of ravioli code.
+
+                                                Raymond J. Rubey
+                                                SoftTech, Inc.
+                                                3100 Presidential Drive
+                                                Fairborn, OH  45324
+                                                Voice:  513-429-8291
