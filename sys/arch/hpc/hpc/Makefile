@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/05/01 13:24:02 enami Exp $
-
-SUBDIR=	platid_gen
+#	$NetBSD: Makefile,v 1.3 2001/05/01 13:26:20 enami Exp $
 
 HOST_CC ?= /usr/bin/cc
 
