@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.3 1997/02/24 17:31:31 cgd Exp $
+#	$NetBSD: disktab,v 1.4 1997/03/18 19:55:00 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
 # the end, etc.  A good setup to make a disk image from...
@@ -17,7 +17,13 @@ pd210s:Quantum PD 210S:\
 # Designed to fit on a Quantum ProDrive 210S, because I had one once
 # and still feel fondly about it.
 ImageDisk:\
-	:ty#winchester:ns#49:nt#7:nc#1189:
+	:ty#winchester:ns#49:nt#7:nc#1189:\
 	:pa#60264:oa#0:ba#8192:fa#2048:ta=4.2BSD:\
 	:pc#407827:oc#0:\
 	:pd#347563:od#60264:bd#8192:fd#2048:td=4.2BSD:
+
+# 3.5" floppy disktab entry.  Good for making floppy images with vnd.
+floppy|floppy3|3in|3.5in High Density Floppy:\
+        :ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+        :pa#2880:oa#0:ba#8192:fa#2048:\
+        :pc#2880:oc#0:
