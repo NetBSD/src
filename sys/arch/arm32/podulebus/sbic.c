@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.13.2.3 2001/03/29 09:02:59 bouyer Exp $ */
+/* $NetBSD: sbic.c,v 1.13.2.4 2001/03/29 09:39:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -371,7 +371,7 @@ void sbic_load_ptrs(dev, regs, target, lun)
  * so I will too.  I could plug it in, however so could they
  * in scsi_scsi_cmd().
  */
-int
+void
 sbic_scsi_request(chan, req, arg)
 	struct scsipi_channel *chan;
 	scsipi_adapter_req_t req;
@@ -443,7 +443,7 @@ sbic_scsi_request(chan, req, arg)
 				dev->target = periph->periph_target;
 				dev->lun = periph->periph_lun;
 				stat = sbicicmd(dev,
-				    periph->periph.target, periph->periph_lun,
+				    periph->periph_target, periph->periph_lun,
 				    &acb->cmd, acb->clen,
 				    acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
 			} while (dev->sc_nexus != acb);
@@ -557,7 +557,7 @@ sbic_scsidone(acb, stat)
 
 	xs = acb->xs;
 	periph = xs->xs_periph;
-	dev = (void *)periph->periph_chan->chan_adapter->adapt_dev;
+	dev = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	SBIC_TRACE(dev);
 #ifdef DIAGNOSTIC
 	if (acb == NULL || xs == NULL) {
@@ -575,7 +575,7 @@ sbic_scsidone(acb, stat)
 		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
 		       periph->periph_target, periph->periph_lun,
 		       dev->target,  dev->lun,  stat);
-	if( xs->xs_periph->periph_target == dev->sc_channel->chan_id )
+	if( xs->xs_periph->periph_target == dev->sc_channel.chan_id )
 		panic("target == hostid");
 #endif
 

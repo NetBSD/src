@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.15.2.2 2001/03/29 09:02:59 bouyer Exp $	*/
+/*	$NetBSD: sfas.c,v 1.15.2.3 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -1091,8 +1091,7 @@ sfas_midaction(dev, rp, nexus)
 
 		sfas_restore_pointers(dev);
 
-		if (!(nexus->flags & SFAS_NF_SENSING))
-			nexus->status	= 0xFF;
+		nexus->status	= 0xFF;
 		dev->sc_msg_in[0] = 0xFF;
 		dev->sc_msg_in_len= 0;
 
@@ -1164,9 +1163,8 @@ sfas_midaction(dev, rp, nexus)
 		status = *rp->sfas_fifo;
 		msg = *rp->sfas_fifo;
 
-		if (!(nexus->flags & SFAS_NF_SENSING))
-			nexus->status = status;
-		else if (status != 0)
+		nexus->status = status;
+		if (status != 0)
 			nexus->status = -1;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.23.2.3 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.23.2.4 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -171,7 +171,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_adapter.adapt_minphys = sfas_minphys;
 	sc->sc_softc.sc_adapter.adapt_request = ptsc_scsi_request;
 
-	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_softc.sc_channel.chan_channel = 0; 
 	sc->sc_softc.sc_channel.chan_ntargets = 8;
@@ -477,6 +477,7 @@ ptsc_scsi_request(chan, req, arg)
 #if 0
 		printf("Opcode %d\n", (int)(xs->cmd->opcode));
 #endif
+	default:
 	}
 	sfas_scsi_request(chan, req, arg);
 }

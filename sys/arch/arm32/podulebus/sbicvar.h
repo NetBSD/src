@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.4.10.2 2001/03/29 09:02:59 bouyer Exp $ */
+/* $NetBSD: sbicvar.h,v 1.4.10.3 2001/03/29 09:39:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -226,7 +226,8 @@ struct buf;
 struct scsipi_xfer;
 
 void sbic_minphys	__P((struct buf *bp));
-int sbic_scsicmd	__P((struct scsipi_xfer *));
+void sbic_scsi_request	__P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void sbicinit		__P((struct sbic_softc *dev));
 int  sbicintr 		__P((struct sbic_softc *));
 void	sbic_dump	__P((struct sbic_softc *dev));
