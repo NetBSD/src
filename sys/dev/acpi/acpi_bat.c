@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.16 2003/02/17 14:37:57 tshiozak Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.17 2003/02/24 19:58:09 christos Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.16 2003/02/17 14:37:57 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.17 2003/02/24 19:58:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,12 +337,12 @@ acpibat_battery_present(struct acpibat_softc *sc)
 	if (p1->Type != ACPI_TYPE_INTEGER) {
 		printf("%s: expected INTEGER, got %d\n", sc->sc_dev.dv_xname,
 		       p1->Type);
-		return (-1);
+		goto out;
 	}
 	if (p1->Package.Count < 1) {
 		printf("%s: expected 1 elts, got %d\n",
 		       sc->sc_dev.dv_xname, p1->Package.Count);
-		return (-1);
+		goto out;
 	}
 	sta = p1->Integer.Value;
 
@@ -355,7 +355,11 @@ acpibat_battery_present(struct acpibat_softc *sc)
 		sc->sc_data[ACPIBAT_PRESENT].cur.data_s = 0;
 	ABAT_UNLOCK(sc, s);
 
+	AcpiOsFree(buf.Pointer);
 	return ((sta & ACPIBAT_STA_PRESENT)?1:0);
+out:
+	AcpiOsFree(buf.Pointer);
+	return -1;
 }
 
 /*
@@ -475,11 +479,11 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
 		printf("bat: expected PACKAGE, got %d\n", p1->Type);
-		return (AE_ERROR);
+		goto out;
 	}
 	if (p1->Package.Count < 4) {
 		printf("bat: expected 4 elts, got %d\n", p1->Package.Count);
-		return (AE_ERROR);
+		goto out;
 	}
 	p2 = p1->Package.Elements;
 
@@ -503,7 +507,11 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_available = ABAT_ALV_STAT;
 	ABAT_UNLOCK(sc, s);
 
+	AcpiOsFree(buf.Pointer);
 	return (AE_OK);
+out:
+	AcpiOsFree(buf.Pointer);
+	return (AE_ERROR);
 }
 
 #define SCALE(x)	((x)/1000000), (((x)%1000000)/1000)
