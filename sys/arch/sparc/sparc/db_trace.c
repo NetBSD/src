@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2000/05/26 03:34:29 jhawk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.17 2002/12/23 13:21:10 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -44,9 +44,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
-	void		(*pr) __P((const char *, ...));
+	void		(*pr)(const char *, ...);
 {
 	struct frame	*frame;
+	db_addr_t	pc;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	char		c, *cp = modif;
@@ -58,9 +59,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			kernel_only = FALSE;
 	}
 
-	if (!have_addr)
+	if (!have_addr) {
 		frame = (struct frame *)DDB_TF->tf_out[6];
-	else {
+		pc = DDB_TF->tf_pc;
+	} else {
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
@@ -76,9 +78,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 			u = p->p_addr;
 			frame = (struct frame *)u->u_pcb.pcb_sp;
+			pc = u->u_pcb.pcb_pc;
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (struct frame *)addr;
+			pc = 0;
 		}
 	}
 
@@ -86,44 +90,39 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		int		i;
 		db_expr_t	offset;
 		char		*name;
-		db_addr_t	pc;
+		db_addr_t	opc;
+
+#define FR(framep,field) (INKERNEL(framep)			\
+				? (u_int)(framep)->##field	\
+				: fuword(&(framep)->##field))
+
+		/* Fetch return address */
+		opc = (db_addr_t)FR(frame, fr_pc);
 
 		/*
 		 * Switch to frame that contains arguments
 		 */
-
-		pc = frame->fr_pc;
-		frame = frame->fr_fp;
-
-		if (!INKERNEL(pc) || !INKERNEL(frame)) {
-			if (!kernel_only) {
-				count++;
-				while (count--) {
-					(*pr)("0x%lx()\n", pc);
-					pc = fuword(&frame->fr_pc);
-					frame = (void *)fuword(&frame->fr_fp);
-					if (pc == 0 || frame == NULL) {
-						return;
-					}
-				}
-			}
+		frame = (struct frame *)FR(frame, fr_fp);
+		if (frame == NULL || (!INKERNEL(frame) && kernel_only))
 			return;
-		}
 
-		db_find_sym_and_offset(pc, &name, &offset);
+		name = NULL;
+		if (INKERNEL(pc))
+			db_find_sym_and_offset(pc, &name, &offset);
 		if (name == NULL)
-			name = "?";
-
-		(*pr)("%s(", name);
+			(*pr)("0x%lx(", pc);
+		else
+			(*pr)("%s(", name);
 
 		/*
 		 * Print %i0..%i5, hope these still reflect the
 		 * actual arguments somewhat...
 		 */
-		for (i=0; i < 5; i++)
-			(*pr)("0x%x, ", frame->fr_arg[i]);
-		(*pr)("0x%x) at ", frame->fr_arg[i]);
-		db_printsym(pc, DB_STGY_PROC, pr);
+		for (i = 0; i < 6; i++)
+			(*pr)("0x%x%s", FR(frame, fr_arg[i]),
+				(i < 5) ? ", " : ") at ");
+		db_printsym(opc, DB_STGY_PROC, pr);
 		(*pr)("\n");
+		pc = opc;
 	}
 }
