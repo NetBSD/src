@@ -1,6 +1,6 @@
-#	$NetBSD: files.mach,v 1.1 2001/07/14 02:10:59 christos Exp $
+#	$NetBSD: files.mach,v 1.2 2002/10/27 21:41:51 manu Exp $
 #
-# Config file description for machine-independent SVR4 compat code.
+# Config file description for machine-independent Mach compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their
