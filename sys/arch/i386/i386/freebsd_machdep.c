@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.29 2001/10/27 12:26:30 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.30 2001/10/27 18:27:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_efl = get_vflags(p);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -220,14 +220,14 @@ freebsd_sys_sigreturn(p, v, retval)
 	/* Restore register context. */
 	tf = p->p_md.md_regs;
 #ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
+	if (context.sc_efl & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
 
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(p, context.sc_efl);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -239,7 +239,7 @@ freebsd_sys_sigreturn(p, v, retval)
 		 * the trap, rather than doing all of the checking here.
 		 */
 		if (((context.sc_efl ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
+		    !USERMODE(context.sc_cs, context.sc_efl))
 			return (EINVAL);
 
 		tf->tf_gs = context.sc_gs;
