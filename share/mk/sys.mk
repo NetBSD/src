@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.83 2004/01/27 03:31:49 lukem Exp $
+#	$NetBSD: sys.mk,v 1.84 2004/08/07 21:43:18 chs Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -23,6 +23,7 @@ CC?=		cc
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "armeb" || \
+    ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
@@ -33,8 +34,6 @@ CC?=		cc
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "vax"
 DBG?=	-O2
-.elif ${MACHINE_ARCH} == "hppa"
-DBG?=
 .else
 DBG?=	-O
 .endif
