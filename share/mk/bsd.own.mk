@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.54 1997/10/11 07:26:53 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.54.2.1 1997/10/29 00:24:19 mellon Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -87,8 +87,9 @@ TARGETS+=	all clean cleandir depend includes install lint obj regress \
 		realinstall
 
 .if !target(install)
-install:	.NOTMAIN beforeinstall realinstall afterinstall
+install:	.NOTMAIN beforeinstall subdir-install realinstall afterinstall
 beforeinstall:	.NOTMAIN
-realinstall:	.NOTMAIN
-afterinstall:	.NOTMAIN
+subdir-install:	.NOTMAIN beforeinstall
+realinstall:	.NOTMAIN beforeinstall
+afterinstall:	.NOTMAIN subdir-install realinstall
 .endif
