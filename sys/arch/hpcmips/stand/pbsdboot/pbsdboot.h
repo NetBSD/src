@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.3 1999/09/26 02:42:50 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -84,6 +84,20 @@ struct preference_s {
 	BOOL load_debug_info;
 	BOOL serial_port;
 };
+
+/*
+ * Machine dependent information
+ */
+struct system_info {
+	unsigned int si_dramstart;
+	unsigned int si_drammaxsize;
+	DWORD si_pagesize;
+	unsigned char *si_asmcode;
+	int si_asmcodelen;
+	int (*si_boot) __P((caddr_t));
+};
+extern struct system_info system_info;
+
 extern struct preference_s pref;
 extern TCHAR* where_pref_load_from;
 
@@ -102,7 +116,6 @@ int CreateMainWindow(HINSTANCE hInstance, HWND hWnd, LPCTSTR name, int cmdbar_he
  *  vmem.c
  */
 int vmem_exec(caddr_t entry, int argc, char *argv[], struct bootinfo *bi);
-DWORD getpagesize(void);
 caddr_t vmem_get(caddr_t phys_addr, int *length);
 int vmem_init(caddr_t start, caddr_t end);
 void vmem_dump_map(void);
@@ -117,9 +130,9 @@ int getinfo(int fd, caddr_t *start, caddr_t *end);
 int loadfile(int fd, caddr_t *entry);
 
 /*
- *  startprog.c
+ *  mips.c
  */
-int startprog(caddr_t map);
+int mips_boot(caddr_t map);
 
 /*
  *  pbsdboot.c
@@ -149,3 +162,21 @@ void pref_dump(struct preference_s* pref);
 int pref_read(TCHAR* filename, struct preference_s* pref);
 int pref_load(TCHAR* load_path[], int pathlen);
 int pref_write(TCHAR* filename, struct preference_s* buf);
+
+
+/*
+ *  systeminfo.c
+ */
+int set_system_info(void);
+
+
+/*
+ *  vr41xx.c
+ */
+void vr41xx_init(SYSTEM_INFO *info);
+
+
+/*
+ *  tx39xx.c
+ */
+void tx39xx_init(SYSTEM_INFO *info);

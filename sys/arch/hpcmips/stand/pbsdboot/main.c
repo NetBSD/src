@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1999/09/23 08:30:59 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1999/09/26 02:42:50 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -383,7 +383,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.5.0 1999.09.23\r\n")
+			       TEXT("Version 1.6.0 1999.09.26\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
@@ -869,12 +869,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 				if (pref.serial_port) {
 					SerialPort(TRUE);
 				}
-
-				/*
-				 *  boot !
+				/* 
+				 * Set system infomation
 				 */
-				pbsdboot(wkernel_name, argc, argv, &bi);
-
+				if (set_system_info()) {
+					/*
+					*  boot !
+					*/
+					pbsdboot(wkernel_name, argc, argv, &bi);
+				}
 				/*
 				 *  Not return.
 				 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.c,v 1.2 1999/09/22 12:49:50 uch Exp $	*/
+/*	$NetBSD: vmem.c,v 1.3 1999/09/26 02:42:52 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -36,10 +36,6 @@
  *
  */
 #include <pbsdboot.h>
-
-#define MAX_MEMORY (1024*1024*32)	/* 32 MB */
-#define MEM_BLOCKS 8
-#define MEM_BLOCK_SIZE (1024*1024*4)
 
 struct addr_s {
 	caddr_t addr;
@@ -117,30 +113,18 @@ vmem_exec(caddr_t entry, int argc, char *argv[], struct bootinfo *bi)
 
 	debug_printf(TEXT("execute startprog()\n"));
 	//return (-1);
-	return (startprog(vtophysaddr((caddr_t)map)));
-}
-
-DWORD
-getpagesize()
-{
-	static int init = 0;
-	static SYSTEM_INFO info;
-
-	if (!init) {
-		GetSystemInfo(&info);
-		init = 1;
-	}
-
-	return (info.dwPageSize);
+	return ((*system_info.si_boot)(vtophysaddr((caddr_t)map)));
 }
 
 caddr_t
 vmem_alloc()
 {
-	int i;
+	int i, pagesize;
 	struct page_header_s *page;
+
+	pagesize = system_info.si_pagesize;
 	for (i = 0; i < npages; i++) {
-		page = (struct page_header_s*)&heap[getpagesize() * i];
+		page = (struct page_header_s*)&heap[pagesize * i];
 		if (!phys_addrs[i].in_use &&
 		    !(kernel_start <= phys_addrs[i].addr &&
 		      phys_addrs[i].addr < kernel_end)) {
@@ -154,10 +138,12 @@ vmem_alloc()
 static caddr_t
 alloc_kpage(caddr_t phys_addr)
 {
-	int i;
+	int i, pagesize;
 	struct page_header_s *page;
+
+	pagesize = system_info.si_pagesize;
 	for (i = 0; i < npages; i++) {
-		page = (struct page_header_s*)&heap[getpagesize() * i];
+		page = (struct page_header_s*)&heap[pagesize * i];
 		if (phys_addrs[i].addr == phys_addr) {
 			if (phys_addrs[i].in_use) {
 				debug_printf(TEXT("page %d (phys addr=0x%x) is already in use\n"),
@@ -177,14 +163,15 @@ alloc_kpage(caddr_t phys_addr)
 caddr_t
 vmem_get(caddr_t phys_addr, int *length)
 {
-	int pageno = (phys_addr - kernel_start) / getpagesize();
-	int offset = (phys_addr - kernel_start) % getpagesize();
+	int pagesize = system_info.si_pagesize;
+	int pageno = (phys_addr - kernel_start) / pagesize;
+	int offset = (phys_addr - kernel_start) % pagesize;
 
 	if (map == NULL || pageno < 0 || npages <= pageno) {
 		return (NULL);
 	}
 	if (length) {
-		*length = getpagesize() - offset;
+		*length = pagesize - offset;
 	}
 	return (map->leaf[pageno / map->leafsize][pageno % map->leafsize] + offset);
 }
@@ -192,8 +179,8 @@ vmem_get(caddr_t phys_addr, int *length)
 caddr_t
 vtophysaddr(caddr_t page)
 {
-	int pageno = (page - heap) / getpagesize();
-	int offset = (page - heap) % getpagesize();
+	int pageno = (page - heap) / system_info.si_pagesize;
+	int offset = (page - heap) % system_info.si_pagesize;
 
 	if (map == NULL || pageno < 0 || npages <= pageno) {
 		return (NULL);
@@ -204,17 +191,22 @@ vtophysaddr(caddr_t page)
 int
 vmem_init(caddr_t start, caddr_t end)
 {
-	int i, N, pageno;
+#define MEM_BLOCK_SIZE (1024*1024*4) /* must be greater than page size */
+	int i, m, pageno;
 	unsigned long magic0;
 	unsigned long magic1;
 	int nfounds;
 	struct page_header_s *page;
 	long size;
 	int nleaves;
+	int pagesize, memblocks;
+
+	pagesize = system_info.si_pagesize;
+	memblocks = (system_info.si_drammaxsize) / MEM_BLOCK_SIZE;
 
 	/* align with page size */
-	start = (caddr_t)(((long)start / getpagesize()) * getpagesize());
-	end = (caddr_t)((((long)end + getpagesize() - 1) / getpagesize()) * getpagesize());
+	start = (caddr_t)(((long)start / pagesize) * pagesize);
+	end = (caddr_t)((((long)end + pagesize - 1) / pagesize) * pagesize);
 
 	kernel_start = start;
 	kernel_end = end;
@@ -223,13 +215,13 @@ vmem_init(caddr_t start, caddr_t end)
 	/*
 	 *  program image pages.
 	 */
-	npages = (size + getpagesize() - 1) / getpagesize();
+	npages = (size + pagesize - 1) / pagesize;
 
 	/*
 	 *  map leaf pages.
 	 *  npages plus one for end mark.
 	 */
-	npages += (nleaves = ((npages * sizeof(caddr_t) + getpagesize()) / getpagesize()));
+	npages += (nleaves = ((npages * sizeof(caddr_t) + pagesize) / pagesize));
 
 	/*
 	 *  map root page, startprg code page, argument page and bootinfo page.
@@ -242,7 +234,7 @@ vmem_init(caddr_t start, caddr_t end)
 	debug_printf(TEXT("allocate %d pages\n"), npages);
 	heap = (unsigned char*)
 		VirtualAlloc(0,
-			     npages * getpagesize(),
+			     npages * pagesize,
 			     MEM_COMMIT,
 			     PAGE_READWRITE | PAGE_NOCACHE);
 	if (heap == NULL) {
@@ -273,7 +265,7 @@ vmem_init(caddr_t start, caddr_t end)
 	debug_printf(TEXT("magic=%08x%08x\n"), magic0, magic1);
 
 	for (i = 0; i < npages; i++) {
-		page = (struct page_header_s*)&heap[getpagesize() * i];
+		page = (struct page_header_s*)&heap[pagesize * i];
 		page->magic0 = magic0;
 		page->pageno = i;
 		page->magic1 = magic1;
@@ -285,30 +277,32 @@ vmem_init(caddr_t start, caddr_t end)
 	 *  Scan whole physical memory.
 	 */
 	nfounds = 0;
-	for (N = 0; N < MEM_BLOCKS && nfounds < npages; N++) {
+	for (m = 0; (m < memblocks) && (nfounds < npages); m++) {
 		unsigned char* mem;
-		int res;
-		mem = (unsigned char*)
-			VirtualAlloc(0,
-				     MEM_BLOCK_SIZE,
-				     MEM_RESERVE,
-				     PAGE_NOACCESS);
-		res = VirtualCopy((LPVOID)mem,
-				  //(LPVOID)((0xa0000000 + MEM_BLOCK_SIZE * N) >> 8),
-				  (LPVOID)((0x80000000 + MEM_BLOCK_SIZE * N) >> 8),
-				  MEM_BLOCK_SIZE,
-				  PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
-
-		for (i = 0; i < (int)(MEM_BLOCK_SIZE/getpagesize()); i++) {
-			page = (struct page_header_s*)&mem[getpagesize() * i];
+		/* Map physical memory block */
+		mem = (unsigned char*)VirtualAlloc(0, MEM_BLOCK_SIZE, 
+						   MEM_RESERVE, PAGE_NOACCESS);
+		if(!VirtualCopy((LPVOID)mem, (LPVOID)
+				((system_info.si_dramstart + MEM_BLOCK_SIZE * m) >> 8),
+				MEM_BLOCK_SIZE,	
+				PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL)) {
+			VirtualFree(mem, 0, MEM_RELEASE);			
+			continue;
+		}
+		/* Find preliminary allocated pages */
+		for (i = 0; i < (int)(MEM_BLOCK_SIZE / pagesize); i++) {
+			page = (struct page_header_s*)&mem[pagesize * i];
 			if (page->magic0 == magic0 &&
 			    page->magic1 == magic1) {
 				pageno = page->pageno;
 				if (0 <= pageno && pageno < npages &&
 				    phys_addrs[pageno].addr == 0) {
-					phys_addrs[pageno].addr =
-						(unsigned char*)(0x80000000 + MEM_BLOCK_SIZE * N +
-								 getpagesize() * i);
+					/* Set kernel virtual addr. XXX mips dependent */
+					phys_addrs[pageno].addr = (unsigned char*)
+						((0x80000000 |
+						  system_info.si_dramstart) +
+						 MEM_BLOCK_SIZE * m +
+						 pagesize * i);
 					page->magic0 = 0;
 					page->magic1 = 0;
 					if (npages <= ++nfounds) {
@@ -326,7 +320,9 @@ vmem_init(caddr_t start, caddr_t end)
 
 	if (nfounds < npages) {
 		debug_printf(TEXT("lost %d pages\n"), npages - nfounds);
-		msg_printf(MSG_ERROR, whoami, TEXT("lost %d pages\n"), npages - nfounds);
+		msg_printf(MSG_ERROR, whoami, 
+			   TEXT("lost %d pages (allocated %d pages)\n"), 
+			   npages - nfounds, npages);
 		goto error_cleanup;
 	}
 
@@ -339,8 +335,8 @@ vmem_init(caddr_t start, caddr_t end)
 		goto error_cleanup;
 	}
 	map->nleaves = nleaves;
-	map->leafsize = getpagesize() / sizeof(caddr_t);
-	map->pagesize = getpagesize();
+	map->leafsize = pagesize / sizeof(caddr_t);
+	map->pagesize = pagesize;
 
 	/*
 	 *  allocate leaf pages
@@ -356,7 +352,7 @@ vmem_init(caddr_t start, caddr_t end)
 	/*
 	 *  allocate kernel pages
 	 */
-	for (i = 0; start < kernel_end; start += getpagesize(), i++) {
+	for (i = 0; start < kernel_end; start += pagesize, i++) {
 		caddr_t *leaf = map->leaf[i / map->leafsize];
 		if ((leaf[i % map->leafsize] = alloc_kpage(start)) == NULL) {
 			debug_printf(TEXT("can't allocate page 0x%x.\n"), start);
@@ -398,7 +394,7 @@ vmem_dump_map()
 		return;
 	}
 
-	for (addr = kernel_start; addr < kernel_end; addr += getpagesize()) {
+	for (addr = kernel_start; addr < kernel_end; addr += system_info.si_pagesize) {
 		page = vmem_get(addr, NULL);
 		paddr = vtophysaddr(page);
 		debug_printf(TEXT("%08X: vaddr=%08X paddr=%08X %s\n"),

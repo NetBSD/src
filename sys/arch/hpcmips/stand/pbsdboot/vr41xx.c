@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.c,v 1.3 1999/09/23 08:30:59 takemura Exp $	*/
+/* $NetBSD: */
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,107 +37,27 @@
  */
 #include <pbsdboot.h>
 
-extern void asm_code();
-extern void asm_code_end();
+extern void vr41xx_asm_code();
+extern void vr41xx_asm_code_end();
+void vr41xx_asm_code_holder __P((void));
 
-#if 0
-static void clear_screen() 
+void
+vr41xx_init(SYSTEM_INFO *info)
 {
-	unsigned char* mem;
-
-	/*
-	 *  clear screen
-	 */
-	mem = (unsigned char*)VirtualAlloc(
-		0,
-		0x4b00,
-		MEM_RESERVE,
-		PAGE_NOACCESS);
-	VirtualCopy(
-		(LPVOID)mem,
-		(LPVOID)(0xaa000000 >> 8),
-		0x4b00,
-//    PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
-		PAGE_READWRITE | PAGE_PHYSICAL);
-	memset(mem, 0, 0x4b00);
-	VirtualFree(mem, 0, MEM_RELEASE);
-}
-
-static void flush_data() 
-{
-	unsigned char* mem;
-	mem = (unsigned char*)malloc(0x4000);
-	memset(mem, 0, 0x4000);
-	free(mem);
-}
-#endif
-
-int
-startprog(caddr_t map)
-{
-	int i;
-	unsigned char *mem;
-	unsigned long jump_instruction, phys_mem;
-	unsigned char *codep = (unsigned char*)asm_code;
-	int code_len = (unsigned char*)asm_code_end - codep;
-
-#if 0
-	clear_screen();
-	//flush_data();
-#endif
-
-	/*
-	 *  allocate physical memory
-	 */
-	if ((mem = (unsigned char*)vmem_alloc()) == NULL) {
-		debug_printf(TEXT("can't allocate final page.\n"));
-		msg_printf(MSG_ERROR, whoami, TEXT("can't allocate root page.\n"));
-		return (-1);
-	}
-
-	/*
-	 *  copy startup program code
-	 */
-	for (i = 0; i < code_len; i++) {
-		mem[i] = *codep++;
-	}
-  
-	/*
-	 *  set map address
-	 */
-	*(unsigned short*)&mem[0] = (unsigned short)(((long)map) >> 16);
-	*(unsigned short*)&mem[4] = (unsigned short)map;
-
-	/*
-	 *  construct start instruction
-	 */
-	phys_mem = (unsigned long)vtophysaddr(mem);
-	jump_instruction = (0x08000000 | ((phys_mem >> 2) & 0x03ffffff));
-
-	/*
-	 *  map interrupt vector
-	 */
-	mem = (unsigned char*)VirtualAlloc(
-		0,
-		0x400,
-		MEM_RESERVE,
-		PAGE_NOACCESS);
-	VirtualCopy(
-		(LPVOID)mem,
-		(LPVOID)(0x80000000 >> 8),
-		0x400,
-		PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
-
-	/*
-	 *  GO !
-	 */
-	*(unsigned long*)&mem[0x0] = jump_instruction;
-
-	return (0); /* not reachable */
+	/* 1KByte page */
+	system_info.si_pagesize = info->dwPageSize;
+	/* DRAM Bank 0/1 physical addr range */
+	system_info.si_dramstart = 0x80000000;
+	system_info.si_drammaxsize = 0x08000000;
+	/* Pointer for bootstrap code */
+	system_info.si_asmcode = (unsigned char*)vr41xx_asm_code;
+	system_info.si_asmcodelen = (unsigned char*)vr41xx_asm_code_end
+		- system_info.si_asmcode;
+	system_info.si_boot = mips_boot;
 }
 
 void
-asm_code_holder()
+vr41xx_asm_code_holder()
 {
 /*
  * void
@@ -184,8 +104,8 @@ asm_code_holder()
  */
 __asm(
 "	.set noreorder;	"
-"	.globl asm_code;"
-"asm_code:"
+"	.globl vr41xx_asm_code;"
+"vr41xx_asm_code:"
 "	lui	a0, 0x0000;	"
 "	ori	a0, 0x0000;	"
 
@@ -305,8 +225,8 @@ __asm(
 "	jr	t0;"
 "	nop;"
 
-"	.globl asm_code_end;"
-"asm_code_end: nop;"
+"	.globl vr41xx_asm_code_end;"
+"vr41xx_asm_code_end: nop;"
 "	.set reorder;	"
 );
 }
