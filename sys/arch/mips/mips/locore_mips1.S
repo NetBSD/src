@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.49 2001/01/13 23:49:12 thorpej Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.50 2001/01/14 21:18:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -361,7 +361,9 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(astpending)	# any pending ast?
+	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
 	beq	t0, zero, 1f			# if no, skip ast processing
 	nop
@@ -450,7 +452,9 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(astpending)	# any pending ast?
+	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
 	beq	t0, zero, 1f
 	nop
@@ -631,9 +635,10 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchoronous traps.
  */
+	lw	v0, _C_LABEL(curproc)		# v0 = curproc
 	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
-	lw	v0, _C_LABEL(astpending)	# any pending ast?
+	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
 	nop					# -delay slot-
