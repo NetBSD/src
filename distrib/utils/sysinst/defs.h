@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 1997/11/03 02:38:41 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 1997/11/04 01:39:03 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,8 +77,8 @@ typedef struct distinfo {
 
 /* variables */
 
-EXTERN char rel[10] INIT(REL);
-EXTERN char rels[10] INIT(REL);
+EXTERN char rel[SSTRSIZE] INIT(REL);
+EXTERN char rels[SSTRSIZE] INIT(REL);
 
 EXTERN int yesno;
 EXTERN int layoutkind;
@@ -233,7 +233,6 @@ void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
 void	reask_sizemult __P((void));
 int	ask_ynquestion __P((char *quest, char def, ...));
-void	extract_dist __P((void));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
@@ -241,10 +240,13 @@ void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
-
-void get_and_unpack_sets(int success_msg, int failure_msg);
+void	ask_verbose_dist __P((void));
+void	extract_file __P((char *path));
+void	extract_dist __P((void));
+void 	get_and_unpack_sets(int success_msg, int failure_msg);
 
 /* from target.c */
+const	char * target_expand __P((const char *pathname));
 void	make_target_dir __P((const char *path));
 void	append_to_target_file __P((const char *path, const char *string));
 void	echo_to_target_file __P(( const char *path, const char *string));

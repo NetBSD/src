@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.5 1997/11/03 09:47:00 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.6 1997/11/04 01:39:07 phil Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.5 1997/11/03 09:47:00 jonathan Exp $");
+__RCSID("$NetBSD: target.c,v 1.6 1997/11/04 01:39:07 phil Exp $");
 #endif
 
 
@@ -71,7 +71,6 @@ static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
-static const char * target_expand __P((const char *pathname));
 
 
 /* get name of current root device  from kernel via sysctl. */
@@ -181,8 +180,10 @@ concat_paths(const char* prefix, const char *suffix)
  * The caller must copy if it wants to use the pathname past the 
  * next call to a target-prefixing  function, or to modify the inputs..
  * Used only  internally so this is probably safe.
+ *
+ * Not static so other functions can generate target related file names.
  */
-static const char* 
+const char* 
 target_expand(const char *tgtpath)
 {
 	return concat_paths(target_prefix(), tgtpath);
