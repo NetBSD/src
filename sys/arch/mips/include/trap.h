@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 1996/03/19 04:34:57 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.6 1996/03/24 08:12:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,4 +70,4 @@
 #define	T_WATCH			23	/* Watch address reference */
 #define T_VCED			31	/* Virtual coherency data */
 
-#define	T_USER			0x10	/* user-mode flag or'ed with type */
+#define	T_USER			0x20	/* user-mode flag or'ed with type */
