@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.2 1997/08/23 07:12:53 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.3 1997/08/29 18:47:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1086,15 +1086,8 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
-#if 0
-	printf("%s: intr\n", sc->sc_dev.dv_xname);
-#endif
-
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
-#if 0
-		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
-#endif
 
 		status = bus_space_read_2(iot, ioh, EP_STATUS);
 
@@ -1107,13 +1100,6 @@ epintr(arg)
 #endif
 				break;
 			}
-#if 1
-			else {
-				printf("%s: rogue intr %04x mask=%04x ipending=%04x (%04x)\n",
-				       sc->sc_dev.dv_xname, status,
-				       cpl, ipending, imask[IPL_NET]);
-			}
-#endif
 		}
 
 		ret = 1;
