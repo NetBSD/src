@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.18 2003/04/15 07:37:34 itojun Exp $	*/
+/*	$NetBSD: table.c,v 1.19 2003/04/15 08:20:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.18 2003/04/15 07:37:34 itojun Exp $");
+__RCSID("$NetBSD: table.c,v 1.19 2003/04/15 08:20:18 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1836,7 +1836,8 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)sprintf(label, "Use #%d", (int)(rts - rt->rt_spares));
+	(void)snprintf(label, sizeof(label), "Use #%d",
+	    (int)(rts - rt->rt_spares));
 	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC), rts, label);
 	if (swap.rts_metric == HOPCNT_INFINITY) {
 		*rts = rts_empty;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.17 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.18 2003/04/15 08:20:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.17 2002/11/30 04:04:23 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.18 2003/04/15 08:20:17 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -344,7 +344,8 @@ gwkludge(void)
 		if (!(state & IS_EXTERNAL)
 		    && ifp->int_mask != ifp->int_std_mask)
 			ifp->int_state |= IS_SUBNET;
-		(void)sprintf(ifp->int_name, "%s(%s)", type, gname);
+		(void)snprintf(ifp->int_name, sizeof(ifp->int_name),
+		    "%s(%s)", type, gname);
 		ifp->int_index = -1;
 
 		if_link(ifp);
@@ -448,7 +449,7 @@ parse_ts(time_t *tp,
 			    buf,bufsize)
 	    || buf[bufsize-1] != '\0'
 	    || buf[bufsize-2] != '\0') {
-		sprintf(buf,"bad timestamp %.25s", val0);
+		snprintf(buf, bufsize, "bad timestamp %.25s", val0);
 		return buf;
 	}
 	strcat(buf,"\n");
@@ -456,7 +457,7 @@ parse_ts(time_t *tp,
 #if defined(sgi) || defined(__NetBSD__)
 	ptr = strptime(buf, "%y/%m/%d@%H:%M\n", &tm);
 	if (ptr == NULL || *ptr != '\0') {
-		sprintf(buf,"bad timestamp %.25s", val0);
+		snprintf(buf, bufsize, "bad timestamp %.25s", val0);
 		return buf;
 	}
 #else
@@ -465,7 +466,7 @@ parse_ts(time_t *tp,
 			&tm.tm_hour, &tm.tm_min)
 	    || tm.tm_mon < 1 || tm.tm_mon > 12
 	    || tm.tm_mday < 1 || tm.tm_mday > 31) {
-		sprintf(buf,"bad timestamp %.25s", val0);
+		snprintf(buf, bufsize, "bad timestamp %.25s", val0);
 		return buf;
 	}
 	tm.tm_mon--;
@@ -474,7 +475,7 @@ parse_ts(time_t *tp,
 #endif
 
 	if ((*tp = mktime(&tm)) == -1) {
-		sprintf(buf,"bad timestamp %.25s", val0);
+		snprintf(buf, bufsize, "bad timestamp %.25s", val0);
 		return buf;
 	}
 
@@ -527,12 +528,13 @@ get_passwd(char *tgt,
 		    || buf[sizeof(buf)-1] != '\0'
 		    || (l = strtoul(buf,&p,0)) > 255
 		    || *p != '\0') {
-			sprintf(buf,"bad KeyID \"%.20s\"", val0);
+			snprintf(buf, sizeof(buf), "bad KeyID \"%.20s\"", val0);
 			return buf;
 		}
 		for (ap2 = parmp->parm_auth; ap2 < ap; ap2++) {
 			if (ap2->keyid == l) {
-				sprintf(buf,"duplicate KeyID \"%.20s\"", val0);
+				snprintf(buf, sizeof(buf),
+				    "duplicate KeyID \"%.20s\"", val0);
 				return buf;
 			}
 		}
@@ -540,18 +542,18 @@ get_passwd(char *tgt,
 
 		if (delim == '|') {
 			val0 = ++val;
-			if (0 != (p = parse_ts(&k.start,&val,val0,&delim,
-					       buf,sizeof(buf))))
+			if (0 != (p = parse_ts(&k.start, &val, val0, &delim,
+			    buf, sizeof(buf))))
 				return p;
 			if (delim != '|')
 				return "missing second timestamp";
 			val0 = ++val;
-			if (0 != (p = parse_ts(&k.end,&val,val0,&delim,
-					       buf,sizeof(buf))))
+			if (0 != (p = parse_ts(&k.end, &val, val0, &delim,
+			    buf, sizeof(buf))))
 				return p;
 			if ((u_long)k.start > (u_long)k.end) {
-				sprintf(buf,"out of order timestamp %.30s",
-					val0);
+				snprintf(buf, sizeof(buf),
+				    "out of order timestamp %.30s", val0);
 				return buf;
 			}
 		}
@@ -569,7 +571,7 @@ bad_str(const char *estr)
 {
 	static char buf[100+8];
 
-	sprintf(buf, "bad \"%.100s\"", estr);
+	snprintf(buf, sizeof(buf), "bad \"%.100s\"", estr);
 	return buf;
 }
 
