@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.4 2001/10/26 04:59:18 itojun Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.5 2001/11/12 23:14:21 lukem Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -39,6 +39,9 @@
  * Real-Time and Priority Service"
  * by Ion Stoica, Hui Zhang, and T. S. Eugene Ng.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.5 2001/11/12 23:14:21 lukem Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
