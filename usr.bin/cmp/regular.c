@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.13 2005/02/06 20:50:34 dsl Exp $	*/
+/*	$NetBSD: regular.c,v 1.14 2005/02/06 21:19:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.13 2005/02/06 20:50:34 dsl Exp $");
+__RCSID("$NetBSD: regular.c,v 1.14 2005/02/06 21:19:46 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 	u_char ch, *p1, *p2;
 	off_t byte, length, line;
 	int dfound;
+	size_t blk_sz, blk_cnt;
 
 	if (sflag && len1 != len2)
 		exit(1);
@@ -69,41 +70,46 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 	len2 -= skip2;
 
 	length = MIN(len1, len2);
-	if (length > SIZE_T_MAX) {
-mmap_failed:
-		c_special(fd1, file1, skip1, fd2, file2, skip2);
-		return;
-	}
+	for (blk_sz = 1024 * 1024; length != 0; length -= blk_sz) {
+		if (blk_sz > length)
+			blk_sz = length;
+		p1 = mmap(NULL, blk_sz, PROT_READ, MAP_FILE|MAP_SHARED, fd1, skip1);
+		if (p1 == MAP_FAILED)
+			goto mmap_failed;
 
-	if ((p1 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_FILE|MAP_SHARED, fd1, skip1)) == MAP_FAILED)
-		goto mmap_failed;
-	(void)madvise(p1, (size_t)length, MADV_SEQUENTIAL);
+		p2 = mmap(NULL, blk_sz, PROT_READ, MAP_FILE|MAP_SHARED, fd2, skip2);
+		if (p2 == MAP_FAILED) {
+			munmap(p1, blk_sz);
+			goto mmap_failed;
+		}
 
-	if ((p2 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_FILE|MAP_SHARED, fd2, skip2)) == MAP_FAILED) {
-		munmap(p1, (size_t) length);
-		goto mmap_failed;
-	}
-	(void)madvise(p2, (size_t)length, MADV_SEQUENTIAL);
-
-	dfound = 0;
-	for (byte = line = 1; length--; ++p1, ++p2, ++byte) {
-		if ((ch = *p1) != *p2) {
-			if (lflag) {
+		dfound = 0;
+		blk_cnt = blk_sz;
+		for (byte = line = 1; blk_cnt--; ++p1, ++p2, ++byte) {
+			if ((ch = *p1) != *p2) {
+				if (!lflag) {
+					diffmsg(file1, file2, byte, line);
+					/* NOTREACHED */
+				}
 				dfound = 1;
 				(void)printf("%6lld %3o %3o\n", (long long)byte,
-				    ch, *p2);
-			} else
-				diffmsg(file1, file2, byte, line);
-				/* NOTREACHED */
+					    ch, *p2);
+			}
+			if (ch == '\n')
+				++line;
 		}
-		if (ch == '\n')
-			++line;
+		munmap(p1 - blk_sz, blk_sz);
+		munmap(p2 - blk_sz, blk_sz);
+		skip1 += blk_sz;
+		skip2 += blk_sz;
 	}
 
 	if (len1 != len2)
 		eofmsg (len1 > len2 ? file2 : file1);
 	if (dfound)
 		exit(DIFF_EXIT);
+	return;
+
+mmap_failed:
+	c_special(fd1, file1, skip1, fd2, file2, skip2);
 }
