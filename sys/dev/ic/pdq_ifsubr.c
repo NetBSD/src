@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.23 1998/09/28 17:13:55 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.24 1998/09/28 18:01:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -195,6 +195,11 @@ pdq_ifstart(
 #if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
 	if ((m->m_flags & M_HASTXDMAMAP) == 0) {
 	    bus_dmamap_t map;
+	    if (PDQ_OS_HDR_OFFSET != PDQ_RX_FC_OFFSET) {
+		m->m_data[0] = PDQ_FDDI_PH0;
+		m->m_data[1] = PDQ_FDDI_PH1;
+		m->m_data[2] = PDQ_FDDI_PH2;
+	    }
 	    if (!bus_dmamap_create(sc->sc_dmatag, m->m_pkthdr.len, 255,
 				   m->m_pkthdr.len, 0, BUS_DMA_NOWAIT, &map)) {
 		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
@@ -206,6 +211,12 @@ pdq_ifstart(
 	    }
 	    if ((m->m_flags & M_HASTXDMAMAP) == 0)
 		break;
+	}
+#else
+	if (PDQ_OS_HDR_OFFSET != PDQ_RX_FC_OFFSET) {
+	    m->m_data[0] = PDQ_FDDI_PH0;
+	    m->m_data[1] = PDQ_FDDI_PH1;
+	    m->m_data[2] = PDQ_FDDI_PH2;
 	}
 #endif
 
@@ -234,11 +245,11 @@ pdq_os_receive_pdu(
 #if defined(PDQ_BUS_DMA)
     {
 	/*
-	 * Even though the first mbuf start at the frame control octet,
-	 * the dmamap PDQ_RX_FC_OFFSET octets earlier.  Any additional
+	 * Even though the first mbuf start at the first fddi header octet,
+	 * the dmamap starts PDQ_OS_HDR_OFFSET octets earlier.  Any additional
 	 * mbufs will start normally.
 	 */
-	int offset = PDQ_RX_FC_OFFSET;
+	int offset = PDQ_OS_HDR_OFFSET;
 	struct mbuf *m0;
 	for (m0 = m; m0 != NULL; m0 = m0->m_next, offset = 0) {
 	    pdq_os_databuf_sync(sc, m0, offset, m0->m_len, BUS_DMASYNC_POSTREAD);
