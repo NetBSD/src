@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2002/09/19 10:49:43 ragge Exp $
+#	$NetBSD: Makefile,v 1.45 2002/09/25 22:47:34 augustss Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -13,7 +13,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	extent.h fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	gmon.h hash.h inttypes.h ioccom.h \
 	ioctl.h ioctl_compat.h ipc.h kcore.h kernel.h kgdb.h ktrace.h lkm.h \
-	localedef.h lock.h lockf.h malloc.h map.h mbuf.h md4.h md5.h midiio.h \
+	localedef.h lock.h lockf.h malloc.h mbuf.h md4.h md5.h midiio.h \
 	mman.h mount.h msg.h msgbuf.h mtio.h namei.h null.h param.h pipe.h \
 	pmc.h poll.h pool.h proc.h properties.h \
 	protosw.h ptrace.h queue.h ras.h reboot.h radioio.h resource.h \
