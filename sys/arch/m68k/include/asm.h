@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 1999/10/25 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.19.6.1 2000/07/25 08:32:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -193,6 +193,12 @@
 	.long	0
 
 #endif /* _KERNEL */
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
 
 #ifdef __STDC__
 #define	__STRING(x)			#x
