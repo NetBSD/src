@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.17 2003/06/29 22:29:40 fvdl Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.17.2.1 2004/11/21 08:53:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.17 2003/06/29 22:29:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.17.2.1 2004/11/21 08:53:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,8 +252,8 @@ osf1_sys_fstat(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
@@ -284,8 +284,8 @@ osf1_sys_fstat2(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.44.6.4 2004/11/02 07:52:46 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.44.6.5 2004/11/21 08:53:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.44.6.4 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.44.6.5 2004/11/21 08:53:49 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1156,10 +1156,10 @@ se_disable(sc)
  * open the device.
  */
 int
-seopen(dev, flag, fmt, p)
+seopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit, error;
 	struct se_softc *sc;
@@ -1194,10 +1194,10 @@ seopen(dev, flag, fmt, p)
  * occurence of an open device
  */
 int
-seclose(dev, flag, fmt, p)
+seclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 	struct scsipi_periph *periph = sc->sc_periph;
@@ -1218,14 +1218,14 @@ seclose(dev, flag, fmt, p)
  * Only does generic scsi ioctls.
  */
 int
-seioctl(dev, cmd, addr, flag, p)
+seioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
-	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, l));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.24.2.4 2004/09/21 13:25:59 skrll Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.24.2.5 2004/11/21 08:53:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.24.2.4 2004/09/21 13:25:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.24.2.5 2004/11/21 08:53:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -130,14 +130,14 @@ osf1_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, p)))
+	if ((error = VFS_STATVFS(mp, sp, l)))
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
 	error = copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -148,7 +148,6 @@ osf1_sys_getfsstat(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_getfsstat_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
@@ -172,7 +171,7 @@ osf1_sys_getfsstat(l, v, retval)
 			 */
 			if (((SCARG(uap, flags) & OSF1_MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & OSF1_MNT_WAIT)) &&
-			    (error = VFS_STATVFS(mp, sp, p)))
+			    (error = VFS_STATVFS(mp, sp, l)))
 				continue;
 			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			osf1_cvt_statfs_from_native(sp, &osfs);
@@ -231,7 +230,6 @@ osf1_sys_statfs(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_statfs_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
@@ -244,7 +242,7 @@ osf1_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, p)))
+	if ((error = VFS_STATVFS(mp, sp, l)))
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
