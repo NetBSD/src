@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1997/03/13 04:21:08 perry Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 07:02:35 mrg Exp $
 #
 
-MAN=	boot.8
+MAN=	boot.8 poffd.8 rtcalarm.8
 MANSUBDIR=/x68k
 
 .include <bsd.prog.mk>
