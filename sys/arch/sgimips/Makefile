@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/14 15:32:11 soren Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/20 18:37:00 soren Exp $
 
 # Makefile for sgimips tags file
 
@@ -11,7 +11,7 @@ SSGIMIPS=	../sgimips/sgimips/*.[ch] ../sgimips/include/*.h \
 ASGIMIPS=	../sgimips/sgimips/*.S
 
 # Directories in which to place tags links
-DSGIMIPS=	gio pbus include
+DSGIMIPS=	dev eisa gio hpc include pci xio
 
 .include "../../kern/Make.tags.inc"
 
@@ -26,6 +26,6 @@ links:
 	-for i in ${DSGIMIPS}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	include
+SUBDIR=	include stand
 
 .include <bsd.subdir.mk>
