@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.1 2001/02/09 18:34:49 uch Exp $	*/
+/*	$NetBSD: arm_arch.cpp,v 1.2 2001/03/23 08:48:12 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ ARMArchitecture::jump(paddr_t info, paddr_t pvec)
 
 	// stack for bootloader
 	_mem->getPage(v, p);
-	sp = ptokv(p);
+	sp = ptokv(p) + _mem->getPageSize();
 
 	// writeback whole D-cache
 	WritebackDCache();
