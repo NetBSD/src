@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.70 2004/07/23 07:20:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.70 2004/07/23 07:20:44 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -141,6 +141,15 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
 #define	VOODOO_DUR_2_4_SPECIALCASE	0x02 /* NOT necessary */
 int atw_voodoo = VOODOO_DUR_11_ROUNDING;
 
+int atw_pseudo_milli = 1;
+int atw_magic_delay1 = 100 * 1000;
+int atw_magic_delay2 = 100 * 1000;
+/* more magic multi-millisecond delays (units: microseconds) */
+int atw_nar_delay = 20 * 1000;
+int atw_magic_delay4 = 10 * 1000;
+int atw_rf_delay1 = 10 * 1000;
+int atw_rf_delay2 = 5 * 1000;
+int atw_plcphd_delay = 2 * 1000;
 int atw_bbp_io_enable_delay = 20 * 1000;
 int atw_bbp_io_disable_delay = 2 * 1000;
 int atw_writewep_delay = 1000;
@@ -937,7 +946,7 @@ atw_reset(struct atw_softc *sc)
 	uint32_t lpc;
 
 	ATW_WRITE(sc, ATW_NAR, 0x0);
-	DELAY(20 * 1000);
+	DELAY(atw_nar_delay);
 
 	/* Reference driver has a cryptic remark indicating that this might
 	 * power-on the chip.  I know that it turns off power-saving....
@@ -946,14 +955,14 @@ atw_reset(struct atw_softc *sc)
 
 	ATW_WRITE(sc, ATW_PAR, ATW_PAR_SWR);
 
-	for (i = 0; i < 50; i++) {
+	for (i = 0; i < 50000 / atw_pseudo_milli; i++) {
 		if (ATW_READ(sc, ATW_PAR) == 0)
 			break;
-		DELAY(1000);
+		DELAY(atw_pseudo_milli);
 	}
 
 	/* ... and then pause 100ms longer for good measure. */
-	DELAY(100 * 1000);
+	DELAY(atw_magic_delay1);
 
 	DPRINTF2(sc, ("%s: atw_reset %d iterations\n", sc->sc_dev.dv_xname, i));
 
@@ -977,12 +986,12 @@ atw_reset(struct atw_softc *sc)
 	 */
 	ATW_WRITE(sc, ATW_FRCTL, 0x0);
 
-	DELAY(100 * 1000);
+	DELAY(atw_magic_delay2);
 
 	/* Recall EEPROM. */
 	ATW_SET(sc, ATW_TEST0, ATW_TEST0_EPRLD);
 
-	DELAY(10 * 1000);
+	DELAY(atw_magic_delay4);
 
 	lpc = ATW_READ(sc, ATW_LPC);
 
@@ -1102,9 +1111,9 @@ atw_rf_reset(struct atw_softc *sc)
 	/* XXX this resets an Intersil RF front-end? */
 	/* TBD condition on Intersil RFType? */
 	ATW_WRITE(sc, ATW_SYNRF, ATW_SYNRF_INTERSIL_EN);
-	DELAY(10 * 1000);
+	DELAY(atw_rf_delay1);
 	ATW_WRITE(sc, ATW_SYNRF, 0);
-	DELAY(5 * 1000);
+	DELAY(atw_rf_delay2);
 }
 
 /* Set 16 TU max duration for the contention-free period (CFP). */
@@ -1489,7 +1498,7 @@ atw_tune(struct atw_softc *sc)
 		    chan);
 
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
-	DELAY(20 * 1000);
+	DELAY(atw_nar_delay);
 	ATW_WRITE(sc, ATW_RDR, 0x1);
 
 	if (rc == 0)
@@ -1789,7 +1798,7 @@ out:
 	reg |= LSHIFT(LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK),
 	    ATW_PLCPHD_SERVICE_MASK);
 	ATW_WRITE(sc, ATW_PLCPHD, reg);
-	DELAY(2 * 1000);
+	DELAY(atw_plcphd_delay);
 
 	return rc;
 }
@@ -1809,9 +1818,9 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	     LSHIFT(val & 0xff, ATW_BBPCTL_DATA_MASK) |
 	     LSHIFT(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
-	for (i = 10; --i >= 0; ) {
+	for (i = 20000 / atw_pseudo_milli; --i >= 0; ) {
 		ATW_WRITE(sc, ATW_BBPCTL, reg);
-		DELAY(2000);
+		DELAY(2 * atw_pseudo_milli);
 		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_WR) == 0)
 			break;
 	}
@@ -2033,7 +2042,7 @@ setit:
 	ATW_WRITE(sc, ATW_MAR0, hashes[0]);
 	ATW_WRITE(sc, ATW_MAR1, hashes[1]);
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
-	DELAY(20 * 1000);
+	DELAY(atw_nar_delay);
 
 	DPRINTF(sc, ("%s: ATW_NAR %08x opmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_NAR), sc->sc_opmode));
@@ -2704,7 +2713,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	/* Stop the transmit and receive processes. */
 	sc->sc_opmode = 0;
 	ATW_WRITE(sc, ATW_NAR, 0);
-	DELAY(20 * 1000);
+	DELAY(atw_nar_delay);
 	ATW_WRITE(sc, ATW_TDBD, 0);
 	ATW_WRITE(sc, ATW_TDBP, 0);
 	ATW_WRITE(sc, ATW_RDB, 0);
@@ -2934,7 +2943,7 @@ atw_intr(void *arg)
 				 * the transmit process.
 				 */
 				ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
-				DELAY(20 * 1000);
+				DELAY(atw_nar_delay);
 				ATW_WRITE(sc, ATW_RDR, 0x1);
 				/* XXX Log every Nth underrun from
 				 * XXX now on?
@@ -3011,13 +3020,13 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	}
 
 	ATW_WRITE(sc, ATW_NAR, opmode);
-	DELAY(20 * 1000);
+	DELAY(atw_nar_delay);
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 1000; i++) {
 		stsr = ATW_READ(sc, ATW_STSR);
 		if ((stsr & ackmask) == ackmask)
 			break;
-		DELAY(1000);
+		DELAY(10);
 	}
 
 	ATW_WRITE(sc, ATW_STSR, stsr & ackmask);
