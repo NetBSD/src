@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.22 2001/11/25 06:57:55 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.23 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.22 2001/11/25 06:57:55 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.23 2001/11/25 10:50:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,16 +77,16 @@ static void setup(void);
 
 int main(int, char *[]);
 
-IO	in, out;		/* input/output state */
-STAT	st;			/* statistics */
-void	(*cfunc)(void);		/* conversion function */
-u_long	cpy_cnt;		/* # of blocks to copy */
-u_int	ddflags;		/* conversion options */
-u_int	cbsz;			/* conversion block size */
-u_int	files_cnt = 1;		/* # of files to copy */
-int	progress = 0;		/* display sign of life */
-const u_char	*ctab;		/* conversion table */
-sigset_t infoset;			/* a set blocking SIGINFO */
+IO		in, out;		/* input/output state */
+STAT		st;			/* statistics */
+void		(*cfunc)(void);		/* conversion function */
+u_longlong_t	cpy_cnt;		/* # of blocks to copy */
+u_int		ddflags;		/* conversion options */
+u_longlong_t	cbsz;			/* conversion block size */
+u_int		files_cnt = 1;		/* # of files to copy */
+int		progress = 0;		/* display sign of life */
+const u_char	*ctab;			/* conversion table */
+sigset_t	infoset;		/* a set blocking SIGINFO */
 
 int
 main(int argc, char *argv[])
@@ -243,7 +243,8 @@ getfdtype(IO *io)
 static void
 dd_in(void)
 {
-	int flags, n;
+	int flags;
+	u_longlong_t n;
 
 	for (flags = ddflags;;) {
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
@@ -364,7 +365,7 @@ void
 dd_out(int force)
 {
 	static int warned;
-	int cnt, n, nw;
+	u_longlong_t cnt, n, nw;
 	u_char *outp;
 
 	/*

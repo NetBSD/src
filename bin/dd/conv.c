@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.12 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: conv.c,v 1.13 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.12 2001/11/25 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: conv.c,v 1.13 2001/11/25 10:50:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: conv.c,v 1.12 2001/11/25 06:53:48 lukem Exp $");
 void
 def(void)
 {
-	int cnt;
+	u_longlong_t cnt;
 	u_char *inp;
 	const u_char *t;
 
@@ -121,7 +121,7 @@ block(void)
 {
 	static int intrunc;
 	int ch = 0;	/* pacify gcc */
-	int cnt, maxlen;
+	u_longlong_t cnt, maxlen;
 	u_char *inp, *outp;
 	const u_char *t;
 
@@ -232,7 +232,7 @@ block_close(void)
 void
 unblock(void)
 {
-	int cnt;
+	u_longlong_t cnt;
 	u_char *inp;
 	const u_char *t;
 
@@ -266,7 +266,7 @@ unblock(void)
 void
 unblock_close(void)
 {
-	int cnt;
+	u_longlong_t cnt;
 	u_char *t;
 
 	if (in.dbcnt) {
