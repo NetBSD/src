@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.16 2002/10/02 04:15:11 thorpej Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.17 2003/12/13 23:04:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.16 2002/10/02 04:15:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.17 2003/12/13 23:04:38 ad Exp $");
 
 /*
  * Which system models were configured?
@@ -177,6 +177,87 @@ tc_ds_get_dma_tag(slot)
 	return (&pmax_default_bus_dma_tag);
 }
 
+#ifdef WSCONS
+
+#include "wsdisplay.h"
+
+#if NWSDISPLAY > 0
+
+#include "sfb.h"
+/* #include "sfbp.h" */
+#include "cfb.h"
+#include "mfb.h"
+#include "tfb.h"
+#include "xcfb.h"
+#include "px.h"
+#include "pxg.h"
+
+#include <pmax/pmax/cons.h>
+#include <machine/dec_prom.h>
+
+int	tc_checkslot __P((tc_addr_t, char *));
+
+struct cnboards {
+	const char	*cb_tcname;
+	void	(*cb_cnattach)(tc_addr_t);
+} static const cnboards[] = {
+#if NXCFB > 0
+	{ "PMAG-DV ", xcfb_cnattach },
+#endif
+#if NSFB > 0
+	{ "PMAGB-BA", sfb_cnattach },
+#endif
+#if NSFBP > 0
+	{ "PMAGD   ", sfbp_cnattach },
+#endif
+#if NCFB > 0
+	{ "PMAG-BA ", cfb_cnattach },
+#endif
+#if NMFB > 0
+	{ "PMAG-AA ", mfb_cnattach },
+#endif
+#if NTFB > 0
+	{ "PMAG-JA ", tfb_cnattach },
+#endif
+#if NPX > 0
+	{ "PMAG-CA ", px_cnattach },
+#endif
+#if NPXG > 0
+	{ "PMAG-DA ", pxg_cnattach },
+	{ "PMAG-FA ", pxg_cnattach },
+	{ "PMAG-FB ", pxg_cnattach },
+	{ "PMAGB-FA", pxg_cnattach },
+	{ "PMAGB-FB", pxg_cnattach },
+#endif
+};
+
+int
+tcfb_cnattach(slotno)
+	int slotno;
+{
+	paddr_t tcaddr;
+	char tcname[TC_ROM_LLEN];
+	int i;
+
+	tcaddr = (*callv->_slot_address)(slotno);
+	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
+		panic("TC console designated by PROM does not exist!?");
+
+	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
+			break;
+
+	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+		return (0);
+
+	(cnboards[i].cb_cnattach)(tcaddr);
+	return (1);
+}
+
+#endif	/* NWSDISPLAY */
+
+#else	/* WSCONS */
+
 #include "rasterconsole.h"
 
 #if NRASTERCONSOLE > 0
@@ -236,4 +317,6 @@ tcfb_cnattach(slotno)
 	return 0;
 }
 
-#endif
+#endif	/* NRASTERCONSOLE */
+
+#endif	/* WSCONS */
