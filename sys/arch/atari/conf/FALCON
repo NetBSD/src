@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.22 1997/07/30 15:43:25 leo Exp $
+#	$NetBSD: FALCON,v 1.23 1997/08/29 19:52:10 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -91,7 +91,7 @@ pseudo-device	ppp			# ppp
 pseudo-device	pty		16	# Pseudo-tty support
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md		1	# Boot memory disk
+pseudo-device	md		2	# Boot memory disk
 
 #
 # The following sections describe various hardware options.
