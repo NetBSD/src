@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2003/02/23 02:44:44 fvdl Exp $	*/
 
 /*
  *
@@ -282,9 +282,9 @@
 
 vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
 int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
-unsigned long nkptp[] = NKPTP_INITIALIZER;
-unsigned long nkptpmax[] = NKPTPMAX_INITIALIZER;
-unsigned long nbpd[] = NBPD_INITIALIZER;
+long nkptp[] = NKPTP_INITIALIZER;
+long nkptpmax[] = NKPTPMAX_INITIALIZER;
+long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
@@ -541,7 +541,7 @@ static boolean_t	pmap_get_physpage __P((vaddr_t, int, paddr_t *));
 static boolean_t	pmap_pdes_valid __P((vaddr_t, pd_entry_t **,
 					     pd_entry_t *));
 static void		pmap_alloc_level __P((pd_entry_t **, vaddr_t, int,
-					      unsigned long *));
+					      long *));
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -3293,7 +3293,7 @@ pmap_alloc_level(pdes, kva, lvl, needed_ptps)
 	pd_entry_t **pdes;
 	vaddr_t kva;
 	int lvl;
-	unsigned long *needed_ptps;
+	long *needed_ptps;
 {
 	unsigned long i;
 	vaddr_t va;
@@ -3310,8 +3310,15 @@ pmap_alloc_level(pdes, kva, lvl, needed_ptps)
 		va = kva;
 		index = pl_i(kva, level);
 		endindex = index + needed_ptps[level - 1];
+		/*
+		 * XXX special case for first time call.
+		 */
+		if (nkptp[level - 1] != 0)
+			index++;
+		else
+			endindex--;
 
-		for (i = index; i < endindex; i++) {
+		for (i = index; i <= endindex; i++) {
 			pmap_get_physpage(va, level - 1, &pa);
 			pdep[i] = pa | PG_RW | PG_V;
 			nkptp[level - 1]++;
@@ -3335,7 +3342,7 @@ pmap_growkernel(maxkvaddr)
 	int s, i;
 	unsigned newpdes;
 	vaddr_t curmax;
-	unsigned long needed_kptp[PTP_LEVELS], target_nptp, old;
+	long needed_kptp[PTP_LEVELS], target_nptp, old;
 
 	curmax = VM_MIN_KERNEL_ADDRESS + nkptp[1] * NBPD_L2;
 	if (maxkvaddr <= curmax)
@@ -3354,9 +3361,7 @@ pmap_growkernel(maxkvaddr)
 		 */
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
-		needed_kptp[i] = target_nptp - nkptp[i];
-		if (needed_kptp[i] == 0 && nkptp[i] == 0)
-			needed_kptp[i] = 1;
+		needed_kptp[i] = target_nptp - nkptp[i] + 1;
 	}
 
 
