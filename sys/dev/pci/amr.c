@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.16 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.17 2003/10/25 21:30:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.16 2003/10/25 18:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.17 2003/10/25 21:30:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,8 +602,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
 			aprint_error(
 			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
-			    "\n", amr->amr_dv.dv_xname,
-			    ae->ae_ldrv.al_numdrives, AMR_MAX_UNITS);
+			    "\n", amr->amr_dv.dv_xname, AMR_MAX_UNITS,
+			    amr->amr_numdrives);
 			amr->amr_numdrives = AMR_MAX_UNITS;
 		} else
 			amr->amr_numdrives = aex->ae_numldrives;
