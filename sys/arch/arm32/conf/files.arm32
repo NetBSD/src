@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.128 2001/11/24 01:15:36 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.129 2001/11/24 01:16:54 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -123,16 +123,6 @@ file	arch/arm/arm/disksubr_mbr.c		disk
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
-
-# RiscPC specific files
-file	arch/arm32/riscpc/rpc_machdep.c		riscpc
-file	arch/arm32/riscpc/rpc_kbd_map.c		riscpc & kbd
-
-# RC7500 specific files
-file	arch/arm32/rc7500/rc7500_machdep.c	rc7500
-file	arch/arm32/rc7500/rc7500_kbd_map.c	rc7500 & kbd
-file	arch/arm32/rc7500/rc7500_prom.c		rc7500 & prom_debug
-file	arch/arm32/rc7500/rc7500_promsys.S	rc7500 & prom_debug
 
 # Shark specific files
 file	arch/arm32/shark/shark_machdep.c	shark
