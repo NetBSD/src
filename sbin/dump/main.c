@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2001/12/30 04:03:17 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2002/01/07 17:34:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.49 2001/12/30 04:03:17 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2002/01/07 17:34:09 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789aB:b:cd:eFf:h:k:lL:nr:s:StT:uWw")) != -1)
+	    "0123456789aB:b:cd:eFf:h:k:l:L:nr:s:StT:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 
 		case 'l':		/* autoload after eject full tapes */
 			eflag = 1;
-			lflag = 1;
+			lflag = numarg("timeout (in seconds)", 1, 0);
 			break;
 
 		case 'L':
@@ -609,9 +609,9 @@ usage(void)
 	const char *prog = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-0123456789aceFlnStu] [-B records] [-b blocksize]\n"
+"usage: %s [-0123456789aceFnStu] [-B records] [-b blocksize]\n"
 "            [-d density] [-f file] [-h level] [-k read-blocksize]\n"
-"            [-L label] [-r read-cache] [-s feet] [-T date] files-to-dump\n"
+"            [-L label] [-l timeout] [-r read-cache] [-s feet] [-T date] files-to-dump\n"
 "       %s [-W | -w]\n", prog, prog);
 	exit(X_STARTUP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.36 2001/12/30 04:03:17 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.37 2002/01/07 17:34:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.36 2001/12/30 04:03:17 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.37 2002/01/07 17:34:09 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -438,7 +438,7 @@ close_rewind(void)
 		broadcast("CHANGE DUMP VOLUMES!\a\a\n");
 	}
 	if (lflag) {
-		for (i = 0; i < 12; i++) { /* wait 2 mn */
+		for (i = 0; i < lflag / 10; i++) { /* wait lflag seconds */
 			if (host) {
 				if (rmtopen(tape, 0, 0) >= 0) {
 					rmtclose();
