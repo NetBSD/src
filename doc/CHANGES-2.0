@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.530 2004/11/12 06:43:00 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.531 2004/11/12 06:44:41 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8038,3 +8038,11 @@ etc/ssh/ssh_known_hosts				1.3
 	- zathras is gone, alias releng to www
 
 	[soren, ticket #962]
+
+etc/rc.d/ipfilter				1.13
+
+	Redo previous (rev 1.12) in a manner that allows this rc.d script to 
+	operate correctly on ipf(8) from prior to 4.1.3 (where -Fa flushes 	
+	both protocols) and 4.1.3 (where -Fa only flushes the current protocol).
+
+	[lukem, ticket #963]
