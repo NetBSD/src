@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2002/07/05 13:31:56 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2002/09/28 10:49:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,10 +120,9 @@
  * Bus address and size types
  *
  * XXX: Ideally, these should be sized according to NEFF
- * Actually, defining them as u_long may cause problems for LP64 ...
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef u_int32_t bus_addr_t;
+typedef u_int32_t bus_size_t;
 
 /*
  * Access methods for bus resources and address space.
@@ -203,6 +202,7 @@ struct sh5_bus_space_tag {
  */
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 /*
  *	void bus_space_unmap(bus_space_tag_t tag, bus_space_handle_t handle,
