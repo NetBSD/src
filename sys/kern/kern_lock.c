@@ -1,4 +1,44 @@
-/*	$NetBSD: kern_lock.c,v 1.18 1999/07/19 03:21:11 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.19 1999/07/25 06:24:23 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Ross Harvey.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1995
@@ -63,20 +103,52 @@
  * Acquire a resource.
  */
 #define ACQUIRE(lkp, error, extflags, wanted)				\
-	for (error = 0; wanted; ) {					\
-		(lkp)->lk_waitcount++;					\
-		simple_unlock(&(lkp)->lk_interlock);			\
-		error = tsleep((void *)lkp, (lkp)->lk_prio,		\
-		    (lkp)->lk_wmesg, (lkp)->lk_timo);			\
-		simple_lock(&(lkp)->lk_interlock);			\
-		(lkp)->lk_waitcount--;					\
-		if (error)						\
-			break;						\
-		if ((extflags) & LK_SLEEPFAIL) {			\
-			error = ENOLCK;					\
-			break;						\
+	if ((extflags) & LK_SPIN) {					\
+		int interlocked;					\
+									\
+		for (interlocked = 1;;) {				\
+			if (wanted) {					\
+				if (interlocked) {			\
+					simple_unlock(&(lkp)->lk_interlock); \
+					interlocked = 0;		\
+				}					\
+			} else if (interlocked) {			\
+				break;					\
+			} else {					\
+				simple_lock(&(lkp)->lk_interlock);	\
+				interlocked = 1;			\
+			}						\
+		}							\
+		KASSERT((wanted) == 0);					\
+		error = 0;	/* sanity */				\
+	} else {							\
+		for (error = 0; wanted; ) {				\
+			(lkp)->lk_waitcount++;				\
+			simple_unlock(&(lkp)->lk_interlock);		\
+			error = tsleep((void *)lkp, (lkp)->lk_prio,	\
+			    (lkp)->lk_wmesg, (lkp)->lk_timo);		\
+			simple_lock(&(lkp)->lk_interlock);		\
+			(lkp)->lk_waitcount--;				\
+			if (error)					\
+				break;					\
+			if ((extflags) & LK_SLEEPFAIL) {		\
+				error = ENOLCK;				\
+				break;					\
+			}						\
 		}							\
 	}
+
+#define	SETHOLDER(lkp, pid, cpu_id)					\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN)					\
+		(lkp)->lk_cpu = cpu_id;					\
+	else								\
+		(lkp)->lk_lockholder = pid;				\
+} while (0)
+
+#define	WEHOLDIT(lkp, pid, cpu_id)					\
+	(((lkp)->lk_flags & LK_SPIN) != 0 ?				\
+	 ((lkp)->lk_cpu == (cpu_id)) : ((lkp)->lk_lockholder == (pid)))
 
 /*
  * Initialize a lock; required before use.
@@ -93,10 +165,14 @@ lockinit(lkp, prio, wmesg, timo, flags)
 	memset(lkp, 0, sizeof(struct lock));
 	simple_lock_init(&lkp->lk_interlock);
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
-	lkp->lk_prio = prio;
-	lkp->lk_timo = timo;
-	lkp->lk_wmesg = wmesg;
-	lkp->lk_lockholder = LK_NOPROC;
+	if (flags & LK_SPIN)
+		lkp->lk_cpu = LK_NOCPU;
+	else {
+		lkp->lk_lockholder = LK_NOPROC;
+		lkp->lk_prio = prio;
+		lkp->lk_timo = timo;
+	}
+	lkp->lk_wmesg = wmesg;	/* just a name for spin locks */
 }
 
 /*
@@ -133,17 +209,36 @@ lockmgr(lkp, flags, interlkp)
 	int error;
 	pid_t pid;
 	int extflags;
+	u_long cpu_id;
 	struct proc *p = curproc;
 
 	error = 0;
-	if (p)
-		pid = p->p_pid;
-	else
-		pid = LK_KERNPROC;
+
 	simple_lock(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
 		simple_unlock(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Don't allow spins on sleep locks and don't allow sleeps
+	 * on spin locks.
+	 */
+	if ((flags ^ lkp->lk_flags) & LK_SPIN)
+		panic("lockmgr: sleep/spin mismatch\n");
+#endif
+
+	if (extflags & LK_SPIN)
+		pid = LK_KERNPROC;
+	else {
+#ifdef DIAGNOSTIC
+		if (p == NULL)
+			panic("lockmgr: no context");
+#endif
+		pid = p->p_pid;
+	}
+	cpu_id = 0;			/* XXX cpu_number() XXX */
+
 #ifdef DIAGNOSTIC
 	/*
 	 * Once a lock has drained, the LK_DRAINING flag is set and an
@@ -160,19 +255,19 @@ lockmgr(lkp, flags, interlkp)
 		if (lkp->lk_flags & LK_DRAINED)
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
-		    lkp->lk_lockholder != pid)
+		    WEHOLDIT(lkp, pid, cpu_id) == 0)
 			panic("lockmgr: non-release on draining lock: %d\n",
 			    flags & LK_TYPE_MASK);
 		lkp->lk_flags &= ~LK_DRAINING;
 		if ((flags & LK_REENABLE) == 0)
 			lkp->lk_flags |= LK_DRAINED;
 	}
-#endif DIAGNOSTIC
+#endif /* DIAGNOSTIC */
 
 	switch (flags & LK_TYPE_MASK) {
 
 	case LK_SHARED:
-		if (lkp->lk_lockholder != pid) {
+		if (WEHOLDIT(lkp, pid, cpu_id) == 0) {
 			/*
 			 * If just polling, check to see if we will block.
 			 */
@@ -201,13 +296,14 @@ lockmgr(lkp, flags, interlkp)
 		/* fall into downgrade */
 
 	case LK_DOWNGRADE:
-		if (lkp->lk_lockholder != pid || lkp->lk_exclusivecount == 0)
+		if (WEHOLDIT(lkp, pid, cpu_id) == 0 ||
+		    lkp->lk_exclusivecount == 0)
 			panic("lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
 		lkp->lk_exclusivecount = 0;
 		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
-		lkp->lk_lockholder = LK_NOPROC;
+		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
 		if (lkp->lk_waitcount)
 			wakeup((void *)lkp);
 		break;
@@ -235,7 +331,7 @@ lockmgr(lkp, flags, interlkp)
 		 * after the upgrade). If we return an error, the file
 		 * will always be unlocked.
 		 */
-		if (lkp->lk_lockholder == pid || lkp->lk_sharecount <= 0)
+		if (WEHOLDIT(lkp, pid, cpu_id) || lkp->lk_sharecount <= 0)
 			panic("lockmgr: upgrade exclusive lock");
 		lkp->lk_sharecount--;
 		COUNT(p, -1);
@@ -260,7 +356,7 @@ lockmgr(lkp, flags, interlkp)
 			if (error)
 				break;
 			lkp->lk_flags |= LK_HAVE_EXCL;
-			lkp->lk_lockholder = pid;
+			SETHOLDER(lkp, pid, cpu_id);
 			if (lkp->lk_exclusivecount != 0)
 				panic("lockmgr: non-zero exclusive count");
 			lkp->lk_exclusivecount = 1;
@@ -279,9 +375,9 @@ lockmgr(lkp, flags, interlkp)
 		/* fall into exclusive request */
 
 	case LK_EXCLUSIVE:
-		if (lkp->lk_lockholder == pid && pid != LK_KERNPROC) {
+		if (WEHOLDIT(lkp, pid, cpu_id)) {
 			/*
-			 *	Recursive lock.
+			 * Recursive lock.
 			 */
 			if ((extflags & LK_CANRECURSE) == 0 &&
 			     lkp->lk_recurselevel == 0) {
@@ -324,7 +420,7 @@ lockmgr(lkp, flags, interlkp)
 		if (error)
 			break;
 		lkp->lk_flags |= LK_HAVE_EXCL;
-		lkp->lk_lockholder = pid;
+		SETHOLDER(lkp, pid, cpu_id);
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
@@ -335,17 +431,25 @@ lockmgr(lkp, flags, interlkp)
 
 	case LK_RELEASE:
 		if (lkp->lk_exclusivecount != 0) {
-			if (pid != lkp->lk_lockholder)
-				panic("lockmgr: pid %d, not exclusive lock "
-				    "holder %d unlocking", pid,
-				    lkp->lk_lockholder);
+			if (WEHOLDIT(lkp, pid, cpu_id) == 0) {
+				if (lkp->lk_flags & LK_SPIN) {
+					panic("lockmgr: processor %lu, not "
+					    "exclusive lock holder %lu "
+					    "unlocking", cpu_id, lkp->lk_cpu);
+				} else {
+					panic("lockmgr: pid %d, not "
+					    "exclusive lock holder %d "
+					    "unlocking", pid,
+					    lkp->lk_lockholder);
+				}
+			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
 				lkp->lk_recurselevel = 0;
 			lkp->lk_exclusivecount--;
 			COUNT(p, -1);
 			if (lkp->lk_exclusivecount == 0) {
 				lkp->lk_flags &= ~LK_HAVE_EXCL;
-				lkp->lk_lockholder = LK_NOPROC;
+				SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
 			}
 		} else if (lkp->lk_sharecount != 0) {
 			lkp->lk_sharecount--;
@@ -362,7 +466,7 @@ lockmgr(lkp, flags, interlkp)
 		 * check for holding a shared lock, but at least we can
 		 * check for an exclusive one.
 		 */
-		if (lkp->lk_lockholder == pid)
+		if (WEHOLDIT(lkp, pid, cpu_id))
 			panic("lockmgr: draining against myself");
 		/*
 		 * If we are just polling, check to see if we will sleep.
@@ -373,20 +477,34 @@ lockmgr(lkp, flags, interlkp)
 			error = EBUSY;
 			break;
 		}
-		for (error = 0; ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0); ) {
-			lkp->lk_flags |= LK_WAITDRAIN;
-			simple_unlock(&lkp->lk_interlock);
-			if ((error = tsleep((void *)&lkp->lk_flags,
-			    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo)))
-				return (error);
-			if ((extflags) & LK_SLEEPFAIL)
-				return (ENOLCK);
-			simple_lock(&lkp->lk_interlock);
+		if (lkp->lk_flags & LK_SPIN) {
+			ACQUIRE(lkp, error, extflags,
+			    ((lkp->lk_flags &
+			     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
+			     lkp->lk_sharecount != 0 ||
+			     lkp->lk_waitcount != 0));
+		} else {
+			/*
+			 * This is just a special cause of the sleep case
+			 * in ACQUIRE().  We set WANTDRAIN instead of
+			 * incrementing waitcount.
+			 */
+			for (error = 0; ((lkp->lk_flags &
+			     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
+			     lkp->lk_sharecount != 0 ||
+			     lkp->lk_waitcount != 0); ) {
+				lkp->lk_flags |= LK_WAITDRAIN;
+				simple_unlock(&lkp->lk_interlock);
+				if ((error = tsleep((void *)&lkp->lk_flags,
+				    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo)))
+					return (error);
+				if ((extflags) & LK_SLEEPFAIL)
+					return (ENOLCK);
+				simple_lock(&lkp->lk_interlock);
+			}
 		}
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
-		lkp->lk_lockholder = pid;
+		SETHOLDER(lkp, pid, cpu_id);
 		lkp->lk_exclusivecount = 1;
 		/* XXX unlikely that we'd want this */
 		if (extflags & LK_SETRECURSE)
@@ -416,16 +534,22 @@ lockmgr(lkp, flags, interlkp)
  */
 void
 lockmgr_printinfo(lkp)
-	struct lock *lkp;
+	__volatile struct lock *lkp;
 {
 
 	if (lkp->lk_sharecount)
 		printf(" lock type %s: SHARED (count %d)", lkp->lk_wmesg,
 		    lkp->lk_sharecount);
-	else if (lkp->lk_flags & LK_HAVE_EXCL)
-		printf(" lock type %s: EXCL (count %d) by pid %d",
-		    lkp->lk_wmesg, lkp->lk_exclusivecount, lkp->lk_lockholder);
-	if (lkp->lk_waitcount > 0)
+	else if (lkp->lk_flags & LK_HAVE_EXCL) {
+		printf(" lock type %s: EXCL (count %d) by ",
+		    lkp->lk_wmesg, lkp->lk_exclusivecount);
+		if (lkp->lk_flags & LK_SPIN)
+			printf("processor %lu", lkp->lk_cpu);
+		else
+			printf("pid %d", lkp->lk_lockholder);
+	} else
+		printf(" not locked");
+	if ((lkp->lk_flags & LK_SPIN) == 0 && lkp->lk_waitcount > 0)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
