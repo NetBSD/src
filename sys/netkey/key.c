@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43 2001/02/21 21:39:56 jdolecek Exp $	*/
+/*	$NetBSD: key.c,v 1.44 2001/06/04 21:38:28 mrg Exp $	*/
 /*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
 
 /*
@@ -1723,7 +1723,7 @@ key_getnewspid()
 
 	/* when requesting to allocate spi ranged */
 	while (count--) {
-		newid = (policy_id = (policy_id == ~0 ? 1 : ++policy_id));
+		newid = (policy_id = (policy_id == ~0 ? 1 : policy_id + 1));
 
 		if ((sp = key_getspbyid(newid)) == NULL)
 			break;
