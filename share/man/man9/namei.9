@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.6 2003/04/06 15:52:38 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.7 2003/04/13 07:15:20 dbj Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -272,11 +272,11 @@ The operation and flags are specified by
 and
 .Fa flags
 respectively.
-These are the values
+These are the values to which
 .Em ndp-\*[Gt]ni_cnd.cn_nameiop
 and
 .Em ndp-\*[Gt]ni_cnd.cn_flags
-are respectively set to.
+are respectively set. 
 The segment flags which defines whether the pathname is in kernel
 address space or user address space is specified by
 .Fa segflag .
