@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2001/06/28 20:35:21 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2001/06/30 01:21:24 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2055,8 +2055,9 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		if (pvo != NULL && PVO_ISEXECUTABLE(pvo)) {
 			pmap_syncicache(
 			    (pvo->pvo_pte.pte_lo & PTE_RPGN) | offset, seglen);
+			PMAP_PVO_CHECK(pvo);
 		}
-		PMAP_PVO_CHECK(pvo);
+		va += seglen;
 		len -= seglen;
 		offset = 0;
 	}
@@ -2123,82 +2124,69 @@ void
 pmap_print_mmuregs(void)
 {
 	int i;
-	u_int32_t x;
 	vaddr_t addr;
 	sr_t soft_sr[16];
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
 	u_int32_t sdr1;
 	
-	asm ("mfsdr1 %0" : "=r"(sdr1));
+	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
 	for (i=0; i<16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
+
 	/* read iBAT registers */
-	i = 0;
-	asm ("mfibatu %0,0" : "=r"(x));
-	soft_ibat[i].batu = x;
-	asm ("mfibatl %0,0" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	asm ("mfibatu %0,1" : "=r"(x));
-	soft_ibat[i].batu = x;
-	asm ("mfibatl %0,1" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	asm ("mfibatu %0,2" : "=r"(x));
-	soft_ibat[i].batu = x;
-	asm ("mfibatl %0,2" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	asm ("mfibatu %0,3" : "=r"(x));
-	soft_ibat[i].batu = x;
-	asm ("mfibatl %0,3" : "=r"(x));
-	soft_ibat[i].batl = x;
+	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
+	__asm __volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
+	__asm __volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
+	__asm __volatile ("mfibatl %0,1" : "=r"(soft_ibat[1].batl));
+	__asm __volatile ("mfibatu %0,2" : "=r"(soft_ibat[2].batu));
+	__asm __volatile ("mfibatl %0,2" : "=r"(soft_ibat[2].batl));
+	__asm __volatile ("mfibatu %0,3" : "=r"(soft_ibat[3].batu));
+	__asm __volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
 
 
 	/* read dBAT registers */
-	i = 0;
-	__asm __volatile ("mfdbatu %0,0" : "=r"(x));
-	soft_ibat[i].batu = x;
-	__asm __volatile ("mfdbatl %0,0" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	__asm __volatile ("mfdbatu %0,1" : "=r"(x));
-	soft_ibat[i].batu = x;
-	__asm __volatile ("mfdbatl %0,1" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	__asm __volatile ("mfdbatu %0,2" : "=r"(x));
-	soft_ibat[i].batu = x;
-	__asm __volatile ("mfdbatl %0,2" : "=r"(x));
-	soft_ibat[i++].batl = x;
-	__asm __volatile ("mfdbatu %0,3" : "=r"(x));
-	soft_ibat[i].batu = x;
-	__asm __volatile ("mfdbatl %0,3" : "=r"(x));
-	soft_ibat[i].batl = x;
+	__asm __volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
+	__asm __volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
+	__asm __volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
+	__asm __volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
+	__asm __volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
+	__asm __volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
+	__asm __volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
+	__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 
-
-	printf("SDR1 0x%x\n", sdr1);
+	printf("SDR1:\t0x%x\n", sdr1);
 	printf("SR[]:\t");
 	addr = 0;
 	for (i=0; i<4; i++)
-		printf("0x%06x, ", soft_sr[i]);
+		printf("0x%06x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<8; i++)
-		printf("0x%06x, ", soft_sr[i]);
+		printf("0x%06x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<12; i++)
-		printf("0x%06x, ", soft_sr[i]);
+		printf("0x%06x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<16; i++)
-		printf("0x%06x, ", soft_sr[i]);
+		printf("0x%06x,   ", soft_sr[i]);
 	printf("\n");
 
 	printf("iBAT[]:\t");
-	for (i=0; i<4; i++)
-		printf("0x%-8x 0x%-8x, ",
+	for (i=0; i<4; i++) {
+		printf("0x%08x 0x%08x, ",
 			soft_ibat[i].batu, soft_ibat[i].batl);
+		if (i == 1)
+			printf("\n\t");
+	}
 	printf("\ndBAT[]:\t");
-	for (i=0; i<4; i++)
-		printf("0x%-8x 0x%-8x, ",
+	for (i=0; i<4; i++) {
+		printf("0x%08x 0x%08x, ",
 			soft_ibat[i].batu, soft_dbat[i].batl);
+		if (i == 1)
+			printf("\n\t");
+	}
 	printf("\n");
 }
 
@@ -2467,7 +2455,7 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 			s = mp->start + mp->size - size;
 			if (s >= mp->start) {
 				mp->size -= size;
-				printf(": %lx\n", s);
+				DPRINTFN(6,(": %lx\n", s));
 				return (void *) s;
 			}
 		}
