@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.7 1996/04/21 21:10:52 veego Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.8 1996/06/10 16:11:20 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -334,7 +334,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	if (l < 512)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
 	else if (
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 		 ((mmutype == MMU_68040) && ((vm_offset_t)p >= 0xFFFC0000)) &&
 #endif
 		 ((vm_offset_t)p >= 0xFF000000)) {
