@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.13 2000/12/24 08:11:16 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.14 2000/12/26 08:19:19 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -333,3 +333,41 @@ sys/arch/news68k/stand/common/romcalls.S	1.2
 
   Make sure to return PROM prompt even if loading kernel fails halfway,
   by calling the PROM halt routine upon failure of loadfile().
+
+gnu/usr.bin/ld/ld/ld.c				1.73
+gnu/usr.bin/ld/ld/ld_i.h			1.2
+gnu/usr.bin/ld/ld/lib.c				1.23
+
+  Correct various problems with argument parsing for --whole-archive and
+  --no-whole-archive. Fully implement --no-whole-archive. Remove spurious
+  warning for -Bshareable.
+
+sys/dev/pci/tga.c				1.29
+
+  Restore code to clear "odd" in VCHR. This seems to be required for X
+  to function properly on the T8-02 TGA (onboard on Multias, seperate
+  card in other machines).
+
+usr.sbin/chown/chown.c				1.25 via patch
+
+  Correct the display of some errors in chown. Fixes PR#11695.
+
+distrib/utils/sysinst/mbr.c			1.24
+
+  Correct an error in the calculation of the end of a partition. Fixes PR#7556.
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.5
+
+  Fix an error freeing the wrong lock; in some cases this might have lfree()'d
+  a NULL pointer.
+
+distrib/utils/sysinst/util.c			1.59
+distrib/utils/sysinst/msg.mi.en			1.79
+distrib/utils/sysinst/msg.mi.fr			1.39
+
+  Fix sysinst to require base.tgz (in addition to etc.tgz and
+  kern.tgz) to successfully install. Fixes PR#11634.
+
+sys/dev/pcmcia/wdc_pcmcia.c			1.36 via patch
+
+  Support AMACOM "Value Engineered" CDROM.
