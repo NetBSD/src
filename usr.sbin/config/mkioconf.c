@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.24 1994/03/10 20:13:10 mycroft Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.25 1994/03/10 21:19:26 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -722,10 +722,9 @@ i386_ioconf()
 /* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
     for (dp = dtab; dp != 0; dp = dp->d_next) {
       mp = dp->d_conn;
-      if (mp == 0 || mp == TO_NEXUS || eq(mp->d_name, "isa"))
+      if (mp == 0 || mp == TO_NEXUS || !i386_scsidev(mp->d_name))
 	continue;
-      fprintf(fp, "{ &%sdriver,        0, ",
-	      i386_scsidev(mp->d_name) ? mp->d_name : dp->d_name);
+      fprintf(fp, "{ &%sdriver,        0, ", mp->d_name);
       fprintf(fp,
 	      "%5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
 	      "0", 0, 0, 0, 0, dp->d_unit, dp->d_flags,
@@ -754,8 +753,8 @@ isa_devtab(fp, table)
 /*	driver	iobase	irq drq	maddr	msiz	intr unit	flags phys cnltr*/\n");
   for (dp = dtab; dp != 0; dp = dp->d_next) {
     mp = dp->d_conn;
-    if (dp->d_unit == QUES || mp == 0 ||
-	mp == TO_NEXUS || !eq(mp->d_name, "isa"))
+    if (dp->d_unit == QUES || mp == 0 || mp == TO_NEXUS ||
+      i386_scsidev(mp->d_name))
 	continue;
     if (strcmp(dp->d_mask, table)) continue;
     if (dp->d_port)
@@ -767,7 +766,7 @@ isa_devtab(fp, table)
     fprintf(fp, "%6s, %2d, C 0x%05X, %5d, %8s,  %2d, 0x%04X, %d, %d },\n",
 	    sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
 	    dp->d_msize, shandler(dp), dp->d_unit,
-	    dp->d_flags, 0, -1);
+	    dp->d_flags, 0, eq(mp->d_name, "isa") ? -1 : mp->d_unit);
   }
   fprintf(fp, "0\n};\n");
 }
