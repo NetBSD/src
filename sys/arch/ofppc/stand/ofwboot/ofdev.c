@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4 1999/10/12 19:40:51 wrstuden Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5 2001/07/22 14:43:15 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -295,7 +295,7 @@ devopen(of, name, file)
 		strcat(fname, ":0");
 	if ((handle = OF_open(fname)) == -1)
 		return ENXIO;
-	bzero(&ofdev, sizeof ofdev);
+	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
@@ -324,8 +324,8 @@ devopen(of, name, file)
 		
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
-		bcopy(&file_system_cd9660, file_system + 1,
+		memcpy(file_system, &file_system_ufs, sizeof file_system[0]);
+		memcpy(file_system + 1, &file_system_cd9660,
 		    sizeof file_system[0]);
 		nfsys = 2;
 		return 0;
@@ -334,7 +334,7 @@ devopen(of, name, file)
 		ofdev.type = OFDEV_NET;
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
+		memcpy(file_system, &file_system_nfs, sizeof file_system[0]);
 		nfsys = 1;
 		if (error = net_open(&ofdev))
 			goto bad;
