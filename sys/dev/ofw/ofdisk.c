@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.7 1997/10/08 23:23:13 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.8 1997/10/08 23:35:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -393,7 +393,7 @@ ofdsize(dev)
 }
 
 void
-ofdiskgetdefaultlabel(of, lp)
+ofdgetdefaultlabel(of, lp)
 	struct ofd_softc *of;
 	struct disklabel *lp;
 {
@@ -427,7 +427,7 @@ ofdiskgetdefaultlabel(of, lp)
 }
 
 void
-ofdiskgetdisklabel(dev)
+ofdgetdisklabel(dev)
 	dev_t dev;
 {
 	int unit = DISKUNIT(dev);
