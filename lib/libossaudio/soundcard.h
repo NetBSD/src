@@ -1,8 +1,11 @@
-/*	$NetBSD: soundcard.h,v 1.8 1999/03/18 11:22:54 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.8.2.1 1999/04/16 20:26:49 augustss Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
