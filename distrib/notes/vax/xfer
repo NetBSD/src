@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.3 1999/01/13 07:30:10 ross Exp $	
+.\" $NetBSD: xfer,v 1.4 1999/05/07 00:15:17 ragge Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact -offset indent
@@ -13,33 +13,35 @@ FTP
 .El
 .(Note
 Installing on a "bare" machine requires some bootable
-device; either a tape or floppy drive or Sun-compatible NFS server
-with MOP capabilities. (Yes, NetBSD/vax uses the same netboot
-principles as Sun's does).
+device; either a tape or floppy drive or a NFS server together
+with a machine that can act as a MOP loader.
+NetBSD/vax can use both BOOTP/DHCP and
+BOOTPARAMS for netboot installations.
 .Note)
 .Pp
 The procedure for transferring the distribution sets onto
-installation media depends on the type of media. The most is up to
+installation media depends on the type of media. most of it is up to
 you, depending what you want to install, but preferred are to do
 the installation over network as soon as the miniroot is installed.
 .
 .Ss2 Creating boot tapes
 .
-Fetch the two files from .../NetBSD-1.3/vax/tk50. Write them onto
-the tape, first file1 and then file2. Under Ultrix this is done
-just like this:
+Fetch the bootable miniroot image from
+.Dl \&.../NetBSD-\*V/vax/miniroot/miniroot.gz Ns Ar {50,33}
+Gunzip the miniroot and write it on the beginning of the tape.
+Under Ultrix this is done like this:
+.D1 Ic "gunzip miniroot.gz
 .D1 Ic "mt -f /dev/rmt0h rewind
-.D1 Ic "dd if=tk50-file1-1.3 of=/dev/nrmt0h
-.D1 Ic "dd if=tk50-file2-1.3 of=/dev/rmt0h
+.D1 Ic "dd if=miniroot of=/dev/rmt0h
 .D1 Ic "mt -f /dev/rmt0h rewoffl
 .Pp
 Under NetBSD this is done the same way, except for the tape name:
+.D1 Ic "gunzip miniroot.gz
 .D1 Ic "mt -f /dev/rmt8 rewind
-.D1 Ic "dd if=tk50-file1-1.3 of=/dev/nrmt8
-.D1 Ic "dd if=tk50-file2-1.3 of=/dev/rmt8
+.D1 Ic "dd if=miniroot of=/dev/rmt8
 .D1 Ic "mt -f /dev/rmt8 rewoffl
 .Pp
-Of course, if you have a tape unit other than 0 you have to use
+Of course, if you have a tape unit other than unit 0 you have to use
 the corresponding unit number.
 .Pp
 If you are using any other OS to create bootable tapes, remember that
@@ -49,13 +51,18 @@ be 512 for the file to be bootable! Otherwise it just won't work.
 .
 .Ss2 Creating boot floppies
 .
-Fetch the files from
-.Dl \&.../NetBSD-1.3/vax/rx Ns Ar {50,33}
-depending of which 
-floppy you have. There are three or seven files depending of the
-density of your floppies. Then just write the floppies using dd (under
-Unix, if you are creating floppies from DOS use some nice utility
-for that). There are one bootable floppy and a splitted miniroot image.
+Fetch the bootable miniroot image from
+.Dl \&.../NetBSD-\*V/vax/miniroot/miniroot.gz Ns Ar {50,33}
+and gunzip it. It is a 1.2MB bootable image that will boot from any
+floppy of size 1.2MB and bigger.
+Note that you
+.Em cannot
+install from RX50 floppies due to the small size. This may change
+in the future.
+.Pp
+All floppies except RX50 uses a standardized format for storing data
+so writing the miniroot to the floppy can be done on any PC. From DOS
+the preferred way to do this is using RAWRITE.EXE.
 .
 .Ss2 Booting from NFS server
 .
@@ -64,11 +71,11 @@ To be able to use MOP, a MOP daemon must be present on one of
 the machines on the local network. The boot principle is:
 .Bl -bullet -compact -offset indent
 .It
-The VS2000 broadcast a wish to load an image.
+The VAX broadcast a wish to load an image.
 .It
 A mopd answers and send the boot program to the VAX.
 .It
-The boot program does rarp requests, mounts the root filesystem
+The boot program does rarp/bootp requests, mounts the root filesystem
 and loads the kernel.
 .It
 The kernel is loaded and starts executing.
@@ -92,20 +99,18 @@ documentation that came with it. (I.e. add_client(8) on SunOS.)
 You also must install a MOP loader. If you are booting from another
 NetBSD machine, MOP are included in the distribution, otherwise you
 may have to install a MOP loader. A loader can be found at
-
-\~\~\~\~\~\~
 .Lk ftp.stacken.kth.se:/pub/OS/NetBSD/mopd
-.Pp
 Fetch the latest and read the
 installation instructions.
 .Pp
-The file that should be loaded are called boot and are located in
-.Dl .../NetBSD-1.3/vax/install.
-If you are not using the mopd written
-by Mats O Jansson (NetBSD) then you should get the file
-boot.mopformat instead.
+The file that should be loaded is called boot.mop and is located in
+.Dl \&.../NetBSD-\*V/vax/installation/netboot/boot.mop Ns Ar {50,33}
 .Pp
-The miniroot to start from is the one called
-.Pa miniroot.tar.gz
-located also in the install directory. Fetch it, unzip and untar
-it wherever you have your root filesystem.
+The kernel to load is the same kernel as the miniroot uses and can 
+be found in
+.Dl \&.../NetBSD-\*V/vax/installation/netboot/netbsd.gz Ns Ar {50,33}
+From the install program started in the kernel the rest of the system
+can be installed.
+There is also a very good FAQ for netbooting VAXen at
+.Lk http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO.html
+that describes netbooting of VAXen from many different OS'es.
