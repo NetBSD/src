@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.13 2003/11/12 12:06:24 kleink Exp $ */
+/* $NetBSD: sunlabel.c,v 1.14 2003/11/16 22:47:07 jmc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.13 2003/11/12 12:06:24 kleink Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.14 2003/11/16 22:47:07 jmc Exp $");
 #endif
 
 #include <stdio.h>
@@ -584,7 +584,7 @@ getlabel(void)
 	int rv;
 	const char *lerr;
 
-	if (lseek(diskfd, (off_t)0, L_SET) == (off_t)-1)
+	if (lseek(diskfd, (off_t)0, SEEK_SET) == (off_t)-1)
 		err(1, "lseek to 0 on `%s' failed", diskname);
 
 	if ((rv = read(diskfd, &labelbuf[0], 512)) == -1)
@@ -613,7 +613,7 @@ putlabel(void)
 		return;
 	}
 
-	if (lseek(diskfd, (off_t)0, L_SET) < (off_t)-1)
+	if (lseek(diskfd, (off_t)0, SEEK_SET) < (off_t)-1)
 		err(1, "lseek to 0 on `%s' failed", diskname);
 
 	pack_label();
