@@ -127,6 +127,7 @@
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/isapnp
+./usr/include/dev/isapnp/if_levar.h
 ./usr/include/dev/isapnp/isapnpreg.h
 ./usr/include/dev/isapnp/isapnpvar.h
 ./usr/include/dev/md.h
@@ -1002,6 +1003,7 @@
 ./usr/share/man/cat2/fstatfs.0
 ./usr/share/man/cat2/fsync.0
 ./usr/share/man/cat2/ftruncate.0
+./usr/share/man/cat2/futimes.0
 ./usr/share/man/cat2/getdirentries.0
 ./usr/share/man/cat2/getegid.0
 ./usr/share/man/cat2/geteuid.0
@@ -1872,8 +1874,11 @@
 ./usr/share/mk/bsd.README
 ./usr/share/mk/bsd.dep.mk
 ./usr/share/mk/bsd.doc.mk
+./usr/share/mk/bsd.files.mk
 ./usr/share/mk/bsd.kmod.mk
+./usr/share/mk/bsd.inc.mk
 ./usr/share/mk/bsd.lib.mk
+./usr/share/mk/bsd.links.mk
 ./usr/share/mk/bsd.man.mk
 ./usr/share/mk/bsd.nls.mk
 ./usr/share/mk/bsd.obj.mk
