@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.34 1999/06/26 16:26:57 tron Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.35 1999/06/28 04:10:26 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.34 1999/06/26 16:26:20 tron Exp 
+ *	aNetBSD: usbdevs,v 1.35 1999/06/28 04:09:53 augustss Exp 
  */
 
 /*
@@ -62,6 +62,7 @@
 #define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix Corp. */
+#define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
@@ -135,6 +136,9 @@
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
+
+/* STMicroelectronics products */
+#define	USB_PRODUCT_STMICRO_COMMUNICATOR	0x7554		/* USB Communicator */
 
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
