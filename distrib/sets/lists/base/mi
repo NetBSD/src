@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.460 2004/01/12 09:42:07 lukem Exp $
+# $NetBSD: mi,v 1.461 2004/01/13 06:17:56 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3338,6 +3338,7 @@
 ./var/games/hackdir/save			base-games-root
 ./var/games/larn				base-games-root
 ./var/games/phantasia				base-games-root
+./var/games/sail				base-games-root
 ./var/games/save				base-obsolete		obsolete
 ./var/heimdal					base-krb5-root
 ./var/log					base-sys-root
