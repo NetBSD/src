@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: host.c,v 1.3 1999/03/30 20:36:58 ross Exp $";
+static char rcsid[] = "$Id: host.c,v 1.4 1999/06/30 12:27:34 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -146,7 +146,7 @@ static int		parsetype(const char *s);
 static int		parseclass(const char *s);
 static void		printanswer(const struct hostent *hp);
 static void		hperror(int errnum);
-static int		getaddrinfo(struct in_addr addr);
+static int		get_addrinfo(struct in_addr addr);
 static int		gethostinfo(char *name);
 static int		getdomaininfo(const char *name, const char *domain);
 static int		getinfo(const char *name, const char *domain,
@@ -287,7 +287,7 @@ main(int c, char **v) {
 				continue;
 			}
 		} else {
-			if (getaddrinfo(addr) == 0)
+			if (get_addrinfo(addr) == 0)
 				hp = NULL;
 			else
 				hp = (struct hostent *)1;	/* XXX */
@@ -432,7 +432,7 @@ hperror(int errnum) {
 }
 
 static int
-getaddrinfo(struct in_addr addr) {
+get_addrinfo(struct in_addr addr) {
 	u_int32_t ha = ntohl(addr.s_addr);
 	char name[NS_MAXDNAME];
 
