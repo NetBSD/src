@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.24 2004/06/01 02:40:00 fair Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.24 2004/06/01 02:40:00 fair Exp $");
 #endif
 
 
@@ -807,7 +807,7 @@ device_start(argc, argv)
 	cmd.opcode = START_STOP;
 	cmd.how = SSS_START;
 
-	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 30000, 0);
 
 	return;
 }
@@ -833,7 +833,7 @@ device_stop(argc, argv)
 	cmd.opcode = START_STOP;
 	cmd.how = SSS_STOP;
 
-	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 30000, 0);
 
 	return;
 }
