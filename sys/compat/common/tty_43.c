@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.10 2000/03/30 11:27:14 augustss Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.11 2000/11/02 11:00:54 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -42,6 +42,7 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/termios.h>
 #include <sys/file.h>
@@ -224,7 +225,7 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	case OTIOCGETD:
-		*(int *)data = tp->t_line ? tp->t_line : 2;
+		*(int *)data = tp->t_linesw ? tp->t_linesw->l_no : 2;
 		break;
 
 	case OTIOCSETD: {
