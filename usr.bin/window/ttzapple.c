@@ -1,4 +1,4 @@
-/*	$NetBSD: ttzapple.c,v 1.4 1997/11/21 08:36:42 lukem Exp $	*/
+/*	$NetBSD: ttzapple.c,v 1.5 1998/12/20 15:01:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttzapple.c,v 1.4 1997/11/21 08:36:42 lukem Exp $");
+__RCSID("$NetBSD: ttzapple.c,v 1.5 1998/12/20 15:01:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,12 +340,12 @@ void
 zz_scroll_down(n)
 	int n;
 {
-	if (n == 1)
+	if (n == 1) {
 		if (tt.tt_row == NROW - 1)
 			ttctrl('j');
 		else
 			ttesc('f');
-	else {
+	} else {
 		ttesc('F');
 		ttputc(n + ' ');
 	}
