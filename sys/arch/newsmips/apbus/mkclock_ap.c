@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_ap.c,v 1.1 2003/10/25 04:07:28 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_ap.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.1 2003/10/25 04:07:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.1 2003/10/25 04:07:28 tsutsui Exp $
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mk48txxvar.h>
 
 #include <newsmips/apbus/apbusvar.h>
 
@@ -58,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.1 2003/10/25 04:07:28 tsutsui Exp $
 
 int  mkclock_ap_match(struct device *, struct cfdata  *, void *);
 void mkclock_ap_attach(struct device *, struct device *, void *);
-static u_int8_t mkclock_ap_nvrd(bus_space_tag_t bt, bus_space_handle_t, int);
-static void mkclock_ap_nvwr(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
+static u_int8_t mkclock_ap_nvrd(struct mk48txx_softc *, int);
+static void mkclock_ap_nvwr(struct mk48txx_softc *, int, u_int8_t);
 
-CFATTACH_DECL(mkclock_ap, sizeof(struct device),
+CFATTACH_DECL(mkclock_ap, sizeof(struct mk48txx_softc),
     mkclock_ap_match, mkclock_ap_attach, NULL, NULL);
 
 extern struct cfdriver mkclock_cd;
@@ -85,48 +86,43 @@ mkclock_ap_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct mk48txx_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	todr_chip_handle_t handle;
 
 	printf(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
-	if (bus_space_map(bst, apa->apa_hwbase - MKCLOCK_AP_OFFSET,
-	    MK48T02_CLKSZ, 0, &bsh) != 0)
+	if (bus_space_map(sc->sc_bst, apa->apa_hwbase - MKCLOCK_AP_OFFSET,
+	    MK48T02_CLKSZ, 0, &sc->sc_bsh) != 0)
 		printf("can't map device space\n");
 
-	handle = mk48txx_attach(bst, bsh, "mk48t02", 1900,
-	    mkclock_ap_nvrd, mkclock_ap_nvwr);
-	if (handle == NULL)
-		panic("can't attach tod clock");
+	sc->sc_model = "mk48t02";
+	sc->sc_year0 = 1900;
+	sc->sc_nvrd = mkclock_ap_nvrd;
+	sc->sc_nvwr = mkclock_ap_nvwr;
+
+	mk48txx_attach(sc);
 
 	printf("\n");
 
-	handle->bus_cookie = NULL;
-	handle->todr_setwen = NULL;
-
-        todr_attach(handle);
+	todr_attach(&sc->sc_handle);
 }
 
 static u_int8_t
-mkclock_ap_nvrd(bt, bh, off)
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
+mkclock_ap_nvrd(sc, off)
+	struct mk48txx_softc *sc;
 	int off;
 {
 	u_int8_t rv;
 
-	rv = bus_space_read_4(bt, bh, off << MKCLOCK_AP_STRIDE);
+	rv = bus_space_read_4(sc->sc_bst, sc->sc_bsh, off << MKCLOCK_AP_STRIDE);
 	return rv;
 }
 
 static void
-mkclock_ap_nvwr(bt, bh, off, v)
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
+mkclock_ap_nvwr(sc, off, v)
+	struct mk48txx_softc *sc;
 	int off;
 	u_int8_t v;
 {
 
-	bus_space_write_4(bt, bh, off << MKCLOCK_AP_STRIDE, v);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, off << MKCLOCK_AP_STRIDE, v);
 }
