@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.31 2001/12/18 10:57:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.32 2001/12/27 01:48:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.31 2001/12/18 10:57:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.32 2001/12/27 01:48:38 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -97,10 +97,18 @@ ufs_inactive(v)
 		if (ip->i_ffs_size != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		}
+		/*
+		 * Setting the mode to zero needs to wait for the inode
+		 * to be written just as does a change to the link count.
+		 * So, rather than creating a new entry point to do the
+		 * same thing, we just use softdep_change_linkcnt().
+		 */
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (DOINGSOFTDEP(vp))
+			softdep_change_linkcnt(ip);
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 
