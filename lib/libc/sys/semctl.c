@@ -1,6 +1,4 @@
-/*
- *	$Id: semctl.c,v 1.1 1994/10/20 04:17:06 cgd Exp $
- */     
+/*	$NetBSD: semctl.c,v 1.2 1995/02/27 10:41:36 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ipc.h>
