@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.87 2003/08/22 22:11:46 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.88 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.87 2003/08/22 22:11:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.88 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_ipsec.h"
 
@@ -533,7 +533,6 @@ nd6_timer(ignored_arg)
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ia6, *nia6;
-	struct in6_addrlifetime *lt6;
 
 	s = splsoftnet();
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
@@ -561,7 +560,6 @@ nd6_timer(ignored_arg)
 	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
 		nia6 = ia6->ia_next;
 		/* check address lifetime */
-		lt6 = &ia6->ia6_lifetime;
 		if (IFA6_IS_INVALID(ia6)) {
 			in6_purgeaddr(&ia6->ia_ifa);
 		}
@@ -792,7 +790,6 @@ nd6_is_addr_neighbor(addr, ifp)
 	struct ifnet *ifp;
 {
 	struct nd_prefix *pr;
-	struct rtentry *rt;
 
 	/*
 	 * A link-local address is always a neighbor.
@@ -835,7 +832,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * Even if the address matches none of our addresses, it might be
 	 * in the neighbor cache.
 	 */
-	if ((rt = nd6_lookup(&addr->sin6_addr, 0, ifp)) != NULL)
+	if (nd6_lookup(&addr->sin6_addr, 0, ifp) != NULL)
 		return (1);
 
 	return (0);
@@ -1017,7 +1014,6 @@ nd6_rtrequest(req, rt, info)
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
-	int mine = 0;
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0)
 		return;
@@ -1176,7 +1172,6 @@ nd6_rtrequest(req, rt, info)
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			mine = 1;
 			if (macp) {
 				Bcopy(macp, LLADDR(SDL(gate)), ifp->if_addrlen);
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
@@ -1997,11 +1992,10 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	void *p;
-	size_t ol, l;
+	size_t ol;
 	int error;
 
 	error = 0;
-	l = 0;
 
 	if (newp)
 		return EPERM;

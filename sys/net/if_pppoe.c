@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.49 2003/10/25 18:29:12 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.50 2003/10/30 01:43:08 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.49 2003/10/25 18:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.50 2003/10/30 01:43:08 simonb Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -1123,7 +1123,7 @@ pppoe_timeout(void *arg)
 static int
 pppoe_connect(struct pppoe_softc *sc)
 {
-	int x, err, retry;
+	int x, err;
 
 	if (sc->sc_state != PPPOE_STATE_INITIAL)
 		return EBUSY;
@@ -1135,7 +1135,6 @@ pppoe_connect(struct pppoe_softc *sc)
 #endif
 	x = splnet();
 	/* save state, in case we fail to send PADI */
-	retry =	sc->sc_padr_retried;
 	sc->sc_state = PPPOE_STATE_PADI_SENT;
 	sc->sc_padr_retried = 0;
 	err = pppoe_send_padi(sc);

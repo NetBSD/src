@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.24 2003/08/11 15:17:29 itojun Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.25 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.24 2003/08/11 15:17:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.25 2003/10/30 01:43:10 simonb Exp $");
 
 #include "opt_iso.h"
 
@@ -166,7 +166,6 @@ iso_pcbbind(v, nam, p)
 		char            data[2];
 		u_short         s;
 	} suf;
-	int error;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -238,7 +237,7 @@ iso_pcbbind(v, nam, p)
 		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
 		suf.s = ntohs(suf.s);
 		if (suf.s < ISO_PORT_RESERVED &&
-		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
 			return EACCES;
 	} else {
 		char  *cp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.23 2003/08/07 16:34:35 agc Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.24 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.23 2003/08/07 16:34:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.24 2003/10/30 01:43:10 simonb Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -203,12 +203,12 @@ lfs_dump_dinode(struct ufs1_dinode *dip)
 void
 lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 {
-	int actual, i;
+	int actual;
 #if 0
 	static int offset; 
 #endif
 	
-	if ((actual = i = 1) == 1)
+	if ((actual = 1) == 1)
 		return; /* XXXX not checking this anymore, really */
 	
 	if (sp->sum_bytes_left >= FINFOSIZE

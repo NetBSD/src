@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.51 2003/09/05 23:20:48 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.52 2003/10/30 01:43:10 simonb Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.51 2003/09/05 23:20:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.52 2003/10/30 01:43:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1360,7 +1360,6 @@ nd6_dad_ns_input(ifa)
 	struct ifaddr *ifa;
 {
 	struct in6_ifaddr *ia;
-	struct ifnet *ifp;
 	const struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
@@ -1369,7 +1368,6 @@ nd6_dad_ns_input(ifa)
 		panic("ifa == NULL in nd6_dad_ns_input");
 
 	ia = (struct in6_ifaddr *)ifa;
-	ifp = ifa->ifa_ifp;
 	taddr6 = &ia->ia_addr.sin6_addr;
 	duplicate = 0;
 	dp = nd6_dad_find(ifa);

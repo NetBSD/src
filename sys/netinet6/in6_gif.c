@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.36 2003/09/05 23:20:50 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.37 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.36 2003/09/05 23:20:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.37 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -431,11 +431,7 @@ in6_gif_ctlinput(cmd, sa, d)
 {
 	struct gif_softc *sc;
 	struct ip6ctlparam *ip6cp = NULL;
-	struct mbuf *m;
 	struct ip6_hdr *ip6;
-	int off;
-	void *cmdarg;
-	const struct sockaddr_in6 *sa6_src = NULL;
 	struct sockaddr_in6 *dst6;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -452,16 +448,9 @@ in6_gif_ctlinput(cmd, sa, d)
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
 		ip6cp = (struct ip6ctlparam *)d;
-		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
-		off = ip6cp->ip6c_off;
-		cmdarg = ip6cp->ip6c_cmdarg;
-		sa6_src = ip6cp->ip6c_src;
 	} else {
-		m = NULL;
 		ip6 = NULL;
-		cmdarg = NULL;
-		sa6_src = &sa6_any;
 	}
 
 	if (!ip6)

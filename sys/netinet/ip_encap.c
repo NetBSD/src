@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.15 2003/10/28 20:27:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.16 2003/10/30 01:43:08 simonb Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -727,8 +727,6 @@ encap6_ctlinput(cmd, sa, d0)
 	struct mbuf *m;
 	int off;
 	struct ip6ctlparam *ip6cp = NULL;
-	const struct sockaddr_in6 *sa6_src = NULL;
-	void *cmdarg;
 	int nxt;
 	struct encaptab *ep;
 	const struct ip6protosw *psw;
@@ -752,8 +750,6 @@ encap6_ctlinput(cmd, sa, d0)
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-		cmdarg = ip6cp->ip6c_cmdarg;
-		sa6_src = ip6cp->ip6c_src;
 		nxt = ip6cp->ip6c_nxt;
 
 		if (ip6 && cmd == PRC_MSGSIZE) {
@@ -779,8 +775,6 @@ encap6_ctlinput(cmd, sa, d0)
 	} else {
 		m = NULL;
 		ip6 = NULL;
-		cmdarg = NULL;
-		sa6_src = &sa6_any;
 		nxt = -1;
 	}
 

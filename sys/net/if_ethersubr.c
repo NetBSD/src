@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.113 2003/08/07 16:32:51 agc Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.114 2003/10/30 01:43:08 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.113 2003/08/07 16:32:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.114 2003/10/30 01:43:08 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -662,7 +662,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	u_int16_t etype;
 	int s;
 	struct ether_header *eh;
-	struct m_tag *mtag;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -766,8 +765,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * see if the device performed the decapsulation and
 	 * provided us with the tag.
 	 */
-	if (ec->ec_nvlans &&
-	    (mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
+	if (ec->ec_nvlans && m_tag_find(m, PACKET_TAG_VLAN, NULL) != NULL) {
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()
