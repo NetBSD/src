@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.1 1999/10/19 17:39:26 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.2 1999/10/20 10:14:54 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -321,7 +321,7 @@ atapi_probe_device(sc, target)
 	    XS_CTL_POLL|XS_CTL_NOSLEEP, id) == 0) {
 #ifdef ATAPI_DEBUG_PROBE
 		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
-		    atapi->sc_dev.dv_xname, target,
+		    sc->sc_dev.dv_xname, target,
 		    id->atap_config & ATAPI_CFG_CMD_MASK,
 		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
