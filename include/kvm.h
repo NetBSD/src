@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.10 2000/06/26 06:38:02 kleink Exp $	*/
+/*	$NetBSD: kvm.h,v 1.10.2.1 2002/04/23 20:10:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -71,6 +71,8 @@ char	**kvm_getenvv2 __P((kvm_t *, const struct kinfo_proc2 *, int));
 char	 *kvm_geterr __P((kvm_t *));
 int	  kvm_getloadavg __P((kvm_t *, double [], int));
 char	 *kvm_getfiles __P((kvm_t *, int, int, int *));
+struct kinfo_lwp *
+	  kvm_getlwps __P((kvm_t *, int, u_long, size_t, int *));
 struct kinfo_proc2 *
 	  kvm_getproc2 __P((kvm_t *, int, int, size_t, int *));
 struct kinfo_proc *

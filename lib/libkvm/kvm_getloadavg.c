@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_getloadavg.c,v 1.6 2000/06/26 17:36:56 mrg Exp $	*/
+/*	$NetBSD: kvm_getloadavg.c,v 1.6.2.1 2002/04/23 20:10:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_getloadavg.c,v 1.6 2000/06/26 17:36:56 mrg Exp $");
+__RCSID("$NetBSD: kvm_getloadavg.c,v 1.6.2.1 2002/04/23 20:10:19 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_param.h>
