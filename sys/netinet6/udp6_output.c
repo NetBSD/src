@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.6 2001/12/18 03:04:05 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.6.10.1 2002/08/27 09:33:07 lukem Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.6 2001/12/18 03:04:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.6.10.1 2002/08/27 09:33:07 lukem Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -269,7 +269,7 @@ udp6_output(in6p, m, addr6, control, p)
 			goto release;
 		}
 		if (in6p->in6p_lport == 0 &&
-		    (error = in6_pcbsetport(laddr, in6p)) != 0)
+		    (error = in6_pcbsetport(laddr, in6p, p)) != 0)
 			goto release;
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
