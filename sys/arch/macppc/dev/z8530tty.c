@@ -1,7 +1,7 @@
-/*	$NetBSD: z8530tty.c,v 1.2 1998/08/31 22:28:05 cgd Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.3 1999/02/03 20:19:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
  *	Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,9 @@
  *	Gordon Ross <gwr@netbsd.org>,
  *	Bill Studenmund <wrstuden@loki.stanford.edu>
  *	Ian Dall <Ian.Dall@dsto.defence.gov.au>
+ *
+ * The driver was massively overhauled in November 1997 by Charles Hannum,
+ * fixing *many* bugs, and substantially improving performance.
  */
 
 #include <sys/param.h>
@@ -203,6 +206,12 @@ static void zs_modem __P((struct zstty_softc *zst, int onoff));
 static int	zshwiflow __P((struct tty *, int));
 static void zs_hwiflow __P((struct zstty_softc *));
 
+/* Low-level routines. */
+static void zstty_rxint   __P((struct zs_chanstate *));
+static void zstty_stint   __P((struct zs_chanstate *, int));
+static void zstty_txint   __P((struct zs_chanstate *));
+static void zstty_softint __P((struct zs_chanstate *));
+
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
 
@@ -258,24 +267,25 @@ zstty_attach(parent, self, aux)
 		printf(" flags 0x%x", zst->zst_swflags);
 
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
-		printf(" (console)");
-	else {
+		printf(" (console)\n");
+		DELAY(20000);
+		cn_tab->cn_dev = dev;
+	} else
 #ifdef KGDB
+	if (zs_check_kgdb(cs, dev)) {
 		/*
 		 * Allow kgdb to "take over" this port.  Returns true
 		 * if this serial port is in-use by kgdb.
 		 */
-		if (zs_check_kgdb(cs, dev)) {
-			printf(" (kgdb)\n");
-			/*
-			 * This is the kgdb port (exclusive use)
-			 * so skip the normal attach code.
-			 */
-			return;
-		}
+		printf(" (kgdb)\n");
+		/*
+		 * This is the kgdb port (exclusive use)
+		 * so skip the normal attach code.
+		 */
+		return;
+	} else
 #endif
-	}
-	printf("\n");
+		printf("\n");
 
 	tp = ttymalloc();
 	tp->t_oproc = zsstart;
@@ -301,21 +311,23 @@ zstty_attach(parent, self, aux)
 		/* Call zsparam similar to open. */
 		struct termios t;
 
-		s = splzs();
-
-		/* Turn on interrupts. */
-		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
-
-		/* Fetch the current modem control status, needed later. */
-		cs->cs_rr0 = zs_read_csr(cs);
-
-		splx(s);
-
 		/* Setup the "new" parameters in t. */
 		t.c_ispeed = 0;
 		t.c_ospeed = cs->cs_defspeed;
 		t.c_cflag = cs->cs_defcflag;
+
+		s = splzs();
+
+		/*
+		 * Turn on receiver and status interrupts.
+		 * We defer the actual write of the register to zsparam(),
+		 * but we must make sure status interrupts are turned on by
+		 * the time zsparam() reads the initial rr0 state.
+		 */
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+
+		splx(s);
+
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
@@ -390,11 +402,11 @@ zs_shutdown(zst)
 	}
 
 	/* Turn off interrupts if not the console. */
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
-		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
-	else
-		cs->cs_creg[1] = cs->cs_preg[1] = 0;
-	zs_write_reg(cs, 1, cs->cs_creg[1]);
+	if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
+		CLR(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		cs->cs_creg[1] = cs->cs_preg[1];
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+	}
 
 	splx(s);
 }
@@ -443,17 +455,6 @@ zsopen(dev, flags, mode, p)
 
 		tp->t_dev = dev;
 
-		s2 = splzs();
-
-		/* Turn on interrupts. */
-		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
-
-		/* Fetch the current modem control status, needed later. */
-		cs->cs_rr0 = zs_read_csr(cs);
-
-		splx(s2);
-
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
@@ -469,9 +470,23 @@ zsopen(dev, flags, mode, p)
 			SET(t.c_cflag, CDTRCTS);
 		if (ISSET(zst->zst_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
+
+		s2 = splzs();
+
+		/*
+		 * Turn on receiver and status interrupts.
+		 * We defer the actual write of the register to zsparam(),
+		 * but we must make sure status interrupts are turned on by
+		 * the time zsparam() reads the initial rr0 state.
+		 */
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+
+		splx(s2);
+
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
+
 		/*
 		 * Note: zsparam has done: cflag, ispeed, ospeed
 		 * so we just need to do: iflag, oflag, lflag, cc
@@ -824,7 +839,6 @@ zsparam(tp, t)
 
 	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
 	tmp15 = cs->cs_preg[15];
-#if 0
 	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD))
 		SET(tmp15, ZSWR15_DCD_IE);
 	else
@@ -833,9 +847,6 @@ zsparam(tp, t)
 		SET(tmp15, ZSWR15_CTS_IE);
 	else
 		CLR(tmp15, ZSWR15_CTS_IE);
-#else
-	SET(tmp15, ZSWR15_DCD_IE | ZSWR15_CTS_IE);
-#endif
 	cs->cs_preg[15] = tmp15;
 
 	/* Recompute character size bits. */
@@ -899,8 +910,12 @@ zsparam(tp, t)
 			zs_loadchannelregs(cs);
 	}
 
+	/*
+	 * If hardware flow control is disabled, turn off the buffer water
+	 * marks and unblock any soft flow control state.  Otherwise, enable
+	 * the water marks.
+	 */
 	if (!ISSET(cflag, CHWFLOW)) {
-		/* Disable the high water mark. */
 		zst->zst_r_hiwat = 0;
 		zst->zst_r_lowat = 0;
 		if (ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
@@ -917,21 +932,26 @@ zsparam(tp, t)
 		zst->zst_r_lowat = zstty_rbuf_lowat;
 	}
 
+	/*
+	 * Force a recheck of the hardware carrier and flow control status,
+	 * since we may have changed which bits we're looking at.
+	 */
+	zstty_stint(cs, 1);
+
 	splx(s);
 
 	/*
-	 * Update the tty layer's idea of the carrier bit, in case we changed
-	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
-	 * explicit request.
+	 * If hardware flow control is disabled, unblock any hard flow control
+	 * state.
 	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(cs->cs_rr0, ZSRR0_DCD));
-
 	if (!ISSET(cflag, CHWFLOW)) {
 		if (zst->zst_tx_stopped) {
 			zst->zst_tx_stopped = 0;
 			zsstart(tp);
 		}
 	}
+
+	zstty_softint(cs);
 
 	return (0);
 }
@@ -1032,12 +1052,7 @@ zs_hwiflow(zst)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zstty_rxint __P((struct zs_chanstate *));
-static void zstty_txint __P((struct zs_chanstate *));
-static void zstty_stint __P((struct zs_chanstate *));
-
 #define	integrate	static inline
-static void zstty_softint  __P((struct zs_chanstate *));
 integrate void zstty_rxsoft __P((struct zstty_softc *, struct tty *));
 integrate void zstty_txsoft __P((struct zstty_softc *, struct tty *));
 integrate void zstty_stsoft __P((struct zstty_softc *, struct tty *));
@@ -1168,8 +1183,9 @@ zstty_txint(cs)
  * status change interrupt.  (splzs)
  */
 static void
-zstty_stint(cs)
+zstty_stint(cs, force)
 	struct zs_chanstate *cs;
+	int force;
 {
 	struct zstty_softc *zst = cs->cs_private;
 	u_char rr0, delta;
@@ -1187,8 +1203,12 @@ zstty_stint(cs)
 		return;
 	}
 
-	delta = rr0 ^ cs->cs_rr0;
+	if (!force)
+		delta = rr0 ^ cs->cs_rr0;
+	else
+		delta = cs->cs_rr0_mask;
 	cs->cs_rr0 = rr0;
+
 	if (ISSET(delta, cs->cs_rr0_mask)) {
 		SET(cs->cs_rr0_delta, delta);
 
