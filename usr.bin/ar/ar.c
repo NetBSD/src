@@ -1,4 +1,4 @@
-/*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
+/*	$NetBSD: ar.c,v 1.6 1997/10/18 11:52:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $";
+__RCSID("$NetBSD: ar.c,v 1.6 1997/10/18 11:52:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ u_int options;
 char *archive, *envtmp, *posarg, *posname;
 static void badoptions __P((char *));
 static void usage __P((void));
+int main __P((int, char **));
 
 /*
  * main --
@@ -87,6 +88,7 @@ main(argc, argv)
 
 	if (argc < 3)
 		usage();
+	fcall = NULL;
 
 	/*
 	 * Historic versions didn't require a '-' in front of the options.
@@ -94,7 +96,7 @@ main(argc, argv)
 	*/
 	if (*argv[1] != '-') {
 		if (!(p = malloc((u_int)(strlen(argv[1]) + 2))))
-			err(1, NULL);
+			err(1, "malloc");
 		*p = '-';
 		(void)strcpy(p + 1, argv[1]);
 		argv[1] = p;

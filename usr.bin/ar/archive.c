@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.11 1997/07/19 22:19:35 perry Exp $	*/
+/*	$NetBSD: archive.c,v 1.12 1997/10/18 11:52:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)archive.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: archive.c,v 1.11 1997/07/19 22:19:35 perry Exp $";
+__RCSID("$NetBSD: archive.c,v 1.12 1997/10/18 11:52:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,6 +301,7 @@ copy_ar(cfp, size)
 	int from, nr, nw, off, to;
 	char buf[8*1024];
 	
+	nr = 0;
 	if (!(sz = size))
 		return;
 
@@ -339,7 +341,7 @@ skip_arobj(fd)
 {
 	off_t len;
 
-	len = chdr.size + (chdr.size + chdr.lname & 1);
+	len = chdr.size + ((chdr.size + chdr.lname) & 1);
 	if (lseek(fd, len, SEEK_CUR) == (off_t)-1)
 		error(archive);
 }

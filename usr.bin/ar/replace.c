@@ -1,4 +1,4 @@
-/*	$NetBSD: replace.c,v 1.7 1997/01/09 12:40:12 tls Exp $	*/
+/*	$NetBSD: replace.c,v 1.8 1997/10/18 11:53:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)replace.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: replace.c,v 1.7 1997/01/09 12:40:12 tls Exp $";
+__RCSID("$NetBSD: replace.c,v 1.8 1997/10/18 11:53:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +148,8 @@ useold:			SETCF(afd, archive, curfd, tname, RPAD|WPAD);
         }
 
 	/* Append any left-over arguments to the end of the after file. */
-append:	while (file = *argv++) {
+append:
+	while ((file = *argv++) != NULL) {
 		if (options & AR_V)
 			(void)printf("a - %s\n", file);
 		if ((sfd = open(file, O_RDONLY)) < 0) {
