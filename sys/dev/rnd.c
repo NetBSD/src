@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.10 1997/10/20 18:43:48 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.11 1998/05/27 00:59:14 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,12 +80,6 @@ int     rnd_debug = 0;
  * reading and writing data.
  */
 #define RND_TEMP_BUFFER_SIZE	128
-
-/*
- * This is the minimum amount of random data we can have and be
- * considered "readable"
- */
-#define RND_ENTROPY_THRESHOLD	64
 
 typedef struct _rnd_event_t {
 	rndsource_t    *source;
@@ -179,7 +173,7 @@ rnd_wakeup_readers()
 	 * If we have added new bits, and now have enough to do something,
 	 * wake up sleeping readers.
 	 */
-	if (rndpool_get_entropy_count(&rnd_pool) > RND_ENTROPY_THRESHOLD) {
+	if (rndpool_get_entropy_count(&rnd_pool) > RND_ENTROPY_THRESHOLD * 8) {
 		if (rnd_status & RND_READWAITING) {
 			DPRINTF(RND_DEBUG_SNOOZE,
 				("waking up pending readers.\n"));
@@ -235,7 +229,7 @@ rnd_estimate_entropy(rs, t)
 	 * If any delta is 0, we got no entropy.  If all are non-zero, we
 	 * got one bit.
 	 *
-	 * XXX This is probably too conservative, but better than that than
+	 * XXX This is probably too conservative, but better that than
 	 * too liberal.
 	 */
 	if (delta == 0 || delta2 == 0 || delta3 == 0)
@@ -344,7 +338,7 @@ rndread(dev, uio, ioflag)
 			s = splsoftclock();
 			entcnt = rndpool_get_entropy_count(&rnd_pool);
 			splx(s);
-			if (entcnt >= RND_ENTROPY_THRESHOLD)
+			if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
 				break;
 
 			/*
@@ -655,7 +649,7 @@ rndpoll(dev, events, p)
 	entcnt = rndpool_get_entropy_count(&rnd_pool);
 	splx(s);
 
-	if (entcnt >= RND_ENTROPY_THRESHOLD)
+	if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
 		selrecord(p, &rnd_selq);
