@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.21 2000/12/12 05:26:38 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.22 2000/12/12 19:41:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -66,44 +66,11 @@ userret(p)
 {
 	int sig;
 
-#ifdef DEBUG
-	if (p == NULL)
-		panic("userret: p=0 curproc=%p", curproc);
-    
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("userret called in non SVC mode !");
-
-	if (current_spl_level != _SPL_0) {
-		printf("userret: spl level=%d on entry\n", current_spl_level);
-#ifdef DDB
-		Debugger();
-#endif	/* DDB */
-	}
-#endif	/* DEBUG */
-
-	/* take pending signals */
-
-	while ((sig = (CURSIG(p))) != 0) {
+	/* Take pending signals. */
+	while ((sig = (CURSIG(p))) != 0)
 		postsig(sig);
-	}
 
-	p->p_priority = p->p_usrpri;
-
-	/*
-	 * Check for reschedule request
-	 */
-
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = (CURSIG(p))) != 0) {
-			postsig(sig);
-		}
-	}
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 
 #ifdef DEBUG
 	if (current_spl_level != _SPL_0) {
@@ -134,19 +101,23 @@ ast(frame)
 	uvmexp.traps++;
 	uvmexp.softs++;
 
-#ifdef DIAGNOSTIC
-	if (p == NULL) {
-		p = &proc0;
-		printf("ast: curproc=NULL\n");
-	}
+#ifdef DEBUG
+	if (p == NULL)
+		panic("ast: no curproc!");
 	if (&p->p_addr->u_pcb == 0)
-		panic("ast: nopcb!");
+		panic("ast: no pcb!");
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("ast: not in SVC32 mode");
 #endif	
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
+
+	/* Allow a forced task switch. */
+	if (want_resched)
+		preempt(NULL);
 
 	userret(p);
 }
