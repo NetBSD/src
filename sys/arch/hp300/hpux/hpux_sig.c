@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_sig.c 1.1 90/07/09
  *	from: @(#)hpux_sig.c	7.8 (Berkeley) 4/20/91
- *	$Id: hpux_sig.c,v 1.4 1994/01/07 00:43:53 mycroft Exp $
+ *	$Id: hpux_sig.c,v 1.5 1994/05/04 03:47:24 mycroft Exp $
  */
 
 /*
@@ -336,7 +336,7 @@ hpux_sigaction(p, uap, retval)
 		if (p->p_flag & SOUSIG)
 			sa->sa_flags |= HPUXSA_RESETHAND;	/* XXX */
 #endif
-		if (p->p_flag & SNOCLDSTOP)
+		if (p->p_flag & P_NOCLDSTOP)
 			sa->sa_flags |= HPUXSA_NOCLDSTOP;
 		if (copyout((caddr_t)sa, (caddr_t)uap->osa, sizeof (action)))
 			return (EFAULT);

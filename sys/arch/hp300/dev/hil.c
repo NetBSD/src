@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.11 1994/04/10 22:12:32 hpeyerl Exp $
+ *	$Id: hil.c,v 1.12 1994/05/04 03:47:12 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -157,7 +157,7 @@ hilopen(dev, flags, mode, p)
 	 * 3.	BSD processes default to shared queue interface.
 	 *	Multiple processes can open the device.
 	 */
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 		if (dptr->hd_flags & (HIL_READIN|HIL_QUEUEIN))
 			return(EBUSY);
 		dptr->hd_flags |= HIL_READIN;
@@ -215,7 +215,7 @@ hilclose(dev, flags)
 	if (device && (dptr->hd_flags & HIL_PSEUDO))
 		return (0);
 
-	if ((p->p_flag & SHPUX) == 0) {
+	if (p->p_emul != EMUL_HPUX) {
 		/*
 		 * If this is the loop device,
 		 * free up all queues belonging to this process.
@@ -382,7 +382,7 @@ hilioctl(dev, cmd, data, flag, p)
 	}
 
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX)
+	if (p->p_emul == EMUL_HPUX)
 		return(hpuxhilioctl(dev, cmd, data, flag));
 #endif
 
