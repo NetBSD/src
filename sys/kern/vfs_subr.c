@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.106 1999/07/29 13:31:45 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.107 1999/08/14 06:23:59 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -431,6 +431,7 @@ getnewvnode(tag, mp, vops, vpp)
 		simple_unlock(&vnode_free_list_slock);
 		vp = pool_get(&vnode_pool, PR_WAITOK);
 		memset((char *)vp, 0, sizeof(*vp));
+		simple_lock_init(&vp->v_interlock);
 		numvnodes++;
 	} else {
 		for (vp = vnode_free_list.tqh_first;
