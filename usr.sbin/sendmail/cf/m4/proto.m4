@@ -148,22 +148,22 @@ C[[
 # Mailer table (overriding domains)
 ifdef(`MAILER_TABLE',
 	`Kmailertable MAILER_TABLE',
-	`#Kmailertable dbm /etc/mailertable')
+	`#Kmailertable hash /etc/mailertable')
 
 # Domain table (adding domains)
 ifdef(`DOMAIN_TABLE',
 	`Kdomaintable DOMAIN_TABLE',
-	`#Kdomaintable dbm /etc/domaintable')
+	`#Kdomaintable hash /etc/domaintable')
 
 # Generics table (mapping outgoing addresses)
 ifdef(`GENERICS_TABLE',
 	`Kgenerics GENERICS_TABLE',
-	`#Kgenerics dbm /etc/genericstable')
+	`#Kgenerics hash /etc/genericstable')
 
 # Virtual user table (maps incoming users)
 ifdef(`VIRTUSER_TABLE',
 	`Kvirtuser VIRTUSER_TABLE',
-	`#Kvirtuser dbm /etc/virtusertable')
+	`#Kvirtuser hash /etc/virtusertable')
 
 # who I send unqualified names to (null means deliver locally)
 DR`'ifdef(`LOCAL_RELAY', LOCAL_RELAY)
