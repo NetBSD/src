@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.10 2002/06/14 01:07:00 wiz Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.11 2002/08/12 02:44:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwopen.c,v 1.10 2002/06/14 01:07:00 wiz Exp $");
+__RCSID("$NetBSD: wwopen.c,v 1.11 2002/08/12 02:44:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ wwopen(int type, int oflags, int nrow, int ncol, int row, int col, int nline)
 	char m;
 	short nvis;
 
-	w = (struct ww *)calloc(sizeof (struct ww), 1);
+	w = (struct ww *)calloc(1, sizeof (struct ww));
 	if (w == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;
