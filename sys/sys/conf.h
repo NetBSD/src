@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.45 1997/01/22 07:09:08 mikel Exp $	*/
+/*	$NetBSD: conf.h,v 1.46 1997/01/31 03:01:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -427,6 +427,22 @@ cdev_decl(ipl);
 #endif
 cdev_decl(svr4_net);
 
+#endif /* _KERNEL */
+
+/*
+ * Used by setroot() to map device names to bdev major numbers.
+ * Ports declare a NULL-terminated array of these structures
+ * to setroot().
+ */
+struct devnametobdevmaj {
+	const char *d_name;
+	int	d_maj;
+};
+
+#ifdef _KERNEL
+struct device;
+void	setroot __P((struct device *, int, struct devnametobdevmaj *));
+void	swapconf __P((void));
 #endif /* _KERNEL */
 
 #endif /* !_SYS_CONF_H_ */
