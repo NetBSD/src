@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.2.4.3 1993/11/14 18:47:34 mycroft Exp $
+ *	$Id: ns_ip.c,v 1.2.4.4 1993/11/14 19:38:45 mycroft Exp $
  */
 
 /*
@@ -39,29 +39,31 @@
  */
 
 #ifdef NSIP
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "protosw.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/protosw.h>
 
-#include "../net/if.h"
-#include "../net/netisr.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
-#include "../netinet/in.h"
-#include "../netinet/in_systm.h"
-#include "../netinet/in_var.h"
-#include "../netinet/ip.h"
-#include "../netinet/ip_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
-#include "../netns/ns.h"
-#include "../netns/ns_if.h"
-#include "../netns/idp.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#include <netns/idp.h>
+
+#include <machine/cpu.h>
 
 struct ifnet_en {
 	struct ifnet ifen_ifnet;
