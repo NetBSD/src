@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 2003/02/14 04:45:32 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.8 2003/07/31 01:25:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
  */
 #define	PSL_VEC		0x02000000	/* AltiVec vector unit available */
 #define	PSL_POW		0x00040000	/* power management */
+#define	PSL_TGPR	0x00020000	/* temp. gpr remapping (mpc603e) */
 #define	PSL_ILE		0x00010000	/* interrupt endian mode (1 == le) */
 #define	PSL_EE		0x00008000	/* external interrupt enable */
 #define	PSL_PR		0x00004000	/* privilege mode (1 == user) */
