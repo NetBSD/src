@@ -30,62 +30,112 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)trek.6	6.3 (Berkeley) 6/23/90
-.\"	$Id: trek.6,v 1.2 1993/08/01 07:46:05 mycroft Exp $
+.\"	$Id: trek.6,v 1.3 1993/08/05 03:16:59 jtc Exp $
 .\"
-.TH TREK 6 "June 23, 1990"
-.UC 4
-.SH NAME
-trek \- trekkie game
-.SH SYNOPSIS
-.B /usr/games/trek
-[ [
-.B \-a
-] file ]
-.SH DESCRIPTION
-.I Trek
+.Dd June 23, 1990
+.Dt TREK 6
+.Os
+.Sh NAME
+.Nm trek 
+.Nd trekkie game
+.Sh SYNOPSIS
+.Nm /usr/games/trek
+.Oo
+.Op Fl a
+.Ar file
+.Oc
+.Sh DESCRIPTION
+.Nm Trek
 is a game of space glory and war.  Below is a summary of commands.
 For complete documentation, see
-.IR Trek
+.Em Trek
 by Eric Allman.
-.PP
+.Pp
 If a filename is given, a log of the game is written onto that file.
 If the
-.B \-a
+.Fl a
 flag is given before the filename, that file is appended to, not truncated.
-.PP
+.Pp
 The game will ask you what length game you would like.
-Valid responses are \*(lqshort\*(rq, \*(lqmedium\*(rq, and \*(lqlong\*(rq.
-You may also type \*(lqrestart\*(rq, which restarts a previously saved game.
+Valid responses are 
+.Dq short ,
+.Dq medium ,
+and 
+.Dq long .
+You may also type 
+.Dq restart ,
+which restarts a previously saved game.
 You will then be prompted for the skill, to which you must respond
-\*(lqnovice\*(rq, \*(lqfair\*(rq, \*(lqgood\*(rq, \*(lqexpert\*(rq,
-\*(lqcommadore\*(rq, or \*(lqimpossible\*(rq.
+.Dq novice ,
+.Dq fair ,
+.Dq good ,
+.Dq expert ,
+.Dq commodore ,
+or
+.Dq impossible .
 You should normally start out with a novice and work up.
-.PP
+.Pp
 In general, throughout the game, if you forget what is appropriate
 the game will tell you what it expects if you just type in a question mark.
-.SH AUTHOR
+.Sh AUTHOR
 Eric Allman
-.SH "SEE ALSO"
-/usr/doc/trek
-.SH "COMMAND SUMMARY"
-.ie t .ds f \fB
-.el .ds f \fI
-.ta 3i
-.nf
-\*fabandon\fR	\*fca\fRpture
-\*fcl\fRoak \*fu\fRp/\*fd\fRown
-\*fc\fRomputer request; ...	\*fda\fRmages
-\*fdestruct\fR	\*fdo\fRck
-\*fhelp\fR	\*fi\fRmpulse course distance
-\*fl\fRrscan	\*fm\fRove course distance
-\*fp\fRhasers \*fa\fRutomatic amount
-\*fp\fRhasers \*fm\fRanual amt1 course1 spread1 ...
-\*ft\fRorpedo course [\*fy\fRes] angle/\*fn\fRo
-\*fram\fR course distance	\*fr\fRest time
-\*fshell\fR	\*fsh\fRields \*fu\fRp/\*fd\fRown
-\*fs\fRrscan [\*fy\fRes/\*fn\fRo]
-\*fst\fRatus	\*fterminate\fR \*fy\fRes/\*fn\fRo
-\*fu\fRndock	\*fv\fRisual course
-\*fw\fRarp warp_factor
-.fi
-.DT
+.Sh "SEE ALSO"
+.Pa /usr/doc/trek
+.Sh COMMAND SUMMARY
+.Bl -item -compact
+.It
+.Ic abandon
+.It
+.Ic ca Ns pture
+.It
+.Ic cl Ns oak 
+.Ic u Ns p/ Ns Ic d Ns own
+.It
+.Ic c Ns omputer request; ...
+.It
+.Ic da Ns mages
+.It
+.Ic destruct
+.It
+.Ic do Ns ck
+.It
+.Ic help
+.It
+.Ic i Ns mpulse course distance
+.It
+.Ic l Ns rscan
+.It
+.Ic m Ns ove course distance
+.It
+.Ic p Ns hasers Ic a Ns utomatic
+amount
+.It
+.Ic p Ns hasers Ic m Ns anual
+amt1 course1 spread1 ...
+.It
+.Ic t Ns orpedo course
+.Op Ic y Ns es
+.No angle/ Ns Ic n Ns o
+.It
+.Ic ram No course distance
+.It
+.Ic r Ns est time
+.It
+.Ic shell
+.It
+.Ic sh Ns ields 
+.Ic u Ns p/ Ns Ic d Ns own
+.It
+.Ic s Ns rscan
+.Op Ic y Ns es/ Ic n Ns o
+.It
+.Ic st Ns atus
+.It
+.Ic terminate y Ns es/ Ns Ic n Ns o
+.It
+.Ic u Ns ndock
+.It
+.Ic v Ns isual course
+.It
+.Ic w Ns arp warp_factor
+.El
