@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 1997/09/23 08:23:29 pk Exp $ */
+/*	$NetBSD: param.h,v 1.33 1997/09/23 19:59:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ extern int nbpg, pgofset, pgshift;
 #endif
 
 #define	KERNBASE	0xf0000000	/* start of kernel virtual space */
-#define	KERNTEXTOFF	0xf0004000	/* start of kernel text */
+#define	KERNTEXTOFF	(KERNBASE+0x4000)	/* start of kernel text */
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
