@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.8 1998/11/12 16:19:47 christos Exp $	*/
+/*	$NetBSD: bim.c,v 1.9 1999/01/25 22:42:11 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.8 1998/11/12 16:19:47 christos Exp $");
+__RCSID("$NetBSD: bim.c,v 1.9 1999/01/25 22:42:11 garbled Exp $");
 #endif /* not lint */
 
 /*
@@ -81,6 +81,7 @@ void	usage __P((void));
 /*  Global data....  */
 char    disk_info[BLOCK_SIZE];
 int     disk_fd;		/* The file descriptor for the disk. */
+int	yesmode;
 
 struct disklabel *dk_label = (struct disklabel *) & disk_info[LABELOFFSET];
 struct imageinfo *im_table =
@@ -97,7 +98,7 @@ int     secsize;
 void 
 usage()
 {
-	printf("usage: %s [-c command [-c command ...]] [device]\n",
+	printf("usage: %s [-y] [-c command [-c command ...]] [device]\n",
 	    __progname);
 	printf("  Maximum of %d commands\n", MAXARGCMDS);
 	exit(1);
@@ -169,6 +170,8 @@ init_images(badmagic)
 	if (badmagic) {
 		printf("Image information has improper magic number.\n");
 		while (TRUE) {
+			if (yesmode == 1)
+				break;
 			prompt(answer, 3,
 			    "Do you want the images initialized? (y or n) ");
 			if (answer[0] == 'y')
@@ -578,11 +581,15 @@ main(argc, argv)
 	int     index;
 
 	/* Check the parameters.  */
+	yesmode = 0;
 	cmdscnt = 0;
 	opterr = TRUE;
 	fname = DEFAULT_DEVICE;
 	while ((optchar = getopt(argc, argv, "c:")) != -1)
 		switch (optchar) {
+		case 'y':
+			yesmode = 1;
+			break;
 		case 'c':
 			if (cmdscnt == MAXARGCMDS)
 				usage();
