@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: raidframe,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: raidframe,v 1.2 2000/04/26 05:13:51 thorpej Exp $
 #
 
-# PROVIDE: raidframe
+# PROVIDE: disks
 
 . /etc/rc.subr
 . /etc/rc.conf
