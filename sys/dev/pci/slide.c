@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
+/*	$NetBSD: slide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,16 +45,16 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_sl82c105_reg.h>
 
-void sl82c105_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void sl82c105_setup_channel __P((struct channel_softc*));
+static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void sl82c105_setup_channel(struct channel_softc*);
 
-int	slide_match __P((struct device *, struct cfdata *, void *));
-void	slide_attach __P((struct device *, struct device *, void *));
+static int  slide_match(struct device *, struct cfdata *, void *);
+static void slide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(slide, sizeof(struct pciide_softc),
     slide_match, slide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_symphony_products[] = {
+static const struct pciide_product_desc pciide_symphony_products[] = {
 	{ PCI_PRODUCT_SYMPHONY_82C105,
 	  0,
 	  "Symphony Labs 82C105 IDE controller",
@@ -66,7 +66,7 @@ const struct pciide_product_desc pciide_symphony_products[] = {
 	}
 };
 
-const struct pciide_product_desc pciide_winbond_products[] =  {
+static const struct pciide_product_desc pciide_winbond_products[] =  {
 	{ PCI_PRODUCT_WINBOND_W83C553F_1,
 	  0,
 	  "Winbond W83C553F IDE controller",
@@ -78,11 +78,8 @@ const struct pciide_product_desc pciide_winbond_products[] =  {
 	}
 };
 
-int
-slide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+slide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -97,10 +94,8 @@ slide_match(parent, match, aux)
 	return (0);
 }
 
-void
-slide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+slide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -129,10 +124,8 @@ sl82c105_bugchk(struct pci_attach_args *pa)
 	return (0);
 }
 
-void
-sl82c105_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
@@ -189,9 +182,8 @@ sl82c105_chip_map(sc, pa)
 	}
 }
 
-void
-sl82c105_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+sl82c105_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;

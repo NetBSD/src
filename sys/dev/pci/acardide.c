@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
+/*	$NetBSD: acardide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -24,7 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
@@ -36,17 +35,19 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_acard_reg.h>
 
-void acard_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void acard_setup_channel __P((struct channel_softc*));
-int  acard_pci_intr __P((void *));
+static void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void acard_setup_channel(struct channel_softc*);
+#if 0 /* XXX !! */
+static int  acard_pci_intr(void *);
+#endif
 
-int	acardide_match __P((struct device *, struct cfdata *, void *));
-void	acardide_attach __P((struct device *, struct device *, void *));
+static int  acardide_match(struct device *, struct cfdata *, void *);
+static void acardide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acardide, sizeof(struct pciide_softc),
     acardide_match, acardide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_acard_products[] =  {
+static const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP850U,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Acard ATP850U Ultra33 IDE Controller",
@@ -69,11 +70,8 @@ const struct pciide_product_desc pciide_acard_products[] =  {
 	}
 };
 
-int
-acardide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+acardide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -84,10 +82,8 @@ acardide_match(parent, match, aux)
 	return (0);
 }
 
-void
-acardide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+acardide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -100,10 +96,8 @@ acardide_attach(parent, self, aux)
 #define	ACARD_IS_850(sc)						\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_ACARD_ATP850U)
 
-void
-acard_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int i;
@@ -159,9 +153,8 @@ acard_chip_map(sc, pa)
 	}
 }
 
-void
-acard_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+acard_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
@@ -271,9 +264,9 @@ acard_setup_channel(chp)
 	}
 }
 
-int
-acard_pci_intr(arg)
-	void *arg;
+#if 0 /* XXX !! */
+static int
+acard_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
@@ -305,3 +298,4 @@ acard_pci_intr(arg)
 	}
 	return rv;
 }
+#endif

@@ -1,5 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: viaide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +30,6 @@
  *
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -41,17 +39,17 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_apollo_reg.h>
 
-void via_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void via_sata_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void via_setup_channel __P((struct channel_softc*));
+static void via_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void via_sata_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void via_setup_channel(struct channel_softc*);
 
-int	viaide_match __P((struct device *, struct cfdata *, void *));
-void	viaide_attach __P((struct device *, struct device *, void *));
+static int  viaide_match(struct device *, struct cfdata *, void *);
+static void viaide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(viaide, sizeof(struct pciide_softc),
     viaide_match, viaide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_amd_products[] =  {
+static const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,
 	  0,
 	  "Advanced Micro Devices AMD756 IDE Controller",
@@ -79,7 +77,7 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	}
 };
 
-const struct pciide_product_desc pciide_nvidia_products[] = {
+static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE_ATA100,
 	  0,
 	  "NVIDIA nForce IDE Controller",
@@ -97,7 +95,7 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	}
 };
 
-const struct pciide_product_desc pciide_via_products[] =  {
+static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	  0,
 	  NULL,
@@ -120,11 +118,8 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	}
 };
 
-int
-viaide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+viaide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -143,10 +138,8 @@ viaide_match(parent, match, aux)
 	return (0);
 }
 
-void
-viaide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+viaide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -163,10 +156,8 @@ viaide_attach(parent, self, aux)
 	pciide_common_attach(sc, pa, pp);
 }
 
-void
-via_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
@@ -320,9 +311,8 @@ via_chip_map(sc, pa)
 	}
 }
 
-void
-via_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+via_setup_channel(struct channel_softc *chp)
 {
 	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;
@@ -460,10 +450,8 @@ pio:		/* setup PIO mode */
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))), DEBUG_PROBE);
 }
 
-void
-via_sata_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
