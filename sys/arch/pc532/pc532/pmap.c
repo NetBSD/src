@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  *
- *	$Id: pmap.c,v 1.4 1994/04/19 17:14:21 phil Exp $
+ *	$Id: pmap.c,v 1.5 1994/05/03 07:30:33 phil Exp $
  */
 
 /*
@@ -202,7 +202,7 @@ void		pmap_clear_modify();
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-struct pte	*CMAP1, *CMAP2, *mmap;
+struct pte	*CMAP1, *CMAP2, *xxx_mmap;
 caddr_t		CADDR1, CADDR2, vmmap;
 struct pte	*msgbufmap;
 struct msgbuf	*msgbufp;
@@ -406,7 +406,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
-	SYSMAP(caddr_t		,mmap		,vmmap	   ,1		)
+	SYSMAP(caddr_t		,xxx_mmap	,vmmap	   ,1		)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
 	virtual_avail = va;
 #endif
