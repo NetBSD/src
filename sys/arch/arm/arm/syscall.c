@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.25 2004/08/21 11:57:36 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2004/08/21 11:57:36 rearnsha Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -134,6 +134,7 @@ swi_handler(trapframe_t *frame)
 	frame->tf_pc += INSN_SIZE;
 #endif
 
+#ifndef THUMB_CODE
 	/*
 	 * Make sure the program counter is correctly aligned so we
 	 * don't take an alignment fault trying to read the opcode.
@@ -156,13 +157,24 @@ swi_handler(trapframe_t *frame)
 		userret(l);
 		return;
 	}
+#endif
 
+#ifdef THUMB_CODE
+	if (frame->tf_spsr & PSR_T_bit) {
+		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
+		insn = fusword((void *)(frame->tf_pc - THUMB_INSN_SIZE));
+		insn = (insn & 0x00ff) | 0xef000000;
+	}
+	else
+#endif
+	{
 	/* XXX fuword? */
 #ifdef __PROG32
-	insn = *(u_int32_t *)(frame->tf_pc - INSN_SIZE);
+		insn = *(u_int32_t *)(frame->tf_pc - INSN_SIZE);
 #else
-	insn = *(u_int32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
+		insn = *(u_int32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
 #endif
+	}
 
 	l->l_addr->u_pcb.pcb_tf = frame;
 
@@ -250,7 +262,14 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			ksi.ksi_signo = SIGILL;
 			/* XXX get an ILL_ILLSYSCALL assigned */
 			ksi.ksi_code = 0;
-			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+#ifdef THUMB_CODE
+			if (frame->tf_spsr & PSR_T_bit) 
+				ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+				    THUMB_INSN_SIZE);
+			else
+#endif
+				ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+				    INSN_SIZE);
 			ksi.ksi_trap = insn;
 			trapsignal(l, &ksi);
 			break;
@@ -268,7 +287,13 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		ksi.ksi_signo = SIGILL;
 		/* XXX get an ILL_ILLSYSCALL assigned */
 		ksi.ksi_code = 0;
-		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+#ifdef THUMB_CODE
+		if (frame->tf_spsr & PSR_T_bit) 
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+			    THUMB_INSN_SIZE);
+		else
+#endif
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
 		ksi.ksi_trap = insn;
 		trapsignal(l, &ksi);
 		userret(l);
@@ -327,7 +352,12 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		/*
 		 * Reconstruct the pc to point at the swi.
 		 */
-		frame->tf_pc -= INSN_SIZE;
+#ifdef THUMB_CODE
+		if (frame->tf_spsr & PSR_T_bit)
+			frame->tf_pc -= THUMB_INSN_SIZE;
+		else
+#endif
+			frame->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
@@ -378,7 +408,14 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			ksi.ksi_signo = SIGILL;
 			/* XXX get an ILL_ILLSYSCALL assigned */
 			ksi.ksi_code = 0;
-			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+#ifdef THUMB_CODE
+			if (frame->tf_spsr & PSR_T_bit) 
+				ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+				    THUMB_INSN_SIZE);
+			else
+#endif
+				ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+				    INSN_SIZE);
 			ksi.ksi_trap = insn;
 			trapsignal(l, &ksi);
 			break;
@@ -396,7 +433,13 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		ksi.ksi_signo = SIGILL;
 		/* XXX get an ILL_ILLSYSCALL assigned */
 		ksi.ksi_code = 0;
-		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+#ifdef THUMB_CODE
+		if (frame->tf_spsr & PSR_T_bit) 
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc -
+			    THUMB_INSN_SIZE);
+		else
+#endif
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
 		ksi.ksi_trap = insn;
 		trapsignal(l, &ksi);
 		userret(l);
@@ -458,7 +501,12 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		/*
 		 * Reconstruct the pc to point at the swi.
 		 */
-		frame->tf_pc -= INSN_SIZE;
+#ifdef THUMB_CODE
+		if (frame->tf_spsr & PSR_T_bit)
+			frame->tf_pc -= THUMB_INSN_SIZE;
+		else
+#endif
+			frame->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
