@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.37 2002/05/06 22:34:40 eeh Exp $
+# 	$NetBSD: GENERIC32,v 1.38 2002/05/13 22:38:01 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	64
 
@@ -224,6 +224,7 @@ lpt*	at ebus?				# parallel port
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock*	at sbus? slot ? offset ?
 clock*	at ebus?
+rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
@@ -518,6 +519,8 @@ autri*		at ofpci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiocs?
 audio*		at autri?
+
+#midi*		at autri?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
