@@ -463,6 +463,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/se
 ./usr/X11R6/lib/X11/xkb/symbols/sgi
 ./usr/X11R6/lib/X11/xkb/symbols/sgi/jp
+./usr/X11R6/lib/X11/xkb/symbols/sharp
+./usr/X11R6/lib/X11/xkb/symbols/sharp/jp
 ./usr/X11R6/lib/X11/xkb/symbols/sony
 ./usr/X11R6/lib/X11/xkb/symbols/sony/us
 ./usr/X11R6/lib/X11/xkb/symbols/sun
