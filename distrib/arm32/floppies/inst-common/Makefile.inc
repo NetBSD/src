@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2000/11/01 07:57:56 garbled Exp $
+# $NetBSD: Makefile.inc,v 1.10 2000/12/14 23:48:16 jhawk Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -44,7 +44,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
