@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.6 2000/07/19 09:58:45 augustss Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.7 2000/09/20 14:33:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -687,13 +687,14 @@ cs4280_intr(p)
 	u_int32_t intr, mem;
 	char * empty_dma;
 
+	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
+	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
-	if ((intr & HISR_INTENA) == 0) {
-		BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-		return (0);
-	}
-	
+	/* not for me */
+	if((intr & HISR_INTENA) == 0 )
+		return 0;
+
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
 		mem = BA1READ4(sc, CS4280_PFIE);
@@ -812,8 +813,7 @@ cs4280_intr(p)
 		DPRINTF(("\n"));
 	}
 #endif
-	/* Throw EOI */
-	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
+
 	return (1);
 }
 
@@ -1655,7 +1655,8 @@ cs4280_init(sc, init)
 	delay(50*1000); /* delay 50ms */
 	
 	/* Turn on clock */
-	BA0WRITE4(sc, CS4280_CLKCR1, CLKCR1_PLLP | CLKCR1_SWCE);
+	mem = BA0READ4(sc, CS4280_CLKCR1) | CLKCR1_SWCE;
+	BA0WRITE4(sc, CS4280_CLKCR1, mem);
 	
 	/* Set the serial port FIFO pointer to the
 	 * first sample in FIFO. (not documented) */
@@ -1687,7 +1688,8 @@ cs4280_init(sc, init)
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
-	while (BA0READ4(sc, CS4280_ACISV) != (ACISV_ISV3 | ACISV_ISV4)) {
+	while ((BA0READ4(sc, CS4280_ACISV) & (ACISV_ISV3 | ACISV_ISV4)) !=
+	       (ACISV_ISV3 | ACISV_ISV4)) {
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
