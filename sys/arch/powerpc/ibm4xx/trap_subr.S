@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.3 2002/03/13 19:11:53 eeh Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.3.4.1 2002/07/16 13:09:57 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@ GLOBAL(intr_depth)
 	.comm	spillstk,SPILLSTK,8
 
 #if defined(MULTIPROCESSOR)
-#define	GET_PCB(rX)	\	
+#define	GET_PCB(rX)	\
 	GET_CPUINFO(rX);	\
 	lwz	rX,CI_CURPCB(rX)
 #else
@@ -113,7 +113,7 @@ GLOBAL(intr_depth)
 	GET_PCB(1);						\
 	addi	1,1,USPACE;	/* stack is top of user struct */ \
 1:
-	
+
 #define	CRITICAL_PROLOG(savearea)	\
 	mtsprg	1,1;			/* save SP */ 		\
 	stmw	28,savearea(0);		/* free r28-r31 */	\
@@ -130,7 +130,7 @@ GLOBAL(intr_depth)
 1:
 
 
-/* Standard handler saves r1,r28-31,LR,CR, sets up the stack and calls s_trap */	
+/* Standard handler saves r1,r28-31,LR,CR, sets up the stack and calls s_trap */
 #define STANDARD_EXC_HANDLER(name)\
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
@@ -138,7 +138,7 @@ _C_LABEL(name ## trap):						\
 	bla	s_trap  ;					\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 
-/* Access exceptions also need DEAR and ESR saved */	
+/* Access exceptions also need DEAR and ESR saved */
 #define ACCESS_EXC_HANDLER(name)\
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
@@ -156,10 +156,10 @@ _C_LABEL(name ## trap):						\
 	CRITICAL_PROLOG(tempsave);				\
 	bla	s_trap  ;					\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
-		 		
+
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, ALI, the interrupts, and possibly the debugging 
+ * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
  * traps when using IPKDB).
  */
 	.text
@@ -191,7 +191,7 @@ _C_LABEL(extint):
 	ba	extintr
 _C_LABEL(extsize) = .-_C_LABEL(extint)
 
-	
+
 #ifdef DDB
 #define	ddbsave	0xde0		/* primary save area for DDB */
 /*
@@ -238,7 +238,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #else
 #define TRAP_IF_ZERO(r)
 #endif
-	
+
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (1)
@@ -315,14 +315,14 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 
 realtrap:	/* entry point after IPKDB is done with exception */
 	/* Test whether we already had PR set */
-        mfsrr1  1
-        mtcr    1
-        mfsprg  1,1                     /* restore SP (might have been
-                                           overwritten) */
-        bc      4,17,s_trap             /* branch if PSL_PR is false */
-        lis     1,_C_LABEL(curpcb)@ha
-        lwz     1,_C_LABEL(curpcb)@l(1)
-        addi    1,1,USPACE              /* stack is top of user struct */
+	mfsrr1	1
+	mtcr	1
+	mfsprg	1,1			/* restore SP (might have been
+					   overwritten) */
+	bc	4,17,s_trap		/* branch if PSL_PR is false */
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
 /*
  * Now the common trap catching code.
  */
@@ -361,7 +361,7 @@ _C_LABEL(trapexit):
 /*
  * External interrupt second level handler
  */
-	
+
 #define	INTRENTER							\
 /* Save non-volatile registers: */					\
 	stwu	1,-92(1);		/* temporarily */		\
@@ -421,7 +421,7 @@ intr_exit:
 	mtmsr	5
 	isync
 	mtpid	3			/* Load CTX */
-	
+
 /* restore possibly overwritten registers: */
 	lwz	12,44(1)
 	lwz	11,48(1)
@@ -485,7 +485,7 @@ intr_exit:
 	lwz	1,0(1)
 	rfi
 	ba	.	/* Protect against prefetch */
-	
+
 /*
  * PIT interrupt handler.
  */
@@ -647,7 +647,7 @@ _C_LABEL(ipkdbfbyte):
 	lwz	8,_C_LABEL(ipkdbsr)@l(8)
 	mtsr	USER_SR,8
 	isync
-#endif	
+#endif
 #endif
 	dcbst	0,9			/* flush data... */
 	sync
@@ -675,7 +675,7 @@ _C_LABEL(ipkdbsbyte):
 	lwz	8,_C_LABEL(ipkdbsr)@l(8)
 	mtsr	USER_SR,8
 	isync
-#endif	
+#endif
 #endif
 	dcbst	0,9			/* flush data... */
 	sync
@@ -690,6 +690,6 @@ _C_LABEL(ipkdbsbyte):
 	stw	5,0(9)			/* restore previous fault handler */
 	dcbst	0,9			/* and flush data... */
 	sync
-	icbi	0,9			/* and instruction caches */	
+	icbi	0,9			/* and instruction caches */
 	blr
 #endif	/* IPKDB */

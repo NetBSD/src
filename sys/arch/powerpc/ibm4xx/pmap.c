@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2002/03/28 18:07:31 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11.2.1 2002/07/16 13:09:57 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -484,7 +484,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 /*
  * Preallocate kernel page tables to a specified VA.
  * This simply loops through the first TTE for each
- * page table from the beginning of the kernel pmap, 
+ * page table from the beginning of the kernel pmap,
  * reads the entry, and if the result is
  * zero (either invalid entry or no page table) it stores
  * a zero there, populating page tables in the process.
@@ -496,15 +496,15 @@ extern void vm_page_free1 __P((struct vm_page *));
 
 vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
 
-vaddr_t 
+vaddr_t
 pmap_growkernel(maxkvaddr)
-        vaddr_t maxkvaddr; 
+	vaddr_t maxkvaddr;
 {
 	int s;
 	int seg;
 	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
-	
+
 	s = splvm();
 
 	/* Align with the start of a page table */
@@ -513,7 +513,7 @@ pmap_growkernel(maxkvaddr)
 		seg = STIDX(kbreak);
 
 		if (pte_find(pm, kbreak)) continue;
- 
+
 		if (uvm.page_init_done) {
 			pg = (paddr_t)VM_PAGE_TO_PHYS(vm_page_alloc1());
 		} else {
@@ -897,9 +897,9 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	paddr_t pa;
 	int s = splvm();
 
-        if (pm == NULL) { 
-                return;
-        }
+	if (pm == NULL) {
+		return;
+	}
 
 	if (!pmap_extract(pm, va, &pa)) {
 		return;
@@ -1183,7 +1183,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mfpid %1;"
 		"mtpid %2;"
 		"sync; isync;"
-		"1:" 
+		"1:"
 		"dcbf 0,%3;"
 		"icbi 0,%3;"
 		"addi %3,%3,32;"
@@ -1268,7 +1268,7 @@ ppc4xx_tlb_find_victim(void)
 		if (++tlbnext >= NTLB)
 			tlbnext = TLB_NRESERVED;
 		flags = tlb_info[tlbnext].ti_flags;
-		if (!(flags & TLBF_USED) || 
+		if (!(flags & TLBF_USED) ||
 			(flags & (TLBF_LOCKED | TLBF_REF)) == 0) {
 			u_long va, stack = (u_long)&va;
 
@@ -1297,7 +1297,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	paddr_t pa;
 	int s, sz;
 
-  
 	tlbenter_ev.ev_count++;
 
 	sz = (pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT;
@@ -1314,7 +1313,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		panic("ppc4xx_tlb_enter: repacing entry %ld\n", idx);
 	}
 #endif
-	
+
 	tlb_info[idx].ti_va = (va & TLB_EPN_MASK);
 	tlb_info[idx].ti_ctx = ctx;
 	tlb_info[idx].ti_flags = TLBF_USED | TLBF_REF;
@@ -1584,7 +1583,7 @@ pmap_testout()
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
 	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
-	
+
 	/* Modify page */
 	*loc = 1;
 
@@ -1643,7 +1642,7 @@ pmap_testout()
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
 	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
-	
+
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
@@ -1685,7 +1684,7 @@ pmap_testout()
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
 	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
-	
+
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
@@ -1726,7 +1725,7 @@ pmap_testout()
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
 	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
-	
+
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
@@ -1768,7 +1767,7 @@ pmap_testout()
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
 	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
-	
+
 	/* Modify page */
 #if 0
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
@@ -1800,7 +1799,7 @@ pmap_testout()
 	printf("Checking cleared page: ref %d, mod %d\n",
 	       ref, mod);
 
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
 		VM_PROT_ALL|PMAP_WIRED);
 	uvm_km_free(kernel_map, (vaddr_t)va, NBPG);
 }

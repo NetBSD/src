@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2002/03/15 21:12:07 eeh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.8.1 2002/07/16 13:09:57 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	/* make sure that we're looking for a CPU */
 	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
-                return (0);
+		return (0);
 
 	return !cpufound;
 }
@@ -103,7 +103,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	struct cputab *cp = models;
 	unsigned int processor_freq;
 
-	if (board_info_get("processor-frequency", 
+	if (board_info_get("processor-frequency",
 		&processor_freq, sizeof(processor_freq)) == -1)
 		panic("no processor-frequency");
 
@@ -139,9 +139,9 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 
 	cpu_probe_cache();
 
-	printf("Instruction cache size %d line size %d\n", 
+	printf("Instruction cache size %d line size %d\n",
 		curcpu()->ci_ci.icache_size, curcpu()->ci_ci.icache_line_size);
-	printf("Data cache size %d line size %d\n", 
+	printf("Data cache size %d line size %d\n",
 		curcpu()->ci_ci.dcache_size, curcpu()->ci_ci.dcache_line_size);
 
 #ifdef DEBUG
@@ -153,7 +153,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	/* Initialize ECC error-logging handler.  This is always enabled,
 	 * but it will never be called on systems that do not have ECC
 	 * enabled by POST code in the bootloader.
-         */
+	 */
 
 	printf("Enabling ecc handler\n");
 	intr_ecc_tb = 0;
@@ -164,8 +164,8 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
- * This routine must be explicitly called to initialize the 
- * CPU cache information so cache flushe and memcpy operation 
+ * This routine must be explicitly called to initialize the
+ * CPU cache information so cache flushe and memcpy operation
  * work.
  */
 void
@@ -174,7 +174,7 @@ cpu_probe_cache()
 	int version;
 
 	/*
-	 * First we need to identify the cpu and determine the 
+	 * First we need to identify the cpu and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */
@@ -233,9 +233,9 @@ cpu_probe_cache()
 		curcpu()->ci_ci.icache_line_size = 32;
 		break;
 	default:
-		/* 
-		 * Unknown CPU type.  For safety we'll specify a 
-		 * cache with a 4-byte line size.  That way cache 
+		/*
+		 * Unknown CPU type.  For safety we'll specify a
+		 * cache with a 4-byte line size.  That way cache
 		 * flush routines won't miss any lines.
 		 */
 		curcpu()->ci_ci.dcache_line_size = 4;
@@ -318,7 +318,7 @@ intr_ecc(void * arg)
 
 	if (board_info_get("mem-size", &memsiz, sizeof(memsiz)) == -1)
 		panic("no mem-size");
-	
+
 	/* This code needs to be improved to handle double-bit errors */
 	/* in some intelligent fashion. */
 
@@ -328,27 +328,27 @@ intr_ecc(void * arg)
 	mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_BEAR);
 	ear = mfdcr(DCR_SDRAM0_CFGDATA);
 
-	/* Always clear the error to stop the intr ASAP. */	
+	/* Always clear the error to stop the intr ASAP. */
 
 	mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
 	mtdcr(DCR_SDRAM0_CFGDATA, 0xffffffff);
 
-	if (esr == 0x00) { 	
+	if (esr == 0x00) {
 		/* No current error.  Could happen due to intr. nesting */
 		return(1);
 	};
 
 	/* Only report errors every once per second max. Do this using the TB, */
 	/* because the system time (via microtime) may be adjusted when the date is set */
-        /* and can't reliably be used to measure intervals. */
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b" 
+	/* and can't reliably be used to measure intervals. */
+
+	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 		: "=r"(tb), "=r"(tmp));
 	intr_ecc_cnt++;
 
 	if ((tb - intr_ecc_tb) < intr_ecc_iv) {
 		return(1);
-	};		
+	};
 
 	ce = (esr & SDRAM0_ECCESR_CE) != 0x00;
 	ue = (esr & SDRAM0_ECCESR_UE) != 0x00;
@@ -356,14 +356,14 @@ intr_ecc(void * arg)
 	printf("ECC: Error CNT=%d ESR=%x EAR=%x %s BKNE=%d%d%d%d "
 		"BLCE=%d%d%d%d CBE=%d%d.\n",
 		intr_ecc_cnt, esr, ear,
-		(ue) ? "Uncorrectable" : "Correctable", 
-		((esr & SDRAM0_ECCESR_BKEN(0)) != 0x00), 
+		(ue) ? "Uncorrectable" : "Correctable",
+		((esr & SDRAM0_ECCESR_BKEN(0)) != 0x00),
 		((esr & SDRAM0_ECCESR_BKEN(1)) != 0x00),
-		((esr & SDRAM0_ECCESR_BKEN(2)) != 0x00), 
-		((esr & SDRAM0_ECCESR_BKEN(3)) != 0x00), 
-		((esr & SDRAM0_ECCESR_BLCEN(0)) != 0x00), 
-		((esr & SDRAM0_ECCESR_BLCEN(1)) != 0x00), 
-		((esr & SDRAM0_ECCESR_BLCEN(2)) != 0x00), 
+		((esr & SDRAM0_ECCESR_BKEN(2)) != 0x00),
+		((esr & SDRAM0_ECCESR_BKEN(3)) != 0x00),
+		((esr & SDRAM0_ECCESR_BLCEN(0)) != 0x00),
+		((esr & SDRAM0_ECCESR_BLCEN(1)) != 0x00),
+		((esr & SDRAM0_ECCESR_BLCEN(2)) != 0x00),
 		((esr & SDRAM0_ECCESR_BLCEN(3)) != 0x00),
 		((esr & SDRAM0_ECCESR_CBEN(0)) != 0x00),
 		((esr & SDRAM0_ECCESR_CBEN(1)) != 0x00));
@@ -411,7 +411,7 @@ intr_ecc(void * arg)
 		/* Should check for uncorrectable errors and panic... */
 		printf("ECC: Recycling complete, ESR=%x. "
 			"Checking for persistent errors.\n", esr);
-	
+
 		asm volatile(
 			"mfmsr 	%0;"
 			"li	%1, 0x00;"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2002/03/13 01:04:16 eeh Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.8.1 2002/07/16 13:09:57 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -126,7 +126,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_bt = sc->bt;
 	mba.mba_dmat = sc->dmat;
 	config_found(self, &mba, mainbus_print);
-	
+
 	/* Attach all other devices. */
 	config_search(mainbus_search, self, NULL);
 }
