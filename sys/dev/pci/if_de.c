@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.66 1998/04/02 13:49:32 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.67 1998/05/22 18:51:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -670,7 +670,8 @@ tulip_media_poll(
 		sc->tulip_dbg.dbg_link_failures++;
 #endif
 		sc->tulip_media = TULIP_MEDIA_UNKNOWN;
-		tulip_reset(sc);	/* restart probe */
+		if (sc->tulip_if.if_flags & IFF_UP)
+		    tulip_reset(sc);	/* restart probe */
 	    }
 	    return;
 	}
@@ -727,12 +728,14 @@ tulip_media_poll(
      * If we really transmitted a packet, then that's the media we'll use.
      */
     if (event == TULIP_MEDIAPOLL_TXPROBE_OK || event == TULIP_MEDIAPOLL_LINKPASS) {
-	if (event == TULIP_MEDIAPOLL_LINKPASS)
+	if (event == TULIP_MEDIAPOLL_LINKPASS) {
+	    /* XXX Check media status just to be sure */
 	    sc->tulip_probe_media = TULIP_MEDIA_10BASET;
 #if defined(TULIP_DEBUG)
-	else
+	} else {
 	    sc->tulip_dbg.dbg_txprobes_ok[sc->tulip_probe_media]++;
 #endif
+	}
 	tulip_linkup(sc, sc->tulip_probe_media);
 	tulip_timeout(sc);
 	return;
@@ -951,6 +954,7 @@ tulip_21040_mediainfo_init(
     if (media == TULIP_MEDIA_10BASET || media == TULIP_MEDIA_UNKNOWN) {
 	TULIP_MEDIAINFO_SIA_INIT(sc, &sc->tulip_mediainfo[0], 21040, 10BASET);
 	TULIP_MEDIAINFO_SIA_INIT(sc, &sc->tulip_mediainfo[1], 21040, 10BASET_FD);
+	sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
     }
 
     if (media == TULIP_MEDIA_AUIBNC || media == TULIP_MEDIA_UNKNOWN) {
@@ -1061,7 +1065,7 @@ tulip_21041_media_probe(
     sc->tulip_if.if_baudrate = 10000000;
     sc->tulip_cmdmode |= TULIP_CMD_CAPTREFFCT|TULIP_CMD_ENHCAPTEFFCT
 	|TULIP_CMD_THRSHLD160|TULIP_CMD_BACKOFFCTR;
-    sc->tulip_intrmask |= TULIP_STS_LINKPASS;
+    sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
     tulip_21041_mediainfo_init(sc);
 }
 
@@ -2555,8 +2559,10 @@ tulip_srom_decode(
 			mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
 		    }
 		    if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+#if defined(TULIP_DEBUG)
 			printf(TULIP_PRINTF_FMT ": can't find phy %d\n",
 			       TULIP_PRINTF_ARGS, phyno);
+#endif
 			break;
 		    }
 		    sc->tulip_features |= TULIP_HAVE_MII;
@@ -2603,10 +2609,12 @@ tulip_srom_decode(
 			    }
 			    case TULIP_MEDIA_10BASET: {
 				TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21142, 10BASET);
+				sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
 				break;
 			    }
 			    case TULIP_MEDIA_10BASET_FD: {
 				TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21142, 10BASET_FD);
+				sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
 				break;
 			    }
 			    default: {
@@ -2652,8 +2660,10 @@ tulip_srom_decode(
 			mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
 		    }
 		    if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+#if defined(TULIP_DEBUG)
 			printf(TULIP_PRINTF_FMT ": can't find phy %d\n",
 			       TULIP_PRINTF_ARGS, phyno);
+#endif
 			break;
 		    }
 		    sc->tulip_features |= TULIP_HAVE_MII;
@@ -2695,6 +2705,8 @@ tulip_srom_decode(
 			mi->mi_actmask = TULIP_SROM_2114X_BITPOS(data);
 			mi->mi_actdata = (data & TULIP_SROM_2114X_POLARITY) ? 0 : mi->mi_actmask;
 		    }
+		    if (TULIP_IS_MEDIA_TP(media))
+			sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
 		    mi++;
 		    break;
 		}
@@ -3266,7 +3278,7 @@ tulip_reset(
 
     sc->tulip_intrmask |= TULIP_STS_NORMALINTR|TULIP_STS_RXINTR|TULIP_STS_TXINTR
 	|TULIP_STS_ABNRMLINTR|TULIP_STS_SYSERROR|TULIP_STS_TXSTOPPED
-	|TULIP_STS_TXUNDERFLOW|TULIP_STS_TXBABBLE|TULIP_STS_LINKFAIL
+	|TULIP_STS_TXUNDERFLOW|TULIP_STS_TXBABBLE
 	|TULIP_STS_RXSTOPPED;
 
     if ((sc->tulip_flags & TULIP_DEVICEPROBE) == 0)
@@ -3864,7 +3876,7 @@ tulip_intr_handler(
 	    sc->tulip_system_errors++;
 	    break;
 	}
-	if (csr & (TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL)) {
+	if (csr & (TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL) & sc->tulip_intrmask) {
 #if defined(TULIP_DEBUG)
 	    sc->tulip_dbg.dbg_link_intrs++;
 #endif
