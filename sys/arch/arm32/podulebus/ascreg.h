@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.5 1997/01/06 04:48:02 mark Exp $ */
+/* $NetBSD: ascreg.h,v 1.6 2001/04/21 20:47:26 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -118,6 +118,8 @@ struct sdmac {
 #define ASC_DMAC		0x3000
 #define ASC_SBIC		0x2000
 #define ASC_SRAM		0x0000
+
+#define ASC_SBIC_SPACE		8
 
 #define ASC_SRAM_BLKSIZE	0x1000
 
