@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2000/12/02 03:57:26 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.56 2000/12/04 16:01:20 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -670,7 +670,7 @@ badtrap:
 	case T_INST_EXCEPT:
 	case T_TEXTFAULT:
 		/* This is not an MMU issue!!!! */
-		printf("trap: textfault at %p!! sending SIGILL due to trap %d: %s\n", 
+		printf("trap: textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
 #ifdef DDB
 		Debugger();
@@ -755,7 +755,7 @@ badtrap:
 		}
 		
 #define fmt64(x)	(int)((x)>>32), (int)((x))
-		printf("Alignment error: dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%p\n",
+		printf("Alignment error: dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
 		       fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}
 		
@@ -1274,7 +1274,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	 */
 	if ((afsr) != 0 ||
 	    (type == T_DATAFAULT && !(sfsr & SFSR_FV))) {
-		printf("data memory error type %x sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
+		printf("data memory error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
 			panic("trap: memory error");
@@ -1403,10 +1403,13 @@ kfault:
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				extern int trap_trace_dis;
+				char buf[768];
+
 				trap_trace_dis = 1; /* Disable traptrace for printf */
+				bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 				(void) splhigh();
-				printf("data fault: pc=%lx addr=%lx sfsr=%%qb\n",
-				    (u_long)pc, (long)sfva, (long)sfsr, SFSR_BITS);
+				printf("data fault: pc=%lx addr=%lx sfsr=%s\n",
+				    (u_long)pc, (long)sfva, buf);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
 				/* NOTREACHED */
@@ -1546,8 +1549,7 @@ text_access_fault(type, pc, tf)
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
-			printf("text fault: pc=%x\n",
-			       pc);
+			printf("text fault: pc=%llx\n", (unsigned long long)pc);
 			DEBUGGER(type, tf);
 			panic("kernel fault");
 			/* NOTREACHED */
@@ -1597,6 +1599,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 #if DEBUG
 	static int lastdouble;
 #endif
+	char buf[768];
 	
 #if DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1612,19 +1615,22 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
-		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %%qb\n",
+	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW)) {
+		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)curproc?curproc->p_pid:-1, 
 		       (long)type, pc, (long)afva, tf, (long)tf->tf_tstate, 
-		       (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
+		       (long)tf->tf_pc, buf); 
+	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %%qb\n",
+		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)curproc?curproc->p_pid:-1, (long)tl(),
 		       (long)type, (long)pc, (long)afva, tf, 
-		       (long)tf->tf_tstate, (long)tf->tf_pc, (long)sfsr, SFSR_BITS); 
+		       (long)tf->tf_tstate, (long)tf->tf_pc, buf); 
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
@@ -1643,7 +1649,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 		trap_trace_dis++; /* Disable traptrace for printf */
 		printf("text_access_error: memory error...\n");
-		printf("text memory error type %d sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
+		printf("text memory error type %d sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		       type, sfsr, pc, afsr, afva, tf);
 		trap_trace_dis--; /* Reenable traptrace for printf */
 
@@ -1677,8 +1683,9 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
+		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		(void) splhigh();
-		printf("text error: pc=%lx sfsr=%%qb\n", pc, (long)sfsr, SFSR_BITS);
+		printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */
@@ -1713,9 +1720,9 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		if (tstate & TSTATE_PRIV) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
+			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 			(void) splhigh();
-			printf("text error: pc=%lx sfsr=%%qb\n",
-			       pc, sfsr, SFSR_BITS);
+			printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 			DEBUGGER(type, tf);
 			panic("kernel fault");
 			/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 2000/12/03 14:49:50 fvdl Exp $ */
+/*	$NetBSD: intr.c,v 1.36 2000/12/04 16:01:19 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,6 +156,7 @@ softnet(fp)
 } while (0)
 #include <net/netisr_dispatch.h>
 #undef DONETISR
+	return (1);
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2000/12/01 17:17:29 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2000/12/04 16:01:19 fvdl Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3709,7 +3709,8 @@ pmap_remove_pv(pmap, va, pa)
 	 * may be called at interrupt time).
 	 */
 	if (!IS_VM_PHYSADDR(pa)) {
-		printf("pmap_remove_pv(): %p not managed\n", pa);
+		printf("pmap_remove_pv(): %llx not managed\n",
+		    (unsigned long long)pa);
 		pv_check();
 		return;
 	}
@@ -3887,7 +3888,7 @@ vm_page_free1(mem)
 {
 	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);
-		printf("pa = %llx\n", (paddr_t)VM_PAGE_TO_PHYS(mem));
+		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(mem));
 		Debugger();
 		return;
 	}
@@ -3914,8 +3915,9 @@ db_dump_pv(addr, have_addr, count, modif)
 	}
 
 	for (pv = pa_to_pvh(addr); pv; pv = pv->pv_next)
-		db_printf("pv@%p: next=%p pmap=%p va=0x%x\n",
-			  pv, pv->pv_next, pv->pv_pmap, pv->pv_va);
+		db_printf("pv@%p: next=%p pmap=%p va=0x%llx\n",
+			  pv, pv->pv_next, pv->pv_pmap,
+			  (unsigned long long)pv->pv_va);
 	
 }
 
