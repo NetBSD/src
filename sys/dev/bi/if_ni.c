@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.14 2001/11/13 12:51:34 lukem Exp $ */
+/*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.14 2001/11/13 12:51:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -846,7 +846,7 @@ ni_setup(struct ni_softc *sc)
 			ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 			i = 1;
 			while (enm != NULL) {
-				if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+				if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 					ifp->if_flags |= IFF_ALLMULTI;
 					ptdb->np_flags |= PTDB_AMC;
 					break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.31 2002/03/20 20:39:15 eeh Exp $	*/
+/*	$NetBSD: be.c,v 1.32 2002/05/22 16:03:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.31 2002/03/20 20:39:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.32 2002/05/22 16:03:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1213,7 +1213,7 @@ be_mcreset(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast
 			 * addresses.  For now, just accept all

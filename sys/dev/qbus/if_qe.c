@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.49 2001/11/13 07:11:24 lukem Exp $ */
+/*      $NetBSD: if_qe.c,v 1.50 2002/05/22 16:03:17 wiz Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.49 2001/11/13 07:11:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.50 2002/05/22 16:03:17 wiz Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -765,7 +765,7 @@ qe_setup(struct qe_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}
