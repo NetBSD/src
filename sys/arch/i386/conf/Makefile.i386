@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.103 2000/02/01 05:25:32 tsutsui Exp $
+#	$NetBSD: Makefile.i386,v 1.104 2000/02/11 07:00:11 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext F0100000 -e start
+LINKFLAGS=	-Ttext c0100000 -e start
 .if (${OBJECT_FMT} == "ELF")
 #LINKFLAGS+=	-N
 .else
