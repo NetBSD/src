@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2003/07/25 08:26:34 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2003/09/27 10:44:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,7 +135,8 @@ md_post_newfs(void)
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, NULL, "/sbin/disklabel -B %s", diskdev);
+	run_prog(0, NULL, "/sbin/installboot /dev/r%s%c %.2sboot",
+	    diskdev, 'a' + getrawpartition(), diskdev);
 	return 0;
 }
 
