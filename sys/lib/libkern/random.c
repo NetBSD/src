@@ -1,3 +1,5 @@
+/*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)random.c	8.1 (Berkeley) 6/10/93
- *      $Id: random.c,v 1.1 1994/06/03 03:37:30 glass Exp $
+ *	@(#)random.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/types.h>

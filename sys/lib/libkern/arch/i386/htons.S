@@ -1,3 +1,5 @@
+/*	$NetBSD: htons.S,v 1.2 1994/10/26 06:39:09 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,13 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: htons.S,v 1.1 1993/12/04 03:06:22 cgd Exp $
+ *	@(#)htons.s	5.2 (Berkeley) 12/17/90
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: htons.S,v 1.1 1993/12/04 03:06:22 cgd Exp $"
+	.asciz "$NetBSD: htons.S,v 1.2 1994/10/26 06:39:09 cgd Exp $"
 #endif
 
 /* netorder = htons(hostorder) */

@@ -1,3 +1,5 @@
+/*	$NetBSD: bootp.c,v 1.5 1994/10/26 06:43:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
- *    $Id: bootp.c,v 1.4 1993/10/18 23:01:13 cgd Exp $
+ * @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
  */
 
 #include <sys/types.h>

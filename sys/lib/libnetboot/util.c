@@ -1,3 +1,5 @@
+/*	$NetBSD: util.c,v 1.4 1994/10/26 06:43:17 cgd Exp $	*/
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/errno.h>
