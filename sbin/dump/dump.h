@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.14 1998/03/18 16:54:56 bouyer Exp $	*/
+/*	$NetBSD: dump.h,v 1.15 1999/01/15 13:32:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)dump.h	8.2 (Berkeley) 4/28/95
  */
+
+#include <machine/bswap.h>
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
 #define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
