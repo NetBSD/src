@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.15 2004/02/09 15:43:05 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.16 2005/02/06 04:56:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.15 2004/02/09 15:43:05 wiz Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.16 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,8 +166,8 @@ clockdiff(int argc, char *argv[])
 {
 	int measure_status;
 	extern int measure(u_long, u_long, char *, struct sockaddr_in*, int);
-	register int avg_cnt;
-	register long avg;
+	int avg_cnt;
+	long avg;
 	struct servent *sp;
 
 	if (argc < 2)  {

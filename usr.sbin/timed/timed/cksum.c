@@ -32,7 +32,7 @@
 #if 0
 static char sccsid[] = "@(#)cksum.c	5.2 (Berkeley) 5/11/93";
 #else
-__RCSID("$NetBSD: cksum.c,v 1.4 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.5 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,10 @@ __RCSID("$NetBSD: cksum.c,v 1.4 2003/08/07 11:25:46 agc Exp $");
 int
 in_cksum(u_short *addr, int len)
 {
-	register int nleft = len;
-	register u_short *w = addr;
-	register u_short answer;
-	register int sum = 0;
+	int nleft = len;
+	u_short *w = addr;
+	u_short answer;
+	int sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),

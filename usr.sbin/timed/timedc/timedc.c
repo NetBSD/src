@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.12 2004/10/30 15:54:29 dsl Exp $	*/
+/*	$NetBSD: timedc.c,v 1.13 2005/02/06 04:56:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.12 2004/10/30 15:54:29 dsl Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.13 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static struct cmd *getcmd(char *);
 int
 main(int argc, char *argv[])
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	openlog("timedc", 0, LOG_AUTH);
 
@@ -146,9 +146,9 @@ intr(int signo)
 static struct cmd *
 getcmd(char *name)
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 	extern struct cmd cmdtab[];
 	extern int NCMDS;
 
@@ -180,8 +180,8 @@ getcmd(char *name)
 int
 makeargv(void)
 {
-	register char *cp;
-	register char **argp = margv;
+	char *cp;
+	char **argp = margv;
 
 	margc = 0;
 	for (cp = cmdline; cp < margv[MAX_MARGV - 1] && *cp;) {
@@ -211,11 +211,11 @@ makeargv(void)
 void
 help(int argc, char *argv[])
 {
-	register struct cmd *c;
+	struct cmd *c;
 	extern struct cmd cmdtab[];
 
 	if (argc == 1) {
-		register int i, j, w;
+		int i, j, w;
 		int columns, width = 0, lines;
 		extern int NCMDS;
 
@@ -249,7 +249,7 @@ help(int argc, char *argv[])
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)

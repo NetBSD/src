@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.16 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.17 2005/02/06 04:56:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.16 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.17 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 	static struct tsplist *tail = &msgslist;
 	static int msgcnt = 0;
 	struct tsplist *prev;
-	register struct netinfo *ntp;
-	register struct tsplist *ptr;
+	struct netinfo *ntp;
+	struct tsplist *ptr;
 	ssize_t n;
 
 	if (trace) {
