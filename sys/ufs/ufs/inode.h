@@ -1,3 +1,5 @@
+/*	$NetBSD: inode.h,v 1.6 1994/12/21 20:00:21 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

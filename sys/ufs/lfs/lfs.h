@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs.h,v 1.6 1994/12/21 20:01:01 mycroft Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
