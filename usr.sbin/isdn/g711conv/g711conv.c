@@ -67,13 +67,14 @@
  *
  *	last edit-date: [Sat Jan  6 12:37:35 2001]
  *
- *	$Id: g711conv.c,v 1.1.1.1 2001/01/06 13:00:36 martin Exp $
+ *	$Id: g711conv.c,v 1.2 2001/01/16 02:44:43 cgd Exp $
  *
  * $FreeBSD$
  *
  *---------------------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <netisdn/i4b_ioctl.h>
 
