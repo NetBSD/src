@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.26 2004/03/13 17:59:00 bjh21 Exp $
+#	$NetBSD: RPC_WSCONS,v 1.27 2004/03/13 18:25:25 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.26 $"
+#ident		"GENERIC-$Revision: 1.27 $"
 
 # estimated number of users
 maxusers	32
@@ -192,12 +192,13 @@ options 	FONT_SONY8x16		# not tested
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself
 
-iomdkbc*	at iomd?
-#pckbd*		at iomdkbc? slot ?
-#options 	PCKBD_LAYOUT=KB_UK
-#pms*		at iomdkbc? slot ?
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
 #wskbd*		at pckbd?
+
+#pms*		at iomdkbc? slot ?	# PS/2 mouse
 #wsmouse*	at pms?
 
 rpckbd* 	at iomd?
@@ -213,8 +214,6 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#qms*		at iomd?		# RiscPC mouse for vidcconsole
-#opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0	at vidc?

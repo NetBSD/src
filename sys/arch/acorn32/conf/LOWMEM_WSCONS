@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.22 2004/02/13 11:36:09 wiz Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.23 2004/03/13 18:25:25 bjh21 Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -173,21 +173,28 @@ options 	FONT_SONY12x25		# looks like VT220 font
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ? # display itself
 
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
+
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
+#wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
+wsmouse*	at pms?
+
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 wsqms*		at iomd?		# ws quadmouse driver
 wsmouse*	at wsqms?		# wsmouse on ws quadmouse
 
-#pseudo-device	wsmux
+pseudo-device	wsmux
 
 # The origional vidcconsole :
 # vidcconsole kbd at IOMD
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#qms*		at iomd?		# RiscPC mouse for vidcconsole
-#opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0		at vidc?

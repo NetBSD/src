@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.23 2004/02/13 11:36:09 wiz Exp $
+#	$NetBSD: NC,v 1.24 2004/03/13 18:25:25 bjh21 Exp $
 #
 #	NC - with vidcconsole
 #
@@ -138,14 +138,19 @@ iomd0	at mainbus?
 # system clock via IOMD
 clock*	at iomd?
 
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
+
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
+#wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
+wsmouse*	at pms?
+
+pseudo-device	wsmux
+
 # kbd via IOMD
 kbd*	at iomd?
-
-# quadrature mouse via IOMD
-#qms*	at iomd?
-
-# PS2 mouse via IOMD
-opms*	at iomd?
 
 # IIC bus device
 iomdiic* at iomd?
