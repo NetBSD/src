@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1994/10/18 04:27:30 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.17 1995/02/01 06:28:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -167,7 +167,7 @@
  * infinite loops reasonably quickly.
  */
 #define	MAXPATHLEN	PATH_MAX
-#define MAXSYMLINKS	8
+#define MAXSYMLINKS	32
 
 /* Bit map related macros. */
 #define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
