@@ -1,4 +1,4 @@
-.\"	$NetBSD: fparseln.3,v 1.1 1997/11/16 22:15:55 christos Exp $
+.\"	$NetBSD: fparseln.3,v 1.2 1997/11/23 04:07:32 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 16, 1997
+.Dd November 23, 1997
 .Dt FPARSELN 3
 .Os
 .Sh NAME
@@ -47,43 +47,53 @@ This string is
 .Dv NUL
 terminated and it is dynamicaly allocated on each invocation. It is the
 responsibility of the caller to free the pointer.
-If
-.Fa len
-is not
+.Pp
+The meaning of the other arguments is as follows:
+.Bl -tag -width "lineno"
+.It Fa len
+If not
 .Dv NULL ,
 the length of the string is stored in the memory location to which it
 points.
-If
-.Fa lineno
-is not
+.It Fa lineno
+If not
 .Dv NULL ,
 the value of the memory location to which is pointed to, is incremented
 by the number of lines actually read from the file.
-The 
-.Fa delim
-argument contains the escape, continuation, newline and comment characters.
+.It Fa delim
+Contains the escape, continuation, and comment characters.
 If a character is
 .Dv NUL
 then processing for that character is disabled.
 If 
-.Fa delim
-is 
-.Dv NULL
+.Dv NULL ,
 all characters default to values specified below.
+The contents of
+.Fa delim
+is as follows:
+.Bl -tag -width "delim[0]"
+.It Fa delim[0]
 The escape character, which defaults to
-.Cm \e
+.Cm \e ,
 is used to remove any special meaning from the next character.
+.It Fa delim[1]
 The continuation character, which defaults to
-.Cm \e
+.Cm \e ,
 is used to indicate that the next line should be concatenated with the
 current one if this character is the last character on the current line
 and is not escaped.
+.It Fa delim[2]
 The comment character, which defaults to
-.Cm #
+.Cm # ,
 if not escaped indicates the beginning of a comment that extends until the
 end of the current line.
+.El
+.Pp
+If a character is escaped, both it and the preceeding escape character
+will be present in the returned string. 
+.El
 .Sh RETURN VALUES
-Upon successful completion a pointer is returned;
+Upon successful completion a pointer to the parsed line is returned;
 otherwise,
 .Dv NULL
 is returned.
@@ -111,4 +121,4 @@ if it runs out of memory.
 The
 .Fn fparseln
 function first appeared in 
-.Nx 1.3A .
+.Nx 1.3a .
