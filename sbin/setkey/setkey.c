@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.11 2003/09/12 07:45:21 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.12 2004/07/23 12:47:55 yamt Exp $	*/
 /*	$KAME: setkey.c,v 1.31 2003/09/08 12:31:58 itojun Exp $	*/
 
 /*
@@ -381,6 +381,7 @@ again:
 
 	msg = (struct sadb_msg *)rbuf;
 	do {
+nextmsg:
 		if ((l = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
 			perror("recv");
 			goto end;
@@ -395,6 +396,10 @@ again:
 			kdebug_sadb((struct sadb_msg *)rbuf);
 			printf("\n");
 		}
+
+		if (msg->sadb_msg_pid != getpid())
+			goto nextmsg;
+
 		if (postproc(msg, l) < 0)
 			break;
 	} while (msg->sadb_msg_errno || msg->sadb_msg_seq);
