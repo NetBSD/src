@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.42 1994/01/04 20:26:52 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.43 1994/01/05 23:29:39 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -29,8 +29,6 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .c.so:
 	${CC} ${PICFLAG} -DPIC ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
 
 .cc.o .C.o:
 	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
@@ -44,8 +42,6 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .cc.so .C.so:
 	${CXX} ${PICFLAG} -DPIC ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
 
 .S.o .s.o:
 	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
@@ -62,8 +58,6 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .S.so .s.so:
 	${CPP} -E -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -k -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
 
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
