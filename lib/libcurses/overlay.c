@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)overlay.c	5.7 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: overlay.c,v 1.4 1993/08/07 05:49:01 mycroft Exp $";
+static char sccsid[] = "@(#)overlay.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <ctype.h>
@@ -49,29 +48,32 @@ overlay(win1, win2)
 {
 
 	register int x, y, y1, y2, endy, endx, starty, startx;
-	register char *sp, *end;
+	register __LDATA *sp, *end;
 
 #ifdef DEBUG
-	__TRACE("overlay: (%0.2o, %0.2o);\n", win1, win2);
+	__CTRACE("overlay: (%0.2o, %0.2o);\n", win1, win2);
 #endif
-	starty = max(win1->_begy, win2->_begy);
-	startx = max(win1->_begx, win2->_begx);
-	endy = min(win1->_maxy + win1->_begy, win2->_maxy + win2->_begx);
-	endx = min(win1->_maxx + win1->_begx, win2->_maxx + win2->_begx);
+	starty = max(win1->begy, win2->begy);
+	startx = max(win1->begx, win2->begx);
+	endy = min(win1->maxy + win1->begy, win2->maxy + win2->begx);
+	endx = min(win1->maxx + win1->begx, win2->maxx + win2->begx);
 #ifdef DEBUG
-	__TRACE("overlay: from (%d,%d) to (%d,%d)\n",
+	__CTRACE("overlay: from (%d,%d) to (%d,%d)\n",
 	    starty, startx, endy, endx);
 #endif
 	if (starty >= endy || startx >= endx)
 		return (OK);
-	y1 = starty - win1->_begy;
-	y2 = starty - win2->_begy;
+	y1 = starty - win1->begy;
+	y2 = starty - win2->begy;
 	for (y = starty; y < endy; y++, y1++, y2++) {
-		end = &win1->_y[y1][endx - win1->_begx];
-		x = startx - win2->_begx;
-		for (sp = &win1->_y[y1][startx - win1->_begx]; sp < end; sp++) {
-			if (!isspace(*sp))
-				mvwaddch(win2, y2, x, *sp);
+		end = &win1->lines[y1]->line[endx - win1->begx];
+		x = startx - win2->begx;
+		for (sp = &win1->lines[y1]->line[startx - win1->begx]; 
+		     sp < end; sp++) {
+			if (!isspace(sp->ch)) {
+				wmove(win2, y2, x);
+				__waddch(win2, sp);
+			}
 			x++;
 		}
 	}

@@ -1,15 +1,14 @@
-#	from: @(#)Makefile	5.12 (Berkeley) 8/23/92
-#	$Id: Makefile,v 1.3 1993/08/07 05:48:37 mycroft Exp $
+#	@(#)Makefile	8.2 (Berkeley) 8/21/93
 
-CFLAGS+=#-g -DDEBUG -DTFILE=\"/dev/ttyp0\"
+CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
 LIB=	curses
-SRCS=	addbytes.c addch.c addstr.c box.c clear.c clrtobot.c clrtoeol.c \
-	cr_put.c curses.c delch.c deleteln.c delwin.c erase.c fullname.c \
-	getch.c getstr.c id_subwins.c idlok.c initscr.c insch.c insertln.c \
-	longname.c move.c mvwin.c newwin.c overlay.c overwrite.c printw.c \
-	putchar.c refresh.c scanw.c scroll.c setterm.c standout.c \
-	toucholap.c touchwin.c trace.c tstp.c tty.c unctrl.c
+SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
+	cr_put.c ctrace.c cur_hash.c curses.c delch.c deleteln.c delwin.c \
+	erase.c fullname.c getch.c getstr.c id_subwins.c idlok.c initscr.c \
+	insch.c insertln.c longname.c move.c mvwin.c newwin.c overlay.c \
+	overwrite.c printw.c putchar.c refresh.c scanw.c scroll.c setterm.c \
+	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 MAN3=	curses.0
 
 beforeinstall:

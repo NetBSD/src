@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)scanw.c	5.10 (Berkeley) 8/31/92";*/
-static char rcsid[] = "$Id: scanw.c,v 1.3 1993/08/07 05:49:05 mycroft Exp $";
+static char sccsid[] = "@(#)scanw.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 /*
@@ -47,8 +46,6 @@ static char rcsid[] = "$Id: scanw.c,v 1.3 1993/08/07 05:49:05 mycroft Exp $";
 #else
 #include <varargs.h>
 #endif
-
-static int __sscans __P((WINDOW *, const char *, va_list));
 
 /*
  * scanw --
@@ -71,7 +68,7 @@ scanw(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = __sscans(stdscr, fmt, ap);
+	ret = vwscanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -98,7 +95,7 @@ wscanw(win, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = __sscans(win, fmt, ap);
+	ret = vwscanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -128,7 +125,7 @@ mvscanw(y, x, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = __sscans(stdscr, fmt, ap);
+	ret = vwscanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -155,18 +152,17 @@ mvwscanw(win, y, x, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = __sscans(win, fmt, ap);
+	ret = vwscanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
 
 /*
- * __sscans --
+ * vwscanw --
  *	This routine actually executes the scanf from the window.
- *	THIS SHOULD BE RENAMED vwscanw AND EXPORTED
  */
-static int
-__sscans(win, fmt, ap)
+int
+vwscanw(win, fmt, ap)
 	WINDOW *win;
 	const char *fmt;
 	va_list ap;
@@ -174,5 +170,6 @@ __sscans(win, fmt, ap)
 
 	char buf[1024];
 
-	return (wgetstr(win, buf) == OK ? vsscanf(buf, fmt, ap) : ERR);
+	return (wgetstr(win, buf) == OK ?
+	    vsscanf(buf, fmt, ap) : ERR);
 }

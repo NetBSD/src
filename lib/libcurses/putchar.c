@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)putchar.c	5.5 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: putchar.c,v 1.3 1993/08/07 05:49:04 mycroft Exp $";
+static char sccsid[] = "@(#)putchar.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -44,7 +43,7 @@ __cputchar(ch)
 {
 
 #ifdef DEBUG
-	__TRACE("__cputchar: %s\n", unctrl(ch));
+	__CTRACE("__cputchar: %s\n", unctrl(ch));
 #endif
 	(void)putchar(ch);
 }

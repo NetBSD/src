@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,30 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)curses.c	5.8 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: curses.c,v 1.3 1993/08/07 05:48:46 mycroft Exp $";
+static char sccsid[] = "@(#)curses.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include <curses.h>
 
 /* Private. */
 int	__echoit = 1;			/* If stty indicates ECHO. */
-int	__endwin = 0;			/* If endwin has been called. */
 int	__pfast;
 int	__rawmode = 0;			/* If stty indicates RAW mode. */
-
+int	__noqch = 0;			/* 
+					 * If terminal doesn't have 
+					 * insert/delete line capabilities 
+					 * for quick change on refresh.
+					 */
+char	AM, BS, CA, DA, EO, HC, HZ, IN, MI, MS, NC, NS, OS,
+	PC, UL, XB, XN, XT, XS, XX;
+char	*AL, *BC, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC, *DL,
+	*DM, *DO, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5, *K6,
+	*K7, *K8, *K9, *HO, *IC, *IM, *IP, *KD, *KE, *KH, *KL,
+	*KR, *KS, *KU, *LL, *MA, *ND, *NL, *RC, *SC, *SE, *SF,
+	*SO, *SR, *TA, *TE, *TI, *UC, *UE, *UP, *US, *VB, *VS,
+	*VE, *al, *dl, *sf, *sr,
+	*AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM, *LEFT_PARM,
+	*RIGHT_PARM;
 /*
  * Public.
  *
@@ -61,13 +73,3 @@ char	 GT;				/* Gtty indicates tabs. */
 char	 NONL;				/* Term can't hack LF doing a CR. */
 char	 UPPERCASE;			/* Terminal is uppercase only. */
 
-char	AM, BS, CA, DA, EO, HC, HZ, IN, MI, MS, NC, NS, OS,
-	PC, UL, XB, XN, XT, XS, XX;
-char	*AL, *BC, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC, *DL,
-	*DM, *DO, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5, *K6,
-	*K7, *K8, *K9, *HO, *IC, *IM, *IP, *KD, *KE, *KH, *KL,
-	*KR, *KS, *KU, *LL, *MA, *ND, *NL, *RC, *SC, *SE, *SF,
-	*SO, *SR, *TA, *TE, *TI, *UC, *UE, *UP, *US, *VB, *VS,
-	*VE,
-	*AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM, *LEFT_PARM,
-	*RIGHT_PARM;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clrtobot.c	5.6 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: clrtobot.c,v 1.4 1993/08/07 05:48:42 mycroft Exp $";
+static char sccsid[] = "@(#)clrtobot.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -46,22 +45,30 @@ int
 wclrtobot(win)
 	register WINDOW *win;
 {
-	register int minx, startx, y;
-	register char *sp, *end, *maxx;
+	register int minx, startx, starty, y;
+	register __LDATA *sp, *end, *maxx;
 
-	startx = win->_curx;
-	for (y = win->_cury; y < win->_maxy; y++) {
-		minx = _NOCHANGE;
-		end = &win->_y[y][win->_maxx];
-		for (sp = &win->_y[y][startx]; sp < end; sp++)
-			if (*sp != ' ') {
+	if (win->lines[win->cury]->flags & __ISPASTEOL) {
+		starty = win->cury + 1;
+		startx = 0;
+	} else {
+		starty = win->cury;
+		startx = win->curx;
+	}
+	for (y = starty; y < win->maxy; y++) {
+		minx = -1;
+		end = &win->lines[y]->line[win->maxx];
+		for (sp = &win->lines[y]->line[startx]; sp < end; sp++)
+			if (sp->ch != ' ' || sp->attr != 0) {
 				maxx = sp;
-				if (minx == _NOCHANGE)
-					minx = sp - win->_y[y];
-				*sp = ' ';
+				if (minx == -1)
+					minx = sp - win->lines[y]->line;
+				sp->ch = ' ';
+				sp->attr = 0;
 			}
-		if (minx != _NOCHANGE)
-			touchline(win, y, minx, maxx - &win->_y[y][0]);
+		if (minx != -1)
+			__touchline(win, y, minx, maxx - win->lines[y]->line,
+		            0);
 		startx = 0;
 	}
 	return (OK);

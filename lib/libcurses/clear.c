@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clear.c	5.5 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: clear.c,v 1.3 1993/08/07 05:48:42 mycroft Exp $";
+static char sccsid[] = "@(#)clear.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -47,7 +46,7 @@ wclear(win)
 	register WINDOW *win;
 {
 	if (werase(win) == OK) {
-		win->_clear = 1;
+		win->flags |= __CLEAROK;
 		return (OK);
 	}
 	return (ERR);

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clrtoeol.c	5.5 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: clrtoeol.c,v 1.4 1993/08/07 05:48:43 mycroft Exp $";
+static char sccsid[] = "@(#)clrtoeol.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -47,24 +46,38 @@ wclrtoeol(win)
 	register WINDOW *win;
 {
 	register int minx, x, y;
-	register char *end, *maxx, *sp;
+	register __LDATA *end, *maxx, *sp;
 
-	y = win->_cury;
-	x = win->_curx;
-	end = &win->_y[y][win->_maxx];
-	minx = _NOCHANGE;
-	maxx = &win->_y[y][x];
+	y = win->cury;
+	x = win->curx;
+	if (win->lines[y]->flags & __ISPASTEOL) {
+		if (y < win->maxy - 1) {
+			y++;
+			x = 0;
+		} else
+			return (OK);
+	}
+	end = &win->lines[y]->line[win->maxx];
+	minx = -1;
+	maxx = &win->lines[y]->line[x];
 	for (sp = maxx; sp < end; sp++)
-		if (*sp != ' ') {
+		if (sp->ch != ' ' || sp->attr != 0) {
 			maxx = sp;
-			if (minx == _NOCHANGE)
-				minx = sp - win->_y[y];
-			*sp = ' ';
+			if (minx == -1)
+				minx = sp - win->lines[y]->line;
+			sp->ch = ' ';
+			sp->attr = 0;
 		}
 #ifdef DEBUG
-	__TRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
-	    minx, maxx - win->_y[y], win->_firstch[y], win->_lastch[y]);
+	__CTRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
+	    minx, maxx - win->lines[y]->line, *win->lines[y]->firstchp, 
+	    *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
-	return (touchline(win, y, win->_curx, win->_maxx - 1));
+	return (__touchline(win, y, x, win->maxx - 1, 0));
 }
+
+
+
+
+

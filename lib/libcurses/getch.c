@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getch.c	5.7 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: getch.c,v 1.4 1993/08/07 05:48:52 mycroft Exp $";
+static char sccsid[] = "@(#)getch.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -48,11 +47,11 @@ wgetch(win)
 {
 	register int inp, weset;
 
-	if (!win->_scroll && (win->_flags & _FULLWIN)
-	    && win->_curx == win->_maxx - 1 && win->_cury == win->_maxy - 1)
+	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
+	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1)
 		return (ERR);
 #ifdef DEBUG
-	__TRACE("wgetch: __echoit = %d, __rawmode = %d\n",
+	__CTRACE("wgetch: __echoit = %d, __rawmode = %d\n",
 	    __echoit, __rawmode);
 #endif
 	if (__echoit && !__rawmode) {
@@ -63,11 +62,11 @@ wgetch(win)
 
 	inp = getchar();
 #ifdef DEBUG
-	__TRACE("wgetch got '%s'\n", unctrl(inp));
+	__CTRACE("wgetch got '%s'\n", unctrl(inp));
 #endif
 	if (__echoit) {
 		mvwaddch(curscr,
-		    win->_cury + win->_begy, win->_curx + win->_begx, inp);
+		    win->cury + win->begy, win->curx + win->begx, inp);
 		waddch(win, inp);
 	}
 	if (weset)

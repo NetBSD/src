@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)move.c	5.6 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: move.c,v 1.3 1993/08/07 05:48:58 mycroft Exp $";
+static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -49,13 +48,15 @@ wmove(win, y, x)
 {
 
 #ifdef DEBUG
-	__TRACE("wmove: (%d, %d)\n", y, x);
+	__CTRACE("wmove: (%d, %d)\n", y, x);
 #endif
 	if (x < 0 || y < 0)
 		return (ERR);
-	if (x >= win->_maxx || y >= win->_maxy)
+	if (x >= win->maxx || y >= win->maxy)
 		return (ERR);
-	win->_curx = x;
-	win->_cury = y;
+	win->curx = x;
+	win->lines[win->cury]->flags &= ~__ISPASTEOL;
+	win->cury = y;
+	win->lines[y]->flags &= ~__ISPASTEOL;
 	return (OK);
 }
