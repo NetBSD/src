@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.50 2002/03/26 23:56:05 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.51 2002/03/26 23:56:45 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.50 2002/03/26 23:56:05 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.51 2002/03/26 23:56:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -457,7 +457,7 @@ usage(void)
 
 	(void)fprintf(stderr, "Usage: %s [-aiufBS] [-0|-1|-2|-3] "
 	      "[-b cylinders/heads/sectors]\n"
-	      "%s [-s id/start/size] [-c bootcode] [device]\n",
+	      "\t%s [-s id/start/size] [-c bootcode] [device]\n",
 	      getprogname(), getprogname());
 	exit(1);
 }
