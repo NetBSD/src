@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.14 1993/05/20 02:05:39 cgd Exp $
+ *	$Id: machdep.c,v 1.15 1993/05/20 02:14:49 cgd Exp $
  */
 
 #include "param.h"
@@ -106,7 +106,7 @@ char *cpu_typenames[] = {
 	"i386",		/* CPU_386 */
 	"i486SX",	/* CPU_486SX */
 	"i486",		/* CPU_486 */
-	"Pentium",	/* CPU_586 */
+	"i586",		/* CPU_586 & note that i hate lawyers -- cgd */
 	0,
 };
 
