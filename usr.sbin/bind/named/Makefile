@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/12/07 19:57:39 scw Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -21,6 +21,11 @@ MAN=		${PROG}.8 named.conf.5
 YHEADER=	yes
 
 .include <bsd.own.mk>
+
+# XXX
+.if ${MACHINE_CPU} == "sh5"
+COPTS.ns_main.c=	-O1
+.endif
 
 .if ${MKSHARE} != "no"
 FILES=		named.conf
