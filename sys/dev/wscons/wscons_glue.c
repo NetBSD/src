@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_glue.c,v 1.3 1998/06/15 17:48:32 drochner Exp $ */
+/* $NetBSD: wscons_glue.c,v 1.4 1998/07/25 20:02:20 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wscons_glue.c,v 1.3 1998/06/15 17:48:32 drochner Exp $";
+    "$NetBSD: wscons_glue.c,v 1.4 1998/07/25 20:02:20 augustss Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,9 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wscons_callbacks.h>
 
 #include "wskbd.h"
+#include "wsdisplay.h"
 
-#if NWSKBD > 0
+#if NWSKBD > 0 && NWSDISPLAY > 0
 extern struct cfdriver wsdisplay_cd, wskbd_cd;
 #endif
 
@@ -67,7 +68,7 @@ static void
 wscons_setup_glue(v)
 	void *v;
 {
-#if NWSKBD > 0
+#if NWSKBD > 0 && NWSDISPLAY > 0
 	int i, kbddev, displaydev;
 	struct device *kbddevice, *displaydevice;
 
@@ -150,5 +151,5 @@ wscons_setup_glue(v)
 	}
 
 	/* Now wasn't that simple? */
-#endif /* NWSKBD > 0*/
+#endif /* NWSKBD > 0 && NWSDISPLAY > 0 */
 }
