@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.102 1996/12/01 00:43:45 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.103 1996/12/20 12:21:48 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -792,7 +792,7 @@ fdopen(dev, flags, mode, p)
 		return ENXIO;
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
-	    fd->sc_type != type)
+	    bcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
 
 	fd->sc_type_copy = *type;
