@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- * $Id: bootsect.h,v 1.1 1993/08/13 11:35:29 cgd Exp $
+ * $Id: bootsect.h,v 1.2 1993/12/01 10:35:21 cgd Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  * first sector of a partitioned hard disk.
  */
 struct bootsector33 {
-	char bsJump[3];		/* jump instruction E9xxxx or EBxx90 */
+	u_char bsJump[3];	/* jump instruction E9xxxx or EBxx90 */
 	char bsOemName[8];	/* OEM name and version */
 	char bsBPB[19];		/* BIOS parameter block */
 	char bsDriveNumber;	/* drive number (0x80) */
@@ -32,7 +32,7 @@ struct bootsector33 {
 };
 
 struct bootsector50 {
-	char bsJump[3];		/* jump instruction E9xxxx or EBxx90 */
+	u_char bsJump[3];	/* jump instruction E9xxxx or EBxx90 */
 	char bsOemName[8];	/* OEM name and version */
 	char bsBPB[25];		/* BIOS parameter block */
 	char bsDriveNumber;	/* drive number (0x80) */
