@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.63 2003/12/31 04:00:01 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.64 2003/12/31 04:13:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.63 2003/12/31 04:00:01 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.64 2003/12/31 04:13:52 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -394,8 +394,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	}
 	
 	raidPtr->reconInProgress++;
-	
-	
+		
 	/* first look for a spare drive onto which to reconstruct the
 	   data.  spare disk descriptors are stored in row 0.  This
 	   may have to change eventually */
@@ -410,6 +409,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		RF_SIGNAL_COND(raidPtr->waitForReconCond);
 		return (EINVAL);
 	}			
 
@@ -449,8 +449,8 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		RF_SIGNAL_COND(raidPtr->waitForReconCond);
 		return(retcode);
-		
 	}
 
 	/* Ok, so we can at least do a lookup... 
@@ -460,21 +460,22 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		RF_SIGNAL_COND(raidPtr->waitForReconCond);
 		return(retcode);
 	}
 
-	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-			    FREAD, proc->p_ucred, proc);
+	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, proc->p_ucred, proc);
 	if (retcode) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		RF_SIGNAL_COND(raidPtr->waitForReconCond);
 		return(retcode);
 	}
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->Disks[col].blockSize =	dpart.disklab->d_secsize;
 	
-	raidPtr->Disks[col].numBlocks = dpart.part->p_size - 
+	raidPtr->Disks[col].numBlocks = dpart.part->p_size -
 		rf_protectedSectors;
 	
 	raidPtr->raid_cinfo[col].ci_vp = vp;
