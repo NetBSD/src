@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/08/02 21:29:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/20 15:21:55 rearnsha Exp $
 
-MAN=	iopaau.4 iopwdog.4
+MAN=	intro.4 iopaau.4 iopwdog.4
 
 MANSUBDIR=/evbarm
 
