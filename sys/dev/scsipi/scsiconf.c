@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.141 2000/05/14 18:20:11 dante Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.142 2000/05/15 16:35:49 dante Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -728,6 +728,10 @@ scsi_probedev(scsi, target, lun)
 			extension[len++] = '\0';
 		while (len < 3 + 28 + 20 + 1)
 			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1 + 1)
+			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
+			extension[len++] = ' ';
 	}
 
 	sa.sa_sc_link = sc_link;
@@ -811,6 +815,9 @@ scsi_probedev(scsi, target, lun)
 		case T_IT8_2:
 		case T_STORARRAY:
 		case T_ENCLOSURE:
+		case T_SIMPLE_DIRECT:
+		case T_OPTIC_CARD_RW:
+		case T_OBJECT_STORED:
 		default:
 			break;
 		case T_NODEVICE:
