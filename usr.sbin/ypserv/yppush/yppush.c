@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.6 1997/10/13 07:38:09 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.7 1997/10/19 19:58:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush.c,v 1.6 1997/10/13 07:38:09 lukem Exp $");
+__RCSID("$NetBSD: yppush.c,v 1.7 1997/10/19 19:58:30 mycroft Exp $");
 #endif
 
 #include <sys/types.h>
@@ -144,8 +144,7 @@ main(argc, argv)
 
 	/* Check domain */
 	sprintf(map_path,"%s/%s",YP_DB_PATH,domain);
-	if (!((stat(map_path, &finfo) == 0) &&
-	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
+	if (stat(map_path, &finfo) != 0 || !S_ISDIR(finfo.st_mode)) {
 	  	fprintf(stderr,"yppush: Map does not exists.\n");
 		exit(1);
 	}
