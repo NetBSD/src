@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.15 2001/12/14 00:13:45 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.16 2002/01/03 21:45:07 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -237,7 +237,7 @@ isp_fc_runstate(struct ispsoftc *isp, int tval)
 	fcparam *fcp;
 	int *tptr;
 
-	if (IS_SCSI(isp))
+	if (IS_SCSI(isp) || isp->isp_role == ISP_ROLE_NONE)
 		return (0);
 
 	tptr = tval? &tval : NULL;
@@ -296,6 +296,8 @@ static INLINE void
 isp_get_response(struct ispsoftc *, ispstatusreq_t *, ispstatusreq_t *);
 static INLINE void
 isp_get_response_x(struct ispsoftc *, ispstatus_cont_t *, ispstatus_cont_t *);
+static INLINE void
+isp_get_rio2(struct ispsoftc *, isp_rio2_t *, isp_rio2_t *);
 static INLINE void
 isp_put_icb(struct ispsoftc *, isp_icb_t *, isp_icb_t *);
 static INLINE void
@@ -580,6 +582,22 @@ isp_get_response_x(struct ispsoftc *isp, ispstatus_cont_t *cpsrc,
 	for (i = 0; i < 60; i++) {
 		ISP_IOXGET_8(isp, &cpsrc->req_sense_data[i],
 		    cpdst->req_sense_data[i]);
+	}
+}
+
+static INLINE void
+isp_get_rio2(struct ispsoftc *isp, isp_rio2_t *r2src, isp_rio2_t *r2dst)
+{
+	int i;
+	isp_copy_in_hdr(isp, &r2src->req_header, &r2dst->req_header);
+	if (r2dst->req_header.rqs_seqno > 30)
+		r2dst->req_header.rqs_seqno = 30;
+	for (i = 0; i < r2dst->req_header.rqs_seqno; i++) {
+		ISP_IOXGET_16(isp, &r2src->req_handles[i],
+		    r2dst->req_handles[i]);
+	}
+	while (i < 30) {
+		r2dst->req_handles[i++] = 0;
 	}
 }
 
