@@ -106,7 +106,7 @@ if [ -n "$NAME" ]; then
 elif [ -f $HOME/.fullname ]; then
   ORIGINATOR="`sed -e '1q' $HOME/.fullname`"
 else
-  ORIGINATOR=`$PASSWD | sed -e /"$LOGNAME"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
+  ORIGINATOR=`$PASSWD | sed -e /"^${LOGNAME}:"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
   case "$ORIGINATOR" in
   *'&'*)
     TEMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
@@ -258,8 +258,20 @@ FIX_C='<how to correct or work around the problem, if known (multiple lines)>'
 
 # Catch some signals. ($xs kludge needed by Sun /bin/sh)
 xs=0
-trap 'rm -f $REF $TEMP; exit $xs' 0
-trap 'echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit' 1 2 3 13 15
+TRAP_EXIT_ACTION='rm -f $REF $TEMP; exit $xs'
+TRAP_IGNORE_ACTION=''
+TRAP_ABORT_ACTION='echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit'
+TRAP_ABORTSAVE_ACTION='
+    echo "$COMMAND: Aborting ...";
+    if cmp -s $REF $TEMP ; then
+	rm $REF
+    else
+	echo "$COMMAND: the problem report remains in $BAD and is not sent."
+	mv $REF $BAD
+    fi
+    rm -f $TEMP; xs=1; exit'
+trap "$TRAP_EXIT_ACTION" 0
+trap "$TRAP_ABORT_ACTION" 1 2 3 13 15
 
 # If they told us to use a specific file, then do so.
 if [ -n "$IN_FILE" ]; then
@@ -359,7 +371,9 @@ __EOF__
 
   chmod u+w $TEMP
   if [ -z "$REQUEST_ID" ]; then
+    trap "$TRAP_IGNORE_ACTION" 2 3
     eval $EDIT $TEMP
+    trap "$TRAP_ABORTSAVE_ACTION" 2 3
   else
     ed -s $TEMP << '__EOF__'
 /^Subject/s/^Subject:.*/Subject: request for a customer id/
@@ -485,7 +499,9 @@ while [ -z "$REQUEST_ID" ]; do
 	xs=1; exit
 	;;
       e*)
-        eval $EDIT $TEMP
+	trap "$TRAP_IGNORE_ACTION" 2 3
+	eval $EDIT $TEMP
+	trap "$TRAP_ABORTSAVE_ACTION" 2 3
 	continue 2
 	;;
       s*)
