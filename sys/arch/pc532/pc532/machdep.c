@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1996/11/24 13:35:18 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1996/12/07 09:24:56 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -842,10 +842,9 @@ map(pd, virtual, physical, protection, size)
  *
  * Level one and level two page tables are initialized to create
  * the following mapping:
- *	0xfdbfe000-0xfdbfffff:	UAREA of process 0
- *	0xfdc00000-0xfdffefff:	Kernel level two page tables
- *	0xfdfff000-0xfdffffff:	Kernel level one page table
- *	0xfe000000-0xff7fffff:	Kernel code and data
+ *	0xf7c00000-0xf7ffefff:	Kernel level two page tables
+ *	0xf7fff000-0xf7ffffff:	Kernel level one page table
+ *	0xf8000000-0xff7fffff:	Kernel code and data
  *	0xffc00000-0xffc00fff:	Kernel temporary stack
  *	0xffc80000-0xffc80fff:	Duarts and Parity control
  *	0xffd00000-0xffdfffff:	SCSI polled
@@ -878,7 +877,6 @@ init532()
 	extern int inttab[];
 	extern char etext[], edata[], end[], *esym;
 	pd_entry_t *pd;
-
 
 #if VERYLOWDEBUG
 	umprintf ("Starting init532\n");
@@ -963,9 +961,7 @@ init532()
 	proc0.p_addr = proc0paddr;
 
 	/* Allocate second level page tables for kernel virtual address space */
-	map(pd, VM_MIN_KERNEL_ADDRESS, (vm_offset_t)-1, 0,
-			VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS);
-
+	map(pd, VM_MIN_KERNEL_ADDRESS, (vm_offset_t)-1, 0, NKPDE << PDSHIFT);
 	/* Map monitor scratch area R/W. */
 	map(pd, KERNBASE,        0x00000000, PG_KW, 0x2000);
 	/* Map kernel text R/O. */
@@ -976,9 +972,19 @@ init532()
 	/* Alias the mapping at KERNBASE to 0 */
 	pd[pdei(0)] = pd[pdei(KERNBASE)];
 
+#if VERYLOWDEBUG
+	umprintf ("enabling mapping\n");
+#endif
+
 	/* Load the ptb registers and start mapping. */
 	load_ptb(pd);
 	lmr(mcr, 3);
+
+#if VERYLOWDEBUG
+	/* Let scncnputc know which form to use. */
+	_mapped = 1;
+	umprintf ("done\n");
+#endif
 
 #if VERYLOWDEBUG
 	umprintf ("Just before jump to high memory.\n");
@@ -986,11 +992,6 @@ init532()
 
 	/* Jump to high memory */
 	__asm __volatile("jump @1f; 1:");
-
-#if VERYLOWDEBUG
-	/* Let scncnputc know which form to use. */
-	_mapped = 1;
-#endif
 
 	/* Set up the ICU. */
 	icu_init();
