@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/10/09 16:13:07 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2002/10/09 16:14:55 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,7 @@ INFOFLAGS=	-I${DIST}/doc
 
 MAN=tar.1
 
-.PATH:	${.CURDIR} ${DIST}/src ${DIST}/po ${DIST}/doc
+.PATH:	${DIST}/src ${DIST}/po ${DIST}/doc
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
