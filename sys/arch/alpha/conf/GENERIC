@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.36 1997/01/23 23:21:42 cgd Exp $
+#	$NetBSD: GENERIC,v 1.37 1997/01/31 01:42:36 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -24,14 +24,16 @@ options		DEC_EB164	# EB164:	AlphaPC 164
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
+# File systems
+file-system 	FFS		# Fast file system
+file-system 	MFS		# Memory-based file system
+file-system 	NFS		# Sun NFS-compatible file system client
+file-system 	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system 	MSDOSFS		# MS-DOS-compatible file system
+
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
-options		FFS		# Fast file system
-options		MFS		# Memory-based file system
-options		CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
-options		MSDOSFS		# MS-DOS-compatible file system
 options		NFSSERVER	# Sun NFS-compatible file system server
-options		NFSCLIENT	# Sun NFS-compatible file system client
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -61,9 +63,9 @@ options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
-config		netbsd	swap generic
-#config		netbsd	root on sd0 swap on sd0
-#config		netbsd	root nfs swap nfs
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs swap on sd0
+#config		netbsd	root on ? type nfs
 
 mainbus0 at	root
 cpu*	at	mainbus0
