@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.5 1996/12/13 08:26:13 mikel Exp $	*/
+/*	$NetBSD: pcap.h,v 1.6 1997/10/03 15:53:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap.h,v 1.20 96/07/12 19:24:15 leres Exp (LBL)
+ * @(#) Header: pcap.h,v 1.20 96/07/12 19:24:15 leres Exp  (LBL)
  */
 
 #ifndef lib_pcap_h

@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.6 1997/09/28 09:41:53 mycroft Exp $	*/
+/*	$NetBSD: optimize.c,v 1.7 1997/10/03 15:53:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -22,9 +22,14 @@
  *
  *  Optimization module for tcpdump intermediate representation.
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: optimize.c,v 1.59 96/07/15 00:48:49 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: optimize.c,v 1.7 1997/10/03 15:53:11 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>

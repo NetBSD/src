@@ -1,4 +1,4 @@
-/*	$NetBSD: savefile.c,v 1.4 1997/01/23 14:03:03 mrg Exp $	*/
+/*	$NetBSD: savefile.c,v 1.5 1997/10/03 15:53:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -19,13 +19,7 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-#ifndef lint
-static char rcsid[] =
-    "@(#)Header: savefile.c,v 1.30 96/07/15 00:48:52 leres Exp (LBL)";
-#endif
-
-/*
+ *
  * savefile.c - supports offline use of tcpdump
  *	Extraction/creation by Jeffrey Mogul, DECWRL
  *	Modified by Steve McCanne, LBL.
@@ -35,6 +29,16 @@ static char rcsid[] =
  * The first record in the file contains saved values for the machine
  * dependent values so we can print the dump file on any architecture.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static const char rcsid[] =
+    "@(#) Header: savefile.c,v 1.36 96/12/10 23:15:02 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: savefile.c,v 1.5 1997/10/03 15:53:17 christos Exp $");
+#endif
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -67,7 +71,7 @@ static char rcsid[] =
 #define	SWAPLONG(y) \
 ((((y)&0xff)<<24) | (((y)&0xff00)<<8) | (((y)&0xff0000)>>8) | (((y)>>24)&0xff))
 #define	SWAPSHORT(y) \
-	( (((y)&0xff)<<8) | (((y)&0xff00)>>8) )
+	( (((y)&0xff)<<8) | ((u_short)((y)&0xff00)>>8) )
 
 #define SFERR_TRUNC		1
 #define SFERR_BADVERSION	2
@@ -238,12 +242,17 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 		static u_char *tp = NULL;
 		static int tsize = 0;
 
+		if (hdr->caplen > 65535) {
+			sprintf(p->errbuf, "bogus savefile header");
+			return (-1);
+		}
 		if (tsize < hdr->caplen) {
 			tsize = ((hdr->caplen + 1023) / 1024) * 1024;
 			if (tp != NULL)
 				free((u_char *)tp);
 			tp = (u_char *)malloc(tsize);
 			if (tp == NULL) {
+				tsize = 0;
 				(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 				    "BUFMOD hack malloc");
 				return (-1);
@@ -254,6 +263,14 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 			    "truncated dump file");
 			return (-1);
 		}
+		/*
+		 * We can only keep up to buflen bytes.  Since caplen > buflen
+		 * is exactly how we got here, we know we can only keep the
+		 * first buflen bytes and must drop the remainder.  Adjust
+		 * caplen accordingly, so we don't get confused later as
+		 * to how many bytes we have to play with.
+		 */
+		hdr->caplen = buflen;
 		memcpy((char *)buf, (char *)tp, buflen);
 
 	} else {
