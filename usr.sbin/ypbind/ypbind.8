@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.15 2005/02/26 16:15:09 thorpej Exp $
+.\"	$NetBSD: ypbind.8,v 1.16 2005/02/26 16:19:08 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 7, 1997
+.Dd February 26, 2005
 .Dt YPBIND 8
 .Os
 .Sh NAME
@@ -54,8 +54,8 @@ domain and stores information about it
 in a
 .Dq binding file .
 This binding information includes the IP address of the server associated with
-that particular domain and which port the server is using.  This information
-is stored in the directory
+that particular domain and which port the server is using.
+This information is stored in the directory
 .Pa /var/yp/binding
 in a file named with the convention
 .Pa \*[Lt]domain\*[Gt].version ,
@@ -143,14 +143,14 @@ options are inherently insecure and should be avoided.
 Messages are send to syslog daemon using facility LOG_DAEMON.
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr nis 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
 .Xr ypwhich 1 ,
+.Xr nis 8 ,
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS
 This version of
 .Nm
-was originally implemented by Theo de Raadt.  The ypservers support was
-implemented by Luke Mewburn.
+was originally implemented by Theo de Raadt.
+The ypservers support was implemented by Luke Mewburn.
