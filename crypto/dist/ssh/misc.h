@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.3 2001/04/10 08:07:58 itojun Exp $	*/
-/*	$OpenBSD: misc.h,v 1.3 2001/02/22 21:59:44 markus Exp $	*/
+/*	$NetBSD: misc.h,v 1.4 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$OpenBSD: misc.h,v 1.7 2001/05/11 14:59:56 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,7 +18,29 @@ char	*chop(char *s);
 /* return next token in configuration line */
 char	*strdelim(char **s);
 
-/* set filedescriptor to non-blocking */
+/* set/unset filedescriptor to non-blocking */
 void	set_nonblock(int fd);
+void	unset_nonblock(int fd);
 
 struct passwd * pwcopy(struct passwd *pw);
+
+/*
+ * Convert ASCII string to TCP/IP port number.
+ * Port must be >0 and <=65535.
+ * Return 0 if invalid.
+ */
+int a2port(const char *s);
+
+/* code from scp.c/rcp.c */
+char *cleanhostname(char *host);
+char *colon(char *cp);
+
+/* function to assist building execv() arguments */
+typedef struct arglist arglist;
+struct arglist {
+        char    **list;
+        int     num;
+        int     nalloc;
+};
+
+void addargs(arglist *args, char *fmt, ...) __attribute__((format(printf, 2, 3)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.8 2001/05/15 14:50:53 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.9 2001/05/15 15:26:10 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.55 2001/04/05 10:42:54 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.60 2001/04/23 22:14:13 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -146,7 +146,7 @@ try_load_pem_key(char *filename)
 void
 do_convert_to_ssh2(struct passwd *pw)
 {
-	Key *prv;
+	Key *k;
 	int len;
 	u_char *blob;
 	struct stat st;
@@ -157,20 +157,21 @@ do_convert_to_ssh2(struct passwd *pw)
 		perror(identity_file);
 		exit(1);
 	}
-	prv = try_load_pem_key(identity_file);
-	if (prv == NULL) {
-		fprintf(stderr, "load failed\n");
-		exit(1);
+	if ((k = key_load_public(identity_file, NULL)) == NULL) {
+		if ((k = try_load_pem_key(identity_file)) == NULL) {
+			fprintf(stderr, "load failed\n");
+			exit(1);
+		}
 	}
-	key_to_blob(prv, &blob, &len);
+	key_to_blob(k, &blob, &len);
 	fprintf(stdout, "%s\n", SSH_COM_PUBLIC_BEGIN);
 	fprintf(stdout,
 	    "Comment: \"%d-bit %s, converted from OpenSSH by %s@%s\"\n",
-	    key_size(prv), key_type(prv),
+	    key_size(k), key_type(k),
 	    pw->pw_name, hostname);
 	dump_base64(stdout, blob, len);
 	fprintf(stdout, "%s\n", SSH_COM_PUBLIC_END);
-	key_free(prv);
+	key_free(k);
 	xfree(blob);
 	exit(0);
 }
@@ -307,12 +308,12 @@ do_convert_from_ssh2(struct passwd *pw)
 		    strstr(line, ": ") != NULL) {
 			if (strstr(line, SSH_COM_PRIVATE_BEGIN) != NULL)
 				private = 1;
-			fprintf(stderr, "ignore: %s", line);
+			/* fprintf(stderr, "ignore: %s", line); */
 			continue;
 		}
 		if (escaped) {
 			escaped--;
-			fprintf(stderr, "escaped: %s", line);
+			/* fprintf(stderr, "escaped: %s", line); */
 			continue;
 		}
 		*p = '\0';
@@ -522,8 +523,7 @@ do_change_passphrase(struct passwd *pw)
 
 	/* Save the file using the new passphrase. */
 	if (!key_save_private(private, identity_file, passphrase1, comment)) {
-		printf("Saving the key failed: %s: %s.\n",
-		       identity_file, strerror(errno));
+		printf("Saving the key failed: %s.\n", identity_file);
 		memset(passphrase1, 0, strlen(passphrase1));
 		xfree(passphrase1);
 		key_free(private);
@@ -601,8 +601,7 @@ do_change_comment(struct passwd *pw)
 
 	/* Save the file using the new passphrase. */
 	if (!key_save_private(private, identity_file, passphrase, new_comment)) {
-		printf("Saving the key failed: %s: %s.\n",
-		       identity_file, strerror(errno));
+		printf("Saving the key failed: %s.\n", identity_file);
 		memset(passphrase, 0, strlen(passphrase));
 		xfree(passphrase);
 		key_free(private);
@@ -640,7 +639,7 @@ do_change_comment(struct passwd *pw)
 void
 usage(void)
 {
-	printf("Usage: %s [-lBpqxXyc] [-t type] [-b bits] [-f file] [-C comment] "
+	printf("Usage: %s [-ceilpqyB] [-t type] [-b bits] [-f file] [-C comment] "
 	    "[-N new-pass] [-P pass]\n", __progname);
 	exit(1);
 }
@@ -674,7 +673,7 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	while ((opt = getopt(ac, av, "dqpclBRxXyb:f:t:P:N:C:")) != -1) {
+	while ((opt = getopt(ac, av, "deiqpclBRxXyb:f:t:P:N:C:")) != -1) {
 		switch (opt) {
 		case 'b':
 			bits = atoi(optarg);
@@ -726,11 +725,15 @@ main(int ac, char **av)
 			exit(0);
 			break;
 
+		case 'e':
 		case 'x':
+			/* export key */
 			convert_to_ssh2 = 1;
 			break;
 
+		case 'i':
 		case 'X':
+			/* import key */
 			convert_from_ssh2 = 1;
 			break;
 
@@ -844,8 +847,7 @@ passphrase_again:
 
 	/* Save the key with the given passphrase and comment. */
 	if (!key_save_private(private, identity_file, passphrase1, comment)) {
-		printf("Saving the key failed: %s: %s.\n",
-		    identity_file, strerror(errno));
+		printf("Saving the key failed: %s.\n", identity_file);
 		memset(passphrase1, 0, strlen(passphrase1));
 		xfree(passphrase1);
 		exit(1);

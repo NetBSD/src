@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/10 08:08:06 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/05/15 15:26:11 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ BINMODE=0555
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
 
-SRCS=	ssh.c readconf.c clientloop.c \
+SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
 
 .if (${MKKERBEROS} != "no")
