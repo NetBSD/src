@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1996/03/09 23:36:09 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 1996/03/14 21:36:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -320,6 +320,8 @@ cdev_decl(bpf);
 #include "tun.h" 
 cdev_decl(tun);
 
+dev_decl(filedesc,open);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -375,7 +377,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 50 */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
-	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */

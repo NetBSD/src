@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1995/10/05 01:53:02 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1996/03/14 21:31:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,6 +145,7 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
+dev_decl(filedesc,open);
 
 
 /* a framebuffer with an attached mouse: */
@@ -166,7 +167,7 @@ struct cdevsw	cdevsw[] =
         cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_notdef(),			/* 8: old 2100/3100 frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
