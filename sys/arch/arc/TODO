@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.17 2003/04/06 17:48:51 tsutsui Exp $
+$NetBSD: TODO,v 1.18 2003/05/22 17:10:27 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -15,9 +15,6 @@ XXX some entries might be obsolete.
 
 
     o	use MI driver
-
-	-   use MI ncr53c9x driver instead of home grown asc
-	    XXX patch is available. needs testers
 
 	-   make fd driver MI, and share it with other ports
 	    (contact christos about MI fd driver)
