@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.13 1998/11/15 17:32:42 christos Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.14 1999/04/19 21:56:01 kleink Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.13 1998/11/15 17:32:42 christos Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.14 1999/04/19 21:56:01 kleink Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ __weak_alias(setrpcent,_setrpcent);
 /*
  * Internet version.
  */
-struct rpcdata {
+static struct rpcdata {
 	FILE	*rpcf;
 	int	stayopen;
 #define	MAXALIASES	35
