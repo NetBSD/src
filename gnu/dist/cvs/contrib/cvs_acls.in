@@ -19,16 +19,7 @@
 #
 # 2. Install this file as /usr/local/bin/cvs_acls and make it executable.
 #
-# 3. Create a file named CVSROOT/avail and optionally add it to
-#    CVSROOT/checkoutlist and check it in.  See the CVS manual's
-#    administrative files section about checkoutlist.  Typically:
-#
-#    $ cvs checkout CVSROOT
-#    $ cd CVSROOT
-#    [ create the avail file ]
-#    [ add avail to checkoutlist ]
-#    $ cvs add avail
-#    $ cvs commit -m 'Added avail for use with cvs_acls.' avail checkoutlist
+# 3. Create a file named $CVSROOT/CVSROOT/avail.
 #
 # ==== FORMAT OF THE avail FILE:
 #
@@ -154,7 +145,7 @@ while (<AVAIL>) {
     # Module matches if it is a NULL module list in the avail line.  If module
     # list is not null, we check every argument combination.
     if (!($in_repo = !$m)) {
-	my @tmp = split(/[\s,]+/,$m);
+	@tmp = split(/[\s,]+/,$m);
 	for $j (@tmp) {
 	    # If the repos from avail is a parent(or equal) dir of $repos, OK
 	    $in_repo = 1, last if ($repos eq $j || $repos =~ /^$j\//);
