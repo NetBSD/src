@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.67 2004/01/29 12:06:02 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.68 2004/02/10 01:30:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.67 2004/01/29 12:06:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.68 2004/02/10 01:30:49 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -155,7 +155,6 @@ struct vm_map *kernel_map = NULL;
  */
 
 static struct vm_map		kernel_map_store;
-static struct vm_map_entry	kernel_first_mapent_store;
 
 /*
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
@@ -188,27 +187,12 @@ uvm_km_init(start, end)
 
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
-	if (start != base) {
-		int error;
-		struct uvm_map_args args;
-
-		error = uvm_map_prepare(&kernel_map_store, base, start - base,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
+	if (start != base &&
+	    uvm_map(&kernel_map_store, &base, start - base, NULL,
+		    UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED), &args);
-		if (!error) {
-			struct vm_map_entry *entry = &kernel_first_mapent_store;
-
-			kernel_first_mapent_store.flags =
-			    UVM_MAP_KERNEL | UVM_MAP_FIRST;
-			error = uvm_map_enter(&kernel_map_store, &args, &entry);
-			KASSERT(entry == NULL);
-		}
-
-		if (error)
-			panic(
-			    "uvm_km_init: could not reserve space for kernel");
-	}
+		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED)) != 0)
+		panic("uvm_km_init: could not reserve space for kernel");
 
 	/*
 	 * install!
