@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.4 2000/12/12 05:11:15 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.5 2000/12/12 05:34:02 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -212,6 +212,7 @@ int an_attach(sc)
 {
 	struct ifnet		*ifp = &sc->arpcom.ec_if;
 #ifdef IFM_IEEE80211
+	int i, mtype;
 	struct ifmediareq imr;
 #endif
 
@@ -294,18 +295,32 @@ int an_attach(sc)
 
 #ifdef IFM_IEEE80211
 	ifmedia_init(&sc->sc_media, 0, an_media_change, an_media_status);
-#define	ADD(m, o) ifmedia_add(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, (m), (o), 0), 0, NULL)
-	ADD(IFM_AUTO, 0);
-	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
-	ADD(IFM_IEEE80211_DS1, 0);
-	ADD(IFM_IEEE80211_DS1, IFM_IEEE80211_ADHOC);
-	ADD(IFM_IEEE80211_DS2, 0);
-	ADD(IFM_IEEE80211_DS2, IFM_IEEE80211_ADHOC);
-	ADD(IFM_IEEE80211_DS5, 0);
-	ADD(IFM_IEEE80211_DS5, IFM_IEEE80211_ADHOC);
-	ADD(IFM_IEEE80211_DS11, 0);
-	ADD(IFM_IEEE80211_DS11, IFM_IEEE80211_ADHOC);
-#undef ADD
+	ifmedia_add(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+	    0, 0), 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+	    IFM_IEEE80211_ADHOC, 0), 0, NULL);
+	for (i = 0; i < sizeof(sc->an_caps.an_rates); i++) {
+		switch (sc->an_caps.an_rates[i]) {
+		case AN_RATE_1MBPS:
+			mtype = IFM_IEEE80211_DS1;
+			break;
+		case AN_RATE_2MBPS:
+			mtype = IFM_IEEE80211_DS2;
+			break;
+		case AN_RATE_5_5MBPS:
+			mtype = IFM_IEEE80211_DS5;
+			break;
+		case AN_RATE_11MBPS:
+			mtype = IFM_IEEE80211_DS11;
+			break;
+		default:
+			continue;
+		}
+		ifmedia_add(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, mtype,
+		    0, 0), 0, NULL);
+		ifmedia_add(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, mtype,
+		    IFM_IEEE80211_ADHOC, 0), 0, NULL);
+	}
 	an_media_status(ifp, &imr);
 	ifmedia_set(&sc->sc_media, imr.ifm_active);
 #endif
@@ -1103,6 +1118,11 @@ an_media_change(ifp)
 		sc->an_config.an_opmode = AN_OPMODE_IBSS_ADHOC;
 	else
 		sc->an_config.an_opmode = AN_OPMODE_INFRASTRUCTURE_STATION;
+	/*
+	 * XXX: how to set txrate for the firmware?
+	 * There is a struct defined as an_txframe, which is used nowhere.
+	 * Perhaps we need to change the transmit mode from 802.3 to native.
+	 */
 	if (sc->sc_enabled)
 		an_init(ifp);
 	return error;
