@@ -162,9 +162,9 @@ _openpam_log(int _level,
 #elif defined(__GNUC__) && (__GNUC__ >= 2) && (__GNUC_MINOR__ >= 95)
 #define openpam_log(lvl, fmt...) \
 	_openpam_log((lvl), __func__, ##fmt)
-#elif defined(__GNUC__) && defined(__function__)
+#elif defined(__GNUC__) && defined(__func__)
 #define openpam_log(lvl, fmt...) \
-	_openpam_log((lvl), __function__, ##fmt)
+	_openpam_log((lvl), __func__, ##fmt)
 #else
 void
 openpam_log(int _level,
