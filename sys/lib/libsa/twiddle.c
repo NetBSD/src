@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.15 1999/02/13 20:56:57 pk Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.1 1999/02/13 20:56:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,6 +35,29 @@
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
+/*
+ * Scaled down version of printf(3).
+ *
+ * One additional format:
+ *
+ * The format %b is supported to decode error registers.
+ * Its usage is:
+ *
+ *	printf("reg=%b\n", regval, "<base><arg>*");
+ *
+ * where <base> is the output base expressed as a control character, e.g.
+ * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
+ * the first of which gives the bit number to be inspected (origin 1), and
+ * the next characters (up to a control character, i.e. a character <= 32),
+ * give the name of the register.  Thus:
+ *
+ *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
+ *
+ * would produce output:
+ *
+ *	reg=3<BITTWO,BITONE>
+ */
+
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #ifdef __STDC__
@@ -46,20 +69,10 @@
 #include "stand.h"
 
 void
-#ifdef __STDC__
-printf(const char *fmt, ...)
-#else
-printf(fmt, va_alist)
-	char *fmt;
-#endif
+twiddle()
 {
-	va_list ap;
+	static int pos;
 
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
+	putchar("|/-\\"[pos++ & 3]);
+	putchar('\b');
 }
