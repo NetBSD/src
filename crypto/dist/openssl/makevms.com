@@ -9,7 +9,7 @@ $!
 $! Changes by Richard Levitte <richard@levitte.org>
 $!
 $! This procedure creates the SSL libraries of "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB"
-$! "[.xxx.EXE.SSL]LIBSSL.OLB" and if specified "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB".
+$! "[.xxx.EXE.SSL]LIBSSL.OLB"
 $! The "xxx" denotes the machine architecture of AXP or VAX.
 $!
 $! This procedures accepts two command line options listed below.
@@ -21,7 +21,6 @@ $!      CONFIG    Just build the "[.CRYPTO]OPENSSLCONF.H" file.
 $!      BUILDINF  Just build the "[.CRYPTO]BUILDINF.H" file.
 $!      SOFTLINKS Just fix the Unix soft links.
 $!      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
-$!      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      CRYPTO/x  Just build the x part of the
 $!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
@@ -31,16 +30,8 @@ $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 $!
 $!
-$! Specify RSAREF as P2 to compile using the RSAREF Library.
-$! If you specify NORSAREF, it will compile without using RSAREF.
-$! (If in the United States, You Must Compile Using RSAREF).
-$!
-$! Note: The RSAREF libraries are NOT INCLUDED and you have to
-$!       download it from "ftp://ftp.rsa.com/rsaref".  You have to
-$!       get the ".tar-Z" file as the ".zip" file dosen't have the
-$!       directory structure stored.  You have to extract the file
-$!       into the [.RSAREF] directory as that is where the scripts
-$!       will look for the files.
+$! P2 is ignored (it was used to denote if RSAref should be used or not,
+$! and is simply kept so surrounding scripts don't get confused)
 $!
 $! Speficy DEBUG or NODEBUG as P3 to compile with or without debugging
 $! information.
@@ -56,11 +47,16 @@ $!
 $! If you don't speficy a compiler, it will try to determine which
 $! "C" compiler to use.
 $!
-$!  P5, if defined, sets a TCP/IP library to use, through one of the following
-$!  keywords:
+$! P5, if defined, sets a TCP/IP library to use, through one of the following
+$! keywords:
 $!
 $!	UCX		for UCX or UCX emulation
+$!	TCPIP		for TCP/IP Services or TCP/IP Services emulation
+$!			(this is prefered over UCX)
 $!	SOCKETSHR	for SOCKETSHR+NETLIB
+$!	NONE		to avoid specifying which TCP/IP implementation to
+$!			use at build time (this works with DEC C).  This is
+$!			the default.
 $!
 $! P6, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
@@ -122,20 +118,6 @@ $!
 $ IF (BUILDCOMMAND.EQS."ALL".OR.BUILDCOMMAND.EQS."BUILDALL")
 $ THEN
 $!
-$!  Check To See If We Are Going To Be Building The 
-$!  [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$   IF (RSAREF.EQS."RSAREF")
-$   THEN
-$!
-$!    Build The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$     GOSUB RSAREF
-$!
-$!  End The RSAREF Check.
-$!
-$   ENDIF
-$!
 $!  Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!
 $   GOSUB CRYPTO
@@ -187,6 +169,59 @@ $!
 $ WRITE H_FILE "/* This file was automatically built using makevms.com */"
 $ WRITE H_FILE "/* and [.CRYPTO]OPENSSLCONF.H_IN */"
 $
+$!
+$! Write a few macros that indicate how this system was built.
+$!
+$ WRITE H_FILE ""
+$ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
+$ WRITE H_FILE "# define OPENSSL_SYS_VMS"
+$ WRITE H_FILE "#endif"
+$ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
+	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
+	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
+$ CONFIG_LOG_I = 0
+$ CONFIG_LOG_LOOP:
+$   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
+$   CONFIG_LOG_I = CONFIG_LOG_I + 1
+$   IF CONFIG_LOG_E1 .EQS. "" THEN GOTO CONFIG_LOG_LOOP
+$   IF CONFIG_LOG_E1 .EQS. "," THEN GOTO CONFIG_LOG_LOOP_END
+$   CONFIG_LOG_E2 = F$EDIT(CONFIG_LOG_E1,"TRIM")
+$   CONFIG_LOG_E1 = F$ELEMENT(0,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E2 = F$ELEMENT(1,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E0 = F$ELEMENT(0,"/",CONFIG_LOG_E1)
+$   CONFIG_LOG_E1 = F$ELEMENT(1,"/",CONFIG_LOG_E1)
+$   IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E0)
+$   THEN
+$     WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E0
+$     WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E0
+$     WRITE H_FILE "#endif"
+$     IF CONFIG_LOG_E1 .NES. "/"
+$     THEN
+$       WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E1
+$       WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E1
+$       WRITE H_FILE "#endif"
+$     ENDIF
+$   ELSE
+$     IF CONFIG_LOG_E2 .NES. ";"
+$     THEN
+$       IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E2)
+$       THEN
+$         WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E2
+$         WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E2
+$         WRITE H_FILE "#endif"
+$       ENDIF
+$     ENDIF
+$   ENDIF
+$   GOTO CONFIG_LOG_LOOP
+$ CONFIG_LOG_LOOP_END:
+$ WRITE H_FILE "#ifndef OPENSSL_THREADS"
+$ WRITE H_FILE "# define OPENSSL_THREADS"
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE "#ifndef OPENSSL_NO_KRB5"
+$ WRITE H_FILE "# define OPENSSL_NO_KRB5"
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE ""
+$!
 $! Different tar version may have named the file differently
 $ IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H_IN") .NES. ""
 $ THEN
@@ -206,7 +241,6 @@ $       EXIT 0
 $     ENDIF
 $   ENDIF
 $ ENDIF
-$!
 $ IF ARCH .EQS. "AXP"
 $ THEN
 $!
@@ -239,6 +273,8 @@ $   WRITE H_FILE "#undef THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
+$
+$   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
 $!  Else...
 $!
@@ -271,6 +307,9 @@ $   WRITE H_FILE "#define THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
+$
+$   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
+$   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
 $!  End
 $!
@@ -320,7 +359,7 @@ $ SOFTLINKS:
 $!
 $! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
 $!
-$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
+$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
 $!
 $ DELETE SYS$DISK:[.APPS]MD4.C;*,MD5.C;*,RMD160.C;*
 $!
@@ -344,10 +383,12 @@ $! First, We Have To "Rebuild" The "[.TEST]" Directory, So Delete
 $! All The "C" Files That Are Currently There Now.
 $!
 $ DELETE SYS$DISK:[.TEST]*.C;*
+$ DELETE SYS$DISK:[.TEST]EVPTESTS.TXT;*
 $!
 $! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
 $!
 $ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
+$ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
 $!
 $! Copy all the *TEST.C files from [.SSL...] into [.TEST]
 $!
@@ -364,17 +405,18 @@ $ IF F$PARSE("SYS$DISK:[.INCLUDE.OPENSSL]") .EQS. "" THEN -
 $!
 $! Copy All The ".H" Files From The Main Directory.
 $!
-$ EXHEADER := e_os.h,e_os2.h
+$ EXHEADER := e_os2.h
 $ COPY 'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,RC2,RC4,RC5,IDEA,BF,CAST,-
-   BN,RSA,DSA,DH,DSO,-
+   BN,EC,RSA,DSA,DH,DSO,ENGINE,AES,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
-   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP
-$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h
+   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5
+$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
+		ossl_typ.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
 $ EXHEADER_MD5 := md5.h
@@ -382,7 +424,7 @@ $ EXHEADER_SHA := sha.h
 $ EXHEADER_MDC2 := mdc2.h
 $ EXHEADER_HMAC := hmac.h
 $ EXHEADER_RIPEMD := ripemd.h
-$ EXHEADER_DES := des.h
+$ EXHEADER_DES := des.h,des_old.h
 $ EXHEADER_RC2 := rc2.h
 $ EXHEADER_RC4 := rc4.h
 $ EXHEADER_RC5 := rc5.h
@@ -390,10 +432,13 @@ $ EXHEADER_IDEA := idea.h
 $ EXHEADER_BF := blowfish.h
 $ EXHEADER_CAST := cast.h
 $ EXHEADER_BN := bn.h
+$ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
 $ EXHEADER_DSA := dsa.h
 $ EXHEADER_DH := dh.h
 $ EXHEADER_DSO := dso.h
+$ EXHEADER_ENGINE := engine.h
+$ EXHEADER_AES := aes.h
 $ EXHEADER_BUFFER := buffer.h
 $ EXHEADER_BIO := bio.h
 $ EXHEADER_STACK := stack.h,safestack.h
@@ -402,7 +447,7 @@ $ EXHEADER_RAND := rand.h
 $ EXHEADER_ERR := err.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_EVP := evp.h
-$ EXHEADER_ASN1 := asn1.h,asn1_mac.h
+$ EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
 $ EXHEADER_PEM := pem.h,pem2.h
 $ EXHEADER_X509 := x509.h,x509_vfy.h
 $ EXHEADER_X509V3 := x509v3.h
@@ -411,6 +456,9 @@ $ EXHEADER_TXT_DB := txt_db.h
 $ EXHEADER_PKCS7 := pkcs7.h
 $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
+$ EXHEADER_OCSP := ocsp.h
+$ EXHEADER_UI := ui.h,ui_compat.h
+$ EXHEADER_KRB5 := krb5_asn.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
@@ -427,14 +475,9 @@ $ ENDIF
 $ GOTO LOOP_SDIRS
 $ LOOP_SDIRS_END:
 $!
-$! Copy All The ".H" Files From The [.RSAREF] Directory.
-$!
-$ EXHEADER := rsaref.h
-$ COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
-$!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
@@ -460,42 +503,17 @@ $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
-$ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
 $ SET DEFAULT [-]
 $!
 $! Time To RETURN.
-$!
-$ RETURN
-$!
-$! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE Library.
-$!
-$ RSAREF:
-$!
-$! Tell The User What We Are Doing.
-$!
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.RSAREF]LIBRSAGLUE.OLB Library."
-$!
-$! Go To The [.RSAREF] Directory.
-$!
-$ SET DEFAULT SYS$DISK:[.RSAREF]
-$!
-$! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$ @RSAREF-LIB LIBRARY 'DEBUGGER' "''COMPILER'" 'ISSEVEN'
-$!
-$! Go Back To The Main Directory.
-$!
-$ SET DEFAULT [-]
-$!
-$! Time To Return.
 $!
 $ RETURN
 $!
@@ -514,7 +532,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]LIBSSL.OLB Library.
 $!
-$ @SSL-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -539,7 +557,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]SSL_TASK.EXE
 $!
-$ @SSL-LIB SSL_TASK 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -564,7 +582,7 @@ $ SET DEFAULT SYS$DISK:[.TEST]
 $!
 $! Build The Test Programs.
 $!
-$ @MAKETESTS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKETESTS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -589,7 +607,7 @@ $ SET DEFAULT SYS$DISK:[.APPS]
 $!
 $! Build The Application Programs.
 $!
-$ @MAKEAPPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKEAPPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -630,7 +648,7 @@ $!  Else, Check To See If P1 Has A Valid Arguement.
 $!
 $   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
        .OR.(P1.EQS."BUILDALL") -
-       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF") -
+       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL") -
        .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
 $   THEN
 $!
@@ -652,7 +670,6 @@ $     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO]OPENSSLCONF.H fi
 $     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
-$     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
 $     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
@@ -676,53 +693,6 @@ $!
 $   ENDIF
 $!
 $! End The P1 Check.
-$!
-$ ENDIF
-$!
-$! Check To See If P2 Is Blank.
-$!
-$ IF (P2.EQS."NORSAREF")
-$ THEN
-$!
-$!   P2 Is NORSAREF, So Compile Without RSAREF.
-$!
-$    RSAREF = "NORSAREF"
-$!
-$! Else...
-$!
-$ ELSE
-$!
-$!  Check To See If We Are To Compile Using The RSAREF Library.
-$!
-$   IF (P2.EQS."RSAREF")
-$   THEN
-$!
-$!    Compile With RSAREF Library.
-$!
-$     RSAREF = "RSAREF"
-$!
-$!  Else...
-$!
-$   ELSE
-$!
-$!    Tell The User Entered An Invalid Option..
-$!
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The Option ",P2," Is Invalid.  The Valid Options Are:"
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "    RSAREF   :  To Compile With The RSAREF Library."
-$     WRITE SYS$OUTPUT "    NORSAREF :  To Compile With The Regular RSA Library."
-$     WRITE SYS$OUTPUT ""
-$!
-$!    Time To EXIT.
-$!
-$     EXIT
-$!
-$!  End The Valid Arguemnt Check.
-$!
-$   ENDIF
-$!
-$! End The P2 Check.
 $!
 $ ENDIF
 $!
@@ -932,7 +902,8 @@ $ ENDIF
 $!
 $! Time to check the contents of P5, and to make sure we get the correct library.
 $!
-$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX"
+$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX" -
+     .OR. P5.EQS."TCPIP" .OR. P5.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -942,7 +913,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
 $!
 $!    Tell the user
 $!
@@ -976,13 +947,47 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
 $!
 $!    Tell the user
 $!
 $     WRITE SYS$OUTPUT "Using UCX or an emulation thereof for TCP/IP"
 $!
 $!    Done with UCX
+$!
+$   ENDIF
+$!
+$!  Check to see if TCPIP was chosen
+$!
+$   IF P5.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP (post UCX).
+$!
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "Using TCPIP (post UCX) for TCP/IP"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P5.EQS."NONE"
+$   THEN
+$!
+$!    Do not use a TCPIP library.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "A specific TCPIP library will not be used."
+$!
+$!    Done with NONE.
 $!
 $   ENDIF
 $!
@@ -1007,6 +1012,8 @@ $     WRITE SYS$OUTPUT "The Option ",P5," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $     WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$     WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP TCP/IP (post UCX) library."
+$     WRITE SYS$OUTPUT "    NONE       :  To not link with a specific TCP/IP library."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
@@ -1014,9 +1021,19 @@ $!
 $     EXIT
 $   ELSE
 $!
+$! If TCPIP is not defined, then hardcode it to make
+$! it clear that no TCPIP is desired.
+$!
+$     IF P5 .EQS. ""
+$     THEN
+$       TCPIP_LIB = ""
+$       TCPIP_TYPE = "NONE"
+$     ELSE
+$!
 $!    Set the TCPIP_TYPE symbol
 $!
-$     TCPIP_TYPE = P5
+$       TCPIP_TYPE = P5
+$     ENDIF
 $   ENDIF
 $!
 $!  Done with TCP/IP libraries

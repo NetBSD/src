@@ -56,7 +56,7 @@
  *
  */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 
 #include "apps.h"
 #include <string.h>
@@ -82,8 +82,12 @@ int MAIN(int argc, char **);
 
 int MAIN(int argc, char **argv)
 {
+	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine = NULL;
+#endif
 	char *keyfile = NULL;
 	char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM;
@@ -102,6 +106,9 @@ int MAIN(int argc, char **argv)
 	argv++;
 
 	if(!bio_err) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 	pad = RSA_PKCS1_PADDING;
@@ -117,6 +124,14 @@ int MAIN(int argc, char **argv)
 		} else if(!strcmp(*argv, "-inkey")) {
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
+		} else if (strcmp(*argv,"-keyform") == 0) {
+			if (--argc < 1) badarg = 1;
+			keyform=str2fmt(*(++argv));
+#ifndef OPENSSL_NO_ENGINE
+		} else if(!strcmp(*argv, "-engine")) {
+			if (--argc < 1) badarg = 1;
+			engine = *(++argv);
+#endif
 		} else if(!strcmp(*argv, "-pubin")) {
 			key_type = KEY_PUBKEY;
 		} else if(!strcmp(*argv, "-certin")) {
@@ -151,20 +166,27 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
+        e = setup_engine(bio_err, engine, 0);
+#endif
+
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
 	
 	switch(key_type) {
 		case KEY_PRIVKEY:
-		pkey = load_key(bio_err, keyfile, keyform, NULL);
+		pkey = load_key(bio_err, keyfile, keyform, 0,
+			NULL, e, "Private Key");
 		break;
 
 		case KEY_PUBKEY:
-		pkey = load_pubkey(bio_err, keyfile, keyform);
+		pkey = load_pubkey(bio_err, keyfile, keyform, 0,
+			NULL, e, "Public Key");
 		break;
 
 		case KEY_CERT:
-		x = load_cert(bio_err, keyfile, keyform);
+		x = load_cert(bio_err, keyfile, keyform,
+			NULL, e, "Certificate");
 		if(x) {
 			pkey = X509_get_pubkey(x);
 			X509_free(x);
@@ -173,7 +195,6 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(!pkey) {
-		BIO_printf(bio_err, "Error loading key\n");
 		return 1;
 	}
 
@@ -203,7 +224,7 @@ int MAIN(int argc, char **argv)
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		    out = BIO_push(tmpbio, out);
@@ -278,6 +299,7 @@ static void usage()
 	BIO_printf(bio_err, "-in file        input file\n");
 	BIO_printf(bio_err, "-out file       output file\n");
 	BIO_printf(bio_err, "-inkey file     input key\n");
+	BIO_printf(bio_err, "-keyform arg    private key format - default PEM\n");
 	BIO_printf(bio_err, "-pubin          input is an RSA public\n");
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
 	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
@@ -289,6 +311,10 @@ static void usage()
 	BIO_printf(bio_err, "-encrypt        encrypt with public key\n");
 	BIO_printf(bio_err, "-decrypt        decrypt with private key\n");
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
+#ifndef OPENSSL_NO_ENGINE
+	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+#endif
+
 }
 
 #endif

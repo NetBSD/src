@@ -206,6 +206,10 @@ static int ssl_read(BIO *b, char *out, int outl)
 		BIO_set_retry_special(b);
 		retry_reason=BIO_RR_SSL_X509_LOOKUP;
 		break;
+	case SSL_ERROR_WANT_ACCEPT:
+		BIO_set_retry_special(b);
+		retry_reason=BIO_RR_ACCEPT;
+		break;
 	case SSL_ERROR_WANT_CONNECT:
 		BIO_set_retry_special(b);
 		retry_reason=BIO_RR_CONNECT;
@@ -399,6 +403,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 			{
 			BIO_free_all(ssl->wbio);
 			}
+		if (b->next_bio != NULL)
+			{
+			CRYPTO_add(&b->next_bio->references,1,CRYPTO_LOCK_BIO);
+			}
 		ssl->wbio=NULL;
 		ssl->rbio=NULL;
 		break;
@@ -482,7 +490,9 @@ static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 		{
 	case BIO_CTRL_SET_CALLBACK:
 		{
-		SSL_set_info_callback(ssl,fp);
+		/* FIXME: setting this via a completely different prototype
+		   seems like a crap idea */
+		SSL_set_info_callback(ssl,(void (*)(const SSL *,int,int))fp);
 		}
 		break;
 	default:
@@ -503,6 +513,7 @@ static int ssl_puts(BIO *bp, const char *str)
 
 BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 	{
+#ifndef OPENSSL_NO_SOCK
 	BIO *ret=NULL,*buf=NULL,*ssl=NULL;
 
 	if ((buf=BIO_new(BIO_f_buffer())) == NULL)
@@ -515,6 +526,7 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 err:
 	if (buf != NULL) BIO_free(buf);
 	if (ssl != NULL) BIO_free(ssl);
+#endif
 	return(NULL);
 	}
 
