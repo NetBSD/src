@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.10 2002/09/17 03:11:41 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.11 2002/09/17 03:30:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.10 2002/09/17 03:11:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.11 2002/09/17 03:30:33 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -381,6 +381,7 @@ rf_PrintReconMap(raidPtr, mapPtr, frow, fcol)
 }
 #endif
 
+#if RF_DEBUG_RECON
 void 
 rf_PrintReconSchedule(mapPtr, starttime)
 	RF_ReconMap_t *mapPtr;
@@ -398,3 +399,5 @@ rf_PrintReconSchedule(mapPtr, starttime)
 		old_pctg = new_pctg;
 	}
 }
+#endif
+
