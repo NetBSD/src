@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
+/*	$NetBSD: pipe.S,v 1.3 2002/09/04 19:19:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.3 2002/09/04 19:19:07 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,10 +87,10 @@ WEAK_ALIAS(pipe,_pipe)
 #endif
 
 ENTRY(_pipe)
-	or	r2, r63, r3		/* Preserve arg across syscall */
+	or	r2, r63, r4		/* Preserve arg across syscall */
 	SYSCALL(pipe)
 	ptabs/l	r18, tr0
-	st.l	r3, 0, r2		/* Store fd#1 */
+	st.l	r4, 0, r2		/* Store fd#1 */
 	movi	0, r2
-	st.l	r3, 4, r3		/* Store fd#2 */
+	st.l	r4, 4, r3		/* Store fd#2 */
 	blink	tr0, r63
