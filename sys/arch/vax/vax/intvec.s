@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.18 1996/03/07 23:22:45 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.19 1996/03/09 23:36:40 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -110,7 +110,7 @@ _rpb:
 	INTVEC(stray50, ISTACK)	# System Backplane Exception, 50
 	INTVEC(cmrerr, ISTACK)	# Corrected Memory Read, 54
 	INTVEC(stray58, ISTACK)	# System Backplane Alert, 58
-	INTVEC(stray5C, ISTACK)	# System Backplane Fault, 5C
+	INTVEC(sbiflt, ISTACK)	# System Backplane Fault, 5C
 	INTVEC(stray60, ISTACK)	# Memory Write Timeout, 60
 	INTVEC(stray64, ISTACK)	# Unused, 64
 	INTVEC(stray68, ISTACK)	# Unused, 68
@@ -259,7 +259,10 @@ syscall:
 	STRAY(0,50)
 	FASTINTR(cmrerr,cmrerr)
 	STRAY(0,58)
-	STRAY(0,5C)
+	ENTRY(sbiflt);
+	moval	sbifltmsg, -(sp)
+	calls	$1, _panic
+
 	STRAY(0,60)
 	STRAY(0,64)
 	STRAY(0,68)
@@ -338,6 +341,9 @@ _sret:	movl	(sp)+, fp
 	addl2	$8, sp
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
+
+sbifltmsg:
+	.asciz	"SBI fault",0
 
 #if VAX630 || VAX650
 /*
