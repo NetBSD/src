@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.13 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: vnode.9,v 1.14 2003/04/04 19:39:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -732,7 +732,7 @@ and
 .Fa cred
 specified the calling process and its credentials.
 The
-.Xr sleep 9
+.Xr ltsleep 9
 flag and timeout are specified by the arguments
 .Fa slpflag
 and
@@ -748,7 +748,7 @@ The truncation length is specified by
 .Fa lbn .
 .Fn vtruncbuf
 will sleep while the I/O is performed,  The
-.Xr sleep 9
+.Xr ltsleep 9
 flag and timeout are specified by the arguments
 .Fa slpflag
 and
