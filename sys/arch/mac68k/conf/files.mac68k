@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k,v 1.1 1993/12/02 18:29:22 briggs Exp $
+#	$Id: files.mac68k,v 1.2 1993/12/15 03:04:41 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -68,3 +68,5 @@ file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/swapgeneric.c
 file	arch/mac68k/mac68k/itedumm.c		ite needs-count
+file	arch/mac68k/mac68k/db_interface.c	ddb
+file	arch/mac68k/mac68k/db_trace.c		ddb

@@ -19,6 +19,7 @@ options		KTRACE			# system call tracing support
 
 # Filesystem options
 #options	FIFO		# POSIX fifo support (in all filesystems)
+options		DDB
 options		FFS
 #options	QUOTA	# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
