@@ -27,7 +27,7 @@
 
 /* Generic NetBSD definitions.  */
 
-#include "tm-nbsd.h"
+#include <tm-nbsd.h>
 
 /* Saved Pc.  Get it from sigcontext if within sigtramp.  */
 
