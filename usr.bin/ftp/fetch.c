@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.17 1997/11/01 14:36:55 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.18 1998/01/18 14:23:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.17 1997/11/01 14:36:55 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.18 1998/01/18 14:23:35 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -92,7 +92,7 @@ url_get(origline, proxyenv)
 {
 	struct sockaddr_in sin;
 	int i, out, isftpurl;
-	u_int16_t port;
+	in_port_t port;
 	volatile int s;
 	size_t len;
 	char c, *cp, *ep, *portnum, *path, buf[4096];
@@ -207,11 +207,11 @@ url_get(origline, proxyenv)
 		long nport;
 
 		nport = strtol(portnum, &ep, 10);
-		if (nport < 1 || nport > 0xffff || *ep != '\0') {
+		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
 			warnx("Invalid port: %s", portnum);
 			goto cleanup_url_get;
 		}
-		port = htons(nport);
+		port = htons((in_port_t)nport);
 	} else
 		port = httpport;
 	sin.sin_port = port;
