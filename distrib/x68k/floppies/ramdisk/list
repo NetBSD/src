@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 1999/05/23 07:31:21 tron Exp $
+#	$NetBSD: list,v 1.10 1999/11/23 14:13:55 minoura Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -54,7 +54,7 @@ SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK	/bin/cat		usr/sbin/update
+SYMLINK /bin/cat		usr/sbin/memswitch
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
