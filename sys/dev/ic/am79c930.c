@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.9 2004/01/15 09:33:48 onoe Exp $ */
+/* $NetBSD: am79c930.c,v 1.10 2004/02/13 01:22:20 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.9 2004/01/15 09:33:48 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.10 2004/02/13 01:22:20 dyoung Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
@@ -278,8 +278,8 @@ mem_write_1(struct am79c930_softc *sc, u_int32_t off, u_int8_t val)
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, off, val);
 }
 
-static
-void mem_write_2(struct am79c930_softc *sc, u_int32_t off, u_int16_t val)
+static void
+mem_write_2(struct am79c930_softc *sc, u_int32_t off, u_int16_t val)
 {
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
