@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.79 2003/10/05 10:13:02 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.80 2003/12/04 21:24:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -596,7 +596,7 @@ WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 attr_t	 no_color_video(void);
 int	 nocbreak(void);
-void	 nodelay(WINDOW *, bool);
+int	 nodelay(WINDOW *, bool);
 int	 noecho(void);
 int	 nonl(void);
 void	 noqiflush(void);
