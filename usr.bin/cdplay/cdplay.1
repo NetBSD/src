@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.6 2000/06/14 14:38:52 ad Exp $
+.\"	$NetBSD: cdplay.1,v 1.6.2.1 2000/09/18 16:49:08 abs Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd June 4, 1999
+.Dd Sep 18, 2000
 .Dt CDPLAY 1
 .Os NetBSD 1.5
 .Sh NAME
@@ -113,20 +113,24 @@ Set the volume of left channel to
 and the volume of right channel to 
 .Ar right_channel . 
 Allowed values are in the range 0-255. 
-.It Cm volume Ar mute
+.It Cm volume Ar value
+Set the volume of both left channel right channel to 
+.Ar value . 
+Allowed values are in the range 0-255. 
+.It Cm volume mute
 Turn the sound off.
-.It Cm volume Ar mono
+.It Cm volume mono
 Set the mono mode.
-.It Cm volume Ar stereo
+.It Cm volume stereo
 Set the stereo mode.
-.It Cm volume Ar left
+.It Cm volume left
 Play the left subtrack on both left and right channels.
-.It Cm volume Ar right
+.It Cm volume right
 Play the right subtrack on both left and right channels.
 .It Cm info
 Print the table of contents.
 .It Cm status 
-.Op Ar audio | media | volume
+.Op audio | media | volume
 
 Print the information about the disc:
 
@@ -142,9 +146,9 @@ the current values of the volume for left and right channels.
 Print the list of available commands.
 .It Cm reset
 Perform the hardware reset of the device.
-.It Cm set Ar msf
+.It Cm set msf
 Set minute-second-frame ioctl mode (default).
-.It Cm set Ar lba
+.It Cm set lba
 Set LBA ioctl mode.
 .It Cm quit
 Quit the program.
