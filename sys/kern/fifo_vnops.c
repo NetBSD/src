@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo_vnops.c	7.7 (Berkeley) 4/15/91
- *	$Id: fifo_vnops.c,v 1.3 1993/05/20 02:54:13 cgd Exp $
+ *	$Id: fifo_vnops.c,v 1.4 1993/05/27 15:38:18 cgd Exp $
  */
 
 #include "param.h"
@@ -168,7 +168,7 @@ fifo_open(vp, mode, cred, p)
 			return (0);
 		while (fip->fi_writers == 0) {
 			VOP_UNLOCK(vp);
-			error = tsleep((caddr_t)&fip->fi_readers, PSOCK,
+			error = tsleep((caddr_t)&fip->fi_readers, PSOCK|PCATCH,
 			    openstr, 0);
 			VOP_LOCK(vp);
 			if(error)
@@ -187,7 +187,7 @@ fifo_open(vp, mode, cred, p)
 			while (fip->fi_readers == 0) {
 				VOP_UNLOCK(vp);
 				error = tsleep((caddr_t)&fip->fi_writers,
-				    PSOCK, openstr, 0);
+				    PSOCK|PCATCH, openstr, 0);
 				VOP_LOCK(vp);
 				if(error)
 					break;
