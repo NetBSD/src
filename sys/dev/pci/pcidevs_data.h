@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.577 2003/10/08 21:17:27 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.578 2003/10/10 15:20:17 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.581 2003/10/08 21:15:33 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.582 2003/10/10 15:19:01 thorpej Exp 
  */
 
 /*
@@ -3982,6 +3982,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "i82546EB Gigabit Ethernet (1000BASE-X)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI,
+	    0,
+	    "Intel",
+	    "i82541EI Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM,
 	    0,
 	    "Intel",
@@ -4000,6 +4006,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "i82540EP Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI_MOBILE,
+	    0,
+	    "Intel",
+	    "i82541EI Mobile Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI,
 	    0,
 	    "Intel",
@@ -4016,6 +4028,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "i82540EP Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER,
+	    0,
+	    "Intel",
+	    "i82545GM Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER,
+	    0,
+	    "Intel",
+	    "i82545GM Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES,
+	    0,
+	    "Intel",
+	    "i82545GM Gigabit Ethernet (SERDES)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -4124,6 +4154,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "PRO/100 M Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
+	    0,
+	    "Intel",
+	    "i82547GI Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI,
+	    0,
+	    "Intel",
+	    "i82541GI Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI_MOBILE,
+	    0,
+	    "Intel",
+	    "i82541GI Mobile Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER,
+	    0,
+	    "Intel",
+	    "i82541ER Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER,
+	    0,
+	    "Intel",
+	    "i82546GB Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER,
+	    0,
+	    "Intel",
+	    "i82546GB Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES,
+	    0,
+	    "Intel",
+	    "i82546GB Gigabit Ethernet (SERDES)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
