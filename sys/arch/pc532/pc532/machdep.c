@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2001/03/15 06:10:46 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2001/04/22 23:30:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -218,7 +218,8 @@ cpu_startup()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_kenter_pgs(curbuf, &pg, 1);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
