@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.147 2001/11/20 12:56:19 lukem Exp $
+# $NetBSD: files.alpha,v 1.148 2001/11/20 14:34:18 lukem Exp $
 #
 # alpha-specific configuration info
 
@@ -570,9 +570,9 @@ include "compat/ossaudio/files.ossaudio"
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam PCIC_ISA_ALLOC_IOBASE
+defparam PCIC_ISA_ALLOC_IOSIZE
+defparam PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
