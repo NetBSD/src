@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2000/12/19 21:09:57 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 2000/12/22 21:02:05 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,28 +132,43 @@ short	exframesize[] = {
 };
 
 #ifdef M68060
+#if defined(M68020) || defined(M68030) || defined(M68040)
 #define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
 #define	WRFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_RW_W))
+#else
+#define	KDFAULT_060(c)	((c) & FSLW_TM_SV)
+#define	WRFAULT_060(c)	((c) & FSLW_RW_W)
+#endif
 #else
 #define	KDFAULT_060(c)	0
 #define	WRFAULT_060(c)	0
 #endif
 
 #ifdef M68040
+#if defined(M68020) || defined(M68030) || defined(M68060)
 #define	KDFAULT_040(c)	(cputype == CPU_68040 && \
 			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
 #define	WRFAULT_040(c)	(cputype == CPU_68040 && \
 			 ((c) & SSW4_RW) == 0)
+#else
+#define	KDFAULT_040(c)	(((c) & SSW4_TMMASK) == SSW4_TMKD)
+#define	WRFAULT_040(c)	(((c) & SSW4_RW) == 0)
+#endif
 #else
 #define	KDFAULT_040(c)	0
 #define	WRFAULT_040(c)	0
 #endif
 
 #if defined(M68030) || defined(M68020)
+#if defined(M68040) || defined(M68060)
 #define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
 			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
 #define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
 			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#else
+#define	KDFAULT_OTH(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define	WRFAULT_OTH(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#endif
 #else
 #define	KDFAULT_OTH(c)	0
 #define	WRFAULT_OTH(c)	0
@@ -221,7 +236,11 @@ again:
 	 * we just return to the user without sucessfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
-	if (cputype == CPU_68040 && fp->f_format == FMT7) {
+	if (
+#if defined(M68030) || defined(M68060)
+	    cputype == CPU_68040 &&
+#endif
+	    fp->f_format == FMT7) {
 		if (beenhere) {
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
@@ -648,7 +667,9 @@ trap(type, code, v, frame)
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
+#if defined(M68030) || defined(M68060)
 				if (cputype == CPU_68040)
+#endif
 					(void) writeback(&frame, 1);
 #endif
 				return;
@@ -702,6 +723,20 @@ char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
+/*
+ * Because calling bcopy() for 16 bytes is *way* too much overhead ...
+ */
+static __inline void fastcopy16(u_int *, u_int *);
+static __inline void
+fastcopy16(src, dst)
+	u_int *src, *dst;
+{
+	*src++ = *dst++;
+	*src++ = *dst++;
+	*src++ = *dst++;
+	*src = *dst;
+}
+
 int
 writeback(fp, docachepush)
 	struct frame *fp;
@@ -712,7 +747,6 @@ writeback(fp, docachepush)
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
-	paddr_t pa;
 	extern int suline(caddr_t, caddr_t);	/* locore.s */
 
 #ifdef DEBUG
@@ -750,13 +784,14 @@ writeback(fp, docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
+			paddr_t pa;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+			fastcopy16(&f->f_pd0, (u_int *)fa);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
-			DCFL(pa);
+			DCFL_40(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
 		} else
@@ -777,8 +812,8 @@ writeback(fp, docachepush)
 			panic("writeback: MOVE16 with WB1S valid");
 		wbstats.move16s++;
 #endif
-		if (KDFAULT(f->f_wb1s))
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)(f->f_fa & ~0xF), 16);
+		if (KDFAULT_040(f->f_wb1s))
+			fastcopy16(&f->f_pd0, (u_int *)(f->f_fa & ~0xF));
 		else
 			err = suline((caddr_t)(f->f_fa & ~0xF), (caddr_t)&f->f_pd0);
 		if (err) {
@@ -809,7 +844,7 @@ writeback(fp, docachepush)
 		case SSW4_SZLW:
 			if (off)
 				wb1d = (wb1d >> (32 - off)) | (wb1d << off);
-			if (KDFAULT(f->f_wb1s))
+			if (KDFAULT_040(f->f_wb1s))
 				*(long *)f->f_wb1a = wb1d;
 			else
 				err = suword((caddr_t)f->f_wb1a, wb1d);
@@ -818,7 +853,7 @@ writeback(fp, docachepush)
 			off = 24 - off;
 			if (off)
 				wb1d >>= off;
-			if (KDFAULT(f->f_wb1s))
+			if (KDFAULT_040(f->f_wb1s))
 				*(char *)f->f_wb1a = wb1d;
 			else
 				err = subyte((caddr_t)f->f_wb1a, wb1d);
@@ -827,7 +862,7 @@ writeback(fp, docachepush)
 			off = (off + 16) % 32;
 			if (off)
 				wb1d = (wb1d >> (32 - off)) | (wb1d << off);
-			if (KDFAULT(f->f_wb1s))
+			if (KDFAULT_040(f->f_wb1s))
 				*(short *)f->f_wb1a = wb1d;
 			else
 				err = susword((caddr_t)f->f_wb1a, wb1d);
@@ -859,19 +894,19 @@ writeback(fp, docachepush)
 #endif
 		switch (f->f_wb2s & SSW4_SZMASK) {
 		case SSW4_SZLW:
-			if (KDFAULT(f->f_wb2s))
+			if (KDFAULT_040(f->f_wb2s))
 				*(long *)f->f_wb2a = f->f_wb2d;
 			else
 				err = suword((caddr_t)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZB:
-			if (KDFAULT(f->f_wb2s))
+			if (KDFAULT_040(f->f_wb2s))
 				*(char *)f->f_wb2a = f->f_wb2d;
 			else
 				err = subyte((caddr_t)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZW:
-			if (KDFAULT(f->f_wb2s))
+			if (KDFAULT_040(f->f_wb2s))
 				*(short *)f->f_wb2a = f->f_wb2d;
 			else
 				err = susword((caddr_t)f->f_wb2a, f->f_wb2d);
@@ -899,19 +934,19 @@ writeback(fp, docachepush)
 #endif
 		switch (f->f_wb3s & SSW4_SZMASK) {
 		case SSW4_SZLW:
-			if (KDFAULT(f->f_wb3s))
+			if (KDFAULT_040(f->f_wb3s))
 				*(long *)f->f_wb3a = f->f_wb3d;
 			else
 				err = suword((caddr_t)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZB:
-			if (KDFAULT(f->f_wb3s))
+			if (KDFAULT_040(f->f_wb3s))
 				*(char *)f->f_wb3a = f->f_wb3d;
 			else
 				err = subyte((caddr_t)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZW:
-			if (KDFAULT(f->f_wb3s))
+			if (KDFAULT_040(f->f_wb3s))
 				*(short *)f->f_wb3a = f->f_wb3d;
 			else
 				err = susword((caddr_t)f->f_wb3a, f->f_wb3d);
