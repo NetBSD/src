@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.4 2003/10/18 18:36:35 briggs Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.5 2003/10/18 20:11:04 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #define	__LIBC12_SOURCE__
 
 #include <sys/types.h>
+#include <stddef.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "extern.h"
 
