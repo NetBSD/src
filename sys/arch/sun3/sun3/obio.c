@@ -10,8 +10,6 @@
 
 #define ALL 0xFF
     
-extern vm_offset_t intersil_va;
-
 char *interrupt_reg = NULL;
 vm_offset_t eeprom_va = NULL;
 vm_offset_t memerr_va = NULL;
@@ -24,7 +22,6 @@ static struct obio_internal {
     int obio_rw;
 } obio_internal_dev[] = {
     {&eeprom_va,                     OBIO_EEPROM,   ALL, OBIO_EEPROM_SIZE  ,1},
-    {&intersil_va,                   OBIO_CLOCK,    ALL, OBIO_CLOCK_SIZE   ,1},
     {(vm_offset_t *) &interrupt_reg, OBIO_INTERREG, ALL, OBIO_INTERREG_SIZE,1},
     {&memerr_va,                     OBIO_MEMERR,   ALL, OBIO_MEMERR_SIZE  ,1},
     {NULL,                           0,               0, 0                 ,0}
@@ -99,7 +96,7 @@ void obio_internal_configure()
 
 caddr_t obio_alloc(obio_addr, obio_size, obio_flags)
      caddr_t obio_addr;
-     caddr_t obio_size;
+     int obio_size;
      int obio_flags;
 {
     int npages;

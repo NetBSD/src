@@ -2,20 +2,23 @@
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.6 1993/08/08 12:21:53 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.7 1993/08/16 10:43:04 glass Exp $
  */
 
 #include "systm.h"
 #include "param.h"
 #include "kernel.h"
-#include "intersil7170.h"
+#include "device.h"
 
+#include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
 
-#define intersil_clock ((struct intersil7170 *) intersil_va)
+#include "intersil7170.h"
+
+#define intersil_clock ((struct intersil7170 *) intersil_softc->clock_va)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
@@ -31,12 +34,61 @@
 #define SECS_YEAR(year) \
        (INTERSIL_LEAP_YEAR(year) ? SECS_PER_LEAP : SECS_PER_YEAR)
 
-vm_offset_t intersil_va = NULL;
-    
+
+struct clock_softc {
+    struct device clock_dev;
+    caddr_t clock_va;
+    int clock_level;
+};
+
+struct clock_softc *intersil_softc = NULL;
+
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
+void clockattach __P((struct device *, struct device *, void *));
+int clockmatch __P((struct device *, struct cfdata *, void *args));
+
+struct cfdriver clockcd = 
+{ NULL, "clock", always_match, clockattach, DV_DULL,
+      sizeof(struct clock_softc), 0};
+
+int clockmatch(parent, cf, args)
+     struct device *parent;
+     struct cfdata *cf;
+     void *args;
+{
+    caddr_t intersil_addr;
+    struct obio_cf_loc *obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
+
+    intersil_addr =
+	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
+    return /* probe */ 1;
+}
+
+void clockattach(parent, self, args)
+     struct device *parent;
+     struct device *self;
+     void *args;
+{
+    struct clock_softc *clock = (struct clock_softc *) self;
+    struct obio_cf_loc *obio_loc = OBIO_LOC(self);
+    caddr_t clock_addr;
+
+    clock_addr = 
+	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
+    clock->clock_level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 5);
+    clock->clock_va = obio_alloc(clock_addr, OBIO_CLOCK_SIZE, OBIO_WRITE);
+    if (!clock->clock_va) {
+	printf(": not enough obio space\n");
+	return;
+    }
+    obio_print(clock_addr, clock->clock_level);
+/*    isr_add(level, leintr, unit);    */
+    intersil_softc = clock;
+    printf("\n");
+}
 /*
  * Machine-dependent clock routines.
  *
@@ -56,8 +108,8 @@ static int month_days[12] = {
  */
 void startrtclock()
 {
-    if (!intersil_va)
-	mon_panic("clock: va address for rt clock not initialized");
+    if (!intersil_softc)
+	panic("clock: not initialized");
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IDISABLE);
     intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
