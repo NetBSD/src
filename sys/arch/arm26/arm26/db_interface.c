@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2001/01/22 13:57:01 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8 2001/03/11 16:31:05 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -34,6 +34,7 @@
  * Interface to new debugger.
  */
 #include "opt_ddb.h"
+#include "opt_progmode.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +45,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
+#include <machine/undefined.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
@@ -62,22 +63,30 @@ static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
 
 const struct db_variable db_regs[] = {
-	{ "r0", (long *)&DDB_TF->tf_r0, FCN_NULL },
-	{ "r1", (long *)&DDB_TF->tf_r1, FCN_NULL },
-	{ "r2", (long *)&DDB_TF->tf_r2, FCN_NULL },
-	{ "r3", (long *)&DDB_TF->tf_r3, FCN_NULL },
-	{ "r4", (long *)&DDB_TF->tf_r4, FCN_NULL },
-	{ "r5", (long *)&DDB_TF->tf_r5, FCN_NULL },
-	{ "r6", (long *)&DDB_TF->tf_r6, FCN_NULL },
-	{ "r7", (long *)&DDB_TF->tf_r7, FCN_NULL },
-	{ "r8", (long *)&DDB_TF->tf_r8, FCN_NULL },
-	{ "r9", (long *)&DDB_TF->tf_r9, FCN_NULL },
-	{ "r10", (long *)&DDB_TF->tf_r10, FCN_NULL },
-	{ "r11", (long *)&DDB_TF->tf_r11, FCN_NULL },
-	{ "r12", (long *)&DDB_TF->tf_r12, FCN_NULL },
-	{ "r13", (long *)&DDB_TF->tf_r13, FCN_NULL },
-	{ "r14", (long *)&DDB_TF->tf_r14, FCN_NULL },
-	{ "r15", (long *)&DDB_TF->tf_r15, FCN_NULL },
+	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
+	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
+	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
+	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, },
+	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, },
+	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, },
+	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, },
+	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, },
+	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, },
+	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, },
+	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, },
+	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, },
+	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, },
+	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, },
+	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, },
+	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, },
+	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
+	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
+	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
+#ifdef PROG32
+	{ "und_sp", (long *)&nil, db_access_und_sp, },
+	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
+	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
+#endif
 };
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -85,6 +94,38 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 extern label_t	*db_recover;
 
 int	db_active = 0;
+
+#ifdef PROG32
+int db_access_und_sp(vp, valp, rw)
+	const struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_UND32_MODE);
+	return(0);
+}
+
+int db_access_abt_sp(vp, valp, rw)
+	const struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_ABT32_MODE);
+	return(0);
+}
+
+int db_access_irq_sp(vp, valp, rw)
+	const struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_IRQ32_MODE);
+	return(0);
+}
+#endif
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -121,8 +162,23 @@ kdb_trap(type, regs)
 
 	*regs = ddb_regs;
 
-	return 1;
+	return (1);
 }
+
+
+/*
+ * Received keyboard interrupt sequence.
+ */
+void
+kdb_kbd_trap(regs)
+	db_regs_t *regs;
+{
+	if (db_active == 0 && (boothowto & RB_KDB)) {
+		printf("\n\nkernel: keyboard interrupt\n");
+		kdb_trap(-1, regs);
+	}
+}
+
 
 static int
 db_validate_address(addr)
@@ -216,7 +272,6 @@ const struct db_command db_machine_command_table[] = {
 	{ NULL, 	NULL, 			0, NULL }
 };
 
-#if 0 /* unused? */
 int
 db_trapper(addr, inst, frame, fault_code)
 	u_int		addr;
@@ -225,7 +280,10 @@ db_trapper(addr, inst, frame, fault_code)
 	int		fault_code;
 {
 	if (fault_code == 0) {
-		if ((inst & ~0xf0000000) == (BKPT_INST & ~0xf0000000))
+#ifndef arm26
+		frame->tf_pc -= INSN_SIZE;
+#endif
+		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
 			kdb_trap(T_BREAKPOINT, frame);
 		else
 			kdb_trap(-1, frame);
@@ -233,10 +291,45 @@ db_trapper(addr, inst, frame, fault_code)
 		return 1;
 	return 0;
 }
-#endif
 
 extern u_int esym;
 extern u_int end;
+
+static struct undefined_handler db_uh;
+
+void
+db_machine_init()
+{
+#ifndef arm26
+	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
+	int len;
+
+	/*
+	 * The boot loader currently loads the kernel with the a.out
+	 * header still attached.
+	 */
+
+	if (kernexec->a_syms == 0) {
+		printf("[No symbol table]\n");
+	} else {
+		/* cover the symbols themselves (what is the int for?? XXX) */
+		esym = (int)&end + kernexec->a_syms + sizeof(int);
+
+		/*
+		 * and the string table.  (int containing size of string
+		 * table is included in string table size).
+		 */
+		len = *((u_int *)esym);
+		esym += (len + (sizeof(u_int) - 1)) & ~(sizeof(u_int) - 1);
+	}
+#endif
+	/*
+	 * We get called before malloc() is available, so supply a static
+	 * struct undefined_handler.
+	 */
+	db_uh.uh_handler = db_trapper;
+	install_coproc_handler_static(0, &db_uh);
+}
 
 u_int
 db_fetch_reg(reg, db_regs)
@@ -246,37 +339,37 @@ db_fetch_reg(reg, db_regs)
 
 	switch (reg) {
 	case 0:
-		return (db_regs->ddb_tf.tf_r0);
+		return (db_regs->tf_r0);
 	case 1:
-		return (db_regs->ddb_tf.tf_r1);
+		return (db_regs->tf_r1);
 	case 2:
-		return (db_regs->ddb_tf.tf_r2);
+		return (db_regs->tf_r2);
 	case 3:
-		return (db_regs->ddb_tf.tf_r3);
+		return (db_regs->tf_r3);
 	case 4:
-		return (db_regs->ddb_tf.tf_r4);
+		return (db_regs->tf_r4);
 	case 5:
-		return (db_regs->ddb_tf.tf_r5);
+		return (db_regs->tf_r5);
 	case 6:
-		return (db_regs->ddb_tf.tf_r6);
+		return (db_regs->tf_r6);
 	case 7:
-		return (db_regs->ddb_tf.tf_r7);
+		return (db_regs->tf_r7);
 	case 8:
-		return (db_regs->ddb_tf.tf_r8);
+		return (db_regs->tf_r8);
 	case 9:
-		return (db_regs->ddb_tf.tf_r9);
+		return (db_regs->tf_r9);
 	case 10:
-		return (db_regs->ddb_tf.tf_r10);
+		return (db_regs->tf_r10);
 	case 11:
-		return (db_regs->ddb_tf.tf_r11);
+		return (db_regs->tf_r11);
 	case 12:
-		return (db_regs->ddb_tf.tf_r12);
+		return (db_regs->tf_r12);
 	case 13:
-		return (db_regs->ddb_tf.tf_r13);
+		return (db_regs->tf_svc_sp);
 	case 14:
-		return (db_regs->ddb_tf.tf_r14);
+		return (db_regs->tf_svc_lr);
 	case 15:
-		return (db_regs->ddb_tf.tf_r15);
+		return (db_regs->tf_pc);
 	default:
 		panic("db_fetch_reg: botch");
 	}
