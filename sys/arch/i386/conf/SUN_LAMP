@@ -1,7 +1,7 @@
 #
 #	SUN_LAMP -- NetBSD source repository
 #
-#	$Id: SUN_LAMP,v 1.25.2.2 1993/09/29 05:37:23 mycroft Exp $
+#	$Id: SUN_LAMP,v 1.25.2.3 1993/09/29 06:57:08 mycroft Exp $
 #
 
 # standard options
@@ -12,7 +12,7 @@ options		DUMMY_NOPS		# speed hack; dangerous
 
 #options	GENERIC			# historical
 maxusers	24			# estimated number of users
-options		TIMEZONE="'8*60'"	# time zone to read RTC in
+options		TIMEZONE=480, DST=1	# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 options		DDB			# kernel debugger; recommended

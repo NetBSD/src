@@ -1,7 +1,7 @@
 #
 #	TDR -- Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.20.2.2 1993/09/29 05:37:27 mycroft Exp $
+#	$Id: TDR,v 1.20.2.3 1993/09/29 06:57:09 mycroft Exp $
 #
 
 # standard options
@@ -12,7 +12,7 @@ options		DUMMY_NOPS		# speed hack; dangerous
 
 #options	GENERIC			# historical
 maxusers	10			# estimated number of users
-options		TIMEZONE="'7*60'"	# time zone to read RTC in
+options		TIMEZONE=420, DST=1	# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 options		DDB			# kernel debugger; recommended
