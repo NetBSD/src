@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
+/*	$NetBSD: nice.c,v 1.10 1997/10/19 06:28:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $";
+__RCSID("$NetBSD: nice.c,v 1.10 1997/10/19 06:28:04 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,7 +61,8 @@ static char rcsid[] = "$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $";
 
 #define	DEFNICE	10
 
-static void usage();
+int	main __P((int, char **));
+static void usage __P((void));
 
 int
 main(argc, argv)
