@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.13 1995/03/26 20:39:08 jtc Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.14 1995/09/27 20:30:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,7 +85,6 @@ int		 svm_deallocate __P((struct proc *, void *, int *));
 int		 svm_inherit __P((struct proc *, void *, int *));
 int		 svm_protect __P((struct proc *, void *, int *));
 void		 swapinit __P((void));
-int		 swapon __P((struct proc *, void *, int *));
 void		 swapout __P((struct proc *));
 void		 swapout_threads __P((void));
 int		 swfree __P((struct proc *, int));
