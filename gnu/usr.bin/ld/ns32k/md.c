@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.3 1994/06/29 11:15:34 pk Exp $
+ *	$Id: md.c,v 1.4 1994/07/04 19:46:37 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -146,7 +146,7 @@ char		n;
 		break;
 	case 2:
 		if (val < -8192 || val > 8191)
-			warnx("Word displacement %d, out of range., val);
+			warnx("Word displacement %d, out of range.", val);
 		val &= 0x3fff;
 		val |= 0x8000;
 		*addr++ = (val >> 8);
