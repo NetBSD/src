@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.25 2000/11/21 16:12:48 wiz Exp $
+# $NetBSD: network,v 1.26 2000/11/22 04:20:04 nisimura Exp $
 #
 
 # PROVIDE: network
@@ -109,9 +109,8 @@ network_start()
 			elif [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
 				while read args; do
-					if [ -n "`eval echo '$args'`" ] ; then
-						ifconfig $int $args
-					fi
+					[ -z "$args" ] && continue
+					ifconfig $int $args
 				done < /etc/ifconfig.$int
 			else
 				if ! checkyesno auto_ifconfig; then
