@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.5 2001/11/20 14:34:24 lukem Exp $
+#	$NetBSD: files.x86_64,v 1.6 2001/11/28 10:21:20 lukem Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -9,18 +9,18 @@ maxpartitions 16
 maxusers 2 16 64
 
 # delay before cpu_reset() for reboot.
-defparam CPURESET_DELAY
+defparam		CPURESET_DELAY
 
 # Large page size
-defopt	LARGEPAGES
+defflag			LARGEPAGES
 
 #
 # XXX these are just here at the moment so that we can share files
 # with the i386 (they include the opt_*.h for these)
 #
 
-defopt USER_LDT
-defopt VM86
+defflag			USER_LDT
+defflag			VM86
 
 file	arch/x86_64/x86_64/autoconf.c
 file	arch/x86_64/x86_64/bus_machdep.c
@@ -113,7 +113,7 @@ file	arch/x86_64/x86_64/mainbus.c		mainbus
 
 include	"dev/pci/files.pci"
 file	arch/x86_64/pci/pci_machdep.c		pci
-defparam PCI_CONF_MODE
+defparam			PCI_CONF_MODE
 file	arch/x86_64/pci/pciide_machdep.c	pciide
 
 # PCI-Host bridge chipsets

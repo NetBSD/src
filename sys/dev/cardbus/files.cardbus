@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.17 2001/11/06 03:18:53 augustss Exp $
+#	$NetBSD: files.cardbus,v 1.18 2001/11/28 10:21:21 lukem Exp $
 #
 # files.cardbus
 #
@@ -6,7 +6,7 @@
 device	cardslot: cbbus, pcmciabus
 attach	cardslot at pcmciaslot
 file	dev/cardbus/cardslot.c		cardslot		needs-flag
-defopt	opt_cardslot.h			CARDSLOT_DEBUG
+defflag	opt_cardslot.h			CARDSLOT_DEBUG
 
 device	cardbus {[dev = -1], [function = -1]}
 attach	cardbus at cbbus
@@ -14,7 +14,7 @@ file	dev/cardbus/cardbus.c		cardbus			needs-flag
 file	dev/cardbus/cardbus_map.c	cardbus
 file	dev/cardbus/cardbus_exrom.c	cardbus
 file	dev/cardbus/rbus.c		cardbus
-defopt	opt_cardbus.h			CARDBUS_DEBUG
+defflag	opt_cardbus.h			CARDBUS_DEBUG
 
 
 #

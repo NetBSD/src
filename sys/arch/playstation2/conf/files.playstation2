@@ -1,11 +1,11 @@
-#	$NetBSD: files.playstation2,v 1.4 2001/11/23 16:08:45 uch Exp $
+#	$NetBSD: files.playstation2,v 1.5 2001/11/28 10:21:18 lukem Exp $
 
 maxpartitions 8
 
 maxusers 2 8 64
 
-defopt	debug_playstation2.h	GSFB_DEBUG_MONITOR INTR_DEBUG SIF_DEBUG
-				SMAP_DEBUG EMAC3_DEBUG KLOADER_DEBUG
+defflag	debug_playstation2.h		GSFB_DEBUG_MONITOR INTR_DEBUG SIF_DEBUG
+					SMAP_DEBUG EMAC3_DEBUG KLOADER_DEBUG
 
 device mainbus {}
 attach mainbus at root
