@@ -74,11 +74,12 @@ print_operand_address (file, addr)
 {
   register rtx reg1, reg2, breg, ireg;
   rtx offset;
+  rtx orig_addr = addr;
 
   if (TARGET_DEBUGADDR)
     {
       fprintf(stderr, "\n======= Print Operand\n");
-      debug_rtx(addr);
+      debug_rtx(orig_addr);
     }
 
  retry:
@@ -147,7 +148,7 @@ print_operand_address (file, addr)
 	}
       else
 	{
-	  debug_rtx(addr);
+	  debug_rtx(orig_addr);
 	  abort ();
 	}
 
@@ -173,7 +174,7 @@ print_operand_address (file, addr)
 		    offset = plus_constant (offset, INTVAL (XEXP (addr, 0)));
 		  else
 		    {
-		      debug_rtx(addr);
+		      debug_rtx(orig_addr);
 		      abort ();
 		    }
 		}
@@ -224,13 +225,13 @@ print_operand_address (file, addr)
 	    }
 	  else
 	    {
-	      debug_rtx(addr);
+	      debug_rtx(orig_addr);
 	      abort ();
 	    }
 	}
       else
 	{
-	  debug_rtx(addr);
+	  debug_rtx(orig_addr);
 	  abort ();
 	}
 
@@ -238,11 +239,13 @@ print_operand_address (file, addr)
       if (reg1)
 	{
 	  if (breg != 0 || (offset && GET_CODE (offset) == MEM)
-	      || ((flag_pic || TARGET_HALFPIC)
-		  && offset && GET_CODE (offset) == SYMBOL_REF))
+	      || (offset && GET_CODE (offset) == SYMBOL_REF))
 	    {
 	      if (ireg)
-		abort ();
+		{
+		  debug_rtx(orig_addr);
+		  abort ();
+	        }
 	      ireg = reg1;
 	    }
 	  else
@@ -759,7 +762,8 @@ check_float_value (mode, d, overflow)
   if (INDIRECTABLE_CONSTANT_ADDRESS_P (X)) goto ADDR;			\
   if (INDIRECTABLE_ADDRESS_P (X, STRICT)) goto ADDR;			\
   xfoob = XEXP (X, 0);							\
-  if (GET_CODE (X) == MEM && INDIRECTABLE_ADDRESS_P (xfoob, STRICT))	\
+  if (!flag_pic && GET_CODE (X) == MEM					\
+      && INDIRECTABLE_ADDRESS_P (xfoob, STRICT))			\
     goto ADDR;								\
   if ((GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_INC)		\
       && GET_CODE (xfoob) == REG					\
@@ -847,19 +851,36 @@ legitimate_address_p(mode, xbar, strict)
   GO_IF_LEGITIMATE_ADDRESS2(mode, xbar, win, strict);
   return 0;
  win:
+  if (GET_CODE (xbar) == PLUS 
+      && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
+	   && GET_CODE (XEXP (xbar, 0)) == REG
+	   && mode != QImode)
+	  || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
+	      && GET_CODE (XEXP (xbar, 1)) == REG
+	      && mode != QImode)
+	  || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
+	      && GET_CODE (XEXP (xbar, 1)) == PLUS
+	      && (GET_CODE (XEXP (XEXP (xbar, 1), 0)) == REG
+	          || GET_CODE (XEXP (XEXP (xbar, 1), 1)) == REG))
+	  || (GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
+	      && GET_CODE (XEXP (xbar, 0)) == PLUS
+	      && (GET_CODE (XEXP (XEXP (xbar, 0), 0)) == REG
+	          || GET_CODE (XEXP (XEXP (xbar, 0), 1)) == REG))))
+    return 0;
   if (flag_pic || TARGET_HALFPIC)
     {
       if (GET_CODE (xbar) == PLUS 
-	  && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
-	       && GET_CODE (XEXP (xbar, 0)) == REG)
-	      || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
-		  && GET_CODE (XEXP (xbar, 1)) == REG)
-	      || (GET_CODE (XEXP (xbar, 0)) == MEM
-		  && GET_CODE (XEXP (XEXP (xbar, 0), 0)) == SYMBOL_REF
-		  && GET_CODE (XEXP (xbar, 1)) == REG)
+	  && ((GET_CODE (XEXP (xbar, 0)) == MEM
+	       && GET_CODE (XEXP (XEXP (xbar, 0), 0)) == SYMBOL_REF
+	       && GET_CODE (XEXP (xbar, 1)) == REG)
 	      || (GET_CODE (XEXP (xbar, 1)) == MEM
 		  && GET_CODE (XEXP (XEXP (xbar, 1), 0)) == SYMBOL_REF
 		  && GET_CODE (XEXP (xbar, 0)) == MULT)))
+	return 0;
+    }
+  if (flag_pic)
+    {
+      if (GET_CODE (xbar) == MEM && GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF)
 	return 0;
     }
   if (TARGET_DEBUGADDR
@@ -882,100 +903,25 @@ legitimate_address_p(mode, xbar, strict)
   return 1;
 }
 
-
 int
-vax_double_indirect_operand (op, mode)
+vax_pic_symbolic_operand (op, mode)
      register rtx op;
      enum machine_mode mode;
 {
-  if (GET_CODE (op) == MEM && GET_CODE (XEXP (op, 0)) == MEM
-      && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF)
-    return 1;
-  return 0;
-}
-
-/*
- * Like memory_operand exit when pic where
- * we can't allow a double derefernce.
- */
-int
-call_operand (op, mode)
-    register rtx op;
-    enum machine_mode mode;
-{
-  if (!memory_operand (op, mode))
-    return 0;
-  if (flag_pic && vax_double_indirect_operand (op, mode))
-    return 0;
-  if (TARGET_DEBUGADDR)
-    {
-      fprintf(stderr, "\n===== Call Operand\n");
-      debug_rtx(op);
-    }
-#if 0
-  debug_rtx(op);
-#endif
-  return 1;
-}
-
-/*
- * Like memory_operand exit when pic where
- * we can't allow a double derefernce.
- */
-int
-vax_general_operand (op, mode)
-    register rtx op;
-    enum machine_mode mode;
-{
-  if (!general_operand (op, mode))
-    return 0;
-  if (!(flag_pic || TARGET_HALFPIC))
-    return 1;
-  if (flag_pic && vax_double_indirect_operand (op, mode))
-    return 0;
-  if (TARGET_DEBUGADDR)
-    {
-      fprintf(stderr, "\n===== VAX Generic Operand\n");
-      debug_rtx(op);
-    }
-  return 1;
+  return flag_pic && !INDIRECTABLE_CONSTANT_P(op);
 }
 
 int
-compare_operand (op, mode)
-    register rtx op;
-    enum machine_mode mode;
-{
-  if (!vax_general_operand (op, mode))
-    return 0;
-  if (!(flag_pic || TARGET_HALFPIC))
-    return 1;
-  if (!INDIRECTABLE_CONSTANT_P (op))
-    return 0;
-  if (TARGET_DEBUGADDR)
-    {
-      fprintf(stderr, "\n===== Compare Operand\n");
-      debug_rtx(op);
-    }
-  return 1;
-}
-
-/* Return 1 if OP is a general operand that is not an immediate operand.  */
-
-int
-vax_nonimmediate_operand (op, mode)
+vax_symbolic_operand (op, mode)
      register rtx op;
      enum machine_mode mode;
 {
-  return (vax_general_operand (op, mode) && ! CONSTANT_P (op));
-}
-
-int
-symbolic_operand (op, mode)
-     register rtx op;
-     enum machine_mode mode;
-{
-  return !INDIRECTABLE_CONSTANT_P (op);
+  return GET_CODE (op) == SYMBOL_REF
+	 || GET_CODE (op) == LABEL_REF
+	 || (GET_CODE (op) == CONST
+	     && GET_CODE (XEXP (op, 0)) == PLUS
+	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF
+	     && GET_CODE (XEXP (XEXP (op, 0), 1)) == CONST_INT);
 }
 
 /* Legitimize PIC addresses.  If the address is already
