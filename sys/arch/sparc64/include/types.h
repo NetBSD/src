@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 1998/08/13 02:10:45 eeh Exp $ */
+/*	$NetBSD: types.h,v 1.4 1998/08/22 22:16:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,14 +59,6 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef unsigned long		vaddr_t;
-typedef vaddr_t			vsize_t;
-typedef unsigned long long	paddr_t;
-typedef paddr_t			psize_t;
-#endif
-
 /*
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
@@ -78,9 +70,24 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
+#ifdef _LP64
+/* 64-bit compiler */
+typedef	long			  int64_t;
+tyoedef unsigned long		u_int64_t;
+#else
+/* 32-bit compiler */
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
-
+#endif
 typedef int32_t			register_t;
+
+/* NB: This should probably be if defined(_KERNEL) */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+typedef unsigned long		vaddr_t;
+typedef vaddr_t			vsize_t;
+typedef u_int64_t		paddr_t;
+typedef paddr_t			psize_t;
+#endif
+
 
 #endif	/* _MACHTYPES_H_ */
