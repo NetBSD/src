@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.48 1994/05/12 03:36:32 chopps Exp $
+#	$Id: files.oldconf,v 1.49 1994/05/13 06:19:13 mycroft Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -131,15 +131,20 @@ net/route.c		standard
 net/rtsock.c		standard
 net/slcompress.c	optional sl or ppp
 netccitt/ccitt_proto.c	optional ccitt
-netccitt/hd_debug.c	optional ccitt
-netccitt/hd_input.c	optional ccitt
-netccitt/hd_output.c	optional ccitt
-netccitt/hd_subr.c	optional ccitt
-netccitt/hd_timer.c	optional ccitt
+netccitt/hd_debug.c	optional hdlc
+netccitt/hd_input.c	optional hdlc
+netccitt/hd_output.c	optional hdlc
+netccitt/hd_subr.c	optional hdlc
+netccitt/hd_timer.c	optional hdlc
 netccitt/if_x25subr.c	optional ccitt
+netccitt/llc_input.c	optional llc
+netccitt/llc_output.c	optional llc
+netccitt/llc_subr.c	optional llc
+netccitt/llc_timer.c	optional llc
 netccitt/pk_acct.c	optional ccitt
 netccitt/pk_debug.c	optional ccitt
 netccitt/pk_input.c	optional ccitt
+netccitt/pk_llcsubr.c	optional llc or hdlc
 netccitt/pk_output.c	optional ccitt
 netccitt/pk_subr.c	optional ccitt
 netccitt/pk_timer.c	optional ccitt
@@ -175,12 +180,15 @@ netiso/clnp_subr.c	optional iso
 netiso/clnp_timer.c	optional iso
 netiso/cltp_usrreq.c	optional iso
 netiso/esis.c		optional iso
+netiso/idrp_usrreq.c	optional iso
+netiso/if_cons.c	optional iso
 netiso/if_eon.c		optional eon
 netiso/iso.c		optional iso
 netiso/iso_chksum.c	optional iso
 netiso/iso_pcb.c	optional iso
 netiso/iso_proto.c	optional iso
 netiso/iso_snpac.c	optional iso
+netiso/tp_astring.c	optional iso or tpip
 netiso/tp_cons.c	optional iso
 netiso/tp_driver.c	optional iso or tpip
 netiso/tp_emit.c	optional iso or tpip
@@ -195,6 +203,9 @@ netiso/tp_subr2.c	optional iso or tpip
 netiso/tp_timer.c	optional iso or tpip
 netiso/tp_trace.c	optional iso or tpip
 netiso/tp_usrreq.c	optional iso or tpip
+netiso/tuba_subr.c	optional iso or tuba
+netiso/tuba_table.c	optional iso or tuba
+netiso/tuba_usrreq.c	optional iso or tuba
 netns/idp_usrreq.c	optional ns
 netns/ns.c		optional ns
 netns/ns_error.c	optional ns
