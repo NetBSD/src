@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.6 2001/01/25 22:50:57 jdolecek Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.7 2001/04/22 20:51:25 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -746,6 +746,8 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 		memset(sun, 0, sizeof *sun);
 		sun->sun_family = AF_LOCAL;
 		strncpy(sun->sun_path, addrstr, sizeof(sun->sun_path) - 1);
+		ret->len = ret->maxlen = sun->sun_len = SUN_LEN(sun);
+		ret->buf = sun;
 		break;
 	default:
 		break;
