@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.29 2005/02/01 02:54:17 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.30 2005/02/01 03:08:16 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.29 2005/02/01 02:54:17 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.30 2005/02/01 03:08:16 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -256,7 +256,6 @@ extern int adb_polling;			/* Are we polling? */
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
 int	pm_adb_op __P((u_char *, void *, void *, int));
 void	pm_init_adb_device __P((void));
 
@@ -266,10 +265,8 @@ void	pm_init_adb_device __P((void));
 #ifdef ADB_DEBUG
 void	print_single __P((u_char *));
 #endif
-void	adb_intr __P((void));
 void	adb_intr_II __P((void));
 void	adb_intr_IIsi __P((void));
-void	adb_intr_cuda __P((void));
 void	adb_soft_intr __P((void));
 int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
 int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
@@ -365,8 +362,8 @@ adb_cuda_tickle(void)
  * TO DO: do we want to add some calls to intr_dispatch() here to
  * grab serial interrupts?
  */
-void
-adb_intr_cuda(void)
+int
+adb_intr_cuda(void *arg)
 {
 	volatile int i, ending;
 	volatile unsigned int s;
@@ -379,7 +376,7 @@ adb_intr_cuda(void)
 	reg = read_via_reg(VIA1, vIFR);		/* Read the interrupts */
 	if ((reg & 0x80) == 0) {
 		splx(s);
-		return;				/* No interrupts to process */
+		return 0;			/* No interrupts to process */
 	}
 
 	write_via_reg(VIA1, vIFR, reg & 0x7f);	/* Clear 'em */
@@ -594,7 +591,7 @@ switch_start:
 
 	splx(s);		/* restore */
 
-	return;
+	return 1;
 }				/* end adb_intr_cuda */
 
 
@@ -680,7 +677,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_cuda();	/* process it */
+				adb_intr_cuda(NULL);	/* process it */
 				adb_soft_intr();
 			}
 
@@ -755,13 +752,8 @@ adb_guess_next_device(void)
 }
 
 
-/*
- * Called when when an adb interrupt happens.
- * This routine simply transfers control over to the appropriate
- * code for the machine we are running on.
- */
-void
-adb_intr(void)
+int
+adb_intr(void *arg)
 {
 	switch (adbHardware) {
 	case ADB_HW_II:
@@ -773,16 +765,17 @@ adb_intr(void)
 		break;
 
 	case ADB_HW_PMU:
-		pm_intr();
+		return pm_intr(arg);
 		break;
 
 	case ADB_HW_CUDA:
-		adb_intr_cuda();
+		return adb_intr_cuda(arg);
 		break;
 
 	case ADB_HW_UNKNOWN:
 		break;
 	}
+	return 0;
 }
 
 
