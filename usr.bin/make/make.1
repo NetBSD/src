@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.104 2004/07/13 11:58:55 wiz Exp $
+.\"	$NetBSD: make.1,v 1.105 2005/02/23 17:22:29 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -798,7 +798,8 @@ Remove adjacent duplicate words (like
 .Sm off
 .It Cm \&:\&? Ar true_string Cm \&: Ar false_string
 .Sm on
-If the variable evaluates to true, return as its value the
+If the variable (actually an expression; see below)
+evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
