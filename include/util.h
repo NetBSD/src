@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.28 2002/11/30 03:04:45 lukem Exp $	*/
+/*	$NetBSD: util.h,v 1.29 2002/12/12 09:45:32 scw Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -66,6 +66,8 @@ struct winsize;
 
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
+off_t		getlabeloffset(void);
+daddr_t		getlabelsector(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
 int		humanize_number(char *, size_t, int64_t, const char *, int,
