@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/02/11 21:36:34 tv Exp $
+#	$NetBSD: Makefile,v 1.17 2002/08/19 09:46:40 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,8 +15,7 @@ LIB=		g2c
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 SRCS=		${G_OBJS:.o=.c} ${G_OBJ:.o=.c}
 
@@ -145,8 +144,8 @@ CLEANFILES+=	g2c.h g2ctypes.sed
 # XXX may need a better way to do this; can be overridden with "cp"
 MAKE_SYMLINK?=	ln -sf
 
-DIST=		${.CURDIR}/../../dist
-ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
+DIST=		${NETBSDSRCDIR}/gnu/dist
+ARCH=		${NETBSDSRCDIR}/gnu/usr.bin/egcs/arch
 
 .if exists(${ARCH}/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}
