@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.28 1998/08/10 15:15:49 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.29 1998/08/16 02:03:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -700,13 +700,6 @@ prefetch_abort_handler(frame)
 	pt_entry_t *pte;
 	int error;
 
-#ifdef DIAGNOSTIC
-	/* Paranoia: We should always be in SVC32 mode at this point */
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		panic("Fault handler not in SVC mode\n");
-	}
-#endif	/* DIAGNOSTIC */
-
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
 	 * from user mode so we know interrupts were not disabled.
@@ -714,6 +707,13 @@ prefetch_abort_handler(frame)
 	 */
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
+
+#ifdef DIAGNOSTIC
+	/* Paranoia: We should always be in SVC32 mode at this point */
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
+		panic("Fault handler not in SVC mode\n");
+	}
+#endif	/* DIAGNOSTIC */
 
 	/* Update vmmeter statistics */
 #if defined(UVM)
