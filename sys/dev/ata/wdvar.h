@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.23 2003/12/14 05:10:19 thorpej Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.24 2003/12/14 05:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -27,19 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
-/*
- * describe an ATA device. Has to be compatible with scsipi_channel, so start
- * with a pointer to ata_bustype
- */
-struct ata_device {
-	const struct ata_bustype *adev_bustype;
-	int adev_channel;
-	int adev_openings;
-	struct ata_drive_datas *adev_drv_data;
-};
 
 #ifdef __ATA_DISK_PRIVATE
 
