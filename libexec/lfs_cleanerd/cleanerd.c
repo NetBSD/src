@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.14 1999/06/15 22:33:48 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.14 1999/06/15 22:33:48 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ cost_benefit(fsp, su)
 		 * priority = ((seg_size - live) * age) / (seg_size + live)
 		 */
 		if (live < 0 || live > seg_size(lfsp)) {
-                        syslog(LOG_NOTICE,"bad segusage count: %d", live);
+                        syslog(LOG_NOTICE,"bad segusage count: %ld", live);
 			live = 0;
 		}
 		return (lblkno(lfsp, seg_size(lfsp) - live) * age)
@@ -417,9 +417,9 @@ clean_fs(fsp, cost_func, nsegs, options)
 	sp=segs;
 	for(j=0; j < total && sp->sl_bytes == 0; j++) {
 		if(debug)
-			syslog(LOG_DEBUG,"Wiping empty segment %d",sp->sl_id);
+			syslog(LOG_DEBUG,"Wiping empty segment %ld",sp->sl_id);
 		if(lfs_segclean(&fsp->fi_statfsp->f_fsid, sp->sl_id) < 0)
-			syslog(LOG_NOTICE,"lfs_segclean failed empty segment %d: %m", sp->sl_id);
+			syslog(LOG_NOTICE,"lfs_segclean failed empty segment %ld: %m", sp->sl_id);
                 ++cleaner_stats.segs_empty;
 		sp++;
 		i--;
@@ -435,7 +435,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 		nsegs = fsp->fi_cip->clean;
 
         if(debug > 1)
-            syslog(LOG_DEBUG, "clean_fs: found %d segments to clean in file system %s",
+            syslog(LOG_DEBUG, "clean_fs: found %ld segments to clean in file system %s",
                    i, fsp->fi_statfsp->f_mntonname);
 
 	if (i) {
@@ -446,14 +446,14 @@ clean_fs(fsp, cost_func, nsegs, options)
 			for (; i && cleaned_bytes < to_clean;
 			    i--, ++sp) {
 				if (clean_segment(fsp, sp) < 0)
-					syslog(LOG_NOTICE,"clean_segment failed segment %d: %m", sp->sl_id);
+					syslog(LOG_NOTICE,"clean_segment failed segment %ld: %m", sp->sl_id);
 				else if (lfs_segclean(&fsp->fi_statfsp->f_fsid,
 						      sp->sl_id) < 0)
-					syslog(LOG_NOTICE,"lfs_segclean failed segment %d: %m", sp->sl_id);
+					syslog(LOG_NOTICE,"lfs_segclean failed segment %ld: %m", sp->sl_id);
 				else {
 					if(debug) {
 						syslog(LOG_DEBUG,
-						       "Cleaned segment %d (%d->%ld/%ld)",
+						       "Cleaned segment %ld (%ld->%ld/%ld)",
 						       sp->sl_id,
 						       (1<<fsp->fi_lfs.lfs_segshift) - sp->sl_bytes,
 						       cleaned_bytes + (1<<fsp->fi_lfs.lfs_segshift) - sp->sl_bytes,
@@ -465,17 +465,17 @@ clean_fs(fsp, cost_func, nsegs, options)
 		} else
 			for (i = MIN(i, nsegs); i-- ; ++sp) {
 				total--;
-				syslog(LOG_DEBUG,"Cleaning segment %d (of %d choices)", sp->sl_id, i+1);
+				syslog(LOG_DEBUG,"Cleaning segment %ld (of %ld choices)", sp->sl_id, i+1);
 				if (clean_segment(fsp, sp) < 0) {
-					syslog(LOG_NOTICE,"clean_segment failed segment %d: %m", sp->sl_id);
+					syslog(LOG_NOTICE,"clean_segment failed segment %ld: %m", sp->sl_id);
 					if(total)
 						i++;
 				}
 				else if (lfs_segclean(&fsp->fi_statfsp->f_fsid,
 				    sp->sl_id) < 0)
-					syslog(LOG_NOTICE,"lfs_segclean failed segment %d: %m", sp->sl_id);
+					syslog(LOG_NOTICE,"lfs_segclean failed segment %ld: %m", sp->sl_id);
 				else if(debug)
-					syslog(LOG_DEBUG,"Completed cleaning segment %d (of %d choices)", sp->sl_id, i+1);
+					syslog(LOG_DEBUG,"Completed cleaning segment %ld (of %ld choices)", sp->sl_id, i+1);
 			}
 	}
 	free(segs);
