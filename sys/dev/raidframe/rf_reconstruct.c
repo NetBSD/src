@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.19 2000/02/25 02:06:34 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.20 2000/02/25 17:14:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -489,6 +489,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			}
 			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 		}
+		/* note that this disk was *not* auto_configured (any longer)*/
+		raidPtr->Disks[row][col].auto_configured = 0;
+
 		printf("About to (re-)open the device for rebuilding: %s\n",
 		       raidPtr->Disks[row][col].devname);
 		
