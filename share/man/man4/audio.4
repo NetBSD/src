@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.52 2003/04/16 13:35:16 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.53 2003/06/11 04:41:17 fair Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 11, 1997
+.Dd June 10, 2003
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -58,19 +58,23 @@ There are four device files available for audio operation:
 .Pa /dev/audioctl ,
 and
 .Pa /dev/mixer .
+.Pp
 .Pa /dev/audio
 and
 .Pa /dev/sound
 are used for recording or playback of digital samples.
+.Pp
 .Pa /dev/mixer
 is used to manipulate volume, recording source, or other audio mixer
 functions.
+.Pp
 .Pa /dev/audioctl
 accepts the same
 .Xr ioctl 2
 operations as
 .Pa /dev/sound ,
 but no other operations.
+.Pp
 In contrast to
 .Pa /dev/sound
 which has the exclusive open property
@@ -106,11 +110,13 @@ will be filled with silence but delayed to return at the current
 sampling rate.
 If both playback and recording are requested on a half-duplex
 device, playback mode takes precedence and recordings will get silence.
+.Pp
 On a full-duplex device, reads and writes may operate
 concurrently without interference.
 If a full-duplex capable audio device is opened for both reading and writing
 it will start in half-duplex play mode; full-duplex mode has to be set
 explicitly.
+.Pp
 On either type of device, if the playback mode is paused then silence is
 played instead of the provided samples, and if recording is paused then
 the process blocks in
@@ -653,9 +659,9 @@ string values.
 .Xr mixerctl 1 ,
 .Xr ioctl 2 ,
 .Xr ossaudio 3 ,
-.Xr midi 4
-.br
-For ports using the ISA bus:
+.Xr midi 4 ,
+.Xr radio 4
+.Ss ISA bus
 .Xr aria 4 ,
 .Xr ess 4 ,
 .Xr gus 4 ,
@@ -663,11 +669,13 @@ For ports using the ISA bus:
 .Xr pas 4 ,
 .Xr pss 4 ,
 .Xr sb 4 ,
+.Xr sp 4 ,
 .Xr wss 4 ,
 .Xr ym 4
-.br
-For ports using the PCI bus:
+.Ss PCI bus
+.Xr als 4 ,
 .Xr auich 4 ,
+.Xr autri 4 ,
 .Xr auvia 4 ,
 .Xr clcs 4 ,
 .Xr clct 4 ,
@@ -681,14 +689,11 @@ For ports using the PCI bus:
 .Xr neo 4 ,
 .Xr sv 4 ,
 .Xr yds 4
-.br
-For ports using PCMCIA:
+.Ss PCMCIA
 .Xr esl 4
-.br
-For ports using TurboChannel:
+.Ss TURBOchannel
 .Xr bba 4
-.br
-For ports using USB:
+.Ss USB
 .Xr uaudio 4
 .Sh BUGS
 If the device is used in
