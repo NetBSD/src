@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.421 2002/01/02 04:52:55 briggs Exp $
+#	$NetBSD: mi,v 1.422 2002/01/02 18:33:06 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -663,7 +663,6 @@
 ./usr/include/sha1.h			comp-c-include
 ./usr/include/signal.h			comp-c-include
 ./usr/include/skey.h			comp-c-include
-./usr/include/smbfs			comp-c-include
 ./usr/include/soundcard.h		comp-c-include
 ./usr/include/stab.h			comp-c-include
 ./usr/include/stdarg.h			comp-c-include
