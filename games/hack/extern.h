@@ -1,7 +1,11 @@
-/*	$NetBSD: extern.h,v 1.2 1999/10/04 23:27:01 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2001/02/05 00:37:43 christos Exp $	*/
 
-/*
- * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,20 +17,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef _EXTERN_H_
 #define _EXTERN_H_
@@ -38,7 +45,6 @@
 #endif
 
 /* alloc.c */
-long *alloc __P((unsigned));
 long *alloc __P((unsigned));
 long *enlarge __P((char *, unsigned));
 
@@ -60,11 +66,9 @@ int dopickup __P((void));
 void pickup __P((int));
 void lookaround __P((void));
 int monster_nearby __P((void));
-int cansee __P((xchar, xchar));
 int rroom __P((int, int));
 int cansee __P((xchar, xchar));
 int sgn __P((int));
-void setsee __P((void));
 void setsee __P((void));
 void nomul __P((int));
 int abon __P((void));
@@ -451,7 +455,6 @@ int used __P((int));
 
 /* hack.save.c */
 int dosave __P((void));
-void hangup __P((int));
 int dosave0 __P((int));
 int dorecover __P((int));
 struct obj *restobjchn __P((int));
@@ -466,15 +469,11 @@ void seemimic __P((struct monst *));
 
 /* hack.shk.c */
 void obfree __P((struct obj *, struct obj *));
-int inshop __P((void));
-int dopay __P((void));
 void paybill __P((void));
-void replshk __P((struct monst *, struct monst *));
 char *shkname __P((struct monst *));
 void shkdead __P((struct monst *));
 void replshk __P((struct monst *, struct monst *));
 int inshop __P((void));
-void obfree __P((struct obj *, struct obj *));
 int dopay __P((void));
 struct bill_x;
 struct obj *bp_to_obj __P((struct bill_x *));
@@ -608,10 +607,6 @@ int gd_move __P((void));
 void gddead __P((void));
 void replgd __P((struct monst *, struct monst *));
 void invault __P((void));
-void setgd __P((void));
-void invault __P((void));
-int gd_move __P((void));
-void replgd __P((struct monst *, struct monst *));
 
 /* hack.version.c */
 int doversion __P((void));

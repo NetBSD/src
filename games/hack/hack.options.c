@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.options.c,v 1.4 1997/10/19 16:58:42 christos Exp $	*/
+/*	$NetBSD: hack.options.c,v 1.5 2001/02/05 00:37:43 christos Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,10 +6,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.options.c,v 1.4 1997/10/19 16:58:42 christos Exp $");
+__RCSID("$NetBSD: hack.options.c,v 1.5 2001/02/05 00:37:43 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
+#include <unistd.h>
 #include "hack.h"
 #include "extern.h"
 
@@ -121,7 +122,6 @@ parseoptions(opts, from_env)
 		while (*op) {
 			num = 1;
 			if (digit(*op)) {
-/*###124 [cc] warning: implicit declaration of function `atoi'%%%*/
 				num = atoi(op);
 				while (digit(*op))
 					op++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.6 1999/04/25 19:08:34 kristerw Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.7 2001/02/05 00:37:43 christos Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.6 1999/04/25 19:08:34 kristerw Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.7 2001/02/05 00:37:43 christos Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -35,6 +35,8 @@ __RCSID("$NetBSD: hack.unix.c,v 1.6 1999/04/25 19:08:34 kristerw Exp $");
 
 #include "hack.h"		/* mainly for strchr() which depends on BSD */
 #include "extern.h"
+
+extern int locknum;
 
 
 void
@@ -209,7 +211,6 @@ veryold(fd)
 void
 getlock()
 {
-	extern int      hackpid, locknum;
 	int             i = 0, fd;
 
 	(void) fflush(stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.read.c,v 1.5 1998/08/30 09:19:37 veego Exp $	*/
+/*	$NetBSD: hack.read.c,v 1.6 2001/02/05 00:37:43 christos Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.read.c,v 1.5 1998/08/30 09:19:37 veego Exp $");
+__RCSID("$NetBSD: hack.read.c,v 1.6 2001/02/05 00:37:43 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -193,7 +193,6 @@ doread()
 		}
 	case SCR_GENOCIDE:
 		{
-			extern char     genocided[], fut_geno[];
 			char            buf[BUFSZ];
 			struct monst   *mtmp, *mtmp2;
 
@@ -575,7 +574,6 @@ monstersym(ch)			/* arnold@ucsfcgl */
 	char            ch;
 {
 	struct permonst *mp;
-	extern struct permonst pm_eel;
 
 	/*
 	 * can't genocide certain monsters
