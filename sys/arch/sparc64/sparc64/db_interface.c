@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.65 2002/06/14 17:12:05 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.66 2002/12/25 22:24:56 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -235,6 +235,7 @@ void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
 void db_setpcb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtlb __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_itlb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtsb __P((db_expr_t, int, db_expr_t, char *));
 void db_pmap_kernel __P((db_expr_t, int, db_expr_t, char *));
 void db_pload_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -429,6 +430,7 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+
 	OF_enter();
 }
 
@@ -465,6 +467,43 @@ db_dump_dtlb(addr, have_addr, count, modif)
 	} else {
 #ifdef DEBUG
 		print_dtlb();
+#endif
+	}
+}
+
+void
+db_dump_itlb(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	extern void print_itlb __P((void));
+
+	if (have_addr) {
+		int i;
+		int64_t* p = (int64_t*)addr;
+		static int64_t buf[128];
+		extern void dump_itlb(int64_t *);
+		
+		dump_itlb(buf);
+		p = buf;
+		for (i=0; i<64;) {
+#ifdef __arch64__
+			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
+			p += 2;
+			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
+			p += 2;
+#else
+			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
+			p += 2;
+			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
+			p += 2;
+#endif
+		}
+	} else {
+#ifdef DEBUG
+		print_itlb();
 #endif
 	}
 }
@@ -1051,6 +1090,7 @@ extern void db_esp(db_expr_t, int, db_expr_t, char*);
 const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
+	{ "itlb",	db_dump_itlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
 #if NESP_SBUS
 	{ "esp",	db_esp,		0,	0 },
