@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.17 2004/01/01 20:39:58 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.18 2004/01/10 00:56:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.17 2004/01/01 20:39:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.18 2004/01/10 00:56:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -176,7 +176,8 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 		rdNode->params[0].p = pda;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
+						       which_ru);
 	} else {
 		/* read secondary copy of data */
 		rf_InitNode(rdNode, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc,
@@ -184,7 +185,8 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 		rdNode->params[0].p = asmap->parityInfo;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
+						       which_ru);
 	}
 
 	/* connect header to block node */
@@ -351,7 +353,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		rudNodes[i].params[0].p = pda;
 		rudNodes[i].params[1].p = pda->bufPtr;
 		rudNodes[i].params[2].v = parityStripeID;
-		rudNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rudNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	}
 
 	/* fill in the Rrd nodes */
@@ -367,7 +369,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			rrdNodes[i].params[0].p = pda;
 			rrdNodes[i].params[1].p = pda->bufPtr;
 			rrdNodes[i].params[2].v = parityStripeID;
-			rrdNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rrdNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	}
 	if (new_asm_h[1]) {
@@ -381,7 +383,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			rrdNodes[i + j].params[0].p = pda;
 			rrdNodes[i + j].params[1].p = pda->bufPtr;
 			rrdNodes[i + j].params[2].v = parityStripeID;
-			rrdNodes[i + j].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rrdNodes[i + j].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	}
 	/* make a PDA for the parity unit */
@@ -397,7 +399,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	rpNode->params[0].p = parityPDA;
 	rpNode->params[1].p = rpBuf;
 	rpNode->params[2].v = parityStripeID;
-	rpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+	rpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
 	/*
          * the last and nastiest step is to assign all
@@ -594,13 +596,13 @@ rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			rdNode->params[0].p = asmap->parityInfo;
 			rdNode->params[1].p = pda->bufPtr;
 			rdNode->params[2].v = parityStripeID;
-			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		} else {
 			/* read primary copy */
 			rdNode->params[0].p = pda;
 			rdNode->params[1].p = pda->bufPtr;
 			rdNode->params[2].v = parityStripeID;
-			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	} else {
 		/* read secondary copy of data */
@@ -609,7 +611,7 @@ rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		rdNode->params[0].p = asmap->parityInfo;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	}
 
 	/* connect header to block node */
@@ -972,7 +974,7 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
   (_node_).params[0].p = _p_ ; \
   (_node_).params[1].p = (_p_)->bufPtr; \
   (_node_).params[2].v = parityStripeID; \
-  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
+  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
 void 
 rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,

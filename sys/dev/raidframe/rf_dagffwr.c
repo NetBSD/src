@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.16 2004/01/09 23:35:59 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.17 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.16 2004/01/09 23:35:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.17 2004/01/10 00:56:28 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -256,7 +256,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				rodNodes[nodeNum].params[1].p = pda->bufPtr;
 				rodNodes[nodeNum].params[2].v = parityStripeID;
 				rodNodes[nodeNum].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-				    0, 0, which_ru);
+				    which_ru);
 				nodeNum++;
 				pda = pda->next;
 			}
@@ -275,7 +275,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		wndNodes[i].params[0].p = pda;
 		wndNodes[i].params[1].p = pda->bufPtr;
 		wndNodes[i].params[2].v = parityStripeID;
-		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
 	}
 
@@ -333,7 +333,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	wnpNode->params[0].p = asmap->parityInfo;
 	wnpNode->params[1].p = xorNode->results[0];
 	wnpNode->params[2].v = parityStripeID;
-	wnpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+	wnpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	/* parityInfo must describe entire parity unit */
 	RF_ASSERT(asmap->parityInfo->next == NULL);
 
@@ -353,7 +353,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		wnqNode->params[0].p = asmap->qInfo;
 		wnqNode->params[1].p = xorNode->results[1];
 		wnqNode->params[2].v = parityStripeID;
-		wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		/* parityInfo must describe entire parity unit */
 		RF_ASSERT(asmap->parityInfo->next == NULL);
 	}
@@ -597,7 +597,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		    dag_h, pda, allocList);
 		readDataNodes[i].params[2].v = parityStripeID;
 		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-		    0, 0, which_ru);
+		    which_ru);
 		pda = pda->next;
 		for (j = 0; j < readDataNodes[i].numSuccedents; j++) {
 			readDataNodes[i].propList[j] = NULL;
@@ -619,7 +619,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		    dag_h, pda, allocList);
 		readParityNodes[i].params[2].v = parityStripeID;
 		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-		    0, 0, which_ru);
+		    which_ru);
 		pda = pda->next;
 		for (j = 0; j < readParityNodes[i].numSuccedents; j++) {
 			readParityNodes[i].propList[0] = NULL;
@@ -642,7 +642,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 								   allocList);
 			readQNodes[i].params[2].v = parityStripeID;
 			readQNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-			    0, 0, which_ru);
+			    which_ru);
 			pda = pda->next;
 			for (j = 0; j < readQNodes[i].numSuccedents; j++) {
 				readQNodes[i].propList[0] = NULL;
@@ -663,7 +663,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		writeDataNodes[i].params[1].p = pda->bufPtr;
 		writeDataNodes[i].params[2].v = parityStripeID;
 		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-		    0, 0, which_ru);
+		    which_ru);
 		pda = pda->next;
 	}
 
@@ -808,7 +808,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 										 * operation */
 		writeParityNodes[i].params[2].v = parityStripeID;
 		writeParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-		    0, 0, which_ru);
+		    which_ru);
 		pda = pda->next;
 	}
 
@@ -828,7 +828,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 										 * operation */
 			writeQNodes[i].params[2].v = parityStripeID;
 			writeQNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
-			    0, 0, which_ru);
+			    which_ru);
 			pda = pda->next;
 		}
 	}
@@ -1069,7 +1069,7 @@ rf_CreateRaidOneWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			wndNode[i].params[0].p = pda;
 			wndNode[i].params[1].p = pda->bufPtr;
 			wndNode[i].params[2].v = parityStripeID;
-			wndNode[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			wndNode[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 			pda = pda->next;
 		}
 		RF_ASSERT(pda == NULL);
@@ -1087,7 +1087,7 @@ rf_CreateRaidOneWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			wmirNode[i].params[0].p = pdaP;
 			wmirNode[i].params[1].p = pda->bufPtr;
 			wmirNode[i].params[2].v = parityStripeID;
-			wmirNode[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			wmirNode[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 			pda = pda->next;
 			pdaP = pdaP->next;
 		}

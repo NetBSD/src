@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.14 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.15 2004/01/10 00:56:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.14 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.15 2004/01/10 00:56:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -286,7 +286,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 			rrdNodes[i].params[0].p = pda;
 			rrdNodes[i].params[1].p = pda->bufPtr;
 			rrdNodes[i].params[2].v = parityStripeID;
-			rrdNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rrdNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	}
 	/* i now equals the number of stripe units accessed in new_asm_h[0] */
@@ -300,7 +300,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 			rrdNodes[i + j].params[0].p = pda;
 			rrdNodes[i + j].params[1].p = pda->bufPtr;
 			rrdNodes[i + j].params[2].v = parityStripeID;
-			rrdNodes[i + j].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rrdNodes[i + j].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 			if (allowBufferRecycle && (pda->numSector == failedPDA->numSector))
 				xorTargetBuf = pda->bufPtr;
 		}
@@ -340,7 +340,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	wnpNode->params[0].p = parityPDA;
 	wnpNode->params[1].p = xorTargetBuf;
 	wnpNode->params[2].v = parityStripeID;
-	wnpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+	wnpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
 	/* fill in the Wnq Node */
 	if (nfaults == 2) {
@@ -359,7 +359,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 			    rf_RaidAddressToByte(raidPtr, failedPDA->numSector), (char *), allocList);
 			wnqNode->params[1].p = xorNode->results[1];
 			wnqNode->params[2].v = parityStripeID;
-			wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	}
 	/* fill in the Wnd nodes */
@@ -374,7 +374,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		wndNodes[i].params[0].p = pda;
 		wndNodes[i].params[1].p = pda->bufPtr;
 		wndNodes[i].params[2].v = parityStripeID;
-		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	}
 
 	/* fill in the results of the xor node */
@@ -650,7 +650,7 @@ rf_WriteGenerateFailedAccessASMs(
   (_node_).params[0].p = _p_ ; \
   (_node_).params[1].p = (_p_)->bufPtr; \
   (_node_).params[2].v = parityStripeID; \
-  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
+  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
 void 
 rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,

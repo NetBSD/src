@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.11 2004/01/10 00:56:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.11 2004/01/10 00:56:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -219,7 +219,7 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		diskNodes[i].params[1].p = pda->bufPtr;
 		/* parity stripe id is not necessary */
 		diskNodes[i].params[2].v = 0;
-		diskNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
+		diskNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 		pda = pda->next;
 	}
 
@@ -364,7 +364,7 @@ CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		readNodes[i].params[1].p = data_pda->bufPtr;
 		/* parity stripe id is not necessary */
 		readNodes[i].params[2].p = 0;
-		readNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, 0);
+		readNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 		readNodes[i].params[4].p = parity_pda;
 		data_pda = data_pda->next;
 		parity_pda = parity_pda->next;
