@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.4 2003/01/31 04:26:50 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.5 2003/01/31 04:59:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -226,7 +226,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	pthread_mutex_lock(mutex);
 	pthread__testcancel(self);
 
-
 	return retval;
 }
 
@@ -280,9 +279,9 @@ pthread_cond_signal(pthread_cond_t *cond)
 		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
 #endif
+		pthread_spinunlock(self, &cond->ptc_lock);
 		if (signaled != NULL)
 			pthread__sched(self, signaled);
-		pthread_spinunlock(self, &cond->ptc_lock);
 	}
 
 	return 0;
@@ -292,7 +291,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
-	pthread_t self, signaled;
+	pthread_t self;
 	struct pthread_queue_t blockedq;
 #ifdef ERRORCHECK
 	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
@@ -311,9 +310,8 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #ifdef ERRORCHECK
 		cond->ptc_mutex = NULL;
 #endif
-		PTQ_FOREACH(signaled, &blockedq, pt_sleep)
-		    pthread__sched(self, signaled);
 		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread__sched_sleepers(self, &blockedq);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.3 2003/01/25 00:47:06 nathanw Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.4 2003/01/31 04:59:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -163,7 +163,6 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 */
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
 		struct pthread_queue_t blockedq;
-		pthread_t signaled;
 
 		SDPRINTF(("(barrier wait %p) Satisfied %p\n",
 		    self, barrier));
@@ -173,8 +172,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation++;
 
-		PTQ_FOREACH(signaled, &blockedq, pt_sleep)
-			pthread__sched(self, signaled);
+		pthread__sched_sleepers(self, &blockedq);
 
 		pthread_spinunlock(self, &barrier->ptb_lock);
 
