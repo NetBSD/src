@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.87 1999/10/06 08:57:46 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.88 1999/10/09 03:00:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.87 1999/10/06 08:57:46 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.88 1999/10/09 03:00:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1040,7 +1040,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	}
 
 			/* Trap signals */
-	if (setjmp(httpabort))
+	if (sigsetjmp(httpabort, 1))
 		goto cleanup_fetch_url;
 	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, aborthttp);
@@ -1213,10 +1213,13 @@ void
 aborthttp(notused)
 	int notused;
 {
+	char msgbuf[100];
+	int len;
 
 	alarmtimer(0);
-	fputs("\nHTTP fetch aborted.\n", ttyout);
-	longjmp(httpabort, 1);
+	len = strlcpy(msgbuf, "\nHTTP fetch aborted.\n", sizeof(msgbuf));
+	write(fileno(ttyout), msgbuf, len);
+	siglongjmp(httpabort, 1);
 }
 
 /*
@@ -1619,12 +1622,12 @@ auto_fetch(argc, argv)
 
 	argpos = 0;
 
-	if (setjmp(toplevel)) {
+	if (sigsetjmp(toplevel, 1)) {
 		if (connected)
 			disconnect(0, NULL);
 		return (argpos + 1);
 	}
-	(void)xsignal(SIGINT, (sig_t)intr);
+	(void)xsignal(SIGINT, intr);
 	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 
 	/*
