@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.11.4.2 1996/06/19 21:17:12 jtc Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.11.4.3 1997/02/03 04:46:59 rat Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.11.4.2 1996/06/19 21:17:12 jtc Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.11.4.3 1997/02/03 04:46:59 rat Exp $";
 #endif
 
 /*
@@ -414,10 +414,10 @@ xdr_ypmap_parms(xdrs, objp)
 	XDR *xdrs;
 	struct ypmap_parms *objp;
 {
-	if (!xdr_ypdomain_wrap_string(xdrs, (char **)objp->domain))
+	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
-	if (!xdr_ypmap_wrap_string(xdrs, (char **)objp->map))
+	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
 		return FALSE;
 
 	if (!xdr_u_long(xdrs, &objp->ordernum))
