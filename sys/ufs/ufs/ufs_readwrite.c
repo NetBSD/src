@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.4.2 1999/06/22 02:29:49 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.3 1999/07/02 22:43:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -262,14 +262,13 @@ WRITE(v)
 	osize = ip->i_ffs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
+#ifndef LFS_READWRITE
 	if (vp->v_type == VREG) {
-
 		/*
 		 * make sure the range of file offsets to be written
 		 * is fully allocated.  updating of ip->i_ffs_size
 		 * is handled by ffs_balloc_range().
 		 */
-
 		if ((error = ffs_balloc_range(ip, uio->uio_offset,
 					      uio->uio_resid, ap->a_cred, 0))) {
 			return error;
@@ -299,6 +298,7 @@ WRITE(v)
 		}
 		goto out;
 	}
+#endif /* ! LFS_READWRITE */
 
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
@@ -367,7 +367,9 @@ WRITE(v)
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
-out:
+#ifndef LFS_READWRITE
+ out:
+#endif
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
 	if (error) {
