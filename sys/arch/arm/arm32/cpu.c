@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.44 2002/10/13 12:24:57 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.45 2002/10/13 21:14:28 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2002/10/13 12:24:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2002/10/13 21:14:28 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -514,7 +514,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	}
 			       
 }
-
+#ifdef MULTIPROCESSOR
 int
 cpu_alloc_idlepcb(struct cpu_info *ci)
 {
@@ -560,5 +560,6 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
 	*tf = *proc0.p_addr->u_pcb.pcb_tf;
 	return 0;
 }
+#endif /* MULTIPROCESSOR */
 
 /* End of cpu.c */
