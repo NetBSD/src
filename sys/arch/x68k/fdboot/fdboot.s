@@ -45,11 +45,15 @@ entry:
 ||		movel	d4,_ID:l
 		moveq	#0xFFFFFF8E,d0	| __BOOTINF
 		trap	#15
-		lslw	#8,d0
+		movel	d0,d2
+		andib	#0x03,d0		| drive # (head=0)
+		jbsr	check_fd_format
+		moveml	d0-d1,_FDSECMINMAX:l	| min and max sec #
+		lslw	#8,d2
 		moveq	#0x70,d1
-		orw	d0,d1		| PDA*256 + MODE
+		orw	d2,d1		| PDA*256 + MODE
 		movel	d1,_FDMODE:l
-		movel	#0x03000001,d2	| read position
+		movel	d0,d2		| read position (first sector)
 		movel	#8192,d3	| read bytes
 		moveq	#0x46,d0	| __B_READ
 		trap	#15
@@ -69,6 +73,8 @@ initpalet:
 		dbra	d3,initpalet
 
 		jmp	_bootufs:l		| 0x3Fxxxx に飛んでゆく
+
+#include "chkfmt.s"
 
 | int RAW_READ(void *buf, int pos, size_t length);
 |	.offset	16
@@ -99,31 +105,63 @@ _RAW_READ:
 ||		moveml	sp@+,a2-a6/d2-d7
 ||		rts
 		moveml	a2-a6/d2-d7,sp@-
-		movel	sp@(raw_read_pos),d4
+		movel	sp@(raw_read_pos),d2
 		movel	sp@(raw_read_len),d3
 		movel	sp@(raw_read_buf),a1
 
-		moveq	#10,d1
-		lsrl	d1,d4		| / 1024
-		bcs	read_half
-
-		| d4: pos (in sector)
+		|
+		| Floppy R/W routine
+		|
 
 		| convert to seek position
-		movel	#0x03000001,d2
-		moveb	d4,d0
-		andb	#7,d0
-		addb	d0,d2
-		movel	d4,d0
-		lsrl	#4,d0
-		bcc	1f
-		bset	#8,d2
-1:		lsll	#8,d0
-		lsll	#8,d0
-		orl	d0,d2
+
+		| sec = raw_read_pos	(d2)
+		| sec >>= 7
+
+		lsrl	#7,d2
+
+		| sec >>= (sector length: 0-3)
+
+		lea	_FDSECMINMAX,a0
+		moveq	#0,d1
+		moveb	a0@,d1		| d1: sector length (0-3)
+		lsrl	d1,d2		| d2: pos in sector
+		bcss	read_half	| error check
+
+		| trk = sec / (# sectors)
+		| sec = sec % (# sectors)
+
+		moveb	a0@(7),d1	| d1: max sector #
+		subb	a0@(3),d1	|   - min sector #
+		addqb	#1,d1		| d1: # sectors
+		divu	d1,d2		| d2: (sec << 16) | track
+
+		| position = (sec length << 24) | (track/2 << 16)
+		|		| (track%2 << 8) | (min sec # + sec)
+
+		movel	a0@,d0		| d0: (sec len << 24) | min sec #
+		lsrw	#1,d2		| d2: (sec << 16) | (track / 2)
+		jcc	1f
+		bset	#8,d0		| |= (track % 2) << 8
+1:		swap	d2		| d2: ((track / 2) << 16) | sec
+		addl	d0,d2		| d2: position
 
 		| read
 		movel	_FDMODE:l,d1	| PDA*256 + MODE
+
+		| B_READ (for floppy)
+		|  d1.w: PDA x 256 + MODE
+		|	PDA: 0x90 (drive 0) ... 0x93 (drive 3)
+		|	MODE:	bit6: MFM
+		|		bit5: retry
+		|		bit4: seek
+		|  d2.l: position
+		|	bit31-24: sector length (0: 128, 1: 256, 2: 512, 3: 1K)
+		|	bit23-16: track # (0-79)
+		|	bit15-08: side (0 or 1)
+		|	bit07-00: sector # (1-)
+		|  d3.l: read bytes
+		|  a1:   read address
 		moveq	#0x46,d0	| __B_READ
 		trap	#15
 
@@ -133,6 +171,7 @@ _RAW_READ:
 
 read_half:
 		lea	half_msg,a1
+boot_error:
 		moveq	#0x21,d0	| __B_PRINT
 		trap	#15
 		moveq	#0xFFFFFFFE,d0	| __IPLERR
@@ -241,5 +280,13 @@ Lis68020:
 
 ||	.comm	_ID,4
 	.comm	_FDMODE,4
+	.comm	_FDSECMINMAX,8	| +0: (min sector) sector length
+				| +1: (min sector) track #
+				| +2: (min sector) side
+				| +3: (min sector) sector #
+				| +4: (max sector) sector length
+				| +5: (max sector) track #
+				| +6: (max sector) side
+				| +7: (max sector) sector #
 
 	.end
