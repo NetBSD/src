@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.32 2003/10/22 09:13:17 mjl Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.33 2004/08/07 01:06:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.32 2003/10/22 09:13:17 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.33 2004/08/07 01:06:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,8 @@ pcmcia_scan_cis(dev, fct, arg)
 	DPRINTF(("%s: CIS tuple chain:\n", sc->dev.dv_xname));
 
 	while (1) {
+		DELAY(1000);
+
 		while (1) {
 			/*
 			 * Perform boundary check for insane cards.
@@ -208,7 +210,6 @@ pcmcia_scan_cis(dev, fct, arg)
 
 			/* get the tuple code */
 
-			DELAY(1000);
 			tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
 
 			/* two special-case tuples */
@@ -235,6 +236,24 @@ pcmcia_scan_cis(dev, fct, arg)
 
 			DELAY(1250);
 			tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr + 1);
+#ifdef PCMCIACISDEBUG
+			/* print the tuple */
+			{
+				int i;
+
+				DPRINTF((" %02x %02x", tuple.code,
+				    tuple.length));
+
+				for (i = 0; i < tuple.length; i++) {
+					DPRINTF((" %02x",
+					    pcmcia_tuple_read_1(&tuple, i)));
+					if ((i % 16) == 13)
+						DPRINTF(("\n"));
+				}
+				if ((i % 16) != 14)
+					DPRINTF(("\n"));
+			}
+#endif
 			switch (tuple.code) {
 			case PCMCIA_CISTPL_LONGLINK_A:
 			case PCMCIA_CISTPL_LONGLINK_C:
@@ -401,24 +420,6 @@ pcmcia_scan_cis(dev, fct, arg)
 				}
 				break;
 			}	/* switch */
-#ifdef PCMCIACISDEBUG
-			/* print the tuple */
-			{
-				int i;
-
-				DPRINTF((" %02x %02x", tuple.code,
-				    tuple.length));
-
-				for (i = 0; i < tuple.length; i++) {
-					DPRINTF((" %02x",
-					    pcmcia_tuple_read_1(&tuple, i)));
-					if ((i % 16) == 13)
-						DPRINTF(("\n"));
-				}
-				if ((i % 16) != 14)
-					DPRINTF(("\n"));
-			}
-#endif
 			/* skip to the next tuple */
 			tuple.ptr += 2 + tuple.length;
 		}
