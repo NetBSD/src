@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.13.2.3 1999/04/09 04:39:39 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13.2.4 1999/04/29 13:46:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -814,31 +814,13 @@ uvm_aio_aiodone(aio)
 {
 	struct uvm_aiobuf *abp = aio->pd_ptr;
 	struct vm_page *pgs[aio->npages];
-	struct uvm_object *uobj;
-	struct vnode *vp;
 	int s, i;
 
 	for (i = 0; i < aio->npages; i++) {
 		pgs[i] = uvm_pageratop(aio->kva + (i << PAGE_SHIFT));
 	}
 	uvm_pagermapout(aio->kva, aio->npages);
-
-	uobj = pgs[0]->uobject;
-	vp = (struct vnode *)uobj;
-
-	/* XXX why don't we need to do this? */
-#if 0
-	vp->v_numoutput--;
-	if (vp->v_flag & VBWAIT && vp->v_numoutput == 0) {
-		vp->v_flag &= ~VBWAIT;
-		wakeup(&vp->v_numoutput);
-	}
-	if (vp->v_numoutput < 0) {
-		panic("uvn_aiodone: neg numoutput vp %p", vp);
-	}
-#endif
-
-	uvm_pager_dropcluster(uobj, NULL, pgs, &aio->npages,
+	uvm_pager_dropcluster(pgs[0]->uobject, NULL, pgs, &aio->npages,
 			      PGO_PDFREECLUST, 0);
 
 	s = splbio();
