@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_utsname.h,v 1.3 1998/02/09 02:30:57 scottb Exp $	*/
+/* $NetBSD: ibcs2_mman.h,v 1.1 1998/02/09 02:30:50 scottb Exp $ */
 
 /*
- * Copyright (c) 1994, 1998 Scott Bartram
+ * Copyright (c) 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Bartram.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,30 +27,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_IBCS2_UTSNAME_H
-#define	_IBCS2_UTSNAME_H
+#ifndef _IBCS2_MMAN_H_
+#define _IBCS2_MMAN_H_
 
-struct ibcs2_utsname {
-	char	sysname[9];
-	char	nodename[9];
-	char	release[9];
-	char	version[9];
-	char	machine[9];
-};
-#define ibcs2_utsname_len	(sizeof(struct ibcs2_utsname))
+/*
+ * only the flags that are different from NetBSD are here
+ */
 
-struct scoutsname {
-	char	sysname[9];
-	char 	nodename[9];
-	char	release[16];
-	char	kid[20];
-	char	machine[9];
-	char	bustype[9];
-	char	serial[10];
-	u_short	origin;
-	u_short	oem;
-	char	nusers[9];
-	u_short	ncpu;
-};
+/* memcntl */
+#define IBCS2_MC_SYNC		0x0001
+#define IBCS2_MC_LOCK		0x0002
+#define IBCS2_MC_UNLOCK		0x0003
+#define IBCS2_MC_LOCKAS		0x0005
+#define IBCS2_MC_UNLOCKAS	0x0006
 
-#endif /* _IBCS2_UTSNAME_H */
+#endif /* !_IBCS2_MMAN_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109 1998/02/06 07:22:00 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.110 1998/02/09 02:30:42 scottb Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,9 +77,10 @@
 #endif
 
 #ifdef COMPAT_IBCS2
+#include <sys/exec_elf.h>
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
-extern struct emul emul_ibcs2;
+extern struct emul emul_ibcs2_coff, emul_ibcs2_elf;
 #endif
 #ifdef COMPAT_LINUX
 #include <sys/exec.h>
@@ -613,7 +614,7 @@ syscall(frame)
 	callp = p->p_emul->e_sysent;
 
 #ifdef COMPAT_IBCS2
-	if (p->p_emul == &emul_ibcs2)
+	if (p->p_emul == &emul_ibcs2_coff || p->p_emul == &emul_ibcs2_elf)
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
 #endif

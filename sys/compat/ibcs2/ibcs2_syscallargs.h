@@ -1,5 +1,3 @@
-/*	$NetBSD: ibcs2_syscallargs.h,v 1.12 1998/01/09 06:21:29 thorpej Exp $	*/
-
 /*
  * System call argument lists.
  *
@@ -273,6 +271,38 @@ struct ibcs2_sys_readlink_args {
 	syscallarg(int) count;
 };
 
+struct ibcs2_sys_mmap_args {
+	syscallarg(ibcs2_caddr_t) addr;
+	syscallarg(ibcs2_size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(ibcs2_off_t) off;
+};
+
+struct ibcs2_sys_memcntl_args {
+	syscallarg(ibcs2_caddr_t) addr;
+	syscallarg(ibcs2_size_t) len;
+	syscallarg(int) cmd;
+	syscallarg(ibcs2_caddr_t) arg;
+	syscallarg(int) attr;
+	syscallarg(int) mask;
+};
+
+struct ibcs2_sys_gettimeofday_args {
+	syscallarg(struct timeval *) tp;
+};
+
+struct ibcs2_sys_settimeofday_args {
+	syscallarg(struct timeval *) tp;
+};
+
+struct xenix_sys_locking_args {
+	syscallarg(int) fd;
+	syscallarg(int) blk;
+	syscallarg(int) size;
+};
+
 struct xenix_sys_rdchk_args {
 	syscallarg(int) fd;
 };
@@ -287,7 +317,7 @@ struct xenix_sys_ftime_args {
 };
 
 struct xenix_sys_nap_args {
-	syscallarg(int) millisec;
+	syscallarg(long) millisec;
 };
 
 struct ibcs2_sys_eaccess_args {
@@ -342,6 +372,11 @@ struct ibcs2_sys_fpathconf_args {
 struct ibcs2_sys_rename_args {
 	syscallarg(char *) from;
 	syscallarg(char *) to;
+};
+
+struct ibcs2_sys_scoinfo_args {
+	syscallarg(struct scoutsname *) bp;
+	syscallarg(int) len;
 };
 
 /*
@@ -408,6 +443,7 @@ int	ibcs2_sys_semsys	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_ioctl	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_uadmin	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_utssys	__P((struct proc *, void *, register_t *));
+int	sys_fsync	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_execve	__P((struct proc *, void *, register_t *));
 int	sys_umask	__P((struct proc *, void *, register_t *));
 int	sys_chroot	__P((struct proc *, void *, register_t *));
@@ -423,7 +459,20 @@ int	sys_poll	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_symlink	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_lstat	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_readlink	__P((struct proc *, void *, register_t *));
-int	sys_sigreturn	__P((struct proc *, void *, register_t *));
+int	sys_fchmod	__P((struct proc *, void *, register_t *));
+int	sys_fchown	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_mmap	__P((struct proc *, void *, register_t *));
+int	sys_mprotect	__P((struct proc *, void *, register_t *));
+int	sys_munmap	__P((struct proc *, void *, register_t *));
+int	sys_fchdir	__P((struct proc *, void *, register_t *));
+int	sys_readv	__P((struct proc *, void *, register_t *));
+int	sys_writev	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_memcntl	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_gettimeofday	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_settimeofday	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_truncate	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_ftruncate	__P((struct proc *, void *, register_t *));
+int	xenix_sys_locking	__P((struct proc *, void *, register_t *));
 int	xenix_sys_rdchk	__P((struct proc *, void *, register_t *));
 int	xenix_sys_chsize	__P((struct proc *, void *, register_t *));
 int	xenix_sys_ftime	__P((struct proc *, void *, register_t *));
@@ -440,3 +489,4 @@ int	ibcs2_sys_sysconf	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_pathconf	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_fpathconf	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_rename	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_scoinfo	__P((struct proc *, void *, register_t *));
