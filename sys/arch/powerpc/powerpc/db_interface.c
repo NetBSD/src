@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 2001/12/24 16:57:40 dbj Exp $ */
+/*	$NetBSD: db_interface.c,v 1.15 2001/12/27 10:32:23 dbj Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -60,15 +60,7 @@ ddb_trap_glue(frame)
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 
-		memcpy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
-		DDB_REGS->iar = frame->srr0;
-		DDB_REGS->msr = frame->srr1;
-
-		db_trap(T_BREAKPOINT, 0);
-
-		memcpy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
-
-		return 1;
+		return kdb_trap(frame->exc, frame);
 	}
 	return 0;
 }
@@ -110,7 +102,7 @@ kdb_trap(type, v)
 
 	db_active++;
 	cnpollc(1);
-	db_trap(T_BREAKPOINT, 0);
+	db_trap(type, 0);
 	cnpollc(0);
 	db_active--;
 
