@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.2 2003/10/25 21:33:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -60,7 +60,7 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 {
 	const uint8_t *cmd = vcmd;
 	uint8_t *buf = vbuf;
-	int error;
+	int error = 0;
 	size_t len;
 
 	/*
