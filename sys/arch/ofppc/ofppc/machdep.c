@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1999/05/05 00:03:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1999/05/20 08:21:46 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,6 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#include "opt_sysv.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>
@@ -89,8 +88,6 @@ char *bootpath;
 
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
-
-caddr_t allocsys __P((caddr_t));
 
 static int fake_spl __P((void));
 static int fake_splx __P((int));
@@ -373,6 +370,7 @@ cpu_startup()
 	caddr_t v;
 	paddr_t minaddr, maxaddr;
 	int base, residual;
+	char pbuf[9];
 
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
@@ -391,16 +389,17 @@ cpu_startup()
 	printf("%s", version);
 	identifycpu();
 
-	printf("real mem = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	sz = (int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -474,9 +473,10 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	printf("avail memory = %d\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	       nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
@@ -502,52 +502,6 @@ cpu_startup()
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
-}
-
-/*
- * Allocate space for system data structures.
- */
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-#define	valloc(name, type, num) \
-	v = (caddr_t)(((name) = (type *)v) + (num))
-
-	valloc(callout, struct callout, ncallout);
-#ifdef	SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef	SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof (int));
-#endif
-#ifdef	SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Decide on buffer space to use.
-	 */
-	if (bufpages == 0)
-		bufpages = (physmem / 20) / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;
-		if (nswbuf > 256)
-			nswbuf = 256;
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return (v);
 }
 
 /*

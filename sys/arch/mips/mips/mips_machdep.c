@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.52 1999/05/18 01:36:52 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.53 1999/05/20 08:21:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.52 1999/05/18 01:36:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.53 1999/05/20 08:21:45 lukem Exp $");
 
-#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
-#include "opt_sysv.h"
 #include "opt_cputype.h"
 
 #include <sys/param.h>
@@ -78,15 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.52 1999/05/18 01:36:52 nisimura E
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 
@@ -117,24 +106,6 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
   NULL, NULL
 };
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifndef NBUF
-#define NBUF		0
-#endif
-#ifndef BUFPAGES
-#define BUFPAGES	0
-#endif
-#ifndef BUFCACHE
-#define BUFCACHE	10
-#endif
-
-int	nswbuf = 0;
-int	nbuf = NBUF;
-int	bufpages = BUFPAGES;	/* optional hardwired count */
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
 int cpu_mhz;
 int mips_num_tlb_entries;
@@ -1129,64 +1100,6 @@ dumpsys()
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
-}
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way, we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and the call
- * allocsys() again with the correct base virtual address.
- */
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-
-#define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcache % of memory for buffer space.  Ensure a
-	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
-	 * headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / CLSIZE * bufcache / 100;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return (v);
-#undef valloc
 }
 
 void

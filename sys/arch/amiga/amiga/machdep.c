@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1999/04/26 22:46:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 1999/05/20 08:21:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,14 +42,12 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,15 +73,6 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
 #include <net/netisr.h>
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm.h>
@@ -174,20 +163,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
 caddr_t	msgbufaddr;
 vm_offset_t msgbufpa;
 
@@ -258,8 +233,9 @@ void
 cpu_startup()
 {
 	register unsigned i;
-	register caddr_t v, firstaddr;
+	caddr_t v;
 	int base, residual;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -289,89 +265,17 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real  mem = %d (%d pages)\n", ctob(physmem), ctob(physmem)/NBPG);
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-/*	valloc(cfree, struct cblock, nclist); */
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	/*
-	 * Determine how many buffers to allocate. We allocate
-	 * the BSD standard of use 10% of memory for the first 2 Meg,
-	 * 5% of remaining. Insure a minimum of 16 buffers.
-	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
-	 */
-  	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
-	}
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf * 3 / 4) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t)uvm_km_zalloc(kernel_map,
-		    round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	size = (vm_size_t)allocsys(NULL, NULL);
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if (allocsys(v, NULL) - v != size)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -451,10 +355,10 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/NBPG);
-	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 	
 	/*
 	 * display memory configuration passed from loadbsd
