@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.13 1997/07/06 05:29:13 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.14 1997/07/08 05:54:02 mrg Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -110,9 +110,9 @@ struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
 int	fr_flags = IPF_LOGGING, fr_active = 0;
 #if defined(IPFILTER_DEFAULT_BLOCK)
-int	fr_pass = FR_NOMATCH|FR_BLOCK;
+int	fr_pass = FR_NOMATCH;
 #else
-int	fr_pass = (IPF_DEFAULT_PASS|FR_NOMATCH);
+int	fr_pass = FR_PASS;
 #endif
 
 fr_info_t	frcache[2];
