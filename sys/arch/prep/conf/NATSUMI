@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.8 2001/11/20 12:56:37 lukem Exp $
+#	$NetBSD: NATSUMI,v 1.9 2001/11/21 22:40:45 soren Exp $
 #
 #	for development
 #
@@ -155,15 +155,6 @@ options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 #obio0	at mainbus0
 
 # Console Devices
-
-# ISA console.
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
