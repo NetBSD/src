@@ -1,4 +1,4 @@
-.\"	$NetBSD: uda.4,v 1.4 1996/07/11 18:15:29 ragge Exp $
+.\"	$NetBSD: mtc.4,v 1.1 1996/07/11 18:15:26 ragge Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -34,27 +34,25 @@
 .\"     from: @(#)uda.4	6.6 (Berkeley) 3/27/91
 .\"
 .Dd March 27, 1991
-.Dt UDA 4 vax
+.Dt MTC 4 vax
 .Os BSD 4
 .Sh NAME
-.Nm uda
+.Nm mtc
 .Nd
 .Tn Unibus
-MSCP disk controller driver
+MSCP tape controller driver
 .Sh SYNOPSIS
-.Cd "uda0 at uba? csr 0172150"
-.Cd "uda1 at uba? csr 0160334"
-.Cd "mscpbus* at uda?"
+.Cd "mtc0 at uba? csr 0174500"
+.Cd "mscpbus* at mtc?"
 .Sh DESCRIPTION
 The 
 .Nm
 driver is for Unibus
-disk controllers that use MSCP. Among these controllers are:
+tape controllers that use MSCP. Among these controllers are:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It DEC UDA50 Unibus ctlr
-.It DEC KDA50 Q22 bus ctlr
-.It DEC RQDX3 Q22 bus ctlr
+.It DEC KLESI-U Unibus ctlr
+.It DEC TK50 Q22 bus ctlr
 .El
 .Pp
 The
@@ -72,9 +70,4 @@ for a detailed description of this protocol.
 .Sh HISTORY
 The
 .Nm
-driver appeared in
-.Bx 4.2 .
-.br
-A new
-.Nm
-driver approach showed up in NetBSD 1.2.
+driver appeared in NetBSD 1.2.
