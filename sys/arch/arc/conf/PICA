@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.38 2003/09/27 10:07:57 tsutsui Exp $
+#	$NetBSD: PICA,v 1.39 2003/10/21 16:28:20 tsutsui Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -150,7 +150,6 @@ fdc0		at jazzio?
 fd*		at fdc? drive ?
 
 asc0		at jazzio?			# NCR53C9x SCSI
-scsibus* 	at asc?
 
 #### ISA bus devices
 
@@ -163,6 +162,9 @@ isa*		at jazzisabr?
 
 com2		at isa? port 0x3f8 irq 4
 com3		at isa? port 0x2f8 irq 3
+
+# SCSI bus support
+scsibus*	at scsi?
 
 #### SCSI bus devices
 

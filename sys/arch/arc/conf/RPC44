@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.5 2003/10/08 11:04:56 bouyer Exp $
+# $NetBSD: RPC44,v 1.6 2003/10/21 16:28:20 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5 $"
+#ident		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -182,25 +182,6 @@ com3		at isa? port 0x2e8 irq 3
 wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1		at isa? port 0x170 irq 15 flags 0x00
 #wdc*		at isapnp?
-atabus* 	at wdc? channel ?
-
-# IDE drives
-# Flags are used only with controllers that support DMA operations
-# and mode settings (e.g. some pciide controllers)
-# The lowest order four bits (rightmost digit) of the flags define the PIO
-# mode to use, the next set of four bits the DMA mode and the third set the
-# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
-# to use, and the last bit must be 1 for this setting to be used.
-# For DMA and UDMA, 0xf (1111) means 'disable'.
-# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
-# (0xc=1100, 0xa=1010, 0xf=1111)
-# 0x0000 means "use whatever the drive claims to support".
-# XXX - should be configured
-wd*		at atabus? drive ? flags 0x0000
-
-# ATAPI bus support
-# XXX - should be configured
-#atapibus*	at atabus?
 
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
@@ -217,7 +198,9 @@ we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 
 # XXX - should be configured
 #btl0		at isa? port 0x330 irq ? drq ?
-#scsibus*	at btl?
+
+#### SCSI bus support
+#scsibus*	at scsi?
 
 #### SCSI bus devices
 
@@ -227,6 +210,27 @@ we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #ch*		at scsibus? target ? lun ?
 #ss*		at scsibus? target ? lun ?
 #uk*		at scsibus? target ? lun ?
+
+# ATA (IDE) bus support
+atabus* 	at wdc? channel ?
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+# XXX - should be configured
+wd*		at atabus? drive ? flags 0x0000
+
+#### ATAPI bus support
+# XXX - should be configured
+#atapibus*	at atabus?
 
 #### ATAPI bus devices
 

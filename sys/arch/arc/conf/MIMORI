@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.23 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: MIMORI,v 1.24 2003/10/21 16:28:20 tsutsui Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -153,7 +153,6 @@ fdc0		at jazzio?
 fd*		at fdc? drive ?
 
 oosiop* 	at jazzio?			# NCR53C700 SCSI
-scsibus* 	at oosiop?
 
 #### PCI bus devices
 
@@ -167,48 +166,30 @@ pci*		at necpb?
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-scsibus*	at ahc?
-
 #siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-#scsibus* 	at siop?
 
-ex*		at pci? dev ? function ?	# 3Com 90x[BC]
-fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
-le*		at pci? dev ? function ?	# PCnet-PCI
-ne*		at pci? dev ? function ?	# NE2000-compatible
-tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
-
-# IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
-aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+#aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+#piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
-siside* 	at pci? dev ? function ?	# SiS IDE controllers
+#siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus* 	at pciide? channel ?
-atabus* 	at acardide? channel ?
-atabus* 	at aceride? channel ?
-atabus* 	at cmdide? channel ?
-atabus* 	at cypide? channel ?
-atabus* 	at hptide? channel ?
-atabus* 	at optiide? channel ?
-atabus* 	at piixide? channel ?
-atabus* 	at pdcide? channel ?
-atabus* 	at siside? channel ?
-atabus* 	at slide? channel ?
-atabus* 	at viaide? channel ?
-wd*		at atabus? drive ? flags 0x0000
-atapibus*	at atabus?
+#viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
+fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
+le*		at pci? dev ? function ?	# PCnet-PCI
+ne*		at pci? dev ? function ?	# NE2000-compatible
+tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 #### MII/PHY support
 
@@ -225,6 +206,9 @@ tlphy*		at mii? phy ?		# ThunderLAN PHYs
 tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
+# SCSI bus supoort
+scsibus*	at scsi?
+
 #### SCSI bus devices
 
 sd*		at scsibus? target ? lun ?
@@ -233,6 +217,15 @@ cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
+
+# ATA (IDE) bus support
+atabus* 	at ata?
+
+# IDE drives
+wd*		at atabus? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus*	at atapi?
 
 #### ATAPI bus devices
 
