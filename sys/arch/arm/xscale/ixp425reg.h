@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.17 2003/12/08 16:14:16 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.18 2004/02/13 15:49:02 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -222,14 +222,14 @@
  */
 #define	IXP425_INT_bit31	31
 #define	IXP425_INT_bit30	30
-#define	IXP425_INT_bit29	29
-#define	IXP425_INT_bit22	22
+#define	IXP425_INT_bit14	14
+#define	IXP425_INT_bit11	11
 
 #define	IXP425_INT_HWMASK	(0xffffffff & \
 					~((1 << IXP425_INT_bit31) | \
 					  (1 << IXP425_INT_bit30) | \
-					  (1 << IXP425_INT_bit29) | \
-					  (1 << IXP425_INT_bit22)))
+					  (1 << IXP425_INT_bit14) | \
+					  (1 << IXP425_INT_bit11)))
 #define	IXP425_INT_GPIOMASK	(0x3ff800c0u)
 
 /*

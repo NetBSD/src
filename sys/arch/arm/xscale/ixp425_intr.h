@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.3 2004/01/12 10:25:06 scw Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.4 2004/02/13 15:49:02 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ ixp425_set_intrmask(void)
 
 #define INT_SWMASK						\
 	((1U << IXP425_INT_bit31) | (1U << IXP425_INT_bit30) |	\
-	 (1U << IXP425_INT_bit29) | (1U << IXP425_INT_bit22))
+	 (1U << IXP425_INT_bit14) | (1U << IXP425_INT_bit11))
 
 static __inline void __attribute__((__unused__))
 ixp425_splx(int new)
