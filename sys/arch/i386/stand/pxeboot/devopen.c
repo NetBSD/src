@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2003/11/05 04:18:26 mycroft Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2003/11/12 18:44:08 drochner Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -92,11 +92,20 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	f->f_dev = dp;
 
-	/* If the DHCP server provided a file name, use it. */
-	if (!fname && bootfile[0] != '\0')
+	/*
+	 * If the DHCP server provided a file name:
+	 * - If it contains a ":", assume it points to a NetBSD kernel.
+	 * - If not, assume that the DHCP server was not able to pass
+	 *   a separate filename for the kernel. (The name probably
+	 *   was the same as used to load "pxeboot".) Ignore it and
+	 *   use the default in this case.
+	 * So we cater to simple DHCP servers while being able to
+	 * use the power of conditional behaviour in modern ones.
+	 */
+	if (strchr(bootfile, ':'))
 		fname = bootfile;
 
-	filename = strchr(fname, ':');
+	filename = (fname ? strchr(fname, ':') : NULL);
 	if (filename != NULL) {
 		fsnamelen = (size_t)((const char *)filename - fname);
 		for (i = 0; i < npxeboot_fstab; i++) {
