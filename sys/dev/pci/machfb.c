@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.20 2005/01/17 22:52:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.20 2005/01/17 22:52:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $");
 
 #ifdef __sparc__
 #include <machine/promlib.h>
+#endif
+
+#ifdef __powerpc__
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
 #endif
 
 #include <dev/ic/videomode.h>
@@ -67,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $");
 
 struct vga_bar {
 	bus_addr_t vb_base;
+	pcireg_t vb_busaddr;
 	bus_size_t vb_size;
 	pcireg_t vb_type;
 	int vb_flags;
@@ -82,12 +88,14 @@ struct mach64_softc {
 
 #define sc_aperbase 	sc_bars[0].vb_base
 #define sc_apersize	sc_bars[0].vb_size
+#define sc_aperphys 	sc_bars[0].vb_busaddr
 
 #define sc_iobase	sc_bars[1].vb_base
 #define sc_iosize	sc_bars[1].vb_size
 
 #define sc_regbase	sc_bars[2].vb_base
 #define sc_regsize	sc_bars[2].vb_size
+#define sc_regphys	sc_bars[2].vb_busaddr
 
 	bus_space_tag_t sc_regt;
 	bus_space_tag_t sc_memt;
@@ -212,7 +220,7 @@ struct videomode mach64_modes[] = {
 };
 
 /* Macallan: let the terminal emulator program the palette, it should be in the softc anyway */
-#if 1
+#if 0
 /* FIXME values are wrong! */
 const u_char mach64_cmap[16 * 3] = {
 	0x00, 0x00, 0x00, /* black */
@@ -506,6 +514,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		(void)pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, reg,
 		    sc->sc_bars[bar].vb_type, &sc->sc_bars[bar].vb_base,
 		    &sc->sc_bars[bar].vb_size, &sc->sc_bars[bar].vb_flags);
+		sc->sc_bars[bar].vb_busaddr=pci_conf_read(sc->sc_pc, sc->sc_pcitag, reg)&0xfffffff0;
 	}
 	sc->sc_memt = pa->pa_memt;
 
@@ -513,8 +522,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: %d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
 	    sc->sc_dev.dv_xname, (u_int)(sc->sc_apersize / (1024 * 1024)),
-	    (u_int)sc->sc_aperbase, (u_int)(sc->sc_regsize / 1024), 
-	    (u_int)sc->sc_regbase);
+	    (u_int)sc->sc_aperphys, (u_int)(sc->sc_regsize / 1024), 
+	    (u_int)sc->sc_regphys);
 
 	if (mach64_chip_id == PCI_PRODUCT_ATI_MACH64_CT ||
 	    ((mach64_chip_id == PCI_PRODUCT_ATI_MACH64_VT || 
@@ -561,7 +570,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	console = mach64_is_console(pa);
 
-#ifdef __sparc__
+#if defined(__sparc__) || defined(__powerpc__)
 	if (console) {
 		mach64_get_mode(sc, &default_mode);
 		setmode = 0;
@@ -1303,6 +1312,17 @@ mach64_is_console(struct pci_attach_args *pa)
 		return 0;
 
 	return (node == prom_instance_to_package(prom_stdout()));
+#elif defined(__powerpc__)
+	/* check if we're the /chosen console device */
+	int chosen, stdout, node, us;
+	us=pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "stdout", &stdout, 4);
+	node = OF_instance_to_package(stdout);
+	printf("us  : %08x\n",us);	
+	printf("inst: %08x\n",stdout);
+	printf("node: %08x\n",node);
+	return((us==node)||(us==stdout));
 #else
 	return 1;
 #endif
@@ -1531,11 +1551,24 @@ mach64_mmap(void *v, off_t offset, int prot)
 		pa = bus_space_mmap(sc->sc_memt,sc->sc_aperbase+offset,0,prot,BUS_SPACE_MAP_LINEAR);	
 		return pa;
 	}
+#if 0	
 	/* allow XFree86 to mmap() PCI space as if the BARs contain physical addresses */
 	if((offset>0x80000000) && (offset<=0xffffffff)) {
 		pa = bus_space_mmap(sc->sc_memt,offset,0,prot,BUS_SPACE_MAP_LINEAR);	
 		return pa;
 	}
+#endif	
+
+	if((offset>=sc->sc_aperphys) && (offset<(sc->sc_aperphys+sc->sc_apersize))) {
+		pa = bus_space_mmap(sc->sc_memt,offset,0,prot,BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
+
+	if((offset>=sc->sc_regphys) && (offset<(sc->sc_regphys+sc->sc_regsize))) {
+		pa = bus_space_mmap(sc->sc_memt,offset,0,prot,BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
+
 	return -1;
 }
 
@@ -1550,10 +1583,15 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	mach64_init_screen(sc, scr, type, 0, defattrp, sc->active == NULL);
 	rasops_init(&scr->ri, mach64_console_screen.ri.ri_height / 16,
 	    mach64_console_screen.ri.ri_width / 8);
+	scr->ri.ri_hw=sc;
+	scr->ri.ri_ops.copyrows=mach64_copyrows;
+	scr->ri.ri_ops.eraserows=mach64_eraserows;
+	scr->ri.ri_ops.copycols=mach64_copycols;
+	scr->ri.ri_ops.erasecols=mach64_erasecols;
 
 	scr->mem = malloc(type->ncols * type->nrows * 2, M_DEVBUF,
 	     M_WAITOK);
-	mach64_eraserows(sc, 0, type->nrows, *defattrp);
+	mach64_eraserows(&scr->ri, 0, type->nrows, *defattrp);
 	if (sc->active == NULL) {
 		scr->active = 1;
 		sc->active = scr;
