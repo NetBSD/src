@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.687 2004/04/28 18:42:03 wiz Exp $
+# $NetBSD: mi,v 1.688 2004/04/29 19:42:30 jonathan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -770,6 +770,7 @@
 ./usr/share/man/cat4/gsip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/guspnp.0			man-sys-catman		.cat
+./usr/share/man/cat4/hifn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hcide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/apci.0		man-obsolete		obsolete
@@ -1203,6 +1204,7 @@
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uax.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsa.0			man-sys-catman		.cat
+./usr/share/man/cat4/ubsec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ucom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udav.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udp.0			man-sys-catman		.cat
@@ -2862,6 +2864,7 @@
 ./usr/share/man/man4/gus.4			man-sys-man		.man
 ./usr/share/man/man4/guspnp.4			man-sys-man		.man
 ./usr/share/man/man4/hcide.4			man-sys-man		.man
+./usr/share/man/man4/hifn.4			man-sys-man		.man
 ./usr/share/man/man4/hme.4			man-sys-man		.man
 ./usr/share/man/man4/hp300/apci.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/autoconf.4		man-sys-man		.man
@@ -3295,6 +3298,7 @@
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man
 ./usr/share/man/man4/uax.4			man-sys-man		.man
 ./usr/share/man/man4/ubsa.4			man-sys-man		.man
+./usr/share/man/man4/ubsec.4			man-sys-man		.man
 ./usr/share/man/man4/ucom.4			man-sys-man		.man
 ./usr/share/man/man4/udav.4			man-sys-man		.man
 ./usr/share/man/man4/udp.4			man-sys-man		.man
