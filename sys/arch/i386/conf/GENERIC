@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.548 2003/02/27 19:22:41 perseant Exp $
+# $NetBSD: GENERIC,v 1.549 2003/03/05 10:27:59 grant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.548 $"
+#ident 		"GENERIC-$Revision: 1.549 $"
 
 maxusers	32		# estimated number of users
 
@@ -256,7 +256,9 @@ cpu* at mainbus?
 # This option can be used to retrieve CPU and APIC information.
 # that I/O APICs can be used if ACPI is enabled below.
 # To use the I/O APIC(s), enable the ioapic line above.
-#options 	MPACPI
+#options 	MPBIOS		# configure CPUs and APICs using MPBIOS
+#options 	MPACPI		# configure CPUs and APICs using ACPI
+				# (acpi at mainbus must also be enabled)
 
 #acpi0 		at mainbus0
 #options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
