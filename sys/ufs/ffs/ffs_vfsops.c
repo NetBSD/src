@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.66 2000/06/16 00:30:15 matt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.67 2000/06/16 05:45:14 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -185,7 +185,7 @@ ffs_mount(mp, path, data, ndp, p)
 		return (error);
 
 #if !defined(SOFTDEP)
-	mp->mnt_flags &= ~MNT_SOFTDEP;
+	mp->mnt_flag &= ~MNT_SOFTDEP;
 #endif
 
 	/*
