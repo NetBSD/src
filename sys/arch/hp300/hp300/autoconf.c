@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 1997/04/01 03:12:06 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1997/04/14 02:28:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -83,9 +83,8 @@
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pte.h>
-
-#include <hp300/hp300/isr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -248,9 +247,6 @@ configure()
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
 
-	/* Initialize the interrupt system. */
-	isrinit();
-
 	/*
 	 * XXX Enable interrupts.  We have to do this now so that the
 	 * XXX HIL configures.
@@ -269,7 +265,7 @@ configure()
 		panic("no mainbus found");
 	(void)spl0();
 
-	isrprintlevels();
+	intr_printlevels();
 
 	cold = 0;
 }
