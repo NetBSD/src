@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: install.c,v 1.2 1997/09/27 00:09:23 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,13 +97,23 @@ void do_install(void)
 	if (nodist)
 		return;
 
-	/* Extract the distribution */
-	extract_dist ();
+	if (got_dist) {
+		/* Extract the distribution */
+		extract_dist ();
 
-	/* Configure the system */
-	
-	/* Install complete ... reboot */
-	msg_display (MSG_instcomplete);
-	process_menu (MENU_ok);
+		/* Configure the system */
+		
+		/* Clean up ... */
+		if (clean_dist_dir) {
+			run_prog ("/bin/rm -rf %s", dist_dir);
+		}
+		
+		/* Install complete ... reboot */
+		msg_display (MSG_instcomplete);
+		process_menu (MENU_ok);
+	} else {
+		msg_display (MSG_abortinst);
+		process_menu (MENU_ok);
+	}
 }
 
