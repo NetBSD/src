@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.32.4.2 2002/03/09 16:52:53 he Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.32.4.3 2002/03/11 22:23:51 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -1416,7 +1416,7 @@ tl_mediachange(ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
-		tl_init(ifp);
+		tl_init(ifp->if_softc);
 	return (0);
 }
 
