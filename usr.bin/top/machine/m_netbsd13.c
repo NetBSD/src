@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.9 1999/11/05 07:25:14 lukem Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.10 2000/04/13 08:34:40 mrg Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.9 1999/11/05 07:25:14 lukem Exp $
+ * $Id: m_netbsd13.c,v 1.10 2000/04/13 08:34:40 mrg Exp $
  */
 #define UVM
 
@@ -49,7 +49,12 @@
 #include <sys/file.h>
 #include <sys/time.h>
 
+/* NetBSD 1.4 has <sys/swap.h> */
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104000000
+#include <sys/swap.h>
+#else
 #include <vm/vm_swap.h>
+#endif
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
