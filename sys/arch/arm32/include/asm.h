@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1997/10/17 18:27:30 mark Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 1997/10/18 02:46:09 mark Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,15 @@
 #endif
 #define	_ASM_FUNC(x)	x
 
-#define _ENTRY(x)	.globl x; .type x,#function; x:
+/*
+ * gas/arm uses @ as a single comment character and thus cannot be used here
+ * Instead it recognised the # instead of an @ symbols in .type directives
+ * We define a couple of macros so that assembly code will not be dependant
+ * on one or the other.
+ */
+#define _ASM_TYPE_FUNCTION	#function
+#define _ASM_TYPE_OBJECT	#object
+#define _ENTRY(x)	.globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
 #define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
