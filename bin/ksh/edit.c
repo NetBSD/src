@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.12 2003/08/26 07:28:39 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.13 2003/09/11 10:24:57 jmmv Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.12 2003/08/26 07:28:39 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.13 2003/09/11 10:24:57 jmmv Exp $");
 #endif
 
 
@@ -1113,7 +1113,7 @@ x_escape(s, len, putbuf_func)
 	int rval=0;
 
 	for (add = 0, wlen = len; wlen - add > 0; add++) {
-		if (strchr("\\$(){}*&;|<>\"'`#", s[add]) || strchr(ifs, s[add])) {
+		if (strchr("\\$(){}*&;|<>\"'`#:", s[add]) || strchr(ifs, s[add])) {
 			if (putbuf_func(s, add) != 0) {
 				rval = -1;
 				break;
