@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.34 2002/05/12 23:16:53 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.35 2002/05/14 02:58:35 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2002/05/12 23:16:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2002/05/14 02:58:35 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2002/05/12 23:16:53 matt Exp $
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
 
