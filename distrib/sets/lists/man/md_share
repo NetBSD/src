@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.83 2000/03/07 20:55:06 veego Exp $
+# $NetBSD: md_share,v 1.84 2000/03/14 09:06:51 shin Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -250,6 +250,8 @@
 ./usr/share/man/cat8/amiga/binpatch.0
 ./usr/share/man/cat8/amiga/installboot.0
 ./usr/share/man/cat8/amiga/makedev.0
+./usr/share/man/cat8/arc/MAKEDEV.0
+./usr/share/man/cat8/arc/makedev.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/atari/MAKEDEV.0
@@ -293,6 +295,7 @@
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme68k/makedev.0
 ./usr/share/man/cat8/next68k/MAKEDEV.0
+./usr/share/man/cat8/next68k/boot.0
 ./usr/share/man/cat8/next68k/makedev.0
 ./usr/share/man/cat8/pc532/MAKEDEV.0
 ./usr/share/man/cat8/pc532/bim.0
@@ -585,6 +588,8 @@
 ./usr/share/man/man8/amiga/binpatch.8
 ./usr/share/man/man8/amiga/installboot.8
 ./usr/share/man/man8/amiga/makedev.8
+./usr/share/man/man8/arc/MAKEDEV.8
+./usr/share/man/man8/arc/makedev.8
 ./usr/share/man/man8/arm32/MAKEDEV.8
 ./usr/share/man/man8/arm32/makedev.8
 ./usr/share/man/man8/atari/MAKEDEV.8
@@ -628,6 +633,7 @@
 ./usr/share/man/man8/mvme68k/installboot.8
 ./usr/share/man/man8/mvme68k/makedev.8
 ./usr/share/man/man8/next68k/MAKEDEV.8
+./usr/share/man/man8/next68k/boot.8
 ./usr/share/man/man8/next68k/makedev.8
 ./usr/share/man/man8/pc532/MAKEDEV.8
 ./usr/share/man/man8/pc532/bim.8
