@@ -1,5 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $ */
-/*	$NetBSD: sys_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $	*/
+/* $NetBSD: sys_machdep.c,v 1.2 2000/01/11 08:24:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2000/01/11 08:24:14 nisimura Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -59,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
-#include <m68k/cacheops.h>
+#include <m68k/cacheops_30.h>
+#include <m68k/cacheops_40.h>
 
 #ifdef TRACE
 int	nvualarm;
@@ -151,11 +151,11 @@ cachectl1(req, addr, len, p)
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
 		int inc = 0, doall = 0;
-		paddr_t pa = 0
+		paddr_t pa = 0;
 		vaddr_t end;
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 
 		if (!doall) {
@@ -184,35 +184,35 @@ cachectl1(req, addr, len, p)
 			case CC_EXTPURGE|CC_IPURGE:
 			case CC_IPURGE:
 				if (doall) {
-					DCFA();
-					ICPA();
+					DCFA_40();
+					ICPA_40();
 				} else if (inc == 16) {
-					DCFL(pa);
-					ICPL(pa);
+					DCFL_40(pa);
+					ICPL_40(pa);
 				} else if (inc == NBPG) {
-					DCFP(pa);
-					ICPP(pa);
+					DCFP_40(pa);
+					ICPP_40(pa);
 				}
 				break;
 			
 			case CC_EXTPURGE|CC_PURGE:
 			case CC_PURGE:
 				if (doall)
-					DCFA();	/* note: flush not purge */
+					DCFA_40(); /* note: flush not purge */
 				else if (inc == 16)
-					DCPL(pa);
+					DCPL_40(pa);
 				else if (inc == NBPG)
-					DCPP(pa);
+					DCPP_40(pa);
 				break;
 
 			case CC_EXTPURGE|CC_FLUSH:
 			case CC_FLUSH:
 				if (doall)
-					DCFA();
+					DCFA_40();
 				else if (inc == 16)
-					DCFL(pa);
+					DCFL_40(pa);
 				else if (inc == NBPG)
-					DCFP(pa);
+					DCFP_40(pa);
 				break;
 				
 			default:
@@ -227,6 +227,10 @@ cachectl1(req, addr, len, p)
 		return(error);
 	}
 #endif
+/* see descriptions in <m68k/include/cacheops_30.h> */
+#define	DCIU()
+#define	DCIA()
+#define	ICIA() ICIA_30()
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
@@ -279,11 +283,11 @@ dma_cachectl(addr, len)
 				pa = kvtop(addr);
 			}
 			if (inc == 16) {
-				DCFL(pa);
-				ICPL(pa);
+				DCFL_40(pa);
+				ICPL_40(pa);
 			} else {
-				DCFP(pa);
-				ICPP(pa);
+				DCFP_40(pa);
+				ICPP_40(pa);
 			}
 			pa += inc;
 			addr += inc;
