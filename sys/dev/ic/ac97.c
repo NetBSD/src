@@ -1,8 +1,8 @@
-/*      $NetBSD: ac97.c,v 1.11.2.1 2000/09/03 22:47:53 soren Exp $ */
-/*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
+/*      $NetBSD: ac97.c,v 1.11.2.2 2001/05/03 20:59:27 he Exp $ */
+/*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
- * Copyright (c) 1999 Constantine Sapuntzakis
+ * Copyright (c) 1999, 2000 Constantine Sapuntzakis
  *
  * Author:        Constantine Sapuntzakis <csapuntz@stanford.edu>
  *
@@ -14,18 +14,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY CONSTANTINE SAPUNTZAKIS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE
  */
 
 /* Partially inspired by FreeBSD's sys/dev/pcm/ac97.c. It came with
@@ -71,24 +74,24 @@
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
-static struct audio_mixer_enum ac97_on_off = { 2,
+static const struct audio_mixer_enum ac97_on_off = { 2,
 					       { { { AudioNoff } , 0 },
 					         { { AudioNon }  , 1 } }};
 
 
-static struct audio_mixer_enum ac97_mic_select = { 2,
+static const struct audio_mixer_enum ac97_mic_select = { 2,
 					       { { { AudioNmicrophone "0" }, 
 						   0 },
 					         { { AudioNmicrophone "1" }, 
 						   1 } }};
 
-static struct audio_mixer_enum ac97_mono_select = { 2,
+static const struct audio_mixer_enum ac97_mono_select = { 2,
 					       { { { AudioNmixerout },
 						   0 },
 					         { { AudioNmicrophone }, 
 						   1 } }};
 
-static struct audio_mixer_enum ac97_source = { 8,
+static const struct audio_mixer_enum ac97_source = { 8,
 					       { { { AudioNmicrophone } , 0 },
 						 { { AudioNcd }, 1 },
 						 { { "video" }, 2 },
@@ -98,25 +101,30 @@ static struct audio_mixer_enum ac97_source = { 8,
 						 { { AudioNmixerout AudioNmono }, 6 },
 						 { { "phone" }, 7 }}};
 
-static struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
+/*
+ * Due to different values for each source that uses these structures, 
+ * the ac97_query_devinfo function sets delta in mixer_devinfo_t using
+ * ac97_source_info.bits.
+ */
+static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
 						       2 };
 
-
-static struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
+static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
 						     1 };
 
 #define WRAP(a)  &a, sizeof(a)
 
-struct ac97_source_info {
-	char *class;
-	char *device;
-	char *qualifier;
+const struct ac97_source_info {
+	const char *class;
+	const char *device;
+	const char *qualifier;
 	int  type;
 
-	void *info;
+	const void *info;
 	int  info_size;
 
 	u_int8_t  reg;
+	u_int16_t default_value;
 	u_int8_t  bits:3;
 	u_int8_t  ofs:4;
 	u_int8_t  mute:1;
@@ -135,106 +143,106 @@ struct ac97_source_info {
 	/* Stereo master volume*/
 	{ AudioCoutputs,     AudioNmaster,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo), 
-	  AC97_REG_MASTER_VOLUME, 5, 0, 1,
+	  AC97_REG_MASTER_VOLUME, 0x8000, 5, 0, 1,
 	},
 	/* Mono volume */
 	{ AudioCoutputs,       AudioNmono,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono),
-	  AC97_REG_MASTER_VOLUME_MONO, 6, 0, 1,
+	  AC97_REG_MASTER_VOLUME_MONO, 0x8000, 6, 0, 1,
 	},
 	{ AudioCoutputs,       AudioNmono,AudioNsource,   AUDIO_MIXER_ENUM,
 	  WRAP(ac97_mono_select),
-	  AC97_REG_GP, 1, 9, 0,
+	  AC97_REG_GP, 0x0000, 1, 9, 0,
 	},
 	/* Headphone volume */
 	{ AudioCoutputs,  AudioNheadphone,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_HEADPHONE_VOLUME, 6, 0, 1,
+	  AC97_REG_HEADPHONE_VOLUME, 0x8000, 6, 0, 1, 
 	},
 	/* Tone */
 	{ AudioCoutputs,           "tone",        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_MASTER_TONE, 4, 0, 0,
+	  AC97_REG_MASTER_TONE, 0x0f0f, 4, 0, 0,
 	},
 	/* PC Beep Volume */
 	{ AudioCinputs,     AudioNspeaker,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_PCBEEP_VOLUME, 4, 1, 1,
+	  AC97_REG_PCBEEP_VOLUME, 0x0000, 4, 1, 1,
 	},
 	/* Phone */
 	{ AudioCinputs,           "phone",        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_PHONE_VOLUME, 5, 0, 1,
+	  AC97_REG_PHONE_VOLUME, 0x8008, 5, 0, 1,
 	},
 	/* Mic Volume */
 	{ AudioCinputs,  AudioNmicrophone,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_MIC_VOLUME, 5, 0, 1,
+	  AC97_REG_MIC_VOLUME, 0x8008, 5, 0, 1,
 	},
 	{ AudioCinputs,  AudioNmicrophone, AudioNpreamp,   AUDIO_MIXER_ENUM,
 	  WRAP(ac97_on_off),
-	  AC97_REG_MIC_VOLUME, 1, 6, 0,
+	  AC97_REG_MIC_VOLUME, 0x8008, 1, 6, 0,
 	},
 	{ AudioCinputs,  AudioNmicrophone, AudioNsource,   AUDIO_MIXER_ENUM,
 	  WRAP(ac97_mic_select),
-	  AC97_REG_GP, 1, 8, 0,
+	  AC97_REG_GP, 0x0000, 1, 8, 0,
 	},
 	/* Line in Volume */
 	{ AudioCinputs,        AudioNline,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_LINEIN_VOLUME, 5, 0, 1,
+	  AC97_REG_LINEIN_VOLUME, 0x8808, 5, 0, 1,
 	},
 	/* CD Volume */
 	{ AudioCinputs,          AudioNcd,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_CD_VOLUME, 5, 0, 1,
+	  AC97_REG_CD_VOLUME, 0x8808, 5, 0, 1,
 	},
 	/* Video Volume */
 	{ AudioCinputs,           "video",        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_VIDEO_VOLUME, 5, 0, 1,
+	  AC97_REG_VIDEO_VOLUME, 0x8808, 5, 0, 1,
 	},
 	/* AUX volume */
 	{ AudioCinputs,         AudioNaux,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_AUX_VOLUME, 5, 0, 1,
+	  AC97_REG_AUX_VOLUME, 0x8808, 5, 0, 1,
 	},
 	/* PCM out volume */
 	{ AudioCinputs,         AudioNdac,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_PCMOUT_VOLUME, 5, 0, 1,
+	  AC97_REG_PCMOUT_VOLUME, 0x8808, 5, 0, 1,
 	},
 	/* Record Source - some logic for this is hard coded - see below */
 	{ AudioCrecord,      AudioNsource,        NULL,    AUDIO_MIXER_ENUM,
 	  WRAP(ac97_source),
-	  AC97_REG_RECORD_SELECT, 3, 0, 0,
+	  AC97_REG_RECORD_SELECT, 0x0000, 3, 0, 0,
 	},
 	/* Record Gain */
 	{ AudioCrecord,      AudioNvolume,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_stereo),
-	  AC97_REG_RECORD_GAIN, 4, 0, 1,
+	  AC97_REG_RECORD_GAIN, 0x8000, 4, 0, 1,
 	},
 	/* Record Gain mic */
 	{ AudioCrecord,  AudioNmicrophone,        NULL,    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_RECORD_GAIN_MIC, 4, 0, 1, 1,
+	  AC97_REG_RECORD_GAIN_MIC, 0x8000, 4, 0, 1, 1,
 	},
 	/* */
 	{ AudioCoutputs,   AudioNloudness,        NULL,    AUDIO_MIXER_ENUM,
 	  WRAP(ac97_on_off),
-	  AC97_REG_GP, 1, 12, 0,
+	  AC97_REG_GP, 0x0000, 1, 12, 0,
 	},
 	{ AudioCoutputs,    AudioNspatial,        NULL,    AUDIO_MIXER_ENUM,
 	  WRAP(ac97_on_off),
-	  AC97_REG_GP, 1, 13, 0,
+	  AC97_REG_GP, 0x0000, 1, 13, 0,
 	},
 	{ AudioCoutputs,    AudioNspatial,    "center",    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_3D_CONTROL, 4, 8, 0, 1,
+	  AC97_REG_3D_CONTROL, 0x0000, 4, 8, 0, 1,
 	},
 	{ AudioCoutputs,    AudioNspatial,     "depth",    AUDIO_MIXER_VALUE,
 	  WRAP(ac97_volume_mono), 
-	  AC97_REG_3D_CONTROL, 4, 0, 0, 1,
+	  AC97_REG_3D_CONTROL, 0x0000, 4, 0, 0, 1,
 	},
 
 	/* Missing features: Simulated Stereo, POP, Loopback mode */
@@ -248,12 +256,16 @@ struct ac97_source_info {
  */
 
 struct ac97_softc {
-	struct ac97_codec_if codecIf;
+	struct ac97_codec_if codec_if;
 
-	struct ac97_host_if *hostIf;
+	struct ac97_host_if *host_if;
 
 	struct ac97_source_info source_info[2 * SOURCE_INFO_SIZE];
 	int num_source_info;
+
+	enum ac97_host_flags host_flags;
+
+	u_int16_t shadow_reg[128];
 };
 
 int ac97_mixer_get_port __P((struct ac97_codec_if *self, mixer_ctrl_t *cp));
@@ -261,33 +273,52 @@ int ac97_mixer_set_port __P((struct ac97_codec_if *self, mixer_ctrl_t *));
 int ac97_query_devinfo __P((struct ac97_codec_if *self, mixer_devinfo_t *));
 int ac97_get_portnum_by_name __P((struct ac97_codec_if *, char *, char *,
 				  char *));
+void ac97_restore_shadow __P((struct ac97_codec_if *self));
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port, 
 	ac97_mixer_set_port,
 	ac97_query_devinfo,
-	ac97_get_portnum_by_name
+	ac97_get_portnum_by_name,
+	ac97_restore_shadow,
 };
 
 static const struct ac97_codecid {
 	u_int32_t id;
 	const char *name;
 } ac97codecid[] = {
+	{ AC97_CODEC_ID('A', 'D', 'S', 64),	"Analog Devices AD1881" },
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
-#if 0
+	{ AC97_CODEC_ID('A', 'K', 'M', 2),	"Asahi Kasei AK4543"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
-#endif
 	{ AC97_CODEC_ID('C', 'R', 'Y', 3),	"Crystal CS4297"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 19),	"Crystal CS4297A"	},
-	{ 0x83847600,				"SigmaTel STAC????"	},
-	{ 0x83847604,				"SigmaTel STAC9701/3/4/5" },
-	{ 0x83847605,				"SigmaTel STAC9704" 	},
-	{ 0x83847608,				"SigmaTel STAC9708" 	},
-	{ 0x83847609,				"SigmaTel STAC9721" 	},
-	{ 0,					NULL			}
+	{ AC97_CODEC_ID('C', 'R', 'Y', 35),	"Crystal CS4298",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 43),	"Crystal CS4294",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 49),	"Crystal CS4299",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 51),	"Crystal CS4298A",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 52),	"Crystal CS4299",	},
+	{ AC97_CODEC_ID('N', 'S', 'C', 49), "National Semiconductor LM4549", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 34),	"Silicon Laboratory Si3036", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 35),	"Silicon Laboratory Si3038", },
+	{ AC97_CODEC_ID('T', 'R', 'A', 2),	"TriTech TR28022",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 3),	"TriTech TR28023",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 6),	"TriTech TR28026",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 8),	"TriTech TR28028",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
+	{ 0x83847600,				"SigmaTel STAC9700",	},
+	{ 0x83847604,				"SigmaTel STAC9701/3/4/5", },
+	{ 0x83847605,				"SigmaTel STAC9704", 	},
+	{ 0x83847608,				"SigmaTel STAC9708", 	},
+	{ 0x83847609,				"SigmaTel STAC9721/23",	},
+	{ 0x83847644,				"SigmaTel STAC9744/45",	},
+	{ 0x83847684,				"SigmaTel STAC9783/84",	},
+	{ 0,					NULL,			}
 };
 
-static char *ac97enhancement[] = {
+static const char * const ac97enhancement[] = {
 	"no 3D stereo",
 	"Analog Devices Phat Stereo",
 	"Creative"
@@ -322,7 +353,7 @@ static char *ac97enhancement[] = {
 	"Unknown 3D",
 };
 
-static char *ac97feature[] = {
+static const char * const ac97feature[] = {
 	"mic channel",
 	"reserved",
 	"tone",
@@ -336,8 +367,11 @@ static char *ac97feature[] = {
 };
 
 
-int ac97_str_equal __P((char *, char *));
+int ac97_str_equal __P((const char *, const char *));
 void ac97_setup_source_info __P((struct ac97_softc *));
+void ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
+void ac97_setup_defaults __P((struct ac97_softc *));
+int ac97_write __P((struct ac97_softc *, u_int8_t, u_int16_t));
 
 /* #define AC97_DEBUG 10 */
 
@@ -354,10 +388,70 @@ int	ac97debug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+void
+ac97_read(as, reg, val)
+	struct ac97_softc *as;
+	u_int8_t reg;
+	u_int16_t *val;
+{
+	int error;
+
+	if (as->host_flags & AC97_HOST_DONT_READ &&
+	    (reg != AC97_REG_VENDOR_ID1 && reg != AC97_REG_VENDOR_ID2 &&
+	     reg != AC97_REG_RESET)) {
+		*val = as->shadow_reg[reg >> 1];
+		return;
+	}
+
+	if ((error = as->host_if->read(as->host_if->arg, reg, val))) {
+		*val = as->shadow_reg[reg >> 1];
+	}
+}
+
+int
+ac97_write(as, reg, val)
+	struct ac97_softc *as;
+	u_int8_t reg;
+	u_int16_t val;
+{
+
+	as->shadow_reg[reg >> 1] = val;
+
+	return (as->host_if->write(as->host_if->arg, reg, val));
+}
+
+void
+ac97_setup_defaults(as)
+	struct ac97_softc *as;
+{
+	int idx;
+	const struct ac97_source_info *si;
+
+	memset(as->shadow_reg, 0, sizeof(as->shadow_reg));
+
+	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
+		si = &source_info[idx];
+		ac97_write(as, si->reg, si->default_value);
+	}
+}
+
+void
+ac97_restore_shadow(self)
+	struct ac97_codec_if *self;
+{
+	struct ac97_softc *as = (struct ac97_softc *) self;
+	int idx;
+	const struct ac97_source_info *si;
+
+	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
+		si = &source_info[idx];
+		ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
+	}
+}
 
 int
 ac97_str_equal(a, b)
-	char *a, *b;
+	const char *a, *b;
 {
 	return ((a == b) || (a && b && (!strcmp(a, b))));
 }
@@ -458,11 +552,11 @@ ac97_setup_source_info(as)
 }
 
 int 
-ac97_attach(hostIf)
-	struct ac97_host_if *hostIf;
+ac97_attach(host_if)
+	struct ac97_host_if *host_if;
 {
 	struct ac97_softc *as;
-	struct device *sc_dev = (struct device *)hostIf->arg;
+	struct device *sc_dev = (struct device *)host_if->arg;
 	int error, i, j;
 	u_int16_t id1, id2, caps;
 	u_int32_t id;
@@ -473,27 +567,28 @@ ac97_attach(hostIf)
 	if (as == NULL)
 		return (ENOMEM);
 
-	as->codecIf.vtbl = &ac97civ;
-	as->hostIf = hostIf;
+	memset(as, 0, sizeof(*as));
 
-	if ((error = hostIf->attach(hostIf->arg, &as->codecIf))) {
+	as->codec_if.vtbl = &ac97civ;
+	as->host_if = host_if;
+
+	if ((error = host_if->attach(host_if->arg, &as->codec_if))) {
 		free (as, M_DEVBUF);
 		return (error);
 	}
 
-	hostIf->reset(hostIf->arg);
+	host_if->reset(host_if->arg);
 
-	hostIf->write(hostIf->arg, AC97_REG_POWER, 0);
-	hostIf->write(hostIf->arg, AC97_REG_RESET, 0);
+	host_if->write(host_if->arg, AC97_REG_POWER, 0);
+	host_if->write(host_if->arg, AC97_REG_RESET, 0);
 
-	if ((error = hostIf->read(hostIf->arg, AC97_REG_VENDOR_ID1, &id1)))
-		return (error);
+	if (host_if->flags)
+		as->host_flags = host_if->flags(host_if->arg);
 
-	if ((error = hostIf->read(hostIf->arg, AC97_REG_VENDOR_ID2, &id2)))
-		return (error);
-
-	if ((error = hostIf->read(hostIf->arg, AC97_REG_RESET, &caps)))
-		return (error);
+	ac97_setup_defaults(as);
+	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
+	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
+	ac97_read(as, AC97_REG_RESET, &caps);
 
 	id = (id1 << 16) | id2;
 
@@ -535,22 +630,22 @@ ac97_attach(hostIf)
 
 	ctl.type = AUDIO_MIXER_ENUM;
 	ctl.un.ord = 0;  /* off */
-	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCoutputs,
+	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCoutputs,
 					   AudioNmaster, AudioNmute);
-	ac97_mixer_set_port(&as->codecIf, &ctl);
-	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCinputs,
+	ac97_mixer_set_port(&as->codec_if, &ctl);
+	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCinputs,
 					   AudioNdac, AudioNmute);
 
-	ac97_mixer_set_port(&as->codecIf, &ctl);
-	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCrecord,
+	ac97_mixer_set_port(&as->codec_if, &ctl);
+	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCrecord,
 					   AudioNvolume, AudioNmute);
-	ac97_mixer_set_port(&as->codecIf, &ctl);
+	ac97_mixer_set_port(&as->codec_if, &ctl);
 
-	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCrecord,
+	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCrecord,
 					   AudioNsource, NULL);
 	ctl.type = AUDIO_MIXER_ENUM;
 	ctl.un.ord = 0;
-	ac97_mixer_set_port(&as->codecIf, &ctl);
+	ac97_mixer_set_port(&as->codec_if, &ctl);
 
 	return (0);
 }
@@ -565,7 +660,7 @@ ac97_query_devinfo(codec_if, dip)
 
 	if (dip->index < as->num_source_info) {
 		struct ac97_source_info *si = &as->source_info[dip->index];
-		char *name;
+		const char *name;
 
 		dip->type = si->type;
 		dip->mixer_class = si->mixer_class;
@@ -585,6 +680,11 @@ ac97_query_devinfo(codec_if, dip)
 			strcpy(dip->label.name, name);
 
 		bcopy(si->info, &dip->un, si->info_size);
+
+		/* Set the delta for volume sources */
+		if (dip->type == AUDIO_MIXER_VALUE)
+			dip->un.v.delta = 1 << (8 - si->bits);
+
 		return (0);
 	}
 
@@ -610,9 +710,7 @@ ac97_mixer_set_port(codec_if, cp)
 	if (cp->type != si->type)
 		return (EINVAL);
 
-	error = as->hostIf->read(as->hostIf->arg, si->reg, &val);
-	if (error)
-		return (error);
+	ac97_read(as, si->reg, &val);
 
 	DPRINTFN(5, ("read(%x) = %x\n", si->reg, val));
 
@@ -631,7 +729,7 @@ ac97_mixer_set_port(codec_if, cp)
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
-		struct audio_mixer_value *value = si->info;
+		const struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||
@@ -641,8 +739,14 @@ ac97_mixer_set_port(codec_if, cp)
 		if (cp->un.value.num_channels == 1) {
 			l = r = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		} else {
-			l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			} else {	/* left/right is reversed here */
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			}
+
 		}
 
 		if (!si->polarity) {
@@ -666,7 +770,7 @@ ac97_mixer_set_port(codec_if, cp)
 	}
 
 	mask = mask << si->ofs;
-	error = as->hostIf->write(as->hostIf->arg, si->reg, (val & ~mask) | newval);
+	error = ac97_write(as, si->reg, (val & ~mask) | newval);
 	if (error)
 		return (error);
 
@@ -701,7 +805,6 @@ ac97_mixer_get_port(codec_if, cp)
 	struct ac97_source_info *si = &as->source_info[cp->dev];
 	u_int16_t mask;
 	u_int16_t val;
-	int error;
 
 	if (cp->dev < 0 || cp->dev >= as->num_source_info)
 		return (EINVAL);
@@ -709,9 +812,7 @@ ac97_mixer_get_port(codec_if, cp)
 	if (cp->type != si->type)
 		return (EINVAL);
 
-	error = as->hostIf->read(as->hostIf->arg, si->reg, &val);
-	if (error)
-		return (error);
+	ac97_read(as, si->reg, &val);
 
 	DPRINTFN(5, ("read(%x) = %x\n", si->reg, val));
 
@@ -724,7 +825,7 @@ ac97_mixer_get_port(codec_if, cp)
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
-		struct audio_mixer_value *value = si->info;
+		const struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
 		if ((cp->un.value.num_channels <= 0) ||
@@ -734,8 +835,13 @@ ac97_mixer_get_port(codec_if, cp)
 		if (value->num_channels == 1) {
 			l = r = (val >> si->ofs) & mask;
 		} else {
-			l = (val >> si->ofs) & mask;
-			r = (val >> (si->ofs + 8)) & mask;
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = (val >> si->ofs) & mask;
+				r = (val >> (si->ofs + 8)) & mask;
+			} else {	/* host has reversed channels */
+				r = (val >> si->ofs) & mask;
+				l = (val >> (si->ofs + 8)) & mask;
+			}
 		}
 
 		l = (l << (8 - si->bits));
