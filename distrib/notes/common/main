@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.72 2000/08/21 14:08:00 ad Exp $
+.\" $NetBSD: main,v 1.73 2000/08/22 05:10:10 wdk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -790,6 +790,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG Ta Sy cobalt
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG Ta Sy sgimips
+.It Ta Wayne Knowles Ta Mt wdk@NetBSD.ORG Ta Sy mipsco
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG Ta Sy sparc
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.ORG Ta Sy vax
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG Ta Sy x68k
