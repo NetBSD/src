@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.4 2000/07/16 19:18:07 jhawk Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.5 2000/07/23 05:21:40 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.3 2000/07/06 01:15:06 enami Exp 
+ *	NetBSD: pcidevs,v 1.236.2.5 2000/07/23 05:19:19 jonathan Exp 
  */
 
 /*
@@ -4480,10 +4480,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    0,
 	    "Yamaha",
 	    "724 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
+	    0,
+	    "Yamaha",
+	    "740 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C,
+	    0,
+	    "Yamaha",
+	    "740C (DS-1) Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
+	    0,
+	    "Yamaha",
+	    "724F (DS-1) Audio",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B,
