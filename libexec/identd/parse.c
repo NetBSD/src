@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.14 2003/05/17 21:17:43 itojun Exp $	*/
+/*	$NetBSD: parse.c,v 1.15 2003/09/06 12:52:10 itojun Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -532,9 +532,8 @@ int parse(fp, laddr, faddr)
 #ifdef SLEEP_BETWEEN_RETRIES
       {
 	/* Seed the generator: lport should be unique (among other concurrent identd's) */
-	if (try < 1) srandom(lport);
 	/* This gives a max sleep of 0xffff = 65535 microsecs, about 32millisec average */
-	usleep(random()&0x00ffff);
+	usleep(arc4random()&0x00ffff);
       }
 #else
       ;
