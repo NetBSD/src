@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 1997/03/04 23:37:48 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.37 1997/03/05 00:01:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -261,16 +261,16 @@ setstatclockrate(newhz)
 
 /*
  * This is is called by the "custom" interrupt handler.
+ * Note that we can get ZS interrupts while this runs,
+ * and those may touch the interrupt_reg, so we have to
+ * be careful to use the single_inst_* macros to modify
+ * the interrupt register atomically.
  */
 void
 clock_intr(cf)
 	struct clockframe cf;
 {
 	register volatile struct intersil7170 *clk = intersil_clock;
-	int s;
-
-	/* Prevent ZS interrupts while we tickle the clock. */
-	s = splhigh();
 
 	/* Read the clock interrupt register. */
 	(void) clk->clk_intr_reg;
@@ -279,9 +279,6 @@ clock_intr(cf)
 	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 	/* Read the clock intr. reg AGAIN! */
 	(void) clk->clk_intr_reg;
-
-	/* Back to normal clock priority. */
-	splx(s);
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
