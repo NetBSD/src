@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.39 1998/08/13 02:11:07 eeh Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.40 1998/10/19 22:16:22 tron Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -67,6 +67,8 @@
 /*
  *	Virtual memory mapping module.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
