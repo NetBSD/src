@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmux.4,v 1.6 2001/09/11 23:18:56 wiz Exp $
+.\" $NetBSD: wsmux.4,v 1.7 2001/10/13 17:15:33 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,10 +38,10 @@
 .Nm wsmux
 .Nd console keyboard/mouse multiplexor for wscons
 .Sh SYNOPSIS
-.Cd "wskbd*     at ... mux N"
-.Cd "wsmouse*   at ... mux N"
+.Cd "wskbd*   at ... mux N"
+.Cd "wsmouse* at ... mux N"
 .Pp
-.Cd pseudo-device  wsmux    N
+.Cd pseudo-device wsmux
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,6 +67,12 @@ further user interaction.
 In a similar way, the window system will open the mouse multiplexor
 and receive all mouse events; mice can also be dynamically attached
 and detached.
+.Pp
+If a
+.Xr wskbd 4
+or
+.Xr wsmouse 4
+device is opened despite having a mux it will be detached from the mux.
 .Pp
 It is also possible to inject events into a multiplexor from a
 user program.
