@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.25 1996/02/18 11:53:41 fvdl Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -143,7 +143,7 @@ nfs_boot_init(nd, procp)
 				break;
 	if (ifp == NULL)
 		panic("nfs_boot: no suitable interface");
-	sprintf(ireq.ifr_name, "%s%d", ifp->if_name, ifp->if_unit);
+	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
 	printf("nfs_boot: using network interface '%s'\n",
 	    ireq.ifr_name);
 
