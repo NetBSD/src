@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.30 2001/01/13 13:26:36 itojun Exp $
+# $NetBSD: network,v 1.31 2001/03/02 03:07:29 itojun Exp $
 #
 
 # PROVIDE: network
@@ -61,7 +61,7 @@ network_start()
 	#
 	ifconfig lo0 inet 127.0.0.1
 
-	# According to RFC1122, 127.0.0.0/8 should not leave the node.
+	# According to RFC1122, 127.0.0.0/8 must not leave the node.
 	#
 	route add -inet 127.0.0.0 -netmask 0xff000000 127.0.0.1 -reject
 
