@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2001/06/02 18:09:16 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.59 2001/07/06 19:00:14 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -295,6 +295,7 @@ trap(type, code, v, frame)
 	int i, s;
 	u_int ucode;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
+	static int panicing = 0;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -317,15 +318,16 @@ trap(type, code, v, frame)
 
 	default:
 	dopanic:
-		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
-		printf("%s program counter = 0x%x\n",
-		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
 		/*
 		 * Let the kernel debugger see the trap frame that
 		 * caused us to panic.  This is a convenience so
 		 * one can see registers at the point of failure.
 		 */
 		s = splhigh();
+		panicing = 1;
+		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
+		printf("%s program counter = 0x%x\n",
+		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
 		if (kgdb_trap(type, &frame))
@@ -546,29 +548,6 @@ trap(type, code, v, frame)
 
 	case T_ASTFLT|T_USER:	/* user async trap */
 		astpending = 0;
-		/*
-		 * We check for software interrupts first.  This is because
-		 * they are at a higher level than ASTs, and on a VAX would
-		 * interrupt the AST.  We assume that if we are processing
-		 * an AST that we must be at IPL0 so we don't bother to
-		 * check.  Note that we ensure that we are at least at SIR
-		 * IPL while processing the SIR.
-		 */
-		spl1();
-		/* fall into... */
-
-	case T_SSIR:		/* software interrupt */
-	case T_SSIR|T_USER:
-		softintr_dispatch();
-
-		/*
-		 * If this was not an AST trap, we are all done.
-		 */
-		if (type != (T_ASTFLT|T_USER)) {
-			uvmexp.traps--;
-			return;
-		}
-		spl0();
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -626,6 +605,13 @@ trap(type, code, v, frame)
 			    "read", v);
 			goto dopanic;
 		}
+
+#ifdef DIAGNOSTIC
+		if (interrupt_depth && !panicing) {
+			printf("trap: calling uvm_fault() from interrupt!\n");
+			goto dopanic;
+		}
+#endif
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {

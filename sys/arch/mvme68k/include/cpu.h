@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2001/06/14 22:56:57 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2001/07/06 19:00:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,19 +90,22 @@ extern struct cpu_info cpu_info_store;
 struct clockframe {
 	u_short	sr;		/* sr at time of interrupt */
 	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
-};
+	u_short	fmt:4,
+		vec:12;		/* vector offset (4-word frame) */
+} __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#if 0
-/* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
-#else
-/* but until we start using PSL_M, we have to do this instead */
-#define	CLKF_INTR(framep)	(0)	/* XXX */
-#endif
+
+/*
+ * The clock interrupt handler can determine if it's a nested
+ * interrupt by checking for interrupt_depth > 1.
+ * (Remember, the clock interrupt handler itself will cause the
+ * depth counter to be incremented).
+ */
+extern volatile unsigned int interrupt_depth;
+#define	CLKF_INTR(framep)	(interrupt_depth > 1)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.18 2001/05/31 18:46:08 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.19 2001/07/06 19:00:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ struct cfattach pcc_ca = {
 
 extern struct cfdriver pcc_cd;
 static int pccintr __P((void *));
+static int pccsoftintr __P((void *));
+static void pccsoftintrassert __P((void));
 
 /*
  * Structure used to describe a device for autoconfiguration purposes.
@@ -196,6 +198,13 @@ pccattach(parent, self, args)
 	pccintr_establish(PCCV_ABORT, pccintr, 7, NULL, &sc->sc_evcnt);
 	pcc_reg_write(sc, PCCREG_ABORT_INTR_CTRL,
 	    PCC_ABORT_IEN | PCC_ABORT_ACK);
+
+	/*
+	 * Install a handler for Software Interrupt 1
+	 * and arrange to schedule soft interrupts on demand.
+	 */
+	pccintr_establish(PCCV_SOFT1, pccsoftintr, 1, sc, &sc->sc_evcnt);
+	_softintr_chipset_assert = pccsoftintrassert;
 
 	/* Make sure the global interrupt line is hot. */
 	reg = pcc_reg_read(sc, PCCREG_GENERAL_CONTROL) | PCC_GENCR_IEN;
@@ -302,4 +311,30 @@ pccintr(frame)
 	    PCC_ABORT_IEN | PCC_ABORT_ACK);
 
 	return (nmihand(frame));
+}
+
+static void
+pccsoftintrassert(void)
+{
+
+	/* Request a software interrupt at ipl 1 */
+	pcc_reg_write(sys_pcc, PCCREG_SOFT1_INTR_CTRL, 1 | PCC_IENABLE);
+}
+
+/*
+ * Handle PCC soft interupt #1
+ */
+static int
+pccsoftintr(arg)
+	void *arg;
+{
+	struct pcc_softc *sc = arg;
+
+	/* Clear the interrupt */
+	pcc_reg_write(sc, PCCREG_SOFT1_INTR_CTRL, 0);
+
+	/* Call the soft interrupt dispatcher */
+	softintr_dispatch();
+
+	return (1);
 }

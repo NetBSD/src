@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.44 2001/06/18 02:00:50 christos Exp $
+#	$NetBSD: files.mvme68k,v 1.45 2001/07/06 19:00:12 scw Exp $
 
 # config file for mvme68k
 
@@ -21,6 +21,11 @@ device pcctwo { [ ipl = -1 ] }
 attach pcctwo at mainbus
 file arch/mvme68k/dev/pcctwo.c			pcctwo needs-flag
 
+# This is not as odd as it looks. If the user doesn't define
+# a vmetwo0 device in the config file, we still need the
+# following gloop to deal with some local interrupts.
+file arch/mvme68k/dev/vme_two_isr.c		pcctwo
+
 # Grab the MD VMEbus goop
 include "dev/vme/files.vme"
 
@@ -36,7 +41,7 @@ file	arch/mvme68k/dev/vme_pcc.c		vmepcc
 # MVME-1[67]7 VME controller chip
 device	vmetwo: mvmebus, vmebus
 attach	vmetwo at mainbus
-file	arch/mvme68k/dev/vme_two.c		vmetwo
+file	arch/mvme68k/dev/vme_two.c		vmetwo needs-flag
 
 device clock
 attach clock at pcc with clock_pcc

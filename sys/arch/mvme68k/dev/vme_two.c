@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.13 2001/05/31 18:46:08 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.14 2001/07/06 19:00:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,19 +40,18 @@
  * VME support specific to the VMEchip2 found on the MVME-1[67][27] boards.
  */
 
+#include "vmetwo.h"
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
-
-#include <mvme68k/mvme68k/isr.h>
 
 #include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/mvmebus.h>
@@ -65,37 +64,12 @@ void vmetwo_attach __P((struct device *, struct device *, void *));
 struct cfattach vmetwo_ca = {
 	sizeof(struct vmetwo_softc), vmetwo_match, vmetwo_attach
 };
-
-extern struct cfdriver vmetwo_cd;
-
-
-/*
- * Array of interrupt handlers registered with us for the non-VMEbus
- * vectored interrupts. Eg. ABORT Switch, SYSFAIL etc.
- *
- * We can't just install a caller's handler directly, since these
- * interrupts have to be manually cleared, so we have a trampoline
- * which does the clearing automatically.
- */
-static struct vme_two_handler {
-	int (*isr_hand) __P((void *));
-	void *isr_arg;
-} vme_two_handlers[(VME2_VECTOR_LOCAL_MAX - VME2_VECTOR_LOCAL_MIN) + 1];
-
-#define VMETWO_HANDLERS_SZ	(sizeof(vme_two_handlers) /	\
-				 sizeof(struct vme_two_handler))
-
-static struct vmetwo_softc *vmetwo_sc;
+struct cfdriver vmetwo_cd;
 
 void vmetwo_master_range __P((struct vmetwo_softc *, int,
 			      struct mvmebus_range *));
 void vmetwo_slave_range __P((struct vmetwo_softc *, int, vme_am_t,
 			      struct mvmebus_range *));
-int vmetwo_local_isr_trampoline __P((void *));
-void vmetwo_intr_establish __P((void *, int, int, int, int,
-				int (*)(void *), void *, struct evcnt *));
-void vmetwo_intr_disestablish __P((void *, int, int, int, struct evcnt *));
-
 
 /* ARGSUSED */
 int
@@ -105,6 +79,7 @@ vmetwo_match(parent, cf, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma;
+	static int matched = 0;
 
 	ma = aux;
 
@@ -112,14 +87,13 @@ vmetwo_match(parent, cf, aux)
 		return (0);
 
 	/* Only one VMEchip2, please. */
-	if (vmetwo_sc)
+	if (matched++)
 		return (0);
 
-	if (machineid != MVME_167 && machineid != MVME_177 &&
-	    machineid != MVME_162 && machineid != MVME_172)
-		return (0);
-
-	return (1);
+	/*
+	 * Some mvme1[67]2 boards have a `no VMEchip2' build option...
+	 */
+	return (vmetwo_probe(ma->ma_bust, ma->ma_offset) ? 1 : 0);
 }
 
 /* ARGSUSED */
@@ -134,7 +108,7 @@ vmetwo_attach(parent, self, aux)
 	u_int32_t reg;
 	int i;
 
-	sc = vmetwo_sc = (struct vmetwo_softc *) self;
+	sc = (struct vmetwo_softc *) self;
 	ma = aux;
 
 	/*
@@ -162,39 +136,8 @@ vmetwo_attach(parent, self, aux)
 	sc->sc_mvmebus.sc_intr_establish = vmetwo_intr_establish;
 	sc->sc_mvmebus.sc_intr_disestablish = vmetwo_intr_disestablish;
 
-	/* Clear out the ISR handler array */
-	for (i = 0; i < VMETWO_HANDLERS_SZ; i++)
-		vme_two_handlers[i].isr_hand = NULL;
-
-	/*
-	 * Initialize the chip.
-	 * Firstly, disable all VMEChip2 Interrupts
-	 */
-	reg = vme2_lcsr_read(sc, VME2LCSR_MISC_STATUS) & ~VME2_MISC_STATUS_MIEN;
-	vme2_lcsr_write(sc, VME2LCSR_MISC_STATUS, reg);
-	vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE, 0);
-	vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_CLEAR,
-	    VME2_LOCAL_INTERRUPT_CLEAR_ALL);
-
-	/* Zap all the IRQ level registers */
-	for (i = 0; i < VME2_NUM_IL_REGS; i++)
-		vme2_lcsr_write(sc, VME2LCSR_INTERRUPT_LEVEL_BASE + (i * 4), 0);
-
-	/* Disable the tick timers */
-	reg = vme2_lcsr_read(sc, VME2LCSR_TIMER_CONTROL);
-	reg &= ~VME2_TIMER_CONTROL_EN(0);
-	reg &= ~VME2_TIMER_CONTROL_EN(1);
-	vme2_lcsr_write(sc, VME2LCSR_TIMER_CONTROL, reg);
-
-	/* Set the VMEChip2's vector base register to the required value */
-	reg = vme2_lcsr_read(sc, VME2LCSR_VECTOR_BASE);
-	reg &= ~VME2_VECTOR_BASE_MASK;
-	reg |= VME2_VECTOR_BASE_REG_VALUE;
-	vme2_lcsr_write(sc, VME2LCSR_VECTOR_BASE, reg);
-
-	/* Set the Master Interrupt Enable bit now */
-	reg = vme2_lcsr_read(sc, VME2LCSR_MISC_STATUS) | VME2_MISC_STATUS_MIEN;
-	vme2_lcsr_write(sc, VME2LCSR_MISC_STATUS, reg);
+	/* Initialise interrupts */
+	vmetwo_intr_init(sc);
 
 	reg = vme2_lcsr_read(sc, VME2LCSR_BOARD_CONTROL);
 	printf(": Type 2 VMEchip, scon jumper %s\n",
@@ -281,15 +224,6 @@ vmetwo_attach(parent, self, aux)
 		    &sc->sc_slave[i + VME2_SLAVE_PROG_START]);
 		vmetwo_slave_range(sc, i, VME_AM_A24,
 		    &sc->sc_slave[i + VME2_SLAVE_PROG_START + 2]);
-	}
-
-	if (machineid != MVME_162 && machineid != MVME_172) {
-		/*
-		 * Let the NMI handler deal with level 7 ABORT switch
-		 * interrupts
-		 */
-		vmetwo_intr_establish(sc, 7, 7, VME2_VEC_ABORT, 1,
-		    nmihand, NULL, NULL);
 	}
 
 	mvmebus_attach(&sc->sc_mvmebus);
@@ -474,192 +408,4 @@ vmetwo_slave_range(sc, range, am, vr)
 		vr->vr_locstart = addr & sel;
 		vr->vr_locstart |= vr->vr_vmestart & (~sel);
 	}
-}
-
-int
-vmetwo_local_isr_trampoline(arg)
-	void *arg;
-{
-	struct vme_two_handler *isr;
-	int s, vec;
-
-	vec = (int) arg;	/* 0x08 <= vec <= 0x1f */
-
-	/* No interrupts while we fiddle with the registers, please */
-	s = splhigh();
-
-	/* Clear the interrupt source */
-	vme2_lcsr_write(vmetwo_sc, VME2LCSR_LOCAL_INTERRUPT_CLEAR,
-	    VME2_LOCAL_INTERRUPT(vec));
-
-	splx(s);
-
-	isr = &vme_two_handlers[vec - VME2_VECTOR_LOCAL_OFFSET];
-	if (isr->isr_hand)
-		(void) (*isr->isr_hand) (isr->isr_arg);
-	else
-		printf("vmetwo: Spurious local interrupt, vector 0x%x\n", vec);
-
-	return (1);
-}
-
-void
-vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
-	void *csc;
-	int prior, lvl, vec, first;
-	int (*hand)(void *);
-	void *arg;
-	struct evcnt *evcnt;
-{
-	struct vmetwo_softc *sc = csc;
-	u_int32_t reg;
-	int bitoff;
-	int iloffset, ilshift;
-	int s;
-
-	s = splhigh();
-
-	/*
-	 * Sort out interrupts generated locally by the VMEChip2 from
-	 * those generated by VMEbus devices...
-	 */
-	if (vec >= VME2_VECTOR_LOCAL_MIN && vec <= VME2_VECTOR_LOCAL_MAX) {
-		/*
-		 * Local interrupts need to be bounced through some
-		 * trampoline code which acknowledges/clears them.
-		 */
-		vme_two_handlers[vec - VME2_VECTOR_LOCAL_MIN].isr_hand = hand;
-		vme_two_handlers[vec - VME2_VECTOR_LOCAL_MIN].isr_arg = arg;
-		hand = vmetwo_local_isr_trampoline;
-		arg = (void *) (vec - VME2_VECTOR_BASE);
-
-		/*
-		 * Interrupt enable/clear bit offset is 0x08 - 0x1f
-		 */
-		bitoff = vec - VME2_VECTOR_BASE;
-		first = 1;	/* Force the interrupt to be enabled */
-	} else {
-		/*
-		 * Interrupts originating from the VMEbus are
-		 * controlled by an offset of 0x00 - 0x07
-		 */
-		bitoff = lvl - 1;
-	}
-
-	/* Hook the interrupt */
-	isrlink_vectored(hand, arg, prior, vec, evcnt);
-
-	/*
-	 * Do we need to tell the VMEChip2 to let the interrupt through?
-	 * (This is always true for locally-generated interrupts, but only
-	 * needs doing once for each VMEbus interrupt level which is hooked)
-	 */
-	if (first) {
-		if (evcnt)
-			evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
-			    isrlink_evcnt(prior),
-			    sc->sc_mvmebus.sc_dev.dv_xname,
-			    mvmebus_irq_name[lvl]);
-
-		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
-		    VME2LCSR_INTERRUPT_LEVEL_BASE;
-		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
-
-		/* Program the specified interrupt to signal at 'prior' */
-		reg = vme2_lcsr_read(sc, iloffset);
-		reg &= ~(VME2_INTERRUPT_LEVEL_MASK << ilshift);
-		reg |= (prior << ilshift);
-		vme2_lcsr_write(sc, iloffset, reg);
-
-		/* Clear it */
-		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_CLEAR,
-		    VME2_LOCAL_INTERRUPT(bitoff));
-
-		/* Enable it. */
-		reg = vme2_lcsr_read(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE);
-		reg |= VME2_LOCAL_INTERRUPT(bitoff);
-		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE, reg);
-	}
-#ifdef DIAGNOSTIC
-	else {
-		/* Verify the interrupt priority is the same */
-		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
-		    VME2LCSR_INTERRUPT_LEVEL_BASE;
-		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
-
-		reg = vme2_lcsr_read(sc, iloffset);
-		reg &= (VME2_INTERRUPT_LEVEL_MASK << ilshift);
-
-		if ((prior << ilshift) != reg)
-			panic("vmetwo_intr_establish: priority mismatch!");
-	}
-#endif
-	splx(s);
-}
-
-void
-vmetwo_intr_disestablish(csc, lvl, vec, last, evcnt)
-	void *csc;
-	int lvl, vec, last;
-	struct evcnt *evcnt;
-{
-	struct vmetwo_softc *sc = csc;
-	u_int32_t reg;
-	int iloffset, ilshift;
-	int bitoff;
-	int s;
-
-	s = splhigh();
-
-	/*
-	 * Sort out interrupts generated locally by the VMEChip2 from
-	 * those generated by VMEbus devices...
-	 */
-	if (vec >= VME2_VECTOR_LOCAL_MIN && vec <= VME2_VECTOR_LOCAL_MAX) {
-		/*
-		 * Interrupt enable/clear bit offset is 0x08 - 0x1f
-		 */
-		bitoff = vec - VME2_VECTOR_BASE;
-		vme_two_handlers[vec - VME2_VECTOR_LOCAL_MIN].isr_hand = NULL;
-		last = 1; /* Force the interrupt to be cleared */
-	} else {
-		/*
-		 * Interrupts originating from the VMEbus are
-		 * controlled by an offset of 0x00 - 0x07
-		 */
-		bitoff = lvl - 1;
-	}
-
-	/*
-	 * Do we need to tell the VMEChip2 to block the interrupt?
-	 * (This is always true for locally-generated interrupts, but only
-	 * needs doing once when the last VMEbus handler for any given level
-	 * has been unhooked.)
-	 */
-	if (last) {
-		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
-		    VME2LCSR_INTERRUPT_LEVEL_BASE;
-		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
-
-		/* Disable it. */
-		reg = vme2_lcsr_read(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE);
-		reg &= ~VME2_LOCAL_INTERRUPT(bitoff);
-		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE, reg);
-
-		/* Set the interrupt's level to zero */
-		reg = vme2_lcsr_read(sc, iloffset);
-		reg &= ~(VME2_INTERRUPT_LEVEL_MASK << ilshift);
-		vme2_lcsr_write(sc, iloffset, reg);
-
-		/* Clear it */
-		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_CLEAR,
-		    VME2_LOCAL_INTERRUPT(vec));
-
-		if (evcnt)
-			evcnt_detach(evcnt);
-	}
-	/* Un-hook it */
-	isrunlink_vectored(vec);
-
-	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.8 2001/05/31 18:46:07 scw Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.9 2001/07/06 19:00:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ clock_pcc_profintr(frame)
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL,
 	    clock_pcc_sc->sc_clock_lvl);
-	__asm __volatile("movw %0,%%sr" : : "di" (s));
+	splx(s);
 
 	for (cr >>= PCC_TIMEROVFLSHIFT; cr; cr--)
 		hardclock(frame);
