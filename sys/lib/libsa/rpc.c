@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.21 2000/03/30 12:19:49 augustss Exp $	*/
+/*	$NetBSD: rpc.c,v 1.22 2003/03/12 14:51:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -63,7 +63,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 #include "rpc.h"
 
 struct auth_info {

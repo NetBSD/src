@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.12 2003/01/12 18:59:15 christos Exp $	 */
+/*	$NetBSD: tftp.c,v 1.13 2003/03/12 14:51:32 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -62,7 +62,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 
 #include "tftp.h"
 

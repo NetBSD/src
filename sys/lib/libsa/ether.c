@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.15 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: ether.c,v 1.16 2003/03/12 14:51:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -56,7 +56,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 
 /* Caller must leave room for ethernet header in front!! */
 ssize_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.29 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: nfs.c,v 1.30 2003/03/12 14:51:31 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -56,7 +56,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 #include "nfs.h"
 #include "rpc.h"
 
