@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.4 1998/06/29 20:03:14 gwr Exp $	*/
+/*	$NetBSD: libsa.h,v 1.5 1999/03/04 07:56:41 gwr Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -39,7 +39,7 @@ extern char *prom_bootfile;
 extern int prom_boothow;
 
 /* sun3.c */
-void sun3_etheraddr __P((u_char *ea));
+void sun3_getidprom __P((u_char *ea));
 
 /* version.c */
 extern char version[];
