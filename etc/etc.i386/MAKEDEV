@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.61 1997/12/15 01:05:01 fvdl Exp $
+#	$NetBSD: MAKEDEV,v 1.62 1998/03/22 01:15:00 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -224,9 +224,10 @@ ccd*|fd*|sd*|vnd*|wd*)
 
 com*|tty*)					# (XXX -- com should die)
 	unit=${i#???}
-	rm -f com$unit tty0$unit
-	mknod tty0$unit c 8 $unit
-	chown uucp.wheel tty0$unit
+	rm -f com$unit tty0$unit dty0$unit
+	mknod tty0$unit c 8 $(($unit +      0))
+	mknod dty0$unit c 8 $(($unit + 524288))
+	chown uucp.wheel tty0$unit dty0$unit
 	;;
 
 pty*)
