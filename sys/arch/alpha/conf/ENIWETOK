@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.17 2000/02/25 20:52:11 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.18 2000/02/25 20:55:34 mycroft Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -317,6 +317,7 @@ ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
 ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 #sm*	at	pcmcia? function ?		# Megahertz Ethernet
 #sb*	at	pcmcia? function ?		# SoundBlaster clones
+ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 
 # SCSI bus support
 #scsibus* at	adv?
