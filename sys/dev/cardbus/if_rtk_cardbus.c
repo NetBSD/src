@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.22 2004/08/02 19:14:28 mycroft Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.23 2004/08/02 19:26:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.22 2004/08/02 19:14:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.23 2004/08/02 19:26:51 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.22 2004/08/02 19:14:28 mycroft 
 static const struct rtk_type rtk_cardbus_devs[] = {
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
 		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE_690TXD,
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
 		RTK_8139, "D-Link DFE-690TXD 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
 		RTK_8139, "Realtek 8138 10/100BaseTX" },
