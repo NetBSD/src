@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.4 1994/12/15 02:53:00 deraadt Exp $ */
+/*	$NetBSD: cache.h,v 1.5 1995/04/13 14:48:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,7 +140,7 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
  */
 void	cache_enable __P((void));		/* turn it on */
 void	cache_flush_context __P((void));	/* flush current context */
-void	cache_flush_segment __P((int vseg));	/* flush seg in cur ctx */
+void	cache_flush_segment __P((int vreg, int vseg));	/* flush seg in cur ctx */
 void	cache_flush_page __P((int va));		/* flush page in cur ctx */
 void	cache_flush __P((caddr_t base, u_int len));/* flush region */
 
@@ -162,6 +162,7 @@ extern struct cacheinfo cacheinfo;
 struct cachestats {
 	int	cs_npgflush;		/* # page flushes */
 	int	cs_nsgflush;		/* # seg flushes */
+	int	cs_nrgflush;		/* # seg flushes */
 	int	cs_ncxflush;		/* # context flushes */
 	int	cs_nraflush;		/* # range flushes */
 #ifdef notyet
