@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ext,v 1.8 2004/03/06 03:31:05 rtr Exp $
+#	$NetBSD: Makefile.ext,v 1.9 2004/05/16 10:25:14 lukem Exp $
 
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
 
@@ -19,7 +19,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION}
 CPPFLAGS+=	-UXF86VIDMODE
 .endif
 
-CPPFLAGS.security.c=	-DDEFAULTPOLICYFILE=\"${X11LIBDIR}/xserver/SecurityPolicy\"
+CPPFLAGS.security.c=	-DDEFAULTPOLICYFILE=\"${X11ETCDIR}/xserver/SecurityPolicy\"
 CPPFLAGS.xf86bigfont.c=	-DHAS_SHM
 
 .include <bsd.x11.mk>

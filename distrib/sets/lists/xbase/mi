@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2004/04/28 14:17:55 lukem Exp $
+# $NetBSD: mi,v 1.42 2004/05/16 10:25:13 lukem Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -207,6 +207,8 @@
 ./usr/X11R6/include/X11/bitmaps/xlogo32
 ./usr/X11R6/include/X11/bitmaps/xlogo64
 ./usr/X11R6/include/X11/bitmaps/xsnow
+./usr/X11R6/include/X11/pixmaps/XFree86.xpm
+./usr/X11R6/include/X11/pixmaps/XFree86bw.xpm
 ./usr/X11R6/include/X11/pixmaps/deny-always.xpm
 ./usr/X11R6/include/X11/pixmaps/deny.xpm
 ./usr/X11R6/include/X11/pixmaps/logo.xpm
