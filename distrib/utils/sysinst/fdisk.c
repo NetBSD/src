@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.8 1998/06/20 13:05:48 mrg Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.9 1998/07/21 14:53:36 rvb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,10 +126,6 @@ set_fdisk_info()
 {
 	int i;
 
-	if (bstuffset)
-		run_prog("/sbin/fdisk -i -f -b %d/%d/%d /dev/r%sd",
-			  bcyl, bhead, bsec, diskdev);
-	
 	for (i = 0; i < 4; i++)
 		if (part[i][SET])
                         run_prog("/sbin/fdisk -u -f -%d -b %d/%d/%d "
