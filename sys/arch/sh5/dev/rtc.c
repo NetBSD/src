@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2 2002/08/26 10:45:55 scw Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3 2002/09/02 20:04:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -139,7 +139,7 @@ rtc_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 		    RTC_REG_RYRCNT);
 
 		retry--;
-	} while (r64cnt == rtc_read_r64cnt(sc->sc_bust, sc->sc_bush) && retry);
+	} while (r64cnt != rtc_read_r64cnt(sc->sc_bust, sc->sc_bush) && retry);
 
 	splx(s);
 
@@ -202,7 +202,7 @@ rtc_settime(struct todr_chip_handle *todr, struct timeval *tv)
 		rtc_write(sc, RTC_REG_RSECCNT, sec);
 
 		retry--;
-	} while (r64cnt == rtc_read_r64cnt(sc->sc_bust, sc->sc_bush) && retry);
+	} while (r64cnt != rtc_read_r64cnt(sc->sc_bust, sc->sc_bush) && retry);
 
 	splx(s);
 
