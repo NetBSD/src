@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsubopt.3,v 1.4 1998/02/05 18:49:58 perry Exp $
+.\"	$NetBSD: getsubopt.3,v 1.5 2001/04/24 09:07:43 joda Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ while ((ch = getopt(argc, argv, "ab:")) != \-1) {
 				break;
 			case \-1:
 				if (suboptarg)
-					error("illegal sub option %s",
+					error("unknown sub option %s",
 					  suboptarg);
 				else
 					error("missing sub option");
