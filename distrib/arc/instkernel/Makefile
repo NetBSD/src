@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/05/08 21:44:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/05/05 11:41:07 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,7 @@ MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_SUFFIXES.-=	ecoff create-ecoff
 create-ecoff=		${OBJCOPY} -O ecoff-littlemips \
-			    -R .mdebug -R .ident ${.TARGET:R} ${.TARGET}
+			    -R .mdebug -R .ident -R .pdr ${.TARGET:R} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
