@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.8 2000/05/12 18:46:34 jhawk Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.8.4.1 2000/07/16 00:27:58 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,8 @@ const struct fxp_pci_product {
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82557,
 	  "Intel i82557 Ethernet" },
+	{ PCI_PRODUCT_INTEL_82559ER,
+	  "Intel i82559ER Ethernet" },
 	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
 	  "Intel InBusiness Ethernet" },
 
@@ -190,6 +192,8 @@ fxp_pci_confreg_restore(psc)
 	if (((reg = pci_conf_read(psc->psc_pc, psc->psc_tag,
 	    PCI_COMMAND_STATUS_REG)) & 0xffff) != 0)
 		return;
+#else
+	reg = pci_conf_read(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG);
 #endif
 
 	pci_conf_write(psc->psc_pc, psc->psc_tag,
