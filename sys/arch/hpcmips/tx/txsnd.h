@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200var.h,v 1.2 2000/01/12 14:56:22 uch Exp $ */
+/*	$NetBSD: txsnd.h,v 1.1 2000/01/12 14:56:17 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -26,19 +26,16 @@
  *
  */
 
-struct ucb1200_attach_args {
-	tx_chipset_tag_t ucba_tc;
-	int ucba_snd_rate;
-	int ucba_tel_rate;
-	struct device *ucba_sib;
-	struct device *ucba_ucb;
+typedef struct tx_sound_tag *tx_sound_tag_t;
+
+struct tx_sound_tag {
+	void	*ts_v;
+
+	void	(*ts_click) __P((tx_sound_tag_t));
 };
 
-#define UCB1200_TP_MODULE	0
-#define UCB1200_SND_MODULE	1
-#define UCB1200_TEL_MODULE	2
-#define UCB1200_MODULE_MAX	3
+#define	tx_sound_click(t) \
+	(*((tx_sound_tag_t)(t->tc_soundt))->ts_click) \
+	(((tx_sound_tag_t)(t->tc_soundt))->ts_v)
 
-void	ucb1200_state_install __P((struct device*, int (*)__P((void*)), void*, int));
-int	ucb1200_state_idle __P((struct device*));
-
+void	tx_sound_init __P((tx_chipset_tag_t));
