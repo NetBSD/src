@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.8 2000/03/26 20:24:12 kleink Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.9 2000/05/25 19:57:36 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -178,7 +178,7 @@ db_show_all_procs(addr, haddr, count, modif)
 				if(p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
 					db_printsym((db_expr_t)p->p_wchan,
-					    DB_STGY_XTRN);
+					    DB_STGY_XTRN, db_printf);
 				}
 				db_printf("\n");
 				break;
