@@ -96,6 +96,32 @@
 	.align	4
 	.word	0x0400000
 #endif
+
+/*
+ * Here are some defines to try to maintain consistency but still
+ * support 32-and 64-bit compilers.
+ */
+#ifdef _LP64
+/* first constants for storage allocation */
+#define PTRSZ	8
+#define	POINTER	.xword
+/* Now instructions to load/store pointers */
+#define LDPTR	ldx
+#define LDPTRA	ldxa
+#define STPTR	stx
+#define STPTRA	stxa
+/* Now something to calculate the stack bias */
+#define STKB	BIAS
+#else
+#define PTRSZ	4
+#define POINTER	.word
+#define LDPTR	lduw
+#define LDPTRA	lduwa
+#define STPTR	stw
+#define STPTRA	stwa
+#define STKB	0
+#endif
+
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler
  * gripes about labels without it.  To allow cross-compilation using
@@ -233,19 +259,20 @@ _C_LABEL(kgdb_stack):
 panicstack:
 
 /*
- * _cpcbtte is the TTE for cpcb which allows the data fault code to not fault
- * before it's in a safe condidion.
- */
-	.globl	_C_LABEL(cpcbtte)
-_C_LABEL(cpcbtte):	.xword	0
-	
-/*
  * _cpcb points to the current pcb (and hence u. area).
  * Initially this is the special one.
  */
 	.globl	_C_LABEL(cpcb)
-_C_LABEL(cpcb):	.word	_C_LABEL(u0)
+_C_LABEL(cpcb):	POINTER	_C_LABEL(u0)
 
+/*
+ * romp is the prom entry pointer 
+ */
+	.globl	romp
+romp:	POINTER	0
+
+
+/* NB:	 Do we really need the following around? */
 /*
  * _cputyp is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
@@ -270,7 +297,6 @@ _C_LABEL(cpumod):
 	.globl	_C_LABEL(mmumod)
 _C_LABEL(mmumod):
 	.word	0
-
 
 /*
  * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
@@ -1254,17 +1280,17 @@ traceit:
 	set	_C_LABEL(curproc), %g6
 	sllx	%g4, 13, %g4
 	cmp	%g6, 0x68
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	movz	%icc, %g0, %g6		! DISABLE PID
 	or	%g4, %g5, %g4
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-!	ldsw	[%g6+P_PID], %g5	! Load PID
+!	LDPTR	[%g6+P_PID], %g5	! Load PID
 2:
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
@@ -1475,7 +1501,139 @@ trap_setup_msg:
 intr_setup_msg:
 	.asciz	"INTR_SETUP: tt=%x osp=%x nsp=%x tl=%x tpc=%x\n"
 	_ALIGN
-#ifdef TRAPWIN
+#ifdef _LP64
+#define	TRAP_SETUP(stackspace) \
+	sethi	%hi(USPACE), %g7; \
+	sethi	%hi(_C_LABEL(cpcb)), %g6; \
+	or	%g7, %lo(USPACE), %g7; \
+	sethi	%hi((stackspace)), %g5; \
+	ldx	[%g6 + %lo(_C_LABEL(cpcb))], %g6; \
+	or	%g5, %lo((stackspace)), %g5; \
+	add	%g6, %g7, %g6; \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
+	\
+	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
+	subcc	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
+	srl	%g6, 0, %g6;					/* XXXXX truncate at 32-bits */ \
+	movz	%icc, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
+	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
+	add	%g6, -BIAS, %g5; \
+	movz	%icc, %g5, %g6; \
+	\
+	stx	%g1, [%g6 + CC64FSZ + BIAS + TF_FAULT]; \
+	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
+	\
+	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
+	\
+	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)]; \
+	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
+	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)];		/* Save out registers to trap frame */ \
+	stx	%i1, [%sp + CC64FSZ + BIAS + TF_O + (1*8)]; \
+	stx	%i2, [%sp + CC64FSZ + BIAS + TF_O + (2*8)]; \
+	stx	%i3, [%sp + CC64FSZ + BIAS + TF_O + (3*8)]; \
+	stx	%i4, [%sp + CC64FSZ + BIAS + TF_O + (4*8)]; \
+	stx	%i5, [%sp + CC64FSZ + BIAS + TF_O + (5*8)]; \
+	stx	%i6, [%sp + CC64FSZ + BIAS + TF_O + (6*8)]; \
+	\
+	stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]; \
+	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
+	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
+	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
+	/* came from user mode -- switch to kernel mode stack */ \
+	wrpr	%g0, 0, %canrestore; \
+	wrpr	%g0, %g5, %otherwin; \
+	mov	CTX_PRIMARY, %g7; \
+	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
+	\
+	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	sethi	%hi(KERNBASE), %g5; \
+	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
+	flush	%g5;						/* Some convenient address that won't trap */ \
+1: 
+
+/*
+ * Interrupt setup is almost exactly like trap setup, but we need to
+ * go to the interrupt stack if (a) we came from user mode or (b) we
+ * came from kernel mode on the kernel stack.
+ *
+ * We don't guarantee any registers are preserved during this operation.
+ */
+#define	INTR_SETUP(stackspace) \
+	sethi	%hi(_C_LABEL(eintstack)), %g6; \
+	sethi	%hi((stackspace)), %g5; \
+	btst	1, %sp; \
+	bnz,pt	%icc, 0f; \
+	 mov	%sp, %g1; \
+	add	%sp, -BIAS, %g1; \
+0: \
+	or	%g6, %lo(_C_LABEL(eintstack)), %g6; \
+	set	(_C_LABEL(eintstack)-_C_LABEL(intstack)), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	or	%g5, %lo((stackspace)), %g5; \
+	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
+	dec	%g7;						/* Make it into a mask */ \
+	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
+	srl	%g1, 0, %g1;					/* XXXXX truncate at 32-bits */ \
+	movz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
+	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
+	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)]; \
+	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
+	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)];		/* Save out registers to trap frame */ \
+	stx	%i1, [%sp + CC64FSZ + BIAS + TF_O + (1*8)]; \
+	stx	%i2, [%sp + CC64FSZ + BIAS + TF_O + (2*8)]; \
+	stx	%i3, [%sp + CC64FSZ + BIAS + TF_O + (3*8)]; \
+	stx	%i4, [%sp + CC64FSZ + BIAS + TF_O + (4*8)]; \
+	stx	%i5, [%sp + CC64FSZ + BIAS + TF_O + (5*8)]; \
+	stx	%i6, [%sp + CC64FSZ + BIAS + TF_O + (6*8)]; \
+	stx	%i6, [%sp + CC64FSZ + BIAS + TF_G + (0*8)];		/* Save fp in clockframe->cf_fp */ \
+	stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]; \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
+	cmp	%g7, WSTATE_KERN;				/* Compare & leave in register */ \
+	be,pn	%icc, 1f;					/* If we were in kernel mode start saving globals */ \
+	/* came from user mode -- switch to kernel mode stack */ \
+	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
+	tst	%g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
+	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
+	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
+	wrpr	%g0, 0, %canrestore; \
+	mov	CTX_PRIMARY, %g7; \
+	wrpr	%g0, %g5, %otherwin; \
+	sethi	%hi(KERNBASE), %g5; \
+	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
+	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
+	flush	%g5;						/* Some convenient address that won't trap */ \
+1:
+#else
 #define	TRAP_SETUP(stackspace) \
 	sethi	%hi(USPACE), %g7; \
 	sethi	%hi(_C_LABEL(cpcb)), %g6; \
@@ -1495,35 +1653,35 @@ intr_setup_msg:
 	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
 	movne	%icc, %g5, %g6; \
 	\
-	stx	%g1, [%g6 + CCFSZ + TF_FAULT]; \
-	stx	%l0, [%g6 + CCFSZ + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CCFSZ + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CCFSZ + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CCFSZ + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CCFSZ + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CCFSZ + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CCFSZ + TF_L + (6*8)]; \
+	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
 	\
-	stx	%l7, [%g6 + CCFSZ + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CCFSZ + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CCFSZ + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CCFSZ + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CCFSZ + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CCFSZ + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CCFSZ + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CCFSZ + TF_I + (6*8)]; \
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
 	\
-	stx	%i7, [%g6 + CCFSZ + TF_I + (7*8)]; \
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]; \
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
-	stx	%i0, [%sp + CCFSZ + TF_O + (0*8)];		/* Save out registers to trap frame */ \
-	stx	%i1, [%sp + CCFSZ + TF_O + (1*8)]; \
-	stx	%i2, [%sp + CCFSZ + TF_O + (2*8)]; \
-	stx	%i3, [%sp + CCFSZ + TF_O + (3*8)]; \
-	stx	%i4, [%sp + CCFSZ + TF_O + (4*8)]; \
-	stx	%i5, [%sp + CCFSZ + TF_O + (5*8)]; \
-	stx	%i6, [%sp + CCFSZ + TF_O + (6*8)]; \
+	stx	%i0, [%sp + CC64FSZ + STKB + TF_O + (0*8)];		/* Save out registers to trap frame */ \
+	stx	%i1, [%sp + CC64FSZ + STKB + TF_O + (1*8)]; \
+	stx	%i2, [%sp + CC64FSZ + STKB + TF_O + (2*8)]; \
+	stx	%i3, [%sp + CC64FSZ + STKB + TF_O + (3*8)]; \
+	stx	%i4, [%sp + CC64FSZ + STKB + TF_O + (4*8)]; \
+	stx	%i5, [%sp + CC64FSZ + STKB + TF_O + (5*8)]; \
+	stx	%i6, [%sp + CC64FSZ + STKB + TF_O + (6*8)]; \
 	\
-	stx	%i7, [%sp + CCFSZ + TF_O + (7*8)]; \
+	stx	%i7, [%sp + CC64FSZ + STKB + TF_O + (7*8)]; \
 	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
 	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
@@ -1564,32 +1722,32 @@ intr_setup_msg:
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	movz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	stx	%l0, [%g6 + CCFSZ + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CCFSZ + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CCFSZ + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CCFSZ + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CCFSZ + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CCFSZ + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CCFSZ + TF_L + (6*8)]; \
-	stx	%l7, [%g6 + CCFSZ + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CCFSZ + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CCFSZ + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CCFSZ + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CCFSZ + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CCFSZ + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CCFSZ + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CCFSZ + TF_I + (6*8)]; \
-	stx	%i7, [%g6 + CCFSZ + TF_I + (7*8)]; \
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]; \
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
-	stx	%i0, [%sp + CCFSZ + TF_O + (0*8)];		/* Save out registers to trap frame */ \
-	stx	%i1, [%sp + CCFSZ + TF_O + (1*8)]; \
-	stx	%i2, [%sp + CCFSZ + TF_O + (2*8)]; \
-	stx	%i3, [%sp + CCFSZ + TF_O + (3*8)]; \
-	stx	%i4, [%sp + CCFSZ + TF_O + (4*8)]; \
-	stx	%i5, [%sp + CCFSZ + TF_O + (5*8)]; \
-	stx	%i6, [%sp + CCFSZ + TF_O + (6*8)]; \
-	stx	%i6, [%sp + CCFSZ + TF_G + (0*8)];		/* Save fp in clockframe->cf_fp */ \
-	stx	%i7, [%sp + CCFSZ + TF_O + (7*8)]; \
+	stx	%i0, [%sp + CC64FSZ + STKB + TF_O + (0*8)];		/* Save out registers to trap frame */ \
+	stx	%i1, [%sp + CC64FSZ + STKB + TF_O + (1*8)]; \
+	stx	%i2, [%sp + CC64FSZ + STKB + TF_O + (2*8)]; \
+	stx	%i3, [%sp + CC64FSZ + STKB + TF_O + (3*8)]; \
+	stx	%i4, [%sp + CC64FSZ + STKB + TF_O + (4*8)]; \
+	stx	%i5, [%sp + CC64FSZ + STKB + TF_O + (5*8)]; \
+	stx	%i6, [%sp + CC64FSZ + STKB + TF_O + (6*8)]; \
+	stx	%i6, [%sp + CC64FSZ + STKB + TF_G + (0*8)];		/* Save fp in clockframe->cf_fp */ \
+	stx	%i7, [%sp + CC64FSZ + STKB + TF_O + (7*8)]; \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	cmp	%g7, WSTATE_KERN;				/* Compare & leave in register */ \
 	be,pn	%icc, 1f;					/* If we were in kernel mode start saving globals */ \
@@ -1607,235 +1765,8 @@ intr_setup_msg:
 	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
-#else
-#if 1
-#define	TRAP_SETUP(stackspace) \
-/*	save	%sp,-CC64FSZ,%sp; set (panicstack-CC64FSZ),%sp; set trap_setup_msg,%o0; rdpr %tt,%o1; mov %i6,%o2; rdpr %tl,%o4; rdpr %tpc,%o5; GLOBTOLOC; call printf; mov %o6,%o3; LOCTOGLOB; restore; /* DEBUG */ \
-	sethi	%hi(USPACE), %g7; \
-	sethi	%hi(_C_LABEL(cpcb)), %g6; \
-	or	%g7, %lo(USPACE), %g7; \
-	sethi	%hi((stackspace)), %g5; \
-	lduw	[%g6 + %lo(_C_LABEL(cpcb))], %g6; \
-	or	%g5, %lo((stackspace)), %g5; \
-	add	%g6, %g7, %g6; \
-	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
-	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	sub	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
-	movrz	%g7, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	add	%g6, BIAS, %g5; \
-	movne	%xcc, %g5, %g6; \
-	srl	%g6, 0, %g6;					/* XXXXXXXXXX truncate at 32-bits */ \
-	stx	%g1, [%g6 + CCFSZ + TF_FAULT]; \
-	stx	%o0, [%g6 + CCFSZ + TF_O + (0*8)];		/* Save out registers to trap frame */ \
-	stx	%o1, [%g6 + CCFSZ + TF_O + (1*8)]; \
-	stx	%o2, [%g6 + CCFSZ + TF_O + (2*8)]; \
-	stx	%o3, [%g6 + CCFSZ + TF_O + (3*8)]; \
-	stx	%o4, [%g6 + CCFSZ + TF_O + (4*8)]; \
-	stx	%o5, [%g6 + CCFSZ + TF_O + (5*8)]; \
-	stx	%o6, [%g6 + CCFSZ + TF_O + (6*8)]; \
-	stx	%o7, [%g6 + CCFSZ + TF_O + (7*8)]; \
-	stx	%l0, [%g6 + CCFSZ + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CCFSZ + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CCFSZ + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CCFSZ + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CCFSZ + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CCFSZ + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CCFSZ + TF_L + (6*8)]; \
-	stx	%l7, [%g6 + CCFSZ + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CCFSZ + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CCFSZ + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CCFSZ + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CCFSZ + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CCFSZ + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CCFSZ + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CCFSZ + TF_I + (6*8)]; \
-	stx	%i7, [%g6 + CCFSZ + TF_I + (7*8)]; \
-	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
-	/* came from user mode -- switch to kernel mode stack */ \
-	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
-	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
-	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
-	wrpr	%g0, 0, %canrestore; \
-	set	CTX_PRIMARY, %g7; \
-	wrpr	%g0, %g5, %otherwin; \
-	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
-	mov	%g6, %sp;					/* Truly switch to new stack frame */ \
-	sethi	%hi(KERNBASE), %g5; \
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
-	membar	#Sync; \
-	flush	%g5;						/* Some convenient address that won't trap */ \
-1: \
-	mov	%g6, %sp;					/* Truly switch to new stack frame.  This insn is idempotent */
-
-#else
-	/* This is the physically addressed version */
-#define	TRAP_SETUP(stackspace) \
-/*	save	%sp,-CC64FSZ,%sp; set (panicstack-CC64FSZ),%sp; set trap_setup_msg,%o0; rdpr %tt,%o1; mov %i6,%o2; rdpr %tl,%o4; rdpr %tpc,%o5; GLOBTOLOC; call printf; mov %o6,%o3; LOCTOGLOB; restore; /* DEBUG */ \
-	sethi	%hi(USPACE), %g7; \
-	sethi	%hi(_C_LABEL(cpcb)), %g6; \
-	or	%g7, %lo(USPACE), %g7; \
-	sethi	%hi((stackspace)), %g5; \
-	lduw	[%g6 + %lo(_C_LABEL(cpcb))], %g6; \
-	or	%g5, %lo((stackspace)), %g5; \
-	add	%g6, %g7, %g6; \
-	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
-	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	sub	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
-	movrz	%g7, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	add	%g6, BIAS, %g5; \
-	movne	%xcc, %g5, %g6; \
-	set	KERNBASE, %g5;					/* Is it in the locked TTE? */ \
-	sub	%g5, %g6, %g5; \
-	set	(4*1024*1024), %g7; \
-	cmp	%g5, %g7; \
-	mov	%g6, %g7;					/* We will use %g7 as the phys addr */ \
-	blu,pt	%icc, 0f;					/* Yes */ \
-	/* Now try to lookup a physical mapping for the pcb */ \
-	 wr	%g0, ASI_NUCLEUS, %asi;				/* In case of problems finding PA */ \
-	sethi	%hi(_C_LABEL(ctxbusy)), %g5; \
-	lduw	[%g5 + %lo(_C_LABEL(ctxbusy))], %g5; \
-	srlx	%g6, STSHIFT-2, %g7; \
-	lduw	[%g5], %g5; \
-	andn	%g7, 3, %g7; \
-	add	%g7, %g5, %g5; \
-	lduwa	[%g5] ASI_PHYS_CACHED, %g5; \
-	srlx	%g6, PTSHIFT, %g7;				/* Convert to ptab offset */ \
-	and	%g7, PTMASK, %g7; \
-	brz,a,pn	%g5, 0f; \
-	 mov	%g6, %g7; \
-	sll	%g7, 3, %g7; \
-	add	%g7, %g5, %g7; \
-	ldxa	[%g7] ASI_PHYS_CACHED, %g7;			/* This one is physaddr */ \
-	brgez,a,pn	%g7, 0f; \
-	 mov	%g6, %g7; \
-	srlx	%g7, PGSHIFT, %g7;				/* Isolate PA part */ \
-	sll	%g6, 32-PGSHIFT, %g5;				/* And offset */ \
-	sllx	%g7, PGSHIFT+23, %g7; \
-	srl	%g5, 32-PGSHIFT, %g5; \
-	srax	%g7, 23, %g7; \
-	or	%g7, %g5, %g7;					/* Then combine them to form PA */ \
-	wr	%g0, ASI_PHYS_CACHED, %asi;			/* Use ASI_PHYS_CACHED to prevent possible page faults */ \
-0:\
-	srl	%g6, 0, %g6;					/* XXXXXXXXXX truncate at 32-bits */ \
-	srl	%g7, 0, %g7; \
-	stxa	%g1, [%g6 + CCFSZ + TF_FAULT] %asi; \
-	stxa	%o0, [%g7 + CCFSZ + TF_O + (0*8)] %asi; \
-	stxa	%o1, [%g7 + CCFSZ + TF_O + (1*8)] %asi; \
-	stxa	%o2, [%g7 + CCFSZ + TF_O + (2*8)] %asi; \
-	stxa	%o3, [%g7 + CCFSZ + TF_O + (3*8)] %asi; \
-	stxa	%o4, [%g7 + CCFSZ + TF_O + (4*8)] %asi; \
-	stxa	%o5, [%g7 + CCFSZ + TF_O + (5*8)] %asi; \
-	rdpr	%wstate, %g5;					/* Find if we're from user mode again */ \
-	stxa	%o6, [%g7 + CCFSZ + TF_O + (6*8)] %asi; \
-	sub	%g5, WSTATE_KERN, %g5;				/* Compare & leave in register again */ \
-	stxa	%o7, [%g7 + CCFSZ + TF_O + (7*8)] %asi; \
-	stxa	%l0, [%g7 + CCFSZ + TF_L + (0*8)] %asi; \
-	stxa	%l1, [%g7 + CCFSZ + TF_L + (1*8)] %asi; \
-	stxa	%l2, [%g7 + CCFSZ + TF_L + (2*8)] %asi; \
-	stxa	%l3, [%g7 + CCFSZ + TF_L + (3*8)] %asi; \
-	stxa	%l4, [%g7 + CCFSZ + TF_L + (4*8)] %asi; \
-	stxa	%l5, [%g7 + CCFSZ + TF_L + (5*8)] %asi; \
-	stxa	%l6, [%g7 + CCFSZ + TF_L + (6*8)] %asi; \
-	stxa	%l7, [%g7 + CCFSZ + TF_L + (7*8)] %asi; \
-	stxa	%i0, [%g7 + CCFSZ + TF_I + (0*8)] %asi; \
-	stxa	%i1, [%g7 + CCFSZ + TF_I + (1*8)] %asi; \
-	stxa	%i2, [%g7 + CCFSZ + TF_I + (2*8)] %asi; \
-	stxa	%i3, [%g7 + CCFSZ + TF_I + (3*8)] %asi; \
-	stxa	%i4, [%g7 + CCFSZ + TF_I + (4*8)] %asi; \
-	stxa	%i5, [%g7 + CCFSZ + TF_I + (5*8)] %asi; \
-	stxa	%i6, [%g7 + CCFSZ + TF_I + (6*8)] %asi; \
-	stxa	%i7, [%g7 + CCFSZ + TF_I + (7*8)] %asi; \
-	brz,pn	%g5, 1f;					/* If we were in kernel mode start saving globals */ \
-	/* came from user mode -- switch to kernel mode stack */ \
-	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
-	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
-	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
-	wrpr	%g0, 0, %canrestore; \
-	set	CTX_PRIMARY, %g7; \
-	wrpr	%g0, %g5, %otherwin; \
-	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
-	mov	%g6, %sp;					/* Truly switch to new stack frame */ \
-	sethi	%hi(KERNBASE), %g5; \
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
-	membar	#Sync; \
-	flush	%g6;						/* Some convenient address that won't trap */ \
-1: \
-	mov	%g6, %sp;					/* Truly switch to new stack frame.  This insn is idempotent */
-
-#endif
-/*
- * Interrupt setup is almost exactly like trap setup, but we need to
- * go to the interrupt stack if (a) we came from user mode or (b) we
- * came from kernel mode on the kernel stack.
- */
-#define	INTR_SETUP(stackspace) \
-	sethi	%hi(_C_LABEL(eintstack)), %g6; \
-	sethi	%hi((stackspace)), %g5; \
-	btst	1, %sp; \
-	bz,pt	%icc, 0f; \
-	 mov	%sp, %g1; \
-	add	%sp, BIAS, %g1; \
-0: \
-	srl	%g1, 0, %g1;					/* truncate at 32-bits */ \
-	or	%g6, %lo(_C_LABEL(eintstack)), %g6; \
-	set	(_C_LABEL(eintstack)-_C_LABEL(intstack)), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
-	or	%g5, %lo((stackspace)), %g5; \
-	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
-	dec	%g7;						/* Make it into a mask */ \
-	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
-	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	movz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	stx	%o0, [%g6 + CCFSZ + TF_O + (0*8)];		/* Save out registers to trap frame */ \
-	stx	%o1, [%g6 + CCFSZ + TF_O + (1*8)]; \
-	stx	%o2, [%g6 + CCFSZ + TF_O + (2*8)]; \
-	stx	%o3, [%g6 + CCFSZ + TF_O + (3*8)]; \
-	stx	%o4, [%g6 + CCFSZ + TF_O + (4*8)]; \
-	stx	%o5, [%g6 + CCFSZ + TF_O + (5*8)]; \
-	stx	%o6, [%g6 + CCFSZ + TF_O + (6*8)]; \
-	stx	%o6, [%g6 + CCFSZ + TF_G + (0*8)];		/* Save fp in clockframe->cf_fp */ \
-	stx	%o7, [%g6 + CCFSZ + TF_O + (7*8)]; \
-	stx	%l0, [%g6 + CCFSZ + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CCFSZ + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CCFSZ + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CCFSZ + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CCFSZ + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CCFSZ + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CCFSZ + TF_L + (6*8)]; \
-	stx	%l7, [%g6 + CCFSZ + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CCFSZ + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CCFSZ + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CCFSZ + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CCFSZ + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CCFSZ + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CCFSZ + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CCFSZ + TF_I + (6*8)]; \
-	stx	%i7, [%g6 + CCFSZ + TF_I + (7*8)]; \
-	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
-	sub	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
-	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
-	/* came from user mode -- switch to kernel mode stack */ \
-	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
-	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
-	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
-	wrpr	%g0, 0, %canrestore; \
-	set	CTX_PRIMARY, %g1; \
-	wrpr	%g0, %g5, %otherwin; \
-	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
-	mov	%g6, %sp;					/* Truly switch to new stack frame */ \
-	sethi	%hi(KERNBASE), %g5; \
-	stxa	%g0, [%g1] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
-	membar	#Sync; \
-	flush	%g5;						/* Some convenient address that won't trap */ \
-1: \
-	mov	%g6, %sp;					/* Truly switch to new stack frame.  This insn is idempotent */
-
-#endif
-
+#endif /* _LP64 */
+	
 #ifdef DEBUG
 	
 	/* Look up kpte to test algorithm */
@@ -1897,13 +1828,9 @@ asmptechk:
 dmmu_write_fault:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS	
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS	
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-#ifdef _LP64
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#else
-	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#endif
+	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	sllx	%g3, (64-13), %g6			! Mask away address
 	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
@@ -2021,12 +1948,8 @@ data_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
-#ifdef _LP64
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#else
-	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#endif
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	sllx	%g3, (64-13), %g6			! Mask away address
 	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
@@ -2148,7 +2071,7 @@ winfault:
 #endif
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page from tag access register
 	ldxa	[%g3] ASI_DMMU, %g3			! And put it into the non-MMU alternate regs
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 winfix:	
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
@@ -2275,7 +2198,7 @@ winfixspill:
 	mov	2, %g5
 	set	_C_LABEL(curproc), %g6
 	sllx	%g4, 13, %g4
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	clr	%g6		! DISABLE PID
 	or	%g4, %g5, %g4
 	mov	%g0, %g5
@@ -2286,7 +2209,7 @@ winfixspill:
 	movnz	%icc, %g0, %g3
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
@@ -2311,7 +2234,7 @@ winfixspill:
 #endif
 #endif
 	wrpr	%g2, 0, %tl				! Restore trap level for now XXXX	
-	lduw	[%g6 + %lo(_C_LABEL(cpcb))], %g6	! This is in the locked TLB and should not fault
+	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g6	! This is in the locked TLB and should not fault
 #ifdef TRAPSTATS
 	set	_C_LABEL(wspill), %g7
 	lduw	[%g7], %g5
@@ -2332,11 +2255,7 @@ winfixspill:
 !	ba	0f					! DEBUG -- don't use phys addresses
 	 wr	%g0, ASI_NUCLEUS, %asi			! In case of problems finding PA
 	sethi	%hi(_C_LABEL(ctxbusy)), %g1
-#ifdef _LP64
-	ldx	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1	! Load start of ctxbusy
-#else
-	lduw	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1
-#endif
+	LDPTR	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1	! Load start of ctxbusy
 #ifdef DEBUG
 	srax	%g6, HOLESHIFT, %g7			! Check for valid address
 	brz,pt	%g7, 1f					! Should be zero or -1
@@ -2614,7 +2533,7 @@ winfixsave:
 	mov	3, %g5
 	set	_C_LABEL(curproc), %g6
 	sllx	%g4, 13, %g4
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	clr	%g6		! DISABLE PID
 	or	%g4, %g5, %g4
 	mov	%g0, %g5
@@ -2625,7 +2544,7 @@ winfixsave:
 	movnz	%icc, %g0, %g3
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
@@ -2706,20 +2625,20 @@ datafault:
 	CHKPT(%g4,%g7,0xf)
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
 	membar	#Sync					! No real reason for this XXXX
 	
-	TRAP_SETUP(-CCFSZ-TF_SIZE)
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 #if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
 #else
 	INCR(_C_LABEL(cnt)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
 #endif
 
-!	ldx	[%sp + CCFSZ + TF_FAULT], %g1		! DEBUG make sure this has not changed
+!	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o5				! Move these to the out regs so we can save the globals
 	mov	%g2, %o1
 	mov	%g3, %o2
@@ -2736,38 +2655,38 @@ datafault:
 	TRACEME
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
 	
-	stx	%g1, [%sp + CCFSZ + TF_G + (1*8)]	! save g1
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
 #else
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
 	
-	stx	%g1, [%sp + CCFSZ + TF_G + (1*8)]	! save g1
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
 	rdpr	%tt, %o0				! find out what trap brought us here
 #endif
-	stx	%g2, [%sp + CCFSZ + TF_G + (2*8)]	! save g2
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
 	rdpr	%tstate, %g1
-	stx	%g3, [%sp + CCFSZ + TF_G + (3*8)]	! (sneak g3 in here)
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]	! (sneak g3 in here)
 	rdpr	%tpc, %g2
-	stx	%g4, [%sp + CCFSZ + TF_G + (4*8)]	! sneak in g4
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]	! sneak in g4
 	rdpr	%tnpc, %g3
-	stx	%g5, [%sp + CCFSZ + TF_G + (5*8)]	! sneak in g5
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]	! sneak in g5
 	rd	%y, %g4					! save y
-	stx	%g6, [%sp + CCFSZ + TF_G + (6*8)]	! sneak in g6
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
 	mov	%g2, %o7				! Make the fault address look like the return address
-	stx	%g7, [%sp + CCFSZ + TF_G + (7*8)]	! sneak in g7
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
 
 #if 1
 	set	trapbase, %g7				! debug
 	set	0x21, %g6				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
 #endif
-	sth	%o0, [%sp + CCFSZ + TF_TT]! debug
-	stx	%g1, [%sp + CCFSZ + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
-	stx	%g2, [%sp + CCFSZ + TF_PC]		! set tf.tf_npc
-	stx	%g3, [%sp + CCFSZ + TF_NPC]
+	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]		! set tf.tf_npc
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
 	
 	rdpr	%pil, %g5
-	stb	%g5, [%sp + CCFSZ + TF_PIL]
-	stb	%g5, [%sp + CCFSZ + TF_OLDPIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 
 #if 1
 	rdpr	%tl, %g7
@@ -2783,7 +2702,7 @@ datafault:
 	flushw						! Get this clean so we won't take any more user faults
 #ifdef NOTDEF_DEBUG
 	set	_C_LABEL(cpcb), %o7
-	lduw	[%o7], %o7
+	LDPTR	[%o7], %o7
 	ldub	[%o7 + PCB_NSAVED], %o7
 	brz,pt	%o7, 2f
 	 nop
@@ -2800,14 +2719,14 @@ datafault:
 #endif
 	/* Use trap type to see what handler to call */
 	cmp	%o0, T_FIMMU_MISS
-	st	%g4, [%sp + CCFSZ + TF_Y]		! set tf.tf_y	
+	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y	
 	bl	data_error
 	 wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
 	
 	mov	%o5, %o1
 	mov	%g2, %o2
 	call	_C_LABEL(data_access_fault)		! data_access_fault(type, addr, pc, &tf);
-	 add	%sp, CCFSZ, %o3				! (argument: &tf)
+	 add	%sp, CC64FSZ + STKB, %o3				! (argument: &tf)
 
 	ba	data_recover
 	 nop
@@ -2816,7 +2735,7 @@ data_error:
 	wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
 	call	_C_LABEL(data_access_error)		! data_access_error(type, sfva, sfsr,
 							!		afva, afsr, &tf);
-	 add	%sp, CCFSZ, %o5				! (argument: &tf)
+	 add	%sp, CC64FSZ + STKB, %o5				! (argument: &tf)
 
 data_recover:
 	CHKPT(%o1,%o2,1)
@@ -2833,7 +2752,7 @@ data_recover:
 	stw	%g0, [%g1]
 #endif
 	b	return_from_trap			! go return
-	 ldx	[%sp + CCFSZ + TF_TSTATE], %g1		! Load this for return_from_trap
+	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1		! Load this for return_from_trap
 	NOTREACHED
 /*
  * Each memory instruction access fault from a fast access handler comes here.
@@ -2869,7 +2788,7 @@ instr_miss:
 #if 1
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 #endif
 	
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
@@ -2985,7 +2904,7 @@ Lutext_miss:
 prom_textfault:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 #if 0
 	!!
 	!!  Check our prom mappings -- temporary
@@ -3040,12 +2959,12 @@ textfault:
 #endif
 	wr	%g0, ASI_IMMU, %asi
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out old info
 	membar	#Sync					! No real reason for this XXXX
 	
-	TRAP_SETUP(-CCFSZ-TF_SIZE)
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 #if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1)
 #else
@@ -3060,29 +2979,29 @@ textfault:
 	mov	-1, %o0
 	stxa	%o0, [%g0] ASI_AFSR			! Clear this out
 	membar	#Sync					! No real reason for this XXXX
-	stx	%g1, [%sp + CCFSZ + TF_G + (1*8)]	! save g1
-	stx	%g2, [%sp + CCFSZ + TF_G + (2*8)]	! save g2
-	stx	%g3, [%sp + CCFSZ + TF_G + (3*8)]	! (sneak g3 in here)
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]	! (sneak g3 in here)
 	rdpr	%tt, %o0				! Find out what caused this trap
-	stx	%g4, [%sp + CCFSZ + TF_G + (4*8)]	! sneak in g4
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]	! sneak in g4
 	rdpr	%tstate, %g1
-	stx	%g5, [%sp + CCFSZ + TF_G + (5*8)]	! sneak in g5
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]	! sneak in g5
 	rdpr	%tpc, %o1				! sync virt addr; must be read first
-	stx	%g6, [%sp + CCFSZ + TF_G + (6*8)]	! sneak in g6
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
 	rdpr	%tnpc, %g3
-	stx	%g7, [%sp + CCFSZ + TF_G + (7*8)]	! sneak in g7
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
 	rd	%y, %g7					! save y
 
 	/* Finish stackframe, call C trap handler */
-	stx	%g1, [%sp + CCFSZ + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
-	sth	%o0, [%sp + CCFSZ + TF_TT]! debug
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
+	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
 
-	stx	%o1, [%sp + CCFSZ + TF_PC]
-	stx	%g3, [%sp + CCFSZ + TF_NPC]		! set tf.tf_npc
+	stx	%o1, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]		! set tf.tf_npc
 
 	rdpr	%pil, %g5
-	stb	%g5, [%sp + CCFSZ + TF_PIL]
-	stb	%g5, [%sp + CCFSZ + TF_OLDPIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 	
 #if 1
 	rdpr	%tl, %g7
@@ -3102,11 +3021,11 @@ textfault:
 	flushw						! Get rid of any user windows so we don't deadlock
 	cmp	%o0, T_FIMMU_MISS
 	bl	text_error
-	 st	%g7, [%sp + CCFSZ + TF_Y]		! set tf.tf_y
+	 st	%g7, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y
 	
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
 	call	_C_LABEL(text_access_fault)	! mem_access_fault(type, pc, &tf);
-	 add	%sp, CCFSZ, %o2			! (argument: &tf)
+	 add	%sp, CC64FSZ + STKB, %o2			! (argument: &tf)
 
 	ba	text_recover
 	 nop
@@ -3115,7 +3034,7 @@ text_error:
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
 	call	_C_LABEL(text_access_error)	! mem_access_fault(type, sfva [pc], sfsr,
 						!		afva, afsr, &tf);
-	 add	%sp, CCFSZ, %o5			! (argument: &tf)
+	 add	%sp, CC64FSZ + STKB, %o5			! (argument: &tf)
 
 text_recover:	
 	CHKPT(%o1,%o2,2)
@@ -3126,7 +3045,7 @@ text_recover:
 	wrpr	%g0, %g1, %tl			! DEBUG
 #endif
 	b	return_from_trap		! go return
-	 ldx	[%sp + CCFSZ + TF_TSTATE], %g1	! Load this for return_from_trap
+	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 	NOTREACHED
 
 /*
@@ -3166,35 +3085,30 @@ slowtrap:
 	rdpr	%tpc, %g2
 	rdpr	%tnpc, %g3
 
-#ifdef TRAPWIN
-	TRAP_SETUP(-CCFSZ-TF_SIZE)
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 Lslowtrap_reenter:	
-#else
-Lslowtrap_reenter:	
-	TRAP_SETUP(-CCFSZ-TF_SIZE)
-#endif
-	stx	%g1, [%sp + CCFSZ + TF_TSTATE]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 	mov	%g4, %o0		! (type)
-	stx	%g2, [%sp + CCFSZ + TF_PC]
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	rd	%y, %g5
-	stx	%g3, [%sp + CCFSZ + TF_NPC]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
 	mov	%g1, %o1		! (pstate)
-	st	%g5, [%sp + CCFSZ + TF_Y]
+	st	%g5, [%sp + CC64FSZ + STKB + TF_Y]
 	mov	%g2, %o2		! (pc)
-	sth	%o0, [%sp + CCFSZ + TF_TT]! debug
+	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
 		
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals	
-	stx	%g1, [%sp + CCFSZ + TF_G + (1*8)]
-	stx	%g2, [%sp + CCFSZ + TF_G + (2*8)]
-	add	%sp, CCFSZ, %o3		! (&tf)
-	stx	%g3, [%sp + CCFSZ + TF_G + (3*8)]
-	stx	%g4, [%sp + CCFSZ + TF_G + (4*8)]
-	stx	%g5, [%sp + CCFSZ + TF_G + (5*8)]
-	stx	%g6, [%sp + CCFSZ + TF_G + (6*8)]
-	stx	%g7, [%sp + CCFSZ + TF_G + (7*8)]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]
+	add	%sp, CC64FSZ + STKB, %o3		! (&tf)
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]
 	rdpr	%pil, %g5
-	stb	%g5, [%sp + CCFSZ + TF_PIL]
-	stb	%g5, [%sp + CCFSZ + TF_OLDPIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 	/*
 	 * Phew, ready to enable traps and call C code.
 	 */
@@ -3250,52 +3164,52 @@ softtrap:
 	bgeu,pt	%icc, Lslowtrap_reenter
 	 nop
 	sethi	%hi(_C_LABEL(cpcb)), %g7
-	lduw	[%g7 + %lo(_C_LABEL(cpcb))], %g7
-	set	USPACE-CCFSZ-TF_SIZE, %g5
+	LDPTR	[%g7 + %lo(_C_LABEL(cpcb))], %g7
+	set	USPACE-CC64FSZ-TF_SIZE, %g5
 	add	%g7, %g5, %g6
 	SET_SP_REDZONE(%g7, %g5)
-	stx	%g1, [%g6 + CCFSZ + TF_FAULT]		! Generate a new trapframe 
-	stx	%i0, [%g6 + CCFSZ + TF_O + (0*8)]	!	but don't bother with
-	stx	%i1, [%g6 + CCFSZ + TF_O + (1*8)]	!	locals and ins
-	stx	%i2, [%g6 + CCFSZ + TF_O + (2*8)]
-	stx	%i3, [%g6 + CCFSZ + TF_O + (3*8)]
-	stx	%i4, [%g6 + CCFSZ + TF_O + (4*8)]
-	stx	%i5, [%g6 + CCFSZ + TF_O + (5*8)]
-	stx	%i6, [%g6 + CCFSZ + TF_O + (6*8)]
-	stx	%i7, [%g6 + CCFSZ + TF_O + (7*8)]
+	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]		! Generate a new trapframe 
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_O + (0*8)]	!	but don't bother with
+	stx	%i1, [%g6 + CC64FSZ + STKB + TF_O + (1*8)]	!	locals and ins
+	stx	%i2, [%g6 + CC64FSZ + STKB + TF_O + (2*8)]
+	stx	%i3, [%g6 + CC64FSZ + STKB + TF_O + (3*8)]
+	stx	%i4, [%g6 + CC64FSZ + STKB + TF_O + (4*8)]
+	stx	%i5, [%g6 + CC64FSZ + STKB + TF_O + (5*8)]
+	stx	%i6, [%g6 + CC64FSZ + STKB + TF_O + (6*8)]
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_O + (7*8)]
 #ifdef DEBUG
-	ldx	[%sp + CCFSZ + TF_I + (0*8)], %l0	! Copy over the rest of the regs
-	ldx	[%sp + CCFSZ + TF_I + (1*8)], %l1	! But just dirty the locals
-	ldx	[%sp + CCFSZ + TF_I + (2*8)], %l2
-	ldx	[%sp + CCFSZ + TF_I + (3*8)], %l3
-	ldx	[%sp + CCFSZ + TF_I + (4*8)], %l4
-	ldx	[%sp + CCFSZ + TF_I + (5*8)], %l5
-	ldx	[%sp + CCFSZ + TF_I + (6*8)], %l6
-	ldx	[%sp + CCFSZ + TF_I + (7*8)], %l7
-	stx	%l0, [%g6 + CCFSZ + TF_I + (0*8)]
-	stx	%l1, [%g6 + CCFSZ + TF_I + (1*8)]
-	stx	%l2, [%g6 + CCFSZ + TF_I + (2*8)]
-	stx	%l3, [%g6 + CCFSZ + TF_I + (3*8)]
-	stx	%l4, [%g6 + CCFSZ + TF_I + (4*8)]
-	stx	%l5, [%g6 + CCFSZ + TF_I + (5*8)]
-	stx	%l6, [%g6 + CCFSZ + TF_I + (6*8)]
-	stx	%l7, [%g6 + CCFSZ + TF_I + (7*8)]
-	ldx	[%sp + CCFSZ + TF_L + (0*8)], %l0
-	ldx	[%sp + CCFSZ + TF_L + (1*8)], %l1
-	ldx	[%sp + CCFSZ + TF_L + (2*8)], %l2
-	ldx	[%sp + CCFSZ + TF_L + (3*8)], %l3
-	ldx	[%sp + CCFSZ + TF_L + (4*8)], %l4
-	ldx	[%sp + CCFSZ + TF_L + (5*8)], %l5
-	ldx	[%sp + CCFSZ + TF_L + (6*8)], %l6
-	ldx	[%sp + CCFSZ + TF_L + (7*8)], %l7
-	stx	%l0, [%g6 + CCFSZ + TF_L + (0*8)]
-	stx	%l1, [%g6 + CCFSZ + TF_L + (1*8)]	
-	stx	%l2, [%g6 + CCFSZ + TF_L + (2*8)]
-	stx	%l3, [%g6 + CCFSZ + TF_L + (3*8)]
-	stx	%l4, [%g6 + CCFSZ + TF_L + (4*8)]
-	stx	%l5, [%g6 + CCFSZ + TF_L + (5*8)]
-	stx	%l6, [%g6 + CCFSZ + TF_L + (6*8)]
-	stx	%l7, [%g6 + CCFSZ + TF_L + (7*8)]
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (0*8)], %l0	! Copy over the rest of the regs
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (1*8)], %l1	! But just dirty the locals
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (2*8)], %l2
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (3*8)], %l3
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (4*8)], %l4
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (5*8)], %l5
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (6*8)], %l6
+	ldx	[%sp + CC64FSZ + STKB + TF_I + (7*8)], %l7
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)]
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (0*8)], %l0
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (1*8)], %l1
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (2*8)], %l2
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (3*8)], %l3
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (4*8)], %l4
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (5*8)], %l5
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (6*8)], %l6
+	ldx	[%sp + CC64FSZ + STKB + TF_L + (7*8)], %l7
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)]
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]	
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]
 #endif
 	ba,pt	%xcc, Lslowtrap_reenter
 	 mov	%g6, %sp
@@ -3535,7 +3449,7 @@ kgdb_rett:
 	srl	%l1, %l0, %l1
 	wr	%l1, 0, %wim		! %wim = 1 << (%psr & 31)
 	sethi	%hi(_C_LABEL(cpcb)), %l1
-	ld	[%l1 + %lo(_C_LABEL(cpcb))], %l1
+	LDPTR	[%l1 + %lo(_C_LABEL(cpcb))], %l1
 	and	%l0, 31, %l0		! CWP = %psr & 31;
 	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = CWP;
 	save	%g0, %g0, %g0		! back to window to reload
@@ -3555,39 +3469,39 @@ syscall_setup:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
-	TRAP_SETUP(-CCFSZ-TF_SIZE)
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 
 	rdpr	%tt, %o0	! debug
-	sth	%o0, [%sp + CCFSZ + TF_TT]! debug
+	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
 		
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
-	stx	%g1, [%sp + CCFSZ + TF_G + ( 1*8)]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	mov	%g1, %o0				! code
 	rdpr	%tpc, %o2				! (pc)
-	stx	%g2, [%sp + CCFSZ + TF_G + ( 2*8)]	
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]	
 	rdpr	%tstate, %g1
-	stx	%g3, [%sp + CCFSZ + TF_G + ( 3*8)]	
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]	
 	rdpr	%tnpc, %g3
-	stx	%g4, [%sp + CCFSZ + TF_G + ( 4*8)]	
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + ( 4*8)]	
 	rd	%y, %g4
-	stx	%g5, [%sp + CCFSZ + TF_G + ( 5*8)]	
-	stx	%g6, [%sp + CCFSZ + TF_G + ( 6*8)]	
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]	
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]	
 	CHKPT(%g5,%g6,0x31)
 	wrpr	%g0, 0, %tl			! return to tl=0
-	stx	%g7, [%sp + CCFSZ + TF_G + ( 7*8)]
-	add	%sp, CCFSZ, %o1				! (&tf)
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
+	add	%sp, CC64FSZ + STKB, %o1				! (&tf)
 	
-	stx	%g1, [%sp + CCFSZ + TF_TSTATE]	
-	stx	%o2, [%sp + CCFSZ + TF_PC]
-	stx	%g3, [%sp + CCFSZ + TF_NPC]
-	st	%g4, [%sp + CCFSZ + TF_Y]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]	
+	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
+	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]
 
 	rdpr	%pil, %g5
-	stb	%g5, [%sp + CCFSZ + TF_PIL]
-	stb	%g5, [%sp + CCFSZ + TF_OLDPIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 	
 !	flushw			! DEBUG
-!	ldx	[%sp + CCFSZ + TF_G + ( 1*8)], %o0	! (code)
+!	ldx	[%sp + CC64FSZ + STKB + TF_G + ( 1*8)], %o0	! (code)
 	call	_C_LABEL(syscall)		! syscall(code, &tf, pc, suncompat)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
@@ -3654,7 +3568,7 @@ interrupt_vector:
 	 cmp	%g2, MAXINTNUM
 	bgeu	iv_halt			! 3f
 	 sllx	%g2, 2, %g5		! Calculate entry number -- 32-bit offset
-	lduw	[%g3+%g5], %g5		! We have a pointer to the handler
+	LDPTR	[%g3+%g5], %g5		! We have a pointer to the handler
 	brz,pn	%g5, iv_halt	/*3f*/	! NULL means it isn't registered yet.  Skip it.
 	 nop
 	lduh	[%g5+IH_PIL], %g6	! Read interrupt mask
@@ -3664,7 +3578,11 @@ interrupt_vector:
 	btst	INTRDEBUG_VECTOR, %g7
 	bz,pt	%icc, 1f
 	 nop
+#ifdef _LP64
+	TO_STACK64(-CC64FSZ)		! Get a clean register window
+#else
 	TO_STACK32(-CC64FSZ)		! Get a clean register window
+#endif
 	set	4f, %o0
 	mov	%g2, %o1
 	rdpr	%pil, %o3
@@ -3691,7 +3609,11 @@ interrupt_vector:
 	btst	INTRDEBUG_SPUR, %g7
 	bz,pt	%icc, 2b
 	 nop
+#ifdef _LP64
+	TO_STACK64(-CC64FSZ)		! Get a clean register window
+#else
 	TO_STACK32(-CC64FSZ)		! Get a clean register window
+#endif
 	set	5f, %o0
 	mov	%g1, %o1
 	GLOBTOLOC
@@ -3798,15 +3720,15 @@ _C_LABEL(sparc_interrupt):
 	stw	%g2, [%g1]	
 1:	
 #endif
-	INTR_SETUP(-CCFSZ-TF_SIZE)
+	INTR_SETUP(-CC64FSZ-TF_SIZE)
 	wrpr	%g0, PSTATE_KERN, %pstate		! Switch to normal globals so we can save them
-	stx	%g1, [%sp + CCFSZ + TF_G + ( 1*8)]
-	stx	%g2, [%sp + CCFSZ + TF_G + ( 2*8)]
-	stx	%g3, [%sp + CCFSZ + TF_G + ( 3*8)]
-	stx	%g4, [%sp + CCFSZ + TF_G + ( 4*8)]
-	stx	%g5, [%sp + CCFSZ + TF_G + ( 5*8)]
-	stx	%g6, [%sp + CCFSZ + TF_G + ( 6*8)]
-	stx	%g7, [%sp + CCFSZ + TF_G + ( 7*8)]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + ( 4*8)]
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
 	
 	flushw			! DEBUG
 	rd	%y, %l6
@@ -3823,11 +3745,11 @@ _C_LABEL(sparc_interrupt):
 	dec	%l3
 	CHKPT(%l4,%l7,0x26)
 	wrpr	%g0, %l3, %tl
-	sth	%l5, [%sp + CCFSZ + TF_TT]! debug
-	stx	%l0, [%sp + CCFSZ + TF_TSTATE]	! set up intrframe/clockframe
-	stx	%l1, [%sp + CCFSZ + TF_PC]
-	stx	%l2, [%sp + CCFSZ + TF_NPC]
-	stx	%fp, [%sp + CCFSZ + TF_KSTACK]	!  old frame pointer
+	sth	%l5, [%sp + CC64FSZ + STKB + TF_TT]! debug
+	stx	%l0, [%sp + CC64FSZ + STKB + TF_TSTATE]	! set up intrframe/clockframe
+	stx	%l1, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%l2, [%sp + CC64FSZ + STKB + TF_NPC]
+	stx	%fp, [%sp + CC64FSZ + STKB + TF_KSTACK]	!  old frame pointer
 	
 	sub	%l5, 0x40, %l5			! Convert to interrupt level
 	mov	1, %l3				! Ack softint
@@ -3836,16 +3758,16 @@ _C_LABEL(sparc_interrupt):
 !	wr	%l3, 0, CLEAR_SOFTINT		! (don't clear possible %tick IRQ)
 
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	stb	%l5, [%sp + CCFSZ + TF_PIL]	! set up intrframe/clockframe
+	stb	%l5, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
 	sll	%l5, 2, %l3
-	stb	%o1, [%sp + CCFSZ + TF_OLDPIL]	! old %pil
+	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
 	ld	[%l4 + %l3], %o0
 	inc	%o0
 	st	%o0, [%l4 + %l3]
 	wrpr	%l5, %pil
 	set	_C_LABEL(intrhand), %l4		! %l4 = intrhand[intlev];
-	ld	[%l4 + %l3], %l4
+	LDPTR	[%l4 + %l3], %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	clr	%l3
 #ifdef DEBUG
@@ -3883,8 +3805,8 @@ _C_LABEL(sparc_interrupt):
 	_ALIGN
 #endif	
 
-1:	ld	[%l4 + IH_FUN], %o1	! do {
-	ld	[%l4 + IH_ARG], %o0
+1:	LDPTR	[%l4 + IH_FUN], %o1	! do {
+	LDPTR	[%l4 + IH_ARG], %o0
 #ifdef DEBUG
 	set	intrdebug, %o2
 	ld	[%o2], %o2
@@ -3906,41 +3828,41 @@ _C_LABEL(sparc_interrupt):
 7:	
 #endif
 #if 0
-	ld	[%l4 + IH_CLR], %l3	!		load up the clrintr ptr for later
-	add	%sp, CCFSZ, %o2		!	tf = %sp + CCFSZ
+	LDPTR	[%l4 + IH_CLR], %l3	!		load up the clrintr ptr for later
+	add	%sp, CC64FSZ + STKB, %o2		!	tf = %sp + CC64FSZ + STKB
 	brnz,a,pt	%l3, 5f		!		Clear this intr?
 	 stx	%g0, [%l3]		!		Yes
 5:	
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		!	arg = (arg == 0) ? arg : tf
 	movrnz	%o0, %o0, %l5		! Store the success somewhere
-	ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
+	LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! } while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
 	brnz,pn	%l5, 4f			!	if (handled) break
 	 nop
 !	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
-	 add	%sp, CCFSZ, %o0
+	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #else
 	brz,a,pn	%o0, 2f
-	 add	%sp, CCFSZ, %o0
+	 add	%sp, CC64FSZ + STKB, %o0
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 ld	[%l4 + IH_CLR], %l3
+	 LDPTR	[%l4 + IH_CLR], %l3
 	brnz,a,pt	%l3, 5f		! Clear intr?
 	 stx	%g0, [%l3]		! Yes
 5:	brnz,pn	%o0, 4f			! if (handled) break
-	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
+	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
 	call	_C_LABEL(strayintr)		!	strayintr(&intrframe)
-	 add	%sp, CCFSZ, %o0
+	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #endif
 4:
-	ldub	[%sp + CCFSZ + TF_OLDPIL], %l3	! restore old %pil
+	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts	
-	stw	%l6, [%sp + CCFSZ + TF_Y]	! Silly, but we need to save this for rft
+	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	wrpr	%l3, 0, %pil
 	
 	rdpr	%tl, %l3			! Restore old trap frame
@@ -3985,7 +3907,7 @@ zshard:
  * Return from trap.
  * registers are:
  *
- *	[%sp + CCFSZ] => trap frame
+ *	[%sp + CC64FSZ + STKB] => trap frame
  *
  * We must load all global, out, and trap registers from the trap frame.
  *
@@ -4005,8 +3927,8 @@ return_from_trap:
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
 	mov	%i1, %o1
-	ldx	[%fp + CCFSZ + TF_PC], %o3
-	ldx	[%fp + CCFSZ + TF_NPC], %o4
+	ldx	[%fp + CC64FSZ + STKB + TF_PC], %o3
+	ldx	[%fp + CC64FSZ + STKB + TF_NPC], %o4
 	GLOBTOLOC
 	call	printf
 	 mov	%i6, %o2
@@ -4020,7 +3942,7 @@ return_from_trap:
 #endif
 
 #ifdef NOTDEF_DEBUG
-	ldx	[%sp + CCFSZ + TF_TSTATE], %g2
+	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g2
 	set	TSTATE_AG, %g3
 	set	4f, %g4
 	and	%g2, %g3, %g3
@@ -4049,74 +3971,47 @@ return_from_trap:
 	!!
 	!! We'll make sure we flush our pcb here, rather than later.
 	!!
-	ldx	[%sp + CCFSZ + TF_TSTATE], %g1
+	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
 #if 0
 	btst	TSTATE_PRIV, %g1			! returning to userland?
 	bnz,pt	%icc, 0f
 	 sethi	%hi(_C_LABEL(curproc)), %o1
 	call	_C_LABEL(rwindow_save)			! Flush out our pcb
-	 lduw	[%o1 + %lo(_C_LABEL(curproc))], %o0
+	 LDPTR	[%o1 + %lo(_C_LABEL(curproc))], %o0
 0:
 #endif
 	wrpr	%g0, PSTATE_KERN, %pstate		! Make sure we have normal globals & no IRQs
 	/* First restore normal globals */
-	ldx	[%sp + CCFSZ + TF_G + (1*8)], %g1	! restore g1
-	ldx	[%sp + CCFSZ + TF_G + (2*8)], %g2	! restore g2
-	ldx	[%sp + CCFSZ + TF_G + (3*8)], %g3	! restore g3
-	ldx	[%sp + CCFSZ + TF_G + (4*8)], %g4	! restore g4
-	ldx	[%sp + CCFSZ + TF_G + (5*8)], %g5	! restore g5
-	ldx	[%sp + CCFSZ + TF_G + (6*8)], %g6	! restore g6
-	ldx	[%sp + CCFSZ + TF_G + (7*8)], %g7	! restore g7
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1	! restore g1
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (2*8)], %g2	! restore g2
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (3*8)], %g3	! restore g3
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (4*8)], %g4	! restore g4
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (5*8)], %g5	! restore g5
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6	! restore g6
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7	! restore g7
 	/* Then switch to alternate globals and load outs */
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
 	mov	%sp, %g6
-#ifdef TRAPWIN
-	ldx	[%g6 + CCFSZ + TF_O + (0*8)], %i0	! tf.tf_out[0], etc
-	ldx	[%g6 + CCFSZ + TF_O + (1*8)], %i1
-	ldx	[%g6 + CCFSZ + TF_O + (2*8)], %i2
-	ldx	[%g6 + CCFSZ + TF_O + (3*8)], %i3
-	ldx	[%g6 + CCFSZ + TF_O + (4*8)], %i4
-	ldx	[%g6 + CCFSZ + TF_O + (5*8)], %i5
-	ldx	[%g6 + CCFSZ + TF_O + (6*8)], %i6
-	ldx	[%g6 + CCFSZ + TF_O + (7*8)], %i7
-#else
-	ldx	[%g6 + CCFSZ + TF_O + (0*8)], %o0	! tf.tf_out[0], etc
-	ldx	[%g6 + CCFSZ + TF_O + (1*8)], %o1
-	ldx	[%g6 + CCFSZ + TF_O + (2*8)], %o2
-	ldx	[%g6 + CCFSZ + TF_O + (3*8)], %o3
-	ldx	[%g6 + CCFSZ + TF_O + (4*8)], %o4
-	ldx	[%g6 + CCFSZ + TF_O + (5*8)], %o5
-	ldx	[%g6 + CCFSZ + TF_O + (6*8)], %o6
-	ldx	[%g6 + CCFSZ + TF_O + (7*8)], %o7
-	ldx	[%g6 + CCFSZ + TF_L + (0*8)], %l0	! tf.tf_local[0], etc
-	ldx	[%g6 + CCFSZ + TF_L + (1*8)], %l1
-	ldx	[%g6 + CCFSZ + TF_L + (2*8)], %l2
-	ldx	[%g6 + CCFSZ + TF_L + (3*8)], %l3
-	ldx	[%g6 + CCFSZ + TF_L + (4*8)], %l4
-	ldx	[%g6 + CCFSZ + TF_L + (5*8)], %l5
-	ldx	[%g6 + CCFSZ + TF_L + (6*8)], %l6
-	ldx	[%g6 + CCFSZ + TF_L + (7*8)], %l7
-	ldx	[%g6 + CCFSZ + TF_I + (0*8)], %i0	! tf.tf_in[0], etc
-	ldx	[%g6 + CCFSZ + TF_I + (1*8)], %i1
-	ldx	[%g6 + CCFSZ + TF_I + (2*8)], %i2
-	ldx	[%g6 + CCFSZ + TF_I + (3*8)], %i3
-	ldx	[%g6 + CCFSZ + TF_I + (4*8)], %i4
-	ldx	[%g6 + CCFSZ + TF_I + (5*8)], %i5
-	ldx	[%g6 + CCFSZ + TF_I + (6*8)], %i6
-	ldx	[%g6 + CCFSZ + TF_I + (7*8)], %i7
-#endif
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (0*8)], %i0	! tf.tf_out[0], etc
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (1*8)], %i1
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (2*8)], %i2
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (3*8)], %i3
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (4*8)], %i4
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (5*8)], %i5
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (6*8)], %i6
+	ldx	[%g6 + CC64FSZ + STKB + TF_O + (7*8)], %i7
 	/* Now load trap registers into alternate globals */
-	ld	[%g6 + CCFSZ + TF_Y], %g4
-	ldx	[%g6 + CCFSZ + TF_TSTATE], %g1		! load new values
+	ld	[%g6 + CC64FSZ + STKB + TF_Y], %g4
+	ldx	[%g6 + CC64FSZ + STKB + TF_TSTATE], %g1		! load new values
 	wr	%g4, 0, %y
-	ldx	[%g6 + CCFSZ + TF_PC], %g2
-	ldx	[%g6 + CCFSZ + TF_NPC], %g3
+	ldx	[%g6 + CC64FSZ + STKB + TF_PC], %g2
+	ldx	[%g6 + CC64FSZ + STKB + TF_NPC], %g3
 
 #ifdef NOTDEF_DEBUG
-	ldub	[%g6 + CCFSZ + TF_PIL], %g5		! restore %pil
+	ldub	[%g6 + CC64FSZ + STKB + TF_PIL], %g5		! restore %pil
 	wrpr	%g5, %pil				! DEBUG
 #endif
 	
@@ -4139,14 +4034,12 @@ rft_kernel:
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
 	CHKPT(%g1,%g2,7)
-#ifdef TRAPWIN
 	restore
 	CHKPT(%g1,%g2,0)			! Clear this out
 	rdpr	%tstate, %g1			! Since we may have trapped our regs may be toast
 	rdpr	%cwp, %g2
 	andn	%g1, CWP, %g1
 	wrpr	%g1, %g2, %tstate		! Put %cwp in %tstate
-#endif
 	CLRTT
 #ifdef TRAPTRACE
 	set	trap_trace, %g2
@@ -4157,7 +4050,7 @@ rft_kernel:
 	rdpr	%tl, %g4
 	set	_C_LABEL(curproc), %g6
 	sllx	%g4, 13, %g4
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	clr	%g6		! DISABLE PID
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
@@ -4166,7 +4059,7 @@ rft_kernel:
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
@@ -4218,18 +4111,13 @@ rft_user:
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
-#ifdef TRAPWIN
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
-#else
-	wrpr	%g0, WSTATE_USER, %wstate	! Need to know where our sp points
-	brnz,pn	%g7, Lslowtrap_reenter		! yes, re-enter trap with type T_AST
-#endif
 	 mov	T_AST, %g4
 
 	CHKPT(%g4,%g7,8)
 #ifdef NOTDEF_DEBUG
 	sethi	%hi(_C_LABEL(cpcb)), %g4
-	lduw	[%g4 + %lo(_C_LABEL(cpcb))], %g4
+	LDPTR	[%g4 + %lo(_C_LABEL(cpcb))], %g4
 	ldub	[%g4 + PCB_NSAVED], %g4		! nsaved
 	brz,pt	%g4, 2f		! Only print if nsaved <> 0
 	 nop
@@ -4266,7 +4154,6 @@ rft_user:
 2:
 #endif
 
-#ifdef TRAPWIN
 	/*
 	 * First: blast away our caches
 	 */
@@ -4274,22 +4161,6 @@ rft_user:
 	/*
 	 * NB: only need to do this after a cache miss
 	 */
-#else
-	/*
-	 * First: blast away our caches
-	 *  Unfortunately we can't touch our outs so we
-	 *  need a special in-lined version here.
-	 */
-	set	(2*NBPG)-8, %g7
-1:	
-	stxa	%g0, [%g7] ASI_ICACHE_TAG
-	stxa	%g0, [%g7] ASI_DCACHE_TAG
-	brnz,pt	%g7, 1b
-	 dec	8, %g7
-	sethi	%hi(KERNBASE), %g7
-	flush	%g7
-
-#endif
 #ifdef TRAPSTATS
 	set	_C_LABEL(rftucnt), %g6
 	lduw	[%g6], %g7
@@ -4317,18 +4188,14 @@ rft_user:
 	 * by the data fault trap handlers and we don't want possible conflict.
 	 */
 	sethi	%hi(_C_LABEL(cpcb)), %g6
-	lduw	[%g6 + %lo(_C_LABEL(cpcb))], %g6
+	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 	ldub	[%g6 + PCB_NSAVED], %g7			! Any saved reg windows?
 #ifdef DEBUG
 	set	rft_wcnt, %g4	! Keep track of all the windows we restored
 	stw	%g7, [%g4]
 #endif
 	brz,a,pt	%g7, 5f				! No
-#ifdef TRAPWIN
 	 restore					! This may fault, but we should return here.
-#else
-	 nop
-#endif
 	dec	%g7					! We can do this now or later.  Move to last entry
 	sll	%g7, 7, %g5				! calculate ptr into rw64 array 8*16 == 128 or 7 bits
 
@@ -4358,9 +4225,6 @@ rft_user:
 2:	.asciz	"rft_user\n"
 	_ALIGN
 6:
-#ifndef TRAPWIN
-	wrpr	%g0, 0, %canrestore			! Make sure we have no freeloaders
-#endif
 3:
 	restored					! Load in the window
 	restore						! This should not trap!
@@ -4420,7 +4284,7 @@ rft_user:
 
 #ifdef DEBUG
 	sethi	%hi(_C_LABEL(cpcb)), %g5
-	lduw	[%g5 + %lo(_C_LABEL(cpcb))], %g5
+	LDPTR	[%g5 + %lo(_C_LABEL(cpcb))], %g5
 	ldub	[%g5 + PCB_NSAVED], %g5		! Any saved reg windows?
 	tst	%g5
 	wrpr	%g0, 0, %tl	! DEBUG
@@ -4435,7 +4299,7 @@ rft_user:
 	wrpr	%g5, 0, %cleanwin			! Force cleanup of kernel windows
 	
 #ifdef NOTDEF_DEBUG
-	ldx	[%g6 + CCFSZ + TF_L + (0*8)], %g5! DEBUG -- get proper value for %l0
+	ldx	[%g6 + CC64FSZ + STKB + TF_L + (0*8)], %g5! DEBUG -- get proper value for %l0
 	cmp	%l0, %g5
 	be,a,pt %icc, 1f
 	 nop
@@ -4464,7 +4328,7 @@ rft_user:
 	wrpr	%g0, WSTATE_KERN, %wstate	! Need to know where our sp points
 	set	rft_wcnt, %g4	! Restore nsaved before trapping
 	sethi	%hi(_C_LABEL(cpcb)), %g6
-	lduw	[%g6 + %lo(_C_LABEL(cpcb))], %g6
+	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 	lduw	[%g4], %g4
 	stb	%g4, [%g6 + PCB_NSAVED]
 	ta	1
@@ -4500,7 +4364,7 @@ badregs:
 	mov	1, %g5
 	set	_C_LABEL(curproc), %g6
 	sllx	%g4, 13, %g4
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	clr	%g6		! DISABLE PID
 	or	%g4, %g5, %g4
 	mov	%g0, %g5
@@ -4510,7 +4374,7 @@ badregs:
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
-	lduw	[%g6], %g6
+	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
@@ -4539,7 +4403,7 @@ badregs:
 #endif
 #ifdef DEBUG
 	sethi	%hi(_C_LABEL(cpcb)), %g5
-	lduw	[%g5 + %lo(_C_LABEL(cpcb))], %g5
+	LDPTR	[%g5 + %lo(_C_LABEL(cpcb))], %g5
 	ldub	[%g5 + PCB_NSAVED], %g5		! Any saved reg windows?
 	tst	%g5
 	tnz	%icc, 1; nop			! Debugger if we still have saved windows!
@@ -4551,28 +4415,7 @@ badregs:
 	.globl	_C_LABEL(endtrapcode)
 _C_LABEL(endtrapcode):
 
-#ifdef not4u
-#ifdef SUN4
-/*
- * getidprom(struct idprom *, sizeof(struct idprom))
- */
-	.global _C_LABEL(getidprom)
-_C_LABEL(getidprom):
-	set	AC_IDPROM, %o2
-1:	lduba	[%o2] ASI_CONTROL, %o3
-	stb	%o3, [%o0]
-	inc	%o0
-	inc	%o2
-	dec	%o1
-	cmp	%o1, 0
-	bne	1b
-	 nop
-	retl
-	 nop
-#endif
-#endif
-
-#if 1
+#if 0
 #define	xword	word	0, 
 	.data
 	.align	8
@@ -4623,7 +4466,7 @@ of_enter:
 	 * Yet another debug rom_halt
 	 */
 trap_enter:
-	set	panicstack - CCFSZ - BIAS, %sp
+	set	panicstack - CC64FSZ + STKB - BIAS, %sp
 	mov	7, %o3
 	wrpr	%g0, %o3, %cleanwin	
 	set	of_enter, %o1
@@ -4783,7 +4626,7 @@ dump_dtlb:
 	 nop
 	.globl	print_dtlb
 print_dtlb:
-	save	%sp, -CCFSZ, %sp
+	save	%sp, -CC64FSZ, %sp
 	clr	%l1
 	add	%l1, (64*8), %l3
 	clr	%l2
@@ -4871,22 +4714,22 @@ dostart:
 	blt	1f			! Not enuff args
 	
 	 set	0x44444230, %l3
-	lduw	[%o1], %l4
+	LDPTR	[%o1], %l4
 	cmp	%l3, %l4		! chk magic
 	bne	1f
 	 nop
 	
-	lduw	[%o1+4], %l4	
+	LDPTR	[%o1+4], %l4	
 	sethi	%hi(_C_LABEL(esym)), %l3	! store _esym
-	st	%l4, [%l3 + %lo(_C_LABEL(esym))]
+	STPTR	%l4, [%l3 + %lo(_C_LABEL(esym))]
 
 	cmp	%o2, 12
 	blt	1f
 	 nop
 	
-	lduw	[%o1+8], %l4	
+	LDPTR	[%o1+8], %l4	
 	sethi	%hi(_C_LABEL(ssym)), %l3	! store _esym
-	st	%l4, [%l3 + %lo(_C_LABEL(ssym))]
+	STPTR	%l4, [%l3 + %lo(_C_LABEL(ssym))]
 1:
 #endif
 	/*
@@ -4895,7 +4738,7 @@ dostart:
 	
 	mov	%o4, %g7	! save prom vector pointer
 	set	romp, %o5
-	st	%o4, [%o5]	! It's initialized data, I hope
+	STPTR	%o4, [%o5]	! It's initialized data, I hope
 
 	/*
 	 * Step 2: Set up a v8-like stack
@@ -4905,23 +4748,19 @@ dostart:
 #define SAVE	save %sp, -CC64FSZ, %sp
 	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE
 	restore;restore;restore;restore;restore;restore;restore;restore;restore;restore
- 	set	estack0 - CCFSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
+ 	set	estack0 - CC64FSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
 	save	%g0, %l0, %sp
 !!! Make sure our stack's OK.
 	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE
 	restore;restore;restore;restore;restore;restore;restore;restore;restore;restore
 
-#if 0
+#ifdef _LP64
 	/*
 	 * This code sets up a proper v9 stack.  We won't need it till we get a
 	 * 64-bit kernel.
 	 */
 	set	SA64(USRSTACK-CC64FSZ)-BIAS, %fp
 	set	SA64(estack0-CC64FSZ)-BIAS, %sp
-	
-	/* If we supported multiple arch then we would Export actual trapbase */
-	sethi	%hi(_C_LABEL(trapbase)), %o0
-	st	%g6, [%o0+%lo(_C_LABEL(trapbase))]
 #endif
 
 	/*
@@ -5170,9 +5009,9 @@ dostart:
 	 * Step 4: change the trap base register, and install our TSB
 	 */
 	set	_C_LABEL(tsb), %l0
-	ld	[%l0], %l0
+	LDPTR	[%l0], %l0
 	set	_C_LABEL(tsbsize), %l1
-	ld	[%l1], %l1
+	LDPTR	[%l1], %l1
 	andn	%l0, 0xfff, %l0			! Mask off size bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
 
@@ -5550,6 +5389,120 @@ _C_LABEL(dcache_flush_page):
 	retl
 	 nop	
 
+#ifdef _LP64
+/*
+ * XXXXX Still needs lotsa cleanup after sendsig is complete and offsets are known
+ * 
+ * The following code is copied to the top of the user stack when each
+ * process is exec'ed, and signals are `trampolined' off it.
+ *
+ * When this code is run, the stack looks like:
+ *	[%sp]			128 bytes to which registers can be dumped
+ *	[%sp + 128]		signal number (goes in %o0)
+ *	[%sp + 128 + 8]		signal code (goes in %o1)
+ *	[%sp + 128 + 16]	placeholder
+ *	[%sp + 128 + 24]	argument for %o3, currently unsupported (always 0)
+ *	[%sp + 128 + 32]	first word of saved state (sigcontext)
+ *	    .
+ *	    .
+ *	    .
+ *	[%sp + NNN]	last word of saved state
+ * (followed by previous stack contents or top of signal stack).
+ * The address of the function to call is in %g1; the old %g1 and %o0
+ * have already been saved in the sigcontext.  We are running in a clean
+ * window, all previous windows now being saved to the stack.
+ *
+ * Note that [%sp + 128 + 8] == %sp + 128 + 16.  The copy at %sp+128+8
+ * will eventually be removed, with a hole left in its place, if things
+ * work out.
+ */
+	.globl	_C_LABEL(sigcode)
+	.globl	_C_LABEL(esigcode)
+_C_LABEL(sigcode):
+	/*
+	 * XXX  the `save' and `restore' below are unnecessary: should
+	 *	replace with simple arithmetic on %sp
+	 *
+	 * Make room on the stack for 64 %f registers + %fsr.  This comes
+	 * out to 64*4+8 or 264 bytes, but this must be aligned to a multiple
+	 * of 64, or 320 bytes.
+	 */
+	save	%sp, -CC64FSZ - 320, %sp
+	mov	%g2, %l2		! save globals in %l registers
+	mov	%g3, %l3
+	mov	%g4, %l4
+	mov	%g5, %l5
+	mov	%g6, %l6
+	mov	%g7, %l7
+	/*
+	 * Saving the fpu registers is expensive, so do it iff it is
+	 * enabled and dirty.
+	 */
+	rd	%fprs, %l0
+	btst	1, %l0			! test dl
+	bz,pt	%icc, 1f
+	 btst	2, %l0			! test du
+
+	! fpu is enabled, oh well
+	stx	%fsr, [%sp + CC64FSZ + BIAS + 0]
+	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
+	stda	%f0, [%l0] ASI_BLK_P
+	inc	BLOCK_SIZE, %l0
+	stda	%f16, [%l0] ASI_BLK_COMMIT_P
+1:	
+	bz,pt	%icc, 2f
+	 rd	%y, %l1			! in any case, save %y
+	inc	BLOCK_SIZE, %l0
+	stda	%f32, [%l0] ASI_BLK_P
+	inc	BLOCK_SIZE, %l0
+	stda	%f48, [%l0] ASI_BLK_COMMIT_P
+2:
+	ldx	[%fp + BIAS + 64], %o0	! sig
+	ldx	[%fp + BIAS + 64], %o1		! code
+	ldx	[%fp + BIAS + 76], %o3		! arg3
+	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
+	 add	%fp, BIAS + 64 + 16, %o2	! scp
+
+	/*
+	 * Now that the handler has returned, re-establish all the state
+	 * we just saved above, then do a sigreturn.
+	 */
+	btst	1, %l0			! test dl
+	bz,pt	%icc, 1f
+	 btst	2, %l0			! test du
+
+	ldx	[%sp + CC64FSZ + BIAS + 0], %fsr
+	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
+	ldda	[%l0] ASI_BLK_P, %f0
+	inc	BLOCK_SIZE, %o0
+	ldda	[%l0] ASI_BLK_P, %f16
+1:	
+	bz,pt	%icc, 1f
+	 wr	%l1, %g0, %y		! in any case, restore %y
+	inc	BLOCK_SIZE, %o0
+	ldda	[%l0] ASI_BLK_P, %f32
+	inc	BLOCK_SIZE, %o0
+	ldda	[%l0] ASI_BLK_P, %f48	
+2:
+	mov	%l2, %g2
+	mov	%l3, %g3
+	mov	%l4, %g4
+	mov	%l5, %g5
+	mov	%l6, %g6
+	mov	%l7, %g7
+
+	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
+	add	%sp, 64 + 16, %o0	! compute scp
+	t	ST_SYSCALL		! sigreturn(scp)
+	! sigreturn does not return unless it fails
+	mov	SYS_exit, %g1		! exit(errno)
+	t	ST_SYSCALL
+_C_LABEL(esigcode):
+#endif
+	
+#if defined(COMPAT_SPARC32) || ! defined(_LP64)
 /*
  * The following code is copied to the top of the user stack when each
  * process is exec'ed, and signals are `trampolined' off it.
@@ -5574,9 +5527,15 @@ _C_LABEL(dcache_flush_page):
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
+#ifdef _LP64
+	.globl	_C_LABEL(SPARC32_sigcode)
+	.globl	_C_LABEL(SPARC32_esigcode)
+_C_LABEL(SPARC32_sigcode):
+#else
 	.globl	_C_LABEL(sigcode)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(sigcode):
+#endif
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
@@ -5659,6 +5618,8 @@ _C_LABEL(sigcode):
 	mov	%l6, %g6
 	mov	%l7, %g7
 
+#ifdef _LP64
+#else
 	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
@@ -5666,6 +5627,7 @@ _C_LABEL(sigcode):
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 _C_LABEL(esigcode):
+#endif
 
 #ifdef COMPAT_SVR4
 /*
@@ -5844,9 +5806,9 @@ ENTRY(copyinstr)
 9:	
 #endif
 	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
-	ld	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
+	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
-	st	%o5, [%o4 + PCB_ONFAULT]
+	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
 	mov	%o1, %o5		!	save = toaddr;
 ! XXX should do this in bigger chunks when possible
@@ -5897,9 +5859,9 @@ ENTRY(copyoutstr)
 9:	
 #endif
 	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
-	ld	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
+	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
-	st	%o5, [%o4 + PCB_ONFAULT]
+	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
 	mov	%o1, %o5		!	save = toaddr;
 ! XXX should do this in bigger chunks when possible
@@ -5917,10 +5879,10 @@ ENTRY(copyoutstr)
 Lcsdone:				! done:
 	sub	%o1, %o5, %o1		!	len = to - save;
 	brnz,a	%o3, 1f			!	if (lencopied)
-	 st	%o1, [%o3]		!		*lencopied = len;
+	 STPTR	%o1, [%o3]		!		*lencopied = len;
 1:
 	retl				! cpcb->pcb_onfault = 0;
-	 st	%g0, [%o4 + PCB_ONFAULT]! return (error);
+	 STPTR	%g0, [%o4 + PCB_ONFAULT]! return (error);
 
 Lcsfault:
 #ifdef NOTDEF_DEBUG
@@ -6018,10 +5980,10 @@ ENTRY(copyin)
 #endif
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	wr	%g0, ASI_AIUS, %asi
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
-	st	%o4, [%o3 + PCB_ONFAULT]
+	STPTR	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lcopyin_start:
 	bge,a	Lcopyin_fancy	! if >= this many, go be fancy.
@@ -6184,8 +6146,8 @@ Lcopyin_mopb:
 Lcopyin_done:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 !	stb	%o4,[%o1]	! Store last byte -- should not be needed
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
-	st	%g0, [%o3 + PCB_ONFAULT]
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	STPTR	%g0, [%o3 + PCB_ONFAULT]
 	retl
 	 clr	%o0			! return 0
 
@@ -6223,10 +6185,10 @@ ENTRY(copyout)
 Ldocopy:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	wr	%g0, ASI_AIUS, %asi
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
-	st	%o4, [%o3 + PCB_ONFAULT]
+	STPTR	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lcopyout_start:
 	bge,a	Lcopyout_fancy	! if >= this many, go be fancy.
@@ -6389,8 +6351,8 @@ Lcopyout_mopb:
 	
 Lcopyout_done:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
-	st	%g0, [%o3 + PCB_ONFAULT]
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	STPTR	%g0, [%o3 + PCB_ONFAULT]
 !	jmp	%g7 + 8		! Original instr
 	retl			! New instr
 	 clr	%o0			! return 0
@@ -6401,8 +6363,8 @@ Lcopyout_done:
 ! [o7 + 8].
 Lcopyfault:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
-	st	%g0, [%o3 + PCB_ONFAULT]
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	STPTR	%g0, [%o3 + PCB_ONFAULT]
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
@@ -6442,13 +6404,9 @@ ENTRY(write_user_windows)
  * XXX masterpaddr is almost the same as cpcb
  * XXX should delete this entirely
  */
-#if 0
-	.comm	_C_LABEL(masterpaddr), 4
-#else
 	.globl	_C_LABEL(masterpaddr)
 _C_LABEL(masterpaddr):
-	.word	proc0
-#endif
+	POINTER	proc0
 
 /*
  * Switch statistics (for later tweaking):
@@ -6536,9 +6494,13 @@ ENTRY(switchexit)
 	flushw						! DEBUG
 #endif
 	
-	st	%g1, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = &idle_u
-	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %o0	! set new %sp
+	STPTR	%g1, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = &idle_u
+	set	_C_LABEL(idle_u) + USPACE - CC64FSZ, %o0	! set new %sp
+#ifdef _LP64
+	sub	%o0, BIAS, %sp		! Maybe this should be a save?
+#else
 	mov	%o0, %sp		! Maybe this should be a save?
+#endif
 	save	%sp,-CC64FSZ,%sp	! Get an extra frame for good measure
 	flushw				! DEBUG this should not be needed
 	wrpr	%g0, 0, %canrestore
@@ -6590,7 +6552,7 @@ ENTRY(switchexit)
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(_C_LABEL(cpcb)), %g6
 	sethi	%hi(_C_LABEL(curproc)), %g7
-	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g5
+	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g5
 	wr	%g0, ASI_DMMU, %asi
 	ldxa	[CTX_SECONDARY] %asi, %g1	! Don't demap the kernel
 	brz,pn	%g1, 1f
@@ -6610,7 +6572,7 @@ ENTRY(switchexit)
  */
 	.globl	idle
 idle:
-	st	%g0, [%g7 + %lo(_C_LABEL(curproc))] ! curproc = NULL;
+	STPTR	%g0, [%g7 + %lo(_C_LABEL(curproc))] ! curproc = NULL;
 1:					! spin reading _whichqs until nonzero
 	wrpr	%g0, PSTATE_INTR, %pstate		! Make sure interrupts are enabled
 	wrpr	%g0, 0, %pil		! (void) spl0();
@@ -6723,10 +6685,10 @@ swdebug:	.word 0
 	wrpr	%g0, PSTATE_INTR, %pstate ! make sure we're on normal globals
 	sethi	%hi(_C_LABEL(cpcb)), %g6
 	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
-	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g5
+	LDPTR	[%g6 + %lo(_C_LABEL(cpcb))], %g5
 	sethi	%hi(_C_LABEL(curproc)), %g7
 	stx	%o7, [%g5 + PCB_PC]	! cpcb->pcb_pc = pc;
-	ld	[%g7 + %lo(_C_LABEL(curproc))], %g4	! lastproc = curproc;
+	LDPTR	[%g7 + %lo(_C_LABEL(curproc))], %g4	! lastproc = curproc;
 	sth	%o1, [%g5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
 	/*
@@ -6737,7 +6699,7 @@ swdebug:	.word 0
 	 * the run queues below.
 	 */
 	rdpr	%pil, %g3		! %g3 has not been used yet
-	st	%g0, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = NULL;
+	STPTR	%g0, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = NULL;
 	wrpr	%g0, 0, %pil			! (void) spl0();
 	stb	%g3, [%g5 + PCB_PIL]	! save old %pil
 	wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
@@ -6843,7 +6805,7 @@ Lsw_scan:
 	 */
 
 	/* firewalls */
-	ld	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
+	LDPTR	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
 	brnz,pn	%o0, Lsw_panic_wchan	!	panic("switch wchan");
 	 EMPTY
 	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
@@ -6857,10 +6819,10 @@ Lsw_scan:
 	 */
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
-	ld	[%g3 + P_ADDR], %g1		! newpcb = p->p_addr;
-	st	%g0, [%g3 + 4]			! p->p_back = NULL;
+	LDPTR	[%g3 + P_ADDR], %g1		! newpcb = p->p_addr;
+	STPTR	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ldub	[%g1 + PCB_PIL], %g2		! newpil = newpcb->pcb_pil;
-	st	%g4, [%g7 + %lo(_C_LABEL(curproc))]	! restore old proc so we can save it
+	STPTR	%g4, [%g7 + %lo(_C_LABEL(curproc))]	! restore old proc so we can save it
 
 	cmp	%g3, %g4		! p == lastproc?
 	be,a	Lsw_sameproc		! yes, go return 0
@@ -6938,11 +6900,11 @@ Lsw_load:
 2:
 #endif
 	/* set new cpcb */
-	st	%g3, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = p;
-	st	%g1, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = newpcb;
+	STPTR	%g3, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = p;
+	STPTR	%g1, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = newpcb;
 	/* XXX update masterpaddr too */
 	sethi	%hi(_C_LABEL(masterpaddr)), %g7
-	st	%g1, [%g7 + %lo(_C_LABEL(masterpaddr))]
+	STPTR	%g1, [%g7 + %lo(_C_LABEL(masterpaddr))]
 #ifdef LOCKED_PCB
 	/* Now lock the cpcb page into the DTSB */
 	set	_C_LABEL(u0), %o1	! Don't screw with %o0
@@ -6950,11 +6912,7 @@ Lsw_load:
 	beq	1f
 	
 	 sethi	%hi(_C_LABEL(ctxbusy)), %o4
-#ifdef _LP64
-	ldx	[%o4 + %lo(_C_LABEL(ctxbusy))], %o4
-#else
-	lduw	[%o4 + %lo(_C_LABEL(ctxbusy))], %o4
-#endif
+	LDPTR	[%o4 + %lo(_C_LABEL(ctxbusy))], %o4
 	ldx	[%o4], %o4				! Load up our page table.
 #ifdef DEBUG
 	srax	%g1, HOLESHIFT, %o1			! Check for valid address
@@ -7052,18 +7010,18 @@ Lsw_load:
 	 * zero so it is safe to have interrupts going here.)
 	 */
 	save	%sp, -CC64FSZ, %sp
-	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	LDPTR	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	set	_C_LABEL(kernel_pmap_), %o1
-	ld	[%o3 + VM_PMAP], %o0		! if (vm->vm_pmap.pm_ctx != NULL)
-	cmp	%o0, %o1
+	LDPTR	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap.pm_ctx != NULL)
+	cmp	%o2, %o1
 	bz,pn	%xcc, Lsw_havectx		! Don't replace kernel context!
-	 ld	[%o0 + PM_CTX], %o0
+	 ld	[%o2 + PM_CTX], %o0
 	brnz,pt	%o0, Lsw_havectx		!	goto havecontext;
 	 nop
 
 	/* p does not have a context: call ctx_alloc to get one */
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
-	 ld	[%o3 + VM_PMAP], %o0
+	 mov	%o2, %o0
 	
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7124,7 +7082,7 @@ Lsw_havectx:
 	mov	4, %o5
 	set	_C_LABEL(curproc), %o0
 	sllx	%o4, 13, %o4
-	lduw	[%o0], %o0
+	LDPTR	[%o0], %o0
 !	clr	%o0		! DISABLE PID
 	or	%o4, %o5, %o4
 	mov	%g0, %o5
@@ -7135,7 +7093,7 @@ Lsw_havectx:
 	movnz	%icc, %g0, %o3
 	
 	set	_C_LABEL(cpcb), %o0	! Load up nsaved
-	ld	[%o0], %o0
+	LDPTR	[%o0], %o0
 	ldub	[%o0 + PCB_NSAVED], %o0
 	sllx	%o0, 9, %o1
 	or	%o1, %o4, %o4
@@ -7167,7 +7125,7 @@ Lsw_sameproc:
 	set	1f, %o0
 	mov	%i0, %o2
 	set	_C_LABEL(curproc), %o3
-	ld	[%o3], %o3
+	LDPTR	[%o3], %o3
 	ld	[%o3 + P_VMSPACE], %o3
 	call	prom_printf
 	 mov	%i7, %o1
@@ -7250,22 +7208,22 @@ ENTRY(proc_trampoline)
 	 */
 !	save	%sp, -CC64FSZ, %sp		! Save a kernel frame to emulate a syscall
 	mov	PSTATE_USER, %g1		! user pstate (no need to load it)
-	ldx	[%sp + CCFSZ + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
+	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
 	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
 	add	%g2, 4, %g3			! npc = pc+4
 	rdpr	%cwp, %g4			! Fixup %cwp in %tstate
-	stx	%g3, [%sp + CCFSZ + TF_NPC]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
 	or	%g1, %g4, %g1
-	stx	%g2, [%sp + CCFSZ + TF_PC]
-	stx	%g1, [%sp + CCFSZ + TF_TSTATE]
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 #ifdef NOTDEF_DEBUG
 !	set	panicstack-CC64FSZ, %o0! DEBUG
 !	save	%g0, %o0, %sp	! DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
-	ldx	[%fp + CCFSZ + TF_O + ( 6*8)], %o2
+	ldx	[%fp + CC64FSZ + STKB + TF_O + ( 6*8)], %o2
 	mov	%fp, %o2
-	add	%fp, CCFSZ, %o3
+	add	%fp, CC64FSZ + STKB, %o3
 	GLOBTOLOC
 	call	prom_printf
 	 mov	%g2, %o1
@@ -7299,14 +7257,14 @@ ENTRY(fuword)
 	EMPTY
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	st	%o3, [%o2 + PCB_ONFAULT]
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	lda	[%o0] ASI_AIUS, %o0	! fetch the word
 	retl				! phew, made it, return the word
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 Lfserr:
-	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 Lfsbadaddr:
 	retl				! and return error indicator
 	 mov	-1, %o0
@@ -7318,7 +7276,7 @@ Lfsbadaddr:
 	 */
 	.globl	_C_LABEL(Lfsbail)
 _C_LABEL(Lfsbail):
-	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -7328,31 +7286,31 @@ _C_LABEL(Lfsbail):
 	 */
 ENTRY(fuswintr)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	lduha	[%o0] ASI_AIUS, %o0	! fetch the halfword
 	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 ENTRY(fusword)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	lduha	[%o0] ASI_AIUS, %o0		! fetch the halfword
 	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 ALTENTRY(fuibyte)
 ENTRY(fubyte)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	lduba	[%o0] ASI_AIUS, %o0	! fetch the byte
 	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 ALTENTRY(suiword)
 ENTRY(suword)
@@ -7360,42 +7318,42 @@ ENTRY(suword)
 	bnz	Lfsbadaddr		!	go return error
 	EMPTY
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	sta	%o1, [%o0] ASI_AIUS	! store the word
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
 	retl				! and return 0
 	clr	%o0
 
 ENTRY(suswintr)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	stha	%o1, [%o0] ASI_AIUS	! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
 	retl				! and return 0
 	clr	%o0
 
 ENTRY(susword)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	stha	%o1, [%o0] ASI_AIUS	! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
 	retl				! and return 0
 	clr	%o0
 
 ALTENTRY(suibyte)
 ENTRY(subyte)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
+	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	stba	%o1, [%o0] ASI_AIUS	! store the byte
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
 	retl				! and return 0
 	clr	%o0
 
@@ -7416,9 +7374,9 @@ ENTRY(subyte)
 ENTRY(probeget)
 	! %o0 = addr, %o1 = (1,2,4)
 	sethi	%hi(_C_LABEL(cpcb)), %o2
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2	! cpcb->pcb_onfault = Lfserr;
+	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o5
-	st	%o5, [%o2 + PCB_ONFAULT]
+	STPTR	%o5, [%o2 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
 	 ldub	[%o0], %o0		!	value = *(char *)addr;
@@ -7429,7 +7387,7 @@ ENTRY(probeget)
 	bnz,a	0f			! if (len & 4)
 	 ld	[%o0], %o0		!	value = *(int *)addr;
 0:	retl				! made it, clear onfault and return
-	 st	%g0, [%o2 + PCB_ONFAULT]
+	 STPTR	%g0, [%o2 + PCB_ONFAULT]
 
 /*
  * probeset(addr, size, val) caddr_t addr; int size, val;
@@ -7439,9 +7397,9 @@ ENTRY(probeget)
 ENTRY(probeset)
 	! %o0 = addr, %o1 = (1,2,4), %o2 = val
 	sethi	%hi(_C_LABEL(cpcb)), %o3
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
+	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o5
-	st	%o5, [%o3 + PCB_ONFAULT]
+	STPTR	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
 	 stb	%o2, [%o0]		!	*(char *)addr = value;
@@ -7453,26 +7411,8 @@ ENTRY(probeset)
 	 st	%o2, [%o0]		!	*(int *)addr = value;
 0:	clr	%o0			! made it, clear onfault and return 0
 	retl
-	 st	%g0, [%o3 + PCB_ONFAULT]
+	 STPTR	%g0, [%o3 + PCB_ONFAULT]
 
-#ifdef not4u
-/*
- * int xldcontrolb(caddr_t, pcb)
- *		    %o0     %o1
- *
- * read a byte from the specified address in ASI_CONTROL space.
- */
-ENTRY(xldcontrolb)
-	!sethi	%hi(_C_LABEL(cpcb)), %o2
-	!ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2	! cpcb->pcb_onfault = Lfsbail;
-	or	%o1, %g0, %o2		! %o2 = %o1
-	set	_C_LABEL(Lfsbail), %o5
-	st	%o5, [%o2 + PCB_ONFAULT]
-	lduba	[%o0] ASI_CONTROL, %o0	! read
-0:	retl
-	 st	%g0, [%o2 + PCB_ONFAULT]
-#endif
-	
 /*
  * Insert entry into doubly-linked queue.
  * We could just do this in C, but gcc does not do leaves well (yet).
@@ -7480,12 +7420,12 @@ ENTRY(xldcontrolb)
 ENTRY(insque)
 ENTRY(_insque)
 	! %o0 = e = what to insert; %o1 = after = entry to insert after
-	st	%o1, [%o0 + 4]		! e->prev = after;
-	ld	[%o1], %o2		! tmp = after->next;
-	st	%o2, [%o0]		! e->next = tmp;
-	st	%o0, [%o1]		! after->next = e;
+	STPTR	%o1, [%o0 + 4]		! e->prev = after;
+	LDPTR	[%o1], %o2		! tmp = after->next;
+	STPTR	%o2, [%o0]		! e->next = tmp;
+	STPTR	%o0, [%o1]		! after->next = e;
 	retl
-	st	%o0, [%o2 + 4]		! tmp->prev = e;
+	 STPTR	%o0, [%o2 + 4]		! tmp->prev = e;
 
 
 /*
@@ -7494,11 +7434,11 @@ ENTRY(_insque)
 ENTRY(remque)
 ENTRY(_remque)
 	! %o0 = e = what to remove
-	ld	[%o0], %o1		! n = e->next;
-	ld	[%o0 + 4], %o2		! p = e->prev;
-	st	%o2, [%o1 + 4]		! n->prev = p;
+	LDPTR	[%o0], %o1		! n = e->next;
+	LDPTR	[%o0 + 4], %o2		! p = e->prev;
+	STPTR	%o2, [%o1 + 4]		! n->prev = p;
 	retl
-	st	%o1, [%o2]		! p->next = n;
+	 STPTR	%o1, [%o2]		! p->next = n;
 
 /*
  * pmap_zero_page(pa)
@@ -7517,9 +7457,11 @@ ENTRY(pmap_zero_page)
 	!! If we have 64-bit physical addresses (and we do now)
 	!! we need to move the pointer from %o0:%o1 to %o0
 	!!
+#ifndef _LP64
 #if PADDRT == 8
 	sllx	%o0, 32, %o0
 	or	%o0, %o1, %o0
+#endif
 #endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
@@ -7585,11 +7527,13 @@ ENTRY(pmap_copy_page)
 	!! we need to move the pointer from %o0:%o1 to %o0 and
 	!! %o2:%o3 to %o1
 	!!
+#ifndef _LP64
 #if PADDRT == 8
 	sllx	%o0, 32, %o0
 	or	%o0, %o1, %o0
 	sllx	%o2, 32, %o1
 	or	%o3, %o1, %o1
+#endif
 #endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
@@ -7797,6 +7741,7 @@ ENTRY(pseg_get)
  *
  */
 ENTRY(pseg_set)
+#ifndef _LP64
 	btst	1, %sp					! 64-bit mode?
 	bnz,pt	%icc, 0f
 	 sllx	%o4, 32, %o4				! Put args into 64-bit format
@@ -7808,6 +7753,7 @@ ENTRY(pseg_set)
 	or	%o2, %o3, %o2
 	or	%o4, %o5, %o3
 0:
+#endif
 #ifdef NOT_DEBUG
 	!! Trap any changes to pmap_kernel below 0xf0000000
 	set	_C_LABEL(kernel_pmap_), %o5
@@ -8168,9 +8114,9 @@ ENTRY(kcopy)
 3:
 #endif
 	sethi	%hi(_C_LABEL(cpcb)), %o5		! cpcb->pcb_onfault = Lkcerr;
-	ld	[%o5 + %lo(_C_LABEL(cpcb))], %o5
+	LDPTR	[%o5 + %lo(_C_LABEL(cpcb))], %o5
 	set	Lkcerr, %o3
-	st	%o3, [%o5 + PCB_ONFAULT]
+	STPTR	%o3, [%o5 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lkcopy_start:
 	bge,a	Lkcopy_fancy	! if >= this many, go be fancy.
@@ -8190,7 +8136,7 @@ Lkcopy_start:
 	bge	0b
 	 inc	%o1
 1:
-	st	%g0, [%o5 + PCB_ONFAULT]
+	STPTR	%g0, [%o5 + PCB_ONFAULT]
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -8225,7 +8171,7 @@ Lkcopy_fancy:
 	membar	#Sync		! Make sure all traps are taken
 	clr	%o0
 	retl
-	 st	%g0, [%o5 + PCB_ONFAULT]
+	 STPTR	%g0, [%o5 + PCB_ONFAULT]
 	NOTREACHED
 
 	! lowest bit matches, so we can copy by words, if nothing else
@@ -8326,7 +8272,7 @@ Lkcopy_mopw:
 	membar	#Sync		! Make sure all traps are taken
 	clr	%o0
 	retl
-	 st	%g0, [%o5 + PCB_ONFAULT]
+	 STPTR	%g0, [%o5 + PCB_ONFAULT]
 	NOTREACHED
 
 	! mop up trailing byte (if present).
@@ -8338,14 +8284,14 @@ Lkcopy_done:
 	clr	%o0
 	membar	#Sync		! Make sure all traps are taken
 	retl
-	 st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	 STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
 
 1:
 	stb	%o4,[%o1]
 	clr	%o0
 	membar	#Sync		! Make sure all traps are taken
 	retl
-	 st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	 STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
 	
 Lkcerr:
 #ifdef DEBUG
@@ -8365,7 +8311,7 @@ Lkcerr:
 	_ALIGN
 3:
 #endif
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -8587,6 +8533,7 @@ Lback_mopb:
  * our trap handler knows how to recover (by `returning' to savefpcont).
  */
  /* XXXXXXXXXX  Assume called created a proper stack frame */
+ /* XXXXXXXXXX  Should test to see if we only need to do a partial store */
 ENTRY(savefpstate)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
@@ -8690,6 +8637,7 @@ savefpcont:
 /*
  * Load FPU state.
  */
+ /* XXXXXXXXXX  Should test to see if we only need to do a partial restore */
 ENTRY(loadfpstate)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	rdpr	%pstate, %o1		! enable FP before we begin
@@ -8859,7 +8807,7 @@ ENTRY(ffs)
  * Vol 33 No 1.
  */
 /*
- * This should be rewritten using the mul instr. if I ever understand what it
+ * This should be rewritten using the mulx instr. if I ever understand what it
  * does.
  */
 	.data
@@ -8944,8 +8892,12 @@ ENTRY(microtime)
 !	sethi	%hi(_C_LABEL(timerblurb), %o5			! This is if we plan to tune the clock
 !	ld	[%o5 + %lo(_C_LABEL(timerblurb))], %o5		!  with respect to the counter/timer
 	udivx	%o4, %o2, %o4
-	mulx	%g1, %o4, %g1					! Scale it: N * Hz / 1 x 10^6 = ticks
-
+	btst	0x7, %o0					! Can we use a single 64-bit store?
+	bnz,pt	%icc, 1f
+	 mulx	%g1, %o4, %g1					! Scale it: N * Hz / 1 x 10^6 = ticks
+	retl
+	 stx	%g1, %o0
+1:	
 	srlx	%g1, 32, %o3					! Isolate high word
 	st	%o3, [%o0]					! and store it 
 	retl
@@ -8953,7 +8905,7 @@ ENTRY(microtime)
 #else
 	sethi	%hi(timerreg_4u), %g3
 	sethi	%hi(_C_LABEL(time)), %g2
-	ld	[%g3+%lo(timerreg_4u)], %g3		! usec counter
+	LDPTR	[%g3+%lo(timerreg_4u)], %g3		! usec counter
 2:
 	ld	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
 	ld	[%g2+%lo(_C_LABEL(time))+4], %o3	! time.tv_sec & time.tv_usec
@@ -9196,7 +9148,7 @@ _C_LABEL(intrcnt):
 _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
-	.comm	_C_LABEL(promvec), 4
-	.comm	_C_LABEL(curproc), 4
+	.comm	_C_LABEL(promvec), PTRSZ
+	.comm	_C_LABEL(curproc), PTRSZ
 	.comm	_C_LABEL(qs), 32 * 8
 	.comm	_C_LABEL(whichqs), 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.2 1998/08/26 13:38:32 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.3 1998/08/29 18:16:57 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -262,7 +262,7 @@ sparc32_exec_aout_prep_omagic(p, epp)
 
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */
 /*
- * this is from sys/arch/sparc/sparc/machdep.c:setregs()
+ * the rest is pretty much verbatum from sys/arch/sparc/sparc64/machdep.c
  */
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */
 
@@ -278,9 +278,9 @@ sparc32_setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	struct trapframe32 *tf = (struct trapframe32 *)p->p_md.md_tf; /* XXX XXX XXX */
-	struct fpstate *fs; /* XXX */
-	int psr;
+	register struct trapframe *tf = p->p_md.md_tf;
+	register struct fpstate *fs;
+	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -288,11 +288,12 @@ sparc32_setregs(p, pack, stack)
 	/*
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
-	 *	%psr: (retain CWP and PSR_S bits)
+	 *	%tstate: (retain icc and xcc and cwp bits)
 	 *	%g1: address of PS_STRINGS (used by crt0)
-	 *	%pc,%npc: entry point of program
+	 *	%tpc,%tnpc: entry point of program
 	 */
-	psr = tf->tf_psr & (PSR_S | PSR_CWP);
+	tstate = ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) 
+		| (tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
@@ -307,19 +308,167 @@ sparc32_setregs(p, pack, stack)
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
-	tf->tf_psr = psr;
+	tf->tf_tstate = tstate;
 	tf->tf_global[1] = (int)PS_STRINGS;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
+
 	stack -= sizeof(struct rwindow32);
 	tf->tf_out[6] = stack;
+	tf->tf_out[7] = NULL;
 }
+
+/*
+ * NB: since this is a 32-bit address world, sf_scp and sf_sc
+ *	can't be a pointer since those are 64-bits wide.
+ */
+struct sparc32_sigframe {
+	int	sf_signo;		/* signal number */
+	int	sf_code;		/* code */
+	u_int	sf_scp;			/* SunOS user addr of sigcontext */
+	int	sf_addr;		/* SunOS compat, always 0 for now */
+	struct	sparc32_sigcontext sf_sc;	/* actual sigcontext */
+};
+
+#undef DEBUG
+#ifdef DEBUG
+extern int sigdebug;
+#endif
 
 void
-sparc32_sendsig(s, a, b, c)
-	sig_t s;
-	int a, b;
-	u_long c;
+sparc32_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	u_long code;
 {
+	register struct proc *p = curproc;
+	register struct sigacts *psp = p->p_sigacts;
+	register struct sparc32_sigframe *fp;
+	register struct trapframe *tf;
+	register int addr, oonstack; 
+	struct rwindow32 *kwin, *oldsp, *newsp, /* DEBUG */tmpwin;
+	struct sparc32_sigframe sf;
+	extern char sigcode[], esigcode[];
+#define	szsigcode	(esigcode - sigcode)
 
+	tf = p->p_md.md_tf;
+	oldsp = (struct rwindow32 *)(int)tf->tf_out[6];
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	/*
+	 * Compute new user stack addresses, subtract off
+	 * one signal frame, and align.
+	 */
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sparc32_sigframe *)(psp->ps_sigstk.ss_sp +
+					 psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
+		fp = (struct sparc32_sigframe *)oldsp;
+	fp = (struct sparc32_sigframe *)((int)(fp - 1) & ~7);
+
+#ifdef DEBUG
+	sigpid = p->p_pid;
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
+		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
+	/*
+	 * Now set up the signal frame.  We build it in kernel space
+	 * and then copy it out.  We probably ought to just build it
+	 * directly in user space....
+	 */
+	sf.sf_signo = sig;
+	sf.sf_code = code;
+#ifdef COMPAT_SUNOS
+	sf.sf_scp = (u_int)&fp->sf_sc;
+#endif
+	sf.sf_addr = 0;			/* XXX */
+
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_mask = mask;
+	sf.sf_sc.sc_sp = (int)oldsp;
+	sf.sf_sc.sc_pc = tf->tf_pc;
+	sf.sf_sc.sc_npc = tf->tf_npc;
+	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+	sf.sf_sc.sc_g1 = tf->tf_global[1];
+	sf.sf_sc.sc_o0 = tf->tf_out[0];
+
+	/*
+	 * Put the stack in a consistent state before we whack away
+	 * at it.  Note that write_user_windows may just dump the
+	 * registers into the pcb; we need them in the process's memory.
+	 * We also need to make sure that when we start the signal handler,
+	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
+	 * joins seamlessly with the frame it was in when the signal occurred,
+	 * so that the debugger and _longjmp code can back up through it.
+	 */
+	newsp = (struct rwindow32 *)((int)fp - sizeof(struct rwindow32));
+	write_user_windows();
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK))
+	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
+		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+#endif
+	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
+	if (rwindow_save(p) || 
+	    suword(&oldsp->rw_in[0], tf->tf_in[0]) || suword(&oldsp->rw_in[1], tf->tf_in[1]) ||
+	    suword(&oldsp->rw_in[2], tf->tf_in[2]) || suword(&oldsp->rw_in[3], tf->tf_in[3]) ||
+	    suword(&oldsp->rw_in[4], tf->tf_in[4]) || suword(&oldsp->rw_in[5], tf->tf_in[5]) ||
+	    suword(&oldsp->rw_in[6], tf->tf_in[6]) || suword(&oldsp->rw_in[7], tf->tf_in[7]) ||
+	    suword(&oldsp->rw_local[0], (int)tf->tf_local[0]) || suword(&oldsp->rw_local[1], (int)tf->tf_local[1]) ||
+	    suword(&oldsp->rw_local[2], (int)tf->tf_local[2]) || suword(&oldsp->rw_local[3], (int)tf->tf_local[3]) ||
+	    suword(&oldsp->rw_local[4], (int)tf->tf_local[4]) || suword(&oldsp->rw_local[5], (int)tf->tf_local[5]) ||
+	    suword(&oldsp->rw_local[6], (int)tf->tf_local[6]) || suword(&oldsp->rw_local[7], (int)tf->tf_local[7]) ||
+	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_int)oldsp)) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig: window save or copyout error\n");
+		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+		if (sigdebug & SDB_DDB) Debugger();
+#endif
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
+	}
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sendsig: %s[%d] sig %d scp %p\n",
+		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
+	}
+#endif
+	/*
+	 * Arrange to continue execution at the code copied out in exec().
+	 * It needs the function to call in %g1, and a new stack pointer.
+	 */
+#ifdef COMPAT_SUNOS
+	if (psp->ps_usertramp & sigmask(sig)) {
+		addr = (int)catcher;	/* user does his own trampolining */
+	} else
+#endif
+	{
+		addr = (int)PS_STRINGS - szsigcode;
+		tf->tf_global[1] = (int)catcher;
+	}
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (u_int64_t)(int)newsp;
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("sendsig: about to return to catcher %p thru %p\n", 
+		       catcher, addr);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 }
+
