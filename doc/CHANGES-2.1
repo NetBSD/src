@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.12 2005/01/16 14:27:42 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.13 2005/01/24 22:24:08 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -242,3 +242,73 @@ sys/fs/smbfs/smbfs_vnops.c			1.45
 	control.  Fixes file access problem when the file is already
 	open on the server.
 	[peter, ticket #933]
+
+
+sys/arch/alpha/a12/if_ade.c			1.23
+sys/arch/amiga/dev/if_ed.c			1.46
+sys/arch/amiga/dev/if_es.c			1.35
+sys/arch/mac68k/dev/if_mc.c			1.24
+sys/arch/mac68k/dev/if_sn.c			1.35
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.5
+sys/arch/macppc/dev/am79c950.c			1.16
+sys/arch/macppc/dev/if_bm.c			1.23
+sys/arch/macppc/dev/if_gm.c			1.23
+sys/arch/mips/alchemy/dev/if_aumac.c		1.12
+sys/arch/newsmips/apbus/if_sn.c			1.15
+sys/arch/next68k/dev/mb8795.c			1.34
+sys/arch/playstation2/dev/if_smap.c		1.6
+sys/arch/powerpc/ibm4xx/dev/if_emac.c		1.19
+sys/arch/sgimips/hpc/if_sq.c			1.21
+sys/arch/sun3/dev/if_ie.c			1.40
+sys/dev/bi/if_ni.c				1.23
+sys/dev/i2o/iopl.c				1.14
+sys/dev/ic/aic6915.c				1.12
+sys/dev/ic/atw.c				1.80
+sys/dev/ic/awi.c				1.66
+sys/dev/ic/cs89x0.c				1.15
+sys/dev/ic/dp8390.c				1.54
+sys/dev/ic/dp83932.c				1.10
+sys/dev/ic/elink3.c				1.108
+sys/dev/ic/elinkxl.c				1.75
+sys/dev/ic/gem.c				1.32
+sys/dev/ic/hme.c				1.43
+sys/dev/ic/i82557.c				1.88
+sys/dev/ic/i82586.c				1.49
+sys/dev/ic/smc91cxx.c				1.49
+sys/dev/ic/i82596.c				1.3
+sys/dev/ic/lance.c				1.30
+sys/dev/ic/lemac.c				1.26
+sys/dev/ic/mb86960.c				1.58
+sys/dev/ic/mtd803.c				1.6
+sys/dev/ic/rtl81x9.c				1.47
+sys/dev/ic/seeq8005.c				1.36
+sys/dev/ic/sgec.c				1.23
+sys/dev/ic/smc83c170.c				1.56
+sys/dev/ic/wi.c					1.188
+sys/dev/pci/if_bge.c				1.77
+sys/dev/pci/if_de.c				1.112
+sys/dev/pci/if_dge.c				1.7
+sys/dev/pci/if_pcn.c				1.24
+sys/dev/pci/if_re.c				1.6
+sys/dev/pci/if_sip.c				1.96
+sys/dev/pci/if_sk.c				1.12
+sys/dev/pci/if_ste.c				1.20
+sys/dev/pci/if_stge.c				1.22
+sys/dev/pci/if_tl.c				1.66
+sys/dev/pci/if_txp.c				1.8
+sys/dev/pci/if_vr.c				1.70
+sys/dev/pci/if_wm.c				1.83
+sys/dev/pcmcia/if_cnw.c				1.29
+sys/dev/pcmcia/if_ray.c				1.54
+sys/dev/qbus/if_qe.c				1.58
+sys/dev/sbus/be.c				1.44
+sys/dev/sbus/qe.c				1.33
+sys/dev/scsipi/if_se.c				1.51
+sys/dev/usb/if_aue.c				1.88
+sys/dev/usb/if_udav.c				1.4
+sys/dev/usb/if_url.c				1.12
+
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#37678.
+	[thorpej, ticket #939]
