@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.4 2001/06/02 19:01:03 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.5 2001/06/02 21:03:33 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -115,7 +115,7 @@ struct cpu_functions arm3_cpufuncs = {
 	(void *)arm3_cache_flush,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	NULL,				/* dataabt_fixup	*/
+	early_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	NULL,				/* context_switch	*/
@@ -185,7 +185,11 @@ struct cpu_functions arm6_cpufuncs = {
 	(void *)arm67_cache_flush,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	arm6_dataabt_fixup,		/* dataabt_fixup	*/
+#ifdef ARM6_LATE_ABORT
+	late_abort_fixup,		/* dataabt_fixup	*/
+#else
+	early_abort_fixup,		/* dataabt_fixup	*/
+#endif
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
@@ -255,7 +259,7 @@ struct cpu_functions arm7_cpufuncs = {
 	(void *)arm67_cache_flush,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	arm7_dataabt_fixup,		/* dataabt_fixup	*/
+	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
@@ -503,14 +507,15 @@ extern int pmap_debug_level;
 #endif
 #endif
 
-#ifdef CPU_ARM6
+#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
+    (defined(CPU_ARM6) && !defined(ARM6_LATE_ABORT))
 /*
- * ARM6 data abort fixup
+ * "Early" data abort fixup.
  *
- * Register fixing is required
+ * For ARM2, ARM2as, ARM3 and ARM6 (in early-abort mode).
  */
 int
-arm6_dataabt_fixup(arg)
+early_abort_fixup(arg)
 	void *arg;
 {
 	trapframe_t *frame = arg;
@@ -551,131 +556,7 @@ arm6_dataabt_fixup(arg)
 
 	/* Decode the fault instruction and fix the registers as needed */
 
-	/* Was is a swap instruction ? */
-
-	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
-	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
-
-	/* Was is a ldr/str instruction */
-
-#ifdef ARM6_LATE_ABORT
-
-		/* This is for late abort only */
-
-		int base;
-		int offset;
-		int *registers = &frame->tf_r0;
-#endif	/* ARM6_LATE_ABORT */
-
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		
-#ifdef ARM6_LATE_ABORT
-
-/* This is for late abort only */
-
-	if ((fault_instruction & (1 << 24)) == 0
-	    || (fault_instruction & (1 << 21)) != 0) {
-		base = (fault_instruction >> 16) & 0x0f;
-		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-		if (base == 15) {
-			disassemble(fault_pc);
-			panic("Abort handler cannot fix this :-(\n");
-		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("late abt fix: r%d=%08x ", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		if ((fault_instruction & (1 << 25)) == 0) {
-			/* Immediate offset - easy */                  
-			offset = fault_instruction & 0xfff;
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
-			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("imm=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		} else {
-			int shift;
-
-			offset = fault_instruction & 0x0f;
-			if (offset == base) {
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-			}
-                
-/* Register offset - hard we have to cope with shifts ! */
-			offset = registers[offset];
-
-			if ((fault_instruction & (1 << 4)) == 0)
-				shift = (fault_instruction >> 7) & 0x1f;
-			else {
-				if ((fault_instruction & (1 << 7)) != 0) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-				}
-				shift = ((fault_instruction >> 8) & 0xf);
-				if (base == shift) {
-					disassemble(fault_pc);
-					panic("Abort handler cannot fix this :-(\n");
-				}
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("shift reg=%d ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
-				shift = registers[shift];
-			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("shift=%08x ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			switch (((fault_instruction >> 5) & 0x3)) {
-			case 0 : /* Logical left */
-				offset = (int)(((u_int)offset) << shift);
-				break;
-			case 1 : /* Logical Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((u_int)offset) >> shift);
-				break;
-			case 2 : /* Arithmetic Right */
-				if (shift == 0) shift = 32;
-				offset = (int)(((int)offset) >> shift);
-				break;
-			case 3 : /* Rotate right */
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this :-(\n");
-				break;
-			}
-
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("abt: fixed LDR/STR with register offset\n");
-#endif	/* DEBUG_FAULT_CORRECTION */               
-			if ((fault_instruction & (1 << 23)))
-				offset = -offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("offset=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			registers[base] += offset;
-		}
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >=0)
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-	}
-#endif	/* ARM6_LATE_ABORT */
-	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
+	if ((fault_instruction & 0x0e000000) == 0x08000000) {
 		int base;
 		int loop;
 		int count;
@@ -794,16 +675,16 @@ arm6_dataabt_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-#endif	/* CPU_ARM6 */
+#endif	/* CPU_ARM2/250/3/6(!LATE) */
 
-#ifdef CPU_ARM7
+#if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7)
 /*
- * ARM7 data abort fixup
+ * "Late" (base updated) data abort fixup
  *
- * Late abort model applies so register fixing is required
+ * For ARM6 (in late-abort mode) and ARM7.
  */
 int
-arm7_dataabt_fixup(arg)
+late_abort_fixup(arg)
 	void *arg;
 {
 	trapframe_t *frame = arg;
