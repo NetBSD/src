@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 2003/04/26 18:39:34 fvdl Exp $
+# $NetBSD: INSTALL,v 1.2 2003/05/10 14:24:56 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.1 $"
+#ident 		"INSTALL-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -161,7 +161,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
+options MPBIOS
 cpu* 	at mainbus0
+ioapic* at mainbus0
 
 #apm0	at mainbus0			# Advanced power management
 
