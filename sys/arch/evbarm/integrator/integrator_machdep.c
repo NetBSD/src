@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.30 2003/04/01 21:27:24 mycroft Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.31 2003/04/02 03:49:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -79,6 +79,8 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -458,7 +460,7 @@ initarm(void *arg)
 	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
-	bootconfig.dram[0].pages = memsize / NBPG;
+	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -473,12 +475,12 @@ initarm(void *arg)
 	 * XXX pmap_bootstrap() needs an enema.
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + (bootconfig.dram[0].pages * NBPG);
+	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
 	physical_freestart = 0x00009000UL;
 	physical_freeend = 0x00200000UL;
     
-	physmem = (physical_end - physical_start) / NBPG;
+	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	/* Tell the user about the memory */
 	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
@@ -506,7 +508,7 @@ initarm(void *arg)
 	printf("Allocating page tables\n");
 #endif
 
-	free_pages = (physical_freeend - physical_freestart) / NBPG;
+	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
@@ -519,12 +521,12 @@ initarm(void *arg)
 	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
 
 #define alloc_pages(var, np)				\
-	physical_freeend -= ((np) * NBPG);		\
+	physical_freeend -= ((np) * PAGE_SIZE);		\
 	if (physical_freeend < physical_freestart)	\
 		panic("initarm: out of memory");	\
 	(var) = physical_freeend;			\
 	free_pages -= (np);				\
-	memset((char *)(var), 0, ((np) * NBPG));
+	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
@@ -532,10 +534,10 @@ initarm(void *arg)
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
+			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
-			    L2_TABLE_SIZE / NBPG);
+			    L2_TABLE_SIZE / PAGE_SIZE);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
 			++loop1;
@@ -554,7 +556,7 @@ initarm(void *arg)
 	alloc_pages(systempage.pv_pa, 1);
 
 	/* Allocate a page for the page table to map kernel page tables. */
-	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -573,7 +575,7 @@ initarm(void *arg)
 	    kernelstack.pv_va); 
 #endif
 
-	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
+	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
@@ -635,13 +637,13 @@ initarm(void *arg)
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
@@ -720,7 +722,8 @@ initarm(void *arg)
 		    (((((uintptr_t) &end) + PGOFSET) & ~PGOFSET) -
 		     KERNEL_BASE);
 		physical_freeend = physical_end;
-		free_pages = (physical_freeend - physical_freestart) / NBPG;
+		free_pages =
+		    (physical_freeend - physical_freestart) / PAGE_SIZE;
 	}
 
 	/* Switch tables */
@@ -766,9 +769,12 @@ initarm(void *arg)
 	 */
 	printf("init subsystems: stacks ");
 
-	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + IRQ_STACK_SIZE * NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + ABT_STACK_SIZE * NBPG);
-	set_stackptr(PSR_UND32_MODE, undstack.pv_va + UND_STACK_SIZE * NBPG);
+	set_stackptr(PSR_IRQ32_MODE,
+	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_ABT32_MODE,
+	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_UND32_MODE,
+	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
 
 	/*
 	 * Well we should set a data abort handler.
