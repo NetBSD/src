@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.60 1999/05/29 22:36:08 bad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.61 1999/05/30 00:39:07 bad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -642,19 +642,25 @@ in_arpinput(m)
 		 * XXX uses m_data and assumes the complete answer including
 		 * XXX token-ring headers is in the same buf
 		 */
-		if (ifp->if_type == IFT_ISO88025 &&
-			m->m_data[8] & TOKEN_RI_PRESENT) {
-			struct token_rif	*rif;
-			size_t	riflen;
+		if (ifp->if_type == IFT_ISO88025) {
+			struct token_header *trh;
 
-			rif = TOKEN_RIF(mtod(m, struct token_header *));
-			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
+			trh = (struct token_header *)M_TRHSTART(m);
+			if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
+				struct token_rif	*rif;
+				size_t	riflen;
 
-			if (riflen > 2 && riflen < sizeof(struct token_rif) &&
-				(riflen & 1) == 0) {
-				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
-				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-				bcopy(rif, TOKEN_RIF(la), riflen);
+				rif = TOKEN_RIF(trh);
+				riflen = (ntohs(rif->tr_rcf) &
+				    TOKEN_RCF_LEN_MASK) >> 8;
+
+				if (riflen > 2 &&
+				    riflen < sizeof(struct token_rif) &&
+				    (riflen & 1) == 0) {
+					rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
+					rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
+					bcopy(rif, TOKEN_RIF(la), riflen);
+				}
 			}
 		}
 #endif /* NTOKEN > 0 */
