@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.129 2003/04/08 22:57:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.130 2003/04/27 10:42:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -59,6 +59,8 @@
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
+
+#include "ksyms.h"
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
@@ -369,7 +371,7 @@ Lstart2:
 	movl	%d1,%a0@		| and physmem
 
 /* configure kernel and lwp0 VA space so we can get going */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart3

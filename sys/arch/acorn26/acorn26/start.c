@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 
 #include "arcvideo.h"
 #include "ioc.h"
+#include "ksyms.h"
 
 #if NIOC > 0
 #include <arch/acorn26/iobus/iocreg.h>
@@ -139,7 +140,7 @@ start(initbootconfig)
 		panic("Bootloader mislaid the data segment");
 #endif
 
-#ifndef DDB
+#if !NKSYMS && !defined(DDB) && !defined(LKM)
 	/* Throw away the symbol table to gain space. */
 	if (bootconfig.freebase == bootconfig.esym) {
 		bootconfig.freebase = bootconfig.ssym;

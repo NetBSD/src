@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2003/03/18 16:40:25 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2003/04/27 10:42:52 ragge Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
+
+#include "ksyms.h"
 
 /*
  * Some instructions gas doesn't understand (yet?)
@@ -118,7 +120,7 @@ __start:
 	mtspr	1008,8
 
 /* compute end of kernel memory */
-#if defined(DDB) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(LKM) || defined(KERNFS)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)
