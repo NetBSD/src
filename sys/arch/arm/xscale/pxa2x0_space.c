@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.1 2002/10/19 19:31:40 bsh Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.2 2003/03/24 04:15:49 bsh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -167,7 +167,7 @@ struct bus_space pxa2x0_bs_tag = {
 
 int
 pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-	      int cacheable, bus_space_handle_t *bshp)
+	      int flag, bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
@@ -192,11 +192,16 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		pte = vtopte(va);
-		if (cacheable == 0)
+		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
+			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;
+			PTE_SYNC(pte);
+			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
+			 *      waste.
+			 */
+		}
 	}
 	pmap_update(pmap_kernel());
 
