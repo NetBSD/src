@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.57 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.57.4.1 1999/07/04 01:56:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1631,6 +1631,8 @@ ufs_strategy(v)
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("ufs_strategy: spec");
+	if (bp->b_bcount == 0)
+		panic("ufs_strategy: bp %p bcount == 0", bp);
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
@@ -1640,10 +1642,10 @@ ufs_strategy(v)
 			biodone(bp);
 			return (error);
 		}
-		if ((long)bp->b_blkno == -1)
+		if (bp->b_blkno == (daddr_t)-1)
 			clrbuf(bp);
 	}
-	if ((long)bp->b_blkno == -1) {
+	if (bp->b_blkno == (daddr_t)-1) {
 		biodone(bp);
 		return (0);
 	}
