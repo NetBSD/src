@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.14 1996/04/07 22:46:31 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.15 1996/04/10 16:33:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,23 +68,14 @@
 
 #include <machine/pte.h>
 
-extern int splbio();
-extern int physio();
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 int	rzprobe __P((void /*register struct pmax_scsi_device*/ *sd));
-void	rzstrategy __P((register struct buf *bp));
 void	rzstart __P((int unit));
 void	rzdone __P((int unit, int error, int resid, int status));
 void	rzgetinfo __P((dev_t dev));
-
-int	rzopen __P((dev_t dev, int flags, int mode, struct proc *p));
-int	rzclose __P((dev_t dev, int flags, int mode));
-int	rzread  __P((dev_t dev, struct uio *uio));
-int	rzwrite __P((dev_t dev, struct uio *uio));
-int	rzioctl __P((dev_t dev, int cmd, caddr_t data, int flag,
-		     struct proc *p));
 int	rzsize __P((dev_t dev));
-int	rzdump __P((dev_t dev));
 
 
 
@@ -129,8 +120,9 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 #endif
 };
 
-extern char *readdisklabel __P((dev_t dev, void (*strat)(),
-		  struct disklabel *lp, struct cpu_disklabel *osdep));
+extern char *
+readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+		   struct disklabel *lp, struct cpu_disklabel *osdep));
 
 /*
  * Ultrix disklabel declarations
@@ -139,7 +131,7 @@ extern char *readdisklabel __P((dev_t dev, void (*strat)(),
 #include "../../stand/dec_boot.h"
 
 extern char *
-compat_label __P((dev_t dev, void (*strat)(),
+compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));
 #endif
 
@@ -950,9 +942,10 @@ rzopen(dev, flags, mode, p)
 }
 
 int
-rzclose(dev, flags, mode)
+rzclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
+	struct proc *p;
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
 	int mask = (1 << rzpart(dev));
@@ -983,9 +976,10 @@ rzclose(dev, flags, mode)
 }
 
 int
-rzread(dev, uio)
+rzread(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
 
@@ -1000,9 +994,10 @@ rzread(dev, uio)
 }
 
 int
-rzwrite(dev, uio)
+rzwrite(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
 
@@ -1016,7 +1011,7 @@ rzwrite(dev, uio)
 int
 rzioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -1147,10 +1142,15 @@ rzsize(dev)
 
 /*
  * Non-interrupt driven, non-dma dump routine.
+ * XXX 
+ *  Still an old-style dump function:  arguments after "dev" are ignored.
  */
 int
-rzdump(dev)
+rzdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	int part = rzpart(dev);
 	int unit = rzunit(dev);
