@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/09/09 18:07:41 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1996/09/09 18:42:51 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -15,11 +15,17 @@ APMDEPS= \
 	${.OBJDIR}/assym.h \
 	${.OBJDIR}/apm.h \
 	${I386}/include/param.h \
+	${I386}/include/cpu.h \
 	${I386}/include/psl.h \
 	${I386}/include/intr.h \
-	${I386}/include/specialreg.h \
+	${I386}/include/frame.h \
+	${I386}/include/signal.h \
+	${I386}/include/trap.h \
 	${I386}/include/segments.h \
-	${I386}/include/apmvar.h
+	${I386}/include/cputypes.h \
+	${I386}/include/specialreg.h \
+	${I386}/include/apmvar.h \
+	${I386}/include/asm.h
 
 APMMAKE= \
 	cd ${APMDIR} && MAKEOBJDIR=${APMDST} ${MAKE} \
