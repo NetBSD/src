@@ -386,7 +386,6 @@ snioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-thorpej
 			(void)sninit(sc);
 			arp_ifinit(&sc->sc_ac, ifa);
 			break;
