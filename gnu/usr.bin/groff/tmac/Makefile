@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2003/06/30 18:47:57 wiz Exp $
+# $NetBSD: Makefile,v 1.16 2003/07/01 13:48:24 wiz Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -78,20 +78,5 @@ $f-s: $f
 .endfor
 
 FILES+=	${NORMALFILES}
-
-donotbeforeinstall:
-.for f in ${STRIPFILES} ${SPECIALFILES}
-	${INSTALL} -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
-	    $f-s ${DESTDIR}${TMACDIR}/$f
-.endfor
-.for f in ${MDOCFILES}
-	${INSTALL} -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
-	    $f-s ${DESTDIR}${MDOCDIR}/$f
-.endfor
-.if !exists(${DESTDIR}${TMACDIR}/man.local)
-	${INSTALL} -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
-	    ${DIST_DIR}/man.local ${DESTDIR}${TMACDIR}
-.endif
-.endif
 
 .include <bsd.prog.mk>
