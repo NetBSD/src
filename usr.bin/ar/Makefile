@@ -9,8 +9,10 @@ CLEANFILES=ar.5.0
 
 ar.0: ar.5.0
 
+.if !defined(NOMAN)
 afterinstall:
 	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} ar.5.0 \
 	    ${DESTDIR}${MANDIR}5/ar.0
+.endif
 
 .include <bsd.prog.mk>
