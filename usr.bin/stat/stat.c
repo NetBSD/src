@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.17 2003/10/29 04:25:46 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.18 2004/05/28 04:48:31 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.17 2003/10/29 04:25:46 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.18 2004/05/28 04:48:31 atatat Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: stat.c,v 1.17 2003/10/29 04:25:46 atatat Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <grp.h>
 #include <limits.h>
 #include <pwd.h>
@@ -306,8 +307,17 @@ main(int argc, char *argv[])
 	do {
 		if (argc == 0)
 			rc = fstat(STDIN_FILENO, &st);
-		else if (usestat)
-			rc = stat(argv[0], &st);
+		else if (usestat) {
+			/*
+			 * Try stat() and if it fails, fall back to
+			 * lstat() just in case we're examining a
+			 * broken symlink.
+			 */
+			if ((rc = stat(argv[0], &st)) == -1 &&
+			    errno == ENOENT &&
+			    (rc = lstat(argv[0], &st)) == -1)
+				errno = ENOENT;
+		}
 		else
 			rc = lstat(argv[0], &st);
 
