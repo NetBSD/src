@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.24 2000/03/22 10:22:37 onoe Exp $
+#	$NetBSD: Makefile.newsmips,v 1.25 2000/03/22 10:39:25 onoe Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ COPTS?=	-O2
 #S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-NEWS=	$S/arch/newsmips
+NEWSMIPS=	$S/arch/newsmips
 MIPS=	$S/arch/mips
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
@@ -55,7 +55,7 @@ GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ${NEWS}/conf/kern.ldscript
+LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ${NEWSMIPS}/conf/kern.ldscript
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
@@ -171,12 +171,12 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${NEWS}/newsmips/locore_machdep.S \
+	${NEWSMIPS}/newsmips/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWSMIPS}/newsmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -214,7 +214,7 @@ locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${NEWS}/newsmips/locore_machdep.S assym.h
+locore_machdep.o: ${NEWSMIPS}/newsmips/locore_machdep.S assym.h
 	${NORMAL_S}
 
 %RULES
