@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.5.2.2 2000/12/15 05:32:42 he Exp $
+# $NetBSD: dot.profile,v 1.5.2.3 2001/04/01 17:01:28 he Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -59,7 +59,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the miniroot read write
 	# our miniroot can be either on ramdisk or on floppy.
-	for $ROOTDEV in $ROOTDEVS; do
+	for ROOTDEV in $ROOTDEVS; do
 		( mount -u $ROOTDEV / > /dev/null 2>&1 ) && break
 	done
 
