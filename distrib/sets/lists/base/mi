@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.280 2001/10/10 16:57:44 christos Exp $
+# $NetBSD: mi,v 1.281 2001/10/12 07:27:33 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2226,6 +2226,16 @@
 ./var/at/jobs			base-cron-root
 ./var/at/spool			base-cron-root
 ./var/backups			base-sys-root
+./var/chroot/named			base-bind-root
+./var/chroot/named/dev			base-bind-root
+./var/chroot/named/etc			base-bind-root
+./var/chroot/named/etc/namedb		base-bind-root
+./var/chroot/named/etc/namedb/cache	base-bind-root
+./var/chroot/named/usr			base-bind-root
+./var/chroot/named/usr/libexec		base-bind-root
+./var/chroot/named/var			base-bind-root
+./var/chroot/named/var/run		base-bind-root
+./var/chroot/named/var/tmp		base-bind-root
 ./var/crash			base-sys-root
 ./var/cron			base-cron-root
 ./var/cron/tabs			base-cron-root
@@ -2241,16 +2251,6 @@
 ./var/log/rdist			base-netutil-root
 ./var/mail			base-mail-root
 ./var/msgs			base-util-root
-./var/named			base-bind-root
-./var/named/dev			base-bind-root
-./var/named/etc			base-bind-root
-./var/named/etc/namedb		base-bind-root
-./var/named/etc/namedb/cache	base-bind-root
-./var/named/usr			base-bind-root
-./var/named/usr/libexec		base-bind-root
-./var/named/var			base-bind-root
-./var/named/var/run		base-bind-root
-./var/named/var/tmp		base-bind-root
 ./var/preserve			base-util-root
 ./var/quotas			base-util-root
 ./var/run			base-sys-root
