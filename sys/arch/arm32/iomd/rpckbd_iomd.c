@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.1 2001/03/20 18:20:55 reinoud Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.2 2001/04/12 20:15:07 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,12 +95,13 @@ rpckbd_iomd_attach(parent, self, aux)
 	struct kbd_attach_args *ka = aux;
 	int error, isconsole;
 
-	isconsole = (sc->sc_device.dv_unit == 0);
-
-	if (isconsole) {
-		console_kbd.sc_device = sc->sc_device;
-		sc = &console_kbd;
-	};
+#ifdef COMCONSOLE
+	isconsole = 0;
+#else
+	isconsole = 1;
+	console_kbd.sc_device = sc->sc_device;
+	sc = &console_kbd;
+#endif
 
 	sc->sc_iot = ka->ka_iot;
 	sc->sc_ioh = ka->ka_ioh;
