@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.252 1999/08/09 18:13:26 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.253 1999/08/14 21:20:45 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -239,7 +239,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci?
@@ -560,6 +560,7 @@ opl*	at eso?
 opl*	at ess?
 opl*	at sb?
 opl*	at sv?
+opl*	at wss?
 
 # Audio support
 #audio*	at aria?
