@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.10 2000/12/17 15:52:42 jdolecek Exp $
+#	$NetBSD: Makefile.mips,v 1.11 2001/01/04 05:13:30 shin Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,8 @@ SIZE?=		${CROSSDIR}size
 STRIP?=		${CROSSDIR}strip
 TSORT?=		${CROSSDIR}tsort -q
 
-COPTS?=		-O2
+DEFCOPTS?=	-O2
+COPTS?=		${DEFCOPTS}
 
 DEFGP?=		-G 0
 TEXTADDR?=	${DEFTEXTADDR}
