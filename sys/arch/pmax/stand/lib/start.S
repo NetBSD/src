@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.3 1999/01/21 12:33:47 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.4 1999/01/22 14:05:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 #include <mips/regdef.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
-#include <pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 
 /*
  * Amount to take off of the stack for the benefit of the debugger.

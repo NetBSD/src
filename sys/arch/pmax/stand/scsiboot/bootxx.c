@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 1999/01/21 12:33:45 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.8 1999/01/22 14:05:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <stand.h>
-#include <pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 
 
 #include "byteswap.h"

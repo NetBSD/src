@@ -1,40 +1,20 @@
-#	$NetBSD: Makefile.booters,v 1.13 1999/01/21 14:16:52 simonb Exp $
+#	$NetBSD: Makefile.booters,v 1.14 1999/01/22 14:05:05 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 # RELOC=80200000 allows for boot prog up to 1D0000 (1900544) bytes long
 RELOC=	80200000
 
-DEFS=	-D_STANDALONE -DSMALL
-CFLAGS=	-O2 ${INCPATH} ${DEFS}
-AFLAGS=	-O2 ${INCPATH} ${DEFS} -D_LOCORE
-
-.PATH:	${S}/stand ${S}/lib/libsa
-
-INCPATH=-I${.CURDIR} -I${.CURDIR}/.. -I${S} -I${S}/arch -I${S}/lib/libsa
+BOOTDEFS=-D_STANDALONE -DSMALL
+AINC+=	 -D_LOCORE
+CFLAGS+= ${DEFS}
+AFLAGS+= ${DEFS}
 
 # not yet: need to write libsa/Makefile.inc first
-LIBSADIR != cd ${.CURDIR}/../libsa; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBSADIR != cd ${.CURDIR}/../libsa ; make print-objdir
 LIBSA=	${LIBSADIR}/libsa.a
-LIBS=	${.OBJDIR}/libdrive.a ${LIBSA}
-
-SRCS=	${DRIVERS}
-
-.s.o:
-	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-		${AS} -o ${.TARGET}
+LIBS=	${LIBSA}
 
 includes:
-
-# XXX doesn't belong here.
-libdrive.a: conf.o ${DRIVERS:.c=.o}
-	ar crv $@ $?
-	ranlib $@
-
-depend: ${SRCS}
-	mkdep ${INCPATH} ${DEFS} ${SRCS}
-	mkdep -a -p ${INCPATH} ${DEFS} mkboot.c mkboottape.c
-	cd libsa; make depend
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.7 1997/05/25 05:44:13 jonathan Exp $	*/
+/*	$NetBSD: callvec.c,v 1.8 1999/01/22 14:05:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)callvec.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <arch/pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 
 const struct callback callvec = {
 	(void *(*) __P((void *s1, void *s2, int n)))0,

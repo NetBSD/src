@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.c,v 1.6 1995/10/26 01:39:49 jonathan Exp $	*/
+/*	$NetBSD: strcmp.c,v 1.7 1999/01/22 14:05:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)strcmp.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <arch/pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 #undef strcmp
 
 strcmp(s1, s2)

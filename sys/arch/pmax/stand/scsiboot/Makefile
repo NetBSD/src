@@ -1,11 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 1999/01/21 14:16:52 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 1999/01/22 14:05:06 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 
 S=	${.CURDIR}/../../../..
 PROG=	boot
+SRCS=	start.S boot.c bootconf.c filesystem.c
+CLEANFILES+=${PROG}.elf ${PROG}.map bootconf.c ${ALL}
+
+DPADD+=	${LIBS}
 NOMAN=	noman	# XXX: Should have one
 LDBUG=	-T $S/arch/mips/conf/stand.ldscript
+
+# Tell boot code which drivers we want to link against
+SRCS+=	rz.c
 
 
 ALL=	boot mkboot rzboot bootrz
@@ -13,32 +20,20 @@ ALL=	boot mkboot rzboot bootrz
 
 all:	${ALL}
 
-boot:	${LIBS}
-DPADD+=	${LIBS}
+${PROG}: ${LIBS}
 
-.PATH:	${.CURDIR}/../libsa
-
-# Tell boot code which drivers we want to link against
-DRIVERS=rz.c
-LIBS+=	libdrive.a
-
-
-#before other deps on bootconf.o
-bootconf.o: ${.CURDIR}/conf.c
-	rm -f bootconf.c
+# before other deps on bootconf.o
+bootconf.c: ${.CURDIR}/conf.c
 	ln -s ${.CURDIR}/conf.c bootconf.c
-	${CC} -c ${CFLAGS} -DBOOT bootconf.c
-	rm -f bootconf.c
-
+	
+bootconf.o: ${.CURDIR}/conf.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} -DBOOT bootconf.c
 
 # bootable from real disks
-
-boot:	start.o boot.o bootconf.o filesystem.o ${LIBS}
-	ld -Map boot.map -N -Ttext ${RELOC} ${LDBUG} -e start \
-		start.o boot.o bootconf.o filesystem.o ${LIBS} -o boot.elf
-	elf2aout boot.elf boot
-
-start.o: ${.CURDIR}/start.S
+${PROG}: ${OBJS} ${LIBS}
+	ld -Map ${PROG}.map -N -Ttext ${RELOC} ${LDBUG} -e start \
+		${OBJS} ${LIBS} -o ${PROG}.elf
+	elf2aout ${PROG}.elf ${PROG}
 
 mkboot:	${.CURDIR}/mkboot.c
 	${CC} ${CPPFLAGS} ${INCPATH} -o mkboot ${.CURDIR}/mkboot.c
@@ -46,23 +41,14 @@ mkboot:	${.CURDIR}/mkboot.c
 mkboottape: ${.CURDIR}/mkboottape.c
 	${CC} ${CPPFLAGS} ${INCPATH} -o mkboottape ${.CURDIR}/mkboottape.c
 
-rzboot bootrz:	mkboot boot
-	./mkboot boot rzboot bootrz
-
-# utilities
-
-clean cleandir:
-	rm -f .depend *.o *.exe *.i errs make.out core*
-	rm -f a.out boot.elf ${ALL}
-	rm -f boot[a-z][a-z] [a-z][a-z]boot
-	rm -f libdrive.a
-	rm -f boot.map
+rzboot bootrz:	mkboot ${PROG}
+	./mkboot ${PROG} rzboot bootrz
 
 proginstall:: bootrz rzboot
 	@echo "Sorry, bootblocks too large to install"
 #	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 #		${.ALLSRC} ${DESTDIR}${BINDIR}
 
-.include "../Makefile.booters"
 .include <bsd.prog.mk>
-.include "../Makefile.inc" 	# XXX after to reset CFLAGS, etc
+.include "../Makefile.inc" 	# XXX after <bsd.prog.mk> to reset CFLAGS, etc
+.include "../Makefile.booters"

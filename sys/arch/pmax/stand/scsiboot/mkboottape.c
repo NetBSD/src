@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboottape.c,v 1.8 1999/01/21 12:33:46 simonb Exp $	*/
+/*	$NetBSD: mkboottape.c,v 1.9 1999/01/22 14:05:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,8 +50,8 @@
 #include <string.h>
 #include <err.h>
 
-#include <pmax/stand/dec_boot.h>
-#include <pmax/stand/dec_exec.h>
+#include <dec_boot.h>
+#include <dec_exec.h>
 
 void usage __P((void));
 

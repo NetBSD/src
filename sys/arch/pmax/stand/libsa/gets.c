@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.7 1997/03/05 05:20:41 jonathan Exp $	*/
+/*	$NetBSD: gets.c,v 1.8 1999/01/22 14:05:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)gets.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <arch/pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 #undef gets
 
 char *

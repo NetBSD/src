@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/01/21 14:16:52 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 1999/01/22 14:05:05 simonb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -23,8 +23,8 @@ SRCS=	alloc.c bcopy.c bzero.c close.c dev.c dkcksum.c disklabel.c \
 
 # set up for standalone library compiation (turn off PIC)
 NOPROFILE=noprofile
-NOPIC	=nopic
-NOLINT	=nolint
+NOPIC	 =nopic
+NOLINT	 =nolint
 
 # only needed during build - prevent installation of library
 libinstall::

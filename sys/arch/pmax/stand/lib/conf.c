@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1999/01/21 12:33:46 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1999/01/22 14:05:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,11 +39,13 @@
  */
 
 #include <sys/types.h>
-#include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
-#include <pmax/stand/dec_prom.h>
-#include "rz.h"
-#include "tz.h"
+#include <stand.h>
+#include <ufs.h>
+#include <dec_prom.h>
+#include <rz.h>
+#ifndef BOOT
+#include <tz.h>
+#endif
 
 const	struct callback *callv = &callvec;
 int	errno;
