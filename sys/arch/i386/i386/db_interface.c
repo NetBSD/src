@@ -23,44 +23,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_interface.c,v 1.4 1993/07/22 13:04:45 brezak Exp $
- */
-/*
- * HISTORY
- * $Log: db_interface.c,v $
- * Revision 1.4  1993/07/22 13:04:45  brezak
- * Allow one to fault in DDB and survive.
- *
- * Revision 1.3  1993/06/27  06:02:50  andrew
- * ANSIfications - removed all implicit function return types and argument
- * definitions.  Ensured that all files include "systm.h" to gain access to
- * general prototypes.  Casts where necessary.
- *
- * Revision 1.2  1993/05/22  07:59:44  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.1.1.1  1993/03/21  09:45:52  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:42:03  pace
- * Initial revision
- *
- * Revision 2.4  91/02/05  17:11:13  mrt
- * 	Changed to new Mach copyright
- * 	[91/02/01  17:31:17  mrt]
- * 
- * Revision 2.3  90/12/04  14:45:55  jsb
- * 	Changes for merged intel/pmap.{c,h}.
- * 	[90/12/04  11:14:41  jsb]
- * 
- * Revision 2.2  90/10/25  14:44:43  rwd
- * 	Added watchpoint support.
- * 	[90/10/18            rpd]
- * 
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- *
+ *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
+ *	$Id: db_interface.c,v 1.5 1993/12/19 03:41:33 mycroft Exp $
  */
 
 /*
@@ -68,6 +32,7 @@
  */
 #include "param.h"
 #include "proc.h"
+#include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
 
 #include <sys/reboot.h>
@@ -86,8 +51,8 @@ kdb_kbd_trap(regs)
 	struct i386_saved_state *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
-	    printf("\n\nkernel: keyboard interrupt\n");
-	    kdb_trap(-1, 0, regs);
+		printf("\n\nkernel: keyboard interrupt\n");
+		kdb_trap(-1, 0, regs);
 	}
 }
 
@@ -103,30 +68,28 @@ kdb_trap(type, code, regs)
 {
 #if 0
 	if ((boothowto&RB_KDB) == 0)
-	    return(0);
+		return(0);
 #endif
 
 	switch (type) {
-	    case T_BPTFLT /* T_INT3 */:	/* breakpoint */
-	    case T_KDBTRAP /* T_WATCHPOINT */:	/* watchpoint */
-	    case T_PRIVINFLT /* T_DEBUG */:	/* single_step */
+	    case T_BPTFLT:	/* breakpoint */
+	    case T_TRCTRAP:	/* single_step */
 
-	    case -1:	/* keyboard interrupt */
+	    case -1:		/* keyboard interrupt */
 		break;
 
 	    default:
 		kdbprinttrap(type, code);
 
 		if (db_nofault) {
-		    jmp_buf *no_fault = db_nofault;
-		    db_nofault = 0;
-		    longjmp(*no_fault, 1);
+			jmp_buf *no_fault = db_nofault;
+			db_nofault = 0;
+			longjmp(*no_fault, 1);
+		} else if (db_active) {
+			db_printf("Faulted in DDB; continuing...\n");
+			db_flush_lex();
+			longjmp(db_jmpbuf, 1);
 		}
-                else if (db_active) {
-                    db_printf("Faulted in DDB; continuing...\n");
-                    db_flush_lex();
-                    longjmp(db_jmpbuf, 1);
-                }
 	}
 
 	/*  Should switch to kdb`s own stack here. */
@@ -134,17 +97,17 @@ kdb_trap(type, code, regs)
 	ddb_regs = *regs;
 
 	if ((regs->tf_cs & 0x3) == 0) {
-	    /*
-	     * Kernel mode - esp and ss not saved
-	     */
-	    ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
+		/*
+		 * Kernel mode - esp and ss not saved
+		 */
+		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
 #if 0
-	    ddb_regs.ss   = KERNEL_DS;
+		ddb_regs.ss   = KERNEL_DS;
 #endif
-	    asm(" movw %%ss,%%ax; movl %%eax,%0 " 
-		: "=g" (ddb_regs.tf_ss) 
-		:
-		: "ax");
+		asm(" movw %%ss,%%ax; movl %%eax,%0 " 
+		    : "=g" (ddb_regs.tf_ss) 
+		    :
+		    : "ax");
 	}
 
 	db_active++;
@@ -153,28 +116,28 @@ kdb_trap(type, code, regs)
 	cnpollc(FALSE);
 	db_active--;
 
-	regs->tf_eip    = ddb_regs.tf_eip;
+	regs->tf_eip = ddb_regs.tf_eip;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	regs->tf_eax    = ddb_regs.tf_eax;
-	regs->tf_ecx    = ddb_regs.tf_ecx;
-	regs->tf_edx    = ddb_regs.tf_edx;
-	regs->tf_ebx    = ddb_regs.tf_ebx;
+	regs->tf_eax = ddb_regs.tf_eax;
+	regs->tf_ecx = ddb_regs.tf_ecx;
+	regs->tf_edx = ddb_regs.tf_edx;
+	regs->tf_ebx = ddb_regs.tf_ebx;
 	if (regs->tf_cs & 0x3) {
-	    /*
-	     * user mode - saved esp and ss valid
-	     */
-	    regs->tf_esp = ddb_regs.tf_esp;		/* user stack pointer */
-	    regs->tf_ss  = ddb_regs.tf_ss & 0xffff;	/* user stack segment */
+		/*
+		 * user mode - saved esp and ss valid
+		 */
+		regs->tf_esp = ddb_regs.tf_esp;		/* user stack pointer */
+		regs->tf_ss  = ddb_regs.tf_ss & 0xffff;	/* user stack segment */
 	}
-	regs->tf_ebp    = ddb_regs.tf_ebp;
-	regs->tf_esi    = ddb_regs.tf_esi;
-	regs->tf_edi    = ddb_regs.tf_edi;
-	regs->tf_es     = ddb_regs.tf_es & 0xffff;
-	regs->tf_cs     = ddb_regs.tf_cs & 0xffff;
-	regs->tf_ds     = ddb_regs.tf_ds & 0xffff;
+	regs->tf_ebp = ddb_regs.tf_ebp;
+	regs->tf_esi = ddb_regs.tf_esi;
+	regs->tf_edi = ddb_regs.tf_edi;
+	regs->tf_es = ddb_regs.tf_es & 0xffff;
+	regs->tf_cs = ddb_regs.tf_cs & 0xffff;
+	regs->tf_ds = ddb_regs.tf_ds & 0xffff;
 #if 0
-	regs->tf_fs     = ddb_regs.tf_fs & 0xffff;
-	regs->tf_gs     = ddb_regs.tf_gs & 0xffff;
+	regs->tf_fs = ddb_regs.tf_fs & 0xffff;
+	regs->tf_gs = ddb_regs.tf_gs & 0xffff;
 #endif
 
 	return (1);
@@ -206,7 +169,7 @@ db_read_bytes(addr, size, data)
 
 	src = (char *)addr;
 	while (--size >= 0)
-	    *data++ = *src++;
+		*data++ = *src++;
 
 	db_nofault = 0;
 }
@@ -234,36 +197,33 @@ db_write_bytes(addr, size, data)
 	db_nofault = &db_jmpbuf;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr <= (vm_offset_t)&etext)
-	{
-	    ptep0 = pmap_pte(kernel_pmap, addr);
-	    oldmap0 = *ptep0;
-	    *(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
+	    addr <= (vm_offset_t)&etext) {
+		ptep0 = pmap_pte(kernel_pmap, addr);
+		oldmap0 = *ptep0;
+		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
 
-	    addr1 = i386_trunc_page(addr + size - 1);
-	    if (i386_trunc_page(addr) != addr1) {
-		/* data crosses a page boundary */
-
-		ptep1 = pmap_pte(kernel_pmap, addr1);
-		oldmap1 = *ptep1;
-		*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-	    }
-	    tlbflush();
+		addr1 = i386_trunc_page(addr + size - 1);
+		if (i386_trunc_page(addr) != addr1) {
+			/* data crosses a page boundary */
+			ptep1 = pmap_pte(kernel_pmap, addr1);
+			oldmap1 = *ptep1;
+			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
+		}
+		tlbflush();
 	}
 
 	dst = (char *)addr;
 
 	while (--size >= 0)
-	    *dst++ = *data++;
+		*dst++ = *data++;
 
 	db_nofault = 0;
 
 	if (ptep0) {
-	    *ptep0 = oldmap0;
-	    if (ptep1) {
-		*ptep1 = oldmap1;
-	    }
-	    tlbflush();
+		*ptep0 = oldmap0;
+		if (ptep1)
+			*ptep1 = oldmap1;
+		tlbflush();
 	}
 }
 
