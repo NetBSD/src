@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.49 2001/10/15 03:00:23 lukem Exp $
+#	$NetBSD: special,v 1.50 2002/02/03 08:33:14 veego Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -121,7 +121,7 @@
 ./etc/rc.d			type=dir  mode=0755
 ./etc/rc.d/DAEMON		type=file mode=0555
 ./etc/rc.d/LOGIN		type=file mode=0555
-./etc/rc.d/NETWORK		type=file mode=0555
+./etc/rc.d/NETWORKING		type=file mode=0555
 ./etc/rc.d/SERVERS		type=file mode=0555
 ./etc/rc.d/accounting		type=file mode=0555
 ./etc/rc.d/altqd		type=file mode=0555
