@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1998/07/05 06:49:07 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1998/08/26 04:54:18 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -377,7 +377,7 @@ cpu_startup()
 {
 	int sz, i;
 	caddr_t v;
-	vm_offset_t minaddr, maxaddr;
+	paddr_t minaddr, maxaddr;
 	int base, residual;
 
 	/*
@@ -414,7 +414,7 @@ cpu_startup()
 	 */
 	sz = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(sz),
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(sz),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
@@ -422,7 +422,7 @@ cpu_startup()
 #else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
-	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
+	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vaddr_t)0,
 			&minaddr, sz, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif
@@ -435,8 +435,8 @@ cpu_startup()
 	}
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -445,7 +445,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -459,10 +459,10 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -496,10 +496,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 
