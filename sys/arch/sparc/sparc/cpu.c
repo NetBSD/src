@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 1998/09/21 10:29:20 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.72 1998/09/22 13:08:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -282,6 +282,10 @@ static	struct cpu_softc *bootcpu;
 		cpu_setup(sc);
 		return;
 	}
+
+	/* for now use the fixed virtual addresses setup in autoconf.c */
+	cip->intreg_4m = (struct icr_pi *)
+		(PI_INTR_VA + (_MAXNBPG * CPU_MID2CPUNO(mid)));
 
 	/* Now start this CPU */
 	cpu_spinup(sc);
