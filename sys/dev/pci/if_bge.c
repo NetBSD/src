@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.9 2002/06/28 01:10:06 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.10 2002/06/28 18:39:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -694,6 +694,7 @@ bge_newbuf_std(sc, i, m, dmamap)
 			return(ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		m_adj(m_new, ETHER_ALIGN);
 
 		if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
 		    BUS_DMA_READ|BUS_DMA_NOWAIT))
@@ -702,13 +703,13 @@ bge_newbuf_std(sc, i, m, dmamap)
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
+		m_adj(m_new, ETHER_ALIGN);
 	}
 
-	m_adj(m_new, ETHER_ALIGN);
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
 	r = &sc->bge_rdata->bge_rx_std_ring[i];
 	bge_set_hostaddr(&r->bge_addr,
-	    dmamap->dm_segs[0].ds_addr + ETHER_ALIGN);
+	    dmamap->dm_segs[0].ds_addr);
 	r->bge_flags = BGE_RXBDFLAG_END;
 	r->bge_len = m_new->m_len;
 	r->bge_idx = i;
