@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.30 2000/04/14 06:03:40 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.31 2000/04/21 02:49:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.30 2000/04/14 06:03:40 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.31 2000/04/21 02:49:37 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -556,7 +556,8 @@ parse(string, flags)
 
 		if (!nflag) {
 			boottime = btp->tv_sec;
-			fprintf(stdout, "%s = %s\n", string, ctime(&boottime));
+			/* ctime() provides the trailing newline */
+			fprintf(stdout, "%s = %s", string, ctime(&boottime));
 		} else
 			fprintf(stdout, "%ld\n", (long) btp->tv_sec);
 		return;
