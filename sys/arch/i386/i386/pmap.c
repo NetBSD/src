@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.35 2001/05/04 20:19:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.36 2001/05/10 04:57:06 thorpej Exp $	*/
 
 /*
  *
@@ -292,7 +292,6 @@ struct pmap_tlb_shootdown_q {
 
 struct pool pmap_tlb_shootdown_job_pool;
 int pj_nentries, pj_nbytes;
-void *pj_page;
 
 void	pmap_tlb_shootdown_q_drain __P((struct pmap_tlb_shootdown_q *));
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
@@ -1124,13 +1123,9 @@ pmap_init()
 	 */
 	pj_nentries = pmap_tlb_shootdown_job_pool.pr_itemsperpage;
 	pj_nbytes =  pmap_tlb_shootdown_job_pool.pr_pagesz;
-	printf("%d pool entries; page size %d\n", pj_nentries, pj_nbytes);
-	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
-	if (pj_page == NULL)
-		panic("pmap_init: pj_page");
-	pool_prime (&pmap_tlb_shootdown_job_pool, pj_nentries, pj_page);
-	pool_setlowat(&pmap_tlb_shootdown_job_pool, 0);
-	pool_sethiwat(&pmap_tlb_shootdown_job_pool, pj_nentries);
+	printf("%d TLB shootdown pool entries; page size %d\n",
+	    pj_nentries, pj_nbytes);
+	pool_prime(&pmap_tlb_shootdown_job_pool, pj_nentries);
 	pool_sethardlimit(&pmap_tlb_shootdown_job_pool, pj_nentries, 0, 0);
 
 	/*
