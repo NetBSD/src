@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.11 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: syslogd,v 1.12 2002/03/22 04:34:00 thorpej Exp $
 #
 
 # PROVIDE: syslogd
 # REQUIRE: mountcritremote sysdb wscons
+# BEFORE:  SERVERS
 
 . /etc/rc.subr
 

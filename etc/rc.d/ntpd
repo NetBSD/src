@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.5 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: ntpd,v 1.6 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: ntpd
 # REQUIRE: DAEMON
+# BEFORE:  LOGIN
 
 . /etc/rc.subr
 
