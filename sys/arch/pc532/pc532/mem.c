@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 1995/04/10 13:15:53 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.12 1995/08/25 07:49:11 phil Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -308,10 +308,7 @@ rdmatch(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
-	if (strcmp(*((char **) aux), rdcd.cd_name)) {
-		return 0;
-	}
-	return 1;
+	return(0);
 }
 
 static void
