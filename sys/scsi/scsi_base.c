@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.28 1995/01/26 12:05:51 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.29 1995/05/03 19:38:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -754,8 +754,8 @@ lto3b(val, bytes)
 	u_int8_t *bytes;
 {
 
-	*bytes++ = (val & 0xff0000) >> 16;
-	*bytes++ = (val & 0xff00) >> 8;
+	*bytes++ = (val >> 16) & 0xff;
+	*bytes++ = (val >> 8) & 0xff;
 	*bytes = val & 0xff;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.68 1995/04/15 05:01:29 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.69 1995/05/03 19:39:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -541,12 +541,12 @@ sdstart(sd)
 		 */
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = (bp->b_flags & B_READ) ? READ_BIG : WRITE_BIG;
-		cmd.addr_3 = (blkno & 0xff000000) >> 24;
-		cmd.addr_2 = (blkno & 0xff0000) >> 16;
-		cmd.addr_1 = (blkno & 0xff00) >> 8;
+		cmd.addr_3 = (blkno >> 24) & 0xff;
+		cmd.addr_2 = (blkno >> 16) & 0xff;
+		cmd.addr_1 = (blkno >> 8) & 0xff;
 		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nblks & 0xff00) >> 8;
-		cmd.length1 = (nblks & 0xff);
+		cmd.length2 = (nblks >> 8) & 0xff;
+		cmd.length1 = nblks & 0xff;
 
 		/*
 		 * Call the routine that chats with the adapter.
@@ -741,10 +741,10 @@ sd_reassign_blocks(sd, block)
 
 	rbdata.length_msb = 0;
 	rbdata.length_lsb = sizeof(rbdata.defect_descriptor[0]);
-	rbdata.defect_descriptor[0].dlbaddr_3 = ((block >> 24) & 0xff);
-	rbdata.defect_descriptor[0].dlbaddr_2 = ((block >> 16) & 0xff);
-	rbdata.defect_descriptor[0].dlbaddr_1 = ((block >> 8) & 0xff);
-	rbdata.defect_descriptor[0].dlbaddr_0 = ((block) & 0xff);
+	rbdata.defect_descriptor[0].dlbaddr_3 = (block >> 24) & 0xff);
+	rbdata.defect_descriptor[0].dlbaddr_2 = (block >> 16) & 0xff);
+	rbdata.defect_descriptor[0].dlbaddr_1 = (block >> 8) & 0xff);
+	rbdata.defect_descriptor[0].dlbaddr_0 = block & 0xff;
 
 	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&rbdata, sizeof(rbdata), SDRETRIES,
@@ -879,7 +879,7 @@ sddump(dev_t dev)
 	register struct sd_softc *sd;	/* disk unit to do the IO */
 	int32	num;		/* number of sectors to write */
 	u_int32	unit, part;
-	int32	blkoff, blknum, blkcnt = MAXTRANSFER;
+	int32	blkoff, blkno, nblks = MAXTRANSFER;
 	int32	nblocks;
 	char	*addr;
 	struct	scsi_rw_big cmd;
@@ -926,7 +926,7 @@ sddump(dev_t dev)
 
 	sddoingadump = 1;
 
-	blknum = dumplo + blkoff;
+	blkno = dumplo + blkoff;
 	while (num > 0) {
 		pmap_enter(pmap_kernel(),
 		    MAPTO,
@@ -939,12 +939,12 @@ sddump(dev_t dev)
 		 */
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = WRITE_BIG;
-		cmd.addr_3 = (blknum & 0xff000000) >> 24;
-		cmd.addr_2 = (blknum & 0xff0000) >> 16;
-		cmd.addr_1 = (blknum & 0xff00) >> 8;
-		cmd.addr_0 = blknum & 0xff;
-		cmd.length2 = (blkcnt & 0xff00) >> 8;
-		cmd.length1 = (blkcnt & 0xff);
+		cmd.addr_3 = (blkno >> 24) & 0xff;
+		cmd.addr_2 = (blkno >> 16) & 0xff;
+		cmd.addr_1 = (blkno >> 8) & 0xff;
+		cmd.addr_0 = blkno & 0xff;
+		cmd.length2 = (nblks >> 8) & 0xff;
+		cmd.length1 = nblks & 0xff;
 		/*
 		 * Fill out the scsi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt
@@ -958,11 +958,11 @@ sddump(dev_t dev)
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
 		xs->cmd = (struct scsi_generic *)&cmd;
 		xs->cmdlen = sizeof(cmd);
-		xs->resid = blkcnt * 512;
+		xs->resid = nblks * 512;
 		xs->error = XS_NOERROR;
 		xs->bp = 0;
 		xs->data = (u_char *) MAPTO;
-		xs->datalen = blkcnt * 512;
+		xs->datalen = nblks * 512;
 
 		/*
 		 * Pass all this info to the scsi driver.
@@ -972,15 +972,15 @@ sddump(dev_t dev)
 			return ENXIO;
 #else	/* NOT_TRUSTED */
 		/* lets just talk about this first... */
-		printf("sd%d: dump addr 0x%x, blk %d\n", unit, addr, blknum);
+		printf("sd%d: dump addr 0x%x, blk %d\n", unit, addr, blkno);
 #endif	/* NOT_TRUSTED */
 
 		if ((unsigned)addr % (1024 * 1024) == 0)
 			printf("%d ", num / 2048);
 		/* update block count */
-		num -= blkcnt;
-		blknum += blkcnt;
-		(int)addr += 512 * blkcnt;
+		num -= nblks;
+		blkno += nblks;
+		(int)addr += 512 * nblks;
 
 		/* operator aborting dump? */
 		if ((c = sgetc(1)) && (c != 0x100))
