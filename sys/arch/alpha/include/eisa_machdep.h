@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.5 2000/06/04 19:14:18 cgd Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.5.2.1 2000/08/11 18:00:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -64,3 +64,21 @@ struct alpha_eisa_chipset {
     (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a))
 #define	eisa_intr_disestablish(c, h)					\
     (*(c)->ec_intr_disestablish)((c)->ec_v, (h))
+
+int	eisa_conf_read_mem(eisa_chipset_tag_t, int, int, int,
+	    struct eisa_cfg_mem *);
+int	eisa_conf_read_irq(eisa_chipset_tag_t, int, int, int,
+	    struct eisa_cfg_irq *);
+int	eisa_conf_read_dma(eisa_chipset_tag_t, int, int, int,
+	    struct eisa_cfg_dma *);
+int	eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
+	    struct eisa_cfg_io *);
+
+/*
+ * Internal functions, NOT TO BE USED BY MACHINE-INDEPENDENT CODE!
+ */
+
+void	eisa_init(void);
+
+extern bus_size_t eisa_config_stride;
+extern paddr_t eisa_config_addr;
