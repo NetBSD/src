@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.146 2000/06/08 21:42:14 fvdl Exp $
+#	$NetBSD: INSTALL,v 1.147 2000/06/11 02:41:10 mycroft Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -212,9 +212,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -614,7 +613,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 # Joysticks
 
