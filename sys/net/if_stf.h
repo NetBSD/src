@@ -1,8 +1,8 @@
-/*	$NetBSD: in_gif.h,v 1.5 2000/04/19 06:30:54 itojun Exp $	*/
-/*	$KAME: in_gif.h,v 1.5 2000/04/14 08:36:02 itojun Exp $	*/
+/*	$NetBSD: if_stf.h,v 1.1 2000/04/19 06:30:53 itojun Exp $	*/
+/*	$KAME: if_stf.h,v 1.3 2000/03/25 07:23:33 sumikawa Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2000 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NETINET_IN_GIF_H_
-#define _NETINET_IN_GIF_H_
+#ifndef _NET_IF_STF_H_
+#define _NET_IF_STF_H_
 
-#define GIF_TTL		30
+void in_stf_input __P((struct mbuf *, ...));
 
-extern int ip_gif_ttl;
-
-void in_gif_input __P((struct mbuf *, ...));
-int in_gif_output __P((struct ifnet *, int, struct mbuf *, struct rtentry *));
-int gif_encapcheck4 __P((const struct mbuf *, int, int, void *));
-
-#endif /*_NETINET_IN_GIF_H_*/
+#endif /* _NET_IF_STF_H_ */
