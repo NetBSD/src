@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.37 2002/05/14 14:35:36 kleink Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.37.2.1 2002/05/25 18:18:56 thorpej Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.37 2002/05/14 14:35:36 kleink Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.37.2.1 2002/05/25 18:18:56 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -93,15 +93,15 @@ struct sockinet {
 };
 
 static int getnameinfo_inet __P((const struct sockaddr *, socklen_t, char *,
-    socklen_t, char *, socklen_t, unsigned int));
+    socklen_t, char *, socklen_t, int));
 #ifdef INET6
 static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
-				 socklen_t, unsigned int));
+				 socklen_t, int));
 static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t,
-				 unsigned int));
+				 int));
 #endif
 static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
-    socklen_t, char *, socklen_t, unsigned int));
+    socklen_t, char *, socklen_t, int));
 static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
 
 /*
@@ -114,7 +114,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	socklen_t salen;
 	char *host, *serv;
 	socklen_t hostlen, servlen;
-	unsigned int flags;
+	int flags;
 {
 
 	switch (sa->sa_family) {
@@ -143,7 +143,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 	socklen_t hostlen;
 	char *serv;
 	socklen_t servlen;
-	unsigned int flags;
+	int flags;
 {
 	const struct afd *afd;
 	struct servent *sp;
@@ -336,7 +336,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	const char *addr;
 	char *host;
 	socklen_t hostlen;
-	unsigned int flags;
+	int flags;
 {
 	int numaddrlen;
 	char numaddr[512];
@@ -380,7 +380,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	const struct sockaddr_in6 *sa6;
 	char *buf;
 	size_t bufsiz;
-	unsigned int flags;
+	int flags;
 {
 	unsigned int ifindex;
 	const struct in6_addr *a6;
@@ -430,7 +430,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 static int
 getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
     char *host, socklen_t hostlen, char *serv, socklen_t servlen,
-    unsigned int flags)
+    int flags)
 {
 	const struct sockaddr_dl *sdl =
 	    (const struct sockaddr_dl *)(const void *)sa;
