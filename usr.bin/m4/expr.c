@@ -67,10 +67,6 @@
 			x / 0 => error and return 0 from expr().
 */
 
-#ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.3 1993/08/02 17:54:38 mycroft Exp $";
-#endif /* not lint */
-
 #define FALSE   0
 #define	TRUE	1
 

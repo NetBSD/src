@@ -4,10 +4,6 @@
     Purpose: Miscellaneous support code for PD M4.
 */
 
-#ifndef lint
-static char rcsid[] = "$Id: misc.c,v 1.3 1993/08/02 17:54:45 mycroft Exp $";
-#endif /* not lint */
-
 #include "mdef.h"
 #include "extr.h"
 #include "ourlims.h"
