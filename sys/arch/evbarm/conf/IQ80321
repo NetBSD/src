@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.13 2002/09/18 02:43:57 lukem Exp $
+#	$NetBSD: IQ80321,v 1.14 2002/10/03 20:14:58 thorpej Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -144,7 +144,7 @@ cpu0		at mainbus?
 
 # On-board device support
 obio*		at mainbus?
-com*		at obio? addr ?		# on-board TI 165C50 UART
+com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
 
 # i80321 I/O Processor peripheral support
 iopxs*		at mainbus?
