@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.16 1998/12/06 16:53:44 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.17 1998/12/19 14:34:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.16 1998/12/06 16:53:44 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.17 1998/12/19 14:34:40 drochner Exp $");
 #endif /* not lint */
 
 /*
@@ -472,9 +472,9 @@ showkre()
 	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
 	mvaddstr(STATROW, STATCOL + 53, buf);
 #if defined(UVM)
-#define pgtokb(pg)	((pg) * s.uvmexp.pagesize / 1024)
+#define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
 #else
-#define pgtokb(pg)	((pg) * cnt.v_page_size / 1024)
+#define pgtokb(pg)	((pg) * (cnt.v_page_size / 1024))
 #endif
 
 #if defined(UVM)
