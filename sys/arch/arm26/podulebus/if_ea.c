@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.14 2000/08/12 14:06:29 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.15 2000/08/12 15:29:35 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -54,9 +54,10 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.14 2000/08/12 14:06:29 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.15 2000/08/12 15:29:35 bjh21 Exp $");
 
 #include <sys/systm.h>
+#include <sys/endian.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
@@ -648,7 +649,13 @@ ea_hardreset(struct ea_softc *sc)
 	ea_chipreset(sc);
 
 	/* Set up defaults for the registers */
+
+	/* Set the byte order for transfers to/from board RAM. */
+#if BYTE_ORDER == BIG_ENDIAN
+	sc->sc_config2 = EA_CFG2_BYTESWAP
+#else
 	sc->sc_config2 = 0;
+#endif
 	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
 	sc->sc_command = 0x00;
 	sc->sc_config1 = EA_CFG1_STATION_ADDR0 | EA_CFG1_DMA_BSIZE_1 |
@@ -939,7 +946,8 @@ eatxpacket(struct ea_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
 	struct ifnet *ifp;
-	int len;
+	int len, nextpacket;
+	u_int8_t hdr[4];
 
 	ifp = &sc->sc_ethercom.ec_if;
 
@@ -1009,11 +1017,14 @@ eatxpacket(struct ea_softc *sc)
 
 
 	/* Write the packet header */
-	ea_writebuf(sc, NULL, 0x0000, 0);
 
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-			  (((len+4) & 0xff00) >> 8) | (((len+4) & 0xff) << 8));
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x00aa);
+	nextpacket = len + 4;
+	hdr[0] = (nextpacket >> 8) & 0xff;
+	hdr[1] = nextpacket & 0xff;
+	hdr[2] = EA_PKTHDR_TX | EA_PKTHDR_DATA_FOLLOWS |
+		EA_TXHDR_XMIT_SUCCESS_INT | EA_TXHDR_COLLISION_INT;
+	hdr[3] = 0; /* Status byte -- will be update by hardware. */
+	ea_writebuf(sc, hdr, 0x0000, 4);
 
 	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
 
@@ -1047,6 +1058,7 @@ eaintr(void *arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int status, s, handled;
+	u_int8_t txhdr[4];
 	u_int txstatus;
 
 	handled = 0;
@@ -1067,12 +1079,13 @@ eaintr(void *arg)
 		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
 				  sc->sc_command | EA_CMD_TX_INTACK);
 
-		ea_readbuf(sc, (u_char *)&txstatus, 0x0000, 4);
+		ea_readbuf(sc, txhdr, 0x0000, 4);
 
 #ifdef EA_TX_DEBUG		
-		dprintf(("txstatus=%08x\n", txstatus));
+		dprintf(("txstatus=%02x %02x %02x %02x\n",
+			 txhdr[0], txhdr[1], txhdr[2], txhdr[3]));
 #endif
-		txstatus = (txstatus >> 24) & 0xff;
+		txstatus = txhdr[3];
 
 		/*
 		 * Did it succeed ? Did we collide ?
@@ -1161,7 +1174,7 @@ eagetpackets(struct ea_softc *sc)
 	int ptr;
 	int pack;
 	int status;
-	u_int rxstatus;
+	u_int8_t rxhdr[4];
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -1174,12 +1187,12 @@ eagetpackets(struct ea_softc *sc)
 
 	do {
 		/* Read rx header */
-		ea_readbuf(sc, (u_char *)&rxstatus, addr, 4);
+		ea_readbuf(sc, rxhdr, addr, 4);
 		
 		/* Split the packet header */
-		ptr = ((rxstatus & 0xff) << 8) | ((rxstatus >> 8) & 0xff);
-		ctrl = (rxstatus >> 16) & 0xff;
-		status = (rxstatus >> 24) & 0xff;
+		ptr = (rxhdr[0] << 8) | rxhdr[1];
+		ctrl = rxhdr[2];
+		status = rxhdr[3];
 
 #ifdef EA_RX_DEBUG
 		dprintf(("addr=%04x ptr=%04x ctrl=%02x status=%02x\n",
