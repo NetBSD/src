@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.23 2003/07/14 09:34:01 itojun Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.24 2003/07/25 07:48:02 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -322,14 +322,14 @@ _erase_ch(void)
 }
 
 static void
-_msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
+_msg_vprompt(const char *fmt, int do_echo, const char *def, char *val,
     size_t max_chars, va_list ap)
 {
 	int ch;
 	int count = 0;
 	char *ibuf = alloca(max_chars);
 
-	_msg_vprintf(0, msg, ap);
+	_msg_vprintf(0, fmt, ap);
 	if (def != NULL && *def) {
 		waddstr(msg_win, " [");
 		waddstr(msg_win, def);
