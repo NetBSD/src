@@ -33,7 +33,7 @@
 
 /*
  *	from: @(#)endian.h	7.7 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.2 1993/11/29 00:38:01 briggs Exp $
+ *	$Id: endian.h,v 1.3 1993/12/02 15:02:50 briggs Exp $
  */
 
 /*
@@ -41,6 +41,11 @@
       BG 05/24/92,17:10:58
          I don't think we need to change this very much.
  */
+#ifndef _MACHINE_ENDIAN_H_
+#define _MACHINE_ENDIAN_H_
+
+#define _QUAD_HIGHWORD	0
+#define _QUAD_LOWWORD	1
 
 /*
  * Definitions for byte order, according to byte significance from low
@@ -121,3 +126,5 @@ __END_DECLS
 #define	HTONL(x)	(x) = htonl((u_long)x)
 #define	HTONS(x)	(x) = htons((u_short)x)
 #endif
+
+#endif /* _MACHINE_ENDIAN_H_ */
