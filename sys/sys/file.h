@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.31 2001/12/18 22:29:25 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.32 2002/06/18 01:54:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,6 +60,7 @@ struct file {
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
+#define	DTYPE_SYSTRACE	5		/* systrace(1) communication channel */
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
