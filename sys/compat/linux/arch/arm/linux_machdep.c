@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 2002/02/17 23:05:08 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.7 2002/03/31 22:22:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2002/02/17 23:05:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.7 2002/03/31 22:22:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ linux_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_r0 = native_to_linux_sig[sig];
+	tf->tf_r0 = native_to_linux_signo[sig];
 	tf->tf_r1 = 0; /* XXX Should be a siginfo_t */
 	tf->tf_r2 = 0;
 	tf->tf_r3 = (register_t)catcher;

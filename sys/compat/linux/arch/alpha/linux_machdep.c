@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.22 2002/03/23 05:00:04 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.23 2002/03/31 22:22:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2002/03/23 05:00:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2002/03/31 22:22:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Signal handler for trampoline code */
 	tf->tf_regs[FRAME_T12] = (u_int64_t)catcher;
-	tf->tf_regs[FRAME_A0] = native_to_linux_sig[sig];
+	tf->tf_regs[FRAME_A0] = native_to_linux_signo[sig];
 
 	/*
 	 * Linux has a custom restorer option.  To support it we would
