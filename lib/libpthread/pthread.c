@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.7 2001/08/01 23:45:16 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.8 2001/08/08 16:38:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,12 +73,15 @@ int pthread__debug_counters[PTHREADD_NCOUNTERS];
 
 #endif /* PTHREAD_DEBUG */
 
-
-static void
-pthread__start(void)
+/* This needs to be started by the library loading code, before main() 
+ * gets to run, for various things that use the state of the initial thread
+ * to work properly (thread-specific data is an application-visible example; 
+ * spinlock counts for mutexes is an internal example).
+ */
+void pthread_init(void)
 {
-	pthread_t first, idle;
-	int i, ret;
+	pthread_t first;
+	extern int __isthreaded;
 
 #ifdef PTHREAD__DEBUG
 	pthread__debug_init();
@@ -98,6 +101,19 @@ pthread__start(void)
 	sigprocmask(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
 
+	/* Tell libc that we're here and it should role-play accordingly. */
+	__isthreaded = 1;
+
+}
+
+static void
+pthread__start(void)
+{
+	pthread_t self, idle;
+	int i, ret;
+
+	self = pthread__self(); /* should be the "main()" thread */
+
 	for (i = 0; i < NIDLETHREADS; i++) {
 		/* Create idle threads */
 		ret = pthread__stackalloc(&idle);
@@ -105,7 +121,7 @@ pthread__start(void)
 			err(1, "Couldn't allocate stack for idle thread!");
 		pthread__initthread(idle);
 		PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
-		pthread__sched_idle(first, idle);
+		pthread__sched_idle(self, idle);
 	}
 
 	/* Start up the SA subsystem */
@@ -130,6 +146,7 @@ pthread__initthread(pthread_t t)
 	sigemptyset(&t->pt_siglist);
 	sigemptyset(&t->pt_sigmask);
 	PTQ_INIT(&t->pt_joiners);
+	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
 #ifdef PTHREAD__DEBUG
 	t->blocks = 0;
 	t->preempts = 0;
@@ -149,7 +166,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	assert(thread != NULL);
 
 	/* It's okay to check this without a lock because there can
-         * only be one thread before it becomes true 
+         * only be one thread before it becomes true.
 	 */
 	if (started == 0) {
 		started = 1;
@@ -247,6 +264,9 @@ pthread_exit(void *retval)
 	pthread_t self, joiner;
 
 	self = pthread__self();
+
+	/* Perform cleanup of thread-specific data */
+	pthread__destroy_tsd(self);
 	
 	self->pt_exitval = retval;
 
@@ -276,6 +296,7 @@ pthread_exit(void *retval)
 
 	/* NOTREACHED */
 	assert(0);
+	exit(1);
 }
 
 
