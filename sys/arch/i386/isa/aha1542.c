@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.13 1993/08/01 19:25:38 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14 1993/08/23 05:01:56 cgd Exp $
  */
 
 /*
@@ -744,6 +744,7 @@ aha_init(int unit)
 	 * Assume we have a board at this stage
 	 * setup dma channel from jumpers and save int level
 	 */
+	DELAY(1000);
 	aha_cmd(unit, 0, sizeof(conf), 0, (u_char *)&conf, AHA_CONF_GET);
 	switch(conf.chan) {
 	case CHAN0:

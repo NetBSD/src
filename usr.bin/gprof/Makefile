@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.17 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:22:23 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/08/23 05:02:37 cgd Exp $
 
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \
@@ -15,7 +15,7 @@ beforeinstall:
         else \
                 true ; \
         fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg \
 	    ${DESTDIR}/usr/share/misc
 

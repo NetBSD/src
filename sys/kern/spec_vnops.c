@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.4 1993/06/27 06:01:50 andrew Exp $
+ *	$Id: spec_vnops.c,v 1.5 1993/08/23 05:02:06 cgd Exp $
  */
 
 #include "param.h"
@@ -481,6 +481,12 @@ spec_close(vp, flag, cred, p)
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;
 		break;
+
+#ifdef DEBUG
+	case VBAD:
+		vprint("spec_close: close VBAD vnode", vp);
+		break;
+#endif
 
 	default:
 		panic("spec_close: not special");

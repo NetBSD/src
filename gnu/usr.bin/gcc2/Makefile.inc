@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1993/08/02 17:39:20 mycroft Exp $
+#	$Id: Makefile.inc,v 1.3 1993/08/23 05:00:08 cgd Exp $
 
 COMMON_SRC=	toplev.c version.c tree.c print-tree.c \
 		stor-layout.c fold-const.c function.c stmt.c expr.c \
@@ -12,3 +12,8 @@ COMMON_SRC=	toplev.c version.c tree.c print-tree.c \
 		insn-opinit.c insn-recog.c insn-extract.c insn-output.c insn-emit.c \
 		insn-attrtab.c aux-output.c getpwd.c convert.c \
 		c-common.c obstack.c 
+
+.if exists(${.CURDIR}/../${MACHINE}/Makefile.inc) && !defined(MACHINE_INC)
+MACHINE_INC=
+.include "${.CURDIR}/../${MACHINE}/Makefile.inc"
+.endif
