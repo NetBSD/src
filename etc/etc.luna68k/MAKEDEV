@@ -1,6 +1,13 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2002/06/17 16:21:08 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/06/18 13:54:40 wiz Exp $
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
