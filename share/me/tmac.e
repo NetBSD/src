@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.4 1997/11/17 01:32:45 mycroft Exp $
+.\"     $NetBSD: tmac.e,v 1.5 1998/04/20 02:34:24 thorpej Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -961,7 +961,14 @@
 .\}
 .nr ?C 1
 .nr $f 1 1
-.ds * \\*[1\\*]\k*
+.ie \n(.g \{\
+.ie \n(.C \
+.	ds * \\*[1\\*]\k*
+.el \
+.	ds * \\*[[]1\\*]\k*
+.\}
+.el \
+.	ds * \\*[1\\*]\k*
 .if \\n(?R \
 .	pn 1
 .bp
@@ -1084,8 +1091,8 @@
 .if \n(dw=5 .ds dw Thursday
 .if \n(dw=6 .ds dw Friday
 .if \n(dw=7 .ds dw Saturday
-.nr *year \n(yr+1900
-.ds td \*(mo \n(dy, \n[*year]
+.nr *y \n(yr+1900
+.ds td \*(mo \n(dy, \n(*y
 .\"		*** PARAMETRIC INITIALIZATIONS ***
 .if (1m<0.1i)&(\nx!=0) \
 .	vs 9p			\" for 12-pitch DTC terminals
