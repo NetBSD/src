@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.6 2001/03/26 09:40:45 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.7 2001/05/08 14:46:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.6 2001/03/26 09:40:45 sato Exp $";
+    "$NetBSD: bivideo.c,v 1.7 2001/05/08 14:46:06 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
