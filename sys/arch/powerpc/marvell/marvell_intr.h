@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.4 2003/03/17 16:54:16 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.5 2003/04/09 15:44:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,120 +100,118 @@
 /*
  * interrupt mask bit vector
  */
-typedef u_int32_t imask_t[4] __attribute__ ((aligned(16)));
+typedef struct {
+	u_int32_t bits[4];
+} imask_t __attribute__ ((aligned(16)));
 
-static inline void imask_zero	__P((imask_t *));
-static inline void imask_zero_v	__P((volatile imask_t *));
-static inline void imask_dup_v	__P((imask_t *, volatile imask_t *));
-static inline void imask_and	__P((imask_t *, imask_t *));
-static inline void imask_andnot_v	__P((volatile imask_t *, imask_t *));
-static inline void imask_andnot_icu_vv	__P((volatile imask_t *, volatile imask_t *));
-static inline int imask_empty	__P((imask_t *));
-static inline void imask_orbit	__P((imask_t *, int));
-static inline void imask_orbit_v	__P((volatile imask_t *, int));
-static inline void imask_clrbit	__P((imask_t *, int));
-static inline void imask_clrbit_v	__P((volatile imask_t *, int));
-static inline int imask_test_v	__P((volatile imask_t *, imask_t *));
+static __inline void imask_zero(imask_t *);
+static __inline void imask_zero_v(volatile imask_t *);
+static __inline void imask_dup_v(imask_t *, const volatile imask_t *);
+static __inline void imask_and(imask_t *, const imask_t *);
+static __inline void imask_andnot_v(volatile imask_t *, const imask_t *);
+static __inline void imask_andnot_icu_vv(volatile imask_t *, const volatile imask_t *);
+static __inline int imask_empty(const imask_t *);
+static __inline void imask_orbit(imask_t *, int);
+static __inline void imask_orbit_v(volatile imask_t *, int);
+static __inline void imask_clrbit(imask_t *, int);
+static __inline void imask_clrbit_v(volatile imask_t *, int);
+static __inline u_int32_t imask_andbit_v(const volatile imask_t *, int);
+static __inline int imask_test_v(const volatile imask_t *, const imask_t *);
 
-static inline void
+static __inline void
 imask_zero(imask_t *idp)
 {
-	(*idp)[IMASK_ICU_LO]  = 0;
-	(*idp)[IMASK_ICU_HI]  = 0;
-	(*idp)[IMASK_ICU_GPP] = 0;
-	(*idp)[IMASK_SOFTINT] = 0;
+	idp->bits[IMASK_ICU_LO]  = 0;
+	idp->bits[IMASK_ICU_HI]  = 0;
+	idp->bits[IMASK_ICU_GPP] = 0;
+	idp->bits[IMASK_SOFTINT] = 0;
 }
 
-static inline void
+static __inline void
 imask_zero_v(volatile imask_t *idp)
 {
-	(*idp)[IMASK_ICU_LO]  = 0;
-	(*idp)[IMASK_ICU_HI]  = 0;
-	(*idp)[IMASK_ICU_GPP] = 0;
-	(*idp)[IMASK_SOFTINT] = 0;
+	idp->bits[IMASK_ICU_LO]  = 0;
+	idp->bits[IMASK_ICU_HI]  = 0;
+	idp->bits[IMASK_ICU_GPP] = 0;
+	idp->bits[IMASK_SOFTINT] = 0;
 }
 
-static inline void
-imask_dup_v(imask_t *idp, volatile imask_t *isp)
+static __inline void
+imask_dup_v(imask_t *idp, const volatile imask_t *isp)
 {
-	(*idp)[IMASK_ICU_LO]  = (*isp)[IMASK_ICU_LO]; 
-	(*idp)[IMASK_ICU_HI]  = (*isp)[IMASK_ICU_HI]; 
-	(*idp)[IMASK_ICU_GPP] = (*isp)[IMASK_ICU_GPP]; 
-	(*idp)[IMASK_SOFTINT] = (*isp)[IMASK_SOFTINT];
+	*idp = *isp;
 }
 
-static inline void
-imask_and(imask_t *idp, imask_t *isp)
+static __inline void
+imask_and(imask_t *idp, const imask_t *isp)
 {
-	(*idp)[IMASK_ICU_LO]  &= (*isp)[IMASK_ICU_LO]; 
-	(*idp)[IMASK_ICU_HI]  &= (*isp)[IMASK_ICU_HI]; 
-	(*idp)[IMASK_ICU_GPP] &= (*isp)[IMASK_ICU_GPP]; 
-	(*idp)[IMASK_SOFTINT] &= (*isp)[IMASK_SOFTINT];
+	idp->bits[IMASK_ICU_LO]  &= isp->bits[IMASK_ICU_LO]; 
+	idp->bits[IMASK_ICU_HI]  &= isp->bits[IMASK_ICU_HI]; 
+	idp->bits[IMASK_ICU_GPP] &= isp->bits[IMASK_ICU_GPP]; 
+	idp->bits[IMASK_SOFTINT] &= isp->bits[IMASK_SOFTINT];
 }
 
-static inline void
-imask_andnot_v(volatile imask_t *idp, imask_t *isp)
+static __inline void
+imask_andnot_v(volatile imask_t *idp, const imask_t *isp)
 {
-	(*idp)[IMASK_ICU_LO]  &= ~(*isp)[IMASK_ICU_LO]; 
-	(*idp)[IMASK_ICU_HI]  &= ~(*isp)[IMASK_ICU_HI]; 
-	(*idp)[IMASK_ICU_GPP] &= ~(*isp)[IMASK_ICU_GPP]; 
-	(*idp)[IMASK_SOFTINT] &= ~(*isp)[IMASK_SOFTINT];
+	idp->bits[IMASK_ICU_LO]  &= ~isp->bits[IMASK_ICU_LO]; 
+	idp->bits[IMASK_ICU_HI]  &= ~isp->bits[IMASK_ICU_HI]; 
+	idp->bits[IMASK_ICU_GPP] &= ~isp->bits[IMASK_ICU_GPP]; 
+	idp->bits[IMASK_SOFTINT] &= ~isp->bits[IMASK_SOFTINT];
 }
 
-static inline void
-imask_andnot_icu_vv(volatile imask_t *idp, volatile imask_t *isp)
+static __inline void
+imask_andnot_icu_vv(volatile imask_t *idp, const volatile imask_t *isp)
 {
-	(*idp)[IMASK_ICU_LO]  &= ~(*isp)[IMASK_ICU_LO]; 
-	(*idp)[IMASK_ICU_HI]  &= ~(*isp)[IMASK_ICU_HI]; 
-	(*idp)[IMASK_ICU_GPP] &= ~(*isp)[IMASK_ICU_GPP]; 
+	idp->bits[IMASK_ICU_LO]  &= ~isp->bits[IMASK_ICU_LO]; 
+	idp->bits[IMASK_ICU_HI]  &= ~isp->bits[IMASK_ICU_HI]; 
+	idp->bits[IMASK_ICU_GPP] &= ~isp->bits[IMASK_ICU_GPP]; 
 }
 
-static inline int
-imask_empty(imask_t *isp)
+static __inline int
+imask_empty(const imask_t *isp)
 {
-	return (! ((*isp)[IMASK_ICU_LO] || 
-		   (*isp)[IMASK_ICU_HI] || 
-		   (*isp)[IMASK_ICU_GPP]|| 
-		   (*isp)[IMASK_SOFTINT]));
+	return (! (isp->bits[IMASK_ICU_LO] | isp->bits[IMASK_ICU_HI] | 
+		   isp->bits[IMASK_ICU_GPP]| isp->bits[IMASK_SOFTINT]));
 }
 
-static inline void
+static __inline void
 imask_orbit(imask_t *idp, int bitno)
 {
-	(*idp)[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
+	idp->bits[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
 }
 
-static inline void
+static __inline void
 imask_orbit_v(volatile imask_t *idp, int bitno)
 {
-	(*idp)[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
+	idp->bits[bitno>>IMASK_WORDSHIFT] |= (1 << (bitno&IMASK_BITMASK));
 }
 
-static inline void
+static __inline void
 imask_clrbit(imask_t *idp, int bitno)
 {
-	(*idp)[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
+	idp->bits[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
 }
 
-static inline void
+static __inline void
 imask_clrbit_v(volatile imask_t *idp, int bitno)
 {
-	(*idp)[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
+	idp->bits[bitno>>IMASK_WORDSHIFT] &= ~(1 << (bitno&IMASK_BITMASK));
 }
 
-static inline u_int32_t
-imask_andbit_v(volatile imask_t *idp, int bitno)
+static __inline u_int32_t
+imask_andbit_v(const volatile imask_t *idp, int bitno)
 {
-	return (*idp)[bitno>>IMASK_WORDSHIFT] & (1 << (bitno&IMASK_BITMASK));
+	return idp->bits[bitno>>IMASK_WORDSHIFT] & (1 << (bitno&IMASK_BITMASK));
 }
 
-static inline int
-imask_test_v(volatile imask_t *idp, imask_t *isp)
+static __inline int
+imask_test_v(const volatile imask_t *idp, const imask_t *isp)
 {
-	return (((*idp)[IMASK_ICU_LO]  & (*isp)[IMASK_ICU_LO]) || 
-		((*idp)[IMASK_ICU_HI]  & (*isp)[IMASK_ICU_HI]) || 
-		((*idp)[IMASK_ICU_GPP] & (*isp)[IMASK_ICU_GPP])|| 
-		((*idp)[IMASK_SOFTINT] & (*isp)[IMASK_SOFTINT]));
+	return ((idp->bits[IMASK_ICU_LO]  & isp->bits[IMASK_ICU_LO]) || 
+		(idp->bits[IMASK_ICU_HI]  & isp->bits[IMASK_ICU_HI]) || 
+		(idp->bits[IMASK_ICU_GPP] & isp->bits[IMASK_ICU_GPP])|| 
+		(idp->bits[IMASK_SOFTINT] & isp->bits[IMASK_SOFTINT]));
 }
 
 #ifdef EXT_INTR_STATS
