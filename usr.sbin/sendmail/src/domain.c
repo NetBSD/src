@@ -312,13 +312,14 @@ punt:
 		if (host[0] == '[')
 		{
 			register char *p;
+			struct in_addr junk;
 
 			/* this may be an MX suppression-style address */
 			p = strchr(MXHostBuf, ']');
 			if (p != NULL)
 			{
 				*p = '\0';
-				if (inet_addr(&MXHostBuf[1]) != -1)
+				if (inet_aton(&MXHostBuf[1], &junk) != 0)
 					*p = ']';
 				else
 				{

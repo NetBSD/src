@@ -655,15 +655,13 @@ makeconnection(host, port, mci, usesecureport)
 
 	if (host[0] == '[')
 	{
-		long hid;
 		register char *p = strchr(host, ']');
 
 		if (p != NULL)
 		{
 			*p = '\0';
 #ifdef NETINET
-			hid = inet_addr(&host[1]);
-			if (hid == -1)
+			if (inet_aton(&host[1], &addr.sin.sin_addr) == 0)
 #endif
 			{
 				/* try it as a host name (avoid MX lookup) */
@@ -686,7 +684,6 @@ makeconnection(host, port, mci, usesecureport)
 		}
 #ifdef NETINET
 		addr.sin.sin_family = AF_INET;		/*XXX*/
-		addr.sin.sin_addr.s_addr = hid;
 #endif
 	}
 	else
@@ -1192,7 +1189,7 @@ host_map_lookup(map, name, av, statp)
 	int *statp;
 {
 	register struct hostent *hp;
-	u_long in_addr;
+	struct in_addr in_addr;
 	char *cp;
 	int i;
 	register STAB *s;
@@ -1315,10 +1312,10 @@ host_map_lookup(map, name, av, statp)
 	if ((cp = strchr(name, ']')) == NULL)
 		return (NULL);
 	*cp = '\0';
-	in_addr = inet_addr(&name[1]);
+	(void) inet_aton(&name[1], &in_addr);
 
 	/* nope -- ask the name server */
-	hp = gethostbyaddr((char *)&in_addr, sizeof(struct in_addr), AF_INET);
+	hp = gethostbyaddr((char *)&in_addr, sizeof(in_addr), AF_INET);
 	s->s_namecanon.nc_errno = errno;
 #if NAMED_BIND
 	s->s_namecanon.nc_herrno = h_errno;
