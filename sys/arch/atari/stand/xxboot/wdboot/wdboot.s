@@ -1,4 +1,4 @@
-/*	$NetBSD: wdboot.s,v 1.3 1996/12/26 14:55:24 leo Exp $	*/
+/*	$NetBSD: wdboot.s,v 1.4 1996/12/28 23:38:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -64,11 +64,7 @@ main:	lea	pc@(regsav),a0
 	bhis	exit			| membot > MAXBOT
 
 	movl	_memtop:w,d3
-	movl	_v_bas_ad:w,d0
-	cmpl	d0,d3
-	blts	0f			| memtop < v_bas_ad
-	movl	d0,d3
-0:	cmpl	#MINTOP,d3
+	cmpl	#MINTOP,d3
 	blts	exit			| memtop < MINTOP
 
 	andw	#-4,d3
@@ -194,7 +190,7 @@ err:	movq	#-1,d0
 
 regsav:	.long	0
 
-fill:	.space	20
+fill:	.space	30
 
 dpar:	.byte	0			| tracks/cylinder
 	.byte	0			| sectors/track
