@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.35 2002/11/03 13:47:34 nisimura Exp $	*/
+/*	$NetBSD: types.h,v 1.36 2002/11/03 17:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ typedef	long		mips_fpreg_t;
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#ifdef _MIPS_PADDR_T_64BIT
+#if defined(_MIPS_PADDR_T_64BIT) && !defined(_LP64)
 typedef unsigned long long	paddr_t;
 typedef unsigned long long	psize_t;
 #else
