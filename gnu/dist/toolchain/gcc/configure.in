@@ -742,6 +742,12 @@ changequote([,])dnl
 		tm_file=arm/semiaof.h
 		tmake_file=arm/t-semiaof
 		;;
+	arm*-*-netbsdelf*)
+		tm_file=arm/netbsd-elf.h
+		xm_file="arm/xm-netbsd.h ${xm_file}"
+		tmake_file="t-netbsd arm/t-netbsd"
+       use_collect2=yes
+		;;
 	arm*-*-netbsd*)
 		tm_file=arm/netbsd.h
 		xm_file="arm/xm-netbsd.h ${xm_file}"
@@ -3294,11 +3300,17 @@ changequote([,])dnl
 		xm_defines=USG
 		float_format=vax
 		;;
+	vax-*-netbsdelf*)
+		tm_file="${tm_file} vax/netbsd-elf.h" 
+		tmake_file=t-netbsd
+		float_format=vax
+		use_collect2=yes
+		;;
 	vax-*-netbsd*)
 		tm_file="${tm_file} netbsd.h vax/netbsd.h"
 		tmake_file=t-netbsd
 		float_format=vax
-       use_collect2=yes
+		use_collect2=yes
 		;;
 	vax-*-openbsd*)
 		tmake_file="${tmake_file} vax/t-openbsd"
