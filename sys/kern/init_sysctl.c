@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.18 2003/12/28 22:24:12 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.19 2003/12/28 22:36:37 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.18 2003/12/28 22:24:12 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.19 2003/12/28 22:36:37 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1471,6 +1471,9 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	int pid, elem_size, elem_count;
 	int buflen, needed, error;
 
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
 	dp = where = oldp;
 	buflen = where != NULL ? *oldlenp : 0;
 	error = needed = 0;
@@ -1652,6 +1655,9 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	size_t buflen, needed;
 	int error;
 
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
 	dp = oldp;
 	dp2 = where = oldp;
 	buflen = where != NULL ? *oldlenp : 0;
@@ -1823,6 +1829,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	int nargv, type, error;
 	char *arg;
 	char *tmp;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (newp != NULL || namelen != 2)
 		return (EINVAL);

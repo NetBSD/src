@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.154 2003/12/05 16:19:09 fvdl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.155 2003/12/28 22:36:37 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.154 2003/12/05 16:19:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.155 2003/12/28 22:36:37 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2024,6 +2024,9 @@ sysctl_needfunc(SYSCTLFN_ARGS)
 int
 sysctl_notavail(SYSCTLFN_ARGS)
 {
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	return (EOPNOTSUPP);
 }
