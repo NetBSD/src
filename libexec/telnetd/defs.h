@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 1996/02/28 20:38:10 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 1998/04/01 15:05:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -123,6 +123,8 @@
 #if !defined(USE_TERMIO) || defined(NO_CC_T)
 typedef unsigned char cc_t;
 #endif
+
+#include <time.h>
 
 #ifdef	__STDC__
 #include <unistd.h>
