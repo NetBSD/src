@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.7 2000/06/12 10:40:51 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.1 2000/06/13 15:15:28 itojun Exp $	*/
 /*	$KAME: token.l,v 1.13 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
