@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.30 2001/06/03 18:32:33 chris Exp $
+#	$NetBSD: files.arm,v 1.31 2001/06/05 09:25:06 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -26,7 +26,7 @@ file	netns/ns_cksum.c			ns
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb
 file	arch/arm/arm32/db_interface.c		ddb & arm32
-file	arch/arm/arm32/db_trace.c		ddb & arm32
+file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm32/db_machdep.c		ddb & arm32
 
 

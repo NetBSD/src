@@ -1,6 +1,7 @@
-/*	$NetBSD: db_trace.c,v 1.7 2001/03/11 16:31:05 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.1 2001/06/05 09:25:05 bjh21 Exp $	*/
 
 /* 
+ * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1996 Scott K. Stevens
  *
  * Mach Operating System
@@ -30,17 +31,20 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.7 2001/03/11 16:31:05 bjh21 Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.1 2001/06/05 09:25:05 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <arm/armreg.h>
+#include <arm/cpufunc.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
+
+#include "opt_progmode.h"
  
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
@@ -48,7 +52,7 @@ __RCSID("$NetBSD: db_trace.c,v 1.7 2001/03/11 16:31:05 bjh21 Exp $");
  * APCS stack frames are awkward beasts, so I don't think even trying to use
  * a structure to represent them is a good idea.
  *
- * Here's the diagram from the APCS.  Incresing address is _up_ the page.
+ * Here's the diagram from the APCS.  Increasing address is _up_ the page.
  * 
  *          save code pointer       [fp]        <- fp points to here
  *          return link value       [fp, #-4]
@@ -89,6 +93,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char c, *cp = modif;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	int	scp_offset;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'u')
@@ -114,12 +119,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}
 			u = p->p_addr;
+#ifdef arm26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
+#else
+			frame = (u_int32_t *)(u->u_pcb.pcb_r11);
+#endif
 			(*pr)("at %p\n", frame);
 		} else
 			frame = (u_int32_t *)(addr);
 	}
 	lastframe = NULL;
+	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (count-- && frame != NULL) {
 		db_expr_t	offset;
@@ -133,7 +143,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * In theory, the SCP isn't guaranteed to be in the function
 		 * that generated the stack frame.  We hope for the best.
 		 */
+#ifdef PROG26
 		scp = frame[FR_SCP] & R15_PC;
+#else
+		scp = frame[FR_SCP];
+#endif
 
 		db_find_sym_and_offset(scp, &name, &offset);
 		if (name == NULL)
@@ -143,11 +157,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		(*pr)("(scp=0x%x(", frame[FR_SCP]);
 		db_printsym(scp, DB_STGY_PROC, pr);
 		(*pr)("), rlv=0x%x(", frame[FR_RLV]);
+#ifdef PROG26
 		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
+#else
+		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
+#endif
 		(*pr)("),\n\trsp=0x%x", frame[FR_RSP]);
 		(*pr)(", rfp=0x%x", frame[FR_RFP]);
 
-		savecode = ((u_int32_t *)scp)[-3];
+		savecode = ((u_int32_t *)scp)[scp_offset];
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
