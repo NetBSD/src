@@ -48,9 +48,7 @@
  *
  */
 	.set	vfork,66
-.globl	_vfork
-
-_vfork:
+ENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
 	movl	$vfork, %eax
 	LCALL(7,0)

@@ -38,6 +38,8 @@
 	.asciz "@(#)modf.s	5.5 (Berkeley) 3/18/91"
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/asm.h>
+
 /*
  * modf(value, iptr): return fractional part of value, and stores the
  * integral part into iptr (a pointer to double).
@@ -47,9 +49,7 @@
  */
 
 /* With CHOP mode on, frndint behaves as TRUNC does.  Useful. */
-.text
-.globl _modf
-_modf:
+ENTRY(modf)
 	pushl %ebp
 	movl %esp,%ebp
 	subl $16,%esp
