@@ -23,6 +23,10 @@
    # <number> <filename> <garbage> into a .line <number>\n.file <filename>
    pair.  This needs better error-handling.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: app.c,v 1.5 1994/05/25 17:10:38 pk Exp $";
+#endif
+
 #include <stdio.h>
 #include "as.h"			/* For BAD_CASE() only */
 
