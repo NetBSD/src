@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyflags.c,v 1.7 1996/03/17 19:28:21 christos Exp $	*/
+/*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ttyflags.c,v 1.7 1996/03/17 19:28:21 christos Exp $";
+static char rcsid[] = "$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: ttyflags.c,v 1.7 1996/03/17 19:28:21 christos Ex
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ttyent.h>
 #include <unistd.h>
 
