@@ -9554,7 +9554,7 @@ simplify_comparison (code, pop0, pop1)
 		  && (code != GT && code != LT && code != GE && code != LE))
 	      || (GET_CODE (op0) == ASHIFTRT
 		  && (code != GTU && code != LTU
-		      && code != GEU && code != GEU)))
+		      && code != GEU && code != LEU)))
 	  && GET_CODE (XEXP (op0, 1)) == CONST_INT
 	  && INTVAL (XEXP (op0, 1)) >= 0
 	  && INTVAL (XEXP (op0, 1)) < HOST_BITS_PER_WIDE_INT
@@ -9863,7 +9863,7 @@ simplify_comparison (code, pop0, pop1)
       equality_comparison_p = (code == EQ || code == NE);
       sign_bit_comparison_p = ((code == LT || code == GE) && const_op == 0);
       unsigned_comparison_p = (code == LTU || code == LEU || code == GTU
-			       || code == LEU);
+			       || code == GEU);
 
       /* If this is a sign bit comparison and we can do arithmetic in
 	 MODE, say that we will only be needing the sign bit of OP0.  */
