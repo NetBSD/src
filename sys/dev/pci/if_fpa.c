@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.20 1997/04/13 19:48:17 cgd Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.21 1997/04/13 20:14:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -424,10 +424,10 @@ pdq_pci_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    ioh_valid = (pci_map_register(pa, PCI_CBIO,
+    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO,
             PCI_MAPREG_TYPE_IO, 0,
             &iot, &ioh, NULL, NULL) == 0);
-    memh_valid = (pci_map_register(pa, PCI_CBMA,
+    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
             PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
             &memt, &memh, NULL, NULL) == 0);  
 
