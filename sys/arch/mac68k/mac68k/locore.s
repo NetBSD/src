@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.102 1998/07/04 22:18:28 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -210,6 +210,7 @@ Lstart1:
 1:
 #endif
 	/* Config botch; no hope. */
+	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
 	jra	Ldoboot1
 
 Lstart2:
@@ -1621,6 +1622,8 @@ LmotommuE:
 
 Lbootcode:
 	lea	a0@(0x800),sp		| physical SP in case of NMI
+	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
+
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuF		| no, skip
@@ -1634,7 +1637,6 @@ LmotommuF:
 	pmove	a3@,tc			| disable MMU
 
 Ldoboot1:
-	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
 	lea	a1@(0x90),a1		| offset of ROM reset routine
 	jmp	a1@			| and jump to ROM to reset machine
 Lebootcode:
