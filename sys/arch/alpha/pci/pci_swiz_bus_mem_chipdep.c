@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.31 1999/12/08 01:48:39 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.32 2000/02/06 03:52:27 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -498,7 +498,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
-	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int prefectchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 
 	/*
@@ -522,17 +522,17 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	mustd = 0;
 #endif
 
-	/* No cacheable space without dense. */
+	/* No prefectchable space without dense. */
 	if (mustd == 0)
-		cacheable = 0;
+		prefectchable = 0;
 
 	/*
 	 * We must have dense space to map memory linearly.
 	 */
-	if (linear && !cacheable)
+	if (linear && !prefectchable)
 		return (EOPNOTSUPP);
 
-	musts = (cacheable == 0);
+	musts = (prefectchable == 0);
 	if (!__C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, NULL)) {
 		/*
 		 * This address isn't mapped into sparse space; don't
@@ -586,7 +586,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 		printf("%s: window[1]=0x%lx-0x%lx\n", __S(__C(CHIP,_mem_map)),
 		    CHIP_D_MEM_W1_BUS_START(v), CHIP_D_MEM_W1_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx cacheable",
+		panic("%s: don't know how to map %lx prefectchable",
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
 #endif /* CHIP_D_MEM_W1_SYS_START */
@@ -605,11 +605,11 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 		printf("%s: window[3]=0x%lx-0x%lx\n", __S(__C(CHIP,_mem_map)),
 		    CHIP_S_MEM_W3_BUS_START(v), CHIP_S_MEM_W3_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx non-cacheable",
+		panic("%s: don't know how to map %lx non-prefectchable",
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
 
-	if (cacheable)
+	if (prefectchable)
 		*memhp = dh;
 	else
 		*memhp = sh;
