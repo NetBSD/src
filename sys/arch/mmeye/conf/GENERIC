@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.9 2000/02/24 17:07:35 msaitoh Exp $
+#	$NetBSD: GENERIC,v 1.10 2000/02/26 17:35:40 oster Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	16		# estimated number of users
 
@@ -156,6 +156,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
