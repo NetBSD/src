@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.131 1999/05/29 01:29:21 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.132 1999/05/29 07:08:52 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.124 1999/05/29 01:28:52 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.125 1999/05/29 07:07:51 mrg Exp 
  */
 
 /*
@@ -971,8 +971,8 @@
 /* Sun Microsystems products */
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
 #define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* SUNW,hme compatible Ethernet */
-#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bus */
-#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI bus */
+#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
+#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI bridge */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
