@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.1 2003/12/09 12:13:44 manu Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.2 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.1 2003/12/09 12:13:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.2 2003/12/24 23:22:22 manu Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_compat_darwin.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,8 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.1 2003/12/09 12:13:44 manu Exp 
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
+#endif
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
+#include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_exception.h>
 #include <compat/mach/mach_message.h>
@@ -119,8 +125,8 @@ mach_trapsignal1(l, ksi)
 }
 
 int
-mach_exception(l, exc, code)
-	struct lwp *l;
+mach_exception(exc_l, exc, code)
+	struct lwp *exc_l;	/* currently running lwp */
 	int exc;
 	int *code;
 {
@@ -128,32 +134,47 @@ mach_exception(l, exc, code)
 	mach_msg_header_t *msgh;
 	size_t msglen;
 	struct mach_right *exc_mr;
-	struct mach_emuldata *med;
+	struct mach_emuldata *exc_med;
+	struct mach_lwp_emuldata *exc_mle;
 	struct mach_emuldata *catcher_med;
 	struct mach_right *kernel_mr;
-	struct lwp *catcher_lwp;
-	struct mach_right *task;
-	struct mach_right *thread;
+	struct lwp *catcher_l;	/* The lwp catching the exception */
+	struct mach_right *exc_task;
+	struct mach_right *exc_thread;
 	struct mach_port *exc_port;
-	int error;
+	struct mach_exc_info *mei;
+	int error = 0;
 
+#ifdef DIAGNOSTIC
+	if (exc_l == NULL) {
+		printf("mach_exception: exc_l = %p\n", exc_l);
+		return ESRCH;
+	}
+#endif
 #ifdef DEBUG_MACH
-	printf("mach_exception: pid %d, exc %d, code (%d, %d)\n",
-	    l->l_proc->p_pid, exc, code[0], code[1]);
+	printf("mach_exception: %d.%d, exc %d, code (%d, %d)\n",
+	    exc_l->l_proc->p_pid, exc_l->l_lid, exc, code[0], code[1]);
 #endif
 	/* 
 	 * No exception if there is no exception port or if it has no receiver
 	 */
-	med = l->l_proc->p_emuldata;
-	if (((exc_port = med->med_exc[exc]) == NULL) ||
+	exc_mle = exc_l->l_emuldata;
+	exc_med = exc_l->l_proc->p_emuldata;
+	if (((exc_port = exc_med->med_exc[exc]) == NULL) ||
 	    (exc_port->mp_recv == NULL))
 		return EINVAL;
 
+#ifdef DEBUG_MACH
+	printf("catcher is %d.%d, state %d\n", 
+	    exc_port->mp_recv->mr_lwp->l_proc->p_pid,
+	    exc_port->mp_recv->mr_lwp->l_lid,
+	    exc_port->mp_recv->mr_lwp->l_proc->p_stat);
+#endif
 	/*
 	 * Don't send exceptions to dying processes
 	 */
 	if (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))
-		return EINVAL;
+		return ESRCH;
 
 	/* 
 	 * XXX Avoid a nasty deadlock because process in TX state 
@@ -175,33 +196,38 @@ mach_exception(l, exc, code)
 	 * a dying parent, a signal is sent instead of the 
 	 * notification, this fixes the problem.
 	 */
-	if ((l->l_proc->p_flag & P_TRACED) &&
-	    (l->l_proc->p_pptr->p_flag & P_WEXIT)) {
+	if ((exc_l->l_proc->p_flag & P_TRACED) &&
+	    (exc_l->l_proc->p_pptr->p_flag & P_WEXIT)) {
+#ifdef DEBUG_MACH
+		printf("mach_exception: deadlock avoided\n");
+#endif
 		return EINVAL;
 	}
 
+	if (exc_port->mp_datatype != MACH_MP_EXC_INFO) {
 #ifdef DIAGNOSTIC
-	if (exc_port->mp_datatype != MACH_MP_EXC_FLAGS)
 		printf("mach_exception: unexpected datatype");
 #endif
-	behavior = (int)exc_port->mp_data >> 16;
-	flavor = (int)exc_port->mp_data & 0xffff;
+		return EINVAL;
+	}
+	mei = exc_port->mp_data;
+	behavior = mei->mei_behavior;
+	flavor = mei->mei_flavor;
 
 	/* 
 	 * We want the port names in the target process, that is, 
 	 * the process with receive right for exc_port.
 	 */
-	catcher_lwp = exc_port->mp_recv->mr_lwp;
-	catcher_med = catcher_lwp->l_proc->p_emuldata;
-	exc_mr = mach_right_get(exc_port, catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+	catcher_l = exc_port->mp_recv->mr_lwp;
+	catcher_med = catcher_l->l_proc->p_emuldata;
+	exc_mr = mach_right_get(exc_port, catcher_l, MACH_PORT_TYPE_SEND, 0);
 	kernel_mr = mach_right_get(catcher_med->med_kernel, 
-	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+	    catcher_l, MACH_PORT_TYPE_SEND, 0);
 
-	/* XXX Thread and task should have different ports */
-	task = mach_right_get(med->med_kernel, 
-	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
-	thread = mach_right_get(med->med_kernel, 
-	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+	exc_task = mach_right_get(exc_med->med_kernel, 
+	    catcher_l, MACH_PORT_TYPE_SEND, 0);
+	exc_thread = mach_right_get(exc_mle->mle_kernel, 
+	    catcher_l, MACH_PORT_TYPE_SEND, 0);
 
 	switch (behavior) {
 	case MACH_EXCEPTION_DEFAULT: {
@@ -220,12 +246,14 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_MSGID;
 
-		mach_add_port_desc(req, thread->mr_name);
-		mach_add_port_desc(req, task->mr_name);
+		mach_add_port_desc(req, exc_thread->mr_name);
+		mach_add_port_desc(req, exc_task->mr_name);
 
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
+
+		mach_set_trailer(req, msglen);
 
 		break;
 	}
@@ -250,11 +278,13 @@ mach_exception(l, exc, code)
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
-		mach_thread_get_state_machdep(l, flavor, req->req_state, &dc);
+		mach_thread_get_state_machdep(exc_l, 
+		    flavor, req->req_state, &dc);
 
 		msglen = msglen - 
 			 sizeof(req->req_state) +
 			 (dc * sizeof(req->req_state[0]));
+		mach_set_trailer(req, msglen);
 
 		break;
 	}
@@ -277,20 +307,22 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_STATE_IDENTITY_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
 
-		mach_add_port_desc(req, thread->mr_name);
-		mach_add_port_desc(req, task->mr_name);
+		mach_add_port_desc(req, exc_thread->mr_name);
+		mach_add_port_desc(req, exc_task->mr_name);
 
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
-		mach_thread_get_state_machdep(l, flavor, req->req_state, &dc);
-		/* Trailer */
-		req->req_state[(dc / sizeof(req->req_state[0])) + 1] = 8;
+		mach_thread_get_state_machdep(exc_l, 
+		    flavor, req->req_state, &dc);
 
 		msglen = msglen - 
 			 sizeof(req->req_state) +
 			 (dc * sizeof(req->req_state[0]));
+
+		mach_set_trailer(req, msglen);
+
 		break;
 	}
 
@@ -302,20 +334,44 @@ mach_exception(l, exc, code)
 		
 	mach_set_trailer(msgh, msglen);
 
+	/*
+	 * Once an exception is sent on the exception port, 
+	 * no new exception will be taken until the catcher
+	 * acknowledge the first one.
+	 */
+	lockmgr(&catcher_med->med_exclock, LK_EXCLUSIVE, NULL);
+
+	/*
+	 * If the catcher died, we are done.
+	 */
+	if (((exc_port = exc_med->med_exc[exc]) == NULL) ||
+	    (exc_port->mp_recv == NULL) ||
+	    (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))) 
+		return ESRCH;
+
 	(void)mach_message_get(msgh, msglen, exc_port, NULL);
 	wakeup(exc_port->mp_recv->mr_sethead);
 
 	/* 
 	 * The thread that caused the exception is now 
 	 * supposed to wait for a reply to its message.
-	 * This is to avoid an endless loop on the same
-	 * exception.
 	 */
-	error = tsleep(kernel_mr->mr_port, PZERO|PCATCH, "mach_exc", 0);
-	if ((error == ERESTART) || (error == EINTR))
-		return error;
+#ifdef DEBUG_MACH
+	printf("mach_exception: %d.%d sleep on catcher_med->med_exclock = %p\n",
+	    exc_l->l_proc->p_pid, exc_l->l_lid, &catcher_med->med_exclock);
+#endif
+	error = tsleep(&catcher_med->med_exclock, PZERO, "mach_exc", 0);
+#ifdef DEBUG_MACH
+	printf("mach_exception: %d.%d resumed, error = %d\n",
+	    exc_l->l_proc->p_pid, exc_l->l_lid, error);
+#endif
 
-	return 0;
+	/* 
+	 * Unlock the catcher's exception handler
+	 */
+	lockmgr(&catcher_med->med_exclock, LK_RELEASE, NULL);
+
+	return error;
 }
 
 static void
@@ -396,10 +452,8 @@ int
 mach_exception_raise(args)
 	struct mach_trap_args *args;
 {
-	mach_exception_raise_reply_t *rep;
 	struct lwp *l = args->l;
-	mach_port_t mn;
-	struct mach_right *mr;
+	mach_exception_raise_reply_t *rep;
 	struct mach_emuldata *med;
 
 	/*
@@ -409,30 +463,38 @@ mach_exception_raise(args)
 	 */
 	rep = args->smsg;
 
-	/*
-	 * Sanity check the remote port: it should be a 
-	 * right to the process' kernel port 
-	 */
-	mn = rep->rep_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return MACH_SEND_INVALID_RIGHT;
-
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
-	if (med->med_kernel != mr->mr_port) {
-#ifdef DEBUG_MACH
-		printf("mach_exception_raise: remote port not kernel port\n");
-#endif
-		return 0;
-	}
-
 	/* 
 	 * This message is sent by the process catching the
 	 * exception to release the process that raised the exception.
 	 * We wake it up if the return value is 0 (no error), else
 	 * we should ignore this message. 
 	 */
-	if (rep->rep_retval == 0)
-		wakeup(mr->mr_port);
+#ifdef DEBUG_MACH
+	printf("mach_excpetion_raise: retval = %ld\n", (long)rep->rep_retval);
+#endif
+	if (rep->rep_retval != 0)
+		return 0;
+
+	med = l->l_proc->p_emuldata;
+
+	/*
+	 * Check for unexpected exception acknowledge, whereas
+	 * the kernel sent no exception message.
+	 */
+	if (lockstatus(&med->med_exclock) == 0) {
+#ifdef DEBUG_MACH
+		printf("spurious mach_exception_raise\n");
+#endif
+		return mach_msg_error(args, EINVAL);
+	}
+
+	/*
+	 * Wakeup the thread that raised the exception.
+	 */
+#ifdef DEBUG_MACH
+	printf("mach_exception_raise: wakeup at %p\n", &med->med_exclock);
+#endif
+	wakeup(&med->med_exclock);
 
 	return 0;
 }

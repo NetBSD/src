@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.32 2003/12/20 19:43:17 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.33 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ struct mach_port {
 #define MACH_MP_PROC		0x4	/* (struct proc *) */
 #define MACH_MP_NOTIFY_SYNC	0x5	/* int */
 #define MACH_MP_MEMORY_ENTRY	0x6	/* (struct mach_memory_entry *) */
-#define MACH_MP_EXC_FLAGS	0x7	/* Two shorts: behavior, flavor */
+#define MACH_MP_EXC_INFO	0x7	/* (struct mach_exc_info *) */
 #define MACH_MP_SEMAPHORE	0x8	/* (struct mach_semaphore *) */
 
 void mach_port_init(void);

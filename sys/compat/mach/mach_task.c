@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.51 2003/12/20 19:43:17 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.52 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.51 2003/12/20 19:43:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.52 2003/12/24 23:22:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,6 +326,7 @@ mach_task_get_exception_ports(args)
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	struct mach_exc_info *mei;
 	int i, j, count;
 
 	med = tl->l_proc->p_emuldata;
@@ -342,13 +343,21 @@ mach_task_get_exception_ports(args)
 		if (med->med_exc[i] == NULL)
 			continue;
 
+		if (med->med_exc[i]->mp_datatype != MACH_MP_EXC_INFO) {
+#ifdef DIAGNOSTIC
+			printf("Exception port without mach_exc_info\n");
+#endif
+			continue;
+		}
+		mei = med->med_exc[i]->mp_data;
+
 		mr = mach_right_get(med->med_exc[i], l, MACH_PORT_TYPE_SEND, 0);
 
 		mach_add_port_desc(rep, mr->mr_name);
 
 		rep->rep_masks[j] = 1 << i;
-		rep->rep_old_behaviors[j] = (int)mr->mr_port->mp_data >> 16;
-		rep->rep_old_flavors[j] = (int)mr->mr_port->mp_data & 0xffff;
+		rep->rep_old_behaviors[j] = mei->mei_behavior;
+		rep->rep_old_flavors[j] = mei->mei_flavor;
 
 		j++;
 	}
@@ -389,6 +398,7 @@ mach_task_set_exception_ports(args)
 	mach_port_name_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
+	struct mach_exc_info *mei;
 
 	mn = req->req_new_port.name;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
@@ -396,12 +406,17 @@ mach_task_set_exception_ports(args)
 
 	mp = mr->mr_port;
 #ifdef DIAGNOSTIC
-	if ((mp->mp_datatype != MACH_MP_EXC_FLAGS) && 
+	if ((mp->mp_datatype != MACH_MP_EXC_INFO) && 
 	    (mp->mp_datatype != MACH_MP_NONE))
 		printf("mach_task_set_exception_ports: data exists\n");
 #endif
-	mp->mp_datatype = MACH_MP_EXC_FLAGS;
-	mp->mp_data = (void *)((req->req_behavior << 16) | req->req_flavor);
+	mei = malloc(sizeof(*mei), M_EMULDATA, M_WAITOK);
+	mei->mei_flavor = req->req_flavor;
+	mei->mei_behavior = req->req_behavior;
+
+	mp->mp_data = mei;
+	mp->mp_flags |= MACH_MP_DATA_ALLOCATED;
+	mp->mp_datatype = MACH_MP_EXC_INFO;
 
 	med = tl->l_proc->p_emuldata;
 	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)

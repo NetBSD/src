@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.40 2003/12/21 07:53:59 simonb Exp $ */
+/*	$NetBSD: mach_message.c,v 1.41 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.40 2003/12/21 07:53:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.41 2003/12/24 23:22:22 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -603,6 +603,8 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	/* 
 	 * Get rights carried by the message if it is not a
 	 * reply from the kernel.
+	 * XXX mm->mm_l could contain stall data. Reference
+	 * the thread's kernel port instead?
 	 */
 	if (mm->mm_l != NULL) {
 		mach_port_t *mnp;

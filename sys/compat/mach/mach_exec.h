@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.25 2003/12/20 19:43:17 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.26 2003/12/24 23:22:22 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,12 +61,11 @@ struct mach_emuldata {
 
 	int med_dirty_thid;		/* Thread id not yet initialized */
 	int med_suspend;		/* Suspend semaphore */
-
+	struct lock med_exclock;	/* Process exception handler lock */
 };
 
 struct mach_lwp_emuldata {
 	struct mach_port *mle_kernel;	/* Thread's kernel port */
-	struct mach_port *mle_exc;	/* Exception we stop on */
 };
 
 int exec_mach_copyargs(struct proc *, struct exec_package *, 

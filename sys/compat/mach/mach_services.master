@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.8 2003/12/09 12:13:44 manu Exp $
+ $NetBSD: mach_services.master,v 1.9 2003/12/24 23:22:22 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -333,9 +333,9 @@
 3602	UNIMPL	act_set_state
 3603	STD	thread_get_state
 3604	STD	thread_set_state
-3605	UNIMPL	thread_suspend
-3606	UNIMPL	thread_resume
-3607	UNIMPL	thread_abort
+3605	STD	thread_suspend
+3606	STD	thread_resume
+3607	STD	thread_abort
 3608	UNIMPL	thread_abort_safely
 3609	UNIMPL	thread_depress_abort
 3610	UNIMPL	thread_get_special_port
