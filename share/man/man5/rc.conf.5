@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.25 1999/09/03 14:36:43 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.26 1999/09/28 14:52:33 bouyer Exp $
 .\"
 .\"  Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -170,6 +170,17 @@ version string in the
 file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
+.It Sy defcorename
+A string.
+This sets the default core name template, from which are derived core dump
+files names. The template can include format charaters which are dynamically
+interpreted. See
+.Xr core 5
+for details of the format.
+If set to nothing, the default compiled-in value is keept (see
+.Xr options 4 ,
+.Xr sysctl 3
+).
 .El
 .Pp
 .Ss System security setting:
