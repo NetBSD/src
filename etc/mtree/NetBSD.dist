@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.119 2000/11/02 22:33:10 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.120 2000/11/02 22:43:43 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1207,6 +1207,17 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/no
+..
+
+# ./usr/share/locale/no@nynorsk
+no@nynorsk
+
+# ./usr/share/locale/no@nynorsk/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/no@nynorsk/LC_MESSAGES
+..
+
+# ./usr/share/locale/no@nynorsk
 ..
 
 # ./usr/share/locale/pl
