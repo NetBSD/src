@@ -1,4 +1,4 @@
-#	$NetBSD: rc.hack,v 1.2 1996/06/15 04:04:28 cgd Exp $
+#	$NetBSD: rc.hack,v 1.3 1997/02/17 20:15:40 cgd Exp $
 
 # Hackish /etc/rc to do basic setup for a distribution rz25 image to
 # make it slightly easier to use.
@@ -32,7 +32,7 @@ usr_dev="${root_dev_base}${root_dev_unit}d"
 #echo usr_dev = $usr_dev
 
 case $root_dev_base in
-cd|sd)
+cd|sd|wd)
 	;;
 
 *)
@@ -54,7 +54,7 @@ if [ -w /tmp ]; then
 		single_user
 		;;
 
-	sd)
+	sd|wd)
 		echo "If you want to boot multi-user, make sure that you've"
 		echo "configured the system properly, then run the"
 		echo "following:"
@@ -87,9 +87,9 @@ cd)
 	echo ""
 	;;
 
-sd)
+sd|wd)
 	echo "Checking root and /usr..."
-	fsck -n /dev/r$root_dev /dev/r$usr_dev > /dev/null 2>&1
+	fsck -n -t ffs /dev/r$root_dev /dev/r$usr_dev > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		echo "File system check failed!"
 		single_user
