@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1 2005/03/11 20:48:24 bouyer Exp $
+# $NetBSD: XEN0,v 1.2 2005/03/18 16:32:33 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -478,8 +478,46 @@ radio*  at udsbr?
 # USB Generic driver
 ugen*   at uhub? port ?
 
+# PCI audio devices
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
+auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
+cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+emuxki* at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+fms*	at pci? dev ? function ?	# Forte Media FM801
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
+
+# OPL[23] FM synthesizers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
+#opl*	at esl?
+opl*	at eso?
+opl*	at fms?
+opl*	at sv?
+opl*	at yds?
+
 # Audio support
-audio*  at audiobus?
+audio*	at audiobus?
+
+# MPU 401 UARTs
+#mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
+mpu*	at cmpci?
+mpu*	at eso?
+mpu*	at fms?
+mpu*	at yds?
+
+# MIDI support
+midi*	at midibus?
 
 include	"arch/i386/conf/GENERIC.local"
 
