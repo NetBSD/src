@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.30 1997/06/01 19:34:49 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.31 1997/07/17 06:39:46 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.30 1997/06/01 19:34:49 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.31 1997/07/17 06:39:46 mikel Exp $";
 #endif
 
 #include <stdio.h>
@@ -1511,11 +1511,11 @@ pr_retip(struct icmp *icp,
 		if (icp2.icmp_type == ICMP_ECHO) {
 			if (pingflags & F_VERBOSE)
 				(void)printf("\n  ID=%u icmp_seq=%u",
-					     icp2.icmp_id,
-					     icp2.icmp_seq);
+					     ntohs((u_short)icp2.icmp_id),
+					     ntohs((u_short)icp2.icmp_seq));
 			else
 				(void)printf(" for icmp_seq=%u",
-					     icp2.icmp_seq);
+					     ntohs((u_short)icp2.icmp_seq));
 		}
 	}
 }
