@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2001/04/06 14:31:14 wiz Exp $
+#	$NetBSD: Makefile,v 1.30 2001/08/20 14:47:49 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
@@ -6,7 +6,7 @@ CPPFLAGS+=-DLIBC_SCCS
 SRCS=	fparseln.c getbootfile.c getmaxpartitions.c getrawpartition.c \
 	login.c login_cap.c login_tty.c \
 	logout.c logwtmp.c opendisk.c passwd.c pw_scan.c pidfile.c pidlock.c \
-	pty.c securepath.c ttyaction.c ttymsg.c
+	pty.c secure_path.c ttyaction.c ttymsg.c
 
 MAN=	fparseln.3 getbootfile.3 getmaxpartitions.3 getrawpartition.3 \
 	login.3 login_cap.3 opendisk.3 \
