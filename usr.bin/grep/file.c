@@ -1,3 +1,5 @@
+/*	$NetBSD: file.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -23,8 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: file.c,v 1.1.1.1 2004/01/02 14:58:45 cjep Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: file.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 
@@ -35,26 +41,55 @@
 
 #include "grep.h"
 
-static char	 fname[MAXPATHLEN];
-static char	*lnbuf;
-static int	 lnbuflen;
+static char fname[MAXPATHLEN];
+static char *lnbuf;
+static int lnbuflen;
 
 #define FILE_STDIO	0
 #define FILE_MMAP	1
 #define FILE_GZIP	2
 
 struct file {
-	int	 type;
-	FILE	*f;
-	mmf_t	*mmf;
-	gzFile	*gzf;
+	int type;
+	FILE *f;
+	mmf_t *mmf;
+	gzFile *gzf;
 };
+
+static char *
+grepfgetln(FILE *f, size_t *len)
+{
+	size_t n;
+	int c;
+	
+	for (n = 0; ; ++n) {
+		c = getc(f);
+		if (c == EOF) {
+			if (feof(f))
+				break;
+			err(2, "%s", fname);
+			/* ERROR */
+		
+		}
+		if (c == line_endchar)
+			break;
+		if (n >= lnbuflen) {
+			lnbuflen *= 2;
+			lnbuf = grep_realloc(lnbuf, ++lnbuflen);
+		}
+		lnbuf[n] = c;
+	}
+	if (feof(f) && n == 0)
+		return NULL;
+	*len = n;
+	return lnbuf;
+}
 
 static char *
 gzfgetln(gzFile *f, size_t *len)
 {
-	size_t		n;
-	int		c;
+	size_t n;
+	int c;
 
 	for (n = 0; ; ++n) {
 		c = gzgetc(f);
@@ -64,14 +99,14 @@ gzfgetln(gzFile *f, size_t *len)
 
 			if (gzeof(f))
 				break;
-			
+
 			gzerrstr = gzerror(f, &gzerr);
 			if (gzerr == Z_ERRNO)
-				err(1, "%s", fname);
+				err(2, "%s", fname);
 			else
-				errx(1, "%s: %s", fname, gzerrstr);
+				errx(2, "%s: %s", fname, gzerrstr);
 		}
-		if (c == '\n')
+		if (c == line_endchar)
 			break;
 		if (n >= lnbuflen) {
 			lnbuflen *= 2;
@@ -95,10 +130,10 @@ grep_fdopen(int fd, char *mode)
 		sprintf(fname, "(standard input)");
 	else
 		sprintf(fname, "(fd %d)", fd);
-	
+
 	f = grep_malloc(sizeof *f);
-	
-	if (Zflag) {
+
+	if (zgrep) {
 		f->type = FILE_GZIP;
 		if ((f->gzf = gzdopen(fd, mode)) != NULL)
 			return f;
@@ -107,7 +142,7 @@ grep_fdopen(int fd, char *mode)
 		if ((f->f = fdopen(fd, mode)) != NULL)
 			return f;
 	}
-	
+
 	free(f);
 	return NULL;
 }
@@ -118,10 +153,10 @@ grep_open(char *path, char *mode)
 	file_t *f;
 
 	snprintf(fname, MAXPATHLEN, "%s", path);
-	
+
 	f = grep_malloc(sizeof *f);
-	
-	if (Zflag) {
+
+	if (zgrep) {
 		f->type = FILE_GZIP;
 		if ((f->gzf = gzopen(fname, mode)) != NULL)
 			return f;
@@ -135,7 +170,7 @@ grep_open(char *path, char *mode)
 		if ((f->f = fopen(path, mode)) != NULL)
 			return f;
 	}
-	
+
 	free(f);
 	return NULL;
 }
@@ -147,28 +182,12 @@ grep_bin_file(file_t *f)
 	case FILE_STDIO:
 		return bin_file(f->f);
 	case FILE_MMAP:
-		return mmbin_file(f->mmf);
+		return mmbin_file(f->mmf); 
 	case FILE_GZIP:
 		return gzbin_file(f->gzf);
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
-	}
-}
-
-long
-grep_tell(file_t *f)
-{
-	switch (f->type) {
-	case FILE_STDIO:
-		return ftell(f->f);
-	case FILE_MMAP:
-		return mmtell(f->mmf);
-	case FILE_GZIP:
-		return gztell(f->gzf);
-	default:
-		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
 
@@ -177,14 +196,17 @@ grep_fgetln(file_t *f, size_t *l)
 {
 	switch (f->type) {
 	case FILE_STDIO:
-		return fgetln(f->f, l);
+		if (line_endchar == '\n') 
+			return fgetln(f->f, l);
+		else
+			return grepfgetln(f->f, l);
 	case FILE_MMAP:
 		return mmfgetln(f->mmf, l);
 	case FILE_GZIP:
 		return gzfgetln(f->gzf, l);
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
 
@@ -203,6 +225,6 @@ grep_close(file_t *f)
 		break;
 	default:
 		/* can't happen */
-		errx(1, "invalid file type");
+		errx(2, "invalid file type");
 	}
 }
