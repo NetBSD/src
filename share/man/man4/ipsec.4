@@ -1,5 +1,5 @@
-.\"	$NetBSD: ipsec.4,v 1.7 2000/06/12 10:32:06 itojun Exp $
-.\"	$KAME: ipsec.4,v 1.10 2000/06/12 10:30:50 itojun Exp $
+.\"	$NetBSD: ipsec.4,v 1.8 2000/06/14 12:36:11 itojun Exp $
+.\"	$KAME: ipsec.4,v 1.11 2000/06/14 12:35:02 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -243,3 +243,19 @@ This is because AH authenticates encapsulating
 packet, not the encapsulated
 .Pq inner
 packet.
+.Pp
+Under certain condition,
+truncated result may be raised from the kernel
+against
+.Dv SADB_DUMP
+and
+.Dv SADB_SPDDUMP
+operation on
+.Dv PF_KEY
+socket.
+This occurs if there are too many database entries in the kernel
+and socket buffer for the
+.Dv PF_KEY
+socket is insufficient.
+If you manipulate many IPsec key/policy database entries,
+increase the size of socket buffer.
