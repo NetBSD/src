@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164_intr.s,v 1.2 1997/04/07 02:01:23 cgd Exp $ */
+/* $NetBSD: pci_eb164_intr.s,v 1.3 1997/04/07 23:56:41 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -43,7 +43,7 @@
  * interrupt mask PLD).
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
 
 #include <machine/asm.h>
 
