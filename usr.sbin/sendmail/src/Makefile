@@ -1,3 +1,7 @@
+#
+#  NetBSD Makefile
+#
+#	$Id: Makefile,v 1.16 1994/01/31 02:40:00 glass Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
@@ -21,6 +25,7 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
+LDSTATIC= -static
 MAN1=	newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
@@ -34,7 +39,7 @@ BINMODE=6555
 beforeinstall:
 #	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 #	    ${DESTDIR}/etc/sendmail.fc
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/sendmail.hf \
 	    ${DESTDIR}/usr/share/misc
