@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.70 2003/03/06 00:41:52 matt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.71 2003/05/04 01:54:26 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.70 2003/03/06 00:41:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.71 2003/05/04 01:54:26 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ sys_mmap(l, v, retval)
 		if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
 #if defined(DEBUG)
 			printf("WARNING: defaulted mmap() share type to "
-			   "%s (pid %d comm %s)\n", vp->v_type == VCHR ?
+			   "%s (pid %d command %s)\n", vp->v_type == VCHR ?
 			   "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
 			    p->p_comm);
 #endif
