@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inflow.c	6.5 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: inflow.c,v 1.2 1993/08/01 18:47:15 mycroft Exp $";
+static char rcsid[] = "$Id: inflow.c,v 1.3 1993/12/07 19:58:32 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running under Unix.
@@ -45,6 +45,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <fcntl.h>
 
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/dir.h>
 #include <signal.h>
 
@@ -69,8 +70,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <sys/resource.h>
 extern int original_stack_limit;
 #endif /* SET_STACK_LIMIT_HUGE */
-
-extern int errno;
 
 /* Nonzero if we are debugging an attached outside process
    rather than an inferior.  */
@@ -384,9 +383,6 @@ create_inferior (allargs, env)
 {
   int pid;
   char *shell_command;
-  extern int sys_nerr;
-  extern char *sys_errlist[];
-  extern int errno;
 
   /* If desired, concat something onto the front of ALLARGS.
      SHELL_COMMAND is the result.  */

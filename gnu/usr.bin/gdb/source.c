@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)source.c	6.3 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: source.c,v 1.2 1993/08/01 18:47:41 mycroft Exp $";
+static char rcsid[] = "$Id: source.c,v 1.3 1993/12/07 19:58:34 mycroft Exp $";
 #endif /* not lint */
 
 /* List lines of source files for GDB, the GNU debugger.
@@ -31,6 +31,7 @@ along with GDB; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <string.h>
 #include "defs.h"
 #include "symtab.h"
 #include "param.h"
@@ -189,7 +190,6 @@ directory_command (dirname, from_tty)
 
       do
 	{
-	  extern char *index ();
 	  char *name = dirname;
 	  register char *p;
 	  struct stat st;
