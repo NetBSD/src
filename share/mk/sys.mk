@@ -1,9 +1,9 @@
-#	$NetBSD: sys.mk,v 1.79 2003/11/08 05:33:37 lukem Exp $
+#	$NetBSD: sys.mk,v 1.80 2003/11/08 23:14:45 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .a .o .ln .c .cc .cpp .cxx .C .f .F .r .p .s .S .l .y .sh
+.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
 .LIBS:		.a
 
