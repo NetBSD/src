@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.25 2003/05/21 13:55:28 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.26 2003/05/21 13:56:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.25 2003/05/21 13:55:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.26 2003/05/21 13:56:21 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -186,7 +186,7 @@ nfsrv_getcache(nd, slp, repp)
 	 * (Maybe we should for the case of a reconnect, but..)
 	 */
 	if (!nd->nd_nam2)
-		return (RC_DOIT);
+		return RC_DOIT;
 loop:
 	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
 		if (nd->nd_retxid == rp->rc_xid &&
@@ -194,7 +194,7 @@ loop:
 		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
-				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+				(void) tsleep(rp, PZERO-1, "nfsrc", 0);
 				goto loop;
 			}
 			rp->rc_flag |= RC_LOCKED;
@@ -226,9 +226,9 @@ loop:
 			rp->rc_flag &= ~RC_LOCKED;
 			if (rp->rc_flag & RC_WANTED) {
 				rp->rc_flag &= ~RC_WANTED;
-				wakeup((caddr_t)rp);
+				wakeup(rp);
 			}
-			return (ret);
+			return ret;
 		}
 	}
 	nfsstats.srvcache_misses++;
@@ -241,7 +241,7 @@ loop:
 		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_flag & RC_LOCKED) != 0) {
 			rp->rc_flag |= RC_WANTED;
-			(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+			(void) tsleep(rp, PZERO-1, "nfsrc", 0);
 			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
 		rp->rc_flag |= RC_LOCKED;
@@ -273,9 +273,9 @@ loop:
 	rp->rc_flag &= ~RC_LOCKED;
 	if (rp->rc_flag & RC_WANTED) {
 		rp->rc_flag &= ~RC_WANTED;
-		wakeup((caddr_t)rp);
+		wakeup(rp);
 	}
-	return (RC_DOIT);
+	return RC_DOIT;
 }
 
 /*
@@ -298,7 +298,7 @@ loop:
 		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
 				rp->rc_flag |= RC_WANTED;
-				(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
+				(void) tsleep(rp, PZERO-1, "nfsrc", 0);
 				goto loop;
 			}
 			rp->rc_flag |= RC_LOCKED;
@@ -321,7 +321,7 @@ loop:
 			rp->rc_flag &= ~RC_LOCKED;
 			if (rp->rc_flag & RC_WANTED) {
 				rp->rc_flag &= ~RC_WANTED;
-				wakeup((caddr_t)rp);
+				wakeup(rp);
 			}
 			return;
 		}
