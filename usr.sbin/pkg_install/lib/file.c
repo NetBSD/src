@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.42 2000/10/11 20:23:55 is Exp $	*/
+/*	$NetBSD: file.c,v 1.43 2000/10/31 23:47:05 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.42 2000/10/11 20:23:55 is Exp $");
+__RCSID("$NetBSD: file.c,v 1.43 2000/10/31 23:47:05 hubertf Exp $");
 #endif
 #endif
 
@@ -701,6 +701,7 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 				break;
 
 			default:
+				*bufp++ = '%';
 				*bufp++ = *fmt;
 				break;
 			}
