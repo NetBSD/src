@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 1997/08/12 17:26:57 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.104 1997/10/16 03:05:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -55,9 +55,7 @@
 #endif
 #include <sys/syscall.h>
 
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
+#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
