@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.27.2.1 1995/10/20 11:01:14 chopps Exp $	*/
+/*	$NetBSD: ser.c,v 1.27.2.2 1996/04/23 17:36:52 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -106,8 +106,6 @@ struct	tty *ser_tty[NSER];
 
 struct speedtab serspeedtab[] = {
 	0,	0,
-	50,	SERBRD(50),
-	75,	SERBRD(75),
 	110,	SERBRD(110),
 	134,	SERBRD(134),
 	150,	SERBRD(150),
@@ -506,8 +504,10 @@ serintr(unit)
 			log(LOG_WARNING, "ser0: %d ring buffer overflows.\n",
 			    ovfl);
 	}
+	s2 = splser();
 	if (sbcnt == 0 && (tp->t_state & TS_TBLOCK) == 0)
 		SETRTS(ciab.pra);	/* start accepting data again */
+	splx(s2);
 	splx(s1);
 }
 
