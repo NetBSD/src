@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.10 1996/03/02 14:27:53 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.11 1996/07/20 17:58:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -100,6 +100,13 @@ struct mem_softc {
 	caddr_t	sc_memaddr;
 	int	sc_memtype;
 	int	sc_memnr;
+};
+
+struct bp_conf {
+	char *type;
+	int num;
+	int partyp;
+	int bp_addr;
 };
 
 struct iobus {

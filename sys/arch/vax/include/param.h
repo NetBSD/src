@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.20 1996/07/10 23:51:08 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.21 1996/07/20 17:58:21 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -176,8 +176,10 @@
 
 #define	ovbcopy(x,y,z)	bcopy(x,y,z)
 
+#if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
+#endif
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
