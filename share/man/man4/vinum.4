@@ -21,7 +21,7 @@
 .\" 4. Neither the name of the Company nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\"  
+.\"
 .\" This software is provided ``as is'', and any express or implied
 .\" warranties, including, but not limited to, the implied warranties of
 .\" merchantability and fitness for a particular purpose are disclaimed.
@@ -34,11 +34,11 @@
 .\" otherwise) arising in any way out of the use of this software, even if
 .\" advised of the possibility of such damage.
 .\"
-.\" $Id: vinum.4,v 1.1 2003/10/16 08:29:52 grog Exp $
-.\" $NetBSD: vinum.4,v 1.1 2003/10/16 08:29:52 grog Exp $
+.\" $Id: vinum.4,v 1.2 2003/10/17 09:42:42 wiz Exp $
+.\" $NetBSD: vinum.4,v 1.2 2003/10/17 09:42:42 wiz Exp $
 .\"
-.Dd 5 October 1999
-.Dt vinum 4
+.Dd October 16, 2003
+.Dt VINUM 4
 .Sh NAME
 .Nm vinum
 .Nd Logical Volume Manager
@@ -51,12 +51,15 @@ is a logical volume manager inspired by, but not derived from, the Veritas
 Volume Manager.  It provides the following features:
 .Bl -bullet
 .It
-It provides device-independent logical disks, called \fIvolumes\fP.  Volumes are
-not restricted to the size of any disk on the system.
+It provides device-independent logical disks, called
+.Em volumes .
+Volumes are not restricted to the size of any disk on the system.
 .It
-The volumes consist of one or more \fIplexes\fP, each of which contain the
-entire address space of a volume.  This represents an implementation of RAID-1
-(mirroring).  Multiple plexes can also be used for
+The volumes consist of one or more
+.Em plexes ,
+each of which contain the entire address space of a volume.
+This represents an implementation of RAID-1 (mirroring).
+Multiple plexes can also be used for
 .\" XXX What about sparse plexes?  Do we want them?
 .if t .sp
 .Bl -bullet
@@ -84,7 +87,8 @@ becomes an accurate snapshot of the file system at the time of detachment.
 .\" Make sure to flush!
 .El
 .It
-Each plex consists of one or more logical disk slices, called \fIsubdisks\fP.
+Each plex consists of one or more logical disk slices, called
+.Em subdisks .
 Subdisks are defined as a contiguous block of physical disk storage.  A plex may
 consist of any reasonable number of subdisks (in other words, the real limit is
 not the number, but other factors, such as memory and performance, associated
@@ -93,11 +97,15 @@ with maintaining a large number of subdisks).
 A number of mappings between subdisks and plexes are available:
 .Bl -bullet
 .It
-\fIConcatenated plexes\fP\| consist of one or more subdisks, each of which
+.Em Concatenated plexes
+consist of one or more subdisks, each of which
 is mapped to a contiguous part of the plex address space.
 .It
-\fIStriped plexes\fP\| consist of two or more subdisks of equal size.  The file
-address space is mapped in \fIstripes\fP, integral fractions of the subdisk
+.Em Striped plexes
+consist of two or more subdisks of equal size.  The file
+address space is mapped in
+.Em stripes ,
+integral fractions of the subdisk
 size.  Consecutive plex address space is mapped to stripes in each subdisk in
 .if n turn.
 .if t \{\
@@ -112,7 +120,7 @@ down
 SD0: box
 SD1: box
 SD2: box
-
+.br
 "plex 0" at SD0.n+(0,.2)
 "subdisk 0" rjust at SD0.w-(.2,0)
 "subdisk 1" rjust at SD1.w-(.2,0)
@@ -122,7 +130,8 @@ SD2: box
 .\}
 The subdisks of a striped plex must all be the same size.
 .It
-\fIRAID-5 plexes\fP\| require at least three equal-sized subdisks.  They
+.Em RAID-5 plexes
+require at least three equal-sized subdisks.  They
 resemble striped plexes, except that in each stripe, one subdisk stores parity
 information.  This subdisk changes in each stripe: in the first stripe, it is the
 first subdisk, in the second it is the second subdisk, etc.  In the event of a
@@ -133,7 +142,9 @@ This mapping is particularly suited to read-intensive access.  The subdisks of a
 RAID-5 plex must all be the same size.
 .It
 .Nm
-also supports \fIRAID-4 plexes\fP.  They have no advantage over RAID-5.  The
+also supports
+.Em RAID-4 plexes .
+They have no advantage over RAID-5.  The
 only difference is that the parity information resides on the same subdisk for
 each stripe.  The subdisks of a RAID-4 plex must all be the same size.
 .\" Make sure to flush!
@@ -153,7 +164,7 @@ started correctly when the subsystem is enabled.  This is also a significant
 advantage over the Veritas\(tm File System.  This feature regards the presence
 of the volumes.  It does not mean that the volumes will be mounted
 automatically, since the standard startup procedures with
-.Pa /etc/fstab 
+.Pa /etc/fstab
 perform this function.
 .El
 .Sh KERNEL CONFIGURATION
@@ -164,7 +175,6 @@ configuration file:
 .Bd -literal -offset indent
 pseudo-device	vinum
 .Ed
-.Pp
 .Ss DEBUG OPTIONS
 The current version of
 .Nm vinum ,
@@ -177,7 +187,9 @@ options         VINUMDEBUG
 .Ed
 .Sh RUNNING VINUM
 .Nm
-is part of the base NetBSD system.  It does not require installation.
+is part of the base
+.Nx
+system.  It does not require installation.
 To start it, start the
 .Nm vinum
 program, which will load the kld if it is not already present.
@@ -217,7 +229,7 @@ program are active.  Unloading the kld does not harm the data in the volumes.
 Use the
 .Xr vinum 8
 utility to configure and start
-.Nm 
+.Nm
 objects.
 .Sh IOCTL CALLS
 .Pa ioctl
@@ -244,12 +256,12 @@ result, the
 .Fl r
 option of
 .Xr disklabel 8 ,
-which reads the 
-.if t ``raw disk'', 
-.if n "raw disk", 
+which reads the
+.if t ``raw disk'',
+.if n "raw disk",
 will fail.
 .Pp
-In general, 
+In general,
 .Xr disklabel 8
 serves no useful purpose on a vinum volume.  If you run it, it will show you
 three partitions, a, b and c, all the same except for the fstype, for example:
@@ -287,7 +299,6 @@ use the following command to create a ufs file system on it:
 .Bd -literal
   # newfs -v /dev/vinum/concat
 .Ed
-.Pp
 .Sh OBJECT NAMING
 .Nm
 assigns default names to plexes and subdisks, although they may be overridden.
@@ -303,7 +314,7 @@ plexes and subdisks may be up to 64 characters long, and the names of drives may
 up to 32 characters long.  When choosing volume and plex names, bear in mind
 that automatically generated plex and subdisk names are longer than the name
 from which they are derived.
-.Bl -bullet 
+.Bl -bullet
 .It
 When
 .Xr vinum 8
@@ -332,11 +343,11 @@ is used by
 .Xr vinum 8 ,
 and
 .Pa /dev/vinum/controld
-is used by the 
+is used by the
 .Nm
 daemon.
 .It
-Unlike 
+Unlike
 .Nm
 .Ux
 drives,
@@ -352,14 +363,16 @@ end in the letters
 to
 .Ar c ,
 you must use the
-.Fl v 
+.Fl v
 flag to
 .Nm newfs
 in order to tell it to ignore this convention.
 .\"
-.It 
+.It
 Plexes do not need to be assigned explicit names.  By default, a plex name is
-the name of the volume followed by the letters \f(CW.p\fR and the number of the
+the name of the volume followed by the letters
+.Em \&.p
+and the number of the
 plex.  For example, the plexes of volume
 .Ar vol3
 are called
@@ -370,7 +383,8 @@ and so on.  These names can be overridden, but it is not recommended.
 .It
 Like plexes, subdisks are assigned names automatically, and explicit naming is
 discouraged.  A subdisk name is the name of the plex followed by the letters
-\f(CW\&.s\fR and a number identifying the subdisk.  For example, the subdisks of
+.Em \&.s
+and a number identifying the subdisk.  For example, the subdisks of
 plex
 .Ar vol3.p0
 are called
@@ -379,7 +393,7 @@ are called
 and so on.
 .br
 .It
-By contrast, 
+By contrast,
 .Nm drives
 must be named.  This makes it possible to move a drive to a different location
 and still recognize it automatically.  Drive names may be up to 32 characters
@@ -388,7 +402,7 @@ long.
 .Pp
 EXAMPLE
 .Pp
-Assume the 
+Assume the
 .Nm
 objects described in the section CONFIGURATION FILE in
 .Xr vinum 8 .
@@ -531,17 +545,17 @@ crwxr-xr--  1 root  wheel  162, 0x20110004 Mar 30 16:08 vol5.p1.s1
 .Pp
 In the case of unattached plexes and subdisks, the naming is reversed.  Subdisks
 are named after the disk on which they are located, and plexes are named after
-the subdisk.  
+the subdisk.
 .\" XXX
-.Nm This mapping is still to be determined.
+.Em This mapping is still to be determined .
 .Ss OBJECT STATES
-.Pp
 Each
 .Nm
-object has a \fIstate\fR associated with it. 
+object has a
+.Em state
+associated with it.
 .Nm
 uses this state to determine the handling of the object.
-.Pp
 .Ss VOLUME STATES
 Volumes may have the following states:
 .sp
@@ -648,6 +662,22 @@ The drive is not accessible.
 The drive is up and running.
 .El
 .sp 2v
+.Sh SEE ALSO
+.Xr disklabel 5 ,
+.Xr disklabel 8 ,
+.Xr newfs 8 ,
+.Xr vinum 8
+.Sh HISTORY
+.Nm vinum
+first appeared in
+.Fx 3.0 .
+The RAID-5 component of
+.Nm
+was developed by Cybernet Inc.
+.Pa www.cybernet.com
+for its NetMAX product.
+.Sh AUTHORS
+.An Greg Lehey Aq grog@lemis.com .
 .Sh BUGS
 .Bl -enum
 .It
@@ -655,11 +685,11 @@ Detection of differences between the version of the kernel and the kld is not
 yet implemented.
 .El
 .Ss Reporting problems with Vinum
-.Pp
 If you find any bugs in
 .Nm vinum ,
-please report them to Greg Lehey <grog@NetBSD.org>.  Supply the following
-information:
+please report them to Greg Lehey
+.Aq grog@NetBSD.org .
+Supply the following information:
 .Pp
 .Bl -bullet
 .It
@@ -675,17 +705,3 @@ at the beginning.
 .It
 If you have a panic, a stack trace.
 .El
-.Sh AUTHOR
-.An Greg Lehey Aq grog@lemis.com .
-.Sh HISTORY
-.Nm vinum
-first appeared in FreeBSD 3.0.  The RAID-5 component of
-.Nm
-was developed by Cybernet Inc. 
-.Pa www.cybernet.com
-for its NetMAX product.
-.Sh SEE ALSO
-.Xr vinum 8 ,
-.Xr disklabel 5 ,
-.Xr disklabel 8 ,
-.Xr newfs 8
