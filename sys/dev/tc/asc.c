@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.28 1996/09/25 21:07:46 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.29 1996/09/29 03:02:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -128,6 +128,7 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 
@@ -408,6 +409,7 @@ script_t asc_scripts[] = {
  */
 static void asc_reset __P((asc_softc_t asc, asc_regmap_t *regs));
 static void asc_startcmd __P((asc_softc_t asc, int target));
+static void asc_timeout __P((void *arg));
 
 extern struct cfdriver asc_cd;
 struct cfdriver asc_cd = {
@@ -598,6 +600,12 @@ asc_start(scsicmd)
 		splx(s);
 	}
 	asc->cmd[sdp->sd_drive] = scsicmd;
+	/*
+	 * Kludge: use a 60 second timeout if data is being transfered,
+	 * otherwise use a 30 minute timeout.
+	 */
+	timeout(asc_timeout, scsicmd, hz * (scsicmd->buflen == 0 ?
+	    1800 : 60));
 	asc_startcmd(asc, sdp->sd_drive);
 	splx(s);
 }
@@ -1315,6 +1323,7 @@ asc_end(asc, status, ss, ir)
 	scsicmd = asc->cmd[target];
 	asc->cmd[target] = (ScsiCmd *)0;
 	state = &asc->st[target];
+	untimeout(asc_timeout, scsicmd);
 
 #ifdef DEBUG
 	if (asc_debug > 1) {
@@ -1408,13 +1417,36 @@ asc_dma_in(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
-#ifdef DEBUG
 	if (!(state->flags & DMA_IN_PROGRESS) &&
 	    (regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
-		printf("asc_dma_in: FIFO count %x flags %x\n",
-		    regs->asc_flags, state->flags);
+	  	volatile int async_fifo_junk = 0;
+
+		/*
+		 * If the target is asynchronous, the FIFO contains
+		 * a byte of garbage. (see the Mach mk84 53c94 driver,
+		 * where this occurs on tk-50s and exabytes.)
+		 * It also occurs on  asynch disks like SCSI-1 disks.
+		 * Recover by reading the byte of junk from the fifo if,
+		 * and only if, the target is async. If the target is
+		 * synch, there is no junk, and reading the fifo
+		 * deadlocks our SCSI state machine.
+		 */
+		 if (state->sync_offset == 0)
+			async_fifo_junk = regs->asc_fifo;
+#ifdef DEBUG
+		printf("%s: asc_dma_in: FIFO count %x flags %x sync_offset %d",
+		    asc->sc_dev.dv_xname, regs->asc_flags,
+		       state->flags, state->sync_offset);
+		if (state->sync_offset != 0)
+			printf("\n");
+		else
+			printf(" unexpected fifo data %x\n", async_fifo_junk);
+#ifdef DIAGNOSTIC
+		asc_DumpLog("asc_dma_in");
+#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
+
 	}
-#endif
 	/* setup to start reading the next chunk */
 	len = state->buflen;
 #ifdef DEBUG
@@ -2008,6 +2040,25 @@ asc_disconnect(asc, status, ss, ir)
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
 	return (1);
+}
+
+
+void
+asc_timeout(arg)
+	void *arg;
+{
+	int s = splbio();
+	ScsiCmd *scsicmd = (ScsiCmd *) arg;
+
+	printf("asc_timeout: cmd %p drive %d\n", scsicmd, scsicmd->sd->sd_drive);
+#ifdef DEBUG
+	asc_DumpLog("asc_timeout");
+#endif
+#if 0
+	panic("asc_timeout");
+#else
+	boot(4, NULL); /* XXX */
+#endif
 }
 
 
