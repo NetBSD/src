@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.13 1994/05/04 04:05:51 mycroft Exp $
+ *	$Id: hil.c,v 1.14 1994/05/24 11:26:02 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -319,7 +319,7 @@ hilread(dev, uio)
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {
 		cc = hilq_to_b(&dptr->hd_queue, buf,
-			       MIN(uio->uio_resid, HILBUFSIZE));
+			       min(uio->uio_resid, HILBUFSIZE));
 		if (cc <= 0)
 			break;
 		error = uiomove(buf, cc, uio);
