@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.22 2002/11/22 15:23:52 fvdl Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.23 2003/02/26 22:23:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.22 2002/11/22 15:23:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.23 2003/02/26 22:23:08 fvdl Exp $");
 
 #include "opt_pcibios.h"
 
@@ -258,10 +258,10 @@ pciintr_link_alloc(pir, pin)
 	l->bitmap = pir->linkmap[pin].bitmap;
 	if (pciintr_icu_tag != NULL) { /* compatible PCI ICU found */
 		l->clink = clink;
-		l->irq = irq; /* maybe I386_PCI_INTERRUPT_LINE_NO_CONNECTION */
+		l->irq = irq; /* maybe X86_PCI_INTERRUPT_LINE_NO_CONNECTION */
 	} else {
 		l->clink = link; /* only for PCIBIOSVERBOSE diagnostic */
-		l->irq = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+		l->irq = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
 	}
 
 	lstart = SIMPLEQ_FIRST(&pciintr_link_map_list);
@@ -297,7 +297,7 @@ static int
 pciintr_bitmap_count_irq(irq_bitmap, irqp)
 	int irq_bitmap, *irqp;
 {
-	int i, bit, count = 0, irq = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+	int i, bit, count = 0, irq = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
 
 	if (irq_bitmap != 0) {
 		for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
@@ -397,7 +397,7 @@ pciintr_guess_irq()
 	 * Stage 1: If only one IRQ is available for the link, use it.
 	 */
 	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
-		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		if (l->irq != X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_count_irq(l->bitmap, &irq) == 1) {
 			l->irq = irq;
@@ -427,7 +427,7 @@ pciintr_link_fixup()
 	 * yet connected.
 	 */
 	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
-		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+		if (l->irq != X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 			/*
 			 * Interrupt is already connected.  Don't do
 			 * anything to it.
@@ -469,7 +469,7 @@ pciintr_link_fixup()
 	 * connect in Stage 1.
 	 */
 	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
-		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		if (l->irq != X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_find_lowest_irq(l->bitmap & pciirq,
 		    &l->irq)) {
@@ -493,7 +493,7 @@ pciintr_link_fixup()
 	 * user supplied a mask for the PCI irqs
 	 */
 	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
-		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		if (l->irq != X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_find_lowest_irq(
 		    l->bitmap & pcibios_irqs_hint, &l->irq)) {
@@ -521,7 +521,7 @@ pciintr_link_route(pciirq)
 
 	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->fixup_stage == 0) {
-			if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+			if (l->irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 				/* Appropriate interrupt was not found. */
 #ifdef DIAGNOSTIC
 				printf("pciintr_link_route: "
@@ -650,7 +650,7 @@ pciintr_do_header_fixup(pc, tag, context)
 		printf("%03d:%02d:%d 0x%04x 0x%04x   %c  0x%02x",
 		    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id),
 		    '@' + pin, l->clink);
-		if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		if (l->irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			printf("   -");
 		else
 			printf(" %3d", l->irq);
@@ -667,10 +667,10 @@ pciintr_do_header_fixup(pc, tag, context)
 		return;
 	}
 
-	if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+	if (l->irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		/* Appropriate interrupt was not found. */
 		if (pciintr_icu_tag == NULL &&
-		    irq != 0 && irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+		    irq != 0 && irq != X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 			/*
 			 * Do not print warning,
 			 * if no compatible PCI ICU found,
@@ -689,7 +689,7 @@ pciintr_do_header_fixup(pc, tag, context)
 		return;
 	}
 
-	if (irq == 0 || irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+	if (irq == 0 || irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		PCIBIOS_PRINTV((" fixed up\n"));
 	} else {
 		/* routed by BIOS, but inconsistent */

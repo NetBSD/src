@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.4 2002/12/30 21:55:05 explorer Exp $	*/
+/*	$NetBSD: piix.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.4 2002/12/30 21:55:05 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ piix_get_intr(v, clink, irqp)
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
 	shift = clink << 3;
 	if ((reg >> shift) & PIIX_CFG_PIRQ_NONE)
-		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+		*irqp = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
 	else
 		*irqp = PIIX_PIRQ(reg, clink);
 

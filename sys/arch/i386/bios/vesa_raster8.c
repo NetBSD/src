@@ -1,4 +1,4 @@
-/* $NetBSD: vesa_raster8.c,v 1.5 2002/10/02 05:47:11 thorpej Exp $ */
+/* $NetBSD: vesa_raster8.c,v 1.6 2003/02/26 22:21:19 fvdl Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,14 +82,14 @@ vesaraster8_attach(parent, dev, aux)
 	ri->ri_height = mi->YResolution;
 	ri->ri_stride = mi->BytesPerScanLine;
 
-	res = _i386_memio_map(I386_BUS_SPACE_MEM, mi->PhysBasePtr,
+	res = _x86_memio_map(X86_BUS_SPACE_MEM, mi->PhysBasePtr,
 			      ri->ri_height * ri->ri_stride,
 			      BUS_SPACE_MAP_LINEAR, &h);
 	if (res) {
 		printf("framebuffer mapping failed\n");
 		goto out;
 	}
-	ri->ri_bits = bus_space_vaddr(I386_BUS_SPACE_MEM, h);
+	ri->ri_bits = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
 
 	printf(": fb %dx%d @%x\n", ri->ri_width, ri->ri_height,
 	       mi->PhysBasePtr);

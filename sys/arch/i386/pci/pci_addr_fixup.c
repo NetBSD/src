@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.11 2001/11/15 07:03:34 lukem Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.12 2003/02/26 22:23:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.11 2001/11/15 07:03:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.12 2003/02/26 22:23:07 fvdl Exp $");
 
 #include "opt_pcibios.h"
 
@@ -134,7 +134,7 @@ pci_addr_fixup(pc, maxbus)
 	/* 
 	 * 3. determine allocation space 
 	 */
-	start = i386_round_page(avail_end + 1);
+	start = x86_round_page(avail_end + 1);
 	if (start < PCIADDR_ISAMEM_RESERVE)
 		start = PCIADDR_ISAMEM_RESERVE;
 	pciaddr.mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
