@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.1.1.1 2004/05/20 20:01:31 christos Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#ifdef notdef
 static const char rcsid[] = "Id: ns_ttl.c,v 1.1.206.1 2004/03/09 08:33:45 marka Exp";
+#else
+__RCSID("$NetBSD: ns_ttl.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+#endif
 #endif
 
 /* Import. */
@@ -46,7 +51,7 @@ static int	fmt1(int t, char s, char **buf, size_t *buflen);
 
 /* Macros. */
 
-#define T(x) if ((x) < 0) return (-1); else (void)NULL
+#define T(x) if ((x) < 0) return (-1); else
 
 /* Public. */
 
@@ -95,6 +100,7 @@ ns_format_ttl(u_long src, char *dst, size_t dstlen) {
 	return (dst - odst);
 }
 
+#ifndef _LIBC
 int
 ns_parse_ttl(const char *src, u_long *dst) {
 	u_long ttl, tmp;
@@ -118,10 +124,10 @@ ns_parse_ttl(const char *src, u_long *dst) {
 		if (islower(ch))
 			ch = toupper(ch);
 		switch (ch) {
-		case 'W':  tmp *= 7;
-		case 'D':  tmp *= 24;
-		case 'H':  tmp *= 60;
-		case 'M':  tmp *= 60;
+		case 'W':  tmp *= 7;	/*FALLTHROUGH*/
+		case 'D':  tmp *= 24;	/*FALLTHROUGH*/
+		case 'H':  tmp *= 60;	/*FALLTHROUGH*/
+		case 'M':  tmp *= 60;	/*FALLTHROUGH*/
 		case 'S':  break;
 		default:   goto einval;
 		}
@@ -143,6 +149,7 @@ ns_parse_ttl(const char *src, u_long *dst) {
 	errno = EINVAL;
 	return (-1);
 }
+#endif
 
 /* Private. */
 

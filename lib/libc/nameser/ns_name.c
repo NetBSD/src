@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.1 2004/05/20 20:01:31 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.3.2.4.4.1 2004/03/09 08:33:44 marka Exp";
+#else
+__RCSID("$NetBSD: ns_name.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+#endif
 #endif
 
 #include "port_before.h"
@@ -134,7 +139,7 @@ ns_name_ntop(const u_char *src, char *dst, size_t dstsiz)
 				errno = EINVAL;
 				return(-1);
 			}
-			if ((m = decode_bitstring((const char **)&cp, dn, eom)) < 0)
+			if ((m = decode_bitstring((const char **)(void *)&cp, dn, eom)) < 0)
 			{
 				errno = EMSGSIZE;
 				return(-1);
@@ -142,7 +147,7 @@ ns_name_ntop(const u_char *src, char *dst, size_t dstsiz)
 			dn += m; 
 			continue;
 		}
-		for ((void)NULL; l > 0; l--) {
+		for (; l > 0; l--) {
 			c = *cp++;
 			if (special(c)) {
 				if (dn + 1 >= eom) {
@@ -216,8 +221,8 @@ ns_name_pton(const char *src, u_char *dst, size_t dstsiz)
 				}
 				if ((e = encode_bitsring(&src,
 							 cp + 2,
-							 (char **)&label,
-							 (char **)&bp,
+							 (char **)(void *)&label,
+							 (char **)(void *)&bp,
 							 (const char *)eom))
 				    != 0) {
 					errno = e;
@@ -362,7 +367,7 @@ ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz)
 			errno = EMSGSIZE;
 			return (-1);
 		}
-		for ((void)NULL; l > 0; l--) {
+		for (; l > 0; l--) {
 			c = *cp++;
 			if (isupper(c))
 				*dn++ = tolower(c);
@@ -414,7 +419,7 @@ ns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src,
 			}
 			checked += l + 1;
 			*dstp++ = n;
-			memcpy(dstp, srcp, l);
+			memcpy(dstp, srcp, (size_t)l);
 			dstp += l;
 			srcp += l;
 			break;
@@ -487,7 +492,7 @@ ns_name_pack(const u_char *src, u_char *dst, int dstsiz,
 	if (dnptrs != NULL) {
 		if ((msg = *dnptrs++) != NULL) {
 			for (cpp = dnptrs; *cpp != NULL; cpp++)
-				(void)NULL;
+				;
 			lpp = cpp;	/* end of list to search */
 		}
 	} else
@@ -527,7 +532,7 @@ ns_name_pack(const u_char *src, u_char *dst, int dstsiz,
 				if (dstp + 1 >= eob) {
 					goto cleanup;
 				}
-				*dstp++ = (l >> 8) | NS_CMPRSFLGS;
+				*dstp++ = ((u_int32_t)l >> 8) | NS_CMPRSFLGS;
 				*dstp++ = l % 256;
 				return (dstp - dst);
 			}
@@ -548,7 +553,7 @@ ns_name_pack(const u_char *src, u_char *dst, int dstsiz,
 		if (dstp + 1 + n >= eob) {
 			goto cleanup;
 		}
-		memcpy(dstp, srcp, n + 1);
+		memcpy(dstp, srcp, (size_t)(n + 1));
 		srcp += n + 1;
 		dstp += n + 1;
 	} while (n != 0);
@@ -607,7 +612,7 @@ ns_name_compress(const char *src, u_char *dst, size_t dstsiz,
 
 	if (ns_name_pton(src, tmp, sizeof tmp) == -1)
 		return (-1);
-	return (ns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
+	return (ns_name_pack(tmp, dst, (int)dstsiz, dnptrs, lastdnptr));
 }
 
 /*
@@ -762,7 +767,7 @@ dn_find(const u_char *domain, const u_char *msg,
 					if (n != *dn++)
 						goto next;
 
-					for ((void)NULL; n > 0; n--)
+					for (; n > 0; n--)
 						if (mklower(*dn++) !=
 						    mklower(*cp++))
 							goto next;
@@ -823,7 +828,7 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 	} else if (b > 0) {
 		tc = *cp++;
 		i = SPRINTF((dn, "%1x",
-			       ((tc >> 4) & 0x0f) & (0x0f << (4 - b)))); 
+			       (((u_int32_t)tc >> 4) & 0x0f) & (0x0f << (4 - b)))); 
 		if (i < 0)
 			return (-1);
 		dn += i;
