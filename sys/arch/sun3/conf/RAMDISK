@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.16 1998/02/05 04:56:30 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.17 1998/02/08 05:10:52 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -8,12 +8,7 @@
 
 include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel.  Note:
-# The SUN3 and SUN3X options are mutually exclusive!
-# (Your kernel will only run on one or the other.)
-makeoptions	MACHTYPE=sun3
-options 	_SUN3_
-
+# Machines to be supported by this kernel
 # options 	FPU_EMULATE		# No FP code here!
 options 	HAVECACHE		# Sun3/260 VAC
 
