@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.6 2000/03/10 09:06:21 itohy Exp $	*/
+/*	$NetBSD: menu.h,v 1.7 2000/04/13 12:44:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -31,12 +31,6 @@
 
 #include <curses.h>
 #include <eti.h>
-
-/* the following is a hack to define attr_t until the curses lib
-   does it officially */
-#ifndef CURSES_V3
-typedef char attr_t;
-#endif
 
 /* requests for the menu_driver call */
 #define REQ_BASE_NUM      (0x100)
