@@ -1,7 +1,7 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.6 1993/06/03 19:20:02 brezak Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.7 1993/06/07 04:28:39 deraadt Exp $
 #
 
 .SUFFIXES: .x
@@ -25,11 +25,11 @@ install: all
 	@-mkdir ${DESTDIR}/usr/include/rpcsvc
 	@echo "Installing RPC service header and definition files"
 	@for i in $(XFILES); do \
-		(install -c ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HDRS); do \
-		(install -c $$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c -m 644 $$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HFILES); do \
-		(install -c ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
 	@chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/rpcsvc
 	@chmod -R a-w ${DESTDIR}/usr/include/rpcsvc
 
