@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.13 2004/09/13 12:55:49 drochner Exp $ */
+/* $NetBSD: vme.c,v 1.14 2004/09/15 09:01:53 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.13 2004/09/13 12:55:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14 2004/09/15 09:01:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ vmesubmatch1(bus, dev, ldesc, aux)
 }
 
 static int
-vmesubmatch(bus, dev, aux)
+vmesubmatch(bus, dev, ldesc, aux)
 	struct device *bus;
 	struct cfdata *dev;
 	const locdesc_t *ldesc;
