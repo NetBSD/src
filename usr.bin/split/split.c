@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.7 1999/11/02 10:53:59 lukem Exp $	*/
+/*	$NetBSD: split.c,v 1.8 1999/11/02 10:55:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.7 1999/11/02 10:53:59 lukem Exp $");
+__RCSID("$NetBSD: split.c,v 1.8 1999/11/02 10:55:47 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ main(argc, argv)
 	int ch;
 	char *ep, *p;
 
-	while ((ch = getopt(argc, argv, "0123456789b:l:")) != -1)
+	while ((ch = getopt(argc, argv, "-0123456789b:l:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
