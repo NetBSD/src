@@ -27,7 +27,6 @@ port-mips
 port-mvme68k
 port-news68k
 port-newsmips
-port-news68k
 port-next68k
 port-ofppc
 port-pc532
