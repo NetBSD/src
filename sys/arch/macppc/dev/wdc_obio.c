@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.9 2000/05/23 13:20:58 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.9.4.1 2002/01/16 10:15:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ struct wdc_obio_softc {
 	struct channel_softc wdc_channel;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
+	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
 	void *sc_ih;
 };
 
@@ -78,7 +79,10 @@ int wdc_obio_detach __P((struct device *, int));
 int wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
 void wdc_obio_dma_start __P((void *, int, int));
 int wdc_obio_dma_finish __P((void *, int, int, int));
+
+static void wdc_obio_select __P((struct channel_softc *, int));
 static void adjust_timing __P((struct channel_softc *));
+static void ata4_adjust_timing __P((struct channel_softc *));
 
 struct cfattach wdc_obio_ca = {
 	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
@@ -166,9 +170,28 @@ wdc_obio_attach(parent, self, aux)
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
 					 ca->ca_reg[3]);
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.DMA_cap = 2;
+		if (strcmp(ca->ca_name, "ata-4") == 0) {
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.set_modes = ata4_adjust_timing;
+		} else {
+			sc->sc_wdcdev.set_modes = adjust_timing;
+		}
+#ifdef notyet
+		/* Minimum cycle time is 150ns (DMA MODE 1) on ohare. */
+		if (ohare) {
+			sc->sc_wdcdev.PIO_cap = 3;
+			sc->sc_wdcdev.DMA_cap = 1;
+		}
+#endif
+	} else {
+		/* all non-dma controllers can use adjust_timing */
+		sc->sc_wdcdev.set_modes = adjust_timing;
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->wdc_chanptr = chp;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
@@ -200,71 +223,188 @@ wdc_obio_attach(parent, self, aux)
 	}
 
 	wdcattach(chp);
+	sc->sc_wdcdev.set_modes(chp);
 
-	/* modify DMA access timings */
-	if (use_dma)
-		adjust_timing(chp);
 }
 
 /* Multiword DMA transfer timings */
-static struct {
+struct ide_timings {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
-} dma_timing[3] = {
-	480, 215,	/* Mode 0 */
-	150,  80,	/* Mode 1 */
-	120,  70,	/* Mode 2 */
+};
+static struct ide_timings pio_timing[5] = {
+	{ 600, 180 },    /* Mode 0 */
+	{ 390, 150 },    /*      1 */
+	{ 240, 105 },    /*      2 */
+	{ 180,  90 },    /*      3 */
+	{ 120,  75 }     /*      4 */
+};
+static struct ide_timings dma_timing[3] = {
+	{ 480, 240 },	/* Mode 0 */
+	{ 165,  90 },	/* Mode 1 */
+	{ 120,  75 }	/* Mode 2 */
+};
+
+static struct ide_timings udma_timing[5] = {
+	{120, 180},	/* Mode 0 */
+	{ 90, 150},	/* Mode 1 */
+	{ 60, 120},	/* Mode 2 */
+	{ 45, 90},	/* Mode 3 */
+	{ 30, 90}	/* Mode 4 */
 };
 
 #define TIME_TO_TICK(time) howmany((time), 30)
+#define PIO_REC_OFFSET 4
+#define PIO_REC_MIN 1
+#define PIO_ACT_MIN 1
+#define DMA_REC_OFFSET 1
+#define DMA_REC_MIN 1
+#define DMA_ACT_MIN 1
+
+#define ATA4_TIME_TO_TICK(time)  howmany((time), 15) /* 15 ns clock */
 
 #define CONFIG_REG (0x200 >> 4)		/* IDE access timing register */
+
+void
+wdc_obio_select(chp, drive)
+	struct channel_softc *chp;
+	int drive;
+{
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+			CONFIG_REG, sc->sc_dmaconf[drive]);
+}
 
 void
 adjust_timing(chp)
 	struct channel_softc *chp;
 {
-        struct ataparams params;
-	struct ata_drive_datas *drvp = &chp->ch_drive[0];	/* XXX */
-	u_int conf;
-	int mode;
-	int cycle, active, min_cycle, min_active;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	int drive;
+	int min_cycle, min_active;
 	int cycle_tick, act_tick, inact_tick, half_tick;
 
-	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK)
-		return;
+	for (drive = 0; drive < 2; drive++) {
+		u_int conf = 0;
+		struct ata_drive_datas *drvp;
+		
+		drvp = &chp->ch_drive[drive];
+		/* set up pio mode timings */
+		if (drvp->drive_flags & DRIVE) {
+			int piomode = drvp->PIO_mode;
+			min_cycle = pio_timing[piomode].cycle;
+			min_active = pio_timing[piomode].active;
+			
+			cycle_tick = TIME_TO_TICK(min_cycle);
+			act_tick = TIME_TO_TICK(min_active);
+			if (act_tick < PIO_ACT_MIN)
+				act_tick = PIO_ACT_MIN;
+			inact_tick = cycle_tick - act_tick - PIO_REC_OFFSET;
+			if (inact_tick < PIO_REC_MIN)
+				inact_tick = PIO_REC_MIN;
+			/* mask: 0x000007ff */
+			conf |= (inact_tick << 5) | act_tick;
+		}
+		/* Set up dma mode timings */
+		if (drvp->drive_flags & DRIVE_DMA) {
+			int dmamode = drvp->DMA_mode;
+			min_cycle = dma_timing[dmamode].cycle;
+			min_active = dma_timing[dmamode].active;
+			cycle_tick = TIME_TO_TICK(min_cycle);
+			act_tick = TIME_TO_TICK(min_active);
+			inact_tick = cycle_tick - act_tick - DMA_REC_OFFSET;
+			if (inact_tick < DMA_REC_MIN)
+				inact_tick = DMA_REC_MIN;
+			half_tick = 0;	/* XXX */
+			/* mask: 0xfffff800 */
+			conf |=
+					(half_tick << 21) |
+					(inact_tick << 16) | (act_tick << 11);
+		}
+		if (conf) {
+			printf("conf[%d] = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
+					drive, conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
+		}
+		sc->sc_dmaconf[drive] = conf;
+	}
+	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;
+	sc->sc_wdcdev.select = 0;
+	if (sc->sc_dmaconf[0]) {
+		wdc_obio_select(chp,0);
+		if (sc->sc_dmaconf[1] && (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
+			sc->sc_wdcdev.select = wdc_obio_select;
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_SELECT;
+		}
+	} else if (sc->sc_dmaconf[1]) {
+		wdc_obio_select(chp,1);
+	}
+}
 
-	for (mode = 2; mode >= 0; mode--)
-		if (params.atap_dmamode_act & (1 << mode))
-			goto found;
+void
+ata4_adjust_timing(chp)
+	struct channel_softc *chp;
+{
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
+	int drive;
+	int min_cycle, min_active;
+	int cycle_tick, act_tick, inact_tick;
 
-	/* No active DMA mode is found...  Do nothing. */
-	return;
+	for (drive = 0; drive < 2; drive++) {
+		u_int conf = 0;
+		struct ata_drive_datas *drvp;
 
-found:
-	min_cycle = dma_timing[mode].cycle;
-	min_active = dma_timing[mode].active;
+		drvp = &chp->ch_drive[drive];
+		/* set up pio mode timings */
 
-#ifdef notyet
-	/* Minimum cycle time is 150ns on ohare. */
-	if (ohare && params.atap_dmatiming_recom < 150)
-		params.atap_dmatiming_recom = 150;
-#endif
-	cycle = max(min_cycle, params.atap_dmatiming_recom);
-	active = min_active + (cycle - min_cycle);		/* XXX */
+		if (drvp->drive_flags & DRIVE) {
+			int piomode = drvp->PIO_mode;
+			min_cycle = pio_timing[piomode].cycle;
+			min_active = pio_timing[piomode].active;
 
-	cycle_tick = TIME_TO_TICK(cycle);
-	act_tick = TIME_TO_TICK(active);
-	inact_tick = cycle_tick - act_tick - 1;
-	if (inact_tick < 1)
-		inact_tick = 1;
-	half_tick = 0;	/* XXX */
-	conf = (half_tick << 21) | (inact_tick << 16) | (act_tick << 11);
-	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG, conf);
-#if 0
-	printf("conf = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
-	    conf, cycle_tick, cycle, act_tick, active, inact_tick);
-#endif
+			cycle_tick = ATA4_TIME_TO_TICK(min_cycle);
+			act_tick = ATA4_TIME_TO_TICK(min_active);
+			inact_tick = cycle_tick - act_tick;
+			/* mask: 0x000003ff */
+			conf |= (inact_tick << 5) | act_tick;
+		}
+		/* set up dma mode timings */
+		if (drvp->drive_flags & DRIVE_DMA) {
+			int dmamode = drvp->DMA_mode;
+			min_cycle = dma_timing[dmamode].cycle;
+			min_active = dma_timing[dmamode].active;
+			cycle_tick = ATA4_TIME_TO_TICK(min_cycle);
+			act_tick = ATA4_TIME_TO_TICK(min_active);
+			inact_tick = cycle_tick - act_tick;
+			/* mask: 0x001ffc00 */
+			conf |= (act_tick << 10) | (inact_tick << 15);
+		}
+		/* set up udma mode timings */
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			int udmamode = drvp->UDMA_mode;
+			min_cycle = udma_timing[udmamode].cycle;
+			min_active = udma_timing[udmamode].active;
+			act_tick = ATA4_TIME_TO_TICK(min_active);
+			cycle_tick = ATA4_TIME_TO_TICK(min_cycle);
+			/* mask: 0x1ff00000 */
+			conf |= (cycle_tick << 21) | (act_tick << 25) | 0x100000;
+		}
+		if (conf) {
+			printf("ata4 conf[%d] = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
+					drive, conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
+		}
+		sc->sc_dmaconf[drive] = conf;
+	}
+	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;
+	sc->sc_wdcdev.select = 0;
+	if (sc->sc_dmaconf[0]) {
+		wdc_obio_select(chp,0);
+		if (sc->sc_dmaconf[1] && (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
+			sc->sc_wdcdev.select = wdc_obio_select;
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_SELECT;
+		}
+	} else if (sc->sc_dmaconf[1]) {
+		wdc_obio_select(chp,1);
+	}
 }
 
 int
