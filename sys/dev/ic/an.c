@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.12 2001/05/24 08:06:04 itojun Exp $	*/
+/*	$NetBSD: an.c,v 1.13 2001/05/24 08:12:28 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1038,7 +1038,7 @@ static int an_ioctl(ifp, command, data)
 	ifr = (struct ifreq *)data;
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & sc->an_if_flags &
 		    (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
@@ -1427,7 +1427,7 @@ static void an_start(ifp)
 	idx = sc->an_rdata.an_tx_prod;
 	bzero((char *)&tx_frame_802_3, sizeof(tx_frame_802_3));
 
-	while(sc->an_rdata.an_tx_ring[idx] == 0) {
+	while (sc->an_rdata.an_tx_ring[idx] == 0) {
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
@@ -1631,7 +1631,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 
 	/* filter for ip packets only 
 	*/
-	if ( an_cache_iponly && !saanp) {
+	if (an_cache_iponly && !saanp) {
 		return;
 	}
 
@@ -1684,7 +1684,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 		 * note: an_nextitem also holds number of entries
 		 * added in the cache table 
 		 */
-		if ( sc->an_nextitem < MAXANCACHE ) {
+		if (sc->an_nextitem < MAXANCACHE ) {
 			cache_slot = sc->an_nextitem;
 			sc->an_nextitem++;                 
 			sc->an_sigitems = sc->an_nextitem;
@@ -1718,7 +1718,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 	if (saanp) {
 		sc->an_sigcache[cache_slot].ipsrc = ip->ip_src.s_addr;
 	}
-	bcopy( eh->ether_shost, sc->an_sigcache[cache_slot].macsrc,  6);
+	bcopy(eh->ether_shost, sc->an_sigcache[cache_slot].macsrc, 6);
 
 	sc->an_sigcache[cache_slot].signal = rx_quality;
 
