@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.9 1997/04/27 03:21:39 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.10 1997/05/17 19:32:08 pk Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.9 1997/04/27 03:21:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.10 1997/05/17 19:32:08 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -964,7 +964,7 @@ yylex()
 			}
 			(void) alarm(0);
 #ifdef HASSETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != NULL)
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
 				setproctitle("%s: %s", proctitle, cbuf);
 #endif /* HASSETPROCTITLE */
 			if ((cp = strchr(cbuf, '\r'))) {
