@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.3 2000/04/30 11:47:21 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.4 2000/05/27 21:44:35 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -161,8 +161,7 @@ dw780_attach(parent, self, aux)
 	/*
 	 * Fill in variables used by the sgmap system.
 	 */
-	sc->uv_size = UBASIZE;		/* Size in bytes of Qbus space */
-	sc->uv_addr = (paddr_t)sc->uv_uba->uba_map;
+	sc->uv_size = UBASIZE;		/* Size in bytes of Unibus space */
 
 	uba_dma_init(sc);
 	uba_attach(&sc->uv_sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
