@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29 2003/07/09 22:51:51 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.30 2003/07/10 02:06:11 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -104,7 +104,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *modif;
 	void (*pr) __P((const char *, ...));
 {
-	db_addr_t frame, lr, caller, *args;
+	db_addr_t frame, lr, *args;
 	db_addr_t fakeframe[2];
 	db_expr_t diff;
 	db_sym_t sym;
@@ -116,6 +116,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	extern int end[];
 #endif
 	boolean_t full = FALSE;
+	boolean_t in_kernel = 1;
 
 	{
 		register char *cp = modif;
@@ -186,23 +187,21 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			(*pr)("saved LR(0x%x) is invalid.", lr);
 			break;
 		}
-		if ((caller = (db_addr_t)vtophys(lr)) == 0)
-			caller = lr;
 
 		if (frame != (db_addr_t) fakeframe) {
 			(*pr)("0x%08lx: ", frame);
 		} else {
 			(*pr)("  <?>  : ");
 		}
-		if (caller + 4 == (db_addr_t) trapexit ||
-		    caller + 4 == (db_addr_t) sctrapexit) {
+		if (lr + 4 == (db_addr_t) trapexit ||
+		    lr + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;
 			struct trapframe *tf = (struct trapframe *) (frame+8);
-			if (caller + 4 == (db_addr_t) sctrapexit) {
+			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
+			if (lr + 4 == (db_addr_t) sctrapexit) {
 				(*pr)("SC trap #%d by ", tf->fixreg[0]);
 				goto print_trap;
 			}
-			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
 			switch (tf->exc) {
 			case EXC_DSI:
 #ifdef PPC_OEA
@@ -248,17 +247,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 		   print_trap:	
 			lr = (db_addr_t) tf->srr0;
-			if ((caller = (db_addr_t)vtophys(lr)) == 0)
-				caller = lr;
 			diff = 0;
 			symname = NULL;
-			sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
-			db_symbol_values(sym, &symname, 0);
+			if (in_kernel && (tf->srr1 & PSL_PR) == 0) {
+				sym = db_search_symbol(lr, DB_STGY_ANY, &diff);
+				db_symbol_values(sym, &symname, 0);
+			}
 			if (symname == NULL || !strcmp(symname, "end")) {
-				(*pr)("%p: srr1=%#x\n", caller, tf->srr1);
+				(*pr)("%p: srr1=%#x\n", lr, tf->srr1);
 			} else {
-				(*pr)("%s+%x: srr1=%#x\n", symname, diff,
-				    tf->srr1);
+				(*pr)("%s+%x: srr1=%#x\n", symname,
+				    diff, tf->srr1);
 			}
 			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
 			    "", tf->fixreg[1], tf->cr, tf->xer, tf->ctr);
@@ -278,19 +277,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			fakeframe[0] = (db_addr_t) tf->fixreg[1];
 			fakeframe[1] = (db_addr_t) tf->lr;
 			frame = (db_addr_t) fakeframe;
-			if (kernel_only && (tf->srr1 & PSL_PR))
-				break;
-			if (tf->exc == EXC_SC)
+			in_kernel = !(tf->srr1 & PSL_PR);
+			if (kernel_only && !in_kernel)
 				break;
 			goto next_frame;
 		}
 
 		diff = 0;
 		symname = NULL;
-		sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
-		db_symbol_values(sym, &symname, 0);
+		if (in_kernel) {
+			sym = db_search_symbol(lr, DB_STGY_ANY, &diff);
+			db_symbol_values(sym, &symname, 0);
+		}
 		if (symname == NULL || !strcmp(symname, "end"))
-			(*pr)("at %p", caller);
+			(*pr)("at %p", lr);
 		else
 			(*pr)("at %s+%x", symname, diff);
 		if (full)
