@@ -1142,7 +1142,6 @@ find_target (name)
 	  while (match->vector == NULL)
 	    ++match;
 	  return match->vector;
-	  break;
 	}
     }
 
@@ -1293,7 +1292,7 @@ DESCRIPTION
 
 const bfd_target *
 bfd_search_for_target (search_func, data)
-     int (* search_func) PARAMS ((const bfd_target * target, void * data));
+     int (* search_func) PARAMS ((const bfd_target *, void *));
      void * data;
 {
   const bfd_target * const * target;
