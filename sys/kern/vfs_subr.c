@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.61 1997/02/23 00:07:18 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.62 1997/04/03 23:15:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -716,6 +716,7 @@ loop:
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
 		nvp->v_specflags = 0;
+		nvp->v_speclockf = NULL;
 		*vpp = nvp;
 		if (vp != NULL) {
 			nvp->v_flag |= VALIASED;
