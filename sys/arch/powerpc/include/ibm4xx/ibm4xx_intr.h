@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.2 2003/06/16 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.3 2003/08/05 02:10:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,8 +160,9 @@ set_sint(pending)
 #define	IRQ_TO_MASK(x)	(0x80000000UL >> (x))
 
 /*
+ * XXX 405GP specific.
  * Interrupt bits 0-18 and 25-31 are used by hardware.  This 
- * leaves us bits 19-24 for stoftware.  
+ * leaves us bits 19-24 for software.
  */
 #define	HWINT_MASK	~0x1fc0
 
