@@ -1,7 +1,7 @@
-/*	$NetBSD: rpc_machdep.c,v 1.44 2002/10/15 20:50:01 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.45 2002/12/29 00:02:20 reinoud Exp $	*/
 
 /*
- * Copyright (c) 2000-2001 Reinoud Zandijk.
+ * Copyright (c) 2000-2002 Reinoud Zandijk.
  * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
@@ -44,7 +44,7 @@
  * This file still needs a lot of work
  *
  * Created      : 17/09/94
- * Updated for new bootloader 22/10/00
+ * Updated for yet another new bootloader 28/12/02
  */
 
 #include "opt_ddb.h"
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.44 2002/10/15 20:50:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.45 2002/12/29 00:02:20 reinoud Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -119,7 +119,7 @@ u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
 #endif
 
 
-BootConfig bootconfig;		/* Boot config storage */
+struct bootconfig bootconfig;	/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
 char *boot_args = NULL;		/* holds the pre-processed boot arguments */
@@ -187,7 +187,7 @@ void data_abort_handler(trapframe_t *);
 void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *frame);
 
-static void canonicalise_bootconfig(BootConfig *, BootConfig *);
+static void canonicalise_bootconfig(struct bootconfig *, struct bootconfig *);
 static void process_kernel_args(void);
 
 extern void dump_spl_masks(void);
@@ -393,73 +393,15 @@ struct l1_sec_map {
 
 
 static void
-canonicalise_bootconfig(BootConfig *bootconf, BootConfig *raw_bootconf)
+canonicalise_bootconfig(struct bootconfig *bootconf, struct bootconfig *raw_bootconf)
 {
-	BootConfig_v1 *old_v1_style;
-	int block;
-
 	/* check for bootconfig v2+ structure */
 	if (raw_bootconf->magic == BOOTCONFIG_MAGIC) {
 		/* v2+ cleaned up structure found */
 		*bootconf = *raw_bootconf;
 		return;
 	} else {
-		/* old messy structure assumed */
-		old_v1_style = (BootConfig_v1 *) raw_bootconf;
-
-		bootconf->magic			= old_v1_style->magic;
-		bootconf->version		= 1;
-		memcpy(bootconf->machine_id, old_v1_style->machine_id, 4);
-		memcpy(bootconf->kernelname, old_v1_style->kernelname, 80);
-		memcpy(bootconf->args, (char *) old_v1_style->argvirtualbase,
-		    512);
-
-		bootconf->kernvirtualbase	=
-		    old_v1_style->kernvirtualbase;
-		bootconf->kernphysicalbase	=
-		    old_v1_style->kernphysicalbase;
-		bootconf->kernsize		= old_v1_style->kernsize;
-		bootconf->scratchvirtualbase	=
-		    old_v1_style->scratchvirtualbase;
-		bootconf->scratchphysicalbase	=
-		    old_v1_style->scratchphysicalbase;
-		bootconf->scratchsize		= old_v1_style->scratchsize;
-
-		/* this shouldn't be happening */
-		bootconf->ksym_start		= 0;
-		bootconf->ksym_end		= 0;
-
-		/* Mode definition file */
-		bootconf->MDFvirtualbase	= 0;
-		bootconf->MDFphysicalbase	= 0;
-		bootconf->MDFsize		= 0;
-
-		bootconf->display_phys		= old_v1_style->display_phys;
-		bootconf->display_start		= old_v1_style->display_start;
-		bootconf->display_size		= old_v1_style->display_size;
-		bootconf->width			= old_v1_style->width;
-		bootconf->height		= old_v1_style->height;
-		bootconf->log2_bpp		= old_v1_style->log2_bpp;
-		bootconf->framerate		= old_v1_style->framerate;
-
-		memset(bootconf->reserved, 0, 512);
-
-		bootconf->pagesize		= old_v1_style->pagesize;
-		bootconf->drampages		= old_v1_style->drampages;
-		bootconf->vrampages		= old_v1_style->vrampages;
-		bootconf->dramblocks		= old_v1_style->dramblocks;
-		bootconf->vramblocks		= old_v1_style->vramblocks;
-
-		for (block = 0; block < 4; block++) {
-			bootconf->dram[block].address =
-			    old_v1_style->dram[block].address;
-			bootconf->dram[block].pages   =
-			    old_v1_style->dram[block].pages;
-			bootconf->dram[block].flags   = 0;	/* XXX */
-		}
-
-		bootconf->vram[0].address = old_v1_style->vram[0].address;
-		bootconf->vram[0].pages   = old_v1_style->vram[0].pages;
+		panic2(("Internal error: no valid bootconfig block found"));
 	}
 }
 
@@ -467,7 +409,7 @@ canonicalise_bootconfig(BootConfig *bootconf, BootConfig *raw_bootconf)
 u_int
 initarm(void *cookie)
 {
-	BootConfig *raw_bootconf = cookie;
+	struct bootconfig *raw_bootconf = cookie;
 	int loop;
 	int loop1;
 	u_int logical;
