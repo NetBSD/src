@@ -29,3 +29,6 @@ SBP2 needs a complete API written up: logins, ORB management/allocation, etc.
 
 Add locator detection/usage into fwnode code.
 
+Should do topology maps, speed maps, the various bus managers, etc.
+
+Change all FW_DEBUG wrapped printf's to DPRINTF macro's
