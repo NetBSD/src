@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.78.2.4 2002/01/08 00:34:41 nathanw Exp $	*/
+/*	$NetBSD: exec.h,v 1.78.2.5 2002/01/09 02:56:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -126,7 +126,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct lwp *, struct exec_package *,
 				  u_long));
-	int	(*es_coredump) __P((struct proc *, struct vnode *,
+	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
 };
 
