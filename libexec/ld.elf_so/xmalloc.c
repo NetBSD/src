@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.1 1996/12/16 20:38:07 cgd Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.2 1999/03/01 16:40:08 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -31,31 +31,36 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include "rtldenv.h"
 #include <stddef.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 void *
-xcalloc(size_t size)
+xcalloc(size)
+	size_t size;
 {
-    return memset(xmalloc(size), 0, size);
+	return memset(xmalloc(size), 0, size);
 }
 
 void *
-xmalloc(size_t size)
+xmalloc(size)
+	size_t size;
 {
-    void *p = malloc(size);
-    if(p == NULL)
-	xerr(1, "Out of memory");
-    return p;
+	void *p = malloc(size);
+	if (p == NULL)
+		xerr(1, "%s", xstrerror(errno));
+	return p;
 }
 
-char *
-xstrdup(const char *s)
+char*
+xstrdup(s)
+	const char *s;
 {
-    char *p = strdup(s);
-    if(p == NULL)
-	xerr(1, "Out of memory");
-    return p;
+	char *p = strdup(s);
+	if (p == NULL)
+		xerr(1, "%s", xstrerror(errno));
+	return p;
 }

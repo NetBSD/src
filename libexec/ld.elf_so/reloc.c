@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.15 1999/02/27 21:38:04 scottr Exp $	 */
+/*	$NetBSD: reloc.c,v 1.16 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,6 +53,9 @@
 #include "rtld.h"
 
 #ifndef RTLD_INHIBIT_COPY_RELOCS
+static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_RelA *,
+    bool));
+
 /*
  * XXX: These don't work for the alpha and i386; don't know about powerpc
  *	The alpha and the i386 avoid the problem by compiling everything PIC.
@@ -63,10 +66,10 @@
  *		  not an indirect call.
  */
 static int
-_rtld_do_copy_relocation(
-	const Obj_Entry *dstobj,
-	const Elf_RelA *rela,
-	bool dodebug)
+_rtld_do_copy_relocation(dstobj, rela, dodebug)
+	const Obj_Entry *dstobj;
+	const Elf_RelA *rela;
+	bool dodebug;
 {
 	void           *dstaddr = (void *)(dstobj->relocbase + rela->r_offset);
 	const Elf_Sym  *dstsym = dstobj->symtab + ELF_R_SYM(rela->r_info);
@@ -89,9 +92,9 @@ _rtld_do_copy_relocation(
 	}
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
-	rdbg(dodebug, "COPY %s %s %s --> src=%p dst=%p *dst= %p size %d",
+	rdbg(dodebug, ("COPY %s %s %s --> src=%p dst=%p *dst= %p size %d",
 	    dstobj->path, srcobj->path, name, (void *)srcaddr,
-	    (void *)dstaddr, (void *)*(long *)dstaddr, size);
+	    (void *)dstaddr, (void *)*(long *)dstaddr, size));
 	return (0);
 }
 #endif /* RTLD_INHIBIT_COPY_RELOCS */
@@ -105,9 +108,9 @@ _rtld_do_copy_relocation(
  * Returns 0 on success, -1 on failure.
  */
 int
-_rtld_do_copy_relocations(
-	const Obj_Entry *dstobj,
-	bool dodebug)
+_rtld_do_copy_relocations(dstobj, dodebug)
+	const Obj_Entry *dstobj;
+	bool dodebug;
 {
 #ifndef RTLD_INHIBIT_COPY_RELOCS
 
@@ -146,10 +149,10 @@ _rtld_do_copy_relocations(
 
 #ifndef __sparc__
 int
-_rtld_relocate_nonplt_object(
-	const Obj_Entry * obj,
-	const Elf_RelA * rela,
-	bool dodebug)
+_rtld_relocate_nonplt_object(obj, rela, dodebug)
+	const Obj_Entry *obj;
+	const Elf_RelA *rela;
+	bool dodebug;
 {
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
@@ -176,9 +179,9 @@ _rtld_relocate_nonplt_object(
 		tmp = (Elf_Addr)(defobj->relocbase + def->st_value);
 		if (*where != tmp)
 			*where = tmp;
-		rdbg(dodebug, "GOT32 %s in %s --> %p in %s",
+		rdbg(dodebug, ("GOT32 %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 
 	case R_TYPE(PC32):
@@ -195,9 +198,9 @@ _rtld_relocate_nonplt_object(
 
 		*where += (Elf_Addr)(defobj->relocbase + def->st_value) -
 		    (Elf_Addr)where;
-		rdbg(dodebug, "PC32 %s in %s --> %p in %s",
+		rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 
 	case R_TYPE(32):
@@ -207,9 +210,9 @@ _rtld_relocate_nonplt_object(
 			return -1;
 
 		*where += (Elf_Addr)(defobj->relocbase + def->st_value);
-		rdbg(dodebug, "32 %s in %s --> %p in %s",
+		rdbg(dodebug, ("32 %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 #endif /* __i386__ */
 
@@ -224,9 +227,9 @@ _rtld_relocate_nonplt_object(
 		    *where + rela->r_addend;
 		if (*where != tmp)
 			*where = tmp;
-		rdbg(dodebug, "REFQUAD %s in %s --> %p in %s",
+		rdbg(dodebug, ("REFQUAD %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 #endif /* __alpha__ */
 
@@ -239,21 +242,21 @@ _rtld_relocate_nonplt_object(
 
 		if (*where != (Elf_Addr)(defobj->relocbase + def->st_value))
 			*where = (Elf_Addr)(defobj->relocbase + def->st_value);
-		rdbg(dodebug, "GLOB_DAT %s in %s --> %p in %s",
+		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 
 	case R_TYPE(RELATIVE):
 		if ((caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
 		    (caddr_t)where >= (caddr_t)&_DYNAMIC) {
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, "RELATIVE in %s --> %p", obj->path,
-			    (void *)*where);
+			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
 		}
 		else
-			rdbg(dodebug, "RELATIVE in %s stays at %p",
-			    obj->path, (void *)*where);
+			rdbg(dodebug, ("RELATIVE in %s stays at %p",
+			    obj->path, (void *)*where));
 		break;
 
 	case R_TYPE(COPY):
@@ -269,7 +272,7 @@ _rtld_relocate_nonplt_object(
 			    obj->path);
 			return -1;
 		}
-		rdbg(dodebug, "COPY (avoid in main)");
+		rdbg(dodebug, ("COPY (avoid in main)"));
 		break;
 #endif /* __i386__ || __alpha__ */
 
@@ -282,8 +285,8 @@ _rtld_relocate_nonplt_object(
 		  (ELF_SYM_TYPE(def->st_info) == Elf_estt_section ||
 		   ELF_SYM_TYPE(def->st_info) == Elf_estt_notype)) {
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, "REL32 in %s --> %p", obj->path,
-			    (void *)*where);
+			rdbg(dodebug, ("REL32 in %s --> %p", obj->path,
+			    (void *)*where));
 		} else {
 			/* XXX maybe do something re: bootstrapping? */
 			def = _rtld_find_symdef(_rtld_objlist, rela->r_info,
@@ -291,9 +294,9 @@ _rtld_relocate_nonplt_object(
 			if (def == NULL)
 				return -1;
 			*where += (Elf_Addr)(defobj->relocbase + def->st_value);
-			rdbg(dodebug, "REL32 %s in %s --> %p in %s",
+			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
 			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path);
+			    (void *)*where, defobj->path));
 		}
 		break;
 
@@ -312,17 +315,17 @@ _rtld_relocate_nonplt_object(
 
 		if (*where != tmp)
 			*where = tmp;
-		rdbg(dodebug, "32/GLOB_DAT %s in %s --> %p in %s",
+		rdbg(dodebug, ("32/GLOB_DAT %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 		break;
 
 	case R_TYPE(COPY):
-		rdbg(dodebug, "COPY");
+		rdbg(dodebug, ("COPY"));
 		break;
 
 	case R_TYPE(JMP_SLOT):
-		rdbg(dodebug, "JMP_SLOT");
+		rdbg(dodebug, ("JMP_SLOT"));
 		break;
 
 	case R_TYPE(RELATIVE):	/* word32 B + A */
@@ -331,21 +334,21 @@ _rtld_relocate_nonplt_object(
 			break;	/* GOT - already done */
 
 		*where = tmp;
-		rdbg(dodebug, "RELATIVE in %s --> %p", obj->path,
-		    (void *)*where);
+		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+		    (void *)*where));
 		break;
 #endif /* __powerpc__ */
 
 	default:
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, true);
-		rdbg(dodebug, "sym = %lu, type = %lu, offset = %p, "
+		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 		    "addend = %p, contents = %p, symbol = %s",
 		    (u_long)ELF_R_SYM(rela->r_info),
 		    (u_long)ELF_R_TYPE(rela->r_info),
 		    (void *)rela->r_offset, (void *)rela->r_addend,
 		    (void *)*where,
-		    def ? defobj->strtab + def->st_name : "??");
+		    def ? defobj->strtab + def->st_name : "??"));
 		_rtld_error("%s: Unsupported relocation type %d"
 		    "in non-PLT relocations\n",
 		    obj->path, ELF_R_TYPE(rela->r_info));
@@ -357,15 +360,15 @@ _rtld_relocate_nonplt_object(
 
 
 int
-_rtld_relocate_plt_object(
-	const Obj_Entry * obj,
-	const Elf_RelA * rela,
-	caddr_t *addrp,
-	bool bind_now,
-	bool dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+	const Obj_Entry *obj;
+	const Elf_RelA *rela;
+	caddr_t *addrp;
+	bool bind_now;
+	bool dodebug;
 {
-	Elf_Addr       *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	Elf_Addr        new_value;
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr new_value;
 
 	/* Fully resolve procedure addresses now */
 
@@ -386,17 +389,17 @@ _rtld_relocate_plt_object(
 			return -1;
 
 		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-		rdbg(dodebug, "bind now %d/fixup in %s --> old=%p new=%p",
+		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
 		    (int)bind_now,
 		    defobj->strtab + def->st_name,
-		    (void *)*where, (void *)new_value);
+		    (void *)*where, (void *)new_value));
 	} else
 #endif /* __alpha__ || __i386__ */
 	if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
-		rdbg(dodebug, "fixup !main in %s --> %p", obj->path,
-		    (void *)*where);
+		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
+		    (void *)*where));
 	} else {
 		return 0;
 	}
@@ -413,9 +416,9 @@ _rtld_relocate_plt_object(
 #endif /* __sparc__ */
 
 caddr_t
-_rtld_bind(
-	const Obj_Entry *obj,
-	Elf_Word reloff)
+_rtld_bind(obj, reloff)
+	const Obj_Entry *obj;
+	Elf_Word reloff;
 {
 	const Elf_RelA *rela;
 	Elf_RelA        ourrela;
@@ -445,29 +448,29 @@ _rtld_bind(
  * or -1 on failure.
  */
 int
-_rtld_relocate_objects(
-	Obj_Entry * first,
-	bool bind_now,
-	bool dodebug)
+_rtld_relocate_objects(first, bind_now, dodebug)
+	Obj_Entry *first;
+	bool bind_now;
+	bool dodebug;
 {
-	Obj_Entry      *obj;
-	int             ok = 1;
+	Obj_Entry *obj;
+	int ok = 1;
 
 	for (obj = first; obj != NULL; obj = obj->next) {
-		if (obj->nbuckets == 0 || obj->nchains == 0
-		    || obj->buckets == NULL || obj->symtab == NULL
-		    || obj->strtab == NULL) {
+		if (obj->nbuckets == 0 || obj->nchains == 0 ||
+		    obj->buckets == NULL || obj->symtab == NULL ||
+		    obj->strtab == NULL) {
 			_rtld_error("%s: Shared object has no run-time"
 			    " symbol table", obj->path);
 			return -1;
 		}
-		rdbg(dodebug, " relocating %s (%ld/%ld rel/rela, "
+		rdbg(dodebug, (" relocating %s (%ld/%ld rel/rela, "
 		    "%ld/%ld plt rel/rela)",
 		    obj->path,
 		    (long)(obj->rellim - obj->rel),
 		    (long)(obj->relalim - obj->rela),
 		    (long)(obj->pltrellim - obj->pltrel),
-		    (long)(obj->pltrelalim - obj->pltrela));
+		    (long)(obj->pltrelalim - obj->pltrela)));
 
 		if (obj->textrel) {
 			/*

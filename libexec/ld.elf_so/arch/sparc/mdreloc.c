@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.6 1999/02/27 17:12:13 pk Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.7 1999/03/01 16:40:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -160,10 +160,10 @@ static int reloc_target_bitmask[] = {
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 int
-_rtld_relocate_nonplt_object(
-	const Obj_Entry *obj,
-	const Elf_RelA *rela,
-	bool dodebug)
+_rtld_relocate_nonplt_object(obj, rela, dodebug)
+	const Obj_Entry *obj;
+	const Elf_RelA *rela;
+	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
 	Elf_Word type, value, mask;
@@ -262,12 +262,12 @@ _rtld_relocate_nonplt_object(
 }
 
 int
-_rtld_relocate_plt_object(
-	const Obj_Entry *obj,
-	const Elf_RelA *rela,
-	caddr_t *addrp,
-	bool bind_now,
-	bool dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+	const Obj_Entry *obj;
+	const Elf_RelA *rela;
+	caddr_t *addrp;
+	bool bind_now;
+	bool dodebug;
 {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;

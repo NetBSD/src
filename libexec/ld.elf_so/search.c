@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 1997/02/17 19:32:05 cgd Exp $	*/
+/*	$NetBSD: search.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -61,66 +61,74 @@
 /*
  * Data declarations.
  */
+static bool _rtld_check_library __P((const char *));
+static char *_rtld_search_library_path __P((const char *, size_t, const char *,
+    size_t));
 
 static bool
-_rtld_check_library(
-    const char *pathname)
+_rtld_check_library(pathname)
+	const char *pathname;
 {
-    struct stat mystat;
-    Elf_Ehdr ehdr;
-    int fd;
+	struct stat mystat;
+	Elf_Ehdr ehdr;
+	int fd;
 
-    if (stat(pathname, &mystat) >= 0 && S_ISREG(mystat.st_mode)) {
-	if ((fd = open(pathname, O_RDONLY)) >= 0) {
-	    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
+	if (stat(pathname, &mystat) == -1 || !S_ISREG(mystat.st_mode))
+		return false;
+
+	if ((fd = open(pathname, O_RDONLY)) == -1)
+		return false;
+
+	if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
 		goto lose;
 
-	    /* Elf_e_ident includes class */
-	    if (memcmp(Elf_e_ident, ehdr.e_ident, Elf_e_siz) != 0)
+	/* Elf_e_ident includes class */
+	if (memcmp(Elf_e_ident, ehdr.e_ident, Elf_e_siz) != 0)
 		goto lose;
 
-	    switch (ehdr.e_machine) {
-	    ELFDEFNNAME(MACHDEP_ID_CASES) 
-
-	    default:
+	switch (ehdr.e_machine) {
+		ELFDEFNNAME(MACHDEP_ID_CASES)
+	default:
 		goto lose;
-	    }
+	}
 
-	    if (ehdr.e_ident[Elf_ei_version] != Elf_ev_current ||
-	      ehdr.e_version != Elf_ev_current ||
-	      ehdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
-	      ehdr.e_type != Elf_et_dyn)
+	if (ehdr.e_ident[Elf_ei_version] != Elf_ev_current ||
+	    ehdr.e_version != Elf_ev_current ||
+	    ehdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
+	    ehdr.e_type != Elf_et_dyn)
 		goto lose;
 
-	    close(fd);
-	    return true;
+	close(fd);
+	return true;
 
 lose:
-	    close(fd);
-	}
-    }
-
-    return false;
+	close(fd);
+	return false;
 }
 
 
 static char *
-_rtld_search_library_path(const char *name, int namelen, const char *dir, int dirlen)
+_rtld_search_library_path(name, namelen, dir, dirlen)
+	const char *name;
+	size_t namelen;
+	const char *dir;
+	size_t dirlen;
 {
 	char *pathname;
 
 	pathname = xmalloc(dirlen + 1 + namelen + 1);
-	strncpy(pathname, dir, dirlen);
+	(void)strncpy(pathname, dir, dirlen);
 	pathname[dirlen] = '/';
 	strcpy(pathname + dirlen + 1, name);
 
-	dbg("  Trying \"%s\"", pathname);
-	if(_rtld_check_library(pathname))		/* We found it */
+	dbg(("  Trying \"%s\"", pathname));
+	if (_rtld_check_library(pathname))	/* We found it */
 		return pathname;
 
 	free(pathname);
 	return NULL;
 }
+
 /*
  * Find the library with the given name, and return its full pathname.
  * The returned string is dynamically allocated.  Generates an error
@@ -130,42 +138,47 @@ _rtld_search_library_path(const char *name, int namelen, const char *dir, int di
  * loaded shared object, whose library search path will be searched.
  */
 char *
-_rtld_find_library(
-    const char *name,
-    const Obj_Entry *refobj)
+_rtld_find_library(name, refobj)
+	const char *name;
+	const Obj_Entry *refobj;
 {
-    Search_Path *sp;
-    char *pathname;
-    int namelen;
+	Search_Path *sp;
+	char *pathname;
+	int namelen;
 
-    if (strchr(name, '/') != NULL) {	/* Hard coded pathname */
-	if (name[0] != '/' && !_rtld_trust) {
-	    _rtld_error("Absolute pathname required for shared object \"%s\"",
-			name);
-	    return NULL;
-	}
+	if (strchr(name, '/') != NULL) {	/* Hard coded pathname */
+		if (name[0] != '/' && !_rtld_trust) {
+			_rtld_error(
+			"Absolute pathname required for shared object \"%s\"",
+			    name);
+			return NULL;
+		}
 #ifdef SVR4_LIBDIR
-	if (strncmp(name, SVR4_LIBDIR, SVR4_LIBDIRLEN) == 0
-	        && name[SVR4_LIBDIRLEN] == '/') {	/* In "/usr/lib" */
-	    /* Map hard-coded "/usr/lib" onto our ELF library directory. */
-	    pathname = xmalloc(strlen(name) + LIBDIRLEN - SVR4_LIBDIRLEN + 1);
-	    strcpy(pathname, LIBDIR);
-	    strcpy(pathname + LIBDIRLEN, name + SVR4_LIBDIRLEN);
-	    return pathname;
-	}
+		if (strncmp(name, SVR4_LIBDIR, SVR4_LIBDIRLEN) == 0
+		    && name[SVR4_LIBDIRLEN] == '/') {	/* In "/usr/lib" */
+			/*
+			 * Map hard-coded "/usr/lib" onto our ELF library
+			 * directory.
+			 */
+			pathname = xmalloc(strlen(name) + LIBDIRLEN -
+			    SVR4_LIBDIRLEN + 1);
+			(void)strcpy(pathname, LIBDIR);
+			(void)strcpy(pathname + LIBDIRLEN, name +
+			    SVR4_LIBDIRLEN);
+			return pathname;
+		}
 #endif /* SVR4_LIBDIR */
-	return xstrdup(name);
-    }
-
-    dbg(" Searching for \"%s\" (%p)", name, refobj);
+		return xstrdup(name);
+	}
+	dbg((" Searching for \"%s\" (%p)", name, refobj));
 
 	namelen = strlen(name);
 
-    if (refobj != NULL)
-	for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
-		if ((pathname = _rtld_search_library_path(name, namelen,
-		    sp->sp_path, sp->sp_pathlen)) != NULL)
-			return (pathname);
+	if (refobj != NULL)
+		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
+			if ((pathname = _rtld_search_library_path(name, namelen,
+			    sp->sp_path, sp->sp_pathlen)) != NULL)
+				return (pathname);
 
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
 		if ((pathname = _rtld_search_library_path(name, namelen,
@@ -173,17 +186,19 @@ _rtld_find_library(
 			return (pathname);
 
 #if 0
-    if((refobj != NULL &&
-	(pathname = _rtld_search_library_path(name, refobj->rpath)) != NULL) ||
-        (pathname = _rtld_search_library_path(name, ld_library_path)) != NULL
+	if ((refobj != NULL &&
+	    (pathname = _rtld_search_library_path(name,
+	    refobj->rpath)) != NULL) ||
+	    (pathname = _rtld_search_library_path(name,
+	    ld_library_path)) != NULL
 #ifdef SVR4_LIBDIR
-	LOSE!
-	|| (pathname = _rtld_search_library_path(name, SVR4_LIBDIR)) != NULL
+	    LOSE !
+	    ||(pathname = _rtld_search_library_path(name, SVR4_LIBDIR)) != NULL
 #endif
-	)
+	    )
 		return pathname;
 #endif
 
-    _rtld_error("Shared object \"%s\" not found", name);
-    return NULL;
+	_rtld_error("Shared object \"%s\" not found", name);
+	return NULL;
 }

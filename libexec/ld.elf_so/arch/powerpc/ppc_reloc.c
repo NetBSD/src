@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.1 1998/11/24 11:34:31 tsubai Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.2 1999/03/01 16:40:08 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -37,11 +37,11 @@
 #include "debug.h"
 #include "rtld.h"
 
-extern caddr_t _rtld_bind_powerpc(const Obj_Entry *, Elf_Word);
-extern void _rtld_powerpc_pltcall(Elf_Word);
-extern void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
+caddr_t _rtld_bind_powerpc __P((const Obj_Entry *, Elf_Word));
+void _rtld_powerpc_pltcall __P((Elf_Word));
+void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
-static Elf_Addr _rtld_bind_pltgot(const Obj_Entry *, const Elf_RelA *);
+static Elf_Addr _rtld_bind_pltgot __P((const Obj_Entry *, const Elf_RelA *));
 
 #define ha(x) ((((u_int32_t)(x) & 0x8000) ? \
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
