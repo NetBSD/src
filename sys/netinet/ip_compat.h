@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.36 2004/03/31 11:41:45 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.37 2004/03/31 20:58:15 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -728,6 +728,10 @@ typedef unsigned int    u_32_t;
 #  define	M_DUPLICATE(x)	m_copy((x), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
+#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
 typedef struct mbuf mb_t;
 # endif /* _KERNEL */
 # if (NetBSD <= 1991011) && (NetBSD >= 199606)
@@ -747,11 +751,6 @@ typedef	u_long		ioctlcmd_t;
 typedef	int		minor_t;
 typedef	u_int32_t	u_32_t;
 # define	U_32_T	1
-
-# define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-# define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-# define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-# define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
 
 # define OS_RECOGNISED 1
 #endif /* __NetBSD__ */
