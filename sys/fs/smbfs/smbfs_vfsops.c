@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.19 2003/02/25 22:17:20 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.20 2003/02/25 23:57:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.19 2003/02/25 22:17:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.20 2003/02/25 23:57:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = LIST_NEXT(vp, v_mntvnodes);
 		np = VTOSMB(vp);
-		if ((np->n_flag & NMODIFIED) == 0 &&
+		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0) {
 			simple_unlock(&vp->v_interlock);
