@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.6 2000/02/01 02:30:20 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.7 2000/03/03 12:32:43 soda Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ END(mdbpanic)
  * mips3_TLBWriteIndexedVPS --
  *
  *	Write the given entry into the TLB at the given index.
- *	Pass full r4000 tlb info icnluding variable page size mask.
+ *	Pass full r4000 tlb info including variable page size mask.
  *
  *	mips3_TLBWriteIndexed(index, tlb)
  *		unsigned index;
