@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.h,v 1.1 2002/12/12 23:18:21 manu Exp $ */
+/*	$NetBSD: mach_semaphore.h,v 1.2 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -93,10 +93,8 @@ typedef struct {
 
 void mach_semaphore_init(void);
 void mach_semaphore_cleanup(struct proc *);
-int mach_semaphore_create(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
-int mach_semaphore_destroy(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
+int mach_semaphore_create(struct mach_trap_args *);
+int mach_semaphore_destroy(struct mach_trap_args *);
 
 #endif /* _MACH_SEMAPHORE_H_ */
 
