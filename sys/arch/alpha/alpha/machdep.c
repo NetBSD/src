@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1996/07/16 04:42:49 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -772,8 +772,9 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	int howto;
+	char *bootstr;
 {
 	extern int cold;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1996/06/25 05:47:31 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -406,7 +406,7 @@ mach_init(argc, argv, code, cv)
 	/* check for MIPS based platform */
 	if (((i >> 24) & 0xFF) != 0x82) {
 		printf("Unknown System type '%s' 0x%x\n", cp, i);
-		boot(RB_HALT | RB_NOSYNC);
+		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -630,7 +630,7 @@ mach_init(argc, argv, code, cv)
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC);
+		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -1189,8 +1189,9 @@ dumpsys()
 }
 
 void
-boot(howto)
+boot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 
 	/* take a snap shot before clobbering any registers */

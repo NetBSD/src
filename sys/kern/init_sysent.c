@@ -29,6 +29,18 @@
 #define compat_10(func) sys_nosys
 #endif
 
+#ifdef COMPAT_11
+#define compat_11(func) __CONCAT(compat_11_,func)
+#else
+#define compat_11(func) sys_nosys
+#endif
+
+#ifdef COMPAT_12
+#define compat_12(func) __CONCAT(compat_12_,func)
+#else
+#define compat_12(func) sys_nosys
+#endif
+
 #define	s(type)	sizeof(type)
 
 struct sysent sysent[] = {
@@ -147,8 +159,8 @@ struct sysent sysent[] = {
 	    sys_sigaltstack },			/* 53 = sigaltstack */
 	{ 3, s(struct sys_ioctl_args),
 	    sys_ioctl },			/* 54 = ioctl */
-	{ 1, s(struct sys_reboot_args),
-	    sys_reboot },			/* 55 = reboot */
+	{ 1, s(struct compat_12_sys_reboot_args),
+	    compat_12(sys_reboot) },		/* 55 = compat_12 oreboot */
 	{ 1, s(struct sys_revoke_args),
 	    sys_revoke },			/* 56 = revoke */
 	{ 2, s(struct sys_symlink_args),
@@ -492,10 +504,10 @@ struct sysent sysent[] = {
 	    sys_undelete },			/* 205 = undelete */
 	{ 2, s(struct sys_futimes_args),
 	    sys_futimes },			/* 206 = futimes */
-	{ 0, 0,
-	    sys_nosys },			/* 207 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 208 = unimplemented */
+	{ 1, s(struct sys_getpgid_args),
+	    sys_getpgid },			/* 207 = getpgid */
+	{ 2, s(struct sys_reboot_args),
+	    sys_reboot },			/* 208 = reboot */
 	{ 0, 0,
 	    sys_nosys },			/* 209 = unimplemented */
 #ifdef LKM

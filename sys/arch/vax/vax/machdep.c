@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.31 1996/07/20 18:14:43 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.32 1996/08/09 10:30:23 mrg Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -529,8 +529,9 @@ int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
-boot(howto)
+boot(howto, bootstr)
 	register howto;
+	char *bootstr;
 {
 	showto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {

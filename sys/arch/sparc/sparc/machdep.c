@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1996/06/12 23:48:51 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.66 1996/08/09 10:30:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -618,14 +618,13 @@ sys_sigreturn(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-int	waittime = -1;
-
 void
-boot(howto)
+boot(howto, user_boot_string)
 	register int howto;
+	char *user_boot_string;
 {
 	int i;
-	static char str[4];	/* room for "-sd\0" */
+	static char str[128];
 	extern int cold;
 
 	if (cold) {
@@ -636,13 +635,11 @@ boot(howto)
 	fb_unblank();
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-#if 1
 		extern struct proc proc0;
 
-		/* protect against curproc->p_stats.foo refs in sync()   XXX */
+		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
 			curproc = &proc0;
-#endif
 		waittime = 0;
 		vfs_shutdown();
 
@@ -663,13 +660,23 @@ boot(howto)
 
 	doshutdownhooks();
 	printf("rebooting\n\n");
-	i = 1;
+	if (user_boot_string && *user_boot_string) {
+		i = strlen(user_boot_string);
+		if (i > sizeof(str))
+			romboot(user_boot_string);	/* XXX */
+		bcopy(user_boot_string, str, i);
+	} else {
+		i = 1;
+		str[0] = '\0';
+	}
+			
 	if (howto & RB_SINGLE)
 		str[i++] = 's';
 	if (howto & RB_KDB)
 		str[i++] = 'd';
 	if (i > 1) {
-		str[0] = '-';
+		if (str[0] == '\0')
+			str[0] = '-';
 		str[i] = 0;
 	} else
 		str[0] = 0;

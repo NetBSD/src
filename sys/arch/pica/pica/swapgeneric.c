@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.1.1.1 1996/03/13 04:58:13 jonathan Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.2 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,7 +106,7 @@ retry:
 		gets(name);
 
 		if (strcmp(name, "halt") == 0)
-			boot(RB_HALT);
+			boot(RB_HALT, NULL);
 			
 		for (gc = genericconf; gc->gc_driver; gc++)
 			if (gc->gc_name[0] == name[0] &&
@@ -140,7 +140,7 @@ bad:
 	}
 verybad:
 	printf("no suitable root\n");
-	boot(RB_HALT);
+	boot(RB_HALT, NULL);
 
 found:
 	rootdev = makedev(gc->gc_major, unit * MAXPARTITIONS);

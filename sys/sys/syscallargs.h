@@ -240,7 +240,7 @@ struct sys_ioctl_args {
 	syscallarg(caddr_t) data;
 };
 
-struct sys_reboot_args {
+struct compat_12_sys_reboot_args {
 	syscallarg(int) opt;
 };
 
@@ -882,6 +882,15 @@ struct sys_futimes_args {
 	syscallarg(struct timeval *) tptr;
 };
 
+struct sys_getpgid_args {
+	syscallarg(pid_t) pid;
+};
+
+struct sys_reboot_args {
+	syscallarg(int) opt;
+	syscallarg(char *) bootstr;
+};
+
 struct sys___semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -1014,7 +1023,7 @@ int	sys_acct	__P((struct proc *, void *, register_t *));
 int	sys_sigpending	__P((struct proc *, void *, register_t *));
 int	sys_sigaltstack	__P((struct proc *, void *, register_t *));
 int	sys_ioctl	__P((struct proc *, void *, register_t *));
-int	sys_reboot	__P((struct proc *, void *, register_t *));
+int	compat_12_sys_reboot	__P((struct proc *, void *, register_t *));
 int	sys_revoke	__P((struct proc *, void *, register_t *));
 int	sys_symlink	__P((struct proc *, void *, register_t *));
 int	sys_readlink	__P((struct proc *, void *, register_t *));
@@ -1161,6 +1170,8 @@ int	sys_mlock	__P((struct proc *, void *, register_t *));
 int	sys_munlock	__P((struct proc *, void *, register_t *));
 int	sys_undelete	__P((struct proc *, void *, register_t *));
 int	sys_futimes	__P((struct proc *, void *, register_t *));
+int	sys_getpgid	__P((struct proc *, void *, register_t *));
+int	sys_reboot	__P((struct proc *, void *, register_t *));
 #ifdef LKM
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));

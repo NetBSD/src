@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1996/07/16 23:24:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -372,7 +372,7 @@ mips_init(argc, argv, code)
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC);
+		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -863,8 +863,9 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
-boot(howto)
+boot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 
 	/* take a snap shot before clobbering any registers */

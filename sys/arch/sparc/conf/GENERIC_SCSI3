@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.30 1996/06/20 19:50:43 pk Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.31 1996/08/09 10:30:23 mrg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -267,9 +267,12 @@ scsibus* at sw?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-# Map the SCSI disk at target 3 to unit 0, a'la SunOS.
-sd0	at scsibus? target 3 lun ?
-sd*	at scsibus? target ? lun ?		# SCSI disks
+# Map the SCSI disk at targets 3120 to units 0123, a'la SunOS.
+sd0	at scsibus? target 3 lun ?		# first SCSI disk
+sd1	at scsibus? target 1 lun ?		# second SCSI disk
+sd2	at scsibus? target 2 lun ?		# third SCSI disk
+sd3	at scsibus? target 0 lun ?		# fourth SCSI disk
+sd*	at scsibus? target ? lun ?		# more SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.35 1996/06/23 11:04:11 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.36 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -94,6 +94,25 @@ sys_getpgrp(p, v, retval)
 
 	*retval = p->p_pgrp->pg_id;
 	return (0);
+}
+
+int
+sys_getpgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_getpgid_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+
+	if (SCARG(uap, pid) == 0)
+		goto found;
+	if ((p = pfind(SCARG(uap, pid))) == 0)
+		return (ESRCH);
+found:
+	*retval = p->p_pgid;
+	return 0;
 }
 
 /* ARGSUSED */

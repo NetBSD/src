@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.66 1996/06/14 22:21:26 cgd Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.67 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1213,7 +1213,7 @@ sunos_sys_reboot(p, v, retval)
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 		return (error);
 
 	/*
@@ -1228,25 +1228,27 @@ sunos_sys_reboot(p, v, retval)
 		convp++;
 	}
 
-#ifdef sun3
 	/*
 	 * Sun RB_STRING (Get user supplied bootstring.)
 	 * If the machine supports passing a string to the
-	 * next booted kernel, add the machine name above
-	 * and provide a reboot2() function (see sun3).
+	 * next booted kernel.
 	 */
 	if (sun_howto & SUNOS_RB_STRING) {
 		char bs[128];
 
 		error = copyinstr(SCARG(uap, bootstr), bs, sizeof(bs), 0);
-		if (error)
+
+		if (error) {
+#if 0
 			return error;
+#endif
+			bs = NULL:
+		}
+	} else
+		bs = NULL;
 
-		return (reboot2(bsd_howto, bs));
-	}
-#endif	/* sun3 */
+	boot(bsd_howto, bs);
 
-	boot(bsd_howto);
 	return 0;
 }
 
