@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.34 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.34 2002/06/15 18:24:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.34 2002/06/15 18:24:56 wiz Exp $");
+__RCSID("$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -60,7 +60,13 @@ __RCSID("$NetBSD: dir.c,v 1.34 2002/06/15 18:24:56 wiz Exp $");
  * The interface for this module is:
  *	Dir_Init  	    Initialize the module.
  *
+ *	Dir_InitCur	    Set the cur Path.
+ *
+ *	Dir_InitDot	    Set the dot Path.
+ *
  *	Dir_End  	    Cleanup the module.
+ *
+ *	Dir_SetPATH	    Set ${.PATH} to reflect state of dirSearchPath.
  *
  *	Dir_HasWildcards    Returns TRUE if the name given it needs to
  *	    	  	    be wildcard-expanded.
@@ -233,20 +239,40 @@ Dir_Init (const char *cdname)
     openDirectories = Lst_Init (FALSE);
     Hash_InitTable(&mtimes, 0);
 
-    if (cdname != NULL) {
-	/*
-	 * Our build directory is not the same as our source directory.
-	 * Keep this one around too.
-	 */
-	cur = Dir_AddDir (NULL, cdname);
-	cur->refCount += 1;
-    }
+    Dir_InitCur(cdname);
 
     dotLast = (Path *) emalloc (sizeof (Path));
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = estrdup(".DOTLAST");
     Hash_InitTable (&dotLast->files, -1);
+}
+
+/*
+ * Called by Dir_Init() and whenever .CURDIR is assigned to.
+ */
+void
+Dir_InitCur (const char *cdname)
+{
+    Path *p;
+    
+    if (cdname != NULL) {
+	/*
+	 * Our build directory is not the same as our source directory.
+	 * Keep this one around too.
+	 */
+	if ((p = Dir_AddDir(NULL, cdname))) {
+	    p->refCount += 1;
+	    if (cur && cur != p) {
+		/*
+		 * We've been here before, cleanup.
+		 */
+		cur->refCount -= 1;
+		Dir_Destroy((ClientData) cur);
+	    }
+	    cur = p;
+	}
+    }
 }
 
 /*-
@@ -284,6 +310,7 @@ Dir_InitDot(void)
      * to make sure it's not destroyed.
      */
     dot->refCount += 1;
+    Dir_SetPATH();			/* initialize */
 }
 
 /*-
@@ -316,6 +343,55 @@ Dir_End(void)
     Lst_Destroy(openDirectories, NOFREE);
     Hash_DeleteTable(&mtimes);
 #endif
+}
+
+/*
+ * We want ${.PATH} to indicate the order in which we will actually
+ * search, so we rebuild it after any .PATH: target.
+ * This is the simplest way to deal with the effect of .DOTLAST.
+ */
+void
+Dir_SetPATH (void)
+{
+    LstNode       ln;		/* a list element */
+    Path *p;
+    Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
+
+    Var_Delete(".PATH", VAR_GLOBAL);
+    
+    if (Lst_Open (dirSearchPath) == SUCCESS) {
+	if ((ln = Lst_First (dirSearchPath)) != NILLNODE) {
+	    p = (Path *) Lst_Datum (ln);
+	    if (p == dotLast) {
+		hasLastDot = TRUE;
+		Var_Append(".PATH", dotLast->name, VAR_GLOBAL);
+	    }
+	}
+
+	if (!hasLastDot) {
+	    if (dot)
+		Var_Append(".PATH", dot->name, VAR_GLOBAL);
+	    if (cur)
+		Var_Append(".PATH", cur->name, VAR_GLOBAL);
+	}
+
+	while ((ln = Lst_Next (dirSearchPath)) != NILLNODE) {
+	    p = (Path *) Lst_Datum (ln);
+	    if (p == dotLast)
+		continue;
+	    if (p == dot && hasLastDot)
+		continue;
+	    Var_Append(".PATH", p->name, VAR_GLOBAL);
+	}
+
+	if (hasLastDot) {
+	    if (dot)
+		Var_Append(".PATH", dot->name, VAR_GLOBAL);
+	    if (cur)
+		Var_Append(".PATH", cur->name, VAR_GLOBAL);
+	}
+	Lst_Close(dirSearchPath);
+    }
 }
 
 /*-
@@ -1066,18 +1142,26 @@ Dir_FindFile(char *name, Lst path)
 	    printf("failed. Trying subdirectories...");
 	}
 
-	/* XXX - should we look in `dot' subdirs here? */
-
-	if (!hasLastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
-	    return file;
+	if (!hasLastDot) {
+		if (dot) {
+			checkedDot = TRUE;
+			if ((file = DirLookupSubdir(dot, name)) != NULL)
+				return file;
+		}
+		if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+			return file;
+	}
 
 	(void) Lst_Open (path);
 	while ((ln = Lst_Next (path)) != NILLNODE) {
 	    p = (Path *) Lst_Datum (ln);
 	    if (p == dotLast)
 		continue;
-	    if (p == dot)
+	    if (p == dot) {
+		    if (checkedDot)
+			    continue;
 		checkedDot = TRUE;
+	    }
 	    if ((file = DirLookupSubdir(p, name)) != NULL) {
 		Lst_Close (path);
 		return file;
@@ -1085,8 +1169,15 @@ Dir_FindFile(char *name, Lst path)
 	}
 	Lst_Close (path);
 
-	if (hasLastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
-	    return file;
+	if (hasLastDot) {
+		if (dot && !checkedDot) {
+			checkedDot = TRUE;
+			if ((file = DirLookupSubdir(dot, name)) != NULL)
+				return file;
+		}
+		if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+			return file;
+	}
 
 	if (DEBUG(DIR)) {
 	    printf("failed. ");
@@ -1301,7 +1392,7 @@ Dir_MTime(GNode *gn)
 Path *
 Dir_AddDir(Lst path, const char *name)
 {
-    LstNode       ln;	      /* node in case Path structure is found */
+    LstNode       ln = NILLNODE; /* node in case Path structure is found */
     Path	  *p = NULL;  /* pointer to new Path structure */
     DIR     	  *d;	      /* for reading directory */
     struct dirent *dp;	      /* entry in directory */
@@ -1316,7 +1407,8 @@ Dir_AddDir(Lst path, const char *name)
 	}
     }
 
-    ln = Lst_Find (openDirectories, (ClientData)name, DirFindName);
+    if (path)
+	ln = Lst_Find (openDirectories, (ClientData)name, DirFindName);
     if (ln != NILLNODE) {
 	p = (Path *)Lst_Datum (ln);
 	if (Lst_Member(path, (ClientData)p) == NILLNODE) {

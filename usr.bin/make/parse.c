@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.84 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.84 2002/06/15 18:24:57 wiz Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.84 2002/06/15 18:24:57 wiz Exp $");
+__RCSID("$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1154,6 +1154,7 @@ ParseDoDependency(char *line)
 		break;
 	    case ExPath:
 		Lst_ForEach(paths, ParseClearPath, (ClientData)NULL);
+		Dir_SetPATH();
 		break;
 #ifdef POSIX
             case Posix:
@@ -1255,6 +1256,8 @@ ParseDoDependency(char *line)
 	if (paths) {
 	    Lst_Destroy(paths, NOFREE);
 	}
+	if (specType == ExPath)
+	    Dir_SetPATH();
     } else {
 	while (*line) {
 	    /*
@@ -1594,6 +1597,15 @@ Parse_DoVar(char *line, GNode *ctxt)
     }
     if (strcmp(line, MAKEOVERRIDES) == 0)
 	Main_ExportMAKEFLAGS(FALSE);	/* re-export MAKEFLAGS */
+    else if (strcmp(line, ".CURDIR") == 0) {
+	/*
+	 * Somone is being (too?) clever...
+	 * Let's pretend they know what they are doing and
+	 * re-initialize the 'cur' Path.
+	 */
+	Dir_InitCur(cp);
+	Dir_SetPATH();
+    }
 }
 
 

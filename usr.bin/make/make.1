@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.68 2002/11/02 04:13:41 perry Exp $
+.\"	$NetBSD: make.1,v 1.69 2002/11/26 06:13:01 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -523,6 +523,13 @@ This variable and
 are both set only while the
 .Ql Pa Makefiles
 are being parsed.
+.It Va .PATH
+a variable that represents the list of directories that 
+.Nm
+will search for files.  The search list should be updated
+using the target
+.Ql Va .PATH
+rather than the variable.
 .It Ev PWD
 Alternate path to the current directory.
 .Nm
