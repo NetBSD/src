@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.50 2003/05/14 14:31:01 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.51 2003/06/23 16:46:57 tacha Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.50 2003/05/14 14:31:01 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.51 2003/06/23 16:46:57 tacha Exp $");
 #endif
 
 /*
@@ -420,12 +420,12 @@ ftp_start(char *base)
 	int urllen;
 
 	/* talk to termcap for bold on/off escape sequences */
-	if (tgetent(term, getenv("TERM")) < 0) {
-		bold_on[0]  = '\0';
-		bold_off[0] = '\0';
-	} else {
+	if (getenv("TERM") != NULL && tgetent(term, getenv("TERM")) > 0) {
 		p = bold_on;  tgetstr("md", &p);
 		p = bold_off; tgetstr("me", &p);
+	} else {
+		bold_on[0]  = '\0';
+		bold_off[0] = '\0';
 	}
 	
 	fileURLHost(base, newHost, sizeof(newHost));
