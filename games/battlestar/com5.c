@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.13 2000/09/17 23:04:17 jsm Exp $	*/
+/*	$NetBSD: com5.c,v 1.14 2000/09/21 09:48:10 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.13 2000/09/17 23:04:17 jsm Exp $");
+__RCSID("$NetBSD: com5.c,v 1.14 2000/09/21 09:48:10 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,39 +48,48 @@ void
 kiss()
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS &&
-	    testbit(location[position].objects, wordvalue[wordnumber])) {
-		pleasure++;
-		printf("Kissed.\n");
-		switch (wordvalue[wordnumber]) {
-		case NORMGOD:
-			switch (godready++) {
-			case 0:
-				puts("She squirms and avoids your advances.");
+	/* The goddess must be "taken" first if bathing. */
+	if (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] == NORMGOD
+	    && testbit(location[position].objects, BATHGOD)) {
+		wordvalue[--wordnumber] = TAKE;
+		cypher();
+		return;
+	}
+	if (wordtype[wordnumber] == NOUNS) {
+		if (testbit(location[position].objects, wordvalue[wordnumber])) {
+			pleasure++;
+			printf("Kissed.\n");
+			switch (wordvalue[wordnumber]) {
+			case NORMGOD:
+				switch (godready++) {
+				case 0:
+					puts("She squirms and avoids your advances.");
+					break;
+				case 1:
+					puts("She is coming around; she didn't fight it as much.");
+					break;
+				case 2:
+					puts("She's beginning to like it.");
+					break;
+				default:
+					puts("She's gone limp.");
+
+				}
 				break;
-			case 1:
-				puts("She is coming around; she didn't fight it as much.");
+			case NATIVE:
+				puts("Her lips are warm and her body robust.  She pulls you down to the ground.");
 				break;
-			case 2:
-				puts("She's beginning to like it.");
+			case TIMER:
+				puts("The old man blushes.");
+				break;
+			case MAN:
+				puts("The dwarf punches you in the kneecap.");
 				break;
 			default:
-				puts("She's gone limp.");
-
+				pleasure--;
 			}
-			break;
-		case NATIVE:
-			puts("Her lips are warm and her body robust.  She pulls you down to the ground.");
-			break;
-		case TIMER:
-			puts("The old man blushes.");
-			break;
-		case MAN:
-			puts("The dwarf punches you in the kneecap.");
-			break;
-		default:
-			pleasure--;
-		}
+		} else
+			puts("I see nothing like that here.");
 	} else
 		puts("I'd prefer not to.");
 }
