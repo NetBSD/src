@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.15 2002/07/06 22:08:31 wiz Exp $	*/
+/*	$NetBSD: timed.c,v 1.16 2002/07/10 22:44:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.15 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: timed.c,v 1.16 2002/07/10 22:44:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,10 @@ __RCSID("$NetBSD: timed.c,v 1.15 2002/07/06 22:08:31 wiz Exp $");
 #include <sys/types.h>
 #include <sys/times.h>
 #include <util.h>
+
+#ifdef HAVENIS
+#include <netgroup.h>
+#endif
 
 int trace = 0;
 int sock, sock_raw = -1;
@@ -99,7 +103,7 @@ static struct goodhost {		/* hosts that we trust */
 static char *goodgroup;			/* net group of trusted hosts */
 static void checkignorednets(void);
 static void pickslavenet(struct netinfo *);
-static void add_good_host(char*,char);
+static void add_good_host(const char*,char);
 
 
 /*
@@ -744,7 +748,7 @@ addnetname(char *name)
 
 /* note a host as trustworthy */
 static void
-add_good_host(char* name,
+add_good_host(const char* name,
 	      char perm)		/* 1=not part of the netgroup */
 {
 	register struct goodhost *ghp;
@@ -780,7 +784,7 @@ get_goodgroup(int force)
 	struct goodhost *ghp, **ghpp;
 #ifdef HAVENIS
 	struct hosttbl *htp;
-	char *mach, *usr, *dom;
+	const char *mach, *usr, *dom;
 #endif
 	struct tms tm;
 
