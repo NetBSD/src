@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.25 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: connect.2,v 1.26 2004/05/18 12:21:29 ragge Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,6 +71,16 @@ only once; datagram sockets may use
 multiple times to change their association.
 Datagram sockets may dissolve the association
 by connecting to an invalid address, such as a null address.
+.Pp
+If a
+.Fn connect
+call is interrupted by a signal, it will return with errno set to
+.Er EINTR
+and the connection attempt will proceed as if the socket was non-blocking.
+Subsequent calls to
+.Fn connect
+will set errno to
+.Er EALREADY .
 .Sh RETURN VALUES
 If the connection or binding succeeds, 0 is returned.
 Otherwise a \-1 is returned, and a more specific error
@@ -123,9 +133,12 @@ level.
 The returned socket error status is zero on success, or one of the
 error codes listed here on failure.
 .It Bq Er EALREADY
-The socket is non-blocking
-and a previous connection attempt
-has not yet been completed.
+Either the socket is non-blocking mode or a previous call to
+.Fn connect
+was interrupted by a signal, and the connection attempt has not yet
+been completed.
+.It Bq Er EINTR
+The connection attempt was interrupted by a signal.
 .El
 .Pp
 The following errors are specific to connecting names in the
