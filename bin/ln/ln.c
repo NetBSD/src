@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ln.c	4.15 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: ln.c,v 1.6 1994/01/27 01:44:15 jtc Exp $";
+static char rcsid[] = "$Id: ln.c,v 1.7 1994/01/27 02:00:45 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$Id: ln.c,v 1.6 1994/01/27 01:44:15 jtc Exp $";
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 
 static int	forceflag,		/* force link by removing target */
 		dirflag,		/* allow hard links to directories */
@@ -101,9 +102,8 @@ main(argc, argv)
 	default:			/* ln target1 target2 directory */
 		sourcedir = argv[argc - 1];
 		if (stat(sourcedir, &buf)) {
-			(void)fprintf(stderr,
-			    "ln: %s: %s\n", sourcedir, strerror(errno));
-			exit(1);
+			err(1, "%s", sourcedir);
+			/* NOTREACHED */
 		}
 		if (!S_ISDIR(buf.st_mode))
 			usage();
@@ -125,13 +125,12 @@ linkit(source, target, isdir)
 	if (!sflag) {
 		/* if source doesn't exist, quit now */
 		if (stat(source, &buf)) {
-			(void)fprintf(stderr,
-			    "ln: %s: %s\n", source, strerror(errno));
+			warn("%s", source);
 			return(1);
 		}
 		/* only symbolic links to directories, unless -F option used */
 		if (!dirflag && (buf.st_mode & S_IFMT) == S_IFDIR) {
-			(void)printf("ln: %s is a directory.\n", source);
+			warnx("%s: %s", source, EISDIR);
 			return(1);
 		}
 	}
@@ -148,14 +147,15 @@ linkit(source, target, isdir)
 
 	/* Remove existing file if -f is was specified */
 	if (forceflag && unlink (target) && errno != ENOENT) {
-		(void)fprintf(stderr, "ln: %s: %s\n", target, strerror(errno));
+		warn("%s", target);
 		return (1);
 	}
 
 	if ((*linkf)(source, target)) {
-		(void)fprintf(stderr, "ln: %s: %s\n", target, strerror(errno));
+		warn("%s", target);
 		return(1);
 	}
+
 	return(0);
 }
 
