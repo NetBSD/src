@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.60 2003/08/14 07:57:40 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.61 2003/08/15 03:42:01 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.60 2003/08/14 07:57:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.61 2003/08/15 03:42:01 jonathan Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -118,6 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.60 2003/08/14 07:57:40 itojun Exp $")
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
 
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC */
+
 #ifdef NSIP
 #include <netns/ns_var.h>
 #include <netns/idp_var.h>
@@ -173,17 +178,36 @@ struct protosw inetsw[] = {
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
-  esp4_input,	0,	 	esp4_ctlinput,	0,
+  esp4_input,
+	0,	 	esp4_ctlinput,	0,
   0,
   0,		0,		0,		0,		ipsec_sysctl
 },
 #endif
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
-  ipcomp4_input, 0,	 	0,		0,
+  ipcomp4_input,
+ 0,	 	0,		0,
   0,
   0,		0,		0,		0,		ipsec_sysctl
 },
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+{ SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,	0,	 	ah4_ctlinput,	0,
+  0,
+  0,		0,		0,		0,		ipsec_sysctl
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,    0,	 	esp4_ctlinput,	0,
+  0,
+  0,		0,		0,		0,		ipsec_sysctl
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,    0,	 	0,		0,
+  0,
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#endif /* FAST_IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap4_input,	rip_output, 	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/

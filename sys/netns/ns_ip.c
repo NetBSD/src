@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.33 2003/08/07 16:33:46 agc Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.34 2003/08/15 03:42:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.33 2003/08/07 16:33:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.34 2003/08/15 03:42:07 jonathan Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -329,7 +329,8 @@ nsipoutput(ifp, m, dst, rt)
 	/*
 	 * Output final datagram.
 	 */
-	error = ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL);
+	error = ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST,
+	    (struct ip_moptions *)0, (struct inpcb *)0);
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;
