@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/11/27 10:21:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2004/02/10 09:37:58 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -57,6 +57,7 @@ native-gcc: .native/.configure_done
 			--enable-long-long \
 			--disable-multilib \
 			--enable-threads \
+			--disable-symvers \
 			--build=`${.CURDIR}/../../gnu/dist/gcc/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
@@ -69,6 +70,7 @@ native-gcc: .native/.configure_done
 			ALL_GCC_C= ALL_GCC_CXX= \
 			CC_FOR_TARGET=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q} \
+			ac_cv_prog_cc_cross=yes \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include) && \
 		(cd .native/${MACHINE_GNU_PLATFORM}/libstdc++-v3/include && \
 			${MAKE} all-local) && \
