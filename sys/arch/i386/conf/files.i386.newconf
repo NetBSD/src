@@ -28,8 +28,6 @@ file	arch/i386/isa/clock.c		clock timer
 
 device	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
-device	dcfclk at isa
-file	arch/i386/isa/dcfclk.c		dcfclk needs-flag
 
 
 device	com at isa: tty
@@ -38,6 +36,7 @@ device	pc at isa: tty
 file	arch/i386/isa/pccons.c		pc needs-count
 device	cy at isa: tty
 file	arch/i386/isa/cy.c		cy needs-count
+
 
 device	spkr at isa: tty
 file	arch/i386/isa/spkr.c		speaker needs-flag
