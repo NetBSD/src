@@ -1,11 +1,11 @@
-/*	$NetBSD: sem.c,v 1.4 2003/01/22 23:18:06 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.5 2003/01/24 01:54:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
