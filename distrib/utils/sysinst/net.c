@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.28 1998/02/07 10:28:02 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.29 1998/02/09 07:34:16 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/param.h>
 #include "defs.h"
