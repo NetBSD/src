@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.53 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.54 1999/09/15 14:17:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -507,7 +507,7 @@ uhci_power(why, v)
 		if (sc->sc_has_timo)
 			usb_untimeout(uhci_timo, sc->sc_has_timo, 
 				      sc->sc_has_timo->timo_handle);
-		sc->sc_bus.use_polling = 1;
+		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
@@ -529,7 +529,7 @@ uhci_power(why, v)
 			UHCI_INTR_IOCE | UHCI_INTR_SPIE); /* re-enable intrs */
 		uhci_run(sc, 1); /* and start traffic again */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
-		sc->sc_bus.use_polling = 0;
+		sc->sc_bus.use_polling--;
 		if (sc->sc_has_timo)
 			usb_timeout(uhci_timo, sc->sc_has_timo, 
 				    sc->sc_ival, sc->sc_has_timo->timo_handle);

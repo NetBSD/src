@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.41 1999/09/15 10:25:32 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.42 1999/09/15 14:17:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1009,7 +1009,10 @@ usbd_set_polling(iface, on)
 	usbd_interface_handle iface;
 	int on;
 {
-	iface->device->bus->use_polling = on;
+	if (on)
+		iface->device->bus->use_polling++;
+	else
+		iface->device->bus->use_polling--;
 }
 
 
