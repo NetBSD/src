@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.24 1996/09/09 14:51:20 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.25 1996/09/10 23:26:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -423,7 +423,8 @@ findpcb:
 	 * Reset idle time and keep-alive timer.
 	 */
 	tp->t_idle = 0;
-	tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+	if (TCPS_HAVEESTABLISHED(tp->t_state))
+		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 
 	/*
 	 * Process options if not in LISTEN state,
@@ -667,6 +668,7 @@ findpcb:
 			tcpstat.tcps_connects++;
 			soisconnected(so);
 			tp->t_state = TCPS_ESTABLISHED;
+			tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -910,6 +912,7 @@ trimthenstep6:
 		tcpstat.tcps_connects++;
 		soisconnected(so);
 		tp->t_state = TCPS_ESTABLISHED;
+		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
