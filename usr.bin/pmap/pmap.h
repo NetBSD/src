@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2003/04/04 03:49:20 atatat Exp $ */
+/*	$NetBSD: pmap.h,v 1.4 2004/01/31 18:25:27 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -105,15 +105,16 @@
 #define D(x,d)	(&((x)->k_data.d))
 
 /* suck the data from the kernel */
+#define _KDEREFOK(kd, addr, dst, sz) \
+	(kvm_read((kd), (addr), (dst), (sz)) == (sz))
 #define _KDEREF(kd, addr, dst, sz) do { \
-	ssize_t len; \
-	len = kvm_read((kd), (addr), (dst), (sz)); \
-	if (len != (sz)) \
+	if (!_KDEREFOK((kd), (addr), (dst), (sz))) \
 		errx(1, "trying to read %lu bytes from %lx: %s", \
 		    (unsigned long)(sz), (addr), kvm_geterr(kd)); \
 } while (0/*CONSTCOND*/)
 
 /* suck the data using the structure */
+#define KDEREFOK(kd, item) _KDEREFOK((kd), A(item), D(item, data), S(item))
 #define KDEREF(kd, item) _KDEREF((kd), A(item), D(item, data), S(item))
 
 struct kbit {
