@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers_stand.sh,v 1.1 2000/07/12 20:57:42 jdolecek Exp $
+#	$NetBSD: newvers_stand.sh,v 1.2 2000/07/12 22:19:57 jdolecek Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ else
 	extra=""
 fi
 
-echo "char bootprog_name[] = \"NetBSD/${2}${extra}\";" > vers.c
-echo "char bootprog_rev[] = \"${r}\";" >> vers.c
-echo "char bootprog_date[] = \"${t}\";" >> vers.c
-echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
+echo "const char bootprog_name[] = \"NetBSD/${2}${extra}\";" > vers.c
+echo "const char bootprog_rev[] = \"${r}\";" >> vers.c
+echo "const char bootprog_date[] = \"${t}\";" >> vers.c
+echo "const char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
