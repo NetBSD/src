@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.9 1999/11/28 04:40:21 lukem Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.10 2000/07/07 15:11:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.9 1999/11/28 04:40:21 lukem Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.10 2000/07/07 15:11:46 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ main(argc, argv)
 	db = dbopen(buf, O_RDWR | O_CREAT | O_EXCL,
 		    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, NULL);
 	if (!db)
-		err(1, buf);
+		err(1, "%s", buf);
 
 	ng_write(db, ndb, _NG_KEYBYNAME);
 	ng_rwrite(db, udb, _NG_KEYBYUSER);
@@ -215,7 +215,7 @@ ng_load(fname)
 
 	/* Open the netgroup file */
 	if ((fp = fopen(fname, "r")) == NULL)
-		err(1, fname);
+		err(1, "%s", fname);
 
 	db = dbopen(NULL, O_RDWR | O_CREAT | O_EXCL, 0, DB_HASH, NULL);
 
