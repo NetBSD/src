@@ -1,4 +1,4 @@
-.\" $NetBSD: opl.4,v 1.16 2001/09/29 19:39:51 augustss Exp $
+.\" $NetBSD: opl.4,v 1.17 2001/11/04 06:46:47 itohy Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Nm opl
 .Nd Yamaha OPL2 and OPL3 FM MIDI synthesizer driver
 .Sh SYNOPSIS
+.Cd "opl*  at cmpci? flags 1"
 .Cd "opl*  at esl?"
 .Cd "opl*  at eso?"
 .Cd "opl*  at ess?"
@@ -65,7 +66,15 @@ The
 .Nm
 driver usually attaches to a sound card, but it can also sit
 directly on the ISA bus.
+.Pp
+If
+.Dq flags 1
+is specified, the
+.Nm
+driver handles left and right channels of OPL3 swapped.
+Use this flag if your device has such problem.
 .Sh SEE ALSO
+.Xr cmpci 4 ,
 .Xr esl 4 ,
 .Xr eso 4 ,
 .Xr ess 4 ,
