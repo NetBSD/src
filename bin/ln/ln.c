@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.17 2001/02/04 19:32:26 christos Exp $	*/
+/*	$NetBSD: ln.c,v 1.18 2001/02/19 22:39:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.17 2001/02/04 19:32:26 christos Exp $");
+__RCSID("$NetBSD: ln.c,v 1.18 2001/02/19 22:39:39 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,6 @@ int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
 int (*linkf) __P((const char *, const char *));
-
-extern char *__progname;
 
 int	linkit __P((char *, char *, int));
 void	usage __P((void));
@@ -177,7 +175,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "Usage:\t%s [-fhns] file1 file2\n\t%s [-fhns] file ... directory\n",
-	    __progname, __progname);
+	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
