@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.17.4.2 1997/02/20 16:32:39 is Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.17.4.3 1997/03/09 21:05:46 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -53,7 +53,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h> 
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
  
 #ifdef NS
