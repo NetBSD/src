@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.154 2001/04/26 02:37:59 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.155 2001/04/26 02:53:46 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2660,6 +2660,11 @@ weeklyconf
 # ./usr/share/sushi/system/securityconf
 securityconf
 # ./usr/share/sushi/system/securityconf
+..
+
+# ./usr/share/sushi/system/sysctl
+sysctl
+# ./usr/share/sushi/system/sysctl
 ..
 
 # ./usr/share/sushi/system/usermgmtconf
