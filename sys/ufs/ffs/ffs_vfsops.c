@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.70 2000/06/28 14:11:33 mrg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.71 2000/09/19 22:04:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -851,7 +851,7 @@ ffs_flushfiles(mp, flags, p)
 	 * Flush filesystem metadata.
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, FSYNC_WAIT, p);
+	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
 	VOP_UNLOCK(ump->um_devvp, 0);
 	return (error);
 }
@@ -952,7 +952,7 @@ loop:
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -966,7 +966,7 @@ loop:
 			waitfor = MNT_NOWAIT;
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
 	}
