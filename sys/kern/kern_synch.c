@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.118 2002/12/29 02:08:39 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.119 2002/12/29 17:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.118 2002/12/29 02:08:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.119 2002/12/29 17:40:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -581,9 +581,10 @@ awaken(struct proc *p)
 
 	/*
 	 * Since curpriority is a user priority, p->p_priority
-	 * is always better than curpriority.
+	 * is always better than curpriority on the last CPU on
+	 * which it ran.
 	 *
-	 * XXX See affinity comment in setrunnable().
+	 * XXXSMP See affinity comment in resched_proc().
 	 */
 	if (p->p_flag & P_INMEM) {
 		setrunqueue(p);
@@ -918,6 +919,38 @@ rqinit()
 		    (struct proc *)&sched_qs[i];
 }
 
+static __inline void
+resched_proc(struct proc *p)
+{
+	struct cpu_info *ci;
+
+	/*
+	 * XXXSMP
+	 * Since p->p_cpu persists across a context switch,
+	 * this gives us *very weak* processor affinity, in
+	 * that we notify the CPU on which the process last
+	 * ran that it should try to switch.
+	 *
+	 * This does not guarantee that the process will run on
+	 * that processor next, because another processor might
+	 * grab it the next time it performs a context switch.
+	 *
+	 * This also does not handle the case where its last
+	 * CPU is running a higher-priority process, but every
+	 * other CPU is running a lower-priority process.  There
+	 * are ways to handle this situation, but they're not
+	 * currently very pretty, and we also need to weigh the
+	 * cost of moving a process from one CPU to another.
+	 *
+	 * XXXSMP
+	 * There is also the issue of locking the other CPU's
+	 * sched state, which we currently do not do.
+	 */
+	ci = (p->p_cpu != NULL) ? p->p_cpu : curcpu();
+	if (p->p_priority < ci->ci_schedstate.spc_curpriority)
+		need_resched(ci);
+}
+
 /*
  * Change process state to be runnable,
  * placing it on the run queue if it is in memory,
@@ -962,17 +995,8 @@ setrunnable(struct proc *p)
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
 		sched_wakeup((caddr_t)&proc0);
-	else if (p->p_priority < curcpu()->ci_schedstate.spc_curpriority) {
-		/*
-		 * XXXSMP
-		 * This is not exactly right.  Since p->p_cpu persists
-		 * across a context switch, this gives us some sort
-		 * of processor affinity.  But we need to figure out
-		 * at what point it's better to reschedule on a different
-		 * CPU than the last one.
-		 */
-		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
-	}
+	else
+		resched_proc(p);
 }
 
 /*
@@ -990,13 +1014,7 @@ resetpriority(struct proc *p)
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
-	if (newpriority < curcpu()->ci_schedstate.spc_curpriority) {
-		/*
-		 * XXXSMP
-		 * Same applies as in setrunnable() above.
-		 */
-		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
-	}
+	resched_proc(p);
 }
 
 /*
