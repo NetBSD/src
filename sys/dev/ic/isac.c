@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.8 2002/04/01 12:12:26 martin Exp $ 
+ *	$Id: isac.c,v 1.9 2002/04/06 21:46:51 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.8 2002/04/01 12:12:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.9 2002/04/06 21:46:51 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -92,7 +92,7 @@ static void isic_isac_ind_hdlr(register struct isic_softc *sc, int ind);
 /*---------------------------------------------------------------------------*
  *	ISAC interrupt service routine
  *---------------------------------------------------------------------------*/
-int
+void
 isic_isac_irq(struct isic_softc *sc, int ista)
 {
 	register u_char c = 0;
@@ -101,10 +101,6 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
 		u_int8_t exirstat = ISAC_READ(I_EXIR);
-		if ((ista & ~ISAC_IMASK) && exirstat == 0xff) {
-			/* bogus - might be a detaching pcmcia card */
-			return (1);
-		}
 		c |= isic_isac_exir_hdlr(sc, exirstat);
 	}
 	
@@ -155,7 +151,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			ISAC_WRITE(I_CMDR, ISAC_CMDR_RMC|ISAC_CMDR_RRES);
 			ISACCMDRWRDELAY();
 
-			return (0);
+			return;
 		}
 
 		rest = (ISAC_READ(I_RBCL) & (ISAC_FIFO_LEN-1));
@@ -325,8 +321,6 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 		ISAC_WRITE(I_CMDR, c);
 		ISACCMDRWRDELAY();
 	}
-
-	return (0);
 }
 
 /*---------------------------------------------------------------------------*
