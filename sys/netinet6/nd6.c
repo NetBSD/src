@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.56 2001/12/18 03:04:04 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.57 2002/03/20 22:47:59 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -30,16 +30,8 @@
  * SUCH DAMAGE.
  */
 
-/*
- * XXX
- * KAME 970409 note:
- * BSD/OS version heavily modifies this code, related to llinfo.
- * Since we don't have BSD/OS version of net/route.c in our hand,
- * I left the code mostly as it was in 970310.  -- itojun
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.56 2001/12/18 03:04:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.57 2002/03/20 22:47:59 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
