@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/08/07 16:28:39 agc Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ start1:
 	mov.l	_ROM_START, r3
 	mov.l	_C_LABEL(ram_start), r4
 	sub	r3, r4
-	/* Set Bus State Controler */
+	/* Set Bus State Controller */
 	mov.l	XLInitializeBsc, r0
 	sub	r4, r0
 	jsr	@r0
@@ -154,7 +154,7 @@ start1:
 LXstart_in_RAM:
 	.long	start_in_RAM
 #else /* ROMIMAGE */
-	/* Set Bus State Controler */
+	/* Set Bus State Controller */
 	mov.l	XLInitializeBsc, r0
 	jsr	@r0
 	nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.22 2003/11/01 12:21:14 jdolecek Exp $	*/
+/*	$NetBSD: intio.c,v 1.23 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.22 2003/11/01 12:21:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.23 2004/01/04 16:19:44 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ intio_intr (frame)
 }
 
 /*
- * Intio I/O controler interrupt
+ * Intio I/O controller interrupt
  */
 static u_int8_t intio_ivec = 0;
 

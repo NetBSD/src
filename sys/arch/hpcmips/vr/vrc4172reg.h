@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172reg.h,v 1.3 2001/04/13 08:11:44 itojun Exp $	*/
+/*	$NetBSD: vrc4172reg.h,v 1.4 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -36,7 +36,7 @@
 #define VRC2_ICU_ADDR	0x15003808	/* ICU */
 #define VRC2_COM_ADDR	0x15003810	/* NS16550A compat */
 #define VRC2_PIO_ADDR	0x15003820	/* IEEE1284 parallel */
-#define VRC2_PS2_ADDR	0x15003870	/* PS/2 controler */
+#define VRC2_PS2_ADDR	0x15003870	/* PS/2 controller */
 #define VRC2_PWM_ADDR	0x15003880	/* PWM (backlight pulus) controller */
 
 /* end */

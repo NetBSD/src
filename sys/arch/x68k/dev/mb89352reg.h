@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352reg.h,v 1.2 2003/08/07 16:30:25 agc Exp $	*/
+/*	$NetBSD: mb89352reg.h,v 1.3 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
  */
 
 /*
- * FUJITSU MB89352A SCSI Protocol Controler Hardware Description.
+ * FUJITSU MB89352A SCSI Protocol Controller Hardware Description.
  */
 
 struct mb89352 {
