@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.16 1997/06/26 20:23:44 kleink Exp $
+.\"	$NetBSD: ping.8,v 1.17 1997/09/15 07:21:09 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Tn ICMP ECHO_REQUEST
 packets to network hosts
 .Sh SYNOPSIS
-.Nm ping
+.Nm
 .Op Fl dfnoqrvDPQRL
 .Op Fl c Ar count
 .Op Fl g Ar gateway
@@ -56,7 +56,7 @@ packets to network hosts
 .Op Fl w Ar maxwait
 .Ar host
 .Sh DESCRIPTION
-.Nm Ping
+.Nm
 uses the
 .Tn ICMP
 protocol's mandatory
@@ -122,7 +122,7 @@ last argument.
 If
 .Ar preload
 is specified,
-.Nm ping
+.Nm
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 .It Fl L
@@ -200,7 +200,7 @@ before transmitting the next one.  The default is 10.
 .El
 .Pp
 When using
-.Nm ping
+.Nm
 for fault isolation, it should first be run on the local host, to verify
 that the local network interface is up and running.
 Then, hosts and gateways further and further away should be ``pinged''.
@@ -213,7 +213,7 @@ if the program is terminated with a
 .Dv SIGINT ,
 a brief summary is displayed.  The summary information can be displayed
 while
-.Nm ping
+.Nm
 is running by sending it a
 .Dv SIGINFO
 signal (see the
@@ -250,7 +250,7 @@ The second interrupt stops ping immediately.
 This program is intended for use in network testing, measurement and
 management.
 Because of the load it can impose on the network, it is unwise to use
-.Nm ping
+.Nm
 during normal operations or from automated scripts.
 .Sh ICMP PACKET DETAILS
 An IP header without options is 20 bytes.
@@ -274,13 +274,13 @@ will always be 8 bytes more than the requested data space
 header).
 .Pp
 If the data space is at least eight bytes large,
-.Nm ping
+.Nm
 uses the first eight bytes of this space to include a timestamp to compute
 round trip times.
 If less than eight bytes of pad are specified, no round trip times are
 given.
 .Sh DUPLICATE AND DAMAGED PACKETS
-.Nm Ping
+.Nm
 will report duplicate and damaged packets.
 Duplicate packets should never occur, and seem to be caused by
 inappropriate link-level retransmissions.
@@ -290,7 +290,7 @@ always be cause for alarm.
 .Pp
 Damaged packets are obviously serious cause for alarm and often
 indicate broken hardware somewhere in the
-.Nm ping
+.Nm
 packet's path (in the network or in the hosts).
 .Sh TRYING DIFFERENT DATA PATTERNS
 The (inter)network layer should never treat packets differently depending
@@ -314,7 +314,7 @@ You can then examine this file for repeated patterns that you can test
 using the
 .Fl p
 option of
-.Nm ping .
+.Nm "" .
 .Sh TTL DETAILS
 The
 .Tn TTL
@@ -373,7 +373,7 @@ number of routers in the path
 the remote system
 .Em to
 the
-.Nm ping Ns Em ing
+.Nm "" Ns Em ing
 host.
 .It
 Set it to some other value.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.31 1997/07/17 06:39:46 mikel Exp $	*/
+/*	$NetBSD: ping.c,v 1.32 1997/09/15 07:21:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,9 @@
  *	This program has to run SUID to ROOT to access the ICMP socket.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.31 1997/07/17 06:39:46 mikel Exp $";
+__RCSID("$NetBSD: ping.c,v 1.32 1997/09/15 07:21:12 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -781,9 +782,9 @@ pr_pack(u_char *buf,
 	struct sockaddr_in *from)
 {
 	struct ip *ip;
-	register struct icmp *icp;
-	register int i, j;
-	register u_char *cp;
+	struct icmp *icp;
+	int i, j;
+	u_char *cp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
 	int hlen, dupflag = 0, dumped;
@@ -967,7 +968,7 @@ pr_pack(u_char *buf,
 #endif
 		default:
 			PR_PACK_SUB();
-			(void)printf("\nunknown option %x", *cp);
+			(void)printf("\nunknown option 0x%x", *cp);
 			break;
 		}
 		hlen--;
@@ -1446,7 +1447,7 @@ static void
 pr_saddr(char *pat,
 	 u_char *cp)
 {
-	register n_long l;
+	n_long l;
 	struct in_addr addr;
 
 	l = (u_char)*++cp;
@@ -1523,7 +1524,7 @@ pr_retip(struct icmp *icp,
 static void
 fill(void)
 {
-	register int i, j, k;
+	int i, j, k;
 	char *cp;
 	int pat[16];
 
@@ -1583,7 +1584,7 @@ gethost(const char *arg,
 {
 	struct hostent *hp;
 
-	bzero(sa, sizeof(*sa));
+	memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
 
 	/* If it is an IP address, try to convert it to a name to
@@ -1611,7 +1612,7 @@ gethost(const char *arg,
 	if (hp->h_addrtype != AF_INET)
 		errx(1, "%s only supported with IP", arg);
 
-	bcopy(hp->h_addr, &sa->sin_addr, sizeof(sa->sin_addr));
+	memmove(&sa->sin_addr, hp->h_addr, sizeof(sa->sin_addr));
 
 	if (realname) {
 		(void)strncpy(realname, hp->h_name, realname_len);
