@@ -1,5 +1,4 @@
 /*
- * Copyright (c) Adam Glass  (sun3 changes) 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -44,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: Id: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.1 1994/02/23 08:29:00 glass Exp $
+ * gwr: merged some of Adam's changes and fixed some bugs.
  */
 
 /*
@@ -73,10 +72,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/obio.h>
-#include <machine/mon.h>
 
-#include "../sun3/interreg.h"
-#include "../sun3/cons.h"
+#include "cons.h"
 #include "kbd.h"
 #include "zsreg.h"
 #include "zsvar.h"
@@ -85,13 +82,21 @@
 #include <machine/remote-sl.h>
 #endif
 
+/* #define DEBUG 1 */
+
 #define	ZSMAJOR	12		/* XXX */
 
 #define	ZS_KBD		2	/* XXX */
 #define	ZS_MOUSE	3	/* XXX */
 
-/* the magic number below was stolen from the Sprite source. */
-#define PCLK	(19660800/4)	/* PCLK pin input clock rate */
+/* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
+#define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
+
+/*
+ * Select software interrupt levels.
+ */
+#define ZSSOFT_PRI	2	/* XXX - Want TTY_PRI */
+#define ZSHARD_PRI	6	/* Wired on the CPU board... */
 
 /*
  * Software state per found chip.  This would be called `zs_softc',
@@ -106,54 +111,50 @@ struct zsinfo {
 struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, struct cfdata *, void *));
-static void	zsattach __P((struct device *, struct device *, void *));
+static int	zsmatch(struct device *, struct cfdata *, void *);
+static void	zsattach(struct device *, struct device *, void *);
 struct cfdriver zscd =
     { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
 
 /* Interrupt handlers. */
-static int	zshard __P((int));
-static int	zssoft __P((int));
+static int	zshard(int);
+static int	zssoft(int);
 
 struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
-static void	zsiopen __P((struct tty *));
-static void	zsiclose __P((struct tty *));
-static void	zsstart __P((struct tty *));
-void		zsstop __P((struct tty *, int));
-static int	zsparam __P((struct tty *, struct termios *));
+int zsopen(dev_t, int, int, struct proc *);
+int zsclose(dev_t, int, int, struct proc *);
+static void	zsiopen(struct tty *);
+static void	zsiclose(struct tty *);
+static void	zsstart(struct tty *);
+void		zsstop(struct tty *, int);
+static int	zsparam(struct tty *, struct termios *);
 
 /* Routines purely local to this driver. */
-static int	zs_getspeed __P((volatile struct zschan *));
-static void	zs_reset __P((volatile struct zschan *, int, int));
-static void	zs_modem __P((struct zs_chanstate *, int));
-static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
+static int	zs_getspeed(volatile struct zschan *);
+static void	zs_reset(volatile struct zschan *, int, int);
+static void	zs_modem(struct zs_chanstate *, int);
+static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
+static void zs_delay(void);
+static u_char zs_read(volatile struct zschan *, u_char);
+static u_char zs_write(volatile struct zschan *, u_char, u_char);
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
-#if 0
 static int zscnputc(int);	/* console putc function */
-#endif
 static volatile struct zschan *zs_conschan;
-static struct tty *zs_checkcons __P((struct zsinfo *, int, struct zs_chanstate *));
+static struct tty *zs_checkcons(struct zsinfo *, int, struct zs_chanstate *);
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
 extern int kgdb_dev, kgdb_rate;
 static int zs_kgdb_savedspeed;
-static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
+static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
 #endif
 
-extern volatile struct zsdevice *findzs(int);
 static volatile struct zsdevice *zsaddr[NZS];
-
-static volatile struct zsdevice *zsaddr_obio[NZS] = {
-    (struct zsdevice *) OBIO_ZS,
-    (struct zsdevice *) OBIO_KEYBD_MS
-};
-
 
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
@@ -177,9 +178,12 @@ int zsshortcuts;		/* number of "shortcut" software interrupts */
 static int
 zsmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct romaux *ra = aux;
+	struct obio_cf_loc *obio_loc;
+	caddr_t zs_addr;
 
-	return 1;
+	obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
+	zs_addr = (caddr_t) obio_loc->obio_addr;
+	return !obio_probe_byte(zs_addr);
 }
 
 /*
@@ -191,34 +195,31 @@ zsmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 zsattach(struct device *parent, struct device *dev, void *aux)
 {
-        struct obio_cf_loc *obio_loc = OBIO_LOC(dev);
+	struct obio_cf_loc *obio_loc = OBIO_LOC(dev);
 	register int zs = dev->dv_unit, unit;
 	register struct zsinfo *zi;
 	register struct zs_chanstate *cs;
 	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;
-	int level, softcar;
-	static int didintr, prevpri;
+	int softcar;
+	static int didintr;
+	caddr_t obio_addr;
 
-	if ((addr = zsaddr[zs]) == NULL)
-	    addr = zsaddr[zs] =
-		(struct zsdevice *) obio_alloc((caddr_t) zsaddr_obio[zs],
-					       OBIO_ZS_SIZE, OBIO_WRITE);
+	obio_addr = (caddr_t)obio_loc->obio_addr;
+	obio_print(obio_addr, ZSSOFT_PRI);
+	printf(" hwpri %d\n", ZSHARD_PRI);
 
-#if 0
-	if (addr != (struct zsdevice *) obio_loc->obio_addr)
-	    panic("zsattach");
-#endif
-	/* all on level 6? */
+	addr = (struct zsdevice *)
+		obio_alloc(obio_addr, OBIO_ZS_SIZE, OBIO_WRITE);
+
 	if (!didintr) {
-	    didintr = 1;
-	    isr_add(2, zssoft, 0);
-	    isr_add(6, zshard, 0);
+		didintr = 1;
+		isr_add(ZSSOFT_PRI, zssoft, 0);
+		isr_add(ZSHARD_PRI, zshard, 0);
 	}
+
 	zi = (struct zsinfo *)dev;
 	zi->zi_zs = addr;
-	printf("zs->zi_zs %x\n", zi->zi_zs);
-	pte_print(get_pte(zi->zi_zs));
 	unit = zs * 2;
 	cs = zi->zi_cs;
 
@@ -227,6 +228,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp = zs_tty[unit];
 	if(!zs_tty[unit+1])
 		zs_tty[unit+1] = ttymalloc();
+
 	if (unit == 0) {
 		softcar = 0;
 	} else
@@ -238,9 +240,16 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	zslist = cs;
 
 	cs->cs_unit = unit;
-	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_A]);
+	cs->cs_zc =	&addr->zs_chan[CHAN_A];
+	cs->cs_speed = zs_getspeed(cs->cs_zc);
+#ifdef	DEBUG
+	printf("zs%d speed %d ",  cs->cs_unit, cs->cs_speed);
+#endif
 	cs->cs_softcar = softcar & 1;
-	cs->cs_zc = &addr->zs_chan[CHAN_A];
+#if 0
+	/* XXX - Drop carrier here? -gwr */
+	zs_modem(cs, cs->cs_softcar ? 1 : 0);
+#endif
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
@@ -264,10 +273,18 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	unit++;
 	cs++;
 	tp = zs_tty[unit];
+
 	cs->cs_unit = unit;
-	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_B]);
-	cs->cs_softcar = softcar & 2;
 	cs->cs_zc = &addr->zs_chan[CHAN_B];
+	cs->cs_speed = zs_getspeed(cs->cs_zc);
+#ifdef	DEBUG
+	printf("zs%d speed %d\n", cs->cs_unit, cs->cs_speed);
+#endif
+	cs->cs_softcar = softcar & 2;
+#if 0
+	/* XXX - Drop carrier here? -gwr */
+	zs_modem(cs, cs->cs_softcar ? 1 : 0);
+#endif
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
@@ -287,7 +304,6 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
 	}
-	obio_print((caddr_t) zsaddr_obio[zs],2);
 }
 
 /*
@@ -326,6 +342,44 @@ zs_reset(zc, inten, speed)
 	zs_loadchannelregs(zc, reg);
 }
 
+
+/* This is only called when the EEPROM says the console is ttyA or ttyB */
+int
+zscnprobe(struct consdev *cn)
+{
+	int maj, unit = minor(cn->cn_dev);
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == zsopen)
+			break;
+	if (maj >= nchrdev) {
+		cn->cn_pri = CN_DEAD;
+		return 0;
+	}
+
+	/* initialize required fields */
+#if 0 /* XXX - Not yet. */
+	cn->cn_dev = makedev(maj, unit);
+	cn->cn_pri = CN_REMOTE;
+#else
+	cn->cn_pri = CN_DEAD;
+	/* XXX - See below... */
+#endif
+	return (0);
+}
+
+/* Attach as console.  Also set zs_conschan */
+int
+zscninit(struct consdev *cn)
+{
+	int unit = minor(cn->cn_dev);
+
+	/* XXX - We need a way to find a VA for the device. */
+	/* zs_conschan = zsaddr[unit]; */
+}
+
+
 #if 0
 /*
  * Declare the given tty (which is in fact &cons) as a console input
@@ -353,7 +407,7 @@ zsconsole(tp, unit, out, fnstop)
 		zs_consout = unit;
 		zs = unit >> 1;
 		if ((addr = zsaddr[zs]) == NULL)
-			addr = zsaddr[zs];
+			addr = zsaddr[zs] = findzs(zs);
 		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[CHAN_A] :
 		    &addr->zs_chan[CHAN_B];
 		v_putc = zscnputc;
@@ -365,35 +419,48 @@ zsconsole(tp, unit, out, fnstop)
 }
 #endif
 
-#if 0
+/*
+ * Polled console input putchar.
+ */
+int
+zscngetc()
+{
+	register volatile struct zschan *zc = zs_conschan;
+	register int s, c;
+
+	if (zc == NULL)
+		return (0);
+
+	s = splhigh();
+	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
+		zs_delay();
+	c = zc->zc_data;
+	splx(s);
+	return (c);
+}
 
 /*
  * Polled console output putchar.
  */
-static int
+int
 zscnputc(c)
 	int c;
 {
 	register volatile struct zschan *zc = zs_conschan;
 	register int s;
 
+	if (zc == NULL)
+		return (0);
+
 	if (c == '\n')
 		zscnputc('\r');
-	/*
-	 * Must block output interrupts (i.e., raise to >= splzs) without
-	 * lowering current ipl.  Need a better way.
-	 */
 	s = splhigh();
-#ifdef sun4c		/* XXX */
-	if (s <= (12 << 8))
-		(void) splzs();
-#endif
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
-		continue;
+		zs_delay();
 	zc->zc_data = c;
 	splx(s);
 }
-#endif
+
 /*
  * Set up the given unit as console input, output, both, or neither, as
  * needed.  Return console tty if it is to receive console input.
@@ -468,25 +535,11 @@ zs_getspeed(zc)
 {
 	register int tconst;
 
-	printf("first line of zs_getspeed\n");
-	pte_print(get_pte(zc));
 	tconst = ZS_READ(zc, 12);
-	printf("second line of zs_getspeed\n");
 	tconst |= ZS_READ(zc, 13) << 8;
-	printf("third line of zs_getspeed\n");
 	return (TCONST_TO_BPS(PCLK / 16, tconst));
 }
 
-
-int cpuspeed = 50;
-
-int zsdelay(arg)
-     int arg;
-{
-    DELAY(100);
-    return 0;
-}
-	    
 
 /*
  * Do an internal open.
@@ -526,11 +579,14 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct zsinfo *zi;
 	int unit = minor(dev), zs = unit >> 1, error, s;
 
+#ifdef	DEBUG
 	printf("zs_open\n");
+#endif
 	if (zs >= zscd.cd_ndevs || (zi = zscd.cd_devs[zs]) == NULL ||
 	    unit == ZS_KBD || unit == ZS_MOUSE)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
+	/* Prevent simultaneous use by console? */
 	if (cs->cs_consio)
 		return (ENXIO);		/* ??? */
 	tp = cs->cs_ttyp;
@@ -554,6 +610,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	for (;;) {
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, 1);
+		/* May never get status intr if carrier already on. -gwr */
+		if (cs->cs_zc->zc_csr & ZSRR0_DCD)
+			tp->t_state |= TS_CARR_ON;
 		if (cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
 		if (flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
@@ -645,7 +704,9 @@ zshard(int intrarg)
 	static int zsrint(struct zs_chanstate *, volatile struct zschan *);
 	static int zsxint(struct zs_chanstate *, volatile struct zschan *);
 	static int zssint(struct zs_chanstate *, volatile struct zschan *);
+#ifdef	DEBUG
 	printf("zshard\n");
+#endif
 
 	for (a = zslist; a != NULL; a = b->cs_next) {
 		rr3 = ZS_READ(a->cs_zc, 3);
@@ -688,7 +749,7 @@ zshard(int intrarg)
 	}
 #undef b
 	if (intflags & 1) {
-	    isr_soft_request(2);
+	    isr_soft_request(ZSSOFT_PRI);
 	}
 	return (intflags & 2);
 }
@@ -798,6 +859,7 @@ zsabort()
 {
 
 	printf("stopping on keyboard abort\n");
+	sun3_stop();
 }
 
 #ifdef KGDB
@@ -839,7 +901,12 @@ zssoft(int arg)
 	register struct tty *tp;
 	register int get, n, c, cc, unit, s;
 
+#ifdef	DEBUG
 	printf("zssoft\n");
+#endif
+
+	isr_soft_clear(ZSSOFT_PRI);
+
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
 		get = cs->cs_rbget;
 again:
@@ -957,10 +1024,10 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int error;
 
-	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag);
+	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1002,6 +1069,10 @@ zsstart(register struct tty *tp)
 
 	cs = &zi->zi_cs[unit & 1];
 	s = spltty();
+
+#ifdef	DEBUG
+	printf("zsstart\n");
+#endif
 
 	/*
 	 * If currently active or delaying, no need to do anything.
@@ -1237,6 +1308,44 @@ zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
 	ZS_WRITE(zc, 5, reg[5]);
 }
 
+/* XXX - Tune this... -gwr */
+int cpuspeed = 50;
+
+static void
+zs_delay()
+{
+	int n = cpuspeed;
+	while (n--) {
+		nullop();		/* foil optimizer */
+	}
+}
+
+static u_char
+zs_read(zc, reg)
+	volatile struct zschan *zc;
+	u_char reg;
+{
+	u_char val;
+
+	zc->zc_csr = reg;
+	zs_delay();
+	val = zc->zc_csr;
+	zs_delay();
+	return val;
+}
+
+static u_char
+zs_write(zc, reg, val)
+	volatile struct zschan *zc;
+	u_char reg, val;
+{
+	zc->zc_csr = reg;
+	zs_delay();
+	zc->zc_csr = val;
+	zs_delay();
+	return val;
+}
+
 #ifdef KGDB
 /*
  * Get a character from the given kgdb channel.  Called at splhigh().
@@ -1297,45 +1406,3 @@ zs_kgdb_init()
 	kgdb_attach(zs_kgdb_getc, zs_kgdb_putc, (void *)zc);
 }
 #endif /* KGDB */
-
-/*
- * Console kernel output character routine.
- */
-zscnputc(dev, c)
-     dev_t dev;
-     int c;
-{
-    int s;
-
-    s = splhigh();
-    mon_putchar(c);
-    splx(s);
-}
-zscngetc(dev)
-     dev_t dev;
-{
-    mon_printf("not sure how to do zscngetc() yet\n");
-}
-
-zscnprobe(cp)
-     struct consdev *cp;
-{
-    int zsmajor;
-
-    /* locate the major number */
-    for (zsmajor = 0; zsmajor < nchrdev; zsmajor++)
-	if (cdevsw[zsmajor].d_open == zsopen)
-	    break;
-
-    cp->cn_dev = makedev(zsmajor, 0);
-    cp->cn_pri = CN_REMOTE;	/* will always exist but you don't
-				 * want to use it unless you have to
-				 */
-}
-
-zscninit(cp)
-     struct consdev *cp;
-{
-    cp->cn_tp = NULL;
-    mon_printf("zs console initialized\n");
-}
