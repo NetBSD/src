@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.228 2004/06/16 12:35:51 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.229 2004/06/19 06:20:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.228 2004/06/16 12:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.229 2004/06/19 06:20:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -239,9 +239,10 @@ getcleanvnode(p)
 	struct freelst *listhd;
 
 	LOCK_ASSERT(simple_lock_held(&vnode_free_list_slock));
-	if ((vp = TAILQ_FIRST(listhd = &vnode_free_list)) == NULL)
-		vp = TAILQ_FIRST(listhd = &vnode_hold_list);
-	for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
+
+	listhd = &vnode_free_list;
+try_nextlist:
+	TAILQ_FOREACH(vp, listhd, v_freelist) {
 		if (!simple_lock_try(&vp->v_interlock))
 			continue;
 		/*
@@ -258,6 +259,10 @@ getcleanvnode(p)
 	}
 
 	if (vp == NULLVP) {
+		if (listhd == &vnode_free_list) {
+			listhd = &vnode_hold_list;
+			goto try_nextlist;
+		}
 		simple_unlock(&vnode_free_list_slock);
 		return NULLVP;
 	}
