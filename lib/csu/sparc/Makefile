@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.2 1994/02/10 01:10:29 cgd Exp $
+#	$Id: Makefile,v 1.3 1994/03/03 14:27:34 pk Exp $
 
-CFLAGS+=	-DLIBC_SCCS
+CFLAGS+=	-DLIBC_SCCS -DDYNAMIC
 OBJS=		crt0.o gcrt0.o
 CLEANFILES+=	gmon.o moncrt0.o core a.out
 
