@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.19 1995/04/10 09:12:10 mycroft Exp $	*/
+/*	$NetBSD: grf.c,v 1.20 1995/04/23 16:20:49 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -267,6 +267,7 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCGSPRITEINF:
 	case GRFIOCGSPRITEMAX:
 	case GRFIOCBITBLT:
+    	case GRFIOCSETMON:
 	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
                      Amiga. 15/11/94 ill */
 		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));
