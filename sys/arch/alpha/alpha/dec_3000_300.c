@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.24 1999/02/26 03:57:10 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.25 1999/03/28 13:48:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.24 1999/02/26 03:57:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.25 1999/03/28 13:48:40 drochner Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.24 1999/02/26 03:57:10 thorpej Ex
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include "wsdisplay.h"
 
 void dec_3000_300_init __P((void));
 static void dec_3000_300_cons_init __P((void));
@@ -98,11 +100,13 @@ dec_3000_300_cons_init()
 
 	switch (ctb->ctb_term_type) {
 	case CTB_GRAPHICS:
+#if NWSDISPLAY > 0
 		/* display console ... */
 		if (zs_ioasic_lk201_cnattach(0x1a0000000, 0x00180000, 0)
 		    && tc_3000_300_fb_cnattach(ctb->ctb_turboslot)) {
 			break;
 		}
+#endif
 		printf("consinit: Unable to init console on keyboard and ");
 		printf("TURBOchannel slot 0x%lx.\n", ctb->ctb_turboslot);
 		printf("Using serial console.\n");
