@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.55 2003/09/13 13:54:30 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.56 2003/09/13 14:45:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -126,6 +126,11 @@ struct	sigaction13 {
 #endif /* _KERNEL */
 
 #include <sys/siginfo.h>
+
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#include <sys/ucontext.h>
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 /*
  * Signal vector "template" used in sigaction call.
