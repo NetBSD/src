@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.40 2004/02/13 11:36:14 wiz Exp $	*/
+/*	$NetBSD: segments.h,v 1.41 2004/03/05 11:33:27 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,11 +86,11 @@
  */
 
 #define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#define	SEL_KPL		0		/* kernel privilege level */	
-#define	SEL_UPL		3		/* user privilege level */	
+#define	SEL_KPL		0		/* kernel privilege level */
+#define	SEL_UPL		3		/* user privilege level */
 #define	SEL_RPL		3		/* requester's privilege level mask */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
-#define	SEL_LDT		4		/* local descriptor table */	
+#define	SEL_LDT		4		/* local descriptor table */
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
@@ -260,9 +260,9 @@ void idt_vec_free(int);
  * bioscall/biostramp.inc, as that relies on GBIOSCODE/GBIOSDATA and a
  * normal kernel build does not rebuild it (it's merely included whole-
  * sale from i386/bioscall.s)
- * 
- * Also, note that the GEXTBIOSDATA_SEL selector is special, as it maps 
- * to the value 0x0040 (when created as a KPL global selector).  Some 
+ *
+ * Also, note that the GEXTBIOSDATA_SEL selector is special, as it maps
+ * to the value 0x0040 (when created as a KPL global selector).  Some
  * BIOSes reference the extended BIOS data area at segment 0040 in a non
  * relocatable fashion (even when in protected mode); mapping the zero page
  * via the GEXTBIOSDATA_SEL allows these buggy BIOSes to continue to work
