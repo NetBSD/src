@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.6 2000/06/26 14:21:08 mrg Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.7 2000/06/28 15:39:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -41,8 +41,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 

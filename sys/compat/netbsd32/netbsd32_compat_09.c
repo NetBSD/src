@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.4 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.5 2000/06/28 15:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/syscallargs.h>
 
 #include <sys/time.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <compat/netbsd32/netbsd32.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.2 2000/04/11 04:37:48 chs Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.3 2000/06/28 15:39:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,7 +37,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 /*
  * exec_aout_prep_oldzmagic():
