@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.29 2003/03/12 00:19:21 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.30 2003/04/28 14:43:32 fvdl Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.29 2003/03/12 00:19:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.30 2003/04/28 14:43:32 fvdl Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -2822,7 +2822,7 @@ rgb_vbi_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 			    if (bktr->y != bktr->y2) {
 				split(bktr, (volatile u_long **) &dma_prog,
 				      bktr->y2 - bktr->y, OP_WRITE,
-				      Bpp, (volatile u_char **) &target, cols);
+				      Bpp, (volatile u_char **) (uintptr_t)&target, cols);
 			    }
 			    if (bktr->yclip != bktr->yclip2) {
 				split(bktr,(volatile u_long **) &dma_prog,
