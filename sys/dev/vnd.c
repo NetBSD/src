@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.41 1997/06/23 21:03:55 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.42 1997/06/26 04:06:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -303,8 +303,6 @@ vndclose(dev, flags, mode, p)
 
 /*
  * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
- * Note that this driver can only be used for swapping over NFS on the hp
- * since nfs_strategy on the vax cannot handle u-areas and page tables.
  */
 void
 vndstrategy(bp)
