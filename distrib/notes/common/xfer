@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.24.2.10 2002/09/01 23:44:03 lukem Exp $
+.\"	$NetBSD: xfer,v 1.24.2.11 2004/11/11 23:38:42 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -535,11 +535,6 @@ partition, you need to get the
 distribution sets you wish to install on your system on to an
 .Tn AmigaDOS
 partition.
-All of the
-.Pa set_name.xx
-pieces can be placed in a single directory instead of separate ones for each
-distribution set.
-This will also simplify the installation work later on.
 .Pp
 Note where you place the files as you will need this later.
 .Pp
