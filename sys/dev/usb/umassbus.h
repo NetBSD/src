@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.h,v 1.3 2001/05/14 20:35:29 bouyer Exp $	*/
+/*	$NetBSD: umassbus.h,v 1.4 2001/12/02 22:44:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,10 +63,6 @@
 struct umass_softc;
 
 struct umassbus_softc {
-	struct {
-		struct ata_atapi_attach sc_aa;
-		struct ata_drive_datas  sc_aa_drive;
-	} aa;
 	struct atapi_adapter	sc_atapi_adapter;
 #define sc_adapter sc_atapi_adapter._generic
 	struct scsipi_channel sc_channel;
