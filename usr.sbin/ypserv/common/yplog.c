@@ -1,4 +1,4 @@
-/*	$NetBSD: yplog.c,v 1.4 1997/10/13 03:42:32 lukem Exp $	*/
+/*	$NetBSD: yplog.c,v 1.5 1998/06/24 10:26:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yplog.c,v 1.4 1997/10/13 03:42:32 lukem Exp $");
+__RCSID("$NetBSD: yplog.c,v 1.5 1998/06/24 10:26:08 kleink Exp $");
 #endif
 
 /*
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: yplog.c,v 1.4 1997/10/13 03:42:32 lukem Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 #if __STDC__
