@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.87 2003/01/25 18:12:33 tron Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.88 2003/01/25 23:00:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.87 2003/01/25 18:12:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.88 2003/01/25 23:00:09 kleink Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1461,7 +1461,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 					if ((*bpp)->b_vp == fs->lfs_ivnode &&
 					    bpp != fs->lfs_sp->bpp) {
 						/* Inode block */
-						printf("block 0x%x: ", (*bpp)->b_blkno);
+						printf("block 0x%" PRIx64 ": ",
+						    (*bpp)->b_blkno);
 						dp = (struct dinode *)(*bpp)->b_data;
 						for (i = 0; i < INOPB(fs); i++)
 							if (dp[i].di_u.inumber)
