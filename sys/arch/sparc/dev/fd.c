@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1995/04/25 14:44:44 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 1995/05/16 17:02:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -421,8 +421,7 @@ fdmatch(parent, match, aux)
 			delay(100000);
 			if (out_fdc(fdc, NE7CMD_SENSEI))
 				break;
-			fdcresult(fdc);
-			if (n == 1 && fdc->sc_status[0] == 0x80)
+			if (fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x80)
 				/*
 				 * Got `invalid command'; we interpret it
 				 * to mean that the re-calibrate hasn't in
