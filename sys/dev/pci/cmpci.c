@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.1 2000/04/30 21:59:58 augustss Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.2 2000/04/30 22:16:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #else
 #define DPRINTF(x)
 #endif
-
-#include "mpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,14 +337,14 @@ cmpci_attach(parent, self, aux)
 		break;
 	}
 
-    /* map I/O space */
+	/* map I/O space */
 	if (pci_mapreg_map(pa, CMPCI_PCI_IOBASEREG, PCI_MAPREG_TYPE_IO, 0,
                 &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		printf("%s: failed to map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
-    /* interrupt */
+	/* interrupt */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
                 pa->pa_intrline, &ih)) {
 		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
