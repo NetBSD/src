@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.55 1996/01/31 05:13:33 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.56 1996/02/01 00:41:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -373,17 +373,17 @@ nfs_open(ap)
 			np->n_direofoffset = 0;
 			if (error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p))
 				return (error);
-			np->n_mtime = vattr.va_mtime.ts_sec;
+			np->n_mtime = vattr.va_mtime.tv_sec;
 		} else {
 			if (error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p))
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.ts_sec) {
+			if (np->n_mtime != vattr.va_mtime.tv_sec) {
 				np->n_direofoffset = 0;
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
 				(void) vnode_pager_uncache(vp);
-				np->n_mtime = vattr.va_mtime.ts_sec;
+				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
 	    }
@@ -494,8 +494,8 @@ nfs_setattr(ap)
 			return (EISDIR);
 		case VCHR:
 		case VBLK:
-			if (vap->va_mtime.ts_sec == VNOVAL &&
-			    vap->va_atime.ts_sec == VNOVAL &&
+			if (vap->va_mtime.tv_sec == VNOVAL &&
+			    vap->va_atime.tv_sec == VNOVAL &&
 			    vap->va_mode == (u_short)VNOVAL &&
 			    vap->va_uid == VNOVAL &&
 			    vap->va_gid == VNOVAL)
@@ -517,8 +517,8 @@ nfs_setattr(ap)
 			np->n_size = np->n_vattr.va_size = vap->va_size;
 			vnode_pager_setsize(vp, (u_long)np->n_size);
 		}
-	} else if ((vap->va_mtime.ts_sec != VNOVAL ||
-	    vap->va_atime.ts_sec != VNOVAL) && (np->n_flag & NMODIFIED)) {
+	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
+	    vap->va_atime.tv_sec != VNOVAL) && (np->n_flag & NMODIFIED)) {
 		error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
 		if (error == EINTR)
 			return (error);
@@ -649,7 +649,7 @@ nfs_lookup(ap)
 						goto cachehit;
 				}
 			   } else if (!VOP_GETATTR(vdp, &vattr, cnp->cn_cred, cnp->cn_proc) &&
-			       vattr.va_ctime.ts_sec == VTONFS(vdp)->n_ctime)
+			       vattr.va_ctime.tv_sec == VTONFS(vdp)->n_ctime)
 				goto cachehit;
 			   cache_purge(vdp);
 			}
@@ -749,7 +749,7 @@ nfsmout:
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
 		if ((nmp->nm_flag & NFSMNT_NQNFS) == 0)
-			np->n_ctime = np->n_vattr.va_ctime.ts_sec;
+			np->n_ctime = np->n_vattr.va_ctime.tv_sec;
 		else if (nqlflag && reqtime > time.tv_sec)
 			nqnfs_clientlease(nmp, np, nqlflag, cachable, reqtime,
 				frev);
@@ -928,7 +928,7 @@ nfs_writerpc(vp, uiop, cred, ioflags)
 		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp, cred);
 		nfsm_loadattr(vp, (struct vattr *)0);
 		if (nmp->nm_flag & NFSMNT_MYWRITE)
-			VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.ts_sec;
+			VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.tv_sec;
 		else if ((nmp->nm_flag & NFSMNT_NQNFS) &&
 			 NQNFS_CKCACHABLE(vp, NQL_WRITE)) {
 			nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
@@ -1583,7 +1583,7 @@ nfs_readdir(ap)
 				return (0);
 			}
 		} else if (VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
-			np->n_mtime == vattr.va_mtime.ts_sec) {
+			np->n_mtime == vattr.va_mtime.tv_sec) {
 			nfsstats.direofcache_hits++;
 			return (0);
 		}
@@ -2465,13 +2465,13 @@ nfsspec_close(ap)
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			VATTR_NULL(&vattr);
 			if (np->n_flag & NACC) {
-				vattr.va_atime.ts_sec = np->n_atim.tv_sec;
-				vattr.va_atime.ts_nsec =
+				vattr.va_atime.tv_sec = np->n_atim.tv_sec;
+				vattr.va_atime.tv_nsec =
 				    np->n_atim.tv_usec * 1000;
 			}
 			if (np->n_flag & NUPD) {
-				vattr.va_mtime.ts_sec = np->n_mtim.tv_sec;
-				vattr.va_mtime.ts_nsec =
+				vattr.va_mtime.tv_sec = np->n_mtim.tv_sec;
+				vattr.va_mtime.tv_nsec =
 				    np->n_mtim.tv_usec * 1000;
 			}
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred, ap->a_p);
@@ -2556,13 +2556,13 @@ nfsfifo_close(ap)
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			VATTR_NULL(&vattr);
 			if (np->n_flag & NACC) {
-				vattr.va_atime.ts_sec = np->n_atim.tv_sec;
-				vattr.va_atime.ts_nsec =
+				vattr.va_atime.tv_sec = np->n_atim.tv_sec;
+				vattr.va_atime.tv_nsec =
 				    np->n_atim.tv_usec * 1000;
 			}
 			if (np->n_flag & NUPD) {
-				vattr.va_mtime.ts_sec = np->n_mtim.tv_sec;
-				vattr.va_mtime.ts_nsec =
+				vattr.va_mtime.tv_sec = np->n_mtim.tv_sec;
+				vattr.va_mtime.tv_nsec =
 				    np->n_mtim.tv_usec * 1000;
 			}
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred, ap->a_p);
