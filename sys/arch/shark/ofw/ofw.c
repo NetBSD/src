@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.29 2003/05/21 22:48:24 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.30 2003/05/22 05:47:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,6 +83,11 @@
 #define	KERNEL_IO_PTS		4
 
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+/*
+ * The range 0xf1000000 - 0xf6ffffff is available for kernel VM space
+ * OFW sits at 0xf7000000
+ */
+#define	KERNEL_VM_SIZE		0x06000000
 
 /*
  *  Imported variables

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.67 2003/05/21 22:48:23 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.68 2003/05/22 05:47:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -111,6 +111,7 @@
 /* Kernel text starts 256K in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00c00000)
+#define	KERNEL_VM_SIZE		0x05000000
 
 /*
  * Address to call from cpu_reset() to reset the machine.
