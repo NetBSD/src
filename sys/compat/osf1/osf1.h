@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.8 1999/04/27 18:38:07 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.9 1999/04/28 02:00:36 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -454,11 +454,19 @@ struct osf1_stat {
 };
 
 
+/* time.h */
+
+struct osf1_timezone {
+	osf1_int	tz_minuteswest;
+	osf1_int	tz_dsttime;
+};
+
+
 /* types.h */
 
-#define osf1_major(x)	((((dev_t)(x)) >> 20) & 0x00000fff)
-#define osf1_minor(x)	((((dev_t)(x)) >>  0) & 0x000fffff)
-#define osf1_makedev(x,y) ((((dev_t)(x)) << 20) | ((dev_t)(x)))
+#define osf1_major(x)		((((dev_t)(x)) >> 20) & 0x00000fff)
+#define osf1_minor(x)		((((dev_t)(x)) >>  0) & 0x000fffff)
+#define osf1_makedev(x,y)	((((dev_t)(x)) << 20) | ((dev_t)(x)))
 
 
 /* uio.h */
@@ -470,6 +478,19 @@ struct osf1_stat {
 struct osf1_iovec {
 	osf1_data_ptr	iov_base;
 	osf1_int	iov_len;
+};
+
+
+/* utsname.h */
+
+#define	OSF1__SYS_NMLN			32
+
+struct osf1_utsname {
+        char    sysname[OSF1__SYS_NMLN];
+        char    nodename[OSF1__SYS_NMLN];
+        char    release[OSF1__SYS_NMLN];
+        char    version[OSF1__SYS_NMLN];
+        char    machine[OSF1__SYS_NMLN];
 };
 
 #endif /* _COMPAT_OSF1_OSF1_H_ */
