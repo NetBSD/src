@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2003/10/23 08:30:21 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.160 2003/10/26 11:09:13 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2003/10/23 08:30:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2003/10/26 11:09:13 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3346,15 +3346,14 @@ pmap_tlb_shootnow(int32_t cpumask)
 				    (1U << ci->ci_cpuid));
 	}
 
-	while (self->ci_tlb_ipi_mask != 0)
+	while (self->ci_tlb_ipi_mask != 0) {
 #ifdef DIAGNOSTIC
 		if (count++ > 10000000)
 			panic("TLB IPI rendezvous failed (mask %x)",
 			    self->ci_tlb_ipi_mask);
-#else
-		x86_pause();
-		;
 #endif
+		x86_pause();
+	}
 #endif
 }
 
