@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.10 1995/12/05 03:09:19 jtc Exp $	*/
+/*	$NetBSD: dirent.h,v 1.11 1997/07/13 18:01:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -93,6 +93,7 @@ int closedir __P((DIR *));
 #ifndef _POSIX_SOURCE
 DIR *__opendir2 __P((const char *, int));
 long telldir __P((const DIR *));
+void __seekdir __P((DIR *, long));
 void seekdir __P((DIR *, long));
 int scandir __P((const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *)));
