@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.16 1997/08/11 22:53:33 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.17 1997/10/26 03:17:15 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -179,7 +179,7 @@ sn_nubus_attach(parent, self, aux)
 		break;
 	
 	case SN_VENDOR_APPLE16:
-		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_EXBUS |
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_EXBUS | 
 		    DCR_DMABLOCK | DCR_PO1 | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
 		sc->bitmode = 0; /* 16 bit card */
@@ -247,9 +247,9 @@ sn_nb_card_vendor(bst, bsh, na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		if (na->drhw == NUBUS_DRHW_APPLE_SN)
+		if (na->drhw == NUBUS_DRHW_APPLE_SNT)
 			vendor = SN_VENDOR_APPLE;
-		else if (na->drhw == NUBUS_DRHW_APPLE_SNT)
+		else if (na->drhw == NUBUS_DRHW_APPLE_SN)
 			vendor = SN_VENDOR_APPLE16;
 		break;
 	case NUBUS_DRSW_APPLE:
