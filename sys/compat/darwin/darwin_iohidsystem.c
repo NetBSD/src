@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.14 2003/09/14 09:48:42 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.15 2003/09/30 19:56:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.14 2003/09/14 09:48:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.15 2003/09/30 19:56:54 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -341,13 +341,7 @@ darwin_iohidsystem_thread(args)
 		if ((error = (*wsmux_cdevsw.d_read)(dev, &auio, 0)) != 0)
 			goto exit;
 
-		/* 
-		 * Send a, I/O notification 
-		 */
-		mr = darwin_iohidsystem_devclass.mid_notify;
-		if (mr != NULL)
-			mach_notify_iohidsystem(l, mr);
-
+		if ((error = (*wsmux_cdevsw.d_read)(dev, &auio, 0)) != 0)
 		diei = &evg->evg_evqueue[evg->evg_event_last];
 		while (diei->diei_sem != 0)
 			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
@@ -368,6 +362,27 @@ darwin_iohidsystem_thread(args)
 		evg->evg_event_tail++;
 		if (evg->evg_event_tail == DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN)
 			evg->evg_event_tail = 0;
+
+		/* 
+		 * Send a I/O notification if the process
+		 * has consumed all available entries
+		 */
+		if (evg->evg_event_last == evg->evg_event_head) {
+			mr = darwin_iohidsystem_devclass.mid_notify;
+			if (mr != NULL)
+				mach_notify_iohidsystem(l, mr);
+		}
+
+
+		/* 
+		 * If the queue is full, ie: the next event slot is not 
+		 * yet consumed, sleep until the process consumes it.
+		 */
+		diei = &evg->evg_evqueue[evg->evg_event_tail];
+		die = (darwin_iohidsystem_event *)&diei->diei_event;
+		while (die->die_type != 0)
+			tsleep((void *)&die->die_type, PZERO, "iohid_full", 1);
+
 	}
 
 exit:
@@ -495,6 +510,16 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 		hidevt->die_data.mouse.buttonid = wsevt->value;
 		break;
 
+	case WSCONS_EVENT_KEY_DOWN:
+		hidevt->die_type = DARWIN_NX_KEYDOWN;
+		hidevt->die_data.key.keycode = wsevt->value;
+		break;
+
+	case WSCONS_EVENT_KEY_UP:
+		hidevt->die_type = DARWIN_NX_KEYUP;
+		hidevt->die_data.key.keycode = wsevt->value;
+		break;
+		
 	default:
 
 #ifdef DEBUG_DARWIN
