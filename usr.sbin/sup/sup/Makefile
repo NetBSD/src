@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 1997/10/07 01:31:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/11/13 17:05:20 thorpej Exp $
 
 PROG=	sup
 
-SRCS=	supcmain.c supcvers.c supcparse.c supcname.c supcmisc.c supcmeat.c
+SRCS=	supcmain.c supcvers.c supcparse.c supcname.c supcmisc.c supcmeat.c \
+	read_line.c
 
 .PATH:	${.CURDIR}/../source
 
