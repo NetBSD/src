@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.15 1998/06/02 01:43:33 thorpej Exp $
+# $NetBSD: INSTALL,v 1.16 1998/06/05 17:03:07 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -21,6 +21,7 @@ options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+options 	DEC_550		# Miata:	Digital Personal Workstation
 
 # File systems
 file-system	FFS		# Fast file system
