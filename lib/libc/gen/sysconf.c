@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.6 1998/02/27 18:43:12 perry Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.7 1998/03/30 14:33:22 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.6 1998/02/27 18:43:12 perry Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.7 1998/03/30 14:33:22 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: sysconf.c,v 1.6 1998/02/27 18:43:12 perry Exp $");
 #include <sys/resource.h>
 
 #include <errno.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
