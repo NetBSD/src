@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.5 1999/12/31 14:28:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.5 1999/12/31 14:28:03 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,6 +74,7 @@ struct whatisstruct {
 };
 
 int              main (int, char **);
+char		*GetS(gzFile, char *, int);
 int		 manpagesection (char *);
 int		 addmanpage (manpage **, ino_t, char *);
 int		 addwhatis (whatis **, char *);
@@ -154,6 +155,18 @@ main(int argc,char **argv)
 		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
 
 	return EXIT_SUCCESS;
+}
+
+char
+*GetS(gzFile in, char *buffer, int length)
+
+{
+	char	*ptr;
+
+	if (((ptr = gzgets(in, buffer, length)) != NULL) && (*ptr == '\0'))
+		ptr = NULL;
+
+	return ptr;
 }
 
 int
@@ -285,7 +298,7 @@ parsecatpage(gzFile *in)
 	int	 size;
 
 	do {
-		if (gzgets(in, buffer, sizeof(buffer)) == NULL)
+		if (GetS(in, buffer, sizeof(buffer)) == NULL)
 			return NULL;
 	}
 	while (buffer[0] == '\n');
@@ -306,7 +319,7 @@ parsecatpage(gzFile *in)
 	}
 
 	for (;;) {
-		if (gzgets(in, buffer, sizeof(buffer)) == NULL) {
+		if (GetS(in, buffer, sizeof(buffer)) == NULL) {
 			free(section);
 			return NULL;
 		}
@@ -316,7 +329,7 @@ parsecatpage(gzFile *in)
 
 	ptr = last = buffer;
 	size = sizeof(buffer) - 1;
-	while ((size > 0) && (gzgets(in, ptr, size) != NULL)) {
+	while ((size > 0) && (GetS(in, ptr, size) != NULL)) {
 		int	 length;
 
 		catpreprocess(ptr);
@@ -409,7 +422,7 @@ parsemanpage(gzFile *in, int defaultsection)
 
 	section = NULL;
 	do {
-		if (gzgets(in, buffer, sizeof(buffer) - 1) == NULL) {
+		if (GetS(in, buffer, sizeof(buffer) - 1) == NULL) {
 			free(section);
 			return NULL;
 		}
@@ -438,7 +451,7 @@ parsemanpage(gzFile *in, int defaultsection)
 	} while ((strncasecmp(buffer, ".Sh NAME", 8) != 0));
 
 	do {
-		if (gzgets(in, buffer, sizeof(buffer) - 1) == NULL) {
+		if (GetS(in, buffer, sizeof(buffer) - 1) == NULL) {
 			free(section);
 			return NULL;
 		}
@@ -465,7 +478,7 @@ parsemanpage(gzFile *in, int defaultsection)
 			int	 more;
 
 			if ((sizeof(buffer) == offset) ||
-		            (gzgets(in, ptr, sizeof(buffer) - offset)
+		            (GetS(in, ptr, sizeof(buffer) - offset)
 			       == NULL)) {
 				free(section);
 				return NULL;
@@ -519,7 +532,7 @@ parsemanpage(gzFile *in, int defaultsection)
 				}
 				ptr = &buffer[offset];
 				if ((sizeof(buffer) == offset) ||
-			            (gzgets(in, ptr, sizeof(buffer) - offset)
+			            (GetS(in, ptr, sizeof(buffer) - offset)
 					== NULL)) {
 					free(section);
 					return NULL;
@@ -540,7 +553,7 @@ parsemanpage(gzFile *in, int defaultsection)
 				return NULL;
 			}
 			space++;
-			(void) memmove(buffer, space, strlen(space));
+			(void) memmove(buffer, space, strlen(space) + 1);
 		}
 
 		offset = strlen(buffer) + 1;
@@ -549,7 +562,7 @@ parsemanpage(gzFile *in, int defaultsection)
 
 			ptr = &buffer[offset];
 			if ((sizeof(buffer) == offset) ||
-		            (gzgets(in, ptr, sizeof(buffer) - offset)
+		            (GetS(in, ptr, sizeof(buffer) - offset)
 				== NULL)) {
 				free(section);
 				return NULL;
@@ -557,16 +570,19 @@ parsemanpage(gzFile *in, int defaultsection)
 			if (manpreprocess(ptr) || (*ptr == '\0'))
 				continue;
 
-			if (strncasecmp(ptr, ".Sh", 3) == 0)
+			if ((strncasecmp(ptr, ".Sh", 3) == 0) ||
+			    (strncasecmp(ptr, ".Ss", 3) == 0))
 				break;
 
 			if (*ptr == '.') {
 				char	*space;
 
-				if ((space = strchr(ptr, ' ')) == NULL)
+				if ((space = strchr(ptr, ' ')) == NULL) {
 					continue;
+				}
+
 				space++;
-				(void) memmove(ptr, space, strlen(space));
+				(void) memmove(ptr, space, strlen(space) + 1);
 			}
 
 			buffer[offset - 1] = ' ';
