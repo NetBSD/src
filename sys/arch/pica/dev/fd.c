@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1996/03/17 01:42:12 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1996/03/27 10:03:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -177,7 +177,7 @@ struct fd_softc {
 int fdprobe __P((struct device *, void *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach fd_cd = {
+struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach
 };
 
