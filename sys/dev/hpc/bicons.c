@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.1 2001/02/09 19:43:23 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.2 2001/02/09 20:42:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -132,6 +132,13 @@ static void clear(int, int);
 static void scroll(int, int, int);
 static void bicons_puts(char *);
 static void bicons_printf(const char *, ...) __attribute__((__unused__));
+
+void
+bicons_init(struct consdev *cndev)
+{
+	biconscninit(cndev);
+	biconscnprobe(cndev);
+}
 
 void
 biconscninit(struct consdev *cndev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.h,v 1.1 2001/02/09 19:43:23 uch Exp $	*/
+/*	$NetBSD: bicons.h,v 1.2 2001/02/09 20:42:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,5 +34,6 @@
  *
  */
 
+void bicons_init(struct consdev *);
 void bicons_set_priority(int);
 void bicons_putn(const char *, int);
