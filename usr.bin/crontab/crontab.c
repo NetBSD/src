@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/usr.bin/crontab/Attic/crontab.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/usr.bin/crontab/Attic/crontab.c,v 1.2 1993/03/28 17:27:09 glass Exp $";
 #endif
 
 /* Revision 1.5  87/05/02  17:33:22  paul
@@ -71,7 +71,7 @@ extern void	log_it();
 static char	*Options[] = {"???", "list", "delete", "replace"};
 #endif
 
-static void
+void
 usage()
 {
 	fprintf(stderr, "usage:  %s [-u user] ...\n", ProgramName);
@@ -86,8 +86,8 @@ main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
-	void	parse_args(), set_cron_uid(), set_cron_cwd(),
-		list_cmd(), delete_cmd(), replace_cmd();
+        void parse_args(), set_cron_uid(), set_cron_cwd(),
+             list_cmd(), delete_cmd(), replace_cmd();
 
 	Pid = getpid();
 	ProgramName = argv[0];
@@ -117,7 +117,7 @@ main(argc, argv)
 }
 	
 
-static void
+ void
 parse_args(argc, argv)
 	int	argc;
 	char	*argv[];
@@ -219,7 +219,7 @@ parse_args(argc, argv)
 }
 
 
-static void
+ void
 list_cmd()
 {
 	extern	errno;
@@ -247,7 +247,7 @@ list_cmd()
 }
 
 
-static void
+ void
 delete_cmd()
 {
 	extern	errno;
@@ -269,7 +269,7 @@ delete_cmd()
 }
 
 
-static void
+ void
 check_error(msg)
 	char	*msg;
 {
@@ -278,10 +278,9 @@ check_error(msg)
 }
 
 
-static void
+ void
 replace_cmd()
 {
-	char	*sprintf();
 	entry	*load_entry();
 	int	load_env();
 	int	unlink();
@@ -318,7 +317,7 @@ replace_cmd()
 	fflush(tmp);  rewind(tmp);
 
 	if (ferror(tmp)) {
-		fprintf("%s: error while writing new crontab to %s\n",
+		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, tn);
 		fclose(tmp);  unlink(tn);
 		exit(ERROR_EXIT);
@@ -383,7 +382,7 @@ replace_cmd()
 }
 
 
-static void
+ void
 poke_daemon()
 {
 #if defined(BSD)
