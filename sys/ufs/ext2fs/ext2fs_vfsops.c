@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.18 1998/09/13 15:14:40 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.19 1998/09/29 10:24:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -113,12 +113,7 @@ extern u_long ext2gennumber;
 void
 ext2fs_init()
 {
-	static int done = 0;
-
-	if (done)
-		return;
-	done = 1;
-	ufs_ihashinit();
+	ufs_init();
 
 	/*
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
