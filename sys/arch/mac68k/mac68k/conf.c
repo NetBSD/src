@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.5 1994/06/26 13:12:41 briggs Exp $
+ *	$Id: conf.c,v 1.6 1994/07/08 07:57:50 lkestel Exp $
  */
 /*
    ALICE
@@ -209,7 +209,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	(dev_type_map((*))) enodev, 0 }
 
 cdev_decl(no);			/* dummy declarations */
-
+cdev_decl(ite);
 cdev_decl(con);
 /* 06/02/92,23:17:34 BG -- this will be LAK's console driver, if I understand */
 /*  the difference between cn and ctty correctly. */
@@ -282,13 +282,14 @@ cdev_decl(grf);
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	dev_init(c,n,select), dev_init(c,n,map), 0 }
 
-cdev_decl(kbd);
+/* ADB driver */
+cdev_decl(adb);
 /* open, close, read, ioctl, select, map -- XXX should be a map device */
-#define	cdev_kbd_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
+#define	cdev_adb_init(n) { \
+	dev_init(1,n,open), dev_init(1,n,close), dev_init(1,n,read), \
+	(dev_type_write((*))) nullop, dev_init(1,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	dev_init(c,n,select), dev_init(c,n,map), 0 }
+	dev_init(1,n,select), (dev_type_reset((*))) nullop, 0 }
 
 /* 06/02/92,23:21:56 BG -- this was dcm, we will make it ser (serial ports) */
 #define NSER 2
@@ -335,7 +336,7 @@ cdev_decl(bpf);
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_con_init(9,con),		/* 0: virtual console */
+	cdev_tty_init(1,ite),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
@@ -351,7 +352,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 13: scsi disk */
 	cdev_tape_init(NST,st),		/* 14: scsi tape */
 	cdev_tape_init(NCD,cd),		/* 15: scsi compact disc */
-	cdev_kbd_init(0,kbd),		/* 16: ADB keyboard -- BG -- BARF*/
+	cdev_notdef(),			/* 16: nothing */
 /*	cdev_disk_init(NCH,ch),		 17: scsi changer device */
 	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
@@ -359,6 +360,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
+	cdev_adb_init(adb),		/* 23: ADB event interface */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
