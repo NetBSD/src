@@ -21,7 +21,7 @@ described using the following grammar in BNF:
 filter-rule = [ insert ] action in-out [ options ] [ match ] [ keep ]
 
 insert	= "@" decnumber .
-action	= block | "pass" | log | "count" | call .
+action	= block | "pass" | log | "count" | skip | "auth" | "preauth" | call .
 in-out	= "in" | "out" .
 options	= [ log ] [ "quick" ] [ "on" interface-name [ dup ] [ froute ] ] .
 match	= [ tos ] [ ttl ] [ proto ] [ ip ] .
@@ -30,6 +30,7 @@ keep  	= "keep state" | "keep frags" .
 block	= "block" [ "return-icmp"[return-code] | "return-rst" ] .
 log   	= "log" [ "body" ] [ "first" ] [ "or-block" ] .
 call  	= "call" [ "now" ] function-name .
+skip	= "skip" decnumber .
 
 dup   	= "dup-to" interface-name[":"ipaddr] .
 froute	= "fastroute" | "to" interface-name .

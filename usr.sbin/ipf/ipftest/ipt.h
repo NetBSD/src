@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.h,v 1.1.1.4 1997/05/27 22:17:12 thorpej Exp $	*/
+/*	$NetBSD: ipt.h,v 1.1.1.5 1997/07/05 05:13:02 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -6,7 +6,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
- * Id: ipt.h,v 2.0.2.6 1997/04/30 13:49:22 darrenr Exp 
+ * $Id: ipt.h,v 1.1.1.5 1997/07/05 05:13:02 darrenr Exp $
  */
 
 #ifndef	__IPT_H__

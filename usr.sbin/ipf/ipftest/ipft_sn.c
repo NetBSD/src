@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_sn.c,v 1.1.1.4 1997/05/27 22:17:03 thorpej Exp $	*/
+/*	$NetBSD: ipft_sn.c,v 1.1.1.5 1997/07/05 05:12:47 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -37,7 +37,7 @@
 #include "snoop.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ipft_sn.c,v 2.0.2.4 1997/04/30 13:55:10 darrenr Exp ";
+static	char	rcsid[] = "$Id: ipft_sn.c,v 1.1.1.5 1997/07/05 05:12:47 darrenr Exp $";
 #endif
 
 struct	llc	{
