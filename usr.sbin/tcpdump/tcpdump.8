@@ -1,4 +1,4 @@
-.\" $NetBSD: tcpdump.8,v 1.8 1998/08/17 17:51:54 msaitoh Exp $
+.\" $NetBSD: tcpdump.8,v 1.8.2.1 1999/10/11 05:39:16 cgd Exp $
 .\"
 .\" @(#) Header: tcpdump.1,v 1.67 97/06/30 16:31:50 leres Exp  (LBL)
 .\"
@@ -29,7 +29,7 @@ tcpdump \- dump traffic on a network
 .na
 .B tcpdump
 [
-.B \-adeflnNOpqStvx
+.B \-adeflnNOpqStvxX
 ] [
 .B \-c
 .I count
@@ -202,10 +202,18 @@ Print an unformatted timestamp on each dump line.
 .B \-v
 (Slightly more) verbose output.  For example, the time to live
 and type of service information in an IP packet is printed.
+Telnet options are printed.
 .TP
 .B \-vv
 Even more verbose output.  For example, additional fields are
 printed from NFS reply packets.
+.TP
+.B \-vvv
+Even more verbose output.  For example,
+telnet \fBSB\fP ... \fBSE\f options
+are printed in full.  With
+.B \-X
+telnet options are printed in hex as well.
 .TP
 .B \-w
 Write the raw packets to \fIfile\fR rather than parsing and printing
@@ -217,6 +225,16 @@ Print each packet (minus its link level header) in hex.
 The smaller of the entire packet or
 .I snaplen
 bytes will be printed.
+.TP
+.B \-X
+When printing hex, print ascii too.  Thus if
+.B \-x
+is also set, the packet is printed in hex/ascii.
+This is very handy for analysing new protocols.
+Even if
+.B \-x
+is not also set, some parts of some packets may be printed
+in hex/ascii.
 .IP "\fI expression\fP"
 .RS
 selects which packets will be dumped.  If no \fIexpression\fP
