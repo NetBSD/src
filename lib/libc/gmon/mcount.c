@@ -1,3 +1,5 @@
+/*	$NetBSD: mcount.c,v 1.3 1995/02/27 12:54:42 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if !defined(lint) && !defined(KERNEL) && defined(LIBC_SCCS)
-/* from: static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: mcount.c,v 1.2 1994/05/14 06:31:17 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: mcount.c,v 1.3 1995/02/27 12:54:42 cgd Exp $";
+#endif
 #endif
 
 #include <sys/param.h>

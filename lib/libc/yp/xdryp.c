@@ -1,3 +1,5 @@
+/*	$NetBSD: xdryp.c,v 1.8 1995/02/27 13:00:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: xdryp.c,v 1.7 1994/08/06 23:07:47 jtc Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.8 1995/02/27 13:00:45 cgd Exp $";
 #endif
 
 #include <sys/param.h>
