@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.18 1997/03/30 22:53:40 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.19 1997/04/06 07:53:11 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.18 1997/03/30 22:53:40 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.19 1997/04/06 07:53:11 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,6 +178,7 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 static void	 ack __P((char *));
 static void	 myoob __P((int));
 static int	 checkuser __P((char *, char *));
+static int	 checkaccess __P((char *));
 static FILE	*dataconn __P((char *, off_t, char *));
 static void	 dolog __P((struct sockaddr_in *));
 static char	*curdir __P((void));
@@ -417,8 +418,6 @@ void
 user(name)
 	char *name;
 {
-	char *cp, *shell;
-
 	if (logged_in) {
 		if (guest) {
 			reply(530, "Can't change user from guest login.");
@@ -432,8 +431,7 @@ user(name)
 
 	guest = 0;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
-		if (checkuser(_PATH_FTPUSERS, "ftp") ||
-		    checkuser(_PATH_FTPUSERS, "anonymous"))
+		if (checkaccess("ftp") || checkaccess("anonymous"))
 			reply(530, "User %s access denied.", name);
 		else if ((pw = sgetpwnam("ftp")) != NULL) {
 			guest = 1;
@@ -447,24 +445,7 @@ user(name)
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
 		return;
 	}
-	if (pw = sgetpwnam(name)) {
-		if ((shell = pw->pw_shell) == NULL || *shell == 0)
-			shell = _PATH_BSHELL;
-		while ((cp = getusershell()) != NULL)
-			if (strcmp(cp, shell) == 0)
-				break;
-		endusershell();
-
-		if (cp == NULL || checkuser(_PATH_FTPUSERS, name)) {
-			reply(530, "User %s access denied.", name);
-			if (logging)
-				syslog(LOG_NOTICE,
-				    "FTP LOGIN REFUSED FROM %s, %s",
-				    remotehost, name);
-			pw = (struct passwd *) NULL;
-			return;
-		}
-	}
+	pw = sgetpwnam(name);
 	if (logging)
 		strncpy(curname, name, sizeof(curname)-1);
 #ifdef SKEY
@@ -516,6 +497,61 @@ checkuser(fname, name)
 }
 
 /*
+ * Determine whether a user has access, based on information in 
+ * _PATH_FTPUSERS. The users are listed one per line, with `allow'
+ * or `deny' after the username. If anything other than `allow', or
+ * just nothing, is given after the username, `deny' is assumed.
+ *
+ * If the user is not found in the file, but the pseudo-user `*' is,
+ * the permission is taken from that line.
+ *
+ * This is probably not the best way to do this, but it preserves
+ * the old semantics where if a user was listed in the file he was
+ * denied, otherwise he was allowed.
+ *
+ * There is one change in the semantics, however; ftpd will now `fail
+ * safe' and deny all access if there's no /etc/ftpusers file.
+ *
+ * Return 1 if the user is denied, or 0 if he is allowed.
+ */
+static int
+checkaccess(name)
+	char *name;
+{
+#define ALLOWED		0
+#define	NOT_ALLOWED	1
+	FILE *fd;
+	int allowed = ALLOWED;
+	char *user, *perm, line[BUFSIZ];
+
+	if ((fd = fopen(_PATH_FTPUSERS, "r")) == NULL)
+		return NOT_ALLOWED;
+
+	while (fgets(line, sizeof(line), fd) != NULL)  {
+		user = strtok(line, " \t\n");
+		if (user[0] == '#')
+			continue;
+		perm = strtok(NULL, " \t\n");
+		if (strcmp(user, "*") == 0)  {
+			if (perm != NULL && strcmp(perm, "allow") == 0)
+				allowed = ALLOWED;
+			else
+				allowed = NOT_ALLOWED;
+		}
+		if (strcmp(user, name) == 0)  {
+			if (perm != NULL && strcmp(perm, "allow") == 0)
+				return ALLOWED;
+			else
+				return NOT_ALLOWED;
+		}
+	}
+	(void) fclose(fd);
+	return (allowed);
+}
+#undef	ALLOWED
+#undef	NOT_ALLOWED
+
+/*
  * Terminate login as previous user, if any, resetting state;
  * used when USER command is given or login fails.
  */
@@ -538,6 +574,7 @@ pass(passwd)
 {
 	int rval;
 	FILE *fd;
+	char *cp, *shell;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -591,6 +628,33 @@ skip:
 			return;
 		}
 	}
+
+	/* password was ok; see if anything else prevents login */
+	if (checkaccess(pw->pw_name))  {
+		reply(530, "User %s may not use FTP.", pw->pw_name);
+		if (logging)
+			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
+			    remotehost, pw->pw_name);
+		pw = (struct passwd *) NULL;
+		return;
+	}
+	/* check for valid shell, if not guest user */
+	if ((shell = pw->pw_shell) == NULL || *shell == 0)
+		shell = _PATH_BSHELL;
+	while ((cp = getusershell()) != NULL)
+		if (strcmp(cp, shell) == 0)
+			break;
+	endusershell();
+	if (cp == NULL && guest == 0) {
+		reply(530, "User %s may not use FTP.", pw->pw_name);
+		if (logging)
+			syslog(LOG_NOTICE,
+			    "FTP LOGIN REFUSED FROM %s, %s",
+			    remotehost, pw->pw_name);
+		pw = (struct passwd *) NULL;
+		return;
+	}
+
 	login_attempts = 0;		/* this time successful */
 	if (setegid((gid_t)pw->pw_gid) < 0) {
 		reply(550, "Can't set gid.");
