@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.9 2003/09/11 21:57:32 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.10 2003/11/27 16:32:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.9 2003/09/11 21:57:32 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.10 2003/11/27 16:32:09 cl Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -55,6 +55,15 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.9 2003/09/11 21:57:32 christos Exp $");
 
 static int td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp);
 static int td__getsync(td_proc_t *proc, caddr_t addr, td_sync_t **syncp);
+static int td__getstacksize(td_proc_t *proc);
+
+#ifndef PT_FIXEDSTACKSIZE_LG
+caddr_t	pt_stacksize_lg_addr = NULL;
+int	pt_stacksize_lg = -1;
+size_t	pt_stacksize;
+vaddr_t	pt_stackmask;
+#endif /* !PT_FIXEDSTACKSIZE_LG */
+
 
 int
 td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
@@ -524,6 +533,8 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 				ptm_owner),
 			    &taddr, sizeof(taddr))) != 0)
 				return val;
+			if ((val = td__getstacksize(s->proc)) != 0)
+				return val;
 			taddr = pthread__id(taddr);
 			td__getthread(s->proc, (void *)taddr, 
 			    &info->sync_data.mutex.owner);
@@ -773,6 +784,10 @@ td_map_lwp2thr(td_proc_t *proc, int lwp, td_thread_t **threadp)
 
 	PTHREAD_REG_TO_UCONTEXT(&uc, &gregs);
 
+	val = td__getstacksize(proc);
+	if (val != 0)
+		return val;
+
 	th = pthread__id(pthread__uc_sp(&uc));
 
 	val = READ(proc, th, &magic, sizeof(magic));
@@ -942,3 +957,26 @@ td_thr_tsd(td_thread_t *thread, pthread_key_t key, void **value)
 	return val;
 }
 
+
+static int
+td__getstacksize(td_proc_t *proc)
+{
+#ifndef PT_FIXEDSTACKSIZE_LG
+	int lg, val;
+
+	if (pt_stacksize_lg_addr == NULL) {
+		val = LOOKUP(proc, "pt_stacksize_lg", &pt_stacksize_lg_addr);
+		if (val != 0)
+			return val;
+	}
+	val = READ(proc, pt_stacksize_lg_addr, &lg, sizeof(int));
+	if (val != 0)
+		return val;
+	if (lg != pt_stacksize_lg) {
+		pt_stacksize_lg = lg;
+		pt_stacksize = (1 << pt_stacksize_lg);
+		pt_stackmask = pt_stacksize - 1;
+	}
+#endif /* !PT_FIXEDSTACKSIZE_LG */
+	return 0;
+}
