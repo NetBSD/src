@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.3 1997/01/14 04:17:25 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.4 1997/04/11 17:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: read.c,v 1.3 1997/01/14 04:17:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: read.c,v 1.4 1997/04/11 17:52:47 christos Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -92,13 +92,17 @@ read__fixio(fd, e)
 
 #ifdef EWOULDBLOCK
     case EWOULDBLOCK:
-# define TRY_AGAIN
+# ifndef TRY_AGAIN
+#  define TRY_AGAIN
+# endif
 #endif /* EWOULDBLOCK */
 
 #if defined(POSIX) && defined(EAGAIN)
 # if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
     case EAGAIN:
-#  define TRY_AGAIN
+#  ifndef TRY_AGAIN
+#   define TRY_AGAIN
+#  endif
 # endif /* EWOULDBLOCK && EWOULDBLOCK != EAGAIN */
 #endif /* POSIX && EAGAIN */
 
