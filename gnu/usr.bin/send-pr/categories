@@ -5,6 +5,7 @@ kern
 lib
 misc
 pkg
+port-acorn32
 port-algor
 port-alpha
 port-amiga
@@ -17,6 +18,7 @@ port-bebox
 port-cats
 port-cobalt
 port-dreamcast
+port-evbmips
 port-evbmips
 port-hp300
 port-hpcmips
@@ -34,9 +36,11 @@ port-newsmips
 port-next68k
 port-ofppc
 port-pc532
+port-playstation2
 port-pmax
 port-powerpc
 port-prep
+port-sbmips
 port-sbmips
 port-sgimips
 port-sh3
