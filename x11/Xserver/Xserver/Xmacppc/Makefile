@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/10 16:14:37 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/21 08:33:23 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	Xmacppc
+MKMAN=	no
 BINMODE=4711
-
-MAN=	Xmacppc.1
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc
 
