@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.16 2000/08/03 20:41:23 thorpej Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.17 2001/01/22 09:57:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 /*
  * The global list of vnode operations.
  */
-extern struct vnodeop_desc *vfs_op_descs[];
+extern const struct vnodeop_desc * const vfs_op_descs[];
 
 /*
  * These vnodeopv_descs are listed here because they are not
@@ -127,13 +127,13 @@ struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
  * extra level of indirection for arrays.  It's an interesting
  * "feature" of C.
  */
-int vfs_opv_numops;
-
 typedef int (*PFI) __P((void *));
 
-void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
-void vfs_opv_init_default __P((struct vnodeopv_desc *));
-void vfs_op_init __P((void));
+static void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
+static void vfs_opv_init_default __P((struct vnodeopv_desc *));
+#ifdef DEBUG
+static void vfs_op_check __P((void));
+#endif
 
 /*
  * A miscellaneous routine.
@@ -169,7 +169,7 @@ vn_default_error(v)
  * Init the vector, if it needs it.
  * Also handle backwards compatibility.
  */
-void
+static void
 vfs_opv_init_explicit(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
@@ -213,7 +213,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 	}
 }
 
-void
+static void
 vfs_opv_init_default(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
@@ -228,7 +228,7 @@ vfs_opv_init_default(vfs_opv_desc)
 	if (opv_desc_vector[VOFFSET(vop_default)] == NULL)
 		panic("vfs_opv_init: operation vector without default routine.");
 
-	for (j = 0; j < vfs_opv_numops; j++)
+	for (j = 0; j < VNODE_OPS_COUNT; j++)
 		if (opv_desc_vector[j] == NULL)
 			opv_desc_vector[j] = 
 			    opv_desc_vector[VOFFSET(vop_default)];
@@ -247,8 +247,8 @@ vfs_opv_init(vopvdpp)
 	for (i = 0; vopvdpp[i] != NULL; i++) {
 		/* XXX - shouldn't be M_VNODE */
 		opv_desc_vector =
-		    malloc(vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
-		memset(opv_desc_vector, 0, vfs_opv_numops * sizeof(PFI));
+		    malloc(VNODE_OPS_COUNT * sizeof(PFI), M_VNODE, M_WAITOK);
+		memset(opv_desc_vector, 0, VNODE_OPS_COUNT * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
 		    opv_desc_vector_p));
@@ -284,22 +284,30 @@ vfs_opv_free(vopvdpp)
 	}
 }
 
-void
-vfs_op_init()
+#ifdef DEBUG
+static void
+vfs_op_check()
 {
 	int i;
 
 	DODEBUG(printf("Vnode_interface_init.\n"));
+
 	/*
-	 * Figure out how many ops there are by counting the table,
-	 * and assign each its offset.
+	 * Check offset of each op.
 	 */
-	for (vfs_opv_numops = 0, i = 0; vfs_op_descs[i]; i++) {
-		vfs_op_descs[i]->vdesc_offset = vfs_opv_numops;
-		vfs_opv_numops++;
+	for (i = 0; vfs_op_descs[i]; i++) {
+		if (vfs_op_descs[i]->vdesc_offset != i)
+			panic("vfs_op_check: vfs_op_desc[] offset mismatch");
 	}
-	DODEBUG(printf ("vfs_opv_numops=%d\n", vfs_opv_numops));
+
+	if (i != VNODE_OPS_COUNT) {
+		panic("vfs_op_check: vnode ops count mismatch (%d != %d)",
+			i, VNODE_OPS_COUNT);
+	}
+
+	DODEBUG(printf ("vfs_opv_numops=%d\n", VNODE_OPS_COUNT));
 }
+#endif /* DEBUG */
 
 /*
  * Routines having to do with the management of the vnode table.
@@ -331,10 +339,12 @@ vfsinit()
 	 */
 	nchinit();
 
+#ifdef DEBUG
 	/*
-	 * Initialize the list of vnode operations.
+	 * Check the list of vnode operations.
 	 */
-	vfs_op_init();
+	vfs_op_check();
+#endif
 
 	/*
 	 * Initialize the special vnode operations.
