@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.3.2.2 1993/10/16 10:49:27 mycroft Exp $ */
+/* $Id: if_ppp.c,v 1.3.2.3 1993/10/27 01:42:19 mycroft Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -670,7 +670,10 @@ pppoutput(ifp, m0, dst)
 	goto bad;
     }
     IF_ENQUEUE(ifq, m0);
+#if 0
+    /* don't hang forever if we lose an interrupt */
     if (CCOUNT(&sc->sc_ttyp->t_outq) == 0)
+#endif
 	pppstart(sc->sc_ttyp);
     splx(s);
     return (0);
