@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.83 2004/03/15 22:43:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.84 2004/03/16 19:10:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -660,7 +660,7 @@ void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
 char   *scsipi_decode_sense __P((void *, int));
 #endif
-void	scsipi_print_cbd __P((struct scsipi_generic *cmd));
+void	scsipi_print_cdb __P((struct scsipi_generic *cmd));
 int	scsipi_thread_call_callback __P((struct scsipi_channel *,
 	    void (*callback) __P((struct scsipi_channel *, void *)),
 	    void *));
