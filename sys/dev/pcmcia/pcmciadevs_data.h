@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.124 2001/05/16 12:57:55 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.125 2001/05/17 13:15:47 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.124 2001/05/14 01:41:16 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.126 2001/05/17 13:14:19 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -303,6 +303,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "Intel EtherExpress PRO/100"	},
+	},
+	{
+	    PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
+	    PCMCIA_CIS_INTEL_PRO_WLAN_2011,
+	    0,
+	    "Intel",
+	    "Intel PRO/Wireless 2011 LAN PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
