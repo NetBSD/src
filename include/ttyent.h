@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.10 1998/07/27 11:14:37 mycroft Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.11 1999/01/15 18:47:48 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,9 +46,10 @@
 #define	_TTYS_ON	"on"
 #define	_TTYS_SECURE	"secure"
 #define	_TTYS_WINDOW	"window"
+#define	_TTYS_CLASS	"class"
 #define	_TTYS_LOCAL	"local"
 #define	_TTYS_RTSCTS	"rtscts"
-#define        _TTYS_DTRCTS    "dtrcts"
+#define	_TTYS_DTRCTS    "dtrcts"
 #define	_TTYS_SOFTCAR	"softcar"
 #define	_TTYS_MDMBUF	"mdmbuf"
 
@@ -66,6 +67,7 @@ struct ttyent {
 	int	ty_status;	/* status flags */
 	__aconst char *ty_window;/* command to start up window manager */
 	__aconst char *ty_comment;/* comment field */
+	__aconst char *ty_class;/* category of tty usage */
 };
 
 __BEGIN_DECLS
