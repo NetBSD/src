@@ -1,16 +1,16 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2002/03/18 01:21:13 simonb Exp $	*/
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#define _EVBMIPS_BUS_DMA_PRIVATE
+#define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 /*
  * PCI doesn't have any special needs; just use
  * the generic versions of these functions.
  */
-struct evbmips_bus_dma_tag pci_bus_dma_tag = {
+struct mips_bus_dma_tag pci_bus_dma_tag = {
 	NULL,	/* cookie */
 	0,	/* _wbase */
 	0,	/* _physbase */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.1 2002/03/07 14:44:02 simonb Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.2 2002/03/18 01:21:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/mbuf.h>
 
 #include <mips/cache.h>
-#define _EVBMIPS_BUS_DMA_PRIVATE
+#define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/locore.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2002/03/07 14:43:58 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2002/03/18 01:21:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2002/03/07 14:43:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2002/03/18 01:21:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2002/03/07 14:43:58 simonb Exp $");
 
 #include <mips/cache.h>
 
-#define _EVBMIPS_BUS_DMA_PRIVATE
+#define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/locore.h>
@@ -66,7 +66,7 @@ int
 _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct evbmips_bus_dmamap *map;
+	struct mips_bus_dmamap *map;
 	void *mapstore;
 	size_t mapsize;
 
@@ -82,14 +82,14 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct evbmips_bus_dmamap) +
+	mapsize = sizeof(struct mips_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
 	memset(mapstore, 0, mapsize);
-	map = (struct evbmips_bus_dmamap *)mapstore;
+	map = mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
@@ -263,7 +263,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 */
 		if (buf >= (void *)MIPS_KSEG1_START &&
 		    buf < (void *)MIPS_KSEG2_START)
-			map->_dm_flags |= EVBMIPS_DMAMAP_COHERENT;
+			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
 	}
 	return (error);
 }
@@ -391,7 +391,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	map->_dm_flags &= ~EVBMIPS_DMAMAP_COHERENT;
+	map->_dm_flags &= ~MIPS_DMAMAP_COHERENT;
 }
 
 /*
@@ -456,7 +456,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * If the mapping is of COHERENT DMA-safe memory, no cache
 	 * flush is necessary.
 	 */
-	if (map->_dm_flags & EVBMIPS_DMAMAP_COHERENT)
+	if (map->_dm_flags & MIPS_DMAMAP_COHERENT)
 		return;
 
 	/*
