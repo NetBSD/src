@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.49 2001/09/05 22:33:05 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.50 2001/10/06 20:34:51 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -274,7 +274,7 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 2,
+				isp_gbspeed	: 2,
 				isp_iid_set	: 1,
 				loop_seen_once	: 1,
 				isp_loopstate	: 4,	/* Current Loop State */
@@ -449,6 +449,8 @@ typedef struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
+#define	ISP_CFG_TWOGB		0x20	/* force 2GB connection (23XX only) */
+#define	ISP_CFG_ONEGB		0x10	/* force 1GB connection (23XX only) */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */

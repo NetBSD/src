@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.80 2001/09/05 23:05:20 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.81 2001/10/06 20:34:49 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -576,15 +576,22 @@ again:
 	ISP_RESET1(isp);
 
 	/*
-	 * Wait for everything to finish firing up...
+	 * Wait for everything to finish firing up.
+	 *
+	 * Avoid doing this on the 2312 because you can generate a PCI
+	 * parity error (chip breakage).
 	 */
-	loops = MBOX_DELAY_COUNT;
-	while (ISP_READ(isp, OUTMAILBOX0) == MBOX_BUSY) {
-		USEC_DELAY(100);
-		if (--loops < 0) {
-			isp_prt(isp, ISP_LOGERR,
-			    "MBOX_BUSY never cleared on reset");
-			return;
+	if (IS_2300(isp)) {
+		USEC_DELAY(5);
+	} else {
+		loops = MBOX_DELAY_COUNT;
+		while (ISP_READ(isp, OUTMAILBOX0) == MBOX_BUSY) {
+			USEC_DELAY(100);
+			if (--loops < 0) {
+				isp_prt(isp, ISP_LOGERR,
+				    "MBOX_BUSY never cleared on reset");
+				return;
+			}
 		}
 	}
 
@@ -1234,23 +1241,29 @@ isp_fibre_init(struct ispsoftc *isp)
 		 */
 		switch(isp->isp_confopts & ISP_CFG_PORT_PREF) {
 		case ISP_CFG_NPORT:
-			icbp->icb_xfwoptions = ICBXOPT_PTP_2_LOOP;
+			icbp->icb_xfwoptions |= ICBXOPT_PTP_2_LOOP;
 			break;
 		case ISP_CFG_NPORT_ONLY:
-			icbp->icb_xfwoptions = ICBXOPT_PTP_ONLY;
+			icbp->icb_xfwoptions |= ICBXOPT_PTP_ONLY;
 			break;
 		case ISP_CFG_LPORT_ONLY:
-			icbp->icb_xfwoptions = ICBXOPT_LOOP_ONLY;
+			icbp->icb_xfwoptions |= ICBXOPT_LOOP_ONLY;
 			break;
 		default:
-			icbp->icb_xfwoptions = ICBXOPT_LOOP_2_PTP;
+			icbp->icb_xfwoptions |= ICBXOPT_LOOP_2_PTP;
 			break;
 		}
 		if (IS_2300(isp)) {
 			if (isp->isp_revision < 2) {
 				icbp->icb_fwoptions &= ~ICBOPT_FAST_POST;
 			}
-			icbp->icb_xfwoptions |= ICBXOPT_RATE_AUTO;
+			if (isp->isp_confopts & ISP_CFG_ONEGB) {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_ONEGB;
+			} else if (isp->isp_confopts & ISP_CFG_TWOGB) {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_TWOGB;
+			} else {
+				icbp->icb_zfwoptions |= ICBZOPT_RATE_AUTO;
+			}
 		}
 	}
 
@@ -1609,6 +1622,20 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 not_on_fabric:
 		fcp->isp_onfabric = 0;
 		fcp->portdb[FL_PORT_ID].valid = 0;
+	}
+
+	fcp->isp_gbspeed = 1;
+	if (IS_2300(isp)) {
+		mbs.param[0] = MBOX_GET_SET_DATA_RATE;
+		mbs.param[1] = MBGSD_GET_RATE;
+		/* mbs.param[2] undefined if we're just getting rate */
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
+			if (mbs.param[1] == MBGSD_TWOGB) {
+				isp_prt(isp, ISP_LOGINFO, "2Gb link speed/s");
+				fcp->isp_gbspeed = 2;
+			}
+		}
 	}
 
 	isp_prt(isp, ISP_LOGINFO, topology, fcp->isp_loopid, fcp->isp_alpa,
@@ -4271,7 +4298,7 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x25: */
 	ISPOPMAP(0x00, 0x00),	/* 0x26: */
 	ISPOPMAP(0x00, 0x00),	/* 0x27: */
-	ISPOPMAP(0x01, 0x3),	/* 0x28: MBOX_GET_FIRMWARE_OPTIONS */
+	ISPOPMAP(0x01, 0x03),	/* 0x28: MBOX_GET_FIRMWARE_OPTIONS */
 	ISPOPMAP(0x03, 0x07),	/* 0x29: MBOX_GET_PORT_QUEUE_PARAMS */
 	ISPOPMAP(0x00, 0x00),	/* 0x2a: */
 	ISPOPMAP(0x00, 0x00),	/* 0x2b: */
@@ -4324,7 +4351,7 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x5a: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5b: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5c: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5d: */
+	ISPOPMAP(0x07, 0x03),	/* 0x5d: MBOX_GET_SET_DATA_RATE */
 	ISPOPMAP(0x00, 0x00),	/* 0x5e: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5f: */
 	ISPOPMAP(0xfd, 0x31),	/* 0x60: MBOX_INIT_FIRMWARE */
@@ -4455,7 +4482,7 @@ static char *fc_mbcmd_names[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	"GET/SET DATA RATE",
 	NULL,
 	NULL,
 	"INIT FIRMWARE",
