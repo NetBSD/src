@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.8 2003/08/31 22:40:48 fvdl Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.9 2003/10/23 15:06:26 he Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	ssize_t sz;
 	int first;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
-	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
+	paddr_t offset = marks[MARK_START], shpp, elfp = 0;
 
 	/* some ports dont use the offset */
 	offset = offset;
