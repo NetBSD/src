@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.15 2003/05/16 21:28:26 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.16 2003/05/27 15:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.15 2003/05/16 21:28:26 nathanw Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.16 2003/05/27 15:22:56 christos Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -333,6 +333,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	case PTHREAD_MUTEX_ERRORCHECK:
 		if (!weown)
 			return EPERM;
+		/*FALLTHROUGH*/
 	default:
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
