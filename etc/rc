@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.71 1997/03/12 19:21:26 mycroft Exp $
+#	$NetBSD: rc,v 1.72 1997/03/17 00:05:12 cjs Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -339,6 +339,13 @@ if [ "$rbootd_flags" != NO ] && [ -r /etc/rbootd.conf ]; then
 		rbootd_flags=""
 	fi
 	echo -n ' rbootd';		rbootd $rbootd_flags
+fi
+
+if [ "$mopd_flags" != NO ]; then
+	if [ "$mopd_flags" = DEFAULT ]; then
+		mopd_flags="-a"
+	fi
+	echo -n ' mopd';		mopd $mopd_flags
 fi
 
 if [ "$inetd_flags" != NO ] && [ -r /etc/inetd.conf ]; then
