@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.15 1999/02/28 14:09:15 fvdl Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.16 1999/03/25 00:20:35 sommerfe Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -320,8 +320,13 @@ lockmgr(lkp, flags, interlkp)
 			 *	Recursive lock.
 			 */
 			if ((extflags & LK_CANRECURSE) == 0 &&
-			     lkp->lk_recurselevel == 0)
-				panic("lockmgr: locking against myself");
+			     lkp->lk_recurselevel == 0) {
+				if (extflags & LK_RECURSEFAIL) {
+					error = EDEADLK;
+					break;
+				} else
+					panic("lockmgr: locking against myself");
+			}
 			lkp->lk_exclusivecount++;
 			if (extflags & LK_SETRECURSE &&
 			    lkp->lk_recurselevel == 0)
