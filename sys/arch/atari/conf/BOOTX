@@ -1,17 +1,20 @@
 #
-# $NetBSD: BOOTX,v 1.41 2002/06/17 05:25:18 lukem Exp $
+# $NetBSD: BOOTX,v 1.42 2002/09/18 02:20:50 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
+#		NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
+#		NetBSD: GENERIC.in,v 1.23 2002/09/18 02:19:19 lukem Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
 #Define 'INSTALL_KERNEL' or 'INSTALLX_KERNEL' to generate a BOOT or
 #BOOTX kernel respectively.
+
+#There is no possibility for physical network interfaces. Use the define
+#below to turn off vlan, pppoe, bridge  and NETATALK.
 
 #Generic atari
 
