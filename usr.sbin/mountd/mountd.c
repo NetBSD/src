@@ -1,7 +1,7 @@
-/* $NetBSD: mountd.c,v 1.60 2000/02/15 04:51:56 enami Exp $	 */
+/* $NetBSD: mountd.c,v 1.61 2000/02/16 01:27:14 dante Exp $	 */
 
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1993, 2000
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.60 2000/02/15 04:51:56 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.61 2000/02/16 01:27:14 dante Exp $");
 #endif
 #endif				/* not lint */
 
@@ -184,6 +184,7 @@ union mount_args {
 	struct adosfs_args aa;
 };
 
+
 /* Global defs */
 static char    *add_expdir __P((struct dirlist **, char *, int));
 static void add_dlist __P((struct dirlist **, struct dirlist *,
@@ -199,9 +200,9 @@ static int do_mount __P((const char *, size_t, struct exportlist *,
 static int do_opt __P((const char *, size_t, char **, char **,
     struct exportlist *, struct grouplist *, int *, int *, struct ucred *));
 static struct exportlist *ex_search __P((fsid_t *));
+static int mount_unexport __P((struct statfs *));
 static int mount_export __P((char *, int, struct statfs *,
     union mount_args *));
-static int mount_unexport __P((struct statfs *));
 static int parse_directory __P((const char *, size_t, struct grouplist *,
     int, char *, struct exportlist **, struct statfs *));
 static int parse_host_netgroup __P((const char *, size_t, struct exportlist *,
@@ -1035,9 +1036,10 @@ nextline:
 		if (ex_search(&fsp->f_fsid))
 			continue;
 
-		if (mount_unexport(fsp) == -1)
+		if (mount_unexport(fsp) == -1) {
 			syslog(LOG_ERR, "Can't delete exports for %s",
-			    fsp->f_mntonname);
+					fsp->f_mntonname);
+		}
 	}
 }
 
@@ -1688,6 +1690,12 @@ mount_unexport(fsp)
 	return (0);
 }
 
+
+#define	MNTD_EXPORTED	0
+#define MNTD_NO_PERM	1
+#define	MNTD_NO_REMOUNT	2
+#define	MNTD_UNSUCC	3
+
 static int
 mount_export(dirp, dirplen, fsb, mntargs)
 	char *dirp;
@@ -1695,11 +1703,9 @@ mount_export(dirp, dirplen, fsb, mntargs)
 	struct statfs *fsb;
 	union mount_args *mntargs;
 {
-	int error;
 	char *cp, savedc;
 
-	cp = dirp + dirplen;		/* First, cp points terminating NUL. */
-	savedc = *cp;
+	cp = NULL;		/* First, cp points terminating NUL. */
 
 	/*
 	 * XXX:
@@ -1708,34 +1714,35 @@ mount_export(dirp, dirplen, fsb, mntargs)
 	 * Also, needs to know how to export all types of local
 	 * exportable file systems and not just MOUNT_FFS.
 	 */
-	while ((error = mount(fsb->f_fstypename, dirp,
+	while ((mount(fsb->f_fstypename, dirp,
 	    fsb->f_flags | MNT_UPDATE, mntargs)) == -1) {
-		if (errno == EPERM ||
-		    (opt_flags & OP_ALLDIRS) != 0)
-			break;
+		if (cp)
+			*cp-- = savedc;
+		else
+			cp = dirp + dirplen - 1;
+		if (errno == EPERM) {
+			return(MNTD_NO_PERM);
+		}
+		if (opt_flags & OP_ALLDIRS) {
+			return(MNTD_NO_REMOUNT);
+		}
 
-		*cp-- = savedc;
-		/* back up over the last component. */
-		while (cp > dirp && *cp != '/')
+		/* back up over the last component */
+		while (*cp == '/' && cp > dirp)
 			cp--;
-		/* skip over the slashes except the very first one (root). */
-		while (cp > dirp && *cp == '/')
+		while (*(cp - 1) != '/' && cp > dirp)
 			cp--;
 		if (cp == dirp) {
 			if (debug)
 				(void)fprintf(stderr, "mnt unsucc\n");
-			errno = 0;	/* This is not a system error. XXX */
-			goto out;	/* Don't restore the savedc. */
+			fprintf(stderr, "3\n");
+			return (MNTD_UNSUCC);
 		}
-		/* Now, cp points the character just before a slash. */
-		savedc = *++cp;
+		savedc = *cp;
 		*cp = '\0';
 	}
 
-	*cp = savedc;
-
- out:
-	return (error);
+	return (MNTD_EXPORTED);
 }
 
 /*
@@ -1755,7 +1762,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	struct statfs *fsb;
 {
 	u_int32_t **addrp;
-	int done, saved_errno;
+	int done, error;
 	struct sockaddr_in sin, imask;
 	union mount_args args;
 	u_int32_t net;
@@ -1825,39 +1832,50 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			return (1);
 		};
 
-		if (mount_export(dirp, dirplen, fsb, &args) == -1) {
-			saved_errno = errno;
+		if((error = mount_export(dirp, dirplen, fsb, &args))
+				!= MNTD_EXPORTED) {
+			if(error == MNTD_NO_REMOUNT) {
+				syslog(LOG_ERR, "\"%s\", line %ld: "
+					"Could not remount %s: %m",
+					 line, (unsigned long)lineno, dirp);
+				return 1;
+			}
+
 			/*
 			 * It may be just some export options are modified.
 			 * Unexport and retry.
 			 */
-			if (mount_unexport(fsb) == -1 ||
-			    mount_export(dirp, dirplen, fsb, &args) == -1) {
-				errno = saved_errno;
-				if (errno == EPERM)
-					syslog(LOG_ERR,
-					    "\"%s\", line %ld: "
-					    "Can't change attributes for %s "
-					    "to %s",
-					    line, (unsigned long)lineno,
-					    dirp, (grp->gr_type == GT_HOST) ?
-					    grp->gr_ptr.gt_hostent->h_name :
-					    (grp->gr_type == GT_NET) ?
-					    grp->gr_ptr.gt_net.nt_name :
-					    "Unknown");
-				else if (errno != 0)
-					syslog(LOG_ERR,
-					    "\"%s\", line %ld: "
-					    "Could not remount %s: %m",
-					    line, (unsigned long)lineno, dirp);
-				else
-					syslog(LOG_ERR, 
-					    "\"%s\", line %ld: "
-					    "Can't export %s",
-					    line, (unsigned long)lineno, dirp);
-				return (1);
+			if(mount_unexport(fsb)) {
+				if(mount_export(dirp, dirplen, fsb, &args)
+						!= MNTD_EXPORTED) {
+					switch(error) {
+					case MNTD_NO_PERM:
+						syslog(LOG_ERR,
+						    "\"%s\", line %ld: "
+						    "Can't change attributes "
+						    "for %s  to %s",
+						    line, (unsigned long)lineno,
+						    dirp,
+						    (grp->gr_type == GT_HOST) ?
+						    grp->gr_ptr.gt_hostent->h_name :
+						    (grp->gr_type == GT_NET) ?
+						    grp->gr_ptr.gt_net.nt_name :
+						    "Unknown");
+						break;
+
+					case MNTD_UNSUCC:
+						syslog(LOG_ERR, 
+						    "\"%s\", line %ld: "
+						    "Can't export %s",
+						    line,
+						    (unsigned long)lineno, dirp);
+						break;
+					}
+					return 1;
+				}
 			}
 		}
+		
 		if (addrp) {
 			++addrp;
 			if (*addrp == NULL)
@@ -1865,6 +1883,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		} else
 			done = TRUE;
 	}
+	
 	return (0);
 }
 
