@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.11 1995/10/31 15:32:35 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.12 1995/11/30 14:25:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -392,7 +392,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #ifdef AUTO_SENSE
 		if (link) {
 			link->link = reqp;
-			link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
+			link->xcmd.bytes[link->xs->cmdlen-1] |= 1;
 		}
 #endif
 	}
