@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.44 1999/06/04 23:38:42 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.45 1999/07/19 03:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -196,9 +196,6 @@ malloc(size, type, flags)
 	int copysize;
 	const char *savedtype;
 #endif
-#ifdef LOCKDEBUG
-	extern int simplelockrecurse;
-#endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
 
@@ -223,10 +220,6 @@ malloc(size, type, flags)
 #ifdef DIAGNOSTIC
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
 #endif
-#ifdef LOCKDEBUG
-	if (flags & M_NOWAIT)
-		simplelockrecurse++;
-#endif
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
@@ -248,9 +241,6 @@ malloc(size, type, flags)
 			 */
 			if ((flags & M_NOWAIT) == 0)
 				panic("malloc: out of space in kmem_map");
-#ifdef LOCKDEBUG
-			simplelockrecurse--;
-#endif
 			splx(s);
 			return ((void *) NULL);
 		}
@@ -381,10 +371,6 @@ out:
 	domlog(va, size, type, 1, file, line);
 #endif
 	splx(s);
-#ifdef LOCKDEBUG
-	if (flags & M_NOWAIT)
-		simplelockrecurse--;
-#endif
 	return ((void *) va);
 }
 
