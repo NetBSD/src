@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/01/27 07:35:32 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2001/02/11 06:45:59 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,5 @@ SUBDIR=	named-bootconf reload restart lib .WAIT dig dnskeygen dnsquery host \
 .if ${MKDOC} != no
 SUBDIR+=doc
 .endif
-
-
-VER= 8.2.3
 
 .include <bsd.subdir.mk>
