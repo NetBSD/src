@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.50 2004/08/10 08:29:27 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.51 2004/08/10 08:57:50 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.50 2004/08/10 08:29:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.51 2004/08/10 08:57:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -677,7 +677,8 @@ ray_detach(self, flags)
 	if (sc->sc_sdhook)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
-	ray_disable(sc);
+	if (sc->sc_if.if_flags & IFF_UP)
+		ray_disable(sc);
 
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
@@ -722,8 +723,7 @@ ray_disable(sc)
 {
 	RAY_DPRINTF(("%s: disable\n", sc->sc_xname));
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
-		ray_stop(sc);
+	ray_stop(sc);
 
 	sc->sc_resetloop = 0;
 	sc->sc_rxoverflow = 0;
