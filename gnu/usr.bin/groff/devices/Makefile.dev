@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.18 1997/05/09 04:53:38 mycroft Exp $
+#	$NetBSD: Makefile.dev,v 1.19 1997/10/18 05:58:29 lukem Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1997/05/31 21:21:36 cjs Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/18 05:59:10 lukem Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\

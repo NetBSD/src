@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/10/18 03:06:43 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/18 05:59:37 lukem Exp $
 
 .if exists(/usr/X11)
 XINCDIR=	/usr/X11/include

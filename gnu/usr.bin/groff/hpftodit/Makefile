@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1996/08/13 07:05:03 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/18 05:59:02 lukem Exp $
 
 PROG=		hpftodit
 SRCS=		hpftodit.cc

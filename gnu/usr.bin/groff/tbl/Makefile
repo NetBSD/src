@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1995/10/26 00:59:14 jtc Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/18 05:59:31 lukem Exp $
 
 PROG=		tbl
 SRCS=		main.cc table.cc

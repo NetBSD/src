@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.12 1997/03/24 22:06:34 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/18 05:59:35 lukem Exp $
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \

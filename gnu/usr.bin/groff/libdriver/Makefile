@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1997/05/31 21:21:35 cjs Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/18 05:59:08 lukem Exp $
 
 LIB=		driver
 SRCS=		input.cc printer.cc

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1997/03/24 22:06:28 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/18 05:58:51 lukem Exp $
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\

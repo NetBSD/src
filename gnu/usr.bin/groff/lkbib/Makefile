@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1995/10/26 00:59:04 jtc Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 05:59:12 lukem Exp $
 
 PROG=		lkbib
 SRCS=		lkbib.cc

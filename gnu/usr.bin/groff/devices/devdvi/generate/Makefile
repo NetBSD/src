@@ -17,7 +17,7 @@
 #with groff; see the file COPYING.  If not, write to the Free Software
 #Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$Id: Makefile,v 1.2 1993/08/02 17:42:09 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1997/10/18 05:58:40 lukem Exp $
 
 # This is set up so you can do:
 #   make -f generate/Makefile

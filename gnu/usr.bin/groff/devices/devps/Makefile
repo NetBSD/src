@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:42:25 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 05:58:47 lukem Exp $
 
 DEVICE=		ps
 FONTFILES=	$(FONTS) $(SUPPORT) $(DEVGENFILES) DESC
