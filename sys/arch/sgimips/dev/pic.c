@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.4 2004/04/10 19:06:33 pooka Exp $	 */
+/* $NetBSD: pic.c,v 1.5 2004/04/10 19:07:06 pooka Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -103,7 +103,7 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_SYSID);
 	reg = (reg >> PIC_SYSID_REVSHIFT) & PIC_SYSID_REVMASK;
-	printf("\npic0: Revision %c", reg + 65);
+	printf("\npic0: Revision %c", reg + 64);
 
 	/* enable refresh, set big-endian, memory parity, allow slave access */
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
