@@ -1,8 +1,9 @@
-#	$NetBSD: bsd.links.mk,v 1.17 2002/02/11 21:15:00 mycroft Exp $
+#	$NetBSD: bsd.links.mk,v 1.18 2002/03/21 12:59:56 pk Exp $
 
 ##### Basic targets
 .PHONY:		linksinstall
-realinstall:	linksinstall
+install:	linksinstall
+linksinstall::	realinstall
 
 ##### Default values
 LINKS?=
