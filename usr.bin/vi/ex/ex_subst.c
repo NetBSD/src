@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.11 1998/01/09 08:08:05 perry Exp $	*/
+/*	$NetBSD: ex_subst.c,v 1.12 2000/03/17 02:23:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -365,6 +365,9 @@ s(sp, cmdp, s, re, flags)
 	int didsub, do_eol_match, eflags, empty_ok, eval;
 	int linechanged, matched, quit, rval;
 	char *bp, *lb;
+#ifndef REG_STARTEND
+	char c;
+#endif
 
 	NEEDFILE(sp, cmdp);
 
@@ -550,7 +553,11 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		do_eol_match = 1;
 
 		/* It's not nul terminated, but we pretend it is. */
+#ifdef REG_STARTEND
 		eflags = REG_STARTEND;
+#else
+		eflags = 0;
+#endif
 
 		/*
 		 * The search area is from s + offset to the EOL.
@@ -559,11 +566,20 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		 * of the match from the start of the search, and offset
 		 * is the offset of the start of the last search.
 		 */
-nextmatch:	match[0].rm_so = 0;
+nextmatch:	
+#ifdef REG_STARTEND
+		match[0].rm_so = 0;
 		match[0].rm_eo = len;
-
+#else
+		c = ((char *)s)[len];
+		((char *)s)[len] = '\0';
+#endif
 		/* Get the next match. */
 		eval = regexec(re, (char *)s + offset, 10, match, eflags);
+#ifndef REG_STARTEND
+		((char *)s)[len] = c;
+#endif
+
 
 		/*
 		 * There wasn't a match or if there was an error, deal with

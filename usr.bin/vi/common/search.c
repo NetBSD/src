@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 1998/01/09 08:07:08 perry Exp $	*/
+/*	$NetBSD: search.c,v 1.4 2000/03/17 02:23:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -153,6 +153,9 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
 	size_t coff, len;
 	int cnt, eval, rval, wrapped;
 	char *l;
+#ifndef REG_STARTEND
+	char c;
+#endif
 
 	if (search_setup(sp, FORWARD, ptrn, eptrn, flags))
 		return (1);
@@ -226,17 +229,28 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
 		if (len != 0 && coff == len)
 			continue;
 
+#ifdef REG_STARTEND
 		/* Set the termination. */
 		match[0].rm_so = coff;
 		match[0].rm_eo = len;
+#else
+		c = l[len];
+		l[len] = '\0';
+#endif
 
 #if defined(DEBUG) && 0
 		TRACE(sp, "F search: %lu from %u to %u\n",
 		    lno, coff, len != 0 ? len - 1 : len);
 #endif
 		/* Search the line. */
+#ifdef REG_STARTEND
 		eval = regexec(&sp->re_c, l, 1, match,
 		    (match[0].rm_so == 0 ? 0 : REG_NOTBOL) | REG_STARTEND);
+#else
+		eval = regexec(&sp->re_c, &l[coff], 1, match,
+		    (match[0].rm_so == 0 ? 0 : REG_NOTBOL));
+		l[len] = c;
+#endif
 		if (eval == REG_NOMATCH)
 			continue;
 		if (eval != 0) {
@@ -319,6 +333,9 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 	size_t coff, last, len;
 	int cnt, eval, rval, wrapped;
 	char *l;
+#ifndef REG_STARTEND
+	char c;
+#endif
 
 	if (search_setup(sp, BACKWARD, ptrn, eptrn, flags))
 		return (1);
@@ -387,15 +404,26 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 			break;
 
 		/* Set the termination. */
+#ifdef REG_STARTEND
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
+#else
+		c = l[len];
+		l[len] = '\0';
+#endif
 
 #if defined(DEBUG) && 0
 		TRACE(sp, "B search: %lu from 0 to %qu\n", lno, match[0].rm_eo);
 #endif
 		/* Search the line. */
+#ifdef REG_STARTEND
 		eval = regexec(&sp->re_c, l, 1, match,
 		    (match[0].rm_eo == len ? 0 : REG_NOTEOL) | REG_STARTEND);
+#else
+		eval = regexec(&sp->re_c, l, 1, match,
+		    (match[0].rm_eo == len ? 0 : REG_NOTEOL));
+		l[len] = c;
+#endif
 		if (eval == REG_NOMATCH)
 			continue;
 		if (eval != 0) {
@@ -432,10 +460,18 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 			last = match[0].rm_so++;
 			if (match[0].rm_so >= len)
 				break;
+#ifdef REG_STARTEND
 			match[0].rm_eo = len;
 			eval = regexec(&sp->re_c, l, 1, match,
 			    (match[0].rm_so == 0 ? 0 : REG_NOTBOL) |
 			    REG_STARTEND);
+#else
+			c = l[len];
+			l[len] = '\0';
+			eval = regexec(&sp->re_c, &l[last + 1], 1, match,
+			    (match[0].rm_so == 0 ? 0 : REG_NOTBOL));
+			l[len] = c;
+#endif
 			if (eval == REG_NOMATCH)
 				break;
 			if (eval != 0) {

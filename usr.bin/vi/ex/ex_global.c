@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_global.c,v 1.7 1998/01/09 08:07:49 perry Exp $	*/
+/*	$NetBSD: ex_global.c,v 1.8 2000/03/17 02:23:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -82,6 +82,9 @@ ex_g_setup(sp, cmdp, cmd)
 	size_t len;
 	int cnt, delim, eval;
 	char *ptrn, *p, *t;
+#ifndef REG_STARTEND
+	char c;
+#endif
 
 	NEEDFILE(sp, cmdp);
 
@@ -217,9 +220,17 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		}
 		if (db_get(sp, start, DBG_FATAL, &p, &len))
 			return (1);
+#ifdef REG_STARTEND
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
-		switch (eval = regexec(&sp->re_c, p, 0, match, REG_STARTEND)) {
+		eval = regexec(&sp->re_c, p, 0, match, REG_STARTEND);
+#else
+		c = p[len];
+		p[len] = '\0';
+		eval = regexec(&sp->re_c, p, 0, match, 0);
+		p[len] = c;
+#endif
+		switch (eval) {
 		case 0:
 			if (cmd == V)
 				continue;
