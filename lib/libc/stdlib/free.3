@@ -1,4 +1,4 @@
-.\"	$NetBSD: free.3,v 1.5 1998/02/05 18:49:54 perry Exp $
+.\"	$NetBSD: free.3,v 1.6 1998/04/28 21:19:49 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,21 +54,19 @@ The
 .Fn free
 function causes the space pointed to by
 .Fa ptr
-to be deallocated, that is, made available
-for further allocation.
+to be deallocated, that is, made available for further allocation.
 If
 .Fa ptr
 is a null pointer, no action occurs.
-Otherwise, if the argument does not match a pointer earlier
-returned by the
-.Xr calloc ,
-.Xr malloc ,
+Otherwise, if the argument does not match a pointer earlier returned by the
+.Fn calloc
+.Fn malloc
 or
-.Xr realloc
+.Fn realloc
 function, or if the space has been deallocated by a call to
 .Fn free
 or
-.Xr realloc ,
+.Fn realloc ,
 general havoc may occur.
 .Sh RETURN VALUES
 The
