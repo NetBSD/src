@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2000/07/29 19:12:17 christos Exp $ */
+/* $NetBSD: main.c,v 1.12 2000/07/29 19:13:34 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.11 2000/07/29 19:12:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2000/07/29 19:13:34 christos Exp $");
 #endif
 
 /*
@@ -304,7 +304,6 @@ acct_load(pn, wr)
 	struct acct ac;
 	struct cmdinfo ci;
 	int i;
-	int nr;
 	FILE *fp;
 
 	/*
@@ -320,7 +319,7 @@ acct_load(pn, wr)
 	 * read all we can; don't stat and open because more processes
 	 * could exit, and we'd miss them
 	 */
-	for (nr = 0;; nr++) {
+	for (;;) {
 		/* get one accounting entry and punt if there's an error */
 		if (fread(&ac, sizeof(struct acct), 1, fp) != 1) {
 			if (feof(fp))
