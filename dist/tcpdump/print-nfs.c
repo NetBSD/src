@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.4 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.4.2.1 2002/06/02 15:47:51 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.89 2001/07/08 08:01:43 itojun Exp (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/tcpdump/Attic/print-nfs.c,v 1.4.2.1 2002/06/02 15:47:51 tv Exp $ (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.4 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.4.2.1 2002/06/02 15:47:51 tv Exp $");
 #endif
 #endif
 
@@ -723,10 +723,16 @@ nfsreq_print(register const u_char *bp, u_int length,
 
 	case NFSPROC_FSINFO:
 		printf(" fsinfo");
+		if ((dp = parsereq(rp, length)) != NULL &&
+		    parsefh(dp, v3) != NULL)
+			return;
 		break;
 
 	case NFSPROC_PATHCONF:
 		printf(" pathconf");
+		if ((dp = parsereq(rp, length)) != NULL &&
+		    parsefh(dp, v3) != NULL)
+			return;
 		break;
 
 	case NFSPROC_COMMIT:
@@ -763,9 +769,10 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 {
 	my_fsid fsid;
 	ino_t ino;
-	char *sfsname = NULL;
+	const char *sfsname = NULL;
+	char *spacep;
 
-	Parse_fh((caddr_t*)dp, len, &fsid, &ino, NULL, (const char **)&sfsname, 0);
+	Parse_fh((const u_char *)dp, len, &fsid, &ino, NULL, &sfsname, 0);
 
 	if (sfsname) {
 		/* file system ID is ASCII, not numeric, for this server OS */
@@ -775,9 +782,9 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 		strncpy(temp, sfsname, NFSX_V3FHMAX);
 		temp[sizeof(temp) - 1] = '\0';
 		/* Remove trailing spaces */
-		sfsname = strchr(temp, ' ');
-		if (sfsname)
-			*sfsname = 0;
+		spacep = strchr(temp, ' ');
+		if (spacep)
+			*spacep = '\0';
 
 		(void)printf(" fh %s/", temp);
 	} else {
@@ -1034,7 +1041,6 @@ parsestatus(const u_int32_t *dp, int *er)
 			printf(" ERROR: %s",
 			    tok2str(status2str, "unk %d", errnum));
 		nfserr = 1;
-		return (NULL);
 	}
 	return (dp + 1);
 trunc:
@@ -1116,8 +1122,10 @@ parseattrstat(const u_int32_t *dp, int verbose, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return (0);
+	if (er)
+		return (1);
 
 	return (parsefattr(dp, verbose, v3) != NULL);
 }
@@ -1127,8 +1135,10 @@ parsediropres(const u_int32_t *dp)
 {
 	int er;
 
-	if (!(dp = parsestatus(dp, &er)) || er)
+	if (!(dp = parsestatus(dp, &er)))
 		return (0);
+	if (er)
+		return (1);
 
 	dp = parsefh(dp, 0);
 	if (dp == NULL)
@@ -1143,8 +1153,10 @@ parselinkres(const u_int32_t *dp, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return(0);
+	if (er)
+		return(1);
 	if (v3 && !(dp = parse_post_op_attr(dp, vflag)))
 		return (0);
 	putchar(' ');
@@ -1158,8 +1170,10 @@ parsestatfs(const u_int32_t *dp, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || (!v3 && er))
+	if (dp == NULL)
 		return (0);
+	if (!v3 && er)
+		return (1);
 
 	if (qflag)
 		return(1);
@@ -1171,7 +1185,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 			return (0);
 	}
 
-	TCHECK2(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
+	TCHECK2(*dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
 
 	sfsp = (const struct nfs_statfs *)dp;
 
@@ -1212,8 +1226,10 @@ parserddires(const u_int32_t *dp)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return (0);
+	if (er)
+		return (1);
 	if (qflag)
 		return (1);
 
@@ -1249,7 +1265,7 @@ parse_pre_op_attr(const u_int32_t *dp, int verbose)
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
-	TCHECK2(dp, 24);
+	TCHECK2(*dp, 24);
 	if (verbose > 1) {
 		return parse_wcc_attr(dp);
 	} else {
@@ -1386,9 +1402,9 @@ parsefsinfo(const u_int32_t *dp)
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_sec),
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_nsec));
 	}
-	return (0);
-trunc:
 	return (1);
+trunc:
+	return (0);
 }
 
 static int
@@ -1416,9 +1432,9 @@ parsepathconf(const u_int32_t *dp)
 	       ntohl(spp->pc_chownrestricted) ? "chownres" : "",
 	       ntohl(spp->pc_caseinsensitive) ? "igncase" : "",
 	       ntohl(spp->pc_casepreserving) ? "keepcase" : "");
-	return (0);
-trunc:
 	return (1);
+trunc:
+	return (0);
 }
 
 static void
