@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.10 2001/12/05 19:59:54 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.11 2001/12/06 00:11:18 augustss Exp $	*/
 
 /*
  * TODO
@@ -594,8 +594,12 @@ irframet_write(void *h, struct uio *uio, int flag)
 		 (long)uio->uio_offset));
 
 	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_ebofs);
-	if (n < 0)
+	if (n < 0) {
+#ifdef IRFRAMET_DEBUG
+		printf("%s: irda_sir_frame() error=%d\n", __FUNCTION__, -n);
+#endif
 		return (-n);
+	}
 	return (irt_write_frame(tp, buf, n));
 }
 
@@ -705,7 +709,10 @@ irframet_get_speeds(void *h, int *speeds)
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
-	*speeds = irt_dongles[sc->sc_dongle].speedmask;
+	if (sc == NULL)		/* during attach */
+		*speeds = IRDA_SPEEDS_SIR;
+	else
+		*speeds = irt_dongles[sc->sc_dongle].speedmask;
 	return (0);
 }
 
