@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io_asm.S,v 1.1 2002/02/10 01:57:53 thorpej Exp $	*/
+/*	$NetBSD: isa_io_asm.S,v 1.2 2005/01/09 15:26:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -337,5 +337,39 @@ Lisa_bs_sr_2_loop:
 	strh	r1, [r0], #2		/*.word e0c010b2*/
 	subs	r2, r2, #1
 	bne	Lisa_bs_sr_2_loop
+
+	mov	pc, lr
+
+/*
+ * Copy region
+ */
+
+ENTRY(isa_bs_c_2)
+	add	r0, r1, r2
+	ldr	r2, [sp, #0]
+	add	r1, r2, r3
+	ldr	r2, [sp, #4]
+	teq	r2, #0
+	moveq	pc, lr
+
+	cmp	r0, r1
+	blt	2f
+
+1:	ldrh	r3, [r0], #2
+	strh	r3, [r1], #2
+	subs	r2, r2, #1
+	bne	1b
+
+	mov	pc, lr
+
+2:	add	r0, r0, r2, lsl #1
+	add	r1, r1, r2, lsl #1
+	sub	r0, r0, #2
+	sub	r1, r1, #2
+
+3:	ldrh	r3, [r0], #-2
+	strh	r3, [r1], #-2
+	subs	r2, r2, #1
+	bne	3b
 
 	mov	pc, lr
