@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2003/11/15 05:24:51 petrov Exp $ */
+/*	$NetBSD: cpu.h,v 1.39 2003/11/20 08:04:04 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,10 +125,10 @@ struct cpu_info {
 extern struct cpu_info *cpus;
 extern struct cpu_info cpu_info_store;
 
-#if 1
-#define	curcpu()	(&cpu_info_store)
-#else
+#if defined(MULTIPROCESSOR)
 #define	curcpu()	((struct cpu_info *)CPUINFO_VA)
+#else
+#define	curcpu()	(&cpu_info_store)
 #endif
 
 /*
@@ -150,6 +150,8 @@ extern struct cpu_info cpu_info_store;
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));
 #define	CPU_IS_PRIMARY(ci)	(1) /* XXX */
+#else
+#define	CPU_IS_PRIMARY(ci)	(1)
 #endif
 
 /*
