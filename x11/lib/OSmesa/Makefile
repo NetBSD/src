@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2005/01/21 05:15:36 rtr Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -55,7 +55,7 @@ CPPFLAGS+=	${X11FLAGS.DRI}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/lib/GL/include \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
-		${X11FLAGS.THREADLIB} \
+		${X11FLAGS.THREADS} \
 		-DGLXEXT -DGLX_USE_MESA
 
 .if ${MACHINE_ARCH} == "i386"

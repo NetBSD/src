@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/06 03:05:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SRCS=	A8Eq.c AA16.c AA32.c AA8.c Alloc.c AofA8.c CA8.c CmpKey.c DA16.c \
 INCS=	Xdmcp.h
 INCSDIR=${X11INCDIR}/X11
 
-CPPFLAGS+=${X11FLAGS.THREADLIB}
+CPPFLAGS+=${X11FLAGS.THREADS}
 CPPFLAGS+=-DHASXDMAUTH
 
 CPPFLAGS.Fill.c=	${X11FLAGS.CONNECTION}
