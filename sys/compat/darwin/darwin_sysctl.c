@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.6 2002/12/27 19:54:54 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.7 2002/12/28 00:15:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.6 2002/12/27 19:54:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.7 2002/12/28 00:15:23 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,10 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.6 2002/12/27 19:54:54 manu Exp $
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-static pid_t darwin_init_pid;
+pid_t darwin_init_pid;
 
 static int darwin_kern_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
@@ -400,8 +401,7 @@ darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
  * The same problem exists after mach_init has forked init: the fork libc stub
  * really insist on the child to have PID 2 (if PID is not 2, then the stub
  * will issue bootstrap calls to an already running mach_init, which fails,
- * of course). There should not be any more getpid after this, so we can
- * forget the mach_init process PID after the second getpid.
+ * of course). 
  */
 int 
 darwin_sys_getpid(p, v, retval)
@@ -409,22 +409,14 @@ darwin_sys_getpid(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	if (darwin_init_pid == 0) {
+	struct darwin_emuldata *ded;
+
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+
+	if (ded->ded_fakepid != 0)
+		*retval = ded->ded_fakepid;
+	else
 		*retval = p->p_pid;
-		return 0;
-	}
 
-	if (p->p_pid == darwin_init_pid) {
-		*retval = 1;
-		return 0;
-	}
-	 
-	if (p->p_pptr->p_pid == darwin_init_pid) {
-		*retval = 2;
-		darwin_init_pid = 0;
-		return 0;
-	}
-
-	*retval = p->p_pid;
 	return 0;
 }
