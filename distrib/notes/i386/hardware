@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.84 2001/01/22 02:05:41 hubertf Exp $
+.\"	$NetBSD: hardware,v 1.85 2001/01/22 02:13:47 hubertf Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -445,6 +445,8 @@ ProAudio Spectrum [*] [+]
 S3 SonicVibes [*] [+]
 .It
 SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
+.It
+VIA VT82C686A southbridge integrated AC'97 audio [*] [+]
 .It
 Windows Sound System [*] [+]
 .It
