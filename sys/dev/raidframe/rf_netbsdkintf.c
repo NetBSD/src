@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.5 1998/12/22 20:03:14 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.6 1999/01/14 22:49:05 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -514,7 +514,7 @@ raidattach(num)
 	
 	raid_softc = (struct raid_softc *)
 		malloc(num * sizeof(struct raid_softc),
-		       M_DEVBUF, M_NOWAIT);
+		       M_RAIDFRAME, M_NOWAIT);
 	if (raid_softc == NULL) {
 		printf("WARNING: no memory for RAIDframe driver\n");
 		return;
@@ -1340,7 +1340,7 @@ raidinit(dev, raidPtr,unit)
 
 	rs = &raid_softc[unit];
 	pool_init(&rs->sc_cbufpool, sizeof(struct raidbuf), 0,
-		  0, 0, "raidpl", 0, NULL, NULL, M_DEVBUF);
+		  0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
 
 	
 	/* XXX should check return code first... */
