@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clist.h	7.3 (Berkeley) 2/15/91
- *	$Id: clist.h,v 1.3 1993/05/20 16:21:56 cgd Exp $
+ *	from: @(#)clist.h	8.1 (Berkeley) 6/4/93
+ *	$Id: clist.h,v 1.4 1994/05/21 03:51:52 cgd Exp $
  */
-
-#ifndef _SYS_CLIST_H_
-#define _SYS_CLIST_H_
 
 struct cblock {
 	struct cblock *c_next;		/* next cblock in queue */
@@ -44,8 +41,6 @@ struct cblock {
 };
 
 #ifdef KERNEL
-struct cblock *cfree, *cfreelist;
-int cfreecount, nclist;
+extern	struct cblock *cfree, *cfreelist;
+extern	int cfreecount, nclist;
 #endif
-
-#endif /* !_SYS_CLIST_H_ */

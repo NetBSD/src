@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dmap.h	7.3 (Berkeley) 2/15/91
- *	$Id: dmap.h,v 1.3 1993/05/20 16:22:06 cgd Exp $
+ *	from: @(#)dmap.h	8.2 (Berkeley) 1/4/94
+ *	$Id: dmap.h,v 1.4 1994/05/21 03:51:55 cgd Exp $
  */
 
 #ifndef _SYS_DMAP_H_
@@ -41,7 +41,6 @@
  * Definitions for the mapping of vitual swap space to the physical swap
  * area - the disk map.
  */
-
 #define	NDMAP	38		/* size of the swap area map */
 
 struct dmap {
@@ -59,5 +58,4 @@ struct dblock {
 	swblk_t db_base;	/* base of physical contig drum block */
 	swblk_t db_size;	/* size of block */
 };
-
 #endif	/* !_SYS_DMAP_H_ */

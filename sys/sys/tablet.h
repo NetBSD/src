@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1985, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,16 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tablet.h	7.5 (Berkeley) 2/15/91
- *	$Id: tablet.h,v 1.4 1993/05/20 16:23:18 cgd Exp $
+ *	from: @(#)tablet.h	8.3 (Berkeley) 1/4/94
+ *	$Id: tablet.h,v 1.5 1994/05/21 03:52:10 cgd Exp $
  */
 
 #ifndef _SYS_TABLET_H_
-#define _SYS_TABLET_H_
+#define	_SYS_TABLET_H_
 
 /*
  * Tablet line discipline.
  */
+#include <sys/ioctl.h>
 
 /*
  * Reads on the tablet return one of the following structures, depending on

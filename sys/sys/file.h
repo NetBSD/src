@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)file.h	7.10 (Berkeley) 6/4/91
- *	$Id: file.h,v 1.4 1994/02/04 22:19:41 cgd Exp $
+ *	from: @(#)file.h	8.1 (Berkeley) 6/2/93
+ *	$Id: file.h,v 1.5 1994/05/21 03:51:57 cgd Exp $
  */
-
-#ifndef _SYS_FILE_H_
-#define _SYS_FILE_H_
 
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
@@ -78,5 +75,3 @@ extern int maxfiles;		/* kernel limit on number of open files */
 extern int nfiles;		/* actual number of open files */
 
 #endif /* KERNEL */
-
-#endif /* !_SYS_FILE_H_ */

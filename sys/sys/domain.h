@@ -31,13 +31,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)domain.h	8.1 (Berkeley) 6/2/93
- *	$Id: domain.h,v 1.4 1994/05/13 06:12:04 mycroft Exp $
+ *	$Id: domain.h,v 1.5 1994/05/21 03:51:56 cgd Exp $
  */
 
 /*
  * Structure per communications domain.
  */
-struct mbuf;
+
+/*
+ * Forward structure declarations for function prototypes [sic].
+ */
+struct	mbuf;
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */

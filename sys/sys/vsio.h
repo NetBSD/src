@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1987 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vsio.h	7.4 (Berkeley) 5/9/91
- *	$Id: vsio.h,v 1.3 1993/05/20 16:23:55 cgd Exp $
+ *	from: @(#)vsio.h	8.1 (Berkeley) 6/2/93
+ *	$Id: vsio.h,v 1.4 1994/05/21 03:52:23 cgd Exp $
  */
-
-#ifndef _SYS_VSIO_H_
-#define _SYS_VSIO_H_
 
  /****************************************************************************
  *									    *
@@ -155,5 +152,3 @@ typedef struct _vsIoAddr {
 	vsBox	 mbox;			/* atomic read/write */
 } vsIoAddr;
 typedef vsIoAddr *vsIoAddrAddr;
-
-#endif /* !_SYS_VSIO_H_ */
