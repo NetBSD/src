@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1996/10/13 03:14:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1996/10/18 08:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -414,6 +414,14 @@ again:
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Tell the VM system that page 0 isn't mapped.
+	 */
+	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
+
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
