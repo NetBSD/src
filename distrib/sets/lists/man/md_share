@@ -27,6 +27,13 @@
 ./usr/share/man/cat4/amiga/console.0
 ./usr/share/man/cat4/amiga/ed.0
 ./usr/share/man/cat4/amiga/es.0
+./usr/share/man/cat4/amiga/grfcl.0
+./usr/share/man/cat4/amiga/grfcv.0
+./usr/share/man/cat4/amiga/grfcv3d.0
+./usr/share/man/cat4/amiga/grfet.0
+./usr/share/man/cat4/amiga/grfrh.0
+./usr/share/man/cat4/amiga/grfrt.0
+./usr/share/man/cat4/amiga/grful.0
 ./usr/share/man/cat4/amiga/gtsc.0
 ./usr/share/man/cat4/amiga/intro.0
 ./usr/share/man/cat4/amiga/ite.0
@@ -48,6 +55,7 @@
 ./usr/share/man/cat4/arm32/ea.0
 ./usr/share/man/cat4/arm32/eb.0
 ./usr/share/man/cat4/arm32/eh.0
+./usr/share/man/cat4/arm32/em.0
 ./usr/share/man/cat4/arm32/es.0
 ./usr/share/man/cat4/arm32/ie.0
 ./usr/share/man/cat4/arm32/intro.0
@@ -60,7 +68,6 @@
 ./usr/share/man/cat4/arm32/podulebus.0
 ./usr/share/man/cat4/arm32/ptsc.0
 ./usr/share/man/cat4/arm32/quadmouse.0
-./usr/share/man/cat4/arm32/rd.0
 ./usr/share/man/cat4/arm32/wd.0
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/ms.0
@@ -88,6 +95,7 @@
 ./usr/share/man/cat4/i386/autoconf.0
 ./usr/share/man/cat4/i386/busmouse.0
 ./usr/share/man/cat4/i386/com.0
+./usr/share/man/cat4/i386/console.0
 ./usr/share/man/cat4/i386/ed.0
 ./usr/share/man/cat4/i386/fdc.0
 ./usr/share/man/cat4/i386/ie.0
@@ -115,6 +123,7 @@
 ./usr/share/man/cat4/mac68k/sn.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
+./usr/share/man/cat4/pc532/ncr.0
 ./usr/share/man/cat4/pc532/plip.0
 ./usr/share/man/cat4/pc532/scn.0
 ./usr/share/man/cat4/pmax/asc.0
@@ -145,11 +154,15 @@
 ./usr/share/man/cat4/sun3/bwtwo.0
 ./usr/share/man/cat4/sun3/cgfour.0
 ./usr/share/man/cat4/sun3/cgtwo.0
+./usr/share/man/cat4/sun3/fd.0
 ./usr/share/man/cat4/sun3/ie.0
+./usr/share/man/cat4/sun3/intro.0
+./usr/share/man/cat4/sun3/kbd.0
 ./usr/share/man/cat4/sun3/kmem.0
 ./usr/share/man/cat4/sun3/le.0
 ./usr/share/man/cat4/sun3/leds.0
 ./usr/share/man/cat4/sun3/mem.0
+./usr/share/man/cat4/sun3/ms.0
 ./usr/share/man/cat4/vax/acc.0
 ./usr/share/man/cat4/vax/ad.0
 ./usr/share/man/cat4/vax/autoconf.0
@@ -201,6 +214,7 @@
 ./usr/share/man/cat4/vax/va.0
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
+./usr/share/man/cat4/x68k/intro.0
 ./usr/share/man/cat4/x68k/pow.0
 ./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -231,6 +245,8 @@
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/boot.0
+./usr/share/man/cat8/i386/boot_console.0
+./usr/share/man/cat8/i386/dosboot.0
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/kbdio.0
@@ -298,6 +314,13 @@
 ./usr/share/man/man4/amiga/console.4
 ./usr/share/man/man4/amiga/ed.4
 ./usr/share/man/man4/amiga/es.4
+./usr/share/man/man4/amiga/grfcl.4
+./usr/share/man/man4/amiga/grfcv.4
+./usr/share/man/man4/amiga/grfcv3d.4
+./usr/share/man/man4/amiga/grfet.4
+./usr/share/man/man4/amiga/grfrh.4
+./usr/share/man/man4/amiga/grfrt.4
+./usr/share/man/man4/amiga/grful.4
 ./usr/share/man/man4/amiga/gtsc.4
 ./usr/share/man/man4/amiga/intro.4
 ./usr/share/man/man4/amiga/ite.4
@@ -319,6 +342,7 @@
 ./usr/share/man/man4/arm32/ea.4
 ./usr/share/man/man4/arm32/eb.4
 ./usr/share/man/man4/arm32/eh.4
+./usr/share/man/man4/arm32/em.4
 ./usr/share/man/man4/arm32/es.4
 ./usr/share/man/man4/arm32/ie.4
 ./usr/share/man/man4/arm32/intro.4
@@ -331,7 +355,6 @@
 ./usr/share/man/man4/arm32/podulebus.4
 ./usr/share/man/man4/arm32/ptsc.4
 ./usr/share/man/man4/arm32/quadmouse.4
-./usr/share/man/man4/arm32/rd.4
 ./usr/share/man/man4/arm32/wd.4
 ./usr/share/man/man4/atari/floppy.4
 ./usr/share/man/man4/atari/ms.4
@@ -359,6 +382,7 @@
 ./usr/share/man/man4/i386/autoconf.4
 ./usr/share/man/man4/i386/busmouse.4
 ./usr/share/man/man4/i386/com.4
+./usr/share/man/man4/i386/console.4
 ./usr/share/man/man4/i386/ed.4
 ./usr/share/man/man4/i386/fdc.4
 ./usr/share/man/man4/i386/ie.4
@@ -386,6 +410,7 @@
 ./usr/share/man/man4/mac68k/sn.4
 ./usr/share/man/man4/pc532/lpt.4
 ./usr/share/man/man4/pc532/mem.4
+./usr/share/man/man4/pc532/ncr.4
 ./usr/share/man/man4/pc532/plip.4
 ./usr/share/man/man4/pc532/scn.4
 ./usr/share/man/man4/pmax/asc.4
@@ -416,11 +441,15 @@
 ./usr/share/man/man4/sun3/bwtwo.4
 ./usr/share/man/man4/sun3/cgfour.4
 ./usr/share/man/man4/sun3/cgtwo.4
+./usr/share/man/man4/sun3/fd.4
 ./usr/share/man/man4/sun3/ie.4
+./usr/share/man/man4/sun3/intro.4
+./usr/share/man/man4/sun3/kbd.4
 ./usr/share/man/man4/sun3/kmem.4
 ./usr/share/man/man4/sun3/le.4
 ./usr/share/man/man4/sun3/leds.4
 ./usr/share/man/man4/sun3/mem.4
+./usr/share/man/man4/sun3/ms.4
 ./usr/share/man/man4/vax/acc.4
 ./usr/share/man/man4/vax/ad.4
 ./usr/share/man/man4/vax/autoconf.4
@@ -472,6 +501,7 @@
 ./usr/share/man/man4/vax/va.4
 ./usr/share/man/man4/vax/vp.4
 ./usr/share/man/man4/vax/vv.4
+./usr/share/man/man4/x68k/intro.4
 ./usr/share/man/man4/x68k/pow.4
 ./usr/share/man/man5/i386/keycap.5
 ./usr/share/man/man8/alpha/installboot.8
@@ -502,6 +532,8 @@
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/apmd.8
 ./usr/share/man/man8/i386/boot.8
+./usr/share/man/man8/i386/boot_console.8
+./usr/share/man/man8/i386/dosboot.8
 ./usr/share/man/man8/i386/installboot.8
 ./usr/share/man/man8/i386/ispcvt.8
 ./usr/share/man/man8/i386/kbdio.8
