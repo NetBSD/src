@@ -1,4 +1,3 @@
-./usr/lib/libbfd_pic.a
 ./usr/lib/libbz2_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
