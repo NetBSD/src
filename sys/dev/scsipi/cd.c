@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.126 1999/04/08 16:12:31 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.127 1999/05/27 11:19:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -390,7 +390,8 @@ cdclose(dev, flag, fmt, p)
 		scsipi_wait_drain(cd->sc_link);
 
 		scsipi_prevent(cd->sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_IGNORE_NOT_READY);
 		cd->sc_link->flags &= ~SDEV_OPEN;
 
 		scsipi_wait_drain(cd->sc_link);
