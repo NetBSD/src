@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.86 2000/05/01 05:33:41 thorpej Exp $
+# $NetBSD: md_share,v 1.87 2000/05/02 07:19:46 augustss Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -148,6 +148,7 @@
 ./usr/share/man/cat4/pc532/plip.0
 ./usr/share/man/cat4/pc532/scn.0
 ./usr/share/man/cat4/pmax/asc.0
+./usr/share/man/cat4/pmax/bba.0
 ./usr/share/man/cat4/pmax/dc.0
 ./usr/share/man/cat4/pmax/intro.0
 ./usr/share/man/cat4/pmax/ioasic.0
@@ -488,6 +489,7 @@
 ./usr/share/man/man4/pc532/plip.4
 ./usr/share/man/man4/pc532/scn.4
 ./usr/share/man/man4/pmax/asc.4
+./usr/share/man/man4/pmax/bba.4
 ./usr/share/man/man4/pmax/dc.4
 ./usr/share/man/man4/pmax/intro.4
 ./usr/share/man/man4/pmax/ioasic.4
