@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.28 2001/09/22 03:34:19 tv Exp $
+#	$NetBSD: Makefile.booters,v 1.29 2001/09/23 23:43:29 tls Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
 BINMODE=444
+
+DBG=    -Os
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
