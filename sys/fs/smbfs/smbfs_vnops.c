@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.5 2003/02/19 13:51:25 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.6 2003/02/20 15:35:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ smbfs_open(v)
 	int mode = ap->a_mode;
 	int error, accmode;
 
-	SMBVDEBUG("%s,%d\n", np->n_name, np->n_opencount);
+	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, np->n_opencount);
 	if (vp->v_type != VREG && vp->v_type != VDIR) { 
 		SMBFSERR("open eacces vtype=%d\n", vp->v_type);
 		return EACCES;
@@ -324,7 +324,8 @@ smbfs_closel(struct vop_close_args *ap)
 	struct vattr vattr;
 	int error;
 
-	SMBVDEBUG("name=%s, pid=%d, c=%d\n",np->n_name, td->td_pid, np->n_opencount);
+	SMBVDEBUG("name=%.*s, pid=%d, c=%d\n",
+		(int)np->n_nmlen, np->n_name, p->p_pid, np->n_opencount);
 
 	smb_makescred(&scred, p, ap->a_cred);
 
@@ -399,7 +400,9 @@ smbfs_getattr(v)
 	u_int32_t oldsize;
 	int error;
 
-	SMBVDEBUG("%lx: '%s' %d\n", (long)vp, np->n_name, (vp->v_flag & VROOT) != 0);
+	SMBVDEBUG("%lx: '%.*s' %d\n", (long)vp,
+		(int) np->n_nmlen, np->n_name, (vp->v_flag & VROOT) != 0);
+
 	if ((error = smbfs_attr_cachelookup(vp, va)) == 0)
 		return (0);
 
@@ -912,8 +915,9 @@ smbfs_print(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 
-	printf("tag VT_SMBFS, name = %s, parent = %p, opencount = %d",
-	    np->n_name, np->n_parent ? SMBTOV(np->n_parent) : NULL,
+	printf("tag VT_SMBFS, name = %.*s, parent = %p, opencount = %d",
+	    (int)np->n_nmlen, np->n_name,
+	    np->n_parent ? SMBTOV(np->n_parent) : NULL,
 	    np->n_opencount);
 	lockmgr_printinfo(&vp->v_lock);
 	printf("\n");
@@ -1219,8 +1223,8 @@ smbfs_lookup(v)
 		return (EROFS);
 
 #ifdef SMB_VNODE_DEBUG
-	SMBVDEBUG("%d '%.*s' in '%s' id=d\n", nameiop, nmlen, name, 
-			VTOSMB(dvp)->n_name);
+	SMBVDEBUG("%d '%.*s' in '%.*s' id=d\n", nameiop, nmlen, name, 
+	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
 #endif
 
 	/*
