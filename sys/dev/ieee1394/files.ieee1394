@@ -1,9 +1,9 @@
-#	$NetBSD: files.ieee1394,v 1.4 2001/05/01 04:48:11 jmc Exp $
+#	$NetBSD: files.ieee1394,v 1.5 2001/05/13 05:01:43 jmc Exp $
 
-file	dev/ieee1394/fwlynx.c		fwlynx
-file	dev/ieee1394/fwohci.c		fwohci
+file	dev/ieee1394/fwlynx.c	fwlynx
+file	dev/ieee1394/fwohci.c	fwohci
 
-device	fwnode {[idhi=-1],[idlo=-1]}
+device	fwnode { }
 attach	fwnode at fwbus
 
 file	dev/ieee1394/fwnode.c		fwnode
