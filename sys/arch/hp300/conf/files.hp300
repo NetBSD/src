@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.62 2002/11/05 07:41:18 chs Exp $
+#	$NetBSD: files.hp300,v 1.63 2002/12/22 00:17:14 gmcgarry Exp $
 #
 # hp300-specific configuration info
 
@@ -54,6 +54,11 @@ device	hil { }
 attach	hil at intio
 file	arch/hp300/dev/hil.c			hil	needs-flag
 file	arch/hp300/dev/hil_keymaps.c		hil
+
+# 98620 DMA controller
+device	dma { }
+attach	dma at intio
+file	arch/hp300/dev/dma.c			dma
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo { offset = -1 }
@@ -130,11 +135,11 @@ file	arch/hp300/dev/if_le.c		le
 # HP-IB interfaces
 define	hpibdev { }
 
-device	nhpib: hpibdev
+device	nhpib: hpibdev, dma
 attach	nhpib at dio
 file	arch/hp300/dev/nhpib.c		nhpib
 
-device	fhpib: hpibdev
+device	fhpib: hpibdev, dma
 attach	fhpib at dio
 file	arch/hp300/dev/fhpib.c		fhpib
 
@@ -200,7 +205,6 @@ file	arch/hp300/hp300/procfs_machdep.c	procfs
 file	arch/hp300/hp300/softintr.c
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
-file	arch/hp300/dev/dma.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
