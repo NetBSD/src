@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.597 2004/04/21 01:05:35 christos Exp $
+# $NetBSD: GENERIC,v 1.598 2004/04/29 11:54:24 minoura Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.597 $"
+#ident 		"GENERIC-$Revision: 1.598 $"
 
 maxusers	32		# estimated number of users
 
@@ -348,7 +348,7 @@ pci*	at ppb? bus ?
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -365,7 +365,7 @@ eisa0	at mainbus?
 eisa0	at pceb?
 
 # ISA bus support
-isa0	at ichlpcib?
+#isa0	at ichlpcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
