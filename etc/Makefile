@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 1996/06/05 21:55:13 cgd Exp $
+#	$NetBSD: Makefile,v 1.54 1996/10/15 23:59:32 perry Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -10,7 +10,6 @@ NOOBJ=	oobj
 .include "etc.${MACHINE}/Makefile.inc"
 .endif
 
-# disktab may be wrong -- hcx9 is a tahoe, but gets its own.
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
@@ -26,8 +25,6 @@ BIN2=	motd
 
 NAMEDB=	localhost.rev named.boot root.cache
 PCS=	pcs750.bin
-WCS1=	wcs fppwcs poc poc1 poc2 fppoc
-WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
 all clean cleandir depend etc includes install lint:
 
@@ -94,19 +91,12 @@ distribution: distrib-dirs
 	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
-.if ${MACHINE} == "tahoe"
-	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
-	    ${DESTDIR}/)
-.endif
 .if ${MACHINE} == "vax"
 	(cd etc.vax; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
 .endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 
-hcx9-distribution:
-	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
-	    ${DESTDIR}/)
 
 distrib-dirs:
 	install -d -o root -g wheel -m 755 ${DESTDIR}
