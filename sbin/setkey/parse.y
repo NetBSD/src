@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.10 2003/07/01 07:20:12 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.11 2003/07/26 15:28:24 mrg Exp $	*/
 /*	$KAME: parse.y,v 1.80 2003/06/27 07:15:45 itojun Exp $	*/
 
 /*
@@ -957,7 +957,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m_key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l,
-			(struct sadb_ext *)&m_key, sizeof(m_key),
+			(struct sadb_ext *)(void*)&m_key, sizeof(m_key),
 			(caddr_t)p_key_enc, p_key_enc_len);
 	}
 
@@ -973,7 +973,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 		m_key.sadb_key_reserved = 0;
 
 		setvarbuf(buf, &l,
-			(struct sadb_ext *)&m_key, sizeof(m_key),
+			(struct sadb_ext *)(void*)&m_key, sizeof(m_key),
 			(caddr_t)p_key_auth, p_key_auth_len);
 	}
 
