@@ -471,8 +471,10 @@
 ./usr/sbin/dumpfs
 ./usr/sbin/dumplfs
 ./usr/sbin/edquota
+./usr/sbin/fixmount
 ./usr/sbin/fsinfo
 ./usr/sbin/gettable
+./usr/sbin/hlfsd
 ./usr/sbin/host
 ./usr/sbin/htable
 ./usr/sbin/inetd
@@ -877,7 +879,7 @@
 ./usr/share/sendmail/domain/eecs.hidden.m4
 ./usr/share/sendmail/domain/generic.m4
 ./usr/share/sendmail/domain/s2k.m4
-./usr/share/sendmail/freture
+./usr/share/sendmail/feature
 ./usr/share/sendmail/feature/allmasquerade.m4
 ./usr/share/sendmail/feature/always_add_domain.m4
 ./usr/share/sendmail/feature/bestmx_is_local.m4
