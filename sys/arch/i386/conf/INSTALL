@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.261 2005/03/01 02:31:26 itojun Exp $
+#	$NetBSD: INSTALL,v 1.262 2005/03/01 02:33:51 itojun Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -662,7 +662,7 @@ umass*	at uhub? port ? configuration ? interface ?
 #ugen*	at uhub? port ? configuration ? interface ?
 
 # USB Ethernet adapters
-atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+#atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
