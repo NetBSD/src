@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vfsops.c,v 1.8 1994/01/09 17:33:06 ws Exp $
+ *	$Id: fdesc_vfsops.c,v 1.9 1994/04/14 04:05:45 cgd Exp $
  */
 
 /*
@@ -105,9 +105,9 @@ fdesc_mount(mp, path, data, ndp, p)
 	printf("fdesc_mount: root vp = %x\n", rvp);
 #endif
 	fmp->f_root = rvp;
-	mp->mnt_flag |= MNT_LOCAL;
+	/* mp->mnt_flag |= MNT_LOCAL; */
 	mp->mnt_data = (qaddr_t) fmp;
-	getnewfsid(mp, MOUNT_FDESC);
+	getnewfsid(mp, (int)MOUNT_FDESC);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -256,7 +256,11 @@ fdesc_statfs(mp, sbp, p)
 	if (fdp->fd_nfiles < lim)
 		freefd += (lim - fdp->fd_nfiles);
 
-	sbp->f_type = MOUNT_FDESC;
+#ifdef COMPAT_09
+	sbp->f_type = 6;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_flags = 0;
 	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
@@ -270,6 +274,8 @@ fdesc_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
@@ -298,6 +304,7 @@ fdesc_vptofh(vp, fhp)
 }
 
 struct vfsops fdesc_vfsops = {
+	MOUNT_FDESC,
 	fdesc_mount,
 	fdesc_start,
 	fdesc_unmount,

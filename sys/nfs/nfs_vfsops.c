@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.13 1994/04/10 01:22:23 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.14 1994/04/14 04:06:26 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@
  * nfs vfs operations.
  */
 struct vfsops nfs_vfsops = {
+	MOUNT_NFS,
 	nfs_mount,
 	nfs_start,
 	nfs_unmount,
@@ -119,7 +120,11 @@ nfs_statfs(mp, sbp, p)
 	nfsm_fhtom(vp);
 	nfsm_request(vp, NFSPROC_STATFS, p, 0);
 	nfsm_disect(sfp, struct nfsv2_statfs *, NFSX_STATFS);
-	sbp->f_type = MOUNT_NFS;
+#ifdef COMPAT_09
+	sbp->f_type = 2;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_flags = nmp->nm_flag;
 	sbp->f_bsize = fxdr_unsigned(long, sfp->sf_tsize);
 	sbp->f_fsize = fxdr_unsigned(long, sfp->sf_bsize);
@@ -132,6 +137,8 @@ nfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	nfsm_reqdone;
 	nfs_nput(vp);
 	crfree(cred);
@@ -398,7 +405,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	bzero((caddr_t)nmp, sizeof *nmp);
 	mp->mnt_data = (qaddr_t)nmp;
 
-	getnewfsid(mp, MOUNT_NFS);
+	getnewfsid(mp, (int)MOUNT_NFS);
 	nmp->nm_mountp = mp;
 	nmp->nm_rto = NFS_TIMEO;
 	nmp->nm_rtt = -1;

@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vfsops.c,v 4.1 1994/01/02 14:42:00 jsp Exp
  *
- *	$Id: kernfs_vfsops.c,v 1.11 1994/01/05 11:05:08 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.12 1994/04/14 04:05:56 cgd Exp $
  */
 
 /*
@@ -135,7 +135,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) fmp;
-	getnewfsid(mp, MOUNT_KERNFS);
+	getnewfsid(mp, (int)MOUNT_KERNFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -268,7 +268,11 @@ kernfs_statfs(mp, sbp, p)
 	printf("kernfs_statfs(mp = %x)\n", mp);
 #endif
 
-	sbp->f_type = MOUNT_KERNFS;
+#ifdef COMPAT_09
+	sbp->f_type = 7;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_flags = 0;
 	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
@@ -282,6 +286,8 @@ kernfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
@@ -308,6 +314,7 @@ kernfs_vptofh(vp, fhp)
 }
 
 struct vfsops kernfs_vfsops = {
+	MOUNT_KERNFS,
 	kernfs_mount,
 	kernfs_start,
 	kernfs_unmount,

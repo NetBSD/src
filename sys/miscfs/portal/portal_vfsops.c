@@ -37,7 +37,7 @@
  * From:
  *	Id: portal_vfsops.c,v 1.6 1993/09/22 17:57:30 jsp Exp
  *
- *	$Id: portal_vfsops.c,v 1.1 1994/01/05 14:23:24 cgd Exp $
+ *	$Id: portal_vfsops.c,v 1.2 1994/04/14 04:06:04 cgd Exp $
  */
 
 /*
@@ -129,9 +129,9 @@ portal_mount(mp, path, data, ndp, p)
 	fmp->pm_root = rvp;
 	fmp->pm_server = fp; fp->f_count++;
 
-	mp->mnt_flag |= MNT_LOCAL;
+	/* mp->mnt_flag |= MNT_LOCAL; */
 	mp->mnt_data = (qaddr_t) fmp;
-	getnewfsid(mp, MOUNT_PORTAL);
+	getnewfsid(mp, (int)MOUNT_PORTAL);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -284,7 +284,11 @@ portal_statfs(mp, sbp, p)
 	printf("portal_statfs(mp = %x)\n", mp);
 #endif
 
-	sbp->f_type = MOUNT_PORTAL;
+#ifdef COMPAT_09
+	sbp->f_type = 12;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_flags = 0;
 	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
@@ -298,6 +302,8 @@ portal_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
@@ -324,6 +330,7 @@ portal_vptofh(vp, fhp)
 }
 
 struct vfsops portal_vfsops = {
+	MOUNT_PORTAL,
 	portal_mount,
 	portal_start,
 	portal_unmount,

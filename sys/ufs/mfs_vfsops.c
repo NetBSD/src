@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vfsops.c	7.19 (Berkeley) 4/16/91
- *	$Id: mfs_vfsops.c,v 1.4 1994/02/06 10:13:02 mycroft Exp $
+ *	$Id: mfs_vfsops.c,v 1.5 1994/04/14 04:06:53 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ int ufs_vptofh();
 int mfs_init();
 
 struct vfsops mfs_vfsops = {
+	MOUNT_MFS,
 	mfs_mount,
 	mfs_start,
 	ufs_unmount,
@@ -192,6 +193,12 @@ mfs_statfs(mp, sbp, p)
 	int error;
 
 	error = ufs_statfs(mp, sbp, p);
-	sbp->f_type = MOUNT_MFS;
+#ifdef COMPAT_09
+	sbp->f_type = 3;
+#else
+	sbp->f_type = 0;
+#endif
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (error);
 }
