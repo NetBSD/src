@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.177 2004/05/05 16:22:52 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.178 2004/05/06 05:05:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1813,3 +1813,13 @@ gnu/dist/gcc/gcc/version.c			1.7
 bump version for SPARC fixes (from kjk via martin)
 [mrg, ticket #253]
 
+
+share/man/man4/crypto.4				0-1.5
+share/man/man4/hifn.4				0-1.6
+share/man/man4/ubsec.4				0-1.4
+distrib/sets/lists/man/mi			1.687-1.688
+share/man/man4/Makefile				1.317-1.318
+
+	Add manpages for crypto(4),and for the hifn(4) and ubsec(4) hardware 
+	crypto accelerators.
+	[jonathan, ticket #237]
