@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.31 2000/02/14 22:00:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.32 2000/03/29 08:46:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -251,8 +251,10 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		    fs->fs_cstotal.cs_nffree >
 		    fs->fs_dsize * fs->fs_minfree / (2 * 100))
 			break;
+#ifdef DEBUG
 		log(LOG_NOTICE, "%s: optimization changed from SPACE to TIME\n",
 			fs->fs_fsmnt);
+#endif
 		fs->fs_optim = FS_OPTTIME;
 		break;
 	case FS_OPTTIME:
@@ -270,8 +272,10 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		if (fs->fs_cstotal.cs_nffree <
 		    fs->fs_dsize * (fs->fs_minfree - 2) / 100)
 			break;
+#ifdef DEBUG
 		log(LOG_NOTICE, "%s: optimization changed from TIME to SPACE\n",
 			fs->fs_fsmnt);
+#endif
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
