@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.40 2003/01/31 00:26:26 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.41 2003/03/03 02:14:12 bsh Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.40 2003/01/31 00:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.41 2003/03/03 02:14:12 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,6 +488,11 @@ static const struct ac97_codecid {
 	  0xffffffff,			"National Semiconductor LM4549", },
 	{ AC97_CODEC_ID('N', 'S', 'C', 0),
 	  AC97_VENDOR_ID_MASK,		"National Semiconductor unknown", },
+
+	{ AC97_CODEC_ID('P', 'S', 'C', 4),
+	  0xffffffff,			"Philips Semiconductor UCB1400", },
+	{ AC97_CODEC_ID('P', 'S', 'C', 0),
+	  AC97_VENDOR_ID_MASK,		"Philips Semiconductor unknown", },
 
 	{ AC97_CODEC_ID('S', 'I', 'L', 34),
 	  0xffffffff,			"Silicon Laboratory Si3036", },
