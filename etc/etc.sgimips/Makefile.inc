@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2004/11/13 10:27:14 sekiya Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2004/11/24 22:01:42 jmc Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -22,13 +22,17 @@ iso-image-md-pre:
 SGI.image= ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-sgimips.img
 
 iso-image-md-post:
-	dd if=/dev/zero of=${SGI.image} bs=1m count=120
-	vnconfig vnd0 ${SGI.image}
-	${TOOLDIR}/bin/nbsgivol -f -i vnd0
-	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${DESTDIR}/usr/mdec/aoutboot vnd0
-	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${DESTDIR}/usr/mdec/ip2xboot vnd0
-	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${DESTDIR}/usr/mdec/ip3xboot vnd0
-	vnconfig -u vnd0
-	dd if=${CDROM.image} of=${SGI.image} bs=512 seek=3135
+	dd if=/dev/zero of=${SGI.image} bs=1024k count=120
+	${TOOLDIR}/bin/nbsgivol -f -i ${SGI.image}
+	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${DESTDIR}/usr/mdec/aoutboot \
+		${SGI.image}
+	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${DESTDIR}/usr/mdec/ip2xboot \
+		${SGI.image}
+	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${DESTDIR}/usr/mdec/ip3xboot \
+		${SGI.image}
+# Don't hardcode this. Pick it up from bootblock.h
+	SEEK=`egrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
+		${.CURDIR}/../../sys/sys/bootblock.h | sed -e 's/[^0-9]*//'`; \
+		dd if=${CDROM.image} of=${SGI.image} bs=512 seek=$${SEEK}
 	mv ${SGI.image} ${CDROM.image}
 	rm -f ${RELEASEDIR}/ip2x ${RELEASEDIR}/ip3x
