@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.10 1995/03/09 12:05:29 mycroft Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.11 1995/04/28 03:10:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -3135,26 +3135,31 @@ END(cpu_getregs)
 
 /*
  * Interrupt counters for vmstat.
- * XXX These aren't used yet.
  */
 	.data
-	.globl intrcnt
-	.globl eintrcnt
-	.globl intrnames
-	.globl eintrnames
-intrnames:
-	.asciiz	"spur"
-	.asciiz	"hil"
-	.asciiz	"lev2"
-	.asciiz	"lev3"
-	.asciiz	"lev4"
-	.asciiz	"lev5"
-	.asciiz	"dma"
+	.globl _C_LABEL(intrcnt)
+	.globl _C_LABEL(eintrcnt)
+	.globl _C_LABEL(intrnames)
+	.globl _C_LABEL(eintrnames)
+_C_LABEL(intrnames):
+	.asciiz	"softclock"
+	.asciiz	"softnet"
+	.asciiz	"dc"
+	.asciiz	"ether"
+	.asciiz	"disk"
+	.asciiz	"memory"
 	.asciiz	"clock"
-	.asciiz	"statclock"
+	.asciiz	"fp"
+	.asciiz	"tcslot0"		# Intrs 0 through 4 folded in here for now
+	.asciiz	"tcslot1"
+	.asciiz	"tcslot2"
+	.asciiz	"tcslot3"
+	.asciiz	"tcslot4"
 	.asciiz	"nmi"
-eintrnames:
+_C_LABEL(eintrnames):
 	.align	2
-intrcnt:
-	.word	0,0,0,0,0,0,0,0,0,0
-eintrcnt:
+_C_LABEL(intrcnt):
+	.word	0,0,0,0,0,0,0,0,0,0,0,0,0,0
+_C_LABEL(eintrcnt):
+	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
+			#  label ends end up in a different section otherwise.
