@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.6 1999/09/02 17:26:15 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.7 1999/09/23 11:46:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -166,6 +166,7 @@ static uint8_t	eso_read_mixreg __P((struct eso_softc *, uint8_t));
 static uint8_t	eso_read_rdr __P((struct eso_softc *));
 static int	eso_reset __P((struct eso_softc *));
 static void	eso_set_gain __P((struct eso_softc *, unsigned int));
+static int	eso_set_monooutsrc __P((struct eso_softc *, unsigned int));
 static int	eso_set_recsrc __P((struct eso_softc *, unsigned int));
 static void	eso_write_cmd __P((struct eso_softc *, uint8_t));
 static void	eso_write_ctlreg __P((struct eso_softc *, uint8_t, uint8_t));
@@ -1000,13 +1001,7 @@ eso_set_port(hdl, cp)
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
 
-		sc->sc_monooutsrc = cp->un.ord;
-
-		tmp = eso_read_mixreg(sc, ESO_MIXREG_MPM);
-		tmp &= ~ESO_MIXREG_MPM_MOMASK;
-		tmp |= sc->sc_monooutsrc;
-		eso_write_mixreg(sc, ESO_MIXREG_MPM, tmp);
-		break;
+		return (eso_set_monooutsrc(sc, cp->un.ord));
 		
 	case ESO_RECORD_MONITOR:
 		if (cp->type != AUDIO_MIXER_ENUM)
@@ -1724,14 +1719,53 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 }
 
 static int
+eso_set_monooutsrc(sc, monooutsrc)
+	struct eso_softc *sc;
+	unsigned int monooutsrc;
+{
+	mixer_devinfo_t di;
+	int i;
+	uint8_t mpm;
+
+	di.index = ESO_MONOOUT_SOURCE;
+	if (eso_query_devinfo(sc, &di) != 0)
+		panic("eso_set_monooutsrc: eso_query_devinfo failed");
+
+	for (i = 0; i < di.un.e.num_mem; i++) {
+		if (monooutsrc == di.un.e.member[i].ord) {
+			mpm = eso_read_mixreg(sc, ESO_MIXREG_MPM);
+			mpm &= ~ESO_MIXREG_MPM_MOMASK;
+			mpm |= monooutsrc;
+			eso_write_mixreg(sc, ESO_MIXREG_MPM, mpm);
+			sc->sc_monooutsrc = monooutsrc;
+			return (0);
+		}
+	}
+
+	return (EINVAL);
+}
+
+static int
 eso_set_recsrc(sc, recsrc)
 	struct eso_softc *sc;
 	unsigned int recsrc;
 {
+	mixer_devinfo_t di;
+	int i;
 
-	eso_write_mixreg(sc, ESO_MIXREG_ERS, recsrc);
-	sc->sc_recsrc = recsrc;
-	return (0);
+	di.index = ESO_RECORD_SOURCE;
+	if (eso_query_devinfo(sc, &di) != 0)
+		panic("eso_set_recsrc: eso_query_devinfo failed");
+
+	for (i = 0; i < di.un.e.num_mem; i++) {
+		if (recsrc == di.un.e.member[i].ord) {
+			eso_write_mixreg(sc, ESO_MIXREG_ERS, recsrc);
+			sc->sc_recsrc = recsrc;
+			return (0);
+		}
+	}
+
+	return (EINVAL);
 }
 
 static void
