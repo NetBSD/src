@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.13 1998/03/19 06:37:26 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.14 1998/03/19 19:26:50 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2543,6 +2543,7 @@ uvmspace_fork(vm1)
 	vm_map_entry_t  old_entry;
 	vm_map_entry_t  new_entry;
 	pmap_t          new_pmap;
+	boolean_t	protect_child;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
 
 #if (defined(i386) && !defined(PMAP_NEW)) || defined(pc532)
@@ -2702,136 +2703,145 @@ uvmspace_fork(vm1)
 			uvm_map_entry_link(new_map, new_map->header.prev,
 			    new_entry);
 			
-			/* 
+			/*
 			 * the new entry will need an amap.  it will either
 			 * need to be copied from the old entry or created
-			 * from scrach (if the old does not have an amap).
-			 * can we defer this process until later (by setting
-			 * needs_copy) or do we need to do it now?
+			 * from scratch (if the old entry does not have an
+			 * amap).  can we defer this process until later
+			 * (by setting "needs_copy") or do we need to copy
+			 * the amap now?
 			 *
-			 * we must do it now if any of the following
+			 * we must copy the amap now if any of the following
 			 * conditions hold:
+			 * 1. the old entry has an amap and that amap is
+			 *    being shared.  this means that the old (parent)
+			 *    process is sharing the amap with another 
+			 *    process.  if we do not clear needs_copy here
+			 *    we will end up in a situation where both the
+			 *    parent and child process are refering to the
+			 *    same amap with "needs_copy" set.  if the 
+			 *    parent write-faults, the fault routine will
+			 *    clear "needs_copy" in the parent by allocating
+			 *    a new amap.   this is wrong because the 
+			 *    parent is supposed to be sharing the old amap
+			 *    and the new amap will break that.
 			 *
-			 * 1. the old entry has an amap and it is not
-			 *    copy_on_write [i.e. shared].  why: we would
-			 *    have to write-protect the old mapping in the 
-			 *    parent's pmap [thus needlessly changing the
-			 *    protection of a shared mapping, something we
-			 *    don't want to do] 
-			 *    note: a non-copy-on-write old entry will not
-			 *    have an amap unless we've used non-standard
-			 *    features of this VM system.
-			 *    [also, see semantic note below...]
+			 * 2. if the old entry has an amap and a non-zero
+			 *    wire count then we are going to have to call
+			 *    amap_cow_now to avoid page faults in the 
+			 *    parent process.   since amap_cow_now requires
+			 *    "needs_copy" to be clear we might as well
+			 *    clear it here as well.
 			 *
-			 * 2. the old entry has an amap and that amap is being
-			 *    shared.  why: if the amap is being shared
-			 *    between 2 or more processes they need to
-			 *    continue sharing the amap.   if we try and defer
-			 *    the copy there is no easy to determine which
-			 *    process needs to break off their references to
-			 *    the amap and which ones are supposed to keep it
-			 *    at fault time.
-			 *
-			 * 3. if the old entry was copy_on_write and wired
-			 *    then we are going to have to call
-			 *    fault_copy_entry now (see below).  that needs
-			 *    to have the amap copied also, so we do it here
-			 *    too.
-			 *
-			 * semantic note: if the old entry was shared and had
-			 * an amap then the child gets a snapshot copy of the
-			 * pages in the amap now, but the child does not want
-			 * to see any new pages added to the amap by the
-			 * parent after the fork.  the child will see changes
-			 * made by the parent to any amap pages it inherits
-			 * until it writes them itself.  to get these
-			 * semantics we need to copy the amap now (as per
-			 * [1] above).
 			 */
 
-			if ((old_entry->aref.ar_amap &&
-			    (UVM_ET_ISCOPYONWRITE(old_entry) == FALSE ||
-			    (old_entry->aref.ar_amap->am_flags & AMAP_SHARED) !=
-			    0)) || (old_entry->wired_count != 0 &&
-			    UVM_ET_ISCOPYONWRITE(old_entry)) ) {
-				amap_copy(new_map, new_entry, M_WAITOK, FALSE,
-				    0, 0); 
-				/* XXXCDC: M_WAITOK? */
-			}
+			if (old_entry->aref.ar_amap != NULL) {
 
+			  if ((old_entry->aref.ar_amap->am_flags & 
+			       AMAP_SHARED) != 0 ||
+			      old_entry->wired_count != 0) {
+
+			    amap_copy(new_map, new_entry, M_WAITOK, FALSE,
+				      0, 0);
+			    /* XXXCDC: M_WAITOK ... ok? */
+			  }
+			}
+			
 			/*
-			 * if an entry is wired down, then we can not get
-			 * faults on access.  this means that we can't do COW
-			 * because we can't write protect the old entry
-			 * (otherwise we could get a protection fault on wired
-			 * memory).   if that is the case we must copy things
-			 * now.   note that we've already allocated the new
-			 * amap (above).
+			 * if the parent's entry is wired down, then the
+			 * parent process does not want page faults on
+			 * access to that memory.  this means that we
+			 * cannot do copy-on-write because we can't write
+			 * protect the old entry.   in this case we
+			 * resolve all copy-on-write faults now, using
+			 * amap_cow_now.   note that we have already
+			 * allocated any needed amap (above).
 			 */
 
-			if (old_entry->wired_count != 0 &&
-			    UVM_ET_ISCOPYONWRITE(old_entry)) {
-				/*
-				 * copy it now
-				 */
-				amap_cow_now(new_map, new_entry);
+			if (old_entry->wired_count != 0) {
 
-			} else {
+			  /* 
+			   * resolve all copy-on-write faults now
+			   * (note that there is nothing to do if 
+			   * the old mapping does not have an amap).
+			   * XXX: is it worthwhile to bother with pmap_copy
+			   * in this case?
+			   */
+			  if (old_entry->aref.ar_amap)
+			    amap_cow_now(new_map, new_entry);
 
-				/*
-				 * do a copy-on-write.   two cases to consider: 
-				 * 1. old_entry is MAP_SHARE
-				 *	(old_entry->copy_on_write *  == FALSE)
-				 *    => no need to protect old mappings
-				 * 2. old_entry is MAP_PRIVATE
-				 *	(old_entry->copy_on_write == TRUE)
-				 *    => must protect both old and new mappings
-				 */
+			} else { 
 
-				/* private mapping? */
-				if (UVM_ET_ISCOPYONWRITE(old_entry)) {
+			  /*
+			   * setup mappings to trigger copy-on-write faults
+			   * we must write-protect the parent if it has
+			   * an amap and it is not already "needs_copy"...
+			   * if it is already "needs_copy" then the parent
+			   * has already been write-protected by a previous
+			   * fork operation.
+			   *
+			   * if we do not write-protect the parent, then
+			   * we must be sure to write-protect the child
+			   * after the pmap_copy() operation.
+			   *
+			   * XXX: pmap_copy should have some way of telling
+			   * us that it didn't do anything so we can avoid
+			   * calling pmap_protect needlessly.
+			   */
 
-					/*
-					 * protect old mappings.   note that if
-					 * needs_copy is true then the mappings
-					 * have already been protected elsewhere
-					 * and there is no need to do it again.
-					 * also note that pmap_copy will copy
-					 * the protected mappings to the child.
-					 */
+			  if (old_entry->aref.ar_amap) {
 
-					/* write protect pages */
-					if (!UVM_ET_ISNEEDSCOPY(old_entry)) {
-						pmap_protect(old_map->pmap,
-						    old_entry->start,
-						    old_entry->end,
-						    old_entry->protection &
-						    ~VM_PROT_WRITE);
-						old_entry->etype |=
-						    UVM_ET_NEEDSCOPY;
-					}
-				}
+			    if (!UVM_ET_ISNEEDSCOPY(old_entry)) {
+			      if (old_entry->max_protection & VM_PROT_WRITE) {
+				pmap_protect(old_map->pmap,
+					     old_entry->start,
+					     old_entry->end,
+					     old_entry->protection &
+					     ~VM_PROT_WRITE);
+			      }
+			      old_entry->etype |= UVM_ET_NEEDSCOPY;
+			    }
 
-				pmap_copy(new_pmap, old_map->pmap,
+			    /*
+			     * parent must now be write-protected
+			     */
+			    protect_child = FALSE;
+			  } else {
+
+			    /*
+			     * we only need to protect the child if the 
+			     * parent has write access.
+			     */
+			    if (old_entry->max_protection & VM_PROT_WRITE)
+			      protect_child = TRUE;
+			    else
+			      protect_child = FALSE;
+
+			  }
+
+			  /*
+			   * copy the mappings
+			   * XXX: need a way to tell if this does anything
+			   */
+
+			  pmap_copy(new_pmap, old_map->pmap,
 				    new_entry->start,
-				(old_entry->end - old_entry->start),
+				    (old_entry->end - old_entry->start),
 				    old_entry->start);
+			  
+			  /*
+			   * protect the child's mappings if necessary
+			   */
+			  if (protect_child) {
+			    pmap_protect(new_pmap, new_entry->start,
+					 new_entry->end, 
+					 new_entry->protection & 
+					          ~VM_PROT_WRITE);
+			  }
 
-				/*
-				 * protect new mappings.   already taken care
-				 * of for private mappings by the call to
-				 * pmap_protect above.
-				 */
-
-				if (!UVM_ET_ISCOPYONWRITE(old_entry)) {
-					pmap_protect(new_pmap,
-					    new_entry->start, new_entry->end,
-					new_entry->protection & ~VM_PROT_WRITE);
-				}
 			}
-
 			break;
-		}
+		}  /* end of switch statement */
 		old_entry = old_entry->next;
 	}
 
