@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.1 2003/03/05 22:08:20 matt Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.2 2003/04/08 22:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -47,14 +47,14 @@
 #include "opt_ddb.h"
 #include "opt_allegro.h"
 
-#include <sys/types.h>
-#include <sys/cdefs.h>
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/inttypes.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
 
-#include <machine/param.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/psl.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -579,7 +579,7 @@ idma_dmamem_alloc(
 	idmp->idm_size = sz;
 	idmp->idm_maxsegs = maxsegs;
 
-	error = bus_dmamem_alloc(sc->idma_dmatag, idmp->idm_size, NBPG,
+	error = bus_dmamem_alloc(sc->idma_dmatag, idmp->idm_size, PAGE_SIZE,
 			IDMA_BOUNDARY, idmp->idm_segs, idmp->idm_maxsegs,
 			&idmp->idm_nsegs, BUS_DMA_NOWAIT);
 	if (error) {
