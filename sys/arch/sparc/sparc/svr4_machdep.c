@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.2 1995/07/01 23:55:43 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.3 1995/07/04 10:29:22 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -53,6 +53,14 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+
+#ifdef DEBUG
+extern int sigdebug;
+extern int sigpid;
+#define SDB_FOLLOW	0x01		/* XXX: dup from machdep.c */
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
@@ -143,8 +151,8 @@ svr4_setcontext(p, uc)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %x\n",
-		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+		printf("svr4_setcontext: %s[%d], svr4_ucontext %x\n",
+		    p->p_comm, p->p_pid, uc);
 #endif
 
 	if ((int)uc & 3 || useracc((caddr_t)uc, sizeof *uc, B_WRITE) == 0)
@@ -282,7 +290,7 @@ svr4_sendsig(catcher, sig, mask, code)
 		 */
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
+			printf("svr4_sendsig: window save or copyout error\n");
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
