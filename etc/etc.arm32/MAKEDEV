@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.30 1999/03/16 11:00:46 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.31 1999/03/20 03:00:20 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -117,7 +117,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 lpa0 lpt0 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
-	sh $0 usbs
+	sh $0 usbs wscons
 	sh $0 mouse-qms0 random
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -168,6 +168,15 @@ wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
 	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
+	;;
+
+ttyEcfg)
+	chr=60
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
 	;;
 
 ttyE*)
@@ -180,7 +189,7 @@ ttyE*)
 wsmouse*)
 	unit=${i#wsmouse}
 	wsmouse=wsmouse$unit
-	major=61
+	major=62
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
 	chown root.wheel $wsmouse
@@ -190,7 +199,7 @@ wsmouse*)
 wskbd*)
 	unit=${i#wskbd}
 	wskbd=wskbd$unit
-	major=62
+	major=61
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
 	chown root.wheel $wskbd
