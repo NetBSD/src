@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.64 2000/11/02 00:42:38 eeh Exp $	*/
+/*	$NetBSD: dc.c,v 1.65 2000/11/03 15:01:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.64 2000/11/02 00:42:38 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.65 2000/11/03 15:01:10 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -908,7 +908,7 @@ dcxint(tp)
 		ndflush(&tp->t_outq, dp->p_mem - (caddr_t) tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
-	if (tp->t_line)
+	if (tp->t_linesw)
 		(*tp->t_linesw->l_start)(tp);
 	else
 		dcstart(tp);
