@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.43 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.44 2003/11/30 20:42:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.43 2003/11/27 23:44:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.44 2003/11/30 20:42:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.43 2003/11/27 23:44:49 manu Exp $");
 #include <sys/ktrace.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/sa.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -636,6 +639,35 @@ mach_task_resume(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_retval = 0;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+int
+mach_task_terminate(args)
+	struct mach_trap_args *args;
+{
+	mach_task_resume_request_t *req = args->smsg;
+	mach_task_resume_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+	struct sys_exit_args cup;
+	register_t retval;
+	int error;
+
+
+	SCARG(&cup, rval) = 0;
+	error = sys_exit(tl, &cup, &retval);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = native_to_mach_errno[error];
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
