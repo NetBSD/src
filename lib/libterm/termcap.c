@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.13 1997/10/13 16:11:48 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.14 1998/07/27 01:57:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.13 1997/10/13 16:11:48 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.14 1998/07/27 01:57:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,8 @@ static	char *tbuf;	/* termcap buffer */
  */
 int
 tgetent(bp, name)
-	char *bp, *name;
+	char *bp;
+	const char *name;
 {
 	char  *p;
 	char  *cp;
@@ -171,7 +172,7 @@ tgetent(bp, name)
  */
 int
 tgetnum(id)
-	char *id;
+	const char *id;
 {
 	long num;
 
@@ -189,7 +190,7 @@ tgetnum(id)
  */
 int
 tgetflag(id)
-	char *id;
+	const char *id;
 {
 	return (cgetcap(tbuf, id, ':') != NULL);
 }
@@ -204,7 +205,8 @@ tgetflag(id)
  */
 char *
 tgetstr(id, area)
-	char *id, **area;
+	const char *id;
+	char **area;
 {
 	char ids[3];
 	char *s;

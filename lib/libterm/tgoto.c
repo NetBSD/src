@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.9 1997/10/13 16:11:52 lukem Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.10 1998/07/27 01:57:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.9 1997/10/13 16:11:52 lukem Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.10 1998/07/27 01:57:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,12 +78,12 @@ char	*BC;
  */
 char *
 tgoto(CM, destcol, destline)
-	char *CM;
+	const char *CM;
 	int destcol, destline;
 {
 	static char result[MAXRETURNSIZE];
 	static char added[10];
-	char *cp = CM;
+	const char *cp = CM;
 	char *dp = result;
 	int c;
 	int oncol = 0;
