@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_tpdu.h	7.4 (Berkeley) 5/6/91
- *	$Id: tp_tpdu.h,v 1.3 1993/05/20 05:28:04 cgd Exp $
+ *	$Id: tp_tpdu.h,v 1.4 1994/05/05 07:56:39 cgd Exp $
  */
 
 #ifndef _NETISO_TP_TPDU_H_
@@ -65,26 +65,7 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * This ghastly set of macros makes it possible to
- * refer to tpdu structures without going mad.
  */
-
-#ifndef BYTE_ORDER
-/*
- * Definitions for byte order,
- * according to byte significance from low address to high.
- */
-#define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax) */
-#define	BIG_ENDIAN	4321	/* most-significant byte first (IBM, net) */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long (pdp) */
-
-#ifdef vax
-#define	BYTE_ORDER	LITTLE_ENDIAN
-#else
-#define	BYTE_ORDER	BIG_ENDIAN	/* mc68000, tahoe, most others */
-#endif
-#endif BYTE_ORDER
 
 /* This much of a tpdu is the same for all types of tpdus  (except
  * DT tpdus in class 0; their exceptions are handled by the data
