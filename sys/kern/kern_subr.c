@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.20 1997/02/01 02:28:48 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.21 1997/02/12 19:27:08 ragge Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -455,6 +455,7 @@ setroot(bootdv, bootpartition, nam2blk)
 				dv = getdisk(buf, len, 1, nam2blk, &nrootdev);
 				if (dv != NULL) {
 					rootdv = dv;
+					swapdv = dv;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}
