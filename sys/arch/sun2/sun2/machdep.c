@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2002/03/20 17:59:26 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2002/05/30 22:40:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -217,7 +217,7 @@ vaddr_t vmmap;
 int	safepri = PSL_LOWIPL;
 
 /* Soft copy of the enable register. */
-u_short	enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
+__volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
 /*
  * Our no-fault fault handler.
