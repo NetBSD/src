@@ -1,5 +1,5 @@
 dnl configure.in for cvs
-AC_INIT([Concurrent Versions System (CVS)],[1.11.11],[bug-cvs@gnu.org],[cvs])
+AC_INIT([Concurrent Versions System (CVS)],[1.11.15],[bug-cvs@gnu.org],[cvs])
 AC_CONFIG_SRCDIR(src/cvs.h)
 AM_INIT_AUTOMAKE([gnu 1.7.9 dist-bzip2 no-define])
 AC_PREREQ(2.58)
@@ -75,7 +75,7 @@ AC_PATH_PROG(CSH, csh, no)
 # for contrib/rcs2log.sh & src/cvsbug.in.
 AC_PATH_PROG(MKTEMP, mktemp, mktemp)
 if test x"$MKTEMP" = xmktemp; then
-	MKTEMP_SH_FUNCTION=mktemp.sh
+	MKTEMP_SH_FUNCTION=$srcdir/mktemp.sh
 else
 	MKTEMP_SH_FUNCTION=/dev/null
 fi
@@ -508,7 +508,7 @@ AC_ARG_WITH(
 
 AC_MSG_CHECKING([for temporary directory])
 if test -z "$with_tmpdir" || test yes = "$with_tmpdir"; then
-  for with_tmpdir in "$TMPDIR" "$TMP" "$TEMP" /tmp /var/tmp no; do
+  for with_tmpdir in /tmp /var/tmp no; do
     if test -d "$with_tmpdir" && test -x "$with_tmpdir" \
         && test -w "$with_tmpdir" && test -r "$with_tmpdir"; then
       break
@@ -687,7 +687,7 @@ if test no != "$enable_password_authenticated_client"; then
        method in the CVS client (default)])
   else
     AC_MSG_WARN(
-      [--enable-password-authenticated-server is meaningless with
+      [--enable-password-authenticated-client is meaningless with
        the CVS client disabled (--disable-client)])
   fi
 fi
@@ -878,7 +878,7 @@ if test "$enable_encryption" = yes; then
       [Define to enable encryption support.])
   else
     AC_MSG_WARN(
-      [--enable-encryption is meaningless with neither the CVS client
+      [--enable-encryption is meaningless when neither the CVS client
        nor the CVS server is enabled (--disable-client and --disable-server).])
   fi
 fi

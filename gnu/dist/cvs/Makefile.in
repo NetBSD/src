@@ -164,7 +164,8 @@ EXTRA_DIST = \
 	cvsnt.dsp \
 	cvsnt.dsw \
 	cvsnt.mak \
-	cvs.spec
+	cvs.spec \
+	mktemp.sh
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

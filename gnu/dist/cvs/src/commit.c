@@ -21,32 +21,37 @@
 #include "fileattr.h"
 #include "hardlink.h"
 
-static Dtype check_direntproc PROTO ((void *callerdat, char *dir,
-				      char *repos, char *update_dir,
-				      List *entries));
+static Dtype check_direntproc PROTO ((void *callerdat, const char *dir,
+                                      const char *repos,
+                                      const char *update_dir,
+                                      List *entries));
 static int check_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 static int check_filesdoneproc PROTO ((void *callerdat, int err,
-				       char *repos, char *update_dir,
-				       List *entries));
-static int checkaddfile PROTO((char *file, char *repository, char *tag,
-			       char *options, RCSNode **rcsnode));
-static Dtype commit_direntproc PROTO ((void *callerdat, char *dir,
-				       char *repos, char *update_dir,
-				       List *entries));
-static int commit_dirleaveproc PROTO ((void *callerdat, char *dir,
-				       int err, char *update_dir,
-				       List *entries));
+                                       const char *repos,
+                                       const char *update_dir,
+                                       List *entries));
+static int checkaddfile PROTO((const char *file, const char *repository,
+                               const char *tag, const char *options,
+                               RCSNode **rcsnode));
+static Dtype commit_direntproc PROTO ((void *callerdat, const char *dir,
+                                       const char *repos,
+                                       const char *update_dir,
+                                       List *entries));
+static int commit_dirleaveproc PROTO ((void *callerdat, const char *dir,
+                                       int err, const char *update_dir,
+                                       List *entries));
 static int commit_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 static int commit_filesdoneproc PROTO ((void *callerdat, int err,
-					char *repository, char *update_dir,
-					List *entries));
+                                        const char *repository,
+                                        const char *update_dir,
+                                        List *entries));
 static int finaladd PROTO((struct file_info *finfo, char *revision, char *tag,
 			   char *options));
 static int findmaxrev PROTO((Node * p, void *closure));
-static int lock_RCS PROTO((char *user, RCSNode *rcs, char *rev,
-			   char *repository));
+static int lock_RCS PROTO((const char *user, RCSNode *rcs, const char *rev,
+			   const char *repository));
 static int precommit_list_proc PROTO((Node * p, void *closure));
-static int precommit_proc PROTO((char *repository, char *filter));
+static int precommit_proc PROTO((const char *repository, const char *filter));
 static int remove_file PROTO ((struct file_info *finfo, char *tag,
 			       char *message));
 static void fixaddfile PROTO((const char *rcs));
@@ -121,23 +126,26 @@ struct find_data {
     /* Only good within functions called from the filesdoneproc.  Stores
        the repository (pointer into storage managed by the recursion
        processor.  */
-    char *repository;
+    const char *repository;
 
     /* Non-zero if we should force the commit.  This is enabled by
        either -f or -r options, unlike force_ci which is just -f.  */
     int force;
 };
 
-static Dtype find_dirent_proc PROTO ((void *callerdat, char *dir,
-				      char *repository, char *update_dir,
-				      List *entries));
+
+
+static Dtype find_dirent_proc PROTO ((void *callerdat, const char *dir,
+                                      const char *repository,
+                                      const char *update_dir,
+                                      List *entries));
 
 static Dtype
 find_dirent_proc (callerdat, dir, repository, update_dir, entries)
     void *callerdat;
-    char *dir;
-    char *repository;
-    char *update_dir;
+    const char *dir;
+    const char *repository;
+    const char *update_dir;
     List *entries;
 {
     struct find_data *find_data = (struct find_data *)callerdat;
@@ -161,16 +169,20 @@ find_dirent_proc (callerdat, dir, repository, update_dir, entries)
     return R_PROCESS;
 }
 
+
+
 /* Here as a static until we get around to fixing ignore_files to pass
    it along as an argument.  */
 static struct find_data *find_data_static;
 
-static void find_ignproc PROTO ((char *, char *));
+
+
+static void find_ignproc PROTO ((const char *, const char *));
 
 static void
 find_ignproc (file, dir)
-    char *file;
-    char *dir;
+    const char *file;
+    const char *dir;
 {
     struct question *p;
 
@@ -182,16 +194,19 @@ find_ignproc (file, dir)
     find_data_static->questionables = p;
 }
 
+
+
 static int find_filesdoneproc PROTO ((void *callerdat, int err,
-				      char *repository, char *update_dir,
-				      List *entries));
+                                      const char *repository,
+                                      const char *update_dir,
+                                      List *entries));
 
 static int
 find_filesdoneproc (callerdat, err, repository, update_dir, entries)
     void *callerdat;
     int err;
-    char *repository;
-    char *update_dir;
+    const char *repository;
+    const char *update_dir;
     List *entries;
 {
     struct find_data *find_data = (struct find_data *)callerdat;
@@ -317,7 +332,7 @@ find_fileproc (callerdat, finfo)
 
     node->type = UPDATE;
     node->delproc = update_delproc;
-    node->data = (char *) data;
+    node->data = data;
     (void)addnode (args->ulist, node);
 
     ++args->argc;
@@ -799,7 +814,7 @@ check_fileproc (callerdat, finfo)
     struct file_info *finfo;
 {
     Ctype status;
-    char *xdir;
+    const char *xdir;
     Node *p;
     List *ulist, *cilist;
     Vers_TS *vers;
@@ -991,7 +1006,7 @@ warning: file `%s' seems to still contain conflict indicators",
 		    xmalloc (sizeof (struct master_lists));
 		ml->ulist = ulist;
 		ml->cilist = cilist;
-		p->data = (char *) ml;
+		p->data = ml;
 		p->delproc = masterlist_delproc;
 		(void) addnode (mulist, p);
 	    }
@@ -1007,7 +1022,7 @@ warning: file `%s' seems to still contain conflict indicators",
 	    li->tag = xstrdup (vers->tag);
 	    li->rev_old = xstrdup (vers->vn_rcs);
 	    li->rev_new = NULL;
-	    p->data = (char *) li;
+	    p->data = li;
 	    (void) addnode (ulist, p);
 
 	    p = getnode ();
@@ -1025,7 +1040,7 @@ warning: file `%s' seems to still contain conflict indicators",
 		ci->rev = (char *) NULL;
 	    ci->tag = xstrdup (vers->tag);
 	    ci->options = xstrdup(vers->options);
-	    p->data = (char *) ci;
+	    p->data = ci;
 	    (void) addnode (cilist, p);
 
 #ifdef PRESERVE_PERMISSIONS_SUPPORT
@@ -1058,7 +1073,7 @@ warning: file `%s' seems to still contain conflict indicators",
 		    hlinfo = (struct hardlink_info *)
 			xmalloc (sizeof (struct hardlink_info));
 		    hlinfo->status = status;
-		    linkp->data = (char *) hlinfo;
+		    linkp->data = hlinfo;
 		}
 	    }
 #endif
@@ -1079,6 +1094,8 @@ warning: file `%s' seems to still contain conflict indicators",
     return (0);
 }
 
+
+
 /*
  * By default, return the code that tells do_recursion to examine all
  * directories
@@ -1087,9 +1104,9 @@ warning: file `%s' seems to still contain conflict indicators",
 static Dtype
 check_direntproc (callerdat, dir, repos, update_dir, entries)
     void *callerdat;
-    char *dir;
-    char *repos;
-    char *update_dir;
+    const char *dir;
+    const char *repos;
+    const char *update_dir;
     List *entries;
 {
     if (!isdir (dir))
@@ -1109,9 +1126,7 @@ precommit_list_proc (p, closure)
     Node *p;
     void *closure;
 {
-    struct logfile_info *li;
-
-    li = (struct logfile_info *) p->data;
+    struct logfile_info *li = p->data;
     if (li->type == T_ADDED
 	|| li->type == T_MODIFIED
 	|| li->type == T_REMOVED)
@@ -1126,8 +1141,8 @@ precommit_list_proc (p, closure)
  */
 static int
 precommit_proc (repository, filter)
-    char *repository;
-    char *filter;
+    const char *repository;
+    const char *filter;
 {
     /* see if the filter is there, only if it's a full path */
     if (isabsolute (filter))
@@ -1164,8 +1179,8 @@ static int
 check_filesdoneproc (callerdat, err, repos, update_dir, entries)
     void *callerdat;
     int err;
-    char *repos;
-    char *update_dir;
+    const char *repos;
+    const char *update_dir;
     List *entries;
 {
     int n;
@@ -1260,7 +1275,7 @@ commit_fileproc (callerdat, finfo)
     if (p == NULL)
 	return (0);
 
-    ci = (struct commit_info *) p->data;
+    ci = p->data;
     if (ci->status == T_MODIFIED)
     {
 	if (finfo->rcs == NULL)
@@ -1407,7 +1422,7 @@ out:
 		struct logfile_info *li;
 
 		(void) classify_file_internal (finfo, &vers);
-		li = (struct logfile_info *) p->data;
+		li = p->data;
 		li->rev_new = xstrdup (vers->vn_rcs);
 		freevers_ts (&vers);
 	    }
@@ -1427,8 +1442,8 @@ static int
 commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
     void *callerdat;
     int err;
-    char *repository;
-    char *update_dir;
+    const char *repository;
+    const char *update_dir;
     List *entries;
 {
     Node *p;
@@ -1442,12 +1457,11 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
 
     got_message = 0;
 
-
     Update_Logfile (repository, saved_message, (FILE *) 0, ulist);
 
     /* Build the administrative files if necessary.  */
     {
-	char *p;
+	const char *p;
 
 	if (strncmp (current_parsed_root->directory, repository,
 		     strlen (current_parsed_root->directory)) != 0)
@@ -1480,7 +1494,7 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
 
 	    cvs_output (program_name, 0);
 	    cvs_output (" ", 1);
-	    cvs_output (command_name, 0);
+	    cvs_output (cvs_cmd_name, 0);
 	    cvs_output (": Rebuilding administrative file database\n", 0);
 	    mkmodules (admin_dir);
 	    free (admin_dir);
@@ -1497,9 +1511,9 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
 static Dtype
 commit_direntproc (callerdat, dir, repos, update_dir, entries)
     void *callerdat;
-    char *dir;
-    char *repos;
-    char *update_dir;
+    const char *dir;
+    const char *repos;
+    const char *update_dir;
     List *entries;
 {
     Node *p;
@@ -1541,9 +1555,9 @@ commit_direntproc (callerdat, dir, repos, update_dir, entries)
 static int
 commit_dirleaveproc (callerdat, dir, err, update_dir, entries)
     void *callerdat;
-    char *dir;
+    const char *dir;
     int err;
-    char *update_dir;
+    const char *update_dir;
     List *entries;
 {
     /* update the per-directory tag info */
@@ -1570,15 +1584,14 @@ findmaxrev (p, closure)
     void *closure;
 {
     int thisrev;
-    Entnode *entdata;
+    Entnode *entdata = p->data;
 
-    entdata = (Entnode *) p->data;
     if (entdata->type != ENT_FILE)
-	return (0);
+	return 0;
     thisrev = atoi (entdata->version);
     if (thisrev > maxrev)
 	maxrev = thisrev;
-    return (0);
+    return 0;
 }
 
 /*
@@ -1623,11 +1636,11 @@ remove_file (finfo, tag, message)
 		error (0, retcode == -1 ? errno : 0,
 		       "failed to remove tag `%s' from `%s'", tag,
 		       finfo->fullname);
-	    return (1);
+	    return 1;
 	}
 	RCS_rewrite (finfo->rcs, NULL, NULL);
 	Scratch_Entry (finfo->entries, finfo->file);
-	return (0);
+	return 0;
     }
 
     /* we are removing the file from either the head or a branch */
@@ -1657,12 +1670,12 @@ remove_file (finfo, tag, message)
 	    /* no revision exists on this branch.  use the previous
 	       revision but do not lock. */
 	    corev = RCS_gettag (finfo->rcs, tag, 1, (int *) NULL);
-	    prev_rev = xstrdup(rev);
+	    prev_rev = xstrdup (corev);
 	    lockflag = 0;
 	} else
 	{
 	    corev = xstrdup (rev);
-	    prev_rev = xstrdup(branchname);
+	    prev_rev = xstrdup (branchname);
 	    free (branchname);
 	}
 
@@ -1869,10 +1882,10 @@ fixbranch (rcs, branch)
 
 static int
 checkaddfile (file, repository, tag, options, rcsnode)
-    char *file;
-    char *repository;
-    char *tag;
-    char *options;
+    const char *file;
+    const char *repository;
+    const char *tag;
+    const char *options;
     RCSNode **rcsnode;
 {
     RCSNode *rcs;
@@ -1900,7 +1913,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	char *desc = NULL;
 	size_t descalloc = 0;
 	size_t desclen = 0;
-	char *opt;
+	const char *opt;
 
 	if ( adding_on_branch )
 	{
@@ -1977,10 +1990,14 @@ checkaddfile (file, repository, tag, options, rcsnode)
 			  NULL, NULL, 0, NULL,
 			  desc, desclen, NULL) != 0)
 	{
+	    if (rcsname != NULL)
+	        free (rcsname);
 	    goto out;
 	}
 	rcs = RCS_parsercsfile (rcsname);
 	newfile = 1;
+	if (rcsname != NULL)
+	    free (rcsname);
 	if (desc != NULL)
 	    free (desc);
 	*rcsnode = rcs;
@@ -2180,10 +2197,10 @@ checkaddfile (file, repository, tag, options, rcsnode)
  */
 static int
 lock_RCS (user, rcs, rev, repository)
-    char *user;
+    const char *user;
     RCSNode *rcs;
-    char *rev;
-    char *repository;
+    const char *rev;
+    const char *repository;
 {
     char *branch = NULL;
     int err = 0;
@@ -2212,11 +2229,11 @@ lock_RCS (user, rcs, rev, repository)
 		return (1);
 	    }
 	}
-	err = RCS_lock(rcs, NULL, 1);
+	err = RCS_lock (rcs, NULL, 1);
     }
     else
     {
-	(void) RCS_lock(rcs, rev, 1);
+	RCS_lock (rcs, rev, 1);
     }
 
     /* We used to call RCS_rewrite here, and that might seem
@@ -2262,9 +2279,8 @@ void
 update_delproc (p)
     Node *p;
 {
-    struct logfile_info *li;
+    struct logfile_info *li = p->data;
 
-    li = (struct logfile_info *) p->data;
     if (li->tag)
 	free (li->tag);
     if (li->rev_old)
@@ -2281,9 +2297,8 @@ static void
 ci_delproc (p)
     Node *p;
 {
-    struct commit_info *ci;
+    struct commit_info *ci = p->data;
 
-    ci = (struct commit_info *) p->data;
     if (ci->rev)
 	free (ci->rev);
     if (ci->tag)
@@ -2300,15 +2315,9 @@ static void
 masterlist_delproc (p)
     Node *p;
 {
-    struct master_lists *ml;
+    struct master_lists *ml = p->data;
 
-    ml = (struct master_lists *) p->data;
     dellist (&ml->ulist);
     dellist (&ml->cilist);
     free (ml);
 }
-
-
-
-/* vim:tabstop=8:shiftwidth=4
- */
