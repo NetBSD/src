@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.10 1997/05/03 17:18:05 mjacob Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.11 1997/09/14 08:53:46 lukem Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,17 +32,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dmesg.c,v 1.10 1997/05/03 17:18:05 mjacob Exp $";
+__RCSID("$NetBSD: dmesg.c,v 1.11 1997/09/14 08:53:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,8 @@ struct nlist nl[] = {
 	{ NULL },
 };
 
-void usage __P((void));
+int	main __P((int, char *[]));
+void	usage __P((void));
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
@@ -76,15 +77,15 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch, newl, skip;
-	register char *p, *ep;
+	int ch, newl, skip;
+	char *p, *ep;
 	struct msgbuf *bufp, cur;
 	char *memf, *nlistf;
 	kvm_t *kd;
 	char buf[5];
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:")) != EOF)
+	while ((ch = getopt(argc, argv, "M:N:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -114,10 +115,11 @@ main(argc, argv)
 	if (nl[X_MSGBUF].n_type == 0)
 		errx(1, "%s: msgbufp not found", nlistf ? nlistf : "namelist");
 	if (KREAD(nl[X_MSGBUF].n_value, bufp))
-		errx(1, "kvm_read: %s (%lx)", kvm_geterr(kd),
+		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
 			nl[X_MSGBUF].n_value);
 	if (KREAD((long)bufp, cur))
-		errx(1, "kvm_read: %s (%lx)", kvm_geterr(kd), bufp);
+		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
+		    (unsigned long)bufp);
 	kvm_close(kd);
 	if (cur.msg_magic != MSG_MAGIC)
 		errx(1, "magic number incorrect");
