@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.6 2001/04/24 04:31:08 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.7 2001/05/11 04:46:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -670,13 +670,13 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
-#endif
-#if 1
-		MachFlushDCache(addr + offset, minlen);
+		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
+		    addr, offset, addr, offset + minlen - 1, len);
 #endif
 #if 0
+		MachFlushDCache(addr + offset, minlen);
+#endif
+#if 1
 		mips3_HitFlushDCache(map->dm_segs[i]._ds_vaddr + offset, len);
 #endif
 #if 0
