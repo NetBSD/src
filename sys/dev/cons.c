@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40 2001/06/04 09:45:03 jdolecek Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.2.1 2001/07/10 14:01:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -236,6 +236,27 @@ cnpoll(dev, events, p)
 	else
 		dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_poll)(dev, events, p));
+}
+
+/*ARGSUSED*/
+int
+cnkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+
+	/*
+	 * Redirect the kqfilter, if that's appropriate.
+	 * I don't want to think of the possible side effects
+	 * of console redirection here.
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
+	else
+		dev = cn_tab->cn_dev;
+	return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
 }
 
 int
