@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.212 2003/09/09 02:37:55 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.213 2003/09/09 03:01:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.212 2003/09/09 02:37:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.213 2003/09/09 03:01:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,10 +613,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST34501FC       ", ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
-	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
-	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
-	 "Maxtor 4", "D040H2",           "DAH0"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1924",          ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
