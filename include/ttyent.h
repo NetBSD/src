@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ttyent.h	5.7 (Berkeley) 4/3/91
- *	$Id: ttyent.h,v 1.2 1993/08/01 18:45:11 mycroft Exp $
+ *	$Id: ttyent.h,v 1.3 1994/03/12 06:39:08 cgd Exp $
  */
 
 #ifndef	_TTYENT_H_
@@ -43,6 +43,9 @@
 #define	_TTYS_ON	"on"
 #define	_TTYS_SECURE	"secure"
 #define	_TTYS_WINDOW	"window"
+#define	_TTYS_LOCAL	"local"
+#define	_TTYS_RTSCTS	"rtscts"
+#define	_TTYS_SOFTCAR	"softcar"
 
 struct ttyent {
 	char	*ty_name;	/* terminal device name */
@@ -50,6 +53,9 @@ struct ttyent {
 	char	*ty_type;	/* terminal type for termcap */
 #define	TTY_ON		0x01	/* enable logins (start ty_getty program) */
 #define	TTY_SECURE	0x02	/* allow uid of 0 to login */
+#define	TTY_LOCAL	0x04	/* set 'CLOCAL' on open (dev. specific) */
+#define	TTY_RTSCTS	0x08	/* set 'CRTSCTS' on open (dev. specific) */
+#define	TTY_SOFTCAR	0x10	/* ignore hardware carrier (dev. specific) */
 	int	ty_status;	/* status flags */
 	char 	*ty_window;	/* command to start up window manager */
 	char	*ty_comment;	/* comment field */
