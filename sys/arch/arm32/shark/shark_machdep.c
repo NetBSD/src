@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.23 2001/11/09 06:52:26 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.24 2001/11/09 07:21:38 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -306,8 +306,10 @@ initarm(ofw_handle)
 		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
@@ -315,6 +317,8 @@ initarm(ofw_handle)
 
 		ddb_init(kernexec->a_syms, &end, esym);
 	}
+#endif /* __ELF__ */
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

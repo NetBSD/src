@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.11 2001/11/09 06:52:27 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.12 2001/11/09 07:21:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -787,11 +787,10 @@ initarm(bootinfo)
 #endif
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
-#if 0
-	ddb_init(end[0], end + 1, esym);
-#endif
+
+	/* Firmware doesn't load symbols. */
+	ddb_init(0, NULL, NULL);
 
 	if (boothowto & RB_KDB)
 		Debugger();
