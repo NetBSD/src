@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.12 2002/05/20 15:00:11 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.13 2002/07/29 05:17:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -321,7 +321,7 @@ form_driver(FORM *form, int c)
 			if ((form->opts & O_BS_OVERLOAD) == O_BS_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
-				    (fieldp->cursor_xpos == 0)) {
+				    (fieldp->row_xpos == 0)) {
 					update_field =
 						_formi_manipulate_field(form,
 							REQ_PREV_FIELD);
@@ -341,7 +341,7 @@ form_driver(FORM *form, int c)
 			if ((form->opts & O_NL_OVERLOAD) == O_NL_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
-				    (fieldp->cursor_xpos == 0)) {
+				    (fieldp->row_xpos == 0)) {
 					update_field =
 						_formi_manipulate_field(form,
 							REQ_NEXT_FIELD);
@@ -406,6 +406,11 @@ form_driver(FORM *form, int c)
 		case REQ_PREV_CHOICE:
 		case REQ_NEXT_CHOICE:
 			update_field = _formi_field_choice(form, c);
+			  /* reinit the cursor pos just in case */
+			if (update_field == 1) {
+				_formi_init_field_xpos(fieldp);
+				fieldp->row_xpos = 0;
+			}
 			break;
 
 		default: /* should not need to do this, but.... */
@@ -438,8 +443,8 @@ form_driver(FORM *form, int c)
 		fieldp->start_char = 0;
 		fieldp->start_line = 0;
 		fieldp->row_xpos = 0;
-		fieldp->cursor_xpos = 0;
 		fieldp->cursor_ypos = 0;
+		_formi_init_field_xpos(fieldp);
 	}
 	
 	if (update_field < 0)
