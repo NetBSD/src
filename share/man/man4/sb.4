@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.8 1997/07/28 00:23:11 augustss Exp $
+.\"	$NetBSD: sb.4,v 1.9 1997/07/30 22:40:46 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,8 @@
 The
 .Nm
 driver provides support for the SoundBlaster, SoundBlaster Pro,
-SoundBlaster 16, Jazz 16, and hardware register-level compatible audio cards.
+SoundBlaster 16, Jazz 16, SoundBlaster AWE 32, SoundBlaster AWE 64,
+and hardware register-level compatible audio cards.
 .Pp
 The SoundBlaster series are half-duplex cards, capable of 8- and 16-bit
 audio sample recording and playback at rates up to 44.1kHz (depending on
@@ -75,8 +76,9 @@ driver, and the optional SCSI CD-ROM interface is handled by the
 .Xr aic 4
 driver.
 .Sh BUGS
-The 16 bit DMA channel is always channel 5.  This is because there
-is currently no way to specify a second drq in the config file.
+For SBs on the ISA bus the 16 bit DMA channel is currently always channel 5.
+This is because there
+is (yet) no way to specify a second drq in the config file.
 .Pp
 The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
 supported.
