@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.38 2003/09/20 15:40:44 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.39 2003/09/20 20:55:34 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,7 +140,7 @@ md_post_newfs(void)
 	msg_display(MSG_dobootblks, diskdev);
 	return (run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev) ||
 	    run_prog(RUN_DISPLAY, NULL,
-		    "/usr/mdec/binstall %s", targetroot_mnt));
+		    "/usr/mdec/binstall ffs %s", targetroot_mnt));
 }
 
 /*
