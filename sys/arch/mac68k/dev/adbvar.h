@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.12 1998/10/26 07:06:41 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.13 1998/11/14 03:20:47 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -53,6 +53,13 @@ extern int	adb_traceq[ADB_MAXTRACE];
 extern int	adb_traceq_tail;
 extern int	adb_traceq_len;
 extern int	adb_polling;
+
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
+
 #ifdef ADB_DEBUG
 extern int	adb_debug;
 #endif
