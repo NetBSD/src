@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1995/11/19 23:27:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1996/10/16 14:35:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.23 1995/11/19 23:27:42 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.24 1996/10/16 14:35:44 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ STATIC char *find_dot_file __P((char *));
 int
 main(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct jmploc jmploc;
 	struct stackmark smark;
@@ -121,15 +121,30 @@ main(argc, argv)
 		 * exception EXSHELLPROC to clean up before executing
 		 * the shell procedure.
 		 */
-		if (exception == EXERROR)
-			exitstatus = 2;
-		if (exception == EXSHELLPROC) {
+		switch (exception) {
+		case EXSHELLPROC:
 			rootpid = getpid();
 			rootshell = 1;
 			minusc = NULL;
 			state = 3;
-		} else if (state == 0 || iflag == 0 || ! rootshell)
-			exitshell(2);
+			break;
+
+		case EXEXEC:
+			exitstatus = exerrno;
+			break;
+
+		case EXERROR:
+			exitstatus = 2;
+			break;
+
+		default:
+			break;
+		}
+
+		if (exception != EXSHELLPROC) {
+		    if (state == 0 || iflag == 0 || ! rootshell)
+			    exitshell(exitstatus);
+		}
 		reset();
 		if (exception == EXINT
 #if ATTY
@@ -167,7 +182,7 @@ main(argc, argv)
 state1:
 		state = 2;
 		read_profile(".profile");
-	} 
+	}
 state2:
 	state = 3;
 	if (getuid() == geteuid() && getgid() == getegid()) {
@@ -200,7 +215,7 @@ state4:	/* XXX ??? - why isn't this before the "if" statement */
  */
 
 void
-cmdloop(top) 
+cmdloop(top)
 	int top;
 {
 	union node *n;
@@ -320,9 +335,9 @@ find_dot_file(basename)
 }
 
 int
-dotcmd(argc, argv)  
+dotcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct strlist *sp;
 	exitstatus = 0;
@@ -343,9 +358,9 @@ dotcmd(argc, argv)
 
 
 int
-exitcmd(argc, argv)  
+exitcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	extern int oexitstatus;
 
