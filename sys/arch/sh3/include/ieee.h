@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.2 2000/08/02 11:32:42 msaitoh Exp $ */
+/*	$NetBSD: ieee.h,v 1.3 2001/05/03 13:19:52 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,9 +84,6 @@
 #define	DBL_EXPBITS	11
 #define	DBL_FRACBITS	52
 
-#define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
-
 #ifndef _BYTE_ORDER
 #error Define _BYTE_ORDER!
 #endif
@@ -104,15 +101,6 @@ struct ieee_double {
 	u_int	dbl_frach:20;
 	u_int	dbl_fracl;
 };
-
-struct ieee_ext {
-	u_int	ext_sign:1;
-	u_int	ext_exp:15;
-	u_int	ext_frach:16;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
-	u_int	ext_fracl;
-};
 #endif
 #if _BYTE_ORDER == LITTLE_ENDIAN
 struct ieee_single {
@@ -127,15 +115,6 @@ struct ieee_double {
 	u_int	dbl_exp:11;
 	u_int	dbl_sign:1;
 };
-
-struct ieee_ext {
-	u_int	ext_fracl;
-	u_int	ext_fraclm;
-	u_int	ext_frachm;
-	u_int	ext_frach:16;
-	u_int	ext_exp:15;
-	u_int	ext_sign:1;
-};
 #endif
 /*
  * Floats whose exponent is in [1..INFNAN) (of whatever type) are
@@ -148,12 +127,10 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
-#define	EXT_EXP_INFNAN	32767
 
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
-#define	EXT_QUIETNAN	(1 << 15)
 #endif
 
 /*
@@ -161,4 +138,3 @@ struct ieee_ext {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
-#define	EXT_EXP_BIAS	16383
