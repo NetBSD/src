@@ -1,4 +1,4 @@
-/*	$NetBSD: disptest.c,v 1.4 2001/03/04 05:08:29 takemura Exp $	*/
+/*	$NetBSD: disptest.c,v 1.5 2001/09/24 10:42:02 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,6 +37,7 @@
  */
 #include <pbsdboot.h>
 
+extern BOOL SetKMode(BOOL);
 #define ARRAYSIZEOF(a)	(sizeof(a)/sizeof(*(a)))
 
 static struct area {
@@ -411,6 +412,7 @@ display_search()
 		     addr < targets[i].end;
 		     addr += step) {
 			int res;
+#if 0
 			char* p = (char*)VirtualAlloc(0, step, MEM_RESERVE,
 						      PAGE_NOACCESS);
 			res = VirtualCopy((LPVOID)p, (LPVOID)(addr >> 8), step,
@@ -420,6 +422,11 @@ display_search()
 			}
 			res = examine(p, step);
 			VirtualFree(p, 0, MEM_RELEASE);
+#else
+			SetKMode(1);
+			res = examine((char*)((int)addr | 0xa0000000), step);
+			SetKMode(0);
+#endif
 			if (res != prevres && prevres != -1) {
 				if (res) {
 					win_printf(TEXT("0x%x "), addr);
@@ -442,10 +449,11 @@ void
 display_draw()
 {
 	long addr = 0x13000000;
-	int size = 0x40000;
+	int size = 0x80000;
 	char* p;
 	int i, j, res;
 	int x, y;
+	int stride = 1280;
 
 	p = (char*)VirtualAlloc(0, size, MEM_RESERVE,
 				PAGE_NOACCESS);
@@ -460,19 +468,19 @@ display_draw()
 	}
 	for (x = 0; x < 640; x += 10) {
 		for (y = 0; y < 240; y += 1) {
-		        p[1024 * y + x] = (char)0xff;
+		        p[stride * y + x] = (char)0xff;
 		}
 	}
 	for (y = 0; y < 240; y += 10) {
 		for (x = 0; x < 640; x += 1) {
-		        p[1024 * y + x] = (char)0xff;
+		        p[stride * y + x] = (char)0xff;
 		}
 	}
 	for (i = 0; i < 16; i++) {
 		for (j = 0; j < 16; j++) {
 			for (x = i * 32; x < i * 32 + 32; x++) {
 				for (y = j * 15; y < j * 15 + 15; y++) {
-					p[1024 * y + x] = j * 16 + i;
+					p[stride * y + x] = j * 16 + i;
 				}
 			}
 		}
@@ -516,6 +524,68 @@ pcic_search()
 	}
 }
 
+#define VRPCIU_CONFA	(*(u_int32_t*)0xaf000c18)
+#define VRPCIU_CONFD	(*(u_int32_t*)0xaf000c14)
+
+void
+pci_dump()
+{
+	int mode, i;
+	BOOL SetKMode(BOOL);
+	int bus, dev;
+	u_int32_t addr, val;
+	u_int32_t addrs[] = {
+		0x00000800,
+		0x00001000,
+		0x00002000,
+		0x00004000,
+		0x00008000,
+		0x00010000,
+		0x00020000,
+		0x00040000,
+		0x00080000,
+		0x00100000,
+		0x00200000,
+		0x00400000,
+		0x00800000,
+		0x01000000,
+		0x02000000,
+		0x04000000,
+		0x08000000,
+		0x10000000,
+		0x20000000,
+		0x40000000,
+		0x80000000,
+	};
+
+#if 0 /* You can find Vrc4173 BCU at 0xb6010000 on Sigmarion II */
+	win_printf(TEXT("Vrc4173 CMUCLKMSK:	%04X\n"),
+	    *(u_int16_t*)0xb6010040);
+	win_printf(TEXT("Vrc4173 CMUSRST:	%04X\n"),
+	    *(u_int16_t*)0xb6010042);
+
+	/* enable CARDU clock */
+	*(u_int16_t*)0xb6010042 = 0x0006; /* enable CARD1RST and CARD2RST */
+	*(u_int16_t*)0xb6010040 = *(u_int16_t*)0xb6010040 | 0x00c0;
+	*(u_int16_t*)0xb6010042 = 0x0000; /* disable CARD1RST and CARD2RST */
+
+	win_printf(TEXT("Vrc4173 CMUCLKMSK:	%04X\n"),
+	    *(u_int16_t*)0xb6010040);
+	win_printf(TEXT("Vrc4173 CMUSRST:	%04X\n"),
+	    *(u_int16_t*)0xb6010042);
+#endif
+
+	for (i = 0; i < sizeof(addrs)/sizeof(*addrs); i++) {
+		VRPCIU_CONFA = addrs[i];
+		val = VRPCIU_CONFD;
+		win_printf(TEXT("%2d:	%08X	%04X %04X\n"),
+		    i, addrs[i], val & 0xffff, (val >> 16) & 0xffff);
+	}
+
+	mode = SetKMode(1);
+	SetKMode(mode);
+}
+
 void
 hardware_test()
 {
@@ -526,6 +596,7 @@ hardware_test()
 	int do_display_search = 0;
 	int do_pcic_search = 0;
 	int do_dump_memory = 0;
+	int do_pci_dump = 0;
 
 	if (do_gpio_test) {
 		gpio_test();
@@ -547,5 +618,8 @@ hardware_test()
 	}
 	if (do_dump_memory) {
 		dump_memory();
+	}
+	if (do_pci_dump) {
+		pci_dump();
 	}
 }
