@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.5 2003/11/02 21:24:39 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.5 2003/11/02 21:24:39 scw Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -61,6 +61,7 @@ CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
 		ixpsip_match, ixpsip_attach, NULL, NULL);
 
 extern struct bus_space ixpsip_bs_tag;
+struct ixpsip_softc *ixpsip_softc;
 
 int
 ixpsip_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -74,7 +75,16 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 	struct ixpsip_softc *sc = (void *) self;
 	sc->sc_iot = &ixpsip_bs_tag;
 
+	ixpsip_softc = sc;
+
 	printf("\n");
+
+	if (bus_space_map(sc->sc_iot, IXP425_EXP_HWBASE, IXP425_EXP_SIZE,
+	    0, &sc->sc_ioh)) {
+		printf("%s: Can't map expansion bus control registers!\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/*
 	 * Bootstrap the timer (needed for delay(9))
