@@ -1,9 +1,9 @@
-/*	$NetBSD: locore.s,v 1.103 1995/01/15 00:52:21 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 1995/01/15 03:33:25 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -1937,6 +1937,21 @@ IDTVEC(align)
 	ZTRAP(T_ALIGNFLT)
 	/* 18 - 31 reserved for future exp */
 
+/*
+ * If an error is detected during trap, syscall, or interrupt exit, trap() will
+ * change %eip to point to one of these labels.  We clean up the stack, if
+ * necessary, and resume as if we were handling a general protection fault.
+ * This will cause the process to get a SIGBUS.
+ */
+ENTRY(resume_iret)
+	ZTRAP(T_PROTFLT)
+ENTRY(resume_pop_ds)
+	movl	$KDSEL,%eax
+	movl	%ax,%es
+ENTRY(resume_pop_es)
+	movl	$T_PROTFLT,TF_TRAPNO(%esp)
+	jmp	calltrap
+
 ENTRY(alltraps)
 	INTRENTRY
 calltrap:
@@ -2037,15 +2052,6 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
-
-ENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-ENTRY(resume_pop_ds)
-	movl	$KDSEL,%eax
-	movl	%ax,%es
-ENTRY(resume_pop_es)
-	movl	$T_PROTFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
