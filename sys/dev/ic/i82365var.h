@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.15 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.16 2001/12/15 13:23:21 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -173,7 +173,7 @@ int	pcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
 void	pcic_chip_mem_free __P((pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *));
 int	pcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *));
 void	pcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int	pcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,
