@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.76 1997/04/11 00:07:08 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.77 1997/06/06 19:52:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 1997/04/11 00:07:08 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 1997/06/06 19:52:43 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,10 +196,10 @@ alpha_init(pfn, ptb)
 	char *p;
 
 	/*
-	 * Turn off interrupts and floating point.
+	 * Turn off interrupts (not mchecks) and floating point.
 	 * Make sure the instruction and data streams are consistent.
 	 */
-	(void)splhigh();
+	(void)alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
 	alpha_pal_wrfen(0);
 	ALPHA_TBIA();
 	alpha_pal_imb();
