@@ -1,6 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8 2001/01/18 20:28:26 jdolecek Exp $	*/
-
-#define	PCMCIADEBUG
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.9 2001/05/13 04:24:51 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
