@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.7 1999/03/31 03:22:57 cgd Exp $ */
+/* $NetBSD: prom.c,v 1.8 1999/03/31 03:34:21 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -35,7 +35,9 @@
 
 int console;
 
+#if !defined(NO_GETCHAR) || !defined(NO_PUTCHAR_HALT)
 static int test_getchar(int *);
+#endif
 static void putonechar(int c);
 
 void
@@ -57,6 +59,7 @@ init_prom_calls()
 	console = buf[0] - '0';
 }
 
+#if !defined(NO_GETCHAR) || !defined(NO_PUTCHAR_HALT)
 static int
 test_getchar(xc)
 	int *xc;
@@ -67,7 +70,9 @@ test_getchar(xc)
 	*xc = ret.u.retval;
 	return ret.u.status == 0 || ret.u.status == 1;
 }
+#endif
 
+#if !defined(NO_GETCHAR)
 int
 getchar()
 {
@@ -81,6 +86,7 @@ getchar()
 		}
 	}
 }
+#endif
 
 static void
 putonechar(c)
@@ -98,16 +104,20 @@ void
 putchar(c)
 	int c;
 {
+#if !defined(NO_PUTCHAR_HALT)
 	int typed_c;
+#endif
 
 	if (c == '\r' || c == '\n') {
 		putonechar('\r');
 		c = '\n';
 	}
 	putonechar(c);
+#if !defined(NO_PUTCHAR_HALT)
 	if (test_getchar(&typed_c))
 		if (typed_c == 3)
 			halt();
+#endif
 }
 
 int
