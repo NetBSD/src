@@ -1,4 +1,4 @@
-.\"	$NetBSD: shlock.1,v 1.5 2001/12/01 16:43:24 wiz Exp $
+.\"	$NetBSD: shlock.1,v 1.6 2001/12/08 19:14:58 wiz Exp $
 .\"
 .Dd June 29, 1997
 .Dt SHLOCK 1
@@ -98,7 +98,6 @@ else
 	echo Lock ${lckfile} already held by `cat ${lckfile}`
 endif
 .Ed
-
 .Pp
 The examples assume that the filesystem where the lock file is to
 be created is writeable by the user, and has space available.
@@ -108,8 +107,8 @@ was written for the first Network News Transfer Protocol (NNTP)
 software distribution, released in March 1986.
 The algorithm was suggested by Peter Honeyman,
 from work he did on HoneyDanBer UUCP.
-.Sh AUTHOR
-Erik E. Fair <fair@clock.org>
+.Sh AUTHORS
+.An Erik E. Fair Aq fair@clock.org
 .Sh BUGS
 Does not work on NFS or other network filesystem on different
 systems because the disparate systems have disjoint PID spaces.
