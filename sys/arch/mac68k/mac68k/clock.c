@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1996/02/19 21:40:48 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 1996/02/22 02:04:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,6 +83,7 @@
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/limits.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
 #include <sys/gprof.h>
@@ -410,7 +411,7 @@ resettodr(void)
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
 #define	LARGE_DELAY	0x40000		/* About 335 msec */
 
-int delay_factor = DELAY_CALIBRATE;
+unsigned delay_factor = DELAY_CALIBRATE;
 volatile int delay_flag = 1;
 
 /*
@@ -423,7 +424,8 @@ volatile int delay_flag = 1;
  * due to adjustments for calculations involving 32 bit values.
  */
 void
-delay(unsigned usec)
+delay(usec)
+	unsigned usec;
 {
 	register unsigned int cycles;
 
@@ -440,7 +442,7 @@ delay(unsigned usec)
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
  */
-static int
+static unsigned
 dummy_delay(usec)
 	unsigned usec;
 {
@@ -470,7 +472,7 @@ void
 mac68k_calibrate_delay()
 {
 	int n;
-	int sum;
+	unsigned sum;
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -502,10 +504,10 @@ mac68k_calibrate_delay()
 	 * 
 	 * We can accomplish the same thing by simplifying and using
 	 * shifts, being careful to avoid as much loss of precision
-	 * as possible.  (If the sum exceeds (2^31-1)/10000, we need
+	 * as possible.  (If the sum exceeds UINT_MAX/10000, we need
 	 * to rearrange the calculation slightly to do this.)
 	 */
-	if (sum > 214748)	/* This is a _fast_ machine! */
+	if (sum > (UINT_MAX / 10000))	/* This is a _fast_ machine! */
 		delay_factor = (((sum >> 3) * 10000) / CLK_RATE) >> 3;
 	else
 		delay_factor = (((sum * 10000) >> 3) / CLK_RATE) >> 3;
