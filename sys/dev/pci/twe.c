@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.46 2003/09/22 18:31:11 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.47 2003/09/23 23:08:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.46 2003/09/22 18:31:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.47 2003/09/23 23:08:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.46 2003/09/22 18:31:11 thorpej Exp $");
 
 #define	PCI_CBIO	0x10
 
+static int	twe_aen_get(struct twe_softc *, uint16_t *);
 static void	twe_aen_handler(struct twe_ccb *, int);
 static void	twe_aen_enqueue(struct twe_softc *sc, uint16_t, int);
 static uint16_t	twe_aen_dequeue(struct twe_softc *);
@@ -303,7 +304,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *intrstr;
-	int size, i, rv, rseg;
+	int s, size, i, rv, rseg;
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
 	struct twe_cmd *tc;
@@ -412,7 +413,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dv.dv_xname, rv);
 			return;
 		}
-		/* Save one CCB for parameter retrieval. */
+
+		/* Save the first CCB for AEN retrieval. */
 		if (i != 0)
 			SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb,
 			    ccb_chain.slist);
@@ -428,7 +430,10 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_DISABLE_INTRS);
 
 	/* Reset the controller. */
-	if (twe_reset(sc)) {
+	s = splbio();
+	rv = twe_reset(sc);
+	splx(s);
+	if (rv) {
 		aprint_error("%s: reset failed\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -614,8 +619,8 @@ twe_del_unit(struct twe_softc *sc, int unit)
 }
 
 /*
- * Reset the controller.  Currently only useful at attach time; must be
- * called with interrupts blocked.
+ * Reset the controller.
+ * MUST BE CALLED AT splbio()!
  */
 static int
 twe_reset(struct twe_softc *sc)
@@ -649,9 +654,9 @@ twe_reset(struct twe_softc *sc)
 	 * Open code this, since we want to detect reset even if the
 	 * queue for management tools is full.
 	 */
+	sc->sc_flags &= ~TWEF_AEN;
 	for (got = 0;;) {
-		rv = twe_param_get_2(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
-		    &aen);
+		rv = twe_aen_get(sc, &aen);
 		if (rv != 0)
 			printf("%s: error %d while draining event queue\n",
 			    sc->sc_dv.dv_xname, rv);
@@ -753,9 +758,7 @@ twe_intr(void *arg)
 	 * state change has occurred.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
-		rv = twe_param_get(sc, TWE_PARAM_AEN,
-		    TWE_PARAM_AEN_UnitCode, 2, twe_aen_handler,
-		    NULL);
+		rv = twe_aen_get(sc, NULL);
 		if (rv != 0)
 			printf("%s: unable to retrieve AEN (%d)\n",
 			    sc->sc_dv.dv_xname, rv);
@@ -787,7 +790,92 @@ twe_intr(void *arg)
 }
 
 /*
+ * Fetch an AEN.  Even though this is really like parameter
+ * retrieval, we handle this specially, because we issue this
+ * AEN retrieval command from interrupt context, and thus
+ * reserve a CCB for it to avoid resource shortage.
+ *
+ * XXX There are still potential resource shortages we could
+ * XXX encounter.  Consider pre-allocating all AEN-related
+ * XXX resources.
+ *
+ * MUST BE CALLED AT splbio()!
+ */
+static int
+twe_aen_get(struct twe_softc *sc, uint16_t *aenp)
+{
+	struct twe_ccb *ccb;
+	struct twe_cmd *tc;
+	struct twe_param *tp;
+	int rv;
+
+	/*
+	 * If we're already retrieving an AEN, just wait; another
+	 * retrieval will be chained after the current one completes.
+	 */
+	if (sc->sc_flags & TWEF_AEN) {
+		/*
+		 * It is a fatal software programming error to attempt
+		 * to fetch an AEN synchronously when an AEN fetch is
+		 * already pending.
+		 */
+		KASSERT(aenp == NULL);
+		return (0);
+	}
+
+	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
+	if (tp == NULL)
+		return (ENOMEM);
+
+	rv = twe_ccb_alloc(sc, &ccb,
+	    TWE_CCB_AEN | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	if (rv != 0)
+		goto done;
+
+	ccb->ccb_data = tp;
+	ccb->ccb_datasize = TWE_SECTOR_SIZE;
+	ccb->ccb_tx.tx_handler = (aenp == NULL) ? twe_aen_handler : NULL;
+	ccb->ccb_tx.tx_context = tp;
+	ccb->ccb_tx.tx_dv = &sc->sc_dv;
+
+	tc = ccb->ccb_cmd;
+	tc->tc_size = 2;
+	tc->tc_opcode = TWE_OP_GET_PARAM | (tc->tc_size << 5);
+	tc->tc_unit = 0;
+	tc->tc_count = htole16(1);
+
+	/* Fill in the outbound parameter data. */
+	tp->tp_table_id = htole16(TWE_PARAM_AEN);
+	tp->tp_param_id = TWE_PARAM_AEN_UnitCode;
+	tp->tp_param_size = 2;
+
+	/* Map the transfer. */
+	if ((rv = twe_ccb_map(sc, ccb)) != 0) {
+		twe_ccb_free(sc, ccb);
+		goto done;
+	}
+
+	/* Enqueue the command and wait. */
+	if (aenp != NULL) {
+		rv = twe_ccb_poll(sc, ccb, 5);
+		twe_ccb_unmap(sc, ccb);
+		twe_ccb_free(sc, ccb);
+		if (rv == 0)
+			*aenp = le16toh(*(uint16_t *)tp->tp_data);
+		free(tp, M_DEVBUF);
+	} else {
+		sc->sc_flags |= TWEF_AEN;
+		twe_ccb_enqueue(sc, ccb);
+		rv = 0;
+	}
+
+ done:
+	return (rv);
+}
+
+/*
  * Handle an AEN returned by the controller.
+ * MUST BE CALLED AT splbio()!
  */
 static void
 twe_aen_handler(struct twe_ccb *ccb, int error)
@@ -800,6 +888,8 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	sc = (struct twe_softc *)ccb->ccb_tx.tx_dv;
 	tp = ccb->ccb_tx.tx_context;
 	twe_ccb_unmap(sc, ccb);
+
+	sc->sc_flags &= ~TWEF_AEN;
 
 	if (error) {
 		printf("%s: error retrieving AEN\n", sc->sc_dv.dv_xname);
@@ -820,8 +910,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	 * Chain another retrieval in case interrupts have been
 	 * coalesced.
 	 */
-	rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode, 2,
-	    twe_aen_handler, NULL);
+	rv = twe_aen_get(sc, NULL);
 	if (rv != 0)
 		printf("%s: unable to retrieve AEN (%d)\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -972,8 +1061,7 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	if (tp == NULL)
 		return ENOMEM;
 
-	rv = twe_ccb_alloc(sc, &ccb,
-	    TWE_CCB_PARAM | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	rv = twe_ccb_alloc(sc, &ccb, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
 	if (rv != 0)
 		goto done;
 
@@ -1040,8 +1128,7 @@ twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	if (tp == NULL)
 		return ENOMEM;
 
-	rv = twe_ccb_alloc(sc, &ccb,
-	    TWE_CCB_PARAM | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	rv = twe_ccb_alloc(sc, &ccb, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
 	if (rv != 0)
 		goto done;
 
@@ -1215,9 +1302,10 @@ twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int flags)
 	int s;
 
 	s = splbio();	
-	if ((flags & TWE_CCB_PARAM) != 0)
+	if ((flags & TWE_CCB_AEN) != 0) {
+		/* Use the reserved CCB. */
 		ccb = sc->sc_ccbs;
-	else {
+	} else {
 		/* Allocate a CCB and command block. */
 		if (SLIST_FIRST(&sc->sc_ccb_freelist) == NULL) {
 			splx(s);
@@ -1254,7 +1342,7 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 	int s;
 
 	s = splbio();
-	if ((ccb->ccb_flags & TWE_CCB_PARAM) == 0)
+	if ((ccb->ccb_flags & TWE_CCB_AEN) == 0)
 		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
 	ccb->ccb_flags = 0;
 	splx(s);
@@ -1502,14 +1590,18 @@ int
 tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct twe_softc *twe;
+#if 0
 	struct twe_ccb *ccb;
+#endif
 	struct twe_param *param;
 	struct twe_usercommand *tu;
 	struct twe_paramcommand *tp;
 	union twe_statrequest *ts;
 	void *pdata = NULL;
 	int rv, s, error = 0;
+#if 0
 	u_int8_t cmdid;
+#endif
 
 	if (securelevel >= 2)
 		return (EPERM);
@@ -1522,6 +1614,8 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/* Hmm, compatible with FreeBSD */
 	switch (cmd) {
 	case TWEIO_COMMAND:
+#if 0
+		/* XXXJRT This whole path needs to be cleaned up. */
 		if (tu->tu_size > 0) {
 			if (tu->tu_size > TWE_SECTOR_SIZE)
 				return EINVAL;
@@ -1561,6 +1655,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		if (tu->tu_size > 0)
 			error = copyout(pdata, tu->tu_data, tu->tu_size);
+#else
+		rv = EOPNOTSUPP;
+#endif
 		goto done;
 
 	case TWEIO_STATS:
@@ -1609,7 +1706,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		goto done;
 
 	case TWEIO_RESET:
+		s = splbio();
 		twe_reset(twe);
+		splx(s);
 		return (0);
 
 	case TWEIO_ADD_UNIT:
