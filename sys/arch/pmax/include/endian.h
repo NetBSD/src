@@ -1,9 +1,4 @@
-/*	$NetBSD: endian.h,v 1.9 2000/01/09 15:34:42 ad Exp $	*/
-
-#ifndef _PMAX_ENDIAN_H_
-#define _PMAX_ENDIAN_H_
+/*	$NetBSD: endian.h,v 1.10 2000/03/16 15:09:37 mycroft Exp $	*/
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
 #include <mips/endian.h>
-
-#endif	/* !_PMAX_ENDIAN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.15 1999/08/21 05:53:52 simonb Exp $	*/
+/*	$NetBSD: endian.h,v 1.16 2000/03/16 15:09:39 mycroft Exp $	*/
 
 #ifndef _VAX_ENDIAN_H_
 #define _VAX_ENDIAN_H_
@@ -17,4 +17,4 @@
 
 #endif
 
-#endif /* _VAX_ENDIAN_H_ */
+#endif /* !_VAX_ENDIAN_H_ */
