@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2000/03/26 20:42:41 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2000/04/18 21:06:12 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_m680x0.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
