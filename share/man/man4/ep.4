@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.14 1997/03/08 14:02:43 mouse Exp $
+.\"	$NetBSD: ep.4,v 1.15 1997/04/10 06:36:28 jeremy Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 The
 .Nm ep
 device driver supports the 3Com Etherlink III family of cards on Alpha
-and i386 CPUs.  Supported Etherlink II cards include:
+and i386 CPUs.  Supported Etherlink III cards include:
 .Pp
 .Bl -tag -width xxxxxx
 .It 3c509
@@ -104,16 +104,16 @@ The
 .Nm 
 driver defaults to using the BNC port.
 To choose an alternative port,
-use the following flag combinations with
+use the following media flags with
 .Xr ifconfig 8
-or in your /etc/hostname.ep? file.
+or in your /etc/ifconfig.ep? file.
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxx
-.It -link0
+.It 10base2/BNC
 Use the BNC port (default).
-.It \ link0 -link1
+.It 10base5/AUI
 Use the AUI port.
-.It \ link0 \ link1
+.It 10baseT/UTP
 Use the UTP port.
 .El
 .Pp
