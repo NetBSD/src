@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.18.2.7 1994/02/01 20:13:26 mycroft Exp $
+ *      $Id: cd.c,v 1.18.2.8 1994/02/06 10:06:41 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -419,7 +419,7 @@ cdstart(unit)
 		dp = &cd->buf_queue;
 		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
 			return;
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 
 		/*
 		 * If the deivce has become invalid, abort all the

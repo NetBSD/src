@@ -36,7 +36,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1.2.7 1994/02/02 11:43:54 mycroft Exp $
+ *	$Id: mcd.c,v 1.1.2.8 1994/02/06 10:08:29 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -381,7 +381,7 @@ mcd_start(sc)
 	if ((bp = qp->b_actf) != 0) {
 		/* block found to process, dequeue */
 		MCD_TRACE("mcd_start: found block bp=0x%x\n", bp, 0, 0, 0);
-		qp->b_actf = bp->av_forw;
+		qp->b_actf = bp->b_actf;
 		splx(s);
 	} else {
 		/* nothing to do */

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.26.2.4 1993/12/13 10:35:10 cgd Exp $
+ *	$Id: wd.c,v 1.26.2.5 1994/02/06 10:08:34 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -484,7 +484,7 @@ loop:
 	if (du->sc_skipm == 0) {
 		struct buf *oldbp, *nextbp;
 		oldbp = bp;
-		nextbp = bp->av_forw;
+		nextbp = bp->b_actf;
 		du->sc_bct = du->sc_bc;
 		oldbp->b_flags |= B_XXX;
 		while( nextbp
@@ -498,7 +498,7 @@ loop:
 			du->sc_bct += nextbp->b_bcount; 
 			oldbp->b_flags |= B_XXX;
 			oldbp = nextbp;
-			nextbp = nextbp->av_forw;
+			nextbp = nextbp->b_actf;
 		}
 	}
     
@@ -800,7 +800,7 @@ done:
 			du->sc_skipm = 0;
 			dp->b_active = 0;
 		}
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 		dp->b_errcnt = 0;
 		bp->b_resid = 0;
 		bp->b_flags &= ~B_XXX;
@@ -1579,13 +1579,13 @@ wddisksort(struct buf *dp, struct buf *bp)
 	if(ap == NULL) {
 		dp->b_actf = bp;
 		dp->b_actl = bp;
-		bp->av_forw = NULL;
+		bp->b_actf = NULL;
 		return;
 	}
 	while( ap->b_flags & B_XXX) {
-		if( ap->av_forw == 0 || (ap->av_forw->b_flags & B_XXX) == 0)
+		if( ap->b_actf == 0 || (ap->b_actf->b_flags & B_XXX) == 0)
 			break;
-		ap = ap->av_forw;
+		ap = ap->b_actf;
 	}
 	/*
 	 * If we lie after the first (currently active)
@@ -1593,13 +1593,13 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * and add ourselves to it.
 	 */
 	if (bp->b_blkno < ap->b_blkno) {
-		while (ap->av_forw) {
+		while (ap->b_actf) {
 			/*
 			 * Check for an ``inversion'' in the
 			 * normally ascending cylinder numbers,
 			 * indicating the start of the second request list.
 			 */
-			if (ap->av_forw->b_blkno < ap->b_blkno) {
+			if (ap->b_actf->b_blkno < ap->b_blkno) {
 				/*
 				 * Search the second request list
 				 * for the first request at a larger
@@ -1607,13 +1607,13 @@ wddisksort(struct buf *dp, struct buf *bp)
 				 * if there is no such request, we go at end.
 				 */
 				do {
-					if (bp->b_blkno < ap->av_forw->b_blkno)
+					if (bp->b_blkno < ap->b_actf->b_blkno)
 						goto insert;
-					ap = ap->av_forw;
-				} while (ap->av_forw);
+					ap = ap->b_actf;
+				} while (ap->b_actf);
 				goto insert;		/* after last */
 			}
-			ap = ap->av_forw;
+			ap = ap->b_actf;
 		}
 		/*
 		 * No inversions... we will go after the last, and
@@ -1625,17 +1625,17 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * Request is at/after the current request...
 	 * sort in the first request list.
 	 */
-	while (ap->av_forw) {
+	while (ap->b_actf) {
 		/*
 		 * We want to go after the current request
 		 * if there is an inversion after it (i.e. it is
 		 * the end of the first request list), or if
 		 * the next request is a larger cylinder than our request.
 		 */
-		if (ap->av_forw->b_blkno < ap->b_blkno ||
-		    bp->b_blkno < ap->av_forw->b_blkno )
+		if (ap->b_actf->b_blkno < ap->b_blkno ||
+		    bp->b_blkno < ap->b_actf->b_blkno )
 			goto insert;
-		ap = ap->av_forw;
+		ap = ap->b_actf;
 	}
 	/*
 	 * Neither a second list nor a larger
@@ -1643,8 +1643,8 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * which is the same as the end of the whole schebang.
 	 */
 insert:
-	bp->av_forw = ap->av_forw;
-	ap->av_forw = bp;
+	bp->b_actf = ap->b_actf;
+	ap->b_actf = bp;
 	if (ap == dp->b_actl)
 		dp->b_actl = bp;
 }

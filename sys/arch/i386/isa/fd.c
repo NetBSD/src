@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.33 1993/12/13 11:21:42 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.34 1994/02/06 10:08:22 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -887,7 +887,7 @@ fdcstate(fdc)
 			goto doseek;
 		} else {
 			bp->b_resid = 0;
-			fd->sc_bufq.b_actf = bp->av_forw;
+			fd->sc_bufq.b_actf = bp->b_actf;
 			biodone(bp);
 			/* turn off motor 5s from now */
 			timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
@@ -999,7 +999,7 @@ fdcretry(fdc)
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount - fd->sc_skip;
-		fd->sc_bufq.b_actf = bp->av_forw;
+		fd->sc_bufq.b_actf = bp->b_actf;
 		biodone(bp);
 		/* turn off motor 5s from now */
 		timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
