@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.22 2004/04/03 20:55:13 christos Exp $
+.\"	$NetBSD: vacation.1,v 1.23 2004/04/03 23:56:49 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)vacation.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd April 19, 2003
+.Dd April 3, 2004
 .Dt VACATION 1
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ login name.
 .It Fl f Ar F|R|S
 Make
 .Nm
-look in addition to From: (F), Return-Path: (R), or Sender: (S) headers
+additionally look in From: (F), Return-Path: (R), or Sender: (S) headers
 to determine the From: field.
 .It Fl i
 Initialize the vacation database files.
@@ -105,7 +105,7 @@ loops.
 .It Fl t Ar A|D
 Make
 .Nm
-look in addition to Apparently-To: (A) or Delivered-To: (D) headers
+additionally look in Apparently-To: (A) or Delivered-To: (D) headers
 to determine the To: field.
 .El
 .Pp
