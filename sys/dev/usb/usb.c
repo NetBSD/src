@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.22 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.23 1999/09/15 14:17:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,6 +125,9 @@ usbd_status usb_discover __P((struct usb_softc *));
 void	usb_create_event_thread __P((void *));
 void	usb_event_thread __P((void *));
 
+/* Flag to see if we are in the cold boot process. */
+extern int cold;
+
 USB_DECLARE_DRIVER_INIT(usb, DEVMETHOD(bus_print_child, usbd_print_child));
 
 USB_MATCH(usb)
@@ -154,7 +157,8 @@ USB_ATTACH(usb)
 	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
-	sc->sc_bus->use_polling = 1;
+	if (cold)
+		sc->sc_bus->use_polling++;
 	sc->sc_port.power = USB_MAX_POWER;
 	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0,0,0,
 			    &sc->sc_port);
@@ -174,7 +178,8 @@ USB_ATTACH(usb)
 		       USBDEVNAME(sc->sc_dev), r); 
 		sc->sc_dying = 1;
 	}
-	sc->sc_bus->use_polling = 0;
+	if (cold)
+		sc->sc_bus->use_polling--;
 
 	kthread_create(usb_create_event_thread, sc);
 
