@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
+/*	$NetBSD: optr.c,v 1.5 1997/01/16 22:00:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $";
+static char rcsid[] = "$NetBSD: optr.c,v 1.5 1997/01/16 22:00:30 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -443,6 +443,9 @@ getfstab()
 		if (strcmp(fs->fs_type, FSTAB_RW) &&
 		    strcmp(fs->fs_type, FSTAB_RO) &&
 		    strcmp(fs->fs_type, FSTAB_RQ))
+			continue;
+		if (strcmp(fs->fs_vfstype, "ufs") &&
+		    strcmp(fs->fs_vfstype, "ffs"))
 			continue;
 		fs = allocfsent(fs);
 		if ((pf = (struct pfstab *)malloc(sizeof (*pf))) == NULL)
