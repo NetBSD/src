@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.41 2005/01/28 11:04:52 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.42 2005/03/21 13:30:50 kleink Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -29,8 +29,9 @@
 .In sys/socket.h
 .In netdb.h
 .Ft int
-.Fn getaddrinfo "const char *hostname" "const char *servname" \
-    "const struct addrinfo *hints" "struct addrinfo **res"
+.Fn getaddrinfo "const char * restrict hostname" \
+    "const char * restrict servname" \
+    "const struct addrinfo * restrict hints" "struct addrinfo ** restrict res"
 .Ft void
 .Fn freeaddrinfo "struct addrinfo *ai"
 .Sh DESCRIPTION
