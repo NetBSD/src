@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.51 2003/12/04 02:33:41 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.52 2004/04/24 22:07:15 pk Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -76,7 +76,8 @@ CWARNFLAGS+=	-Wno-uninitialized
 
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
-CFLAGS+=	${CPUFLAGS} -ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
+CFLAGS+=	${CPUFLAGS} -ffreestanding -fno-zero-initialized-in-bss
+CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
 # Use the per-source COPTS variables to add -g to just those
