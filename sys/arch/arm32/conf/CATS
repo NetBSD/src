@@ -240,24 +240,24 @@ usb*  at ohci?
 
 # USB Hubs
 uhub* at usb?
-uhub* at uhub? port ?
+uhub* at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*  at uhub? port ?
+ums*  at uhub? port ? configuration ? interface ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd* at uhub? port ?
+ukbd* at uhub? port ? configuration ? interface ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid* at uhub? port ?
+uhid* at uhub? port ? configuration ? interface ?
 
 # USB Printer
-ulpt* at uhub? port ?
+ulpt* at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
-#ugen*        at uhub? port ?
+ugen* at uhub? port ? configuration ? interface ?
 
 # Audio Devices
 

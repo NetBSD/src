@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1998/11/13 04:47:04 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 1998/12/08 15:52:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -139,6 +139,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 69: */
 	bdev_lkm_dummy(),		/* 70: */
 	bdev_disk_init(NRAID,raid),	/* 71: RAIDframe disk driver */
+	bdev_lkm_dummy(),		/* 72: */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -179,6 +180,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "joy.h"
 #include "usb.h"
 #include "uhid.h"
+#include "ugen.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "vcoda.h"			/* coda file system */
@@ -279,6 +281,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 69: reserved */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 70: SCSI bus */
 	cdev_disk_init(NRAID,raid),    	/* 71: RAIDframe disk driver */
+	cdev_ugen_init(NUGEN,ugen),   /* 72: USB generic driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
