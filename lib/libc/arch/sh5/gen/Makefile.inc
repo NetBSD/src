@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2003/01/19 23:05:01 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2003/01/21 20:23:32 kleink Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
 	alloca.S \
@@ -13,5 +13,5 @@ SRCS+=	fpgetmask.S fpgetround.S fpgetsticky.S \
 
 SRCS+=	makecontext.c resumecontext.c swapcontext.S _lwp.c
 
-LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
-DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
+LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c Lint_swapcontext.c
+DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c Lint_swapcontext.c
