@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.39.4.3 2003/09/09 10:33:32 msaitoh Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.39.4.4 2004/04/20 20:25:32 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -302,5 +302,6 @@ struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
 
 int tcp_rst_ppslim = 100;			/* 100pps */
+int tcp_ackdrop_ppslim = 100;			/* 100pps */
 
 int icmperrppslim = 100;			/* 100pps */
