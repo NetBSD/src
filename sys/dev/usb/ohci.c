@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.25 1999/01/10 18:42:10 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.26 1999/01/13 10:08:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -577,7 +577,9 @@ ohci_intr(p)
 
 	done = LE(sc->sc_hcca->hcca_done_head);
 	if (done != 0) {
-		intrs = OHCI_WDH;
+		sc->sc_hcca->hcca_done_head = 0;
+		if (done & ~OHCI_DONE_INTRS)
+			intrs = OHCI_WDH;
 		if (done & OHCI_DONE_INTRS)
 			intrs |= OREAD4(sc, OHCI_INTERRUPT_STATUS);
 	} else
@@ -1238,7 +1240,7 @@ ohci_dump_ed(sed)
 	       OHCI_ED_GET_EN(LE(sed->ed->ed_flags)),
 	       OHCI_ED_GET_MAXP(LE(sed->ed->ed_flags)),
 	       (u_long)LE(sed->ed->ed_flags),
-	       "\20\14OUT\15IN\16LOWSPEED\17SKIP\18ISO",
+	       "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
 	       (u_long)LE(sed->ed->ed_tailp),
 	       (u_long)LE(sed->ed->ed_headp), "\20\1HALT\2CARRY",
 	       (u_long)LE(sed->ed->ed_nexted));
@@ -2087,7 +2089,6 @@ ohci_device_intr_start(reqh)
 	}
 #endif
 	sed->ed->ed_flags &= LE(~OHCI_ED_SKIP);
-	splx(s);
 
 #ifdef USB_DEBUG
 	if (ohcidebug > 5) {
@@ -2098,6 +2099,7 @@ ohci_device_intr_start(reqh)
 		ohci_dump_tds(xfer);
 	}
 #endif
+	splx(s);
 
 	return (USBD_IN_PROGRESS);
 
