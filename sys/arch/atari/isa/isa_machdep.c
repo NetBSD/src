@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 1999/01/08 09:29:17 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13 1999/08/06 08:27:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -99,7 +99,7 @@ void		*auxp;
 	iba.iba_iot->base  = ISA_IOSTART;
 	iba.iba_memt->base = ISA_MEMSTART;
 
-	MFP->mf_aer    |= (IO_ISA1|IO_ISA2); /* ISA interrupts: LOW->HIGH */
+	MFP->mf_aer |= (IO_ISA1|IO_ISA2); /* ISA interrupts: LOW->HIGH */
 
 	printf("\n");
 	config_found(dp, &iba, isabusprint);
@@ -148,10 +148,10 @@ int	sr;
 	 * Disable the interrupts
 	 */
 	if (slot == 0) {
-		MFP->mf_imrb  &= ~(IB_ISA1);
+		single_inst_bclr_b(MFP->mf_imrb, IB_ISA1);
 	}
 	else {
-		MFP->mf_imra &= ~(IA_ISA2);
+		single_inst_bclr_b(MFP->mf_imra, IA_ISA2);
 	}
 
 	if ((sr & PSL_IPL) >= (iinfo_p->ipl & PSL_IPL)) {
@@ -164,17 +164,17 @@ int	sr;
 		s = splx(iinfo_p->ipl);
 		if (slot == 0) {
 			do {
-				single_inst_bclr_b(MFP->mf_iprb, IB_ISA1);
+				MFP->mf_iprb = (u_int8_t)~IB_ISA1;
 				(void) (iinfo_p->ifunc)(iinfo_p->iarg);
 			} while (MFP->mf_iprb & IB_ISA1);
-			MFP->mf_imrb  |= IB_ISA1;
+			single_inst_bset_b(MFP->mf_imrb, IB_ISA1);
 		}
 		else {
 			do {
-				single_inst_bclr_b(MFP->mf_ipra, IA_ISA2);
+				MFP->mf_ipra = (u_int8_t)~IA_ISA2;
 				(void) (iinfo_p->ifunc)(iinfo_p->iarg);
 			} while (MFP->mf_ipra & IA_ISA2);
-			MFP->mf_imra |= IA_ISA2;
+			single_inst_bset_b(MFP->mf_imra, IA_ISA2);
 		}
 		splx(s);
 	}
@@ -217,12 +217,12 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		 * Enable (unmask) the interrupt
 		 */
 		if (slot == 0) {
-			MFP->mf_imrb |= IB_ISA1;
-			MFP->mf_ierb |= IB_ISA1;
+			single_inst_bset_b(MFP->mf_imrb, IB_ISA1);
+			single_inst_bset_b(MFP->mf_ierb, IB_ISA1);
 		}
 		else {
-			MFP->mf_imra |= IA_ISA2;
-			MFP->mf_iera |= IA_ISA2;
+			single_inst_bset_b(MFP->mf_imra, IA_ISA2);
+			single_inst_bset_b(MFP->mf_iera, IA_ISA2);
 		}
 		return(iinfo_p);
 	}

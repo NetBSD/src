@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.8 1999/04/06 19:28:41 pk Exp $	*/
+/*	$NetBSD: ser.c,v 1.9 1999/08/06 08:27:31 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1485,7 +1485,7 @@ s_stat2 = MFP->mf_tsr;
 
 s_stat3 = MFP->mf_tsr;
 	/* Clear pending serial interrupts and re-enable */
-	single_inst_bclr_b(MFP->mf_ipra, imra);
+	MFP->mf_ipra = (u_int8_t)~imra;
 	single_inst_bset_b(MFP->mf_imra, imra);
 }
 
