@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.h,v 1.4 1995/05/04 19:39:49 cgd Exp $	*/
+/*	$NetBSD: nvram.h,v 1.5 1995/05/05 22:08:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,6 +64,15 @@
 #define	NVRAM_DISKETTE_144M	 0x40		/* 1.44M */
 #define	NVRAM_DISKETTE_TYPE5	 0x50		/* 2.88M, presumably */
 #define	NVRAM_DISKETTE_TYPE6	 0x60		/* 2.88M */
+
+/* NVRAM byte 6: equipment type */
+#define	NVRAM_EQUIPMENT	(MC_NVRAM_START + 6)
+
+#define	NVRAM_EQUIPMENT_EGAVGA	0x00		/* EGA or VGA */
+#define	NVRAM_EQUIPMENT_COLOR40	0x10		/* 40 column color */
+#define	NVRAM_EQUIPMENT_COLOR80	0x20		/* 80 column color */
+#define	NVRAM_EQUIPMENT_MONO80	0x30		/* 80 column mono */
+#define	NVRAM_EQUIPMENT_MONITOR	0x30		/* mask for monitor type */
 
 /* NVRAM bytes 7 & 8: base memory size */
 #define NVRAM_BASELO	(MC_NVRAM_START + 7)	/* low byte; RTC off. 0x15 */
