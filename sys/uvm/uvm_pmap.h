@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.15 2003/08/07 16:34:50 agc Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.16 2004/03/23 14:15:59 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -113,8 +113,10 @@ boolean_t	 pmap_clear_reference __P((struct vm_page *));
 #endif
 
 void		 pmap_collect __P((pmap_t));
+#if !defined(pmap_copy)
 void		 pmap_copy __P((pmap_t,
 		    pmap_t, vaddr_t, vsize_t, vaddr_t));
+#endif
 #if !defined(pmap_copy_page)
 void		 pmap_copy_page __P((paddr_t, paddr_t));
 #endif
@@ -148,7 +150,9 @@ void		 pmap_protect __P((pmap_t,
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		 pmap_remove_all(struct pmap *);
+#if !defined(pmap_update)
 void		 pmap_update __P((pmap_t));
+#endif
 #if !defined(pmap_resident_count)
 long		 pmap_resident_count __P((pmap_t));
 #endif
