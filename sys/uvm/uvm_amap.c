@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.2 1998/02/06 22:31:31 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.3 1998/02/07 02:21:29 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -150,7 +150,7 @@ int slots, padslots, waitf;
   struct vm_amap *amap;
   int totalslots = slots + padslots;
 
-  MALLOC(amap, struct vm_amap *, sizeof(*amap), M_TEMP, waitf);
+  MALLOC(amap, struct vm_amap *, sizeof(*amap), M_UVMAMAP, waitf);
   if (amap == NULL)
     return(NULL);
 
@@ -163,12 +163,12 @@ int slots, padslots, waitf;
   amap->am_maxslot = totalslots;
   amap->am_nslot = slots;
   amap->am_nused = 0;
-  MALLOC(amap->am_slots,  int *, totalslots * sizeof(int), M_TEMP, waitf);
+  MALLOC(amap->am_slots,  int *, totalslots * sizeof(int), M_UVMAMAP, waitf);
   if (amap->am_slots) {
-    MALLOC(amap->am_bckptr, int *, totalslots * sizeof(int), M_TEMP, waitf);
+    MALLOC(amap->am_bckptr, int *, totalslots * sizeof(int), M_UVMAMAP, waitf);
     if (amap->am_bckptr) {
       MALLOC(amap->am_anon, struct vm_anon **, 
-	     totalslots * sizeof(struct vm_anon *), M_TEMP, waitf);
+	     totalslots * sizeof(struct vm_anon *), M_UVMAMAP, waitf);
     }
   }
 
@@ -176,11 +176,11 @@ int slots, padslots, waitf;
     return(amap);
 
   if (amap->am_slots) {
-    FREE(amap->am_slots, M_TEMP);
+    FREE(amap->am_slots, M_UVMAMAP);
     if (amap->am_bckptr)
-      FREE(amap->am_bckptr, M_TEMP);
+      FREE(amap->am_bckptr, M_UVMAMAP);
   }
-  FREE(amap, M_TEMP);
+  FREE(amap, M_UVMAMAP);
   return(NULL);
 }
 
@@ -234,14 +234,14 @@ struct vm_amap *amap;
     panic("amap_free");
 #endif
 
-  FREE(amap->am_slots, M_TEMP);
-  FREE(amap->am_bckptr, M_TEMP);
-  FREE(amap->am_anon, M_TEMP);
+  FREE(amap->am_slots, M_UVMAMAP);
+  FREE(amap->am_bckptr, M_UVMAMAP);
+  FREE(amap->am_anon, M_UVMAMAP);
 #ifdef VM_AMAP_PPREF
   if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
-    FREE(amap->am_ppref, M_TEMP);
+    FREE(amap->am_ppref, M_UVMAMAP);
 #endif
-  FREE(amap, M_TEMP);
+  FREE(amap, M_UVMAMAP);
 
   UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
@@ -344,17 +344,17 @@ vm_size_t addsize;
 #ifdef VM_AMAP_PPREF
   newppref = NULL;
   if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-    MALLOC(newppref, int *, slotneed * sizeof(int), M_TEMP, M_NOWAIT);
+    MALLOC(newppref, int *, slotneed * sizeof(int), M_UVMAMAP, M_NOWAIT);
     if (newppref == NULL) {
-      FREE(amap->am_ppref, M_TEMP); /* give up if malloc fails */
+      FREE(amap->am_ppref, M_UVMAMAP); /* give up if malloc fails */
       amap->am_ppref = PPREF_NONE;
     }
   }
 #endif
-  MALLOC(newsl,  int *, slotneed * sizeof(int), M_TEMP, M_WAITOK);
-  MALLOC(newbck, int *, slotneed * sizeof(int), M_TEMP, M_WAITOK);
+  MALLOC(newsl,  int *, slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
+  MALLOC(newbck, int *, slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
   MALLOC(newover, struct vm_anon **, slotneed * sizeof(struct vm_anon *), 
-						   M_TEMP, M_WAITOK);
+						   M_UVMAMAP, M_WAITOK);
   simple_lock(&amap->am_l);				/* re-lock! */
 
 #ifdef DIAGNOSTIC
@@ -407,12 +407,12 @@ vm_size_t addsize;
   simple_unlock(&amap->am_l);
 
   /* and free */
-  FREE(oldsl, M_TEMP);
-  FREE(oldbck, M_TEMP);
-  FREE(oldover, M_TEMP);
+  FREE(oldsl, M_UVMAMAP);
+  FREE(oldbck, M_UVMAMAP);
+  FREE(oldover, M_UVMAMAP);
 #ifdef VM_AMAP_PPREF
   if (oldppref && oldppref != PPREF_NONE)
-    FREE(oldppref, M_TEMP);
+    FREE(oldppref, M_UVMAMAP);
 #endif
   UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%x, slotneed=%d", 
 		amap, slotneed, 0, 0);
@@ -745,7 +745,7 @@ ReStart:
        */
       if (pg->flags & PG_BUSY) {
 	pg->flags |= PG_WANTED;
-	simple_unlock(&amap->am_lock);
+	simple_unlock(&amap->am_l);
 	UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE, "cownow", 0);
 	goto ReStart;
       }
@@ -765,7 +765,7 @@ ReStart:
 	if (nanon)
 	  uvm_anfree(nanon);
 	simple_unlock(&anon->an_lock);
-	simple_unlock(&amap->am_lock);
+	simple_unlock(&amap->am_l);
 	uvm_wait("cownowpage");
 	goto ReStart;
       }
@@ -851,7 +851,7 @@ struct vm_amap *amap;
 
 {
 
-  MALLOC(amap->am_ppref, int *, sizeof(int) * amap->am_maxslot, M_TEMP,
+  MALLOC(amap->am_ppref, int *, sizeof(int) * amap->am_maxslot, M_UVMAMAP,
 	 M_NOWAIT);
 
   /*
@@ -1025,7 +1025,7 @@ void uvm_anon_init()
   int nanon = uvmexp.free - (uvmexp.free / 16); /* XXXCDC ??? */
   int lcv;
 
-  MALLOC(anon, struct vm_anon *, sizeof(*anon) * nanon, M_TEMP, M_NOWAIT);
+  MALLOC(anon, struct vm_anon *, sizeof(*anon) * nanon, M_UVMAMAP, M_NOWAIT);
   if (anon == NULL) {
     printf("uvm_anon_init: can not allocate %d anons\n", nanon);
     panic("uvm_anon_init");
@@ -1053,7 +1053,7 @@ int	pages;
   struct vm_anon *anon;
   int lcv;
 
-  MALLOC(anon, struct vm_anon *, sizeof(*anon) * pages, M_TEMP,
+  MALLOC(anon, struct vm_anon *, sizeof(*anon) * pages, M_UVMAMAP,
       M_WAITOK);
 
   simple_lock(&uvm.afreelock);
@@ -1084,8 +1084,8 @@ struct vm_anon *uvm_analloc()
     a->an_ref = 1;
     a->an_swslot = 0;
     a->u.an_page = NULL;		/* so we can free quickly */
+    simple_lock_init(&a->an_lock);
   }
-  simple_lock_init(&a->an_lock);
   simple_unlock(&uvm.afreelock);
   return(a);
 }
@@ -1198,7 +1198,7 @@ struct vm_anon *anon;
   simple_lock(&uvm.afreelock);
   anon->u.an_nxt = uvm.afree;
   uvm.afree = anon;
-  uvmexp.nfreeanon++
+  uvmexp.nfreeanon++;
   simple_unlock(&uvm.afreelock);
 }
 
