@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.38 2000/07/09 20:57:47 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.39 2000/11/01 06:27:45 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -494,6 +494,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
+	sa->sa_frequency = sc->sc_clockfreq;
 
 	error = getprop(node, "reg", sizeof(struct sbus_reg),
 			&sa->sa_nreg, (void **)&sa->sa_reg);
