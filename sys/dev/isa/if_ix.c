@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ix.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
-/*	$Id: if_ix.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
+/*	$NetBSD: if_ix.c,v 1.3 1998/03/03 20:51:20 pk Exp $ */
+/*	$Id: if_ix.c,v 1.3 1998/03/03 20:51:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,10 +100,10 @@ static void	ix_write_24 __P((struct ie_softc *, int, int));
 
 static void	ix_mediastatus __P((struct ie_softc *, struct ifmediareq *));
 
-static u_int16_t ix_read_eeprom __P((struct ix_softc*, int));
-static void	ix_eeprom_outbits __P((struct ix_softc *, int, int));
-static int	ix_eeprom_inbits  __P((struct ix_softc *));
-static void	ix_eeprom_clock   __P((struct ix_softc *, int));
+static u_int16_t ix_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int));
+static void	ix_eeprom_outbits __P((bus_space_tag_t, bus_space_handle_t, int, int));
+static int	ix_eeprom_inbits  __P((bus_space_tag_t, bus_space_handle_t));
+static void	ix_eeprom_clock   __P((bus_space_tag_t, bus_space_handle_t, int));
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int ix_match __P((struct device *, void*, void *));
@@ -145,85 +145,89 @@ ix_atten(sc)
 }
 
 static u_int16_t
-ix_read_eeprom(sc, location)
-	struct ix_softc *sc;
+ix_read_eeprom(iot, ioh, location)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int location;
 {
 	int ectrl, edata;
 
-	ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+	ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 	ectrl &= IX_ECTRL_MASK;
 	ectrl |= IX_ECTRL_EECS;
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_ECTRL, ectrl);
+	bus_space_write_1(iot, ioh, IX_ECTRL, ectrl);
 
-	ix_eeprom_outbits(sc, IX_EEPROM_READ, IX_EEPROM_OPSIZE1);
-	ix_eeprom_outbits(sc, location, IX_EEPROM_ADDR_SIZE);
-	edata = ix_eeprom_inbits(sc);
-	ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+	ix_eeprom_outbits(iot, ioh, IX_EEPROM_READ, IX_EEPROM_OPSIZE1);
+	ix_eeprom_outbits(iot, ioh, location, IX_EEPROM_ADDR_SIZE);
+	edata = ix_eeprom_inbits(iot, ioh);
+	ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 	ectrl &= ~(IX_RESET_ASIC | IX_ECTRL_EEDI | IX_ECTRL_EECS);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_ECTRL, ectrl);
-	ix_eeprom_clock(sc, 1);
-	ix_eeprom_clock(sc, 0);
+	bus_space_write_1(iot, ioh, IX_ECTRL, ectrl);
+	ix_eeprom_clock(iot, ioh, 1);
+	ix_eeprom_clock(iot, ioh, 0);
 	return (edata);
 }
 
 static void
-ix_eeprom_outbits(sc, edata, count)
-	struct ix_softc *sc;
+ix_eeprom_outbits(iot, ioh, edata, count)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int edata, count;
 {
 	int ectrl, i;
 
-	ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+	ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 	ectrl &= ~IX_RESET_ASIC;
 	for (i = count - 1; i >= 0; i--) {
 		ectrl &= ~IX_ECTRL_EEDI;
 		if (edata & (1 << i)) {
 			ectrl |= IX_ECTRL_EEDI;
 		}
-		bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_ECTRL, ectrl);
+		bus_space_write_1(iot, ioh, IX_ECTRL, ectrl);
 		delay(1);	/* eeprom data must be setup for 0.4 uSec */
-		ix_eeprom_clock(sc, 1);
-		ix_eeprom_clock(sc, 0);
+		ix_eeprom_clock(iot, ioh, 1);
+		ix_eeprom_clock(iot, ioh, 0);
 	}
 	ectrl &= ~IX_ECTRL_EEDI;
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_ECTRL, ectrl);
+	bus_space_write_1(iot, ioh, IX_ECTRL, ectrl);
 	delay(1);		/* eeprom data must be held for 0.4 uSec */
 }
 
 static int
-ix_eeprom_inbits(sc)
-    struct ix_softc *sc;
+ix_eeprom_inbits(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 {
 	int ectrl, edata, i;
 
-	ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+	ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 	ectrl &= ~IX_RESET_ASIC;
 	for (edata = 0, i = 0; i < 16; i++) {
 		edata = edata << 1;
-		ix_eeprom_clock(sc, 1);
-		ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+		ix_eeprom_clock(iot, ioh, 1);
+		ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 		if (ectrl & IX_ECTRL_EEDO) {
 			edata |= 1;
 		}
-		ix_eeprom_clock(sc, 0);
+		ix_eeprom_clock(iot, ioh, 0);
 	}
 	return (edata);
 }
 
 static void
-ix_eeprom_clock(sc, state)
-	struct ix_softc *sc;
+ix_eeprom_clock(iot, ioh, state)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int state;
 {
 	int ectrl;
 
-	ectrl = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_ECTRL);
+	ectrl = bus_space_read_1(iot, ioh, IX_ECTRL);
 	ectrl &= ~(IX_RESET_ASIC | IX_ECTRL_EESK);
 	if (state) {
 		ectrl |= IX_ECTRL_EESK;
 	}
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_ECTRL, ectrl);
+	bus_space_write_1(iot, ioh, IX_ECTRL, ectrl);
 	delay(9);		/* EESK must be stable for 8.38 uSec */
 }
 
@@ -369,28 +373,30 @@ ix_match(parent, cf, aux)
 	bus_size_t msize;
 	u_short checksum = 0;
 	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
 	u_int8_t val, bart_config;
 	u_short pg, adjust, decode, edecode;
-	u_short board_id, id_var1, id_var2, irq;
+	u_short board_id, id_var1, id_var2, irq, irq_encoded;
 	struct isa_attach_args * const ia = aux;
-	struct ix_softc *sc = (struct ix_softc *) cf;
 	short irq_translate[] = {0, 0x09, 0x03, 0x04, 0x05, 0x0a, 0x0b, 0};
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
+	iot = ia->ia_iot;
+
+	if (bus_space_map(iot, ia->ia_iobase,
 			  IX_IOSIZE, 0, &ioh) != 0) {
 		DPRINTF(("Can't map io space at 0x%x\n", ia->ia_iobase));
 		return (0);
 	}
 
 	/* XXX: reset any ee16 at the current iobase */
-	bus_space_write_1(ia->ia_iot, ioh, IX_ECTRL, IX_RESET_ASIC);
-	bus_space_write_1(ia->ia_iot, ioh, IX_ECTRL, 0);
+	bus_space_write_1(iot, ioh, IX_ECTRL, IX_RESET_ASIC);
+	bus_space_write_1(iot, ioh, IX_ECTRL, 0);
 	delay(240);
 
 	/* now look for ee16. */
 	board_id = id_var1 = id_var2 = 0;
 	for (i = 0; i < 4 ; i++) {
-		id_var1 = bus_space_read_1(ia->ia_iot, ioh, IX_ID_PORT);
+		id_var1 = bus_space_read_1(iot, ioh, IX_ID_PORT);
 		id_var2 = ((id_var1 & 0x03) << 2);
 		board_id |= (( id_var1 >> 4)  << id_var2);
 	}
@@ -400,9 +406,6 @@ ix_match(parent, cf, aux)
 			board_id, IX_ID));
 		goto out;
 	}
-
-	sc->sc_regt = ia->ia_iot;
-	sc->sc_regh = ioh;
 
 	/*
 	 * The shared RAM size and location of the EE16 is encoded into
@@ -421,7 +424,7 @@ ix_match(parent, cf, aux)
 	 * with what the card can do...
 	 */
 
-	val = ix_read_eeprom(sc, 6) & 0xff;
+	val = ix_read_eeprom(iot, ioh, 6) & 0xff;
 	DPRINTF(("memory config: 0x%02x\n", val));
 
 	for(i = 0; i < 8; i++) {
@@ -481,11 +484,11 @@ ix_match(parent, cf, aux)
 		ia->ia_msize, ia->ia_maddr));
 
 	/* need to put the 586 in RESET, and leave it */
-	bus_space_write_1(ia->ia_iot, ioh, IX_ECTRL, IX_RESET_586);
+	bus_space_write_1(iot, ioh, IX_ECTRL, IX_RESET_586);
 
 	/* read the eeprom and checksum it, should == IX_ID */
 	for(i = 0; i < 0x40; i++)
-		checksum += ix_read_eeprom(sc, i);
+		checksum += ix_read_eeprom(iot, ioh, i);
 
 	if (checksum != IX_ID) {
 		DPRINTF(("checksum mismatch (got 0x%04x, expected 0x%04x\n",
@@ -504,16 +507,16 @@ ix_match(parent, cf, aux)
 	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
 
 	/* ZZZ This should be checked against eeprom location 6, low byte */
-	bus_space_write_1(ia->ia_iot, ioh, IX_MEMDEC, decode & 0xFF);
+	bus_space_write_1(iot, ioh, IX_MEMDEC, decode & 0xFF);
 
 	/* ZZZ This should be checked against eeprom location 1, low byte */
-	bus_space_write_1(ia->ia_iot, ioh, IX_MCTRL, adjust);
+	bus_space_write_1(iot, ioh, IX_MCTRL, adjust);
 
 	/* ZZZ Now if I could find this one I would have it made */
-	bus_space_write_1(ia->ia_iot, ioh, IX_MPCTRL, (~decode & 0xFF));
+	bus_space_write_1(iot, ioh, IX_MPCTRL, (~decode & 0xFF));
 
 	/* ZZZ I think this is location 6, high byte */
-	bus_space_write_1(ia->ia_iot, ioh,+ IX_MECTRL, edecode); /*XXX disable Exxx */
+	bus_space_write_1(iot, ioh, IX_MECTRL, edecode); /*XXX disable Exxx */
 
 	/*
 	 * Get the encoded interrupt number from the EEPROM, check it
@@ -521,10 +524,9 @@ ix_match(parent, cf, aux)
 	 * match, and fail the probe.  If irq is 'IRQUNK' then we
 	 * use the EEPROM irq, and continue.
 	 */
-	irq = ix_read_eeprom(sc, IX_EEPROM_CONFIG1);
-	irq = (irq & IX_EEPROM_IRQ) >> IX_EEPROM_IRQ_SHIFT;
-	sc->irq_encoded = irq;
-	irq = irq_translate[irq];
+	irq_encoded = ix_read_eeprom(iot, ioh, IX_EEPROM_CONFIG1);
+	irq_encoded = (irq_encoded & IX_EEPROM_IRQ) >> IX_EEPROM_IRQ_SHIFT;
+	irq = irq_translate[irq_encoded];
 	if (ia->ia_irq == ISACF_IRQ_DEFAULT)
 		ia->ia_irq = irq;
 	else if (irq != ia->ia_irq) {
@@ -533,15 +535,15 @@ ix_match(parent, cf, aux)
 	}
 
 	/* disable the board interrupts */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_IRQ, sc->irq_encoded);
+	bus_space_write_1(iot, ioh, IX_IRQ, irq_encoded);
 
-	bart_config = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_CONFIG);
+	bart_config = bus_space_read_1(iot, ioh, IX_CONFIG);
 	bart_config |= IX_BART_LOOPBACK;
 	bart_config |= IX_BART_MCS16_TEST; /* inb doesn't get bit! */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, IX_CONFIG, bart_config);
-	bart_config = bus_space_read_1(sc->sc_regt, sc->sc_regh, IX_CONFIG);
+	bus_space_write_1(iot, ioh, IX_CONFIG, bart_config);
+	bart_config = bus_space_read_1(iot, ioh, IX_CONFIG);
 
-	bus_space_write_1(ia->ia_iot, ioh, IX_ECTRL, 0);
+	bus_space_write_1(iot, ioh, IX_ECTRL, 0);
 	delay(100);
 
 	rv = 1;
@@ -549,7 +551,7 @@ ix_match(parent, cf, aux)
 	DPRINTF(("ix_match: found board @ 0x%x\n", ia->ia_iobase));
 
 out:
-	bus_space_unmap(ia->ia_iot, ioh, IX_IOSIZE);
+	bus_space_unmap(iot, ioh, IX_IOSIZE);
 	return (rv);
 }
 
@@ -566,10 +568,14 @@ ix_attach(parent, self, aux)
 	int media;
 	u_short eaddrtemp;
 	u_int8_t bart_config;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh, memh;
+	u_short irq_encoded;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
+	iot = ia->ia_iot;
+
+	if (bus_space_map(iot, ia->ia_iobase,
 			  ia->ia_iosize, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
@@ -584,24 +590,24 @@ ix_attach(parent, self, aux)
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
 			sc->sc_dev.dv_xname, ia->ia_maddr,
 			ia->ia_maddr + ia->ia_msize - 1));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, ia->ia_iosize);
 		return;
 	}
 
-	isc->sc_regt = ia->ia_iot;
+	isc->sc_regt = iot;
 	isc->sc_regh = ioh;
 
 	/*
 	 * Get the hardware ethernet address from the EEPROM and
 	 * save it in the softc for use by the 586 setup code.
 	 */
-	eaddrtemp = ix_read_eeprom(isc, IX_EEPROM_ENET_HIGH);
+	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_HIGH);
 	ethaddr[1] = eaddrtemp & 0xFF;
 	ethaddr[0] = eaddrtemp >> 8;
-	eaddrtemp = ix_read_eeprom(isc, IX_EEPROM_ENET_MID);
+	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_MID);
 	ethaddr[3] = eaddrtemp & 0xFF;
 	ethaddr[2] = eaddrtemp >> 8;
-	eaddrtemp = ix_read_eeprom(isc, IX_EEPROM_ENET_LOW);
+	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_LOW);
 	ethaddr[5] = eaddrtemp & 0xFF;
 	ethaddr[4] = eaddrtemp >> 8;
 
@@ -655,14 +661,16 @@ ix_attach(parent, self, aux)
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
 			sc->sc_dev.dv_xname));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, ia->ia_iosize);
 		bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
 		return;
 	}
 
 	/* Figure out which media is being used... */
-	if (ix_read_eeprom(isc, IX_EEPROM_CONFIG1) & IX_EEPROM_MEDIA_EXT) {
-		if (ix_read_eeprom(isc, IX_EEPROM_MEDIA) & IX_EEPROM_MEDIA_TP)
+	if (ix_read_eeprom(iot, ioh, IX_EEPROM_CONFIG1) &
+				IX_EEPROM_MEDIA_EXT) {
+		if (ix_read_eeprom(iot, ioh, IX_EEPROM_MEDIA) &
+				IX_EEPROM_MEDIA_TP)
 			media = IFM_ETHER | IFM_10_T;
 		else
 			media = IFM_ETHER | IFM_10_2;
@@ -670,15 +678,21 @@ ix_attach(parent, self, aux)
 		media = IFM_ETHER | IFM_10_5;
 
 	/* Take the card out of lookback */
-	bart_config = bus_space_read_1(isc->sc_regt, isc->sc_regh, IX_CONFIG);
+	bart_config = bus_space_read_1(iot, ioh, IX_CONFIG);
 	bart_config &= ~IX_BART_LOOPBACK;
 	bart_config |= IX_BART_MCS16_TEST; /* inb doesn't get bit! */
-	bus_space_write_1(isc->sc_regt, isc->sc_regh, IX_CONFIG, bart_config);
-	bart_config = bus_space_read_1(isc->sc_regt, isc->sc_regh, IX_CONFIG);
+	bus_space_write_1(iot, ioh, IX_CONFIG, bart_config);
+	bart_config = bus_space_read_1(iot, ioh, IX_CONFIG);
+
+	irq_encoded = ix_read_eeprom(iot, ioh,
+				     IX_EEPROM_CONFIG1);
+	irq_encoded = (irq_encoded & IX_EEPROM_IRQ) >> IX_EEPROM_IRQ_SHIFT;
 
 	/* Enable interrupts */
-	bus_space_write_1(isc->sc_regt, isc->sc_regh, IX_IRQ,
-			  isc->irq_encoded | IX_IRQ_ENABLE);
+	bus_space_write_1(iot, ioh, IX_IRQ,
+			  irq_encoded | IX_IRQ_ENABLE);
+
+	isc->irq_encoded = irq_encoded;
 
 	i82586_attach(sc, "EtherExpress/16", ethaddr,
 		      ix_media, NIX_MEDIA, media);
