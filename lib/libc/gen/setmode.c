@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.27 2000/01/22 22:42:45 mycroft Exp $	*/
+/*	$NetBSD: setmode.c,v 1.28 2000/01/25 15:43:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.27 2000/01/22 22:42:45 mycroft Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.28 2000/01/25 15:43:43 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -204,10 +204,10 @@ setmode(p)
 	 * as best we can.
 	 */
 	sigfillset(&sigset);
-        (void)sigprocmask(SIG_BLOCK, &sigset, &sigoset);
+	(void)sigprocmask(SIG_BLOCK, &sigset, &sigoset);
 	(void)umask(mask = umask(0));
 	mask = ~mask;
-        (void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
+	(void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
 
 	setlen = SET_LEN + 2;
 	
