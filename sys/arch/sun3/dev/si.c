@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.44.2.2 2001/01/22 18:25:15 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.44.2.3 2001/02/18 18:25:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ si_attach(sc)
 		sc->sc_dma[i].dh_flags = 0;
 
 	ncr_sc->sc_channel.chan_id = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+	ncr_sc->sc_adapter.adapt_minphys = si_minphys;
 
 	/*
 	 *  Initialize si board itself.
