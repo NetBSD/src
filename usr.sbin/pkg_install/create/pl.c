@@ -1,10 +1,10 @@
-/* $NetBSD: pl.c,v 1.2 1997/06/05 12:59:33 agc Exp $ */
+/* $NetBSD: pl.c,v 1.3 1997/10/16 00:31:58 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: pl.c,v 1.10 1997/02/22 16:09:30 peter Exp";
+static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: pl.c,v 1.2 1997/06/05 12:59:33 agc Exp $";
+static const char *rcsid = "$NetBSD: pl.c,v 1.3 1997/10/16 00:31:58 hubertf Exp $";
 #endif
 #endif
 
@@ -31,6 +31,7 @@ static const char *rcsid = "$NetBSD: pl.c,v 1.2 1997/06/05 12:59:33 agc Exp $";
 #include "lib.h"
 #include "create.h"
 #include <errno.h>
+#include <err.h>
 #include <md5.h>
 
 /* Check a list for files that require preconversion */
@@ -90,7 +91,7 @@ trylink(const char *from, const char *to)
 	if (where_count > sizeof(STARTSTRING)-1) { \
 		    strcat(where_args, "|tar xpf -"); \
 		    if (system(where_args)) \
-			barf("can't invoke tar pipeline"); \
+			cleanup(0), errx(2, "can't invoke tar pipeline"); \
 		    memset(where_args, 0, maxargs); \
  		    last_chdir = NULL; \
 		    strcpy(where_args, STARTSTRING); \
@@ -117,7 +118,7 @@ copy_plist(char *home, Package *plist)
 					   and sh -c */
     where_args = malloc(maxargs);
     if (!where_args)
-	barf("can't get argument list space");
+	cleanup(0), errx(2, "can't get argument list space");
 
     memset(where_args, 0, maxargs);
     strcpy(where_args, STARTSTRING);
@@ -178,7 +179,7 @@ copy_plist(char *home, Package *plist)
 		    last_chdir = home;
 		}
 		if (add_count > maxargs - where_count)
-		    barf("oops, miscounted strings!");
+		    cleanup(0), errx(2, "oops, miscounted strings!");
 		where_count += add_count;
 	    }
 	    /*
@@ -212,7 +213,7 @@ copy_plist(char *home, Package *plist)
 					 mythere ? mythere : where,
 					 p->name);
 		if (add_count > maxargs - where_count)
-		    barf("oops, miscounted strings!");
+		    cleanup(0), errx(2, "oops, miscounted strings!");
 		where_count += add_count;
 		last_chdir = (mythere ? mythere : where);
 	    }

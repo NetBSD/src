@@ -1,6 +1,6 @@
-/* $NetBSD: lib.h,v 1.2 1997/06/05 12:59:50 agc Exp $ */
+/* $NetBSD: lib.h,v 1.3 1997/10/16 00:32:22 hubertf Exp $ */
 
-/* from FreeBSD Id: lib.h,v 1.24 1997/02/22 16:09:49 peter Exp */
+/* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -167,7 +167,6 @@ int		plist_cmd(char *, char **);
 int		delete_package(Boolean, Boolean, Package *);
 
 /* For all */
-void		usage(const char *, const char *, ...);
 int		pkg_perform(char **);
 
 /* Externs */

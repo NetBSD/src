@@ -1,10 +1,10 @@
-/* $NetBSD: main.c,v 1.2 1997/06/05 12:59:26 agc Exp $ */
+/* $NetBSD: main.c,v 1.3 1997/10/16 00:31:38 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/03/31 05:10:45 imp Exp";
+static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.2 1997/06/05 12:59:26 agc Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.3 1997/10/16 00:31:38 hubertf Exp $";
 #endif
 #endif
 
@@ -29,6 +29,7 @@ static char *rcsid = "$NetBSD: main.c,v 1.2 1997/06/05 12:59:26 agc Exp $";
  *
  */
 
+#include <err.h>
 #include <sys/param.h>
 #include "lib.h"
 #include "add.h"
@@ -51,12 +52,14 @@ add_mode_t AddMode	= NORMAL;
 char	pkgnames[MAX_PKGS][MAXPATHLEN];
 char	*pkgs[MAX_PKGS];
 
+static void usage __P((void));
+
 int
 main(int argc, char **argv)
 {
     int ch, err;
     char **start;
-    char *prog_name = argv[0], *cp;
+    char *cp;
 
     start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1) {
@@ -101,7 +104,7 @@ main(int argc, char **argv)
 	case 'h':
 	case '?':
 	default:
-	    usage(prog_name, NULL);
+	    usage();
 	    break;
 	}
     }
@@ -109,7 +112,7 @@ main(int argc, char **argv)
     argv += optind;
 
     if (argc > MAX_PKGS) {
-	whinge("Too many packages (max %d).", MAX_PKGS);
+	warnx("too many packages (max %d)", MAX_PKGS);
 	return(1);
     }
 
@@ -127,7 +130,7 @@ main(int argc, char **argv)
 		    pkgs[ch] = realpath(*argv, pkgnames[ch]);
 		else {		/* look for the file in the expected places */
 		    if (!(cp = fileFindByPath(NULL, *argv)))
-			whinge("Can't find package '%s'.", *argv);
+			warnx("can't find package '%s'", *argv);
 		    else
 			pkgs[ch] = strcpy(pkgnames[ch], cp);
 		}
@@ -136,39 +139,24 @@ main(int argc, char **argv)
     }
     /* If no packages, yelp */
     else if (!ch)
-	usage(prog_name, "Missing package name(s)");
+	warnx("missing package name(s)"), usage();
     else if (ch > 1 && AddMode == MASTER)
-	usage(prog_name, "Only one package name may be specified with master mode");
-    if ((err = pkg_perform(pkgs)) != NULL) {
+	warnx("only one package name may be specified with master mode"),
+	usage();
+    if ((err = pkg_perform(pkgs)) != 0) {
 	if (Verbose)
-	    fprintf(stderr, "%d package addition(s) failed.\n", err);
+	    warnx("%d package addition(s) failed", err);
 	return err;
     }
     else
 	return 0;
 }
 
-void
-usage(const char *name, const char *fmt, ...)
+static void
+usage()
 {
-    va_list args;
-
-    va_start(args, fmt);
-    if (fmt) {
-	fprintf(stderr, "%s: ", name);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n\n");
-    }
-    va_end(args);
-    fprintf(stderr, "Usage: %s [args] pkg [ .. pkg ]\n", name);
-    fprintf(stderr, "Where args are one or more of:\n\n");
-    fprintf(stderr, "-v         verbose\n");
-    fprintf(stderr, "-p arg     override prefix with arg\n");
-    fprintf(stderr, "-I         don't execute pkg install script, if any\n");
-    fprintf(stderr, "-R         don't record installation (can't delete!)\n");
-    fprintf(stderr, "-n         don't actually install, just show steps\n");
-    fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "-S         run in SLAVE mode\n");
-    fprintf(stderr, "-M         run in MASTER mode\n");
+    fprintf(stderr, "%s\n%s\n",
+		"usage: pkg_add [-vInfRMS] [-t template] [-p prefix]",
+		"               pkg-name [pkg-name ...]");
     exit(1);
 }
