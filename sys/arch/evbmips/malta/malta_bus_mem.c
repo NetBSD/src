@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_bus_mem.c,v 1.3 2002/04/09 03:40:17 simonb Exp $	*/
+/*	$NetBSD: malta_bus_mem.c,v 1.3.2.1 2002/07/16 01:40:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <machine/locore.h>
 
 #include <evbmips/malta/maltareg.h>
 #include <evbmips/malta/maltavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37.2.2 2002/07/14 17:45:53 gehenna Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37.2.3 2002/07/16 00:55:25 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.2.2 2002/07/14 17:45:53 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.2.3 2002/07/16 00:55:25 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -298,10 +298,14 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  xscale_steppings },
 
-	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
+	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250(1st ver core)",
 	  pxa2x0_steppings },
-	{ CPU_ID_PXA210,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },	/* XXX */
+	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210(1st ver core)",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA250B,	CPU_CLASS_XSCALE,	"PXA250(3rd ver core)",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210(3rd ver core)",
+	  pxa2x0_steppings },
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },
