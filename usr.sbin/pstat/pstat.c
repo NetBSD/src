@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.33 1997/10/17 06:34:22 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.34 1997/10/17 12:17:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.33 1997/10/17 06:34:22 mrg Exp $";
+__RCSID("$NetBSD: pstat.c,v 1.34 1997/10/17 12:17:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ struct e_vnode *
 	kinfo_vnodes __P((int *));
 struct e_vnode *
 	loadvnodes __P((int *));
+int	main __P((int, char **));
 void	mount_print __P((struct mount *));
 void	nfs_header __P((void));
 int	nfs_print __P((struct vnode *));
@@ -276,6 +277,7 @@ vnodemode()
 	struct mount *maddr, *mp;
 	int numvnodes;
 
+	mp = NULL;
 	e_vnodebase = loadvnodes(&numvnodes);
 	if (totalflag) {
 		(void)printf("%7d vnodes\n", numvnodes);
@@ -390,8 +392,8 @@ vnode_print(avnode, vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8x %s %5s %4d %4d",
-	    avnode, type, flags, vp->v_usecount, vp->v_holdcnt);
+	(void)printf("%8lx %s %5s %4d %4ld",
+	    (long)avnode, type, flags, vp->v_usecount, (long)vp->v_holdcnt);
 }
 
 void
@@ -522,7 +524,7 @@ nfs_print(vp)
 	*flags = '\0';
 
 #define VT	np->n_vattr
-	(void)printf(" %6d %5s", VT.va_fileid, flagbuf);
+	(void)printf(" %6ld %5s", (long)VT.va_fileid, flagbuf);
 	type = VT.va_mode & S_IFMT;
 	if (S_ISCHR(VT.va_mode) || S_ISBLK(VT.va_mode))
 		if (usenumflag || ((name = devname(VT.va_rdev, type)) == NULL))
@@ -549,7 +551,7 @@ union_print(vp)
 
 	KGETRET(VTOUNION(vp), &unode, sizeof(unode), "vnode's unode");
 
-	(void)printf(" %8x %8x", up->un_uppervp, up->un_lowervp);
+	(void)printf(" %8lx %8lx", (long)up->un_uppervp, (long)up->un_lowervp);
 	return (0);
 }
 	
@@ -572,7 +574,7 @@ getmnt(maddr)
 		if (maddr == mt->maddr)
 			return (&mt->mount);
 	if ((mt = malloc(sizeof(struct mtab))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	KGETRET(maddr, &mt->mount, sizeof(struct mount), "mount table");
 	mt->maddr = maddr;
 	mt->next = mhead;
@@ -585,11 +587,10 @@ mount_print(mp)
 	struct mount *mp;
 {
 	int flags;
-	const char *type;
 
 	(void)printf("*** MOUNT %s %s on %s", ST.f_fstypename,
 	    ST.f_mntfromname, ST.f_mntonname);
-	if (flags = mp->mnt_flag) {
+	if ((flags = mp->mnt_flag) != 0) {
 		int i;
 		const char *sep = " (";
 
@@ -626,7 +627,7 @@ loadvnodes(avnodes)
 	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
 	if ((vnodebase = malloc(copysize)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	if (sysctl(mib, 2, vnodebase, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
 	if (copysize % sizeof(struct e_vnode))
@@ -654,7 +655,7 @@ kinfo_vnodes(avnodes)
 
 	KGET(V_NUMV, numvnodes);
 	if ((vbuf = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mountlist);
@@ -685,7 +686,7 @@ int ttyspace = 128;
 void
 ttymode()
 {
-	int ntty, i;
+	int ntty;
 	struct ttylist_head tty_head;
 	struct tty *tp, tty;
 
@@ -743,7 +744,7 @@ ttyprt(tp)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-6s %8x", state, (u_long)tp->t_session);
+	(void)printf("%-6s %8lX", state, (u_long)tp->t_session);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
@@ -801,7 +802,7 @@ filemode()
 	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
 		if ((unsigned)fp->f_type > DTYPE_SOCKET)
 			continue;
-		(void)printf("%x ", addr);
+		(void)printf("%lx ", (long)addr);
 		(void)printf("%-8.8s", dtypes[fp->f_type]);
 		fbp = flagbuf;
 		if (fp->f_flag & FREAD)
@@ -821,7 +822,7 @@ filemode()
 		*fbp = '\0';
 		(void)printf("%6s  %3d", flagbuf, fp->f_count);
 		(void)printf("  %3d", fp->f_msgcount);
-		(void)printf("  %8.1x", fp->f_data);
+		(void)printf("  %8.1lx", (long)fp->f_data);
 		if (fp->f_offset < 0)
 			(void)printf("  %qx\n", fp->f_offset);
 		else
@@ -853,7 +854,7 @@ getfiles(abuf, alen)
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
 		warn("sysctl: KERN_FILE");
 		return (-1);
