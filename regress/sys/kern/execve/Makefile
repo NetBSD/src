@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/07 16:01:49 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6 1998/03/02 19:59:20 cgd Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
 
-LDSTATIC= -static
+LDSTATIC= -static		# only static compilation makes sense here
 
 RP=	${.OBJDIR}/${PROG}
 TD=	${.CURDIR}/tests
