@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.8 1999/04/05 00:23:43 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.9 1999/04/06 02:32:34 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.8 1999/04/05 00:23:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.9 1999/04/06 02:32:34 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	int i;
+	int i, imsk;
 
 	sc->sc_bst = ta->ta_memt;
 	sc->sc_dmat = ta->ta_dmat;
@@ -162,8 +162,7 @@ ioasicattach(parent, self, aux)
 	}
 	sc->sc_cookie = ta->ta_cookie;
 
-	/* XXX XXX XXX */
-	sc->sc_base = ta->ta_addr;
+	sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
 
 	printf("\n");
 
@@ -172,10 +171,10 @@ ioasicattach(parent, self, aux)
 	 * Turn off all device interrupt bits.
 	 * (This _does_ include TC option slot bits.
 	 */
+	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	for (i = 0; i < ioasic_ndevs; i++)
-		*(volatile u_int32_t *)(sc->sc_base + IOASIC_IMSK)
-			&= ~ioasic_devs[i].iad_intrbits;
-	tc_wmb();
+		imsk &= ~ioasic_devs[i].iad_intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 #endif
 
 #if 0
@@ -200,24 +199,23 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 	int (*func) __P((void *));
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int dev, i, intrbits;
-
-	dev = (u_long)cookie;
+	int i, imsk, intrbits;
 
 	for (i = 0; i < ioasic_ndevs; i++) {
 		if (ioasic_devs[i].iad_cookie == cookie)
 			goto found;
 	}
-	panic("ioasic_intr_establish: invalid cookie %d", dev);
+	panic("ioasic_intr_establish: invalid cookie %d", (int)cookie);
 found:
 
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = func;
+	intrtab[(int)cookie].ih_arg = arg;
 	
 	intrbits = ioasic_devs[i].iad_intrbits;
 	iplmask[level] |= intrbits;
-	*(volatile u_int32_t *)(sc->sc_base + IOASIC_IMSK) |= intrbits;
-	tc_wmb();
+	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
+	imsk |= intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 }
 
 void
