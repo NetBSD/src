@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Winning Strategies, Inc.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcat.S,v 1.3 1994/01/28 20:34:48 jtc Exp $
+ *	$Id: strcat.S,v 1.4 1994/02/14 17:45:16 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcat.S,v 1.3 1994/01/28 20:34:48 jtc Exp $"
+	.asciz "$Id: strcat.S,v 1.4 1994/02/14 17:45:16 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -49,7 +49,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strcat)
