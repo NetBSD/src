@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.3 2003/02/16 19:42:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -48,9 +48,6 @@
 struct smbfs_fctx;
 
 struct smbnode {
-#ifndef FB_CURRENT
-	struct lock		n_lock;		/* smbnode lock. (mbf) */
-#endif
 	int			n_flag;
 	struct smbnode *	n_parent;
 	struct vnode *		n_vnode;
