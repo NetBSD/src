@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.11 2002/03/15 22:19:49 reinoud Exp $	*/
+/*	$NetBSD: fault.c,v 1.12 2002/03/24 21:27:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 28/11/94
  */
 
+#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -563,7 +564,6 @@ prefetch_abort_handler(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	u_int fault_instruction;
-	pt_entry_t *pte;
 	int error;
 
 	/*
@@ -648,23 +648,36 @@ prefetch_abort_handler(frame)
 		return;
 	}
 
-	/* Is the page already mapped ? */
-	/* This is debugging for rev K SA110 silicon */
-	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vaddr_t)fault_pc);
-	if (pte && *pte != 0) {
-		if (kernel_debug & 1) {
-			printf("prefetch_abort: page is already mapped - pte=%p *pte=%08x\n",
-			    pte, *pte);
-			printf("prefetch_abort: pc=%08x proc=%p process=%s\n", fault_pc, p, p->p_comm);
-			printf("prefetch_abort: far=%08x fs=%x\n", cpu_faultaddress(), cpu_faultstatus());
-			printf("prefetch_abort: trapframe=%08x\n", (u_int)frame);
-		}
+#ifdef CPU_SA110
+	/*
+	 * There are bugs in the rev K SA110.  This is a check for one
+	 * of them.
+	 */
+	if (cputype == CPU_ID_SA110 /* XXXJRT check stepping */) {
+		/* Always current pmap */
+		pt_entry_t *pte = vtopte((vaddr_t) fault_pc);
+		struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+
+		if (pmap_pde_v(pmap_pde(pmap, (vaddr_t) fault_pc)) &&
+		    pmap_pte_v(pte)) {
+			if (kernel_debug & 1) {
+				printf("prefetch_abort: page is already "
+				    "mapped - pte=%p *pte=%08x\n", pte, *pte);
+				printf("prefetch_abort: pc=%08x proc=%p "
+				    "process=%s\n", fault_pc, p, p->p_comm);
+				printf("prefetch_abort: far=%08x fs=%x\n",
+				    cpu_faultaddress(), cpu_faultstatus());
+				printf("prefetch_abort: trapframe=%08x\n",
+				    (u_int)frame);
+			}
 #ifdef DDB
-		if (kernel_debug & 2)
-			Debugger();
+			if (kernel_debug & 2)
+				Debugger();
+		}
 #endif
 	}
-	
+#endif /* CPU_SA110 */
+
 	/* Ok read the fault address. This will fault the page in for us */
 	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
 #ifdef DEBUG
@@ -672,27 +685,6 @@ prefetch_abort_handler(frame)
 		    fault_pc);
 #endif
 		trapsignal(p, SIGSEGV, fault_pc);
-	} else {
-
-#ifdef DIAGNOSTIC
-		/* More debug stuff */
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0) {
-			printf("Instruction @V%08x = %08x\n", fault_pc,
-			    fault_instruction);
-			disassemble(fault_pc);
-			printf("return addr=%08x", frame->tf_pc);
-			pte = pmap_pte(p->p_vmspace->vm_map.pmap,
-			    (vaddr_t)fault_pc);
-			if (pte)
-				printf(" pte=%p *pte=%08x\n", pte, *pte);
-			else
-				printf("\n");
-
-		}
-#endif	/* PMAP_DEBUG */
-#endif	/* DIAGNOSTIC */
 	}
 
 	userret(p);
@@ -715,5 +707,3 @@ cowfault(va)
 	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
 	return error;
 }
-
-/* End of fault.c */
