@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.32 1999/05/14 19:38:44 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.33 1999/06/10 15:48:27 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -430,6 +430,7 @@ ukbd_enable(v, on)
 	struct ukbd_softc *sc = v;
 	usbd_status r;
 
+	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
 	if (on) {
 		/* Set up interrupt pipe. */
 		if (sc->sc_enabled)
