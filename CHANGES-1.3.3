@@ -1081,3 +1081,17 @@ distrib/utils/sysinst/msg.mi.fr			1.8-1.10
 
   Add a missing "doingwhat" reason for a re-install of sets.
   Fixes PR#6432.  (simonb)
+
+sbin/Makefile					1.30
+sbin/disklabel.c				1.49
+share/man/man8/man8.i386/installboot.8		1.5
+sys/arch/i386/include/disklabel.h		1.5
+sys/arch/i386/stand/lib/crt/bootsect/start_bootsect.S
+						patch
+sys/arch/i386/stand/lib/biosdisk.c		patch
+sys/arch/i386/i386/disksubr.c			patch
+
+  Add forward-compatibility with new NetBSD MBR partition-id 169 (0xa9).
+  Warn about old-style 165 partitions with a reference to installboot(8)
+  for details on when and how to upgrade bootblocks and partition IDs.
+  Do fresh installs using the new ID.  (jonathan)
