@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.8 2002/01/04 12:21:26 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.9 2002/03/16 16:56:03 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,18 +36,13 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.8 2002/01/04 12:21:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.9 2002/03/16 16:56:03 martin Exp $");
 
-#include "i4b.h"
-#include "i4bipr.h"
-#include "i4btel.h"
+#include "isdn.h"
+#include "irip.h"
+#include "isdntel.h"
 
-
-#if NI4B > 1
-#error "only 1 (one) i4b device possible!"
-#endif
-
-#if NI4B > 0
+#if NISDN > 0
 
 #include <sys/param.h>
 
@@ -121,16 +116,16 @@ static void *devfs_token;
 #ifndef __FreeBSD__
 
 #define	PDEVSTATIC	/* - not static - */
-PDEVSTATIC void i4battach __P((void));
-PDEVSTATIC int i4bopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int i4bioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC void isdnattach __P((void));
+PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int isdnread __P((dev_t dev, struct uio *uio, int ioflag));
+PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 #ifdef OS_USES_POLL
-PDEVSTATIC int i4bpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct proc *p));
 #else
-PDEVSTATIC int i4bselect __P((dev_t dev, int rw, struct proc *p));
+PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct proc *p));
 #endif
 
 #endif /* #ifndef __FreeBSD__ */
@@ -239,14 +234,11 @@ dummy_i4battach(struct device *parent, struct device *self, void *aux)
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4battach(void *dummy)
+isdnattach(void *dummy)
 #else
-i4battach()
+isdnattach()
 #endif
 {
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4b: ISDN call control device attached\n");
-#endif
 	i4b_rdqueue.ifq_maxlen = IFQ_MAXLEN;
 
 #if defined(__FreeBSD__)
@@ -268,7 +260,7 @@ i4battach()
  *	i4bopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x;
 
@@ -290,7 +282,7 @@ i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x = splnet();
 	openflag = 0;
@@ -304,7 +296,7 @@ i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bread - device driver read routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bread(dev_t dev, struct uio *uio, int ioflag)
+isdnread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
@@ -343,7 +335,7 @@ i4bread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	call_desc_t *cd;
 	int error = 0;
@@ -553,25 +545,25 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			switch(mdrsp->driver)
 			{
-#if NI4BIPR > 0
+#if NIRIP > 0
 				case BDRV_IPR:
 					dlt = ipr_ret_linktab(mdrsp->driver_unit);
 					break;
 #endif					
 
-#if NI4BISPPP > 0
+#if NIPPP > 0
 				case BDRV_ISPPP:
 					dlt = i4bisppp_ret_linktab(mdrsp->driver_unit);
 					break;
 #endif
 
-#if NI4BTEL > 0
+#if NISDNTEL > 0
 				case BDRV_TEL:
 					dlt = tel_ret_linktab(mdrsp->driver_unit);
 					break;
 #endif
 
-#if NIBC > 0
+#if NISDNBCHAN > 0
 				case BDRV_IBC:
 					dlt = ibc_ret_linktab(mdrsp->driver_unit);
 					break;
@@ -673,7 +665,7 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			
 			mui = (msg_updown_ind_t *)data;
 
-#if NI4BIPR > 0
+#if NIRIP > 0
 			if(mui->driver == BDRV_IPR)
 			{
 				drvr_link_t *dlt;
@@ -916,7 +908,7 @@ i4bselect(dev_t dev, int rw, struct proc *p)
  *	i4bpoll - device driver poll routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bpoll(dev_t dev, int events, struct proc *p)
+isdnpoll(dev_t dev, int events, struct proc *p)
 {
 	int x;
 	
@@ -1026,4 +1018,4 @@ i4bputqueue_hipri(struct mbuf *m)
 	}
 }
 
-#endif /* NI4B > 0 */
+#endif /* NISDN > 0 */

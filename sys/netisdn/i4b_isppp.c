@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.11 2002/02/10 15:29:58 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.12 2002/03/16 16:56:04 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,12 +43,12 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.11 2002/02/10 15:29:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.12 2002/03/16 16:56:04 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
 #endif
-#include "i4bisppp.h"
+#include "ippp.h"
 
 #ifndef USE_ISPPP
 
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.11 2002/02/10 15:29:58 martin Exp $"
 #include <netisdn/i4b_l4.h>
 
 #ifdef __FreeBSD__
-#define ISPPP_FMT	"isp%d: "
+#define ISPPP_FMT	"ippp%d: "
 #define	ISPPP_ARG(sc)	((sc)->sc_if.if_unit)
 #define	PDEVSTATIC	static
 #define IFP2UNIT(ifp)	(ifp)->if_unit
@@ -144,10 +144,10 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.11 2002/02/10 15:29:58 martin Exp $"
 #endif
 
 #ifdef __FreeBSD__
-PDEVSTATIC void i4bispppattach(void *);
-PSEUDO_SET(i4bispppattach, i4b_isppp);
+PDEVSTATIC void ipppattach(void *);
+PSEUDO_SET(ipppattach, i4b_isppp);
 #else
-PDEVSTATIC void i4bispppattach(void);
+PDEVSTATIC void ipppattach(void);
 #endif
 
 #define I4BISPPPACCT		1	/* enable accounting messages */
@@ -181,7 +181,7 @@ struct i4bisppp_softc {
 	struct callout_handle sc_ch;
 #endif
 
-} i4bisppp_softc[NI4BISPPP];
+} i4bisppp_softc[NIPPP];
 
 static void	i4bisppp_init_linktab(int unit);
 static int	i4bisppp_ioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data);
@@ -205,8 +205,8 @@ time_t   	i4bisppp_idletime(int unit);
 
 /* initialized by L4 */
 
-static drvr_link_t i4bisppp_drvr_linktab[NI4BISPPP];
-static isdn_link_t *isdn_linktab[NI4BISPPP];
+static drvr_link_t i4bisppp_drvr_linktab[NIPPP];
+static isdn_link_t *isdn_linktab[NIPPP];
 
 enum i4bisppp_states {
 	ST_IDLE,			/* initialized, ready, idle	*/
@@ -223,35 +223,27 @@ enum i4bisppp_states {
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4bispppattach(void *dummy)
+ipppattach(void *dummy)
 #else
-i4bispppattach()
+ipppattach()
 #endif
 {
 	struct i4bisppp_softc *sc = i4bisppp_softc;
 	int i;
 
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-#ifdef SPPP_VJ
-	printf("i4bisppp: %d ISDN SyncPPP device(s) attached (VJ header compression)\n", NI4BISPPP);
-#else
-	printf("i4bisppp: %d ISDN SyncPPP device(s) attached\n", NI4BISPPP);
-#endif
-#endif
-
-	for(i = 0; i < NI4BISPPP; sc++, i++) {
+	for(i = 0; i < NIPPP; sc++, i++) {
 		i4bisppp_init_linktab(i);
 		
 		sc->sc_sp.pp_if.if_softc = sc;
 
 #ifdef __FreeBSD__		
-		sc->sc_sp.pp_if.if_name = "isp";
+		sc->sc_sp.pp_if.if_name = "ippp";
 #if defined(__FreeBSD_version) && __FreeBSD_version < 300001
 		sc->sc_sp.pp_if.if_next = NULL;
 #endif
 		sc->sc_sp.pp_if.if_unit = i;
 #else
-		sprintf(sc->sc_sp.pp_if.if_xname, "isp%d", i);
+		sprintf(sc->sc_sp.pp_if.if_xname, "ippp%d", i);
 		sc->sc_unit = i;
 #endif
 
@@ -412,7 +404,7 @@ i4bisppp_start(struct ifnet *ifp)
 
 		if(IF_QFULL(isdn_linktab[unit]->tx_queue))
 		{
-			NDBGL4(L4_ISPDBG, "isp%d, tx queue full!", unit);
+			NDBGL4(L4_ISPDBG, "ippp%d, tx queue full!", unit);
 			m_freem(m);
 		}
 		else
@@ -585,7 +577,7 @@ i4bisppp_disconnect(int unit, void *cdp)
 	/* new stuff to check that the active channel is being closed */
 	if (cd != sc->sc_cdp)
 	{
-		NDBGL4(L4_ISPDBG, "isp%d, channel%d not active!", unit, cd->channelid);
+		NDBGL4(L4_ISPDBG, "ippp%d, channel%d not active!", unit, cd->channelid);
 		splx(s);
 		return;
 	}
@@ -620,13 +612,13 @@ i4bisppp_dialresponse(int unit, int status, cause_t cause)
 {
 	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
 
-	NDBGL4(L4_ISPDBG, "isp%d: status=%d, cause=%d", unit, status, cause);
+	NDBGL4(L4_ISPDBG, "ippp%d: status=%d, cause=%d", unit, status, cause);
 
 	if(status != DSTAT_NONE)
 	{
 		struct mbuf *m;
 		
-		NDBGL4(L4_ISPDBG, "isp%d: clearing queues", unit);
+		NDBGL4(L4_ISPDBG, "ippp%d: clearing queues", unit);
 
 #ifndef USE_ISPPP
 		if(!(sppp_isempty(&sc->sc_sp.pp_if)))

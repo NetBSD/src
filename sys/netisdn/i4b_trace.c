@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.6 2001/11/13 01:06:23 lukem Exp $
+ *	$Id: i4b_trace.c,v 1.7 2002/03/16 16:56:05 martin Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,11 +35,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.6 2001/11/13 01:06:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.7 2002/03/16 16:56:05 martin Exp $");
 
-#include "i4btrc.h"
+#include "isdntrc.h"
 
-#if NI4BTRC > 0
+#if NISDNTRC > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.6 2001/11/13 01:06:23 lukem Exp $");
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l2.h>
 
-static struct ifqueue trace_queue[NI4BTRC];
-static int device_state[NI4BTRC];
+static struct ifqueue trace_queue[NISDNTRC];
+static int device_state[NISDNTRC];
 #define ST_IDLE		0x00
 #define ST_ISOPEN	0x01
 #define ST_WAITDATA	0x02
@@ -81,29 +81,25 @@ static int txunit = -1;				/* l2 bri of transmitting driver */
 static int outunit = -1;			/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
-void i4btrcattach __P((void));
-int i4btrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int i4btrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+void isdntrcattach __P((void));
+int isdntrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntrcread __P((dev_t dev, struct uio * uio, int ioflag));
+int isdntrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4btrcattach(void *dummy)
+isdntrcattach(void *dummy)
 #else
-i4btrcattach()
+isdntrcattach()
 #endif
 {
 	int i;
 	
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4btrc: %d ISDN trace device(s) attached\n", NI4BTRC);
-#endif
-	
-	for(i=0; i < NI4BTRC; i++)
+	for(i=0; i < NISDNTRC; i++)
 	{
 
 #if defined(__FreeBSD__)
@@ -113,12 +109,12 @@ i4btrcattach()
 	  	devfs_token[i]
 		  = devfs_add_devswf(&i4btrc_cdevsw, i, DV_CHR,
 				     UID_ROOT, GID_WHEEL, 0600,
-				     "i4btrc%d", i);
+				     "isdntrc%d", i);
 #endif
 
 #else
 		make_dev(&i4btrc_cdevsw, i,
-				     UID_ROOT, GID_WHEEL, 0600, "i4btrc%d", i);
+				     UID_ROOT, GID_WHEEL, 0600, "isdntrc%d", i);
 #endif
 #endif
 		trace_queue[i].ifq_maxlen = IFQ_MAXLEN;
@@ -172,9 +168,9 @@ isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsign
 	
 	/* check valid interface */
 	
-	if((bri = hdr->bri) > NI4BTRC)
+	if((bri = hdr->bri) > NISDNTRC)
 	{
-		printf("i4b_trace: get_trace_data_from_l1 - bri > NI4BTRC!\n"); 
+		printf("i4b_trace: get_trace_data_from_l1 - bri > NISDNTRC!\n"); 
 		return(0);
 	}
 
@@ -236,12 +232,12 @@ isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsign
  *	open trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdntrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x;
 	int unit = minor(dev);
 
-	if(unit >= NI4BTRC)
+	if(unit >= NISDNTRC)
 		return(ENXIO);
 
 	if(device_state[unit] & ST_ISOPEN)
@@ -264,7 +260,7 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int bri = minor(dev);
 	int x;
@@ -304,7 +300,7 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	read from trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcread(dev_t dev, struct uio * uio, int ioflag)
+isdntrcread(dev_t dev, struct uio * uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
@@ -360,7 +356,7 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	int bri = minor(dev);
@@ -378,12 +374,12 @@ i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_TRC_SETA:
 			tsa = (i4b_trace_setupa_t *)data;
 
-			if(tsa->rxunit >= 0 && tsa->rxunit < NI4BTRC)
+			if(tsa->rxunit >= 0 && tsa->rxunit < NISDNTRC)
 				rxunit = tsa->rxunit;
 			else
 				error = EINVAL;
 
-			if(tsa->txunit >= 0 && tsa->txunit < NI4BTRC)
+			if(tsa->txunit >= 0 && tsa->txunit < NISDNTRC)
 				txunit = tsa->txunit;
 			else
 				error = EINVAL;
@@ -424,4 +420,4 @@ i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return(error);
 }
 
-#endif /* NI4BTRC > 0 */
+#endif /* NISDNTRC > 0 */

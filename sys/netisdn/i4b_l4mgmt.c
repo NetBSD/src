@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.4 2001/11/13 01:06:22 lukem Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.5 2002/03/16 16:56:04 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,11 +36,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.4 2001/11/13 01:06:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.5 2002/03/16 16:56:04 martin Exp $");
 
-#include "i4b.h"
+#include "isdn.h"
 
-#if NI4B > 0
+#if NISDN > 0
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -476,4 +476,4 @@ i4b_print_cdaa(void)
 
 #endif /* I4B_CD_DEBUG_PRINT */
 
-#endif /* NI4BQ931 > 0 */
+#endif /* NISDN > 0 */

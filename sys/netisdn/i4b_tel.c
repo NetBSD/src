@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.6 2002/01/27 11:42:13 martin Exp $
+ *	$Id: i4b_tel.c,v 1.7 2002/03/16 16:56:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,11 +36,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.6 2002/01/27 11:42:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.7 2002/03/16 16:56:05 martin Exp $");
 
-#include "i4btel.h"
+#include "isdntel.h"
 
-#if NI4BTEL > 0
+#if NISDNTEL > 0
 
 #undef I4BTELDEBUG
 
@@ -153,7 +153,7 @@ typedef struct {
 
 } tel_sc_t;
 
-static tel_sc_t tel_sc[NI4BTEL][NOFUNCS];
+static tel_sc_t tel_sc[NISDNTEL][NOFUNCS];
 	
 /* forward decl */
 
@@ -172,18 +172,18 @@ static u_char sinetab[];
 
 #ifndef __FreeBSD__
 #define	PDEVSTATIC	/* - not static - */
-PDEVSTATIC void i4btelattach __P((void));
-PDEVSTATIC int i4btelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC void isdntelattach __P((void));
+PDEVSTATIC int isdntelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
-int i4btelopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btelclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btelread __P((dev_t dev, struct uio *uio, int ioflag));
-int i4btelwrite __P((dev_t dev, struct uio * uio, int ioflag));
+int isdntelopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntelclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntelread __P((dev_t dev, struct uio *uio, int ioflag));
+int isdntelwrite __P((dev_t dev, struct uio * uio, int ioflag));
 
 #ifdef OS_USES_POLL
-int i4btelpoll	__P((dev_t dev, int events, struct proc *p));
+int isdntelpoll	__P((dev_t dev, int events, struct proc *p));
 #else
-int i4btelsel __P((dev_t dev, int rw, struct proc *p));
+int isdntelsel __P((dev_t dev, int rw, struct proc *p));
 #endif
 
 #endif /* __FreeBSD__ */
@@ -233,10 +233,10 @@ static struct cdevsw i4btel_cdevsw = {
 };
 #endif
 
-PDEVSTATIC void i4btelinit(void *unused);
-PDEVSTATIC void i4btelattach(void *);
+PDEVSTATIC void isdntelinit(void *unused);
+PDEVSTATIC void isdntelattach(void *);
 
-PSEUDO_SET(i4btelattach, i4b_tel);
+PSEUDO_SET(isdntelattach, i4b_tel);
 
 /*===========================================================================*
  *			DEVICE DRIVER ROUTINES
@@ -246,7 +246,7 @@ PSEUDO_SET(i4btelattach, i4b_tel);
  *	initialization at kernel load time
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
-i4btelinit(void *unused)
+isdntelinit(void *unused)
 {
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 	cdevsw_add(&i4btel_cdevsw);
@@ -299,18 +299,14 @@ dummy_i4btelattach(struct device *parent, struct device *self, void *aux)
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4btelattach(void *dummy)
+isdntelattach(void *dummy)
 #else
-i4btelattach()
+isdntelattach()
 #endif
 {
 	int i, j;
 
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4btel: %d ISDN telephony interface device(s) attached\n", NI4BTEL);
-#endif
-	
-	for(i=0; i < NI4BTEL; i++)
+	for(i=0; i < NISDNTEL; i++)
 	{
 		for(j=0; j < NOFUNCS; j++)
 		{
@@ -357,14 +353,14 @@ i4btelattach()
  *	open tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdntelopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 	
 	tel_sc_t *sc;
 	
-	if(unit >= NI4BTEL)
+	if(unit >= NISDNTEL)
 		return(ENXIO);
 
 	sc = &tel_sc[unit][func];		
@@ -386,7 +382,7 @@ i4btelopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdntelclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -394,7 +390,7 @@ i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int error = 0;
 	int x;
 	
-	if(unit > NI4BTEL)
+	if(unit > NISDNTEL)
 		return(ENXIO);
 
 	sc = &tel_sc[unit][func];		
@@ -428,7 +424,7 @@ i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -550,7 +546,7 @@ i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  *	read from tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelread(dev_t dev, struct uio *uio, int ioflag)
+isdntelread(dev_t dev, struct uio *uio, int ioflag)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -670,7 +666,7 @@ i4btelread(dev_t dev, struct uio *uio, int ioflag)
  *	write to tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelwrite(dev_t dev, struct uio * uio, int ioflag)
+isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -833,7 +829,7 @@ tel_tone(tel_sc_t *sc)
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelpoll(dev_t dev, int events, struct proc *p)
+isdntelpoll(dev_t dev, int events, struct proc *p)
 {
 	int revents = 0;	/* Events we found */
 	int s;
@@ -1888,4 +1884,4 @@ static u_char sinetab[8000] = { 213, 213, 213, 213, 213, 213, 213, 212,
 
 /*===========================================================================*/
 
-#endif /* NI4BTEL > 0 */
+#endif /* NISDNTEL > 0 */

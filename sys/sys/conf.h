@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.99 2002/03/15 17:29:06 manu Exp $	*/
+/*	$NetBSD: conf.h,v 1.100 2002/03/16 16:56:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -445,19 +445,19 @@ extern struct cdevsw cdevsw[];
 #define cdev_wdog_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, ioctl */
-#define cdev_i4bctl_init(c,n)	cdev__oci_init(c,n)
+#define cdev_isdnctl_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, read, write, ioctl, poll */
-#define	cdev_i4brbch_init(c,n)	cdev__ocrwip_init(c,n)
+#define	cdev_isdnbchan_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, read, write, ioctl, poll */
-#define	cdev_i4btel_init(c,n)	cdev__ocrwip_init(c,n)
+#define	cdev_isdntel_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, read, ioctl */
-#define cdev_i4btrc_init(c,n)	cdev__ocri_init(c,n)
+#define cdev_isdntrc_init(c,n)	cdev__ocri_init(c,n)
 
 /* open, close, read, ioctl, poll */
-#define cdev_i4b_init(c,n)	cdev__ocrip_init(c,n)
+#define cdev_isdn_init(c,n)	cdev__ocrip_init(c,n)
 
 /* open, close, ioctl, mmap */
 #define	cdev_pci_init(c,n)	cdev__ocim_init(c,n)
