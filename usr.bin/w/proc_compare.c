@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.7 1997/10/20 02:49:14 mrg Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.8 2000/05/26 00:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: proc_compare.c,v 1.7 1997/10/20 02:49:14 mrg Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.8 2000/05/26 00:44:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,8 @@ __RCSID("$NetBSD: proc_compare.c,v 1.7 1997/10/20 02:49:14 mrg Exp $");
  * TODO - consider whether pctcpu should be used.
  */
 
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL))
+#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
+			 ((p)->p_stat == SONPROC))
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1
