@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.3 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.4 2003/07/13 08:26:31 igy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -106,6 +106,11 @@
  *            VA F200 0000 == PA 5200 0000 (16Mbyte)
  * F200 0000 ---------------------------
  *            not used
+ * F020 0000 ---------------------------
+ *            PCI Registers Accessible Through I/O
+ *            VA F010 0000 == PA 5400 0000 (1Mbyte)
+ * F010 0000 ---------------------------
+ *            not used
  * F001 1000 ---------------------------
  *            PCI Registers Accessible Through StrongARM Core
  *            VA F001 0000 == PA 4200 0000 (4kbyte)
@@ -114,7 +119,7 @@
  *              F001 0180 - F001 0193  PCI_IRQ
  * F001 0000 ---------------------------
  *            StrongARM System and Peripheral Registers
- *            VA F001 0000 == PA 9000 0000 (64kbyte)
+ *            VA F000 0000 == PA 9000 0000 (64kbyte)
  *              F000 3400 - F000 3C03  UART
  *              F000 3400 - F000 3C03  UART
  *              F000 2000 - F000 3003  RTC
@@ -131,8 +136,6 @@
  *            PCI Registers Accessible Through Memory
  *            VA 6000 0000 == PA 6000 0000 (512Mbyte)
  * 6000 0000 ---------------------------
- *            PCI Registers Accessible Through I/O
- *            VA 5400 0000 == PA 5400 0000 (1Mbyte)
  * 5400 0000 ---------------------------
  * 0000 0000 ---------------------------
  *
@@ -142,8 +145,7 @@
 #define	IXP12X0_IO_VBASE	0xf0000000UL
 
 /* StrongARM System and Peripheral Registers */
-#define	IXP12X0_SYS_VBASE	IXP12X0_IO_VBASE
-						/* va=0xf0000000 */
+#define	IXP12X0_SYS_VBASE	0xf0000000UL
 #define	IXP12X0_SYS_HWBASE	0x90000000UL
 #define	IXP12X0_SYS_SIZE	0x00010000UL	/* 64Kbyte */
 
@@ -151,14 +153,13 @@
 #define	 IXP12X0_PLL_CFG_CCF	0x1f
 
 /* PCI Registers Accessible Through StrongARM Core */
-#define	IXP12X0_PCI_VBASE	(IXP12X0_IO_VBASE + IXP12X0_SYS_SIZE)
-						/* va=0xf0010000 */
+#define	IXP12X0_PCI_VBASE	0xf0010000UL
 #define	IXP12X0_PCI_HWBASE	0x42000000UL
 #define	IXP12X0_PCI_SIZE	0x00001000UL	/* 4Kbyte */
 
 /* PCI I/O Space */
-#define	IXP12X0_PCI_IO_HWBASE	0x54000000UL	/* VA == PA */
-#define	IXP12X0_PCI_IO_VBASE	IXP12X0_PCI_IO_HWBASE
+#define	IXP12X0_PCI_IO_VBASE	0xf0100000UL
+#define	IXP12X0_PCI_IO_HWBASE	0x54000000UL
 #define	IXP12X0_PCI_IO_SIZE	0x00100000UL	/* 1Mbyte */
 
 /* PCI Memory Space */
