@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1995/10/26 15:38:45 gwr Exp $	*/
+/*	$NetBSD: md.c,v 1.3 1995/11/17 23:33:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -103,7 +103,7 @@ static void rd_attach(struct device *, struct device *self, void *);
 
 struct cfdriver rdcd = {
 	NULL, "rd", rd_match, rd_attach,
-	DV_DISK, sizeof(struct device), NULL, 0 };
+	DV_DULL, sizeof(struct rd_softc), NULL, 0 };
 
 static int
 rd_match(parent, self, aux)
