@@ -1,4 +1,4 @@
-/* $Id: pcc.c,v 1.1.1.1 1995/07/25 23:12:08 chuck Exp $ */
+/* $Id: pcc.c,v 1.2 1996/03/17 01:35:03 thorpej Exp $ */
 
 /*
  *
@@ -67,9 +67,12 @@ struct pccsoftc {
 void pccattach __P((struct device *, struct device *, void *));
 int  pccmatch __P((struct device *, void *, void *));
 
-struct cfdriver pcccd = {
-	NULL, "pcc", pccmatch, pccattach,
-	DV_DULL, sizeof(struct pccsoftc), 0
+struct cfattach pcc_ca = {
+	sizeof(struct pccsoftc), pccmatch, pccattach
+};
+
+struct cfdriver pcc_cd = {
+	NULL, "pcc", DV_DULL, 0
 };
 
 /*

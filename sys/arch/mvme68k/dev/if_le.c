@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1996/02/03 06:38:27 mycroft Exp $ */
+/*	$NetBSD: if_le.c,v 1.4 1996/03/17 01:35:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,15 +68,19 @@
 #define	LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
 int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 int	leintr __P((void *));
 
-struct	cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc)
+struct cfattach le_ca = {
+	sizeof(struct le_softc), lematch, leattach
+};
+
+struct	cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
@@ -143,7 +147,7 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	pccintr_establish(PCCV_LE, leintr, pri, sc);

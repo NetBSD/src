@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.40 1996/02/22 23:36:03 gwr Exp $
+#	$NetBSD: files.mac68k,v 1.41 1996/03/17 01:33:13 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -7,44 +7,56 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-device mainbus at root { }		# no locators (yet?)
+device mainbus { }			# no locators (yet?)
+attach mainbus at root
 
-device	nubus at mainbus { slot = -1, id = -1, claimed = 0 }
+device	nubus { slot = -1, id = -1, claimed = 0 }
+attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
-device	ser at mainbus: tty
+device	ser: tty
+attach	ser at mainbus
 file	arch/mac68k/dev/ser.c		ser needs-flag
 
-device	adb at mainbus
+device	adb
+attach	adb at mainbus
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
 
-device	asc at mainbus
+device	asc
+attach	asc at mainbus
 file	arch/mac68k/dev/asc.c		asc
 
-device	fpu at mainbus
+device	fpu
+attach	fpu at mainbus
 file	arch/mac68k/mac68k/fpu.c	fpu
 
-device	grf at nubus
+device	grf
+attach	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
 file	arch/mac68k/dev/grf_mv.c	grf
 file	arch/mac68k/dev/grf_iv.c	grf
-device	ite at mainbus
+device	ite
+attach	ite at mainbus
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
-device	ae at nubus: ifnet, ether
+device	ae: ifnet, ether
+attach	ae at nubus
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
 include "../../../scsi/files.scsi"
 
-device	ncrscsi at mainbus: scsi
+device	ncrscsi: scsi
+attach	ncrscsi at mainbus
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
-device	ncr96scsi at mainbus: scsi
+device	ncr96scsi: scsi
+attach	ncr96scsi at mainbus
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
-device	sbc at mainbus: scsi, ncr5380sbc
+device	sbc: scsi, ncr5380sbc
+attach	sbc at mainbus
 file	arch/mac68k/dev/ncr_sbc.c	sbc
 
 file	arch/m68k/m68k/copy.s
@@ -72,7 +84,8 @@ file	dev/cons.c
 file	dev/cninit.c
 
 # RAM Disk for installs
-device	rd at mainbus
+device	rd
+attach	rd at mainbus
 file	dev/ramdisk.c			rd needs-count
 file	arch/mac68k/dev/rd_root.c	ramdisk_hooks
 
