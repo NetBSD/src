@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.32 1998/05/08 00:05:19 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.33 1998/05/19 04:31:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
 #include <pmax/dev/siireg.h>		/* device registers */
 #include <pmax/dev/siivar.h>		/* softc and prototypes */
 
+#include <pmax/pmax/pmaxtype.h>		/* Definition of DS_PMAX */
 
 /* Machine-indepedent back-end attach entry point */
 void	siiattach __P((struct siisoftc *sc));
