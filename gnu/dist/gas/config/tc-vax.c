@@ -1215,18 +1215,21 @@ md_estimate_size_before_relax (fragP, segment)
       else
 	{
 	  int reloc_type = NO_RELOC;
+	  p = fragP->fr_literal + old_fr_fix;
 #ifndef OBJ_VMS
 	  if (GOT_symbol == NULL)
 	    GOT_symbol = symbol_find(GLOBAL_OFFSET_TABLE_NAME);
 	  if (PLT_symbol == NULL)
 	    PLT_symbol = symbol_find(PROCEDURE_LINKAGE_TABLE_NAME);
-	  p = fragP->fr_literal + old_fr_fix;
 	  if (flag_want_pic
 		&& (GOT_symbol == NULL || fragP->fr_symbol != GOT_symbol)
 		&& (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
 		&& fragP->fr_symbol != NULL
 		&& !S_IS_DEFINED(fragP->fr_symbol))
 	    {
+	      if (p[0] & 0x10)
+		as_fatal("PIC reference to %s is already indirect.\n",
+			 S_GET_NAME(fragP->fr_symbol));
 	      p[0] |= 0x10;		/* SET @ bit */
 	      reloc_type = RELOC_GLOB_DAT;
 	    }
@@ -3376,7 +3379,7 @@ md_section_align (segment, size)
 
 /* Exactly what point is a PC-relative offset relative TO?
    On the vax, they're relative to the address of the offset, plus
-   its size. (??? Is this right?  FIXME-SOON) */
+   its size. */
 long
 md_pcrel_from (fixP)
      fixS *fixP;
