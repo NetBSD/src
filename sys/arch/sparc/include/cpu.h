@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 1998/11/11 06:43:50 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.32 1999/01/19 10:02:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,7 @@ extern union sir {
 
 #define SIR_NET		0
 #define SIR_CLOCK	1
+#define SIR_SERIAL	2
 
 #if defined(SUN4M)
 extern void	raise __P((int, int));
@@ -124,6 +125,7 @@ extern void	raise __P((int, int));
 
 #define setsoftnet()	(sir.sir_which[SIR_NET] = 1, setsoftint())
 #define setsoftclock()	(sir.sir_which[SIR_CLOCK] = 1, setsoftint())
+#define setsoftserial()	(sir.sir_which[SIR_SERIAL] = 1, setsoftint())
 
 extern int	want_ast;
 
