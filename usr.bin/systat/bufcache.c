@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.4 1999/11/27 05:58:04 mrg Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.4 1999/11/27 05:58:04 mrg Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -206,9 +206,10 @@ initbufcache()
 	NREAD(X_BUFPAGES, &bufpages, sizeof(bufpages));
 	bufbytes = bufpages * sysconf(_SC_PAGESIZE);
 
-	buf = (struct buf *)malloc(nbuf * sizeof(struct buf));
-	if (buf == NULL)
-		errx(1, "malloc failed\n");
+	if ((buf = malloc(nbuf * sizeof(struct buf))) == NULL) {
+		error("malloc failed");
+		die(0);
+	}
 	NREAD(X_BUF, &bufaddr, sizeof(bufaddr));
 
 	return(1);
@@ -352,8 +353,10 @@ ml_lookup(maddr, size, valid)
 				return(&ml->ml_mount);
 		}
 
-	if ((ml = malloc(sizeof(struct ml_entry))) == NULL)
-		errx(1, "out of memory\n");
+	if ((ml = malloc(sizeof(struct ml_entry))) == NULL) {
+		error("out of memory");
+		die(0);
+	}
 	LIST_INSERT_HEAD(&mount_list, ml, ml_entries);
 	ml->ml_count = 1;
 	ml->ml_size = size;

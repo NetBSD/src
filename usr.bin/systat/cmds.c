@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.17 1999/12/20 21:46:10 jwise Exp $	*/
+/*	$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.17 1999/12/20 21:46:10 jwise Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -115,7 +115,7 @@ switch_mode(p)
 		wnd = (*curmode->c_open)();
 		if (wnd == 0) {
 			error("Couldn't change back to previous mode");
-			exit(1);
+			die(0);
 		}
 
 		p = curmode;

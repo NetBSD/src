@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.9 1999/12/20 21:59:29 jwise Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.10 1999/12/20 23:11:50 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.9 1999/12/20 21:59:29 jwise Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.10 1999/12/20 23:11:50 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,10 +63,9 @@ keyboard()
 	sigaddset(&set, SIGALRM);
 
 	linesz = COLS - 2;		/* XXX does not get updated on SIGWINCH */
-	line = malloc(linesz);
-	if (line == NULL) {
-		error("malloc");
-		exit(1);
+	if ((line = malloc(linesz)) == NULL) {
+		error("malloc failed");
+		die(0);
 	}
 
 	for (;;) {

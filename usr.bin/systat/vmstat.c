@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.22 1999/12/20 03:45:03 jwise Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.23 1999/12/20 23:11:51 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.22 1999/12/20 03:45:03 jwise Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.23 1999/12/20 23:11:51 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -224,7 +224,7 @@ initkre()
 		intrname = calloc(nintr, sizeof (long));
 		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
 			namelist[X_INTRNAMES].n_value);
-		if (intrnamebuf == 0 || intrname == 0 || intrloc == 0) {
+		if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
 			error("Out of memory\n");
 			if (intrnamebuf)
 				free(intrnamebuf);
@@ -634,9 +634,10 @@ allocinfo(s)
 	struct Info *s;
 {
 
-	s->intrcnt = (long *) malloc(nintr * sizeof(long));
-	if (s->intrcnt == NULL)
-		errx(2, "out of memory");
+	if ((s->intrcnt = malloc(nintr * sizeof(long))) == NULL) {
+		error("malloc failed");
+		die(0);
+	}
 }
 
 static void
