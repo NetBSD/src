@@ -144,13 +144,13 @@ $ EREMOTE
 $ EBADRPC
 72 ©patná RPC struktura
 $ ERPCMISMATCH
-73 ©patná verze RPC
+73 RPC: Nekompatibilní verze RPC
 $ EPROGUNAVAIL
-74 RPC program není pøístupný
+74 RPC: Program není dostupný
 $ EPROGMISMATCH
-75 ©patná verze programu
+75 RPC: Neshoda programu nebo verze
 $ EPROCUNAVAIL
-76 ©patná procedura pro program
+76 RPC: Procedura není dostupná
 $ ENOLCK
 77 Zámky souborových záznamù nejsou dostupné
 $ ENOSYS
