@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.48 2001/01/22 20:08:05 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.49 2001/02/02 07:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1800,6 +1800,22 @@ netbsd32_execve(p, v, retval)
 	} */ *uap = v;
 	struct sys_execve_args ua;
 	caddr_t sg;
+
+	NETBSD32TOP_UAP(path, const char);
+	NETBSD32TOP_UAP(argp, char *);
+	NETBSD32TOP_UAP(envp, char *);
+	sg = stackgap_init(p->p_emul);
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+
+	return netbsd32_execve2(p, &ua, retval);
+}
+
+int
+netbsd32_execve2(p, uap, retval)
+	struct proc *p;
+	struct sys_execve_args *uap;
+	register_t *retval;
+{
 	/* Function args */
 	int error, i;
 	struct exec_package pack;
@@ -1819,20 +1835,14 @@ netbsd32_execve(p, v, retval)
 	int szsigcode;
 	struct exec_vmcmd *base_vcp = NULL;
 
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TOP_UAP(argp, char *);
-	NETBSD32TOP_UAP(envp, char *);
-	sg = stackgap_init(p->p_emul);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-
 	/* init the namei data to point the file user's program name */
 	/* XXX cgd 960926: why do this here?  most will be clobbered. */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(&ua, path), p);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	pack.ep_name = SCARG(&ua, path);
+	pack.ep_name = SCARG(uap, path);
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -1879,7 +1889,7 @@ netbsd32_execve(p, v, retval)
 	}
 
 	/* Now get argv & environment */
-	if (!(cpp = (netbsd32_charp *)SCARG(&ua, argp))) {
+	if (!(cpp = (netbsd32_charp *)SCARG(uap, argp))) {
 		error = EINVAL;
 		goto bad;
 	}
@@ -1906,7 +1916,7 @@ netbsd32_execve(p, v, retval)
 
 	envc = 0;
 	/* environment need not be there */
-	if ((cpp = (netbsd32_charp *)SCARG(&ua, envp)) != NULL ) {
+	if ((cpp = (netbsd32_charp *)SCARG(uap, envp)) != NULL ) {
 		while (1) {
 			len = argp + ARG_MAX - dp;
 			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
