@@ -1,10 +1,10 @@
-/*	\$NetBSD\$	*/
+/*	$NetBSD: pcidevs_data.h,v 1.476 2002/10/18 00:59:12 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.473 2002/10/16 14:55:26 leo Exp 
+ *	NetBSD: pcidevs,v 1.474 2002/10/18 00:56:17 yamt Exp 
  */
 
 /*
@@ -3379,7 +3379,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
 	    0,
 	    "Intel",
-	    "i82452 Gigabit Ethernet",
+	    "i82542 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER,
