@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.6 2004/01/29 09:55:35 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.7 2004/02/17 21:20:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -88,6 +88,7 @@
 #define MASK_AND_RSHIFT(x, mask) (((x) & (mask)) >> MASK_TO_SHIFT(mask))
 #define LSHIFT(x, mask) ((x) << MASK_TO_SHIFT(mask))
 #define MASK_AND_REPLACE(reg, val, mask) ((reg & ~mask) | LSHIFT(val, mask))
+#define PRESHIFT(m) MASK_AND_RSHIFT((m), (m))
 
 #endif /* _BIT_TWIDDLE */
 
@@ -839,105 +840,4 @@ struct atw_rxdesc {
 #define ATW_SRAM_ADDR_SSID	(0x180 * 2)
 #define ATW_SRAM_ADDR_SUPRATES	(0x191 * 2)
 #define ATW_SRAM_SIZE		(0x200 * 2)
-
-/*
- * Registers for Silicon Laboratories Si4126/Si4136 RF synthesizer.
- */
-#define SI4126_MAIN	0	/* main configuration */
-#define	SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)	/* aux. output pin function */
-/* reserved */
-#define	SI4126_MAIN_AUXSEL_RSVD		LSHIFT(0x0, SI4126_MAIN_AUXSEL_MASK)
-/* force low */
-#define	SI4126_MAIN_AUXSEL_FRCLOW	LSHIFT(0x1, SI4126_MAIN_AUXSEL_MASK)
-/* Lock Detect (LDETB) */
-#define	SI4126_MAIN_AUXSEL_LDETB	LSHIFT(0x3, SI4126_MAIN_AUXSEL_MASK)
-
-#define	SI4126_MAIN_IFDIV_MASK	BITS(11, 10)	/* IFOUT = IFVCO
-						 * frequency / 2**IFDIV.
-						 */
-
-#define	SI4126_MAIN_XINDIV2	BIT(6)	/* 1: divide crystal input (XIN) by 2 */
-#define	SI4126_MAIN_LPWR	BIT(5)	/* 1: low-power mode */
-#define	SI4126_MAIN_AUTOPDB	BIT(3)	/* 1: equivalent to
-					 *    reg[SI4126_POWER] <-
-					 *    SI4126_POWER_PDIB |
-					 *    SI4126_POWER_PDRB.
-					 *
-					 * 0: power-down under control of
-					 *    reg[SI4126_POWER].
-					 */
-
-#define	SI4126_GAIN	1		/* phase detector gain */
-#define	SI4126_GAIN_KPI_MASK	BITS(5, 4)	/* IF phase detector gain */
-#define	SI4126_GAIN_KP2_MASK	BITS(3, 2)	/* RF2 phase detector gain */
-#define	SI4126_GAIN_KP1_MASK	BITS(1, 0)	/* RF1 phase detector gain */
-
-#define	SI4126_POWER	2		/* powerdown */
-#define	SI4126_POWER_PDIB	BIT(1)	/* 1: IF synthesizer on */
-#define	SI4126_POWER_PDRB	BIT(0)	/* 1: RF synthesizer on */
-
-#define	SI4126_RF1N	3		/* RF1 N divider */
-#define	SI4126_RF2N	4		/* RF2 N divider */
-#define	SI4126_IFN	5		/* IF N divider */
-#define	SI4126_RF1R	6		/* RF1 R divider */
-#define	SI4126_RF2R	7		/* RF2 R divider */
-#define	SI4126_IFR	8		/* IF R divider */
-
-/*
- * Registers for RF Microdevices RF3000 spread-spectrum baseband modem.
- */
-#define RF3000_CTL		0x01		/* modem control */
-#define RF3000_RXSTAT		RF3000_CTL	/* RX status */
-#define		RF3000_CTL_MODE_MASK		BITS(7, 4)
-#define		RF3000_RXSTAT_ACQ		BIT(2)
-#define		RF3000_RXSTAT_SFD		BIT(1)
-#define		RF3000_RXSTAT_CRC		BIT(0)
-#define RF3000_CCACTL		0x02		/* CCA control */
-/* CCA mode */
-#define		RF3000_CCACTL_MODE_MASK		BITS(7, 6)
-#define		RF3000_CCACTL_MODE_RSSIT	0	/* RSSI threshold */
-#define		RF3000_CCACTL_MODE_ACQ		1	/* acquisition */
-#define		RF3000_CCACTL_MODE_BOTH		2	/* threshold or acq. */
-/* RSSI threshold for CCA */
-#define		RF3000_CCACTL_RSSIT_MASK	BITS(5, 0)
-#define RF3000_DIVCTL		0x03		/* diversity control */
-#define		RF3000_DIVCTL_ENABLE		BIT(7)	/* enable diversity */
-#define		RF3000_DIVCTL_ANTSEL		BIT(6)	/* if ENABLE = 0, set
-							 * ANT SEL
-							 */
-#define RF3000_RSSI		RF3000_DIVCTL	/* RSSI value */
-#define		RF3000_RSSI_MASK		BITS(5, 0)
-#define RF3000_GAINCTL		0x11		/* TX variable gain control */
-#define		RF3000_GAINCTL_TXVGC_MASK	BITS(7, 2)
-#define		RF3000_GAINCTL_SCRAMBLER	BIT(1)
-#define	RF3000_LOGAINCAL	0x14		/* low gain calibration */
-#define		RF3000_LOGAINCAL_CAL_MASK	BITS(5, 0)
-#define	RF3000_HIGAINCAL	0x15		/* high gain calibration */
-#define		RF3000_HIGAINCAL_CAL_MASK	BITS(5, 0)
-#define		RF3000_HIGAINCAL_DSSSPAD	BIT(6)	/* 6dB gain pad for DSSS
-							 * modes (meaning?)
-							 */
-#define RF3000_OPTIONS1		0x1C		/* Options Register 1 */
-/* Saturation threshold is 4 + offset, where -3 <= offset <= 3.
- * SAT_THRESH is the absolute value, SAT_THRESH_SIGN is the sign.
- */
-#define		RF3000_OPTIONS1_SAT_THRESH_SIGN	BIT(7)
-#define		RF3000_OPTIONS1_SAT_THRESH	BITS(6,5)
-#define		RF3000_OPTIONS1_ALTAGC		BIT(4)	/* 1: retrigger AGC
- 							 * algorithm on ADC
- 							 * saturation
-							 */
-#define		RF3000_OPTIONS1_ALTBUS		BIT(3)	/* 1: enable alternate
-							 * Tx/Rx data bus
-							 * interface.
-							 */
-#define		RF3000_OPTIONS1_RESERVED0_MASK	BITS(2,0)/* 0 */
-
-#define RF3000_OPTIONS2		0x1D		/* Options Register 2 */
-/* 1: delay next AGC 2us instead of 1us after a 1->0 LNAGS-pin transition. */
-#define		RF3000_OPTIONS2_LNAGS_DELAY	BIT(7)
-#define		RF3000_OPTIONS2_RESERVED0_MASK	BITS(6,3)	/* 0 */
-/* Threshold for AGC re-trigger. 0: high count, 1: low count. */
-#define		RF3000_OPTIONS2_RTG_THRESH	BIT(2)
-#define		RF3000_OPTIONS2_RESERVED1_MASK	BITS(1,0)	/* 0 */
 
