@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.1 2002/01/14 23:14:36 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,23 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#ifndef _ARM_LINUX_EXEC_H
+#define _ARM_LINUX_EXEC_H
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
+#define LINUX_M_ARM		103
+#define LINUX_MID_MACHINE	LINUX_M_ARM
+
+#define LINUX_ELF_AUX_ARGSIZ \
+	(howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
+#ifdef ELF32NAME
+#define LINUX_COPYARGS_FUNCTION	ELF32NAME(copyargs)
 #else
-#define	LINUX_SYS_MAXSYSCALL	0
+#define LINUX_COPYARGS_FUNCTION	ELFNAME(copyargs)
 #endif
 
-#endif /* !_LINUX_SYSCALL_H */
+#endif /* !_I386_LINUX_EXEC_H */

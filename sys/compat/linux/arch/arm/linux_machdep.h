@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.1 2002/01/14 23:14:38 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#ifndef _ARM_LINUX_MACHDEP_H_
+#define _ARM_LINUX_MACHDEP_H_
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
+struct linux_sigcontext {
+	u_int32_t	sc_trapno;
+	u_int32_t	sc_error_code;
+	u_int32_t	sc_mask;
+	u_int32_t	sc_r0;
+	u_int32_t	sc_r1;
+	u_int32_t	sc_r2;
+	u_int32_t	sc_r3;
+	u_int32_t	sc_r4;
+	u_int32_t	sc_r5;
+	u_int32_t	sc_r6;
+	u_int32_t	sc_r7;
+	u_int32_t	sc_r8;
+	u_int32_t	sc_r9;
+	u_int32_t	sc_r10;
+	u_int32_t	sc_r11;
+	u_int32_t	sc_r12;
+	u_int32_t	sc_sp;
+	u_int32_t	sc_lr;
+	u_int32_t	sc_pc;
+	u_int32_t	sc_cpsr;
+	u_int32_t	sc_fault_address;
+};
+
+/*
+ * We make the stack look like Linux expects it when calling a signal
+ * handler, but use the BSD way of calling the handler and sigreturn().
+ * This means that we need to pass the pointer to the handler too.
+ * It is appended to the frame to not interfere with the rest of it.
+ */
+
+struct linux_sigframe {
+	int	sf_sig;
+	struct	linux_sigcontext sf_sc;
+	sig_t	sf_handler;
+};
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
+dev_t linux_fakedev __P((dev_t));
+__END_DECLS
+#endif /* _KERNEL */
+
 #endif
-
-#endif /* !_LINUX_SYSCALL_H */

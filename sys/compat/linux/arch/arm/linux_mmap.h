@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.1 2002/01/14 23:14:38 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#ifndef _ARM_LINUX_MMAP_H
+#define _ARM_LINUX_MMAP_H
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
-#endif
+/* LINUX_PROT_* defined in common/linux_mmap.h */
 
-#endif /* !_LINUX_SYSCALL_H */
+/* LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h */
+
+#define LINUX_MAP_FIXED		0x0010
+#define LINUX_MAP_ANON		0x0020
+
+/* the following flags are silently ignored */
+
+#define LINUX_MAP_GROWSDOWN	0x0100
+#define LINUX_MAP_DENYWRITE	0x0800
+#define LINUX_MAP_EXECUTABLE	0x1000
+#define LINUX_MAP_LOCKED	0x2000
+#define LINUX_MAP_NORESERVE	0x4000
+
+#define LINUX_MAP_IGNMASK	0x7900
+
+#endif /* !_ARM_LINUX_MMAP_H */

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.1 2002/01/14 23:14:39 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,79 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_sigarray.c,v 1.1 2002/01/14 23:14:39 bjh21 Exp $");
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
-#endif
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/signal.h>
 
-#endif /* !_LINUX_SYSCALL_H */
+#include <compat/linux/common/linux_signal.h>
+
+int const linux_to_native_sig[LINUX__NSIG] = {
+	0,
+	SIGHUP,
+	SIGINT,
+	SIGQUIT,
+	SIGILL,
+	SIGTRAP,
+	SIGABRT,
+	SIGBUS,
+	SIGFPE,
+	SIGKILL,
+	SIGUSR1,
+	SIGSEGV,
+	SIGUSR2,
+	SIGPIPE,
+	SIGALRM,
+	SIGTERM,
+	0,			/* SIGSTKFLT */
+	SIGCHLD,
+	SIGCONT,
+	SIGSTOP,
+	SIGTSTP,
+	SIGTTIN,
+	SIGTTOU,
+	SIGURG,
+	SIGXCPU,
+	SIGXFSZ,
+	SIGVTALRM,
+	SIGPROF,
+	SIGWINCH,
+	SIGIO,
+	SIGPWR,
+	0,			/* SIGUNUSED */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+};
