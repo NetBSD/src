@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.56 2003/02/05 15:49:02 pk Exp $	*/
+/*	$NetBSD: tty.h,v 1.57 2003/02/05 20:34:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
+#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 
