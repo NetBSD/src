@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.22 2002/10/21 04:14:51 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2003/01/20 01:21:13 soren Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,6 +91,7 @@
 #	tun*	network tunnel driver
 #	uk*	unknown SCSI device
 #	systrace syscall tracer
+#	panel	Front panel display and keypad
 
 dialin=0
 dialout=524288
@@ -418,6 +419,12 @@ systrace)
 	rm -f systrace
 	mknod systrace c 34 0
 	chmod 644 systrace
+	;;
+
+panel)
+	rm -f panel0
+	mknod panel0 c 36 0
+	chmod 660 panel0
 	;;
 
 local)
