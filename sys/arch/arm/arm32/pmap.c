@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2002/07/30 16:07:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2002/07/30 16:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2002/07/30 16:07:23 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2002/07/30 16:16:39 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -997,11 +997,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	TAILQ_INIT(&(pmap_kernel()->pm_obj.memq));
 	pmap_kernel()->pm_obj.uo_npages = 0;
 	pmap_kernel()->pm_obj.uo_refs = 1;
-
-	/*
-	 * Initialize PAGE_SIZE-dependent variables.
-	 */
-	uvm_setpagesize();
 
 	loop = 0;
 	while (loop < bootconfig.dramblocks) {

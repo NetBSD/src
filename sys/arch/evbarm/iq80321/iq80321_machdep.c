@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.6 2002/04/12 20:50:27 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.7 2002/07/30 16:16:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -763,6 +763,7 @@ initarm(void *arg)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */
