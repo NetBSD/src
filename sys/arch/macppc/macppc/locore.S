@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2001/01/01 05:16:12 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2001/01/01 05:23:17 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,8 +66,8 @@
 #endif
 #endif
 
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
-#define	SPILLSTK 1024		/* 1K spill stack */
+#define	INTSTK   8192			/* 8K interrupt stack */
+#define	SPILLSTK 4096			/* 4K spill stack */
 
 /*
  * Globals
@@ -178,6 +178,10 @@ __start:
 #if defined(MULTIPROCESSOR)
 	lis	9,_C_LABEL(cpu_info)@ha
 	addi	9,9,_C_LABEL(cpu_info)@l
+	addi	8,8,INTSTK
+	stw	8,CI_INTSTK(9)
+	addi	8,8,SPILLSTK
+	stw	8,CI_SPILLSTK(9)
 	stw	8,CI_IDLE_PCB(9)
 #else
 	lis	9,idle_u@ha
