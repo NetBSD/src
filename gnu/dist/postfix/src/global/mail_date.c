@@ -115,7 +115,7 @@ const char *mail_date(time_t when)
     if (gmtoff < -DAY_MIN || gmtoff > DAY_MIN)
 	msg_panic("UTC time offset %d is larger than one day", gmtoff);
     vstring_sprintf_append(vp, "%+03d%02d", (int) (gmtoff / HOUR_MIN),
-			   (int) (gmtoff % HOUR_MIN));
+			   (int) (abs(gmtoff) % HOUR_MIN));
 
     /*
      * Finally, add the time zone name.

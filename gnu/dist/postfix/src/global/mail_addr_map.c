@@ -68,6 +68,7 @@
 /* Application-specific. */
 
 #define STR	vstring_str
+#define LEN	VSTRING_LEN
 
 /* mail_addr_map - map a canonical address */
 
@@ -88,7 +89,8 @@ ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
     if ((string = mail_addr_find(path, address, &extension)) != 0) {
 
 	/*
-	 * Prepend the original user to @otherdomain.
+	 * Prepend the original user to @otherdomain, but do not propagate
+	 * the unmatched address extension.
 	 */
 	if (*string == '@') {
 	    buffer = vstring_alloc(100);
@@ -96,6 +98,8 @@ ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
 		vstring_strncpy(buffer, address, ratsign - address);
 	    else
 		vstring_strcpy(buffer, address);
+	    if (extension)
+		vstring_truncate(buffer, LEN(buffer) - strlen(extension));
 	    vstring_strcat(buffer, string);
 	    string = STR(buffer);
 	}
@@ -157,12 +161,23 @@ int     main(int argc, char **argv)
     /*
      * Initialize.
      */
+#define UPDATE(dst, src) { myfree(dst); dst = mystrdup(src); }
+
     mail_conf_read();
     msg_verbose = 1;
     if (chdir(var_queue_dir) < 0)
 	msg_fatal("chdir %s: %m", var_queue_dir);
     path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK);
     while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
+	msg_info("=== Address extension on, extension propagation on ===");
+	UPDATE(var_rcpt_delim, "+");
+	if ((result = mail_addr_map(path, STR(buffer), 1)) != 0)
+	    argv_free(result);
+	msg_info("=== Address extension on, extension propagation off ===");
+	if ((result = mail_addr_map(path, STR(buffer), 0)) != 0)
+	    argv_free(result);
+	msg_info("=== Address extension off ===");
+	UPDATE(var_rcpt_delim, "");
 	if ((result = mail_addr_map(path, STR(buffer), 1)) != 0)
 	    argv_free(result);
     }
