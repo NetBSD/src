@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.11 1996/10/13 02:21:38 christos Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.12 1997/08/12 22:47:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -214,6 +214,9 @@ procfs_domem(curp, p, pfs, uio)
 
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if ((error = procfs_checkioperm(curp, p)) != 0)
+		return (error);
 
 	PHOLD(p);
 	error = procfs_rwmem(p, uio);
