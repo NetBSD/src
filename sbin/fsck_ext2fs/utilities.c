@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.7 2003/01/24 21:55:07 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.8 2003/07/13 08:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.7 2003/01/24 21:55:07 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.8 2003/07/13 08:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,8 +405,9 @@ freeblk(blkno)
  * Find a pathname
  */
 void
-getpathname(namebuf, curdir, ino)
+getpathname(namebuf, namebuflen, curdir, ino)
 	char *namebuf;
+	size_t namebuflen;
 	ino_t curdir, ino;
 {
 	int len;
@@ -415,12 +416,12 @@ getpathname(namebuf, curdir, ino)
 	static int busy = 0;
 
 	if (curdir == ino && ino == EXT2_ROOTINO) {
-		(void)strcpy(namebuf, "/");
+		(void)strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
 	if (busy ||
 	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
-		(void)strcpy(namebuf, "?");
+		(void)strlcpy(namebuf, "?", namebuflen);
 		return;
 	}
 	busy = 1;
