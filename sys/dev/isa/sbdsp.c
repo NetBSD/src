@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.11 1995/05/08 22:02:19 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.12 1995/07/07 02:19:55 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -63,17 +63,12 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbdspvar.h>
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 extern void Dprintf __P((const char *, ...));
-
-#define DPRINTF(x)	if (sbdspdebug) printf x
+#define DPRINTF(x)	if (sbdspdebug) Dprintf x
 int	sbdspdebug = 0;
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef NEWCONFIG
-#define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
 #endif
 
 #ifndef SBDSP_NPOLL
@@ -86,7 +81,7 @@ struct {
 	int wmidi;
 } sberr;
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 void
 sb_printsc(struct sbdsp_softc *sc)
 {
@@ -140,20 +135,6 @@ sbdsp_attach(sc)
 	register u_short iobase = sc->sc_iobase;
 
 	sc->sc_locked = 0;
-
-#ifdef NEWCONFIG
-	/*
-	 * We limit DMA transfers to a page, and use the generic DMA handling
-	 * code in isa.c.  This code can end up copying a buffer, but since
-	 * the audio driver uses relative small buffers this isn't likely.
-	 *
-	 * This allocation scheme means that the maximum transfer is limited
-	 * by the page size (rather than 64k).  This is reasonable.  For 4K
-	 * pages, the transfer time at 48KHz is 4096 / 48000 = 85ms.  This
-	 * is plenty long enough to amortize any fixed time overhead.
-	 */
-	at_setup_dmachan(sc->sc_drq, NBPG);
-#endif
 
 	/* Set defaults */
 	if (ISSBPROCLASS(sc))
@@ -962,7 +943,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	register u_short iobase;
 	u_int phys;
 	
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_dma_input: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
@@ -995,7 +976,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	}
 	sc->sc_dmaout_inprogress = 0;
 
-	at_dma(B_READ, p, cc, sc->sc_drq);
+	isa_dmastart(B_READ, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 	sc->dmaflags = B_READ;
@@ -1045,7 +1026,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	register struct sbdsp_softc *sc = addr;
 	register u_short iobase;
 	
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_dma_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
@@ -1065,7 +1046,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		sc->sc_last_hsw_size = 0;	/* restarting */
 	}
 	sc->sc_dmain_inprogress = 0;
-	at_dma(B_WRITE, p, cc, sc->sc_drq);
+	isa_dmastart(B_WRITE, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 	sc->dmaflags = B_WRITE;
@@ -1131,7 +1112,7 @@ sbdsp_intr(arg)
 {
 	register struct sbdsp_softc *sc = arg;
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif

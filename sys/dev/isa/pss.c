@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.7 1995/05/08 22:02:05 brezak Exp $	*/
+/*	$NetBSD: pss.c,v 1.8 1995/07/07 02:19:51 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -67,7 +67,6 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
@@ -142,9 +141,9 @@ struct cd_softc {
 	u_short	sc_irq;			/* CD interrupt */
 };
 
-#define DEBUG	/*XXX*/
-#ifdef DEBUG
-#define DPRINTF(x)	if (pssdebug) printf x
+#ifdef AUDIO_DEBUG
+extern void Dprintf __P((const char *, ...));
+#define DPRINTF(x)	if (pssdebug) Dprintf x
 int	pssdebug = 0;
 #else
 #define DPRINTF(x)
@@ -702,7 +701,7 @@ pssprobe(parent, self, aux)
     int i;
     
     if (!PSS_BASE_VALID(iobase)) {
-	printf("pss: configured iobase %d invalid\n", iobase);
+	printf("pss: configured iobase %x invalid\n", iobase);
 	return 0;
     }
 
@@ -865,6 +864,7 @@ spprobe(parent, match, aux)
 	}
 	sc->sc_drq = cf->cf_drq;
     }
+    sc->sc_recdrq = sc->sc_drq;
 
     /* Set WSS config registers */
     if ((bits = wss_interrupt_bits[sc->sc_irq]) == 0xff) {
@@ -994,6 +994,7 @@ pssattach(parent, self, aux)
     u_short iobase = ia->ia_iobase;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
+    int err;
     
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
@@ -1003,11 +1004,11 @@ pssattach(parent, self, aux)
 #endif
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
-	pssintr, sc);
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+				   pssintr, sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
-    printf(": esc614%c\n", (vers > 0)?'A'+vers:' ');
+    printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
     
     (void)config_found(self, NULL, NULL);
 
@@ -1018,8 +1019,8 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    if (audio_hardware_attach(&pss_audio_if, sc->ad1848_sc) != 0)
-	printf("pss: could not attach to audio pseudo-device driver\n");
+    if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc)) != 0)
+	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 void
@@ -1038,7 +1039,7 @@ spattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
 	ad1848_intr, sc);
 
     /* XXX might use pssprint func ?? */
@@ -1066,7 +1067,7 @@ mpuattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_CLOCK,
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
 	mpuintr, sc);
 
     /* XXX might use pssprint func ?? */
@@ -1462,6 +1463,7 @@ pss_mixer_set_port(addr, cp)
 	if (cp->type == AUDIO_MIXER_ENUM) {
 	    sc->mic_mute = cp->un.ord;
 	    DPRINTF(("mic mute %d\n", cp->un.ord));
+	    ad1848_mute_aux2(ac, cp->un.ord);
 	    error = 0;
 	}
 	break;
@@ -1477,6 +1479,7 @@ pss_mixer_set_port(addr, cp)
 	if (cp->type == AUDIO_MIXER_ENUM) {
 	    sc->cd_mute = cp->un.ord;
 	    DPRINTF(("CD mute %d\n", cp->un.ord));
+	    ad1848_mute_aux1(ac, cp->un.ord);
 	    error = 0;
 	}
 	break;

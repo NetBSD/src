@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.7 1995/05/08 22:02:01 brezak Exp $	*/
+/*	$NetBSD: pas.c,v 1.8 1995/07/07 02:19:48 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -55,7 +55,6 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
 #include <dev/isa/sbdspvar.h>
 #include <dev/isa/sbreg.h>
@@ -63,8 +62,7 @@
 #define DEFINE_TRANSLATIONS
 #include <dev/isa/pasreg.h>
 
-#define DEBUG	/*XXX*/
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (pasdebug) printf x
 int	pasdebug = 0;
 #else
@@ -432,28 +430,11 @@ pasattach(parent, self, aux)
 	register struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	register u_short iobase = ia->ia_iobase;
-
+	int err;
+	
 	sc->sc_iobase = iobase;
-
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    sbdsp_intr, &sc->sc_sbdsp);
-
-#ifdef NEWCONFIG
-	/*
-	 * We limit DMA transfers to a page, and use the generic DMA handling
-	 * code in isa.c.  This code can end up copying a buffer, but since
-	 * the audio driver uses relative small buffers this isn't likely.
-	 *
-	 * This allocation scheme means that the maximum transfer is limited
-	 * by the page size (rather than 64k).  This is reasonable.  For 4K
-	 * pages, the transfer time at 48KHz is 4096 / 48000 = 85ms.  This
-	 * is plenty long enough to amortize any fixed time overhead.
-	 */
-	at_setup_dmachan(sc->sc_dmachan, NBPG);
-#endif
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+				       sbdsp_intr, &sc->sc_sbdsp);
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
 	
@@ -462,8 +443,8 @@ pasattach(parent, self, aux)
 	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
 	sprintf(pas_device.version, "%d", sc->rev);
 
-	if (audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp) != 0)
-		printf("pas: could not attach to audio pseudo-device driver\n");
+	if ((err = audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp)) != 0)
+		printf("pas: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 int
