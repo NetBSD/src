@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 1998/11/11 06:41:27 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 1998/12/03 06:28:46 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 1998/11/11 06:41:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 1998/12/03 06:28:46 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 1998/11/11 06:41:27 thorpej Exp 
 
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
-extern void savefpregs __P((struct proc *));
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
@@ -125,10 +124,11 @@ cpu_set_kpc(p, pc, arg)
 	void (*pc) __P((void *));
 	void *arg;
 {
-	p->p_addr->u_pcb.pcb_context[10] =
-	    (int)proc_trampoline;			/* RA */
-	p->p_addr->u_pcb.pcb_context[0] = (int)pc;	/* S0 */
-	p->p_addr->u_pcb.pcb_context[1] = (int)arg;	/* S1 */
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
+	pcb->pcb_context[0] = (int)pc;			/* S0 */
+	pcb->pcb_context[1] = (int)arg;			/* S1 */
 }
 
 /*
@@ -208,7 +208,7 @@ cpu_coredump(p, vp, cred, chdr)
 		cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 	else
-		bzero((caddr_t)&cpustate.fpregs, sizeof(struct fpreg));
+		memset(&cpustate.fpregs, 0, sizeof(struct fpreg));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
@@ -219,9 +219,8 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp,
-			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
-			(off_t)chdr -> c_cpusize,
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate,
+			(off_t)chdr->c_cpusize,
 	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
 			cred, NULL, p);
