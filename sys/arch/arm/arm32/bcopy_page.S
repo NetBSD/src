@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.2 2001/08/11 12:44:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -41,6 +41,8 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 
+/* #define BIG_LOOPS */
+
 /*
  * bcopy_page(src, dest)
  *
@@ -51,54 +53,63 @@
  *   r1 - dest address
  *
  * Requires:
- *   number of bytes per page (NBPG) is a multiple of 512
+ *   number of bytes per page (NBPG) is a multiple of 512 (BIG_LOOPS), 128
+ *   otherwise.
  */
 
 ENTRY(bcopy_page)
-	stmfd	sp!, {r4-r10, lr}
+	stmfd	sp!, {r4-r8, lr}
+#ifdef BIG_LOOPS
 	mov	r2, #(NBPG >> 9)
+#else
+	mov	r2, #(NBPG >> 7)
+#endif
 
 Lloopcopy:
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
 
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
+#ifdef BIG_LOOPS
+	/* There is little point making the loop any larger; unless we are
+	   running with the cache off, the load/store overheads will
+	   completely dominate this loop.  */
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
 
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
 
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-	ldmia	r0!, {r3-r10}
-	stmia	r1!, {r3-r10}
-
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+	ldmia	r0!, {r3-r8,ip,lr}
+	stmia	r1!, {r3-r8,ip,lr}
+#endif
 	subs	r2, r2, #1
 	bne	Lloopcopy
 
-	ldmfd	sp!, {r4-r10, pc}
+	ldmfd	sp!, {r4-r8, pc}
 
 /*
  * bzero_page(dest)
@@ -109,44 +120,54 @@ Lloopcopy:
  *   r0 - dest address
  *
  * Requires:
- *   number of bytes per page (NBPG) is a multiple of 512
+ *   number of bytes per page (NBPG) is a multiple of 512 (BIG_LOOPS), 128
+ *   otherwise
  */
 
 ENTRY(bzero_page)
-	stmfd	sp!, {r4-r10, lr}
+	stmfd	sp!, {r4-r8, lr}
+#ifdef BIG_LOOPS
 	mov	r2, #(NBPG >> 9)
-
+#else
+	mov	r2, #(NBPG >> 7)
+#endif
 	mov	r3, #0
 	mov	r4, #0
 	mov	r5, #0
 	mov	r6, #0
 	mov	r7, #0
 	mov	r8, #0
-	mov	r9, #0
-	mov	r10, #0
+	mov	ip, #0
+	mov	lr, #0
 
 Lloopzero:
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
 
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
+#ifdef BIG_LOOPS
+	/* There is little point making the loop any larger; unless we are
+	   running with the cache off, the load/store overheads will
+	   completely dominate this loop.  */
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
 
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
 
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
-	stmia	r0!, {r3-r10}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+	stmia	r0!, {r3-r8,ip,lr}
+
+#endif
 
 	subs	r2, r2, #1
 	bne	Lloopzero
 
-	ldmfd	sp!, {r4-r10, pc}
+	ldmfd	sp!, {r4-r8, pc}
