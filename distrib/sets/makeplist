@@ -18,7 +18,7 @@ echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname"
 echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]"
 echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
 echo "	-s setsdir	directory to find sets			[$setd]"
-echo "	-p prefix	prefix for created plist		[$plist]"
+echo "	-p prefix	prefix for created plist		[$prefix]"
 echo "	setname pkgname	set and package to build plist for"
 
 exit 1
