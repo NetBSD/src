@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/04/22 04:32:12 gwr Exp $
+#	$NetBSD: Makefile,v 1.14 1999/05/16 08:21:53 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	miniroot
-#CBIN=	mini_usr
 
 TREE=	${TOP}/common/${IMAGE}.tree
 
@@ -15,17 +14,17 @@ LISTS=	${TOP}/common/${IMAGE}.list \
 	${TOP}/common/mini_bin.list \
 	${TOP}/common/mini_usr.list
 
-KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/INSTALL/netbsd
-KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/INSTALL3X/netbsd
+KERNEL3  = ${KERNOBJDIR}/INSTALL/netbsd
+KERNEL3X = ${KERNOBJDIR}/INSTALL3X/netbsd
 
-MOUNT_POINT=	/mnt
-BDEV=		/dev/sd1b
-CDEV=		/dev/rsd1b
+MOUNT_POINT?=	/mnt
+BDEV?=		/dev/sd1b
+CDEV?=		/dev/rsd1b
 
 # These are all the parameters for the miniroot: (8MB)
 DISKTYPE=	miniroot
-NBLKS=		16384
-# old format, minfree, opt, b/i  trks, sects, cpg
+NBLKS=		20480
+# bigendian, old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -B be -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
 CLEANFILES= ${IMAGE}.gz install.sub
