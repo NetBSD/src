@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.2.1 2001/10/24 16:47:50 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.2.2 2001/10/30 16:41:41 uch Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -99,6 +99,7 @@ struct mips_cache_ops mips_cache_ops;
 
 #ifdef MIPS1
 #ifdef ENABLE_MIPS_TX3900
+#include <mips/cache_tx39.h>
 void	tx3900_get_cache_config(void);
 void	tx3920_get_cache_config(void);
 #endif /* ENABLE_MIPS_TX3900 */
@@ -173,7 +174,7 @@ mips_config_cache(void)
 
 			tx3900_get_cache_config();
 
-			mips_pdcache_write_though = 1;
+			mips_pdcache_write_through = 1;
 
 			mips_cache_ops.mco_icache_sync_all =
 			    tx3900_icache_sync_all_16;
@@ -235,8 +236,7 @@ mips_config_cache(void)
 		}
 
 		mips_pdcache_ways = 2;
-		mips_picache_size = tx3900_picache_size();
-		mips_pdcache_size = tx3900_pdcache_size();
+		tx3900_get_cache_config();
 
 		uvmexp.ncolors = atop(mips_pdcache_size) / mips_pdcache_ways;
 		break;
@@ -459,7 +459,7 @@ tx3900_get_cache_config(void)
 	config = tx3900_cp0_config_read();
 
 	mips_picache_size = R3900_C_SIZE_MIN <<
-	    ((config & R3900_CONFIG_ICS_MASK) >> R3900_CONFIG_ICS_MASK);
+	    ((config & R3900_CONFIG_ICS_MASK) >> R3900_CONFIG_ICS_SHIFT);
 
 	mips_pdcache_size = R3900_C_SIZE_MIN <<
 	    ((config & R3900_CONFIG_DCS_MASK) >> R3900_CONFIG_DCS_SHIFT);
