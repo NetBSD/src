@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.8 2003/06/10 21:27:16 hubertf Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.9 2003/07/12 13:37:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.8 2003/06/10 21:27:16 hubertf Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.9 2003/07/12 13:37:15 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -234,10 +234,10 @@ main(argc, argv)
 	i = cgetent(&defs, defsfile, language);
 	if (i == -1) {
 	    fprintf (stderr, "no entry for language %s\n", language);
-	    exit (0);
+	    exit(0);
 	} else  if (i == -2) { fprintf(stderr,
 	    "cannot find vgrindefs file %s\n", defsfile[0]);
-	    exit (0);
+	    exit(0);
 	} else if (i == -3) { fprintf(stderr,
 	    "potential reference loop detected in vgrindefs file %s\n",
             defsfile[0]);
@@ -384,8 +384,7 @@ putScp(os)
         ps("\n");
 	if (psptr < PSMAX) {
 	    ++psptr;
-	    strncpy (pstack[psptr], pname, PNAMELEN);
-	    pstack[psptr][PNAMELEN] = '\0';
+	    strlcpy(pstack[psptr], pname, sizeof(pstack[psptr]));
 	    plstack[psptr] = blklevel;
 	}
     }
@@ -394,12 +393,12 @@ skip:
 	/* check for string, comment, blockstart, etc */
 	if (!incomm && !instr && !inchr) {
 
-	    blkeptr = expmatch (s, l_blkend, dummy);
-	    blksptr = expmatch (s, l_blkbeg, dummy);
-	    comptr = expmatch (s, l_combeg, dummy);
-	    acmptr = expmatch (s, l_acmbeg, dummy);
-	    strptr = expmatch (s, l_strbeg, dummy);
-	    chrptr = expmatch (s, l_chrbeg, dummy);
+	    blkeptr = expmatch(s, l_blkend, dummy);
+	    blksptr = expmatch(s, l_blkbeg, dummy);
+	    comptr = expmatch(s, l_combeg, dummy);
+	    acmptr = expmatch(s, l_acmbeg, dummy);
+	    strptr = expmatch(s, l_strbeg, dummy);
+	    chrptr = expmatch(s, l_chrbeg, dummy);
 
 	    /* start of a comment? */
 	    if (comptr != NIL)
@@ -408,13 +407,13 @@ skip:
 		  && (comptr < chrptr || chrptr == NIL)
 		  && (comptr < blksptr || blksptr == NIL)
 		  && (comptr < blkeptr || blkeptr == NIL)) {
-		    putKcp (s, comptr-1, FALSE);
+		    putKcp(s, comptr-1, FALSE);
 		    s = comptr;
 		    incomm = TRUE;
 		    comtype = STANDARD;
 		    if (s != os)
-			ps ("\\c");
-		    ps ("\\c\n'+C\n");
+			ps("\\c");
+		    ps("\\c\n'+C\n");
 		    continue;
 		}
 
@@ -424,13 +423,13 @@ skip:
 		  && (acmptr < chrptr || chrptr == NIL)
 		  && (acmptr < blksptr || blksptr == NIL)
 		  && (acmptr < blkeptr || blkeptr == NIL)) {
-		    putKcp (s, acmptr-1, FALSE);
+		    putKcp(s, acmptr-1, FALSE);
 		    s = acmptr;
 		    incomm = TRUE;
 		    comtype = ALTERNATE;
 		    if (s != os)
-			ps ("\\c");
-		    ps ("\\c\n'+C\n");
+			ps("\\c");
+		    ps("\\c\n'+C\n");
 		    continue;
 		}
 
@@ -439,7 +438,7 @@ skip:
 		if ((strptr < chrptr || chrptr == NIL)
 		  && (strptr < blksptr || blksptr == NIL)
 		  && (strptr < blkeptr || blkeptr == NIL)) {
-		    putKcp (s, strptr-1, FALSE);
+		    putKcp(s, strptr-1, FALSE);
 		    s = strptr;
 		    instr = TRUE;
 		    continue;
@@ -449,7 +448,7 @@ skip:
 	    if (chrptr != NIL)
 		if ((chrptr < blksptr || blksptr == NIL)
 		  && (chrptr < blkeptr || blkeptr == NIL)) {
-		    putKcp (s, chrptr-1, FALSE);
+		    putKcp(s, chrptr-1, FALSE);
 		    s = chrptr;
 		    inchr = TRUE;
 		    continue;
@@ -458,15 +457,15 @@ skip:
 	    /* end of a lexical block */
 	    if (blkeptr != NIL) {
 		if (blkeptr < blksptr || blksptr == NIL) {
-		    putKcp (s, blkeptr - 1, FALSE);
+		    putKcp(s, blkeptr - 1, FALSE);
 		    s = blkeptr;
 		    blklevel--;
 		    if (psptr >= 0 && plstack[psptr] >= blklevel) {
 
 			/* end of current procedure */
 			if (s != os)
-			    ps ("\\c");
-			ps ("\\c\n'-F\n");
+			    ps("\\c");
+			ps("\\c\n'-F\n");
 			blklevel = plstack[psptr];
 
 			/* see if we should print the last proc name */
@@ -481,7 +480,7 @@ skip:
 
 	    /* start of a lexical block */
 	    if (blksptr != NIL) {
-		putKcp (s, blksptr - 1, FALSE);
+		putKcp(s, blksptr - 1, FALSE);
 		s = blksptr;
 		blklevel++;
 		continue;
@@ -489,61 +488,61 @@ skip:
 
 	/* check for end of comment */
 	} else if (incomm) {
-	    comptr = expmatch (s, l_comend, dummy);
-	    acmptr = expmatch (s, l_acmend, dummy);
+	    comptr = expmatch(s, l_comend, dummy);
+	    acmptr = expmatch(s, l_acmend, dummy);
 	    if (((comtype == STANDARD) && (comptr != NIL)) ||
 	        ((comtype == ALTERNATE) && (acmptr != NIL))) {
 		if (comtype == STANDARD) {
-		    putKcp (s, comptr-1, TRUE);
+		    putKcp(s, comptr-1, TRUE);
 		    s = comptr;
 		} else {
-		    putKcp (s, acmptr-1, TRUE);
+		    putKcp(s, acmptr-1, TRUE);
 		    s = acmptr;
 		}
 		incomm = FALSE;
 		ps("\\c\n'-C\n");
 		continue;
 	    } else {
-		putKcp (s, s + strlen(s) -1, TRUE);
+		putKcp(s, s + strlen(s) -1, TRUE);
 		s = s + strlen(s);
 		continue;
 	    }
 
 	/* check for end of string */
 	} else if (instr) {
-	    if ((strptr = expmatch (s, l_strend, dummy)) != NIL) {
-		putKcp (s, strptr-1, TRUE);
+	    if ((strptr = expmatch(s, l_strend, dummy)) != NIL) {
+		putKcp(s, strptr-1, TRUE);
 		s = strptr;
 		instr = FALSE;
 		continue;
 	    } else {
-		putKcp (s, s+strlen(s)-1, TRUE);
+		putKcp(s, s+strlen(s)-1, TRUE);
 		s = s + strlen(s);
 		continue;
 	    }
 
 	/* check for end of character string */
 	} else if (inchr) {
-	    if ((chrptr = expmatch (s, l_chrend, dummy)) != NIL) {
-		putKcp (s, chrptr-1, TRUE);
+	    if ((chrptr = expmatch(s, l_chrend, dummy)) != NIL) {
+		putKcp(s, chrptr-1, TRUE);
 		s = chrptr;
 		inchr = FALSE;
 		continue;
 	    } else {
-		putKcp (s, s+strlen(s)-1, TRUE);
+		putKcp(s, s+strlen(s)-1, TRUE);
 		s = s + strlen(s);
 		continue;
 	    }
 	}
 
 	/* print out the line */
-	putKcp (s, s + strlen(s) -1, FALSE);
+	putKcp(s, s + strlen(s) -1, FALSE);
 	s = s + strlen(s);
     } while (*s);
 }
 
 static void
-putKcp (start, end, force)
+putKcp(start, end, force)
     char	*start;		/* start of string to write */
     char	*end;		/* end of string to write */
     boolean	force;		/* true if we should force nokeyw */
@@ -587,7 +586,7 @@ putKcp (start, end, force)
 		}
 	    }
 
-	putcp (*start++);
+	putcp(*start++);
     }
 }
 
@@ -692,7 +691,7 @@ isproc(s)
 {
     pname[0] = '\0';
     if (!l_toplex || blklevel == 0)
-	if (expmatch (s, l_prcbeg, pname) != NIL) {
+	if (expmatch(s, l_prcbeg, pname) != NIL) {
 	    return (TRUE);
 	}
     return (FALSE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.5 1998/12/19 23:41:53 christos Exp $	*/
+/*	$NetBSD: regexp.c,v 1.6 2003/07/12 13:37:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.5 1998/12/19 23:41:53 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.6 2003/07/12 13:37:15 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -162,7 +162,7 @@ convexp(re)
 	return (NIL);
     if (*re == '\0')
 	return (NIL);
-    cre = malloc (4 * strlen(re) + 3);
+    cre = malloc(4 * strlen(re) + 3);
     ccre = cre;
     ure = re;
 
@@ -172,7 +172,7 @@ convexp(re)
     ccre = MNEXT(cre);
 
     /* start the conversion (its recursive) */
-    expconv ();
+    expconv();
     *ccre = 0;
     return (cre);
 }
@@ -264,7 +264,7 @@ expconv()
 	    *cs = OPER;
 	    OSYM(cs) = '(';
 	    ccre = ONEXT(cs);
-	    expconv ();
+	    expconv();
 	    OCNT(cs) = ccre - cs;		/* offset to next symbol */
 	    break;
 
@@ -349,7 +349,7 @@ expconv()
  */
 
 char *
-expmatch (s, re, mstring)
+expmatch(s, re, mstring)
     char *s;		/* string to check for a match in */
     char *re;		/* a converted irregular expression */
     char *mstring;	/* where to put whatever matches a \p */
@@ -410,7 +410,7 @@ expmatch (s, re, mstring)
 
 	    /* this is a grouping, recurse */
 	    case '(':
-		ptr = expmatch (s, ONEXT(cs), mstring);
+		ptr = expmatch(s, ONEXT(cs), mstring);
 		if (ptr != NIL) {
 
 		    /* the subexpression matched */
@@ -447,11 +447,11 @@ expmatch (s, re, mstring)
 		 */
 		s1 = s;
 		do {
-		    ptr = expmatch (s1, MNEXT(cs), mstring);
+		    ptr = expmatch(s1, MNEXT(cs), mstring);
 		    if (ptr != NIL && s1 != s) {
 
 			/* we have a match, remember the match */
-			strncpy (mstring, s, s1 - s);
+			strncpy(mstring, s, s1 - s);
 			mstring[s1 - s] = '\0';
 			return (ptr);
 		    } else if (ptr != NIL && (*cs & OPT)) {
@@ -481,7 +481,7 @@ expmatch (s, re, mstring)
 		 */
 		s1 = s;
 		do {
-		    ptr = expmatch (s1, MNEXT(cs), mstring);
+		    ptr = expmatch(s1, MNEXT(cs), mstring);
 		    if (ptr != NIL && s1 != s) {
 
 			/* we have a match */
