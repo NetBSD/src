@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.9 1998/06/09 05:18:52 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.10 1998/07/24 20:28:48 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -987,4 +987,66 @@ uvm_km_valloc_wait(map, size)
 		tsleep((caddr_t)map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/
+}
+
+/* Sanity; must specify both or none. */
+#if (defined(PMAP_MAP_POOLPAGE) || defined(PMAP_UNMAP_POOLPAGE)) && \
+    (!defined(PMAP_MAP_POOLPAGE) || !defined(PMAP_UNMAP_POOLPAGE))
+#error Must specify MAP and UNMAP together.
+#endif
+
+/*
+ * uvm_km_alloc_poolpage: allocate a page for the pool allocator
+ *
+ * => if the pmap specifies an alternate mapping method, we use it.
+ */
+
+vm_offset_t
+uvm_km_alloc_poolpage()
+{
+#if defined(PMAP_MAP_POOLPAGE)
+	struct vm_page *pg;
+	vm_offset_t va;
+
+	pg = uvm_pagealloc(NULL, 0, NULL);
+	if (pg == NULL)
+		return (0);
+	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+	if (va == 0)
+		uvm_pagefree(pg);
+	return (va);
+#else
+	vm_offset_t va;
+	int s;
+
+	s = splimp();
+	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, PAGE_SIZE,
+	    UVM_KMF_NOWAIT);
+	splx(s);
+	return (va);
+#endif /* PMAP_MAP_POOLPAGE */
+}
+
+/*
+ * uvm_km_free_poolpage: free a previously allocated pool page
+ *
+ * => if the pmap specifies an alternate unmapping method, we use it.
+ */
+
+void
+uvm_km_free_poolpage(addr)
+	vm_offset_t addr;
+{
+#if defined(PMAP_UNMAP_POOLPAGE)
+	vm_offset_t pa;
+
+	pa = PMAP_UNMAP_POOLPAGE(addr);
+	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+#else
+	int s;
+
+	s = splimp();
+	uvm_km_free(kmem_map, addr, PAGE_SIZE);
+	splx(s);
+#endif /* PMAP_UNMAP_POOLPAGE */
 }
