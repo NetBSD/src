@@ -1,3 +1,5 @@
+/*	$NetBSD: specfile.h,v 1.2 1995/08/17 17:22:23 thorpej Exp $	*/
+
 #define T_OPTIONAL            1
 #define T_STANDARD            2
 #define T_COMPILE_WITH        3
