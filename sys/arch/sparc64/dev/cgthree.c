@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.4 1998/11/19 15:38:24 mrg Exp $ */
+/*	$NetBSD: cgthree.c,v 1.5 1999/05/23 02:45:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -217,7 +217,7 @@ cgthreeattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = (node == fbnode) && fbconstty != NULL;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1999/04/25 16:16:31 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1999/05/23 02:45:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -214,6 +214,11 @@ struct cfattach zs_obio_ca = {
 };
 
 extern struct cfdriver zs_cd;
+extern struct consdev consdev_kd;
+extern struct consdev consdev_zs;
+extern struct consdev *cn_hw;
+extern int stdinnode;
+extern int fbnode;
 
 /* Interrupt handlers. */
 static int zshard __P((void *));
@@ -316,6 +321,7 @@ zs_attach_sbus(parent, self, aux)
 	struct zsc_softc *zsc = (void *) self;
 	struct sbus_attach_args *sa = aux;
 	int zs_unit = zsc->zsc_dev.dv_unit;
+	struct consdev *cn = NULL;
 
 	zsc->zsc_bustag = sa->sa_bustag;
 	zsc->zsc_dmatag = sa->sa_dmatag;
@@ -352,7 +358,40 @@ zs_attach_sbus(parent, self, aux)
 				(long)kvaddr;
 		}
 	}
+	/* 
+	 * Check to see if we're the console.  We presume the input comes from
+	 * the same location as the output, although that may not be true.  
+	 * To support input from the serial line but output to a display we
+	 * would need to generate some really weird consdev vectors.
+	 */
+	if (sa->sa_node == stdinnode) {
+		char buf[256];
+		int chan = 0;
+		int len;
+
+		if ((len = OF_instance_to_path(sa->sa_node, buf, sizeof(buf))) > 0) {
+			/* With zs nodes, the last :a or :b selects the channel */
+			if (buf[len] == 0) len--;
+			if (buf[len] == 'b') chan = 1;
+			/* But keyboards don't have a :a or :b */
+		}
+		zs_hwflags[zs_unit][chan] = ZS_HWFLAG_CONSOLE;
+		zs_conschan = zs_get_chan_addr(zs_unit, chan);
+		if (OF_getproplen(sa->sa_node, "keyboard") >= 0) {
+			cn_hw = &consdev_zs;
+			cn = &consdev_kd;
+		} else {
+			cn = &consdev_zs;
+		}
+	}
 	zs_attach(zsc, sa->sa_pri);
+	if (cn) {
+		cn_tab = cn;
+		(*cn->cn_init)(cn);
+#ifdef	KGDB
+		zs_kgdb_init();
+#endif
+	}
 }
 
 static void
@@ -790,7 +829,15 @@ zs_abort(cs)
 #if defined(KGDB)
 	zskgdb(cs);
 #elif defined(DDB)
-	Debugger();
+	{
+		extern int db_active;
+		
+		if (!db_active)
+			Debugger();
+		else
+			/* Debugger is probably hozed */
+			callrom();
+	}
 #else
 	printf("stopping on keyboard abort\n");
 	callrom();
@@ -868,7 +915,7 @@ static void zscnpollc __P((dev_t, int));
 /*
  * Console table shared by ttya, ttyb
  */
-struct consdev consdev_tty = {
+struct consdev consdev_zs = {
 	nullcnprobe,
 	zscninit,
 	zscngetc,
@@ -919,208 +966,4 @@ zscnpollc(dev, on)
 
 	if (on) swallow_zsintrs++;
 	else swallow_zsintrs--;
-}
-
-/*****************************************************************/
-
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-
-int stdin = NULL, stdout = NULL;
-
-/*
- * The console is set to this one initially,
- * which lets us use the PROM until consinit()
- * is called to select a real console.
- */
-struct consdev consdev_prom = {
-	nullcnprobe,
-	prom_cninit,
-	prom_cngetc,
-	prom_cnputc,
-	nullcnpollc,
-};
-
-/*
- * The console table pointer is statically initialized
- * to point to the PROM (output only) table, so that
- * early calls to printf will work.
- */
-struct consdev *cn_tab = &consdev_prom;
-
-void
-nullcnprobe(cn)
-	struct consdev *cn;
-{
-}
-
-static void
-prom_cninit(cn)
-	struct consdev *cn;
-{
-}
-
-/*
- * PROM console input putchar.
- * (dummy - this is output only)
- */
-static int
-prom_cngetc(dev)
-	dev_t dev;
-{
-	char c0;
-
-	if (!stdin) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
-	}
-	if (OF_read(stdin, &c0, 1) == 1)
-		return (c0 & 0x7f);
-	return -1;
-}
-
-/*
- * PROM console output putchar.
- */
-static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
-{
-	int s;
-	char c0 = (c & 0x7f);
-
-	if (!stdout) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdout",  &stdout, sizeof(stdout));
-	}
-
-	s = splhigh();
-	OF_write(stdout, &c0, 1);
-	splx(s);
-}
-
-/*****************************************************************/
-
-extern struct consdev consdev_kd;
-
-static char *prom_inSrc_name[] = {
-	"keyboard/display",
-	"ttya", "ttyb",
-	"ttyc", "ttyd" };
-
-#ifdef	DEBUG
-#define	DBPRINT(x)	printf x
-#else
-#define	DBPRINT(x)
-#endif
-
-/*
- * This function replaces sys/dev/cninit.c
- * Determine which device is the console using
- * the PROM "input source" and "output sink".
- */
-void
-consinit()
-{
-	struct zschan *zc;
-	struct consdev *cn;
-	int channel, zs_unit, zstty_unit;
-	int inSource, outSink;
-	register int node;
-	char buffer[128];
-	register char *cp;
-	extern int fbnode;
-
-	DBPRINT(("consinit()\r\n"));
-	if (cn_tab != &consdev_prom) return;
-
-	inSource = outSink = -1;
-	
-	DBPRINT(("setting up stdin\r\n"));
-	node = OF_finddevice("/chosen");
-	OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
-	DBPRINT(("stdin instance = %x\r\n", stdin));
-
-	if ((node = OF_instance_to_package(stdin)) == 0)
-		goto setup_output;
-	DBPRINT(("stdin package = %x\r\n", node));
-	if (OF_getproplen(node,"keyboard") >= 0) {
-		inSource = PROMDEV_KBD;
-	} else if (strcmp(getpropstring(node,"device_type"),"serial") != 0) {
-		/* not a serial, not keyboard. what is it?!? */
-		inSource = -1;
-	}
-
-setup_output:
-	DBPRINT(("setting up stdout\r\n"));
-	node = OF_finddevice("/chosen");
-	OF_getprop(node, "stdout", &stdout, sizeof(stdout));
-	
-	DBPRINT(("stdout instance = %x\r\n", stdout));
-
-	node = OF_instance_to_package(stdout);
-	DBPRINT(("stdout package = %x\r\n", node));
-	if (strcmp(getpropstring(node,"device_type"),"display") == 0) {
-		/* frame buffer output */
-		outSink = PROMDEV_SCREEN;
-		fbnode = node;
-	} else if (strcmp(getpropstring(node,"device_type"), "serial")
-		   != 0) {
-		/* not screen, not serial. Whatzit? */
-		outSink = -1;
-	}	
-	if (inSource != outSink) {
-		printf("cninit: mismatched PROM output selector\n");
-	}
-
-	switch (inSource) {
-	default:
-		printf("cninit: invalid inSource=%d\n", inSource);
-		callrom();
-		inSource = PROMDEV_KBD;
-		/* fall through */
-
-	case 0:	/* keyboard/display */
-#if NKBD > 0
-		zs_unit = 1;	/* XXX - config info! */
-		channel = 0;
-		cn = &consdev_kd;
-		/* Set cn_dev, cn_pri in kd.c */
-		break;
-#else	/* NKBD */
-		printf("cninit: kdb/display not configured\n");
-		callrom();
-		inSource = PROMDEV_TTYA;
-		/* fall through */
-#endif	/* NKBD */
-
-	case PROMDEV_TTYA:
-	case PROMDEV_TTYB:
-		zstty_unit = inSource - PROMDEV_TTYA;
-		zs_unit = 0;	/* XXX - config info! */
-		channel = zstty_unit & 1;
-		cn = &consdev_tty;
-		cn->cn_dev = makedev(zs_major, zstty_unit);
-		cn->cn_pri = CN_REMOTE;
-		break;
-
-	}
-	/* Now that inSource has been validated, print it. */
-	printf("console is %s\n", prom_inSrc_name[inSource]);
-
-	/* 
-	 * We'll just mark this as the future console, but still
-	 * use the PROM until the zs driver attaches.
-	 */
-	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
-	zs_conschan = NULL; 
-	cn_tab = cn;
-
-	(*cn->cn_init)(cn);
-#ifdef	KGDB
-	zs_kgdb_init();
-#endif
-	/* Defer the rest to zs_attach */
 }

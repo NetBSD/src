@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.12 1999/04/26 04:25:38 ad Exp $
+# 	$NetBSD: NONPLUS,v 1.13 1999/05/23 02:45:19 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -222,13 +222,13 @@ ms0	at zs1 channel 1	# mouse
 ## called `se' and `su'
 
 ## Part of a PC87332VLJ?
-#se0	at ebus?		# 
-#kbd0	at su1 channel 0	# keyboard
-#ms0	at su1 channel 1	# mouse
-
-## These are two SAB82532 controllers
 #su0	at ebus?		# ttya
 #su1	at ebus?		# ttyb
+#kbd0	at su0			# keyboard
+#ms0	at su1			# mouse
+
+## This is the SAB82532 DUART
+#se0	at ebus?		# 
 
 
 #### Disk controllers and disks

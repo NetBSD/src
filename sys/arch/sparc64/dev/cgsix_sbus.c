@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3 1998/09/05 16:50:37 pk Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.4 1999/05/23 02:45:19 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ cgsixattach(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	name = getpropstring(node, "model");
 
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = (node == fbnode);
 	if (isconsole && cgsix_use_rasterconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
