@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.12 1995/04/10 01:07:18 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.13 1995/04/18 00:59:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -106,14 +106,12 @@
 #endif
 
 #if PCVT_NETBSD > 9
-#include "i386/isa/isavar.h"
+#include "dev/isa/isavar.h"
 #else
 #include "i386/isa/isa_device.h"
-#endif
-#if PCVT_NETBSD <= 10
 #include "i386/isa/icu.h"
 #endif
-#include "i386/isa/isareg.h"
+#include "dev/isa/isareg.h"
 
 #if PCVT_NETBSD > 9
 #include "dev/cons.h"
@@ -1486,7 +1484,7 @@ int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
 int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
-int	pcrint ( void );
+int	pcrint ( void * );
 int	pcparam ( struct tty *tp, struct termios *t );
 void	pccnprobe ( struct consdev *cp );
 void	pccninit ( struct consdev *cp );
