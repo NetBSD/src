@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.135 2004/10/04 00:46:05 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.136 2004/10/04 01:24:18 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.135 2004/10/04 00:46:05 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.136 2004/10/04 01:24:18 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,9 +460,10 @@ buf_lotsfree(void)
 	try = random() & 0x0000000fL;
 
 	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
-	thresh = bufmem / (bufmem_hiwater / 16);
+	thresh = (bufmem - bufmem_lowater) /
+	    ((bufmem_hiwater - bufmem_lowater) / 16);
 
-	if (try >= thresh && uvmexp.free > (2 * uvmexp.freetarg))
+	if (try >= thresh)
 		return 1;
 
 	/* Otherwise don't allocate. */
@@ -1613,8 +1614,12 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 		bufcache = t;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
+		if (bufmem_hiwater - bufmem_lowater < 16)
+			return (EINVAL);
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
+		if (bufmem_hiwater - bufmem_lowater < 16)
+			return (EINVAL);
 		bufmem_hiwater = t;
 	} else
 		return (EINVAL);
