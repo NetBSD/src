@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.268 2000/10/27 22:43:28 thorpej Exp $
+$NetBSD: pcidevs,v 1.269 2000/11/03 15:54:02 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -394,7 +394,7 @@ vendor OALAB		0x1162	OA Laboratory
 vendor SYNEMA		0x1163	Synema Corporation
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
-vendor PEQUR		0x1166	Pequr Technology
+vendor SERVERWORKS	0x1166	ServerWorks
 vendor MUTOH		0x1167	Mutoh Industries
 vendor THINE		0x1168	Thine Electronics
 vendor CDAC		0x1169	Centre for Dev. of Advanced Computing
