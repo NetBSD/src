@@ -1,0 +1,17 @@
+#	$NetBSD: Makefile.lib,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+
+.include <bsd.own.mk>
+
+LIBGROFFDIR!=cd ${.CURDIR}/../libgroff && ${PRINTOBJDIR}
+
+LIBDRIVERDIR!=cd ${.CURDIR}/../libdriver && ${PRINTOBJDIR}
+
+LIBBIBDIR!=cd ${.CURDIR}/../libbib && ${PRINTOBJDIR}
+
+LIBGROFF=	${LIBGROFFDIR}/libgroff.a
+LIBDRIVER=	${LIBDRIVERDIR}/libdriver.a
+LIBBIB=		${LIBBIBDIR}/libbib.a
+
+.if exists(../Makefile.comp)
+.include "../Makefile.comp"
+.endif
