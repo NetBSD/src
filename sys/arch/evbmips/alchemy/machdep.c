@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2.2.3 2002/08/27 23:44:29 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.2.2.4 2002/12/11 05:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.3 2002/08/27 23:44:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.4 2002/12/11 05:58:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -220,7 +220,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 
 #if defined(MEMSIZE)
-	size = MEMSIZE;
+	memsize = MEMSIZE;
 #else
 	if (memsize == 0) {
 		if ((cp = yamon_getenv("memsize")) != NULL)

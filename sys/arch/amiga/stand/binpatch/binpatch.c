@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.7.32.2 2002/06/20 03:37:56 nathanw Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.7.32.3 2002/12/11 05:52:03 thorpej Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -18,7 +18,7 @@
 #undef N_TXTADDR
 #define N_TXTADDR(ex) \
 	((N_GETMAGIC2(ex) == (ZMAGIC|0x10000) || N_GETMAGIC2(ex) == NMAGIC) ? \
-	0 : __LDPGSZ)
+	0 : AOUT_LDPGSZ)
 #endif
 
 

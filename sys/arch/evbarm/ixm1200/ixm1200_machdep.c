@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.7.4.2 2002/10/18 02:36:34 nathanw Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.7.4.3 2002/12/11 05:58:32 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -297,28 +297,6 @@ cpu_reboot(howto, bootstr)
 }
 
 /*
- * pmap table
- */
-/*
- * IXM1200 specific I/O registers mapping table
- */
-static struct pmap_ent	map_tbl_ixm1200[] = {
-	{ "IXM1200 SlowPort I/O Registers",
-	  IXM1200_LED_VADDR, IXM1200_LED_ADDR,
-	  IXM1200_LED_ADDR_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ NULL,
-	  0,
-	  0,
-	  0,
-	  0,
-	  0,
-	}
-};
-
-/*
  * Initial entry point on startup. This gets called before main() is
  * entered.
  * It should be responsible for setting up everything that must be
@@ -341,10 +319,6 @@ initarm(void *arg)
 	pv_addr_t kernel_ptpt;
 #ifdef DDB
         Elf_Shdr *sh;
-#endif
-
-#ifdef PMAP_DEBUG
-	pmap_debug(-1);
 #endif
 
 #ifdef DEBUG_BEFOREMMU
@@ -378,6 +352,11 @@ initarm(void *arg)
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
+
+#ifdef PMAP_DEBUG
+	pmap_debug(-1);
+#endif
+
 #ifdef DDB
         if (! memcmp(&end, "\177ELF", 4)) {
                 sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
@@ -621,7 +600,6 @@ initarm(void *arg)
 	 */
 
 	ixp12x0_pmap_io_reg(l1pagetable);
-	ixp12x0_pmap_chunk_table(l1pagetable, map_tbl_ixm1200);
 
 	printf("done.\n");
 

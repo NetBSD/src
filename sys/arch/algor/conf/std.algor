@@ -1,0 +1,12 @@
+#	$NetBSD: std.algor,v 1.4.4.2 2002/12/11 05:51:55 thorpej Exp $
+
+machine algor mips
+
+# Standard exec-package options
+options 	EXEC_ELF32	# 32-bit ELF support (native format)
+options 	EXEC_SCRIPT	# exec of #! scripts
+
+options 	MIPS3		# All supported Algor boards are MIPS3
+options 	MIPS3_ENABLE_CLOCK_INTR
+
+makeoptions	DEFTEXTADDR="0x80100000"

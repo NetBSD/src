@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.23.4.2 2002/01/08 00:22:54 nathanw Exp $ */
+/* $NetBSD: vmparam.h,v 1.23.4.3 2002/12/11 05:51:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,15 +50,13 @@
  */
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
+ * USRSTACK is the top (end) of the user stack.
  *
  * Digital UNIX (formerly DEC OSF/1) places the stack below the
  * text segment (i.e. growing downward from 4G).  We may want to
  * consider doing that at some point, but it might require changes
  * to the exec code.
  */
-#define	USRTEXT		NBPG
 #define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*

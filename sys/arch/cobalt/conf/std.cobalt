@@ -1,4 +1,4 @@
-#	$NetBSD: std.cobalt,v 1.4.4.2 2002/01/08 00:24:00 nathanw Exp $
+#	$NetBSD: std.cobalt,v 1.4.4.3 2002/12/11 05:58:25 thorpej Exp $
 
 machine cobalt mips
 
@@ -12,4 +12,3 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options 	__NO_SOFT_SERIAL_INTERRUPT
 
 makeoptions	DEFTEXTADDR="0x80001000"
-makeoptions	MACHINE_ARCH="mipsel"

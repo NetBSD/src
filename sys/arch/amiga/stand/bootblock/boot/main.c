@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.13.4.3 2002/02/28 04:07:07 nathanw Exp $
+ * $NetBSD: main.c,v 1.13.4.4 2002/12/11 05:52:03 thorpej Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -50,8 +50,8 @@
 #include "samachdep.h"
 #include "loadfile.h"
 
-#undef __LDPGSZ
-#define __LDPGSZ 8192
+#undef AOUT_LDPGSZ
+#define AOUT_LDPGSZ 8192
 #define __PGSZ 8192
 
 #define DRACOREVISION	(*(u_int8_t *)0x02000009)

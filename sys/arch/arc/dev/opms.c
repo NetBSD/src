@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.3.4.3 2002/11/11 21:56:29 nathanw Exp $	*/
+/*	$NetBSD: opms.c,v 1.3.4.4 2002/12/11 05:52:09 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -433,7 +433,7 @@ filt_opmsrdetach(struct knote *kn)
 	int s;  
 
 	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -458,7 +458,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &opmsread_filtops;
 		break;
 

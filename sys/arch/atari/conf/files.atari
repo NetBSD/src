@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.89.4.7 2002/11/11 21:57:13 nathanw Exp $
+#	$NetBSD: files.atari,v 1.89.4.8 2002/12/11 05:58:20 thorpej Exp $
 
 maxpartitions 16
 
@@ -145,8 +145,8 @@ file	arch/atari/pci/pci_vga.c	pci
 file	arch/atari/pci/pci_tseng.c	pci
 file	arch/atari/pci/pciide_machdep.c	pciide
 
-device	pcibus
-attach	pcibus at mainbus
+device	pcib: pcibus
+attach	pcib at mainbus
 
 include "dev/pci/files.pci"
 
@@ -158,8 +158,8 @@ file	arch/atari/isa/isa_hades.c	isa & _atarihw_
 file	arch/atari/isa/isa_milan.c	isa & _milanhw_
 file	arch/atari/isa/isa_dma.c	isadma
 
-device	isabus
-attach	isabus at mainbus
+device	isab: isabus
+attach	isab at mainbus
 
 include "dev/isa/files.isa"
 include "dev/ata/files.ata"

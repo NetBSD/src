@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.4.5 2002/08/13 02:17:54 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.4.6 2002/12/11 05:53:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,6 @@
 #include <sys/lock.h>		/* struct simplelock */ 
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
-#define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*

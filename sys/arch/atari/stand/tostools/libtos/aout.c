@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.4.4.2 2002/02/28 04:08:32 nathanw Exp $	*/
+/*	$NetBSD: aout.c,v 1.4.4.3 2002/12/11 05:58:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,11 +69,11 @@
  * Assume compiling under TOS or MINT. The page-size will always
  * be incorrect then (if it is defined anyway).
  */
-#ifdef __LDPGSZ
-#undef __LDPGSZ
+#ifdef AOUT_LDPGSZ
+#undef AOUT_LDPGSZ
 #endif
 
-#define __LDPGSZ	(8*1024)	/* Page size for NetBSD		*/
+#define AOUT_LDPGSZ	(8*1024)	/* Page size for NetBSD		*/
 
 #endif /* TOSTOOLS */
 
@@ -112,7 +112,7 @@ int	loadsyms;
 	/*
 	 * Extract various sizes from the kernel executable
 	 */
-	textsz     = (ehdr.a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1);
+	textsz     = (ehdr.a_text + AOUT_LDPGSZ - 1) & ~(AOUT_LDPGSZ - 1);
 	od->k_esym = 0;
 	od->ksize  = textsz + ehdr.a_data + ehdr.a_bss;
 	od->kentry = ehdr.a_entry;

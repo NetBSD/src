@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.4 2002/08/19 21:39:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.5 2002/12/11 05:58:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -136,6 +136,11 @@ void	_setsoftintr(int);
 #include <arch/arm/xscale/i80321_intr.h>
 #elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_IXM1200
 #include <arch/evbarm/ixm1200/ixm1200_intr.h>
+#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_PXA2X0
+#include <arch/arm/xscale/pxa2x0_intr.h>
+#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C2800 || \
+      EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C24X0
+#include <arch/arm/s3c2xx0/s3c2xx0_intr.h>
 #endif
 
 #else	/* EVBARM_BOARDTYPE */

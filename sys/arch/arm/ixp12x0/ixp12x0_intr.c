@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.2.2.2 2002/10/18 02:35:37 nathanw Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.2.2.3 2002/12/11 05:53:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/termios.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -53,8 +54,8 @@
 
 #include <arm/ixp12x0/ixp12x0reg.h> 
 #include <arm/ixp12x0/ixp12x0var.h> 
-
 #include <arm/ixp12x0/ixp12x0_comreg.h> 
+#include <arm/ixp12x0/ixp12x0_comvar.h> 
 #include <arm/ixp12x0/ixp12x0_pcireg.h> 
 
 extern u_int32_t	ixpcom_cr;	/* current cr from *_com.c */
@@ -123,14 +124,18 @@ static void
 ixp12x0_enable_uart_irq(void)
 {
 	ixpcom_imask = 0;
-	IXPREG(IXPCOM_UART_BASE + IXPCOM_CR) = ixpcom_cr & ~ixpcom_imask;
+	if (ixpcom_sc)
+		bus_space_write_4(ixpcom_sc->sc_iot, ixpcom_sc->sc_ioh,
+				  IXPCOM_CR, ixpcom_cr & ~ixpcom_imask);
 }
 
 static void
 ixp12x0_disable_uart_irq(void)
 {
 	ixpcom_imask = CR_RIE | CR_XIE;
-	IXPREG(IXPCOM_UART_BASE + IXPCOM_CR) = ixpcom_cr & ~ixpcom_imask;
+	if (ixpcom_sc)
+		bus_space_write_4(ixpcom_sc->sc_iot, ixpcom_sc->sc_ioh,
+				  IXPCOM_CR, ixpcom_cr & ~ixpcom_imask);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.26.8.2 2002/08/13 02:17:47 nathanw Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.26.8.3 2002/12/11 05:52:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -57,8 +57,8 @@
 /* Get definitions for boothowto */
 #include "reboot.h"
 
-#undef __LDPGSZ
-#define __LDPGSZ 8192
+#undef AOUT_LDPGSZ
+#define AOUT_LDPGSZ 8192
 
 #ifndef __NetBSD__
 #ifndef __P
@@ -289,7 +289,7 @@ main(argc, argv)
 	get_eclock();
 	get_AGA();
 
-	textsz = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
+	textsz = (e.a_text + AOUT_LDPGSZ - 1) & (-AOUT_LDPGSZ);
 	esym = NULL;
 	ksize = textsz + e.a_data + e.a_bss + ncd * sizeof(*cd)
 	    + 4 + memlist.m_nseg * sizeof(struct boot_memseg) + 4;
@@ -544,8 +544,8 @@ get_mem_config(fmem, fmemsz, cmemsz)
 			/*
 			 * some heuristics..
 			 */
-			seg &= -__LDPGSZ;
-			eseg = (eseg + __LDPGSZ - 1) & -__LDPGSZ;
+			seg &= -AOUT_LDPGSZ;
+			eseg = (eseg + AOUT_LDPGSZ - 1) & -AOUT_LDPGSZ;
 	
 			/*
 			 * get the mem back stolen by incore kickstart on

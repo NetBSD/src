@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.4.4.5 2002/10/18 02:37:03 nathanw Exp $
+# 	$NetBSD: LROUTER,v 1.4.4.6 2002/12/11 05:58:39 thorpej Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -98,7 +98,7 @@ options 	COMPAT_43
 options 	NFS_BOOT_DHCP
 
 # compile options
-makeoptions	DEFGP="-G 14"
+#makeoptions	DEFGP="-G 14"
 
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs

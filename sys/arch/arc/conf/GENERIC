@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54.2.8 2002/11/11 21:56:26 nathanw Exp $
+# $NetBSD: GENERIC,v 1.54.2.9 2002/12/11 05:52:07 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.54.2.8 $"
+#ident		"GENERIC-$Revision: 1.54.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,6 +31,7 @@ options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
 options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
 options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
+options 	PLATFORM_NEC_J96A		# NEC Express 5800/240 EISA R4K
 options 	PLATFORM_NEC_JC94		# NEC Express 5800/230 PCI R4K
 options 	PLATFORM_NEC_R94		# NEC RISCstation 2200 EISA
 options 	PLATFORM_NEC_R96	# NEC Express RISCserver, RISCserver 2200
@@ -60,7 +61,7 @@ options 	LKM		# loadable kernel modules
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
@@ -74,6 +75,7 @@ options 	DDB			# in-kernel debugger
 #options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
 #options 	KGDB_DEV="17*256+0"	# device for kernel gdb
 #makeoptions	DEBUG="-g"		# compile full symbol table
+#options 	SYMTAB_SPACE=262144
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -165,6 +167,7 @@ cpu*		at mainbus0
 
 # PLATFORM_ACER_PICA_61
 # PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_J96A
 # PLATFORM_NEC_JC94
 # PLATFORM_NEC_R94
 # PLATFORM_NEC_R96
@@ -201,6 +204,7 @@ scsibus* 	at osiop?
 
 # PLATFORM_ACER_PICA_61
 # PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_J96A
 # PLATFORM_NEC_R94
 # PLATFORM_NEC_R96
 jazzisabr*	at mainbus0	# Jazz-(E)ISA bus bridge.

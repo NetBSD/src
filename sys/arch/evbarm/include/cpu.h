@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.2.4 2002/10/18 02:36:29 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.5 2002/12/11 05:58:31 thorpej Exp $	*/
 
 #if defined(_KERNEL) && !defined(_LKM)
 
@@ -10,6 +10,7 @@
 #define EVBARM_BOARDTYPE_IXM1200	4
 #define EVBARM_BOARDTYPE_PXA2X0	  	5   /* PXA2X0 based boards */
 #define EVBARM_BOARDTYPE_S3C2800	6   /* S3C2800 based boards */
+#define EVBARM_BOARDTYPE_S3C24X0	7   /* S3C2400X/2410X based boards */
 
 #endif
 

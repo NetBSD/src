@@ -1,11 +1,10 @@
-#	$NetBSD: MALTA,v 1.10.4.2 2002/10/18 02:36:37 nathanw Exp $
+#	$NetBSD: MALTA,v 1.10.4.3 2002/12/11 05:58:34 thorpej Exp $
 
-#include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
-include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
+include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10.4.2 $"
+#ident 		"GENERIC-$Revision: 1.10.4.3 $"
 
 maxusers	32
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.1.4.3 2002/10/18 02:36:25 nathanw Exp $
+#	$NetBSD: NAPPI,v 1.1.4.4 2002/12/11 05:58:30 thorpej Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -97,12 +97,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-# Device options
-
-#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
-#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
-
 # Console options.
 #options 	CONSPEED=38400		# Console speed
 
@@ -143,13 +137,13 @@ cpu0		at mainbus?
 ixpsip0		at mainbus?
 
 #Timer
-ixpclk*		at ixpsip? addr 0xf0010300 size 0x10
+ixpclk*		at ixpsip? addr 0x42000300 size 0x10
 
 # Serial
 ixpcom*		at ixpsip? addr 0xf0000000 size 0x4000
 
 # Status LEDs
-nappinr*	at ixpsip? addr 0xf0021000 size 0x1000
+nappinr*	at ixpsip? addr 0x38508000 size 0x1000
 
 # IXP12x0 fast bus
 ixpio0		at mainbus?

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5.46.1 2002/11/11 21:57:15 nathanw Exp $	*/
+/*	$NetBSD: event.c,v 1.5.46.2 2002/12/11 05:58:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,7 +174,7 @@ filt_evrdetach(struct knote *kn)
 	int s;
 
 	s = splev();
-	SLIST_REMOVE(&ev->ev_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -208,7 +208,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->ev_sel.si_klist;
+		klist = &ev->ev_sel.sel_klist;
 		kn->kn_fop = &ev_filtops;
 		break;
 
