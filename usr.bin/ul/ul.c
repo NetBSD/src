@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.7 1998/12/19 23:21:24 christos Exp $	*/
+/*	$NetBSD: ul.c,v 1.8 1999/10/04 23:32:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.7 1998/12/19 23:21:24 christos Exp $");
+__RCSID("$NetBSD: ul.c,v 1.8 1999/10/04 23:32:54 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,7 +92,7 @@ void	iattr __P((void));
 void	initbuf __P((void));
 void	initcap __P((void));
 void	outc __P((int));
-void	outchar __P((int));
+int	outchar __P((int));
 void	overstrike __P((void));
 void	reverse __P((void));
 void	setulmode __P((int));
@@ -470,11 +470,11 @@ initcap()
 	must_use_uc = (UNDER_CHAR && !ENTER_UNDERLINE);
 }
 
-void
+int
 outchar(c)
 	int c;
 {
-	putchar(c & 0177);
+	return (putchar(c & 0177));
 }
 
 static int curmode = 0;
