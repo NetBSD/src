@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.24 1999/12/04 12:33:03 ragge Exp $	*/
+/*	$NetBSD: shm.h,v 1.23 1999/08/25 05:05:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#define	SHMLBA		NBPG	/* Segment low boundry address multiple XXX */
+#define	SHMLBA		CLBYTES	/* Segment low boundry address multiple XXX */
 
 typedef unsigned int	shmatt_t;
 

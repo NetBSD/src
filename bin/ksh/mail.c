@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: mail.c,v 1.2 1997/01/12 19:12:06 tls Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -27,10 +27,9 @@ typedef struct mbox {
  * same list is used for both since they are exclusive.
  */
 
-static mbox_t	*mplist;
-static mbox_t	mbox;
+static mbox_t  *mplist;
+static mbox_t  mbox;
 static time_t	mlastchkd;	/* when mail was last checked */
-static time_t	mailcheck_interval;
 
 static void     munset      ARGS((mbox_t *mlist)); /* free mlist and mval */
 static mbox_t * mballoc     ARGS((char *p, char *m)); /* allocate a new mbox */
@@ -41,16 +40,21 @@ mcheck()
 {
 	register mbox_t	*mbp;
 	time_t		 now;
+	long		 mailcheck;
 	struct tbl	*vp;
 	struct stat	 stbuf;
+
+	if (getint(global("MAILCHECK"), &mailcheck) < 0)
+		return;
 
 	now = time((time_t *) 0);
 	if (mlastchkd == 0)
 		mlastchkd = now;
-	if (now - mlastchkd >= mailcheck_interval) {
+	if (now - mlastchkd >= mailcheck) {
 		mlastchkd = now;
 
-		if (mplist)
+		vp = global("MAILPATH");
+		if (vp && (vp->flag & ISSET))
 			mbp = mplist;
 		else if ((vp = global("MAIL")) && (vp->flag & ISSET))
 			mbp = &mbox;
@@ -81,13 +85,6 @@ mcheck()
 }
 
 void
-mcset(interval)
-	long interval;
-{
-	mailcheck_interval = interval;
-}
-
-void
 mbset(p)
 	register char	*p;
 {
@@ -95,12 +92,9 @@ mbset(p)
 
 	if (mbox.mb_msg)
 		afree((void *)mbox.mb_msg, APERM);
-	if (mbox.mb_path)
-		afree((void *)mbox.mb_path, APERM);
-	/* Save a copy to protect from export (which munges the string) */
-	mbox.mb_path = str_save(p, APERM);
+	mbox.mb_path = p;
 	mbox.mb_msg = NULL;
-	if (p && stat(p, &stbuf) == 0 && S_ISREG(stbuf.st_mode))
+	if (p && stat(p,&stbuf) == 0 && S_ISREG(stbuf.st_mode))
 		mbox.mb_mtime = stbuf.st_mtime;
 	else
 		mbox.mb_mtime = 0;
@@ -186,8 +180,7 @@ mbox_t	*mbp;
 {
 	struct tbl	*vp;
 
-	/* Ignore setstr errors here (arbitrary) */
-	setstr((vp = local("_", FALSE)), mbp->mb_path, KSH_RETURN_ERROR);
+	setstr((vp = local("_", FALSE)), mbp->mb_path);
 
 	shellf("%s\n", substitute(mbp->mb_msg ? mbp->mb_msg : MBMESSAGE, 0));
 

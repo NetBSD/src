@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-ip6.c,v 1.3 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-ip.c,v 2.1 1995/02/03 18:14:45 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ip6.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-ip6.c,v 1.3 1999/09/04 03:36:41 itojun Exp $");
 #endif
 #endif
 
@@ -125,9 +125,8 @@ ip6_print(register const u_char *bp, register int length)
 			nh = *cp;
 			break;
 		case IPPROTO_FRAGMENT:
-			hlen = frag6_print(cp, (const u_char *)ip6);
-			if (snapend <= cp + hlen)
-				goto end;
+			frag6_print(cp, (const u_char *)ip6);
+			hlen = 8;
 			nh = *cp;
 			break;
 		case IPPROTO_ROUTING:
@@ -135,12 +134,10 @@ ip6_print(register const u_char *bp, register int length)
 			nh = *cp;
 			break;
 		case IPPROTO_TCP:
-			tcp_print(cp, len + sizeof(struct ip6_hdr) - (cp - bp),
-				(const u_char *)ip6);
+			tcp_print(cp, len, (const u_char *)ip6);
 			goto end;
 		case IPPROTO_UDP:
-			udp_print(cp, len + sizeof(struct ip6_hdr) - (cp - bp),
-				(const u_char *)ip6);
+			udp_print(cp, len, (const u_char *)ip6);
 			goto end;
 		case IPPROTO_ICMPV6:
 			icmp6_print(cp, (const u_char *)ip6);
@@ -215,9 +212,6 @@ ip6_print(register const u_char *bp, register int length)
 	if (flow & 0x000fffff)
 		(void)printf(" [flowlabel 0x%x]", flow & 0x000fffff);
 #endif
-
-	if (ip6->ip6_hlim <= 1)
-		(void)printf(" [hlim %d]", (int)ip6->ip6_hlim);
 
 	if (vflag) {
 		printf(" (");

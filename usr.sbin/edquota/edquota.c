@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.19 1999/12/16 17:29:53 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.18 1999/08/16 03:12:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,9 +405,9 @@ writeprivs(quplist, outfd, name, quotatype)
 	for (qup = quplist; qup; qup = qup->next) {
 		fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
 		    qup->fsname, "blocks in use:",
-		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks) / 1024),
-		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit) / 1024),
-		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit) / 1024));
+		    dbtob(qup->dqblk.dqb_curblocks) / 1024,
+		    dbtob(qup->dqblk.dqb_bsoftlimit) / 1024,
+		    dbtob(qup->dqblk.dqb_bhardlimit) / 1024);
 		fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
 		    "\tinodes in use:", qup->dqblk.dqb_curinodes,
 		    qup->dqblk.dqb_isoftlimit, qup->dqblk.dqb_ihardlimit);
@@ -460,12 +460,9 @@ readprivs(quplist, infd)
 			warnx("%s:%s: bad format", fsp, cp);
 			return (0);
 		}
-		dqblk.dqb_curblocks = btodb((u_quad_t)
-		    dqblk.dqb_curblocks * 1024);
-		dqblk.dqb_bsoftlimit = btodb((u_quad_t)
-		    dqblk.dqb_bsoftlimit * 1024);
-		dqblk.dqb_bhardlimit = btodb((u_quad_t)
-		    dqblk.dqb_bhardlimit * 1024);
+		dqblk.dqb_curblocks = btodb(dqblk.dqb_curblocks * 1024);
+		dqblk.dqb_bsoftlimit = btodb(dqblk.dqb_bsoftlimit * 1024);
+		dqblk.dqb_bhardlimit = btodb(dqblk.dqb_bhardlimit * 1024);
 		if ((cp = strtok(line2, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp, line2);
 			return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.14 1999/11/18 14:20:11 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.12 1999/09/26 08:14:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -52,6 +52,8 @@ int	aic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	aic_pcmcia_attach __P((struct device *, struct device *, void *));
 int	aic_pcmcia_detach __P((struct device *, int));
 
+int	aic_dodetach = 0;
+
 struct aic_pcmcia_softc {
 	struct aic_softc sc_aic;		/* real "aic" softc */
 
@@ -60,8 +62,6 @@ struct aic_pcmcia_softc {
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
-	int sc_flags;
-#define AIC_PCMCIA_ATTACH	0x0001		/* attach is in progress */
 };
 
 struct cfattach aic_pcmcia_ca = {
@@ -138,10 +138,9 @@ aic_pcmcia_attach(parent, self, aux)
 		    cfe->num_iospace != 1)
 			continue;
 
-		/*
-		 * The bustoaster has a default config as first
-		 * entry, we don't want to use that.
-		 */
+		/* The bustoaster has a default config as first
+		 * entry, we don't want to use that. */
+
 		if (pa->manufacturer == PCMCIA_VENDOR_NEWMEDIA &&
 		    pa->product == PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER &&
 		    cfe->iospace[0].start == 0)
@@ -187,12 +186,34 @@ aic_pcmcia_attach(parent, self, aux)
 
 	printf(": %s\n", app->app_name);
 
+    if (aic_dodetach) {				/* XXX temporary */
 	/* We can enable and disable the controller. */
 	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;
+#ifdef DIAGNOSTIC
+	if (sc->sc_adapter.scsipi_refcnt != 0)
+		panic("refcnt isn't 0");
+#endif
+	sc->sc_adapter.scsipi_refcnt++;
+    } else {					/* XXX temporary */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_BIO,
+	    aicintr, &psc->sc_aic);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt handler\n",
+		    psc->sc_aic.sc_dev.dv_xname);
+		return;
+	}
+    }						/* XXX temporary */
 
-	psc->sc_flags |= AIC_PCMCIA_ATTACH;
 	aicattach(sc);
-	psc->sc_flags &= ~AIC_PCMCIA_ATTACH;
+
+    if (aic_dodetach) {				/* XXX temporary */
+	sc->sc_adapter.scsipi_refcnt--;
+#ifdef DIAGNOSTIC
+	if (sc->sc_adapter.scsipi_refcnt != 0)
+		panic("refcnt isn't 0");
+#endif
+	pcmcia_function_disable(pf);
+    }
 }
 
 int
@@ -229,23 +250,15 @@ aic_pcmcia_enable(arg, onoff)
 			return (EIO);
 		}
 
-		/*
-		 * If attach is in progress, we know that card power is
-		 * enabled and chip will be initialized later.
-		 * Otherwise, enable and reset now.
-		 */
-		if ((psc->sc_flags & AIC_PCMCIA_ATTACH) == 0) {
-			if (pcmcia_function_enable(psc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    psc->sc_aic.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(psc->sc_pf,
-				    psc->sc_ih);
-				return (EIO);
-			}
-
-			/* Initialize only chip.  */
-			aic_init(&psc->sc_aic, 0);
+		if (pcmcia_function_enable(psc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    psc->sc_aic.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+			return (EIO);
 		}
+
+		/* Initialize only chip.  */
+		aic_init(&psc->sc_aic, 0);
 	} else {
 		pcmcia_function_disable(psc->sc_pf);
 		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);

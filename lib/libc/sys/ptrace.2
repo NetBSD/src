@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.10 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: ptrace.2,v 1.8 1999/03/26 23:37:27 sommerfe Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -7,8 +7,6 @@
 .Sh NAME
 .Nm ptrace
 .Nd process tracing and debugging
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/ptrace.h>
@@ -382,9 +380,6 @@ on a process in violation of the requirements listed under
 above.
 .El
 .El
-.Sh SEE ALSO
-.Xr sigaction 2 ,
-.Xr signal 7
 .Sh BUGS
 On the SPARC, the PC is set to the provided PC value for
 .Dv PT_CONTINUE

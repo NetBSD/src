@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.10 1999/11/12 20:45:46 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8 1999/10/05 03:46:30 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ svr4_getmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long *flags;
 {
-	struct trapframe64 *tf = (struct trapframe64 *)p->p_md.md_tf;
+	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
@@ -218,11 +218,11 @@ svr4_setmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long flags;
 {
-	register struct trapframe64 *tf;
+	register struct trapframe *tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
-	struct fpstate64 *fps = p->p_md.md_fpstate;
+	struct fpstate *fps = p->p_md.md_fpstate;
 #endif
 
 #ifdef DEBUG_SVR4
@@ -246,7 +246,7 @@ svr4_setmcontext(p, mc, flags)
 
 	if (flags & SVR4_UC_CPU) {
 		/* Restore register context. */
-		tf = (struct trapframe64 *)p->p_md.md_tf;
+		tf = (struct trapframe *)p->p_md.md_tf;
 
 		/*
 		 * Only the icc bits in the psr are used, so it need not be
@@ -456,13 +456,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct trapframe64 *tf;
+	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	vaddr_t oldsp, newsp, addr;
 
-	tf = (struct trapframe64 *)p->p_md.md_tf;
+	tf = (struct trapframe *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/* Do we need to jump onto the signal stack? */
@@ -567,7 +567,7 @@ svr4_trap(type, p)
 	struct proc *p;
 {
 	int n;
-	struct trapframe64 *tf = p->p_md.md_tf;
+	struct trapframe *tf = p->p_md.md_tf;
 	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
@@ -592,48 +592,23 @@ svr4_trap(type, p)
 
 	case T_SVR4_GETHRTIME:
 		/*
-		 * This is like gethrtime(3), returning the time expressed
-		 * in nanoseconds since an arbitrary time in the past and
-		 * guaranteed to be monotonically increasing, which we
-		 * obtain from mono_time(9).
+		 * this list like gethrtime(3). To implement this
+		 * correctly we need a timer that does not get affected
+		 * adjtime(), or settimeofday(). For now we use
+		 * microtime, and convert to nanoseconds...
 		 */
-		{
-			struct timeval tv;
-			quad_t tm;
-			int s;
-
-			s = splclock();
-			tv = mono_time;
-			splx(s);
-
-			tm = (u_quad_t) tv.tv_sec * 1000000000 +
-			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
-		}
-		break;
-
+		/*FALLTHROUGH*/
 	case T_SVR4_GETHRVTIME:
 		/*
-		 * This is like gethrvtime(3). returning the LWP's (now:
-		 * proc's) virtual time expressed in nanoseconds. It is
-		 * supposedly guaranteed to be monotonically increasing, but
-		 * for now using the process's real time augmented with its
-		 * current runtime is the best we can do.
+		 * This is like gethrvtime(3). Since we don't have lwp
+		 * we massage microtime() output
 		 */
 		{
-			struct timeval tv;
-			quad_t tm;
+			struct timeval  tv;
 
 			microtime(&tv);
-
-			tm =
-			    (u_quad_t) (p->p_rtime.tv_sec +
-			                tv.tv_sec - runtime.tv_sec) * 1000000 +
-			    (u_quad_t) (p->p_rtime.tv_usec +
-			                tv.tv_usec - runtime.tv_usec) * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+			tf->tf_out[0] = tv.tv_sec;
+			tf->tf_out[1] = tv.tv_usec * 1000;
 		}
 		break;
 

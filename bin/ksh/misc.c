@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 1998/10/09 02:42:28 erh Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -130,7 +130,7 @@ const struct option options[] = {
 	{ "braceexpand",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "bgnice",	  0,		OF_ANY },
-	{ (char *) 0, 	'c',	    OF_CMDLINE },
+	{ null,	 	'c',	    OF_CMDLINE },
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
 #endif
@@ -146,7 +146,7 @@ const struct option options[] = {
 #ifdef JOBS
 	{ "monitor",	'm',		OF_ANY },
 #else /* JOBS */
-	{ (char *) 0,	'm',		     0 }, /* so FMONITOR not ifdef'd */
+	{ null,		'm',		     0 }, /* so FMONITOR not ifdef'd */
 #endif /* JOBS */
 	{ "noclobber",	'C',		OF_ANY },
 	{ "noexec",	'n',		OF_ANY },
@@ -172,10 +172,7 @@ const struct option options[] = {
 	{ "vi-esccomplete",  0, 	OF_ANY }, /* non-standard */
 #endif
 	{ "xtrace",	'x',		OF_ANY },
-	/* Anonymous flags: used internally by shell only
-	 * (not visable to user)
-	 */
-	{ (char *) 0,	0,		OF_INTERNAL }, /* FTALKING_I */
+	{ NULL,		  0,		     0 }
 };
 
 /*
@@ -187,8 +184,8 @@ option(n)
 {
 	int i;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0)
+	for (i = 0; options[i].name; i++)
+		if (strcmp(options[i].name, n) == 0)
 			return i;
 
 	return -1;
@@ -234,8 +231,8 @@ printoptions(verbose)
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(options); i++)
-			if (options[i].name) {
+		for (i = n = oi.opt_width = 0; options[i].name; i++)
+			if (options[i].name[0]) {
 				len = strlen(options[i].name);
 				oi.opts[n].name = options[i].name;
 				oi.opts[n++].flag = i;
@@ -247,8 +244,8 @@ printoptions(verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(options); i++)
-			if (Flag(i) && options[i].name)
+		for (i = 0; options[i].name; i++)
+			if (Flag(i) && options[i].name[0])
 				shprintf(" -o %s", options[i].name);
 		shprintf(newline);
 	}
@@ -258,10 +255,10 @@ char *
 getoptions()
 {
 	int i;
-	char m[(int) FNFLAGS + 1];
+	char m[FNFLAGS + 1];
 	register char *cp = m;
 
-	for (i = 0; i < NELEM(options); i++)
+	for (i = 0; options[i].name; i++)
 		if (options[i].c && Flag(i))
 			*cp++ = options[i].c;
 	*cp = 0;
@@ -311,7 +308,7 @@ change_flag(f, what, newval)
 #ifdef OS2
 		;
 #else /* OS2 */
-		setuid(ksheuid = getuid());
+		setuid(getuid());
 		setgid(getgid());
 #endif /* OS2 */
 	} else if (f == FPOSIX && newval) {
@@ -319,11 +316,6 @@ change_flag(f, what, newval)
 		Flag(FBRACEEXPAND) = 0
 #endif /* BRACE_EXPAND */
 		;
-	}
-	/* Changing interactive flag? */
-	if (f == FTALKING) {
-		if ((what == OF_CMDLINE || what == OF_SET) && procpid == kshpid)
-			Flag(FTALKING_I) = newval;
 	}
 }
 
@@ -339,28 +331,28 @@ parse_args(argv, what, setargsp)
 	static char cmd_opts[NELEM(options) + 3]; /* o:\0 */
 	static char set_opts[NELEM(options) + 5]; /* Ao;s\0 */
 	char *opts;
-	char *array = (char *) 0;
+	char *array;
 	Getopt go;
 	int i, optc, set, sortargs = 0, arrayset = 0;
 
 	/* First call?  Build option strings... */
 	if (cmd_opts[0] == '\0') {
-		char *p, *q;
+		char *p;
 
+		/* c is also in options[], but it needs a trailing : */
 		strcpy(cmd_opts, "o:"); /* see cmd_opts[] declaration */
 		p = cmd_opts + strlen(cmd_opts);
-		strcpy(set_opts, "A:o;s"); /* see set_opts[] declaration */
-		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(options); i++) {
-			if (options[i].c) {
-				if (options[i].flags & OF_CMDLINE)
-					*p++ = options[i].c;
-				if (options[i].flags & OF_SET)
-					*q++ = options[i].c;
-			}
-		}
+		for (i = 0; options[i].name; i++)
+			if (options[i].c && (options[i].flags & OF_CMDLINE))
+				*p++ = options[i].c;
 		*p = '\0';
-		*q = '\0';
+
+		strcpy(set_opts, "Ao;s"); /* see set_opts[] declaration */
+		p = set_opts + strlen(set_opts);
+		for (i = 0; options[i].name; i++)
+			if (options[i].c && (options[i].flags & OF_SET))
+				*p++ = options[i].c;
+		*p = '\0';
 	}
 
 	if (what == OF_CMDLINE) {
@@ -380,7 +372,6 @@ parse_args(argv, what, setargsp)
 		switch (optc) {
 		  case 'A':
 			arrayset = set ? 1 : -1;
-			array = go.optarg;
 			break;
 
 		  case 'o':
@@ -419,7 +410,7 @@ parse_args(argv, what, setargsp)
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(options); i++)
+			for (i = 0; options[i].name; i++)
 				if (optc == options[i].c
 				    && (what & options[i].flags))
 				{
@@ -427,7 +418,7 @@ parse_args(argv, what, setargsp)
 						    set);
 					break;
 				}
-			if (i == NELEM(options)) {
+			if (!options[i].name) {
 				internal_errorf(1, "parse_args: `%c'", optc);
 				return -1; /* not reached */
 			}
@@ -448,10 +439,18 @@ parse_args(argv, what, setargsp)
 		*setargsp = !arrayset && ((go.info & GI_MINUSMINUS)
 					  || argv[go.optind]);
 
-	if (arrayset && (!*array || *skip_varname(array, FALSE))) {
-		bi_errorf("%s: is not an identifier", array);
-		return -1;
-	}
+	if (arrayset) {
+		array = argv[go.optind++];
+		if (!array) {
+			bi_errorf("-A: missing array name");
+			return -1;
+		}
+		if (!*array || *skip_varname(array, FALSE)) {
+			bi_errorf("%s: is not an identifier", array);
+			return -1;
+		}
+	} else
+		array = (char *) 0;	/* keep gcc happy */
 	if (sortargs) {
 		for (i = go.optind; argv[i]; i++)
 			;
@@ -586,7 +585,7 @@ has_globbing(xp, xpe)
 					return 0;
 				in_bracket = 0;
 			}
-		} else if ((c & 0x80) && strchr("*+?@! ", c & 0x7f)) {
+		} else if ((c & 0x80) && strchr("*+?@!", c & 0x7f)) {
 			saw_glob = 1;
 			if (in_bracket)
 				bnest++;
@@ -655,11 +654,8 @@ do_gmatch(s, se, p, pe, isfile)
 			} while (s++ < se);
 			return 0;
 
-		  /*
-		   * [*+?@!](pattern|pattern|..)
-		   *
-		   * Not ifdef'd KSH as this is needed for ${..%..}, etc.
-		   */
+#ifdef KSH
+		  /* [*+?@!](pattern|pattern|..) */
 		  case 0x80|'+': /* matches one or more times */
 		  case 0x80|'*': /* matches zero or more times */
 			if (!(prest = pat_scan(p, pe, 0)))
@@ -688,7 +684,6 @@ do_gmatch(s, se, p, pe, isfile)
 
 		  case 0x80|'?': /* matches zero or once */
 		  case 0x80|'@': /* matches one of the patterns */
-		  case 0x80|' ': /* simile for @ */
 			if (!(prest = pat_scan(p, pe, 0)))
 				return 0;
 			s--;
@@ -734,6 +729,7 @@ do_gmatch(s, se, p, pe, isfile)
 					return 1;
 			}
 			return 0;
+#endif /* KSH */
 
 		  default:
 			if (sc != p[-1])
@@ -758,12 +754,8 @@ cclass(p, sub)
 		c = *p++;
 		if (ISMAGIC(c)) {
 			c = *p++;
-			if ((c & 0x80) && !ISMAGIC(c)) {
+			if ((c & 0x80) && !ISMAGIC(c))
 				c &= 0x7f;/* extended pattern matching: *+?@! */
-				/* XXX the ( char isn't handled as part of [] */
-				if (c == ' ') /* simile for @: plain (..) */
-					c = '(' /*)*/;
-			}
 		}
 		if (c == '\0')
 			/* No closing ] - act as if the opening [ was quoted */
@@ -805,7 +797,7 @@ pat_scan(p, pe, match_sep)
 		if ((*++p == /*(*/ ')' && nest-- == 0)
 		    || (*p == '|' && match_sep && nest == 0))
 			return ++p;
-		if ((*p & 0x80) && strchr("*+?@! ", *p & 0x7f))
+		if ((*p & 0x80) && strchr("*+?@!", *p & 0x7f))
 			nest++;
 	}
 	return (const unsigned char *) 0;
@@ -950,7 +942,8 @@ ksh_getopt_reset(go, flags)
  *	  Used for 'typeset -LZ4'.
  *	- accepts +c as well as -c IF the GF_PLUSOPT flag is present.  If an
  *	  option starting with + is accepted, the GI_PLUS flag will be set
- *	  in go->info.
+ *	  in go->info.  Once a - or + has been seen, all other options must
+ *	  start with the same character.
  */
 int
 ksh_getopt(argv, go, options)
@@ -972,15 +965,15 @@ ksh_getopt(argv, go, options)
 			return EOF;
 		}
 		if (arg == (char *) 0
-		    || ((flag != '-' ) /* neither a - nor a + (if + allowed) */
-			&& (!(go->flags & GF_PLUSOPT) || flag != '+'))
+		    || ((flag != '-' || (go->info & GI_PLUS))
+			&& (!(go->flags & GF_PLUSOPT) || (go->info & GI_MINUS)
+			    || flag != '+'))
 		    || (c = arg[1]) == '\0')
 		{
 			go->p = 0;
 			return EOF;
 		}
 		go->optind++;
-		go->info &= ~(GI_MINUS|GI_PLUS);
 		go->info |= flag == '-' ? GI_MINUS : GI_PLUS;
 	}
 	go->p++;
@@ -1262,62 +1255,16 @@ reset_nonblock(fd)
 # define MAXPATHLEN PATH
 #endif /* MAXPATHLEN */
 
-#ifdef HPUX_GETWD_BUG
-# include "ksh_dir.h"
-
-/*
- * Work around bug in hpux 10.x C library - getwd/getcwd dump core
- * if current directory is not readable.  Done in macro 'cause code
- * is needed in GETWD and GETCWD cases.
- */
-# define HPUX_GETWD_BUG_CODE \
-	{ \
-	    DIR *d = ksh_opendir("."); \
-	    if (!d) \
-		return (char *) 0; \
-	    closedir(d); \
-	}
-#else /* HPUX_GETWD_BUG */
-# define HPUX_GETWD_BUG_CODE
-#endif /* HPUX_GETWD_BUG */
-
 /* Like getcwd(), except bsize is ignored if buf is 0 (MAXPATHLEN is used) */
 char *
 ksh_get_wd(buf, bsize)
 	char *buf;
 	int bsize;
 {
-#ifdef HAVE_GETCWD
-	char *b;
-	char *ret;
-
-	/* Before memory allocated */
-	HPUX_GETWD_BUG_CODE
-
-	/* Assume getcwd() available */
-	if (!buf) {
-		bsize = MAXPATHLEN;
-		b = alloc(MAXPATHLEN + 1, ATEMP);
-	} else
-		b = buf;
-
-	ret = getcwd(b, bsize);
-
-	if (!buf) {
-		if (ret)
-			ret = aresize(b, strlen(b) + 1, ATEMP);
-		else
-			afree(b, ATEMP);
-	}
-
-	return ret;
-#else /* HAVE_GETCWD */
+#ifdef HAVE_GETWD
 	extern char *getwd ARGS((char *));
 	char *b;
 	int len;
-
-	/* Before memory allocated */
-	HPUX_GETWD_BUG_CODE
 
 	if (buf && bsize > MAXPATHLEN)
 		b = buf;
@@ -1343,5 +1290,26 @@ ksh_get_wd(buf, bsize)
 	}
 
 	return b;
-#endif /* HAVE_GETCWD */
+#else /* HAVE_GETWD */
+	char *b;
+	char *ret;
+
+	/* Assume getcwd() available */
+	if (!buf) {
+		bsize = MAXPATHLEN;
+		b = alloc(MAXPATHLEN + 1, ATEMP);
+	} else
+		b = buf;
+
+	ret = getcwd(b, bsize);
+
+	if (!buf) {
+		if (ret)
+			ret = aresize(b, strlen(b) + 1, ATEMP);
+		else
+			afree(b, ATEMP);
+	}
+
+	return ret;
+#endif /* HAVE_GETWD */
 }

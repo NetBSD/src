@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.10 1999/10/27 22:29:06 mycroft Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.7 1999/08/13 21:12:18 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ usage()
 	for (i=0; bus_commands[i].cmd_name != NULL; i++)
 		fprintf(stderr, "\t%s %s\n", bus_commands[i].cmd_name,
 					    bus_commands[i].arg_names);
-	fprintf(stderr, "   Use `any' or `all' to wildcard target or lun\n");
+	fprintf(stderr, "   Use `any' to wildcard target or lun\n");
 	
 	exit(1);
 }
@@ -224,7 +224,7 @@ device_format(argc, argv)
 	memcpy(cmd.interleave, data.format_page.interleave,
 	    sizeof(cmd.interleave));
 
-	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 21600000, 0);
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 60000, 0);
 
 	return;
 }
@@ -307,21 +307,16 @@ device_reassign(argc, argv)
 	memset(data, 0, dlen);
 
 	cmd.opcode = SCSI_REASSIGN_BLOCKS;
-	cmd.byte2 = 0;
-	cmd.unused[0] = 0;
-	cmd.unused[1] = 0;
-	cmd.unused[2] = 0;
-	cmd.control = 0;
 
 	/* Defect descriptor length. */
-	_lto2b(argc * 4, data->length);
+	_lto2l(argc * 4, data->length);
 
 	/* Build the defect descriptor list. */
 	for (i = 0; i < argc; i++) {
 		blkno = strtoul(argv[i], &cp, 10);
 		if (*cp != '\0')
 			errx(1, "invalid block number: %s\n", argv[i]);
-		_lto4b(blkno, data->defect_descriptor[i].dlbaddr);
+		_lto4l(blkno, data->defect_descriptor[i].dlbaddr);
 	}
 
 	scsi_command(fd, &cmd, sizeof(cmd), data, dlen, 30000, SCCMD_WRITE);
@@ -393,7 +388,7 @@ bus_scan(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (strcmp(argv[0], "any") == 0 || strcmp(argv[0], "all") == 0)
+	if (strcmp(argv[0], "any") == 0)
 		args.sa_target = -1;
 	else {
 		args.sa_target = strtol(argv[0], &cp, 10);
@@ -401,7 +396,7 @@ bus_scan(argc, argv)
 			errx(1, "invalid target: %s\n", argv[0]);
 	}
 
-	if (strcmp(argv[1], "any") == 0 || strcmp(argv[1], "all") == 0)
+	if (strcmp(argv[1], "any") == 0)
 		args.sa_lun = -1;
 	else {
 		args.sa_lun = strtol(argv[1], &cp, 10);

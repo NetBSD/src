@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,9 +144,7 @@ struct nlist namelist[] = {
 	{ "_allevents" },
 #define X_POOLHEAD	12
 	{ "_pool_head" },
-#define	X_UVMEXP	13
-	{ "_uvmexp" },
-#define X_END		14
+#define X_END		13
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -436,23 +434,19 @@ dovmstat(interval, reps)
 			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
-		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
-		if (memf != NULL) {
-			/*
-			 * XXX Can't do this if we're reading a crash
-			 * XXX dump because they're lazily-calculated.
-			 */
-			printf("Unable to get vmtotals from crash dump.\n");
+		size = sizeof(uvmexp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP;
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+			printf("can't get uvmexp: %s\n", strerror(errno));
+			memset(&uvmexp, 0, sizeof(uvmexp));
+		}
+		size = sizeof(total);
+		mib[0] = CTL_VM;
+		mib[1] = VM_METER;
+		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
+			printf("Can't get kerninfo: %s\n", strerror(errno));
 			memset(&total, 0, sizeof(total));
-		} else {
-			size = sizeof(total);
-			mib[0] = CTL_VM;
-			mib[1] = VM_METER;
-			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-				printf("Can't get vmtotals: %s\n",
-				    strerror(errno));
-				memset(&total, 0, sizeof(total));
-			}
 		}
 		(void)printf("%2d%2d%2d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
@@ -542,7 +536,16 @@ dosum()
 	struct nchstats nchstats;
 	long nchtotal;
 
-	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	int	mib[2];
+	size_t	size;
+
+	size = sizeof(uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		printf("can't get uvmexp: %s\n", strerror(errno));
+		memset(&uvmexp, 0, sizeof(uvmexp));
+	}
 
 	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
 
@@ -574,12 +577,12 @@ dosum()
 	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
 	(void)printf("%9u software interrupts\n", uvmexp.softs);
 	(void)printf("%9u system calls\n", uvmexp.syscalls);
-	(void)printf("%9u pagein requests\n", uvmexp.pageins);
-	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
+	(void)printf("%9u pagein requests\n", uvmexp.pageins / CLSIZE);
+	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts / CLSIZE);
 	(void)printf("%9u swap ins\n", uvmexp.swapins);
 	(void)printf("%9u swap outs\n", uvmexp.swapouts);
-	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
-	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
+	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin / CLSIZE);
+	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout / CLSIZE);
 	(void)printf("%9u forks total\n", uvmexp.forks);
 	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%9u forks shared address space with parent\n",
@@ -634,9 +637,16 @@ dosum()
 void
 doforkst()
 {
+	int	mib[2];
+	size_t	size;
 
-	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
-
+	size = sizeof(uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		printf("can't get uvmexp: %s\n", strerror(errno));
+		memset(&uvmexp, 0, sizeof(uvmexp));
+	}
 	(void)printf("%u forks total\n", uvmexp.forks);
 	(void)printf("%u forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%u forks shared address space with parent\n",
@@ -922,18 +932,18 @@ dopool()
 		if (first) {
 			(void)printf("Memory resource pool statistics\n");
 			(void)printf(
-			"%-11s%5s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
+			"%16s %6s %8s %8s %8s %7s %7s %6s %6s %6s %6s %6s\n",
 		 		"Name",
 				"Size",
 				"Requests",
-				"Fail",
+				"Failed",
 				"Releases",
-				"Pgreq",
-				"Pgrel",
+				"Pagereq",
+				"Pagerel",
 				"Npage",
 				"Hiwat",
-				"Minpg",
-				"Maxpg",
+				"Minpage",
+				"Maxpage",
 				"Idle");
 			first = 0;
 		}
@@ -942,7 +952,7 @@ dopool()
 		else
 			sprintf(maxp, "%6u", pp->pr_maxpages);
 		(void)printf(
-		    "%-11s%5u%9lu%5lu%9lu%6lu%6lu%6d%6d%6d%6s%5lu\n",
+		    "%16s %6u %8lu %8lu %8lu %7lu %7lu %6u %6u %6u %6s %6lu\n",
 			name, 
 			pp->pr_size,
 			pp->pr_nget,

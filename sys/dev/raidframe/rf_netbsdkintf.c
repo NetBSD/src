@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.36 1999/12/15 02:02:16 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.29.8.1 1999/12/21 23:19:54 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -153,6 +153,11 @@
 
 int     rf_kdebug_level = 0;
 
+#define RFK_BOOT_NONE 0
+#define RFK_BOOT_GOOD 1
+#define RFK_BOOT_BAD  2
+static int rf_kbooted = RFK_BOOT_NONE;
+
 #ifdef DEBUG
 #define db0_printf(a) printf a
 #define db_printf(a) if (rf_kdebug_level > 0) printf a
@@ -252,7 +257,6 @@ struct raid_softc {
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct pool sc_cbufpool;	/* component buffer pool */
-	struct buf buf_queue;   /* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -344,6 +348,8 @@ raidattach(num)
 	else
 		panic("Serious error booting RAID!!\n");
 
+	rf_kbooted = RFK_BOOT_GOOD;
+
 	/* put together some datastructures like the CCD device does.. This
 	 * lets us lock the device and what-not when it gets opened. */
 
@@ -356,11 +362,8 @@ raidattach(num)
 	}
 	numraid = num;
 	bzero(raid_softc, num * sizeof(struct raid_softc));
-
+	
 	for (raidID = 0; raidID < num; raidID++) {
-		raid_softc[raidID].buf_queue.b_actf = NULL;
-		raid_softc[raidID].buf_queue.b_actb = 
-			&raid_softc[raidID].buf_queue.b_actf;
 		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
@@ -553,16 +556,22 @@ raidstrategy(bp)
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
 	struct disklabel *lp;
-	struct buf *dp;
 	int     wlabel;
 
-	if ((rs->sc_flags & RAIDF_INITED) ==0) {
-		bp->b_error = ENXIO;
-		bp->b_flags = B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+#if 0
+	db1_printf(("Strategy: 0x%x 0x%x\n", bp, bp->b_data));
+	db1_printf(("Strategy(2): bp->b_bufsize%d\n", (int) bp->b_bufsize));
+	db1_printf(("bp->b_count=%d\n", (int) bp->b_bcount));
+	db1_printf(("bp->b_resid=%d\n", (int) bp->b_resid));
+	db1_printf(("bp->b_blkno=%d\n", (int) bp->b_blkno));
+
+	if (bp->b_flags & B_READ)
+		db1_printf(("READ\n"));
+	else
+		db1_printf(("WRITE\n"));
+#endif
+	if (rf_kbooted != RFK_BOOT_GOOD)
 		return;
-	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
@@ -598,21 +607,23 @@ raidstrategy(bp)
 			biodone(bp);
 			return;
 		}
-	s = splbio();
+	s = splbio();		/* XXX Needed? */
+	db1_printf(("Beginning strategy...\n"));
 
 	bp->b_resid = 0;
-
-	/* stuff it onto our queue */
-
-	dp = &rs->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	
-	raidstart(raidPtrs[raidID]);
-
+	bp->b_error = rf_DoAccessKernel(raidPtrs[raidID], bp,
+	    NULL, NULL, NULL);
+	if (bp->b_error) {
+		bp->b_flags |= B_ERROR;
+		db1_printf(("bp->b_flags HAS B_ERROR SET!!!: %d\n",
+			bp->b_error));
+	}
 	splx(s);
+#if 0
+	db1_printf(("Strategy exiting: 0x%x 0x%x %d %d\n",
+		bp, bp->b_data,
+		(int) bp->b_bcount, (int) bp->b_resid));
+#endif
 }
 /* ARGSUSED */
 int
@@ -748,7 +759,6 @@ raidioctl(dev, cmd, data, flag, p)
 		retcode = copyin((caddr_t) u_cfg, (caddr_t) k_cfg,
 		    sizeof(RF_Config_t));
 		if (retcode) {
-			RF_Free(k_cfg, sizeof(RF_Config_t));
 			db3_printf(("rf_ioctl: retcode=%d copyin.1\n",
 				retcode));
 			return (retcode);
@@ -758,7 +768,6 @@ raidioctl(dev, cmd, data, flag, p)
 		if (k_cfg->layoutSpecificSize) {
 			if (k_cfg->layoutSpecificSize > 10000) {
 				/* sanity check */
-				RF_Free(k_cfg, sizeof(RF_Config_t));
 				db3_printf(("rf_ioctl: EINVAL %d\n", retcode));
 				return (EINVAL);
 			}
@@ -773,8 +782,6 @@ raidioctl(dev, cmd, data, flag, p)
 			    (caddr_t) specific_buf,
 			    k_cfg->layoutSpecificSize);
 			if (retcode) {
-				RF_Free(k_cfg, sizeof(RF_Config_t));
-				RF_Free(specific_buf, k_cfg->layoutSpecificSize);
 				db3_printf(("rf_ioctl: retcode=%d copyin.2\n",
 					retcode));
 				return (retcode);
@@ -870,7 +877,6 @@ raidioctl(dev, cmd, data, flag, p)
 				  sizeof(RF_ComponentLabel_t));
 
 		if (retcode) {
-			RF_Free( component_label, sizeof(RF_ComponentLabel_t));
 			return(retcode);
 		}
 
@@ -879,7 +885,6 @@ raidioctl(dev, cmd, data, flag, p)
 
 		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
 		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
-			RF_Free( component_label, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
 
@@ -1041,12 +1046,12 @@ raidioctl(dev, cmd, data, flag, p)
 			cfg->cols = raid->numCol;
 			cfg->ndevs = raid->numRow * raid->numCol;
 			if (cfg->ndevs >= RF_MAX_DISKS) {
-				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
+				cfg->ndevs = 0;
 				return (ENOMEM);
 			}
 			cfg->nspares = raid->numSpare;
 			if (cfg->nspares >= RF_MAX_DISKS) {
-				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
+				cfg->nspares = 0;
 				return (ENOMEM);
 			}
 			cfg->maxqdepth = raid->maxQueueDepth;
@@ -1102,6 +1107,10 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_GET_SIZE:
 		*(int *) data = raidPtrs[unit]->totalSectors;
 		return (0);
+
+#define RAIDFRAME_RECON 1
+		/* XXX The above should probably be set somewhere else!! GO */
+#if RAIDFRAME_RECON > 0
 
 		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
@@ -1220,8 +1229,11 @@ raidioctl(dev, cmd, data, flag, p)
 		return (retcode);
 #endif
 
+
+#endif				/* RAIDFRAME_RECON > 0 */
+
 	default:
-		break; /* fall through to the os-specific code below */
+		break;		/* fall through to the os-specific code below */
 
 	}
 
@@ -1412,12 +1424,14 @@ rf_GetSpareTableFromDaemon(req)
  * any calls originating in the kernel must use non-blocking I/O
  * do some extra sanity checking to return "appropriate" error values for
  * certain conditions (to make some standard utilities work)
- * 
- * Formerly known as: rf_DoAccessKernel
  */
-void
-raidstart(raidPtr)
+int 
+rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 	RF_Raid_t *raidPtr;
+	struct buf *bp;
+	RF_RaidAccessFlags_t flags;
+	void    (*cbFunc) (struct buf *);
+	void   *cbArg;
 {
 	RF_SectorCount_t num_blocks, pb, sum;
 	RF_RaidAddr_t raid_addr;
@@ -1427,117 +1441,96 @@ raidstart(raidPtr)
 	int     unit;
 	struct raid_softc *rs;
 	int     do_async;
-	struct buf *bp;
-	struct buf *dp;
+
+	/* XXX The dev_t used here should be for /dev/[r]raid* !!! */
 
 	unit = raidPtr->raidid;
 	rs = &raid_softc[unit];
-	
-	/* Check to see if we're at the limit... */
+
+	/* Ok, for the bp we have here, bp->b_blkno is relative to the
+	 * partition.. Need to make it absolute to the underlying device.. */
+
+	blocknum = bp->b_blkno;
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		pp = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		blocknum += pp->p_offset;
+		db1_printf(("updated: %d %d\n", DISKPART(bp->b_dev),
+			pp->p_offset));
+	} else {
+		db1_printf(("Is raw..\n"));
+	}
+	db1_printf(("Blocks: %d, %d\n", (int) bp->b_blkno, (int) blocknum));
+
+	db1_printf(("bp->b_bcount = %d\n", (int) bp->b_bcount));
+	db1_printf(("bp->b_resid = %d\n", (int) bp->b_resid));
+
+	/* *THIS* is where we adjust what block we're going to... but DO NOT
+	 * TOUCH bp->b_blkno!!! */
+	raid_addr = blocknum;
+
+	num_blocks = bp->b_bcount >> raidPtr->logBytesPerSector;
+	pb = (bp->b_bcount & raidPtr->sectorMask) ? 1 : 0;
+	sum = raid_addr + num_blocks + pb;
+	if (1 || rf_debugKernelAccess) {
+		db1_printf(("raid_addr=%d sum=%d num_blocks=%d(+%d) (%d)\n",
+			(int) raid_addr, (int) sum, (int) num_blocks,
+			(int) pb, (int) bp->b_resid));
+	}
+	if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
+	    || (sum < num_blocks) || (sum < pb)) {
+		bp->b_error = ENOSPC;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return (bp->b_error);
+	}
+	/*
+	 * XXX rf_DoAccess() should do this, not just DoAccessKernel()
+	 */
+
+	if (bp->b_bcount & raidPtr->sectorMask) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return (bp->b_error);
+	}
+	db1_printf(("Calling DoAccess..\n"));
+
+
+	/* Put a throttle on the number of requests we handle simultanously */
+
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	while (raidPtr->openings > 0) {
+
+	while(raidPtr->openings <= 0) {
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
-
-		/* get the next item, if any, from the queue */
-		dp = &rs->buf_queue;
-		bp = dp->b_actf;
-		if (bp == NULL) {
-			/* nothing more to do */
-			return;
-		}
-
-		/* update structures */
-		dp = bp->b_actf;
-		if (dp != NULL) {
-			dp->b_actb = bp->b_actb;
-		} else {
-			rs->buf_queue.b_actb = bp->b_actb;
-		}
-		*bp->b_actb = dp;
-
-		/* Ok, for the bp we have here, bp->b_blkno is relative to the
-		 * partition.. Need to make it absolute to the underlying 
-		 * device.. */
-
-		blocknum = bp->b_blkno;
-		if (DISKPART(bp->b_dev) != RAW_PART) {
-			pp = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blocknum += pp->p_offset;
-		}
-
-		db1_printf(("Blocks: %d, %d\n", (int) bp->b_blkno, 
-			    (int) blocknum));
-		
-		db1_printf(("bp->b_bcount = %d\n", (int) bp->b_bcount));
-		db1_printf(("bp->b_resid = %d\n", (int) bp->b_resid));
-		
-		/* *THIS* is where we adjust what block we're going to... 
-		 * but DO NOT TOUCH bp->b_blkno!!! */
-		raid_addr = blocknum;
-		
-		num_blocks = bp->b_bcount >> raidPtr->logBytesPerSector;
-		pb = (bp->b_bcount & raidPtr->sectorMask) ? 1 : 0;
-		sum = raid_addr + num_blocks + pb;
-		if (1 || rf_debugKernelAccess) {
-			db1_printf(("raid_addr=%d sum=%d num_blocks=%d(+%d) (%d)\n",
-				    (int) raid_addr, (int) sum, (int) num_blocks,
-				    (int) pb, (int) bp->b_resid));
-		}
-		if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
-		    || (sum < num_blocks) || (sum < pb)) {
-			bp->b_error = ENOSPC;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
-			continue;
-		}
-		/*
-		 * XXX rf_DoAccess() should do this, not just DoAccessKernel()
-		 */
-		
-		if (bp->b_bcount & raidPtr->sectorMask) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
-			continue;
-			
-		}
-		db1_printf(("Calling DoAccess..\n"));
-		
-
-		RF_LOCK_MUTEX(raidPtr->mutex);
-		raidPtr->openings--;
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
-
-		/*
-		 * Everything is async.
-		 */
-		do_async = 1;
-		
-		/* don't ever condition on bp->b_flags & B_WRITE.  
-		 * always condition on B_READ instead */
-		
-		/* XXX we're still at splbio() here... do we *really* 
-		   need to be? */
-
-		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
-				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
-				      do_async, raid_addr, num_blocks,
-				      bp->b_un.b_addr, bp, NULL, NULL, 
-				      RF_DAG_NONBLOCKING_IO, NULL, NULL, NULL);
-
-
+		(void)tsleep(&raidPtr->openings, PRIBIO, "rfdwait", 0);
 		RF_LOCK_MUTEX(raidPtr->mutex);
 	}
+	raidPtr->openings--;
+
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+
+	/*
+	 * Everything is async.
+	 */
+	do_async = 1;
+
+	/* don't ever condition on bp->b_flags & B_WRITE.  always condition on
+	 * B_READ instead */
+	retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
+	    RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
+	    do_async, raid_addr, num_blocks,
+	    bp->b_un.b_addr,
+	    bp, NULL, NULL, RF_DAG_NONBLOCKING_IO | flags,
+	    NULL, cbFunc, cbArg);
+#if 0
+	db1_printf(("After call to DoAccess: 0x%x 0x%x %d\n", bp,
+		bp->b_data, (int) bp->b_resid));
+#endif
+
+	return (retcode);
 }
-
-
-
-
 /* invoke an I/O from kernel mode.  Disk queue should be locked upon entry */
 
 int 
@@ -1592,8 +1585,6 @@ rf_DispatchKernelIO(queue, req)
 	 */
 	raidbp->rf_obp = bp;
 	raidbp->req = req;
-
-	LIST_INIT(&raidbp->rf_buf.b_dep);
 
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */
@@ -1669,19 +1660,31 @@ KernelWakeupFunc(vbp)
 	int     unit;
 	register int s;
 
-	s = splbio();
+	s = splbio();		/* XXX */
 	db1_printf(("recovering the request queue:\n"));
 	req = raidbp->req;
 
 	bp = raidbp->rf_obp;
+#if 0
+	db1_printf(("bp=0x%x\n", bp));
+#endif
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
 	if (raidbp->rf_buf.b_flags & B_ERROR) {
+#if 0
+		printf("Setting bp->b_flags!!! %d\n", raidbp->rf_buf.b_error);
+#endif
 		bp->b_flags |= B_ERROR;
 		bp->b_error = raidbp->rf_buf.b_error ?
 		    raidbp->rf_buf.b_error : EIO;
 	}
+#if 0
+	db1_printf(("raidbp->rf_buf.b_bcount=%d\n", (int) raidbp->rf_buf.b_bcount));
+	db1_printf(("raidbp->rf_buf.b_bufsize=%d\n", (int) raidbp->rf_buf.b_bufsize));
+	db1_printf(("raidbp->rf_buf.b_resid=%d\n", (int) raidbp->rf_buf.b_resid));
+	db1_printf(("raidbp->rf_buf.b_data=0x%x\n", raidbp->rf_buf.b_data));
+#endif
 
 	/* XXX methinks this could be wrong... */
 #if 1
@@ -1704,7 +1707,7 @@ KernelWakeupFunc(vbp)
 
 	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
 	 * ballistic, and mark the component as hosed... */
-
+#if 1
 	if (bp->b_flags & B_ERROR) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
@@ -1722,20 +1725,26 @@ KernelWakeupFunc(vbp)
 		}
 
 	}
+#endif
 
 	rs = &raid_softc[unit];
 	RAIDPUTBUF(rs, raidbp);
 
 
 	if (bp->b_resid == 0) {
+		db1_printf(("Disk is no longer busy for this buffer... %d %ld %ld\n",
+			unit, bp->b_resid, bp->b_bcount));
 		/* XXX is this the right place for a disk_unbusy()??!??!?!? */
 		disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
-	} 
+	} else {
+		db1_printf(("b_resid is still %ld\n", bp->b_resid));
+	}
 
 	rf_DiskIOComplete(queue, req, (bp->b_flags & B_ERROR) ? 1 : 0);
 	(req->CompleteFunc) (req->argument, (bp->b_flags & B_ERROR) ? 1 : 0);
+	/* printf("Exiting KernelWakeupFunc\n"); */
 
-	splx(s);
+	splx(s);		/* XXX */
 }
 
 
@@ -1763,9 +1772,15 @@ InitBP(
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
 	bp->b_dev = dev;
+	db1_printf(("bp->b_dev is %d\n", dev));
 	bp->b_un.b_addr = buf;
+#if 0
+	db1_printf(("bp->b_data=0x%x\n", bp->b_data));
+#endif
+
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
+	db1_printf(("b_bcount is: %d\n", (int) bp->b_bcount));
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!\n");
 	}
@@ -1999,10 +2014,12 @@ raidmarkdirty(dev_t dev, struct vnode *b_vp, int mod_counter)
 
 /* ARGSUSED */
 int
-raidread_component_label(dev, b_vp, component_label)
+raidread_component_label(dev, b_vp, component_label, bshift, bsize)
 	dev_t dev;
 	struct vnode *b_vp;
 	RF_ComponentLabel_t *component_label;
+	int bshift;
+	int bsize;
 {
 	struct buf *bp;
 	int error;
@@ -2012,18 +2029,25 @@ raidread_component_label(dev, b_vp, component_label)
 
 	/* get a block of the appropriate size... */
 	bp = geteblk((int)RF_COMPONENT_INFO_SIZE);
+	if (bshift < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bshift);
 
 	/* get our ducks in a row for the read */
-	bp->b_blkno = RF_COMPONENT_INFO_OFFSET / DEV_BSIZE;
+	bp->b_blkno = btodb(RF_COMPONENT_INFO_OFFSET, bshift);
+ 	bp->b_resid = btodb(RF_COMPONENT_INFO_SIZE , bshift);
 	bp->b_bcount = RF_COMPONENT_INFO_SIZE;
 	bp->b_flags = B_BUSY | B_READ;
- 	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
 	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 
 	error = biowait(bp); 
 
+out:
 	if (!error) {
 		memcpy(component_label, bp->b_un.b_addr,
 		       sizeof(RF_ComponentLabel_t));
@@ -2049,23 +2073,31 @@ raidread_component_label(dev, b_vp, component_label)
 }
 /* ARGSUSED */
 int 
-raidwrite_component_label(dev, b_vp, component_label)
+raidwrite_component_label(dev, b_vp, component_label, bshift, bsize)
 	dev_t dev; 
 	struct vnode *b_vp;
 	RF_ComponentLabel_t *component_label;
+	int bshift;
+	int bsize;
 {
 	struct buf *bp;
 	int error;
 
 	/* get a block of the appropriate size... */
 	bp = geteblk((int)RF_COMPONENT_INFO_SIZE);
+	if (bshift < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bshift);
 
 	/* get our ducks in a row for the write */
-	bp->b_blkno = RF_COMPONENT_INFO_OFFSET / DEV_BSIZE;
+	bp->b_blkno = btodb(RF_COMPONENT_INFO_OFFSET, bshift);
+ 	bp->b_resid = btodb(RF_COMPONENT_INFO_SIZE, bshift);
 	bp->b_bcount = RF_COMPONENT_INFO_SIZE;
 	bp->b_flags = B_BUSY | B_WRITE;
- 	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
 	memset( bp->b_un.b_addr, 0, RF_COMPONENT_INFO_SIZE );
 
@@ -2073,6 +2105,8 @@ raidwrite_component_label(dev, b_vp, component_label)
 
 	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	error = biowait(bp); 
+
+out:
         bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	if (error) {

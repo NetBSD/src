@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.19 1999/11/28 04:00:04 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.18 1999/04/18 02:04:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.19 1999/11/28 04:00:04 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.18 1999/04/18 02:04:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,11 +138,9 @@ _local_initshells(rv, cb_data, ap)
 	if (sl)
 		sl_free(sl, 1);
 	sl = sl_init();
-	if (!sl)
-		return (NS_UNAVAIL);
 
 	if ((fp = fopen(_PATH_SHELLS, "r")) == NULL)
-		return (NS_UNAVAIL);
+		return NS_UNAVAIL;
 
 	sp = cp = line;
 	while (fgets(cp, MAXPATHLEN + 1, fp) != NULL) {
@@ -154,11 +152,10 @@ _local_initshells(rv, cb_data, ap)
 		while (!isspace(*cp) && *cp != '#' && *cp != '\0')
 			cp++;
 		*cp++ = '\0';
-		if (sl_add(sl, strdup(sp)) == -1)
-			return (NS_UNAVAIL);
+		sl_add(sl, strdup(sp));
 	}
 	(void)fclose(fp);
-	return (NS_SUCCESS);
+	return NS_SUCCESS;
 }
 
 #ifdef HESIOD
@@ -179,9 +176,6 @@ _dns_initshells(rv, cb_data, ap)
 	if (sl)
 		sl_free(sl, 1);
 	sl = sl_init();
-	if (!sl)
-		return (NS_UNAVAIL);
-
 	r = NS_UNAVAIL;
 	if (hesiod_init(&context) == -1)
 		return (r);
@@ -198,16 +192,9 @@ _dns_initshells(rv, cb_data, ap)
 			}
 			break;
 		} else {
-			int bad = 0;
-
 			for (hpi = 0; hp[hpi]; hpi++)
-				if (sl_add(sl, hp[hpi]) == -1) {
-					bad = 1;
-					break;
-				}
+				sl_add(sl, hp[hpi]);
 			free(hp);
-			if (bad)
-				break;
 		}
 	}
 	hesiod_end(context);
@@ -230,17 +217,15 @@ _nis_initshells(rv, cb_data, ap)
 	if (sl)
 		sl_free(sl, 1);
 	sl = sl_init();
-	if (!sl)
-		return (NS_UNAVAIL);
 
 	if (ypdomain == NULL) {
 		switch (yp_get_default_domain(&ypdomain)) {
 		case 0:
 			break;
 		case YPERR_RESRC:
-			return (NS_TRYAGAIN);
+			return NS_TRYAGAIN;
 		default:
-			return (NS_UNAVAIL);
+			return NS_UNAVAIL;
 		}
 	}
 
@@ -262,11 +247,11 @@ _nis_initshells(rv, cb_data, ap)
 			case YPERR_NOMORE:
 				free(key);
 				free(data);
-				return (NS_SUCCESS);
+				return NS_SUCCESS;
 			default:
 				free(key);
 				free(data);
-				return (NS_UNAVAIL);
+				return NS_UNAVAIL;
 			}
 			ypcur = key;
 			ypcurlen = keylen;
@@ -274,12 +259,11 @@ _nis_initshells(rv, cb_data, ap)
 			if (yp_first(ypdomain, "shells", &ypcur,
 				    &ypcurlen, &data, &datalen)) {
 				free(data);
-				return (NS_UNAVAIL);
+				return NS_UNAVAIL;
 			}
 		}
 		data[datalen] = '\0';		/* clear trailing \n */
-		if (sl_add(sl, data) == -1)
-			return (NS_UNAVAIL);
+		sl_add(sl, data);
 	}
 }
 #endif /* YP */
@@ -296,19 +280,15 @@ initshells()
 	if (sl)
 		sl_free(sl, 1);
 	sl = sl_init();
-	if (!sl)
-		goto badinitshells;
 
 	if (nsdispatch(NULL, dtab, NSDB_SHELLS, "initshells", __nsdefaultsrc)
 	    != NS_SUCCESS) {
- badinitshells:
 		if (sl)
 			sl_free(sl, 1);
 		sl = NULL;
 		return (okshells);
 	}
-	if (sl_add(sl, NULL) == -1)
-		goto badinitshells;
+	sl_add(sl, NULL);
 
 	return (const char *const *)(sl->sl_str);
 }

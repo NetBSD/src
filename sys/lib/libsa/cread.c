@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.11 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: cread.c,v 1.9 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996

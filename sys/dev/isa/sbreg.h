@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.29 1999/11/02 23:35:02 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.28 1999/03/22 07:37:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -280,7 +280,7 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
-#define SBP_IRQ_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10 || (irq) == 15)
+#define SBP_IRQ_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10)
 #define SB_IRQ_VALID(irq)   ((irq) == 3 || (irq) == 5 || (irq) == 7 || (irq) == 9)
 
 #define SB16_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || \

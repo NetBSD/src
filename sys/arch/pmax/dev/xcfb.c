@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.29 1999/12/15 14:48:25 ad Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.28 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -141,6 +141,13 @@ struct fbdriver xcfb_driver = {
 	ims332LoadCursor,
 	ims332CursorColor
 };
+
+
+/*
+ * Forward references.
+ */
+extern u_short defCursor[32];
+
 
 /*
  * Autoconfiguration data for config.new.

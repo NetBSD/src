@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.22 1999/12/11 23:10:15 augustss Exp $
+.\"	$NetBSD: pci.4,v 1.18 1999/07/12 15:22:18 kleink Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -37,8 +37,6 @@
 .Nd introduction to machine-independent PCI bus support and drivers
 .Sh SYNOPSIS
 .Pp
-.Cd "pci* at mainbus? bus ?"
-.Cd "pci* at pchb? bus ?"
 .Cd "pci* at ppb? bus ?"
 .Pp
 Other
@@ -151,25 +149,16 @@ device interface.
 .Pp
 .Ss Audio devices
 .Bl -tag -width speaker -offset indent
-.It clcs
-Cirrus Logic CS4280 sound device.
 .It eap
 Ensoniq AudioPCI sound device.
 .It eso
 ESS Solo-1 PCI AudioDrive sound device.
-.It fms
-Forte Media FM801 sound device.
 .It sv
 S3 SonicVibes sound device.
 .El
 .Pp
 .Ss Miscellaneous devices
 .Bl -tag -width speaker -offset indent
-.It cbb
-.Tn PCI
-Yenta compatible
-.Tn CardBus
-bridges.
 .It ohci
 USB OHCI host controller
 .It pcic
@@ -198,11 +187,9 @@ USB UHCI host controller
 .Xr intro 4 ,
 .Xr ahc 4 ,
 .Xr bha 4 ,
-.Xr clcs 4 ,
 .Xr cy 4 ,
 .Xr de 4 ,
 .Xr eap 4 ,
-.Xr eso 4 ,
 .Xr en 4 ,
 .Xr ep 4 ,
 .Xr eso 4 ,

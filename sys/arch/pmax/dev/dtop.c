@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $	*/
+/*	$NetBSD: dtop.c,v 1.39 1999/04/24 08:01:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.39 1999/04/24 08:01:03 simonb Exp $");
 
 #include "rasterconsole.h"
 
@@ -826,7 +826,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 {
 	u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
-	int msg_len, c, s, cl;
+	int msg_len, c, s;
 	char *cp;
 #ifdef RCONS_BRAINDAMAGE
 	struct tty *tp = DTOP_TTY(0);
@@ -905,7 +905,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	ls = &dev->keyboard.last_codes[dev->keyboard.last_codes_count - 1];
 	for ( ; ls >= le; ls--)
 	    if ((c = *ls) != 0) {
-		(void) kbdMapChar(c, &cl);
+		(void) kbdMapChar(c);
 
 		if (outc == 0 && dtopDivertXInput &&
 		    (keymodes[(c >> 5) & 0x7] & (1 << (c & 0x1f))))
@@ -919,7 +919,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	retc = 0;
 	for ( ; ns >= ne; ns--)
 	    if (*ns) {
-		cp = kbdMapChar(*ns, &cl);
+		cp = kbdMapChar(*ns);
 #ifdef DDB
 		if (*ns == LK_DO) {
 			spl0();
@@ -931,7 +931,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 			(*dtopDivertXInput)(*ns);
 			c = -1; /* consumed by X */
 		    } else if (cp /*&& tp != NULL*/) {
-			for (; cl; cl--, cp++) {
+			for (; *cp; cp++) {
 #if 0
 				(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else
@@ -946,7 +946,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		 * XXX when in debugger, don't return multi-char sequences
 		 */
 		if (cp && (cp[1] == '\0') &&(retc == 0))
-		    retc = cp[0];
+		    retc = c;
 	    }
 	outc = retc;
 	/* install new scan state */
@@ -968,8 +968,9 @@ dtop_keyboard_repeat(arg)
 	void *arg;
 {
 	dtop_device_t dev = (dtop_device_t)arg;
-	int i, c, cl;
+	int i, c;
 	char *cp;
+
 #if 0
 	struct tty *tp = DTOP_TTY(0);
 #endif
@@ -986,8 +987,8 @@ dtop_keyboard_repeat(arg)
 				continue;
 			}
 
-			if ((cp = kbdMapChar(KEY_REPEAT, &cl)) != NULL) {
-				for (; cl; cl--, cp++) {
+			if ((cp = kbdMapChar(KEY_REPEAT)) != NULL) {
+				for (; *cp; cp++) {
 #if 0
 					(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else

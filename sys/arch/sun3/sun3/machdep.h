@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.21 1999/11/22 19:01:50 jdolecek Exp $	*/
+/*	$NetBSD: machdep.h,v 1.20 1999/04/09 04:01:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,6 +69,13 @@ extern int fputype;
 extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
+
+/* Note: This arch ALWAYS has a Debugger() function! */
+/* Do not assume this conditional is backwards! */
+#if defined(DDB) == 0  /* No DDB! */
+/* In this case, our "Debugger" is the PROM. */
+extern void	Debugger __P((void));
+#endif /* !DDB */
 
 /* Cache flush functions. */
 void	DCIA __P((void));

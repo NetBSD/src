@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.14.1 1999/12/21 23:20:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -408,12 +408,12 @@ detrunc(dep, length, flags, cred, p)
 	if ((boff = length & pmp->pm_crbomask) != 0) {
 		if (isadir) {
 			bn = cntobn(pmp, eofentry);
-			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, bn),
+					pmp->pm_bpcluster, NOCRED, &bp);
 		} else {
 			bn = de_blk(pmp, length);
-			error = bread(DETOV(dep), bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
+			error = bread(DETOV(dep), fsbtosb(pmp, bn),
+					pmp->pm_bpcluster, NOCRED, &bp);
 		}
 		if (error) {
 			brelse(bp);

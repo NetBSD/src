@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.19 1999/12/09 13:07:41 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.15 1999/07/08 18:05:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
@@ -57,93 +56,8 @@ static int  _bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 		bus_size_t alignment, bus_size_t boundary,
 		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 		paddr_t low, paddr_t high));
-static int  bus_mem_add_mapping __P((bus_space_tag_t t, bus_addr_t bpa,
-		bus_size_t size, int flags, bus_space_handle_t *bsph));
-
-extern struct extent *iomem_ex;
-extern int iomem_malloc_safe;
 
 extern paddr_t avail_end;
-
-/*
- * We need these for the early memory allocator. The idea is this:
- * Allocate VA-space through ptextra (atari_init.c:startc()). When
- * The VA & size of this space are known, call bootm_init().
- * Until the VM-system is up, bus_mem_add_mapping() allocates it's virtual
- * addresses from this extent-map.
- *
- * This allows for the console code to use the bus_space interface at a
- * very early stage of the system configuration.
- */
-static pt_entry_t	*bootm_ptep;
-static long		bootm_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) /
-								sizeof(long)];
-static struct extent	*bootm_ex;
-
-void bootm_init(vaddr_t, pt_entry_t *, u_long);
-static vaddr_t	bootm_alloc(paddr_t pa, u_long size, int flags);
-static int	bootm_free(vaddr_t va, u_long size);
-
-void
-bootm_init(va, ptep, size)
-vaddr_t		va;
-pt_entry_t	*ptep;
-u_long		size;
-{
-	bootm_ex = extent_create("bootmem", va, va + size, M_DEVBUF,
-	    (caddr_t)bootm_ex_storage, sizeof(bootm_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	bootm_ptep = ptep;
-}
-
-vaddr_t
-bootm_alloc(pa, size, flags)
-paddr_t	pa;
-u_long	size;
-int	flags;
-{
-	pt_entry_t	*pg, *epg;
-	pt_entry_t	pg_proto;
-	vaddr_t		va, rva;
-
-	if (extent_alloc(bootm_ex, size, NBPG, 0, EX_NOWAIT, &rva)) {
-		printf("bootm_alloc fails! Not enough fixed extents?\n");
-		printf("Requested extent: pa=%lx, size=%lx\n",
-						(u_long)pa, size);
-		return 0;
-	}
-	
-	pg  = &bootm_ptep[btoc(rva - bootm_ex->ex_start)];
-	epg = &pg[btoc(size)];
-	va  = rva;
-	pg_proto = pa | PG_RW | PG_V;
-	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
-		pg_proto |= PG_CI;
-	while(pg < epg) {
-		*pg++     = pg_proto;
-		pg_proto += NBPG;
-#if defined(M68040) || defined(M68060)
-		if (mmutype == MMU_68040) {
-			DCFP(pa);
-			pa += NBPG;
-		}
-#endif
-		TBIS(va);
-		va += NBPG;
-	}
-	return rva;
-}
-
-int
-bootm_free(va, size)
-vaddr_t	va;
-u_long	size;
-{
-	if ((va < bootm_ex->ex_start) || ((va + size) > bootm_ex->ex_end))
-		return 0; /* Not for us! */
-	extent_free(bootm_ex, va, size, EX_NOWAIT);
-	return 1;
-}
 
 int
 bus_space_map(t, bpa, size, flags, mhp)
@@ -153,93 +67,6 @@ bus_size_t		size;
 int			flags;
 bus_space_handle_t	*mhp;
 {
-	paddr_t	pa, endpa;
-	int	error;
-
-	/*
-	 * Before we go any further, let's make sure that this
-	 * region is available.
-	 */
-	error = extent_alloc_region(iomem_ex, bpa + t->base, size,
-			EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0));
-
-	if (error)
-		return (error);
-
-	pa    = m68k_trunc_page(bpa + t->base);
-	endpa = m68k_round_page((bpa + t->base + size) - 1);
-
-	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
-	if (error) {
-		if (extent_free(iomem_ex, bpa + t->base, size, EX_NOWAIT |
-				(iomem_malloc_safe ? EX_MALLOCOK : 0))) {
-		    printf("bus_space_map: pa 0x%lx, size 0x%lx\n", bpa, size);
-		    printf("bus_space_map: can't free region\n");
-		}
-	}
-	return (error);
-}
-
-int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	u_long bpa;
-	int error;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Sanity check the allocation against the extent's boundaries.
-	 * XXX: Since we manage the whole of memory in a single map,
-	 *      this is nonsense for now! Brace it DIAGNOSTIC....
-	 */
-	if ((rstart + t->base) < iomem_ex->ex_start
-				|| (rend + t->base) > iomem_ex->ex_end)
-		panic("bus_space_alloc: bad region start/end");
-#endif /* DIAGNOSTIC */
-
-	/*
-	 * Do the requested allocation.
-	 */
-	error = extent_alloc_subregion(iomem_ex, rstart + t->base,
-	    rend + t->base, size, alignment, boundary,
-	    EX_FAST | EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
-	    &bpa);
-
-	if (error)
-		return (error);
-
-	/*
-	 * Map the bus physical address to a kernel virtual address.
-	 */
-	error = bus_mem_add_mapping(t, bpa, size, flags, bshp);
-	if (error) {
-		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
-		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
-			    bpa, size);
-			printf("bus_space_alloc: can't free region\n");
-		}
-	}
-
-	*bpap = bpa;
-
-	return (error);
-}
-
-static int
-bus_mem_add_mapping(t, bpa, size, flags, bshp)
-bus_space_tag_t		t;
-bus_addr_t		bpa;
-bus_size_t		size;
-int			flags;
-bus_space_handle_t	*bshp;
-{
 	vaddr_t	va;
 	paddr_t	pa, endpa;
 
@@ -248,30 +75,17 @@ bus_space_handle_t	*bshp;
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
-		panic("bus_mem_add_mapping: overflow");
+		panic("bus_mem_map: overflow");
 #endif
-
-	if (kernel_map == NULL) {
-		/*
-		 * The VM-system is not yet operational, allocate from
-		 * a special pool.
-		 */
-		va = bootm_alloc(pa, endpa - pa, flags);
-		if (va == 0)
-			return (ENOMEM);
-		*bshp = (caddr_t)(va + (bpa & PGOFSET));
-		return (0);
-	}
 
 	va = uvm_km_valloc(kernel_map, endpa - pa);
 	if (va == 0)
-		return (ENOMEM);
-
-	*bshp = (caddr_t)(va + (bpa & PGOFSET));
+		return 1;
+	*mhp = (caddr_t)(va + (bpa & PGOFSET));
 
 	for(; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 			pmap_changebit(pa, PG_CI, TRUE);
 	}
@@ -279,38 +93,22 @@ bus_space_handle_t	*bshp;
 }
 
 void
-bus_space_unmap(t, bsh, size)
+bus_space_unmap(t, memh, size)
 bus_space_tag_t		t;
-bus_space_handle_t	bsh;
+bus_space_handle_t	memh;
 bus_size_t		size;
 {
 	vaddr_t	va, endva;
-	paddr_t bpa;
 
-	va = m68k_trunc_page(bsh);
-	endva = m68k_round_page((bsh + size) - 1);
+	va = m68k_trunc_page(memh);
+	endva = m68k_round_page((memh + size) - 1);
+
 #ifdef DIAGNOSTIC
 	if (endva < va)
 		panic("unmap_iospace: overflow");
 #endif
 
-	(void) pmap_extract(pmap_kernel(), va, &bpa);
-	bpa += ((u_long)bsh & PGOFSET);
-
-	/*
-	 * Free the kernel virtual mapping.
-	 */
-	if (!bootm_free(va, endva - va))
-		uvm_km_free(kernel_map, va, endva - va);
-
-	/*
-	 * Mark as free in the extent map.
-	 */
-	if (extent_free(iomem_ex, bpa, size,
-			EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n", bpa, size);
-		printf("bus_space_unmap: can't free region\n");
-	}
+	uvm_km_free(kernel_map, va, endva - va);
 }
 
 /*
@@ -703,8 +501,8 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr - offset,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.160 1999/12/16 19:59:17 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -44,8 +44,6 @@
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
-#include "opt_maxuprc.h"
-#include "opt_multiprocessor.h"
 
 #include "rnd.h"
 
@@ -92,9 +90,6 @@
 #include <sys/syscallargs.h>
 
 #include <ufs/ufs/quota.h>
-
-#include <miscfs/genfs/genfs.h>
-#include <miscfs/syncfs/syncfs.h>
 
 #include <machine/cpu.h>
 
@@ -427,17 +422,8 @@ main()
 	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create process 4, the filesystem syncer */
-	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
-		panic("fork syncer");
-
 	/* Create any other deferred kernel threads. */
 	kthread_run_deferred_queue();
-
-#if defined(MULTIPROCESSOR)
-	/* Boot the secondary processors. */
-	cpu_boot_secondary_processors();
-#endif
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();

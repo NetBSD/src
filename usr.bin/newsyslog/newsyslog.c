@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.21 1999/11/30 12:03:24 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.21 1999/11/30 12:03:24 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -71,7 +71,6 @@ __RCSID("$NetBSD: newsyslog.c,v 1.21 1999/11/30 12:03:24 ad Exp $");
 #define CE_COMPACT 1            /* Compact the achived log files */
 #define CE_BINARY 2             /* Logfile is in binary, don't add */
                                 /* status messages */
-#define CE_NOSIGNAL 4           /* Don't send a signal when trimmed */
 #define NONE -1
         
 struct conf_entry {
@@ -82,9 +81,7 @@ struct conf_entry {
         int     size;           /* Size cutoff to trigger trimming the log */
         int     hours;          /* Hours between log trimming */
         int     permissions;    /* File permissions on the log */
-        int     flags;          /* Flags (CE_*) */
-        char	*pidfile;	/* Name of file containing PID to signal */
-        int	signum;		/* Signal to send */
+        int     flags;          /* Flags (CE_COMPACT & CE_BINARY)  */
         struct conf_entry       *next; /* Linked list pointer */
 };
 
@@ -92,7 +89,6 @@ char    *progname;              /* contains argv[0] */
 int     verbose = 0;            /* Print out what's going on */
 int     needroot = 1;           /* Root privs are necessary */
 int     noaction = 0;           /* Don't do anything, just show it */
-int	force;			/* Force the trim no matter what */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
 int     syslog_pid;             /* read in from /etc/syslog.pid */
@@ -105,7 +101,7 @@ char    *daytime;               /* timenow in human readable form */
 void	PRS __P((int, char **));
 int	age_old_log __P((char *));
 void	compress_log __P((char *));
-void	dotrim __P((char *, int, int, int, int, int, char *, int));
+void	dotrim __P((char *, int, int, int, int, int));
 void	do_entry __P((struct conf_entry *));
 int	isnumber __P((char *));
 int	log_trim __P((char *));
@@ -116,7 +112,6 @@ int	sizefile __P((char *));
 char   *sob __P((char *));
 char   *son __P((char *));
 void	usage __P((void));
-int	getsig __P((char *));
 
 int
 main(argc,argv)
@@ -162,7 +157,7 @@ do_entry(ent)
                         printf("size (Kb): %d [%d] ", size, ent->size);
                 if (verbose && (ent->hours > 0))
                         printf(" age (hr): %d [%d] ", modtime, ent->hours);
-                if (force || ((ent->size > 0) && (size >= ent->size)) ||
+                if (((ent->size > 0) && (size >= ent->size)) ||
                     ((ent->hours > 0) && ((modtime >= ent->hours)
                                         || (modtime < 0)))) {
                         if (verbose)
@@ -176,8 +171,7 @@ do_entry(ent)
                                                ent->log,ent->numlogs);
                         }
                         dotrim(ent->log, ent->numlogs, ent->flags,
-                               ent->permissions, ent->uid, ent->gid,
-                               ent->pidfile, ent->signum);
+                               ent->permissions, ent->uid, ent->gid);
                 } else {
                         if (verbose)
                                 printf("--> skipping\n");
@@ -218,7 +212,7 @@ PRS(argc,argv)
 	}
 
         optind = 1;             /* Start options parsing */
-        while ((c=getopt(argc,argv,"Fnrvf:")) != -1)
+        while ((c=getopt(argc,argv,"nrvf:t:")) != -1)
                 switch (c) {
                 case 'n':
                         noaction++; /* This implies needroot as off */
@@ -232,9 +226,6 @@ PRS(argc,argv)
                 case 'f':
                         conf = optarg;
                         break;
-                case 'F':
-                        force++;
-                        break;
                 default:
                         usage();
                 }
@@ -244,7 +235,7 @@ void
 usage()
 {
         fprintf(stderr,
-                "Usage: %s <-Fnrv> <-f config-file>\n", progname);
+                "Usage: %s <-nrv> <-f config-file>\n", progname);
         exit(1);
 }
 
@@ -256,7 +247,7 @@ parse_file()
 {
         FILE    *f;
         char    line[BUFSIZ], *parse, *q;
-        char    *errline, *group, prev;
+        char    *errline, *group;
         struct conf_entry *first = NULL;
         struct conf_entry *working;
         struct passwd *pass;
@@ -290,7 +281,7 @@ parse_file()
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if ((group = strchr(q, ':')) != NULL || (group = strchr(q, '.')) != NULL) {
+                if ((group = strchr(q, '.')) != NULL) {
                     *group++ = '\0';
                     if (*q) {
                         if (!(isnumber(q))) {
@@ -358,17 +349,14 @@ parse_file()
                         working->hours = -1;
 
                 q = parse = sob(++parse); /* Optional field */
-                prev = *(parse = son(parse));
-                *parse = '\0';
+                *(parse = son(parse)) = '\0';
                 working->flags = 0;
                 while (q && *q && !isspace((unsigned char)*q)) {
                         if ((*q == 'Z') || (*q == 'z'))
                                 working->flags |= CE_COMPACT;
                         else if ((*q == 'B') || (*q == 'b'))
                                 working->flags |= CE_BINARY;
-                        else if ((*q == 'N') || (*q == 'n'))
-                                working->flags |= CE_NOSIGNAL;
-                        else if (*q != '-') {
+                        else {
                                 fprintf(stderr,
                                         "Illegal flag in config file -- %c\n",
                                         *q);
@@ -376,28 +364,6 @@ parse_file()
                         }
                         q++;
                 }
-
-                if (prev != '\0' && (q = parse = sob(++parse)) != NULL && 
-                    q[0] == '/') {
-                	prev = *(parse = son(parse));
-                	*parse++ = '\0';
-               		working->pidfile = strdup(q);
-               	} else {
-               		working->pidfile = NULL;
-			prev = *parse;
-		}
-
-                if (prev != '\0' && (q = parse = sob(parse)) != NULL && 
-                    q[0] != '\0') {
-                	*(parse = son(parse)) = '\0';
-               		if ((working->signum = getsig(q)) < 0) {
-               			fprintf(stderr,
-                                    "Illegal signal in config file -- %s\n",
-                                    q);
-                                exit(1);
-                        }
-               	} else
-               		working->signum = SIGHUP;
                 
                 free(errline);
         }
@@ -420,24 +386,19 @@ missing_field(p,errline)
 }
 
 void
-dotrim(log,numdays,flags,perm,owner_uid,group_gid,pidfile,signum)
+dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         char    *log;
         int     numdays;
         int     flags;
         int     perm;
         int     owner_uid;
         int     group_gid;
-        char	*pidfile;
-        int	signum;
 {
         char    file1[128], file2[128];
         char    zfile1[128], zfile2[128];
-	char    line[BUFSIZ];
         int     fd;
         struct  stat st;
         int     ngen = numdays;
-        FILE    *f;
-        pid_t   pid;
 
 #ifdef _IBMR2
 /* AIX 3.1 has a broken fchown- if the owner_uid is -1, it will actually */
@@ -446,20 +407,6 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid,pidfile,signum)
                 if (owner_uid == -1)
                   owner_uid = geteuid();
 #endif
-
-        if (pidfile != NULL && pidfile[0] != '\0') {
-       		if ((f = fopen(pidfile,"r")) == NULL) {
-       			(void) fprintf(stderr,"%s: ",progname);
-                	perror(conf);
-                	return;
-                }
-       		
-       		if (fgets(line,BUFSIZ,f))
-       	        	pid = atoi(line);
-		if (f)
-			(void)fclose(f);
-	} else
-		pid = syslog_pid;
 
         /* Remove oldest log */
         (void) sprintf(file1,"%s.%d",log,numdays);
@@ -533,20 +480,17 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid,pidfile,signum)
                 printf("chmod %o %s...",perm,log);
         else
                 (void) chmod(log,perm);
-
-	if ((flags & CE_NOSIGNAL) == 0) {
-		if (noaction)
-			printf("kill -HUP %d\n",pid);
-		else if (pid < MIN_PID || pid > MAX_PID) {
-			fprintf(stderr,"%s: preposterous process number: %d\n",
-			    progname, pid);
-		} else if (kill(pid, signum)) {
-			fprintf(stderr,"%s: ", progname);
-			perror("warning - could not restart daemon");
-		}
-	}
-	
-        if ((flags & CE_COMPACT) != 0) {
+        if (noaction)
+                printf("kill -HUP %d (syslogd)\n",syslog_pid);
+        else
+	if (syslog_pid < MIN_PID || syslog_pid > MAX_PID) {
+		fprintf(stderr,"%s: preposterous process number: %d\n",
+				progname, syslog_pid);
+        } else if (kill(syslog_pid,SIGHUP)) {
+                        fprintf(stderr,"%s: ",progname);
+                        perror("warning - could not restart syslogd");
+                }
+        if (flags & CE_COMPACT) {
                 if (noaction)
                         printf("Compress %s.0\n",log);
                 else
@@ -565,13 +509,13 @@ log_trim(log)
         fprintf(f,"%s %s newsyslog[%ld]: logfile turned over\n",
                 daytime, hostname, (u_long)getpid());
         if (fclose(f) == EOF) {
-                perror("log_trim: fclose");
+                perror("log_trim: fclose:");
                 exit(1);
         }
         return(0);
 }
 
-/* Fork off compress/gzip to compress the old log file */
+/* Fork of /usr/ucb/compress to compress the old log file */
 void
 compress_log(log)
         char    *log;
@@ -651,26 +595,4 @@ isnumber(string)
             string++;
         }
         return(1);
-}
-
-int
-getsig(sig)
-	char *sig;
-{
-	int n;
-	
-	if (isnumber(sig)) {
-		n = strtol(sig, &sig, 0);
-		if ((unsigned)n >= NSIG)
-			return (-1);
-		return (n);
-	}
-
-	if (!strncasecmp(sig, "sig", 3))
-		sig += 3;
-	for (n = 1; n < NSIG; n++) {
-		if (!strcasecmp(sys_signame[n], sig))
-			return (n);
-	}
-	return (-1);
 }

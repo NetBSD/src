@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.78 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.77.8.1 1999/12/21 23:20:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@ struct fid {
 
 struct statfs {
 	short	f_type;			/* type of file system */
-	u_short	f_oflags;		/* deprecated copy of mount flags */
+	u_short	f_flags;		/* copy of mount flags */
 	long	f_bsize;		/* fundamental file system block size */
 	long	f_iosize;		/* optimal transfer block size */
 	long	f_blocks;		/* total data blocks in file system */
@@ -80,10 +80,7 @@ struct statfs {
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the file system */
-	long	f_flags;		/* copy of mount flags */
-	long	f_syncwrites;		/* count of sync writes since mount */
-	long	f_asyncwrites;		/* count of async writes since mount */
-	long	f_spare[1];		/* spare for later */
+	long	f_spare[4];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
@@ -125,7 +122,6 @@ struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
-	struct vnode	*mnt_syncer;		/* syncer vnode */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
@@ -133,7 +129,7 @@ struct mount {
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
-	struct proc	*mnt_unmounter;		/* who is unmounting */
+	int		mnt_bshift;		/* shift code for mounted dev */
 };
 
 /*
@@ -148,6 +144,7 @@ struct mount {
 #define __MNT_UNUSED1	0x00100000
 #define __MNT_UNUSED2	0x00400000
 #define __MNT_UNUSED3	0x00800000
+#define __MNT_UNUSED4	0x80000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -160,7 +157,6 @@ struct mount {
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
-#define MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 
 /*
  * exported mount flags.
@@ -185,7 +181,7 @@ struct mount {
  * Since f_flags in struct statfs is short, this mask overflows on
  * most architecture.  XXX.
  */
-#define	MNT_VISFLAGMASK	0xfc00ffff
+#define	MNT_VISFLAGMASK	0x7c00ffff
 
 /*
  * External filesystem control flags.
@@ -343,9 +339,8 @@ struct vfsops {
  *
  * waitfor flags to vfs_sync() and getfsstat()
  */
-#define MNT_WAIT	1	/* synchronously wait for I/O to complete */
-#define MNT_NOWAIT	2	/* start all I/O, but do not wait for it */
-#define MNT_LAZY 	3	/* push data not written by filesystem syncer */
+#define MNT_WAIT	1
+#define MNT_NOWAIT	2
 
 /*
  * Generic file handle

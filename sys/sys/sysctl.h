@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.39 1999/11/19 10:41:41 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.38 1999/09/29 11:58:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -466,7 +466,7 @@ int sysctl_doeproc __P((int *, u_int, char *, size_t *));
 struct radix_node;
 struct walkarg;
 int sysctl_dumpentry __P((struct radix_node *, void *));
-int sysctl_iflist __P((int, struct walkarg *, int));
+int sysctl_iflist __P((int, struct walkarg *));
 int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
 int sysctl_clockrate __P((char *, size_t *));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));

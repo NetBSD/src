@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.3 1999/12/04 10:15:34 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -52,14 +52,11 @@
 
 #include "locators.h"
 
-#define VRGIUDEBUG
 #ifdef VRGIUDEBUG
-#define DEBUG_IO	1
-#define DEBUG_INTR	2
 int	vrgiu_debug = 1;
-#define	DPRINTF(flag, arg) if (vrgiu_debug & flag) printf arg;
+#define	DPRINTF(arg) if (vrgiu_debug) printf arg;
 #else
-#define	DPRINTF(flag, arg)
+#define	DPRINTF(arg)
 #endif
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
@@ -72,11 +69,8 @@ int vrgiu_print __P((void*, const char*));
 void vrgiu_callback __P((struct device*));
 
 void	vrgiu_dump_regs(struct vrgiu_softc *sc);
-void	vrgiu_dump_iosetting(struct vrgiu_softc *sc);
 u_int32_t vrgiu_regread_4 __P((vrgiu_chipset_tag_t, bus_addr_t));
-u_int16_t vrgiu_regread __P((vrgiu_chipset_tag_t, bus_addr_t));
 void	vrgiu_regwrite_4 __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
-void	vrgiu_regwrite __P((vrgiu_chipset_tag_t, bus_addr_t, u_int16_t));
 
 int vrgiu_port_register __P((vrgiu_chipset_tag_t, enum gpio_name, int));
 int vrgiu_port_read __P((vrgiu_chipset_tag_t, vrgiu_gpioreg_t*));
@@ -130,13 +124,6 @@ vrgiu_attach(parent, self, aux)
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
-#ifdef VRGIUDEBUG
-	if (vrgiu_debug & DEBUG_IO) {
-		printf("\nWIN setting:                                ");
-		vrgiu_dump_iosetting(sc);
-		printf("\n");
-	}
-#endif /* VRGIUDEBUG */
 	vrgiu_regwrite_4(sc, GIUINTEN_REG, sc->sc_intr_mask);
 #endif
     
@@ -153,18 +140,13 @@ vrgiu_attach(parent, self, aux)
 	 * Register functions to upper interface. 
 	 */
 	vrip_giu_function_register(va->va_vc, &vrgiu_functions, self);
-#ifdef VRGIUDEBUG
 	/* Display port status (Input/Output) for debugging */
-	if (vrgiu_debug & DEBUG_IO) {
+	{
 		vrgiu_gpioreg_t preg;
-		printf("I/O setting:                                ");
-		vrgiu_dump_iosetting(sc);
-		printf("\n");
 		vrgiu_port_read(sc, &preg);
-		printf("       data:");
+		printf("Output-port:");
 		bitdisp64(preg);
 	}
-#endif /* VRGIUDEBUG */
 	/* 
 	 *  General purpose bus 
 	 */
@@ -208,22 +190,6 @@ vrgiu_print(aux, pnp)
 }
 
 void
-vrgiu_dump_iosetting(sc)
-	struct vrgiu_softc *sc;
-{
-	long iosel, inten, useupdn, termupdn;
-	u_int32_t m;
-	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
-	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-	for (m = 0x80000000; m; m >>=1)
-		printf ("%c" , (useupdn&m) ?
-			((termupdn&m) ? 'U' : 'D') :
-			((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
-}
-
-void
 vrgiu_dump_regs(sc)
 	struct vrgiu_softc *sc;
 {
@@ -254,15 +220,6 @@ vrgiu_regread_4(vc, offs)
 	return reg[0]|(reg[1]<<16);
 }
 
-u_int16_t
-vrgiu_regread(vc, off)
-	vrgiu_chipset_tag_t vc;
-	bus_addr_t off;
-{
-	struct vrgiu_softc *sc = (void*)vc;
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
-}
-
 void
 vrgiu_regwrite_4(vc, offs, data)
 	vrgiu_chipset_tag_t vc;
@@ -275,16 +232,6 @@ vrgiu_regwrite_4(vc, offs, data)
 	reg[0] = data & 0xffff;
 	reg[1] = (data>>16)&0xffff;
 	bus_space_write_region_2 (sc->sc_iot, sc->sc_ioh, offs, reg, 2);
-}
-
-void
-vrgiu_regwrite(vc, off, data)
-	vrgiu_chipset_tag_t vc;
-	bus_addr_t off;
-	u_int16_t data;
-{
-	struct vrgiu_softc *sc = (void*)vc;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, data);
 }
 /*
  * Assign Platform independent port name to GPIO # map.
@@ -434,12 +381,12 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 
 	/* interrupt type */
 	reg = vrgiu_regread_4(sc, GIUINTTYP_REG);
-	DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "edge" : "level"));
+	DPRINTF(("[%s->",reg & mask ? "edge" : "level"));
 	if (mode & VRGIU_INTR_EDGE) {
-		DPRINTF(DEBUG_INTR, ("edge]"));
+		DPRINTF(("edge]"));
 		reg |= mask;	/* edge */
 	} else {
-		DPRINTF(DEBUG_INTR, ("level]"));
+		DPRINTF(("level]"));
 		reg &= ~mask;	/* level */
 	}
 	vrgiu_regwrite_4(sc, GIUINTTYP_REG, reg);
@@ -447,24 +394,24 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 	/* interrupt level */
 	if (!(mode & VRGIU_INTR_EDGE)) {
 		reg = vrgiu_regread_4(sc, GIUINTALSEL_REG);
-		DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "high" : "low"));
+		DPRINTF(("[%s->",reg & mask ? "high" : "low"));
 		if (mode & VRGIU_INTR_HIGH) {
-			DPRINTF(DEBUG_INTR, ("high]"));
+			DPRINTF(("high]"));
 			reg |= mask;	/* high */
 		} else {
-			DPRINTF(DEBUG_INTR, ("low]"));
+			DPRINTF(("low]"));
 			reg &= ~mask;	/* low */
 		}
 		vrgiu_regwrite_4(sc, GIUINTALSEL_REG, reg);
 	}
 	/* hold or through */
 	reg = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
-	DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "hold" : "through"));
+	DPRINTF(("[%s->",reg & mask ? "hold" : "through"));
 	if (mode & VRGIU_INTR_HOLD) {
-		DPRINTF(DEBUG_INTR, ("hold]"));
+		DPRINTF(("hold]"));
 		reg |= mask;	/* hold */
 	} else {
-		DPRINTF(DEBUG_INTR, ("through]"));
+		DPRINTF(("through]"));
 		reg &= ~mask;	/* through */
 	}
 	vrgiu_regwrite_4(sc, GIUINTHTSEL_REG, reg);
@@ -488,7 +435,7 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 #endif
 	splx(s);
 
-	DPRINTF(DEBUG_INTR, ("\n"));
+	DPRINTF(("\n"));
 #if 0 && defined VRGIUDEBUG
 	vrgiu_dump_regs(sc);
 #endif
@@ -562,9 +509,6 @@ vrgiu_intr(arg)
 		printf ("\n");
 	}
 #endif
-	/* Clear interrupt */
-	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, vrgiu_regread_4(sc, GIUINTSTAT_REG));
-
 	/* Dispatch handler */
 	for (i = 0; i < MAX_GPIO_INOUT; i++) {
 		if (reg & (1 << i)) {
@@ -574,6 +518,7 @@ vrgiu_intr(arg)
 			}
 		}
 	}
-
+	/* Clear interrupt */
+	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, vrgiu_regread_4(sc, GIUINTSTAT_REG));
 	return 0;
 }

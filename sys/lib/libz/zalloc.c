@@ -1,4 +1,4 @@
-/* $NetBSD: zalloc.c,v 1.3 1999/11/13 21:35:06 thorpej Exp $ */
+/* $NetBSD: zalloc.c,v 1.1 1999/04/15 00:50:39 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.12 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.9 1999/07/02 11:31:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -48,7 +48,6 @@ extern int Sflag;		/* print raw TCP sequence numbers */
 extern int tflag;		/* print packet arrival time */
 extern int vflag;		/* verbose */
 extern int xflag;		/* print packet in hex */
-extern int Xflag;		/* print packet in hex/ascii */
 
 extern int packettype;		/* as specified by -T */
 #define PT_VAT		1	/* Visual Audio Tool */
@@ -198,11 +197,6 @@ struct pcap_pkthdr;
 struct p8022Hdr;
 #endif
 
-extern void ascii_print_with_offset(const u_char *, u_int, u_int);    
-extern void ascii_print(const u_char *, u_int);    
-extern void hex_print_with_offset(const u_char *, u_int, u_int);    
-extern void hex_print(const u_char *, u_int);    
-extern void telnet_print(const u_char *, u_int);    
 extern int ether_encap_print(u_short, const u_char *, u_int, u_int);
 extern int llc_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
@@ -211,14 +205,11 @@ extern void arp_print(const u_char *, u_int, u_int);
 extern void atalk_print(const u_char *, u_int);
 extern void atm_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void bootp_print(const u_char *, u_int, u_short, u_short);
-extern void bgp_print(const u_char *, int);
 extern void decnet_print(const u_char *, u_int, u_int);
 extern void default_print(const u_char *, u_int);
 extern void default_print_unaligned(const u_char *, u_int);
 extern void dvmrp_print(const u_char *, u_int);
 extern void egp_print(const u_char *, u_int, const u_char *);
-extern void arcnet_if_print(u_char *, const struct pcap_pkthdr *,
-	const u_char *);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
@@ -230,7 +221,6 @@ extern void ipx_print(const u_char *, u_int);
 extern void isoclns_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
 extern void krb_print(const u_char *, u_int);
-extern void l2tp_print(const u_char *dat, u_int length);
 extern void llap_print(const u_char *, u_int);
 extern void mobile_print(const u_char *, u_int);
 extern void netbios_print(struct p8022Hdr *, u_int);
@@ -271,10 +261,9 @@ extern void ip6_print(const u_char *, int);
 extern void ip6_opt_print __P((const u_char *, int));
 extern int hbhopt_print(const u_char *);
 extern int dstopt_print(const u_char *);
-extern int frag6_print(const u_char *, const u_char *);
+extern void frag6_print(const u_char *, const u_char *);
 extern void icmp6_print(const u_char *, const u_char *);
 extern void ripng_print(const u_char *, int);
 extern int rt6_print(const u_char *, const u_char *);
 extern void ospf6_print(const u_char *, u_int);
-extern void dhcp6_print(const u_char *, u_int, u_short, u_short);
 #endif /*INET6*/

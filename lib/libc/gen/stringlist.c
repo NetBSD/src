@@ -1,11 +1,8 @@
-/*	$NetBSD: stringlist.c,v 1.8 1999/11/28 03:44:09 lukem Exp $	*/
+/*	$NetBSD: stringlist.c,v 1.6 1999/09/16 11:45:05 lukem Exp $	*/
 
-/*-
- * Copyright (c) 1994, 1999 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,28 +14,26 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *	This product includes software developed by Christos Zoulas.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stringlist.c,v 1.8 1999/11/28 03:44:09 lukem Exp $");
+__RCSID("$NetBSD: stringlist.c,v 1.6 1999/09/16 11:45:05 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,23 +64,21 @@ sl_init()
 
 	sl = malloc(sizeof(StringList));
 	if (sl == NULL)
-		return (NULL);
+		err(1, "stringlist");
 
 	sl->sl_cur = 0;
 	sl->sl_max = _SL_CHUNKSIZE;
 	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
-	if (sl->sl_str == NULL) {
-		free(sl);
-		sl = NULL;
-	}
-	return (sl);
+	if (sl->sl_str == NULL)
+		err(1, "stringlist");
+	return sl;
 }
 
 
 /*
  * sl_add(): Add an item to the string list
  */
-int
+void
 sl_add(sl, name)
 	StringList *sl;
 	char *name;
@@ -94,16 +87,12 @@ sl_add(sl, name)
 	_DIAGASSERT(sl != NULL);
 
 	if (sl->sl_cur == sl->sl_max - 1) {
-		char	**new;
-
 		sl->sl_max += _SL_CHUNKSIZE;
-		new = (char **)realloc(sl->sl_str, sl->sl_max * sizeof(char *));
-		if (new == NULL)
-			return (-1);
-		sl->sl_str = new;
+		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
+		if (sl->sl_str == NULL)
+			err(1, "stringlist");
 	}
 	sl->sl_str[sl->sl_cur++] = name;
-	return (0);
 }
 
 
@@ -148,5 +137,5 @@ sl_find(sl, name)
 		if (strcmp(sl->sl_str[i], name) == 0)
 			return sl->sl_str[i];
 
-	return (NULL);
+	return NULL;
 }

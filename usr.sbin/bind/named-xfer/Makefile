@@ -1,24 +1,22 @@
-#	$NetBSD: Makefile,v 1.7 1999/11/21 16:46:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 1998/10/09 19:30:02 tron Exp $
 
-.include "../Makefile.inc"
-.PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
-	${BIND_DIST_DIR}/man
+.PATH:	${.CURDIR}/../named \
+	${.CURDIR}/../man
 
-NAMEDOBJ!=cd ${.CURDIR}/../named; ${MAKE} print-objdir
-
+WARNS=	0
 PROG=	named-xfer
 SRCS=	${PROG}.c db_glue.c ns_glue.c tmp_version.c
-CPPFLAGS+= ${INCLUDE} -I${NAMEDOBJ}
+CPPFLAGS+= ${INCLUDE}
 LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
 BINDIR=	/usr/libexec
 
-tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
+tmp_version.c: ${.CURDIR}/../named/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < ${BIND_DIST_DIR}/bin/named/version.c > tmp_version.c)
+	    < ${.CURDIR}/../named/version.c > tmp_version.c)
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

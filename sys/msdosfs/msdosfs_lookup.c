@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.44 1999/11/05 21:33:21 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.42.6.1 1999/12/21 23:20:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -111,7 +111,7 @@ msdosfs_lookup(v)
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wincnt = 1;
-	int chksum = -1, chksum_ok;
+	int chksum = -1;
 	int olddos = 1;
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
@@ -221,7 +221,8 @@ msdosfs_lookup(v)
 				break;
 			return (error);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+								NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -288,8 +289,7 @@ msdosfs_lookup(v)
 				/*
 				 * Check for a checksum or name match
 				 */
-				chksum_ok = (chksum == winChksum(dep->deName));
-				if (!chksum_ok
+				if (chksum != winChksum(dep->deName)
 				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
 					chksum = -1;
 					continue;
@@ -304,21 +304,7 @@ msdosfs_lookup(v)
 				 * this lookup.
 				 */
 				dp->de_fndoffset = diroff;
-				if (chksum_ok && nameiop == RENAME) {
-					/*
-					 * Target had correct long name
-					 * directory entries, reuse them
-					 * as needed.
-					 */
-					dp->de_fndcnt = wincnt - 1;
-				} else {
-					/*
-					 * Long name directory entries
-					 * not present or corrupt, can only
-					 * reuse dos directory entry.
-					 */
-					dp->de_fndcnt = 0;
-				}
+				dp->de_fndcnt = 0;	/* unused anyway */
 
 				goto found;
 			}
@@ -638,7 +624,8 @@ createde(dep, ddep, depp, cnp)
 	diroffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		diroffset &= pmp->pm_crbomask;
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+						NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return error;
 	}
@@ -668,8 +655,8 @@ createde(dep, ddep, depp, cnp)
 				if (error)
 					return error;
 
-				error = bread(pmp->pm_devvp, bn, blsize,
-					      NOCRED, &bp);
+				error = bread(pmp->pm_devvp, fsbtosb(pmp, bn),
+							blsize, NOCRED, &bp);
 				if (error) {
 					brelse(bp);
 					return error;
@@ -733,7 +720,8 @@ dosdirempty(dep)
 				return (1);	/* it's empty */
 			return (0);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+							NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (0);
@@ -825,7 +813,7 @@ doscheckpath(source, target)
 			break;
 		}
 		scn = dep->de_StartCluster;
-		error = bread(pmp->pm_devvp, cntobn(pmp, scn),
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, cntobn(pmp, scn)),
 			      pmp->pm_bpcluster, NOCRED, &bp);
 		if (error)
 			break;
@@ -894,7 +882,8 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+							NOCRED, bpp)) != 0) {
 		brelse(*bpp);
 		*bpp = NULL;
 		return (error);
@@ -953,7 +942,8 @@ removede(pdep, dep)
 		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
 		if (error)
 			return error;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+								NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return error;
@@ -1027,7 +1017,8 @@ uniqdosname(dep, cnp, cp)
 					return 0;
 				return error;
 			}
-			error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, bn),
+							blsize, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return error;
@@ -1078,7 +1069,8 @@ findwin95(dep)
 	for (cn = 0;; cn++) {
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
 			return 0;
-		if (bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		if (bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+							NOCRED, &bp)) {
 			brelse(bp);
 			return 0;
 		}

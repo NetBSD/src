@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.6 1999/11/07 00:21:12 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -63,28 +63,28 @@ _rtld_digest_dynamic(obj)
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
 	const Elf_Dyn  *dyn_rpath = NULL;
-	Elf_Sword	plttype = DT_REL;
+	enum Elf_e_dynamic_type plttype = Elf_edt_rel;
 	Elf_Word        relsz = 0, relasz = 0;
 	Elf_Word	pltrelsz = 0, pltrelasz = 0;
 
-	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
+	for (dynp = obj->dynamic; dynp->d_tag != Elf_edt_null; ++dynp) {
 		switch (dynp->d_tag) {
 
-		case DT_REL:
+		case Elf_edt_rel:
 			obj->rel = (const Elf_Rel *)
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_RELSZ:
+		case Elf_edt_relsz:
 			relsz = dynp->d_un.d_val;
 			break;
 
-		case DT_RELENT:
+		case Elf_edt_relent:
 			assert(dynp->d_un.d_val == sizeof(Elf_Rel));
 			break;
 
-		case DT_JMPREL:
-			if (plttype == DT_REL) {
+		case Elf_edt_jmprel:
+			if (plttype == Elf_edt_rel) {
 				obj->pltrel = (const Elf_Rel *)
 				    (obj->relocbase + dynp->d_un.d_ptr);
 			} else {
@@ -93,32 +93,32 @@ _rtld_digest_dynamic(obj)
 			}
 			break;
 
-		case DT_PLTRELSZ:
-			if (plttype == DT_REL) {
+		case Elf_edt_pltrelsz:
+			if (plttype == Elf_edt_rel) {
 				pltrelsz = dynp->d_un.d_val;
 			} else {
 				pltrelasz = dynp->d_un.d_val;
 			}
 			break;
 
-		case DT_RELA:
+		case Elf_edt_rela:
 			obj->rela = (const Elf_RelA *)
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_RELASZ:
+		case Elf_edt_relasz:
 			relasz = dynp->d_un.d_val;
 			break;
 
-		case DT_RELAENT:
+		case Elf_edt_relaent:
 			assert(dynp->d_un.d_val == sizeof(Elf_RelA));
 			break;
 
-		case DT_PLTREL:
+		case Elf_edt_pltrel:
 			plttype = dynp->d_un.d_val;
-			assert(plttype == DT_REL ||
-			    plttype == DT_RELA);
-			if (plttype == DT_RELA) {
+			assert(plttype == Elf_edt_rel ||
+			    plttype == Elf_edt_rela);
+			if (plttype == Elf_edt_rela) {
 				obj->pltrela = (const Elf_RelA *) obj->pltrel;
 				obj->pltrel = NULL;
 				pltrelasz = pltrelsz;
@@ -126,25 +126,25 @@ _rtld_digest_dynamic(obj)
 			}
 			break;
 
-		case DT_SYMTAB:
+		case Elf_edt_symtab:
 			obj->symtab = (const Elf_Sym *)
 				(obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_SYMENT:
+		case Elf_edt_syment:
 			assert(dynp->d_un.d_val == sizeof(Elf_Sym));
 			break;
 
-		case DT_STRTAB:
+		case Elf_edt_strtab:
 			obj->strtab = (const char *)
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_STRSZ:
+		case Elf_edt_strsz:
 			obj->strsize = dynp->d_un.d_val;
 			break;
 
-		case DT_HASH:
+		case Elf_edt_hash:
 			{
 				const Elf_Word *hashtab = (const Elf_Word *)
 				(obj->relocbase + dynp->d_un.d_ptr);
@@ -156,7 +156,7 @@ _rtld_digest_dynamic(obj)
 			}
 			break;
 
-		case DT_NEEDED:
+		case Elf_edt_needed:
 			assert(!obj->rtld);
 			{
 				Needed_Entry *nep = NEW(Needed_Entry);
@@ -170,20 +170,20 @@ _rtld_digest_dynamic(obj)
 			}
 			break;
 
-		case DT_PLTGOT:
+		case Elf_edt_pltgot:
 			obj->pltgot = (Elf_Addr *)
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_TEXTREL:
+		case Elf_edt_textrel:
 			obj->textrel = true;
 			break;
 
-		case DT_SYMBOLIC:
+		case Elf_edt_symbolic:
 			obj->symbolic = true;
 			break;
 
-		case DT_RPATH:
+		case Elf_edt_rpath:
 			/*
 		         * We have to wait until later to process this, because
 			 * we might not have gotten the address of the string
@@ -192,21 +192,21 @@ _rtld_digest_dynamic(obj)
 			dyn_rpath = dynp;
 			break;
 
-		case DT_SONAME:
+		case Elf_edt_soname:
 			/* Not used by the dynamic linker. */
 			break;
 
-		case DT_INIT:
+		case Elf_edt_init:
 			obj->init = (void (*) __P((void)))
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_FINI:
+		case Elf_edt_fini:
 			obj->fini = (void (*) __P((void)))
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
-		case DT_DEBUG:
+		case Elf_edt_debug:
 #ifdef RTLD_LOADER
 			dynp->d_un.d_ptr = (Elf_Addr)&_rtld_debug;
 #endif
@@ -258,26 +258,21 @@ _rtld_digest_phdr(phdr, phnum, entry)
 	int phnum;
 	caddr_t entry;
 {
-	Obj_Entry      *obj;
+	Obj_Entry      *obj = CNEW(Obj_Entry);
 	const Elf_Phdr *phlimit = phdr + phnum;
 	const Elf_Phdr *ph;
 	int             nsegs = 0;
 
-	obj = _rtld_obj_new();
 	for (ph = phdr; ph < phlimit; ++ph) {
 		switch (ph->p_type) {
 
-		case PT_PHDR:
+		case Elf_pt_phdr:
 			assert((const Elf_Phdr *) ph->p_vaddr == phdr);
 			obj->phdr = (const Elf_Phdr *) ph->p_vaddr;
 			obj->phsize = ph->p_memsz;
 			break;
 
-		case PT_INTERP:
-			obj->interp = (const char *) ph->p_vaddr;
-			break;
-
-		case PT_LOAD:
+		case Elf_pt_load:
 			assert(nsegs < 2);
 			if (nsegs == 0) {	/* First load segment */
 				obj->vaddrbase = round_down(ph->p_vaddr);
@@ -292,7 +287,7 @@ _rtld_digest_phdr(phdr, phnum, entry)
 			++nsegs;
 			break;
 
-		case PT_DYNAMIC:
+		case Elf_pt_dynamic:
 			obj->dynamic = (Elf_Dyn *) ph->p_vaddr;
 			break;
 		}

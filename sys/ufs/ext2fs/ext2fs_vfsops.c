@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.30 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.27.2.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -343,7 +343,6 @@ ext2fs_reload(mountp, cred, p)
 	struct buf *bp;
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
-	struct partinfo dpart;
 	int i, size, error;
 	caddr_t cp;
 
@@ -358,10 +357,16 @@ ext2fs_reload(mountp, cred, p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
+#if 0
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+#endif
+	if ((mountp->mnt_bshift = devvp->v_specbshift) <= 0)
+		return (EINVAL);
+	size = blocksize(devvp->v_specbshift);
+
 	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -484,7 +489,6 @@ ext2fs_mountfs(devvp, mp, p)
 	register struct ext2fs *fs;
 	register struct m_ext2fs *m_fs;
 	dev_t dev;
-	struct partinfo dpart;
 	int error, i, size, ronly;
 	struct ucred *cred;
 	extern struct vnode *rootvp;
@@ -508,10 +512,15 @@ ext2fs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
+#if 0
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+#endif
+	if ((mp->mnt_bshift = devvp->v_specbshift) <= 0)
+		return (EINVAL);
+	size = blocksize(devvp->v_specbshift);
 
 	bp = NULL;
 	ump = NULL;
@@ -520,7 +529,7 @@ ext2fs_mountfs(devvp, mp, p)
 	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
 	    EXT2_DINODE_SIZE);
 #endif
-	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
+	error = bread(devvp, (SBOFF >> mp->mnt_bshift), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -607,14 +616,12 @@ ext2fs_mountfs(devvp, mp, p)
 	ump->um_nindir = NINDIR(m_fs);
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
-	devvp->v_specmountpoint = mp;
+	devvp->v_specflags |= SI_MOUNTEDON;
 	return (0);
 out:
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -649,12 +656,10 @@ ext2fs_unmount(mp, mntflags, p)
 		fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
-	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
+	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	vput(ump->um_devvp);
+	vrele(ump->um_devvp);
 	free(fs->e2fs_gd, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
@@ -775,10 +780,9 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		ip = VTOI(vp);
-		if (vp->v_type == VNON || ((ip->i_flag &
+		if ((ip->i_flag &
 		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-		    (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY)))
-		{   
+			vp->v_dirtyblkhd.lh_first == NULL) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -839,7 +843,7 @@ ext2fs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 			return (0);
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
@@ -1011,7 +1015,8 @@ ext2fs_sbupdate(mp, waitfor)
 	register struct buf *bp;
 	int error = 0;
 
-	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, 0);
+	bp = getblk(mp->um_devvp, btodb(SBOFF, mp->um_mountp->mnt_bshift),
+			SBSIZE, 0, 0);
 	e2fs_sbsave(&fs->e2fs, (struct ext2fs*)bp->b_data);
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: _def_time.c,v 1.6 1999/11/10 09:15:11 kleink Exp $	*/
+/*	$NetBSD: _def_time.c,v 1.5 1997/04/29 16:40:16 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -28,7 +28,7 @@ const _TimeLocale _DefaultTimeLocale =
 	{
 		"AM", "PM"
 	},
-	"%a %b %e %H:%M:%S %Y",
+	"%a %b %d %H:%M:%S %Y",
 	"%m/%d/%y",
 	"%H:%M:%S",
 	"%I:%M:%S %p"

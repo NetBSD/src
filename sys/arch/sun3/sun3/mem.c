@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.34 1999/12/04 21:21:44 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.32 1999/03/27 00:30:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -162,7 +162,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, prot|PMAP_WIRED);
+			    trunc_page(v), prot, TRUE, prot);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -218,10 +218,10 @@ mmrw(dev, uio, flags)
 			 */
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
+				bzero(devzeropage, CLBYTES);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(devzeropage, c, uio);
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.4 1999/10/26 06:53:42 cgd Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.3 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -62,19 +62,19 @@
  */
 
 Lintr_disabled_mask:
-	.word	_C_LABEL(intr_disabled_mask)
+	.word	_intr_disabled_mask
 
 Lintr_claimed_mask:
-	.word	_C_LABEL(intr_claimed_mask)
+	.word	_intr_claimed_mask
 
 Lcurrent_spl_level:	
-	.word	_C_LABEL(current_spl_level)
+	.word	_current_spl_level
 
 Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+	.word	_current_intr_depth
 
 Lspl_masks:
-	.word	_C_LABEL(spl_masks)
+	.word	_spl_masks
 
 /*
  * Regsister usage
@@ -157,7 +157,7 @@ Lfind_highest_ipl:
 	str	r6, [r7]		/* new current mask */	
 
 	/* Update the DC21285 irq masks */
-	bl	_C_LABEL(irq_setmasks_nointr)
+	bl	_irq_setmasks_nointr
 
         mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
@@ -175,7 +175,7 @@ irqloop:
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	beq	_C_LABEL(stray_irqhandler) /* call special handler */
+	beq	_stray_irqhandler	/* call special handler */
 
 	ldr	r0, Lcnt
 	ldr	r1, [r0, #(V_INTR)]
@@ -234,9 +234,9 @@ nextirq:
 	bic	r0, r0, r2		/* mask out disabled */
 	ldr	r1, Lintr_current_mask	/* get claimed mask */
 	str	r0, [r1]		/* new current mask */	
-	bl	_C_LABEL(irq_setmasks)
+	bl	_irq_setmasks
 
-	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+	bl	_dosoftints		/* Handle the soft interrupts */
 
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 	ldr	r0, [sp]		/* Get the SPSR from stack */
@@ -292,7 +292,7 @@ irqast:
         msr     cpsr_all, r2
 
 	mov	r0, sp
-	bl	_C_LABEL(ast)
+	bl	_ast
 
 /* Kill IRQ's in preparation for exit */
 
@@ -305,22 +305,22 @@ irqast:
 	movs	pc, lr			/* Exit */
 	
 Lcnt:
-	.word	_C_LABEL(uvmexp)
+	.word	_uvmexp
 
 Lintrcnt:
-	.word	_C_LABEL(intrcnt)
+	.word	_intrcnt
 
 irqhandlers:
-	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
+	.word	_irqhandlers		/* Pointer to array of irqhandlers */
 
 Lastpending:
-	.word	_C_LABEL(astpending)
+	.word	_astpending
 
 Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
+	.word	_spl_mask	/* irq's allowed at current spl level */
 
 Lintr_current_mask:
-	.word	_C_LABEL(intr_current_mask)
+	.word	_intr_current_mask
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
@@ -363,15 +363,15 @@ ENTRY(irq_setmasks_nointr)
 	/* These symbols are used by vmstat */
 
 	.text
-	.global	_C_LABEL(_intrnames)
-_C_LABEL(_intrnames):
-	.word	_C_LABEL(intrnames)
+	.global	__intrnames
+__intrnames:
+	.word	_intrnames
 
 	.data
 	.align	0
-        .global	_C_LABEL(intrnames), _C_LABEL(sintrnames), _C_LABEL(eintrnames)
-	.global	_C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
+        .global	_intrnames, _sintrnames, _eintrnames
+	.global	_intrcnt, _sintrcnt, _eintrcnt
+_intrnames:
 	.asciz	"interrupt  0 "
 	.asciz	"interrupt  1 "
 	.asciz	"interrupt  2 "
@@ -404,7 +404,7 @@ _C_LABEL(intrnames):
 	.asciz	"interrupt 29 "
 	.asciz	"interrupt 30 "
 	.asciz	"interrupt 31 "
-_C_LABEL(sintrnames):
+_sintrnames:
 	.asciz	"soft int  0  "
 	.asciz	"soft int  1  "
 	.asciz	"soft int  2  "
@@ -437,29 +437,29 @@ _C_LABEL(sintrnames):
 	.asciz	"soft int 29  "
 	.asciz	"soft int 30  "
 	.asciz	"soft int 31  "
-_C_LABEL(eintrnames):
+_eintrnames:
 
 	.bss
 	.align	0
-	.global	_C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrcnt):
+	.global	_intrcnt, _sintrcnt, _eintrcnt
+_intrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
-_C_LABEL(sintrcnt):
+_sintrcnt:
 	.space	32*4	/* XXX Should be linked to number of soft ints */
-_C_LABEL(eintrcnt):
+_eintrcnt:
 
 #else	/* IRQSTATS */
 	/* Dummy entries to keep vmstat happy */
 
 	.text
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
+        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
+_intrnames:
 	.long	0
-_C_LABEL(eintrnames):
+_eintrnames:
 
-_C_LABEL(intrcnt):
+_intrcnt:
 	.long	0
-_C_LABEL(eintrcnt):
+_eintrcnt:
 #endif	/* IRQSTATS */
 
 /* End of footbridge_irq.S */

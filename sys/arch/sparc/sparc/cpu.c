@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.97 1999/12/16 20:24:58 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.94 1999/06/24 20:22:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -175,8 +175,7 @@ alloc_cpuinfo()
 	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
 		va += NBPG;
 	}
 
@@ -334,22 +333,6 @@ static	int cpu_number;
 #endif /* MULTIPROCESSOR */
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * Start secondary processors in motion.
- */
-void
-cpu_boot_secondary_processors()
-{
-
-	/*
-	 * XXX This is currently a noop; the CPUs are already running, but
-	 * XXX aren't doing anything.  Eventually, this will release a
-	 * XXX semaphore that all those secondary processors are anxiously
-	 * XXX waiting on.
-	 */
-}
-#endif /* MULTIPROCESSOR */
 
 /* */
 void *cpu_hatchstack = 0;
@@ -429,12 +412,12 @@ extern void cpu_hatch __P((void));
 	}
 	printf("CPU did not spin up\n");
 #endif
+	return;
 }
 
 void
 mp_pause_cpus()
 {
-#ifdef SUN4M
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -446,13 +429,11 @@ mp_pause_cpus()
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		raise_ipi(cpi);
 	}
-#endif
 }
 
 void
 mp_resume_cpus()
 {
-#ifdef SUN4M
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -464,7 +445,6 @@ mp_resume_cpus()
 		cpi->msg.tag = XPMSG_RESUMECPU;
 		raise_ipi(cpi);
 	}
-#endif
 }
 
 /*

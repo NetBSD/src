@@ -1,21 +1,20 @@
-# $NetBSD: shl.mi,v 1.49 1999/12/16 12:11:12 blymn Exp $
+# $NetBSD: shl.mi,v 1.40 1999/09/19 23:26:29 lukem Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
-./usr/lib/libc.so.12.53
+./usr/lib/libc.so.12.49
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.5
-./usr/lib/libedit.so.2.3
+./usr/lib/libedit.so.2.2
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libipsec.so.0.0
 ./usr/lib/libkvm.so.5.0
 ./usr/lib/libm.so.0.1
-./usr/lib/libmenu.so.0.1
 ./usr/lib/libntp.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libossaudio.so.0.0
-./usr/lib/libpcap.so.1.1
+./usr/lib/libpcap.so.1.0
 ./usr/lib/libposix.so.0.1
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0
@@ -26,4 +25,4 @@
 ./usr/lib/libusb.so.0.0
 ./usr/lib/libutil.so.5.1
 ./usr/lib/libwrap.so.0.2
-./usr/lib/libz.so.0.2
+./usr/lib/libz.so.0.1

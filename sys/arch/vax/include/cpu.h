@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.40 1999/09/17 20:07:19 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VAX_CPU_H_
-#define _VAX_CPU_H_
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
@@ -133,4 +131,3 @@ void	findcpu(void);
 int	kdbrint __P((int));
 #endif
 #endif /* _KERNEL */
-#endif /* _VAX_CPU_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/10/18 20:13:55 pk Exp $
+#	$NetBSD: Makefile,v 1.22 1999/07/18 07:22:36 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,6 @@ DISKTYPEARG=	-t ${DISKTYPE}
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
-ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-			-o root -g wheel -m ${NONBINMODE} 
 
 .ifndef DESTDIR
 all:
@@ -69,20 +67,10 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/miniroot-${REV}.fs \
-		> $(RELEASEDIR)/installation/miniroot/miniroot-${REV}.fs.gz
-.endif	# RELEASEDIR check
-.endif	# DESTDIR check
-
 clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.cro *.c
 
+.endif	# DESTDIR check
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1999/12/05 11:56:31 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 1999/07/08 18:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,6 +375,14 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
+
+#ifdef DDB
+	if (type == T_TRACE || type == T_BREAKPOINT) {
+		if (kdb_trap(type, (db_regs_t *)&frame))
+			return;
+	}
+#endif
+
 	switch (type) {
 #ifdef DEBUG
 	dopanic:
@@ -508,15 +516,14 @@ trap(type, code, v, frame)
 	 * NetBSD and HP-UX traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
-	 *
-	 * XXX: We should never get kernel-mode T_TRAP15
-	 * XXX: because locore.s now gives them special treatment.
 	 */
+	case T_TRACE:
 	case T_TRAP15:
 		frame.f_sr &= ~PSL_T;
-		return;
-
+		i = SIGTRAP;
+		break;
 	case T_TRACE|T_USER:
+	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -528,9 +535,6 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
-		/* FALLTHROUGH */
-	case T_TRACE:		/* tracing a trap instruction */
-	case T_TRAP15|T_USER:
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -644,7 +648,7 @@ trap(type, code, v, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = clrnd(btoc(USRSTACK-(unsigned)va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -759,8 +763,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE,
-			    VM_PROT_WRITE|PMAP_WIRED);
+			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
+			    VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.10 1999/11/26 12:39:43 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.9.8.1 1999/12/21 23:19:52 wrstuden Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -63,7 +63,7 @@ ata_get_params(drvp, flags, prms)
 	u_int8_t flags;
 	struct ataparams *prms;
 {
-	char tb[DEV_BSIZE];
+	char tb[WD_DEF_BSIZE];
 	struct wdc_command wdc_c;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -73,7 +73,7 @@ ata_get_params(drvp, flags, prms)
 
 	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
 
-	memset(tb, 0, DEV_BSIZE);
+	memset(tb, 0, WD_DEF_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
 	memset(&wdc_c, 0, sizeof(struct wdc_command));
 
@@ -88,21 +88,14 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_pmask = WDCS_DRQ;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
-		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
-	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_exec_command failed\n"),
-		    DEBUG_FUNCS|DEBUG_PROBE);
+	wdc_c.bcount = WD_DEF_BSIZE;
+	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
 		return CMD_AGAIN;
-	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_c.flags=0x%x\n",
-		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */

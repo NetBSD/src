@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.20 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: route.h,v 1.19 1999/07/30 10:35:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -185,8 +185,7 @@ struct rt_msghdr {
 #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
-#define RTM_OIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
-#define RTM_IFINFO	0xf	/* iface going up/down etc. */
+#define RTM_IFINFO	0xe	/* iface going up/down etc. */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1999/11/13 00:30:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1999/08/18 03:59:37 chs Exp $	*/
 
 /*
  *
@@ -1857,7 +1857,7 @@ pmap_map(va, spa, epa, prot)
 	int prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -3121,20 +3121,20 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
  * => we set pmap => pv_head locking
  */
 
-int
-pmap_enter(pmap, va, pa, prot, flags)
+void
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	int flags;
+	boolean_t wired;
+	vm_prot_t access_type;
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
@@ -3292,8 +3292,6 @@ enter_now:
 
 	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
 		cinv(ia, 0);
-
-	return (KERN_SUCCESS);
 }
 
 /*

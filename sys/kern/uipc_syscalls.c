@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.49 1999/11/05 11:48:57 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.45 1999/07/01 08:12:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -177,11 +177,10 @@ sys_accept(p, v, retval)
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) anamelen;
 	} */ *uap = v;
-	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct mbuf *nam;
 	unsigned int namelen;
-	int error, s, fd;
+	int error, s, tmpfd;
 	register struct socket *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
@@ -193,7 +192,7 @@ sys_accept(p, v, retval)
 		return (EFAULT);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(fdp, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
@@ -229,11 +228,11 @@ sys_accept(p, v, retval)
 		return (error);
 	}
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp, &fd)) != 0) {
+	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
 		splx(s);
 		return (error);
 	}
-	*retval = fd;
+	*retval = tmpfd;
 	{ struct socket *aso = so->so_q.tqh_first;
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");
@@ -245,7 +244,8 @@ sys_accept(p, v, retval)
 	fp->f_data = (caddr_t)so;
 	FILE_UNUSE(fp, p);
 	nam = m_get(M_WAIT, MT_SONAME);
-	if ((error = soaccept(so, nam)) == 0 && SCARG(uap, name)) {
+	(void) soaccept(so, nam);
+	if (SCARG(uap, name)) {
 		if (namelen > nam->m_len)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
@@ -254,11 +254,8 @@ sys_accept(p, v, retval)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
-	}
-	/* if an error occured, free the file descriptor */
-	if (error) {
-		fdp->fd_ofiles[fd] = 0;
-		ffree(fp);
+		if (error != 0)
+			(void) closef(fp, p);
 	}
 	m_freem(nam);
 	splx(s);

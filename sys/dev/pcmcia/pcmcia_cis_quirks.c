@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.5 1999/10/11 17:50:21 thorpej Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.4 1999/08/14 13:43:02 tron Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -90,48 +90,6 @@ static struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_3ccfem556bi_func0 = {
-	0,			/* function number */
-	PCMCIA_FUNCTION_NETWORK,
-	0x07,			/* last cfe number */
-	0x1000,			/* ccr_base */
-	0x267,			/* ccr_mask */
-};
-
-static struct pcmcia_config_entry pcmcia_3ccfem556bi_func0_cfe0 = {
-	0x07,			/* cfe number */
-	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
-	PCMCIA_IFTYPE_IO,
-	1,			/* num_iospace */
-	5,			/* iomask */
-	{ { 0x0020, 0 } },	/* iospace */
-	0xffff,			/* irqmask */
-	0,			/* num_memspace */
-	{ },			/* memspace */
-	0,			/* maxtwins */
-};
-
-static struct pcmcia_function pcmcia_3ccfem556bi_func1 = {
-	1,			/* function number */
-	PCMCIA_FUNCTION_SERIAL,
-	0x27,			/* last cfe number */
-	0x1100,			/* ccr_base */
-	0x277,			/* ccr_mask */
-};
-
-static struct pcmcia_config_entry pcmcia_3ccfem556bi_func1_cfe0 = {
-	0x27,			/* cfe number */
-	PCMCIA_CFE_IO8 | PCMCIA_CFE_IRQLEVEL,
-	PCMCIA_IFTYPE_IO,
-	1,			/* num_iospace */
-	3,			/* iomask */
-	{ { 0x0008, 0 } },	/* iospace */
-	0xffff,			/* irqmask */
-	0,			/* num_memspace */
-	{ },			/* memspace */
-	0,			/* maxtwins */
-};
-
 static struct pcmcia_function pcmcia_sveclancard_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
@@ -163,12 +121,6 @@ static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
-	  PCMCIA_CIS_INVALID,
-	  &pcmcia_3ccfem556bi_func0, &pcmcia_3ccfem556bi_func0_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
-	  PCMCIA_CIS_INVALID,
-	  &pcmcia_3ccfem556bi_func1, &pcmcia_3ccfem556bi_func1_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_SVEC_LANCARD,
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
 };

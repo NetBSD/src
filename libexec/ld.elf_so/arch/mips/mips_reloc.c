@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.3 1999/11/07 08:01:51 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.1 1998/03/25 04:12:32 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,6 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -61,11 +60,11 @@ _rtld_relocate_mips_got(obj)
 		def = _rtld_find_symdef(_rtld_objlist, 0,
 		    sym->st_name + obj->strtab, obj, &defobj, true);
 		if (def != NULL) {
-			if (sym->st_shndx == SHN_UNDEF) {
+			if (sym->st_shndx == Elf_eshn_undefined) {
 #if 0	/* These don't seem to work? */
 
-				if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-				    STT_FUNC) {
+				if (ELF_SYM_TYPE(sym->st_info) ==
+				    Elf_estt_func) {
 					if (sym->st_value)
 						*got = sym->st_value +
 						    (Elf_Word)obj->relocbase;
@@ -76,17 +75,16 @@ _rtld_relocate_mips_got(obj)
 #endif
 					*got = def->st_value +
 					    (Elf_Word)defobj->relocbase;
-			} else if (sym->st_shndx == SHN_COMMON) {
+			} else if (sym->st_shndx == Elf_eshn_common) {
 				*got = def->st_value +
 				    (Elf_Word)defobj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_FUNC &&
-			    *got != sym->st_value) {
+			} else if (ELF_SYM_TYPE(sym->st_info) == Elf_estt_func
+			    && *got != sym->st_value) {
 				*got += (Elf_Word)obj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
-			    STB_GLOBAL) {
-				if (sym->st_shndx == SHN_ABS)
+			} else if (ELF_SYM_TYPE(sym->st_info) ==
+			    Elf_estt_section && ELF_SYM_BIND(sym->st_info) ==
+			    Elf_estb_global) {
+				if (sym->st_shndx == Elf_eshn_absolute)
 					*got = sym->st_value +
 					    (Elf_Word)obj->relocbase;
 				/* else SGI stuff ignored */

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.29 1999/11/08 03:00:32 mhitch Exp $ */
+/* $NetBSD: tcds.c,v 1.28 1999/09/22 03:32:42 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.29 1999/11/08 03:00:32 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.28 1999/09/22 03:32:42 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -574,7 +574,7 @@ tcds_params(sc, chip, idp, fastp)
 	u_int32_t ids;
 
 #ifdef __alpha__
-	if (sc->sc_flags & TCDSF_BASEBOARD) {
+	if (sc->sc_flags && TCDSF_BASEBOARD) {
 		extern u_int8_t dec_3000_scsiid[], dec_3000_scsifast[];
 
 		id = dec_3000_scsiid[chip];

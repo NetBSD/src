@@ -1,5 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.19 1999/11/18 23:32:31 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.14 1999/09/15 13:57:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +39,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#if defined(__FreeBSD__)
+#include <sys/bus.h>
+#endif
  
 #include <dev/usb/usb.h>
 
@@ -50,12 +52,12 @@
 extern int usbdebug;
 #endif
 
-static struct usbd_quirk_entry {
+struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
 	u_int16_t bcdDevice;
 	struct usbd_quirks quirks;
-} usb_quirks[] = {
+} quirks[] = {
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
  { USB_VENDOR_INSIDEOUT,USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
    						    0x094, { UQ_SWAP_UNICODE}},
@@ -64,8 +66,6 @@ static struct usbd_quirk_entry {
  { USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1, 0x101, { UQ_NO_STRINGS }},
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_BAD_ADC }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_N48,   0x110, { UQ_MS_REVZ }},
- { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495,      0x000, { UQ_BAD_AUDIO }},
- { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { 0, 0, 0, { 0 } }
 };
 
@@ -77,7 +77,7 @@ usbd_find_quirk(d)
 {
 	struct usbd_quirk_entry *t;
 
-	for (t = usb_quirks; t->idVendor != 0; t++) {
+	for (t = quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == UGETW(d->idVendor) &&
 		    t->idProduct == UGETW(d->idProduct) &&
 		    t->bcdDevice == UGETW(d->bcdDevice))

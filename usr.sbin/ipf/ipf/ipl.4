@@ -1,0 +1,139 @@
+.\"	$NetBSD: ipl.4,v 1.8 1999/03/22 18:43:57 garbled Exp $
+.\"
+.\" Copyright (c) 1997 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" (C)opyright 1993, 1994, 1995 by Darren Reed.
+.\"
+.\" The author accepts no responsibility for the use of this software and
+.\" provides it on an ``as is'' basis without express or implied warranty.
+.\"
+.\" Redistribution and use in source and binary forms are permitted
+.\" provided that this notice is preserved and due credit is given
+.\" to the original author and the contributors.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.\"
+.\" I hate legaleese, don't you ?
+.Dd January 5, 1997
+.Dt IPL 4
+.Os
+.Sh NAME
+.Nm ipl ,
+.Nm ipfilter
+.Nd IP filter software
+.Sh SYNOPSIS
+.Cd pseudo-device ipfilter
+.Sh DESCRIPTION
+The
+.Nm
+pseudo device's purpose is to provide an easy way to gather
+packet headers of packets you wish to log.  If a packet header is to be
+logged, the entire header is logged (including any IP options \- TCP/UDP
+options are not included when it calculates header size) or not at all.
+The packet contents are also logged after the header.  If the log reader
+is busy or otherwise unable to read log records, upto IPLLOGSIZE (8192 is the
+default) bytes of data are stored.
+.Pp
+Prepending every packet header logged is a structure containing information
+relevant to the packet following and why it was logged.  The structure's
+format is as follows:
+.Lp
+.nf
+/*
+ * Log structure.  Each packet header logged is prepended by one of these.
+ * Following this in the log records read from the device will be an ipflog
+ * structure which is then followed by any packet data.
+ */
+typedef struct iplog    {
+        u_long  ipl_sec;
+        u_long  ipl_usec;
+        u_int   ipl_len;
+        u_int   ipl_count;
+        size_t  ipl_dsize;
+        struct  iplog   *ipl_next;
+} iplog_t;
+
+
+typedef struct  ipflog  {
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+        u_char  fl_ifname[IFNAMSIZ];
+#else
+        u_int   fl_unit;
+        u_char  fl_ifname[4];
+#endif
+.Lp
+        u_char  fl_plen;        /* extra data after hlen */
+        u_char  fl_hlen;        /* length of IP headers saved */
+        u_short fl_rule;        /* assume never more than 64k rules, total */
+        u_32_t  fl_flags;
+} ipflog_t;
+
+.fi
+.Pp
+When reading from the
+.Nm
+device, it is necessary to call
+.Xr read 2
+with a buffer big enough to hold at least 1 complete log record - reading of
+partial log records is not supported.
+.Pp
+If the packet contents is more then 128 bytes when \fBlog body\fP is used,
+then only 128 bytes of the packet contents is logged.
+.Pp
+Although it is only possible to read from the
+.Nm
+device, opening it for writing is required when using an ioctl which changes
+any kernel data.
+.Pp
+The ioctls which are loaded with this device can be found under
+.Xr ipf 4 .
+The ioctls which are for use with logging and don't affect the filter are:
+.Lp
+.nf
+        ioctl(fd, SIOCIPFFB, int *)
+        ioctl(fd, FIONREAD, int *)
+.fi
+.Pp
+The SIOCIPFFB ioctl flushes the log buffer and returns the number of bytes
+flushed.  FIONREAD returns the number of bytes currently used for storing
+log data.  If IPFILTER_LOG is not defined when compiling, SIOCIPFFB is not
+available and FIONREAD will return but not do anything.
+.Pp
+There is currently no support for non-blocking IO with this device, meaning
+all read operations should be considered blocking in nature (if there is no
+data to read, it will sleep until some is made available).
+.Pp
+This pseudo-device includes the PFIL_HOOKS option.
+.Sh SEE ALSO
+.Xr ipf 4
+.Sh BUGS
+Packet headers are dropped when the internal buffer (static size) fills.
+.Sh FILES
+.Pa /dev/ipl
+device for ioctl and packet loging.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.21 1999/12/04 22:17:43 tron Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.18 1998/10/07 23:05:09 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -73,25 +73,21 @@ linux_sys_signal(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_signal_args /* {
-		syscallarg(int) signum;
+		syscallarg(int) sig;
 		syscallarg(linux_handler_t) handler;
 	} */ *uap = v;
 	struct sigaction nbsa, obsa;
-	int error, sig;
-
-	*retval = -1;
-	sig = SCARG(uap, signum);
-	if (sig < 0 || sig >= LINUX__NSIG)
-		return (EINVAL);
+	int error;
 
 	nbsa.sa_handler = SCARG(uap, handler);
 	sigemptyset(&nbsa.sa_mask);
 	nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
-	error = sigaction1(p, linux_to_native_sig[sig],
+	error = sigaction1(p, linux_to_native_sig[SCARG(uap, sig)],
 	    &nbsa, &obsa);
-	if (error == 0)
-		*retval = (int)obsa.sa_handler;
-	return (error);
+	if (error)
+		return (error);
+	*retval = (int)obsa.sa_handler;
+	return (0);
 }
 
 
@@ -171,4 +167,3 @@ linux_sys_pause(p, v, retval)
 
 	return (sigsuspend1(p, 0));
 }
-

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: le.4,v 1.6 1999/12/15 23:44:53 abs Exp $
+.\"	$NetBSD: le.4,v 1.5 1999/04/06 20:24:49 pk Exp $
 .\"
 .Dd August 6, 1996
 .Dt LE 4 pmax
@@ -35,11 +35,11 @@
 .Sh NAME
 .Nm le
 .Nd
-DECstation AMD 7990 LANCE Ethernet interface
+DECstation AMD 7990 LANCE ethernet interface
 .Sh SYNOPSIS
-.Cd "le* at mainbus?	with le_pmax"	(3100 baseboard)
-.Cd "le* at tc?	with le_tc"		(5000/200 baseboard)
-.Cd "le* at ioasic?  with le_ioasic"	(ioasic baseboard)
+.Cd "le? at mainbus	with le_pmax"		(3100 baseboard)
+.Cd "le*? at tc	with le_tc"		(5000/200 baseboard)
+.Cd "le? at ioasic  with le_ioasic"	(ioasic baseboard)
 .Cd "le* at tc?	with le_tc"		(TC option cards)
 .Sh DESCRIPTION
 The

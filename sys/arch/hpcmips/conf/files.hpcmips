@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.11 1999/12/12 17:11:20 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -33,13 +33,11 @@ file arch/hpcmips/hpcmips/cpu.c		cpu
 
 # CPU support option headers
 defopt	VR41X1
-defopt	TX39XX
 
 #
 # CPU-dependent files
 #
-file	arch/hpcmips/vr/vr.c		vr41x1	# NEC VR4000 series
-file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
+file	arch/hpcmips/vr/vr.c	vr41x1	# NEC VR4000 series
 
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/conf.c
@@ -48,26 +46,21 @@ file	arch/hpcmips/hpcmips/platid.c
 file	arch/hpcmips/hpcmips/platid_mask.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/bus_space.c
-#file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/disksubr.c	disk
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
+file	arch/hpcmips/dev/findcons.c
 file	arch/hpcmips/dev/bicons.c
 file	arch/hpcmips/dev/bifont.c
 defpseudo	biconsdev
 file	arch/hpcmips/dev/biconsdev.c	biconsdev	needs-count
 
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
 #
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
-#device	fb: wsemuldisplaydev, wsrasteremulops
-device	fb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
+device	fb: wsemuldisplaydev, wsrasteremulops
 attach	fb at mainbus
 file	arch/hpcmips/dev/fb.c           fb needs-flag
 
@@ -81,7 +74,7 @@ include "dev/isa/files.isa"
 #
 device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1] }
 attach vrip at mainbus
-file arch/hpcmips/vr/vrip.c		vrip needs-flag
+file arch/hpcmips/vr/vrip.c		vrip
 
 device vrrtc
 attach vrrtc at vrip
@@ -108,154 +101,17 @@ file arch/hpcmips/isa/isa_machdep.c		vrisab
 
 device vrbcu
 attach vrbcu at vrip
-file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
+file arch/hpcmips/vr/bcu_vrip.c			vrbcu
 
-device vrkiu: wskbddev
+device vrkiu
 attach vrkiu at vrip
-file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
-#
-#	XXX files.pckbc XXX
-#
-device	pckbd: wskbddev
-attach	pckbd at pckbc
-file	dev/pckbc/pckbd.c		pckbd	needs-flag
-file	dev/pckbc/wskbdmap_mfii.c		pckbd | vrkiu | skbd
-defopt	PCKBD_LAYOUT
+file arch/hpcmips/vr/vrkiu.c			vrkiu
 
 device vrpmu
 attach vrpmu at vrip
-file arch/hpcmips/vr/vrpmu.c			vrpmu needs-flag
+file arch/hpcmips/vr/vrpmu.c			vrpmu
 
-device vrdsu
-attach vrdsu at vrip
-file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
-
-#
-#	TOSHIBA TX3912/3922
-#
-defopt TX39_DEBUG
-defopt TX39_WATCHDOGTIMER
-defopt TX39ICUDEBUG
-defopt TX39CLKDEBUG
-defopt TX39BIUDEBUG
-defopt TX39IODEBUG
-defopt TX39POWERDEBUG
-defopt TX39UARTDEBUG
-defopt IT8368DEBUG
-defopt USE_POLL
-
-device txsim { }
-device txcsbusif {[platform = -1]}
-device txcomif {[slot = -1]}
-
-attach txsim at mainbus
-file arch/hpcmips/tx/txsim.c		txsim
-
-device tx39biu: txcsbusif
-attach tx39biu at txsim
-file arch/hpcmips/tx/tx39biu.c		tx39biu
-
-device txcsbus {[regcs=-1], [regcsbase=0], [regcssize=-1], [regcswidth=-1], [iocs=-1], [iocsbase=0], [iocssize=-1], [iocswidth=-1], [memcs=-1], [memcsbase=0], [memcssize=-1], [memcswidth=-1], [irq1=-1], [irq2=-1], [irq3=-1]}
-attach txcsbus at txcsbusif
-file arch/hpcmips/tx/txcsbus.c		txcsbus
-
-device tx39icu
-attach tx39icu at txsim
-file arch/hpcmips/tx/tx39icu.c		tx39icu
-
-device tx39power
-attach tx39power at txsim
-file arch/hpcmips/tx/tx39power.c	tx39power
-
-device tx39clock
-attach tx39clock at txsim
-file arch/hpcmips/tx/tx39clock.c	tx39clock
-
-device tx3912video: mainbus	# XXX crazy XXX
-attach tx3912video at txsim
-file arch/hpcmips/tx/tx3912video.c	tx3912video
-
-device tx39io
-attach tx39io at txsim
-file arch/hpcmips/tx/tx39io.c		tx39io
-
-device tx39uart: txcomif
-attach tx39uart at txsim
-file arch/hpcmips/tx/tx39uart.c		tx39uart	needs-flag
-
-device txcom
-attach txcom at txcomif
-file arch/hpcmips/tx/txcom.c		txcom
-
-#	ITE 8368E PCMCIA controller
-device it8368e: pcmciabus
-attach it8368e at txcsbus
-file arch/hpcmips/dev/it8368.c	it8368e
-
-device skbdif {}
-#	PHILIPS 74ALVC16241 buffer driver (keyboard)
-device p7416buf: skbdif
-attach p7416buf at txcsbus
-file arch/hpcmips/dev/p7416buf.c	p7416buf	needs-flag
-
-#	MITUBISHI M38813 keryboard controller
-device m38813c: skbdif
-attach m38813c at txcsbus
-file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
-
-#	TOSHIBA TC5165BTFS buffer driver (keyboard)
-device tc5165buf: skbdif
-attach tc5165buf at txcsbus
-file arch/hpcmips/dev/tc5165buf.c	tc5165buf	needs-flag
-
-#	Simple keyboard interface for wskbd
-device skbd: wskbddev
-attach skbd at skbdif
-file arch/hpcmips/dev/skbd.c		skbd
-
-
-#	TOSHIBA TC6358E(Plum2)
-device plumif {}
-device plum: plumif
-attach plum at txcsbus
-file arch/hpcmips/dev/plum.c		plum
-
-device plumicu
-attach plumicu at plumif
-file arch/hpcmips/dev/plumicu.c		plumicu
-
-device plumpower
-attach plumpower at plumif
-file arch/hpcmips/dev/plumpower.c	plumpower
-
-device plumvideo: mainbus	# XXX crazy XXX
-attach plumvideo at plumif
-file arch/hpcmips/dev/plumvideo.c	plumvideo
-
-device plumpcmcia: pcmciabus
-attach plumpcmcia at plumif
-file arch/hpcmips/dev/plumpcmcia.c	plumpcmcia
-
-device plumiobusif {[platform = -1], [slot = -1]}
-device plumiobus: plumiobusif
-attach plumiobus at plumif
-file arch/hpcmips/dev/plumiobus.c	plumiobus
-
-device plumisab: isabus
-attach plumisab at plumiobusif
-file arch/hpcmips/isa/plumisa_machdep.c	plumisab
-
-# OHCI USB controller
-#attach	ohci at plumif with plumohci
-#file	arch/hpcmips/dev/plumohci.c	plumohci
-
-#device txisab: isabus
-#attach txisab at txcsbus
-#file arch/hpcmips/isa/txisa_machdep.c	txisab
-
-#
-#	Real-time clock (not optional)
-#
+# Real-time clock (not optional)
 file	arch/hpcmips/hpcmips/clock.c
 file	dev/clock_subr.c
 
@@ -306,5 +162,3 @@ file	arch/hpcmips/vr/com_vrip.c			com_vrip
 # Memory Disk for boot tape
 file arch/hpcmips/dev/md_root.c		memory_disk_hooks
 major	{md = 6}
-
-#include "dev/usb/files.usb"

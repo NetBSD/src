@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.32 1999/12/15 05:49:33 explorer Exp $
+$NetBSD: isapnpdevs,v 1.28 1999/08/24 12:46:55 rh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@ devcompat	aha	PNP00A0		0	Adaptec AHA-1542CP
  * aic
  */
 devlogic	aic	ADP1520		0	Adaptec AHA-1520B
-devlogic	aic	ADP1502		0	Adaptec AHA-1502P
 devlogic	aic	ADP1505		0	Adaptec AVA-1505A
 devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
 
@@ -88,7 +87,6 @@ devlogic	com	CIR3000		0	Cirrus Logic V43
 devlogic	com	MOT0000		0	Motorola ModemSurfr
 devlogic	com	SMM00C1		0	Leopard 56k PnP
 devlogic	com	SUP1650		0	Supra 336i Sp Intl
-devlogic	com	GVC0505		0	GVC 56k Faxmodem
 devcompat	com	PNP0500		0	Generic 8250/16450
 devcompat	com	PNP0501		0	Generic 16550A
 
@@ -113,7 +111,6 @@ devlogic	ess	ESS1869		0	ESS1869
 devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
 devlogic	joy	CSC0001		0	CS4235
 devlogic	joy	CSCA801		0	Terratec EWS64XL
-devlogic	joy	CTL7001		0	Creative Awe64
 devlogic	joy	CTL7002		0	Creative Vibra16CL
 devlogic	joy	ESS0001		0	ESS1868
 devlogic	joy	OPT0001		0	OPTi Audio 16
@@ -186,7 +183,6 @@ devcompat	wdc	PNP0600		0	Western Digital Compatible Controller
  */
 devlogic	wss	AZT0001		1	Aztech AZT2320 AUDIO
 devlogic	wss	CSC0000		0	Windows Sound System
-devlogic	wss	CSC0100		0	CS4235 CODEC
 devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
 devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
 devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1999/11/10 16:49:38 drochner Exp $ */
+/*	$NetBSD: util.c,v 1.4 1998/12/30 19:15:11 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,11 +85,7 @@ static struct nameint dpytype_tab[] = {
 };
 
 static struct nameint kbdenc_tab[] = {
-	KB_ENCTAB
-};
-
-static struct nameint kbdvar_tab[] = {
-	KB_VARTAB
+	KB_NAMETAB
 };
 
 static struct field *field_tab;
@@ -175,8 +171,6 @@ pr_field(f, sep)
 	char *sep;
 {
 	char *p;
-	u_int flags;
-	int i;
 
 	if (sep)
 		printf("%s%s", f->name, sep);
@@ -205,14 +199,10 @@ pr_field(f, sep)
 			     kbdenc_tab, TABLEN(kbdenc_tab));
 		printf("%s", p);
 
-		flags = KB_VARIANT(*((u_int *) f->valp));
-		for (i = 0; i < 32; i++) {
-			if (!(flags & (1 << i)))
-				continue;
-			p = int2name(flags & (1 << i), 1,
-				     kbdvar_tab, TABLEN(kbdvar_tab));
+		p = int2name(KB_VARIANT(*((u_int *) f->valp)), 0,
+			     kbdenc_tab, TABLEN(kbdenc_tab));
+		if (p)
 			printf(".%s", p);
-		}
 		break;
 	case FMT_KBMAP:
 		print_kmap((struct wskbd_map_data *) f->valp);
@@ -255,17 +245,13 @@ rd_field(f, val, merge)
 			errx(1, "%s: not a valid encoding", val);
 		*((u_int *) f->valp) = i;
 
-		while (p) {
-			val = p;
-			p = strchr(p, '.');
-			if (p != NULL)
-				*p++ = '\0';
-			i = name2int(val, kbdvar_tab, TABLEN(kbdvar_tab));
-			if (i == -1)
-				errx(1, "%s: not a valid variant", val);
-			*((u_int *) f->valp) |= i;
-		}
-		printf("enc: %x\n", *((u_int *) f->valp));
+		if (p == NULL)
+			break;
+
+		i = name2int(p, kbdenc_tab, TABLEN(kbdenc_tab));
+		if (i == -1)
+			errx(1, "%s: not a valid variant", val);
+		*((u_int *) f->valp) |= i;
 		break;
 	case FMT_KBMAP:
 		if (! merge)

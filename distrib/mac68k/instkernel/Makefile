@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 20:48:07 fredb Exp $
+#	$NetBSD: Makefile,v 1.1 1999/03/26 08:34:37 ender Exp $
 
 SUBDIR=	ramdisk instkernel 
-
-TARGETS+= release
 
 .include <bsd.subdir.mk>

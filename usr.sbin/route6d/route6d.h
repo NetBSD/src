@@ -1,7 +1,7 @@
-/*	$NetBSD: route6d.h,v 1.4 1999/12/16 05:55:54 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.3 1999/09/03 04:04:22 itojun Exp $	*/
 
 /*
- * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.h,v 1.2 1999/12/16 05:38:44 jinmei Exp
+ * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.h,v 1.1.1.1 1999/08/08 23:31:35 itojun Exp
  */
 
 /*
@@ -37,7 +37,7 @@
 #define	ROUTE6D_CONF	"/usr/local/v6/etc/route6d.conf"
 */
 
-#define	ROUTE6D_DUMP	"/var/run/route6d_dump"
+#define	ROUTE6D_DUMP	"/var/tmp/route6d_dump"
 #define	ROUTE6D_PID	"/var/run/route6d.pid"
 
 #define	RIP6_VERSION	1

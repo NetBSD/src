@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1998/06/01 19:31:05 tsubai Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2.20.1 1999/12/21 23:16:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -47,7 +47,7 @@
 
 char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		       register struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
+		       struct cpu_disklabel *osdep, int bshift));
 
 /*
  * Attempt to read a disk label from a device
@@ -58,11 +58,12 @@ char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
@@ -77,6 +78,8 @@ readdisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -99,6 +102,7 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+out:
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
@@ -155,11 +159,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -174,6 +179,8 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.14 1999/10/20 15:22:25 enami Exp $	*/
+/*	$NetBSD: atavar.h,v 1.13.12.1 1999/12/21 23:19:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -146,6 +146,9 @@ int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
 #define WDC_QUEUED   0x02
 #define WDC_TRY_AGAIN 0x03
 
+#define	WD_DEF_BSHIFT	9
+#define	WD_DEF_BSIZE	(1 << WD_DEF_BSHIFT)
+
 void wdc_probe_caps __P((struct ata_drive_datas*));
 int  wdc_downgrade_mode __P((struct ata_drive_datas*));
 
@@ -153,7 +156,6 @@ void wdc_reset_channel __P((struct ata_drive_datas *));
 
 int wdc_ata_addref __P((struct ata_drive_datas *));
 void wdc_ata_delref __P((struct ata_drive_datas *));
-void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.17 1999/11/20 00:38:00 thorpej Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.15 1998/02/10 01:27:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,7 +44,7 @@
 struct	udpiphdr {
 	struct 	ipovly ui_i;		/* overlaid ip structure */
 	struct	udphdr ui_u;		/* udp header */
-} __attribute__((__packed__));
+};
 #define	ui_x1		ui_i.ih_x1
 #define	ui_pr		ui_i.ih_pr
 #define	ui_len		ui_i.ih_len
@@ -56,17 +56,17 @@ struct	udpiphdr {
 #define	ui_sum		ui_u.uh_sum
 
 struct	udpstat {
-					/* input statistics: */
-	u_quad_t udps_ipackets;		/* total input packets */
-	u_quad_t udps_hdrops;		/* packet shorter than header */
-	u_quad_t udps_badsum;		/* checksum error */
-	u_quad_t udps_badlen;		/* data length larger than packet */
-	u_quad_t udps_noport;		/* no socket on port */
-	u_quad_t udps_noportbcast;	/* of above, arrived as broadcast */
-	u_quad_t udps_fullsock;		/* not delivered, input socket full */
-	u_quad_t udps_pcbhashmiss;	/* input packets missing pcb hash */
-					/* output statistics: */
-	u_quad_t udps_opackets;		/* total output packets */
+				/* input statistics: */
+	u_long	udps_ipackets;		/* total input packets */
+	u_long	udps_hdrops;		/* packet shorter than header */
+	u_long	udps_badsum;		/* checksum error */
+	u_long	udps_badlen;		/* data length larger than packet */
+	u_long	udps_noport;		/* no socket on port */
+	u_long	udps_noportbcast;	/* of above, arrived as broadcast */
+	u_long	udps_fullsock;		/* not delivered, input socket full */
+	u_long	udps_pcbhashmiss;	/* input packets missing pcb hash */
+				/* output statistics: */
+	u_long	udps_opackets;		/* total output packets */
 };
 
 /*

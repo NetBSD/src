@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.7 1999/12/02 05:08:16 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.5 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,7 +45,7 @@
 #include <netkey/keyv2.h>
 #include <netkey/keydb.h>
 
-#ifdef _KERNEL
+#ifdef KERNEL
 
 /* Security Policy Data Base */
 struct secpolicy {
@@ -82,7 +82,7 @@ struct ipsecrequest {
 	struct secpolicy *sp;	/* back pointer to SP */
 };
 
-#endif /*_KERNEL*/
+#endif /*KERNEL*/
 
 #define	IPSEC_MODE_TRANSPORT	0
 #define	IPSEC_MODE_TUNNEL	1
@@ -108,26 +108,26 @@ struct ipsecrequest {
 
 /* statistics for ipsec processing */
 struct ipsecstat {
-	u_quad_t in_success; /* succeeded inbound process */
-	u_quad_t in_polvio;  /* security policy violation for inbound process */
-	u_quad_t in_nosa;    /* inbound SA is unavailable */
-	u_quad_t in_inval;   /* inbound processing failed due to EINVAL */
-	u_quad_t in_badspi;   /* failed getting a SPI */
-	u_quad_t in_ahreplay; /* AH replay check failed */
-	u_quad_t in_espreplay; /* ESP replay check failed */
-	u_quad_t in_ahauthsucc; /* AH authentication success */
-	u_quad_t in_ahauthfail; /* AH authentication failure */
-	u_quad_t in_espauthsucc; /* ESP authentication success */
-	u_quad_t in_espauthfail; /* ESP authentication failure */
-	u_quad_t in_esphist[SADB_EALG_MAX];
-	u_quad_t in_ahhist[SADB_AALG_MAX];
-	u_quad_t out_success; /* succeeded outbound process */
-	u_quad_t out_polvio;  /* security policy violation for outbound process */
-	u_quad_t out_nosa;    /* outbound SA is unavailable */
-	u_quad_t out_inval;   /* outbound process failed due to EINVAL */
-	u_quad_t out_noroute; /* there is no route */
-	u_quad_t out_esphist[SADB_EALG_MAX];
-	u_quad_t out_ahhist[SADB_AALG_MAX];
+	u_long in_success;  /* succeeded inbound process */
+	u_long in_polvio;   /* security policy violation for inbound process */
+	u_long in_nosa;     /* inbound SA is unavailable */
+	u_long in_inval;    /* inbound processing failed due to EINVAL */
+	u_long in_badspi;   /* failed getting a SPI */
+	u_long in_ahreplay; /* AH replay check failed */
+	u_long in_espreplay; /* ESP replay check failed */
+	u_long in_ahauthsucc; /* AH authentication success */
+	u_long in_ahauthfail; /* AH authentication failure */
+	u_long in_espauthsucc; /* ESP authentication success */
+	u_long in_espauthfail; /* ESP authentication failure */
+	u_long in_esphist[SADB_EALG_MAX];
+	u_long in_ahhist[SADB_AALG_MAX];
+	u_long out_success; /* succeeded outbound process */
+	u_long out_polvio;  /* security policy violation for outbound process */
+	u_long out_nosa;    /* outbound SA is unavailable */
+	u_long out_inval;   /* outbound process failed due to EINVAL */
+	u_long out_noroute; /* there is no route */
+	u_long out_esphist[SADB_EALG_MAX];
+	u_long out_ahhist[SADB_AALG_MAX];
 };
 
 /*
@@ -209,7 +209,7 @@ struct ipsecstat {
 	&ip6_ipsec_ecn, \
 }
 
-#ifdef _KERNEL
+#ifdef KERNEL
 struct ipsec_output_state {
 	struct mbuf *m;
 	struct route *ro;
@@ -338,14 +338,14 @@ extern int ipsec_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 extern int ipsec6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif /* __bsdi__ || __NetBSD__ */
 
-#endif /*_KERNEL*/
+#endif /*KERNEL*/
 
-#ifndef _KERNEL
+#ifndef KERNEL
 extern int ipsec_get_policylen(char *reqstr);
 extern int ipsec_set_policy(char *buf, int len, char *reqstr);
 extern char *ipsec_dump_policy(char *buf, char *delimiter);
 
 extern char *ipsec_strerror(void);
-#endif /*!_KERNEL*/
+#endif /*!KERNEL*/
 
 #endif /*_NETINET6_IPSEC_H_*/

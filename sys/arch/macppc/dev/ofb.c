@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.10 1999/12/06 19:25:58 drochner Exp $	*/
+/*	$NetBSD: ofb.c,v 1.9 1999/03/24 05:51:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -93,8 +93,7 @@ static int ofb_mmap __P((void *, off_t, int));
 static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void ofb_free_screen __P((void *, void *));
-static int ofb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static void ofb_show_screen __P((void *, void *));
 
 struct wsdisplay_accessops ofb_accessops = {
 	ofb_ioctl,
@@ -354,16 +353,11 @@ ofb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-int
-ofb_show_screen(v, cookie, waitok, cb, cbarg)
+void
+ofb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
 {
-
-	return (0);
 }
 
 int

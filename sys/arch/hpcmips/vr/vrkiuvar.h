@@ -1,8 +1,11 @@
-/*	$NetBSD: vrkiuvar.h,v 1.2 1999/10/24 08:37:30 takemura Exp $	*/
+/*	$NetBSD: vrkiuvar.h,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999 SASAKI Takesi All rights reserved.
+ * Copyright (c) 1999 SASAKI Takesi
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * All rights reserved.
+ *
+ * This code is a part of the PocketBSD.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,5 +37,18 @@
  *
  */
 
+struct vrkiu_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	void *sc_handler;
+	unsigned short keystat[12];	/* key status */
+
+	int k_sft:1, k_alt:1, k_ctrl:1;
+
+#define NKEYBUF 32
+	unsigned char keybuf[NKEYBUF];
+	int keybufhead, keybuftail;
+};
+
 extern int vrkiu_getc __P((void));
-extern int vrkiu_cnattach __P((bus_space_tag_t iot, int iobase));

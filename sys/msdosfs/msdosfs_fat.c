@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.31 1999/07/27 05:38:03 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.31.8.1 1999/12/21 23:20:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -223,7 +223,8 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), bsize,
+								NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -532,7 +533,8 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if ((error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), bsize, NOCRED,
+								&bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -615,7 +617,8 @@ fatchain(pmp, start, count, fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), bsize,
+								NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -856,7 +859,8 @@ freeclusterchain(pmp, cluster)
 		if (lbn != bn) {
 			if (bp)
 				updatefats(pmp, bp, lbn);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), bsize,
+								NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -929,7 +933,8 @@ fillinusemap(pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), bsize,
+								NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -1050,27 +1055,33 @@ extendfile(dep, count, bpp, ncp, flags)
 		 * cache.
 		 */
 		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
-
+	
 		if (flags & DE_CLEAR) {
 			while (got-- > 0) {
 				/*
 				 * Get the buf header for the new block of the file.
 				 */
 				if (dep->de_Attributes & ATTR_DIRECTORY)
-					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
+					bp = getblk(pmp->pm_devvp,
+						fsbtosb(pmp, cntobn(pmp, cn++)),
 						    pmp->pm_bpcluster, 0, 0);
 				else {
-					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
+					bp = getblk(DETOV(dep),
+					    fsbtosb(pmp, de_cn2bn(pmp, frcn++)),
 					    pmp->pm_bpcluster, 0, 0);
 					/*
 					 * Do the bmap now, as in msdosfs_write
 					 */
 					if (pcbmap(dep,
-					    de_bn2cn(pmp, bp->b_lblkno),
+					    fsbtosb(pmp,
+					    de_bn2cn(pmp, bp->b_lblkno)),
 					    &bp->b_blkno, 0, 0))
 						bp->b_blkno = -1;
 					if (bp->b_blkno == -1)
 						panic("extendfile: pcbmap");
+					else
+						bp->b_blkno = fsbtosb(pmp,
+								bp->b_blkno);
 				}
 				clrbuf(bp);
 				if (bpp) {

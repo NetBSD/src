@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 1999/12/04 21:21:16 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.8.20.1 1999/12/21 23:16:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,6 +89,10 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	CLSIZE		1
+#define	CLSIZELOG2	0
+
+/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
@@ -113,6 +117,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
+#include "opt_non_po2_blocks.h"
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
@@ -123,23 +128,30 @@
 #endif
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
+ * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/NBPG)
+#define	NKMEMCLUSTERS	(512*1024/CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)	((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)	((x) >> (PGSHIFT - (sh)))
 
 /* pages to bytes */
 #define	ctob(x)	((x) << PGSHIFT)
 #define btoc(x) (((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define dbtob(x)	((x) << DEV_BSHIFT)
+#if defined(LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Map a ``block device block'' to a file system block.

@@ -1,10 +1,10 @@
-/*	$NetBSD: path.c,v 1.4 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: path.c,v 1.3 1997/10/20 10:39:26 lukem Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
 
 /*
- *	Contains a routine to search a : separated list of
+ *	Contains a routine to search a : seperated list of
  *	paths (a la CDPATH) and make appropiate file names.
  *	Also contains a routine to simplify .'s and ..'s out of
  *	a path name.
@@ -35,7 +35,7 @@ int
 make_path(cwd, file, cdpathp, xsp, phys_pathp)
 	const char *cwd;
 	const char *file;
-	char	**cdpathp;	/* & of : separated list */
+	char	**cdpathp;	/* & of : seperated list */
 	XString	*xsp;
 	int	*phys_pathp;
 {
@@ -124,10 +124,10 @@ simplify_path(path)
 
 	if ((isrooted = ISROOTEDPATH(path)))
 		very_start++;
-#if defined (OS2) || defined (__CYGWIN__)
+#ifdef OS2
 	if (path[0] && path[1] == ':')	/* skip a: */
 		very_start += 2;
-#endif /* OS2 || __CYGWIN__ */
+#endif /* OS2 */
 
 	/* Before			After
 	 *  /foo/			/foo
@@ -137,18 +137,12 @@ simplify_path(path)
 	 *  ..				..
 	 *  ./foo			foo
 	 *  foo/../../../bar		../../bar
-	 * OS2 and CYGWIN:
+	 * OS2:
 	 *  a:/foo/../..		a:/
 	 *  a:.				a:
 	 *  a:..			a:..
 	 *  a:foo/../../blah		a:../blah
 	 */
-
-#ifdef __CYGWIN__
-       /* preserve leading double-slash on pathnames (for UNC paths) */
-       if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
-               very_start++;
-#endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {
 		/* treat multiple '/'s as one '/' */

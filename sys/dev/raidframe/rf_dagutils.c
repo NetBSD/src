@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6 1999/12/09 02:26:09 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1212,25 +1212,21 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
 		} else
-			if (raidPtr->parity_good == RF_RAID_DIRTY) {
-				/* Trust only the main disk */
+			if (dataQueueLength < mirrorQueueLength) {
 				usemirror = 0;
 			} else
-				if (dataQueueLength < mirrorQueueLength) {
-					usemirror = 0;
-				} else
-					if (mirrorQueueLength < dataQueueLength) {
-						usemirror = 1;
+				if (mirrorQueueLength < dataQueueLength) {
+					usemirror = 1;
+				} else {
+					/* queues are equal length. attempt
+					 * cleverness. */
+					if (SNUM_DIFF(dataQueue->last_deq_sector, data_pda->startSector)
+					    <= SNUM_DIFF(mirrorQueue->last_deq_sector, mirror_pda->startSector)) {
+						usemirror = 0;
 					} else {
-						/* queues are equal length. attempt
-						 * cleverness. */
-						if (SNUM_DIFF(dataQueue->last_deq_sector, data_pda->startSector)
-						    <= SNUM_DIFF(mirrorQueue->last_deq_sector, mirror_pda->startSector)) {
-							usemirror = 0;
-						} else {
-							usemirror = 1;
-						}
+						usemirror = 1;
 					}
+				}
 
 	if (usemirror) {
 		/* use mirror (parity) disk, swap params 0 & 4 */
@@ -1273,17 +1269,12 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	} else
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
-		} else 
-			if (raidPtr->parity_good == RF_RAID_DIRTY) {
-				/* Trust only the main disk */
+		} else
+			if (data_pda->startSector < (disks[rowData][colData].numBlocks / 2)) {
 				usemirror = 0;
-			} else
-				if (data_pda->startSector < 
-				    (disks[rowData][colData].numBlocks / 2)) {
-					usemirror = 0;
-				} else {
-					usemirror = 1;
-				}
+			} else {
+				usemirror = 1;
+			}
 
 	if (usemirror) {
 		/* use mirror (parity) disk, swap params 0 & 4 */

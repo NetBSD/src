@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.16 1999/10/22 10:43:12 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.15 1999/08/18 17:46:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.16 1999/10/22 10:43:12 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.15 1999/08/18 17:46:28 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,6 @@ static int uqd_oct __P((u_quad_t, char *, int, int));
 
 static int tar_nodir;			/* do not write dirs under old tar */
 int is_oldgnutar;			/* skip end-ofvolume checks */
-char *gnu_hack_string;			/* ././@LongLink hackery */
 
 /*
  * tar_endwr()
@@ -467,16 +466,8 @@ tar_rd(arcn, buf)
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	if (gnu_hack_string) {
-		int len = MAX(strlen(gnu_hack_string), PAXPATHLEN);
-		arcn->nlen = l_strncpy(arcn->name, gnu_hack_string, len);
-		arcn->name[len] = '\0';
-		free(gnu_hack_string);
-		gnu_hack_string = NULL;
-	} else {
-		arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(hd->name));
-		arcn->name[arcn->nlen] = '\0';
-	}
+	arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(hd->name));
+	arcn->name[arcn->nlen] = '\0';
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
@@ -520,21 +511,6 @@ tar_rd(arcn, buf)
 		 * we set something for printing only.
 		 */
 		arcn->sb.st_mode |= S_IFREG;
-		break;
-	case LONGLINKTYPE:
-		arcn->type = PAX_GLL;
-		/* FALLTHROUGH */
-	case LONGNAMETYPE:
-		/*
-		 * GNU long link/file; we tag these here and let the
-		 * pax internals deal with it -- too ugly otherwise.
-		 */
-		if (hd->linkflag != LONGLINKTYPE)
-			arcn->type = PAX_GLF;
-		arcn->pad = TAR_PAD(arcn->sb.st_size);
-		arcn->skip = arcn->sb.st_size;
-		arcn->ln_name[0] = '\0';
-		arcn->ln_nlen = 0;
 		break;
 	case AREGTYPE:
 	case REGTYPE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.65 1999/10/30 00:58:32 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63 1999/09/30 23:04:40 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -269,6 +269,8 @@ aicattach(sc)
 	sc->sc_minsync = (2 * 250) / sc->sc_freq;
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
+	aic_init(sc, 1);	/* Init chip and driver */
+
 	/*
 	 * Fill in the adapter.
 	 */
@@ -289,22 +291,9 @@ aicattach(sc)
 	sc->sc_link.type = BUS_SCSI;
 
 	/*
-	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
-	 */
-	if (scsipi_adapter_addref(&sc->sc_link) != 0) {
-		printf("%s: unable to enable controller\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	aic_init(sc, 1);	/* Init chip and driver */
-
-	/*
-	 * Ask the adapter what subunits are present
+	 * ask the adapter what subunits are present
 	 */
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-	scsipi_adapter_delref(&sc->sc_link);
 }
 
 int
@@ -322,11 +311,8 @@ aic_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL && !sc->sc_dying) {
+		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-			if (rv == 0)
-				sc->sc_dying = 1;
-		}
 		break;
 	}
 	splx(s);
@@ -566,16 +552,6 @@ aic_scsi_cmd(xs)
 	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	if (sc->sc_dying) {
-		xs->xs_status |= XS_STS_DONE;
-		xs->error = XS_DRIVER_STUFFUP;
-		scsipi_done(xs);
-		if ((xs->xs_control & XS_CTL_POLL) == 0)
-			return (SUCCESSFULLY_QUEUED);
-		else
-			return (COMPLETE);
-	}
-
 	flags = xs->xs_control;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -813,9 +789,6 @@ aic_sched(sc)
 	struct aic_tinfo *ti;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-
-	if (sc->sc_dying)
-		return;
 
 	/*
 	 * Find first acb in ready queue that is for a target/lunit pair that
@@ -1725,9 +1698,6 @@ aicintr(arg)
 	register struct scsipi_link *sc_link;
 	struct aic_tinfo *ti;
 	int n;
-
-	if (sc->sc_dying)
-		return (0);
 
 	/*
 	 * Clear INTEN.  We enable it again before returning.  This makes the

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 1999/12/04 21:21:18 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.27.14.1 1999/12/21 23:16:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,14 +62,17 @@
 #define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEF_BSIZE	512
+#define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	CLSIZE		1
+#define	CLSIZELOG2	0
+
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * MCLBYTES must be no larger than CLBYTES (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.

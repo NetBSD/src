@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 1999/11/06 20:13:50 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.2 1999/05/12 01:11:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@ struct trapframe32 {
  * (The slot tf_global[0] is used to store the %fp when this is used
  * as a clockframe.  This is known as `cheating'.)
  */
-struct trapframe64 {
+struct trapframe {
 	int64_t		tf_tstate;	/* tstate register */
 	int64_t		tf_pc;		/* return pc */
 	int64_t		tf_npc;		/* return npc */
@@ -110,6 +110,11 @@ struct rwindow64 {
 	int64_t	rw_in[8];		/* %i0..%i7 */
 };
 
+union rwindow {
+	struct rwindow64 v9;
+	struct rwindow32 v8;
+};
+
 /*
  * Clone trapframe for now; this seems to be the more useful
  * than the old struct reg above.
@@ -123,7 +128,7 @@ struct reg32 {
 	int	r_out[8];	/* output registers in trap's caller */
 };
 
-struct reg64 {
+struct reg {
 	int64_t	r_tstate;	/* tstate register */
 	int64_t	r_pc;		/* return pc */
 	int64_t	r_npc;		/* return npc */
@@ -144,26 +149,15 @@ struct reg64 {
  * need to malloc these.
  */
 #define	FP_QSIZE	16
-#define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~BLOCK_ALIGN)))
+#define ALIGNFPSTATE(f)		((struct fpstate *)(((long)(f))&(~BLOCK_ALIGN)))
 
 struct fp_qentry {
 	int	*fq_addr;		/* the instruction's address */
 	int	fq_instr;		/* the instruction itself */
 };
-
-struct fpstate64 {
+struct fpstate {
 	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fs_fsr;			/* %fsr */
-	int	fs_qsize;		/* actual queue depth */
-	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
-};
-
-/* 
- * For 32-bit emulations.
- */
-struct fpstate32 {
-	u_int	fs_regs[32];		/* our view is 32 32-bit registers */
-	int	fs_fsr;			/* %fsr */
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
@@ -171,7 +165,7 @@ struct fpstate32 {
 /*
  * Clone fpstate into an fpreg structure to satisfy <kern/sys_process.c>
  */
-struct fpreg64 {
+struct fpreg {
 	u_int	fr_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fr_fsr;			/* %fsr */
 	int	fr_qsize;		/* actual queue depth */
@@ -187,18 +181,5 @@ struct fpreg32 {
 	int	fr_qsize;		/* actual queue depth */
 	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
-
-#if defined(__arch64__)
-/* Here we gotta do naughty things to let gdb work on 32-bit binaries */
-#define reg		reg64
-#define fpreg		fpreg64
-#define trapframe	trapframe64
-#define rwindow		rwindow64
-#else
-#define reg		reg32
-#define fpreg		fpreg32
-#define trapframe	trapframe32
-#define rwindow		rwindow32
-#endif
 
 #endif /* _MACHINE_REG_H_ */

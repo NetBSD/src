@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1999/12/05 11:56:35 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -212,7 +212,7 @@ trap(p1, p2, p3, p4, frame)
 		else
 			printf("unknown trap %x", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %x spc %x ssr %x \n",
+		printf("trap type %d spc %x ssr %x \n",
 			   type, frame.tf_spc, frame.tf_ssr);
 
 		panic("trap");
@@ -276,7 +276,7 @@ trap(p1, p2, p3, p4, frame)
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
-		printf("trap type %x spc %x ssr %x \n",
+		printf("trap type %d spc %x ssr %x \n",
 			   type, frame.tf_spc, frame.tf_ssr);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
@@ -353,7 +353,7 @@ trap(p1, p2, p3, p4, frame)
 		if ((caddr_t)va >= vm->vm_maxsaddr
 			&& (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 			&& map != kernel_map) {
-			nss = btoc(USRSTACK-(unsigned)va);
+			nss = clrnd(btoc(USRSTACK-(unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				rv = KERN_FAILURE;
 				goto nogo;
@@ -672,7 +672,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 	if ((caddr_t)va >= vm->vm_maxsaddr
 	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 	    && map != kernel_map) {
-		nss = btoc(USRSTACK-(unsigned)va);
+		nss = clrnd(btoc(USRSTACK-(unsigned)va));
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 			rv = KERN_FAILURE;
 			goto nogo;

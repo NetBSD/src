@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1999/06/25 01:54:39 sakamoto Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6.8.1 1999/12/21 23:15:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -126,11 +126,12 @@ mbr_findslice(dp, bp)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -142,7 +143,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = bsize;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 #if 0
@@ -166,6 +167,8 @@ readdisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -376,11 +379,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
@@ -390,6 +394,8 @@ writedisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;

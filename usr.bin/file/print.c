@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.15 1998/09/30 18:51:13 thorpej Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -27,27 +27,25 @@
  * 4. This notice may not be removed or altered.
  */
 
-#include "file.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#ifdef __STDC__
+#if __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>
 #endif
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <time.h>
+#include "file.h"
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.29 1999/10/31 22:23:04 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.26 1998/06/27 13:57:23 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.16 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.15 1998/09/30 18:51:13 thorpej Exp $");
 #endif
 #endif  /* lint */
 
@@ -74,7 +72,8 @@ struct magic *m;
 
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
 		       /* Note: type is unsigned */
-		       (m->type < SZOF(typ)) ? typ[m->type] : "*bad*");
+		       (m->type < SZOF(typ)) ? 
+				typ[(unsigned char) m->type] : "*bad*");
 	if (m->mask != ~((uint32)0))
 		(void) fprintf(stderr, " & %.8x", m->mask);
 
@@ -131,7 +130,7 @@ ckfputs(str, fil)
 
 /*VARARGS*/
 void
-#ifdef __STDC__
+#if __STDC__
 ckfprintf(FILE *f, const char *fmt, ...)
 #else
 ckfprintf(va_alist)
@@ -139,7 +138,7 @@ ckfprintf(va_alist)
 #endif
 {
 	va_list va;
-#ifdef __STDC__
+#if __STDC__
 	va_start(va, fmt);
 #else
 	FILE *f;
@@ -159,7 +158,7 @@ ckfprintf(va_alist)
  */
 /*VARARGS*/
 void
-#ifdef __STDC__
+#if __STDC__
 error(const char *f, ...)
 #else
 error(va_alist)
@@ -167,7 +166,7 @@ error(va_alist)
 #endif
 {
 	va_list va;
-#ifdef __STDC__
+#if __STDC__
 	va_start(va, f);
 #else
 	const char *f;
@@ -186,7 +185,7 @@ error(va_alist)
 
 /*VARARGS*/
 void
-#ifdef __STDC__
+#if __STDC__
 magwarn(const char *f, ...)
 #else
 magwarn(va_alist)
@@ -194,7 +193,7 @@ magwarn(va_alist)
 #endif
 {
 	va_list va;
-#ifdef __STDC__
+#if __STDC__
 	va_start(va, f);
 #else
 	const char *f;

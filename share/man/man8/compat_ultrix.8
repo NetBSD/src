@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.11 1999/11/19 01:12:42 enami Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.8 1999/03/17 20:31:19 garbled Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm compat_ultrix
-.Nd "setup procedure for Ultrix compatibility on mips and vax architectures"
+.Nd setup procedure for Ultrix compatibility on mips and vax architectures
 .Sh DESCRIPTION
 .Nx Ns Tn /mips
 and
@@ -50,10 +50,10 @@ proprietary, Ultrix-specific features (LAT, CI support, DECnet
 support) and various system calls, ioctl()'s, or Ultrix kernel
 semantics that are difficult to emulate (e.g., Ultrix packetfilter) or
 buggy (e.g., Ultrix
-.Tn NIS ). 
+.TN NIS ). 
 .Pp
 All Ultrix executables are static, so no shared libraries are required
-for Ultrix compatibility. However, Ultrix is based on a
+for Ultrix compatiblity. However, Ultrix is based on a
 .Bx 4.3
 alpha release.  Ultrix commands and libraries are often much older
 than their

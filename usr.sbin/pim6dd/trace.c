@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.4 1999/12/10 06:13:32 itojun Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: trace.c,v 1.5 1999/09/16 08:46:00 jinmei Exp
+ *  KAME Id: trace.c,v 1.3 1999/08/31 12:30:53 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -79,6 +79,7 @@
 
 #include "defs.h"
 #include "trace.h"
+
 
 /* TODO */
 /*
@@ -97,9 +98,9 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 {
 	u_char type;
 	mrtentry_t *mrt;
-	struct tr6_query *qry;
-	struct tr6_resp  *resp;
-	int vifi, ovifi;
+	struct tr_query *qry;
+	struct tr_resp  *resp;
+	int vifi;
 	char *p;
 	int rcount;
 	int errcode = TR_NO_ERR;
@@ -111,10 +112,6 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 	struct sockaddr_in6 dst_sa6 = {sizeof(dst_sa6), AF_INET6};
 	struct sockaddr_in6 resp_sa6 = {sizeof(resp_sa6), AF_INET6};
 	struct sockaddr_in6 grp_sa6 = {sizeof(grp_sa6), AF_INET6};
-	struct sockaddr_in6 *sa_global;
-#ifdef SM_ONLY
-	rpentry_t *rpentry_ptr;
-#endif 
 
 	/* Remember qid across invocations */
 	static u_int32 oqid = 0;
@@ -153,7 +150,7 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 		return;
 	}
 
-	qry = (struct tr6_query *)data;
+	qry = (struct tr_query *)data;
 	src_sa6.sin6_addr = qry->tr_src;
 	src_sa6.sin6_scope_id =
 		(IN6_IS_ADDR_LINKLOCAL(&qry->tr_src)
@@ -233,10 +230,8 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 				log(LOG_DEBUG, 0,
 				    "Mcast traceroute: no route entry %s",
 				    inet6_fmt(&qry->tr_src));
-#if 0
 			if (IN6_IS_ADDR_MULTICAST(dst))
 				return;
-#endif
 		}
 		vifi = find_vif_direct(&dst_sa6);
 	
@@ -296,8 +291,8 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 	 * If there is no room to insert our reply, coopt the previous hop
 	 * error indication to relay this fact.
 	 */
-	if (p + sizeof(struct tr6_resp) > mld6_send_buf + RECV_BUF_SIZE) {
-		resp = (struct tr6_resp *)p - 1;
+	if (p + sizeof(struct tr_resp) > mld6_send_buf + RECV_BUF_SIZE) {
+		resp = (struct tr_resp *)p - 1;
 		resp->tr_rflags = TR_NO_SPACE;
 		mrt = NULL;
 		goto sendit;
@@ -306,19 +301,21 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 	/*
 	 * fill in initial response fields
 	 */
-	resp = (struct tr6_resp *)p;
-	bzero(resp, sizeof(struct tr6_resp));
-	datalen += (RLEN + sizeof(struct mld6_hdr));
+	resp = (struct tr_resp *)p;
+	bzero(resp, sizeof(struct tr_resp));
+	datalen += RLEN;
 
 	resp->tr_qarr    = htonl(((tp.tv_sec + JAN_1970) << 16) + 
 				 ((tp.tv_usec << 10) / 15625));
 
 	resp->tr_rproto  = PROTO_PIM;
-	resp->tr_outifid = (vifi == NO_VIF) ? TR_NO_VIF : htonl(vifi);
+	resp->tr_outaddr = (vifi == NO_VIF) ? (*dst) : uvifs[vifi].uv_lcl_addr.sin6_addr;
+#if 0
+	resp->tr_fhlim    = (vifi == NO_VIF) ? 0 : uvifs[vifi].uv_threshold;
+#else
+	resp->tr_fhlim    = 0; /* XXX right? */
+#endif
 	resp->tr_rflags  = errcode;
-	if ((sa_global = max_global_address()) == NULL)	/* impossible */
-		log(LOG_ERR, 0, "acept_mtrace: max_global_address returns NULL");
-	resp->tr_lcladdr = sa_global->sin6_addr;
 
 	/*
 	 * obtain # of packets out on interface
@@ -382,7 +379,7 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 	 */
 	if (mrt == (mrtentry_t *)NULL) {
 		src->sin6_addr = *dst;	/* the dst address of resp. pkt */
-		resp->tr_inifid = TR_NO_VIF;
+		memset(&resp->tr_inaddr, 0, sizeof(struct in6_addr));
 		resp->tr_rflags   = TR_NO_RTE;
 		memset(&resp->tr_rmtaddr, 0, sizeof(struct in6_addr));
 	} else {
@@ -397,7 +394,8 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 		 * TODO
 		 * MASK_TO_VAL(rt->rt_originmask, resp->tr_smask);
 		 */
-		resp->tr_inifid = htonl(mrt->incoming);
+		src->sin6_addr = uvifs[mrt->incoming].uv_lcl_addr.sin6_addr;
+		resp->tr_inaddr = src->sin6_addr;
 		if (mrt->upstream != (pim_nbr_entry_t *)NULL)
 			parent_address = mrt->upstream->address.sin6_addr;
 		else
@@ -422,15 +420,6 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 #endif /* 0 */
 	}
 
-#ifdef SM_ONLY
-	/*
-	 * If we're the RP for the trace group, note it.
-	 */
-	rpentry_ptr = rp_match(&grp_sa6);
-	if (rpentry_ptr && local_address(&rpentry_ptr->address) != NO_VIF)
-		resp->tr_rflags = TR_RP;
-#endif /* SM_ONLY */
-
   sendit:
 	/*
 	 * if metric is 1 or no. of reports is 1, send response to requestor
@@ -440,102 +429,63 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 	IF_DEBUG(DEBUG_TRACE)
 		log(LOG_DEBUG, 0, "rcount:%d, no:%d", rcount, no);
 
-	ovifi = NO_VIF;		/* unspecified */
 	if ((rcount + 1 == no) || (mrt == NULL) || (mrt->metric == 1)) {
 		resptype = MLD6_MTRACE_RESP;
 		resp_sa6.sin6_addr = qry->tr_raddr;
-		if (IN6_IS_ADDR_LINKLOCAL(&resp_sa6.sin6_addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&resp_sa6.sin6_addr)) {
-			if ((ovifi = find_vif_direct(&dst_sa6)) == NO_VIF) {
-				log(LOG_INFO, 0,
-				    "can't determine outgoing i/f for mtrace "
-				    "response.");
-				return;
-			}
-		}
 	} else
 		/* TODO */
 	{
 #if 0
 		if (!can_mtrace(rt->rt_parent, rt->rt_gateway)) {
-			resp_sa6.sin6_addr = qry->tr_raddr;
+			dst = qry->tr_raddr;
 			resp->tr_rflags = TR_OLD_ROUTER;
 			resptype = MLD6_MTRACE_RESP;
 		} else
 #endif /* 0 */
-#ifdef SM_ONLY
-		if (mrt->incoming &&
-		    (uvifs[mrt->incoming].uv_flags & MIFF_REGISTER)) {
-			log(LOG_DEBUG, 0,
-			    "incoming i/f is for register. "
-			    "Can't be forwarded anymore.");
-				resp_sa6.sin6_addr = qry->tr_raddr;
-				resptype = MLD6_MTRACE_RESP;
-		} else
-#endif /* SM_ONLY */
 		{
 			if (mrt->upstream != (pim_nbr_entry_t *)NULL)
 				parent_address =
 					mrt->upstream->address.sin6_addr;
 			else
-				parent_address = allrouters_group.sin6_addr;
+				parent_address = in6addr_any;
 			resp_sa6.sin6_addr = parent_address;
-			ovifi = mrt->incoming;
 			resptype = MLD6_MTRACE;
 		}
 	}
+	if (IN6_IS_ADDR_LINKLOCAL(&resp_sa6.sin6_addr)
+	 || IN6_IS_ADDR_MC_LINKLOCAL(&resp_sa6.sin6_addr))
+		resp_sa6.sin6_scope_id = ifindex;
+	else
+		resp_sa6.sin6_scope_id = 0;
 
 	if (IN6_IS_ADDR_MULTICAST(&resp_sa6.sin6_addr)) {
-		struct sockaddr_in6 *sa6;
-
 		/*
 		 * Send the reply on a known multicast capable vif.
 		 * If we don't have one, we can't source any
 		 * multicasts anyway.
 		 */
-		if (IN6_IS_ADDR_MC_LINKLOCAL(&resp_sa6.sin6_addr)) {
-			sa6 = &uvifs[ovifi].uv_linklocal->pa_addr;
-			ifindex = uvifs[ovifi].uv_ifindex;
-		}
-		else {
-			if (phys_vif != -1 &&
-			    (sa6 = uv_global(phys_vif)) != NULL) {
-				IF_DEBUG(DEBUG_TRACE)
-					log(LOG_DEBUG, 0,
-					    "Sending reply to %s from %s",
-					    inet6_fmt(dst),
-					    inet6_fmt(&sa6->sin6_addr));
-				ifindex = uvifs[phys_vif].uv_ifindex;
-			}
-			else {
-				log(LOG_INFO, 0, "No enabled phyints -- %s",
-				    "dropping traceroute reply");
-				return;
-			}
-		}
-		k_set_hlim(mld6_socket, qry->tr_rhlim);
-		send_mld6(resptype, no, sa6, &resp_sa6, group,
-			  ifindex, 0, datalen, 0);
-		k_set_hlim(mld6_socket, 1);
+		if (phys_vif != -1) {
+			IF_DEBUG(DEBUG_TRACE)
+				log(LOG_DEBUG, 0,
+				    "Sending reply to %s from %s",
+				    inet6_fmt(dst),
+				    inet6_fmt(&uvifs[phys_vif].uv_lcl_addr.sin6_addr));
+			k_set_hlim(mld6_socket, qry->tr_rhlim);
+			send_mld6(resptype, no, &uvifs[phys_vif].uv_lcl_addr,
+				  &dst_sa6, group, ifindex, 0, datalen);
+			k_set_hlim(mld6_socket, 1);
+		} else
+			log(LOG_INFO, 0, "No enabled phyints -- %s",
+			    "dropping traceroute reply");
 	} else {
-		struct sockaddr_in6 *sa6 = NULL;
-		ifindex = -1;	/* unspecified by default */
-
-		if (IN6_IS_ADDR_LINKLOCAL(&resp_sa6.sin6_addr)) {
-			/* ovifi must be valid in this case */
-			ifindex = uvifs[ovifi].uv_ifindex;
-			sa6 = &uvifs[ovifi].uv_linklocal->pa_addr;
-		}
-
 		IF_DEBUG(DEBUG_TRACE)
 			log(LOG_DEBUG, 0, "Sending %s to %s from %s",
 			    resptype == MLD6_MTRACE_RESP ?
 			    "reply" : "request on",
-			    inet6_fmt(dst),
-			    sa6 ? inet6_fmt(&sa6->sin6_addr) : "unspecified");
+			    inet6_fmt(dst), inet6_fmt(&src->sin6_addr));
 	
-		send_mld6(resptype, no, sa6, &resp_sa6, group, ifindex,
-			  0, datalen, 0);
+		send_mld6(resptype, no, src, &dst_sa6, group, ifindex,
+			  0, datalen);
 	}
 	return;
 }

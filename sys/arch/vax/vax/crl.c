@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.5 1996/10/13 03:35:35 christos Exp $	*/
+/*	$NetBSD: crl.c,v 1.5.34.1 1999/12/21 23:16:20 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -100,6 +100,8 @@ crlopen(dev, flag, p)
 		return (EALREADY);
 	crltab.crl_state = CRL_OPEN;
 	crltab.crl_buf = geteblk(512);
+	crltab.crl_buf->b_bsize = 512;
+	crltab.crl_buf->b_bshift = 9;
 	return (0);
 }
 

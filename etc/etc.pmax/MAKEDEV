@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.33 1999/12/18 03:09:49 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.30 1999/09/18 00:23:39 hubertf Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -24,7 +24,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #	raid*	RAIDframe disk driver
-#	md*	memory pseudo-disk devices
 # Terminal multiplexors:
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
 #	scc*	82530 serial interface
@@ -153,19 +152,10 @@ lkm)
 	chmod 640 lkm
 	;;
 
-md*)
-	unit=${i#md}; blk=17; chr=97;
-	rm -f md${unit} md${unit}c rmd${unit}
-	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
-	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
-#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
-	chgrp operator md${unit} md${unit}c #rmd${unit}
-	chmod 640 md${unit} md${unit}c #rmd${unit}
-	;;
-
-rz*|vnd*|ccd*|raid*)
+rz*|vnd*|md*|ccd*|raid*)
 	case $i in
 	rz*) name=rz;	unit=${i#rz};	blk=21; chr=56;;
+	md*) name=md;	unit=${i#md};	blk=17; chr=96;;
 	raid*) name=raid; unit=${i#raid}; blk=32; chr=96;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=2; chr=11;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;

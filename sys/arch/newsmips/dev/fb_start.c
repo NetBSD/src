@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_start.c,v 1.4 1999/12/04 21:20:57 ragge Exp $	*/
+/*	$NetBSD: fb_start.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -397,7 +397,7 @@ iopmemfbmap(addr, len, map)
 	register int i;
 
 	map->fm_vaddr = addr;
-	map->fm_offset = (unsigned)addr & PGOFSET;
+	map->fm_offset = (unsigned)addr & CLOFSET;
 	map->fm_count = len;
 	len += map->fm_offset;
 	p = map->fm_addr;
@@ -405,8 +405,8 @@ iopmemfbmap(addr, len, map)
 
 	for (i = 0; i < NFBMAP && len > 0; i++) {
 		*p++ = addr;
-		addr += NBPG;
-		len -= NBPG;
+		addr += CLBYTES;
+		len -= CLBYTES;
 	}
 }
 #endif /* IPC_MRX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.9 1999/12/10 09:13:06 jun Exp $	*/
+/*	$NetBSD: platid.def,v 1.2 1999/09/25 10:51:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -48,10 +48,10 @@ MIPS {
     }
   }
   TX {
-    3900 {
-      3911 3912 
+    391X {
+      3910 3911 3912 
     }
-    3920 {
+    392X {
       3922
     }
   }
@@ -73,15 +73,13 @@ NEC {
     3XX {
       CPU=MIPS_VR_4111 300
       CPU=MIPS_VR_4121 320
-      CPU=MIPS_VR_4111 forDoCoMo
     }
     5XX {
       CPU=MIPS_VR_4111 500
-      CPU=MIPS_VR_4121 510 520 520A
-      CPU=MIPS_VR_4111 500A
+      CPU=MIPS_VR_4121 510 520
     }
     7XX {
-      CPU=MIPS_VR_4121 700 700A
+      CPU=MIPS_VR_4121 700
     }
   }
 }
@@ -113,12 +111,6 @@ Sharp {
       CPU=MIPS_VR_4111 PV6000
     }
   }
-  Telios {
-    HC {
-      CPU=MIPS_TX_3922 HCAJ1
-    }
-  }
-
 }
 
 Fujitsu {
@@ -149,27 +141,6 @@ Compaq {
   AERO {
     21XX {
       CPU=MIPS_VR_4111 2110 2130 2140
-    }
-  }
-  PRESARIO {
-    21X {
-      CPU=MIPS_VR_4111 213
-    }
-  }
-}
-
-Victor {
-  InterLink {
-    MP {
-      CPU=MIPS_TX_3922 MPC101
-    }
-  }
-}
-
-IBM {
-  WorkPad {
-    z50 {
-      CPU=MIPS_VR_4121 2601_1AU
     }
   }
 }

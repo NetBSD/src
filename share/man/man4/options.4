@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.92 1999/12/17 03:55:52 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.86 1999/08/05 15:47:07 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -424,12 +424,13 @@ and
 .Xr fsck_msdos 8
 for details.
 .It Cd file-system NTFS
-[EXPERIMENTAL] Includes code for the
-.Tn Microsoft Windows NT
+Includes the
+.Tn Windows/NT
 file system.
 See
 .Xr mount_ntfs 8
-for details.
+for details. Note that NTFS support is still very experimental and
+should be used with extreme caution. 
 .It Cd file-system FDESC
 Includes code for a file system, conventionally mounted on
 .Pa /dev/fd ,
@@ -738,13 +739,13 @@ gadget box
 to convert from TTL to RS-232 signal levels.
 The gadget box and PPS are described in more detail in the HTML documentation
 shipped with the xntpd distribution.
-.It Cd options SETUIDSCRIPTS
+.It Cd option SETUIDSCRIPTS
 Allows scripts with the setuid bit set to execute as the effective
 user rather than the real user, just like binary executables.
 .Pp
 .Em NOTE :
 Using this option will also enable
-.Em options FDSCRIPTS
+.Em option FDSCRIPTS
 .It Cd option FDSCRIPTS
 Allows execution of scripts with the execute bit set, but not the
 read bit, by opening the file and passing the file descriptor to
@@ -836,32 +837,18 @@ to a value less than
 .Em CHILD_MAX
 is not permitted, as this would result in a violation of the semantics of
 .St -p1003.1-90 .
-.It Cd options DEFCORENAME=string
-Sets the default value of the
-.Em kern.defcorename
-sysctl variable, otherwise it is set to
-.Nm %n.core .
-See
+.It Cd options SHORTCORENAME
+If set, process core dumps are named 
+.Nm core .
+If not specified, they are named
+.Nm programname.core 
+(the default in 4.4BSD). Note that this changes the value of the 
+.Em kern.shortcorename 
+sysctl variable which may be changed at run time. See
 .Xr sysctl 8
 and
 .Xr sysctl 3
-for details.
-.It Cd options RASOPS_CLIPPING
-Enables clipping within the 
-.Nm rasops
-raster-console output system. 
-.Em NOTE :
-only available on architectures that use
-.Nm rasops
-for console output.
-.It Cd options RASOPS_SMALL
-Removes optimized character writing code from the 
-.Nm rasops
-raster-console output system.
-.Em NOTE :
-only available on architectures that use
-.Nm rasops
-for console output.
+for details. 
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -1018,15 +1005,12 @@ will enable US-export controlled source code, so compiled binary is
 subject to US-export restriction.
 This option assumes
 .Em IPSEC .
-To use this option, you will need have a symbolic link from
-.Li src/crypto-intl
-to
-.Li cryptosrc-intl/crypto-intl
-(or from
-.Li src/crypto-us
-to
-.Li cryptosrc-us/crypto-us
-if you are in the US).
+To use this option, you will need to combine
+.Li cryptosrc/sys
+onto
+.Li syssrc/sys
+tree somehow manually
+.Pq symbolic link for example .
 .It Cd options SUBNETSARELOCAL
 Sets default value for net.inet.ip.subnetsarelocal variable, which
 controls whether non-directly-connected subnets of connected networks
@@ -1522,7 +1506,6 @@ bolded
 .Xr shmctl 2 ,
 .Xr shmdt 2 ,
 .Xr shmget 2 ,
-.Xr apm 4 ,
 .Xr ddb 4 ,
 .Xr lkm 4 ,
 .Xr inet 4 ,
@@ -1538,7 +1521,6 @@ bolded
 .Xr mount_fdesc 8 ,
 .Xr mount_kernfs 8 ,
 .Xr mount_null 8 ,
-.Xr mount_ntfs 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
 .Xr mount_umap 8 ,

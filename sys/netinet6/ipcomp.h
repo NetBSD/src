@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.6 1999/12/02 05:25:59 itojun Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.5 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -44,7 +44,7 @@
 
 struct ipcomp {
 	u_int8_t comp_nxt;	/* Next Header */
-	u_int8_t comp_flags;	/* reserved, must be zero */
+	u_int8_t comp_flags;	/* Length of data, in 32bit */
 	u_int16_t comp_cpi;	/* Compression parameter index */
 };
 

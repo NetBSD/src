@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1999/12/04 21:21:37 ragge Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.19 1999/07/08 18:11:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,8 +73,6 @@
 struct sbus_softc *sbus0;
 void    sbus_enter __P((struct sbus_softc *, vaddr_t va, int64_t pa, int flags));
 void    sbus_remove __P((struct sbus_softc *, vaddr_t va, int len));
-static int cpu_coredump32 __P((struct proc *, struct vnode *, struct ucred *, 
-			       struct core32 *));
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -86,7 +84,7 @@ pagemove(from, to, size)
 {
 	paddr_t pa;
 
-	if (size & PGOFSET || (long)from & PGOFSET || (long)to & PGOFSET)
+	if (size & CLOFSET || (long)from & CLOFSET || (long)to & CLOFSET)
 		panic("pagemove 1");
 #if 1
 	cache_flush((caddr_t)from, size);
@@ -97,8 +95,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
+		    VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -153,7 +151,7 @@ vmapbuf(bp, len)
 		/* Now map the page into kernel space. */
 		pmap_enter(pmap_kernel(), kva,
 			   pa /* | PMAP_NC */,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
@@ -196,14 +194,12 @@ vunmapbuf(bp, len)
  */
 #ifdef __arch64__
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
-#define	STACK_OFFSET	BIAS
+#define rwindow		rwindow64
+#define STACK_OFFSET	BIAS
 #else
-#undef	trapframe
-#define	trapframe	trapframe64
-#undef	rwindow
-#define	rwindow		rwindow32
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
-#define	STACK_OFFSET	0
+#define rwindow		rwindow32
+#define STACK_OFFSET	0
 #endif
 
 #ifdef DEBUG
@@ -274,10 +270,10 @@ cpu_fork(p1, p2, stack, stacksize)
        	if (p1->p_md.md_fpstate) {
 		if (p1 == fpproc)
 			savefpstate(p1->p_md.md_fpstate);
-		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
-		    sizeof(struct fpstate64));
+		    sizeof(struct fpstate));
 	} else
 		p2->p_md.md_fpstate = NULL;
 
@@ -400,7 +396,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	register struct fpstate64 *fs;
+	register struct fpstate *fs;
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		if (p == fpproc) {
@@ -432,64 +428,16 @@ cpu_coredump(p, vp, cred, chdr)
 	 * XXX DUMP A SPARC32 CORE FILE IF WE ARE USING
 	 * XXX emul_sparc32!
 	 */
-#ifdef	__arch64__
-	if (p->p_flag & P32)
-#endif
-		return (cpu_coredump32(p, vp, cred, (struct core32 *)chdr));
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
 
+#if 0
 	md_core.md_tf = *p->p_md.md_tf;
-	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
-			savefpstate(p->p_md.md_fpstate);
-		md_core.md_fpstate = *p->p_md.md_fpstate;
-	} else
-		bzero((caddr_t)&md_core.md_fpstate, 
-		      sizeof(md_core.md_fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
-}
-
-/*
- * cpu_coredump is called to write a core dump header.
- * (should this be defined elsewhere?  machdep.c?)
- */
-static int
-cpu_coredump32(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core32 *chdr;
-{
-	int i, error;
-	struct md_coredump32 md_core;
-	struct coreseg32 cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
-
-	/* Fake a v8 trapframe */
+#else
+	/* Until we get 64-bit executables we need to fake a v8 trapframe */
 	md_core.md_tf.tf_psr = TSTATECCR_TO_PSR(p->p_md.md_tf->tf_tstate);
 	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
 	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
@@ -498,23 +446,13 @@ cpu_coredump32(p, vp, cred, chdr)
 		md_core.md_tf.tf_global[i] = p->p_md.md_tf->tf_global[i];
 		md_core.md_tf.tf_out[i] = p->p_md.md_tf->tf_out[i];
 	}
-
+#endif
 	if (p->p_md.md_fpstate) {
 		if (p == fpproc)
 			savefpstate(p->p_md.md_fpstate);
-		/* Copy individual fields */
-		for (i=0; i<32; i++)
-			md_core.md_fpstate.fs_regs[i] = 
-				p->p_md.md_fpstate->fs_regs[i];
-		md_core.md_fpstate.fs_fsr = p->p_md.md_fpstate->fs_fsr;
-		i = md_core.md_fpstate.fs_qsize = p->p_md.md_fpstate->fs_qsize;
-		/* Should always be zero */
-		while (i--)
-			md_core.md_fpstate.fs_queue[i] = 
-				p->p_md.md_fpstate->fs_queue[i];
+		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
-		bzero((caddr_t)&md_core.md_fpstate, 
-		      sizeof(md_core.md_fpstate));
+		bzero((caddr_t)&md_core.md_fpstate, sizeof(struct fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

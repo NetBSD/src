@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1999/12/07 18:42:06 wennmach Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmux.4,v 1.3 1999/12/15 22:07:35 abs Exp $
+.\" $NetBSD: wsmux.4,v 1.1 1999/07/29 18:22:04 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm wsmux
-.Nd console keyboard/mouse multiplexor for wscons
+.Nd console keyboard/mouse multiplexor
 .Sh SYNOPSIS
 .Cd "wskbd*     at ... mux N"
 .Cd "wsmouse*   at ... mux N"
@@ -56,23 +56,23 @@ for mouse events and one for keyboard events.  All
 devices should direct their events to the mouse mux (normally 0)
 and all keyboard devices, except the console, should direct their
 events to the keyboard mux (normally 1).  A device will
-send its events to the mux indicated by the
+send its events to the mux indicated my the
 .Va mux
 locator.  If none is given the device will not use a multiplexor.
 The keyboard multiplexor should be connected to the display, using
 the
 .Xr wsconscfg 8
-command.  It will then receive all keystrokes from all keyboards
+command.  It will then recieve all keystrokes from all keyboards
 and, furthermore, keyboards can be dynamically attached and detached without
 further user interaction.
 In a similar way, the window system will open the mouse multiplexor
-and receive all mouse events; mice can also be dynamically attached 
+and recieve all mouse events; mice can also be dynamically attached 
 and detached.
 .Pp
 It is also possible to inject events into a multiplexor from a
 user program.  This is used by the
 .Xr moused 8
-daemon to take data from a mouse connected to a serial port and
+deamon to take data from a mouse connected to a serial port and
 make it appear on the standard mouse mux.
 .Pp
 .Sh FILES

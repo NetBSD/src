@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.15 1999/10/26 12:35:14 drochner Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.14 1999/09/26 09:20:04 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.14 1999/10/26 12:34:41 drochner Exp 
+ *	NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp 
  */
 
 /*
@@ -62,8 +62,8 @@
 #define	TC_DEVICE_PMAF_AA	"fza"
 #define	TC_DESCRIPTION_PMAF_AA	"DEC FDDIcontroller 700 (DEFZA; fiber optic)"
 
-#define	TC_DEVICE_PMAF_FA	"fta"
-#define	TC_DESCRIPTION_PMAF_FA	"DEFTA FDDI"
+#define	TC_DEVICE_PMAF_F	"fta"
+#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI"
 
 #define	TC_DEVICE_PMAG_AA	"mfb"
 #define	TC_DESCRIPTION_PMAG_AA	"Monochrome Frame Buffer"
@@ -107,9 +107,6 @@
 #define	TC_DEVICE_PMAZB_AA	"tcds"
 #define	TC_DESCRIPTION_PMAZB_AA	"53c94 TCDS SCSI option card"
 
-#define	TC_DEVICE_PMAZB_AB	"tcds"
-#define	TC_DESCRIPTION_PMAZB_AB	"53c94 TCDS SCSI option card"
-
 #define	TC_DEVICE_PMAZC_AA	"tcds"
 #define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI option card"
 
@@ -124,9 +121,3 @@
 
 #define	TC_DEVICE_PMAT_AA	"tra"
 #define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
-
-#define	TC_DEVICE_PMABV_AA	"vba"
-#define	TC_DESCRIPTION_PMABV_AA	"VME Adapter"
-
-#define	TC_DEVICE_PMAP_AA	"???"
-#define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.17 1999/11/08 18:41:32 mhitch Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.16 1999/07/25 22:50:28 ad Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -68,13 +68,6 @@ fbclose(dev, flag, mode, p)
 		fi->fi_driver->fbd_initcmap(fi);
 
 	genDeconfigMouse();
-
-	/*
-	 * Reset the keyboard - we don't know what the X server (or whatever
-	 * was using the framebuffer) did to the keyboard.  The X11R6 server
-	 * changes the keyboard state, and doesn't reset it.
-	 */
-	KBDReset(fbtty->kbddev, fbtty->KBDPutc);
 
 	bzero((caddr_t)fi->fi_pixels, fi->fi_pixelsize);
 	(*fi->fi_driver->fbd_poscursor)

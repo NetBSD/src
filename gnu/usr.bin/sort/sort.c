@@ -1857,7 +1857,6 @@ error (n, e, s, s1)
   if (e)
     fprintf(stderr,"error %d:", e);
   fprintf(stderr, s, s1);
-  fprintf(stderr, "\n");
   if (n)
     exit(n);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.28 1999/11/28 20:30:58 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.26 1999/07/08 18:05:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -157,13 +157,6 @@ cachectl1(req, addr, len, p)
 #endif
 
 		if (addr == 0 ||
-#if defined(M68040)
-#if defined(M68060)
-		    (cputype == CPU_68040 && req & CC_IPURGE) ||
-#else
-		    (req & CC_IPURGE) ||
-#endif
-#endif
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 

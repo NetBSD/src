@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1999/12/17 06:05:40 tsubai Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,15 +171,7 @@ le_attach(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	/*struct confargs *ca = aux;*/
-	int intlevel;
 	u_char *p;
-
-	intlevel = self->dv_cfdata->cf_level;
-	if (intlevel == -1) {
-		printf(": interrupt level not configured\n");
-		return;
-	}
-	printf(" level %d", intlevel);
 
 	switch (sc->sc_dev.dv_unit) {
 
@@ -231,13 +223,18 @@ le_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	am7990_config(&lesc->sc_am7990);
+}
 
-	switch (sc->sc_dev.dv_unit) {
-	case 0:
-		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
-		break;
-	default:
-		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
-		break;
-	}
+int
+leintr(unit)
+	int unit;
+{
+	struct am7990_softc *sc;
+	extern struct cfdriver le_cd;
+
+	if (unit >= le_cd.cd_ndevs)
+		return 0;
+
+	sc = le_cd.cd_devs[unit];
+	return am7990_intr(sc);
 }

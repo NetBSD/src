@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.68 1999/10/20 06:40:26 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.66 1999/09/25 21:47:03 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -32,7 +32,6 @@
  */
 
 #include "opt_amigaccgrf.h"
-#include "opt_p5ppc68kboard.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +74,6 @@ extern int	protostfree;
 #endif
 extern u_long boot_partition;
 vaddr_t		amiga_uptbase;
-#ifdef P5PPC68KBOARD
-extern int	p5ppc;
-#endif
 
 extern char *esym;
 
@@ -207,9 +203,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	struct boot_memlist *ml;
 	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	u_int *shadow_pt = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-#ifdef	P5PPC68KBOARD
-        struct cfdev *cdp, *ecdp;
-#endif
 
 #ifdef DEBUG_KERNEL_START
 	/* XXX this only is valid if Altais is in slot 0 */
@@ -998,20 +991,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		*a3000_magic_reset |= 0x80;
 	}
 
-#ifdef	P5PPC68KBOARD
-	/*
-	 * Are we an P5 PPC/68K board? install different reset 
-	 * routine.
-	 */
-        
-        for (cdp = cfdev, ecdp = &cfdev[ncfdev]; cdp < ecdp; cdp++) {
-		if (cdp->rom.manid == 8512 &&
-		    (cdp->rom.prodid == 100 || cdp->rom.prodid == 110)) {
-		    		p5ppc = 1;
-				break;
-			}
-        }
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.18 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.16 1999/04/08 10:26:21 drochner Exp $	*/
 
 /*
  *
@@ -415,7 +415,6 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	int lcv, retval, mdpgno;
 	dev_t device;
 	int (*mapfn) __P((dev_t, int, int));
-	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
 
@@ -474,31 +473,16 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
-		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
-		    ufi->orig_map->pmap, curr_va, (int)paddr, mapprot);
-		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
-		    mapprot, PMAP_CANFAIL | mapprot) != KERN_SUCCESS) {
-			/*
-			 * pmap_enter() didn't have the resource to
-			 * enter this mapping.  Unlock everything,
-			 * wait for the pagedaemon to free up some
-			 * pages, and then tell uvm_fault() to start
-			 * the fault again.
-			 *
-			 * XXX Needs some rethinking for the PGO_ALLPAGES
-			 * XXX case.
-			 */
-			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
-			uvm_wait("udv_fault");
-			return (VM_PAGER_REFAULT);
-		}
+		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
+		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0,
+		    access_type);
+
 	}
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-	return (retval);
+	return(retval);
 }
 
 /*

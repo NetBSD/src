@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.28 1999/12/01 16:08:32 drochner Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.25 1999/09/12 01:17:38 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -208,9 +208,9 @@ void
 uvm_page_init(kvm_startp, kvm_endp)
 	vaddr_t *kvm_startp, *kvm_endp;
 {
-	vsize_t freepages, pagecount, n;
+	int freepages, pagecount;
 	vm_page_t pagearray;
-	int lcv, i;  
+	int lcv, n, i;  
 	paddr_t paddr;
 
 
@@ -288,8 +288,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 
 		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
 		if (n > pagecount) {
-			printf("uvm_page_init: lost %ld page(s) in init\n",
-			    (long)(n - pagecount));
+			printf("uvm_page_init: lost %d page(s) in init\n",
+			    n - pagecount);
 			panic("uvm_page_init");  /* XXXCDC: shouldn't happen? */
 			/* n = pagecount; */
 		}
@@ -457,13 +457,9 @@ uvm_pageboot_alloc(size)
  * => return false if out of memory.
  */
 
-/* subroutine: try to allocate from memory chunks on the specified freelist */
-static boolean_t uvm_page_physget_freelist __P((paddr_t *, int));
-
-static boolean_t
-uvm_page_physget_freelist(paddrp, freelist)
+boolean_t
+uvm_page_physget(paddrp)
 	paddr_t *paddrp;
-	int freelist;
 {
 	int lcv, x;
 
@@ -477,9 +473,6 @@ uvm_page_physget_freelist(paddrp, freelist)
 
 		if (vm_physmem[lcv].pgs)
 			panic("vm_page_physget: called _after_ bootstrap");
-
-		if (vm_physmem[lcv].free_list != freelist)
-			continue;
 
 		/* try from front */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
@@ -551,19 +544,6 @@ uvm_page_physget_freelist(paddrp, freelist)
 
 	return (FALSE);        /* whoops! */
 }
-
-boolean_t
-uvm_page_physget(paddrp)
-	paddr_t *paddrp;
-{
-	int i;
-
-	/* try in the order of freelist preference */
-	for (i = 0; i < VM_NFREELIST; i++)
-		if (uvm_page_physget_freelist(paddrp, i) == TRUE)
-			return (TRUE);
-	return (FALSE);
-}
 #endif /* PMAP_STEAL_MEMORY */
 
 /*
@@ -590,9 +570,6 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
 		panic("uvm_page_physload: bad free list %d\n", free_list);
-
-	if (start >= end)
-		panic("uvm_page_physload: start >= end");
 
 	/*
 	 * do we have room?

@@ -1,5 +1,3 @@
-/*	$NetBSD: s_rint.S,v 1.6 1999/11/10 16:45:34 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,15 +40,15 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_rint.S,v 1.6 1999/11/10 16:45:34 thorpej Exp $")
+RCSID("$NetBSD: s_rint.S,v 1.5 1999/08/21 21:26:40 is Exp $")
 
 | rint(x)
 | delivers integer nearest x in direction of prevailing rounding mode
 ENTRY(rint)
-	fintd	%sp@(4),%fp0	| use prevailing rounding mode
+	fintd	sp@(4),fp0	| use prevailing rounding mode
 #ifndef __SVR4_ABI__
-	fmoved	%fp0,%sp@-
-	movel	%sp@+,%d0
-	movel	%sp@+,%d1
+	fmoved	fp0,sp@-
+	movel	sp@+,d0
+	movel	sp@+,d1
 #endif
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.25 1999/11/07 15:57:31 mycroft Exp $	*/
+/*	$NetBSD: options.c,v 1.22 1999/08/24 08:02:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.25 1999/11/07 15:57:31 mycroft Exp $");
+__RCSID("$NetBSD: options.c,v 1.22 1999/08/24 08:02:27 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,12 +68,12 @@ __RCSID("$NetBSD: options.c,v 1.25 1999/11/07 15:57:31 mycroft Exp $");
  */
 
 int cpio_mode;			/* set if we are in cpio mode */
+char *chdir_dir;		/* directory to chdir to before operating */
 
 static int nopids;		/* tar mode: suppress "pids" for -p option */
 static char *flgch = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
-static char *firstminusC;	/* first -C argument encountered. */
 
 static int no_op __P((void));
 static void printflg __P((unsigned int));
@@ -85,8 +85,6 @@ static void tar_options __P((int, char **));
 static void tar_usage __P((void));
 static void cpio_options __P((int, char **));
 static void cpio_usage __P((void));
-
-static void checkpositionalminusC __P((char ***, int (*)(char *, int)));
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -301,22 +299,12 @@ pax_options(argc, argv)
 					/*
 					 * preserve user id, group id, file
 					 * mode, access/modification times
-					 * and file flags.
 					 */
 					pids = 1;
 					pmode = 1;
 					patime = 1;
 					pmtime = 1;
-					pfflags = 1;
 					break;
-#if 0
-				case 'f':
-					/*
-					 * do not preserve file flags
-					 */
-					pfflags = 0;
-					break;
-#endif
 				case 'm':
 					/*
 					 * do not preserve modification time
@@ -582,7 +570,7 @@ pax_options(argc, argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], 0) < 0)
+			if (pat_add(argv[optind]) < 0)
 				pax_usage();
 		break;
 	case COPY:
@@ -596,7 +584,7 @@ pax_options(argc, argv)
 	case ARCHIVE:
 	case APPND:
 		for (; optind < argc; optind++)
-			if (ftree_add(argv[optind], 0) < 0)
+			if (ftree_add(argv[optind]) < 0)
 				pax_usage();
 		/*
 		 * no read errors allowed on updates/append operation!
@@ -650,9 +638,8 @@ tar_options(argc, argv)
 		case 'C':
 			/*
 			 * chdir here before extracting.
-			 * do so lazily, in case it's a list
 			 */
-			firstminusC = optarg;
+			chdir_dir = optarg;
 			break;
 		case 'e':
 			/*
@@ -814,9 +801,6 @@ tar_options(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (firstminusC && (opt_chdir(firstminusC) < 0))
-		tty_warn(1, "can't remember -C directory");
-
 	/*
 	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
 	 */
@@ -828,17 +812,17 @@ tar_options(argc, argv)
 	 */
 	switch (act) {
 	case LIST:
+	case EXTRACT:
 	default:
 		while (*argv != (char *)NULL)
-			if (pat_add(*argv++, 0) < 0)
+			if (pat_add(*argv++) < 0)
 				tar_usage();
-		break;
-	case EXTRACT:
-		checkpositionalminusC(&argv, pat_add);
 		break;
 	case ARCHIVE:
 	case APPND:
-		checkpositionalminusC(&argv, ftree_add);
+		while (*argv != (char *)NULL)
+			if (ftree_add(*argv++) < 0)
+				tar_usage();
 		/*
 		 * no read errors allowed on updates/append operation!
 		 */
@@ -1098,7 +1082,7 @@ cpio_options(argc, argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], 0) < 0)
+			if (pat_add(argv[optind]) < 0)
 				cpio_usage();
 		break;
 	case COPY:
@@ -1112,7 +1096,7 @@ cpio_options(argc, argv)
 	case ARCHIVE:
 	case APPND:
 		for (; optind < argc; optind++)
-			if (ftree_add(argv[optind], 0) < 0)
+			if (ftree_add(argv[optind]) < 0)
 				cpio_usage();
 		/*
 		 * no read errors allowed on updates/append operation!
@@ -1478,62 +1462,4 @@ cpio_usage()
 #endif
 	exit(1);
 	/* NOTREACHED */
-}
-
-/*
- * opt_chdir
- *	call ftree_add or pat_add, depending on archive type.
- *	
- * Returns: -1 for listing, else what ftree_add or pat_add returned.
- */
-
-#ifdef __STDC__
-int
-opt_chdir(char *name)
-#else
-int
-opt_chdir(name)
-	char *name;
-#endif
-{
-	switch (act) {
-	default:
-		return (-1);
-		break;
-	case ARCHIVE:
-	case APPND:
-		return (ftree_add(name, 1));
-		break;
-	case EXTRACT:
-		return (pat_add(name, 1));
-		break;
-	}
-}
-
-/*
- * checkpositionalminusC(argvp, addfunc)
- */
-
-#ifdef __STDC__
-void
-checkpositionalminusC(char ***argvp, int (*addfunc)(char *, int))
-#else
-void
-checkpositionalminusC(argvp, addfunc)
-	char ***argvp;
-	int (*addfunc)();
-#endif
-{
-	while (**argvp != (char *)NULL) {
-		if (!strcmp(**argvp, "-C")) {
-			/* XXX should be allow for positional -C/dir, too? */
-			if ((*addfunc)(*++*argvp, 1) < 0) {
-				tar_usage();
-			}
-			++*argvp;
-			continue;
-		}
-		if ((*addfunc)(*(*argvp)++, 0) < 0)
-			tar_usage();
-	}
 }

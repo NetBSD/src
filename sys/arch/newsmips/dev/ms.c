@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1999/12/18 06:54:05 tsubai Exp $	*/
+/*	$NetBSD: ms.c,v 1.3 1998/12/26 00:53:49 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,8 +60,8 @@
 #include <sys/file.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/mouse.h>
+#include <machine/autoconf.h>
 
 #include <newsmips/dev/msreg.h>
 #include <newsmips/dev/scc.h>
@@ -93,7 +93,6 @@ struct cfattach ms_ca = {
 
 extern struct cfdriver ms_cd;
 
-static int ms_intr __P((void *));
 static void msq_init __P((int));
 static int msq_stat __P((int));
 static struct ms_event * msq_read __P((int));
@@ -141,21 +140,7 @@ msattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int intr = self->dv_cfdata->cf_level;
-
-	if (intr == -1)
-		intr = 2;	/* XXX */
-
-	hb_intr_establish(intr, IPL_TTY, ms_intr, self);
-	printf(" level %d\n", intr);
-}
-
-int
-ms_intr(v)
-	void *v;
-{
-	kbm_rint(SCC_MOUSE);
-	return 1;
+	printf("\n");
 }
 
 /* queue structure operators */

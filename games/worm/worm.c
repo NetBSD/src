@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.17 1999/10/26 06:35:49 cgd Exp $	*/
+/*	$NetBSD: worm.c,v 1.16 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.17 1999/10/26 06:35:49 cgd Exp $");
+__RCSID("$NetBSD: worm.c,v 1.16 1999/09/12 09:02:24 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ int running = 0;
 int slow = 0;
 int score = 0;
 int start_len = LENGTH;
-int lastch;
+char lastch;
 char outbuf[BUFSIZ];
 
 void	crash __P((void)) __attribute__((__noreturn__));
@@ -89,7 +89,7 @@ int	main __P((int, char **));
 void	leave __P((int)) __attribute__((__noreturn__));
 void	life __P((void));
 void	newpos __P((struct body *));
-void	process __P((int));
+void	process __P((char));
 void	prize __P((void));
 int	rnd __P((int));
 void	setup __P((void));
@@ -100,6 +100,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+	char ch;
 
 	/* Revoke setgid privileges */
 	setregid(getgid(), getgid());
@@ -116,9 +117,6 @@ main(argc, argv)
 	initscr();
 	crmode();
 	noecho();
-#ifdef KEY_LEFT
-	keypad(stdscr, TRUE);
-#endif
 	slow = (baudrate() <= 1200);
 	clear();
 	stw = newwin(1, COLS-1, 0, 0);
@@ -143,7 +141,8 @@ main(argc, argv)
 		else
 		{
 		    fflush(stdout);
-		    process(getch());
+		    if (read(0, &ch, 1) >= 0)
+			process(ch);
 		}
 	}
 }
@@ -238,7 +237,7 @@ prize()
 
 void
 process(ch)
-	int ch;
+	char ch;
 {
 	int x,y;
 	struct body *nh;
@@ -248,42 +247,17 @@ process(ch)
 	y = head->y;
 	switch(ch)
 	{
-#ifdef KEY_LEFT
-		case KEY_LEFT:
-#endif
-		case 'h':
-			x--; break;
-
-#ifdef KEY_DOWN
-		case KEY_DOWN:
-#endif
-		case 'j':
-			y++; break;
-
-#ifdef KEY_UP
-		case KEY_UP:
-#endif
-		case 'k':
-			y--; break;
-
-#ifdef KEY_RIGHT
-		case KEY_RIGHT:
-#endif
-		case 'l':
-			x++; break;
-
+		case 'h': x--; break;
+		case 'j': y++; break;
+		case 'k': y--; break;
+		case 'l': x++; break;
 		case 'H': x--; running = RUNLEN; ch = tolower(ch); break;
 		case 'J': y++; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
 		case '\f': setup(); return;
-
-		case ERR:
-		case CNTRL('C'):
-		case CNTRL('D'):
-			crash();
-			return;
-
+		case CNTRL('C'): crash(); return;
+		case CNTRL('D'): crash(); return;
 		default: if (! running) alarm(1);
 			   return;
 	}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: de.4,v 1.6 1999/12/15 23:44:54 abs Exp $
+.\"	$NetBSD: de.4,v 1.5 1999/03/16 01:19:23 garbled Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Tn DEC DEUNA
 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "de0 at uba0 csr 174510 vector deintr"
+.Cd "device de0 at uba0 csr 174510 vector deintr"
 .Sh DESCRIPTION
 The
 .Nm de
@@ -79,7 +79,7 @@ flag with an
 .Bl -diag
 .It de%d: hardware address %s.
 This is a normal autoconfiguration message noting the 6 byte physical
-Ethernet address of the adapter.
+ethernet address of the adapter.
 .Pp
 .It de%d: oerror, flags=%b tdrerr=%b (len=%d).
 The hardware indicated an error
@@ -102,7 +102,7 @@ than it had buffers allocated to receive them.
 .Pp
 .It de%d: address change failed, csr0=%b csr1=%b.
 The interface was unable to reprogram
-its physical Ethernet address.
+its physical ethernet address.
 This may happen with very early models of the interface.
 This facility is used only when
 the controller is not the first network interface configured for

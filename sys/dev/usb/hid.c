@@ -1,5 +1,4 @@
-/*	$NetBSD: hid.c,v 1.11 1999/11/18 23:32:25 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
+/*	$NetBSD: hid.c,v 1.8 1999/08/14 14:49:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,17 +39,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__NetBSD__)
 #include <sys/kernel.h>
-#endif
 #include <sys/malloc.h>
+#if defined(__FreeBSD__)
+#include <sys/bus.h>
+#endif
  
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/hid.h>
 
-#ifdef UHID_DEBUG
+#ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;
@@ -111,7 +111,7 @@ void
 hid_end_parse(s)
 	struct hid_data *s;
 {
-	while (s->cur.next != NULL) {
+	while (s->cur.next) {
 		struct hid_item *hi = s->cur.next->next;
 		free(s->cur.next, M_TEMP);
 		s->cur.next = hi;
@@ -133,7 +133,7 @@ hid_get_item(s, h)
 	int i;
 
  top:
-	if (s->multimax != 0) {
+	if (s->multimax) {
 		if (s->multi < s->multimax) {
 			c->usage = s->usages[min(s->multi, s->nu-1)];
 			s->multi++;
@@ -367,7 +367,7 @@ hid_get_item(s, h)
 	}
 }
 
-int
+int 
 hid_report_size(buf, len, k, idp)
 	void *buf;
 	int len;
@@ -380,11 +380,11 @@ hid_report_size(buf, len, k, idp)
 
 	id = 0;
 	for (d = hid_start_parse(buf, len, 1<<k); hid_get_item(d, &h); )
-		if (h.report_ID != 0)
+		if (h.report_ID)
 			id = h.report_ID;
 	hid_end_parse(d);
 	size = h.loc.pos;
-	if (id != 0) {
+	if (id) {
 		size += 8;
 		*idp = id;	/* XXX wrong */
 	} else
@@ -406,9 +406,9 @@ hid_locate(desc, size, u, k, loc, flags)
 
 	for (d = hid_start_parse(desc, size, 1<<k); hid_get_item(d, &h); ) {
 		if (h.kind == k && !(h.flags & HIO_CONST) && h.usage == u) {
-			if (loc != NULL)
+			if (loc)
 				*loc = h.loc;
-			if (flags != NULL)
+			if (flags)
 				*flags = h.flags;
 			hid_end_parse(d);
 			return (1);
@@ -456,15 +456,15 @@ hid_is_collection(desc, size, usage)
 {
 	struct hid_data *hd;
 	struct hid_item hi;
-	int err;
+	int r;
 
 	hd = hid_start_parse(desc, size, hid_input);
-	if (hd == NULL)
+	if (!hd)
 		return (0);
 
-	err = hid_get_item(hd, &hi) &&
+	r = hid_get_item(hd, &hi) &&
 	    hi.kind == hid_collection &&
 	    hi.usage == usage;
 	hid_end_parse(hd);
-	return (err);
+	return (r);
 }

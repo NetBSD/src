@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.132 1999/11/14 18:06:09 soren Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.128.2.1 1999/12/21 23:19:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ scsibusmatch(parent, cf, aux)
 	    cf->cf_loc[SCSICF_CHANNEL] != SCSICF_CHANNEL_DEFAULT)
 		return (0);
 
-	return (1);
+	return ((cf->cf_loc[SCSICF_CHANNEL] == channel) ? 2 : 1);
 }
 
 /*
@@ -177,7 +177,6 @@ scsibusattach(parent, self, aux)
 	sc_link_proto->scsipi_cmd = scsi_scsipi_cmd;
 	sc_link_proto->scsipi_interpret_sense = scsipi_interpret_sense;
 	sc_link_proto->sc_print_addr = scsi_print_addr;
-	sc_link_proto->scsipi_kill_pending = scsi_kill_pending;
 
 	sb->adapter_link = sc_link_proto;
 	sb->sc_maxtarget = sc_link_proto->scsipi_scsi.max_target;
@@ -214,9 +213,13 @@ void
 scsibus_config_interrupts(self)
 	struct device *self;
 {
-#ifndef SCSI_DELAY
+
+#if defined(SCSI_DELAY) && SCSI_DELAY > 2
+#else	/* SCSI_DELAY > 2 */
+#undef	SCSI_DELAY
 #define SCSI_DELAY 2
-#endif
+#endif	/* SCSI_DELAY */
+
 	if (SCSI_DELAY > 0) {
 		printf("%s: waiting %d seconds for devices to settle...\n",
 		    self->dv_xname, SCSI_DELAY);
@@ -491,8 +494,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "SONY    ", "CD-ROM CDU-561  ", ""},     SDEV_NOLUNS},
-	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8012 ", ""},     SDEV_NOLUNS},
@@ -519,8 +520,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 
-	{{T_DIRECT, T_FIXED,
-	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, ADEV_CDROM|SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.5 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.4 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,133 +99,11 @@ struct	in6_ifaddr {
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	u_int32_t ia_plen;		/* prefix length */
 	struct	in6_ifaddr *ia_next;	/* next in6 list of IP6 addresses */
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	LIST_HEAD(in6_multihead, in6_multi) ia6_multiaddrs;
 					/* list of multicast addresses */
-#endif
 	int	ia6_flags;
 
 	struct in6_addrlifetime ia6_lifetime;	/* NULL = infty */
-	struct ifprefix *ia6_ifpr; /* back pointer to ifprefix */
-};
-
-/*
- * IPv6 interface statistics, as defined in RFC2465 Ipv6IfStatsEntry (p12).
- */
-struct in6_ifstat {
-	u_quad_t ifs6_in_receive;	/* # of total input datagram */
-	u_quad_t ifs6_in_hdrerr;	/* # of datagrams with invalid hdr */
-	u_quad_t ifs6_in_toobig;	/* # of datagrams exceeded MTU */
-	u_quad_t ifs6_in_noroute;	/* # of datagrams with no route */
-	u_quad_t ifs6_in_addrerr;	/* # of datagrams with invalid dst */
-	u_quad_t ifs6_in_protounknown;	/* # of datagrams with unknown proto */
-					/* NOTE: increment on final dst if */
-	u_quad_t ifs6_in_truncated;	/* # of truncated datagrams */
-	u_quad_t ifs6_in_discard;	/* # of discarded datagrams */
-					/* NOTE: fragment timeout is not here */
-	u_quad_t ifs6_in_deliver;	/* # of datagrams delivered to ULP */
-					/* NOTE: increment on final dst if */
-	u_quad_t ifs6_out_forward;	/* # of datagrams forwarded */
-					/* NOTE: increment on outgoing if */
-	u_quad_t ifs6_out_request;	/* # of outgoing datagrams from ULP */
-					/* NOTE: does not include forwrads */
-	u_quad_t ifs6_out_discard;	/* # of discarded datagrams */
-	u_quad_t ifs6_out_fragok;	/* # of datagrams fragmented */
-	u_quad_t ifs6_out_fragfail;	/* # of datagrams failed on fragment */
-	u_quad_t ifs6_out_fragcreat;	/* # of fragment datagrams */
-					/* NOTE: this is # after fragment */
-	u_quad_t ifs6_reass_reqd;	/* # of incoming fragmented packets */
-					/* NOTE: increment on final dst if */
-	u_quad_t ifs6_reass_ok;		/* # of reassembled packets */
-					/* NOTE: this is # after reass */
-					/* NOTE: increment on final dst if */
-	u_quad_t ifs6_reass_fail;	/* # of reass failures */
-					/* NOTE: may not be packet count */
-					/* NOTE: increment on final dst if */
-	u_quad_t ifs6_in_mcast;		/* # of inbound multicast datagrams */
-	u_quad_t ifs6_out_mcast;	/* # of outbound multicast datagrams */
-};
-
-/*
- * ICMPv6 interface statistics, as defined in RFC2466 Ipv6IfIcmpEntry.
- * XXX: I'm not sure if this file is the right place for this structure...
- */
-struct icmp6_ifstat {
-	/*
-	 * Input statistics
-	 */
-	/* ipv6IfIcmpInMsgs, total # of input messages */
-	u_quad_t ifs6_in_msg;
-	/* ipv6IfIcmpInErrors, # of input error messages */
-	u_quad_t ifs6_in_error;
-	/* ipv6IfIcmpInDestUnreachs, # of input dest unreach errors */
-	u_quad_t ifs6_in_dstunreach;
-	/* ipv6IfIcmpInAdminProhibs, # of input administratively prohibited errs */
-	u_quad_t ifs6_in_adminprohib;
-	/* ipv6IfIcmpInTimeExcds, # of input time exceeded errors */
-	u_quad_t ifs6_in_timeexceed;
-	/* ipv6IfIcmpInParmProblems, # of input parameter problem errors */
-	u_quad_t ifs6_in_paramprob;
-	/* ipv6IfIcmpInPktTooBigs, # of input packet too big errors */
-	u_quad_t ifs6_in_pkttoobig;
-	/* ipv6IfIcmpInEchos, # of input echo requests */
-	u_quad_t ifs6_in_echo;
-	/* ipv6IfIcmpInEchoReplies, # of input echo replies */
-	u_quad_t ifs6_in_echoreply;
-	/* ipv6IfIcmpInRouterSolicits, # of input router solicitations */
-	u_quad_t ifs6_in_routersolicit;
-	/* ipv6IfIcmpInRouterAdvertisements, # of input router advertisements */
-	u_quad_t ifs6_in_routeradvert;
-	/* ipv6IfIcmpInNeighborSolicits, # of input neighbor solicitations */
-	u_quad_t ifs6_in_neighborsolicit;
-	/* ipv6IfIcmpInNeighborAdvertisements, # of input neighbor advertisements */
-	u_quad_t ifs6_in_neighboradvert;
-	/* ipv6IfIcmpInRedirects, # of input redirects */
-	u_quad_t ifs6_in_redirect;
-	/* ipv6IfIcmpInGroupMembQueries, # of input MLD queries */
-	u_quad_t ifs6_in_mldquery;
-	/* ipv6IfIcmpInGroupMembResponses, # of input MLD reports */
-	u_quad_t ifs6_in_mldreport;
-	/* ipv6IfIcmpInGroupMembReductions, # of input MLD done */
-	u_quad_t ifs6_in_mlddone;
-
-	/*
-	 * Output statistics. We should solve unresolved routing problem...  
-	 */
-	/* ipv6IfIcmpOutMsgs, total # of output messages */
-	u_quad_t ifs6_out_msg;
-	/* ipv6IfIcmpOutErrors, # of output error messages */
-	u_quad_t ifs6_out_error;
-	/* ipv6IfIcmpOutDestUnreachs, # of output dest unreach errors */
-	u_quad_t ifs6_out_dstunreach;
-	/* ipv6IfIcmpOutAdminProhibs, # of output administratively prohibited errs */
-	u_quad_t ifs6_out_adminprohib;
-	/* ipv6IfIcmpOutTimeExcds, # of output time exceeded errors */
-	u_quad_t ifs6_out_timeexceed;
-	/* ipv6IfIcmpOutParmProblems, # of output parameter problem errors */
-	u_quad_t ifs6_out_paramprob;
-	/* ipv6IfIcmpOutPktTooBigs, # of output packet too big errors */
-	u_quad_t ifs6_out_pkttoobig;
-	/* ipv6IfIcmpOutEchos, # of output echo requests */
-	u_quad_t ifs6_out_echo;
-	/* ipv6IfIcmpOutEchoReplies, # of output echo replies */
-	u_quad_t ifs6_out_echoreply;
-	/* ipv6IfIcmpOutRouterSolicits, # of output router solicitations */
-	u_quad_t ifs6_out_routersolicit;
-	/* ipv6IfIcmpOutRouterAdvertisements, # of output router advertisements */
-	u_quad_t ifs6_out_routeradvert;
-	/* ipv6IfIcmpOutNeighborSolicits, # of output neighbor solicitations */
-	u_quad_t ifs6_out_neighborsolicit;
-	/* ipv6IfIcmpOutNeighborAdvertisements, # of output neighbor advertisements */
-	u_quad_t ifs6_out_neighboradvert;
-	/* ipv6IfIcmpOutRedirects, # of output redirects */
-	u_quad_t ifs6_out_redirect;
-	/* ipv6IfIcmpOutGroupMembQueries, # of output MLD queries */
-	u_quad_t ifs6_out_mldquery;
-	/* ipv6IfIcmpOutGroupMembResponses, # of output MLD reports */
-	u_quad_t ifs6_out_mldreport;
-	/* ipv6IfIcmpOutGroupMembReductions, # of output MLD done */
-	u_quad_t ifs6_out_mlddone;
 };
 
 struct	in6_ifreq {
@@ -238,8 +116,6 @@ struct	in6_ifreq {
 		int	ifru_metric;
 		caddr_t	ifru_data;
 		struct in6_addrlifetime ifru_lifetime;
-		struct in6_ifstat ifru_stat;
-		struct icmp6_ifstat ifru_icmp6stat;
 	} ifr_ifru;
 };
 
@@ -251,10 +127,6 @@ struct	in6_aliasreq {
 	int	ifra_flags;
 	struct in6_addrlifetime ifra_lifetime;
 };
-
-/* prefix type macro */
-#define IN6_PREFIX_ND	1
-#define IN6_PREFIX_RR	2
 
 /*
  * prefix related flags passed between kernel(NDP related part) and
@@ -291,7 +163,6 @@ struct  in6_prefixreq {
 #define PR_ORIG_RA	0
 #define PR_ORIG_RR	1
 #define PR_ORIG_STATIC	2
-#define PR_ORIG_KERNEL	3
 
 #define ipr_raf_onlink		ipr_flags.prf_ra.onlink
 #define ipr_raf_auto		ipr_flags.prf_ra.autonomous
@@ -338,23 +209,20 @@ struct	in6_rrenumreq {
  * Given a pointer to an in6_ifaddr (ifaddr),
  * return a pointer to the addr as a sockaddr_in6
  */
-#define IA6_IN6(ia)	(&((ia)->ia_addr.sin6_addr))
-#define IA6_DSTIN6(ia)	(&((ia)->ia_dstaddr.sin6_addr))
-#define IA6_MASKIN6(ia)	(&((ia)->ia_prefixmask.sin6_addr))
-#define IA6_SIN6(ia)	(&((ia)->ia_addr))
-#define IA6_DSTSIN6(ia)	(&((ia)->ia_dstaddr))
-#define IFA_IN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_addr))->sin6_addr)
-#define IFA_DSTIN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_dstaddr))->sin6_addr)
+#define IA6_IN6(ia)	(&(((struct in6_ifaddr *)(ia))->ia_addr.sin6_addr))
+#define IA6_DSTIN6(ia)	(&(((struct in6_ifaddr *)(ia))->ia_dstaddr.sin6_addr))
+#define IA6_MASKIN6(ia)	(&(((struct in6_ifaddr *)(ia))->ia_prefixmask.sin6_addr))
+#define IA6_SIN6(ia)	(&(((struct in6_ifaddr *)(ia))->ia_addr))
+#define IA6_DSTSIN6(ia)	(&(((struct in6_ifaddr *)(ia))->ia_dstaddr))
+#define IFA_IN6(x)	(((struct sockaddr_in6 *)((x)->ifa_addr))->sin6_addr)
 
-#define IFPR_IN6(x)	(&((struct sockaddr_in6 *)((x)->ifpr_prefix))->sin6_addr)
+#define IFPR_IN6(x)	(((struct sockaddr_in6 *)((x)->ifpr_prefix))->sin6_addr)
 
-#ifdef _KERNEL
 #define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
 	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
 	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
 	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
 	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
-#endif
 
 #define SIOCSIFADDR_IN6		 _IOW('i', 12, struct in6_ifreq)
 #define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
@@ -382,11 +250,6 @@ struct	in6_rrenumreq {
 
 #define SIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
 #define SIOCSIFALIFETIME_IN6	_IOWR('i', 82, struct in6_ifreq)
-#define SIOCGIFSTAT_IN6		_IOWR('i', 83, struct in6_ifreq)
-#define SIOCGIFSTAT_ICMP6	_IOWR('i', 84, struct in6_ifreq)
-
-#define SIOCSDEFIFACE_IN6	_IOWR('i', 85, struct in6_ndifreq)
-#define SIOCGDEFIFACE_IN6	_IOWR('i', 86, struct in6_ndifreq)
 
 #define SIOCSIFPREFIX_IN6	_IOW('i', 100, struct in6_prefixreq) /* set */
 #define SIOCGIFPREFIX_IN6	_IOWR('i', 101, struct in6_prefixreq) /* get */
@@ -413,21 +276,6 @@ struct	in6_rrenumreq {
 
 #ifdef _KERNEL
 extern struct in6_ifaddr *in6_ifaddr;
-
-extern struct in6_ifstat **in6_ifstat;
-extern size_t in6_ifstatmax;
-extern struct icmp6stat icmp6stat;
-extern struct icmp6_ifstat **icmp6_ifstat;
-extern size_t icmp6_ifstatmax;
-#define in6_ifstat_inc(ifp, tag) \
-do {								\
-	if ((ifp) && (ifp)->if_index <= if_index		\
-	 && (ifp)->if_index < in6_ifstatmax			\
-	 && in6_ifstat && in6_ifstat[(ifp)->if_index]) {	\
-		in6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
-} while (0)
-
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
 extern struct in6_addr zeroin6_addr;
 extern u_char inet6ctlerrmap[];
@@ -442,28 +290,10 @@ MALLOC_DECLARE(M_IPMADDR);
  * Macro for finding the internet address structure (in6_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-
 #define IFP_TO_IA6(ifp, ia)				\
 /* struct ifnet *ifp; */				\
 /* struct in6_ifaddr *ia; */				\
-do {									\
-	struct ifaddr *ifa;						\
-	for (ifa = (ifp)->if_addrlist; ifa; ifa = ifa->ifa_next) {	\
-		if (!ifa->ifa_addr)					\
-			continue;					\
-		if (ifa->ifa_addr->sa_family == AF_INET6)		\
-			break;						\
-	}								\
-	(ia) = (struct in6_ifaddr *)ifa;				\
-} while (0)
-
-#else
-
-#define IFP_TO_IA6(ifp, ia)				\
-/* struct ifnet *ifp; */				\
-/* struct in6_ifaddr *ia; */				\
-do {									\
+{									\
 	struct ifaddr *ifa;						\
 	for (ifa = (ifp)->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next) {	\
 		if (!ifa->ifa_addr)					\
@@ -472,10 +302,8 @@ do {									\
 			break;						\
 	}								\
 	(ia) = (struct in6_ifaddr *)ifa;				\
-} while (0)
+}
 #endif /* _KERNEL */
-
-#endif
 
 /*
  * Multi-cast membership entry.  One for each group/ifp that a PCB
@@ -490,21 +318,13 @@ struct	in6_multi {
 	LIST_ENTRY(in6_multi) in6m_entry; /* list glue */
 	struct	in6_addr in6m_addr;	/* IP6 multicast address */
 	struct	ifnet *in6m_ifp;	/* back pointer to ifnet */
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	struct	in6_ifaddr *in6m_ia;    /* back pointer to in6_ifaddr */ 
-#else
-	struct	ifmultiaddr *in6m_ifma;	/* back pointer to ifmultiaddr */
-#endif
 	u_int	in6m_refcount;		/* # membership claims by sockets */
 	u_int	in6m_state;		/* state of the membership */
 	u_int	in6m_timer;		/* MLD6 listener report timer */
 };
 
 #ifdef _KERNEL
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern LIST_HEAD(in6_multihead, in6_multi) in6_multihead;
-#endif
-
 /*
  * Structure used by macros below to remember position when stepping through
  * all of eht in6_multi records.
@@ -520,54 +340,11 @@ struct	in6_multistep {
  * returns NLL.
  */
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-
 #define IN6_LOOKUP_MULTI(addr, ifp, in6m)			\
 /* struct in6_addr addr; */					\
 /* struct ifnet *ifp; */					\
 /* struct in6_multi *in6m; */					\
-do { \
-	register struct ifmultiaddr *ifma; \
-	for (ifma = (ifp)->if_multiaddrs.lh_first; ifma; \
-	     ifma = ifma->ifma_link.le_next) { \
-		if (ifma->ifma_addr->sa_family == AF_INET6 \
-		    && IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6 *)ifma->ifma_addr)->sin6_addr, \
-					  &(addr))) \
-			break; \
-	} \
-	(in6m) = (struct in6_multi *)(ifma ? ifma->ifma_protospec : 0); \
-} while(0)
-
-/*
- * Macro to step through all of the in6_multi records, one at a time.
- * The current position is remembered in "step", which the caller must
- * provide.  IN6_FIRST_MULTI(), below, must be called to initialize "step"
- * and get the first record.  Both macros return a NULL "in6m" when there
- * are no remaining records.
- */
-#define IN6_NEXT_MULTI(step, in6m)					\
-/* struct in6_multistep step; */					\
-/* struct in6_multi *in6m; */						\
-do { \
-	if (((in6m) = (step).i_in6m) != NULL) \
-		(step).i_in6m = (step).i_in6m->in6m_entry.le_next; \
-} while(0)
-
-#define IN6_FIRST_MULTI(step, in6m)		\
-/* struct in6_multistep step; */		\
-/* struct in6_multi *in6m */			\
-do { \
-	(step).i_in6m = in6_multihead.lh_first; \
-		IN6_NEXT_MULTI((step), (in6m)); \
-} while(0)
-
-#else /* not FreeBSD3 */
-
-#define IN6_LOOKUP_MULTI(addr, ifp, in6m)			\
-/* struct in6_addr addr; */					\
-/* struct ifnet *ifp; */					\
-/* struct in6_multi *in6m; */					\
-do {								\
+{								\
 	register struct in6_ifaddr *ia;				\
 								\
 	IFP_TO_IA6((ifp), ia);					\
@@ -579,7 +356,7 @@ do {								\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
 		     (in6m) = in6m->in6m_entry.le_next)		\
 			continue;				\
-} while (0)
+}
 
 /*
  * Macro to step through all of the in6_multi records, one at a time.
@@ -591,7 +368,7 @@ do {								\
 #define IN6_NEXT_MULTI(step, in6m)					\
 /* struct in6_multistep step; */					\
 /* struct in6_multi *in6m; */						\
-do {									\
+{									\
 	if (((in6m) = (step).i_in6m) != NULL)				\
 		(step).i_in6m = (in6m)->in6m_entry.le_next;		\
 	else								\
@@ -603,18 +380,16 @@ do {									\
 				break;					\
 			}						\
 		}							\
-} while (0)
+}
 
 #define IN6_FIRST_MULTI(step, in6m)		\
 /* struct in6_multistep step; */		\
 /* struct in6_multi *in6m */			\
-do {						\
+{						\
 	(step).i_ia = in6_ifaddr;		\
 	(step).i_in6m = NULL;			\
 	IN6_NEXT_MULTI((step), (in6m));		\
-} while (0)
-
-#endif /* not FreeBSD3 */
+}
 
 int	in6_ifinit __P((struct ifnet *,
 			struct in6_ifaddr *, struct sockaddr_in6 *, int));
@@ -622,10 +397,9 @@ struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
 				     int *));
 void	in6_delmulti __P((struct in6_multi *));
 void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
-extern int in6_ifindex2scopeid __P((int));
 extern int in6_mask2len __P((struct in6_addr *));
 extern void in6_len2mask __P((struct in6_addr *, int));
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
+#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 int	in6_control __P((struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *));
 #else
@@ -639,13 +413,7 @@ struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
 char	*ip6_sprintf __P((struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
-int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,
-				  int len));
-void	in6_prefixlen2mask __P((struct in6_addr *maskp, int len));
-int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
-			      struct ifnet *ifp));
-int	in6_prefix_add_ifid __P((int iilen, struct in6_ifaddr *ia));
-void	in6_prefix_remove_ifid __P((int iilen, struct in6_ifaddr *ia));
+int	in6_prefix_ioctl __P((u_long cmd, caddr_t data, struct ifnet *ifp));
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */

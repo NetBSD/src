@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.30 1999/11/17 00:06:38 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.29 1999/08/22 13:43:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -639,8 +639,6 @@ oss_ioctl_mixer(p, uap, retval)
 	u_long com;
 	struct audiodevinfo *di;
 	mixer_ctrl_t mc;
-	struct oss_mixer_info omi;
-	struct audio_device adev;
 	int idat;
 	int i;
 	int error;
@@ -673,15 +671,6 @@ oss_ioctl_mixer(p, uap, retval)
 
 	ioctlf = fp->f_ops->fo_ioctl;
 	switch (com) {
-	case OSS_SOUND_MIXER_INFO:
-	case OSS_SOUND_OLD_MIXER_INFO:
-		error = ioctlf(fp, AUDIO_GETDEV, (caddr_t)&adev, p);
-		if (error)
-			return (error);
-		omi.modify_counter = 1;
-		strncpy(omi.id, adev.name, sizeof omi.id);
-		strncpy(omi.name, adev.name, sizeof omi.name);
-		return copyout(&omi, SCARG(uap, data), OSS_IOCTL_SIZE(com));
 	case OSS_SOUND_MIXER_READ_RECSRC:
 		if (di->source == -1) {
 			error = EINVAL;

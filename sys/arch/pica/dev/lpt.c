@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.6 1998/08/15 03:02:42 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.6.18.1 1999/12/21 23:16:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -304,6 +304,8 @@ lptopen(dev, flag)
 	outb(iobase + lpt_control, control);
 
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
+	sc->sc_inbuf->b_bsize = LPT_BSIZE;
+	sc->sc_inbuf->b_bshift = intlog2(LPT_BSIZE);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 

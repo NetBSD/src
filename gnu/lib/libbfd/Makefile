@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/11/23 02:08:03 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.11 1999/08/01 04:25:39 sommerfeld Exp $
 
 LIB=		bfd
 
@@ -155,11 +155,9 @@ SRCS+=			ns32knetbsd.c aout-ns32k.c cpu-ns32k.c ns32k-dis.c
 .if (${MACHINE_ARCH} == "powerpc" || !defined(BFD_SLIM))
 ARCHES+=		powerpc
 DEFAULT_VEC.powerpc=	bfd_elf32_powerpc_vec
-SELECT_VECS+=		${DEFAULT_VEC.powerpc} bfd_elf32_powerpcle_vec \
-				rs6000coff_vec
+SELECT_VECS+=		${DEFAULT_VEC.powerpc} bfd_elf32_powerpcle_vec
 SRCS+=			cpu-powerpc.c elf32-ppc.c ppc-dis.c ppc-opc.c \
-			elf32.c elf.c elflink.c dwarf2.c coff-rs6000.c \
-			xcofflink.c
+			elf32.c elf.c elflink.c dwarf2.c
 .endif
 
 ##### sparc #####

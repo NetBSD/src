@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.3 1999/12/01 05:08:34 hubertf Exp $
+# $NetBSD: README,v 1.2 1997/06/05 12:59:19 agc Exp $
 # Original from FreeBSD, no rcs id.
 
 This is the pkg_install suite of tools for doing maintainance of
@@ -9,6 +9,3 @@ This code was written by Jordan Hubbard for FreeBSD, snatched and
 mildly reshaped by John Kohl in NetBSD and the changes taken back into
 FreeBSD again by Jordan, who then proceeded to add another couple
 of dozen features on top.  Whee! :-)
-
-In another round of enhancements, NetBSD changes were added by
-Alistair Crooks, Hubert Feyrer and Thorsten Frueauf.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1999/12/05 11:56:37 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 1999/07/08 18:11:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -510,9 +510,10 @@ trap(type, code, v, frame)
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRAP15
+	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
 	 * XXX: because locore.s now gives them special treatment.
 	 */
+	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
 #ifdef DEBUG
 		printf("unexpected kernel trace trap, type = %d\n", type);
@@ -522,6 +523,7 @@ trap(type, code, v, frame)
 		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -533,9 +535,6 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
-		/* FALLTHROUGH */
-	case T_TRACE:		/* tracing a trap instruction */
-	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -689,7 +688,7 @@ trap(type, code, v, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = clrnd(btoc(USRSTACK-(unsigned)va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -801,8 +800,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE,
-			    VM_PROT_WRITE|PMAP_WIRED);
+			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
+			    VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (paddr_t)fa, &pa);

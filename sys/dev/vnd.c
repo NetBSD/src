@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.62 1999/11/17 09:34:03 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.61.8.1 1999/12/21 23:19:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ vndstrategy(bp)
 	 * Put the block number in terms of the logical blocksize
 	 * of the "device".
 	 */
-	bn = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	bn = bp->b_blkno;
 
 	/*
 	 * Translate the partition-relative block number to an absolute.
@@ -370,7 +370,7 @@ vndstrategy(bp)
 	}
 
 	/* ...and convert to a byte offset within the file. */
-	bn *= lp->d_secsize;
+	bn = dbtob(bn, vnd->sc_ushift);
 
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
@@ -439,13 +439,12 @@ vndstrategy(bp)
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
 		nbp->vb_buf.b_error = 0;
 		nbp->vb_buf.b_data = addr;
-		nbp->vb_buf.b_blkno = nbn + btodb(off);
+		nbp->vb_buf.b_blkno = nbn + btodb(off, vnd->sc_lshift);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
 		nbp->vb_buf.b_vp = NULLVP;
 		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
-		LIST_INIT(&nbp->vb_buf.b_dep);
 		if (bp->b_dirtyend == 0) {
 			nbp->vb_buf.b_dirtyoff = 0;
 			nbp->vb_buf.b_dirtyend = sz;
@@ -650,7 +649,7 @@ vndread(dev, uio, flags)
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio, vnd->sc_ushift));
 }
 
 /* ARGSUSED */
@@ -675,7 +674,7 @@ vndwrite(dev, uio, flags)
 	if ((sc->sc_flags & VNF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio, vnd->sc_ushift));
 }
 
 /* ARGSUSED */
@@ -761,7 +760,21 @@ vndioctl(dev, cmd, data, flag, p)
 		}
 		VOP_UNLOCK(nd.ni_vp, 0);
 		vnd->sc_vp = nd.ni_vp;
-		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
+		/*
+		 * Figure out the underlying block shift value. We support
+		 * device nodes since this driver is the only one meant
+		 * to map block sizes.
+		 */
+		if ((vnd->sc_vp->v_type == VBLK) ||
+					(vnd->sc_vp->v_type == VCHR)) {
+			vnd->sc_lshift = vp->v_specbshift;
+			vnd->sc_bsize = blocksize(vnd->sc_lshift);
+		} else {
+			vnd->sc_lshift = vp->v_mount->mnt_bshift;
+			vnd->sc_bsize = blocksize(vnd->sc_lshift);
+		}
+		vnd->sc_size = btodb(vattr.va_size, vnd->sc_lshift);
+		/* note truncation above */
 
 		/*
 		 * Use pseudo-geometry specified.  If none was provided,
@@ -774,11 +787,12 @@ vndioctl(dev, cmd, data, flag, p)
 
 			/*
 			 * Sanity-check the sector size.
-			 * XXX Don't allow secsize < DEV_BSIZE.  Should
-			 * XXX we?
+			 *
+			 * We make sure that the larger of the lower and
+			 * upper block sizes is a multiple of the smaller.
 			 */
-			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
-			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
+			if (vnd->sc_geom.vng_secsize < DEFAULT_BSIZE ||
+			    (vnd->sc_geom.vng_secsize % DEFAULT_BSIZE) != 0) {
 				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
 				    p->p_ucred, p);
 				vndunlock(vnd);
@@ -792,7 +806,8 @@ vndioctl(dev, cmd, data, flag, p)
 			geomsize = (vnd->sc_geom.vng_nsectors *
 			    vnd->sc_geom.vng_ntracks *
 			    vnd->sc_geom.vng_ncylinders) *
-			    (vnd->sc_geom.vng_secsize / DEV_BSIZE);
+			    (vnd->sc_geom.vng_secsize / DEFAULT_BSIZE);
+/* XXXXX */
 
 			/*
 			 * Sanity-check the size against the specified
@@ -838,7 +853,7 @@ vndioctl(dev, cmd, data, flag, p)
 			return(error);
 		}
 		vndthrottle(vnd, vnd->sc_vp);
-		vio->vnd_size = dbtob(vnd->sc_size);
+		vio->vnd_size = dbtob(vnd->sc_size, XXX);
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
@@ -973,11 +988,11 @@ vndsetcred(vnd, cred)
 	int error;
 
 	vnd->sc_cred = crdup(cred);
-	tmpbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
+	tmpbuf = malloc(DEFAULT_BSIZE, M_TEMP, M_WAITOK);
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
+	aiov.iov_len = min(DEFAULT_BSIZE, dbtob(vnd->sc_size, XXX));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
@@ -1083,7 +1098,7 @@ vndsize(dev)
 		size = -1;
 	else
 		size = lp->d_partitions[part].p_size *
-		    (lp->d_secsize / DEV_BSIZE);
+		    (lp->d_secsize / DEFAULT_BSIZE);
 
 	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
@@ -1113,7 +1128,7 @@ vndgetdefaultlabel(sc, lp)
 
 	bzero(lp, sizeof(*lp));
 
-	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEV_BSIZE);
+	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEFAULT_BSIZE);
 	lp->d_secsize = vng->vng_secsize;
 	lp->d_nsectors = vng->vng_nsectors;
 	lp->d_ntracks = vng->vng_ntracks;

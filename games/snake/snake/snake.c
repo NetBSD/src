@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.15 1999/10/26 06:38:31 cgd Exp $	*/
+/*	$NetBSD: snake.c,v 1.14 1999/09/14 18:07:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.15 1999/10/26 06:38:31 cgd Exp $");
+__RCSID("$NetBSD: snake.c,v 1.14 1999/09/14 18:07:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -182,7 +182,6 @@ main(argc, argv)
 			break;
 		case 't':
 			fast = 0;
-			break;
 		case '?':
 		default:
 			fputs("usage: snake [-d seed] [-w width] [-l length] [-t]\n", stderr);
@@ -822,8 +821,6 @@ surround(ps)
 	mvaddstr(ps->line, ps->col, "   ");
 	mvaddstr(ps->line + 1, ps->col, "o.o");
 	mvaddstr(ps->line + 2, ps->col, "\\_/");
-	refresh();
-	delay(6);
 }
 
 void

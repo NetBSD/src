@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.28 1999/11/23 23:52:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.27.8.1 1999/12/21 23:20:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ lfs_truncate(v)
 	ufs_daddr_t daddr, lastblock, lbn, olastblock;
 	ufs_daddr_t oldsize_lastblock, oldsize_newlast, newsize;
 	long off, a_released, fragsreleased, i_released;
-	int e1, e2, depth, lastseg, num, offset, seg, freesize, s;
+	int e1, e2, depth, lastseg, num, offset, seg, freesize;
 	
 	ip = VTOI(vp);
 
@@ -318,7 +318,8 @@ lfs_truncate(v)
 #endif
 			allocbuf(bp, newsize);
 		if(oldsize_newlast > newsize)
-			ip->i_ffs_blocks -= btodb(oldsize_newlast - newsize);
+			ip->i_ffs_blocks -= btodb(oldsize_newlast - newsize,
+					DEF_BSHIFT);
 		if ((e1 = VOP_BWRITE(bp)) != 0) {
 			printf("lfs_truncate: bwrite: %d\n",e1);
 			return (e1);
@@ -426,8 +427,6 @@ lfs_truncate(v)
 	 */
 	a_released = 0;
 	i_released = 0;
-
-	s = splbio();
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
 
 		/* XXX KS - Don't miscount if we're not truncating to zero. */
@@ -453,7 +452,6 @@ lfs_truncate(v)
 			}
 		}
 	}
-	splx(s);
 	fragsreleased = i_released;
 #ifdef DIAGNOSTIC
 	if (fragsreleased > dbtofrags(fs, ip->i_ffs_blocks)) {
@@ -509,10 +507,10 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 		else /* i == 1 */
 			blist = vp->v_dirtyblkhd.lh_first;
 
-		s = splbio();
 		for (bp = blist; bp; bp = nbp) {
 			nbp = bp->b_vnbufs.le_next;
 
+			s = splbio();
 			if (bp->b_flags & B_GATHERED) {
 				error = tsleep(vp, PRIBIO+1, "lfs_vin2", 0);
 				splx(s);
@@ -524,14 +522,14 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 				bp->b_flags |= B_WANTED;
 				error = tsleep((caddr_t)bp,
 					(PRIBIO + 1), "lfs_vinval", 0);
-				if (error) {
-					splx(s);
+				splx(s);
+				if (error)
 					return (error);
-				}
 				goto top;
 			}
 
 			bp->b_flags |= B_BUSY;
+			splx(s);
 			if((bp->b_lblkno >= 0 && bp->b_lblkno > maxblk)
 			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-(NIADDR-1)))
 			{
@@ -554,7 +552,6 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 				}
 			}
 		}
-		splx(s);
 	}
 	if(dirty)
 		goto top;

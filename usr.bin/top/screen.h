@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.4 1999/10/04 23:33:45 lukem Exp $	*/
+/*	$NetBSD: screen.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
 
 /*
  *  top - a top users display for Unix 4.2
@@ -42,4 +42,4 @@ void standout __P((char *));
 void clear __P((void));
 int clear_eol __P((int));
 void go_home __P((void));
-int putstdout __P((int));
+void putstdout __P((int));

@@ -1,8 +1,9 @@
-.\"	$NetBSD: newsyslog.8,v 1.11 1999/11/30 12:04:14 ad Exp $
-.\"
+.TH NEWSYSLOG 8 "January 12, 1989" "Project Athena"
+.ns
 .\" This file contains changes from the Open Software Foundation.
 .\"
-.\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
+.\"	from: @(#)newsyslog.8
+.\"	$NetBSD: newsyslog.8,v 1.8 1996/11/10 23:58:22 lukem Exp $
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
 .\" 
@@ -18,185 +19,150 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd November 20, 1999
-.Dt NEWSYSLOG 8
-.Os
-.Sh NAME
-.Nm newsyslog
-.Nd maintain system log files to manageable sizes
-.Sh SYNOPSIS
-.Nm newsyslog
-.Op Fl Fnrv
-.Op Fl f Ar config_file
-.Sh DESCRIPTION
-.Nm Newsyslog
+.sp
+.SH NAME
+newsyslog \- maintain system log files to manageable sizes
+.SH SYNOPSIS
+.B /usr/bin/newsyslog
+[
+.B \-vnr
+] [
+.B \-f
+.I configuration file
+]
+.SH DESCRIPTION
+.I Newsyslog
 is a program that should be scheduled to run periodically by
-.Xr cron 8 .
+.IR crontab .
 When it is executed it archives log files if necessary.  If a log file
 is determined to require archiving, 
-.Nm
-rearranges the files so that
-.Dq Va logfile
-is empty,
-.Dq Va logfile Ns Li \&.0
-has
-the last period's logs in it,
-.Dq Va logfile Ns Li \&.1
-has the next to last
-period's logs in it and so on, up to a user-specified number of
+.I newsyslog
+rearranges the files so that ``logfile'' is empty, ``logfile.0'' has
+the last period's logs in it, ``logfile.1'' has the next to last
+period's logs in it, and so on, up to a user-specified number of
 archived logs.  Optionally the archived logs can be compressed to save
-space.  
-.Pp
-A log can be archived for two reasons:
-.Bl -enum -offset indent
-.It
-It is larger than the configured size (in kilobytes).
-.It
-A configured number of hours have elapsed since the log was last
-archived.
-.El
-.Pp
-The granularity of
-.Nm
-is dependent on how often it is scheduled to run by
-.Xr cron 8 .
-It is recommended that
-.Nm
-be run once hourly.
-.Pp
+space. 
+.PP
+A log can be archived because of two reasons.  The log file can have
+grown bigger than a preset size in kilobytes, or a preset number of
+hours may have elapsed since the last log archive.  The granularity of
+.I newsyslog
+is dependent on how often it is scheduled to run in crontab.  Since
+the program is quite fast, it may be scheduled to run every hour
+without any ill effects.
+.PP
 When starting up, 
-.Nm
-reads in a configuration file to determine which logs may potentially
-be archived.
-By default, this configuration file is 
-.Pa /etc/newsyslog.conf .
+.I newsyslog
+reads in a configuration file to determine which logs should be looked
+at.  By default, this configuration file is 
+.IR /etc/newsyslog.conf .
 Each line of the file contains information about a particular log file
 that should be handled by
-.Nm newsyslog .
-Each line has five mandatory fields and four optional fields, with a
+.IR newsyslog .
+Each line has five mandatory fields and two optional fields, with a
 whitespace separating each field.  Blank lines or lines beginning with
 ``#'' are ignored.  The fields of the configuration file are as
 follows: 
-.Pp
-.Bl -tag -width indent
-.It Ar logfile_name
-Name of the system log file to be archived.
-.It Ar owner:group
-This optional field specifies the owner and group for the archive file.
-The ":" is essential, even if the
-.Ar owner
+.br
+	logfile name
+.br
+	owner.group of archives (optional)
+.br
+	mode of logfile & archives
+.br
+	number of archives
+.br
+	size of archives
+.br
+	archive interval
+.br
+	flags (optional)
+.PP
+The
+.I logfile name
+entry is the name of the system log file to be archived.
+.PP
+The optional
+.I owner.group
+entry specifies an ownership and group for the archive file.
+The "." is essential, even if the 
+.I owner
 or
-.Ar group
-field is left blank.  The field may be numeric, or a name which is 
-present in
-.Pa /etc/passwd
-or
-.Pa /etc/group .
-For backward compatibility, "." is useable in lieu of ":", however use of
-this feature is discouraged.
-.It Ar mode 
-Specify the mode of the log file and archives.
-.It Ar count
-Specify the number of archive files to be kept
-besides the log file itself.
-.It Ar size
-When the size of the log file reaches
-.Ar size ,
-the log file will be trimmed as described above.  If this field
-is replaced by an asterisk
-.Pq Ql \&* ,
-then the size of the log file is not taken into account
-when determining when to trim the log file.
-.It Ar interval
+.I group
+field is left blank. The
+fields may be numeric, or a name which is looked up in 
+.I /etc/passwd
+or 
+.IR /etc/group .
+.PP
 The
-.Ar interval
-field specifies the time separation (in hours) between trimming of the 
-logfile.  If this field
-is replaced by an asterisk
-.Pq Ql \&* ,
-then the interval is not taken into account
-when determining when to trim the log file.
-.It Ar flags
-This optional field specifies if any special processing is required.
+.I number of archives
+entry specifies the number of archives to be kept besides the log file
+itself.  
+.PP
+When the size of the logfile reaches 
+.I size of 
+.IR archives ,
+the logfile becomes trimmed as described above.  If this field is
+replaced by a ``*'', then the size of the logfile is not taken into
+account when determining when to trim the log file.
+.PP
 The
-.Ar Z
-flag means that archived log files should be compressed with
-.Xr gzip 1
-to save space.
+.I number of hours
+entry specifies the time separation between the trimming of the log
+file.  If this field is replaced by a ``*'', the number of hours
+since the last time the log was trimmed will not be taken into
+consideration.
+.PP
 The
-.Ar B
-flag means that the file is a binary file and so the
-.Tn ASCII
-message which
-.Nm
-inserts to indicate the fact that the logs have been
-trimmed should not be included.  The
-.Ar N
-flag means that no signal should be sent when the log is trimmed.  The
-.Ar -
-flag means nothing, but can be used as a placeholder when the
-.Ar path_to_pid_file
-field is specified.
-.It Ar path_to_pid_file
-This optional field specifies
-the file name to read to find the daemon process id.  If this
-field is present, a signal of type
-.Ar sigtype
-is sent the process id contained in this
-file.  This field must start with "/" in order to be recognized
-properly.
-.It Ar sigtype
-This optional field specifies the type of signal to be sent to the daemon 
-process.  This may be a numeric or symbolic value.  By default
-a SIGHUP (hang-up) will be sent.
-.El
-.Sh OPTIONS
+.I flags
+field specifies if the archives should have any special processing
+done to the archived log files.  The ``Z'' flag will make the archive
+files compressed to save space using /usr/bin/gzip.  The ``B'' flag
+means that the file is a binary file, and so the ascii message which
+.I newsyslog
+inserts to indicate the fact that the logs have been turned over
+should not be included.
+.PP
+.SH OPTIONS
 The following options can be used with newsyslog:
-.Bl -tag -width indent
-.It Fl f Ar config_file
-Instruct newsyslog to use 
-.Ar config_file
-instead of
-.Pa /etc/newsyslog.conf
-as its configuration file.
-.It Fl v
-Place 
-.Nm
+.TP
+.B \-f \fIconfig-file
+instructs newsyslog to use 
+.I config-file
+instead of /etc/newsyslog.conf for its configuration file.
+.TP
+.B \-v
+places 
+.I newsyslog
 in verbose mode.  In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
-.It Fl n
-Cause
-.Nm
+.TP
+.B \-n
+causes
+.I newsyslog 
 not to trim the logs, but to print out what it would do if this option
 were not specified.
-.It Fl r
-Remove the restriction that
-.Nm
-must be running as root.  When running as a regular user,
-.Nm
+.TP
+.B \-r
+removes the restriction that
+.I newsyslog 
+must be running as root.  Of course, 
+.I newsyslog
 will not be able to send a HUP signal to
-.Xr syslogd 8 ,
-so this option should be used only when debugging or trimming user generated
-logs.
-.It Fl F
-Force
-.Nm
-to trim the logs, even if the trim conditions have not been met.  This
-option is useful for diagnosing system problems by providing you with
-fresh logs.
-.El
-.Sh FILES
-.Bl -tag -width /etc/newsyslog.confxxxx -compact
-.It Pa /etc/newsyslog.conf
-.Nm
-configuration file.
-.El
-.Sh AUTHORS
-.An Theodore Ts'o ,
-MIT Project Athena
-.Pp
+.IR syslogd ,
+so this option should only be used in debugging.
+.SH FILES
+/etc/newsyslog.conf
+.SH BUGS
+Doesn't yet automatically read the logs to find security breaches.
+
+
+.SH AUTHOR
+Theodore Ts'o, MIT Project Athena
+.br
 Copyright 1987, Massachusetts Institute of Technology
-.Sh "SEE ALSO"
-.Xr gzip 1 ,
-.Xr syslog 3 ,
-.Xr syslogd 8
+.SH "SEE ALSO"
+syslogd(8), syslog(3), gzip(1)
+.ns
+.sp

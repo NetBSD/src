@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.6 1999/12/17 14:43:07 jdolecek Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -83,8 +83,7 @@ Specify the maximum file permissions for files
 in the file system.
 .El
 .Sh FEATURES
-.Ss NTFS file attributes
-NTFS file attributes can be accessed in following way:
+NTFS file attributes are accessed in following way:
 .Bd -literal -offset indent
 foo[[:ATTRTYPE]:ATTRNAME]
 .Ed
@@ -94,8 +93,12 @@ is one of identifier listed in $AttrDef file of
 volume. Default is $DATA.
 .Sq ATTRNAME
 is an attribute name. Default is none.
-.Pp
-.Sy Examples:
+.Sh EXAMPLES
+To mount an ntfs volume located in 
+.Pa /dev/wd1s1 :
+.Bd -literal -offset indent
+# mount_ntfs /dev/wd1s1 /mnt
+.Ed
 .Pp
 To get volume name (in Unicode):
 .Bd -literal -offset indent
@@ -107,34 +110,31 @@ To read directory raw data:
 # cat /mnt/foodir:\\$INDEX_ROOT:\\$I30
 .Ed
 .Pp
-.Ss Limited support for writing
-There is limited writing ability. Limitations: file must be nonresident,
-must not contain any holes (uninitialized areas) and can't be compressed.
-.Pp
-.Sy Warning:
-while read-only mode appears to be very stable and there are
-no known problems, the read-write mode
-has not been very well tested yet and it may well be possible
-that an attempt to write into file residing on NTFS could
-damage the filesystem. Don't experiment with read-write mode unless
-you are ready to recover the trashed contents any time.
+.Sh WRITING
+There is limited writing ability. Limitations: file must be nonresident
+and must not contain any holes (uninitialized areas), compressed
+files are not supported either.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
+.Sh BUGS
+Note that NTFS support is still very experimental on NetBSD and
+should be used with extreme caution. Do not mount NTFS volumes read-write
+unless you are ready to recreate trashed contents.
 .Sh HISTORY
-Support for NTFS first appeared in
+The
+.Nm
+first appeared in
 .Fx 3.0 .
-It has been ported to NetBSD and first appeared here in
-.Nx 1.5 .
 .Sh AUTHOR
 NTFS kernel implementation,
 .Nm
-and this manual were originally written by
+and manual were written by
 .An Semen Ustimenko Aq semenu@FreeBSD.org .
 
-NetBSD port was done by
+NetBSD port by
 .An Christos Zoulas Aq christos@NetBSD.org
 and
 .An Jaromir Dolecek Aq jdolecek@NetBSD.org .

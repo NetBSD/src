@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 1999/12/13 15:40:28 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 1999/08/14 20:48:33 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,9 +90,6 @@ typedef caddr_t			bus_space_handle_t;
 #define	BUS_SPACE_MAP_CACHEABLE	0x01
 #define	BUS_SPACE_MAP_LINEAR	0x02
 
-int	bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
-				bus_size_t, bus_size_t, bus_size_t, int,
-				bus_addr_t *, bus_space_handle_t *));
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
@@ -314,10 +311,8 @@ struct atari_bus_space {
     #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
 	(*(t)->__abs_opname(c,sz))(t, h1, o1, h2, o2, cnt)
 #else
-    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt) do {		\
-		    memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt);  \
-		    (void)t;						    \
-		} while (0)
+    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
+	memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt)
 #endif
 
 

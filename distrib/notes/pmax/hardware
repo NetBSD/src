@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.9 1999/10/06 22:37:29 ad Exp $	
+.\"	$NetBSD: hardware,v 1.8 1999/05/04 03:38:40 simonb Exp $	
 .
 NetBSD/pmax \*V runs on the following classes of machines:
 .Bl -bullet -compact
@@ -64,20 +64,12 @@ PMAG-BA 1024x768 8-bit colour frame buffer
 PMAGB-BA 1024x768 8-bit colour frame buffer
 .	It
 PMAG-AA 1280x1024 four-bit greyscale frame buffer
-.	It
-PMAG-C (PX) 2D 8-bit accelerated frame buffer.
-.	It
-PMAG-D (PXG) 3D 8-bit accelerated frame buffer.
-.	It
-PMAG-E (PXG+) 3D 24-bit accelerated frame buffer.
-.	It
-PMAG-F (PXG+ Turbo) 3D 24-bit accelerated frame buffer.
-.	El
 .		(Note
 All supported DECstation video produces sync-on-green.
 Be sure to use either a DEC-compatible fixed-sync monitor
 or a multisync monitor that supports sync-on-green.
 .		Note)
+.	El
 .It
 serial ports: 
 .	Bl -hyphen -compact
@@ -134,8 +126,15 @@ audio drivers for Personal DECstation machines
 floppy driver for Personal DECstation machines
 .It
 TurboChannel audio hardware (LoFi)
+.It
+PMAG-C 2-D (PX) and other accelerated framebuffers (PXG, PXG+ and
+PXG+ Turbo) with onboard i860 processors
 .El
 .(Note
-The primary obstacle to supporting the above is non-availability of sample 
-hardware for development.
+the primary obstacle to support of all but the very
+last item is non-availability of sample hardware for development.
+.Pp
+The primary obstacle for the i860-based framebuffers is that there
+is no documentation on the accelerator board.  There is support
+for the PX and PXG framebuffers in NetBSD-current after NetBSD 1.4.
 .Note)

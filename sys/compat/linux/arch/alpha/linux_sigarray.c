@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.4 1999/12/04 21:41:53 tron Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.2 1998/10/03 20:17:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <compat/linux/common/linux_signal.h>
 
-int linux_to_native_sig[LINUX__NSIG] = {
+int linux_to_native_sig[LINUX_NSIG] = {
 	0,
 	SIGHUP,			/* 1 */
 	SIGINT,
@@ -76,36 +76,5 @@ int linux_to_native_sig[LINUX__NSIG] = {
 	SIGINFO,
 	SIGUSR1,		/* 30 */
 	SIGUSR2,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
 };
+

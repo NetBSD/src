@@ -642,11 +642,11 @@ do {									 \
 {									\
   if (flag_pic)								\
     {									\
-      fprintf (FILE, "\tcall __mcount@PLT\n");				\
+      fprintf (FILE, "\tcall mcount@PLT\n");				\
     }									\
   else									\
     {									\
-      fprintf (FILE, "\tcall __mcount\n");				\
+      fprintf (FILE, "\tcall mcount\n");				\
     }									\
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.17 1998/07/18 05:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.17 1998/07/18 05:04:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ __RCSID("$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $");
 #include <sys/file.h>
 #include <netinet/in.h>
 
-#include <err.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -107,7 +106,6 @@ __RCSID("$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $");
 #include "extern.h"
 
 int	lflag;				/* log requests flag */
-int	rflag;				/* allow of for remote printers */
 int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
 
@@ -121,7 +119,6 @@ static int	  ckqueue __P((char *));
 static void	  usage __P((void));
 
 uid_t	uid, euid;
-int child_count;
 
 int
 main(argc, argv)
@@ -133,7 +130,6 @@ main(argc, argv)
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_in sin, frominet;
 	int omask, lfd, errs, i;
-	int child_max = 32;	/* more then enough to hose the system */
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
@@ -143,7 +139,7 @@ main(argc, argv)
 	name = argv[0];
 
 	errs = 0;
-	while ((i = getopt(argc, argv, "dln:srw:")) != -1)
+	while ((i = getopt(argc, argv, "dls")) != -1)
 		switch (i) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -151,25 +147,8 @@ main(argc, argv)
 		case 'l':
 			lflag++;
 			break;
-		case 'n':
-			child_max = atoi(optarg);
-			if (child_max < 0 || child_max > 1024)
-				errx(1, "invalid number of children: %s",
-				    optarg);
-			break;
-		case 'r':
-			rflag++;
-			break;
 		case 's':
 			sflag++;
-			break;
-		case 'w':
-			wait_time = atoi(optarg);
-			if (wait_time < 0)
-				errx(1, "wait time must be postive: %s",
-				    optarg);
-			if (wait_time < 30)
-			    warnx("warning: wait time less than 30 seconds");
 			break;
 		default:
 			errs++;
@@ -276,20 +255,6 @@ main(argc, argv)
 	for (;;) {
 		int domain, nfds, s;
 		fd_set readfds;
-		/* "short" so it overflows in about 2 hours */
-		short sleeptime = 10;
-
-		while (child_max < child_count) {
-			syslog(LOG_WARNING,
-			    "too many children, sleeping for %d seconds",
-				sleeptime);
-			sleep(sleeptime);
-			sleeptime <<= 1;
-			if (sleeptime < 0) {
-				syslog(LOG_CRIT, "sleeptime overflowed! help!");
-				sleeptime = 10;
-			}
-		}
 
 		FD_COPY(&defreadfds, &readfds);
 		nfds = select(20, &readfds, 0, 0, 0);
@@ -312,9 +277,7 @@ main(argc, argv)
 				syslog(LOG_WARNING, "accept: %m");
 			continue;
 		}
-		
-		switch (fork()) {
-		case 0:
+		if (fork() == 0) {
 			signal(SIGCHLD, SIG_IGN);
 			signal(SIGHUP, SIG_IGN);
 			signal(SIGINT, SIG_IGN);
@@ -332,12 +295,6 @@ main(argc, argv)
 				from_remote = 0;
 			doit();
 			exit(0);
-		case -1:
-			syslog(LOG_WARNING, "fork: %m, sleeping for 10 seconds...");
-			sleep(10);
-			continue;
-		default:
-			child_count++;
 		}
 		(void)close(s);
 	}
@@ -350,7 +307,7 @@ reapchild(signo)
 	union wait status;
 
 	while (wait3((int *)&status, WNOHANG, 0) > 0)
-		child_count--;
+		;
 }
 
 static void
@@ -403,12 +360,9 @@ doit()
 		*--cp = '\0';
 		cp = cbuf;
 		if (lflag) {
-			if (*cp >= '\1' && *cp <= '\5') {
+			if (*cp >= '\1' && *cp <= '\5')
 				syslog(LOG_INFO, "%s requests %s %s",
 					from, cmdnames[(int)*cp], cp+1);
-				setproctitle("serving %s: %s %s", from,
-				    cmdnames[(int)*cp], cp+1);
-			}
 			else
 				syslog(LOG_INFO, "bad request (%d) from %s",
 					*cp, from);
@@ -499,6 +453,7 @@ startup()
 {
 	char *buf;
 	char *cp;
+	int pid;
 
 	/*
 	 * Restart the daemons.
@@ -515,20 +470,17 @@ startup()
 			}
 		if (lflag)
 			syslog(LOG_INFO, "work for %s", buf);
-		switch (fork()) {
-		case -1:
+		if ((pid = fork()) < 0) {
 			syslog(LOG_WARNING, "startup: cannot fork");
 			mcleanup(0);
-		case 0:
+		}
+		if (!pid) {
 			printer = buf;
-			setproctitle("working on printer %s", printer);
 			cgetclose();
 			printjob();
 			/* NOTREACHED */
-		default:
-			child_count++;
-			free(buf);
 		}
+		else free(buf);
 	}
 }
 
@@ -598,7 +550,6 @@ chkhost(f)
 	if (good == 0)
 		fatal("address for your hostname (%s) not matched",
 		    inet_ntoa(f->sin_addr));
-	setproctitle("serving %s", from);
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
 	if (hostf) {

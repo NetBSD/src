@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 1999/12/04 21:20:26 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 1999/04/26 22:46:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,7 +148,7 @@
  * by the page replacement algorithm.  Basically this says that if you are
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES pages which are not
+ * Note that each process has at least UPAGES+CLSIZE pages which are not
  * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
  * number just means a swapped in process is given around 25k bytes.
  * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
@@ -236,8 +236,8 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/10/25 14:01:29 kleink Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1999/04/17 21:16:47 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -218,8 +218,7 @@ loadfile(fd, args)
 	} else
 #endif
 #ifdef POWERPC_BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
+	if (memcmp(Elf_e_ident, hdr.elf.e_ident, Elf_e_siz) == 0) {
 		rval = elf_exec(fd, &hdr.elf, &entry, &esym);
 	} else
 #endif
@@ -358,8 +357,8 @@ elf_exec(fd, elf, entryp, esymp)
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0)
+		if (phdr.p_type != Elf_pt_load ||
+		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
 			continue;
 
 		/* Read in segment. */
@@ -401,12 +400,12 @@ elf_exec(fd, elf, entryp, esymp)
 		return (1);
 	}
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == SHT_NULL)
+		if (shp->sh_type == Elf_sht_null)
 			continue;
-		if (shp->sh_type != SHT_SYMTAB
-		    && shp->sh_type != SHT_STRTAB) {
+		if (shp->sh_type != Elf_sht_symtab
+		    && shp->sh_type != Elf_sht_strtab) {
 			shp->sh_offset = 0; 
-			shp->sh_type = SHT_NOBITS;
+			shp->sh_type = Elf_sht_nobits;
 			continue;
 		}
 		size += shp->sh_size;
@@ -438,8 +437,8 @@ elf_exec(fd, elf, entryp, esymp)
 	addr += sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	off = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == SHT_SYMTAB
-		    || shp->sh_type == SHT_STRTAB) {
+		if (shp->sh_type == Elf_sht_symtab
+		    || shp->sh_type == Elf_sht_strtab) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
 			printf("%s%d", first ? "" : "+", shp->sh_size);

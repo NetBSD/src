@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.78 1999/12/04 21:13:19 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.71.2.1 1999/12/21 23:20:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  104160000	/* NetBSD 1.4P */
+#define __NetBSD_Version__  104110000	/* NetBSD 1.4K */
 
 /*
  * Historical NetBSD #define
@@ -101,8 +101,7 @@
 
 #define	MAXCOMLEN	16		/* max command name remembered */
 #define	MAXINTERP	64		/* max interpreter file name length */
-/* DEPRECATED: use LOGIN_NAME_MAX instead. */
-#define	MAXLOGNAME	(LOGIN_NAME_MAX - 1) /* max login name length */
+#define	MAXLOGNAME	16		/* max login name length */
 #define	NCARGS		ARG_MAX		/* max bytes for an exec function */
 #define	NGROUPS		NGROUPS_MAX	/* max number groups */
 #define	NOFILE		OPEN_MAX	/* max open files per process */
@@ -134,6 +133,11 @@
 #ifndef NVNODE
 #define	NVNODE (NPROC + NTEXT + 100)
 #endif
+/*
+ * Routine to determine the most significant bit set in the passed number.
+ * calculates int(log2(i)). -1 is returned when 0 is the passed in value.
+ */
+int intlog2 __P((u_int32_t));
 #endif /* _KERNEL */
 
 /* Signals. */
@@ -167,6 +171,27 @@
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
+
+/*
+ * Clustering of hardware pages on machines with ridiculously small
+ * page sizes is done here.  The paging subsystem deals with units of
+ * CLSIZE pte's describing NBPG (from machine/param.h) pages each.
+ */
+#define	CLBYTES		(CLSIZE*NBPG)
+#define	CLOFSET		(CLSIZE*NBPG-1)	/* for clusters, like PGOFSET */
+#define	claligned(x)	((((int)(x))&CLOFSET)==0)
+#define	CLOFF		CLOFSET
+#define	CLSHIFT		(PGSHIFT+CLSIZELOG2)
+
+#if CLSIZE==1
+#define	clbase(i)	(i)
+#define	clrnd(i)	(i)
+#else
+/* Give the base virtual address (first of CLSIZE). */
+#define	clbase(i)	((i) &~ (CLSIZE-1))
+/* Round a number of clicks up to a whole cluster. */
+#define	clrnd(i)	(((i) + (CLSIZE-1)) &~ (CLSIZE-1))
+#endif
 
 #define	CBLOCK	64		/* Clist block size, must be a power of 2. */
 #define CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
@@ -231,11 +256,11 @@
  * always allocate and free physical memory; requests for these
  * size allocations should be done infrequently as they will be slow.
  *
- * Constraints: NBPG <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
+ * Constraints: CLBYTES <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
  * MAXALLOCSIZE must be a power of two.
  */
 #define MINBUCKET	4		/* 4 => min allocation of 16 bytes */
-#define MAXALLOCSAVE	(2 * NBPG)
+#define MAXALLOCSAVE	(2 * CLBYTES)
 
 /*
  * Scale factor for scaled integers used to count %cpu time and load avgs.

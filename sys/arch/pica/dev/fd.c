@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 1998/08/15 04:22:45 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.12.18.1 1999/12/21 23:16:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1150,7 +1150,7 @@ fdioctl(dev, cmd, addr, flag)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL, FDC_BSHIFT) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1170,7 +1170,7 @@ fdioctl(dev, cmd, addr, flag)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL, FDC_BSHIFT);
 		return error;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.8 1999/10/31 19:45:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.6 1999/09/29 15:58:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -57,27 +57,25 @@
 #define	IN_PRELOADED	0x4000	/* loaded from directory entry */
 
 struct ntnode {
-	struct vnode   *i_devvp;	/* vnode of blk dev we live on */
-	dev_t           i_dev;		/* Device associated with the inode. */
-
 	LIST_ENTRY(ntnode)	i_hash;
 	struct ntnode  *i_next;
 	struct ntnode **i_prev;
 	struct ntfsmount       *i_mp;
 	ino_t           i_number;
+	dev_t           i_dev;
 	u_int32_t       i_flag;
-
-	/* locking */
-	struct lock	i_lock;
-	struct simplelock i_interlock;
+	int		i_lock;
 	int		i_usecount;
-
 	LIST_HEAD(,fnode)	i_fnlist;
 	LIST_HEAD(,ntvattr)	i_valist;
 
 	long		i_nlink;	/* MFR */
 	ino_t		i_mainrec;	/* MFR */
 	u_int32_t	i_frflag;	/* MFR */
+
+	uid_t           i_uid;
+	gid_t           i_gid;
+	mode_t          i_mode;
 };
 
 #define	FN_PRELOADED	0x0001
@@ -92,6 +90,9 @@ struct fnode {
 	struct vnode   *f_vp;		/* Associatied vnode */
 	struct ntnode  *f_ip;		/* Associated ntnode */
 	u_long		f_flag;
+	struct vnode   *f_devvp;	/* vnode of blk dev we live on */
+	dev_t           f_dev;		/* Device associated with the inode. */
+	enum vtype      f_type;
 
 	ntfs_times_t	f_times;	/* $NAME/dirinfo */
 	ino_t		f_pnumber;	/* $NAME/dirinfo */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $	*/
+/*	$NetBSD: mfb.c,v 1.39 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.39 1999/09/05 11:34:30 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -123,15 +123,15 @@ static void mfbCursorColor  __P((struct fbinfo *fi, u_int *color));
 
 static void mfbInitColorMapBlack __P((struct fbinfo *fi, int blackpix));
 static void mfbInitColorMap __P((struct fbinfo *fi));
-static int mfbLoadColorMap __P((struct fbinfo *fi, u_char *mapbits,
+static int mfbLoadColorMap __P((struct fbinfo *fi, caddr_t mapbits,
 				int index, int count));
-static int mfbLoadColorMapNoop __P((struct fbinfo *fi, const u_char *mapbits,
+static int mfbLoadColorMapNoop __P((struct fbinfo *fi, caddr_t mapbits,
 				int index, int count));
 #endif /* 0 */
 
 /* new-style raster-cons "driver" methods */
 
-int mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
+int mfbGetColorMap __P((struct fbinfo *fi, caddr_t, int, int));
 
 
 static int bt455_video_on __P((struct fbinfo *));
@@ -148,16 +148,12 @@ static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
 static __inline void  bt431_cursor_off __P((struct fbinfo *fi));
 static __inline void  bt431_cursor_on __P((struct fbinfo *fi));
 
-/*
- * The default cursor.
- */
-static u_short defCursor[32] = {
-/* plane A */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-/* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-              0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 
-};
+/*
+ * old pmax-framebuffer hackery
+ */
+extern u_short defCursor[32];
+
 
 /*
  * "driver" (member functions) for the raster-console (rcons) pseudo-device.
@@ -538,7 +534,7 @@ mfbInitColorMapBlack(fi, blackpix)
 	else
 		rgb [0] = rgb [1] = rgb [2] = 0;
 
-	mfbLoadColorMap(fi, rgb, 0, 1);
+	mfbLoadColorMap(fi, (caddr_t)rgb, 0, 1);
 
 	if (blackpix)
 		rgb [0] = rgb [1] = rgb [2] = 0;
@@ -546,7 +542,7 @@ mfbInitColorMapBlack(fi, blackpix)
 		rgb [0] = rgb [1] = rgb [2] = 0xff;
 
 	for (i = 1; i < 16; i++) {
-		mfbLoadColorMap(fi, rgb, i, 1);
+		mfbLoadColorMap(fi, (caddr_t)rgb, i, 1);
 	}
 
 	/* initialize cmap entries for cursor sprite value and mask */
@@ -570,7 +566,7 @@ mfbInitColorMap(fi)
 int
 mfbLoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	u_char *bits;
+	caddr_t bits;
 	int index, count;
 {
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
@@ -622,7 +618,7 @@ mfbLoadColorMap(fi, bits, index, count)
 int
 mfbLoadColorMapNoop(fi, bits, index, count)
 	struct fbinfo *fi;
-	const u_char *bits;
+	caddr_t bits;
 	int index, count;
 {
 	return 0;
@@ -633,7 +629,7 @@ mfbLoadColorMapNoop(fi, bits, index, count)
 int
 mfbGetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	u_char *bits;
+	caddr_t bits;
 	int index, count;
 {
 	/*bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.5 1999/11/12 01:05:07 lukem Exp $	*/
+/*	$NetBSD: el.h,v 1.4 1998/07/29 02:26:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -122,7 +122,6 @@ struct editline {
     el_tty_t	  el_tty;	/* Tty dependent stuff			*/
     el_refresh_t  el_refresh;	/* Refresh stuff			*/
     el_prompt_t   el_prompt;	/* Prompt stuff				*/
-    el_prompt_t   el_rprompt;	/* Prompt stuff				*/
     el_chared_t	  el_chared;	/* Characted editor stuff		*/
     el_map_t	  el_map;	/* Key mapping stuff			*/
     el_key_t	  el_key;	/* Key binding stuff			*/

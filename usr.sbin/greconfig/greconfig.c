@@ -37,7 +37,7 @@
 /*
  * greconfig - frontend to set/query tunnel endpoints
  *
- * $NetBSD: greconfig.c,v 1.6 1999/09/30 12:35:54 soren Exp $
+ * $NetBSD: greconfig.c,v 1.5 1999/06/28 07:37:13 explorer Exp $
  */
 
 #include <stdio.h>
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {
-		perror("socket() failed:");
+		perror("Socket() failed: \n");
 		exit(5);
 	}
 	if (pflag) {	/* IPPROTO_GRE is default in kernel */

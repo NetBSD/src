@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.3 1999/10/25 13:58:04 kleink Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 1999/07/21 03:32:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.3 1999/10/25 13:58:04 kleink Exp $");
+__RCSID("$NetBSD: elf.c,v 1.2 1999/07/21 03:32:53 mycroft Exp $");
 
 #include <sys/param.h>
 
@@ -65,7 +65,7 @@ read_section_header(int fd, Elf_Ehdr *ehdr, int num, Elf_Shdr *shdr)
 
 struct elf_section {
 	char *name;		/* name of section; points into string table */
-	unsigned long type;	/* type of section */
+	enum Elf_s_sht type;	/* type of section */
 	void *addr;		/* load address of section */
 	off_t offset;		/* offset in file */
 	size_t size;		/* size of section */
@@ -162,8 +162,7 @@ read_elf_header(int fd, Elf_Ehdr *ehdr)
 			warnx("failed to read %lu bytes", (u_long)sizeof(*ehdr));
 		return -1;
 	}
-	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdr->e_ident[EI_CLASS] != ELFCLASS)
+	if (memcmp(ehdr->e_ident, Elf_e_ident, Elf_e_siz) != 0)
 		errx(4, "not in ELF%u format", ELFSIZE);
 	if (ehdr->e_ehsize != ELF_HDR_SIZE)
 		errx(4, "file has ELF%u identity, but wrong header size", 
@@ -296,7 +295,7 @@ elf_mod_load(int fd)
 			fprintf(stderr, "loading `%s': addr = %p, "
 				"size = %#lx\n", 
 				s->name, s->addr, (u_long)s->size);
-		if (s->type == SHT_NOBITS)
+		if (s->type == Elf_sht_nobits)
 			/* skip some space */
 			zero_size += s->size;
 		else {

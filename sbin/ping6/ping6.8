@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: ping6.8,v 1.4 1999/12/15 05:02:39 itojun Exp $
-.\"     KAME Id: ping6.8,v 1.7 1999/12/15 04:59:13 itojun Exp
+.\"     $NetBSD: ping6.8,v 1.2 1999/07/04 02:46:28 itojun Exp $
+.\"     KAME Id: ping6.8,v 1.1.2.5.4.1.4.1 1999/03/21 15:57:58 jinmei Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -38,10 +38,7 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm
-.\" without ipsec, or new ipsec
-.Op Fl dfnqRrvw
-.\" old ipsec
-.\" .Op Fl AdEfnqRrvw
+.Op Fl AdEfnqRrvw
 .Op Fl a Ar addrtype
 .Op Fl b Ar bufsiz
 .Op Fl c Ar count
@@ -50,30 +47,12 @@ packets to network hosts
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
-.\" new ipsec
-.Op Fl P Ar policy
-.Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
 .Ar host
 .Sh DESCRIPTION
-.Nm
-uses the
-.Tn ICMPv6
-protocol's mandatory
-.Tn ICMP6_ECHO_REQUEST
-datagram to elicit an
-.Tn ICMP6_ECHO_REPLY
-from a host or gateway.
-.Tn ICMP6_ECHO_REQUEST
-datagrams (``pings'') have an IPv6 header,
-and
-.Tn ICMPv6
-header formatted as documented in RFC2463.
-The options are as follows:
 .Bl -tag -width Ds
-.\" old ipsec
-.\" .It Fl A
-.\" Enables transport-mode IPsec authentication header. (experimental)
+.It Fl A
+Enables transport-mode IPsec authentication header. (experimental)
 .It Fl a Ar addrtype
 Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 .Ar addrtype
@@ -89,12 +68,6 @@ requires responder's global-scope addresses.
 requires responder's site-local addresses.
 .It Ic l
 requires responder's link-local addresses.
-.It Ic A
-requires responder's anycast addresses. Without this character, the responder
-will return unicast addresses only. With this character, the responder
-will return anycast addresses only.
-Note that the specification does not specify how to get responder's
-anycast addresses. This is an experimental option.
 .El
 .It Fl b Ar bufsiz
 Set socket buffer size.
@@ -108,8 +81,8 @@ packets.
 Set the
 .Dv SO_DEBUG
 option on the socket being used.
-.\" .It Fl E
-.\" Enables transport-mode IPsec encapsulated security payload. (experimental)
+.It Fl E
+Enables transport-mode IPsec encapsulated security payload. (experimental)
 .It Fl f
 Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
@@ -166,10 +139,6 @@ flag,
 .Nm
 prints out any ICMP error messages caused by its own ECHO_REQUEST
 messages.
-.\" new ipsec
-.It Fl P Ar policy
-.Ar policy
-specifies IPsec policy to be used for the probe.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
@@ -200,13 +169,6 @@ that has no route through it
 e.g., after the interface was dropped by
 .Xr routed 8
 .Pc .
-.It Fl S Ar sourceaddr
-Specifies the source address of request packets.
-The source address must be one of the unicast addresses of the sending
-node.
-If the outgoing interface is specified by the
-.Fl I
-option as well, the address must be assinged to the specified interface.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.  
 The default is 56, which translates into 64
@@ -215,9 +177,6 @@ data bytes when combined
 with the 8 bytes of
 .Tn ICMP
 header data.
-You may need to specify
-.Fl b
-as well to extend socket buffer size.
 .It Fl v
 Verbose output.
 .Tn ICMP
@@ -226,18 +185,10 @@ packets other than
 that are received are listed.
 .It Fl w
 Generate ICMPv6 Node Information FQDN query, rather than echo-request.
-.Fl s
-has no effect if
-.Fl w
-is specified.
 .It Fl W
 Same as
-.Fl w .
+.Fl w.
 This option was remained for backward compatibility.
-.Fl s
-has no effect if
-.Fl w
-is specified.
 .El
 .Pp
 When using
@@ -352,13 +303,6 @@ if an error occurred.
 .Xr ping 8 ,
 .Xr traceroute 8 ,
 .Xr traceroute6 8
-.Rs
-.%A A. Conta
-.%A S. Deering
-.%T "Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification"
-.%N RFC2463
-.%D December 1998
-.Re
 .Sh HISTORY
 The
 .Nm ping

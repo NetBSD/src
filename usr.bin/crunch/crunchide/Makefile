@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1999/11/26 13:47:52 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.4 1997/08/02 21:30:14 perry Exp $
 
 PROG=   crunchide
-SRCS=	crunchide.c exec_aout.c exec_coff.c exec_ecoff.c exec_elf32.c \
-	exec_elf64.c
+SRCS=	crunchide.c exec_aout.c exec_ecoff.c exec_elf32.c exec_elf64.c
 
 .include <bsd.prog.mk>

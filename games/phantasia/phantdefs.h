@@ -1,4 +1,4 @@
-/*	$NetBSD: phantdefs.h,v 1.3 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: phantdefs.h,v 1.2 1995/03/24 03:59:28 cgd Exp $	*/
 
 /*
  * phantdefs.h - important constants for Phantasia
@@ -12,15 +12,6 @@
 #define R_SPOILED 	4		/* ring which has gone bad */
 
 /* status constants */
-/* We must #undef these first since setup.c includes headers that reserve S_* */
-#undef S_NOTUSED
-#undef S_OFF
-#undef S_PLAYING
-#undef S_CLOAKED
-#undef S_INBATTLE
-#undef S_MONSTER
-#undef S_TRADING
-#undef S_HUNGUP
 #define	S_NOTUSED	0		/* record not in use */
 #define S_OFF		1		/* not playing */
 #define S_PLAYING	2		/* playing - nothing else */

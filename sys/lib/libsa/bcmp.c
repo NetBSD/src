@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.3 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.1 1999/04/01 05:12:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993

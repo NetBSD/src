@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.15 1999/11/28 05:46:15 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.14 1999/09/20 04:39:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.15 1999/11/28 05:46:15 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.14 1999/09/20 04:39:16 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -99,7 +99,7 @@ _nscmp(a, b)
 }
 
 
-int
+void
 _nsdbtaddsrc(dbt, src)
 	ns_dbt		*dbt;
 	const ns_src	*src;
@@ -109,16 +109,12 @@ _nsdbtaddsrc(dbt, src)
 	_DIAGASSERT(src != NULL);
 
 	if ((dbt->srclistsize % NSELEMSPERCHUNK) == 0) {
-		ns_src *new;
-
-		new = (ns_src *)realloc(dbt->srclist,
+		dbt->srclist = (ns_src *)realloc(dbt->srclist,
 		    (dbt->srclistsize + NSELEMSPERCHUNK) * sizeof(ns_src));
-		if (new == NULL)
-			return (-1);
-		dbt->srclist = new;
+		if (dbt->srclist == NULL)
+			err(1, "nsdispatch: memory allocation failure");
 	}
 	memmove(&dbt->srclist[dbt->srclistsize++], src, sizeof(ns_src));
-	return (0);
 }
 
 
@@ -213,7 +209,7 @@ _nsdbtget(name)
 }
 
 
-int
+void
 _nsdbtput(dbt)
 	const ns_dbt *dbt;
 {
@@ -227,21 +223,17 @@ _nsdbtput(dbt)
 			if (_nsmap[i].srclist != NULL)
 				free(_nsmap[i].srclist);
 			memmove(&_nsmap[i], dbt, sizeof(ns_dbt));
-			return (0);
+			return;
 		}
 	}
 
 	if ((_nsmapsize % NSELEMSPERCHUNK) == 0) {
-		ns_dbt *new;
-
-		new = (ns_dbt *)realloc(_nsmap,
+		_nsmap = (ns_dbt *)realloc(_nsmap,
 		    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_dbt));
-		if (new == NULL)
-			return (-1);
-		_nsmap = new;
+		if (_nsmap == NULL)
+			err(1, "nsdispatch: memory allocation failure");
 	}
 	memmove(&_nsmap[_nsmapsize++], dbt, sizeof(ns_dbt));
-	return (0);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.18 1999/10/08 21:10:44 pk Exp $	*/
+/*	$NetBSD: show.c,v 1.17 1999/02/04 16:17:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.18 1999/10/08 21:10:44 pk Exp $");
+__RCSID("$NetBSD: show.c,v 1.17 1999/02/04 16:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ shtree(n, ind, pfx, fp)
 	FILE *fp;
 {
 	struct nodelist *lp;
-	const char *s;
+	char *s;
 
 	if (n == NULL)
 		return;
@@ -138,7 +138,7 @@ shcmd(cmd, fp)
 {
 	union node *np;
 	int first;
-	const char *s;
+	char *s;
 	int dftfd;
 
 	first = 1;
@@ -336,7 +336,7 @@ trace(va_alist)
 #ifdef DEBUG
 void
 trputs(s)
-	const char *s;
+	char *s;
 {
 	if (tracefile == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.8 1999/09/30 18:01:32 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.7 1997/10/12 00:53:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.8 1999/09/30 18:01:32 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.7 1997/10/12 00:53:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ init()
 			pp->hand[j] = *--Topcard;
 			if (i == COMP) {
 				account(card = *Topcard);
-				if (is_safety(card))
+				if (issafety(card))
 					pp->safety[card - S_CONV] = S_IN_HAND;
 			}
 		}

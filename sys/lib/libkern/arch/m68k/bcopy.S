@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2 1999/11/11 01:32:10 thorpej Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1 1998/02/22 08:43:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.2 1999/11/11 01:32:10 thorpej Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.1 1998/02/22 08:43:27 mycroft Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,150 +94,144 @@ ENTRY(bcopy)
 #endif
 #endif
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%a1		| dest address
-	movl	%sp@(8),%a0		| src address
+	movl	sp@(4),a1		| dest address
+	movl	sp@(8),a0		| src address
 #else
-	movl	%sp@(4),%a0		| src address
-	movl	%sp@(8),%a1		| dest address
+	movl	sp@(4),a0		| src address
+	movl	sp@(8),a1		| dest address
 #endif
-	movl	%sp@(12),%d1		| count
+	movl	sp@(12),d1		| count
 
-	cmpl	%a1,%a0			| src after dest?
+	cmpl	a1,a0			| src after dest?
 	jlt	Lbcback			| yes, must copy backwards
 
 	/* 
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
-	cmpl	#8,%d1
+	cmpl	#8,d1
 	jlt	Lbcfbyte
 
 	/* word align */
-	movl	%a1,%d0
-	btst	#0,%d0		| if (dst & 1)
+	movl	a1,d0
+	btst	#0,d0		| if (dst & 1)
 	jeq	Lbcfalgndw	| 
-	movb	%a0@+,%a1@+	|	*(char *)dst++ = *(char *) src++
-	subql	#1,%d1		|	len--
+	movb	a0@+,a1@+	|	*(char *)dst++ = *(char *) src++
+	subql	#1,d1		|	len--
 Lbcfalgndw:
 	/* long word align */
-	btst	#1,%d0		| if (dst & 2)
+	btst	#1,d0		| if (dst & 2)
 	jeq	Lbcfalgndl
-	movw	%a0@+,%a1@+	|	*(short *)dst++ = *(short *) dst++
-	subql	#2,%d1		|	len -= 2
+	movw	a0@+,a1@+	|	*(short *)dst++ = *(short *) dst++
+	subql	#2,d1		|	len -= 2
 Lbcfalgndl:
 	/* copy by 8 longwords */
-	movel	%d1,%d0
-	lsrl	#5,%d0		| cnt = len / 32
+	movel	d1,d0
+	lsrl	#5,d0		| cnt = len / 32
 	jeq	Lbcflong	| if (cnt)
-	andl	#31,%d1		|	len %= 32
-	subql	#1,%d0		|	set up for dbf
+	andl	#31,d1		|	len %= 32
+	subql	#1,d0		|	set up for dbf
 Lbcf32loop:
-	movl	%a0@+,%a1@+	|	copy 8 long words
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	dbf	%d0,Lbcf32loop	|	till done
-	clrw	%d0
-	subql	#1,%d0
+	movl	a0@+,a1@+	|	copy 8 long words
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	dbf	d0,Lbcf32loop	|	till done
+	clrw	d0
+	subql	#1,d0
 	jcc	Lbcf32loop
 
 Lbcflong:
 	/* copy by longwords */
-	movel	%d1,%d0
-	lsrl	#2,%d0		| cnt = len / 4
+	movel	d1,d0
+	lsrl	#2,d0		| cnt = len / 4
 	jeq	Lbcfbyte	| if (cnt)
-	subql	#1,%d0		|	set up for dbf
+	subql	#1,d0		|	set up for dbf
 Lbcflloop:
-	movl	%a0@+,%a1@+	|	copy longwords
-	dbf	%d0,Lbcflloop	|	til done
-	andl	#3,%d1		|	len %= 4
+	movl	a0@+,a1@+	|	copy longwords
+	dbf	d0,Lbcflloop	|	til done
+	andl	#3,d1		|	len %= 4
 	jeq	Lbcdone
 
-	subql	#1,%d1		| set up for dbf
+	subql	#1,d1		| set up for dbf
 Lbcfbloop:
-	movb	%a0@+,%a1@+	| copy bytes
+	movb	a0@+,a1@+	| copy bytes
 Lbcfbyte:
-	dbf	%d1,Lbcfbloop	| till done
+	dbf	d1,Lbcfbloop	| till done
 Lbcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%d0	| dest address
-#if defined(__SVR4_ABI__)
-	moveal	%d0,%a0
-#endif
+	movl	sp@(4),d0	| dest address
 #endif
 	rts
 
 
 Lbcback:
-	addl	%d1,%a0		| src pointer to end
-	addl	%d1,%a1		| dest pointer to end
+	addl	d1,a0		| src pointer to end
+	addl	d1,a1		| dest pointer to end
 
 	/* 
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
-	cmpl	#8,%d1
+	cmpl	#8,d1
 	jlt	Lbcbbyte
 
 	/* word align */
-	movl	%a1,%d0
-	btst	#0,%d0		| if (dst & 1)
+	movl	a1,d0
+	btst	#0,d0		| if (dst & 1)
 	jeq	Lbcbalgndw	| 
-	movb	%a0@-,%a1@-	|	*(char *)dst-- = *(char *) src--
-	subql	#1,%d1		|	len--
+	movb	a0@-,a1@-	|	*(char *)dst-- = *(char *) src--
+	subql	#1,d1		|	len--
 Lbcbalgndw:
 	/* long word align */
-	btst	#1,%d0		| if (dst & 2)
+	btst	#1,d0		| if (dst & 2)
 	jeq	Lbcbalgndl
-	movw	%a0@-,%a1@-	|	*(short *)dst-- = *(short *) dst--
-	subql	#2,%d1		|	len -= 2
+	movw	a0@-,a1@-	|	*(short *)dst-- = *(short *) dst--
+	subql	#2,d1		|	len -= 2
 Lbcbalgndl:
 	/* copy by 8 longwords */
-	movel	%d1,%d0
-	lsrl	#5,%d0		| cnt = len / 32
+	movel	d1,d0
+	lsrl	#5,d0		| cnt = len / 32
 	jeq	Lbcblong	| if (cnt)
-	andl	#31,%d1		|	len %= 32
-	subql	#1,%d0		|	set up for dbf
+	andl	#31,d1		|	len %= 32
+	subql	#1,d0		|	set up for dbf
 Lbcb32loop:
-	movl	%a0@-,%a1@-	|	copy 8 long words
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	dbf	%d0,Lbcb32loop	|	till done
-	clrw	%d0
-	subql	#1,%d0
+	movl	a0@-,a1@-	|	copy 8 long words
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	movl	a0@-,a1@-
+	dbf	d0,Lbcb32loop	|	till done
+	clrw	d0
+	subql	#1,d0
 	jcc	Lbcb32loop
 	
 Lbcblong:
 	/* copy by longwords */
-	movel	%d1,%d0
-	lsrl	#2,%d0		| cnt = len / 4
+	movel	d1,d0
+	lsrl	#2,d0		| cnt = len / 4
 	jeq	Lbcbbyte	| if (cnt)
-	subql	#1,%d0		|	set up for dbf
+	subql	#1,d0		|	set up for dbf
 Lbcblloop:
-	movl	%a0@-,%a1@-	|	copy longwords
-	dbf	%d0,Lbcblloop	|	til done
-	andl	#3,%d1		|	len %= 4
+	movl	a0@-,a1@-	|	copy longwords
+	dbf	d0,Lbcblloop	|	til done
+	andl	#3,d1		|	len %= 4
 	jeq	Lbcdone
 
-	subql	#1,%d1		| set up for dbf
+	subql	#1,d1		| set up for dbf
 Lbcbbloop:
-	movb	%a0@-,%a1@-	| copy bytes
+	movb	a0@-,a1@-	| copy bytes
 Lbcbbyte:
-	dbf	%d1,Lbcbbloop	| till done
+	dbf	d1,Lbcbbloop	| till done
 
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%d0	| dest address
-#if defined(__SVR4_ABI__)
-	moveal	%d0,%a0
-#endif
+	movl	sp@(4),d0	| dest address
 #endif
 	rts

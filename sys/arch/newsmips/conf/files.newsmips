@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.6 1999/12/05 15:50:47 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.4 1999/06/07 20:31:32 thorpej Exp $
 # NEWS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -81,26 +81,20 @@ file arch/newsmips/newsmips/newsmips_trap.c
 file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
-file dev/clock_subr.c
 file dev/cons.c
+
+major {md = 2}
 
 #
 # Machine-independent SCSI driver.
 #
 
 include "dev/scsipi/files.scsipi"
+major { sd = 0 }
+major { fd = 1 }
+major { cd = 16 }
 
 device sc: scsi
 file arch/newsmips/dev/scsi_1185.c		sc needs-count
 file arch/newsmips/dev/sc_wrap.c		sc
 attach sc at hb
-
-#
-# Memory Disk for install floppy
-#
-file arch/newsmips/newsmips/md_root.c		memory_disk_hooks
-
-major { sd = 0 }
-major { fd = 1 }
-major { md = 2 }
-major { cd = 16 }

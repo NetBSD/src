@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 1999/11/18 06:47:49 jun Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 1999/04/24 08:10:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 1999/11/18 06:47:49 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 1999/04/24 08:10:41 simonb Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -80,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 1999/11/18 06:47:49 jun Exp
 
 extern struct proc *fpcurproc;			/* trap.c */
 
-#ifndef SOFTFLOAT
 extern void savefpregs __P((struct proc *));
-#endif
 
 int
 process_read_regs(p, regs)
@@ -113,10 +111,8 @@ process_read_fpregs(p, regs)
 	struct fpreg *regs;
 {
 	if (p->p_md.md_flags & MDP_FPUSED) {
-#ifndef SOFTFLOAT
 		if (p == fpcurproc)
 			savefpregs(p);
-#endif
 		memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs,
 			sizeof(struct fpreg));
 	}
@@ -133,12 +129,10 @@ process_write_fpregs(p, regs)
 	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
 		return EINVAL;
 
-#ifndef SOFTFLOAT
 	if (p->p_md.md_flags & MDP_FPUSED) {
 		if (p == fpcurproc)
 			savefpregs(p);
 	}
-#endif
 
 	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1999/10/25 14:00:46 kleink Exp $ */
+/*	$NetBSD: installboot.c,v 1.1 1999/07/08 11:48:08 tsubai Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -256,7 +256,7 @@ loadprotoblocks(fname, size)
 	sz = 1024*7;
 
 	/* Find first executable psect */
-	while ((ph->p_flags & PF_X) == 0) {
+	while ((ph->p_flags & Elf_pf_x) == 0) {
 		ph++;		/* XXX check overrun (eh->e_phnum) */
 		eh->e_phnum--;
 		if (eh->e_phnum == 0) {

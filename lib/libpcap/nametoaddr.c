@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.12 1999/11/28 14:51:04 itojun Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.11 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -30,7 +30,7 @@
 static const char rcsid[] =
     "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.12 1999/11/28 14:51:04 itojun Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.11 1999/07/02 16:03:41 simonb Exp $");
 #endif
 #endif
 
@@ -114,7 +114,6 @@ pcap_nametoaddrinfo(const char *name)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;	/*not really..*/
 	error = getaddrinfo(name, NULL, &hints, &res);
 	if (error)
 		return NULL;

@@ -87,17 +87,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    necessary on the Alpha. */
 
 #undef ASM_SPEC
-#define ASM_SPEC " %| \
-  %{mcpu=ev4:-mev4} \
-  %{mcpu=21064:-m21064} \
-  %{mcpu=ev5:-mev5} \
-  %{mcpu=21164:-m21164} \
-  %{mcpu=ev56:-mev56} \
-  %{mcpu=21164a:-m21164a} \
-  %{mcpu=pca56:-mpca56} \
-  %{mcpu=21164pc|mcpu=21164PC:-m21164pc} \
-  %{mcpu=ev6:-mev6} \
-  %{mcpu=21264:-m21264}"
+#define ASM_SPEC " %|"
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  Only
    the linker emulation and -O options are Alpha-specific.  The rest are

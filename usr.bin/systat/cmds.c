@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: cmds.c,v 1.10 1999/08/02 02:01:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.10 1999/08/02 02:01:57 sommerfeld Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,93 +49,157 @@ __RCSID("$NetBSD: cmds.c,v 1.18 1999/12/20 23:11:50 jwise Exp $");
 #include "systat.h"
 #include "extern.h"
 
-void	switch_mode __P((struct mode *p));
-
 void
 command(cmd)
 	char *cmd;
 {
-	struct command *c;
-	struct mode *p;
-	char *args;
+	struct cmdtab *p;
+	char *cp;
+	int interval;
 	sigset_t set;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, NULL);
-
-	args  = strtok(cmd, " \t");
-	args  = strtok(NULL, " \t");
-
-	if (curmode->c_commands) {
-		for (c = curmode->c_commands; c->c_name; c++) {
-			if (strcmp(cmd, c->c_name) == 0) {
-				(c->c_cmd)(args);
-				goto done;
-			}
-		}
-	}
-
-	for (c = global_commands; c->c_name; c++) {
-		if (strcmp(cmd, c->c_name) == 0) {
-			(c->c_cmd)(args);
-			goto done;
-		}
-	}
-
-	for (p = modes; p->c_name; p++) {
-		if (strcmp(cmd, p->c_name) == 0) {
-			switch_mode(p);
-			goto done;
-		}
-	}
-
-	if (isdigit(cmd[0])) {
-		global_interval(cmd);
+	for (cp = cmd; *cp && !isspace((unsigned char)*cp); cp++)
+		;
+	if (*cp)
+		*cp++ = '\0';
+	if (*cmd == '\0')
+		return;
+	for (; *cp && isspace((unsigned char)*cp); cp++)
+		;
+	if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0)
+		die(0);
+	if (strcmp(cmd, "load") == 0) {
+		load();
 		goto done;
 	}
+	if (strcmp(cmd, "stop") == 0) {
+		alarm(0);
+		mvaddstr(CMDLINE, 0, "Refresh disabled.");
+		clrtoeol();
+		goto done;
+	}
+	if (strcmp(cmd, "help") == 0) {
+		int col, len;
 
-	error("%s: Unknown command.", cmd);
+		move(CMDLINE, col = 0);
+		for (p = cmdtab; p->c_name; p++) {
+			len = strlen(p->c_name);
+			if (col + len > COLS)
+				break;
+			addstr(p->c_name); col += len;
+			if (col + 1 < COLS)
+				addch(' ');
+		}
+		clrtoeol();
+		goto done;
+	}
+	interval = atoi(cmd);
+	if (interval <= 0 &&
+	    (strcmp(cmd, "start") == 0 || strcmp(cmd, "interval") == 0)) {
+		interval = *cp ? atoi(cp) : naptime;
+		if (interval <= 0) {
+			error("%d: bad interval.", interval);
+			goto done;
+		}
+	}
+	if (interval > 0) {
+		alarm(0);
+		naptime = interval;
+		display(0);
+		status();
+		goto done;
+	}
+	p = lookup(cmd);
+	if (p == (struct cmdtab *)-1) {
+		error("%s: Ambiguous command.", cmd);
+		goto done;
+	}
+	if (p) {
+		if (curcmd == p)
+			goto done;
+		alarm(0);
+		(*curcmd->c_close)(wnd);
+		wnd = (*p->c_open)();
+		if (wnd == 0) {
+			error("Couldn't open new display");
+			wnd = (*curcmd->c_open)();
+			if (wnd == 0) {
+				error("Couldn't change back to previous cmd");
+				exit(1);
+			}
+			p = curcmd;
+		}
+		if ((p->c_flags & CF_INIT) == 0) {
+			if ((*p->c_init)())
+				p->c_flags |= CF_INIT;
+			else
+				goto done;
+		}
+		curcmd = p;
+		labels();
+		display(0);
+		status();
+		goto done;
+	}
+	if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
+		error("%s: Unknown command.", cmd);
 done:
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
 }
 
-void
-switch_mode(p)
-	struct mode *p;
+struct cmdtab *
+lookup(name)
+	char *name;
 {
-	if (curmode == p)
-		return;
+	char *p, *q;
+	struct cmdtab *c, *found;
+	int nmatches, longest;
 
-	alarm(0);
-	(*curmode->c_close)(wnd);
-	wnd = (*p->c_open)();
-	if (wnd == 0) {
-		error("Couldn't open new display");
-		wnd = (*curmode->c_open)();
-		if (wnd == 0) {
-			error("Couldn't change back to previous mode");
-			die(0);
+	longest = 0;
+	nmatches = 0;
+	found = (struct cmdtab *) 0;
+	for (c = cmdtab; (p = c->c_name); c++) {
+		for (q = name; *q == *p++; q++)
+			if (*q == 0)		/* exact match? */
+				return (c);
+		if (!*q) {			/* the name was a prefix */
+			if (q - name > longest) {
+				longest = q - name;
+				nmatches = 1;
+				found = c;
+			} else if (q - name == longest)
+				nmatches++;
 		}
-
-		p = curmode;
 	}
-
-	if ((p->c_flags & CF_INIT) == 0) {
-		if ((*p->c_init)())
-			p->c_flags |= CF_INIT;
-		else
-			return;
-	}
-
-	curmode = p;
-	labels();
-	display(0);
-	status();
+	if (nmatches > 1)
+		return ((struct cmdtab *)-1);
+	return (found);
 }
 
 void
 status()
 {
-	error("Showing %s, refresh every %d seconds.", curmode->c_name, naptime);
+	error("Showing %s, refresh every %d seconds.", curcmd->c_name, naptime);
+}
+
+/* case insensitive prefix comparison */
+int
+prefix(s1, s2)
+	char *s1, *s2;
+{
+	char c1, c2;
+
+	while (1) {
+		c1 = *s1 >= 'A' && *s1 <= 'Z' ? *s1 + 'a' - 'A' : *s1;	
+		c2 = *s2 >= 'A' && *s2 <= 'Z' ? *s2 + 'a' - 'A' : *s2;	
+		if (c1 != c2)
+			break;
+		if (c1 == '\0')
+			return (1);
+		s1++, s2++;
+	}
+	return (*s1 == '\0');
 }

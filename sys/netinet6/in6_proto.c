@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.9 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.8 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,17 +73,10 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#if defined(__FreeBSD__)
-#include <sys/socketvar.h>
-#endif
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-#ifdef __FreeBSD__
-#include <sys/systm.h>
-#include <sys/sysctl.h>
-#endif
 
 #include <net/if.h>
 #include <net/radix.h>
@@ -92,21 +85,21 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || (defined(__NetBSD__) && !defined(TCP6)) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || (defined(__NetBSD__) && !defined(TCP6))
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #endif
-#if (defined(__NetBSD__) && !defined(TCP6)) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
+#if defined(__NetBSD__) && !defined(TCP6)
 #include <netinet/in_pcb.h>
 #endif
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__OpenBSD__) && !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
 #endif
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
@@ -130,24 +123,14 @@
 #endif
 #endif
 
-#if !defined(__OpenBSD__) && !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #include <netinet6/udp6.h>
 #include <netinet6/udp6_var.h>
-#endif
 
 #include <netinet6/pim6_var.h>
 
 #include <netinet6/nd6.h>
-#ifdef __FreeBSD__
-#include <netinet6/in6_prefix.h>
-#endif
-
-#ifdef __OpenBSD__ /*KAME IPSEC*/
-#undef IPSEC
-#endif
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>
@@ -162,8 +145,6 @@
 #include <netinet6/in6_gif.h>
 #endif
 
-#include <net/net_osdep.h>
-
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
@@ -171,172 +152,78 @@
  */
 
 extern	struct domain inet6domain;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-static struct pr_usrreqs nousrreqs;
-#endif
 
 struct ip6protosw inet6sw[] = {
 { 0,		&inet6domain,	IPPROTO_IPV6,	0,
   0,		0,		0,		0,
   0,
-  ip6_init,	0,		frag6_slowtimo,	frag6_drain,
-#ifndef __FreeBSD__
-  ip6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &nousrreqs,
-# endif
-#endif
+  ip6_init,	0,		frag6_slowtimo,	frag6_drain,	ip6_sysctl
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC | PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
- 0, 0,
-#elif defined(HAVE_NRL_INPCB)
- udp6_usrreq,	0,
-#else
- udp6_usrreq,	udp6_init,
-#endif
-  0,		0,		0,
-#ifndef __FreeBSD__
-#ifdef HAVE_NRL_INPCB
-  udp_sysctl,
-#else
-  udp6_sysctl,
-#endif
-#else
-# if __FreeBSD__ >= 3
-  &udp6_usrreqs,
-# endif
-#endif
+  udp6_usrreq,
+  udp6_init,	0,		0,		0,		udp6_sysctl
 },
 #ifdef TCP6
-{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN,
+{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
   tcp6_input,	0,		tcp6_ctlinput,	tcp6_ctloutput,
   tcp6_usrreq,
-  tcp6_init,	tcp6_fasttimo,	tcp6_slowtimo,	tcp6_drain,
-#ifndef __FreeBSD__
-  tcp6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &tcp6_usrreqs,
-# endif
-#endif
+  tcp6_init,	tcp6_fasttimo,	tcp6_slowtimo,	tcp6_drain,	tcp6_sysctl
 },
 #else
-{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN,
+{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  0,
-#elif defined(HAVE_NRL_INPCB)
-  tcp6_usrreq,
-#else
   tcp_usrreq,
-#endif
-#ifdef INET	/* don't call timeout routines twice */
-  tcp_init,	0,		0,		tcp_drain,
+#ifdef INET
+  /* If inet4, no need to have tcp_slowtimo and tcp_fasttimo happen TWICE */
+  tcp_init,	NULL,		NULL,		tcp_drain,	tcp_sysctl
 #else
-  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,
-#endif
-#ifndef __FreeBSD__
-  tcp_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &tcp6_usrreqs,
-# endif
+  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
 #endif
 },
-#endif /*TCP6*/
+#endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  0,
-#else
   rip6_usrreq,
-#endif
-  0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &rip6_usrreqs
-#endif
+  0,		0,		0,		0,		0
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC | PR_ADDR,
   icmp6_input,	rip6_output,	0,		rip6_ctloutput,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  0,
-#else
   rip6_usrreq,
-#endif
-  icmp6_init,	icmp6_fasttimo,	0,		0,
-#ifndef __FreeBSD__
-  icmp6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &rip6_usrreqs
-# endif
-#endif
+  icmp6_init,	icmp6_fasttimo,	0,		0,		icmp6_sysctl
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_DSTOPTS,PR_ATOMIC|PR_ADDR,
   dest6_input,	0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &nousrreqs
-#endif
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ROUTING,PR_ATOMIC|PR_ADDR,
   route6_input,	0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &nousrreqs
-#endif
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_FRAGMENT,PR_ATOMIC|PR_ADDR,
   frag6_input,	0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &nousrreqs
-#endif
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inet6domain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ah6_input,	0,	 	0,		0,
   0,	  
-  0,		0,		0,		0,
-#ifndef __FreeBSD__
-  ipsec6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &nousrreqs,
-# endif
-#endif
+  0,		0,		0,		0,		ipsec6_sysctl
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	0,		0,
   0,	  
-  0,		0,		0,		0,
-#ifndef __FreeBSD__
-  ipsec6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &nousrreqs,
-# endif
-#endif
+  0,		0,		0,		0,		ipsec6_sysctl
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
   0,	  
-  0,		0,		0,		0,
-#ifndef __FreeBSD__
-  ipsec6_sysctl,
-#else
-# if __FreeBSD__ >= 3
-  &nousrreqs,
-# endif
-#endif
+  0,		0,		0,		0,		ipsec6_sysctl
 },
 #endif /* IPSEC */
 #if NGIF > 0
@@ -344,62 +231,33 @@ struct ip6protosw inet6sw[] = {
   in6_gif_input,0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &nousrreqs
-#endif
 },
 #ifdef INET6
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in6_gif_input,0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &nousrreqs
-#endif
 },
 #endif /* INET6 */
 #endif /* GIF */
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim6_input,    rip6_output,	0,              rip6_ctloutput, 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  0,
-#else
   rip6_usrreq,
-#endif
   0,            0,              0,              0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &rip6_usrreqs
-# endif
 },
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC | PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  0, 0,
-#else
-  rip6_usrreq, rip6_init,
-#endif
-  0,		0,		0,
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-  &rip6_usrreqs
-#endif
+  rip6_usrreq,
+  rip6_init,	0,		0,		0,
 },
 };
-
-#ifdef __FreeBSD__
-extern int in6_inithead __P((void **, int));
-#endif
 
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0, 
       (struct protosw *)inet6sw,
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
-#ifdef __FreeBSD__
-      in6_inithead,
-#else
-      rn_inithead,
-#endif
-      offsetof(struct sockaddr_in6, sin6_addr) << 3,
+      rn_inithead, offsetof(struct sockaddr_in6, sin6_addr) << 3,
       sizeof(struct sockaddr_in6) };
 
 #ifdef __FreeBSD__
@@ -437,23 +295,14 @@ int	ip6_gif_hlim = GIF_HLIM;
 #else
 int	ip6_gif_hlim = 0;
 #endif
-int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
-int	ip6_rr_prune = 5;	/* router renumbering prefix
-				 * walk list every 5 sec.    */
+
 u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 
 /* icmp6 */
-#ifndef __bsdi__
-/*
- * BSDI4 defines these variables in in_proto.c...
- * XXX: what if we don't define INET? Should we define pmtu6_expire
- * or so? (jinmei@kame.net 19990310)
- */
 int pmtu_expire = 60*10;
 int pmtu_probe = 60*2;
-#endif
 
 /* raw IP6 parameters */
 /*
@@ -567,50 +416,8 @@ SYSCTL_NODE(_net_inet6,	IPPROTO_ESP,	ipsec6,	CTLFLAG_RW, 0,	"IPSEC6");
 #endif /* IPSEC */
 
 /* net.inet6.ip6 */
-static int
-sysctl_ip6_forwarding SYSCTL_HANDLER_ARGS
-{
-	int error = 0;
-	int old_ip6_forwarding;
-	int changed;
-
-	error = SYSCTL_OUT(req, arg1, sizeof(int));
-	if (error || !req->newptr)
-		return (error);
-	old_ip6_forwarding = ip6_forwarding;
-	error = SYSCTL_IN(req, arg1, sizeof(int));
-	if (error != 0)
-		return (error);
-	changed = (ip6_forwarding ? 1 : 0) ^ (old_ip6_forwarding ? 1 : 0);
-	if (changed == 0)
-		return (error);
-	if (ip6_forwarding != 0) {	/* host becomes router */
-		int s = splnet();
-		struct nd_prefix *pr, *next;
-
-		for (pr = nd_prefix.lh_first; pr; pr = next) {
-			next = pr->ndpr_next;
-			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
-				in6_ifdel(pr->ndpr_ifp, &pr->ndpr_addr);
-			prelist_remove(pr);
-		}
-		splx(s);
-	} else {			/* router becomes host */
-		struct socket so;
-
-		/* XXX: init dummy so */
-		bzero(&so, sizeof(so));
-		while(!LIST_EMPTY(&rr_prefix))
-			delete_each_prefix(&so, LIST_FIRST(&rr_prefix),
-					   PR_ORIG_KERNEL);
-	}
-
-	return (error);
-}
-
-SYSCTL_OID(_net_inet6_ip6, IPV6CTL_FORWARDING, forwarding,
-	   CTLTYPE_INT|CTLFLAG_RW, &ip6_forwarding, 0, sysctl_ip6_forwarding,
-	   "I", "");
+SYSCTL_INT(_net_inet6_ip6, IPV6CTL_FORWARDING,
+	forwarding, CTLFLAG_RW,		&ip6_forwarding,	0, "");
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_SENDREDIRECTS,
 	redirect, CTLFLAG_RW,		&ip6_sendredirects,	0, "");
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_DEFHLIM,
@@ -633,12 +440,6 @@ SYSCTL_INT(_net_inet6_ip6, IPV6CTL_DEFMCASTHLIM,
 	defmcasthlim, CTLFLAG_RW,	&ip6_defmcasthlim,	0, "");
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_GIF_HLIM,
 	gifhlim, CTLFLAG_RW,	&ip6_gif_hlim,			0, "");
-SYSCTL_STRING(_net_inet6_ip6, IPV6CTL_KAME_VERSION,
-	kame_version, CTLFLAG_RD,	__KAME_VERSION,		0, "");
-SYSCTL_INT(_net_inet6_ip6, IPV6CTL_USE_DEPRECATED,
-	use_deprecated, CTLFLAG_RW,	&ip6_use_deprecated,	0, "");
-SYSCTL_INT(_net_inet6_ip6, IPV6CTL_RR_PRUNE,
-	rr_prune, CTLFLAG_RW,	&ip6_rr_prune,			0, "");
 
 /* net.inet6.icmp6 */
 SYSCTL_INT(_net_inet6_icmp6, ICMPV6CTL_REDIRACCEPT,
@@ -662,7 +463,6 @@ SYSCTL_INT(_net_inet6_icmp6, ICMPV6CTL_ND6_USELOOPBACK,
 SYSCTL_INT(_net_inet6_icmp6, ICMPV6CTL_ND6_PROXYALL,
 	nd6_proxyall, CTLFLAG_RW,	&nd6_proxyall, 0, "");
 
-#if __FreeBSD__ < 3
 /* net.inet6.udp6 */
 SYSCTL_INT(_net_inet6_udp6, UDP6CTL_SENDMAX,
 	sendmax, CTLFLAG_RW,	&udp6_sendspace,	0, "");
@@ -704,6 +504,5 @@ SYSCTL_INT(_net_inet6_tcp6, TCP6CTL_SYN_BUCKET_LIMIT,
 	syn_bucket_limit, CTLFLAG_RW,	&tcp6_syn_bucket_limit, 0, "");
 SYSCTL_INT(_net_inet6_tcp6, TCP6CTL_SYN_CACHE_INTER,
 	syn_cache_interval, CTLFLAG_RW, &tcp6_syn_cache_interval, 0, "");
-#endif /* !(defined(__FreeBSD__) && __FreeBSD__ >= 3) */
 
 #endif /* __FreeBSD__ */

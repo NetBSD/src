@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.24 1999/07/08 01:19:05 wrstuden Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.24.8.1 1999/12/21 23:19:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -163,6 +163,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	nmp->nullm_vfs = lowerrootvp->v_mount;
 	if (nmp->nullm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_bshift = nmp->nullm_vfs->mnt_bshift;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized

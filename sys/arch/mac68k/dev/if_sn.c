@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.25 1999/12/12 08:18:48 scottr Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.24 1999/09/29 06:14:02 scottr Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1022,8 +1022,8 @@ sonicrxint(sc)
 		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
 		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
-			caddr_t pkt = sc->rbuf[orra & RBAMASK] +
-			    m68k_page_offset(rxpkt_ptr);
+			caddr_t pkt =
+			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
 			if (sonic_read(sc, pkt, len))
 				sc->sc_if.if_ipackets++;
 			else

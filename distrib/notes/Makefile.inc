@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/12/08 03:57:29 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/06/30 18:23:02 ross Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -9,7 +9,7 @@ V_S!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 MAIN=	${.CURDIR}/../common/main ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
-SRCS=	${MAIN} whatis contents hardware xfer prep install\
+SRCS=	${MAIN} mirrors whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
 ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
@@ -17,11 +17,11 @@ ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 
 PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1 
 
-POST_PLAIN= -P-b -P-u -P-o
+POST_PLAIN= -P-b -P-u -P-o -Tascii
 
 ARGS_PS=	${PRESET} -dformat=PostScript
-ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii
-ARGS_HTML=	${PRESET} -dformat=HTML ${POST_PLAIN} -Tlatin1 -ww
+ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN}
+ARGS_HTML=	${PRESET} -dformat=HTML  ${POST_PLAIN} -ww
 ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii
 
 #

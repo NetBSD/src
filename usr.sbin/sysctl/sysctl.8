@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.34 1999/12/17 05:01:26 garbled Exp $
+.\"	$NetBSD: sysctl.8,v 1.30 1999/07/02 08:58:22 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,13 +86,6 @@ If a value is to be set, the
 flag must be specified and the MIB name followed
 by an equal sign and the new value to be used.
 .Pp
-The proc top-level MIB has a special semantic: it represent per-process values
-and as such may differ from one process to another. The second-level name
-is the pid of the process (in decimal form), or the special word 'curproc'.
-For variables below 'proc.<pid>.rlimit', the integer value may be remplaced
-with the string 'unlimited' if it matches the magic value used to disable
-a limit.
-.Pp
 The information available from
 .Nm sysctl
 consists of integers, strings, and tables.
@@ -102,7 +95,7 @@ purpose programs such as
 .Nm systat ,
 and
 .Nm netstat .
-The string and integer information is summarized below.
+The string and integer information is summaried below.
 For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
@@ -144,7 +137,7 @@ privilege can change the value.
 .It kern.sysvmsg	integer	no
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
-.It kern.defcorename	string	yes
+.It kern.shortcorename	integer	yes
 .It kern.synchronized_io	integer	no
 .It kern.iov_max	integer	no
 .It kern.mbuf.msize	integer	no
@@ -288,35 +281,17 @@ privilege can change the value.
 .It ddb.tabstops	integer		yes
 .It ddb.lines	integer		yes
 .It ddb.onpanic	integer		yes
-.It ddb.fromconsole	integer 	yes
-.It proc.<pid>.corename	string	yes
-.It proc.<pid>.rlimit.cputime.soft	integer	yes
-.It proc.<pid>.rlimit.cputime.hard	integer	yes
-.It proc.<pid>.rlimit.filesize.soft	integer	yes
-.It proc.<pid>.rlimit.filesize.hard	integer	yes
-.It proc.<pid>.rlimit.datasize.soft	integer	yes
-.It proc.<pid>.rlimit.datasize.hard	integer	yes
-.It proc.<pid>.rlimit.stacksize.soft	integer	yes
-.It proc.<pid>.rlimit.stacksize.hard	integer	yes
-.It proc.<pid>.rlimit.coredumpsize.soft	integer	yes
-.It proc.<pid>.rlimit.coredumpsize.hard	integer	yes
-.It proc.<pid>.rlimit.memoryuse.soft	integer	yes
-.It proc.<pid>.rlimit.memoryuse.hard	integer	yes
-.It proc.<pid>.rlimit.memorylocked.soft	integer	yes
-.It proc.<pid>.rlimit.memorylocked.hard	integer	yes
-.It proc.<pid>.rlimit.maxproc.soft	integer	yes
-.It proc.<pid>.rlimit.maxproc.hard	integer	yes
 .El
 .Sh EXAMPLES
 .Pp
 For example, to retrieve the maximum number of processes allowed
-in the system, one would use the following request:
+in the system, one would use the follow request:
 .Bd -literal -offset indent -compact
 sysctl kern.maxproc
 .Ed
 .Pp
 To set the maximum number of processes allowed
-in the system to 1000, one would use the following request:
+in the system to 1000, one would use the follow request:
 .Bd -literal -offset indent -compact
 sysctl -w kern.maxproc=1000
 .Ed
@@ -326,30 +301,10 @@ Information about the system clock rate may be obtained with:
 sysctl kern.clockrate
 .Ed
 .Pp
-Information about the load average history may be obtained with:
+Information about the load average history may be obtained with
 .Bd -literal -offset indent -compact
 sysctl vm.loadavg
 .Ed
-.Pp
-To view the values of the per-process variables of the current shell,
-the request:
-.Bd -literal -offset indent -compact
-sysctl proc.$$
-.Ed
-can be used if the shell interpreter replaces $$ with it's pid (this is true
-for most shells).
-.Pp
-To redirect core dumps to the /var/tmp/<username> directory,
-.Bd -literal -offset indent -compact
-sysctl -w proc.$$.corename=/var/tmp/%u/%n.core
-.Ed
-Shall be used.
-.Bd -literal -offset indent -compact
-sysctl -w proc.curproc.corename=/var/tmp/%u/%n.core
-.Ed
-changes the value for the sysctl process itself, and will not have the desired
-effect.
-
 .Sh FILES
 .Bl -tag -width <netinet/icmpXvar.h> -compact
 .It Pa <sys/sysctl.h>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.58 1999/11/30 13:04:43 itojun Exp $	
+.\"	$NetBSD: hardware,v 1.54 1999/08/30 13:12:50 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -54,11 +54,6 @@ Supported devices include:
 		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
-		DPT SCSI RAID boards (PCI and EISA):
-			SmartCache III
-			SmartCache IV
-			SmartRAID III
-			SmartRAID IV
 		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 		Seagate/Future Domain ISA SCSI adapter cards, including
 			ST01/02
@@ -80,7 +75,7 @@ Supported devices include:
 					the SYM 8125)
 			Tekram DC-390U/F
 			Tyan Yorktown
-		Symbios Logic (NCR) 5380/53C400-based ISA SCSI host adapters [*]
+		Symbios Logic (NCR) 5380/53C400-based ISA SCSI host adapters [*] [+]
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI and TMC-7000 host adapters
 			(ISA cards only)
@@ -159,7 +154,7 @@ Supported devices include:
 			Compaq Integrated NetFlex 3/P
 			Compaq NetFlex 3/P in baseboard variant (the PCI
 				(variant doesn't use the same chip !).
-			Compaq Dual Port Netelligent 10/100 TX
+			Compaq Dual Port Netelligent 10/100 TX (untested)
 			Compaq Deskpro 4000 5233MMX (untested)
 			Texas Instruments TravelMate 5000 series laptop
 				docking station Ethernet board
@@ -178,10 +173,6 @@ Supported devices include:
 		IBM Auto 16/4 Token-Ring ISA Adapter [+]
 		3COM 3C619 TokenLink [+]
 		3COM 3C319 TokenLink Velocity [+]
-	Wireless network adapters:
-		AT\*&T/Lucent WaveLan IEEE (802.11) PCMCIA cards
-		BayStack 650 802.11FH PCMIA cards [+]
-		NetWave AirSurfer PCMCIA cards [+]
 	High Speed Serial:
 		LAN Media Corporation SSI/LMC10000 (up to 10Mbps) [*] [+]
 		LAN Media Corporation HSSI/LMC5200 [*] [+]
@@ -215,7 +206,7 @@ Supported devices include:
 		Gravis Ultrasound Plug\*&Play [*] [+]
 		Ensoniq AudioPCI [*] [+]
 		Yamaha OPL3-SA3 [*] [+]
-		Aria based sound cards [*]
+		Aria based sound cards [*] [+]
 		S3 SonicVibes [*] [+]
 		ESS Technology ES1777/1868/1869/1887/1888/888 and
 			Solo-1 ES1938/1946 audio [*] [+]
@@ -317,6 +308,10 @@ AMD PCscsi-PCI based SCSI host adapters
 BusLogic BT445, BT74x, or BT9xx SCSI host adapters
 		bha0 	0x330	any	any
 		bha1 	0x334	any	any
+
+Symbios Logic/NCR 5380/53C400 based ISA SCSI host adapters
+		nca0	0x360	15
+		nca1		5		iomem 0xd8000
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
 		ncr0	any  	any	any

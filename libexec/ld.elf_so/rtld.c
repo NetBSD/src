@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.28 1999/12/13 09:09:34 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.23 1999/08/19 23:42:15 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -59,8 +59,6 @@
 #include "sysident.h"
 #endif
 
-#define END_SYM		"_end"
-
 /*
  * Debugging support.
  */
@@ -88,22 +86,12 @@ Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char            _rtld_path[] = _PATH_RTLD;
-unsigned long   _rtld_curmark;	/* Current mark value */
-Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 #ifdef	VARPSZ
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 #endif
 
-Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
-Objlist _rtld_list_main =	/* Objects loaded at program startup */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
-
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
-
-Library_Xform  *_rtld_xforms;
-
 /*
  * Global declarations normally provided by crt0.
  */
@@ -120,14 +108,7 @@ extern Elf_Dyn  _DYNAMIC;
 static void _rtld_call_fini_functions __P((Obj_Entry *));
 static void _rtld_call_init_functions __P((Obj_Entry *));
 static Obj_Entry *_rtld_dlcheck __P((void *));
-static void _rtld_init_dag __P((Obj_Entry *));
-static void _rtld_init_dag1 __P((Obj_Entry *, Obj_Entry *));
-static void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
-static Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
-static void _rtld_objlist_remove __P((Objlist *, Obj_Entry *));
-static void _rtld_unload_object __P((Obj_Entry *, bool));
-static void _rtld_unref_dag __P((Obj_Entry *));
-static Obj_Entry *_rtld_obj_from_addr __P((const void *));
+static void _rtld_unref_object_dag __P((Obj_Entry *));
 
 static void
 _rtld_call_fini_functions(first)
@@ -276,7 +257,6 @@ _rtld(sp)
 	bool            bind_now = 0;
 	const char     *ld_bind_now;
 	const char    **argv;
-	Obj_Entry	*obj;
 #if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
 	int             i = 0;
 #endif
@@ -316,28 +296,28 @@ _rtld(sp)
 #ifdef	VARPSZ
 	pAUX_pagesz = NULL;
 #endif
-	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
-		switch (auxp->a_type) {
-		case AT_BASE:
+	for (auxp = aux; auxp->au_id != AUX_null; ++auxp) {
+		switch (auxp->au_id) {
+		case AUX_base:
 			pAUX_base = auxp;
 			break;
-		case AT_ENTRY:
+		case AUX_entry:
 			pAUX_entry = auxp;
 			break;
-		case AT_EXECFD:
+		case AUX_execfd:
 			pAUX_execfd = auxp;
 			break;
-		case AT_PHDR:
+		case AUX_phdr:
 			pAUX_phdr = auxp;
 			break;
-		case AT_PHENT:
+		case AUX_phent:
 			pAUX_phent = auxp;
 			break;
-		case AT_PHNUM:
+		case AUX_phnum:
 			pAUX_phnum = auxp;
 			break;
 #ifdef	VARPSZ
-		case AT_PAGESZ:
+		case AUX_pagesz:
 			pAUX_pagesz = auxp;
 			break;
 #endif
@@ -346,11 +326,11 @@ _rtld(sp)
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v);
+	_rtld_init((caddr_t) pAUX_base->au_v);
 
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
-	_rtld_pagesz = (int)pAUX_pagesz->a_v;
+	_rtld_pagesz = (int)pAUX_pagesz->au_v;
 #endif
 
 #ifdef RTLD_DEBUG
@@ -373,18 +353,18 @@ _rtld(sp)
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
 	}
-	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
+	_rtld_process_hints(&_rtld_paths, _PATH_LD_HINTS, true);
 	dbg(("%s is initialized, base address = %p", __progname,
-	     (void *) pAUX_base->a_v));
+	     (void *) pAUX_base->au_v));
 
 	/*
          * Load the main program, or process its program header if it is
          * already loaded.
          */
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
-		int             fd = pAUX_execfd->a_v;
+		int             fd = pAUX_execfd->au_v;
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(argv[0], fd, NULL);
+		_rtld_objmain = _rtld_map_object(argv[0], fd);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -395,31 +375,18 @@ _rtld(sp)
 
 		dbg(("processing main program's program header"));
 		assert(pAUX_phdr != NULL);
-		phdr = (const Elf_Phdr *) pAUX_phdr->a_v;
+		phdr = (const Elf_Phdr *) pAUX_phdr->au_v;
 		assert(pAUX_phnum != NULL);
-		phnum = pAUX_phnum->a_v;
+		phnum = pAUX_phnum->au_v;
 		assert(pAUX_phent != NULL);
-		assert(pAUX_phent->a_v == sizeof(Elf_Phdr));
+		assert(pAUX_phent->au_v == sizeof(Elf_Phdr));
 		assert(pAUX_entry != NULL);
-		entry = (caddr_t) pAUX_entry->a_v;
+		entry = (caddr_t) pAUX_entry->au_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
 	}
 
 	_rtld_objmain->path = xstrdup("main program");
 	_rtld_objmain->mainprog = true;
-	
-	/*
-	 * Get the actual dynamic linker pathname from the executable if
-	 * possible.  (It should always be possible.)  That ensures that
-	 * gdb will find the right dynamic linker even if a non-standard
-	 * one is being used.
-	 */
-	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
-		free(_rtld_objself.path);
-		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
-	}
-	
 	_rtld_digest_dynamic(_rtld_objmain);
 
 	_rtld_linkmap_add(_rtld_objmain);
@@ -430,10 +397,6 @@ _rtld(sp)
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
 
-	/* Initialize a fake symbol for resolving undefined weak references. */
-	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
-	_rtld_sym_zero.st_shndx = SHN_ABS;
-
 	/*
 	 * Pre-load user-specified objects after the main program but before
 	 * any shared object dependencies.
@@ -443,11 +406,8 @@ _rtld(sp)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, true) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain) == -1)
 		_rtld_die();
-
-	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
-		_rtld_objlist_add(&_rtld_list_main, obj);
 
 	dbg(("relocating objects"));
 	if (_rtld_relocate_objects(_rtld_objmain, bind_now, true) == -1)
@@ -503,77 +463,7 @@ _rtld_dlcheck(handle)
 }
 
 static void
-_rtld_init_dag(root)
-	Obj_Entry *root;
-{
-	_rtld_curmark++;
-	_rtld_init_dag1(root, root);
-}
-
-static void
-_rtld_init_dag1(root, obj)
-	Obj_Entry *root;
-	Obj_Entry *obj;
-{
-	const Needed_Entry *needed;
-
-	if (obj->mark == _rtld_curmark)
-		return;
-	obj->mark = _rtld_curmark;
-	_rtld_objlist_add(&obj->dldags, root);
-	_rtld_objlist_add(&root->dagmembers, obj);
-	for (needed = obj->needed; needed != NULL; needed = needed->next)
-		if (needed->obj != NULL)
-			_rtld_init_dag1(root, needed->obj);
-}
-
-/*
- * Note, this is called only for objects loaded by dlopen().
- */
-static void
-_rtld_unload_object(root, do_fini_funcs)
-	Obj_Entry *root;
-	bool do_fini_funcs;
-{
-	_rtld_unref_dag(root);
-	if (root->refcount == 0) { /* We are finished with some objects. */
-		Obj_Entry *obj;
-		Obj_Entry **linkp;
-		Objlist_Entry *elm;
-
-		/* Finalize objects that are about to be unmapped. */
-		if (do_fini_funcs)
-			for (obj = _rtld_objlist->next;  obj != NULL;  obj = obj->next)
-				if (obj->refcount == 0 && obj->fini != NULL)
-					(*obj->fini)();
-
-		/* Remove the DAG from all objects' DAG lists. */
-		for (elm = SIMPLEQ_FIRST(&root->dagmembers); elm; elm = SIMPLEQ_NEXT(elm, link))
-			_rtld_objlist_remove(&elm->obj->dldags, root);
-
-		/* Remove the DAG from the RTLD_GLOBAL list. */
-		_rtld_objlist_remove(&_rtld_list_global, root);
-
-		/* Unmap all objects that are no longer referenced. */
-		linkp = &_rtld_objlist->next;
-		while ((obj = *linkp) != NULL) {
-			if (obj->refcount == 0) {
-#ifdef RTLD_DEBUG
-				dbg(("unloading \"%s\"", obj->path));
-#endif
-				munmap(obj->mapbase, obj->mapsize);
-				_rtld_linkmap_delete(obj);
-				*linkp = obj->next;
-				_rtld_obj_free(obj);
-			} else
-				linkp = &obj->next;
-		}
-		_rtld_objtail = linkp;
-	}
-}
-
-static void
-_rtld_unref_dag(root)
+_rtld_unref_object_dag(root)
 	Obj_Entry *root;
 {
 	assert(root->refcount != 0);
@@ -582,8 +472,8 @@ _rtld_unref_dag(root)
 		const Needed_Entry *needed;
 
 		for (needed = root->needed; needed != NULL;
-		     needed = needed->next)
-			_rtld_unref_dag(needed->obj);
+		    needed = needed->next)
+			_rtld_unref_object_dag(needed->obj);
 	}
 }
 
@@ -600,7 +490,7 @@ _rtld_dlclose(handle)
 	_rtld_debug_state();
 
 	--root->dl_refcount;
-	_rtld_unref_dag(root);
+	_rtld_unref_object_dag(root);
 	if (root->refcount == 0) {	/* We are finished with some objects. */
 		Obj_Entry      *obj;
 		Obj_Entry     **linkp;
@@ -657,7 +547,6 @@ _rtld_dlopen(name, mode)
 
 	if (name == NULL) {
 		obj = _rtld_objmain;
-		obj->refcount++;
 	} else {
 		char *path = _rtld_find_library(name, _rtld_objmain);
 		if (path != NULL)
@@ -666,20 +555,20 @@ _rtld_dlopen(name, mode)
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
-		if (mode & RTLD_GLOBAL && _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
-			_rtld_objlist_add(&_rtld_list_global, obj);
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, true) == -1 ||
-			    (_rtld_init_dag(obj),
-			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW), true)) == -1) {
-				_rtld_unload_object(obj, false);
-				obj->dl_refcount--;
+			/* FIXME - Clean up properly after an error. */
+			if (_rtld_load_needed_objects(obj) == -1) {
+				--obj->dl_refcount;
 				obj = NULL;
-			} else
+			} else if (_rtld_relocate_objects(obj,
+			    (mode & 3) == RTLD_NOW, true) == -1) {
+				--obj->dl_refcount;
+				obj = NULL;
+			} else {
 				_rtld_call_init_functions(obj);
+			}
 		}
 	}
 	_rtld_debug.r_state = RT_CONSISTENT;
@@ -693,115 +582,23 @@ _rtld_dlsym(handle, name)
 	void *handle;
 	const char *name;
 {
-	const Obj_Entry *obj;
-	unsigned long hash;
-	const Elf_Sym *def;
+	const Obj_Entry *obj = _rtld_dlcheck(handle);
+	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
-	
-	hash = _rtld_elf_hash(name);
-	def = NULL;
-	defobj = NULL;
-	
-#if 1
-	if (handle == NULL) {
-#else
-		if (handle == NULL || handle == RTLD_NEXT) {
-#endif
-			void *retaddr;
 
-			retaddr = __builtin_return_address(0); /* __GNUC__ only */
-			if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
-				_rtld_error("Cannot determine caller's shared object");
-				return NULL;
-			}
-			if (handle == NULL) { /* Just the caller's shared object. */
-				def = _rtld_symlook_obj(name, hash, obj, true);
-				defobj = obj;
-			} else { /* All the shared objects after the caller's */
-				while ((obj = obj->next) != NULL) {
-					if ((def = _rtld_symlook_obj(name, hash, obj, true)) != NULL) {
-						defobj = obj;
-						break;
-					}
-				}
-			}
-		} else {
-			if ((obj = _rtld_dlcheck(handle)) == NULL)
-				return NULL;
-			
-			if (obj->mainprog) {
-				/* Search main program and all libraries loaded by it. */
-				_rtld_curmark++;
-				def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
-			} else {
-				/*
-				 * XXX - This isn't correct.  The search should include the whole
-				 * DAG rooted at the given object.
-				 */
-				def = _rtld_symlook_obj(name, hash, obj, true);
-				defobj = obj;
-			}
-		}
-		
-		if (def != NULL)
-			return defobj->relocbase + def->st_value;
-		
-		_rtld_error("Undefined symbol \"%s\"", name);
-	return NULL;
-}
+	if (obj == NULL)
+		return NULL;
 
-int
-_rtld_dladdr(addr, info)
-	const void *addr;
-	Dl_info *info;
-{
-	const Obj_Entry *obj;
-	const Elf_Sym *def;
-	void *symbol_addr;
-	unsigned long symoffset;
-	
-	obj = _rtld_obj_from_addr(addr);
-	if (obj == NULL) {
-		_rtld_error("No shared object contains address");
-		return 0;
-	}
-	info->dli_fname = obj->path;
-	info->dli_fbase = obj->mapbase;
-	info->dli_saddr = (void *)0;
-	info->dli_sname = NULL;
-	
 	/*
-	 * Walk the symbol list looking for the symbol whose address is
-	 * closest to the address sent in.
-	 */
-	for (symoffset = 0; symoffset < obj->nchains; symoffset++) {
-		def = obj->symtab + symoffset;
+         * FIXME - This isn't correct.  The search should include the whole
+         * DAG rooted at the given object.
+         */
+	def = _rtld_find_symdef(_rtld_objlist, 0, name, obj, &defobj, false);
+	if (def != NULL)
+		return defobj->relocbase + def->st_value;
 
-		/*
-		 * For skip the symbol if st_shndx is either SHN_UNDEF or
-		 * SHN_COMMON.
-		 */
-		if (def->st_shndx == SHN_UNDEF || def->st_shndx == SHN_COMMON)
-			continue;
-
-		/*
-		 * If the symbol is greater than the specified address, or if it
-		 * is further away from addr than the current nearest symbol,
-		 * then reject it.
-		 */
-		symbol_addr = obj->relocbase + def->st_value;
-		if (symbol_addr > addr || symbol_addr < info->dli_saddr)
-			continue;
-
-		/* Update our idea of the nearest symbol. */
-		info->dli_sname = obj->strtab + def->st_name;
-		info->dli_saddr = symbol_addr;
-
-		/* Exact match? */
-		if (info->dli_saddr == addr)
-			break;
-	}
-	return 1;
+	_rtld_error("Undefined symbol \"%s\"", name);
+	return NULL;
 }
 
 /*
@@ -876,71 +673,4 @@ _rtld_linkmap_delete(obj)
 	}
 	if ((l->l_prev->l_next = l->l_next) != NULL)
 		l->l_next->l_prev = l->l_prev;
-}
-
-static Obj_Entry *
-_rtld_obj_from_addr(const void *addr)
-{
-	unsigned long endhash;
-	Obj_Entry *obj;
-	
-	endhash = _rtld_elf_hash(END_SYM);
-	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
-		const Elf_Sym *endsym;
-
-		if (addr < (void *) obj->mapbase)
-			continue;
-		if ((endsym = _rtld_symlook_obj(END_SYM, endhash, obj, true)) == NULL)
-			continue; /* No "end" symbol?! */
-		if (addr < (void *) (obj->relocbase + endsym->st_value))
-			return obj;
-	}
-	return NULL;
-}
-
-static void
-_rtld_objlist_add(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
-{
-	Objlist_Entry *elm;
-
-	elm = NEW(Objlist_Entry);
-	elm->obj = obj;
-	SIMPLEQ_INSERT_TAIL(list, elm, link);
-}
-
-static Objlist_Entry *
-_rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
-{
-	Objlist_Entry *elm;
-
-	for (elm = SIMPLEQ_FIRST(list); elm; elm = SIMPLEQ_NEXT(elm, link)) {
-		if (elm->obj == obj)
-			return elm;
-	}
-	return NULL;
-}
-
-static void
-_rtld_objlist_remove(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
-{
-	Objlist_Entry *elm;
-	
-	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
-		if ((list)->sqh_first == (elm)) {
-			SIMPLEQ_REMOVE_HEAD(list, elm, link);
-		}
-		else {
-			struct Struct_Objlist_Entry *curelm = (list)->sqh_first;
-			while (curelm->link.sqe_next != (elm))
-				curelm = curelm->link.sqe_next;
-			if((curelm->link.sqe_next =
-			    curelm->link.sqe_next->link.sqe_next) == NULL)
-				(list)->sqh_last = &(curelm)->link.sqe_next;
-		}
-		free(elm);
-	}
 }

@@ -1,5 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.19 1999/12/06 21:07:00 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.14 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +69,7 @@ typedef union {
  */
 typedef struct uhci_intr_info {
 	struct uhci_softc *sc;
-	usbd_xfer_handle xfer;
+	usbd_request_handle reqh;
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
@@ -92,7 +91,7 @@ struct uhci_soft_td {
 };
 /* 
  * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
- * we can pack a number of soft TD together and have the real TD well
+ * we can pack a number of soft TD together and have the real TS well
  * aligned.
  * NOTE: Minimum size is 32 bytes.
  */
@@ -116,7 +115,7 @@ struct uhci_soft_qh {
 #define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
 /*
- * Information about an entry in the virtual frame list.
+ * Information about an entry in the virtial frame list.
  */
 struct uhci_vframe {
 	uhci_soft_td_t *htd;		/* pointer to dummy TD */
@@ -130,6 +129,11 @@ typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	void *sc_ih;			/* interrupt vectoring */
+
+	/* XXX should keep track of all DMA memory */
+#endif /* defined(__FreeBSD__) */
 
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;
@@ -140,37 +144,44 @@ typedef struct uhci_softc {
 	uhci_soft_qh_t *sc_bulk_start;	/* dummy QH for bulk */
 	uhci_soft_qh_t *sc_bulk_end;	/* last bulk transfer */
 
-	uhci_soft_td_t *sc_freetds;	/* TD free list */
-	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
+	uhci_soft_td_t *sc_freetds;
+	uhci_soft_qh_t *sc_freeqhs;
 
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
 	char sc_isreset;
+
 	char sc_suspend;
+	usbd_request_handle sc_has_timo;
 
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 
 	/* Info for the root hub interrupt channel. */
-	int sc_ival;			/* time between root hug intrs */
-	usbd_xfer_handle sc_has_timo;	/* root hub interrupt transfer */
+	int sc_ival;
 
-	char sc_vflock;			/* for lock virtual frame list */
+	char sc_vflock;
 #define UHCI_HAS_LOCK 1
 #define UHCI_WANT_LOCK 2
 
-	char sc_vendor[16];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
+	char sc_vendor[16];
+	int sc_id_vendor;
 
-	void *sc_powerhook;		/* cookie from power hook */
-
-	device_ptr_t sc_child;		/* /dev/usb device */
+	void *sc_powerhook;
+	device_ptr_t sc_child;
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-int		uhci_detach __P((uhci_softc_t *, int));
+int		uhci_detach __P((device_ptr_t, int));
 int		uhci_activate __P((device_ptr_t, enum devact));
+
+#ifdef USB_DEBUG
+#define DPRINTF(x)	if (uhcidebug) printf x
+#define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
+extern int uhcidebug;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 

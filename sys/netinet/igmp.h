@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.8 1999/11/20 00:37:58 thorpej Exp $	*/
+/*	$NetBSD: igmp.h,v 1.7 1998/02/10 01:26:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -56,7 +56,7 @@ struct igmp {
 	u_int8_t	igmp_code;	/* code for routing sub-messages   */
 	u_int16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
-} __attribute__((__packed__));		/*  (zero for queries)             */
+};					/*  (zero for queries)             */
 
 #define	IGMP_MINLEN		     8
 

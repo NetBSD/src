@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 1999/12/15 08:03:43 garbled Exp $ */
+/*	$NetBSD: conf.c,v 1.60 1999/08/01 00:23:49 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,6 @@
 #include "cgfourteen.h"
 #include "pnozz.h"
 #include "fb.h"
-#include "tctrl.h"
 
 #include "xd.h"
 #include "xy.h"
@@ -97,9 +96,6 @@
 #include "ipfilter.h"
 #include "rnd.h"
 #include "scsibus.h"
-
-#include "vcoda.h"
-cdev_decl(vc_nb_);
 
 struct bdevsw	bdevsw[] =
 {
@@ -181,7 +177,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
-	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: coda file system psuedo-device */
+	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
@@ -205,7 +201,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
-	cdev_tctrl_init(NTCTRL,tctrl),	/* 71: /dev/tctrl */
+	cdev_notdef(),			/* 71 */
 	cdev_notdef(),			/* 72 */
 	cdev_notdef(),			/* 73 */
 	cdev_notdef(),			/* 74 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.8.1 1999/12/21 23:16:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -112,11 +112,12 @@ bad:
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
@@ -131,6 +132,8 @@ readdisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -149,6 +152,8 @@ readdisklabel(dev, strat, lp, osdep)
 			*lp = *dlp;
 		}
 	}
+
+out:
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
@@ -201,18 +206,21 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error = 0;
 
-	bp = geteblk((int)lp->d_secsize);
+	bp = geteblk((int)lp->d_secsize, dev);
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;

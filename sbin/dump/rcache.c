@@ -1,4 +1,4 @@
-/*      $NetBSD: rcache.c,v 1.4 1999/10/01 04:35:23 perseant Exp $       */
+/*      $NetBSD: rcache.c,v 1.1 1999/03/23 14:22:59 bouyer Exp $       */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,7 +100,7 @@ initcache(cachesize, readblksize)
 	size_t len;
 	size_t  sharedSize;
 
-	nblksread = (readblksize + ufsib->ufs_bsize - 1) / ufsib->ufs_bsize;
+	nblksread = (readblksize + sblock->fs_bsize - 1) / sblock->fs_bsize;
 	if(cachesize == -1) {	/* Compute from memory available */
 		int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
@@ -358,7 +359,7 @@ retry:
 			blockBlkNo = (blkno / nblksread) * nblksread;
 			idx = findlru();
 			rsize = min(nblksread,
-			    ufsib->ufs_dsize - blockBlkNo) *
+			    fsbtodb(sblock, sblock->fs_size) - blockBlkNo) *
 			    dev_bsize;
 
 #ifdef DIAGNOSTICS

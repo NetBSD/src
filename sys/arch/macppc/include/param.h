@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1999/12/04 21:20:45 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.5.2.1 1999/12/21 23:16:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,6 +57,9 @@
 #define	BLKDEV_IOSIZE	NBPG
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
+
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 
@@ -68,7 +71,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * MCLBYTES must be no larger than CLBYTES (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -81,6 +84,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
+#include "opt_non_po2_blocks.h"
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
@@ -91,17 +95,17 @@
 #endif
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages.
+ * Size of kernel malloc arena in CLBYTES-sized logical pages.
  */
 #ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(8 * 1024 * 1024 / NBPG)
+#define	NKMEMCLUSTERS	(8 * 1024 * 1024 / CLBYTES)
 #endif
 
 /*
  * pages ("clicks") to disk blocks
  */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)		((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)		((x) >> (PGSHIFT - (sh)))
 /*
  * bytes to pages
  */
@@ -111,8 +115,15 @@
 /*
  * bytes to disk blocks
  */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
+#if defined(_LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Segment handling stuff
@@ -125,7 +136,7 @@
  */
 #define	USER_SR		13
 #define	KERNEL_SR	14
-#define	KERNEL_SEGMENT	(0xf00000 + KERNEL_SR)
+#define	KERNEL_SEGMENT	(0xfffff0 + KERNEL_SR)
 #define	EMPTY_SEGMENT	0xfffff0
 #define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
 

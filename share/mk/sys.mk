@@ -1,10 +1,9 @@
-#	$NetBSD: sys.mk,v 1.56 1999/11/15 06:14:23 matt Exp $
+#	$NetBSD: sys.mk,v 1.54 1999/03/10 14:06:14 mycroft Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .out .a .ln .o .s .S .c .cc .cpp .cxx .C .F .f .r .y .l .cl .p .h
-.SUFFIXES: .sh .m4
+.SUFFIXES: .out .a .ln .o .s .S .c .cc .C .F .f .r .y .l .cl .p .h .sh .m4
 
 .LIBS:		.a
 
@@ -25,8 +24,7 @@ CC?=		cc
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "vax"
+    ${MACHINE_ARCH} == "sparc"
 CFLAGS?=	-O2
 .else
 CFLAGS?=	-O
@@ -103,11 +101,20 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 # C++
-.cc .cpp .cxx .C:
+.cc:
 	${LINK.cc} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
-.cc.o .cpp.o .cxx.o .C.o:
+.cc.o:
 	${COMPILE.cc} ${.IMPSRC}
-.cc.a .cpp.a .cxx.a .C.a:
+.cc.a:
+	${COMPILE.cc} ${.IMPSRC}
+	${AR} ${ARFLAGS} $@ $*.o
+	rm -f $*.o
+
+.C:
+	${LINK.cc} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.C.o:
+	${COMPILE.cc} ${.IMPSRC}
+.C.a:
 	${COMPILE.cc} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
 	rm -f $*.o

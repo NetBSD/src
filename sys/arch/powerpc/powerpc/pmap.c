@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1999/11/13 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1999/09/14 17:11:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -952,13 +952,14 @@ pmap_remove_pv(pteidx, va, pa, pte)
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
-int
-pmap_enter(pm, va, pa, prot, flags)
+void
+pmap_enter(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	int flags;
+	int wired;
+	vm_prot_t access_type;
 {
 	sr_t sr;
 	int idx, i, s;
@@ -966,7 +967,6 @@ pmap_enter(pm, va, pa, prot, flags)
 	struct pte_ovfl *po;
 	int managed;
 	struct mem_region *mp;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
 	 * Have to remove any existing mapping first.
@@ -1018,7 +1018,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return (KERN_SUCCESS);
+		return;
 	}
 
 	/*
@@ -1030,8 +1030,6 @@ pmap_enter(pm, va, pa, prot, flags)
 	po->po_pte = pte;
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
-
-	return (KERN_SUCCESS);
 }
 
 void
@@ -1040,7 +1038,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
 }
 
 void
@@ -1053,7 +1051,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 	}
 }
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: s_finite.S,v 1.6 1999/11/10 16:45:33 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,16 +40,16 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_finite.S,v 1.6 1999/11/10 16:45:33 thorpej Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.5 1999/08/21 21:25:40 is Exp $")
 
 | finite(x)
 | returns the value TRUE if -INF < x < +INF and returns FALSE otherwise.
 ENTRY(finite)
-	movw	%sp@(4),%d0
-	movw	#0x7FF0,%d1
-	andw	%d1,%d0
-	cmpw	%d1,%d0
-	sne	%d0
-	extbl	%d0
-	negl	%d0
+	movw	sp@(4),d0
+	movw	#0x7FF0,d1
+	andw	d1,d0
+	cmpw	d1,d0
+	sne	d0
+	extbl	d0
+	negl	d0
 	rts

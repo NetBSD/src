@@ -1,40 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $	*/
-
-/*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -74,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <signal.h>
 #include "ftp_var.h"
 
 /*
@@ -98,9 +63,12 @@ char	connecthelp[] =	"connect to remote ftp server";
 char	crhelp[] =	"toggle carriage return stripping on ascii gets";
 char	debughelp[] =	"toggle/set debugging mode";
 char	deletehelp[] =	"delete remote file";
+char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
+#ifndef NO_EDITCOMPLETE
 char	edithelp[] =	"toggle command line editing";
+#endif /* !NO_EDITCOMPLETE */
 char	epsv4help[] =	"toggle use of EPSV/EPRT on IPv4 ftp";
 char	formhelp[] =	"set file transfer format";
 char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
@@ -109,7 +77,6 @@ char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
 char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
-char	lpagehelp[] =	"view a local file through your pager";
 char	lpwdhelp[] =	"print local working directory";
 char	lshelp[] =	"list contents of remote directory";
 char	macdefhelp[] =  "define a macro";
@@ -122,11 +89,11 @@ char	modehelp[] =	"set file transfer mode";
 char	modtimehelp[] = "show last modification time of remote file";
 char	mputhelp[] =	"send multiple files";
 char	newerhelp[] =	"get file if remote file is newer than local file ";
+char	nlisthelp[] =	"nlist contents of remote directory";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
 char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
-char	plshelp[] =	"list contents of remote directory through your pager";
 char	porthelp[] =	"toggle use of PORT/LPRT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
 			"retrieved files";
@@ -136,7 +103,7 @@ char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
 char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
-char	ratehelp[] =	"set transfer rate limit (in bytes/second)";
+char	ratehelp[] =	"set transfer rate limit";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
 char	remotehelp[] =	"get help from remote server";
@@ -147,7 +114,6 @@ char	rmdirhelp[] =	"remove directory on the remote machine";
 char	rmtstatushelp[]="show status of remote machine";
 char	runiquehelp[] = "toggle store unique for local files";
 char	sendhelp[] =	"send one file";
-char	sethelp[] =	"set or display options";
 char	shellhelp[] =	"escape to the shell";
 char	sitehelp[] =	"send site specific command to remote server\n"
 			"\t\tTry \"rhelp site\" or \"site help\" "
@@ -161,18 +127,16 @@ char	tenexhelp[] =	"set tenex file transfer type";
 char	tracehelp[] =	"toggle packet tracing";
 char	typehelp[] =	"set file transfer type";
 char	umaskhelp[] =	"get (set) umask on remote side";
-char	unsethelp[] =	"unset an option";
-char	usagehelp[] =	"show command usage";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 char	xferbufhelp[] =	"set socket send/receive buffer size";
 
 #ifdef NO_EDITCOMPLETE
-#define	CMPL(x)
-#define	CMPL0
+#define CMPL(x)
+#define CMPL0
 #else  /* !NO_EDITCOMPLETE */
-#define	CMPL(x)	__STRING(x),
-#define	CMPL0	"",
+#define CMPL(x)	__STRING(x),
+#define CMPL0	"",
 #endif /* !NO_EDITCOMPLETE */
 
 struct cmd cmdtab[] = {
@@ -192,23 +156,24 @@ struct cmd cmdtab[] = {
 	{ "cr",		crhelp,		0, 0, 0, CMPL0		setcr },
 	{ "debug",	debughelp,	0, 0, 0, CMPL0		setdebug },
 	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
-	{ "dir",	lshelp,		1, 1, 1, CMPL(rl)	ls },
+	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
+#ifndef NO_EDITCOMPLETE
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
+#endif /* !NO_EDITCOMPLETE */
 	{ "epsv4",	epsv4help,	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
-	{ "gate",	gatehelp,	0, 0, 0, CMPL0		setgate },
 	{ "get",	receivehelp,	1, 1, 1, CMPL(rl)	get },
+	{ "gate",	gatehelp,	0, 0, 0, CMPL0		setgate },
 	{ "glob",	globhelp,	0, 0, 0, CMPL0		setglob },
 	{ "hash",	hashhelp,	0, 0, 0, CMPL0		sethash },
 	{ "help",	helphelp,	0, 0, 1, CMPL(C)	help },
-	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idlecmd },
+	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idle },
 	{ "image",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
 	{ "lcd",	lcdhelp,	0, 0, 0, CMPL(l)	lcd },
 	{ "less",	pagehelp,	1, 1, 1, CMPL(r)	page },
-	{ "lpage",	lpagehelp,	0, 0, 0, CMPL(l)	lpage },
 	{ "lpwd",	lpwdhelp,	0, 0, 0, CMPL0		lpwd },
 	{ "ls",		lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "macdef",	macdefhelp,	0, 0, 0, CMPL0		macdef },
@@ -223,14 +188,12 @@ struct cmd cmdtab[] = {
 	{ "mput",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "msend",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "newer",	newerhelp,	1, 1, 1, CMPL(r)	newer },
-	{ "nlist",	lshelp,		1, 1, 1, CMPL(rl)	ls },
+	{ "nlist",	nlisthelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
 	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
 	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
 	{ "page",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
-	{ "pdir",	plshelp,	1, 1, 1, CMPL(rl)	ls },
-	{ "pls",	plshelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "preserve",	preservehelp,	0, 0, 0, CMPL0		setpreserve },
 	{ "progress",	progresshelp,	0, 0, 0, CMPL0		setprogress },
 	{ "prompt",	prompthelp,	0, 0, 0, CMPL0		setprompt },
@@ -252,7 +215,6 @@ struct cmd cmdtab[] = {
 	{ "runique",	runiquehelp,	0, 0, 1, CMPL0		setrunique },
 	{ "send",	sendhelp,	1, 1, 1, CMPL(lr)	put },
 	{ "sendport",	porthelp,	0, 0, 0, CMPL0		setport },
-	{ "set",	sethelp,	0, 0, 0, CMPL(o)	setoption },
 	{ "site",	sitehelp,	0, 1, 1, CMPL0		site },
 	{ "size",	sizecmdhelp,	1, 1, 1, CMPL(r)	sizecmd },
 	{ "sndbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
@@ -265,8 +227,6 @@ struct cmd cmdtab[] = {
 	{ "trace",	tracehelp,	0, 0, 0, CMPL0		settrace },
 	{ "type",	typehelp,	0, 1, 1, CMPL0		settype },
 	{ "umask",	umaskhelp,	0, 1, 1, CMPL0		do_umask },
-	{ "unset",	unsethelp,	0, 0, 0, CMPL(o)	unsetoption },
-	{ "usage",	usagehelp,	0, 0, 1, CMPL(C)	help },
 	{ "user",	userhelp,	0, 1, 1, CMPL0		user },
 	{ "verbose",	verbosehelp,	0, 0, 0, CMPL0		setverbose },
 	{ "xferbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
@@ -274,13 +234,4 @@ struct cmd cmdtab[] = {
 	{ 0 },
 };
 
-struct option optiontab[] = {
-	{ "anonpass",	NULL },
-	{ "ftp_proxy",	NULL },
-	{ "http_proxy",	NULL },
-	{ "no_proxy",	NULL },
-	{ "pager",	NULL },
-	{ "prompt",	NULL },
-	{ "rprompt",	NULL },
-	{ 0 },
-};
+int	NCMDS = (sizeof(cmdtab) / sizeof(cmdtab[0])) - 1;

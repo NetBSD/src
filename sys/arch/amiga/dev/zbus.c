@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.43 1999/11/25 22:11:03 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.41 1999/09/25 21:47:11 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -160,15 +160,10 @@ static struct aconfdata aconftab[] = {
 	{ "apssc",	8738,	35 },	/* Apollo '060 scsi */
 	/* KATO development */
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
-	/* Individual Computers Jens Schoenfeld */
-	{ "buddha",	4626,	0 },
-	{ "X-serve",	4626,	23 },	/* X-serve Ethernet */
 	/* VMC Harald Frank */
 	{ "blst",	5001,	1},	/* ISDN Blaster */
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
-	{ "hyper3Z",	5001,	3},	/* Hypercom3-Zbus */
-	{ "hyper4+",	5001,	6},	/* Hypercom4+ */
-	{ "hyper3+",	5001,	7}	/* Hypercom3+ */
+	{ "hyper3",	5001,	3}	/* Hypercom3-Zbus */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 

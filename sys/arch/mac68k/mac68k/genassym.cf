@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 1999/12/04 21:20:41 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.15 1999/08/05 12:34:49 briggs Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -83,6 +83,7 @@ define	FPU_68040		FPU_68040
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	P1PAGES 		P1PAGES
+define	CLSIZE			CLSIZE
 define	NBPG			NBPG
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
@@ -116,7 +117,6 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
-define	PSL_TS			(PSL_T | PSL_S)
 define	SPL1			(PSL_S | PSL_IPL1)
 define	SPL2			(PSL_S | PSL_IPL2)
 define	SPL3			(PSL_S | PSL_IPL3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $	*/
+/*	$NetBSD: interact.c,v 1.10 1999/09/05 07:27:55 abs Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,27 +31,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $");
+__RCSID("$NetBSD: interact.c,v 1.10 1999/09/05 07:27:55 abs Exp $");
 #endif /* lint */
 
-#include <sys/param.h>
-#define FSTYPENAMES
-#define DKTYPENAMES
-#include <sys/disklabel.h>
-
-#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <util.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#define FSTYPENAMES
+#include <sys/disklabel.h>
 
 #include "extern.h"
 
 static void cmd_help __P((struct disklabel *, char *, int));
 static void cmd_chain __P((struct disklabel *, char *, int));
 static void cmd_print __P((struct disklabel *, char *, int));
-static void cmd_printall __P((struct disklabel *, char *, int));
-static void cmd_info __P((struct disklabel *, char *, int));
 static void cmd_part __P((struct disklabel *, char *, int));
 static void cmd_label __P((struct disklabel *, char *, int));
 static void cmd_round __P((struct disklabel *, char *, int));
@@ -59,7 +55,7 @@ static void cmd_name __P((struct disklabel *, char *, int));
 static int runcmd __P((char *, struct disklabel *, int));
 static int getinput __P((const char *, const char *, const char *, char *));
 static void defnum __P((char *, struct disklabel *, int));
-static int getnum __P((char *, int, struct disklabel *));
+static int getnum __P((char *, struct disklabel *));
 static void deffstypename __P((char *, int));
 static int getfstypename __P((const char *));
 
@@ -73,8 +69,6 @@ static struct cmds {
 } cmds[] = {
 	{ "?",	cmd_help,	"print this menu" },
 	{ "C",	cmd_chain,	"make partitions contiguous" },
-	{ "E",	cmd_printall,	"print disk label and current partition table"},
-	{ "I",	cmd_info,	"change label information" },
 	{ "N",	cmd_name,	"name the label" },
 	{ "P",	cmd_print,	"print current partition table" },
 	{ "Q",	NULL,		"quit" },
@@ -129,17 +123,6 @@ cmd_chain(lp, s, fd)
 }
 
 static void
-cmd_printall(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
-{
-
-	showinfo(stdout, lp);
-	showpartitions(stdout, lp);
-}
-
-static void
 cmd_print(lp, s, fd)
 	struct disklabel *lp;
 	char *s;
@@ -148,220 +131,6 @@ cmd_print(lp, s, fd)
 	showpartitions(stdout, lp);
 }
 
-static void
-cmd_info(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
-{
-	char line[BUFSIZ];
-	char def[BUFSIZ];
-	const char * const *cpp;
-	const char *t;
-	int v, i;
-	u_int32_t u;
-
-	printf("# Current values:\n");
-	showinfo(stdout, lp);
-
-	/* d_typename */
-	for (;;) {
-		strncpy(def, lp->d_typename, sizeof(def));
-		def[sizeof(def) - 1] = '\0';
-		i = getinput(":", "Disk type", def, line);
-		if (i <= 0)
-			break;
-		cpp = dktypenames;
-		for (; cpp < &dktypenames[DKMAXTYPES]; cpp++)
-			if ((t = *cpp) && !strcmp(t, line)) {
-				lp->d_type = cpp - dktypenames;
-				goto done_typename;
-			}
-		v = atoi(line);
-		if ((unsigned)v >= DKMAXTYPES) {
-			warnx("unknown disk type: %s", line);
-			continue;
-		}
-		lp->d_type = v;
-done_typename:
-		break;
-	}
-
-	/* d_packname */
-	cmd_name(lp, s, fd);
-
-	/* d_npartitions */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_npartitions);
-		i = getinput(":", "Number of partitions", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_npartitions = u;
-		break;
-	}
-
-	/* d_secsize */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secsize);
-		i = getinput(":", "Sector size (bytes)", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_secsize = u;
-		break;
-	}
-
-	/* d_nsectors */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_nsectors);
-		i = getinput(":", "Number of sectors per track", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector `%s'\n", line);
-			continue;
-		}
-		lp->d_nsectors = u;
-		break;
-	}
-
-	/* d_ntracks */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_ntracks);
-		i = getinput(":", "Number of tracks per cylinder", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of tracks `%s'\n", line);
-			continue;
-		}
-		lp->d_ntracks = u;
-		break;
-	}
-
-	/* d_secpercyl */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secpercyl);
-		i = getinput(":", "Number of sectors/cylinder", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector/cylinder `%s'\n", line);
-			continue;
-		}
-		lp->d_secpercyl = u;
-		break;
-	}
-
-	/* d_ncylinders */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_ncylinders);
-		i = getinput(":", "Total number of cylinders", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_ncylinders = u;
-		break;
-	}
-
-	/* d_secperunit */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secperunit);
-		i = getinput(":", "Total number of sectors", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector `%s'\n", line);
-			continue;
-		}
-		lp->d_secperunit = u;
-		break;
-	}
-
-	/* d_rpm */
-
-	/* d_interleave */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_interleave);
-		i = getinput(":", "Hardware sectors interleave", def, line);
-
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_interleave = u;
-		break;
-	}
-
-	/* d_trackskew */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_trackskew);
-		i = getinput(":", "Sector 0 skew, per track", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_trackskew = u;
-		break;
-	}
-
-	/* d_cylskew */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_cylskew);
-		i = getinput(":", "Sector 0 skew, per cylinder", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_cylskew = u;
-		break;
-	}
-
-	/* d_headswitch */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_headswitch);
-		i = getinput(":", "Head switch time (usec)", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_headswitch = u;
-		break;
-	}
-
-	/* d_trkseek */
-	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_trkseek);
-		i = getinput(":", "Track seek time (usec)", def, line);
-		if (i <= 0)
-			break;
-		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
-			continue;
-		}
-		lp->d_trkseek = u;
-		break;
-	}
-
-}
 
 static void
 cmd_name(lp, s, fd)
@@ -376,6 +145,7 @@ cmd_name(lp, s, fd)
 		return;
 	(void) strncpy(lp->d_packname, line, sizeof(lp->d_packname));
 }
+
 
 static void
 cmd_round(lp, s, fd)
@@ -403,6 +173,7 @@ cmd_round(lp, s, fd)
 		return;
 	}
 }
+
 
 static void
 cmd_part(lp, s, fd)
@@ -436,7 +207,7 @@ cmd_part(lp, s, fd)
 		i = getinput(":", "Start offset", def, line);
 		if (i <= 0)
 			break;
-		if ((i = getnum(line, 0, lp)) == -1) {
+		if ((i = getnum(line, lp)) == -1) {
 			printf("Bad offset `%s'\n", line);
 			continue;
 		}
@@ -445,12 +216,10 @@ cmd_part(lp, s, fd)
 	}
 	for (;;) {
 		defnum(def, lp, p->p_size);
-		i = getinput(":", "Partition size ('$' for all remaining)",
-		    def, line);
+		i = getinput(":", "Partition size", def, line);
 		if (i <= 0)
 			break;
-		if ((i = getnum(line, lp->d_secperunit - p->p_offset, lp))
-		    == -1) {
+		if ((i = getnum(line, lp)) == -1) {
 			printf("Bad size `%s'\n", line);
 			continue;
 		}
@@ -569,24 +338,19 @@ defnum(buf, lp, size)
 
 
 static int
-getnum(buf, max, lp)
+getnum(buf, lp)
 	char *buf;
-	int max;
 	struct disklabel *lp;
 {
 	char *ep;
-	double d;
+	double d = strtod(buf, &ep);
 	int rv;
 
-	if (max && buf[0] == '$' && buf[1] == 0)
-		return max;
-
-	d = strtod(buf, &ep);
 	if (buf == ep)
 		return -1;
 
 #define ROUND(a)	((a / lp->d_secpercyl) + \
-		 ((a % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl
+			 ((a % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl
 
 	switch (*ep) {
 	case '\0':

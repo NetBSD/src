@@ -1,9 +1,7 @@
 #! /bin/ksh
 #
-#	$NetBSD: tzselect.ksh,v 1.5 1999/11/10 20:32:31 kleink Exp $
+#	$NetBSD: tzselect.ksh,v 1.4 1998/09/10 15:58:40 kleink Exp $
 #
-# '@(#)tzselect.ksh	1.7'
-
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 
@@ -294,17 +292,5 @@ Universal Time is now:	$UTdate."
 do :
 done
 
-case $SHELL in
-*csh) file=.login line="setenv TZ '$TZ'";;
-*) file=.profile line="TZ='$TZ'; export TZ"
-esac
-
-echo >&2 "
-You can make this change permanent for yourself by appending the line
-	$line
-to the file '$file' in your home directory; then log out and log in again.
-
-Here is that TZ value again, this time on standard output so that you
-can use the $0 command in shell scripts:"
-
+# Output the answer.
 echo "$TZ"

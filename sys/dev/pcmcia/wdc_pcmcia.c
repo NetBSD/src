@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.25 1999/12/09 03:22:41 sommerfeld Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21 1999/09/23 11:04:33 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,8 +79,6 @@ struct wdc_pcmcia_softc {
 	int sc_auxiowindow;
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
-	int sc_flags;
-#define	WDC_PCMCIA_ATTACH	0x0001
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
@@ -108,9 +106,9 @@ struct wdc_pcmcia_product {
 	  PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM },
 
 	{ PCMCIA_VENDOR_IBM,
-	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
+	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
 	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
-	  PCMCIA_STR_IBM_PORTABLE_CDROM },
+	  PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE },
 
 	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
 	  -1,			/* XXX */
@@ -124,12 +122,6 @@ struct wdc_pcmcia_product {
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
-
-	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
-	{ -1, -1, 0,
-	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
-	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
-	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
 };
@@ -324,17 +316,14 @@ wdc_pcmcia_attach(parent, self, aux)
 	 * So whether the work around like above is necessary or not
 	 * is unknown.  XXX.
 	 */
-	if (cfe->num_iospace <= 1)
-		sc->sc_auxiowindow = -1;
-	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
+	if (cfe->num_iospace > 1 &&
+	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-			printf(": can't map second I/O space\n");
-			return;
-	}
+		printf(": can't map second I/O space\n");
+		return;
+	} else
+		sc->sc_auxiowindow = -1;
 
-	if ((wpp != NULL) && (wpp->wpp_name != NULL))
-		printf(": %s", wpp->wpp_name);
-	
 	printf("\n");
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
@@ -363,9 +352,13 @@ wdc_pcmcia_attach(parent, self, aux)
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
 
-	sc->sc_flags |= WDC_PCMCIA_ATTACH;
+	/*
+	 * Disable the pcmcia function now; wdcattach() will enable
+	 * us again as it adds references to probe for children.
+	 */
+	pcmcia_function_disable(pa->pf);
+
 	wdcattach(&sc->wdc_channel);
-	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 }
 
 int
@@ -379,8 +372,7 @@ wdc_pcmcia_detach(self, flags)
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
 
-	if (sc->wdc_channel.ch_queue != NULL)
-		free(sc->wdc_channel.ch_queue, M_DEVBUF);
+	free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o window and i/o space. */
 	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
@@ -410,14 +402,11 @@ wdc_pcmcia_enable(arg, onoff)
 			return (EIO);
 		}
 
-		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
-			}
-			wdcreset(&sc->wdc_channel, VERBOSE);
+		if (pcmcia_function_enable(sc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			return (EIO);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);

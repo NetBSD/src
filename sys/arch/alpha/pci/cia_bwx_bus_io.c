@@ -1,4 +1,4 @@
-/* $NetBSD: cia_bwx_bus_io.c,v 1.2 1999/12/02 19:43:25 thorpej Exp $ */
+/* $NetBSD: cia_bwx_bus_io.c,v 1.1 1998/06/04 21:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.2 1999/12/02 19:43:25 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.1 1998/06/04 21:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,5 @@ __KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.2 1999/12/02 19:43:25 thorpej E
 #define	CHIP_IO_EXTENT(v)	(((struct cia_config *)(v))->cc_io_ex)
 
 #define	CHIP_IO_SYS_START(v)	CIA_EV56_BWIO
-
-/*
- * CIA core logic with BWX enabled appears on EV56 and PCA56.  We
- * require at least EV56 support for the assembler to emit BWX opcodes.
- */
-__asm(".arch ev56");
 
 #include <alpha/pci/pci_bwx_bus_io_chipdep.c>

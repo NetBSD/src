@@ -1,4 +1,4 @@
-/*	$NetBSD: tt.h,v 1.6 1999/10/04 23:31:30 lukem Exp $	*/
+/*	$NetBSD: tt.h,v 1.5 1998/10/14 00:58:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -157,9 +157,9 @@ void	ttpgoto __P((struct tt_str *, int, int, int));
 void	ttputs __P((char *));
 int	ttstrcmp __P((struct tt_str *, struct tt_str *));
 void	tttgoto __P((struct tt_str *, int, int));
-int	tttputc __P((int));
+void	tttputc __P((int));
 void	ttwrite __P((char *, int));
-int	ttxputc __P((int));
+void	ttxputc __P((int));
 
 #define tttputs(s, n)	tputs((s)->ts_str, (n), tttputc)
 #define ttxputs(s)	ttwrite((s)->ts_str, (s)->ts_n)

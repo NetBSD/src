@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.53 1999/12/13 15:17:21 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.52 1999/09/13 12:15:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,9 +68,14 @@
 
 #include "ipkdb.h"
 
+/* XXX MAPPED_ADDR_ENABLED should be revisited */
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#ifdef MAPPED_ADDR_ENABLED
+#include <sys/domain.h>
+#endif /* MAPPED_ADDR_ENABLED */
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -78,7 +83,6 @@
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/domain.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -95,21 +99,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netinet/icmp6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/in6_pcb.h>
-#include <netinet6/udp6_var.h>
-#endif
-
-#ifdef PULLDOWN_TEST
-#ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
-#include <netinet/ip6.h>
-#endif
-#endif
 
 #include <machine/stdarg.h>
 
@@ -129,18 +118,6 @@ int	udpcksum = 1;
 int	udpcksum = 0;		/* XXX */
 #endif
 
-static void udp4_sendup __P((struct mbuf *, int, struct sockaddr *,
-	struct socket *));
-static int udp4_realinput __P((struct sockaddr_in *, struct sockaddr_in *,
-	struct mbuf *, int));
-#ifdef INET6
-static void udp6_sendup __P((struct mbuf *, int, struct sockaddr *,
-	struct socket *));
-static	int in6_mcmatch __P((struct in6pcb *, struct in6_addr *,
-	struct ifnet *));
-static int udp6_realinput __P((int, struct sockaddr_in6 *,
-	struct sockaddr_in6 *, struct mbuf *, int));
-#endif
 static	void udp_notify __P((struct inpcb *, int));
 
 #ifndef UDBHASHSIZE
@@ -164,704 +141,6 @@ udp_input(m, va_alist)
 	va_dcl
 #endif
 {
-	va_list ap;
-	struct sockaddr_in src, dst;
-	struct ip *ip;
-	struct udphdr *uh;
-	int iphlen, proto;
-	int len;
-	int n;
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
-
-	udpstat.udps_ipackets++;
-
-#ifndef PULLDOWN_TEST
-	/*
-	 * Strip IP options, if any; should skip this,
-	 * make available to user, and use on returned packets,
-	 * but we don't yet have a way to check the checksum
-	 * with options still present.
-	 */
-	if (iphlen > sizeof (struct ip)) {
-		ip_stripoptions(m, (struct mbuf *)0);
-		iphlen = sizeof(struct ip);
-	}
-#else
-	/*
-	 * we may enable the above code if we save and pass IPv4 options
-	 * to the userland.
-	 */
-#endif
-
-	/*
-	 * Get IP and UDP header together in first mbuf.
-	 */
-	ip = mtod(m, struct ip *);
-#ifndef PULLDOWN_TEST
-	if (m->m_len < iphlen + sizeof(struct udphdr)) {
-		if ((m = m_pullup(m, iphlen + sizeof(struct udphdr))) == 0) {
-			udpstat.udps_hdrops++;
-			return;
-		}
-		ip = mtod(m, struct ip *);
-	}
-	uh = (struct udphdr *)((caddr_t)ip + iphlen);
-#else
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
-	if (uh == NULL) {
-		udpstat.udps_hdrops++;
-		return;
-	}
-#endif
-
-	/*
-	 * Make mbuf data length reflect UDP length.
-	 * If not enough data to reflect UDP length, drop.
-	 */
-	len = ntohs((u_int16_t)uh->uh_ulen);
-	if (ip->ip_len != iphlen + len) {
-		if (ip->ip_len < iphlen + len) {
-			udpstat.udps_badlen++;
-			goto bad;
-		}
-		m_adj(m, iphlen + len - ip->ip_len);
-	}
-
-	/*
-	 * Checksum extended UDP header and data.
-	 */
-	if (uh->uh_sum) {
-#ifndef PULLDOWN_TEST
-		struct ip save_ip;
-
-		/*
-		 * Save a copy of the IP header in case we want restore it
-		 * for sending an ICMP error message in response.
-		 */
-		save_ip = *ip;
-
-		bzero(((struct ipovly *)ip)->ih_x1,
-		    sizeof ((struct ipovly *)ip)->ih_x1);
-		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		if (in_cksum(m, len + sizeof (struct ip)) != 0) {
-			udpstat.udps_badsum++;
-			m_freem(m);
-			return;
-		}
-
-		*ip = save_ip;
-#else
-		if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0) {
-			udpstat.udps_badsum++;
-			m_freem(m);
-			return;
-		}
-#endif
-	}
-
-	/* construct source and dst sockaddrs. */
-	bzero(&src, sizeof(src));
-	src.sin_family = AF_INET;
-	src.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_src, &src.sin_addr, sizeof(src.sin_addr));
-	src.sin_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_dst, &dst.sin_addr, sizeof(dst.sin_addr));
-	dst.sin_port = uh->uh_dport;
-
-	n = udp4_realinput(&src, &dst, m, iphlen);
-#ifdef INET6
-	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
-		struct sockaddr_in6 src6, dst6;
-
-		bzero(&src6, sizeof(src6));
-		src6.sin6_family = AF_INET6;
-		src6.sin6_len = sizeof(struct sockaddr_in6);
-		src6.sin6_addr.s6_addr[10] = src6.sin6_addr.s6_addr[11] = 0xff;
-		bcopy(&ip->ip_src, &src6.sin6_addr.s6_addr[12],
-			sizeof(ip->ip_src));
-		src6.sin6_port = uh->uh_sport;
-		bzero(&dst6, sizeof(dst6));
-		dst6.sin6_family = AF_INET6;
-		dst6.sin6_len = sizeof(struct sockaddr_in6);
-		dst6.sin6_addr.s6_addr[10] = dst6.sin6_addr.s6_addr[11] = 0xff;
-		bcopy(&ip->ip_dst, &dst6.sin6_addr.s6_addr[12],
-			sizeof(ip->ip_dst));
-		dst6.sin6_port = uh->uh_dport;
-
-		n += udp6_realinput(AF_INET, &src6, &dst6, m, iphlen);
-	}
-#endif
-
-	if (n == 0) {
-		udpstat.udps_noport++;
-		if (m->m_flags & (M_BCAST | M_MCAST)) {
-			udpstat.udps_noportbcast++;
-			goto bad;
-		}
-#if NIPKDB > 0
-		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
-				m, iphlen + sizeof(struct udphdr),
-				m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
-			/*
-			 * It was a debugger connect packet,
-			 * just drop it now
-			 */
-			goto bad;
-		}
-#endif
-		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
-		m = NULL;
-	}
-
-bad:
-	if (m)
-		m_freem(m);
-}
-
-#ifdef INET6
-int
-udp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
-{
-	struct mbuf *m = *mp;
-	int off = *offp;
-	struct sockaddr_in6 src, dst;
-	struct ip6_hdr *ip6;
-	struct udphdr *uh;
-	u_int32_t plen, ulen;
-
-#if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* send icmp6 host unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-	}
-#endif
-
-	udp6stat.udp6s_ipackets++;
-
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct udphdr), IPPROTO_DONE);
-#endif
-
-	ip6 = mtod(m, struct ip6_hdr *);
-	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
-	plen = m->m_pkthdr.len - off;
-#ifndef PULLDOWN_TEST
-	uh = (struct udphdr *)((caddr_t)ip6 + off);
-#else
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udphdr));
-	if (uh == NULL) {
-		ip6stat.ip6s_tooshort++;
-		return IPPROTO_DONE;
-	}
-#endif
-	ulen = ntohs((u_short)uh->uh_ulen);
-	if (ulen == 0 && plen > 0xffff)
-		ulen = plen;
-
-	if (plen != ulen) {
-		udp6stat.udp6s_badlen++;
-		goto bad;
-	}
-
-	/*
-	 * Checksum extended UDP header and data.
-	 */
-	if (uh->uh_sum == 0)
-		udp6stat.udp6s_nosum++;
-	else if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
-		udp6stat.udp6s_badsum++;
-		goto bad;
-	}
-
-	/*
-	 * Construct source and dst sockaddrs.
-	 * Note that ifindex (s6_addr16[1]) is already filled.
-	 */
-	bzero(&src, sizeof(src));
-	src.sin6_family = AF_INET6;
-	src.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &src.sin6_addr, sizeof(src.sin6_addr));
-	if (IN6_IS_SCOPE_LINKLOCAL(&src.sin6_addr))
-		src.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&src.sin6_addr))
-			src.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			src.sin6_scope_id = 0;
-	}
-	src.sin6_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &dst.sin6_addr, sizeof(dst.sin6_addr));
-	if (IN6_IS_SCOPE_LINKLOCAL(&dst.sin6_addr))
-		dst.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&dst.sin6_addr))
-			dst.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			dst.sin6_scope_id = 0;
-	}
-	dst.sin6_port = uh->uh_dport;
-
-	if (udp6_realinput(AF_INET6, &src, &dst, m, off) == 0) {
-		udp6stat.udp6s_noport++;
-		if (m->m_flags & M_MCAST) {
-			udp6stat.udp6s_noportmcast++;
-			goto bad;
-		}
-		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT, 0);
-		m = NULL;
-	}
-
-bad:
-	if (m)
-		m_freem(m);
-	return IPPROTO_DONE;
-}
-#endif
-
-static void
-udp4_sendup(m, off, src, so)
-	struct mbuf *m;
-	int off;	/* offset of data portion */
-	struct sockaddr *src;
-	struct socket *so;
-{
-	struct mbuf *opts = NULL;
-	struct mbuf *n;
-	struct inpcb *inp = NULL;
-#ifdef INET6
-	struct in6pcb *in6p = NULL;
-#endif
-
-	if (!so)
-		return;
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		inp = sotoinpcb(so);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		in6p = sotoin6pcb(so);
-		break;
-#endif
-	default:
-		return;
-	}
-
-#ifdef IPSEC
-	/* check AH/ESP integrity. */
-	if (so != NULL && ipsec4_in_reject_so(m, so)) {
-		ipsecstat.in_polvio++;
-		return;
-	}
-#endif /*IPSEC*/
-
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-		if (inp && (inp->inp_flags & INP_CONTROLOPTS
-			 || so->so_options & SO_TIMESTAMP)) {
-			struct ip *ip = mtod(n, struct ip *);
-			ip_savecontrol(inp, &opts, ip, n);
-		}
-
-		m_adj(n, off);
-		if (sbappendaddr(&so->so_rcv, src, n,
-				opts) == 0) {
-			m_freem(n);
-			if (opts)
-				m_freem(opts);
-		} else
-			sorwakeup(so);
-	}
-}
-
-#ifdef INET6
-static void
-udp6_sendup(m, off, src, so)
-	struct mbuf *m;
-	int off;	/* offset of data portion */
-	struct sockaddr *src;
-	struct socket *so;
-{
-	struct mbuf *opts = NULL;
-	struct mbuf *n;
-	struct in6pcb *in6p = NULL;
-
-	if (!so)
-		return;
-	if (so->so_proto->pr_domain->dom_family != AF_INET6)
-		return;
-	in6p = sotoin6pcb(so);
-
-#ifdef IPSEC
-	/* check AH/ESP integrity. */
-	if (so != NULL && ipsec6_in_reject_so(m, so)) {
-		ipsec6stat.in_polvio++;
-		return;
-	}
-#endif /*IPSEC*/
-
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
-			  || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
-			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
-			ip6_savecontrol(in6p, &opts, ip6, n);
-		}
-
-		m_adj(n, off);
-		if (sbappendaddr(&so->so_rcv, src, n, opts) == 0) {
-			m_freem(n);
-			if (opts)
-				m_freem(opts);
-			udp6stat.udp6s_fullsock++;
-		} else
-			sorwakeup(so);
-	}
-}
-#endif
-
-static int
-udp4_realinput(src, dst, m, off)
-	struct sockaddr_in *src;
-	struct sockaddr_in *dst;
-	struct mbuf *m;
-	int off;	/* offset of udphdr */
-{
-	u_int16_t *sport, *dport;
-	int rcvcnt;
-	struct in_addr *src4, *dst4;
-	struct inpcb *inp;
-
-	rcvcnt = 0;
-	off += sizeof(struct udphdr);	/* now, offset of payload */
-
-	if (src->sin_family != AF_INET || dst->sin_family != AF_INET)
-		goto bad;
-
-	src4 = &src->sin_addr;
-	sport = &src->sin_port;
-	dst4 = &dst->sin_addr;
-	dport = &dst->sin_port;
-
-	if (IN_MULTICAST(src4->s_addr) ||
-	    in_broadcast(*dst4, m->m_pkthdr.rcvif)) {
-		struct inpcb *last;
-		/*
-		 * Deliver a multicast or broadcast datagram to *all* sockets
-		 * for which the local and remote addresses and ports match
-		 * those of the incoming datagram.  This allows more than
-		 * one process to receive multi/broadcasts on the same port.
-		 * (This really ought to be done for unicast datagrams as
-		 * well, but that would cause problems with existing
-		 * applications that open both address-specific sockets and
-		 * a wildcard socket listening to the same port -- they would
-		 * end up receiving duplicates of every unicast datagram.
-		 * Those applications open the multiple sockets to overcome an
-		 * inadequacy of the UDP socket interface, but for backwards
-		 * compatibility we avoid the problem here rather than
-		 * fixing the interface.  Maybe 4.5BSD will remedy this?)
-		 */
-
-		/*
-		 * KAME note: usually we drop udpiphdr from mbuf here.
-		 * we need udpiphdr for iPsec processing so we do that later.
-		 */
-		/*
-		 * Locate pcb(s) for datagram.
-		 */
-		for (inp = udbtable.inpt_queue.cqh_first;
-		    inp != (struct inpcb *)&udbtable.inpt_queue;
-		    inp = inp->inp_queue.cqe_next) {
-			if (inp->inp_lport != *dport)
-				continue;
-			if (!in_nullhost(inp->inp_laddr)) {
-				if (!in_hosteq(inp->inp_laddr, *dst4))
-					continue;
-			}
-			if (!in_nullhost(inp->inp_faddr)) {
-				if (!in_hosteq(inp->inp_faddr, *src4) ||
-				    inp->inp_fport != *sport)
-					continue;
-			}
-
-			last = inp;
-			udp4_sendup(m, off, (struct sockaddr *)src,
-				inp->inp_socket);
-			rcvcnt++;
-
-			/*
-			 * Don't look for additional matches if this one does
-			 * not have either the SO_REUSEPORT or SO_REUSEADDR
-			 * socket options set.  This heuristic avoids searching
-			 * through all pcbs in the common case of a non-shared
-			 * port.  It assumes that an application will never
-			 * clear these options after setting them.
-			 */
-			if ((inp->inp_socket->so_options &
-			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
-				break;
-		}
-
-#if 0
-		if (last == NULL) {
-			/*
-			 * No matching pcb found; discard datagram.
-			 * (No need to send an ICMP Port Unreachable
-			 * for a broadcast or multicast datgram.)
-			 */
-			udpstat.udps_noport++;
-			udpstat.udps_noportbcast++;
-			goto bad;
-		}
-#endif
-	} else {
-		/*
-		 * Locate pcb for datagram.
-		 */
-		inp = in_pcblookup_connect(&udbtable, *src4, *sport, *dst4, *dport);
-		if (inp == 0) {
-			++udpstat.udps_pcbhashmiss;
-			inp = in_pcblookup_bind(&udbtable, *dst4, *dport);
-			if (inp == 0) {
-#if 0
-				struct mbuf *n;
-
-				udpstat.udps_noport++;
-				if (m->m_flags & (M_BCAST | M_MCAST)) {
-					udpstat.udps_noportbcast++;
-					goto bad;
-				}
-#if NIPKDB > 0
-				if (checkipkdb(src4, *sport, *dport, m, off,
-					       m->m_pkthdr.len - off)) {
-					/*
-					 * It was a debugger connect packet,
-					 * just drop it now
-					 */
-					goto bad;
-				}
-#endif
-				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-					icmp_error(n, ICMP_UNREACH,
-						ICMP_UNREACH_PORT, 0, 0);
-				}
-#endif
-				return rcvcnt;
-			}
-		}
-
-		udp4_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
-		rcvcnt++;
-	}
-
-bad:
-	return rcvcnt;
-}
-
-#ifdef INET6
-static int
-in6_mcmatch(in6p, ia6, ifp)
-	struct in6pcb *in6p;
-	register struct in6_addr *ia6;
-	struct ifnet *ifp;
-{
-	struct ip6_moptions *im6o = in6p->in6p_moptions;
-	struct in6_multi_mship *imm;
-
-	if (im6o == NULL)
-		return 0;
-
-	for (imm = im6o->im6o_memberships.lh_first; imm != NULL;
-	     imm = imm->i6mm_chain.le_next) {
-		if ((ifp == NULL ||
-		     imm->i6mm_maddr->in6m_ifp == ifp) &&
-		    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
-				       ia6))
-			return 1;
-	}
-	return 0;
-}
-
-static int
-udp6_realinput(af, src, dst, m, off)
-	int af;		/* af on packet */
-	struct sockaddr_in6 *src;
-	struct sockaddr_in6 *dst;
-	struct mbuf *m;
-	int off;	/* offset of udphdr */
-{
-	u_int16_t *sport, *dport;
-	int rcvcnt;
-	struct in6_addr *src6, *dst6;
-	struct in_addr *src4;
-	struct in6pcb *in6p;
-
-	rcvcnt = 0;
-	off += sizeof(struct udphdr);	/* now, offset of payload */
-
-	if (af != AF_INET && af != AF_INET6)
-		goto bad;
-	if (src->sin6_family != AF_INET6 || dst->sin6_family != AF_INET6)
-		goto bad;
-
-	src6 = &src->sin6_addr;
-	sport = &src->sin6_port;
-	dst6 = &dst->sin6_addr;
-	dport = &dst->sin6_port;
-	src4 = (struct in_addr *)&src->sin6_addr.s6_addr32[12];
-
-	if (IN6_IS_ADDR_MULTICAST(dst6)
-	 || (af == AF_INET && IN_MULTICAST(src4->s_addr))) {
-		struct in6pcb *last;
-		/*
-		 * Deliver a multicast or broadcast datagram to *all* sockets
-		 * for which the local and remote addresses and ports match
-		 * those of the incoming datagram.  This allows more than
-		 * one process to receive multi/broadcasts on the same port.
-		 * (This really ought to be done for unicast datagrams as
-		 * well, but that would cause problems with existing
-		 * applications that open both address-specific sockets and
-		 * a wildcard socket listening to the same port -- they would
-		 * end up receiving duplicates of every unicast datagram.
-		 * Those applications open the multiple sockets to overcome an
-		 * inadequacy of the UDP socket interface, but for backwards
-		 * compatibility we avoid the problem here rather than
-		 * fixing the interface.  Maybe 4.5BSD will remedy this?)
-		 */
-
-		/*
-		 * KAME note: usually we drop udpiphdr from mbuf here.
-		 * we need udpiphdr for iPsec processing so we do that later.
-		 */
-		/*
-		 * Locate pcb(s) for datagram.
-		 */
-		for (in6p = udb6.in6p_next; in6p != &udb6;
-		     in6p = in6p->in6p_next) {
-			if (in6p->in6p_lport != *dport)
-				continue;
-			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, dst6)
-				 && !in6_mcmatch(in6p, dst6, m->m_pkthdr.rcvif))
-					continue;
-			}
-			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, src6)
-				 || in6p->in6p_fport != *sport)
-					continue;
-			}
-
-			last = in6p;
-			udp6_sendup(m, off, (struct sockaddr *)src,
-				in6p->in6p_socket);
-			rcvcnt++;
-
-			/*
-			 * Don't look for additional matches if this one does
-			 * not have either the SO_REUSEPORT or SO_REUSEADDR
-			 * socket options set.  This heuristic avoids searching
-			 * through all pcbs in the common case of a non-shared
-			 * port.  It assumes that an application will never
-			 * clear these options after setting them.
-			 */
-			if ((in6p->in6p_socket->so_options &
-			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
-				break;
-		}
-
-#if 0
-		if (last == NULL) {
-			/*
-			 * No matching pcb found; discard datagram.
-			 * (No need to send an ICMP Port Unreachable
-			 * for a broadcast or multicast datgram.)
-			 */
-			switch (af) {
-			case AF_INET:
-				udpstat.udps_noport++;
-				udpstat.udps_noportbcast++;
-				break;
-			case AF_INET6:
-				udp6stat.udp6s_noport++;
-				udp6stat.udp6s_noportmcast++;
-				break;
-			}
-			goto bad;
-		}
-#endif
-	} else {
-		/*
-		 * Locate pcb for datagram.
-		 */
-		in6p = in6_pcblookup_connect(&udb6, src6, *sport,
-			dst6, *dport, 0);
-		if (in6p == 0) {
-			++udpstat.udps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&udb6, dst6, *dport, 0);
-			if (in6p == 0) {
-#if 0
-				struct mbuf *n;
-				n = m_copy(m, 0, M_COPYALL);
-				switch (af) {
-				case AF_INET:
-					udpstat.udps_noport++;
-					if (m->m_flags & (M_BCAST | M_MCAST)) {
-						udpstat.udps_noportbcast++;
-						goto bad;
-					}
-					if (n != NULL)
-						icmp_error(n, ICMP_UNREACH,
-						    ICMP_UNREACH_PORT, 0, 0);
-					break;
-				case AF_INET6:
-					udp6stat.udp6s_noport++;
-					if (m->m_flags & M_MCAST) {
-						udp6stat.udp6s_noportmcast++;
-						goto bad;
-					}
-					if (n != NULL)
-						icmp6_error(n, ICMP6_DST_UNREACH,
-						    ICMP6_DST_UNREACH_NOPORT, 0);
-					break;
-				}
-#endif
-
-				return rcvcnt;
-			}
-		}
-
-		udp6_sendup(m, off, (struct sockaddr *)src, in6p->in6p_socket);
-		rcvcnt++;
-	}
-
-bad:
-	return rcvcnt;
-}
-#endif
-
-#if 0
-void
-#if __STDC__
-udp_input(struct mbuf *m, ...)
-#else
-udp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
-{
 	int proto;
 	register struct ip *ip;
 	register struct udphdr *uh;
@@ -872,6 +151,9 @@ udp_input(m, va_alist)
 	int iphlen;
 	va_list ap;
 	struct sockaddr_in udpsrc;
+#ifdef MAPPED_ADDR_ENABLED
+	struct sockaddr_in6 mapped;
+#endif
 	struct sockaddr *sa;
 
 	va_start(ap, m);
@@ -1009,6 +291,14 @@ udp_input(m, va_alist)
 					}
 					m_adj(n, iphlen);
 					sa = (struct sockaddr *)&udpsrc;
+#ifdef MAPPED_ADDR_ENABLED
+					if (last->inp_socket->so_proto->
+					    pr_domain->dom_family == AF_INET6) {
+						in6_sin_2_v4mapsin6(&udpsrc,
+								    &mapped);
+						sa = (struct sockaddr *)&mapped;
+					}
+#endif /* MAPPED_ADDR_ENABLED */
 					if (sbappendaddr(
 					    &last->inp_socket->so_rcv,
 					    sa, n, opts) == 0) {
@@ -1058,6 +348,13 @@ udp_input(m, va_alist)
 		m->m_pkthdr.len -= iphlen;
 		m->m_data += iphlen;
 		sa = (struct sockaddr *)&udpsrc;
+#ifdef MAPPED_ADDR_ENABLED
+		if (last->inp_socket->so_proto->pr_domain->dom_family ==
+		    AF_INET6) {
+			in6_sin_2_v4mapsin6(&udpsrc, &mapped);
+			sa = (struct sockaddr *)&mapped;
+		}
+#endif /* MAPPED_ADDR_ENABLED */
 		if (sbappendaddr(&last->inp_socket->so_rcv, sa, m, opts) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
@@ -1112,6 +409,12 @@ udp_input(m, va_alist)
 	m->m_pkthdr.len -= iphlen;
 	m->m_data += iphlen;
 	sa = (struct sockaddr *)&udpsrc;
+#ifdef MAPPED_ADDR_ENABLED
+	if (inp->inp_socket->so_proto->pr_domain->dom_family == AF_INET6) {
+		in6_sin_2_v4mapsin6(&udpsrc, &mapped);
+		sa = (struct sockaddr *)&mapped;
+	}
+#endif /* MAPPED_ADDR_ENABLED */
 	if (sbappendaddr(&inp->inp_socket->so_rcv, sa, m, opts) == 0) {
 		udpstat.udps_fullsock++;
 		goto bad;
@@ -1123,7 +426,6 @@ bad:
 	if (opts)
 		m_freem(opts);
 }
-#endif
 
 /*
  * Notify a udp user of an asynchronous error;
@@ -1152,8 +454,8 @@ udp_ctlinput(cmd, sa, v)
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 	int errno;
 
-	if (sa->sa_family != AF_INET
-	 || sa->sa_len != sizeof(struct sockaddr_in))
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
 		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
@@ -1168,8 +470,6 @@ udp_ctlinput(cmd, sa, v)
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, satosin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
-
-		/* XXX mapped address case */
 	} else
 		in_pcbnotifyall(&udbtable, satosin(sa)->sin_addr, errno,
 		    notify);
@@ -1307,11 +607,9 @@ udp_usrreq(so, req, m, nam, control, p)
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_ttl = ip_defttl;
 #ifdef IPSEC
-		error = ipsec_init_policy(&inp->inp_sp);
-		if (error != 0) {
+		inp = (struct inpcb *)so->so_pcb;
+		if ((error = ipsec_init_policy(&inp->inp_sp)) != 0)
 			in_pcbdetach(inp);
-			break;
-		}
 #endif /*IPSEC*/
 		break;
 

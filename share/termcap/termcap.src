@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.51 1999/10/11 10:05:47 pk Exp $
+#	$NetBSD: termcap.src,v 1.48 1999/09/19 09:35:44 tron Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -2085,13 +2085,10 @@ sun-il|Sun Microsystems console with working insert-line:\
 	:nd=\E[C:r2=\E[s:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m:\
 	:se=\E[m:sf=^J:so=\E[7m:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
-# On some versions of CGSIX framebuffer firmware, :al:/:AL: flake out on
-# the last line. Unfortunately, without them the terminal has no way to scroll.
-sun-cgsix|Sun cgsix framebuffer console:\
+# On a SparcStation 5, :al:/:AL: flake out on the last line.
+# Unfortunately, without them the terminal has no way to scroll.
+sun-ss5|Sun SparcStation 5 console:\
 	:AL@:al@:tc=sun-il:
-# Backwards compatibility: `sun-cgsix' used to be called `sun-ss5'
-sun-ss5:\
-	:tc=sun-cgsix:
 # If you are using an SS5, change the sun definition to use sun-ss5.
 sun|sun1|sun2|Sun Microsystems Inc. workstation console:\
 	:tc=sun-il:

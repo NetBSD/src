@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.h,v 1.4 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: ims332.h,v 1.3 1999/04/24 08:01:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -169,8 +169,8 @@
 
 int ims332init (struct fbinfo *);
 void ims332InitColorMap (struct fbinfo *);
-int ims332LoadColorMap (struct fbinfo *, const u_char *, int, int);
-int ims332GetColorMap (struct fbinfo *, u_char *, int, int);
+int ims332LoadColorMap (struct fbinfo *, caddr_t, int, int);
+int ims332GetColorMap (struct fbinfo *, caddr_t, int, int);
 int ims332_video_off (struct fbinfo *);
 int ims332_video_on (struct fbinfo *);
 void ims332PosCursor (struct fbinfo *, int, int);

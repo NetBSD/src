@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.53 1999/09/21 03:08:18 enami Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.53.8.1 1999/12/21 23:20:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -50,7 +50,7 @@
 /*
  * The absolute maximum number of disk partitions allowed.
  * This is the maximum value of MAXPARTITIONS for which 'struct disklabel'
- * is <= DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
+ * is <= 512 bytes long.  If MAXPARTITIONS is greater than this, beware.
  */
 #define	MAXMAXPARTITIONS	22
 #if MAXPARTITIONS > MAXMAXPARTITIONS
@@ -354,9 +354,9 @@ u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
 char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+	    struct cpu_disklabel *, int bshift));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+	    struct cpu_disklabel *, int bshift));
 int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #endif
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-#	$NetBSD: ZSCONS,v 1.10 1999/11/18 14:09:41 minoura Exp $
+#	$NetBSD: ZSCONS,v 1.9 1999/08/05 15:04:38 minoura Exp $
 
 #
 #	ZSCONS -- like GENERIC, but use zs console.
@@ -25,7 +25,7 @@ options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
-#options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
+options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
 
@@ -152,7 +152,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

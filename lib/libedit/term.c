@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.19 1999/10/24 04:04:13 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.19 1999/10/24 04:04:13 lukem Exp $");
+__RCSID("$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -319,7 +319,7 @@ term_init(el)
     el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char*));
     (void) memset(el->el_term.t_str, 0, T_str * sizeof(char*));
     el->el_term.t_val = (int *)   el_malloc(T_val * sizeof(int));
-    (void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
+    (void) memset(el->el_term.t_val, 0, T_val * sizeof(char*));
     term_outfile = el->el_outfile;
     (void) term_set(el, NULL);
     term_init_arrow(el);
@@ -1142,11 +1142,11 @@ term_bind_arrow(el)
 /* term__putc():
  *	Add a character
  */
-protected int
+protected void
 term__putc(c)
     int c;
 {
-    return fputc(c, term_outfile);
+    (void) fputc(c, term_outfile);
 } /* end term__putc */
 
 

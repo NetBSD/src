@@ -1,0 +1,88 @@
+Changes towards the removal of DEV_BSIZE:
+
+Started with diffs from Leo which were a recent version of Koji's third
+solution.
+
+Deleted the definition of DEV_BSIZE from i386/include/param.h, and added
+DEF_BSIZE, which is the default for things not using physical blocks.
+
+Modified btodb and dbtob macros to acept a shift and a size. If the shift is
+0, then the macro uses multiplication & division. For non-zero shift values,
+the macros use bit shifting.
+
+Added d_bsize routines to block devices, which will return shift and size
+values for a given partition on a unit. Added sdbsize routine which
+interrogates current drive parameters. wdbsize assumes DEF_BSIZE disks.
+
+checkalias will call a new routines, getbdevshift(), to get the shift and
+size values for new device nodes. They will be stored in si_bshift & si_bsize,
+new fields in struct specdev.
+
+Added mnt_bshift and mnt_bsize values to struct mount. For filesystems
+on block nodes, they are initialized to the values from the mounted-on
+device. Block numbers in the buffer cache are cataloged in these units.
+
+Added b_bshift and b_bsize values to struct buf, to indicate the units for
+block numbers in this struct buf.
+
+Noted that ufs (and ffs and lfs) maintain block allocation information
+in terms of DEF_BSIZE blocks. :-(
+
+99/9/29 changed ufs & friends to use UFS_BSHIFT and UFS_BSIZE for quotas &
+block allocation counts. Note: unsure of correctness of code, especially
+lfs, if UFS_BSIZE != S_BLKSIZE, the block size used in stat reporting.
+
+bgetvp() will initialize the b_bshift and b_bsize fields when the vnode is
+assosciated with the buffer. If the node is a VCHR or a VBLK, si_bshift &
+si_bsize will be used, otherwise mnt_bs{ift,ize} will be.
+
+geteblk() now also takes a dev_t. The returned buffer's b_bs{hift,ize} will
+be initialized from the corresponding block device.
+
+99/9/30 Investigated all uses of DIOCGPART. Most were in mount operations,
+and so I made the mount call just look in the mounted-on device's si_ fields.
+
+Added cdev entrypoint to obtain shift and size values for a device. Because
+I used the same name (bshift) for both, devices which have both character
+and block interfaces will have just one entry point, which will be called for
+both.
+
+Discovered that a number of files depend on DIRBLKSIZE, which is defined in
+ufs/ufs/dir.h - even kern/vfs_getcwd.c  and nfs/nfs_serv.c!
+
+Bashed on wd, cd, and i386/fd drivers. They now do a better job of supporting
+variable-sized blocks.
+
+99/12/20 finsihed some more clean up, and created a branch.
+
+As per discussions on tech-kern, the device entry points were removed, and now
+an ioctl call, DIOCGBSHIFT, will return the shift value for the device.
+As such, si_bshift is only valid after a device has been opened.
+
+spec_open() will initialize si_bshift at the end of a successful device open.
+
+si_bsize has been dropped.
+
+An i386 kernel with these changes runs well.
+
+ccd has been updated to require all components be of the same size. raidframe
+needs work.
+
+vnd is still being worked on.
+
+To do: userland, stand, and other ports.
+
+Also, the non-2**n block size support has been defopt'd.
+
+The canonical way for a dirver to determine if it's in a 2**n-supported or
+not environment when calculating a shift from a size is something like:
+
+	if (powerof2(new_size)) {
+		shift = intlog2(new_size);
+	} else if (blocksize(-1) == 1) {
+		shift = -new_size;
+	} else {
+		deal with the error
+	}
+
+Note: LKM's will always be compiled with non-2**n support by default.

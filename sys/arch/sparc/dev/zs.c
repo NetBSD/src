@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.71 1999/11/21 15:23:02 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.69 1999/03/27 01:21:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -292,8 +292,7 @@ zs_attach_obio(parent, self, aux)
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 		zsc->zsc_bustag = sa->sa_bustag;
 		zsc->zsc_dmatag = sa->sa_dmatag;
-		if (sa->sa_nintr != 0)
-			zs_attach(zsc, sa->sa_pri);
+		zs_attach(zsc, sa->sa_pri);
 	} else {
 		struct obio4_attach_args *oba = &uoba->uoba_oba4;
 		zsc->zsc_bustag = oba->oba_bustag;
@@ -907,19 +906,9 @@ get_serial_promdev(io)
 	 * At this point we assume the device path is in the form
 	 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb, etc.
 	 */
-	if (cp[0] != '\0' && cp[1] != '\0') {
-		while (*cp != '\0')
-			cp++;
-		cp -= 2;
-	} else {
-		/*
-		 * If don't have at least a 2 character string at cp, then
-		 *  we default to using using the string ":a" for ttya.
-		 */
-		cp[0] = ':';
-		cp[1] = 'a';
-		cp[2] = '\0';
-	}
+	while (*cp != 0)
+		cp++;
+	cp -= 2;
 
 	if (cp >= buffer) {
 		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */

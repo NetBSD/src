@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.h,v 1.5 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: bt459.h,v 1.4 1999/04/24 08:01:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -154,8 +154,8 @@ void bt459RestoreCursorColor (struct fbinfo *);
 void bt459CursorColor (struct fbinfo *, unsigned int []);
 void bt459PosCursor (struct fbinfo *, int, int);
 void bt459InitColorMap (struct fbinfo *);
-int bt459LoadColorMap (struct fbinfo *, const u_char *, int, int);
-int bt459GetColorMap (struct fbinfo *, u_char *, int, int);
+int bt459LoadColorMap (struct fbinfo *, caddr_t, int, int);
+int bt459GetColorMap (struct fbinfo *, caddr_t, int, int);
 void bt459LoadCursor (struct fbinfo *, u_short *);
 int bt459_video_on (struct fbinfo *);
 int bt459_video_off (struct fbinfo *);

@@ -1,11 +1,10 @@
-# $NetBSD: obsolete.mi,v 1.7 1999/12/04 10:32:18 veego Exp $
+# $NetBSD: obsolete.mi,v 1.4 1999/07/09 11:55:33 fvdl Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
 /usr/include/bfd
 /usr/include/dev/ic/isp_netbsd.h
-/usr/include/dev/ic/opl3sa3.h
 /usr/include/dev/isa/ahareg.h
 /usr/include/dev/isa/btreg.h
 /usr/include/dev/isa/comreg.h
@@ -16,7 +15,6 @@
 /usr/include/dev/isa/if_ieatt.h
 /usr/include/dev/isa/if_iee16.h
 /usr/include/dev/isa/lptreg.h
-/usr/include/dev/isa/pckbcvar.h
 /usr/include/dev/isa/wdlink.h
 /usr/include/dev/isa/wdreg.h
 /usr/include/dev/mii/generic_phy.h
@@ -312,19 +310,13 @@
 /usr/share/man/cat1/lexdoc.0
 /usr/share/man/cat2/getdirentries.0
 /usr/share/man/cat2/swapon.0
-/usr/share/man/cat3/getpw.0
 /usr/share/man/cat3/regsterrpc.0
 /usr/share/man/cat3/setgrfile.0
 /usr/share/man/cat3/setpwfile.0
 /usr/share/man/cat3/setregid.0
 /usr/share/man/cat3/setreuid.0
-/usr/share/man/cat3/vlimit.0
-/usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
-/usr/share/man/man3/getpw.3
 /usr/share/man/man3/regsterrpc.3
-/usr/share/man/man3/vlimit.3
-/usr/share/man/man3/vtimes.3
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
 /usr/share/mk/bsd.port.mk

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.21 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.21.8.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -277,7 +277,7 @@ ext2fs_getattr(v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob((u_quad_t)ip->i_e2fs_nblock);
+	vap->va_bytes = dbtob((u_quad_t)ip->i_e2fs_nblock, UFS_BSHIFT);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);

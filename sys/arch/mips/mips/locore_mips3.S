@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.13 1999/11/30 11:53:24 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.10 1999/09/25 00:00:39 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -138,22 +138,13 @@
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
  *
- * NOTE:  This relies on a non-standard use of the XContext register.  The
- * upper 32 bits of the XContext register is loaded with the 32-bit address
- * of the user PT segment table.  This eliminatees the need to load the
- * address of the segment table from memory on each miss.
- * Also, the BadVAddr register contains the virtual address that caused the
- * TLBmiss - the 32-bit address is signed extended to 64 bits in the BadVAddr
- * register, so the upper 32 bits will be the same as bit 31 of the virtual
- * address and is used to check for a user or kernel address.
- *
  *----------------------------------------------------------------------------
  */
 VECTOR(mips3_TLBMiss, unknown)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
-	bltz	k0, 4f			# Kernel address (KSEG) if bit 31 set
+	bltz	k0, 4f
 	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
 	andi	k0, k0, 0x7fc		# index of segment table
 	dsra	k1, k1, 32		# Tricky -- The lower bit is
@@ -210,20 +201,11 @@ VECTOR_END(mips3_TLBMiss)
  *
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
- *
- * NOTE:  This also relies on a non-standard use of the XContext register.  The
- * upper 32 bits of the XContext register is loaded with the 32-bit address
- * of the user PT segment table.  This eliminatees the need to load the
- * address of the segment table from memory on each miss.  The 32-bit address
- * is shifted to form the 64-bit address, and will be a KSEG0 compatibility
- * mode address (tricky!).
- * Bit 63 in the BadVAddr register will be 0 for a user address, 1 for
- * a kernel address.
  */
 VECTOR(mips3_XTLBMiss, unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
-	bltz	k0, 4f			# Kernel address if bit 63 set.
+	bltz	k0, 4f
 	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
 	andi	k0, k0, 0x7fc		# index of segment table
 	dsra	k1, k1, 32		# Tricky -- The lower bit is
@@ -1278,8 +1260,8 @@ END(mips3_GetWIRED)
 LEAF(mips3_TLBFlush)
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	li	v0, MIPS_KSEG0_START		# invalid address
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
+	li	v0, MIPS_KSEG0_START		# invalid address
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
 
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
@@ -1923,7 +1905,7 @@ END(mips3_HitFlushDCache)
  *
  * mips3_InvalidateDCache --
  *
- *	void mips3_InvalidateDCache(addr, len)
+ *	void mips3_FlushDCache(addr, len)
  *		vaddr_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.

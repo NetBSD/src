@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.6 1999/12/15 22:07:35 abs Exp $
+.\"     $NetBSD: wi.4,v 1.2 1999/08/09 18:23:44 bouyer Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.6 1999/12/15 22:07:35 abs Exp $
+.\"	$Id: wi.4,v 1.2 1999/08/09 18:23:44 bouyer Exp $
 .\"
 .Dd April 21, 1999
 .Dt WI 4 
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm wi
 .Nd
-Lucent Technologies WaveLAN/IEEE 802.11 PCMCIA wireless network driver
+Lucent Technologies WaveLAN/IEEE 802.11 PCMCIA driver
 .Sh SYNOPSIS
 .Cd "wi*     at pcmcia? function ?"
 .Sh DESCRIPTION
@@ -69,7 +69,7 @@ driver configures the WaveLAN card for ad-hoc operation. In this mode,
 stations can communicate among each other without the aid of an access
 point. To join a service set, the driver must be set for BSS mode using
 the
-.Xr wiconfig 8
+.Xr wicontrol 8
 utility.
 .Pp
 For more information on configuring this device, see
@@ -82,7 +82,7 @@ issued.
 .It "wi%d: failed to allocate %d bytes on NIC"
 The driver was unable to allocate memory for transmit frames in the
 NIC's on-board RAM.
-.It "wi%d: device timeout"
+.It "wd%d: device timeout"
 The WaveLAN failed to generate an interrupt to acknowledge a transmit
 command. One reason can be that the board is mis-configured, see
 .Xr wiconfig 8 .
@@ -91,7 +91,7 @@ command. One reason can be that the board is mis-configured, see
 .Xr arp 4 ,
 .Xr netintro 4 , 
 .Xr ifconfig 8 ,
-.Xr wiconfig 8
+.Xr wicontrol 8
 .Rs
 .%T HCF Light programming specification
 .%O http://www.wavelan.com

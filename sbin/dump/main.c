@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1999/10/01 04:35:23 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 1999/10/01 04:35:23 perseant Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/03/23 14:22:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,10 @@ __RCSID("$NetBSD: main.c,v 1.25 1999/10/01 04:35:23 perseant Exp $");
 
 #include "dump.h"
 #include "pathnames.h"
+
+#ifndef SBOFF
+#define SBOFF (SBLOCK * DEV_BSIZE)
+#endif
 
 int	notify = 0;		/* notify operator flag */
 int	blockswritten = 0;	/* number of blocks written on current tape */
@@ -384,8 +388,15 @@ main(argc, argv)
 		exit(X_ABORT);
 	}
 	sync();
-
-	needswap = fs_read_sblock(sblock_buf);
+	sblock = (struct fs *)sblock_buf;
+	rawread(SBOFF, (char *) sblock, SBSIZE);
+	if (sblock->fs_magic != FS_MAGIC) {
+		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
+			ffs_sb_swap(sblock, sblock, 0);
+			needswap = 1;
+		} else
+			quit("bad sblock magic number\n");
+	}
 
 	spcl.c_level = iswap32(level - '0');
 	spcl.c_type = iswap32(TS_TAPE);
@@ -410,15 +421,29 @@ main(argc, argv)
 		msgtail("to %s\n", tape);
 	msg("Label: %s\n", labelstr);
 
-	ufsib = fs_parametrize();
-
+	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
 		quit("dev_bsize (%d) is not a power of 2", dev_bsize);
 	tp_bshift = ffs(TP_BSIZE) - 1;
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2", TP_BSIZE);
-	maxino = fs_maxino();
+#ifdef FS_44INODEFMT
+	if (sblock->fs_inodefmt >= FS_44INODEFMT) {
+		spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
+	} else {
+		/*
+		 * Determine parameters for older filesystems. From
+		 *	/sys/ufs/ffs/ffs_vfsops.c::ffs_oldfscompat()
+		 *
+		 * XXX: not sure if other variables (fs_npsect, fs_interleave,
+		 * fs_nrpos, fs_maxfilesize) need to be fudged too.
+		 */
+		sblock->fs_qbmask = ~sblock->fs_bmask;
+		sblock->fs_qfmask = ~sblock->fs_fmask;
+	}
+#endif
+	maxino = sblock->fs_ipg * sblock->fs_ncg;
 	mapsize = roundup(howmany(maxino, NBBY), TP_BSIZE);
 	usedinomap = (char *)calloc((unsigned) mapsize, sizeof(char));
 	dumpdirmap = (char *)calloc((unsigned) mapsize, sizeof(char));

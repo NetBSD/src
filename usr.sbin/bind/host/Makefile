@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/20 19:47:13 veego Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/26 20:12:44 kim Exp $
 
-.include "../Makefile.inc"
-.PATH:	${BIND_DIST_DIR}/bin/host \
-	${BIND_DIST_DIR}/man
+.PATH:	${.CURDIR}/../man
 
+WARNS=	0
 BINDIR=	/usr/bin
 PROG=	host
 SRCS=	${PROG}.c

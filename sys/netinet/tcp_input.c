@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.100 1999/12/15 06:28:43 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.96 1999/09/23 02:21:30 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -158,14 +158,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
-#endif
-
-#ifdef PULLDOWN_TEST
-#ifndef INET6
-/* always need ip6.h for IP6_EXTHDR_GET */
-#include <netinet/ip6.h>
-#endif
 #endif
 
 #include <netinet/tcp.h>
@@ -195,21 +187,6 @@ int	tcp_log_refused;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
-
-/*
- * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
- */
-#ifdef INET6
-#define ND6_HINT(tp) \
-do { \
-	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 \
-	 && tp->t_in6pcb->in6p_route.ro_rt) { \
-		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL); \
-	} \
-} while (0)
-#else
-#define ND6_HINT(tp)
-#endif
 
 /*
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
@@ -482,7 +459,6 @@ present:
 
 	tp->rcv_nxt += q->ipqe_len;
 	pkt_flags = q->ipqe_flags & TH_FIN;
-	ND6_HINT(tp);
 
 	LIST_REMOVE(q, ipqe_q);
 	LIST_REMOVE(q, ipqe_timeq);
@@ -518,17 +494,13 @@ tcp6_input(mp, offp, proto)
 	 * better place to put this in?
 	 */
 	if (m->m_flags & M_ANYCAST6) {
-		struct ip6_hdr *ip6;
-		if (m->m_len < sizeof(struct ip6_hdr)) {
-			if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-				tcpstat.tcps_rcvshort++;
-				return IPPROTO_DONE;
-			}
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		icmp6_error(m, ICMP6_DST_UNREACH,
-			ICMP6_DST_UNREACH_ADDR,
-			(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		if (m->m_len >= sizeof(struct ip6_hdr)) {
+			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+			icmp6_error(m, ICMP6_DST_UNREACH,
+				ICMP6_DST_UNREACH_ADDR,
+				(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		} else
+			m_freem(m);
 		return IPPROTO_DONE;
 	}
 
@@ -596,7 +568,6 @@ tcp_input(m, va_alist)
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
-#ifndef PULLDOWN_TEST
 		/* would like to get rid of this... */
 		if (toff > sizeof (struct ip)) {
 			ip_stripoptions(m, (struct mbuf *)0);
@@ -610,22 +581,12 @@ tcp_input(m, va_alist)
 		}
 		ip = mtod(m, struct ip *);
 		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
-#else
-		ip = mtod(m, struct ip *);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
-		if (th == NULL) {
-			tcpstat.tcps_rcvshort++;
-			return;
-		}
-#endif
 
 		/*
 		 * Checksum extended TCP header and data.
 		 */
 		len = ip->ip_len;
 		tlen = len - toff;
-#ifndef PULLDOWN_TEST
 	    {
 		struct ipovly *ipov;
 		ipov = (struct ipovly *)ip;
@@ -636,19 +597,12 @@ tcp_input(m, va_alist)
 			tcpstat.tcps_rcvbadsum++;
 			goto drop;
 		}
-#else
-		if (in4_cksum(m, IPPROTO_TCP, toff, tlen) != 0) {
-			tcpstat.tcps_rcvbadsum++;
-			goto drop;
-		}
-#endif
 		break;
 #ifdef INET6
 	case 6:
 		ip = NULL;
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
-#ifndef PULLDOWN_TEST
 		if (m->m_len < toff + sizeof(struct tcphdr)) {
 			m = m_pullup(m, toff + sizeof(struct tcphdr));	/*XXX*/
 			if (m == NULL) {
@@ -658,15 +612,6 @@ tcp_input(m, va_alist)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
-#else
-		ip6 = mtod(m, struct ip6_hdr *);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
-		if (th == NULL) {
-			tcpstat.tcps_rcvshort++;
-			return;
-		}
-#endif
 
 		/*
 		 * Checksum extended TCP header and data.
@@ -703,7 +648,6 @@ tcp_input(m, va_alist)
 	 */
 
 	if (off > sizeof (struct tcphdr)) {
-#ifndef PULLDOWN_TEST
 		if (m->m_len < toff + off) {
 			if ((m = m_pullup(m, toff + off)) == 0) {
 				tcpstat.tcps_rcvshort++;
@@ -721,19 +665,8 @@ tcp_input(m, va_alist)
 			}
 			th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
 		}
-#else
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
-		if (th == NULL) {
-			tcpstat.tcps_rcvshort++;
-			return;
-		}
-		/*
-		 * NOTE: ip/ip6 will not be affected by m_pulldown()
-		 * (as they're before toff) and we don't need to update those.
-		 */
-#endif
 		optlen = off - sizeof (struct tcphdr);
-		optp = ((caddr_t)th) + sizeof(struct tcphdr);
+		optp = mtod(m, caddr_t) + toff + sizeof (struct tcphdr);
 		/* 
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
@@ -1176,7 +1109,6 @@ after_listen:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
-				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
 				/*
 				 * We want snd_recover to track snd_una to
@@ -1221,12 +1153,12 @@ after_listen:
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m_adj(m, toff + off);
+			m->m_data += toff + off;
+			m->m_len -= (toff + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
@@ -1239,9 +1171,11 @@ after_listen:
 	}
 
 	/*
-	 * Compute mbuf offset to TCP data segment.
+	 * Drop TCP, IP headers and TCP options.
 	 */
-	hdroptlen = toff + off;
+	hdroptlen  = toff + off;
+	m->m_data += hdroptlen;
+	m->m_len  -= hdroptlen;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -1427,7 +1361,7 @@ after_listen:
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
 		}
-		hdroptlen += todrop;	/*drop from head afterwards*/
+		m_adj(m, todrop);
 		th->th_seq += todrop;
 		tlen -= todrop;
 		if (th->th_urp > todrop)
@@ -1470,6 +1404,15 @@ after_listen:
 				iss = tcp_new_iss(tp, sizeof(struct tcpcb),
 						  tp->snd_nxt);
 				tp = tcp_close(tp);
+				/*
+				 * We have already advanced the mbuf
+				 * pointers past the IP+TCP headers and
+				 * options.  Restore those pointers before
+				 * attempting to use the TCP header again.
+				 */
+				m->m_data -= hdroptlen;
+				m->m_len  += hdroptlen;
+				hdroptlen = 0;
 				goto findpcb;
 			}
 			/*
@@ -1746,7 +1689,6 @@ after_listen:
 			tp->snd_cwnd = min(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
 		}
-		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -1901,7 +1843,7 @@ step6:
 		     && (so->so_options & SO_OOBINLINE) == 0
 #endif
 		     )
-			tcp_pulloutofband(so, th, m, hdroptlen);
+			tcp_pulloutofband(so, th, m);
 	} else
 		/*
 		 * If no out of band data is expected,
@@ -1942,14 +1884,11 @@ dodata:							/* XXX */
 			TCP_SETUP_ACK(tp, th);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
-			tcpstat.tcps_rcvpack++;
-			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
-			m_adj(m, hdroptlen);
+			tcpstat.tcps_rcvpack++;\
+			tcpstat.tcps_rcvbyte += tlen;\
 			sbappend(&(so)->so_rcv, m);
 			sorwakeup(so);
 		} else {
-			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
 		}
@@ -2066,6 +2005,9 @@ dropwithreset:
 	else if (ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 		goto drop;
 #endif
+	/* recover the header if dropped. */
+	m->m_data -= hdroptlen;
+	m->m_len += hdroptlen;
     {
 	/*
 	 * need to recover version # field, which was overwritten on
@@ -2241,13 +2183,12 @@ tcp_dooptions(tp, cp, cnt, th, oi)
  * sequencing purposes.
  */
 void
-tcp_pulloutofband(so, th, m, off)
+tcp_pulloutofband(so, th, m)
 	struct socket *so;
 	struct tcphdr *th;
 	register struct mbuf *m;
-	int off;
 {
-	int cnt = off + th->th_urp - 1;
+	int cnt = th->th_urp - 1;
 	
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
@@ -3269,7 +3210,7 @@ syn_cache_respond(sc, m)
 	struct syn_cache *sc;
 	struct mbuf *m;
 {
-	struct route *ro;
+	struct route *ro = &sc->sc_route4;
 	struct rtentry *rt;
 	u_int8_t *optp;
 	int optlen, error;
@@ -3284,12 +3225,10 @@ syn_cache_respond(sc, m)
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:
@@ -3428,10 +3367,9 @@ syn_cache_respond(sc, m)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_vfc = IPV6_VERSION;
 		ip6->ip6_plen = htons(tlen - hlen);
-		/* ip6_hlim will be initialized afterwards */
+		ip6->ip6_hlim = ip6_defhlim;
 		/* XXX flowlabel? */
 		break;
 #endif
@@ -3476,11 +3414,8 @@ syn_cache_respond(sc, m)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6->ip6_hlim = in6_selecthlim(NULL,
-				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
-
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro,
-			0, NULL, NULL);
+			0, NULL);
 		break;
 #endif
 	default:

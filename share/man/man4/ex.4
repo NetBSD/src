@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex.4,v 1.5 1999/12/17 16:23:21 abs Exp $
+.\"	$NetBSD: ex.4,v 1.2 1999/04/10 16:23:10 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -10,22 +10,21 @@
 .Nm ex
 .Nd driver for
 .Tn 3Com
-Fast EtherLink XL (3c900, 3c905, 3c980)
+Fast EtherLinkr XL (3c900, 3c905, 3c980)
 .Tn PCI
 bus
 .Tn Ethernet
 interfaces
 .Sh SYNOPSIS
-.Cd "ex* at cardbus? dev ? function ?"
 .Cd "ex* at pci? dev ? function ?"
-.Sh HARDWARE
-.Tn 3Com
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports the following 3Com
 .Tn Ethernet
 and
 .Tn Fast Ethernet
-cards supported by the 
-.Nm
-driver include:
+interfaces:
 .Pp
 .Bl -item -compact
 .It
@@ -75,7 +74,6 @@ See
 .It "%s: uplistptr was 0"
 .El
 .Sh SEE ALSO
-.Xr cardbus 4 ,
 .Xr exphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,

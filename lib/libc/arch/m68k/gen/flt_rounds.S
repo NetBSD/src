@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.8 1999/10/25 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.7 1995/12/13 19:36:12 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -16,8 +16,8 @@ _map:
 	.byte 2		/* round to positive infinity */
 
 ENTRY(__flt_rounds)
-	fmovel %fpcr,%d0
-	bfextu %d0{#26:#2},%d0
-	lea _map,%a0
-	moveb %a0@(%d0:l:1),%d0
+	fmovel fpcr,d0
+	bfextu d0{#26:#2},d0
+	lea _map,a0
+	moveb a0@(d0:l:1),d0
 	rts

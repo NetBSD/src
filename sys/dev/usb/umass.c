@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.23 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.20 1999/09/30 23:13:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -227,11 +227,11 @@ USB_MATCH(umass)
 	USB_MATCH_START(umass, uaa);
 	usb_interface_descriptor_t *id;
 
-	if (uaa->iface == NULL)
+	if (!uaa->iface)
 		return(UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id != NULL
+	if (id
 	    && id->bInterfaceClass == UCLASS_MASS
 	    && id->bInterfaceSubClass == USUBCLASS_SCSI
 	    && id->bInterfaceProtocol == UPROTO_MASS_BULK_P)
@@ -304,7 +304,7 @@ USB_ATTACH(umass)
 	 */
 	for (i = 0 ; i < id->bNumEndpoints ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
-		if (ed == NULL) {
+		if (!ed) {
 			printf("%s: could not read endpoint descriptor\n",
 			       USBDEVNAME(sc->sc_dev));
 			USB_ATTACH_ERROR_RETURN;
@@ -322,7 +322,7 @@ USB_ATTACH(umass)
 	 * Get the maximum LUN supported by the device.
 	 */
 	err = umass_bulk_get_max_lun(sc, &maxlun);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		printf("%s: unable to get Max Lun: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		USB_ATTACH_ERROR_RETURN;
@@ -330,14 +330,14 @@ USB_ATTACH(umass)
 
 	/* Open the bulk-in and -out pipe */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout,
-		  USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+				USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 	if (err) {
 		DPRINTF(UDMASS_USB,("cannot open bulk out pipe (address %d)\n",
 			sc->sc_bulkout));
 		USB_ATTACH_ERROR_RETURN;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin,
-		  USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+				USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 	if (err) {
 		DPRINTF(UDMASS_USB,("cannot open bulk in pipe (address %d)\n",
 			sc->sc_bulkin));
@@ -401,9 +401,12 @@ umass_activate(self, act)
 	return (rv);
 }
 
-USB_DETACH(umass)
+int
+umass_detach(self, flags)
+	struct device *self;
+	int flags;
 {
-	USB_DETACH_START(umass, sc);
+	struct umass_softc *sc = (struct umass_softc *) self;
 	int s, rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_detach: flags 0x%x\n",
@@ -453,7 +456,7 @@ usbd_status
 umass_usb_transfer(umass_softc_t *sc, usbd_pipe_handle pipe,
 		   void *buf, int buflen, int flags, int *xfer_size)
 {
-	usbd_xfer_handle xfer;
+	usbd_request_handle reqh;
 	usbd_private_handle priv;
 	void *buffer;
 	int size;
@@ -463,28 +466,28 @@ umass_usb_transfer(umass_softc_t *sc, usbd_pipe_handle pipe,
 	 * transfer and then wait for it to complete
 	 */
 
-	xfer = usbd_alloc_xfer(usbd_pipe2device_handle(pipe));
-	if (xfer == NULL) {
+	reqh = usbd_alloc_request(usbd_pipe2device_handle(pipe));
+	if (!reqh) {
 		DPRINTF(UDMASS_USB, ("%s: not enough memory\n",
 		    USBDEVNAME(sc->sc_dev)));
 		return USBD_NOMEM;
 	}
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, buflen,flags, 3000/*ms*/, NULL);
-	err = usbd_sync_transfer(xfer);
+	usbd_setup_request(reqh, pipe, 0, buf, buflen,flags, 3000/*ms*/, NULL);
+	err = usbd_sync_transfer(reqh);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: transfer failed: %s\n",
 			USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
-		usbd_free_xfer(xfer);
+		usbd_free_request(reqh);
 		return(err);
 	}
 
-	usbd_get_xfer_status(xfer, &priv, &buffer, &size, &err);
+	usbd_get_request_status(reqh, &priv, &buffer, &size, &err);
 
-	if (xfer_size != NULL)
+	if (xfer_size)
 		*xfer_size = size;
 
-	usbd_free_xfer(xfer);
+	usbd_free_request(reqh);
 	return(USBD_NORMAL_COMPLETION);
 }
 
@@ -632,7 +635,7 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 	u_int8_t *c = cmd;
 
 	/* check the given arguments */
-	if (data == NULL && datalen > 0) {	/* no buffer for transfer */
+	if (!data && datalen > 0) {	/* no buffer for transfer */
 		DPRINTF(UDMASS_BULK, ("%s: no buffer, but datalen > 0 !\n",
 			USBDEVNAME(sc->sc_dev)));
 		return USBD_IOERROR;
@@ -744,7 +747,8 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 		err = usbd_clear_endpoint_stall(sc->sc_bulkin_pipe);
 		if (!err) {
 			err = umass_usb_transfer(sc, sc->sc_bulkin_pipe,
-				  &csw, USB_BULK_CSW_SIZE, 0, NULL);
+						&csw, USB_BULK_CSW_SIZE, 0,
+						NULL);
 		}
 	}
 	if (err && err != USBD_STALLED)

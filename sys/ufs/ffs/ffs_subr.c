@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.14 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.13.20.1 1999/12/21 23:20:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -148,7 +148,7 @@ ffs_checkoverlap(bp, ip)
 
 	ebp = &buf[nbuf];
 	start = bp->b_blkno;
-	last = start + btodb(bp->b_bcount) - 1;
+	last = start + btodb(bp->b_bcount, bp->b_bshift) - 1;
 	for (ep = buf; ep < ebp; ep++) {
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 		    ep->b_vp == NULLVP)
@@ -159,12 +159,14 @@ ffs_checkoverlap(bp, ip)
 			continue;
 		/* look for overlap */
 		if (ep->b_bcount == 0 || ep->b_blkno > last ||
-		    ep->b_blkno + btodb(ep->b_bcount) <= start)
+		    start >= ep->b_blkno +
+				btodb(ep->b_bcount, bp->b_bshift))
 			continue;
 		vprint("Disk overlap", vp);
 		printf("\tstart %d, end %d overlap start %d, end %ld\n",
 		    start, last, ep->b_blkno,
-		    ep->b_blkno + btodb(ep->b_bcount) - 1);
+		    ep->b_blkno +
+			btodb(ep->b_bcount, bp->b_bshift) - 1);
 		panic("Disk buffer overlap");
 	}
 }
@@ -197,30 +199,6 @@ ffs_isblock(fs, cp, h)
 		return ((cp[h >> 3] & mask) == mask);
 	default:
 		panic("ffs_isblock");
-	}
-}
-
-/*
- * check if a block is free
- */
-int
-ffs_isfreeblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	ufs_daddr_t h;
-{
-
-	switch ((int)fs->fs_frag) {
-	case 8:
-		return (cp[h] == 0);
-	case 4:
-		return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
-	case 2:
-		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
-	case 1:
-		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
-	default:
-		panic("ffs_isfreeblock");
 	}
 }
 

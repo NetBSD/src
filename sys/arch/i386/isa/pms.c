@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.46 1999/12/03 22:48:24 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.45 1999/08/19 15:33:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -57,7 +57,7 @@
 #endif
 #if (NOPMS_PCKBC > 0)
 #include <machine/bus.h>
-#include <dev/ic/pckbcvar.h>
+#include <dev/isa/pckbcvar.h>
 #endif
 #include <machine/mouse.h>
 #include <machine/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.4 1999/10/04 23:27:03 lukem Exp $	*/
+/*	$NetBSD: screen.h,v 1.3 1997/10/14 01:14:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ char *SOstr;			/* begin standout mode */
  */
 #define	putpad(s)	tputs(s, 1, put)
 
-int	put __P((int));		/* just calls putchar; for tputs */
+void	put __P((int));		/* just calls putchar; for tputs */
 void	scr_clear __P((void));
 void	scr_end __P((void));
 void	scr_init __P((void));

@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.12 1999/12/05 15:08:31 jdolecek Exp $
+#	$NetBSD: inter.phone,v 1.8 1999/01/05 21:47:24 pk Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -88,7 +88,7 @@
 39:91:Palermo:Italy
 39:95:Catania:Italy
 39:99:Taranto:Italy
-40:0:Bucharest:Romania
+40:0:Bucharest:Romania, Soc. Rep. of
 41:1:Zurich:Switzerland
 41:21:Lausanne:Switzerland
 41:22:Geneva:Switzerland
@@ -97,6 +97,7 @@
 41:52:Winterthur:Switzerland
 41:61:Basel:Switzerland
 41:75::Liechtenstein
+42:2:Prague:Czechoslovakia
 43:222:Vienna:Austria
 43:316:Graz:Austria
 43:5222:Innsbruck:Austria
@@ -321,11 +322,9 @@
 354:1:Reykjavik:Iceland
 356:::Malta
 357:21:Nicosia:Cyprus
-358:9:Helsinki:Finland
-358:3:Tampere:Finland
+358:0:Helsinki:Finland
+358:31:Tampere:Finland
 359:2:Sofia:Bulgaria
-420:2:Prague:Czech Republic
-421:7:Bratislava:Slovak Republic
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
 502:2:Guatemala City:Guatemala

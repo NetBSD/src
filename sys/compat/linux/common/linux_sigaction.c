@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.18 1999/12/04 22:21:12 tron Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.17 1998/10/07 23:47:44 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ linux_sys_sigaction(p, v, retval)
 	} */ *uap = v;
 	struct linux_old_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
-	int error, sig;
+	int error;
 
 	/* XXX XAX handle switch to RT signal handler */
 	/* XXX XAX and update emuldata->ps_siginfo. */
@@ -88,10 +88,7 @@ linux_sys_sigaction(p, v, retval)
 			return (error);
 		linux_old_to_native_sigaction(&nlsa, &nbsa);
 	}
-	sig = SCARG(uap, signum);
-	if (sig < 0 || sig >= LINUX__NSIG)
-		return (EINVAL);
-	error = sigaction1(p, linux_to_native_sig[sig],
+	error = sigaction1(p, linux_to_native_sig[SCARG(uap, signum)],
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 	if (error)
 		return (error);

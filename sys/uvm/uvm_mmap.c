@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.37 1999/12/11 05:38:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.35 1999/07/17 21:35:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1153,7 +1153,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if (flags & MAP_ANON) {
-		foff = UVM_UNKNOWN_OFFSET;
+		
+		foff = UVM_UNKNOWN_OFFSET;		
 		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
 			/* XXX: defer amap create */

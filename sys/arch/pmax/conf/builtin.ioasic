@@ -1,0 +1,12 @@
+#	$NetBSD: builtin.ioasic,v 1.5 1998/11/27 00:09:33 simonb Exp $
+
+#########################################################################
+# Common configuration for machines with IO ASIC chips			#
+# (3MIN, MAXINE, 3MAXPLUS)						#
+#########################################################################
+ioasic0		at	tc?
+mcclock0 at ioasic? 	offset ?	# RTC
+asc0	at ioasic?	offset ?	# system SCSI subslot
+scc0	at ioasic?	offset ?
+le0	at ioasic?	offset ?	# tc onboard lance
+scc1	at ioasic?	offset ?	# Not present on Maxine

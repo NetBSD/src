@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.3 1999/12/13 15:32:46 abs Exp $
+.\"	$NetBSD: postinstall,v 1.2 1999/05/04 03:35:03 simonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 Once you've got the operating system running, there are a few
-things you need to do in order to bring the system into a properly
+things you need to do in order to bring the system into a propperly
 configured state, with the most important ones described below.
 .Bl -enum
 .It
@@ -165,26 +165,23 @@ to your path in your shell's dot file so that you have access to the X binaries.
 .It
 Installing 3rd party packages
 .Pp
-If you wish to install any of the software freely available for unix systems
-you are strongly advised to first check the
+There is a lot of software freely available for Unix-based systems,
+almost all of which can run on
+.Nx .
+Modifications are usually needed to
+when transferring programs between different Unix-like systems, so
+the
 .Nx
-package system. This automatically handles any changes necessary to
-make the software run on
+packages collection incorporates any such
+changes necessary to make that software run on
 .Nx ,
-retrieval and installation of any other packages on which the software
-may depend, and simplifies installation (and deinstallation), both
-from source and precompiled binaries.
-.Bl -bullet
-.It
-More information on the package system is at
-.Lk http://www.netbsd.org/Documentation/software/packages.html
-.It
-A browsable listing of available packages is at
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/README.html
-.It
+and makes
+the installation (and deinstallation) of the software packages
+easy. There's also the option of building a package from source, in
+case there's no precompiled binary available.
+.Pp
 Precompiled binaries can be found at
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/
-.It
 Package sources for compiling packages can be obtained by
 retrieving the file
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
@@ -193,7 +190,6 @@ and extracting it into
 See
 .Pa /usr/pkgsrc/README
 then for more information.
-.El
 .It
 Misc
 .Bl -bullet

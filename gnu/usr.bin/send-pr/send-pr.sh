@@ -244,7 +244,7 @@ esac
 
 ORIGINATOR_C='<name of the PR author (one line)>'
 ORGANIZATION_C='<organization of PR author (multiple lines)>'
-CONFIDENTIAL_C='<[ no | yes ] (one line)>'
+CONFIDENTIAL_C='<[ yes | no ] (one line)>'
 SYNOPSIS_C='<synopsis of the problem (one line)>'
 SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
 PRIORITY_C='<[ low | medium | high ] (one line)>'

@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.41 1999/10/15 21:54:43 is Exp $
+# $NetBSD: DRACO,v 1.40 1999/07/29 10:37:14 augustss Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.129 1999/10/15 21:50:34 is Exp $
+#$ NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 

@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.2 1999/10/11 01:41:10 hubertf Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.1 1999/09/18 00:15:13 hubertf Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubert@feyrer.de>.  All rights reserved.
@@ -178,16 +178,6 @@ sub doarch
 
     rename("man8.${arch}/MAKEDEV.8", "man8.${arch}/MAKEDEV.8.old");
 
-    # find out current RCS ID
-    $RCSID="\$NetBSD\$";
-    open(OLD, "man8.${arch}/MAKEDEV.8.old") or die;
-    while(<OLD>) {
-        if (/(\$NetBSD.*\$)/) {
-            $RCSID = "$1";
-        }
-    }
-    close(OLD);
-
     open(MANPAGE, ">man8.${arch}/MAKEDEV.8")	or die;
     print MANPAGE ".\\\" *** ------------------------------------------------------------------\n";
     print MANPAGE ".\\\" *** This file was generated automatically\n";
@@ -209,11 +199,6 @@ sub doarch
 	    } elsif (/^\@\@\@DEVICES\@\@\@$/) {
 		do_devices();
 	    }
-	} elsif (/(\$NetBSD.*\$)/) {
-	    $id=$1;
-            $id=~s/\$/\\\$/g;
-            s/$id/$RCSID/;
-	    print MANPAGE "$_";
 	} else {
 	    print MANPAGE "$_";
 	}
@@ -243,25 +228,19 @@ chomp($pwd=`pwd`);
 die "Run this in .../src/share/man/man8 !\n" 
     if ($pwd !~ m:share/man/man8: );
 
-if ($#ARGV >= 0) {
-    @archs = @ARGV;
-
-} else {
-
-    # Determine available archs by looking for man8.* 
-    opendir(D, ".") || die;
-    while ($d=readdir(D)) {
-        if ($d =~ /man8\.(.*)$/) {
-	    push(@archs, $1);
-        }
+# Determine available archs by looking for man8.* 
+opendir(D, ".") || die;
+while ($d=readdir(D)) {
+    if ($d =~ /man8\.(.*)$/) {
+	push(@archs, $1);
     }
-    closedir(d);
 }
+closedir(d);
 
 #DEBUG ONLY# @archs=("alpha");
 
 # Handle each arch's manpage
 foreach $arch ( sort @archs ) {
     $rc = doarch($arch);
-    printf("%-20s $rc\n", "$arch:");
+    print "$arch:\t $rc\n";
 }

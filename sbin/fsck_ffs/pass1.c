@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.22 1999/11/15 19:18:25 fvdl Exp $	*/
+/*	$NetBSD: pass1.c,v 1.21 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.22 1999/11/15 19:18:25 fvdl Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.21 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,8 +205,7 @@ checkinode(inumber, idesc)
 	for (j = ndb; j < NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
-				printf("bad direct addr ix %d: %d [ndb %d]\n",
-					j, iswap32(dp->di_db[j]), ndb);
+				printf("bad direct addr: %d\n", iswap32(dp->di_db[j]));
 			goto unknown;
 		}
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
@@ -227,10 +226,8 @@ checkinode(inumber, idesc)
 		if (zlnp == NULL) {
 			markclean = 0;
 			pfatal("LINK COUNT TABLE OVERFLOW");
-			if (reply("CONTINUE") == 0) {
-				ckfini();
+			if (reply("CONTINUE") == 0)
 				exit(EEXIT);
-			}
 		} else {
 			zlnp->zlncnt = inumber;
 			zlnp->next = zlnhead;
@@ -303,11 +300,8 @@ pass1check(idesc)
 				idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
-			else if (reply("CONTINUE") == 0) {
-				markclean = 0;
-				ckfini();
+			else if (reply("CONTINUE") == 0)
 				exit(EEXIT);
-			}
 			return (STOP);
 		}
 	}
@@ -324,22 +318,16 @@ pass1check(idesc)
 					idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
-				else if (reply("CONTINUE") == 0) {
-					markclean = 0;
-					ckfini();
+				else if (reply("CONTINUE") == 0)
 					exit(EEXIT);
-				}
 				return (STOP);
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
 				markclean = 0;
 				pfatal("DUP TABLE OVERFLOW.");
-				if (reply("CONTINUE") == 0) {
-					markclean = 0;
-					ckfini();
+				if (reply("CONTINUE") == 0)
 					exit(EEXIT);
-				}
 				return (STOP);
 			}
 			new->dup = blkno;

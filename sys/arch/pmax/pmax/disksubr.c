@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 1999/11/28 04:55:39 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.6.1 1999/12/21 23:16:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -58,7 +58,7 @@ compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 
 char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		       struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
+		       struct cpu_disklabel *osdep, int bshift));
 
 /*
  * Attempt to read a disk label from a device
@@ -69,11 +69,12 @@ char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -88,6 +89,8 @@ readdisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -110,6 +113,7 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+done:
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
@@ -121,18 +125,21 @@ readdisklabel(dev, strat, lp, osdep)
  * putting the partition info into a native NetBSD label
  */
 char *
-compat_label(dev, strat, lp, osdep)
+compat_label(dev, strat, lp, osdep, bshift, bsize)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift, bsize;
 {
-	dec_disklabel *dlp;
+	Dec_DiskLabel *dlp;
 	struct buf *bp = NULL;
 	char *msg = NULL;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = DEC_LABEL_SECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -144,9 +151,9 @@ compat_label(dev, strat, lp, osdep)
 		goto done;
 	}
 
-	for (dlp = (dec_disklabel *)bp->b_un.b_addr;
-	     dlp <= (dec_disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	     dlp = (dec_disklabel *)((char *)dlp + sizeof(long))) {
+	for (dlp = (Dec_DiskLabel *)bp->b_un.b_addr;
+	     dlp <= (Dec_DiskLabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	     dlp = (Dec_DiskLabel *)((char *)dlp + sizeof(long))) {
 
 		int part;
 
@@ -166,8 +173,8 @@ compat_label(dev, strat, lp, osdep)
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
 		     part++) {
-			lp->d_partitions[part].p_size = dlp->map[part].num_blocks;
-			lp->d_partitions[part].p_offset = dlp->map[part].start_block;
+			lp->d_partitions[part].p_size = dlp->map[part].numBlocks;
+			lp->d_partitions[part].p_offset = dlp->map[part].startBlock;
 			lp->d_partitions[part].p_fsize = 1024;
 			lp->d_partitions[part].p_fstype =
 			  (part==1) ? FS_SWAP : FS_BSDFFS;
@@ -242,11 +249,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -261,6 +269,8 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
@@ -315,7 +325,7 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[RAW_PART].p_offset;
+	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 

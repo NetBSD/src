@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.27 1999/12/12 00:56:29 sommerfeld Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.24 1998/05/18 16:47:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,6 @@ int	dead_open	__P((void *));
 #define dead_setattr	genfs_ebadf
 int	dead_read	__P((void *));
 int	dead_write	__P((void *));
-#define dead_lease_check genfs_nullop
-#define dead_fcntl	genfs_nullop
 int	dead_ioctl	__P((void *));
 int	dead_poll	__P((void *));
 #define dead_mmap	genfs_badop
@@ -109,8 +107,6 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_setattr_desc, dead_setattr },		/* setattr */
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
-	{ &vop_lease_desc, dead_lease_check },		/* lease */
-	{ &vop_fcntl_desc, dead_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */
 	{ &vop_revoke_desc, dead_revoke },		/* revoke */

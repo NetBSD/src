@@ -1,5 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.15 1999/11/18 23:32:27 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.11 1999/09/15 21:14:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +51,7 @@ typedef struct ohci_soft_td {
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	usbd_xfer_handle xfer;
+	usbd_request_handle reqh;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
@@ -69,6 +68,11 @@ typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	void *sc_ih;			/* interrupt vectoring */
+
+	/* XXX should keep track of all DMA memory */
+#endif /* __NetBSD__ || defined(__OpenBSD__) */
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;
@@ -88,7 +92,7 @@ typedef struct ohci_softc {
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
 
-	usbd_xfer_handle sc_intrxfer;
+	usbd_request_handle sc_intrreqh;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
@@ -99,9 +103,16 @@ typedef struct ohci_softc {
 
 usbd_status	ohci_init __P((ohci_softc_t *));
 int		ohci_intr __P((void *));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-int		ohci_detach __P((ohci_softc_t *, int));
+int		ohci_detach __P((device_ptr_t, int));
 int		ohci_activate __P((device_ptr_t, enum devact));
-#endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
+
+#ifdef USB_DEBUG
+#define DPRINTF(x)	if (ohcidebug) printf x
+#define DPRINTFN(n,x)	if (ohcidebug>(n)) printf x
+extern int ohcidebug;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.9 1999/12/05 23:39:11 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.8 1999/08/25 19:58:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.9 1999/12/05 23:39:11 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.8 1999/08/25 19:58:15 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -64,15 +64,14 @@ krb5_data tgtname = {
 
 krb5_context kcontext;
 
-int notickets;
-char *krbtkfile_env;
+extern int notickets;
+extern char *krbtkfile_env;
 extern char *tty;
 
 static char tkt_location[MAXPATHLEN];
 static krb5_creds forw_creds;
 int have_forward;
 static krb5_principal me, server;
-int use_krb5;
 
 int k5_read_creds __P((char *));
 int k5_write_creds __P((void));
@@ -92,9 +91,6 @@ k5_read_creds(username)
 	krb5_error_code code;
 	krb5_creds mcreds;
 	krb5_ccache ccache;
-
-	if (! use_krb5)
-		return(1);
 
 	have_forward = 0;
 	memset((char*) &mcreds, 0, sizeof(forw_creds));
@@ -148,8 +144,6 @@ k5_write_creds()
 	krb5_error_code code;
 	krb5_ccache ccache;
 
-	if (! use_krb5)
-		return(1);
 	if (!have_forward)
 		return(1);
 	code = krb5_cc_default(kcontext, &ccache);
@@ -204,8 +198,7 @@ klogin(pw, instance, localhost, password)
 	 * for a password.  If that's ok, log the user in
 	 * without issuing any tickets.
 	 */
-	if (! use_krb5 ||
-	    strcmp(pw->pw_name, "root") == 0 ||
+	if (strcmp(pw->pw_name, "root") == 0 ||
 	    krb5_get_default_realm(kcontext, &realm))
 		return (1);
 
@@ -328,7 +321,7 @@ kdestroy()
         krb5_error_code code;
 	krb5_ccache ccache = NULL;
 
-	if (! use_krb5 || krbtkfile_env == NULL)
+	if (krbtkfile_env == NULL)
 	    return;
 
 	code = krb5_cc_resolve(kcontext, krbtkfile_env, &ccache);

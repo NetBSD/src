@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.51 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.49 1999/09/21 22:18:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -264,16 +264,13 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef OLDIP6OUTPUT
+#ifdef NEWIP6OUTPUT
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
+			return(0); /* it must be impossible, but... */
+#else
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
 			return(0);	/* if not yet resolves */
-#else
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
-			/* this must be impossible, so we bark */
-			printf("nd6_storelladdr failed\n");
-			return(0);
-		}
-#endif /* OLDIP6OUTPUT */
+#endif /* NEWIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
@@ -443,10 +440,6 @@ ether_output(ifp, m0, dst, rt0)
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 
-	/* If no ether type is set, this must be a 802.2 formatted packet.
-	 */
-	if (etype == 0)
-		etype = htons(m->m_pkthdr.len);
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
@@ -455,6 +448,8 @@ ether_output(ifp, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
+	if (etype == 0)
+		etype = htons(m->m_pkthdr.len);
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));

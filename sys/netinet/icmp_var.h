@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.13 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.12 1998/02/10 01:26:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,17 +44,17 @@
  */
 struct	icmpstat {
 /* statistics related to icmp packets generated */
-	u_quad_t icps_error;		/* # of calls to icmp_error */
-	u_quad_t icps_oldshort;		/* no error 'cuz old ip too short */
-	u_quad_t icps_oldicmp;		/* no error 'cuz old was icmp */
-	u_quad_t icps_outhist[ICMP_MAXTYPE + 1];
+	u_long	icps_error;		/* # of calls to icmp_error */
+	u_long	icps_oldshort;		/* no error 'cuz old ip too short */
+	u_long	icps_oldicmp;		/* no error 'cuz old was icmp */
+	u_long	icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
- 	u_quad_t icps_badcode;		/* icmp_code out of range */
-	u_quad_t icps_tooshort;		/* packet < ICMP_MINLEN */
-	u_quad_t icps_checksum;		/* bad checksum */
-	u_quad_t icps_badlen;		/* calculated bound mismatch */
-	u_quad_t icps_reflect;		/* number of responses */
-	u_quad_t icps_inhist[ICMP_MAXTYPE + 1];
+ 	u_long	icps_badcode;		/* icmp_code out of range */
+	u_long	icps_tooshort;		/* packet < ICMP_MINLEN */
+	u_long	icps_checksum;		/* bad checksum */
+	u_long	icps_badlen;		/* calculated bound mismatch */
+	u_long	icps_reflect;		/* number of responses */
+	u_long	icps_inhist[ICMP_MAXTYPE + 1];
 };
 
 /*

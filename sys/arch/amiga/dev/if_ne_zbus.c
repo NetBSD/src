@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.3 1999/11/25 21:58:57 is Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.1 1998/11/11 22:26:27 veego Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,15 +82,13 @@ struct cfattach ne_zbus_ca = {
 	sizeof(struct ne_zbus_softc), ne_zbus_match, ne_zbus_attach
 };
 
-/*
- * The Amiga address are shifted by one bit to the ISA-Bus, but 
- * this is handled by the bus_space functions.
- */
-#define	NE_ARIADNE_II_NPORTS	0x20
+/* The amiga address are shifted by one bit to the ISA-Bus. */
+#define	NE_ARIADNE_II_NPORTS	0x40
 #define	NE_ARIADNE_II_NICBASE	0x0300	/* 0x0600 */
-#define	NE_ARIADNE_II_NICSIZE	0x10
+#define	NE_ARIADNE_II_NICSIZE	0x20
 #define	NE_ARIADNE_II_ASICBASE	0x0310	/* 0x0620 */
-#define	NE_ARIADNE_II_ASICSIZE	0x10
+#define	NE_ARIADNE_II_ASICSIZE	0x20
+
 
 int
 ne_zbus_match(parent, cf, aux)
@@ -102,10 +100,6 @@ ne_zbus_match(parent, cf, aux)
 
 	/* Ariadne II ethernet card */
 	if (zap->manid == 2167 && zap->prodid == 202)
-		return (1);
-
-	/* X-serv ethernet card */
-	if (zap->manid == 4626 && zap->prodid == 23)
 		return (1);
 
 	return (0);
@@ -137,9 +131,6 @@ ne_zbus_attach(parent, self, aux)
 	dsc->init_card = rtl80x9_init_card;
 
 	zsc->sc_bst.base = (u_long)zap->va + 0;
-	if (zap->manid == 4626)
-		 zsc->sc_bst.base += 0x8000;
-
 	zsc->sc_bst.stride = 1;
 	zsc->sc_bst.absm = &amiga_interleaved_wordaccess_methods;
 

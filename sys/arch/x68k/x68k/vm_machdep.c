@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1999/12/04 21:21:50 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 1999/09/16 14:35:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,7 +222,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & PGOFSET)
+	if (size & CLOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
@@ -322,8 +322,7 @@ vmapbuf(bp, len)
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    PMAP_WIRED);
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;

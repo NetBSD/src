@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.33 1999/11/28 10:10:51 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.27 1999/02/11 06:41:07 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -57,14 +57,13 @@
 static int	adbmatch __P((struct device *, struct cfdata *, void *));
 static void	adbattach __P((struct device *, struct device *, void *));
 static int	adbprint __P((void *, const char *));
-void		adb_config_interrupts __P((struct device *));
 
 extern void	adb_jadbproc __P((void));
 
 /*
  * Global variables.
  */
-int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
+int	adb_initted = 0;	/* adb_init() has completed successfully */
 #ifdef ADB_DEBUG
 int	adb_debug = 0;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
@@ -97,29 +96,14 @@ adbmatch(parent, cf, aux)
 }
 
 static void
-adbattach(parent, self, aux)
-	struct device *parent, *self;
+adbattach(parent, dev, aux)
+	struct device *parent, *dev;
 	void *aux;
-{
-	printf("\n");
-
-	/*
-	 * Defer configuration until interrupts are enabled.
-	 */
-	config_interrupts(self, adb_config_interrupts);
-}
-
-void
-adb_config_interrupts(self)
-	struct device *self;
 {
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
 	int adbindex, adbaddr;
-
-	printf("%s", self->dv_xname);
-	adb_polling = 1;
 
 #ifdef MRG_ADB
 	/* 
@@ -127,12 +111,12 @@ adb_config_interrupts(self)
          * ADB in order to get the date/time and do soft power.
 	 */
 	if ((mac68k_machine.serial_console & 0x03)) {
-		printf(": using serial console\n");
+		printf(": using serial console");
 		return;
 	}
 
 	if (!mrg_romready()) {
-		printf(": no ROM ADB driver in this kernel for this machine\n");
+		printf(": no ROM ADB driver in this kernel for this machine");
 		return;
 	}
 
@@ -156,7 +140,7 @@ adb_config_interrupts(self)
 		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
-	printf(" (mrg)");
+	printf(" (mrg)  ");
 	ADBAlternateInit();
 #else
 	ADBReInit();
@@ -170,14 +154,14 @@ adb_config_interrupts(self)
 
 	totaladbs = CountADBs();
 
-	printf(": %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
+	printf(": %d targets\n", totaladbs);
 
 #if NAED > 0
 	/* ADB event device for compatibility */
 	aa_args.origaddr = 0;
 	aa_args.adbaddr = 0;
 	aa_args.handler_id = 0;
-	(void)config_found(self, &aa_args, adbprint);
+	(void)config_found(dev, &aa_args, adbprint);
 #endif
 
 	/* for each ADB device */
@@ -189,9 +173,8 @@ adb_config_interrupts(self)
 		aa_args.adbaddr = adbaddr;
 		aa_args.handler_id = (int)(adbdata.devType);
 
-		(void)config_found(self, &aa_args, adbprint);
+		(void)config_found(dev, &aa_args, adbprint);
 	}
-	adb_polling = 0;
 }
 
 

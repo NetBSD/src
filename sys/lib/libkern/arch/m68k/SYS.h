@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 1999/11/11 01:32:10 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.3 1998/02/22 08:43:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,18 +44,11 @@
 
 #ifdef __STDC__
 #define	IMMEDIATE	#
-#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,%d0; trap IMMEDIATE 0
+#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,d0; trap IMMEDIATE 0
 #else
-#define SYSTRAP(x)	movl #SYS_/**/x,%d0; trap #0
+#define SYSTRAP(x)	movl #SYS_/**/x,d0; trap #0
 #endif
 
-#ifdef __ELF__
-#define CERROR		_C_LABEL(__cerror)
-#define CURBRK		_C_LABEL(__curbrk)
-#else
-#define CERROR		_ASM_LABEL(cerror)
-#define CURBRK		_ASM_LABEL(curbrk)
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
@@ -63,7 +56,7 @@
 
 #define _SYSCALL(x,y)							\
 	.even;								\
-	err: jra PIC_PLT(CERROR);					\
+	err: jra cerror;						\
 	_SYSCALL_NOERROR(x,y);						\
 	jcs err
 
@@ -89,4 +82,4 @@
 	
 #define	ASMSTR		.asciz
 
-	.globl	CERROR
+	.globl	cerror

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.3 1999/10/25 14:31:50 kleink Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.2.12.1 1999/12/21 23:16:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1628,10 +1628,8 @@ static int
 fdstart_Exit(fd)
 	fd_softc_t *fd;
 {
-	struct buf *bp;
-#ifdef DIAGNOSTIC
 	int i;
-#endif
+	struct buf *bp;
 	
 	invalidateCylinderCache(fd);
 
@@ -1811,7 +1809,7 @@ fdGetDiskLabel(fd, dev)
 	if (TRACE_OPEN)
 		printf(" now calling readdisklabel()...\n");
 
-	msg = readdisklabel(dev, fdstrategy, lp, clp);
+	msg = readdisklabel(dev, fdstrategy, lp, clp, 7);
 	if (msg == NULL) {
 		strncpy(lp->d_packname, "default label",
 		    sizeof(lp->d_packname));	/* XXX - ?? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.2 1998/10/06 01:47:53 mark Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.2.18.1 1999/12/21 23:15:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -144,13 +144,13 @@ filecore_checksum(bootblock)
 
 
 int
-filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
+filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp, bshift, bsize)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	char **msgp;
-	int *cylp, *netbsd_label_offp;
+	int *cylp, *netbsd_label_offp, bshift, bsize;
 {
 	struct filecore_bootblock *bb;
 	int heads;
@@ -165,7 +165,13 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		*msgp = "filecore boot block I/O error";
+		goto out;
+	}
         bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read the Acorn filecore boot block */
 
@@ -279,12 +285,12 @@ out:
 
 
 int
-filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
+filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp, bshift, bsize)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
-	int *cylp, *netbsd_label_offp;
+	int *cylp, *netbsd_label_offp, bshift, bsize;
 {
 	struct filecore_bootblock *bb;
 	int heads;
@@ -295,7 +301,13 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		rv = -1;
+		goto out;
+	}
         bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read the filecore boot block */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.10 1999/11/18 14:09:41 minoura Exp $
+#	$NetBSD: TOKOCHAN,v 1.9 1999/08/05 15:05:56 minoura Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -153,7 +153,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -175,6 +174,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
+options 	BUFCACHE=20	# 20% of real memory as buffer cache
 options 	NVNODE=1024	# 'make build' required huge vnode table
 options 	MSGBUFSIZE=32768 # increase msgbuf to preserve debug messages
 #options 	NKMEMCLUSTERS=2048 # 8MB kernel vm

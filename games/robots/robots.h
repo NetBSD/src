@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.14 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: robots.h,v 1.13 1999/09/18 19:38:54 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -60,7 +60,6 @@
 # define	MAXLEVELS	4
 # define	MAXROBOTS	(MAXLEVELS * 10)
 # define	ROB_SCORE	10
-# undef		S_BONUS
 # define	S_BONUS		(60 * ROB_SCORE)
 # define	Y_SCORE		21
 # define	X_SCORE		(X_FIELDSIZE + 9)

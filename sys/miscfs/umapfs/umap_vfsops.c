@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.23 1999/07/08 01:19:07 wrstuden Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.23.8.1 1999/12/21 23:20:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,6 +142,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	amp->umapm_vfs = lowerrootvp->v_mount;
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_bshift = amp->umapm_vfs->mnt_bshift;
 
 	/* 
 	 * Now copy in the number of entries and maps for umap mapping.

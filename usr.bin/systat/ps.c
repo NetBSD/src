@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.11 1999/12/20 19:31:47 jwise Exp $  */
+/*      $NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -14,8 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD Foundation.
- * 4. Neither the name of the Foundation nor the names of its contributors
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.11 1999/12/20 19:31:47 jwise Exp $");
+__RCSID("$NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -206,7 +207,7 @@ state2str(kp)
 	if ((flag & P_CONTROLT) && e->e_pgid == e->e_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
-	snprintf(statestr, sizeof(statestr), "%-s",  buf);
+	sprintf(statestr, "%-s",  buf);
 
 	return statestr;
 }
@@ -224,10 +225,9 @@ tty2str(kp)
 	if (e->e_tdev == NODEV || (ttyname = devname(e->e_tdev, S_IFCHR)) == NULL)
 		strcpy(ttystr, "??");
 	else {
-		if (strncmp(ttyname, "tty", 3) == 0 ||
-		    strncmp(ttyname, "dty", 3) == 0)
+		if (strncmp(ttyname, "tty", 3) == 0)
 			ttyname += 3;
-		snprintf(ttystr, sizeof(ttystr), "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
+		sprintf(ttystr, "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
 	}
 
 	return ttystr;
@@ -307,7 +307,7 @@ pmem2float(kp)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/mempages;
+	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
 	return (fracmem >= 0) ? 100.0 * fracmem : 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1999/12/05 11:56:34 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1999/06/28 08:20:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -547,7 +547,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = clrnd(btoc(USRSTACK-(unsigned)va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)

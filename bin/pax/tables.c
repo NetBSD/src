@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.10 1999/11/01 01:35:59 mrg Exp $	*/
+/*	$NetBSD: tables.c,v 1.9 1999/07/03 14:42:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.10 1999/11/01 01:35:59 mrg Exp $");
+__RCSID("$NetBSD: tables.c,v 1.9 1999/07/03 14:42:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -1286,7 +1286,6 @@ add_dir(name, nlen, psb, frc_mode)
 	dblk.mode = psb->st_mode & 0xffff;
 	dblk.mtime = psb->st_mtime;
 	dblk.atime = psb->st_atime;
-	dblk.fflags = psb->st_flags;
 	dblk.frc_mode = frc_mode;
 	if ((write(dirfd, name, dblk.nlen) == dblk.nlen) &&
 	    (write(dirfd, (char *)&dblk, sizeof(dblk)) == sizeof(dblk))) {
@@ -1346,8 +1345,6 @@ proc_dir()
 			set_pmode(name, dblk.mode);
 		if (patime || pmtime)
 			set_ftime(name, dblk.mtime, dblk.atime, 0);
-		if (pfflags)
-			set_chflags(name, dblk.fflags);
 	}
 
 	(void)close(dirfd);

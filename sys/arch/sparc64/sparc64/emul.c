@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.5 1999/11/06 20:18:50 eeh Exp $	*/
+/*	$NetBSD: emul.c,v 1.4 1998/11/24 12:50:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <machine/instr.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <sparc64/sparc64/cpuvar.h>
+#include <sparc/sparc/cpuvar.h>
 
 #define DEBUG_EMUL
 #ifdef DEBUG_EMUL
@@ -56,12 +56,12 @@
 #define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe64 *, int, void *));
+static __inline int readgpreg __P((struct trapframe *, int, void *));
 static __inline int readfpreg __P((struct proc *, int, void *));
-static __inline int writegpreg __P((struct trapframe64 *, int, const void *));
+static __inline int writegpreg __P((struct trapframe *, int, const void *));
 static __inline int writefpreg __P((struct proc *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe64 *, union instr *, void *));
-static int muldiv __P((struct trapframe64 *, union instr *, int32_t *, int32_t *,
+static __inline int decodeaddr __P((struct trapframe *, union instr *, void *));
+static int muldiv __P((struct trapframe *, union instr *, int32_t *, int32_t *,
     int32_t *));
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
@@ -69,7 +69,7 @@ static int muldiv __P((struct trapframe64 *, union instr *, int32_t *, int32_t *
 
 static __inline int
 readgpreg(tf, i, val)
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	int i;
 	void *val;
 {
@@ -87,7 +87,7 @@ readgpreg(tf, i, val)
 		
 static __inline int
 writegpreg(tf, i, val)
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	int i;
 	const void *val;
 {
@@ -128,7 +128,7 @@ writefpreg(p, i, val)
 
 static __inline int
 decodeaddr(tf, code, val)
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	union instr *code;
 	void *val;
 {
@@ -148,7 +148,7 @@ decodeaddr(tf, code, val)
 
 static int
 muldiv(tf, code, rd, rs1, rs2)
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	union instr *code;
 	int32_t *rd, *rs1, *rs2;
 {
@@ -236,7 +236,7 @@ muldiv(tf, code, rd, rs1, rs2)
 int
 fixalign(p, tf)
 	struct proc *p;
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 {
 	static u_char sizedef[] = { 0x4, 0xff, 0x2, 0x8 };
 
@@ -397,7 +397,7 @@ fixalign(p, tf)
 int
 emulinstr(pc, tf)
 	vaddr_t pc;
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 {
 	union instr code;
 	int32_t rs1, rs2, rd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.5 1999/10/17 23:39:16 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
 
 /*
  * 
@@ -43,6 +43,63 @@
  * This code was written for the Coda file system at Carnegie Mellon
  * University.  Contributers include David Steere, James Kistler, and
  * M. Satyanarayanan.  
+ */
+
+/*
+ * HISTORY
+ * $Log: coda_vnops.h,v $
+ * Revision 1.4  1998/09/15 02:03:00  rvb
+ * Final piece of rename cfs->coda
+ *
+ * Revision 1.3  1998/09/12 15:05:49  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
+ * Revision 1.2  1998/09/08 17:12:48  rvb
+ * Pass2 complete
+ *
+ * Revision 1.1.1.1  1998/08/29 21:26:46  rvb
+ * Very Preliminary Coda
+ *
+ * Revision 1.7  1998/08/28 18:12:24  rvb
+ * Now it also works on FreeBSD -current.  This code will be
+ * committed to the FreeBSD -current and NetBSD -current
+ * trees.  It will then be tailored to the particular platform
+ * by flushing conditional code.
+ *
+ * Revision 1.6  1998/08/18 17:05:22  rvb
+ * Don't use __RCSID now
+ *
+ * Revision 1.5  1998/08/18 16:31:47  rvb
+ * Sync the code for NetBSD -current; test on 1.3 later
+ *
+ * Revision 1.4  98/01/23  11:53:49  rvb
+ * Bring RVB_CODA1_1 to HEAD
+ * 
+ * Revision 1.3.2.3  98/01/23  11:21:13  rvb
+ * Sync with 2.2.5
+ * 
+ * Revision 1.3.2.2  97/12/16  12:40:20  rvb
+ * Sync with 1.3
+ * 
+ * Revision 1.3.2.1  97/12/10  14:08:34  rvb
+ * Fix O_ flags; check result in coda_call
+ * 
+ * Revision 1.3  97/12/05  10:39:25  rvb
+ * Read CHANGES
+ * 
+ * Revision 1.2.34.2  97/11/20  11:46:54  rvb
+ * Capture current coda_venus
+ * 
+ * Revision 1.2.34.1  97/11/13  22:03:04  rvb
+ * pass2 cfs_NetBSD.h mt
+ * 
+ * Revision 1.2  96/01/02  16:57:14  bnoble
+ * Added support for Coda MiniCache and raw inode calls (final commit)
+ * 
+ * Revision 1.1.2.1  1995/12/20 01:57:40  bnoble
+ * Added Coda-specific files
+ *
  */
 
 /* NetBSD interfaces to the vnodeops */

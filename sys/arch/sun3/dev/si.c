@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.46 1999/11/22 18:34:00 jdolecek Exp $	*/
+/*	$NetBSD: si.c,v 1.43 1999/02/02 04:57:11 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -221,7 +221,9 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -268,8 +270,11 @@ si_intr(void *arg)
 #ifdef	DEBUG
 		if (!claimed) {
 			printf("si_intr: spurious from SBC\n");
-			if (si_debug & 4)
+			if (si_debug & 4) {
+#ifdef	DDB
 				Debugger();	/* XXX */
+#endif
+			}
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
@@ -326,7 +331,9 @@ si_dma_alloc(ncr_sc)
 	 */
 	if (xlen > MAX_DMA_LEN) {
 		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
+#ifdef	DDB
 		Debugger();
+#endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 
@@ -346,7 +353,7 @@ found:
 	dh->dh_dvma = 0;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->xs_control & XS_CTL_DATA_OUT)
+	if (xs->flags & SCSI_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
 #if 0

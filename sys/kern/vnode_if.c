@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.21 1999/12/07 23:58:28 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.18 1999/08/03 18:20:22 wrstuden Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.23 1999/12/07 23:57:49 thorpej Exp 
+ *	NetBSD: vnode_if.src,v 1.19 1999/08/03 18:19:08 wrstuden Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
@@ -658,22 +658,6 @@ struct vnodeop_desc vop_valloc_desc = {
 	NULL,
 };
 
-int vop_balloc_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_balloc_desc = {
-	0,
-	"vop_balloc",
-	0,
-	vop_balloc_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_balloc_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
 int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
 	VDESC_NO_OFFSET
@@ -846,7 +830,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_advlock_desc,
 	&vop_blkatoff_desc,
 	&vop_valloc_desc,
-	&vop_balloc_desc,
 	&vop_reallocblks_desc,
 	&vop_vfree_desc,
 	&vop_truncate_desc,

@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.10 1999/11/29 20:09:54 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/09/13 00:32:14 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 1999/11/29 20:09:54 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/09/13 00:32:14 hubertf Exp $");
 #endif
 
 /*

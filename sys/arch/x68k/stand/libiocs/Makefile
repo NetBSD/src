@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/11 08:16:20 itohy Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/16 16:30:21 minoura Exp $
 
 LIB=	iocs
 
@@ -54,7 +54,7 @@ MAKECALL=${.CURDIR}/makeiocscalls.awk
 ${ASM}: ${.CURDIR}/iocs.h ${MAKECALL}
 	@echo creating ${.TARGET}
 	@grep -i 'IOCS_${.PREFIX} ' ${.CURDIR}/iocs.h | \
-	    ${AWK} -f ${MAKECALL} | ${CPP} | ${AS} -o ${.TARGET}
+	    ${AWK} -f ${MAKECALL} | ${AS} -o ${.TARGET}
 
 # only needed during build
 libinstall::

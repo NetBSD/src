@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.7 1999/10/25 16:39:37 is Exp $	*/
+/*	$NetBSD: grammar.y,v 1.6 1999/07/02 10:05:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: grammar.y,v 1.56 96/11/02 21:54:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.7 1999/10/25 16:39:37 is Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.6 1999/07/02 10:05:22 itojun Exp $");
 #endif
 #endif
 
@@ -120,14 +120,13 @@ pcap_parse()
 %token  NUM INBOUND OUTBOUND
 %token  LINK
 %token	GEQ LEQ NEQ
-%token	ID EID HID HID6 AID
+%token	ID EID HID HID6
 %token	LSH RSH
 %token  LEN
 %token  IPV6 ICMPV6 AH ESP
 
 %type	<s> ID
 %type	<e> EID
-%type	<e> AID
 %type	<s> HID HID6
 %type	<i> NUM
 
@@ -199,7 +198,6 @@ nid:	  ID			{ $$.b = gen_scode($1, $$.q = $<blk>0.q); }
 #endif /*INET6*/
 				}
 	| EID			{ $$.b = gen_ecode($1, $$.q = $<blk>0.q); }
-	| AID			{ $$.b = gen_acode($1, $$.q = $<blk>0.q); }
 	| not id		{ gen_not($2.b); $$ = $2; }
 	;
 not:	  '!'			{ $$ = $<blk>0; }

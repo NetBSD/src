@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.15 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.13 1999/08/03 20:19:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -237,7 +237,7 @@ genfs_enoioctl(v)
 
 
 /*
- * Eliminate all activity associated with the requested vnode
+ * Eliminate all activity associated with  the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 int
@@ -311,6 +311,7 @@ genfs_lock(v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -327,6 +328,7 @@ genfs_unlock(v)
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

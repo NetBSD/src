@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.50 1999/12/04 21:19:57 ragge Exp $ */
+/* $NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 1999/12/04 21:19:57 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,8 +474,8 @@ trap(a0, a1, a2, entry, framep)
 				if (rv == KERN_SUCCESS) {
 					unsigned nss;
 	
-					nss = btoc(USRSTACK -
-					    (unsigned long)va);
+					nss = clrnd(btoc(USRSTACK -
+					    (unsigned long)va));
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
 				} else if (rv == KERN_PROTECTION_FAILURE)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.29 1999/12/18 03:09:50 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1999/09/18 00:23:39 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -53,7 +53,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #	raid*	RAIDframe disk driver
-#	md*	memory pseudo-disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
@@ -63,6 +62,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	md*	memory pseudo-disk
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsictl(8), scsi(4)
 

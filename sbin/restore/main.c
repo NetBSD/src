@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1998/06/24 19:56:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1998/06/24 19:56:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ obsolete(argcp, argvp)
 	/* Allocate space for new arguments. */
 	if ((*argvp = nargv = malloc((argc + 1) * sizeof(char *))) == NULL ||
 	    (p = flagsp = malloc(strlen(ap) + 2)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	*nargv++ = *argv;
 	argv += 2;
@@ -350,7 +350,7 @@ obsolete(argcp, argvp)
 				usage();
 			}
 			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
-				err(1, NULL);
+				err(1, "%s", "");
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
 			(void)strcpy(&nargv[0][2], *argv);

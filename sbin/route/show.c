@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.14 1999/11/09 15:06:34 drochner Exp $	*/
+/*	$NetBSD: show.c,v 1.13 1999/09/03 04:17:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.14 1999/11/09 15:06:34 drochner Exp $");
+__RCSID("$NetBSD: show.c,v 1.13 1999/09/03 04:17:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ show(argc, argv)
 		exit(1);
 	}
 	if ((buf = malloc(needed)) == 0)
-		err(1, NULL);
+		err(1, "%s", "");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 		err(1, "sysctl of routing table");
 	lim  = buf + needed;

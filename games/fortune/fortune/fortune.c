@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.22 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: fortune.c,v 1.21 1999/09/22 18:56:32 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.22 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.21 1999/09/22 18:56:32 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ char	*regcmp(), *regex();
 regex_t *Re_pat = NULL;
 #  define	RE_INIT()	if (Re_pat == NULL && \
 				    (Re_pat = calloc(sizeof(*Re_pat), 1)) == NULL)\
-					err(1, NULL)
+					err(1, "%s", "")
 #  define	RE_COMP(p)	(regcomp(Re_pat, p, REG_EXTENDED))
 #  define	BAD_COMP(f)	((f) != 0)
 #  define	RE_EXEC(p)	(!regexec(Re_pat, p, 0, NULL, 0))
@@ -859,7 +859,7 @@ do_malloc(size)
 	void	*new;
 
 	if ((new = malloc(size)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	return new;
 }
 
@@ -1243,7 +1243,7 @@ conv_pat(orig)
 		else
 			cnt++;
 	if ((new = malloc(cnt)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	for (sp = new; *orig != '\0'; orig++) {
 		if (islower(*orig)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 1999/12/10 06:13:31 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.4 1999/09/03 04:49:23 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: debug.c,v 1.4 1999/09/20 14:28:08 jinmei Exp
+ *  KAME Id: debug.c,v 1.3 1999/08/24 16:45:22 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -479,7 +479,7 @@ dump_lcl_grp(fp)
     	struct uvif *v;
 	struct listaddr *g;
 
-	fprintf(fp, "\nList of local listener information per interface\n");
+	fprintf(fp, "\nList of local listner information per interface\n");
 	for (vifi = 0, v = uvifs; vifi < numvifs; vifi++, v++) {
 		int first = 1;
 

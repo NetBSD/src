@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1997/08/27 11:24:11 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.24.1 1999/12/21 23:16:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -77,11 +77,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -105,6 +106,8 @@ readdisklabel(dev, strat, lp, clp)
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	if (dp) {
@@ -230,11 +233,12 @@ setdisklabel(olp, nlp, openmask, clp)
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
@@ -242,8 +246,10 @@ writedisklabel(dev, strat, lp, clp)
 	int error = 0, i;
 	int dospartoff = 0;
 
-	bp = geteblk((int)lp->d_secsize);
+	bp = geteblk((int)lp->d_secsize, dev);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	if (dp) {

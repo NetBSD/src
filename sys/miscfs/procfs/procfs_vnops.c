@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69 1999/09/02 23:33:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69.8.1 1999/12/21 23:20:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -52,6 +52,7 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
@@ -474,7 +475,8 @@ procfs_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct pfsnode *pfs = VTOPFS(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct pfsnode *pfs = VTOPFS(vp);
 	struct vattr *vap = ap->a_vap;
 	struct proc *procp;
 	struct timeval tv;
@@ -501,7 +503,7 @@ procfs_getattr(v)
 	VATTR_NULL(vap);
 
 	/* next do all the common fields */
-	vap->va_type = ap->a_vp->v_type;
+	vap->va_type = vp->v_type;
 	vap->va_mode = pfs->pfs_mode;
 	vap->va_fileid = pfs->pfs_fileno;
 	vap->va_flags = 0;
@@ -564,7 +566,8 @@ procfs_getattr(v)
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_bytes = vap->va_size = DEV_BSIZE;
+		vap->va_bytes = vap->va_size =
+					blocksize(vp->v_mount->mnt_bshift);
 		break;
 
 	case Pcurproc: {
@@ -588,7 +591,8 @@ procfs_getattr(v)
 		vap->va_nlink = 2;
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
-		vap->va_bytes = vap->va_size = DEV_BSIZE;
+		vap->va_bytes = vap->va_size =
+					blocksize(vp->v_mount->mnt_bshift);
 		break;
 
 	case Pfile:

@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.7 1999/12/17 10:34:23 joda Exp $
+.\"   $NetBSD: apm.4,v 1.6 1999/09/09 03:52:22 itohy Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -76,13 +76,6 @@ Do not print power state on console at
 .Dv APM_POWER_CHANGE
 events.  (Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
-.It Dv APM_DISABLE_INTERRUPTS
-Set this to zero if you don't want the kernel to disable interrupts
-before calling the BIOS. This is required for most IBM ThinkPads, and
-some other newer laptops. A good indication that you need this is that
-the machine hangs just after resuming from suspended state. It's
-unclear if doing this has negative effects on older BIOS, therefore it
-defaults to one (i.e interrupts are disabled).
 .El
 .Pp
 If no processes are holding open file descriptors to the APM device, the

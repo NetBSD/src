@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 1999/11/23 23:16:04 simonb Exp $
+#	$NetBSD: list,v 1.8 1999/06/05 20:17:41 bouyer Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -45,6 +45,7 @@ SPECIAL	ln -s ../../instbin	usr.install/bin/vi
 # local usr.sbin
 SPECIAL	ln -s ../../instbin	usr.install/sbin/chroot
 SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
+SPECIAL	ln -s ../../instbin	usr.install/sbin/update
 
 
 # crunchgen source directory specials: progs built in nonstandard places

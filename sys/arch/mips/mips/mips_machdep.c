@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.60 1999/11/29 11:12:14 uch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.60 1999/11/29 11:12:14 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -131,9 +131,6 @@ int	default_pg_mask = 0x00001800;
 #endif
 
 #ifdef MIPS1
-#ifdef ENABLE_MIPS_TX3900
-int	r3900_icache_direct;
-#endif
 /*
  * MIPS-I (r2000 and r3000) locore-function vector.
  */
@@ -345,6 +342,9 @@ mips3_vector_init()
 void
 mips_vector_init()
 {
+	int i;
+
+	(void) &i;		/* shut off gcc unused-variable warnings */
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -359,27 +359,6 @@ mips_vector_init()
 		cpu_arch = 1;
 		mips_num_tlb_entries = MIPS1_TLB_NUM_TLB_ENTRIES;
 		break;
-#ifdef ENABLE_MIPS_TX3900
-	case MIPS_TX3900:
-		cpu_arch = 1;
-		switch (cpu_id.cpu.cp_majrev) {
-		default:
-			panic("not supported revision");
-		case 1: /* TX3912 */
-			mips_num_tlb_entries = R3900_TLB_NUM_TLB_ENTRIES;
-			r3900_icache_direct = 1;
-			mips_L1ICacheLSize = 16;
-			mips_L1DCacheLSize = 4;
-			break;
-		case 3: /* TX3922 */
-			mips_num_tlb_entries = R3920_TLB_NUM_TLB_ENTRIES;
-			r3900_icache_direct = 0;
-			mips_L1ICacheLSize = 16;
-			mips_L1DCacheLSize = 16;
-			break;
-		}
-		break;
-#endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
 
 #ifdef MIPS3
@@ -486,11 +465,7 @@ struct pridtab cputab[] = {
 	{ MIPS_R8000,	"MIPS R8000 Blackbird/TFP CPU", 4 },
 	{ MIPS_R4600,	"QED R4600 Orion CPU",	3 },
 	{ MIPS_R4700,	"QED R4700 Orion CPU",	3 },
-#ifdef ENABLE_MIPS_TX3900
-	{ MIPS_TX3900,	"Toshiba TX3900 CPU", 1 }, /* see below */
-#else
 	{ MIPS_TX3900,	"Toshiba TX3900 or QED R4650 CPU", 1 }, /* see below */
-#endif
 	{ MIPS_R5000,	"MIPS R5000 CPU",	4 },
 	{ MIPS_RC32364,	"IDT RC32364 CPU",	3 },
 	{ MIPS_RM5230,	"QED RM5200 CPU",	4 },
@@ -544,11 +519,11 @@ cpu_identify()
 		}
 	}
 	if (fpuname == NULL && fpu_id.cpu.cp_imp == cpu_id.cpu.cp_imp)
-		fpuname = "built-in FPU";
+		fpuname = "built in floating point processor";
 	if (cpu_id.cpu.cp_imp == MIPS_R4700)	/* FPU PRid is 0x20 */
-		fpuname = "built-in FPU";
+		fpuname = "built in floating point processor";
 	if (cpu_id.cpu.cp_imp == MIPS_RC64470)	/* FPU PRid is 0x21 */
-		fpuname = "built-in FPU";
+		fpuname = "built in floating point processor";
 
 	printf("cpu0: ");
 	if (cpuname != NULL)
@@ -567,16 +542,8 @@ cpu_identify()
 	printf("cpu0: ");
 #ifdef MIPS1
 	if (cpu_arch == 1) {
-#ifdef ENABLE_MIPS_TX3900
-		printf("%dKB/%dB Instruction %s, %dKB/%dB Data 2-way set associative, %d TLB entries",
-		       mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
-		       r3900_icache_direct ? "direct mapped" : "2-way set associative",
-		       mips_L1DCacheSize / 1024, mips_L1DCacheLSize,
-		       mips_num_tlb_entries);
-#else /* ENABLE_MIPS_TX3900 */
 		printf("%dKB Instruction, %dKB Data, direct mapped cache",
 		    mips_L1ICacheSize / 1024, mips_L1DCacheSize / 1024);
-#endif /* ENABLE_MIPS_TX3900 */
 	}
 #endif
 #ifdef MIPS3
@@ -761,11 +728,9 @@ sendsig(catcher, sig, mask, code)
 	/* Save the floating-pointstate, if necessary, then copy it. */
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-#ifndef SOFTFLOAT
 		/* if FPU has current state, save it first */
 		if (p == fpcurproc)
 			savefpregs(p);
-#endif
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 

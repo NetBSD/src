@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.102 1999/11/01 18:12:20 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.100 1999/08/04 10:50:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -612,7 +612,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 				break;
 			case AUDIO_ENCODING_ULAW:
 				if (mode == AUMODE_PLAY) {
-					swcode = mulaw_to_ulinear16_le;
+					swcode = mulaw_to_ulinear16;
 					factor = 2;
 					m = &sbpmodes[PLAY16];
 				} else
@@ -621,7 +621,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 				break;
 			case AUDIO_ENCODING_ALAW:
 				if (mode == AUMODE_PLAY) {
-					swcode = alaw_to_ulinear16_le;
+					swcode = alaw_to_ulinear16;
 					factor = 2;
 					m = &sbpmodes[PLAY16];
 				} else
@@ -638,15 +638,14 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			case AUDIO_ENCODING_SLINEAR_LE:
 				break;
 			case AUDIO_ENCODING_ULINEAR_LE:
-				swcode = change_sign16_le;
+				swcode = change_sign16;
 				break;
 			case AUDIO_ENCODING_SLINEAR_BE:
 				swcode = swap_bytes;
 				break;
 			case AUDIO_ENCODING_ULINEAR_BE:
 				swcode = mode == AUMODE_PLAY ?
-					swap_bytes_change_sign16_le : 
-					change_sign16_swap_bytes_le;
+					swap_bytes_change_sign16 : change_sign16_swap_bytes;
 				break;
 			case AUDIO_ENCODING_ULAW:
 				swcode = mode == AUMODE_PLAY ? 
@@ -714,7 +713,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 		DPRINTF(("sbdsp_set_params: fd=%d, usemode=%d, idma=%d, odma=%d\n", sc->sc_fullduplex, usemode, sc->sc_i.dmachan, sc->sc_o.dmachan));
 		if (sc->sc_o.dmachan == sc->sc_drq8) {
 			/* Use 16 bit DMA for playing by expanding the samples. */
-			play->sw_code = linear8_to_linear16_le;
+			play->sw_code = linear8_to_linear16;
 			play->factor = 2;
 			sc->sc_o.modep = &sbpmodes[PLAY16];
 			sc->sc_o.dmachan = sc->sc_drq16;
@@ -2305,7 +2304,7 @@ sbdsp_get_props(addr)
 	       (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
 
-#if NMPU > 0
+#if NMIDI > 0
 /*
  * MIDI related routines.
  */

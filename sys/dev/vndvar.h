@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.4 1998/07/31 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.4.18.1 1999/12/21 23:19:52 wrstuden Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,9 @@ struct vnd_softc {
 	int		 sc_unit;	/* logical unit number */
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
+	long		 sc_bsize;	/* logical block size of underlying dev. */
+	int		 sc_lshift;	/* shift value of underlying device */
+	int		 sc_ushift;	/* shift of vnd blocksize */
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 1999/11/13 00:32:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 1999/09/12 01:17:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1974,7 +1974,7 @@ pmap_map(va, pa, endpa, prot)
 
 	sz = endpa - pa;
 	do {
-		pmap_enter(kernel_pmap, va, pa, prot, 0);
+		pmap_enter(kernel_pmap, va, pa, prot, FALSE, 0);
 		va += NBPG;
 		pa += NBPG;
 		sz -= NBPG;
@@ -2106,19 +2106,19 @@ pmap_reference(pmap)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-int
-pmap_enter(pmap, va, pa, prot, flags)
+void
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
-	int flags;
+	boolean_t wired;
+	vm_prot_t access_type;
 {
 	int new_pte, s;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	if (pmap == NULL)
-		return (KERN_SUCCESS);
+		return;
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_ENTER) ||
 		(va == pmap_db_watchva))
@@ -2152,7 +2152,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_enter_user(pmap, va, new_pte, wired);
 	}
 	splx(s);
-	return (KERN_SUCCESS);
 }
 
 static void
@@ -2492,7 +2491,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
 }
 
 void
@@ -2505,7 +2504,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 	}
 }
 

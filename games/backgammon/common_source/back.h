@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.12 1999/10/04 23:26:59 lukem Exp $	*/
+/*	$NetBSD: back.h,v 1.11 1999/07/26 20:56:03 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -133,7 +133,7 @@ extern	int	curc;		/* column position of cursor */
 extern	int	begscr;		/* 'beginning' of screen
 				   (not including board) */
 
-int	addbuf __P((int));
+void	addbuf __P((int));
 void	backone __P((int));
 void	bsect __P((int, int, int, int));
 void	buflush __P((void));

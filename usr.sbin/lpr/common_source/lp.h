@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.13 1999/12/07 14:54:44 mrg Exp $	*/
+/*	$NetBSD: lp.h,v 1.12 1998/07/07 03:36:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -90,7 +90,6 @@ extern char	host[MAXHOSTNAMELEN + 1];
 extern char	*from;		/* client's machine name */
 extern int	remote;		/* true if sending files to a remote host */
 extern char	*printcapdb[];  /* printcap database array */
-extern int	wait_time;	/* time to wait for remote responses */
 /*
  * Structure used for building a sorted list of control files.
  */

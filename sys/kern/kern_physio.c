@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.38 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.37.8.1 1999/12/21 23:19:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -73,13 +73,14 @@ void putphysbuf __P((struct buf *bp));
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, minphys, uio)
+physio(strategy, bp, dev, flags, minphys, uio, bshift)
 	void (*strategy) __P((struct buf *));
 	struct buf *bp;
 	dev_t dev;
 	int flags;
 	void (*minphys) __P((struct buf *));
 	struct uio *uio;
+	int bshift;
 {
 	struct iovec *iovp;
 	struct proc *p = curproc;
@@ -135,7 +136,6 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	bp->b_dev = dev;
 	bp->b_error = 0;
 	bp->b_proc = p;
-	LIST_INIT(&bp->b_dep);
 
 	/*
 	 * [while there are data to transfer and no I/O error]
@@ -155,7 +155,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			bp->b_flags = B_BUSY | B_PHYS | B_RAW | flags;
 
 			/* [set up the buffer for a maximum-sized transfer] */
-			bp->b_blkno = btodb(uio->uio_offset);
+			bp->b_blkno = btodb(uio->uio_offset, bshift);
 			bp->b_bcount = iovp->iov_len;
 			bp->b_data = iovp->iov_base;
 

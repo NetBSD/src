@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.5 1999/10/06 09:19:46 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.4 1999/09/17 01:23:00 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -314,8 +314,11 @@ InitializeScif(bps)
 	/* Initialize SCR */
 	SHREG_SCSCR2 = 0x00;
 
+#if 1
+	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST | SCFCR2_MCE;
+#else
 	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST;
-
+#endif
 	/*Serial Mode Register */
 	SHREG_SCSMR2 = 0x00;	/* 8bit,NonParity,Even,1Stop */
 
@@ -325,7 +328,11 @@ InitializeScif(bps)
 	/*wait 1mSec, because Send/Recv must begin 1 bit period after BRR is set. */
 	WaitFor(1);
 
+#if 1
+	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE;
+#else
 	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1;
+#endif
 
 	/* Send permission, Recieve permission ON */
 	SHREG_SCSCR2 = SCSCR2_TE | SCSCR2_RE;
@@ -1542,6 +1549,12 @@ scifcninit(cp)
 {
 
 	InitializeScif(SCIFCN_SPEED);
+
+#if 0
+	scif_intr_init(); 	/* XXX msaitoh */
+#endif
+
+	scif_puts("scif initialized.\n\r");
 }
 
 #define scif_getc GetcScif

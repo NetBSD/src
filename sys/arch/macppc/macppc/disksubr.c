@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1999/09/27 17:02:44 wrstuden Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.8.1 1999/12/21 23:16:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -145,7 +145,7 @@ static char *read_mac_label __P((dev_t, void (*)(struct buf *),
 static char *read_dos_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
 static int get_netbsd_label __P((dev_t dev, void (*strat)(struct buf *),
-		struct disklabel *lp, daddr_t bno));
+		struct disklabel *lp, daddr_t bno, int bshift, int bsize));
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -291,11 +291,12 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
  *	disk.  This whole algorithm should probably be changed in the future.
  */
 static char *
-read_mac_label(dev, strat, lp, osdep)
+read_mac_label(dev, strat, lp, osdep, bshift, bsize)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift, bsize;
 {
 	struct part_map_entry *part;
 	struct partition *pp;
@@ -306,6 +307,8 @@ read_mac_label(dev, strat, lp, osdep)
 	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize * NUM_PARTS);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read partition map */
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
@@ -380,11 +383,12 @@ done:
  * this should suffice to mount_msdos Zip and other removable media.
  */
 static char *
-read_dos_label(dev, strat, lp, osdep)
+read_dos_label(dev, strat, lp, osdep, bshift, bsize)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift, bsize;
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -395,6 +399,8 @@ read_dos_label(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
@@ -442,11 +448,12 @@ read_dos_label(dev, strat, lp, osdep)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, bno)
+get_netbsd_label(dev, strat, lp, bno, bshift, bsize)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	daddr_t bno;
+	int	bshift, bsize;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -454,6 +461,8 @@ get_netbsd_label(dev, strat, lp, bno)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* Now get the label block */
 	bp->b_blkno = bno + LABELSECTOR;
@@ -496,11 +505,12 @@ done:
  * then we assume that it's a real disklabel and return it.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct buf *bp;
 	char *msg = NULL;
@@ -513,6 +523,8 @@ readdisklabel(dev, strat, lp, osdep)
 		return msg = "Zero secpercyl";
 	}
 	bp = geteblk((int)lp->d_secsize);
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	bp->b_dev = dev;
 	bp->b_blkno = 0;
@@ -526,7 +538,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	if (biowait(bp)) {
 		msg = "I/O error reading block zero";
-	} if (get_netbsd_label(dev, strat, lp, 0)) {
+	} if (get_netbsd_label(dev, strat, lp, 0, bshift, bsize)) {
 		osdep->cd_start = 0;
 		msg = "NetBSD disklabel";
 	} else {
@@ -534,10 +546,12 @@ readdisklabel(dev, strat, lp, osdep)
 
 		sbSigp = (u_int16_t *)bp->b_un.b_addr;
 		if (*sbSigp == 0x4552) {
-			msg = read_mac_label(dev, strat, lp, osdep);
+			msg = read_mac_label(dev, strat, lp, osdep, bshift,
+							bsize);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
-			msg = read_dos_label(dev, strat, lp, osdep);
+			msg = read_dos_label(dev, strat, lp, osdep, bshift,
+							bsize);
 		} else {
 			msg = "no disk label -- NetBSD or Macintosh";
 			osdep->cd_start = 0;	/* XXX for now */
@@ -583,11 +597,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct buf *bp;
 	int error;
@@ -597,16 +612,18 @@ writedisklabel(dev, strat, lp, osdep)
 	 * Try to re-read a disklabel, in case he changed the MBR.
 	 */
 	label = *lp;
-	readdisklabel(dev, strat, &label, osdep);
+	readdisklabel(dev, strat, &label, osdep, bshift);
 	if (osdep->cd_start < 0)
 		return EINVAL;
 
 	/* get a buffer and initialize it */
 	bp = geteblk(lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	bp->b_blkno = osdep->cd_start + LABELSECTOR;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 
 	bp->b_flags = B_BUSY | B_READ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.4 1999/11/30 18:42:02 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,19 +33,16 @@
  * SUCH DAMAGE.
  *
  */
-#include "vrkiu.h"
 
 #define HALF_FONT
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/systm.h>
 #include <dev/cons.h>
 
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/platid.h>
-#include <machine/stdarg.h>
 
 #include <hpcmips/dev/biconsvar.h>
 #include <hpcmips/dev/bicons.h>
@@ -99,7 +96,7 @@ struct {
 #define FB_TABLE_SIZE (sizeof(fb_table)/sizeof(*fb_table))
 
 
-static u_char	*fb_vram	= 0;
+static u_char	*fb_vram	= (unsigned char*)0xAA000000;
 static short	fb_line_bytes	= 0x50;
 static u_char	fb_clear_byte	= 0;
 short	bicons_ypixel	= 240;
@@ -138,14 +135,8 @@ static void
 draw_char(int x, int y, int c)
 {
 	int i;
-	unsigned char* p;
-	
-	if (!fb_vram) {
-		return;
-	}
-
-	p = &fb_vram[(y * FONT_HEIGHT * fb_line_bytes) +
-		    x * FONT_WIDTH * fb_oxel_bytes];
+	unsigned char* p = &fb_vram[(y * FONT_HEIGHT * fb_line_bytes) +
+				   x * FONT_WIDTH * fb_oxel_bytes];
 	for (i = 0; i < FONT_HEIGHT; i++) {
 		(*fb_put_oxel)(p, font_clR8x8_data[FONT_WIDTH * (FONT_HEIGHT * c + i)],
 			       0xff);
@@ -158,9 +149,6 @@ clear(int y, int height)
 {
 	unsigned char *p;
 
-	if (!fb_vram) {
-		return;
-	}
 	TRACE(1, 2);
 	p = &fb_vram[y * fb_line_bytes];
 	TRACE(1, 3);
@@ -178,10 +166,6 @@ static void
 scroll(int y, int height, int d)
 {
 	unsigned char *from, *to;
-
-	if (!fb_vram) {
-		return;
-	}
 	if (d < 0) {
 		from = &fb_vram[y * fb_line_bytes];
 		to = from + d * fb_line_bytes;
@@ -222,31 +206,11 @@ bicons_putn(char *s, int n)
 	}
 }
 
-void
-#ifdef __STDC__
-bicons_printf(const char *fmt, ...)
-#else
-bicons_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	char buf[1000];
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-	bicons_puts(buf);
-}
 
 int
 bicons_getc(dev_t dev)
 {
-#if NVRKIU > 0
 	return vrkiu_getc();
-#endif
-	return 0;
 }
 
 static void
@@ -259,10 +223,9 @@ bicons_putc(dev_t dev, int c)
 	switch (c) {
 	case 0x08: /* back space */
 		if (--curs_x < 0) {
-			curs_x = 0;
+			/* erase character ar cursor position */
+			draw_char(curs_x, curs_y, ' ');
 		}
-		/* erase character ar cursor position */
-		draw_char(curs_x, curs_y, ' ');
 		break;
 	case '\r':
 		curs_x = 0;

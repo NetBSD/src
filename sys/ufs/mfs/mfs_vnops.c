@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.18 1999/10/01 22:12:02 mycroft Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.18.8.1 1999/12/21 23:20:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -153,7 +153,7 @@ mfs_strategy(v)
 	if (mfsp->mfs_pid == 0) {
 		caddr_t base;
 
-		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
+		base = mfsp->mfs_baseoff + (bp->b_blkno << buf->b_bshift);
 		if (bp->b_flags & B_READ)
 			memcpy(bp->b_data, base, bp->b_bcount);
 		else
@@ -179,7 +179,7 @@ mfs_doio(bp, base)
 	register struct buf *bp;
 	caddr_t base;
 {
-	base += (bp->b_blkno << DEV_BSHIFT);
+	base += (bp->b_blkno << buf->b_bshift);
 	if (bp->b_flags & B_READ)
 		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.22 1999/11/10 20:32:31 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.21 1998/11/15 17:11:06 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -9,9 +9,9 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)localtime.c	7.70";
+static char	elsieid[] = "@(#)localtime.c	7.66";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.22 1999/11/10 20:32:31 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.21 1998/11/15 17:11:06 christos Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -82,17 +82,6 @@ __weak_alias(tzsetwall,_tzsetwall);
 static const char	wildabbr[] = "WILDABBR";
 
 static const char	gmt[] = "GMT";
-
-/*
-** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
-** We default to US rules as of 1999-08-17.
-** POSIX 1003.1 section 8.1.1 says that the default DST rules are
-** implementation dependent; for historical reasons, US rules are a
-** common default.
-*/
-#ifndef TZDEFRULESTRING
-#define TZDEFRULESTRING ",M4.1.0,M10.5.0"
-#endif /* !defined TZDEFDST */
 
 struct ttinfo {				/* time type information */
 	long		tt_gmtoff;	/* UTC offset in seconds */
@@ -802,8 +791,6 @@ const int			lastditch;
 			if (name == NULL)
 				return -1;
 		} else	dstoffset = stdoffset - SECSPERHOUR;
-		if (*name == '\0' && load_result != 0)
-			name = TZDEFRULESTRING;
 		if (*name == ',' || *name == ';') {
 			struct rule	start;
 			struct rule	end;
@@ -865,6 +852,8 @@ const int			lastditch;
 			register int	j;
 
 			if (*name != '\0')
+				return -1;
+			if (load_result != 0)
 				return -1;
 			/*
 			** Initial values of theirstdoffset and theirdstoffset.

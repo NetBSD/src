@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclone_boot.h,v 1.3 1999/12/06 09:55:57 mark Exp $	*/
+/*	$NetBSD: cyclone_boot.h,v 1.2 1998/10/05 02:36:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -52,15 +52,9 @@ struct ebsaboot {
 	u_int32_t	bt_memend;	/* end of physical memory */
 	u_int32_t	bt_memavail;	/* start of avail phys memory */
 	u_int32_t	bt_fclk;	/* fclk frequency */
-	u_int32_t	bt_pciclk;	/* PCI bus frequency */
-	u_int32_t	bt_vers;	/* structure version (CATS) */
-	u_int32_t	bt_features;	/* feature mask (CATS) */
 };
 
 #define BT_MAGIC_NUMBER_EBSA	0x45425341
 #define BT_MAGIC_NUMBER_CATS	0x43415453
-
-#define BT_BOOT_VERSION_OLD	0
-#define BT_BOOT_VERSION_NEW	1
 
 /* End of cyclone_boot.h */

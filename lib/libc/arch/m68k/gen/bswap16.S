@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap16.S,v 1.2 1999/10/25 23:48:09 thorpej Exp $	*/
+/*	$NetBSD: bswap16.S,v 1.1 1999/01/15 13:31:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,6 +29,6 @@
 #include <machine/asm.h>
 
 ENTRY(bswap16)
-	movl	%sp@(4),%d0
-	rolw	#8,%d0
+	movl	sp@(4),d0
+	rolw	#8,d0
 	rts

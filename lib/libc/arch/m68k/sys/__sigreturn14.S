@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.4 1999/10/25 23:48:16 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.3 1999/05/02 23:19:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __sigreturn14.S,v 1.4 1999/10/25 23:48:16 thorpej Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.3 1999/05/02 23:19:50 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,9 @@
 #ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
-	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,%sp@-; .data; \
-	PROF/**/x:; .long 0; .text; lea PROF/**/x,%a0; jbsr mcount; \
-	moveml %sp@+,#0x0303
+	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
+	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
+	moveml sp@+,#0x0303
 #endif /* GPROF */
 
 ENTRY(__sigreturn14)

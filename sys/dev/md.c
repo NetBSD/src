@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.20.14.1 1999/12/21 23:19:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -57,6 +57,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -172,6 +173,7 @@ md_attach(parent, self, aux)
 	 */
 	sc->sc_dkdev.dk_driver = &mddkdriver;
 	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	sc->sc_dkdev.dk_byteshift = DEF_BSHIFT;
 	disk_attach(&sc->sc_dkdev);
 }
 
@@ -222,7 +224,7 @@ int mdsize(dev_t dev)
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return 0;
 
-	return (sc->sc_size >> DEV_BSHIFT);
+	return (sc->sc_size >> DEF_BSHIFT);
 }
 
 int
@@ -294,7 +296,8 @@ mdread(dev, uio, flags)
 	struct uio	*uio;
 	int		flags;
 {
-	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio,
+			DEF_BSHIFT));
 }
 
 int
@@ -303,7 +306,8 @@ mdwrite(dev, uio, flags)
 	struct uio	*uio;
 	int		flags;
 {
-	return (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio,
+			DEF_BSHIFT));
 }
 
 /*
@@ -342,7 +346,7 @@ mdstrategy(bp)
 	case MD_KMEM_ALLOCATED:
 		/* These are in kernel space.  Access directly. */
 		bp->b_resid = bp->b_bcount;
-		off = (bp->b_blkno << DEV_BSHIFT);
+		off = (bp->b_blkno << sc->sc_dkdev.dk_byteshift);
 		if (off >= sc->sc_size) {
 			if (bp->b_flags & B_READ)
 				break;	/* EOF */
@@ -393,6 +397,10 @@ mdioctl(dev, cmd, data, flag, proc)
 	switch (cmd) {
 	case MD_GETCONF:
 		*umd = sc->sc_md;
+		return 0;
+
+	case DIOCGBSHIFT:
+		*(int *)data = DEF_BSHIFT;
 		return 0;
 
 	case MD_SETCONF:
@@ -506,7 +514,7 @@ md_server_loop(sc)
 		/* Do the transfer to/from user space. */
 		error = 0;
 		bp->b_resid = bp->b_bcount;
-		off = (bp->b_blkno << DEV_BSHIFT);
+		off = (bp->b_blkno << sc->sc_dkdev.dk_byteshift);
 		if (off >= sc->sc_size) {
 			if (bp->b_flags & B_READ)
 				goto done;	/* EOF (not an error) */

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.94 1999/12/06 22:44:47 simonb Exp $
+#	$NetBSD: NetBSD.dist,v 1.91 1999/09/22 12:54:12 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -88,11 +88,6 @@ postfix
 # ./etc/sliphome
 sliphome
 # ./etc/sliphome
-..
-
-# ./etc/skel
-skel
-# ./etc/skel
 ..
 
 # ./etc/uucp
@@ -838,11 +833,6 @@ amd
 # ./usr/share/examples/amd
 ..
 
-# ./usr/share/examples/dhcp
-dhcp
-# ./usr/share/examples/dhcp
-..
-
 # ./usr/share/examples/emul
 emul
 
@@ -899,11 +889,6 @@ openssl
 # ./usr/share/examples/supfiles
 supfiles
 # ./usr/share/examples/supfiles
-..
-
-# ./usr/share/examples/usermgmt
-usermgmt
-# ./usr/share/examples/usermgmt
 ..
 
 # ./usr/share/examples
@@ -1275,11 +1260,6 @@ mac68k
 # ./usr/share/man/cat4/mac68k
 ..
 
-# ./usr/share/man/cat4/mvme68k
-mvme68k
-# ./usr/share/man/cat4/mvme68k
-..
-
 # ./usr/share/man/cat4/pc532
 pc532
 # ./usr/share/man/cat4/pc532
@@ -1579,11 +1559,6 @@ i386
 # ./usr/share/man/man4/mac68k
 mac68k
 # ./usr/share/man/man4/mac68k
-..
-
-# ./usr/share/man/man4/mvme68k
-mvme68k
-# ./usr/share/man/man4/mvme68k
 ..
 
 # ./usr/share/man/man4/pc532

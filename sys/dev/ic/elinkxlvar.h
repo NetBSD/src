@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.3 1999/10/15 06:07:27 haya Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.2 1999/04/13 23:07:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,8 +116,6 @@ struct ex_softc {
 	int (*enable) __P((struct ex_softc *));
 	void (*disable) __P((struct ex_softc *));
 	int enabled;
-	/* interrupt acknowledge hook */
-	void (*intr_ack) __P((struct ex_softc *));
 };
 
 #define ex_waitcmd(sc) \

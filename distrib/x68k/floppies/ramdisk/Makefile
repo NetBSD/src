@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/12/05 15:48:12 minoura Exp $
+#	$NetBSD: Makefile,v 1.11 1999/07/06 16:22:59 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -34,8 +34,8 @@ start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=2400
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/15/2/80
+	dd if=/dev/zero of=${IMAGE} count=2048
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/16/2/64
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
@@ -63,15 +63,6 @@ ${CBIN}: libhack.o
 
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
-
-# turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
-
-# Used in building bootfloppy
-echoimage:
-	@echo ${.OBJDIR}/${IMAGE}
-
-release:
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c

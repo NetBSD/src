@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.21 1999/07/17 01:08:30 wrstuden Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.21.8.1 1999/12/21 23:20:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -60,6 +60,8 @@
 
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
+
+#include <miscfs/specfs/specdev.h>
 
 caddr_t	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */
@@ -139,6 +141,7 @@ mfs_mountroot()
 	rootvp->v_data = mfsp;
 	rootvp->v_op = mfs_vnodeop_p;
 	rootvp->v_tag = VT_MFS;
+	rootvp->v_specbshift = DEF_BSHIFT;	/* XXX */
 	mfsp->mfs_baseoff = mfs_rootbase;
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
@@ -241,6 +244,7 @@ mfs_mount(mp, path, data, ndp, p)
 	if (checkalias(devvp, makedev(255, mfs_minor++), (struct mount *)0))
 		panic("mfs_mount: dup dev");
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
+	devvp->v_specbshift = DEF_BSHIFT;	/* XXX */
 	devvp->v_data = mfsp;
 	mfsp->mfs_baseoff = args.base;
 	mfsp->mfs_size = args.size;

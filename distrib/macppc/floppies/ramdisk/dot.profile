@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.5 1999/11/23 22:43:27 simonb Exp $
+#	$NetBSD: dot.profile,v 1.4 1999/06/26 06:12:58 cgd Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -55,6 +55,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs kern /kern
+
+	# run update, so that installed software is written as it goes.
+	update
 
 	# get the terminal type
 	_forceloop=""

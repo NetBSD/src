@@ -1,12 +1,10 @@
-# $NetBSD: md.sparc,v 1.36 1999/11/08 22:41:30 mycroft Exp $
+# $NetBSD: md.sparc,v 1.34 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/sparc
 ./usr/include/sparc/_G_config.h
 ./usr/include/sparc/ansi.h
 ./usr/include/sparc/aout_machdep.h
-./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
-./usr/include/sparc/bootinfo.h
 ./usr/include/sparc/bsd_openprom.h
 ./usr/include/sparc/bswap.h
 ./usr/include/sparc/bus.h
@@ -31,7 +29,6 @@
 ./usr/include/sparc/kbio.h
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
-./usr/include/sparc/loadfile_machdep.h
 ./usr/include/sparc/oldmon.h
 ./usr/include/sparc/openpromio.h
 ./usr/include/sparc/param.h
@@ -54,3 +51,5 @@
 ./usr/include/sparc/varargs.h
 ./usr/include/sparc/vmparam.h
 ./usr/include/sparc/vuid_event.h
+./usr/lib/c++rt0.o
+./usr/lib/scrt0.o

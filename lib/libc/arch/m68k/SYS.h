@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.12 1999/10/25 23:48:07 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.11 1999/05/02 23:19:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,9 +44,9 @@
 
 #ifdef __STDC__
 #define	IMMEDIATE	#
-#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,%d0; trap IMMEDIATE 0
+#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,d0; trap IMMEDIATE 0
 #else
-#define SYSTRAP(x)	movl #SYS_/**/x,%d0; trap #0
+#define SYSTRAP(x)	movl #SYS_/**/x,d0; trap #0
 #endif
 
 #ifdef __ELF__

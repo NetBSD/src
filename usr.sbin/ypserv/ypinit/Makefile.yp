@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.9 1999/11/19 16:55:25 abs Exp $
+#	$NetBSD: Makefile.yp,v 1.8 1998/06/08 03:44:34 lukem Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -36,7 +36,6 @@ REVNETGROUP=	/usr/sbin/revnetgroup
 RM=		/bin/rm
 SED=		/usr/bin/sed
 SENDMAIL=	/usr/sbin/sendmail
-SORT=		/usr/bin/sort
 STDETHERS=	/usr/sbin/stdethers
 STDHOSTS=	/usr/sbin/stdhosts
 TOUCH=		/usr/bin/touch
@@ -56,29 +55,25 @@ passwd.time: ${DIR}/master.passwd
 			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 | \
 			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
 			{ print $$1, $$1":*:"$$3":"$$4":"$$5":"$$6":"$$7 }' -|\
-			${SORT} | ${MAKEDBM} - passwd.byname; \
-			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 |\
-			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-			{ print $$3, $$1":*:"$$3":"$$4":"$$5":"$$6":"$$7 }' -|\
-			${SORT} | ${MAKEDBM} - passwd.byuid; \
-		else \
-			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 | \
-			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-			{ print $$1, $$0 }' - | ${SORT} | \
 			${MAKEDBM} - passwd.byname; \
 			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 |\
 			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-			{ print $$3, $$0 }' - | ${SORT} | \
+			{ print $$3, $$1":*:"$$3":"$$4":"$$5":"$$6":"$$7 }' -|\
 			${MAKEDBM} - passwd.byuid; \
+		else \
+			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 | \
+			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+			{ print $$1, $$0 }' - | ${MAKEDBM} - passwd.byname; \
+			${CAT} ${.ALLSRC} | ${CUT} -d: -f1-4,8-10 |\
+			${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+			{ print $$3, $$0 }' - | ${MAKEDBM} - passwd.byuid; \
 		fi; \
 		${CAT} ${.ALLSRC} | \
 		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-		{ print $$1, $$0 }' - | ${SORT} | \
-		${MAKEDBM_S} - master.passwd.byname; \
+		{ print $$1, $$0 }' - | ${MAKEDBM_S} - master.passwd.byname; \
 		${CAT} ${.ALLSRC} | \
 		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-		{ print $$3, $$0 }' - | ${SORT} | \
-		${MAKEDBM_S} - master.passwd.byuid; \
+		{ print $$3, $$0 }' - | ${MAKEDBM_S} - master.passwd.byuid; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated passwd"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -99,8 +94,7 @@ aliases.time: ${DIR}/aliases
 	-@if [ -f ${.ALLSRC} ]; then \
 		${CP} -p ${.ALLSRC} ${DOMAIN}-aliases; \
 		${SENDMAIL} -bi -oA${PWD}/${DOMAIN}-aliases; \
-		${MAKEDBM} -u ${DOMAIN}-aliases | ${SORT} | \
-		${MAKEDBM} - mail.aliases; \
+		${MAKEDBM} -u ${DOMAIN}-aliases | ${MAKEDBM} - mail.aliases; \
 		${MKALIAS} mail.aliases mail.byaddr; \
 		${TOUCH} ${.TARGET}; \
 		${RM} ${DOMAIN}-aliases.db ${DOMAIN}-aliases; \
@@ -133,7 +127,7 @@ amd.home.time: ${AMDDIR}/amd.home
 				else \
 				    printf("%s ", $$i); \
 			}' | \
-		${SORT} | ${MAKEDBM} - amd.home; \
+		${MAKEDBM} - amd.home; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated amd.home"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -151,10 +145,10 @@ ethers.time: ${DIR}/ethers
 	-@if [ -f ${.ALLSRC} ]; then \
 		${STDETHERS} ${.ALLSRC} | ${SED} -e s/#.*$$// | \
 		${AWK} 'BEGIN { FS="\t"; OFS="\t"; } { print $$1, $$0 }' | \
-		${SORT} | ${MAKEDBM} - ethers.byaddr; \
+		${MAKEDBM} - ethers.byaddr; \
 		${STDETHERS} ${.ALLSRC} | \
 		${AWK} 'BEGIN { FS="\t"; OFS="\t"; } { print $$2, $$0 }' | \
-		${SORT} | ${MAKEDBM} - ethers.byname; \
+		${MAKEDBM} - ethers.byname; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated ethers"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -173,10 +167,10 @@ group.time: ${DIR}/group
 	-@if [ -f ${.ALLSRC} ]; then \
 		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
 		    { print $$1, $$0 }' ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - group.byname; \
+		${MAKEDBM} - group.byname; \
 		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
 		    { print $$3, $$0 }' ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - group.bygid; \
+		${MAKEDBM} - group.bygid; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated group"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -195,10 +189,10 @@ hosts.time: ${DIR}/hosts
 	-@if [ -f ${.ALLSRC} ]; then \
 		${STDHOSTS} ${.ALLSRC} | ${SED} -e s/#.*$$// | \
 		${AWK} '{for (i = 2; i <= NF; i++) print $$i, $$0 }' | \
-		${SORT} | ${MAKEDBM} - hosts.byname; \
+		${MAKEDBM} - hosts.byname; \
 		${STDHOSTS} ${.ALLSRC} | \
 		${AWK} 'BEGIN { OFS="\t"; } { print $$1, $$0 }' | \
-		${SORT} | ${MAKEDBM} - hosts.byaddr; \
+		${MAKEDBM} - hosts.byaddr; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated hosts"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -215,11 +209,11 @@ hosts.time: ${DIR}/hosts
 
 netgroup.time: ${DIR}/netgroup
 	-@if [ -f ${.ALLSRC} ]; then \
-		${CAT} ${.ALLSRC} | ${SORT} | ${MAKEDBM} - netgroup; \
+		${CAT} ${.ALLSRC} | ${MAKEDBM} - netgroup; \
 		${CAT} ${.ALLSRC} | ${REVNETGROUP} -u -f - | \
-		${SORT} | ${MAKEDBM} - netgroup.byuser; \
+		${MAKEDBM} - netgroup.byuser; \
 		${CAT} ${.ALLSRC} | ${REVNETGROUP} -h -f - | \
-		${SORT} | ${MAKEDBM} - netgroup.byhost; \
+		${MAKEDBM} - netgroup.byhost; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated netgroup"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -240,10 +234,10 @@ networks.time: ${DIR}/networks
 		${SED} -e "/^#/d" -e s/#.*$$// ${.ALLSRC} | \
 		${AWK} '{print $$1, $$0; \
 		    for (i = 3;i <= NF;i++) print $$i,$$0}' | \
-		${SORT} | ${MAKEDBM} - networks.byname; \
+		${MAKEDBM} - networks.byname; \
 		${AWK} 'BEGIN { OFS="\t"; } $$1 !~ /^#/ { print $$2, $$0 }' \
 		    ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - networks.byaddr; \
+		${MAKEDBM} - networks.byaddr; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated networks"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -262,11 +256,11 @@ protocols.time: ${DIR}/protocols
 	-@if [ -f ${.ALLSRC} ]; then \
 		${AWK} 'BEGIN { OFS="\t"; } $$1 !~ /^#/ { print $$2, $$0 }' \
 		    ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - protocols.bynumber; \
+		${MAKEDBM} - protocols.bynumber; \
 		${SED} -e "/^#/d" -e s/#.*$$// ${.ALLSRC} | \
 		${AWK} '{print $$1, $$0; \
 		    for (i = 3;i <= NF;i++) print $$i,$$0}' | \
-		${SORT} | ${MAKEDBM} - protocols.byname; \
+		${MAKEDBM} - protocols.byname; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated protocols"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -285,7 +279,7 @@ rpc.time: ${DIR}/rpc
 	-@if [ -f ${.ALLSRC} ]; then \
 		${AWK} 'BEGIN { OFS="\t"; } $$1 !~ /^#/ { print $$2, $$0 }' \
 		    ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - rpc.bynumber; \
+		${MAKEDBM} - rpc.bynumber; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated rpc"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -303,7 +297,7 @@ services.time: ${DIR}/services
 	-@if [ -f ${.ALLSRC} ]; then \
 		${AWK} 'BEGIN { OFS="\t"; } $$1 !~ /^#/ { print $$2, $$0 }' \
 		    ${.ALLSRC} | \
-		${SORT} | ${MAKEDBM} - services.byname; \
+		${MAKEDBM} - services.byname; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated services"; \
 		if [ ! ${NOPUSH} ]; then \
@@ -320,7 +314,7 @@ services.time: ${DIR}/services
 netid.time: ${DIR}/passwd ${DIR}/group ${DIR}/hosts ${DIR}/netid
 	-@${MKNETID} -q -d ${DOMAIN} -p ${DIR}/passwd -g ${DIR}/group -h \
 	      ${DIR}/hosts -m ${DIR}/netid | \
-	  ${SORT} | ${MAKEDBM} - netid.byname; \
+	  ${MAKEDBM} - netid.byname; \
 	  ${TOUCH} ${.TARGET}; \
 	  ${ECHO} "updated netid"; \
 	  if [ ! ${NOPUSH} ]; then \

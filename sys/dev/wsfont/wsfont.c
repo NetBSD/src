@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -68,16 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $");
 #include <dev/wsfont/lucida16x29.h>
 #endif
 
-#ifdef FONT_VT220L8x8
-#define HAVE_FONT 1
-#include <dev/wsfont/vt220l8x8.h>
-#endif
-
-#ifdef FONT_VT220L8x10
-#define HAVE_FONT 1
-#include <dev/wsfont/vt220l8x10.h>
-#endif
-
 /* Make sure we always have at least one font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -100,6 +90,9 @@ struct font {
 	u_char	byteorder;	/* XXX move to wsdisplay_font */
 };	
 
+#define WSFONT_BUILTIN	(0x01)
+#define WSFONT_STATIC	(0x02)
+
 /* Our list of built-in fonts */
 static struct font *list, builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
@@ -119,12 +112,6 @@ static struct font *list, builtin_fonts[] = {
 #endif
 #ifdef FONT_QVSS8x15
 	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_R2L, WSFONT_L2R },
-#endif
-#ifdef FONT_VT220L8x8
-	{ NULL, NULL, &vt220l8x8, 0, 7, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
-#endif
-#ifdef FONT_VT220L8x10
-	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 	{ NULL, NULL, NULL, 0, WSFONT_L2R, WSFONT_L2R },
 };
@@ -169,6 +156,7 @@ static struct	font *wsfont_find0 __P((int));
 static void	wsfont_revbit __P((struct wsdisplay_font *));
 static void	wsfont_revbyte __P((struct wsdisplay_font *));
 
+
 /*
  * Reverse the bit order of a font
  */
@@ -184,6 +172,7 @@ wsfont_revbit(font)
 	while (p < m)
 		*p++ = reverse[*p];
 }
+
 
 /*
  * Reverse the byte order of a font
@@ -216,26 +205,29 @@ wsfont_revbyte(font)
 	}
 }
 
+
 /*
  * Enumarate the list of fonts
  */
 void
-wsfont_enum(cb)
-	void (*cb) __P((char *, int, int, int));
+wsfont_enum(func)
+	void (*func) __P((char *, int, int, int));
 {
-	struct wsdisplay_font *f;
 	struct font *ent;
+	struct wsdisplay_font *font;
 	int s;
 	
 	s = splhigh();
 	
 	for (ent = list; ent; ent = ent->next) {
-		f = ent->font;	
-		cb(f->name, f->fontwidth, f->fontheight, f->stride);
+		font = ent->font;	
+		func(font->name, font->fontwidth, font->fontheight, 
+		    font->stride);
 	}
 	
 	splx(s);
 }
+
 
 /*
  * Initialize list with WSFONT_BUILTIN fonts
@@ -246,15 +238,17 @@ wsfont_init(void)
 	static int again;
 	int i;
 	
-	if (again != 0)
+	if (again)
 		return;
+
 	again = 1;
 		
-	for (i = 0; builtin_fonts[i].font != NULL; i++) {
+	for (i = 0; builtin_fonts[i].font; i++) {
 		builtin_fonts[i].next = list;
 		list = &builtin_fonts[i];
 	}
 }
+
 
 /*
  * Find a font by cookie. Called at splhigh.
@@ -265,12 +259,13 @@ wsfont_find0(cookie)
 {
 	struct font *ent;
 	
-	for (ent = list; ent != NULL; ent = ent->next)
+	for (ent = list; ent; ent = ent->next)
 		if (ent->cookie == cookie)
 			return (ent);
 			
 	return (NULL);
 }
+
 
 /*
  * Find a font.
@@ -285,17 +280,17 @@ wsfont_find(name, width, height, stride)
 	
 	s = splhigh();
 	
-	for (ent = list; ent != NULL; ent = ent->next) {
-		if (height != 0 && ent->font->fontheight != height)
+	for (ent = list; ent; ent = ent->next) {
+		if (height && ent->font->fontheight != height)
 			continue;
 
-		if (width != 0 && ent->font->fontwidth != width)
+		if (width && ent->font->fontwidth != width)
 			continue;
 
-		if (stride != 0 && ent->font->stride != stride)
+		if (stride && ent->font->stride != stride)
 			continue;
 		
-		if (name != NULL && strcmp(ent->font->name, name) != 0)
+		if (name && strcmp(ent->font->name, name))
 			continue;
 
 		splx(s);
@@ -306,6 +301,7 @@ wsfont_find(name, width, height, stride)
 	return (-1);
 }
 
+
 /*
  * Add a font to the list.
  */
@@ -315,21 +311,21 @@ wsfont_add(font, copy)
 	struct wsdisplay_font *font;
 	int copy;
 {
-	static int cookiegen = 666;
 	struct font *ent;
-	size_t size;
+	static int cookiegen = 666;
 	int s;
-	
-	s = splhigh();
+	size_t size;
 	
 	/* Don't allow exact duplicates */
+	s = splhigh();
+	
 	if (wsfont_find(font->name, font->fontwidth, font->fontheight, 
 	    font->stride) >= 0) {
 		splx(s);
 		return (-1);
 	}
 	
-	MALLOC(ent, struct font *, sizeof *ent, M_DEVBUF, M_WAITOK);
+	MALLOC(ent, struct font *, sizeof *ent, M_WSCONS, M_WAITOK);
 	
 	ent->lockcount = 0;
 	ent->flg = 0;
@@ -343,11 +339,11 @@ wsfont_add(font, copy)
 		ent->flg = WSFONT_STATIC;
 	} else {
 		MALLOC(ent->font, struct wsdisplay_font *, sizeof *ent->font, 
-		    M_DEVBUF, M_WAITOK);
+		    M_WSCONS, M_WAITOK);
 		memcpy(ent->font, font, sizeof(*ent->font));
 		
 		size = font->fontheight * font->numchars * font->stride;
-		MALLOC(ent->font->data, void *, size, M_DEVBUF, M_WAITOK);
+		MALLOC(ent->font->data, void *, size, M_WSCONS, M_WAITOK);
 		memcpy(ent->font->data, font->data, size);
 		ent->flg = 0;
 	}
@@ -359,6 +355,7 @@ wsfont_add(font, copy)
 }
 #endif
 			
+
 /*
  * Remove a font.
  */
@@ -377,15 +374,15 @@ wsfont_remove(cookie)
 		return (-1);
 	}
 	
-	if ((ent->flg & WSFONT_BUILTIN) != 0 || ent->lockcount != 0) {
+	if ((ent->flg & WSFONT_BUILTIN) || ent->lockcount != 0) {
 		splx(s);
 		return (-1);
 	}
 	
 	/* Don't free statically allocated font data */
-	if ((ent->flg & WSFONT_STATIC) != 0) {
-		FREE(ent->font->data, M_DEVBUF);
-		FREE(ent->font, M_DEVBUF);
+	if (!(ent->flg & WSFONT_STATIC)) {
+		FREE(ent->font->data, M_WSCONS);
+		FREE(ent->font, M_WSCONS);
 	}
 		
 	/* Remove from list, free entry */	
@@ -397,11 +394,12 @@ wsfont_remove(cookie)
 	if (ent->next)
 		ent->next->prev = ent->prev;	
 			
-	FREE(ent, M_DEVBUF);
+	FREE(ent, M_WSCONS);
 	splx(s);
-	return (0);
+	return (ent ? 0 : -1);
 }
 #endif
+	
 
 /*
  * Lock a given font and return new lockcount. This fails if the cookie
@@ -423,6 +421,7 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 		if (bitorder && bitorder != ent->bitorder) {
 			if (ent->lockcount)
 				return (-1);
+		
 			wsfont_revbit(ent->font);
 			ent->bitorder = bitorder;
 		}
@@ -430,6 +429,7 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 		if (byteorder && byteorder != ent->byteorder) {
 			if (ent->lockcount)
 				return (-1);
+
 			wsfont_revbyte(ent->font);
 			ent->byteorder = byteorder;
 		}
@@ -439,9 +439,11 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 	} else
 		lc = -1;
 	
+	
 	splx(s);
 	return (lc);
 }
+
 
 /*
  * Get font flags and lockcount.
@@ -461,8 +463,9 @@ wsfont_getflg(cookie, flg, lc)
 	}
 	
 	splx(s);
-	return (ent != NULL ? 0 : -1);
+	return (ent ? 0 : -1);
 }
+
 
 /*
  * Unlock a given font and return new lockcount.
@@ -479,6 +482,7 @@ wsfont_unlock(cookie)
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (ent->lockcount == 0)
 			panic("wsfont_unlock: font not locked\n");
+			
 		lc = --ent->lockcount;
 	} else	
 		lc = -1;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.63 1999/12/05 20:09:17 danw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.51 1999/09/27 22:58:57 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp 
+ *	NetBSD: pcmciadevs,v 1.48 1999/09/27 22:57:26 enami Exp 
  */
 
 /*-
@@ -80,13 +80,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXM056BNW,
-	    PCMCIA_CIS_3COM_3CXM056BNW,
-	    0,
-	    "3Com Corporation",
-	    "3Com/NoteWorthy 3CXM056-BNW 56K Modem"	},
-	},
-	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
 	    PCMCIA_CIS_3COM_3CXEM556,
 	    0,
@@ -99,13 +92,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com/Megahertz 3CXEM556-INT Ethernet/Modem"	},
-	},
-	{
-	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
-	    PCMCIA_CIS_3COM_3CCFEM556BI,
-	    0,
-	    "3Com Corporation",
-	    "3Com/Megahertz 3CCFEM556BI Ethernet/Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
@@ -171,39 +157,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Fujitsu Towa LA501 Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA10S,
-	    PCMCIA_CIS_FUJITSU_LA10S,
-	    0,
-	    "Fujitsu Corporation",
-	    "Fujitsu Compact Flash Ethernet"	},
-	},
-	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_3270,
-	    PCMCIA_CIS_IBM_3270,
-	    0,
-	    "IBM Corporation",
-	    "3270 Emulation"	},
-	},
-	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
 	    "IBM Corporation",
 	    "National Semiconductor InfoMover"	},
-	},
-	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_5250,
-	    PCMCIA_CIS_IBM_5250,
-	    0,
-	    "IBM Corporation",
-	    "5250 Emulation"	},
-	},
-	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_TROPIC,
-	    PCMCIA_CIS_IBM_TROPIC,
-	    0,
-	    "IBM Corporation",
-	    "Token Ring 4/16"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
@@ -220,25 +178,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Wireless LAN Entry"	},
 	},
 	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
+	    PCMCIA_CIS_IBM_PORTABLE_CDROM_DRIVE,
 	    0,
 	    "IBM Corporation",
 	    "PCMCIA Portable CD-ROM Drive"	},
 	},
 	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
-	    PCMCIA_CIS_IBM_ETHERJET,
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET_PCCARD,
+	    PCMCIA_CIS_IBM_ETHERJET_PCCARD,
 	    0,
 	    "IBM Corporation",
-	    "IBM EtherJet Ethernet"	},
+	    "IBM EtherJet Ethernet PC Card"	},
 	},
 	{
-	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
-	    PCMCIA_CIS_IODATA_PCLATE,
+	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
+	    PCMCIA_CIS_IODATA_PCLAT,
 	    0,
 	    "I-O DATA",
-	    "I-O DATA PCLA/TE"	},
+	    "I-O DATA PCLA/T"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -267,13 +225,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Megahertz Corporation",
 	    "Megahertz XJ4288 Modem"	},
-	},
-	{
-	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4336,
-	    PCMCIA_CIS_MEGAHERTZ_XJ4336,
-	    0,
-	    "Megahertz Corporation",
-	    "Megahertz XJ4336 Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ5560,
@@ -339,13 +290,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications Dual RS232"	},
 	},
 	{
-	    PCMCIA_VENDOR_SOCEKT, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
-	    PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
-	    0,
-	    "",
-	    "Socket Communications Low Power Ethernet CF"	},
-	},
-	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX,
 	    0,
@@ -358,13 +302,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
-	},
-	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
-	    PCMCIA_CIS_TDK_LAK_CF010,
-	    0,
-	    "TDK Corporation",
-	    "TDK LAC-CF010"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,
@@ -388,25 +325,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Xircom CreditCard CE2 Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE3_10_100,
-	    PCMCIA_CIS_TDK_XIR_CE3_10_100,
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW,
+	    PCMCIA_CIS_TDK_XIR_CNW,
 	    0,
 	    "TDK Corporation",
-	    "Xircom CreditCard CE3 10/100 Ethernet"	},
-	},
-	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_801,
-	    PCMCIA_CIS_TDK_XIR_CNW_801,
-	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard Netwave (Canada)"	},
-	},
-	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_802,
-	    PCMCIA_CIS_TDK_XIR_CNW_802,
-	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard Netwave (US)"	},
+	    "Xircom CreditCard Netwave"	},
 	},
 	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
@@ -456,13 +379,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Lucent Technologies",
 	    "WaveLAN/IEEE"	},
-	},
-	{
-	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
-	    PCMCIA_CIS_BAY_STACK_650,
-	    0,
-	    "Bay Networks",
-	    "BayStack 650 Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -563,13 +479,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega"	},
 	},
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
-	    PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
-	    0,
-	    "Corega K.K.",
-	    "Corega"	},
-	},
-	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
 	    PCMCIA_CIS_SVEC_COMBOCARD,
 	    0,
@@ -589,20 +498,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "AmbiCom Inc",
 	    "AmbiCom AMB8002T"	},
-	},
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_PCLAT,
-	    PCMCIA_CIS_IODATA_PCLAT,
-	    0,
-	    "I-O DATA",
-	    "IO-DATA PCLA/T"	},
-	},
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EPSON_EEN10B,
-	    PCMCIA_CIS_EPSON_EEN10B,
-	    0,
-	    "Seiko Epson Corporation",
-	    "Epson EEN10B"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
@@ -721,13 +616,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Dayna Corporation",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_BAY, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Bay Networks",
 	    NULL,
 	},
 	{
@@ -854,13 +742,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "AmbiCom Inc",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_EPSON, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Seiko Epson Corporation",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1999/11/23 23:16:04 simonb Exp $
+#	$NetBSD: list,v 1.4 1999/06/05 20:17:42 bouyer Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -59,6 +59,7 @@ SYMLINK	/bin/cat			usr/bin/tset
 SYMLINK	/bin/cat			usr/sbin/bad144
 SYMLINK	/bin/cat			usr/sbin/chown
 SYMLINK	/bin/cat			usr/sbin/chroot
+SYMLINK	/bin/cat			usr/sbin/update
 SPECIAL	/bin/rm ramdiskbin
 
 # copy the MAKEDEV script and make some devices

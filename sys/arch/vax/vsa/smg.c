@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.20 1999/12/12 14:40:55 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.17 1999/08/27 17:49:41 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -117,8 +117,7 @@ static int	smg_mmap __P((void *, off_t, int));
 static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	smg_free_screen __P((void *, void *));
-static int	smg_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
+static void	smg_show_screen __P((void *, void *));
 static void	smg_crsr_blink __P((void *));
 
 const struct wsdisplay_accessops smg_accessops = {
@@ -409,7 +408,7 @@ smg_mmap(v, offset, prot)
 {
 	if (offset >= SMSIZE || offset < 0)
 		return -1;
-	return (SMADDR + offset) >> PGSHIFT;
+	return (SMADDR + offset) >> CLSHIFT;
 }
 
 int
@@ -433,19 +432,16 @@ smg_free_screen(v, cookie)
 {
 }
 
-int
-smg_show_screen(v, cookie, waitok, cb, cbarg)
+void
+smg_show_screen(v, cookie)
 	void *v;
 	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
 {
 	struct smg_screen *ss = cookie;
 	int row, col, line;
 
 	if (ss == curscr)
-		return (0);
+		return;
 
 	for (row = 0; row < SM_ROWS; row++)
 		for (line = 0; line < SM_CHEIGHT; line++) {
@@ -465,7 +461,6 @@ smg_show_screen(v, cookie, waitok, cb, cbarg)
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];
 	curscr = ss;
-	return (0);
 }
 
 cons_decl(smg);
@@ -483,24 +478,17 @@ smgcninit(cndev)
 
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
-	cn_tab->cn_pri = CN_INTERNAL;
-#if 0
+	cn_tab->cn_dev = makedev(WSCONSOLEMAJOR, 0);
+#if NLKC
 	lkccninit(cndev);
 	wsdisplay_set_cons_kbd(lkccngetc, nullcnpollc);
 #endif
 }
 
-/*
- * Called very early to setup the glass tty as console.
- * Because it's called before the VM system is inited, virtual memory
- * for the framebuffer can be stolen directly without disturbing anything.
- */
-void
-smgcnprobe(cndev)
-	struct  consdev *cndev;
+int smgprobe(void);
+int
+smgprobe()
 {
-	extern vaddr_t virtual_avail;
-
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
@@ -508,14 +496,14 @@ smgcnprobe(cndev)
 		if ((vax_confdata & KA420_CFG_L3CON) ||
 		    (vax_confdata & KA420_CFG_MULTU))
 			break; /* doesn't use graphics console */
-		sm_addr = (caddr_t)virtual_avail;
-		virtual_avail += SMSIZE;
-		ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE/VAX_NBPG));
-		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(WSCONSOLEMAJOR, 0);
-		break;
+		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
+		if (sm_addr == 0)
+			return 0;
+
+		return 1;
 
 	default:
 		break;
 	}
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.35 1999/08/03 20:19:19 wrstuden Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.35.8.1 1999/12/21 23:20:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -550,8 +550,8 @@ portal_getattr(v)
 	vap->va_uid = 0;
 	vap->va_gid = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
-	vap->va_size = DEV_BSIZE;
-	vap->va_blocksize = DEV_BSIZE;
+	vap->va_size = blocksize(vp->v_mount->mnt_bshift);
+	vap->va_blocksize = vap->va_size;
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;

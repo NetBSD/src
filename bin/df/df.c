@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.33 1999/09/24 13:35:21 hubertf Exp $	*/
+/*	$NetBSD: df.c,v 1.32 1999/07/27 12:13:19 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.33 1999/09/24 13:35:21 hubertf Exp $");
+__RCSID("$NetBSD: df.c,v 1.32 1999/07/27 12:13:19 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,7 +412,7 @@ ufs_df(file, sfsp)
 	sfsp->f_blocks = sblock.fs_dsize;
 	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
 		sblock.fs_cstotal.cs_nffree;
-	sfsp->f_bavail = ((int64_t)sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
+	sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
 		(sblock.fs_dsize - sfsp->f_bfree);
 	if (sfsp->f_bavail < 0)
 		sfsp->f_bavail = 0;

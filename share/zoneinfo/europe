@@ -1,13 +1,13 @@
-# @(#)europe	7.67
+# @(#)europe	7.62
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1999-10-29):
+# From Paul Eggert <eggert@twinsun.com> (1999-03-22):
 # A good source for time zone historical data outside the U.S. is
-# Thomas G. Shanks, The International Atlas (5th edition),
-# San Diego: ACS Publications, Inc. (1999).
+# Thomas G. Shanks, The International Atlas (4th edition),
+# San Diego: ACS Publications, Inc. (1995).
 #
 # Gwillim Law <LAW@encmail.encompass.com> writes that a good source
 # for recent time zone data is the International Air Transport
@@ -15,8 +15,8 @@
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.
 #
-# Except where otherwise noted, Shanks is the source for entries through 1991,
-# and IATA SSIM is the source for entries afterwards.
+# Except where otherwise noted, Shanks is the source for entries through 1990,
+# and IATA SSIM is the source for entries after 1990.
 #
 # Other sources occasionally used include:
 #
@@ -154,11 +154,6 @@
 # acronym BDST for British Double Summer Time.  Look for the published
 # time of sunrise and sunset in The Times, when BDST was in effect, and
 # if you find a zone reference it will say, "All times B.D.S.T."
-
-# From Joseph S. Myers (1999-09-02):
-# ... some military cables (WO 219/4100 - this is a copy from the
-# main SHAEF archives held in the US National Archives, SHAEF/5252/8/516)
-# agree that the usage is BDST (this appears in a message dated 17 Feb 1945).
 
 # Howse writes (p 157) `DBST'; let's assume this is a typo.
 
@@ -713,34 +708,6 @@
 # Implements the eighth Directive. Has the same text about the Isle of Man,
 # Guernsey and Jersey as the 1994 Order.
 
-# From Joseph S. Myers (1999-09-02):
-# I today found the 1916 summer time orders for the Channel Islands in
-# the Public Record Office (HO 45/10811/312364)....  Alderney,
-# Jersey and Guernsey all enacted summer time for 1916 (and the
-# enactment for the Isle of Man is already noted).  This doesn't
-# complete the resolution of timekeeping in the Channel Islands, since
-# 1917-1921 need to be resolved for the Channel Islands, and it isn't
-# clear whether the islands were using GMT or local time then.  The
-# changes in Alderney and Guernsey were at the same 2am GMT time as
-# for Great Britain; the order for Jersey is more interesting.
-#
-# From Paul Eggert (1999-10-22):
-# Mark Brader kindly translated the 1916 Jersey order from the French.
-# It says that the 1916 transitions were 05-20 and 09-30 at midnight.
-# No doubt this was 24:00, two or three hours earlier than Great Britain.
-# It also says that after 1916 they'll sync with Great Britain.
-
-# From Joseph S. Myers (1999-09-28):
-# I have the 1918 orders for Guernsey, Alderney (both changing on same
-# dates as UK, 2am GMT) and Sark (same dates; start and end at 2am,
-# start "temps de Greenwich" (not specified as "temps moyen de
-# Greenwich" which was used in the other orders) and end in an
-# unspecified zone).  For Jersey the same file (Public Record Office: HO
-# 45/10892/357138) includes letters to the effect that in 1918 and 1919
-# the States of Jersey agreed the same start and end dates as the UK
-# (times unspecified, and it was the 1916 Jersey order that specified
-# change at midnight of an unspecified zone).
-
 # From Joseph S. Myers <jsm28@hermes.cam.ac.uk> (1998-01-06):
 #
 # The legal time in the UK outside of summer time is definitely GMT, not UTC;
@@ -749,7 +716,7 @@
 # (Lords Hansard 11 June 1997 columns 964 to 976)
 # </a>.
 
-# From Paul Eggert (1999-09-20):
+# From Paul Eggert <eggert@twinsun.com> (1996-06-12):
 #
 # The date `20 April 1924' in the table of ``Summer Time: A
 # Consultation Document'' (Cm 722, 1989) table is a transcription error;
@@ -773,14 +740,11 @@
 # Actually, that date saw the usual switch to summer time.
 # Standard time was not changed until 1968-10-27 (the clocks didn't change).
 #
-# Here is another incorrect claim by Shanks: 
+# The following claims by Shanks are possible though doubtful;
+# we'll ignore them for now.
 #     * Jersey, Guernsey, and the Isle of Man did not switch from GMT
 #	to daylight saving time until 1921 Apr 3, when they began to
 #	conform with Great Britain.
-# S.R.&O. 1916, No. 382 and HO 45/10811/312364 (quoted above) say otherwise.
-#
-# The following claim by Shanks is possible though doubtful;
-# we'll ignore it for now.
 #     * Dublin's 1971-10-31 switch was at 02:00, even though London's was 03:00.
 #
 #
@@ -1000,11 +964,14 @@ Rule	E-Eur	1996	max	-	Oct	lastSun	 0:00	0	-
 Rule	Russia	1917	only	-	Jul	 1	23:00	1:00	MST	# Moscow Summer Time
 Rule	Russia	1917	only	-	Dec	28	 0:00	0	MMT	# Moscow Mean Time
 Rule	Russia	1918	only	-	May	31	22:00	2:00	MDST	# Moscow Double Summer Time
-Rule	Russia	1918	only	-	Sep	16	 1:00	1:00	MST
+Rule	Russia	1918	only	-	Sep	17	 0:00	1:00	MST
 Rule	Russia	1919	only	-	May	31	23:00	2:00	MDST
 Rule	Russia	1919	only	-	Jul	 1	 2:00	1:00	S
 Rule	Russia	1919	only	-	Aug	16	 0:00	0	-
 Rule	Russia	1921	only	-	Feb	14	23:00	1:00	S
+# Shanks gives 1921 Mar 21 for the following transition.
+# From Andrey A. Chernov <ache@astral.msk.su> (1993-11-12):
+# My sources says, that it is Mar 20, not 21.
 Rule	Russia	1921	only	-	Mar	20	23:00	2:00	M # Midsummer
 Rule	Russia	1921	only	-	Sep	 1	 0:00	1:00	S
 Rule	Russia	1921	only	-	Oct	 1	 0:00	0	-
@@ -1087,6 +1054,7 @@ Rule	Albania	1984	only	-	Apr	 1	0:00	1:00	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Tirane	1:19:20 -	LMT	1914
 			1:00	-	CET	1940 Jun 16
+# The following transition is from Shanks's 4th edition (1995).
 			1:00	Albania	CE%sT	1984 Jul
 			1:00	EU	CE%sT
 
@@ -1116,17 +1084,17 @@ Zone	Europe/Vienna	1:05:20 -	LMT	1893 Apr
 			1:00	EU	CE%sT
 
 # Belarus
+# Transitions before 1991 are from Shanks (1995).
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Minsk	1:50:16 -	LMT	1880
 			1:50	-	MMT	1924 May 2 # Minsk Mean Time
 			2:00	-	EET	1930 Jun 21
 			3:00	-	MSK	1941 Jun 28
 			1:00	C-Eur	CE%sT	1944 Jul  3
-			3:00	Russia	MSK/MSD	1990
-			3:00	-	MSK	1991 Mar 31 2:00s
+			3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
 			2:00	1:00	EEST	1991 Sep 29 2:00s
-			2:00	-	EET	1992 Mar 29 0:00s
-			2:00	1:00	EEST	1992 Sep 27 0:00s
+			2:00	-	EET	1992 Mar 29 2:00s
+			2:00	1:00	EEST	1992 Sep 27 2:00s
 			2:00	Russia	EE%sT
 
 # Belgium
@@ -1197,12 +1165,6 @@ Zone	Europe/Brussels	0:17:30 -	LMT	1880
 # see Yugoslavia
 
 # Bulgaria
-#
-# From Plamen Simenov <P.Simeonov@cnsys.bg> via Steffen Thorsen (1999-09-09):
-# A document of Government of Bulgaria (No.94/1997) says:
-# EET --> EETDST is in 03:00 Local time in last Sunday of March ...
-# EETDST --> EET is in 04:00 Local time in last Sunday of October
-#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Bulg	1979	only	-	Mar	31	23:00	1:00	S
 Rule	Bulg	1979	only	-	Oct	 1	 1:00	0	-
@@ -1217,8 +1179,7 @@ Zone	Europe/Sofia	1:33:16 -	LMT	1880
 			2:00	-	EET	1979 Mar 31 23:00
 			2:00	Bulg	EE%sT	1982 Sep 26  2:00
 			2:00	C-Eur	EE%sT	1991
-			2:00	E-Eur	EE%sT	1997
-			2:00	EU	EE%sT
+			2:00	E-Eur	EE%sT
 
 # Croatia
 # see Yugosloavia
@@ -1317,15 +1278,6 @@ Zone America/Thule	-4:35:08 -	LMT	1916 Jul 28 # Pituffik
 # for their standard and summer times. He says no, they use "suveaeg"
 # (summer time) and "talveaeg" (winter time).
 
-# From <a href="http://www.baltictimes.com/">The Baltic Times</a> (1999-09-09)
-# via Steffen Thorsen:
-# This year will mark the last time Estonia shifts to summer time,
-# a council of the ruling coalition announced Sept. 6....
-# But what this could mean for Estonia's chances of joining the European
-# Union are still unclear.  In 1994, the EU declared summer time compulsory
-# for all member states until 2001.  Brussels has yet to decide what to do
-# after that. 
-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Tallinn	1:39:00	-	LMT	1880
 			1:39:00	-	TMT	1918 Feb # Tallinn Mean Time
@@ -1337,8 +1289,7 @@ Zone	Europe/Tallinn	1:39:00	-	LMT	1880
 			3:00	Russia	MSK/MSD	1989 Mar 26 2:00s
 			2:00	1:00	EEST	1989 Sep 24 2:00s
 			2:00	C-Eur	EE%sT	1998 Sep 22
-			2:00	EU	EE%sT	2000
-			2:00	-	EET
+			2:00	EU	EE%sT
 
 # Finland
 #
@@ -1362,6 +1313,7 @@ Zone	Europe/Helsinki	1:39:52 -	LMT	1878 May 31
 # France
 #
 # Shanks seems to use `24:00' ambiguously; we resolve it with Whitman.
+# From Shanks (1991):
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	France	1916	only	-	Jun	14	23:00s	1:00	S
 Rule	France	1916	1919	-	Oct	Sun>=1	23:00s	0	-
@@ -1449,6 +1401,7 @@ Rule	Germany	1945	only	-	May	31	3:00	2:00	M # Midsummer
 Rule	Germany	1945	only	-	Sep	23	3:00	1:00	S
 Rule	Germany	1945	only	-	Nov	18	2:00s	0	-
 Rule	Germany	1946	only	-	Apr	14	2:00s	1:00	S
+# Shanks gives 1946-10-06; go with the PTB.
 Rule	Germany	1946	only	-	Oct	 7	2:00s	0	-
 Rule	Germany	1947	1949	-	Oct	Sun>=1	2:00s	0	-
 Rule	Germany	1947	only	-	Apr	 6	2:00s	1:00	S
@@ -1565,10 +1518,10 @@ Zone	Europe/Budapest	1:16:20 -	LMT	1890 Oct
 # might be a reference to the Julian calendar as opposed to Gregorian, or it
 # might mean something else (???).
 #
-# From Paul Eggert <eggert@twinsun.com> (1999-10-29):
+# From Paul Eggert <eggert@twinsun.com> (1993-12-09):
 # The Iceland Almanak, Shanks and Whitman disagree on many points.
 # We go with the Almanak, except for one claim from Shanks, namely that
-# Reykavik was 21W57 from 1837 to 1908, local mean time before that.
+# Reykavik was -1:28 from 1837 to 1908, local mean time before that.
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Iceland	1917	1918	-	Feb	19	23:00	1:00	S
@@ -1722,6 +1675,8 @@ Zone	Europe/Riga	1:36:24	-	LMT	1880
 			2:00	-	EET	1940 Aug  5
 			3:00	-	MSK	1941 Jul
 			1:00	C-Eur	CE%sT	1944 Oct 13
+			# Shanks says 1944-08-08, but
+			# Riga fell to the Red Army on 1944-10-13.
 			3:00	Russia	MSK/MSD	1989 Mar lastSun 2:00s
 			2:00	1:00	EEST	1989 Sep lastSun 2:00s
 			2:00	Latvia	EE%sT	1997 Jan 21
@@ -1734,24 +1689,6 @@ Zone	Europe/Vaduz	0:38:04 -	LMT	1894 Jun
 			1:00	EU	CE%sT
 
 # Lithuania
-
-# From Paul Eggert (1996-11-22):
-# IATA SSIM (1992/1996) says Lithuania uses W-Eur rules, but since it is
-# known to be wrong about Estonia and Latvia, assume it's wrong here too.
-
-# From Marius Gedminas <mgedmin@pub.osf.lt> (1998-08-07):
-# I would like to inform that in this year Lithuanian time zone
-# (Europe/Vilnius) was changed.
-
-# From <a href="http://www.elta.lt/">ELTA</a> No. 972 (2582) (1999-09-29),
-# via Steffen Thorsen:
-# Lithuania has shifted back to the second time zone (GMT plus two hours)
-# to be valid here starting from October 31,
-# as decided by the national government on Wednesday....
-# The Lithuanian government also announced plans to consider a
-# motion to give up shifting to summer time in spring, as it was
-# already done by Estonia. 
-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Vilnius	1:41:16	-	LMT	1880
 			1:24:00	-	WMT	1917	    # Warsaw Mean Time
@@ -1765,8 +1702,14 @@ Zone	Europe/Vilnius	1:41:16	-	LMT	1880
 			2:00	1:00	EEST	1991 Sep 29 2:00s
 			2:00	C-Eur	EE%sT	1998
 			2:00	-	EET	1998 Mar 29 1:00u
-			1:00	EU	CE%sT	1999 Oct 31 1:00u
-			2:00	EU	EE%sT
+			1:00	EU	CE%sT
+# From Paul Eggert (1996-11-22):
+# IATA SSIM (1992/1996) says Lithuania uses W-Eur rules, but since it is
+# known to be wrong about Estonia and Latvia, assume it's wrong here too.
+
+# From Marius Gedminas <mgedmin@pub.osf.lt> (1998-08-07):
+# I would like to inform that in this year Lithuanian time zone
+# (Europe/Vilnius) was changed.
 
 # Luxembourg
 # Whitman disagrees with most of these dates in minor ways; go with Shanks.
@@ -1825,28 +1768,11 @@ Zone	Europe/Malta	0:58:04 -	LMT	1893 Nov  2	# Valletta
 
 # Moldova
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Europe/Chisinau	1:55:20 -	LMT	1880
-			1:55	-	CMT	1918 Feb 15 # Chisinau MT
-			1:44:24	-	BMT	1931 Jul 24 # Bucharest MT
-			2:00	Romania	EE%sT	1940 Aug 15
-			2:00	1:00	EEST	1941 Jul 17
-			1:00	C-Eur	CE%sT	1944 Aug 24
-			3:00	Russia	MSK/MSD	1990
-			3:00	-	MSK	1990 May 6
-			2:00	-	EET	1991
-			2:00	Russia	EE%sT	1992
-			2:00	E-Eur	EE%sT	1997
-# See Romania commentary for the guessed 1997 transition to EU rules.
-			2:00	EU	EE%sT
-Zone	Europe/Tiraspol	1:58:32	-	LMT	1880
-			1:55	-	CMT	1918 Feb 15 # Chisinau MT
-			1:44:24	-	BMT	1931 Jul 24 # Bucharest MT
-			2:00	Romania	EE%sT	1940 Aug 15
-			2:00	1:00	EEST	1941 Jul 17
-			1:00	C-Eur	CE%sT	1944 Aug 24
-			3:00	Russia	MSK/MSD	1991 Mar 31 2:00
-			2:00	Russia	EE%sT	1992 Jan 19 2:00
-			3:00	Russia	MSK/MSD
+Zone	Europe/Chisinau	1:55:20 -	LMT	1924 May  2
+			2:00	-	EET	1930 Jun 21
+			3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+			2:00	1:00	EEST	1991 Sep 29 2:00s
+			2:00	E-Eur	EE%sT
 
 # Monaco
 # Shanks gives 0:09 for Paris Mean Time; go with Howse's more precise 0:09:21.
@@ -1861,7 +1787,7 @@ Zone	Europe/Monaco	0:29:32 -	LMT	1891 Mar 15
 # Howse writes that the Netherlands' railways used GMT between 1892 and 1940,
 # but for other purposes the Netherlands used Amsterdam mean time.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-# Shanks gives 1916 Apr 30 24:00 and 1916 Oct 1 00:00; go with Whitman.
+# Shanks gives 1916 May 1 0:00 and 1916 Oct 1 0:00; go with Whitman.
 Rule	Neth	1916	only	-	May	 1	2:00s	1:00	NST	# Netherlands Summer Time
 Rule	Neth	1916	only	-	Oct	 2	2:00s	0	AMT	# Amsterdam Mean Time
 Rule	Neth	1917	only	-	Apr	16	2:00s	1:00	NST
@@ -1887,6 +1813,7 @@ Rule	Neth	1937	1939	-	Oct	Sun>=2	2:00s	0	-
 Rule	Neth	1938	1939	-	May	15	2:00s	1:00	S
 Rule	Neth	1945	only	-	Apr	 2	2:00s	1:00	S
 Rule	Neth	1945	only	-	May	20	2:00s	0	-
+# Before 1937, Shanks says just `0:20'; we use Whitman's more precise figure.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Europe/Amsterdam	0:19:28 -	LMT	1892 May
 			0:19:28	Neth	%s	1937 Jul
@@ -2075,14 +2002,6 @@ Zone Atlantic/Madeira	-1:07:36 -	LMT	1884		# Funchal
 			 0:00	EU	WE%sT
 
 # Romania
-#
-# From Paul Eggert (1999-10-07):
-# <a href="http://www.nineoclock.ro/POL/1778pol.html">
-# Nine O'clock</a> (1998-10-23) reports that the switch occurred at
-# 04:00 local time in fall 1998.  For lack of better info,
-# assume that Romania and Moldova switched to EU rules in 1997,
-# the same year as Bulgaria.
-#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Romania	1932	only	-	May	21	 0:00s	1:00	S
 Rule	Romania	1932	1939	-	Oct	Sun>=1	 0:00s	0	-
@@ -2099,16 +2018,15 @@ Zone Europe/Bucharest	1:44:24 -	LMT	1891 Oct
 			2:00	Romania	EE%sT	1981 Mar 29 2:00s
 			2:00	C-Eur	EE%sT	1991
 			2:00	Romania	EE%sT	1994
-			2:00	E-Eur	EE%sT	1997
-			2:00	EU	EE%sT
+			2:00	E-Eur	EE%sT
 
 # Russia
 
-# From Paul Eggert <eggert@twinsun.com> (1999-11-12):
-# Except for Moscow after 1919-07-01, I invented the time zone abbreviations.
+# From Paul Eggert <eggert@twinsun.com> (1996-11-22):
+# Except for Moscow after 1919-07-01, I invented the time zone abbreviations,
+# and (unless otherwise specified) guessed what happened after 1991.
 # Moscow time zone abbreviations after 1919-07-01, and Moscow rules after 1991,
-# are from Andrey A. Chernov.  The rest is from Shanks, except we follow
-# Chernov's report that 1992 DST transitions were Sat 23:00, not Sun 02:00s.
+# are from Andrey A. Chernov.  The rest is from Shanks and the IATA.
 #
 # From Andrey A. Chernov <ache@nagual.ru> (1996-10-04):
 # `MSK' and `MSD' were born and used initially on Moscow computers with
@@ -2124,83 +2042,97 @@ Zone Europe/Bucharest	1:44:24 -	LMT	1891 Oct
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Europe/Kaliningrad	 1:22:00 - 	LMT	1893 Apr
 			 1:00	C-Eur	CE%sT	1945
-			 2:00	Poland	CE%sT	1946
+			 2:00	Poland	CET	1946
 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+			 2:00	1:00	EEST	1991 Sep 29 2:00s
+			 2:00	-	EET	1992 Jan 19 2:00s
+			 3:00	Russia	MSK/MSD	1994
+# IATA SSIM (1994-02) says Kaliningrad is at UTC+2; guess 1994 change.
 			 2:00	Russia	EE%sT
 Zone Europe/Moscow	 2:30:20 -	LMT	1880
-			 2:30	-	MMT	1916 Jul  3 # Moscow Mean Time
-			 2:30:48 Russia	%s	1919 Jul  1 2:00
+			 2:30:20 Russia	%s	1919 Jul  1 2:00
 			 3:00	Russia	MSK/MSD	1922 Oct
 			 2:00	-	EET	1930 Jun 21
 			 3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
-			 2:00	Russia	EE%sT	1992 Jan 19 2:00s
+			 2:00	1:00	EEST	1991 Sep 29 2:00s
+			 2:00	-	EET	1992 Jan 19 2:00s
 			 3:00	Russia	MSK/MSD
-Zone Europe/Samara	 3:20:36 -	LMT	1919 Jul  1 2:00
-			 3:00	-	KUYT	1930 Jun 21 # Kuybyshev
-			 4:00	Russia	KUY%sT	1989 Mar 26 2:00s
-			 3:00	Russia	KUY%sT	1991 Mar 31 2:00s
-			 2:00	Russia	KUY%sT	1991 Sep 29 2:00s
-			 3:00	-	KUYT	1991 Oct 20 3:00
-			 4:00	Russia	SAM%sT	# Samara Time
-Zone Asia/Yekaterinburg	 4:02:24 -	LMT	1919 Jul 15 4:00
-			 4:00	-	SVET	1930 Jun 21 # Sverdlovsk Time
+Zone Europe/Samara	 3:20:36 -	LMT	1924 May  2
+			 3:00	-	KUYT	1957 Mar # Kuybyshev Time
+			 4:00	Russia	KUY%sT	1991 Mar 31 2:00s
+			 3:00	1:00	KUYST	1991 Sep 29 2:00s
+			 3:00	-	SAMT	1992 Jan 19 2:00s # Samara Time
+			 4:00	Russia	SAM%sT
+Zone Asia/Yekaterinburg	 4:02:34 -	LMT	1924 May  2
+			 4:00	-	SVET	1957 Mar # Sverdlovsk Time
 			 5:00	Russia	SVE%sT	1991 Mar 31 2:00s
-			 4:00	Russia	SVE%sT	1992 Jan 19 2:00s
+			 4:00	1:00	SVEST	1991 Sep 29 2:00s
+			 4:00	-	SVET	1992 Jan 19 2:00s
 			 5:00	Russia	YEK%sT	# Yekaterinburg Time
-Zone Asia/Omsk		 4:53:36 -	LMT	1919 Nov 14
-			 5:00	-	OMST	1930 Jun 21 # Omsk TIme
+Zone Asia/Omsk		 4:53:36 -	LMT	1924 May  2
+			 5:00	-	OMST	1957 Mar # Omsk Time
 			 6:00	Russia	OMS%sT	1991 Mar 31 2:00s
-			 5:00	Russia	OMS%sT	1992 Jan 19 2:00s
+			 5:00	1:00	OMSST	1991 Sep 29 2:00s
+			 5:00	-	OMST	1992 Jan 19 2:00s
 			 6:00	Russia	OMS%sT
 # From Stanislaw A. Kuzikowski <S.A.Kuz@iae.nsk.su> (1994-06-29):
 # But now it is some months since Novosibirsk is 3 hours ahead of Moscow!
 # I do not know why they have decided to make this change;
 # as far as I remember it was done exactly during winter->summer switching
 # so we (Novosibirsk) simply did not switch.
-Zone Asia/Novosibirsk	 5:31:40 -	LMT	1919 Dec 14 6:00
-			 6:00	-	NOVT	1930 Jun 21 # Novosibirsk Time
+Zone Asia/Novosibirsk	 5:31:40 -	LMT	1924 May  2
+			 6:00	-	NOVT	1957 Mar # Novosibirsk Time
 			 7:00	Russia	NOV%sT	1991 Mar 31 2:00s
-			 6:00	Russia	NOV%sT	1992 Jan 19 2:00s
-			 7:00	Russia	NOV%sT	1993 May 23 # says Shanks
+			 6:00	1:00	NOVST	1991 Sep 29 2:00s
+			 6:00	-	NOVT	1992 Jan 19 2:00s
+			 7:00	Russia	NOV%sT	1994 Mar 27 2:00s
+			 6:00	1:00	NOVST	1994 Sep 25 2:00s
 			 6:00	Russia	NOV%sT
-Zone Asia/Krasnoyarsk	 6:11:20 -	LMT	1920 Jan  6
-			 6:00	-	KRAT	1930 Jun 21 # Krasnoyarsk Time
+Zone Asia/Krasnoyarsk	 6:11:20 -	LMT	1924 May  2
+			 6:00	-	KRAT	1957 Mar # Krasnoyarsk Time
 			 7:00	Russia	KRA%sT	1991 Mar 31 2:00s
-			 6:00	Russia	KRA%sT	1992 Jan 19 2:00s
+			 6:00	1:00	KRAST	1991 Sep 29 2:00s
+			 6:00	-	KRAT	1992 Jan 19 2:00s
 			 7:00	Russia	KRA%sT
 Zone Asia/Irkutsk	 6:57:20 -	LMT	1880
-			 6:57:20 -	IMT	1920 Jan 25 # Irkutsk Mean Time
-			 7:00	-	IRKT	1930 Jun 21 # Irkutsk Time
+			 6:57:20 -	IMT	1924 May  2 # Irkutsk Mean Time
+			 7:00	-	IRKT	1957 Mar # Irkutsk Time
 			 8:00	Russia	IRK%sT	1991 Mar 31 2:00s
-			 7:00	Russia	IRK%sT	1992 Jan 19 2:00s
+			 7:00	1:00	IRKST	1991 Sep 29 2:00s
+			 7:00	-	IRKT	1992 Jan 19 2:00s
 			 8:00	Russia	IRK%sT
-Zone Asia/Yakutsk	 8:38:40 -	LMT	1919 Dec 15
-			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
+Zone Asia/Yakutsk	 8:38:40 -	LMT	1924 May  2
+			 8:00	-	YAKT	1957 Mar # Yakutsk Time
 			 9:00	Russia	YAK%sT	1991 Mar 31 2:00s
-			 8:00	Russia	YAK%sT	1992 Jan 19 2:00s
+			 8:00	1:00	YAKST	1991 Sep 29 2:00s
+			 8:00	-	YAKT	1992 Jan 19 2:00s
 			 9:00	Russia	YAK%sT
-Zone Asia/Vladivostok	 8:47:44 -	LMT	1922 Nov 15
-			 9:00	-	VLAT	1930 Jun 21 # Vladivostok Time
+Zone Asia/Vladivostok	 8:47:44 -	LMT	1880
+			 8:47:44 -	VMT	1924 May  2 # Vladivostok MT
+			 9:00	-	VLAT	1957 Mar # Vladivostok Time
 			10:00	Russia	VLA%sT	1991 Mar 31 2:00s
-			 9:00	Russia	VLA%sST	1992 Jan 19 2:00s
+			 9:00	1:00	VLAST	1991 Sep 29 2:00s
+			 9:00	-	VLAT	1992 Jan 19 2:00s
 			10:00	Russia	VLA%sT
 Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
-			10:00	-	MAGT	1930 Jun 21 # Magadan Time
+			10:00	-	MAGT	1957 Mar # Magadan Time
 			11:00	Russia	MAG%sT	1991 Mar 31 2:00s
-			10:00	Russia	MAG%sT	1992 Jan 19 2:00s
+			10:00	1:00	MAGST	1991 Sep 29 2:00s
+			10:00	-	MAGT	1992 Jan 19 2:00s
 			11:00	Russia	MAG%sT
 # This name should be Asia/Petropavlovsk-Kamchatski, but that's too long.
-Zone Asia/Kamchatka	10:34:36 -	LMT	1922 Nov 10
-			11:00	-	PETT	1930 Jun 21 # P-K Time
+Zone Asia/Kamchatka	10:34:36 -	LMT	1924 May  2
+			11:00	-	PETT	1957 Mar # P-K Time
 			12:00	Russia	PET%sT	1991 Mar 31 2:00s
-			11:00	Russia	PET%sT	1992 Jan 19 2:00s
+			11:00	1:00	PETST	1991 Sep 29 2:00s
+			11:00	-	PETT	1992 Jan 19 2:00s
 			12:00	Russia	PET%sT
 Zone Asia/Anadyr	11:49:56 -	LMT	1924 May  2
-			12:00	-	ANAT	1930 Jun 21 # Anadyr Time
-			13:00	Russia	ANA%sT	1982 Apr  1 0:00s
-			12:00	Russia	ANA%sT	1991 Mar 31 2:00s
-			11:00	Russia	ANA%sT	1992 Jan 19 2:00s
-			12:00	Russia	ANA%sT
+			12:00	-	ANAT	1957 Mar # Anadyr Time
+			13:00	Russia	ANA%sT	1991 Mar 31 2:00s
+			12:00	1:00	ANAST	1991 Sep 29 2:00s
+			12:00	-	ANAT	1992 Jan 19 2:00s
+			13:00	Russia	ANA%sT
 
 # Slovakia
 Link Europe/Prague Europe/Bratislava
@@ -2296,7 +2228,7 @@ Zone Europe/Stockholm	1:12:12 -	LMT	1878 May 31
 # From Whitman (who writes ``Midnight?''):
 Rule	Swiss	1940	only	-	Nov	 2	0:00	1:00	S
 Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
-# From Shanks:
+# From Shanks (1991):
 Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
 Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -2319,6 +2251,7 @@ Rule	Turkey	1922	only	-	Oct	 8	0:00	0	-
 Rule	Turkey	1924	only	-	May	13	0:00	1:00	S
 Rule	Turkey	1924	1925	-	Oct	 1	0:00	0	-
 Rule	Turkey	1925	only	-	May	 1	0:00	1:00	S
+# Shanks omits the first two transitions in 1940; go with Whitman.
 Rule	Turkey	1940	only	-	Jun	30	0:00	1:00	S
 Rule	Turkey	1940	only	-	Oct	 5	0:00	0	-
 Rule	Turkey	1940	only	-	Dec	 1	0:00	1:00	S
@@ -2369,61 +2302,53 @@ Zone	Europe/Istanbul	1:55:52 -	LMT	1880
 Link	Europe/Istanbul	Asia/Istanbul	# Istanbul is in both continents.
 
 # Ukraine
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Ukraine	1917	only	-	Jul	 1	23:00	1:00	UST	# Ukrainian Summer Time
+Rule	Ukraine	1917	only	-	Dec	28	 0:00	0	KMT	# Kiev Mean Time
+Rule	Ukraine	1918	only	-	May	31	22:00	2:00	UDST	# Ukrainian Double Summer Time
+Rule	Ukraine	1918	only	-	Sep	17	 0:00	1:00	UST
+Rule	Ukraine	1919	only	-	May	31	23:00	2:00	UDST
+Rule	Ukraine	1919	only	-	Jul	 1	 2:00	1:00	UST
+Rule	Ukraine	1919	only	-	Aug	16	 0:00	0	KMT
+Rule	Ukraine	1921	only	-	Feb	14	23:00	1:00	UST
+Rule	Ukraine	1921	only	-	Mar	21	23:00	2:00	UDST
+Rule	Ukraine	1921	only	-	Sep	 1	 0:00	1:00	UST
+Rule	Ukraine	1921	only	-	Oct	 1	 0:00	0	KMT
+Rule	Crimea	1917	only	-	Jul	 1	23:00	1:00	CST	# Crimean Summer Time
+Rule	Crimea	1917	only	-	Dec	28	 0:00	0	NMT	# Nikolayev Mean Time
+Rule	Crimea	1918	only	-	May	31	22:00	2:00	CDST	# Crimean Double Summer Time
+Rule	Crimea	1918	only	-	Sep	17	 0:00	1:00	CST
+Rule	Crimea	1919	only	-	May	31	23:00	2:00	CDST
+Rule	Crimea	1919	only	-	Jul	 1	 2:00	1:00	CST
+Rule	Crimea	1919	only	-	Aug	16	 0:00	0	NMT
+Rule	Crimea	1921	only	-	Feb	14	23:00	1:00	CST
+Rule	Crimea	1921	only	-	Mar	21	23:00	2:00	CDST
+Rule	Crimea	1921	only	-	Sep	 1	 0:00	1:00	CST
+Rule	Crimea	1921	only	-	Oct	 1	 0:00	0	NMT
+Rule	Crimea	1996	only	-	Mar	lastSun	 0:00u	1:00	-
+Rule	Crimea	1996	only	-	Oct	lastSun	 0:00u	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-# Most of Ukraine since 1970 has been like Kiev.
 Zone Europe/Kiev	2:02:04 -	LMT	1880
-			2:02:04	-	KMT	1924 May  2 # Kiev Mean Time
+			2:02:04	Ukraine	%s	1924 May  2
 			2:00	-	EET	1930 Jun 21
-			3:00	-	MSK	1941 Sep 20
-			1:00	C-Eur	CE%sT	1943 Nov  6
-			3:00	Russia	MSK/MSD	1990
-			3:00	-	MSK	1990 Jul  1 2:00
-			2:00	-	EET	1992
-			2:00	E-Eur	EE%sT	1995
+			3:00	Russia	MSK/MSD	1990 Jul 17
+			2:00	E-Eur	EE%sT	1996
 			2:00	EU	EE%sT
-# Ruthenia used CET 1990/1991.
-Zone Europe/Uzhgorod	1:29:12 -	LMT	1890 Oct
-			1:00	-	CET	1940
-			1:00	C-Eur	CE%sT	1944 Oct
-			1:00	1:00	CEST	1944 Oct 26
-			1:00	-	CET	1945 Jun 29
-			3:00	Russia	MSK/MSD	1990
-			3:00	-	MSK	1990 Jul  1 2:00
-			1:00	-	CET	1991 Mar 31 3:00
-			2:00	-	EET	1992
-			2:00	E-Eur	EE%sT	1995
-			2:00	EU	EE%sT
-# Zaporozh'ye and eastern Lugansk oblasts observed DST 1990/1991.
-# Zaporozh'ye has an apostrophe, but Posix file names can't have apostrophes.
-Zone Europe/Zaporozhye	2:20:40 -	LMT	1880
-			2:20	-	CUT	1924 May  2 # Central Ukraine T
-			2:00	-	EET	1930 Jun 21
-			3:00	-	MSK	1941 Aug 25
-			1:00	C-Eur	CE%sT	1943 Oct 25
-			3:00	Russia	MSK/MSD	1991 Mar 31 2:00
-			2:00	E-Eur	EE%sT	1995
-			2:00	EU	EE%sT
-# Central Crimea used Moscow time 1994/1997.
 Zone Europe/Simferopol	2:16:24 -	LMT	1880
-			2:16	-	SMT	1924 May  2 # Simferopol Mean T
+			2:08:00	Crimea	%s	1924 May  2
 			2:00	-	EET	1930 Jun 21
-			3:00	-	MSK	1941 Nov
-			1:00	C-Eur	CE%sT	1944 Apr 13
-			3:00	Russia	MSK/MSD	1990
-			3:00	-	MSK	1990 Jul  1 2:00
-			2:00	-	EET	1992
-# From Paul Eggert <eggert@twinsun.com> (1999-11-12):
-# The _Economist_ (1994-05-28, p 45) reports that central Crimea switched
+			3:00	Russia	MSK/MSD	1991 Mar 31 2:00s
+			2:00	1:00	EEST	1991 Sep 29 2:00s
+# From Paul Eggert <eggert@twinsun.com> (1996-10-21):
+# The _Economist_ (1994-05-28, p 45) reports that most of Crimea switched
 # from Kiev to Moscow time sometime after the January 1994 elections.
-# Shanks says ``date of change uncertain'', but implies that it happened
-# sometime between the 1994 DST switches.  For now, guess it changed in May.
-			2:00	E-Eur	EE%sT	1994 May
+# For now, guess it changed Feb 1.
+			2:00	C-Eur	EE%sT	1994 Feb
 # From IATA SSIM (1994/1997), which also says that Kerch is still like Kiev.
-			3:00	E-Eur	MSK/MSD	1996 Mar 31 3:00s
-			3:00	1:00	MSD	1996 Oct 27 3:00s
+			3:00	E-Eur	MSK/MSD	1996
 # IATA SSIM (1997-09) says Crimea switched to EET/EEST.
 # Assume it happened in March by not changing the clocks.
-			3:00	Russia	MSK/MSD	1997 Mar lastSun 1:00u
+			3:00	Crimea	MSK/MSD	1997 Mar lastSun 1:00u
 			2:00	EU	EE%sT
 
 # Yugoslavia

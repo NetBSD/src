@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.9 1999/12/15 06:28:44 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.7 1999/08/20 10:07:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
 #endif
 #include <sys/protosw.h>
@@ -68,8 +68,6 @@
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
-
-#include <net/net_osdep.h>
 
 int
 in6_gif_output(ifp, family, m, rt)
@@ -145,8 +143,7 @@ in6_gif_output(ifp, family, m, rt)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_flow	= 0;
-	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
-	ip6->ip6_vfc	|= IPV6_VERSION;
+	ip6->ip6_vfc	= IPV6_VERSION;
 	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_gif_hlim;
@@ -156,10 +153,6 @@ in6_gif_output(ifp, family, m, rt)
 		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
 			ip6->ip6_dst = sin6_dst->sin6_addr;
 		else if (rt) {
-			if (family != AF_INET6) {
-				m_freem(m);
-				return EINVAL;	/*XXX*/
-			}
 			ip6->ip6_dst = ((struct sockaddr_in6 *)(rt->rt_gateway))->sin6_addr;
 		} else {
 			m_freem(m);
@@ -209,11 +202,9 @@ in6_gif_output(ifp, family, m, rt)
 	}
 	
 #ifdef IPSEC
-#ifndef __OpenBSD__ /*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
-#endif
 #endif /*IPSEC*/
-	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
+	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0));
 }
 
 int in6_gif_input(mp, offp, proto)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.6 1999/11/24 13:35:50 jdc Exp $
+.\"	$NetBSD: installboot.8,v 1.5 1999/04/06 04:54:20 cgd Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,8 +135,10 @@ Except for installation of the bootcode on floppy,
 .Nm
 automatically sets the boot preference in NVRAM to
 .Nx .
+.Sh BUGS
+There is currently no easy way to change the NVRAM preference from within
+.Nx .
 .Sh SEE ALSO
-.Xr bootpref 8
 .Xr disklabel 8
 .Sh HISTORY
 The

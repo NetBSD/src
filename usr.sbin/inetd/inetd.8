@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.26 1999/11/21 17:28:23 itojun Exp $
+.\"	$NetBSD: inetd.8,v 1.23 1999/09/10 03:26:49 simonb Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,8 +127,8 @@ fields of the configuration file are as follows:
 [addr:]service-name
 socket-type
 protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
-user[:group]
+wait/nowait[.max]
+user[.group]
 server-program
 server program arguments
 .Ed
@@ -141,8 +141,8 @@ based service, the entry would contain these fields.
 service-name/version
 socket-type
 rpc/protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
-user[:group]
+wait/nowait[.max]
+user[.group]
 server-program
 server program arguments
 .Ed
@@ -150,7 +150,7 @@ server program arguments
 For Internet services, the first field of the line may also have a host
 address specifier prefixed to it, separated from the service name by a
 colon.  If this is done, the string before the colon in the first field
-indicates what local address
+indiciates what local address
 .Nm
 should use when listening for that service, or the single character
 .Dq \&*
@@ -292,8 +292,8 @@ suffix (separated from
 .Dq wait
 or
 .Dq nowait
-by a dot or a colon) specifies the maximum number of server instances that may 
-be spawned from
+by a dot) specifies the maximum number of server instances that may be
+spawned from
 .Nm
 within an interval of 60 seconds. When omitted,
 .Dq max
@@ -316,14 +316,13 @@ is usually the only stream server marked as wait.
 .Pp
 The
 .Em user
-entry should contain the user name of the user as whom the server should
-run.  This allows for servers to be given less permission than root. An
-optional group name can be specified by appending a colon to the user name
-followed by the group name (it is possible to use a dot in lieu of a colon,
-however this feature is provided only for backward compatibility). This allows
-for servers to run with a different (primary) group id than specified in the
-password file. If a group is specified and user is not root, the
-supplementary groups associated with that user will still be set.
+entry should contain the user name of the user as whom the server
+should run.  This allows for servers to be given less permission
+than root. An optional group name can be specified by appending a dot to
+the user name followed by the group name. This allows for servers to run with
+a different (primary) group id than specified in the password file. If a group
+is specified and user is not root, the supplementary groups associated with
+that user will still be set.
 .Pp
 The
 .Em server-program
@@ -372,7 +371,7 @@ is reread.
 creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
-.Ss IPsec
+.Sh IPSEC
 The implementation includes tiny hack to support IPsec policy setting for
 each of the socket.
 A special form of comment line, starting with
@@ -396,7 +395,7 @@ If invalid IPsec policy string appears on
 will leave error message using
 .Xr syslog 3 ,
 and terminates itself.
-.Ss IPv6 TCP/UDP behavior
+.Sh TCP6/UDP6 BEHAVIOR
 If you run servers for IPv4 and IPv6 traffic, you'll need to specify
 .Dq tcp4
 and

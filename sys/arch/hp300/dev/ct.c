@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.23 1998/01/12 18:30:44 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.23.20.1 1999/12/21 23:15:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -464,6 +464,8 @@ ctcommand(dev, cmd, cnt)
 	bp->b_dev = dev;
 	if (cmd == MTFSF) {
 		nbp = (struct buf *)geteblk(MAXBSIZE);
+		nbp->b_bshift = intlog2(MAXBSIZE);
+		nbp->b_bsize = MAXBSIZE;
 		bp->b_un.b_addr = nbp->b_un.b_addr;
 		bp->b_bcount = MAXBSIZE;
 	}

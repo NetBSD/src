@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.6 1999/12/13 16:22:56 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4 1999/08/22 12:54:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,24 +32,13 @@
 /*
  * Issues to be discussed:
  * - Thread safe-ness must be checked
- * - Return values.  There seems to be no standard for return value (RFC2553)
+ * - Return values.  There seems to be no standard for return value (RFC2133)
  *   but INRIA implementation returns EAI_xxx defined for getaddrinfo().
- * - RFC2553 says that we should raise error on short buffer.  X/Open says
- *   we need to truncate the result.  We obey RFC2553 (and X/Open should be
- *   modified).
  */
 
-#if 0
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif 
-#else
-#define HAVE_SA_LEN
-#endif
-
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -57,16 +46,6 @@
 #include <resolv.h>
 #include <string.h>
 #include <stddef.h>
-
-#if 0
-#ifndef HAVE_PORTABLE_PROTOTYPE
-#include "cdecl_ext.h"
-#endif 
-
-#ifndef HAVE_ADDRINFO
-#include "addrinfo.h"
-#endif
-#endif
 
 #define SUCCESS 0
 #define ANY 0
@@ -116,9 +95,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	struct servent *sp;
 	struct hostent *hp;
 	u_short port;
-	int family, i;
+	int family, len, i;
 	char *addr, *p;
-	u_int32_t v4a;
+	u_long v4a;
 	int h_error;
 	char numserv[512];
 	char numaddr[512];
@@ -126,10 +105,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (sa == NULL)
 		return ENI_NOSOCKET;
 
-#ifdef HAVE_SA_LEN
-	if (sa->sa_len != salen)
-		return ENI_SALEN;
-#endif
+	len = sa->sa_len;
+	if (len != salen) return ENI_SALEN;
 	
 	family = sa->sa_family;
 	for (i = 0; afdl[i].a_af; i++)
@@ -140,42 +117,31 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	return ENI_FAMILY;
 	
  found:
-	if (salen != afd->a_socklen)
-		return ENI_SALEN;
+	if (len != afd->a_socklen) return ENI_SALEN;
 	
 	port = ((struct sockinet *)sa)->si_port; /* network byte order */
 	addr = (char *)sa + afd->a_off;
 
 	if (serv == NULL || servlen == 0) {
-		/*
-		 * do nothing in this case.
-		 * in case you are wondering if "&&" is more correct than
-		 * "||" here: RFC2553 says that serv == NULL OR servlen == 0
-		 * means that the caller does not want the result.
-		 */
+		/* what we should do? */
+	} else if (flags & NI_NUMERICSERV) {
+		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
+		if (strlen(numserv) > servlen)
+			return ENI_MEMORY;
+		strcpy(serv, numserv);
 	} else {
-		if (flags & NI_NUMERICSERV)
-			sp = NULL;
-		else {
-			sp = getservbyport(port,
-				(flags & NI_DGRAM) ? "udp" : "tcp");
-		}
+		sp = getservbyport(port, (flags & NI_DGRAM) ? "udp" : "tcp");
 		if (sp) {
 			if (strlen(sp->s_name) > servlen)
 				return ENI_MEMORY;
 			strcpy(serv, sp->s_name);
-		} else {
-			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
-			if (strlen(numserv) > servlen)
-				return ENI_MEMORY;
-			strcpy(serv, numserv);
-		}
+		} else
+			return ENI_NOSERVNAME;
 	}
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		v4a = (u_int32_t)
-			ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+		v4a = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
@@ -187,7 +153,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	    {
 		struct sockaddr_in6 *sin6;
 		sin6 = (struct sockaddr_in6 *)sa;
-		switch (sin6->sin6_addr.s6_addr[0]) {
+		switch (sin6->sin6_addr.s6_addr8[0]) {
 		case 0x00:
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 				;
@@ -197,9 +163,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				flags |= NI_NUMERICHOST;
 			break;
 		default:
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				flags |= NI_NUMERICHOST;
-			}
 			else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
 				flags |= NI_NUMERICHOST;
 			break;
@@ -209,12 +174,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 #endif
 	}
 	if (host == NULL || hostlen == 0) {
-		/*
-		 * do nothing in this case.
-		 * in case you are wondering if "&&" is more correct than
-		 * "||" here: RFC2553 says that host == NULL OR hostlen == 0
-		 * means that the caller does not want the result.
-		 */
+		/* what should we do? */
 	} else if (flags & NI_NUMERICHOST) {
 		/* NUMERICHOST and NAMEREQD conflicts with each other */
 		if (flags & NI_NAMEREQD)
@@ -225,26 +185,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		if (strlen(numaddr) > hostlen)
 			return ENI_MEMORY;
 		strcpy(host, numaddr);
-#if defined(INET6) && defined(NI_WITHSCOPEID)
-		if (afd->a_af == AF_INET6 &&
-		    (IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr) ||
-		     IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr)) &&
-		    ((struct sockaddr_in6 *)sa)->sin6_scope_id) {
-#ifndef ALWAYS_WITHSCOPE
-			if (flags & NI_WITHSCOPEID)
-#endif /* !ALWAYS_WITHSCOPE */
-			{
-				char *ep = strchr(host, '\0');
-				unsigned int ifindex =
-					((struct sockaddr_in6 *)sa)->sin6_scope_id;
-
-				*ep = SCOPE_DELIMITER;
-				if ((if_indextoname(ifindex, ep + 1)) == NULL)
-					/* XXX what should we do? */
-					strncpy(ep + 1, "???", 3);
-			}
-		}
-#endif /* INET6 */
 	} else {
 #ifdef USE_GETIPNODEBY
 		hp = getipnodebyaddr(addr, afd->a_addrlen, afd->a_af, &h_error);

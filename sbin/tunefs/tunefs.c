@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.19 1999/11/15 19:22:22 fvdl Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.18 1999/01/15 13:32:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.19 1999/11/15 19:22:22 fvdl Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.18 1999/01/15 13:32:06 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *cp, *name, *action;
+	char *cp, *name;
 	const char *special;
 	struct stat st;
 	int i;
@@ -197,23 +197,6 @@ again:
 				    sblock.fs_optim == FS_OPTTIME)
 					warnx(OPTWARN, "space", "<", MINFREE);
 				continue;
-			case 'n':
-				name = "soft dependencies";
-				if (argc < 1)
-					errx(10, "-n: missing %s", name);
-				argc--, argv++;
-				if (strcmp(*argv, "enable") == 0) {
-					sblock.fs_flags |= FS_DOSOFTDEP;
-					action = "set";
-				} else if (strcmp(*argv, "disable") == 0) {
-					sblock.fs_flags &= ~FS_DOSOFTDEP;
-					action = "cleared";
-				} else {
-					errx(10, "bad %s (options are %s)",
-					    name, "`enable' or `disable'");
-				}
-				warnx("%s %s", name, action);
-				continue;
 
 			case 'o':
 				name = "optimization preference";
@@ -275,8 +258,6 @@ again:
 		    sblock.fs_maxbpg);
 		fprintf(stdout, "\tminimum percentage of free space %d%%\n",
 		    sblock.fs_minfree);
-		fprintf(stdout, "\tsoft dependencies: %s\n",
-		    (sblock.fs_flags & FS_DOSOFTDEP) ? "on" : "off");
 		fprintf(stdout, "\toptimization preference: %s\n",
 		    chg[sblock.fs_optim]);
 		fprintf(stdout, "\ttrack skew %d sectors\n",
@@ -310,7 +291,6 @@ usage()
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
-	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
 	fprintf(stderr, "\t-t track skew in sectors\n");
 	exit(2);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.3 1999/01/29 21:20:22 matthias Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.3.14.1 1999/12/21 23:15:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -91,13 +91,13 @@ int fat_types[] = {
 };
 
 int
-mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
+mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp, bshift, bsize)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	char **msgp;
-	int *cylp, *netbsd_label_offp;
+	int *cylp, *netbsd_label_offp, bshift, bsize;
 {
 	struct mbr_partition *mbrp;
 	struct partition *pp;
@@ -107,7 +107,13 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		*msgp = "dos partition I/O error";
+		goto out;
+	}
         bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* In case nothing sets them */
 	mbrpartoff = 0;
@@ -204,12 +210,12 @@ out:
 }
 
 int
-mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
+mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp, bshift, bsize)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
-	int *cylp, *netbsd_label_offp;
+	int *cylp, *netbsd_label_offp, bshift, bsize;
 {
 	struct mbr_partition *mbrp;
 	int cyl, mbrpartoff, i;
@@ -219,7 +225,13 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		rv = 0;
+		goto out;
+	}
         bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do MBR partitions in the process of getting disklabel? */
 	mbrpartoff = 0;

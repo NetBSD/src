@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 1999/11/15 09:50:20 nisimura Exp $ */
+/*	$NetBSD: cpu.c,v 1.11 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -15,7 +15,7 @@
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -34,15 +34,18 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-static int  cpumatch __P((struct device *, struct cfdata *, void *));
-static void cpuattach __P((struct device *, struct device *, void *));
+/* Definition of the driver for autoconfig. */
+static int	cpumatch(struct device *, struct cfdata *, void *);
+static void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof (struct device), cpumatch, cpuattach
 };
+
 extern struct cfdriver cpu_cd;
 
 extern void cpu_identify __P((void));
+
 
 static int
 cpumatch(parent, cf, aux)
@@ -50,10 +53,11 @@ cpumatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct confargs *ca = aux;
+
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0) {
 		return (0);
 	}
 	return (1);
@@ -61,10 +65,12 @@ cpumatch(parent, cf, aux)
 
 static void
 cpuattach(parent, dev, aux)
-	struct device *parent, *dev;
+	struct device *parent;
+	struct device *dev;
 	void *aux;
 {
-	printf("\n");
+
+	printf(": ");
 
 	cpu_identify();
 }

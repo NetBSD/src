@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.5 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.4 1998/07/28 00:31:42 pk Exp $	*/
 /*
  * magma.c
  *
@@ -436,9 +436,6 @@ magma_attach(parent, self, aux)
 	/*
 	 * Establish the interrupt handlers.
 	 */
-	if (sa->sa_nintr == 0)
-		return;		/* No interrupts to service!? */
-
 	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, magma_hard, sc);
 	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY,
 				 BUS_INTR_ESTABLISH_SOFTINTR,

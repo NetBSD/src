@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.53 1999/12/18 03:09:50 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.48 1999/09/18 00:23:39 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,7 +57,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk driver
-#	md*	memory pseudo-disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
@@ -73,6 +72,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	md*	memory pseudo-disk driver
 #	ipl	IP filter
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
@@ -99,7 +99,7 @@ all)
 	sh -$- $0 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh -$- $0 cgeight0 tcx0
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh -$- $0 lkm random local ipl cfs0 apm apmctl tctrl0
+	sh -$- $0 lkm random local ipl
 	;;
 floppy)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
@@ -174,12 +174,6 @@ bwtwo*)
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
 	;;
 
-cfs*)
-	unit=${i#cfs}
-	rm -f cfs$unit
-	mknod cfs$unit		c 47 $unit; chmod 600 cfs$unit
-	;;
-
 cgtwo*)
 	unit=${i#cgtwo}
 	rm -f cgtwo$unit
@@ -250,13 +244,21 @@ tun*)
 	;;
 
 md*)
-	unit=${i#md}; blk=5; chr=61;
-	rm -f md${unit} md${unit}c rmd${unit}
-	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
-	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
-#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
-	chgrp operator md${unit} md${unit}c #rmd${unit}
-	chmod 640 md${unit} md${unit}c #rmd${unit}
+	case $i in
+	md*)	name=md;	unit=${i#md};	blk=5;	chr=61;;
+	esac
+	unit=${i#md}
+	rm -f $name$unit $name$unit[abc] r$name$unit r$name$unit[abc]
+	mknod ${name}${unit}	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chown root.operator $name$unit $name$unit[abc] r$name$unit r$name$unit[abc]
+	chmod 640 md$unit rmd$unit $name$unit $name$unit[abc] r$name$unit r$name$unit[abc]
 	;;
 
 ccd*|fd*|sd*|xd*|xy*|cd*|vnd*|raid*)
@@ -447,22 +449,6 @@ scsibus*)
 	mknod scsibus$unit c 120 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
-	;;
-
-apm*)
-	rm -f apm apmctl
-	ln -s tctrl0 apm
-	mknod apmctl c 71 8
-	chown root:wheel apm apmctl
-	chmod 644 apmctl
-	;;
-
-tctrl*)
-	unit=${i#tctrl}
-	rm -f tctrl$unit
-	mknod tctrl$unit	c 71 $unit
-	chown root:wheel tctrl$unit
-	chmod 666 tctrl$unit
 	;;
 
 local)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.18 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.16 1999/05/07 14:49:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

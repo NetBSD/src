@@ -1,4 +1,4 @@
-/*	$NetBSD: tttermcap.c,v 1.5 1999/10/04 23:31:30 lukem Exp $	*/
+/*	$NetBSD: tttermcap.c,v 1.4 1997/11/21 08:36:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tttermcap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tttermcap.c,v 1.5 1999/10/04 23:31:30 lukem Exp $");
+__RCSID("$NetBSD: tttermcap.c,v 1.4 1997/11/21 08:36:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,20 +49,18 @@ __RCSID("$NetBSD: tttermcap.c,v 1.5 1999/10/04 23:31:30 lukem Exp $");
 #include <termcap.h>
 #include "tt.h"
 
-int
+void
 tttputc(c)
 	int c;
 {
 	ttputc(c);
-	return (0);
 }
 
-int
+void
 ttxputc(c)
 	int c;
 {
 	*tt_strp++ = c;
-	return (0);
 }
 
 struct tt_str *

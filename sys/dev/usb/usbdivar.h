@@ -1,5 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.42 1999/11/20 00:57:10 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.35 1999/09/15 21:08:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +40,7 @@
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
 
-struct usbd_xfer;
+struct usbd_request;
 struct usbd_pipe;
 
 struct usbd_endpoint {
@@ -58,12 +57,12 @@ struct usbd_bus_methods {
 };
 
 struct usbd_pipe_methods {
-	usbd_status	      (*transfer)__P((usbd_xfer_handle xfer));
-	usbd_status	      (*start)__P((usbd_xfer_handle xfer));
-	void		      (*abort)__P((usbd_xfer_handle xfer));
+	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
+	usbd_status	      (*start)__P((usbd_request_handle reqh));
+	void		      (*abort)__P((usbd_request_handle reqh));
 	void		      (*close)__P((usbd_pipe_handle pipe));
 	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
-	void		      (*done)__P((usbd_xfer_handle xfer));
+	void		      (*done)__P((usbd_request_handle reqh));
 };
 
 struct usbd_port {
@@ -101,13 +100,6 @@ struct usbd_bus {
 	struct usb_device_stats	stats;
 	int 			intr_context;
 	u_int			no_intrs;
-	int			usbrev;	/* USB revision */
-#define USBREV_UNKNOWN	0
-#define USBREV_PRE_1_0	1
-#define USBREV_1_0	2
-#define USBREV_1_1	3
-#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1" }
-
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
 #endif
@@ -124,7 +116,6 @@ struct usbd_device {
 	int			config;
 	int			langid;	/* language to use for strings */
 #define USBD_NOLANG (-1)
-	usb_event_cookie_t	cookie;	/* unique connection id */
 	struct usbd_port       *powersrc;
 	struct usbd_endpoint	def_ep;	/* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
@@ -152,17 +143,17 @@ struct usbd_pipe {
 	struct usbd_endpoint   *endpoint;
 	int			refcnt;
 	char			running;
-	SIMPLEQ_HEAD(, usbd_xfer) queue;
+	SIMPLEQ_HEAD(, usbd_request) queue;
 	LIST_ENTRY(usbd_pipe)	next;
 
-	usbd_xfer_handle     intrxfer; /* used for repeating requests */
+	usbd_request_handle     intrreqh; /* used for repeating requests */
 	char			repeat;
 
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
 };
 
-struct usbd_xfer {
+struct usbd_request {
 	struct usbd_pipe       *pipe;
 	void		       *priv;
 	void		       *buffer;
@@ -190,7 +181,7 @@ struct usbd_xfer {
 #define URQ_AUTO_DMABUF	0x10
 #define URQ_DEV_DMABUF	0x20
 
-	SIMPLEQ_ENTRY(usbd_xfer) next;
+	SIMPLEQ_ENTRY(usbd_request) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
 	int			hcprivint; /* ditto */
@@ -201,7 +192,6 @@ struct usbd_xfer {
 };
 
 void usbd_init __P((void));
-void usbd_finish __P((void));
 
 /* Routines from usb_subr.c */
 int		usbctlprint __P((void *, const char *));
@@ -224,9 +214,9 @@ usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev,
 					  int i, int a));
 void		usb_free_device __P((usbd_device_handle));
 
-usbd_status	usb_insert_transfer __P((usbd_xfer_handle xfer));
-void		usb_transfer_complete __P((usbd_xfer_handle xfer));
-void		usb_disconnect_port __P((struct usbd_port *up, device_ptr_t));
+usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
+void		usb_transfer_complete __P((usbd_request_handle reqh));
+void		usb_disconnect_port __P((struct usbd_port *up));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
@@ -235,10 +225,8 @@ void		usb_needs_explore __P((usbd_bus_handle));
 #ifdef DIAGNOSTIC
 #define SPLUSBCHECK \
 	do { int _s = splusb(), _su = splusb(); \
-	     extern int cold; \
-             if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
+             if (_s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
-	     splx(_s); \
         } while (0)
 #else
 #define SPLUSBCHECK

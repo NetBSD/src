@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.9 1999/12/15 15:27:57 ad Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,26 +61,19 @@
  *
  *	wsfont_unlock(cookie);
  */
-
 struct wsdisplay_font;
 
 /* Left to Right, Right to Left */
 #define WSFONT_L2R	(1)
 #define WSFONT_R2L	(2)
 
-/* For wsfont_add() */
-#define WSFONT_BUILTIN	(0x01)
-#define WSFONT_STATIC	(0x02)
-#define WSFONT_RDONLY	(0x04)
-
-/* wsfont.c */
 void	wsfont_init __P((void));
-int	wsfont_find __P((char *, int, int, int));
-int	wsfont_add __P((struct wsdisplay_font *, int));
-int	wsfont_remove __P((int));
-void	wsfont_enum __P((void (*) __P((char *, int, int, int))));
-int	wsfont_lock __P((int, struct wsdisplay_font **, int, int));
-int	wsfont_unlock __P((int));
-int	wsfont_getflg __P((int, int *, int *));
+int	wsfont_find __P((char *name, int width, int height, int stride));
+int	wsfont_add __P((struct wsdisplay_font *font, int copy));
+int	wsfont_remove __P((int cookie));
+void	wsfont_enum __P((void (*func) __P((char *n, int w, int h, int s))));
+int	wsfont_lock __P((int cookie, struct wsdisplay_font **font, int, int));
+int	wsfont_unlock __P((int cookie));
+int	wsfont_getflg __P((int cookie, int *flg, int *lockcount));
 
-#endif	/* !_WSFONT_H_ */
+#endif /* _WSFONT_H_ */

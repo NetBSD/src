@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1999/11/06 15:11:46 kleink Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 1995/09/02 06:15:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,4 +41,5 @@
 #define	IG_FILE2	"llib-port"
 #define	IG_FILE3	"/usr/lib/llib-lc"
 #define	IG_FILE4	"/usr/lib/llib-port"
-#define	TMPFILE		"ErrorXXXXXX"
+#undef _PATH_TMP
+#define	_PATH_TMP	"/tmp/ErrorXXXXXX"

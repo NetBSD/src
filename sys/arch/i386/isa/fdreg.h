@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.10 1997/09/07 13:03:10 mycroft Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.10.24.1 1999/12/21 23:16:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -62,6 +62,7 @@
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
 #define	FDC_BSIZE	512
+#define	FDC_BSHIFT	9
 #define	FDC_NPORT	8
 #define	FDC_MAXIOSIZE	MAXBSIZE
 

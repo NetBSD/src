@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.22 1999/05/05 20:01:11 thorpej Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.22.8.1 1999/12/21 23:20:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -144,6 +144,7 @@ portal_mount(mp, path, data, ndp, p)
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_bshift = DEF_BSHIFT;
 	vfs_getnewfsid(mp, MOUNT_PORTAL);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -255,8 +256,8 @@ portal_statfs(mp, sbp, p)
 	struct proc *p;
 {
 
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
+	sbp->f_bsize = blocksize(mp->mnt_bshift);
+	sbp->f_iosize = blocksize(mp->mnt_bshift);
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

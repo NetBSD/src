@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.8 1999/12/20 17:19:13 nathanw Exp $	*/
+/*	$NetBSD: pack.c,v 1.7 1997/10/18 07:59:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,7 +171,7 @@ packdevi()
 	/*
 	 * Sort all the cloning units to after the non-cloning units,
 	 * preserving order of cloning and non-cloning units with
-	 * respect to other units of the same type.
+	 * respect to other units of the same time.
 	 *
 	 * Algorithm: Walk down the list until the first cloning unit is
 	 * seen for the second time (or until the end of the list, if there

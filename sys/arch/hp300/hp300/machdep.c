@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1999/12/14 17:51:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 1999/09/17 19:59:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,6 @@
 #include <ddb/db_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 #include <machine/reg.h>
@@ -89,7 +88,7 @@
 
 #include <dev/cons.h>
 
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -114,15 +113,6 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern paddr_t avail_end;
-
-/*
- * bootinfo base (physical and virtual).  The bootinfo is placed, by
- * the boot loader, into the first page of kernel text, which is zero
- * filled (see locore.s) and not mapped at 0.  It is remapped to a
- * different address in pmap_bootstrap().
- */
-paddr_t	bootinfo_pa;
-vaddr_t	bootinfo_va;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
@@ -187,7 +177,6 @@ int	delay_divisor;		/* delay constant */
 void
 hp300_init()
 {
-	struct btinfo_magic *bt_mag;
 	int i;
 
 	extern paddr_t avail_start, avail_end;
@@ -211,25 +200,9 @@ hp300_init()
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
-
-	/*
-	 * Map in the bootinfo page, and make sure the bootinfo
-	 * exists by searching for the MAGIC record.  If it's not
-	 * there, disable bootinfo.
-	 */
-	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
-	    VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	bt_mag = lookup_bootinfo(BTINFO_MAGIC);
-	if (bt_mag == NULL ||
-	    bt_mag->magic1 != BOOTINFO_MAGIC1 ||
-	    bt_mag->magic2 != BOOTINFO_MAGIC2) {
-		pmap_remove(pmap_kernel(), bootinfo_va, bootinfo_va + NBPG);
-		bootinfo_va = 0;
-	}
 }
 
 /*
@@ -261,12 +234,6 @@ consinit()
 	hp300_cninit();
 
 	consinit_active = 0;
-
-	/*
-	 * Issue a warning if the boot loader didn't provide bootinfo.
-	 */
-	if (bootinfo_va == 0)
-		printf("WARNING: boot loader did not provide bootinfo\n");
 
 #ifdef DDB
 	{
@@ -349,7 +316,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -396,7 +363,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -873,7 +840,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -899,7 +866,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check do see if we will fit.  Note we always skip the
-	 * first NBPG in case there is a disk label there.
+	 * first CLBYTES in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -966,7 +933,7 @@ dumpsys()
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -1070,33 +1037,6 @@ badbaddr(addr)
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
 	return(0);
-}
-
-/*
- * lookup_bootinfo:
- *
- *	Look up information in bootinfo from boot loader.
- */
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *bt;
-	char *help = (char *)bootinfo_va;
-
-	/* Check for a bootinfo record first. */
-	if (help == NULL)
-		return (NULL);
-
-	do {
-		bt = (struct btinfo_common *)help;
-		if (bt->type == type)
-			return (help);
-		help += bt->next;
-	} while (bt->next != 0 &&
-		 (size_t)help < (size_t)bootinfo_va + BOOTINFO_SIZE);
-
-	return (NULL);
 }
 
 #ifdef PANICBUTTON
@@ -1289,7 +1229,7 @@ parityerrorfind()
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, ctob(pg),
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
 			i = *ip++;

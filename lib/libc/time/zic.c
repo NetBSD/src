@@ -1,12 +1,12 @@
-/*	$NetBSD: zic.c,v 1.16 1999/11/10 20:32:31 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.15 1999/02/08 18:00:19 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zic.c	7.100";
+static char	elsieid[] = "@(#)zic.c	7.99";
 #else
-__RCSID("$NetBSD: zic.c,v 1.16 1999/11/10 20:32:31 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.15 1999/02/08 18:00:19 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -624,7 +624,7 @@ const char * const	tofile;
 		result = link(fromname, toname);
 #if (HAVE_SYMLINK - 0) 
 		if (result != 0) {
-		        const char *s = tofile;
+		        char *s = (char *) tofile;
 		        register char * symlinkcontents = NULL;
 		        while ((s = strchr(s+1, '/')) != NULL)
 			        symlinkcontents = ecatalloc(symlinkcontents, "../");
@@ -1920,12 +1920,10 @@ const char * const	type;
 	buf = erealloc(buf, (int) (132 + strlen(yitcommand) + strlen(type)));
 	(void)sprintf(buf, "%s %d %s", yitcommand, year, type); /* XXX: sprintf is safe */
 	result = system(buf);
-	if (WIFEXITED(result)) switch (WEXITSTATUS(result)) {
-		case 0:
-			return TRUE;
-		case 1:
-			return FALSE;
-	}
+	if (result == 0)
+		return TRUE;
+	if (result == (1 << 8))
+		return FALSE;
 	error(_("Wild result from command execution"));
 	(void) fprintf(stderr, _("%s: command was '%s', result was %d\n"),
 		progname, buf, result);

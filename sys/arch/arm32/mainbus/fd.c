@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 1998/09/06 04:20:37 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.25.18.1 1999/12/21 23:15:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1395,7 +1395,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL, FDC_BSHIFT) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1415,7 +1415,8 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL,
+				7 + fd->sc_type->secsize);
 		return error;
 
 	case FDIOCGETFORMAT:
@@ -1642,7 +1643,9 @@ load_memory_disc_from_floppy(md, dev)
 
 /* obtain a buffer */
 
-	bp = geteblk(fd_types[type].sectrac * DEV_BSIZE);
+	bp = geteblk(fd_types[type].sectrac << (fd_types[type].secsize + 7));
+	bp->b_bshift = fd_types[type].secsize + 7;
+	bp->b_bsize = 1 << bp->b_bshift;
     
 /* request no partition relocation by driver on I/O operations */
 

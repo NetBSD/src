@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.6 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.5 1998/11/18 03:09:20 ross Exp $	*/
 
 /*
  * 
@@ -42,6 +42,104 @@
 /*
  * This code was written for the Coda file system at Carnegie Mellon University.
  * Contributers include David Steere, James Kistler, and M. Satyanarayanan.
+ */
+
+/* 
+ * HISTORY
+ * $Log: coda_namecache.h,v $
+ * Revision 1.5  1998/11/18 03:09:20  ross
+ * Various trivial LP64 tweaks to squelch some compiler warnings.
+ *
+ * Revision 1.4  1998/09/15 02:02:58  rvb
+ * Final piece of rename cfs->coda
+ *
+ * Revision 1.3  1998/09/12 15:05:50  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
+ * Revision 1.2  1998/09/08 17:12:48  rvb
+ * Pass2 complete
+ *
+ * Revision 1.1.1.1  1998/08/29 21:26:46  rvb
+ * Very Preliminary Coda
+ *
+ * Revision 1.8  1998/08/28 18:12:25  rvb
+ * Now it also works on FreeBSD -current.  This code will be
+ * committed to the FreeBSD -current and NetBSD -current
+ * trees.  It will then be tailored to the particular platform
+ * by flushing conditional code.
+ *
+ * Revision 1.7  1998/08/18 17:05:24  rvb
+ * Don't use __RCSID now
+ *
+ * Revision 1.6  1998/08/18 16:31:49  rvb
+ * Sync the code for NetBSD -current; test on 1.3 later
+ *
+ * Revision 1.5  98/01/23  11:53:51  rvb
+ * Bring RVB_CODA1_1 to HEAD
+ * 
+ * Revision 1.4.2.1  97/12/16  12:40:23  rvb
+ * Sync with 1.3
+ * 
+ * Revision 1.4  97/12/05  10:39:29  rvb
+ * Read CHANGES
+ * 
+ * Revision 1.3.4.3  97/11/24  15:44:51  rvb
+ * Final cfs_venus.c w/o macros, but one locking bug
+ * 
+ * Revision 1.3.4.2  97/11/12  12:09:44  rvb
+ * reorg pass1
+ * 
+ * Revision 1.3.4.1  97/11/06  21:06:05  rvb
+ * don't include headers in headers
+ * 
+ * Revision 1.3  97/08/05  11:08:19  lily
+ * Removed cfsnc_replace, replaced it with a coda_find, unhash, and
+ * rehash.  This fixes a cnode leak and a bug in which the fid is
+ * not actually replaced.  (cfs_namecache.c, cfsnc.h, cfs_subr.c)
+ * 
+ * Revision 1.2  96/01/02  16:57:19  bnoble
+ * Added support for Coda MiniCache and raw inode calls (final commit)
+ * 
+ * Revision 1.1.2.1  1995/12/20 01:57:45  bnoble
+ * Added CODA-specific files
+ *
+ * Revision 3.1.1.1  1995/03/04  19:08:22  bnoble
+ * Branch for NetBSD port revisions
+ *
+ * Revision 3.1  1995/03/04  19:08:21  bnoble
+ * Bump to major revision 3 to prepare for NetBSD port
+ *
+ * Revision 2.2  1994/08/28  19:37:39  luqi
+ * Add a new CODA_REPLACE call to allow venus to replace a ViceFid in the
+ * mini-cache.
+ *
+ * In "cfs.h":
+ * Add CODA_REPLACE decl.
+ *
+ * In "cfs_namecache.c":
+ * Add routine cfsnc_replace.
+ *
+ * In "cfs_subr.c":
+ * Add case-statement to process CODA_REPLACE.
+ *
+ * In "cfsnc.h":
+ * Add decl for CODA_NC_REPLACE.
+ *
+ * Revision 2.1  94/07/21  16:25:27  satya
+ * Conversion to C++ 3.0; start of Coda Release 2.0
+ *
+ * Revision 1.2  92/10/27  17:58:34  lily
+ * merge kernel/latest and alpha/src/cfs
+ * 
+ * Revision 2.2  90/07/05  11:27:04  mrt
+ * 	Created for the Coda File System.
+ * 	[90/05/23            dcs]
+ * 
+ * Revision 1.4  90/05/31  17:02:12  dcs
+ * Prepare for merge with facilities kernel.
+ * 
+ * 
  */
 
 #ifndef _CODA_NC_HEADER_
