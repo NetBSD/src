@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.19 2001/05/22 15:14:24 bouyer Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.20 2001/09/02 19:35:21 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -311,5 +311,10 @@ struct scsipi_mode_header_big {
 	u_int8_t blk_desc_len[2];	/* unused on ATAPI */
 } __attribute__((packed));
 
+/*
+ * Bits present in the page code octet of the returned mode page.
+ */
+#define	PGCODE_MASK	0x3f		/* page code */
+#define	PGCODE_PS	0x80		/* page is savable */
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
