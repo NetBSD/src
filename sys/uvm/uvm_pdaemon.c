@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.59.2.1 2004/10/08 03:25:21 jmc Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.59.2.2 2005/03/16 12:11:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59.2.1 2004/10/08 03:25:21 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59.2.2 2005/03/16 12:11:02 tron Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -102,6 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59.2.1 2004/10/08 03:25:21 jmc Exp
 void		uvmpd_scan(void);
 void		uvmpd_scan_inactive(struct pglist *);
 void		uvmpd_tune(void);
+
+/*
+ * XXX hack to avoid hangs when large processes fork.
+ */
+int uvm_extrapages;
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -183,6 +188,9 @@ uvmpd_tune(void)
 	if (uvmexp.freetarg <= uvmexp.freemin)
 		uvmexp.freetarg = uvmexp.freemin + 1;
 
+	uvmexp.freetarg += uvm_extrapages;
+	uvm_extrapages = 0;
+
 	/* uvmexp.inactarg: computed in main daemon loop */
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
@@ -198,6 +206,7 @@ void
 uvm_pageout(void *arg)
 {
 	int bufcnt, npages = 0;
+	int extrapages = 0;
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
@@ -230,8 +239,9 @@ uvm_pageout(void *arg)
 		 */
 
 		uvm_lock_pageq();
-		if (npages != uvmexp.npages) {	/* check for new pages? */
+		if (npages != uvmexp.npages || extrapages != uvm_extrapages) {
 			npages = uvmexp.npages;
+			extrapages = uvm_extrapages;
 			uvmpd_tune();
 		}
 
