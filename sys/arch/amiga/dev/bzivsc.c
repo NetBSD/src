@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.2 1998/01/12 10:39:11 thorpej Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.3 1998/05/23 20:51:07 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "opt_m68kcpu.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.20 1997/10/04 17:38:00 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.21 1998/05/23 20:51:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  * DMA driver
  */
 
+#include "opt_m68kcpu.h"
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>

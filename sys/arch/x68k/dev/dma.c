@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: dma.c,v 1.2 1998/05/23 20:51:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -36,6 +36,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

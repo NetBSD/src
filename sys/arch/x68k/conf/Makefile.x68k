@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.24 1998/04/12 23:47:45 tv Exp $
+#	$NetBSD: Makefile.x68k,v 1.25 1998/05/23 20:51:15 is Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dx68k
-.if empty(IDENT:M-DM68060)
+OPT_M68KCPU!=   cpp -E -dM opt_m68kcpu.h
+.if empty(OPT_M68KCPU:MM68060)
 CMACHFLAGS=	-m68030
 .else
 CMACHFLAGS=	-m68060

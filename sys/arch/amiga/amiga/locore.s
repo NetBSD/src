@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 1998/04/11 16:13:57 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 1998/05/23 20:51:08 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,8 @@
  * Amiga author: Markus Wild
  * Other contributors: Bryan Ford (kernel reload stuff)
  */
+
+#include "opt_m68kcpu.h"
 
 #include "assym.h"
 #include <machine/asm.h>

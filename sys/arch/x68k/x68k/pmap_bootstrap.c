@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 1997/10/12 18:20:23 oki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 1998/05/23 20:51:14 is Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,6 +38,8 @@
  *
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <machine/pte.h>

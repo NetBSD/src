@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1998/05/11 07:46:19 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 1998/05/23 20:51:09 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
  */
 
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

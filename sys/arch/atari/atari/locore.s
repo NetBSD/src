@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 1998/05/11 07:46:17 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1998/05/23 20:51:09 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@
  * Atari Modifications: Leo Weppelman
  */
 
+
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include "assym.h"

@@ -1,5 +1,8 @@
-#       $NetBSD: files.m68k,v 1.20 1998/02/22 08:35:33 mycroft Exp $
+#       $NetBSD: files.m68k,v 1.21 1998/05/23 20:51:11 is Exp $
 #
+
+defopt	opt_m68kcpu.h	M68020 M68030 M68040 M68060
+
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
