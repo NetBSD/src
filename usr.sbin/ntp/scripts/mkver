@@ -1,0 +1,33 @@
+#!/bin/sh
+PROG=${1-UNKNOWN}
+
+ConfStr="$PROG"
+
+ConfStr="$ConfStr 4.0.99g"
+
+case "" in
+ '') ;;
+ *)  ConfStr="${ConfStr}-r" ;;
+esac
+
+ConfStr="$ConfStr `date`"
+
+if [ ! -f .version ]; then
+  echo 0 > .version
+fi
+RUN="`cat .version`"
+RUN="`expr $RUN + 1`"
+echo $RUN > .version
+
+ConfStr="$ConfStr (${RUN})"
+
+echo "Version <${ConfStr}>";
+
+rm -f version.c
+cat > version.c << -EoF-
+/*
+ * version file for $PROG
+ */
+#include <config.h>
+const char * Version = "${ConfStr}";
+-EoF-
