@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 1995/02/01 04:49:37 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 1995/02/08 04:06:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2862,7 +2862,7 @@ timebomb:
 	.long	0
 #endif
 /* interrupt counters */
-	.globl	_intrcnt,_intrnames
+	.globl	_intrcnt,_intrnames,_eintrcnt,_eintrnames
 _intrnames:
 	.asciz	"spur"
 	.asciz	"via1"
@@ -2870,8 +2870,10 @@ _intrnames:
 	.asciz	"scc"
 	.asciz	"nmi"
 	.asciz	"clock"
+_eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0
+_eintrcnt:
 _locore_dodebugmarks:
 	.long	0
