@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.7 1999/10/29 11:30:27 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.8 1999/10/29 12:02:13 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -80,6 +80,9 @@ static int decode_tuples __P((u_int8_t *, int));
 
 static int cardbus_read_tuples __P((struct cardbus_attach_args *,
 				    cardbusreg_t, u_int8_t *, size_t));
+
+static void enable_function __P((struct cardbus_softc *, int, int));
+static void disable_function __P((struct cardbus_softc *, int));
 
 
 struct cfattach cardbus_ca = {
@@ -178,9 +181,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
      u_int8_t *tuples;
      size_t len;
 {
-#ifdef CARDBUS_DEBUG
-    static const char __func__[] = "cardbus_read_tuples";
-#endif
+    struct cardbus_softc *sc = ca->ca_ct->ct_sc;
     cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
     cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
     cardbustag_t tag = ca->ca_tag;
@@ -201,7 +202,8 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 
     switch(cardbus_space) {
     case CARDBUS_CIS_ASI_TUPLE:
-	DPRINTF(("%s: reading CIS data from configuration space\n", __func__));
+	DPRINTF(("%s: reading CIS data from configuration space\n", 
+		 sc->sc_dev.dv_xname));
 	for (i = cis_ptr, j = 0; i < 0xff; i += 4) {
 	    u_int32_t e = (cf->cardbus_conf_read)(cc, tag, i);
 	    tuples[j] = 0xff & e;
@@ -225,11 +227,12 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
     case CARDBUS_CIS_ASI_ROM:
 	if(cardbus_space == CARDBUS_CIS_ASI_ROM) {
 	    reg = CARDBUS_ROM_REG;
-	    DPRINTF(("%s: reading CIS data from ROM\n", __func__));
+	    DPRINTF(("%s: reading CIS data from ROM\n",
+		     sc->sc_dev.dv_xname));
 	} else {
 	    reg = CARDBUS_BASE0_REG + (cardbus_space - 1) * 4;
 	    DPRINTF(("%s: reading CIS data from BAR%d\n",
-		     __func__, cardbus_space - 1));
+		     sc->sc_dev.dv_xname, cardbus_space - 1));
 	}
 
 	/* XXX zero register so mapreg_map doesn't get confused by old
@@ -239,7 +242,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 			      CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			      0, 
 			      NULL, &bar_memh, &bar_addr, &bar_size)) {
-	    printf("%s: failed to map memory\n", __func__);
+	    printf("%s: failed to map memory\n", sc->sc_dev.dv_xname);
 	    return 1;
 	}
 
@@ -308,7 +311,7 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 
 #ifdef DIAGNOSTIC
     default:
-	panic("%s: bad CIS space (%d)", __func__, cardbus_space);
+	panic("%s: bad CIS space (%d)", sc->sc_dev.dv_xname, cardbus_space);
 #endif
     }
     return !found;
@@ -351,13 +354,9 @@ cardbus_attach_card(sc)
     return 0;
   }
 
-  if (cdstatus & CARDBUS_3V_CARD) {
-    cf->cardbus_power(cc, CARDBUS_VCC_3V);
-    sc->sc_poweron_func = 1;	/* function 0 on */
-  }
-
-  (cf->cardbus_ctrl)(cc, CARDBUS_RESET);
-
+  enable_function(sc, cdstatus, 8); /* XXX use fake function 8 to
+				       keep power on during whole
+				       configuration */
   function = 0;
 
   tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
@@ -388,80 +387,85 @@ cardbus_attach_card(sc)
 
   nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
-  /*
-   *           XXX multi-function card
-   *
-   * I don't know how to process CIS information for
-   * multi-function cards.
-   */
+  for(function = 0; function < nfunction; function++) {
+      struct cardbus_attach_args ca;
 
-  id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-  class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
-  cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
-  
-  DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
-	   CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
-  
-  {
-    struct cardbus_attach_args ca;
+      tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
+      
+      id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+      class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
+      cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
+      
+      /* Invalid vendor ID value? */
+      if (CARDBUS_VENDOR(id) == 0xffff)
+	  continue;
+      
+      DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
+	       CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
+      
+      enable_function(sc, cdstatus, function);
+
+      /* we need to allocate the ct here, since we might 
+	 need it when reading the CIS */
+      if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
+						  M_DEVBUF, M_NOWAIT))) {
+	  panic("no room for cardbus_tag");
+      }
+
+      ct->ct_cc = sc->sc_cc;
+      ct->ct_cf = sc->sc_cf;
+      ct->ct_bus = sc->sc_bus;
+      ct->ct_dev = sc->sc_device;
+      ct->ct_func = function;
+      ct->ct_sc = sc;
+      ct->ct_next = NULL;
+      *previous_next = ct;
+
+      ca.ca_unit = sc->sc_dev.dv_unit;
+      ca.ca_ct = ct;
+
+      ca.ca_iot = sc->sc_iot;
+      ca.ca_memt = sc->sc_memt;
+      ca.ca_dmat = sc->sc_dmat;
+
+      ca.ca_tag = tag;
+      ca.ca_device = sc->sc_device;
+      ca.ca_function = function;
+      ca.ca_id = id;
+      ca.ca_class = class;
+
+      ca.ca_intrline = sc->sc_intrline;
+
+      bzero(tuple, 2048);
+
+      if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+	  printf("cardbus_attach_card: failed to read CIS\n");
+	  free(ct, M_DEVBUF);
+	  disable_function(sc, function);
+	  continue;
+      }
     
-    /* we need to allocate the ct here, since we might 
-       need it when reading the CIS */
-    if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
-						M_DEVBUF, M_NOWAIT))) {
-      panic("no room for cardbus_tag");
-    }
-
-    ct->ct_cc = sc->sc_cc;
-    ct->ct_cf = sc->sc_cf;
-    ct->ct_bus = sc->sc_bus;
-    ct->ct_dev = sc->sc_device;
-    ct->ct_func = function;
-    ct->ct_sc = sc;
-    ct->ct_next = NULL;
-    *previous_next = ct;
-
-    ca.ca_unit = sc->sc_dev.dv_unit;
-    ca.ca_ct = ct;
-
-    ca.ca_iot = sc->sc_iot;
-    ca.ca_memt = sc->sc_memt;
-    ca.ca_dmat = sc->sc_dmat;
-
-    ca.ca_tag = tag;
-    ca.ca_device = sc->sc_device;
-    ca.ca_function = function;
-    ca.ca_id = id;
-    ca.ca_class = class;
-
-    ca.ca_intrline = sc->sc_intrline;
-
-    bzero(tuple, 2048);
-
-    if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-      printf("cardbus_attach_card: failed to read CIS\n");
-      free(ct, M_DEVBUF);
-      return 0;
-    }
-    
-    decode_tuples(tuple, 2048);
+      decode_tuples(tuple, 2048);
     
     
-    if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
-      /* do not match */
-      cf->cardbus_power(cc, CARDBUS_VCC_0V);
-      sc->sc_poweron_func = 0;	/* no functions on */
-      free(cc, M_DEVBUF);
-      free(ct, M_DEVBUF);
-      *previous_next = NULL;
-    } else {
-      /* found */
-      previous_next = &(ct->ct_next);
-      ct->ct_device = csc;
-      ++no_work_funcs;
-    }
+      if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
+	  /* do not match */
+	  disable_function(sc, function);
+	  free(ct, M_DEVBUF);
+	  *previous_next = NULL;
+      } else {
+	  /* found */
+	  previous_next = &(ct->ct_next);
+	  ct->ct_device = csc;
+	  ++no_work_funcs;
+      }
   }
+  /* XXX power down pseudo function 8 (this will power down the card
+     if no functions were attached) */
+  disable_function(sc, 8);
 
+  if(no_work_funcs == 0)
+      free(cc, M_DEVBUF);
   return no_work_funcs;
 }
 
@@ -564,6 +568,36 @@ cardbus_intr_disestablish(cc, cf, handler)
 
 
 
+/* XXX this should be merged with cardbus_function_{enable,disable},
+   but we don't have a ct when these functions are called */
+
+static void
+enable_function(sc, cdstatus, function)
+     struct cardbus_softc *sc;
+     int cdstatus;
+     int function;
+{
+    if(sc->sc_poweron_func == 0) {
+	if (cdstatus & CARDBUS_3V_CARD) {
+	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_3V);
+	}
+	(sc->sc_cf->cardbus_ctrl)(sc->sc_cc, CARDBUS_RESET);
+    }
+    sc->sc_poweron_func |= (1 << function);
+}
+
+static void
+disable_function(sc, function)
+     struct cardbus_softc *sc; 
+     int function;
+{
+    sc->sc_poweron_func &= ~(1 << function);
+    if(sc->sc_poweron_func == 0) {
+	/* power-off because no functions are enabled */
+	sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_0V);
+    }
+}
+
 /*
  * int cardbus_function_enable(cardbus_devfunc_t ct)
  *
@@ -585,13 +619,7 @@ cardbus_function_enable(ct)
 
   /* entering critical area */
 
-  if (sc->sc_poweron_func == 0) {
-    /* no functions are enabled */
-    (*cf->cardbus_power)(cc, CARDBUS_VCC_3V); /* XXX: sc_vold should be used */
-    (*cf->cardbus_ctrl)(cc, CARDBUS_RESET);
-  }
-
-  sc->sc_poweron_func |= (1 << func);
+  enable_function(sc, CARDBUS_3V_CARD, func); /* XXX: sc_vold should be used */
 
   /* exiting critical area */
 
@@ -620,19 +648,10 @@ cardbus_function_disable(ct)
 {
   struct cardbus_softc *sc = ct->ct_sc;
   int func = ct->ct_func;
-  cardbus_chipset_tag_t cc = sc->sc_cc;
-  cardbus_function_tag_t cf = sc->sc_cf;
 
   DPRINTF(("entering cardbus_enable_disable...  "));
 
-  sc->sc_poweron_func &= ~(1 << func);
-
-  DPRINTF(("%x\n", sc->sc_poweron_func));
-
-  if (sc->sc_poweron_func == 0) {
-    /* power-off because no functions are enabled */
-    (*cf->cardbus_power)(cc, CARDBUS_VCC_0V);
-  }
+  disable_function(sc, func);
 
   return 0;
 }
