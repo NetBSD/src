@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.36 2003/02/09 23:29:32 atatat Exp $	*/
+/*	$NetBSD: modload.c,v 1.37 2003/04/11 07:49:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.36 2003/02/09 23:29:32 atatat Exp $");
+__RCSID("$NetBSD: modload.c,v 1.37 2003/04/11 07:49:31 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 	int strtablen;
 	size_t modsize;	/* XXX */
 	void *modentry;	/* XXX */
-	int noready = 0, old = 0;
+	int noready = 0;
 
 	while ((c = getopt(argc, argv, "dnvse:p:o:A:ST:")) != -1) {
 		switch (c) {
@@ -420,15 +420,9 @@ main(int argc, char **argv)
 
 	if (verbose)
 		warnx("reserving %lu bytes of memory", (unsigned long)modsize);
-	if (ioctl(devfd, LMRESERV, &resrv) == -1) {
-	    if (symtab)
-		warn("not loading symbols: kernel does not support symbol table loading");
-	doold:
-	    symtab = 0;
-	    if (ioctl(devfd, LMRESERV_O, &resrv) == -1)
+	if (ioctl(devfd, LMRESERV, &resrv) == -1)
 		err(9, "can't reserve memory");
-	    old = TRUE;
-	}
+
 	fileopen |= PART_RESRV;
 
 	/*
@@ -466,19 +460,9 @@ main(int argc, char **argv)
 	 * is maintained on success, or blow everything back to ground
 	 * zero on failure.
 	 */
-	if (ioctl(devfd, LMREADY, &modentry) == -1) {
-	  if (errno == EINVAL && !old) {
-	    if (fileopen & MOD_OPEN)
-	      close(modfd);
-	    /* PART_RESRV is not true since the kernel cleans up
-	       after a failed LMREADY */
-	    fileopen &= ~(MOD_OPEN|PART_RESRV);
-	    /* try using oldstyle */
-	    warn("module failed to load using new version; trying old version");
-	    goto doold;
-	  } else
+	if (ioctl(devfd, LMREADY, &modentry) == -1)
 	    err(14, "error initializing module");
-	}
+
 	/*
 	 * Success!
 	 */
