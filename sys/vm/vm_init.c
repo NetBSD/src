@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_init.c,v 1.10 1998/01/08 11:36:20 mrg Exp $	*/
+/*	$NetBSD: vm_init.c,v 1.11 1998/01/09 06:00:50 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -96,7 +96,7 @@ void vm_mem_init()
 	 *	From here on, all physical memory is accounted for,
 	 *	and we use only virtual addresses.
 	 */
-	if (cnt.v_page_size == 0) {
+	if (page_shift == 0) {
 		printf("vm_mem_init: WARN: MD code did not set page size\n");
 		vm_set_page_size();
 	}
