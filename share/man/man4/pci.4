@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.9 1998/04/30 08:50:09 fair Exp $
+.\"	$NetBSD: pci.4,v 1.10 1998/05/07 20:17:32 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -144,7 +144,13 @@ interfaces.
 .Bl -tag -width speaker -offset indent
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
-device interface
+device interface.
+.El
+.Pp
+.Ss Audio devices
+.Bl -tag -width speaker -offset indent
+.It eap
+Ensoniq AudioPCI sound device.
 .El
 .Pp
 .Ss Miscellaneous devices
@@ -167,6 +173,7 @@ expansion backplanes.
 .Xr bha 4 ,
 .Xr cy 4 ,
 .Xr de 4 ,
+.Xr eap 4 ,
 .Xr en 4 ,
 .Xr ep 4 ,
 .Xr fpa 4 ,
