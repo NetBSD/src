@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.9 1997/08/18 21:33:33 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.10 1997/08/18 23:21:33 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,7 +302,9 @@ when the encoding parameter changes, but if the
 .Va blocksize
 is set explicitely this value becomes sticky, i.e., it is remains
 even when the encoding is changed.  The stickyness can be cleared
-by reopening the device or performing an AUDIO_FLUSH.
+by reopening the device or setting the
+.Va blocksize
+to 0.
 .Pp
 .Va backlog
 is currently unused.
