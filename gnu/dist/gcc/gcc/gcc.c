@@ -6096,7 +6096,7 @@ main (argc, argv)
 
   if (print_search_dirs)
     {
-#ifdef NETBSD_NATIVE
+#ifndef NETBSD_NATIVE
       printf (_("install: %s%s\n"), standard_exec_prefix, machine_suffix);
 #endif /* NETBSD_NATIVE */
       printf (_("programs: %s\n"), build_search_list (&exec_prefixes, "", 0));
