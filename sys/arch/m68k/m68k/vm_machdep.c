@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ physaccess(vaddr, paddr, size, prot)
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
 		*pte++ = PG_V | prot | page;
-		page += NBPG;
+		page += PAGE_SIZE;
 	}
 	TBIAS();
 }

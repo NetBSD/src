@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.5 2002/09/27 15:36:14 provos Exp $ */
+/* $NetBSD: bus_dma.c,v 1.6 2003/04/02 00:00:46 thorpej Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2002/09/27 15:36:14 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2003/04/02 00:00:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -468,13 +468,13 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 					"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 			}
 #endif
-			while ((p < e) && (p % NBPG)) {
+			while ((p < e) && (p % PAGE_SIZE)) {
 				DCFL(p);		/* flush cache line */
 				p += 16;
 			}
-			while (p + NBPG <= e) {
+			while (p + PAGE_SIZE <= e) {
 				DCFP(p);		/* flush page */
-				p += NBPG;
+				p += PAGE_SIZE;
 			}
 			while (p < e) {
 				DCFL(p);		/* flush cache line */
@@ -525,13 +525,13 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 						"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 				}
 #endif
-				while ((p < e) && (p % NBPG)) {
+				while ((p < e) && (p % PAGE_SIZE)) {
 					DCPL(p);	/* purge cache line */
 					p += 16;
 				}
-				while (p + NBPG <= e) {
+				while (p + PAGE_SIZE <= e) {
 					DCPP(p);	/* purge page */
-					p += NBPG;
+					p += PAGE_SIZE;
 				}
 				while (p < e) {
 					DCPL(p);	/* purge cache line */
@@ -676,7 +676,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,11 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD");
 /*
  * Note that what we do here on 040/060 for BSD is different than for HP-UX.
  *
- * In 'pux they either act on a line (len == 16), a page (len == NBPG)
+ * In 'pux they either act on a line (len == 16), a page (len == PAGE_SIZE)
  * or the whole cache (len == anything else).
  *
  * In BSD we attempt to be more optimal when acting on "odd" sizes.
- * For lengths up to 1024 we do all affected lines, up to 2*NBPG we
+ * For lengths up to 1024 we do all affected lines, up to 2*PAGE_SIZE we
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
@@ -89,7 +89,7 @@ cachectl1(req, addr, len, p)
 		extern struct emul emul_hpux;
 
 		if ((p->p_emul == &emul_hpux) &&
-		    len != 16 && len != NBPG)
+		    len != 16 && len != PAGE_SIZE)
 			doall = 1;
 #endif
 
@@ -99,7 +99,7 @@ cachectl1(req, addr, len, p)
 #else
 		    (req & CC_IPURGE) ||
 #endif
-		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2 * NBPG))
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2 * PAGE_SIZE))
 			doall = 1;
 
 		if (!doall) {
@@ -109,7 +109,7 @@ cachectl1(req, addr, len, p)
 				inc = 16;
 			} else {
 				addr = addr & ~PGOFSET;
-				inc = NBPG;
+				inc = PAGE_SIZE;
 			}
 		}
 		do {
@@ -133,7 +133,7 @@ cachectl1(req, addr, len, p)
 				} else if (inc == 16) {
 					DCFL(pa);
 					ICPL(pa);
-				} else if (inc == NBPG) {
+				} else if (inc == PAGE_SIZE) {
 					DCFP(pa);
 					ICPP(pa);
 				}
@@ -145,7 +145,7 @@ cachectl1(req, addr, len, p)
 					DCFA();	/* note: flush not purge */
 				else if (inc == 16)
 					DCPL(pa);
-				else if (inc == NBPG)
+				else if (inc == PAGE_SIZE)
 					DCPP(pa);
 				break;
 
@@ -155,7 +155,7 @@ cachectl1(req, addr, len, p)
 					DCFA();
 				else if (inc == 16)
 					DCFL(pa);
-				else if (inc == NBPG)
+				else if (inc == PAGE_SIZE)
 					DCFP(pa);
 				break;
 
@@ -238,7 +238,7 @@ dma_cachectl(addr, len)
 		inc = 16;
 	} else {
 		addr = (caddr_t)((vaddr_t)addr & ~PGOFSET);
-		inc = NBPG;
+		inc = PAGE_SIZE;
 	}
 	do {
 		/*

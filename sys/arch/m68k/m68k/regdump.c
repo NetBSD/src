@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.3 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: regdump.c,v 1.4 2003/04/02 00:00:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/m68k.h>
 #include <m68k/frame.h>
@@ -108,7 +110,7 @@ dumpmem(ptr, sz, ustack)
 	register int limit;
 
 	/* Stay in the same page */
-	limit = ((int)ptr) | (NBPG-3);
+	limit = ((int)ptr) | (PAGE_SIZE-3);
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
