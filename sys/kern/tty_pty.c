@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.4 1993/05/18 18:19:32 cgd Exp $
+ *	$Id: tty_pty.c,v 1.5 1993/05/26 10:06:47 deraadt Exp $
  */
 
 /*
@@ -48,6 +48,7 @@
 #include "tty.h"
 #include "conf.h"
 #include "file.h"
+#include "malloc.h"
 #include "proc.h"
 #include "uio.h"
 #include "kernel.h"
@@ -64,7 +65,7 @@
  * pts == /dev/tty[pqrs]?
  * ptc == /dev/pty[pqrs]?
  */
-struct	tty pt_tty[NPTY];
+struct	tty *pt_tty[NPTY];
 struct	pt_ioctl {
 	int	pt_flags;
 	struct selinfo pt_selr, pt_selw;
@@ -94,7 +95,12 @@ ptsopen(dev, flag, devtype, p)
 #endif
 	if (minor(dev) >= NPTY)
 		return (ENXIO);
-	tp = &pt_tty[minor(dev)];
+	if(!pt_tty[minor(dev)]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		pt_tty[minor(dev)] = tp;
+	} else
+		tp = pt_tty[minor(dev)];
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);		/* Set up default chars */
@@ -128,7 +134,7 @@ ptsclose(dev, flag, mode, p)
 {
 	register struct tty *tp;
 
-	tp = &pt_tty[minor(dev)];
+	tp = pt_tty[minor(dev)];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
@@ -140,7 +146,7 @@ ptsread(dev, uio, flag)
 	struct uio *uio;
 {
 	struct proc *p = curproc;
-	register struct tty *tp = &pt_tty[minor(dev)];
+	register struct tty *tp = pt_tty[minor(dev)];
 	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	int error = 0;
 
@@ -192,7 +198,7 @@ ptswrite(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &pt_tty[minor(dev)];
+	tp = pt_tty[minor(dev)];
 	if (tp->t_oproc == 0)
 		return (EIO);
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -246,7 +252,12 @@ ptcopen(dev, flag, devtype, p)
 
 	if (minor(dev) >= NPTY)
 		return (ENXIO);
-	tp = &pt_tty[minor(dev)];
+	if(!pt_tty[minor(dev)]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		pt_tty[minor(dev)] = tp;
+	} else
+		tp = pt_tty[minor(dev)];
 	if (tp->t_oproc)
 		return (EIO);
 	tp->t_oproc = ptsstart;
@@ -265,7 +276,7 @@ ptcclose(dev)
 {
 	register struct tty *tp;
 
-	tp = &pt_tty[minor(dev)];
+	tp = pt_tty[minor(dev)];
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	tp->t_state &= ~TS_CARR_ON;
 	tp->t_oproc = 0;		/* mark closed */
@@ -275,6 +286,17 @@ ptcclose(dev)
 	if (constty==tp)
 		constty = 0;
 
+#if 0
+	/*
+	 * currently, we do not free the pty structures once they have
+	 * been allocated. Two reasons: cheap to keep them around, and
+	 * I don't want to spend my time finding the exact variables that
+	 * will tell me if the slave/master are closed and if I can free
+	 * them. <deraadt@fsa.ca>
+	 */
+	FREE(tp, M_TTYS);
+	pt_tty[minor(dev)] = (struct tty *)NULL;
+#endif
 	return (0);
 }
 
@@ -282,7 +304,7 @@ ptcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &pt_tty[minor(dev)];
+	register struct tty *tp = pt_tty[minor(dev)];
 	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	char buf[BUFSIZ];
 	int error = 0, cc;
@@ -380,7 +402,7 @@ ptcselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	register struct tty *tp = &pt_tty[minor(dev)];
+	register struct tty *tp = pt_tty[minor(dev)];
 	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	struct proc *prev;
 	int s;
@@ -434,7 +456,7 @@ ptcwrite(dev, uio, flag)
 	dev_t dev;
 	register struct uio *uio;
 {
-	register struct tty *tp = &pt_tty[minor(dev)];
+	register struct tty *tp = pt_tty[minor(dev)];
 	register u_char *cp;
 	register int cc = 0;
 	u_char locbuf[BUFSIZ];
@@ -529,7 +551,7 @@ ptyioctl(dev, cmd, data, flag)
 	caddr_t data;
 	dev_t dev;
 {
-	register struct tty *tp = &pt_tty[minor(dev)];
+	register struct tty *tp = pt_tty[minor(dev)];
 	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	register u_char *cc = tp->t_cc;
 	int stop, error;
