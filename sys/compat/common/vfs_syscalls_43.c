@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.12 1999/05/05 20:01:01 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.13 2000/03/30 11:27:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,7 +105,7 @@ compat_43_sys_stat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_stat_args /* {
+	struct compat_43_sys_stat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
@@ -137,7 +137,7 @@ compat_43_sys_lstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_lstat_args /* {
+	struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
 	} */ *uap = v;
@@ -198,13 +198,13 @@ compat_43_sys_fstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_fstat_args /* {
+	struct compat_43_sys_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat43 *) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct stat ub;
 	struct stat43 oub;
 	int error;
@@ -244,7 +244,7 @@ compat_43_sys_ftruncate(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_ftruncate_args /* {
+	struct compat_43_sys_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(long) length;
 	} */ *uap = v;
@@ -269,7 +269,7 @@ compat_43_sys_truncate(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_truncate_args /* {
+	struct compat_43_sys_truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
@@ -294,7 +294,7 @@ compat_43_sys_lseek(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_lseek_args /* {
+	struct compat_43_sys_lseek_args /* {
 		syscallarg(int) fd;
 		syscallarg(long) offset;
 		syscallarg(int) whence;
@@ -326,7 +326,7 @@ compat_43_sys_creat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_creat_args /* {
+	struct compat_43_sys_creat_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -363,13 +363,13 @@ compat_43_sys_getdirentries(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_getdirentries_args /* {
+	struct compat_43_sys_getdirentries_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct file *fp;
 	struct uio auio, kuio;
 	struct iovec aiov, kiov;

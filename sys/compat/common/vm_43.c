@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.3 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.4 2000/03/30 11:27:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,7 @@ compat_43_sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_mmap_args /* {
+	struct compat_43_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
