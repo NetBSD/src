@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.8 1997/02/02 08:38:00 thorpej Exp $	*/
+/*	$NetBSD: _startup.c,v 1.8.2.1 1997/03/12 14:22:07 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,14 +65,19 @@ extern char kernel_text[];
 extern char etext[], edata[], end[];
 char *esym;	/* DDB */
 
-/* m68k common code needs these */
-int	cputype, mmutype;
+/*
+ * XXX: m68k common code needs these...
+ * ... but this port does not need to deal with anything except
+ * an mc68030, so these two variables are always ignored.
+ * XXX: Need to do something about <m68k/include/cpu.h>
+ */
+int cputype =  1;	/* CPU_68030 */
+int mmutype = -1;	/* MMU_68030 */
 
 /*
  * Now our own stuff.
  */
-int boothowto = RB_KDB; 	/* XXX - For now... */
-int cold = 1;
+int boothowto = RB_SINGLE | RB_KDB; 	/* XXX - For now... */
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
@@ -236,10 +241,6 @@ _verify_hardware()
 		mon_printf("not a sun3x?\n");
 		sunmon_abort();
 	}
-
-	/* Set cputype and mmutype for common m68k code. */
-	cputype = CPU_68030;
-	mmutype = MMU_68030;
 
 	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
 	switch (cpu_machine_id) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1997/02/02 08:39:55 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.3.4.1 1997/03/12 14:22:24 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,11 +61,16 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
+#include <machine/mon.h>
+
+/* XXX - Put this in pmap_pvt.h or something? */
+extern vm_offset_t avail_start;
 
 #define	mmread	mmrw
 cdev_decl(mm);
-
+static int promacc __P((caddr_t, int, int));
 static caddr_t devzeropage;
+
 
 /*ARGSUSED*/
 int
@@ -96,9 +101,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
 	register struct iovec *iov;
+	register vm_offset_t o, v;
+	register int c, rw;
 	int error = 0;
 	static int physlock;
 
@@ -126,47 +131,63 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case 0:                        /*  /dev/mem  */
 			v = uio->uio_offset;
+			/* allow reads only in RAM */
 			if (!pmap_pa_exists(v)) {
 				error = EFAULT;
 				goto unlock;
+			}
+			/*
+			 * If the offset (physical address) is within the
+			 * linearly mapped range (0 .. avail_start) then
+			 * we can save some hair by using the /dev/kmem
+			 * alias mapping known to exist for this range.
+			 */
+			if (v < avail_start) {
+				v += KERNBASE;
+				goto use_kmem;
 			}
 			/* Temporarily map the memory at vmmap. */
 			pmap_enter(pmap_kernel(), vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = uio->uio_offset & PGOFSET;
+			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 			continue;
 
-/* minor device 1 is kernel memory */
-		/* XXX - Allow access to the PROM? */
-		case 1:
+		case 1:                        /*  /dev/kmem  */
 			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+		use_kmem:
+			/*
+			 * One page at a time to simplify access checks.
+			 * Note that we can get here from case 0 above!
+			 */
+			o = v & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
+			if (!(kernacc((caddr_t)v, c, rw) ||
+			      promacc((caddr_t)v, c, rw)))
+			{
+				error = EFAULT;
+				/* Note: case 0 can get here, so must unlock! */
+				goto unlock;
+			}
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case 2:                        /*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 11 (/dev/eeprom) accesses Non-Volatile RAM */
-		case 11:
+		case 11:                        /*  /dev/eeprom  */
 			error = eeprom_uio(uio);
 			return (error);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case 12:                        /*  /dev/zero  */
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
@@ -227,7 +248,7 @@ mmmmap(dev, off, prot)
 	case 0:		/* dev/mem */
 		/* Allow access only in valid memory. */
 		if (!pmap_pa_exists(v))
-			return (-1);
+			break;
 		return (v);
 
 #if 0	/* XXX - NOTYET */
@@ -261,4 +282,35 @@ mmmmap(dev, off, prot)
 	}
 
 	return (-1);
+}
+
+
+/*
+ * Just like kernacc(), but for the PROM mappings.
+ * Return non-zero if access at VA is allowed.
+ */
+static int
+promacc(va, len, rw)
+	caddr_t va;
+	int len, rw;
+{
+	vm_offset_t sva, eva;
+
+	sva = (vm_offset_t)va;
+	eva = (vm_offset_t)va + len;
+
+	/* Test for the most common case first. */
+	if (sva < PROM_BASE)
+		return (0);
+
+	/* Read in the PROM itself is OK. */
+	if ((rw == B_READ) && (eva <= MONEND))
+		return (1);
+
+	/* PROM data page is OK for read/write. */
+	if ((sva >= MONDATA) && (eva <= (MONDATA+NBPG)))
+		return (1);
+
+	/* otherwise, not OK to touch */
+	return (0);
 }

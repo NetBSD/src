@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.5 1997/02/03 19:33:42 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5.2.1 1997/03/12 14:22:15 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -98,6 +98,9 @@ struct nv assyms[] = {
 	/* def1(BUSERR_REG), XXX */
 	/* def1(BUSERR_MMU), XXX */
 
+	/* XXX: for copy.s */
+	def("M68030", 1),
+
 	/* 68k isms */
 	def1(PSL_LOWIPL),
 	def1(PSL_HIGHIPL),
@@ -119,6 +122,7 @@ struct nv assyms[] = {
 	/* kernel-isms */
 	def1(KERNBASE),
 	def1(USPACE),
+	def1(NBPG),
 
 	/* system calls */
 	def1(SYS_sigreturn),
@@ -148,10 +152,10 @@ struct nv assyms[] = {
 
 	/* XXX: HP-UX trace bit? */
 
-	/* VM structure fields */
+	/* VM/pmap structure fields */
 	def("VM_PMAP", offsetof(struct vmspace, vm_pmap)),
-	def("VM_PMAP_MMUCRP", offsetof(struct vmspace, vm_pmap.pm_mmucrp)),
-	def("VM_PMAP_A_TMGR", offsetof(struct vmspace, vm_pmap.pm_a_tmgr)),
+	def("PM_A_PHYS", offsetof(struct pmap, pm_a_phys)),
+	def("PM_A_TMGR", offsetof(struct pmap, pm_a_tmgr)),
 
 	/* pcb offsets */
 	def("PCB_FLAGS", offsetof(struct pcb, pcb_flags)),

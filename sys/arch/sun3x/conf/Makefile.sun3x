@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.4 1997/02/04 17:16:38 gwr Exp $
+#	$NetBSD: Makefile.sun3x,v 1.4.2.1 1997/03/12 14:21:40 is Exp $
 
 # Makefile for NetBSD
 #
@@ -31,10 +31,7 @@ CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-COPTS?=	-O2
-
-# Need to override this for cross compilation.
-HOSTED_CC?=	${CC}
+COPTS?=	-O2 -fno-defer-pop
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -73,8 +70,8 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
-# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
+# compile rules: rules are named NORMAL_${SUFFIX} where SUFFIX is
+# the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
@@ -116,11 +113,10 @@ SYSTEM_LD_TAIL+=; \
 		${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-S
-.endif
-
 # XXX - temporary:
 SYSTEM_LD_TAIL+=; \
 		dbsym $@
+.endif
 
 # LOAD+
 
@@ -128,17 +124,16 @@ SYSTEM_LD_TAIL+=; \
 
 # LOAD-
 
-assym.h: genassym
-	./genassym >assym.h
+# Use awk to cross-build assym.h from the genassym.s file.
+assym.h: genassym.o ${SUN3X}/sun3x/genassym.awk
+	awk -f ${SUN3X}/sun3x/genassym.awk < genassym.s > $@
 
-# Doing a cross-build of this is very tricky, and very dependent
-# on compatibility of things like structure member alignment in
-# the compiler used as HOSTED_CC (must match the native compiler).
-# Often this is not possible at all, and you just have to build
-# the assym.h file by hand on some other machine. -gwr
-genassym: ${SUN3X}/sun3x/genassym.c
-	${CC} ${CPPFLAGS} -E $< > $@.i
-	${HOSTED_CC} -o $@ $@.i
+# The above rule lists genassym.o as a prerequisite so that the
+# generated .depend rule is effective, even though we actually
+# use genassym.s instead.   This always creates both.
+genassym.o: ${SUN3X}/sun3x/genassym.c
+	${CC} ${CPPFLAGS} -S $<
+	${CC} -c $*.s
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -208,6 +203,9 @@ db_machdep.o dvma.o machdep.o pmap.o sun3x_startup.o vm_machdep.o: Makefile
 
 # depends on DDB symbol space
 db_aout.o : Makefile
+
+# depends on KGDBDEV, KGDBRATE
+kgdb_stub.o: Makefile
 
 locore.o: ${SUN3X}/sun3x/locore.s
 	${NORMAL_S}
