@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)unistd.h	5.13 (Berkeley) 6/17/91
+ *	@(#)unistd.h	8.12 (Berkeley) 4/27/95
  */
 
 #ifndef _UNISTD_H_
@@ -44,26 +44,19 @@
 #define	STDOUT_FILENO	1	/* standard output file descriptor */
 #define	STDERR_FILENO	2	/* standard error file descriptor */
 
-/* fnmatch(3) defines */
-#define	FNM_PATHNAME	0x01	/* match pathnames, not filenames */
-#ifndef _POSIX_SOURCE
-#define	FNM_QUOTE	0x02	/* escape special chars with \ */
-#endif
-
 #ifndef NULL
 #define	NULL		0	/* null pointer constant */
 #endif
 
-typedef	int ssize_t;		/* count of bytes or error indication */
-
 __BEGIN_DECLS
-void	 _exit __P((int));
+__dead void
+	 _exit __P((int));
 int	 access __P((const char *, int));
-u_int	 alarm __P((u_int));
+unsigned int	 alarm __P((unsigned int));
 int	 chdir __P((const char *));
 int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
-char	*cuserid __P((char *));
+size_t	 confstr __P((int, char *, size_t));
 int	 dup __P((int));
 int	 dup2 __P((int, int));
 int	 execl __P((const char *, const char *, ...));
@@ -73,12 +66,12 @@ int	 execv __P((const char *, char * const *));
 int	 execve __P((const char *, char * const *, char * const *));
 int	 execvp __P((const char *, char * const *));
 pid_t	 fork __P((void));
-long	 fpathconf __P((int, int));		/* not yet */
+long	 fpathconf __P((int, int));
 char	*getcwd __P((char *, size_t));
 gid_t	 getegid __P((void));
 uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
-int	 getgroups __P((int, int *));		/* XXX (gid_t *) */
+int	 getgroups __P((int, gid_t []));
 char	*getlogin __P((void));
 pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
@@ -87,7 +80,7 @@ uid_t	 getuid __P((void));
 int	 isatty __P((int));
 int	 link __P((const char *, const char *));
 off_t	 lseek __P((int, off_t, int));
-long	 pathconf __P((const char *, int));	/* not yet */
+long	 pathconf __P((const char *, int));
 int	 pause __P((void));
 int	 pipe __P((int *));
 ssize_t	 read __P((int, void *, size_t));
@@ -96,23 +89,25 @@ int	 setgid __P((gid_t));
 int	 setpgid __P((pid_t, pid_t));
 pid_t	 setsid __P((void));
 int	 setuid __P((uid_t));
-u_int	 sleep __P((u_int));
-long	 sysconf __P((int));			/* not yet */
+unsigned int	 sleep __P((unsigned int));
+long	 sysconf __P((int));
 pid_t	 tcgetpgrp __P((int));
 int	 tcsetpgrp __P((int, pid_t));
 char	*ttyname __P((int));
 int	 unlink __P((const char *));
 ssize_t	 write __P((int, const void *, size_t));
 
+extern char *optarg;			/* getopt(3) external variables */
+extern int optind, opterr, optopt;
+int	 getopt __P((int, char * const [], const char *));
+
 #ifndef	_POSIX_SOURCE
-
-/* structure timeval required for select() */
-#include <sys/time.h>
-
+#ifdef	__STDC__
+struct timeval;				/* select(2) */
+#endif
 int	 acct __P((const char *));
 int	 async_daemon __P((void));
 char	*brk __P((const char *));
-int	 chflags __P((const char *, long));
 int	 chroot __P((const char *));
 char	*crypt __P((const char *, const char *));
 int	 des_cipher __P((const char *, char *, long, int));
@@ -121,27 +116,27 @@ int	 encrypt __P((char *, int));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
-int	 fchflags __P((int, long));
 int	 fchown __P((int, int, int));
-int	 fnmatch __P((const char *, const char *, int));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
 int	 getdtablesize __P((void));
 long	 gethostid __P((void));
 int	 gethostname __P((char *, int));
 mode_t	 getmode __P((const void *, mode_t));
-int	 getpagesize __P((void));
+__pure int
+	 getpagesize __P((void));
 char	*getpass __P((const char *));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, int));
+int	 iruserok __P((unsigned long, int, const char *, const char *));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
-int	 nfssvc __P((int));
+int	 nfssvc __P((int, void *));
 int	 nice __P((int));
-void	 psignal __P((u_int, const char *));
-extern char *sys_siglist[];
+void	 psignal __P((unsigned int, const char *));
+extern __const char *__const sys_siglist[];
 int	 profil __P((char *, int, int, int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
@@ -156,15 +151,15 @@ char	*sbrk __P((int));
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
-int	 setgroups __P((int, const int *));
+int	 setgroups __P((int, const gid_t *));
 void	 sethostid __P((long));
 int	 sethostname __P((const char *, int));
 int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
 void	*setmode __P((const char *));
 int	 setpgrp __P((pid_t pid, pid_t pgrp));	/* obsoleted by setpgid() */
-int	 setregid __P((int, int));
-int	 setreuid __P((int, int));
+int	 setregid __P((gid_t, gid_t));
+int	 setreuid __P((uid_t, uid_t));
 int	 setrgid __P((gid_t));
 int	 setruid __P((uid_t));
 void	 setusershell __P((void));
@@ -174,11 +169,14 @@ void	 sync __P((void));
 int	 syscall __P((int, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
-u_int	 ualarm __P((u_int, u_int));
-void	 usleep __P((u_int));
+unsigned int	 ualarm __P((unsigned int, unsigned int));
+int	 unwhiteout __P((const char *));
+void	 usleep __P((unsigned int));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
-int	 vfork __P((void));
+pid_t	 vfork __P((void));
 
+extern char *suboptarg;			/* getsubopt(3) external variable */
+int	 getsubopt __P((char **, char * const *, char **));
 #endif /* !_POSIX_SOURCE */
 __END_DECLS
 

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -33,25 +33,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdio.h	5.17 (Berkeley) 6/3/91
+ *	@(#)stdio.h	8.5 (Berkeley) 4/29/95
  */
 
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
+#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
+#include <sys/types.h>
+#endif
+
 #include <sys/cdefs.h>
 
 #include <machine/ansi.h>
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 #ifndef NULL
 #define	NULL	0
 #endif
 
-typedef long fpos_t;		/* Must match off_t <sys/types.h> */
+/*
+ * This is fairly grotesque, but pure ANSI code must not inspect the
+ * innards of an fpos_t anyway.  The library internally uses off_t,
+ * which we assume is exactly as big as eight chars.  (When we switch
+ * to gcc 2.4 we will use __attribute__ here.)
+ *
+ * WARNING: the alignment constraints on an off_t and the struct below
+ * differ on (e.g.) the SPARC.  Hence, the placement of an fpos_t object
+ * in a structure will change if fpos_t's are not aligned on 8-byte
+ * boundaries.  THIS IS A CROCK, but for now there is no way around it.
+ */
+#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
+typedef off_t fpos_t;
+#else
+typedef struct __sfpos {
+	char	_pos[8];
+} fpos_t;
+#endif
 
 #define	_FSTDIO			/* Define for new stdio with functions. */
 
@@ -90,6 +111,8 @@ struct __sbuf {
  * that does not match the previous one in _bf.  When this happens,
  * _ub._base becomes non-nil (i.e., a stream has ungetc() data iff
  * _ub._base!=NULL) and _up and _ur save the current values of _p and _r.
+ *
+ * NB: see WARNING above before changing the layout of this structure!
  */
 typedef	struct __sFILE {
 	unsigned char *_p;	/* current position in (some) buffer */
@@ -116,12 +139,12 @@ typedef	struct __sFILE {
 	unsigned char _ubuf[3];	/* guarantee an ungetc() buffer */
 	unsigned char _nbuf[1];	/* guarantee a getc() buffer */
 
-	/* separate buffer for fgetline() when line crosses buffer boundary */
-	struct	__sbuf _lb;	/* buffer for fgetline() */
+	/* separate buffer for fgetln() when line crosses buffer boundary */
+	struct	__sbuf _lb;	/* buffer for fgetln() */
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
-	int	_offset;	/* current lseek offset */
+	fpos_t	_offset;	/* current lseek offset (see WARNING) */
 } FILE;
 
 __BEGIN_DECLS
@@ -142,7 +165,7 @@ __END_DECLS
 #define	__SOPT	0x0400		/* do fseek() optimisation */
 #define	__SNPT	0x0800		/* do not do fseek() optimisation */
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
-#define	__SMOD	0x2000		/* true => fgetline modified _p text */
+#define	__SMOD	0x2000		/* true => fgetln modified _p text */
 
 /*
  * The following three definitions are for ANSI C, which took them
@@ -161,10 +184,11 @@ __END_DECLS
 #define	EOF	(-1)
 
 /*
- * FOPEN_MAX is a minimum maximum, and should be the number of descriptors
- * that the kernel can provide without allocation of a resource that can
- * fail without the process sleeping.  Do not use this for anything.
+ * FOPEN_MAX is a minimum maximum, and is the number of streams that
+ * stdio can provide without attempting to allocate further resources
+ * (which could fail).  Do not use this for anything.
  */
+				/* must be == _POSIX_STREAM_MAX <limits.h> */
 #define	FOPEN_MAX	20	/* must be <= OPEN_MAX <sys/syslimits.h> */
 #define	FILENAME_MAX	1024	/* must be <= PATH_MAX <sys/syslimits.h> */
 
@@ -205,19 +229,19 @@ FILE	*fopen __P((const char *, const char *));
 int	 fprintf __P((FILE *, const char *, ...));
 int	 fputc __P((int, FILE *));
 int	 fputs __P((const char *, FILE *));
-int	 fread __P((void *, size_t, size_t, FILE *));
+size_t	 fread __P((void *, size_t, size_t, FILE *));
 FILE	*freopen __P((const char *, const char *, FILE *));
 int	 fscanf __P((FILE *, const char *, ...));
 int	 fseek __P((FILE *, long, int));
 int	 fsetpos __P((FILE *, const fpos_t *));
-long	 ftell __P((const FILE *));
-int	 fwrite __P((const void *, size_t, size_t, FILE *));
+long	 ftell __P((FILE *));
+size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
 char	*gets __P((char *));
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern int sys_nerr;			/* perror(3) external variables */
-extern char *sys_errlist[];
+extern __const char *__const sys_errlist[];
 #endif
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
@@ -231,13 +255,13 @@ int	 scanf __P((const char *, ...));
 void	 setbuf __P((FILE *, char *));
 int	 setvbuf __P((FILE *, char *, int, size_t));
 int	 sprintf __P((char *, const char *, ...));
-int	 sscanf __P((char *, const char *, ...));
+int	 sscanf __P((const char *, const char *, ...));
 FILE	*tmpfile __P((void));
 char	*tmpnam __P((char *));
 int	 ungetc __P((int, FILE *));
-int	 vfprintf __P((FILE *, const char *, _VA_LIST_));
-int	 vprintf __P((const char *, _VA_LIST_));
-int	 vsprintf __P((char *, const char *, _VA_LIST_));
+int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
+int	 vprintf __P((const char *, _BSD_VA_LIST_));
+int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 __END_DECLS
 
 /*
@@ -259,7 +283,7 @@ __END_DECLS
  */
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
-char	*fgetline __P((FILE *, size_t *));
+char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 int	 getw __P((FILE *));
 int	 pclose __P((FILE *));
@@ -269,9 +293,10 @@ void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
 char	*tempnam __P((const char *, const char *));
 int	 snprintf __P((char *, size_t, const char *, ...));
-int	 vsnprintf __P((char *, size_t, const char *, _VA_LIST_));
-int	 vscanf __P((const char *, _VA_LIST_));
-int	 vsscanf __P((const char *, const char *, _VA_LIST_));
+int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+int	 vscanf __P((const char *, _BSD_VA_LIST_));
+int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_));
+FILE	*zopen __P((const char *, const char *, int));
 __END_DECLS
 
 /*
@@ -300,7 +325,7 @@ __END_DECLS
  */
 __BEGIN_DECLS
 int	__srget __P((FILE *));
-int	__svfscanf __P((FILE *, const char *, _VA_LIST_));
+int	__svfscanf __P((FILE *, const char *, _BSD_VA_LIST_));
 int	__swbuf __P((int, FILE *));
 __END_DECLS
 
@@ -310,7 +335,7 @@ __END_DECLS
  */
 #define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
 #if defined(__GNUC__) && defined(__STDC__)
-static inline int __sputc(int _c, FILE *_p) {
+static __inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
 		return (*_p->_p++ = _c);
 	else

@@ -1,6 +1,9 @@
-/*
- * Copyright (c) 1983, 1993
+/*-
+ * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chuck Karish of Mindcraft, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,51 +33,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tftp.h	8.1 (Berkeley) 6/2/93
+ *	@(#)tar.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _TFTP_H_
-#define	_TFTP_H_
+#ifndef _TAR_H
+#define _TAR_H
 
-/*
- * Trivial File Transfer Protocol (IEN-133)
- */
-#define	SEGSIZE		512		/* data segment size */
+#define	TMAGIC		"ustar"	/* ustar and a null */
+#define	TMAGLEN		6
+#define	TVERSION	"00"	/* 00 and no null */
+#define	TVERSLEN	2
 
-/*
- * Packet types.
- */
-#define	RRQ	01			/* read request */
-#define	WRQ	02			/* write request */
-#define	DATA	03			/* data packet */
-#define	ACK	04			/* acknowledgement */
-#define	ERROR	05			/* error code */
+/* Values used in typeflag field */
+#define	REGTYPE		'0'	/* Regular file */
+#define	AREGTYPE	'\0'	/* Regular file */
+#define	LNKTYPE		'1'	/* Link */
+#define	SYMTYPE		'2'	/* Reserved */
+#define	CHRTYPE		'3'	/* Character special */
+#define	BLKTYPE		'4'	/* Block special */
+#define	DIRTYPE		'5'	/* Directory */
+#define	FIFOTYPE	'6'	/* FIFO special */
+#define	CONTTYPE	'7'	/* Reserved */
 
-struct	tftphdr {
-	short	th_opcode;		/* packet type */
-	union {
-		short	tu_block;	/* block # */
-		short	tu_code;	/* error code */
-		char	tu_stuff[1];	/* request packet stuff */
-	} th_u;
-	char	th_data[1];		/* data or error string */
-};
+/* Bits used in the mode field - values in octal */
+#define	TSUID		04000	/* Set UID on execution */
+#define	TSGID		02000	/* Set GID on execution */
+#define	TSVTX		01000	/* Reserved */
+				/* File permissions */
+#define	TUREAD		00400	/* Read by owner */
+#define	TUWRITE		00200	/* Write by owner */
+#define	TUEXEC		00100	/* Execute/Search by owner */
+#define	TGREAD		00040	/* Read by group */
+#define	TGWRITE		00020	/* Write by group */
+#define	TGEXEC		00010	/* Execute/Search by group */
+#define	TOREAD		00004	/* Read by other */
+#define	TOWRITE		00002	/* Write by other */
+#define	TOEXEC		00001	/* Execute/Search by other */
 
-#define	th_block	th_u.tu_block
-#define	th_code		th_u.tu_code
-#define	th_stuff	th_u.tu_stuff
-#define	th_msg		th_data
-
-/*
- * Error codes.
- */
-#define	EUNDEF		0		/* not defined */
-#define	ENOTFOUND	1		/* file not found */
-#define	EACCESS		2		/* access violation */
-#define	ENOSPACE	3		/* disk full or allocation exceeded */
-#define	EBADOP		4		/* illegal TFTP operation */
-#define	EBADID		5		/* unknown transfer ID */
-#define	EEXISTS		6		/* file already exists */
-#define	ENOUSER		7		/* no such user */
-
-#endif /* !_TFTP_H_ */
+#endif
