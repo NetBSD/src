@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.128 2000/11/02 13:12:58 pk Exp $ */
+/*	$NetBSD: st.c,v 1.129 2000/11/02 13:34:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct quirkdata {
 #define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 #define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
+#define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
@@ -199,14 +200,14 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, QIC_120}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, 12, {
+	 "ARCHIVE ", "VIPER 150  21247", ""},     {ST_Q_ERASE_NOIMM, 12, {
 		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
 		{0, 0, QIC_24}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21531", ""},     {0, 12, {
+	 "ARCHIVE ", "VIPER 150  21531", ""},     {ST_Q_ERASE_NOIMM, 12, {
 		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
@@ -1939,17 +1940,20 @@ st_erase(st, full, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = ERASE;
 	if (full) {
-		cmd.byte2 = SE_IMMED|SE_LONG;
+		cmd.byte2 = SE_LONG;
 		tmo = ST_SPC_TIME;
 	} else {
 		tmo = ST_IO_TIME;
-		cmd.byte2 = SE_IMMED;
 	}
 
 	/*
-	 * XXX We always do this asynchronously, for now.  How long should
-	 * we wait if we want to (eventually) to it synchronously?
+	 * XXX We always do this asynchronously, for now, unless the device
+	 * has the ST_Q_ERASE_NOIMM quirk.  How long should we wait if we
+	 * want to (eventually) to it synchronously?
 	 */
+	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
+		cmd.byte2 |= SE_IMMED;
+
 	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, tmo, NULL, flags));
