@@ -52,11 +52,10 @@ sys/arch/mac68k/mac68k/machdep.c	1.187		scottr
 
   Fix hang during startup on non-NuBus machines.
 
-distrib/notes/mac68k/hardware		1.13		ender
+distrib/notes/mac68k/hardware		1.10-1.12
+		     hardware		1.13		ender
 
   Document some known bugs.
-
-  [Also did 1.10-1.12, since they were fairly minor.]
 
 sys/arch/sun3x/conf/RAMDISK		patch		jeremy
 
@@ -103,10 +102,9 @@ usr.sbin/amd/mk-amd-map/mk-amd-map.c	1.7		tv
   Fix missing close of the DB file, and erroneous path names.
 
 bin/ps/ps.1				1.23		bouyer
+       ps.1				1.24
 
   Fix man page errors.
-
-  [Also pulled up some more fixes from fair.]
 
 sys/dev/isa/wd.c			patch		bouyer
 	    wdc.c			patch		bouyer
@@ -184,7 +182,7 @@ sys/arch/amiga/amiga/pmap.c		1.45		is
 sys/arch/amiga/conf/GENERIC		1.101		is
 share/man/man4/options.4		1.43		is
 
-  Fix panics on machines with a lot of memory.
+  Fix panics on machines with >24MB.
 
 usr.sbin/pwd_mkdb/pwd_mkdb.c		1.11-1.13	fair
 
@@ -293,10 +291,6 @@ sys/arch/i386/stand/netboot/Makefile		1.15	drochner
 
   Rewrite WD/SMC boot ROM support to make it more reliable.
 
-distrib/sets/lists/*			patch		cgd
-
-  Sync with reality.
-
 sys/arch/pmax/tc/mcclock_ioasic.c	-1.5		mhitch
 
   Revert incorrect 1.3.1 pullup that caused clock initialization to
@@ -341,7 +335,8 @@ sys/arch/bebox/isa/wd.c			patch		mycroft
 
 sys/dev/isa/wt.c			1.43		drochner
 
-  Fix broken I/O address calculations.
+  Fix broken I/O address calculations that prevented this from working
+  at all.
 
 sys/arch/sparc/dev/zs.c			1.59-1.60	mycroft
 sys/dev/ic/z8530sc.h			1.10		mycroft
@@ -369,10 +364,6 @@ sys/arch/mips/include/elf_machdep.h	1.4		mhitch
 sys/arch/arm32/arm32/disassem.h		1.2		mark
 
   Fix compilation error.
-
-distrib/sets/lists/xbase/mi		1.8		cgd
-
-  Remove . and ./usr.
 
 bin/csh/Makefile			1.18		fair
 	strpct.c			1.1-1.2		fair
