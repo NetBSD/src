@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.15.2.2 1999/08/08 07:04:16 cgd Exp $	*/
+/*	$NetBSD: rnd.c,v 1.15.2.3 1999/08/22 16:33:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -378,7 +378,7 @@ rndread(dev, uio, ioflag)
 			 * How much entropy do we have?  If it is enough for
 			 * one hash, we can read.
 			 */
-			s = splsoftclock();
+			s = splsoftnet();
 			entcnt = rndpool_get_entropy_count(&rnd_pool);
 			splx(s);
 			if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
@@ -448,7 +448,7 @@ rndwrite(dev, uio, ioflag)
 		/*
 		 * Mix in the bytes.
 		 */
-		s = splsoftclock();
+		s = splsoftnet();
 		rndpool_add_data(&rnd_pool, buf, n, 0);
 		splx(s);
 
@@ -490,7 +490,7 @@ rndioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case RNDGETENTCNT:
-		s = splsoftclock();
+		s = splsoftnet();
 		*(u_int32_t *)addr = rndpool_get_entropy_count(&rnd_pool);
 		splx(s);
 
@@ -607,7 +607,7 @@ rndioctl(dev, cmd, addr, flag, p)
 
 		rnddata = (rnddata_t *)addr;
 
-		s = splsoftclock();
+		s = splsoftnet();
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
 				 rnddata->entropy);
 
@@ -655,7 +655,7 @@ rndpoll(dev, events, p)
 	/*
 	 * make certain we have enough entropy to be readable
 	 */
-	s = splsoftclock();
+	s = splsoftnet();
 	entcnt = rndpool_get_entropy_count(&rnd_pool);
 	splx(s);
 
@@ -876,7 +876,7 @@ rnd_add_uint32(rs, val)
 
 /*
  * timeout, run to process the events in the ring buffer.  Only one of these
- * can possibly be running at a time, and we are run at splsoftclock().
+ * can possibly be running at a time, and we are run at splsoftnet().
  */
 static void
 rnd_timeout(arg)
