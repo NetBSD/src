@@ -13,6 +13,7 @@ int
 genfs_select(v)
 	void *v;
 {
+#if 0
 	struct vop_select_args /* {
 		struct vnode *a_vp;
 		int a_which;
@@ -20,6 +21,7 @@ genfs_select(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
+#endif
 
 	return (1);
 }
