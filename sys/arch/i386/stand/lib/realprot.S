@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.1 2003/04/16 17:38:43 dsl Exp $	*/
+/*	$NetBSD: realprot.S,v 1.2 2003/04/24 17:41:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ ENTRY(real_to_prot)
 
 	movl	%cr0, %eax
 	or	$CR0_PE, %ax
-	movl	%eax, %cr0 		/* Enter 'protected mode'
+	movl	%eax, %cr0 		/* Enter 'protected mode' */
 
 	ljmp	$bootcodeseg, $1f	/* Jump into a 32bit segment */
 1:
