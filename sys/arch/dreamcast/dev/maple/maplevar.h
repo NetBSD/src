@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.5 2002/11/15 13:30:21 itohy Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.6 2003/02/11 01:21:46 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -109,12 +109,22 @@ struct maple_func {
 	TAILQ_ENTRY(maple_func)	f_cmdq;
 };
 
+/* work-around problem with 3rd party memory cards */
+#define MAPLE_MEMCARD_PING_HACK
+
 struct maple_unit {
 	int		port, subunit;
 	struct maple_func u_func[MAPLE_NFUNC];
 	u_int32_t	getcond_func_set;
 	int		u_ping_func;	/* function used for ping */
 	u_int32_t	u_noping;	/* stop ping (bitmap of function) */
+#ifdef MAPLE_MEMCARD_PING_HACK
+	enum maple_ping_stat {
+		MAPLE_PING_NORMAL,	/* ping with GETCOND */
+		MAPLE_PING_MEMCARD,	/* memory card, possibly 3rd party */
+		MAPLE_PING_MINFO	/* poorly implemented 3rd party card */
+	} u_ping_stat;
+#endif
 	struct maple_devinfo devinfo;
 
 	/* DMA status / function */
