@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.80 2001/10/30 06:43:21 kml Exp $
+.\"	$NetBSD: sysctl.3,v 1.81 2001/12/24 01:07:06 chs Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1298,19 +1298,60 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
 .It Sy Pa Second level name	Type	Changeable
+.It VM\_ANONMAX	int	yes
+.It VM\_ANONMIN	int	yes
+.It VM\_EXECMAX	int	yes
+.It VM\_EXECMIN	int	yes
+.It VM\_FILEMAX	int	yes
+.It VM\_FILEMIN	int	yes
 .It VM\_LOADAVG	struct loadavg	no
+.It VM\_MAXSLP	int	no
 .It VM\_METER	struct vmtotal	no
+.It VM\_NKMEMPAGES	int	no
+.It VM\_USPACE	int	no
+.It VM\_UVMEXP	struct uvmexp	no
+.It VM\_UVMEXP2	struct uvmexp_sysctl	no
 .El
 .Pp
 .Bl -tag -width "123456"
+.It Li VM_ANONMAX
+The percentage of physical memory which will be reclaimed
+from other types of memory usage to store anonymous application data.
+.It Li VM_ANONMIN
+The percentage of physical memory which will be always be available for
+anonymous application data.
+.It Li VM_EXECMAX
+The percentage of physical memory which will be reclaimed
+from other types of memory usage to store cached executable data.
+.It Li VM_EXECMIN
+The percentage of physical memory which will be always be available for
+cached executable data.
+.It Li VM_FILEMAX
+The percentage of physical memory which will be reclaimed
+from other types of memory usage to store cached file data.
+.It Li VM_FILEMIN
+The percentage of physical memory which will be always be available for
+cached file data.
 .It Li VM_LOADAVG
 Return the load average history.
 The returned data consists of a
 .Va struct loadavg .
+.It Li VM_MAXSLP
+The value of the maxslp kernel global variable.
 .It Li VM_METER
-Return the system wide virtual memory statistics.
+Return system wide virtual memory statistics.
 The returned data consists of a
 .Va struct vmtotal .
+.It Li VM_USPACE
+The number of bytes allocated for each kernel stack.
+.It Li VM_UVMEXP
+Return system wide virtual memory statistics.
+The returned data consists of a
+.Va struct uvmexp .
+.It Li VM_UVMEXP2
+Return system wide virtual memory statistics.
+The returned data consists of a
+.Va struct uvmexp_sysctl .
 .El
 .Sh CTL_DDB
 The integer information available for the CTL_DDB level is detailed below.
