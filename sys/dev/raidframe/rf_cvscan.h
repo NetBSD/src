@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.h,v 1.4 2002/09/21 00:37:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -70,7 +70,6 @@ typedef struct RF_CvscanHeader_s {
 	RF_DiskQueueData_t *burner;
 }       RF_CvscanHeader_t;
 
-int     rf_CvscanConfigure(void);
 void   *
 rf_CvscanCreate(RF_SectorCount_t sect_per_disk,
     RF_AllocListElem_t * cl_list, RF_ShutdownList_t ** listp);
