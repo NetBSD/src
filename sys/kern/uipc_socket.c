@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.24 1996/05/22 19:06:07 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.25 1996/08/14 05:53:18 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -429,7 +429,7 @@ restart:
 				} else
 					len = min(MCLBYTES, resid);
 #endif
-				space -= MCLBYTES;
+				space -= len;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
