@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.25 1999/03/09 06:33:21 ross Exp $
+.\"	$NetBSD: doc-common,v 1.26 1999/03/09 12:05:35 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,7 +289,7 @@
 ..
 .de lM
 .fl
-.if \\n(lC .ab List open at EOF -- A .Bl directive has no matching .El
+.if \\n(lC .tm List open at EOF -- A .Bl directive has no matching .El
 .if \\n(cR \{\
 '	sp
 .	tl @\\*(Hs\\*(oS\fP@\\*(Vs\\*(dD\fP@%@
