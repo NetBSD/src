@@ -1,5 +1,3 @@
-/* $NetBSD: config.h,v 1.18 2000/11/21 12:14:18 veego Exp $ */
-
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 /*
@@ -432,6 +430,9 @@
 /* Mount Table option string: max groups */
 /* #undef MNTTAB_OPT_MAXGROUPS */
 
+/* Mount Table option string: support property lists (ACLs) */
+/* #undef MNTTAB_OPT_PROPLIST */
+
 /*
  * Generic mount(2) options (hex numbers)
  */
@@ -441,6 +442,9 @@
 
 /* automounter filesystem (ignore) flag, used in bsdi-4.1 */
 /* #undef MNT2_GEN_OPT_AUTOMNTFS */
+
+/* directory hardlink */
+/* #undef MNT2_GEN_OPT_BIND */
 
 /* cache (what?) */
 /* #undef MNT2_GEN_OPT_CACHE */
@@ -472,13 +476,13 @@
 /* nocache (what?) */
 /* #undef MNT2_GEN_OPT_NOCACHE */
 
-/* not a device */
+/* do not interpret special device files */
 #define MNT2_GEN_OPT_NODEV 0x10
 
 /* no exec calls allowed */
 #define MNT2_GEN_OPT_NOEXEC 0x4
 
-/* not a device  */
+/* do not interpret special device files */
 /* #undef MNT2_GEN_OPT_NONDEV */
 
 /* Disallow mounts beneath this mount */
@@ -540,16 +544,16 @@
 /* #undef MNT2_NFS_OPT_ACREGMIN */
 
 /* Authentication error */
-#define MNT2_NFS_OPT_AUTHERR 0x2000
+/* #undef MNT2_NFS_OPT_AUTHERR */
 
 /* set dead server retry thresh */
 #define MNT2_NFS_OPT_DEADTHRESH 0x4000
 
 /* Dismount in progress */
-#define MNT2_NFS_OPT_DISMINPROG 0x10
+/* #undef MNT2_NFS_OPT_DISMINPROG */
 
 /* Dismounted */
-#define MNT2_NFS_OPT_DISMNT 0x20
+/* #undef MNT2_NFS_OPT_DISMNT */
 
 /* Don't estimate rtt dynamically */
 #define MNT2_NFS_OPT_DUMBTIMR 0x800
@@ -558,7 +562,7 @@
 /* #undef MNT2_NFS_OPT_GRPID */
 
 /* Has authenticator */
-#define MNT2_NFS_OPT_HASAUTH 0x800
+/* #undef MNT2_NFS_OPT_HASAUTH */
 
 /* provide name of server's fs to system */
 /* #undef MNT2_NFS_OPT_FSNAME */
@@ -597,7 +601,7 @@
 #define MNT2_NFS_OPT_MAXGRPS 0x20
 
 /* Mnt server for mnt point */
-#define MNT2_NFS_OPT_MNTD 0x8
+/* #undef MNT2_NFS_OPT_MNTD */
 
 /* Assume writes were mine */
 /* #undef MNT2_NFS_OPT_MYWRITE */
@@ -620,6 +624,9 @@
 /* Get lease for lookup */
 /* #undef MNT2_NFS_OPT_NQLOOKLEASE */
 
+/* Don't use locking */
+/* #undef MNT2_NFS_OPT_NONLM */
+
 /* Use Nqnfs protocol */
 #define MNT2_NFS_OPT_NQNFS 0x100
 
@@ -627,13 +634,22 @@
 /* #undef MNT2_NFS_OPT_POSIX */
 
 /* Rcv socket lock */
-#define MNT2_NFS_OPT_RCVLOCK 0x100
+/* #undef MNT2_NFS_OPT_RCVLOCK */
 
 /* Do lookup with readdir (nqnfs) */
 /* #undef MNT2_NFS_OPT_RDIRALOOK */
 
+/* allow property list operations (ACLs over NFS) */
+/* #undef MNT2_NFS_OPT_PROPLIST */
+
+/* Use Readdirplus for NFSv3 */
+/* #undef MNT2_NFS_OPTS_RDIRPLUS */
+
 /* set read ahead */
 #define MNT2_NFS_OPT_READAHEAD 0x2000
+
+/* Set readdir size */
+#define MNT2_NFS_OPT_READDIRSIZE 0x20000
 
 /* Allocate a reserved port */
 #define MNT2_NFS_OPT_RESVPORT 0x8000
@@ -654,7 +670,7 @@
 /* #undef MNT2_NFS_OPT_SECURE */
 
 /* Send socket lock */
-#define MNT2_NFS_OPT_SNDLOCK 0x40
+/* #undef MNT2_NFS_OPT_SNDLOCK */
 
 /* soft mount (hard is default) */
 #define MNT2_NFS_OPT_SOFT 0x1
@@ -672,16 +688,16 @@
 /* #undef MNT2_NFS_OPT_VER3 */
 
 /* Wait for authentication */
-#define MNT2_NFS_OPT_WAITAUTH 0x400
+/* #undef MNT2_NFS_OPT_WAITAUTH */
 
 /* Wants an authenticator */
-#define MNT2_NFS_OPT_WANTAUTH 0x1000
+/* #undef MNT2_NFS_OPT_WANTAUTH */
 
 /* Want receive socket lock */
-#define MNT2_NFS_OPT_WANTRCV 0x200
+/* #undef MNT2_NFS_OPT_WANTRCV */
 
 /* Want send socket lock */
-#define MNT2_NFS_OPT_WANTSND 0x80
+/* #undef MNT2_NFS_OPT_WANTSND */
 
 /* set write size */
 #define MNT2_NFS_OPT_WSIZE 0x2
@@ -691,6 +707,9 @@
 
 /* paging threshold */
 /* #undef MNT2_NFS_OPT_PGTHRESH */
+
+/* 32<->64 dir cookie translation */
+#define MNT2_NFS_OPT_XLATECOOKIE 0x40000
 
 /*
  * CDFS-specific mount(2) options (hex numbers)
@@ -821,7 +840,7 @@
 #define HAVE_FIELD_NFS_ARGS_T_SOTYPE 1
 
 /* does struct nfs_args have a version field? */
-#define HAVE_FIELD_NFS_ARGS_T_VERSION 
+#define HAVE_FIELD_NFS_ARGS_T_VERSION 1
 
 /* does struct ifreq have field ifr_addr? */
 #define HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR 1
@@ -852,47 +871,41 @@
 /* Turn off memory debugging by default */
 /* #undef DEBUG_MEM */
 
-/* Enable "amq -M" remote mount code (insecure due to IP spoofing) */
-/* #undef ENABLE_AMQ_MOUNT */
-
 /* Define package name (must be defined by configure.in) */
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0.4"
+#define VERSION "6.0.6"
 
 /* Define name of host machine's cpu (eg. sparc) */
-#define HOST_CPU MACHINE
+#define HOST_CPU "i386"
 
 /* Define name of host machine's architecture (eg. sun4) */
-#define HOST_ARCH MACHINE_ARCH
+#define HOST_ARCH "i386"
 
 /* Define name of host machine's vendor (eg. sun) */
 #define HOST_VENDOR "unknown"
 
-#include <config_local.h>
-#if 0
 /* Define name and version of host machine (eg. solaris2.5.1) */
-#define HOST_OS "netbsd1.5H"
+#define HOST_OS "netbsdelf1.5V"
 
 /* Define only name of host machine OS (eg. solaris2) */
-#define HOST_OS_NAME "netbsd1"
+#define HOST_OS_NAME "netbsdelf1"
 
 /* Define only version of host machine (eg. 2.5.1) */
-#define HOST_OS_VERSION "1.5H"
+#define HOST_OS_VERSION "1.5V"
 
 /* Define the header version of (linux) hosts (eg. 2.2.10) */
-#define HOST_HEADER_VERSION "1.5H"
+#define HOST_HEADER_VERSION "1.5V"
 
 /* Define name of host */
-#define HOST_NAME "hiro"
+#define HOST_NAME "arresum"
 
 /* Define user name */
-#define USER_NAME "wiz"
+#define USER_NAME "veego"
 
 /* Define configuration date */
-#define CONFIG_DATE "Thu Nov  9 00:50:20 CET 2000"
-#endif
+#define CONFIG_DATE "Sun May 13 16:00:07 CEST 2001"
 
 /* what type of network transport type is in use?  TLI or sockets? */
 /* #undef HAVE_TRANSPORT_TYPE_TLI */
@@ -1939,7 +1952,7 @@
 #define PACKAGE "am-utils"
 
 /* Version number of package */
-#define VERSION "6.0.4"
+#define VERSION "6.0.6"
 
 
 /**************************************************************************/
