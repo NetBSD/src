@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1996/05/12 20:50:11 oki Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1996/05/20 14:56:20 oki Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,6 +66,8 @@ bdev_decl(ccd);
 bdev_decl(vnd);
 #include "st.h"
 bdev_decl(st);
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,8 +80,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
-	bdev_disk_init(NCD,cd),		/* 7: SCSI cdrom */
-	bdev_notdef(),			/* 8: */
+	bdev_disk_init(NCD,cd),		/* 7: SCSI CD-ROM */
+	bdev_disk_init(NRD,rd),		/* 8: ram disk */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
@@ -168,6 +170,7 @@ cdev_decl(par);
 cdev_decl(ite);
 cdev_decl(ccd);
 cdev_decl(vnd);
+cdev_decl(rd);
 cdev_decl(st);
 #define	fdopen	Fdopen
 cdev_decl(fd);
@@ -208,7 +211,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_notdef(),			/* 7: */
+	cdev_disk_init(NRD,rd),		/* 7: RAM disk */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI cdrom */
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
