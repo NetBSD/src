@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.4 1996/12/29 10:34:14 cgd Exp $	*/
+/*	$NetBSD: value.c,v 1.5 1996/12/29 10:41:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: value.c,v 1.4 1996/12/29 10:34:14 cgd Exp $";
+static char rcsid[] = "$NetBSD: value.c,v 1.5 1996/12/29 10:41:53 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -136,12 +136,12 @@ vassign(p, v)
 }
 
 static void vprint();
+static void vtoken();
 
 vlex(s)
 	register char *s;
 {
 	register value_t *p;
-	static void vtoken();
 
 	if (equal(s, "all")) {
 		for (p = vtable; p->v_name; p++)
