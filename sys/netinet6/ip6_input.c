@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.74 2004/05/25 04:34:00 atatat Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.75 2004/06/01 03:13:22 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.74 2004/05/25 04:34:00 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.75 2004/06/01 03:13:22 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -997,12 +997,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
-	struct proc *p = curproc;	/* XXX */
-	int privileged;
-
-	privileged = 0;
-	if (p && !suser(p->p_ucred, &p->p_acflag))
-		privileged++;
 
 #ifdef SO_TIMESTAMP
 	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
@@ -1055,12 +1049,13 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	/* IN6P_NEXTHOP - for outgoing packet only */
 
 	/*
-	 * IPV6_HOPOPTS socket option. We require super-user privilege
-	 * for the option, but it might be too strict, since there might
-	 * be some hop-by-hop options which can be returned to normal user.
-	 * See RFC 2292 section 6.
+	 * IPV6_HOPOPTS socket option.  Recall that we required super-user
+	 * privilege for the option (see ip6_ctloutput), but it might be too
+	 * strict, since there might be some hop-by-hop options which can be
+	 * returned to normal user.
+	 * See also RFC 2292 section 6.
 	 */
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0 && privileged) {
+	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
@@ -1153,14 +1148,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
 				if (!in6p->in6p_flags & IN6P_DSTOPTS)
-					break;
-
-				/*
-				 * We also require super-user privilege for
-				 * the option.
-				 * See the comments on IN6_HOPOPTS.
-				 */
-				if (!privileged)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
