@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ext.h	8.1 (Berkeley) 6/4/93
- *	$Id: ext.h,v 1.4 1994/02/25 03:20:47 cgd Exp $
+ *	from: @(#)ext.h	8.2 (Berkeley) 12/15/93
+ *	$NetBSD: ext.h,v 1.5 1996/02/24 01:22:16 jtk Exp $
  */
 
 /*
@@ -90,13 +90,8 @@ extern int	pty, net;
 extern char	*line;
 extern int	SYNCHing;		/* we are in TELNET SYNCH mode */
 
-#ifndef	P
-# ifdef	__STDC__
-#  define P(x)	x
-# else
-#  define P(x)	()
-# endif
-#endif
+#include <sys/cdefs.h>
+#define P __P
 
 extern void
 	_termstat P((void)),

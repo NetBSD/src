@@ -31,12 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)telnetd.h	8.1 (Berkeley) 6/4/93
- *	$Id: telnetd.h,v 1.3 1994/02/25 03:21:00 cgd Exp $
+ *	$NetBSD: telnetd.h,v 1.4 1996/02/24 01:22:24 jtk Exp $
  */
 
 
-#include "defs.h"
-#include "ext.h"
+#include <defs.h>
+#include <ext.h>
 
 #ifdef	DIAGNOSTICS
 #define	DIAG(a,b)	if (diagnostic & (a)) b

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/4/93
- *	$Id: defs.h,v 1.4 1994/02/25 03:20:46 cgd Exp $
+ *	$NetBSD: defs.h,v 1.5 1996/02/24 01:22:15 jtk Exp $
  */
 
 /*
