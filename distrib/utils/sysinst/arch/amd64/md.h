@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2003/07/25 08:26:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.12 2003/08/19 17:25:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <machine/cpu.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/bootblock.h>
 #include <fcntl.h>
 #include <unistd.h>
 
