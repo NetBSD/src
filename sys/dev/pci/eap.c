@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.7 1998/06/08 06:55:54 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.8 1998/07/06 11:12:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,14 +64,6 @@
 
 #include <machine/bus.h>
 
-/* NetBSD 1.3 backwards compatibility */
-#ifndef BUS_DMA_COHERENT
-#define BUS_DMA_COHERENT 0	/* XXX */
-struct        cfdriver eap_cd = {
-      NULL, "eap", DV_DULL
-};
-#endif
- 
 #define	PCI_CBIO		0x10
 
 #define EAP_ICSC		0x00    /* interrupt / chip select control */
@@ -228,12 +220,10 @@ struct        cfdriver eap_cd = {
 #define EAP_AUX_VOL		5
 #define EAP_MIC_VOL		6
 #define	EAP_RECORD_SOURCE 	7
-#define EAP_OUTPUT_CLASS	8
-#define EAP_RECORD_CLASS	9
-#define EAP_INPUT_CLASS		10
-
-#define EAP_NDEVS		11
-
+#define EAP_OUTPUT_SELECT	8
+#define EAP_OUTPUT_CLASS	9
+#define EAP_RECORD_CLASS	10
+#define EAP_INPUT_CLASS		11
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (eapdebug) printf x
@@ -280,6 +270,7 @@ struct eap_softc {
 
 	u_char	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
 	u_int	sc_record_source;	/* recording source mask */
+	u_int	sc_output_source;	/* output source mask */
 };
 
 int	eap_allocmem __P((struct eap_softc *, size_t, size_t, struct eap_dma *));
@@ -437,15 +428,14 @@ eap_attach(parent, self, aux)
 	eap_write_codec(sc, AK_RESET, AK_PD); /* reset codec */
 	eap_write_codec(sc, AK_RESET, AK_PD | AK_NRST);	/* normal operation */
 	eap_write_codec(sc, AK_CS, 0x0); /* select codec clocks */
+
 	/* Enable all relevant mixer switches. */
-	eap_write_codec(sc, AK_OUT_MIXER1, 
-			AK_M_FM_L | AK_M_FM_R |
-			AK_M_LINE_L | AK_M_LINE_R |
-			AK_M_CD_L | AK_M_CD_R);
-	eap_write_codec(sc, AK_OUT_MIXER2, 
-			AK_M_AUX_L | AK_M_AUX_R |
-			AK_M_VOICE_L | AK_M_VOICE_R |
-			AK_M_MONO2 | AK_M_MONO1);
+	ctl.dev = EAP_OUTPUT_SELECT;
+	ctl.type = AUDIO_MIXER_SET;
+	ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL | 1 << EAP_CD_VOL |
+	    1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL | 1 << EAP_MIC_VOL;
+	eap_mixer_set_port(sc, &ctl);
+
 	ctl.type = AUDIO_MIXER_VALUE;
 	ctl.un.value.num_channels = 1;
 	for (ctl.dev = EAP_MASTER_VOL; ctl.dev < EAP_MIC_VOL; ctl.dev++) {
@@ -912,7 +902,7 @@ eap_mixer_set_port(addr, cp)
 {
 	struct eap_softc *sc = addr;
 	int lval, rval, l, r, la, ra;
-	int l1, r1, l2, r2, m;
+	int l1, r1, l2, r2, m, o1, o2;
 
 	if (cp->dev == EAP_RECORD_SOURCE) {
 		if (cp->type != AUDIO_MIXER_SET)
@@ -920,7 +910,7 @@ eap_mixer_set_port(addr, cp)
 		m = sc->sc_record_source = cp->un.mask;
 		l1 = l2 = r1 = r2 = 0;
 		if (m & (1 << EAP_VOICE_VOL)) 
-			l2 |= AK_M_VOICE_L, r2 |= AK_M_VOICE_R;
+			l2 |= AK_M_VOICE, r2 |= AK_M_VOICE;
 		if (m & (1 << EAP_FM_VOL)) 
 			l1 |= AK_M_FM_L, r1 |= AK_M_FM_R;
 		if (m & (1 << EAP_CD_VOL)) 
@@ -928,13 +918,34 @@ eap_mixer_set_port(addr, cp)
 		if (m & (1 << EAP_LINE_VOL)) 
 			l1 |= AK_M_LINE_L, r1 |= AK_M_LINE_R;
 		if (m & (1 << EAP_AUX_VOL)) 
-			l2 |= AK_M_AUX_L, r2 |= AK_M_AUX_R;
+			l2 |= AK_M2_AUX_L, r2 |= AK_M2_AUX_R;
 		if (m & (1 << EAP_MIC_VOL)) 
 			l2 |= AK_M_TMIC, r2 |= AK_M_TMIC;
 		eap_set_mixer(sc, AK_IN_MIXER1_L, l1);		
 		eap_set_mixer(sc, AK_IN_MIXER1_R, r1);
 		eap_set_mixer(sc, AK_IN_MIXER2_L, l2);
 		eap_set_mixer(sc, AK_IN_MIXER2_R, r2);
+		return (0);
+	}
+	if (cp->dev == EAP_OUTPUT_SELECT) {
+		if (cp->type != AUDIO_MIXER_SET)
+			return (EINVAL);
+		m = sc->sc_output_source = cp->un.mask;
+		o1 = o2 = 0;
+		if (m & (1 << EAP_VOICE_VOL)) 
+			o2 |= AK_M_VOICE_L | AK_M_VOICE_R;
+		if (m & (1 << EAP_FM_VOL)) 
+			o1 |= AK_M_FM_L | AK_M_FM_R;
+		if (m & (1 << EAP_CD_VOL)) 
+			o1 |= AK_M_CD_L | AK_M_CD_R;
+		if (m & (1 << EAP_LINE_VOL)) 
+			o1 |= AK_M_LINE_L | AK_M_LINE_R;
+		if (m & (1 << EAP_AUX_VOL)) 
+			o2 |= AK_M_AUX_L | AK_M_AUX_R;
+		if (m & (1 << EAP_MIC_VOL)) 
+			o1 |= AK_M_MIC;
+		eap_set_mixer(sc, AK_OUT_MIXER1, o1);
+		eap_set_mixer(sc, AK_OUT_MIXER2, o2);
 		return (0);
 	}
 	if (cp->type != AUDIO_MIXER_VALUE)
@@ -1006,6 +1017,9 @@ eap_mixer_get_port(addr, cp)
 	case EAP_RECORD_SOURCE:
 		cp->un.mask = sc->sc_record_source;
 		return (0);
+	case EAP_OUTPUT_SELECT:
+	        cp->un.mask = sc->sc_output_source;
+	        return (0);
 	case EAP_MASTER_VOL:
 		l = ATT5_TO_VOL(sc->sc_port[AK_MASTER_L]);
 		r = ATT5_TO_VOL(sc->sc_port[AK_MASTER_R]);
@@ -1123,7 +1137,7 @@ eap_query_devinfo(addr, dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
-		dip->un.s.num_mem = 5;
+		dip->un.s.num_mem = 6;
 		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);
 		dip->un.s.member[0].mask = 1 << EAP_MIC_VOL;
 		strcpy(dip->un.s.member[1].label.name, AudioNcd);
@@ -1134,6 +1148,27 @@ eap_query_devinfo(addr, dip)
 		dip->un.s.member[3].mask = 1 << EAP_FM_VOL;
 		strcpy(dip->un.s.member[4].label.name, AudioNaux);
 		dip->un.s.member[4].mask = 1 << EAP_AUX_VOL;
+		strcpy(dip->un.s.member[5].label.name, AudioNdac);
+		dip->un.s.member[5].mask = 1 << EAP_VOICE_VOL;
+		return (0);
+	case EAP_OUTPUT_SELECT:
+		dip->mixer_class = EAP_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNselect);
+		dip->type = AUDIO_MIXER_SET;
+		dip->un.s.num_mem = 6;
+		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);
+		dip->un.s.member[0].mask = 1 << EAP_MIC_VOL;
+		strcpy(dip->un.s.member[1].label.name, AudioNcd);
+		dip->un.s.member[1].mask = 1 << EAP_CD_VOL;
+		strcpy(dip->un.s.member[2].label.name, AudioNline);
+		dip->un.s.member[2].mask = 1 << EAP_LINE_VOL;
+		strcpy(dip->un.s.member[3].label.name, AudioNfmsynth);
+		dip->un.s.member[3].mask = 1 << EAP_FM_VOL;
+		strcpy(dip->un.s.member[4].label.name, AudioNaux);
+		dip->un.s.member[4].mask = 1 << EAP_AUX_VOL;
+		strcpy(dip->un.s.member[5].label.name, AudioNdac);
+		dip->un.s.member[5].mask = 1 << EAP_VOICE_VOL;
 		return (0);
 	case EAP_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
