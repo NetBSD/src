@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:45 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/05 15:24:49 lukem Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/sl
 
-WARNS?=  1
 MKLINT= no
 
 LIB=	sl
