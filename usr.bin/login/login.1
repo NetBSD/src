@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.1,v 1.9 1997/06/25 00:15:04 lukem Exp $
+.\"	$NetBSD: login.1,v 1.10 1997/10/12 15:05:24 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,13 +56,8 @@ prompts for a user name.
 Authentication of users is done via passwords.
 If the user can be authenticated via S/Key, then the S/Key challenge is
 incorporated in the password prompt.  The user then has the option of
-entering their normal password or the S/Key response, neither will be
+entering their normal password or the S/Key response.  Neither will be
 echoed. 
-Alternatively, the user can enter the password "s/key", in which case
-S/Key authentication is performed, as described in
-.Xr skey 1 ,
-and the response will be echoed.
-S/Key is a Trademark of Bellcore.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -89,11 +84,7 @@ The
 .Fl p
 option disables this behavior.
 .It Fl s
-If the user can be authenticated via S/Key, then require it.
-If the 
-.Fl s
-option is given more than once, user's may only log in if they can be
-authenticated via S/Key.
+Require a secure authentication mechanism like Kerberos or S/Key to be used.
 .El
 .Pp
 If the file
@@ -164,3 +155,5 @@ A
 .Nm login
 appeared in
 .At v6 .
+.Sh TRADEMARKS AND PATENTS
+S/Key is a Trademark of Bellcore.
