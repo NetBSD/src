@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.19 1994/06/30 05:31:11 cgd Exp $
+#	$NetBSD: bsd.doc.mk,v 1.20 1994/07/26 19:42:37 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -52,3 +52,5 @@ BINDIR?=	/usr/share/doc
 BINGRP?=	bin
 BINOWN?=	bin
 BINMODE?=	444
+
+.include <bsd.own.mk>
