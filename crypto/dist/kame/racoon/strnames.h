@@ -1,4 +1,4 @@
-/*	$KAME: strnames.h,v 1.11 2001/07/14 14:06:40 sakane Exp $	*/
+/*	$KAME: strnames.h,v 1.12 2001/08/09 07:32:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,7 +55,6 @@ extern char *s_attr_isakmp_group __P((int));
 extern char *s_attr_isakmp_ltype __P((int));
 extern char *s_oakley_attr_v __P((int, int));
 extern char *s_ipsec_level __P((int));
-extern char *s_algstrength __P((int));
 extern char *s_algclass __P((int));
 extern char *s_algtype __P((int, int));
 extern char *s_pfkey_type __P((int));

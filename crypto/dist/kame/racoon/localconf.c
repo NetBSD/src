@@ -1,4 +1,4 @@
-/*	$KAME: localconf.c,v 1.32 2001/06/01 08:26:05 sakane Exp $	*/
+/*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,10 +69,6 @@ initlcconf()
 	if (lcconf == NULL)
 		errx(1, "failed to allocate local conf.");
 
-	lcconf->algstrength = initalgstrength();
-	if (lcconf->algstrength == NULL)
-		errx(1, "failed to allocate algorithm strength.");
-
 	setdefault();
 
 	lcconf->racoon_conf = LC_DEFAULT_CF;
@@ -96,7 +92,6 @@ flushlcconf()
 			vfree(lcconf->ident[i]);
 		lcconf->ident[i] = NULL;
 	}
-	flushalgstrength(lcconf->algstrength);
 }
 
 static void

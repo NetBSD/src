@@ -1,4 +1,4 @@
-/*	$KAME: localconf.h,v 1.26 2001/03/27 02:39:57 thorpej Exp $	*/
+/*	$KAME: localconf.h,v 1.27 2001/08/09 07:32:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,8 +30,6 @@
  */
 
 /* local configuration */
-
-/* must include algstrength.h first. */
 
 #define LC_DEFAULT_CF	SYSCONFDIR "/racoon.conf"
 
@@ -89,12 +87,6 @@ struct localconf {
 
 	int secret_size;
 	int strict_address;		/* strictly check addresses. */
-
-	struct algorithm_strength **algstrength;
-		/*
-		 * There is a different both of the number and the kind of
-		 * algorithms between oakley's and ipsec_doi's.
-		 */
 
 	int complex_bundle;
 		/*

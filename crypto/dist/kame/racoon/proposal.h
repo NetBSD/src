@@ -1,4 +1,4 @@
-/*	$KAME: proposal.h,v 1.15 2001/04/06 14:23:48 sakane Exp $	*/
+/*	$KAME: proposal.h,v 1.16 2001/08/16 05:02:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,6 @@ struct saproto {
 	int reqid_out;			/* request id (outbound) */
 	int reqid_in;			/* request id (inbound) */
 
-	int len;			/* length, in bits */
 	int ok;				/* if 1, success to set SA in kenrel */
 
 	struct satrns *head;		/* header of transform */

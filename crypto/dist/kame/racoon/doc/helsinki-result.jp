@@ -1,0 +1,533 @@
+Mon Aug 13 2001 - Fri Aug 17 2001
+$KAME: helsinki-result.jp,v 1.49 2001/08/17 14:33:48 sakane Exp $
+
+
+generic
+	sec* interface(受け側だけだけどね)はうまく動く。どのSPD entryと
+	どのインタフェースが関連づいているのか知る手段が必要(PF_KEY
+	APIまた変更?)。ところで、tunnel/transportはSPD entryのpropertyであると
+	十分合意されているか?
+
+	tunnel modeのproposal比較。see F-Secure
+
+	phase 1でのAES/SHA2 support要。(AESは動作確認済)
+	Q. 暗号化した結果がIV長より短い場合は？そんなのありえない？
+
+	phase 1で鍵長のネゴができない。(できる。勘違いだった)
+
+	IPsecでのSHA2 support確認(添付するbit数)。
+
+	SSH社からtoolkitを買って使っているところが大変多い。なんかSSH社の
+	ためにbakeoffしているような気がしてきた。というか、ipsec自体SSH社の
+	利益のためのプロトコルじゃないかという気すらしてくる。複雑にすれば
+	するほどSSH社は儲かる... (conspiracy theory)
+
+	id payloadに対するpolicy database検索の見直し。anyの場合wildcardだと
+	思って検索すべき。exactly right!!
+
+	phase 2で、ipsec enc modeがついていなかったときの取り扱い
+	(transport modeと思ってよいのではないか)。(修正済)
+
+	長いKEYMATの計算のとき、必要鍵長の計算にbugあり (修正済)
+
+	DH公開情報は事前に計算しとく方がいいかも
+
+	subjectAltNameとID payload比較についてよく考えないと証明書は使えない。
+	証明書を送る前に、どのIDをsubjectAltNameに使うか決めないといけないから。
+
+	ndpをbypassさせるフラグかポリシがあった方がいいかも。
+	一応ipsec_setsocket(NULL)はしている。ip6_output()にフラグ渡す?
+	美しくない... (itojun)
+
+
+latest isakmpd on KAME
+	Tue Aug 14 01:42:55 JST 2001
+	isakmpdのinterface selection部を直したらphase 1は成功した。
+	phase 2がうまくいかない模様。多分設定問題。
+
+35:36.982316 130.233.9.166:500 -> 130.233.9.165:500: isakmp 1.0 msgid 00000000: 
+phase 1 ? ident[E]: [encrypted id]
+2001-08-13 23:35:36: DEBUG: isakmp.c:402:isakmp_main(): malformed cookie receive
+d or the spi expired.
+
+
+USAGI linux
+	Tue Aug 14 01:42:55 JST 2001
+	なんか今はまっているらしい。
+
+	Wed Aug 15 JST
+	ESP 3des, desのmanual keyは成功
+
+	Thu Aug 16 JST
+	とりあえずplutoだけ動かした。phase 2は完了するが結果の鍵が違う。
+
+
+Compaq Tru54 UNIX X5.1B-BL4
+	Tue Aug 14 17:09:18 JST 2001
+	IPv4, ESP, tunnel mode
+	phase 1/2とも3DES + SHA1, group 2
+	phase 1 lifetime = 10min, phase 2 lifetime = 5min
+
+	IPv6, ESP + AH, transport tunnel mode
+	phase 1/2とも3DES + SHA1, group 2
+	phase 1 lifetime = 10min, phase 2 lifetime = 5min
+
+	IPv6, IPComp + ESP + AH, transport mode
+	phase 1/2とも3DES + SHA1 + defalte, group 2
+	phase 1 lifetime = 10min, phase 2 lifetime = 5min
+
+	initiator/responderどちらもやった。
+
+	Compaqがinitiatorの場合に問題あり。
+	Compaq側はphase 2 lifetimeのproposal作り部分にbugが居るようで、
+	GUIで5minと言っても10minと言ってくる(phase 1 lifetimeの値を
+	コピーしている?)。
+
+	chargen中のrekey等も試した。問題なし。
+
+	IPv4 over IPv6/IPv6 over IPv4やろうと言われたができず。sec* transition
+	終わったらやれるかな。
+
+	明日12:00 RSA signature modeで再戦
+	むむ、authentication-failedで失敗。こっちの問題か？
+
+	Fitecと現象は一緒。openssl 0.9.6 を使うと問題なし。
+	opensslのバージョン下げちゃったので
+	ipv6 address as subjectAltName は出来ず。
+
+
+Sun
+	Thu Aug 16 16:30 EEST 2001
+	phase1: RSA signature, 3des, sha1, dh5
+	phase2: ESP transport, aes 128, sha1, dh5
+
+	問題なし
+
+	Sunは phase2のAESの鍵長をつけてなかった。draftによるとmust。
+	racoon側がdefault鍵長をセットするようにして対応。
+
+
+IBM AIX 5.1
+	Tue Aug 14 17:33:43 JST 2001
+	IPv6 testしようと言われるも、先方のマシン(遠隔地)にglobal addressなし。
+
+	Thu Aug 16 21:00 ESST 2001
+	IPv6だけ
+	phase1 pre-shared-key, 3des, sha1, dh2
+	phase2 esp transport, 3des, sha1, pfs2
+	最初の1回は問題なし。
+	phase2 SAを消して再ネゴするとisakmpdがだんまりになる。
+	ibm isakmpd に問題あるっぽい。
+
+	san diegoでやった時は manual だったかな？
+		そうです(itojun)
+
+	prasad君はインドに帰ってるので来ない。
+
+F-Secure VPN+ 5.40
+	Tue Aug 14 19:44:15 JST 2001
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 5, lifetime = 10min
+	phase 2 AES + SHA1, group 5, lifetime = 2min
+
+	IPv4, IPComp + ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 10min
+	phase 2 AES + SHA1 + deflate, group 5, lifetime = 2min
+
+	どちらも問題なし、rekeyもOK。
+
+	IPComp + ESP tunnel mode (IP ESP IPComp IP payload)をやろうとして
+	ipcomp/tunnel//use esp/transport//useとポリシを書いたら、
+	IKE phase 2的に
+		向こう: IPComp tunnel, ESP tunnel
+		こっち: IPComp tunnel, ESP transport
+	のproposalを比較して、no proposal chosenになる。こっちの問題
+	(bundleの取り扱い)
+
+	でっかいDH group、phase 1 SHA2-256/AESもできるらしい。後でやりたい。
+		(modp4096, phase 1 aes はok)
+
+	Fri Aug 17 11:00 EEST 2001
+	phase1: aggressive mode modp4096, aes, sha1, rsa signature
+	phase2: pfs 5, esp tunnel, aes, hmac sha1
+
+	aes for phase1 もOK.
+	f-secureはsubjectAltNameにアドレス書かないとパケットだせない。
+	invalid signatureでf-secureに怒られて失敗。原因不明。
+		-> f-secureはsubjectAltNameを1つしか受けつけない。
+		証明書を作り直して成功。
+
+	DH公開情報は事前に計算しとく方がいいかも
+
+SecGo CryptoIP v3
+	Tue Aug 14 21:41:36 JST 2001
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 10min
+	phase 2 blowfish, group 5, lifetime = 2min
+
+	phase 2 AESも試そうとしたが失敗(SecGo側が12以外のalgorithm #を
+	使っていた or コンパイルしてなかった)。rekeyもやってみた。
+
+	phase 1 AESもできるらしい(SSH toolkit使用)。
+
+	Wed Aug 15 00:16:35 JST 2001
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, lifetime = 10min
+	phase 2 AES, lifetime = 2min
+
+	tested rekey as well.
+
+Oullim information technologies SECUREWORKS VPN gateway 3.0
+	Tue Aug 14 21:48:36 JST 2001
+	phase 2 AES/blowfishはどうだねとナンパしてみるも、not ready。
+	明日か明後日ねとのこと。
+
+	Wed Aug 15 17:15:09 JST 2001
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES + SHA1, group 2, lifetime = 2min
+
+	失敗。先方がAESのときにESP ICV checkに失敗する。
+
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES + MD5, group 2, lifetime = 2min
+
+	おなじく失敗
+
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 3DES + MD5, group 2, lifetime = 2min
+
+	成功。
+
+	先方がこういうの投げてくるので、こっちは怒る(id payloadの順序が
+	普通ではない)。
+
+>11:59.824877 130.233.10.30:500 -> 130.233.9.166:500: isakmp 1.0 msgid 75973360: phase 2/others ? oakley-quick:
+>    (hash: len=20)
+>    (sa: doi=ipsec situation=identity
+>        (p: #1 protoid=ipsec-esp transform=1 spi=6fd60ca5
+>            (t: #1 id=3des (type=lifetype value=sec)(type=life value=0078)(type=enc mode value=tunnel)(type=auth value=hmac-md5)(type=group desc value=modp1024))))
+>    (nonce: n len=16)
+>    (ke: key len=128)
+>    (id: idtype=IPv4 protoid=0 port=0 len=4 130.233.9.166)
+>    (id: idtype=IPv4net protoid=0 port=0 len=8 192.168.10.0/255.255.255.0)
+
+	Wed Aug 15 18:39:11 JST 2001
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES, group 2, lifetime = 2min
+
+	IKE的には大丈夫。IPsec的にまだ駄目。
+
+	Wed Aug 15 19:09:05 JST 2001
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES, group 2, lifetime = 2min
+
+	IPv4, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES + SHA1, group 2, lifetime = 2min
+
+	向こうがAES codeを修正した。IKE的にもIPsec的にも大丈夫。
+	rekeyも一応成功(向こうはreal lifetime == soft, real * 1.2 == hardとかに
+	設定しているのでちょっとヘンだったけど)。
+
+	Thu Aug 16 22:01:57 JST 2001
+	もういちど。あとはID payloadの順序だけ。
+
+	Fri Aug 17 02:00 JST頃
+	再挑戦。成功。
+
+
+Trilogy AdmitOne 2.6
+	Tue Aug 14 21:58:01 JST 2001
+	30分後と言われた。
+
+	Wed Aug 15 01:53:42 JST 2001
+	明日。
+
+	Wed Aug 15 16:09:50 JST 2001
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 1, lifetime = 10min
+	phase 2 AES + SHA1, group 1, lifetime = 2min
+
+	Trilogy側はIKE phase 2のkey lengthがbyte単位だと思っているらしく
+	negotiation失敗。修正後再挑戦。
+
+	Wed Aug 15 17:40:05 JST 2001
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 1, lifetime = 10min
+	phase 2 AES + SHA1, group 1, lifetime = 2min
+
+	再挑戦。こちらがinitiatorのときはうまくいく。あちらがinitiatorの
+	場合、id payloadにproto=icmpが埋まっており、こちらのkernel policy
+	proto=anyにmatchせずno policy foundになる。要修正。
+
+>spdadd 130.233.9.166 130.233.10.167 any -P out ipsec esp/transport//use;
+>spdadd 130.233.10.167 130.233.9.166 any -P in ipsec esp/transport//use;
+
+>35:45.215745 130.233.10.167:500 -> 130.233.9.166:500: isakmp 1.0 msgid dba05304: phase 2/others ? oakley-quick:
+>    (hash: len=20)
+>    (sa: doi=ipsec situation=identity
+>        (p: #1 protoid=ipsec-esp transform=1 spi=dba05304
+>            (t: #1 id=aes (type=lifetype value=sec)(type=life value=7080)(type=lifetype value=kb)(type=life value=2000)(type=
+>group desc value=modp768)(type=enc mode value=transport)(type=auth value=hmac-sha1)(type=keylen value=0080))))
+>    (nonce: n len=64)
+>    (ke: key len=96)
+>    (id: idtype=IPv4 protoid=icmp port=0 len=4 130.233.10.167)
+>    (id: idtype=IPv4 protoid=icmp port=0 len=4 130.233.9.166)
+
+>2001-08-15 17:35:45: DEBUG: isakmp_quick.c:1951:get_proposal_r(): get a src address from ID payload 130.233.10.167[0] prefixlen=32 ul_proto=1
+>2001-08-15 17:35:45: DEBUG: isakmp_quick.c:1956:get_proposal_r(): get dst address from ID payload 130.233.9.166[0] prefixlen=32 ul_proto=1
+>2001-08-15 17:35:45: DEBUG: policy.c:245:cmpspidxwild(): sub:0xbfbfd350: 130.233.10.167/32[0] 130.233.9.166/32[0] proto=icmp dir=in
+>2001-08-15 17:35:45: DEBUG: policy.c:246:cmpspidxwild(): db: 0x80ca408: 130.233.10.167/32[0] 130.233.9.166/32[0] proto=any dir=in
+>2001-08-15 17:35:45: DEBUG: policy.c:245:cmpspidxwild(): sub:0xbfbfd350: 130.233.10.167/32[0] 130.233.9.166/32[0] proto=icmp dir=in
+>2001-08-15 17:35:45: DEBUG: policy.c:246:cmpspidxwild(): db: 0x80ca808: 130.233.9.166/32[0] 130.233.10.167/32[0] proto=any dir=out
+>2001-08-15 17:35:45: ERROR: isakmp_quick.c:1979:get_proposal_r(): no policy found: 130.233.10.167/32[0] 130.233.9.166/32[0] proto=icmp dir=in
+
+
+ZyXEL
+	Tue Aug 14 12:00 ESST 2001
+	phase1 main mode, pre-shared key, des, sha1, dh1
+	phase2 esp, des, sha1, tunnel
+
+	問題なし。proposalは1つだけ受けつける。rekeyはできない。
+
+
+III
+	Tue Aug 14 14:00 ESST 2001
+	phase1 main mode, pre-shared key, 3des, md5, dh2
+	phase2 esp, des, md5, tunnel
+
+	問題なし。proposalは1番目を使う。rekeyはできない。
+	台湾の上司にKAMEとテストしてこいと言われたらしい。
+
+
+WindowsXP
+	Tue Aug 14 20:00
+	phase1 main mode, pre-shared key, 3des, sha1, modp3072
+	phase2 esp, 3des, sha1, transport
+
+	modp3072やろうよとナンパされる。
+	dhの計算: fbsd43 P100MHzで約7(s)
+	          XP P2 200MHzで約9(s)
+
+	明日夕方 RSA signature modeで再戦。
+
+	帰っちゃったのでできない。
+
+Ashley
+	Tue Aug 14 18:00
+	invalid-signatureと文句を言われる。
+	互いに ssh-ca1から署名してもらったと言ってるが、
+	実はtest-ca1.ssh.comとbakeoff-ca1.ssh.comの2つある事が判明…
+
+	test-ca1.ssh.comに統一して再戦予約
+
+	Fri Aug 17 10:30
+	Ashley実装にpkcs#1 paddingの問題あり。ネゴできず。
+
+Netoctave
+	Wed Aug 15 11:00
+	こっちが initiateすると no-proposal-chosenが帰ってくる。
+	敵からpingしてもらうとIKEのパケットが出ない。
+
+	状況確認してもらって後から再戦する予定。
+
+isakmpd (jakob@openbsd)
+	Tue Aug 14
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES + SHA1, group 2, lifetime = 2min
+
+	問題なし。
+
+	Wed Aug 15 21:25:49 JST 2001
+	IPv6, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 10min
+	phase 2 AES + SHA1, group 2, lifetime = 2min
+
+	向こうはmain modeでFQDNをIDに使いたがったが、こういうエラーで怒られる。
+	sakaneはこれはwgでの合意と思っているが、要確認。
+2001-08-15 21:14:41: ERROR: ipsec_doi.c:3063:ipsecdoi_checkid1(): Expecting IP address type in main mode, but FQDN.
+
+	Fri Aug 17 10:00
+	rsa signature.
+	問題なし。
+
+	isakmpdは subjectAltNameを1つしか受けつけない。
+
+
+Fitec
+	Wed Aug 15 13:00
+	RSA signature
+	invalid-authentication で跳ねられる。いよいよこっちの問題か...
+
+	KeyUsage をIKEにしとかないと怒られる。
+	他の実装とうまくいかないのは、これが原因か？
+	そうでもなさそう、opensslの問題かも。
+
+	openssl 0.9.6 にしたら成功。違いが分からず。
+
+SSH
+	IPv6だけやった
+
+	ssh solaris version:
+	ssh側: IKEのパケットが出ない。
+	nd cacheの問題か？
+		tcpだけのポリシでもIKEのパケットが出せない。
+		solarisはstatic cache entry入れるコマンドがないらしい。
+		一旦ping6してcacheを作った気になってもNSを出そうとする。
+	原因調査するから再戦してねと言われる。
+	再戦. 問題なし
+
+	沢山のphase2 proposal(43440BのUDPパケット)を受けると
+	racoon までパケットが上がって来ない。
+
+	500 proposalを投げてくる。proposal#は1byteなので弾くべき。
+	racoonは最初に全部パースしてるみたい。
+
+	RSA signature mode
+	ssh側にpublic key計算に問題あった。直してOK
+	sshはssh-test-ca1がサインした証明書を使い、
+	racoonはfujixeroxがサインした証明書でもOK
+
+	AES phase1 がうまくいかない。間違いなくracoonの問題。(直して動作確認済)
+
+	phase1 proposalのパースに虫がいるかも。要確認
+
+freeswan
+	IPv4, IPComp + ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 10min
+	phase 2 3DES + SHA1 + deflate, group 5, lifetime = 2min
+
+	IPCompには問題なし。
+
+	先方がinitiateしてきたときに問題あり。phase 2で、ipcomp enc modeが
+	無指定の場合、ipcompの場合だけはtransportと思わなければならない。
+	が、racoonは現状これをRFC2407的に(Anyとして)取り扱う。ので、no
+	proposal chosenになる。
+	RFC2407からすると、enc mode unspecified == transportでもよいような
+	気がするが...  ("host-dependent"って書いてあるから)
+
+RFC2407
+>         Encapsulation Mode
+>           RESERVED                0
+>           Tunnel                  1
+>           Transport               2
+>
+>           Values 3-61439 are reserved to IANA.  Values 61440-65535 are
+>           for private use.
+>
+>           If unspecified, the default value shall be assumed to be
+>           unspecified (host-dependent).
+
+draft-shacham-ippcp-rfc2393bis-08.txt
+>      Encapsulation Mode
+>
+>         To propose a non-default Encapsulation Mode (such as Tunnel
+>         Mode), an IPComp proposal MUST include an Encapsulation Mode
+>         attribute.  If the Encapsulation Mode is unspecified, the
+>         default value of Transport Mode is assumed.
+
+>42:28.211568 130.233.9.175:500 -> 130.233.9.166:500: isakmp 1.0 msgid 6935cbd8: phase 2/others ? oakley-quick:
+>    (hash: len=20)
+>    (sa: doi=ipsec situation=identity
+>        (p: #0 protoid=ipsec-esp transform=2 spi=3a47a3e7
+>            (t: #0 id=3des (type=group desc value=0005)(type=enc mode value=transport)(type=lifetype value=sec)(type=life value=7080)(type=auth value=hmac-md5))
+>            (t: #1 id=3des (type=group desc value=0005)(type=enc mode value=transport)(type=lifetype value=sec)(type=life value=7080)(type=auth value=hmac-sha1)))
+>        (p: #0 protoid=ipcomp transform=1 spi=ac23
+>            (t: #0 id=deflate (type=lifetype value=sec)(type=life value=7080))))
+>    (nonce: n len=16)
+>    (ke: key len=192)
+
+>2001-08-15 16:42:28: DEBUG: ipsec_doi.c:1024:get_ph2approvalx(): peer's single bundle:
+>2001-08-15 16:42:28: DEBUG: proposal.c:814:printsaproto():  (proto_id=ESP spisize=4 spi=3a47a3e7 spi_p=00000000 encmode=Transport reqid=0:0)
+>2001-08-15 16:42:28: DEBUG: proposal.c:848:printsatrns():   (trns_id=3DES encklen=0 authtype=1)
+>2001-08-15 16:42:28: DEBUG: proposal.c:848:printsatrns():   (trns_id=3DES encklen=0 authtype=2)
+>2001-08-15 16:42:28: DEBUG: proposal.c:814:printsaproto():  (proto_id=IPCOMP spisize=2 spi=0000ac23 spi_p=00000000 encmode=Any reqid=0:0)
+>2001-08-15 16:42:28: DEBUG: proposal.c:855:printsatrns():   (trns_id=DEFLATE)
+>2001-08-15 16:42:28: DEBUG: ipsec_doi.c:1027:get_ph2approvalx(): my single bundle:
+>2001-08-15 16:42:28: DEBUG: proposal.c:814:printsaproto():  (proto_id=ESP spisize=4 spi=00000000 spi_p=00000000 encmode=Transport reqid=0:0)
+>2001-08-15 16:42:28: DEBUG: proposal.c:848:printsatrns():   (trns_id=3DES encklen=0 authtype=2)
+>2001-08-15 16:42:28: DEBUG: proposal.c:814:printsaproto():  (proto_id=IPCOMP spisize=4 spi=00000000 spi_p=00000000 encmode=Transport reqid=0:0)
+>2001-08-15 16:42:28: DEBUG: proposal.c:855:printsatrns():   (trns_id=DEFLATE)
+>2001-08-15 16:42:28: ERROR: proposal.c:497:cmpsatrns(): authtype mismatched: my:1 peer:2
+>2001-08-15 16:42:28: ERROR: proposal.c:365:cmpsaprop_alloc(): IPComp SPI size promoted from 16bit to 32bit
+>2001-08-15 16:42:28: ERROR: proposal.c:378:cmpsaprop_alloc(): encmode mismatched: my:2 peer:0			<-----
+
+	Thu Aug 16 16:49:08 JST 2001
+	IPv4, IPComp + ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 10min
+	phase 2 3DES + SHA1 + deflate, group 5, lifetime = 2min
+	再挑戦。修正できたことを確認。
+
+
+netopia
+	Wed Aug 15 19:00 JST頃
+	IPv6, ESP, transport mode
+	phase 1 3DES + SHA1, group 2, lifetime = 24h
+	phase 2 3DES + SHA1, group 2, lifetime = 1h
+
+	KAMEベース実装。CPUがしょぼいらしくD-Hに5秒くらいかかってどきどきする。
+	bug reportなどあったら送ってもらうようお願いする。
+
+
+Ericsson
+	Wed Aug 15 20:30 JST頃
+	IPv6, ESP, transport mode
+	phase 1 3DES + SHA1, group 2, lifetime = 24h
+	phase 2 AES + SHA1, group 2, lifetime = 1h
+
+	成功
+
+	IPv6, ESP, transport mode
+	phase 1 3DES + SHA1, group 2, lifetime = 24h
+	phase 2 blowfish + SHA1, group 2, lifetime = 1h
+
+	失敗。blowfish、こっちがわの鍵の生成がおかしい(= 長い鍵の場合)。
+
+	IPv6, ESP, transport mode
+	phase 1 3DES + SHA1, group 2, lifetime = 24h
+	phase 2 3DES + SHA1, group 2, lifetime = 1h
+
+	失敗。ericsson側、NDがおかしい。
+
+
+Nokia EPOC
+	Wed Aug 15 20:51:25 JST 2001
+	IPv6, ESP, tunnel mode
+	phase 1 3DES + SHA1, group 2, lifetime = 3600min
+	phase 2 3DES + SHA1 + deflate, group 2, lifetime = 2min
+
+	IPsec keyも入るが、先方のポリシ問題でpingは返らない。
+
+Trustworks TrustedClient v3.2
+	Thu Aug 16 20:17:51 JST 2001
+	IPv6, AH + ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 3min
+	phase 2 3DES + SHA1, group 5, lifetime = 2min
+
+	先方がresponderのとき、鍵交換が終了した瞬間先方のIKE daemonがpanic。
+	まあ鍵交換自体はできているようだ。
+
+
+Nortel GatewayController/CallServer 2000 (not released yet)
+	Fri Aug 17 00:16:23 JST 2001
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 3min
+	phase 2 AES + SHA1, group 5, lifetime = 2min
+
+	Nortel側initiator: round=10というattributeをつけてくるのでno proposal
+	chosen
+	KAME側initiator: id payload抜き(ip address使え)だとNortel側は
+	へくるので駄目
+
+	IPv4, ESP, transport mode
+	phase 1 3DES + SHA1, group 5, lifetime = 3min
+	phase 2 3DES + SHA1, group 5, lifetime = 2min
+
+	Nortel側initiator: ok
+	KAME側initiator: id payload抜きだとNortel側はへくるので駄目

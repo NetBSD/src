@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.18 2001/04/11 00:28:59 sakane Exp $	*/
+/*	$KAME: oakley.h,v 1.27 2001/08/17 10:50:27 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,6 +74,10 @@
 #define   OAKLEY_ATTR_GRP_DESC_EC2N155		3
 #define   OAKLEY_ATTR_GRP_DESC_EC2N185		4
 #define   OAKLEY_ATTR_GRP_DESC_MODP1536		5
+#define   OAKLEY_ATTR_GRP_DESC_MODP2048		42048	/* these value are */
+#define   OAKLEY_ATTR_GRP_DESC_MODP3072		43072	/* make consensus  */
+#define   OAKLEY_ATTR_GRP_DESC_MODP4096		44096	/* at the bake off */
+#define   OAKLEY_ATTR_GRP_DESC_MODP8192		48192	/* in helsinki     */
 					/*	32768 - 65535 Private Use */
 #define OAKLEY_ATTR_GRP_TYPE		5 /* B */
 #define   OAKLEY_ATTR_GRP_TYPE_MODP		1
@@ -110,38 +114,7 @@
 	 */
 #define OAKLEY_ATTR_GSS_ID		16384
 
-#define OAKLEY_PRIME_MODP768 \
-	"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1" \
-	"29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD" \
-	"EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245" \
-	"E485B576 625E7EC6 F44C42E9 A63A3620 FFFFFFFF FFFFFFFF"
-
-#define OAKLEY_PRIME_MODP1024 \
-	"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1" \
-	"29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD" \
-	"EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245" \
-	"E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED" \
-	"EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE65381" \
-	"FFFFFFFF FFFFFFFF"
-
-#define OAKLEY_PRIME_MODP1536 \
-	"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1" \
-	"29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD" \
-	"EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245" \
-	"E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED" \
-	"EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE45B3D" \
-	"C2007CB8 A163BF05 98DA4836 1C55D39A 69163FA8 FD24CF5F" \
-	"83655D23 DCA3AD96 1C62F356 208552BB 9ED52907 7096966D" \
-	"670C354E 4ABC9804 F1746C08 CA237327 FFFFFFFF FFFFFFFF"
-
 #define MAXPADLWORD	20
-
-struct cipher_algorithm {
-	char *name;
-	vchar_t *(*encrypt) __P((vchar_t *data, vchar_t *key, caddr_t iv));
-	vchar_t *(*decrypt) __P((vchar_t *data, vchar_t *key, caddr_t iv));
-	int (*weakkey) __P((vchar_t *key));
-};
 
 struct dhgroup {
 	int type;
@@ -152,10 +125,6 @@ struct dhgroup {
 	vchar_t *curve_b;
 	vchar_t *order;
 };
-
-#define MAXDHGROUP	10
-
-extern struct dhgroup dhgroup[MAXDHGROUP];
 
 /* certificate holder */
 typedef struct cert_t_tag {
@@ -170,7 +139,7 @@ struct isakmp_ivm;
 
 extern int oakley_get_defaultlifetime __P((void));
 
-extern void oakley_dhinit __P((void));
+extern int oakley_dhinit __P((void));
 extern void oakley_dhgrp_free __P((struct dhgroup *));
 extern int oakley_dh_compute __P((const struct dhgroup *,
 	vchar_t *, vchar_t *, vchar_t *, vchar_t **));
@@ -219,4 +188,3 @@ extern vchar_t *oakley_do_decrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
 extern vchar_t *oakley_do_encrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
-extern int oakley_padlen __P((int));

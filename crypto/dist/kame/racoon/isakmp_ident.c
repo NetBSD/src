@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_ident.c,v 1.55 2001/03/27 02:46:05 thorpej Exp $	*/
+/*	$KAME: isakmp_ident.c,v 1.56 2001/08/17 06:58:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1207,7 +1207,7 @@ ident_r3recv(iph1, msg0)
 	 * payload's.
 	 */
 
-	plog(LLV_DEBUG, LOCATION, iph1->remote, "peer's ID ");
+	plog(LLV_DEBUG, LOCATION, iph1->remote, "peer's ID\n");
 	plogdump(LLV_DEBUG, iph1->id_p->v, iph1->id_p->l);
 
 #ifdef HAVE_GSSAPI
