@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.4 2003/03/19 14:04:25 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.5 2003/10/21 09:42:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ inetwrite(void)
 
 	n = sizeof(sa);
 
-	EV_SET(&event[0], fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, NULL, NULL);
+	EV_SET(&event[0], fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
 	n = kevent(kq, event, 1, NULL, 0, NULL);
 	if (n == -1)
 		err(1, "iw: kevent(1)");
@@ -204,7 +204,7 @@ printf("ir: waiting 5 seconds before accept()\n"); sleep(5);
 
 		/* set a kevent on the listen socket */
 	EV_SET(&event[0], sock, EVFILT_READ, EV_ADD | EV_ENABLE | EV_ONESHOT,
-	    0, NULL, NULL);
+	    0, 0, 0);
 	n = kevent(kq, event, 1, NULL, 0, NULL);
 	if (n == -1)
 		err(1, "ir: kevent(1)");
@@ -239,7 +239,7 @@ printf("ir: registered sock %d\n", sock);
 	printf("ir: got connection from 0x%x port %d\n",
 	    ntohl(sa.sin_addr.s_addr), ntohs(sa.sin_port));
 
-	EV_SET(&event[0], fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, NULL, NULL);
+	EV_SET(&event[0], fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
 	n = kevent(kq, event, 1, NULL, 0, NULL);
 	if (n == -1)
 		err(1, "ir: kevent(1)");
