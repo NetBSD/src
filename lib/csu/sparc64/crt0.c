@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.18 2002/02/11 06:08:41 mrg Exp $ */
+/* $NetBSD: crt0.c,v 1.19 2002/03/29 18:11:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -49,12 +49,10 @@ __asm__("\n\
 __data_start:					! Start of data section\n\
 	.text\n\
 	.align 4\n\
-	.global start\n\
 	.global _start\n\
 	.global __start\n\
 	.register %g3,#scratch\n\
 	.register %g2,#scratch\n\
-start:\n\
 _start:\n\
 __start:\n\
 	setx	__data_start, %o0, %g4		! Point %g4 to start of data section\n\
@@ -68,10 +66,10 @@ __start:\n\
 	mov	%g1, %o3			! ps_strings XXXX\n\
 ");
 
-void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
+static void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 
-void
+static void
 ___start(sp, cleanup, obj, ps_strings)
 	char **sp;
 	void (*cleanup) __P((void));		/* from shared loader */
@@ -116,7 +114,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.18 2002/02/11 06:08:41 mrg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19 2002/03/29 18:11:55 eeh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
