@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.229 2002/10/16 02:30:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.230 2002/10/23 19:50:30 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -109,6 +109,12 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
+ETC_PKG=-T etc_pkg
+BASE_PKG=-T base_pkg
+ETC_INSTALL_FILE=${INSTALL_FILE} ${ETC_PKG}
+ETC_INSTALL_LINK=${INSTALL_LINK} ${ETC_PKG}
+ETC_INSTALL_SYMLINK=${INSTALL_SYMLINK} ${ETC_PKG}
+
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
 .if make(install-etc-files)						# {
@@ -135,119 +141,124 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 install-etc-files: check_DESTDIR
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
-	    ${DESTDIR}/etc/mail
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-	    ${DESTDIR}/etc/mail/local-host-names
-	${INSTALL_FILE} -o root -g wheel -m 600 crontab \
-	    ${DESTDIR}/var/cron/tabs/root
-	${INSTALL_FILE} -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${BIN1} ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
+	    ${BIN2} ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
+	    ${BIN3} ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    aliases ${DESTDIR}/etc/mail
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    /dev/null ${DESTDIR}/etc/mail/local-host-names
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    crontab ${DESTDIR}/var/cron/tabs/root
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    master.passwd ${DESTDIR}/etc
 	${PWD_MKDB} -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
-		${DESTDIR}/etc/master.passwd
+	    ${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
 	( \
-	    echo "/etc/passwd type=file mode=0644 uname=root gname=wheel"; \
-	    echo "/etc/pwd.db type=file mode=0644 uname=root gname=wheel"; \
-	    echo "/etc/spwd.db type=file mode=0600 uname=root gname=wheel"; \
+	    echo "/etc/passwd type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+	    echo "/etc/pwd.db type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+	    echo "/etc/spwd.db type=file mode=0600 uname=root gname=wheel tags=etc_pkg"; \
 	) | \
 	    sed -e "s|^/|./${DESTDIR}/|g" -e "s|//|/|g" | ${CAT} -l >>${METALOG}
 .endif	# UNPRIVED
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
-	${INSTALL_FILE} -o root -g wheel -m 600 minfree ${DESTDIR}/var/crash
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+	    MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    minfree ${DESTDIR}/var/crash
 	(cd root; \
-		${INSTALL_FILE} -o root -g wheel -m 644 dot.cshrc \
-		    ${DESTDIR}/root/.cshrc; \
-		${INSTALL_FILE} -o root -g wheel -m 600 dot.klogin \
-		    ${DESTDIR}/root/.klogin; \
-		${INSTALL_FILE} -o root -g wheel -m 644 dot.login \
-		    ${DESTDIR}/root/.login; \
-		${INSTALL_FILE} -o root -g wheel -m 644 dot.profile \
-		    ${DESTDIR}/root/.profile; \
-		${INSTALL_FILE} -o root -g wheel -m 644 dot.shrc \
-		    ${DESTDIR}/root/.shrc; \
+		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
+		    dot.cshrc ${DESTDIR}/root/.cshrc; \
+		${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+		    dot.klogin ${DESTDIR}/root/.klogin; \
+		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
+		    dot.login ${DESTDIR}/root/.login; \
+		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
+		    dot.profile ${DESTDIR}/root/.profile; \
+		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
+		    dot.shrc ${DESTDIR}/root/.shrc; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
-		${INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
-		${INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+		${ETC_INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
+		${ETC_INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
 	(cd defaults; ${MAKE} install)
 	(cd mtree; ${MAKE} install)
 	(cd namedb; \
-		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+		${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
 	(cd rc.d; ${MAKE} install)
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		postinstall ${DESTDIR}/etc
-	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
-		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
-	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
-		/usr/sbin/rmt ${DESTDIR}/etc/rmt
-	${INSTALL_FILE} -o ${BINOWN} -g operator -m 664 /dev/null \
-		${DESTDIR}/etc/dumpdates
-	${INSTALL_FILE} -o ${BINOWN} -g operator -m 600 /dev/null \
-		${DESTDIR}/etc/skeykeys
-	${INSTALL_FILE} -o root -g wheel -m 600 /dev/null \
-		${DESTDIR}/var/at/at.deny
-	${INSTALL_FILE} -o root -g wheel -m 600 /dev/null \
-		${DESTDIR}/var/cron/log
-	${INSTALL_FILE} -o nobody -g ${BINGRP} -m 664 /dev/null \
-		${DESTDIR}/var/db/locate.database
-	${INSTALL_FILE} -o uucp -g dialer -m 640 /dev/null \
-		${DESTDIR}/var/log/aculog
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
-		${DESTDIR}/var/log/authlog
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-		${DESTDIR}/var/log/lastlog
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
-		${DESTDIR}/var/log/lpd-errs
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
-		${DESTDIR}/var/log/maillog
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-		${DESTDIR}/var/log/messages
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
-		${DESTDIR}/var/log/secure
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-		${DESTDIR}/var/log/sendmail.st
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-		${DESTDIR}/var/log/wtmp
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-		${DESTDIR}/var/log/wtmpx
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
-		${DESTDIR}/var/log/xferlog
-	${INSTALL_FILE} -o daemon -g staff -m 664 /dev/null \
-		${DESTDIR}/var/msgs/bounds
-	${INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 /dev/null \
-		${DESTDIR}/var/run/utmp
-	${INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 /dev/null \
-		${DESTDIR}/var/run/utmpx
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/atc_scores
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/battlestar.log
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/cfscores
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/criblog
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/robots_roll
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/rogue.scores
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/saillog
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/snakerawscores
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/snake.log
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/tetris.scores
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/larn/llog12.0
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/larn/lscore12.0
-	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/larn/playerids
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    postinstall ${DESTDIR}/etc
+	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
+	    ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
+	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
+	    /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g operator -m 664 \
+	    /dev/null ${DESTDIR}/etc/dumpdates
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g operator -m 600 \
+	    /dev/null ${DESTDIR}/etc/skeykeys
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    /dev/null ${DESTDIR}/var/at/at.deny
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    /dev/null ${DESTDIR}/var/cron/log
+	${ETC_INSTALL_FILE} -o nobody -g ${BINGRP} -m 664 \
+	    /dev/null ${DESTDIR}/var/db/locate.database
+	${ETC_INSTALL_FILE} -o uucp -g dialer -m 640 \
+	    /dev/null ${DESTDIR}/var/log/aculog
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
+	    /dev/null ${DESTDIR}/var/log/authlog
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
+	    /dev/null ${DESTDIR}/var/log/lastlog
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 640 \
+	    /dev/null ${DESTDIR}/var/log/lpd-errs
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
+	    /dev/null ${DESTDIR}/var/log/maillog
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    /dev/null ${DESTDIR}/var/log/messages
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
+	    /dev/null ${DESTDIR}/var/log/secure
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    /dev/null ${DESTDIR}/var/log/sendmail.st
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    /dev/null ${DESTDIR}/var/log/wtmp
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    /dev/null ${DESTDIR}/var/log/wtmpx
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
+	    /dev/null ${DESTDIR}/var/log/xferlog
+	${ETC_INSTALL_FILE} -o daemon -g staff -m 664 \
+	    /dev/null ${DESTDIR}/var/msgs/bounds
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 \
+	    /dev/null ${DESTDIR}/var/run/utmp
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 \
+	    /dev/null ${DESTDIR}/var/run/utmpx
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/atc_scores
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/battlestar.log
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/cfscores
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/criblog
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/robots_roll
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/rogue.scores
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/saillog
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/snakerawscores
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/snake.log
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/tetris.scores
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/llog12.0
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/lscore12.0
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/playerids
 	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
@@ -259,10 +270,11 @@ install-etc-files: check_DESTDIR
 .endif
 
 distrib-dirs: check_DESTDIR
-	${INSTALL_DIR} -o root -g wheel -m 755 ${DESTDIR}
+	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
 	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 	rm -f ${DESTDIR}/sys
-	${INSTALL_SYMLINK} -o root -g wheel -m 755 usr/src/sys ${DESTDIR}/sys
+	${INSTALL_SYMLINK} -o root -g wheel -m 755 ${BASE_PKG} \
+	    usr/src/sys ${DESTDIR}/sys
 
 release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
     distribution .WAIT snap_pre snap_md_pre .WAIT snap_kern .WAIT snap_md_post
@@ -277,8 +289,8 @@ iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 	@if ${MKISOFS} --version; then \
 		mkdir -p ${RELEASEDIR}/installation/cdrom ; \
 		${MKISOFS} ${MKISOFS_FLAGS} \
-			-o ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
-			${RELEASEDIR} ; \
+		    -o ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
+		    ${RELEASEDIR} ; \
 		${MAKESUMS} -t ${RELEASEDIR}/installation/cdrom '*.iso' ; \
 	else \
 		echo "install pkgsrc/sysutils/cdrecord and type 'make iso-image'." ; \
