@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- * 	$Id: open.c,v 1.3 1994/05/08 16:11:33 brezak Exp $
+ * 	$Id: open.c,v 1.4 1994/07/18 18:41:12 pk Exp $
  */
 
 #include "stand.h"
@@ -118,6 +118,7 @@ fnd:
 		error = ENOENT;
 
 err:
+	f->f_flags = 0;
 	errno = error;
 	return (-1);
 }
