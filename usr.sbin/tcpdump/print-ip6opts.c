@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6opts.c,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+/*	$NetBSD: print-ip6opts.c,v 1.3 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -28,6 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef lint
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-ip6opts.c,v 1.3 1999/09/04 03:36:41 itojun Exp $");
+#endif
 
 #ifdef INET6
 #include <sys/param.h>
