@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/03/21 23:41:21 martin Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2004/06/22 07:53:13 tron Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -87,7 +87,7 @@ sparc:
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
