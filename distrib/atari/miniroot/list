@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.12 2002/03/06 12:04:50 lukem Exp $
+#	$NetBSD: list,v 1.13 2002/04/10 01:57:28 lukem Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64KB!
 LIBS	libhack.o
@@ -30,6 +30,7 @@ COPY	${ARCHDIR}/install.md		install.md
 COPY	${ARCHDIR}/dot.profile		.profile
 
 # and the keyboard maps
+MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755
 COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
 
 # strip /etc/services - not enough space... (leaves ftp in).
