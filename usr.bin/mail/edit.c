@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)edit.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: edit.c,v 1.3 1994/06/29 05:09:17 deraadt Exp $";
+static char rcsid[] = "$Id: edit.c,v 1.4 1994/11/28 20:03:32 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -149,7 +149,7 @@ run_editor(fp, size, type, readonly)
 	time_t modtime;
 	char *edit;
 	struct stat statb;
-	extern char tempEdit[];
+	extern char *tempEdit;
 
 	if ((t = creat(tempEdit, readonly ? 0400 : 0600)) < 0) {
 		perror(tempEdit);

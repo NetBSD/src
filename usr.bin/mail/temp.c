@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)temp.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: temp.c,v 1.3 1994/06/29 05:09:45 deraadt Exp $";
+static char rcsid[] = "$Id: temp.c,v 1.4 1994/11/28 20:03:40 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -46,11 +46,11 @@ static char rcsid[] = "$Id: temp.c,v 1.3 1994/06/29 05:09:45 deraadt Exp $";
  * Give names to all the temporary files that we will need.
  */
 
-char	tempMail[24];
-char	tempQuit[24];
-char	tempEdit[24];
-char	tempResid[24];
-char	tempMesg[24];
+char	*tempMail;
+char	*tempQuit;
+char	*tempEdit;
+char	*tempResid;
+char	*tempMesg;
 char	*tmpdir;
 
 void
@@ -59,30 +59,15 @@ tinit()
 	register char *cp;
 	int len;
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
+	if ((tmpdir = getenv("TMPDIR")) == NULL) {
 		tmpdir = _PATH_TMP;
-	else {
-		len = strlen(tmpdir);
-		if ((cp = malloc(len + 2)) == NULL) {
-			(void)fprintf(stderr, "mail: %s\n", strerror(errno));
-			exit (1);
-		}
-		(void)strcpy(cp, tmpdir);
-		cp[len] = '/';
-		cp[len + 1] = '\0';
-		tmpdir = cp;
 	}
-			
-	strcpy(tempMail, tmpdir);
-	mktemp(strcat(tempMail, "RsXXXXXX"));
-	strcpy(tempResid, tmpdir);
-	mktemp(strcat(tempResid, "RqXXXXXX"));
-	strcpy(tempQuit, tmpdir);
-	mktemp(strcat(tempQuit, "RmXXXXXX"));
-	strcpy(tempEdit, tmpdir);
-	mktemp(strcat(tempEdit, "ReXXXXXX"));
-	strcpy(tempMesg, tmpdir);
-	mktemp(strcat(tempMesg, "RxXXXXXX"));
+
+	tempMail  = tempnam (tmpdir, "Rs");
+	tempResid = tempnam (tmpdir, "Rq");
+	tempQuit  = tempnam (tmpdir, "Rm");
+	tempEdit  = tempnam (tmpdir, "Re");
+	tempMesg  = tempnam (tmpdir, "Rx");
 
 	/*
 	 * It's okay to call savestr in here because main will

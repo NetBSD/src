@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)collect.c	8.2 (Berkeley) 4/19/94";
-static char rcsid[] = "$Id: collect.c,v 1.3 1994/06/29 05:09:14 deraadt Exp $";
+static char rcsid[] = "$Id: collect.c,v 1.4 1994/11/28 20:03:30 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -78,7 +78,7 @@ collect(hp, printheaders)
 	int lc, cc, escape, eofcount;
 	register int c, t;
 	char linebuf[LINESIZE], *cp;
-	extern char tempMail[];
+	extern char *tempMail;
 	char getsub;
 	int omask;
 	void collint(), collhup(), collstop();
@@ -464,7 +464,7 @@ mespipe(fp, cmd)
 {
 	FILE *nf;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	extern char tempEdit[];
+	extern char *tempEdit;
 	char *shell;
 
 	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
@@ -513,7 +513,7 @@ forward(ms, fp, f)
 	int f;
 {
 	register int *msgvec;
-	extern char tempMail[];
+	extern char *tempMail;
 	struct ignoretab *ig;
 	char *tabst;
 
