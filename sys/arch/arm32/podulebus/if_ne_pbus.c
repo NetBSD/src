@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.6 2001/03/17 20:34:44 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.7 2001/03/18 16:58:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ struct ne_pbus_softc {
 	podule_t		*sc_podule;
 	struct bus_space	sc_tag;			/* Patched tag */
 	void			*sc_ih;			/* Interrupt handler */
+	struct evcnt		sc_intrcnt;		/* Interrupt count */
 	int			sc_mediatype;		/* Media Info */
 #define NE_MEDIA_AUTO		0 
 #define	NE_MEDIA_10BASET	1
@@ -311,8 +312,10 @@ ne_pbus_attach(parent, self, aux)
 		ne->postattach(npsc);
 
 	/* Install an interrupt handler */
-	npsc->sc_ih = intr_claim(npsc->sc_podule->interrupt, IPL_NET,
-	    "if_ne", dp8390_intr, dsc);
+	evcnt_attach_dynamic(&npsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	npsc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
+	    dsc, &npsc->sc_intrcnt);
 	if (npsc->sc_ih == NULL)
 		panic("%s: Cannot install interrupt handler",
 		   dsc->sc_dev.dv_xname);

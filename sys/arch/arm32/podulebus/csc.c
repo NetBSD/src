@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.10 2001/03/17 20:34:44 bjh21 Exp $	*/
+/*	$NetBSD: csc.c,v 1.11 2001/03/18 16:58:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,13 +181,6 @@ cscattach(pdp, dp, auxp)
 
 	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	sc->sc_softc.sc_ih.ih_func = csc_intr;
-	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
-	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
-	sc->sc_softc.sc_ih.ih_name = "scsi: csc";
-	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
-	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
-
 	/* initialise the alatch */
 	sc->sc_specific.sc_alatch_defs = (CSC_POLL?0:CSC_ALATCH_DEFS_INTEN);
 	for (loop = 0; loop < 8; loop ++) {
@@ -197,7 +190,11 @@ cscattach(pdp, dp, auxp)
 	}
 
 #if CSC_POLL == 0
-	if (irq_claim(IRQ_PODULE, &sc->sc_softc.sc_ih))
+	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    dp->dv_xname, "intr");
+	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
+	if (sc->sc_softc.sc_ih == NULL)
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #else
 	printf(" polling");
