@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.52 1998/06/11 05:16:35 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.53 1998/06/11 10:30:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1998/06/11 05:16:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 1998/06/11 10:30:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,8 @@ int pmapdebug = PDB_PARANOIA;
 
 /*
  * Given a map and a machine independent protection code,
- * convert to an alpha protection code.
+ * convert to an alpha protection code.  NOTE:  THESE ONLY
+ * INCLUDE HARDWARE PTE BITS!
  */
 #define pte_prot(m, p)	(protection_codes[m == pmap_kernel() ? 0 : 1][p])
 int	protection_codes[2][8];
@@ -1586,19 +1587,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 				pmap->pm_stats.wired_count++;
 			else
 				pmap->pm_stats.wired_count--;
-
-			/*
-			 * Check to see if this is a wiring-only
-			 * change.
-			 */
-			if (pmap_pte_prot(pte) == pte_prot(pmap, prot)) {
-				/*
-				 * Wiring-only changes only affect software
-				 * PTE bits; no TLB invalidation is necessary.
-				 */
-				tflush = FALSE;
-			}
 		}
+
+		/*
+		 * Check to see if the hardware protection bits
+		 * are the same.  If they are, no TLB invalidation
+		 * is necessary.
+		 */
+		if (pmap_pte_prot(pte) == pte_prot(pmap, prot))
+			tflush = FALSE;
 
 		/*
 		 * Set the PTE.
@@ -1665,6 +1662,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 	if (wired)
 		npte |= PG_WIRED;
+	if (prot & VM_PROT_EXECUTE)
+		npte |= PG_EXEC;
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: new pte = 0x%lx\n", npte);
@@ -1726,6 +1725,8 @@ pmap_kenter_pa(va, pa, prot)
 	 */
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap_kernel(), prot) |
 	    PG_V | PG_WIRED;
+	if (prot & VM_PROT_EXECUTE)
+		npte |= PG_EXEC;
 
 	/*
 	 * Set the new PTE.
@@ -2471,7 +2472,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
 	isactive = active_pmap(pmap);
-	needisync = isactive /* && XXX tract execute in PTE */;
+	needisync = isactive && (pmap_pte_exec(pte) != 0);
 
 	/*
 	 * Update statistics
@@ -2644,10 +2645,9 @@ pmap_changebit(pa, bit, setem)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = active_pmap(pv->pv_pmap);
+			needisync |= (isactive && (pmap_pte_exec(pte) != 0));
 			*pte = npte;
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive);
-			/* XXX track execute in PTE. */
-			needisync = isactive && TRUE;
 		}
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
