@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.39 1995/04/22 00:58:19 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.40 1995/04/22 01:25:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -128,7 +128,7 @@ IDTVEC(softtty)
 #define DONET(s, c) \
 	.globl  c		;\
 	testl	$(1 << s),%edi	;\
-	jnc	1f		;\
+	jz	1f		;\
 	call	c		;\
 1:
 
