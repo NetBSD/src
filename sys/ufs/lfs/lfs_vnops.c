@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.20 1998/11/06 23:02:12 cgd Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.21 1999/03/05 21:09:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
@@ -236,10 +236,8 @@ lfs_fsync(v)
 		int a_waitfor;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (VOP_UPDATE(ap->a_vp, &ts, &ts,
+	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
 	    (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0));	/* XXX */
 }
 

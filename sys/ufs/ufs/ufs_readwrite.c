@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.19 1999/02/10 13:14:10 bouyer Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.20 1999/03/05 21:09:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -78,7 +78,6 @@ READ(v)
 	register struct uio *uio;
 	register FS *fs;
 	struct buf *bp;
-	struct timespec ts;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
@@ -164,10 +163,8 @@ READ(v)
 		brelse(bp);
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
-		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
-			TIMEVAL_TO_TIMESPEC(&time, &ts);
-			error = VOP_UPDATE(vp, &ts, &ts, 1);
-		}
+		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
+			error = VOP_UPDATE(vp, NULL, NULL, 1);
 	}
 	return (error);
 }
@@ -194,7 +191,6 @@ WRITE(v)
 	ufs_daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
-	struct timespec ts;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -314,9 +310,7 @@ WRITE(v)
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		error = VOP_UPDATE(vp, &ts, &ts, 1);
-	}
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
+		error = VOP_UPDATE(vp, NULL, NULL, 1);
 	return (error);
 }

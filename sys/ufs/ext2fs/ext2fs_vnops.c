@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.17 1999/02/26 07:30:00 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.18 1999/03/05 21:09:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -532,7 +532,6 @@ ext2fs_link(v)
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
-	struct timespec ts;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -566,8 +565,7 @@ ext2fs_link(v)
 	}
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	error = VOP_UPDATE(vp, &ts, &ts, 1);
+	error = VOP_UPDATE(vp, NULL, NULL, 1);
 	if (!error)
 		error = ext2fs_direnter(ip, dvp, cnp);
 	if (error) {
@@ -627,7 +625,6 @@ ext2fs_rename(v)
 	struct componentname *fcnp = ap->a_fcnp;
 	struct inode *ip, *xp, *dp;
 	struct ext2fs_dirtemplate dirbuf;
-	struct timespec ts;
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
 	int error = 0;
 	u_char namlen;
@@ -747,8 +744,7 @@ abortit:
 	 */
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(fvp, &ts, &ts, 1)) != 0) {
+	if ((error = VOP_UPDATE(fvp, NULL, NULL, 1)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
 	}
@@ -806,7 +802,7 @@ abortit:
 			}
 			dp->i_e2fs_nlink++;
 			dp->i_flag |= IN_CHANGE;
-			if ((error = VOP_UPDATE(tdvp, &ts, &ts, 1)) != 0)
+			if ((error = VOP_UPDATE(tdvp, NULL, NULL, 1)) != 0)
 				goto bad;
 		}
 		error = ext2fs_direnter(ip, tdvp, tcnp);
@@ -814,7 +810,7 @@ abortit:
 			if (doingdirectory && newparent) {
 				dp->i_e2fs_nlink--;
 				dp->i_flag |= IN_CHANGE;
-				(void)VOP_UPDATE(tdvp, &ts, &ts, 1);
+				(void)VOP_UPDATE(tdvp, NULL, NULL, 1);
 			}
 			goto bad;
 		}
@@ -1011,7 +1007,6 @@ ext2fs_mkdir(v)
 	register struct inode *ip, *dp;
 	struct vnode *tvp;
 	struct ext2fs_dirtemplate dirtemplate;
-	struct timespec ts;
 	int error, dmode;
 
 #ifdef DIAGNOSTIC
@@ -1039,8 +1034,7 @@ ext2fs_mkdir(v)
 	ip->i_e2fs_mode = dmode;
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 2;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	error = VOP_UPDATE(tvp, &ts, &ts, 1);
+	error = VOP_UPDATE(tvp, NULL, NULL, 1);
 
 	/*
 	 * Bump link count in parent directory
@@ -1050,7 +1044,7 @@ ext2fs_mkdir(v)
 	 */
 	dp->i_e2fs_nlink++;
 	dp->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(dvp, &ts, &ts, 1)) != 0)
+	if ((error = VOP_UPDATE(dvp, NULL, NULL, 1)) != 0)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
@@ -1337,7 +1331,6 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	struct componentname *cnp;
 {
 	register struct inode *ip, *pdir;
-	struct timespec ts;
 	struct vnode *tvp;
 	int error;
 
@@ -1370,8 +1363,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(tvp, &ts, &ts, 1)) != 0)
+	if ((error = VOP_UPDATE(tvp, NULL, NULL, 1)) != 0)
 		goto bad;
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0)
