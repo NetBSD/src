@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.74 2003/08/07 09:05:30 agc Exp $	*/
+/*	$NetBSD: eval.c,v 1.75 2003/11/14 10:27:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.74 2003/08/07 09:05:30 agc Exp $");
+__RCSID("$NetBSD: eval.c,v 1.75 2003/11/14 10:27:10 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -816,7 +816,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 			vforked = 1;
 			switch (pid = vfork()) {
 			case -1:
-				TRACE(("Vfork failed, errno=%d", errno));
+				TRACE(("Vfork failed, errno=%d\n", errno));
 				INTON;
 				error("Cannot vfork");
 				break;
