@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.63 2001/06/21 19:08:36 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.64 2001/07/02 20:48:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -429,25 +429,6 @@ struct kinfo_proc2 {
 #define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
-
-/*
- * KERN_PIPE subtypes
- */
-#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
-#define	KERN_PIPE_LIMITKVA		2	/* */
-#define KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
-#define KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
-#define KERN_PIPE_KVASIZE		5	/* current pipe kva size */
-#define KERN_PIPE_MAXID			6
-
-#define	CTL_PIPE_NAMES { \
-	{ 0, 0 }, \
-	{ "maxkvasz", CTLTYPE_INT }, \
-	{ "maxloankvasz", CTLTYPE_INT }, \
-	{ "maxbigpipes", CTLTYPE_INT }, \
-	{ "nbigpipes", CTLTYPE_INT }, \
-	{ "kvasize", CTLTYPE_INT }, \
-}
 
 /*
  * CTL_HW identifiers
