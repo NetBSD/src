@@ -136,6 +136,8 @@
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/rrunnerreg.h
 ./usr/include/dev/ic/rrunnervar.h
+./usr/include/dev/ic/smc83c170reg.h
+./usr/include/dev/ic/smc83c170var.h
 ./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
@@ -153,6 +155,7 @@
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
+./usr/include/dev/isa/ariareg.h
 ./usr/include/dev/isa/com_multi.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
@@ -295,6 +298,7 @@
 ./usr/include/dev/wscons/wscons_raster.h
 ./usr/include/dev/wscons/wscons_rfont.h
 ./usr/include/dev/wscons/wsconsio.h
+./usr/include/dev/wscons/wsdisplay_usl_io.h
 ./usr/include/dev/wscons/wsdisplayvar.h
 ./usr/include/dev/wscons/wsemulvar.h
 ./usr/include/dev/wscons/wseventvar.h
@@ -1006,6 +1010,7 @@
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
 ./usr/include/sys/timeb.h
+./usr/include/sys/timepps.h
 ./usr/include/sys/times.h
 ./usr/include/sys/timex.h
 ./usr/include/sys/tprintf.h
