@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 2003/05/01 06:20:19 fair Exp $
+.\"	$NetBSD: boot.8,v 1.5 2003/05/01 09:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,6 @@
 .Aq Ar boot string
 .Oc
 .Sh DESCRIPTION
-.Pp
 .Tn Sun
 systems support booting from locally attached storage media
 .Pq e.g. floppy, hard disk, Tn CD-ROM ,
@@ -149,7 +148,7 @@ is specified the default device is used (see below).
 .Sh FIRMWARE ENVIRONMENT VARIABLES
 All Open Firmware environment variables can be printed with the
 .Ic printenv
-command and changed with
+command and changed with the
 .Ic setenv
 command.
 The boot process relevant variables and their suggested value for
@@ -209,15 +208,6 @@ boot net -sd
 .Pp
 to boot single user from network and break into the kernel debugger as
 soon as possible.
-.Sh FILES
-.Bl -tag -width /netbsdxx -compact
-.It Pa /netbsd
-.Nx 
-kernel
-.It Pa /boot
-.Nx
-secondary bootstrap
-.El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr fsck 8 ,
@@ -230,6 +220,6 @@ secondary bootstrap
 .Sh STANDARDS
 .Tn Sun
 developed its firmware and promoted it to become
-.St - IEEE 1275 Open Firmware
+.St - IEEE 1275 Open Firmware .
 .Pp
 .Pa http://playground.sun.com/1275/
