@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.17 2002/01/22 02:09:11 ichiro Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.18 2002/01/25 17:17:21 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.17 2002/01/22 02:09:11 ichiro Exp $";
+	"@(#) $Id: wiconfig.c,v 1.18 2002/01/25 17:17:21 christos Exp $";
 #endif
 
 struct wi_table {
@@ -94,7 +94,11 @@ struct wi_table {
 #define WI_APRATE_5		0x37	/* 5.5 Mbps */
 #define WI_APRATE_11		0x6E	/* 11 Mbps */
 
+#ifdef WI_RID_SCAN_APS
 static void wi_apscan		__P((char *));
+static int  get_if_flags	__P((int, const char *));
+static int  set_if_flags	__P((int, const char *, int));
+#endif
 static void wi_getval		__P((char *, struct wi_req *));
 static void wi_setval		__P((char *, struct wi_req *));
 static void wi_printstr		__P((struct wi_req *));
@@ -109,8 +113,6 @@ static void wi_dumpinfo		__P((char *));
 static void wi_setkeys		__P((char *, char *, int));
 static void wi_printkeys	__P((struct wi_req *));
 static void wi_dumpstats	__P((char *));
-static int  get_if_flags	__P((int, const char *));
-static int  set_if_flags	__P((int, const char *, int));
 static void usage		__P((void));
 static struct wi_table *
 	wi_optlookup __P((struct wi_table *, int));
@@ -118,6 +120,7 @@ static int  wi_hex2int(char c);
 static void wi_str2key		__P((char *, struct wi_key *));
 int main __P((int argc, char **argv));
 
+#ifdef WI_RID_SCAN_APS
 static int get_if_flags(s, name)
 	int		s;
 	const char	*name;
@@ -273,6 +276,7 @@ static void wi_apscan(iface)
 	set_if_flags(s, iface, flags);
 	close(s);
 }
+#endif
 
 static void wi_getval(iface, wreq)
 	char			*iface;
@@ -936,8 +940,13 @@ int main(argc, argv)
 		wi_dumpstats(iface);
 	if (dumpinfo)
 		wi_dumpinfo(iface);
+
 	if (apscan)
+#ifdef WI_RID_SCAN_APS
 		wi_apscan(iface);
+#else
+		errx(1, "AP scan mode is not available.");
+#endif
 
 	exit(0);
 }
