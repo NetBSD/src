@@ -1,4 +1,4 @@
-#	$NetBSD: std.adi_brh,v 1.2 2003/04/19 21:52:04 thorpej Exp $
+#	$NetBSD: std.adi_brh,v 1.3 2003/05/22 05:52:18 thorpej Exp $
 #
 # standard NetBSD/evbarm for ADI BRH options
 
@@ -13,9 +13,6 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="adi_brh"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcarm,v 1.4 2003/05/03 03:19:27 thorpej Exp $
+#	$NetBSD: std.hpcarm,v 1.5 2003/05/22 05:52:19 thorpej Exp $
 #
 # standard NetBSD/hpcarm options
 
@@ -10,4 +10,3 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-options 	ARM32_PMAP_NEW

@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwinder,v 1.10 2003/04/22 01:42:01 thorpej Exp $
+#	$NetBSD: std.netwinder,v 1.11 2003/05/22 05:52:19 thorpej Exp $
 #
 # standard NetBSD/netwinder options
 
@@ -10,9 +10,6 @@ options 	EXEC_ELF32
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-
-# The new pmap is standard on the Netwinder.
-options 	ARM32_PMAP_NEW
 
 options 	ARM_INTR_IMPL="<arm/footbridge/footbridge_intr.h>"
 
