@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.56 2004/06/06 01:46:53 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.57 2004/08/19 22:24:04 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.56 2004/06/06 01:46:53 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.57 2004/08/19 22:24:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -88,6 +88,7 @@ typedef struct prog {
 
 strlst_t *srcdirs = NULL;
 strlst_t *libs    = NULL;
+strlst_t *vars	  = NULL;
 prog_t   *progs   = NULL;
 
 char line[MAXLINELEN];
@@ -155,7 +156,7 @@ int main(int argc, char **argv)
     
     if(argc > 0) pname = argv[0];
 
-    while((optc = getopt(argc, argv, "m:c:d:e:foqD:L:")) != -1) {
+    while((optc = getopt(argc, argv, "m:c:d:e:foqD:L:v:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
@@ -168,6 +169,7 @@ int main(int argc, char **argv)
 
 	case 'D':	strcpy(topdir, optarg); break;
 	case 'L':	strcpy(libdir, optarg); break;
+	case 'v':	add_string(&vars, optarg); break;
 
 	case '?':
 	default:	usage();
@@ -918,8 +920,12 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_make:\n", p->ident);
 	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
 	    p->ident, p->ident, p->ident);
-	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
-	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
+	fprintf(outmk, "\tprintf '.PATH: ${%s_SRCDIR}\\n"
+	    ".CURDIR:= ${%s_SRCDIR}\\n"
+	    ".include \"$${.CURDIR}/Makefile\"\\n", p->ident, p->ident);
+	for(lst = vars; lst != NULL; lst = lst->next)
+	    fprintf(outmk, "%s\\n", lst->str);
+	fprintf(outmk, "'\\\n");
 	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend ${%s_OBJS}\n\n",
 	    p->ident);
     }
