@@ -1,3 +1,5 @@
+/*	$NetBSD: fmt.c,v 1.12 1998/01/09 07:00:57 perry Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
