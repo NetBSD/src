@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.4 1999/09/04 22:38:19 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.5 2000/01/15 15:51:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -425,12 +425,13 @@ real_plog(int lvl, char *fmt, va_list vargs)
   expand_error(fmt, efmt, 1024);
 
   /*
-   * XXX: ptr is 1024 bytes long.  It is possible to write into it
-   * more than 1024 bytes, if efmt is already large, and vargs expand
-   * as well.
+   * XXX: ptr is 1024 bytes long, but we may write to ptr[strlen(ptr) + 2]
+   * (to add an '\n', see code below) so we have to limit the string copy
+   * to 1023 (including the '\0').
+   * 
    */
-  vsprintf(ptr, efmt, vargs);
-  msg[1023] = '\0';		/* null terminate, to be sure */
+  vsnprintf(ptr, 1023, efmt, vargs);
+  msg[1022] = '\0';		/* null terminate, to be sure */
 
   ptr += strlen(ptr);
   if (ptr[-1] == '\n')
