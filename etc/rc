@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.30 1994/01/10 16:57:26 mycroft Exp $
+#	$Id: rc,v 1.31 1994/01/13 18:43:50 jtc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -161,7 +161,7 @@ echo clearing /tmp
 
 echo -n standard daemons:
 echo -n ' update';		update
-echo -n ' cron';		/usr/libexec/cron
+echo -n ' cron';		cron
 echo '.'
 
 echo -n starting network daemons:
