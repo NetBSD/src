@@ -1,5 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.2 2004/08/23 11:57:35 lukem Exp $	*/
-/*      Id: if_ipwvar.h,v 1.1.2.2 2004/08/19 16:28:26 damien Exp  */
+/*	$NetBSD: if_ipwvar.h,v 1.3 2004/09/14 00:27:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -54,7 +53,7 @@ struct ipw_soft_buf {
 struct ipw_softc {
 	struct device			sc_dev;
 
-        struct ieee80211com		sc_ic;
+	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
@@ -65,7 +64,7 @@ struct ipw_softc {
 	struct resource			*mem;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
-	void 				*sc_ih;
+	void				*sc_ih;
 	pci_chipset_tag_t		sc_pct;
 	bus_size_t			sc_sz;
 
