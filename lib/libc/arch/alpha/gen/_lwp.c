@@ -1,4 +1,4 @@
-/*	$Id: _lwp.c,v 1.1.2.2 2001/12/17 22:10:02 nathanw Exp $ */
+/*	$Id: _lwp.c,v 1.1.2.3 2002/01/28 20:09:50 nathanw Exp $ */
 
 /* Copyright */
 
@@ -27,6 +27,6 @@ void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	gr[_REG_T12] = (unsigned long) start;
 	gr[_REG_RA] = (unsigned long) _lwp_exit;
 	gr[_REG_A0] = (unsigned long) arg;
-	gr[_REG_SP] = (unsigned long) (stack_base + stack_size);
+	gr[_REG_SP] = ((unsigned long) (stack_base + stack_size)) & ~0x7;
 	gr[_REG_S6] = 0;
 }
