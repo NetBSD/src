@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.24 1999/02/13 02:54:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 1999/02/20 15:00:50 pk Exp $
+
+MKLINKLIB=no
+MKMAN=	no
+MKPIC=	no
 
 .include "../Makefile.inc"
 
 LIB=	cc1
 
-MKLINKLIB=no
-MKMAN=	no
-MKPIC=	no
 YHEADER=1
 
 # GNU (gcc,gas) uses "mips" as arch-dependent filename for mipsel and mipseb
