@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1996/02/09 18:25:02 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1996/02/10 00:13:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -39,12 +39,8 @@ __BEGIN_DECLS
 
 void	consinit __P((void));
 void	boot __P((int));
-int	fuswintr __P((caddr_t));
-int	suswintr __P((caddr_t, u_int));
 void	pagemove __P((caddr_t, caddr_t, size_t));
 void	delay __P((unsigned));
-int	chrtoblk __P((dev_t));
-int	iskmemdev __P((dev_t));
 
 void	cpu_exit __P((struct proc *));
 void	cpu_startup __P((void));
