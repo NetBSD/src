@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.29 2004/12/01 22:51:50 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.30 2004/12/11 06:01:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,14 +61,15 @@
 #define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CONSTTY	"/dev/constty"
+#define	_PATH_CSMAPPER	"/usr/share/i18n/csmapper"
 #define	_PATH_DEFTAPE	"/dev/nrst0"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
+#define	_PATH_ESDB	"/usr/share/i18n/esdb"
+#define	_PATH_FTPUSERS	"/etc/ftpusers"
 #define	_PATH_I18NMODULE "/usr/lib/i18n"
 #define	_PATH_ICONV	"/usr/share/i18n/iconv"
-#define	_PATH_ESDB	"/usr/share/i18n/esdb"
-#define	_PATH_CSMAPPER	"/usr/share/i18n/csmapper"
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
