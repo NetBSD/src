@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 2002/06/05 01:04:22 fredette Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 2004/07/18 20:27:11 chs Exp $	*/
 
 /*	$OpenBSD: pcb.h,v 1.6 2000/01/12 07:24:35 mickey Exp $	*/
 
@@ -44,6 +44,7 @@ struct pcb {
 	u_int pcb_onfault;		/* SW copy fault handler */
 	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 	vaddr_t pcb_uva;		/* KVA for U-area */
+	u_int pcb_ksp;			/* kernel sp for ctxsw */
 };
 
 struct md_coredump {
