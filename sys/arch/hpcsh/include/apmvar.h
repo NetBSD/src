@@ -1,7 +1,7 @@
-/*	$NetBSD: mainbus.c,v 1.12 2004/07/03 12:49:21 uch Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.1 2004/07/03 12:49:21 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,76 +32,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __HPCSH_APMVAR_H__
+#define	__HPCSH_APMVAR_H__
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2004/07/03 12:49:21 uch Exp $");
+#include <dev/apm/apmbios.h>
+#include <dev/apm/apmio.h>
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
-#include <machine/autoconf.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-
-#include "locators.h"
-
-static int mainbus_match(struct device *, struct cfdata *, void *);
-static void mainbus_attach(struct device *, struct device *, void *);
-static int mainbus_search(struct device *, struct cfdata *, void *);
-static int mainbus_print(void *, const char *);
-
-CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbus_match, mainbus_attach, NULL, NULL);
-
-static int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (1);
-}
-
-static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
-{
-
-	printf("\n");
-	/* CPU  */
-	config_found(self, &(struct mainbus_attach_args){.ma_name = "cpu"},
-	    mainbus_print);
-
-	/* Devices */
-	config_search(mainbus_search, self, 0);
-
-	/* APM */
-	config_found(self, &(struct mainbus_attach_args){.ma_name = "hpcapm"},
-	    mainbus_print);
-}
-
-static int
-mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct mainbus_attach_args maa;
-	int locator = cf->cf_loc[MAINBUSCF_ID];
-
-	if (locator != MAINBUSCF_ID_DEFAULT &&
-	    !platid_match(&platid, PLATID_DEREFP(locator)))
-		return (0);
-
-	if (strcmp(cf->cf_name, "hpcapm") == 0)
-		return 0;
-
-	maa.ma_name = cf->cf_name;
-
-	if (config_match(parent, cf, &maa))
-		config_attach(parent, cf, &maa, mainbus_print);
-
-	return (0);
-}
-
-static int
-mainbus_print(void *aux, const char *pnp)
-{
-
-	return (pnp ? QUIET : UNCONF);
-}
+#endif /* __HPCSH_APMVAR_H__ */

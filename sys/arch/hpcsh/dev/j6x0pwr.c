@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.3 2003/10/22 23:52:46 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.4 2004/07/03 12:49:21 uch Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.3 2003/10/22 23:52:46 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.4 2004/07/03 12:49:21 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.3 2003/10/22 23:52:46 uwe Exp $");
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/config_hook.h>
 
 #include <sh3/exception.h>
 #include <sh3/intcreg.h>
@@ -67,6 +68,8 @@ struct j6x0pwr_softc {
 	struct device sc_dev;
 
 	struct callout sc_poll_ch;
+	void *sc_ih;
+	volatile int sc_poweroff;
 };
 
 static int	j6x0pwr_match(struct device *, struct cfdata *, void *);
@@ -78,7 +81,8 @@ CFATTACH_DECL(j6x0pwr, sizeof(struct j6x0pwr_softc),
 
 static int	j6x0pwr_intr(void *);
 static void	j6x0pwr_poll_callout(void *);
-
+static void	j6x0pwr_sleep(void *);
+static int	j6x0pwr_clear_interrupt(void);
 
 static int
 j6x0pwr_match(struct device *parent, struct cfdata *cfp, void *aux)
@@ -101,15 +105,26 @@ j6x0pwr_match(struct device *parent, struct cfdata *cfp, void *aux)
 static void
 j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 {
+	extern void (*__sleep_func)(void *);
+	extern void *__sleep_ctx;
 	struct j6x0pwr_softc *sc = (struct j6x0pwr_softc *)self;
 
-	intc_intr_establish(SH7709_INTEVT2_IRQ0, IST_EDGE, IPL_TTY,
-			    j6x0pwr_intr, sc);
+	/* regsiter sleep function to APM */
+	__sleep_func = j6x0pwr_sleep;
+	__sleep_ctx = self;
+	sc->sc_poweroff = 0;
+
+	/* drain the old interrupt */
+	j6x0pwr_clear_interrupt();
+
+	sc->sc_ih = intc_intr_establish(SH7709_INTEVT2_IRQ0, IST_EDGE, IPL_TTY,
+	    j6x0pwr_intr, sc);
 
 	callout_init(&sc->sc_poll_ch);
 	callout_reset(&sc->sc_poll_ch, 5 * hz,
 		      j6x0pwr_poll_callout, sc);
 
+	*(volatile u_int8_t *)0xa4000132 = 0;	/* Green LED on */
 	printf("\n");
 }
 
@@ -130,26 +145,74 @@ j6x0pwr_intr(void *self)
 	uint8_t irr0;
 	uint8_t pgdr;
 
-	irr0 = _reg_read_1(SH7709_IRR0);
-	if ((irr0 & IRR0_IRQ0) == 0) {
+	if (((irr0 = j6x0pwr_clear_interrupt()) & IRR0_IRQ0) == 0) {
 #ifdef DIAGNOSTIC
 		printf_nolog("%s: irr0=0x%02x?\n", sc->sc_dev.dv_xname, irr0);
 #endif
 		return (0);
 	}
 
-	/* clear the interrupt */
-	_reg_write_1(SH7709_IRR0, irr0 & ~IRR0_IRQ0);
-
 	pgdr = _reg_read_1(SH7709_PGDR);
-	if ((pgdr & PGDR_LID_OPEN) == 0)
-		printf("%s: lid closed\n", sc->sc_dev.dv_xname);
-	else 
-		printf("%s: ON/OFF\n", sc->sc_dev.dv_xname);
+	if ((pgdr & PGDR_LID_OPEN) == 0) {
+		printf("%s: lid closed %d\n", sc->sc_dev.dv_xname,
+		    sc->sc_poweroff);
+		if (sc->sc_poweroff)
+			return 1;
+	} else {
+		printf("%s: ON/OFF %d\n", sc->sc_dev.dv_xname, sc->sc_poweroff);
+		if (sc->sc_poweroff)
+			sc->sc_poweroff = 0;
+	}
+
+	/* push */
+	config_hook_call(CONFIG_HOOK_BUTTONEVENT, CONFIG_HOOK_BUTTONEVENT_POWER,
+	    (void *)1);
+	/* release (fake) */
+	config_hook_call(CONFIG_HOOK_BUTTONEVENT, CONFIG_HOOK_BUTTONEVENT_POWER,
+	    (void *)0);
 
 	return (1);
 }
 
+static int
+j6x0pwr_clear_interrupt()
+{
+	uint8_t irr0;
+
+	irr0 = _reg_read_1(SH7709_IRR0);
+	if (irr0 & IRR0_IRQ0)
+		_reg_write_1(SH7709_IRR0, irr0 & ~IRR0_IRQ0);
+
+	return irr0;
+}
+
+void
+j6x0pwr_sleep(void *self)
+{
+	/* splhigh on entry */
+	struct j6x0pwr_softc *sc = self;
+	int s;
+
+	/* Reinstall j6x0pwr_intr as a wakeup handler */
+	intc_intr_disestablish(sc->sc_ih);
+	sc->sc_ih = intc_intr_establish(SH7709_INTEVT2_IRQ0, IST_EDGE, IPL_HIGH,
+	    j6x0pwr_intr, sc);
+	sc->sc_poweroff = 1;
+	do {
+		/* Disable interrupt except for power button. */
+		s = _cpu_intr_resume(IPL_CLOCK << 4);
+		*(volatile u_int8_t *)0xa4000132 = 255;	/* Green LED off */
+		__asm__ __volatile__("sleep");
+		*(volatile u_int8_t *)0xa4000132 = 0;	/* Green LED on */
+		_cpu_intr_resume(s);
+	} while (sc->sc_poweroff);
+
+	/* Return to normal power button */
+	intc_intr_disestablish(sc->sc_ih);
+	sc->sc_ih = intc_intr_establish(SH7709_INTEVT2_IRQ0, IST_EDGE, IPL_TTY,
+	    j6x0pwr_intr, sc);
+	/* splhigh on exit */
+}
 
 volatile int j6x0pwr_poll_verbose = 0; /* XXX: tweak from ddb */
 

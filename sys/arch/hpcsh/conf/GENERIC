@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2004/07/02 18:05:23 uch Exp $
+# $NetBSD: GENERIC,v 1.39 2004/07/03 12:49:21 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -107,6 +107,12 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # Device configuration
 #
 mainbus0 at root
+
+# temporally power management
+hpcapm0		at mainbus0			# power management
+apmdev0		at hpcapm0			# APM
+btnmgr0		at mainbus0
+wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2004/03/24 15:34:49 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2004/07/03 12:49:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2004/03/24 15:34:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2004/07/03 12:49:21 uch Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2004/03/24 15:34:49 atatat Exp $");
 #include <nfs/nfsmount.h>
 #endif
 
+#include <dev/hpc/apm/apmvar.h>
+
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 #include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
@@ -161,6 +163,8 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 void main(void) __attribute__((__noreturn__));
 void machine_startup(int, char *[], struct bootinfo *)
 	__attribute__((__noreturn__));
+void (*__sleep_func)(void *);	/* model dependent sleep function holder */
+void *__sleep_ctx;
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
@@ -342,6 +346,20 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+}
+
+void
+machine_sleep()
+{
+
+	if (__sleep_func != NULL)
+		__sleep_func(__sleep_ctx);
+}
+
+void
+machine_standby()
+{
+	// notyet
 }
 
 void
