@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.82 2000/03/31 04:45:29 tsarna Exp $
+#	$NetBSD: files.pci,v 1.83 2000/04/02 18:57:38 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -147,7 +147,7 @@ attach	tga at pci
 file	dev/pci/tga.c			tga needs-flag
 file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
-file	dev/pci/tga_bt463.c		tga
+file	dev/ic/bt463.c			tga
 
 # Cirrus Logic CrystalClear PCI Audio CS4280
 device clcs: audio, auconv, mulaw, ac97, midibus
