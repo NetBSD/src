@@ -1,6 +1,9 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Dave Borman at Cray Research, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +35,22 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)setmode.c	5.6 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: setmode.c,v 1.8 1994/02/11 05:55:45 cgd Exp $";
+/* from: static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94"; */
+static char *rcsid = "$Id: setmode.c,v 1.9 1994/03/29 10:50:38 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <signal.h>
+
+#include <ctype.h>
 #include <errno.h>
+#include <signal.h>
 #include <stddef.h>
+#include <stdlib.h>
+
 #ifdef SETMODE_DEBUG
 #include <stdio.h>
 #endif
-#include <stdlib.h>
-#include <ctype.h>
 
 #define	SET_LEN	6		/* initial # of bitcmd struct to malloc */
 #define	SET_LEN_INCR 4		/* # of bitcmd structs to add as needed */
@@ -80,7 +85,7 @@ getmode(bbox, omode)
 	mode_t omode;
 {
 	register BITCMD *set;
-	register mode_t newmode, value;
+	register mode_t clrval, newmode, value;
 
 	set = (BITCMD *)bbox;
 	newmode = omode;
@@ -103,11 +108,8 @@ getmode(bbox, omode)
 		case 'o':
 			value = newmode & S_IRWXO;
 common:			if (set->cmd2 & CMD2_CLR) {
-				mode_t clrval;
-			
 				clrval =
 				    (set->cmd2 & CMD2_SET) ?  S_IRWXO : value;
-				    
 				if (set->cmd2 & CMD2_UBITS)
 					newmode &= ~((clrval<<6) & set->bits);
 				if (set->cmd2 & CMD2_GBITS)
@@ -147,17 +149,17 @@ common:			if (set->cmd2 & CMD2_CLR) {
 		}
 }
 
-#define	ADDCMD(a, b, c, d) \
-	if (set >= endset) { \
-		register BITCMD *newset; \
-		setlen += SET_LEN_INCR; \
-		newset = realloc(saveset, sizeof(BITCMD) * setlen); \
-		if (!saveset) \
-			return (NULL); \
-		set = newset + (set - saveset); \
-		saveset = newset; \
-		endset = newset + (setlen - 2); \
-	} \
+#define	ADDCMD(a, b, c, d)						\
+	if (set >= endset) {						\
+		register BITCMD *newset;				\
+		setlen += SET_LEN_INCR;					\
+		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
+		if (!saveset)						\
+			return (NULL);					\
+		set = newset + (set - saveset);				\
+		saveset = newset;					\
+		endset = newset + (setlen - 2);				\
+	}								\
 	set = addcmd(set, (a), (b), (c), (d))
 
 #define	STANDARD_BITS	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
@@ -200,7 +202,7 @@ setmode(p)
 	 * or illegal bits.
 	 */
 	if (isdigit(*p)) {
-		perm = (mode_t)strtol(p, (char **)0, 8);
+		perm = (mode_t)strtol(p, NULL, 8);
 		if (perm & ~(STANDARD_BITS|S_ISTXT)) {
 			free(saveset);
 			return (NULL);
@@ -340,29 +342,20 @@ addcmd(set, op, who, oparg, mask)
 	u_int mask;
 {
 	switch (op) {
+	case '=':
+		set->cmd = '-';
+		set->bits = who ? who : STANDARD_BITS;
+		set++;
+
+		op = '+';
+		/* FALLTHROUGH */
 	case '+':
+	case '-':
 	case 'X':
 		set->cmd = op;
 		set->bits = (who ? who : mask) & oparg;
 		break;
 
-	case '-':
-		set->cmd = '-';
-		set->bits = (who ? who : (S_IRWXU|S_IRWXG|S_IRWXO)) & oparg;
-		break;
-
-	case '=':
-		set->cmd = '-';
-		if (!who) {
-			set->bits = STANDARD_BITS;
-			who = mask;
-		} else
-			set->bits = who;
-		set++;
-
-		set->cmd = '+';
-		set->bits = who & oparg;
-		break;
 	case 'u':
 	case 'g':
 	case 'o':
@@ -374,10 +367,7 @@ addcmd(set, op, who, oparg, mask)
 			set->bits = ~0;
 		} else {
 			set->cmd2 = CMD2_UBITS | CMD2_GBITS | CMD2_OBITS;
-			if (oparg == '-')
-				set->bits = (S_IRWXU|S_IRWXG|S_IRWXO);
-			else
-				set->bits = mask;
+			set->bits = mask;
 		}
 	
 		if (oparg == '+')
