@@ -1388,6 +1388,13 @@ main (argc, argv)
   if (out_before < 0)
     out_before = default_context;
 
+  if (! matcher)
+#ifdef __NetBSD__
+    matcher = __progname;
+#else
+    matcher = "grep";
+#endif
+
   if (show_version)
     {
       printf (_("%s (GNU grep) %s\n"), matcher, VERSION);
@@ -1421,13 +1428,6 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"))
       }
     else
       usage (2);
-
-  if (! matcher)
-#ifdef __NetBSD__
-    matcher = __progname;
-#else
-    matcher = "grep";
-#endif
 
   if (!install_matcher (matcher) && !install_matcher ("default"))
     abort ();
