@@ -1,0 +1,104 @@
+#	$NetBSD: DUMMY,v 1.1 1996/10/23 07:49:52 matthias Exp $
+#
+# DUMMY: Matthias Pfaller's second pc532
+#
+
+machine		pc532
+
+maxusers	8			# estimated number of users
+options		TIMEZONE=0, DST=0	# time zone to read RTC in
+options		SWAPPAGER		# paging
+options		VNODEPAGER,DEVPAGER	# vnode and device node caching
+
+makeoptions DEBUG="-g"
+#options	DDB			# kernel debugger; recommended
+options		KGDB			# remote gdb kernel debugger
+options		KGDBDEV=0x0802		#	over tty02
+options		KGDBRATE=9600		#	with 9600 baud
+
+#options	DIAGNOSTIC		# internal consistency checking
+options		KTRACE			# system call tracing, a la ktrace(1)
+
+#options	ACCOUNTING		# process accounting
+options		FIFO			# fifos; recommended
+#options	SYSVSHM			# System V shared memory; broken
+#options	SHMMAXPGS=1024
+#options	LKM			# loadable kernel modules
+
+# compatibility options
+options		COMPAT_43		# 4.3 system calls
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+
+# file system options
+#options	QUOTA			# file system quotas
+options		FFS			# Berkeley fast file system
+options		LFS			# log-structered file system
+options		MFS			# memory file system; uses RAM and swap
+options		MSDOSFS			# MS-DOS file system
+options		CD9660			# ISO 9660 CD-ROM file system, with RR
+options		NULLFS			# loopback file system
+#options	UMAPFS			# NULLFS + uid and gid remapping
+options		UNION			# union file system
+#options	PORTAL			# /portal
+options		FDESC			# /dev/fd
+options		KERNFS			# /kern
+options		PROCFS			# /proc
+options		NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
+
+# networking options
+#options	GATEWAY			# packet forwarding
+options		INET			# IP + ICMP + TCP + UDP
+#options	NS			# XNS
+#options	ISO,TPIP		# OSI
+#options	EON			# OSI tunneling over IP
+#options	CCITT,LLC,HDLC		# X.25
+options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
+
+# pc532 specific options
+options		NLINES=8
+options		SCN_HSOFT
+options		CONSOLE_SPEED=B9600	# default console baud rate
+options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+options		NS381			# FPU installed
+options		DEV_RTC			# RTC driver in pc532/mem.c
+options		NO_INLINE_SPLX
+
+config		netbsd swap generic
+options		GENERIC
+
+membus0 at root
+#clock0 at membus?
+#timer0 at membus?
+
+ncr0 at membus?
+scsibus0 at ncr0
+sd0 at scsibus? target 0 lun 0		# Conner CP30100-121mb
+sd1 at scsibus? target 1 lun 0		# Emulex MD21/Seagate ST4383E
+sd2 at scsibus? target 2 lun 0		# Teac FC-1 HF (3.5" Floppy)
+st0 at scsibus? target 4 lun 0		# Tandberg TDC 3620 QIC-60 Drive
+sd* at scsibus? target ? lun ?		# SCSI disks
+cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+st* at scsibus? target ? lun ?		# SCSI tapes
+#uk* at scsibus? target ? lun ?		# All the things we don't know
+
+
+scn0 at membus? flags 1
+scn1 at membus? flags 0
+scn2 at membus? flags 0
+scn3 at membus? flags 0
+scn4 at membus? flags 0
+scn5 at membus? flags 0
+scn6 at membus? flags 0
+scn7 at membus? flags 0
+
+pseudo-device	pty 16			# pseudo-terminals
+pseudo-device	loop 1			# loopback network
+pseudo-device	vnd 4			# vnode  devices
+pseudo-device	bpfilter 8		# packet filter
+pseudo-device	ccd 1
+pseudo-device	sl 1			# compressed SLIP
+pseudo-device	ppp 1			# Point-to-Point Protocol
+pseudo-device	tun 1			# ip tunneling
