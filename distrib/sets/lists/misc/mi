@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2000/12/29 03:16:40 itojun Exp $
+# $NetBSD: mi,v 1.50 2000/12/30 06:14:53 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -415,6 +415,7 @@
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
 ./usr/share/examples/syslogd/all.debug
+./usr/share/sendmail/LICENSE
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
