@@ -1,4 +1,4 @@
-# $NetBSD: sshd,v 1.6 2005/03/17 01:07:51 christos Exp $
+# $NetBSD: sshd,v 1.7 2005/03/17 01:47:18 christos Exp $
 #
 # PAM configuration for the "sshd" service
 #
@@ -11,7 +11,7 @@ auth		sufficient	pam_krb5.so	no_warn try_first_pass
 auth		required	pam_unix.so	no_warn try_first_pass
 
 # account
-account		requiredl	pam_krb5.so
+account		required	pam_krb5.so
 account		required	pam_login_access.so
 account		required	pam_unix.so
 
