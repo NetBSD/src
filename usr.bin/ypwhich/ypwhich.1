@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypwhich.1,v 1.4 1997/10/20 03:44:39 lukem Exp $
+.\"	$NetBSD: ypwhich.1,v 1.5 1997/11/04 11:36:26 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 23, 1994
+.Dd November 4, 1997
 .Dt YPWHICH 1
 .Os
 .Sh NAME
@@ -38,11 +38,15 @@
 .Nm
 .Op Fl d Ar domain
 .Oo
-.Op Fl t
-.Fl m Op Ar mname
-|
+.Op Fl h
 .Ar host
 .Oc
+.Nm ""
+.Op Fl d Ar domain
+.Op Fl h Ar host
+.Op Fl f
+.Op Fl t
+.Fl m Op Ar mname
 .Nm ""
 .Fl x
 .Sh DESCRIPTION
@@ -63,21 +67,28 @@ which
 server it is using.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl d Ar domain
 Specify a domain other than the default domain.
+.It Fl h Ar host
+Specify a host other than localhost to query for information.
+.It Fl f
+When used in conjunction with
+.Fl m ,
+force
+.Nm
+to query
+.Ar host
+directly, without using the local copy of
+.Xr ypbind 8 .
 .It Fl t
 Inhibit translation of map nicknames
 to their corresponding map names.
 .It Fl m Op Ar mname
 Find the master
 .Tn YP
-server for the named map.  No
-.Ar host
-may be specified with the
-.Fl m
-option.
-.Ar Mname
+server for the named map.
+.Ar mname
 can be a map name or nickname.  If
 .Ar mname
 is ommitted,
@@ -88,13 +99,11 @@ Display the map nickname table.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
+.Xr yp 8 ,
+.Xr ypbind 8 ,
 .Xr yppoll 8 ,
-.Xr ypset 8 ,
-.Xr yp 8
+.Xr ypset 8
 .Sh AUTHOR
-Theo De Raadt
-
-
+Charles D. Cranor
