@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.10 1997/01/28 00:49:41 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.11 1997/10/18 14:53:54 lukem Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -51,9 +51,9 @@
 
 #include "file.h"
 
+#include <sys/cdefs.h>
 #ifndef	lint
-static char *moduleid = 
-	"@(#)$NetBSD: fsmagic.c,v 1.10 1997/01/28 00:49:41 christos Exp $";
+__RCSID("$NetBSD: fsmagic.c,v 1.11 1997/10/18 14:53:54 lukem Exp $");
 #endif	/* lint */
 
 int
