@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1984 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.14 1994/05/21 03:52:05 cgd Exp $
+ *	from: @(#)ptrace.h	8.2 (Berkeley) 1/4/94
+ *	$Id: ptrace.h,v 1.15 1994/05/21 04:21:27 cgd Exp $
  */
 
-#ifndef _SYS_PTRACE_H_
-#define _SYS_PTRACE_H_
+#ifndef	_SYS_PTRACE_H_
+#define	_SYS_PTRACE_H_
 
 #define	PT_TRACE_ME	0	/* child declares it's being traced */
 #define	PT_READ_I	1	/* read word in child's I space */
@@ -53,30 +53,30 @@
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
 #ifdef KERNEL
-/* internal machine-dependent functions used by ptrace (and others) */
+
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 struct reg;
-#endif
-#ifdef PT_GETREGS
-int	process_read_regs __P((struct proc *p, struct reg *regs));
-#endif
-#ifdef PT_SETREGS
-int	process_write_regs __P((struct proc *p, struct reg *regs));
 #endif
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 struct fpreg;
 #endif
+
+void	proc_reparent __P((struct proc *child, struct proc *newparent));
+int	process_fix_sstep __P((struct proc *p));
 #ifdef PT_GETFPREGS
 int	process_read_fpregs __P((struct proc *p, struct fpreg *regs));
 #endif
+#ifdef PT_GETREGS
+int	process_read_regs __P((struct proc *p, struct reg *regs));
+#endif
+int	process_set_pc __P((struct proc *p, u_int addr));
+int	process_sstep __P((struct proc *p, int sstep));
 #ifdef PT_SETFPREGS
 int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
 #endif
-int	process_sstep __P((struct proc *p, int sstep));
-int	process_fix_sstep __P((struct proc *p));
-int	process_set_pc __P((struct proc *p, u_int addr));
-
-/* macros used by more than one kernel subsystem */
+#ifdef PT_SETREGS
+int	process_write_regs __P((struct proc *p, struct reg *regs));
+#endif
 
 /* do a single-stepping fixup, if needed */
 #define FIX_SSTEP(p) { \
@@ -85,13 +85,15 @@ int	process_set_pc __P((struct proc *p, u_int addr));
 		(p)->p_flag &= ~P_SSTEP; \
 	} \
 }        
-void	proc_reparent __P((struct proc *child, struct proc *newparent));
-#else /* KERNEL */
+
+#else /* !KERNEL */
+
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	ptrace __P((int _request, pid_t _pid, caddr_t _addr, int _data));
 __END_DECLS
-#endif
 
-#endif /* !_SYS_PTRACE_H_ */
+#endif /* !KERNEL */
+
+#endif	/* !_SYS_PTRACE_H_ */
