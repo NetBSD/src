@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.14 2002/05/21 14:22:05 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.15 2002/05/21 14:29:53 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.58 2002/05/21 13:59:45 itojun Exp $	*/
 
 /*
@@ -1161,17 +1161,21 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 {
 	struct prefix *pp;
 	int bytelen, bitlen;
+	u_char bitmask;
 
 	for (pp = rai->prefix.next; pp != &rai->prefix; pp = pp->next) {
 		if (plen != pp->prefixlen)
 			continue;
 		bytelen = plen / 8;
 		bitlen = plen % 8;
+		bitmask = 0xff << (8 - bitlen);
 		if (memcmp((void *)prefix, (void *)&pp->prefix, bytelen))
 			continue;
-		if (prefix->s6_addr[bytelen] >> (8 - bitlen) ==
-		    pp->prefix.s6_addr[bytelen] >> (8 - bitlen))
+		if (bitlen == 0 ||
+		    ((prefix->s6_addr[bytelen] & bitmask) == 
+		     (pp->prefix.s6_addr[bytelen] & bitmask))) {
 			return(pp);
+		}
 	}
 
 	return(NULL);
@@ -1183,16 +1187,20 @@ prefix_match(struct in6_addr *p0, int plen0,
 	     struct in6_addr *p1, int plen1)
 {
 	int bytelen, bitlen;
+	u_char bitmask;
 
 	if (plen0 < plen1)
 		return(0);
 	bytelen = plen1 / 8;
 	bitlen = plen1 % 8;
+	bitmask = 0xff << (8 - bitlen);
 	if (memcmp((void *)p0, (void *)p1, bytelen))
 		return(0);
-	if (p0->s6_addr[bytelen] >> (8 - bitlen) ==
-	    p1->s6_addr[bytelen] >> (8 - bitlen))
+	if (bitlen == 0 ||
+	    ((p0->s6_addr[bytelen] & bitmask) ==
+	     (p1->s6_addr[bytelen] & bitmask))) { 
 		return(1);
+	}
 
 	return(0);
 }
@@ -1275,7 +1283,7 @@ free_ndopts(union nd_opts *ndopts)
 {
 	struct nd_optlist *opt = ndopts->nd_opts_list, *next;
 
-	while(opt) {
+	while (opt) {
 		next = opt->next;
 		free(opt);
 		opt = next;
@@ -1372,7 +1380,7 @@ sock_open()
 		       __FUNCTION__);
 		exit(1);
 	}
-	while(ra) {
+	while (ra) {
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
