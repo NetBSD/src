@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/12/12 22:37:19 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1997/12/12 22:42:11 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -51,9 +51,6 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 
 # Do not delete this if I change my mind and kill make...
 .PRECIOUS: ${IMAGE}.gz
-
-# Rules for making ${CBIN} ...
-.include "${TOP}/common/Make.crunch"
 
 install.sub : ${TOP}/../miniroot/install.sub
 	sed -e "/^VERSION=/s/=.*/=${REV}/" < $? > $@
