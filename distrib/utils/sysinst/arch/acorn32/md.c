@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2003/05/29 17:51:26 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2003/05/30 13:23:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,8 +92,7 @@ filecore_checksum(u_char *bootblock);
  */
 
 static int
-filecore_checksum(bootblock)
-	u_char *bootblock;
+filecore_checksum(u_char *bootblock)
 {  
 	u_char byte0, accum_diff;
 	u_int sum;
@@ -128,8 +127,10 @@ filecore_checksum(bootblock)
 	return (sum - ((sum - 1) / 255) * 255);
 }
 
-int	md_get_info (void)
-{	struct disklabel disklabel;
+int
+md_get_info(void)
+{
+	struct disklabel disklabel;
 	int fd;
 	char devname[100];
 	static char bb[DEV_BSIZE];
@@ -269,17 +270,20 @@ int	md_get_info (void)
 	return 1;
 }
 
-int	md_pre_disklabel (void)
+int
+md_pre_disklabel(void)
 {
 	return 0;
 }
 
-int	md_post_disklabel (void)
+int
+md_post_disklabel(void)
 {
 	return 0;
 }
 
-int	md_post_newfs (void)
+int
+md_post_newfs(void)
 {
 #if 0
 	/* XXX boot blocks ... */
@@ -290,12 +294,14 @@ int	md_post_newfs (void)
 	return 0;
 }
 
-int	md_copy_filesystem (void)
+int
+md_copy_filesystem(void)
 {
 	return 0;
 }
 
-int md_make_bsd_partitions (void)
+int
+md_make_bsd_partitions(void)
 {
 	int i, part;
 	int remain;
@@ -535,25 +541,25 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
