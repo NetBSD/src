@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.26.2.1 2000/07/27 00:00:31 mycroft Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.26.2.2 2000/08/07 01:25:25 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -20,7 +20,6 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
-
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -68,6 +67,10 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
 CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
+.if defined(PROF)
+# We need to run the compiler in medlow memory model.
+CFLAGS += -mcmodel=medlow
+.endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
 #LINKFLAGS=	-N -Ttext f1000000 -e start
