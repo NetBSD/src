@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.16 2000/01/05 12:15:00 drochner Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.17 2000/07/20 07:11:28 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.15 2000/01/05 12:14:33 drochner Exp 
+ *	NetBSD: tcdevs,v 1.16 2000/07/20 06:38:39 tsutsui Exp 
  */
 
 /*
@@ -82,6 +82,9 @@
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
+
+#define	TC_DEVICE_PMAG_JA	"???"
+#define	TC_DESCRIPTION_PMAG_JA	"24-plane True Color Frame Buffer (TX)"
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
