@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.15 2003/09/02 07:35:04 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.16 2003/09/08 05:34:35 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.15 2003/09/02 07:35:04 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.16 2003/09/08 05:34:35 jlam Exp $");
 #endif
 
 /*
@@ -63,8 +63,8 @@ static char  pkgdb_cache[FILENAME_MAX];
 /*
  *  Open the pkg-database
  *  Return value:
- *   0: everything ok
- *  -1: error, see errno
+ *   1: everything ok
+ *   0: error
  */
 int
 pkgdb_open(int mode)
@@ -197,7 +197,12 @@ pkgdb_remove(const char *key)
 	return (*pkgdbp->del) (pkgdbp, &keyd, 0);
 }
 
-/* remove any entry from the cache which has a data field of `pkg' */
+/*
+ *  Remove any entry from the cache which has a data field of `pkg'.
+ *  Return value:
+ *   1: everything ok
+ *   0: error
+ */
 int
 pkgdb_remove_pkg(const char *pkg)
 {
