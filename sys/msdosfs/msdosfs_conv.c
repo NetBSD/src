@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.6 1994/06/29 06:35:35 cgd Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.7 1994/08/30 01:31:11 mycroft Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -327,16 +327,13 @@ unix2dosfn(un, dn, unlen)
 	 * Strip any further characters up to a '.' or the end of the
 	 * string.
 	 */
-	while (unlen && (c = *un) && c != '.') {
+	while (unlen && (c = *un)) {
 		un++;
 		unlen--;
+		/* Make sure we've skipped over the dot before stopping. */
+		if (c == '.')
+			break;
 	}
-
-	/*
-	 * If we stopped on a '.', then get past it.
-	 */
-	if (c == '.')
-		un++;
 
 	/*
 	 * Copy in the extension part of the name, if any. Force to upper
