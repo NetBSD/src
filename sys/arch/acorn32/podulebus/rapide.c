@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.11 2003/09/24 07:15:52 mycroft Exp $	*/
+/*	$NetBSD: rapide.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.11 2003/09/24 07:15:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ rapide_attach(parent, self, aux)
 		    IRQ_MASK_REGISTER_OFFSET, sc->sc_intr_enable_mask);
 		/* XXX - Issue 1 cards will need to clear any pending interrupts */
 	}
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 /*
