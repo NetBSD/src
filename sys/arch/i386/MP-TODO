@@ -3,19 +3,24 @@ TODO list for MP branch (incomplete):
 showstoppers for merge back to -current:
 
  - rewrite interrupt dispatch so that multi-level shared interrupts
-are no longer broken.
+   are no longer broken.
 
- - Figure out why things are broken on !MULTIPROCESSOR
-
- - Sort out cpu feature probes [runs on new cpu], identify_cpu() [runs
-on BSP] and cpu initialization [runs on new cpu]; finish banishing
-most global variables containing cpu configuration information.
+ - Sort out:
+	- cpu feature probes [runs on new cpu]
+	- identify_cpu() output [runs on BSP] 
+	- cpu initialization [runs on new cpu];
+   finish banishing most global variables containing cpu configuration 
+   information to struct cpu_info
 
  - figure out why ahc on serverworks fails to find its interrupt.
 
  - careful code review of all diffs from -current
 
+ - test and fix npx on i386 (npx exceptions through ISA interrupts).
+
 "would be nice":
+
+ - stop all cpu's on shutdown.
 
  - try out mpbios+ioapic w/o MULTIPROCESSOR
 
@@ -28,3 +33,12 @@ most global variables containing cpu configuration information.
 > 3839853 369428  322400  4531681 4525e1  netbsd
 > -1787494046.7u 681459032.2s 7:26.71 2421928.1% 0+0k 17+11379io 99pf+0w
 
+-----
+
+DONE:
+
+ - Figure out why things are broken on !MULTIPROCESSOR
+[2001/01/08  22:29:56  sommerfeld]
+fixed three bugs; !MP kernel now comes up multiuser.
+
+	
