@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.5 2000/03/13 23:22:55 soren Exp $ */
+.\" $NetBSD: userdel.8,v 1.6 2000/08/18 15:49:21 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -64,7 +64,7 @@ will be used by the
 utility. Together with one of the options shown for the first version
 of the command, -D will set the default to be the new value.
 .It Fl p Ar preserve-value
-sets the preservation value. If this value is one of "true", "false",
+sets the preservation value. If this value is one of "true", "yes",
 or a non-zero number, then the user login information will be preserved.
 .El
 .Pp
@@ -74,8 +74,9 @@ The following command line options are recognised:
 preserve the user information in the password file,
 but do not allow the user to login, by switching the
 password to an "impossible" one, and by setting the
-user's shell to the false(1) program.
-This option can be helpful in preserving a user's
+user's shell to the 
+.Xr false 1
+program. This option can be helpful in preserving a user's
 files for later use by members of that person's
 group after the user has moved on.
 This value can also be set in the
