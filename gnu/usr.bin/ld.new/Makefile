@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/04/30 15:12:57 kleink Exp $
+#	$NetBSD: Makefile,v 1.13 1999/07/24 09:09:39 mrg Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -120,11 +120,15 @@ ldemul-list.h: Makefile
 	done
 .endif
 
+.include <bsd.own.mk>
+
 afterinstall:
+.if ${MKSHARE} != "no"
 	(cd ldscripts ; pax -rw . ${DESTDIR}${SCRIPTDIR})
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}${SCRIPTDIR}
 	find ${DESTDIR}${SCRIPTDIR} -type f | xargs chmod a=rX
 	find ${DESTDIR}${SCRIPTDIR} -type d | xargs chmod u=rwX,go=rX
+.endif
 
 cleanprog: __cleanldscripts
 __cleanldscripts:
