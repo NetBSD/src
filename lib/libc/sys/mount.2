@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mount.2	6.12 (Berkeley) 3/15/91
-.\"	$Id: mount.2,v 1.2 1993/08/01 07:42:37 mycroft Exp $
+.\"	$Id: mount.2,v 1.3 1993/11/08 03:31:24 cgd Exp $
 .\"
 .Dd March 15, 1991
 .Dt MOUNT 2
@@ -75,22 +75,22 @@ The following
 .Ar flags
 may be specified to
 suppress default semantics which affect filesystem access.
-.Bl -tag -width M_SYNCHRONOUS
-.It Dv M_RDONLY
+.Bl -tag -width MNT_SYNCHRONOUS
+.It Dv MNT_RDONLY
 The file system should be treated as read-only;
 Even the super-user may not write on it.
-.It Dv M_NOEXEC
+.It Dv MNT_NOEXEC
 Do not allow files to be executed from the file system.
-.It Dv M_NOSUID
+.It Dv MNT_NOSUID
 Do not honor setuid or setgid bits on files when executing them.
-.It Dv M_NODEV
+.It Dv MNT_NODEV
 Do not interpret special files on the file system.
-.It Dv M_SYNCHRONOUS
+.It Dv MNT_SYNCHRONOUS
 All I/O to the file system should be done synchronously.
 .El
 .Pp
 The flag
-.Dv M_UPDATE
+.Dv MNT_UPDATE
 indicates that the mount command is being applied 
 to an already mounted file system.
 This allows the mount flags to be changed without requiring
@@ -151,7 +151,7 @@ mount point
 The
 .Fa flags
 argument may have one of the following values:
-.Bl -tag -width  M_SYNCHRONOUS
+.Bl -tag -width  MNT_SYNCHRONOUS
 .It Dv MNT_NOFORCE
 The unmount should fail if any files are active on the file system.
 .It Dv MNT_FORCE
