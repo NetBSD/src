@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.181 2000/11/01 23:54:57 eeh Exp $	*/
+/*	$NetBSD: com.c,v 1.182 2000/11/18 15:46:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -523,6 +523,8 @@ com_attach_subr(sc)
 
 	sc->sc_tty = tp;
 	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
+	sc->sc_rbavail = com_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
 		    sc->sc_dev.dv_xname);
