@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.23 1996/05/09 20:30:49 is Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.24 1996/05/21 17:15:40 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -138,6 +138,7 @@ getgenconf(bp)
 	return(gc);
 }
 
+#ifdef GENERIC
 void
 setconf()
 {
@@ -216,6 +217,7 @@ justdoswap:
 	if (swaponroot)
 		rootdev = dumpdev;
 }
+#endif
 
 void
 gets(cp)
