@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.25 2003/10/10 23:51:00 mbw Exp $
+.\"	$NetBSD: macros,v 1.26 2004/02/24 15:05:53 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -373,7 +373,7 @@
 .ta (\n(.lu)R
 \.tm ...reading INSTALL.\*[format].toc
 .       Pp
-.\" Use so-real here becuase otherwise we lose on objdirs
+.\" Use so-real here because otherwise we lose on objdirs
 \.so-real INSTALL.\*[format].toc
 .Ed
 ..

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.25 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.26 2004/02/24 15:05:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.26 2004/02/24 15:05:54 wiz Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1794,7 +1794,7 @@ sca_frame_print(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 #endif
 
 /*
- * adjust things becuase we have just read the current starting
+ * adjust things because we have just read the current starting
  * frame
  *
  * must be called at splnet()
