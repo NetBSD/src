@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/07/11 01:38:48 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/08/03 13:12:44 simonb Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -131,8 +131,9 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+
 	ticks_per_intr = ticks_per_sec / hz;
-	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER);
+	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	mtspr(SPR_PIT, ticks_per_intr);
