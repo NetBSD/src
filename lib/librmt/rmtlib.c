@@ -1,35 +1,4 @@
-#ifndef lint
-static char *RCSid = "$Header: /cvsroot/src/lib/librmt/rmtlib.c,v 1.1 1996/08/09 03:35:19 jtc Exp $";
-#endif
-
-/*
- * $Log: rmtlib.c,v $
- * Revision 1.1  1996/08/09 03:35:19  jtc
- * Remote mag tape library from volume 18 of comp.sources.unix.
- *
- * Revision 1.7  89/03/23  14:09:51  root
- * Fix from haynes@ucscc.ucsc.edu for use w/compat. ADR.
- * 
- * Revision 1.6  88/10/25  17:04:29  root
- * rexec code and a bug fix from srs!dan, miscellanious cleanup. ADR.
- * 
- * Revision 1.5  88/10/25  16:30:17  root
- * Fix from jeff@gatech.edu for getting user@host:dev right. ADR.
- * 
- * Revision 1.4  87/10/30  10:36:12  root
- * Made 4.2 syntax a compile time option. ADR.
- * 
- * Revision 1.3  87/04/22  11:16:48  root
- * Two fixes from parmelee@wayback.cs.cornell.edu to correctly
- * do fd biasing and rmt protocol on 'S' command. ADR.
- * 
- * Revision 1.2  86/10/09  16:38:53  root
- * Changed to reflect 4.3BSD rcp syntax. ADR.
- * 
- * Revision 1.1  86/10/09  16:17:35  root
- * Initial revision
- * 
- */
+/*	$NetBSD: rmtlib.c,v 1.2 1996/08/09 03:39:00 jtc Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -62,6 +31,8 @@ static char *RCSid = "$Header: /cvsroot/src/lib/librmt/rmtlib.c,v 1.1 1996/08/09
 /* #define USE_REXEC	1	/* rexec code courtesy of Dan Kegel, srs!dan */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 
@@ -75,8 +46,10 @@ static char *RCSid = "$Header: /cvsroot/src/lib/librmt/rmtlib.c,v 1.1 1996/08/09
 #endif
 
 #include <errno.h>
-#include <setjmp.h>
 #include <sys/stat.h>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
 #define MAXUNIT	4
@@ -87,14 +60,12 @@ static char *RCSid = "$Header: /cvsroot/src/lib/librmt/rmtlib.c,v 1.1 1996/08/09
 static int Ctp[MAXUNIT][2] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 static int Ptc[MAXUNIT][2] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
-static jmp_buf Jmpbuf;
-extern int errno;
 
 /*
- *	abort --- close off a remote tape connection
+ *	rmtabort --- close off a remote tape connection
  */
 
-static void abort(fildes)
+static void rmtabort(fildes)
 int fildes;
 {
 	close(READ(fildes));
@@ -114,7 +85,7 @@ int fildes;
 char *buf;
 {
 	register int blen;
-	int (*pstat)();
+	void (*pstat)();
 
 /*
  *	save current pipe status and try to make the request
@@ -133,7 +104,7 @@ char *buf;
  */
 
 	signal(SIGPIPE, pstat);
-	abort(fildes);
+	rmtabort(fildes);
 
 	errno = EIO;
 	return(-1);
@@ -160,7 +131,7 @@ int fildes;
 	{
 		if (read(READ(fildes), cp, 1) != 1)
 		{
-			abort(fildes);
+			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
 		}
@@ -173,7 +144,7 @@ int fildes;
 
 	if (i == BUFMAGIC)
 	{
-		abort(fildes);
+		rmtabort(fildes);
 		errno = EIO;
 		return(-1);
 	}
@@ -194,7 +165,7 @@ int fildes;
 				break;
 
 		if (*cp == 'F')
-			abort(fildes);
+			rmtabort(fildes);
 
 		return(-1);
 	}
@@ -205,7 +176,7 @@ int fildes;
 
 	if (*cp != 'A')
 	{
-		abort(fildes);
+		rmtabort(fildes);
 		errno = EIO;
 		return(-1);
 	}
@@ -413,7 +384,7 @@ int fildes;
 	{
 		rc = status(fildes);
 
-		abort(fildes);
+		rmtabort(fildes);
 		return(rc);
 	}
 
@@ -443,7 +414,7 @@ unsigned int nbyte;
 		nbyte = read(READ(fildes), buf, rc);
 		if (nbyte <= 0)
 		{
-			abort(fildes);
+			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
 		}
@@ -465,7 +436,7 @@ unsigned int nbyte;
 {
 	int rc;
 	char buffer[BUFMAGIC];
-	int (*pstat)();
+	void (*pstat)();
 
 	sprintf(buffer, "W%d\n", nbyte);
 	if (command(fildes, buffer) == -1)
@@ -479,7 +450,7 @@ unsigned int nbyte;
 	}
 
 	signal (SIGPIPE, pstat);
-	abort(fildes);
+	rmtabort(fildes);
 	errno = EIO;
 	return(-1);
 }
@@ -557,7 +528,7 @@ char *arg;
 		cnt = read(READ(fildes), arg, rc);
 		if (cnt <= 0)
 		{
-			abort(fildes);
+			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
 		}
@@ -630,9 +601,6 @@ char *arg;
 static int remdev (path)
 register char *path;
 {
-#define strchr	index
-	extern char *strchr ();
-
 	if ((path = strchr (path, ':')) != NULL)
 	{
 		if (strncmp (path + 1, "/dev/", 5) == 0)
@@ -852,9 +820,6 @@ struct stat *buf;
 /*
  *	Create a file from scratch.  Looks just like creat(2) to the caller.
  */
-
-#include <sys/file.h>		/* BSD DEPENDANT!!! */
-/* #include <fcntl.h>		/* use this one for S5 with remote stuff */
 
 int rmtcreat (path, mode)
 char *path;
