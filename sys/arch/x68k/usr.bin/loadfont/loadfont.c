@@ -3,7 +3,7 @@
  * from: amiga/stand/loadkmap/loadkmap.c
  * Copyright 1993 by Masaru Oki
  *
- *	$NetBSD: loadfont.c,v 1.3 1998/08/06 14:08:55 minoura Exp $
+ *	$NetBSD: loadfont.c,v 1.4 2003/05/17 10:37:55 isaki Exp $
  */
 
 #include <stdio.h>
@@ -12,39 +12,39 @@
 #define ITEKANJI 1 /* XXX */
 #include <machine/iteioctl.h>
 
-void load_font __P((const char *file));
+void load_font(const char *);
 
 int
-main(argc, argv)
-     int argc;
-     char *argv[];
+main(int argc, char *argv[])
 {
-  if (argc != 2)
-    fprintf (stderr, "Usage: %s fontfile\n", argv[0]), exit (1);
 
-  load_font (argv[1]);
-  exit (0);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s fontfile\n", argv[0]);
+		exit (1);
+	}
+
+	load_font(argv[1]);
+	exit(0);
 }
 
 void
-load_font (file)
-     const char *file;
+load_font(const char *file)
 {
-  int fd;
-  unsigned char buf[4096];
+	unsigned char buf[4096];
+	int fd;
 
-  if ((fd = open(file, O_RDONLY)) >= 0) {
-      if (read (fd, buf, sizeof(buf)) == sizeof (buf)) {
-	  if (ioctl(0, ITELOADFONT, buf) == 0)
-	    return;
-	  else
-	    perror("ITELOADFONT");
-      }
-      else
-	  perror("read font");
+	if ((fd = open(file, O_RDONLY)) >= 0) {
+		if (read (fd, buf, sizeof(buf)) == sizeof (buf)) {
+			if (ioctl(0, ITELOADFONT, buf) == 0)
+				return;
+			else
+				perror("ITELOADFONT");
+		} else {
+			perror("read font");
+		}
 
-      close(fd);
-  }
-  else
-      perror("open font");
+		close(fd);
+	} else {
+		perror("open font");
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.4 2000/07/31 23:40:02 minoura Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.5 2003/05/17 10:37:56 isaki Exp $	*/
 /*
  * loadkmap - load keyboard map (for NetBSD/X680x0)
  * from: amiga/stand/loadkmap/loadkmap.c
@@ -12,49 +12,39 @@
 #include <machine/iteioctl.h>
 #include "kbdmap.h"
 
-void load_kmap __P((const char *file));
+void load_kmap(const char *);
 
 int
-#ifdef __STDC__
 main(int argc, char *argv[])
-#else
-main()
-     int argc;
-     char *argv[];
-#endif
 {
-  if (argc != 2)
-    fprintf (stderr, "Usage: %s kmapfile\n", argv[0]), exit (1);
 
-  load_kmap (argv[1]);
-  exit (0);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s kmapfile\n", argv[0]);
+		exit (1);
+	}
+
+	load_kmap(argv[1]);
+	exit(0);
 }
 
 void
-#ifdef __STDC__
-load_kmap (const char *file)
-#else
-load_kmap (file)
-     const char *file;
-#endif
+load_kmap(const char *file)
 {
-  int fd;
-  unsigned char buf[sizeof(struct kbdmap)];
+	unsigned char buf[sizeof(struct kbdmap)];
+	int fd;
 
-  if ((fd = open (file, 0)) >= 0)
-    {
-      if (read (fd, buf, sizeof (buf)) == sizeof (buf))
-	{
-	  if (ioctl (0, ITEIOCSKMAP, buf) == 0)
-	    return;
-	  else
-	    perror ("ITEIOCSKMAP");
+	if ((fd = open(file, 0)) >= 0) {
+		if (read(fd, buf, sizeof(buf)) == sizeof(buf)) {
+			if (ioctl(0, ITEIOCSKMAP, buf) == 0)
+				return;
+			else
+				perror("ITEIOCSKMAP");
+		} else {
+			perror("read kbdmap");
+		}
+
+		close (fd);
+	} else {
+	    perror("open kbdmap");
 	}
-      else
-	perror ("read kbdmap");
-
-      close (fd);
-    }
-  else
-    perror ("open kbdmap");
 }
