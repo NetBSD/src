@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.73 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: atw.c,v 1.74 2004/07/24 01:26:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.73 2004/07/23 10:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.74 2004/07/24 01:26:20 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -167,18 +167,18 @@ int atw_debug = 0;
 #define	DPRINTF2(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF2(x)
 #define	DPRINTF3(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF3(x)
 
-static void atw_print_regs(struct atw_softc *, const char *);
-static void atw_dump_pkt(struct ifnet *, struct mbuf *);
+static void	atw_dump_pkt(struct ifnet *, struct mbuf *);
+static void	atw_print_regs(struct atw_softc *, const char *);
 
 /* Note well: I never got atw_rf3000_read or atw_si4126_read to work. */
 #	ifdef ATW_BBPDEBUG 
-static int atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
-static void atw_rf3000_print(struct atw_softc *);
+static void	atw_rf3000_print(struct atw_softc *);
+static int	atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
 #	endif /* ATW_BBPDEBUG */
 
 #	ifdef ATW_SYNDEBUG 
-static int atw_si4126_read(struct atw_softc *, u_int, u_int *);
-static void atw_si4126_print(struct atw_softc *);
+static void	atw_si4126_print(struct atw_softc *);
+static int	atw_si4126_read(struct atw_softc *, u_int, u_int *);
 #	endif /* ATW_SYNDEBUG */
 
 #else
@@ -191,52 +191,58 @@ static void atw_si4126_print(struct atw_softc *);
 #endif
 
 /* ifnet methods */
-void	atw_start(struct ifnet *);
-void	atw_watchdog(struct ifnet *);
-int	atw_ioctl(struct ifnet *, u_long, caddr_t);
 int	atw_init(struct ifnet *);
+int	atw_ioctl(struct ifnet *, u_long, caddr_t);
+void	atw_start(struct ifnet *);
 void	atw_stop(struct ifnet *, int);
+void	atw_watchdog(struct ifnet *);
 
 /* Device attachment */
 void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
 
 /* Rx/Tx process */
-void	atw_rxdrain(struct atw_softc *);
-void	atw_txdrain(struct atw_softc *);
 int	atw_add_rxbuf(struct atw_softc *, int);
 void	atw_idle(struct atw_softc *, u_int32_t);
+void	atw_rxdrain(struct atw_softc *);
+void	atw_txdrain(struct atw_softc *);
 
 /* Device (de)activation and power state */
-int	atw_enable(struct atw_softc *);
 void	atw_disable(struct atw_softc *);
+int	atw_enable(struct atw_softc *);
 void	atw_power(int, void *);
-void	atw_shutdown(void *);
 void	atw_reset(struct atw_softc *);
+void	atw_shutdown(void *);
 
 /* Interrupt handlers */
+void	atw_linkintr(struct atw_softc *, u_int32_t);
 void	atw_rxintr(struct atw_softc *);
 void	atw_txintr(struct atw_softc *);
-void	atw_linkintr(struct atw_softc *, u_int32_t);
 
 /* 802.11 state machine */
 static int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static int	atw_tune(struct atw_softc *);
+static void	atw_next_scan(void *);
+static void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
+		                struct ieee80211_node *, int, int, u_int32_t);
 static void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
 		              struct ieee80211_node *, int, int, u_int32_t);
+static void	atw_tsf(struct atw_softc *);
+static void	atw_tsft(struct atw_softc *, uint32_t *, uint32_t *);
+static int	atw_tune(struct atw_softc *);
 
 /* Device initialization */
-static void	atw_wcsr_init(struct atw_softc *);
+static void	atw_bbp_io_init(struct atw_softc *);
+static void	atw_cfp_init(struct atw_softc *);
 static void	atw_cmdr_init(struct atw_softc *);
+static void	atw_ifs_init(struct atw_softc *);
+static void	atw_nar_init(struct atw_softc *);
+static void	atw_response_times_init(struct atw_softc *);
+static void	atw_rf_reset(struct atw_softc *);
+static void	atw_test1_init(struct atw_softc *);
+static void	atw_tofs0_init(struct atw_softc *);
 static void	atw_tofs2_init(struct atw_softc *);
 static void	atw_txlmt_init(struct atw_softc *);
-static void	atw_test1_init(struct atw_softc *);
-static void	atw_rf_reset(struct atw_softc *);
-static void	atw_cfp_init(struct atw_softc *);
-static void	atw_tofs0_init(struct atw_softc *);
-static void	atw_ifs_init(struct atw_softc *);
-static void	atw_response_times_init(struct atw_softc *);
-static void	atw_bbp_io_init(struct atw_softc *);
+static void	atw_wcsr_init(struct atw_softc *);
 
 /* RAM/ROM utilities */
 static void	atw_clear_sram(struct atw_softc *);
@@ -244,7 +250,6 @@ static void	atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
 static int	atw_read_srom(struct atw_softc *);
 
 /* BSS setup */
-static void	atw_tsf(struct atw_softc *);
 static void	atw_start_beacon(struct atw_softc *, int);
 static void	atw_write_bssid(struct atw_softc *);
 static void	atw_write_ssid(struct atw_softc *);
@@ -258,18 +263,13 @@ static void	atw_media_status(struct ifnet *, struct ifmediareq *);
 static void	atw_filter_setup(struct atw_softc *);
 
 /* 802.11 utilities */
-static void	atw_frame_setdurs(struct atw_softc *,
-		                  struct atw_frame *, int, int);
-static struct ieee80211_node	*atw_node_alloc(struct ieee80211com *);
-static void	atw_node_free(struct ieee80211com *,
-		              struct ieee80211_node *);
-static void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
-		                struct ieee80211_node *, int, int,
-		                u_int32_t);
+static void			atw_frame_setdurs(struct atw_softc *,
+				                  struct atw_frame *, int, int);
 static __inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
 				                   uint32_t);
-static __inline void		atw_tsft(struct atw_softc *, uint32_t *,
-				         uint32_t *);
+static struct ieee80211_node	*atw_node_alloc(struct ieee80211com *);
+static void			atw_node_free(struct ieee80211com *,
+				              struct ieee80211_node *);
 
 /*
  * Tuner/transceiver/modem
@@ -277,13 +277,13 @@ static __inline void		atw_tsft(struct atw_softc *, uint32_t *,
 static void	atw_bbp_io_enable(struct atw_softc *, int);
 
 /* RFMD RF3000 Baseband Processor */
-static int atw_rf3000_init(struct atw_softc *);
-static int atw_rf3000_tune(struct atw_softc *, u_int);
-static int atw_rf3000_write(struct atw_softc *, u_int, u_int);
+static int	atw_rf3000_init(struct atw_softc *);
+static int	atw_rf3000_tune(struct atw_softc *, u_int);
+static int	atw_rf3000_write(struct atw_softc *, u_int, u_int);
 
 /* Silicon Laboratories Si4126 RF/IF Synthesizer */
-static void atw_si4126_tune(struct atw_softc *, u_int);
-static void atw_si4126_write(struct atw_softc *, u_int, u_int);
+static void	atw_si4126_tune(struct atw_softc *, u_int);
+static void	atw_si4126_write(struct atw_softc *, u_int, u_int);
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
@@ -2201,6 +2201,18 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	return;
 }
 
+static __inline void
+atw_tsft(struct atw_softc *sc, uint32_t *tsfth, uint32_t *tsftl)
+{
+	int i;
+	for (i = 0; i < 2; i++) {
+		*tsfth = ATW_READ(sc, ATW_TSFTH);
+		*tsftl = ATW_READ(sc, ATW_TSFTL);
+		if (ATW_READ(sc, ATW_TSFTH) == *tsfth)
+			break;
+	}
+}
+
 static int
 do_slow_print(struct atw_softc *sc, int *did_print)
 {
@@ -2471,18 +2483,6 @@ atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 	 *   = ((0xffffffff % m + 1) * H + L) % m
 	 */
 	return ((0xFFFFFFFF % ival + 1) * tsfth + tsftl) % ival;
-}
-
-static __inline void
-atw_tsft(struct atw_softc *sc, uint32_t *tsfth, uint32_t *tsftl)
-{
-	int i;
-	for (i = 0; i < 2; i++) {
-		*tsfth = ATW_READ(sc, ATW_TSFTH);
-		*tsftl = ATW_READ(sc, ATW_TSFTL);
-		if (ATW_READ(sc, ATW_TSFTH) == *tsfth)
-			break;
-	}
 }
 
 /* If we've created an IBSS, write the TSF time in the ADM8211 to
