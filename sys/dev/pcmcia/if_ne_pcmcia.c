@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.53 2000/02/09 14:42:37 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.54 2000/02/09 14:54:53 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -287,6 +287,11 @@ struct ne2000dev {
       PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
       0, -1, { 0x00, 0xc0, 0x1b} },
 
+    { PCMCIA_STR_XIRCOM_CFE_10,
+      PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
+      PCMCIA_CIS_XIRCOM_CFE_10,
+      0, -1, { 0x00, 0x10, 0xa4 } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -471,8 +476,8 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_1;
 	}
 
-	if (pcmcia_io_alloc(pa->pf, 0, NE2000_NPORTS, NE2000_NPORTS,
-	    &psc->sc_pcioh)) {
+	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start, NE2000_NPORTS,
+	    NE2000_NPORTS, &psc->sc_pcioh)) {
 		printf(": can't alloc i/o space\n");
 		goto fail_1;
 	}
