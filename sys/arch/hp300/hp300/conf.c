@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.16 1994/07/16 13:15:03 mycroft Exp $
+ *	$Id: conf.c,v 1.17 1994/09/16 21:14:58 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -288,6 +288,15 @@ cdev_decl(bpf);
 	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_map((*))) enodev, 0 }
 
+#include "tun.h"
+cdev_decl(tun);
+/* open, close, read, write, ioctl, select -- XXX should be generic device */
+#define cdev_tun_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_mmap((*))) enodev, 0 }
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -313,6 +322,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
+	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
