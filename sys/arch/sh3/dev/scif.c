@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.8 2000/03/23 06:43:52 thorpej Exp $ */
+/* $NetBSD: scif.c,v 1.9 2000/03/27 16:24:08 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -240,6 +240,7 @@ u_int scif_rbuf_lowat = (SCIF_RING_SIZE * 3) / 4;
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int scifconscflag = CONMODE;
+int scifisconsole = 0;
 
 #ifdef SCIFCN_SPEED
 unsigned int scifcn_speed = SCIFCN_SPEED;
@@ -516,8 +517,15 @@ scif_attach(parent, self, aux)
 
 	irq = ia->ia_irq;
 
-	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
-	SET(sc->sc_hwflags, SCIF_HW_CONSOLE);
+	if (scifisconsole) {
+		/* InitializeScif(scifcn_speed); */
+		SET(sc->sc_hwflags, SCIF_HW_CONSOLE);
+		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
+		printf("\n%s: console\n", sc->sc_dev.dv_xname);
+	} else {
+		InitializeScif(9600);
+		printf("\n");
+	}
 
 	callout_init(&sc->sc_diag_ch);
 
@@ -533,9 +541,7 @@ scif_attach(parent, self, aux)
 	}
 #endif
 
-	printf("\n");
-
-	printf("%s: console\n", sc->sc_dev.dv_xname);
+	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
 	tp = ttymalloc();
 	tp->t_oproc = scifstart;
@@ -1578,6 +1584,7 @@ scifcninit(cp)
 {
 
 	InitializeScif(scifcn_speed);
+	scifisconsole = 1;
 }
 
 #define scif_getc GetcScif
