@@ -1,4 +1,4 @@
-.\"  $NetBSD: od.1,v 1.14 2001/12/05 17:46:15 bjh21 Exp $
+.\"  $NetBSD: od.1,v 1.15 2001/12/05 18:07:50 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,9 @@
 .Op Fl aBbcDdeFfHhIiLlOovXx
 .Bk -words
 .Op Fl j Ar skip
+.Ek
+.Bk -words
+.Op Fl N Ar length
 .Ek
 .Bk -words
 .Op Fl t Ar type_string
@@ -176,6 +179,10 @@ Same as
 .It Fl l
 Same as
 .Fl I .
+.It Fl N Ar length
+Interpret only
+.Ar length
+bytes of input.
 .It Fl O
 .Em Four-byte octal display .
 Display the input offset in octal, followed by four
