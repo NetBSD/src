@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga,v 1.5 1994/05/25 07:59:02 chopps Exp $
+#	$Id: files.amiga,v 1.6 1994/05/25 21:54:09 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -77,7 +77,7 @@ file	arch/amiga/dev/zthreebus.c	zthreebus
 device	gvpbus at ztwobus {}
 file	arch/amiga/dev/gvpbus.c		gvpbus
 
-device	le at ztwobus
+device	le at ztwobus:	ifnet, ether
 file	arch/amiga/dev/if_le.c		le needs-count
 
 define	scsi {}
