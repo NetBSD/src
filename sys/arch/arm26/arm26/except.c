@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.11 2000/08/22 21:22:50 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.12 2000/08/25 01:04:07 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.11 2000/08/22 21:22:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.12 2000/08/25 01:04:07 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -708,7 +708,7 @@ setsoftast()
 extern int want_resched; /* XXX */
 
 void
-need_resched(void)
+need_resched(struct cpu_info *ci)
 {
 	want_resched = 1;
 	setsoftast();

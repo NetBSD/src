@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2000/07/03 17:56:06 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.24 2000/08/25 01:04:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,7 +184,7 @@ int	want_ast;
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci)	(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling
