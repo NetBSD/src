@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.302 2002/02/07 02:49:39 ross Exp $
+# $NetBSD: mi,v 1.303 2002/02/09 21:16:34 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -814,6 +814,8 @@
 ./usr/share/calendar/calendar.judaic		base-sysutil-share
 ./usr/share/calendar/calendar.music		base-sysutil-share
 ./usr/share/calendar/calendar.usholiday		base-sysutil-share
+./usr/share/dhcpd		base-dhcpd-bin
+./usr/share/dhcpd/pxe.defs	base-dhcpd-bin
 ./usr/share/dict		base-reference-share
 ./usr/share/dict/papers		base-reference-share
 ./usr/share/dict/special	base-reference-share
