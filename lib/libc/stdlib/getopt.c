@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,93 +32,86 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getopt.c	4.13 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: getopt.c,v 1.5 1993/10/12 21:52:45 jtc Exp $";
+static char sccsid[] = "@(#)getopt.c	8.2 (Berkeley) 4/2/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * get option letter from argument vector
- */
-int	opterr = 1;		/* if error message should be printed */
-int	optind = 1;		/* index into parent argv vector */
-int	optopt;			/* character checked for validity */
+int	opterr = 1,		/* if error message should be printed */
+	optind = 1,		/* index into parent argv vector */
+	optopt,			/* character checked for validity */
+	optreset;		/* reset getopt */
 char	*optarg;		/* argument associated with option */
 
-#define NOOPT	(int)':'	/* No option */
 #define	BADCH	(int)'?'
+#define	BADARG	(int)':'
 #define	EMSG	""
 
+/*
+ * getopt --
+ *	Parse argc/argv argument vector.
+ */
 int
 getopt(nargc, nargv, ostr)
 	int nargc;
 	char * const *nargv;
 	const char *ostr;
 {
+	extern char *__progname;
 	static char *place = EMSG;		/* option letter processing */
-	register char *oli;			/* option letter list index */
-	char *p;
+	char *oli;				/* option letter list index */
 
-	if (!*place) {				/* update scanning pointer */
+	if (optreset || !*place) {		/* update scanning pointer */
+		optreset = 0;
 		if (optind >= nargc || *(place = nargv[optind]) != '-') {
 			place = EMSG;
-			return(-1);
+			return (EOF);
 		}
 		if (place[1] && *++place == '-') {	/* found "--" */
 			++optind;
 			place = EMSG;
-			return(-1);
+			return (EOF);
 		}
-	}
-						/* option letter okay? */
+	}					/* option letter okay? */
 	if ((optopt = (int)*place++) == (int)':' ||
 	    !(oli = strchr(ostr, optopt))) {
 		/*
 		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
+		 * assume it means EOF.
 		 */
 		if (optopt == (int)'-')
-			return(-1);
+			return (EOF);
 		if (!*place)
 			++optind;
-		if (opterr && *ostr != ':') {
-			if (!(p = strrchr(*nargv, '/')))
-				p = *nargv;
-			else
-				++p;
-			(void)fprintf(stderr, "%s: illegal option -- %c\n",
-			    p, optopt);
-		}
-		return(BADCH);
+		if (opterr && *ostr != ':')
+			(void)fprintf(stderr,
+			    "%s: illegal option -- %c\n", __progname, optopt);
+		return (BADCH);
 	}
-
 	if (*++oli != ':') {			/* don't need argument */
 		optarg = NULL;
 		if (!*place)
 			++optind;
-	} else {				/* need an argument */
+	}
+	else {					/* need an argument */
 		if (*place)			/* no white space */
 			optarg = place;
 		else if (nargc <= ++optind) {	/* no arg */
 			place = EMSG;
-			if (opterr && *ostr != ':') {
-				if (!(p = strrchr(*nargv, '/')))
-					p = *nargv;
-				else
-					++p;
+			if (*ostr == ':')
+				return (BADARG);
+			if (opterr)
 				(void)fprintf(stderr,
 				    "%s: option requires an argument -- %c\n",
-				    p, optopt);
-			}
-			return((*ostr == ':') ? NOOPT : BADCH);
+				    __progname, optopt);
+			return (BADCH);
 		}
 	 	else				/* white space */
 			optarg = nargv[optind];
 		place = EMSG;
 		++optind;
 	}
-	return(optopt);				/* dump back option letter */
+	return (optopt);			/* dump back option letter */
 }
