@@ -1,4 +1,4 @@
-.\"	$NetBSD: system.3,v 1.10 1999/04/06 19:44:42 tron Exp $
+.\"	$NetBSD: system.3,v 1.11 2001/09/16 01:31:54 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,18 +74,18 @@ pointer,
 will return non-zero.
 Otherwise,
 .Fn system
-returns the termination status of the shell in the format specified by 
+returns the termination status of the shell in the format specified by
 .Xr waitpid 2 .
-.Sh RETURN VALUES 
+.Sh RETURN VALUES
 If a child process cannot be created, or the termination status of
-the shell cannot be obtained, 
+the shell cannot be obtained,
 .Fn system
 returns -1 and sets
 .Va errno
 to indicate the error.
-If execution of the shell fails, 
+If execution of the shell fails,
 .Fn system
-returns the termination status for a program that terminates with a call of 
+returns the termination status for a program that terminates with a call of
 .Fn exit 127 .
 .Sh SEE ALSO
 .Xr sh 1 ,
@@ -97,6 +97,6 @@ The
 .Fn system
 function
 conforms to
-.St -ansiC 
+.St -ansiC
 and
 .St -p1003.2-92 .
