@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 1998/09/30 18:38:57 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.75 1998/10/12 14:32:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1093,9 +1093,6 @@ syscall(code, tf, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
-#ifdef DIAGNOSTIC
-	extern struct pcb *cpcb;
-#endif
 
 #if defined(UVM)
 	uvmexp.syscalls++;
@@ -1106,9 +1103,9 @@ syscall(code, tf, pc)
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
 		panic("syscall");
-	if (cpcb != &p->p_addr->u_pcb)
+	if (cpuinfo.curpcb != &p->p_addr->u_pcb)
 		panic("syscall cpcb/ppcb");
-	if (tf != (struct trapframe *)((caddr_t)cpcb + USPACE) - 1)
+	if (tf != (struct trapframe *)((caddr_t)cpuinfo.curpcb + USPACE) - 1)
 		panic("syscall trapframe");
 #endif
 	sticks = p->p_sticks;
