@@ -94,8 +94,11 @@
 #ifndef SYMTAB_SPACE
 #define SYMTAB_SPACE 63000
 #endif
+
+#ifdef	SYMTAB_SPACE
 int db_symtabsize = SYMTAB_SPACE;
 char db_symtab[SYMTAB_SPACE] = { 1 };
+#endif
 
 X_db_sym_init(symtab, esymtab, name)
 	int *	symtab;		/* pointer to start of symbol table */
@@ -108,27 +111,33 @@ X_db_sym_init(symtab, esymtab, name)
 	register struct nlist	*sp;
 	register char *	strtab;
 	register int	strlen;
+	char *		estrtab;
 
+#ifdef SYMTAB_SPACE
 	if (*symtab < 4) {
 		printf ("DDB: no symbols\n");
 		return;
 	}
-
+#endif
+        
 	db_get_aout_symtab(symtab, sym_start, sym_end);
 
 	strtab = (char *)sym_end;
 	strlen = *(int *)strtab;
 
-#if 0
-	if (strtab + ((strlen + sizeof(int) - 1) & ~(sizeof(int)-1))
-	    != esymtab)
+#ifndef	SYMTAB_SPACE
+	estrtab = strtab + strlen;
+
+#define	round_to_size(x) \
+	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
+
+	if (round_to_size(estrtab) != round_to_size(esymtab)) {
 	{
 	    db_printf("[ %s symbol table not valid ]\n", name);
 	    return;
 	}
+#undef	round_to_size
 
-	db_printf("[ preserving %#x bytes of %s symbol table ]\n",
-		esymtab - (char *)symtab, name);
 #endif
 
 	for (sp = sym_start; sp < sym_end; sp++) {
@@ -144,7 +153,12 @@ X_db_sym_init(symtab, esymtab, name)
 	    }
 	}
 
-	db_add_symbol_table(sym_start, sym_end, name, (char *)symtab);
+	if (db_add_symbol_table(sym_start, sym_end, name, (char *)symtab) !=  -1) {
+#ifndef	SYMTAB_SPACE
+                db_printf("[ preserving %#x bytes of %s symbol table ]\n",
+                          esymtab - (char *)symtab, name);
+#endif
+        }
 }
 
 db_sym_t
@@ -345,84 +359,18 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 /*
  * Initialization routine for a.out files.
  */
-kdb_init()
+ddb_init()
 {
-#if 0
+#ifndef SYMTAB_SPACE
 	extern char	*esym;
 	extern int	end;
 
 	if (esym > (char *)&end) {
 	    X_db_sym_init((int *)&end, esym, "netbsd");
 	}
-#endif
-
+#else
 	X_db_sym_init (db_symtab, 0, "netbsd");
-}
-
-#if 0
-/*
- * Read symbol table from file.
- * (should be somewhere else)
- */
-#include <boot_ufs/file_io.h>
-#include <vm/vm_kern.h>
-
-read_symtab_from_file(fp, symtab_name)
-	struct file	*fp;
-	char *		symtab_name;
-{
-	vm_size_t	resid;
-	kern_return_t	result;
-	vm_offset_t	symoff;
-	vm_size_t	symsize;
-	vm_offset_t	stroff;
-	vm_size_t	strsize;
-	vm_size_t	table_size;
-	vm_offset_t	symtab;
-
-	if (!get_symtab(fp, &symoff, &symsize)) {
-	    boot_printf("[ error %d reading %s file header ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	stroff = symoff + symsize;
-	result = read_file(fp, (vm_offset_t)stroff,
-			(vm_offset_t)&strsize, sizeof(strsize), &resid);
-	if (result || resid) {
-	    boot_printf("[ no valid symbol table present for %s ]\n",
-		symtab_name);
-		return;
-	}
-
-	table_size = sizeof(int) + symsize + strsize;
-	table_size = (table_size + sizeof(int)-1) & ~(sizeof(int)-1);
-
-	symtab = kmem_alloc_wired(kernel_map, table_size);
-
-	*(int *)symtab = symsize;
-
-	result = read_file(fp, symoff,
-			symtab + sizeof(int), symsize, &resid);
-	if (result || resid) {
-	    boot_printf("[ error %d reading %s symbol table ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	result = read_file(fp, stroff,
-			symtab + sizeof(int) + symsize, strsize, &resid);
-	if (result || resid) {
-	    boot_printf("[ error %d reading %s string table ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	X_db_sym_init((int *)symtab,
-			(char *)(symtab + table_size),
-			symtab_name);
-	
-}
 #endif
+}
 
 #endif	/* DB_NO_AOUT */
