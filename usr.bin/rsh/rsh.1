@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.13 2003/04/07 01:46:41 hubertf Exp $
+.\"	$NetBSD: rsh.1,v 1.14 2003/04/07 06:04:09 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,6 @@
 .Op Fl p Ar port
 .Ar host
 .Op command
-
 .Nm
 .Op Fl Kdnx
 .Op Fl k Ar realm
@@ -59,7 +58,7 @@
 executes
 .Ar command
 on
-.Ar host  .
+.Ar host .
 .Pp
 .Nm
 copies its standard input to the remote command, the standard
@@ -70,20 +69,20 @@ command;
 .Nm
 normally terminates when the remote command does.
 The options are as follows:
-.Bl -tag -width flag
-.It Fl K
-The
-.Fl K
-option turns off all Kerberos authentication.
+.Bl -tag -width XlXusernameX
 .It Fl d
 The
 .Fl d
 option turns on socket debugging (using
-.Xr setsockopt  2  )
+.Xr setsockopt 2 )
 on the
 .Tn TCP
 sockets used for communication with the remote host.
-.It Fl k
+.It Fl K
+The
+.Fl K
+option turns off all Kerberos authentication.
+.It Fl k Ar realm
 The
 .Fl k
 option causes
@@ -91,17 +90,16 @@ option causes
 to obtain tickets for the remote host in
 .Ar realm
 instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
-.It Fl l
+.Xr krb_realmofhost 3 .
+.It Fl l Ar username
 By default, the remote username is the same as the local username.
 The
 .Fl l
 option or the
-.Pa username@host
+.Ar username@host
 format allow the remote name to be specified.
-Kerberos authentication is used, and authorization is determined
-as in
-.Xr rlogin  1  .
+Kerberos authentication is used, and authorization is determined as in
+.Xr rlogin 1 .
 .It Fl n
 The
 .Fl n
@@ -110,19 +108,20 @@ option redirects input from the special device
 (see the
 .Sx BUGS
 section of this manual page).
-.It Fl p
+.It Fl p Ar port
 Uses the given
 .Pa port
-instead of the one assigned to the service "shell".
+instead of the one assigned to the service
+.Dq shell .
 May be given either as symbolic name or as number.
 If no command is given, note that 
-.Nm rlogin
+.Xr rlogin 1
 is started, which may need a different daemon 
-.Nm ( rlogind ,
+.No ( Xr rlogind 8
 instead of 
-.Nm rshd )
-running on the server; You want to pass the 
-.Nm rshd 's
+.Xr rshd 8 )
+running on the server; you want to pass the 
+.Xr rshd 8
 port number in that case.
 .It Fl x
 The
@@ -136,7 +135,7 @@ This may introduce a significant delay in response time.
 If no
 .Ar command
 is specified, you will be logged in on the remote host using
-.Xr rlogin  1  .
+.Xr rlogin 1 .
 .Pp
 Shell metacharacters which are not quoted are interpreted on local machine,
 while quoted metacharacters are interpreted on the remote machine.
@@ -158,9 +157,13 @@ to
 .Ar other_remotefile .
 .\" .Pp
 .\" Many sites specify a large number of host names as commands in the
-.\" directory /usr/hosts.
+.\" directory
+.\" .Pa /usr/hosts .
 .\" If this directory is included in your search path, you can use the
-.\" shorthand ``host command'' for the longer form ``rsh host command''.
+.\" shorthand
+.\" .Dq host command
+.\" for the longer form
+.\" .Dq rsh host command .
 .Sh FILES
 .Bl -tag -width /etc/hosts -compact
 .It Pa /etc/hosts
@@ -179,7 +182,7 @@ command appeared in
 .Bx 4.2 .
 .Sh BUGS
 If you are using
-.Xr csh  1
+.Xr csh 1
 and put a
 .Nm
 in the background without redirecting its input away from the terminal,
@@ -192,15 +195,14 @@ using the
 .Fl n
 option.
 .Pp
-You cannot run an interactive command
-(like
-.Xr rogue  6
+You cannot run an interactive command (like
+.Xr rogue 6
 or
-.Xr vi  1  )
+.Xr vi 1 )
 using
-.Nm  ;
+.Nm ;
 use
-.Xr rlogin  1
+.Xr rlogin 1
 instead.
 .Pp
 Stop signals stop the local
