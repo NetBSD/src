@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2001/08/20 12:19:44 martin Exp $
+# $NetBSD: Makefile,v 1.12 2001/10/05 01:17:29 jmc Exp $
 # Build a smaller dd (i.e. for boot media)
 
 PROG=	dd
@@ -11,7 +11,7 @@ SRCS=	args.c conv.c dd.c misc.c position.c
 
 CPPFLAGS+= -DNO_CONV -I${SRCDIR}
 .if ${MACHINE_ARCH} != "sparc64"
-COPTS+= -Os
+DBG= -Os
 .endif
 LDSTATIC?=-static
 
