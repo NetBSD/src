@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.71 2003/11/16 18:18:59 tsutsui Exp $	*/
+/*	$NetBSD: iommu.c,v 1.72 2004/02/13 22:47:04 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.71 2003/11/16 18:18:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.72 2004/02/13 22:47:04 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -318,7 +318,7 @@ iommu_remove(is, va, len)
 		panic("iommu_remove: va 0x%lx + len 0x%lx wraps",
 		      (long) va, (long) len);
 	if (len & ~0xfffffff)
-		panic("iommu_remove: rediculous len 0x%lx", (u_long)len);
+		panic("iommu_remove: ridiculous len 0x%lx", (u_long)len);
 #endif
 
 	va = trunc_page(va);
