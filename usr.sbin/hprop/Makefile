@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:40 thorpej Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2000/08/06 21:17:39 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
