@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.61 2003/08/07 10:04:39 agc Exp $	*/
+/*	$NetBSD: savecore.c,v 1.61.2.1 2004/07/14 07:14:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.61 2003/08/07 10:04:39 agc Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.61.2.1 2004/07/14 07:14:50 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 off_t	dumplo;				/* where dump starts on dumpdev */
 u_int32_t dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
+off_t dumpbytes;			/* in bytes */
 
 const char	*kernel;		/* name of used kernel */
 char	*dirname;			/* directory to save dumps in */
@@ -448,7 +449,7 @@ dump_exists(void)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
-	dumpsize *= getpagesize();
+	dumpbytes = (off_t)dumpsize * getpagesize();
 
 	/*
 	 * Return zero if core dump doesn't seem to be there, and note
@@ -535,7 +536,7 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	/* Seek to the start of the core. */
 	Lseek(ifd, dumplo, SEEK_SET);
 
-	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
+	if (kvm_dump_wrtheader(kd_dump, fp, (int32_t)dumpbytes) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
 		    kvm_geterr(kd_dump));
 		exit(1);
@@ -544,12 +545,12 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	/* Copy the core file. */
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    compress ? "compressed " : "", path);
-	for (; dumpsize > 0; dumpsize -= nr) {
+	for (; dumpbytes > (off_t)0; dumpbytes -= (off_t)nr) {
 		char nbuf[7];
-		humanize_number(nbuf, 7, dumpsize, "", HN_AUTOSCALE, 0);
+		humanize_number(nbuf, 7, dumpbytes, "", HN_AUTOSCALE, 0);
 		(void)printf("%7s\r", nbuf);
 		(void)fflush(stdout);
-		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
+		nr = read(ifd, buf, MIN(dumpbytes, sizeof(buf)));
 		if (nr <= 0) {
 			if (nr == 0)
 				syslog(LOG_WARNING,
@@ -729,7 +730,7 @@ check_space(void)
 		(void)fclose(fp);
 	}
 
-	needed = (dumpsize + kernelsize) / 1024;
+	needed = (dumpbytes + kernelsize) / 1024;
  	if (minfree > 0 && spacefree - needed < minfree) {
 		syslog(LOG_WARNING,
 		    "no dump, not enough free space in %s", dirname);
