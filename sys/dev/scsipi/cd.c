@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.145 2001/04/25 17:53:38 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.146 2001/04/28 04:11:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -708,13 +708,14 @@ cdstart(periph)
 
 		/*
 		 * Figure out what flags to use.
-		 * XXX Need a B_ORDERED.
 		 */
 		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
 		if (bp->b_flags & B_READ)
-			flags |= XS_CTL_DATA_IN | XS_CTL_SIMPLE_TAG;
+			flags |= XS_CTL_DATA_IN;
+		if (bp->b_flags & B_ORDERED)
+			flags |= XS_CTL_ORDERED_TAG;
 		else
-			flags |= XS_CTL_DATA_OUT | XS_CTL_ORDERED_TAG;
+			flags |= XS_CTL_SIMPLE_TAG;
 
 		/*
 		 * Call the routine that chats with the adapter.
