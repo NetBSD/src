@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 1999/01/11 20:58:46 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.135 1999/01/16 20:43:22 chuck Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3179,9 +3179,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte4(p, getpte4(p) & mask);
 	}
-#if defined(MACHINE_NEW_NONCONTIG)
 	pmap_page_upload();
-#endif
 }
 #endif
 
@@ -3541,9 +3539,7 @@ pmap_bootstrap4m(void)
 	 */
 	mmu_install_tables(&cpuinfo);
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	pmap_page_upload();
-#endif
 }
 
 static u_long prom_ctxreg;
