@@ -1,0 +1,94 @@
+#	$NetBSD: GENERIC,v 1.1 2001/02/04 18:32:10 briggs Exp $
+#
+# GENERIC for Motorola Sandpoint
+#
+
+include "arch/sandpoint/conf/std.sandpoint"
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+maxusers	32
+
+#options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
+#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
+# HMAC key to be used for debugging sessions
+#options 	IPKDBKEY="\"HMAC pass phrase text\""
+#options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
+makeoptions	DEBUG="-g"
+
+options 	DEBUG
+options 	DIAGNOSTIC
+options 	TRAP_PANICWAIT
+options 	DDB
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	KTRACE
+
+options 	TCP_COMPAT_42
+options 	COMPAT_43
+options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
+
+file-system 	FFS
+file-system 	MFS
+file-system 	NFS
+file-system 	CD9660
+file-system 	MSDOSFS
+file-system 	FDESC
+file-system 	KERNFS
+file-system 	NULLFS
+file-system 	OVERLAY
+file-system 	PORTAL
+file-system 	PROCFS
+file-system 	UMAPFS
+file-system 	UNION
+
+options 	SOFTDEP         # FFS soft updates support.
+
+options 	INET
+
+options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+
+config		netbsd	root on ? type ?
+
+pseudo-device	vnd		4
+pseudo-device	loop
+pseudo-device	bpfilter	8	# packet filter
+pseudo-device	pty		64	# pseudo-terminals
+
+# random number generator pseudo-device
+pseudo-device	rnd			# /dev/random and in-kernel generator
+
+#
+# device
+#
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+
+options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+
+mainbus0 at root
+
+pci*	at mainbus0 bus ?
+
+pchb*	at pci? dev ? function ?	# PCI host bridge
+pcib*	at pci? dev ? function ?	# Winbond 83c553 PCI-ISA bridges
+
+isa*	at pcib?			# ISA on PCI-ISA bridge
+
+#pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
+
+vga*	at pci?
+wsdisplay*	at vga? console ?
+
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
+
+ukphy*	at mii? phy ?			# generic unknown PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3

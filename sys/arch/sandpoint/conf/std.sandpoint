@@ -1,0 +1,10 @@
+#	$NetBSD: std.sandpoint,v 1.1 2001/02/04 18:32:11 briggs Exp $
+#
+# standard, required NetBSD/sandpoint 'options'
+
+machine		sandpoint powerpc
+
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+options		OPENPIC

@@ -1,0 +1,104 @@
+#	$NetBSD: files.sandpoint,v 1.1 2001/02/04 18:32:11 briggs Exp $
+#
+# Motorola's "SandPoint" evaluation board's specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	arch/sandpoint/sandpoint/autoconf.c
+file	arch/sandpoint/sandpoint/bus_dma.c
+file	arch/sandpoint/sandpoint/clock.c
+file	arch/sandpoint/sandpoint/conf.c
+file	arch/sandpoint/sandpoint/disksubr.c		disk
+file	arch/sandpoint/sandpoint/extintr.c
+file	arch/sandpoint/sandpoint/machdep.c
+file	arch/sandpoint/sandpoint/procfs_machdep.c	procfs
+
+# General files
+file	dev/cons.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+major	{wd = 0}
+
+#
+# Memory Disk for install floppy
+#
+file dev/md_root.c   memory_disk_hooks 
+major   {md = 17}
+
+#
+# RAIDframe
+#
+major	{raid = 18}
+
+#
+# System bus types
+#
+define mainbus { }
+device	mainbus: isabus, pcibus, mainbus
+attach	mainbus at root
+file	arch/sandpoint/sandpoint/mainbus.c	mainbus
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+file	arch/sandpoint/pci/pci_machdep.c	pci
+
+# PCI-Host bridge chipsets
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/sandpoint/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/sandpoint/pci/pcib.c		pcib
+
+# network devices MII bus
+include "dev/mii/files.mii"
+
+#
+# ISA and mixed ISA+PCI drivers
+#
+
+include "dev/isa/files.isa"
+major	{mcd = 7}
+#major	{scd = 15}
+
+file	arch/sandpoint/isa/isa_machdep.c	isa
+file	arch/sandpoint/isa/isadma_machdep.c	isa
+
+# PC clock
+file	arch/sandpoint/isa/isaclock.c		isa
+
+include	"dev/wscons/files.wscons"
+
+# Floppy disk controller
+#device	fdc {drive = -1}: isadma
+#file	dev/isa/fd.c			fdc needs-flag
+#
+#attach	fdc at isa with fdc_isa
+#file	dev/isa/fdc_isa.c		fdc_isa
+#
+#device	fd: disk
+#attach	fd at fdc
+#major	{fd = 2}
+
+# ISA Plug 'n Play support
+file	arch/sandpoint/isa/isapnp_machdep.c		isapnp
