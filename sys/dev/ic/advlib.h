@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.7 1998/12/09 08:47:17 thorpej Exp $        */
+/*      $NetBSD: advlib.h,v 1.8 1999/02/25 20:21:33 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -55,7 +55,8 @@
 #ifndef	_ADVANSYS_NARROW_LIBRARY_H_
 #define	_ADVANSYS_NARROW_LIBRARY_H_
 
-#include <dev/ic/adv.h>
+
+struct adv_ccb;
 
 /******************************************************************************/
 
@@ -477,7 +478,7 @@ typedef struct asc_scisq_1
 
 typedef struct asc_scisq_2
 {
-	u_int32_t	ccb_ptr;	/* pointer to our CCB */
+	u_int32_t	ccb_ptr;	/* physical pointer to our CCB */
 	u_int8_t	target_ix;	/* combined TID and LUN */
 	u_int8_t	flag;
 	u_int8_t	cdb_len;	/* bytes of Command Descriptor Block */
@@ -828,6 +829,10 @@ typedef struct ext_msg
 #define ASC_MAX_SCSI_RESET_WAIT	30
 
 
+#define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
+#define	CCB_HASH_SHIFT	9
+#define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
+
 typedef struct asc_softc
 {
 	struct device		sc_dev;
@@ -839,6 +844,8 @@ typedef struct asc_softc
 	void			*sc_ih;
 
 	struct adv_control	*sc_control; /* control structures */
+
+	struct adv_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;
 	struct scsipi_link	sc_link;     /* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
@@ -1329,7 +1336,7 @@ int AscFindSignature __P((bus_space_tag_t, bus_space_handle_t));
 int AscISR __P((ASC_SOFTC *));
 int AscExeScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *));
 void AscInquiryHandling __P((ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *));
-int AscAbortCCB __P((ASC_SOFTC *, u_int32_t));
+int AscAbortCCB __P((ASC_SOFTC *, struct adv_ccb *));
 int AscResetBus __P((ASC_SOFTC *));
 int AscResetDevice __P((ASC_SOFTC *, u_char));
 
