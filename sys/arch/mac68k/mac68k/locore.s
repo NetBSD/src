@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1995/06/30 05:23:03 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1995/07/08 04:25:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -807,7 +807,6 @@ _esym:		.long	0
 	.globl	_edata
 	.globl	_etext
 	.globl	start
-	.globl _gray_bar
 	.globl _videoaddr, _videorowbytes
 	.globl _videobitdepth
 	.globl _machineid
@@ -849,7 +848,6 @@ start:
 
 	.globl	_initenv, _getenvvars	| in machdep.c
 	.globl	_setmachdep		| in machdep.c
-	.globl	_printenvvars
 
 	/* Initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space

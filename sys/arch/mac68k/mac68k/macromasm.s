@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.1 1994/12/03 23:35:04 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.2 1995/07/08 04:25:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -104,7 +104,6 @@
 
 	.text
 	.even
-	.global	_gray_bar2
 	.global _Debugger
 	.global	_printf
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.22 1995/07/01 16:35:16 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.23 1995/07/08 04:25:23 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -350,22 +350,20 @@ via_shutdown()
 }
 
 int
-rbv_vidstatus(void)
+rbv_vidstatus()
 {
 	int montype;
 
+/*
 	montype = via_reg(VIA2, rMonitor) & RBVMonitorMask;
 	if(montype == RBVMonIDNone)
 		montype = RBVMonIDOff;
-
-   ddprintf("Monitor type: %d\n", montype);
-
-   return(0);
-	return(montype);
+*/
+	return(0);
 }
 
 static int
-scsi_irq_intr(void)
+scsi_irq_intr()
 {
 #if NNCR96SCSI
 	if (mac68k_machine.scsi96) {
@@ -381,7 +379,7 @@ scsi_irq_intr(void)
 }
 
 static int
-scsi_drq_intr(void)
+scsi_drq_intr()
 {
 #if NNCR96SCSI
 	if (mac68k_machine.scsi96) {

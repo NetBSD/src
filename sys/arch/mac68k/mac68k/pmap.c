@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1995/06/22 03:08:29 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1995/07/08 04:25:18 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -232,7 +232,6 @@ extern vm_offset_t pager_sva, pager_eva;
 
 #define pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
 
-void print_pmap(pmap_t pmap);  /* LAK */
 int pmap_page_index(vm_offset_t pa);
 
 /*
@@ -2519,53 +2518,6 @@ pmap_check_wiring(str, va)
 		       str, va, entry->wired_count, count);
 }
 #endif
-
-/* LAK: */
-void print_pmap(pmap_t pmap)
-{
-	register pt_entry_t *pte;
-	vm_offset_t opa, va;
-	int i;
-
-	printf ("print_pmap(): [stab=%d,ptab=%d] ==\n",(int)pmap->pm_stab,(int)pmap->pm_ptab);
-	i = 0;
-	for (va = 0; va <= 4000000; va += 4096)
-	{
-		pte = pmap_pte(pmap, va);
-		opa = pmap_pte_pa(pte);
-		if (opa != 0)
-		{
-			printf ("%d -> %d (%d), ", (int)va, (int)opa, (int)pte);
-			if (++i == 2)
-			{
-				printf ("\n");
-				i=0;
-			}
-		}
-	}
-	printf ("\n\n");
-}
-
-pmap_print_debug()
-{
-  printf ("pmap_print_debug()\n");
-  printf ("System segment table:\n");
-  hex_dump((int)Sysseg,(int)32);
-  printf ("System page tables (through map):\n");
-  hex_dump((int)Sysmap,(int)32);
-  printf ("System page tables (direct):\n");
-  hex_dump((int)Sysseg+4096,(int)32);
-  printf ("System page table map:\n");
-  hex_dump(*((int *)Sysseg+2) & PG_FRAME,(int)32);
-}
-
-pmap_check_stab()
-{
-   if(pmap_kernel()->pm_stab != Sysseg){
-      printf("Uh-oh.  pmap_kernel()->pm_stab != Sysseg\n");
-      panic("Sysseg!");
-   }
-}
 
 /*
  * LAK: These functions are from NetBSD/i386 and are used for
