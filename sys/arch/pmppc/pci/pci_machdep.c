@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2003/11/07 17:00:19 augustss Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2003/11/07 17:12:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/11/07 17:00:19 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2003/11/07 17:12:56 augustss Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,6 +270,14 @@ void
 pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
 {
-	/*printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d\n", bus, dev, pin, swiz);*/
-	*iline = (swiz + dev) & 3;
+	int line;
+
+	line = (swiz + dev) & 3;
+	/* XXX UGLY UGLY, figure out the real interrupt mapping */
+	if (bus==3&&dev==2&&pin==1&&swiz==3) line=2;
+/*
+	printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d => line=%d\n",
+		bus, dev, pin, swiz, line);
+*/
+	*iline = line;
 }
