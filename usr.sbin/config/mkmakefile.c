@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.52 2001/12/09 16:04:04 atatat Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.53 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 #include "sem.h"
 
 /*

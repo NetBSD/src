@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.20 2002/01/29 10:20:31 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#define HAVE_FTS_H 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
@@ -43,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.20 2002/01/29 10:20:31 tv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,10 +59,8 @@ __RCSID("$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $");
 #include <sys/wait.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <fts.h>
 #include <locale.h>
 #include <paths.h>
 #include <signal.h>
@@ -64,6 +69,13 @@ __RCSID("$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
+#if HAVE_FTS_H
+#include <fts.h>
+#endif
 
 typedef struct manpagestruct manpage;
 struct manpagestruct {

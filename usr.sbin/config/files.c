@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.13 2000/10/02 19:48:34 cgd Exp $	*/
+/*	$NetBSD: files.c,v 1.14 2002/01/29 10:20:36 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 
 extern const char *yyfile;
 

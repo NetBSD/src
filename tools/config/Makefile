@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:40 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/29 10:20:33 tv Exp $
 
 HOSTPROGNAME=	nbconfig
 HOST_SRCDIR=	usr.sbin/config
+
+HOST_CPPFLAGS+=	-DMAKE_BOOTSTRAP
 
 .include "${.CURDIR}/../Makefile.host"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.3 1999/08/19 02:27:02 hubertf Exp $
+#	$NetBSD: Makefile.boot,v 1.4 2002/01/29 10:20:36 tv Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 #
 # a very simple makefile...
@@ -39,7 +39,7 @@ lex.yy.o : lex.yy.c gram.h
 lex.yy.c : scan.l
 	${LEX} scan.l
 
-${OBJS} : config.h
+${OBJS} : defs.h
 
 y.tab.o mkmakefile.o mkswap.o sem.o : sem.h
 lex.yy.o : gram.h

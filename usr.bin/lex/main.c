@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.13 2000/10/11 14:46:10 is Exp $ */
+/* $NetBSD: main.c,v 1.14 2002/01/29 10:20:34 tv Exp $ */
 
 
 #include "flexdef.h"
@@ -242,7 +242,7 @@ void check_options()
 
 	if ( C_plus_plus && yytext_is_array )
 		{
-		warn( _( "%array incompatible with -+ option" ) );
+		lwarn( _( "%array incompatible with -+ option" ) );
 		yytext_is_array = false;
 		}
 
