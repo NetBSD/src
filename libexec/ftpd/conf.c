@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1997/06/18 19:05:47 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1997/06/22 22:33:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.2 1997/06/18 19:05:47 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.3 1997/06/22 22:33:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -406,7 +406,7 @@ do_conversion(fname)
 	struct ftpconv	*cp;
 	struct stat	 st;
 	int		 o_errno;
-	char		*base;
+	char		*base = NULL;
 
 	o_errno = errno;
 	for (cp = curclass.conversions; cp != NULL; cp = cp->next) {
