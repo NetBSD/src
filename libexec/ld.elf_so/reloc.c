@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.31 2000/07/26 02:07:34 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.32 2000/08/07 01:47:04 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -734,9 +734,8 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 #endif /* __arch64__ */
 #endif /* __sparc__ */
 #if defined(__vax__)
-			obj->pltgot[1] = (Elf_Addr) obj->pltgot;
+			obj->pltgot[1] = (Elf_Addr) obj;
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
-			obj->pltgot[3] = (Elf_Addr) obj;
 #endif
 		}
 	}
