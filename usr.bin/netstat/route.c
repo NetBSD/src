@@ -85,6 +85,34 @@ struct bits {
 };
 
 /*
+ * Print address family.
+ */
+void
+p_proto(proto)
+	int	proto;
+{
+	switch (proto)
+	{
+	case AF_INET:
+		printf("inet");
+		break;
+	case AF_NS:
+		printf("ns");
+		break;
+	case AF_ISO:
+		printf("iso");
+		break;
+	case AF_CCITT:
+		printf("ccitt");
+		break;
+	default:
+		printf("%d", proto);
+		break;
+	}
+}
+
+
+/*
  * Print routing tables.
  */
 routepr(hostaddr, netaddr, hashsizeaddr, treeaddr)
@@ -169,8 +197,9 @@ off_t rtree;
 				p_tree(head.rnh_treetop);
 			}
 		} else if (af == AF_UNSPEC || af == head.rnh_af) {
-			printf("\nRoute Tree for Protocol Family %d:\n",
-								head.rnh_af);
+			printf("\nRoute Tree for Protocol Family ");
+			p_proto(head.rnh_af);
+			printf(":\n");
 			do_rtent = 1;
 			p_tree(head.rnh_treetop);
 		}
@@ -378,7 +407,7 @@ register struct rtentry *rt;
 	struct ifnet ifnet;
 
 	p_sockaddr(kgetsa(rt_key(rt)), rt->rt_flags, 16);
-	p_sockaddr(kgetsa(rt->rt_gateway), 0, 18);
+	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, 18);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_ifp == 0) {
