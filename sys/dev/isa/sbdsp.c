@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.9 1995/04/26 21:46:10 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.10 1995/05/08 17:28:51 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.9 1995/04/26 21:46:10 brezak Exp $
+ *	$Id: sbdsp.c,v 1.10 1995/05/08 17:28:51 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -1575,7 +1575,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    break;
 	case SB_DAC_PORT:
 	    dip->type = AUDIO_MIXER_VALUE;
-	    dip->mixer_class = SB_INPUT_CLASS;
+	    dip->mixer_class = SB_OUTPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
 	    dip->next = AUDIO_MIXER_LAST;
 	    strcpy(dip->label.name, AudioNdac);
@@ -1593,7 +1593,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    break;
 	case SB_FM_PORT:
 	    dip->type = AUDIO_MIXER_VALUE;
-	    dip->mixer_class = SB_INPUT_CLASS;
+	    dip->mixer_class = SB_OUTPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
 	    dip->next = AUDIO_MIXER_LAST;
 	    strcpy(dip->label.name, "fmsynth");	/* XXX move to audioio.h */
@@ -1604,7 +1604,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	    dip->type = AUDIO_MIXER_VALUE;
 	    dip->mixer_class = SB_OUTPUT_CLASS;
 	    dip->prev = AUDIO_MIXER_LAST;
-	    dip->next = SB_OUTPUT_MODE;
+	    dip->next = /*TREBLE, BASS not handled, nor is SB_OUTPUT_MODE*/SB_RECORD_SOURCE;
 	    strcpy(dip->label.name, AudioNvolume);
 	    dip->un.v.num_channels = 2;
 	    strcpy(dip->un.v.units.name, AudioNvolume);
