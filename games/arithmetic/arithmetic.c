@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.7 1997/10/09 23:07:02 lukem Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.8 1997/10/10 11:49:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.7 1997/10/09 23:07:02 lukem Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.8 1997/10/10 11:49:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ main(argc, argv)
 	extern int optind;
 	int ch, cnt;
 
-	while ((ch = getopt(argc, argv, "r:o:")) != EOF)
+	while ((ch = getopt(argc, argv, "r:o:")) != -1)
 		switch(ch) {
 		case 'o': {
 			char *p;
