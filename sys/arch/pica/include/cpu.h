@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.3 1996/03/31 04:16:46 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1996/08/11 23:30:25 jonathan Exp $	*/
 
 #include <mips/cpu.h>
+#include <mips/cpuregs.h>
 
 /*
  * definitions of cpu-dependent requirements

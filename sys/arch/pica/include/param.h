@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1996/07/16 23:24:28 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1996/08/11 23:30:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,11 @@
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
+
+/*
+ * Machine-dependent constants (VM, etc) common across MIPS cpus
+ */
+#include <mips/mips_param.h>
 
 /*
  * Machine dependent constants for Acer Labs PICA_61.
@@ -145,7 +150,7 @@
 #define pica_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
 	   (*Mach_spltty)(), (*Mach_splclock)(), (*Mach_splstatclock)();
 #define	splnet()	((*Mach_splnet)())
@@ -161,7 +166,7 @@ extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
  */
 extern	int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while ((N -= 3) > 0); }
-#endif
+#endif /*!_LOCORE */
 
 #else /* !_KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
