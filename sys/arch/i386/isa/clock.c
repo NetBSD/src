@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 1998/08/15 03:02:38 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.53 1998/10/06 05:52:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -621,7 +621,7 @@ resettodr()
 	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
 		n -= i;
 
-	rtclk[MC_YEAR] = dectohexdec(j - 1900);
+	rtclk[MC_YEAR] = dectohexdec((j - 1900)%100);
 
 	if (i == 366)
 		month[1] = 29;
