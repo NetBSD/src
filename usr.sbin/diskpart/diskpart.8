@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)diskpart.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: diskpart.8,v 1.6 1999/03/22 18:43:51 garbled Exp $
+.\"	$NetBSD: diskpart.8,v 1.7 2002/01/19 03:10:06 wiz Exp $
 .\"
 .Dd June 6, 1993
 .Dt DISKPART 8
@@ -77,7 +77,7 @@ for a bad sector forwarding table, although this space
 is not reflected in the tables produced.  The space reserved
 is one track for the replicated copies of the table and
 sufficient tracks to hold a pool of 126 sectors to which bad sectors
-are mapped.  For more information, see 
+are mapped.  For more information, see
 .Xr bad144 8 .
 The
 .Fl s
@@ -123,12 +123,17 @@ e	unused	55936	55936	307200
 h	unused	unused	291346	291346
 .El
 .Pp
-If an unknown disk type is specified, 
+If an unknown disk type is specified,
 .Nm
 will prompt for the required disk geometry information.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr bad144 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 Most default partition sizes are based on historical artifacts
 (like the RP06), and may result in unsatisfactory layouts.
@@ -137,8 +142,3 @@ When using the
 .Fl d
 flag, alternative disk names are not included
 in the output.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .
