@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.26 1998/03/01 02:25:11 fvdl Exp $	*/
+/*	$NetBSD: denode.h,v 1.27 1998/06/25 22:21:54 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -263,12 +263,7 @@ int	msdosfs_getattr		__P((void *));
 int	msdosfs_setattr		__P((void *));
 int	msdosfs_read		__P((void *));
 int	msdosfs_write		__P((void *));
-#ifdef NFSSERVER
-int	lease_check		__P((void *));
-#define	msdosfs_lease_check lease_check
-#else
-#define	msdosfs_lease_check genfs_nullop
-#endif
+#define	msdosfs_lease_check	genfs_lease_check
 int	msdosfs_ioctl		__P((void *));
 #define	msdosfs_poll		genfs_poll
 #define	msdosfs_revoke		genfs_revoke

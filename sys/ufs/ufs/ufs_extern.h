@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.13 1998/06/24 20:58:49 sommerfe Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.14 1998/06/25 22:23:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,12 +66,7 @@ int	ufs_getattr	__P((void *));
 int	ufs_inactive	__P((void *));
 int	ufs_ioctl	__P((void *));
 int	ufs_islocked	__P((void *));
-#ifdef NFSSERVER
-int	lease_check	__P((void *));
-#define	ufs_lease_check lease_check
-#else
-#define	ufs_lease_check genfs_nullop
-#endif
+#define	ufs_lease_check genfs_lease_check
 int	ufs_link	__P((void *));
 int	ufs_lock	__P((void *));
 int	ufs_lookup	__P((void *));
