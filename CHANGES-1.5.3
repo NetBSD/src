@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.6 2001/10/26 18:16:34 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.7 2001/10/27 21:05:06 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -225,6 +225,7 @@ sys/dev/eisa/eisadevs.h				regenerate
 sys/dev/eisa/eisadevs_data.h			regenerate
 sys/dev/eisa/files.eisa				1.22
 sys/dev/i2o/Makefile				1.1-1.4 (new)
+sys/dev/i2o/files.i2o				1.1-1.3 (new)
 sys/dev/i2o/i2o.h				1.1-1.8 (new)
 sys/dev/i2o/iop.c				1.1-1.16 (new, via patch)
 sys/dev/i2o/iopio.h				1.1 (new)
@@ -267,10 +268,6 @@ sys/sys/scsiio.h				1.9
 
   Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
 
-sys/dev/i2o/files.i2o				1.1-1.3 (new)
-
-  Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
-
 sys/dev/ic/Makefile				patch
 sys/dev/pci/Makefile				patch
 
@@ -287,3 +284,98 @@ lib/libc/gen/getcap.c				1.34
 gnu/libexec/uucp/uuxqt/uuxqt.c			1.4
 
   Pay more attention to commandline parsing of long options.
+
+usr.sbin/vipw/vipw.8				1.8
+
+  Correct reference to user(8).
+
+sys/miscfs/specfs/spec_vnops.c			1.59 via patch
+
+  Change spec_{read,write}() to specify block number in units of
+  DEV_BSIZE instead of the device's sector size.  With this,
+  /dev/rcd0a and /dev/cd0a returns the same data.  Fixes PR#3261
+  and PR#14026.
+
+etc/defaults/rc.conf				1.22 via patch
+
+  By default issue Router Solicitation requests on all interfaces
+  if someone sets rtsol=YES.
+
+sys/dev/pci/if_sip.c				patch
+
+  Adjust receive and transmit descriptor list structures,
+  sip_start(), and sip_txintr() to be more similar to the current
+  development version.  Fixes periodic device timeouts.
+
+usr.bin/rpcgen/rpc_clntout.c			1.11 via patch
+
+  Remove an extraneous opening brace from newstyle output.
+  Fixes PR#14066.
+
+crypto/dist/ssh/key.c				1.8
+
+  Fix ssh v2 access control vulnerability.
+
+lib/libc/db/recno/rec_get.c			1.11
+
+  Use a ptrdiff_t instead of an indx_t to hold a difference between
+  a pair of pointers, since the latter can be a 16 bit data type.
+  The effects are that recno databases can now handle records larger
+  than 64KB, and nvi can now handle files with lines longer than
+  64KB.
+
+lib/libc/gen/fstab.c				1.23
+
+  Two fixes to fstabscan():
+   o if fs_type is NULL, warn in stead of crashing
+   o clear _fs_fstab before each use
+  Fixes PR#13787 and PR#14117.
+
+gnu/usr.bin/send-pr/Makefile			1.26 via patch
+
+  Get the information for the "Release" field via running "uname"
+  on the host which is doing the filing.  Fixes PR#14217, PR#13938,
+  and PR#14104.
+
+share/man/man5/resolv.conf.5			1.21 via patch
+
+  Typo correction.
+
+sys/dev/usb/uhci.c				1.127
+
+  Fix warnings about interrupts which were not for uhci.
+
+distrib/i386/floppies/Makefile			1.23 partial, via patch
+distrib/i386/floppies/fdset-com/Makefile	1.1 (new)
+distrib/i386/floppies/ramdisk-big/list		1.3
+distrib/utils/sysinst/arch/i386/md.c		1.55
+distrib/utils/sysinst/arch/i386/md.h		1.27
+distrib/utils/sysinst/arch/i386/menus.md.en	1.35
+distrib/utils/sysinst/arch/i386/menus.md.fr	1.28
+distrib/utils/sysinst/arch/i386/msg.md.en	1.24
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.16
+
+  Create boot-com{1,2}.fs{,.gz} floppy images, for installing or
+  upgrading NetBSD/i386 on a machine with no video console at all.
+
+usr.bin/sed/process.c				1.27-1.30
+
+  Don't attempt memmove() if pattern space length is zero.
+  Fixes PR#14074.
+
+sys/dev/ic/rtl81x9.c			1.29-1.31,1.33-1.34,1.36 via patch
+sys/dev/ic/rtl81x9var.h				1.8-1.10 via patch
+
+  Apply assorted stability fixes:
+   o increase early TX threshold if underrun occurred
+   o reworked transmit logic
+   o fix bug in ring-buffer wrap calculation
+  Should fix problems with hung network interfaces of this type.
+
+sys/arch/i386/pci/ali1543.c			1.1-1.2 (new)
+sys/arch/i386/pci/pci_intr_fixup.c		1.17
+sys/arch/i386/pci/pci_intr_fixup.h		1.3 via patch
+sys/arch/i386/conf/files.i386			1.190 via patch
+
+  Add support for ALi M1543 in pcibios as e.g. found in a Toshiba
+  Portege 4000.
