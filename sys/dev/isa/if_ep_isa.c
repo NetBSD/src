@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.24 1998/11/04 00:30:14 fvdl Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.24.6.1 1999/04/28 14:04:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ ep_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh, ioh2;
+	bus_space_handle_t ioh;
 	int slot, iobase, irq, i;
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
@@ -252,34 +252,84 @@ ep_isa_probe(parent, match, aux)
 		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
 
-		/* so card will not respond to contention again */
-		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
+		/* XXX Should ignore card if non-ISA(EISA) io address? -chb */
+
+		/*
+		 * Don't attach a 3c509 in PnP mode.
+		 * PnP mode was added with the 3C509B.
+		 * Check some EEPROM registers to make sure this is really
+		 * a 3C509B and test whether it is in PnP mode.
+		 */
+		if ((model & 0xfff0) == PROD_ID_3C509) {
+			u_int16_t cksum, eepromrev, eeprom_cap, eeprom_hi;
+
+
+			/*
+			 * Fetch all the info we need to ascertain whether
+			 * the card is  PnP capable and in PnP mode.
+			 * Skip over PnP cards.
+			 */
+
+			/* secondary configurable data checksum */
+			cksum = epreadeeprom(iot, ioh, EEPROM_CHECKSUM_EL3)
+			    & 0xFF;
+			for (i = EEPROM_CONFIG_HIGH;
+			    i < EEPROM_CHECKSUM_EL3; i++) {
+				cksum ^= epreadeeprom(iot, ioh, i);
+			}
+			cksum = (cksum & 0xFF) ^ ((cksum >> 8) & 0xFF);
+
+			eepromrev = epreadeeprom(iot, ioh, EEPROM_SSI);
+			eeprom_hi = epreadeeprom(iot, ioh, EEPROM_CONFIG_HIGH);
+			eeprom_cap = epreadeeprom(iot, ioh, EEPROM_CAP);
+
+			/*
+			 * Stop card responding to contention in future.
+			 * (NB: stops rsponse to all reads from ID port.)
+			 */
+			bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
+
+			if (cksum != 0) {
+#if 0
+				printf("ep_isa_probe: cksum mismatch 0x%02x\n",
+				    (int)cksum);
+#endif
+			}
+			else if ((eepromrev & 0xF) < 1) {
+				/* 3C509B is adapter revision level 1. */
+#if 0
+				printf("ep_isa_probe revision level 0\n");
+#endif
+			}
+			else if (eeprom_cap != 0x2083) {
+#if 0
+				printf("ep_isa_probe: capabilities word mismatch0x%03x\n",
+				    (int)epreadeeprom(iot, ioh, EEPROM_CAP));
+#endif
+			}
+			else
+			  /*
+			   * we have a 3c509B with PnP capabilities.
+			   * Test partly documented bit which toggles when
+			   * in  PnP mode.
+			   */
+			if ((eeprom_hi & 8) != 0) {
+				printf("3COM 3C509B Ethernet card in PnP mode\n");
+				continue;
+			}
+		}
 
 		/*
 		 * XXX: this should probably not be done here
 		 * because it enables the drq/irq lines from
 		 * the board. Perhaps it should be done after
 		 * we have checked for irq/drq collisions?
+		 *
+		 * According to the 3COM docs, this does not enable
+		 * the irq lines. -chb
 		 */
 		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
 
-		/*
-		 * Don't attach a 3c509 in PnP mode.
-		 */
-		if ((model & 0xfff0) == PROD_ID_3C509) {
-			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
-				printf(
-				"ep_isa_probe: can't map Etherlink iobase\n");
-				return 0;
-			}
-			if (bus_space_read_2(iot, ioh2, ELINK_W0_EEPROM_COMMAND)
-			    & EEPROM_TST_MODE) {
-				printf(
-				 "3COM 3C509 Ethernet card in PnP mode\n");
-				continue;
-			}
-			bus_space_unmap(iot, ioh2, 1);
-		}
 		epaddcard(bus, iobase, irq, model);
 	}
 	/* XXX should we sort by ethernet address? */
