@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.34.2.3 2001/03/20 17:25:14 he Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.34.2.4 2001/05/15 21:34:06 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1467,9 +1467,14 @@ ex_reset(sc)
 	u_int16_t val = GLOBAL_RESET;
 
 	if (sc->ex_conf & EX_CONF_RESETHACK)
-		val |= 0xff;
+		val |= 0x10;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, val);
-	delay(400);
+	/*
+	 * XXX apparently the command in progress bit can't be trusted
+	 * during a reset, so we just always wait this long. Fortunately
+	 * we normally only reset the chip during autoconfig.
+	 */
+	delay(100000);
 	ex_waitcmd(sc);
 }
 
