@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.1 2001/08/26 17:03:37 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.2 2001/09/02 07:27:33 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,30 +42,30 @@
 /* 
  * Everything is from Linux's include/asm-mips/signal.h 
  */
-#define LINUX_SIGHUP	 		1
-#define LINUX_SIGINT			2
+#define LINUX_SIGHUP	 	1
+#define LINUX_SIGINT		2
 #define LINUX_SIGQUIT		3
-#define LINUX_SIGILL			4
+#define LINUX_SIGILL		4
 #define LINUX_SIGTRAP		5
 #define LINUX_SIGABRT		6
-#define LINUX_SIGIOT			6
-#define LINUX_SIGEMT			7
-#define LINUX_SIGFPE			8
+#define LINUX_SIGIOT		6
+#define LINUX_SIGEMT		7
+#define LINUX_SIGFPE		8
 #define LINUX_SIGKILL		9
-#define LINUX_SIGBUS			10
+#define LINUX_SIGBUS		10
 #define LINUX_SIGSEGV		11
-#define LINUX_SIGSYS			12
+#define LINUX_SIGSYS		12
 #define LINUX_SIGPIPE		13
 #define LINUX_SIGALRM		14
 #define LINUX_SIGTERM		15
 #define LINUX_SIGUSR1		16
 #define LINUX_SIGUSR2		17
 #define LINUX_SIGCHLD		18
-#define LINUX_SIGCLD			18
-#define LINUX_SIGPWR			19
+#define LINUX_SIGCLD		18
+#define LINUX_SIGPWR		19
 #define LINUX_SIGWINCH		20
-#define LINUX_SIGURG			21
-#define LINUX_SIGIO			22
+#define LINUX_SIGURG		21
+#define LINUX_SIGIO		22
 #define LINUX_SIGPOLL		22
 #define LINUX_SIGSTOP		23
 #define LINUX_SIGTSTP		24
@@ -79,7 +79,7 @@
 
 #define LINUX_SIGRTMIN		32
 
-#define LINUX__NSIG			128
+#define LINUX__NSIG		128
 #define LINUX__NSIG_BPW		32
 #define LINUX__NSIG_WORDS (LINUX__NSIG / LINUX__NSIG_BPW)
 
