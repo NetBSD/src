@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.360 2002/10/16 15:32:26 christos Exp $
+# $NetBSD: mi,v 1.361 2002/10/17 12:26:46 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -990,13 +990,11 @@
 ./usr/share/locale				base-locale-share
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
-./usr/share/locale/cs/LC_MESSAGES/tar.mo	base-tar_locale-cs
 ./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2		base-locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs
 ./usr/share/locale/da				base-locale-da
 ./usr/share/locale/da/LC_MESSAGES		base-locale-da
-./usr/share/locale/da/LC_MESSAGES/tar.mo	base-tar_locale-da
 ./usr/share/locale/da_DK.ISO8859-1		base-locale-da
 ./usr/share/locale/da_DK.ISO8859-1/LC_CTYPE	base-locale-da
 ./usr/share/locale/da_DK.ISO8859-15		base-locale-da
@@ -1004,7 +1002,6 @@
 ./usr/share/locale/de				base-locale-de
 ./usr/share/locale/de/LC_MESSAGES		base-locale-de
 ./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de
-./usr/share/locale/de/LC_MESSAGES/tar.mo	base-tar_locale-de
 ./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de
 ./usr/share/locale/de_AT			base-locale-de
 ./usr/share/locale/de_AT.ISO8859-1		base-locale-de
@@ -1048,14 +1045,12 @@
 ./usr/share/locale/es				base-locale-es
 ./usr/share/locale/es/LC_MESSAGES		base-locale-es
 ./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es
-./usr/share/locale/es/LC_MESSAGES/tar.mo	base-tar_locale-es
 ./usr/share/locale/es_ES.ISO8859-1		base-locale-es
 ./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE	base-locale-es
 ./usr/share/locale/es_ES.ISO8859-15		base-locale-es
 ./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE	base-locale-es
 ./usr/share/locale/et				base-locale-et
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
-./usr/share/locale/et/LC_MESSAGES/tar.mo	base-tar_locale-et
 ./usr/share/locale/fi_FI.ISO8859-1		base-locale-fi
 ./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE	base-locale-fi
 ./usr/share/locale/fi_FI.ISO8859-15		base-locale-fi
@@ -1063,7 +1058,6 @@
 ./usr/share/locale/fr				base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES		base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr
-./usr/share/locale/fr/LC_MESSAGES/tar.mo	base-tar_locale-fr
 ./usr/share/locale/fr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-fr
 ./usr/share/locale/fr_BE.ISO8859-1		base-locale-fr
 ./usr/share/locale/fr_BE.ISO8859-1/LC_CTYPE	base-locale-fr
@@ -1087,14 +1081,12 @@
 ./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
-./usr/share/locale/id/LC_MESSAGES/tar.mo	base-tar_locale-id
 ./usr/share/locale/is_IS.ISO8859-1		base-locale-is
 ./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE	base-locale-is
 ./usr/share/locale/is_IS.ISO8859-15		base-locale-is
 ./usr/share/locale/is_IS.ISO8859-15/LC_CTYPE	base-locale-is
 ./usr/share/locale/it				base-locale-it
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
-./usr/share/locale/it/LC_MESSAGES/tar.mo	base-tar_locale-it
 ./usr/share/locale/it_CH.ISO8859-1		base-locale-it
 ./usr/share/locale/it_CH.ISO8859-1/LC_CTYPE	base-locale-it
 ./usr/share/locale/it_CH.ISO8859-15		base-locale-it
@@ -1105,7 +1097,6 @@
 ./usr/share/locale/it_IT.ISO8859-15/LC_CTYPE	base-locale-it
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
-./usr/share/locale/ja/LC_MESSAGES/tar.mo	base-tar_locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP		base-locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP2		base-locale-ja
@@ -1119,7 +1110,6 @@
 ./usr/share/locale/ko				base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko
-./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-tar_locale-ko
 ./usr/share/locale/ko_KR.eucKR			base-locale-ko
 ./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko
 ./usr/share/locale/lt_LT.ISO8859-4		base-locale-lt
@@ -1127,7 +1117,6 @@
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl
-./usr/share/locale/nl/LC_MESSAGES/tar.mo	base-tar_locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nl
 ./usr/share/locale/nl_BE.ISO8859-1		base-locale-nl
 ./usr/share/locale/nl_BE.ISO8859-1/LC_CTYPE	base-locale-nl
@@ -1140,7 +1129,6 @@
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
 ./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no
-./usr/share/locale/no/LC_MESSAGES/tar.mo	base-tar_locale-no
 ./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no
 ./usr/share/locale/no@nynorsk			base-locale-no
 ./usr/share/locale/no@nynorsk/LC_MESSAGES	base-locale-no
@@ -1151,16 +1139,13 @@
 ./usr/share/locale/pl				base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES		base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl
-./usr/share/locale/pl/LC_MESSAGES/tar.mo	base-tar_locale-pl
 ./usr/share/locale/pl_PL.ISO8859-2		base-locale-pl
 ./usr/share/locale/pl_PL.ISO8859-2/LC_CTYPE	base-locale-pl
 ./usr/share/locale/pt				base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES		base-locale-pt
-./usr/share/locale/pt/LC_MESSAGES/tar.mo	base-tar_locale-pt
 ./usr/share/locale/pt_BR			base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt
-./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-tar_locale-pt
 ./usr/share/locale/pt_PT.ISO8859-1		base-locale-pt
 ./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt
 ./usr/share/locale/pt_PT.ISO8859-15		base-locale-pt
@@ -1168,7 +1153,6 @@
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru
-./usr/share/locale/ru/LC_MESSAGES/tar.mo	base-tar_locale-ru
 ./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru
 ./usr/share/locale/ru_RU.CP866			base-locale-ru
 ./usr/share/locale/ru_RU.CP866/LC_CTYPE		base-locale-ru
@@ -1181,20 +1165,17 @@
 ./usr/share/locale/sl				base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES		base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl
-./usr/share/locale/sl/LC_MESSAGES/tar.mo	base-tar_locale-sl
 ./usr/share/locale/sl_SI.ISO8859-2		base-locale-sl
 ./usr/share/locale/sl_SI.ISO8859-2/LC_CTYPE	base-locale-sl
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv
-./usr/share/locale/sv/LC_MESSAGES/tar.mo	base-tar_locale-sv
 ./usr/share/locale/sv_SE.ISO8859-1		base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-15		base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-sv
 ./usr/share/locale/tr				base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES		base-locale-tr
-./usr/share/locale/tr/LC_MESSAGES/tar.mo	base-tar_locale-tr
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
