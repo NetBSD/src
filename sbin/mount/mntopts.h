@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mntopts.h	8.3 (Berkeley) 3/27/94
+ *	from: @(#)mntopts.h	8.3 (Berkeley) 3/27/94
+ *	$Id: mntopts.h,v 1.2 1994/06/24 07:32:05 deraadt Exp $
  */
 
 struct mntopt {
@@ -47,21 +48,30 @@ struct mntopt {
 #define MOPT_RDONLY		{ "rdonly",	0, MNT_RDONLY }
 #define MOPT_SYNC		{ "sync",	0, MNT_SYNCHRONOUS }
 #define MOPT_UNION		{ "union",	0, MNT_UNION }
+#define MOPT_USERQUOTA		{ "userquota",	0, 0 }
+#define MOPT_GROUPQUOTA		{ "groupquota",	0, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	1, MNT_FORCE }
 #define MOPT_UPDATE		{ "update",	0, MNT_UPDATE }
+#define MOPT_RELOAD		{ "reload",	0, MNT_RELOAD }
 
 /* Support for old-style "ro", "rw" flags. */
 #define MOPT_RO			{ "ro",		0, MNT_RDONLY }
 #define MOPT_RW			{ "rw",		1, MNT_RDONLY }
 
+/* This is parse by mount(8), but is ignored by specific mount_*(8)s. */
+#define MOPT_AUTO		{ "auto",	0, 0 }
+
 #define MOPT_FSTAB_COMPAT						\
 	MOPT_RO,							\
-	MOPT_RW
+	MOPT_RW,							\
+	MOPT_AUTO
 
 /* Standard options which all mounts can understand. */
 #define MOPT_STDOPTS							\
+	MOPT_USERQUOTA,							\
+	MOPT_GROUPQUOTA,						\
 	MOPT_FSTAB_COMPAT,						\
 	MOPT_NODEV,							\
 	MOPT_NOEXEC,							\
