@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52 1997/05/01 07:11:12 cjs Exp $
+# $NetBSD: GENERIC,v 1.53 1997/05/03 21:27:24 cjs Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -156,7 +156,7 @@ awdc1	at	isa? port 0x170 irq 15
 # EISA devices
 ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
-ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet
+ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 
 # SCSI bus support
