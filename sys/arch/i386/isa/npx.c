@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.5 1993/10/11 01:51:36 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.6 1993/10/12 23:39:21 mycroft Exp $
  */
 
 #include "param.h"
@@ -402,48 +402,10 @@ npxintr(aux)
 	curpcb->pcb_savefpu.sv_ex_tw = curpcb->pcb_savefpu.sv_env.en_tw;
 
 	/*
-	 * Pass exception to process.
+	 * Pass exception to process.  We don't really care where it was
+	 * generated.
 	 */
-	if (ISPL(frame->if_cs) == SEL_UPL) {
-		/*
-		 * Interrupt is essentially a trap, so we can afford to call
-		 * the SIGFPE handler (if any) as soon as the interrupt
-		 * returns.
-		 *
-		 * XXX little or nothing is gained from this, and plenty is
-		 * lost - the interrupt frame has to contain the trap frame
-		 * (this is otherwise only necessary for the rescheduling trap
-		 * in doreti, and the frame for that could easily be set up
-		 * just before it is used).
-		 */
-		curproc->p_regs = (int *)&frame->if_es;
-#ifdef notyet
-		/*
-		 * Encode the appropriate code for detailed information on
-		 * this exception.
-		 */
-		code = XXX_ENCODE(curpcb->pcb_savefpu.sv_ex_sw);
-#else
-		code = 0;	/* XXX */
-#endif
-		trapsignal(curproc, SIGFPE, code);
-	} else {
-		/*
-		 * Nested interrupt.  These losers occur when:
-		 *	o an IRQ13 is bogusly generated at a bogus time, e.g.:
-		 *		o immediately after an fnsave or frstor of an
-		 *		  error state.
-		 *		o a couple of 386 instructions after
-		 *		  "fstpl _memvar" causes a stack overflow.
-		 *	  These are especially nasty when combined with a
-		 *	  trace trap.
-		 *	o an IRQ13 occurs at the same time as another higher-
-		 *	  priority interrupt.
-		 *
-		 * Treat them like a true async interrupt.
-		 */
-		psignal(npxproc, SIGFPE);
-	}
+	psignal(npxproc, SIGFPE);
 	return 1;
 }
 
