@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.51 1997/08/12 02:08:12 cgd Exp $
+# $NetBSD: files.alpha,v 1.52 1997/08/12 02:59:43 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -12,12 +12,12 @@ defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 defopt	DEC_3000_300	# Pelican etc:	3000/300*
 defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+defopt	DEC_550		# Miata:	Personal Workstation (550)
 defopt	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 defopt	DEC_EB164	# EB164:	AlphaPC 164
 defopt	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 defopt	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 defopt	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
-defopt	DEC_550		# Miata:	Personal Workstation (550)
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
@@ -349,10 +349,10 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # CPU support
-file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
+file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
