@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.6 1999/02/10 00:11:28 hubertf Exp $	*/
+/*	$NetBSD: hdr.h,v 1.7 1999/07/16 01:38:20 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,9 @@
  *
  * The data file distributed with the fortran source is assumed to be called
  * "glorkz" in the directory where the program is first run.
+ *
+ * The original FORTRAN version can be found at
+ * <URL:ftp://ftp.gmd.de/if-archive/games/source/advent-original.tar.gz>.
  */
 
 /* hdr.h: included by c advent files */
@@ -71,7 +74,7 @@ int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
 char   *wd1, *wd2;		/* the complete words */
 int     verb, obj, spk;
 extern int blklin;
-int     saved, savet, mxscor, latncy;
+int     saveday, savet, mxscor, latncy;
 
 #define SHORT 50		/* How short is a demo game? */
 
