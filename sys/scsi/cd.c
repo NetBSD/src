@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.73 1995/08/12 20:31:42 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.74 1995/08/12 21:36:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -543,6 +543,7 @@ cdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_READ,
 		       cd->sc_link->adapter->scsi_minphys, uio));
@@ -553,6 +554,7 @@ cdwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_WRITE,
 		       cd->sc_link->adapter->scsi_minphys, uio));
