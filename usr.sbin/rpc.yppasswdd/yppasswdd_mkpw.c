@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.8 2000/12/08 22:23:14 tron Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.9 2001/08/18 19:35:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.8 2000/12/08 22:23:14 tron Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.9 2001/08/18 19:35:32 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 
 	pw_copy(pfd, tfd, pw, NULL);
 
-	if (pw_mkdb() < 0) {
+	if (pw_mkdb(pw->pw_name, 0) < 0) {
 		warnx("pw_mkdb failed");
 		pw_abort();
 		RETURN(1);
