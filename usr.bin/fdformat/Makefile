@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2002/12/10 16:07:28 fvdl Exp $
+#	$NetBSD: Makefile,v 1.9 2004/04/23 14:50:00 christos Exp $
 
+WARNS=3
 .if (${MACHINE} == "acorn32" || \
      ${MACHINE_ARCH} == "alpha" || \
      ${MACHINE} == "cats" || \
