@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.117 2003/08/07 11:17:11 agc Exp $ */
+/* $NetBSD: vmstat.c,v 1.118 2003/09/19 07:10:30 itojun Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.117 2003/08/07 11:17:11 agc Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.118 2003/09/19 07:10:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1210,7 +1210,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 	LIST_HEAD(, generic)	*hashtbl_list;
 	TAILQ_HEAD(, generic)	*hashtbl_tailq;
 	struct kernel_hash	*curhash;
-	void	*hashaddr, *hashbuf, *nextaddr;
+	void	*hashaddr, *hashbuf, *nhashbuf, *nextaddr;
 	size_t	elemsize, hashbufsize, thissize;
 	u_long	hashsize;
 	int	i, used, items, chain, maxchain;
@@ -1276,10 +1276,11 @@ dohashstat(int verbose, int todo, const char *hashname)
 			    (unsigned long long)elemsize);
 		thissize = hashsize * elemsize;
 		if (thissize > hashbufsize) {
-			hashbufsize = thissize;
-			if ((hashbuf = realloc(hashbuf, hashbufsize)) == NULL)
+			if ((nhashbuf = realloc(hashbuf, thissize)) == NULL)
 				errx(1, "malloc hashbuf %llu",
 				    (unsigned long long)hashbufsize);
+			hashbuf = nhashbuf;
+			hashbufsize = thissize;
 		}
 		deref_kptr(hashaddr, hashbuf, thissize,
 		    hashnl[curhash->hashtbl].n_name);
