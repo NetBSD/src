@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 1996/04/09 22:58:29 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,7 @@ mainbus_attach(parent, self, aux)
 	if (1 /* XXX ISA NOT YET SEEN */) {
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_bc = NULL;
+		mba.mba_iba.iba_ic = NULL;
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 
