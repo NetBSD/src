@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.14 2002/07/13 20:14:34 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.15 2002/07/14 03:04:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.14 2002/07/13 20:14:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.15 2002/07/14 03:04:02 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -659,7 +659,6 @@ rf_FinishNode(
     RF_DagNode_t * node,
     int context)
 {
-	/* as far as I can tell, retcode is not used -wvcii */
 	int     retcode = RF_FALSE;
 	node->dagHdr->numNodesCompleted++;
 	ProcessNode(node, context);
