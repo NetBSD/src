@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.15 2003/08/07 11:14:13 agc Exp $	*/
+/*	$NetBSD: setemul.c,v 1.16 2003/10/19 07:34:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.15 2003/08/07 11:14:13 agc Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.16 2003/10/19 07:34:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -236,23 +236,20 @@ struct emulation_ctx {
 const struct emulation *current;
 const struct emulation *previous;
 /* Mach emulation require extra emulation contexts */
-const struct emulation *mach;
-const struct emulation *mach_ppccalls;
-const struct emulation *mach_fasttraps;
+static const struct emulation *mach;
+static const struct emulation *mach_ppccalls;
+static const struct emulation *mach_fasttraps;
 
-static const struct emulation *default_emul=NULL;
+static const struct emulation *default_emul = NULL;
 
 struct emulation_ctx *current_ctx;
 struct emulation_ctx *emul_ctx = NULL;
 
-static struct emulation_ctx *ectx_find __P((pid_t));
-static void	ectx_update __P((pid_t, const struct emulation *));
+static struct emulation_ctx *ectx_find(pid_t);
+static void	ectx_update(pid_t, const struct emulation *);
 
 void
-setemul(name, pid, update_ectx)
-	const char *name;
-	pid_t pid;
-	int update_ectx;
+setemul(const char *name, pid_t pid, int update_ectx)
 {
 	int i;
 	const struct emulation *match = NULL;
@@ -293,8 +290,7 @@ setemul(name, pid, update_ectx)
  * Find an emulation context appropriate for the given pid.
  */
 static struct emulation_ctx *
-ectx_find(pid)
-	pid_t pid;
+ectx_find(pid_t pid)
 {
 	struct emulation_ctx *ctx;
 
@@ -311,9 +307,7 @@ ectx_find(pid)
  * for this pid exists.
  */
 static void
-ectx_update(pid, emul)
-	pid_t pid;
-	const struct emulation *emul;
+ectx_update(pid_t pid, const struct emulation *emul)
 {
 	struct emulation_ctx *ctx;
 
@@ -324,7 +318,9 @@ ectx_update(pid, emul)
 		return;
 	}
 	
-	ctx = (struct emulation_ctx *)malloc(sizeof(struct emulation_ctx));
+	ctx = malloc(sizeof(*ctx));
+	if (ctx == NULL)
+		err(1, NULL);
 	ctx->pid = pid;
 	ctx->emulation = emul;
 	
@@ -337,8 +333,7 @@ ectx_update(pid, emul)
  * Ensure current emulation context is correct for given pid.
  */
 void
-ectx_sanify(pid)
-	pid_t pid;
+ectx_sanify(pid_t pid)
 {
 	struct emulation_ctx *ctx;
 
@@ -358,22 +353,18 @@ ectx_sanify(pid)
 #define MACH_PPCCALLS		0x00006000
 #define MACH_ODD_SYSCALL_MASK	0x0000fff0
 int
-mach_traps_dispatch(code, emul)
-	int *code;
-	const struct emulation **emul;
+mach_traps_dispatch(int *code, const struct emulation **emul)
 {
 	switch (*code & MACH_ODD_SYSCALL_MASK) {
 	case MACH_FASTTRAPS:
 		*emul = mach_fasttraps;
 		*code -= MACH_FASTTRAPS;
 		return 1;
-		break;
 
 	case MACH_PPCCALLS:
 		*emul = mach_ppccalls;
 		*code -= MACH_PPCCALLS;
 		return 1;
-		break;
 
 	default:
 		if (*code < 0) {
@@ -381,16 +372,16 @@ mach_traps_dispatch(code, emul)
 			*code = -*code;
 			return 1;
 		}
-		break;
+		return 0;
 	}
-	return 0;
 }
 
 /*
  * Lookup Machs emulations
  */
 void
-mach_lookup_emul(void) {
+mach_lookup_emul(void)
+{
 	const struct emulation *emul_idx;
 
 	for (emul_idx = emulations; emul_idx->name; emul_idx++) {
@@ -401,9 +392,6 @@ mach_lookup_emul(void) {
 		if (strcmp("mach ppccalls", emul_idx->name) == 0)
 			mach_ppccalls = emul_idx;
 	}
-	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL) {
+	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL)
 		errx(1, "Cannot load mach emulations");
-		exit(1);
-	}
-	return;
 }
