@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 1998/02/04 10:24:13 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1999/09/14 18:07:21 jsm Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	snake
-SRCS=	snake.c move.c
+SRCS=	snake.c
 MAN=	snake.6
-DPADD=	${LIBM} ${LIBTERMCAP}
-LDADD=	-lm -ltermcap
+DPADD=	${LIBM} ${LIBCURSES}
+LDADD=	-lm -lcurses
 HIDEGAME=hidegame
 SETGIDGAME=yes
 
