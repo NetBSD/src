@@ -1,4 +1,4 @@
-.\"	$NetBSD: atalk.4,v 1.8 1999/12/15 22:07:30 abs Exp $
+.\"	$NetBSD: atalk.4,v 1.9 2000/06/26 16:17:13 kleink Exp $
 .\"
 .\" This file is derived from the atalk.4 man page in the Netatlk 1.4b2
 .\" distribution. That distribution is covered by the following copyright:
@@ -74,7 +74,7 @@ structure:
 .Bd -literal -offset indent
 struct sockaddr_at {
 	u_int8_t	sat_len;
-	u_int8_t	sat_family;
+	sa_family_t	sat_family;
 	u_int8_t	sat_port;
 	struct at_addr	sat_addr;
 	union {
