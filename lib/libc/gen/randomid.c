@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.4 2003/09/11 11:24:33 itojun Exp $	*/
+/*	$NetBSD: randomid.c,v 1.5 2003/09/13 21:27:43 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,8 +88,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.4 2003/09/11 11:24:33 itojun Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.5 2003/09/13 21:27:43 itojun Exp $");
 #endif
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -97,6 +99,12 @@ __RCSID("$NetBSD: randomid.c,v 1.4 2003/09/11 11:24:33 itojun Exp $");
 #include <string.h>
 #include <errno.h>
 #include <randomid.h>
+
+#ifdef __weak_alias
+__weak_alias(randomid,_randomid)
+__weak_alias(randomid_new,_randomid_new)
+__weak_alias(randomid_delete,_randomid_delete)
+#endif
 
 struct randomconf {
 	const int	rc_bits; /* resulting bits */

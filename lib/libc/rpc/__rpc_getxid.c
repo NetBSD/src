@@ -1,4 +1,4 @@
-/*	$NetBSD: __rpc_getxid.c,v 1.2 2003/09/09 22:16:58 itojun Exp $	*/
+/*	$NetBSD: __rpc_getxid.c,v 1.3 2003/09/13 21:27:46 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -32,10 +32,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __rpc_getxid.c,v 1.2 2003/09/09 22:16:58 itojun Exp $");
+__RCSID("$NetBSD: __rpc_getxid.c,v 1.3 2003/09/13 21:27:46 itojun Exp $");
 #endif
 
 #include <sys/types.h>
+
+#include "namespace.h"
 
 #include <stdlib.h>
 #include <randomid.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.79 2003/06/27 05:21:54 tshiozak Exp $	*/
+/*	$NetBSD: namespace.h,v 1.80 2003/09/13 21:27:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -378,6 +378,9 @@
 #define qdiv			_qdiv
 #define radixsort		_radixsort
 #define random			_random
+#define randomid		_randomid
+#define randomid_new		_randomid_new
+#define randomid_delete		_randomid_delete
 #define readdir			_readdir
 #define readdir_r		_readdir_r
 #define realpath		_realpath
