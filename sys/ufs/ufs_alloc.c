@@ -31,20 +31,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_alloc.c	7.26 (Berkeley) 5/2/91
- *	$Id: ufs_alloc.c,v 1.3 1993/05/20 03:53:32 cgd Exp $
+ *	$Id: ufs_alloc.c,v 1.3.4.1 1993/11/14 22:02:31 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "proc.h"
-#include "vnode.h"
-#include "kernel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "quota.h"
-#include "inode.h"
-#include "fs.h"
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#include <ufs/fs.h>
 
 extern u_long		hashalloc();
 extern ino_t		ialloccg();

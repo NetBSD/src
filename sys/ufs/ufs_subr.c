@@ -31,16 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_subr.c	7.13 (Berkeley) 6/28/90
- *	$Id: ufs_subr.c,v 1.4.2.1 1993/09/14 18:35:04 mycroft Exp $
+ *	$Id: ufs_subr.c,v 1.4.2.2 1993/11/14 22:02:41 mycroft Exp $
  */
 
-#ifdef KERNEL
-#include "param.h"
-#include "../ufs/fs.h"
-#else
 #include <sys/param.h>
+
 #include <ufs/fs.h>
-#endif
 
 extern	int around[9];
 extern	int inside[9];
