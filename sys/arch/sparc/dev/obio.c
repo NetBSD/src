@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 1994/10/15 05:49:06 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 1994/10/26 07:09:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -44,6 +44,7 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
+#include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/vaddrs.h>
@@ -139,7 +140,10 @@ busattach(parent, self, args, bustype)
 					    bustype);
 				oca.ca_ra.ra_vaddr = tmp;
 				oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
-				oca.ca_ra.ra_intr[0].int_vec = 0;
+				if (bustype == BUS_VME16 || bustype == BUS_VME32)
+					oca.ca_ra.ra_intr[0].int_vec = cf->cf_loc[2];
+				else
+					oca.ca_ra.ra_intr[0].int_vec = 0;
 				oca.ca_ra.ra_nintr = 1;
 				oca.ca_ra.ra_name = cf->cf_driver->cd_name;
 				oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
@@ -178,11 +182,18 @@ obioattach(parent, self, args)
 	busattach(parent, self, args, BUS_OBIO);
 }
 
+struct intrhand **vmeints;
+
 void
 vmesattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+	if (vmeints == NULL) {
+		vmeints = (struct intrhand **)malloc(256 *
+		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		bzero(vmeints, 256 * sizeof(struct intrhand *));
+	}
 	busattach(parent, self, args, BUS_VME16);
 }
 
@@ -191,9 +202,78 @@ vmelattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+	if (vmeints == NULL) {
+		vmeints = (struct intrhand **)malloc(256 *
+		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		bzero(vmeints, 256 * sizeof(struct intrhand *));
+	}
 	busattach(parent, self, args, BUS_VME32);
 }
 
+int pil_to_vme[] = {
+	-1,	/* pil 0 */
+	-1,	/* pil 1 */
+	1,	/* pil 2 */
+	2,	/* pil 3 */
+	-1,	/* pil 4 */
+	3,	/* pil 5 */
+	-1,	/* pil 6 */
+	4,	/* pil 7 */
+	-1,	/* pil 8 */
+	5,	/* pil 9 */
+	-1,	/* pil 10 */
+	6,	/* pil 11 */
+	-1,	/* pil 12 */
+	7,	/* pil 13 */
+	-1,	/* pil 14 */
+	-1,	/* pil 15 */
+};
+
+int
+vmeintr(arg)
+	void *arg;
+{
+	int level = (int)arg, vec;
+	struct intrhand *ih;
+	int i = 0;
+
+	vec = lduba(AC_VMEINTVEC | (pil_to_vme[level] << 1) | 1, ASI_CONTROL);
+
+	for (ih = vmeints[vec]; ih; ih = ih->ih_next)
+		if (ih->ih_fun)
+			i += (ih->ih_fun)(ih->ih_arg);
+	return (i);
+}
+
+void
+vmeintr_establish(vec, level, ih)
+	int vec, level;
+	struct intrhand *ih;
+{	
+	struct intrhand *ihs;
+
+	if (vmeints[vec] == NULL)
+		vmeints[vec] = ih;
+	else {
+		for (ihs = vmeints[vec]; ihs->ih_next; ihs = ihs->ih_next)
+			;
+		ihs->ih_next = ih;
+	}
+
+	/* ensure the interrupt subsystem will call us at this level */
+	for (ihs = intrhand[level]; ihs; ihs = ihs->ih_next)
+		if (ihs->ih_fun == vmeintr)
+			return;
+
+	ihs = (struct intrhand *)malloc(sizeof(struct intrhand),
+	    M_TEMP, M_NOWAIT);
+	if (ihs == NULL)
+		panic("vme_addirq");
+	bzero(ihs, sizeof *ihs);
+	ihs->ih_fun = vmeintr;
+	ihs->ih_arg = (void *)level;
+	intr_establish(level, ihs);
+}
 
 #define	getpte(va)		lda(va, ASI_PTE)
 
