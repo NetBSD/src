@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2000/07/25 17:56:05 jeffs Exp $	*/
+/*	$NetBSD: asm.h,v 1.26 2000/07/27 05:01:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,11 +232,13 @@ _C_LABEL(x):
 #define PANIC(msg)			\
 	la	a0, 9f;			\
 	jal	_C_LABEL(panic);	\
+	nop;				\
 	MSG(msg)
 
 #define	PRINTF(msg)			\
 	la	a0, 9f;			\
 	jal	_C_LABEL(printf);	\
+	nop;				\
 	MSG(msg)
 
 #define	MSG(msg)			\
