@@ -1,4 +1,4 @@
-/* $NetBSD: mouse.h,v 1.1 1996/03/27 20:57:18 mark Exp $ */
+/* $NetBSD: mouse.h,v 1.2 1996/06/03 22:07:39 mark Exp $ */
 
 /*
  * Copyright (c) Mark Brinicombe 1996 All rights reserved
@@ -89,23 +89,5 @@ struct mouse_origin {
 #define MOUSEIOC_READ		MOUSEIOC_GETSTATE
 #define MOUSEIOC_GETBOUNDS	_IOR ( 'M', 106, struct mouse_boundingbox )
 #define MOUSEIOC_GETORIGIN	_IOR ( 'M', 107, struct mouse_origin )
-
-/*
- * For backwards compatibility with the current Xserver.
- * Eventually these will be removed.
- */
-
-#define QUADMOUSE_WRITEX	MOUSEIOC_WRITEX
-#define QUADMOUSE_WRITEY	MOUSEIOC_WRITEY
-
-#define QUADMOUSE_SETSTATE	MOUSEIOC_SETSTATE
-#define QUADMOUSE_SETBOUNDS	MOUSEIOC_SETBOUNDS
-#define QUADMOUSE_SETORIGIN	MOUSEIOC_SETORIGIN
-
-#define QUADMOUSE_GETSTATE	MOUSEIOC_GETSTATE
-#define QUADMOUSE_GETBOUNDS	MOUSEIOC_GETBOUNDS
-#define QUADMOUSE_GETORIGIN	MOUSEIOC_GETORIGIN
-
-#define QUADMOUSE_SETFORMAT	_IOW ( 'M', 108, char[20] )
 
 /* End of mouse.h */
