@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.12 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: genfs.h,v 1.12.2.1 2001/07/10 14:00:39 lukem Exp $	*/
 
 int	genfs_badop		__P((void *));
 int	genfs_nullop		__P((void *));
@@ -13,6 +13,7 @@ int	genfs_noislocked	__P((void *));
 int	genfs_nounlock		__P((void *));
 
 int	genfs_poll		__P((void *));
+int	genfs_kqfilter		__P((void *));
 int	genfs_fcntl		__P((void *));
 int	genfs_fsync		__P((void *));
 int	genfs_seek		__P((void *));
