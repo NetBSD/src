@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.6 1998/07/01 02:35:24 tv Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.7 1998/07/01 17:14:51 tv Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -36,6 +36,13 @@
 #endif
 #else
 #define __indr_reference(sym,alias)
+#define __warn_references(sym,msg)
+#endif
+
+#ifdef __ELF__
+/* XXX: we should be able to do weak as __indr_reference, and __weak_alias. */
+#undef __indr_reference
+#undef __warn_references
 #define __warn_references(sym,msg)
 #endif
 
