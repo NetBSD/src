@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2002/03/06 02:13:51 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2002/03/17 06:28:57 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -255,53 +255,55 @@ mach_init(fwhandle,magic,bootdata,reserved)
 #endif
 
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
-	       (u_int) fwhandle,(u_int) magic,(u_int) bootdata,(u_int) reserved);
+	    (u_int) fwhandle,(u_int) magic,(u_int) bootdata,(u_int) reserved);
 
 	if (magic == BOOTINFO_MAGIC) {
-	    int idx;
-	    int added;
-	    cfe_xuint_t start,len,type;
+		int idx;
+		int added;
+		cfe_xuint_t start,len,type;
 
-	    cfe_init(fwhandle);
-	    cfe_present = 1;
+		cfe_init(fwhandle);
+		cfe_present = 1;
 
-	    idx = 0;
-	    physmem = 0;
-	    mem_cluster_cnt = 0;
-	    while (cfe_getmeminfo(idx,&start,&len,&type) == 0) {
-		added = 0;
-		printf("Memory Block #%d start %08llX len %08llX: %s: ",idx,
-		       start,len,
-		       (type == CFE_MI_AVAILABLE) ? "Available" : "Reserved");
-		if ((type == CFE_MI_AVAILABLE) && (mem_cluster_cnt < VM_PHYSSEG_MAX)) {
-		    /*
-		     * XXX Ignore memory above 256MB for now, it needs special
-		     * XXX handling.
-		     */
-		    if (start < (256*1024*1024)) {
-			physmem += btoc(((int) len));
-			mem_clusters[mem_cluster_cnt].start = (long) start;
-			mem_clusters[mem_cluster_cnt].size = (long) len;
-			mem_cluster_cnt++;
-			added = 1;
+		idx = 0;
+		physmem = 0;
+		mem_cluster_cnt = 0;
+		while (cfe_getmeminfo(idx,&start,&len,&type) == 0) {
+			added = 0;
+			printf("Memory Block #%d start %08llX len %08llX: %s: ",
+			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
+			    "Available" : "Reserved");
+			if ((type == CFE_MI_AVAILABLE) &&
+			    (mem_cluster_cnt < VM_PHYSSEG_MAX)) {
+				/*
+				 * XXX Ignore memory above 256MB for now, it
+				 * XXX needs special handling.
+				 */
+				if (start < (256*1024*1024)) {
+				    physmem += btoc(((int) len));
+				    mem_clusters[mem_cluster_cnt].start =
+					(long) start;
+				    mem_clusters[mem_cluster_cnt].size =
+					(long) len;
+				    mem_cluster_cnt++;
+				    added = 1;
+				}
 			}
-		    }
-		if (added)
-			printf("added to map\n");
-		else
-			printf("not added to map\n");
-		idx++;
+			if (added)
+				printf("added to map\n");
+			else
+				printf("not added to map\n");
+			idx++;
 		}
 
-	    }
-	else {
-	    /*
-	     * Handle the case of not being called from the firmware.
-	     */
-	    mem_clusters[0].start = 0;
-	    mem_clusters[0].size = ctob(physmem);
-	    mem_cluster_cnt = 1;
-	    }
+	} else {
+		/*
+		 * Handle the case of not being called from the firmware.
+		 */
+		mem_clusters[0].start = 0;
+		mem_clusters[0].size = ctob(physmem);
+		mem_cluster_cnt = 1;
+	}
 
 
 	for (i = 0; i < sizeof(bootinfo.boot_flags); i++) {
@@ -311,7 +313,8 @@ mach_init(fwhandle,magic,bootdata,reserved)
 		case ' ':
 			continue;
 		case '-':
-			while (bootinfo.boot_flags[i] != ' ' && bootinfo.boot_flags[i] != '\0') {
+			while (bootinfo.boot_flags[i] != ' ' &&
+			    bootinfo.boot_flags[i] != '\0') {
 				switch (bootinfo.boot_flags[i]) {
 				case 'a':
 					boothowto |= RB_ASKNAME;
@@ -346,11 +349,11 @@ mach_init(fwhandle,magic,bootdata,reserved)
 		VM_FREELIST_DEFAULT);
 
 	for (i = 1; i < mem_cluster_cnt; i++) {
-	    first = round_page(mem_clusters[i].start);
-	    last = mem_clusters[i].start + mem_clusters[i].size;
-	    uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
-	    }
+		first = round_page(mem_clusters[i].start);
+		last = mem_clusters[i].start + mem_clusters[i].size;
+		uvm_page_physload(atop(first), atop(last), atop(first),
+		    atop(last), VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -446,7 +449,7 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 					"buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -456,13 +459,13 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
+	    VM_MAP_PAGEABLE, FALSE, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
+	    0, FALSE, NULL);
 
 
 	/*
