@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.12 2003/10/31 03:32:19 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.13 2004/03/08 11:28:48 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.12 2003/10/31 03:32:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.13 2004/03/08 11:28:48 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -654,9 +654,13 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			dsc->dscr_a = KVTOPHYS(mtod(m_temp,caddr_t)) |
 			    M_DMA_DSCRA_INTERRUPT;
 
-			/* transmitting: set outbound options,buffer A size(+ low 5 bits of start addr) */
+			/*
+			 * transmitting: set outbound options,buffer A
+			 * size(+ low 5 bits of start addr)
+			 */
 			dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
-			    V_DMA_DSCRB_A_SIZE( (m_temp->m_len + (mtod(m_temp,unsigned int) & 0x0000001F)) );
+			    V_DMA_DSCRB_A_SIZE( (m_temp->m_len +
+			    (mtod(m_temp,unsigned int) & 0x0000001F)) );
 
 			d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = NULL;
 
@@ -681,8 +685,9 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		struct mbuf *m_new = NULL;
 		/*
 		 * [BEGIN XXX]
-		 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we assume
-		 * it will fit).  This is a temporary hack to get us going.
+		 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we
+		 * assume it will fit).  This is a temporary hack to get us
+		 * going.
 		 */
 
 		MGETHDR(m_new,M_DONTWAIT,MT_DATA);
@@ -733,7 +738,8 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		    M_DMA_ETHTX_SOP;
 
 		/* transmitting: set outbound options and length */
-		dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
+		dsc->dscr_b =
+		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_PKT_SIZE(length);
 
 		num_mbufs++;
@@ -1251,7 +1257,6 @@ sbmac_channel_start(struct sbmac_softc *s)
 	txdma = &(s->sbm_txdma); 
 
 	if (s->sbm_pass3_dma) {
-
 		dma_cfg0 = SBMAC_READCSR(txdma->sbdma_config0);
 		dma_cfg0 |= V_DMA_DESC_TYPE(K_DMA_DESC_TYPE_RING_UAL_RMW) |
 		    M_DMA_TBX_EN | M_DMA_TDX_EN;
@@ -1428,8 +1433,8 @@ sbmac_init_and_start(struct sbmac_softc *sc)
 
 	s = splnet();
 
-	mii_pollstat(&sc->sc_mii);			/* poll phy for current speed */
-	sbmac_mii_statchg((struct device *) sc);	/* set state to new speed */
+	mii_pollstat(&sc->sc_mii);		/* poll phy for current speed */
+	sbmac_mii_statchg((struct device *) sc); /* set state to new speed */
 	sbmac_set_channel_state(sc, sbmac_state_on);
 
 	splx(s);
@@ -1755,8 +1760,8 @@ sbmac_start(struct ifnet *ifp)
 
 		if (rv == 0) {
 			/*
-			 * If there's a BPF listener, bounce a copy of this frame
-			 * to it.
+			 * If there's a BPF listener, bounce a copy of this
+			 * frame to it.
 			 */
 #if (NBPFILTER > 0)
 			if (ifp->if_bpf)
@@ -1764,8 +1769,9 @@ sbmac_start(struct ifnet *ifp)
 #endif
 			if (!sc->sbm_pass3_dma) {
 				/*
-				 * Don't free mbuf if we're not copying to new mbuf in sbdma_add_txbuffer.
-				 * It will be freed in sbdma_tx_process.
+				 * Don't free mbuf if we're not copying to new
+				 * mbuf in sbdma_add_txbuffer.  It will be
+				 * freed in sbdma_tx_process.
 				 */
 				m_freem(m_head);
 			}
@@ -1810,12 +1816,14 @@ sbmac_setmulti(struct sbmac_softc *sc)
 	 */
 
 	for (idx = 1; idx < MAC_ADDR_COUNT; idx++) {
-		port = PKSEG1(sc->sbm_base + R_MAC_ADDR_BASE+(idx*sizeof(uint64_t)));
+		port = PKSEG1(sc->sbm_base +
+		    R_MAC_ADDR_BASE+(idx*sizeof(uint64_t)));
 		SBMAC_WRITECSR(port, 0);
 	}
 
 	for (idx = 0; idx < MAC_HASH_COUNT; idx++) {
-		port = PKSEG1(sc->sbm_base + R_MAC_HASH_BASE+(idx*sizeof(uint64_t)));
+		port = PKSEG1(sc->sbm_base +
+		    R_MAC_HASH_BASE+(idx*sizeof(uint64_t)));
 		SBMAC_WRITECSR(port, 0);
 	}
 
@@ -1911,7 +1919,8 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
+				ina->x_host =
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ifp->if_addrlen);
@@ -2304,7 +2313,8 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
+	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;
 	ifp->if_start = sbmac_start;
 	ifp->if_watchdog = sbmac_watchdog;
