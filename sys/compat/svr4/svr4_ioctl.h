@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.h,v 1.5 1996/04/11 12:54:43 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.h,v 1.5.4.1 1996/06/11 01:12:38 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,6 +37,8 @@
 
 #define	SVR4_IOC(inout,group,num,len) \
 	(inout | ((len & 0xff) << 16) | ((group) << 8) | (num))
+
+#define SVR4_XIOC	('X' << 8)
 
 #define	SVR4_IO(g,n)		SVR4_IOC(SVR4_IOC_VOID,	(g), (n), 0)
 #define	SVR4_IOR(g,n,t)		SVR4_IOC(SVR4_IOC_OUT,	(g), (n), sizeof(t))
