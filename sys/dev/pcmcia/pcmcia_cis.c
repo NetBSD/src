@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.7 1998/07/19 17:28:16 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.8 1998/08/13 15:03:06 nathanw Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -471,37 +471,40 @@ pcmcia_print_cis(sc)
 		printf("%s: function %d: ", sc->dev.dv_xname, pf->number);
 
 		switch (pf->function) {
-		case 0:
+		case PCMCIA_FUNCTION_UNSPEC:
+			printf("unspecified");
+			break;
+		case PCMCIA_FUNCTION_MULTIFUNCTION:
 			printf("multi-function");
 			break;
-		case 1:
+		case PCMCIA_FUNCTION_MEMORY:
 			printf("memory");
 			break;
-		case 2:
+		case PCMCIA_FUNCTION_SERIAL:
 			printf("serial port");
 			break;
-		case 3:
+		case PCMCIA_FUNCTION_PARALLEL:
 			printf("parallel port");
 			break;
-		case 4:
+		case PCMCIA_FUNCTION_DISK:
 			printf("fixed disk");
 			break;
-		case 5:
+		case PCMCIA_FUNCTION_VIDEO:
 			printf("video adapter");
 			break;
-		case 6:
+		case PCMCIA_FUNCTION_NETWORK:
 			printf("network adapter");
 			break;
-		case 7:
+		case PCMCIA_FUNCTION_AIMS:
 			printf("auto incrementing mass storage");
 			break;
-		case 8:
+		case PCMCIA_FUNCTION_SCSI:
 			printf("SCSI bridge");
 			break;
-		case 9:
+		case PCMCIA_FUNCTION_SECURITY:
 			printf("Security services");
 			break;
-		case 10:
+		case PCMCIA_FUNCTION_INSTRUMENT:
 			printf("Instrument");
 			break;
 		default:
@@ -809,7 +812,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				SIMPLEQ_INSERT_TAIL(&state->card->pf_head,
 				    state->pf, pf_list);
 
-				state->pf->function = 0;
+				state->pf->function = PCMCIA_FUNCTION_UNSPEC;
 			}
 			state->pf->last_config_index =
 			    pcmcia_tuple_read_1(tuple, 1);
