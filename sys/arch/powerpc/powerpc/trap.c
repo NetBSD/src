@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.99.4.1 2005/01/07 12:33:40 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99.4.1 2005/01/07 12:33:40 jdc Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -574,10 +574,10 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		uva += seglen;
 		kp += seglen;
 		len -= seglen;
+		unsetusr();
 	}
 
   out:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -602,10 +602,10 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		uva += seglen;
 		kp += seglen;
 		len -= seglen;
+		unsetusr();
 	}
 
   out:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -768,9 +768,12 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 		len -= seglen;
 		uva += seglen;
 		for (; seglen-- > 0; p++) {
-			if ((*kp++ = *(char *)p) == 0)
+			if ((*kp++ = *(char *)p) == 0) {
+				unsetusr();
 				goto out;
+			}
 		}
+		unsetusr();
 	}
 	rv = ENAMETOOLONG;
 
@@ -778,7 +781,6 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 	if (done != NULL)
 		*done = kp - (char *) kaddr;
  out2:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -803,9 +805,12 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		len -= seglen;
 		uva += seglen;
 		for (; seglen-- > 0; p++) {
-			if ((*(char *)p = *kp++) == 0)
+			if ((*(char *)p = *kp++) == 0) {
+				unsetusr();
 				goto out;
+			}
 		}
+		unsetusr();
 	}
 	rv = ENAMETOOLONG;
 
@@ -813,7 +818,6 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	if (done != NULL)
 		*done = kp - (char *) kaddr;
  out2:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
