@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.244 2003/10/10 23:49:23 mbw Exp $
+.\"	$NetBSD: main,v 1.245 2003/10/10 23:59:16 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -292,7 +292,7 @@ file system.
 You may need to replace
 .Ic cd
 with
-.Ic "scsi/sd@3 , scsi-int/sd@3 , scsi-ext/sd@3 , ata/atapi-disk ,"
+.Ic "scsi/sd@3 , scsi-int/sd@3 , ata/atapi-disk ,"
 or some other device alias.
 You should also use the Open Firmware
 .Ic dir
