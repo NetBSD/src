@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.2 1998/07/05 00:51:05 jonathan Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.3 1998/07/05 06:49:02 jonathan Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,6 +81,7 @@
 #define	LCLDMA 1
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.9 1998/07/05 00:51:19 jonathan Exp $ */
+/* $NetBSD: lemac.c,v 1.10 1998/07/05 06:49:11 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,6 +34,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "rnd.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.18 1998/04/29 03:41:49 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.19 1998/07/05 06:49:17 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
  *
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
+
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

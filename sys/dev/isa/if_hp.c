@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.26 1998/07/05 00:51:21 jonathan Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.27 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -56,6 +56,7 @@
 #if NHP > 0
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "rnd.h"
 
 #include <sys/param.h>

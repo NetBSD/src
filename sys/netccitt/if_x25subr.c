@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.19 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.20 1998/07/05 06:49:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -37,6 +37,7 @@
 
 #include "opt_inet.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

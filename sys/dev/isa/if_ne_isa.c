@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.5 1998/07/05 00:51:21 jonathan Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

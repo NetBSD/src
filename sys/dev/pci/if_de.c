@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.71 1998/07/05 00:51:23 jonathan Exp $	*/
+/*	$NetBSD: if_de.c,v 1.72 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -40,6 +40,7 @@
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
+#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>

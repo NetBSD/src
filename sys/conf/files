@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.215 1998/07/05 04:37:41 jonathan Exp $
+#	$NetBSD: files,v 1.216 1998/07/05 06:49:00 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -39,6 +39,8 @@ defopt	COMPAT_ULTRIX
 # networking protocols
 defopt	INET
 defopt	opt_atalk.h	NETATALK
+defopt	opt_ns.h	NS	 	# Xerox Network Services (XNS)
+defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
 defopt	opt_iso.h	ISO TPIP	# ISO network stack
 defopt	EON				# ISO clnp over IP
 defopt	CCITT				# 

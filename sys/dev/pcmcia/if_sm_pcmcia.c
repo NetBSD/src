@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.4 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.5 1998/07/05 06:49:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.26 1998/07/05 00:51:23 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.27 1998/07/05 06:49:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -32,6 +32,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h" 
  
 #include <sys/param.h>

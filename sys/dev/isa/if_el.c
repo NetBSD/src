@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.53 1998/07/05 00:51:21 jonathan Exp $	*/
+/*	$NetBSD: if_el.c,v 1.54 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,6 +19,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

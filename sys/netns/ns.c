@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: ns.c,v 1.15 1998/07/05 06:49:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ns.c	8.5 (Berkeley) 2/9/95
  */
+
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

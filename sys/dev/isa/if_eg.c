@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.42 1998/07/05 00:51:20 jonathan Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.43 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -39,6 +39,7 @@
  * - get rid of isa indirect stuff
  */
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

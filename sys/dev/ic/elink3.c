@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.39 1998/07/05 00:51:18 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.40 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -32,6 +32,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.9 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.10 1998/07/05 06:49:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.29 1998/07/05 04:37:40 jonathan Exp $   */
+/*	$NetBSD: intvec.s,v 1.30 1998/07/05 06:49:10 jonathan Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -36,6 +36,7 @@
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 #include "arp.h"
 #include "ppp.h"
 

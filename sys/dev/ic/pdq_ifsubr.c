@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.17 1998/07/05 00:51:19 jonathan Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.18 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -36,6 +36,7 @@
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
+#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.15 1998/07/05 06:49:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,7 @@
  *
  *	@(#)idp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+#include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.21 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.22 1998/07/05 06:49:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -38,6 +38,8 @@
 /*
  * Software interface driver for encapsulating ns in ip.
  */
+
+#include "opt_ns.h"			/* options NSIP */
 
 #ifdef NSIP
 #include <sys/param.h>

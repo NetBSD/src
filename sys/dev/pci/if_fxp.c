@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.17 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.18 1998/07/05 06:49:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

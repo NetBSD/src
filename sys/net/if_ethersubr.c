@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.36 1998/07/05 04:37:41 jonathan Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.37 1998/07/05 06:49:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -40,6 +40,7 @@
 #include "opt_ccitt.h"
 #include "opt_llc.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 #include "opt_gateway.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.8 1998/07/05 00:51:20 jonathan Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h" 
 
