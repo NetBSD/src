@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.8 1994/06/29 06:32:13 cgd Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -193,17 +193,4 @@ vmcmd_map_zero(p, cmd)
 
 	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
 	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
-}
-
-void
-exec_closefd(p, fd)
-	struct proc *p;
-	int fd;
-{
-	if (p->p_fd->fd_lastfile == fd)
-		p->p_fd->fd_lastfile--;
-	if (p->p_fd->fd_freefile > fd)
-		p->p_fd->fd_freefile = fd;
-	closef(p->p_fd->fd_ofiles[fd], p); 
-	p->p_fd->fd_ofiles[fd] = 0;
 }
