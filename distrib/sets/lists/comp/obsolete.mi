@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.63 2002/01/02 18:33:07 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.64 2002/01/12 17:22:10 augustss Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -582,6 +582,7 @@
 /usr/lib/libntp_pic.a
 /usr/lib/libusb.a
 /usr/lib/libusb_p.a
+/usr/lib/libusb_pic.a
 /usr/libdata/lint/llib-lntp.ln
 /usr/sbin/config.new
 /usr/share/ldscripts/m68kelf.x
