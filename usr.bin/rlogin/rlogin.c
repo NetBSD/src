@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.18 1997/06/05 16:10:49 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.19 1997/06/28 23:43:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.18 1997/06/05 16:10:49 mrg Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.19 1997/06/28 23:43:38 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -314,8 +314,8 @@ main(argc, argv)
 	/*
 	 * We set SIGURG and SIGUSR1 below so that an
 	 * incoming signal will be held pending rather than being
-	 * discarded. Note that these routines will be ready to get
-	 * a signal by the time that they are unblocked below.
+	 * discarded. Note that these routines will be ready to get;
+	 * a signal by the time that they are unblocked below.;
 	 */
 	sa.sa_handler = copytochild;
 	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
@@ -350,6 +350,7 @@ try_connect:
 		if (!(cp = krb_realmofhost (host))) {
 			warnx("Unknown realm for host %s.", host);
 			use_kerberos = 0;
+			sp = getservbyname("login", "tcp");
 			goto try_connect;
 		}
 
@@ -367,10 +368,12 @@ try_connect:
 					warnx("Host %s not registered for %s",
 				       	      host, "Kerberos rlogin service");
 					use_kerberos = 0;
+					sp = getservbyname("login", "tcp");
 					goto try_connect;
 				case NO_TKT_FIL:
 					if (through_once++) {
 						use_kerberos = 0;
+						sp = getservbyname("login", "tcp");
 						goto try_connect;
 					}
 #ifdef notyet
@@ -384,28 +387,25 @@ try_connect:
 				      (rem == -1) ? "rcmd protocol failure" :
 				      krb_err_txt[rem]);
 				use_kerberos = 0;
-				goto out;
+				sp = getservbyname("login", "tcp");
+				goto try_connect;
+			}
 		}
-	}
-	rem = sock;
-	if (doencrypt)
-		krem = kstream_create_rlogin_from_fd(rem, &schedule,
-						     &cred.session);
-	else
-		krem = kstream_create_from_fd(rem, 0, 0);
-	kstream_set_buffer_mode(krem, 0);
+		rem = sock;
+		if (doencrypt)
+			krem = kstream_create_rlogin_from_fd(rem, &schedule,
+							     &cred.session);
+		else
+			krem = kstream_create_from_fd(rem, 0, 0);
+			kstream_set_buffer_mode(krem, 0);
 	} else {
 #ifdef CRYPT
-		out:
 		if (doencrypt)
 			errx(1, "the -x flag requires Kerberos authentication.");
-#else
-		out:
 #endif /* CRYPT */
 		rem = rcmd(&host, sp->s_port, name, user, term, 0);
 		if (rem < 0)
 			exit(1);
-		krem = kstream_create_from_fd(rem, 0, 0);
 	}
 #else
 	rem = rcmd(&host, sp->s_port, name, user, term, 0);
@@ -650,23 +650,29 @@ writer()
 			}
 			if (c != escapechar)
 #ifdef KERBEROS
-				(void)kstream_write(krem,
-				    (char *)&escapechar, 1);
-			else
+				if (use_kerberos) {
+					(void)kstream_write(krem,
+				    	(char *)&escapechar, 1);
+				}
+				else
 #endif
 				(void)write(rem, &escapechar, 1);
 		}
 
 #ifdef KERBEROS
-		if (kstream_write(krem, &c, 1) == 0) {
-				msg("line gone");
-				break;
+		if (use_kerberos) {
+			if (kstream_write(krem, &c, 1) == 0) {
+					msg("line gone");
+					break;
+			}
 		}
+		else
 #endif
 			if (write(rem, &c, 1) == 0) {
 				msg("line gone");
 				break;
 			}
+
 		bol = CCEQ(deftty.c_cc[VKILL], c) ||
 		    CCEQ(deftty.c_cc[VEOF], c) ||
 		    CCEQ(deftty.c_cc[VINTR], c) ||
@@ -753,7 +759,9 @@ sendwindow()
 	wp->ws_ypixel = htons(winsize.ws_ypixel);
 
 #ifdef KERBEROS
-		(void)kstream_write(krem, obuf, sizeof(obuf));
+		if (use_kerberos)
+			(void)kstream_write(krem, obuf, sizeof(obuf));
+		else
 #endif
 		(void)write(rem, obuf, sizeof(obuf));
 }
@@ -892,9 +900,12 @@ reader(smask)
 		rcvstate = READING;
 
 #ifdef KERBEROS
-			rcvcnt = kstream_read(krem, rcvbuf, sizeof(rcvbuf));
+			if (use_kerberos)
+				rcvcnt = kstream_read(krem, rcvbuf, sizeof(rcvbuf));
+			else
 #endif
 			rcvcnt = read(rem, rcvbuf, sizeof (rcvbuf));
+
 		if (rcvcnt == 0)
 			return (0);
 		if (rcvcnt < 0) {
