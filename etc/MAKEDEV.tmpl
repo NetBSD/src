@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.2 2003/10/15 19:16:01 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.3 2003/10/17 19:06:33 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -675,7 +675,7 @@ ttyCY*)
 	done
 	;;
 
-tty0*|tty1*)
+tty0*|tty1*|tty[0-9])
 	ounit=${i#tty}
 	ounit=$(($ounit + 0))
 	if [ $ounit -lt 10 ]; then
@@ -1634,7 +1634,7 @@ done
 }
 
 # three variants of disk partitions - max 8, max 16, max 16 with highpartoffset
-# hack
+# hack; only the one used by port is retained in final MAKEDEV script
 # routine is called as:
 # makedisk name unit blk chr
 makedisk_p8() {
@@ -1660,7 +1660,6 @@ makedisk_p8() {
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 }
-
 makedisk_p16() {
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
 
@@ -1700,7 +1699,6 @@ makedisk_p16() {
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 }
-
 makedisk_p16high() {
 	highpartoffset=524280	# offset for partition 9 to 16
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
