@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.8 2001/09/15 13:01:44 drochner Exp $	*/
+/*	$NetBSD: agp.c,v 1.9 2001/09/15 18:03:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -765,6 +765,9 @@ int
 agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->as_chipc == NULL)
 		return ENXIO;
