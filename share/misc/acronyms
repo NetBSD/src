@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.112 2002/09/27 03:40:46 junyoung Exp $
+$NetBSD: acronyms,v 1.113 2003/02/05 20:11:04 mason Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -69,6 +69,7 @@ IHAFC	I haven't a fucking clue
 IHNFC	I have no fucking clue
 IIANM	if I am not mistaken
 IIRC	if I recall correctly
+IMAO	in my arrogant opinion
 IMCO	in my considered opinion
 IMHO	in my humble opinion
 IMNSHO	in my not so humble opinion
