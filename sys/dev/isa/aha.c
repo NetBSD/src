@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.5 1996/04/03 08:48:46 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.6 1996/04/03 09:45:45 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -221,7 +221,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * Wait for the adapter to go idle, unless it's one of
 	 * the commands which don't need this
 	 */
-	if (opcode != AHA_MBX_INIT && opcode != AHA_MBO_INTR_EN) {
+	if (opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
 			sts = inb(iobase + AHA_STAT_PORT);
 			if (sts & AHA_STAT_IDLE)
@@ -286,16 +286,19 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * We may get an extra interrupt for the HACC signal, but this is
 	 * unimportant.
 	 */
-	for (i = 20000; i; i--) {	/* 1 sec? */
-		sts = inb(iobase + AHA_INTR_PORT);
-		/* XXX Need to save this in the interrupt handler? */
-		if (sts & AHA_INTR_HACC)
-			break;
-		delay(50);
-	}
-	if (!i) {
-		printf("%s: aha_cmd, host not finished(0x%x)\n", name, sts);
-		return ENXIO;
+	if (opcode != AHA_MBO_INTR_EN) {
+		for (i = 20000; i; i--) {	/* 1 sec? */
+			sts = inb(iobase + AHA_INTR_PORT);
+			/* XXX Need to save this in the interrupt handler? */
+			if (sts & AHA_INTR_HACC)
+				break;
+			delay(50);
+		}
+		if (!i) {
+			printf("%s: aha_cmd, host not finished(0x%x)\n",
+			    name, sts);
+			return ENXIO;
+		}
 	}
 	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_IRST);
 	return 0;
