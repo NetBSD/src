@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.350 2000/02/19 10:31:07 itojun Exp $
+#	$NetBSD: files,v 1.351 2000/02/25 02:17:45 groo Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -356,6 +356,10 @@ file	dev/ic/clmpcc.c			clmpcc needs-flag
 # Device description for i2c bus and i2c eeprom
 define  i2c
 define  i2c_eeprom
+
+# National Semiconductor LM7[89]
+device  lm
+file	dev/ic/nslm7x.c		lm
 
 # Essential Communications Corp. HIPPI Interface
 device  esh: hippi, ifnet
