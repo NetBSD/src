@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.34 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.35 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -161,3 +161,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	iostat(8): report read/write stats in iostat -x.  [mrg 20021101]
 	systat(1): report read/write stats in iostat "rw" mode.  [mrg 20021101]
 	sparc64: Find the correct boot path for all IDE disks.  [mrg 20021102]
+	eap(4): Add support for second DAC [pooka 20021104]
