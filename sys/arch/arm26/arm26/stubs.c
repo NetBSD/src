@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.3 2000/06/26 22:36:33 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.4 2000/08/20 15:16:52 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.3 2000/06/26 22:36:33 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.4 2000/08/20 15:16:52 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -140,51 +140,3 @@ int sys_sysarch(p, v, retval)
 
 static struct user user0;
 struct user *proc0paddr = &user0;
-
-int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
-{
-	panic("process_read_fpregs not implemented");
-}
-
-int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
-{
-	panic("process_read_regs not implemented");
-}
-
-int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
-{
-	panic("process_set_pc not implemented");
-}
-
-int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
-{
-	panic("process_sstep not implemented");
-}
-
-int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
-{
-	panic("process_write_fpregs not implemented");
-}
-
-int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
-{
-	panic("process_write_regs not implemented");
-}
