@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uio.h	7.8 (Berkeley) 4/15/91
- *	$Id: uio.h,v 1.3 1993/05/20 16:23:39 cgd Exp $
+ *	$Id: uio.h,v 1.4 1993/06/27 05:59:11 andrew Exp $
  */
 
 #ifndef _SYS_UIO_H_
@@ -76,6 +76,11 @@ struct uio {
 __BEGIN_DECLS
 int	readv __P((int, const struct iovec *, int));
 int	writev __P((int, const struct iovec *, int));
+int	uiomove __P((caddr_t cp, int n, struct uio *uio));
+int	uioapply __P((int (*func)(), int arg1, int arg2,
+		struct uio *uio));
+int	ureadc __P((int c, struct uio *uio));
+int	uwritec __P((struct uio *uio));
 __END_DECLS
 
 #endif	/* !KERNEL */
