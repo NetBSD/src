@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/06/12 23:18:09 provos Exp $
+#	$NetBSD: Makefile,v 1.15 2003/07/18 16:18:29 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR+= csu libc libevent libposix libpthread librt libutil
 SUBDIR+= libskey
 .endif
 
-.if ${MKCRYPTO} == "yes"
+.if ${MKCRYPTO} != "no"
 SUBDIR+= libcrypto 
 .endif
 
