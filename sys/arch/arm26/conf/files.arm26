@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.10 2000/12/23 13:37:02 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.11 2000/12/26 19:55:52 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -200,7 +200,7 @@ file	arch/arm26/podulebus/asc.c		asc needs-flag
 
 
 # Memory disk for installation (or ROM versions?)
-file	arch/arm26/arm26/md_root.c		memory_disk_hooks
+file	dev/md_root.c				memory_disk_hooks
 major	{ md = 1 }
 
 ####
