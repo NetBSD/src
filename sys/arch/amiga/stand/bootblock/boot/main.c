@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.11 1999/11/28 22:10:47 is Exp $
+ * $NetBSD: main.c,v 1.12 2000/09/24 20:56:04 jdolecek Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -198,11 +198,17 @@ pain(aio)
 				case 'p':	/* Select fastmem by priority */
 					p_flag++;
 					break;
+				case 'q':
+					boothowto |= AB_QUIET;
+					break;
 				case 's':	/* single-user state */
 					boothowto |= RB_SINGLE;
 					break;
 				case 't':	/* test flag */
 					t_flag = 1;
+					break;
+				case 'v':
+					boothowto |= AB_VERBOSE;
 					break;
 				case 'A':	/* enable AGA modes */
 					amiga_flags |= 1;
