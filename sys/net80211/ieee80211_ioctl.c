@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.14 2004/05/06 02:16:59 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.14 2004/05/06 02:16:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $");
 #endif
 
 /*
@@ -1121,7 +1121,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	struct ifaddr *ifa;			/* XXX */
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
@@ -1354,34 +1353,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCSIFADDR:
-		/*
-		 * XXX Handle this directly so we can suppress if_init calls.
-		 * XXX This should be done in ether_ioctl but for the moment
-		 * XXX there are too many other parts of the system that
-		 * XXX set IFF_UP and so suppress if_init being called when
-		 * XXX it should be.
-		 */
-		ifa = (struct ifaddr *) data;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((ifp->if_flags & IFF_UP) == 0) {
-				ifp->if_flags |= IFF_UP;
-				if ((error = ifp->if_init(ifp)) != 0)
-					break;
-			}
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		default:
-			if ((ifp->if_flags & IFF_UP) == 0) {
-				ifp->if_flags |= IFF_UP;
-				ifp->if_init(ifp);
-			}
-			break;
-		}
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
