@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.46 2000/03/20 05:48:28 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.47 2000/03/22 03:27:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,13 +218,6 @@ ncr53c9x_attach(sc, dev)
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
-	/* Initialize CFG4 and CFG5, and disable interrupts. */
-	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
-	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
-		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5);
-		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
-	}
-
 	/*
 	 * Add reference to adapter so that we drop the reference after
 	 * config_found() to make sure the adatper is disabled.
@@ -246,13 +239,6 @@ ncr53c9x_attach(sc, dev)
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	scsipi_adapter_delref(&sc->sc_link);
-
-	/* Enable interrupts. */
-	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
-	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
-		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5 | NCRCFG5_SINT);
-		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
-	}
 }
 
 int
