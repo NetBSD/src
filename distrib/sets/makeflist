@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.56 2002/11/26 06:22:22 lukem Exp $
+# $NetBSD: makeflist,v 1.57 2002/12/10 22:00:56 fvdl Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -75,10 +75,8 @@ if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
 fi
 
 # Turn off lintlibs for some ports.
+# Not needed anymore, leave the hook here for future use.
 lintlibs=
-if [ "$machine" = "x86_64" ]; then
-	lintlibs=no
-fi
 
 # Automatically add XFree86 version specific sets
 for list in $lists
