@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.74 2000/12/10 14:14:15 fvdl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75 2001/01/12 22:55:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -960,7 +960,7 @@ finddevice(name)
 			return (dv);
 		}
 	}
-#endif;
+#endif
 
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	    dv = TAILQ_NEXT(dv, dv_list))
