@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.18 1999/07/28 10:07:05 tron Exp $
+.\" $NetBSD: pkg_create.1,v 1.19 1999/11/29 19:48:45 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -70,6 +70,12 @@
 .Op Fl r Ar rscript
 .Ek
 .Bk -words
+.Op Fl s Ar size-pkg-file
+.Ek
+.Bk -words
+.Op Fl S Ar size-all-file
+.Ek
+.Bk -words
 .Op Fl t Ar template
 .Ek
 .Bk -words
@@ -105,7 +111,7 @@ were used to control the build when creating the
 binary package. This allows various build definitions
 to be retained in a binary package and viewed wherever it is installed,
 using
-.Xr pkginfo 1 .
+.Xr pkg_info 1 .
 .It Fl C Ar cpkgs
 Set the initial package conflict list to
 .Ar cpkgs .
@@ -132,11 +138,18 @@ directives in the packing list (see PACKING LIST DETAILS section below).
 Re-order any directories in the pkg/PLIST file into reverse alphabetic
 order, so that child directories will automatically be removed before
 parent directories.
+.It Fl S Ar size-all-file
+Store the given file for later querying with the
+.Xr pkg_info 1 
+.Ar -S
+flag. The file is expected to contain the the size (in bytes) of all files of
+this package plus any required packages added up and stored as a
+ASCII string, terminated by a newline.
 .It Fl X Ar excludefile
 Pass
 .Ar excludefile
 as a
-.Fl exclude-from
+.Fl -exclude-from
 argument to
 .Cm tar
 when creating final package.  See
@@ -232,6 +245,12 @@ to be the ``requirements'' procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
+.It Fl s Ar size-pkg-file
+Store the given file for later querying with the
+.Xr pkg_info 1 
+.Ar -s
+flag. The file is expected to contain the the size (in bytes) of all files of
+this package added up and stored as a ASCII string, terminated by a newline.
 .It Fl t Ar template
 Use
 .Ar template
@@ -269,12 +288,6 @@ All subsequent filenames will be assumed relative to this directory.
 Note:
 .Cm @cd
 is also an alias for this command.
-.It Cm @src Ar directory
-Set the internal directory pointer for _creation only_ to
-.Ar directory .
-That is to say that it overrides
-.Cm @cwd
-for package creation but not extraction.
 .It Cm @exec Ar command
 Execute
 .Ar command
@@ -446,7 +459,7 @@ refined it for
 .Nx
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, etc. 
+wildcard dependency processing, pkgdb, pkg size recording etc. 
 .El
 .Sh BUGS
 Hard links between files in a distribution must be bracketed by
