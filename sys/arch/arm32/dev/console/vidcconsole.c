@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.10 1996/06/03 22:14:56 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.11 1996/06/12 19:12:57 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -1261,7 +1261,7 @@ vidcconsole_cursorintr(vc)
 			vidc_write ( VIDC_CP1, 0xffffff );
 		}
 	}
-	return(0);
+	return(0);	/* Pass interrupt on down the chain */
 }
 
 int
@@ -1312,7 +1312,7 @@ vidcconsole_flashintr(vc)
 			vidc_write(VIDC_PALETTE, VIDC_COL(  0,   0,   0));
 		}
 	}
-	return(0);
+	return(0);	/* Pass interrupt on down the chain */
 }
 
 static int
@@ -1642,16 +1642,20 @@ int
 vidcconsole_flash_go(vc)
 	struct vconsole *vc;
 {
-	static lock=0;
+	static int irqclaimed = 0;
+	static int lock=0;
 	if (lock==1)
 		return -1;
 	lock=0;
 
-	cursor_ih.ih_func = vidcconsole_cursorintr;
-	cursor_ih.ih_arg = vc;
-	cursor_ih.ih_level = IPL_TTY;
-	cursor_ih.ih_name = "vsync";
-	irq_claim ( IRQ_FLYBACK, &cursor_ih );
+	if (!irqclaimed) {
+		cursor_ih.ih_func = vidcconsole_cursorintr;
+		cursor_ih.ih_arg = vc;
+		cursor_ih.ih_level = IPL_TTY;
+		cursor_ih.ih_name = "vsync";
+		irq_claim ( IRQ_FLYBACK, &cursor_ih );
+		irqclaimed = 1;
+	}
 
 	cursor_init = 0;
 	return 0;
