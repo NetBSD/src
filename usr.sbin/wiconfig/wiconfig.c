@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.19 2002/01/28 22:07:30 ichiro Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.20 2002/03/03 05:00:03 dbj Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.19 2002/01/28 22:07:30 ichiro Exp $";
+	"@(#) $Id: wiconfig.c,v 1.20 2002/03/03 05:00:03 dbj Exp $";
 #endif
 
 struct wi_table {
@@ -217,7 +217,7 @@ static void wi_apscan(iface)
 	}
 	printf("\nAP Information\n");
 
-	naps = (int)wreq.wi_val[0]; 
+	naps = *(int *)wreq.wi_val;
 	w =  (struct wi_apinfo *)(((char *)&wreq.wi_val) + sizeof(int));
 	for ( i = 0; i < naps; i++, w++) {
 		printf("ap[%d]:\n", i);
