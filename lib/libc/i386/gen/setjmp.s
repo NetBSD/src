@@ -37,7 +37,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: setjmp.s,v 1.3 1993/08/26 02:13:28 mycroft Exp $"
+	.asciz "$Id: setjmp.s,v 1.4 1993/09/28 21:04:39 pk Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,10 +51,11 @@
  */
 
 #include "DEFS.h"
+#include "SYS.h"
 
 ENTRY(setjmp)
 	pushl	$0
-	call	_sigblock
+	call	PIC_PLT(_sigblock)
 	popl	%edx
 	movl	4(%esp),%ecx 
 	movl	0(%esp),%edx
@@ -71,7 +72,7 @@ ENTRY(setjmp)
 ENTRY(longjmp)
 	movl	4(%esp),%edx
 	pushl	24(%edx)
-	call	_sigsetmask
+	call	PIC_PLT(_sigsetmask)
 	popl	%eax
 	movl	4(%esp),%edx
 	movl	8(%esp),%eax

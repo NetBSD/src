@@ -37,7 +37,7 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: sbrk.s,v 1.3 1993/08/26 02:14:18 mycroft Exp $"
+	.asciz "$Id: sbrk.s,v 1.4 1993/09/28 21:04:56 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -54,6 +54,27 @@ curbrk:	.long	_end
 	.text
 
 ENTRY(sbrk)
+#ifdef PIC
+	movl	4(%esp),%ecx
+	PIC_PROLOGUE
+	movl	PIC_GOT(curbrk),%edx
+	movl	(%edx),%eax
+	PIC_EPILOGUE
+	addl	%eax,4(%esp)
+	lea	SYS_brk,%eax
+	LCALL(7,0)
+	jb	err
+	PIC_PROLOGUE
+	movl	PIC_GOT(curbrk),%edx
+	movl	(%edx),%eax
+	addl	%ecx,(%edx)
+	PIC_EPILOGUE
+	ret
+err:
+	jmp	PIC_PLT(cerror)
+
+#else
+
 	movl	4(%esp),%ecx
 	movl	curbrk,%eax
 	addl	%eax,4(%esp)
@@ -65,3 +86,4 @@ ENTRY(sbrk)
 	ret
 err:
 	jmp	cerror
+#endif

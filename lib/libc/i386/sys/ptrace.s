@@ -37,14 +37,21 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)ptrace.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: ptrace.s,v 1.3 1993/08/26 02:14:16 mycroft Exp $"
+	.asciz "$Id: ptrace.s,v 1.4 1993/09/28 21:04:55 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(ptrace)
 	xorl	%eax,%eax
+#ifdef PIC
+	PIC_PROLOGUE
+	movl	PIC_GOT(_errno),%edx
+	movl	%eax,(%edx)
+	PIC_EPILOGUE
+#else
 	movl	%eax,_errno
+#endif
 	lea	SYS_ptrace,%eax
 	LCALL(7,0)
 	jb	err

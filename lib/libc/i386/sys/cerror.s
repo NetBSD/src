@@ -37,13 +37,20 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)cerror.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: cerror.s,v 1.3 1993/08/26 02:14:12 mycroft Exp $"
+	.asciz "$Id: cerror.s,v 1.4 1993/09/28 21:04:54 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_errno
 cerror:
+#ifdef PIC
+	PIC_PROLOGUE
+	movl	PIC_GOT(_errno),%ecx
+	movl	%eax,(%ecx)
+	PIC_EPILOGUE
+#else
 	movl	%eax,_errno
+#endif
 	movl	$-1,%eax
 	ret

@@ -34,17 +34,26 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)fixunsdfsi.s	5.1	12/17/90"*/
-	.asciz "$Id: fixunsdfsi.s,v 1.3 1993/08/26 02:13:27 mycroft Exp $"
+	.asciz "$Id: fixunsdfsi.s,v 1.4 1993/09/28 21:04:38 pk Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 	.globl ___fixunsdfsi
 ___fixunsdfsi:
 	fldl	4(%esp)		/* argument double to accum stack */
 	frndint			/* create integer */
-	fcoml	fbiggestsigned	/* bigger than biggest signed? */
+#ifdef PIC
+	PIC_PROLOGUE
+	leal	PIC_GOTOFF(fbiggestsigned),%eax
+	PIC_EPILOGUE
+	fcoml	(%eax)
+#else
+	fcoml	PIC_GOTOFF(fbiggestsigned)	/* bigger than biggest signed? */
+#endif
 	fstsw	%ax
 	sahf
 	jnb	1f
@@ -53,10 +62,19 @@ ___fixunsdfsi:
 	movl	4(%esp),%eax
 	ret
 
-1:	fsubl	fbiggestsigned	/* reduce for proper conversion */
+1:	
+#ifdef PIC
+	PIC_PROLOGUE
+	leal	PIC_GOTOFF(fbiggestsigned),%eax
+	PIC_EPILOGUE
+	fsubl	(%eax)
+#else
+	fsubl	PIC_GOTOFF(fbiggestsigned)	/* reduce for proper conversion */
+#endif
 	fistpl	4(%esp)		/* convert */
 	movl	4(%esp),%eax
 	orl	$0x80000000,%eax	/* restore bias */
+	PIC_EPILOGUE
 	ret
 
 fbiggestsigned:	.double	0r2147483648.0
