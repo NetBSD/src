@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1995/02/13 22:24:24 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1995/03/10 23:36:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -207,7 +207,6 @@ bus_print(args, name)
 }
 
 extern vm_offset_t tmp_vpages[];
-extern int fubyte(), fusword(), fuword();
 static const int bustype_to_ptetype[4] = {
 	PGT_OBMEM,
 	PGT_OBIO,
