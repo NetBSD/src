@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.91 2001/01/16 03:38:23 augustss Exp $
+#	$NetBSD: GENERIC,v 1.92 2001/02/27 07:33:17 matt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	32
 
@@ -176,6 +176,8 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+gpio*	at obio?			# gpio
+gpio*	at gpio?			# extint
 adb*	at obio?			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
