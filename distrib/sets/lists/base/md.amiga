@@ -1,5 +1,4 @@
-# $NetBSD: md.amiga,v 1.48 2002/04/06 02:03:23 heinz Exp $
-./boot.amiga				base-sysutil-bin
+# $NetBSD: md.amiga,v 1.49 2002/04/15 02:50:30 mhitch Exp $
 ./sbin/binpatch				base-sysutil-root
 ./usr/mdec/boot.amiga			base-sysutil-bin
 ./usr/mdec/bootxx_fd			base-sysutil-bin
