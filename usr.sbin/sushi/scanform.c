@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.1 2001/01/05 01:28:38 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.2 2001/01/06 15:04:05 veego Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ scan_form(struct cqForm *cqf, char *basedir, char *path)
 	FILE *filep;
 	int lcnt;
 	char *p, *t;
-	int len;
+	size_t len;
 
 	if((filep = fopen(path, "r"))) {
 		for (lcnt = 1; (p = fgetln(filep, &len)) != NULL; ++lcnt) {
@@ -908,7 +908,8 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char *p, *q, *comm, *test;
 	FILE *file;
 	char buf[PATH_MAX+30];
-	int i, len, cur;
+	size_t len;
+	int i, cur;
 
 	q = strdup(ftp->data);
 	comm = malloc(sizeof(char) * strlen(q));
@@ -966,7 +967,8 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char *p, *q, *test, *comm;
 	FILE *file;
 	char buf[PATH_MAX+30];
-	int len, cur;
+	size_t len;
+	int cur;
 
 	q = strdup(ftp->data);
 	comm = malloc(sizeof(char) * strlen(q));

@@ -1,4 +1,4 @@
-/*      $NetBSD: scandir.c,v 1.1 2001/01/05 01:28:38 garbled Exp $       */
+/*      $NetBSD: scandir.c,v 1.2 2001/01/06 15:04:05 veego Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ scan_dir(cqm, basedir)
 	char path[PATH_MAX+30];
 	int lcnt;
 	char *p, *t;
-	int len;
+	size_t len;
 
 	if (lang_id == NULL)
 		snprintf(path, sizeof(path), "%s/%s", basedir, INDEXFILE);
