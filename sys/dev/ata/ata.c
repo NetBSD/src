@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.61 2004/10/28 20:11:41 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.62 2004/10/30 23:10:37 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.61 2004/10/28 20:11:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.62 2004/10/30 23:10:37 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -702,6 +702,21 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
+	/*
+	 * if polling and can sleep, wait for the xfer to be at head of queue
+	 */
+	if ((xfer->c_flags & (C_POLL | C_WAIT)) ==  (C_POLL | C_WAIT)) {
+		while (chp->ch_queue->active_xfer != NULL ||
+		    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
+			xfer->c_flags |= C_WAITACT;
+			tsleep(xfer, PRIBIO, "ataact", 0);
+			xfer->c_flags &= ~C_WAITACT;
+			if (xfer->c_flags & C_FREE) {
+				ata_free_xfer(chp, xfer);
+				return;
+			}
+		}
+	}
 	atastart(chp);
 }
 
@@ -744,6 +759,17 @@ atastart(struct ata_channel *chp)
 	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
 		return; /* queue froozen */
 	}
+	/*
+	 * if someone is waiting for the command to be active, wake it up
+	 * and let it process the command
+	 */
+	if (xfer->c_flags & C_WAITACT) {
+		ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
+		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
+		    DEBUG_XFERS);
+		wakeup(xfer);
+		return;
+	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
 		panic("atastart: channel waiting for irq");
@@ -763,6 +789,7 @@ atastart(struct ata_channel *chp)
 	
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
+
 	xfer->c_start(chp, xfer);
 }
 
@@ -787,6 +814,13 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	int s;
+
+	if (xfer->c_flags & C_WAITACT) {
+		/* Someone is waiting for this xfer, so we can't free now */
+		xfer->c_flags |= C_FREE;
+		wakeup(xfer);
+		return;
+	}
 
 	if (atac->atac_free_hw)
 		(*atac->atac_free_hw)(chp);
