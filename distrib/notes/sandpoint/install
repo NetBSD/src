@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1 2001/10/24 18:30:35 briggs Exp $
+.\"	$NetBSD: install,v 1.2 2002/01/02 21:12:18 he Exp $
 .
 .Ss2 Booting the installer
 .
@@ -11,7 +11,7 @@ and what your boot method is, but we'll include this anyways just so you
 get an idea of what to expect (user-typed commands are in
 .Ic bold No Ns ).
 .(disp
-.No DINK32>> Ic go 90000
+.No DINK32\*>\*> Ic go 90000
 [ XXX - insert boot w/ installer on ramdisk instead of this example ]
 .disp)
 .
