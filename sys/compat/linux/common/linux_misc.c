@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.108 2002/05/10 14:38:08 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.109 2002/05/10 14:49:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.108 2002/05/10 14:38:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.109 2002/05/10 14:49:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,7 +750,7 @@ again:
 			idb.d_off = (linux_off_t)linux_reclen;
 			idb.d_reclen = (u_short)bdp->d_namlen;
 		} else {
-			if (sizeof (idb.d_off) < 4 && (off >> 32) != 0) {
+			if (sizeof (idb.d_off) <= 4 && (off >> 32) != 0) {
 				compat_offseterr(vp, "linux_getdents");
 				error = EINVAL;
 				goto out;
