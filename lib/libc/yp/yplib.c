@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.19 1996/05/14 13:36:51 jtc Exp $	 */
+/*	$NetBSD: yplib.c,v 1.20 1996/05/14 23:37:33 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.19 1996/05/14 13:36:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.20 1996/05/14 23:37:33 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -54,9 +54,6 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.19 1996/05/14 13:36:51 jtc Exp $";
 #define YPBINDLOCK	"/var/run/ypbind.lock"
 #define YPMATCHCACHE
 
-int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
-void *ypresp_data;
-
 struct dom_binding *_ypbindlist;
 static char _yp_domain[MAXHOSTNAMELEN];
 int _yplib_timeout = 10;
@@ -64,7 +61,7 @@ int _yplib_timeout = 10;
 static bool_t ypmatch_add __P((const char *, const char *, int, char *, int));
 static bool_t ypmatch_find __P((const char *, const char *, int, const char **,
 				int *));
-static void _yp_unbind __P((struct dom_binding *));
+void _yp_unbind __P((struct dom_binding *));
 
 #ifdef YPMATCHCACHE
 int _yplib_cache = 5;
@@ -357,7 +354,7 @@ gotit:
 	return 0;
 }
 
-static void
+void
 _yp_unbind(ypb)
 	struct dom_binding *ypb;
 {
@@ -590,134 +587,6 @@ again:
 		}
 	}
 	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
-	_yp_unbind(ysd);
-	return r;
-}
-
-int
-yp_all(indomain, inmap, incallback)
-	const char     *indomain;
-	const char     *inmap;
-	struct ypall_callback *incallback;
-{
-	struct ypreq_nokey yprnk;
-	struct dom_binding *ysd;
-	struct timeval  tv;
-	struct sockaddr_in clnt_sin;
-	CLIENT         *clnt;
-	u_long          status;
-	int             clnt_sock;
-
-	if (_yp_dobind(indomain, &ysd) != 0)
-		return YPERR_DOMAIN;
-
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
-	clnt_sock = RPC_ANYSOCK;
-	clnt_sin = ysd->dom_server_addr;
-	clnt_sin.sin_port = 0;
-	clnt = clnttcp_create(&clnt_sin, YPPROG, YPVERS, &clnt_sock, 0, 0);
-	if (clnt == NULL) {
-		printf("clnttcp_create failed\n");
-		return YPERR_PMAP;
-	}
-	yprnk.domain = indomain;
-	yprnk.map = inmap;
-	ypresp_allfn = incallback->foreach;
-	ypresp_data = (void *) incallback->data;
-
-	(void) clnt_call(clnt, YPPROC_ALL,
-		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
-	clnt_destroy(clnt);
-	/* not really needed... */
-	xdr_free(xdr_ypresp_all_seq, (char *) &status);
-	_yp_unbind(ysd);
-
-	if (status != YP_FALSE)
-		return ypprot_err(status);
-	return 0;
-}
-
-int
-yp_order(indomain, inmap, outorder)
-	const char     *indomain;
-	const char     *inmap;
-	int            *outorder;
-{
-	struct dom_binding *ysd;
-	struct ypresp_order ypro;
-	struct ypreq_nokey yprnk;
-	struct timeval  tv;
-	int             r;
-
-again:
-	if (_yp_dobind(indomain, &ysd) != 0)
-		return YPERR_DOMAIN;
-
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
-
-	yprnk.domain = indomain;
-	yprnk.map = inmap;
-
-	(void)memset(&ypro, 0, sizeof ypro);
-
-	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
-	if (r != RPC_SUCCESS) {
-	        clnt_perror(ysd->dom_client, "yp_order: clnt_call");
-	        if (r == RPC_PROCUNAVAIL) {
-			/* Case of NIS+ server in NIS compat mode */
-			r = YPERR_YPERR;
-			goto bail;
-	        } 
-		ysd->dom_vers = -1;
-		goto again;
-	}
-	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *) &ypro);
-	r = ypprot_err(ypro.status);
-bail:
-	_yp_unbind(ysd);
-	return r;
-}
-
-int
-yp_master(indomain, inmap, outname)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outname;
-{
-	struct dom_binding *ysd;
-	struct ypresp_master yprm;
-	struct ypreq_nokey yprnk;
-	struct timeval  tv;
-	int             r;
-
-again:
-	if (_yp_dobind(indomain, &ysd) != 0)
-		return YPERR_DOMAIN;
-
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
-
-	yprnk.domain = indomain;
-	yprnk.map = inmap;
-
-	(void)memset(&yprm, 0, sizeof yprm);
-
-	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
-	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_master: clnt_call");
-		ysd->dom_vers = -1;
-		goto again;
-	}
-	if (!(r = ypprot_err(yprm.status))) {
-		if ((*outname = strdup(yprm.master)) == NULL)
-			r = RPC_SYSTEMERROR;
-	}
-	xdr_free(xdr_ypresp_master, (char *) &yprm);
 	_yp_unbind(ysd);
 	return r;
 }
