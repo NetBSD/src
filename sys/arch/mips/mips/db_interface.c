@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.44 2002/11/04 19:51:05 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45 2002/11/04 20:02:09 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -192,12 +192,11 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 		tfp[TF_TA3] = f->f_regs[TA3];
 		tfp[TF_T8] = f->f_regs[T8];
 		tfp[TF_T9] = f->f_regs[T9];
-		/* XXX Define named indices for these! */
-		tfp[17] = f->f_regs[RA];
-		tfp[18] = f->f_regs[SR];
-		tfp[19] = f->f_regs[MULLO];
-		tfp[20] = f->f_regs[MULHI];
-		tfp[21] = f->f_regs[PC];
+		tfp[TF_RA] = f->f_regs[RA];
+		tfp[TF_SR] = f->f_regs[SR];
+		tfp[TF_MULLO] = f->f_regs[MULLO];
+		tfp[TF_MULHI] = f->f_regs[MULHI];
+		tfp[TF_EPC] = f->f_regs[PC];
 		kdbaux[0] = f->f_regs[S0];
 		kdbaux[1] = f->f_regs[S1];
 		kdbaux[2] = f->f_regs[S2];
@@ -250,12 +249,11 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 		f->f_regs[TA3] = tfp[TF_TA3];
 		f->f_regs[T8] = tfp[TF_T8];
 		f->f_regs[T9] = tfp[TF_T9];
-		/* XXX Define named indices for these! */
-		f->f_regs[RA] = tfp[17];
-		f->f_regs[SR] = tfp[18];
-		f->f_regs[MULLO] = tfp[19];
-		f->f_regs[MULHI] = tfp[20];
-		f->f_regs[PC] = tfp[21];
+		f->f_regs[RA] = tfp[TF_RA];
+		f->f_regs[SR] = tfp[TF_SR];
+		f->f_regs[MULLO] = tfp[TF_MULLO];
+		f->f_regs[MULHI] = tfp[TF_MULHI];
+		f->f_regs[PC] = tfp[TF_EPC];
 		f->f_regs[S0] = kdbaux[0];
 		f->f_regs[S1] = kdbaux[1];
 		f->f_regs[S2] = kdbaux[2];
