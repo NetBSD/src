@@ -1,0 +1,458 @@
+/* Disassemble h8300 instructions.
+   Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002
+   Free Software Foundation, Inc.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+#define DEFINE_TABLE
+
+#include "sysdep.h"
+#define h8_opcodes h8ops
+#include "opcode/h8300.h"
+#include "dis-asm.h"
+#include "opintl.h"
+#include "libiberty.h"
+
+struct h8_instruction
+{
+  int length;
+  const struct h8_opcode *opcode;
+};
+
+struct h8_instruction *h8_instructions;
+
+static void bfd_h8_disassemble_init PARAMS ((void));
+static unsigned int bfd_h8_disassemble
+  PARAMS ((bfd_vma, disassemble_info *, int));
+
+/* Run through the opcodes and sort them into order to make them easy
+   to disassemble.  */
+static void
+bfd_h8_disassemble_init ()
+{
+  unsigned int i;
+  unsigned int nopcodes;
+  const struct h8_opcode *p;
+  struct h8_instruction *pi;
+
+  nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
+
+  h8_instructions = (struct h8_instruction *)
+    xmalloc (nopcodes * sizeof (struct h8_instruction));
+
+  for (p = h8_opcodes, pi = h8_instructions; p->name; p++, pi++)
+    {
+      int n1 = 0;
+      int n2 = 0;
+
+      if ((int) p->data.nib[0] < 16)
+	n1 = (int) p->data.nib[0];
+      else
+	n1 = 0;
+
+      if ((int) p->data.nib[1] < 16)
+	n2 = (int) p->data.nib[1];
+      else
+	n2 = 0;
+
+      /* Just make sure there are an even number of nibbles in it, and
+	 that the count is the same as the length.  */
+      for (i = 0; p->data.nib[i] != E; i++)
+	;
+
+      if (i & 1)
+	abort ();
+
+      pi->length = i / 2;
+      pi->opcode = p;
+    }
+
+  /* Add entry for the NULL vector terminator.  */
+  pi->length = 0;
+  pi->opcode = p;
+}
+
+static unsigned int
+bfd_h8_disassemble (addr, info, mode)
+     bfd_vma addr;
+     disassemble_info *info;
+     int mode;
+{
+  /* Find the first entry in the table for this opcode.  */
+  static const char *regnames[] =
+    {
+      "r0h", "r1h", "r2h", "r3h", "r4h", "r5h", "r6h", "r7h",
+      "r0l", "r1l", "r2l", "r3l", "r4l", "r5l", "r6l", "r7l"
+    };
+  static const char *wregnames[] =
+    {
+      "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+      "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7"
+    };
+  static const char *lregnames[] =
+    {
+      "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7",
+      "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7"
+    };
+  int rs = 0;
+  int rd = 0;
+  int rdisp = 0;
+  int abs = 0;
+  int bit = 0;
+  int plen = 0;
+  static bfd_boolean init = 0;
+  const struct h8_instruction *qi;
+  char const **pregnames = mode != 0 ? lregnames : wregnames;
+  int status;
+  int l;
+  unsigned char data[20];
+  void *stream = info->stream;
+  fprintf_ftype fprintf = info->fprintf_func;
+
+  if (!init)
+    {
+      bfd_h8_disassemble_init ();
+      init = 1;
+    }
+
+  status = info->read_memory_func (addr, data, 2, info);
+  if (status != 0)
+    {
+      info->memory_error_func (status, addr, info);
+      return -1;
+    }
+
+  for (l = 2; status == 0 && l < 10; l += 2)
+    status = info->read_memory_func (addr + l, data + l, 2, info);
+
+  /* Find the exact opcode/arg combo.  */
+  for (qi = h8_instructions; qi->opcode->name; qi++)
+    {
+      const struct h8_opcode *q = qi->opcode;
+      op_type *nib = q->data.nib;
+      unsigned int len = 0;
+
+      while (1)
+	{
+	  op_type looking_for = *nib;
+	  int thisnib = data[len >> 1];
+
+	  thisnib = (len & 1) ? (thisnib & 0xf) : ((thisnib >> 4) & 0xf);
+
+	  if (looking_for < 16 && looking_for >= 0)
+	    {
+	      if (looking_for != thisnib)
+		goto fail;
+	    }
+	  else
+	    {
+	      if ((int) looking_for & (int) B31)
+		{
+		  if (!(((int) thisnib & 0x8) != 0))
+		    goto fail;
+
+		  looking_for = (op_type) ((int) looking_for & ~(int) B31);
+		}
+
+	      if ((int) looking_for & (int) B30)
+		{
+		  if (!(((int) thisnib & 0x8) == 0))
+		    goto fail;
+
+		  looking_for = (op_type) ((int) looking_for & ~(int) B30);
+		}
+
+	      if (looking_for & DBIT)
+		{
+		  /* Exclude adds/subs by looking at bit 0 and 2, and
+                     make sure the operand size, either w or l,
+                     matches by looking at bit 1.  */
+		  if ((looking_for & 7) != (thisnib & 7))
+		    goto fail;
+
+		  abs = (thisnib & 0x8) ? 2 : 1;
+		}
+	      else if (looking_for & (REG | IND | INC | DEC))
+		{
+		  if (looking_for & SRC)
+		    rs = thisnib;
+		  else
+		    rd = thisnib;
+		}
+	      else if (looking_for & L_16)
+		{
+		  abs = (data[len >> 1]) * 256 + data[(len + 2) >> 1];
+		  plen = 16;
+		}
+	      else if (looking_for & ABSJMP)
+		{
+		  abs = (data[1] << 16) | (data[2] << 8) | (data[3]);
+		}
+	      else if (looking_for & MEMIND)
+		{
+		  abs = data[1];
+		}
+	      else if (looking_for & L_32)
+		{
+		  int i = len >> 1;
+
+		  abs = (data[i] << 24)
+		    | (data[i + 1] << 16)
+		    | (data[i + 2] << 8)
+		    | (data[i + 3]);
+
+		  plen = 32;
+		}
+	      else if (looking_for & L_24)
+		{
+		  int i = len >> 1;
+
+		  abs = (data[i] << 16) | (data[i + 1] << 8) | (data[i + 2]);
+		  plen = 24;
+		}
+	      else if (looking_for & IGNORE)
+		{
+		  ;
+		}
+	      else if (looking_for & DISPREG)
+		{
+		  rdisp = thisnib;
+		}
+	      else if (looking_for & KBIT)
+		{
+		  switch (thisnib)
+		    {
+		    case 9:
+		      abs = 4;
+		      break;
+		    case 8:
+		      abs = 2;
+		      break;
+		    case 0:
+		      abs = 1;
+		      break;
+		    default:
+		      goto fail;
+		    }
+		}
+	      else if (looking_for & L_8)
+		{
+		  plen = 8;
+		  abs = data[len >> 1];
+		}
+	      else if (looking_for & L_3)
+		{
+		  bit = thisnib & 0x7;
+		}
+	      else if (looking_for & L_2)
+		{
+		  plen = 2;
+		  abs = thisnib & 0x3;
+		}
+	      else if (looking_for & MACREG)
+		{
+		  abs = (thisnib == 3);
+		}
+	      else if (looking_for == E)
+		{
+		  int i;
+
+		  for (i = 0; i < qi->length; i++)
+		    fprintf (stream, "%02x ", data[i]);
+
+		  for (; i < 6; i++)
+		    fprintf (stream, "   ");
+
+		  fprintf (stream, "%s\t", q->name);
+
+		  /* Gross.  Disgusting.  */
+		  if (strcmp (q->name, "ldm.l") == 0)
+		    {
+		      int count, high;
+
+		      count = (data[1] >> 4) & 0x3;
+		      high = data[3] & 0x7;
+
+		      fprintf (stream, "@sp+,er%d-er%d", high - count, high);
+		      return qi->length;
+		    }
+
+		  if (strcmp (q->name, "stm.l") == 0)
+		    {
+		      int count, low;
+
+		      count = (data[1] >> 4) & 0x3;
+		      low = data[3] & 0x7;
+
+		      fprintf (stream, "er%d-er%d,@-sp", low, low + count);
+		      return qi->length;
+		    }
+
+		  /* Fill in the args.  */
+		  {
+		    op_type *args = q->args.nib;
+		    int hadone = 0;
+
+		    while (*args != E)
+		      {
+			int x = *args;
+
+			if (hadone)
+			  fprintf (stream, ",");
+
+			if (x & L_3)
+			  {
+			    fprintf (stream, "#0x%x", (unsigned) bit);
+			  }
+			else if (x & (IMM | KBIT | DBIT))
+			  {
+			    /* Bletch.  For shal #2,er0 and friends.  */
+			    if (*(args + 1) & SRC_IN_DST)
+			      abs = 2;
+
+			    fprintf (stream, "#0x%x", (unsigned) abs);
+			  }
+			else if (x & REG)
+			  {
+			    int rn = (x & DST) ? rd : rs;
+
+			    switch (x & SIZE)
+			      {
+			      case L_8:
+				fprintf (stream, "%s", regnames[rn]);
+				break;
+			      case L_16:
+				fprintf (stream, "%s", wregnames[rn]);
+				break;
+			      case L_P:
+			      case L_32:
+				fprintf (stream, "%s", lregnames[rn]);
+				break;
+			      }
+			  }
+			else if (x & MACREG)
+			  {
+			    fprintf (stream, "mac%c", abs ? 'l' : 'h');
+			  }
+			else if (x & INC)
+			  {
+			    fprintf (stream, "@%s+", pregnames[rs]);
+			  }
+			else if (x & DEC)
+			  {
+			    fprintf (stream, "@-%s", pregnames[rd]);
+			  }
+			else if (x & IND)
+			  {
+			    int rn = (x & DST) ? rd : rs;
+			    fprintf (stream, "@%s", pregnames[rn]);
+			  }
+			else if (x & ABS8MEM)
+			  {
+			    fprintf (stream, "@0x%x:8", (unsigned) abs);
+			  }
+			else if (x & (ABS | ABSJMP))
+			  {
+			    fprintf (stream, "@0x%x:%d", (unsigned) abs, plen);
+			  }
+			else if (x & MEMIND)
+			  {
+			    fprintf (stream, "@@%d (%x)", abs, abs);
+			  }
+			else if (x & PCREL)
+			  {
+			    if (x & L_16)
+			      {
+				abs += 2;
+				fprintf (stream,
+					 ".%s%d (%x)",
+					 (short) abs > 0 ? "+" : "",
+					 (short) abs, addr + (short) abs + 2);
+			      }
+			    else
+			      {
+				fprintf (stream,
+					 ".%s%d (%x)",
+					 (char) abs > 0 ? "+" : "",
+					 (char) abs, addr + (char) abs + 2);
+			      }
+			  }
+			else if (x & DISP)
+			  {
+			    fprintf (stream, "@(0x%x:%d,%s)",
+				     abs, plen, pregnames[rdisp]);
+			  }
+			else if (x & CCR)
+			  {
+			    fprintf (stream, "ccr");
+			  }
+			else if (x & EXR)
+			  {
+			    fprintf (stream, "exr");
+			  }
+			else
+			  /* xgettext:c-format */
+			  fprintf (stream, _("Hmmmm %x"), x);
+
+			hadone = 1;
+			args++;
+		      }
+		  }
+
+		  return qi->length;
+		}
+	      else
+		/* xgettext:c-format */
+		fprintf (stream, _("Don't understand %x \n"), looking_for);
+	    }
+
+	  len++;
+	  nib++;
+	}
+
+    fail:
+      ;
+    }
+
+  /* Fell off the end.  */
+  fprintf (stream, "%02x %02x        .word\tH'%x,H'%x",
+	   data[0], data[1],
+	   data[0], data[1]);
+  return 2;
+}
+
+int
+print_insn_h8300 (addr, info)
+     bfd_vma addr;
+     disassemble_info *info;
+{
+  return bfd_h8_disassemble (addr, info, 0);
+}
+
+int
+print_insn_h8300h (addr, info)
+     bfd_vma addr;
+     disassemble_info *info;
+{
+  return bfd_h8_disassemble (addr, info, 1);
+}
+
+int
+print_insn_h8300s (addr, info)
+     bfd_vma addr;
+     disassemble_info *info;
+{
+  return bfd_h8_disassemble (addr, info, 2);
+}

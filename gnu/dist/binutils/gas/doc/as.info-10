@@ -1,0 +1,1397 @@
+This is as.info, produced by makeinfo version 4.3 from as.texinfo.
+
+START-INFO-DIR-ENTRY
+* As: (as).                     The GNU assembler.
+* Gas: (as).                    The GNU assembler.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU Assembler "as".
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: as.info,  Node: VAX-branch,  Next: VAX-operands,  Prev: VAX-opcodes,  Up: Vax-Dependent
+
+VAX Branch Improvement
+----------------------
+
+   Certain pseudo opcodes are permitted.  They are for branch
+instructions.  They expand to the shortest branch instruction that
+reaches the target.  Generally these mnemonics are made by substituting
+`j' for `b' at the start of a DEC mnemonic.  This feature is included
+both for compatibility and to help compilers.  If you do not need this
+feature, avoid these opcodes.  Here are the mnemonics, and the code
+they can expand into.
+
+`jbsb'
+     `Jsb' is already an instruction mnemonic, so we chose `jbsb'.
+    (byte displacement)
+          `bsbb ...'
+
+    (word displacement)
+          `bsbw ...'
+
+    (long displacement)
+          `jsb ...'
+
+`jbr'
+`jr'
+     Unconditional branch.
+    (byte displacement)
+          `brb ...'
+
+    (word displacement)
+          `brw ...'
+
+    (long displacement)
+          `jmp ...'
+
+`jCOND'
+     COND may be any one of the conditional branches `neq', `nequ',
+     `eql', `eqlu', `gtr', `geq', `lss', `gtru', `lequ', `vc', `vs',
+     `gequ', `cc', `lssu', `cs'.  COND may also be one of the bit tests
+     `bs', `bc', `bss', `bcs', `bsc', `bcc', `bssi', `bcci', `lbs',
+     `lbc'.  NOTCOND is the opposite condition to COND.
+    (byte displacement)
+          `bCOND ...'
+
+    (word displacement)
+          `bNOTCOND foo ; brw ... ; foo:'
+
+    (long displacement)
+          `bNOTCOND foo ; jmp ... ; foo:'
+
+`jacbX'
+     X may be one of `b d f g h l w'.
+    (word displacement)
+          `OPCODE ...'
+
+    (long displacement)
+               OPCODE ..., foo ;
+               brb bar ;
+               foo: jmp ... ;
+               bar:
+
+`jaobYYY'
+     YYY may be one of `lss leq'.
+
+`jsobZZZ'
+     ZZZ may be one of `geq gtr'.
+    (byte displacement)
+          `OPCODE ...'
+
+    (word displacement)
+               OPCODE ..., foo ;
+               brb bar ;
+               foo: brw DESTINATION ;
+               bar:
+
+    (long displacement)
+               OPCODE ..., foo ;
+               brb bar ;
+               foo: jmp DESTINATION ;
+               bar:
+
+`aobleq'
+`aoblss'
+`sobgeq'
+`sobgtr'
+
+    (byte displacement)
+          `OPCODE ...'
+
+    (word displacement)
+               OPCODE ..., foo ;
+               brb bar ;
+               foo: brw DESTINATION ;
+               bar:
+
+    (long displacement)
+               OPCODE ..., foo ;
+               brb bar ;
+               foo: jmp DESTINATION ;
+               bar:
+
+
+File: as.info,  Node: VAX-operands,  Next: VAX-no,  Prev: VAX-branch,  Up: Vax-Dependent
+
+VAX Operands
+------------
+
+   The immediate character is `$' for Unix compatibility, not `#' as
+DEC writes it.
+
+   The indirect character is `*' for Unix compatibility, not `@' as DEC
+writes it.
+
+   The displacement sizing character is ``' (an accent grave) for Unix
+compatibility, not `^' as DEC writes it.  The letter preceding ``' may
+have either case.  `G' is not understood, but all other letters (`b i l
+s w') are understood.
+
+   Register names understood are `r0 r1 r2 ... r15 ap fp sp pc'.  Upper
+and lower case letters are equivalent.
+
+   For instance
+     tstb *w`$4(r5)
+
+   Any expression is permitted in an operand.  Operands are comma
+separated.
+
+
+File: as.info,  Node: VAX-no,  Prev: VAX-operands,  Up: Vax-Dependent
+
+Not Supported on VAX
+--------------------
+
+   Vax bit fields can not be assembled with `as'.  Someone can add the
+required code if they really need it.
+
+
+File: as.info,  Node: V850-Dependent,  Next: Xtensa-Dependent,  Prev: TIC54X-Dependent,  Up: Machine Dependencies
+
+v850 Dependent Features
+=======================
+
+* Menu:
+
+* V850 Options::              Options
+* V850 Syntax::               Syntax
+* V850 Floating Point::       Floating Point
+* V850 Directives::           V850 Machine Directives
+* V850 Opcodes::              Opcodes
+
+
+File: as.info,  Node: V850 Options,  Next: V850 Syntax,  Up: V850-Dependent
+
+Options
+-------
+
+   `as' supports the following additional command-line options for the
+V850 processor family:
+
+`-wsigned_overflow'
+     Causes warnings to be produced when signed immediate values
+     overflow the space available for then within their opcodes.  By
+     default this option is disabled as it is possible to receive
+     spurious warnings due to using exact bit patterns as immediate
+     constants.
+
+`-wunsigned_overflow'
+     Causes warnings to be produced when unsigned immediate values
+     overflow the space available for then within their opcodes.  By
+     default this option is disabled as it is possible to receive
+     spurious warnings due to using exact bit patterns as immediate
+     constants.
+
+`-mv850'
+     Specifies that the assembled code should be marked as being
+     targeted at the V850 processor.  This allows the linker to detect
+     attempts to link such code with code assembled for other
+     processors.
+
+`-mv850e'
+     Specifies that the assembled code should be marked as being
+     targeted at the V850E processor.  This allows the linker to detect
+     attempts to link such code with code assembled for other
+     processors.
+
+`-mv850any'
+     Specifies that the assembled code should be marked as being
+     targeted at the V850 processor but support instructions that are
+     specific to the extended variants of the process.  This allows the
+     production of binaries that contain target specific code, but
+     which are also intended to be used in a generic fashion.  For
+     example libgcc.a contains generic routines used by the code
+     produced by GCC for all versions of the v850 architecture,
+     together with support routines only used by the V850E architecture.
+
+`-mrelax'
+     Enables relaxation.  This allows the .longcall and .longjump pseudo
+     ops to be used in the assembler source code.  These ops label
+     sections of code which are either a long function call or a long
+     branch.  The assembler will then flag these sections of code and
+     the linker will attempt to relax them.
+
+
+File: as.info,  Node: V850 Syntax,  Next: V850 Floating Point,  Prev: V850 Options,  Up: V850-Dependent
+
+Syntax
+------
+
+* Menu:
+
+* V850-Chars::                Special Characters
+* V850-Regs::                 Register Names
+
+
+File: as.info,  Node: V850-Chars,  Next: V850-Regs,  Up: V850 Syntax
+
+Special Characters
+..................
+
+   `#' is the line comment character.
+
+
+File: as.info,  Node: V850-Regs,  Prev: V850-Chars,  Up: V850 Syntax
+
+Register Names
+..............
+
+   `as' supports the following names for registers:
+`general register 0'
+     r0, zero
+
+`general register 1'
+     r1
+
+`general register 2'
+     r2, hp
+
+`general register 3'
+     r3, sp
+
+`general register 4'
+     r4, gp
+
+`general register 5'
+     r5, tp
+
+`general register 6'
+     r6
+
+`general register 7'
+     r7
+
+`general register 8'
+     r8
+
+`general register 9'
+     r9
+
+`general register 10'
+     r10
+
+`general register 11'
+     r11
+
+`general register 12'
+     r12
+
+`general register 13'
+     r13
+
+`general register 14'
+     r14
+
+`general register 15'
+     r15
+
+`general register 16'
+     r16
+
+`general register 17'
+     r17
+
+`general register 18'
+     r18
+
+`general register 19'
+     r19
+
+`general register 20'
+     r20
+
+`general register 21'
+     r21
+
+`general register 22'
+     r22
+
+`general register 23'
+     r23
+
+`general register 24'
+     r24
+
+`general register 25'
+     r25
+
+`general register 26'
+     r26
+
+`general register 27'
+     r27
+
+`general register 28'
+     r28
+
+`general register 29'
+     r29
+
+`general register 30'
+     r30, ep
+
+`general register 31'
+     r31, lp
+
+`system register 0'
+     eipc
+
+`system register 1'
+     eipsw
+
+`system register 2'
+     fepc
+
+`system register 3'
+     fepsw
+
+`system register 4'
+     ecr
+
+`system register 5'
+     psw
+
+`system register 16'
+     ctpc
+
+`system register 17'
+     ctpsw
+
+`system register 18'
+     dbpc
+
+`system register 19'
+     dbpsw
+
+`system register 20'
+     ctbp
+
+
+File: as.info,  Node: V850 Floating Point,  Next: V850 Directives,  Prev: V850 Syntax,  Up: V850-Dependent
+
+Floating Point
+--------------
+
+   The V850 family uses IEEE floating-point numbers.
+
+
+File: as.info,  Node: V850 Directives,  Next: V850 Opcodes,  Prev: V850 Floating Point,  Up: V850-Dependent
+
+V850 Machine Directives
+-----------------------
+
+`.offset <EXPRESSION>'
+     Moves the offset into the current section to the specified amount.
+
+`.section "name", <type>'
+     This is an extension to the standard .section directive.  It sets
+     the current section to be <type> and creates an alias for this
+     section called "name".
+
+`.v850'
+     Specifies that the assembled code should be marked as being
+     targeted at the V850 processor.  This allows the linker to detect
+     attempts to link such code with code assembled for other
+     processors.
+
+`.v850e'
+     Specifies that the assembled code should be marked as being
+     targeted at the V850E processor.  This allows the linker to detect
+     attempts to link such code with code assembled for other
+     processors.
+
+
+File: as.info,  Node: V850 Opcodes,  Prev: V850 Directives,  Up: V850-Dependent
+
+Opcodes
+-------
+
+   `as' implements all the standard V850 opcodes.
+
+   `as' also implements the following pseudo ops:
+
+`hi0()'
+     Computes the higher 16 bits of the given expression and stores it
+     into the immediate operand field of the given instruction.  For
+     example:
+
+     `mulhi hi0(here - there), r5, r6'
+
+     computes the difference between the address of labels 'here' and
+     'there', takes the upper 16 bits of this difference, shifts it
+     down 16 bits and then mutliplies it by the lower 16 bits in
+     register 5, putting the result into register 6.
+
+`lo()'
+     Computes the lower 16 bits of the given expression and stores it
+     into the immediate operand field of the given instruction.  For
+     example:
+
+     `addi lo(here - there), r5, r6'
+
+     computes the difference between the address of labels 'here' and
+     'there', takes the lower 16 bits of this difference and adds it to
+     register 5, putting the result into register 6.
+
+`hi()'
+     Computes the higher 16 bits of the given expression and then adds
+     the value of the most significant bit of the lower 16 bits of the
+     expression and stores the result into the immediate operand field
+     of the given instruction.  For example the following code can be
+     used to compute the address of the label 'here' and store it into
+     register 6:
+
+     `movhi hi(here), r0, r6'     `movea lo(here), r6, r6'
+
+     The reason for this special behaviour is that movea performs a sign
+     extension on its immediate operand.  So for example if the address
+     of 'here' was 0xFFFFFFFF then without the special behaviour of the
+     hi() pseudo-op the movhi instruction would put 0xFFFF0000 into r6,
+     then the movea instruction would takes its immediate operand,
+     0xFFFF, sign extend it to 32 bits, 0xFFFFFFFF, and then add it
+     into r6 giving 0xFFFEFFFF which is wrong (the fifth nibble is E).
+     With the hi() pseudo op adding in the top bit of the lo() pseudo
+     op, the movhi instruction actually stores 0 into r6 (0xFFFF + 1 =
+     0x0000), so that the movea instruction stores 0xFFFFFFFF into r6 -
+     the right value.
+
+`hilo()'
+     Computes the 32 bit value of the given expression and stores it
+     into the immediate operand field of the given instruction (which
+     must be a mov instruction).  For example:
+
+     `mov hilo(here), r6'
+
+     computes the absolute address of label 'here' and puts the result
+     into register 6.
+
+`sdaoff()'
+     Computes the offset of the named variable from the start of the
+     Small Data Area (whoes address is held in register 4, the GP
+     register) and stores the result as a 16 bit signed value in the
+     immediate operand field of the given instruction.  For example:
+
+     `ld.w sdaoff(_a_variable)[gp],r6'
+
+     loads the contents of the location pointed to by the label
+     '_a_variable' into register 6, provided that the label is located
+     somewhere within +/- 32K of the address held in the GP register.
+     [Note the linker assumes that the GP register contains a fixed
+     address set to the address of the label called '__gp'.  This can
+     either be set up automatically by the linker, or specifically set
+     by using the `--defsym __gp=<value>' command line option].
+
+`tdaoff()'
+     Computes the offset of the named variable from the start of the
+     Tiny Data Area (whoes address is held in register 30, the EP
+     register) and stores the result as a 4,5, 7 or 8 bit unsigned
+     value in the immediate operand field of the given instruction.
+     For example:
+
+     `sld.w tdaoff(_a_variable)[ep],r6'
+
+     loads the contents of the location pointed to by the label
+     '_a_variable' into register 6, provided that the label is located
+     somewhere within +256 bytes of the address held in the EP
+     register.  [Note the linker assumes that the EP register contains
+     a fixed address set to the address of the label called '__ep'.
+     This can either be set up automatically by the linker, or
+     specifically set by using the `--defsym __ep=<value>' command line
+     option].
+
+`zdaoff()'
+     Computes the offset of the named variable from address 0 and
+     stores the result as a 16 bit signed value in the immediate
+     operand field of the given instruction.  For example:
+
+     `movea zdaoff(_a_variable),zero,r6'
+
+     puts the address of the label '_a_variable' into register 6,
+     assuming that the label is somewhere within the first 32K of
+     memory.  (Strictly speaking it also possible to access the last
+     32K of memory as well, as the offsets are signed).
+
+`ctoff()'
+     Computes the offset of the named variable from the start of the
+     Call Table Area (whoes address is helg in system register 20, the
+     CTBP register) and stores the result a 6 or 16 bit unsigned value
+     in the immediate field of then given instruction or piece of data.
+     For example:
+
+     `callt ctoff(table_func1)'
+
+     will put the call the function whoes address is held in the call
+     table at the location labeled 'table_func1'.
+
+`.longcall `name''
+     Indicates that the following sequence of instructions is a long
+     call to function `name'.  The linker will attempt to shorten this
+     call sequence if `name' is within a 22bit offset of the call.  Only
+     valid if the `-mrelax' command line switch has been enabled.
+
+`.longjump `name''
+     Indicates that the following sequence of instructions is a long
+     jump to label `name'.  The linker will attempt to shorten this code
+     sequence if `name' is within a 22bit offset of the jump.  Only
+     valid if the `-mrelax' command line switch has been enabled.
+
+   For information on the V850 instruction set, see `V850 Family
+32-/16-Bit single-Chip Microcontroller Architecture Manual' from NEC.
+Ltd.
+
+
+File: as.info,  Node: Xtensa-Dependent,  Next: Z8000-Dependent,  Prev: V850-Dependent,  Up: Machine Dependencies
+
+Xtensa Dependent Features
+=========================
+
+   This chapter covers features of the GNU assembler that are specific
+to the Xtensa architecture.  For details about the Xtensa instruction
+set, please consult the `Xtensa Instruction Set Architecture (ISA)
+Reference Manual'.
+
+* Menu:
+
+* Xtensa Options::              Command-line Options.
+* Xtensa Syntax::               Assembler Syntax for Xtensa Processors.
+* Xtensa Optimizations::        Assembler Optimizations.
+* Xtensa Relaxation::           Other Automatic Transformations.
+* Xtensa Directives::           Directives for Xtensa Processors.
+
+
+File: as.info,  Node: Xtensa Options,  Next: Xtensa Syntax,  Up: Xtensa-Dependent
+
+Command Line Options
+--------------------
+
+   The Xtensa version of the GNU assembler supports these special
+options:
+
+`--density | --no-density'
+     Enable or disable use of the Xtensa code density option (16-bit
+     instructions).  *Note Using Density Instructions: Density
+     Instructions.  If the processor is configured with the density
+     option, this is enabled by default; otherwise, it is always
+     disabled.
+
+`--relax | --no-relax'
+     Enable or disable relaxation of instructions with immediate
+     operands that are outside the legal range for the instructions.
+     *Note Xtensa Relaxation: Xtensa Relaxation.  The default is
+     `--relax' and this default should almost always be used.  If
+     relaxation is disabled with `--no-relax', instruction operands
+     that are out of range will cause errors.  Note: In the current
+     implementation, these options also control whether assembler
+     optimizations are performed, making these options equivalent to
+     `--generics' and `--no-generics'.
+
+`--generics | --no-generics'
+     Enable or disable all assembler transformations of Xtensa
+     instructions, including both relaxation and optimization.  The
+     default is `--generics'; `--no-generics' should only be used in
+     the rare cases when the instructions must be exactly as specified
+     in the assembly source.  As with `--no-relax', using
+     `--no-generics' causes out of range instruction operands to be
+     errors.
+
+`--text-section-literals | --no-text-section-literals'
+     Control the treatment of literal pools.  The default is
+     `--no-text-section-literals', which places literals in a separate
+     section in the output file.  This allows the literal pool to be
+     placed in a data RAM/ROM, and it also allows the linker to combine
+     literal pools from separate object files to remove redundant
+     literals and improve code size.  With `--text-section-literals',
+     the literals are interspersed in the text section in order to keep
+     them as close as possible to their references.  This may be
+     necessary for large assembly files.
+
+`--target-align | --no-target-align'
+     Enable or disable automatic alignment to reduce branch penalties
+     at some expense in code size.  *Note Automatic Instruction
+     Alignment: Xtensa Automatic Alignment.  This optimization is
+     enabled by default.  Note that the assembler will always align
+     instructions like `LOOP' that have fixed alignment requirements.
+
+`--longcalls | --no-longcalls'
+     Enable or disable transformation of call instructions to allow
+     calls across a greater range of addresses.  *Note Function Call
+     Relaxation: Xtensa Call Relaxation.  This option should be used
+     when call targets can potentially be out of range, but it degrades
+     both code size and performance.  The default is `--no-longcalls'.
+
+
+File: as.info,  Node: Xtensa Syntax,  Next: Xtensa Optimizations,  Prev: Xtensa Options,  Up: Xtensa-Dependent
+
+Assembler Syntax
+----------------
+
+   Block comments are delimited by `/*' and `*/'.  End of line comments
+may be introduced with either `#' or `//'.
+
+   Instructions consist of a leading opcode or macro name followed by
+whitespace and an optional comma-separated list of operands:
+
+     OPCODE [OPERAND,...]
+
+   Instructions must be separated by a newline or semicolon.
+
+* Menu:
+
+* Xtensa Opcodes::              Opcode Naming Conventions.
+* Xtensa Registers::            Register Naming.
+
+
+File: as.info,  Node: Xtensa Opcodes,  Next: Xtensa Registers,  Up: Xtensa Syntax
+
+Opcode Names
+............
+
+   See the `Xtensa Instruction Set Architecture (ISA) Reference Manual'
+for a complete list of opcodes and descriptions of their semantics.
+
+   The Xtensa assembler distinguishes between "generic" and "specific"
+opcodes.  Specific opcodes correspond directly to Xtensa machine
+instructions.  Prefixing an opcode with an underscore character (`_')
+identifies it as a specific opcode.  Opcodes without a leading
+underscore are generic, which means the assembler is required to
+preserve their semantics but may not translate them directly to the
+specific opcodes with the same names.  Instead, the assembler may
+optimize a generic opcode and select a better instruction to use in its
+place (*note Xtensa Optimizations: Xtensa Optimizations.), or the
+assembler may relax the instruction to handle operands that are out of
+range for the corresponding specific opcode (*note Xtensa Relaxation:
+Xtensa Relaxation.).
+
+   Only use specific opcodes when it is essential to select the exact
+machine instructions produced by the assembler.  Using specific opcodes
+unnecessarily only makes the code less efficient, by disabling
+assembler optimization, and less flexible, by disabling relaxation.
+
+   Note that this special handling of underscore prefixes only applies
+to Xtensa opcodes, not to either built-in macros or user-defined macros.
+When an underscore prefix is used with a macro (e.g., `_NOP'), it
+refers to a different macro.  The assembler generally provides built-in
+macros both with and without the underscore prefix, where the underscore
+versions behave as if the underscore carries through to the instructions
+in the macros.  For example, `_NOP' expands to `_OR a1,a1,a1'.
+
+   The underscore prefix only applies to individual instructions, not to
+series of instructions.  For example, if a series of instructions have
+underscore prefixes, the assembler will not transform the individual
+instructions, but it may insert other instructions between them (e.g.,
+to align a `LOOP' instruction).  To prevent the assembler from
+modifying a series of instructions as a whole, use the `no-generics'
+directive.  *Note generics: Generics Directive.
+
+
+File: as.info,  Node: Xtensa Registers,  Prev: Xtensa Opcodes,  Up: Xtensa Syntax
+
+Register Names
+..............
+
+   An initial `$' character is optional in all register names.  General
+purpose registers are named `a0'...`a15'.  Additional registers may be
+added by processor configuration options.  In particular, the MAC16
+option adds a MR register bank.  Its registers are named `m0'...`m3'.
+
+   As a special feature, `sp' is also supported as a synonym for `a1'.
+
+
+File: as.info,  Node: Xtensa Optimizations,  Next: Xtensa Relaxation,  Prev: Xtensa Syntax,  Up: Xtensa-Dependent
+
+Xtensa Optimizations
+--------------------
+
+   The optimizations currently supported by `as' are generation of
+density instructions where appropriate and automatic branch target
+alignment.
+
+* Menu:
+
+* Density Instructions::        Using Density Instructions.
+* Xtensa Automatic Alignment::  Automatic Instruction Alignment.
+
+
+File: as.info,  Node: Density Instructions,  Next: Xtensa Automatic Alignment,  Up: Xtensa Optimizations
+
+Using Density Instructions
+..........................
+
+   The Xtensa instruction set has a code density option that provides
+16-bit versions of some of the most commonly used opcodes.  Use of these
+opcodes can significantly reduce code size.  When possible, the
+assembler automatically translates generic instructions from the core
+Xtensa instruction set into equivalent instructions from the Xtensa code
+density option.  This translation can be disabled by using specific
+opcodes (*note Opcode Names: Xtensa Opcodes.), by using the
+`--no-density' command-line option (*note Command Line Options: Xtensa
+Options.), or by using the `no-density' directive (*note density:
+Density Directive.).
+
+   It is a good idea _not_ to use the density instuctions directly.
+The assembler will automatically select dense instructions where
+possible.  If you later need to avoid using the code density option, you
+can disable it in the assembler without having to modify the code.
+
+
+File: as.info,  Node: Xtensa Automatic Alignment,  Prev: Density Instructions,  Up: Xtensa Optimizations
+
+Automatic Instruction Alignment
+...............................
+
+   The Xtensa assembler will automatically align certain instructions,
+both to optimize performance and to satisfy architectural requirements.
+
+   When the `--target-align' command-line option is enabled (*note
+Command Line Options: Xtensa Options.), the assembler attempts to widen
+density instructions preceding a branch target so that the target
+instruction does not cross a 4-byte boundary.  Similarly, the assembler
+also attempts to align each instruction following a call instruction.
+If there are not enough preceding safe density instructions to align a
+target, no widening will be performed.  This alignment has the
+potential to reduce branch penalties at some expense in code size.  The
+assembler will not attempt to align labels with the prefixes `.Ln' and
+`.LM', since these labels are used for debugging information and are
+not typically branch targets.
+
+   The `LOOP' family of instructions must be aligned on either a 1 or 2
+mod 4 byte boundary.  The assembler knows about this restriction and
+inserts the minimal number of 2 or 3 byte no-op instructions to satisfy
+it.  When no-op instructions are added, any label immediately preceding
+the original loop will be moved in order to refer to the loop
+instruction, not the newly generated no-op instruction.
+
+   Similarly, the `ENTRY' instruction must be aligned on a 0 mod 4 byte
+boundary.  The assembler satisfies this requirement by inserting zero
+bytes when required.  In addition, labels immediately preceding the
+`ENTRY' instruction will be moved to the newly aligned instruction
+location.
+
+
+File: as.info,  Node: Xtensa Relaxation,  Next: Xtensa Directives,  Prev: Xtensa Optimizations,  Up: Xtensa-Dependent
+
+Xtensa Relaxation
+-----------------
+
+   When an instruction operand is outside the range allowed for that
+particular instruction field, `as' can transform the code to use a
+functionally-equivalent instruction or sequence of instructions.  This
+process is known as "relaxation".  This is typically done for branch
+instructions because the distance of the branch targets is not known
+until assembly-time.  The Xtensa assembler offers branch relaxation and
+also extends this concept to function calls, `MOVI' instructions and
+other instructions with immediate fields.
+
+* Menu:
+
+* Xtensa Branch Relaxation::        Relaxation of Branches.
+* Xtensa Call Relaxation::          Relaxation of Function Calls.
+* Xtensa Immediate Relaxation::     Relaxation of other Immediate Fields.
+
+
+File: as.info,  Node: Xtensa Branch Relaxation,  Next: Xtensa Call Relaxation,  Up: Xtensa Relaxation
+
+Conditional Branch Relaxation
+.............................
+
+   When the target of a branch is too far away from the branch itself,
+i.e., when the offset from the branch to the target is too large to fit
+in the immediate field of the branch instruction, it may be necessary to
+replace the branch with a branch around a jump.  For example,
+
+         beqz    a2, L
+
+   may result in:
+
+         bnez.n  a2, M
+         j L
+     M:
+
+   (The `BNEZ.N' instruction would be used in this example only if the
+density option is available.  Otherwise, `BNEZ' would be used.)
+
+
+File: as.info,  Node: Xtensa Call Relaxation,  Next: Xtensa Immediate Relaxation,  Prev: Xtensa Branch Relaxation,  Up: Xtensa Relaxation
+
+Function Call Relaxation
+........................
+
+   Function calls may require relaxation because the Xtensa immediate
+call instructions (`CALL0', `CALL4', `CALL8' and `CALL12') provide a
+PC-relative offset of only 512 Kbytes in either direction.  For larger
+programs, it may be necessary to use indirect calls (`CALLX0',
+`CALLX4', `CALLX8' and `CALLX12') where the target address is specified
+in a register.  The Xtensa assembler can automatically relax immediate
+call instructions into indirect call instructions.  This relaxation is
+done by loading the address of the called function into the callee's
+return address register and then using a `CALLX' instruction.  So, for
+example:
+
+         call8 func
+
+   might be relaxed to:
+
+         .literal .L1, func
+         l32r    a8, .L1
+         callx8  a8
+
+   Because the addresses of targets of function calls are not generally
+known until link-time, the assembler must assume the worst and relax all
+the calls to functions in other source files, not just those that really
+will be out of range.  The linker can recognize calls that were
+unnecessarily relaxed, but it can only partially remove the overhead
+introduced by the assembler.
+
+   Call relaxation has a negative effect on both code size and
+performance, so this relaxation is disabled by default.  If a program
+is too large and some of the calls are out of range, function call
+relaxation can be enabled using the `--longcalls' command-line option
+or the `longcalls' directive (*note longcalls: Longcalls Directive.).
+
+
+File: as.info,  Node: Xtensa Immediate Relaxation,  Prev: Xtensa Call Relaxation,  Up: Xtensa Relaxation
+
+Other Immediate Field Relaxation
+................................
+
+   The `MOVI' machine instruction can only materialize values in the
+range from -2048 to 2047.  Values outside this range are best
+materalized with `L32R' instructions.  Thus:
+
+         movi a0, 100000
+
+   is assembled into the following machine code:
+
+         .literal .L1, 100000
+         l32r a0, .L1
+
+   The `L8UI' machine instruction can only be used with immediate
+offsets in the range from 0 to 255. The `L16SI' and `L16UI' machine
+instructions can only be used with offsets from 0 to 510.  The `L32I'
+machine instruction can only be used with offsets from 0 to 1020.  A
+load offset outside these ranges can be materalized with an `L32R'
+instruction if the destination register of the load is different than
+the source address register.  For example:
+
+         l32i a1, a0, 2040
+
+   is translated to:
+
+         .literal .L1, 2040
+         l32r a1, .L1
+         addi a1, a0, a1
+         l32i a1, a1, 0
+
+If the load destination and source address register are the same, an
+out-of-range offset causes an error.
+
+   The Xtensa `ADDI' instruction only allows immediate operands in the
+range from -128 to 127.  There are a number of alternate instruction
+sequences for the generic `ADDI' operation.  First, if the immediate is
+0, the `ADDI' will be turned into a `MOV.N' instruction (or the
+equivalent `OR' instruction if the code density option is not
+available).  If the `ADDI' immediate is outside of the range -128 to
+127, but inside the range -32896 to 32639, an `ADDMI' instruction or
+`ADDMI'/`ADDI' sequence will be used.  Finally, if the immediate is
+outside of this range and a free register is available, an `L32R'/`ADD'
+sequence will be used with a literal allocated from the literal pool.
+
+   For example:
+
+         addi    a5, a6, 0
+         addi    a5, a6, 512
+         addi    a5, a6, 513
+         addi    a5, a6, 50000
+
+   is assembled into the following:
+
+         .literal .L1, 50000
+         mov.n   a5, a6
+         addmi   a5, a6, 0x200
+         addmi   a5, a6, 0x200
+         addi    a5, a5, 1
+         l32r    a5, .L1
+         add     a5, a6, a5
+
+
+File: as.info,  Node: Xtensa Directives,  Prev: Xtensa Relaxation,  Up: Xtensa-Dependent
+
+Directives
+----------
+
+   The Xtensa assember supports a region-based directive syntax:
+
+         .begin DIRECTIVE [OPTIONS]
+         ...
+         .end DIRECTIVE
+
+   All the Xtensa-specific directives that apply to a region of code use
+this syntax.
+
+   The directive applies to code between the `.begin' and the `.end'.
+The state of the option after the `.end' reverts to what it was before
+the `.begin'.  A nested `.begin'/`.end' region can further change the
+state of the directive without having to be aware of its outer state.
+For example, consider:
+
+         .begin no-density
+     L:  add a0, a1, a2
+         .begin density
+     M:  add a0, a1, a2
+         .end density
+     N:  add a0, a1, a2
+         .end no-density
+
+   The generic `ADD' opcodes at `L' and `N' in the outer `no-density'
+region both result in `ADD' machine instructions, but the assembler
+selects an `ADD.N' instruction for the generic `ADD' at `M' in the
+inner `density' region.
+
+   The advantage of this style is that it works well inside macros
+which can preserve the context of their callers.
+
+   When command-line options and assembler directives are used at the
+same time and conflict, the one that overrides a default behavior takes
+precedence over one that is the same as the default.  For example, if
+the code density option is available, the default is to select density
+instructions whenever possible.  So, if the above is assembled with the
+`--no-density' flag, which overrides the default, all the generic `ADD'
+instructions result in `ADD' machine instructions.  If assembled with
+the `--density' flag, which is already the default, the `no-density'
+directive takes precedence and only one of the generic `ADD'
+instructions is optimized to be a `ADD.N' machine instruction.  An
+underscore prefix identifying a specific opcode always takes precedence
+over directives and command-line flags.
+
+   The following directives are available:
+
+* Menu:
+
+* Density Directive::          Disable Use of Density Instructions.
+* Relax Directive::            Disable Assembler Relaxation.
+* Longcalls Directive::        Use Indirect Calls for Greater Range.
+* Generics Directive::         Disable All Assembler Transformations.
+* Literal Directive::          Intermix Literals with Instructions.
+* Literal Position Directive:: Specify Inline Literal Pool Locations.
+* Literal Prefix Directive::   Specify Literal Section Name Prefix.
+* Freeregs Directive::         List Registers Available for Assembler Use.
+* Frame Directive::            Describe a stack frame.
+
+
+File: as.info,  Node: Density Directive,  Next: Relax Directive,  Up: Xtensa Directives
+
+density
+.......
+
+   The `density' and `no-density' directives enable or disable
+optimization of generic instructions into density instructions within
+the region.  *Note Using Density Instructions: Density Instructions.
+
+         .begin [no-]density
+         .end [no-]density
+
+   This optimization is enabled by default unless the Xtensa
+configuration does not support the code density option or the
+`--no-density' command-line option was specified.
+
+
+File: as.info,  Node: Relax Directive,  Next: Longcalls Directive,  Prev: Density Directive,  Up: Xtensa Directives
+
+relax
+.....
+
+   The `relax' directive enables or disables relaxation within the
+region.  *Note Xtensa Relaxation: Xtensa Relaxation.  Note: In the
+current implementation, these directives also control whether assembler
+optimizations are performed, making them equivalent to the `generics'
+and `no-generics' directives.
+
+         .begin [no-]relax
+         .end [no-]relax
+
+   Relaxation is enabled by default unless the `--no-relax'
+command-line option was specified.
+
+
+File: as.info,  Node: Longcalls Directive,  Next: Generics Directive,  Prev: Relax Directive,  Up: Xtensa Directives
+
+longcalls
+.........
+
+   The `longcalls' directive enables or disables function call
+relaxation.  *Note Function Call Relaxation: Xtensa Call Relaxation.
+
+         .begin [no-]longcalls
+         .end [no-]longcalls
+
+   Call relaxation is disabled by default unless the `--longcalls'
+command-line option is specified.
+
+
+File: as.info,  Node: Generics Directive,  Next: Literal Directive,  Prev: Longcalls Directive,  Up: Xtensa Directives
+
+generics
+........
+
+   This directive enables or disables all assembler transformation,
+including relaxation (*note Xtensa Relaxation: Xtensa Relaxation.) and
+optimization (*note Xtensa Optimizations: Xtensa Optimizations.).
+
+         .begin [no-]generics
+         .end [no-]generics
+
+   Disabling generics is roughly equivalent to adding an underscore
+prefix to every opcode within the region, so that every opcode is
+treated as a specific opcode.  *Note Opcode Names: Xtensa Opcodes.  In
+the current implementation of `as', built-in macros are also disabled
+within a `no-generics' region.
+
+
+File: as.info,  Node: Literal Directive,  Next: Literal Position Directive,  Prev: Generics Directive,  Up: Xtensa Directives
+
+literal
+.......
+
+   The `.literal' directive is used to define literal pool data, i.e.,
+read-only 32-bit data accessed via `L32R' instructions.
+
+         .literal LABEL, VALUE[, VALUE...]
+
+   This directive is similar to the standard `.word' directive, except
+that the actual location of the literal data is determined by the
+assembler and linker, not by the position of the `.literal' directive.
+Using this directive gives the assembler freedom to locate the literal
+data in the most appropriate place and possibly to combine identical
+literals.  For example, the code:
+
+         entry sp, 40
+         .literal .L1, sym
+         l32r    a4, .L1
+
+   can be used to load a pointer to the symbol `sym' into register
+`a4'.  The value of `sym' will not be placed between the `ENTRY' and
+`L32R' instructions; instead, the assembler puts the data in a literal
+pool.
+
+   By default literal pools are placed in a separate section; however,
+when using the `--text-section-literals' option (*note Command Line
+Options: Xtensa Options.), the literal pools are placed in the current
+section.  These text section literal pools are created automatically
+before `ENTRY' instructions and manually after `.literal_position'
+directives (*note literal_position: Literal Position Directive.).  If
+there are no preceding `ENTRY' instructions or `.literal_position'
+directives, the assembler will print a warning and place the literal
+pool at the beginning of the current section.  In such cases, explicit
+`.literal_position' directives should be used to place the literal
+pools.
+
+
+File: as.info,  Node: Literal Position Directive,  Next: Literal Prefix Directive,  Prev: Literal Directive,  Up: Xtensa Directives
+
+literal_position
+................
+
+   When using `--text-section-literals' to place literals inline in the
+section being assembled, the `.literal_position' directive can be used
+to mark a potential location for a literal pool.
+
+         .literal_position
+
+   The `.literal_position' directive is ignored when the
+`--text-section-literals' option is not used.
+
+   The assembler will automatically place text section literal pools
+before `ENTRY' instructions, so the `.literal_position' directive is
+only needed to specify some other location for a literal pool.  You may
+need to add an explicit jump instruction to skip over an inline literal
+pool.
+
+   For example, an interrupt vector does not begin with an `ENTRY'
+instruction so the assembler will be unable to automatically find a good
+place to put a literal pool.  Moreover, the code for the interrupt
+vector must be at a specific starting address, so the literal pool
+cannot come before the start of the code.  The literal pool for the
+vector must be explicitly positioned in the middle of the vector (before
+any uses of the literals, of course).  The `.literal_position'
+directive can be used to do this.  In the following code, the literal
+for `M' will automatically be aligned correctly and is placed after the
+unconditional jump.
+
+         .global M
+     code_start:
+         j continue
+         .literal_position
+         .align 4
+     continue:
+         movi    a4, M
+
+
+File: as.info,  Node: Literal Prefix Directive,  Next: Freeregs Directive,  Prev: Literal Position Directive,  Up: Xtensa Directives
+
+literal_prefix
+..............
+
+   The `literal_prefix' directive allows you to specify different
+sections to hold literals from different portions of an assembly file.
+With this directive, a single assembly file can be used to generate code
+into multiple sections, including literals generated by the assembler.
+
+         .begin literal_prefix [NAME]
+         .end literal_prefix
+
+   For the code inside the delimited region, the assembler puts
+literals in the section `NAME.literal'. If this section does not yet
+exist, the assembler creates it.  The NAME parameter is optional. If
+NAME is not specified, the literal prefix is set to the "default" for
+the file.  This default is usually `.literal' but can be changed with
+the `--rename-section' command-line argument.
+
+
+File: as.info,  Node: Freeregs Directive,  Next: Frame Directive,  Prev: Literal Prefix Directive,  Up: Xtensa Directives
+
+freeregs
+........
+
+   This directive tells the assembler that the given registers are
+unused in the region.
+
+         .begin freeregs RI[,RI...]
+         .end freeregs
+
+   This allows the assembler to use these registers for relaxations or
+optimizations.  (They are actually only for relaxations at present, but
+the possibility of optimizations exists in the future.)
+
+   Nested `freeregs' directives can be used to add additional registers
+to the list of those available to the assembler.  For example:
+
+         .begin freeregs a3, a4
+         .begin freeregs a5
+
+   has the effect of declaring `a3', `a4', and `a5' all free.
+
+
+File: as.info,  Node: Frame Directive,  Prev: Freeregs Directive,  Up: Xtensa Directives
+
+frame
+.....
+
+   This directive tells the assembler to emit information to allow the
+debugger to locate a function's stack frame.  The syntax is:
+
+         .frame REG, SIZE
+
+   where REG is the register used to hold the frame pointer (usually
+the same as the stack pointer) and SIZE is the size in bytes of the
+stack frame.  The `.frame' directive is typically placed immediately
+after the `ENTRY' instruction for a function.
+
+   In almost all circumstances, this information just duplicates the
+information given in the function's `ENTRY' instruction; however, there
+are two cases where this is not true:
+
+  1. The size of the stack frame is too big to fit in the immediate
+     field of the `ENTRY' instruction.
+
+  2. The frame pointer is different than the stack pointer, as with
+     functions that call `alloca'.
+
+
+File: as.info,  Node: Reporting Bugs,  Next: Acknowledgements,  Prev: Machine Dependencies,  Up: Top
+
+Reporting Bugs
+**************
+
+   Your bug reports play an essential role in making `as' reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of `as' work
+better.  Bug reports are your contribution to the maintenance of `as'.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+
+
+File: as.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: Reporting Bugs
+
+Have You Found a Bug?
+=====================
+
+   If you are not sure whether you have found a bug, here are some
+guidelines:
+
+   * If the assembler gets a fatal signal, for any input whatever, that
+     is a `as' bug.  Reliable assemblers never crash.
+
+   * If `as' produces an error message for valid input, that is a bug.
+
+   * If `as' does not produce an error message for invalid input, that
+     is a bug.  However, you should note that your idea of "invalid
+     input" might be our idea of "an extension" or "support for
+     traditional practice".
+
+   * If you are an experienced user of assemblers, your suggestions for
+     improvement of `as' are welcome in any case.
+
+
+File: as.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: Reporting Bugs
+
+How to Report Bugs
+==================
+
+   A number of companies and individuals offer support for GNU
+products.  If you obtained `as' from a support organization, we
+recommend you contact that organization first.
+
+   You can find contact information for many support companies and
+individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
+
+   In any event, we also recommend that you send bug reports for `as'
+to `bug-binutils@gnu.org'.
+
+   The fundamental principle of reporting bugs usefully is this:
+*report all the facts*.  If you are not sure whether to state a fact or
+leave it out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of a symbol you use in an example does not matter.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug
+is a stray memory reference which happens to fetch from the location
+where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the assembler into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug if it is new to us.  Therefore, always write your bug reports
+on the assumption that the bug has not been reported previously.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  This cannot help us fix a bug, so it is basically useless.  We
+respond by asking for enough details to enable us to investigate.  You
+might as well expedite matters by sending them to begin with.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of `as'.  `as' announces it if you start it with the
+     `--version' argument.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of `as'.
+
+   * Any patches you may have applied to the `as' source.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * What compiler (and its version) was used to compile `as'--e.g.
+     "`gcc-2.7'".
+
+   * The command arguments you gave the assembler to assemble your
+     example and observe the bug.  To guarantee you will not omit
+     something important, list them all.  A copy of the Makefile (or
+     the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input file that will reproduce the bug.  If the bug is
+     observed when the assembler is invoked via a compiler, send the
+     assembler source, not the high level language source.  Most
+     compilers will produce the assembler source when run with the `-S'
+     option.  If you are using `gcc', use the options `-v
+     --save-temps'; this will save the assembler source in a file with
+     an extension of `.s', and also show you exactly how `as' is being
+     run.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that `as' gets a fatal signal, then we
+     will certainly notice it.  But if the bug is incorrect output, we
+     might not notice unless it is glaringly wrong.  You might as well
+     not give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as, your copy of `as' is out of synch, or you have
+     encountered a bug in the C library on your system.  (This has
+     happened!)  Your copy might crash and ours would not.  If you told
+     us to expect a crash, then when ours fails to crash, we would know
+     that the bug was not happening for us.  If you had not told us to
+     expect a crash, then we would not be able to draw any conclusion
+     from our observations.
+
+   * If you wish to suggest changes to the `as' source, send us context
+     diffs, as generated by `diff' with the `-u', `-c', or `-p' option.
+     Always send diffs from the old file to the new file.  If you even
+     discuss something in the `as' source, refer to it by context, not
+     by line number.
+
+     The line numbers in our development sources will not match those
+     in your sources.  Your line numbers would convey no useful
+     information to us.
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report _instead_
+     of the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems
+     with your patch and decide to fix the problem another way, or we
+     might not understand it at all.
+
+     Sometimes with a program as complicated as `as' it is very hard to
+     construct an example that will make the program follow a certain
+     path through the code.  If you do not send us the example, we will
+     not be able to construct one, so we will not be able to verify
+     that the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+
