@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.23 2001/01/19 01:51:17 manu Exp $
+#	$NetBSD: files.bebox,v 1.24 2001/02/12 06:10:42 briggs Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -85,6 +85,9 @@ file	arch/bebox/pci/pchb.c		pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/bebox/pci/pcib.c		pcib
+
+# network devices MII bus
+include "dev/mii/files.mii"
 
 #
 # ISA and mixed ISA+PCI drivers
