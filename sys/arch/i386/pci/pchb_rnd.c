@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.4 2000/11/06 22:01:31 augustss Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.5 2000/11/06 22:10:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -112,7 +112,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 
 			/*
 			 * Should test entropy source to ensure
-			 * that it passes the Stastical Random
+			 * that it passes the Statistical Random
 			 * Number Generator Tests in section 4.11.1,
 			 * FIPS PUB 140-1.
 			 *
