@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.63 1999/07/27 21:50:37 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.64 1999/08/27 01:14:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -252,6 +252,30 @@ log(level, fmt, va_alist)
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
 		va_end(ap);
 	}
+
+	KPRINTF_MUTEX_EXIT(s);
+
+	logwakeup();		/* wake up anyone waiting for log msgs */
+}
+
+/*
+ * vlog: write to the log buffer [already have va_alist]
+ */
+
+void
+vlog(level, fmt, ap)
+	int level;
+	const char *fmt;
+	va_list ap;
+{
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	klogpri(level);		/* log the level first */
+	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	if (!log_open)
+		kprintf(fmt, TOCONS, NULL, NULL, ap);
 
 	KPRINTF_MUTEX_EXIT(s);
 
