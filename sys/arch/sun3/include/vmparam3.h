@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.12 1995/05/24 20:55:34 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.13 1995/08/08 20:56:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -88,10 +88,17 @@
  * PTEs for mapping user space into the kernel for phyio operations.
  * [this figure is based on the assumption that you can put ptes in real
  *  memory.  this is a false assumption on a sun3]
- *  
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	1
+#endif
+
+/*
+ * PTEs for system V style shared memory.
+ * This is basically slop for kmempt which we actually allocate (malloc) from.
+ */
+#ifndef SHMMAXPGS
+#define SHMMAXPGS	1024
 #endif
 
 /*
