@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.231 2004/01/05 03:33:06 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.231 2004/01/05 03:33:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -386,9 +386,9 @@ main(void)
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
 	 * defined in kernel config, adjust the number such as we use roughly
-	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
+	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
-	usevnodes = (ptoa((unsigned)physmem) / 200) / sizeof(struct vnode);
+	usevnodes = (ptoa((unsigned)physmem) / 100) / sizeof(struct vnode);
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
