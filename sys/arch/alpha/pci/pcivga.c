@@ -1,7 +1,7 @@
-/*	$NetBSD: pcivga.c,v 1.1 1995/08/03 00:35:55 cgd Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.2 1995/08/03 01:17:17 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

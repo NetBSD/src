@@ -1,7 +1,7 @@
-/*	$NetBSD: apecs_pci.c,v 1.2 1995/08/03 00:42:25 cgd Exp $	*/
+/*	$NetBSD: apecs_pci.c,v 1.3 1995/08/03 01:16:57 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
