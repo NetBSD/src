@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 1999/02/09 19:52:50 christos Exp $
+#	$NetBSD: Makefile,v 1.84 1999/02/11 14:49:49 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -72,10 +72,19 @@ afterinstall:
 whatis.db:
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 
+# wrt info/dir below:  It's safe to move this over top of /usr/share/info/dir,
+# as the build will automatically remove/replace the non-pkg entries there.
+
 build: beforeinstall
 .if !defined(NOSHARE)
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
+	if [ -f ${DESTDIR}/usr/pkg/info/dir ]; then \
+		${INSTALL} -c -m 644 -o ${BINOWN} -g ${BINGRP} \
+			${DESTDIR}/usr/pkg/info/dir ${DESTDIR}/usr/share/info/dir; \
+		rm -f ${DESTDIR}/usr/pkg/info/dir; \
+		ln -s /usr/share/info/dir ${DESTDIR}/usr/pkg/info/dir; \
+	fi
 .endif
 .if !defined(UPDATE)
 	${MAKE} cleandir
@@ -83,9 +92,9 @@ build: beforeinstall
 .if empty(HAVE_GCC28)
 .if defined(DESTDIR)
 	@echo "*** CAPUTE!"
-	@echo "    You attempted to compile the world with egcs.  You must"
+	@echo "    You attempted to compile the world without egcs.  You must"
 	@echo "    first install a native egcs compiler."
-	false
+	@false
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && \
