@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 2000/12/03 02:56:25 tsutsui Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3 2001/01/23 11:30:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+
+#ifdef _STANDALONE
+
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
@@ -55,3 +58,13 @@
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
 #define OKMAGIC(a)		((a) == NMAGIC)
+
+#else
+
+#define WARN(a)			warn a
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		malloc(a)
+#define FREE(a, b)		free(a)
+#define OKMAGIC(a)		((a) == NMAGIC || (a) == OMAGIC)
+
+#endif
