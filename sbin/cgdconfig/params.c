@@ -1,7 +1,7 @@
-/* $NetBSD: params.c,v 1.4 2002/12/04 05:02:29 elric Exp $ */
+/* $NetBSD: params.c,v 1.5 2003/03/24 02:02:51 elric Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,462 +38,571 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: params.c,v 1.5 2003/03/24 02:02:51 elric Exp $");
 #endif
 
 #include <sys/types.h>
 
+#include <err.h>
 #include <errno.h>
-#include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-/* include the resolver gunk in order that we can use b64 routines */
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-
 #include "params.h"
+#include "pkcs5_pbkdf2.h"
 #include "utils.h"
 
-static int	params_setstring(char **, const char *);
-static int	params_setbinary(u_int8_t **, int *, const char *, int);
-static int	params_setb64(u_int8_t **, int *, const char *);
+/* from cgdparse.y */
+struct params	*cgdparsefile(FILE *);
 
-static void	eatwhite(char *);
-static int	take_action(struct params *, FILE *, const char *, char *);
-static void	print_kvpair_str(FILE *, const char *, const char *);
-static void	print_kvpair_int(FILE *, const char *, int);
-static void	print_kvpair_b64(FILE *, const char *, const char *, int);
+static void	params_init(struct params *);
 
-static void	free_notnull(void *);
+static void	print_kvpair_cstr(FILE *, int, const char *, const char *);
+static void	print_kvpair_string(FILE *, int, const char *, const string_t *);
+static void	print_kvpair_int(FILE *, int, const char *, int);
+static void	print_kvpair_b64(FILE *, int, int, const char *, bits_t *);
 
-/* crypt defaults functions */
-#define CRYPT_DEFAULTKEYSIZE	0x01
+static void	spaces(FILE *, int);
 
-static int	crypt_int_lookup(char *, int);
-static int	crypt_int_lookup_aes_cbc(int);
-static int	crypt_int_lookup_3des_cbc(int);
-static int	crypt_int_lookup_blowfish_cbc(int);
+/* keygen defaults */
+#define DEFAULT_SALTLEN		128
+#define DEFAULT_ITERATION_TIME	2000000		/* 1 second in milliseconds */
 
-void
+/* crypto defaults functions */
+struct crypto_defaults {
+	char	alg[32];
+	int	keylen;
+} crypto_defaults[] = {
+	{ "aes-cbc",		128 },
+	{ "3des-cbc",		192 },
+	{ "blowfish-cbc",	128 }
+};
+
+static int	crypt_defaults_lookup(const char *);
+
+struct params *
+params_new(void)
+{
+	struct params	*p;
+
+	p = malloc(sizeof(*p));
+	params_init(p);
+	return p;
+}
+
+static void
 params_init(struct params *p)
 {
 
-	p->alg = NULL;
+	p->algorithm = NULL;
 	p->ivmeth = NULL;
 	p->key = NULL;
 	p->keylen = -1;
 	p->bsize = -1;
-	p->keygen_method = KEYGEN_UNKNOWN;
-	p->keygen_salt = NULL;
-	p->keygen_saltlen = -1;
-	p->keygen_iterations = -1;
 	p->verify_method = VERIFY_UNKNOWN;
-	p->key_hash = NULL;
-	p->key_hashlen = -1;
-	p->xor_key = NULL;
-	p->xor_keylen = -1;
+	p->dep_keygen = NULL;
+	p->keygen = NULL;
 }
 
 void
 params_free(struct params *p)
 {
 
-	free_notnull(p->alg);
-	free_notnull(p->ivmeth);
-	free_notnull(p->keygen_salt);
-	free_notnull(p->key_hash);
-	free_notnull(p->xor_key);
+	if (!p)
+		return;
+	string_free(p->algorithm);
+	string_free(p->ivmeth);
+	keygen_free(p->dep_keygen);
+	keygen_free(p->keygen);
+}
+
+struct params *
+params_combine(struct params *p1, struct params *p2)
+{
+	struct params *p;
+
+	if (p1)
+		p = p1;
+	else
+		p = params_new();
+
+	if (!p2)
+		return p;
+
+	if (p2->algorithm)
+		string_assign(&p->algorithm, p2->algorithm);
+	if (p2->ivmeth)
+		string_assign(&p->ivmeth, p2->ivmeth);
+	if (p2->keylen != -1)
+		p->keylen = p2->keylen;
+	if (p2->bsize != -1)
+		p->bsize = p2->bsize;
+	if (p2->verify_method != VERIFY_UNKNOWN)
+		p->verify_method = p2->verify_method;
+
+	p->dep_keygen = keygen_combine(p->dep_keygen, p2->dep_keygen);
+	keygen_addlist(&p->keygen, p2->keygen);
+
+	/*
+	 * at this point we should have moved all allocated data
+	 * in p2 into p, so we can free it.
+	 */
+	free(p2);
+	return p;
 }
 
 int
 params_filldefaults(struct params *p)
 {
+	int	i;
 
-	if (p->keygen_method == KEYGEN_UNKNOWN)
-		p->keygen_method = KEYGEN_PKCS5_PBKDF2;
 	if (p->verify_method == VERIFY_UNKNOWN)
 		p->verify_method = VERIFY_NONE;
 	if (!p->ivmeth)
-		params_setivmeth(p, "encblkno");
-	if (p->keylen == -1)
-		p->keylen = crypt_int_lookup(p->alg, CRYPT_DEFAULTKEYSIZE);
+		p->ivmeth = string_fromcharstar("encblkno");
 	if (p->keylen == -1) {
-		fprintf(stderr, "Could not determine key length\n");
-		return -1;
+		i = crypt_defaults_lookup(string_tocharstar(p->algorithm));
+		if (i != -1) {
+			p->keylen = crypto_defaults[i].keylen;
+		} else {
+			warnx("could not determine key length for unknown "
+			    "algorithm \"%s\"",
+			    string_tocharstar(p->algorithm));
+			return -1;
+		}
 	}
-	if (p->keygen_iterations < 1)
-		p->keygen_iterations = 128;
 	return 0;
 }
 
+/*
+ * params_verify traverses the parameters and all of the keygen methods
+ * looking for inconsistencies.  It outputs warnings on non-fatal errors
+ * such as unknown encryption methods, but returns failure on fatal
+ * conditions such as a PKCS5_PBKDF2 keygen without a salt.  It is intended
+ * to run before key generation.
+ */
+
 int
-params_changed(const struct params *c)
+params_verify(const struct params *p)
 {
 
-	if (c->alg || c->ivmeth || c->key || c->keylen != -1 ||
-	    c->bsize != -1 || c->keygen_method || c->keygen_salt ||
-	    c->keygen_saltlen != -1 || c->keygen_iterations != -1 ||
-	    c->key_hash)
+	if (!p->algorithm) {
+		warnx("unspecified algorithm");
+		return 0;
+	}
+	/*
+	 * we only warn for the encryption method so that it is possible
+	 * to use an older cgdconfig(8) with a new kernel that supports
+	 * additional crypto algorithms.
+	 */
+	if (crypt_defaults_lookup(string_tocharstar(p->algorithm)) == -1)
+		warnx("unknown algorithm \"%s\"(warning)",
+		    string_tocharstar(p->algorithm));
+	/* same rationale with IV methods. */
+	if (!p->ivmeth) {
+		warnx("unspecified IV method");
+		return 0;
+	}
+	if (strcmp("encblkno", string_tocharstar(p->ivmeth)))
+		warnx("unknown IV method \"%s\" (warning)",
+		    string_tocharstar(p->ivmeth));
+	if (p->keylen == -1) {
+		warnx("unspecified key length");
+		return 0;
+	}
+
+	return keygen_verify(p->keygen);
+}
+
+struct params *
+params_algorithm(string_t *in)
+{
+	struct params *p = params_new();
+
+	p->algorithm = in;
+	return p;
+}
+
+struct params *
+params_ivmeth(string_t *in)
+{
+	struct params *p = params_new();
+
+	p->ivmeth = in;
+	return p;
+}
+
+struct params *
+params_keylen(int in)
+{
+	struct params *p = params_new();
+
+	p->keylen = in;
+	return p;
+}
+
+struct params *
+params_bsize(int in)
+{
+	struct params *p = params_new();
+
+	p->bsize = in;
+	return p;
+}
+
+struct params *
+params_verify_method(string_t *in)
+{
+	struct params *p = params_new();
+	const char *vm = string_tocharstar(in);
+
+	if (!strcmp("none", vm))
+		p->verify_method = VERIFY_NONE;
+	if (!strcmp("disklabel", vm))
+		p->verify_method = VERIFY_DISKLABEL;
+	if (!strcmp("ffs", vm))
+		p->verify_method = VERIFY_FFS;
+
+	string_free(in);
+
+	if (p->verify_method == VERIFY_UNKNOWN)
+		fprintf(stderr, "params_setverify_method: unrecognized "
+		    "verify method \"%s\"\n", vm);
+	return p;
+}
+
+struct params *
+params_keygen(struct keygen *in)
+{
+	struct params *p = params_new();
+
+	p->keygen = in;
+	return p;
+}
+
+struct params *
+params_dep_keygen(struct keygen *in)
+{
+	struct params *p = params_new();
+
+	p->dep_keygen = in;
+	return p;
+}
+
+struct keygen *
+keygen_new(void)
+{
+	struct keygen *kg;
+
+	kg = malloc(sizeof(*kg));
+	if (!kg)
+		return NULL;
+	kg->kg_method = KEYGEN_UNKNOWN;
+	kg->kg_iterations = -1;
+	kg->kg_salt = NULL;
+	kg->kg_key = NULL;
+	kg->next = NULL;
+	return kg;
+}
+
+void
+keygen_free(struct keygen *kg)
+{
+
+	if (!kg)
+		return;
+	bits_free(kg->kg_salt);
+	bits_free(kg->kg_key);
+	keygen_free(kg->next);
+	free(kg);
+}
+
+/*
+ * keygen_verify traverses the keygen structures and ensures
+ * that the appropriate information is available.
+ */
+
+int
+keygen_verify(const struct keygen *kg)
+{
+
+	if (!kg)
 		return 1;
-	return 0;
-}
-
-static int
-params_setstring(char **s, const char *in)
-{
-
-	free_notnull(*s);
-	*s = strdup(in);
-	if (!in)
-		return -1;
-	return 0;
-}
-
-/*
- * params_setbinary allocates a buffer of at least len bits and
- * fills it in.  It returns the number of bits in *l and the buffer
- * in *s.
- */
-
-static int
-params_setbinary(u_int8_t **s, int *l, const char *in, int len)
-{
-
-	*l = len;
-	len = BITS2BYTES(len);
-	*s = malloc(len);
-	if (!*s)
-		return -1;
-	memcpy(*s, in, len);
-	return 0;
-}
-
-/*
- * params_setb64 reads an encoded base64 stream.  We interpret
- * the first 32 bits as an unsigned integer in network byte order
- * specifying the number of bits in the stream.
- */
-
-static int
-params_setb64(u_int8_t **s, int *l, const char *in)
-{
-	int	 len;
-	int	 nbits;
-	char	*tmp;
-
-	len = strlen(in);
-	tmp = malloc(len);
-	if (!tmp)
-		return -1;
-
-	len = __b64_pton(in, tmp, len);
-
-	if (len == -1) {
-		fprintf(stderr, "params_setb64: mangled base64 stream\n");
-		return -1;
-	}
-
-	nbits = ntohl(*((u_int32_t *)tmp));
-	if (nbits > (len - 4) * 8) {
-		fprintf(stderr, "params_setb64: encoded bits claim to be "
-		    "longer than they are (nbits=%u, stream len=%u bytes)\n",
-		    (unsigned)nbits, (unsigned)len);
-		return -1;
-	}
-
-	*s = malloc(BITS2BYTES(nbits));
-	if (!*s) {
-		free(tmp);
-		return -1;
-	}
-
-	memcpy(*s, tmp + 4, BITS2BYTES(nbits));
-	
-	*l = nbits;
-	return *l;
-}
-
-int
-params_setalgorithm(struct params *p, const char *in)
-{
-
-	return params_setstring(&p->alg, in);
-}
-
-int
-params_setivmeth(struct params *p, const char *in)
-{
-
-	return params_setstring(&p->ivmeth, in);
-}
-
-int
-params_setkeylen(struct params *p, int keylen)
-{
-
-	if (!keylen) {
-		fprintf(stderr, "zero keylen not permitted\n");
-		return -1;
-	}
-	p->keylen = keylen;
-	return 0;
-}
-
-int
-params_setbsize(struct params *p, int bsize)
-{
-
-	if (!bsize) {
-		fprintf(stderr, "zero blocksize not permitted\n");
-		return -1;
-	}
-	p->bsize = bsize;
-	return 0;
-}
-
-int
-params_setkeygen_method(struct params *p, int in)
-{
-
-	switch (in) {
-	case KEYGEN_RANDOMKEY:
+	switch (kg->kg_method) {
 	case KEYGEN_PKCS5_PBKDF2:
+		if (kg->kg_iterations == -1) {
+			warnx("keygen pkcs5_pbkdf2 must provide `iterations'");
+			return 0;
+		}
+		if (kg->kg_key)
+			warnx("keygen pkcs5_pbkdf2 does not need a `key'");
+		if (!kg->kg_salt) {
+			warnx("keygen pkcs5_pbkdf2 must provide a salt");
+			return 0;
+		}
+		break;
+	case KEYGEN_STOREDKEY:
+		if (kg->kg_iterations != -1)
+			warnx("keygen storedkey does not need `iterations'");
+		if (!kg->kg_key) {
+			warnx("keygen storedkey must provide a key");
+			return 0;
+		}
+		if (kg->kg_salt)
+			warnx("keygen storedkey does not need `salt'");
+		break;
+	case KEYGEN_RANDOMKEY:
+		if (kg->kg_iterations != -1)
+			warnx("keygen randomkey does not need `iterations'");
+		if (kg->kg_key)
+			warnx("keygen randomkey does not need `key'");
+		if (kg->kg_salt)
+			warnx("keygen randomkey does not need `salt'");
+		break;
+	}
+	return keygen_verify(kg->next);
+}
+
+struct keygen *
+keygen_generate(int method)
+{
+	struct keygen *kg;
+
+	kg = keygen_new();
+	if (!kg)
+		return NULL;
+
+	kg->kg_method = method;
+	return kg;
+}
+
+/*
+ * keygen_filldefaults walks the keygen list and fills in
+ * default values.  The defaults may be either calibrated
+ * or randomly generated so this function is designed to be
+ * called when generating a new parameters file, not when
+ * reading a parameters file.
+ */
+
+int
+keygen_filldefaults(struct keygen *kg, int keylen)
+{
+
+	if (!kg)
+		return 0;
+	switch (kg->kg_method) {
+	case KEYGEN_RANDOMKEY:
+		break;
+	case KEYGEN_PKCS5_PBKDF2:
+		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN);
+		kg->kg_iterations =
+		    pkcs5_pbkdf2_calibrate(keylen, DEFAULT_ITERATION_TIME);
+		if (kg->kg_iterations < 1) {
+			fprintf(stderr, "%s: could not calibrate "
+			    "pkcs5_pbkdf2\n", getprogname());
+			return -1;
+		}
+		break;
+	case KEYGEN_STOREDKEY:
+		/* Generate a random stored key */
+		kg->kg_key = bits_getrandombits(keylen);
+		if (!kg->kg_key) {
+			warnx("can't generate random bits for storedkey");
+			return -1;
+		}
 		break;
 	default:
-		fprintf(stderr, "params_setkeygen_method: unsupported "
-		    "keygen_method (%d)\n", in);
 		return -1;
 	}
 
-	p->keygen_method = in;
-	return 0;
+	return keygen_filldefaults(kg->next, keylen);
 }
 
-int
-params_setkeygen_method_str(struct params *p, const char *in)
+struct keygen *
+keygen_combine(struct keygen *kg1, struct keygen *kg2)
 {
+	struct keygen *kg;
 
-	if (!strcmp("pkcs5_pbkdf2", in))
-		return params_setkeygen_method(p, KEYGEN_PKCS5_PBKDF2);
-	if (!strcmp("randomkey", in))
-		return params_setkeygen_method(p, KEYGEN_RANDOMKEY);
+	if (!kg1 && !kg2)
+		return NULL;
 
-	fprintf(stderr, "unrecognized key generation method \"%s\"\n", in);
-	return -1;
+	if (kg1)
+		kg = kg1;
+	else
+		kg = keygen_new();
+
+	if (!kg2)
+		return kg;
+
+	if (kg2->kg_method != KEYGEN_UNKNOWN)
+		kg->kg_method = kg2->kg_method;
+	if (kg2->kg_iterations > 0)
+		kg->kg_iterations = kg2->kg_iterations;
+	if (kg2->kg_salt)
+		bits_assign(&kg->kg_salt, kg2->kg_salt);
+	if (kg2->kg_key)
+		bits_assign(&kg->kg_key, kg2->kg_key);
+	return kg;
 }
 
-int
-params_setkeygen_salt(struct params *p, const char *in, int len)
+struct keygen *
+keygen_method(string_t *in)
 {
+	struct keygen *kg = keygen_new();
+	const char *kgm = string_tocharstar(in);
 
-	return params_setbinary(&p->keygen_salt, &p->keygen_saltlen, in, len);
+	if (!strcmp("pkcs5_pbkdf2", kgm))
+		kg->kg_method = KEYGEN_PKCS5_PBKDF2;
+	if (!strcmp("randomkey", kgm))
+		kg->kg_method = KEYGEN_RANDOMKEY;
+	if (!strcmp("storedkey", kgm))
+		kg->kg_method = KEYGEN_STOREDKEY;
+
+	string_free(in);
+
+	if (kg->kg_method == KEYGEN_UNKNOWN)
+		fprintf(stderr, "unrecognized key generation method "
+		    "\"%s\"\n", kgm);
+	return kg;
 }
 
-int
-params_setkeygen_salt_b64(struct params *p, const char *in)
+struct keygen *
+keygen_set_method(struct keygen *kg, string_t *in)
 {
 
-	return params_setb64(&p->keygen_salt, &p->keygen_saltlen, in);
+	return keygen_combine(kg, keygen_method(in));
 }
 
-int
-params_setkeygen_iterations(struct params *p, int in)
+struct keygen *
+keygen_salt(bits_t *in)
 {
+	struct keygen *kg = keygen_new();
 
-	if (in < 1) {
-		fprintf(stderr, "keygen_iterations < 1 not permitted\n");
-		return -1;
-	}
-	p->keygen_iterations = in;
-	return 0;
+	kg->kg_salt = in;
+	return kg;
 }
 
-int
-params_setverify_method(struct params *p, int in)
+struct keygen *
+keygen_iterations(int in)
 {
+	struct keygen *kg = keygen_new();
 
-	switch (in) {
-	case VERIFY_NONE:
-	case VERIFY_DISKLABEL:
-		break;
-	default:
-		fprintf(stderr, "params_setverify_method: unsupported "
-		    "verify_method (%d)\n", in);
-		return -1;
-	}
-	p->verify_method = in;
-	return 0;
+	kg->kg_iterations = in;
+	return kg;
 }
 
-int
-params_setverify_method_str(struct params *p, const char *in)
+void
+keygen_addlist(struct keygen **l, struct keygen *e)
 {
+	struct keygen *t;
 
-	if (!strcmp("none", in))
-		return params_setverify_method(p, VERIFY_NONE);
-	if (!strcmp("disklabel", in))
-		return params_setverify_method(p, VERIFY_DISKLABEL);
-
-	fprintf(stderr, "params_setverify_method: unrecognized verify method "
-	    "\"%s\"\n", in);
-	return -1;
-}
-
-int
-params_setxor_key(struct params *p, const char *in, int len)
-{
-
-	return params_setbinary(&p->xor_key, &p->xor_keylen, in, len);
-}
-
-int
-params_setxor_key_b64(struct params *p, const char *in)
-{
-
-	return params_setb64(&p->xor_key, &p->xor_keylen, in);
-}
-
-int
-params_setkey_hash(struct params *p, const char *in, int len)
-{
-
-	return params_setbinary(&p->key_hash, &p->key_hashlen, in, len);
-}
-
-int
-params_setkey_hash_b64(struct params *p, const char *in)
-{
-
-	return params_setb64(&p->key_hash, &p->key_hashlen, in);
-}
-
-/* eatwhite simply removes all the whitespace from a string, in line */
-static void
-eatwhite(char *s)
-{
-	int	i, j;
-
-	for (i=0,j=0; s[i]; i++)
-		if (s[i] != ' ' && s[i] != '\t' && s[i] != '\n')
-			s[j++] = s[i];
-	s[j++] = '\0';
-}
-
-static int
-take_action(struct params *c, FILE *f, const char *key, char *val)
-{
-	int	ret;
-
-	eatwhite(val);
-
-	if (!strcmp(key, "algorithm")) {
-		return params_setalgorithm(c, val);
-	} else if (!strcmp(key, "iv-method")) {
-		return params_setivmeth(c, val);
-	} else if (!strcmp(key, "keylength")) {
-		return params_setkeylen(c, atoi(val));
-	} else if (!strcmp(key, "blocksize")) {
-		return params_setbsize(c, atoi(val));
-	} else if (!strcmp(key, "keygen_method")) {
-		return params_setkeygen_method_str(c, val);
-	} else if (!strcmp(key, "keygen_salt")) {
-		ret = params_setkeygen_salt_b64(c, val);
-		if (ret < 0) {
-			fprintf(stderr, "keygen_salt improperly encoded\n");
-			return -1;
-		}
-	} else if (!strcmp(key, "keygen_iterations")) {
-		return params_setkeygen_iterations(c, atoi(val));
-	} else if (!strcmp(key, "xor_key")) {
-		ret = params_setxor_key_b64(c, val);
-		if (ret < 0) {
-			fprintf(stderr, "xor_key improperly encoded\n");
-			return -1;
-		}
-	} else if (!strcmp(key, "verify_method")) {
-		return params_setverify_method_str(c, val);
-	} else if (!strcmp(key, "key_hash")) {
-		ret = params_setkey_hash_b64(c, val);
-		if (ret < 0) {
-			fprintf(stderr, "key_hash improperly encoded\n");
-			return -1;
-		}
+	if (*l) {
+		t = *l;
+		for (;t->next; t = t->next)
+			;
+		t->next = e;
 	} else {
-		fprintf(stderr, "unrecognised keyword (%s, %s)\n", key, val);
-		return -1;
+		*l = e;
 	}
-	return 0;
 }
 
-int
-params_fget(struct params *p, FILE *f)
+struct keygen *
+keygen_key(bits_t *in)
 {
-	size_t	 len;
-	size_t	 lineno;
-	int	 ret;
-	char	*line;
-	char	*val;
+	struct keygen *kg = keygen_new();
 
-	lineno = 0;
-	for (;;) {
-		line = fparseln(f, &len, &lineno, "\\\\#", FPARSELN_UNESCALL);
-		if (!line)
-			break;
-		if (!*line)
-			continue;
-
-		/*
-		 * our parameters file has two tokens per line,
-		 * so we cut it up that way and ignore other cases.
-		 */
-		val = strpbrk(line, " \t");
-		if (!val) {
-			fprintf(stderr, "syntax error on line %lu\n",
-			    (u_long)lineno);
-			return -1;
-		}
-		*val++ = '\0';
-
-		ret = take_action(p, f, line, val);
-		if (ret) {
-			fprintf(stderr, "parse failure on line %lu\n",
-			    (u_long)lineno);
-			return -1;
-		}
-	}
-	return 0;
+	kg->kg_key = in;
+	return kg;
 }
 
-int
-params_cget(struct params *p, const char *fn)
+struct params *
+params_fget(FILE *f)
 {
-	FILE	*f;
+	struct params *p;
+
+	p = cgdparsefile(f);
+
+	if (!p)
+		return NULL;
+
+	/*
+	 * We deal with the deprecated keygen structure by prepending it
+	 * to the list of keygens, so that the rest of the code does not
+	 * have to deal with this backwards compat issue.  The deprecated
+	 * ``xor_key'' field may be stored in p->dep_keygen->kg_key.  If
+	 * it exists, we construct a storedkey keygen struct as well.
+	 */
+
+	if (p->dep_keygen) {
+		p->dep_keygen->next = p->keygen;
+		if (p->dep_keygen->kg_key) {
+			p->keygen = keygen_generate(KEYGEN_STOREDKEY);
+			p->keygen->kg_key = p->dep_keygen->kg_key;
+			p->dep_keygen->kg_key = NULL;
+			p->keygen->next = p->dep_keygen;
+		} else {
+			p->keygen = p->dep_keygen;
+		}
+		p->dep_keygen = NULL;
+	}
+	return p;
+}
+
+struct params *
+params_cget(const char *fn)
+{
+	struct params	*p;
+	FILE		*f;
 
 	f = fopen(fn, "r");
 	if (!f) {
 		fprintf(stderr, "failed to open params file \"%s\": %s\n",
 		    fn, strerror(errno));
-		return -1;
+		return NULL;
 	}
-	return params_fget(p, f);
+	p = params_fget(f);
+	fclose(f);
+	return p;
+}
+
+#define WRAP_COL	50
+#define TAB_COL		8
+
+static void
+spaces(FILE *f, int len)
+{
+
+	while (len-- > 0)
+		fputc(' ', f);
 }
 
 static void
-print_kvpair_str(FILE *f, const char *key, const char *val)
+print_kvpair_cstr(FILE *f, int ts, const char *key, const char *val)
 {
 
-	if (key && val)
-		fprintf(f, "%-25.25s%s\n", key, val);
+	spaces(f, ts);
+	fprintf(f, "%s %s;\n", key, val);
 }
 
 static void
-print_kvpair_int(FILE *f, const char *key, int val)
+print_kvpair_string(FILE *f, int ts, const char *key, const string_t *val)
 {
 
-	if (key && val != -1)
-		fprintf(f, "%-25.25s%d\n", key, val);
+	print_kvpair_cstr(f, ts, key, string_tocharstar(val));
+}
+
+static void
+print_kvpair_int(FILE *f, int ts, const char *key, int val)
+{
+	char	*tmp;
+
+	if (!key || val == -1)
+		return;
+
+	asprintf(&tmp, "%d", val);
+	print_kvpair_cstr(f, ts, key, tmp);
+	free(tmp);
 }
 
 /*
@@ -503,140 +612,128 @@ print_kvpair_int(FILE *f, const char *key, int val)
  */
 
 static void
-print_kvpair_b64(FILE *f, const char *key, const char *val, int vallen)
+print_kvpair_b64(FILE *f, int curpos, int ts, const char *key, bits_t *val)
 {
-	int	 col;
-	int	 i;
-	int	 len;
-	char	*out;
-	char	*tmp;
+	string_t	*str;
+	int		 i;
+	int		 len;
+	int		 pos;
+	const char	*out;
 
-	if (!key || !val || vallen == -1)
+	if (!key || !val)
 		return;
 
-	/* compute the total size of the input stream */
-	len = BITS2BYTES(vallen) + 4;
+	str = bits_encode(val);
+	out = string_tocharstar(str);
+	len = strlen(out);
 
-	tmp = malloc(len);
-	out = malloc(len * 2);
-	/* XXXrcd: errors ? */
-	if (!tmp || !out)
-		abort();	/* lame error handling here... */
+	spaces(f, ts);
+	fprintf(f, "%s ", key);
+	curpos += ts + strlen(key) + 1;
+	ts = curpos;
 
-	/* stuff the length up front */
-	*((u_int32_t *)tmp) = htonl(vallen);
-	memcpy(tmp + 4, val, len - 4);
-
-	len = __b64_ntop(tmp, len, out, len * 2);
-	free(tmp);
-
-	fprintf(f, "%-25.25s", key);
-	col = 0;
-	for (i=0; i < len; i++) {
-		fputc(out[i], f);
-		if (col++ > 40) {
-			fprintf(f, " \\\n%-25.25s", "");
-			col = 0;
+	for (i=0, pos=curpos; i < len; i++, pos++) {
+		if (pos > WRAP_COL) {
+			fprintf(f, " \\\n");
+			spaces(f, ts);
+			pos = ts;
 		}
+		fputc(out[i], f);
 	}
-	fprintf(f, "\n");
-	free(out);
+	fprintf(f, ";\n");
+	string_free(str);
+}
+
+int
+keygen_fput(struct keygen *kg, int ts, FILE *f)
+{
+	int	curpos = 0;
+
+	if (!kg)
+		return 0;
+	fprintf(f, "keygen ");
+	curpos += strlen("keygen ");
+	switch (kg->kg_method) {
+	case KEYGEN_STOREDKEY:
+		fprintf(f, "storedkey ");
+		curpos += strlen("storedkey ");
+		print_kvpair_b64(f, curpos, 0, "key", kg->kg_key);
+		break;
+	case KEYGEN_RANDOMKEY:
+		fprintf(f, "randomkey;\n");
+		break;
+	case KEYGEN_PKCS5_PBKDF2:
+		fprintf(f, "pkcs5_pbkdf2 {\n");
+		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
+		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
+		fprintf(f, "};\n");
+		break;
+	default:
+		fprintf(stderr, "keygen_fput: %d not a valid method\n",
+		    kg->kg_method);
+		break;
+	}
+	return keygen_fput(kg->next, ts, f);
 }
 
 int
 params_fput(struct params *p, FILE *f)
 {
+	int	ts = 0;		/* tabstop of 0 spaces */
 
-	print_kvpair_str(f, "algorithm", p->alg);
-	print_kvpair_str(f, "iv-method", p->ivmeth);
-	print_kvpair_int(f, "keylength", p->keylen);
-	print_kvpair_int(f, "blocksize", p->bsize);
+	print_kvpair_string(f, ts, "algorithm", p->algorithm);
+	print_kvpair_string(f, ts, "iv-method", p->ivmeth);
+	print_kvpair_int(f, ts, "keylength", p->keylen);
+	print_kvpair_int(f, ts, "blocksize", p->bsize);
 	switch (p->verify_method) {
 	case VERIFY_NONE:
-		print_kvpair_str(f, "verify_method", "none");
+		print_kvpair_cstr(f, ts, "verify_method", "none");
 		break;
 	case VERIFY_DISKLABEL:
-		print_kvpair_str(f, "verify_method", "disklabel");
+		print_kvpair_cstr(f, ts, "verify_method", "disklabel");
+		break;
+	case VERIFY_FFS:
+		print_kvpair_cstr(f, ts, "verify_method", "ffs");
 		break;
 	default:
 		fprintf(stderr, "unsupported verify_method (%d)\n",
 		    p->verify_method);
 		return -1;
 	}
-	switch (p->keygen_method) {
-	case KEYGEN_RANDOMKEY:
-		print_kvpair_str(f, "keygen_method", "randomkey");
-		break;
-	case KEYGEN_PKCS5_PBKDF2:
-		print_kvpair_str(f, "keygen_method", "pkcs5_pbkdf2");
-		print_kvpair_b64(f, "keygen_salt", p->keygen_salt,
-		    p->keygen_saltlen);
-		print_kvpair_int(f, "keygen_iterations", p->keygen_iterations);
-		print_kvpair_b64(f, "xor_key", p->xor_key, p->xor_keylen);
-		print_kvpair_b64(f, "key_hash", p->key_hash, p->key_hashlen);
-		break;
-	default:
-		fprintf(stderr, "unsupported keygen_method (%d)\n",
-		    p->keygen_method);
-		return -1;
-	}
+	keygen_fput(p->keygen, TAB_COL, f);
 	return 0;
 }
 
-static int
-crypt_int_lookup(char *alg, int type)
+int
+params_cput(struct params *p, const char *fn)
 {
+	FILE	*f;
 
-	if (!strcmp(alg, "aes-cbc"))
-		return crypt_int_lookup_aes_cbc(type);
-	if (!strcmp(alg, "3des-cbc"))
-		return crypt_int_lookup_3des_cbc(type);
-	if (!strcmp(alg, "blowfish-cbc"))
-		return crypt_int_lookup_blowfish_cbc(type);
-
-	return -1;
-}
-
-static int
-crypt_int_lookup_aes_cbc(int type)
-{
-
-	switch (type) {
-	case CRYPT_DEFAULTKEYSIZE:
-		return 256;
+	if (fn && *fn) {
+		f = fopen(fn, "w");
+		if (!f) {
+			fprintf(stderr, "could not open outfile \"%s\": %s\n",
+			    fn, strerror(errno));
+			perror("fopen");
+			return -1;
+		}
+	} else {
+		f = stdout;
 	}
-
-	return -1;
+	return params_fput(p, f);
 }
 
 static int
-crypt_int_lookup_3des_cbc(int type)
+crypt_defaults_lookup(const char *alg)
 {
+	int	i;
 
-	switch (type) {
-	case CRYPT_DEFAULTKEYSIZE:
-		return 192;
-	}
+	for (i=0; i < sizeof(crypto_defaults); i++)
+		if (!strcmp(alg, crypto_defaults[i].alg))
+			break;
 
-	return -1;
-}
-
-static int
-crypt_int_lookup_blowfish_cbc(int type)
-{
-
-	switch (type) {
-	case CRYPT_DEFAULTKEYSIZE:
-		return 128;
-	}
-
-	return -1;
-}
-
-static void
-free_notnull(void *mem)
-{
-
-	if (!mem)
-		free(mem);
+	if (i >= sizeof(crypto_defaults))
+		return -1;
+	else
+		return i;
 }

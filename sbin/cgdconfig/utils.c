@@ -1,7 +1,7 @@
-/* $NetBSD: utils.c,v 1.1 2002/10/04 18:37:21 elric Exp $ */
+/* $NetBSD: utils.c,v 1.2 2003/03/24 02:02:52 elric Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,11 +38,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.1 2002/10/04 18:37:21 elric Exp $");
+__RCSID("$NetBSD: utils.c,v 1.2 2003/03/24 02:02:52 elric Exp $");
 #endif
 
-#include <malloc.h>
+#include <sys/param.h>
+
+#include <stdlib.h>
 #include <string.h>
+
+/* include the resolver gunk in order that we can use b64 routines */
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 #include "utils.h"
 
@@ -119,4 +126,361 @@ memxor(void *res, const void *src, size_t len)
 	s = src;
 	for (i=0; i < len; i++)
 		r[i] ^= s[i];
+}
+
+/*
+ * well, a very simple set of string functions...
+ *
+ * The goal here is basically to manage length encoded strings,
+ * but just for safety we nul terminate them anyway.
+ */
+
+/* for now we use a very simple encoding */
+
+struct string {
+	int	 length;
+	char	*text;
+};
+
+string_t *
+string_new(const char *intext, int inlength)
+{
+	string_t *out;
+
+	out = malloc(sizeof(*out));
+	out->length = inlength;
+	out->text = malloc(out->length + 1);
+	memcpy(out->text, intext, out->length);
+	out->text[out->length] = '\0';
+	return out;
+}
+
+string_t *
+string_dup(const string_t *in)
+{
+
+	return string_new(in->text, in->length);
+}
+
+void
+string_free(string_t *s)
+{
+
+	if (!s)
+		return;
+	free_notnull(s->text);
+	free(s);
+}
+
+void
+string_assign(string_t **lhs, string_t *rhs)
+{
+
+	string_free(*lhs);
+	*lhs = rhs;
+}
+
+string_t *
+string_add(const string_t *a1, const string_t *a2)
+{
+	string_t *sum;
+
+	sum = malloc(sizeof(*sum));
+	sum->length = a1->length + a2->length;
+	sum->text = malloc(sum->length + 1);
+	memcpy(sum->text, a1->text, a1->length);
+	memcpy(sum->text + a1->length, a2->text, a2->length);
+	sum->text[sum->length] = '\0';
+	return sum;
+}
+
+string_t *
+string_add_d(string_t *a1, string_t *a2)
+{
+	string_t *sum;
+
+	sum = string_add(a1, a2);
+	string_free(a1);
+	string_free(a2);
+	return sum;
+}
+
+string_t *
+string_fromcharstar(const char *in)
+{
+
+	return string_new(in, strlen(in));
+}
+
+const char *
+string_tocharstar(const string_t *in)
+{
+
+	return in->text;
+}
+
+string_t *
+string_fromint(int in)
+{
+	string_t *ret;
+
+	ret = malloc(sizeof(*ret));
+	if (!ret)
+		return NULL;
+	ret->length = asprintf(&ret->text, "%d", in);
+	if (ret->length == -1) {
+		free(ret);
+		ret = NULL;
+	}
+	return ret;
+}
+
+void
+string_fprint(FILE *f, const string_t *s)
+{
+
+	fwrite(s->text, s->length, 1, f);
+}
+
+struct bits {
+	int	 length;
+	char	*text;
+};
+
+bits_t *
+bits_new(const void *buf, int len)
+{
+	bits_t	*b;
+
+	/* XXX do some level of error checking here */
+	b = malloc(sizeof(*b));
+	b->length = len;
+	b->text = malloc(BITS2BYTES(b->length));
+	memcpy(b->text, buf, BITS2BYTES(b->length));
+	return b;
+}
+
+bits_t *
+bits_dup(const bits_t *in)
+{
+
+	return bits_new(in->text, in->length);
+}
+
+void
+bits_free(bits_t *b)
+{
+
+	if (!b)
+		return;
+	free_notnull(b->text);
+	free(b);
+}
+
+void
+bits_assign(bits_t **lhs, bits_t *rhs)
+{
+
+	bits_free(*lhs);
+	*lhs = rhs;
+}
+
+const void *
+bits_getbuf(bits_t *in)
+{
+
+	return in->text;
+}
+
+int
+bits_len(bits_t *in)
+{
+
+	return in->length;
+}
+
+bits_t *
+bits_xor(const bits_t *x1, const bits_t *x2)
+{
+	bits_t	*b;
+	int	 i;
+
+	/* XXX do some level of error checking here */
+	b = malloc(sizeof(*b));
+	b->length = MAX(x1->length, x2->length);
+	b->text = calloc(1, BITS2BYTES(b->length));
+	for (i=0; i < BITS2BYTES(MIN(x1->length, x2->length)); i++)
+		b->text[i] = x1->text[i] ^ x2->text[i];
+	return b;
+}
+
+bits_t *
+bits_xor_d(bits_t *x1, bits_t *x2)
+{
+	bits_t	*ret;
+
+	ret = bits_xor(x1, x2);
+	bits_free(x1);
+	bits_free(x2);
+	return ret;
+}
+
+/*
+ * bits_decode() reads an encoded base64 stream.  We interpret
+ * the first 32 bits as an unsigned integer in network byte order
+ * specifying the number of bits in the stream to give a little
+ * resilience.
+ */
+
+bits_t *
+bits_decode(const string_t *in)
+{
+	bits_t	*ret;
+	int	 len;
+	int	 nbits;
+	char	*tmp;
+
+	len = in->length;
+	tmp = malloc(len);
+	if (!tmp)
+		return NULL;
+
+	len = __b64_pton(in->text, tmp, len);
+
+	if (len == -1) {
+		fprintf(stderr, "bits_decode: mangled base64 stream\n");
+		fprintf(stderr, "  %s\n", in->text);
+		return NULL;
+	}
+
+	nbits = ntohl(*((u_int32_t *)tmp));
+	if (nbits > (len - 4) * 8) {
+		fprintf(stderr, "bits_decode: encoded bits claim to be "
+		    "longer than they are (nbits=%u, stream len=%u bytes)\n",
+		    (unsigned)nbits, (unsigned)len);
+		return NULL;
+	}
+
+	ret = bits_new(tmp+4, nbits);
+	free(tmp);
+	return ret;
+}
+
+bits_t *
+bits_decode_d(string_t *in)
+{
+	bits_t *ret;
+
+	ret = bits_decode(in);
+	string_free(in);
+	return ret;
+}
+
+string_t *
+bits_encode(const bits_t *in)
+{
+	string_t *ret;
+	int	 len;
+	char	*out;
+	char	*tmp;
+
+	if (!in)
+		return NULL;
+
+	/* compute the total size of the input stream */
+	len = BITS2BYTES(in->length) + 4;
+
+	tmp = malloc(len);
+	out = malloc(len * 2);
+	if (!tmp || !out) {
+		free_notnull(tmp);
+		free_notnull(out);
+		return NULL;
+	}
+
+	/* stuff the length up front */
+	*((u_int32_t *)tmp) = htonl(in->length);
+	memcpy(tmp + 4, in->text, len - 4);
+
+	len = __b64_ntop(tmp, len, out, len * 2);
+	ret = string_new(out, len);
+	free(tmp);
+	free(out);
+	return ret;
+}
+
+string_t *
+bits_encode_d(bits_t *in)
+{
+	string_t *ret;
+
+	ret = bits_encode(in);
+	bits_free(in);
+	return ret;
+}
+
+bits_t *
+bits_fget(FILE *f, int len)
+{
+	bits_t	*bits;
+	int	 ret;
+
+	bits = malloc(sizeof(*bits));
+	if (!bits)
+		return NULL;
+	bits->length = len;
+	bits->text = malloc(BITS2BYTES(bits->length));
+	if (!bits->text) {
+		free(bits);
+		return NULL;
+	}
+	ret = fread(bits->text, BITS2BYTES(bits->length), 1, f);
+	if (ret != 1) {
+		bits_free(bits);
+		return NULL;
+	}
+	return bits;
+}
+
+bits_t *
+bits_cget(const char *fn, int len)
+{
+	bits_t	*bits;
+	FILE	*f;
+
+	f = fopen(fn, "r");
+	if (!f) {
+		free(bits->text);
+		free(bits);
+		return NULL;
+	}
+
+	bits = bits_fget(f, len);
+	fclose(f);
+	return bits;
+}
+
+bits_t *
+bits_getrandombits(int len)
+{
+
+	return bits_cget("/dev/random", len);
+}
+
+void
+bits_fprint(FILE *f, const bits_t *bits)
+{
+	string_t *s;
+
+	s = bits_encode(bits);
+	string_fprint(f, s);
+	free(s);
+}
+
+void
+free_notnull(void *b)
+{
+
+	if (b)
+		free(b);
 }
