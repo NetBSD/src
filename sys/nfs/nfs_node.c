@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.17 1996/09/01 23:49:00 mycroft Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.18 1997/02/12 17:26:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,11 +173,11 @@ nfs_inactive(v)
 	np = VTONFS(ap->a_vp);
 	if (prtactive && ap->a_vp->v_usecount != 0)
 		vprint("nfs_inactive: pushing active", ap->a_vp);
-	if (ap->a_vp->v_type != VDIR)
+	if (ap->a_vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
-	else
+		np->n_sillyrename = (struct sillyrename *)0;
+	} else
 		sp = (struct sillyrename *)0;
-	np->n_sillyrename = (struct sillyrename *)0;
 	if (sp) {
 		/*
 		 * Remove the silly file that was rename'd earlier
