@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.14.3 2000/09/06 13:57:14 enami Exp $
+#	$NetBSD: Makefile,v 1.13.14.4 2000/10/19 14:18:47 he Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -28,6 +28,8 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 VERSIONFILE= ${.CURDIR}/version
+
+.include <bsd.own.mk>
 
 .ifndef RELEASEDIR
 release:
