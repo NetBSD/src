@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.1,v 1.4 1994/12/07 00:46:55 jtc Exp $
+.\"	$NetBSD: tty.1,v 1.5 1997/10/20 01:10:38 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,11 @@
 .Nm tty
 .Nd return user's terminal name
 .Sh SYNOPSIS
-.Nm tty
+.Nm
 .Op Fl s
 .Sh DESCRIPTION
 The
-.Nm tty
+.Nm
 utility writes the name of the terminal attached to standard input
 to standard output.
 The name that is written is the string returned by
@@ -66,7 +66,7 @@ option is deprecated in favor of the
 command.
 .El
 .Pp
-.Nm Tty
+.Nm
 exits 0 if the standard input is a terminal, 1 if the standard input is
 not a terminal, and >1 if an error occurs.
 .Sh SEE ALSO
@@ -74,6 +74,6 @@ not a terminal, and >1 if an error occurs.
 .Xr ttyname 3
 .Sh STANDARDS
 The
-.Nm tty
+.Nm
 utility conforms to 
 .St -p1003.2-92 .
