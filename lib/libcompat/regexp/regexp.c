@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regexp.c,v 1.14 2000/09/14 01:24:32 msaitoh Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.15 2002/11/11 23:43:03 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -206,8 +206,8 @@ STATIC int strcspn __P((char *, char *));
  * of the structure of the compiled regexp.
  */
 regexp *
-__compat_regcomp(exp)
-const char *exp;
+__compat_regcomp(expn)
+const char *expn;
 {
 	regexp *r;
 	char *scan;
@@ -215,15 +215,15 @@ const char *exp;
 	int len;
 	int flags;
 
-	if (exp == NULL)
+	if (expn == NULL)
 		FAIL("NULL argument");
 
 	/* First pass: determine size, legality. */
 #ifdef notdef
-	if (exp[0] == '.' && exp[1] == '*') exp += 2;  /* aid grep */
+	if (expn[0] == '.' && expn[1] == '*') expn += 2;  /* aid grep */
 #endif
 	/* LINTED const castaway */
-	regparse = (char *)exp;
+	regparse = (char *)expn;
 	regnpar = 1;
 	regsize = 0L;
 	regcode = &regdummy;
@@ -242,7 +242,7 @@ const char *exp;
 
 	/* Second pass: emit code. */
 	/* LINTED const castaway */
-	regparse = (char *)exp;
+	regparse = (char *)expn;
 	regnpar = 1;
 	regcode = r->program;
 	regc(MAGIC);
@@ -276,7 +276,7 @@ const char *exp;
 			longest = NULL;
 			len = 0;
 			for (; scan != NULL; scan = regnext(scan))
-				if (OP(scan) == EXACTLY && strlen(OPERAND(scan)) >= len) {
+				if (OP(scan) == EXACTLY && (int) strlen(OPERAND(scan)) >= len) {
 					longest = OPERAND(scan);
 					len = strlen(OPERAND(scan));
 				}

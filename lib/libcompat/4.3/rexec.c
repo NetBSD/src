@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.14 2001/11/05 14:59:21 lukem Exp $	*/
+/*	$NetBSD: rexec.c,v 1.15 2002/11/11 23:43:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.14 2001/11/05 14:59:21 lukem Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.15 2002/11/11 23:43:03 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ retry:
 	rsin.sin_len = sizeof(rsin);
 	rsin.sin_port = rport;
 	/* Avoid data corruption from bogus DNS results */
-	if (hp->h_length > sizeof(rsin.sin_addr))
+	if (hp->h_length > (int) sizeof(rsin.sin_addr))
 		len = sizeof(rsin.sin_addr);
 	else
 		len = hp->h_length;
