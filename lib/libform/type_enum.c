@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.3 2001/01/20 11:03:43 blymn Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.4 2001/01/23 01:57:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -213,6 +213,9 @@ enum_check_field(FIELD *field, char *args)
 {
 	enum_args *ta;
 	unsigned match_num;
+
+	if (args == NULL)
+		return FALSE;
 	
 	ta = (enum_args *) (void *) field->args;
 	
@@ -239,6 +242,9 @@ next_enum(FIELD *field, char *args)
 {
 	enum_args *ta;
 	unsigned cur_choice;
+
+	if (args == NULL)
+		return FALSE;
 	
 	ta = (enum_args *) (void *) field->args;
 
@@ -281,6 +287,9 @@ prev_enum(FIELD *field, char *args)
 	enum_args *ta;
 	unsigned cur_choice;
 
+	if (args == NULL)
+		return FALSE;
+	
 	ta = (enum_args *) (void *) field->args;
 	
 #ifdef DEBUG
