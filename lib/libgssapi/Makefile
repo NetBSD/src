@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2002/08/19 09:41:30 lukem Exp $
+# $NetBSD: Makefile,v 1.9 2002/08/19 13:35:07 lukem Exp $
 
 NOLINT=		# defined
 
@@ -54,8 +54,8 @@ SRCS	 =		\
 INCS=		gssapi.h
 INCSDIR=	/usr/include/gssapi
 
-ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${NETBSDSRCDIR}/lib/libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/gssapi		\

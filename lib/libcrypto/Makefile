@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/08/19 09:41:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/08/19 13:35:07 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -94,8 +94,8 @@ SYMLINKS+=	libcrypto_p.a ${LIBDIR}/libdes_p.a
 
 .if ${MKPIC} != "no"
 
-DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-major
-DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-minor
+DES_SHLIB_MAJOR != cd ${NETBSDSRCDIR}/lib/libdes && ${MAKE} -B print-shlib-major
+DES_SHLIB_MINOR != cd ${NETBSDSRCDIR}/lib/libdes && ${MAKE} -B print-shlib-minor
 
 .if ${MKPICINSTALL} != "no"
 SYMLINKS+=	libcrypto_pic.a ${LIBDIR}/libdes_pic.a
