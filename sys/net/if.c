@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.133 2003/11/10 20:03:29 jonathan Exp $	*/
+/*	$NetBSD: if.c,v 1.134 2003/11/11 20:33:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.133 2003/11/10 20:03:29 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.134 2003/11/11 20:33:46 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -544,7 +544,7 @@ if_detach(ifp)
 	struct ifnet *ifp;
 {
 	struct socket so;
-	struct ifaddr *ifa, *next;
+	struct ifaddr *ifa, **ifap;
 #ifdef IFAREF_DEBUG
 	struct ifaddr *last_ifa = NULL;
 #endif
@@ -581,8 +581,8 @@ if_detach(ifp)
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
 	 */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
-		next = TAILQ_NEXT(ifa, ifa_list);
+	ifap = &TAILQ_FIRST(&ifp->if_addrlist); /* XXX abstraction violation */
+	while ((ifa = *ifap)) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -591,8 +591,10 @@ if_detach(ifp)
 			panic("if_detach: loop detected");
 		last_ifa = ifa;
 #endif
-		if (family == AF_LINK)
+		if (family == AF_LINK) {
+			ifap = &TAILQ_NEXT(ifa, ifa_list);
 			continue;
+		}
 		dp = pffinddomain(family);
 #ifdef DIAGNOSTIC
 		if (dp == NULL)
@@ -617,6 +619,7 @@ if_detach(ifp)
 			 */
 			printf("if_detach: WARNING: AF %d not purged\n",
 			    family);
+			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 		}
 	}
 
