@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.26 2000/03/01 20:51:50 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.27 2000/03/01 20:53:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1563,7 +1563,9 @@ ex_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		mii_activate(&sc->ex_mii, act, MII_PHY_ANY, MII_OFFSET_ANY);
+		if (sc->ex_conf & EX_CONF_MII)
+			mii_activate(&sc->ex_mii, act, MII_PHY_ANY,
+			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
 		break;
 	}
