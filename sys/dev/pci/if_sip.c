@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.98 2005/02/06 03:15:14 kim Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.99 2005/02/06 08:52:08 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.98 2005/02/06 03:15:14 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.99 2005/02/06 08:52:08 cube Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1566,6 +1566,7 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    == (sc->sc_if_flags & (~RESETIGN)))) {
 			/* Set up the receive filter. */
 			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+			error = 0;
 			break;
 #undef RESETIGN
 		}
