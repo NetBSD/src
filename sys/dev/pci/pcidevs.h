@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.59 1998/03/07 16:48:47 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.60 1998/03/28 02:10:40 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.53 1998/03/07 16:43:46 augustss Exp 
+ *	NetBSD: pcidevs,v 1.54 1998/03/28 02:09:29 cgd Exp 
  */
 
 /*
@@ -513,7 +513,7 @@
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
-#define	PCI_VENDOR_BAD	0xffff		/* ILLEGITIMATE VENDOR ID */
+#define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -759,8 +759,8 @@
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX System Controller (TSC) */
-#define	PCI_PRODUCT_INTEL_82471FB_ISA	0x122e		/* 82371FB PCI-to-ISA Bridge (PIIX) */
-#define	PCI_PRODUCT_INTEL_82471FB_IDE	0x1230		/* 82371FB IDE controller (PIIX) */
+#define	PCI_PRODUCT_INTEL_82371FB_ISA	0x122e		/* 82371FB PCI-to-ISA Bridge (PIIX) */
+#define	PCI_PRODUCT_INTEL_82371FB_IDE	0x1230		/* 82371FB IDE controller (PIIX) */
 #define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371MX Mobile PCI I/O IDE Xcelerator (MPIIX) */
 #define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437MX Mobile System Controller (MTSC) */
 #define	PCI_PRODUCT_INTEL_82441FX	0x1237		/* 82441FX PCI and Memory Controller (PMC) */

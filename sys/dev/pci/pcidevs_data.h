@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.58 1998/03/07 16:48:47 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.59 1998/03/28 02:10:40 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.53 1998/03/07 16:43:46 augustss Exp 
+ *	NetBSD: pcidevs,v 1.54 1998/03/28 02:09:29 cgd Exp 
  */
 
 /*
@@ -994,13 +994,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82437FX System Controller (TSC)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82471FB_ISA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_ISA,
 	    0,
 	    "Intel",
 	    "82371FB PCI-to-ISA Bridge (PIIX)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82471FB_IDE,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_IDE,
 	    0,
 	    "Intel",
 	    "82371FB IDE controller (PIIX)",
@@ -4828,9 +4828,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_BAD, 0,
+	    PCI_VENDOR_INVALID, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ILLEGITIMATE VENDOR ID",
+	    "INVALID VENDOR ID",
 	    NULL,
 	},
 	{ 0, 0, 0, NULL, NULL, }
