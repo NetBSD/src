@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.8 2003/07/15 00:04:48 lukem Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.9 2003/08/14 09:35:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.8 2003/07/15 00:04:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.9 2003/08/14 09:35:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,13 +150,16 @@ jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	jazz_tlbmap_t tlbmap;
 	int error, npte;
 
+	if (nsegments > 1)
+		/*
+		 * BUS_DMA_ALLOCNOW is allowed only with one segment for now.
+		 * XXX needs re-think.
+		 */
+		flags &= ~BUS_DMA_ALLOCNOW;
+
 	if ((flags & BUS_DMA_ALLOCNOW) == 0)
 		return (_bus_dmamap_create(t, size, nsegments, maxsegsz,
 		    boundary, flags, dmamp));
-
-	if (nsegments > 1)
-		/* BUS_DMA_ALLOCNOW is allowed only with one segment for now. */
-		return (ENOMEM);
 
 	tlbmap = malloc(sizeof(struct jazz_tlbmap), M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
@@ -171,7 +174,7 @@ jazz_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		return (ENOMEM);
 	}
 
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
+	error = _bus_dmamap_create(t, size, 1, maxsegsz, boundary,
 	    flags, dmamp);
 	if (error != 0) {
 		jazz_dmatlb_free(tlbmap->vaddr, npte);
