@@ -2434,6 +2434,7 @@ process_one_symbol (type, desc, valu, name, section_offsets, objfile)
     case N_ENDM:		/* Solaris 2:  End of module */
     case N_MAIN:		/* Name of main routine.  */
     case N_ALIAS:		/* SunPro F77: alias name, ignore for now.  */
+    case N_WARNING:		/* Linker warning message; ignore.  */
       break;
     }
 
