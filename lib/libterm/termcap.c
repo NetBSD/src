@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.16 1999/03/22 03:26:43 abs Exp $	*/
+/*	$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.16 1999/03/22 03:26:43 abs Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ tgetent(bp, name)
 	 * normally read.
 	 */
 	dummy = NULL;
-	i = cgetent(&dummy, pathvec, name);      
+	i = cgetent(&dummy, pathvec, name);
 
 	if (i == 0) {
 		/*
@@ -159,7 +159,7 @@ tgetent(bp, name)
 		}
 		bp[1023] = '\0';
 	}
-	
+
 	if (dummy)
 		free(dummy);
 	/* no tc reference loop return code in libterm XXX */
@@ -217,7 +217,7 @@ tgetstr(id, area)
 	char ids[3];
 	char *s;
 	int i;
-	
+
 	/*
 	 * XXX
 	 * This is for all the boneheaded programs that relied on tgetstr
@@ -229,7 +229,7 @@ tgetstr(id, area)
 
 	if ((i = cgetstr(tbuf, ids, &s)) < 0)
 		return NULL;
-	
+
 	strcpy(*area, s);
 	*area += i + 1;
 	return (s);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.5 1999/05/17 23:47:27 augustss Exp $
+.\"	$NetBSD: usb.3,v 1.6 1999/07/02 15:46:53 simonb Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -93,7 +93,7 @@ device.
 When the report descriptor is no longer needed it should be freed
 by calling
 .Fn hid_dispose_report_desc .
-The type 
+The type
 .Fa report_desc_t
 is opaque and should be used when calling the parsing functions.
 .Sh DESCRIPTOR PARSING FUNCTIONS
@@ -105,7 +105,7 @@ by oring together values
 .Fa "(1 << k)"
 where
 .Fa k
-is an item of type 
+is an item of type
 .Fa hid_kind_t .
 The function returns
 .Fa NULL
@@ -124,7 +124,7 @@ than 0.
 The struct pointed to by
 .Fa h
 will be filled with the relevant data for the item.
-The definition of 
+The definition of
 .Fa hid_item_t
 can be found in
 .Pa <usb.h>
@@ -174,8 +174,8 @@ The default HID usage table.
 .Sh BUGS
 This man page is woefully incomplete.
 .Sh SEE ALSO
-The 
-.Tn USB 
+The
+.Tn USB
 specifications can be found at
 .Dv http://www.usb.org/developers/docs.htm .
 .Pp
