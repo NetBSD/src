@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sel_subs.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: sel_subs.c,v 1.3 1994/06/14 00:43:11 mycroft Exp $";
+static char *rcsid = "$Id: sel_subs.c,v 1.4 1994/09/23 11:35:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -382,7 +382,7 @@ trng_add(str)
 	/*
 	 * locate optional flags suffix /{cm}.
 	 */
-	if ((flgpt = rindex(str, '/')) != NULL)
+	if ((flgpt = strrchr(str, '/')) != NULL)
 		*flgpt++ = '\0';
 
 	for (stpt = str; *stpt != '\0'; ++stpt) {
@@ -591,7 +591,7 @@ str_sec(str, tval)
 	register char *dot = NULL;
 
 	lt = localtime(tval);
-	if ((dot = index(str, '.')) != NULL) {
+	if ((dot = strchr(str, '.')) != NULL) {
 		/*
 		 * seconds (.ss)
 		 */

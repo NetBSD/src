@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gen_subs.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: gen_subs.c,v 1.3 1994/06/14 00:42:34 mycroft Exp $";
+static char *rcsid = "$Id: gen_subs.c,v 1.4 1994/09/23 11:35:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -204,7 +204,7 @@ ls_tty(arcn)
  *	copy src to dest up to len chars (stopping at first '\0'), when src is
  *	shorter than len, pads to len with '\0'. big performance win (and 
  *	a lot easier to code) over strncpy(), then a strlen() then a
- *	bzero(). (or doing the bzero() first).
+ *	memset(). (or doing the memset() first).
  */
 
 #if __STDC__

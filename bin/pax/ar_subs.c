@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ar_subs.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: ar_subs.c,v 1.3 1994/06/14 00:41:10 mycroft Exp $";
+static char *rcsid = "$Id: ar_subs.c,v 1.4 1994/09/23 11:35:05 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1085,7 +1085,7 @@ next_head(arcn)
 			warn(1,"Invalid header, starting valid header search.");
 			++in_resync;
 		}
-		bcopy(hdbuf+1, hdbuf, shftsz);
+		memmove(hdbuf, hdbuf+1, shftsz);
 		res = 1;
 		hdend = hdbuf + shftsz;
 	}
@@ -1220,7 +1220,7 @@ get_arc()
 		 * portable manner
 		 */
 		if (--hdsz > 0) {
-			bcopy(hdbuf+1, hdbuf, hdsz);
+			memmove(hdbuf, hdbuf+1, hdsz);
 			res = BLKMULT - hdsz;
 			hdend = hdbuf + hdsz;
 		} else {

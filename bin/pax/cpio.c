@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cpio.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: cpio.c,v 1.3 1994/06/14 00:41:52 mycroft Exp $";
+static char *rcsid = "$Id: cpio.c,v 1.4 1994/09/23 11:35:09 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,7 @@ cpio_endwr()
 	/*
 	 * create a trailer request and call the proper format write function
 	 */
-	bzero((char *)&last, sizeof(last));
+	memset(&last, 0, sizeof(last));
 	last.nlen = sizeof(TRAILER) - 1;
 	last.type = PAX_REG;
 	last.sb.st_nlink = 1;
