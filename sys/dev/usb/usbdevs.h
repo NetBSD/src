@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.59 1999/11/10 19:47:39 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.60 1999/11/12 00:26:39 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.59 1999/11/10 19:46:40 augustss Exp 
+ *	NetBSD: usbdevs,v 1.60 1999/11/12 00:26:13 augustss Exp 
  */
 
 /*
@@ -99,6 +99,7 @@
 #define	USB_VENDOR_INSYSTEM	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_QTRONIX	0x05c7		/* Qtronix Corp */
+#define	USB_VENDOR_ELSA	0x05cc		/* ELSA Gmbh */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
@@ -275,6 +276,9 @@
 
 /* Qtronix products */
 #define	USB_PRODUCT_QTRONIX_980N	0x2011		/* Scorpion-980N keyboard */
+
+/* Elsa products */
+#define	USB_PRODUCT_ELSA_MODEM1	0x2265		/* ELSA Modem Board */
 
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
