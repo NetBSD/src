@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.103 2000/02/29 19:07:42 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.104 2000/03/01 19:03:17 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -115,12 +115,10 @@ umask 77
 
 # Check if we have fdesc mounted
 if [ -d fd ]; then
-	df fd | grep -q fdesc
-	if [ $? = 0 ]; then
-		nofdesc=false
-	else
-		nofdesc=true
-	fi
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
 else
 	nofdesc=true
 fi
