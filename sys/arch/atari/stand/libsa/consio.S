@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.s,v 1.1.1.1 1996/02/29 11:36:12 leo Exp $	*/
+/*	$NetBSD: consio.S,v 1.1 2001/09/08 11:21:02 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,34 +30,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-	.globl	_getchar	| int getchar (void);
-	.text
-	.even
-_getchar:
-	movml	d2/a2,sp@-
-	movw	#2,sp@-		| BIOS device 2 => console (VT52)
-	movw	#2,sp@-		| BIOS opcode 2 => Bconin
+#include <machine/asm.h>
+
+ENTRY_NOPROFILE(getchar)	| int getchar (void);
+	movml	%d2/%a2,%sp@-
+	movw	#2,%sp@-	| BIOS device 2 => console (VT52)
+	movw	#2,%sp@-	| BIOS opcode 2 => Bconin
 	trap	#13		| => char in d0.b
-	addql	#4,sp
-	andl	#0xff,d0
-	movml	sp@+,d2/a2
+	addql	#4,%sp
+	andl	#0xff,%d0
+	movml	%sp@+,%d2/%a2
 	rts
 
-	.globl	_putchar	| void putchar (int c);
-	.text
-	.even
-_putchar:
-	movl	sp@(4),d0
-	cmpw	#10,d0		| linefeed?
+ENTRY_NOPROFILE(putchar)	| void putchar (int c);
+	movl	%sp@(4),%d0
+	cmpw	#10,%d0		| linefeed?
 	bnes	0f
-	movq	#13,d0		| yes, put CR and LF.
+	movq	#13,%d0		| yes, put CR and LF.
 	bsrs	0f
-	movq	#10,d0
-0:	movml	d2/a2,sp@-
-	movw	d0,sp@-		| character
-	movw	#2,sp@-		| BIOS device 2 => console (VT52)
-	movw	#3,sp@-		| BIOS opcode 3 => Bconout
+	movq	#10,%d0
+0:	movml	%d2/%a2,%sp@-
+	movw	%d0,%sp@-	| character
+	movw	#2,%sp@-	| BIOS device 2 => console (VT52)
+	movw	#3,%sp@-	| BIOS opcode 3 => Bconout
 	trap	#13		| => none
-	addql	#6,sp
-	movml	sp@+,d2/a2
+	addql	#6,%sp
+	movml	%sp@+,%d2/%a2
 	rts
