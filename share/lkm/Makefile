@@ -1,10 +1,10 @@
 #
-#	$NetBSD: Makefile,v 1.17 1999/08/21 06:30:12 simonb Exp $
+#	$NetBSD: Makefile,v 1.18 2000/12/11 09:14:28 jdolecek Exp $
 #
 
 .include <bsd.own.mk>		# for UNPRIVILEGED
 
-STUFF=	README syscall vfs misc
+STUFF=	README syscall misc
 MKOBJ=	no
 
 install:
