@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.13 2002/05/23 06:32:42 leo Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.14 2002/06/15 21:45:37 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.8 2001/11/20 11:29:41 lukem Exp $
+#		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
 #		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
 
 #This configuration file is for a generic Milan
@@ -89,7 +89,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				#immutable) behave as system flags.
+				# immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -245,6 +245,7 @@ isabus0 	at mainbus0			# ISA-bus
 isa0 		at isabus0
 pcibus0 	at mainbus0			# PCI-bus
 pci0 		at pcibus0
+nvr0 		at mainbus0			# nvram driver
 ser0 		at mainbus0
 fdcisa0 	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy contr.
 fdisa0 		at fdcisa0 drive 0
@@ -259,13 +260,13 @@ fdisa0 		at fdcisa0 drive 0
 #a little endian (ISA) bus, in PIO mode this is essentially the same as
 #swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode
 #provided by the PCI_ISA bridge on the Milan. CDROM's are OK, but the data
-# on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
+#on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
 #developers have thought up a solution, you can make a byteswapped disk
 #during the partioning with HDDRIVER and TOS supports booting from it!
 #Ok, now you have to choose:
 #- If _none_ of your disks are marked byteswapped by HDDRIVER, choose
-#the MILAN_ISAIDE version.
-#- If _all_ of your disks are byteswapped, use the  1  version
+#the MILAN-ISAIDE version.
+#- If _all_ of your disks are byteswapped, use the  MILAN-PCIIDE version
 #The is no way to mix things!
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# 2 PCIIDE channels
@@ -274,7 +275,7 @@ atapibus* 	at pciide? channel ?			# ATAPI bus support
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
-#
+
 options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console
