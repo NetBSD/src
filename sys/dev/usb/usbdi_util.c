@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.27 2000/02/08 18:45:27 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.28 2000/02/22 11:25:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -341,8 +341,8 @@ usbd_get_report(iface, type, id, data, len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	DPRINTFN(4, ("usbd_set_report: len=%d\n", len));
-	if (id == NULL)
+	DPRINTFN(4, ("usbd_get_report: len=%d\n", len));
+	if (ifd == NULL)
 		return (USBD_IOERROR);
 	err = usbd_interface2device_handle(iface, &dev);
 	if (err)
