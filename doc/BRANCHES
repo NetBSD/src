@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.11 2003/08/06 06:35:31 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.12 2003/11/12 13:16:22 grant Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -304,7 +304,7 @@ Status:		Active
 Start Date:	Wed Jul  2 15:27:30 UTC 2003
 End Date:	
 Base Tag:	ktrace-lwp-base
-Maintainer:	Darren Reed <darrenr@netbsd.org>
+Maintainer:	Darren Reed <darrenr@NetBSD.org>
 Scope:		sys
 Notes:		
 
