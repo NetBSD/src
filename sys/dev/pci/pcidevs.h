@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.532 2003/06/07 04:17:10 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.533 2003/06/07 04:29:48 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.531 2003/06/07 04:16:25 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp 
  */
 
 /*
@@ -1543,9 +1543,9 @@
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-to-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82855PM_PM	0x3342		/* 82855PM Power Management Controller */
 #define	PCI_PRODUCT_INTEL_82855GM_MCH	0x3580		/* 82855GM Host-to-Hub Controller */
-#define	PCI_PRODUCT_INTEL_82855GM_AGP	0x3582		/* 82855PM GMCH Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_82855GM_AGP	0x3584		/* 82855PM GMCH Memory Controller */
-#define	PCI_PRODUCT_INTEL_82855GM_AGP	0x3585		/* 82855PM GMCH Configuration Process */
+#define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855PM GMCH Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855PM GMCH Memory Controller */
+#define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855PM GMCH Configuration Process */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
 #define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
