@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.185 2003/07/26 10:40:33 martin Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.186 2003/09/11 11:34:46 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.184 2003/07/26 10:39:32 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.185 2003/09/11 11:34:18 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -530,6 +530,9 @@
 #define	PCMCIA_STR_PSION_GOLDCARD	"Psion Gold Card"
 
 /* Quatech */
+#define	PCMCIA_CIS_QUATECH_SPP_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_QUATECH_SPP_100	0x0003
+#define	PCMCIA_STR_QUATECH_SPP_100	"Quatech Enhanced Parallel Port"
 #define	PCMCIA_CIS_QUATECH_DSP_225	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_QUATECH_DSP_225	0x0008
 #define	PCMCIA_STR_QUATECH_DSP_225	"Quatech Dual Serial Port"
