@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_xdr.c,v 1.1.1.1 1997/07/24 21:22:53 christos Exp $
+ * $Id: amq_xdr.c,v 1.2 1997/07/24 23:17:32 christos Exp $
  *
  */
 

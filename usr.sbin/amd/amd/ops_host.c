@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_host.c,v 1.1.1.1 1997/07/24 21:21:43 christos Exp $
+ * $Id: ops_host.c,v 1.2 1997/07/24 23:16:56 christos Exp $
  *
  */
 

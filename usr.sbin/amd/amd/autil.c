@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: autil.c,v 1.1.1.1 1997/07/24 21:20:37 christos Exp $
+ * $Id: autil.c,v 1.2 1997/07/24 23:16:21 christos Exp $
  *
  */
 

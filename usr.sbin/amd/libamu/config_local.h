@@ -3,7 +3,7 @@
 #define USER_NAME "christos"
 
 /* Define configuration date */
-#define CONFIG_DATE "Thu Jul 24 12:25:26 EDT 1997"
+#define CONFIG_DATE "Thu Jul 24 18:30:11 EDT 1997"
 
 /* Define name of host */
 #define HOST_NAME "borken.nyc.deshaw.com"

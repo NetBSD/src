@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,87 +36,101 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)info_ndbm.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_ndbm.c,v 1.3 1994/06/13 20:47:24 mycroft Exp $
+ *      %W% (Berkeley) %G%
+ *
+ * $Id: info_ndbm.c,v 1.4 1997/07/24 23:16:35 christos Exp $
+ *
  */
 
 /*
  * Get info from NDBM map
  */
 
-#include "am.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
 
-#ifdef HAS_NDBM_MAPS
 
-#include <ndbm.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-
-static int search_ndbm P((DBM *db, char *key, char **val));
-static int search_ndbm(db, key, val)
-DBM *db;
-char *key;
-char **val;
+static int
+search_ndbm(DBM *db, char *key, char **val)
 {
-	datum k, v;
-	k.dptr = key;
-	k.dsize = strlen(key) + 1;
-	v = dbm_fetch(db, k);
-	if (v.dptr) {
-		*val = strdup(v.dptr);
-		return 0;
-	}
-	return ENOENT;
+  datum k, v;
+
+  k.dptr = key;
+  k.dsize = strlen(key) + 1;
+  v = dbm_fetch(db, k);
+  if (v.dptr) {
+    *val = strdup(v.dptr);
+    return 0;
+  }
+  return ENOENT;
 }
 
-int ndbm_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int ndbm_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+
+int
+ndbm_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
-	DBM *db;
+  DBM *db;
 
-	db = dbm_open(map, O_RDONLY, 0);
-	if (db) {
-		struct stat stb;
-		int error;
-		error = fstat(dbm_pagfno(db), &stb);
-		if (!error && *tp < stb.st_mtime) {
-			*tp = stb.st_mtime;
-			error = -1;
-		} else {
-			error = search_ndbm(db, key, pval);
-		}
-		(void) dbm_close(db);
-		return error;
-	}
+  db = dbm_open(map, O_RDONLY, 0);
+  if (db) {
+    struct stat stb;
+    int error;
+#ifdef DBM_SUFFIX
+    char dbfilename[256];
 
-	return errno;
+    strcpy(dbfilename, map);
+    strcat(dbfilename, DBM_SUFFIX);
+    error = stat(dbfilename, &stb);
+#else /* not DBM_SUFFIX */
+    error = fstat(dbm_pagfno(db), &stb);
+#endif /* not DBM_SUFFIX */
+    if (!error && *tp < stb.st_mtime) {
+      *tp = stb.st_mtime;
+      error = -1;
+    } else {
+      error = search_ndbm(db, key, pval);
+    }
+    (void) dbm_close(db);
+    return error;
+  }
+  return errno;
 }
 
-int ndbm_init P((char *map, time_t *tp));
-int ndbm_init(map, tp)
-char *map;
-time_t *tp;
+
+int
+ndbm_init(mnt_map *m, char *map, time_t *tp)
 {
-	DBM *db;
+  DBM *db;
 
-	db = dbm_open(map, O_RDONLY, 0);
-	if (db) {
-		struct stat stb;
+  db = dbm_open(map, O_RDONLY, 0);
+  if (db) {
+    struct stat stb;
+    int error;
+#ifdef DBM_SUFFIX
+    char dbfilename[256];
 
-		if (fstat(dbm_pagfno(db), &stb) < 0)
-			*tp = clocktime();
-		else
-			*tp = stb.st_mtime;
-		dbm_close(db);
-		return 0;
-	}
-
-	return errno;
+    strcpy(dbfilename, map);
+    strcat(dbfilename, DBM_SUFFIX);
+    error = stat(dbfilename, &stb);
+#else /* not DBM_SUFFIX */
+    error = fstat(dbm_pagfno(db), &stb);
+#endif /* not DBM_SUFFIX */
+    if (error < 0)
+      *tp = clocktime();
+    else
+      *tp = stb.st_mtime;
+    dbm_close(db);
+    return 0;
+  }
+  return errno;
 }
 
-#endif /* HAS_NDBM_MAPS */
+
+int
+ndbm_mtime(mnt_map *m, char *map, time_t *tp)
+{
+  return ndbm_init(m,map, tp);
+}
