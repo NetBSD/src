@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2004/05/24 18:17:45 hannken Exp $
+#	$NetBSD: Makefile,v 1.25 2004/07/02 03:11:26 jmc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,7 +25,12 @@ netbsd.gz: ${KERNOBJDIR}/GENERIC/netbsd
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+=	${CRUNCHBIN} netbsd.gz sysinst
+clean:	localclean
+
+localclean:
+	rm -rf sysinst
+
+CLEANFILES+=	${CRUNCHBIN} netbsd.gz
 
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
