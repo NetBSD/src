@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.76 2003/05/14 16:36:22 ragge Exp $
+#	$NetBSD: special,v 1.77 2004/01/14 10:51:54 jmmv Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -209,6 +209,7 @@
 ./etc/rc.d/syslogd		type=file mode=0555
 ./etc/rc.d/timed		type=file mode=0555
 ./etc/rc.d/ttys			type=file mode=0555
+./etc/rc.d/veriexec		type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
 ./etc/rc.d/wdogctl		type=file mode=0555
 ./etc/rc.d/wscons		type=file mode=0555
