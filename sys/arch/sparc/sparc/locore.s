@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.170 2002/12/21 11:57:41 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.171 2002/12/23 00:55:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1034,7 +1034,7 @@ trapbase_sun4m:
 	SYSCALL			! 88 = svr4 syscall
 	SYSCALL			! 89 = bsd syscall
 	BPT_KGDB_EXEC		! 8a = enter kernel gdb on kernel startup
-	STRAP(0x8b)
+	TRAP(T_DBPAUSE)		! 8b = hold CPU for kernel debugger
 	STRAP(0x8c)
 	STRAP(0x8d)
 	STRAP(0x8e)
