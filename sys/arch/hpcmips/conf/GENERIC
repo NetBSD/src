@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.26 2000/01/31 11:44:01 shin Exp $
+# 	$NetBSD: GENERIC,v 1.27 2000/02/10 08:45:44 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	8
 
@@ -28,7 +28,7 @@ options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 options 	SCSIVERBOSE		# human readable SCSI error messages
-options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
+#options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	RTC_OFFSET=-540		# JST-9
@@ -126,12 +126,43 @@ wskbd*		at	vrkiu? mux 1
 wsmouse*	at	vrpiu? mux 0
 
 #
-# MC-R300
+# MC-R300, MC-R500
 # Button to GPIO port # mapping
 #  + REC button       : 4
 #  + Open/Close button: 6
 # (PCIC-ISA : 9)
 # (COM power:14)
+#
+# MC-R510
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# MC-R530
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+#  + Application button: 2
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# MC-R700
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+# (PCIC-ISA : 9)
+# (COM power:46)
+#
+# MC-CS
+# Button to GPIO port # mapping
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# IBM WorkPad z50
+# Button to GPIO port # mapping
+#  + REC button       : 1
+#  + Application button?      : 2
+# (PCIC-ISA : 9)
+#
 button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
 button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
 button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
@@ -140,6 +171,8 @@ button0 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button0 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
 button0 at vrgiu? platform NEC_MCR_7XX id BTN_COVER port 3
+button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0 
+button1 at vrgiu? platform IBM_WORKPAD id BTN_APP0  port 2 active 0
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_5XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
