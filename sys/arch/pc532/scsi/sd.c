@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.1 1994/04/01 23:18:17 phil Exp $
+ *	$Id: sd.c,v 1.2 1994/04/17 07:53:54 phil Exp $
  */
 
 #include "sd.h"
@@ -914,11 +914,19 @@ sd_get_parms(int unit, int flags)
 	struct sd_data *sd = sd_data[unit];
 	struct disk_parms *disk_parms = &sd->params;
 	struct scsi_mode_sense	scsi_cmd;
-	struct scsi_mode_sense_data {
-		struct	scsi_mode_header header;
-		struct	blk_desc blk_desc;
-		union	disk_pages pages;
+	union scsi_mode_sense_data {
+		struct t1 {
+			struct	scsi_mode_header header;
+			struct	blk_desc blk_desc;
+			union	disk_pages pages;
+		} t1;
+		struct t0 {
+			struct	scsi_mode_header header;
+			union	disk_pages pages;
+		} t0;
 	} scsi_sense;
+	struct page_disk_format *scsi_disk_format;
+	struct page_rigid_geometry *scsi_disk_geometry;
 	int sectors;
 
 	/* First check if we have it all loaded */
@@ -944,17 +952,21 @@ sd_get_parms(int unit, int flags)
 			printf("could not mode sense (3) for unit %d\n", unit);
 			return ENXIO;
 		} 
+		if (scsi_sense.t1.header.blk_desc_len == 0)
+			scsi_disk_format = &scsi_sense.t0.pages.disk_format;
+		else
+			scsi_disk_format = &scsi_sense.t1.pages.disk_format;
+
 		printf("unit %d: %d trk/zn, %d altsec/zn, %d alttrk/zn, %d alttrk/lun\n",
-			unit, b2tol(scsi_sense.pages.disk_format.trk_z),
-			b2tol(scsi_sense.pages.disk_format.alt_sec),
-			b2tol(scsi_sense.pages.disk_format.alt_trk_z),
-			b2tol(scsi_sense.pages.disk_format.alt_trk_v));
-		printf("  %d sec/trk, %d byte/sec, %d interleave, %d %d bytes/log_blk\n",
-			b2tol(scsi_sense.pages.disk_format.ph_sec_t),
-			b2tol(scsi_sense.pages.disk_format.bytes_s),
-			b2tol(scsi_sense.pages.disk_format.interleave),
-			sd_size(unit, flags),
-			_3btol((u_char *)scsi_sense.blk_desc.blklen));
+			unit, b2tol(scsi_disk_format->trk_z),
+			b2tol(scsi_disk_format->alt_sec),
+			b2tol(scsi_disk_format->alt_trk_z),
+			b2tol(scsi_disk_format->alt_trk_v));
+		printf("  %d sec/trk, %d byte/sec, %d interleave, %d blks\n",
+			b2tol(scsi_disk_format->ph_sec_t),
+			b2tol(scsi_disk_format->bytes_s),
+			b2tol(scsi_disk_format->interleave),
+			sd_size(unit, flags));
 	}
 
 
@@ -979,13 +991,18 @@ sd_get_parms(int unit, int flags)
 		disk_parms->cyls = sectors/(64 * 32);
 		disk_parms->secsiz = SECSIZE;
 	} else {
+		if (scsi_sense.t1.header.blk_desc_len == 0)
+			scsi_disk_geometry = &scsi_sense.t0.pages.rigid_geometry;
+		else
+			scsi_disk_geometry = &scsi_sense.t1.pages.rigid_geometry;
+
 		if (sd_debug) {
 			printf("  %d cyl, %d head, %d precomp, %d redwrite, %d land\n",
-			_3btol((u_char *)&scsi_sense.pages.rigid_geometry.ncyl_2),
-			scsi_sense.pages.rigid_geometry.nheads,
-			b2tol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
-			b2tol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
-			b2tol(scsi_sense.pages.rigid_geometry.land_zone));
+			_3btol((u_char *)&scsi_disk_geometry->ncyl_2),
+			scsi_disk_geometry->nheads,
+			b2tol(scsi_disk_geometry->st_cyl_wp),
+			b2tol(scsi_disk_geometry->st_cyl_rwc),
+			b2tol(scsi_disk_geometry->land_zone));
 		}
 
 		/*
@@ -993,10 +1010,13 @@ sd_get_parms(int unit, int flags)
 		 * give a number of sectors so that sec * trks * cyls
 		 * is <= disk_size
 		 */
-		disk_parms->heads = scsi_sense.pages.rigid_geometry.nheads;
+		disk_parms->heads = scsi_disk_geometry->nheads;
 		disk_parms->cyls =
-			_3btol((u_char *)&scsi_sense.pages.rigid_geometry.ncyl_2);
-		disk_parms->secsiz = _3btol((u_char *)&scsi_sense.blk_desc.blklen);
+			_3btol((u_char *)&scsi_disk_geometry->ncyl_2);
+		if (scsi_sense.t1.header.blk_desc_len != 0)
+			disk_parms->secsiz = _3btol((u_char *)&scsi_sense.t1.blk_desc.blklen);
+		else
+			disk_parms->secsiz = SECSIZE; /* Should use read_cap instead */
 
 		sectors = sd_size(unit, flags);
 		sectors /= disk_parms->cyls;
