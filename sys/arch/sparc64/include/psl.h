@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.21 2002/09/29 04:06:20 chs Exp $ */
+/*	$NetBSD: psl.h,v 1.22 2003/03/22 06:34:28 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -373,6 +373,8 @@ SPLHOLD(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
 
+SPLHOLD(splsoftserial, 4)
+
 /* audio software interrupts are at software level 4 */
 SPLHOLD(splausoft, PIL_AUSOFT)
 
@@ -421,6 +423,7 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define	spl0()	spl0X(__FILE__, __LINE__)
 #define	spllowersoftclock() spllowersoftclockX(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
+#define	splsoftserial()	splsoftserialX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)
 #define	splfdsoft()	splfdsoftX(__FILE__, __LINE__)
 #define	splbio()	splbioX(__FILE__, __LINE__)
