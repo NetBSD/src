@@ -96,8 +96,8 @@ struct request_info *VARARGS(request_init, struct request_info *, request)
     VASTART(ap, struct request_info *, request);
     *request = default_info;
     request->fd = -1;
-    strcpy(request->daemon, unknown);
-    sprintf(request->pid, "%d", getpid());
+    (void)strncpy(request->daemon, unknown, sizeof(request->daemon) - 1);
+    (void)snprintf(request->pid, sizeof(request->pid), "%d", getpid());
     request->client->request = request;
     request->server->request = request;
     r = request_fill(request, ap);

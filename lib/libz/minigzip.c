@@ -1,4 +1,4 @@
-/*	$NetBSD: minigzip.c,v 1.3 1996/09/13 00:30:41 cgd Exp $	*/
+/*	$NetBSD: minigzip.c,v 1.4 1997/01/23 14:03:29 mrg Exp $	*/
 
 /* minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -138,8 +138,8 @@ void file_compress(file)
     FILE  *in;
     gzFile out;
 
-    strcpy(outfile, file);
-    strcat(outfile, GZ_SUFFIX);
+    (void)strncpy(outfile, file, MAX_NAME_LEN - 1 - GZ_SUFFIX_LEN);
+    (void)strcat(outfile, GZ_SUFFIX);	/* XXX strcat is safe */
 
     in = fopen(file, "rb");
     if (in == NULL) {
@@ -169,7 +169,7 @@ void file_uncompress(file)
     gzFile in;
     int len = strlen(file);
 
-    strcpy(buf, file);
+    (void)strncpy(buf, file, MAX_NAME_LEN - 1 - GZ_SUFFIX);
 
     if (len > SUFFIX_LEN && strcmp(file+len-SUFFIX_LEN, GZ_SUFFIX) == 0) {
         infile = file;
@@ -178,7 +178,7 @@ void file_uncompress(file)
     } else {
         outfile = file;
         infile = buf;
-        strcat(infile, GZ_SUFFIX);
+        (void)strcat(infile, GZ_SUFFIX);	/* XXX strcat is safe */
     }
     in = gzopen(infile, "rb");
     if (in == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.8 1995/02/02 02:10:11 jtc Exp $	*/
+/*	$NetBSD: perror.c,v 1.9 1997/01/23 14:02:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: perror.c,v 1.8 1995/02/02 02:10:11 jtc Exp $";
+static char rcsid[] = "$NetBSD: perror.c,v 1.9 1997/01/23 14:02:17 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ static char rcsid[] = "$NetBSD: perror.c,v 1.8 1995/02/02 02:10:11 jtc Exp $";
  * internal function __strerror().
  */
 
-extern char *__strerror __P((int , char *));
+extern char *__strerror __P((int , char *, int));
 
 void
 perror(s)
@@ -72,7 +72,7 @@ perror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = __strerror(errno, buf);
+	v->iov_base = __strerror(errno, buf, NL_TEXTMAX);
 	v->iov_len = strlen(v->iov_base);
 	v++;
 	v->iov_base = "\n";

@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.5 1995/02/27 13:28:39 cgd Exp $	*/
+/*	$NetBSD: engine.c,v 1.6 1997/01/23 14:02:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -1074,9 +1074,9 @@ int ch;
 	static char pbuf[10];
 
 	if (isprint(ch) || ch == ' ')
-		sprintf(pbuf, "%c", ch);
+		(void)snprintf(pbuf, sizeof pbuf, "%c", ch);
 	else
-		sprintf(pbuf, "\\%o", ch);
+		(void)snprintf(pbuf, sizeof pbuf, "\\%o", ch);
 	return(pbuf);
 }
 #endif

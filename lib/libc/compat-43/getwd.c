@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getwd.c	5.1 (Berkeley) 2/20/91";*/
-static char *rcsid = "$Id: getwd.c,v 1.3 1993/08/26 00:43:05 jtc Exp $";
+static char *rcsid = "$Id: getwd.c,v 1.4 1997/01/23 14:01:48 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,6 @@ getwd(buf)
 
 	if (p = getcwd(buf, MAXPATHLEN))
 		return(p);
-	(void)strcpy(buf, strerror(errno));
+	(void)strncpy(buf, strerror(errno), MAXPATHLEN); /* XXX strncpy may be unsafe */
 	return((char *)NULL);
 }

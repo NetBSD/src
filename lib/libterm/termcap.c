@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.9 1996/11/12 07:50:11 mikel Exp $	*/
+/*	$NetBSD: termcap.c,v 1.10 1997/01/23 14:03:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.9 1996/11/12 07:50:11 mikel Exp $";
+static char rcsid[] = "$NetBSD: termcap.c,v 1.10 1997/01/23 14:03:12 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,8 @@ tgetent(bp, name)
 			if ((home = getenv("HOME")) != NULL) {
 				/* set up default */
 				p += strlen(home);	/* path, looking in */
-				strcpy(pathbuf, home);	/* $HOME first */
+				(void)strncpy(pathbuf, home,
+				    sizeof(pathbuf) - 1);	/* $HOME first */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
 			strncpy(p, _PATH_DEF, PBUFSIZ - (p - pathbuf));

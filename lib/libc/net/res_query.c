@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $	*/
+/*	$NetBSD: res_query.c,v 1.11 1997/01/23 14:02:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_query.c,v 8.6 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_query.c,v 1.11 1997/01/23 14:02:09 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -350,7 +350,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		} else
 			longname = name;
 	} else
-		(void)sprintf(nbuf, "%.*s.%.*s",
+		(void)snprintf(nbuf, sizeof nbuf, "%.*s.%.*s",
 		    MAXDNAME, name, MAXDNAME, domain);
 
 	return (res_query(longname, class, type, answer, anslen));
