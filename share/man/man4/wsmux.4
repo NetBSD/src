@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmux.4,v 1.3 1999/12/15 22:07:35 abs Exp $
+.\" $NetBSD: wsmux.4,v 1.4 2001/04/04 14:16:07 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,10 +70,11 @@ and receive all mouse events; mice can also be dynamically attached
 and detached.
 .Pp
 It is also possible to inject events into a multiplexor from a
-user program.  This is used by the
-.Xr moused 8
-daemon to take data from a mouse connected to a serial port and
-make it appear on the standard mouse mux.
+user program.
+.\" This is used by the
+.\" .Xr moused 8
+.\" daemon to take data from a mouse connected to a serial port and
+.\" make it appear on the standard mouse mux.
 .Pp
 .Sh FILES
 .Bl -item
@@ -85,7 +86,7 @@ make it appear on the standard mouse mux.
 .Pa /usr/include/dev/wscons/wsconsio.h .
 .El
 .Sh SEE ALSO
-.Xr moused 8 ,
+.\" .Xr moused 8 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
 .Xr wskbd 4 ,
