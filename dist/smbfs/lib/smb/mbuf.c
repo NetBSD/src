@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbuf.c,v 1.3 2003/04/04 08:05:33 jdolecek Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.4 2003/07/26 14:59:11 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -194,7 +194,8 @@ m_getm(struct mbuf *top, size_t len, struct mbuf **mpp)
  * Routines to put data in a buffer
  */
 #define	MB_PUT(t)	int error; t *p; \
-			if ((error = mb_fit(mbp, sizeof(t), (char**)&p)) != 0) \
+			if ((error = mb_fit(mbp, sizeof(t), \
+					    (char **)(void *)&p)) != 0) \
 				return error
 
 /*

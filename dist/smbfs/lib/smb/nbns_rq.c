@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbns_rq.c,v 1.2 2003/04/04 08:05:35 jdolecek Exp $");
+__RCSID("$NetBSD: nbns_rq.c,v 1.3 2003/07/26 14:59:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -241,7 +241,7 @@ nbns_rq_prepare(struct nbns_rq *rqp)
 		if (rqp->nr_qdcount > 1)
 			return EINVAL;
 		len = nb_name_len(rqp->nr_qdname);
-		error = mb_fit(mbp, len, (char**)&cp);
+		error = mb_fit(mbp, len, (char**)(void *)&cp);
 		if (error)
 			return error;
 		nb_name_encode(rqp->nr_qdname, cp);
