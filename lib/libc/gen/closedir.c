@@ -1,3 +1,5 @@
+/*	$NetBSD: closedir.c,v 1.3 1995/02/25 08:51:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)closedir.c	8.1 (Berkeley) 6/10/93";*/
-static char rcsid[] = "$Id: closedir.c,v 1.2 1994/07/27 14:39:44 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
+#else
+static char rcsid[] = "$NetBSD: closedir.c,v 1.3 1995/02/25 08:51:01 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: getnetgrent.c,v 1.8 1995/02/25 08:51:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: getnetgrent.c,v 1.7 1994/12/12 22:42:10 jtc Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.8 1995/02/25 08:51:19 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

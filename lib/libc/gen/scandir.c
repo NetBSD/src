@@ -1,3 +1,5 @@
+/*	$NetBSD: scandir.c,v 1.6 1995/02/25 08:51:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)scandir.c	8.3 (Berkeley) 1/2/94";*/
-static char rcsid[] = "$Id: scandir.c,v 1.5 1994/07/27 14:39:50 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
+#else
+static char rcsid[] = "$NetBSD: scandir.c,v 1.6 1995/02/25 08:51:42 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

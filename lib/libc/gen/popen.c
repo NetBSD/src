@@ -1,3 +1,5 @@
+/*	$NetBSD: popen.c,v 1.10 1995/02/25 08:51:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: popen.c,v 1.9 1994/05/09 16:28:27 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: popen.c,v 1.10 1995/02/25 08:51:31 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -99,7 +104,7 @@ popen(program, type)
 			}
 			(void)close(pdes[1]);
 		}
-		execl(_PATH_BSHELL, "sh", "-c", program, (char *) 0);
+		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
 		_exit(127);
 		/* NOTREACHED */
 	}
