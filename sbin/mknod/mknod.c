@@ -1,7 +1,7 @@
-/*	$NetBSD: mknod.c,v 1.21 2001/02/19 22:56:21 cgd Exp $	*/
+/*	$NetBSD: mknod.c,v 1.22 2001/10/08 04:20:44 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.21 2001/02/19 22:56:21 cgd Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.22 2001/10/08 04:20:44 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,292 +53,35 @@ __RCSID("$NetBSD: mknod.c,v 1.21 2001/02/19 22:56:21 cgd Exp $");
 #include <unistd.h>
 #include <string.h>
 
-int main __P((int, char *[]));
-static void usage __P((void));
-typedef	dev_t pack_t __P((int, u_long []));
+#include "mknod.h"
+
+	int	main(int, char *[]);
+static	void	usage(void);
 
 
-pack_t pack_native;
+#define	MAXARGS	8
 
-dev_t
-pack_native(n, numbers)
-	int n;
-	u_long numbers[];
+int
+main(int argc, char **argv)
 {
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev(numbers[0], numbers[1]);
-		if (major(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_netbsd(x)		((int32_t)((((x) & 0x000fff00) >>  8)))
-#define	minor_netbsd(x)		((int32_t)((((x) & 0xfff00000) >> 12) | \
-					   (((x) & 0x000000ff) >>  0)))
-#define	makedev_netbsd(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
-					 (((y) << 12) & 0xfff00000) | \
-					 (((y) <<  0) & 0x000000ff)))
-
-pack_t pack_netbsd;
-
-dev_t
-pack_netbsd(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_netbsd(numbers[0], numbers[1]);
-		if (major_netbsd(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_netbsd(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_freebsd(x)	((int32_t)(((x) & 0x0000ff00) >> 8))
-#define	minor_freebsd(x)	((int32_t)(((x) & 0xffff00ff) >> 0))
-#define	makedev_freebsd(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
-					 (((y) << 0) & 0xffff00ff)))
-
-pack_t pack_freebsd;
-
-dev_t
-pack_freebsd(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_freebsd(numbers[0], numbers[1]);
-		if (major_freebsd(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_freebsd(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_8_8(x)		((int32_t)(((x) & 0x0000ff00) >> 8))
-#define	minor_8_8(x)		((int32_t)(((x) & 0x000000ff) >> 0))
-#define	makedev_8_8(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
-					 (((y) << 0) & 0x000000ff)))
-
-pack_t pack_8_8;
-
-dev_t
-pack_8_8(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_8_8(numbers[0], numbers[1]);
-		if (major_8_8(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_8_8(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_12_20(x)		((int32_t)(((x) & 0xfff00000) >> 20))
-#define	minor_12_20(x)		((int32_t)(((x) & 0x000fffff) >>  0))
-#define	makedev_12_20(x,y)	((dev_t)((((x) << 20) & 0xfff00000) | \
-					 (((y) <<  0) & 0x000fffff)))
-
-pack_t pack_12_20;
-
-dev_t
-pack_12_20(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_12_20(numbers[0], numbers[1]);
-		if (major_12_20(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_12_20(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_14_18(x)		((int32_t)(((x) & 0xfffc0000) >> 18))
-#define	minor_14_18(x)		((int32_t)(((x) & 0x0003ffff) >>  0))
-#define	makedev_14_18(x,y)	((dev_t)((((x) << 18) & 0xfffc0000) | \
-					 (((y) <<  0) & 0x0003ffff)))
-
-pack_t pack_14_18;
-
-dev_t
-pack_14_18(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_14_18(numbers[0], numbers[1]);
-		if (major_14_18(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_14_18(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_8_24(x)		((int32_t)(((x) & 0xff000000) >> 24))
-#define	minor_8_24(x)		((int32_t)(((x) & 0x00ffffff) >>  0))
-#define	makedev_8_24(x,y)	((dev_t)((((x) << 24) & 0xff000000) | \
-					 (((y) <<  0) & 0x00ffffff)))
-
-pack_t pack_8_24;
-
-dev_t
-pack_8_24(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_8_24(numbers[0], numbers[1]);
-		if (major_8_24(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_8_24(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-#define	major_12_12_8(x)	((int32_t)(((x) & 0xfff00000) >> 20))
-#define	unit_12_12_8(x)		((int32_t)(((x) & 0x000fff00) >>  8))
-#define	subunit_12_12_8(x)	((int32_t)(((x) & 0x000000ff) >>  0))
-#define	makedev_12_12_8(x,y,z)	((dev_t)((((x) << 20) & 0xfff00000) | \
-					 (((y) <<  8) & 0x000fff00) | \
-					 (((z) <<  0) & 0x000000ff)))
-
-pack_t pack_bsdos;
-
-dev_t
-pack_bsdos(n, numbers)
-	int n;
-	u_long numbers[];
-{
-	dev_t dev=0; /* Quiet -Wall */
-
-	if (n == 2) {
-		dev = makedev_12_20(numbers[0], numbers[1]);
-		if (major_12_20(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (minor_12_20(dev) != numbers[1])
-			errx(1, "invalid minor number");
-	} else if (n == 3) {
-		dev = makedev_12_12_8(numbers[0], numbers[1], numbers[2]);
-		if (major_12_12_8(dev) != numbers[0])
-			errx(1, "invalid major number");
-		if (unit_12_12_8(dev) != numbers[1])
-			errx(1, "invalid unit number");
-		if (subunit_12_12_8(dev) != numbers[2])
-			errx(1, "invalid subunit number");
-	} else
-		errx(1, "too many fields for format");
-	return (dev);
-}
-
-
-struct format {
-	char	*name;
+	char	*name, *p;
+	mode_t	 mode;
+	dev_t	 dev;
 	pack_t	*pack;
-} formats[] = {
-	{"386bsd",  pack_8_8},
-	{"4bsd",    pack_8_8},
-	{"bsdos",   pack_bsdos},
-	{"freebsd", pack_freebsd},
-	{"hpux",    pack_8_24},
-	{"isc",     pack_8_8},
-	{"linux",   pack_8_8},
-	{"native",  pack_native},
-	{"netbsd",  pack_netbsd},
-	{"osf1",    pack_12_20},
-	{"sco",     pack_8_8},
-	{"solaris", pack_14_18},
-	{"sunos",   pack_8_8},
-	{"svr3",    pack_8_8},
-	{"svr4",    pack_14_18},
-	{"ultrix",  pack_8_8},
-};
+	u_long	 numbers[MAXARGS];
+	int	 n, ch, fifo, hasformat;
 
-int compare_format __P((const void *, const void *));
-
-int
-compare_format(key, element)
-	const void *key;
-	const void *element;
-{
-	const char *name;
-	const struct format *format;
-
-	name = key;
-	format = element;
-
-	return (strcmp(name, format->name));
-}
-
-
-int
-main(argc, argv)
-	int argc;
-	char **argv;
-{
-	char *name;
-	mode_t mode;
-	dev_t dev = 0;
-	pack_t *pack;
-	u_long numbers[8];
-	struct format *format = NULL;
-	char *p;
-	int n;
-	int ch;
-	int fifo = 0;
-
+	dev = 0;
+	fifo = hasformat = 0;
 	pack = pack_native;
 
 	while ((ch = getopt(argc, argv, "F:")) != -1) {
 		switch (ch) {
 		case 'F':
-			format = bsearch(optarg, formats,
-			    sizeof(formats)/sizeof(formats[0]),
-			    sizeof(formats[0]), compare_format);
-			if (format == 0)
+			pack = find_format(optarg);
+			if (pack == NULL)
 				errx(1, "invalid format: %s", optarg);
-			pack = format->pack;
+			hasformat++;
 			break;
 
 		default:
@@ -357,6 +100,8 @@ main(argc, argv)
 	argv++;
 
 	mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	if (argv[0][1] != '\0')
+		goto badtype;
 	switch (*argv[0]) {
 	case 'c':
 		mode |= S_IFCHR;
@@ -367,23 +112,30 @@ main(argc, argv)
 		break;
 
 	case 'p':
-		if (format)
+		if (hasformat)
 			errx(1, "format is meaningless for fifos");
 		fifo = 1;
 		break;
 
 	default:
+ badtype:
 		errx(1, "node type must be 'b', 'c' or 'p'.");
 	}
 	argc--;
 	argv++;
 
-	if (!fifo == (argc == 0))
-		usage();
+	if (fifo) {
+		if (argc != 0)
+			usage();
+	} else {
+		if (argc < 1 || argc >= MAXARGS)
+			usage();
+	}
 
 	for (n = 0; n < argc; n++) {
 		numbers[n] = strtoul(argv[n], &p, 0);
-		if ((p && *p != '\0') || (numbers[n] == ULONG_MAX && errno == ERANGE))
+		if ((p && *p != '\0') ||
+		    (numbers[n] == ULONG_MAX && errno == ERANGE))
 			errx(1, "invalid number: %s", argv[n]);
 	}
 
@@ -412,7 +164,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *progname = getprogname();
 
