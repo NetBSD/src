@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.13 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.14 2005/02/16 07:42:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.13 2005/02/15 21:33:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.14 2005/02/16 07:42:16 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1107,7 +1107,6 @@ ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 	struct ktr_header *kth;
 	struct file *fp = ktd->ktd_fp;
 	struct proc *p;
-	int rl, hl;
 	int error;
 next:
 	auio.uio_iov = iov = &aiov[0];
@@ -1120,37 +1119,21 @@ next:
 	do {
 		kth = &kte->kte_kth;
 
-		rl = kth->ktr_len;
-		hl = KTRv0_LEN;
-
-		switch (kth->ktr_version) {
-		case 0:
+		if (kth->ktr_version == 0) {
 			/*
 			 * Convert back to the old format fields
 			 */
 			TIMESPEC_TO_TIMEVAL(&kth->ktr_tv, &kth->ktr_time);
 			kth->ktr_unused = NULL;
-			hl = KTRv0_LEN;
-			break;
-		/*
-		 * Add in the incremental header size for later versions of
-		 * header records so that old kdump(1) binaries get the right
-		 * total record lenth.
-		 */
-		case 1:
-			kth->ktr_len += KTRv1_LEN - KTRv0_LEN;
-
-			hl = KTRv1_LEN;
-			break;
 		}
 		iov->iov_base = (caddr_t)kth;
-		iov++->iov_len = hl;
-		auio.uio_resid += hl;
+		iov++->iov_len = sizeof(struct ktr_header);
+		auio.uio_resid += sizeof(struct ktr_header);
 		auio.uio_iovcnt++;
-		if (rl > 0) {
+		if (kth->ktr_len > 0) {
 			iov->iov_base = kte->kte_buf;
-			iov++->iov_len = rl;
-			auio.uio_resid += rl;
+			iov++->iov_len = kth->ktr_len;
+			auio.uio_resid += kth->ktr_len;
 			auio.uio_iovcnt++;
 		}
 	} while ((kte = TAILQ_NEXT(kte, kte_list)) != NULL &&
