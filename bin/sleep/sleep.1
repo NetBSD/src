@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
+.\"	$NetBSD: sleep.1,v 1.10 1997/08/04 01:13:09 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,17 +47,16 @@
 .Ar seconds
 .Sh DESCRIPTION
 The
-.Nm sleep
+.Nm
 utility
 suspends execution for a minimum of
 .Ar seconds .
-.Nm Sleep
-is used to schedule the execution of other commands (see
+It is usually used to schedule the execution of other commands (see
 .Sx EXAMPLES
 below).
 .Pp
 The
-.Nm Sleep
+.Nm
 utility exits with one of the following values:
 .Bl -tag -width flag
 .It Li \&0
@@ -67,6 +66,14 @@ was received.
 .It Li \&>\&0
 An error occurred.
 .El
+.Pp
+Note: The
+.Nx
+.Nm
+command will accept and honor a non-integer number of specified
+seconds. This is a non-portable extension, and its use will nearly
+guarantee that a shell script will not execute properly on another
+system.
 .Sh EXAMPLES
 To schedule the execution of a command for
 .Va x
@@ -106,13 +113,12 @@ when the file is found, then another portion processing
 is done courteously by sleeping for 70 seconds in between each
 awk job.
 .Sh SEE ALSO
-.Xr setitimer 2 ,
-.Xr alarm 3 ,
+.Xr nanosleep 2 ,
 .Xr sleep 3 ,
 .Xr at 1
 .Sh STANDARDS
 The
-.Nm sleep
+.Nm
 command is expected to be
 .St -p1003.2
 compatible.

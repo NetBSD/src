@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.9 1997/07/20 21:28:27 christos Exp $	*/
+/*	$NetBSD: sleep.c,v 1.10 1997/08/04 01:13:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,16 +43,26 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.9 1997/07/20 21:28:27 christos Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.10 1997/08/04 01:13:10 perry Exp $");
 #endif
 #endif /* not lint */
 
+/*
+ * XXX shouldn't need sys/time.h, but there was an include file bug
+ * which may be fixed soon.
+ */
+#include <sys/time.h>
+#include <time.h>
+#include <ctype.h>
+#include <math.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>
 
 void usage __P((void));
+void alarmhandle __P((int));
 int  main __P((int, char *[]));
 
 int
@@ -60,9 +70,15 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, secs;
+	char *arg, *temp;
+	double val, ival, fval;
+	struct timespec ntime;
+	int fracflag;
+	int ch;
 
 	setlocale(LC_ALL, "");
+
+	(void)signal(SIGALRM, alarmhandle);
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch(ch) {
@@ -76,8 +92,42 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 
-	if ((secs = atoi(*argv)) > 0)
-		(void)sleep(secs);
+	/*
+	 * Okay, why not just use atof for everything? Why bother
+	 * checking if there is a fraction in use? Because the old
+	 * sleep handled the full range of integers, that's why, and a
+	 * double can't handle a large long. This is fairly useless
+	 * given how large a number a double can hold on most
+	 * machines, but now we won't ever have trouble. If you want
+	 * 1000000000.9 seconds of sleep, well, that's your
+	 * problem. Why use an isdigit() check instead of checking for
+	 * a period? Because doing it this way means locales will be
+	 * handled transparently by the atof code.
+	 */
+	fracflag = 0;
+	arg = *argv;
+	for (temp = arg; *temp != '\0'; temp++)
+		if (!isdigit(*temp))
+			fracflag++;
+
+	if (fracflag) {
+		val = atof(arg);
+		if (val <= 0)
+			exit(0);
+		ival = floor(val);
+		fval = (1000000000 * (val-ival));
+		ntime.tv_sec = ival;
+		ntime.tv_nsec = fval;
+	}
+	else{
+		ntime.tv_sec = atol(arg);
+		if (ntime.tv_sec <= 0)
+			exit(0);
+		ntime.tv_nsec = 0;
+	}
+
+	(void)nanosleep(&ntime, NULL);
+
 	exit(0);
 }
 
@@ -87,4 +137,11 @@ usage()
 
 	(void)fprintf(stderr, "usage: sleep seconds\n");
 	exit(1);
+}
+
+void
+alarmhandle(i)
+	int i;
+{
+	_exit(0);
 }
