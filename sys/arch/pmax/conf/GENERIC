@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.57 1999/12/02 03:52:25 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.58 1999/12/08 04:11:07 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -172,6 +172,14 @@ ibus0	at	mainbus0
 pm*	at	ibus0 addr ?		# 3100 onboard fb
 le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
 sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
+
+# MIPSFAIR-2 (and ?)
+#uba0	at	ibus0 addr ?		# Qbus adapter
+#ze0	at	ibus0 addr ?		# SGEC on-board ethernet
+#shac0	at	ibus0 addr ?		# DSSI controller
+
+# Unibus/Qbus adapters
+#qe0	at	uba? csr 0174440	# DEQNA/DELQA
 
 #########################################################################
 # SCSI configuration							#

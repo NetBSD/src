@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.75 1999/12/01 08:39:20 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.76 1999/12/08 04:11:07 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -35,7 +35,7 @@ file	arch/pmax/pmax/dec_3min.c	dec_3min	# DS5000/1xx, 3min
 file	arch/pmax/pmax/dec_maxine.c	dec_maxine	# DS5000/1xx, maxine
 file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 #file	arch/pmax/pmax/dec_5400.c	dec_5400	# DS5400, mipsfair
-#file	arch/pmax/pmax/dec_5500.c	dec_5500	# kn220, mipsfair2
+file	arch/pmax/pmax/dec_5500.c	dec_5500	# kn220, mipsfair2
 #file	arch/pmax/pmax/dec_5800.c	dec_5800	# 5800, isis
 
 # handlers for memory subsystems shared across models..
@@ -51,7 +51,7 @@ include "dev/dec/files.dec"
 device ibus { [addr = -1] }
 attach ibus at mainbus with ibus_pmax
 file	arch/pmax/ibus/ibus.c		ibus
-file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
+file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100|dec_5500)
 
 #
 # TURBOchannel Devices
@@ -168,6 +168,15 @@ file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm_ds.c		pm_ds
 
+# 5500 (and?...) onboard ethernet
+device	ze: sgec, arp, ether, ifnet
+attach	ze at ibus with ze_ibus
+file	arch/pmax/ibus/if_ze.c		ze_ibus
+
+# 5500 (and?...) onboard SCSI
+#attach	asc at ibus with asc_ibus
+#file	arch/pmax/ibus/if_asc.c		asc_ibus
+
 
 #########################################################################
 # TURBOchannel option cards.						#
@@ -218,7 +227,7 @@ file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-file	arch/pmax/stand/common/callvec.c
+file	arch/pmax/stand/common/callvec.c	# don't rely in stand!!!
 file	dev/cons.c
 file	arch/pmax/dev/findcons.c	# find and set up console.
 #file	arch/pmax/pmax/kadb.c		# obsolute kadb
