@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.17 1994/03/01 08:23:15 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.18 1994/04/17 06:31:30 glass Exp $
  */
 
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ static void initialize_vector_table()
 {
     int i;
 
-    mon_printf("initializing vector table (starting)\n");
     old_vector_table = getvbr();
     for (i = 0; i < NVECTORS; i++) {
 	if (vector_table[i] == COPY_ENTRY)
@@ -84,7 +83,6 @@ static void initialize_vector_table()
     }
     setvbr((unsigned int *) vector_table);
     orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
-    mon_printf("initializing vector table (finished)\n");
 }
 
 vm_offset_t high_segment_alloc(npages)
@@ -232,7 +230,6 @@ void sun3_vm_init()
 	}
 	va = eva;
     }
-    mon_printf("monitor protected\n");
     /*
      * MONSHORTSEG contains MONSHORTPAGE which is some stupid page
      * allocated by the monitor.  One page, in an otherwise empty segment.
@@ -270,8 +267,6 @@ void sun3_vm_init()
      */
     temp_seg = sun3_round_seg(virtual_avail);
     set_temp_seg_addr(temp_seg);
-    mon_printf("%x virtual bytes lost allocating temporary segment for pmap\n",
-	       temp_seg - virtual_avail); 
     set_segmap(temp_seg, SEGINV);
     virtual_avail = temp_seg + NBSG;
 
@@ -312,7 +307,6 @@ void sun3_vm_init()
 
     virtual_avail = eva;
 
-    mon_printf("unmapping range: %x to %x\n", virtual_avail, virtual_end);
     /*
      * unmap kernel virtual space (only segments.  if it squished ptes, bad
      * things might happen.
@@ -431,7 +425,7 @@ void sun3_verify_hardware()
     }
     if (!cpu_match)
 	mon_panic("kernel not configured for the Sun 3 model\n");
-    mon_printf("kernel configured for Sun 3/%s\n", cpu_string);
+    mon_printf("configured for Sun 3/%s\n", cpu_string);
 }
 
 /*
@@ -572,7 +566,6 @@ unsigned int get_interrupt_reg()
 
 void sun3_bootstrap()
 {
-    static char hello[] = "hello world";
     int i;
     extern int cold, astpending;
 
@@ -582,7 +575,6 @@ void sun3_bootstrap()
      */
 
     cold = 1;
-    mon_printf("%s\n", hello);
     mon_printf("\nPROM Version: %x\n", romp->romvecVersion);
 
     sun3_monitor_hooks();

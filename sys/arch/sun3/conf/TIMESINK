@@ -1,6 +1,6 @@
 #
 # config file for TIMESINK, Adam's test machine
-# $Id: TIMESINK,v 1.10 1994/03/01 08:24:02 glass Exp $
+# $Id: TIMESINK,v 1.11 1994/04/17 06:31:10 glass Exp $
 #
 
 include "std.sun3"
@@ -30,6 +30,7 @@ options		INET				# IP prototol stack support
 
 # Sun3-specific options
 options		COMPAT_SUNOS
+options		COMPAT_09
 
 # Sun3-specific debugging options
 options 	CONTEXT_DEBUG
@@ -38,8 +39,6 @@ options		EXEC_DEBUG
 #options		PMAP_DEBUG
 #options	SYSCALL_DEBUG
 #options	LAME_ZS
-
-include "TIMESINK.nfsdiskless"	# utter hack for NFS diskless bootstrapping
 
 config		netbsd swap nfs
 
