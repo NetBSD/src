@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.18 1994/12/28 19:43:09 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.19 1994/12/30 05:14:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -231,12 +231,14 @@ scsi_strvis(dst, src, len)
 		--len;
 
 	while (len > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
+		if (*src == 0x00)
+			break;
+		else if (*src < 0x20 || *src >= 0x80) {
 			/* non-printable characters */
 			*dst++ = '\\';
-			*dst++ = (*src & 0300) >> 6;
-			*dst++ = (*src & 0070) >> 3;
-			*dst++ = (*src & 0007) >> 0;
+			*dst++ = ((*src & 0300) >> 6) + '0';
+			*dst++ = ((*src & 0070) >> 3) + '0';
+			*dst++ = ((*src & 0007) >> 0) + '0';
 		} else if (*src == '\\') {
 			/* quote characters */
 			*dst++ = '\\';
