@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.71 2000/09/19 22:04:09 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.72 2000/10/13 16:40:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
