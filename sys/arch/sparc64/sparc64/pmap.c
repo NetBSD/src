@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1999/05/30 18:52:51 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1999/05/31 00:14:01 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -165,13 +165,8 @@ typedef struct pv_entry {
 #define PV_WE		0x10LL		/* Debug -- track if this page was ever writable */
 #define PV_MASK		(0x01fLL)
 #define PV_VAMASK	(~(NBPG-1))
-#if 0
-#define PV_MATCH(pv,va)	(((pv)->pv_va) == (va))
-#define PV_SETVA(pv,va) ((pv)->pv_va = (va))
-#else
 #define PV_MATCH(pv,va)	(!((((pv)->pv_va)^(va))&PV_VAMASK))
 #define PV_SETVA(pv,va) ((pv)->pv_va = ((va)&PV_VAMASK)|(((pv)->pv_va)&PV_MASK))
-#endif
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
 extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
@@ -230,9 +225,6 @@ static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 static void tsb_enter __P((int ctx, int64_t va, int64_t data));
 static void pmap_pinit __P((struct pmap *));
 static void pmap_release __P((pmap_t));
-#if 0
-static int pv_syncflags __P((pv_entry_t));
-#endif
 
 struct pmap_stats {
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
@@ -752,10 +744,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 
-#if 0       
-	/* DEBUG -- don't allow these pages to be used. */
-	kernelend = (kernelstart + 4*MEG);
-#endif
 #ifdef BOOT1_DEBUG
 	/* print out mem list */
 	prom_printf("Available %lx physical memory before cleanup:\r\n",
@@ -995,15 +983,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef DEBUG
 				page_size_map[k].use++;
 #endif
-#if 0
-				/* Enter prom map into TSB */
-				int k = ptelookup_va(prom_map[i].vstart+j);
-				tsb[k].tag.tag = TSB_TAG(0, 0,
-				    prom_map[i].vstart+j);
-				tsb[k].data.data = prom_map[i].tte + j;
-#endif
-#if 1
-				/* And into pmap_kernel() */
+				/* Enter PROM map into pmap_kernel() */
 				newp = NULL;
 				while (pseg_set(pmap_kernel(),
 				    prom_map[i].vstart + j, 
@@ -1015,14 +995,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					enter_stats.ptpneeded++;
 #endif
 				}
-#else
-				prom_printf("i=%d j=%d\r\n", i, j);
-				pmap_enter(pmap_kernel(),
-					   (vaddr_t)prom_map[i].vstart + j, 
-					   (prom_map[i].tte & TLB_PA_MASK) + j,
-					   VM_PROT_WRITE, 1, 
-					   VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
-#endif
 			}
 #ifdef BOOT1_DEBUG
 	prom_printf("Done inserting PROM mappings into pmap_kernel()\r\n");
@@ -1272,7 +1244,7 @@ void
 pmap_collect(pm)
 	struct pmap *pm;
 {
-#if 0
+#if 1
 	int i, j, k, n, m, s;
 	paddr_t *pdir, *ptbl;
 	/* This is a good place to scan the pmaps for page tables with
@@ -1915,10 +1887,6 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 #endif
 #endif
 	/* We will let the fast mmu miss interrupt load the new translation */
-#if 0
-	/* Tell prom about our mappings so we can debug w/OBP after a watchdog */
-	if (pm->pm_ctx)	prom_map_phys(pa, NBPG, va, -1);
-#endif
 	pv_check();
 }
 
@@ -2366,28 +2334,6 @@ paddr_t pa;
 	return 0;
 }
 
-#if 0
-/* 
- * Lookup an entry in TSB -- returns NULL if not mapped. 
- *
- * At the moment it just looks up an entry in the TSB.
- * This will need to be changed to store ref and modified
- * info elsewhere or we will have severe data corruption.
- */
-int 
-ptelookup_pa(pa)
-	paddr_t pa;
-{
-	register int i;
-
-	/* Scan for PA in TSB */
-	for( i=0; i<TSBENTS; i++ )
-		if( (tsb[i].data.data&TLB_PA_MASK) == (pa&TLB_PA_MASK) )
-			return i;
-	return -1;
-}
-#endif
-
 /*
  * Lookup the appropriate TSB entry.
  *
@@ -2473,57 +2419,6 @@ void tsb_enter(ctx, va, data)
 /*
  * Do whatever is needed to sync the MOD/REF flags
  */
-#if 0
-int
-pv_syncflags(pv)
-	pv_entry_t pv;
-{
-	pv_entry_t npv;
-	int s = splimp();
-	int flags = pv->pv_va&PV_MASK;
-	
-#ifdef DEBUG	
-	if (pv->pv_next && !pv->pv_pmap) {
-		printf("pv_syncflags: npv but no pmap for pv %p\n", pv);
-		Debugger();
-	}
-#endif
-	if (pv->pv_pmap != NULL)
-		for (npv = pv; npv; npv = npv->pv_next) {
-			int64_t data;
-
-			/* First clear the mod bit in the PTE and make it R/O */
-			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
-			/* Need to both clear the modify and write bits */
-			if (data & (TLB_MODIFY|TLB_W))
-				flags |= PV_MOD;
-#ifdef HWREF
-			if (data & (TLB_ACCESS))
-				flags |= PV_REF;
-#else
-			if (data < 0)
-				flags |= PV_REF;
-#endif
-			data &= ~(TLB_MODIFY|TLB_ACCESS);
-			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, data, 0)) {
-				printf("pv_syncflags: gotten pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
-			/* Then clear the mod bit in the pv */
-			flags |= npv->pv_va&PV_MASK;
-			npv->pv_va &= ~(PV_MOD|PV_REF);
-		}
-	pv->pv_va |= flags&(PV_MOD|PV_REF);
-#ifdef DEBUG
-	if (pv->pv_va & PV_MOD)
-		pv->pv_va |= PV_WE;	/* Remember this was modified */
-#endif
-	splx(s);
-	return (flags);
-}
-#endif
 
 #if defined(PMAP_NEW)
 boolean_t
@@ -3348,56 +3243,7 @@ pmap_remove_pv(pmap, va, pa)
 vm_page_t
 vm_page_alloc1()
 {
-#if 1
 	return uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
-#else
-	register vm_page_t	mem;
-	int		spl;
-
-	spl = splimp();				/* XXX */
-	uvm_lock_fpageq();            /* lock free page queue */
-	if (uvm.page_free.tqh_first == NULL) {
-		uvm_unlock_fpageq();
-		splx(spl);
-		printf("vm_page_alloc1: free list empty\n");
-		return (NULL);
-	}
-
-	mem = uvm.page_free.tqh_first;
-	TAILQ_REMOVE(&uvm.page_free, mem, pageq);
-
-	uvmexp.free--;
-	uvm_unlock_fpageq();
-	splx(spl);
-
-	mem->flags =  PG_BUSY | PG_CLEAN | PG_FAKE;
-	mem->pqflags = 0;
-	mem->uobject = NULL;
-	mem->uanon = NULL;
-	mem->wire_count = 0;
-	mem->loan_count = 0;
-
-	/*
-	 *	Decide if we should poke the pageout daemon.
-	 *	We do this if the free count is less than the low
-	 *	water mark, or if the free count is less than the high
-	 *	water mark (but above the low water mark) and the inactive
-	 *	count is less than its target.
-	 *
-	 *	We don't have the counts locked ... if they change a little,
-	 *	it doesn't really matter.
-	 */
-
-	if (uvmexp.free < uvmexp.freemin ||
-	    (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg)) 
-		thread_wakeup(&uvm.pagedaemon);
-
-#ifdef DEBUG
-	pmap_pages_stolen ++;
-#endif
-	return (mem);
-#endif
 }
 
 /*
@@ -3412,34 +3258,12 @@ void
 vm_page_free1(mem)
 	register vm_page_t	mem;
 {
-#if 1
 	if (mem->flags != (PG_BUSY|PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);
 		Debugger();
 		return;
 	}
 	uvm_pagefree(mem);
-#else
-#ifdef DIAGNOSTIC
-	if (mem->pqflags & (PQ_ACTIVE|PQ_INACTIVE|PG_FAKE))
-		panic("vm_page_free1: active/inactive page!");
-#endif
-	
-	if (!(mem->flags & PG_FAKE)) {
-		int	spl;
-
-		spl = splimp();
-		uvm_lock_fpageq();
-		mem->pqflags = PQ_FREE;
-		TAILQ_INSERT_TAIL(&uvm.page_free, mem, pageq);
-		TAILQ_INSERT_TAIL(&uvm.page_free, mem, pageq);
-		uvmexp.free++;
-		splx(spl);
-	}
-#ifdef DEBUG
-	pmap_pages_stolen --;
-#endif
-#endif
 }
 
 #ifdef DDB

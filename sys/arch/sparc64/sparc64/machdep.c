@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1999/05/26 19:16:34 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.43 1999/05/31 00:14:00 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -374,10 +374,6 @@ setregs(p, pack, stack)
 	register struct fpstate *fs;
 	register int64_t tstate;
 
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
@@ -484,11 +480,6 @@ sendsig(catcher, sig, mask, code)
 #endif
 	struct sigframe sf;
 	int onstack;
-
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(tf->tf_out[6] + STACK_OFFSET);
@@ -646,10 +637,6 @@ sys___sigreturn14(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
@@ -1020,6 +1007,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return (ENOEXEC);
 }
 
+#if 0
 void
 wzero(vb, l)
 	void *vb;
@@ -1089,6 +1077,7 @@ wcopy(vb1, vb2, l)
 	if (l & 1)
 		*b2 = *b1e;
 }
+#endif
 
 bus_addr_t dvmamap_alloc __P((int, int));
 
@@ -1481,21 +1470,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int r, cbit;
 	size_t oversize;
 	u_long align;
-#if 0
-	/* This went away with dvma_mapin.  We may need it later */
-	extern u_long dvma_cachealign;
-#endif
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
 
 	cbit = PMAP_NC;
-#if 0
-	/* This went away with dvma_mapin.  We may need it later */
-	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
-#else
 	align = PAGE_SIZE;
-#endif
 
 	size = round_page(size);
 
@@ -1715,11 +1695,6 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	*hp = (bus_space_handle_t)pmap_from_phys_address(paddr,flags);
 #else
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
-#endif
-#if 0
-	printf("sparc_bus_mmap: encoding pa %llx as %llx becomes %llx\n",
-	       (bus_addr_t)(paddr), (bus_space_handle_t)*hp, 
-	       (paddr_t)(pmap_phys_address(*hp)));
 #endif
 	return (0);
 }
