@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/03/06 22:36:58 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/04/11 18:14:18 mycroft Exp $
 #
 # Makefile for install
 
@@ -7,6 +7,7 @@ NOMAN=		# defined
 
 .include <bsd.own.mk>		# for mk.conf
 
+DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
 LDSTATIC?=	-static
 
