@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.3 2002/04/20 21:25:01 manu Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.4 2002/10/13 21:07:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.3 2002/04/20 21:25:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.4 2002/10/13 21:07:41 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -145,16 +146,15 @@ irix_sys_systeminfo(p, v, retval)
 		break;
 	}
 
-	case SVR4_MIPS_SI_HOSTID: {
-		register_t hostid;
-
-		error = compat_43_sys_gethostid(p, NULL, &hostid);
-		if (!error) {
-			snprintf(strbuf, BUF_SIZE, "%08x", (int32_t)hostid);
-			str = strbuf;
-		}
+	case SVR4_SI_HW_SERIAL:
+		snprintf(strbuf, BUF_SIZE, "%d", (int32_t)hostid);
+		str = strbuf;
 		break;
-	}
+
+	case SVR4_MIPS_SI_HOSTID:
+		snprintf(strbuf, BUF_SIZE, "%08x", (int32_t)hostid);
+		str = strbuf;
+		break;
 
 	case SVR4_MIPS_SI_SERIAL: /* Unimplemented yet */
 	default:
