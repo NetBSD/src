@@ -1,11 +1,11 @@
-/*	$NetBSD: exec.c,v 1.5 1998/10/08 12:15:24 agc Exp $	*/
+/*	$NetBSD: exec.c,v 1.5.2.1 1999/09/13 22:17:54 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: exec.c,v 1.6 1997/10/08 07:47:50 charnier Exp";
 #else
-__RCSID("$NetBSD: exec.c,v 1.5 1998/10/08 12:15:24 agc Exp $");
+__RCSID("$NetBSD: exec.c,v 1.5.2.1 1999/09/13 22:17:54 he Exp $");
 #endif
 #endif
 
@@ -36,17 +36,16 @@ __RCSID("$NetBSD: exec.c,v 1.5 1998/10/08 12:15:24 agc Exp $");
  * Unusual system() substitute.  Accepts format string and args,
  * builds and executes command.  Returns exit code.
  */
-
 int
-vsystem(const char *fmt, ...)
+vsystem(const char *fmt,...)
 {
-	va_list	args;
-	char	*cmd;
-	size_t	maxargs;
-	int	ret;
+	va_list args;
+	char   *cmd;
+	size_t  maxargs;
+	int     ret;
 
 	maxargs = (size_t) sysconf(_SC_ARG_MAX);
-	maxargs -= 32;			/* some slop for the sh -c */
+	maxargs -= 32;		/* some slop for the sh -c */
 	if ((cmd = (char *) malloc(maxargs)) == (char *) NULL) {
 		warnx("vsystem can't alloc arg space");
 		return 1;
@@ -65,4 +64,3 @@ vsystem(const char *fmt, ...)
 	free(cmd);
 	return ret;
 }
-
