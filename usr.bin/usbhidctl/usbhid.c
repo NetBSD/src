@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.2 1998/07/13 20:44:04 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.3 1998/07/13 20:56:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,11 @@
 #define USBDEV "/dev/uhid0"
 
 int verbose = 0;
+int all = 0;
+int noname = 0;
+
+char **names;
+int nnames;
 
 void prbits(int bits, char **strs, int n);
 void usage(void);
@@ -59,6 +64,18 @@ void rev(struct hid_item **p);
 u_long getdata(u_char *buf, int hpos, int hsize, int sign);
 void prdata(u_char *buf, struct hid_item *h);
 void dumpdata(int f, u_char *buf, int len, int loop);
+int gotname(char *n);
+
+int
+gotname(char *n)
+{
+	int i;
+
+	for (i = 0; i < nnames; i++)
+		if (strcmp(names[i], n) == 0)
+			return 1;
+	return 0;
+}
 
 void
 prbits(int bits, char **strs, int n)
@@ -75,7 +92,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s -f device [-l] [-n] [-r] [-t tablefile] [-v]\n", __progname);
+	fprintf(stderr, "Usage: %s [-a] -f device [-l] [-n] [-r] [-t tablefile] [-v] [name ...]\n", __progname);
 	exit(1);
 }
 
@@ -190,6 +207,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	static int one = 1;
 	u_int32_t colls[100];
 	int sp = 0;
+	char namebuf[10000], *namep;
 
 	hids = 0;
 	for (d = hid_start_parse(buf, len, 1<<hid_input); 
@@ -218,17 +236,23 @@ dumpdata(int f, u_char *buf, int len, int loop)
 			err(1, "bad read %d != %d", r, dlen);
 		}
 		for (n = hids; n; n = n->next) {
-			printf("%s:%s.",
-			       usage_page(HID_PAGE(n->collection)),
-			       usage_in_page(n->collection));
-			printf("%s:%s=",
-			       usage_page(HID_PAGE(n->usage)),
-			       usage_in_page(n->usage));
-			prdata(dbuf, n);
-			if (verbose)
-				printf(" [%d - %d]", 
-				       n->logical_minimum, n->logical_maximum);
-			printf("\n");
+			namep = namebuf;
+			namep += sprintf(namep, "%s:%s.",
+					 usage_page(HID_PAGE(n->collection)),
+					 usage_in_page(n->collection));
+			namep += sprintf(namep, "%s:%s",
+					 usage_page(HID_PAGE(n->usage)),
+					 usage_in_page(n->usage));
+			if (all || gotname(namebuf)) {
+				if (!noname)
+					printf("%s=", namebuf);
+				prdata(dbuf, n);
+				if (verbose)
+					printf(" [%d - %d]", 
+					       n->logical_minimum, 
+					       n->logical_maximum);
+				printf("\n");
+			}
 		}
 		if (loop)
 			printf("\n");
@@ -247,11 +271,13 @@ main(int argc, char **argv)
 	struct usb_ctl_report_desc rep;
 	int repdump = 0;
 	int loop = 0;
-	int nothing = 0;
 	char *table = HIDTABLE;
 
-	while ((ch = getopt(argc, argv, "f:lnrt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "af:lnrt:v")) != -1) {
 		switch(ch) {
+		case 'a':
+			all++;
+			break;
 		case 'f':
 			dev = optarg;
 			break;
@@ -259,7 +285,7 @@ main(int argc, char **argv)
 			loop ^= 1;
 			break;
 		case 'n':
-			nothing++;
+			noname++;
 			break;
 		case 'r':
 			repdump++;
@@ -277,8 +303,10 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 0 || dev == 0)
+	if (dev == 0)
 		usage();
+	names = argv;
+	nnames = argc;
 
 	init_hid(table);
 
@@ -295,8 +323,7 @@ main(int argc, char **argv)
 		printf("Report descriptor\n");
 		dumpitems(rep.data, rep.size);
 	}
-	if (!nothing)
-		dumpdata(f, rep.data, rep.size, loop);
+	dumpdata(f, rep.data, rep.size, loop);
 
 	exit(0);
 }
