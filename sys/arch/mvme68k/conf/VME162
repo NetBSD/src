@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.2 2000/11/25 19:33:40 scw Exp $
+#	$NetBSD: VME162,v 1.3 2000/11/25 21:46:43 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -58,6 +58,7 @@ pseudo-device	vnd 2
 mainbus0	at root
 
 pcctwo0		at mainbus0
+memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 zsc*		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
