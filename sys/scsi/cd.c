@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.18.2.5 1993/11/29 06:14:03 mycroft Exp $
+ *      $Id: cd.c,v 1.18.2.6 1994/02/01 20:05:16 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -709,9 +709,13 @@ cdioctl(dev, cmd, addr, flag)
 	case CDIOCSTART:
 		return scsi_start_unit(cd->sc_link, 0);
 	case CDIOCSTOP:
-		return scsi_start_unit(cd->sc_link, 0);
+		return scsi_stop_unit(cd->sc_link, 0, 0);
 	case CDIOCEJECT:
-		return scsi_start_unit(cd->sc_link, 0);
+		return scsi_stop_unit(cd->sc_link, 1, 0);
+	case CDIOCALLOW:
+		return scsi_prevent(cd->sc_link, PR_ALLOW, 0);
+	case CDIOCPREVENT:
+		return scsi_prevent(cd->sc_link, PR_PREVENT, 0);
 	case CDIOCSETDEBUG:
 		cd->sc_link->flags |= (SDEV_DB1 | SDEV_DB2);
 		return 0;

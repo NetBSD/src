@@ -46,7 +46,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsi_disk.h,v 1.3.3.1 1993/11/24 05:03:04 mycroft Exp $
+ *	$Id: scsi_disk.h,v 1.3.3.2 1994/02/01 20:05:21 mycroft Exp $
  */
 
 /*
@@ -108,6 +108,7 @@ struct scsi_start_stop
 	u_char	byte2;
 	u_char	unused[2];
 	u_char	how;
+#define	SSS_STOP		0x00
 #define	SSS_START		0x01
 #define	SSS_LOEJ		0x02
 	u_char	control;
