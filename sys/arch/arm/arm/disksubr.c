@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2002/02/19 17:09:42 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2002/08/27 17:30:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -394,7 +394,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = lp->d_partitions[0].p_offset + LABELSECTOR;
+	int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
 	int sz;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
