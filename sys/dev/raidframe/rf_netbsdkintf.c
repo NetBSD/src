@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.132 2002/09/21 01:09:43 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.133 2002/09/21 07:05:06 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.132 2002/09/21 01:09:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.133 2002/09/21 07:05:06 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -153,9 +153,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.132 2002/09/21 01:09:43 oster E
 #include "rf_parityscan.h"
 #include "rf_threadstuff.h"
 
-int     rf_kdebug_level = 0;
-
 #ifdef DEBUG
+int     rf_kdebug_level = 0;
 #define db1_printf(a) if (rf_kdebug_level > 0) printf a
 #else				/* DEBUG */
 #define db1_printf(a) { }
@@ -2840,6 +2839,7 @@ rf_reasonable_label(clabel)
 }
 
 
+#if 0
 void
 rf_print_component_label(clabel)
 	RF_ComponentLabel_t *clabel;
@@ -2866,6 +2866,7 @@ rf_print_component_label(clabel)
 #endif
 	       
 }
+#endif
 
 RF_ConfigSet_t *
 rf_create_auto_sets(ac_list)
