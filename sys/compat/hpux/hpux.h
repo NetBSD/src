@@ -1,7 +1,7 @@
-/*	$NetBSD: hpux.h,v 1.13 1997/10/19 19:25:07 carrel Exp $	*/
+/*	$NetBSD: hpux.h,v 1.14 1998/10/01 06:35:09 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -314,7 +314,7 @@ struct hpux_shmid_ds {
 #define	HPUX_FPE_INTDIV_TRAP	5	/* T_ZERODIV+USER */
 
 /* HP-UX POSIX signal stuff implementation */
-typedef struct __hpux_sigset_t { long sigset[8]; } hpux_sigset_t;
+typedef struct __hpux_sigset_t { int sigset[8]; } hpux_sigset_t;
 struct hpux_sigaction {
 	void		(*sa_handler) __P((int));
 	hpux_sigset_t	sa_mask;
