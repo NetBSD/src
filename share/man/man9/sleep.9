@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.3 1996/11/18 22:16:50 pk Exp $
+.\"	$NetBSD: sleep.9,v 1.4 1997/02/06 05:05:21 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd put current process to sleep
 .Sh SYNOPSIS
 .Ft int
-.Fn "tsleep" "void *ident" "int priority" "int timo" "char *wmesg"
+.Fn "tsleep" "void *ident" "int priority" "char *wmesg" "int timo"
 .Ft void
 .Fn "sleep" "void *ident" "int priority"
 .Ft void
@@ -82,10 +82,10 @@ function takes the following arguments:
 .It Fa ident
 An identifier of the
 .Dq wait channel
-representing the resource that the current process needs wait for. This
+representing the resource for which the current process needs to wait. This
 typically is the virtual address of some kernel data-structure related
-to the resource the process is contending for. The same identifier must
-be used in a call to
+to the resource for which the process is contending. The same identifier
+must be used in a call to
 .Fn wakeup
 to get the process going again.
 .Fa ident
@@ -111,8 +111,8 @@ If non-zero, the process will sleep for at most
 .Li timo/hz
 seconds. If this amount of time elapses and no
 .Fn wakeup "ident"
-occurred, or signal
-.Pq if Dv PCATCH No was set ,
+has occurred, and no signal
+.Pq if Dv PCATCH No was set
 was posted,
 .Fn tsleep
 will return
@@ -145,7 +145,7 @@ the lock when it is released. All others will have to go back to sleep and
 wait for the next opportunity.
 .Sh RETURN VALUES
 .Fn tsleep
-return 0 if it return as a result of a
+returns 0 if it returns as a result of a
 .Fn wakeup .
 If a
 .Fn tlseep
@@ -153,12 +153,13 @@ returns as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
 .Dv SA_RESTART
-property,
-.Pq see Xr sigaction 2 , and
+property
+.Pq see Xr sigaction 2 ,
+and
 .Er EINTR
 otherwise.
 If
 .Fn tsleep
-return because of a timeout
-.Er EWOULDBLOCK
-is returned.
+returns because of a timeout it returns
+.Er EWOULDBLOCK .
+
