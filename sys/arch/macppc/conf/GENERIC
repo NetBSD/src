@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129.2.1 2002/07/14 18:37:09 gehenna Exp $
+# $NetBSD: GENERIC,v 1.129.2.2 2002/07/16 08:48:13 gehenna Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,11 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129.2.1 $"
+#ident 		"GENERIC-$Revision: 1.129.2.2 $"
 
 maxusers	32
+
+options 	ALTIVEC		# Include AltiVec support
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -51,9 +53,11 @@ options 	LKM		# loadable kernel modules
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+options 	ZS_CONSOLE_ABORT# allow break to get into DDB on serial
 options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=0	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	TRAP_PANICWAIT
+#options 	TRAP_PANICWAIT
 
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
@@ -66,7 +70,7 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_LINUX	# Linux binary compatibility
+options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
@@ -177,7 +181,8 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
-gm*	at pci? dev ? function ?	# gmac ethernet
+#gm*	at pci? dev ? function ?	# gmac ethernet (old)
+gem*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
@@ -207,6 +212,7 @@ esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
 adb*	at obio?			# Apple Desktop Bus
+apm0	at adb?				# APM emulation
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
@@ -314,8 +320,9 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus? oui ? devhi ? devlo ?
-#scsibus* at fwnode?
+#fwnode* at fwbus? idhi ? idlo ?
+#fwscsi* at fwnode?
+#scsibus* at fwscsi?
 
 # Audio Devices
 

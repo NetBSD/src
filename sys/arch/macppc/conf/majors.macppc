@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.1.2.3 2002/07/14 18:37:09 gehenna Exp $
+#	$NetBSD: majors.macppc,v 1.1.2.4 2002/07/16 08:48:15 gehenna Exp $
 #
 # Device majors for macppc
 #
@@ -64,3 +64,5 @@ device-major	pci		char 60			pci
 device-major	clockctl	char 61			clockctl
 device-major	sysmon		char 62			sysmon
 device-major	systrace	char 63			systrace
+device-major	apm		char 64			apm
+device-major	kttcp		char 65			kttcp

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.16.1 2002/07/16 08:48:20 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,9 +75,7 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void clearsoftclock __P((void));
-void clearsoftnet __P((void));
-void softnet __P((void));
+void softnet __P((int));
 void softserial __P((void));
 
 int splraise __P((int));
