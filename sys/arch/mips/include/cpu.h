@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)cpu.h	7.7 (Berkeley) 11/15/92
- * $Id: cpu.h,v 1.3 1994/01/14 04:53:37 deraadt Exp $
+ * $Id: cpu.h,v 1.4 1994/01/15 18:46:00 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -61,7 +61,7 @@
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
-typedef struct intrframe {
+typedef struct clockframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
 } clockframe;
