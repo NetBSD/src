@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.18 2001/09/08 01:29:07 wiz Exp $
+.\"	$NetBSD: passwd.5,v 1.19 2001/12/12 13:36:11 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,7 +126,7 @@ entries, and that one by random selection.
 .Pp
 The login name must never begin with a hyphen
 .Pq Dq \&- ;
-also, it is strongly suggested that neither upper-case characters or dots
+also, it is strongly suggested that neither upper-case characters nor dots
 .Pq Dq \&.
 be part of the name, as this tends to confuse mailers.
 No field may contain a colon
@@ -144,6 +144,8 @@ field is empty, no password will be required to gain access to the
 machine.  This is almost invariably a mistake.
 Because these files contain the encrypted user passwords, they should
 not be readable by anyone without appropriate privileges.
+For the possible ciphers used in this field see
+.Xr passwd.conf 5 .
 .Pp
 The
 .Em gid
@@ -339,6 +341,7 @@ field may also be overridden.
 .Xr login_getclass 3 ,
 .Xr login.conf 5 ,
 .Xr netgroup 5 ,
+.Xr passwd.conf 5 ,
 .Xr adduser 8 ,
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8 ,
