@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/06/15 23:51:09 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/10/17 10:14:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@
 
 void	create_knlist __P((const char *, DB *));
 void	punt __P((void));
-int	testdb __P(());
+int	testdb __P((void));
 
 #ifdef NLIST_AOUT
 int	create_knlist_aout __P((const char *, DB *));
