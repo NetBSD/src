@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 1998/08/30 23:40:14 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.22 1998/10/03 21:24:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1073,6 +1073,7 @@ struct i386_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
+	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
