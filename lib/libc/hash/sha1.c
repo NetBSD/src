@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.8 2002/03/31 12:58:55 bjh21 Exp $	*/
+/*	$NetBSD: sha1.c,v 1.9 2002/03/31 14:17:19 bjh21 Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -19,16 +19,16 @@
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/param.h>
+#include <sys/sha1.h>
 #include <sys/systm.h>
 #define _DIAGASSERT(x)	(void)0
 #else
 #include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
+#include <sha1.h>
 #include <string.h>
 #endif
-
-#include <sys/sha1.h>
 
 #if HAVE_CONFIG_H
 #include "config.h"
