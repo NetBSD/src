@@ -1,4 +1,4 @@
-.\"	$NetBSD: leave.1,v 1.8 2002/01/20 03:53:53 fair Exp $
+.\"	$NetBSD: leave.1,v 1.9 2002/01/21 11:42:55 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,6 @@ When you log off,
 exits just before it would have
 printed the next message.
 .Sh OPTIONS
-.Pp
 .Bl -tag -width flag
 .It Ar hhmm
 The time of day is in the form
@@ -99,7 +98,12 @@ or
 .Sh SEE ALSO
 .Xr calendar 1 ,
 .Xr csh 1 ,
-.Xr sh 1 .
+.Xr sh 1
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 3.0 .
 .Sh BUGS
 In the modern age with
 .Xr X 1
@@ -115,8 +119,3 @@ has the window where
 was started minimized or obscured.
 .Pp
 This all begs for a more general user notifications system to be implemented.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 3.0 .
