@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.14 2001/03/21 19:48:29 fair Exp $
+#	$NetBSD: na.phone,v 1.15 2001/07/08 17:31:12 tv Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #	From: http://www.teltronics.com/nanp2.html
 201:New Jersey (USA):Hackensack, Morristown, Newark and Jersey City:NJ
@@ -43,7 +43,7 @@
 #
 301:Maryland (USA):Rockville, Silver Spring, Bethesda:MD
 302:Delaware (USA):all locations:DE
-303:Colorado (USA):Denver:CO 
+303:Colorado (USA):Denver:CO
 304:West Virginia (USA):all locations:WV
 305:Florida (USA):Miami, Key West:FL
 306:Saskatchewan (Canada):all locations:SK
@@ -59,8 +59,8 @@
 317:Indiana (USA):Indianapolis:IN
 318:Louisiana (USA):Alexandria, Monroe:LA
 319:Iowa (USA):Dubuque:IA
-320:Minnesota (USA):St. Cloud, Willmar 
-321*:Florida (USA):Cape Canaveral 
+320:Minnesota (USA):St. Cloud, Willmar:MN
+321*:Florida (USA):Cape Canaveral:FL
 323:California (USA):Los Angeles:CA
 330:Ohio (USA):Akron, Youngstown:OH
 334:Alabama (USA):Auburn, Mobile, Montgomery, Selma:AL
@@ -69,7 +69,7 @@
 340:U.S. Virgin Islands (Caribbean):all locations:
 341*:California (USA):Oakland:CA
 345:Cayman Islands (Caribbean):all locations:
-347*:New York (USA):Bronx, Brooklyn, Queens, Staten Island:
+347*:New York (USA):Bronx, Brooklyn, Queens, Staten Island:NY
 352:Florida (USA):Gainesville, Ocala:FL
 360:Washington (USA):Bellingham, Olympia, Vancouver:WA
 361:Texas (USA):Corpus Christi:TX
@@ -95,7 +95,7 @@
 423:Tennessee (USA):Chattanooga:TN
 424*:California (USA):Beverly Hills, Gardena:CA
 425:Washington (USA):Everett, Kent:WA
-435:Utah (USA):Cedar City, St. George:UT 
+435:Utah (USA):Cedar City, St. George:UT
 440:Ohio (USA):Ashtabula, Lorain, Westlake:OH
 443:Maryland (USA):Baltimore, Towson:MD
 441:Bermuda (Caribbean):all locations:
@@ -158,7 +158,7 @@
 626:California (USA):Alhambra, La Puente, Pasadena:CA
 628*:California (USA):San Francisco:CA
 630:Illinois (USA):suburban Chicago:IL
-631*:New York (USA):Suffolk County
+631*:New York (USA):Suffolk County:NY
 636:Missouri (USA):Chesterfield, O'Fallon, Gray Summit:MO
 646*:New York (USA):Manhattan:NY
 647*:Ontario (Canada):Toronto:ON
@@ -213,7 +213,7 @@
 780:Alberta (Canada):Edmonton, Grande Prairie:AB
 781:Massachusetts (USA):Burlington, Reading, Waltham:MA
 784:St. Vincent/Grenadines (Caribbean):all locations:
-785:Kansas (USA):Junction City, Lawrence, Topeka:MO
+785:Kansas (USA):Junction City, Lawrence, Topeka:KS
 786:Florida (USA):Miami, North Dade:FL
 787:Puerto Rico (Caribbean):all locations:PR
 #
@@ -227,17 +227,17 @@
 807:Ontario (Canada):Thunder Bay:ON
 808:Hawaii (USA):all locations:HI
 809::Islands in the Caribbean, including the Dominican Republic:
-810:Michigan (USA):Birmingham, Flint, Pontiac:MI 
+810:Michigan (USA):Birmingham, Flint, Pontiac:MI
 812:Indiana (USA):Bloomington, Evansville, Terra Haute:IN
 813:Florida (USA):Clearwater, St. Petersburg, Tampa:FL
 814:Pennsylvania (USA):Altoona, Erie:PA
-815:Illinois (USA):Joliet, Rockford 
-816:Missouri (USA):Kansas City 
-817:Texas (USA):Arlington, Fort Worth:IL
+815:Illinois (USA):Joliet, Rockford:IL
+816:Missouri (USA):Kansas City:MO
+817:Texas (USA):Arlington, Fort Worth:TX
 818:California (USA):Burbank, Pasadena, Van Nuys:CA
 819:Quebec (Canada):Sherbrooke, Trois Rivieres:QC
 828:North Carolina (USA):Asheville, Hendersonville:NC
-830:Texas (USA):Fredericksburg, New Braunfels, Uvalde:TX 
+830:Texas (USA):Fredericksburg, New Braunfels, Uvalde:TX
 831:California (USA):Monterey, Salinas:CA
 832:Texas (USA):Houston:TX
 843:South Carolina (USA):Charleston, Florence:SC
@@ -247,7 +247,7 @@
 858*:California (USA):La Jolla, Poway, Rancho Santa Fe:CA
 860:Connecticut (USA):Bloomfield, Canaan, Hartford, Norwich:CT
 863*:Florida (USA):Arcadia, Lakeland, Sebring:FL
-864:South Carolina (USA):Greenville, Spartanburg:SC 
+864:South Carolina (USA):Greenville, Spartanburg:SC
 865*:Tennessee (USA):Knoxville:TN
 866*::Toll Free:
 867:Yukon (Canada):all locations:YT
@@ -263,7 +263,7 @@
 901:Tennessee (USA):Memphis:TN
 902:Nova Scotia, Prince Edward Island (Canada):all locations:NS
 903:Texas (USA):Longview, Texarkana, Tyler:TX
-904:Florida (USA):Daytona Beach, Jacksonville:FL 
+904:Florida (USA):Daytona Beach, Jacksonville:FL
 905:Ontario (Canada):Hamilton, Unionville, Woodbridge:ON
 906:Michigan (USA):Marquette, Sault Ste. Marie:MI
 907:Alaska (USA):all locations:AK
@@ -276,7 +276,7 @@
 915:Texas (USA):Abilene, El Paso, San Angelo:TX
 916:California (USA):Sacramento:CA
 917:New York (USA):New York City, Queens, Staten Island:NY
-918:Oklahoma (USA):Broken Arrow, Muskogee, Tulsa 
+918:Oklahoma (USA):Broken Arrow, Muskogee, Tulsa:OK
 919:North Carolina (USA):Durham, Raleigh:NC
 920:Wisconsin (USA):Appleton, Green Bay, Sheboygan:WI
 925:California (USA):Pleasanton, Walnut Creek:CA
