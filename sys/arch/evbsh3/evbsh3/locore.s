@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1999/12/21 21:41:56 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1999/12/26 20:32:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -451,7 +451,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_whichqs,_qs,_panic
+	.globl	_C_LABEL(whichqs), _C_LABEL(qs), _C_LABEL(panic)
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -472,7 +472,7 @@ ENTRY(idle)
 
 	sleep
 
-	bra	_idle
+	bra	_C_LABEL(idle)
 	nop
 
 	.align	2
@@ -559,7 +559,8 @@ switch_error:
 1:
 	.asciz	"cpu_swicth"
 	.align	2
-XL_panic:	.long	_panic
+XL_panic:
+	.long	_C_LABEL(panic)
 #endif
 
 /*
@@ -632,9 +633,9 @@ ENTRY(cpu_switch)
 	nop
 
 	.align	2
-XXLcpl:		.long	_cpl
-XXLcurproc:	.long	_curproc
-XXLXspllower:	.long	_Xspllower
+XXLcpl:		.long	_C_LABEL(cpl)
+XXLcurproc:	.long	_C_LABEL(curproc)
+XXLXspllower:	.long	_C_LABEL(Xspllower)
 XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
 
@@ -706,7 +707,7 @@ sw1:	mov	#1, r1
 	TESTANDSHIFT	/* bit 30 */
 	TESTANDSHIFT	/* bit 31 */
 
-	bra	_idle			/* if none, idle */
+	bra	_C_LABEL(idle)		/* if none, idle */
 	nop
 
 1:	mov.l	XLqs, r0
@@ -829,7 +830,8 @@ sw1:	mov	#1, r1
 	nop
 
 	.align	2
-XL_switch_error:	.long	switch_error
+XL_switch_error:
+	.long	switch_error
 11:
 #endif
 
@@ -975,11 +977,11 @@ switch_return:
 	nop
 
 	.align	2
-XLqs:		.long	_qs
+XLqs:		.long	_C_LABEL(qs)
 XLP_ADDR:	.long	P_ADDR
-XLwhichqs:	.long	_whichqs
-XLwant_resched:	.long	_want_resched
-XXXLcurproc:	.long	_curproc
+XLwhichqs:	.long	_C_LABEL(whichqs)
+XLwant_resched:	.long	_C_LABEL(want_resched)
+XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
 /*
@@ -987,7 +989,7 @@ XL_KernelSp:	.long	KernelSp
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_proc0,_kernel_map
+	.globl	_C_LABEL(proc0), _C_LABEL(kernel_map)
 ENTRY(switch_exit)
 	mov	r4, r8			/* old process */
 	mov.l	XLproc0, r9
@@ -1049,9 +1051,9 @@ ENTRY(switch_exit)
 	nop
 
 	.align	2
-	.globl	_exit2
+	.globl	_C_LABEL(exit2)
 XLexit2:
-	.long	_exit2
+	.long	_C_LABEL(exit2)
 
 XXLP_ADDR:
 	.long	P_ADDR
@@ -1170,16 +1172,17 @@ NENTRY(exphandler)
 XL_TLBPROTWR:
 	.long	0x000000c0
 
-	.globl	_tlbmisshandler_stub, _tlbmisshandler_stub_end
+	.globl	_C_LABEL(tlbmisshandler_stub)
+	.globl	_C_LABEL(tlbmisshandler_stub_end)
 
-_tlbmisshandler_stub:
+_C_LABEL(tlbmisshandler_stub):
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
 	nop
 	.align	2
 XL_tlbmisshandler:
 	.long	_tlbmisshandler
-_tlbmisshandler_stub_end:
+_C_LABEL(tlbmisshandler_stub_end):
 
 	.align	2
 NENTRY(tlbmisshandler)
@@ -1213,8 +1216,8 @@ XL_splimit_low3:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-	.globl	_MonTrap100, _MonTrap100_end
-_MonTrap100:
+	.globl	_C_LABEL(MonTrap100), _C_LABEL(MonTrap100_end)
+_C_LABEL(MonTrap100):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1222,11 +1225,11 @@ _MonTrap100:
 	.align	2
 1:
 	.long	_exphandler
-_MonTrap100_end:
+_C_LABEL(MonTrap100_end):
 
 	.align	2
-	.globl	_MonTrap600, _MonTrap600_end
-_MonTrap600:
+	.globl	_C_LABEL(MonTrap600), _C_LABEL(MonTrap600_end)
+_C_LABEL(MonTrap600):
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1241,17 +1244,17 @@ _MonTrap600_end:
 /************************************************************************/
 		.align	2
 
-XL_curpcb:	.long	_curpcb
-XLcurproc:	.long	_curproc
-XLcpl:		.long	_cpl
-XLXspllower:	.long	_Xspllower
-XLproc0:	.long	_proc0
+XL_curpcb:	.long	_C_LABEL(curpcb)
+XLcurproc:	.long	_C_LABEL(curproc)
+XLcpl:		.long	_C_LABEL(cpl)
+XLXspllower:	.long	_C_LABEL(Xspllower)
+XLproc0:	.long	_C_LABEL(proc0)
 
-XL_trap:	.long	_trap
-XL_astpending:	.long	_astpending
+XL_trap:	.long	_C_LABEL(trap)
+XL_astpending:	.long	_C_LABEL(astpending)
 XLT_ASTFLT:	.long	T_ASTFLT
-XL_tlb_handler:	.long	_tlb_handler
-XLexphandler:	.long	_exphandler
+XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
+XLexphandler:	.long	_C_LABEL(exphandler)
 
 	/*
 	 *	Convert Virtual address to Physical Address
@@ -1390,11 +1393,11 @@ XL_splimit_low2:	.long	0x80000000
 1:	INTRFASTEXIT
 
 	.align	2
-XL_intrhandler:		.long	_intrhandler
-XXL_astpending:		.long	_astpending
+XL_intrhandler:		.long	_C_LABEL(intrhandler)
+XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
-XXL_trap:		.long	_trap
-XL_check_ipending:	.long	_check_ipending
+XXL_trap:		.long	_C_LABEL(trap)
+XL_check_ipending:	.long	_C_LABEL(check_ipending)
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
@@ -1501,14 +1504,15 @@ ENTRY(Sh3Reset)
 XL_reset_vector:
 	.long	0xa0000000
 
-	.globl	_intrcnt, _eintrcnt, _intrnames, _eintrnames
-_intrcnt:
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
+	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
+_C_LABEL(intrcnt):
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
-_intrnames:
+_C_LABEL(intrnames):
 	.asciz	"irq0", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"
 	.asciz	"irq8", "irq9", "irq10", "irq11"
 	.asciz	"irq12", "irq13", "irq14", "irq15"
-_eintrnames:
+_C_LABEL(eintrnames):
