@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.4 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.5 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -149,11 +149,10 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.DMA_cap = 2;
 	}

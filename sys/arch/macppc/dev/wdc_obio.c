@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.37 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.38 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.37 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.38 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ wdc_obio_attach(parent, self, aux)
 	}
 
 	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->wdc_chanptr = chp;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
@@ -336,13 +336,12 @@ adjust_timing(chp)
 #endif
 		sc->sc_dmaconf[drive] = conf;
 	}
-	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;
 	sc->sc_wdcdev.select = 0;
 	if (sc->sc_dmaconf[0]) {
 		wdc_obio_select(chp,0);
-		if (sc->sc_dmaconf[1] && (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
+		if (sc->sc_dmaconf[1] &&
+		    (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
 			sc->sc_wdcdev.select = wdc_obio_select;
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_SELECT;
 		}
 	} else if (sc->sc_dmaconf[1]) {
 		wdc_obio_select(chp,1);
@@ -405,13 +404,12 @@ ata4_adjust_timing(chp)
 #endif
 		sc->sc_dmaconf[drive] = conf;
 	}
-	sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_SELECT;
 	sc->sc_wdcdev.select = 0;
 	if (sc->sc_dmaconf[0]) {
 		wdc_obio_select(chp,0);
-		if (sc->sc_dmaconf[1] && (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
+		if (sc->sc_dmaconf[1] &&
+		    (sc->sc_dmaconf[0] != sc->sc_dmaconf[1])) {
 			sc->sc_wdcdev.select = wdc_obio_select;
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_SELECT;
 		}
 	} else if (sc->sc_dmaconf[1]) {
 		wdc_obio_select(chp,1);
