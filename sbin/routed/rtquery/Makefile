@@ -2,7 +2,7 @@
 
 PROG=	rtquery
 MAN8=	rtquery.0
-#COPTS=	-g -DDEBUG
+#COPTS=	-g -DDEBUG -Wall
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
