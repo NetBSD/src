@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.54 2003/09/11 13:59:49 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.55 2003/09/30 20:34:28 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -395,11 +395,14 @@ function putent(nodefs, compatwrap) {
 	if (nodefs != "INDIR") {
 		prototype = "(struct lwp *, void *, register_t *)"
 		if (compatwrap == "")
-			printf("int\t%s%s;\n", funcname,
-			    prototype) > sysprotos
+			proto = sprintf("int\t%s%s;\n", funcname, prototype);
 		else
-			printf("int\t%s_%s%s;\n", compatwrap, funcname,
-			    prototype) > sysprotos
+			proto = sprintf("int\t%s_%s%s;\n", compatwrap,
+			    funcname, prototype);
+		if (sysmap[proto] != 1) {
+			sysmap[proto] = 1;
+			print proto > sysprotos;
+		}
 	}
 
 	# output syscall switch entry
