@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.31 2003/06/12 13:37:21 agc Exp $
+# $NetBSD: shl.mi,v 1.32 2003/06/14 08:04:43 nonaka Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a	comp-c-piclib
@@ -11,6 +11,7 @@
 ./usr/lib/libcurses_pic.a	comp-c-piclib
 ./usr/lib/libdes_pic.a		comp-c-piclib
 ./usr/lib/libedit_pic.a		comp-c-piclib
+./usr/lib/libevent_pic.a	comp-c-piclib
 ./usr/lib/libform_pic.a		comp-c-piclib
 ./usr/lib/libgnumalloc_pic.a	comp-c-piclib
 ./usr/lib/libgssapi_pic.a	comp-c-piclib
