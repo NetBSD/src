@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.14 1997/05/17 22:14:20 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.15 1997/09/26 19:52:55 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: lcp.c,v 1.14 1997/05/17 22:14:20 christos Exp $";
+__RCSID("$NetBSD: lcp.c,v 1.15 1997/09/26 19:52:55 christos Exp $");
 #endif
 #endif
 

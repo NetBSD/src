@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.h,v 1.2 1997/03/12 20:17:52 christos Exp $	*/
+/*	$NetBSD: ipxcp.h,v 1.3 1997/09/26 19:52:53 christos Exp $	*/
 
 /*
  * ipxcp.h - IPX Control Protocol definitions.
