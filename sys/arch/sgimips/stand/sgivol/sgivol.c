@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.1 2001/11/20 18:35:22 soren Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.2 2001/11/20 23:07:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,38 +36,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <util.h>
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/stat.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <util.h>
+
 #define SGI_SIZE_VOLHDR	3135	/* XXX Irix: 2592, NetBSD: 3753 */
 
 int	fd;
-int	n;
 int	opt_i;			/* Initialize volume header */
 int	opt_r;			/* Read a file from volume header */
 int	opt_w;			/* Write a file to volume header */
 int	opt_d;			/* Delete a file from volume header */
 int	opt_p;			/* Modify a partition */
-char	*vfilename = "";
-char	*ufilename = "";
 int	partno, partfirst, partblocks, parttype;
 struct sgilabel *volhdr;
-long	*l;
-long	checksum;
+int32_t	checksum;
+
+const char *vfilename = "";
+const char *ufilename = "";
 
 struct disklabel lbl;
 
 unsigned char buf[512];
 
-char *sgi_types[] = {
+const char *sgi_types[] = {
 	"Volume Header",
 	"Repl Trks",
 	"Repl Secs",
@@ -84,9 +84,21 @@ char *sgi_types[] = {
 	"XVM"
 };
 
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+int	main(int, char *[]);
+
+void	display_vol(void);
+void	init_volhdr(void);
+void	read_file(void);
+void	write_file(void);
+void	delete_file(void);
+void	modify_partition(void);
+void	write_volhdr(void);
+int	allocate_space(int);
+void	checksum_vol(void);
+void	usage(void);
+
+int
+main(int argc, char *argv[])
 {
 	if (argc < 2)
 		usage();
@@ -142,19 +154,18 @@ main(argc, argv)
 	fd = open(argv[1], (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
 	if (fd < 0) {
 		sprintf(buf, "/dev/r%s%c", argv[1], 'a' + getrawpartition());
-		fd = open(buf, (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
+		fd = open(buf,
+		    (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
 		if (fd < 0) {
 			perror("open");
 			exit(1);
 		}
 	}
-	n = read(fd, buf, sizeof(buf));
-	if (n != sizeof(buf)) {
+	if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
 		perror("read volhdr");
 		exit(1);
 	}
-	n = ioctl(fd, DIOCGDINFO, &lbl);
-	if (n < 0) {
+	if (ioctl(fd, DIOCGDINFO, &lbl) < 0) {
 		perror("DIOCGDINFO");
 		exit(1);
 	}
@@ -164,7 +175,7 @@ main(argc, argv)
 		exit(0);
 	}
 	if (volhdr->magic != SGILABEL_MAGIC) {
-		printf("No SGI volumn header found, magic=%x\n", volhdr->magic);
+		printf("No SGI volume header found, magic=%x\n", volhdr->magic);
 		exit(1);
 	}
 	if (opt_r) {
@@ -188,41 +199,49 @@ main(argc, argv)
 	return 0;
 }
 
-display_vol()
+void
+display_vol(void)
 {
+	int32_t *l;
+	int i;
+
 	printf("disklabel shows %d sectors\n", lbl.d_secperunit);
-	l = (long *)buf;
+	l = (int32_t *)buf;
 	checksum = 0;
-	for (n = 0; n < 512 / 4; ++n)
-		checksum += l[n];
+	for (i = 0; i < 512 / 4; ++i)
+		checksum += l[i];
 	printf("checksum: %08x%s\n", checksum, checksum == 0 ? "" : " *ERROR*");
 	printf("root part: %d\n", volhdr->root);
 	printf("swap part: %d\n", volhdr->swap);
-	printf("bootfile: %\n", volhdr->bootfile);
+	printf("bootfile: %s\n", volhdr->bootfile);
 	/* volhdr->devparams[0..47] */
 	printf("\nVolume header files:\n");
-	for (n = 0; n < 15; ++n)
-		if (volhdr->voldir[n].name[0])
+	for (i = 0; i < 15; ++i)
+		if (volhdr->voldir[i].name[0])
 			printf("%-8s offset %4d blocks, length %8d bytes (%d blocks)\n",
-			    volhdr->voldir[n].name, volhdr->voldir[n].block,
-			    volhdr->voldir[n].bytes, (volhdr->voldir[n].bytes + 511 ) / 512);
+			    volhdr->voldir[i].name, volhdr->voldir[i].block,
+			    volhdr->voldir[i].bytes, (volhdr->voldir[i].bytes + 511 ) / 512);
 	printf("\nSGI partitions:\n");
-	for (n = 0; n < MAXPARTITIONS; ++n)
-		if (volhdr->partitions[n].blocks)
-			printf("%2d:%c blocks %8d first %8d type %2d (%s)\n", n, n + 'a',
-			    volhdr->partitions[n].blocks, volhdr->partitions[n].first,
-			    volhdr->partitions[n].type,
-			    volhdr->partitions[n].type > 13 ? "???" :
-			    sgi_types[volhdr->partitions[n].type]);
+	for (i = 0; i < MAXPARTITIONS; ++i) {
+		if (volhdr->partitions[i].blocks) {
+			printf("%2d:%c blocks %8d first %8d type %2d (%s)\n",
+			    i, i + 'a', volhdr->partitions[i].blocks,
+			    volhdr->partitions[i].first,
+			    volhdr->partitions[i].type,
+			    volhdr->partitions[i].type > 13 ? "???" :
+			    sgi_types[volhdr->partitions[i].type]);
+		}
+	}
 }
 
-init_volhdr()
+void
+init_volhdr(void)
 {
 	memset(buf, 0, sizeof(buf));
 	volhdr->magic = SGILABEL_MAGIC;
 	volhdr->root = 0;
 	volhdr->swap = 1;
-	strcpy(volhdr->bootfile, "netbsd");
+	strcpy(volhdr->bootfile, "/netbsd");
         volhdr->dp.dp_skew = lbl.d_trackskew;
         volhdr->dp.dp_gap1 = 1; /* XXX */
         volhdr->dp.dp_gap2 = 1; /* XXX */
@@ -241,47 +260,51 @@ init_volhdr()
 	volhdr->partitions[8].type = SGI_PTYPE_VOLHDR;
 	volhdr->partitions[0].blocks = lbl.d_secperunit - SGI_SIZE_VOLHDR;
 	volhdr->partitions[0].first = SGI_SIZE_VOLHDR;
-	volhdr->partitions[0].type = SGI_PTYPE_EFS;
+	volhdr->partitions[0].type = SGI_PTYPE_BSD;
 	write_volhdr();
 }
 
-read_file()
+void
+read_file(void)
 {
 	FILE *fp;
+	int i;
 
 	printf("Reading file %s\n", vfilename);
-	for (n = 0; n < 15; ++n) {
-		if (strcmp(vfilename, volhdr->voldir[n].name) == NULL)
+	for (i = 0; i < 15; ++i) {
+		if (strcmp(vfilename, volhdr->voldir[i].name) == NULL)
 			break;
 	}
-	if (n >= 15) {
+	if (i >= 15) {
 		printf("file %s not found\n", vfilename);
 		exit(1);
 	}
 	/* XXX assumes volume header starts at 0? */
-	lseek(fd, volhdr->voldir[n].block * 512, SEEK_SET);
+	lseek(fd, volhdr->voldir[i].block * 512, SEEK_SET);
 	fp = fopen(ufilename, "w");
 	if (fp == NULL) {
 		perror("open write");
 		exit(1);
 	}
-	n = volhdr->voldir[n].bytes;
-	while (n > 0) {
+	i = volhdr->voldir[i].bytes;
+	while (i > 0) {
 		if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
 			perror("read file");
 			exit(1);
 		}
-		fwrite(buf, 1, n > sizeof(buf) ? sizeof(buf) : n, fp);
-		n -= n > sizeof(buf) ? sizeof(buf) : n;
+		fwrite(buf, 1, i > sizeof(buf) ? sizeof(buf) : i, fp);
+		i -= i > sizeof(buf) ? sizeof(buf) : i;
 	}
 	fclose(fp);
 }
 
-write_file()
+void
+write_file(void)
 {
 	FILE *fp;
-	int fileno;
-	int block, bytes;
+	int slot;
+	size_t namelen;
+	int block, i;
 	struct stat st;
 	char fbuf[512];
 
@@ -291,24 +314,24 @@ write_file()
 		exit(1);
 	}
 	printf("File %s has %lld bytes\n", ufilename, st.st_size);
-	fileno = -1;
-	for (n = 0; n < 15; ++n) {
-		if (volhdr->voldir[n].name[0] == '\0' && fileno < 0)
-			fileno = n;
-		if (strcmp(vfilename, volhdr->voldir[n].name) == 0) {
-			fileno = n;
+	slot = -1;
+	for (i = 0; i < 15; ++i) {
+		if (volhdr->voldir[i].name[0] == '\0' && slot < 0)
+			slot = i;
+		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
+			slot = i;
 			break;
 		}
 	}
-	if (fileno == -1) {
-		printf("No directory space for file %\n", vfilename);
+	if (slot == -1) {
+		printf("No directory space for file %s\n", vfilename);
 		exit(1);
 	}
 	/* -w can overwrite, -a won't overwrite */
-	if (volhdr->voldir[fileno].block > 0) {
+	if (volhdr->voldir[slot].block > 0) {
 		printf("File %s exists, removing old file\n", vfilename);
-		volhdr->voldir[fileno].name[0] = 0;
-		volhdr->voldir[fileno].block = volhdr->voldir[fileno].bytes = 0;
+		volhdr->voldir[slot].name[0] = 0;
+		volhdr->voldir[slot].block = volhdr->voldir[slot].bytes = 0;
 	}
 	if (st.st_size == 0) {
 		printf("bad file size?\n");
@@ -321,57 +344,71 @@ write_file()
 		exit(1);
 	}
 
-	/* Make sure name in volume header is max. 8 chars including NUL */
-	if (strlen(vfilename) > sizeof(volhdr->voldir[fileno].name) - 1) {
+	/*
+	 * Make sure the name in the volume header is max. 8 chars,
+	 * NOT including NUL.
+	 */
+	namelen = strlen(vfilename);
+	if (namelen > sizeof(volhdr->voldir[slot].name)) {
 		printf("Warning: '%s' is too long for volume header, ",
 		       vfilename);
-		vfilename[sizeof(volhdr->voldir[fileno].name) - 1] = '\0';
-		printf("truncating to '%s'\n", vfilename);
+		namelen = sizeof(volhdr->voldir[slot].name);
+		printf("truncating to '%-8s'\n", vfilename);
 	}
 	
-	strcpy(volhdr->voldir[fileno].name, vfilename);
-	volhdr->voldir[fileno].block = block;
-	volhdr->voldir[fileno].bytes = st.st_size;
+	/* Populate it w/ NULs */
+	memset(volhdr->voldir[slot].name, 0,
+	    sizeof(volhdr->voldir[slot].name));
+	/* Then copy the name */
+	memcpy(volhdr->voldir[slot].name, vfilename, namelen);
+
+	volhdr->voldir[slot].block = block;
+	volhdr->voldir[slot].bytes = st.st_size;
 
 	write_volhdr();
 
 	/* write the file itself */
-	n = lseek(fd, block * 512, SEEK_SET);
-	if (n < 0) {
+	i = lseek(fd, block * 512, SEEK_SET);
+	if (i < 0) {
 		perror("lseek write");
 		exit(1);
 	}
-	n = st.st_size;
+	i = st.st_size;
 	fp = fopen(ufilename, "r");
-	while (n > 0) {
-		fread(fbuf, 1, n > 512 ? 512 : n, fp);
+	while (i > 0) {
+		fread(fbuf, 1, i > 512 ? 512 : i, fp);
 		if (write(fd, fbuf, 512) != 512) {
 			perror("write file");
 			exit(1);
 		}
-		n -= n > 512 ? 512 : n;
+		i -= i > 512 ? 512 : i;
 	}
 }
 
-delete_file()
+void
+delete_file(void)
 {
-	for (n = 0; n < 15; ++n) {
-		if (strcmp(vfilename, volhdr->voldir[n].name) == NULL) {
+	int i;
+
+	for (i = 0; i < 15; ++i) {
+		if (strcmp(vfilename, volhdr->voldir[i].name) == NULL) {
 			break;
 		}
 	}
-	if (n >= 15) {
+	if (i >= 15) {
 		printf("File %s not found\n", vfilename);
 		exit(1);
 	}
-	volhdr->voldir[n].name[0] = '\0';
-	volhdr->voldir[n].block = volhdr->voldir[n].bytes = 0;
+	volhdr->voldir[i].name[0] = '\0';
+	volhdr->voldir[i].block = volhdr->voldir[i].bytes = 0;
 	write_volhdr();
 }
 
-modify_partition()
+void
+modify_partition(void)
 {
-	printf("Modify partition %d start %d length %d\n", partno, partfirst, partblocks);
+	printf("Modify partition %d start %d length %d\n", partno, partfirst,
+	    partblocks);
 	if (partno < 0 || partno > 15) {
 		printf("Invalue partition number: %d\n", partno);
 		exit(1);
@@ -382,28 +419,29 @@ modify_partition()
 	write_volhdr();
 }
 
-write_volhdr()
+void
+write_volhdr(void)
 {
+	int i;
+
 	checksum_vol();
 	display_vol();
 	printf("\nDo you want to update volume (y/n)? ");
-	n = getchar();
-	if (n != 'Y' && n != 'y')
+	i = getchar();
+	if (i != 'Y' && i != 'y')
 		exit(1);
-	n = lseek(fd, 0 , SEEK_SET);
-	if (n < 0) {
+	i = lseek(fd, 0 , SEEK_SET);
+	if (i < 0) {
 		perror("lseek 0");
 		exit(1);
 	}
-	n = write(fd, buf, 512);
-	if (n < 0)
+	i = write(fd, buf, 512);
+	if (i < 0)
 		perror("write volhdr");
 }
 
-/*
- */
-allocate_space(size)
-	int size;
+int
+allocate_space(int size)
 {
 	int n, blocks;
 	int first;
@@ -439,16 +477,21 @@ printf("first=%d block=%d last=%d end=%d\n", first, volhdr->voldir[n].block,
 	return(first);
 }
 
-checksum_vol()
+void
+checksum_vol(void)
 {
+	int32_t *l;
+	int i;
+
 	volhdr->checksum = checksum = 0;
-	l = (long *)buf;
-	for (n = 0; n < 512 / 4; ++n)
-		checksum += l[n];
+	l = (int32_t *)buf;
+	for (i = 0; i < 512 / 4; ++i)
+		checksum += l[i];
 	volhdr->checksum = -checksum;
 }
 
-usage()
+void
+usage(void)
 {
 	printf("Usage:  sgivol [-i] device\n"
 	       "        sgivol [-r vhfilename diskfilename] device\n"
