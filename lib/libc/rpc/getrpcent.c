@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.4 1995/02/25 03:01:45 cgd Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.5 1996/12/20 20:49:47 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$NetBSD: getrpcent.c,v 1.4 1995/02/25 03:01:45 cgd Exp $";
+static char *rcsid = "$NetBSD: getrpcent.c,v 1.5 1996/12/20 20:49:47 cgd Exp $";
 #endif
 
 /*
@@ -44,6 +44,8 @@ static char *rcsid = "$NetBSD: getrpcent.c,v 1.4 1995/02/25 03:01:45 cgd Exp $";
 #include <sys/types.h>
 #include <string.h>
 #include <rpc/rpc.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 /*
  * Internet version.
@@ -57,9 +59,7 @@ struct rpcdata {
 	char	line[BUFSIZ+1];
 } *rpcdata;
 
-static	struct rpcent *interpret();
-struct	hostent *gethostent();
-char	*inet_ntoa();
+static	struct rpcent *interpret __P((char *val, int len));
 
 static char RPCDB[] = "/etc/rpc";
 
