@@ -58,6 +58,6 @@ _go:
 	movl	sp@(8), a3	| nb args (start)
 	movl	sp@(12), a4	| nb end args
 	movl	#Lname, a5	| args
-	movl	#Lname+6, a6	| end args
+	movl	#Lname+5, a6	| end args
 				| SRT0 will set stack
 	jmp	a1@		| GO!
