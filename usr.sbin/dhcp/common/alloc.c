@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.6.2.2 2000/10/18 04:11:00 tv Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.6.2.3 2001/04/04 20:55:58 he Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -56,6 +56,120 @@ OMAPI_OBJECT_ALLOC (subnet, struct subnet, dhcp_type_subnet)
 OMAPI_OBJECT_ALLOC (shared_network, struct shared_network,
 		    dhcp_type_shared_network)
 OMAPI_OBJECT_ALLOC (group_object, struct group_object, dhcp_type_group)
+
+int option_chain_head_allocate (ptr, file, line)
+	struct option_chain_head **ptr;
+	const char *file;
+	int line;
+{
+	int size;
+
+	if (!ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+	if (*ptr) {
+		log_error ("%s(%d): non-null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		*ptr = (struct option_chain_head *)0;
+#endif
+	}
+
+	*ptr = dmalloc (sizeof **ptr, file, line);
+	if (*ptr) {
+		memset (*ptr, 0, sizeof **ptr);
+		(*ptr) -> refcnt = 1;
+		return 1;
+	}
+	return 0;
+}
+
+int option_chain_head_reference (ptr, bp, file, line)
+	struct option_chain_head **ptr;
+	struct option_chain_head *bp;
+	const char *file;
+	int line;
+{
+	if (!ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+	if (*ptr) {
+		log_error ("%s(%d): non-null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		*ptr = (struct option_chain_head *)0;
+#endif
+	}
+	*ptr = bp;
+	bp -> refcnt++;
+	rc_register (file, line, ptr, bp, bp -> refcnt);
+	dmalloc_reuse (bp, file, line, 1);
+	return 1;
+}
+
+int option_chain_head_dereference (ptr, file, line)
+	struct option_chain_head **ptr;
+	const char *file;
+	int line;
+{
+	int i;
+	struct option_chain_head *option_chain_head;
+	pair car, cdr;
+
+	if (!ptr || !*ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+
+	option_chain_head = *ptr;
+	*ptr = (struct option_chain_head *)0;
+	--option_chain_head -> refcnt;
+	rc_register (file, line, ptr,
+		     option_chain_head, option_chain_head -> refcnt);
+	if (option_chain_head -> refcnt > 0)
+		return 1;
+
+	if (option_chain_head -> refcnt < 0) {
+		log_error ("%s(%d): negative refcnt!", file, line);
+#if defined (DEBUG_RC_HISTORY)
+		dump_rc_history ();
+#endif
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+
+	/* If there are any options on this head, free them. */
+	for (car = option_chain_head -> first; car; car = cdr) {
+		cdr = car -> cdr;
+		if (car -> car)
+			option_cache_dereference ((struct option_cache **)
+						  (&car -> car), MDL);
+		dfree (car, MDL);
+		car = cdr;
+	}
+
+	dfree (option_chain_head, file, line);
+	return 1;
+}
 
 int group_allocate (ptr, file, line)
 	struct group **ptr;

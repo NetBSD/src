@@ -84,7 +84,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dlpi.c,v 1.1.1.7.2.1 2000/10/18 04:11:03 tv Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dlpi.c,v 1.1.1.7.2.2 2001/04/04 20:55:59 he Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -130,15 +130,7 @@ static int strioctl PROTO ((int fd, int cmd, int timeout, int len, char *dp));
 #define DLPI_MAXDLBUF		8192	/* Buffer size */
 #define DLPI_MAXDLADDR		1024	/* Max address size */
 #define DLPI_DEVDIR		"/dev/"	/* Device directory */
-#define DLPI_DEFAULTSAP		0x0800	/* IP protocol */
 
-static void dlpi_makeaddr PROTO ((unsigned char *physaddr, int physaddrlen,
-				  unsigned char *sap, int saplen,
-				  unsigned char *buf));
-static void dlpi_parseaddr PROTO ((unsigned char *buf,
-				   unsigned char *physaddr,
-				   int physaddrlen, unsigned char *sap,
-				   int saplen));
 static int dlpiopen PROTO ((char *ifname));
 static int dlpiunit PROTO ((char *ifname));
 static int dlpiinforeq PROTO ((int fd));
@@ -211,13 +203,10 @@ int if_register_dlpi (info)
 	    log_fatal ("Can't open DLPI device for %s: %m", info -> name);
 	}
 
-	/*
-	 * Get information about the provider.
-	 */
 
 	/*
-	 * Submit a DL_INFO_REQ request, to find
-	 * the dl_mac_type and dl_provider_style
+       * Submit a DL_INFO_REQ request, to find the dl_mac_type and 
+         * dl_provider_style
 	 */
 	if (dlpiinforeq(sock) < 0 || dlpiinfoack(sock, (char *)buf) < 0) {
 	    log_fatal ("Can't get DLPI MAC type for %s: %m", info -> name);
@@ -235,11 +224,21 @@ int if_register_dlpi (info)
 		info -> hw_address.hbuf [0] = HTYPE_FDDI;
 		break;
 	      default:
-		log_fatal ("%s: unknown DLPI MAC type %ld",
-		       info -> name,
-		       dlp -> info_ack.dl_mac_type);
+              log_fatal ("%s: unsupported DLPI MAC type %ld",
+                     info -> name, dlp -> info_ack.dl_mac_type);
 		break;
 	    }
+            /*
+             * copy the sap length and broadcast address of this interface
+             * to interface_info. This fixes nothing but seemed nicer than to
+             * assume -2 and ffffff.
+             */
+            info -> dlpi_sap_length = dlp -> info_ack.dl_sap_length;
+            info -> dlpi_broadcast_addr.hlen = 
+             dlp -> info_ack.dl_brdcst_addr_length;
+            memcpy (info -> dlpi_broadcast_addr.hbuf, 
+             (char *)dlp + dlp -> info_ack.dl_brdcst_addr_offset, 
+             dlp -> info_ack.dl_brdcst_addr_length);
 	}
 
 	if (dlp -> info_ack.dl_provider_style == DL_STYLE2) {
@@ -258,7 +257,7 @@ int if_register_dlpi (info)
 	/*
 	 * Bind to the IP service access point (SAP), connectionless (CLDLS).
 	 */
-	if (dlpibindreq (sock, DLPI_DEFAULTSAP, 0, DL_CLDLS, 0, 0) < 0
+      if (dlpibindreq (sock, ETHERTYPE_IP, 0, DL_CLDLS, 0, 0) < 0
 	    || dlpibindack (sock, (char *)buf) < 0) {
 	    log_fatal ("Can't bind DLPI device for %s: %m", info -> name);
 	}
@@ -404,6 +403,8 @@ void if_register_receive (info)
 {
 #ifdef USE_DLPI_PFMOD
 	struct packetfilt pf;
+        struct ip iphdr;
+        u_int16_t offset;
 #endif
 
 	/* Open a DLPI device and hang it on this interface... */
@@ -417,19 +418,18 @@ void if_register_receive (info)
 	pf.Pf_Priority = 0;
 	pf.Pf_FilterLen = 0;
 
-#ifdef USE_DLPI_RAW
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 6;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (ETHERTYPE_IP);
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 18;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
-#else
+#if defined (USE_DLPI_RAW)
+# define ETHER_H_PREFIX (14) /* sizeof (ethernet_header) */
+    /*
+     * ethertype == ETHERTYPE_IP
+     */
+    offset = 12;
+    pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + (offset / 2);
+    pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT | ENF_CAND;
+    pf.Pf_Filter [pf.Pf_FilterLen++] = htons (ETHERTYPE_IP);
+# else
+# define ETHER_H_PREFIX (0)
+# endif /* USE_DLPI_RAW */
 	/*
 	 * The packets that will be received on this file descriptor
 	 * will be IP packets (due to the SAP that was specified in
@@ -439,22 +439,32 @@ void if_register_receive (info)
 	 * to the local port.  All offsets are relative to the start
 	 * of an IP packet.
 	 */
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 4;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
-#endif
+
+        /*
+         * BOOTPS destination port
+         */
+        offset = ETHER_H_PREFIX + sizeof (iphdr) + sizeof (u_int16_t);
+        pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + (offset / 2);
+        pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT | ENF_CAND;
+        pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+
+        /*
+         * protocol should be udp. this is a byte compare, test for
+         * endianess.
+         */
+        offset = ETHER_H_PREFIX + ((u_int8_t *)&(iphdr.ip_p) - (u_int8_t *)&iphdr);
+        pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + (offset / 2);
+        pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT | ENF_AND;
+        pf.Pf_Filter [pf.Pf_FilterLen++] = htons (0x00FF);
+        pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT | ENF_CAND;
+      pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
 
 	/* Install the filter... */
 	if (strioctl (info -> rfdesc, PFIOCSETF, INFTIM,
 		      sizeof (pf), (char *)&pf) < 0) {
 	    log_fatal ("Can't set PFMOD receive filter on %s: %m", info -> name);
 	}
-#endif
+#endif /* USE_DLPI_PFMOD */
 
         if (!quiet_interface_discovery)
 		log_info ("Listening on DLPI/%s/%s%s%s",
@@ -509,14 +519,12 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct hardware *hto;
 {
 	unsigned hbufp = 0;
-	double hh [16];
+	double hh [32];
 	double ih [1536 / sizeof (double)];
 	unsigned char *dbuf = (unsigned char *)ih;
 	unsigned dbuflen;
-	unsigned char sap [2];
 	unsigned char dstaddr [DLPI_MAXDLADDR];
 	unsigned addrlen;
-	int saplen;
 	int result;
 	int fudge;
 
@@ -529,8 +537,11 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	/* Assemble the headers... */
 #ifdef USE_DLPI_RAW
 	assemble_hw_header (interface, (unsigned char *)hh, &dbuflen, hto);
+      if (dbuflen > sizeof hh)
+              log_fatal ("send_packet: hh buffer too small.\n");
 	fudge = dbuflen % 4; /* IP header must be word-aligned. */
 	memcpy (dbuf + fudge, (unsigned char *)hh, dbuflen);
+	dbuflen += fudge;
 #else
 	fudge = 0;
 #endif
@@ -545,34 +556,52 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 #ifdef USE_DLPI_RAW
 	result = write (interface -> wfdesc, dbuf + fudge, dbuflen - fudge);
 #else
-	/* XXX: Assumes ethernet, with two byte SAP */
-	sap [0] = 0x08;		/* ETHERTYPE_IP, high byte */
-	sap [1] = 0x0;		/* ETHERTYPE_IP, low byte */
-	saplen = -2;		/* -2 indicates a two byte SAP at the end
-				   of the address */
 
-	/* Setup the destination address */
-	if (hto && hto -> hlen == interface -> hw_address.hlen) {
-		dlpi_makeaddr (&hto -> hbuf [1],
-			       hto -> hlen - 1, sap, saplen, dstaddr);
-	} else {
-	    /* XXX: Assumes broadcast addr is all ones */
-	    /* Really should get the broadcast address as part of the
-	     * dlpiinforeq, and store it somewhere in the interface structure.
-	     */
-	    unsigned char bcast_ether [DLPI_MAXDLADDR];
+	/*
+         * Setup the destination address (DLSAP) in dstaddr 
+         *
+         * If sap_length < 0 we must deliver the DLSAP as phys+sap. 
+         * If sap_length > 0 we must deliver the DLSAP as sap+phys.
+         *
+         * sap = Service Access Point == ETHERTYPE_IP
+         * sap + datalink address is called DLSAP in dlpi speak.
+         */
+        { /* ENCODE DLSAP */
+          unsigned char phys [DLPI_MAXDLADDR];
+          unsigned char sap [4];
+          int sap_len = interface -> dlpi_sap_length;
+          int phys_len = interface -> hw_address.hlen - 1;
 
-	    memset ((char *)bcast_ether, 0xFF,
-		    interface -> hw_address.hlen - 1);
-	    dlpi_makeaddr (bcast_ether, interface -> hw_address.hlen - 1,
-			   sap, saplen, dstaddr);
-	}
-	addrlen = interface -> hw_address.hlen - 1 + ABS (saplen);
+          /* sap = htons (ETHERTYPE_IP) kludge */
+          memset (sap, 0, sizeof (sap));
+# if (BYTE_ORDER == LITTLE_ENDIAN)
+          sap [0] = 0x00;
+          sap [1] = 0x08;
+# else
+          sap [0] = 0x08;
+          sap [1] = 0x00;
+# endif
 
-	/* Send the packet down the wire... */
+        if (hto && hto -> hlen == interface -> hw_address.hlen)
+             memcpy ( phys, (char *) &hto -> hbuf [1], phys_len);
+          else 
+             memcpy ( phys, interface -> dlpi_broadcast_addr.hbuf, 
+              interface -> dlpi_broadcast_addr.hlen);
+           
+          if (sap_len < 0) { 
+             memcpy ( dstaddr, phys, phys_len);
+             memcpy ( (char *) &dstaddr [phys_len], sap, ABS (sap_len));
+          }
+          else {
+             memcpy ( dstaddr, (void *) sap, sap_len);
+             memcpy ( (char *) &dstaddr [sap_len], phys, phys_len);
+          }
+        addrlen = phys_len + ABS (sap_len);
+      } /* ENCODE DLSAP */
+
 	result = dlpiunitdatareq (interface -> wfdesc, dstaddr, addrlen,
 				  0, 0, dbuf, dbuflen);
-#endif
+#endif /* USE_DLPI_RAW */
 	if (result < 0)
 		log_error ("send_packet: %m");
 	return result;
@@ -588,10 +617,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	struct hardware *hfrom;
 {
 	unsigned char dbuf [1536];
-	unsigned char sap [2];
 	unsigned char srcaddr [DLPI_MAXDLADDR];
 	unsigned long srcaddrlen;
-	int saplen;
 	int flags = 0;
 	int length = 0;
 	int offset = 0;
@@ -610,20 +637,36 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	    return length;
 	}
 
-#ifndef USE_DLPI_RAW
-	/* Copy sender info */
-	/* XXX: Assumes ethernet, where SAP comes at end of haddr */
-	saplen = -2;
-	if (hfrom && (srcaddrlen ==
-		      ABS (saplen) + interface -> hw_address.hlen - 1)) {
-		hfrom -> hbuf [0] = interface -> hw_address.hbuf [0];
-		hfrom -> hlen = interface -> hw_address.hlen;
-		dlpi_parseaddr (srcaddr, &hfrom -> hbuf [1],
-				interface -> hw_address.hlen - 1, sap, saplen);
-	} else if (hfrom) {
-		memset (hfrom, '\0', sizeof *hfrom);
-	}
-#endif
+# if !defined (USE_DLPI_RAW)
+        /*
+         * Copy the sender's hw address into hfrom
+         * If sap_len < 0 the DLSAP is as phys+sap.
+         * If sap_len > 0 the DLSAP is as sap+phys.
+         *
+         * sap is discarded here.
+         */
+        { /* DECODE DLSAP */
+          int sap_len = interface -> dlpi_sap_length;
+          int phys_len = interface -> hw_address.hlen - 1;
+
+          if (hfrom && (srcaddrlen == ABS (sap_len) + phys_len )) {
+            hfrom -> hbuf [0] = interface -> hw_address.hbuf [0];
+            hfrom -> hlen = interface -> hw_address.hlen;
+            
+            if (sap_len < 0) {
+              memcpy ((char *) &hfrom -> hbuf [1], srcaddr, phys_len);
+            }
+            else {
+              memcpy ((char *) &hfrom -> hbuf [1], (char *) &srcaddr [phys_len],
+                phys_len);
+            }
+          } 
+          else if (hfrom) {
+            memset (hfrom, '\0', sizeof *hfrom);
+          }
+        } /* DECODE_DLSAP */
+
+# endif /* !defined (USE_DLPI_RAW) */
 
 	/* Decode the IP and UDP headers... */
 	bufix = 0;
@@ -677,45 +720,6 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 #define DLPI_MAXWAIT		15	/* Max timeout */
 
-static void dlpi_makeaddr (physaddr, physaddrlen, sap, saplen, buf)
-	unsigned char *physaddr;
-	int physaddrlen;
-	unsigned char *sap;
-	int saplen;
-	unsigned char *buf;
-{
-	/*
-	 * If the saplen is negative, the SAP goes at the end of the address,
-	 * otherwise it goes at the beginning.
-	 */
-	if (saplen >= 0) {
-		memcpy ((char *)buf, (char *)sap, saplen);
-		memcpy ((char *)&buf [saplen], (char *)physaddr, physaddrlen);
-	} else {
-		memcpy ((char *)buf, (char *)physaddr, physaddrlen);
-		memcpy ((char *)&buf [physaddrlen], (char *)sap, 0 - saplen);
-	}
-}
-
-static void dlpi_parseaddr (buf, physaddr, physaddrlen, sap, saplen)
-	unsigned char *buf;
-	unsigned char *physaddr;
-	int physaddrlen;
-	unsigned char *sap;
-	int saplen;
-{
-	/*
-	 * If the saplen is negative, the SAP is at the end of the address,
-	 * otherwise it is at the beginning.
-	 */
-	if (saplen >= 0) {
-		memcpy ((char *)sap, (char *)buf, saplen);
-		memcpy ((char *)physaddr, (char *)&buf [saplen], physaddrlen);
-	} else {
-		memcpy ((char *)physaddr, (char *)buf, physaddrlen);
-		memcpy ((char *)sap, (char *)&buf [physaddrlen], 0 - saplen);
-	}
-}
 
 /*
  * Parse an interface name and extract the unit number
