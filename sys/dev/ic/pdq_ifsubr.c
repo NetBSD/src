@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdq_ifsubr.c,v 1.10 1997/03/21 21:16:04 thomas Exp thomas
+ * Id: pdq_ifsubr.c,v 1.11 1997/03/24 15:24:36 thomas Exp
  *
  */
 
@@ -256,14 +256,41 @@ pdq_os_addr_fill(
     struct ether_multistep step;
     struct ether_multi *enm;
 
+    /*
+     * ADDR_FILTER_SET is always issued before FILTER_SET so
+     * we can play with PDQ_ALLMULTI and not worry about 
+     * queueing a FILTER_SET ourselves.
+     */
+
+    pdq->pdq_flags &= ~PDQ_ALLMULTI;
+#if defined(IFF_ALLMULTI)
+    sc->sc_if.if_flags &= ~IFF_ALLMULTI;
+#endif
+
     ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
     while (enm != NULL && num_addrs > 0) {
-	((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
-	((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
-	((u_short *) addr->lanaddr_bytes)[2] = ((u_short *) enm->enm_addrlo)[2];
+	if (bcmp(enm->enm_addrlo, enm->enm_addrlo, 6) == 0) {
+	    ((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
+	    ((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
+	    ((u_short *) addr->lanaddr_bytes)[2] = ((u_short *) enm->enm_addrlo)[2];
+	    addr++;
+	    num_addrs--;
+	} else {
+	    pdq->pdq_flags |= PDQ_ALLMULTI;
+#if defined(IFF_ALLMULTI)
+	    sc->sc_if.if_flags |= IFF_ALLMULTI;
+#endif
+	}
 	ETHER_NEXT_MULTI(step, enm);
-	addr++;
-	num_addrs--;
+    }
+    /*
+     * If not all the address fit into the CAM, turn on all-multicast mode.
+     */
+    if (enm != NULL) {
+	pdq->pdq_flags |= PDQ_ALLMULTI;
+#if defined(IFF_ALLMULTI)
+	sc->sc_if.if_flags |= IFF_ALLMULTI;
+#endif
     }
 }
 
