@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ipfs,v 1.4 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: ipfs,v 1.4.4.1 2004/07/05 21:33:24 he Exp $
 #
 
 # PROVIDE: ipfs
-# REQUIRE: ipnat mountcritremote
+# REQUIRE: ipnat mountcritremote downinterfaces isdnd
+# BEFORE:  SERVERS
 # KEYWORD: shutdown
 
 . /etc/rc.subr
