@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/07/05 11:44:03 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/07/05 16:10:36 cyber Exp $
 #	$OpenBSD: Makefile.inc,v 1.5 1997/07/17 06:02:42 millert Exp $
 
 # hash functions
 .PATH: ${ARCHDIR}/hash ${.CURDIR}/hash
 
-SRCS+=	rmd160.c rmd160l.c sha1.c sha1hl.c
+SRCS+=	rmd160.c rmd160hl.c sha1.c sha1hl.c
 
 MAN+=	sha1.3 rmd160.3
 
