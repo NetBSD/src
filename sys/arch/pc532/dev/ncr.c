@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ncr.c,v 1.4 1994/03/10 21:35:48 phil Exp $
+ * $Id: ncr.c,v 1.5 1994/03/17 01:02:34 phil Exp $
  *
  */
 
@@ -458,6 +458,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 		switch (sense) {
 			case 0x02:	/* Check condition */
 /*				printf("check cond. target %d.\n", xs->targ); */
+		  		spinwait(10);
 				s = splbio();
 				scsi_group0(xs->adapter,
 					    xs->targ,
@@ -468,7 +469,6 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    sizeof(struct scsi_sense_data));
 				splx(s);
 				xs->error = XS_SENSE;
-		spinwait(2);
 				return HAD_ERROR;
 			case 0x08:	/* Busy */
 				xs->error = XS_BUSY;
