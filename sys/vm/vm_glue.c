@@ -59,7 +59,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_glue.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_glue.c,v 1.2 1993/05/07 07:03:50 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -108,6 +108,22 @@ useracc(addr, len, rw)
 {
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
+
+	/*
+	 * XXX - specially disallow access to user page tables - they are
+	 * in the map.
+	 *
+	 * XXX - don't specially disallow access to the user area - treat
+	 * it as incorrectly as elsewhere.
+	 *
+	 * XXX - VM_MAXUSER_ADDRESS is an end address, not a max.  It was
+	 * only used (as an end address) in trap.c.  Use it as an end
+	 * address here too.
+	 */
+	if ((vm_offset_t) addr >= VM_MAXUSER_ADDRESS + UPAGES * NBPG
+	    || (vm_offset_t) addr + len > VM_MAXUSER_ADDRESS + UPAGES * NBPG
+	    || (vm_offset_t) addr + len <= (vm_offset_t) addr)
+		return (FALSE);
 
 	rv = vm_map_check_protection(&curproc->p_vmspace->vm_map,
 	    trunc_page(addr), round_page(addr+len-1), prot);
