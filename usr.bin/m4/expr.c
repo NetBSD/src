@@ -1,4 +1,5 @@
-/*	$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $	*/
+/*	$NetBSD: expr.c,v 1.12 2001/11/14 06:16:08 tv Exp $	*/
+/*	$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,14 +42,15 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $");
+__RCSID("$NetBSD: expr.c,v 1.12 2001/11/14 06:16:08 tv Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
-#include <stdio.h>
 #include <ctype.h>
-
+#include <err.h>
+#include <stddef.h>
+#include <stdio.h>
 #include "mdef.h"
 #include "extern.h"
 
@@ -96,9 +98,6 @@ __RCSID("$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $");
  *                      Bob Harper
  */
 
-#define TRUE    1
-#define FALSE   0
-#define EOS     (char) 0
 #define EQL     0
 #define NEQ     1
 #define LSS     2
@@ -109,7 +108,8 @@ __RCSID("$NetBSD: expr.c,v 1.11 2001/03/05 20:26:17 wiz Exp $");
 #define DECIMAL 10
 #define HEX	16
 
-static char *nxtch;		       /* Parser scan pointer */
+static const char *nxtch;		       /* Parser scan pointer */
+static const char *where;
 
 static int query __P((void));
 static int lor __P((void));
@@ -144,11 +144,12 @@ static jmp_buf expjump;
 
 int
 expr(expbuf)
-	char *expbuf;
+	const char *expbuf;
 {
 	int rval;
 
 	nxtch = expbuf;
+	where = expbuf;
 	if (setjmp(expjump) != 0)
 		return FALSE;
 
@@ -343,10 +344,16 @@ term()
 			vl *= vr;
 			break;
 		case '/':
-			vl /= vr;
+			if (vr == 0)
+				errx(1, "division by zero in eval.");
+			else
+				vl /= vr;
 			break;
 		case '%':
-			vl %= vr;
+			if (vr == 0)
+				errx(1, "modulo zero in eval.");
+			else
+				vl %= vr;
 			break;
 		}
 	}
@@ -525,7 +532,6 @@ num()
 		experr("bad constant");
 
 	return rval;
-
 }
 
 /*
@@ -593,6 +599,6 @@ static void
 experr(msg)
 	const char *msg;
 {
-	printf("m4: %s in expr.\n", msg);
+	printf("m4: %s in expr %s.\n", msg, where);
 	longjmp(expjump, -1);
 }
