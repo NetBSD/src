@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.38 1994/10/20 13:50:38 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.39 1994/10/20 14:05:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -523,8 +523,8 @@ sdstart(unit)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
+		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)&cmd,
+		    sizeof(cmd), (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))
 		    != SUCCESSFULLY_QUEUED)
@@ -601,7 +601,7 @@ sdioctl(dev, cmd, addr, flag)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *) addr,
+		    (struct disklabel *)addr,
 		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openpart : */0,
 		    &sd->sc_dk.dk_cpulabel);
 		if (error == 0) {
@@ -702,8 +702,8 @@ sd_size(sd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &rdcap, sizeof(rdcap), SDRETRIES,
+	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), SDRETRIES,
 	    2000, NULL, flags | SCSI_DATA_IN) != 0) {
 		printf("%s: could not get size\n", sd->sc_dev.dv_xname);
 		return 0;
@@ -736,8 +736,8 @@ sd_reassign_blocks(sd, block)
 	rbdata.defect_descriptor[0].dlbaddr_1 = ((block >> 8) & 0xff);
 	rbdata.defect_descriptor[0].dlbaddr_0 = ((block) & 0xff);
 
-	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &rbdata, sizeof(rbdata), SDRETRIES,
+	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&rbdata, sizeof(rbdata), SDRETRIES,
 	    5000, NULL, SCSI_DATA_OUT);
 }
 
@@ -778,8 +778,8 @@ sd_get_parms(sd, flags)
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
-	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &scsi_sense, sizeof(scsi_sense),
+	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&scsi_sense, sizeof(scsi_sense),
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) != 0) {
 		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
 	fake_it:
@@ -909,7 +909,7 @@ sddump(dev_t dev)
 		return ENXIO;
 
 	/* Convert to disk sectors */
-	num = (u_int32) num * NBPG / sd->sc_dk.dk_label.d_secsize;
+	num = (u_int32)num * NBPG / sd->sc_dk.dk_label.d_secsize;
 
 	/* check if controller active */
 	if (sddoingadump)
@@ -954,7 +954,7 @@ sddump(dev_t dev)
 		xs->sc_link = sd->sc_link;
 		xs->retries = SDRETRIES;
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
-		xs->cmd = (struct scsi_generic *) &cmd;
+		xs->cmd = (struct scsi_generic *)&cmd;
 		xs->cmdlen = sizeof(cmd);
 		xs->resid = blkcnt * 512;
 		xs->error = XS_NOERROR;
@@ -980,12 +980,12 @@ sddump(dev_t dev)
 		printf("sd%d: dump addr 0x%x, blk %d\n", unit, addr, blknum);
 #endif	/* NOT_TRUSTED */
 
-		if ((unsigned) addr % (1024 * 1024) == 0)
+		if ((unsigned)addr % (1024 * 1024) == 0)
 			printf("%d ", num / 2048);
 		/* update block count */
 		num -= blkcnt;
 		blknum += blkcnt;
-		(int) addr += 512 * blkcnt;
+		(int)addr += 512 * blkcnt;
 
 		/* operator aborting dump? */
 		if ((c = sgetc(1)) && (c != 0x100))
