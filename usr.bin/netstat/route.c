@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.64 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.65 2004/11/16 06:04:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.64 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.65 2004/11/16 06:04:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -886,11 +886,7 @@ routename6(sa6)
 	struct sockaddr_in6 *sa6;
 {
 	static char line[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	int flag = NI_WITHSCOPEID;
-#else
 	int flag = 0;
-#endif
 	/* use local variable for safety */
 	struct sockaddr_in6 sa6_local;
 	int error;

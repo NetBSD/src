@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.8 2003/07/26 19:24:57 salo Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.9 2004/11/16 06:04:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv6.c,v 1.8 2003/07/26 19:24:57 salo Exp $");
+__RCSID("$NetBSD: type_ipv6.c,v 1.9 2004/11/16 06:04:13 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -55,11 +55,7 @@ ipv6_check_field(FIELD *field, char *args)
 {
 	char cleaned[NI_MAXHOST];
 	struct addrinfo hints, *res;
-#ifdef NI_WITHSCOPEID	/* KAME extension */
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	if (args == NULL)
 		return FALSE;

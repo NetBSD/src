@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.5 2003/03/09 01:03:54 lukem Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.6 2004/11/16 06:04:13 itojun Exp $	*/
 /*	$KAME: ipsec_dump_policy.c,v 1.12 2001/11/13 12:38:47 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipsec_dump_policy.c,v 1.5 2003/03/09 01:03:54 lukem Exp $");
+__RCSID("$NetBSD: ipsec_dump_policy.c,v 1.6 2004/11/16 06:04:13 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -295,11 +295,7 @@ set_address(buf, len, sa)
 	size_t len;
 	struct sockaddr *sa;
 {
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	if (len < 1)
 		return NULL;
