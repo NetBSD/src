@@ -9,9 +9,10 @@
 #
 
 # use O=-O (usual) or O=-g (debugging)
-O=	-O
+# warning: do not use -O with gcc
+O=	
 
-CC=	gcc -V2.3.3
+CC=	gcc
 
 # define the database mechanism used for alias lookups:
 #	-DNDBM -- use new DBM
@@ -20,30 +21,31 @@ CC=	gcc -V2.3.3
 # The really old (V7) DBM library is no longer supported.
 # See READ_ME for a description of how these flags interact.
 #
-DBMDEF=	-DNDBM
+DBMDEF=	-DNDBM -DNIS
 
 # environment definitions (e.g., -D_AIX3)
+# include -DSOLARIS_2_3 for version 2.3 and higher
 ENVDEF=	-DSOLARIS
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=-I/usr/sww/include/db
+INCDIRS=-I/usr/sww/include/db -I.
 
 # library directories
-LIBDIRS=-L/usr/sww/lib -L/usr/ucblib
+LIBDIRS=-L/usr/sww/lib
 
 # libraries required on your system
 LIBS=	-lresolv -lsocket -lnsl -lelf
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
-BINDIR=	${DESTDIR}/usr/sbin
+BINDIR=	${DESTDIR}/usr/lib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
 STDIR=	${DESTDIR}/var/log
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/usr/share/misc
+HFDIR=	${DESTDIR}/etc/mail
 
 # additional .o files needed
 OBJADD=
@@ -85,7 +87,7 @@ install: install-sendmail install-docs
 install-sendmail: sendmail
 	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 

@@ -29,7 +29,7 @@ ENVDEF=	-Olimit 1000
 INCDIRS=-I/usr/sww/include/db
 
 # library directories
-LIBDIRS=-L/usr/sww/lib
+LIBDIRS=-L/usr/sww/lib -L/usr/shlib -L/usr/lib
 
 # libraries required on your system
 LIBS=	-ldbm
@@ -47,7 +47,7 @@ HFDIR=	${DESTDIR}/usr/share/lib
 OBJADD=
 
 # additional link flags
-LDADD=	-non_shared
+#LDADD=	-non_shared
 
 ###################  end of user configuration flags  ######################
 
@@ -69,7 +69,7 @@ ALL=	sendmail aliases.0 newaliases.0 sendmail.0
 all: ${ALL}
 
 sendmail: ${BEFORE} ${OBJS}
-	${CC} -o sendmail ${LDFLAGS} ${OBJS} ${LIBDIRS} ${LIBS}
+	${CC} -o sendmail ${LDADD} ${OBJS} ${LIBDIRS} ${LIBS}
 
 aliases.0: aliases.5
 	nroff -h -mandoc aliases.5 > aliases.0
@@ -86,8 +86,8 @@ install-sendmail: sendmail
 	installbsd -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
 	cp /dev/null ${STDIR}/sendmail.st
-	chmod ${BINMOD} ${STDIR}/sendmail.st
-	chown ${BINGRP}.${BINGRP} ${STDIR}/sendmail.st
+	chmod 644 ${STDIR}/sendmail.st
+	chown ${BINOWN}.${BINGRP} ${STDIR}/sendmail.st
 	installbsd -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 	rm -f /usr/sbin/smtpd
 
