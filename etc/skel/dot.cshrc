@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.1 2000/10/16 13:12:26 simonb Exp $
+#	$NetBSD: dot.cshrc,v 1.2 2002/09/29 14:52:57 grant Exp $
 #csh .cshrc file
 
 alias h		history 25
@@ -24,5 +24,4 @@ if ($?prompt) then
 	set mail = (/var/mail/$USER)
 	set mch = `hostname -s`
 	set prompt = "${mch:q}: {\!} "
-	umask 2
 endif
