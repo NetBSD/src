@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.27 2000/07/03 01:45:46 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.28 2000/07/04 22:30:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -352,8 +352,10 @@ struct ifile {
  * to pass information between the cleaner and the kernel.
  */
 typedef struct _cleanerinfo {
-	u_int32_t clean;		/* K: number of clean segments */
-	u_int32_t dirty;		/* K: number of dirty segments */
+	u_int32_t clean;		/* number of clean segments */
+	u_int32_t dirty;		/* number of dirty segments */
+	u_int32_t bfree;		/* disk blocks free */
+	u_int32_t avail;		/* disk blocks available */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
@@ -504,21 +506,18 @@ struct segment {
  * of segment summaries and inode blocks taken into account.
  */
 /* Estimate number of clean blocks not available for writing */
-#define LFS_EST_CMETA(F) ((u_int32_t)(((F)->lfs_dmeta *                     \
-				       (u_int64_t)(F)->lfs_nclean) /        \
+#define LFS_EST_CMETA(F) ((((F)->lfs_dmeta * (u_int64_t)(F)->lfs_nclean) /  \
 				      ((F)->lfs_nseg - (F)->lfs_nclean)))
 
 /* Estimate total size of the disk not including metadata */
-#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - fsbtodb((F), (F)->lfs_minfreeseg *\
-						     (F)->lfs_ssize) -      \
-			    (F)->lfs_dmeta - LFS_EST_CMETA(F))
+#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
 
 /* Estimate number of blocks actually available for writing */
-#define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F))
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta)
 
 /* Amount of non-meta space not available to mortal man */
-#define LFS_EST_RSVD(F) ((u_int32_t)(((LFS_EST_NONMETA(F) *         \
-				       (u_int64_t)(F)->lfs_minfree)) / 100))
+#define LFS_EST_RSVD(F) ((LFS_EST_NONMETA(F) * (u_int64_t)(F)->lfs_minfree) / \
+			  100)
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
