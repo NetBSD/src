@@ -1,0 +1,580 @@
+# $NetBSD: GENERIC,v 1.1 2002/06/06 19:48:02 fredette Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include 	"arch/hp700/conf/std.hp700"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+maxusers	32		# estimated number of users
+
+# CPU support.  At least one is REQUIRED.
+options 	HP7000_CPU		# PCX, PCX-S
+options 	HP7100_CPU,HP7150_CPU	# PCX-T
+options 	HP7100LC_CPU		# PCX-L
+options 	HP7200_CPU,HP7250_CPU	# PCX-T'
+options 	HP7300LC_CPU		# PCX-L2
+#options 	HP8000_CPU		# PCX-U  (in 32bit mode)
+#options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
+#options 	HP8500_CPU		# PCX-W  (in 32bit mode)
+#options	HP8600_CPU		# PCX-W+ (in 32bit mode)
+
+# CPU-related options.
+options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
+options 	USELEDS		# blink 'em
+
+# delay between "rebooting ..." message and hardware reset, in milliseconds
+#options 	CPURESET_DELAY=2000
+
+# Standard system options
+
+options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+options 	INSECURE	# disable kernel security levels
+
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+options 	LKM		# loadable kernel modules
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0xf0822000,KGDBRATE=9600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+# Compatibility options
+options 	COMPAT_15	# compatability with NetBSD 1.5,
+options 	COMPAT_43	# and 4.3BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+#options 	COMPAT_HPUX	# HP-UX binary compatibility
+#options 	COMPAT_OSF1	# OSF1 binary compatibility
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
+file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+
+# File system options
+options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+options 	SOFTDEP		# FFS soft updates support.
+options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	GSCVERBOSE	# verbose GSC device autoconfig messages
+options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#
+# wscons options
+#
+# builtin terminal emulations
+options 	WSEMUL_DUMB
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0a type ffs
+#config		netbsd	root on ? type nfs
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+# CPU and memory - DO NOT REMOVE THESE
+cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
+mem*	at mainbus0		# /dev/*mem and memory controller
+
+# Coprocessor/SFU Support
+#fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
+#pmu*	at mainbus0		# HP PA-RISC perfomance monitor unit (iv 29)
+#power*	at mainbus0		# power/fail manager (iv 2)
+
+# STI graphics
+sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
+
+# Basic Bus Support
+lasi*	at mainbus0 irq 28	# LASI host adapter (LSI PN??? )
+asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
+#wax*	at mainbus0 irq 28	# Wax may host EISA as well
+mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI??? )
+#vmeb*	at mainbus0 irq ?	# VME bus adapter
+#dino*	at mainbus0 irq ?	# PCI bus bridge
+pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+
+# GSC bus support
+gsc*	at lasi?		# 712
+gsc*	at asp?			# 7xx (old)
+#gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
+
+# PCI bus support
+#pci*	at dino?
+
+# EISA bus support
+eisa*	at mongoose?
+#eisa*	at wax?
+#eisa0	at pceb?
+
+# ISA bus support
+#isa*	at mongoose?
+#isa*	at wax?
+#isa0	at pceb?
+#isa0	at pcib?
+
+# VME bus support
+#vme*	at vmeb?
+
+# Console Devices
+
+# Human Interface Loop
+#hil*		at gsc? irq 1
+#hkbd*		at hil? code 0	# keyboard
+#hms*		at hil? code 1	# mice & trackballs
+
+# wscons
+#pckbc*		at gsc? irq 26		# pc keyboard controller
+#pckbd*		at pckbc?		# PC keyboard
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#vga0		at isa?
+#vga*		at pci? dev ? function ?
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at sti?
+#wsdisplay*	at vga? console ?
+#wsdisplay*	at pcdisplay? console ?
+#wskbd*		at pckbd? console ?
+#wskbd*		at hkbd? console ?
+#wsmouse*	at pms? mux 0
+#wsmouse*	at hms? mux 0
+
+# Serial Devices
+
+# GSC serial interfaces
+com0	at gsc? irq 5			# RS/232 serial port
+com1	at gsc? irq 6			# RS/232 serial port
+
+# ISA serial interfaces
+#options 	COM_HAYESP		# adds Hayes ESP serial board support
+#com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+#com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
+#com*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#boca0	at isa? port 0x100 irq 5	# BOCA 16-port serial cards (BB2016)
+#boca1	at isa? port 0x140 irq 5	# this line is also needed for BB2016
+#com*	at boca? slave ?
+#tcom0	at isa? port 0x100 irq 7	# TC-800 8-port serial cards
+#com*	at tcom? slave ?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#com*	at rtfps? slave ?
+#cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
+#addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
+#com*	at addcom? slave ?
+#moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
+#com*	at moxa? slave ?
+
+# Parallel Printer Interfaces
+
+# GSC parallel printer interface
+lpt0	at gsc? irq 7
+
+# ISA parallel printer interfaces
+#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
+
+# SCSI Controllers and Devices
+
+# GSC SCSI controllers
+osiop0	at gsc? irq 9 flags 0xffff	# NCR 53c700 or NCR 53c710
+#siop0	at gsc? irq 9			# NCR 53c720 (Fast/Wide)
+#siop1	at gsc? irq 3			# NCR 53c720 (Fast/Wide)
+
+# EISA SCSI controllers
+ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+dpt*	at eisa? slot ?			# DPT EATA SCSI
+uha*	at eisa? slot ?			# UltraStor 24f SCSI
+
+# ISA SCSI controllers
+#adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02] SCSI
+#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
+#aha1	at isa? port 0x334 irq ? drq ?
+#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
+#bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
+#bha1	at isa? port 0x334 irq ? drq ?
+# The "nca" and "dpt" probes might give false hits or hang your machine.
+#dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
+#nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
+#sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
+#uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
+#uha1	at isa? port 0x340 irq ? drq ?
+#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds1	at isa? port 0x358 irq 11 drq 5
+
+# SCSI bus support
+#scsibus* at adv?
+#scsibus* at adw?
+#scsibus* at aha?
+scsibus* at ahb?
+scsibus* at ahc?
+#scsibus* at aic?
+scsibus* at bha?
+#scsibus* at dpt?
+#scsibus* at esp?
+#scsibus* at iha?
+#scsibus* at iopsp?
+#scsibus* at isp?
+#scsibus* at mly?
+#scsibus* at nca?
+scsibus* at osiop?
+#scsibus* at pcscp?
+#scsibus* at sea?
+#scsibus* at siop?
+#scsibus* at trm?
+#scsibus* at uha?
+#scsibus* at wds?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+
+# RAID controllers and devices
+cac*	at eisa? slot ?			# Compaq EISA array controllers
+mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
+
+ld*	at cac? unit ?
+ld*	at mlx? unit ?
+
+# IDE and related devices
+
+# ISA ST506, ESDI, and IDE controllers
+# Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
+# fall back to 16bits I/O if 32bits I/O are not functional).
+# Some controllers pass the initial 32bit test, but will fail later.
+#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+#wdc1	at isa? port 0x170 irq 15 flags 0x00
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+#wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATAPI bus support
+#atapibus* at wdc? channel ?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+#cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+
+# Miscellaneous mass storage devices
+
+# GSC floppy
+#fdc*	at gsc? irq 20			# PC floppy controller (WD37C65C)
+#options	FD_DEBUG
+
+# ISA floppy
+#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc1	at isa? port 0x370 irq ? drq ?
+#fd*	at fdc? drive ?			# the drives themselves
+# some machines need you to do this instead of fd*
+#fd0	at fdc0 drive 0
+
+# ISA CD-ROM devices
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+
+# ISA tape devices
+# note: the wt driver conflicts unpleasantly with SMC boards at the
+# same I/O address. The probe reprograms their EEPROMs. Don't
+# uncomment it unless you are actually using it.
+#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+
+
+# Network Interfaces
+
+# GSC network interfaces
+#medusa* at gsc? irq 4			# FDDI
+ie0	at gsc? irq 8			# 82C5[89]6 ether
+
+# EISA network interfaces
+ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
+#fea*	at eisa? slot ?			# DEC DEFEA FDDI
+tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
+#sh*	at eisa? slot ?			# Interphase Seahawk 4811 FDDI
+#ie*	at eisa? slot ?			# Intel Ethernet
+
+# ISA network interfaces
+#ate0	at isa? port 0x2a0 irq ?		# AT1700
+#cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
+#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
+#eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
+#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+#ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+#ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
+#ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
+#fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
+#ie*	at isa? port 0x360 iomem 0xd0000 irq 7	# Intel Ethernet
+#ie*	at isa? port 0x300 irq 10		# Intel Ethernet
+#ix0	at isa? port 0x300 irq 10		# EtherExpress/16
+#iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
+#lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
+#le*	at depca?
+#nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
+#le*	at nele?
+#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
+#bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
+#le*	at bicc?
+#ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+#ne1	at isa? port 0x300 irq 10
+#sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
+#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
+#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
+#tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
+#we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+#we1	at isa? port 0x300 iomem 0xcc000 irq 10
+
+# MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+
+# Audio Devices
+
+# GSC audio devices
+#aone*	at gsc? irq 13			# Audio Type 1 (PSB 2160-N)
+#harmony* at gsc? irq 13		# Audio Type 2 (CS4215)
+#com2	at harmony? irq 16		# Telephone add-in card #0
+#com3	at harmony? irq 17		# Telephone add-in card #1
+
+# ISA audio devices
+# the "aria" probe might give false hits
+#aria0	at isa? port 0x290 irq 10 		# Aria
+#ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
+#gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
+#pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
+#sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
+#wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
+
+#cms0	at isa? port 0x220			# Creative Music System
+
+# OPL[23] FM synthesizers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+#opl*	at ess?
+#opl*	at sb?
+#opl*	at wss?
+
+# Audio support
+#audio* at aone?
+#audio*	at aria?
+#audio*	at ess?
+#audio*	at gus?
+#audio*	at harmony?
+#audio*	at pas?
+#audio*	at sb?
+#audio*	at sp?
+#audio*	at wss?
+
+# MPU 401 UARTs
+#mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
+#mpu*	at sb?
+
+# MIDI support
+#midi*	at opl?			# OPL FM synth
+#midi*	at pcppi?		# MIDI interface to the PC speaker
+#midi*	at sb?			# SB1 MIDI port
+
+# FM-Radio devices
+# ISA radio devices
+#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+#az1	at isa? port 0x358
+#rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
+#rt1	at isa? port 0x284
+#rt2	at isa? port 0x30c
+#rt3	at isa? port 0x384
+#rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
+#rtii1	at isa? port 0x30c
+#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
+
+# Radio support
+#radio*	at az?
+#radio*	at rt?
+#radio*	at rtii?
+#radio*	at sf2r?
+
+# Joysticks
+
+# ISA joysticks. Probe is a little strange; add only if you have one.
+#joy0	at isa? port 0x201
+
+
+# Miscellaneous Devices
+
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd		4	# disk-like interface to files
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	sl		2	# Serial Line IP
+pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
+# rnd works; RND_COM does not on port hp700 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
