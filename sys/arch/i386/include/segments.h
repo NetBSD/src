@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30 1999/11/12 18:37:29 drochner Exp $	*/
+/*	$NetBSD: segments.h,v 1.30.2.1 2000/02/20 17:44:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -138,6 +138,13 @@ void setgate __P((struct gate_descriptor *, void *, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
+void unsetgate __P((struct gate_descriptor *));
+void cpu_init_idt __P((void));
+
+int idt_vec_alloc __P((int, int));
+void idt_vec_set __P((int, void (*)(void)));
+void idt_vec_free __P((int));
+
 #endif /* _KERNEL */
 
 #endif /* !_LOCORE */
