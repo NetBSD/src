@@ -1,4 +1,4 @@
-.\"	$NetBSD: uucpd.8,v 1.1 1998/07/03 18:09:48 mrg Exp $
+.\"	$NetBSD: uucpd.8,v 1.2 1998/08/10 17:21:08 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -40,7 +40,9 @@ The
 .Nm
 daemon reads a username and password, and then executes
 .Xr uucico 8 ,
-the UUCP file transfer daemon, if the following conditions are met:
+the
+.Tn UUCP
+file transfer daemon, if the following conditions are met:
 .Bl -enum
 .It
 the username and password match a valid account
@@ -48,6 +50,7 @@ the username and password match a valid account
 the accounts shell is
 .Dq /usr/libexec/uucp/uucico .
 .El
+.Pp
 .Nm
 is started by
 .Xr inetd 8 .
@@ -67,4 +70,5 @@ program was first made available in
 .Sh BUGS
 There are no known bugs.
 .Sh SEE ALSO
-.Xr inetd 8 .
+.Xr inetd 8
+.Xr uucico 8
