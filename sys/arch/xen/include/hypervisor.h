@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.2 2004/04/10 23:46:26 cl Exp $	*/
 
 /*
  * 
@@ -40,9 +40,11 @@ struct xen_npx_attach_args {
 
 
 /* include the hypervisor interface */
-#include <machine/hypervisor-ifs/network.h>
+#include <sys/systm.h>
 #include <machine/hypervisor-ifs/block.h>
 #include <machine/hypervisor-ifs/hypervisor-if.h>
+#include <machine/hypervisor-ifs/dom0_ops.h>
+#include <machine/hypervisor-ifs/network.h>
 
 
 /*
@@ -85,6 +87,9 @@ static inline int HYPERVISOR_mmu_update(mmu_update_t *req, int count)
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_mmu_update), 
         "b" (req), "c" (count) );
+
+    if (__predict_false(ret < 0))
+        panic("Failed mmu update: %p, %d", req, count);
 
     return ret;
 }
@@ -144,7 +149,7 @@ static inline int HYPERVISOR_net_io_op(netop_t *op)
     __asm__ __volatile__ (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_net_io_op),
-        "b" (op) );
+        "b" (op) : "memory" );
 
     return ret;
 }
@@ -181,20 +186,22 @@ static inline int HYPERVISOR_exit(void)
     return ret;
 }
 
-static inline int HYPERVISOR_stop(void)
+static inline int HYPERVISOR_stop(unsigned long srec)
 {
     int ret;
+    /* NB. On suspend, control software expects a suspend record in %esi. */
     __asm__ __volatile__ (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_stop) );
+        "b" (SCHEDOP_stop), "S" (srec) : "memory" );
 
     return ret;
 }
 
-static inline int HYPERVISOR_dom0_op(void *dom0_op)
+static inline int HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 {
     int ret;
+    dom0_op->interface_version = DOM0_INTERFACE_VERSION;
     __asm__ __volatile__ (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_dom0_op),
@@ -209,18 +216,18 @@ static inline int HYPERVISOR_network_op(void *network_op)
     __asm__ __volatile__ (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_network_op),
-        "b" (network_op) );
+        "b" (network_op) : "memory" );
 
     return ret;
 }
 
-static inline int HYPERVISOR_block_io_op(unsigned int op)
+static inline int HYPERVISOR_block_io_op(void * block_io_op)
 {
     int ret;
     __asm__ __volatile__ (
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_block_io_op),
-        "b" (op) ); 
+        "b" (block_io_op) : "memory" ); 
 
     return ret;
 }
@@ -311,6 +318,10 @@ static inline int HYPERVISOR_update_va_mapping(
         TRAP_INSTR
         : "=a" (ret) : "0" (__HYPERVISOR_update_va_mapping), 
         "b" (page_nr), "c" (new_val), "d" (flags) );
+
+    if (__predict_false(ret < 0))
+        panic("Failed update VA mapping: %08lx, %08lx, %08lx",
+              page_nr, new_val, flags);
 
     return ret;
 }
