@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.5 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.6 2000/07/09 13:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -61,7 +61,50 @@
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-void
+/* prototypes for the converters */
+static __inline void
+netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *);
+static __inline void
+netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *);
+static __inline void
+netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *);
+static __inline void
+netbsd32_to_partinfo(struct netbsd32_partinfo *, struct partinfo *);
+static __inline void
+netbsd32_to_format_op(struct netbsd32_format_op *, struct format_op *);
+static __inline void
+netbsd32_to_ifconf(struct netbsd32_ifconf *, struct ifconf *);
+static __inline void
+netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *, struct ifmediareq *);
+static __inline void
+netbsd32_to_ifdrv(struct netbsd32_ifdrv *, struct ifdrv *);
+static __inline void
+netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *, struct sioc_vif_req *);
+static __inline void
+netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *, struct sioc_sg_req *);
+
+static __inline void
+netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
+static __inline void
+netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
+static __inline void
+netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
+static __inline void
+netbsd32_from_format_op(struct format_op *, struct netbsd32_format_op *);
+static __inline void
+netbsd32_from_ifconf(struct ifconf *, struct netbsd32_ifconf *);
+static __inline void
+netbsd32_from_ifmediareq(struct ifmediareq *, struct netbsd32_ifmediareq *);
+static __inline void
+netbsd32_from_ifdrv(struct ifdrv *, struct netbsd32_ifdrv *);
+static __inline void
+netbsd32_from_sioc_vif_req(struct sioc_vif_req *, struct netbsd32_sioc_vif_req *);
+static __inline void
+netbsd32_from_sioc_sg_req(struct sioc_sg_req *, struct netbsd32_sioc_sg_req *);
+
+/* convert to/from different structures */
+
+static __inline void
 netbsd32_to_fbcmap(s32p, p)
 	struct netbsd32_fbcmap *s32p;
 	struct fbcmap *p;
@@ -74,7 +117,7 @@ netbsd32_to_fbcmap(s32p, p)
 	p->blue = (u_char *)(u_long)s32p->blue;
 }
 
-void
+static __inline void
 netbsd32_to_fbcursor(s32p, p)
 	struct netbsd32_fbcursor *s32p;
 	struct fbcursor *p;
@@ -90,7 +133,7 @@ netbsd32_to_fbcursor(s32p, p)
 	p->mask = (char *)(u_long)s32p->mask;
 }
 
-void
+static __inline void
 netbsd32_to_opiocdesc(s32p, p)
 	struct netbsd32_opiocdesc *s32p;
 	struct opiocdesc *p;
@@ -103,7 +146,7 @@ netbsd32_to_opiocdesc(s32p, p)
 	p->op_buf = (char *)(u_long)s32p->op_buf;
 }
 
-void
+static __inline void
 netbsd32_to_partinfo(s32p, p)
 	struct netbsd32_partinfo *s32p;
 	struct partinfo *p;
@@ -113,7 +156,7 @@ netbsd32_to_partinfo(s32p, p)
 	p->part = (struct partition *)(u_long)s32p->part;
 }
 
-void
+static __inline void
 netbsd32_to_format_op(s32p, p)
 	struct netbsd32_format_op *s32p;
 	struct format_op *p;
@@ -126,7 +169,7 @@ netbsd32_to_format_op(s32p, p)
 }
 
 #if 0 /* XXX see below */
-void
+static __inline void
 netbsd32_to_ifreq(s32p, p, cmd)
 	struct netbsd32_ifreq *s32p;
 	struct ifreq *p;
@@ -143,7 +186,7 @@ netbsd32_to_ifreq(s32p, p, cmd)
 }
 #endif
 
-void
+static __inline void
 netbsd32_to_ifconf(s32p, p)
 	struct netbsd32_ifconf *s32p;
 	struct ifconf *p;
@@ -154,7 +197,7 @@ netbsd32_to_ifconf(s32p, p)
 	p->ifc_buf = (caddr_t)(u_long)s32p->ifc_buf;
 }
 
-void
+static __inline void
 netbsd32_to_ifmediareq(s32p, p)
 	struct netbsd32_ifmediareq *s32p;
 	struct ifmediareq *p;
@@ -164,7 +207,7 @@ netbsd32_to_ifmediareq(s32p, p)
 	p->ifm_ulist = (int *)(u_long)s32p->ifm_ulist;
 }
 
-void
+static __inline void
 netbsd32_to_ifdrv(s32p, p)
 	struct netbsd32_ifdrv *s32p;
 	struct ifdrv *p;
@@ -174,7 +217,7 @@ netbsd32_to_ifdrv(s32p, p)
 	p->ifd_data = (void *)(u_long)s32p->ifd_data;
 }
 
-void
+static __inline void
 netbsd32_to_sioc_vif_req(s32p, p)
 	struct netbsd32_sioc_vif_req *s32p;
 	struct sioc_vif_req *p;
@@ -187,7 +230,7 @@ netbsd32_to_sioc_vif_req(s32p, p)
 	p->obytes = (u_long)s32p->obytes;
 }
 
-void
+static __inline void
 netbsd32_to_sioc_sg_req(s32p, p)
 	struct netbsd32_sioc_sg_req *s32p;
 	struct sioc_sg_req *p;
@@ -204,7 +247,7 @@ netbsd32_to_sioc_sg_req(s32p, p)
  * handle ioctl conversions from sparc64 -> netbsd32
  */
 
-void
+static __inline void
 netbsd32_from_fbcmap(p, s32p)
 	struct fbcmap *p;
 	struct netbsd32_fbcmap *s32p;
@@ -220,7 +263,7 @@ netbsd32_from_fbcmap(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_fbcursor(p, s32p)
 	struct fbcursor *p;
 	struct netbsd32_fbcursor *s32p;
@@ -239,7 +282,7 @@ netbsd32_from_fbcursor(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_opiocdesc(p, s32p)
 	struct opiocdesc *p;
 	struct netbsd32_opiocdesc *s32p;
@@ -252,7 +295,7 @@ netbsd32_from_opiocdesc(p, s32p)
 	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
 }
 
-void
+static __inline void
 netbsd32_from_format_op(p, s32p)
 	struct format_op *p;
 	struct netbsd32_format_op *s32p;
@@ -268,7 +311,7 @@ netbsd32_from_format_op(p, s32p)
 }
 
 #if 0 /* XXX see below */
-void
+static __inline void
 netbsd32_from_ifreq(p, s32p, cmd)
 	struct ifreq *p;
 	struct netbsd32_ifreq *s32p;
@@ -285,7 +328,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 }
 #endif
 
-void
+static __inline void
 netbsd32_from_ifconf(p, s32p)
 	struct ifconf *p;
 	struct netbsd32_ifconf *s32p;
@@ -296,7 +339,7 @@ netbsd32_from_ifconf(p, s32p)
 	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
 }
 
-void
+static __inline void
 netbsd32_from_ifmediareq(p, s32p)
 	struct ifmediareq *p;
 	struct netbsd32_ifmediareq *s32p;
@@ -309,7 +352,7 @@ netbsd32_from_ifmediareq(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_ifdrv(p, s32p)
 	struct ifdrv *p;
 	struct netbsd32_ifdrv *s32p;
@@ -322,7 +365,7 @@ netbsd32_from_ifdrv(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_sioc_vif_req(p, s32p)
 	struct sioc_vif_req *p;
 	struct netbsd32_sioc_vif_req *s32p;
@@ -335,7 +378,7 @@ netbsd32_from_sioc_vif_req(p, s32p)
 	s32p->obytes = (netbsd32_u_long)p->obytes;
 }
 
-void
+static __inline void
 netbsd32_from_sioc_sg_req(p, s32p)
 	struct sioc_sg_req *p;
 	struct netbsd32_sioc_sg_req *s32p;
