@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.3 2002/11/10 21:53:40 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.4 2002/11/10 22:05:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.3 2002/11/10 21:53:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.4 2002/11/10 22:05:35 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -74,7 +74,7 @@ mach_host_info(p, msgh)
 		    M_TEMP, M_ZERO|M_WAITOK);
 		rep->rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 		rep->rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-		rep->rep_msgh.msgh_id = 300;	/* XXX why? */
+		rep->rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 
 		info = (struct mach_host_basic_info *)&rep->rep_data[0];
 		info->max_cpus = 1; /* XXX fill this  accurately */
@@ -91,7 +91,7 @@ mach_host_info(p, msgh)
 		    M_TEMP, M_ZERO|M_WAITOK);
 		rep->rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 		rep->rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-		rep->rep_msgh.msgh_id = 300;	/* XXX why? */
+		rep->rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 		break;
 
 	case MACH_HOST_SCHED_INFO:
@@ -125,7 +125,7 @@ mach_host_page_size(p, msgh)
 	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = 302;	/* XXX why? */
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_page_size = PAGE_SIZE;
 	
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
@@ -146,7 +146,7 @@ mach_host_get_clock_service(p, msgh)
 	rep.rep_msgh.msgh_bits = 0x80001200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = 306; /* XXX why? */
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_body.msgh_descriptor_count = 1; /* XXX why? */
 	rep.rep_clock_serv.name = 0x60b; /* XXX */
 	rep.rep_clock_serv.disposition = 0x11; /* XXX */
