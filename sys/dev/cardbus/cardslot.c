@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.7 2000/01/26 09:04:59 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.8 2000/01/31 08:49:07 haya Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -428,6 +428,7 @@ cardslot_event_thread(arg)
 	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
 	  cardbus_detach_card(sc->sc_cb_softc);
 	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
 	}
 	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
       } else if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_16) {
