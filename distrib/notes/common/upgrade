@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.1 1999/01/13 08:18:45 ross Exp $	
+.\" $NetBSD: upgrade,v 1.2 1999/05/04 03:37:09 simonb Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,9 +57,20 @@ is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
+.ie r_pmax \{\
+To do the upgrade, you must install new bootblocks and boot off
+the
+.Ic install
+kernel as described in the
+.Sx Installing from an existing system
+section.
+.\}
+.el \{\
 To do the upgrade, you must have the boot floppy
 .if r_alpha set
-available. You must also have at least the
+available.
+.\}
+You must also have at least the
 .Ic base No and Ic kern
 binary distribution sets available, so that you can upgrade with them,
 using one of the upgrade methods described above. Finally, you must
