@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2002/05/03 03:28:49 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.36 2002/05/10 17:50:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2002/05/03 03:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2002/05/10 17:50:25 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -199,6 +199,13 @@ static const char *sa1110_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char *ixp1200_steppings[16] = {
+	"step A",	"step B",	"rev 2",	"step C",
+	"rev 4",	"step A (IXP1250)","rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
@@ -277,6 +284,9 @@ const struct cpuidtab cpuids[] = {
 	  sa1100_steppings },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
 	  sa1110_steppings },
+
+	{ CPU_ID_IXP1200,	CPU_CLASS_SA1,		"IXP1200",
+	  ixp1200_steppings },
 
 	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
 	  xscale_steppings },
