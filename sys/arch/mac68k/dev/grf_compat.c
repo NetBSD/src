@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.1.2.3 1999/11/18 08:12:42 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.1.2.4 1999/11/18 08:15:49 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -360,7 +360,7 @@ grfmap(dev, sc, addrp, p)
 
 	*addrp = (caddr_t)sc->sc_dc->dc_paddr;
 	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
-	flags = MAP_SHARED;
+	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;		/* XXX */
 	vn.v_specinfo = &si;		/* XXX */
