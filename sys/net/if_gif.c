@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.10.4.2 2000/10/17 02:19:17 tv Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.10.4.3 2000/11/19 20:21:09 tv Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #endif
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <machine/cpu.h>
 
@@ -439,6 +440,7 @@ gif_ioctl(ifp, cmd, data)
 #endif
 	caddr_t data;
 {
+	struct proc *p = curproc;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
@@ -457,6 +459,8 @@ gif_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 #if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -484,6 +488,8 @@ gif_ioctl(ifp, cmd, data)
 			mtu = *(short *)ifr->ifr_data;
 #else
 			u_long mtu;
+			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+				break;
 			mtu = ifr->ifr_mtu;
 #endif
 			if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX) {
@@ -498,6 +504,8 @@ gif_ioctl(ifp, cmd, data)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		switch (cmd) {
 		case SIOCSIFPHYADDR:
 			src = (struct sockaddr *)
@@ -612,6 +620,8 @@ gif_ioctl(ifp, cmd, data)
 
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		if (sc->gif_psrc) {
 			free((caddr_t)sc->gif_psrc, M_IFADDR);
 			sc->gif_psrc = NULL;
