@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.1.1.12 2001/11/27 04:04:50 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.1.1.13 2001/12/06 03:46:46 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.212 2001/11/22 12:34:22 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.214 2001/12/05 10:06:13 deraadt Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -402,7 +402,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	}
 
 	mismatch = 0;
-	switch(remote_major) {
+	switch (remote_major) {
 	case 1:
 		if (remote_minor == 99) {
 			if (options.protocol & SSH_PROTO_2)
@@ -479,7 +479,7 @@ list_hostkey_types(void)
 		Key *key = sensitive_data.host_keys[i];
 		if (key == NULL)
 			continue;
-		switch(key->type) {
+		switch (key->type) {
 		case KEY_RSA:
 		case KEY_DSA:
 			strlcat(buf, key_ssh_name(key), sizeof buf);
@@ -716,7 +716,7 @@ main(int ac, char **av)
 			sensitive_data.host_keys[i] = NULL;
 			continue;
 		}
-		switch(key->type){
+		switch (key->type) {
 		case KEY_RSA1:
 			sensitive_data.ssh1_host_key = key;
 			sensitive_data.have_ssh1_key = 1;
@@ -952,7 +952,7 @@ main(int ac, char **av)
 				error("select: %.100s", strerror(errno));
 			if (received_sigterm) {
 				log("Received signal %d; terminating.",
-				    received_sigterm);
+				    (int) received_sigterm);
 				close_listen_socks();
 				unlink(options.pid_file);
 				exit(255);

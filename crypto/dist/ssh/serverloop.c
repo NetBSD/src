@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.1.1.13 2001/11/27 04:04:20 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.1.1.14 2001/12/06 03:46:28 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.84 2001/11/22 12:34:22 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.85 2001/12/05 03:50:01 itojun Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -267,7 +267,8 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 		tvp = &tv;
 	}
 	if (tvp!=NULL)
-		debug3("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
+		debug3("tvp!=NULL kid %d mili %d", (int) child_terminated,
+		    max_time_milliseconds);
 
 	/* Wait for something to happen, or the timeout to expire. */
 	ret = select((*maxfdp)+1, *readsetp, *writesetp, NULL, tvp);

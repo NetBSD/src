@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.1.1.11 2001/11/07 06:20:04 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.1.1.12 2001/12/06 03:46:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.140 2001/10/10 22:18:47 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.143 2001/12/05 10:06:12 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -362,7 +362,7 @@ channel_free_all(void)
  */
 
 void
-channel_close_all()
+channel_close_all(void)
 {
 	int i;
 
@@ -403,7 +403,7 @@ channel_stop_listening(void)
  */
 
 int
-channel_not_very_much_buffered_data()
+channel_not_very_much_buffered_data(void)
 {
 	u_int i;
 	Channel *c;
@@ -433,7 +433,7 @@ channel_not_very_much_buffered_data()
 /* Returns true if any channel is still open. */
 
 int
-channel_still_open()
+channel_still_open(void)
 {
 	int i;
 	Channel *c;
@@ -476,7 +476,7 @@ channel_still_open()
 /* Returns the id of an open channel suitable for keepaliving */
 
 int
-channel_find_open()
+channel_find_open(void)
 {
 	int i;
 	Channel *c;
@@ -521,7 +521,7 @@ channel_find_open()
  */
 
 char *
-channel_open_message()
+channel_open_message(void)
 {
 	Buffer buffer;
 	Channel *c;
@@ -1278,7 +1278,7 @@ channel_handle_rfd(Channel *c, fd_set * readset, fd_set * writeset)
 			}
 			return -1;
 		}
-		if(c->input_filter != NULL) {
+		if (c->input_filter != NULL) {
 			if (c->input_filter(c, buf, len) == -1) {
 				debug("channel %d: filter stops", c->self);
 				chan_read_failed(c);
@@ -1602,7 +1602,7 @@ channel_after_select(fd_set * readset, fd_set * writeset)
 /* If there is data to send to the connection, enqueue some of it now. */
 
 void
-channel_output_poll()
+channel_output_poll(void)
 {
 	int len, i;
 	Channel *c;
@@ -1726,7 +1726,7 @@ channel_input_data(int type, int plen, void *ctxt)
 	data = packet_get_string(&data_len);
 	packet_done();
 
-	if (compat20){
+	if (compat20) {
 		if (data_len > c->local_maxpacket) {
 			log("channel %d: rcvd big packet %d, maxpack %d",
 			    c->self, data_len, c->local_maxpacket);
@@ -1910,7 +1910,7 @@ channel_input_open_confirmation(int type, int plen, void *ctxt)
 static char *
 reason2txt(int reason)
 {
-	switch(reason) {
+	switch (reason) {
 	case SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED:
 		return "administratively prohibited";
 	case SSH2_OPEN_CONNECT_FAILED:
@@ -2266,7 +2266,7 @@ channel_input_port_forward_request(int is_root, int gateway_ports)
  * anyway, and the server has no way to know but to trust the client anyway.
  */
 void
-channel_permit_all_opens()
+channel_permit_all_opens(void)
 {
 	if (num_permitted_opens == 0)
 		all_opens_permitted = 1;
@@ -2391,19 +2391,17 @@ channel_connect_to(const char *host, u_short port)
 
 /*
  * Creates an internet domain socket for listening for X11 connections.
- * Returns a suitable value for the DISPLAY variable, or NULL if an error
- * occurs.
+ * Returns a suitable display number for the DISPLAY variable, or -1 if
+ * an error occurs.
  */
-char *
-x11_create_display_inet(int screen_number, int x11_display_offset)
+int
+x11_create_display_inet(int x11_display_offset, int gateway_ports)
 {
 	int display_number, sock;
 	u_short port;
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr, n, num_socks = 0, socks[NUM_SOCKS];
-	char display[512];
-	char hostname[MAXHOSTNAMELEN];
 
 	for (display_number = x11_display_offset;
 	     display_number < MAX_DISPLAYS;
@@ -2411,12 +2409,12 @@ x11_create_display_inet(int screen_number, int x11_display_offset)
 		port = 6000 + display_number;
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = IPv4or6;
-		hints.ai_flags = AI_PASSIVE;		/* XXX loopback only ? */
+		hints.ai_flags = gateway_ports ? AI_PASSIVE : 0;
 		hints.ai_socktype = SOCK_STREAM;
 		snprintf(strport, sizeof strport, "%d", port);
 		if ((gaierr = getaddrinfo(NULL, strport, &hints, &aitop)) != 0) {
 			error("getaddrinfo: %.100s", gai_strerror(gaierr));
-			return NULL;
+			return -1;
 		}
 		for (ai = aitop; ai; ai = ai->ai_next) {
 			if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
@@ -2424,7 +2422,7 @@ x11_create_display_inet(int screen_number, int x11_display_offset)
 			sock = socket(ai->ai_family, SOCK_STREAM, 0);
 			if (sock < 0) {
 				error("socket: %.100s", strerror(errno));
-				return NULL;
+				return -1;
 			}
 			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
 				debug("bind port %d: %.100s", port, strerror(errno));
@@ -2447,7 +2445,7 @@ x11_create_display_inet(int screen_number, int x11_display_offset)
 	}
 	if (display_number >= MAX_DISPLAYS) {
 		error("Failed to allocate internet-domain X11 display socket.");
-		return NULL;
+		return -1;
 	}
 	/* Start listening for connections on the socket. */
 	for (n = 0; n < num_socks; n++) {
@@ -2456,15 +2454,9 @@ x11_create_display_inet(int screen_number, int x11_display_offset)
 			error("listen: %.100s", strerror(errno));
 			shutdown(sock, SHUT_RDWR);
 			close(sock);
-			return NULL;
+			return -1;
 		}
 	}
-
-	/* Set up a suitable value for the DISPLAY variable. */
-	if (gethostname(hostname, sizeof(hostname)) < 0)
-		fatal("gethostname: %.100s", strerror(errno));
-	snprintf(display, sizeof display, "%.400s:%d.%d", hostname,
-		 display_number, screen_number);
 
 	/* Allocate a channel for each socket. */
 	for (n = 0; n < num_socks; n++) {
@@ -2475,8 +2467,8 @@ x11_create_display_inet(int screen_number, int x11_display_offset)
 		    0, xstrdup("X11 inet listener"), 1);
 	}
 
-	/* Return a suitable value for the DISPLAY environment variable. */
-	return xstrdup(display);
+	/* Return the display number for the DISPLAY environment variable. */
+	return display_number;
 }
 
 #ifndef X_UNIX_PATH
@@ -2663,7 +2655,7 @@ void
 deny_input_open(int type, int plen, void *ctxt)
 {
 	int rchan = packet_get_int();
-	switch(type){
+	switch (type) {
 	case SSH_SMSG_AGENT_OPEN:
 		error("Warning: ssh server tried agent forwarding.");
 		break;
@@ -2755,7 +2747,7 @@ x11_request_forwarding_with_spoofing(int client_session_id,
 /* Sends a message to the server to request authentication fd forwarding. */
 
 void
-auth_request_forwarding()
+auth_request_forwarding(void)
 {
 	packet_start(SSH_CMSG_AGENT_REQUEST_FORWARDING);
 	packet_send();
@@ -2769,7 +2761,7 @@ auth_request_forwarding()
  */
 
 char *
-auth_get_socket_name()
+auth_get_socket_name(void)
 {
 	return auth_sock_name;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.1.1.7 2001/06/23 16:36:25 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.1.1.8 2001/12/06 03:46:07 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.27 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.28 2001/12/05 03:56:39 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -240,7 +240,7 @@ get_local_name(int socket)
  */
 
 const char *
-get_remote_ipaddr()
+get_remote_ipaddr(void)
 {
 	static char *canonical_host_ip = NULL;
 
@@ -323,13 +323,13 @@ get_peer_port(int sock)
 }
 
 int
-get_remote_port()
+get_remote_port(void)
 {
 	return get_port(0);
 }
 
 int
-get_local_port()
+get_local_port(void)
 {
 	return get_port(1);
 }

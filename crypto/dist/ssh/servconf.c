@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.1.1.10 2001/11/27 04:04:19 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.1.1.11 2001/12/06 03:46:27 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.92 2001/11/17 19:14:34 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.93 2001/12/05 10:06:12 deraadt Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>
@@ -770,7 +770,7 @@ parse_flag:
 			break;
 
 		case sSubsystem:
-			if(options->num_subsystems >= MAX_SUBSYSTEMS) {
+			if (options->num_subsystems >= MAX_SUBSYSTEMS) {
 				fatal("%s line %d: too many subsystems defined.",
 				      filename, linenum);
 			}
@@ -779,7 +779,7 @@ parse_flag:
 				fatal("%s line %d: Missing subsystem name.",
 				      filename, linenum);
 			for (i = 0; i < options->num_subsystems; i++)
-				if(strcmp(arg, options->subsystem_name[i]) == 0)
+				if (strcmp(arg, options->subsystem_name[i]) == 0)
 					fatal("%s line %d: Subsystem '%s' already defined.",
 					      filename, linenum, arg);
 			options->subsystem_name[options->num_subsystems] = xstrdup(arg);
@@ -840,7 +840,7 @@ parse_flag:
 		case sDeprecated:
 			log("%s line %d: Deprecated option %s",
 			    filename, linenum, arg);
-			while(arg)
+			while (arg)
 			    arg = strdelim(&cp);
 			break;
 
