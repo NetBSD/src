@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.187 2004/05/06 05:43:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.188 2004/05/06 05:46:26 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1891,3 +1891,10 @@ lib/libz/zlib.3					1.5
 	- un-bump minor number
 	- remove docs for gone functions.
 	[mrg, ticket #258]
+
+share/man/man4/cardbus.4			1.18
+
+	Update to suggest what to do if you see
+	   cbb0: NOT USED because of unconfigured interrupt
+	on an i386-family system. PR#25386
+	[briggs, ticket #259]
