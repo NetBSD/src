@@ -2,45 +2,42 @@
  * SVID compatible sem.h file
  *
  * Author:  Daniel Boulet
+ *
+ *	$Id: sem.h,v 1.3 1994/02/09 20:54:49 mycroft Exp $
  */
 
-#ifndef _SEM_H_
-#define _SEM_H_
+#ifndef _SYS_SEM_H_
+#define _SYS_SEM_H_
 
-#ifdef KERNEL
-#include "ipc.h"
-#else
 #include <sys/ipc.h>
-#endif
 
 struct sem {
-    ushort		semval;		/* semaphore value */
-    pid_t		sempid;		/* pid of last operation */
-    ushort		semncnt;	/* # awaiting semval > cval */
-    ushort		semzcnt;	/* # awaiting semval = 0 */
+	u_short	semval;		/* semaphore value */
+	pid_t	sempid;		/* pid of last operation */
+	u_short	semncnt;	/* # awaiting semval > cval */
+	u_short	semzcnt;	/* # awaiting semval = 0 */
 };
 
 struct semid_ds {
-    struct ipc_perm	sem_perm;	/* operation permission struct */
-    struct sem		*sem_base;	/* pointer to first semaphore in set */
-    ushort		sem_nsems;	/* number of sems in set */
-    time_t		sem_otime;	/* last operation time */
-    long		sem_pad1;	/* SVABI/386 says I need this here */
-    time_t		sem_ctime;	/* last change time */
-    					/* Times measured in secs since */
-    					/* 00:00:00 GMT, Jan. 1, 1970 */
-    long		sem_pad2;	/* SVABI/386 says I need this here */
-    long		sem_pad3[4];	/* SVABI/386 says I need this here */
+	struct	ipc_perm sem_perm;	/* operation permission struct */
+	struct	sem *sem_base;	/* pointer to first semaphore in set */
+	u_short	sem_nsems;	/* number of sems in set */
+	time_t	sem_otime;	/* last operation time */
+	long	sem_pad1;	/* SVABI/386 says I need this here */
+	time_t	sem_ctime;	/* last change time */
+    				/* Times measured in secs since */
+    				/* 00:00:00 GMT, Jan. 1, 1970 */
+	long	sem_pad2;	/* SVABI/386 says I need this here */
+	long	sem_pad3[4];	/* SVABI/386 says I need this here */
 };
 
 /*
  * semop's sops parameter structure
  */
-
 struct sembuf {
-    ushort		sem_num;	/* semaphore # */
-    short		sem_op;		/* semaphore operation */
-    short		sem_flg;	/* operation flags */
+	u_short	sem_num;	/* semaphore # */
+	short	sem_op;		/* semaphore operation */
+	short	sem_flg;	/* operation flags */
 };
 #define SEM_UNDO	010000
 
@@ -49,17 +46,15 @@ struct sembuf {
 /*
  * semctl's arg parameter structure
  */
-
 union semun {
-    int			val;		/* value for SETVAL */
-    struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
-    ushort		*array;		/* array for GETALL & SETALL */
+	int	val;		/* value for SETVAL */
+	struct	semid_ds *buf;	/* buffer for IPC_STAT & IPC_SET */
+	u_short	*array;		/* array for GETALL & SETALL */
 };
 
 /*
  * commands for semctl
  */
-
 #define GETNCNT	3	/* Return the value of semncnt {READ} */
 #define GETPID	4	/* Return the value of sempid {READ} */
 #define GETVAL	5	/* Return the value of semval {READ} */
@@ -72,38 +67,34 @@ union semun {
 /*
  * Kernel implementation stuff
  */
-
 #define SEMVMX	32767		/* semaphore maximum value */
 #define SEMAEM	16384		/* adjust on exit max value */
 
 /*
  * Permissions
  */
-
 #define SEM_A		0200	/* alter permission */
 #define SEM_R		0400	/* read permission */
 
 /*
  * Undo structure (one per process)
  */
-
 struct sem_undo {
-    struct sem_undo	*un_next;	/* ptr to next active undo structure */
-    struct proc *un_proc;		/* owner of this structure */
-    short		un_cnt;		/* # of active entries */
-    struct undo {
-	short	un_adjval;		/* adjust on exit values */
-	short	un_num;			/* semaphore # */
-	int	un_id;			/* semid */
-    } un_ent[1];			/* undo entries */
+	struct	sem_undo *un_next;	/* ptr to next active undo structure */
+	struct	proc *un_proc;		/* owner of this structure */
+	short	un_cnt;			/* # of active entries */
+	struct undo {
+		short	un_adjval;	/* adjust on exit values */
+		short	un_num;		/* semaphore # */
+		int	un_id;		/* semid */
+	} un_ent[1];			/* undo entries */
 };
 
 /*
  * semaphore info struct
  */
-
 struct seminfo {
-    int		semmap,		/* # of entries in semaphore map */
+	int	semmap,		/* # of entries in semaphore map */
 		semmni,		/* # of semaphore identifiers */
 		semmns,		/* # of semaphores in system */
 		semmnu,		/* # of undo structures in system */
@@ -123,7 +114,6 @@ struct seminfo	seminfo;
 /*
  * Configuration parameters
  */
-
 #ifndef SEMMNI
 #define SEMMNI	10		/* # of semaphore identifiers */
 #endif
@@ -137,8 +127,7 @@ struct seminfo	seminfo;
 #define SEMMNU	30		/* # of undo structures in system */
 #endif
 
-/* These shouldn't need tuning */
-
+/* shouldn't need tuning */
 #ifndef SEMMAP
 #define SEMMAP	30		/* # of entries in semaphore map */
 #endif
@@ -155,43 +144,35 @@ struct seminfo	seminfo;
 /*
  * Structures allocated in machdep.c
  */
-
-struct semid_ds		*sema;		/* semaphore id pool */
-struct sem		*sem;		/* semaphore pool */
-struct map		*semmap;	/* semaphore allocation map */
-struct sem_undo		*semu_list;	/* list of active undo structures */
-int			*semu;		/* undo structure pool */
+struct	semid_ds *sema;		/* semaphore id pool */
+struct	sem *sem;		/* semaphore pool */
+struct	map *semmap;		/* semaphore allocation map */
+struct	sem_undo *semu_list;	/* list of active undo structures */
+int	*semu;			/* undo structure pool */
 
 /*
  * Macro to find a particular sem_undo vector
  */
-
 #define SEMU(ix)	((struct sem_undo *)(((long)semu)+ix * SEMUSZ))
 
 /*
  * Parameters to the semconfig system call
  */
-
 typedef enum {
-    SEM_CONFIG_FREEZE,		/* Freeze the semaphore facility. */
-    SEM_CONFIG_THAW		/* Thaw the semaphore facility. */
+	SEM_CONFIG_FREEZE,	/* Freeze the semaphore facility. */
+	SEM_CONFIG_THAW		/* Thaw the semaphore facility. */
 } semconfig_ctl_t;
-
-#endif KERNEL
+#endif /* KERNEL */
 
 #ifndef KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-
 int semsys __P((int, ...));
-
 int semctl __P((int, int, int, union semun));
 int semget __P((key_t, int, int));
 int semop __P((int, struct sembuf *,unsigned));
-
 __END_DECLS
-
-#endif
+#endif /* !KERNEL */
 
 #endif /* !_SEM_H_ */
