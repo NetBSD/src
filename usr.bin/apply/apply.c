@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.14 2005/01/12 14:35:56 xtraeme Exp $	*/
+/*	$NetBSD: apply.c,v 1.15 2005/01/20 15:44:59 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.14 2005/01/12 14:35:56 xtraeme Exp $");
+__RCSID("$NetBSD: apply.c,v 1.15 2005/01/20 15:44:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,8 @@ __RCSID("$NetBSD: apply.c,v 1.14 2005/01/12 14:35:56 xtraeme Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main (int, char **);
-void	usage (void);
-int	shell_system (const char *);
+void	usage(void);
+int	shell_system(const char *);
 
 int
 main(int argc, char *argv[])
