@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.45 2000/03/01 12:49:28 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.45.4.1 2000/08/19 07:55:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -469,8 +469,16 @@ m_copym0(m, off0, len, wait, deep)
 				n->m_ext = m->m_ext;
 				MCLADDREFERENCE(m, n);
 			} else {
+				/*
+				 * we are unsure about the way m was allocated.
+				 * copy into multiple MCLBYTES cluster mbufs.
+				 */
 				MCLGET(n, wait);
-				memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
+				n->m_len = 0;
+				n->m_len = M_TRAILINGSPACE(n);
+				n->m_len = min(n->m_len, len);
+				n->m_len = min(n->m_len, m->m_len - off);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 				    (unsigned)n->m_len);
 			}
 		} else
@@ -478,8 +486,15 @@ m_copym0(m, off0, len, wait, deep)
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
-		off = 0;
-		m = m->m_next;
+		off += n->m_len;
+#ifdef DIAGNOSTIC
+		if (off > m->m_len)
+			panic("m_copym0 overrun");
+#endif
+		if (off == m->m_len) {
+			m = m->m_next;
+			off = 0;
+		}
 		np = &n->m_next;
 	}
 	if (top == 0)
