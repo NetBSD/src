@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.14 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: install,v 1.15 1999/03/25 21:13:04 ross Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,20 +54,22 @@ an in-memory file system of utility programs.
 .Pp
 The usual procedure is to write the installation system to a floppy
 disk set and then boot from the floppies, however, there
-are now five ways to boot the NetBSD/alpha installation system! Each way
+are now six ways to boot the NetBSD/alpha installation system! Each approach
 loads the exact same installation bits.
-The five paths are:
+The six paths are:
 .Pp
 .
-.Bl -enum -compact
+.Bl -enum -compact -offset indent
 .It
 Floppy disk boot
 .It
 CD boot
 .It
-Magnetic tape boot
+Hard Drive Boot
 .It
-Initialized hard drive boot
+Magnetic Tape Boot
+.It
+Existing Root FS Boot
 .It
 Network boot
 .El
@@ -134,7 +136,7 @@ CD boot
 .It
 Hard Drive boot
 .It
-Tape Boot
+Magnetic Tape Boot
 .Pp
 All three of these media types use the same initial image:
 .Dl \&.../installation/diskimage/cdhdtape
@@ -157,7 +159,22 @@ The use of CD-R devices varies greatly depending on the host OS
 and host software; it isn't possible to give typical instructions here.
 .Pp
 .It
-Network Boots
+Existing Root FS Boot
+.Pp
+The installation subdirectory
+.Pa instkernel/
+contains
+.Pa netbsd.gz ;
+this is the same install kernel but without a bootable filesystem
+image wrapped around it. You can perform an complete reinstall
+by beginning it as an upgrade, and booting this kernel in the
+normal way off the root file system of a previous installation.
+.Pp
+The gzipped image can be booted directly; it is not necessary to
+uncompress it first.
+.Pp
+.It
+Network Boot
 .Pp
 Booting NetBSD/alpha \*V over a network requires a BOOTP or
 DHCP server, a TFTP server and an NFS server. (These are usually
@@ -226,6 +243,9 @@ For this case, you still need to export an NFS root, but
 the only thing it needs to have in it is the
 .Li instkernel
 image from the distribution.
+.Pp
+The gzipped image can be booted directly; it is not necessary to
+uncompress it first.
 .Pp
 The console will be using TFTP to load the NetBSD boot program,
 so for the TFTP setup, you need to copy the second stage bootstrap,
