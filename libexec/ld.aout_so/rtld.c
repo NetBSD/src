@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.2 1993/10/17 15:40:11 pk Exp $
+ *	$Id: rtld.c,v 1.3 1993/10/21 00:00:09 pk Exp $
  */
 
 #include <sys/param.h>
@@ -68,26 +68,33 @@ struct lm_private {
 #define LM_OFFSET(lmp)	(0)
 #endif
 
-#define LM_BASE(lmp)	(lmp->lm_addr + LM_OFFSET(lmp))
+/* Base address for link_dynamic_2 entries */
+#define LM_LDBASE(lmp)	(lmp->lm_addr + LM_OFFSET(lmp))
 
-#define LM_TXTOFF(lmp)	(lmp->lm_addr == (caddr_t)0 ? PAGSIZ : 0)
+/* Start of text segment */
+#define LM_TXTADDR(lmp)	(lmp->lm_addr == (caddr_t)0 ? PAGSIZ : 0)
 
+/* Start of run-time relocation_info */
 #define LM_REL(lmp)	((struct relocation_info *) \
 			(lmp->lm_addr + LM_OFFSET(lmp) + LD_REL((lmp)->lm_ld)))
 
+/* Start of symbols */
 #define LM_SYMBOL(lmp, i)	((struct nzlist *) \
 		(lmp->lm_addr + LM_OFFSET(lmp) + LD_SYMBOL((lmp)->lm_ld) + \
 			i * (LD_VERSION_NZLIST_P(lmp->lm_ld->ld_version) ? \
 				sizeof(struct nzlist) : sizeof(struct nlist))))
 
+/* Start of hash table */
 #define LM_HASH(lmp)	((struct rrs_hash *) \
 		(lmp->lm_addr + LM_OFFSET(lmp) + LD_HASH((lmp)->lm_ld)))
 
+/* Start of strings */
 #define LM_STRINGS(lmp)	((char *) \
 		(lmp->lm_addr + LM_OFFSET(lmp) + LD_STRINGS((lmp)->lm_ld)))
 
+/* End of text */
 #define LM_ETEXT(lmp)	((char *) \
-		(LM_BASE(lmp) + LM_TXTOFF(lmp) + LD_TEXTSZ((lmp)->lm_ld)))
+		(lmp->lm_addr + LM_TXTADDR(lmp) + LD_TEXTSZ((lmp)->lm_ld)))
 
 /* PLT is in data segment, so don't use LM_OFFSET here */
 #define LM_PLT(lmp)	((jmpslot_t *) \
@@ -220,7 +227,7 @@ struct crt_ldso	*crtp;
 			next = LD_NEED(lmp->lm_ld);
 
 		while (next) {
-			lop = (struct link_object *) (LM_BASE(lmp) + next);
+			lop = (struct link_object *) (LM_LDBASE(lmp) + next);
 			map_object(lop, lmp);
 			next = lop->lo_next;
 		}
@@ -292,7 +299,7 @@ struct link_object	*lop;
 struct link_map		*lmp;
 {
 	struct link_dynamic	*dp;
-	char		*path, *name = (char *)(lop->lo_name + LM_BASE(lmp));
+	char		*path, *name = (char *)(lop->lo_name + LM_LDBASE(lmp));
 	int		fd;
 	caddr_t		addr;
 	struct exec	hdr;
@@ -351,7 +358,7 @@ struct link_map		*lmp;
 	/* Fixup __DYNAMIC structure */
 	(long)dp->ld_un.ld_2 += (long)addr;
 
-	alloc_link_map(path, lop, LM_BASE(lmp), addr, dp);
+	alloc_link_map(path, lop, lmp->lm_addr, addr, dp);
 
 }
 
@@ -462,7 +469,7 @@ caddr_t			addr;
 	fprintf(stderr, "ld.so: warning: non pure code in %s at %x (%s)\n",
 				lmp->lm_name, r->r_address, sym);
 
-	if (mprotect(	LM_BASE(lmp) + LM_TXTOFF(lmp),
+	if (mprotect(	lmp->lm_addr + LM_TXTADDR(lmp),
 			LD_TEXTSZ(lmp->lm_ld),
 			PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
 
