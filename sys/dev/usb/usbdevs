@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.327 2003/06/08 13:33:16 grant Exp $
+$NetBSD: usbdevs,v 1.328 2003/06/16 12:45:20 rjs Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -360,8 +360,11 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
+vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
+vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770  NHJ
+vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
@@ -422,6 +425,9 @@ product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
 /* ActiveWire, Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
+
+/* AEI products */
+product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
 
 /* Addonics products */
 product ADDONICS2 205		0xa001	Cable 205
@@ -575,6 +581,7 @@ product CHICONY KB8933		0x0001	KB-8933 keyboard
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
+product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
