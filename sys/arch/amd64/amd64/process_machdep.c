@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 2003/10/23 17:45:14 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 2003/11/30 12:59:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3 2003/10/23 17:45:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.4 2003/11/30 12:59:30 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ process_read_fpregs(l, regs)
 		fpusave_lwp(l, 1);
 	} else {
 		u_int16_t cw;
+		u_int32_t mxcsr, mxcsr_mask;
 
 		/*
 		 * Fake a FNINIT.
@@ -131,10 +132,14 @@ process_read_fpregs(l, regs)
 		 * save it temporarily.
 		 */
 		cw = frame->fx_fcw;
+		mxcsr = frame->fx_mxcsr;
+		mxcsr_mask = frame->fx_mxcsr_mask;
 		memset(frame, 0, sizeof(*regs));
 		frame->fx_fcw = cw;
 		frame->fx_fsw = 0x0000;
 		frame->fx_ftw = 0xff;
+		frame->fx_mxcsr = mxcsr;
+		frame->fx_mxcsr_mask = mxcsr_mask;
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
