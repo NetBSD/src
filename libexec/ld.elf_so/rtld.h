@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.70 2003/08/12 09:18:49 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.71 2004/07/05 11:50:07 cube Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -97,9 +97,7 @@ typedef struct _rtld_search_path_t {
 typedef struct _rtld_library_xform_t {
 	struct _rtld_library_xform_t *next;
 	char *name;
-	int ctl[RTLD_MAX_CTL];
-	int ctltype[RTLD_MAX_CTL];
-	int ctlmax;
+	const char *ctlname;
 	struct {
 		char *value;
 		char *library[RTLD_MAX_LIBRARY];
@@ -243,6 +241,7 @@ int _rtld_preload(const char *);
 /* path.c */
 void _rtld_add_paths(Search_Path **, const char *);
 void _rtld_process_hints(Search_Path **, Library_Xform **, const char *);
+int _rtld_sysctl(const char *, void *, size_t *);
 
 /* reloc.c */
 int _rtld_do_copy_relocations(const Obj_Entry *);

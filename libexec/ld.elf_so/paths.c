@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.30 2004/03/16 05:25:12 atatat Exp $	 */
+/*	$NetBSD: paths.c,v 1.31 2004/07/05 11:50:07 cube Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -216,49 +216,6 @@ _rtld_add_paths(Search_Path **path_p, const char *pathstr)
 	}
 }
 
-struct list {
-	const struct ctlname *ctl;
-	int numentries;
-};
-
-#ifdef CTL_MACHDEP_NAMES
-static const struct ctlname ctl_machdep[] = CTL_MACHDEP_NAMES;
-#endif
-static const struct ctlname ctl_toplvl[] = CTL_NAMES;
-
-const struct list toplevel[] = {
-	{ 0, 0 },
-	{ ctl_toplvl, CTL_MAXID },
-	{ 0, -1 },
-};
-
-const struct list secondlevel[] = {
-	{ 0, 0 },			/* CTL_UNSPEC */
-	{ 0, KERN_MAXID },		/* CTL_KERN */
-	{ 0, VM_MAXID },		/* CTL_VM */
-	{ 0, VFS_MAXID },		/* CTL_VFS */
-	{ 0, NET_MAXID },		/* CTL_NET */
-	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
-	{ 0, HW_MAXID },		/* CTL_HW */
-#ifdef CTL_MACHDEP_NAMES
-	{ ctl_machdep, CPU_MAXID },	/* CTL_MACHDEP */
-#else
-	{ 0, 0 },			/* CTL_MACHDEP */
-#endif
-	{ 0, USER_MAXID },		/* CTL_USER_NAMES */
-	{ 0, DDBCTL_MAXID },		/* CTL_DDB_NAMES */
-	{ 0, 2 },			/* dummy name */
-	{ 0, -1 },
-};
-
-const struct list *lists[] = {
-	toplevel,
-	secondlevel,
-	0
-};
-
-#define CTL_MACHDEP_SIZE (sizeof(ctl_machdep) / sizeof(ctl_machdep[0]))
-
 /*
  * Process library mappings of the form:
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
@@ -268,7 +225,7 @@ _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 {
 	Library_Xform *hwptr = NULL;
 	const char *ptr, *key, *ekey, *lib, *elib, *l;
-	int i, j, k;
+	int i, j;
 	
 	dbg((" processing mapping \"%.*s\"", (int)(ep - bp), bp));
 
@@ -290,37 +247,7 @@ _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 
 	dbg((" sysctl \"%.*s\"", (int)(bp - ptr), ptr));
 
-	for (i = 0; (l = getstr(&ptr, bp, ".")) != NULL; i++, ptr++) {
-
-		if (lists[i] == NULL || i >= RTLD_MAX_CTL) {
-			xwarnx("sysctl nesting too deep");
-			goto cleanup;
-		}
-
-		for (j = 1; lists[i][j].numentries != -1; j++) {
-
-			if (lists[i][j].ctl == NULL)
-				continue;
-
-			for (k = 1; k < lists[i][j].numentries; k++)
-				if (matchstr(lists[i][j].ctl[k].ctl_name, l,
-				    ptr))
-					break;
-
-			if (lists[i][j].numentries == -1) {
-				xwarnx("unknown sysctl variable name `%.*s'",
-				    (int)(ptr - l), l);
-				goto cleanup;
-			}
-
-			hwptr->ctl[hwptr->ctlmax] = k;
-			hwptr->ctltype[hwptr->ctlmax++] =
-			    lists[i][j].ctl[k].ctl_type;
-		}
-	}
-
-	for (i = 0; i < hwptr->ctlmax; i++)
-		dbg((" sysctl %d, %d", hwptr->ctl[i], hwptr->ctltype[i]));
+	hwptr->ctlname = exstrdup(ptr, bp);
 
 	for (i = 0; bp++, (ptr = getword(&bp, ep, WS)) != NULL;) {
 		dbg((" ptr = %.*s", (int)(bp - ptr), ptr));
@@ -455,4 +382,72 @@ _rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p,
 	}
 
 	(void)munmap(buf, sz);
+}
+
+/* Basic name -> sysctl MIB translation */
+int
+_rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
+{
+	const char *node, *ep;
+	struct sysctlnode query, *result, *newresult;
+	int mib[CTL_MAXNAME], i, r;
+	size_t res_size, n;
+	u_int miblen = 0;
+
+	/* Start with 16 entries, will grow it up as needed. */
+	res_size = 16 * sizeof(struct sysctlnode);
+	result = (struct sysctlnode *)malloc(res_size);
+	if (result == NULL)
+		return (-1);
+
+	ep = name + strlen(name);
+	do {
+		while (*name == '/' || *name == '.')
+			name++;
+		if (name >= ep)
+			break;
+
+		mib[miblen] = CTL_QUERY;
+		memset(&query, 0, sizeof(query));
+		query.sysctl_flags = SYSCTL_VERSION;
+
+		n = res_size;
+		if (sysctl(mib, miblen+1, result, &n, &query,
+		    sizeof(query)) == -1) {
+			if (errno != ENOMEM)
+				goto bad;
+			/* Grow up result */
+			res_size = n;
+			newresult = (struct sysctlnode *)realloc(result, res_size);
+			if (newresult == NULL)
+				goto bad;
+			result = newresult;
+			if (sysctl(mib, miblen+1, result, &n, &query,
+			    sizeof(query)) == -1)
+				goto bad;
+		}
+		n /= sizeof(struct sysctlnode);
+
+		node = getstr(&name, ep, "./");
+
+		for (i = 0; i < n; i++)
+			if (matchstr(result[i].sysctl_name, node, name)) {
+				mib[miblen] = result[i].sysctl_num;
+				miblen++;
+				break;
+			}
+	} while (name < ep && miblen <= CTL_MAXNAME);
+
+	if (name < ep)
+		goto bad;
+	r = SYSCTL_TYPE(result[i].sysctl_flags);
+
+	free(result);
+	if (sysctl(mib, miblen, oldp, oldlen, NULL, 0) == -1)
+		return (-1);
+	return r;
+
+bad:
+	free(result);
+	return (-1);
 }
