@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.11 1999/11/15 09:50:27 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.12 1999/11/19 04:34:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,10 +73,6 @@ void		dec_5100_cons_init __P((void));
 void		dec_5100_device_register __P((struct device *, void *));
 
 void		dec_5100_memintr __P((void));
-
-void	dec_5100_intr_establish __P((struct device *, void *cookie, int level,
-			 int (*handler) __P((void *)), void * arg));
-void	dec_5100_intr_disestablish __P((struct device *, void *));
 
 extern void kn230_wbflush __P((void));
 
