@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.10 2001/11/11 01:38:01 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.11 2001/12/27 02:23:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ intio_attach(parent, self, aux)
 	sc->sc_dmat = &intio_bus_dma;
 	sc->sc_dmac = 0;
 
-	bzero(iiv, sizeof (struct intio_interrupt_vector) * 256);
+	memset(iiv, 0, sizeof (struct intio_interrupt_vector) * 256);
 
 	ia.ia_bst = sc->sc_bst;
 	ia.ia_dmat = sc->sc_dmat;

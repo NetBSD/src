@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.8 2001/10/21 03:46:31 isaki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.9 2001/12/27 02:23:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -77,7 +77,7 @@ u_char kern_font[256 * FONTHEIGHT];
 #define ROWOFFSET(y) ((y) * FONTHEIGHT * ROWBYTES)
 #define CHADDR(y, x) (tv_row[PHYSLINE(y)] + (x))
 
-#define SETGLYPH(to,from) bcopy(&kern_font[(to)*16], &kern_font[(from)*16],16)
+#define SETGLYPH(to,from) memcpy(&kern_font[(from)*16],&kern_font[(to)*16], 16)
 #define KFONTBASE(left)   ((left) * 32 * 0x5e - 0x21 * 32)
 
 /* prototype */
@@ -168,7 +168,7 @@ tv_init(ip)
 	for (i = 0; i < PLANELINES; i++)
 		tv_row[i] = (void *)&IODEVbase->tvram[ROWOFFSET(i)];
 	/* shadow ANK font */
-	bcopy((void *)&IODEVbase->cgrom0_8x16, kern_font, 256 * FONTHEIGHT);
+	memcpy(kern_font, (void *)&IODEVbase->cgrom0_8x16, 256 * FONTHEIGHT);
 	ite_set_glyph();
 	/* set font address cache */
 	for (i = 0; i < 256; i++)
@@ -675,7 +675,7 @@ tv_clear(ip, y, x, height, width)
 	while (height--) {
 		p = CHADDR(y++, x);
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			bzero(p, width);
+			memset(p, 0, width);
 	}
 	/* crtc mode reset */
 	CRTC.r21 = 0;
@@ -738,7 +738,7 @@ tv_scroll(ip, srcy, srcx, count, dir)
 
 			siz = ip->cols - srcx;
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				bcopy(src, dst, siz);
+				memcpy(dst, src, siz);
 				src += ROWBYTES;
 				dst += ROWBYTES;
 			}
@@ -753,7 +753,7 @@ tv_scroll(ip, srcy, srcx, count, dir)
 
 			siz = ip->cols - (srcx + count);
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				bcopy(src, dst, siz);
+				memcpy(dst, src, siz);
 				src += ROWBYTES;
 				dst += ROWBYTES;
 			}
