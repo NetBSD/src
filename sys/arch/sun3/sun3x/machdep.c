@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1997/10/05 20:43:40 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1997/11/18 12:40:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -82,6 +81,8 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 
