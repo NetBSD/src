@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.5 1996/12/13 08:26:08 mikel Exp $	*/
+/*	$NetBSD: optimize.c,v 1.6 1997/09/28 09:41:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1475,6 +1475,8 @@ opt_blks(root, do_stmts)
 
 	init_val();
 	maxlevel = root->level;
+
+	find_inedges(root);
 	for (i = maxlevel; i >= 0; --i)
 		for (p = levels[i]; p; p = p->link)
 			opt_blk(p, do_stmts);
@@ -1492,6 +1494,8 @@ opt_blks(root, do_stmts)
 			opt_j(&p->ef);
 		}
 	}
+
+	find_inedges(root);
 	for (i = 1; i <= maxlevel; ++i) {
 		for (p = levels[i]; p; p = p->link) {
 			or_pullup(p);
@@ -1571,7 +1575,6 @@ opt_loop(root, do_stmts)
 		find_levels(root);
 		find_dom(root);
 		find_closure(root);
-		find_inedges(root);
 		find_ud(root);
 		find_edom(root);
 		opt_blks(root, do_stmts);
