@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.10 1994/10/18 20:16:13 mycroft Exp $";
+static char *rcsid = "$Id: parse.c,v 1.11 1994/10/18 20:36:26 mycroft Exp $";
 #endif /* not lint */
 
 /*-
@@ -2448,16 +2448,22 @@ Parse_File(name, stream)
 #endif
 		
 		cp = line;
-#ifndef POSIX
-		if (line[0] == ' ') {
-		    while ((*cp != ':') && (*cp != '!') && (*cp != '\0')) {
-			if (!isspace((unsigned char) *cp)) {
-			    nonSpace = TRUE;
-			}
+		if (isspace((unsigned char) line[0])) {
+		    while ((*cp != '\0') && isspace((unsigned char) *cp)) {
 			cp++;
 		    }
+		    if (*cp == '\0') {
+			goto nextLine;
+		    }
+#ifndef POSIX
+		    while ((*cp != ':') && (*cp != '!') && (*cp != '\0')) {
+			nonSpace = TRUE;
+			cp++;
+		    }
+#endif
 		}
 		    
+#ifndef POSIX
 		if (*cp == '\0') {
 		    if (inLine) {
 			Parse_Error (PARSE_WARNING,
