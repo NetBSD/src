@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.79 2001/07/31 17:01:15 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.80 2001/08/04 11:38:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -57,6 +57,9 @@
 #include <dev/ic/rtl80x9var.h>
 
 #include <dev/ic/dl10019var.h>
+
+#include <dev/ic/ax88190reg.h>
+#include <dev/ic/ax88190var.h>
 
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -694,6 +697,14 @@ again:
 			++i;
 			goto again;
 		}
+
+		dsc->sc_mediachange = ax88190_mediachange;
+		dsc->sc_mediastatus = ax88190_mediastatus;
+		dsc->init_card = ax88190_init_card;
+		dsc->stop_card = ax88190_stop_card;
+		dsc->sc_media_init = ax88190_media_init;
+		dsc->sc_media_fini = ax88190_media_fini;
+
 		nsc->sc_type = NE2000_TYPE_AX88190;
 		typestr = " (AX88190)";
 	}
@@ -897,7 +908,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	int rv = 1, mwindow;
 	u_int last_liobase, new_liobase;
 
-	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+	if (pcmcia_mem_alloc(psc->sc_pf, AX88190_LAN_IOSIZE, &pcmh)) {
 #if 0
 		printf("%s: can't alloc mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
@@ -905,7 +916,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 		goto fail_1;
 	}
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
-	    NE2000_AX88190_LAN_IOBASE, NE2000_AX88190_LAN_IOSIZE,
+	    AX88190_LAN_IOBASE, AX88190_LAN_IOSIZE,
 	    &pcmh, &offset, &mwindow)) {
 		printf("%s: can't map mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
