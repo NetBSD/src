@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.16 1998/08/28 20:04:35 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.17 1998/08/29 03:17:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -149,7 +149,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
 #define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
 #define	KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	8
+#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -756,9 +756,6 @@ initarm(prom_id)
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	}
-	for (loop = 0; loop < (PD_SIZE / NBPG); ++loop)
-		map_entry_nc(l2pagetable, ((CURRENT_PAGEDIR_HOLE + loop * 0x400000) >> (PGSHIFT-2)),
-		    kernel_l1pt.physical + loop * 0x1000);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
