@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.4 2000/12/21 05:12:18 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.5 2000/12/21 08:30:52 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -74,6 +74,11 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
 
+#ifdef	_BSD_MBSTATE_T_
+typedef	_BSD_MBSTATE_T_	mbstate_t;
+#undef	_BSD_MBSTATE_T_
+#endif
+
 #ifdef	_BSD_WINT_T_
 typedef	_BSD_WINT_T_	wint_t;
 #undef	_BSD_WINT_T_
@@ -102,6 +107,8 @@ wchar_t	*wcspbrk __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsrchr __P((const wchar_t *, wchar_t));
 size_t	wcsspn __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
+int	wcswidth __P((const wchar_t *, size_t));
+int	wcwidth __P((wchar_t));
 wchar_t	*wmemchr __P((const wchar_t *, wchar_t, size_t));
 int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t *, const wchar_t *, size_t));
