@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.8 1998/02/13 04:19:33 enami Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.9 1998/07/15 20:11:34 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -100,6 +100,15 @@ struct scsipi_generic {
 #define TRY_AGAIN_LATER		1
 #define	COMPLETE		2
 #define	ESCAPE_NOT_SUPPORTED	3
+
+/*
+ * Device Specific Sense Handlers return either an errno
+ * or one of these three items.
+ */
+
+#define SCSIRET_NOERROR   0	/* No Error */
+#define SCSIRET_RETRY    -1	/* Retry the command that got this sense */
+#define SCSIRET_CONTINUE -2	/* Continue with standard sense processing */
 
 /*
  * These entry points are called by the low-end drivers to get services from
@@ -265,6 +274,7 @@ struct scsipi_xfer {
 #define	SCSI_DATA_OUT	0x1000	/* expect data to flow OUT of memory	*/
 #define	SCSI_TARGET	0x2000	/* This defines a TARGET mode op.	*/
 #define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
+#define	SCSI_URGENT	0x8000	/* Urgent operation (e.g., HTAG)	*/
 
 /*
  * Error values an adapter driver may return
