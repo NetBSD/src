@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.30 2002/05/12 20:40:12 matt Exp $ */
+/* $NetBSD: netisr.h,v 1.31 2003/03/15 07:51:06 matt Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -149,7 +149,9 @@ extern void pppnetisr(void);
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
+#ifndef schednetisr
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
+#endif
 
 extern	int netisr;			/* scheduling bits for network */
 
