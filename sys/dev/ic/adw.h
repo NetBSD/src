@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.2 1999/02/23 20:18:16 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.3 1999/08/16 02:01:11 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -72,7 +72,7 @@ struct adw_ccb
 
 	TAILQ_ENTRY(adw_ccb)	chain;
 	struct adw_ccb		*nexthash;
-	u_long			hashkey;
+	u_int32_t		hashkey;
 	struct scsipi_xfer	*xs;	/* the scsipi_xfer for this cmd */
 	int			flags;	/* see below */
 
@@ -109,7 +109,7 @@ struct adw_control
 int adw_init __P((ADW_SOFTC *sc));
 void adw_attach __P((ADW_SOFTC *sc));
 int adw_intr __P((void *arg));
-ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_long));
+ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_int32_t));
 
 /******************************************************************************/
 

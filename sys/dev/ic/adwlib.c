@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.4 1999/08/07 07:36:19 thorpej Exp $        */
+/* $NetBSD: adwlib.c,v 1.5 1999/08/16 02:01:11 thorpej Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -825,7 +825,7 @@ AdvResetCCB(sc)
 {
 	int             status;
 
-	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET, 0L, 0);
+	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET, 0, 0);
 
 	AdvResetSCSIBus(sc);
 
@@ -942,7 +942,10 @@ AdvISR(sc)
 		 * more information on the RISC list structure.
 		 */
 		{
-			ushort          lsw, msw;
+			ADW_CCB *ccb;
+			u_int32_t hashkey;
+			u_int16_t lsw, msw;
+
 			ADW_READ_WORD_LRAM(iot, ioh,
 					   next_done_loc + RQL_PHYADDR, lsw);
 			ADW_READ_WORD_LRAM(iot, ioh,
@@ -957,8 +960,9 @@ AdvISR(sc)
 			 * retrivieng the the ADW_SCSI_REQ_Q pointer stored
 			 * into the ccb structure.
 			 */
-			scsiq = &adw_ccb_phys_kv(sc,
-				(((u_int32_t) msw << 16) | lsw))->scsiq;
+			hashkey = (((u_int32_t)msw) << 16) | lsw;
+			ccb = adw_ccb_phys_kv(sc, hashkey);
+			scsiq = &ccb->scsiq;
 		}
 
 		target_bit = ADW_TID_TO_TIDMASK(scsiq->target_id);
