@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.97 2000/12/17 21:50:14 pk Exp $	*/
+/*	$NetBSD: pciide.c,v 1.98 2000/12/21 01:19:24 mycroft Exp $	*/
 
 
 /*
@@ -369,22 +369,22 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA33,
-	  IDE_PCI_CLASS_OVERRIDE /* |IDE_16BIT_IOSPACE */,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra33/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra66/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100X,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
