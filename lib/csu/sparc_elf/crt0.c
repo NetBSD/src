@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.9 2000/06/14 22:52:50 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.10 2002/02/11 06:08:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -40,25 +40,24 @@
 void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
     const Obj_Entry *, struct ps_strings *));
 
-__asm("
-	.text
-	.align	4
-	.global	__start
-	.global	_start
-__start:
-_start:
-	mov	0, %fp
-	ld	[%sp + 64], %o0		! get argc
-	add	%sp, 68, %o1		! get argv
-	sll	%o0, 2,	%o2		!
-	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4
-	add	%o1, %o2, %o2		!
-	andn	%sp, 7,	%sp		! align
-	sub	%sp, 24, %sp		! expand to standard stack frame size
-	mov	%g3, %o3
-	mov	%g2, %o4
-	call	___start
-	 mov	%g1, %o5
+__asm("	.text\n\
+	.align	4\n\
+	.global	__start\n\
+	.global	_start\n\
+__start:\n\
+_start:\n\
+	mov	0, %fp\n\
+	ld	[%sp + 64], %o0		! get argc\n\
+	add	%sp, 68, %o1		! get argv\n\
+	sll	%o0, 2,	%o2		!\n\
+	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4\n\
+	add	%o1, %o2, %o2		!\n\
+	andn	%sp, 7,	%sp		! align\n\
+	sub	%sp, 24, %sp		! expand to standard stack frame size\n\
+	mov	%g3, %o3\n\
+	mov	%g2, %o4\n\
+	call	___start\n\
+	 mov	%g1, %o5\n\
 ");
 
 void
@@ -102,7 +101,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.9 2000/06/14 22:52:50 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 2002/02/11 06:08:23 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
