@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.26 1996/05/09 20:30:37 is Exp $	*/
+/*	$NetBSD: genassym.c,v 1.27 1996/10/12 04:34:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,6 +35,7 @@
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
  */
 
+#include <stdio.h>
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
