@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.100 2000/03/25 19:58:05 mycroft Exp $
+#	$NetBSD: files.isa,v 1.101 2000/04/21 17:48:30 explorer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -38,6 +38,11 @@ file	dev/isa/tcom.c			tcom
 device	boca: commulti
 attach	boca at isa
 file	dev/isa/boca.c			boca
+
+# Addonics FlexPort multiport serial card
+device	addcom: commulti
+attach	addcom at isa with addcom_isa
+file	dev/isa/addcom_isa.c		addcom
 
 # IBM RT PC 4-port board
 device	rtfps: commulti
