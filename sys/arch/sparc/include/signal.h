@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8.12.2 2003/01/16 03:14:58 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.8.12.3 2003/01/16 10:34:00 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ do {									\
 	(sc)->sc_psr = (uc)->uc_mcontext.__gregs[_REG_PSR];		\
 } while (/*CONSTCOND*/0)
 
-define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
+#define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
 do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PSR] = (sc)->sc_psr;		\
 } while (/*CONSTCOND*/0)
