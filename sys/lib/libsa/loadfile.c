@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.11 2001/07/13 17:17:12 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.12 2001/07/13 17:43:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -277,8 +277,8 @@ elf_exec(fd, elf, marks, flags)
 	int i;
 	size_t sz;
 	int first;
-	int havesyms, numsyms;
-	paddr_t minp = ~0, maxp = 0, pos, symp;
+	int havesyms;
+	paddr_t minp = ~0, maxp = 0, pos;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
@@ -383,14 +383,6 @@ elf_exec(fd, elf, marks, flags)
 				havesyms = 1;
 
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			if (shp[i].sh_type == SHT_SYMTAB) {
-				if (symp == NULL) {
-					/* Save addr of first sym section */
-					symp = maxp;
-				}
-				numsyms += roundup(shp[i].sh_size,
-				    sizeof(long));
-			}
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB) {
 				if (havesyms && (flags & LOAD_SYM)) {
@@ -439,11 +431,15 @@ elf_exec(fd, elf, marks, flags)
 
 	marks[MARK_START] = LOADADDR(minp);
 	marks[MARK_ENTRY] = LOADADDR(elf->e_entry);
-	if (!numsyms)
-		marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
-	else
-		marks[MARK_NSYM] = numsyms;
-	marks[MARK_SYM] = LOADADDR(symp);
+	/*
+	 * Since there can be more than one symbol section in the code
+	 * and we need to find strtab too in order to do anything
+	 * useful with the symbols, we just pass the whole elf
+	 * header back and we let the kernel debugger find the
+	 * location and number of symbols by itself.
+	 */
+	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
+	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
 }
