@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.9 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.9 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,10 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.9 2003/12/29 02:38:17 oster Exp
 /* configuration code */
 
 int 
-rf_ConfigureDeclusteredPQ(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+			  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	int     b, v, k, r, lambda;	/* block design params */
@@ -268,7 +266,7 @@ rf_ConfigureDeclusteredPQ(
 }
 
 int 
-rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t *raidPtr)
 {
 	int     def_decl;
 
@@ -277,13 +275,9 @@ rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t * raidPtr)
 }
 
 void 
-rf_MapSectorDeclusteredPQ(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+			  RF_RowCol_t *row, RF_RowCol_t *col,
+			  RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
@@ -349,13 +343,9 @@ rf_MapSectorDeclusteredPQ(
 
 
 void 
-rf_MapParityDeclusteredPQ(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+			  RF_RowCol_t *row, RF_RowCol_t *col,
+			  RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
@@ -405,13 +395,9 @@ rf_MapParityDeclusteredPQ(
 }
 
 void 
-rf_MapQDeclusteredPQ(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		     RF_RowCol_t *row, RF_RowCol_t *col,
+		     RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
@@ -464,11 +450,8 @@ rf_MapQDeclusteredPQ(
  * the caller must _never_ attempt to modify this array.
  */
 void 
-rf_IdentifyStripeDeclusteredPQ(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+rf_IdentifyStripeDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+			       RF_RowCol_t **diskids, RF_RowCol_t *outRow)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;

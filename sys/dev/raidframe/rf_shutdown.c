@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.14 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.14 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -50,18 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.14 2003/12/29 03:33:48 oster Exp $
 static void rf_FreeShutdownEnt(RF_ShutdownList_t *);
 
 static void 
-rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
+rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
 	FREE(ent, M_RAIDFRAME);
 }
 
 int 
-_rf_ShutdownCreate(
-    RF_ShutdownList_t ** listp,
-    void (*cleanup) (void *arg),
-    void *arg,
-    char *file,
-    int line)
+_rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
+		   void *arg, char *file, int line)
 {
 	RF_ShutdownList_t *ent;
 
@@ -85,7 +81,7 @@ _rf_ShutdownCreate(
 }
 
 int 
-rf_ShutdownList(RF_ShutdownList_t ** list)
+rf_ShutdownList(RF_ShutdownList_t **list)
 {
 	RF_ShutdownList_t *r, *next;
 #if RF_DEBUG_SHUTDOWN

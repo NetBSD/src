@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.9 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.9 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -55,10 +55,8 @@ typedef struct RF_Raid5ConfigInfo_s {
 }       RF_Raid5ConfigInfo_t;
 
 int 
-rf_ConfigureRAID5(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureRAID5(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid5ConfigInfo_t *info;
@@ -97,32 +95,28 @@ rf_ConfigureRAID5(
 }
 
 int 
-rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t 
-rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t * raidPtr)
+rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
 #if !defined(__NetBSD__) && !defined(_KERNEL)
 /* not currently used */
 int 
-rf_ShutdownRAID5(RF_Raid_t * raidPtr)
+rf_ShutdownRAID5(RF_Raid_t *raidPtr)
 {
 	return (0);
 }
 #endif
 
 void 
-rf_MapSectorRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = (SUID % raidPtr->numCol);
@@ -131,12 +125,8 @@ rf_MapSectorRAID5(
 }
 
 void 
-rf_MapParityRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
@@ -146,10 +136,8 @@ rf_MapParityRAID5(
 }
 
 void 
-rf_IdentifyStripeRAID5(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids)
+rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+		       RF_RowCol_t **diskids)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_Raid5ConfigInfo_t *info = (RF_Raid5ConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
@@ -158,11 +146,8 @@ rf_IdentifyStripeRAID5(
 }
 
 void 
-rf_MapSIDToPSIDRAID5(
-    RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID,
-    RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru)
+rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -172,11 +157,9 @@ rf_MapSIDToPSIDRAID5(
  * another to a function that will create the dag.
  */
 void 
-rf_RaidFiveDagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+		     RF_AccessStripeMap_t *asmap,
+		     RF_VoidFuncPtr *createFunc)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_PhysDiskAddr_t *failedPDA = NULL;

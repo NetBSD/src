@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.18 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.19 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.18 2003/12/29 05:01:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.19 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -48,11 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.18 2003/12/29 05:01:14 oster Exp 
 /*******************************************************************
  * allocates/frees the reconstruction control information structures
  *******************************************************************/
+
+/* fcol - failed column
+ * scol - identifies which spare we are using
+ */
+
 RF_ReconCtrl_t *
-rf_MakeReconControl(reconDesc, fcol, scol)
-	RF_RaidReconDesc_t *reconDesc;
-	RF_RowCol_t fcol;       /* failed column */
-	RF_RowCol_t scol;       /* identifies which spare we're using */
+rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc, 
+		    RF_RowCol_t fcol, RF_RowCol_t scol)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -149,8 +152,7 @@ rf_MakeReconControl(reconDesc, fcol, scol)
 }
 
 void 
-rf_FreeReconControl(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_FreeReconControl(RF_Raid_t *raidPtr)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_ReconBuffer_t *t;
@@ -178,8 +180,7 @@ rf_FreeReconControl(raidPtr)
  * computes the default head separation limit
  *****************************************************************************/
 RF_HeadSepLimit_t 
-rf_GetDefaultHeadSepLimit(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_GetDefaultHeadSepLimit(RF_Raid_t *raidPtr)
 {
 	RF_HeadSepLimit_t hsl;
 	const RF_LayoutSW_t *lp;
@@ -196,8 +197,7 @@ rf_GetDefaultHeadSepLimit(raidPtr)
  * computes the default number of floating recon buffers
  *****************************************************************************/
 int 
-rf_GetDefaultNumFloatingReconBuffers(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_GetDefaultNumFloatingReconBuffers(RF_Raid_t *raidPtr)
 {
 	const RF_LayoutSW_t *lp;
 	int     nrb;
@@ -214,10 +214,7 @@ rf_GetDefaultNumFloatingReconBuffers(raidPtr)
  * creates and initializes a reconstruction buffer
  *****************************************************************************/
 RF_ReconBuffer_t *
-rf_MakeReconBuffer(
-    RF_Raid_t * raidPtr,
-    RF_RowCol_t col,
-    RF_RbufType_t type)
+rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t col, RF_RbufType_t type)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ReconBuffer_t *t;
@@ -237,8 +234,7 @@ rf_MakeReconBuffer(
  * frees a reconstruction buffer
  *****************************************************************************/
 void 
-rf_FreeReconBuffer(rbuf)
-	RF_ReconBuffer_t *rbuf;
+rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
 	u_int   recon_buffer_size;
@@ -254,9 +250,7 @@ rf_FreeReconBuffer(rbuf)
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/
 void 
-rf_CheckFloatingRbufCount(raidPtr, dolock)
-	RF_Raid_t *raidPtr;
-	int     dolock;
+rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 {
 	RF_ReconParityStripeStatus_t *p;
 	RF_PSStatusHeader_t *pssTable;

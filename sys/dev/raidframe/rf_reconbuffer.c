@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.14 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.14 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -94,13 +94,13 @@ static const RF_VoidFuncPtr nWayXorFuncs[] = {
 	(RF_VoidFuncPtr) rf_nWayXor9
 };
 
+/*
+ * rbuf          - the recon buffer to submit
+ * keep_it       - whether we can keep this buffer or we have to return it
+ * use_committed - whether to use a committed or an available recon buffer
+ */
 int 
-rf_SubmitReconBuffer(rbuf, keep_it, use_committed)
-	RF_ReconBuffer_t *rbuf;	/* the recon buffer to submit */
-	int     keep_it;	/* whether we can keep this buffer or we have
-				 * to return it */
-	int     use_committed;	/* whether to use a committed or an available
-				 * recon buffer */
+rf_SubmitReconBuffer(RF_ReconBuffer_t *rbuf, int keep_it, int use_committed)
 {
 	const RF_LayoutSW_t *lp;
 	int     rc;
@@ -110,13 +110,14 @@ rf_SubmitReconBuffer(rbuf, keep_it, use_committed)
 	return (rc);
 }
 
+/*
+ * rbuf          - the recon buffer to submit
+ * keep_it       - whether we can keep this buffer or we have to return it
+ * use_committed - whether to use a committed or an available recon buffer
+ */
 int 
-rf_SubmitReconBufferBasic(rbuf, keep_it, use_committed)
-	RF_ReconBuffer_t *rbuf;	/* the recon buffer to submit */
-	int     keep_it;	/* whether we can keep this buffer or we have
-				 * to return it */
-	int     use_committed;	/* whether to use a committed or an available
-				 * recon buffer */
+rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it, 
+			  int use_committed)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -280,12 +281,9 @@ out:
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	return (retcode);
 }
-
+/* pssPtr - the pss descriptor for this parity stripe */
 int 
-rf_MultiWayReconXor(raidPtr, pssPtr)
-	RF_Raid_t *raidPtr;
-	RF_ReconParityStripeStatus_t *pssPtr;	/* the pss descriptor for this
-						 * parity stripe */
+rf_MultiWayReconXor(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *pssPtr)
 {
 	int     i, numBufs = pssPtr->xorBufCount;
 	int     numBytes = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.SUsPerRU);
@@ -326,8 +324,7 @@ rf_MultiWayReconXor(raidPtr, pssPtr)
  * ASSUMES THE RB_MUTEX IS UNLOCKED AT ENTRY.
  */
 RF_ReconBuffer_t *
-rf_GetFullReconBuffer(reconCtrlPtr)
-	RF_ReconCtrl_t *reconCtrlPtr;
+rf_GetFullReconBuffer(RF_ReconCtrl_t *reconCtrlPtr)
 {
 	RF_ReconBuffer_t *p;
 
@@ -347,11 +344,8 @@ rf_GetFullReconBuffer(reconCtrlPtr)
  *
  * ASSUMES THE RB_MUTEX IS LOCKED AT ENTRY.  */
 int 
-rf_CheckForFullRbuf(raidPtr, reconCtrl, pssPtr, numDataCol)
-	RF_Raid_t *raidPtr;
-	RF_ReconCtrl_t *reconCtrl;
-	RF_ReconParityStripeStatus_t *pssPtr;
-	int     numDataCol;
+rf_CheckForFullRbuf(RF_Raid_t *raidPtr, RF_ReconCtrl_t *reconCtrl, 
+		    RF_ReconParityStripeStatus_t *pssPtr, int numDataCol)
 {
 	RF_ReconBuffer_t *p, *pt, *rbuf = (RF_ReconBuffer_t *) pssPtr->rbuf;
 
@@ -383,9 +377,7 @@ rf_CheckForFullRbuf(raidPtr, reconCtrl, pssPtr, numDataCol)
  * assumes the rb_mutex is LOCKED at entry
  */
 void 
-rf_ReleaseFloatingReconBuffer(raidPtr, rbuf)
-	RF_Raid_t *raidPtr;
-	RF_ReconBuffer_t *rbuf;
+rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 {
 	RF_ReconCtrl_t *rcPtr = raidPtr->reconControl;
 	RF_CallbackDesc_t *cb;

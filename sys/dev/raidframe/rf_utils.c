@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.11 2003/01/03 08:05:22 junyoung Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.12 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11 2003/01/03 08:05:22 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.12 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -42,10 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11 2003/01/03 08:05:22 junyoung Exp $
 
 /* creates & zeros 2-d array with b rows and k columns (MCH) */
 RF_RowCol_t **
-rf_make_2d_array(b, k, allocList)
-	int     b;
-	int     k;
-	RF_AllocListElem_t *allocList;
+rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList)
 {
 	RF_RowCol_t **retval, i;
 
@@ -60,10 +57,7 @@ rf_make_2d_array(b, k, allocList)
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
 void 
-rf_free_2d_array(a, b, k)
-	RF_RowCol_t **a;
-	int     b;
-	int     k;
+rf_free_2d_array(RF_RowCol_t **a, int b, int k)
 {
 	RF_RowCol_t i;
 
@@ -75,9 +69,7 @@ rf_free_2d_array(a, b, k)
 
 /* creates & zeros a 1-d array with c columns */
 RF_RowCol_t *
-rf_make_1d_array(c, allocList)
-	int     c;
-	RF_AllocListElem_t *allocList;
+rf_make_1d_array(int c, RF_AllocListElem_t *allocList)
 {
 	RF_RowCol_t *retval;
 
@@ -87,9 +79,7 @@ rf_make_1d_array(c, allocList)
 }
 
 void 
-rf_free_1d_array(a, n)
-	RF_RowCol_t *a;
-	int     n;
+rf_free_1d_array(RF_RowCol_t *a, int n)
 {
 	RF_Free(a, n * sizeof(RF_RowCol_t));
 }
@@ -98,9 +88,7 @@ rf_free_1d_array(a, n)
  * between a and b.     (MCH)
  */
 int 
-rf_gcd(m, n)
-	int     m;
-	int     n;
+rf_gcd(int m, int n)
 {
 	int     t;
 
@@ -123,8 +111,7 @@ rf_gcd(m, n)
 		       ( ((x) >= 'A' && (x) <= 'F') ? (x) - 'A' + 10 : (x - '0') ) )
 
 int 
-rf_atoi(p)
-	char   *p;
+rf_atoi(char *p)
 {
 	int     val = 0, negate = 0;
 
@@ -138,8 +125,7 @@ rf_atoi(p)
 }
 
 int 
-rf_htoi(p)
-	char   *p;
+rf_htoi(char *p)
 {
 	int     val = 0;
 	for (; ISHEXCHAR(*p); p++)

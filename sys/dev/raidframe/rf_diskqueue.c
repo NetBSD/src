@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.26 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.27 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.26 2003/12/29 05:48:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.27 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -157,8 +157,7 @@ static struct pool rf_dqd_pool;
 #include <sys/buf.h>
 
 static int 
-init_dqd(dqd)
-	RF_DiskQueueData_t *dqd;
+init_dqd(RF_DiskQueueData_t *dqd)
 {
 
 	dqd->bp = (struct buf *) malloc(sizeof(struct buf), 
@@ -172,24 +171,18 @@ init_dqd(dqd)
 }
 
 static void 
-clean_dqd(dqd)
-	RF_DiskQueueData_t *dqd;
+clean_dqd(RF_DiskQueueData_t *dqd)
 {
 	free(dqd->bp, M_RAIDFRAME);
 }
 /* configures a single disk queue */
 
 int 
-rf_ConfigureDiskQueue(
-      RF_Raid_t * raidPtr,
-      RF_DiskQueue_t * diskqueue,
-      RF_RowCol_t c,
-      const RF_DiskQueueSW_t * p,
-      RF_SectorCount_t sectPerDisk,
-      dev_t dev,
-      int maxOutstanding,
-      RF_ShutdownList_t ** listp,
-      RF_AllocListElem_t * clList)
+rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
+		      RF_RowCol_t c, const RF_DiskQueueSW_t *p,
+		      RF_SectorCount_t sectPerDisk, dev_t dev,
+		      int maxOutstanding, RF_ShutdownList_t **listp,
+		      RF_AllocListElem_t *clList)
 {
 	diskqueue->col = c;
 	diskqueue->qPtr = p;
@@ -210,15 +203,13 @@ rf_ConfigureDiskQueue(
 }
 
 static void 
-rf_ShutdownDiskQueueSystem(ignored)
-	void   *ignored;
+rf_ShutdownDiskQueueSystem(void *ignored)
 {
 	pool_destroy(&rf_dqd_pool);
 }
 
 int 
-rf_ConfigureDiskQueueSystem(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -238,10 +229,8 @@ rf_ConfigureDiskQueueSystem(listp)
 }
 
 int 
-rf_ConfigureDiskQueues(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		       RF_Config_t *cfgPtr)
 {
 	RF_DiskQueue_t *diskQueues, *spareQueues;
 	const RF_DiskQueueSW_t *p;
@@ -324,10 +313,7 @@ rf_ConfigureDiskQueues(
  *    Do the same as at user level, with the sleeps and wakeups suppressed.
  */
 void 
-rf_DiskIOEnqueue(queue, req, pri)
-	RF_DiskQueue_t *queue;
-	RF_DiskQueueData_t *req;
-	int     pri;
+rf_DiskIOEnqueue(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int pri)
 {
 	RF_ETIMER_START(req->qtime);
 	RF_ASSERT(req->type == RF_IO_TYPE_NOP || req->numSector);
@@ -384,10 +370,7 @@ rf_DiskIOEnqueue(queue, req, pri)
 
 /* get the next set of I/Os started, kernel version only */
 void 
-rf_DiskIOComplete(queue, req, status)
-	RF_DiskQueue_t *queue;
-	RF_DiskQueueData_t *req;
-	int     status;
+rf_DiskIOComplete(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int status)
 {
 	int     done = 0;
 
@@ -475,10 +458,8 @@ rf_DiskIOComplete(queue, req, status)
  * a queue, this routine does nothing and returns -1.
  */
 int 
-rf_DiskIOPromote(queue, parityStripeID, which_ru)
-	RF_DiskQueue_t *queue;
-	RF_StripeNum_t parityStripeID;
-	RF_ReconUnitNum_t which_ru;
+rf_DiskIOPromote(RF_DiskQueue_t *queue, RF_StripeNum_t parityStripeID,
+		 RF_ReconUnitNum_t which_ru)
 {
 	int     retval;
 
@@ -491,20 +472,14 @@ rf_DiskIOPromote(queue, parityStripeID, which_ru)
 }
 
 RF_DiskQueueData_t *
-rf_CreateDiskQueueData(
-    RF_IoType_t typ,
-    RF_SectorNum_t ssect,
-    RF_SectorCount_t nsect,
-    caddr_t buf,
-    RF_StripeNum_t parityStripeID,
-    RF_ReconUnitNum_t which_ru,
-    int (*wakeF) (void *, int),
-    void *arg,
-    RF_DiskQueueData_t * next,
-    RF_AccTraceEntry_t * tracerec,
-    void *raidPtr,
-    RF_DiskQueueDataFlags_t flags,
-    void *kb_proc)
+rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
+		       RF_SectorCount_t nsect, caddr_t buf,
+		       RF_StripeNum_t parityStripeID,
+		       RF_ReconUnitNum_t which_ru,
+		       int (*wakeF) (void *, int), void *arg,
+		       RF_DiskQueueData_t *next,
+		       RF_AccTraceEntry_t *tracerec, void *raidPtr,
+		       RF_DiskQueueDataFlags_t flags, void *kb_proc)
 {
 	RF_DiskQueueData_t *p;
 
@@ -533,8 +508,7 @@ rf_CreateDiskQueueData(
 }
 
 void 
-rf_FreeDiskQueueData(p)
-	RF_DiskQueueData_t *p;
+rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
 	clean_dqd(p);
 	pool_put(&rf_dqd_pool, p);

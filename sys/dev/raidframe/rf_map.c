@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.25 2003/12/29 17:13:36 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.26 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.25 2003/12/29 17:13:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.26 2003/12/30 21:59:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,17 +71,15 @@ static void rf_FreeASMList(RF_AccessStripeMap_t * start,
  * 
  * This routine returns NULL if numBlocks is 0
  *
+ * raidAddress - starting address in RAID address space
+ * numBlocks   - number of blocks in RAID address space to access
+ * buffer      - buffer to supply/recieve data
+ * remap       - 1 => remap address to spare space
  ***************************************************************************/
 
 RF_AccessStripeMapHeader_t *
-rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
-	RF_Raid_t *raidPtr;
-	RF_RaidAddr_t raidAddress;	/* starting address in RAID address
-					 * space */
-	RF_SectorCount_t numBlocks;	/* number of blocks in RAID address
-					 * space to access */
-	caddr_t buffer;		/* buffer to supply/receive data */
-	int     remap;		/* 1 => remap addresses to spare space */
+rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
+	     RF_SectorCount_t numBlocks, caddr_t buffer, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_AccessStripeMapHeader_t *asm_hdr = NULL;
@@ -266,9 +264,8 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
  ***************************************************************************/
 
 void 
-rf_MarkFailuresInASMList(raidPtr, asm_h)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMapHeader_t *asm_h;
+rf_MarkFailuresInASMList(RF_Raid_t *raidPtr, 
+			 RF_AccessStripeMapHeader_t *asm_h)
 {
 	RF_RaidDisk_t *disks = raidPtr->Disks;
 	RF_AccessStripeMap_t *asmap;
@@ -336,8 +333,7 @@ static struct pool rf_pda_pool;   /* may need to be visible for
    release all the free lists */
 static void rf_ShutdownMapModule(void *);
 static void 
-rf_ShutdownMapModule(ignored)
-	void   *ignored;
+rf_ShutdownMapModule(void *ignored)
 {
 	pool_destroy(&rf_asmhdr_pool);
 	pool_destroy(&rf_asm_pool);
@@ -345,8 +341,7 @@ rf_ShutdownMapModule(ignored)
 }
 
 int 
-rf_ConfigureMapModule(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -386,8 +381,7 @@ rf_AllocAccessStripeMapHeader()
 }
 
 void 
-rf_FreeAccessStripeMapHeader(p)
-	RF_AccessStripeMapHeader_t *p;
+rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 {
 	pool_put(&rf_asmhdr_pool, p);
 }
@@ -408,8 +402,7 @@ rf_AllocPhysDiskAddr()
  * not be much of a performance hit, because it should be very
  * infrequently executed.  */
 RF_PhysDiskAddr_t *
-rf_AllocPDAList(count)
-	int     count;
+rf_AllocPDAList(int count)
 {
 	RF_PhysDiskAddr_t *p, *prev;
 	int i;
@@ -427,18 +420,17 @@ rf_AllocPDAList(count)
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 void 
-rf_FreePhysDiskAddr(p)
-	RF_PhysDiskAddr_t *p;
+rf_FreePhysDiskAddr(RF_PhysDiskAddr_t *p)
 {
 	pool_put(&rf_pda_pool, p);
 }
 #endif
 
+/* l_start, l_end - pointers to start and end of list
+ * count          - number of elements in list
+ */
 static void 
-rf_FreePDAList(l_start, l_end, count)
-	RF_PhysDiskAddr_t *l_start, *l_end;	/* pointers to start and end
-						 * of list */
-	int     count;		/* number of elements in list */
+rf_FreePDAList(RF_PhysDiskAddr_t *l_start, RF_PhysDiskAddr_t *l_end, int count)
 {
 	RF_PhysDiskAddr_t *p, *tmp;
 
@@ -456,8 +448,7 @@ rf_FreePDAList(l_start, l_end, count)
  * shutdown.  This should not be much of a performance hit, because it
  * should be very infrequently executed.  */
 RF_AccessStripeMap_t *
-rf_AllocASMList(count)
-	int     count;
+rf_AllocASMList(int count)
 {
 	RF_AccessStripeMap_t *p, *prev;
 	int i;
@@ -473,9 +464,8 @@ rf_AllocASMList(count)
 }
 
 static void 
-rf_FreeASMList(l_start, l_end, count)
-	RF_AccessStripeMap_t *l_start, *l_end;
-	int     count;
+rf_FreeASMList(RF_AccessStripeMap_t *l_start, RF_AccessStripeMap_t *l_end,
+	       int count)
 {
 	RF_AccessStripeMap_t *p, *tmp;
 
@@ -488,8 +478,7 @@ rf_FreeASMList(l_start, l_end, count)
 }
 
 void 
-rf_FreeAccessStripeMap(hdr)
-	RF_AccessStripeMapHeader_t *hdr;
+rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 {
 	RF_AccessStripeMap_t *p, *pt = NULL;
 	RF_PhysDiskAddr_t *pdp, *trailer, *pdaList = NULL, *pdaEnd = NULL;
@@ -559,9 +548,7 @@ rf_FreeAccessStripeMap(hdr)
  *
  * ASSUMES AT MOST ONE FAILURE IN THE STRIPE.  */
 int 
-rf_CheckStripeForFailures(raidPtr, asmap)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
+rf_CheckStripeForFailures(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 {
 	RF_RowCol_t tcol, pcol, *diskids, i;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -613,9 +600,7 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 */
 
 int 
-rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
+rf_NumFailedDataUnitsInStripe(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_RowCol_t tcol, i;
@@ -651,17 +636,15 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
  ***************************************************************************/
 #if RF_DEBUG_MAP
 void 
-rf_PrintAccessStripeMap(asm_h)
-	RF_AccessStripeMapHeader_t *asm_h;
+rf_PrintAccessStripeMap(RF_AccessStripeMapHeader_t *asm_h)
 {
 	rf_PrintFullAccessStripeMap(asm_h, 0);
 }
 #endif
 
+/* prbuf - flag to print buffer pointers */
 void 
-rf_PrintFullAccessStripeMap(asm_h, prbuf)
-	RF_AccessStripeMapHeader_t *asm_h;
-	int     prbuf;		/* flag to print buffer pointers */
+rf_PrintFullAccessStripeMap(RF_AccessStripeMapHeader_t *asm_h, int prbuf)
 {
 	int     i;
 	RF_AccessStripeMap_t *asmap = asm_h->stripeMap;
@@ -715,10 +698,8 @@ rf_PrintFullAccessStripeMap(asm_h, prbuf)
 
 #if RF_MAP_DEBUG
 void 
-rf_PrintRaidAddressInfo(raidPtr, raidAddr, numBlocks)
-	RF_Raid_t *raidPtr;
-	RF_RaidAddr_t raidAddr;
-	RF_SectorCount_t numBlocks;
+rf_PrintRaidAddressInfo(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr, 
+			RF_SectorCount_t numBlocks)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_RaidAddr_t ra, sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, raidAddr);
@@ -737,12 +718,11 @@ rf_PrintRaidAddressInfo(raidPtr, raidAddr, numBlocks)
  * range restrict the parity descriptor to touch only the correct
  * stuff.  */
 void 
-rf_ASMParityAdjust(
-    RF_PhysDiskAddr_t * toAdjust,
-    RF_StripeNum_t startAddrWithinStripe,
-    RF_SectorNum_t endAddress,
-    RF_RaidLayout_t * layoutPtr,
-    RF_AccessStripeMap_t * asm_p)
+rf_ASMParityAdjust(RF_PhysDiskAddr_t *toAdjust,
+		   RF_StripeNum_t startAddrWithinStripe,
+		   RF_SectorNum_t endAddress,
+		   RF_RaidLayout_t *layoutPtr,
+		   RF_AccessStripeMap_t *asm_p)
 {
 	RF_PhysDiskAddr_t *new_pda;
 
@@ -795,12 +775,9 @@ rf_ASMParityAdjust(
  * I/O.  If it has been failed, record it in the asm pointer.  Fourth
  * arg is whether data or parity.  */
 void 
-rf_ASMCheckStatus(
-    RF_Raid_t * raidPtr,
-    RF_PhysDiskAddr_t * pda_p,
-    RF_AccessStripeMap_t * asm_p,
-    RF_RaidDisk_t * disks,
-    int parity)
+rf_ASMCheckStatus(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda_p,
+		  RF_AccessStripeMap_t *asm_p, RF_RaidDisk_t *disks,
+		  int parity)
 {
 	RF_DiskStatus_t dstatus;
 	RF_RowCol_t fcol;
