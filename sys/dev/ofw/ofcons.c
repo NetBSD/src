@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.8 1998/02/24 05:44:39 mycroft Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.9 1998/03/21 04:08:37 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -114,7 +114,6 @@ ofcons_open(dev, flag, mode, p)
 	tp->t_param = ofcons_param;
 	tp->t_dev = dev;
 	if (!(tp->t_state & TS_ISOPEN)) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;

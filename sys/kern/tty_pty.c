@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.39 1998/03/01 02:22:33 fvdl Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.40 1998/03/21 04:02:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -132,7 +132,6 @@ ptsopen(dev, flag, devtype, p)
 	else
 		tp = pti->pt_tty;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		SET(tp->t_state, TS_WOPEN);
 		ttychars(tp);		/* Set up default chars */
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -144,15 +143,15 @@ ptsopen(dev, flag, devtype, p)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
-	while (!ISSET(tp->t_state, TS_CARR_ON)) {
-		SET(tp->t_state, TS_WOPEN);
-		if (flag&FNONBLOCK)
-			break;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-				 ttopen, 0);
-		if (error)
-			return (error);
-	}
+	if (!ISSET(flag, O_NONBLOCK))
+		while (!ISSET(tp->t_state, TS_CARR_ON)) {
+			tp->t_wopen++;
+			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
+			    ttopen, 0);
+			tp->t_wopen--;
+			if (error)
+				return (error);
+		}
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.39 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: tty.h,v 1.40 1998/03/21 04:02:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -95,6 +95,7 @@ struct tty {
 	u_char	t_line;			/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
+	int	t_wopen;		/* Processes waiting for open. */
 	int	t_flags;		/* Tty flags. */
 	struct	pgrp *t_pgrp;		/* Foreground process group. */
 	struct	session *t_session;	/* Enclosing session. */
@@ -148,7 +149,6 @@ struct tty {
 #define	TS_TBLOCK	0x00040		/* Further input blocked. */
 #define	TS_TIMEOUT	0x00080		/* Wait for output char processing. */
 #define	TS_TTSTOP	0x00100		/* Output paused. */
-#define	TS_WOPEN	0x00200		/* Open in progress. */
 #define	TS_XCLUDE	0x00400		/* Tty requires exclusivity. */
 
 /* State for intra-line fancy editing work. */
