@@ -1,11 +1,11 @@
-/* $NetBSD: map.c,v 1.11 2003/06/01 14:07:07 atatat Exp $ */
+/* $NetBSD: map.c,v 1.12 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map.c,v 1.11 2003/06/01 14:07:07 atatat Exp $");
+__RCSID("$NetBSD: map.c,v 1.12 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1992, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: map.c,v 1.11 2003/06/01 14:07:07 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: map.c,v 8.645.2.7 2002/12/03 17:01:15 ca Exp")
+SM_RCSID("@(#)Id: map.c,v 8.645.2.10 2003/07/24 18:24:17 ca Exp")
 
 #if LDAPMAP
 # include <sm/ldap.h>
@@ -389,7 +389,7 @@ map_rewrite(map, s, slen, av)
 			if (c != '%')
 			{
   pushc:
-				if (--len <= 0)
+				if (len-- <= 1)
 				     break;
 				*bp++ = c;
 				continue;
@@ -400,8 +400,9 @@ map_rewrite(map, s, slen, av)
 				goto pushc;
 			if (!(isascii(c) && isdigit(c)))
 			{
+				if (len-- <= 1)
+				     break;
 				*bp++ = '%';
-				--len;
 				goto pushc;
 			}
 			for (avp = av; --c >= '0' && *avp != NULL; avp++)
@@ -1179,8 +1180,7 @@ dns_map_lookup(map, name, av, statp)
 	if (r == NULL)
 	{
 		result = NULL;
-		if (errno == ETIMEDOUT || h_errno == TRY_AGAIN ||
-		    errno == ECONNREFUSED)
+		if (h_errno == TRY_AGAIN || transienterror(errno))
 			*statp = EX_TEMPFAIL;
 		else
 			*statp = EX_NOTFOUND;
@@ -6948,6 +6948,10 @@ regex_map_init(map, ap)
 
 		  case 'm':	/* matchonly */
 			map->map_mflags |= MF_MATCHONLY;
+			break;
+
+		  case 'q':
+			map->map_mflags |= MF_KEEPQUOTES;
 			break;
 
 		  case 'S':

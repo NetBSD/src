@@ -1,7 +1,7 @@
-/* $NetBSD: daemon.c,v 1.12 2003/06/01 14:07:05 atatat Exp $ */
+/* $NetBSD: daemon.c,v 1.13 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: daemon.c,v 1.12 2003/06/01 14:07:05 atatat Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.13 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: daemon.c,v 1.12 2003/06/01 14:07:05 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: daemon.c,v 8.613.2.14 2003/02/11 17:17:22 ca Exp")
+SM_RCSID("@(#)Id: daemon.c,v 8.613.2.20 2003/11/25 19:02:24 ca Exp")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -170,6 +170,8 @@ getrequests(e)
 	extern bool refuseconnections __P((char *, ENVELOPE *, int, bool));
 
 
+	/* initialize data for function that generates queue ids */
+	init_qid_alg();
 	for (idx = 0; idx < NDaemons; idx++)
 	{
 		Daemons[idx].d_port = setupdaemon(&(Daemons[idx].d_addr));
@@ -241,13 +243,7 @@ getrequests(e)
 
 		/* see if we are rejecting connections */
 		(void) sm_blocksignal(SIGALRM);
-
-		if (ShutdownRequest != NULL)
-			shutdown_daemon();
-		else if (RestartRequest != NULL)
-			restart_daemon();
-		else if (RestartWorkGroup)
-			restart_marked_work_groups();
+		CHECK_RESTART;
 
 		for (idx = 0; idx < NDaemons; idx++)
 		{
@@ -289,13 +285,7 @@ getrequests(e)
 		}
 
 		/* May have been sleeping above, check again */
-		if (ShutdownRequest != NULL)
-			shutdown_daemon();
-		else if (RestartRequest != NULL)
-			restart_daemon();
-		else if (RestartWorkGroup)
-			restart_marked_work_groups();
-
+		CHECK_RESTART;
 		getrequests_checkdiskspace(e);
 
 #if XDEBUG
@@ -341,15 +331,8 @@ getrequests(e)
 			fd_set readfds;
 			struct timeval timeout;
 
-			if (ShutdownRequest != NULL)
-				shutdown_daemon();
-			else if (RestartRequest != NULL)
-				restart_daemon();
-			else if (RestartWorkGroup)
-				restart_marked_work_groups();
-
+			CHECK_RESTART;
 			FD_ZERO(&readfds);
-
 			for (idx = 0; idx < NDaemons; idx++)
 			{
 				/* wait for a connection */
@@ -386,14 +369,7 @@ getrequests(e)
 				   NULL, NULL, &timeout);
 
 			/* Did someone signal while waiting? */
-			if (ShutdownRequest != NULL)
-				shutdown_daemon();
-			else if (RestartRequest != NULL)
-				restart_daemon();
-			else if (RestartWorkGroup)
-				restart_marked_work_groups();
-
-
+			CHECK_RESTART;
 
 			curdaemon = -1;
 			if (doqueuerun())
@@ -3369,7 +3345,9 @@ getauthinfo(fd, may_be_forged)
 		/* try to match the reverse against the forward lookup */
 		hp = sm_gethostbyname(RealHostName, family);
 		if (hp == NULL)
+		{
 			*may_be_forged = true;
+		}
 		else
 		{
 			for (ha = hp->h_addr_list; *ha != NULL; ha++)
@@ -3513,10 +3491,21 @@ getauthinfo(fd, may_be_forged)
 	nleft = sizeof ibuf - 1;
 	while ((i = read(s, p, nleft)) > 0)
 	{
+		char *s;
+
 		p += i;
 		nleft -= i;
 		*p = '\0';
-		if (strchr(ibuf, '\n') != NULL || nleft <= 0)
+		if ((s = strchr(ibuf, '\n')) != NULL)
+		{
+			if (p > s + 1)
+			{
+				p = s + 1;
+				*p = '\0';
+			}
+			break;
+		}
+		if (nleft <= 0)
 			break;
 	}
 	(void) close(s);

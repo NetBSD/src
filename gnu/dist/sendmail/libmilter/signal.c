@@ -1,11 +1,11 @@
-/* $NetBSD: signal.c,v 1.7 2003/06/01 14:07:00 atatat Exp $ */
+/* $NetBSD: signal.c,v 1.8 2004/03/25 19:14:30 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signal.c,v 1.7 2003/06/01 14:07:00 atatat Exp $");
+__RCSID("$NetBSD: signal.c,v 1.8 2004/03/25 19:14:30 atatat Exp $");
 #endif
 
 /*
- *  Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: signal.c,v 1.7 2003/06/01 14:07:00 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: signal.c,v 8.37.2.2 2002/10/23 16:52:00 ca Exp")
+SM_RCSID("@(#)Id: signal.c,v 8.37.2.4 2003/11/19 00:22:40 ca Exp")
 
 #include "libmilter.h"
 
@@ -96,15 +96,15 @@ mi_signal_thread(name)
 	int sig, errs;
 	sigset_t set;
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGHUP);
-	sigaddset(&set, SIGTERM);
+	(void) sigemptyset(&set);
+	(void) sigaddset(&set, SIGHUP);
+	(void) sigaddset(&set, SIGTERM);
 
 	/* Handle Ctrl-C gracefully for debugging */
-	sigaddset(&set, SIGINT);
+	(void) sigaddset(&set, SIGINT);
 	errs = 0;
 
-	while (true)
+	for (;;)
 	{
 		sig = 0;
 #if defined(SOLARIS) || defined(__svr5__)
@@ -144,6 +144,7 @@ mi_signal_thread(name)
 			break;
 		}
 	}
+	/* NOTREACHED */
 }
 /*
 **  MI_SPAWN_SIGNAL_THREAD -- spawn thread to handle signals
@@ -164,10 +165,10 @@ mi_spawn_signal_thread(name)
 	sigset_t set;
 
 	/* Mask HUP and KILL signals */
-	sigemptyset(&set);
-	sigaddset(&set, SIGHUP);
-	sigaddset(&set, SIGTERM);
-	sigaddset(&set, SIGINT);
+	(void) sigemptyset(&set);
+	(void) sigaddset(&set, SIGHUP);
+	(void) sigaddset(&set, SIGTERM);
+	(void) sigaddset(&set, SIGINT);
 
 	if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0)
 	{

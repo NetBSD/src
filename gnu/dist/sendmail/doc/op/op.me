@@ -9,8 +9,8 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	Id: op.me,v 8.609.2.23 2003/03/28 05:51:16 ca Exp
-.\"	$NetBSD: op.me,v 1.11 2003/06/01 14:06:57 atatat Exp $
+.\"	Id: op.me,v 8.609.2.29 2004/01/11 17:58:24 ca Exp
+.\"	$NetBSD: op.me,v 1.12 2004/03/25 19:14:30 atatat Exp $
 .\"
 .\" eqn op.me | pic | troff -me
 .\"
@@ -91,7 +91,7 @@ Sendmail, Inc.
 .de Ve
 Version \\$2
 ..
-.Ve Revision: 8.609.2.23
+.Ve Revision: 8.609.2.29
 .rm Ve
 .sp
 For Sendmail Version 8.12
@@ -1126,7 +1126,7 @@ that some sites might want.
 A complete description of the log levels
 is given in section
 .\" XREF
-4.6.
+4.7.
 .sh 2 "Dumping State"
 .pp
 You can ask
@@ -3026,7 +3026,7 @@ alias files,
 :include: files,
 and external databases)
 must be readable by that user.
-Also, since sendmail will not be able to change it's uid,
+Also, since sendmail will not be able to change its uid,
 delivery to programs or files will be marked as unsafe,
 e.g., undeliverable,
 in
@@ -4308,8 +4308,11 @@ is ignored (even if the ruleset does not return a ``useful'' result).
 .pp
 The
 .i queuegroup
-ruleset is used to map an address to a queue group name.
-It should return
+ruleset is used to map a recipient address to a queue group name.
+The input for the ruleset is a recipient address as specified by the
+.sm "SMTP RCPT"
+command.
+The ruleset should return
 .b $#
 followed by the name of a queue group.
 If the return value starts with anything else it is silently ignored.
@@ -6225,8 +6228,9 @@ selected SASL mechanisms.
 Explanations of these properties can be found in the Cyrus SASL documentation.
 .ip BadRcptThrottle=\fIN\fP
 [no short name]
-If set and more than the specified number of recipients in a single SMTP
-envelope are rejected, sleep for one second after each rejected RCPT command.
+If set and the specified number of recipients in a single SMTP
+transaction have been rejected, sleep for one second after each subsequent
+RCPT command in that transaction.
 .ip BlankSub=\fIc\fP
 [B]
 Set the blank substitution character to
@@ -8271,7 +8275,7 @@ Contributed and supported by
 Mark Roth, roth@uiuc.edu.
 For more information,
 consult the web site
-.q http://www-dev.cso.uiuc.edu/sendmail/ .
+.q http://www-dev.cites.uiuc.edu/sendmail/ .
 .ip nsd
 nsd map for IRIX 6.5 and later.
 Contributed and supported by Bob Mende of SGI,
@@ -9155,7 +9159,7 @@ Then create a config file that uses this.
 For example, using the V8 M4 configuration, include the
 following line in your .mc file:
 .(b
-define(\`confUSERDB_SPEC\', /etc/mail/userdb.db)
+define(\`confUSERDB_SPEC\', /etc/mail/userdb)
 .)b
 .sh 1 "OTHER CONFIGURATION"
 .pp
@@ -10765,7 +10769,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version Revision: 8.609.2.23
+.\"Version Revision: 8.609.2.29
 .\".ce 0
 .bp 3
 .ce
