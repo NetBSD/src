@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.7 2000/01/21 19:51:36 mycroft Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.8 2001/04/13 14:18:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,9 +29,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.7 2000/01/21 19:51:36 mycroft Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.8 2001/04/13 14:18:09 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +41,10 @@ __RCSID("$NetBSD: asprintf.c,v 1.7 2000/01/21 19:51:36 mycroft Exp $");
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(asprintf, _asprintf)
 #endif
 
 int
