@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2000/02/11 19:30:30 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2001/01/11 13:18:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,7 @@
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 

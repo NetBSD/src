@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.20 2001/01/11 10:40:56 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21 2001/01/11 13:18:37 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -50,11 +50,10 @@
 
 
 #define RELOC(v, t)	*((t*)((caddr_t)&(v) + firstpa))
-#define RELOCA(a, t)	((t)((caddr_t)(a) + firstpa))
 
 extern char *etext;
 extern int Sysptsize;
-extern char *extiobase, *proc0paddr;
+extern char *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
@@ -63,9 +62,6 @@ extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern psize_t mem_size;
 extern int protection_codes[];
-#ifdef M68K_MMU_HP
-extern int pmap_aliasmask;
-#endif
 
 u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
 
@@ -98,7 +94,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, eiiopa, kptmpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -115,16 +111,14 @@ pmap_bootstrap(nextpa, firstpa)
 	 *	iiopa		internal IO space
 	 *			PT pages		IIOMAPSIZE pages
 	 *
-	 *	eiopa		external IO space
-	 *			PT pages		EIOMAPSIZE pages
+	 *	eiiopa		page following
+	 *			internal IO space
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
-	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
+	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
+	 *   is the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
-	 *
-	 *	lkptpa		last kernel PT page	1 page
 	 *
 	 *	p0upa		proc 0 u-area		UPAGES pages
 	 *
@@ -141,11 +135,9 @@ pmap_bootstrap(nextpa, firstpa)
 	nptpages = RELOC(Sysptsize, int) +
 		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa;
-	iiopa = eiopa - IIOMAPSIZE * sizeof(pt_entry_t);
+	eiiopa = nextpa;		/* just a reference for later */
+	iiopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
-	nextpa += NBPG;
-	lkptpa = nextpa;
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
@@ -163,15 +155,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 * points to blocks of 128 second level descriptors (512 bytes)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
-	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
-	 * to the last physical page of RAM to give us a region in which
-	 * PA == VA.  We use the first part of this page for enabling
-	 * and disabling mapping.  The last part of this page also contains
-	 * info left by the boot ROM.
 	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
@@ -226,17 +209,6 @@ pmap_bootstrap(nextpa, firstpa)
 		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
-		 * Now initialize the final portion of that block of
-		 * descriptors to map the "last PT page".
-		 */
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = lkptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-		/*
 		 * Initialize Sysptmap
 		 */
 		pte = (u_int *)kptmpa;
@@ -249,15 +221,10 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entry.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
-		/*
-		 * Initialize the last to point to the page
-		 * table page allocated earlier.
-		 */
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif /* M68040 || M68060 */
 	{
@@ -280,28 +247,13 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entries in both.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
-		/*
-		 * Initialize the last to point to point to the page
-		 * table page allocated earlier.
-		 */
-		*ste = lkptpa | SG_RW | SG_V;
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
-	/*
-	 * Invalidate all but the final entry in the last kernel PT page
-	 * (u-area PTEs will be validated later).  The final entry maps
-	 * the last page of physical memory.
-	 */
-	pte = (u_int *)lkptpa;
-	epte = &pte[NPTEPG/*-1*/];
-	while (pte < epte)
-		*pte++ = PG_NV;
-	/* *pte = MAXADDR | PG_RW | PG_CI | PG_V;*/
+
 	/*
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.
@@ -325,7 +277,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -353,13 +305,9 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
-	 * We do this here since the 320/350 MMU registers (also
-	 * used, but to a lesser extent, on other models) are mapped
-	 * in this range and it would be nice to be able to access
-	 * them after the MMU is turned on.
 	 */
 	pte = (u_int *)iiopa;
-	epte = (u_int *)eiopa;
+	epte = (u_int *)eiiopa;
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -391,15 +339,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * kernel page table.
 	 */
 	RELOC(IODEVbase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE));
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
 	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
 	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG);
-	/*
-	 * extiobase: base of external (DIO-II) IO space.
-	 * EIOMAPSIZE pages at the end of the static kernel page table.
-	 */
-	RELOC(extiobase, char *) =
 		(char *)m68k_ptob(nptpages*NPTEPG);
 
 	/*
@@ -433,17 +375,6 @@ pmap_bootstrap(nextpa, firstpa)
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
-#ifdef M68K_MMU_HP
-	/*
-	 * Determine VA aliasing distance if any
-	 */
-	if (RELOC(ectype, int) == EC_VIRT)
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-#endif
-
 	/*
 	 * Initialize protection array.
 	 * XXX don't use a switch statement, it might produce an
@@ -464,7 +395,7 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 
 	/*
-	 * Kernel page/segment table allocated in locore,
+	 * Kernel page/segment table allocated above,
 	 * just initialize pointers.
 	 */
 	{
