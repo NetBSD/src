@@ -1,4 +1,4 @@
-/*	$NetBSD: hostname.c,v 1.13 1998/07/28 05:31:24 mycroft Exp $	*/
+/* $NetBSD: hostname.c,v 1.14 2001/09/16 13:48:35 wiz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: hostname.c,v 1.13 1998/07/28 05:31:24 mycroft Exp $");
+__RCSID("$NetBSD: hostname.c,v 1.14 2001/09/16 13:48:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,17 +55,16 @@ __RCSID("$NetBSD: hostname.c,v 1.13 1998/07/28 05:31:24 mycroft Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void usage __P((void));
-int main __P((int, char *[]));
+void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, sflag;
 	char *p, hostname[MAXHOSTNAMELEN + 1];
 
+	setprogname(argv[0]);
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1)
 		switch (ch) {
@@ -98,10 +97,10 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr, "usage: hostname [-s] [name-of-host]\n");
+	(void)fprintf(stderr, "usage: %s [-s] [name-of-host]\n",
+	    getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
