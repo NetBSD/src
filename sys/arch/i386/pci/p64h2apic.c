@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.4 2002/10/17 22:03:40 thorpej Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.5 2003/07/14 22:13:10 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * This driver currently does nothing useful but will eventually
  * thwak the ioapic into working correctly.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.5 2003/07/14 22:13:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.9 2003/06/28 11:33:19 fvdl Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10 2003/07/14 22:13:10 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,11 +39,12 @@
  */
 
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
 /*
  * Interprocessor interrupt handlers.
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2003/07/14 22:13:10 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
