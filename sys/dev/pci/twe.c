@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.13 2001/03/07 23:07:17 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.14 2001/03/30 16:48:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ struct {
 	{ 0x0109, "aport timeout" },
 	{ 0x010a, "drive error" },
 	{ 0x010b, "rebuild started" },
+	{ 0x010c, "init started" },
 	{ 0x0015, "table undefined" },
 	{ 0x00ff, "aen queue full" },
 };
