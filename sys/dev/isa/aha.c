@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.18 1996/10/21 22:40:14 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.19 1996/12/10 21:27:49 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -360,6 +360,7 @@ aha_attach(sc)
 	sc->sc_link.adapter = &aha_switch;
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * ask the adapter what subunits are present

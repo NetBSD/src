@@ -1,4 +1,4 @@
-/* $NetBSD: cosc.c,v 1.2 1996/10/29 23:53:00 mark Exp $ */
+/* $NetBSD: cosc.c,v 1.3 1996/12/10 21:27:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -264,6 +264,7 @@ coscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.adapter	    = &cosc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &cosc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
+	sc->sc_softc.sc_link.max_target     = 7;
 
 	/* initialise the card */
 #if 0

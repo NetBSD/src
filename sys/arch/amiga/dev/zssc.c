@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.20 1996/10/13 03:07:38 christos Exp $	*/
+/*	$NetBSD: zssc.c,v 1.21 1996/12/10 21:27:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -130,6 +130,7 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &zssc_scsiswitch;
 	sc->sc_link.device = &zssc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	siopinitialize(sc);
 

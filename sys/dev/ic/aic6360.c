@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.51 1996/10/13 01:37:34 christos Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -779,6 +779,7 @@ aicattach(parent, self, aux)
 	sc->sc_link.adapter = &aic_switch;
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	printf("\n");
 

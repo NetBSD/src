@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.8 1996/10/13 03:35:06 christos Exp $	*/
+/*	$NetBSD: spc.c,v 1.9 1996/12/10 21:27:46 thorpej Exp $	*/
 
 #define	integrate	static inline
 
@@ -464,6 +464,7 @@ spcattach(parent, self, aux)
 	sc->sc_link.adapter = &spc_switch;
 	sc->sc_link.device = &spc_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	printf("\n");
 
