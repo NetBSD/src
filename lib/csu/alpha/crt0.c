@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.12 1998/02/03 20:01:34 perry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.13 1998/03/27 09:11:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -71,8 +71,8 @@ char	*__progname = "";
 struct ps_strings *__ps_strings = 0;
 
 #ifndef ECOFF_COMPAT
-extern void	__init __P((void));
-extern void	__fini __P((void));
+extern void	_init __P((void));
+extern void	_fini __P((void));
 #endif /* ECOFF_COMPAT */
 
 #ifdef DYNAMIC
@@ -136,8 +136,8 @@ __start(sp, cleanup, obj, ps_strings)
 #endif
 
 #ifndef ECOFF_COMPAT
-	atexit(__fini);
-	__init();
+	atexit(_fini);
+	_init();
 #endif /* ECOFF_COMPAT */
 
 	exit(main(argc, argv, environ));
@@ -147,7 +147,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.12 1998/02/03 20:01:34 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.13 1998/03/27 09:11:33 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *

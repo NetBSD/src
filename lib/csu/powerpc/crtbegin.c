@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.2 1997/04/16 20:53:15 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.3 1998/03/27 09:11:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -85,10 +85,10 @@ __ctors()
 		(**p++)();
 }
 
-extern void __init(void) __attribute__((section(".init")));
+extern void _init(void) __attribute__((section(".init")));
 
 void
-__init()
+_init()
 {
 	static int initialized = 0;
 
@@ -103,10 +103,10 @@ __init()
 
 }
 
-extern void __fini(void) __attribute__((section(".fini")));
+extern void _fini(void) __attribute__((section(".fini")));
 
 void
-__fini()
+_fini()
 {
 	/*
 	 * Call global destructors.
