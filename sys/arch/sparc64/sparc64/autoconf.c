@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 2001/01/22 13:56:59 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.43 2001/02/11 00:27:06 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -106,6 +106,8 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
+char platform_type[32];
+
 static	char *str2hex __P((char *, int *));
 static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
@@ -634,7 +636,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
-	printf(": %s\n", getpropstringA(findroot(), "name", namebuf));
+	printf(": %s\n", getpropstringA(findroot(), "name", platform_type));
 
 
 	/*
