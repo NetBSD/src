@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1994/10/26 21:10:38 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1994/11/23 20:46:20 dean Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1444,7 +1444,7 @@ vm_page_alloc1()
 	if (cnt.v_free_count < cnt.v_free_min ||
 	    (cnt.v_free_count < cnt.v_free_target &&
 	     cnt.v_inactive_count < cnt.v_inactive_target))
-		thread_wakeup((int)&vm_pages_needed);
+		thread_wakeup((void *)&vm_pages_needed);
 	return (mem);
 }
 
