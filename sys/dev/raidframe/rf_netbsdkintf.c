@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.56 2000/02/23 03:44:03 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.57 2000/02/24 01:23:05 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2305,6 +2305,15 @@ rf_update_component_labels( raidPtr )
 					&clabel);
 				/* make sure status is noted */
 				clabel.status = rf_ds_optimal;
+				/* bump the counter */
+				clabel.mod_counter++;
+#if DEBUG
+				if (raidPtr->mod_counter != 
+				    clabel.mod_counter) {
+					printf("raid%d: mod_counter for row: %d col: %d not in sync\n", raidPtr->raidid, r, c);
+				}
+#endif
+
 				raidwrite_component_label( 
 					raidPtr->Disks[r][c].dev,
 					raidPtr->raid_cinfo[r][c].ci_vp,
@@ -2367,20 +2376,20 @@ rf_update_component_labels( raidPtr )
 				}
 			}
 			
+			/* XXX shouldn't *really* need this... */
 			raidread_component_label( 
 				      raidPtr->Disks[0][sparecol].dev,
 				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
 				      &clabel);
 			/* make sure status is noted */
-			clabel.version = RF_COMPONENT_LABEL_VERSION; 
+
+			raid_init_component_label(raidPtr, &clabel);
+
 			clabel.mod_counter = raidPtr->mod_counter;
-			clabel.serial_number = raidPtr->serial_number;
 			clabel.row = srow;
 			clabel.column = scol;
-			clabel.num_rows = raidPtr->numRow;
-			clabel.num_columns = raidPtr->numCol;
-			clabel.clean = RF_RAID_DIRTY; /* changed in a bit*/
 			clabel.status = rf_ds_optimal;
+
 			raidwrite_component_label(
 				      raidPtr->Disks[0][sparecol].dev,
 				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
@@ -2996,7 +3005,7 @@ raid_init_component_label(raidPtr, clabel)
 {
 	/* current version number */
 	clabel->version = RF_COMPONENT_LABEL_VERSION; 
-	clabel->serial_number = clabel->serial_number;
+	clabel->serial_number = raidPtr->serial_number;
 	clabel->mod_counter = raidPtr->mod_counter;
 	clabel->num_rows = raidPtr->numRow;
 	clabel->num_columns = raidPtr->numCol;
