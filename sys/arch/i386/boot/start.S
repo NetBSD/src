@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.10 1995/01/16 02:50:35 mycroft Exp $	*/
+/*	$NetBSD: start.S,v 1.11 1995/01/18 17:28:13 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -50,9 +50,10 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
 NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
-#include	"asm.h"
 
-	.file	"start.s"
+#include <machine/asm.h>
+#define	addr32	.byte 0x67
+#define	data32	.byte 0x66
 
 BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
 BOOTSTACK	=	0xfffc	# boot stack
@@ -222,7 +223,7 @@ load:
 #endif
 
 	data32
-	ljmp	$BOOTSEG, $ EXT(boot2)
+	ljmp	$BOOTSEG, $_C_LABEL(boot2)
 
 #
 #	read_error
@@ -294,9 +295,66 @@ done:
 	data32
 	ret
 
+
+/* Conventional GDT indexes. */
+BOOT_CS_INDEX	=	3
+BOOT_CS16_INDEX	=	5
+BOOT_DS_INDEX	=	4
+
+ENTRY(boot2)
+	data32
+	xorl	%eax, %eax
+	movl	%cs, %ax
+	movl	%ax, %ds
+	movl	%ax, %es
+	addr32
+	data32
+	movl	%eax, _C_LABEL(ourseg)
+	data32
+	shll	$4, %eax
+
+	/* fix up GDT entries for bootstrap */
+#define FIXUP(gdt_index) \
+	addr32; \
+	movl	%eax, _C_LABEL(Gdt)+(8*gdt_index)+2;	/* actually movw %ax */ \
+	addr32; \
+	movb	%bl, _C_LABEL(Gdt)+(8*gdt_index)+4
+
+	data32
+	shldl	$16, %eax, %ebx
+	FIXUP(BOOT_CS_INDEX)
+	FIXUP(BOOT_CS16_INDEX)
+	FIXUP(BOOT_DS_INDEX)
+
+	/* fix up GDT pointer */
+	data32
+	movl	%eax, %ecx
+	data32
+	addl	$_C_LABEL(Gdt), %eax
+	addr32
+	data32
+	movl	%eax, _C_LABEL(Gdtr)+2
+
+	/* change to protected mode */
+	data32
+	call	_C_LABEL(real_to_prot)
+
+	/* clear the bss */
+	movl	$_C_LABEL(edata), %edi
+	movl	$_C_LABEL(end), %ecx
+	subl	%edi, %ecx
+	subb	%al, %al
+	rep
+	stosb
+
+	movzbl	%dl, %edx	/* discard head (%dh) and random high bits */
+	pushl	%edx
+	call	_C_LABEL(boot)
+
 stop:
 	cli
 	hlt
+
 
 /* error messages */
 
@@ -314,17 +372,19 @@ enoboot: .asciz		"No bootable partition\r\n"
 endofcode:
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
-	. = EXT(boot1) + PARTSTART
-	.byte 0x0,0,0,0,0,0,0,0
-	.long 0,0
-	.byte 0x0,0,0,0,0,0,0,0
-	.long 0,0
-	.byte 0x0,0,0,0,0,0,0,0
-	.long 0,0
-	.byte BOOTABLE,0,1,0,BSDPART,255,255,255
-	.long 0,50000
+	. = _C_LABEL(boot1) + PARTSTART
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	BOOTABLE,0,1,0,BSDPART,255,255,255
+	.long	0,50000
 /* the last 2 bytes in the sector 0 contain the signature */
-	. = EXT(boot1) + 0x1fe
-	.value	SIGNATURE
-ENTRY(disklabel)
-	. = EXT(boot1) + 0x400	
+	. = _C_LABEL(boot1) + 0x1fe
+	.short	SIGNATURE
+	. = _C_LABEL(boot1) + 0x200
+	.globl	_disklabel
+_disklabel:
+	. = _C_LABEL(boot1) + 0x400	
