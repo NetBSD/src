@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1998/02/22 14:19:39 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.22 1998/04/13 12:10:27 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,6 +44,9 @@
 
 static unsigned long year;     /*  start of current year in seconds */
 static unsigned long year_len; /* length of current year in 100th of seconds */
+
+int	yeartonum __P((int));
+int	numtoyear __P((int));
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -117,11 +120,11 @@ inittodr(fs_time)
 
 	default: /* System clock OK, no warning if we don't want to. */
 		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
-			printf("Clock has gained %d days",
+			printf("Clock has gained %ld days",
 			    (time.tv_sec - fs_time) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
-			printf("Clock has lost %d day(s)",
+			printf("Clock has lost %ld day(s)",
 			    (fs_time - time.tv_sec) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		}

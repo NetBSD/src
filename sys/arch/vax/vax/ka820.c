@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.8 1998/01/24 14:16:22 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.9 1998/04/13 12:10:27 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h> 
 #include <vm/vm_kern.h>
@@ -97,6 +98,8 @@ char eeprom[KA820_EEPAGES * NBPG];
 
 struct ivec_dsp nollhanterare;
 
+static void hant __P((int));
+
 static void
 hant(arg)
 	int arg;
@@ -108,11 +111,11 @@ hant(arg)
 void
 ka820_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail;
 	extern	struct ivec_dsp idsptch;
 	extern	short *clk_page;
 	extern	int clk_adrshift, clk_tweak;
-	struct scb *sb;
+	struct	scb *sb;
 	int	junk, i, j;
 
 	/*
@@ -122,7 +125,7 @@ ka820_steal_pages()
 	 * the existent nodes, but we only loose 1K so...
 	 */
 	sb = (void *)avail_start;
-	MAPPHYS(junk, j, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
+	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
 	clk_adrshift = 0;	/* clk regs are addressed at short's */
 	clk_tweak = 1; 		/* ...but not exactly in each short */
 	MAPVIRT(clk_page, 1);
@@ -330,7 +333,7 @@ static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 			type = "";
 		} else
 			type = "mysterious error";
-		printf("%s: %s%s%s addr %x bank %x syn %x\n",
+		printf("%s: %s%s%s addr %lx bank %x syn %x\n",
 		    mc->mem_dev.dv_xname,
 		    hard ? "hard error: " : "soft ecc",
 		    type, mcr->ms_csr2 & MS2_HIERR ?
@@ -402,9 +405,11 @@ ka820_mchk(cmcf)
 	return (MCHK_PANIC);
 }
 
+void rxcdintr __P((void));
 /*
  * Receive a character from logical console.
  */
+void
 rxcdintr()
 {
 	register int c = mfpr(PR_RXCD);
