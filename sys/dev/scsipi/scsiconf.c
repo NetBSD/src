@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.157 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.158 2001/06/11 13:58:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -472,6 +472,9 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "TOSHIBA ", "XM-4101TASUNSLCD", "1755"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
+	/* "IBM CDRM00201     !F" 0724 is an IBM OEM Toshiba XM-4101BME */
+	{{T_CDROM, T_REMOV,
+	 "IBM     ", "CDRM00201     !F", "0724"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	{{T_CDROM, T_REMOV,
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"},   PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
