@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.5 2004/09/14 00:32:55 lukem Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.6 2004/09/14 00:34:19 lukem Exp $	*/
 /*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.5 2004/09/14 00:32:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.6 2004/09/14 00:34:19 lukem Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -779,6 +779,11 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	    shdr->hdr.encrypted, shdr->hdr.encrypt)); 
 	DPRINTFN(5, ("!%s", ether_sprintf(shdr->hdr.src_addr))); 
 	DPRINTFN(5, ("!%s\n", ether_sprintf(shdr->hdr.dst_addr)));
+
+	bus_dmamap_sync(sc->sc_dmat, sc->tbd_map, 
+	    sc->txcur * sizeof (struct ipw_bd), 
+	    sizeof (struct ipw_bd), BUS_DMASYNC_PREWRITE);
+
 	sc->txcur = (sc->txcur + 1) % IPW_NTBD;
 
 	sbuf->m = m;
