@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1998/01/20 01:18:26 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1998/02/21 23:27:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -63,7 +63,6 @@
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-#include <machine/katelib.h>
 
 #ifdef ARMFPE
 #include <sys/device.h>
@@ -86,9 +85,8 @@ int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
-int	savectx		__P((struct pcb *pcb));
-extern void proc_trampoline	__P(());
-extern void child_return	__P(());
+extern void proc_trampoline	__P((void));
+extern void child_return	__P((void));
 
 pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
@@ -113,7 +111,6 @@ cpu_fork(p1, p2)
 	struct proc *p1;
 	struct proc *p2;
 {
-	struct user *up = p2->p_addr;
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
@@ -128,7 +125,7 @@ cpu_fork(p1, p2)
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_fork: %p %p %p %p\n", p1, p2, curproc, &proc0);
-#endif
+#endif	/* PMAP_DEBUG */
 
 #if 0	/* XXX */
 	/* Sync the pcb */
@@ -172,16 +169,16 @@ cpu_fork(p1, p2)
  
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("cpu_fork: pcb = %08x pagedir = %08x\n",
-		    (u_int)&up->u_pcb, (u_int)up->u_pcb.pcb_pagedir);
-		printf("p1->procaddr=%08x p1->procaddr->u_pcb=%08x pid=%d pmap=%p\n",
-		    (u_int)p1->p_addr, (u_int)&p1->p_addr->u_pcb, p1->p_pid,
+		printf("cpu_fork: pcb = %p pagedir = %p\n",
+		    &p2->p_addr->u_pcb, p2->p_addr->u_pcb.pcb_pagedir);
+		printf("p1->procaddr=%p p1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
+		    p1->p_addr, &p1->p_addr->u_pcb, p1->p_pid,
 		    p1->p_vmspace->vm_map.pmap);
-		printf("p2->procaddr=%08x p2->procaddr->u_pcb=%08x pid=%d pmap=%p\n",
-		    (u_int)p2->p_addr, (u_int)&p2->p_addr->u_pcb, p2->p_pid,
+		printf("p2->procaddr=%p p2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
+		    p2->p_addr, &p2->p_addr->u_pcb, p2->p_pid,
 		    p2->p_vmspace->vm_map.pmap);
 	}
-#endif
+#endif	/* PMAP_DEBUG */
 
 /* ream out old pagetables */
 
@@ -203,7 +200,7 @@ cpu_fork(p1, p2)
 		printf("p2->pm_vptpt[0] = %08x",
 		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif
+#endif	/* PMAP_DEBUG */
 
 /* Nuke the exising mapping */
 
@@ -220,14 +217,12 @@ cpu_fork(p1, p2)
 /* Wire down a page to cover the page table zero page and the start of the user are in */
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
+	if (pmap_debug_level >= 0)
 		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
-	}
-#endif
+#endif	/* PMAP_DEBUG */
 
-	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0) {
+	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0)
 		panic("Failed to fault in system page PT\n");
-	}
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
@@ -237,7 +232,7 @@ cpu_fork(p1, p2)
 		printf("p2->pm_vptpt[0] = %08x",
 		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif
+#endif	/* PMAP_DEBUG */
 
 	/* Map the system page */
 
@@ -329,7 +324,7 @@ cpu_swapin(p)
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
-#endif
+#endif	/* PMAP_DEBUG */
 
 	/* Get the address of the page table containing 0x00000000 */
 
@@ -343,7 +338,7 @@ cpu_swapin(p)
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif  
+#endif  /* PMAP_DEBUG */
 
 	/*
 	 * Wire down a page to cover the page table zero page
@@ -360,7 +355,7 @@ cpu_swapin(p)
 		printf("p->pm_vptpt[0] = %08x",
 		     *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif
+#endif	/* PMAP_DEBUG */
 
 	/* Map the system page */
 
@@ -380,7 +375,7 @@ cpu_swapout(p)
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif
+#endif	/* PMAP_DEBUG */
 
 	/* Free the system page mapping */
 
@@ -408,7 +403,8 @@ pagemove(from, to, size)
 	if (pmap_debug_level >= 0)
 		printf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
 		    (u_int)to, size);
-#endif
+#endif	/* PMAP_DEBUG */
+
 	fpte = vtopte(from);
 	tpte = vtopte(to);
 
@@ -465,7 +461,7 @@ vmapbuf(bp, len)
 	if (pmap_debug_level >= 0)
 		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
-#endif
+#endif	/* PMAP_DEBUG */
     
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -518,7 +514,7 @@ vunmapbuf(bp, len)
 	if (pmap_debug_level >= 0)
 		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
 		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
-#endif
+#endif	/* PMAP_DEBUG */
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
