@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.2 1997/09/05 21:46:59 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.3 1997/11/30 15:49:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -179,20 +179,20 @@ X_db_sym_init(symtab, esymtab, name)
 	 */
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1)
-		db_printf("[ preserving %lu bytes of %s symbol table ]\n",
-		    (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
+		printf("[ preserving %lu bytes of %s symbol table ]\n",
+		       (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
 	return;
 
  badheader:
-	db_printf("[ %s symbol table not valid ]\n", name);
+	printf("[ %s symbol table not valid ]\n", name);
 	return;
 
  multiple_strtab:
-	db_printf("[ %s has multiple string tables ]\n", name);
+	printf("[ %s has multiple string tables ]\n", name);
 	return;
 
  multiple_symtab:
-	db_printf("[ %s has multiple symbol tables ]\n", name);
+	printf("[ %s has multiple symbol tables ]\n", name);
 	return;
 }
 
