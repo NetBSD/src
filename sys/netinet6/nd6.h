@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.19 2001/02/23 06:41:50 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.20 2001/02/23 08:02:41 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_useloopback;
 extern int nd6_maxnudhint;
+extern int nd6_gctimer;
 extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
