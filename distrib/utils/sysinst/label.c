@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.31 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.32 2003/06/16 20:11:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.31 2003/06/16 19:42:14 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.32 2003/06/16 20:11:40 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -111,7 +111,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 			continue;
 
 		/*
-		 * check succeding partitions for overlap.
+		 * check succeeding partitions for overlap.
 		 * O(n^2), but n is small (currently <= 16).
 		 */
 		istart = ip->pi_offset;
@@ -378,8 +378,8 @@ set_label_texts(menudesc *menu, void *arg)
 
 /*
  * Check a disklabel.
- * If there are overlapping active parititons,
- * Ask the user if they want to edit the parittion or give up.
+ * If there are overlapping active partitions,
+ * Ask the user if they want to edit the partition or give up.
  */
 int
 edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
@@ -484,7 +484,7 @@ translate_partinfo(partinfo *lp, struct partition *pp)
 }
 
 /*
- * Read a label from disk into a sysist label structure.
+ * Read a label from disk into a sysinst label structure.
  */
 int
 incorelabel(const char *dkname, partinfo *lp)
@@ -565,7 +565,7 @@ getpartoff(int defpartstart)
 }
 
 
-/* Ask for a partition size, check bounds and does the needed roundups */
+/* Ask for a partition size, check bounds and do the needed roundups */
 int
 getpartsize(int partstart, int defpartsize)
 {
