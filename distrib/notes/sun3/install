@@ -12,7 +12,7 @@ initialize the disk on that machine and then move the disk.
 
 * Installing from tape:
 
-Create the NetBSD/sun3 1.2 boot tape as described in the section
+Create the NetBSD/sun3 _VER boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape.  At the PROM
 monitor prompt, use one of the commands:
 	>b st()
@@ -137,26 +137,6 @@ The miniroot's install program will:
 	* Allow you to place disklabels on additional disks.
 	  The disk we are installing on should already have
 	  been partitioned using the RAMDISK kernel.
-
-	  Note that partition sizes and offsets are expressed
-	  in sectors.  When you fill out the disklabel, you will
-	  need to specify partition types and filesystem parameters.
-	  If you're unsure what the these values should be, use the
-	  following:
-
-		fstype: 4.2BSD
-		fsize: 1024
-		bsize: 4096
-		cpg: 16
-
-	  If the partition will be a swap partition, use the following:
-
-		fstype: swap
-		fsize: 0 (or blank)
-		bsize: 0 (or blank)
-		cpg: 0 (or blank)
-
-	  The number of partitions is fixed at 8 (by the Sun PROM).
 
 	* Create filesystems on target partitions.
 
