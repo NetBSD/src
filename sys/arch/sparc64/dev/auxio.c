@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.9 2002/10/02 16:02:17 thorpej Exp $	*/
+/*	$NetBSD: auxio.c,v 1.10 2003/06/16 19:24:51 heas Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -32,6 +32,8 @@
  * AUXIO registers support on the sbus & ebus2, used for the floppy driver
  * and to control the system LED, for the BLINK option.
  */
+
+#include "opt_auxio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
