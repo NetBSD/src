@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.27 2003/08/07 16:26:33 agc Exp $ */
+/* $NetBSD: vmparam.h,v 1.28 2004/03/22 05:25:22 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@
 #define	MAXTSIZ		(1<<30)			/* max text size (1G) */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(1<<27)			/* initial data size (128M) */
+#define	DFLDSIZ		(1<<28)			/* initial data size (256M) */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(1<<30)			/* max data size (1G) */
