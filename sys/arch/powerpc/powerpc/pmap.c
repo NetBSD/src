@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2000/09/13 15:00:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2000/09/24 15:26:34 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -397,13 +397,23 @@ pmap_bootstrap(kernelstart, kernelend)
 		}
 	}
 
-#ifdef	HTABENTS
+	/*
+	 * The PEM recommends that the total number of PTEGs should be
+	 * at least 1/2 of the number of physical pages.
+	 */
+#ifdef HTABENTS
 	ptab_cnt = HTABENTS;
-#else /* HTABENTS */
-	ptab_cnt = 1024;
-	while (btoc(HTABSIZE << 7) < physmem)
-		ptab_cnt <<= 1;
-#endif /* HTABENTS */
+#else
+	ptab_cnt = (physmem + 1) / 2;
+
+	/* The minimum is 1024 PTEGs. */
+	if (ptab_cnt < 1024)
+		ptab_cnt = 1024;
+
+	/* Round up to power of 2. */
+	asm ("cntlzw %0,%1" : "=r"(i) : "r"(ptab_cnt - 1));
+	ptab_cnt = 1 << (32 - i);
+#endif
 
 	/*
 	 * Find suitably aligned memory for HTAB.
