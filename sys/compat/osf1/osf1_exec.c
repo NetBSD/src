@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.22 2001/05/06 19:09:53 manu Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.23 2001/05/07 09:55:13 manu Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@ const struct emul emul_osf1 = {
 	"osf1",
 	"/emul/osf1",
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_BSD_ASYNCIO_PIPE,
+	EMUL_NO_BSD_ASYNCIO_PIPE,
 	(int *)osf1_errno_rxlist,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
