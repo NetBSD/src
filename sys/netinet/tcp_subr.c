@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.36 1997/12/11 22:47:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.37 1997/12/31 03:31:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -88,6 +88,7 @@ tcp_init()
 {
 
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
+	LIST_INIT(&tcp_delacks);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.37 1997/12/11 06:33:29 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.38 1997/12/31 03:31:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -121,7 +121,7 @@ do { \
 	    (tp)->t_flags & TF_DELACK) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
-		tp->t_flags |= TF_DELACK; \
+		TCP_SET_DELACK(tp); \
 } while (0)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.26 1997/12/17 06:04:17 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.27 1997/12/31 03:31:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -71,26 +71,27 @@ extern	int tcp_keepcnt;
 extern	int tcp_maxpersistidle;
 #endif /* TUBA_INCLUDE */
 
+struct tcp_delack_head tcp_delacks;
+
 /*
  * Fast timeout routine for processing delayed acks
  */
 void
 tcp_fasttimo()
 {
-	register struct inpcb *inp;
-	register struct tcpcb *tp;
+	register struct tcpcb *tp, *ntp;
 	int s;
 
 	s = splsoftnet();
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
-		if ((tp = intotcpcb(inp)) != NULL &&
-		    (tp->t_flags & TF_DELACK)) {
-			tp->t_flags |= TF_ACKNOW;
-			(void) tcp_output(tp);
-		}
+	for (tp = tcp_delacks.lh_first; tp != NULL; tp = ntp) {
+		/*
+		 * If tcp_output() can't transmit the ACK for whatever
+		 * reason, it will remain on the queue for the next
+		 * time the heartbeat ticks.
+		 */
+		ntp = tp->t_delack.le_next;
+		tp->t_flags |= TF_ACKNOW;
+		(void) tcp_output(tp);
 	}
 	splx(s);
 }
