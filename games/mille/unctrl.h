@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)unctrl.h	5.4 (Berkeley) 6/1/90
+ *	from: @(#)unctrl.h	5.4 (Berkeley) 6/1/90
+ *	$Id: unctrl.h,v 1.2 1993/08/01 18:54:06 mycroft Exp $
  */
 
 /*

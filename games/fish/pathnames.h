@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.1 (Berkeley) 1/18/91
+ *	from: @(#)pathnames.h	5.1 (Berkeley) 1/18/91
+ *	$Id: pathnames.h,v 1.2 1993/08/01 18:54:53 mycroft Exp $
  */
 
 #define	_PATH_INSTR	"/usr/share/games/fish.instr"

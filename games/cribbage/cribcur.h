@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cribcur.h	5.4 (Berkeley) 6/1/90
+ *	from: @(#)cribcur.h	5.4 (Berkeley) 6/1/90
+ *	$Id: cribcur.h,v 1.2 1993/08/01 18:55:20 mycroft Exp $
  */
 
 # define	PLAY_Y		15	/* size of player's hand window */

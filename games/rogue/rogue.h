@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rogue.h	5.6 (Berkeley) 2/28/91
+ *	from: @(#)rogue.h	5.6 (Berkeley) 2/28/91
+ *	$Id: rogue.h,v 1.2 1993/08/01 18:52:33 mycroft Exp $
  */
 
 /*

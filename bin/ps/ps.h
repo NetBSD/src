@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ps.h	5.3 (Berkeley) 6/3/91
- *
- *	$Header: /cvsroot/src/bin/ps/ps.h,v 1.3 1993/03/23 00:26:43 cgd Exp $
+ *	from: @(#)ps.h	5.3 (Berkeley) 6/3/91
+ *	$Id: ps.h,v 1.4 1993/08/01 18:59:12 mycroft Exp $
  */
 
 #define	UNLIMITED	0	/* unlimited terminal width */

@@ -33,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)machdep.h	5.1 (Berkeley) 3/7/91
- *
- *	$Header: /cvsroot/src/bin/sh/machdep.h,v 1.3 1993/03/23 00:28:16 cgd Exp $
+ *	from: @(#)machdep.h	5.1 (Berkeley) 3/7/91
+ *	$Id: machdep.h,v 1.4 1993/08/01 18:58:26 mycroft Exp $
  */
 
 /*

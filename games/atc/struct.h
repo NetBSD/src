@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)struct.h	5.2 (Berkeley) 4/30/90
+ *	from: @(#)struct.h	5.2 (Berkeley) 4/30/90
+ *	$Id: struct.h,v 1.2 1993/08/01 18:57:14 mycroft Exp $
  */
 
 /*

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
+/*static char sccsid[] = "from: @(#)store.c	5.4 (Berkeley) 5/13/91";*/
+static char rcsid[] = "$Id: store.c,v 1.2 1993/08/01 18:54:12 mycroft Exp $";
 #endif /* not lint */
 
 /*	store.c		Larn is copyrighted 1986 by Noah Morgan. */

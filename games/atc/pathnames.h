@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.4 (Berkeley) 4/30/90
+ *	from: @(#)pathnames.h	5.4 (Berkeley) 4/30/90
+ *	$Id: pathnames.h,v 1.2 1993/08/01 18:57:15 mycroft Exp $
  */
 
 #include <paths.h>

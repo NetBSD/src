@@ -32,11 +32,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)echo.c	5.2 (Berkeley) 3/13/91
- *
- *	$Header: /cvsroot/src/bin/sh/bltin/echo.c,v 1.3 1993/03/23 00:29:42 cgd Exp $
  */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)echo.c	5.2 (Berkeley) 3/13/91";*/
+static char rcsid[] = "$Id: echo.c,v 1.4 1993/08/01 18:58:43 mycroft Exp $";
+#endif /* not lint */
 
 /*
  * Echo command.

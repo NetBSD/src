@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)dumpgame.c	4.6 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)dumpgame.c	4.6 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: dumpgame.c,v 1.2 1993/08/01 18:50:39 mycroft Exp $";
 #endif /* not lint */
 
 # include	"trek.h"

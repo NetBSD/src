@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)setwarp.c	5.4 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)setwarp.c	5.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: setwarp.c,v 1.2 1993/08/01 18:49:59 mycroft Exp $";
 #endif /* not lint */
 
 # include	"trek.h"

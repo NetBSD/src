@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)quiz.h	5.1 (Berkeley) 11/10/91
+ *	from: @(#)quiz.h	5.1 (Berkeley) 11/10/91
+ *	$Id: quiz.h,v 1.2 1993/08/01 18:53:00 mycroft Exp $
  */
 
 #define	TRUE		1

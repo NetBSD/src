@@ -62,7 +62,8 @@
 #include "include.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)grammar.y	5.2 (Berkeley) 4/30/90";
+/*static char sccsid[] = "from: @(#)grammar.y	5.2 (Berkeley) 4/30/90";*/
+static char rcsid[] = "$Id: grammar.y,v 1.2 1993/08/01 18:57:12 mycroft Exp $";
 #endif /* not lint */
 
 int	errors = 0;
