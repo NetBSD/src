@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63 2002/04/02 15:08:33 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.63.2.1 2002/06/28 12:42:58 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63 2002/04/02 15:08:33 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.63.2.1 2002/06/28 12:42:58 lukem Exp $");
 #endif
 #endif
 
@@ -44,17 +44,6 @@ static int zapLogDir;		/* Should we delete LogDir? */
 
 static package_t Plist;
 static char *Home;
-
-/*
- * Called to see if pkg is already installed as some other version, 
- * note found version in "note".
- */
-static int
-note_whats_installed(const char *found, char *note)
-{
-	(void) strcpy(note, found);
-	return 0;
-}
 
 static int
 sanity_check(char *pkg)
@@ -687,7 +676,6 @@ pkg_do(char *pkg)
 	/* Time to record the deed? */
 	if (!NoRecord && !Fake) {
 		char    contents[FILENAME_MAX];
-		FILE   *cfile;
 
 		umask(022);
 		if (getuid() != 0)
@@ -755,6 +743,7 @@ pkg_do(char *pkg)
 					char   *t;
 					t = strrchr(contents, '/');
 					strcpy(t + 1, s);
+					free(s);
 				} else {
 					errx(1, "Where did our dependency go?!");
 					/* this shouldn't happen... X-) */
