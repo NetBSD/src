@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.14 2000/04/23 18:11:21 mjl Exp $	*/
+/*	$NetBSD: at.c,v 1.14.4.1 2000/06/26 00:40:38 simonb Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -48,12 +48,6 @@
 #include <utmp.h>
 #include <locale.h>
 
-#if (MAXLOGNAME-1) > UT_NAMESIZE
-#define LOGNAMESIZE UT_NAMESIZE
-#else
-#define LOGNAMESIZE (MAXLOGNAME-1)
-#endif
-
 /* Local headers */
 #include "at.h"
 #include "panic.h"
@@ -75,7 +69,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.14 2000/04/23 18:11:21 mjl Exp $");
+__RCSID("$NetBSD: at.c,v 1.14.4.1 2000/06/26 00:40:38 simonb Exp $");
 #endif
 #endif
 
@@ -110,6 +104,7 @@ int main __P((int, char **));
 
 /* Signal catching functions */
 
+/*ARGSUSED*/
 static void 
 sigc(signo)
 	int signo;
@@ -124,6 +119,7 @@ sigc(signo)
 	exit(EXIT_FAILURE);
 }
 
+/*ARGSUSED*/
 static void 
 alarmc(signo)
 	int signo;
@@ -295,7 +291,7 @@ writefile(runtimer, queue)
 		mailname = getenv("USER");
 
 	if ((mailname == NULL) || (mailname[0] == '\0') ||
-	    (strlen(mailname) > LOGNAMESIZE) || (getpwnam(mailname) == NULL)) {
+	    (strlen(mailname) > LOGIN_NAME_MAX) || (getpwnam(mailname) == NULL)) {
 		pass_entry = getpwuid(real_uid);
 		if (pass_entry != NULL)
 			mailname = pass_entry->pw_name;
@@ -306,8 +302,8 @@ writefile(runtimer, queue)
 		if (fpin == NULL)
 			perr("Cannot open input file");
 	}
-	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%u gid=%u\n# mail %*s %d\n",
-	    real_uid, real_gid, LOGNAMESIZE, mailname, send_mail);
+	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%u gid=%u\n# mail %s %d\n",
+	    real_uid, real_gid, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
 	(void)fprintf(fp, "umask %o\n", cmask);
@@ -371,7 +367,7 @@ writefile(runtimer, queue)
 	(void)fputs("cd ", fp);
 	for (ap = cwdname(); *ap != '\0'; ap++) {
 		if (*ap == '\n')
-			fprintf(fp, "\"\n\"");
+			(void)fprintf(fp, "\"\n\"");
 		else {
 			if (*ap != '/' && !isalnum(*ap))
 				(void)fputc('\\', fp);
@@ -467,16 +463,20 @@ list_jobs()
 		runtime = *localtime(&runtimer);
 		strftime(timestr, TIMESIZE, "%X %x", &runtime);
 		if (first) {
-			(void)printf("Date\t\t\tOwner\tQueue\tJob#\n");
+			(void)printf("%-*s  %-*s  %-*s  %s\n",
+			    (int)strlen(timestr), "Date",
+			    LOGIN_NAME_MAX, "Owner",
+			    7, "Queue",
+			    "Job");
 			first = 0;
 		}
 		pw = getpwuid(buf.st_uid);
 
-		(void)printf("%s\t%s\t%c%s\t%d\n",
+		(void)printf("%s  %-*s  %c%-*s  %d\n",
 		    timestr,
-		    pw ? pw->pw_name : "???",
+		    LOGIN_NAME_MAX, pw ? pw->pw_name : "???",
 		    queue,
-		    (S_IXUSR & buf.st_mode) ? "" : "(done)",
+		    6, (S_IXUSR & buf.st_mode) ? "" : "(done)",
 		    jobno);
 	}
 	PRIV_END
@@ -579,9 +579,6 @@ main(argc, argv)
 	char queue_set = 0;
 	char *pgm;
 
-	enum {
-		ATQ, ATRM, AT, BATCH, CAT
-	};				/* what program we want to run */
 	int program = AT;		/* our default program */
 	char *options = "q:f:mvldbrVc";	/* default options for at */
 	int disp_version = 0;
@@ -733,4 +730,5 @@ main(argc, argv)
 		break;
 	}
 	exit(EXIT_SUCCESS);
+	/*NOTREACHED*/
 }
