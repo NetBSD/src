@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.2 2002/05/04 20:39:32 mbw Exp $
+.\"	$NetBSD: netboot,v 1.3 2002/05/04 21:35:19 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -497,9 +497,9 @@ filesystem.
 .No # Ic "vnconfig -c /dev/vnd0c /path/to/miniroot.fs"
 .No # Ic "mount -o ro /dev/vnd0c /export/client/root"
 .No # Ic "ls /export/client/root"
-.profile     dist/        install.md   mnt/         sbin/        usr/
-bin/         etc/         install.sub  mnt2/        tmp/         var/
-dev/         install*     kern/        netbsd*      upgrade*
+ .profile     dist/        install.md   mnt/         sbin/        usr/
+ bin/         etc/         install.sub  mnt2/        tmp/         var/
+ dev/         install*     kern/        netbsd*      upgrade*
 .disp)
 .Pp
 If there are no files present in your exported directory, then
