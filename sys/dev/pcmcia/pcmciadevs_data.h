@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.16 1998/09/10 19:57:20 kenh Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.17 1998/09/20 19:19:54 dbj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -80,8 +80,15 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E,
-	    PCMCIA_CIS_DAYNA_COMMUNICARD_E,
+	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
+	    PCMCIA_CIS_DAYNA_COMMUNICARD_E_1,
+	    0,
+	    "Dayna Corporation",
+	    "Dayna CommuniCard E"	},
+	},
+	{
+	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
+	    PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
 	    0,
 	    "Dayna Corporation",
 	    "Dayna CommuniCard E"	},

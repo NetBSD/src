@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.18 1998/09/20 19:19:53 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -134,10 +134,15 @@ struct ne2000dev {
       /* two possible location, 0x01c0 or 0x0ff0 */
       0, -1, { 0x00, 0xa0, 0xb0 } },
 
-    { PCMCIA_STR_DAYNA_COMMUNICARD_E,
-      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E,
-      PCMCIA_CIS_DAYNA_COMMUNICARD_E,
+    { PCMCIA_STR_DAYNA_COMMUNICARD_E_1,
+      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
+      PCMCIA_CIS_DAYNA_COMMUNICARD_E_1,
       0, 0x0110, { 0x00, 0x80, 0x19 } },
+
+    { PCMCIA_STR_DAYNA_COMMUNICARD_E_2,
+      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
+      PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
+      0, -1, { 0x00, 0x80, 0x19 } },
 
     { PCMCIA_STR_RPTI_EP401,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
