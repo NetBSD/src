@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.91 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.92 2004/01/02 15:51:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.91 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.92 2004/01/02 15:51:45 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.91 2003/11/11 20:25:26 jonathan Exp $")
 struct	in_addr zeroin_addr;
 
 #define	INPCBHASH_PORT(table, lport) \
-	&(table)->inpt_porthashtbl[ ntohs(lport) & (table)->inpt_porthash]
+	&(table)->inpt_porthashtbl[ntohs(lport) & (table)->inpt_porthash]
 #define	INPCBHASH_BIND(table, laddr, lport) \
 	&(table)->inpt_bindhashtbl[ \
 	    ((ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_bindhash]
