@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.h,v 1.1.1.1.2.2 1999/12/20 21:01:43 he Exp $	*/
+/*	$NetBSD: ipt.h,v 1.1.1.1.2.3 2000/10/10 21:26:34 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -30,8 +30,10 @@ struct	ipread	{
 	int	(*r_readip) __P((char *, int, char **, int *));
 };
 
-extern	void	debug __P((char *, ...));
-extern	void	verbose __P((char *, ...));
+extern	void	debug __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+extern	void	verbose __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 
 #ifdef P_DEF
 # undef	__P
