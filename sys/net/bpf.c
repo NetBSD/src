@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.37 1997/10/09 18:58:08 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.38 1997/10/12 16:35:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -265,7 +265,9 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 	}
 	m->m_len = len;
 	*mp = m;
- bad:
+	return (0);
+
+bad:
 	m_freem(m);
 	return (error);
 }
