@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.4 1998/09/04 18:01:14 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.5 1998/09/04 18:03:56 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2107,6 +2107,10 @@ void client_reinit (state)
 			ip -> client -> active -> expiry = cur_time;
 			write_client_lease (ip, ip -> client -> active);
 
+			/* Send the release message. */
+			make_release (ip, ip -> client -> active);
+			send_release (ip);
+
 			/* Unconfigure the leased IP address. */
 			script_init (ip, "EXPIRE", (struct string_list *)0);
 			script_write_params (ip,
@@ -2123,9 +2127,6 @@ void client_reinit (state)
 				script_write_params(ip, "alias_",
 						    ip->client->alias);
 			script_go (ip);
-
-			make_release (ip, ip -> client -> active);
-			send_release (ip);
 
 			ip -> client -> state = S_INIT;
 		} else if (state == 1) {
