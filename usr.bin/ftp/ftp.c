@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.113 2000/11/27 16:08:03 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.114 2001/02/19 18:15:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.113 2000/11/27 16:08:03 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.114 2001/02/19 18:15:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1211,7 +1211,7 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 			bytes++;
 	contin2:	;
 		}
-break2:
+ break2:
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);

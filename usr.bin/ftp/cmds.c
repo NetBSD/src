@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.93 2000/12/15 02:22:50 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.94 2001/02/19 18:15:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.93 2000/12/15 02:22:50 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.94 2001/02/19 18:15:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -558,10 +558,10 @@ get(int argc, char *argv[])
 int
 getit(int argc, char *argv[], int restartit, const char *mode)
 {
-	int loc = 0;
-	int rval = 0;
-	char *remfile, *locfile, *olocfile;
+	int	 loc, rval;
+	char	*remfile, *locfile, *olocfile;
 
+	loc = rval = 0;
 	if (argc == 2) {
 		argc++;
 		argv[2] = argv[1];
