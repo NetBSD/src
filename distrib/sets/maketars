@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.35 2002/12/25 23:47:32 lukem Exp $
+# $NetBSD: maketars,v 1.36 2003/01/03 15:26:32 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -66,7 +66,7 @@ while : ; do
 	-*)
 		cat 1>&2 <<USAGE
 Usage: $0 [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
-	    [-M metalog] [-N etcdir] [-d dest] [-t tars] [setname ...]
+	    [-M metalog] [-N etcdir] [-d dest] [-t targetdir] [setname ...]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
 	-i idir		install sets to idir instead of creating tar files
@@ -76,7 +76,7 @@ Usage: $0 [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
 	-M metalog	metalog file
 	-N etcdir	etc dir for metalog use [$dest/etc]
 	-d dest		\$DESTDIR	[$dest]
-	-t tars		\$RELEASEDIR	[$tars]
+	-t targetdir	\$RELEASEDIR	[$tars]
 	[setname ...]	sets to build 	[$lists]
 USAGE
 		exit 1
