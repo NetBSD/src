@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.216 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.217 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -512,3 +512,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		better performance.  [provos 20031022]
 	netinet: change port allocation from linked list to a hash table
 		for better performance. [provos 20031023]
+	MAKEDEV: platform device creation script is now generated from
+		unified template driven by platform config file and
+		MD device major lists. [dolecek 20031024] 
