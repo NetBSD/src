@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.135.2.4 2001/09/03 19:48:09 sommerfeld Exp $	*/
+/*	$NetBSD: conf.c,v 1.135.2.5 2001/09/06 03:41:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -237,6 +237,9 @@ cdev_decl(edmca);
 
 #include <altq/altqconf.h>
 
+#include "wsfont.h"
+cdev_decl(wsfont);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -327,6 +330,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
 	cdev_disk_init(NED_MCA,edmca),	/* 79: PS/2 ESDI disk */
 	cdev__oci_init(NMLY,mly),	/* 80: Newer Mylex control interface */
+	cdev__oci_init(NWSFONT,wsfont),	/* 81: wsfont pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

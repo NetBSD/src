@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28.4.5 2001/06/18 03:33:28 sommerfeld Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.4.6 2001/09/06 03:41:45 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -288,6 +288,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 		}
 		if (INKERNEL((int)frame) && name) {
+			/*
+			 * XXX traps should be based off of the Xtrap*
+			 * locations rather than on trap, since some traps
+			 * (e.g., npxdna) don't go through trap()
+			 */
 #ifdef __ELF__
 			if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
