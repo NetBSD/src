@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp $
+$NetBSD: pcidevs,v 1.16 1996/09/24 17:47:14 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -386,6 +386,7 @@ vendor INVENTEC		0x1170	Inventec
 vendor ZEINET		0x1193	Zeinet
 vendor SYMPHONY		0x1c1c	Symphony Labs
 vendor TEKRAM		0x1de1	Tekram Technology
+vendor CYCLADES		0x120e	Cyclades
 vendor S3		0x5333	S3
 vendor INTEL		0x8086	Intel
 vendor ADP		0x9004	Adaptec
@@ -636,3 +637,7 @@ product WINBOND W83769F	0x0001	W83769F
 
 /* Zeinet products */
 product ZEINET 1221	0x0001	1221
+
+/* Cyclades products */
+product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
+product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M

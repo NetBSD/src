@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.19 1996/09/01 00:12:11 mycroft Exp $
+#	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -55,3 +55,7 @@ file	dev/pci/ncr.c			ncr
 device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
+
+# Cyclades Cyclom-8/16/32 
+attach	cy at pci with cy_pci
+file	dev/pci/cy_pci.c		cy_pci
