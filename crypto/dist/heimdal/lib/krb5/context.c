@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: context.c,v 1.2 2000/07/16 18:27:53 thorpej Exp $");
+RCSID("$Id: context.c,v 1.3 2000/08/02 20:08:33 assar Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -89,27 +89,26 @@ init_context_from_config_file(krb5_context context)
     INIT_FIELD(context, time, kdc_timeout, 3, "kdc_timeout");
     INIT_FIELD(context, int, max_retries, 3, "max_retries");
 
-    context->http_proxy = krb5_config_get_string(context, NULL, "libdefaults", 
-					   "http_proxy", NULL);
+    INIT_FIELD(context, string, http_proxy, NULL, "http_proxy");
 
     set_etypes (context, "default_etypes", &context->etypes);
     set_etypes (context, "default_etypes_des", &context->etypes_des);
 
     /* default keytab name */
-    context->default_keytab = krb5_config_get_string(context, NULL, 
-					       "libdefaults", 
-					       "default_keytab_name", 
-					       NULL);
-    if(context->default_keytab == NULL)
-	context->default_keytab = KEYTAB_DEFAULT;
+    INIT_FIELD(context, string, default_keytab, 
+	       KEYTAB_DEFAULT, "default_keytab_name");
 
-    context->time_fmt = krb5_config_get_string(context, NULL, "libdefaults", 
-					 "time_format", NULL);
-    if(context->time_fmt == NULL)
-	context->time_fmt = "%Y-%m-%dT%H:%M:%S";
-    context->log_utc = krb5_config_get_bool(context, NULL, "libdefaults",
-					    "log_utc", NULL);
+    INIT_FIELD(context, string, time_fmt, 
+	       "%Y-%m-%dT%H:%M:%S", "time_format");
 
+    INIT_FIELD(context, string, date_fmt, 
+	       "%Y-%m-%d", "date_format");
+
+    INIT_FIELD(context, bool, log_utc, 
+	       FALSE, "log_utc");
+
+
+    
     /* init dns-proxy slime */
     tmp = krb5_config_get_string(context, NULL, "libdefaults", 
 				 "dns_proxy", NULL);
@@ -213,6 +212,10 @@ krb5_free_context(krb5_context context)
   free(context);
 }
 
+/*
+ * set `etype' to a malloced list of the default enctypes
+ */
+
 static krb5_error_code
 default_etypes(krb5_enctype **etype)
 {
@@ -220,6 +223,7 @@ default_etypes(krb5_enctype **etype)
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_DES3_CBC_MD5,
 	ETYPE_DES_CBC_MD5,
+	ETYPE_ARCFOUR_HMAC_MD5,
 	ETYPE_DES_CBC_MD4,
 	ETYPE_DES_CBC_CRC,
 	ETYPE_NULL

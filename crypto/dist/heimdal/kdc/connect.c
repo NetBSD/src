@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.2 2000/06/21 06:05:01 thorpej Exp $");
+RCSID("$Id: connect.c,v 1.3 2000/08/02 20:08:33 assar Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -129,10 +129,18 @@ add_standard_ports (int family)
     add_port_service(family, "kerberos", 88, "tcp");
     add_port_service(family, "kerberos-sec", 88, "udp");
     add_port_service(family, "kerberos-sec", 88, "tcp");
-    add_port_service(family, "kerberos-iv", 750, "udp");
-    add_port_service(family, "kerberos-iv", 750, "tcp");
     if(enable_http)
 	add_port_service(family, "http", 80, "tcp");
+#ifdef KRB4
+    if(enable_v4) {
+	add_port_service(family, "kerberos-iv", 750, "udp");
+	add_port_service(family, "kerberos-iv", 750, "tcp");
+    }
+    if(enable_524) {
+	add_port_service(family, "krb524", 4444, "udp");
+	add_port_service(family, "krb524", 4444, "tcp");
+    }
+#endif
 #ifdef KASERVER
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
