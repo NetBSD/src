@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.38 2001/01/05 02:02:57 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.39 2001/01/09 05:39:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.38 2001/01/05 02:02:57 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.39 2001/01/09 05:39:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,7 +413,17 @@ setup(dev)
 		    (unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
+	/*
+	 * cs_ndir may be inaccurate, particularly if we're using the -b
+	 * option, so set a minimum to prevent bogus subdirectory reconnects
+	 * and really inefficient directory scans.
+	 * Also set a maximum in case the value is too large.
+	 */
 	numdirs = sblock->fs_cstotal.cs_ndir;
+	if (numdirs < 1024)
+		numdirs = 1024;
+	if (numdirs > maxino + 1)
+		numdirs = maxino + 1;
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = (struct inoinfo **)calloc((unsigned)listmax,
