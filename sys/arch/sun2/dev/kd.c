@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.6 2003/07/15 03:36:12 lukem Exp $	*/
+/*	$NetBSD: kd.c,v 1.7 2003/08/24 17:32:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.6 2003/07/15 03:36:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.7 2003/08/24 17:32:04 uwe Exp $");
+
+#include "opt_rcons.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

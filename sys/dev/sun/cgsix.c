@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.13 2003/08/07 16:31:23 agc Exp $ */
+/*	$NetBSD: cgsix.c,v 1.14 2003/08/24 17:32:06 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.13 2003/08/07 16:31:23 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.14 2003/08/24 17:32:06 uwe Exp $");
+
+#include "opt_rcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

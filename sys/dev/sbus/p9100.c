@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.16 2003/06/29 22:30:36 fvdl Exp $ */
+/*	$NetBSD: p9100.c,v 1.17 2003/08/24 17:32:04 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.16 2003/06/29 22:30:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.17 2003/08/24 17:32:04 uwe Exp $");
+
+#include "opt_rcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

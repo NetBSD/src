@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.35 2003/08/07 16:29:34 agc Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.36 2003/08/24 17:31:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -132,7 +132,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.35 2003/08/07 16:29:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.36 2003/08/24 17:31:59 uwe Exp $");
+
+#include "opt_rcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
