@@ -37,12 +37,12 @@
  *	genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp
  */
 
-#include "sys/param.h"
-#include "sys/vmmeter.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "machine/cpu.h"
-#include "machine/trap.h"
+#include <sys/param.h>
+#include <sys/vmmeter.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <machine/cpu.h>
+#include <machine/trap.h>
 
 main()
 {
@@ -53,37 +53,43 @@ main()
 	struct sigframe *sigf = (struct sigframe *)0;
 	register unsigned i;
 
-	printf("#define\tSRUN %d\n", SRUN);
-	printf("#define\tUSRSTACK %d\n", USRSTACK);
+#define	def(N,V)	printf("#define\t%s %d\n", N, V)
 
-	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_LINK %d\n", &p->p_link);
-	printf("#define\tP_PRI %d\n", &p->p_pri);
-	printf("#define\tP_RLINK %d\n", &p->p_rlink);
-	printf("#define\tP_STAT %d\n", &p->p_stat);
-	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
+	def("SRUN", SRUN);
+	def("USRSTACK", USRSTACK);
 
-	printf("#define\tV_TRAP %d\n", &vm->v_trap);
-	printf("#define\tV_INTR %d\n", &vm->v_intr);
+	def("SIR_GENERIC", SIR_GENERIC);
+	def("SIR_NET", SIR_NET);
+	def("SIR_CLOCK", SIR_CLOCK);
 
-	printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
-	printf("#define\tPCB_CR3 %d\n", &pcb->pcb_tss.tss_cr3);
-	printf("#define\tPCB_EBP %d\n", &pcb->pcb_tss.tss_ebp);
-	printf("#define\tPCB_EBX %d\n", &pcb->pcb_tss.tss_ebx);
-	printf("#define\tPCB_EDI %d\n", &pcb->pcb_tss.tss_edi);
-	printf("#define\tPCB_EIP %d\n", &pcb->pcb_tss.tss_eip);
-	printf("#define\tPCB_ESI %d\n", &pcb->pcb_tss.tss_esi);
-	printf("#define\tPCB_ESP %d\n", &pcb->pcb_tss.tss_esp);
-	printf("#define\tPCB_IML %d\n", &pcb->pcb_iml);
-	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
-	printf("#define\tPCB_SAVEFPU %d\n", &pcb->pcb_savefpu);
-	printf("#define\tPCB_USERLDT %d\n", &pcb->pcb_ldt);
+	def("P_ADDR", &p->p_addr);
+	def("P_LINK", &p->p_link);
+	def("P_PRI", &p->p_pri);
+	def("P_RLINK", &p->p_rlink);
+	def("P_STAT", &p->p_stat);
+	def("P_WCHAN", &p->p_wchan);
 
-	printf("#define\tTF_TRAPNO %d\n", &tf->tf_trapno);
-	printf("#define\tTF_EFLAGS %d\n", &tf->tf_eflags);
+	def("V_TRAP", &vm->v_trap);
+	def("V_INTR", &vm->v_intr);
 
-	printf("#define\tSIGF_HANDLER %d\n", &sigf->sf_handler);
-	printf("#define\tSIGF_SC %d\n", &sigf->sf_sc);
+	def("PCB_CMAP2", &pcb->pcb_cmap2);
+	def("PCB_CR3", &pcb->pcb_tss.tss_cr3);
+	def("PCB_EBP", &pcb->pcb_tss.tss_ebp);
+	def("PCB_EBX", &pcb->pcb_tss.tss_ebx);
+	def("PCB_EDI", &pcb->pcb_tss.tss_edi);
+	def("PCB_EIP", &pcb->pcb_tss.tss_eip);
+	def("PCB_ESI", &pcb->pcb_tss.tss_esi);
+	def("PCB_ESP", &pcb->pcb_tss.tss_esp);
+	def("PCB_IML", &pcb->pcb_iml);
+	def("PCB_ONFAULT", &pcb->pcb_onfault);
+	def("PCB_SAVEFPU", &pcb->pcb_savefpu);
+	def("PCB_USERLDT", &pcb->pcb_ldt);
+
+	def("TF_TRAPNO", &tf->tf_trapno);
+	def("TF_EFLAGS", &tf->tf_eflags);
+
+	def("SIGF_HANDLER", &sigf->sf_handler);
+	def("SIGF_SC", &sigf->sf_sc);
 
 	exit(0);
 }
