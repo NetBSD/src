@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.37 2000/03/06 03:13:36 mhitch Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.38 2000/04/11 02:43:55 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.37 2000/03/06 03:13:36 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.38 2000/04/11 02:43:55 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,21 +284,21 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static int
-dec_3maxplus_intr(cpumask, pc, status, cause)
-	unsigned cpumask;
-	unsigned pc;
+dec_3maxplus_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	static int warned = 0;
 	unsigned old_buscycle;
 
-	if (cpumask & MIPS_INT_MASK_4)
+	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
 	/* handle clock interrupts ASAP */
 	old_buscycle = latched_cycle_cnt;
-	if (cpumask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -324,14 +324,14 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	 * ticks to be missed.
 	 */
 #ifdef notdef
-	if ((cpumask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+	if ((ipending & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
 		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
   		if(msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}
 #endif
-	if (cpumask & MIPS_INT_MASK_0) {
+	if (ipending & MIPS_INT_MASK_0) {
 		int ifound;
 		u_int32_t imsk, intr, can_serve, xxxintr;
 
@@ -385,7 +385,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 			}
 		} while (ifound);
         }
-	if (cpumask & MIPS_INT_MASK_3)
+	if (ipending & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));

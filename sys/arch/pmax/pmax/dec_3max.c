@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.28 2000/03/08 18:09:27 mhitch Exp $ */
+/* $NetBSD: dec_3max.c,v 1.29 2000/04/11 02:43:55 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.28 2000/03/08 18:09:27 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.29 2000/04/11 02:43:55 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,17 +240,17 @@ found:
 	} while (0)
 
 static int
-dec_3max_intr(cpumask, pc, status, cause)
-	unsigned cpumask;
-	unsigned pc;
+dec_3max_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	static int warned = 0;
 	u_int32_t csr;
 
 	/* handle clock interrupts ASAP */
-	if (cpumask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
 		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
@@ -276,7 +276,7 @@ dec_3max_intr(cpumask, pc, status, cause)
 	/* If clock interrups were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
-	if (cpumask & MIPS_INT_MASK_0) {
+	if (ipending & MIPS_INT_MASK_0) {
 		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
 		if (csr & (KN02_IP_DZ | KN02_IP_LANCE | KN02_IP_SCSI)) {
@@ -296,7 +296,7 @@ dec_3max_intr(cpumask, pc, status, cause)
 				CALLINTR(SYS_DEV_OPT0);
 		}
 	}
-	if (cpumask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		intrcnt[ERROR_INTR]++;
 		dec_3max_errintr();
 	}
