@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.13 2002/04/22 23:40:10 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.14 2002/04/23 00:13:50 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -353,6 +353,18 @@ void *setmode(const char *);
 
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xffffffffU
+#endif
+
+/* <stdlib.h> */
+
+#ifndef __GNUC__
+# if HAVE_ALLOCA_H
+#  include <alloca.h>
+# else
+#  ifndef alloca /* predefined by HP cc +Olibcalls */
+char *alloca ();
+#  endif
+# endif
 #endif
 
 /* <sys/endian.h> */
