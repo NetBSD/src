@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.20 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.21 1999/09/13 21:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 int	usbdebug = 0;
 int	uhcidebug;
 int	ohcidebug;
+int	usb_noexplore = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -205,6 +206,10 @@ usb_event_thread(arg)
 	while (!sc->shutdown) {
 		(void)tsleep(&sc->sc_bus->needs_explore, 
 			     PWAIT, "usbevt", hz*30);
+#ifdef USB_DEBUG
+		if (usb_noexplore)
+			continue;
+#endif
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 		usb_discover(sc);
 	}
