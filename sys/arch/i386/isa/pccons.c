@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.102 1996/10/11 00:27:10 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.103 1996/10/13 03:20:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -287,7 +287,7 @@ kbd_cmd(val, polling)
 						break;
 					}
 #ifdef DIAGNOSTIC
-					kprintf("kbd_cmd: input char %x lost\n", c);
+					printf("kbd_cmd: input char %x lost\n", c);
 #endif
 				}
 			}
@@ -354,7 +354,7 @@ do_async_update(v)
 		old_lock_state = lock_state;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
 		    !kbd_cmd(lock_state, poll)) {
-			kprintf("pc: timeout updating leds\n");
+			printf("pc: timeout updating leds\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
@@ -362,7 +362,7 @@ do_async_update(v)
 		old_typematic_rate = typematic_rate;
 		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
 		    !kbd_cmd(typematic_rate, poll)) {
-			kprintf("pc: timeout updating typematic rate\n");
+			printf("pc: timeout updating typematic rate\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
@@ -412,7 +412,7 @@ pcprobe(parent, match, aux)
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
-		kprintf("pcprobe: command error\n");
+		printf("pcprobe: command error\n");
 		return 0;
 	}
 
@@ -421,7 +421,7 @@ pcprobe(parent, match, aux)
 	kbd_flush_input();
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
-		kprintf("pcprobe: reset error %d\n", 1);
+		printf("pcprobe: reset error %d\n", 1);
 		goto lose;
 	}
 	for (i = 600000; i; i--)
@@ -430,7 +430,7 @@ pcprobe(parent, match, aux)
 			break;
 		}
 	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
-		kprintf("pcprobe: reset error %d\n", 2);
+		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
 	/*
@@ -441,7 +441,7 @@ pcprobe(parent, match, aux)
 	kbd_flush_input();
 	/* Just to be sure. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
-		kprintf("pcprobe: reset error %d\n", 3);
+		printf("pcprobe: reset error %d\n", 3);
 		goto lose;
 	}
 
@@ -461,13 +461,13 @@ pcprobe(parent, match, aux)
 	if (kbc_get8042cmd() & KC8_TRANS) {
 		/* The 8042 is translating for us; use AT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(2, 1)) {
-			kprintf("pcprobe: reset error %d\n", 4);
+			printf("pcprobe: reset error %d\n", 4);
 			goto lose;
 		}
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(1, 1)) {
-			kprintf("pcprobe: reset error %d\n", 5);
+			printf("pcprobe: reset error %d\n", 5);
 			goto lose;
 		}
 	}
@@ -492,7 +492,7 @@ pcattach(parent, self, aux)
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	kprintf(": %s\n", vs.color ? "color" : "mono");
+	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update((void *)1);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

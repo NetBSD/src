@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.18 1996/10/11 00:26:51 christos Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.19 1996/10/13 03:19:48 christos Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -265,7 +265,7 @@ math_emulate(info)
 		real_to_real(&tmp,&ST(code & 7));
 		return(0);
 	case 0xb8: /* ffree */
-		kprintf("ffree not implemented\n\r");
+		printf("ffree not implemented\n\r");
 		math_abort(info,SIGILL);
 	case 0xb9: /* fstp XXX */
 		fxchg(&ST(0),&ST(code & 7));
@@ -322,7 +322,7 @@ math_emulate(info)
 		fpop();
 		return(0);
 	case 0xf8: /* XXX */
-		kprintf("ffree not implemented\n\r");
+		printf("ffree not implemented\n\r");
 		math_abort(info,SIGILL);
 		fpop();
 		return(0);
@@ -475,7 +475,7 @@ math_emulate(info)
 		real_to_real(&tmp,&ST(0));
 		return(0);
 	}
-	kprintf("Unknown math-insns: %04x:%08x %04x\n\r",(u_short)info->tf_cs,
+	printf("Unknown math-insns: %04x:%08x %04x\n\r",(u_short)info->tf_cs,
 		info->tf_eip,code);
 	math_abort(info,SIGFPE);
 }

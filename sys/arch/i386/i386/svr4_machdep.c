@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.25 1996/10/11 00:26:55 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.26 1996/10/13 03:19:51 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -296,7 +296,7 @@ svr4_getsiginfo(si, sig, code, addr)
 		si->si_code = 0;
 		si->si_trap = 0;
 #ifdef DIAGNOSTIC
-		kprintf("sig %d code %ld\n", sig, code);
+		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
 #endif
 		break;
@@ -359,7 +359,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
 #ifdef DEBUG_SVR4
-	kprintf("sig = %d, sip %p, ucp = %p, handler = %p\n", 
+	printf("sig = %d, sip %p, ucp = %p, handler = %p\n", 
 	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
 #endif
 
@@ -415,17 +415,17 @@ svr4_sys_sysarch(p, v, retval)
 
 			if ((error = copyin(SCARG(uap, a1), &ssd,
 					    sizeof(ssd))) != 0) {
-				kprintf("Cannot copy arg1\n");
+				printf("Cannot copy arg1\n");
 				return error;
 			}
 
-			kprintf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
+			printf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
 			       ssd.selector, ssd.base, ssd.limit,
 			       ssd.access1, ssd.access2);
 
 			/* We can only set ldt's for now. */
 			if (!ISLDT(ssd.selector)) {
-				kprintf("Not an ldt\n");
+				printf("Not an ldt\n");
 				return EPERM;
 			}
 
@@ -454,7 +454,7 @@ svr4_sys_sysarch(p, v, retval)
 					     sizeof(struct i386_set_ldt_args));
 
 			if ((error = copyout(&sa, sap, sizeof(sa))) != 0) {
-				kprintf("Cannot copyout args\n");
+				printf("Cannot copyout args\n");
 				return error;
 			}
 
@@ -462,7 +462,7 @@ svr4_sys_sysarch(p, v, retval)
 			SCARG(&ua, parms) = (char *) sap;
 
 			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0) {
-				kprintf("Cannot copyout desc\n");
+				printf("Cannot copyout desc\n");
 				return error;
 			}
 
@@ -471,7 +471,7 @@ svr4_sys_sysarch(p, v, retval)
 #endif
 
 	default:
-		kprintf("svr4_sysarch(%d), a1 %p\n", SCARG(uap, op),
+		printf("svr4_sysarch(%d), a1 %p\n", SCARG(uap, op),
 		       SCARG(uap, a1));
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.16 1996/10/11 00:26:59 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.17 1996/10/13 03:19:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ vm86_return(p, retval)
 	 */
 	if (p->p_sigmask & sigmask(SIGURG)) {
 #ifdef DIAGNOSTIC
-		kprintf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
+		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
 		       p->p_pid);
 #endif
 		sigexit(p, SIGILL);
