@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2002/04/12 23:13:23 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2002/04/13 00:00:20 tv Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -24,7 +24,8 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	cd ${.CURDIR}/../sys/arch/i386/stand/dosboot && ${MAKE} release
 	cd ${.CURDIR}/../sys/arch/i386/stand/misc && ${MAKE} release
-	${MAKESUMS} -t ${RELEASEDIR}/installation/floppy '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.*'
 
 # For "make iso-image"
 iso-image_md_pre:
