@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+REM $NetBSD: BtNetBSD,v 1.2 2002/09/03 22:02:02 chris Exp $
 REM
 REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -1150,7 +1150,7 @@ DEF PROCget_memory_configuration
  
     REM find SDRAM start... DRAM is under 512 Mb, SDRAM is above it
     first_SDRAM% = -1
-    FOR I%=0 TO MAX_RAMBANKS
+    FOR I%=0 TO MAX_DRAMBANKS
       IF (DRAM_addr%(I%) >= SDRAM_ADDR_START%) AND (first_SDRAM%<0) THEN first_SDRAM% = I%
     NEXT
     IF first_SDRAM% >= 0 THEN
@@ -1161,10 +1161,10 @@ DEF PROCget_memory_configuration
         REM save this block
         DRAM_addr% = DRAM_addr%(I%): DRAM_pages% = DRAM_pages%(I%)
         REM move everything down
-        FOR J%=I% TO MAX_RAMBANKS-1
+        FOR J%=I% TO MAX_DRAMBANKS-1
           DRAM_addr%(J%) = DRAM_addr%(J%+1): DRAM_pages%(J%) = DRAM_pages%(J%+1)
         NEXT
-        DRAM_addr%(MAX_RAMBANKS) = 0: DRAM_pages%(MAX_RAMBANKS) = 0
+        DRAM_addr%(MAX_DRAMBANKS) = 0: DRAM_pages%(MAX_DRAMBANKS) = 0
         REM fill in the moved block at the top of the structure
         DRAM_addr%(dramblocks%-1) = DRAM_addr%: DRAM_pages%(dramblocks%-1) = DRAM_pages%
       NEXT
