@@ -1,4 +1,4 @@
-.\"	$NetBSD: vslock.9,v 1.5 1998/04/30 06:32:39 thorpej Exp $
+.\"	$NetBSD: vslock.9,v 1.6 1998/05/09 15:04:39 kleink Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,9 @@
 .Nd lock/unlock user space addresses in memory
 .Sh SYNOPSIS
 .Ft void
-.Fn vslock "struct proc *p" "caddr_t addr" "u_int len"
+.Fn vslock "struct proc *p" "caddr_t addr" "size_t len"
 .Ft void
-.Fn vsunlock "struct proc *p" "caddr_t addr" "u_int len"
+.Fn vsunlock "struct proc *p" "caddr_t addr" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn vslock
