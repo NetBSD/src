@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.14 2003/03/23 16:46:41 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.15 2003/03/23 16:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.14 2003/03/23 16:46:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.15 2003/03/23 16:57:51 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,6 +321,8 @@ smb_rq_reply(struct smb_rq *rqp)
 {
 	struct mdchain *mdp = &rqp->sr_rp;
 	int error;
+	u_int8_t errclass;
+	u_int16_t serror;
 
 	error = smb_iod_waitrq(rqp);
 	if (error)
@@ -330,13 +332,13 @@ smb_rq_reply(struct smb_rq *rqp)
 		return error;
 	(void) md_get_uint8(mdp, NULL);
 	if (rqp->sr_vc->vc_hflags2 & SMB_FLAGS2_ERR_STATUS) {
-		(void) md_get_uint32le(mdp, &rqp->sr_error);
+		(void) md_get_uint32(mdp, NULL);	/* XXX ignored? */
 	} else {
-		(void) md_get_uint8(mdp, &rqp->sr_errclass);
+		(void) md_get_uint8(mdp, &errclass);
 		(void) md_get_uint8(mdp, NULL);
-		error = md_get_uint16le(mdp, &rqp->sr_serror);
+		error = md_get_uint16le(mdp, &serror);
 		if (!error)
-			error = smb_maperror(rqp->sr_errclass, rqp->sr_serror);
+			error = smb_maperror(errclass, serror);
 	}
 	(void) md_get_uint8(mdp, NULL);		/* rpflags */
 	(void) md_get_uint16(mdp, NULL);	/* rpflags2 */
@@ -352,7 +354,7 @@ smb_rq_reply(struct smb_rq *rqp)
 
 	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
 	    rqp->sr_rpmid, rqp->sr_rppid, rqp->sr_rpuid, rqp->sr_rptid,
-	    rqp->sr_errclass, rqp->sr_serror);
+	    errclass, serror);
 	return (error);
 }
 
