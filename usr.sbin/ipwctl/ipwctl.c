@@ -1,4 +1,4 @@
-/*	$NetBSD: ipwctl.c,v 1.2 2004/08/23 11:54:28 lukem Exp $	*/
+/*	$NetBSD: ipwctl.c,v 1.3 2004/08/23 13:11:45 lukem Exp $	*/
 /*	Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp 	*/
 
 /*-
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ipwctl.c,v 1.2 2004/08/23 11:54:28 lukem Exp $");
+__RCSID("$NetBSD: ipwctl.c,v 1.3 2004/08/23 13:11:45 lukem Exp $");
 #else
 #ifndef lint
 static char rcsid[] = "Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp ";
@@ -124,7 +124,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr, "usage:  %s -i iface\n"
-	    "\t%s -i iface -f firmware image\n"
+	    "\t%s -i iface -f firmware\n"
 	    "\t%s -i iface -k\n"
 	    "\t%s -i iface -r\n", __progname, __progname, __progname, 
 	    __progname);
