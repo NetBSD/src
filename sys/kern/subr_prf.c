@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.91 2003/02/17 22:21:52 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.92 2003/03/06 00:39:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.91 2003/02/17 22:21:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92 2003/03/06 00:39:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -140,6 +140,7 @@ int	dumponpanic = DUMP_ON_PANIC;
  */
 
 void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
+void (*v_flush) __P((void)) = cnflush;	/* start with cnflush (normal cons) */
 
 
 /*
@@ -1426,6 +1427,7 @@ number:			if ((dprec = prec) >= 0)
 done:
 	if ((oflags == TOBUFONLY) && (vp != NULL))
 		*(char **)vp = sbuf;
+	(*v_flush)();
 overflow:
 	return (ret);
 	/* NOTREACHED */
