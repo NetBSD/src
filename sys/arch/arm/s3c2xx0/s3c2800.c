@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.5 2003/07/15 00:24:48 lukem Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.6 2003/08/01 00:41:42 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.5 2003/07/15 00:24:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.6 2003/08/01 00:41:42 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ s3c2800_attach(struct device *parent, struct device *self, void *aux)
 		FAIL("TIMER1");
 
 	/* calculate current clock frequency */
-	s3c2800_clock_freq(sc);
+	s3c2800_clock_freq(&sc->sc_sx);
 	printf("fclk %d MHz hclk %d MHz pclk %d MHz\n",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
@@ -199,11 +199,10 @@ s3c2800_softreset(void)
  * fill sc_pclk, sc_hclk, sc_fclk from values of clock controller register.
  */
 void
-s3c2800_clock_freq(struct s3c2800_softc *__sc)
+s3c2800_clock_freq(struct s3c2xx0_softc *sc)
 {
 	int mdiv, pdiv, sdiv;
 	int pllcon, clkcon;
-	struct s3c2xx0_softc *sc = (struct s3c2xx0_softc *)__sc;
 
 	pllcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
 	    CLKMAN_PLLCON);
