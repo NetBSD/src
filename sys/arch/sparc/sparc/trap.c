@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 1999/03/24 05:51:12 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.85 1999/06/28 15:51:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -203,7 +203,7 @@ void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
 void mem_access_fault4m __P((unsigned, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
 
-int ignore_bogus_traps = 0;
+int ignore_bogus_traps = 1;
 
 /*
  * Define the code needed before returning to user mode, for
