@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2001/08/02 22:04:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76 2001/11/17 08:21:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -264,7 +264,11 @@ void i386_bus_space_mallocok __P((void));
 #define	CPU_OSFXSR		8	/* OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* OS/CPU supports SSE2 */
-#define	CPU_MAXID		11	/* number of valid machdep ids */
+#define CPU_TMLR_MODE		11
+#define CPU_TMLR_FREQUENCY	12
+#define CPU_TMLR_VOLTAGE	13
+#define CPU_TMLR_PERCENTAGE	14
+#define	CPU_MAXID		15	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -278,6 +282,10 @@ void i386_bus_space_mallocok __P((void));
 	{ "osfxsr", CTLTYPE_INT }, \
 	{ "sse", CTLTYPE_INT }, \
 	{ "sse2", CTLTYPE_INT }, \
+	{ "tm_longrun_mode", CTLTYPE_INT }, \
+	{ "tm_longrun_frequency", CTLTYPE_INT }, \
+	{ "tm_longrun_voltage", CTLTYPE_INT }, \
+	{ "tm_longrun_percentage", CTLTYPE_INT }, \
 }
 
 
