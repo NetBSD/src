@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.132 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.133 2001/09/13 23:23:26 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -65,6 +65,7 @@ LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
 LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
+LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
 LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
