@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.19 1997/02/03 22:02:56 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.20 1997/09/15 10:38:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: input.c,v 1.19 1997/02/03 22:02:56 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: input.c,v 1.20 1997/09/15 10:38:14 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -146,7 +147,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	struct rt_entry *rt;
 	struct netinfo *n, *lim;
 	struct interface *ifp1;
-	naddr gate, mask, v1_mask, dst, ddst_h;
+	naddr gate, mask, v1_mask, dst, ddst_h = 0;
 	struct auth *ap;
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.11 1997/02/03 22:02:54 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.12 1997/09/15 10:38:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: if.c,v 1.11 1997/02/03 22:02:54 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: if.c,v 1.12 1997/09/15 10:38:12 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -79,9 +80,9 @@ int	have_ripv1_in;
 
 
 static struct interface**
-nhash(register char *p)
+nhash(char *p)
 {
-	register u_int i;
+	u_int i;
 
 	for (i = 0; *p != '\0'; p++) {
 		i = ((i<<1) & 0x7fffffff) | ((i>>31) & 1);
@@ -628,7 +629,7 @@ rt_xaddrs(struct rt_addrinfo *info,
 #endif
 
 
-	bzero(info, sizeof(*info));
+	memset(info, 0, sizeof(*info));
 	info->rti_addrs = addrs;
 	for (i = 0; i < RTAX_MAX && sa < lim; i++) {
 		if ((addrs & (1 << i)) == 0)
@@ -726,7 +727,7 @@ ifinit(void)
 			ifm = (struct if_msghdr *)ifam;
 			/* make prototype structure for the IP aliases
 			 */
-			bzero(&ifs0, sizeof(ifs0));
+			memset(&ifs0, 0, sizeof(ifs0));
 			ifs0.int_rip_sock = -1;
 			ifs0.int_index = ifm->ifm_index;
 			ifs0.int_if_flags = ifm->ifm_flags;

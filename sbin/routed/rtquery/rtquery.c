@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.4 1997/02/03 22:03:20 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.5 1997/09/15 10:38:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,8 @@ char copyright[] =
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: rtquery.c,v 1.4 1997/02/03 22:03:20 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rtquery.c,v 1.5 1997/09/15 10:38:24 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,7 +131,7 @@ main(int argc,
 	OMSG.rip_nets[0].n_metric = htonl(HOPCNT_INFINITY);
 
 	pgmname = argv[0];
-	while ((ch = getopt(argc, argv, "np1w:r:t:a:")) != EOF)
+	while ((ch = getopt(argc, argv, "np1w:r:t:a:")) != -1)
 		switch (ch) {
 		case 'n':
 			not_trace = 1;
@@ -167,7 +168,7 @@ main(int argc,
 					herror(0);
 					exit(1);
 				}
-				bcopy(hp->h_addr, &OMSG.rip_nets[0].n_dst,
+				memmove(&OMSG.rip_nets[0].n_dst, hp->h_addr,
 				      sizeof(OMSG.rip_nets[0].n_dst));
 				OMSG.rip_nets[0].n_family = RIP_AF_INET;
 				OMSG.rip_nets[0].n_mask = -1;
@@ -306,7 +307,7 @@ trace_loop(char *argv[])
 		OMSG.rip_vers = RIPv1;
 	}
 
-	bzero(&myaddr, sizeof(myaddr));
+	memset(&myaddr, 0, sizeof(myaddr));
 	myaddr.sin_family = AF_INET;
 #ifdef _HAVE_SIN_LEN
 	myaddr.sin_len = sizeof(myaddr);
@@ -357,8 +358,7 @@ query_loop(char *argv[], int argc)
 			OMSG.rip_nets[1] = OMSG.rip_nets[0];
 			NA0.a_family = RIP_AF_AUTH;
 			NA0.a_type = RIP_AUTH_PW;
-			bcopy(passwd, NA0.au.au_pw,
-			      RIP_AUTH_PW_LEN);
+			memmove(NA0.au.au_pw, passwd, RIP_AUTH_PW_LEN);
 			omsg_len += sizeof(OMSG.rip_nets[0]);
 
 		} else if (auth_type == RIP_AUTH_MD5) {
@@ -371,7 +371,7 @@ query_loop(char *argv[], int argc)
 			NA0.au.a_md5.md5_pkt_len = sizeof(OMSG.rip_nets[1]);
 			NA2.a_family = RIP_AF_AUTH;
 			NA2.a_type = 1;
-			bcopy(passwd, NA2.au.au_pw, sizeof(NA2.au.au_pw));
+			memmove(NA2.au.au_pw, passwd, sizeof(NA2.au.au_pw));
 			MD5Init(&md5_ctx);
 			MD5Update(&md5_ctx, (u_char *)&NA0,
 				  (char *)(&NA2+1) - (char *)&NA0);
@@ -476,7 +476,7 @@ out(char *host)
 		return -1;
 	}
 
-	bzero(&router, sizeof(router));
+	memset(&router, 0, sizeof(router));
 	router.sin_family = AF_INET;
 #ifdef _HAVE_SIN_LEN
 	router.sin_len = sizeof(router);
@@ -487,7 +487,7 @@ out(char *host)
 			herror(host);
 			return -1;
 		}
-		bcopy(hp->h_addr, &router.sin_addr, sizeof(router.sin_addr));
+		memmove(&router.sin_addr, hp->h_addr, sizeof(router.sin_addr));
 	}
 	router.sin_port = htons(RIP_PORT);
 
@@ -763,11 +763,11 @@ getnet(char *name,
 
 	/* Detect and separate "1.2.3.4/24"
 	 */
-	if (0 != (mname = rindex(name,'/'))) {
+	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
 		if (i > sizeof(hname)-1)	/* name too long */
 			return 0;
-		bcopy(name, hname, i);
+		memmove(hname, name, i);
 		hname[i] = '\0';
 		mname++;
 		name = hname;
