@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.11 2003/08/15 05:56:41 keihan Exp $
+$NetBSD: acronyms.comp,v 1.12 2003/08/30 10:17:45 wiz Exp $
 
 ABI	application binary interface
 API	application programming interface
@@ -53,6 +53,7 @@ ISDN	integrated services digital network
 ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
+KVA	kernel virtual address
 LAN	local area network
 LBA	logical block addressing
 LDAP	lightweight directory access protocol
@@ -73,6 +74,9 @@ POP	post office protocol
 POSIX	portable operating system interface [for] unix
 PPP	point-to-point protocol
 PPPOE	point-to-point protocol over ethernet
+PDP	page descriptor page
+PTE	page table entry
+PTP	page table page
 RAID	redundant array of inexpensive disks
 RAM	random access memory
 RCS	revision control system
