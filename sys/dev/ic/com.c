@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.97 1997/01/30 19:42:33 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.98 1997/04/04 20:49:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -162,14 +162,14 @@ struct cfdriver com_cd = {
 };
 
 #ifdef COMCONSOLE
-int	comdefaultrate = CONSPEED;		/* XXX why set default? */
+int	comconsrate = CONSPEED;		/* XXX why set default? */
 #else
-int	comdefaultrate = TTYDEF_SPEED;
+int	comconsrate = TTYDEF_SPEED;
 #endif
 int	comconsaddr;
 int	comconsattached;
 bus_space_tag_t comconstag;
-bus_space_handle_t comconsbah;
+bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
@@ -399,7 +399,7 @@ comattach(parent, self, aux)
 	                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 				panic("comattach: io mapping failed");
 		} else
-	                ioh = comconsbah;
+	                ioh = comconsioh;
 		irq = ia->ia_irq;
 	} else
 #endif
@@ -487,7 +487,7 @@ comattach(parent, self, aux)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		cominit(iot, ioh, comdefaultrate);
+		cominit(iot, ioh, comconsrate);
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
@@ -546,10 +546,13 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			tp->t_ispeed = tp->t_ospeed = comconsrate;
 			tp->t_cflag = comconscflag;
-		else
+		} else {
+			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 			tp->t_cflag = TTYDEF_CFLAG;
+		}
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
@@ -557,7 +560,6 @@ comopen(dev, flag, mode, p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 
 		s = spltty();
 
@@ -1380,10 +1382,10 @@ comcninit(cp)
 	XXX NEEDS TO BE FIXED XXX
 	comconstag = ???;
 #endif
-	if (bus_space_map(comconstag, CONADDR, COM_NPORTS, 0, &comconsbah))
+	if (bus_space_map(comconstag, CONADDR, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
-	cominit(comconstag, comconsbah, comdefaultrate);
+	cominit(comconstag, comconsioh, comconsrate);
 	comconsaddr = CONADDR;
 }
 
@@ -1397,7 +1399,7 @@ cominit(iot, ioh, rate)
 	u_char stat;
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(comdefaultrate);
+	rate = comspeed(comconsrate);
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
@@ -1415,7 +1417,7 @@ comcngetc(dev)
 {
 	int s = splhigh();
 	bus_space_tag_t iot = comconstag;
-	bus_space_handle_t ioh = comconsbah;
+	bus_space_handle_t ioh = comconsioh;
 	u_char stat, c;
 
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
@@ -1436,7 +1438,7 @@ comcnputc(dev, c)
 {
 	int s = splhigh();
 	bus_space_tag_t iot = comconstag;
-	bus_space_handle_t ioh = comconsbah;
+	bus_space_handle_t ioh = comconsioh;
 	u_char stat;
 	register int timo;
 
