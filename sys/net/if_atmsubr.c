@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.31 2001/11/12 23:49:36 lukem Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.32 2003/01/19 23:14:42 simonb Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.31 2001/11/12 23:49:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.32 2003/01/19 23:14:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -110,7 +110,6 @@ atm_output(ifp, m0, dst, rt0)
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct atmllc *atmllc;
-	struct atmllc *llc_hdr = NULL;
 	u_int32_t atm_flags;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -192,7 +191,6 @@ atm_output(ifp, m0, dst, rt0)
 			 * header (4) + LLC/SNAP (8))
 			 */
 			bcopy(dst->sa_data, &atmdst, sizeof(atmdst));
-			llc_hdr = (struct atmllc *)(dst->sa_data + sizeof(atmdst));
 			break;
 			
 		default:
