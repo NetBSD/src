@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2001/10/21 14:19:34 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,8 +42,6 @@
 
 #define	_MACHINE	arm26
 #define	MACHINE		"arm26"
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
 
 #define POOL_SUBPAGE 4096
 
