@@ -1,3 +1,5 @@
+/*	$NetBSD: scireg.h,v 1.3 1994/10/26 02:04:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scireg.h	7.3 (Berkeley) 2/5/91
- *	$Id: scireg.h,v 1.2 1994/05/29 04:50:23 chopps Exp $
  */
 
 /*

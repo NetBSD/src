@@ -1,3 +1,5 @@
+/*	$NetBSD: wesc.c,v 1.4 1994/10/26 02:05:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: wesc.c,v 1.3 1994/06/16 14:28:57 chopps Exp $
  */
 
 #include <sys/param.h>

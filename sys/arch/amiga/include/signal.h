@@ -1,6 +1,5 @@
-/*
- *	$Id: signal.h,v 1.4 1994/04/10 02:28:36 chopps Exp $
- */
+/*	$NetBSD: signal.h,v 1.5 1994/10/26 02:06:39 cgd Exp $	*/
+
 #ifndef _MACHINE_SIGNAL_H_
 #define _MACHINE_SIGNAL_H_
 

@@ -1,6 +1,5 @@
-/*
- *	$Id: ptrace.h,v 1.3 1994/04/10 02:28:34 chopps Exp $
- */
+/*	$NetBSD: ptrace.h,v 1.4 1994/10/26 02:06:36 cgd Exp $	*/
+
 #ifndef _MACHINE_PTRACE_H_
 #define _MACHINE_PTRACE_H_
 

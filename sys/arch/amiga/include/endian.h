@@ -1,6 +1,5 @@
-/*
- *	$Id: endian.h,v 1.6 1994/04/10 02:28:22 chopps Exp $
- */
+/*	$NetBSD: endian.h,v 1.7 1994/10/26 02:06:09 cgd Exp $	*/
+
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
 

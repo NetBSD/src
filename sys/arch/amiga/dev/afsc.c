@@ -1,3 +1,5 @@
+/*	$NetBSD: afsc.c,v 1.2 1994/10/26 02:02:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: afsc.c,v 1.1 1994/10/06 19:06:40 chopps Exp $
  */
 
 #include <sys/param.h>

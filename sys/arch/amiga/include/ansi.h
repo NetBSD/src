@@ -1,6 +1,5 @@
-/*
- *	$Id: ansi.h,v 1.7 1994/04/10 02:28:14 chopps Exp $
- */
+/*	$NetBSD: ansi.h,v 1.8 1994/10/26 02:05:55 cgd Exp $	*/
+
 #ifndef _MACHINE_ANSI_H_
 #define _MACHINE_ANSI_H_
 

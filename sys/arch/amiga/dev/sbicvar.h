@@ -1,3 +1,5 @@
+/*	$NetBSD: sbicvar.h,v 1.3 1994/10/26 02:04:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: sbicvar.h,v 1.2 1994/06/14 00:59:03 chopps Exp $
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_

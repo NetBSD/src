@@ -1,6 +1,5 @@
-/*
- *	$Id: psl.h,v 1.6 1994/04/10 02:28:32 chopps Exp $
- */
+/*	$NetBSD: psl.h,v 1.7 1994/10/26 02:06:31 cgd Exp $	*/
+
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
 

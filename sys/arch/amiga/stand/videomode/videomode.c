@@ -1,6 +1,4 @@
-/*
- *	$Id: videomode.c,v 1.2 1994/02/11 07:03:12 chopps Exp $
- */
+/*	$NetBSD: videomode.c,v 1.3 1994/10/26 02:07:14 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>

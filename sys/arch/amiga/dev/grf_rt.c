@@ -1,6 +1,4 @@
-/*
- *	$Id: grf_rt.c,v 1.17 1994/07/31 18:42:06 chopps Exp $
- */
+/*	$NetBSD: grf_rt.c,v 1.18 1994/10/26 02:03:16 cgd Exp $	*/
 
 #include "grfrt.h"
 #if NGRFRT > 0

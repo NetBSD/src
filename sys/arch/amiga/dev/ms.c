@@ -1,3 +1,5 @@
+/*	$NetBSD: ms.c,v 1.5 1994/10/26 02:04:24 cgd Exp $	*/
+
 /*
  * based on:
  *
@@ -43,8 +45,7 @@
  *
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
- * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- *	$Id: ms.c,v 1.4 1994/06/05 07:45:17 chopps Exp $
+ * Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
 
 /*
