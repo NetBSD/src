@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.52 2000/07/11 06:23:38 kleink Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.53 2000/07/13 02:35:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ int	ELFNAME(check_header) __P((Elf_Ehdr *, int));
 int	ELFNAME(load_file) __P((struct proc *, struct exec_package *, char *,
 	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *));
 void	ELFNAME(load_psection) __P((struct exec_vmcmd_set *, struct vnode *,
-	    Elf_Phdr *, Elf_Addr *, u_long *, int *));
+	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int));
 
 int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *));
@@ -281,13 +281,14 @@ ELFNAME(check_header)(eh, type)
  * Load a psection at the appropriate address
  */
 void
-ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
+ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot, flags)
 	struct exec_vmcmd_set *vcset;
 	struct vnode *vp;
-	Elf_Phdr *ph;
+	const Elf_Phdr *ph;
 	Elf_Addr *addr;
 	u_long *size;
 	int *prot;
+	int flags;
 {
 	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
@@ -297,7 +298,7 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
 	 */
 	if (*addr != ELFDEFNNAME(NO_ADDR)) {
 		if (ph->p_align > 1) {
-			*addr = ELF_ROUND(*addr, ph->p_align);
+			*addr = ELF_TRUNC(*addr, ph->p_align);
 			uaddr = ELF_TRUNC(ph->p_vaddr, ph->p_align);
 		} else
 			uaddr = ph->p_vaddr;
@@ -325,14 +326,16 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
 		 * readvn.
 		 */
 		psize = trunc_page(*size);
-		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
-		    offset, *prot);
-		if(psize != *size)
-			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
-			    *addr + psize, vp, offset + psize, *prot);
-	} else
-		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
-		    offset, *prot);
+	}
+	if (psize > 0) {
+		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+		    offset, *prot, flags);
+	}
+	if (psize < *size) {
+		NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
+		    *addr + psize, vp, offset + psize, *prot, 
+		    psize > 0 ? flags & VMCMD_RELATIVE : flags);
+	}
 
 	/*
 	 * Check if we need to extend the size of the segment
@@ -341,8 +344,8 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
 	rf = round_page(*addr + *size);
 
 	if (rm != rf) {
-		NEW_VMCMD(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
-		    0, *prot);
+		NEW_VMCMD2(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
+		    0, *prot, flags & VMCMD_RELATIVE);
 		*size = msize;
 	}
 }
@@ -397,6 +400,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	struct vattr attr;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
+	Elf_Phdr *base_ph = NULL;
 	u_long phsize;
 	char *bp = NULL;
 	Elf_Addr addr = *last;
@@ -464,11 +468,19 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	for (i = 0; i < eh.e_phnum; i++) {
 		u_long size = 0;
 		int prot = 0;
+		int flags;
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
+			if (base_ph == NULL) {
+				addr = *last;
+				flags = VMCMD_BASE;
+			} else {
+				addr = ph[i].p_vaddr - base_ph->p_vaddr;
+				flags = VMCMD_RELATIVE;
+			}
 			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
-			    &size, &prot);
+			    &size, &prot, flags);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
@@ -479,6 +491,8 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 #endif
 				ap->arg_interp = addr;
 			}
+			if (base_ph == NULL)
+				base_ph = &ph[i];
 			addr += size;
 			break;
 
@@ -637,7 +651,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 			if (nload++ == 2)
 				goto bad;
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
-			    &ph[i], &addr, &size, &prot);
+			    &ph[i], &addr, &size, &prot, 0);
 
 			/*
 			 * Decide whether it's text or data by looking
