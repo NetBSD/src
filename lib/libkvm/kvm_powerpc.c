@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.5 2000/06/29 06:34:25 mrg Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.6 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,10 +90,19 @@ int
 _kvm_mdopen(kd)
 	kvm_t	*kd;
 {
+	uintptr_t max_uva;
+	extern struct ps_strings *__ps_strings;
 
+#if 0   /* XXX - These vary across powerpc machines... */
 	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
+#endif
+	/* This is somewhat hack-ish, but it works. */
+	max_uva = (uintptr_t) (__ps_strings + 1);
+	kd->usrstack = max_uva;
+	kd->max_uva  = max_uva;
+	kd->min_uva  = 0;
 
 	return (0);
 }
