@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29 1998/09/13 08:19:49 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.30 1998/12/12 17:28:05 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -477,12 +477,12 @@ return:
 ENTRY(setjmp)
 	stmia	r0, {r4-r14}
 	mov	r0, #0x00000000
-	mov	r15, r14
+	mov	pc, lr
 
 ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
-	mov	r15, r14
+	mov	pc, lr
 
 	.data
 	.global _esym

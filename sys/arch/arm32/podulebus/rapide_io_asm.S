@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.6 1998/09/22 00:40:37 mark Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.7 1998/12/12 17:28:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -60,7 +60,7 @@ rapide_rm_4_loop:
 	subs	r2, r2, #1
 	bne	rapide_rm_4_loop
 
-	mov	pc, r14
+	mov	pc, lr
 
 rapide_rm_4_m8:
 	/* xfer 32 bytes at a time */
@@ -73,7 +73,7 @@ rapide_rm_4_m8_loop:
 	bne	rapide_rm_4_m8_loop
 
 	ldmfd	sp!, {r4-r10}
-	mov	pc, r14
+	mov	pc, lr
 
 rapide_rm_4_m128:
 	/* xfer 512 bytes at a time */
@@ -125,7 +125,7 @@ rapide_wm_4_loop:
 	subs	r2, r2, #1
 	bne	rapide_wm_4_loop
 
-	mov	pc, r14
+	mov	pc, lr
 
 rapide_wm_4_m8:
 	/* xfer 32 bytes at a time */
@@ -138,7 +138,7 @@ rapide_wm_4_m8_loop:
 	bne	rapide_wm_4_m8_loop
 
 	ldmfd	sp!, {r4-r10}
-	mov	pc, r14
+	mov	pc, lr
 
 rapide_wm_4_m128:
 	/* xfer 512 bytes at a time */
@@ -175,4 +175,4 @@ rapide_wm_4_m128_loop:
 	bne	rapide_wm_4_m128_loop
 
 	ldmfd	sp!, {r4-r12}
-	mov	pc, r14
+	mov	pc, lr
