@@ -1,11 +1,14 @@
-/*	$NetBSD: compress.c,v 1.7 2002/03/11 23:40:16 fvdl Exp $	*/
+/*	$NetBSD: compress.c,v 1.8 2003/03/08 07:42:33 lukem Exp $	*/
 
 /* compress.c -- compress a memory buffer
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: compress.c,v 1.7 2002/03/11 23:40:16 fvdl Exp $ */
+/* @(#) $Id: compress.c,v 1.8 2003/03/08 07:42:33 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: compress.c,v 1.8 2003/03/08 07:42:33 lukem Exp $");
 
 #include "zlib.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: deflate.c,v 1.10 2002/05/29 18:15:17 christos Exp $ */
+/* $NetBSD: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -49,7 +49,10 @@
  *
  */
 
-/* @(#) $Id: deflate.c,v 1.10 2002/05/29 18:15:17 christos Exp $ */
+/* @(#) $Id: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $");
 
 #include "deflate.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.c,v 1.8 2002/03/11 23:40:23 fvdl Exp $ */
+/* $NetBSD: zutil.c,v 1.9 2003/03/08 07:42:37 lukem Exp $ */
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -6,6 +6,9 @@
  */
 
 /* @(#) Id */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: zutil.c,v 1.9 2003/03/08 07:42:37 lukem Exp $");
 
 #include <stdio.h>
 

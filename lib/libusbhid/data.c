@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.2 2003/03/08 07:45:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: data.c,v 1.2 2003/03/08 07:45:57 lukem Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
