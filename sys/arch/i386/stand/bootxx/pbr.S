@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.4 2003/08/05 13:41:52 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.5 2003/08/05 15:14:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -322,7 +322,7 @@ pbr_read_ok:
 	jnz	error
 
 	movl	%ebp, %esi			/* %esi ptn base, %dl disk id */
-	jmpl	$0, $bootxx			/* our %cs may not be zero */
+	jmp	$0, $bootxx			/* our %cs may not be zero */
 
 /* Read disk using int13-extension parameter block */
 read_lba:
