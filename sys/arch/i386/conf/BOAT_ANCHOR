@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.65 1996/08/31 20:39:14 mycroft Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.66 1996/08/31 20:43:53 mycroft Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -127,6 +127,7 @@ com*	at ast? slave ?
 #bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha*	at eisa? slot ?
+#bha*	at pci? dev ? function ?
 #scsibus* at bha?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
