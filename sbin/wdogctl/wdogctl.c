@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.2 2000/11/06 07:48:28 minoura Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.3 2001/01/10 07:59:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -171,7 +171,7 @@ enable_user(const char *name, u_int period)
 		err(1, "open %s", _PATH_WATCHDOG);
 
 	/* ...so we can log failures to tickle the timer. */
-	openlog(__progname, LOG_CONS|LOG_PERROR|LOG_PID, LOG_DAEMON);
+	openlog(__progname, LOG_PERROR|LOG_PID, LOG_DAEMON);
 
 	/*
 	 * We fork a child process which detaches from the controlling
@@ -218,7 +218,7 @@ enable_user(const char *name, u_int period)
 		 * we exit, the kernel will disable the watchdog so
 		 * that the system won't die.
 		 */
-		err(1, "unable to deatch from terminal");
+		err(1, "unable to detach from terminal");
 	}
 
 	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
