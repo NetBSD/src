@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.13 2003/01/03 02:34:49 thorpej Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.14 2003/09/21 15:21:03 matt Exp $
 
 CPPFLAGS+=	-D${MACHINE}
 
@@ -12,6 +12,6 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${DBSYM} $@ || true"; \
 	${DBSYM} $@ || true; \
 	echo \
-	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout"; \
-	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout
+	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
+	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout
 .endif
