@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2004/03/28 09:01:28 martti Exp $
+#	$NetBSD: Makefile,v 1.18 2004/03/28 09:18:55 martti Exp $
 
 PROG=		ipnat
 SRCS=		ipnat.c ipnat_y.c ipnat_l.c
@@ -20,7 +20,7 @@ ipnat_y.c ipnat_y.h: ipnat_y.y ipnat_l.h
 	    -e 's/y.tab.h/ipnat_y.h/' \
 		y.tab.h > ipnat_y.h
 
-ipnat_l.c: lexer.c ipnat_l.h
+ipnat_l.c: lexer.c ipnat_l.h ipnat_y.h
 	sed -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    -e 's/lexer.h/ipnat_l.h/' \
