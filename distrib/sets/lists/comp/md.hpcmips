@@ -1,10 +1,11 @@
-# $NetBSD: md.hpcmips,v 1.15 2002/08/07 21:20:56 briggs Exp $
+# $NetBSD: md.hpcmips,v 1.16 2002/10/14 02:11:09 takemura Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
 ./usr/include/hpcmips/_G_config.h	comp-c-include
 ./usr/include/hpcmips/ansi.h	comp-c-include
 ./usr/include/hpcmips/aout_machdep.h	comp-c-include
+./usr/include/hpcmips/apmvar.h	comp-c-include
 ./usr/include/hpcmips/asm.h	comp-c-include
 ./usr/include/hpcmips/autoconf.h	comp-c-include
 ./usr/include/hpcmips/bootinfo.h	comp-c-include
