@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.6 1997/07/04 21:54:06 pk Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.7 1997/10/19 05:13:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mkstr.c,v 1.6 1997/07/04 21:54:06 pk Exp $";
+__RCSID("$NetBSD: mkstr.c,v 1.7 1997/10/19 05:13:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
 char	name[100], *np;
 
 void process __P((void));
+int main __P((int, char **));
 int match __P((char *));
 int octdigit __P((char));
 void inithash __P((void));
@@ -131,7 +132,6 @@ main(argc, argv)
 void
 process()
 {
-	char *cp;
 	int c;
 
 	for (;;) {
