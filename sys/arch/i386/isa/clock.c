@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.73 2002/10/01 12:57:10 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.74 2002/10/02 05:47:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.73 2002/10/01 12:57:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74 2002/10/02 05:47:12 thorpej Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -133,8 +133,8 @@ int clock_debug = 0;
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(sysbeep, sizeof(struct device), sysbeepmatch, sysbeepattach,
-    NULL, NULL)
+CFATTACH_DECL(sysbeep, sizeof(struct device),
+    sysbeepmatch, sysbeepattach, NULL, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
