@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.18 1998/03/27 19:32:15 cgd Exp $ */
+/*	$NetBSD: wdc.c,v 1.19 1998/04/07 19:51:57 leo Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -390,6 +390,11 @@ wdcstart(wdc)
 		}
 		return;
 	}
+
+	if (wdc->sc_cap & WDC_CAPABILITY_HWLOCK)
+		if (!(*wdc->sc_claim_hw)(wdc, 0))
+			return;
+
 	wdc->sc_flags |= WDCF_ACTIVE;
 #ifdef ATAPI_DEBUG2
 		printf("wdcstart: drive %d\n", (int)xfer->d_link->drive);
@@ -773,6 +778,9 @@ wdc_ata_done(wdc, xfer)
 
 	WDDEBUG_PRINT(("wdc_ata_done\n"));
 
+	if (wdc->sc_cap & WDC_CAPABILITY_HWLOCK)
+		(*wdc->sc_free_hw)(wdc);
+
 	/* remove this command from xfer queue */
 	s = splbio();
 	TAILQ_REMOVE(&wdc->sc_xfer, xfer, c_xferchain);
@@ -828,6 +836,9 @@ wdc_get_parms(wdc, d_link)
 			return error;
 		}
 	}
+	if (wdc->sc_cap & WDC_CAPABILITY_HWLOCK)
+		if (!(*wdc->sc_claim_hw)(wdc, 1))
+			panic("wdc_get_parms: Cannot claim wd-hardware");
 
 	wdc->sc_flags |= WDCF_ACTIVE;
 
@@ -871,6 +882,9 @@ wdc_get_parms(wdc, d_link)
 
 	/* Clear any leftover interrupt. */
 	(void) bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
+
+	if (wdc->sc_cap & WDC_CAPABILITY_HWLOCK)
+		(*wdc->sc_free_hw)(wdc);
 
 	/* Restart the queue. */
 	WDDEBUG_PRINT(("wdcstart from wdc_get_parms flags 0x%x\n",
@@ -1868,6 +1882,9 @@ wdc_atapi_done(wdc, xfer)
 	struct scsipi_xfer *sc_xfer = xfer->atapi_cmd;
 	int s;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
+
+	if (wdc->sc_cap & WDC_CAPABILITY_HWLOCK)
+		(*wdc->sc_free_hw)(wdc);
 
 #ifdef ATAPI_DEBUG
 	printf("wdc_atapi_done: flags 0x%x\n", (u_int)xfer->c_flags);

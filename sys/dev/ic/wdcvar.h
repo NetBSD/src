@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.1 1998/01/14 23:42:04 cgd Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2 1998/04/07 19:51:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,11 +56,16 @@ struct wdc_attachment_data {
 	void			(*dma_start) __P((void *, void *, size_t,
 				    int));
 	void			(*dma_finish) __P((void *));
+
+	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
+	int			(*claim_hw) __P((void *, int));
+	void			(*free_hw) __P((void *));
 };
 
 /* Capabilities supported by the controller */
 #define	WDC_CAPABILITY_DATA32	0x01		/* 32-bit data access */
 #define	WDC_CAPABILITY_DMA	0x02		/* DMA */
+#define	WDC_CAPABILITY_HWLOCK	0x04		/* Needs to lock HW */
 
 struct wdc_softc {
 	struct device sc_dev;
@@ -92,6 +97,8 @@ struct wdc_softc {
 #define	sc_dma_setup	sc_adp->dma_setup
 #define	sc_dma_start	sc_adp->dma_start
 #define	sc_dma_finish	sc_adp->dma_finish
+#define	sc_claim_hw	sc_adp->claim_hw
+#define	sc_free_hw	sc_adp->free_hw
 
 void	wdcattach(struct wdc_softc *, const struct wdc_attachment_data *);
 int	wdcintr(void *);
