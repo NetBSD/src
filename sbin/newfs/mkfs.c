@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.32 1998/10/23 00:39:15 thorpej Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.33 1998/11/03 18:14:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.32 1998/10/23 00:39:15 thorpej Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.33 1998/11/03 18:14:55 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,6 +860,7 @@ fsinit(utime)
 	/*
 	 * initialize the node
 	 */
+	memset(&node, 0, sizeof(node));
 	node.di_atime = utime;
 	node.di_mtime = utime;
 	node.di_ctime = utime;
