@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_time_rcsid[] = "$Id: time.c,v 1.3 1995/08/24 05:22:09 jtc Exp $";
+const char _uuconf_time_rcsid[] = "$Id: time.c,v 1.4 2002/12/06 09:57:58 scw Exp $";
 #endif
 
 #include <ctype.h>
@@ -84,7 +84,7 @@ _uuconf_itime_parse (qglobal, ztime, ival, cretry, picmp, pqspan, pblock)
   const char *z;
 
   qlist = *pqspan;
-  if (qlist == (struct uuconf_timespan *) &_uuconf_unset)
+  if (qlist == (void *) &_uuconf_unset)
     qlist = NULL;
 
   /* Expand the string using a timetable.  Keep rechecking the string
