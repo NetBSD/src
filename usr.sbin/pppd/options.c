@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.2 1993/11/10 01:34:24 paulus Exp $";
+static char rcsid[] = "$Id: options.c,v 1.3 1993/11/28 23:39:38 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -297,8 +297,9 @@ usage()
  * and interpret them.
  */
 int
-options_from_file(filename)
+options_from_file(filename, must_exist)
     char *filename;
+    int must_exist;
 {
     FILE *f;
     int i, newline;
@@ -308,7 +309,7 @@ options_from_file(filename)
     char cmd[MAXWORDLEN];
 
     if ((f = fopen(filename, "r")) == NULL) {
-	if (errno == ENOENT)
+	if (!must_exist && errno == ENOENT)
 	    return 1;
 	perror(filename);
 	exit(1);
@@ -370,7 +371,7 @@ options_from_user()
 	novm("init file name");
     strcpy(path, user);
     strcat(path, file);
-    ret = options_from_file(path);
+    ret = options_from_file(path, 0);
     free(path);
     return ret;
 }
@@ -531,7 +532,7 @@ static int
 readfile(argv)
     char **argv;
 {
-    return options_from_file(*argv);
+    return options_from_file(*argv, 1);
 }
 
 /*
