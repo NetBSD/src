@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.4 2003/08/07 16:26:59 agc Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.5 2004/05/18 20:08:51 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,8 @@
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
  */
 
+#ifndef _MACHINE_GRFIOCTL_H_
+#define _MACHINE_GRFIOCTL_H_
 
 /* these are changeable values, encapsulated in their own structure, so
    no the whole thing has to be copied when setting parameters. */
@@ -250,3 +252,4 @@ struct grf_bitblt {
 
 #define GRFIOCBITBLT	_IOR('G', 57, struct grf_bitblt)
 
+#endif /* _MACHINE_GRFIOCTL_H_ */
