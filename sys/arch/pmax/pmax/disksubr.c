@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2000/03/03 17:51:26 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2000/03/06 03:14:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -348,4 +348,11 @@ bounds_check_with_label(bp, lp, wlabel)
 bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
+}
+
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
 }
