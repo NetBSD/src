@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.11 1999/09/30 18:01:32 jsm Exp $	*/
+/*	$NetBSD: move.c,v 1.12 1999/10/01 17:06:01 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.11 1999/09/30 18:01:32 jsm Exp $");
+__RCSID("$NetBSD: move.c,v 1.12 1999/10/01 17:06:01 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ check_go()
 #ifdef DEBUG
 				if (Debug) {
 					fprintf(outf, "CHECK_GO: can play %s (%d), ", C_name[card], card);
-					fprintf(outf, "is_safety(card) = %d, ", issafety(card));
+					fprintf(outf, "is_safety(card) = %d, ", is_safety(card));
 					fprintf(outf, "canplay(pp, op, card) = %d\n", canplay(pp, op, card));
 				}
 #endif
