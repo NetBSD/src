@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.4 2000/10/17 15:13:40 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.5 2001/01/12 19:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.4 2000/10/17 15:13:40 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.5 2001/01/12 19:39:02 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -56,9 +56,8 @@ __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 	while (!((FLD_D | REC_D_F) & l_d_mask[*++pos]));	\
 }
 		
-extern u_char *enterfield __P((u_char *, u_char *, struct field *, int));
-
-extern u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
+static u_char *enterfield __P((u_char *, u_char *, struct field *, int));
+static u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
 
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
@@ -80,7 +79,7 @@ enterkey(keybuf, line, size, fieldtable)
 	struct recheader *keybuf;	/* pointer to start of key */
 	DBT *line;
 	int size;
-	struct field fieldtable[];
+	struct field *fieldtable;
 {
 	int i;
 	u_char *l_d_mask;
@@ -120,12 +119,22 @@ enterkey(keybuf, line, size, fieldtable)
 		    fieldtable->flags)) == NULL)
 			return (1);
 
-	if (UNIQUE)
-		*(keypos-1) = REC_D;
 	keybuf->offset = keypos - keybuf->data;
+
+	/*
+	 * Make [s]radixsort() only sort by relevant part of key if:
+	 * 1. we want to choose unique items by relevant field[s]
+	 * 2. we want stable sort and so the items should be sorted only by
+	 *    the relevant field[s]
+	 */
+	if (UNIQUE || (stable_sort && keybuf->offset < line->size))
+		keypos[-1] = REC_D;
+
 	keybuf->length = keybuf->offset + line->size;
-	if (keybuf->length + sizeof(TRECHEADER) > size)
-		return (1);		/* line too long for buffer */
+	if (keybuf->length + sizeof(TRECHEADER) > size) {
+		/* line too long for buffer */
+		return (1);
+	}
 	memcpy(keybuf->data + keybuf->offset, line->data, line->size);
 	return (0);
 }
@@ -133,7 +142,7 @@ enterkey(keybuf, line, size, fieldtable)
 /*
  * constructs a field (as defined by -k) within a key
  */
-u_char *
+static u_char *
 enterfield(tablepos, endkey, cur_fld, gflags)
 	struct field *cur_fld;
 	u_char *tablepos, *endkey;
@@ -157,18 +166,19 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 	else {
 		if (tcol.indent) {
 			end = tcol.p->start;
-			if (flags & BT) blancmange(end);
+			if (flags & BT)
+				blancmange(end);
 			end += tcol.indent;
 			end = min(end, lineend);
 		} else
 			end = tcol.p->end;
 	}
+
 	if (flags & N) {
 		Rflag = (gflags & R ) ^ (flags & R) ? 1 : 0;
-		tablepos = number(tablepos, endkey, start, end, Rflag);
-		return (tablepos);
+		return number(tablepos, endkey, start, end, Rflag);
 	}
-	mask = alltable;
+
 	mask = cur_fld->mask;
 	lweight = cur_fld->weights;	
 	for (; start < end; start++)
@@ -181,7 +191,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 			} else {
 				*tablepos++ = lweight[*start];
 				if (tablepos == endkey)
-				return (NULL);
+					return (NULL);
 			}
 		}
 	*tablepos++ = lweight[0];
@@ -201,7 +211,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
  * Reverse order is done analagously.
 */
 
-u_char *
+static u_char *
 number(pos, bufend, line, lineend, Rflag)
 	u_char *line, *pos, *bufend, *lineend;
 	int Rflag;
