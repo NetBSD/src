@@ -1,10 +1,16 @@
-#	$NetBSD: Makefile.cc1,v 1.4 1998/04/09 00:32:33 tv Exp $
+#	$NetBSD: Makefile.cc1,v 1.5 1998/04/12 20:40:21 tv Exp $
+
+.include <bsd.own.mk>
 
 NOMAN=
 
 BINDIR=	/usr/libexec
 
 LDADD+=	-L${COMMONOBJ} -lcc1
+.if defined(NOPIC)
 DPADD+=	${COMMONOBJ}/libcc1.a
+.else
+DPADD+=	${COMMONOBJ}/libcc1_pic.a
+.endif
 
 .include <bsd.prog.mk>
