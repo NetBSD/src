@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 2001/12/19 06:38:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -166,6 +166,8 @@ cdev_decl(bell);
 cdev_decl(ch);
 #include "uk.h"
 cdev_decl(uk);
+#include "clockctl.h"
+cdev_decl(clockctl);
 #include "ipfilter.h"
 #include "rnd.h"
 
@@ -230,6 +232,7 @@ struct cdevsw	cdevsw[] =
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 45: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 46: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 47: i4b phone device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl), /* 48: settimeofday driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -294,6 +297,7 @@ static int chrtoblktbl[] = {
 	/* 42 */	NODEV,		/* 43 */	NODEV,
 	/* 44 */	NODEV,		/* 45 */	NODEV,
 	/* 46 */	NODEV,		/* 47 */	NODEV,
+	/* 48 */	NODEV,
 };
 
 /*
