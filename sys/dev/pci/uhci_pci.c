@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.2 1998/07/25 15:15:40 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.3 1998/07/25 23:23:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
 #include <dev/usb/usb.h>
@@ -71,13 +70,12 @@ uhci_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return 0;
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_USB &&
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371SB_USB)
-		return 0;
-
-	return 1;
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
+	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_UHCI)
+		return 1;
+ 
+	return 0;
 }
 
 void
@@ -92,26 +90,9 @@ uhci_pci_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	char *typestr;
+	char *typestr, *vendor;
 	char devinfo[256];
 	usbd_status r;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		switch(PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82371SB_USB:
-			sc->sc_model = UHCI_PIIX3;
-			break;
-		case PCI_PRODUCT_INTEL_82371AB_USB:
-			sc->sc_model = UHCI_PIIX4;
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			printf("uhci_attach: unknown product 0x%x\n",
-			       PCI_PRODUCT(pa->pa_id));
-			return;
-#endif
-		}
-	}
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -162,6 +143,13 @@ uhci_pci_attach(parent, self, aux)
 	}
 	printf("%s: USB version %s\n", sc->sc_bus.bdev.dv_xname, typestr);
 
+	/* Figure out vendor for root hub descriptor. */
+	vendor = pci_findvendor(pa->pa_id);
+	if (vendor)
+		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor));
+	else
+		sprintf(sc->sc_vendor, "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+	
 	r = uhci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", 
