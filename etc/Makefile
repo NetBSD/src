@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 1999/02/13 02:54:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.102 1999/02/18 19:03:44 fair Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -257,8 +257,8 @@ snap_kern:
 .endif
 	cd ${KERNOBJDIR}/${kernel} &&	\
 		${MAKE} depend && ${MAKE} ${_J} &&	\
-		tar cf - netbsd |\
-		gzip -c -9 > ${RELEASEDIR}/binary/kernel/netbsd.${kernel}.gz
+		gzip -c -9 < netbsd > \
+			${RELEASEDIR}/binary/kernel/netbsd.${kernel}.gz
 .endfor # EXTRA_KERNELS
 	
 .endif # RELEASEDIR check
