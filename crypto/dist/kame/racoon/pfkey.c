@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.4 2003/09/25 01:00:32 mycroft Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.5 2003/11/09 15:37:24 yamt Exp $");
 
 #define _PFKEY_C_
 
@@ -263,12 +263,15 @@ pfkey_dump_sadb(satype)
 	vchar_t *buf = NULL;
 	int mib[] = { CTL_NET, PF_KEY, KEYCTL_DUMPSA, 0 };
 	size_t len;
+	struct sadb_msg *msg;
+	int error;
 
 	mib[3] = satype;
 	if (sysctl(mib, 4, NULL, &len, NULL, 0) < 0) {
+		error = errno;
 		plog(LLV_ERROR, LOCATION, NULL,
 			"libipsec failed sysctl: %s\n", strerror(errno));
-		goto fail;
+		goto goterror;
 	}
 
 	buf = vmalloc(len);
@@ -279,9 +282,10 @@ pfkey_dump_sadb(satype)
 	}
 
 	if (sysctl(mib, 4, buf->v, &len, NULL, 0) < 0) {
+		error = errno;
 		plog(LLV_ERROR, LOCATION, NULL,
 			"libipsec failed sysctl: %s\n", strerror(errno));
-		goto fail;
+		goto goterror;
 	}
 
 	return buf;
@@ -290,6 +294,30 @@ fail:
 	if (buf)
 		vfree(buf);
 	return (NULL);
+
+goterror:
+	buf = vrealloc(buf, sizeof(*msg));
+	if (buf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to reallocate buffer for error msg.\n");
+		goto fail;
+	}
+
+	/*
+	 * mimic an error from keysock
+	 */
+	msg = (struct sadb_msg *)buf->v;
+	memset(msg, 0, sizeof(*msg));
+	msg->sadb_msg_version = PF_KEY_V2;
+	msg->sadb_msg_type = SADB_DUMP;
+	msg->sadb_msg_errno = error;
+	msg->sadb_msg_satype = satype;
+	msg->sadb_msg_len = PFKEY_UNIT64(sizeof(struct sadb_msg));
+	msg->sadb_msg_reserved = 0;
+	msg->sadb_msg_seq = 0;
+	msg->sadb_msg_pid = getpid();
+
+	return buf;
 #else
 	int s = -1;
 	vchar_t *buf = NULL;
