@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.16 1999/02/07 21:38:44 aidan Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.17 1999/06/23 15:41:48 carrel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.16 1999/02/07 21:38:44 aidan Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.17 1999/06/23 15:41:48 carrel Exp $");
 #endif
 #endif /* not lint */
 
@@ -549,7 +549,7 @@ validate_access(filep, mode)
 			*filep = filename;
 		}
 	}
-	fd = open(filename, mode == RRQ ? 0 : 1);
+	fd = open(filename, mode == RRQ ? O_RDONLY : O_WRONLY | O_TRUNC);
 	if (fd < 0)
 		return (errno + 100);
 	file = fdopen(fd, (mode == RRQ)? "r":"w");
