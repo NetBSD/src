@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1997/12/01 07:11:34 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1997/12/12 03:08:28 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*
@@ -113,67 +113,107 @@ extern struct bebox_bus_space bebox_bus_io, bebox_bus_mem;
 #define	bus_space_subregion(t, addr, size, cacheable, bshp)		      \
     ((*(bshp) = (t)->bus_base + (addr)), 0)
 
+/*
+ *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset));
+ *
+ * Read a 1, 2, 4, or 8 byte quantity from bus space
+ * described by tag/handle/offset.
+ */
+
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
-CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
-     bus_addr_t ba)							      \
+CAT(bus_space_read_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
+     bus_size_t offset)							      \
 {									      \
-    if(bst->bus_reverse)						      \
-	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));      \
+    if(tag->bus_reverse)						      \
+	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));  \
     else								      \
-	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));	      \
+	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));      \
 }
 
 bus_space_read(1,8)
 bus_space_read(2,16)
 bus_space_read(4,32)
-
 #define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
 
-#define bus_space_read_multi_1(t, h, o, a, c) do {			      \
-		insb((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+/*
+ *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.
+ */
 
-#define bus_space_read_multi_2(t, h, o, a, c) do {			      \
-		insw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_read_multi(n,m)					      \
+static __inline void							      \
+CAT(bus_space_read_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,     \
+     bus_size_t offset, CAT3(u_int,m,_t) *addr, size_t count)		      \
+{									      \
+    if(tag->bus_reverse)						      \
+	CAT3(ins,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+    else								      \
+	CAT(ins,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+}
 
-#define bus_space_read_multi_4(t, h, o, a, c) do {			      \
-		insl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
+bus_space_read_multi(1,8)
+bus_space_read_multi(2,16)
+bus_space_read_multi(4,32)
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
+
+/*
+ *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t value));
+ *
+ * Write the 1, 2, 4, or 8 byte value `value' to bus space
+ * described by tag/handle/offset.
+ */
 
 #define bus_space_write(n,m)						      \
 static __inline void							      \
-CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
-     bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
+CAT(bus_space_write_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
+     bus_size_t offset, CAT3(u_int,m,_t) x)				      \
 {									      \
-    if(bst->bus_reverse)						      \
-	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
+    if(tag->bus_reverse)						      \
+	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);     \
     else								      \
-	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
+	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);	      \
 }
 
 bus_space_write(1,8)
 bus_space_write(2,16)
 bus_space_write(4,32)
-
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
 
+/*
+ *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_intN_t *addr, size_t count));
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
+ * provided to bus space described by tag/handle/offset.
+ */
 
-#define bus_space_write_multi_1(t, h, o, a, c) do {			      \
-		outsb((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define bus_space_write_multi(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,    \
+     bus_size_t offset, const CAT3(u_int,m,_t) *addr, size_t count)	      \
+{									      \
+    if (tag->bus_reverse)						      \
+	CAT3(outs,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+    else								      \
+	CAT(outs,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+}
 
-#define bus_space_write_multi_2(t, h, o, a, c) do {			      \
-		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
-#define bus_space_write_multi_4(t, h, o, a, c) do {			      \
-		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
+bus_space_write_multi(1,8)
+bus_space_write_multi(2,16)
+bus_space_write_multi(4,32)
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
 /*
