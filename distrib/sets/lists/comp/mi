@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.394 2001/11/07 05:27:14 enami Exp $
+#	$NetBSD: mi,v 1.395 2001/11/08 09:15:08 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -495,6 +495,7 @@
 ./usr/include/netns/spp_debug.h		comp-c-include
 ./usr/include/netns/spp_timer.h		comp-c-include
 ./usr/include/netns/spp_var.h		comp-c-include
+./usr/include/netsmb			comp-c-include
 ./usr/include/nfs/krpc.h		comp-c-include
 ./usr/include/nfs/nfs.h			comp-c-include
 ./usr/include/nfs/nfs_var.h		comp-c-include
@@ -660,6 +661,7 @@
 ./usr/include/sha1.h			comp-c-include
 ./usr/include/signal.h			comp-c-include
 ./usr/include/skey.h			comp-c-include
+./usr/include/smbfs			comp-c-include
 ./usr/include/soundcard.h		comp-c-include
 ./usr/include/stab.h			comp-c-include
 ./usr/include/stdarg.h			comp-c-include
