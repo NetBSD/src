@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.3 2000/03/25 04:13:54 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.4 2000/04/08 18:16:42 kleink Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.3 $"
+#ident		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -140,6 +140,7 @@ pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 # ISA bus support
@@ -187,6 +188,9 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 
 # PCI SCSI controllers
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+
+# SCSI bus support
+scsibus* at pcscp?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
