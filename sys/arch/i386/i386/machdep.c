@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.78 1994/01/13 06:24:27 cgd Exp $
+ *	$Id: machdep.c,v 1.79 1994/01/14 02:58:37 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -197,7 +197,7 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				16*NCARGS, TRUE);
+				 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
