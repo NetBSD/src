@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2004/09/27 23:04:50 dyoung Exp $	
+#	$NetBSD: Makefile,v 1.36 2004/09/28 00:01:02 dyoung Exp $	
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCDIR=	${NETBSDSRCDIR}/dist/tcpdump
 PROG=	tcpdump
 MAN=	tcpdump.8 
 
-SRCS=	addrtoname.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
+SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
 	print-802_11.c print-ah.c print-aodv.c print-ap1394.c print-arcnet.c \
 	print-arp.c \
 	print-ascii.c print-atalk.c print-atm.c print-bfd.c print-bgp.c \
