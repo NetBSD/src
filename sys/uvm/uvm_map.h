@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.18 2000/06/26 15:32:28 mrg Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.19 2000/06/26 17:18:40 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -106,6 +106,8 @@
 #define UVM_EXTRACT_CONTIG	0x2	/* try to keep it contig */
 #define UVM_EXTRACT_QREF	0x4	/* use quick refs */
 #define UVM_EXTRACT_FIXPROT	0x8	/* set prot to maxprot as we go */
+
+#endif /* _KERNEL */
 
 #include <uvm/uvm_anon.h>
 
@@ -305,6 +307,8 @@ vmi_list_unlock(s)
 /*
  * globals:
  */
+
+#ifdef _KERNEL
 
 #ifdef PMAP_GROWKERNEL
 extern vaddr_t	uvm_maxkaddr;
