@@ -1,4 +1,4 @@
-/*	$NetBSD: _sbrk.c,v 1.1 2000/06/23 15:40:40 kleink Exp $	*/
+/*	$NetBSD: _sbrk.c,v 1.2 2000/06/26 06:29:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -35,10 +35,8 @@ __indr_reference(_sbrk, sbrk)
 #else
 
 #include <unistd.h>
-/* LONGLONG */
 void *	_sbrk __P((intptr_t));	/* XXX */
 
-/* LONGLONG */
 void *
 sbrk(incr)
 	intptr_t incr;
