@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.112 2001/04/07 15:23:15 jhawk Exp $
+.\"	$NetBSD: main,v 1.113 2001/04/09 15:07:56 pooka Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ on the
 platform. It is available in four different formats titled
 .Pa INSTALL. Ns Ar ext ,
 where
-.Ar ext
+.Ar \&.ext
 is one of
 .Pa \&.ps , \&.html , \&.more ,
 .No or Pa \&.txt :
