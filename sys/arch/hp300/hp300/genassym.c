@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1994/10/26 07:25:34 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.11 1995/03/28 18:38:10 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -40,6 +40,7 @@
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
 #define KERNEL
+#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.2 1994/10/26 09:11:46 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.3 1995/03/28 18:38:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -37,6 +37,7 @@
  */
 
 #define KERNEL
+#define _KERNEL
 
 #include "sys/cdefs.h"
 #include "sys/errno.h"

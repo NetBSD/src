@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.17 1995/02/12 19:18:37 chopps Exp $	*/
+/*	$NetBSD: genassym.c,v 1.18 1995/03/28 18:37:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,6 +36,7 @@
  */
 
 #define KERNEL
+#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/buf.h>
