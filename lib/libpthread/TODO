@@ -25,7 +25,8 @@ Features that need more/better regression tests:
 Things that need fixing:
 - Correct [non]resumption of PT_IDLED thread.
 - Recycle dead threads for new threads.
-
+- Handle pthread_exit() from main() and corresponding exit when
+  the last thread dies.
 
 Ideas to play with:
 - Explore the trapcontext vs. usercontext distinction in ucontext_t.
