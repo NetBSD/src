@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$NetBSD: chown.c,v 1.12 1997/10/11 03:14:12 enami Exp $";
+#if 0
+static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
+#else
+__RCSID("$NetBSD: chown.c,v 1.13 1997/10/18 04:08:19 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +65,7 @@ void	a_gid __P((char *));
 void	a_uid __P((char *));
 void	chownerr __P((char *));
 u_long	id __P((char *, char *));
+int	main __P((int, char **));
 void	usage __P((void));
 
 uid_t uid;
@@ -160,7 +164,7 @@ main(argc, argv)
 		a_gid(*argv);
 
 	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
