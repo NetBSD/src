@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.14 2000/04/26 15:06:46 lukem Exp $
+# $NetBSD: rc.subr,v 1.15 2000/04/28 01:40:09 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,8 +120,10 @@ check_pidfile()
 		if [ "$_npid" = "PID" ]; then
 			continue
 		fi
-		if [ "$_arg0" = "$_procname" -o "$_arg0" = "$_procnamebn" \
-		    -o "$_arg0" = "${_procnamebn}:" ]; then
+		if [   "$_arg0" = "$_procname" \
+		    -o "$_arg0" = "$_procnamebn" \
+		    -o "$_arg0" = "${_procnamebn}:" \
+		    -o "$_arg0" = "(${_procnamebn})" ]; then
 			echo $_npid
 			return
 		fi
@@ -145,8 +147,10 @@ check_process()
 		if [ "$_npid" = "PID" ]; then
 			continue
 		fi
-		if [ "$_arg0" = "$_procname" -o "$_arg0" = "$_procnamebn" \
-		    -o "$_arg0" = "${_procnamebn}:" ]; then
+		if [   "$_arg0" = "$_procname" \
+		    -o "$_arg0" = "$_procnamebn" \
+		    -o "$_arg0" = "${_procnamebn}:" \
+		    -o "$_arg0" = "(${_procnamebn})" ]; then
 			echo -n "$_pref$_npid"
 			_pref=" "
 		fi
