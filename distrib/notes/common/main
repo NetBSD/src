@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.25 2001/05/06 22:03:08 he Exp $
+.\"	$NetBSD: main,v 1.61.2.26 2001/05/09 00:03:37 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,7 +167,7 @@ Trying to use the
 .Nx
 1.5.1 kernel on such a system
 .Em will
-in all probability result in problems.
+probably result in problems.
 .Pp
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
@@ -307,12 +307,12 @@ reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
 See the CHANGES-1.5.1 file for the complete list.
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Since The NetBSD 1.4 Release
+.Ss Changes Between The NetBSD 1.4 and 1.5 Releases
 .Pp
 The
-.Nx \*V
+.Nx 1.5
 release 
-provides numerous significant functional enhancements, including
+provided numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many userland enhancements. The
 result of these improvements is a stable operating system fit for
@@ -681,7 +681,7 @@ This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
 .br
-.Em 5.6 MB gzipped, 57.0 MB uncompressed
+.Em 7.4 MB gzipped, 73.0 MB uncompressed
 .It Sy sharesrc
 This set contains the
 .Dq share
@@ -699,7 +699,7 @@ sources which are not in
 or
 .Sy syssrc .
 .br
-.Em 24.2 MB gzipped, 120.6 MB uncompressed
+.Em 24.8 MB gzipped, 123.1 MB uncompressed
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
@@ -708,11 +708,11 @@ kernel for all architectures;
 and
 .Xr dbsym 8 .
 .br
-.Em 17.6 MB gzipped, 88.6 MB uncompressed
+.Em 18.0 MB gzipped, 90.9 MB uncompressed
 .It Sy xsrc
 This set contains the sources to the X Window System.
 .br
-.Em 35.2 MB gzipped, 176.8 MB uncompressed
+.Em 78.1 MB gzipped, 393.6 MB uncompressed
 .tag)
 .Pp
 All the above source sets are located in the
