@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1999/10/18 19:37:28 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 1999/10/25 17:26:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,13 +46,18 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include "opt_compat_oldboot.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#ifdef COMPAT_OLDBOOT
 #include <sys/reboot.h>
+#endif
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
@@ -232,8 +237,9 @@ matchbiosdisks()
 	}
 }
 
-
+#ifdef COMPAT_OLDBOOT
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
+#endif
 struct device *booted_device;
 
 /*
@@ -325,8 +331,10 @@ findroot(devpp, partp)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
+#ifdef COMPAT_OLDBOOT
 	int i, majdev, unit, part;
 	char buf[32];
+#endif
 
 	/*
 	 * Default to "not found."
@@ -409,6 +417,7 @@ found:
 			return;
 	}
 
+#ifdef COMPAT_OLDBOOT
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
 #endif
@@ -435,6 +444,7 @@ found:
 			return;
 		}
 	}
+#endif
 }
 
 #include "pci.h"
