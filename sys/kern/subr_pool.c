@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.62 2001/10/07 12:44:06 bjh21 Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.63 2001/10/21 00:06:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1414,9 +1414,8 @@ pool_drain(void *arg)
 		drainpp = TAILQ_NEXT(pp, pr_poollist);
 	}
 	simple_unlock(&pool_head_slock);
-	splx(s);
-
 	pool_reclaim(pp);
+	splx(s);
 }
 
 
