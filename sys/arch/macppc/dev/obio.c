@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.19 2003/07/15 02:43:30 lukem Exp $	*/
+/*	$NetBSD: obio.c,v 1.20 2004/12/09 03:19:56 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.19 2003/07/15 02:43:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.20 2004/12/09 03:19:56 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,20 @@ obio_attach(parent, self, aux)
 	ca.ca_baseaddr = reg[2];
 
 	printf(": addr 0x%x\n", ca.ca_baseaddr);
+
+	/* Enable internal modem (KeyLargo) */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
+		printf("enabling KeyLargo internal modem\n");
+		out32rb(ca.ca_baseaddr + 0x40,
+			in32rb(ca.ca_baseaddr + 0x40) & ~((u_int32_t)1<<25));
+	}
+
+	/* Enable internal modem (Pangea) */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_MACIO) {
+		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x04); /* set reset */
+		out8(ca.ca_baseaddr + 0x006a + 0x02, 0x04); /* power modem on */
+		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x05); /* unset reset */ 
+	}
 
 	/* Enable CD and microphone sound input. */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
