@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.160 1998/01/11 05:57:45 scottr Exp $
+#	$NetBSD: files,v 1.161 1998/01/12 02:58:58 scottr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -17,6 +17,9 @@ defopt	VNODEPAGER
 defopt	NFS_BOOT_BOOTP
 defopt	NFS_BOOT_BOOTPARAM
 defopt	NFS_BOOT_DHCP
+
+defopt	MROUTING
+defopt	TCP_COMPAT_42
 
 # generic attributes
 define	disk
