@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.13 1998/08/15 09:16:28 mycroft Exp $	*/
+/*	$NetBSD: mknod.c,v 1.14 1998/09/11 07:20:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.13 1998/08/15 09:16:28 mycroft Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.14 1998/09/11 07:20:48 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,20 +54,26 @@ __RCSID("$NetBSD: mknod.c,v 1.13 1998/08/15 09:16:28 mycroft Exp $");
 
 int main __P((int, char *[]));
 static void usage __P((void));
-typedef	dev_t pack_t __P((u_long, u_long, u_long *, u_long *));
+typedef	dev_t pack_t __P((int, u_long []));
 
 
 pack_t pack_native;
 
 dev_t
-pack_native(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_native(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev(maj, min);
-	*maj2 = major(dev);
-	*min2 = minor(dev);
+	if (n == 2) {
+		dev = makedev(numbers[0], numbers[1]);
+		if (major(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -82,14 +88,20 @@ pack_native(maj, min, maj2, min2)
 pack_t pack_netbsd;
 
 dev_t
-pack_netbsd(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_netbsd(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_netbsd(maj, min);
-	*maj2 = major_netbsd(dev);
-	*min2 = minor_netbsd(dev);
+	if (n == 2) {
+		dev = makedev_netbsd(numbers[0], numbers[1]);
+		if (major_netbsd(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_netbsd(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -102,14 +114,20 @@ pack_netbsd(maj, min, maj2, min2)
 pack_t pack_freebsd;
 
 dev_t
-pack_freebsd(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_freebsd(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_freebsd(maj, min);
-	*maj2 = major_freebsd(dev);
-	*min2 = minor_freebsd(dev);
+	if (n == 2) {
+		dev = makedev_freebsd(numbers[0], numbers[1]);
+		if (major_freebsd(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_freebsd(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -122,14 +140,20 @@ pack_freebsd(maj, min, maj2, min2)
 pack_t pack_8_8;
 
 dev_t
-pack_8_8(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_8_8(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_8_8(maj, min);
-	*maj2 = major_8_8(dev);
-	*min2 = minor_8_8(dev);
+	if (n == 2) {
+		dev = makedev_8_8(numbers[0], numbers[1]);
+		if (major_8_8(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_8_8(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -142,14 +166,20 @@ pack_8_8(maj, min, maj2, min2)
 pack_t pack_12_20;
 
 dev_t
-pack_12_20(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_12_20(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_12_20(maj, min);
-	*maj2 = major_12_20(dev);
-	*min2 = minor_12_20(dev);
+	if (n == 2) {
+		dev = makedev_12_20(numbers[0], numbers[1]);
+		if (major_12_20(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_12_20(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -162,14 +192,20 @@ pack_12_20(maj, min, maj2, min2)
 pack_t pack_14_18;
 
 dev_t
-pack_14_18(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_14_18(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_14_18(maj, min);
-	*maj2 = major_14_18(dev);
-	*min2 = minor_14_18(dev);
+	if (n == 2) {
+		dev = makedev_14_18(numbers[0], numbers[1]);
+		if (major_14_18(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_14_18(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -182,14 +218,56 @@ pack_14_18(maj, min, maj2, min2)
 pack_t pack_8_24;
 
 dev_t
-pack_8_24(maj, min, maj2, min2)
-	u_long maj, min, *maj2, *min2;
+pack_8_24(n, numbers)
+	int n;
+	u_long numbers[];
 {
 	dev_t dev;
 
-	dev = makedev_8_24(maj, min);
-	*maj2 = major_8_24(dev);
-	*min2 = minor_8_24(dev);
+	if (n == 2) {
+		dev = makedev_8_24(numbers[0], numbers[1]);
+		if (major_8_24(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_8_24(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else
+		errx(1, "too many fields for format");
+	return (dev);
+}
+
+
+#define	major_12_12_8(x)	((int32_t)(((x) & 0xfff00000) >> 20))
+#define	unit_12_12_8(x)		((int32_t)(((x) & 0x000fff00) >>  8))
+#define	subunit_12_12_8(x)	((int32_t)(((x) & 0x000000ff) >>  0))
+#define	makedev_12_12_8(x,y,z)	((dev_t)((((x) << 20) & 0xfff00000) | \
+					 (((y) <<  8) & 0x000fff00) | \
+					 (((z) <<  0) & 0x000000ff)))
+
+pack_t pack_bsdos;
+
+dev_t
+pack_bsdos(n, numbers)
+	int n;
+	u_long numbers[];
+{
+	dev_t dev;
+
+	if (n == 2) {
+		dev = makedev_12_20(numbers[0], numbers[1]);
+		if (major_12_20(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (minor_12_20(dev) != numbers[1])
+			errx(1, "invalid minor number");
+	} else if (n == 3) {
+		dev = makedev_12_12_8(numbers[0], numbers[1], numbers[2]);
+		if (major_12_12_8(dev) != numbers[0])
+			errx(1, "invalid major number");
+		if (unit_12_12_8(dev) != numbers[1])
+			errx(1, "invalid unit number");
+		if (subunit_12_12_8(dev) != numbers[2])
+			errx(1, "invalid subunit number");
+	} else
+		errx(1, "too many fields for format");
 	return (dev);
 }
 
@@ -200,13 +278,15 @@ struct format {
 } formats[] = {
 	{"386bsd",  pack_8_8},
 	{"4bsd",    pack_8_8},
-	{"bsdos",   pack_12_20},
+	{"bsdos",   pack_bsdos},
 	{"freebsd", pack_freebsd},
 	{"hpux",    pack_8_24},
+	{"isc",     pack_8_8},
 	{"linux",   pack_8_8},
 	{"native",  pack_native},
 	{"netbsd",  pack_netbsd},
 	{"osf1",    pack_12_20},
+	{"sco",     pack_8_8},
 	{"solaris", pack_14_18},
 	{"sunos",   pack_8_8},
 	{"svr3",    pack_8_8},
@@ -236,12 +316,14 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct format *format;
-	pack_t *pack;
-	char *p;
-	u_long maj, min, maj2, min2;
+	char *name;
 	mode_t mode;
 	dev_t dev;
+	pack_t *pack;
+	u_long numbers[8];
+	struct format *format;
+	char *p;
+	int n;
 	int ch;
 
 	pack = pack_native;
@@ -265,41 +347,40 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 3 && argc != 4)
+	if (argc < 3 || argc > 10)
 		usage();
 
-	mode = 0666;
-	if (argv[1][0] == 'c')
+	name = *argv;
+	argc--;
+	argv++;
+
+	mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	if (*argv[0] == 'c')
 		mode |= S_IFCHR;
-	else if (argv[1][0] == 'b')
+	else if (*argv[0] == 'b')
 		mode |= S_IFBLK;
 	else
-		errx(1, "node must be type 'b' or 'c'.");
+		errx(1, "node type must be 'b' or 'c'.");
+	argc--;
+	argv++;
 
-	if (argc == 4) {
-		maj = strtoul(argv[2], &p, 0);
-		if ((p && *p != '\0') || (maj == ULONG_MAX && errno == ERANGE))
-			errx(1, "invalid major number: %s", argv[2]);
-
-		min = strtoul(argv[3], &p, 0);
-		if ((p && *p != '\0') || (min == ULONG_MAX && errno == ERANGE))
-			errx(1, "invalid minor number: %s", argv[3]);
-
-		dev = (*pack)(maj, min, &maj2, &min2);
-
-		if (maj2 != maj)
-			errx(1, "major number out of range: %s", argv[2]);
-
-		if (min2 != min)
-			errx(1, "minor number out of range: %s", argv[3]);
-	} else {
-		dev = (dev_t) strtoul(argv[2], &p, 0);
-		if ((p && *p != '\0') || (dev == ULONG_MAX && errno == ERANGE))
-			errx(1, "invalid device number: %s", argv[2]);
+	for (n = 0; n < argc; n++) {
+		numbers[n] = strtoul(argv[n], &p, 0);
+		if ((p && *p != '\0') || (numbers[n] == ULONG_MAX && errno == ERANGE))
+			errx(1, "invalid number: %s", argv[n]);
 	}
 
-	if (mknod(argv[0], mode, dev) < 0)
+	if (argc == 1)
+		dev = numbers[0];
+	else
+		dev = (*pack)(argc, numbers);
+
+#if 0
+	printf("name: %s\nmode: %05o\ndev:  %08x\n", name, mode, dev);
+#else
+	if (mknod(name, mode, dev) < 0)
 		err(1, "%s", argv[0]);
+#endif
 
 	exit(0);
 }
