@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2000/02/21 14:52:01 pk Exp $
+#	$NetBSD: Makefile,v 1.16 2000/03/08 21:58:10 cjs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
+
+.include <bsd.own.mk>	# So we use /etc/mk.conf.
 
 KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
 
