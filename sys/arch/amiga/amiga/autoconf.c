@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 2000/01/31 22:51:53 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70 2000/02/06 21:45:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -314,9 +314,7 @@ mbprint(auxp, pnp)
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
-#if 0		/* not yet */
 #include "wd.h"
-#endif
 
 #if NFD > 0
 extern  struct cfdriver fd_cd;
