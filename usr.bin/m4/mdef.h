@@ -1,4 +1,4 @@
-/*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
+/*	$NetBSD: mdef.h,v 1.7.2.1 1998/01/29 10:52:54 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -137,6 +137,8 @@ typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
 	char 	*sstr;		/* string entry */
 } stae;
+
+typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
 
 /*
  * macros for readibility and/or speed
