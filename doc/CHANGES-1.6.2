@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.84 2003/06/30 02:50:39 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.85 2003/06/30 02:52:54 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -958,3 +958,9 @@ sys/dev/pcmcia/if_xi.c				1.28
 	addresses.  At last set the IFF_PROMISC flag so that the upper layer
 	filters frames that are not for us.
 	[bouyer, ticket #1351]
+
+sys/arch/alpha/conf/files.alpha			1.160
+
+	As pceb pulls in sio.c and sio_pci.c, is also needs the
+	alpha_shared_intr attribute.
+	[bouyer, ticket #1352]
