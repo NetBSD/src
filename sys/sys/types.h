@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.37 1999/03/14 01:24:18 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.38 1999/08/10 21:09:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -59,6 +59,8 @@ typedef unsigned char	unchar;		/* Sys V compatibility */
 typedef	unsigned short	ushort;		/* Sys V compatibility */
 typedef	unsigned int	uint;		/* Sys V compatibility */
 typedef unsigned long	ulong;		/* Sys V compatibility */
+
+typedef	u_long		cpuid_t;
 #endif
 
 typedef	u_int64_t	u_quad_t;	/* quads */
