@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2001/11/25 18:31:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.161 2002/02/08 16:11:18 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -202,6 +202,9 @@ install-${dir}:
 # XXX this needs to change when distrib Makefiles are recursion compliant
 dependall-distrib depend-distrib all-distrib:
 	@true
+
+clean:
+	rm -f METALOG
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
