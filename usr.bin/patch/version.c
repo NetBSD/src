@@ -1,7 +1,7 @@
-/*	$NetBSD: version.c,v 1.4 1998/02/22 13:33:51 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.5 2002/03/11 18:47:51 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: version.c,v 1.4 1998/02/22 13:33:51 christos Exp $");
+__RCSID("$NetBSD: version.c,v 1.5 2002/03/11 18:47:51 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: version.c,v 1.4 1998/02/22 13:33:51 christos Exp $");
 /* Print out the version number and die. */
 
 void
-version()
+version(void)
 {
     fprintf(stderr, "Patch version 2.0, patch level %s\n", PATCHLEVEL);
     my_exit(0);

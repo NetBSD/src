@@ -1,8 +1,6 @@
-/*	$NetBSD: common.h,v 1.10 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: common.h,v 1.11 2002/03/11 18:47:51 kristerw Exp $	*/
 
 #define DEBUGGING
-
-#include "config.h"
 
 /* shut lint up about the following when return value ignored */
 
@@ -19,10 +17,6 @@
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 
-/* NeXT declares malloc and realloc incompatibly from us in some of
-   these files.  Temporarily redefine them to prevent errors.  */
-#define malloc system_malloc
-#define realloc system_realloc
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -30,8 +24,6 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <signal.h>
-#undef malloc
-#undef realloc
 
 /* constants */
 
@@ -58,20 +50,12 @@
 #define CHECKOUT "co -l %s"
 #define RCSDIFF "rcsdiff %s > /dev/null"
 
-#ifdef FLEXFILENAMES
 #define ORIGEXT ".orig"
 #define REJEXT ".rej"
-#else
-#define ORIGEXT "~"
-#define REJEXT "#"
-#endif
 
 /* handy definitions */
 
-#define Null(t) ((t)0)
-#define Nullch Null(char *)
-#define Nullfp Null(FILE *)
-#define Nulline Null(LINENUM)
+#define Nulline 0
 
 #define Ctl(ch) ((ch) & 037)
 
@@ -84,7 +68,6 @@
 
 typedef char bool;
 typedef long LINENUM;			/* must be signed */
-typedef unsigned MEM;			/* what to feed malloc */
 
 /* globals */
 
@@ -97,8 +80,8 @@ EXT struct stat filestat;		/* file statistics area */
 EXT int filemode INIT(0644);
 
 EXT char buf[MAXLINELEN];		/* general purpose buffer */
-EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
-EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
+EXT FILE *ofp INIT(NULL);		/* output file pointer */
+EXT FILE *rejfp INIT(NULL);		/* reject file pointer */
 
 EXT int myuid;				/* cache getuid return value */
 
@@ -111,12 +94,12 @@ EXT char *filearg[MAXFILEC];
 EXT bool ok_to_create_file INIT(FALSE);
 EXT bool filename_is_dev_null INIT(FALSE);
 EXT bool old_file_is_dev_null INIT(FALSE);
-EXT char *bestguess INIT(Nullch);	/* guess at correct filename */
+EXT char *bestguess INIT(NULL);		/* guess at correct filename */
 
-EXT char *outname INIT(Nullch);
+EXT char *outname INIT(NULL);
 EXT char rejname[128];
 
-EXT char *origprae INIT(Nullch);
+EXT char *origprae INIT(NULL);
 
 EXT char *TMPOUTNAME;
 EXT char *TMPINNAME;
@@ -152,7 +135,7 @@ EXT char not_defined[128];		/* #ifndef xyzzy */
 EXT char else_defined[] INIT("#else\n");/* #else */
 EXT char end_defined[128];		/* #endif xyzzy */
 
-EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
+EXT char *revision INIT(NULL);		/* prerequisite revision, if any */
 
 #include <errno.h>
 
