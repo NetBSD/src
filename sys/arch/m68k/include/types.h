@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.22 2004/01/18 18:23:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,10 @@ typedef	__volatile unsigned char __cpu_simple_lock_t;
 #define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_RAS
 #define	__HAVE_MD_RUNQUEUE
+
+#if defined(_KERNEL)
+#define	__HAVE_RAS
+#endif
 
 #endif	/* !_M68K_TYPES_H_ */

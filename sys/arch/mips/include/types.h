@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.40 2004/01/18 18:23:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -99,6 +99,9 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
 #endif
+
+#if defined(_KERNEL)
 #define	__HAVE_RAS
+#endif
 
 #endif	/* _MACHTYPES_H_ */

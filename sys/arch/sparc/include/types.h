@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.36 2004/01/06 21:35:18 martin Exp $ */
+/*	$NetBSD: types.h,v 1.37 2004/01/18 18:23:19 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,9 +103,10 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #ifdef SUN4U
 #define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
+#if defined(_KERNEL)
+#define __HAVE_RAS
 #endif
-#ifdef __arch64__
-#define __HAVE_RAS		/* sparc64 implements RAS */
 #endif
+
 
 #endif	/* _MACHTYPES_H_ */
