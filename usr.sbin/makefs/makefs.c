@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.6 2001/11/25 11:22:09 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.7 2001/12/05 11:08:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.6 2001/11/25 11:22:09 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.7 2001/12/05 11:08:53 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -69,7 +69,7 @@ static fstype_t fstypes[] = {
 	{ NULL	},
 };
 
-u_int		debug;
+uint		debug;
 struct timespec	start_time;
 
 
