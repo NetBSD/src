@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.17 1999/02/07 13:39:36 tron Exp $
+#	$NetBSD: Makefile.booters,v 1.18 1999/02/07 18:25:54 tron Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -47,7 +47,7 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-clean cleandir distclean: cleanlibdir
+cleandir distclean: cleanlibdir
 
 cleanlibdir:
 	rm -rf lib
