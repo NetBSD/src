@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.237 2000/05/03 22:58:39 augustss Exp $
+# $NetBSD: mi,v 1.238 2000/05/03 23:04:13 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -352,6 +352,7 @@
 ./usr/share/man/cat4/ast.0
 ./usr/share/man/cat4/atalk.0
 ./usr/share/man/cat4/atapi.0
+./usr/share/man/cat4/atapibus.0
 ./usr/share/man/cat4/ate.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
@@ -366,6 +367,7 @@
 ./usr/share/man/cat4/ca.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
+./usr/share/man/cat4/cardslot.0
 ./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
@@ -471,6 +473,7 @@
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pcdisplay.0
+./usr/share/man/cat4/pchb.0
 ./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pcic.0
@@ -484,6 +487,7 @@
 ./usr/share/man/cat4/phy.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
+./usr/share/man/cat4/ppb.0
 ./usr/share/man/cat4/ppp.0
 ./usr/share/man/cat4/pss.0
 ./usr/share/man/cat4/pty.0
@@ -498,6 +502,7 @@
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/sb.0
 ./usr/share/man/cat4/scsi.0
+./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sea.0
 ./usr/share/man/cat4/sequencer.0
@@ -506,6 +511,8 @@
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sound.0
 ./usr/share/man/cat4/speaker.0
+./usr/share/man/cat4/spkr.0
+./usr/share/man/cat4/sp.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
@@ -517,6 +524,7 @@
 ./usr/share/man/cat4/strip.0
 ./usr/share/man/cat4/sv.0
 ./usr/share/man/cat4/sw.0
+./usr/share/man/cat4/sysbeep.0
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcic.0
 ./usr/share/man/cat4/tcp.0
@@ -1325,6 +1333,7 @@
 ./usr/share/man/man4/ast.4
 ./usr/share/man/man4/atalk.4
 ./usr/share/man/man4/atapi.4
+./usr/share/man/man4/atapibus.4
 ./usr/share/man/man4/ate.4
 ./usr/share/man/man4/audio.4
 ./usr/share/man/man4/aue.4
@@ -1339,6 +1348,7 @@
 ./usr/share/man/man4/ca.4
 ./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
+./usr/share/man/man4/cardslot.4
 ./usr/share/man/man4/cbb.4
 ./usr/share/man/man4/ccd.4
 ./usr/share/man/man4/cd.4
@@ -1444,6 +1454,7 @@
 ./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/pcdisplay.4
+./usr/share/man/man4/pchb.4
 ./usr/share/man/man4/pci.4
 ./usr/share/man/man4/pcic.4
 ./usr/share/man/man4/pcic.4
@@ -1457,6 +1468,7 @@
 ./usr/share/man/man4/phy.4
 ./usr/share/man/man4/pms.4
 ./usr/share/man/man4/pmsi.4
+./usr/share/man/man4/ppb.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pss.4
 ./usr/share/man/man4/pty.4
@@ -1471,6 +1483,7 @@
 ./usr/share/man/man4/rtfps.4
 ./usr/share/man/man4/sb.4
 ./usr/share/man/man4/scsi.4
+./usr/share/man/man4/scsibus.4
 ./usr/share/man/man4/sd.4
 ./usr/share/man/man4/sea.4
 ./usr/share/man/man4/sequencer.4
@@ -1479,6 +1492,8 @@
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/sound.4
 ./usr/share/man/man4/speaker.4
+./usr/share/man/man4/spkr.4
+./usr/share/man/man4/sp.4
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
@@ -1490,6 +1505,7 @@
 ./usr/share/man/man4/strip.4
 ./usr/share/man/man4/sv.4
 ./usr/share/man/man4/sw.4
+./usr/share/man/man4/sysbeep.4
 ./usr/share/man/man4/tb.4
 ./usr/share/man/man4/tcic.4
 ./usr/share/man/man4/tcp.4
