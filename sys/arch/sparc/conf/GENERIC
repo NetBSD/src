@@ -1,6 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.44 1997/06/10 21:54:21 pk Exp $
+# 	$NetBSD: GENERIC,v 1.45 1997/07/07 21:54:51 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
+
+maxusers	32
 
 # Options for variants of the Sun SPARC architecure.
 # At least one is required.
