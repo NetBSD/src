@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.21.2.2 2003/01/16 03:35:43 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.21.2.3 2003/01/17 06:08:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -140,12 +140,14 @@ sigismember(const sigset_t *set, int signo)
 #define	sigfillset(set)		(__sigfillset(set), /*LINTED*/ 0)
 #endif /* !__LIBC12_SOURCE__ */
 
+/*
+ * X/Open CAE Specification Issue 5 Version 2
+ */      
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500
 int	killpg __P((pid_t, int));
 int	siginterrupt __P((int, int));
-int	sigpause __P((int));
 int	sigstack __P((const struct sigstack *, struct sigstack *));
 #ifdef __LIBC12_SOURCE__
 int	sigaltstack __P((const struct sigaltstack13 *, struct sigaltstack13 *));
@@ -154,6 +156,22 @@ int	__sigaltstack14 __P((const stack_t *, stack_t *));
 int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #endif
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+
+
+/*
+ * X/Open CAE Specification Issue 5 Version 2; IEEE Std 1003.1-2001 (POSIX)
+ */      
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
+int	sighold __P((int));
+int	sigignore __P((int));
+int	sigpause __P((int));
+int	sigrelse __P((int));
+void	(*sigset __P((int, void (*)(int)))) __P((int));
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #ifndef __PSIGNAL_DECLARED
