@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.228 2003/01/12 01:16:07 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.229 2003/01/14 13:56:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3920,8 +3920,6 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 				pm->pm_regmap[i].rg_smeg = reginval;
 		}
 #endif
-		/* pm->pm_gap_start = 0; // already done */
-		pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
 	}
 #if defined(SUN4M) || defined(SUN4D)
 	else {
@@ -3934,7 +3932,6 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		 * this user context.
 		 */
 #if defined(MULTIPROCESSOR)
-		pm->pm_cpuset = 0;
 		for (n = 0; n < ncpu; n++)
 #else
 		n = 0;
@@ -4006,7 +4003,21 @@ pmap_create()
 	struct pmap *pm;
 
 	pm = pool_cache_get(&pmap_pmap_pool_cache, PR_WAITOK);
+
+	/*
+	 * Reset fields that are not preserved in the pmap cache pool.
+	 */
 	pm->pm_refcount = 1;
+#if defined(MULTIPROCESSOR)
+	/* reset active CPU set */
+	pm->pm_cpuset = 0;
+#endif
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		/* reset the region gap */
+		pm->pm_gap_start = 0;
+		pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
+	}
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
 		printf("pmap_create[%d]: created %p\n", cpu_number(), pm);
@@ -4033,11 +4044,6 @@ pmap_destroy(pm)
 	count = --pm->pm_refcount;
 	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
-		if (CPU_ISSUN4 || CPU_ISSUN4C) {
-			/* reset the region gap */
-			pm->pm_gap_start = 0;
-			pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
-		}
 #ifdef DEBUG
 		pmap_quiet_check(pm);
 #endif
