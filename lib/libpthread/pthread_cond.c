@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.5 2003/01/31 04:59:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.6 2003/02/01 00:57:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <sys/cdefs.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -51,7 +53,13 @@
 #define SDPRINTF(x)
 #endif
 
+int	_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+
+extern int pthread__started;
+
 static void pthread_cond_wait__callback(void *);
+static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
+    const struct timespec *);
 
 __strong_alias(__libc_cond_init,pthread_cond_init)
 __strong_alias(__libc_cond_signal,pthread_cond_signal)
@@ -107,6 +115,11 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 #endif
 	self = pthread__self();
 	PTHREADD_ADD(PTHREADD_COND_WAIT);
+
+	/* Just hang out for a while if threads aren't running yet. */
+	if (__predict_false(pthread__started == 0))
+		return pthread_cond_wait_nothread(self, mutex, NULL);
+
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
@@ -174,6 +187,12 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		return EINVAL;
 #endif
 	self = pthread__self();
+	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
+
+	/* Just hang out for a while if threads aren't running yet. */
+	if (__predict_false(pthread__started == 0))
+		return pthread_cond_wait_nothread(self, mutex, abstime);
+
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
@@ -190,7 +209,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		}
 	}
 #endif
-	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
+	
 	wait.ptw_thread = self;
 	wait.ptw_cond = cond;
 	retval = 0;
@@ -347,4 +366,39 @@ pthread_condattr_destroy(pthread_condattr_t *attr)
 	attr->ptca_magic = _PT_CONDATTR_DEAD;
 
 	return 0;
+}
+
+/* Utility routine to hang out for a while if threads haven't started yet. */
+static int
+pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
+    const struct timespec *abstime)
+{
+	struct timeval now, tv, *tvp;
+	int retval;
+
+	if (abstime == NULL)
+		tvp = NULL;
+	else {
+		tvp = &tv;
+		gettimeofday(&now, NULL);
+		TIMESPEC_TO_TIMEVAL(tvp, abstime);
+		timersub(tvp, &now, tvp);
+	}
+
+	/*
+	 * The libpthread select() wrapper has cancellation tests, but
+	 * we need to have the mutex locked when testing for
+	 * cancellation and unlocked while we sleep.  So, skip the
+	 * wrapper.
+	 */
+	pthread__testcancel(self);
+	pthread_mutex_unlock(mutex);
+	retval = _sys_select(0, NULL, NULL, NULL, tvp);
+	pthread_mutex_lock(mutex);
+	pthread__testcancel(self);
+
+	if (retval == 0)
+		return ETIMEDOUT;
+	else
+		return EINTR;
 }
