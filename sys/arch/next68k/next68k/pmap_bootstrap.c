@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 1999/03/24 23:16:00 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 1999/03/24 23:47:46 dbj Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -173,7 +173,7 @@ pmap_bootstrap(nextpa, firstpa)
 	monopa = emonopa - MONOMAPSIZE * sizeof(pt_entry_t);
 
 	ecolorpa = emonopa - MONOMAPSIZE * sizeof(pt_entry_t);
-	colorpa = emonopa - COLORMAPSIZE * sizeof(pt_entry_t);
+	colorpa = ecolorpa - COLORMAPSIZE * sizeof(pt_entry_t);
 
 	kptmpa = nextpa;
 	nextpa += NBPG;
