@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 2002/01/05 20:21:37 jhawk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11 2002/01/05 20:22:52 jhawk Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -730,7 +730,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		func &= ~Op_SIMM;
 	case Op_UIMM:
 		IMM = extract_field(instr, 31 - 31, 16);
-		pstr += sprintf(pstr, "0x%x, ", IMM);
+		pstr += sprintf(pstr, "0x%x", IMM);
 		func &= ~Op_UIMM;
 		break;
 	default:
