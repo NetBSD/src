@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.27 1999/07/29 18:20:03 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.28 1999/07/30 20:52:28 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.27 1999/07/29 18:20:03 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.28 1999/07/30 20:52:28 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -391,7 +391,7 @@ wskbd_attach(parent, self, aux)
 	}
 	printf("\n");
 
-#if NWSMUX > 0 || NWSDISPLAY > 0
+#if NWSMUX > 0
 	if (mux != WSKBDDEVCF_MUX_DEFAULT)
 		wsmux_attach(mux, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
 			     &sc->sc_mux, &wskbd_muxops);
@@ -470,7 +470,7 @@ wskbd_detach(self, flags)
 	struct wseventvar *evar;
 	int maj, mn;
 	int s;
-#if NWSMUX > 0 || NWSDISPLAY > 0
+#if NWSMUX > 0
 	int mux;
 
 	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.1 1999/07/29 18:20:03 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.2 1999/07/30 20:52:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,13 +88,11 @@ struct wsplink {
 	struct wsmuxops *sc_ops;
 };
 
-cdev_decl(wsmux);
-
 int wsmuxdoclose __P((struct device *, int, int, struct proc *));
 int wsmux_set_display __P((struct device *, struct wsmux_softc *));
 
-int nwsmux = NWSMUX;
-struct wsmux_softc *wsmuxdevs[NWSMUX];
+#if NWSMUX > 0
+cdev_decl(wsmux);
 
 void wsmuxattach __P((int));
 
@@ -103,6 +101,34 @@ struct wsmuxops wsmux_muxops = {
 	wsmux_set_display
 };
 
+void wsmux_setmax __P((int n));
+
+int nwsmux = 0;
+struct wsmux_softc **wsmuxdevs;
+
+void
+wsmux_setmax(n)
+	int n;
+{
+	int i;
+
+	if (n >= nwsmux) {
+		i = nwsmux;
+		nwsmux = n + 1;
+		if (nwsmux != 0)
+			wsmuxdevs = realloc(wsmuxdevs, 
+					    nwsmux * sizeof (*wsmuxdevs), 
+					    M_DEVBUF, M_NOWAIT);
+		else
+			wsmuxdevs = malloc(nwsmux * sizeof (*wsmuxdevs), 
+					   M_DEVBUF, M_NOWAIT);
+		if (wsmuxdevs == 0)
+			panic("wsmux_setmax: no memory\n");
+		for (; i < nwsmux; i++)
+			wsmuxdevs[i] = 0;
+	}
+}
+
 /* From upper level */
 void
 wsmuxattach(n)
@@ -110,38 +136,12 @@ wsmuxattach(n)
 {
 	int i;
 
-#if 0
-/* Called too late. We use static allocation instead. */
-	nwsmux = n;
-	wsmuxdevs = malloc(n * sizeof (struct wsmux_softc *),
-			   M_DEVBUF, M_NOWAIT);
-	if (wsmuxdevs == 0)
-		panic("wsmuxattach: out of memory\n");
-#endif
+	wsmux_setmax(n);	/* Make sure we have room for all muxes. */
 
 	/* Make sure all muxes are there. */
 	for (i = 0; i < nwsmux; i++)
 		if (!wsmuxdevs[i])
 			wsmuxdevs[i] = wsmux_create("wsmux", i);
-}
-
-struct wsmux_softc *
-wsmux_create(name, unit)
-	const char *name;
-	int unit;
-{
-	struct wsmux_softc *sc;
-
-	DPRINTF(("wsmux_create: allocating\n"));
-	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
-	if (!sc)
-		return (0);
-	memset(sc, 0, sizeof *sc);
-	LIST_INIT(&sc->sc_reals);
-	snprintf(sc->sc_dv.dv_xname, sizeof sc->sc_dv.dv_xname,
-		 "%s%d", name, unit);
-	sc->sc_dv.dv_unit = unit;
-	return (sc);
 }
 
 /* From mouse or keyboard. */
@@ -157,12 +157,8 @@ wsmux_attach(n, type, dsc, ev, psp, ops)
 	struct wsmux_softc *sc;
 	int error;
 
-	DPRINTF(("wsmux_attach\n"));
-	if (n >= nwsmux || n < 0) {
-		printf("wsmux: attach device %d is out of range (%d..%d)\n",
-		       n, 0, nwsmux-1);
-		return;
-	}
+	DPRINTF(("wsmux_attach: n=%d\n", n));
+	wsmux_setmax(n);
 	sc = wsmuxdevs[n];
 	if (sc == 0) {
 		sc = wsmux_create("wsmux", n);
@@ -175,73 +171,6 @@ wsmux_attach(n, type, dsc, ev, psp, ops)
 	error = wsmux_attach_sc(sc, type, dsc, ev, psp, ops);
 	if (error)
 		printf("wsmux_attach: error=%d\n", error);
-}
-
-int
-wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
-	struct wsmux_softc *sc;
-	int type;
-        struct device *dsc;
-	struct wseventvar *ev;
-	struct wsmux_softc **psp;
-	struct wsmuxops *ops;
-{
-	struct wsplink *m;
-	int error;
-
-	DPRINTF(("wsmux_attach_sc: %s: type=%d dsc=%p, *psp=%p\n",
-		 sc->sc_dv.dv_xname, type, dsc, *psp));
-	m = malloc(sizeof *m, M_DEVBUF, M_NOWAIT);
-	if (m == 0)
-		return (ENOMEM);
-	m->type = type;
-	m->mux = sc;
-	m->sc = dsc;
-	m->sc_mevents = ev;
-	m->sc_muxp = psp;
-	m->sc_ops = ops;
-	LIST_INSERT_HEAD(&sc->sc_reals, m, next);
-
-	if (sc->sc_displaydv) {
-		/* This is a display mux, so attach the new device to it. */
-		DPRINTF(("wsmux_attach_sc: %s: set display %p\n", 
-			 sc->sc_dv.dv_xname, sc->sc_displaydv));
-		error = 0;
-		if (m->sc_ops->dsetdisplay) {
-			error = m->sc_ops->dsetdisplay(m->sc, sc);
-			/* Ignore that the console already has a display. */
-			if (error == EBUSY)
-				error = 0;
-			if (!error) {
-				*m->sc_muxp = sc;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-				DPRINTF(("wsmux_attach_sc: on %s set rawkbd=%d\n",
-					 m->sc->dv_xname, sc->sc_rawkbd));
-				(void)m->sc_ops->dioctl(m->sc, 
-					     WSKBDIO_SETMODE, 
-					     (caddr_t)&sc->sc_rawkbd,
-					     0, 0);
-#endif
-			}
-		}
-	} else if (sc->sc_events.io) {
-		/* Mux is open, so open the new subdevice */
-		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
-			 sc->sc_dv.dv_xname, m->sc->dv_xname));
-		/* mux already open, join in */
-		error = m->sc_ops->dopen(makedev(0, m->sc->dv_unit),
-					 sc->sc_flags, sc->sc_mode, sc->sc_p);
-		if (!error)
-			*m->sc_muxp = sc;
-	} else {
-		DPRINTF(("wsmux_attach_sc: %s not open\n",
-			 sc->sc_dv.dv_xname));
-		error = 0;
-	}
-	DPRINTF(("wsmux_attach_sc: done sc=%p psp=%p *psp=%p\n", 
-		 sc, psp, *psp));
-
-	return (error);
 }
 
 /* From mouse or keyboard. */
@@ -262,52 +191,6 @@ wsmux_detach(n, dsc)
 #else
 	(void)wsmux_detach_sc(wsmuxdevs[n], dsc);
 #endif
-}
-
-int
-wsmux_detach_sc(sc, dsc)
-	struct wsmux_softc *sc;
-        struct device *dsc;
-{
-	struct wsplink *m;
-	int error;
-
-	DPRINTF(("wsmux_detach_sc: %s: dsc=%p\n", sc->sc_dv.dv_xname, dsc));
-#ifdef DIAGNOSTIC
-	if (sc == 0) {
-		printf("wsmux_detach_sc: not allocated\n");
-		return (ENXIO);
-	}
-#endif
-
-	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {
-		if (m->sc == dsc)
-			break;
-	}
-#ifdef DIAGNOSTIC
-	if (!m) {
-		printf("wsmux_detach_sc: not found\n");
-		return (ENXIO);
-	}
-#endif
-	if (sc->sc_displaydv) {
-		if (m->sc_ops->dsetdisplay)
-			error = m->sc_ops->dsetdisplay(m->sc, 0);
-		if (error)
-			return (error);
-		*m->sc_muxp = 0;
-	} else if (*m->sc_muxp) {
-		DPRINTF(("wsmux_detach_sc: close\n"));
-		/* mux device is open, so close multiplexee */
-		m->sc_ops->dclose(m->sc, FREAD, 0, 0);
-		*m->sc_muxp = 0;
-	}
-
-	LIST_REMOVE(m, next);
-
-	free(m, M_DEVBUF);
-	DPRINTF(("wsmux_detach_sc: done sc=%p\n", sc));
-	return (0);
 }
 
 int
@@ -378,6 +261,220 @@ wsmuxclose(dev, flags, mode, p)
 	return wsmuxdoclose(&wsmuxdevs[minor(dev)]->sc_dv, flags, mode, p);
 }
 
+int
+wsmuxread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+
+	if (!sc->sc_events.io)
+		return (EACCES);
+
+	return (wsevent_read(&sc->sc_events, uio, flags));
+}
+
+int
+wsmuxioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	return wsmuxdoioctl(&wsmuxdevs[minor(dev)]->sc_dv, cmd, data, flag, p);
+}
+
+int
+wsmuxpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+
+	if (!sc->sc_events.io)
+		return (EACCES);
+
+	return (wsevent_poll(&sc->sc_events, events, p));
+}
+
+int
+wsmux_add_mux(unit, muxsc)
+	int unit;
+	struct wsmux_softc *muxsc;
+{
+	struct wsmux_softc *sc, *m;
+
+	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
+		return (ENXIO);
+
+	DPRINTF(("wsmux_add_mux: %s to %s\n", sc->sc_dv.dv_xname,
+		 muxsc->sc_dv.dv_xname));
+
+	if (sc->sc_mux || sc->sc_events.io)
+		return (EBUSY);
+
+	/* The mux we are adding must not be an ancestor of it. */
+	for (m = muxsc->sc_mux; m; m = m->sc_mux)
+		if (m == sc)
+			return (EINVAL);
+
+	return (wsmux_attach_sc(muxsc, WSMUX_MUX, &sc->sc_dv, &sc->sc_events, 
+				&sc->sc_mux, &wsmux_muxops));
+}
+
+int
+wsmux_rem_mux(unit, muxsc)
+	int unit;
+	struct wsmux_softc *muxsc;
+{
+	struct wsmux_softc *sc;
+
+	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
+		return (ENXIO);
+	
+	DPRINTF(("wsmux_rem_mux: %s from %s\n", sc->sc_dv.dv_xname,
+		 muxsc->sc_dv.dv_xname));
+
+	return (wsmux_detach_sc(muxsc, &sc->sc_dv));
+}
+
+#endif /* NWSMUX > 0 */
+
+struct wsmux_softc *
+wsmux_create(name, unit)
+	const char *name;
+	int unit;
+{
+	struct wsmux_softc *sc;
+
+	DPRINTF(("wsmux_create: allocating\n"));
+	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
+	if (!sc)
+		return (0);
+	memset(sc, 0, sizeof *sc);
+	LIST_INIT(&sc->sc_reals);
+	snprintf(sc->sc_dv.dv_xname, sizeof sc->sc_dv.dv_xname,
+		 "%s%d", name, unit);
+	sc->sc_dv.dv_unit = unit;
+	return (sc);
+}
+
+int
+wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
+	struct wsmux_softc *sc;
+	int type;
+        struct device *dsc;
+	struct wseventvar *ev;
+	struct wsmux_softc **psp;
+	struct wsmuxops *ops;
+{
+	struct wsplink *m;
+	int error;
+
+	DPRINTF(("wsmux_attach_sc: %s: type=%d dsc=%p, *psp=%p\n",
+		 sc->sc_dv.dv_xname, type, dsc, *psp));
+	m = malloc(sizeof *m, M_DEVBUF, M_NOWAIT);
+	if (m == 0)
+		return (ENOMEM);
+	m->type = type;
+	m->mux = sc;
+	m->sc = dsc;
+	m->sc_mevents = ev;
+	m->sc_muxp = psp;
+	m->sc_ops = ops;
+	LIST_INSERT_HEAD(&sc->sc_reals, m, next);
+
+	if (sc->sc_displaydv) {
+		/* This is a display mux, so attach the new device to it. */
+		DPRINTF(("wsmux_attach_sc: %s: set display %p\n", 
+			 sc->sc_dv.dv_xname, sc->sc_displaydv));
+		error = 0;
+		if (m->sc_ops->dsetdisplay) {
+			error = m->sc_ops->dsetdisplay(m->sc, sc);
+			/* Ignore that the console already has a display. */
+			if (error == EBUSY)
+				error = 0;
+			if (!error) {
+				*m->sc_muxp = sc;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+				DPRINTF(("wsmux_attach_sc: on %s set rawkbd=%d\n",
+					 m->sc->dv_xname, sc->sc_rawkbd));
+				(void)m->sc_ops->dioctl(m->sc, 
+					     WSKBDIO_SETMODE, 
+					     (caddr_t)&sc->sc_rawkbd,
+					     0, 0);
+#endif
+			}
+		}
+	} else if (sc->sc_events.io) {
+		/* Mux is open, so open the new subdevice */
+		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
+			 sc->sc_dv.dv_xname, m->sc->dv_xname));
+		/* mux already open, join in */
+		error = m->sc_ops->dopen(makedev(0, m->sc->dv_unit),
+					 sc->sc_flags, sc->sc_mode, sc->sc_p);
+		if (!error)
+			*m->sc_muxp = sc;
+	} else {
+		DPRINTF(("wsmux_attach_sc: %s not open\n",
+			 sc->sc_dv.dv_xname));
+		error = 0;
+	}
+	DPRINTF(("wsmux_attach_sc: done sc=%p psp=%p *psp=%p\n", 
+		 sc, psp, *psp));
+
+	return (error);
+}
+
+int
+wsmux_detach_sc(sc, dsc)
+	struct wsmux_softc *sc;
+        struct device *dsc;
+{
+	struct wsplink *m;
+	int error;
+
+	DPRINTF(("wsmux_detach_sc: %s: dsc=%p\n", sc->sc_dv.dv_xname, dsc));
+#ifdef DIAGNOSTIC
+	if (sc == 0) {
+		printf("wsmux_detach_sc: not allocated\n");
+		return (ENXIO);
+	}
+#endif
+
+	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {
+		if (m->sc == dsc)
+			break;
+	}
+#ifdef DIAGNOSTIC
+	if (!m) {
+		printf("wsmux_detach_sc: not found\n");
+		return (ENXIO);
+	}
+#endif
+	if (sc->sc_displaydv) {
+		if (m->sc_ops->dsetdisplay)
+			error = m->sc_ops->dsetdisplay(m->sc, 0);
+		if (error)
+			return (error);
+		*m->sc_muxp = 0;
+	} else if (*m->sc_muxp) {
+		DPRINTF(("wsmux_detach_sc: close\n"));
+		/* mux device is open, so close multiplexee */
+		m->sc_ops->dclose(m->sc, FREAD, 0, 0);
+		*m->sc_muxp = 0;
+	}
+
+	LIST_REMOVE(m, next);
+
+	free(m, M_DEVBUF);
+	DPRINTF(("wsmux_detach_sc: done sc=%p\n", sc));
+	return (0);
+}
+
 int wsmuxdoclose(dv, flags, mode, p)
 	struct device *dv;
 	int flags, mode;
@@ -405,31 +502,6 @@ int wsmuxdoclose(dv, flags, mode, p)
 	sc->sc_events.io = NULL;
 
 	return (0);
-}
-
-int
-wsmuxread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
-
-	if (!sc->sc_events.io)
-		return (EACCES);
-
-	return (wsevent_read(&sc->sc_events, uio, flags));
-}
-
-int
-wsmuxioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	return wsmuxdoioctl(&wsmuxdevs[minor(dev)]->sc_dv, cmd, data, flag, p);
 }
 
 int
@@ -488,8 +560,10 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 		case WSMUX_KBD:
 			return (wskbd_add_mux(d->idx, sc));
 #endif
+#if NWSMUX > 0
 		case WSMUX_MUX:
 			return (wsmux_add_mux(d->idx, sc));
+#endif
 		default:
 			return (EINVAL);
 		}
@@ -503,8 +577,10 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 		case WSMUX_KBD:
 			return (wskbd_rem_mux(d->idx, sc));
 #endif
+#if NWSMUX > 0
 		case WSMUX_MUX:
 			return (wsmux_rem_mux(d->idx, sc));
+#endif
 		default:
 			return (EINVAL);
 		}
@@ -597,20 +673,6 @@ wsmux_displayioctl(dv, cmd, data, flag, p)
 }
 
 int
-wsmuxpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
-
-	if (!sc->sc_events.io)
-		return (EACCES);
-
-	return (wsevent_poll(&sc->sc_events, events, p));
-}
-
-int
 wsmux_set_display(dv, muxsc)
 	struct device *dv;
 	struct wsmux_softc *muxsc;
@@ -670,47 +732,6 @@ wsmux_set_display(dv, muxsc)
 		       sc->sc_dv.dv_xname, odisplaydv->dv_xname);
 
 	return (error);
-}
-
-int
-wsmux_add_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
-{
-	struct wsmux_softc *sc, *m;
-
-	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
-		return (ENXIO);
-
-	DPRINTF(("wsmux_add_mux: %s to %s\n", sc->sc_dv.dv_xname,
-		 muxsc->sc_dv.dv_xname));
-
-	if (sc->sc_mux || sc->sc_events.io)
-		return (EBUSY);
-
-	/* The mux we are adding must not be an ancestor of it. */
-	for (m = muxsc->sc_mux; m; m = m->sc_mux)
-		if (m == sc)
-			return (EINVAL);
-
-	return (wsmux_attach_sc(muxsc, WSMUX_MUX, &sc->sc_dv, &sc->sc_events, 
-				&sc->sc_mux, &wsmux_muxops));
-}
-
-int
-wsmux_rem_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
-{
-	struct wsmux_softc *sc;
-
-	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
-		return (ENXIO);
-	
-	DPRINTF(("wsmux_rem_mux: %s from %s\n", sc->sc_dv.dv_xname,
-		 muxsc->sc_dv.dv_xname));
-
-	return (wsmux_detach_sc(muxsc, &sc->sc_dv));
 }
 
 #endif /* NWSMUX > 0 || (NWSDISPLAY > 0 && NWSKBD > 0) */

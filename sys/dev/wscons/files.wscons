@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.17 1999/07/30 20:42:16 thorpej Exp $
+# $NetBSD: files.wscons,v 1.18 1999/07/30 20:52:27 augustss Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -53,8 +53,5 @@ file	dev/rcons/raster_text.c			wsrasteremulops
 file	dev/wscons/wscons_rinit.c		wsrasteremulops
 file	dev/wscons/wscons_rops.c		wsrasteremulops
 
-# XXX XXX XXX COMPLETELY, UTTERLY BROKEN!!! XXX XXX XXX
-# XXX XXX XXX wsdisplay needs wsmux to work but there is Lossage
-# XXX XXX XXX if you use "wsmux | wsdisplay" below.
 defpseudo	wsmux
-file	dev/wscons/wsmux.c			wsmux needs-count
+file	dev/wscons/wsmux.c			wsmux | wsdisplay needs-flag
