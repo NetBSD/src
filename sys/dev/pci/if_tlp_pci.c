@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.70 2002/10/09 16:59:19 jdolecek Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.71 2002/12/23 02:58:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.70 2002/10/09 16:59:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.71 2002/12/23 02:58:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -508,13 +508,13 @@ tlp_pci_attach(parent, self, aux)
 	}
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
 			printf(": waking up from power state D%d\n%s",
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
 			break;
@@ -525,7 +525,7 @@ tlp_pci_attach(parent, self, aux)
 			 */
 			printf(": unable to wake up from power state D3, "
 			       "reboot required.\n");
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
 			return;

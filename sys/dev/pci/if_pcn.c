@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.17 2002/10/23 01:50:12 perry Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.18 2002/12/23 02:58:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.17 2002/10/23 01:50:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.18 2002/12/23 02:58:37 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -585,8 +585,9 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode, if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (pmode == 3) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
+		    PCI_PMCSR_STATE_MASK;
+		if (pmode == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -595,10 +596,11 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		if (pmode != 0) {
+		if (pmode != PCI_PMCSR_STATE_D0) {
 			printf("%s: waking up from power date D%d\n",
 			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    PCI_PMCSR_STATE_D0);
 		}
 	}
 

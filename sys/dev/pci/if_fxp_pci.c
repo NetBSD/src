@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.29 2002/10/02 16:51:24 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.30 2002/12/23 02:58:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.29 2002/10/02 16:51:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.30 2002/12/23 02:58:37 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -430,7 +430,7 @@ fxp_pci_attach(parent, self, aux)
 		sc->sc_enable = fxp_pci_enable;
 		sc->sc_disable = fxp_pci_disable;
 
-		psc->psc_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		psc->psc_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
 		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
 		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
 		    PCI_PMCSR_STATE_D0;
