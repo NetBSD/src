@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.8 2001/11/23 17:23:41 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.9 2002/01/05 22:41:46 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -61,6 +61,7 @@
 #include <dev/cons.h>
 
 #include <arm/arm32/katelib.h>
+#include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
@@ -116,7 +117,6 @@ void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern void dumpsys	__P((void));
 
 /*
  * Debug function just to park the CPU
