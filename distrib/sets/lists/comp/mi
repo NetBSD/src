@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.281 2000/12/11 13:44:00 jdolecek Exp $
+#	$NetBSD: mi,v 1.282 2000/12/14 05:59:39 jmc Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1351,12 +1351,12 @@
 ./usr/share/ldscripts/i386nbsd.xn	comp-util-share
 ./usr/share/ldscripts/i386nbsd.xr	comp-util-share
 ./usr/share/ldscripts/i386nbsd.xu	comp-util-share
-./usr/share/ldscripts/m68kelf.x	comp-util-share
-./usr/share/ldscripts/m68kelf.xbn	comp-util-share
-./usr/share/ldscripts/m68kelf.xn	comp-util-share
-./usr/share/ldscripts/m68kelf.xr	comp-util-share
-./usr/share/ldscripts/m68kelf.xs	comp-util-share
-./usr/share/ldscripts/m68kelf.xu	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.x	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.xbn	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.xn	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.xr	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.xs	comp-util-share
+./usr/share/ldscripts/m68kelfnbsd.xu	comp-util-share
 ./usr/share/ldscripts/m68knbsd.x	comp-util-share
 ./usr/share/ldscripts/m68knbsd.xbn	comp-util-share
 ./usr/share/ldscripts/m68knbsd.xn	comp-util-share
