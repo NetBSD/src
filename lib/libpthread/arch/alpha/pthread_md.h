@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.3 2001/12/17 22:07:29 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/08/06 20:06:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,5 +53,32 @@ pthread__sp(void)
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 #define STACKSPACE 32	/* 4 quad values */
+/*
+ * Conversions between struct reg and struct mcontext. Used by
+ * libpthread_dbg.
+ */
+
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
+	memcpy(&(reg)->r_regs, &(uc)->uc_mcontext.__gregs,		\
+		31 * sizeof(__greg_t));					\
+	(reg)->r_regs[R_ZERO] = (uc)->uc_mcontext.__gregs[_REG_PC];    	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_regs,		\
+		31 * sizeof(__greg_t));					\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_regs[R_ZERO];    	\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
+	memcpy((freg), &(uc)->uc_mcontext.__fpregs,			\
+	    sizeof(struct fpreg))					\
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
+	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
+	    sizeof(struct fpreg));					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_ALPHA_MD_H */
