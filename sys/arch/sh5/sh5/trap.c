@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2002/09/22 20:31:20 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 2002/09/28 11:04:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -570,6 +570,8 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	panic("panic trap");
 }
 
+
+#ifdef PORTMASTER
 /*
  * Called from exception.S when we get an exception inside the critical
  * section of another exception.
@@ -631,6 +633,7 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es,
 
 	panic("panic_critical_fault");
 }
+#endif	/* PORTMASTER */
 
 const char *
 trap_type(int traptype)
@@ -836,7 +839,7 @@ dump_trapframe(void (*pr)(const char *, ...), const char *prefix,
 #endif
 
 
-#ifdef DIAGNOSTIC
+#ifdef PORTMASTER
 /*
  * Called from Ltrapexit in exception.S just before we restore the
  * trapframe in order to verify that the trapframe is valid enough
@@ -910,4 +913,4 @@ boom:
 #endif
 	panic("validate_trapframe");
 }
-#endif
+#endif	/* PORTMASTER */
