@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.12 1998/02/18 10:24:45 mycroft Exp $	*/
+/*	$NetBSD: float.h,v 1.13 1998/09/27 04:54:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -70,8 +70,8 @@ __END_DECLS
 #define LDBL_MANT_DIG	64
 #define LDBL_EPSILON	1.0842021724855044340E-19L
 #define LDBL_DIG	18
-#define LDBL_MIN_EXP	(-16381)
-#define LDBL_MIN	3.3621031431120935063E-4932L
+#define LDBL_MIN_EXP	(-16382)
+#define LDBL_MIN	1.6810515715560467531E-4932L
 #define LDBL_MIN_10_EXP	(-4931)
 #define LDBL_MAX_EXP	16384
 #define LDBL_MAX	1.1897314953572317650E+4932L
