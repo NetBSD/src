@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.32 1998/04/01 21:07:03 kleink Exp $	*/
+/*	$NetBSD: ftp.c,v 1.33 1998/05/20 00:54:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.32 1998/04/01 21:07:03 kleink Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.33 1998/05/20 00:54:52 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -57,6 +58,7 @@ __RCSID("$NetBSD: ftp.c,v 1.32 1998/04/01 21:07:03 kleink Exp $");
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -540,7 +542,11 @@ sendrequest(cmd, local, remote, printnames)
 				(*closefunc)(fin);
 			goto cleanupsend;
 		}
+#ifndef NO_QUAD
 		if (command("REST %qd", (long long) restart_point) !=
+#else
+		if (command("REST %ld", (long) restart_point) !=
+#endif
 		    CONTINUE) {
 			if (closefunc != NULL)
 				(*closefunc)(fin);
@@ -833,7 +839,11 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	if (setjmp(recvabort))
 		goto abort;
 	if (is_retr && restart_point &&
+#ifndef NO_QUAD
 	    command("REST %qd", (long long) restart_point) != CONTINUE)
+#else
+	    command("REST %ld", (long) restart_point) != CONTINUE)
+#endif
 		return;
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
