@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.205 2004/05/13 20:25:25 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.206 2004/05/14 06:35:03 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2358,14 +2358,53 @@ sys/dev/pci/if_bge.c				1.70
 sys/dev/pci/pcidevs				1.625
 sys/dev/pci/pcidevs.h				regenerate
 sys/dev/pci/pcidevs_data.h			regenerate
+
 	Add support for Broadcom BCM5788 GbE.  PR#25166.
 	[tron, ticket #316]
 
 usr.bin/rpcgen/rpcgen.1				1.17
+
 	Don't document -b twice.
 	[kleink, ticket #317]
 
 distrib/notes/sparc64/install			1.20
+
 	Remove extra "NetBSD" after ".Nx" macro.
 	[tron, ticket #318]
+
+sys/kern/kern_sysctl.c				1.176
+	
+	In sysctl_destroyv, the newly created dnode structure must have its
+	version set to the correct value to prevent later failure of
+	sysctl_cvt_in.
+	[cube, ticket #319]
+
+usr.bin/rpcgen/rpcgen.1				1.18
+usr.bin/rpcgen/rpc_main.c			1.25
+
+	Describe missing flags.  Correct synopsis.  Explain -b better.
+	Add a 'v' flag to display a version number so that our usage matches
+	with everyone else's rpcgen.
+	[christos, ticket #320]
+
+lib/libc/time/strftime.c			1.15
+
+	Don't use tm_zone for %Z: a strictly conforming ISO C application
+	won't initialize it.  PR#21722.
+	[kleink, ticket #321]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.100-1.101
+sys/miscfs/kernfs/kernfs.h			1.21
+sys/miscfs/kernfs/kernfs_subr.c			1.6
+
+	Find the right entry when doing lookup on dotdot in kern/ipsec subdirs.
+	Make lookup and readdir return the same inode number.  kernfs_readdir
+	now uses kernfs_allocvp to map from kernfs entry to inode number,
+	kernfs_allocvp is now the only place where entries are mapped to inode
+	numbers.  Also make KERNFS_FILENO not return random results for entries
+	not in kern_targets.
+	Remove code no longer needed since the type/permission information
+	is available in the entry's struct kern_target and every entry has a
+	(possibly shared) struct kern_target now.
+	[cl, ticket #322]
 
