@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.621 2003/10/24 20:35:41 jdolecek Exp $
+# $NetBSD: mi,v 1.622 2003/10/24 23:52:00 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1531,6 +1531,7 @@
 ./usr/share/man/cat8/mailstats.0		man-sendmail-catman
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman
 ./usr/share/man/cat8/makedbm.0			man-sendmail-catman
+./usr/share/man/cat8/makedev.8			man-sysutil-catman
 ./usr/share/man/cat8/makefs.0			man-sysutil-catman
 ./usr/share/man/cat8/makekey.0			man-crypto-catman
 ./usr/share/man/cat8/makemap.0			man-sendmail-catman
@@ -3330,6 +3331,7 @@
 ./usr/share/man/man8/mailstats.8		man-sendmail-man
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man
 ./usr/share/man/man8/makedbm.8			man-sendmail-man
+./usr/share/man/man8/makedev.8			man-sysutil-man
 ./usr/share/man/man8/makefs.8			man-sysutil-man
 ./usr/share/man/man8/makekey.8			man-crypto-man
 ./usr/share/man/man8/makemap.8			man-sendmail-man
