@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.4 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops8.c,v 1.5 1999/08/13 09:45:46 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.4 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.5 1999/08/13 09:45:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,8 +131,8 @@ rasops8_putchar(cookie, row, col, uc, attr)
 
 	height = ri->ri_font->fontheight;
 	width = ri->ri_font->fontwidth;
-	clr[0] = (u_char)(attr >> 16);
-	clr[1] = (u_char)(attr >> 24);
+	clr[0] = (u_char)ri->ri_devcmap[(attr >> 16) & 15];
+	clr[1] = (u_char)ri->ri_devcmap[(attr >> 24) & 15];
 		
 	if (uc == ' ') {
 		while (height--) {
@@ -179,9 +179,9 @@ rasops8_makestamp(attr)
 {
 	int i;
 	int32_t fg, bg;
-	
-	fg = (attr >> 24) & 15;
-	bg = (attr >> 16) & 15;
+
+	fg = ri->ri_devcmap[(attr >> 24) & 15] & 0xff;
+	bg = ri->ri_devcmap[(attr >> 16) & 15] & 0xff;
 	stamp_attr = attr;
 	
 	for (i = 0; i < 16; i++) {
