@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.8 2004/02/03 20:04:56 jdolecek Exp $ */
+/* $NetBSD: lptctl.c,v 1.9 2004/02/03 21:32:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lptctl.c,v 1.8 2004/02/03 20:04:56 jdolecek Exp $");
+__RCSID("$NetBSD: lptctl.c,v 1.9 2004/02/03 21:32:02 jdolecek Exp $");
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -115,6 +115,33 @@ main(const int argc, const char * const * argv) {
 				errx(2, "invalid '%s' command argument '%s'",
 					argv[i], argv[i+1]);
 			}
+		} else if (strcmp("intr", argv[i]) == 0) {
+			if (strcmp("yes", argv[i + 1]) == 0)
+				flags |= LPT_INTR;
+			else if (strcmp("no", argv[i + 1]) == 0)
+				flags &= ~LPT_INTR;
+			else {
+				errx(2, "invalid '%s' command argument '%s'",
+					argv[i], argv[i+1]);
+			}
+		} else if (strcmp("prime", argv[i]) == 0) {
+			if (strcmp("yes", argv[i + 1]) == 0)
+				flags |= LPT_PRIME;
+			else if (strcmp("no", argv[i + 1]) == 0)
+				flags &= ~LPT_PRIME;
+			else {
+				errx(2, "invalid '%s' command argument '%s'",
+					argv[i], argv[i+1]);
+			}
+		} else if (strcmp("autolf", argv[i]) == 0) {
+			if (strcmp("yes", argv[i + 1]) == 0)
+				flags |= LPT_AUTOLF;
+			else if (strcmp("no", argv[i + 1]) == 0)
+				flags &= ~LPT_AUTOLF;
+			else {
+				errx(2, "invalid '%s' command argument '%s'",
+					argv[i], argv[i+1]);
+			}
 		} else {
 			errx(2, "invalid command '%s'", argv[i]);
 		}
@@ -131,6 +158,7 @@ main(const int argc, const char * const * argv) {
 	}
 
 	/* Print out information on device */
+	printf("%s status:\n\t", argv[1]);
 	print_lpt_info(mode, flags);
 
 	exit(0);
@@ -139,7 +167,7 @@ main(const int argc, const char * const * argv) {
 
 static void 
 print_lpt_info(int mode, int flags) {
-	printf("dma=%s ", (flags & LPT_DMA) ? "on" : "off");
+	printf("dma=%s ", (flags & LPT_DMA) ? "yes" : "no");
 		
 	printf("mode=");
 	switch(mode) {
@@ -167,15 +195,23 @@ print_lpt_info(int mode, int flags) {
 	}
 		
 	printf("ieee=%s ", (flags & LPT_IEEE) ? "yes" : "no");
+	printf("intr=%s ", (flags & LPT_INTR) ? "yes" : "no");
+	printf("prime=%s ", (flags & LPT_PRIME) ? "yes" : "no");
+	printf("autolf=%s ", (flags & LPT_AUTOLF) ? "yes" : "no");
 
 	printf("\n");
 }
 
 static void 
 usage(int status) {
-	printf("usage:\t%s /dev/device [[command arg] ...]"
-		"\n\t commands are:\n\tdma [on|off]\n\tieee [yes|no]"
-		"\n\tmode [standard|ps2|nibble|fast|ecp|epp]\n",
+	printf("usage:\t%s /dev/device [[command arg] ...]\n"
+		"\tcommands are:\n"
+		"\t\tdma [on|off]\n"
+		"\t\tieee [yes|no]\n"
+		"\t\tmode [standard|ps2|nibble|fast|ecp|epp]\n"
+		"\t\tintr [yes|no]\n"
+		"\t\tprime [yes|no]\n"
+		"\t\tautolf [yes|no]\n",
 		getprogname());
 	exit(status);
 }
