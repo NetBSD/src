@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.28 2002/09/28 18:02:21 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.29 2002/10/04 15:22:30 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -204,3 +204,5 @@ int	mb86960_enable	__P((struct mb86960_softc *));
 void	mb86960_disable	__P((struct mb86960_softc *));
 int	mb86960_activate __P((struct device *, enum devact));
 int	mb86960_detach	__P((struct mb86960_softc *));
+void	mb86965_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
+	    u_int8_t *));
