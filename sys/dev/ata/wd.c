@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.236 2003/01/23 00:00:32 bad Exp $ */
+/*	$NetBSD: wd.c,v 1.237 2003/01/27 18:21:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.236 2003/01/23 00:00:32 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.237 2003/01/27 18:21:29 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.236 2003/01/23 00:00:32 bad Exp $");
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -130,52 +132,6 @@ extern int wdcdebug_wd_mask; /* init'ed in ata_wdc.c */
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif
-
-struct wd_softc {
-	/* General disk infos */
-	struct device sc_dev;
-	struct disk sc_dk;
-	struct bufq_state sc_q;
-	struct callout sc_restart_ch;
-	/* IDE disk soft states */
-	struct ata_bio sc_wdc_bio; /* current transfer */
-	struct buf *sc_bp; /* buf being transfered */
-	void *wdc_softc;   /* pointer to our parent */
-	struct ata_drive_datas *drvp; /* Our controller's infos */
-	const struct ata_bustype *atabus;
-	int openings;
-	struct ataparams sc_params;/* drive characteistics found */
-	int sc_flags;	  
-#define	WDF_LOCKED	0x001
-#define	WDF_WANTED	0x002
-#define	WDF_WLABEL	0x004 /* label is writable */
-#define	WDF_LABELLING	0x008 /* writing label */
-/*
- * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
- * more fully implemented.
- */
-#define WDF_LOADED	0x010 /* parameters loaded */
-#define WDF_WAIT	0x020 /* waiting for resources */
-#define WDF_LBA		0x040 /* using LBA mode */
-#define WDF_KLABEL	0x080 /* retain label after 'full' close */
-#define WDF_LBA48	0x100 /* using 48-bit LBA mode */
-	int sc_capacity;
-	int cyl; /* actual drive parameters */
-	int heads;
-	int sectors;
-	int retries; /* number of xfer retry */
-
-	void *sc_sdhook;		/* our shutdown hook */
-
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
-};
-
-#define sc_drive sc_wdc_bio.drive
-#define sc_mode sc_wdc_bio.mode
-#define sc_multi sc_wdc_bio.multi
-#define sc_badsect sc_wdc_bio.badsect
 
 int	wdprobe		__P((struct device *, struct cfdata *, void *));
 void	wdattach	__P((struct device *, struct device *, void *));
