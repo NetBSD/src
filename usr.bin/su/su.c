@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.42 2000/07/13 08:37:10 assar Exp $	*/
+/*	$NetBSD: su.c,v 1.43 2000/08/09 02:15:27 assar Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.42 2000/07/13 08:37:10 assar Exp $");
+__RCSID("$NetBSD: su.c,v 1.43 2000/08/09 02:15:27 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -463,6 +463,7 @@ kerberos5(username, user, uid)
 	krb5_principal princ = NULL;
 	krb5_ccache ccache, ccache2;
 	char *cc_name;
+	const char *filename;
 
 	ret = krb5_init_context(&context);
 	if (ret)
@@ -512,13 +513,22 @@ kerberos5(username, user, uid)
 		goto fail;
 	}
 
+	filename = krb5_cc_get_name(context, ccache2);
 	asprintf(&cc_name, "%s:%s", krb5_cc_get_type(context, ccache2),
-		 krb5_cc_get_name(context, ccache2));
+		 filename);
+	if (chown (filename, uid, -1) < 0) {
+		warn("chown %s", filename);
+		free(cc_name);
+		krb5_cc_destroy(context, ccache);
+		krb5_cc_destroy(context, ccache2);
+		goto fail;
+	}
+
 	setenv("KRB5CCNAME", cc_name, 1);
 	free(cc_name);
 	krb5_cc_close(context, ccache2);
 	krb5_cc_destroy(context, ccache);
-	return 0;
+	return (0);
 
  fail:
 	if (princ != NULL)
