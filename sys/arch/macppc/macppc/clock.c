@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2000/12/17 23:16:22 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2001/01/01 05:28:54 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,10 +47,16 @@
  */
 static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
-static long ticks_per_intr;
+long ticks_per_intr;
+static int clockinitted;
+
+#ifdef MULTIPROCESSOR
+#define lasttb (curcpu()->ci_lasttb)
+#define tickspending (curcpu()->ci_tickspending)
+#else
 static volatile u_long lasttb;
-static int clockinitted = 0;
 volatile int tickspending;
+#endif
 
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
