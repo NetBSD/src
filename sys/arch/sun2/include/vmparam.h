@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2002/12/10 05:14:35 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2003/04/01 15:33:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,13 @@
  * that consume portions of kernel virtual (KV) space matter,
  * and those things should be chosen to conserve KV space.
  */
+
+/*
+ * The Sun2 has 2K pages.  Override PAGE_* to be compile-time constants.
+ */
+#define	PAGE_SHIFT	11
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * We definitely need a small pager map.
