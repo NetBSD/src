@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.43 2005/01/17 15:28:51 cube Exp $
+#	$NetBSD: LAMB,v 1.44 2005/01/18 10:28:00 scw Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -285,6 +285,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 #wsdisplay*	at vga? console ?

@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.14 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: VIRTUALPC,v 1.15 2005/01/18 10:28:00 scw Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.14 $"
+#ident 		"VIRTUALPC-$Revision: 1.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -349,6 +349,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
