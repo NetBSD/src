@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.30 2000/04/14 05:52:57 simonb Exp $	*/
+/*	$NetBSD: date.c,v 1.30.4.1 2000/10/09 12:09:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.30 2000/04/14 05:52:57 simonb Exp $");
+__RCSID("$NetBSD: date.c,v 1.30.4.1 2000/10/09 12:09:09 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,8 @@ setthetime(p)
 	}
 
 	lt = localtime(&tval);
+
+	lt->tm_isdst = -1;			/* Divine correct DST */
 
 	if (dot != NULL) {			/* .ss */
 		len = strlen(dot);
