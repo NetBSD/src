@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2004/07/27 22:14:22 jkunz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2004/07/28 09:17:31 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.11 2004/07/27 22:14:22 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2004/07/28 09:17:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,10 +316,10 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	int fsoff;
 
 	/* read LIF volume header */
-	bp->b_blkno = btodb(LIF_VOLSTART);
+	bp->b_blkno = btodb(HP700_LIF_VOLSTART);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = btodb(LIF_VOLSTART) / lp->d_secpercyl;
+	bp->b_cylin = btodb(HP700_LIF_VOLSTART) / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -329,16 +329,16 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 	memcpy(&osdep->lifvol, bp->b_data, sizeof(struct lifvol));
-	if (osdep->lifvol.vol_id != LIF_VOL_ID) {
+	if (osdep->lifvol.vol_id != HP700_LIF_VOL_ID) {
 		fsoff = 0;
 	} else {
-		struct lifdir *p;
+		struct hp700_lifdir *p;
 
 		/* read LIF directory */
-		bp->b_blkno = btodb(LIF_DIRSTART);
+		bp->b_blkno = btodb(HP700_LIF_DIRSTART);
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
+		bp->b_cylin = (HP700_LIF_DIRSTART) / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if (biowait(bp)) {
@@ -347,11 +347,11 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 			return "LIF directory I/O error";
 		}
 
-		memcpy(osdep->lifdir, bp->b_data, LIF_DIRSIZE);
+		memcpy(osdep->lifdir, bp->b_data, HP700_LIF_DIRSIZE);
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->lifdir[0];
-		     fsoff < 0 && p < &osdep->lifdir[LIF_NUMDIR]; p++)
-			if (p->dir_type == LIF_DIR_FS)
+		     fsoff < 0 && p < &osdep->lifdir[HP700_LIF_NUMDIR]; p++)
+			if (p->dir_type == HP700_LIF_DIR_FS)
 				fsoff = lifstodb(p->dir_addr);
 
 		/* if no suitable lifdir entry found assume 0 */
