@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2000/11/25 15:49:43 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2000/12/10 12:49:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,6 +59,8 @@
 
 volatile int astpending;
 volatile int want_resched;
+
+void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 
