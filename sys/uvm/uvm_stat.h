@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.22 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.23 2002/03/04 02:19:11 simonb Exp $	*/
 
 /*
  *
@@ -180,8 +180,6 @@ do { \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
-
-extern int cold;
 
 #if defined(UVMHIST_PRINT)
 extern int uvmhist_print_enabled;

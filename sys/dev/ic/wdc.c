@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.110 2002/01/31 06:37:30 simonb Exp $ */
+/*	$NetBSD: wdc.c,v 1.111 2002/03/04 02:19:10 simonb Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.110 2002/01/31 06:37:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.111 2002/03/04 02:19:10 simonb Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -878,9 +878,6 @@ wdcwait(chp, mask, bits, timeout)
 {
 	u_char status;
 	int time = 0;
-#ifdef WDCNDELAY_DEBUG
-	extern int cold;
-#endif
 
 	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc ?chp->wdc->sc_dev.dv_xname
 	    :"none", chp->channel), DEBUG_STATUS);
