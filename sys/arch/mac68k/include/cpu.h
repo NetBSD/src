@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.13 1994/07/10 16:56:31 briggs Exp $
+ *	$Id: cpu.h,v 1.14 1994/07/21 00:33:54 briggs Exp $
  */
 
 /*
@@ -246,6 +246,7 @@ struct mac68k_machine_S {
 	int			scsi80;		/* Has NCR 5380 */
 	int			scsi96;		/* Has NCR 53C96 */
 	int			scsi96_2;	/* Has 2nd 53C96 */
+	int			sonic;		/* Has SONIC e-net */
 
 	int			sccClkConst;	/* "Constant" for SCC bps */
 };
