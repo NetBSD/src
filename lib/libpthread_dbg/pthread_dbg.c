@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.26 2004/07/01 18:27:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.27 2004/07/01 18:59:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.26 2004/07/01 18:27:36 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.27 2004/07/01 18:59:52 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -690,6 +690,8 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 			return val;
 		if (slock == __SIMPLELOCK_LOCKED)
 			info->sync_data.spin.locked = 1;
+		else
+			info->sync_data.spin.locked = 0;
 		break;
 	case PT_MAGIC:
 		info->sync_type = TD_SYNC_JOIN;
