@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.13 2003/03/05 20:18:16 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.14 2003/03/10 20:41:29 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,20 +44,22 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#ifdef _BSD_RUNE_T_
-typedef	_BSD_RUNE_T_	rune_t;
-#undef _BSD_RUNE_T_
+/* for cross host tools on older systems */
+#ifndef UINT32_C
+/* assumes sizeof(unsigned int)>=4 */
+#define UINT32_C(c) ((uint32_t)(c##U))
 #endif
 
+typedef int32_t		rune_t;
 typedef uint64_t	__runepad_t;
 
 extern size_t __mb_len_max_runtime;
 #define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
-
 #define	_CACHED_RUNES		(1 << 8)	/* Must be a power of 2 */
 #define _RUNE_ISCACHED(c)	((c)>=0 && (c)<_CACHED_RUNES)
 
+#define _DEFAULT_INVALID_RUNE	((rune_t)-3)
 
 /*
  * The lower 8 bits of runetype[] contain the digit value of the rune.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.5 2002/03/17 22:14:30 tshiozak Exp $	*/
+/*	$NetBSD: rune.h,v 1.6 2003/03/10 20:41:29 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,7 +44,5 @@
 #include <stdio.h>
 #include <wchar.h>
 #include "runetype.h"
-
-#define _DEFAULT_INVALID_RUNE	-3
 
 #endif	/*! _RUNE_H_ */
