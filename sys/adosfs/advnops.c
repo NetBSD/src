@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.9 1994/07/11 05:07:41 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.10 1994/08/30 23:06:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -708,7 +708,7 @@ adosfs_access(sp)
 	advopprint(sp);
 #endif
 
-	error = 0;
+	mask = error = 0;
 	ucp = sp->a_cred;
 	mode = sp->a_mode;
 	ap = VTOA(sp->a_vp);
