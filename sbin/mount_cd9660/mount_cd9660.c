@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.18 2003/08/07 10:04:26 agc Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.19 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.18 2003/08/07 10:04:26 agc Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.19 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ mount_cd9660(argc, argv)
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
-	char *dev, *dir;
+	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 
 	mntflags = opts = 0;
 	while ((ch = getopt(argc, argv, "egijo:r")) != -1)
@@ -139,6 +139,22 @@ mount_cd9660(argc, argv)
 
 	dev = argv[0];
 	dir = argv[1];
+
+	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
+		err(1, "realpath %s", dev);
+	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dev);
+		dev = canon_dev;
+		warnx("using \"%s\" instead.", dev);
+	}
+
+	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
+		err(1, "realpath %s", dir);
+	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dir);
+		dir = canon_dir;
+		warnx("using \"%s\" instead.", dir);
+	}
 
 #define DEFAULT_ROOTUID	-2
 	/*

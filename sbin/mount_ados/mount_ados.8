@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ados.8,v 1.17 2003/02/25 10:35:00 wiz Exp $
+.\" $NetBSD: mount_ados.8,v 1.18 2005/01/31 05:19:18 erh Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -55,6 +55,11 @@ the device
 to the global filesystem namespace at the location
 indicated by
 .Pa node .
+Both
+.Ar special
+and
+.Ar node
+are converted to absolute paths before use.
 This command is normally executed by
 .Xr mount 8
 at boot time, but can be used by any user to mount an

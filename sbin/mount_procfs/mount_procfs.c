@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.15 2003/08/07 10:04:31 agc Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.15 2003/08/07 10:04:31 agc Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ mount_procfs(argc, argv)
 {
 	int ch, mntflags, altflags;
 	struct procfs_args args;
+	char canon_dir[MAXPATHLEN];
 
 	mntflags = altflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -140,11 +141,18 @@ mount_procfs(argc, argv)
 	if (argc != 2)
 		usage();
 
+	if (realpath(argv[1], canon_dir) == NULL)   /* Check mounton path */
+		err(1, "realpath %s", argv[1]);
+	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[1]);
+		warnx("using \"%s\" instead.", canon_dir);
+	}
+
 	args.version = PROCFS_ARGSVERSION;
 	args.flags = altflags;
 
-	if (mount(MOUNT_PROCFS, argv[1], mntflags, &args))
-		err(1, "procfs on %s", argv[1]);
+	if (mount(MOUNT_PROCFS, canon_dir, mntflags, &args))
+		err(1, "procfs on %s", canon_dir);
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), PROCFSMNT_BITS, args.flags);

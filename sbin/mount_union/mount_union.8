@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_union.8,v 1.15 2003/08/07 10:04:33 agc Exp $
+.\"	$NetBSD: mount_union.8,v 1.16 2005/01/31 05:19:19 erh Exp $
 .\"
 .\" Copyright (c) 1994
 .\" The Regents of the University of California.  All rights reserved.
@@ -61,6 +61,12 @@ layer and
 becomes the
 .Em lower
 layer.
+.Pp
+Both
+.Ar directory
+and
+.Ar uniondir
+are converted to absolute paths before use.
 .Pp
 The options are as follows:
 .Bl -tag -width indent

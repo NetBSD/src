@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.15 2003/08/07 10:04:28 agc Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.15 2003/08/07 10:04:28 agc Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ mount_kernfs(argc, argv)
 	char *argv[];
 {
 	int ch, mntflags;
+	char canon_dir[MAXPATHLEN];
 
 	mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -135,7 +136,14 @@ mount_kernfs(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL))
+	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
+		err(1, "realpath %s", argv[1]);
+	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[1]);
+		warnx("using \"%s\" instead.", canon_dir);
+	}
+
+	if (mount(MOUNT_KERNFS, canon_dir, mntflags, NULL))
 		err(1, "kernfs on %s", argv[1]);
 	exit(0);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.25 2003/08/07 10:04:31 agc Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.26 2005/01/31 05:19:19 erh Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,9 @@ command attaches an instance of the process
 namespace to the global filesystem namespace.
 The conventional mount point is
 .Pa /proc .
+The directory specified by
+.Ar mount_point
+is converted to an absolute path before use.
 This command is normally executed by
 .Xr mount 8
 at boot time.
