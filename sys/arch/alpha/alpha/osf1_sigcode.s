@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sigcode.s,v 1.2 2002/05/13 21:37:12 thorpej Exp $ */
+/* $NetBSD: osf1_sigcode.s,v 1.3 2002/07/01 03:10:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@
 
 #include <compat/osf1/osf1_syscall.h>
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_sigcode.s,v 1.2 2002/05/13 21:37:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_sigcode.s,v 1.3 2002/07/01 03:10:02 thorpej Exp $");
 
 /*
  * OSF/1 signal trampoline code.
@@ -75,11 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_sigcode.s,v 1.2 2002/05/13 21:37:12 thorpej Exp
 	call_pal PAL_OSF1_callsys
 
 NESTED_NOPROFILE(osf1_sigcode,0,0,ra,0,0)
-	lda	sp, -16(sp)
-	stq	a2, 0(sp)
-	jsr	ra, (t12)
-	ldq	a0, 0(sp)
-	lda	sp, 16(sp)
+	mov	sp, a0
 	OSF1_CALLSYS_NOERROR(sigreturn)
 	mov	v0, a0
 	OSF1_CALLSYS_NOERROR(exit)
