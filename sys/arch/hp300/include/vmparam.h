@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 1999/01/16 20:13:42 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -245,9 +245,6 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
-
-/* Use new VM page bootstrap interface. */
-#define	MACHINE_NEW_NONCONTIG
 
 /*
  * Constants which control the way the VM system deals with memory segments.
