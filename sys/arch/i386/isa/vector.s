@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.32.4.1 1996/12/06 01:02:22 rat Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -161,6 +161,7 @@ IDTVEC(fast/**/irq_num)							;\
 	ack(irq_num)							;\
 	addl	$4,%esp							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
+	incl	_fastintrcnt + (4*(irq_num))				;\
 	popl	%es							;\
 	popl	%ds							;\
 	popl	%edx							;\
@@ -214,6 +215,7 @@ _Xintr/**/irq_num/**/:							;\
 	MAKE_FRAME							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
+	incl	_cnt+V_INTR		/* statistical info */		;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
@@ -226,6 +228,7 @@ _Xresume/**/irq_num/**/:						;\
 	testl	%ebx,%ebx						;\
 	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
+	incl	_slowintrcnt + (4*(irq_num))	/* XXX */		;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -245,6 +248,7 @@ IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
 	call	_isa_strayintr						;\
 	addl	$4,%esp							;\
+	incl	_strayintrcnt + (4*(irq_num))				;\
 	jmp	5b							;\
 IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
@@ -324,11 +328,50 @@ IDTVEC(recurse)
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
 
-/* Some bogus data, to keep vmstat happy, for now. */
+
+/* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
 	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
+	.data
+	.align 4
+
+	/* Names */
 _intrnames:
-	.long	0
+_slowintrnames:
+	.asciz	"irq0", "irq1", "irq2", "irq3"
+	.asciz	"irq4", "irq5", "irq6", "irq7"
+	.asciz	"irq8", "irq9", "irq10", "irq11"
+	.asciz	"irq12", "irq13", "irq14", "irq15"
+fastintrnames:
+	.asciz	"firq0", "firq1", "firq2", "firq3"
+	.asciz	"firq4", "firq5", "firq6", "firq7"
+	.asciz	"firq8", "firq9", "firq10", "firq11"
+	.asciz	"firq12", "firq13", "firq14", "firq15"
+_strayintrnames:
+	.asciz	"stray0", "stray1", "stray2", "stray3"
+	.asciz	"stray4", "stray5", "stray6", "stray7"
+	.asciz	"stray8", "stray9", "stray10", "stray11"
+	.asciz	"stray12", "stray13", "stray14", "stray15"
 _eintrnames:
+
+	/* And counters */
 _intrcnt:
-	.long	0
+_slowintrcnt:
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+
+	.globl _vassa_intrcnt
+_vassa_intrcnt:
+	.long	0, 0, 0, 0
+_fastintrcnt:
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+
+_strayintrcnt:
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+_spareintrcnt:
+	/* spare, for local use */
+	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0
 _eintrcnt:
+	.text
