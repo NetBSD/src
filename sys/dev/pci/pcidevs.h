@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.301 2001/01/26 10:04:12 rh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.302 2001/01/31 07:24:58 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.295 2001/01/26 10:03:47 rh Exp 
+ *	NetBSD: pcidevs,v 1.296 2001/01/31 07:24:32 thorpej Exp 
  */
 
 /*
@@ -490,6 +490,7 @@
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
 #define	PCI_VENDOR_AURAVISION	0x11d1		/* Auravision */
+#define	PCI_VENDOR_SEGA	0x11db		/* SEGA Enterprises */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
@@ -1515,6 +1516,9 @@
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
+
+/* SEGA Enterprises products */
+#define	PCI_PRODUCT_SEGA_BROADBAND	0x1234		/* Broadband Adapter */
 
 /* ServerWorks products */
 #define	PCI_PRODUCT_SERVERWORKS_ROSB4	0x0200		/* ROSB4 SouthBridge */

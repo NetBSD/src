@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.299 2001/01/26 10:04:13 rh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.300 2001/01/31 07:24:59 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.295 2001/01/26 10:03:47 rh Exp 
+ *	NetBSD: pcidevs,v 1.296 2001/01/31 07:24:32 thorpej Exp 
  */
 
 /*
@@ -4216,6 +4216,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "KS8920 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
+	    0,
+	    "SEGA Enterprises",
+	    "Broadband Adapter",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_ROSB4,
 	    0,
 	    "ServerWorks",
@@ -8329,6 +8335,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AURAVISION, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Auravision",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SEGA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "SEGA Enterprises",
 	    NULL,
 	},
 	{
