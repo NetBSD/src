@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.94 2003/09/10 03:56:33 itojun Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.95 2003/09/10 09:59:47 dan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.94 2003/09/10 03:56:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.95 2003/09/10 09:59:47 dan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -669,7 +669,11 @@ kernfs_getattr(v)
 
 	switch (kfs->kfs_type) {
 	case Pkern:
-		vap->va_nlink = 4;
+#ifdef IPSEC
+		vap->va_nlink = 4; /* 2 extra subdirs */
+#else
+		vap->va_nlink = 2;
+#endif
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
