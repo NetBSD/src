@@ -1,14 +1,10 @@
-#	@(#)Makefile	8.2 (Berkeley) 4/22/94
+#	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
+#	$Id: Makefile,v 1.2 1994/09/23 01:47:32 mycroft Exp $
 
 MAN8=	nologin.0
-
-nologin clean depend lint tags:
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.CURDIR}/nologin.sh ${DESTDIR}/sbin/nologin
-
-cleandir:
-	rm -f nologin.0
 
 .include <bsd.prog.mk>
