@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.90 1999/09/21 14:20:36 hubertf Exp $
+#	$NetBSD: NetBSD.dist,v 1.91 1999/09/22 12:54:12 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1666,6 +1666,11 @@ mac68k
 # ./usr/share/man/man8/mvme68k
 mvme68k
 # ./usr/share/man/man8/mvme68k
+..
+
+# ./usr/share/man/man8/next68k
+next68k
+# ./usr/share/man/man8/next68k
 ..
 
 # ./usr/share/man/man8/pc532
