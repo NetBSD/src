@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.18 2004/05/10 20:46:44 drochner Exp $
+#	$NetBSD: mkioctls,v 1.19 2004/06/22 17:30:52 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -66,6 +66,7 @@ done | sed -e "s,${DESTDIR}/usr/include/,,g"
 ${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
+	keep["TUNSLMODE"] = 1;	# Same as PPPIOCGASYNCMAP
 	keep["SIOCRMNAT"] = 1;	# Same as SIOCRMAFR
 	keep["SIOCADNAT"] = 1;	# Same as SIOCADAFR
 	keep["SIOCDELST"] = 1;	# Same as SIOCRMNAT
@@ -82,17 +83,20 @@ BEGIN {
 	print "\tswitch (val) {\n"
 }
 
-/^#[ 	]*define[ 	]*[A-Z]*IO[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*[A-Z]*[ 	]*_IO/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
 		if ($i ~ /define/)
 			break;
 	++i;
+	printf("/* %s [%s] */\n", $0, $i);
 	# 
-	if (keep[$i] != 1) {
-		printf("\tcase %s:\n\t\treturn \"%s\";\n", $i, $i);
-		keep[$i] = 1;
+	if ($i ~ /^[A-Z0-9a-z_]*$/) {
+		if (keep[$i] != 1) {
+			printf("\tcase %s:\n\t\treturn \"%s\";\n", $i, $i);
+			keep[$i] = 1;
+		}
 	}
 }
 END {
