@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.26 1995/04/11 10:06:38 mellon Exp $	*/
+/*	$NetBSD: cons.c,v 1.27 1995/04/11 22:08:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,8 +54,6 @@
 #include <sys/vnode.h>
 
 #include <dev/cons.h>
-
-extern struct consdev constab[];
 
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
