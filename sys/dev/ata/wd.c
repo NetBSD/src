@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.190 1999/01/18 20:06:24 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.191 1999/02/18 14:44:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -320,7 +320,7 @@ wdattach(parent, self, aux)
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
-		printf("%s %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d "
+		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d "
 		    "sectors\n", self->dv_xname,
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
