@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.54 2000/04/12 04:20:47 chs Exp $	*/
+/*	$NetBSD: bpf.c,v 1.55 2000/05/12 05:58:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -77,7 +77,9 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-#define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
+#ifndef BPF_BUFSIZE
+# define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
+#endif
 
 #define PRINET  26			/* interruptible */
 
