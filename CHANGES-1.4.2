@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.24 1999/09/16 03:36:58 itojun Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.25 1999/09/18 01:20:22 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -358,3 +358,27 @@ sys/dev/ic/smc91cxx.c				1.18-1.19
 
   Avoid multicast packet loopback from itself during promiscuous mode.
   This makes the driver behave as IFF_SIMPLEX interface in all cases.
+
+sys/dev/ic/elinkxl.c				1.14
+sys/dev/ic/elinkxlreg.h				1.2
+
+	Select the right tranceiver type when configuring the driver,
+	and change the timing for the MII code a bit.  Fixes the problem
+	reported in PR#8363 with the MII not being reported
+	correctly.  (cgd)
+
+sys/dev/pci/ncr.c				1.81
+
+	Make the ncr driver work with more than 5 devices on the same
+	bus.  Fixes PR#6347.  (bouyer)
+
+sys/dev/pci/ncr.c				1.82
+
+	Make driver build with Tekram EEPROM support enabled.
+	Fixes PR#8141.  (tron)
+
+sys/dev/pci/ncr.c				1.83
+
+	Zero out DMA memory regions to avoid use of uninitialized
+	memory (and resutling "COMMAND FAILED" errors) on systems
+	which don't clear memory on boot.  (cgd)
