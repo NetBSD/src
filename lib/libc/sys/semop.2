@@ -1,4 +1,4 @@
-.\"	$NetBSD: semop.2,v 1.14 2003/04/16 13:34:56 wiz Exp $
+.\"	$NetBSD: semop.2,v 1.15 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -103,7 +103,7 @@ In the case where the calling process would normally block, waiting
 for a semaphore to reach a certain value,
 .Dv IPC_NOWAIT
 makes the
-call return immediately, returning a value of -1 and setting
+call return immediately, returning a value of \-1 and setting
 .Va errno
 to
 .Er EAGAIN .
@@ -116,7 +116,7 @@ critical section.
 .El
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
