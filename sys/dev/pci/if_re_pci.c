@@ -152,12 +152,12 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	struct ifnet		*ifp;
 	struct rtk_type		*t;
 	struct rtk_hwrev	*hw_rev;
 	int			hwrev;
 	int			error = 0;
 	pcireg_t		command;
+	bus_size_t		bsize;
 
 
 #if 0 /*ndef BURN_BRIDGES*/
@@ -195,17 +195,15 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef RE_USEIOSPACE
 	if (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		error = ENXIO;
-		goto fail;
+		return;
 	}
 #else
 	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
 		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
-		error = ENXIO;
-		goto fail;
+		return;
 	}
 #endif
 	t = re_devs;
@@ -238,19 +236,12 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;
-
-	re_attach(sc);
-
-	ifp = &sc->ethercom.ec_if;
 	
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		error = ENXIO;
-		ether_ifdetach(ifp);
-		if_detach(ifp);
-		goto fail;
+		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
@@ -260,16 +251,32 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		ether_ifdetach(ifp);
-		if_detach(ifp);
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-fail:
-#if 0
-	if (error)
+	re_attach(sc);
+
+	/*
+	 * Perform hardware diagnostic. 
+	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
+	 * busses: PCI, but not CardBus.
+	 */
+	error = re_diag(sc);
+	if (error) {
+		aprint_error(
+		    "%s: attach aborted due to hardware diag failure\n",
+		    sc->sc_dev.dv_xname);
+
 		re_detach(sc);
-#endif
-	return;
+		
+		if (psc->sc_ih != NULL) {
+			pci_intr_disestablish(pc, psc->sc_ih);
+			psc->sc_ih = NULL;
+		}
+
+		if (bsize) {
+			bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle, bsize);
+		}
+	}
 }

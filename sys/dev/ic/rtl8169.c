@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.5 2005/01/09 12:25:25 kanaoka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.6 2005/01/13 14:24:24 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -185,7 +185,6 @@ static void re_miibus_statchg(struct device *);
 
 static void re_reset(struct rtk_softc *);
 
-static int re_diag(struct rtk_softc *);
 
 #ifdef RE_USEIOSPACE
 #define RTK_RES			SYS_RES_IOPORT
@@ -430,7 +429,7 @@ re_reset(struct rtk_softc *sc)
  * so we print out a message on the console and abort the device attach.
  */
 
-static int
+int
 re_diag(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
@@ -462,7 +461,7 @@ re_diag(struct rtk_softc *sc)
 	ifp->if_flags |= IFF_PROMISC;
 	sc->rtk_testmode = 1;
 	re_init(ifp);
-	re_stop(ifp, 1);
+	re_stop(ifp, 0);
 	DELAY(100000);
 	re_init(ifp);
 
@@ -560,7 +559,7 @@ done:
 
 	sc->rtk_testmode = 0;
 	ifp->if_flags &= ~IFF_PROMISC;
-	re_stop(ifp, 1);
+	re_stop(ifp, 0);
 	if (m0 != NULL)
 		m_freem(m0);
 
@@ -743,6 +742,11 @@ re_attach(struct rtk_softc *sc)
 		}
 	}
 
+	/*
+	 * Record interface as attached. From here, we should not fail.
+	 */
+	sc->sc_flags |= RTK_ATTACHED;
+
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -784,25 +788,6 @@ re_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-	/*
-	 * Perform hardware diagnostic. 
-	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
-	 * busses: PCI, but not CardBus.
-	 */
-	error = re_diag(sc);
-
-	if (error) {
-		aprint_error(
-		    "%s: attach aborted due to hardware diag failure\n",
-		    sc->sc_dev.dv_xname);
-		ether_ifdetach(ifp);
-		if_detach(ifp);
-		goto fail_8;
-	}
-
-	/*
-	 * Record interface as attached. From here, we should not fail.
-	 */
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -820,7 +805,6 @@ re_attach(struct rtk_softc *sc)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
-	sc->sc_flags |= RTK_ATTACHED;
 
 	return;
 
