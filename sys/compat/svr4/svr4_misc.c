@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.82 2000/03/26 20:42:43 kleink Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.83 2000/04/09 05:33:04 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -631,9 +631,6 @@ svr4_sys_sysconfig(p, v, retval)
 	extern int	maxfiles;
 
 	switch (SCARG(uap, name)) {
-	case SVR4_CONFIG_UNUSED:
-		*retval = 0;
-		break;
 	case SVR4_CONFIG_NGROUPS:
 		*retval = NGROUPS_MAX;
 		break;
@@ -702,6 +699,45 @@ svr4_sys_sysconfig(p, v, retval)
 		break;
 	case SVR4_CONFIG_AVPHYS_PAGES:
 		*retval = uvmexp.active;	/* XXX: active instead of avg */
+		break;
+	case SVR4_CONFIG_COHERENCY:
+		*retval = 0;	/* XXX */
+		break;
+	case SVR4_CONFIG_SPLIT_CACHE:
+		*retval = 0;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHESZ:
+		*retval = 256;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHESZ:
+		*retval = 256;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHELINESZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHELINESZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHEBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHEBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHETBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHE_ASSOC:
+		*retval = 1;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHE_ASSOC:
+		*retval = 1;	/* XXX */
+		break;
+	case SVR4_CONFIG_MAXPID:
+		*retval = PID_MAX;
+		break;
+	case SVR4_CONFIG_STACK_PROT:
+		*retval = PROT_READ|PROT_WRITE|PROT_EXEC;
 		break;
 	default:
 		return EINVAL;
