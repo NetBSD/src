@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.112 1998/04/15 21:27:47 drochner Exp $
+#	$NetBSD: files.i386,v 1.113 1998/04/16 20:16:28 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -177,6 +177,9 @@ file	arch/i386/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"
+
+device sysbeep
+attach sysbeep at pcppi
 
 # Floppy disk controller
 device	fdc {drive = -1}
