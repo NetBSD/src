@@ -38,7 +38,7 @@
  * from: Utah Hdr: vmparam.h 1.16 91/01/18
  *
  *	from: @(#)vmparam.h	8.2 (Berkeley) 4/22/94
- *      $Id: vmparam.h,v 1.3 1994/05/27 09:02:39 glass Exp $
+ *      $Id: vmparam.h,v 1.4 1994/06/01 18:51:16 glass Exp $
  */
 
 /*
@@ -225,7 +225,7 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0x1000)
+#define VM_MIN_ADDRESS		((vm_offset_t)0x00000000)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)0x80000000)
 #define VM_MAX_ADDRESS		((vm_offset_t)0x80000000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xC0000000)
