@@ -1,4 +1,4 @@
-/*	$NetBSD: intrcnt.h,v 1.4.4.1 1996/06/05 00:38:59 cgd Exp $	*/
+/*	$NetBSD: intrcnt.h,v 1.4.4.2 1996/06/05 03:42:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,74 +29,74 @@
 
 #define	INTRNAMES_DEFINITION						\
 /* 0x00 */	ASCIZ "clock";						\
-		ASCIZ "ISA irq 0";					\
-		ASCIZ "ISA irq 1";					\
-		ASCIZ "ISA irq 2";					\
-		ASCIZ "ISA irq 3";					\
-		ASCIZ "ISA irq 4";					\
-		ASCIZ "ISA irq 5";					\
-		ASCIZ "ISA irq 6";					\
-		ASCIZ "ISA irq 7";					\
-		ASCIZ "ISA irq 8";					\
-		ASCIZ "ISA irq 9";					\
-		ASCIZ "ISA irq 10";					\
-		ASCIZ "ISA irq 11";					\
-		ASCIZ "ISA irq 12";					\
-		ASCIZ "ISA irq 13";					\
-		ASCIZ "ISA irq 14";					\
-/* 0x10 */	ASCIZ "ISA irq 15";					\
-		ASCIZ "KN20AA irq 0";					\
-		ASCIZ "KN20AA irq 1";					\
-		ASCIZ "KN20AA irq 2";					\
-		ASCIZ "KN20AA irq 3";					\
-		ASCIZ "KN20AA irq 4";					\
-		ASCIZ "KN20AA irq 5";					\
-		ASCIZ "KN20AA irq 6";					\
-		ASCIZ "KN20AA irq 7";					\
-		ASCIZ "KN20AA irq 8";					\
-		ASCIZ "KN20AA irq 9";					\
-		ASCIZ "KN20AA irq 10";					\
-		ASCIZ "KN20AA irq 11";					\
-		ASCIZ "KN20AA irq 12";					\
-		ASCIZ "KN20AA irq 13";					\
-		ASCIZ "KN20AA irq 14";					\
-/* 0x20 */	ASCIZ "KN20AA irq 15";					\
-		ASCIZ "KN20AA irq 16";					\
-		ASCIZ "KN20AA irq 17";					\
-		ASCIZ "KN20AA irq 18";					\
-		ASCIZ "KN20AA irq 19";					\
-		ASCIZ "KN20AA irq 20";					\
-		ASCIZ "KN20AA irq 21";					\
-		ASCIZ "KN20AA irq 22";					\
-		ASCIZ "KN20AA irq 23";					\
-		ASCIZ "KN20AA irq 24";					\
-		ASCIZ "KN20AA irq 25";					\
-		ASCIZ "KN20AA irq 26";					\
-		ASCIZ "KN20AA irq 27";					\
-		ASCIZ "KN20AA irq 28";					\
-		ASCIZ "KN20AA irq 29";					\
-		ASCIZ "KN20AA irq 30";					\
-/* 0x30 */	ASCIZ "KN20AA irq 31";					\
-		ASCIZ "KN15 TC slot 0";					\
-		ASCIZ "KN15 TC slot 1";					\
-		ASCIZ "KN15 TC slot 2";					\
-		ASCIZ "KN15 TC slot 3";					\
-		ASCIZ "KN15 TC slot 4";					\
-		ASCIZ "KN15 TC slot 5";					\
-		ASCIZ "KN15 tcds";					\
-		ASCIZ "KN15 ioasic";					\
-		ASCIZ "KN15 sfb";					\
-		ASCIZ "KN16 TC slot 0";					\
-		ASCIZ "KN16 TC slot 1";					\
-		ASCIZ "KN16 tcds";					\
-		ASCIZ "KN16 ioasic";					\
-		ASCIZ "KN16 sfb";					\
-		ASCIZ "TCDS slot 0";					\
-/* 0x40 */	ASCIZ "TCDS slot 1";					\
-		ASCIZ "IOASIC LANCE";					\
-		ASCIZ "IOASIC SCC 0";					\
-		ASCIZ "IOASIC SCC 1";					\
-		ASCIZ "IOASIC ISDN";
+		ASCIZ "isa irq 0";					\
+		ASCIZ "isa irq 1";					\
+		ASCIZ "isa irq 2";					\
+		ASCIZ "isa irq 3";					\
+		ASCIZ "isa irq 4";					\
+		ASCIZ "isa irq 5";					\
+		ASCIZ "isa irq 6";					\
+		ASCIZ "isa irq 7";					\
+		ASCIZ "isa irq 8";					\
+		ASCIZ "isa irq 9";					\
+		ASCIZ "isa irq 10";					\
+		ASCIZ "isa irq 11";					\
+		ASCIZ "isa irq 12";					\
+		ASCIZ "isa irq 13";					\
+		ASCIZ "isa irq 14";					\
+/* 0x10 */	ASCIZ "isa irq 15";					\
+		ASCIZ "kn20aa irq 0";					\
+		ASCIZ "kn20aa irq 1";					\
+		ASCIZ "kn20aa irq 2";					\
+		ASCIZ "kn20aa irq 3";					\
+		ASCIZ "kn20aa irq 4";					\
+		ASCIZ "kn20aa irq 5";					\
+		ASCIZ "kn20aa irq 6";					\
+		ASCIZ "kn20aa irq 7";					\
+		ASCIZ "kn20aa irq 8";					\
+		ASCIZ "kn20aa irq 9";					\
+		ASCIZ "kn20aa irq 10";					\
+		ASCIZ "kn20aa irq 11";					\
+		ASCIZ "kn20aa irq 12";					\
+		ASCIZ "kn20aa irq 13";					\
+		ASCIZ "kn20aa irq 14";					\
+/* 0x20 */	ASCIZ "kn20aa irq 15";					\
+		ASCIZ "kn20aa irq 16";					\
+		ASCIZ "kn20aa irq 17";					\
+		ASCIZ "kn20aa irq 18";					\
+		ASCIZ "kn20aa irq 19";					\
+		ASCIZ "kn20aa irq 20";					\
+		ASCIZ "kn20aa irq 21";					\
+		ASCIZ "kn20aa irq 22";					\
+		ASCIZ "kn20aa irq 23";					\
+		ASCIZ "kn20aa irq 24";					\
+		ASCIZ "kn20aa irq 25";					\
+		ASCIZ "kn20aa irq 26";					\
+		ASCIZ "kn20aa irq 27";					\
+		ASCIZ "kn20aa irq 28";					\
+		ASCIZ "kn20aa irq 29";					\
+		ASCIZ "kn20aa irq 30";					\
+/* 0x30 */	ASCIZ "kn20aa irq 31";					\
+		ASCIZ "kn15 tc slot 0";					\
+		ASCIZ "kn15 tc slot 1";					\
+		ASCIZ "kn15 tc slot 2";					\
+		ASCIZ "kn15 tc slot 3";					\
+		ASCIZ "kn15 tc slot 4";					\
+		ASCIZ "kn15 tc slot 5";					\
+		ASCIZ "kn15 tcds";					\
+		ASCIZ "kn15 ioasic";					\
+		ASCIZ "kn15 sfb";					\
+		ASCIZ "kn16 tc slot 0";					\
+		ASCIZ "kn16 tc slot 1";					\
+		ASCIZ "kn16 tcds";					\
+		ASCIZ "kn16 ioasic";					\
+		ASCIZ "kn16 sfb";					\
+		ASCIZ "tcds esp 0";					\
+/* 0x40 */	ASCIZ "tcds esp 1";					\
+		ASCIZ "ioasic le";					\
+		ASCIZ "ioasic scc 0";					\
+		ASCIZ "ioasic scc 1";					\
+		ASCIZ "ioasic am79c30";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
