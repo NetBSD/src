@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.8 1994/12/17 20:14:23 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.9 1995/03/10 02:09:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -295,4 +295,13 @@ kdcnputc(dev, c)
 	mon_putchar(c);
 #endif
 	splx(s);
+}
+
+extern void fb_unblank();
+void kdcnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+	if (on)
+		fb_unblank();
 }
