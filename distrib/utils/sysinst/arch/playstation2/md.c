@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2002/12/05 01:17:27 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.4 2003/01/11 19:37:49 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,11 @@
 #include "menu_defs.h"
 #include "bsddisklabel.c"
 
+#ifdef __mips__
 extern char mbr[512];
+#else
+char mbr[512];
+#endif
 
 int
 md_get_info()
