@@ -1,0 +1,66 @@
+
+
+
+BOOTPTEST(8)                                         BOOTPTEST(8)
+
+
+NNAAMMEE
+       bootptest - send BOOTP queries and print responses
+
+SSYYNNOOPPSSIISS
+       bboooottpptteesstt [ --hh ] _s_e_r_v_e_r_-_n_a_m_e [_t_e_m_p_l_a_t_e_-_f_i_l_e]
+
+DDEESSCCRRIIPPTTIIOONN
+       bboooottpptteesstt  sends  BOOTP  requests to the host specified as
+       _s_e_r_v_e_r_-_n_a_m_e  at  one-second  intervals  until   either   a
+       response  is  received,  or  until  ten requests have gone
+       unanswered.  After a response is received, bboooottpptteesstt  will
+       wait one more second listening for additional responses.
+
+OOPPTTIIOONNSS
+       --hh     Use the hardware (Ethernet) address to identify the
+              client.  By default, the IP address is copied  into
+              the  request  indicating  that  this client already
+              knows its IP address.
+
+       A _t_e_m_p_l_a_t_e_-_f_i_l_e may be specified, in which case  bboooottpptteesstt
+       uses  the (binary) contents of this file to initialize the
+       _o_p_t_i_o_n_s area of the request packet.
+
+CCRREEDDIITTSS
+       The bootptest program is a  combination  of  original  and
+       derived  works.   The main program module (bootptest.c) is
+       original work by Gordon W. Ross <gwr@mc.com>.  The  packet
+       printing  module  (print-bootp.c)  is  a slightly modified
+       version of a file from the BSD tcpdump program.
+
+       This program includes software developed by the University
+       of  California,  Lawrence Berkeley Laboratory and its con-
+       tributors.  (See the copyright notice in print-bootp.c)
+
+SSEEEE AALLSSOO
+       bootpd(8)
+
+RREEFFEERREENNCCEESS
+       RFC951 BOOTSTRAP PROTOCOL (BOOTP)
+
+       RFC1048
+              BOOTP Vendor Information Extensions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAINTENANCE COMMANDS       10 June 1993                         1
+
+
