@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.4 1997/05/07 20:23:53 augustss Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.5 1998/07/28 12:13:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -181,3 +181,4 @@
 #define SP_UPPER_BASE_COUNT	0x0E
 #define SP_LOWER_BASE_COUNT	0x0F
 
+#define SP_IADDR_MASK		0xaf
