@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.43 1998/09/02 04:40:02 jeremy Exp $
+#       $NetBSD: Makefile,v 1.44 1998/09/03 07:27:38 augustss Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -7,7 +7,7 @@ MAN=	access.9 arp.9 audio.9 bus_space.9 bus_dma.9 copy.9 cpu_reboot.9 \
 	fetch.9 fork1.9 inittodr.9 intro.9 log.9 malloc.9 mbuf.9 panic.9 \
 	pfil.9 physio.9 pool.9 psignal.9 resettodr.9 rnd.9 rt_timer.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 store.9 time.9 timeout.9 \
-	vslock.9 uvm.9
+	vslock.9 uvm.9 kprintf.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
@@ -78,7 +78,6 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
-MLINKS+=kprintf.9 printf.9 sprintf.9 vprintf.9 uprintf.9 ttyprintf.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
@@ -115,6 +114,8 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
+MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 vprintf.9 \
+	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9
 
 SUBDIR= man9.sun3
 
