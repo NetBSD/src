@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)overwrite.c	5.6 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: overwrite.c,v 1.4 1993/08/07 05:49:02 mycroft Exp $";
+static char sccsid[] = "@(#)overwrite.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <ctype.h>
@@ -51,23 +50,26 @@ overwrite(win1, win2)
 	register int x, y, endy, endx, starty, startx;
 
 #ifdef DEBUG
-	__TRACE("overwrite: (%0.2o, %0.2o);\n", win1, win2);
+	__CTRACE("overwrite: (%0.2o, %0.2o);\n", win1, win2);
 #endif
-	starty = max(win1->_begy, win2->_begy);
-	startx = max(win1->_begx, win2->_begx);
-	endy = min(win1->_maxy + win1->_begy, win2->_maxy + win2->_begx);
-	endx = min(win1->_maxx + win1->_begx, win2->_maxx + win2->_begx);
+	starty = max(win1->begy, win2->begy);
+	startx = max(win1->begx, win2->begx);
+	endy = min(win1->maxy + win1->begy, win2->maxy + win2->begx);
+	endx = min(win1->maxx + win1->begx, win2->maxx + win2->begx);
 	if (starty >= endy || startx >= endx)
 		return (OK);
 #ifdef DEBUG
-	__TRACE("overwrite: from (%d, %d) to (%d, %d)\n",
+	__CTRACE("overwrite: from (%d, %d) to (%d, %d)\n",
 	    starty, startx, endy, endx);
 #endif
 	x = endx - startx;
 	for (y = starty; y < endy; y++) {
-		bcopy(&win1->_y[y - win1->_begy][startx - win1->_begx],
-		    &win2->_y[y - win2->_begy][startx - win2->_begx], x);
-		touchline(win2, y, startx - win2->_begx, endx - win2->_begx);
+		(void)memcpy(
+		    &win2->lines[y - win2->begy]->line[startx - win2->begx], 
+		    &win1->lines[y - win1->begy]->line[startx - win1->begx],
+		    x * __LDATASIZE);
+		__touchline(win2, y, startx - win2->begx, endx - win2->begx,
+		    0);
 	}
 	return (OK);
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)scroll.c	5.6 (Berkeley) 8/31/92";*/
-static char rcsid[] = "$Id: scroll.c,v 1.3 1993/08/07 05:49:06 mycroft Exp $";
+static char sccsid[] = "@(#)scroll.c	8.1 (Berkeley) 6/11/93";
 #endif /* not lint */
 
 #include <curses.h>
@@ -50,10 +49,10 @@ scroll(win)
 	register int oy, ox;
 
 #ifdef DEBUG
-	__TRACE("scroll: (%0.2o)\n", win);
+	__CTRACE("scroll: (%0.2o)\n", win);
 #endif
 
-	if (!win->_scroll)
+	if (!(win->flags & __SCROLLOK))
 		return (ERR);
 
 	getyx(win, oy, ox);
@@ -63,10 +62,10 @@ scroll(win)
 
 	if (win == curscr) {
 		putchar('\n');
-		if (origtermio.c_oflag & ONLCR)
-			win->_curx = 0;
+		if (!NONL)
+			win->curx = 0;
 #ifdef DEBUG
-		__TRACE("scroll: win == curscr\n");
+		__CTRACE("scroll: win == curscr\n");
 #endif
 	}
 	return (OK);

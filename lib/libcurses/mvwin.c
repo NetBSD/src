@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mvwin.c	5.5 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: mvwin.c,v 1.3 1993/08/07 05:49:00 mycroft Exp $";
+static char sccsid[] = "@(#)mvwin.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -50,29 +49,29 @@ mvwin(win, by, bx)
 	register WINDOW *orig;
 	register int dy, dx;
 
-	if (by + win->_maxy > LINES || bx + win->_maxx > COLS)
+	if (by + win->maxy > LINES || bx + win->maxx > COLS)
 		return (ERR);
-	dy = by - win->_begy;
-	dx = bx - win->_begx;
-	orig = win->_orig;
+	dy = by - win->begy;
+	dx = bx - win->begx;
+	orig = win->orig;
 	if (orig == NULL) {
 		orig = win;
 		do {
-			win->_begy += dy;
-			win->_begx += dx;
+			win->begy += dy;
+			win->begx += dx;
 			__swflags(win);
-			win = win->_nextp;
+			win = win->nextp;
 		} while (win != orig);
 	} else {
-		if (by < orig->_begy || win->_maxy + dy > orig->_maxy)
+		if (by < orig->begy || win->maxy + dy > orig->maxy)
 			return (ERR);
-		if (bx < orig->_begx || win->_maxx + dx > orig->_maxx)
+		if (bx < orig->begx || win->maxx + dx > orig->maxx)
 			return (ERR);
-		win->_begy = by;
-		win->_begx = bx;
+		win->begy = by;
+		win->begx = bx;
 		__swflags(win);
 		__set_subwin(orig, win);
 	}
-	touchwin(win);
+	__touchwin(win);
 	return (OK);
 }

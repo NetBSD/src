@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)delwin.c	5.6 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: delwin.c,v 1.3 1993/08/07 05:48:49 mycroft Exp $";
+static char sccsid[] = "@(#)delwin.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -49,20 +48,18 @@ delwin(win)
 {
 
 	register WINDOW *wp, *np;
-	register int i;
 
-	if (win->_orig == NULL) {
+	if (win->orig == NULL) {
 		/*
 		 * If we are the original window, delete the space for all
-		 * the subwindows, and the array of space as well.
+		 * the subwindows, the line space and the window space.
 		 */
-		for (i = 0; i < win->_maxy && win->_y[i]; i++)
-			free(win->_y[i]);
-		free(win->_firstch);
-		free(win->_lastch);
-		wp = win->_nextp;
+		free(win->lspace);
+		free(win->wspace);
+		free(win->lines);
+		wp = win->nextp;
 		while (wp != win) {
-			np = wp->_nextp;
+			np = wp->nextp;
 			delwin(wp);
 			wp = np;
 		}
@@ -73,11 +70,10 @@ delwin(win)
 		 * followed by this subwindow, so there are always at least
 		 * two windows in the list.
 		 */
-		for (wp = win->_nextp; wp->_nextp != win; wp = wp->_nextp)
+		for (wp = win->nextp; wp->nextp != win; wp = wp->nextp)
 			continue;
-		wp->_nextp = win->_nextp;
+		wp->nextp = win->nextp;
 	}
-	free(win->_y);
 	free(win);
 	return (OK);
 }

@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1981, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,93 +32,109 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tstp.c	8.2 (Berkeley) 11/2/93";
+static char sccsid[] = "@(#)tscroll.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include <curses.h>
-#include <errno.h>
-#include <signal.h>
-#include <termios.h>
-#include <unistd.h>
 
+#define	MAXRETURNSIZE	64
 
 /*
- * stop_signal_handler --
- *	Handle stop signals.
+ * Routine to perform scrolling.  Derived from tgoto.c in tercamp(3) library.
+ * Cap is a string containing printf type escapes to allow
+ * scrolling.
+ * The following escapes are defined for substituting n:
+ *
+ *	%d	as in printf
+ *	%2	like %2d
+ *	%3	like %3d
+ *	%.	gives %c hacking special case characters
+ *	%+x	like %c but adding x first
+ *
+ *	The codes below affect the state but don't use up a value.
+ *
+ *	%>xy	if value > x add y
+ *	%i	increments n
+ *	%%	gives %
+ *	%B	BCD (2 decimal digits encoded in one byte)
+ *	%D	Delta Data (backwards bcd)
+ *
+ * all other characters are ``self-inserting''.
  */
-void
-__stop_signal_handler(signo)
-	int signo;
+char *
+__tscroll(cap, n)
+	const char *cap;
+	int n;
 {
-	struct termios save;
-	sigset_t oset, set;
+	static char result[MAXRETURNSIZE];
+	register char *dp;
+	register int c;
+	char *cp;
 
-	/* Get the current terminal state (which the user may have changed). */
-	if (tcgetattr(STDIN_FILENO, &save))
-		return;
+	if (cap == NULL) {
+toohard:
+		/*
+		 * ``We don't do that under BOZO's big top''
+		 */
+		return ("OOPS");
+	}
 
-	/*
-	 * Block window change and timer signals.  The latter is because
-	 * applications use timers to decide when to repaint the screen.
-	 */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGALRM);
-	(void)sigaddset(&set, SIGWINCH);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	
-	/*
-	 * End the window, which also resets the terminal state to the
-	 * original modes.
-	 */
-	endwin();
+	cp = (char *) cap;
+	dp = result;
+	while (c = *cp++) {
+		if (c != '%') {
+			*dp++ = c;
+			continue;
+		}
+		switch (c = *cp++) {
+		case 'n':
+			n ^= 0140;
+			continue;
+		case 'd':
+			if (n < 10)
+				goto one;
+			if (n < 100)
+				goto two;
+			/* fall into... */
+		case '3':
+			*dp++ = (n / 100) | '0';
+			n %= 100;
+			/* fall into... */
+		case '2':
+two:	
+			*dp++ = n / 10 | '0';
+one:
+			*dp++ = n % 10 | '0';
+			continue;
+		case '>':
+			if (n > *cp++)
+				n += *cp++;
+			else
+				cp++;
+			continue;
+		case '+':
+			n += *cp++;
+			/* fall into... */
+		case '.':
+			*dp++ = n;
+			continue;
+		case 'i':
+			n++;
+			continue;
+		case '%':
+			*dp++ = c;
+			continue;
 
-	/* Unblock SIGTSTP. */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGTSTP);
-	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
-
-	/* Stop ourselves. */
-	__restore_stophandler();
-	(void)kill(0, SIGTSTP);
-
-	/* Time passes ... */
-
-	/* Reset the curses SIGTSTP signal handler. */
-	__set_stophandler();
-
-	/* save the new "default" terminal state */
-	(void)tcgetattr(STDIN_FILENO, &__orig_termios);
-
-	/* Reset the terminal state to the mode just before we stopped. */
-	(void)tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save);
-
-	/* Restart the screen. */
-	__startwin();
-
-	/* Repaint the screen. */
-	wrefresh(curscr);
-
-	/* Reset the signals. */
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-}
-
-static void (*otstpfn)() = SIG_DFL;
-
-/*
- * Set the TSTP handler.
- */
-void
-__set_stophandler()
-{
-	otstpfn = signal(SIGTSTP, __stop_signal_handler);
-}
-
-/*
- * Restore the TSTP handler.
- */
-void
-__restore_stophandler()
-{
-	(void)signal(SIGTSTP, otstpfn);
+		case 'B':
+			n = (n / 10 << 4) + n % 10;
+			continue;
+		case 'D':
+			n = n - 2 * (n % 16);
+			continue;
+		default:
+			goto toohard;
+		}
+	}
+	*dp = '\0';
+	return (result);
 }
