@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.11 1998/06/10 05:28:16 ross Exp $	*/
+/*	$NetBSD: fio.c,v 1.12 1998/12/19 16:32:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.11 1998/06/10 05:28:16 ross Exp $");
+__RCSID("$NetBSD: fio.c,v 1.12 1998/12/19 16:32:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ setptr(ibuf, offset)
 		} else if (inhead) {
 			for (cp = linebuf, cp2 = "status";; cp++) {
 				if ((c = *cp2++) == 0) {
-					while (isspace(*cp++))
+					while (isspace((unsigned char)*cp++))
 						;
 					if (cp[-1] != ':')
 						break;
@@ -355,7 +355,7 @@ expand(name)
 	char *cp, *shell;
 	int pivec[2];
 	struct stat sbuf;
-	extern union wait wait_status;
+	extern int wait_status;
 
 	/*
 	 * The order of evaluation is "%" and "#" expand into constants.
@@ -407,7 +407,7 @@ expand(name)
 	close(pivec[1]);
 	l = read(pivec[0], xname, PATHSIZE);
 	close(pivec[0]);
-	if (wait_child(pid) < 0 && wait_status.w_termsig != SIGPIPE) {
+	if (wait_child(pid) < 0 && WTERMSIG(wait_status) != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
 		return NOSTR;
 	}
@@ -427,7 +427,7 @@ expand(name)
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
 		;
 	cp[1] = '\0';
-	if (index(xname, ' ') && stat(xname, &sbuf) < 0) {
+	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
 		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
 		return NOSTR;
 	}
