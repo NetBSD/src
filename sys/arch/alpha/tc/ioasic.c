@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.20 1999/02/12 01:50:30 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.21 1999/03/15 01:25:27 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.20 1999/02/12 01:50:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.21 1999/03/15 01:25:27 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,16 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.20 1999/02/12 01:50:30 thorpej Exp $");
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-
-struct ioasic_softc {
-	struct	device sc_dv;
-
-	tc_addr_t sc_base;
-	void	*sc_cookie;
-
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_lance_dmam;
-};
 
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
@@ -120,12 +110,7 @@ int	ioasic_intrnull __P((void *));
 
 #define	IOASIC_NCOOKIES		4
 
-struct ioasic_dev {
-	char		*iad_modname;
-	tc_offset_t	iad_offset;
-	void		*iad_cookie;
-	u_int32_t	iad_intrbits;
-} ioasic_devs[] = {
+struct ioasic_dev ioasic_devs[] = {
 	/* XXX lance name */
 	{ "lance",    IOASIC_SLOT_3_START, C(IOASIC_DEV_LANCE),
 	  IOASIC_INTR_LANCE, },

@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.32 1999/03/14 23:59:53 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.33 1999/03/15 01:25:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -67,13 +67,6 @@
 tc_addr_t	ioasic_base = 0;
 
 /* tables of child devices on an ioasic bus. */
-struct ioasic_dev {
-        char            *iad_modname;
-        tc_offset_t     iad_offset;
-        void            *iad_cookie;
-        u_int32_t       iad_intrbits;
-};
-
 #define	C(x)	((void*)(x))
 #define	ASIC_NDEVS(x)	(sizeof(x)/sizeof(x[0]))
 #define ARRAY_SIZEOF(x) (sizeof((x)) / sizeof ((x)[0]))
@@ -111,10 +104,6 @@ const int kn02_ioasic_ndevs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
 #endif /* DEC_3MAX */
 #endif /* pmax */
 
-struct asic_softc {
-	struct	device sc_dv;
-	tc_addr_t sc_base;
-};
 
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
@@ -126,7 +115,7 @@ int     ioasicprint(void *, const char *);
 #define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
 
 struct cfattach ioasic_ca = {
-	sizeof(struct asic_softc), ioasicmatch, ioasicattach
+	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
 };
 
 #ifdef	pmax
@@ -176,10 +165,9 @@ ioasicattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct asic_softc *sc = (struct asic_softc *)self;
+	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	struct ioasicdev_attach_args idev;
-	int i, nslots;
+	int ndevs;
 
 	/* See if the unit number is valid. */
 	switch (systype) {
@@ -188,21 +176,21 @@ ioasicattach(parent, self, aux)
 	case DS_3MAXPLUS:
 		/* 3min ioasic addressees are the same as 3maxplus. */
 		ioasic_devs = kn03_ioasic_devs;
-		nslots = kn03_ioasic_ndevs;
+		ndevs = kn03_ioasic_ndevs;
 		break;
 #endif
 
 #ifdef DEC_MAXINE
 	case DS_MAXINE:
 		ioasic_devs = xine_ioasic_devs;
-		nslots = xine_ioasic_ndevs;
+		ndevs = xine_ioasic_ndevs;
 		break;
 #endif
 
 #ifdef DEC_3MAX
 	case DS_3MAX:
 		ioasic_devs = kn02_ioasic_devs;
-		nslots = kn02_ioasic_ndevs;
+		ndevs = kn02_ioasic_ndevs;
 		break;
 #endif
 
@@ -233,45 +221,10 @@ ioasicattach(parent, self, aux)
 #endif 	/* Alpha AXP: select ASIC speed  */
 
 
-        /* 
+	/* 
 	 * Try to configure each ioctl asic baseboard device.
 	 */
-        for (i = 0; i < nslots; i++) {
-		strncpy(idev.iada_modname, ioasic_devs[i].iad_modname,
-			TC_ROM_LLEN);
-		idev.iada_modname[TC_ROM_LLEN] = '\0';
-		idev.iada_offset = ioasic_devs[i].iad_offset;
-		idev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
-		idev.iada_cookie = ioasic_devs[i].iad_cookie;
-		/* XXX bus-space handle */
-
-                /* Tell the autoconfig machinery we've found the hardware. */
-                config_found(self, &idev, ioasicprint);
-        }
-}
-
-int
-ioasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ioasicdev_attach_args *d = aux;
-
-	if (pnp)
-		printf("%s at %s", d->iada_modname, pnp);
-	printf(" offset 0x%x", d->iada_offset);
-	printf(" priority %d", (int)d->iada_cookie);
-	return (UNCONF);
-}
-
-int
-ioasic_submatch(match, d)
-	struct cfdata *match;
-	struct ioasicdev_attach_args *d;
-{
-
-	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASICCF_OFFSET_DEFAULT));
+        ioasic_attach_devs(sc, ioasic_devs, ndevs);
 }
 
 

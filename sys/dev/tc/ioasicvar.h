@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.5 1998/01/19 02:50:19 thorpej Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.6 1999/03/15 01:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -31,6 +31,14 @@
  * IOASIC subdevice attachment information.
  */
 
+/* motherboard-specific autoconfiguration tables of ioasic child devices. */
+struct ioasic_dev {
+	char		*iad_modname;
+	tc_offset_t	iad_offset;
+	void		*iad_cookie;
+	u_int32_t	iad_intrbits;
+};
+
 /* Attachment arguments. */
 struct ioasicdev_attach_args {
 	char	iada_modname[TC_ROM_LLEN];
@@ -44,6 +52,16 @@ struct ioasicdev_attach_args {
 #define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
 
 #define	IOASIC_OFFSET_UNKNOWN	IOASICCF_OFFSET_DEFAULT
+
+struct ioasic_softc {
+	struct	device sc_dv;
+
+	tc_addr_t sc_base;
+	void	*sc_cookie;
+
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_lance_dmam;
+};
 
 /*
  * XXX Some drivers need direct access to IOASIC registers.
@@ -64,6 +82,9 @@ void    ioasic_intr_disestablish __P((struct device *, void *));
  */
 int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
 char	*ioasic_lance_ether_address __P((void));
-#ifndef __alpha__
+void	ioasic_attach_devs __P((struct ioasic_softc *sc, 
+	    struct ioasic_dev *ioasic_devs, int ioasic_ndevs));
+
+#ifndef alpha
 void	ioasic_lance_dma_setup __P((void *));
 #endif

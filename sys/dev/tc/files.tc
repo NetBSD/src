@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.13 1998/07/21 17:36:06 drochner Exp $
+#	$NetBSD: files.tc,v 1.14 1999/03/15 01:25:26 jonathan Exp $
 #
 # Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
@@ -12,6 +12,7 @@ file	dev/tc/tc.c			tc	needs-flag
 # The TurboChannel IOCTL ASIC
 device	ioasic { offset = -1 }
 attach	ioasic at tc
+#file	dev/tc/ioasic_subr.c		ioasic
 
 # LANCE attachments.
 #  lance device defined in sys/conf/files
@@ -22,6 +23,10 @@ attach le at tc with le_tc:		le24, le_dec_subr
 
 file	dev/tc/if_le_ioasic.c		le_ioasic needs-flag # for le_iomem
 file	dev/tc/if_le_tc.c		le_tc
+
+# ioasic audio
+attach audioamd at ioasic with am7930_ioasic
+file	dev/tc/am7930_ioasic.c		am7930_ioasic
 
 
 # DEC DEFTA TC FDDI Controller
