@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.87 2000/04/12 21:13:12 scw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.88 2000/04/17 12:01:20 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp 
+ *	NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp 
  */
 
 /*-
@@ -246,6 +246,9 @@
 #define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PANASONIC_KXLC002	0x0304
 #define	PCMCIA_STR_PANASONIC_KXLC002	"Panasonic 4X CD-ROM Interface Card"
+#define	PCMCIA_CIS_PANASONIC_KXLC003	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PANASONIC_KXLC003	0x0504
+#define	PCMCIA_STR_PANASONIC_KXLC003	"Panasonic 8X CD-ROM Interface Card"
 
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
