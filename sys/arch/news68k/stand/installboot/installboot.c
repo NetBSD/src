@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2001/01/23 11:30:54 tsutsui Exp $ */
+/*	$NetBSD: installboot.c,v 1.4 2001/01/30 14:11:01 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,15 +38,10 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/sysctl.h>
 #include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <err.h>
 #include <a.out.h>
-#include <sys/exec_elf.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -114,7 +109,6 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	size_t	protosize;
-	size_t	size;
 	u_int32_t boot00[BOOTSECTOR_OFFSET / sizeof(u_int32_t)];
 
 	while ((c = getopt(argc, argv, "vn")) != EOF) {
@@ -186,7 +180,7 @@ main(argc, argv)
 	if (read(devfd, boot00, sizeof(boot00)) != sizeof(boot00))
 		err(1, "read boot00");
 
-	bzero(boot00, LABELOFFSET);
+	memset(boot00, 0, LABELOFFSET);
 	boot00[0] = 0x600001fe;	/* jra +0x200 */
 	boot00[2] = 0x0;
 	if (lseek(devfd, 0, SEEK_SET) != 0)
@@ -255,28 +249,28 @@ loadprotoblocks(fname, size)
 	entry_point_p = (int32_t *)(bp + nl[X_ENTRY_POINT].n_value - st);
 
 	if ((int)block_table & 3) {
-		warn("%s: invalid address: block_table = %x",
+		warn("%s: invalid address: block_table = %p",
 		     fname, block_table);
 		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_count_p & 3) {
-		warn("%s: invalid address: block_count_p = %x",
+		warn("%s: invalid address: block_count_p = %p",
 		     fname, block_count_p);
 		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)block_size_p & 3) {
-		warn("%s: invalid address: block_size_p = %x",
+		warn("%s: invalid address: block_size_p = %p",
 		     fname, block_size_p);
 		free((void *)bp);
 		close(fd);
 		return NULL;
 	}
 	if ((int)entry_point_p & 3) {
-		warn("%s: invalid address: entry_point_p = %x",
+		warn("%s: invalid address: entry_point_p = %p",
 		     fname, entry_point_p);
 		free((void *)bp);
 		close(fd);
@@ -285,7 +279,7 @@ loadprotoblocks(fname, size)
 	max_block_count = *block_count_p;
 
 	if (verbose) {
-		printf("proto bootblock size: %ld\n", sz);
+		printf("proto bootblock size: %d\n", sz);
 	}
 
 	*size = sz;
