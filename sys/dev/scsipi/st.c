@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.136 2001/05/04 07:48:56 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.137 2001/05/06 11:31:08 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2357,7 +2357,7 @@ st_interpret_sense(xs)
 			bp->b_resid = info;
 	}
 
-#ifdef SCSIPI_DEBUG
+#ifndef SCSIPI_DEBUG
 	if (retval == 0 && key == SKEY_NO_SENSE)
 		doprint = 0;
 #endif
