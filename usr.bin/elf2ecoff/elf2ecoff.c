@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.18 2002/03/23 17:44:52 bouyer Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.19 2002/03/24 19:19:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -48,6 +48,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
