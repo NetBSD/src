@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.62 1999/04/13 18:53:28 ad Exp $
+#	$NetBSD: files.pmax,v 1.63 1999/04/26 04:30:26 ad Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -180,9 +180,12 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 attach le at ibus with le_pmax:		le24, le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
+# Raster operations for rcons. This isn't in the rcons section, since
+# it depends on fb devices for configuration glue. 
+include "dev/rasops/files.rasops"
 
 # 3100 (pmax) onboard framebuffer
-device pm
+device pm: rasops1
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
@@ -192,15 +195,15 @@ file	arch/pmax/dev/pm_ds.c		pm_ds
 # Turbochannel options.							#
 #########################################################################
 
-device cfb
+device cfb: rasops8
 attach cfb at tc
 file	arch/pmax/dev/cfb.c		cfb needs-flag
 
-device sfb
+device sfb: rasops8
 attach sfb at tc
 file	arch/pmax/dev/sfb.c		sfb needs-flag
 
-device mfb
+device mfb: rasops8
 attach mfb at tc
 file	arch/pmax/dev/mfb.c		mfb needs-flag
 
@@ -210,7 +213,7 @@ attach scc at ioasic
 file	arch/pmax/tc/scc.c		scc needs-flag
 
 # MAXINE onboard framebuffer
-device	xcfb
+device	xcfb: rasops8
 attach	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
@@ -249,7 +252,6 @@ file	arch/pmax/dev/findcons.c		# find and set up console.
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
 include "dev/rcons/files.rcons"
-include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 pseudo-device	rasterconsole
