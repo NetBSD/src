@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.2 2002/11/10 22:05:36 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.3 2002/11/11 01:18:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.2 2002/11/10 22:05:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.3 2002/11/11 01:18:44 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.2 2002/11/10 22:05:36 manu Exp $");
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_vm.h> 
+#include <compat/mach/mach_errno.h> 
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -74,7 +75,7 @@ mach_vm_map(p, msgh)
 	SCARG(&cup, pos) = (off_t)req.req_offset;
 	
 	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
-		return error;
+		rep.rep_retval = native_to_mach_errno[error];
 	
 	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
@@ -107,7 +108,7 @@ mach_vm_deallocate(p, msgh)
 	SCARG(&cup, len) = req.req_size;
 
 	if ((error = sys_munmap(p, &cup, &rep.rep_retval)) != 0)
-		return error;
+		rep.rep_retval = native_to_mach_errno[error];
 	
 	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
