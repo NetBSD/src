@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.4 1997/08/25 16:43:47 kleink Exp $
+.\"	$NetBSD: renice.8,v 1.5 1997/10/19 14:01:33 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.4 1997/08/25 16:43:47 kleink Exp $
+.\"	$NetBSD: renice.8,v 1.5 1997/10/19 14:01:33 lukem Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -41,7 +41,7 @@
 .Nm renice
 .Nd alter priority of running processes
 .Sh SYNOPSIS
-.Nm renice
+.Nm
 .Ar priority
 .Oo
 .Op Fl p
@@ -56,24 +56,24 @@
 .Ar user ...
 .Oc
 .Sh DESCRIPTION
-.Nm Renice
+.Nm
 alters the 
 scheduling priority of one or more running processes.
 The following
 .Ar who
 parameters are interpreted as process ID's, process group
 ID's, or user names.
-.Nm Renice Ns 'ing
+.Nm "" Ns 'ing
 a process group causes all processes in the process group
 to have their scheduling priority altered.  
-.Nm Renice Ns 'ing
+.Nm "" Ns 'ing
 a user causes all processes owned by the user to have
 their scheduling priority altered.
 By default, the processes to be affected are specified by
 their process ID's.
 .Pp
 Options supported by
-.Nm renice :
+.Nm "" :
 .Bl -tag -width Ds
 .It Fl g
 Force 
