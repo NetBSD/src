@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.15 1998/07/04 22:18:48 jonathan Exp $	*/
+/*	$NetBSD: db_run.c,v 1.16 1998/11/25 06:38:03 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -210,7 +210,8 @@ db_restart_at_pc(regs, watchpt)
 		db_addr_t brpc;
 
 		brpc = next_instr_address(pc, TRUE);
-		if ((brpc != pc) && (inst_branch(ins) || inst_call(ins))) {
+		if ((brpc != pc) &&
+		    (inst_branch(ins) || inst_call(ins) || inst_return(ins))) {
 		    ins = db_get_value(brpc, sizeof(int), FALSE);
 		    db_inst_count++;
 		    db_load_count += inst_load(ins);
@@ -394,7 +395,7 @@ db_set_single_step(regs)
 	 *	at pc was not executed.
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
-	if (inst_branch(inst) || inst_call(inst)) {
+	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
 		brpc = branch_taken(inst, pc, regs);
 		if (brpc != pc) {	/* self-branches are hopeless */
 			db_set_temp_breakpoint(&db_taken_bkpt, brpc);
