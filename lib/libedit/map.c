@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.14 2001/01/09 17:22:09 jdolecek Exp $	*/
+/*	$NetBSD: map.c,v 1.15 2002/03/18 16:00:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,25 +36,24 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.14 2001/01/09 17:22:09 jdolecek Exp $");
+__RCSID("$NetBSD: map.c,v 1.15 2002/03/18 16:00:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * map.c: Editor function definitions
  */
-#include "sys.h"
 #include <stdlib.h>
 #include "el.h"
 
 #define	N_KEYS 256
 
-private void	map_print_key(EditLine *, el_action_t *, char *);
+private void	map_print_key(EditLine *, el_action_t *, const char *);
 private void	map_print_some_keys(EditLine *, el_action_t *, int, int);
 private void	map_print_all_keys(EditLine *);
 private void	map_init_nls(EditLine *);
@@ -1127,7 +1126,7 @@ map_get_editor(EditLine *el, const char **editor)
  *	Print the function description for 1 key
  */
 private void
-map_print_key(EditLine *el, el_action_t *map, char *in)
+map_print_key(EditLine *el, el_action_t *map, const char *in)
 {
 	char outbuf[EL_BUFSIZ];
 	el_bindings_t *bp;
@@ -1240,14 +1239,14 @@ map_print_all_keys(EditLine *el)
  *	Add/remove/change bindings
  */
 protected int
-map_bind(EditLine *el, int argc, char **argv)
+map_bind(EditLine *el, int argc, const char **argv)
 {
 	el_action_t *map;
 	int ntype, rem;
-	char *p;
+	const char *p;
 	char inbuf[EL_BUFSIZ];
 	char outbuf[EL_BUFSIZ];
-	char *in = NULL;
+	const char *in = NULL;
 	char *out = NULL;
 	el_bindings_t *bp;
 	int cmd;
