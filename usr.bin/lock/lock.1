@@ -1,4 +1,4 @@
-.\"	$NetBSD: lock.1,v 1.5 1997/10/19 04:15:39 lukem Exp $
+.\"	$NetBSD: lock.1,v 1.6 1999/06/27 10:00:36 tron Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd reserve a terminal
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
+.Op Fl np
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
@@ -55,6 +55,9 @@ with the appropriate permission.
 Options:
 .Pp
 .Bl -tag -width Fl
+.It Fl n
+No timeout is used.  The terminal will be locked indefinitely or until
+current challenge is met.
 .It Fl p
 A password is not requested, instead the user's current login password
 is used.
