@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.48 2002/07/27 23:58:40 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.49 2002/07/28 20:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.48 2002/07/27 23:58:40 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.49 2002/07/28 20:47:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,6 +235,8 @@ main(int argc, char **argv)
 
 #ifdef SUPPORT_UTMP
 	while ((ut = getutent()) != NULL) {
+		if (ut->ut_name[0] == '\0')
+			continue;
 		++nusers;
 		if (wcmd == 0 || (sel_user &&
 		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name) != 0)))
