@@ -1007,6 +1007,7 @@ convert_to_extended (dbl, ptr)
 {
   *(double*)ptr = *dbl;
 }
+#endif
 
 static int
 condition_true (cond, status_reg)
@@ -1112,7 +1113,6 @@ shifted_reg_val (inst, carry, pc_val, status_reg)
 
   return res & 0xffffffff;
 }
-#endif
 
 /* Return number of 1-bits in VAL.  */
 
