@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,15 +32,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.20 1994/03/06 17:18:50 mycroft Exp $
+ *	$Id: com.c,v 1.21 1994/03/08 08:12:56 mycroft Exp $
  */
 
-#include "com.h"
-#if NCOM > 0
 /*
  * COM driver, based on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
+#include "com.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -53,107 +54,153 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
+#include <sys/device.h>
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa_device.h>
 #include <i386/isa/comreg.h>
 #include <i386/isa/ic/ns16550.h>
 
-#define cominor(d)
+struct com_softc {
+	struct device sc_dev;
 
-int 	comprobe(), comattach(), comintr(), comparam();
-void	comstart();
+	u_short sc_iobase;
+	u_char sc_flags;
+#define	COM_SOFTCAR	0x01
+#define	COM_FIFO	0x02
+	u_char sc_msr, sc_mcr;
+} com_softc[NCOM];
+/* XXXX should be in com_softc, but not ready for that yet */
+struct	tty *com_tty[NCOM];
+
+int comprobe __P((struct isa_device *));
+int comattach __P((struct isa_device *));
+int comopen __P((dev_t, int, int, struct proc *));
+int comclose __P((dev_t, int, int, struct proc *));
+int comintr __P((int));
+int comparam __P((struct tty *, struct termios *));
+void comstart __P((struct tty *));
 
 struct	isa_driver comdriver = {
 	comprobe, comattach, "com"
 };
 
-int	comsoftCAR;
-int	com_active;
-int	com_hasfifo;
-int	ncom = NCOM;
+int	comdefaultrate = TTYDEF_SPEED;
 #ifdef COMCONSOLE
 int	comconsole = COMCONSOLE;
 #else
 int	comconsole = -1;
 #endif
 int	comconsinit;
-int	comdefaultrate = TTYDEF_SPEED;
 int	commajor;
-short com_addr[NCOM];
-struct	tty *com_tty[NCOM];
 
-struct speedtab comspeedtab[] = {
-	0,	0,
-	50,	COMBRD(50),
-	75,	COMBRD(75),
-	110,	COMBRD(110),
-	134,	COMBRD(134),
-	150,	COMBRD(150),
-	200,	COMBRD(200),
-	300,	COMBRD(300),
-	600,	COMBRD(600),
-	1200,	COMBRD(1200),
-	1800,	COMBRD(1800),
-	2400,	COMBRD(2400),
-	4800,	COMBRD(4800),
-	9600,	COMBRD(9600),
-	19200,	COMBRD(19200),
-	38400,	COMBRD(38400),
-	57600,	COMBRD(57600),
-	-1,	-1
-};
-
-extern	struct tty *constty;
 #ifdef KGDB
 #include <machine/remote-sl.h>
-
 extern int kgdb_dev;
 extern int kgdb_rate;
 extern int kgdb_debug_init;
 #endif
 
-#define	UNIT(x)		(minor(x))
+#define	COMUNIT(x)	(minor(x))
 
-comprobe(dev)
-struct isa_device *dev;
-{
-	/* force access to id reg */
-	outb(dev->id_iobase+com_cfcr, 0);
-	outb(dev->id_iobase+com_iir, 0);
-	delay(100);
-	if ((inb(dev->id_iobase+com_iir) & 0x38) == 0)
-		return(8);
-	return(0);
-}
-
+#define	bis(c, b)	do { const register u_short com_ad = (c); \
+			     outb(com_ad, inb(com_ad) | (b)); } while(0)
+#define	bic(c, b)	do { const register u_short com_ad = (c); \
+			     outb(com_ad, inb(com_ad) & ~(b)); } while(0)
 
 int
-comattach(isdp)
-struct isa_device *isdp;
+comspeed(speed)
+	long speed;
 {
-	struct	tty	*tp;
-	u_char		unit;
-	int		port = isdp->id_iobase;
+#define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
-	unit = isdp->id_unit;
+	int x, err;
+
+	if (speed == 0)
+		return 0;
+	if (speed < 0)
+		return -1;
+	x = divrnd((COM_FREQ / 16), speed);
+	if (x <= 0)
+		return -1;
+	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	if (err < 0)
+		err = -err;
+	if (err > COM_TOLERANCE)
+		return -1;
+	return x;
+
+#undef	divrnd(n, q)
+}
+
+int
+comprobe1(iobase)
+	u_short iobase;
+{
+
+	/* force access to id reg */
+	outb(iobase + com_cfcr, 0);
+	outb(iobase + com_iir, 0);
+	if (inb(iobase + com_iir) & 0x38)
+		return 0;
+
+	return 1;
+}
+
+int
+comprobe(isa_dev)
+	struct isa_device *isa_dev;
+{
+	struct com_softc *sc = &com_softc[isa_dev->id_unit];
+	u_short iobase = isa_dev->id_iobase;
+
+	/* XXX HACK */
+	sprintf(sc->sc_dev.dv_xname, "%s%d", comdriver.name, isa_dev->id_unit);
+	sc->sc_dev.dv_unit = isa_dev->id_unit;
+
+	if (!comprobe1(iobase))
+		return 0;
+
+	return COM_NPORTS;
+}
+
+int
+comattach(isa_dev)
+	struct isa_device *isa_dev;
+{
+	int unit = isa_dev->id_unit;
+	struct com_softc *sc = &com_softc[unit];
+	u_short iobase = isa_dev->id_iobase;
+	struct tty *tp;
+
 	if (unit == comconsole)
 		delay(1000);
-	com_addr[unit] = port;
-	com_active |= 1 << unit;
-	comsoftCAR |= 1 << unit;	/* XXX */
+
+	sc->sc_iobase = iobase;
+	sc->sc_flags = 0;
+
+	printf("%s: ", sc->sc_dev.dv_xname);
 
 	/* look for a NS 16550AF UART with FIFOs */
-	outb(port+com_fifo, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4);
+	outb(iobase + com_fifo,
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
-	if ((inb(port+com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
-		com_hasfifo |= 1 << unit;
-		printf("com%d: fifo\n", isdp->id_unit);
-	}
+	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK)
+		if ((inb(iobase + com_fifo) & FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
+			sc->sc_flags |= COM_FIFO;
+			printf("ns16550a, working fifo\n");
+		} else
+			printf("ns82550 or ns16550, broken fifo\n");
+	else
+		printf("ns82450 or ns16450, no fifo\n");
+	outb(iobase + com_fifo, 0);
 
-	outb(port+com_ier, 0);
-	outb(port+com_mcr, 0 | MCR_IENABLE);
+	/* disable interrupts */
+	outb(iobase + com_ier, 0);
+	outb(iobase + com_mcr, 0);
+
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
 		if (comconsole == unit)
@@ -165,38 +212,51 @@ struct isa_device *isdp;
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("com%d: ", unit);
+				printf("%s: ", sc->sc_dev.dv_xname);
 				kgdb_connect(1);
 			} else
-				printf("com%d: kgdb enabled\n", unit);
+				printf("%s: kgdb enabled\n",
+				    sc->sc_dev.dv_xname);
 		}
 	}
 #endif
+
 	/*
 	 * Need to reset baud rate, etc. of next print so reset comconsinit.
-	 * Also make sure console is always "hardwired"
+	 * Also make sure console is always "hardwired".
 	 */
 	if (unit == comconsole) {
 		comconsinit = 0;
-		comsoftCAR |= (1 << unit);
+		sc->sc_flags |= COM_SOFTCAR;
 	}
-	return (1);
 }
 
-/* ARGSUSED */
-comopen(dev_t dev, int flag, int mode, struct proc *p)
+int
+comopen(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit;
+	int unit = COMUNIT(dev);
+	struct com_softc *sc;
+	u_short iobase;
+	struct tty *tp;
+	int s;
 	int error = 0;
  
-	unit = UNIT(dev);
-	if (unit >= NCOM || (com_active & (1 << unit)) == 0)
-		return (ENXIO);
-	if(!com_tty[unit]) {
+	if (unit > NCOM)
+		return ENXIO;
+	sc = &com_softc[unit];
+	if (!sc->sc_iobase)
+		return ENXIO;
+
+	s = spltty();
+
+	if (!com_tty[unit])
 		tp = com_tty[unit] = ttymalloc();
-	} else
+	else
 		tp = com_tty[unit];
+
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_dev = dev;
@@ -210,156 +270,341 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	(void) spltty();
-	(void) commctl(dev, MCR_DTR | MCR_RTS, DMSET);
-	if ((comsoftCAR & (1 << unit)) || (commctl(dev, 0, DMGET) & MSR_DCD))
-		tp->t_state |= TS_CARR_ON;
-	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
-	       (tp->t_state & TS_CARR_ON) == 0) {
-		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
+
+		iobase = sc->sc_iobase;
+		/* flush any pending I/O */
+		if (sc->sc_flags & COM_FIFO)
+			outb(iobase + com_fifo,
+			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+			    FIFO_TRIGGER_8);
+		(void) inb(iobase + com_lsr);
+		(void) inb(iobase + com_data);
+		/* you turn me on, baby */
+		outb(iobase + com_mcr,
+		    sc->sc_mcr = MCR_DTR | MCR_RTS | MCR_IENABLE);
+		outb(iobase + com_ier,
+		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
+
+		sc->sc_msr = inb(iobase + com_msr);
+		if (sc->sc_flags & COM_SOFTCAR || sc->sc_msr & MSR_DCD)
+			tp->t_state |= TS_CARR_ON;
+		else
+			tp->t_state &= ~TS_CARR_ON;
+	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+		splx(s);
+		return EBUSY;
 	}
-	(void) spl0();
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
-	return (error);
+
+	/* wait for carrier if necessary */
+	if ((flag & O_NONBLOCK) == 0)
+		while ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0) {
+			tp->t_state |= TS_WOPEN;
+			error = ttysleep(tp, (caddr_t)&tp->t_rawq, 
+			    TTIPRI | PCATCH, ttopen, 0);
+			if (error) {
+				/* XXX should turn off chip if we're the
+				   only waiter */
+				splx(s);
+				return error;
+			}
+		}
+	splx(s);
+
+	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
  
-/*ARGSUSED*/
+int
 comclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register com;
-	register int unit;
- 
-	unit = UNIT(dev);
-	com = com_addr[unit];
-	tp = com_tty[unit];
+	int unit = COMUNIT(dev);
+	struct com_softc *sc = &com_softc[unit];
+	u_short iobase = sc->sc_iobase;
+	struct tty *tp = com_tty[unit];
+
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	outb(com+com_cfcr, inb(com+com_cfcr) & ~CFCR_SBREAK);
 #ifdef KGDB
 	/* do not disable interrupts if debugging */
 	if (kgdb_dev != makedev(commajor, unit))
 #endif
-	outb(com+com_ier, 0);
-	if (tp->t_cflag&HUPCL || tp->t_state&TS_WOPEN || 
-	    (tp->t_state&TS_ISOPEN) == 0)
-		(void) commctl(dev, 0, DMSET);
+	{
+		bic(iobase + com_cfcr, CFCR_SBREAK);
+		outb(iobase + com_ier, 0);
+		if (tp->t_cflag & HUPCL && (sc->sc_flags & COM_SOFTCAR) == 0)
+			/* XXX perhaps only clear DTR */
+			outb(iobase + com_mcr, 0);
+	}
 	ttyclose(tp);
-#ifdef broken /* session holds a ref to the tty; can't deallocate */
-	ttyfree(tp);
-	com_tty[unit] = (struct tty *)NULL;
+#ifdef notyet /* XXXX */
+	if (unit != comconsole) {
+		ttyfree(tp);
+		com_tty[unit] = (struct tty *)NULL;
+	}
 #endif
-	return(0);
+	return 0;
 }
  
+int
 comread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
-	register struct tty *tp = com_tty[UNIT(dev)];
+	struct tty *tp = com_tty[COMUNIT(dev)];
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
+int
 comwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
-	register struct tty *tp = com_tty[UNIT(dev)];
+	struct tty *tp = com_tty[COMUNIT(dev)];
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
-comintr(unit)
-	register int unit;
+static u_char
+tiocm_xxx2mcr(data)
+	int data;
 {
-	register com;
-	register u_char code;
-	register struct tty *tp;
+	u_char m = 0;
 
-	com = com_addr[unit];
-	while (1) {
-		code = inb(com+com_iir);
-		switch (code & IIR_IMASK) {
-		case IIR_NOPEND:
-			return (1);
-		case IIR_RXTOUT:
-		case IIR_RXRDY:
-			tp = com_tty[unit];
-/*
- * Process received bytes.  Inline for speed...
- */
-#ifdef KGDB
-#define	RCVBYTE() \
-			code = inb(com+com_data); \
-			if ((tp->t_state & TS_ISOPEN) == 0) { \
-				if (kgdb_dev == makedev(commajor, unit) && \
-				    code == FRAME_END) \
-					kgdb_connect(0); /* trap into kgdb */ \
-			} else \
-				(*linesw[tp->t_line].l_rint)(code, tp)
-#else
-#define	RCVBYTE() \
-			code = inb(com+com_data); \
-			if (tp->t_state & TS_ISOPEN) \
-				(*linesw[tp->t_line].l_rint)(code, tp)
-#endif
-
-			RCVBYTE();
-
-			if (com_hasfifo & (1 << unit))
-				while ((code = inb(com+com_lsr)) & LSR_RCV_MASK) {
-					if (code == LSR_RXRDY) {
-						RCVBYTE();
-					} else
-						comeint(unit, code, com);
-				}
-			break;
-		case IIR_TXRDY:
-			tp = com_tty[unit];
-			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				comstart(tp);
-			break;
-		case IIR_RLS:
-			comeint(unit, inb(com+com_lsr), com);
-			break;
-		default:
-			if (code & IIR_NOPEND)
-				return (1);
-			log(LOG_WARNING, "com%d: weird interrupt: 0x%x\n",
-			    unit, code);
-			/* fall through */
-		case IIR_MLSC:
-			commint(unit, com);
-			break;
-		}
-	}
+	if (data & TIOCM_DTR)
+		m |= MCR_DTR;
+	if (data & TIOCM_RTS)
+		m |= MCR_RTS;
+	return m;
 }
 
-comeint(unit, stat, com)
-	register int unit, stat;
-	register com;
+int
+comioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
-	register struct tty *tp;
-	register int c;
+	int unit = COMUNIT(dev);
+	struct com_softc *sc = &com_softc[unit];
+	u_short iobase = sc->sc_iobase;
+	struct tty *tp = com_tty[unit];
+	int error;
 
-	tp = com_tty[unit];
-	c = inb(com+com_data);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+
+	switch (cmd) {
+	case TIOCSBRK:
+		bis(iobase + com_cfcr, CFCR_SBREAK);
+		break;
+	case TIOCCBRK:
+		bic(iobase + com_cfcr, CFCR_SBREAK);
+		break;
+	case TIOCSDTR:
+		outb(iobase + com_mcr, sc->sc_mcr |= (MCR_DTR | MCR_RTS));
+		break;
+	case TIOCCDTR:
+		outb(iobase + com_mcr, sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
+		break;
+	case TIOCMSET:
+		sc->sc_mcr &= ~(MCR_DTR | MCR_RTS);
+	case TIOCMBIS:
+		outb(iobase + com_mcr,
+		    sc->sc_mcr |= tiocm_xxx2mcr(*(int *)data));
+		break;
+	case TIOCMBIC:
+		outb(iobase + com_mcr,
+		    sc->sc_mcr &= ~tiocm_xxx2mcr(*(int *)data));
+		break;
+	case TIOCMGET: {
+		u_char m;
+		int bits = 0;
+
+		m = sc->sc_mcr;
+		if (m & MCR_DTR)
+			bits |= TIOCM_DTR;
+		if (m & MCR_RTS)
+			bits |= TIOCM_RTS;
+		m = sc->sc_msr;
+		if (m & MSR_DCD)
+			bits |= TIOCM_CD;
+		if (m & MSR_CTS)
+			bits |= TIOCM_CTS;
+		if (m & MSR_DSR)
+			bits |= TIOCM_DSR;
+		if (m & (MSR_RI | MSR_TERI))
+			bits |= TIOCM_RI;
+		if (inb(iobase + com_ier))
+			bits |= TIOCM_LE;
+		*(int *)data = bits;
+		break;
+	}
+	default:
+		return ENOTTY;
+	}
+
+	return 0;
+}
+
+int
+comparam(tp, t)
+	struct tty *tp;
+	struct termios *t;
+{
+	struct com_softc *sc = &com_softc[COMUNIT(tp->t_dev)];
+	u_short iobase = sc->sc_iobase;
+	int ospeed = comspeed(t->c_ospeed);
+	u_char cfcr;
+	int s;
+
+	/* check requested parameters */
+	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+		return EINVAL;
+
+	switch (t->c_cflag & CSIZE) {
+	case CS5:
+		cfcr = CFCR_5BITS;
+		break;
+	case CS6:
+		cfcr = CFCR_6BITS;
+		break;
+	case CS7:
+		cfcr = CFCR_7BITS;
+		break;
+	case CS8:
+		cfcr = CFCR_8BITS;
+		break;
+	}
+	if (t->c_cflag & PARENB) {
+		cfcr |= CFCR_PENAB;
+		if ((t->c_cflag & PARODD) == 0)
+			cfcr |= CFCR_PEVEN;
+	}
+	if (t->c_cflag & CSTOPB)
+		cfcr |= CFCR_STOPB;
+
+	s = spltty();
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
+
+	if (ospeed == 0)
+		outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_DTR);
+	else
+		outb(iobase + com_mcr, sc->sc_mcr |= MCR_DTR);
+
+	outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
+	outb(iobase + com_dlbl, ospeed);
+	outb(iobase + com_dlbh, ospeed>>8);
+	outb(iobase + com_cfcr, cfcr);
+
+	/* When not using CRTS_IFLOW, RTS follows DTR. */
+	if ((t->c_cflag & CRTS_IFLOW) == 0) {
+		if (sc->sc_mcr & MCR_DTR) {
+			if ((sc->sc_mcr & MCR_RTS) == 0)
+				outb(iobase + com_mcr, sc->sc_mcr |= MCR_RTS);
+		} else {
+			if (sc->sc_mcr & MCR_RTS)
+				outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_RTS);
+		}
+	}
+
+	/* If CTS is off and CCTS_OFLOW is changed, we must toggle TS_TTSTOP. */
+	if ((sc->sc_msr & MSR_CTS) == 0 &&
+	    (tp->t_cflag & CCTS_OFLOW) != (t->c_cflag & CCTS_OFLOW)) {
+		if ((t->c_cflag & CCTS_OFLOW) == 0) {
+			tp->t_state &= ~TS_TTSTOP;
+			ttstart(tp);
+		} else
+			tp->t_state |= TS_TTSTOP;
+	}
+
+	splx(s);
+	return 0;
+}
+
+void
+comstart(tp)
+	struct tty *tp;
+{
+	struct com_softc *sc = &com_softc[COMUNIT(tp->t_dev)];
+	u_short iobase = sc->sc_iobase;
+	int s;
+
+	s = spltty();
+	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
+		goto out;
+#if 0 /* XXXX I think this is handled adequately by commint() and comparam(). */
+	if (tp->t_cflag & CCTS_OFLOW && (sc->sc_mcr & MSR_CTS) == 0)
+		goto out;
+#endif
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
+	if (tp->t_outq.c_cc == 0)
+		goto out;
+	tp->t_state |= TS_BUSY;
+	if ((inb(iobase + com_lsr) & LSR_TXRDY) == 0)
+		goto out;
+	if (sc->sc_flags & COM_FIFO) {
+		u_char buffer[16], *cp = buffer;
+		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
+		do {
+			outb(iobase + com_data, *cp++);
+		} while (--n);
+	} else
+		outb(iobase + com_data, getc(&tp->t_outq));
+out:
+	splx(s);
+}
+
+/*
+ * Stop output on a line.
+ */
+void
+comstop(tp, flag)
+	struct tty *tp;
+{
+	int s;
+
+	s = spltty();
+	if (tp->t_state & TS_BUSY)
+		if ((tp->t_state & TS_TTSTOP) == 0)
+			tp->t_state |= TS_FLUSH;
+	splx(s);
+}
+
+static inline void
+comeint(sc, stat)
+	struct com_softc *sc;
+	int stat;
+{
+	u_short iobase = sc->sc_iobase;
+	int unit = sc->sc_dev.dv_unit;
+	struct tty *tp = com_tty[unit];
+	int c;
+
+	c = inb(iobase + com_data);
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
 		/* we don't care about parity errors */
-		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
+		if (((stat & (LSR_BI | LSR_FE | LSR_PE)) == LSR_PE) &&
 		    kgdb_dev == makedev(commajor, unit) && c == FRAME_END)
 			kgdb_connect(0); /* trap into kgdb */
 #endif
@@ -369,232 +614,93 @@ comeint(unit, stat, com)
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
 		c |= TTY_PE;
-	else if (stat & LSR_OE) {			/* 30 Aug 92*/
-		c |= TTY_PE;	/* Ought to have it's own define... */
-		log(LOG_WARNING, "com%d: silo overflow\n", unit);
-	}
+	if (stat & LSR_OE)
+		log(LOG_WARNING, "%s: silo overflow\n", sc->sc_dev.dv_xname);
+	/* XXXX put in FIFO and process later */
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
-
-commint(unit, com)
-	register int unit;
-	register com;
+ 
+static inline void
+commint(sc)
+	struct com_softc *sc;
 {
-	register struct tty *tp;
-	register int stat;
+	u_short iobase = sc->sc_iobase;
+	struct tty *tp = com_tty[sc->sc_dev.dv_unit];
+	u_char msr, delta;
 
-	tp = com_tty[unit];
-	stat = inb(com+com_msr);
-	if ((stat & MSR_DDCD) && (comsoftCAR & (1 << unit)) == 0) {
-		if (stat & MSR_DCD)
+	msr = inb(iobase + com_msr);
+	delta = msr ^ sc->sc_msr;
+	sc->sc_msr = msr;
+
+	if (delta & MSR_DCD && (sc->sc_flags & COM_SOFTCAR) == 0) {
+		if (msr & MSR_DCD)
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
-			outb(com+com_mcr,
-				inb(com+com_mcr) & ~(MCR_DTR | MCR_RTS) | MCR_IENABLE);
-	} else if ((stat & MSR_DCTS) && (tp->t_state & TS_ISOPEN) &&
-		   (tp->t_flags & CRTSCTS)) {
+			outb(iobase + com_mcr,
+			    sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
+	}
+	if (delta & MSR_CTS && tp->t_cflag & CCTS_OFLOW) {
 		/* the line is up and we want to do rts/cts flow control */
-		if (stat & MSR_CTS) {
-			tp->t_state &=~ TS_TTSTOP;
+		if (msr & MSR_CTS) {
+			tp->t_state &= ~TS_TTSTOP;
 			ttstart(tp);
 		} else
 			tp->t_state |= TS_TTSTOP;
 	}
 }
 
-comioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int
+comintr(unit)
+	int unit;
 {
-	register struct tty *tp;
-	register int unit = UNIT(dev);
-	register com;
-	register int error;
- 
-	tp = com_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
+	struct com_softc *sc = &com_softc[unit];
+	u_short iobase = sc->sc_iobase;
+	struct tty *tp;
+	u_char code;
 
-	com = com_addr[unit];
-	switch (cmd) {
+	code = inb(iobase + com_iir) & IIR_IMASK;
+	if (code & IIR_NOPEND)
+		return 0;
 
-	case TIOCSBRK:
-		outb(com+com_cfcr, inb(com+com_cfcr) | CFCR_SBREAK);
-		break;
-
-	case TIOCCBRK:
-		outb(com+com_cfcr, inb(com+com_cfcr) & ~CFCR_SBREAK);
-		break;
-
-	case TIOCSDTR:
-		(void) commctl(dev, MCR_DTR | MCR_RTS, DMBIS);
-		break;
-
-	case TIOCCDTR:
-		(void) commctl(dev, MCR_DTR | MCR_RTS, DMBIC);
-		break;
-
-	case TIOCMSET:
-		(void) commctl(dev, *(int *)data, DMSET);
-		break;
-
-	case TIOCMBIS:
-		(void) commctl(dev, *(int *)data, DMBIS);
-		break;
-
-	case TIOCMBIC:
-		(void) commctl(dev, *(int *)data, DMBIC);
-		break;
-
-	case TIOCMGET:
-		*(int *)data = commctl(dev, 0, DMGET);
-		break;
-
-	default:
-		return (ENOTTY);
-	}
-	return (0);
-}
-
-comparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
-{
-	register com;
-	register int cfcr, cflag = t->c_cflag;
-	int unit = UNIT(tp->t_dev);
-	int ospeed = ttspeedtab(t->c_ospeed, comspeedtab);
- 
-	/* check requested parameters */
-        if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
-                return(EINVAL);
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
-
-	com = com_addr[unit];
-	outb(com+com_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS /*| IER_EMSC*/);
-	if (ospeed == 0) {
-		(void) commctl(unit, 0, DMSET);	/* hang up line */
-		return(0);
-	}
-	outb(com+com_cfcr, inb(com+com_cfcr) | CFCR_DLAB);
-	outb(com+com_data, ospeed & 0xFF);
-	outb(com+com_ier, ospeed >> 8);
-	switch (cflag&CSIZE) {
-	case CS5:
-		cfcr = CFCR_5BITS; break;
-	case CS6:
-		cfcr = CFCR_6BITS; break;
-	case CS7:
-		cfcr = CFCR_7BITS; break;
-	case CS8:
-		cfcr = CFCR_8BITS; break;
-	}
-	if (cflag&PARENB) {
-		cfcr |= CFCR_PENAB;
-		if ((cflag&PARODD) == 0)
-			cfcr |= CFCR_PEVEN;
-	}
-	if (cflag&CSTOPB)
-		cfcr |= CFCR_STOPB;
-	outb(com+com_cfcr, cfcr);
-
-	if (com_hasfifo & (1 << unit))
-		outb(com+com_fifo, FIFO_ENABLE | FIFO_TRIGGER_4);
-
-	return(0);
-}
- 
-void
-comstart(tp)
-	register struct tty *tp;
-{
-	register com;
-	int s, unit, c;
- 
-	unit = UNIT(tp->t_dev);
-	com = com_addr[unit];
-	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
-		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+	for (;;) {
+		if (code & IIR_RXRDY) {
+			tp = com_tty[sc->sc_dev.dv_unit];
+			/* XXXX put in FIFO and process later */
+			while (code = (inb(iobase + com_lsr) & LSR_RCV_MASK)) {
+				if (code == LSR_RXRDY) {
+					code = inb(iobase + com_data);
+					if (tp->t_state & TS_ISOPEN)
+						(*linesw[tp->t_line].l_rint)(code, tp);
+#ifdef KGDB
+					else {
+						if (kgdb_dev == makedev(commajor, unit) &&
+						    code == FRAME_END)
+							kgdb_connect(0);
+					}
+#endif
+				} else
+					comeint(sc, code);
+			}
+		} else if (code == IIR_TXRDY) {
+			tp = com_tty[sc->sc_dev.dv_unit];
+			tp->t_state &= ~TS_BUSY;
+			if (tp->t_state & TS_FLUSH)
+				tp->t_state &= ~TS_FLUSH;
+			else
+				if (tp->t_line)
+					(*linesw[tp->t_line].l_start)(tp);
+				else
+					comstart(tp);
+		} else if (code == IIR_MLSC) {
+			commint(sc);
+		} else {
+			log(LOG_WARNING, "%s: weird interrupt: iir=0x%02x\n",
+			    sc->sc_dev.dv_xname, code);
 		}
-		selwakeup(&tp->t_wsel);
+		code = inb(iobase + com_iir) & IIR_IMASK;
+		if (code & IIR_NOPEND)
+			return 1;
 	}
-	if (tp->t_outq.c_cc == 0)
-		goto out;
-	if (inb(com+com_lsr) & LSR_TXRDY) {
-		c = getc(&tp->t_outq);
-		tp->t_state |= TS_BUSY;
-		outb(com+com_data, c);
-		if (com_hasfifo & (1 << unit))
-			for (c = 1; c < 16 && tp->t_outq.c_cc; ++c)
-				outb(com+com_data, getc(&tp->t_outq));
-	}
-out:
-	splx(s);
-}
- 
-/*
- * Stop output on a line.
- */
-/*ARGSUSED*/
-comstop(tp, flag)
-	register struct tty *tp;
-{
-	register int s;
-
-	s = spltty();
-	if (tp->t_state & TS_BUSY) {
-		if ((tp->t_state&TS_TTSTOP)==0)
-			tp->t_state |= TS_FLUSH;
-	}
-	splx(s);
-}
- 
-commctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
-{
-	register com;
-	register int unit;
-	int s;
-
-	unit = UNIT(dev);
-	com = com_addr[unit];
-	s = spltty();
-	switch (how) {
-
-	case DMSET:
-		outb(com+com_mcr, bits | MCR_IENABLE);
-		break;
-
-	case DMBIS:
-		outb(com+com_mcr, inb(com+com_mcr) | bits | MCR_IENABLE);
-		break;
-
-	case DMBIC:
-		outb(com+com_mcr, inb(com+com_mcr) & ~bits | MCR_IENABLE);
-		break;
-
-	case DMGET:
-		bits = inb(com+com_msr);
-		break;
-	}
-	(void) splx(s);
-	return(bits);
 }
 
 /*
@@ -605,18 +711,19 @@ commctl(dev, bits, how)
 comcnprobe(cp)
 	struct consdev *cp;
 {
-	int unit;
+	int unit = CONUNIT;
+
+	if (!comprobe1(CONADDR)) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
 
 	/* locate the major number */
 	for (commajor = 0; commajor < nchrdev; commajor++)
 		if (cdevsw[commajor].d_open == comopen)
 			break;
 
-	/* XXX: ick */
-	unit = CONUNIT;
-	com_addr[CONUNIT] = CONADDR;
-
-	/* make sure hardware exists?  XXX */
+	com_softc[unit].sc_iobase = CONADDR;
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, unit);
@@ -630,52 +737,44 @@ comcnprobe(cp)
 comcninit(cp)
 	struct consdev *cp;
 {
-	int unit = UNIT(cp->cn_dev);
+	int unit = CONUNIT;
 
 	cominit(unit, comdefaultrate);
 	comconsole = unit;
-	comconsinit = 1;
+	comconsinit = 0;
 }
 
 cominit(unit, rate)
 	int unit, rate;
 {
-	register int com;
-	int s;
-	short stat;
+	int s = splhigh();
+	u_short iobase = com_softc[unit].sc_iobase;
+	u_char stat;
 
-#ifdef lint
-	stat = unit; if (stat) return;
-#endif
-	com = com_addr[unit];
-	s = splhigh();
-	outb(com+com_cfcr, CFCR_DLAB);
-	rate = ttspeedtab(comdefaultrate, comspeedtab);
-	outb(com+com_data, rate & 0xFF);
-	outb(com+com_ier, rate >> 8);
-	outb(com+com_cfcr, CFCR_8BITS);
-	outb(com+com_ier, IER_ERXRDY | IER_ETXRDY);
-	outb(com+com_fifo, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4);
-	stat = inb(com+com_iir);
+	outb(iobase + com_cfcr, CFCR_DLAB);
+	rate = comspeed(comdefaultrate);
+	outb(iobase + com_dlbl, rate);
+	outb(iobase + com_dlbh, rate >> 8);
+	outb(iobase + com_cfcr, CFCR_8BITS);
+	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
+	outb(iobase + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	stat = inb(iobase + com_iir);
 	splx(s);
 }
 
 comcngetc(dev)
+	dev_t dev;
 {
-	register com = com_addr[UNIT(dev)];
-	short stat;
-	int c, s;
+	int s = splhigh();
+	u_short iobase = com_softc[COMUNIT(dev)].sc_iobase;
+	u_char stat, c;
 
-#ifdef lint
-	stat = dev; if (stat) return(0);
-#endif
-	s = splhigh();
-	while (((stat = inb(com+com_lsr)) & LSR_RXRDY) == 0)
+	while (((stat = inb(iobase + com_lsr)) & LSR_RXRDY) == 0)
 		;
-	c = inb(com+com_data);
-	stat = inb(com+com_iir);
+	c = inb(iobase + com_data);
+	stat = inb(iobase + com_iir);
 	splx(s);
-	return(c);
+	return c;
 }
 
 /*
@@ -683,35 +782,30 @@ comcngetc(dev)
  */
 comcnputc(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
-	register com = com_addr[UNIT(dev)];
-	register int timo;
-	short stat;
 	int s = splhigh();
+	u_short iobase = com_softc[COMUNIT(dev)].sc_iobase;
+	u_char stat;
+	register int timo;
 
-#ifdef lint
-	stat = dev; if (stat) return;
-#endif
 #ifdef KGDB
 	if (dev != kgdb_dev)
 #endif
 	if (comconsinit == 0) {
-		(void) cominit(UNIT(dev), comdefaultrate);
+		(void) cominit(COMUNIT(dev), comdefaultrate);
 		comconsinit = 1;
 	}
 	/* wait for any pending transmission to finish */
 	timo = 50000;
-	while (((stat = inb(com+com_lsr)) & LSR_TXRDY) == 0 && --timo)
+	while (((stat = inb(iobase + com_lsr)) & LSR_TXRDY) == 0 && --timo)
 		;
-	outb(com+com_data, c);
+	outb(iobase + com_data, c);
 	/* wait for this transmission to complete */
 	timo = 1500000;
-	while (((stat = inb(com+com_lsr)) & LSR_TXRDY) == 0 && --timo)
+	while (((stat = inb(iobase + com_lsr)) & LSR_TXRDY) == 0 && --timo)
 		;
 	/* clear any interrupts generated by this transmission */
-	stat = inb(com+com_iir);
+	stat = inb(iobase + com_iir);
 	splx(s);
 }
-
-#endif
