@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2000/09/11 21:53:31 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2000/09/27 20:05:54 fvdl Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -7,7 +7,7 @@
 EXTRA_KERNELS+= GENERIC_TINY
 
 # These are for use by the bootfloppy construction tools
-BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY
+BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP
 INSTALLATION_DIRS += installation/misc
 
 # mkisofs arguments to generate bootable iso image
