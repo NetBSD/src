@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.5 2000/06/08 09:01:05 fvdl Exp $	*/
+/*	$NetBSD: security.c,v 1.6 2001/01/16 02:43:37 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -102,6 +102,7 @@ check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, int rpcbvers)
 	case RPCBPROC_GETADDRLIST:
 	case RPCBPROC_GETSTAT:
 	default:
+		break;
 	}
 
 #ifdef LIBWRAP
@@ -146,6 +147,7 @@ is_loopback(struct netbuf *nbuf)
 	case AF_LOCAL:
 		return 1;
 	default:
+		break;
 	}
 	
 	return 0;
@@ -265,8 +267,10 @@ check_callit(SVCXPRT *xprt, struct r_rmtcall_args *args, int versnum)
 		case YPPROC_NEXT:
 			goto deny;
 		default:
+			break;
 		}
 	default:
+		break;
 	}
 
 	return 1;
