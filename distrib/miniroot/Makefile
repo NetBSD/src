@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2002/05/02 18:02:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.61 2002/05/07 03:34:16 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -32,7 +32,7 @@ IMAGE_RELEASEDIR=	installation/miniroot
 .endif
 .include "${DISTRIBDIR}/common/Makefile.image"
 
-release: check_RELEASEDIR .WAIT
+release:: check_RELEASEDIR .WAIT
 	${MAKESUMS} -t ${RELEASEDIR}/${IMAGE_RELEASEDIR} ${IMAGE}.gz
 
 .include <bsd.prog.mk>
