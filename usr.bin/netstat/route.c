@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.30 1998/10/31 06:42:22 mrg Exp $	*/
+/*	$NetBSD: route.c,v 1.31 1998/11/23 10:17:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.30 1998/10/31 06:42:22 mrg Exp $");
+__RCSID("$NetBSD: route.c,v 1.31 1998/11/23 10:17:12 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,8 +659,6 @@ netname(in, mask)
 				mask = (long)mask >> subnetshift;
 		}
 		net = i & mask;
-		while ((mask & 1) == 0)
-			mask >>= 1, net >>= 1;
 		np = getnetbyaddr(net, AF_INET);
 		if (np)
 			cp = np->n_name;
