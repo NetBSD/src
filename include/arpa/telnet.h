@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.10 2003/08/07 09:44:12 agc Exp $	*/
+/*	$NetBSD: telnet.h,v 1.11 2005/02/19 21:57:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -61,13 +61,13 @@
 #define SYNCH	242		/* for telfunc calls */
 
 #ifdef TELCMDS
-char *telcmds[] = {
+const char *telcmds[] = {
 	"EOF", "SUSP", "ABORT", "EOR",
 	"SE", "NOP", "DMARK", "BRK", "IP", "AO", "AYT", "EC",
-	"EL", "GA", "SB", "WILL", "WONT", "DO", "DONT", "IAC", 0,
+	"EL", "GA", "SB", "WILL", "WONT", "DO", "DONT", "IAC", 0
 };
 #else
-extern char *telcmds[];
+extern const char *telcmds[];
 #endif
 
 #define	TELCMD_FIRST	xEOF
@@ -117,12 +117,22 @@ extern char *telcmds[];
 #define	TELOPT_AUTHENTICATION 37/* Authenticate */
 #define	TELOPT_ENCRYPT	38	/* Encryption option */
 #define TELOPT_NEW_ENVIRON 39	/* New - Environment variables */
+#define	TELOPT_TN3270E	40	/* RFC2355 - TN3270 Enhancements */
+#define	TELOPT_CHARSET	42	/* RFC2066 - Charset */
+#define	TELOPT_COMPORT	44	/* RFC2217 - Com Port Control */
+#define	TELOPT_KERMIT	47	/* RFC2840 - Kermit */
 #define	TELOPT_EXOPL	255	/* extended-options-list */
 
 
-#define	NTELOPTS	(1+TELOPT_NEW_ENVIRON)
+#define	TELOPT_FIRST	TELOPT_BINARY
+#define	TELOPT_LAST	TELOPT_KERMIT
+#define	TELOPT_OK(x)	((unsigned int)(x) <= TELOPT_LAST)
+#define	TELOPT(x)	telopts[(x)-TELOPT_FIRST]
+
+#define	NTELOPTS	(1+TELOPT_LAST)
+
 #ifdef TELOPTS
-char *telopts[NTELOPTS+1] = {
+const char *telopts[NTELOPTS+1] = {
 	"BINARY", "ECHO", "RCP", "SUPPRESS GO AHEAD", "NAME",
 	"STATUS", "TIMING MARK", "RCTE", "NAOL", "NAOP",
 	"NAOCRD", "NAOHTS", "NAOHTD", "NAOFFD", "NAOVTS",
@@ -132,13 +142,10 @@ char *telopts[NTELOPTS+1] = {
 	"TACACS UID", "OUTPUT MARKING", "TTYLOC",
 	"3270 REGIME", "X.3 PAD", "NAWS", "TSPEED", "LFLOW",
 	"LINEMODE", "XDISPLOC", "OLD-ENVIRON", "AUTHENTICATION",
-	"ENCRYPT", "NEW-ENVIRON",
-	0,
+	"ENCRYPT", "NEW-ENVIRON", "TN3270E", "CHARSET", "COM-PORT",
+	"KERMIT",
+	0
 };
-#define	TELOPT_FIRST	TELOPT_BINARY
-#define	TELOPT_LAST	TELOPT_NEW_ENVIRON
-#define	TELOPT_OK(x)	((unsigned int)(x) <= TELOPT_LAST)
-#define	TELOPT(x)	telopts[(x)-TELOPT_FIRST]
 #endif
 
 /* sub-option qualifiers */
@@ -219,7 +226,7 @@ char *telopts[NTELOPTS+1] = {
  			"MCL", "MCR", "MCWL", "MCWR", "MCBOL",		\
  			"MCEOL", "INSRT", "OVER", "ECR", "EWR",		\
  			"EBOL", "EEOL",					\
- 			0,
+ 			0
 
 #ifdef	SLC_NAMES
 char *slc_names[] = {
@@ -284,16 +291,18 @@ extern char *slc_names[];
 #define	AUTHTYPE_KERBEROS_V5	2
 #define	AUTHTYPE_SPX		3
 #define	AUTHTYPE_MINK		4
-#define	AUTHTYPE_CNT		5
+#define	AUTHTYPE_SRA		6
+#define	AUTHTYPE_CNT		7
 
 #define	AUTHTYPE_TEST		99
 
 #ifdef	AUTH_NAMES
-char *authtype_names[] = {
-	"NULL", "KERBEROS_V4", "KERBEROS_V5", "SPX", "MINK", 0,
+const char *authtype_names[] = {
+	"NULL", "KERBEROS_V4", "KERBEROS_V5", "SPX", "MINK", NULL, "SRA",
+	0
 };
 #else
-extern char *authtype_names[];
+extern const char *authtype_names[];
 #endif
 
 #define	AUTHTYPE_NAME_OK(x)	((unsigned int)(x) < AUTHTYPE_CNT)
@@ -319,17 +328,18 @@ extern char *authtype_names[];
 #define	ENCTYPE_CNT		3
 
 #ifdef	ENCRYPT_NAMES
-char *encrypt_names[] = {
+const char *encrypt_names[] = {
 	"IS", "SUPPORT", "REPLY", "START", "END",
 	"REQUEST-START", "REQUEST-END", "ENC-KEYID", "DEC-KEYID",
-	0,
+	0
 };
-char *enctype_names[] = {
-	"ANY", "DES_CFB64",  "DES_OFB64",  0,
+const char *enctype_names[] = {
+	"ANY", "DES_CFB64",  "DES_OFB64",
+	0
 };
 #else
-extern char *encrypt_names[];
-extern char *enctype_names[];
+extern const char *encrypt_names[];
+extern const char *enctype_names[];
 #endif
 
 
