@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/05/05 20:13:31 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6 2000/05/05 21:35:51 mycroft Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,5 +11,6 @@ KERN!=	cd $(.CURDIR)/../ramdisk-kernel/; \
 
 DISKTYPE=	floppy5
 DISKSIZE=	2400
+BLOCK8K=	149
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
