@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.16 1997/10/21 06:40:40 mrg Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.17 1998/03/30 03:33:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,6 @@ editit(tmpfile)
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
  top:
 	if ((pid = fork()) < 0) {
-		extern errno;
 
 		if (errno == EPROCLIM) {
 			warnx("You have too many processes");
