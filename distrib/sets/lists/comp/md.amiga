@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.42 2001/04/15 17:14:26 kleink Exp $
+# $NetBSD: md.amiga,v 1.43 2001/09/19 16:40:52 thorpej Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -15,7 +15,6 @@
 ./usr/include/amiga/elf_machdep.h	comp-c-include
 ./usr/include/amiga/endian.h	comp-c-include
 ./usr/include/amiga/endian_machdep.h	comp-c-include
-./usr/include/amiga/fbio.h	comp-c-include
 ./usr/include/amiga/float.h	comp-c-include
 ./usr/include/amiga/frame.h	comp-c-include
 ./usr/include/amiga/ieee.h	comp-c-include
