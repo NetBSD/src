@@ -1,4 +1,4 @@
-.\" $NetBSD: rpc.bootparamd.8,v 1.11 1999/09/12 18:47:12 kleink Exp $
+.\" $NetBSD: rpc.bootparamd.8,v 1.12 2002/02/02 01:42:22 wiz Exp $
 .\" @(#)bootparamd.8
 .Dd January 8, 1994
 .Dt BOOTPARAMD 8
@@ -47,7 +47,6 @@ This defaults to the machine running the server.
 Specify the file to use as boot parameter file instead of
 .Dq Pa /etc/bootparams .
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/bootparams -compact
 .It Pa /etc/bootparams
@@ -55,9 +54,9 @@ default configuration file
 .El
 .Sh SEE ALSO
 .Xr bootparams 5
+.Sh AUTHORS
+Originally written by Klas Heggemann <klas@nada.kth.se>
 .Sh BUGS
 You may find the syslog messages too verbose.
 .Pp
 It's not clear if the non-canonical hack mentioned above is a good idea.
-.Sh AUTHOR
-Originally written by Klas Heggemann <klas@nada.kth.se>
