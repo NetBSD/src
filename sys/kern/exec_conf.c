@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.39 1999/12/30 15:57:31 eeh Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.40 2000/01/02 13:39:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -52,14 +52,12 @@
 /*#include <sys/exec_aout.h> -- automatically pulled in */
 #endif
 
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
+#ifdef EXEC_COFF
+#include <sys/exec_coff.h>
 #endif
 
-#ifdef __sh3__ /* XXX */
-#ifdef EXEC_COFF
-#include <machine/exec_coff.h>
-#endif
+#ifdef EXEC_ECOFF
+#include <sys/exec_ecoff.h>
 #endif
 
 #if defined(EXEC_ELF32) || defined(EXEC_ELF64)
@@ -127,13 +125,11 @@ struct execsw execsw[] = {
 	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
 # endif
 #endif
-#ifdef EXEC_ECOFF
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
-#endif
-#ifdef __sh3__ /* XXX */
 #ifdef EXEC_COFF
 	{ COFF_HDR_SIZE, exec_coff_makecmds, },		/* coff binaries */
 #endif
+#ifdef EXEC_ECOFF
+	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
 #ifdef EXEC_ELF32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds, },	/* 32bit ELF bins */
