@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.10 2003/12/11 18:33:03 matt Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.11 2004/01/06 12:41:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #endif
 
 #include <machine/signal.h>	/* XXX: __HAVE_SIGINFO */
+#ifdef _KERNEL
 #include <sys/queue.h>
+#endif
 
 typedef union sigval {
 	int	sival_int;
