@@ -1,3 +1,4 @@
-# $NetBSD: md.mac68k,v 1.35 2002/07/09 05:57:34 dbj Exp $
+# $NetBSD: md.mac68k,v 1.36 2002/08/29 01:30:41 lukem Exp $
+./rescue/pdisk		base-rescue-root
 ./sbin/pdisk		base-sysutil-root
 ./usr/lkm/iwmfd.o	base-sys-lkm

@@ -1,3 +1,4 @@
-# $NetBSD: md.shark,v 1.1 2002/02/11 19:10:56 thorpej Exp $
+# $NetBSD: md.shark,v 1.2 2002/08/29 01:30:44 lukem Exp $
+./rescue/ldconfig		base-rescue-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/libexec/ld.so		base-sys-shlib
