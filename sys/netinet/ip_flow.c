@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.16 2000/06/30 19:43:53 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.17 2001/04/13 23:30:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ ipflow_free(
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	s = splimp();
+	s = splnet();
 	IPFLOW_REMOVE(ipf);
 	splx(s);
 	ipflow_addstats(ipf);
@@ -307,7 +307,7 @@ ipflow_reap(
 		/*
 		 * Remove the entry from the flow table.
 		 */
-		s = splimp();
+		s = splnet();
 		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
@@ -374,7 +374,7 @@ ipflow_create(
 		}
 		bzero((caddr_t) ipf, sizeof(*ipf));
 	} else {
-		s = splimp();
+		s = splnet();
 		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
@@ -397,7 +397,7 @@ ipflow_create(
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
-	s = splimp();
+	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.40 2001/04/08 02:10:57 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.41 2001/04/13 23:30:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -493,7 +493,7 @@ USB_ATTACH(kue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * A KLSI chip was detected. Inform the world.
@@ -760,7 +760,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	s = splimp();
+	s = splnet();
 
 	/* XXX ugly */
 	if (kue_newbuf(sc, c, NULL) == ENOBUFS) {
@@ -813,7 +813,7 @@ kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->kue_dying)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->kue_dev),
 		    __FUNCTION__, status));
@@ -945,7 +945,7 @@ kue_init(void *xsc)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 #if defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
@@ -1064,7 +1064,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	}
 #endif
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:

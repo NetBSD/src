@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -215,7 +215,7 @@ priq_class_create(pif, pri, qlimit, flags)
 
 	if ((cl = pif->pif_classes[pri]) != NULL) {
 		/* modify the class instead of creating a new one */
-		s = splimp();
+		s = splnet();
 		if (!qempty(cl->cl_q))
 			priq_purgeq(cl);
 		splx(s);
@@ -315,7 +315,7 @@ priq_class_destroy(cl)
 	struct priq_if *pif;
 	int s, pri;
 
-	s = splimp();
+	s = splnet();
 
 	/* delete filters referencing to this class */
 	acc_discard_filters(&cl->cl_pif->pif_classifier, cl, 0);

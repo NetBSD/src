@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.22 2001/03/15 23:01:33 enami Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.23 2001/04/13 23:30:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -559,7 +559,7 @@ fwohci_power(int why, void *arg)
 	struct fwohci_softc *sc = arg;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -647,7 +647,7 @@ fwohci_phy_busreset(struct fwohci_softc *sc)
 	int s;
 	u_int8_t val;
 
-	s = splimp();
+	s = splnet();
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
 	    OHCI_Int_BusReset | OHCI_Int_SelfIDComplete);
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet, OHCI_Int_BusReset);
@@ -2325,7 +2325,7 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	fwohci_handler_set(sc, IEEE1394_TCODE_WRITE_REQ_BLOCK, offhi, offlo, 
 	    fwohci_if_input, handler);
 	fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
@@ -2523,7 +2523,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	pkt.fp_uio.uio_iov = pkt.fp_iov;
 	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
 	pkt.fp_uio.uio_rw = UIO_WRITE;
-	s = splimp();
+	s = splnet();
 	if (m0->m_flags & (M_BCAST | M_MCAST)) {
 		/* construct GASP header */
 		p = mtod(m0, u_int8_t *);

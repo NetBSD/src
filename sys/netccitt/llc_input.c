@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.9 2000/03/30 13:53:33 augustss Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.10 2001/04/13 23:30:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -91,7 +91,7 @@ llcintr()
 	struct rtentry *nlrt;
 
 	for (;;) {
-		i = splimp();
+		i = splnet();
 		IF_DEQUEUE(&llcintrq, m);
 		splx(i);
 		if (m == 0)
@@ -438,7 +438,7 @@ llc_ctlinput(prc, addr, info)
 			while (LQVALID(linkp)) {
 				nlinkp = LQNEXT(linkp);
 				if ((linkp->llcl_if = ifp) != NULL) {
-					i = splimp();
+					i = splnet();
 					(void)llc_statehandler(linkp, (struct llc *)0,
 							       NL_DISCONNECT_REQUEST,
 							       0, 1);
@@ -456,7 +456,7 @@ llc_ctlinput(prc, addr, info)
 						 pcb, llrt)) == 0)
 				return (0);
 			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
-			i = splimp();
+			i = splnet();
 			(void)llc_statehandler(linkp, (struct llc *) 0,
 						NL_CONNECT_REQUEST, 0, 1);
 			splx(i);
@@ -467,7 +467,7 @@ llc_ctlinput(prc, addr, info)
 		if (linkp == 0) 
 			panic("no link control block!");
 
-		i = splimp();
+		i = splnet();
 		(void)llc_statehandler(linkp, (struct llc *) 0,
 				       NL_DISCONNECT_REQUEST, 0, 1);
 		splx(i);
@@ -482,7 +482,7 @@ llc_ctlinput(prc, addr, info)
 		if (linkp == 0) 
 			panic("no link control block!");
 
-		i = splimp();
+		i = splnet();
 		(void)llc_statehandler(linkp, (struct llc *) 0,
 				       NL_RESET_REQUEST, 0, 1);
 		splx(i);

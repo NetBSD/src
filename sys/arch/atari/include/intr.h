@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/01/14 02:00:39 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:29:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #define splbio()		_splraise(PSL_S|PSL_IPL3)
 #define splnet()		_splraise(PSL_S|PSL_IPL3)
 #define spltty()		_splraise(PSL_S|PSL_IPL4)
-#define splimp()		_splraise(PSL_S|PSL_IPL4)
 #define splvm()			_splraise(PSL_S|PSL_IPL4)
 
 #define spllpt()		spltty()

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.20 2000/03/30 13:02:56 augustss Exp $	*/
+/*	$NetBSD: ns.c,v 1.21 2001/04/13 23:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -270,7 +270,7 @@ ns_ifinit(ifp, ia, sns, scrub)
 {
 	struct sockaddr_ns oldaddr;
 	union ns_host *h = &ia->ia_addr.sns_addr.x_host;
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	/*
 	 * Set up new addresses.

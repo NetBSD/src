@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.73 2001/03/31 00:35:23 enami Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.74 2001/04/13 23:30:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -515,7 +515,7 @@ slstart(tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_SLIP);
 	splx(s);
     }
@@ -647,7 +647,7 @@ slinput(c, tp)
 		softintr_schedule(sc->sc_si);
 #else
 	    {
-		int s = splimp();
+		int s = splhigh();
 		schednetisr(NETISR_SLIP);
 		splx(s);
 	    }
@@ -993,7 +993,7 @@ slintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_if.if_lastchange = time;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.11 2001/04/12 19:16:06 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.12 2001/04/13 23:30:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -115,7 +115,6 @@ do {								\
 #define splbio()	_splraise(IPL_BIO)		/* IPL15 */
 #define splnet()	_splraise(IPL_NET)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
-#define splimp()	_splraise(IPL_IMP)		/* IPL17 */
 #define splvm()		_splraise(IPL_IMP)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
 #define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */

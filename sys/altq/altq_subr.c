@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.4 2000/12/14 18:08:09 thorpej Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.5 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_subr.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ altq_enable(ifq)
 	if (ALTQ_IS_ENABLED(ifq))
 		return 0;
 
-	s = splimp();
+	s = splnet();
 	IFQ_PURGE(ifq);
 	ASSERT(ifq->ifq_len == 0);
 	ifq->altq_flags |= ALTQF_ENABLED;
@@ -213,7 +213,7 @@ altq_disable(ifq)
 	if (!ALTQ_IS_ENABLED(ifq))
 		return 0;
 
-	s = splimp();
+	s = splnet();
 	IFQ_PURGE(ifq);
 	ASSERT(ifq->ifq_len == 0);
 	ifq->altq_flags &= ~(ALTQF_ENABLED|ALTQF_CLASSIFY);
@@ -359,7 +359,7 @@ tbr_timeout(arg)
 	int active, s;
 
 	active = 0;
-	s = splimp();
+	s = splnet();
 #ifdef __FreeBSD__
 #if (__FreeBSD_version < 300000)
 	for (ifp = ifnet; ifp; ifp = ifp->if_next)
@@ -830,7 +830,7 @@ acc_add_filter(classifier, filter, class, phandle)
 	 * add this filter to the filter list.
 	 * filters are ordered from the highest rule number.
 	 */
-	s = splimp();
+	s = splnet();
 	prev = NULL;
 	LIST_FOREACH(tmp, &classifier->acc_filters[i], f_chain) {
 		if (tmp->f_filter.ff_ruleno > afp->f_filter.ff_ruleno)
@@ -859,7 +859,7 @@ acc_delete_filter(classifier, handle)
 	if ((afp = filth_to_filtp(classifier, handle)) == NULL)
 		return (EINVAL);
 
-	s = splimp();
+	s = splnet();
 	LIST_REMOVE(afp, f_chain);
 	splx(s);
 
@@ -883,7 +883,7 @@ acc_discard_filters(classifier, class, all)
 	struct acc_filter *afp;
 	int	i, s;
 
-	s = splimp();
+	s = splnet();
 	for (i = 0; i < ACC_FILTER_TABLESIZE; i++) {
 		do {
 			LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)

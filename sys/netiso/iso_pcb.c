@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.19 2000/03/30 13:10:11 augustss Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.20 2001/04/13 23:30:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -582,7 +582,7 @@ iso_pcbdetach(v)
  *
  * SIDE EFFECTS:
  *
- * NOTES:		(notify) is called at splimp!
+ * NOTES:		(notify) is called at splnet!
  */
 void
 iso_pcbnotify(head, siso, errno, notify)
@@ -592,7 +592,7 @@ iso_pcbnotify(head, siso, errno, notify)
 	void (*notify) __P((struct isopcb *));
 {
 	struct isopcb *isop;
-	int             s = splimp();
+	int             s = splnet();
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {

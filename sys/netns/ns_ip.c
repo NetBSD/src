@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.27 2001/01/17 00:30:53 thorpej Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.28 2001/04/13 23:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -254,7 +254,7 @@ idpip_input(va_alist)
 	/*
 	 * Deliver to NS
 	 */
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

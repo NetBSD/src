@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 2001/02/22 07:11:09 chs Exp $	*/
+/*	$NetBSD: psl.h,v 1.19 2001/04/13 23:30:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@ _getsr(void)
  * initialization, and later at spl0, so we have to 
  * use splraise to avoid enabling interrupts early.
  */
-#define splimp()        _splraise(PSL_S|PSL_IPL4)
 #define splvm()         _splraise(PSL_S|PSL_IPL4)
 
 /* Intersil clock hardware interrupts (hard-wired at 5) */

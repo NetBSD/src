@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.40 2001/01/15 20:19:51 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.41 2001/04/13 23:29:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,6 @@ _splraise(int s)
 #define splsoftnet()		splsoft()
 #define splnet()		_splraise(ALPHA_PSL_IPL_IO)
 #define splbio()		_splraise(ALPHA_PSL_IPL_IO)
-#define splimp()		_splraise(ALPHA_PSL_IPL_IO)
 #define splvm()			_splraise(ALPHA_PSL_IPL_IO)
 #define spltty()		_splraise(ALPHA_PSL_IPL_IO)
 #define splserial()		_splraise(ALPHA_PSL_IPL_IO)

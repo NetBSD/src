@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.4 2000/03/23 07:03:27 thorpej Exp $	 */
+/*	$NetBSD: at_control.c,v 1.5 2001/04/13 23:30:18 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -386,7 +386,7 @@ at_ifinit(ifp, aa, sat)
 {
 	struct netrange nr, onr;
 	struct sockaddr_at oldaddr;
-	int             s = splimp(), error = 0, i, j;
+	int             s = splnet(), error = 0, i, j;
 	int             netinc, nodeinc, nnets;
 	u_short         net;
 

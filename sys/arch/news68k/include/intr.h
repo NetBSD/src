@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2001/01/14 02:00:41 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2001/04/13 23:30:01 thorpej Exp $	*/
 
 /*
  *
@@ -56,7 +56,6 @@
 #define	splbio()	splraise4()
 #define	splnet()	splraise4()
 #define	spltty()	splraise5()
-#define	splimp()	splraise5()
 #define	splvm()		splraise5()
 #define	splserial()     splraise5()
 #define	splclock()	splraise6()

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.25 2001/03/22 06:21:43 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.26 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,7 +364,6 @@ _SPLRAISE(spltty, PIL_TTY)
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
-_SPLRAISE(splimp, 7)
 _SPLRAISE(splvm, 7)
 
 /* clock interrupts at level 10 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9 2001/01/17 19:08:59 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.10 2001/04/13 23:30:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (m0 == NULL)
 		senderr(ENOBUFS);
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 		splx(s);
@@ -399,7 +399,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/01/14 02:00:41 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:30:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -91,7 +91,6 @@ extern void _clrsoftintr __P((int));
 #define splbio()	_splraise(MIPS_INT_MASK_SPL0)
 #define splnet()	_splraise(MIPS_INT_MASK_SPL1)
 #define spltty()	_splraise(MIPS_INT_MASK_SPL1)
-#define splimp()	_splraise(MIPS_INT_MASK_SPL1)
 #define splvm()		_splraise(MIPS_INT_MASK_SPL1)
 #define splclock()	_splraise(MIPS_INT_MASK_SPL2)
 #define splstatclock()	_splraise(MIPS_INT_MASK_SPL2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2001/02/18 19:08:16 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2001/04/13 23:29:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -212,7 +212,6 @@ softintr(ipl)
 /*
  * Miscellaneous
  */
-#define splimp()	splraise(imask[IPL_IMP])
 #define splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()

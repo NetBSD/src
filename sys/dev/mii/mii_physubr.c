@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.19 2001/04/13 11:12:36 augustss Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ mii_phy_statusmsg(sc)
 	}
 
 	if (announce) {
-		s = splimp();	/* XXX Should be splnet() */
+		s = splnet();
 		rt_ifmsg(ifp);
 		splx(s);
 	}

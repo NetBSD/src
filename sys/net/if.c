@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.87 2001/04/10 21:45:39 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.88 2001/04/13 23:30:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splimp();
+	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFAFREE(ifa);
@@ -431,7 +431,7 @@ if_deactivate(ifp)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->if_input	 = if_nullinput;
@@ -475,7 +475,7 @@ if_detach(ifp)
 	 */
 	memset(&so, 0, sizeof(so));
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -1032,7 +1032,7 @@ if_slowtimo(arg)
 	void *arg;
 {
 	struct ifnet *ifp;
-	int s = splimp();
+	int s = splnet();
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1180,12 +1180,12 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -1315,7 +1315,7 @@ ifioctl(so, cmd, data, p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splimp();
+			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
 		}

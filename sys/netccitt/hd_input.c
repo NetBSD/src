@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.14 2000/03/30 13:53:33 augustss Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.15 2001/04/13 23:30:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -79,7 +79,7 @@ hdintr()
 	static struct hdcb *lasthdp;
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&hdintrq, m);
 		splx(s);
 		if (m == 0)
