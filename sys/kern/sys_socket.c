@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
- *	$Id: sys_socket.c,v 1.7 1994/04/25 08:09:59 mycroft Exp $
+ *	from: @(#)sys_socket.c	8.1 (Berkeley) 6/10/93
+ *	$Id: sys_socket.c,v 1.8 1994/05/11 10:26:49 mycroft Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
