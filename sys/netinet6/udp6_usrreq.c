@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.59 2003/09/06 03:12:55 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.60 2003/10/25 08:26:14 christos Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.59 2003/09/06 03:12:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.60 2003/10/25 08:26:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -181,6 +181,7 @@ udp6_ctlinput(cmd, sa, d)
 		ip6 = NULL;
 		cmdarg = NULL;
 		sa6_src = &sa6_any;
+		off = 0;
 	}
 
 	if (ip6) {

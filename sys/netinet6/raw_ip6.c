@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.61 2003/09/06 03:12:54 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.62 2003/10/25 08:26:14 christos Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.61 2003/09/06 03:12:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.62 2003/10/25 08:26:14 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -428,6 +428,9 @@ rip6_output(m, va_alist)
 		icmp6 = mtod(m, struct icmp6_hdr *);
 		type = icmp6->icmp6_type;
 		code = icmp6->icmp6_code;
+	} else {
+		type = 0;
+		code = 0;
 	}
 
 	M_PREPEND(m, sizeof(*ip6), M_DONTWAIT);
