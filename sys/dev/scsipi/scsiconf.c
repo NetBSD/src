@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.11 2001/04/11 01:16:04 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.12 2001/04/11 01:19:47 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ scsibusattach(parent, self, aux)
 	sc->sc_channel = chan;
 
 	/* Initialize the channel structure first */
-	if (scsipi_channel_init(chan) == 0) {
+	if (scsipi_channel_init(chan)) {
 		printf(": failed to init channel\n");
 		return;
 	}
