@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.24 2000/04/27 22:12:36 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.25 2000/04/28 06:51:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.24 2000/04/27 22:12:36 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.25 2000/04/28 06:51:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -780,7 +780,6 @@ quickch(void)
 	u_int	blank_hash;
 	attr_t	bcolor;
 
-return;
 #ifdef __GNUC__
 	curs = curw = starts = startw = 0;	/* XXX gcc -Wuninitialized */
 #endif
