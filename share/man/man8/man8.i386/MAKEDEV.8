@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$Id: MAKEDEV.8,v 1.2 1993/08/01 07:34:51 mycroft Exp $
+.\"	$Id: MAKEDEV.8,v 1.3 1994/12/28 23:34:56 cgd Exp $
 .\"
 .TH MAKEDEV 8 "March 22, 1991"
 .UC 7
@@ -75,6 +75,11 @@ standard PC COM ports
 .br
 .ns
 .TP 10
+cd#
+SCSI CD-ROM drives
+.br
+.ns
+.TP 10
 fd#
 ``floppy'' disk drives (3 1/2, 5 1/4)
 .br
@@ -87,6 +92,16 @@ kernel logging device
 .TP 10
 pty#
 set of 16 master and slave pseudo terminals
+.br
+.ns
+.TP 10
+sd#
+SCSI disk drives
+.br
+.ns
+.TP 10
+st#
+SCSI tape drives
 .br
 .ns
 .TP 10
