@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.3 2001/05/03 02:09:11 minoura Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.4 2001/10/16 04:36:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -43,6 +43,7 @@
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 #include <dev/auconv.h>
+#include <dev/mulaw.h>
 #include <dev/ic/msm6258var.h>
 
 
@@ -99,7 +100,7 @@ pcm2adpcm_step(short a, short *y, char *x)
 	register unsigned char b;
 
 	a -= *y;
-	d = adpcm_estim[*x];
+	d = adpcm_estim[(int) *x];
 	c = a * 4 * 1000;
 	c /= d;
 
@@ -149,7 +150,7 @@ msm6258_mulaw_to_adpcm(void *hdl, u_char *p, int cc)
 static inline void
 adpcm2pcm_step(u_char b, short *y, char *x)
 {
-	*y += (short)(adpcm_estimindex[b] * adpcm_estim[*x]);
+	*y += (short)(adpcm_estimindex[b] * adpcm_estim[(int) *x]);
 	*x += adpcm_estimindex_correct[b];
 	if (*x < 0)
 		*x = 0;
