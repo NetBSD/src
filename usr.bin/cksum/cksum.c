@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.15 2001/03/21 03:16:38 atatat Exp $	*/
+/*	$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -38,16 +38,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.15 2001/03/21 03:16:38 atatat Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
