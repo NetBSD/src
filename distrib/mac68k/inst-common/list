@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.1 1995/07/18 04:13:21 briggs Exp $
+#	$NetBSD: list,v 1.2 1995/08/13 13:21:07 briggs Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -31,6 +31,7 @@ LINK	raminst			sbin/init
 LINK	raminst			sbin/mknod
 LINK	raminst			sbin/mount
 LINK	raminst			sbin/mount_cd9660
+LINK	raminst			sbin/mount_ffs
 LINK	raminst			sbin/mount_nfs
 LINK	raminst			sbin/newfs
 LINK	raminst			sbin/reboot
