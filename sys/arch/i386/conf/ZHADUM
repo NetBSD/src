@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.9 1998/08/11 00:32:05 thorpej Exp $
+#	$NetBSD: ZHADUM,v 1.10 1998/08/31 03:54:33 thorpej Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -52,6 +52,9 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	UVM		# New UVM VM system
+#options 	PMAP_NEW	# UVM's new pmap interface
+
 # Need a large message buffer; machine has lots of hardware.
 options 	MSGBUFSIZE=32768
 
@@ -62,7 +65,7 @@ options 	NMBCLUSTERS=1024
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB		# remote debugger
@@ -397,10 +400,10 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # MII/PHY support
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
+#nsphy*	at mii? phy ?			# NS83840 PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
 # Audio Devices
 
