@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.49 2002/07/11 21:14:26 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.49 2002/07/11 21:14:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -385,12 +385,11 @@ allmulti:
 Static void
 kue_reset(struct kue_softc *sc)
 {
-	usbd_status		err;
-
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __func__));
 
-	err = usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 1);
-	if (err)
+	if (usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 1) ||
+	    usbd_device2interface_handle(sc->kue_udev, KUE_IFACE_IDX,
+					 &sc->kue_iface))
 		printf("%s: reset failed\n", USBDEVNAME(sc->kue_dev));
 
 	/* Wait a little while for the chip to get its brains in order. */
