@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2004/07/05 07:28:45 pk Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2004/08/28 12:32:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/07/05 07:28:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/08/28 12:32:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,14 +38,20 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/07/05 07:28:45 pk Exp $");
 
 #include <dev/ic/mc146818reg.h>
 
-void	cpu_initclocks(void);
-void	inittodr(time_t);
-void	resettodr(void);
-void	setstatclockrate(int);
+#include <cobalt/cobalt/clockvar.h>
+
+void (*timer_start)(void *);
+long (*timer_read)(void *);
+void *timer_cookie;
 
 void
 cpu_initclocks()
 {
+
+	/* start timer */
+	if (timer_start == NULL)
+		panic("cpu_initclocks(): no timer configured");
+	(*timer_start)(timer_cookie);
 
 	return;
 }
@@ -131,4 +137,33 @@ setstatclockrate(arg)
 	/* XXX */
 
 	return;
+}
+
+void
+microtime(struct timeval *tvp)
+{
+	int s;
+	static struct timeval lasttime;
+
+	s = splclock();
+
+	*tvp = time;
+
+	if (timer_read)
+		tvp->tv_usec += (*timer_read)(timer_cookie);
+
+	if (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
+	}
+
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+
+	lasttime = *tvp;
+	splx(s);
 }
