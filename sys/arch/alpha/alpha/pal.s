@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.11 1997/11/03 04:22:03 ross Exp $ */
+/* $NetBSD: pal.s,v 1.12 1998/02/27 03:44:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.11 1997/11/03 04:22:03 ross Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.12 1998/02/27 03:44:53 thorpej Exp $");
 
 inc2:	.stabs	__FILE__,132,0,0,inc2; .loc	1 __LINE__
 /*
@@ -330,3 +330,19 @@ LEAF(alpha_pal_wrval,1)
 	call_pal PAL_OSF1_wrval
 	RET
 	END(alpha_pal_wrval)
+
+/*
+ * alpha_pal_swpctx: Swap context. [PRIVILEGED]
+ *
+ * Switch to a new process context.
+ *
+ * Arguments:
+ *	a0	physical address of hardware PCB describing context
+ *
+ * Returns:
+ *	v0	physical address of hardware PCB describing previous context
+ */
+LEAF(alpha_pal_swpctx,1)
+	call_pal PAL_OSF1_swpctx
+	RET
+	END(alpha_pal_swpctx)
