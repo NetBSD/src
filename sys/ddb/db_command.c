@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.38 2000/04/13 22:48:29 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.39 2000/05/15 19:56:43 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -469,6 +469,7 @@ struct db_command db_command_table[] = {
 #endif
 	{ "match",	db_trace_until_matching_cmd,0,		NULL },
 	{ "next",	db_trace_until_matching_cmd,0,		NULL },
+	{ "p",		db_print_cmd,		0,		NULL },
 	{ "print",	db_print_cmd,		0,		NULL },
 	{ "ps",		db_show_all_procs,	0,		NULL },
 	{ "reboot",	db_reboot_cmd,		CS_OWN,		NULL },
