@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2000/08/01 00:31:16 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ define	CF_OLDPIL	offsetof(struct clockframe, oldpil)
 define	CF_FP		offsetof(struct clockframe, fp)
 endif
 
-# interrupt handler fields */
+# interrupt handler fields
 define	IH_FUN		offsetof(struct intrhand, ih_fun)
 define	IH_ARG		offsetof(struct intrhand, ih_arg)
 define	IH_NUMBER	offsetof(struct intrhand, ih_number)
@@ -236,6 +236,11 @@ define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
 	
+# mbuf fields of import
+define	M_NEXT		offsetof(struct mbuf, m_next)
+define	M_DATA		offsetof(struct mbuf, m_data)
+define	M_LEN		offsetof(struct mbuf, m_len)
+
 # floppy trap handler fields
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
 define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
