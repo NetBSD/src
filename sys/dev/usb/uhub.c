@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.60 2002/09/27 20:42:00 thorpej Exp $	*/
+/*	$NetBSD: uhub.c,v 1.61 2002/10/01 01:25:25 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.60 2002/09/27 20:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.61 2002/10/01 01:25:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +102,8 @@ Static bus_child_detached_t uhub_child_detached;
 USB_DECLARE_DRIVER(uhub);
 
 /* Create the driver instance for the hub connected to hub case */
-const struct cfattach uhub_uhub_ca = {
-	sizeof(struct uhub_softc), uhub_match, uhub_attach,
-	uhub_detach, uhub_activate
-};
+CFATTACH_DECL(uhub_uhub, sizeof(struct uhub_softc),
+    uhub_match, uhub_attach, uhub_detach, uhub_activate)
 #elif defined(__FreeBSD__)
 USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));

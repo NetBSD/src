@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.43 2002/09/27 20:42:05 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.44 2002/10/01 01:28:04 thorpej Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.43 2002/09/27 20:42:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.44 2002/10/01 01:28:04 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -193,13 +193,11 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  * cfattach's: device driver interface to autoconfig
  */
 
-const struct cfattach xyc_ca = {
-	sizeof(struct xyc_softc), xycmatch, xycattach
-};
+CFATTACH_DECL(xyc, sizeof(struct xyc_softc),
+    xycmatch, xycattach, NULL, NULL)
 
-const struct cfattach xy_ca = {
-	sizeof(struct xy_softc), xymatch, xyattach
-};
+CFATTACH_DECL(xy, sizeof(struct xy_softc),
+    xymatch, xyattach, NULL, NULL)
 
 extern struct cfdriver xy_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.43 2002/09/27 20:42:04 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.44 2002/10/01 01:28:03 thorpej Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.43 2002/09/27 20:42:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.44 2002/10/01 01:28:03 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -278,14 +278,11 @@ void xdc_md_setup()
  * cfattach's: device driver interface to autoconfig
  */
 
-const struct cfattach xdc_ca = {
-	sizeof(struct xdc_softc), xdcmatch, xdcattach
-};
+CFATTACH_DECL(xdc, sizeof(struct xdc_softc),
+    xdcmatch, xdcattach, NULL, NULL)
 
-
-const struct cfattach xd_ca = {
-	sizeof(struct xd_softc), xdmatch, xdattach
-};
+CFATTACH_DECL(xd, sizeof(struct xd_softc),
+    xdmatch, xdattach, NULL, NULL)
 
 extern struct cfdriver xd_cd;
 
