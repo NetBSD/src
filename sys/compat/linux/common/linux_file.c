@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.49 2002/03/24 00:32:34 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.50 2002/03/24 15:12:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.49 2002/03/24 00:32:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.50 2002/03/24 15:12:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,6 +421,7 @@ linux_sys_fcntl(p, v, retval)
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
+		/* FILE_USE() not needed here */
 		if (fp->f_type != DTYPE_VNODE) {
 	    notty:
 			/* Not a tty, proceed with common fcntl() */
