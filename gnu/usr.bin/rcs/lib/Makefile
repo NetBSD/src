@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/25 10:12:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 1998/03/26 13:56:42 tv Exp $
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
 CPPFLAGS+=-DFSYNC_ALL
 
 # If you wish to use a different Id token in addition to Id,
-# uncomment the following line and edit to taste.
-#CPPFLAGS+=-DLOCALID=\"Foo\"
+# set the variable RCS_LOCALID in mk.conf or environment.
+.if defined(RCS_LOCALID)
+CPPFLAGS+=-DLOCALID=\"${RCS_LOCALID}\"
+.endif
 
 LIB=	rcs
 SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
