@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 1997/04/25 01:50:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 1997/04/25 18:48:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -701,10 +701,10 @@ _Idle_count:
 	.long	0
 	.text
 
-	.globl	Idle
+	.globl	__Idle			| See clock.c
 Lidle:
 	stop	#PSL_LOWIPL
-Idle:
+__Idle:
 	movw	#PSL_HIGHIPL,sr
 	addql	#1, _Idle_count
 	tstl	_whichqs
@@ -745,7 +745,7 @@ Lswchk:
 	addqb	#1,d0
 	cmpb	#32,d0
 	jne	Lswchk
-	jra	Idle
+	jra	__Idle
 Lswfnd:
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	a0@,d1			| and check again...
