@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.2.2.1 1997/10/30 07:17:19 mrg Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2.2.2 1997/11/11 05:47:47 thorpej Exp $	*/
 
 %{
 /*
@@ -50,7 +50,9 @@
 #include "ipf.h"
 #include "iplang.h"
 
+#ifndef __NetBSD__
 extern	struct ether_addr *ether_aton __P((char *));
+#endif
 
 extern	int	opts;
 extern	struct ipopt_names ionames[];
