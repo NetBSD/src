@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.8 2003/09/16 07:56:51 simonb Exp $	*/
+/*	$NetBSD: randomid.c,v 1.9 2003/11/25 18:13:06 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.8 2003/09/16 07:56:51 simonb Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.9 2003/11/25 18:13:06 itojun Exp $");
 #endif
 
 #include "namespace.h"
@@ -130,7 +130,7 @@ struct randomid_ctx {
 	u_int32_t ru_msb;
 
 	u_int32_t ru_x;
-	u_int32_t ru_seed, ru_seed2;
+	u_int32_t ru_seed;
 	u_int32_t ru_a, ru_b;
 	u_int32_t ru_g;
 	long ru_reseed;
@@ -218,7 +218,6 @@ initid(struct randomid_ctx *p)
 
 	/* (bits - 1) bits of random seed */
 	p->ru_seed = arc4random() & (~0U >> (32 - p->ru_bits + 1));
-	p->ru_seed2 = arc4random() & (~0U >> (32 - p->ru_bits + 1));
 
 	/* Determine the LCG we use */
 	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
@@ -319,6 +318,6 @@ randomid(struct randomid_ctx *p)
 
 	p->ru_counter += i;
 
-	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 ^ p->ru_x, p->ru_n)) |
+	return (p->ru_seed ^ pmod(p->ru_g, p->ru_x, p->ru_n)) |
 	    p->ru_msb;
 }
