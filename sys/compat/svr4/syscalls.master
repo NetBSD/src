@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 1998/09/12 00:10:06 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.36 1998/10/04 16:21:58 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -251,7 +251,7 @@
 146	UNIMPL		yield
 147	UNIMPL		lwp_sema_wait
 148	UNIMPL		lwp_sema_post
-149	UNIMPL
+149	UNIMPL		lwp_sema_trywait
 150	UNIMPL
 151	UNIMPL
 152	UNIMPL		modctl
@@ -321,7 +321,7 @@
 206	UNIMPL		schedctl
 207	UNIMPL		pset
 208	UNIMPL
-209	UNIMPL
+209	UNIMPL		resolvepath
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
