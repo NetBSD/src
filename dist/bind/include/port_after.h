@@ -1,4 +1,4 @@
-/*	$NetBSD: port_after.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: port_after.h,v 1.2 2001/01/11 02:39:43 lukem Exp $	*/
 
 #ifndef	PORT_AFTER_H
 #define	PORT_AFTER_H
@@ -14,7 +14,7 @@
 #define SETPWENT_VOID
 #define HAVE_SA_LEN
 #define HAVE_MINIMUM_IFREQ
-#define USE_LOG_CONS
+#undef USE_LOG_CONS
 #define RLIMIT_TYPE rlim_t
 #define RLIMIT_LONGLONG
 #define RLIMIT_FILE_INFINITY
