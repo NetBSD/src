@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 1997/05/31 23:53:25 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.12 1997/06/18 21:09:36 phil Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -222,7 +222,7 @@ ch*|uk*|se*)
 
 cd*)
 	case $i in
-	cd*) name=cd;	unit=${i#cd};	chr=4;	blk=12;;
+	cd*) name=cd;	unit=${i#cd};	chr=12;	blk=4;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
