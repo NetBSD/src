@@ -1,0 +1,14 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:31 garbled Exp $
+
+DATA=`echo $1 | sed -e 's@ @\[^A-Za-z0-9_/\\.-\]\*@g'`
+LIST=`echo $DATA | sed -e 's@,@.*//" | sed -e "s/^@g'`
+LIST=`echo 'sed -e "s/^'$LIST'.*//"'`
+IFS=" "
+HOSTS=`cat /etc/hosts`
+echo $HOSTS | eval "$LIST" >/etc/hosts
+if [ "$?" = "0" ]; then
+	echo "Deleted all selected hosts from /etc/hosts"
+else
+	echo "Failed to delete hosts"
+fi

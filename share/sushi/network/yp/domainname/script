@@ -1,0 +1,14 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:37 garbled Exp $
+
+if [ "$2" = "both" -o "$2" = "boot" ]; then
+	echo "$1" >/etc/defaultdomain
+fi
+if [ "$2" = "both" -o "$2" = "now" ]; then
+	domainname $1
+fi
+if [ "$?" = "0" ]; then
+	echo "Domainname has been changed to $1"
+else
+	echo "Failed to change domainname to $1"
+fi

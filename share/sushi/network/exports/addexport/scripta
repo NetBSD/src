@@ -1,0 +1,10 @@
+#!/bin/sh
+# $NetBSD: scripta,v 1.1 2001/04/25 03:43:28 garbled Exp $
+LIST=`grep "^$1 " /etc/exports | sed -e 's/-network [a-zA-Z0-9.:%/]*//g' \
+  | sed -e 's/-mask [a-zA-Z0-9.:%/]*//g' | sed -e 's/-[a-zA-Z0-9=:]*//g' \
+  | sed -e "s@$1@@"`
+if [ -z "$LIST" ]; then
+	echo
+else
+	echo "$LIST"
+fi
