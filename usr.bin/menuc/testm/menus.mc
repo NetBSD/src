@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.6 1998/06/29 22:21:03 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.7 1998/07/01 07:46:02 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,8 @@
 }
 
 default x=20, y=10;
+
+include dynamic menu;
 
 error action { fprintf (stderr, "Testm: Could not initialize curses.\n");
 	       exit(1); };
@@ -153,6 +155,7 @@ menu submenu, title "  submenu test";
 	option  "upper right", sub menu  upperright;
 	option  "lower left", sub menu  lowerleft;
 	option  "middle, no title", sub menu middle;
+	option  "next menu", next menu nextmenu;
 
 menu upperright, title "upper right", y=2, x=60, no exit;
 	option  "Just Exit!", exit;
@@ -162,6 +165,9 @@ menu lowerleft, title "lower left", y=20, x=2, no exit;
 
 menu middle, no box;
 	option "Just Exit!", exit;
+
+menu nextmenu, title "  A next window! ? for comments", no exit;
+	option "Just Exit!:", exit;
 
 menu scrollit, scrollable, h=4, title "  Scrollable Menu";
 	option "option 1", action {};
