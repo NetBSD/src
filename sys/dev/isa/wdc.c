@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.6.2.2 1997/11/06 22:18:32 mellon Exp $ */
+/*	$NetBSD: wdc.c,v 1.6.2.3 1997/12/24 06:03:24 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -170,6 +170,7 @@ wdcprobe(parent, match, aux)
 				return 0;
 		}
 	}
+	delay(1000);
 	/* reset succeeded. Test registers */
 	if (inb(iobase + wd_cyl_lo) == 0x14 &&
 		inb(iobase + wd_cyl_hi) == 0xeb)
