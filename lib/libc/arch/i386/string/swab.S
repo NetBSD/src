@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: swab.S,v 1.9 1995/04/28 22:58:16 jtc Exp $")
+	RCSID("$NetBSD: swab.S,v 1.10 1999/08/23 08:45:11 kleink Exp $")
 #endif
 
 /*
@@ -27,7 +27,7 @@ ENTRY(swab)
 	shrl	$1,%ecx
 	testl	$7,%ecx			# copy first group of 1 to 7 words
 	jz	L2			# while swaping alternate bytes.
-	.align	2,0x90
+	_ALIGN_TEXT,0x90
 L1:	lodsw
 	rorw	$8,%ax
 	stosw
@@ -37,7 +37,7 @@ L1:	lodsw
 
 L2:	shrl	$3,%ecx			# copy remainder 8 words at a time
 	jz	L4			# while swapping alternate bytes.
-	.align	2,0x90
+	_ALIGN_TEXT,0x90
 L3:	lodsw
 	rorw	$8,%ax
 	stosw
