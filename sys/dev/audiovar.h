@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.5 2004/12/29 13:41:58 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.6 2004/12/29 17:37:47 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,12 +111,12 @@ struct au_mixer_ports {
 	int	index;		/* index of port-selector mixerctl */
 	int	master;		/* index of master mixerctl */
 	int	nports;		/* number of selectable ports */
-	u_char	isenum;		/* selector is enum type */
+	boolean_t isenum;	/* selector is enum type */
 	u_int	allports;	/* all aumasks or'd */
 	u_int	aumask[AUDIO_N_PORTS];	/* exposed value of "ports" */
 	u_int	misel [AUDIO_N_PORTS];	/* ord of port, for selector */
 	u_int	miport[AUDIO_N_PORTS];	/* index of port's mixerctl */
-	u_char	isdual;		/* has working mixerout */
+	boolean_t isdual;	/* has working mixerout */
 	int	mixerout;	/* ord of mixerout, for dual case */
 	int	cur_port;	/* the port that gain actually controls when
 				   mixerout is selected, for dual case */
@@ -126,14 +126,14 @@ struct au_mixer_ports {
  * Software state, per audio device.
  */
 struct audio_softc {
-	struct	device dev;
-	void	*hw_hdl;	/* Hardware driver handle */
+	struct device	dev;
+	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
-	struct	device *sc_dev;	/* Hardware device struct */
-	u_char	sc_open;	/* single use device */
+	struct	device	*sc_dev;	/* Hardware device struct */
+	u_char		sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02
-	u_char	sc_mode;	/* bitmask for RECORD/PLAY */
+	u_char		sc_mode;	/* bitmask for RECORD/PLAY */
 
 	struct	selinfo sc_wsel; /* write selector */
 	struct	selinfo sc_rsel; /* read selector */
@@ -144,16 +144,16 @@ struct audio_softc {
 	} *sc_async_mixer;  /* processes who want mixer SIGIO */
 
 	/* Sleep channels for reading and writing. */
-	int	sc_rchan;
-	int	sc_wchan;
+	int		sc_rchan;
+	int		sc_wchan;
 
-	u_char	sc_blkset;	/* Blocksize has been set */
+	boolean_t	sc_blkset;	/* Blocksize has been set */
 
-	u_char	*sc_sil_start;	/* start of silence in buffer */
-	int	sc_sil_count;	/* # of silence bytes */
+	uint8_t		*sc_sil_start;	/* start of silence in buffer */
+	int		sc_sil_count;	/* # of silence bytes */
 
-	u_char	sc_rbus;	/* input DMA in progress */
-	u_char	sc_pbus;	/* output DMA in progress */
+	boolean_t	sc_rbus;	/* input DMA in progress */
+	boolean_t	sc_pbus;	/* output DMA in progress */
 
 	/**
 	 *  userland
@@ -193,17 +193,17 @@ struct audio_softc {
 	audio_stream_t		sc_rstreams[AUDIO_MAX_FILTERS];
 	audio_params_t		sc_rparams;	/* record encoding parameters */
 
-	int	sc_eof;		/* EOF, i.e. zero sized write, counter */
-	u_long	sc_wstamp;
-	u_long	sc_playdrop;
+	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
+	u_long		sc_wstamp;
+	u_long		sc_playdrop;
 
-	int	sc_full_duplex;	/* device in full duplex mode */
+	int		sc_full_duplex;	/* device in full duplex mode */
 
 	struct	au_mixer_ports sc_inports, sc_outports;
-	int	sc_monitor_port;
+	int		sc_monitor_port;
 
-	int	sc_refcnt;
-	u_char	sc_dying;
+	int		sc_refcnt;
+	boolean_t	sc_dying;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
