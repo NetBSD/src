@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2002/03/06 13:27:22 lukem Exp $
+# $NetBSD: Makefile,v 1.9 2002/04/10 01:08:34 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 KERNELS=	INSTALL
 
-SUBDIR=		ramdisk kernels
+SUBDIR=		ramdisk .WAIT kernels
 
 .include <bsd.subdir.mk>
 
