@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 1997/04/25 02:17:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 1997/04/27 20:50:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -137,6 +137,11 @@ Lhaveihpib:
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
+
+	/*
+	 * 68030 models
+	 */
+
 	RELOC(mmutype, a0)		| no, we have 68030
 	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
 	RELOC(cputype, a0)
@@ -158,7 +163,22 @@ Lnot370:
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#16,d0			| still on?
 	jeq	Lstart1			| no, must be a 360
-	movl	#HP_375,a0@		| yes, must be a 345/375
+	RELOC(mmuid, a0)		| save MMU ID
+	lsrl	#MMUID_SHIFT,d0
+	andl	#MMUID_MASK,d0
+	movl	d0,a0@
+	RELOC(machineid, a0)
+	cmpb	#MMUID_345,d0		| are we a 345?
+	beq	Lisa345
+	cmpb	#MMUID_375,d0		| how about a 375?
+	beq	Lisa375
+	movl	#HP_400,a0@		| must be a 400
+	jra	Lhaspac
+Lisa345:
+	movl	#HP_345,a0@
+	jra	Lhaspac
+Lisa375:
+	movl	#HP_375,a0@
 	jra	Lhaspac
 Lisa370:
 	movl	#HP_370,a0@		| set to 370
@@ -166,6 +186,11 @@ Lhaspac:
 	RELOC(ectype, a0)
 	movl	#EC_PHYS,a0@		| also has a physical address cache
 	jra	Lstart1
+
+	/*
+	 * End of 68030 section
+	 */
+
 Lnot68030:
 	bset	#31,d0			| data cache enable bit
 	movc	d0,cacr			|   only exists on 68040
@@ -174,6 +199,11 @@ Lnot68030:
 	beq	Lis68020		| yes, we have 68020
 	moveq	#0,d0			| now turn it back off
 	movec	d0,cacr			|   before we access any data
+
+	/*
+	 * 68040 models
+	 */
+
 	RELOC(mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(cputype, a0)
@@ -182,17 +212,40 @@ Lnot68030:
 	movl	#FPU_68040,a0@		| ...and FPU
 	RELOC(ectype, a0)
 	movl	#EC_NONE,a0@		| and no cache (for now XXX)
+	RELOC(mmuid,a0)			| save MMU ID
+	movl	a1@(MMUCMD),d0
+	lsrl	#MMUID_SHIFT,d0
+	andl	#MMUID_MASK,d0
+	movl	d0,a0@
 	RELOC(machineid, a0)
-	movl	a1@(MMUCMD),d0		| read MMU register
-	lsrl	#8,d0			| get apparent ID
-	cmpb	#6,d0			| id == 6?
-	jeq	Lis33mhz		| yes, we have a 433s
-	movl	#HP_380,a0@		| no, we have a 380/425t
+	cmpb	#MMUID_425_T,d0		| are we a 425t?
+	jeq	Lisa425
+	cmpb	#MMUID_425_S,d0		| how about 425s?
+	jeq	Lisa425
+	cmpb	#MMUID_433_T,d0		| or a 433t?
+	jeq	Lisa433
+	cmpb	#MMUID_433_S,d0		| last chance...
+	jeq	Lisa433
+	movl	#HP_380,a0@		| guess we're a 380
 	jra	Lstart1
-Lis33mhz:
-	movl	#HP_433,a0@		| 433s (XXX 425s returns same ID, ugh!)
+Lisa425:
+	movl	#HP_425,a0@
 	jra	Lstart1
+Lisa433:
+	movl	#HP_433,a0@
+	jra	Lstart1
+
+	/*
+	 * End of 68040 section
+	 */
+
+	/*
+	 * 68020 models
+	 */
+
 Lis68020:
+	RELOC(fputype, a0)		| all of the 68020 systems
+	movl	#FPU_68881,a0@		|   have a 68881 FPU
 	movl	#1,a1@(MMUCMD)		| a 68020, write HP MMU location
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#0,d0			| non-zero?
@@ -215,6 +268,10 @@ Lishpmmu:
 Lis320:
 	RELOC(machineid, a0)
 	movl	#HP_320,a0@
+
+	/*
+	 * End of 68020 section
+	 */
 
 Lstart1:
 	movl	#0,a1@(MMUCMD)		| clear out MMU again
@@ -1795,6 +1852,9 @@ Lebootcode:
 GLOBAL(machineid)
 	.long	HP_320		| default to 320
 
+GLOBAL(mmuid)
+	.long	0		| default to nothing
+
 GLOBAL(mmutype)
 	.long	MMU_HP		| default to HP MMU
 
@@ -1805,7 +1865,7 @@ GLOBAL(ectype)
 	.long	EC_NONE		| external cache type, default to none
 
 GLOBAL(fputype)
-	.long	FPU_68881	| default to 68881 FPU
+	.long	FPU_68882	| default to 68882 FPU
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
