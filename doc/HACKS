@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.17 2003/10/28 08:22:48 mrg Exp $
+# $NetBSD: HACKS,v 1.18 2003/10/28 12:11:31 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -259,4 +259,16 @@ file	usr.sbin/installboot/Makefile : 1.26
 descr
 	ffs.c causes cc1 to barf for as-yet unknown reasons.  this
 	hack ues -O0 to avoid the problem.
+kcah
+
+hack	gcc 3.3.2/m68k -Wno-uninitialized
+cdate	Tue Oct 28 13:07:55 CET 2003
+who	he
+port	atari
+file	sys/conf/Makefile.kern.inc : 1.39
+descr
+	sys/dev/ata/wd.c causes spurious warning about blkno not
+	being initialized before used.  This appears to be a bug
+	specific to (at least) the m68k target, and will be reported
+	to the GCC maintainers.
 kcah
