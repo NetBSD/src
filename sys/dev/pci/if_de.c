@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.75 1998/08/24 14:09:15 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.76 1998/08/28 20:58:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2496,7 +2496,7 @@ tulip_srom_decode(
 	    switch (type & 0x3f) {
 		case 0: {	/* 21140[A] GPR block */
 		    tulip_media_t media;
-		    srom_media = (tulip_srom_media_t) dp[0];
+		    srom_media = (tulip_srom_media_t)(dp[0] & 0x3f);
 		    for (idx3 = 0; tulip_srom_mediums[idx3].sm_type != TULIP_MEDIA_UNKNOWN; idx3++) {
 			if (tulip_srom_mediums[idx3].sm_srom_type == srom_media)
 			    break;
@@ -2585,7 +2585,7 @@ tulip_srom_decode(
 		}
 		case 2: {	/* 2114[23] SIA block */
 		    tulip_media_t media;
-		    srom_media = (tulip_srom_media_t) dp[0];
+		    srom_media = (tulip_srom_media_t)(dp[0] & 0x3f);
 		    for (idx3 = 0; tulip_srom_mediums[idx3].sm_type != TULIP_MEDIA_UNKNOWN; idx3++) {
 			if (tulip_srom_mediums[idx3].sm_srom_type == srom_media)
 			    break;
@@ -2595,10 +2595,10 @@ tulip_srom_decode(
 			break;
 		    mi->mi_type = TULIP_MEDIAINFO_SIA;
 		    sc->tulip_mediums[media] = mi;
-		    if (type & 0x40) {
-			mi->mi_sia_connectivity = dp[0] + dp[1] * 256;
-			mi->mi_sia_tx_rx        = dp[2] + dp[3] * 256;
-			mi->mi_sia_general      = dp[4] + dp[5] * 256;
+		    if (dp[0] & 0x40) {
+			mi->mi_sia_connectivity = dp[1] + dp[2] * 256;
+			mi->mi_sia_tx_rx        = dp[3] + dp[4] * 256;
+			mi->mi_sia_general      = dp[5] + dp[6] * 256;
 			dp += 6;
 		    } else {
 			switch (media) {
@@ -2625,8 +2625,8 @@ tulip_srom_decode(
 			    }
 			}
 		    }
-		    mi->mi_sia_gp_control = (dp[0] + dp[1] * 256) << 16;
-		    mi->mi_sia_gp_data    = (dp[2] + dp[3] * 256) << 16;
+		    mi->mi_sia_gp_control = (dp[1] + dp[2] * 256) << 16;
+		    mi->mi_sia_gp_data    = (dp[3] + dp[4] * 256) << 16;
 		    mi++;
 		  bad_media:
 		    break;
@@ -5506,14 +5506,14 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
     if (PCI_VENDORID(id) == DEC_VENDORID) {
-	if (PCI_CHIPID(id) == CHIPID_21040) chipid = TULIP_21040;
-	else if (PCI_CHIPID(id) == CHIPID_21140) {
-	    chipid = (revinfo >= 0x20) ? TULIP_21140A : TULIP_21140;
-	} else if (PCI_CHIPID(id) == CHIPID_21142) {
-	    chipid = (revinfo >= 0x20) ? TULIP_21143 : TULIP_21142;
-	}
-	else if (PCI_CHIPID(id) == CHIPID_21041) chipid = TULIP_21041;
-	else if (PCI_CHIPID(id) == CHIPID_21142) chipid = TULIP_21142;
+	if (PCI_CHIPID(id) == CHIPID_21040)
+		chipid = TULIP_21040;
+	else if (PCI_CHIPID(id) == CHIPID_21041)
+		chipid = TULIP_21041;
+	else if (PCI_CHIPID(id) == CHIPID_21140)
+		chipid = (revinfo >= 0x20) ? TULIP_21140A : TULIP_21140;
+	else if (PCI_CHIPID(id) == CHIPID_21142)
+		chipid = (revinfo >= 0x20) ? TULIP_21143 : TULIP_21142;
     }
     if (chipid == TULIP_CHIPID_UNKNOWN)
 	return;
@@ -5554,11 +5554,11 @@ tulip_pci_attach(
 	sc->tulip_features |= TULIP_HAVE_POWERMGMT;
     if (chipid == TULIP_21041 || chipid == TULIP_21142 || chipid == TULIP_21143) {
 	sc->tulip_features |= TULIP_HAVE_DUALSENSE;
-	if (chipid != TULIP_21041 || sc->tulip_revinfo >= 0x20)
+	if (chipid != TULIP_21041 || revinfo >= 0x20)
 	    sc->tulip_features |= TULIP_HAVE_SIANWAY;
 	if (chipid != TULIP_21041)
 	    sc->tulip_features |= TULIP_HAVE_SIAGP|TULIP_HAVE_RXBADOVRFLW|TULIP_HAVE_STOREFWD;
-	if (chipid != TULIP_21041 && sc->tulip_revinfo >= 0x20)
+	if (chipid != TULIP_21041 && revinfo >= 0x20)
 	    sc->tulip_features |= TULIP_HAVE_SIA100;
     }
 
