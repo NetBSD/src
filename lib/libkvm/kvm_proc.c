@@ -86,8 +86,15 @@ kvm_readswap(kd, p, va, cnt)
 	register u_long offset;
 	struct vm_map_entry vme;
 	struct vm_object vmo;
-	static char page[NBPG];
+	static char *page;
+	int nbpg = getpagesize();
 
+	if (page == 0) {
+		/* XXX should be placed in kvm_t (so we can free it) */
+		page = (char *)_kvm_malloc(kd, nbpg);
+		if (page == 0)
+			return (0);
+	}
 	head = (u_long)&p->p_vmspace->vm_map.header;
 	/*
 	 * Look through the address map for the memory object
@@ -130,8 +137,8 @@ kvm_readswap(kd, p, va, cnt)
 	}
 
 	/* Found the page. */
-	offset %= NBPG;
-	*cnt = NBPG - offset;
+	offset %= nbpg;
+	*cnt = nbpg - offset;
 	return (&page[offset]);
 }
 
@@ -148,6 +155,7 @@ _kvm_readfrompager(kd, vmop, offset, buf)
 	int ix;
 	struct swblock swb;
 	register off_t seekpoint;
+	int nbpg = getpagesize();
 
 	/* Read in the pager info and make sure it's a swap device. */
 	addr = (u_long)vmop->pager;
@@ -198,14 +206,14 @@ _kvm_readfrompager(kd, vmop, offset, buf)
 	offset %= dbtob(swap.sw_bsize);
 
 	/* Check that the page is actually present. */
-	if ((swb.swb_mask & (1 << (offset / NBPG))) == 0)
+	if ((swb.swb_mask & (1 << (offset / nbpg))) == 0)
 		return (0);
 
 	/* Calculate the physical address and read the page. */
-	seekpoint = dbtob(swb.swb_block) + (offset & ~PGOFSET);
+	seekpoint = dbtob(swb.swb_block) + (offset & ~(nbpg -1));
 	if (lseek(kd->swfd, seekpoint, 0) == -1)
 		return (0);
-	if (read(kd->swfd, buf, NBPG) != NBPG)
+	if (read(kd->swfd, buf, nbpg) != nbpg)
 		return (0);
 
 	return (1);
@@ -500,6 +508,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	register char *cp;
 	register int len, cc;
 	register char **argv;
+	int nbpg = getpagesize();
 
 	/*
 	 * Check that there aren't an unreasonable number of agruments,
@@ -525,10 +534,10 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			return (0);
 	}
 	if (kd->argspc == 0) {
-		kd->argspc = (char *)_kvm_malloc(kd, NBPG);
+		kd->argspc = (char *)_kvm_malloc(kd, nbpg);
 		if (kd->argspc == 0)
 			return (0);
-		kd->arglen = NBPG;
+		kd->arglen = nbpg;
 	}
 	cp = kd->argspc;
 	argv = kd->argv;
@@ -538,7 +547,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	 * Loop over pages, filling in the argument vector.
 	 */
 	while (addr < VM_MAXUSER_ADDRESS) {
-		cc = NBPG - (addr & PGOFSET);
+		cc = nbpg - (addr & (nbpg - 1));
 		if (maxcnt > 0 && cc > maxcnt - len)
 			cc = maxcnt - len;;
 		if (len + cc > kd->arglen) {
@@ -566,7 +575,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		len += cc;
 		addr += cc;
 
-		if (maxcnt == 0 && len > 16 * NBPG)
+		if (maxcnt == 0 && len > 16 * nbpg)
 			/* sanity */
 			return (0);
 
