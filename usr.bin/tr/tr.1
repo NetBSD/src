@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
+.\"	$NetBSD: tr.1,v 1.6 1997/10/20 00:56:05 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,24 +43,24 @@
 .Nm tr
 .Nd translate characters
 .Sh SYNOPSIS
-.Nm tr
+.Nm
 .Op Fl cs
 .Ar string1 string2
-.Nm tr
+.Nm ""
 .Op Fl c
 .Fl d
 .Ar string1
-.Nm tr
+.Nm ""
 .Op Fl c
 .Fl s
 .Ar string1
-.Nm tr
+.Nm ""
 .Op Fl c
 .Fl ds
 .Ar string1 string2
 .Sh DESCRIPTION
 The
-.Nm tr
+.Nm
 utility copies the standard input to the standard output with substitution
 or deletion of selected characters.
 .Pp
@@ -228,7 +228,7 @@ it's interpreted as a decimal value.
 .El
 .Pp
 The
-.Nm tr
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
@@ -264,13 +264,13 @@ represent the three characters ``a'', ``-'' and ``z'' will have to be
 rewritten as ``a\e-z''.
 .Pp
 The
-.Nm tr
+.Nm
 utility has historically not permitted the manipulation of NUL bytes in
 its input and, additionally, stripped NUL's from its input stream.
 This implementation has removed this behavior as a bug.
 .Pp
 The
-.Nm tr
+.Nm
 utility has historically been extremely forgiving of syntax errors,
 for example, the
 .Fl c
@@ -280,7 +280,7 @@ options were ignored unless two strings were specified.
 This implementation will not permit illegal syntax.
 .Sh STANDARDS
 The
-.Nm tr
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.
