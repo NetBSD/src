@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.1.10.1 2002/10/18 02:39:06 nathanw Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.1.10.2 2003/01/15 18:22:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -74,7 +74,7 @@ kb_hb_match(parent, cf, aux)
 		return 0;
 
 	/* XXX no default address */
-	if (ha->ha_address == -1)
+	if (ha->ha_address == (u_int)-1)
 		return 0;
 
 	addr = IIOV(ha->ha_address); /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.5.2.5 2003/01/07 21:11:41 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5.2.6 2003/01/15 18:21:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -484,6 +484,9 @@ mpbios_scan(self)
 	int		type;
 	int		intr_cnt, cur_intr;
 	paddr_t		lapic_base;
+	const struct mpbios_int *iep;
+	struct mpbios_int ie;
+	struct ioapic_softc *sc;
 
 	printf ("%s: Intel MP Specification ", self->dv_xname);
 
@@ -578,8 +581,14 @@ mpbios_scan(self)
 			 * dst_apic_id of MPS_ALL_APICS means "wired to all
 			 * apics of this type".
 			 */
-			if ((type == MPS_MCT_IOINT) ||
-			    (type == MPS_MCT_LINT))
+			if (type == MPS_MCT_IOINT) {
+				iep = (const struct mpbios_int *)position;
+				if (iep->dst_apic_id == MPS_ALL_APICS)
+					intr_cnt +=
+					    mp_conf[MPS_MCT_IOAPIC].count;
+				else
+					intr_cnt++;
+			} else if (type == MPS_MCT_LINT)
 				intr_cnt++;
 			position += mp_conf[type].length;
 		}
@@ -608,6 +617,19 @@ mpbios_scan(self)
 				mpbios_ioapic(position, self);
 				break;
 			case MPS_MCT_IOINT:
+				iep = (const struct mpbios_int *)position;
+				ie = *iep;
+				if (iep->dst_apic_id == MPS_ALL_APICS) {
+					for (sc = ioapics ; sc != NULL;
+					     sc = sc->sc_next) {
+						ie.dst_apic_id = sc->sc_apicid;
+						mpbios_int((char *)&ie, type,
+						    &mp_intrs[cur_intr++]);						}
+				} else {
+					mpbios_int(position, type,
+					    &mp_intrs[cur_intr++]);
+				}
+				break;
 			case MPS_MCT_LINT:
 				mpbios_int(position, type,
 				    &mp_intrs[cur_intr]);

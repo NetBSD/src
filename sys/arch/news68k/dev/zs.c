@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6.8.5 2003/01/03 16:48:31 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.6.8.6 2003/01/15 18:22:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ zs_match(parent, cf, aux)
 		return 0;
 
 	/* XXX no default address */
-	if (ha->ha_address == -1)
+	if (ha->ha_address == (u_int)-1)
 		return 0;
 
 	addr = IIOV(ha->ha_address);

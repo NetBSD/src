@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110.4.12 2002/12/11 06:10:46 thorpej Exp $
+# $NetBSD: GENERIC,v 1.110.4.13 2003/01/15 18:22:26 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110.4.12 $"
+#ident 		"GENERIC-$Revision: 1.110.4.13 $"
 
 maxusers	32
 
@@ -76,8 +76,8 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	COMPAT_MACH	# Mach binary compatibility (experimental)
-#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
+options 	COMPAT_MACH	# Mach binary compatibility (experimental)
+options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
@@ -168,53 +168,84 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
+# PCI Network devices
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gem*	at pci? dev ? function ?	# gmac ethernet
+#gm*	at pci? dev ? function ?	# gmac ethernet (old)
+gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
+ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
+#ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+
+# PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+esiop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (enhanced)
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
+
+# Other  PCI devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
-#gm*	at pci? dev ? function ?	# gmac ethernet (old)
-gem*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
+dmphy*	at mii? phy ?                   # Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 #cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+
+bktr*   at      pci? dev ? function ?           # Brooktree video/audio capture/tuner
+radio*  at      bktr?
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
@@ -315,6 +346,10 @@ scsibus* at umass? channel ?
 
 uaudio*	at uhub? port ? configuration ?			# USB audio
 
+# D-Link DSB-R100 USB FM radio tuner
+udsbr* at uhub? port ?
+radio* at udsbr?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -331,8 +366,8 @@ fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
 #fwnode* at fwbus? idhi ? idlo ?
-#fwscsi* at fwnode?
-#scsibus* at fwscsi?
+#sbpscsi* at fwnode?
+#scsibus* at sbpscsi?
 
 # Audio Devices
 

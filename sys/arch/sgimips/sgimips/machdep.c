@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.13 2003/01/07 21:14:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.14 2003/01/15 18:22:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -912,12 +912,6 @@ void ddb_trap_hook(int where)
 
 #endif
 
-/* XXXrkb: does this belong elsewhere??? */
-void mips_machdep_cache_config(void);
-extern void r5k_sdcache_wbinv_all(void);
-extern void sgimips_find_l2cache(struct arcbios_component *comp, 
-				 struct arcbios_treewalk_context *atc);
-
 void mips_machdep_cache_config(void)
 {
 	volatile u_int32_t cpu_config;
@@ -930,20 +924,20 @@ void mips_machdep_cache_config(void)
 		mips_sdcache_line_size = 0;
 
 		cpu_config = mips3_cp0_config_read();
-		cpu_config &= ~(MIPS3_CONFIG_SC_ENABLE);
+		cpu_config &= ~MIPS3_CONFIG_SE;
 		mips3_cp0_config_write(cpu_config);
 #else
 		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
 		cpu_config = mips3_cp0_config_read();
 		printf("\nbefore mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+				cpu_config & MIPS3_CONFIG_SE);
 
 		r5k_enable_sdcache();
 
 		cpu_config = mips3_cp0_config_read();
 		printf("after mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+				cpu_config & MIPS3_CONFIG_SE);
 #endif
 	}
 	else /* IP22 works, maybe */

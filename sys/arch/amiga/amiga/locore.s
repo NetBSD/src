@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126.2.7 2002/11/11 21:56:06 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.126.2.8 2003/01/15 18:17:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -919,16 +919,68 @@ Lstartnot040:
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
 
-/* let the C function initialize everything and enable the MMU */
+/* let the C function initialize everything */
 	RELOC(start_c, %a0)
 	jbsr	%a0@
 	addl	#28,%sp
-	jmp	Lunshadow:l
 
-Lunshadow:
+#ifdef DRACO
+	RELOC(machineid,%a0)
+	cmpb	#0x7d,%a0@
+	jne	LAmiga_enable_MMU
+
+	lea	%pc@(0),%a0
+	movl	%a0,%d0
+	andl	#0xff000000,%d0
+	orl	#0x0000c044,%d0		| 16 MB, ro, cache inhibited
+	.word	0x4e7b,0x0004		| movc %d0,%itt0
+	.word	0xf518			| pflusha
+	movl	#0xc000,%d0		| enable MMU
+	.word	0x4e7b,0x0003		| movc %d0,%tc
+	jmp	Lcleanitt0:l
+Lcleanitt0:
+	movq	#0,%d0
+	.word	0x4e7b,0x0004		| movc %d0,%itt0
+	bra	LMMUenable_end
+
+LAmiga_enable_MMU:
+#endif /* DRACO */
+
+/* Copy just the code to enable the MMU into chip memory */
+	lea	LMMUenable_start,%a0
+	movl	#LMMUenable_start:l,%a1
+	lea	LMMUenable_end,%a2
+Lcopy_MMU_enabler:
+	movl	%a0@+,%a1@+
+	cmpl	%a0,%a2
+	jgt	Lcopy_MMU_enabler
+
+	jmp	LMMUenable_start:l
+
+LMMUenable_start:
+
+/* enable the MMU */
+#if defined(M68040) || defined(M68060)
+	RELOC(mmutype, %a0)
+	cmpl	#MMU_68040,%a0@
+	jne	Lenable030
+	.word	0xf518			| pflusha
+	movl	#0xc000,%d0		| enable MMU
+	.word	0x4e7b,0x0003		| movc	%d0,%tc
+	jmp	LMMUenable_end:l
+#endif /* M68040 || M68060 */
+Lenable030:
+	lea	Ltc,%a0
+	pmove	%a0@,%tc
+	jmp	LMMUenable_end:l
+
+/* ENABLE, SRP_ENABLE, 8K pages, 8bit A-level, 11bit B-level */
+Ltc:	.long	0x82d08b00
+
+LMMUenable_end:
 
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
-	jbsr	_C_LABEL(start_c_cleanup)
+	jbsr	_C_LABEL(start_c_finish)
 
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1	| proc0 kernel stack

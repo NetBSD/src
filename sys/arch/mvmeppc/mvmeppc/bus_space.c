@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.2.3 2002/12/11 06:11:25 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.2.4 2003/01/15 18:22:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ mvmeppc_memio_mmap(t, bpa, offset, prot, flags)
 	int prot, flags;
 {
 
-	return ((bpa + offset) >> PGSHIFT);
+	return (trunc_page(bpa + offset));
 }
 
 int

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.3.2.5 2003/01/07 21:11:40 thorpej Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.3.2.6 2003/01/15 18:21:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@ int apic_verbose = 0;
 int ioapic_bsp_id = 0;
 int ioapic_cold = 1;
 
-static struct ioapic_softc *ioapics;	 /* head of linked list */
-static int nioapics = 0;	   	 /* number attached */
+struct ioapic_softc *ioapics;	 /* head of linked list */
+int nioapics = 0;	   	 /* number attached */
 
 static __inline u_long
 ioapic_lock(struct ioapic_softc *sc)
@@ -404,7 +404,12 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 			redlo |= IOAPIC_REDLO_LEVEL;
 		else
 			redlo &= ~IOAPIC_REDLO_LEVEL;
-		/* XXX polarity goo, too */
+		if (map != NULL && ((map->flags & 3) == MPS_INTPO_DEF)) {
+			if (pp->ip_type == IST_LEVEL)
+				redlo |= IOAPIC_REDLO_ACTLO;
+			else
+				redlo &= ~IOAPIC_REDLO_ACTLO;
+		}
 	}
 	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);

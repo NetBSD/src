@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.1.10.3 2003/01/03 16:48:30 thorpej Exp $	*/
+/*	$NetBSD: kbc.c,v 1.1.10.4 2003/01/15 18:22:28 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -65,7 +65,7 @@ static int kbc_match(parent, cf, aux)
 		return 0;
 
 	/* XXX no default address */
-	if (ha->ha_address == -1)
+	if (ha->ha_address == (u_int)-1)
 		return 0;
 
 	addr = IIOV(ha->ha_address); /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1.8.4 2002/02/28 04:11:27 nathanw Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.8.5 2003/01/15 18:22:29 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -51,7 +51,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef PPC_MPC6XX
+#include <powerpc/mpc6xx/bat.h>
+#else
 #include <machine/bat.h>
+#endif
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>

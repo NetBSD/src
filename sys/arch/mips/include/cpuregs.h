@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.47.4.8 2002/12/11 06:11:02 thorpej Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.47.4.9 2003/01/15 18:22:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -321,6 +321,9 @@
 #define	MIPS3_CONFIG_CACHE_SIZE(config, mask, base, shift) \
 	((base) << (((config) & (mask)) >> (shift)))
 #endif
+
+/* External cache enable: Controls L2 for R5000/Rm527x and L3 for Rm7000 */
+#define	MIPS3_CONFIG_SE		0x00001000
 
 /* Block ordering: 0: sequential, 1: sub-block */
 #define	MIPS3_CONFIG_EB		0x00002000

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1.2.5 2003/01/07 20:46:49 thorpej Exp $
+$NetBSD: version,v 1.1.2.6 2003/01/15 18:16:22 thorpej Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -21,3 +21,4 @@ $NetBSD: version,v 1.1.2.5 2003/01/07 20:46:49 thorpej Exp $
 3.04:	fixed physical memory blocks searching; it was a sorting error
 3.05:	fixed printing of videomem useage
 3.06:	fixed non 1Mb-alignment problems for the top 1Mb in the memorymap
+3.10:	Serious loading problems fixed and cleanup code
