@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.22 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.23 1999/05/18 23:52:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -185,7 +185,6 @@ esattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_output = ether_output;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
@@ -732,11 +731,7 @@ esrint(sc)
 		}
 	}
 #endif
-	top->m_pkthdr.len -= sizeof (*eh);
-	top->m_len -= sizeof (*eh);
-	top->m_data += sizeof (*eh);
-
-	ether_input(ifp, eh, top);
+	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
 		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);

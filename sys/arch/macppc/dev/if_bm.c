@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.2 1999/05/18 23:52:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Tsubai Masanari.  All rights reserved.
@@ -457,8 +457,7 @@ bmac_rint(v)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, data, m);
+		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 
 next:

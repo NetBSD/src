@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_if.c,v 1.8 1998/07/05 22:29:52 jonathan Exp $	*/
+/*	$NetBSD: ipkdb_if.c,v 1.9 1999/05/18 23:52:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
@@ -202,12 +202,7 @@ ipkdbread(kip)
 	}
 #endif
 
-	/*
-	 * Fix up data start offset in mbuf to point past ether header
-	 */
-	m_adj(head, sizeof(struct ether_header));
-
-	ether_input(ifp, eh, head);
+	(*ifp->if_input)(ifp, head);
 	return 1;
 
 bad:

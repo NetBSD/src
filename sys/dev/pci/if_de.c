@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.84 1999/04/12 04:31:55 cjs Exp $	*/
+/*	$NetBSD: if_de.c,v 1.85 1999/05/18 23:52:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3567,7 +3567,6 @@ tulip_rx_intr(
 		    && !TULIP_ADDREQUAL(eh.ether_dhost, sc->tulip_enaddr))
 		    goto next;
 	    accept = 1;
-	    total_len -= sizeof(struct ether_header);
 	} else {
 	    ifp->if_ierrors++;
 	    if (eop->d_status & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxOVERFLOW|TULIP_DSTS_RxWATCHDOG)) {
@@ -3642,7 +3641,7 @@ tulip_rx_intr(
 	    MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	    if (m0 != NULL) {
 #if defined(TULIP_COPY_RXDATA)
-		if (!accept || total_len >= MHLEN) {
+		if (!accept || total_len >= (MHLEN - 2)) {
 #endif
 		    MCLGET(m0, M_DONTWAIT);
 		    if ((m0->m_flags & M_EXT) == 0) {
@@ -3662,25 +3661,30 @@ tulip_rx_intr(
 		eh.ether_type = ntohs(eh.ether_type);
 #endif
 #if !defined(TULIP_COPY_RXDATA)
-		ms->m_data += sizeof(struct ether_header);
-		ms->m_len -= sizeof(struct ether_header);
 		ms->m_pkthdr.len = total_len;
 		ms->m_pkthdr.rcvif = ifp;
+#if defined(__NetBSD__)
+		(*ifp->if_input)(ifp, ms);
+#else
+		m_adj(ms, sizeof(struct ether_header);
 		ether_input(ifp, &eh, ms);
+#endif /* __NetBSD__ */
 #else
 #ifdef BIG_PACKET
 #error BIG_PACKET is incompatible with TULIP_COPY_RXDATA
 #endif
-		if (ms == me)
-		    bcopy(mtod(ms, caddr_t) + sizeof(struct ether_header),
-			  mtod(m0, caddr_t), total_len);
-		else
-		    m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
+		m0->m_data += 2;	/* align data after header */
+		m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
 		m0->m_len = m0->m_pkthdr.len = total_len;
 		m0->m_pkthdr.rcvif = ifp;
+#if defined(__NetBSD__)
+		(*ifp->if_input)(ifp, m0);
+#else
+		m_adj(m0, sizeof(struct ether_header);
 		ether_input(ifp, &eh, m0);
+#endif /* __NetBSD__ */
 		m0 = ms;
-#endif
+#endif /* ! TULIP_COPY_RXDATA */
 	    }
 	    ms = m0;
 	}
@@ -5000,7 +5004,7 @@ tulip_attach(
     ifp->if_start = tulip_ifstart;
     ifp->if_watchdog = tulip_ifwatchdog;
     ifp->if_timer = 1;
-#if !defined(__bsdi__) || _BSDI_VERSION < 199401
+#if (!defined(__bsdi__) || _BSDI_VERSION < 199401) && !defined(__NetBSD__)
     ifp->if_output = ether_output;
 #endif
 #if defined(__bsdi__) && _BSDI_VERSION < 199401
