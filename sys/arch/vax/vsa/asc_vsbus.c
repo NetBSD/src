@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.2 2000/03/04 07:27:50 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.3 2000/03/04 18:20:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.2 2000/03/04 07:27:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.3 2000/03/04 18:20:53 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,16 +143,14 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	int dummy;
-	volatile int *ncr_regs;
+	volatile u_int8_t *ncr_regs;
 
 	if (vax_boardtype != VAX_BTYP_46
 	   && vax_boardtype != VAX_BTYP_48
 	   && vax_boardtype != VAX_BTYP_49)
 		return 0;
 
-	printf("asc_vsbus_match: pa=0x%lx, va=0x%lx\n", va->va_paddr, va->va_addr);
-
-	ncr_regs = (volatile int *) va->va_addr;
+	ncr_regs = (volatile u_int8_t *) va->va_addr;
 
 	/*  *** need to generate an interrupt here
 	 * From trial and error, I've determined that an INT is generated
@@ -163,13 +161,14 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	 *   4) NOP command must be sent
 	 */
 
-        dummy = ncr_regs[NCR_INTR]; /* clear status register */
-        ncr_regs[NCR_CFG1] = 0x07; /* we're ID 7, turn on INT for SCSI reset */
-        ncr_regs[NCR_CMD] = NCRCMD_RSTSCSI; /* send the reset */
-        ncr_regs[NCR_CMD] = NCRCMD_NOP; /* send a NOP */
+	dummy = ncr_regs[NCR_INTR << 2] & 0xFF;
+        ncr_regs[NCR_CFG1 << 2] = 0x07; /* we're ID 7, turn on INT for SCSI reset */
+        ncr_regs[NCR_CMD << 2] = NCRCMD_RSTSCSI; /* send the reset */
+        ncr_regs[NCR_CMD << 2] = NCRCMD_NOP; /* send a NOP */
 	DELAY(10000);
 
-	return (ncr_regs[NCR_INTR] & NCRINTR_FC) != 0;
+	dummy = ncr_regs[NCR_INTR << 2] & 0xFF;
+	return (dummy & NCRINTR_SBR) != 0;
 }
 
 
@@ -239,6 +238,8 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_minsync = (1000 / sc->sc_freq);
 	sc->sc_maxxfer = 64 * 1024;
 
+	printf("\n%s", self->dv_xname);	/* Pretty print */
+
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
 	sc->sc_adapter.scsipi_minphys = minphys;
@@ -272,8 +273,8 @@ asc_vsbus_read_reg(struct ncr53c9x_softc *sc, int reg)
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
 	u_char v;
 
-	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
-	    ASC_REG_NCR + reg * sizeof(u_int32_t)) & 0xff;
+	v = bus_space_read_1(asc->sc_bst, asc->sc_bsh,
+	    ASC_REG_NCR + reg * sizeof(u_int32_t));
 
 	return (v);
 }
@@ -286,7 +287,7 @@ asc_vsbus_write_reg(sc, reg, val)
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
 
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+	bus_space_write_1(asc->sc_bst, asc->sc_bsh,
 	    ASC_REG_NCR + reg * sizeof(u_int32_t), val);
 }
 
