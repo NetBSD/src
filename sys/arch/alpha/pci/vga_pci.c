@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.2 1996/11/23 06:06:47 cgd Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.3 1996/11/27 01:20:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,6 +72,7 @@ vga_pci_match(parent, match, aux)
 
 	/*
 	 * If it's prehistoric/vga or display/vga, we might match.
+	 * For the console device, this is jut a sanity check.
 	 */
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
@@ -80,13 +81,20 @@ vga_pci_match(parent, match, aux)
 	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
 		potential = 1;
 
+	if (!potential)
+		return (0);
+
+	/* If it's the console, we have a winner! */
+	if (pa->pa_tag == vga_pci_console_tag)
+		return (1);
+
 	/*
 	 * If we might match, make sure that the card actually looks OK.
 	 */
-	if (potential && vga_common_probe(pa->pa_iot, pa->pa_memt) == 0)
-		potential = 0;
+	if (!vga_common_probe(pa->pa_iot, pa->pa_memt))
+		return (0);
 
-	return (potential);
+	return (1);
 }
 
 void
