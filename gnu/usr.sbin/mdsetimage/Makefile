@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/24 23:56:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/25 02:37:18 thorpej Exp $
 
 PROG=	mdsetimage
 
@@ -19,7 +19,8 @@ ${MDSETIMAGE_TARGET_PREFIX}mdsetimage.8: ${.CURDIR}/mdsetimage.8
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 
-CPPFLAGS+=	-I${BFDDIR} -I${DIST}/include
+# Host tool Makefile MUST set HOST_CPPFLAGS!
+#CPPFLAGS+=	-I${BFDDIR} -I${DIST}/include
 
 DPADD+=	${BFDDIR}/libbfd.a
 LDADD+=	-L${BFDDIR} -lbfd
