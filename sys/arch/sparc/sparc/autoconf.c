@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 1996/05/16 15:57:07 abrown Exp $ */
+/*	$NetBSD: autoconf.c,v 1.56 1996/05/18 12:35:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -97,8 +97,6 @@ int	cold;		/* if 1, still working on cold-start */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
 int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
-
-extern	struct promvec *promvec;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -1127,7 +1125,7 @@ mainbus_attach(parent, dev, aux)
 		"vmes",
 		NULL
 	};
-#endif
+#endif /* SUN4 */
 
 #if defined(SUN4C)
 	static const char *const openboot_special4c[] = {
@@ -1207,7 +1205,6 @@ mainbus_attach(parent, dev, aux)
 			oca.ca_ra.ra_name = sp;
 			(void)config_found(dev, (void *)&oca, mbprint);
 		}
-		return;
 	}
 #endif
 
