@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.33 1999/01/12 02:09:18 kleink Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.34 1999/01/21 23:20:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -535,6 +535,69 @@ svr4_sys_kill(p, v, retval)
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	SCARG(&ka, signum) = svr4_to_native_sig[SCARG(uap, signum)];
 	return sys_kill(p, &ka, retval);
+}
+
+void
+svr4_getcontext(p, uc, mask)
+	struct proc *p;
+	struct svr4_ucontext *uc;
+	sigset_t *mask;
+{
+	void *sp;
+	struct svr4_sigaltstack *ss = &uc->uc_stack;
+
+	memset(uc, 0, sizeof(*uc));
+
+	/* get machine context */
+	sp = svr4_getmcontext(p, &uc->uc_mcontext, &uc->uc_flags);
+
+	/* get link */
+	uc->uc_link = p->p_ctxlink;
+
+	/* get stack state. XXX: solaris appears to do this */
+#if 0
+	svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
+#else
+	ss->ss_sp = (void *)(((u_long) sp) & ~(16384 - 1));
+	ss->ss_size = 16384;
+	ss->ss_flags = 0;
+#endif
+	/* get signal mask */
+	native_to_svr4_sigset(mask, &uc->uc_sigmask);
+
+	uc->uc_flags |= SVR4_UC_STACK|SVR4_UC_SIGMASK;
+}
+
+
+int
+svr4_setcontext(p, uc)
+	struct proc *p;
+	struct svr4_ucontext *uc;
+{
+	int error;
+
+	/* set machine context */
+	if ((error = svr4_setmcontext(p, &uc->uc_mcontext, uc->uc_flags)) != 0)
+		return error;
+
+	/* set link */
+	p->p_ctxlink = uc->uc_link;
+
+	/* set signal stack */
+	if (uc->uc_flags & SVR4_UC_STACK) {
+		svr4_to_native_sigaltstack(&uc->uc_stack,
+		    &p->p_sigacts->ps_sigstk);
+	}
+
+	/* set signal mask */
+	if (uc->uc_flags & SVR4_UC_SIGMASK) {
+		sigset_t mask;
+
+		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+		(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	}
+
+	return EJUSTRETURN;
 }
 
 int 
