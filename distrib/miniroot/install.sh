@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.5.2.4 1996/08/22 03:23:45 mrg Exp $
+#	$NetBSD: install.sh,v 1.5.2.5 1996/08/25 14:58:34 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,6 @@ MODE="install"
 #	md_get_ifdevs()		- return available network interfaces
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
 #	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
@@ -339,6 +338,22 @@ esac
 echo ""
 munge_fstab /tmp/fstab /tmp/fstab.shadow
 mount_fs /tmp/fstab.shadow
+
+mount | while read line; do
+	set -- $line
+	if [ "$2" = "/" -a "$3" = "nfs" ]; then
+		echo "You appear to be running diskless."
+		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				get_localdir
+				;;
+			*)
+				;;
+		esac
+	fi
+done
 
 md_install_sets
 install_sets $ALLSETS $MDSETS
