@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.32 1996/09/14 14:40:27 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.33 1996/10/11 18:19:08 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -428,7 +428,7 @@ bad:
 			ip = mtod(m = m1, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
-	m_freem(m0);
+	m_freem(m);
 	goto done;
 }
 
