@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.58 1999/03/27 01:24:50 aidan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.58.2.1 1999/06/22 17:05:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -348,6 +348,7 @@ ip_output(m0, va_alist)
 	} else
 		m->m_flags &= ~M_BCAST;
 
+sendit:
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
@@ -366,7 +367,6 @@ ip_output(m0, va_alist)
 			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
-sendit:
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
