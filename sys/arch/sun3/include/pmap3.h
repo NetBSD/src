@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.35 2002/09/22 07:17:22 chs Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.36 2002/09/22 07:53:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ extern segsz_t pmap_wired_pages(pmap_t);
 extern vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
