@@ -1,7 +1,7 @@
-/*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
+/*	$NetBSD: extent.h,v 1.7 1998/01/21 22:33:51 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,7 +52,7 @@ struct extent_region {
 #define ER_ALLOC	0x01	/* region descriptor dynamically allocated */
 
 struct extent {
-	char	*ex_name;		/* name of extent */
+	const char *ex_name;		/* name of extent */
 					/* allocated regions in extent */
 	LIST_HEAD(, extent_region) ex_regions;
 	u_long	ex_start;		/* start of extent */
@@ -100,7 +100,7 @@ struct extent_fixed {
 	((ALIGN(sizeof(struct extent_region))) *	\
 	 (_nregions)))
 
-struct	extent *extent_create __P((char *, u_long, u_long, int,
+struct	extent *extent_create __P((const char *, u_long, u_long, int,
 	    caddr_t, size_t, int));
 void	extent_destroy __P((struct extent *));
 int	extent_alloc_subregion __P((struct extent *, u_long, u_long,
