@@ -1,4 +1,16 @@
-.\"	$NetBSD: hardware,v 1.25 2003/07/26 17:07:18 salo Exp $
+.\"	$NetBSD: hardware,v 1.26 2003/10/21 02:17:35 mbw Exp $
+.
+.Pp
+The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
+To install the entire system requires about 260 MB (not including swap).
+To install the X window system you need at least 295 MB (not including 
+swap) and 8 MB RAM.
+.Nx
+with 4 MB of RAM feels like
+.Tn Solaris
+with 4 MB of RAM \(em slow.
+Note that until you have around 16 MB of RAM, getting more RAM is more
+important than getting a faster CPU.
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -131,111 +143,143 @@ JavaStation Support page
 .It
 Solbourne machines
 .bullet)
-.Pp
-The minimal configuration requires 4 MB of RAM and ~60 MB of disk space.
-To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended, as
-.Nx
-with 4 MB of RAM feels like
-.Tn Solaris
-with 4 MB of RAM - slow.
-Note that until you have around 16 MB of RAM, getting more RAM is more
-important than getting a faster CPU.
 .
 .Ss2 Supported devices
 .(bullet -offset indent
+sun4m mbus CPU modules; Sun  4/600, SPARCstation/server 10, 
+SPARCstation/server 20, and clones
+.(bullet -offset indent
+.Em cpu0 ;
+All single-CPU systems are supported
+.It
+.Em cpuN ;
+All hardware compatible dual-, tri- and quad-CPU SuperSPARC-I and 
+SuperSPARC-II systems are supported with an SMP kernel
+.Lk http://www.NetBSD.org/Ports/sparc/faq.html#smp-cpus
+.bullet)
+.It
 sun4c and sun4m video; Sbus card, on-board, or optional
-.(bullet -compact
+.(bullet -offset indent
 .Em bwtwo ;
 1 bpp framebuffer.
+.br
 On-board and Sbus card (MG1 and MG2)
 .It
 .Em cgthree ;
 8 bpp framebuffer.
+.br
 On-board and Sbus card
 .It
 .Em cgsix ;
 8 bpp accelerated framebuffer.
+.br
 On-board and Sbus card (GX, GX+, TGX, and TGX+)
 .It
 .Em cgfourteen ;
 SX 24 bpp accelerated framebuffer.
+.br
 On-board SPARCstation 10SX and SPARCstation 20, requires optional 4 or 8 MB
-VSIMM, limited to
+VSIMM, 
+.br
+limited to
 .Em cgthree
 emulation
 .It
 .Em tcx ;
 S24 accelerated color framebuffer.
+.br
 On-board SPARCstation 4 (8 bpp), JavaStation-1 (24 bpp), and optional on
-SPARCstation 5 (24 bpp), limited to
+SPARCstation 5 (24 bpp),
+.br
+limited to
 .Em cgthree
 emulation
 .It
 .Em pnozz ;
 Weitek p9100 24 bpp accelerated framebuffer.
-On-board Tadpole SPARCbook 3GS and 3GX, limited to
+.br
+On-board Tadpole SPARCbook 3GS and 3GX,
+.br
+limited to
 .Em cgthree
 emulation
+.It
+.Em zx ;
+ZX and TZX 24 bpp accelerated framebuffer.
+.br
+Sbus card (leo)
 .bullet)
 .It
-sun4 video; VME card, on-board, or P4 (supported only on 4/100 and 4/300 series machines)
-.(bullet -compact
+sun4 video; VME card, on-board, or P4 (supported only on 4/100 and 4/300 
+series machines)
+.(bullet -offset indent
 .Em bwtwo ;
 1 bpp framebuffer.
+.br
 On-board and P4
 .It
 .Em cgtwo ;
 8 bpp framebuffer.
+.br
 VME card
 .It
 .Em cgfour ;
 8 bpp framebuffer with overlay.
+.br
 P4
 .It
 .Em cgsix ;
 LEGO 8 bpp accelerated framebuffer.
+.br
 P4
 .It
 .Em cgeight ;
 24 bpp framebuffer with overlay.
+.br
 P4 (not well tested)
 .bullet)
 .It
 Network interfaces
-.(bullet -compact
+.(bullet -offset indent
 .Em be ;
 100 Mbps half-duplex
 .Dq Big Mac
 ethernet.
+.br
 Sbus card
 .It
 .Em en ;
 Efficient Networks, Inc. ATM interface.
+.br
 Sbus card
 .It
 .Em hme ;
 100 Mbps full-duplex
 .Dq Happy Meal
 ethernet.
+.br
 Sbus card
 .It
 .Em ie ;
 10 Mbps Intel 82586 ethernet.
+.br
 On-board (4/100 and 4/200, may not be working properly on 4/400) and VME card
 .It
 .Em le ;
 10 Mbps AMD 9790 Lance ethernet.
+.br
 On-board (4/300, sun4c, and sun4m) and Sbus card
 .It
 .Em qec ;
 One 100 Mbps be interface and four 10 Mbps Mace ethernet interfaces.
+.br
 Sbus card
 .It
 .Em qfe ;
-quad 100 Mbps full-duplex
+four 100 Mbps full-duplex
 .Dq Happy Meal
-ethernet (four ethernet interfaces).
+ethernet interfaces.
+.br
 Sbus card (not well tested)
 .It
 misc: various ethernet interfaces are found on multi-function Sbus cards
@@ -244,27 +288,31 @@ functions do not
 .bullet)
 .It
 SCSI interfaces
-.(bullet -compact
+.(bullet -offset indent
 .Em esp ;
 5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller,
 and 20 MB/s (Fast+Wide) FAS336 controller (known as
 .Sq fas
 on
 .Tn Solaris ) .
+.br
 On-board (sun4c, sun4m, 4/300, Ultra 1e, and Ultra 2) and Sbus cards
 .It
 .Em isp ;
 10 MB/s (Fast) and 20 MB/s (Fast+Wide) Qlogic ISP 10x0 family.
+.br
 Sbus card
 .It
 .Em si ;
 5 MB/s NCR 5380 SCSI controller.
+.br
 VME card (Interrupt driven and polled DMA)
 .It
 .Em sw ;
 5 MB/s NCR 5380
 .Dq "SCSI Weird"
 controller.
+.br
 Onboard 4/110 (polled DMA only)
 .It
 misc: SCSI functionality is sometimes found on multi-function Sbus cards
@@ -297,20 +345,25 @@ VME/IPI disks are not supported
 .bullet)
 .It
 Floppy drives
-.(bullet -compact
+.(bullet -offset indent
 .Em fd ;
 floppy disk drive.
+.br
 On-board sun4c and sun4m
 .It
 .Em sd ;
 SCSI floppy drive, acts as a SCSI drive to kernel.
-found with some SPARCBook 3 machines
+.br
+found with some SPARCbook 3 machines
 .bullet)
 .It
-.Em nell ;
-PCMCIA/Cardbus devices using the sbus-to-PCMCIA bridge.
-On-board (SPARCstation Voyager) and Sbus card.
+PCMCIA/Cardbus devices
 .(bullet -compact
+.Em nell ;
+PCMCIA interface
+.br
+On-board (SPARCstation Voyager) and Sbus card.
+.br
 All 8 bit devices listed in the Machine-independent PCMCIA drivers page
 should work.
 Very few have been tested with
@@ -330,57 +383,84 @@ See the FAQ for more information.
 .bullet)
 .It
 Serial interfaces
-.(bullet -compact
-On-board serial ports based on Zilog 8530 and Zilog 85C30
-(can be used as console if needed)
+.(bullet -offset indent
+.Em zs ;
+Zilog 8530 serial ports, which can be used as the system console
+.br
+On-board sun4, sun4c, and sun4m
+.It
+.Em com ;
+Zilog 85C30 serial ports (ns16550a)
+.br
+On-board Tadpole SPARCbook 3GS and 3GX (internal 14.4 kbps modem, use
+.Pa /dev/ttyC0 )
+and JavaStation-1
 .bullet)
 .It
 Input devices
 .(bullet -compact
 Sun keyboard and mouse
 .It
-SPARCBook 3 keyboard and joystick
+SPARCbook 3 keyboard and joystick
 .It
 Third-party keyboards, mice, and trackballs
 .bullet)
 .It
-Audio
-.(bullet -compact
+Audio interfaces
+.(bullet -offset indent
 .Em audioamd ;
 AMD 7930-based 8000 Hz, 8 bit, mono, mu-law.
+.br
 On-board sun4c and SPARC Classic
 .It
 .Em audiocs ;
 CS4231-based 44 KHz, 16 bit, stereo, PCM.
+.br
 On-board SPARCStation 5, JavaStation-1, JavaStation-10,  and optional on
 SPARCStation 4.
 .bullet)
 .It
 Misc cards
-.(bullet -compact
+.(bullet -offset indent
 .Em mtty /
 .Em mbpp ;
-Magma Serial/Parallel ports.  Sbus card
+Magma Serial/Parallel ports.
+.br
+Sbus card
 .It
 .Em xbox ;
+.br
 Sun Sbus expander device
 .bullet)
 .It
+Parallel ports
+.(bullet -offset indent
 .Em bpp ;
-Bi-directional parallel port.  On-board and Sbus card
+Bi-directional parallel port.
+.br
+On-board and Sbus card
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
+.Em cpuN ;
+multiple HyperSPARC CPUs
+.It
 DBRIe-based audio and ISDN.
-On-board some sun4m machines (such as SS10,
-SS20, SPARC LX, and Tadpole SPARCbook)
+.br
+On-board some sun4m machines (such as SPARCstation 10,
+SPARCstation 20, SPARC LX, SPARCstation Voyager, and Tadpole SPARCbook 3)
 .It
 .Em sc ;
-Sun SCSI.  VME card
+Sun SCSI.
+.br
+VME card
 .It
 .Em cgtwelve ;
-I.e. GS, 24 bpp framebuffer.  Sbus card
+I.e. GS, 24 bpp framebuffer.
+.br
+Sbus card
 .It
-.Em leo ;
-I.e. ZX and TZX, 24 bpp accelerated framebuffer.  Sbus card
+PCMCIA interface
+.br
+On-board Tadpole SPARCbook 3GS and 3GX
 .bullet)
