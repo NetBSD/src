@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.19 1993/06/16 02:59:42 mycroft Exp $
+ *	$Id: isa.c,v 1.20 1993/06/20 07:24:53 deraadt Exp $
  */
 
 /*
@@ -168,7 +168,8 @@ config_isadev(isdp, mp)
 			if (isdp->id_maddr != 0)
 				printf(" maddr 0x%x", kvtop(isdp->id_maddr));
 			if (isdp->id_msize != 0)
-				printf(" msize %d", isdp->id_msize);
+				printf("-0x%x", kvtop(isdp->id_maddr) +
+					isdp->id_msize - 1);
 			if (isdp->id_flags != 0)
 				printf(" flags 0x%x", isdp->id_flags);
 			printf(" on isa\n");
