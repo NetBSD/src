@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.20 2003/10/14 01:15:07 mycroft Exp $
+$NetBSD: acronyms.comp,v 1.21 2003/10/14 01:18:08 mycroft Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -127,7 +127,7 @@ RTF	rich text format
 S/PDIF	sony/phillips digital interface
 SAM	serial access memory
 SATA	serial advanced technology attachment
-SCSI	small computer standard interface
+SCSI	small computer system interface
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SLDRAM	synchronous-link dynamic random access memory
