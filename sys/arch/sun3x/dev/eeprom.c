@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.3 1997/04/25 18:57:49 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.4 1997/04/28 23:30:22 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,8 +92,11 @@ eeprom_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_EEPROM)
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
 	return (1);
@@ -105,11 +108,12 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
+	struct confargs *ca = args;
 	char *src, *dst, *lim;
 
 	printf("\n");
 
-	eeprom_va = obio_mapin(OBIO_EEPROM, OBIO_EEPROM_SIZE);
+	eeprom_va = obio_mapin(ca->ca_paddr, OBIO_EEPROM_SIZE);
 	if (!eeprom_va)
 		panic("eeprom_attach");
 
