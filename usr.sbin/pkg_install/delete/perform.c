@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.44 2003/09/08 07:08:11 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.45 2003/09/08 22:11:13 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.44 2003/09/08 07:08:11 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.45 2003/09/08 22:11:13 jlam Exp $");
 #endif
 #endif
 
@@ -607,7 +607,7 @@ pkg_do(char *pkg)
 
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s",
 	    _pkgdb_getPKGDB_DIR(), pkg);
-	if (!fexists(LogDir) || !isdir(LogDir)) {
+	if (!fexists(LogDir) || !(isdir(LogDir) || islinktodir(LogDir))) {
 		/* Check if the given package name matches something
 		 * with 'pkg-[0-9]*' */
 		char	        try[FILENAME_MAX];

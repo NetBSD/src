@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.47 2003/09/02 07:34:58 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.48 2003/09/08 22:11:14 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.47 2003/09/02 07:34:58 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.48 2003/09/08 22:11:14 jlam Exp $");
 #endif
 #endif
 
@@ -120,7 +120,7 @@ pkg_do(char *pkg)
 	         */
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
 		    _pkgdb_getPKGDB_DIR(), pkg);
-		if (!fexists(log_dir) || !isdir(log_dir)) {
+		if (!fexists(log_dir) || !(isdir(log_dir) || islinktodir(log_dir))) {
 			{
 				/* Check if the given package name matches
 				 * something with 'pkg-[0-9]*' */
@@ -253,7 +253,7 @@ foundpkg(const char *found, void *vp)
 
 	/* we only want to display this if it really is a directory */
 	snprintf(buf, sizeof(buf), "%s/%s", data, found);
-	if (!isdir(buf)) {
+	if (!(isdir(buf) || islinktodir(buf))) {
 		/* return value seems to be ignored for now */
 		return -1;
 	}
@@ -286,7 +286,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = !isdir(buf);
+	error = !(isdir(buf) || islinktodir(buf));
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
 	}
@@ -325,7 +325,7 @@ pkg_perform(lpkg_head_t *pkghead)
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, dbdir);
 	} else if (AllInstalled) {
-		if (!(isdir(dbdir) || islinktodir(dbdir)))
+		if (!isdir(dbdir))
 			return 1;
 
 		if (File2Pkg) {
