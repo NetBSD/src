@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.547 2003/03/25 18:26:52 tshiozak Exp $
+#	$NetBSD: mi,v 1.548 2003/03/25 22:07:35 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3753,6 +3753,8 @@
 ./usr/share/man/cat9/pci_mapreg_map.0		comp-sys-catman
 ./usr/share/man/cat9/pci_mapreg_type.0		comp-sys-catman
 ./usr/share/man/cat9/pci_set_powerstate.0		comp-sys-catman
+./usr/share/man/cat9/pci_vpd_read.0		comp-sys-catman
+./usr/share/man/cat9/pci_vpd_write.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia_cis_read_1.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia_cis_read_2.0		comp-sys-catman
@@ -6805,6 +6807,8 @@
 ./usr/share/man/man9/pci_mapreg_map.9		comp-sys-man
 ./usr/share/man/man9/pci_mapreg_type.9		comp-sys-man
 ./usr/share/man/man9/pci_set_powerstate.9		comp-sys-man
+./usr/share/man/man9/pci_vpd_read.9		comp-sys-man
+./usr/share/man/man9/pci_vpd_write.9		comp-sys-man
 ./usr/share/man/man9/pcmcia.9		comp-sys-man
 ./usr/share/man/man9/pcmcia_cis_read_1.9		comp-sys-man
 ./usr/share/man/man9/pcmcia_cis_read_2.9		comp-sys-man
