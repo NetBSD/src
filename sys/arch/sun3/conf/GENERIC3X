@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.29 2000/04/01 14:00:29 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.30 2000/06/09 13:16:00 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -231,7 +231,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		32	# pseudo-terminals
-#pseudo-device	vnd		4	# paging to files
+pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
