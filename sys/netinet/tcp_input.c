@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.92 1999/08/23 14:14:30 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.93 1999/08/25 15:23:12 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -2377,6 +2377,8 @@ do {									\
 #define	SYN_CACHE_RM(sc)						\
 do {									\
 	LIST_REMOVE((sc), sc_bucketq);					\
+	(sc)->sc_tp = NULL;						\
+	LIST_REMOVE((sc), sc_tpq);					\
 	tcp_syn_cache[(sc)->sc_bucketidx].sch_length--;			\
 	TAILQ_REMOVE(&tcp_syn_cache_timeq[(sc)->sc_rxtshift], (sc), sc_timeq); \
 	syn_cache_count--;						\
@@ -2427,8 +2429,9 @@ syn_cache_init()
 }
 
 void
-syn_cache_insert(sc)
+syn_cache_insert(sc, tp)
 	struct syn_cache *sc;
+	struct tcpcb *tp;
 {
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
@@ -2519,6 +2522,9 @@ syn_cache_insert(sc)
 	SYN_CACHE_TIMER_ARM(sc);
 	TAILQ_INSERT_TAIL(&tcp_syn_cache_timeq[sc->sc_rxtshift], sc, sc_timeq);
 
+	/* Link it from tcpcb entry */
+	LIST_INSERT_HEAD(&tp->t_sc, sc, sc_tpq);
+
 	/* Put it into the bucket. */
 	LIST_INSERT_HEAD(&scp->sch_bucket, sc, sc_bucketq);
 	scp->sch_length++;
@@ -2588,6 +2594,36 @@ syn_cache_timer()
 		SYN_CACHE_RM(sc);
 		SYN_CACHE_PUT(sc);
 	}
+	splx(s);
+}
+
+/*
+ * Remove syn cache created by the specified tcb entry,
+ * because this does not make sense to keep them
+ * (if there's no tcb entry, syn cache entry will never be used)
+ */
+void
+syn_cache_cleanup(tp)
+	struct tcpcb *tp;
+{
+	struct syn_cache *sc, *nsc;
+	int s;
+
+	s = splsoftnet();
+
+	for (sc = LIST_FIRST(&tp->t_sc); sc != NULL; sc = nsc) {
+		nsc = LIST_NEXT(sc, sc_tpq);
+
+#ifdef DIAGNOSTIC
+		if (sc->sc_tp != tp)
+			panic("invalid sc_tp in syn_cache_cleanup");
+#endif
+		SYN_CACHE_RM(sc);
+		SYN_CACHE_PUT(sc);
+	}
+	/* just for safety */
+	LIST_INIT(&tp->t_sc);
+
 	splx(s);
 }
 
@@ -3166,9 +3202,9 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
-	sc->sc_so = so;
+	sc->sc_tp = tp;
 	if (syn_cache_respond(sc, m) == 0) {
-		syn_cache_insert(sc);
+		syn_cache_insert(sc, tp);
 		tcpstat.tcps_sndacks++;
 		tcpstat.tcps_sndtotal++;
 	} else {
@@ -3234,8 +3270,22 @@ syn_cache_respond(sc, m)
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
 #ifdef IPSEC
-	/* use IPsec policy on listening socket, on SYN ACK */
-	m->m_pkthdr.rcvif = (struct ifnet *)sc->sc_so;
+	if (sc->sc_tp) {
+		struct tcpcb *tp;
+		struct socket *so;
+
+		tp = sc->sc_tp;
+		if (tp->t_inpcb)
+			so = tp->t_inpcb->inp_socket;
+#ifdef INET6
+		else if (tp->t_in6pcb)
+			so = tp->t_in6pcb->in6p_socket;
+#endif
+		else
+			so = NULL;
+		/* use IPsec policy on listening socket, on SYN ACK */
+		m->m_pkthdr.rcvif = (struct ifnet *)so;
+	}
 #else
 	m->m_pkthdr.rcvif = NULL;
 #endif

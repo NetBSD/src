@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.66 1999/08/12 16:04:52 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.67 1999/08/25 15:23:13 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -224,6 +224,9 @@ struct tcpcb {
 
 /* SACK stuff */
 	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
+
+/* pointer for syn cache entries*/
+	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
 };
 
 #ifdef _KERNEL
@@ -367,7 +370,9 @@ struct syn_cache {
 	u_int16_t sc_ourmaxseg;
 	u_int8_t sc_request_r_scale	: 4,
 		 sc_requested_s_scale	: 4;
-	struct socket *sc_so;			/* listening socket */
+
+	struct tcpcb *sc_tp;			/* tcb for listening socket */
+	LIST_ENTRY(syn_cache) sc_tpq;		/* list of entries by same tp */
 };
 
 struct syn_cache_head {
@@ -683,13 +688,14 @@ struct socket *syn_cache_get __P((struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int,
 		struct socket *so, struct mbuf *));
 void	 syn_cache_init __P((void));
-void	 syn_cache_insert __P((struct syn_cache *));
+void	 syn_cache_insert __P((struct syn_cache *, struct tcpcb *));
 struct syn_cache *syn_cache_lookup __P((struct sockaddr *, struct sockaddr *,
 		struct syn_cache_head **));
 void	 syn_cache_reset __P((struct sockaddr *, struct sockaddr *,
 		struct tcphdr *));
 int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
 void	 syn_cache_timer __P((void));
+void	 syn_cache_cleanup __P((struct tcpcb *));
 
 int	tcp_newreno __P((struct tcpcb *, struct tcphdr *));
 #endif
