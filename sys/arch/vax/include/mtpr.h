@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.13 2000/07/06 17:42:49 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.14 2003/01/22 23:06:37 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -166,20 +166,20 @@
 
 #ifndef	_LOCORE
 
-#define mtpr(val,reg)                                   \
-{                                                       \
-        __asm__ __volatile ("mtpr %0,%1"                    \
-                        : /* No output */               \
-                        : "g" (val), "g" (reg));        \
+#define mtpr(val,reg)						\
+{								\
+	__asm__ __volatile ("mtpr %0,%1"			\
+			: /* No output */			\
+			: "g" ((long)(val)), "g" (reg));        \
 }
 
-#define mfpr(reg)                                       \
-({                                                      \
-        register int val;                               \
-        __asm__ __volatile ("mfpr %1,%0"                    \
-                        : "=g" (val)                    \
-                        : "g" (reg));                   \
-        val;                                            \
+#define mfpr(reg)					\
+({							\
+	register int val;				\
+	__asm__ __volatile ("mfpr %1,%0"		\
+			: "=g" (val)			\
+			: "g" (reg));			\
+	val;						\
 })
 #endif	/* _LOCORE */
 
