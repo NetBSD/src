@@ -68,6 +68,8 @@ extern struct pmax_driver tzdriver;
 
 struct pmax_scsi_device scsi_dinit[] = {
 /*driver,	cdriver,	unit,	ctlr,	drive,	slave,	dk,	flags*/
+
+#if NSII > 0
 { &rzdriver,	&siidriver,	0,	0,	0,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	1,	0,	1,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	2,	0,	2,	0,	1,	0x0 },
@@ -75,6 +77,9 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&siidriver,	4,	0,	4,	0,	1,	0x0 },
 { &tzdriver,	&siidriver,	0,	0,	5,	0,	0,	0x0 },
 { &tzdriver,	&siidriver,	1,	0,	6,	0,	0,	0x0 },
+#endif /* NSII */
+
+#if NASC > 0
 { &rzdriver,	&ascdriver,	0,	0,	0,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	1,	0,	1,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	2,	0,	2,	0,	1,	0x0 },
@@ -82,6 +87,8 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&ascdriver,	4,	0,	4,	0,	1,	0x0 },
 { &tzdriver,	&ascdriver,	0,	0,	5,	0,	0,	0x0 },
 { &tzdriver,	&ascdriver,	1,	0,	6,	0,	0,	0x0 },
+#endif /* NASC */
+
 0
 };
 
