@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 1995/02/11 21:08:44 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 1995/03/26 19:28:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -111,19 +111,19 @@ L_high_code:
 	lea _kstack, a1			| proc0 kernel stack (low end)
 	lea a1@(UPAGES*NBPG-4),sp	| set stack pointer to last word
 	pea _kstack_fall_off		| push something to fall back on :)
+
 	movl #USRSTACK-4, a2		
 	movl a2, usp			| set user stack
-	movl	_proc0paddr,a1		| get proc0 pcb addr
-	movl	a1,_curpcb		| proc0 is running
-	clrw	a1@(PCB_FLAGS)		| clear flags
-	clrl	a1@(PCB_FPCTX)		| ensure null FP context
-| Will do fpu initialization during autoconfig (see fpu.c)
 
-/* Interrupts remain disabled until after autoconfig is done. */
+| Note curpcb was already set in sun3_bootstrap.
+| Will do fpu initialization during autoconfig (see fpu.c)
 
 	moveq	#FC_USERD, d0		| make movs access "user data"
 	movc	d0, sfc			| space for copyin/copyout
 	movc	d0, dfc
+
+| The interrupt vector table and stack are now ready.
+	movw	#PSL_LOWIPL,sr		| lower SPL
 
 /*
  * Final preparation for calling main:
