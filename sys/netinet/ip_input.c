@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.121 2000/11/11 00:52:38 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.122 2000/11/24 03:43:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -695,7 +695,8 @@ found:
 	 * Switch out to protocol's input routine.
 	 */
 #if IFA_STATS
-	ia->ia_ifa.ifa_data.ifad_inbytes += ip->ip_len;
+	if (ia && ip)
+		ia->ia_ifa.ifa_data.ifad_inbytes += ip->ip_len;
 #endif
 	ipstat.ips_delivered++;
     {
