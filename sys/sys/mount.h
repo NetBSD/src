@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.78 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.79 2000/01/20 19:06:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -101,6 +101,7 @@ struct statfs {
 #define	MOUNT_FDESC	"fdesc"		/* File Descriptor Filesystem */
 #define	MOUNT_PORTAL	"portal"	/* Portal Filesystem */
 #define	MOUNT_NULL	"null"		/* Minimal Filesystem Layer */
+#define	MOUNT_OVERLAY	"overlay"	/* Minimal Overlay Filesystem Layer */
 #define	MOUNT_UMAP	"umap"	/* User/Group Identifier Remapping Filesystem */
 #define	MOUNT_KERNFS	"kernfs"	/* Kernel Information Filesystem */
 #define	MOUNT_PROCFS	"procfs"	/* /proc Filesystem */
