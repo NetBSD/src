@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.6 1997/10/18 11:06:02 lukem Exp $	*/
+/*	$NetBSD: plist.c,v 1.7 1998/03/27 12:16:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.6 1997/10/18 11:06:02 lukem Exp $");
+__RCSID("$NetBSD: plist.c,v 1.7 1998/03/27 12:16:26 agc Exp $");
 #endif
 #endif
 
@@ -256,8 +256,10 @@ read_plist(Package *pkg, FILE *fp)
 	cp = pline;
 	if (pline[0] == CMD_CHAR) {
 	    cmd = plist_cmd(pline + 1, &cp);
-	    if (cmd == FAIL)
-		cleanup(0), errx(2, "bad command '%s'", pline);
+	    if (cmd == FAIL) {
+		warnx("Unrecognised PLIST command `%s'", pline);
+		continue;
+	    }
 	    if (*cp == '\0')
 		cp = NULL;
 	}
