@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.49 2003/07/25 08:26:22 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.50 2003/07/27 07:45:08 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,7 +224,7 @@ get_mbrp(mbr_info_t **mbrip, int opt)
 }
 
 static int
-set_mbr_type(menudesc *m, menu_ent *ent, void *arg)
+set_mbr_type(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ombri = arg;
@@ -241,7 +241,7 @@ set_mbr_type(menudesc *m, menu_ent *ent, void *arg)
 	if (opt >= NMBRPART)
 		opt = 0;
 
-	type = ent - m->opts;
+	type = m->cursel;
 	if (type == 0)
 		return 1;
 	type = part_ids[type - 1].id;
@@ -374,7 +374,7 @@ set_type_label(menudesc *m, int opt, void *arg)
 }
 
 static int
-edit_mbr_type(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_type(menudesc *m, void *arg)
 {
 	static menu_ent type_opts[1 + nelem(part_ids)];
 	static int type_menu = -1;
@@ -399,7 +399,7 @@ edit_mbr_type(menudesc *m, menu_ent *ent, void *arg)
 }
 
 static int
-edit_mbr_start(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_start(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ext;
@@ -544,7 +544,7 @@ edit_mbr_start(menudesc *m, menu_ent *ent, void *arg)
 }
 
 static int
-edit_mbr_size(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_size(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ombri = arg;
@@ -711,7 +711,7 @@ edit_mbr_size(menudesc *m, menu_ent *ent, void *arg)
 }
 
 static int
-edit_mbr_active(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_active(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	int i;
@@ -737,7 +737,7 @@ edit_mbr_active(menudesc *m, menu_ent *ent, void *arg)
 }
 
 static int
-edit_mbr_install(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_install(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ombri = arg;
@@ -759,7 +759,7 @@ edit_mbr_install(menudesc *m, menu_ent *ent, void *arg)
 
 #ifdef BOOTSEL
 static int
-edit_mbr_bootmenu(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_bootmenu(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ombri = arg;
@@ -784,7 +784,7 @@ edit_mbr_bootmenu(menudesc *m, menu_ent *ent, void *arg)
 }
 
 static int
-edit_mbr_bootdefault(menudesc *m, menu_ent *ent, void *arg)
+edit_mbr_bootdefault(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	mbr_info_t *ombri = arg;
@@ -801,7 +801,7 @@ static void set_ptn_label(menudesc *m, int line, void *arg);
 static void set_ptn_header(menudesc *m, void *arg);
 
 static int
-edit_mbr_entry(menudesc *m, menu_ent *opt, void *arg)
+edit_mbr_entry(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
 	static int ptn_menu = -1;
@@ -837,7 +837,7 @@ edit_mbr_entry(menudesc *m, menu_ent *opt, void *arg)
 	if (ptn_menu == -1)
 		return 1;
 
-	mbri->opt = opt - m->opts;
+	mbri->opt = m->cursel;
 	process_menu(ptn_menu, mbri);
 	return 0;
 }
@@ -1146,6 +1146,7 @@ edit_mbr(mbr_info_t *mbri)
 		return 0;
 
 	/* Ask for sizes, which partitions, ... */
+	sizemult = MEG / sectorsize;
 	ask_sizemult(bcylsize);
 
 	for (;;) {
