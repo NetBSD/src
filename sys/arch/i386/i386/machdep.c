@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 1995/07/02 16:10:40 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 1995/08/06 05:32:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -911,15 +911,15 @@ setregs(p, pack, stack, retval)
 	register struct pcb *pcb;
 	register struct trapframe *tf;
 
-	pcb = &p->p_addr->u_pcb;
-	lcr0(pcb->pcb_cr0 |= CR0_EM|CR0_TS);
-	pcb->pcb_flags = 0;
-
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (npxproc == p)
-		npxproc = 0;
+		npxdrop();
 #endif
+
+	pcb = &p->p_addr->u_pcb;
+	lcr0(pcb->pcb_cr0);
+	pcb->pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.13 1995/05/03 00:17:19 mycroft Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.14 1995/08/06 05:33:01 mycroft Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -79,8 +79,8 @@ math_emulate(struct trapframe *info)
 		panic("math emulator called from supervisor mode");
 
 	/* ever used fp? */
-	if ((curpcb->pcb_flags & PCB_USEDFPU) == 0) {
-		curpcb->pcb_flags |= PCB_USEDFPU;
+	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
+		curproc->p_md.md_flags |= MDP_USEDFPU;
 		fninit();
 	}
 
