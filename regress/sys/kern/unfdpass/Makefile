@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/07 23:38:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/02 21:57:38 cgd Exp $
 
 PROG=	unfdpass
 NOMAN=	noman, no way, man
-LDSTATIC=-static
 
 CLEANFILES+=file1 file2 output test-sock
 
