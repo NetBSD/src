@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2001/11/02 05:30:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.30.2.1 2004/04/01 03:05:57 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.30 2001/11/02 05:30:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.30.2.1 2004/04/01 03:05:57 jmc Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -226,7 +226,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.24");
+			msglog("version 2.24nb1");
 			break;
 
 		default:
