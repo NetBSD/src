@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.30 2000/04/16 09:00:26 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.31 2000/05/10 01:34:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1687,6 +1687,13 @@ LEAF(mips1_TBRPL)
 	END(mips1_TBRPL)
 
 	.data
+
+	.globl _C_LABEL(mips1_locoresw)
+_C_LABEL(mips1_locoresw):
+	.word _C_LABEL(mips1_cpu_switch_resume)
+	.word _C_LABEL(mips1_proc_trampoline)
+	.word _C_LABEL(mips_idle)
+
 mips1_excausesw:
 	####
 	#### The kernel exception handlers.
