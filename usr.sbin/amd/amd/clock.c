@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clock.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: clock.c,v 1.2 1994/06/13 19:47:28 mycroft Exp $
- *
+ *	from: @(#)clock.c	8.1 (Berkeley) 6/6/93
+ *	$Id: clock.c,v 1.3 1994/06/13 20:47:05 mycroft Exp $
  */
 
 /*
