@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.13 2003/09/13 16:35:47 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.14 2003/09/14 09:48:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.13 2003/09/13 16:35:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.14 2003/09/14 09:48:42 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.13 2003/09/13 16:35:47 manu
 #include <compat/mach/mach_iokit.h>
 
 #include <compat/darwin/darwin_iokit.h>
+#include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iohidsystem.h>
 
 /* Redefined from sys/dev/wscons/wsmux.c */
@@ -317,8 +318,10 @@ darwin_iohidsystem_thread(args)
 
 	evg = (struct darwin_iohidsystem_evglobals *)&shmem->dis_evglobals;
 
-	/* Use the first wsmux available */
-	if ((error = darwin_findwsmux(&dev, 0)) != 0)
+	/* 
+	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+	 */
+	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
 		goto exit;		
 
 	if ((error = (*wsmux_cdevsw.d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
@@ -460,7 +463,40 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 		py = wsevt->value;
 		break;
 
+	case WSCONS_EVENT_MOUSE_DOWN:
+		if (wsevt->value == 0)
+			hidevt->die_type = DARWIN_NX_LMOUSEDOWN;
+		else if (wsevt->value == 1)
+			hidevt->die_type = DARWIN_NX_RMOUSEDOWN;
+		else {
+#ifdef DEBUG_DARWIN
+			printf("Unknown mouse button %d\n", wsevt->value);
+#endif
+			break;
+		}
+		hidevt->die_data.mouse.subx = px;
+		hidevt->die_data.mouse.suby = py;
+		hidevt->die_data.mouse.buttonid = wsevt->value;
+		break;
+
+	case WSCONS_EVENT_MOUSE_UP:
+		if (wsevt->value == 0)
+			hidevt->die_type = DARWIN_NX_LMOUSEUP;
+		else if (wsevt->value == 1)
+			hidevt->die_type = DARWIN_NX_RMOUSEUP;
+		else {
+#ifdef DEBUG_DARWIN
+			printf("Unknown mouse button %d\n", wsevt->value);
+#endif
+			break;
+		}
+		hidevt->die_data.mouse.subx = px;
+		hidevt->die_data.mouse.suby = py;
+		hidevt->die_data.mouse.buttonid = wsevt->value;
+		break;
+
 	default:
+
 #ifdef DEBUG_DARWIN
 		printf("Untranslated wsevt->type = %d, wsevt->value = %d\n", 
 		    wsevt->type, wsevt->value);
