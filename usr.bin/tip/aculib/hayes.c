@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.7 1997/11/22 07:28:56 lukem Exp $	*/
+/*	$NetBSD: hayes.c,v 1.8 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.7 1997/11/22 07:28:56 lukem Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.8 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -219,6 +219,7 @@ static void
 error_rep(c)
 	char c;
 {
+
 	printf("\n\r");
 	switch (c) {
 

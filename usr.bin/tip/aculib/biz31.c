@@ -1,4 +1,4 @@
-/*	$NetBSD: biz31.c,v 1.6 1997/11/22 07:28:53 lukem Exp $	*/
+/*	$NetBSD: biz31.c,v 1.7 1998/07/12 09:14:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz31.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz31.c,v 1.6 1997/11/22 07:28:53 lukem Exp $");
+__RCSID("$NetBSD: biz31.c,v 1.7 1998/07/12 09:14:19 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -140,7 +140,6 @@ echo(s)
 	char c;
 
 	while (c = *s++) switch (c) {
-
 	case '$':
 		read(FD, &c, 1);
 		s++;
