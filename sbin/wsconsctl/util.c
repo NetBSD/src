@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2002/01/13 18:16:10 jandberg Exp $ */
+/*	$NetBSD: util.c,v 1.13 2002/02/24 02:01:41 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ static struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_ARCHIMEDES,	"archimedes" },
 	{ WSMOUSE_TYPE_HIL,		"hil" },
 	{ WSMOUSE_TYPE_AMIGA,		"amiga" },
+	{ WSMOUSE_TYPE_MAXINE,		"dec-maxine" },
 };
 
 static struct nameint dpytype_tab[] = {
