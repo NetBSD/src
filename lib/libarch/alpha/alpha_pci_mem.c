@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_mem.c,v 1.1 2000/02/26 18:59:36 thorpej Exp $	*/
+/*	$NetBSD: alpha_pci_mem.c,v 1.1.4.1 2000/07/03 22:37:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,10 +124,11 @@ alpha_pci_mem_map(memaddr, memsize, flags, rabst)
 }
 
 void
-alpha_pci_mem_unmap(addr, size)
+alpha_pci_mem_unmap(abst, addr, size)
+	struct alpha_bus_space_translation *abst;
 	void *addr;
 	bus_size_t size;
 {
 
-	(void) munmap(addr, size);
+	(void) munmap(addr, size << abst->abst_addr_shift);
 }
