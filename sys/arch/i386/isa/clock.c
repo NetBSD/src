@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 1995/08/13 04:06:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -258,10 +258,15 @@ void
 sysbeep(pitch, period)
 	int pitch, period;
 {
-	static int last_pitch, last_period;
+	static int last_pitch;
 
 	if (beeping)
 		untimeout(sysbeepstop, 0);
+	if (pitch == 0 || period == 0) {
+		sysbeepstop(0);
+		last_pitch = 0;
+		return;
+	}
 	if (!beeping || last_pitch != pitch) {
 		disable_intr();
 		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
@@ -271,7 +276,7 @@ sysbeep(pitch, period)
 		enable_intr();
 	}
 	last_pitch = pitch;
-	beeping = last_period = period;
+	beeping = 1;
 	timeout(sysbeepstop, 0, period);
 }
 
