@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.1 1995/10/10 01:22:33 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.2 1995/10/10 01:40:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -49,14 +49,14 @@
 
 #include <vm/vm.h>
 
-#include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_exec.h>
-#include <compat/freebsd/freebsd_ptrace.h>
-
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
 #include <machine/reg.h>
 #include <machine/freebsd_machdep.h>
+
+#include <compat/freebsd/freebsd_syscallargs.h>
+#include <compat/freebsd/freebsd_exec.h>
+#include <compat/freebsd/freebsd_ptrace.h>
 
 /*
  * signal support
@@ -178,7 +178,7 @@ freebsd_sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct freebsd_sigreturn_args /* {
+	struct freebsd_sys_sigreturn_args /* {
 		syscallarg(struct freebsd_sigcontext *) scp;
 	} */ *uap = v;
 	struct freebsd_sigcontext *scp, context;
