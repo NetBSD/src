@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.509 2003/02/05 12:18:03 nakayama Exp $	*/
+/*	$NetBSD: machdep.c,v 1.510 2003/02/09 13:03:38 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.509 2003/02/05 12:18:03 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.510 2003/02/09 13:03:38 enami Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -213,7 +213,7 @@ int     cpureset_delay = 2000; /* default to 2s */
 #endif
 
 #ifdef MTRR
-struct mtrr_funcs *mtrr_funcs;
+const struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int	physmem;
