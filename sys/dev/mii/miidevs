@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.16 2001/04/09 09:39:24 drochner Exp $
+$NetBSD: miidevs,v 1.17 2001/05/15 21:37:04 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
 /* National Semiconductor PHYs */
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
+model xxNATSEMI DP83861		0x0006 DP83861 1000baseTX PHY
 
 /* Quality Semiconductor PHYs */
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
