@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.43 2000/10/11 20:23:58 is Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.44 2000/12/20 01:34:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.43 2000/10/11 20:23:58 is Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.44 2000/12/20 01:34:39 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: ypbind.c,v 1.43 2000/10/11 20:23:58 is Exp $");
 #define BUFSIZE		1400
 
 #define YPSERVERSSUFF	".ypservers"
-#define BINDINGDIR	__CONCAT(_PATH_VAR_YP, "binding")
+#define BINDINGDIR	(_PATH_VAR_YP "binding")
 
 struct _dom_binding {
 	struct _dom_binding *dom_pnext;
