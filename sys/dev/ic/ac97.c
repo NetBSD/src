@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.44 2003/09/07 11:27:32 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.45 2003/09/07 11:59:40 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.44 2003/09/07 11:27:32 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.45 2003/09/07 11:59:40 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ void ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
 u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
 int ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src);
 
-static void ac97_ad1981_init(struct ac97_softc *);
+static void ac97_ad1980_init(struct ac97_softc *);
 static void ac97_alc650_init(struct ac97_softc *);
 static void ac97_vt1616_init(struct ac97_softc *);
 
@@ -367,7 +367,7 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
-	  0xffffffff,			"Analog Devices AD1981", ac97_ad1981_init },
+	  0xffffffff,			"Analog Devices AD1980", ac97_ad1980_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
@@ -1469,7 +1469,7 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 #define AC97_AD_MISC_MSPLT	0x1000  /*12 */
 #define AC97_AD_MISC_DACZ	0x4000  /*14 */
 static void
-ac97_ad1981_init(struct ac97_softc *as)
+ac97_ad1980_init(struct ac97_softc *as)
 {
 	unsigned short misc;
 
