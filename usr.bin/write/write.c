@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.9 1997/10/19 14:35:31 mrg Exp $	*/
+/*	$NetBSD: write.c,v 1.10 1997/10/20 03:24:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.9 1997/10/19 14:35:31 mrg Exp $");
+__RCSID("$NetBSD: write.c,v 1.10 1997/10/20 03:24:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *cp;
+	char *cp;
 	time_t atime;
 	uid_t myuid;
 	int msgsok, myttyfd;
@@ -255,8 +255,8 @@ do_write(tty, mytty, myuid)
 	char *tty, *mytty;
 	uid_t myuid;
 {
-	register char *login, *nows;
-	register struct passwd *pwd;
+	char *login, *nows;
+	struct passwd *pwd;
 	time_t now;
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
 
@@ -304,9 +304,9 @@ done(dummy)
  */
 void
 wr_fputs(s)
-	register char *s;
+	char *s;
 {
-	register char c;
+	char c;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;
 
