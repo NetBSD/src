@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.7 2000/03/13 22:37:13 soren Exp $
+.\"	$NetBSD: install,v 1.8 2000/10/03 23:23:56 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.7 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.8 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -379,7 +379,7 @@ Now, if you want to do it through serial line 1, then connect serial
 line one to a machine. At the
 .Li 147-Bug\*> No prompt type Ic \&tm 1
 You should then login to the machine it is connected to.
-Then hit "^A" to escape to Bug. do 
+Then press Control-A to escape to Bug. do 
 .Ic lo 1;x=cat sboot Em ...
 then when that is done you can reconnect
 .Ic tm 1 No and logout.
@@ -415,7 +415,7 @@ For both boards, the boot messages are very similar:
 .Pp
 .Bd -literal -offset indent
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.7 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.8 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
