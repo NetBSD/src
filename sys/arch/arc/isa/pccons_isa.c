@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.5 2003/07/15 00:04:47 lukem Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.6 2004/09/14 20:32:48 drochner Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.5 2003/07/15 00:04:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.6 2004/09/14 20:32:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ pccons_isa_match(parent, match, aux)
 
 	if (ia->ia_nio < 1)
 		return (0);
-	if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT)
 		iobase = ia->ia_io[0].ir_addr;
 #if 0	/* XXX isa.c */
 	if (ia->ia_iosize != 0)
@@ -73,14 +73,14 @@ pccons_isa_match(parent, match, aux)
 #endif
 	if (ia->ia_niomem < 1)
 		return (0);
-	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT)
+	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM)
 		maddr = ia->ia_iomem[0].ir_addr;
-	if (ia->ia_iomem[0].ir_size != ISACF_IOSIZ_DEFAULT)
+	if (ia->ia_iomem[0].ir_size != ISA_UNKNOWN_IOSIZ)
 		msize = ia->ia_iomem[0].ir_size;
 
 	if (ia->ia_nirq < 1)
 		return (0);
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ)
 		irq = ia->ia_irq[0].ir_irq;
 
 #if 0
