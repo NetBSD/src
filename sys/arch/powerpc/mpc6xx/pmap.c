@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28.4.2 2001/11/05 19:46:17 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.4.3 2001/11/19 16:43:08 briggs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -115,10 +115,12 @@ u_long pmap_pte_valid;
 u_long pmap_pte_overflow;
 u_long pmap_pte_replacements;
 u_long pmap_pvo_entries;
-u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_enter_calls;
-u_long pmap_pvo_remove_depth;
 u_long pmap_pvo_remove_calls;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+u_long pmap_pvo_enter_depth;
+u_long pmap_pvo_remove_depth;
+#endif
 u_int64_t pmap_pte_spills = 0;
 struct pvo_entry *pmap_pvo_syncicache;
 struct pvo_entry *pmap_pvo_zeropage;
@@ -227,7 +229,7 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 STATIC int pmap_pte_insert(int, pte_t *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, u_int, int);
-STATIC void pmap_pvo_remove(struct pvo_entry *, int, int);
+STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
@@ -507,13 +509,13 @@ pmap_pte_synch(volatile pte_t *pt, pte_t *pvo_pt)
 }
 
 static __inline void
-pmap_pte_clear(volatile pte_t *pt, int ptebit)
+pmap_pte_clear(volatile pte_t *pt, vaddr_t va, int ptebit)
 {
 	/*
-	 * As shown in Section 7.6.3.2.2
+	 * As shown in Section 7.6.3.2.3
 	 */
 	pt->pte_lo &= ~ptebit;
-	TLBIE(pt);
+	TLBIE(va);
 	EIEIO();
 	TLBSYNC();
 	SYNC();
@@ -522,8 +524,10 @@ pmap_pte_clear(volatile pte_t *pt, int ptebit)
 static __inline void
 pmap_pte_set(volatile pte_t *pt, pte_t *pvo_pt)
 {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (pvo_pt->pte_hi & PTE_VALID)
 		panic("pte_set: setting an already valid pte %p", pvo_pt);
+#endif
 	pvo_pt->pte_hi |= PTE_VALID;
 	/*
 	 * Update the PTE as defined in section 7.6.3.1
@@ -540,10 +544,12 @@ pmap_pte_set(volatile pte_t *pt, pte_t *pvo_pt)
 static __inline void
 pmap_pte_unset(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ((pvo_pt->pte_hi & PTE_VALID) == 0)
 		panic("pte_unset: attempt to unset an inactive pte#1 %p/%p", pvo_pt, pt);
 	if ((pt->pte_hi & PTE_VALID) == 0)
 		panic("pte_unset: attempt to unset an inactive pte#2 %p/%p", pvo_pt, pt);
+#endif
 
 	pvo_pt->pte_hi &= ~PTE_VALID;
 	/*
@@ -630,7 +636,7 @@ pmap_pte_spill(vaddr_t addr)
 {
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
-	int ptegidx, i;
+	int ptegidx, i, j;
 	sr_t sr;
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
@@ -646,8 +652,8 @@ pmap_pte_spill(vaddr_t addr)
 	 * Use low bits of timebase as random generator
 	 */
 	pteg = &pmap_pteg_table[ptegidx];
-	i = MFTB();
-	pt = &pteg->pt[i & 7];
+	i = MFTB() & 7;
+	pt = &pteg->pt[i];
 
 	source_pvo = NULL;
 	victim_pvo = NULL;
@@ -662,10 +668,11 @@ pmap_pte_spill(vaddr_t addr)
 			 * Now found an entry to be spilled into the pteg.
 			 * The PTE is now be valid, so we know it's active;
 			 */
-			i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
-			if (i >= 0) {
-				PVO_PTEGIDX_SET(pvo, i);
+			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
+			if (j >= 0) {
+				PVO_PTEGIDX_SET(pvo, j);
 				pmap_pte_overflow--;
+				PMAP_PVO_CHECK(pvo);	/* sanity check */
 				return 1;
 			}
 			source_pvo = pvo;
@@ -676,7 +683,7 @@ pmap_pte_spill(vaddr_t addr)
 		 * We also need the pvo entry of the victim we are replacing
 		 * so save the R & C bits of the PTE.
 		 */
-		if (victim_pvo == NULL &&
+		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
 		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
 			victim_pvo = pvo;
 			if (source_pvo != NULL)
@@ -687,8 +694,30 @@ pmap_pte_spill(vaddr_t addr)
 	if (source_pvo == NULL)
 		return 0;
 
-	if (victim_pvo == NULL)
-		panic("pmap_pte_spill: victim pte has no pvo entry!");
+	if (victim_pvo == NULL) {
+		if ((pt->pte_hi & PTE_HID) == 0)
+			panic("pmap_pte_spill: victim p-pte (%p) has "
+			    "no pvo entry!", pt);
+		/*
+		 * If this is a secondary PTE, we need to search
+		 * its primary pvo bucket for the matching PVO.
+		 */
+		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx ^ pmap_pteg_mask],
+		    pvo_olink) {
+			PMAP_PVO_CHECK(pvo);		/* sanity check */
+			/*
+			 * We also need the pvo entry of the victim we are
+			 * replacing so save the R & C bits of the PTE.
+			 */
+			if (pmap_pte_compare(pt, &pvo->pvo_pte)) {
+				victim_pvo = pvo;
+				break;
+			}
+		}
+		if (victim_pvo == NULL)
+			panic("pmap_pte_spill: victim s-pte (%p) has "
+			    "no pvo entry!", pt);
+	}
 
 	/*
 	 * We are invalidating the TLB entry for the EA for the
@@ -704,6 +733,9 @@ pmap_pte_spill(vaddr_t addr)
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
 	pmap_pte_replacements++;
+
+	PMAP_PVO_CHECK(victim_pvo);
+	PMAP_PVO_CHECK(source_pvo);
 	return 1;
 }
 
@@ -1017,6 +1049,11 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
 
+#if !defined(DIAGNOSTIC) && !defined(DEBUG) && !defined(PMAPCHECK)
+	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
+		return NULL;
+#endif
+
 	/*
 	 * If we haven't been supplied the ptegidx, calculate it.
 	 */
@@ -1029,7 +1066,9 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 
 	pt = &pmap_pteg_table[pteidx >> 3].pt[pteidx & 7];
 
-#ifdef DIAGNOSTIC
+#if !defined(DIAGNOSTIC) && !defined(DEBUG) && !defined(PMAPCHECK)
+	return pt;
+#else
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) && !PVO_PTEGIDX_ISSET(pvo)) {
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte in "
 		    "pvo but no valid pte index", pvo);
@@ -1038,10 +1077,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte index in "
 		    "pvo but no valid pte", pvo);
 	}
-#endif
 
 	if ((pt->pte_hi ^ (pvo->pvo_pte.pte_hi & ~PTE_VALID)) == PTE_VALID) {
-#ifdef DIAGNOSTIC
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0) {
 #if defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pte_print(pt);
@@ -1058,11 +1095,9 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 			    "not match pte %p in pmap_pteg_table",
 			    pvo, pt);
 		}
-#endif
 		return pt;
 	}
 
-#ifdef DIAGNOSTIC
 	if (pvo->pvo_pte.pte_hi & PTE_VALID) {
 #if defined(DEBUG) || defined(PMAPCHECK)
 		pmap_pte_print(pt);
@@ -1070,8 +1105,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
 		    "pmap_pteg_table but valid in pvo", pvo, pt);
 	}
-#endif
 	return NULL;
+#endif	/* !(!DIAGNOSTIC && !DEBUG && !PMAPCHECK) */
 }
 
 struct pvo_entry *
@@ -1086,7 +1121,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	ptegidx = va_to_pteg(sr, va);
 
 	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
 			panic("pmap_pvo_find_va: invalid pvo %p on "
 			    "list %#x (%p)", pvo, ptegidx,
@@ -1118,9 +1153,11 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 		volatile pte_t *pt;
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 			if (depth_p != NULL && *depth_p == 0)
 				panic("pmap_pa_map: pvo %p: valid pt %p"
 				    " on 0 depth", pvo, pt);
+#endif
 			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 			PVO_PTEGIDX_CLR(pvo);
 			pmap_pte_overflow++;
@@ -1131,17 +1168,21 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
 		    pvo->pvo_vaddr));
 		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	} else if ((pvo->pvo_pte.pte_hi & PTE_VALID) ||
 	    (depth_p != NULL && (*depth_p) > 0)) {
 		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
+#endif
 	}
 	pvo->pvo_pte.pte_lo |= pa;
 	if (!pmap_pte_spill(pvo->pvo_vaddr))
 		panic("pmap_pa_map: could not spill pvo %p", pvo);
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
 		panic("pmap_pa_map: pvo %p: pte not valid after spill", pvo);
 	if (PVO_PTEGIDX_ISSET(pvo) == 0)
 		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
+#endif
 	if (depth_p != NULL)
 		(*depth_p)++;
 	pmap_interrupts_restore(msr);
@@ -1170,10 +1211,12 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 	 * and return.
 	 */
 	if (saved_pt != NULL && (saved_pt->pte_lo & PTE_RPGN) != 0) {
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if (pvo->pvo_pte.pte_hi != saved_pt->pte_hi)
 			panic("pmap_pa_unmap: pvo %p pte_hi %#x "
 			    "!= saved pte_hi %#x", pvo, pvo->pvo_pte.pte_hi,
 			    saved_pt->pte_hi);
+#endif
 		if (depth_p != NULL && --(*depth_p) == 0)
 			panic("pmap_pa_unmap: restoring but depth == 0");
 		pvo->pvo_pte = *saved_pt;
@@ -1182,6 +1225,7 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
 		if (!pmap_pte_spill(pvo->pvo_vaddr))
 			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
 			panic("pmap_pa_unmap: pvo %p: pte not valid after "
 			    "spill", pvo);
@@ -1189,6 +1233,7 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 		if (depth_p != NULL && --(*depth_p) != 0)
 			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
 			    *depth_p);
+#endif
 	}
 
 	pmap_interrupts_restore(msr);
@@ -1201,8 +1246,8 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	static int depth;
 	static u_int calls;
 	DPRINTFN(SYNCICACHE, ("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
-	if (pa < SEGMENT_LENGTH) {
-		__syncicache((void *)pa, NBPG);
+	if (pa + len <= SEGMENT_LENGTH) {
+		__syncicache((void *)pa, len);
 		return;
 	}
 	if (pmap_initialized) {
@@ -1362,11 +1407,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int first;
 	int ptegidx;
 	int i;
+	int poolflags = PR_NOWAIT;
 
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (pmap_pvo_remove_depth > 0)
 		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
 	if (++pmap_pvo_enter_depth > 1)
 		panic("pmap_pvo_enter: called recursively!");
+#endif
 
 	pmap_pvo_enter_calls++;
 	/*
@@ -1399,7 +1447,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			}
 #endif
-			pmap_pvo_remove(pvo, -1, FALSE);
+			pmap_pvo_remove(pvo, -1);
 			break;
 		}
 	}
@@ -1407,37 +1455,31 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * If we aren't overwriting an mapping, try to allocate
 	 */
+	if ((flags & PMAP_CANFAIL) == 0)
+		poolflags |= PR_URGENT;
+	pmap_interrupts_restore(msr);
+	pvo = pool_get(pl, poolflags);
+	msr = pmap_interrupts_off();
 	if (pvo == NULL) {
-		int poolflags = PR_NOWAIT;
-		if ((flags & PMAP_CANFAIL) == 0)
-			poolflags |= PR_URGENT;
-		pmap_interrupts_restore(msr);
-		pvo = pool_get(pl, poolflags);
-		msr = pmap_interrupts_off();
+#if 0
+		pvo = pmap_pvo_reclaim(pm);
 		if (pvo == NULL) {
-#if 0
-			pvo = pmap_pvo_reclaim(pm);
-			if (pvo == NULL) {
 #endif
-				if ((flags & PMAP_CANFAIL) == 0)
-					panic("pmap_pvo_enter: failed");
-				pmap_pvo_enter_depth--;
-				pmap_interrupts_restore(msr);
-				return ENOMEM;
-#if 0
-			}
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_pvo_enter: failed");
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+			pmap_pvo_enter_depth--;
 #endif
+			pmap_interrupts_restore(msr);
+			return ENOMEM;
+#if 0
 		}
-		pmap_pvo_entries++;
-		pvo->pvo_vaddr = va;
-		pvo->pvo_pmap = pm;
-		LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-#if 0
-	} else {
-		if (pmap_initialized && pm != pmap_kernel())
-			printf("pmap_pvo_enter: pmap %p: reusing pvo %p for va %#x\n", pm, pvo, va);
 #endif
 	}
+	pmap_pvo_entries++;
+	pvo->pvo_vaddr = va;
+	pvo->pvo_pmap = pm;
+	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
 	if (flags & VM_PROT_EXECUTE)
 		pvo->pvo_vaddr |= PVO_EXECUTABLE;
@@ -1454,7 +1496,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	first = LIST_FIRST(pvo_head) == NULL;
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
-	if (pvo->pvo_pte.pte_lo & PMAP_WIRED)
+	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
 #if defined(DEBUG)
@@ -1477,18 +1519,22 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_enter_depth--;
+#endif
 	pmap_interrupts_restore(msr);
 	return first ? ENOENT : 0;
 }
 
 void
-pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
+pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
 
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (++pmap_pvo_remove_depth > 1)
 		panic("pmap_pvo_remove: called recursively!");
+#endif
 
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 	/* 
@@ -1507,7 +1553,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
 	 * Update our statistics
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
-	if (pvo->pvo_pte.pte_lo & PMAP_WIRED)
+	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
@@ -1529,16 +1575,16 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
 	 * Remove this from the Overflow list and return it to the pool...
 	 * ... if we aren't going to reuse it.
 	 */
-	if (freeit) {
-		LIST_REMOVE(pvo, pvo_olink);
-		pool_put(pvo->pvo_vaddr & PVO_MANAGED
-		    ? &pmap_mpvo_pool
-		    : &pmap_upvo_pool,
-		    pvo);
-		pmap_pvo_entries--;
-		pmap_pvo_remove_calls++;
-	}
+	LIST_REMOVE(pvo, pvo_olink);
+	pool_put(pvo->pvo_vaddr & PVO_MANAGED
+	    ? &pmap_mpvo_pool
+	    : &pmap_upvo_pool,
+	    pvo);
+	pmap_pvo_entries--;
+	pmap_pvo_remove_calls++;
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
+#endif
 }
 
 /*
@@ -1695,7 +1741,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 		msr = pmap_interrupts_off();
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
-			pmap_pvo_remove(pvo, pteidx, TRUE);
+			pmap_pvo_remove(pvo, pteidx);
 		}
 		pmap_interrupts_restore(msr);
 		splx(s);
@@ -1866,7 +1912,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
 			if ((pvo->pvo_vaddr & PVO_WIRED) == 0)
-				pmap_pvo_remove(pvo, -1, TRUE);
+				pmap_pvo_remove(pvo, -1);
 			continue;
 		} 
 
@@ -2033,7 +2079,8 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
 			pmap_pte_synch(pt, &pvo->pvo_pte);
-			pmap_pte_clear(pt, ptebit);
+			if (pvo->pvo_pte.pte_lo & ptebit)
+				pmap_pte_clear(pt, PVO_VADDR(pvo), ptebit);
 		}
 		rv |= pvo->pvo_pte.pte_lo;
 		pvo->pvo_pte.pte_lo &= ~ptebit;
@@ -2712,7 +2759,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 */
 	size = pmap_pteg_cnt * sizeof(pteg_t);
 	pmap_pteg_table = pmap_boot_find_memory(size, size, 0);
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pteg_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pteg_table end (%p + %lx) > 256MB",
 		    pmap_pteg_table, size);
@@ -2727,7 +2774,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 */
 	size = sizeof(struct pvo_head) * pmap_pteg_cnt;
 	pmap_pvo_table = pmap_boot_find_memory(size, NBPG, 0);
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pvo_table end (%p + %lx) > 256MB",
 		    pmap_pvo_table, size);
@@ -2752,7 +2799,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		size = (sizeof(struct pvo_head) + 1) * npgs;
 		pmap_physseg.pvoh = pmap_boot_find_memory(size, NBPG, 0);
 		pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t)pmap_physseg.pvoh + size > SEGMENT_LENGTH)
 			panic("pmap_bootstrap: PVO list end (%p + %lx) > 256MB",
 			    pmap_physseg.pvoh, size);
