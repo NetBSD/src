@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.6.24.2 2000/03/13 19:09:03 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6.24.3 2000/03/14 15:59:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
+#include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/vme_pccreg.h>
 #include <mvme68k/dev/vme_pccvar.h>
@@ -74,8 +75,10 @@ extern	struct cfdriver vmepcc_cd;
 extern	phys_ram_seg_t mem_clusters[];
 static	int vme_pcc_attached;
 
+#ifdef DIAGNOSTIC
 const char *_vme_mod_string __P((vme_addr_t, vme_size_t,
     vme_am_t, vme_datasize_t));
+#endif
 
 /*
  * Describe the VMEbus ranges available from the MVME147
@@ -464,6 +467,7 @@ _vme_pcc_dmamem_free(vsc, segs, nsegs)
 {
 }
 
+#ifdef DIAGNOSTIC
 const char *
 _vme_mod_string(addr, len, am, ds)
 	vme_addr_t addr;
@@ -509,3 +513,4 @@ _vme_mod_string(addr, len, am, ds)
 
 	return (mstring);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3.10.2 2000/03/13 12:15:26 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.3.10.3 2000/03/14 15:59:51 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ ie_pcctwo_match(parent, cf, args)
 	struct cfdata *cf;
 	void *args;
 {
-	struct pcc_attach_args *pa = args;
+	struct pcctwo_attach_args *pa = args;
 
 	if ( strcmp(pa->pa_name, ie_cd.cd_name) )
 		return 0;

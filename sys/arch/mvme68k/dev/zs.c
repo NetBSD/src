@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.16.1 2000/03/14 15:59:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,9 +125,10 @@ extern struct cfdriver zsc_cd;
  * Configure children of an SCC.
  */
 void
-zs_config(zsc, chan_addr)
+zs_config(zsc, bust, bush)
 	struct zsc_softc *zsc;
-	struct zschan *(*chan_addr) __P((int, int));
+	bus_space_tag_t bust;
+	bus_space_handle_t bush;
 {
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
@@ -154,7 +155,7 @@ zs_config(zsc, chan_addr)
 			bcopy(zs_conschan, cs, sizeof(struct zs_chanstate));
 			zs_conschan = cs;
 		} else {
-			zc = (*chan_addr)(zsc_unit, channel);
+			zc = (volatile struct zschan *) bush;	/* XXXXXXXX */
 			cs->cs_reg_csr  = &zc->zc_csr;
 			cs->cs_reg_data = &zc->zc_data;
 			bcopy(zs_init_reg, cs->cs_creg, 16);

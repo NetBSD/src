@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.7.16.1 2000/03/11 20:51:51 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.7.16.2 2000/03/14 15:59:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,34 +68,6 @@
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/zsvar.h>
 
-/*
- * PCC offsets.
- */
-static int zs_pcc_offsets[NZSC] = { PCC_ZS0_OFF, PCC_ZS1_OFF };
-
-struct zschan *
-zs_pcc_get_chan_addr(zsc_unit, channel)
-	int zsc_unit, channel;
-{
-	struct zsdevice *addr;
-	struct zschan *zc;
-
-	if (zsc_unit >= NZSC)
-		return NULL;
-	addr = (struct zsdevice *)PCC_VADDR(zs_pcc_offsets[zsc_unit]);
-	if (addr == NULL)
-		return NULL;
-	if (channel == 0) {
-		zc = &addr->zs_chan_a;
-	} else {
-		zc = &addr->zs_chan_b;
-	}
-	return (zc);
-}
-
-/****************************************************************
- * Autoconfig
- ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
 static int	zsc_pcc_match  __P((struct device *, struct cfdata *, void *));
@@ -147,13 +119,17 @@ zsc_pcc_attach(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct pcc_attach_args *pa = aux;
+	bus_space_handle_t bush;
 	int zs_level, ir;
 	static int didintr;
+
+	/* Map the device's registers */
+	bus_space_map(pa->pa_bust, pa->pa_offset, 4, 0, &bush);
 
 	zs_level = pa->pa_ipl;
 
 	/* Do common parts of SCC configuration. */
-	zs_config(zsc, zs_pcc_get_chan_addr);
+	zs_config(zsc, pa->pa_bust, bush);
 
 	/*
 	 * Now safe to install interrupt handlers.  Note the arguments
@@ -205,13 +181,11 @@ void
 zsc_pcccninit(cp)
 	struct consdev *cp;
 {
-	int unit, chan;
-	struct zschan *zc;
+	bus_space_tag_t bust = MVME68K_INTIO_BUS_SPACE;
+	bus_space_handle_t bush;
 
-	unit = 0;	/* XXX */
-	chan = 0;	/* XXX */
-	zc = zs_pcc_get_chan_addr(unit, chan);
+	bus_space_map(bust, MAINBUS_PCC_OFFSET + PCC_ZS0_OFF, 4, 0, &bush);
 
 	/* Do common parts of console init. */
-	zs_cnconfig(unit, chan, zc);
+	zs_cnconfig(0, bust, bush);
 }

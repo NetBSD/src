@@ -1,4 +1,4 @@
-/*	$NetBSD: pccreg.h,v 1.5.38.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: pccreg.h,v 1.5.38.2 2000/03/14 15:59:52 scw Exp $	*/
 
 /*
  *
@@ -51,15 +51,12 @@
 #define PCC_ZS1_OFF	0x3800		/* offset of second 8530 UART */
 #define PCC_WDSC_OFF	0x4000		/* offset of 33c93 SCSI chip */
 
-
-#if 1
 /*
- * XXXSCW: Temp. needed until all onboard drivers are bus-spaced
+ * This is needed to figure out the boot device.
+ * (The physical address of the boot device's registers are passed in
+ * from the Boot ROM)
  */
-#define PCC_BASE 0xfffe0000u
-#define PCC_PADDR(off) ((void *)(PCC_BASE + (off)))
-#define PCC_VADDR(off) ((void *)IIOV(PCC_BASE + (off)))
-#endif
+#define PCC_PADDR(off) ((void *)(0xfffe0000u + (off)))
 
 /*
  * The PCC chip's own registers. These are 8-bits wide, unless

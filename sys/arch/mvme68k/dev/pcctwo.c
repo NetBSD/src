@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2.16.1 2000/03/11 20:51:50 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.2.16.2 2000/03/14 15:59:52 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -84,12 +84,12 @@ struct pcctwo_device {
  */
 struct pcctwo_device pcctwo_devices[] = {
 	{"clock",	PCCTWO_RTC_OFF},
-	{"nvram",	PCCTWO_NVRAM_OFF},
 	{"clmpcc",	PCCTWO_SCC_OFF},
 	{"ie",		PCCTWO_IE_OFF},
 	{"ncrsc",	PCCTWO_NCRSC_OFF},
 	{"lpt",		PCCTWO_LPT_OFF},
-	{NULL,		0},
+	{"nvram",	PCCTWO_NVRAM_OFF},
+	{NULL,		0}
 };
 
 int
@@ -172,7 +172,7 @@ pcctwoprint(aux, cp)
 	void *aux;
 	const char *cp;
 {
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa = aux;
 
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
@@ -193,15 +193,17 @@ pcctwointr_establish(vec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
-	if ((vec < 0) || (vec >= PCCTWOV_MAX)) {
+#ifdef DEBUG
+	if ( vec < 0 || vec >= PCCTWOV_MAX ) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
 		panic("pcctwointr_establish");
 	}
 
-	if ((lvl < 1) || (lvl > 7)) {
+	if ( lvl < 1 || lvl > 7 ) {
 		printf("pcctwo: illegal interrupt level: %d\n", lvl);
 		panic("pcctwointr_establish");
 	}
+#endif
 
 	isrlink_vectored(hand, arg, lvl, vec + PCCTWO_VECBASE);
 }
@@ -210,10 +212,12 @@ void
 pcctwointr_disestablish(vec)
 	int vec;
 {
-	if ((vec < 0) || (vec >= PCCTWOV_MAX)) {
+#ifdef DEBUG
+	if ( vec < 0 || vec >= PCCTWOV_MAX ) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
-		panic("pcctwointr_establish");
+		panic("pcctwointr_disestablish");
 	}
+#endif
 
 	isrunlink_vectored(vec + PCCTWO_VECBASE);
 }
