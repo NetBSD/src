@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.11 2002/07/16 01:15:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.12 2002/07/16 13:26:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,8 +147,8 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
 	pthread_t self;
 	struct pthread_cond__waitarg wait;
+	struct pt_alarm_t alarm;
 	int retval;
-	void *alarm;
 
 #ifdef ERRORCHECK
 	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
@@ -178,7 +178,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		pthread_spinunlock(self, &cond->ptc_lock);
 		pthread_exit(PTHREAD_CANCELED);
 	}
-	alarm = pthread__alarm_add(self, abstime, pthread_cond_wait__callback,
+	pthread__alarm_add(self, &alarm, abstime, pthread_cond_wait__callback,
 	    &wait);
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
 	self->pt_sleepobj = cond;
@@ -191,9 +191,9 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	pthread__block(self, &cond->ptc_lock);
 	/* Spinlock is unlocked on return */
-	if (pthread__alarm_fired(alarm))
+	if (pthread__alarm_fired(&alarm))
 		retval = ETIMEDOUT;
-	pthread__alarm_del(self, alarm);
+	pthread__alarm_del(self, &alarm);
 	pthread_mutex_lock(mutex);
 	pthread__testcancel(self);
 
