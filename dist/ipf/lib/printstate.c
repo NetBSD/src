@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.3 2005/02/19 21:26:49 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.3.2.1 2005/04/04 19:34:15 tron Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -53,7 +53,8 @@ u_long now;
 		PRINTF(" %hu -> %hu\n", ntohs(ips.is_sport),
 			ntohs(ips.is_dport));
 	} else if (ips.is_p == IPPROTO_GRE) {
-		PRINTF(" call %hu\n", ips.is_gre.gs_call);
+		PRINTF(" call %hx/%hx\n", ntohs(ips.is_gre.gs_call[0]),
+		       ntohs(ips.is_gre.gs_call[1]));
 	} else if (ips.is_p == IPPROTO_ICMP
 #ifdef	USE_INET6
 		 || ips.is_p == IPPROTO_ICMPV6
