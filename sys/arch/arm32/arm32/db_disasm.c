@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.8 1996/10/29 23:12:26 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.9 1997/01/03 23:17:40 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -357,15 +357,15 @@ db_disasm(loc, altfmt)
 				db_printf("cpsr");
 			break;
 		case 'F':
-			printf("_");
+			db_printf("_");
 			if (insn & (1 << 16))
-				printf("c");
+				db_printf("c");
 			if (insn & (1 << 17))
-				printf("x");
+				db_printf("x");
 			if (insn & (1 << 18))
-				printf("s");
+				db_printf("s");
 			if (insn & (1 << 19))
-				printf("f");
+				db_printf("f");
 			break;
 		case 'B':
 			if (insn & 0x00400000)
@@ -523,24 +523,24 @@ db_insn_ldcstc(insn, loc)
 	u_int loc;
 {
 	if (((insn >> 8) & 0xf) == 1)
-		printf("f%d, ", (insn >> 12) & 0x07);
+		db_printf("f%d, ", (insn >> 12) & 0x07);
 	else
-		printf("c%d, ", (insn >> 12) & 0x0f);
+		db_printf("c%d, ", (insn >> 12) & 0x0f);
 
-	printf("[r%d", (insn >> 16) & 0x0f);
+	db_printf("[r%d", (insn >> 16) & 0x0f);
 
-	printf("%s, ", (insn & (1 << 24)) ? "" : "]");
+	db_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 
 	if (!(insn & (1 << 23)))
-		printf("-");
+		db_printf("-");
 
-	printf("#0x%03x", (insn & 0xff) << 2);
+	db_printf("#0x%03x", (insn & 0xff) << 2);
 
 	if (insn & (1 << 24))
-		printf("]");
+		db_printf("]");
 
 	if (insn & (1 << 21))
-		printf("!");
+		db_printf("!");
 }
 
 /* End of db_disasm.c */
