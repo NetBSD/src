@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.33 1997/08/20 15:26:29 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.34 1997/08/24 20:03:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -322,7 +322,7 @@ wssattach(parent, self, aux)
     int version;
     
     if (!wssfind(parent, sc, ia)) {
-        printf("wssattach: wssfind failed\n");
+        printf("%s: wssfind failed\n", sc->sc_dev.dv_xname);
         return;
     }
 
