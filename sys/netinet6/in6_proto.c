@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.34 2001/11/13 00:57:00 lukem Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.35 2001/12/21 03:21:51 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.34 2001/11/13 00:57:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.35 2001/12/21 03:21:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -121,12 +121,12 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.34 2001/11/13 00:57:00 lukem Exp $")
 
 #include <netinet6/ip6protosw.h>
 
+#include <net/net_osdep.h>
+
 #include "gif.h"
 #if NGIF > 0
 #include <netinet6/in6_gif.h>
 #endif
-
-#include <net/net_osdep.h>
 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
@@ -243,15 +243,6 @@ struct ip6protosw inet6sw[] = {
 },
 };
 
-#if NGIF > 0
-struct ip6protosw in6_gif_protosw =
-{ SOCK_RAW,	&inet6domain,	0/*IPPROTO_IPV[46]*/,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq,
-  0,            0,              0,              0,
-};
-#endif /*NGIF*/
-
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
@@ -286,11 +277,7 @@ int	ip6_hdrnestlimit = 50;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
 u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
-#if NGIF > 0
 int	ip6_gif_hlim = GIF_HLIM;
-#else
-int	ip6_gif_hlim = 0;
-#endif
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec.    */

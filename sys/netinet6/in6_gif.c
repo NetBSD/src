@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.25 2001/12/21 03:21:51 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.25 2001/12/21 03:21:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $");
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $");
 #include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #endif
+#include <netinet6/ip6protosw.h>
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
@@ -73,7 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.24 2001/12/20 07:26:37 itojun Exp $");
 static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
 	struct ifnet *));
 
-extern struct ip6protosw in6_gif_protosw;
+extern struct domain inet6domain;
+struct ip6protosw in6_gif_protosw =
+{ SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,            0,              0,              0,
+};
 
 int
 in6_gif_output(ifp, family, m)
