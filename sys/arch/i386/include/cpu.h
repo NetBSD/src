@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.17 1994/05/05 05:36:06 cgd Exp $
+ *	$Id: cpu.h,v 1.18 1994/05/06 12:23:10 mycroft Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -56,7 +56,7 @@
 #define	cpu_exec(p)	/* nothing */
 
 /*
- * Arguments to hardclock, softclock and gatherstats
+ * Arguments to hardclock, softclock and statclock
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
  *
