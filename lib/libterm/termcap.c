@@ -1,6 +1,8 @@
+/*	$NetBSD: termcap.c,v 1.6 1995/02/27 10:18:54 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)termcap.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: termcap.c,v 1.5 1994/04/18 12:35:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: termcap.c,v 1.6 1995/02/27 10:18:54 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #define	PBUFSIZ		512	/* max length of filename path */
@@ -59,7 +64,7 @@ static char rcsid[] = "$Id: termcap.c,v 1.5 1994/04/18 12:35:39 deraadt Exp $";
  * doesn't, and because living w/o it is not hard.
  */
 
-static	char *tbuf;
+static	char *tbuf;	/* termcap buffer */
 
 /*
  * Get an entry for terminal name in buffer bp from the termcap file.
@@ -70,12 +75,17 @@ tgetent(bp, name)
 {
 	register char *p;
 	register char *cp;
-	int i;
-	char *dummy = NULL, *home, *termpath;
-	char **fname, **pvec;
-	char pathbuf[PBUFSIZ], *pathvec[PVECSIZ];
+	char  *dummy;
+	char **fname;
+	char  *home;
+	int    i;
+	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
+	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+	char **pvec;			/* holds usable tail of path vector */
+	char  *termpath;
 
-	fname = pvec = pathvec;
+	fname = pathvec;
+	pvec = pathvec;
 	tbuf = bp;
 	p = pathbuf;
 	cp = getenv("TERMCAP");
@@ -122,20 +132,20 @@ tgetent(bp, name)
 	*fname = (char *) 0;			/* mark end of vector */
 	if (cp && *cp && *cp != '/')
 		if (cgetset(cp) < 0)
-			return -2;
+			return (-2);
 
-	i = cgetent(&dummy, pathvec, name);
-
+	dummy = NULL;
+	i = cgetent(&dummy, pathvec, name);      
+	
 	if (i == 0)
 		strcpy(bp, dummy);
-
-	if (dummy != NULL)
+	
+	if (dummy)
 		free(dummy);
-
-	/* no way to return "loop" */
+	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
-                return -1;
-        return(i + 1);
+		return (-1);
+	return (i + 1);
 }
 
 /*
@@ -153,9 +163,9 @@ tgetnum(id)
 	long num;
 
 	if (cgetnum(tbuf, id, &num) == 0)
-		return(num);
+		return (num);
 	else
-		return -1;
+		return (-1);
 }
 
 /*
@@ -164,10 +174,11 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
+int
 tgetflag(id)
 	char *id;
 {
-	return(cgetcap(tbuf, id, ':') != NULL);
+	return (cgetcap(tbuf, id, ':') != NULL);
 }
 
 /*
@@ -185,7 +196,7 @@ tgetstr(id, area)
 	char ids[3];
 	char *s;
 	int i;
-
+	
 	/*
 	 * XXX
 	 * This is for all the boneheaded programs that relied on tgetstr
@@ -197,8 +208,8 @@ tgetstr(id, area)
 
 	if ((i = cgetstr(tbuf, ids, &s)) < 0)
 		return NULL;
-
+	
 	strcpy(*area, s);
 	*area += i + 1;
-	return(s);
+	return (s);
 }
