@@ -1,7 +1,7 @@
-/*	$NetBSD: param.h,v 1.24 1995/03/18 07:23:54 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1995/03/27 01:22:50 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,56 +149,15 @@
 #define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-/*
- * Suns have a REAL interrupt register, so spl0() and splx(s)
- * have no need to check for any simulated interrupts, etc.
- * All are done in-line (if optimization turned on).
- */
+/* XXX - Does this really belong here? -gwr */
 #include <machine/psl.h>
 
-#ifdef __GNUC__
-/*
- * This is as close to a macro as one can get.
- * (See the GCC extensions info document.)
- */
-extern __inline__ int _spl(int new)
-{
-	register int old;
-	__asm__ __volatile ("clrl %0; movw sr,%0; movw %1,sr" :
-						"&=d" (old) : "di" (new));
-	return (old);
-}
-#endif	/* GNUC */
-
-#define spl0()  _spl(PSL_S|PSL_IPL0)
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-#define splx(x)	_spl(x)
-
-#define splsoftclock()  spl1()
-#define splnet()        spl3()
-#define splbio()        spl2()
-#define splimp()        spl3()
-#define spltty()        spl2()
-#define splzs()         spl6()
-#define splclock()      spl5()
-#define splstatclock()  splclock()
-#define splvm()         splimp()
-#define splhigh()       spl7()
-#define splsched()      spl7()
-
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 #define	DELAY(n)	delay(n)
 #endif
-
-#else
+#else	/* KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif
+#endif	/* KERNEL */
 
 #endif	/* MACHINE */
