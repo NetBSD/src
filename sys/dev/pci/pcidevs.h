@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.388 2002/01/09 19:29:39 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.389 2002/01/13 03:14:22 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.383 2002/01/09 19:29:07 augustss Exp 
+ *	NetBSD: pcidevs,v 1.384 2002/01/13 03:13:39 augustss Exp 
  */
 
 /*
@@ -600,6 +600,7 @@
 #define	PCI_PRODUCT_3COM_3C556	0x6055		/* 3c556 10/100 MiniPCI Ethernet */
 #define	PCI_PRODUCT_3COM_3C556B	0x6056		/* 3c556B 10/100 MiniPCI Ethernet */
 #define	PCI_PRODUCT_3COM_3CSOHO100TX	0x7646		/* 3cSOHO100-TX 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3CRWE777A	0x7770		/* 3crwe777a AirConnect */
 #define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900-TPO Ethernet */
 #define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900-COMBO Ethernet */
 #define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905-TX 10/100 Ethernet */
@@ -1128,7 +1129,7 @@
 #define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* Eumitcom products */
-#define	PCI_PRODUCT_EUMITCOM_WL11000	0x1100		/* WL11000 */
+#define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P */
 
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
@@ -1173,7 +1174,7 @@
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
-#define	PCI_PRODUCT_GLOBALSUN_GL24110P_2	0x1102		/* GL24110P */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P */
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
