@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.70 2003/03/08 21:46:05 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.71 2003/03/20 06:47:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.70 2003/03/08 21:46:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.71 2003/03/20 06:47:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -249,7 +249,7 @@ lfs_truncate(void *v)
 	long lastseg;
 	size_t bc;
 	int obufsize, odb;
-	int usepc, needunlock;
+	int usepc;
 
 	if (length < 0)
 		return (EINVAL);
@@ -285,7 +285,6 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_ffs_size;
-	needunlock = usepc = 0;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 
 	/*
@@ -365,10 +364,11 @@ lfs_truncate(void *v)
 	offset = blkoff(fs, length);
 	lastseg = -1;
 	bc = 0;
+
+	lfs_seglock(fs, SEGM_PROT);
 	if (offset == 0) {
 		oip->i_ffs_size = length;
 	} else if (!usepc) {
-		lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
@@ -377,8 +377,7 @@ lfs_truncate(void *v)
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
 			    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-			lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
-			return (error);
+			goto errout;
 		}
 		obufsize = bp->b_bufsize;
 		odb = btofsb(fs, bp->b_bcount);
@@ -393,7 +392,6 @@ lfs_truncate(void *v)
 		if (bp->b_flags & B_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
 		(void) VOP_BWRITE(bp);
-		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
 		/*
 		 * When truncating a regular file down to a non-block-aligned
@@ -410,7 +408,7 @@ lfs_truncate(void *v)
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 					 aflags);
 		if (error) {
-			return error;
+			goto errout;
 		}
 		eoz = blkroundup(fs, length);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
@@ -418,7 +416,7 @@ lfs_truncate(void *v)
 		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
 		    PGO_CLEANIT | PGO_DEACTIVATE | (aflags ? PGO_SYNCIO : 0));
 		if (error) {
-			return error;
+			goto errout;
 		}
 	}
 
@@ -485,10 +483,6 @@ lfs_truncate(void *v)
 			goto done;
 	}
 
-	if (!usepc) {
-		lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
-		needunlock = 1;
-	}
 	/*
 	 * All whole direct blocks or frags.
 	 */
@@ -580,10 +574,10 @@ done:
 #endif
 	lfs_reserve(fs, ovp, NULL,
 	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-	if (needunlock)
-		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-	return (allerror);
+  errout:
+	lfs_segunlock(fs);
+	return (allerror ? allerror : error);
 }
 
 /* Update segment usage information when removing a block. */
@@ -769,7 +763,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 /*
  * Destroy any in core blocks past the truncation length.
  * Inlined from vtruncbuf, so that lfs_avail could be updated.
- * We take the fraglock to prevent cleaning from occurring while we are
+ * We take the seglock to prevent cleaning from occurring while we are
  * invalidating blocks.
  */
 static int
@@ -790,7 +784,6 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	fs = VTOI(vp)->i_lfs;
 	s = splbio();
 
-	lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
@@ -802,7 +795,6 @@ restart:
 			    "lfs_vtruncbuf", slptimeo);
 			if (error) {
 				splx(s);
-				lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 				return (error);
 			}
 			goto restart;
@@ -827,7 +819,6 @@ restart:
 			    "lfs_vtruncbuf", slptimeo);
 			if (error) {
 				splx(s);
-				lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 				return (error);
 			}
 			goto restart;
@@ -843,7 +834,6 @@ restart:
 	}
 
 	splx(s);
-	lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 
 	return (0);
 }
