@@ -1,4 +1,4 @@
-.\"	$NetBSD: isinf.3,v 1.5 1998/08/02 04:52:54 mycroft Exp $
+.\"	$NetBSD: isinf.3,v 1.6 1999/08/16 23:12:19 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Fd #include <math.h>
 .Ft int 
 .Fn isinf double
 .Ft int 
@@ -62,6 +63,8 @@ returns 1 if the number is
 .Dq not-a-number ,
 otherwise 0.
 .Sh SEE ALSO
+.Xr isinff 3 ,
+.Xr isnanf 3 ,
 .Xr math 3
 .Rs
 .%T "IEEE Standard for Binary Floating-Point Arithmetic"
