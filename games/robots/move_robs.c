@@ -1,4 +1,4 @@
-/*	$NetBSD: move_robs.c,v 1.4 1997/10/12 14:10:00 lukem Exp $	*/
+/*	$NetBSD: move_robs.c,v 1.5 1999/05/15 23:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move_robs.c,v 1.4 1997/10/12 14:10:00 lukem Exp $");
+__RCSID("$NetBSD: move_robs.c,v 1.5 1999/05/15 23:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ move_robots(was_sig)
 			Dead = TRUE;
 		else if (Field[rp->y][rp->x] > 1) {
 			mvaddch(rp->y, rp->x, HEAP);
+			Scrap[Num_scrap++] = *rp;
 			rp->y = -1;
 			Num_robots--;
 			if (Waiting)
@@ -122,7 +123,7 @@ move_robots(was_sig)
 	move(Max.y, Max.x);
 	addch(inch());
 	standend();
-# endif DEBUG
+# endif /* DEBUG */
 	if (Real_time)
 		alarm(3);
 }
