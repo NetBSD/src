@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.50 2002/03/27 21:41:35 briggs Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.51 2002/03/27 21:42:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.50 2002/03/27 21:41:35 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.51 2002/03/27 21:42:45 briggs Exp $");
 
 #include "bpfilter.h"
 
@@ -3073,8 +3073,8 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 	case SIS_REV_630S:
 	case SIS_REV_630E:
 	case SIS_REV_630EA1:
+	case SIS_REV_630ET:
 	case SIS_REV_635:
-	case 0x84:
 		/*
 		 * The MAC address for the on-board Ethernet of
 		 * the SiS 630 chipset is in the NVRAM.  Kick
