@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.14 2003/09/06 19:35:35 martin Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.15 2004/02/13 18:02:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.14 2003/09/06 19:35:35 martin Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.15 2004/02/13 18:02:05 wiz Exp $");
 #endif
 
 
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 	if (argc == 0 && !(dns1||dns2) && !configname) {
 		/* list only mode */
 
-		/* first pass, get name lenghts */
+		/* first pass, get name lengths */
 		if (ioctl(s, SPPPGETAUTHCFG, &spr) == -1)
 			err(EX_OSERR, "SPPPGETAUTHCFG");
 		/* now allocate buffers for strings */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751reg.h,v 1.5 2003/11/16 00:22:09 jonathan Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.6 2004/02/13 18:02:05 wiz Exp $	*/
 /*	$OpenBSD: hifn7751reg.h,v 1.43 2003/06/02 15:58:41 deraadt Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ struct hifn_desc {
 #define	HIFN_PUBOPLEN_MOD_M	0x0000007f	/* modulus length mask */
 #define	HIFN_PUBOPLEN_MOD_S	0		/* modulus length shift */
 #define	HIFN_PUBOPLEN_EXP_M	0x0003ff80	/* exponent length mask */
-#define	HIFN_PUBOPLEN_EXP_S	7		/* exponent lenght shift */
+#define	HIFN_PUBOPLEN_EXP_S	7		/* exponent length shift */
 #define	HIFN_PUBOPLEN_RED_M	0x003c0000	/* reducend length mask */
 #define	HIFN_PUBOPLEN_RED_S	18		/* reducend length shift */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.5 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.6 2004/02/13 18:02:05 wiz Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.5 2003/11/09 22:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.6 2004/02/13 18:02:05 wiz Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -149,7 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.5 2003/11/09 22:11:12 christos Exp $"
 #define	TH_MIN		 5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RIO_LIMIT	60	/* default max queue lenght */
+#define	RIO_LIMIT	60	/* default max queue length */
 
 #define	TV_DELTA(a, b, delta) {					\
 	register int	xxs;					\
