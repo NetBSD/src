@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.15 2002/03/06 21:28:10 he Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.16 2002/03/28 23:58:13 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -396,6 +396,7 @@ Type
 The main menu will be displayed.
 .\} \" ! r_pmax
 .(disp
+. cs \n(.f 22
   .***********************************************.
   * NetBSD-1.5.2 Install System                   *
   *                                               *
@@ -406,6 +407,7 @@ The main menu will be displayed.
   * e: Utility menu                               *
   * x: Exit Install System                        *
   .***********************************************.
+. cs \n(.f
 .disp)
 .It
 If you wish, you can configure some network settings
