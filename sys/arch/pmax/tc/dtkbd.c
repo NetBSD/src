@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.1.2.2 2002/03/15 14:26:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.1.2.2 2002/03/15 14:26:48 ad Exp $");
 
 #include "locators.h"
 
@@ -285,13 +285,11 @@ dtkbd_process_msg(struct dt_msg *msg, u_int *types, int *vals)
 		types[0] = WSCONS_EVENT_ALL_KEYS_UP;
 		vals[0] = 0;
 		dtkbd_maplen = 0;
-		printf("dtkbd events: %d/%02x\n", WSCONS_EVENT_ALL_KEYS_UP, 0);
 		return (1);
 	}
 
 	count = 0;
 
-	printf("dtkbd new map:");
 	for (i = 0; i < len; i++) {
 		c = msg->body[i];
 
@@ -304,12 +302,8 @@ dtkbd_process_msg(struct dt_msg *msg, u_int *types, int *vals)
 			vals[count] = c - MIN_LK201_KEY;
 			count++;
 		}
-
-		printf(" %02x", c);
 	}
-	printf("\n");
 
-	printf("dtkbd old map:");
 	for (j = 0; j < dtkbd_maplen; j++) {
 		c = dtkbd_map[j];
 
@@ -322,18 +316,10 @@ dtkbd_process_msg(struct dt_msg *msg, u_int *types, int *vals)
 			vals[count] = c - MIN_LK201_KEY;
 			count++;
 		}
-
-		printf(" %02x", c);
 	}
-	printf("\n");
 
 	memcpy(dtkbd_map, msg->body, len);
 	dtkbd_maplen = len;
-
-	printf("dtkbd events:");
-	for (i = 0; i < count; i++)
-		printf(" %d/%02x", types[i], vals[i]);
-	printf("\n");
 
 	return (count);
 }
