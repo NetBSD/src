@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_rpc.c,v 1.1.1.5 2002/11/29 22:59:05 christos Exp $	*/
+/*	$NetBSD: misc_rpc.c,v 1.2 2002/12/06 03:57:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -140,7 +140,7 @@ make_rpc_packet(char *buf, int buflen, u_long proc, struct rpc_msg *mp, voidp ar
   /*
    * Called procedure number
    */
-  if (!xdr_enum(&msg_xdr, (enum_t *) & proc))
+  if (!xdr_enum(&msg_xdr, (void *) & proc))
     return -EIO;
 
   /*
