@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1996/02/28 04:14:11 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 1996/03/12 04:24:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -809,11 +809,18 @@ boot(howto)
 		 */
 		vfs_shutdown();
 
+#ifdef notyet
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
 		 */
 		resettodr();
+#else
+# ifdef DIAGNOSTIC
+		printf("NetBSD/mac68k does not trust itself to update the "
+		    "RTC on shutdown.\n");
+# endif
+#endif
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
