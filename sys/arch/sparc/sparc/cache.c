@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.75 2003/01/15 22:56:32 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.76 2003/01/20 21:56:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -155,11 +155,6 @@ viking_cache_enable()
 {
 	u_int pcr;
 
-	cache_alias_dist = max(
-		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
-		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
-	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
-
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	if ((pcr & VIKING_PCR_ICE) == 0) {
@@ -193,18 +188,21 @@ hypersparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr, v;
-
-	ls = CACHEINFO.c_linesize;
-	ts = CACHEINFO.c_totalsize;
-
-	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	int alias_dist;
 
 	/*
 	 * Setup the anti-aliasing constants and DVMA alignment constraint.
 	 */
-	cache_alias_dist = CACHEINFO.c_totalsize;
-	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
-	dvma_cachealign = cache_alias_dist;
+	alias_dist = CACHEINFO.c_totalsize;
+	if (alias_dist > cache_alias_dist) {
+		cache_alias_dist = alias_dist;
+		cache_alias_bits = (alias_dist - 1) & ~PGOFSET;
+		dvma_cachealign = cache_alias_dist;
+	}
+
+	ls = CACHEINFO.c_linesize;
+	ts = CACHEINFO.c_totalsize;
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	if ((pcr & HYPERSPARC_PCR_CE) == 0)
@@ -275,9 +273,14 @@ cypress_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr;
+	int alias_dist;
 
-	cache_alias_dist = CACHEINFO.c_totalsize;
-	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
+	alias_dist = CACHEINFO.c_totalsize;
+	if (alias_dist > cache_alias_dist) {
+		cache_alias_dist = alias_dist;
+		cache_alias_bits = (alias_dist - 1) & ~PGOFSET;
+		dvma_cachealign = alias_dist;
+	}
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	pcr &= ~CYPRESS_PCR_CM;
