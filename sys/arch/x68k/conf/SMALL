@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.23 2000/04/16 14:17:59 minoura Exp $
+#	$NetBSD: SMALL,v 1.24 2000/06/14 22:02:44 veego Exp $
 
 #
 #	SMALL -- works with a small memory, e.g. 4MB
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"SMALL-$Revision: 1.23 $"
+#ident 		"SMALL-$Revision: 1.24 $"
 
 maxusers	8
 
@@ -157,19 +157,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

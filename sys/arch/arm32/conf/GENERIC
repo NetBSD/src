@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.66 2000/04/19 06:50:29 itojun Exp $
+#	$NetBSD: GENERIC,v 1.67 2000/06/14 22:02:21 veego Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 # estimated number of users
 maxusers	32
@@ -62,19 +62,6 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 

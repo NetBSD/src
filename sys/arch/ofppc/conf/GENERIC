@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.26 2000/04/19 06:50:34 itojun Exp $
+#	$NetBSD: GENERIC,v 1.27 2000/06/14 22:02:34 veego Exp $
 #
 # First try for PPC config file
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -53,19 +53,6 @@ file-system 	UNION
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 options 	INET
 options 	INET6		# IPV6

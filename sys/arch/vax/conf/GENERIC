@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.69 2000/06/04 06:16:53 matt Exp $
+#	$NetBSD: GENERIC,v 1.70 2000/06/14 22:02:42 veego Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -37,19 +37,6 @@ options 	KTRACE
 #options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Network support
 #options 	GATEWAY

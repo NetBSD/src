@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.4 2000/02/12 03:33:30 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.5 2000/06/14 22:02:29 veego Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	8
 
@@ -60,19 +60,6 @@ file-system 	NULLFS		# loopback file system
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 #options	SOFTDEP		# ffs soft updates support
-
-# Pull in config fragments for kernel crypto. This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 options 	INET		# IP prototol stack support

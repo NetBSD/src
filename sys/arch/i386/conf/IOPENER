@@ -1,11 +1,11 @@
-#	$NetBSD: IOPENER,v 1.2 2000/04/14 23:14:25 tsarna Exp $
+#	$NetBSD: IOPENER,v 1.3 2000/06/14 22:02:28 veego Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.2 $"
+#ident 		"IOPENER-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -102,19 +102,6 @@ file-system 	KERNFS		# /kern
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
