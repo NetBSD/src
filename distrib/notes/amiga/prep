@@ -82,7 +82,7 @@ Preparing you hard disk with HDToolBox:
 Transferring the miniroot file system:
 
 	The NetBSD/Amiga installation or upgrade now uses a "miniroot"
-	fileystem which is installed on the partition used by NetBSD
+	file system which is installed on the partition used by NetBSD
 	for swapping.  This removes the requirement of using a floppy
 	disk for the file system used by the installation or upgrade
 	process.  It also allows more utilities to be present on the

@@ -10,7 +10,7 @@ really isn't usable on a 4M system.)
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
 	root (/)	20M	20M	15M	15M
-	user (/usr)	65M	100M	55M 	90M
+	user (/usr)	75M	110M	55M 	90M
 	swap		----- 2M for every M ram -----
 	local (/local)	up to you
 
@@ -31,7 +31,7 @@ Supported devices include:
 		    Emplant.*)
 		53c710 based boards: A4091, Magnum, Warp Engine, Zeus 
 		    and DraCo builtin.
-		FAS216 based SCSI boards: FastLane Z3, Blizzard I and II**)
+		FAS216 based SCSI boards: Fastlane Z3, Blizzard I and II**)
 	Video controllers:
 		ECS, AGA and A2024 built in on various Amigas.
 		Retina Z2, Retina Z3 and Altais.
@@ -88,11 +88,13 @@ Known problems with some hardware:
 
 	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
-	There are reports that it Mustek and HP Scanjet hang if
+	There are reports that the Mustek and HP Scanjet hang if
 	accessed from the A3000. This might apply to other
 	33C93-Adapters, too.
 
 	****) Our floppy driver doesn't notice when mounted floppies are 
 	write-protected at the moment. Your floppy will stay
 	unchanged, but you might not notice that you didn't write
-	anything due to the buffer cache.
+	anything due to the buffer cache. Also note that HD floppy
+	drives only get detected as such if a HD floppy is inserted at
+	boot time.
