@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.4 1993/08/14 14:29:07 mycroft Exp $
+ *	$Id: genassym.c,v 1.5 1994/01/06 16:57:59 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -173,7 +173,6 @@ main()
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
 	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
-	printf("#define\tSP %d\n", SP);
 	printf("#define\tB_READ %d\n", B_READ);
 	printf("#define\tENOENT %d\n", ENOENT);
 	printf("#define\tEFAULT %d\n", EFAULT);
