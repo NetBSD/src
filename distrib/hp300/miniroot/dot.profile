@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1995/11/11 06:24:47 thorpej Exp $
+#	$NetBSD: dot.profile,v 1.1 1996/06/11 08:30:13 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
