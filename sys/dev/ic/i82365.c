@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.59 2000/04/03 01:55:25 cgd Exp $	*/
+/*	$NetBSD: i82365.c,v 1.60 2000/06/28 17:12:56 mrg Exp $	*/
 
 #define	PCICDEBUG
 
@@ -40,8 +40,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.14 2000/05/12 16:45:42 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.15 2000/06/28 17:12:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -78,7 +78,7 @@
 #include <i386/isa/decether.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

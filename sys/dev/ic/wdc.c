@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.91 2000/06/12 21:10:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.92 2000/06/28 17:13:06 mrg Exp $ */
 
 
 /*
@@ -85,8 +85,6 @@
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

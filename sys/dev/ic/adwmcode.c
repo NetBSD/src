@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.6 2000/06/26 14:38:52 mrg Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.7 2000/06/28 17:12:51 mrg Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -69,8 +69,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#include <vm/vm.h>
 
 #include "adwmcode.h"
 
