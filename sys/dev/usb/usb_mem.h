@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.17 2002/05/28 12:42:39 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.18 2002/05/28 17:45:17 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -69,18 +69,22 @@ void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/bio.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <vm/vm.h>
+#include <vm/pmap.h>
+
+#include <machine/pmap.h>       /* for vtophys */
 
 #define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
 #define		usb_freemem(t,p)	(free(*(p), M_USB))
 
 #ifdef __alpha__
-#define DMAADDR(dma)	(alpha_XXX_dmamap((vm_offset_t) *(dma)))
+#define DMAADDR(dma, o)	(alpha_XXX_dmamap((vm_offset_t) *(dma) + (o)))
 #else
-#define DMAADDR(dma)	(vtophys(*(dma)))
+#define DMAADDR(dma, o)	(vtophys(*(dma) + (o)))
 #endif
 #define KERNADDR(dma, o)	((void *) ((char *)*(dma) + (o)))
 #endif /* __FreeBSD__ */
