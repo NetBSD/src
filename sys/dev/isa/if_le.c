@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 1995/05/10 14:04:14 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 1995/06/12 00:09:56 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -531,10 +531,6 @@ leinit(sc)
 	int s;
 	register int timo;
 	u_long a;
-
-	/* Address not known. */
-	if (!ifp->if_addrlist)
-		return;
 
 	s = splimp();
 
