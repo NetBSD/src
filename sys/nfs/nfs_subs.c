@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.119 2003/05/07 16:18:53 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.120 2003/05/22 14:14:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.119 2003/05/07 16:18:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.120 2003/05/22 14:14:02 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1233,20 +1233,28 @@ nfs_initdircache(vp)
 	struct vnode *vp;
 {
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+
+	KASSERT(np->n_dircache == NULL);
 
 	np->n_dircachesize = 0;
 	np->n_dblkno = 1;
 	np->n_dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, M_NFSDIROFF,
 	    M_WAITOK, &nfsdirhashmask);
 	TAILQ_INIT(&np->n_dirchain);
-	if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
-		MALLOC(np->n_dirgens, unsigned *,
-		    NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF,
-		    M_WAITOK);
-		memset((caddr_t)np->n_dirgens, 0,
-		    NFS_DIRHASHSIZ * sizeof (unsigned));
-	}
+}
+
+void
+nfs_initdirxlatecookie(vp)
+	struct vnode *vp;
+{
+	struct nfsnode *np = VTONFS(vp);
+
+	KASSERT(VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_XLATECOOKIE);
+	KASSERT(np->n_dirgens == NULL);
+
+	MALLOC(np->n_dirgens, unsigned *,
+	    NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF, M_WAITOK);
+	memset((caddr_t)np->n_dirgens, 0, NFS_DIRHASHSIZ * sizeof (unsigned));
 }
 
 static struct nfsdircache dzero = {0, 0, {0, 0}, {0, 0}, 0, 0, 0};
@@ -1329,6 +1337,9 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 		 * isn't known at that time.
 		 */
 		nfs_initdircache(vp);
+
+	if ((nmp->nm_flag & NFSMNT_XLATECOOKIE) && !np->n_dirgens)
+		nfs_initdirxlatecookie(vp);
 
 	/*
 	 * XXX refuse entries for offset 0. amd(8) erroneously sets
@@ -1436,6 +1447,7 @@ nfs_invaldircache(vp, forcefree)
 		np->n_dircachesize = 0;
 		if (forcefree && np->n_dirgens) {
 			FREE(np->n_dirgens, M_NFSDIROFF);
+			np->n_dirgens = NULL;
 		}
 	} else {
 		TAILQ_FOREACH(ndp, &np->n_dirchain, dc_chain) {
