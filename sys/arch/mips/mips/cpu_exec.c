@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.35 2003/01/17 23:36:10 thorpej Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.36 2003/04/02 03:27:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,18 +247,18 @@ mips_elf_makecmds (p, epp)
 #endif /*ELF_DEBUG*/
 
 				if (residue) {
-					vaddr &= ~(NBPG - 1);
-					offset &= ~(NBPG - 1);
+					vaddr &= ~(PAGE_SIZE - 1);
+					offset &= ~(PAGE_SIZE - 1);
 					length = roundup (length + ph.p_vaddr
-							  - vaddr, NBPG);
+							  - vaddr, PAGE_SIZE);
 					residue = (ph.p_vaddr + ph.p_memsz)
 						  - (vaddr + length);
 				}
 			} else {
-				vaddr &= ~(NBPG - 1);
-				offset &= ~(NBPG - 1);
+				vaddr &= ~(PAGE_SIZE - 1);
+				offset &= ~(PAGE_SIZE - 1);
 				length = roundup (length + ph.p_vaddr - vaddr,
-						  NBPG);
+						  PAGE_SIZE);
 				residue = (ph.p_vaddr + ph.p_memsz)
 					  - (vaddr + length);
 				if (!epp->ep_taddr || vaddr < epp->ep_taddr)

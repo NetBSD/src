@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.158 2003/02/07 17:38:48 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.159 2003/04/02 03:27:35 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.158 2003/02/07 17:38:48 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.159 2003/04/02 03:27:35 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -1314,7 +1314,7 @@ cpu_dumpconf(void)
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define	BYTES_PER_DUMP	NBPG
+#define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
 dumpsys(void)
