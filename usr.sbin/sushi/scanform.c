@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.5 2001/01/10 10:00:29 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.6 2001/01/24 07:17:10 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ my_driver(FORM * form, int c, char *path)
 	CDKENTRY *entry;
 	FIELD *curfield;
 	char **list;
-	int i, y, n, dcols, drows, dmax;
+	int i, j, y, n, dcols, drows, dmax;
 	char *tmp, *p;
 	char *choices[] = {" ", "+"};
 	char buf[1024];
@@ -394,16 +394,24 @@ my_driver(FORM * form, int c, char *path)
 	switch (c) {
 	case EDIT:
 		curfield = current_field(form);
-		dynamic_field_info(curfield, &drows, &dcols, &dmax);
+		if (field_opts(curfield) & O_STATIC) {
+			field_info(curfield, &drows, &dcols, &j, &j, &j, &j);
+			dmax = 0;
+		} else
+			dynamic_field_info(curfield, &drows, &dcols, &dmax);
 		if (dmax == 0)
 			dmax = dcols;
 		entry = newCDKEntry(cdkscreen, BOTTOM, CENTER,
 		    catgets(catalog, 4, 6, "Enter the field data "
 		    "below, and hit enter to return to the form."),
-		    catgets(catalog, 4, 7, "Data Entry: "),
+		    catgets(catalog, 4, 7, "Data Entry:"),
 		    A_REVERSE, field_pad(curfield), vMIXED, ws.ws_col-20,
 		    0, dmax, TRUE, FALSE);
-		setCDKEntry(entry, field_buffer(curfield, 0), 0, dmax, TRUE);
+		if (field_buffer(curfield, 0) == NULL)
+			setCDKEntry(entry, "", 0, dmax, TRUE);
+		else
+			setCDKEntry(entry, field_buffer(curfield, 0), 0,
+			    dmax, TRUE);
 		injectCDKEntry(entry, CDK_BEGOFLINE);
 		tmp = activateCDKEntry(entry, NULL);
 		if (entry->exitType == vESCAPE_HIT) {
@@ -460,6 +468,9 @@ my_driver(FORM * form, int c, char *path)
 		for (i=0, y=0; list[i] != NULL; i++)
 			if (strlen(list[i]) > y)
 				y = strlen(list[i]);
+		if (field_buffer(curfield, 1) == NULL || 
+		    field_buffer(curfield, 0) == NULL)
+			return(FALSE);
 		tmp = strdup(field_buffer(curfield, 1));
 		stripWhiteSpace(vBOTH, tmp);
 		if (*tmp == 'm') {
@@ -695,7 +706,10 @@ process_preform(FORM *form, char *path)
 	f = form_fields(form);
 	for (lcnt=0, i=0; f[lcnt] != NULL; lcnt++)
 		if (F[lcnt].type != (PF_field)LABEL) {
-			args[i] = strdup(field_buffer(f[lcnt], 0));
+			if (field_buffer(f[lcnt], 0) == NULL)
+				args[i] = "";
+			else
+				args[i] = strdup(field_buffer(f[lcnt], 0));
 			if (args[i] != NULL) {
 				p = &args[i][strlen(args[i]) - 1];
 					p--;
@@ -784,7 +798,10 @@ process_form(FORM *form, char *path)
 	f = form_fields(form);
 	for (lcnt=0; f[lcnt] != NULL; lcnt++)
 		if (F[lcnt].type != (PF_field)LABEL) {
-			args[i] = strdup(field_buffer(f[lcnt], 0));
+			if (field_buffer(f[lcnt], 0) == NULL)
+				args[i] = "";
+			else
+				args[i] = strdup(field_buffer(f[lcnt], 0));
 			if (args[i] != NULL) {
 				p = &args[i][strlen(args[i]) - 1];
 					p--;
