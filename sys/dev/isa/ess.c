@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.39 1999/03/17 01:06:17 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.40 1999/03/17 02:39:59 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -765,6 +765,8 @@ essmatch(sc)
 		printf("ess: record drq %d invalid\n", sc->sc_audio1.drq);
 		return (0);
 	}
+	if (!isa_drq_isfree(sc->sc_ic, sc->sc_audio1.drq))
+		return (0);
 	if (sc->sc_model != ESS_1788) {
 		if (!ESS_DRQ2_VALID(sc->sc_audio2.drq, sc->sc_model)) {
 			printf("ess: play drq %d invalid\n", sc->sc_audio2.drq);
@@ -775,6 +777,8 @@ essmatch(sc)
 			       sc->sc_audio1.drq);
 			return (0);
 		}
+		if (!isa_drq_isfree(sc->sc_ic, sc->sc_audio2.drq))
+			return (0);
 	}
 	
 	/* 
@@ -804,11 +808,6 @@ essmatch(sc)
 	}
 
 irq_not1888:
-	/* Check that the DRQs are free. */
-	if (!isa_drq_isfree(sc->sc_ic, sc->sc_audio1.drq) ||
-	    !isa_drq_isfree(sc->sc_ic, sc->sc_audio2.drq))
-		return (0);
-
 	/* XXX should we check IRQs as well? */
 
 	return (1);
@@ -1996,7 +1995,7 @@ ess_malloc(addr, direction, size, pool, flags)
 	struct ess_softc *sc = addr;
 	int drq;
 
-	if (direction == AUMODE_PLAY)
+	if (sc->sc_model != ESS_1788 && direction == AUMODE_PLAY)
 		drq = sc->sc_audio2.drq;
 	else
 		drq = sc->sc_audio1.drq;
@@ -2065,8 +2064,8 @@ ess_reset(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	sc->sc_audio1.intr = 0;
-	sc->sc_audio2.intr = 0;
+	sc->sc_audio1.active = 0;
+	sc->sc_audio2.active = 0;
 
 	EWRITE1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
 	delay(10000);
