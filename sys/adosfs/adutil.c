@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.17 1998/03/01 02:25:18 fvdl Exp $	*/
+/*	$NetBSD: adutil.c,v 1.17.8.1 1999/06/21 15:27:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -239,7 +239,7 @@ tvtods(tvp, dsp)
 }
 #endif
 
-#ifndef m68k
+#if BYTE_ORDER != BIG_ENDIAN
 u_int32_t
 adoswordn(bp, wn)
 	struct buf *bp;
