@@ -1,0 +1,2424 @@
+//  -*- C -*-
+//  Mitsubishi Electric Corp. D30V Simulator.
+//  Copyright (C) 1997, Free Software Foundation, Inc.
+//  Contributed by Cygnus Solutions Inc.
+//
+//  This file is part of GDB, the GNU debugger.
+//
+//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+//
+
+
+define( _BRA,  `1.*,CCC,000')
+define( _LOGIC, `1.*,CCC,001')
+define( _IMEM, `1.*,CCC,010')
+define( _IALU1, `1.*,CCC,100')
+define(_IALU2, `1.*,CCC,101')
+
+
+
+define(_IMM6, `6.IMM_6S')
+define(_IMM12, `12.IMM_12S')
+define(_IMM18, `18.IMM_18S')
+define(_IMM32, `6.IMM_6L,*,000,8.IMM_8L,00,18.IMM_18L')
+
+
+
+// The following is called when ever an illegal instruction is
+// encountered
+::internal::illegal
+	sim_io_eprintf (sd, "illegal instruction at 0x%lx\n", (long) cia);
+	sim_engine_halt (SD, CPU, NULL, cia, sim_signalled, SIM_SIGILL);
+
+// The following is called when ever an instruction in the wrong
+// slot is encountered.
+::internal::wrong_slot
+	sim_io_eprintf (sd, "wrong slot at 0x%lx\n", (long) cia);
+	sim_engine_halt (SD, CPU, NULL, cia, sim_signalled, SIM_SIGILL);
+
+
+
+// Something illegal that can be used to contact the simulator emul
+// library.
+define(_EMUL, `1.*,CCC,111')
+
+void::function::do_emul:int imm
+	/* temp hack - later replace with real interface */
+	enum {
+	  param1 = 2, param2, param3, param4
+	};
+	switch (imm) {
+	case 0:
+	  {
+	    sim_engine_abort (SD, CPU, cia, "UNIX call emulation unsupported");
+	    break;
+	  }
+	case 1:
+	  /* Trap 1 - prints a string */
+	  {
+	    address_word str = GPR[param1];
+	    char chr;
+	    while (1) {
+	      chr = MEM (unsigned, str, 1);
+	    if (chr == '\0') break;
+	      sim_io_write_stdout (sd, &chr, sizeof chr);
+	      str++;
+	    }
+	    break;
+	  }
+	case 3:
+	  /* Trap 3 - writes a character */
+	  {
+	    char chr = GPR[param1];
+	    sim_io_write_stdout (sd, &chr, sizeof chr);
+	    break;
+	  }
+	case 4:
+	  /* Trap 4 exits with status in [param1] */
+	  {
+	    sim_engine_halt (SD, CPU, NULL, cia, sim_exited, GPR[param1]);
+	    break;
+	  }
+	case 5:
+	  /* Trap 5 breakpoints.  If the breakpoint system knows about this, it
+	     won't return.  Otherwise, we fall through to treat this as an
+	     unknown instruction.  */
+	  {
+	    sim_handle_breakpoint (SD, CPU, cia);
+	  /* Fall through to default case.*/
+	  }
+	default:
+	  sim_engine_abort (SD, CPU, cia, "Unknown monitor call %d", imm);
+	}
+
+_EMUL,00000,00,6.*,6.*,IMM_6S:EMUL:short,emul:iu,mu:EMUL
+"syscall <imm>"
+	do_emul (_SD, imm);
+_BRA,00000,00,6.**,6.**,_IMM32:BRA:long:iu,mu:EMUL long
+"syscall <imm>"
+	do_emul (_SD, imm);
+
+// ABS
+
+_IALU1,01000,00,6.RA,6.RB,6.**:IALU1:short:iu,mu:ABS
+"abs r<RA>, r<RB>"
+	WRITE32_QUEUE (Ra, abs(Rb));
+
+
+
+// ADD
+
+void::function::do_add:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	ALU_BEGIN(rb);
+	ALU_ADDC(imm);
+	ALU_END(ra);
+
+_IALU1,00000,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADD
+"add r<RA>, r<RB>, r<RC>"
+	do_add (_SD, Ra, Rb, Rc);
+_IALU1,00000,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADD imm
+"add r<RA>, r<RB>, <imm>"
+	do_add (_SD, Ra, Rb, imm);
+_IALU1,00000,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADD imm long
+"add r<RA>, r<RB>, <imm>"
+	do_add (_SD, Ra, Rb, imm);
+
+
+
+// ADD2H
+
+void::function::do_add2h:signed32 *ra, signed32 rb, signed32 imm
+	unsigned16 ah2 = VH2_4(rb) + VH2_4(imm);
+	unsigned16 al2 = VL2_4(rb) + VL2_4(imm);
+	WRITE32_QUEUE (ra, (ah2 << 16) | al2);
+
+_IALU1,00001,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADD2H
+"add2h r<RA>, r<RB>, r<RC>"
+	do_add2h (_SD, Ra, Rb, Rc);
+_IALU1,00001,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADD2H imm
+"add2h r<RA>, r<RB>, <imm>"
+	do_add2h (_SD, Ra, Rb, immHL);
+_IALU1,00001,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADD2H imm long
+"add2h r<RA>, r<RB>, <imm>"
+	do_add2h (_SD, Ra, Rb, imm);
+
+
+
+// ADDC
+
+void::function::do_addc:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	ALU_BEGIN(rb);
+	ALU_ADDC_C(imm, ALU_CARRY);
+	ALU_END(ra);
+
+_IALU1,00100,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADDC
+"addc r<RA>, r<RB>, r<RC>"
+	do_addc (_SD, Ra, Rb, Rc);
+_IALU1,00100,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADDC imm
+"addc r<RA>, r<RB>, <imm>"
+	do_addc (_SD, Ra, Rb, imm);
+_IALU1,00100,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADDC imm long
+"addc r<RA>, r<RB>, <imm>"
+	do_addc (_SD, Ra, Rb, imm);
+
+
+
+// ADDHppp
+
+void::function::do_addh_ppp:int ppp, unsigned32 *ra, unsigned32 rb, unsigned32 src
+	switch (ppp) {
+	case 0x0: /* LLL */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_ADDC(VL2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x1: /* LLH */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_ADDC(VH2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x2: /* LHL */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_ADDC(VL2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x3: /* LHH */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_ADDC(VH2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x4: /* HLL */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_ADDC(VL2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x5: /* HLH */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_ADDC(VH2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x6: /* HHL */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_ADDC(VL2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x7: /* HHH */
+	  {	
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_ADDC(VH2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "do_addh_ppp - internal error - bad switch");
+	}
+::%s::ppp:int ppp
+	switch (ppp)
+	  {
+	  case 0x0: return "lll";
+	  case 0x1: return "llh";
+	  case 0x2: return "lhl";
+	  case 0x3: return "lhh";
+	  case 0x4: return "hll";
+	  case 0x5: return "hlh";
+	  case 0x6: return "hhl";
+	  case 0x7: return "hhh";
+	  default: return "?";
+	  }
+
+_IALU1,10,ppp,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADDHppp
+"addh%s<ppp> r<RA>, r<RB>, r<RC>"
+	do_addh_ppp(_SD, ppp, Ra, Rb, Rc);
+_IALU1,10,ppp,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADDHppp imm
+"addh%s<ppp> r<RA>, r<RB>, <imm>"
+	do_addh_ppp(_SD, ppp, Ra, Rb, immHL);
+_IALU1,10,ppp,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADDHppp imm long
+"addh%s<ppp> r<RA>, r<RB>, <imm>"
+	do_addh_ppp(_SD, ppp, Ra, Rb, imm);
+
+
+
+// ADDS
+
+void::function::do_adds:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	ALU_BEGIN(rb);
+	ALU_ADDC(EXTRACTED32(imm, 0, 0));
+	ALU_END(ra);
+
+_IALU1,00110,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADDS
+"adds r<RA>, r<RB>, r<RC>"
+	do_adds (_SD, Ra, Rb, Rc);
+_IALU1,00110,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADDS imm
+"adds r<RA>, r<RB>, <imm>"
+	do_adds (_SD, Ra, Rb, imm);
+_IALU1,00110,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADDS imm long
+"adds r<RA>, r<RB>, <imm>"
+	do_adds (_SD, Ra, Rb, imm);
+
+
+
+// ADDS2H
+
+void::function::do_adds2h:unsigned32 *ra, unsigned32 rb, unsigned32 immHL
+	unsigned16 high = VH2_4(rb) + EXTRACTED32(immHL, 0, 0);
+	unsigned16 low = VL2_4(rb) + EXTRACTED32(immHL, 16, 16);
+	WRITE32_QUEUE (ra, (high << 16) | low);
+
+_IALU1,00111,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:ADDS2H
+"adds2h r<RA>, r<RB>, r<RC>"
+	do_adds2h (_SD, Ra, Rb, Rc);
+_IALU1,00111,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:ADDS2H imm
+"adds2h r<RA>, r<RB>, <imm>"
+	do_adds2h (_SD, Ra, Rb, immHL);
+_IALU1,00111,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:ADDS2H imm long
+"adds2h r<RA>, r<RB>, <imm>"
+	do_adds2h (_SD, Ra, Rb, imm);
+
+
+
+// AND
+
+_LOGIC,11000,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:AND
+"and r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, Rb & Rc);
+_LOGIC,11000,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:AND imm
+"and r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb & imm);
+_LOGIC,11000,10,6.RA,6.RB,_IMM32:LOGIC:long:iu,mu:AND imm long
+"and r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb & imm);
+
+
+// ANDFG
+
+_LOGIC,01000,00,***,3.FA,***,3.FB,***,3.FC:LOGIC:short:iu,mu:Logical AND Flags
+"andfg f<FA>, f<FB>, f<FC>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) & PSW_FLAG_VAL(FC));
+_LOGIC,01000,10,***,3.FA,***,3.FB,_IMM6:LOGIC:short:iu,mu:Logical AND Flags imm
+"andfg f<FA>, f<FB>, <imm_6>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) & (imm_6 & 1));
+
+
+
+// AVG
+
+void::function::do_avg:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	WRITE32_QUEUE (ra, ((signed64)(signed32)rb + (signed64)(signed32)imm + 1) >> 1);
+
+_IALU1,01010,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:AVG
+"avg r<RA>, r<RB>, r<RC>"
+	do_avg (_SD, Ra, Rb, Rc);
+_IALU1,01010,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:AVG imm
+"avg r<RA>, r<RB>, <imm>"
+	do_avg (_SD, Ra, Rb, imm);
+_IALU1,01010,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:AVG imm long
+"avg r<RA>, r<RB>, <imm>"
+	do_avg (_SD, Ra, Rb, imm);
+
+
+
+// AVG2H
+
+void::function::do_avg2h:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	unsigned16 high = ((signed32)(signed16)VH2_4(rb) + (signed32)(signed16)VH2_4(imm) + 1) >> 1;
+	unsigned16 low  = ((signed32)(signed16)VL2_4(rb) + (signed32)(signed16)VL2_4(imm) + 1) >> 1;
+	WRITE32_QUEUE (ra, (high << 16) | low);
+
+_IALU1,01011,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:AVG2H
+"avg2h r<RA>, r<RB>, r<RC>"
+	do_avg2h (_SD, Ra, Rb, Rc);
+_IALU1,01011,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:AVG2H imm
+"avg2h r<RA>, r<RB>, <imm>"
+	do_avg2h (_SD, Ra, Rb, immHL);
+_IALU1,01011,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:AVG2H imm long
+"avg2h r<RA>, r<RB>, <imm>"
+	do_avg2h (_SD, Ra, Rb, imm);
+
+
+
+// BCLR
+
+_LOGIC,00011,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:BCLR
+"bclr r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE(Ra, Rb & ~BIT32((Rc) % 32));
+_LOGIC,00011,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:BCLR imm
+"bclr r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE(Ra, Rb & ~BIT32((imm) % 32));
+
+
+
+// BNOT
+
+_LOGIC,00001,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:BNOT
+"bnot r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, Rb ^ BIT32((Rc) % 32));
+_LOGIC,00001,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:BNOT imm
+"bnot r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb ^ BIT32((imm) % 32));
+
+
+
+// BRA
+
+_BRA,00000,00,6.**,6.**,6.RC:BRA:short:mu:BRA
+"bra r<RC>"
+	nia = cia + pcdisp;
+_BRA,00000,10,_IMM18:BRA:short:mu:BRA imm
+"bra <pcdisp>"
+	nia = cia + pcdisp;
+_BRA,00000,10,6.**,6.**,_IMM32:BRA:long:mu:BRA imm long
+"bra <pcdisp>"
+	nia = cia + pcdisp;
+
+
+
+// BRATNZ
+
+_BRA,00100,01,6.RA,6.**,6.RC:BRA:short:mu:BRATNZ
+"bratnz r<RC>"
+	if (*Ra != 0)
+	  nia = cia + pcdisp;
+_BRA,00100,11,6.RA,_IMM12:BRA:short:mu:BRATNZ imm
+"bratnz <pcdisp>"
+	if (*Ra != 0)
+	  nia = cia + pcdisp;
+_BRA,00100,11,6.RA,6.**,_IMM32:BRA:long:mu:BRATNZ imm long
+"bratnz <pcdisp>"
+	if (*Ra != 0)
+	  nia = cia + pcdisp;
+
+
+
+// BRATZR
+
+_BRA,00100,00,6.RA,6.**,6.RC:BRA:short:mu:BRATZR
+"bratzr r<RC>"
+	if (val_Ra == 0)
+	  nia = cia + pcdisp;
+_BRA,00100,10,6.RA,_IMM12:BRA:short:mu:BRATZR imm
+"bratzr <pcdisp>"
+	if (val_Ra == 0)
+	  nia = cia + pcdisp;
+_BRA,00100,10,6.RA,6.**,_IMM32:BRA:long:mu:BRATZR imm long
+"bratzr <pcdisp>"
+	if (val_Ra == 0)
+	  nia = cia + pcdisp;
+
+
+
+// BSET
+
+_LOGIC,00010,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:BSET
+"bset r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, Rb | BIT32((Rc) % 32));
+_LOGIC,00010,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:BSET imm
+"bset r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb | BIT32((imm) % 32));
+
+
+
+// BSR
+
+_BRA,00010,00,6.**,6.**,6.RC:BRA:short:mu:BSR
+"bsr r<RC>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	nia = cia + pcdisp;
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+_BRA,00010,10,_IMM18:BRA:short:mu:BSR imm
+"bsr <pcdisp>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	nia = cia + pcdisp;
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+_BRA,00010,10,6.**,6.**,_IMM32:BRA:long:mu:BSR imm long
+"bsr <pcdisp>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	nia = cia + pcdisp;
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+
+
+// BSRTNZ
+
+_BRA,00110,01,6.RA,6.**,6.RC:BRA:short:mu:BSRTNZ
+"bsrtnz r<RC>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+_BRA,00110,11,6.RA,_IMM12:BRA:short:mu:BSRTNZ imm
+"bsrtnz <pcdisp>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+_BRA,00110,11,6.RA,6.**,_IMM32:BRA:long:mu:BSRTNZ imm long
+"bsrtnz <pcdisp>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+
+// BSRTZR
+
+_BRA,00110,00,6.RA,6.**,6.RC:BRA:short:mu:BSRTZR
+"bsrtzr r<RC>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+_BRA,00110,10,6.RA,_IMM12:BRA:short:mu:BSRTZR imm
+"bsrtzr <pcdisp>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+_BRA,00110,10,6.RA,6.**,_IMM32:BRA:long:mu:BSRTZR imm long
+"bsrtzr <pcdisp>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = cia + pcdisp;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+
+// BTST
+
+_LOGIC,00000,00,***,3.FA,6.RB,6.RC:LOGIC:short:iu,mu:BTST
+"btst f<FA>, r<RB>, r<RC>"
+	int bit = (Rc) % 32;
+	PSW_FLAG_SET_QUEUE(FA, MASKED32(Rb, bit, bit));
+_LOGIC,00000,10,***,3.FA,6.RB,_IMM6:LOGIC:short:iu,mu:BTST imm
+"btst f<FA>, r<RB>, <imm>"
+	int bit = imm % 32;
+	PSW_FLAG_SET_QUEUE(FA, MASKED32(Rb, bit, bit));
+
+
+
+// CMPcc
+
+void::function::do_cmp_cc:int cc, int fa, signed32 rb, signed32 rc
+	int value = 0;
+	switch (cc) {
+	case 0: /* EQ */
+	  value = (rb == rc);
+	  break;
+	case 1: /* NE */
+	  value = (rb != rc);
+	  break;
+	case 2: /* GT */
+	  value = (rb > rc);
+	  break;
+	case 3: /* GE */
+	  value = (rb >= rc);
+	  break;
+	case 4: /* LT */
+	  value = (rb < rc);
+	  break;
+	case 5: /* LE */
+	  value = (rb <= rc);
+	  break;
+	case 6: /* PS */
+	  value = ((rb >= 0) && (rc >= 0));
+	  break;
+	case 7: /* NG */
+	  value = ((rb < 0) && (rc < 0));
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "do_cmp_cc - internal error - bad switch (%d)", cc);
+	}
+	PSW_FLAG_SET_QUEUE(fa, value);
+
+::%s::ccc:int ccc
+	switch (ccc)
+	  {
+	  case 0: return "eq";
+	  case 1: return "ne";
+	  case 2: return "gt";
+	  case 3: return "ge";
+	  case 4: return "lt";
+	  case 5: return "le";
+	  case 6: return "ps";
+	  case 7: return "ng";
+	  default: return "?";
+	  }
+
+_LOGIC,01100,00,ccc,3.FA,6.RB,6.RC:LOGIC:short:iu,mu:CMPcc
+"cmp%s<ccc> f<FA>, r<RB>, r<RC>"
+	do_cmp_cc(_SD, ccc, FA, Rb, Rc);
+_LOGIC,01100,10,ccc,3.FA,6.RB,_IMM6:LOGIC:short:iu,mu:CMPcc imm
+"cmp%s<ccc> f<FA>, r<RB>, <imm>"
+	do_cmp_cc(_SD, ccc, FA, Rb, imm);
+_LOGIC,01100,10,ccc,3.FA,6.RB,_IMM32:LOGIC:long:iu,mu:CMPcc imm long
+"cmp%s<ccc> f<FA>, r<RB>, <imm>"
+	do_cmp_cc(_SD, ccc, FA, Rb, imm);
+
+
+
+// CMPUcc
+
+void::function::do_cmpu_cc:int cc, int fa, unsigned32 rb, unsigned32 rc
+	int value = 0;
+	switch (cc) {
+	case 2: /* GT */
+	  value = (rb > rc);
+	  break;
+	case 3: /* GE */
+	  value = (rb >= rc);
+	  break;
+	case 4: /* LT */
+	  value = (rb < rc);
+	  break;
+	case 5: /* LE */
+	  value = (rb <= rc);
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "do_cmpu_cc - internal error - bad switch (%d)", cc);
+	}
+	PSW_FLAG_SET_QUEUE(fa, value);
+
+_LOGIC,01101,00,ccc,3.FA,6.RB,6.RC:LOGIC:short:iu,mu:CMPUcc
+"cmpu%s<ccc> f<FA>, r<RB>, r<RC>"
+	do_cmpu_cc(_SD, ccc, FA, Rb, Rc);
+_LOGIC,01101,10,ccc,3.FA,6.RB,_IMM6:LOGIC:short:iu,mu:CMPUcc imm
+"cmpu%s<ccc> f<FA>, r<RB>, <imm>"
+	do_cmpu_cc(_SD, ccc, FA, Rb, imm_6u);
+_LOGIC,01101,10,ccc,3.FA,6.RB,_IMM32:LOGIC:long:iu,mu:CMPUcc imm long
+"cmpu%s<ccc> f<FA>, r<RB>, <imm>"
+	do_cmpu_cc(_SD, ccc, FA, Rb, imm);
+
+
+
+// DBRA
+
+void::function::do_dbra:address_word pcdisp, unsigned32 ra
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, cia + pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (ra & ~0x7));
+
+_BRA,10000,00,6.RA,6.**,6.RC:BRA:short:mu:DBRA
+"dbra r<RA>, r<RC>"
+	do_dbra(_SD, pcdisp, val_Ra);
+_BRA,10000,10,6.RA,_IMM12:BRA:short:mu:DBRA imm
+"dbra r<RA>, <pcdisp>"
+	do_dbra(_SD, pcdisp, val_Ra);
+_BRA,10000,10,6.RA,6.**,_IMM32:BRA:long:mu:DBRA imm long
+"dbra r<RA>, <pcdisp>"
+	do_dbra(_SD, pcdisp, val_Ra);
+
+
+
+// DBRAI
+
+void::function::do_dbrai:address_word pcdisp, unsigned32 imm
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, cia + pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (imm << 3));
+
+_BRA,10100,00,6.IMM_6,6.**,6.RC:BRA:short:mu:DBRAI
+"dbrai <IMM_6>, r<RC>"
+	do_dbrai(_SD, pcdisp, IMM_6);
+_BRA,10100,10,6.IMM_6,_IMM12:BRA:short:mu:DBRAI imm
+"dbrai <IMM_6>, <pcdisp>"
+	do_dbrai(_SD, pcdisp, IMM_6);
+_BRA,10100,10,6.IMM_6,6.**,_IMM32:BRA:long:mu:DBRAI imm long
+"dbrai <IMM_6>, <pcdisp>"
+	do_dbrai(_SD, pcdisp, IMM_6);
+
+
+
+// DBSR
+
+void::function::do_dbsr:address_word pcdisp, unsigned32 ra
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, cia + pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + ra);
+	WRITE32_QUEUE (&GPR[62], cia + ra + 8);
+
+_BRA,10010,00,6.RA,6.**,6.RC:BRA:short:mu:DBSR
+"dbsr r<RA>, r<RC>"
+	do_dbsr(_SD, pcdisp, val_Ra);
+_BRA,10010,10,6.RA,_IMM12:BRA:short:mu:DBSR imm
+"dbsr r<RA>, <pcdisp>"
+	do_dbsr(_SD, pcdisp, val_Ra);
+_BRA,10010,10,6.RA,6.**,_IMM32:BRA:long:mu:DBSR imm long
+"dbsr r<RA>, <pcdisp>"
+	do_dbsr(_SD, pcdisp, val_Ra);
+
+
+
+// DBSRI
+
+void::function::do_dbsri:address_word pcdisp, unsigned32 imm
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, cia + pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (imm << 3));
+	WRITE32_QUEUE (&GPR[62], cia + (imm << 3) + 8);
+
+_BRA,10110,00,6.IMM_6,6.**,6.RC:BRA:short:mu:DBSRI
+"dbsri <IMM_6>, r<RC>"
+	do_dbsri(_SD, pcdisp, IMM_6);
+_BRA,10110,10,6.IMM_6,_IMM12:BRA:short:mu:DBSRI imm
+"dbsri <IMM_6>, <pcdisp>"
+	do_dbsri(_SD, pcdisp, IMM_6);
+_BRA,10110,10,6.IMM_6,6.**,_IMM32:BRA:long:mu:DBSRI imm long
+"dbsri <IMM_6>, <pcdisp>"
+	do_dbsri(_SD, pcdisp, IMM_6);
+
+
+
+// DBT
+
+
+_BRA,01011,00,6.**,6.**,6.**:BRA:short:mu:DBT
+"dbt"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  {
+	    WRITE32_QUEUE (&DPC, RPT_S);
+	    if (RPT_C == 0)
+	      PSW_SET (PSW_RP, 0);
+	  }
+	else
+	  WRITE32_QUEUE (&DPC, cia + 8);
+	DID_TRAP = 2;
+	nia = 0xfffff120; /* debug_trap_address */
+
+// DJMP
+
+void::function::do_djmp:address_word pcdisp, unsigned32 ra
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (ra & ~0x7));
+
+_BRA,10001,00,6.RA,6.**,6.RC:BRA:short:mu:DJMP
+"djmp r<RA>, r<RC>"
+	do_djmp(_SD, pcdisp, val_Ra);
+_BRA,10001,10,6.RA,_IMM12:BRA:short:mu:DJMP imm
+"djmp r<RA>, <pcdisp>"
+	do_djmp(_SD, pcdisp, val_Ra);
+_BRA,10001,10,6.RA,6.**,_IMM32:BRA:long:mu:DJMP imm long
+"djmp r<RA>, <pcdisp>"
+	do_djmp(_SD, pcdisp, val_Ra);
+
+
+
+// DJMPI
+
+void::function::do_djmpi:address_word pcdisp, unsigned32 imm
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (imm << 3));
+
+_BRA,10101,00,6.IMM_6,6.**,6.RC:BRA:short:mu:DJMPI
+"djmpi <IMM_6>, r<RC>"
+	do_djmpi(_SD, pcdisp, IMM_6);
+_BRA,10101,10,6.IMM_6,_IMM12:BRA:short:mu:DJMPI imm
+"djmpi <IMM_6>, <pcdisp>"
+	do_djmpi(_SD, pcdisp, IMM_6);
+_BRA,10101,10,6.IMM_6,6.**,_IMM32:BRA:long:mu:DJMPI imm long
+"djmpi <IMM_6>, <pcdisp>"
+	do_djmpi(_SD, pcdisp, IMM_6);
+
+
+
+// DJSR
+
+void::function::do_djsr:address_word pcdisp, unsigned32 ra
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (ra & ~0x7));
+	WRITE32_QUEUE (&GPR[62], cia + (ra & ~0x7) + 8);
+
+_BRA,10011,00,6.RA,6.**,6.RC:BRA:short:mu:DJSR
+"djsr r<RA>, r<RC>"
+	do_djsr(_SD, pcdisp, val_Ra);
+_BRA,10011,10,6.RA,_IMM12:BRA:short:mu:DJSR imm
+"djsr r<RA>, <pcdisp>"
+	do_djsr(_SD, pcdisp, val_Ra);
+_BRA,10011,10,6.RA,6.**,_IMM32:BRA:long:mu:DJSR imm long
+"djsr r<RA>, <pcdisp>"
+	do_djsr(_SD, pcdisp, val_Ra);
+
+
+
+// DJSRI
+
+void::function::do_djsri:address_word pcdisp, unsigned32 imm
+	PSW_SET_QUEUE (PSW_RP, 1);
+	WRITE32_QUEUE (&RPT_C, 1);
+	WRITE32_QUEUE (&RPT_S, pcdisp);
+	WRITE32_QUEUE (&RPT_E, cia + (imm << 3));
+	WRITE32_QUEUE (&GPR[62], cia + (imm << 3) + 8);
+
+_BRA,10111,00,6.IMM_6,6.**,6.RC:BRA:short:mu:DJSRI
+"djsri <IMM_6>, r<RC>"
+	do_djsri(_SD, pcdisp, IMM_6);
+_BRA,10111,10,6.IMM_6,_IMM12:BRA:short:mu:DJSRI imm
+"djsri <IMM_6>, <pcdisp>"
+	do_djsri(_SD, pcdisp, IMM_6);
+_BRA,10111,10,6.IMM_6,6.**,_IMM32:BRA:long:mu:DJSRI imm long
+"djsri <IMM_6>, <pcdisp>"
+	do_djsri(_SD, pcdisp, IMM_6);
+
+
+
+// JMP
+
+_BRA,00001,00,6.**,6.**,6.RC:BRA:short:mu:JMP
+"jmp r<RC>"
+	nia = pcaddr;
+	if (RC == 62 && TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_RETURN;
+_BRA,00001,10,_IMM18:BRA:short:mu:JMP imm
+"jmp <pcdisp>"
+	nia = pcaddr;
+_BRA,00001,10,6.**,6.**,_IMM32:BRA:long:mu:JMP imm long
+"jmp <pcdisp>"
+	nia = pcaddr;
+
+
+
+// JMPTNZ
+
+_BRA,00101,01,6.RA,6.**,6.RC:BRA:short:mu:JMPTNZ
+"jmptnz r<RC>"
+	if (val_Ra != 0)
+	  nia = pcaddr;
+_BRA,00101,11,6.RA,_IMM12:BRA:short:mu:JMPTNZ imm
+"jmptnz <pcdisp>"
+	if (val_Ra != 0)
+	  nia = pcaddr;
+_BRA,00101,11,6.RA,6.**,_IMM32:BRA:long:mu:JMPTNZ imm long
+"jmptnz <pcdisp>"
+	if (val_Ra != 0)
+	  nia = pcaddr;
+
+
+
+// JMPTZR
+
+_BRA,00101,00,6.RA,6.**,6.RC:BRA:short:mu:JMPTZR
+"jmptzr r<RC>"
+	if (val_Ra == 0)
+	  nia = pcaddr;
+_BRA,00101,10,6.RA,_IMM12:BRA:short:mu:JMPTZR imm
+"jmptzr <pcdisp>"
+	if (val_Ra == 0)
+	  nia = pcaddr;
+_BRA,00101,10,6.RA,6.**,_IMM32:BRA:long:mu:JMPTZR imm long
+"jmptzr <pcdisp>"
+	if (val_Ra == 0)
+	  nia = pcaddr;
+
+
+
+// JOINpp 
+
+void::function::do_join_pp:int pp, unsigned32 *ra, unsigned32 rb, unsigned32 src
+	switch (pp) {
+	case 0x0: /* LL */
+	  WRITE32_QUEUE (ra, ((unsigned32)VL2_4(rb) << 16) | VL2_4(src));
+	  break;
+	case 0x1: /* LH */
+	  WRITE32_QUEUE (ra, ((unsigned32)VL2_4(rb) << 16) | VH2_4(src));
+	  break;
+	case 0x2: /* HL */
+	  WRITE32_QUEUE (ra, ((unsigned32)VH2_4(rb) << 16) | VL2_4(src));
+	  break;
+	case 0x3: /* HH */
+	  WRITE32_QUEUE (ra, ((unsigned32)VH2_4(rb) << 16) | VH2_4(src));
+	  break;
+	}
+
+::%s::pp:int pp
+	switch (pp)
+	  {
+	  case 0x0: return "ll";
+	  case 0x1: return "lh";
+	  case 0x2: return "hl";
+	  case 0x3: return "hh";
+	  default: return "?";
+	  }
+
+_IALU1,011,pp,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:JOINpp
+"join%s<pp> r<RA>, r<RB>, r<RC>"
+	do_join_pp(_SD, pp, Ra, Rb, Rc);
+_IALU1,011,pp,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:JOINpp imm
+"join%s<pp> r<RA>, r<RB>, <imm>"
+	do_join_pp(_SD, pp, Ra, Rb, immHL);
+_IALU1,011,pp,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:JOINpp imm long
+"join%s<pp> r<RA>, r<RB>, <imm>"
+	do_join_pp(_SD, pp, Ra, Rb, immHL);
+
+
+
+// JSR
+
+_BRA,00011,00,6.**,6.**,6.RC:BRA:short:mu:JSR
+"jsr r<RC>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+	return pcaddr;
+_BRA,00011,10,_IMM18:BRA:short:mu:JSR imm
+"jsr <pcdisp>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+	return pcaddr;
+_BRA,00011,10,6.**,6.**,_IMM32:BRA:long:mu:JSR imm long
+"jsr <pcdisp>"
+	if (cia == RPT_E && PSW_VAL (PSW_RP))
+	  WRITE32_QUEUE (&GPR[62], RPT_S);
+	else
+	  WRITE32_QUEUE (&GPR[62], cia + 8);
+	if (TRACE_CALL_P)
+	  TRACE_ACTION |= TRACE_ACTION_CALL;
+	return pcaddr;
+
+
+// JSRTNZ
+
+_BRA,00111,01,6.RA,6.**,6.RC:BRA:short:mu:JSRTNZ
+"jsrtnz r<RC>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+_BRA,00111,11,6.RA,_IMM12:BRA:short:mu:JSRTNZ imm
+"jsrtnz <pcdisp>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+_BRA,00111,11,6.RA,6.**,_IMM32:BRA:long:mu:JSRTNZ imm long
+"jsrtnz <pcdisp>"
+	if (val_Ra != 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+
+
+// JSRTZR
+
+_BRA,00111,00,6.RA,6.**,6.RC:BRA:short:mu:JSRTZR
+"jsrtzr r<RC>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+_BRA,00111,10,6.RA,_IMM12:BRA:short:mu:JSRTZR imm
+"jsrtzr <pcdisp>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+_BRA,00111,10,6.RA,6.**,_IMM32:BRA:long:mu:JSRTZR imm long
+"jsrtzr <pcdisp>"
+	if (val_Ra == 0) {
+	  if (cia == RPT_E && PSW_VAL (PSW_RP))
+	    WRITE32_QUEUE (&GPR[62], RPT_S);
+	  else
+	    WRITE32_QUEUE (&GPR[62], cia + 8);
+	  nia = pcaddr;
+	  if (TRACE_CALL_P)
+	    TRACE_ACTION |= TRACE_ACTION_CALL;
+	}
+
+
+
+// Post increment
+
+void::function::do_incr:int x, unsigned32 *rb, int delta
+	unsigned32 next_rb;
+	if (x == 1)
+	  next_rb = *rb + delta;
+	else if (x == 3)
+	  next_rb = *rb - delta;
+	else
+	  next_rb = *rb; /* value not used */
+	/* HW erratum: check value after incrementing */
+	if (next_rb == MOD_E
+	    && (x == 1 || x == 3)
+	    && (PSW_VAL(PSW_MD))) {
+	  WRITE32_QUEUE (rb, MOD_S);
+	}
+	else if (x == 1 || x == 3)
+	  WRITE32_QUEUE (rb, next_rb);
+
+// LD2H
+
+int::function::make_even_reg:int reg, const char *name
+	if (reg & 1)
+	  sim_engine_abort (SD, CPU, cia,
+			    "0x%lx:%s odd register (r%d) used in multi-word load/mulx2h",
+			    (long) cia, name, reg);
+	return reg;
+
+void::function::do_ld2h:int ra, unsigned32 rb, unsigned32 src
+	signed32 mem;
+	ra = make_even_reg(_SD, ra, "LD2H");
+	mem = MEM(signed, rb + src, 4);
+	if (ra != 0)
+	{
+	  WRITE32_QUEUE (&GPR[ra + 0], SEXT32(EXTRACTED32(mem, 0, 15), 16));
+	  WRITE32_QUEUE (&GPR[ra + 1], SEXT32(EXTRACTED32(mem, 16, 31), 16));
+	}
+
+::%s::XX:int XX
+	switch (XX)
+	  {
+	  case 0: return "";
+	  case 1: return "+";
+	  case 3: return "-";
+	  default: return "?";
+	  }
+
+_IMEM,00011,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LD2H
+"ld2h r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ld2h r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ld2h(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,00011,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LD2H long
+"ld2h r<RA>, @(r<RB>, <imm>)"
+	do_ld2h(_SD, RA, Rb, imm);
+
+
+
+// LD2W
+
+void::function::do_ld2w:int ra, unsigned32 rb, unsigned32 src
+	unsigned64 mem;
+	ra = make_even_reg(_SD, ra, "LD2W");
+	mem = MEM(unsigned, rb + src, 8);
+	if (ra != 0)
+	{
+	  WRITE32_QUEUE (&GPR[ra + 0], EXTRACTED64 (mem, 0, 31));
+	  WRITE32_QUEUE (&GPR[ra + 1], EXTRACTED64 (mem, 32, 63));
+	}
+
+_IMEM,00110,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:L2W
+"ld2w r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ld2w r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ld2w(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 8);
+_IMEM,00110,10,6.RA,6.RB,_IMM32:IMEM:long:mu:L2W long
+"ld2w r<RA>, @(r<RB>, <imm>)"
+	do_ld2w(_SD, RA, Rb, imm);
+
+
+
+// LD4BH
+
+void::function::do_ld4bh:unsigned32 ra, unsigned32 rb, unsigned32 src
+	unsigned16 l1, l2, h1, h2;
+	unsigned32 mem;
+	ra = make_even_reg(_SD, ra, "LD4BH");
+	mem = MEM(unsigned, rb + src, 4);
+	h1 = SEXT16(EXTRACTED32(mem, 0, 7), 8);
+	l1 = SEXT16(EXTRACTED32(mem, 8, 15), 8);
+	h2 = SEXT16(EXTRACTED32(mem, 16, 23), 8);
+	l2 = SEXT16(EXTRACTED32(mem, 24, 31), 8);
+	if (ra != 0)
+	{
+	  WRITE32_QUEUE (&GPR[ra + 0], (h1 << 16) | l1);
+	  WRITE32_QUEUE (&GPR[ra + 1], (h2 << 16) | l2);
+	}
+
+_IMEM,00101,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LD4BH
+"ld4bh r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ld4bh r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ld4bh(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,00101,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LD4BH long
+"ld4bh r<RA>, @(r<RB>, <imm>)"
+	do_ld4bh(_SD, RA, Rb, imm);
+
+
+
+// LD4BHU
+
+void::function::do_ld4bhu:unsigned32 ra, unsigned32 rb, unsigned32 src
+	unsigned16 l1, l2, h1, h2;
+	unsigned32 mem;
+	ra = make_even_reg(_SD, ra, "LD4BH");
+	mem = MEM(signed, rb + src, 4);
+	h1 = EXTRACTED32(mem, 0, 7);
+	l1 = EXTRACTED32(mem, 8, 15);
+	h2 = EXTRACTED32(mem, 16, 23);
+	l2 = EXTRACTED32(mem, 24, 31);
+	if (ra != 0)
+	{
+	  WRITE32_QUEUE (&GPR[ra + 0], (h1 << 16) | l1);
+	  WRITE32_QUEUE (&GPR[ra + 1], (h2 << 16) | l2);
+	}
+
+_IMEM,01101,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LD4BHU
+"ld4hbu r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ld4hbu r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ld4bhu(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,01101,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LD4BHU long
+"ld4hbu r<RA>, @(r<RB>, <imm>)"
+	do_ld4bhu(_SD, RA, Rb, imm);
+
+
+
+// LDB
+
+void::function::do_ldb:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(signed, rb + src, 1));
+
+_IMEM,00000,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDB
+"ldb r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldb r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldb(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 1);
+_IMEM,00000,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDB long
+"ldb r<RA>, @(r<RB>, <imm>)"
+	do_ldb(_SD, Ra, Rb, imm);
+
+
+
+// LDBU
+
+void::function::do_ldbu:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(unsigned, rb + src, 1));
+
+_IMEM,01001,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDBU
+"ldbu r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldbu r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldbu(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 1);
+_IMEM,01001,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDBU long
+"ldbu r<RA>, @(r<RB>, <imm>)"
+	do_ldbu(_SD, Ra, Rb, imm);
+
+
+
+// LDH
+
+void::function::do_ldh:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(signed, rb + src, 2));
+
+_IMEM,00010,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDH
+"ldh r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldh r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldh(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 2);
+_IMEM,00010,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDH long
+"ldh r<RA>, @(r<RB>, <imm>)"
+	do_ldh(_SD, Ra, Rb, imm);
+
+
+
+// LDHH
+
+void::function::do_ldhh:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(signed, rb + src, 2) << 16);
+
+_IMEM,00001,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDHH
+"ldhh r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldhh r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldhh(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 2);
+_IMEM,00001,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDHH long
+"ldhh r<RA>, @(r<RB>, <imm>)"
+	do_ldhh(_SD, Ra, Rb, imm);
+
+
+
+// LDHU
+
+void::function::do_ldhu:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(unsigned, rb + src, 2));
+
+_IMEM,01010,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDHU
+"ldhu r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldhu r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldhu(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 2);
+_IMEM,01010,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDHU long
+"ldhu r<RA>, @(r<RB>, <imm>)"
+	do_ldhu(_SD, Ra, Rb, imm);
+
+
+
+// LDW
+
+void::function::do_ldw:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, MEM(signed, rb + src, 4));
+
+_IMEM,00100,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:LDW
+"ldw r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"ldw r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_ldw(_SD, Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,00100,10,6.RA,6.RB,_IMM32:IMEM:long:mu:LDW long
+"ldw r<RA>, @(r<RB>, <imm>)"
+	do_ldw(_SD, Ra, Rb, imm);
+
+
+
+// MACa
+
+void::function::do_mac:unsigned64 *aa, unsigned32 *ra, signed32 rb, signed32 src
+	unsigned64 accum = *aa;
+	accum += (signed64) (rb) * (signed64) (src);
+	WRITE64_QUEUE (aa, accum);
+	WRITE32_QUEUE (ra, EXTRACTED64(accum, 32, 63));
+
+_IALU2,10100,0,1.AA,6.RA,6.RB,6.RC:IALU2:short:iu:MACa
+"mac<AA> r<RA>, r<RB>, r<RC>"
+	do_mac(_SD, Aa, Ra, Rb, Rc);	
+_IALU2,10100,1,1.AA,6.RA,6.RB,_IMM6:IALU2:short:iu:MACa imm
+"mac<AA> r<RA>, r<RB>, <imm>"
+	do_mac(_SD, Aa, Ra, Rb, imm);
+
+
+
+// MACSa
+
+void::function::do_macs:unsigned64 *aa, unsigned32 *ra, signed32 rb, signed32 src
+	unsigned64 accum = *aa;
+	accum += ((signed64) (rb) * (signed64) (src)) << 1;
+	WRITE64_QUEUE (aa, accum);
+	WRITE32_QUEUE (ra, EXTRACTED64(accum, 0, 31));
+
+_IALU2,10101,0,1.AA,6.RA,6.RB,6.RC:IALU2:short:iu:MACSa
+"macs<AA> r<RA>, r<RB>, r<RC>"
+	do_macs(_SD, Aa, Ra, Rb, Rc);	
+_IALU2,10101,1,1.AA,6.RA,6.RB,_IMM6:IALU2:short:iu:MACSa imm
+"macs<AA> r<RA>, r<RB>, <imm>"
+	do_macs(_SD, Aa, Ra, Rb, imm);
+
+
+
+// MODDEC | MODINC
+
+_IMEM,00111,11,6.**,6.RB,_IMM6:IMEM:short:mu:MODDEC
+"moddec r<RB>, <imm>"
+	do_incr(_SD, 3/*0b11*/, &GPR[RB], imm_5);	
+_IMEM,00111,01,6.**,6.RB,_IMM6:IMEM:short:mu:MODINC
+"modinc r<RB>, <imm>"
+	do_incr(_SD, 1/*0b01*/, &GPR[RB], imm_5);	
+
+
+
+// MSUBa
+
+void::function::do_msub:unsigned64 *aa, unsigned32 *ra, signed32 rb, signed32 src
+	unsigned64 accum = *aa;
+	accum -= (signed64) (rb) * (signed64) (src);
+	WRITE64_QUEUE (aa, accum);
+	WRITE32_QUEUE (ra, EXTRACTED64(accum, 32, 63));
+
+_IALU2,10110,0,1.AA,6.RA,6.RB,6.RC:IALU2:short:iu:MSUBa
+"msub<AA> r<RA>, r<RB>, r<RC>"
+	do_msub(_SD, Aa, Ra, Rb, Rc);	
+_IALU2,10110,1,1.AA,6.RA,6.RB,_IMM6:IALU2:short:iu:MSUBa imm
+"msub<AA> r<RA>, r<RB>, <imm>"
+	do_msub(_SD, Aa, Ra, Rb, imm);
+
+
+
+// MSUBSa
+
+void::function::do_msubs:unsigned64 *aa, unsigned32 *ra, signed32 rb, signed32 src
+	unsigned64 accum = *aa;
+	accum -= ((signed64) (rb) * (signed64) (src)) << 1;
+	WRITE64_QUEUE (aa, accum);
+	WRITE32_QUEUE (ra, EXTRACTED64(accum, 0, 31));
+
+_IALU2,10111,0,1.AA,6.RA,6.RB,6.RC:IALU2:short:iu:MSUBSa
+"msubs<AA> r<RA>, r<RB>, r<RC>"
+	do_msubs(_SD, Aa, Ra, Rb, Rc);	
+_IALU2,10111,1,1.AA,6.RA,6.RB,_IMM6:IALU2:short:iu:MSUBSa imm
+"msubs<AA> r<RA>, r<RB>, <imm>"
+	do_msubs(_SD, Aa, Ra, Rb, imm);
+
+
+
+// MUL
+
+void::function::do_mul:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	WRITE32_QUEUE (ra, rb * src);
+
+_IALU2,10000,00,6.RA,6.RB,6.RC:IALU2:short:iu:MUL
+"mul r<RA>, r<RB>, r<RC>"
+	do_mul(_SD, Ra, Rb, Rc);	
+_IALU2,10000,10,6.RA,6.RB,_IMM6:IALU2:short:iu:MUL imm
+"mul r<RA>, r<RB>, <imm>"
+	do_mul(_SD, Ra, Rb, imm);
+
+
+
+// MUL2H
+
+void::function::do_mul2h:unsigned32 *ra, unsigned32 rb, unsigned32 src
+	unsigned16 high = VH2_4(rb) * VH2_4(src);
+	unsigned16 low  = VL2_4(rb) * VL2_4(src);
+	WRITE32_QUEUE (ra, (high << 16) | low);
+
+_IALU2,00000,00,6.RA,6.RB,6.RC:IALU2:short:iu:MUL2H
+"mul2h r<RA>, r<RB>, r<RC>"
+	do_mul2h(_SD, Ra, Rb, Rc);	
+_IALU2,00000,10,6.RA,6.RB,_IMM6:IALU2:short:iu:MUL2H imm
+"mul2h r<RA>, r<RB>, <imm>"
+	do_mul2h(_SD, Ra, Rb, immHL);
+
+
+
+// MULX
+
+void::function::do_mulx:unsigned64 *aa, signed32 rb, signed32 src
+	WRITE64_QUEUE (aa, (signed64) (rb) * (signed64) (src));
+
+_IALU2,11000,00,5.*,1.AA,6.RB,6.RC:IALU2:short:iu:MULX
+"mulx a<AA>, r<RB>, r<RC>"
+	do_mulx(_SD, Aa, Rb, Rc);	
+_IALU2,11000,10,5.*,1.AA,6.RB,_IMM6:IALU2:short:iu:MULX imm
+"mulx a<AA>, r<RB>, <imm>"
+	do_mulx(_SD, Aa, Rb, imm);
+
+
+// MULX2H
+
+void::function::do_mulx2h:int ra, signed32 rb, signed32 src, int high
+	signed32 result = rb * src;
+	if (!high)
+	  {
+	    ra = make_even_reg(_SD, ra, "MULX2H");
+	    if (ra != 0)
+	      WRITE32_QUEUE (&GPR[ra+1], result);
+	  }
+	else if (ra != 0)
+	  {
+	      WRITE32_QUEUE (&GPR[ra+0], result);
+	  }
+
+_IALU2,00001,00,6.RA,6.RB,6.RC:IALU2:short:iu:MULX2H
+"mul2h r<RA>, r<RB>, r<RC>"
+	do_mulx2h(_SD, RA, RbH, RcH, 1);
+	do_mulx2h(_SD, RA, RbL, RcL, 0);
+_IALU2,00001,10,6.RA,6.RB,_IMM6:IALU2:short:iu:MULX2H imm
+"mul2h r<RA>, r<RB>, <imm>"
+	do_mulx2h(_SD, RA, RbH, imm, 1);
+	do_mulx2h(_SD, RA, RbL, imm, 0);
+
+// MULHXpp
+
+void::function::do_mulhx:int pp, unsigned32 *ra, unsigned32 rb, unsigned32 src
+	signed32 value = 0;
+	switch (pp) {
+	case 0: /* LL */
+	  value = SEXT32(VL2_4(rb), 16) * SEXT32(VL2_4(src), 16);
+	  break;
+	case 1: /* LH */
+	  value = SEXT32(VL2_4(rb), 16) * SEXT32(VH2_4(src), 16);
+	  break;
+	case 2: /* HL */
+	  value = SEXT32(VH2_4(rb), 16) * SEXT32(VL2_4(src), 16);
+	  break;
+	case 3: /* HH */
+	  value = SEXT32(VH2_4(rb), 16) * SEXT32(VH2_4(src), 16);
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "do_mulhx - internal error - bad switch");
+	}
+	WRITE32_QUEUE (ra, value);
+
+_IALU2,001,pp,00,6.RA,6.RB,6.RC:IALU2:short:iu:MULHXpp
+"mulhx%s<pp> r<RA>, r<RB>, r<RC>"
+	do_mulhx(_SD, pp, Ra, Rb, Rc);	
+_IALU2,001,pp,10,6.RA,6.RB,_IMM6:IALU2:short:iu:MULHXpp imm
+"mulhx%s<pp> r<RA>, r<RB>, <imm>"
+	do_mulhx(_SD, pp, Ra, Rb, immHL);
+
+
+
+// MULXS
+
+void::function::do_mulxs:unsigned64 *aa, signed32 rb, signed32 src
+	WRITE64_QUEUE (aa, ((signed64) (rb) * (signed64) (src)) << 1);
+
+_IALU2,11001,00,5.*,1.AA,6.RB,6.RC:IALU2:short:iu:MULXS
+"mulxs a<AA>, r<RB>, r<RC>"
+	do_mulxs(_SD, Aa, Rb, Rc);	
+_IALU2,11001,10,5.*,1.AA,6.RB,_IMM6:IALU2:short:iu:MULXS imm
+"mulxs a<AA>, r<RB>, <imm>"
+	do_mulxs(_SD, Aa, Rb, imm);
+
+
+
+// MVFACC
+
+void::function::do_mvfacc:unsigned32 *ra, unsigned64 ab, unsigned32 src
+	while (src > 63) src -= 64;
+	WRITE32_QUEUE (ra, ((signed64)ab) >> src);
+
+_IALU2,11111,00,6.RA,5.*,1.AB,6.RC:IALU2:short:iu:MVFACC
+"mvfacc r<RA>, a<AB>, r<RC>"
+	do_mvfacc(_SD, Ra, *Ab, Rc);	
+_IALU2,11111,10,6.RA,5.*,1.AB,_IMM6:IALU2:short:iu:MVFACC imm
+"mvfacc r<RA>, a<AB>, <imm>"
+	do_mvfacc(_SD, Ra, *Ab, imm_6u);
+
+
+
+// MVFSYS
+
+_BRA,11110,00,6.RA,6.CR,6.ID:BRA:short:mu:MVFSYS
+"mvfsys r<RA>, cr<CR>"
+	switch (ID) {
+	case 0:
+	  if (CR >= NR_CONTROL_REGISTERS)
+	    sim_engine_abort (SD, CPU, cia, "FIXME - illegal CR");
+	  else
+	    WRITE32_QUEUE (Ra, (CPU)->regs.control[CR]);
+	  break;
+	case 1:
+	  WRITE32_QUEUE (Ra, PSWL);
+	  break;
+	case 2:
+	  WRITE32_QUEUE (Ra, EXTRACTED32(PSWH, 16, 31));
+	  break;
+	case 3:
+	  WRITE32_QUEUE (Ra, PSW_FLAG_VAL(CR));
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "FIXME - illegal ID");
+	}
+
+
+
+// MVTACC
+
+_IALU2,01111,00,5.*,1.AA,6.RB,6.RC:IALU2:short:iu:MVTACC
+"mvtacc a<AA>, r<RB>, r<RC>"
+	WRITE64_QUEUE (Aa, INSERTED64(RbU, 0, 31) | (RcU));
+
+
+
+// MVTSYS
+
+_BRA,01110,00,6.CR,6.RB,6.ID:BRA:short:mu:MVTSYS
+"mvtsys cr<CR>, r<RB>"
+	switch (ID) {
+	case 0:			/* control register */
+	  if (CR >= NR_CONTROL_REGISTERS)
+	    sim_engine_abort (SD, CPU, cia, "FIXME - illegal CR");
+	  else
+	    {
+	      unsigned32 value = Rb;
+	      CPU->mvtsys_left_p = 1;
+	      if (CR == processor_status_word_cr)
+		{
+		  unsigned32 ds = PSW & BIT32 (PSW_DS);	/* preserve ds */
+		  value = ds | (value & PSW_VALID);
+		}
+	      else if (CR == backup_processor_status_word_cr
+		       || CR == debug_backup_processor_status_word_cr)
+		value &= DPSW_VALID;
+	      else if (CR == eit_vector_base_cr)
+		value &= EIT_VALID;
+	      WRITE32_QUEUE (&(CPU)->regs.control[CR], value);
+	    }
+	  break;
+	case 1:			/* PSWL */
+	  WRITE32_QUEUE_MASK (&PSW, EXTRACTED32(Rb, 16, 31),
+			      PSW_VALID & 0x0000ffff);
+	  break;
+	case 2:			/* PSWH */
+	  {
+	    unsigned32 ds = PSW & BIT32 (PSW_DS);	/* preserve ds */
+	    WRITE32_QUEUE_MASK (&PSW, (EXTRACTED32(Rb, 16, 31) << 16) | ds,
+				(PSW_VALID | ds) & 0xffff0000);
+	  }
+	  break;
+	case 3:			/* FLAG */
+	  PSW_FLAG_SET_QUEUE(CR, Rb & 1);
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "FIXME - illegal ID");
+	}
+
+
+
+// NOP
+
+_BRA,01111,00,6.**,6.**,6.**:BRA:short:iu,mu:NOP
+"nop"
+	/* NOP */;
+
+
+// NOT
+
+_LOGIC,11001,00,6.RA,6.RB,6.*:LOGIC:short:iu,mu:NOT
+"not r<RA>, r<RB>"
+	WRITE32_QUEUE (Ra, ~Rb);
+
+
+
+// NOTFG
+
+_LOGIC,01001,00,***,3.FA,***,3.FB,***,3.FC:LOGIC:short:iu,mu:NOTFG
+"notfg f<FA>, f<FB>"
+	PSW_FLAG_SET_QUEUE(FA, !PSW_FLAG_VAL(FB));
+
+
+// OR
+
+_LOGIC,11010,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:OR
+"or r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, Rb | Rc);
+_LOGIC,11010,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:OR imm
+"or r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb | imm);
+_LOGIC,11010,10,6.RA,6.RB,_IMM32:LOGIC:long:iu,mu:OR imm long
+"or r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb | imm);
+
+
+
+// ORFG
+
+_LOGIC,01010,00,***,3.FA,***,3.FB,***,3.FC:LOGIC:short:iu,mu:ORFG
+"orfg f<FA>, f<FB>, f<FC>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) | PSW_FLAG_VAL(FC));
+_LOGIC,01010,10,***,3.FA,***,3.FB,_IMM6:LOGIC:short:iu,mu:ORFG imm
+"orfg f<FA>, f<FB>, <imm>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) | (imm_6 & 1));
+
+
+
+// REIT
+
+_BRA,01000,00,6.**,6.**,6.**:BRA:short:mu:REIT
+"reit"
+	WRITE32_QUEUE (&PSW, bPSW);
+	nia = bPC;
+
+
+
+
+// REPEAT
+
+void::function::do_repeat:unsigned32 count, address_word pcaddr
+	address_word rpt_s = cia + 8;
+	address_word rpt_e = cia + pcaddr;
+
+	if (count == 0)
+	  sim_engine_abort (SD, CPU, cia, "REPEAT with ra=0 and REPEATI with imm = 0 is forbidden.");
+	if (count > 1)
+	  PSW_SET_QUEUE (PSW_RP, 1);
+	if (rpt_e  < rpt_s + 0x18)
+	  sim_io_eprintf (sd, "warning: 0x%lx: REPEAT or REPEATI loop is too small\n", (long) cia);
+	WRITE32_QUEUE (&RPT_C, count - 1);
+	WRITE32_QUEUE (&RPT_S, rpt_s);
+	WRITE32_QUEUE (&RPT_E, rpt_e);
+
+_BRA,11000,00,6.RA,6.**,6.RC:BRA:short:mu:REPEAT
+"repeat r<RA>, r<RC>"
+	do_repeat(_SD, val_Ra, pcaddr);
+_BRA,11000,10,6.RA,_IMM12:BRA:short:mu:REPEAT imm
+"repeat r<RA>, <pcaddr>"
+	do_repeat(_SD, val_Ra, pcaddr);
+_BRA,11000,10,6.RA,6.**,_IMM32:BRA:long:mu:REPEAT imm long
+"repeat r<RA>, <pcaddr>"
+	do_repeat(_SD, val_Ra, pcaddr);
+
+
+
+
+// REPEATI
+
+_BRA,11010,00,6.IMM_6,6.**,6.RC:BRA:short:mu:REPEATI
+"repeati <IMM_6>, r<RC>"
+	do_repeat(_SD, IMM_6, pcaddr);
+_BRA,11010,10,6.IMM_6,_IMM12:BRA:short:mu:REPEATI imm
+"repeati <IMM_6>, <pcaddr>"
+	do_repeat(_SD, IMM_6, pcaddr);
+_BRA,11010,10,6.IMM_6,6.**,_IMM32:BRA:long:mu:REPEATI imm long
+"repeati <IMM_6>, <pcaddr>"
+	do_repeat(_SD, IMM_6, pcaddr);
+
+
+
+
+// RTD
+
+_BRA,01010,00,6.*,6.*,6.*:BRA:short:mu:RTD
+"rtd"
+	WRITE32_QUEUE (&PSW, DPSW);
+	nia = DPC;
+
+
+
+
+// ROT
+
+_LOGIC,10100,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:ROT
+"rot r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, ROT32(Rb, Rc & 0x1f));
+_LOGIC,10100,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:ROT imm
+"rot r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, ROT32(Rb, imm & 0x1f));
+
+
+
+
+// ROT2H
+
+void::function::do_rot2h:unsigned32 *ra, unsigned32 rb, signed32 src
+	unsigned16 high = ROTR16(VH2_4(rb), VH2_4(src) & 0xf);
+	unsigned16 low  = ROTR16(VL2_4(rb), VL2_4(src) & 0xf);
+	WRITE32_QUEUE (ra, (high << 16) | low);
+
+_LOGIC,10101,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:ROT2H
+"rot2h r<RA>, r<RB>, r<RC>"
+	do_rot2h(_SD, Ra, Rb, Rc);
+_LOGIC,10101,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:ROT2H imm
+"rot2h r<RA>, r<RB>, <imm>"
+	do_rot2h(_SD, Ra, Rb, immHL);
+
+
+
+
+// SAT
+
+void::function::do_sat:signed32 *ra, signed32 rb, signed32 src
+	int bits = LSMASKED32(src, 4, 0); /* 5 */
+	signed32 sat = LSMASK32(bits, 0) >> 2;
+	signed32 nsat = ~sat;
+	signed32 value;
+	if (bits != src)
+	  sim_io_eprintf (sd, "warning: 0x%lx:SAT bit overflow\n", (long) cia);
+	if (bits == 0)
+	  value = rb;
+	else if (rb >= sat)
+	  value = sat;
+	else if (rb <= nsat)
+	  value = nsat;
+	else
+	  value = rb;
+	WRITE32_QUEUE (ra, value);
+
+_IALU2,01000,00,6.RA,6.RB,6.RC:IALU2:short:iu:SAT
+"sat r<RA>, r<RB>, r<RC>"
+	do_sat(_SD, Ra, Rb, Rc);
+_IALU2,01000,10,6.RA,6.RB,_IMM6:IALU2:short:iu:SAT imm
+"sat r<RA>, r<RB>, <imm>"
+	do_sat(_SD, Ra, Rb, imm_5);
+
+
+
+
+// SAT2H
+
+void::function::do_sath:signed32 *ra, signed32 rb, signed32 src, int high, int updates_f4
+	int bits = LSMASKED32(src, 4, 0); /* 5 */
+	signed32 sat = LSMASK32(bits, 0) >> 2;
+	signed32 nsat = ~sat;
+	signed32 value;
+	if (bits != src)
+	  sim_io_eprintf (sd, "warning: 0x%lx:SAT bit overflow\n", (long) cia);
+	if (bits == 0)
+	  value = rb;
+	else if (rb >= sat)
+	  value = sat;
+	else if (rb <= nsat)
+	  value = nsat;
+	else
+	  value = rb;
+	if (high)
+	  WRITE32_QUEUE_MASK (ra, value << 16, 0xffff0000);
+	else
+	  WRITE32_QUEUE_MASK (ra, value, 0x0000ffff);
+	if (updates_f4)
+	  {
+	    /* if MU instruction was a MVTSYS (lkr), unqueue register writes now */
+	    if(STATE_CPU (sd, 0)->mvtsys_left_p)
+	      unqueue_writes (sd, STATE_CPU (sd, 0), cia);
+	    PSW_FLAG_SET_QUEUE(PSW_S_FLAG, PSW_FLAG_VAL(PSW_S_FLAG) ^ (value & 1));
+	  }
+
+_IALU2,01001,00,6.RA,6.RB,6.RC:IALU2:short:iu:SAT2H
+"sat2h r<RA>, r<RB>, r<RC>"
+	do_sath(_SD, Ra, RbH, RcH, 1, 0);
+	do_sath(_SD, Ra, RbL, RcL, 0, 0);
+_IALU2,01001,10,6.RA,6.RB,_IMM6:IALU2:short:iu:SAT2H imm
+"sat2h r<RA>, r<RB>, <imm>"
+	do_sath(_SD, Ra, RbH, imm_5, 1, 0);
+	do_sath(_SD, Ra, RbL, imm_5, 0, 0);
+
+
+
+
+// SATHp
+
+::%s::p:int p
+	switch (p)
+	  {
+	  case 0: return "l";
+	  case 1: return "h";
+	  default: return "?";
+	  }
+
+_IALU2,1110,p,00,6.RA,6.RB,6.RC:IALU2:short:iu:SATHP
+"sath%s<p> r<RA>, r<RB>, r<RC>"
+	do_sath(_SD, Ra, Rb, Rc, p, 1);
+_IALU2,1110,p,10,6.RA,6.RB,_IMM6:IALU2:short:iu:SATHP imm
+"sath%s<p> r<RA>, r<RB>, <imm>"
+	do_sath(_SD, Ra, Rb, imm_5, p, 1);
+
+
+
+// SATZ
+
+void::function::do_satz:signed32 *ra, signed32 rb, signed32 src
+	if (rb < 0)
+	  WRITE32_QUEUE (ra, 0);
+	else
+	  do_sat (_SD, ra, rb, src);
+
+_IALU2,01010,00,6.RA,6.RB,6.RC:IALU2:short:iu:SATZ
+"satz r<RA>, r<RB>, r<RC>"
+	do_satz(_SD, Ra, Rb, Rc);
+_IALU2,01010,10,6.RA,6.RB,_IMM6:IALU2:short:iu:SATZ imm
+"satz r<RA>, r<RB>, <imm>"
+	do_satz(_SD, Ra, Rb, imm_5);
+
+
+
+
+// SATZ2H
+
+void::function::do_satzh:signed32 *ra, signed16 rb, signed32 src, int high
+	int bits = LSMASKED32(src, 3, 0); /*4*/
+	signed16 sat = LSMASK16(bits, 0) >> 2;
+	signed16 nsat = 0;
+	signed16 value;
+	if (bits != src)
+	  sim_io_eprintf (sd, "warning: 0x%lx:SATZ2H bit overflow\n", (long) cia);
+	if (bits == 0 && rb > sat)
+	  value = rb;
+	else if (rb > sat)
+	  value = sat;
+	else if (rb < nsat)
+	  value = nsat;
+	else
+	  value = rb;
+	if (high)
+	  WRITE32_QUEUE_MASK (ra, value << 16, 0xffff0000);
+	else
+	  WRITE32_QUEUE_MASK (ra, value, 0x0000ffff);
+
+
+_IALU2,01011,00,6.RA,6.RB,6.RC:IALU2:short:iu:SATZ2H
+"satz2h r<RA>, r<RB>, r<RC>"
+	do_satzh(_SD, Ra, RbH, RcH, 1);
+	do_satzh(_SD, Ra, RbL, RcL, 0);
+_IALU2,01011,10,6.RA,6.RB,_IMM6:IALU2:short:iu:SATZ2H imm
+"satz2h r<RA>, r<RB>, <imm>"
+	do_satzh(_SD, Ra, RbH, imm, 1);
+	do_satzh(_SD, Ra, RbL, imm, 0);
+
+
+
+
+// SRA
+
+void::function::do_sra:unsigned32 *ra, unsigned32 rb, signed32 src
+	unsigned32 value;
+	while (src > 31) src -= 32;
+	while (src < -32) src += 32;
+	if (src >= 0)
+	  value = (signed32)rb >> src;
+	else if (src == -32)
+	  value = 0;
+	else
+	  value = rb << -src;
+	WRITE32_QUEUE (ra, value);
+
+_LOGIC,10000,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRA
+"sra r<RA>, r<RB>, r<RC>"
+	do_sra(_SD, Ra, Rb, Rc);
+_LOGIC,10000,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRA imm
+"sra r<RA>, r<RB>, <imm>"
+	do_sra(_SD, Ra, Rb, imm);
+
+
+
+
+// SRAHp
+
+void::function::do_srah:unsigned32 *ra, unsigned32 rb, int src, int high
+	unsigned32 value;
+	while (src > 31) src -= 32;
+	while (src < -32) src += 32;
+	if (src >= 0)
+	  value = (signed32)rb >> src;
+	else if (src == -32)
+	  value = 0;
+	else
+	  value = rb << -src;
+	if (high)
+	  WRITE32_QUEUE_MASK (ra, value << 16, 0xffff0000);
+	else
+	  WRITE32_QUEUE_MASK (ra, value, 0x0000ffff);
+
+_LOGIC,0010,p,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRAHP
+"srah%s<p> r<RA>, r<RB>, r<RC>"
+	do_srah(_SD, Ra, Rb, Rc, p);
+_LOGIC,0010,p,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRAHP imm
+"srah%s<p> r<RA>, r<RB>, <imm>"
+	do_srah(_SD, Ra, Rb, imm, p);
+
+
+
+
+// SRA2H
+
+_LOGIC,10001,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRA2H
+"sra2h r<RA>, r<RB>, r<RC>"
+	signed32 srcH = RcH;
+	signed32 srcL = RcL;
+	while (srcH > 15) srcH -= 16;
+	while (srcH < -16) srcH += 16;
+	while (srcL > 15) srcL -= 16;
+	while (srcL < -16) srcL += 16;
+	do_srah(_SD, Ra, RbH, srcH, 1);
+	do_srah(_SD, Ra, RbL, srcL, 0);
+_LOGIC,10001,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRA2H imm
+"sra2h r<RA>, r<RB>, <imm>"
+	signed32 src = imm;
+	while (src > 15) src -= 16;
+	while (src < -16) src += 16;
+	do_srah(_SD, Ra, RbH, src, 1);
+	do_srah(_SD, Ra, RbL, src, 0);
+
+
+
+
+// SRC
+
+void::function::do_src:unsigned32 *ra, unsigned32 rb, int src
+	unsigned32 value;
+	unsigned64 operand;
+	unsigned64 shifted;
+	while (src > 31) src -= 32;
+	while (src < -32) src += 32;
+	if (src >= 0)
+	  {
+	    operand = (INSERTED64(rb, 0, 31) | INSERTED64(*ra, 32, 63));
+	    shifted = operand >> src;
+	    value = EXTRACTED64(shifted, 32, 63);
+	  }
+	else
+	  {
+	    operand = (INSERTED64(*ra, 0, 31) | INSERTED64(rb, 32, 63));
+	    shifted = operand << -src;
+	    value = EXTRACTED64(shifted, 0, 31);
+	  }
+	WRITE32_QUEUE (ra, value);
+
+_LOGIC,10110,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRC
+"src r<RA>, r<RB>, r<RC>"
+	do_src(_SD, Ra, Rb, Rc);
+_LOGIC,10110,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRC imm
+"src r<RA>, r<RB>, <imm>"
+	do_src(_SD, Ra, Rb, imm);
+
+
+
+
+// SRL
+
+void::function::do_srl:unsigned32 *ra, unsigned32 rb, int src
+	unsigned32 value;
+	while (src > 31) src -= 32;
+	while (src < -32) src += 32;
+	if (src >= 0)
+	  value = (unsigned32)rb >> src;
+	else if (src == -32)
+	  value = 0;
+	else
+	  value = (unsigned32)rb << -src;
+	WRITE32_QUEUE (ra, value);
+
+_LOGIC,10010,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRL
+"srl r<RA>, r<RB>, r<RC>"
+	do_srl(_SD, Ra, Rb, Rc);
+_LOGIC,10010,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRL imm
+"srl r<RA>, r<RB>, <imm>"
+	do_srl(_SD, Ra, Rb, imm);
+
+
+
+
+// SRLHp
+
+void::function::do_srlh:unsigned32 *ra, unsigned32 rb, int src, int high
+	unsigned32 value;
+	while (src > 31) src -= 32;
+	while (src < -32) src += 32;
+	if (src >= 0)
+	  value = rb >> src;
+	else if (src == -32)
+	  value = 0;
+	else
+	  value = rb << -src;
+	if (high)
+	  WRITE32_QUEUE_MASK (ra, value << 16, 0xffff0000);
+	else
+	  WRITE32_QUEUE_MASK (ra, value, 0x0000ffff);
+
+_LOGIC,0011,p,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRLHP
+"srlh%s<p> r<RA>, r<RB>, r<RC>"
+	do_srlh(_SD, Ra, Rb, Rc, p);
+_LOGIC,0011,p,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRLHP imm
+"srlh%s<p> r<RA>, r<RB>, <imm>"
+	do_srlh(_SD, Ra, Rb, imm, p);
+
+
+// SRL2H
+
+_LOGIC,10011,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:SRL2H
+"srl2h r<RA>, r<RB>, r<RC>"
+	signed32 srcH = RcH;
+	signed32 srcL = RcL;
+	while (srcH > 15) srcH -= 16;
+	while (srcH < -16) srcH += 16;
+	while (srcL > 15) srcL -= 16;
+	while (srcL < -16) srcL += 16;
+	do_srlh(_SD, Ra, RbHU, srcH, 1);
+	do_srlh(_SD, Ra, RbLU, srcL, 0);
+_LOGIC,10011,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:SRL2H imm
+"srl2h r<RA>, r<RB>, <imm>"
+	signed32 src = imm;
+	while (src > 15) src -= 16;
+	while (src < -16) src += 16;
+	do_srlh(_SD, Ra, RbHU, src, 1);
+	do_srlh(_SD, Ra, RbLU, src, 0);
+
+
+
+
+// ST2H
+
+void::function::get_even_reg:int *reg, unsigned32 *r0, const char *name
+	if (*reg & 1)
+	  sim_engine_abort (SD, CPU, cia,
+			    "0x%lx:%s odd register (r%d) used in multi-word store",
+			    (long) cia, name, *reg);
+	if (*reg == 0)
+	  *r0 = 0;
+	else
+	  *r0 = GPR[*reg];
+
+void::function::do_st2h:int ra, unsigned32 rb, unsigned32 src
+	unsigned32 val_ra;
+	unsigned32 mem;
+	get_even_reg(_SD, &ra, &val_ra, "ST2H");
+	mem = INSERTED32(val_ra, 0, 15) |
+	      INSERTED32(GPR[ra + 1], 16, 31);
+	STORE(rb + src, 4, mem);
+
+_IMEM,10011,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:ST2H
+"st2h r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"st2h r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_st2h(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,10011,10,6.RA,6.RB,_IMM32:IMEM:long:mu:ST2H long
+"st2h r<RA>, @(r<RB>, <imm>)"
+	do_st2h(_SD, RA, Rb, imm);
+
+
+
+// ST2W
+
+void::function::do_st2w:int ra, unsigned32 rb, unsigned32 src
+	unsigned32 val_ra;
+	unsigned64 mem;
+	get_even_reg(_SD, &ra, &val_ra, "ST2W");
+	mem = INSERTED64(val_ra, 0, 31) | INSERTED64(GPR[ra + 1], 32, 63);
+	STORE(rb + src, 8, mem);
+
+_IMEM,10110,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:ST2W
+"st2w r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"st2w r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_st2w(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 8);
+_IMEM,10110,10,6.RA,6.RB,_IMM32:IMEM:long:mu:ST2W long
+"st2w r<RA>, @(r<RB>, <imm>)"
+	do_st2w(_SD, RA, Rb, imm);
+
+
+
+// ST4HB
+
+void::function::do_st4hb:int ra, unsigned32 rb, unsigned32 src
+	unsigned32 val_ra;
+	unsigned32 mem;
+	get_even_reg(_SD, &ra, &val_ra, "ST4HB");
+	mem = INSERTED32(EXTRACTED32(val_ra, 8, 15), 0, 7) |
+	      INSERTED32(EXTRACTED32(val_ra, 24, 31), 8, 15) |
+	      INSERTED32(EXTRACTED32(GPR[ra + 1], 8, 15), 16, 23) |
+	      INSERTED32(EXTRACTED32(GPR[ra + 1], 24, 31), 24, 31);
+	STORE(rb + src, 4, mem);
+
+_IMEM,10101,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:ST4HB
+"st4hb r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"st4hb r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_st4hb(_SD, RA, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,10101,10,6.RA,6.RB,_IMM32:IMEM:long:mu:ST4HB long
+"st4hb r<RA>, @(r<RB>, <imm>)"
+	do_st4hb(_SD, RA, Rb, imm);
+
+
+
+// STB
+
+void::function::do_stb:unsigned32 ra, unsigned32 rb, unsigned32 src
+	STORE(rb + src, 1, EXTRACTED32(ra, 24, 31));
+
+_IMEM,10000,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:STB
+"stb r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"stb r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_stb(_SD, val_Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 1);
+_IMEM,10000,10,6.RA,6.RB,_IMM32:IMEM:long:mu:STB long
+"stb r<RA>, @(r<RB>, <imm>)"
+	do_stb(_SD, val_Ra, Rb, imm);
+
+
+
+// STH
+
+void::function::do_sth:unsigned32 ra, unsigned32 rb, unsigned32 src
+	STORE(rb + src, 2, EXTRACTED32(ra, 16, 31));
+
+_IMEM,10010,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:STH
+"sth r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"sth r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_sth(_SD, val_Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 2);
+_IMEM,10010,10,6.RA,6.RB,_IMM32:IMEM:long:mu:STH long
+"sth r<RA>, @(r<RB>, <imm>)"
+	do_sth(_SD, val_Ra, Rb, imm);
+
+
+
+// STHH
+
+void::function::do_sthh:unsigned32 ra, unsigned32 rb, unsigned32 src
+	STORE(rb + src, 2, EXTRACTED32(ra, 0, 15));
+
+_IMEM,10001,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:STHH
+"sthh r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"sthh r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_sthh(_SD, val_Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 2);
+_IMEM,10001,10,6.RA,6.RB,_IMM32:IMEM:long:mu:STHH long
+"sthh r<RA>, @(r<RB>, <imm>)"
+	do_sthh(_SD, val_Ra, Rb, imm);
+
+
+
+// STW
+
+void::function::do_stw:unsigned32 ra, unsigned32 rb, unsigned32 src
+	STORE(rb + src, 4, ra);
+
+_IMEM,10100,XX,6.RA,6.RB,6.SRC_6:IMEM:short:mu:STW
+"stw r<RA>, @(r<RB>, <SRC_6>)":XX == 0
+"stw r<RA>, @(r<RB>%s<XX>, r<SRC_6>)"
+	do_stw(_SD, val_Ra, Rb, src);
+	do_incr(_SD, XX, &GPR[RB], 4);
+_IMEM,10100,10,6.RA,6.RB,_IMM32:IMEM:long:mu:STW long
+"stw r<RA>, @(r<RB>, <imm>)"
+	do_stw(_SD, val_Ra, Rb, imm);
+
+
+
+// SUB
+
+void::function::do_sub:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	ALU_BEGIN(rb);
+	ALU_SUBB(imm);
+	ALU_END(ra);
+
+_IALU1,00010,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:SUB
+"sub r<RA>, r<RB>, r<RC>"
+	do_sub (_SD, Ra, Rb, Rc);
+_IALU1,00010,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:SUB imm
+"sub r<RA>, r<RB>, <imm>"
+	do_sub (_SD, Ra, Rb, imm);
+_IALU1,00010,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:SUB imm long
+"sub r<RA>, r<RB>, <imm>"
+	do_sub (_SD, Ra, Rb, imm);
+
+
+
+// SUB2H
+
+void::function::do_sub2h:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	unsigned16 high = VH2_4(rb) - VH2_4(imm);
+	unsigned16 low  = VL2_4(rb) - VL2_4(imm);
+	WRITE32_QUEUE (ra, (high << 16) | low);
+
+_IALU1,00011,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:SUB2H
+"sub2h r<RA>, r<RB>, r<RC>"
+	do_sub2h (_SD, Ra, Rb, Rc);
+_IALU1,00011,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:SUB2H imm
+"sub2h r<RA>, r<RB>, <imm>"
+	do_sub2h (_SD, Ra, Rb, immHL);
+_IALU1,00011,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:SUB2H imm long
+"sub2h r<RA>, r<RB>, <imm>"
+	do_sub2h (_SD, Ra, Rb, imm);
+
+
+
+// SUBB
+
+void::function::do_subb:unsigned32 *ra, unsigned32 rb, unsigned32 imm
+	ALU_BEGIN(rb);
+	ALU_SUBB_B(imm, ALU_CARRY);
+	ALU_END(ra);
+	
+_IALU1,00101,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:SUBB
+"subb r<RA>, r<RB>, r<RC>"
+	do_subb (_SD, Ra, Rb, Rc);
+_IALU1,00101,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:SUBB imm
+"subb r<RA>, r<RB>, <imm>"
+	do_subb (_SD, Ra, Rb, imm);
+_IALU1,00101,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:SUBB imm long
+"subb r<RA>, r<RB>, <imm>"
+	do_subb (_SD, Ra, Rb, imm);
+
+
+
+// SUBHppp
+
+void::function::do_subh_ppp:int ppp, unsigned32 *ra, unsigned32 rb, unsigned32 src
+	switch (ppp) {
+	case 0x0: /* LLL */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_SUBB(VL2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x1: /* LLH */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_SUBB(VH2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x2: /* LHL */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_SUBB(VL2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x3: /* LHH */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_SUBB(VH2_4(src));
+	  ALU16_END(ra, 0);
+	  }
+	  break;
+	case 0x4: /* HLL */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_SUBB(VL2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x5: /* HLH */
+	  {
+	  ALU16_BEGIN(VL2_4(rb));
+	  ALU16_SUBB(VH2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x6: /* HHL */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_SUBB(VL2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	case 0x7: /* HHH */
+	  {
+	  ALU16_BEGIN(VH2_4(rb));
+	  ALU16_SUBB(VH2_4(src));
+	  ALU16_END(ra, 1);
+	  }
+	  break;
+	default:
+	  sim_engine_abort (SD, CPU, cia, "do_subh_ppp - internal error - bad switch");
+	}
+
+_IALU1,11,ppp,00,6.RA,6.RB,6.RC:IALU1:short:iu,mu:SUBHppp
+"subh%s<ppp> r<RA>, r<RB>, r<RC>"
+	do_subh_ppp(_SD, ppp, Ra, Rb, Rc);
+_IALU1,11,ppp,10,6.RA,6.RB,_IMM6:IALU1:short:iu,mu:SUBHppp imm
+"subh%s<ppp> r<RA>, r<RB>, <imm>"
+	do_subh_ppp(_SD, ppp, Ra, Rb, immHL);
+_IALU1,11,ppp,10,6.RA,6.RB,_IMM32:IALU1:long:iu,mu:SUBHppp imm long
+"subh%s<ppp> r<RA>, r<RB>, <imm>"
+	do_subh_ppp(_SD, ppp, Ra, Rb, imm);
+
+
+
+// TRAP
+
+address_word::function::do_trap:address_word trap_vector, address_word nia
+	/* Steal trap 31 for doing system calls */
+	/* System calls are defined in libgloss/d30v/syscall.h.  */
+	if (trap_vector == EIT_VB + 0x20 + (31 << 3))
+	  {
+	    enum { PARM1 = 2, PARM2, PARM3, PARM4, FUNC };
+	    if (GPR[FUNC] == 1)		/* exit */
+	      {
+	        sim_engine_halt (sd, STATE_CPU (sd, 0), NULL, cia, sim_exited,
+		  	         GPR[PARM1]);
+	        return -1; /* dummy */
+	      }
+	    else
+	      {
+		CB_SYSCALL syscall;
+
+		CB_SYSCALL_INIT (&syscall);
+		syscall.arg1 = GPR[PARM1];
+		syscall.arg2 = GPR[PARM2];
+		syscall.arg3 = GPR[PARM3];
+		syscall.arg4 = GPR[PARM4];
+		syscall.func = GPR[FUNC];
+		syscall.p1 = (PTR) SD;
+		syscall.read_mem = d30v_read_mem;
+		syscall.write_mem = d30v_write_mem;
+
+		WRITE32_QUEUE (&GPR[PARM1],
+			       ((cb_syscall (STATE_CALLBACK (SD), &syscall)
+				 == CB_RC_OK)
+				? syscall.result
+				: -syscall.errcode));
+		return nia;
+	      }
+	  }
+	else if (TRACE_TRAP_P)
+	  {
+	    int reg, i;
+	    sim_io_eprintf (sd, "\nTrap %ld:\n", (long) ((trap_vector - (EIT_VB + 0x20)) >> 3));
+	    for (reg = 0; reg < NR_GENERAL_PURPOSE_REGISTERS; reg += 8)
+	      {
+		sim_io_eprintf (sd, "r%.2d  - r%.2d: ", reg, reg+7);
+		for (i = 0; i < 8; i++)
+		  sim_io_eprintf (sd, " 0x%.8lx", (long) GPR[reg+i]);
+		sim_io_eprintf (sd, "\n");
+	      }
+
+	    for (reg = 0; reg < 16; reg += 8)
+	      {
+		sim_io_eprintf (sd, "cr%.2d - cr%.2d:", reg, reg+7);
+		for (i = 0; i < 8; i++)
+		  sim_io_eprintf (sd, " 0x%.8lx", (long) CREG[reg+i]);
+		sim_io_eprintf (sd, "\n");
+	      }
+
+	    sim_io_eprintf (sd, "a0   - a1:  ");
+	    for (reg = 0; reg < NR_ACCUMULATORS; reg++)
+	      sim_io_eprintf (sd, " 0x%.8lx 0x%.8lx",
+			      (long)EXTRACTED64(ACC[reg], 0, 31),
+			      (long)EXTRACTED64(ACC[reg], 32, 63));
+	    sim_io_eprintf (sd, "\n");
+
+	    sim_io_eprintf (sd, "f0   - f7:  ");
+	    sim_io_eprintf (sd, "     (f0) %d", (int) PSW_VAL(PSW_F0));
+	    sim_io_eprintf (sd, "     (f1) %d", (int) PSW_VAL(PSW_F1));
+	    sim_io_eprintf (sd, "     (f2) %d", (int) PSW_VAL(PSW_F2));
+	    sim_io_eprintf (sd, "     (f3) %d", (int) PSW_VAL(PSW_F3));
+	    sim_io_eprintf (sd, "      (s) %d", (int) PSW_VAL(PSW_S));
+	    sim_io_eprintf (sd, "      (v) %d", (int) PSW_VAL(PSW_V));
+	    sim_io_eprintf (sd, "     (va) %d", (int) PSW_VAL(PSW_VA));
+	    sim_io_eprintf (sd, "      (c) %d\n", (int) PSW_VAL(PSW_C));
+
+	    sim_io_eprintf (sd, "pswh:       ");
+	    sim_io_eprintf (sd, "     (sm) %d", (int) PSW_VAL(PSW_SM));
+	    sim_io_eprintf (sd, "     (ea) %d", (int) PSW_VAL(PSW_EA));
+	    sim_io_eprintf (sd, "     (ie) %d", (int) PSW_VAL(PSW_IE));
+	    sim_io_eprintf (sd, "     (rp) %d", (int) PSW_VAL(PSW_RP));
+	    sim_io_eprintf (sd, "     (md) %d", (int) PSW_VAL(PSW_MD));
+
+	    if (PSW_VAL(PSW_DB))
+	      sim_io_eprintf (sd, "     (db) %d", (int) PSW_VAL(PSW_DB));
+
+	    if (PSW_VAL(PSW_DS))
+	      sim_io_eprintf (sd, "     (ds) %d", (int) PSW_VAL(PSW_DS));
+
+	    sim_io_eprintf (sd, "\n");
+	    return nia;
+	  }
+	else
+	  {
+	    if(PSW_VAL(PSW_RP) && RPT_E == cia)
+	      {
+		WRITE32_QUEUE (&bPC, RPT_S);
+		if (RPT_C == 0)
+		  PSW_SET (PSW_RP, 0);
+	      }
+	    else
+	      WRITE32_QUEUE (&bPC, cia + 8);
+	    DID_TRAP = 1;
+	    return trap_vector;
+	  }
+
+_BRA,01001,00,6.**,6.**,6.RC:BRA:short:mu:TRAP
+"trap r<RC>"
+	nia = do_trap (_SD, EIT_VB + 0x20 + MASKED32(Rc, 24, 28), nia);
+_BRA,01001,10,6.**,6.**,_IMM6:BRA:short:mu:TRAP imm
+"trap <imm>"
+	nia = do_trap (_SD, EIT_VB + 0x20 + (imm_5 << 3), nia);
+
+
+
+// XOR
+
+_LOGIC,11011,00,6.RA,6.RB,6.RC:LOGIC:short:iu,mu:XOR
+"xor r<RA>, r<RB>, r<RC>"
+	WRITE32_QUEUE (Ra, Rb ^ Rc);
+_LOGIC,11011,10,6.RA,6.RB,_IMM6:LOGIC:short:iu,mu:XOR imm
+"xor r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb ^ imm);
+_LOGIC,11011,10,6.RA,6.RB,_IMM32:LOGIC:long:iu,mu:XOR imm long
+"xor r<RA>, r<RB>, <imm>"
+	WRITE32_QUEUE (Ra, Rb ^ imm);
+
+
+
+// XORFG
+
+_LOGIC,01011,00,***,3.FA,***,3.FB,***,3.FC:LOGIC:short:iu,mu:XORFG
+"xorfg f<FA>, f<FB>, f<FC>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) ^ PSW_FLAG_VAL(FC));
+_LOGIC,01011,10,***,3.FA,***,3.FB,_IMM6:LOGIC:short:iu,mu:XORFG imm
+"xorfg f<FA>, f<FB>, <imm_6>"
+	PSW_FLAG_SET_QUEUE(FA, PSW_FLAG_VAL(FB) ^ (imm_6 & 1));
+
+
+

@@ -1,0 +1,342 @@
+# Tests of overloaded operators resolution.
+# Copyright (C) 1998, 1999 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# written by Elena Zannoni (ezannoni@cygnus.com)
+#
+# source file "userdef.cc"
+#
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "userdef"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1 \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" { pass "up from marker1" }
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one+two\n"
+gdb_expect {
+    -re "FIXME.*$gdb_prompt $" {
+        pass "print value of one + two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one two" }
+    timeout           { fail "(timeout) print value of one two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one-two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one - two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one - two" }
+    timeout           { fail "(timeout) print value of one - two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one*two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one * two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one * two" }
+    timeout           { fail "(timeout) print value of one * two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one/two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one / two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one / two" }
+    timeout           { fail "(timeout) print value of one / two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one%two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one % two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one % two" }
+    timeout           { fail "(timeout) print value of one % two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one&&two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one && two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one && two" }
+    timeout           { fail "(timeout) print value of one && two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one||two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one|| two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one|| two" }
+    timeout           { fail "(timeout) print value of one|| two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one&two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one & two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one & two" }
+    timeout           { fail "(timeout) print value of one & two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one|two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one | two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one | two" }
+    timeout           { fail "(timeout) print value of one | two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one ^ two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one ^  two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one ^  two" }
+    timeout           { fail "(timeout) print value of one ^  two" }
+  }
+
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one < two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one <  two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one <  two" }
+    timeout           { fail "(timeout) print value of one <  two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one <= two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one <=  two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one <=  two" }
+    timeout           { fail "(timeout) print value of one <=  two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one > two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one  > two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one >  two" }
+    timeout           { fail "(timeout) print value of one >  two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one >= two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one >=  two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one >=  two" }
+    timeout           { fail "(timeout) print value of one >=  two" }
+  }
+
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one==two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one == two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one == two" }
+    timeout           { fail "(timeout) print value of one == two" }
+  }
+
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one!=two\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one != two"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one != two" }
+    timeout           { fail "(timeout) print value of one != two" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one<<31\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one<<31"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one<<31" }
+    timeout           { fail "(timeout) print value of one<<31" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one>>31\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one>>31"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one>>31" }
+    timeout           { fail "(timeout) print value of one>>31" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print !one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of !one"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of !one" }
+    timeout           { fail "(timeout) print value of !one" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print ~one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of ~one"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of ~one" }
+    timeout           { fail "(timeout) print value of ~one" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print -one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of -one"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of -one" }
+    timeout           { fail "(timeout) print value of -one" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one++\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one++"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one++" }
+    timeout           { fail "(timeout) print value of one++" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print ++one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of ++one>>31"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of ++one" }
+    timeout           { fail "(timeout) print value of ++one" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one--\n"
+gdb_expect {
+    -re ".*.FIXME*$gdb_prompt $" {
+        pass "print value of one-->>31"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one-->>31" }
+    timeout           { fail "(timeout) print value of one-->>31" }
+  }
+
+
+setup_xfail "hppa*-*-*"
+send_gdb "print --one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of --one"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of --one" }
+    timeout           { fail "(timeout) print value of --one" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print one+=7\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of one+=7"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of one+=7" }
+    timeout           { fail "(timeout) print value of one+=7" }
+  }
+
+setup_xfail "hppa*-*-*"
+send_gdb "print two=one\n"
+gdb_expect {
+    -re ".*FIXME.*$gdb_prompt $" {
+        pass "print value of two=one"
+      }
+    -re ".*$gdb_prompt $" { xfail "print value of two=one" }
+    timeout           { fail "(timeout) print value of two=one" }
+  }
+
+gdb_exit
+return 0
