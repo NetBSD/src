@@ -36,7 +36,7 @@ options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	FDSCRIPTS
 options 	SETUIDSCRIPTS
 
-#options 	LKM
+options 	LKM
 
 options 	UCONSOLE	# allows non-root to read console output
 
@@ -48,6 +48,8 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0 binaries
 options 	COMPAT_11	# compatibility with NetBSD 1.1 binaries
 options 	COMPAT_12	# compatibility with NetBSD 1.2 binaries
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+
+options 	COMPAT_SUNOS
 
 options 	SYSVSHM		# System V shared memory
 options 	SYSVSEM		# System V semaphores
@@ -85,12 +87,12 @@ dca0		at dio? scode? flags 0x0
 
 le*		at dio? scode?
 
-nhpib0		at dio? scode 7		# slow internal HP-IB
-nhpib*		at dio? scode ?
-fhpib*		at dio? scode ?		# fast HP-IB
-hpibbus0	at nhpib0
-hpibbus*	at nhpib?
-hpibbus*	at fhpib?
+#nhpib0		at dio? scode 7		# slow internal HP-IB
+#nhpib*		at dio? scode ?
+#fhpib*		at dio? scode ?		# fast HP-IB
+#hpibbus0	at nhpib0
+#hpibbus*	at nhpib?
+#hpibbus*	at fhpib?
 
 oscsi*		at dio? scode?		# old HP SCSI
 
@@ -99,6 +101,8 @@ st*		at oscsi? target ? lun ?
 
 pseudo-device	pty		32
 #pseudo-device	sl		1
+pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ppp		1
 pseudo-device	bpfilter	8
-pseudo-device	loop		1
+pseudo-device	vnd		2
+pseudo-device	loop		2
