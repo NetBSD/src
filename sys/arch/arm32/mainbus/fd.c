@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 1997/07/17 01:48:35 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 1997/07/28 18:07:10 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -264,6 +264,10 @@ fdcprobe(parent, match, aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int rv;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 	iot = mb->mb_iot;
 	rv = 0;
