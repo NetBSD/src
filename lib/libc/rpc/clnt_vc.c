@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.3 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.3 2000/07/06 03:10:34 christos Exp $");
 #endif
 #endif
  
@@ -178,14 +178,14 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	if (disrupt == 0)
 		disrupt = (u_int32_t)(long)raddr;
 
-	h  = (CLIENT *)mem_alloc(sizeof(*h));
+	h  = mem_alloc(sizeof(*h));
 	if (h == NULL) {
 		warnx("clnt_vc_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
 	}
-	ct = (struct ct_data *)mem_alloc(sizeof(*ct));
+	ct = mem_alloc(sizeof(*ct));
 	if (ct == NULL) {
 		warnx("clnt_vc_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
@@ -233,7 +233,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	 * XXX - fvdl connecting while holding a mutex?
 	 */
 	slen = sizeof ss;
-	if (getpeername(fd, (struct sockaddr *)&ss, &slen) < 0) {
+	if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
 		if (errno != ENOTCONN) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
@@ -270,9 +270,8 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	/*
 	 * Initialize call message
 	 */
-	(void)gettimeofday(&now, (struct timezone *)0);
-	call_msg.rm_xid =
-	    (u_int32_t)((++disrupt) ^ getpid() ^ now.tv_sec ^ now.tv_usec);
+	(void)gettimeofday(&now, NULL);
+	call_msg.rm_xid = ((u_int32_t)++disrupt) ^ __RPC_GETXID(&now);
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = (u_int32_t)prog;
@@ -313,7 +312,7 @@ fooy:
 		mem_free(ct, sizeof(struct ct_data));
 	if (h)
 		mem_free(h, sizeof(CLIENT));
-	return ((CLIENT *)NULL);
+	return (NULL);
 }
 
 static enum clnt_stat
@@ -359,7 +358,7 @@ clnt_vc_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	}
 
 	shipnow =
-	    (xdr_results == (xdrproc_t)0 && timeout.tv_sec == 0
+	    (xdr_results == NULL && timeout.tv_sec == 0
 	    && timeout.tv_usec == 0) ? FALSE : TRUE;
 
 call_again:
@@ -367,7 +366,7 @@ call_again:
 	ct->ct_error.re_status = RPC_SUCCESS;
 	x_id = ntohl(--(*msg_x_id));
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_u.ct_mcallc, ct->ct_mpos)) ||
-	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	    (! XDR_PUTLONG(xdrs, (long *)(void *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xdr_args)(xdrs, args_ptr))) {
 		if (ct->ct_error.re_status == RPC_SUCCESS)
@@ -549,7 +548,7 @@ clnt_vc_control(cl, request, info)
 	}
 	switch (request) {
 	case CLSET_TIMEOUT:
-		if (time_not_ok((struct timeval *)info)) {
+		if (time_not_ok((struct timeval *)(void *)info)) {
 			release_fd_lock(ct->ct_fd, mask);
 			return (FALSE);
 		}
@@ -560,14 +559,14 @@ clnt_vc_control(cl, request, info)
 		*(struct timeval *)infop = ct->ct_wait;
 		break;
 	case CLGET_SERVER_ADDR:
-		(void) memcpy(info, ct->ct_addr.buf, (int)ct->ct_addr.len);
+		(void) memcpy(info, ct->ct_addr.buf, (size_t)ct->ct_addr.len);
 		break;
 	case CLGET_FD:
-		*(int *)info = ct->ct_fd;
+		*(int *)(void *)info = ct->ct_fd;
 		break;
 	case CLGET_SVC_ADDR:
 		/* The caller should not free this memory area */
-		*(struct netbuf *)info = ct->ct_addr;
+		*(struct netbuf *)(void *)info = ct->ct_addr;
 		break;
 	case CLSET_SVC_ADDR:		/* set to new address */
 		release_fd_lock(ct->ct_fd, mask);
@@ -578,12 +577,13 @@ clnt_vc_control(cl, request, info)
 		 * first element in the call structure
 		 * This will get the xid of the PREVIOUS call
 		 */
-		*(u_int32_t *)info = ntohl(*(u_int32_t *)&ct->ct_u.ct_mcalli);
+		*(u_int32_t *)(void *)info =
+		    ntohl(*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli);
 		break;
 	case CLSET_XID:
 		/* This will set the xid of the NEXT call */
-		*(u_int32_t *)&ct->ct_u.ct_mcalli =
-		    htonl(*(u_int32_t *)info + 1);
+		*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli =
+		    htonl(*((u_int32_t *)(void *)info) + 1);
 		/* increment by 1 as clnt_vc_call() decrements once */
 		break;
 	case CLGET_VERS:
@@ -593,13 +593,15 @@ clnt_vc_control(cl, request, info)
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)info = ntohl(*(u_int32_t *)(ct->ct_u.ct_mcallc +
-						4 * BYTES_PER_XDR_UNIT));
+		*(u_int32_t *)(void *)info =
+		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
+		    4 * BYTES_PER_XDR_UNIT));
 		break;
 
 	case CLSET_VERS:
-		*(u_int32_t *)(ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT) =
-			htonl(*(u_int32_t *)info);
+		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
+		    4 * BYTES_PER_XDR_UNIT) =
+		    htonl(*(u_int32_t *)(void *)info);
 		break;
 
 	case CLGET_PROG:
@@ -609,13 +611,15 @@ clnt_vc_control(cl, request, info)
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)info = ntohl(*(u_int32_t *)(ct->ct_u.ct_mcallc +
-						3 * BYTES_PER_XDR_UNIT));
+		*(u_int32_t *)(void *)info =
+		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
+		    3 * BYTES_PER_XDR_UNIT));
 		break;
 
 	case CLSET_PROG:
-		*(u_int32_t *)(ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT) =
-			htonl(*(u_int32_t *)info);
+		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
+		    3 * BYTES_PER_XDR_UNIT) =
+		    htonl(*(u_int32_t *)(void *)info);
 		break;
 
 	default:

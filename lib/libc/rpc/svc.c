@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.20 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc.c,v 1.21 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.20 2000/06/02 23:11:16 fvdl Exp $");
+__RCSID("$NetBSD: svc.c,v 1.21 2000/07/06 03:10:35 christos Exp $");
 #endif
 #endif
 
@@ -87,7 +87,6 @@ __weak_alias(xprt_unregister,_xprt_unregister)
 
 static SVCXPRT **xports;
 
-#define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
 
 #define SVC_VERSQUIET 0x0001		/* keep quiet about vers mismatch */
@@ -163,7 +162,7 @@ xprt_unregister(xprt)
 
 	rwlock_wrlock(&svc_fd_lock);
 	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
+		xports[sock] = NULL;
 		FD_CLR(sock, &svc_fdset);
 		if (sock >= svc_maxfd) {
 			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
@@ -189,9 +188,9 @@ svc_reg(xprt, prog, vers, dispatch, nconf)
 {
 	bool_t dummy;
 	struct svc_callout *prev;
-	register struct svc_callout *s;
+	struct svc_callout *s;
 	struct netconfig *tnconf;
-	register char *netid = NULL;
+	char *netid = NULL;
 	int flag = 0;
 
 /* VARIABLES PROTECTED BY svc_lock: s, prev, svc_head */
@@ -212,7 +211,7 @@ svc_reg(xprt, prog, vers, dispatch, nconf)
 	}
 
 	rwlock_wrlock(&svc_lock);
-	if ((s = svc_find(prog, vers, &prev, netid)) != NULL_SVC) {
+	if ((s = svc_find(prog, vers, &prev, netid)) != NULL) {
 		if (netid)
 			free(netid);
 		if (s->sc_dispatch == dispatch)
@@ -220,8 +219,8 @@ svc_reg(xprt, prog, vers, dispatch, nconf)
 		rwlock_unlock(&svc_lock);
 		return (FALSE);
 	}
-	s = (struct svc_callout *)mem_alloc(sizeof (struct svc_callout));
-	if (s == (struct svc_callout *)NULL) {
+	s = mem_alloc(sizeof (struct svc_callout));
+	if (s == NULL) {
 		if (netid)
 			free(netid);
 		rwlock_unlock(&svc_lock);
@@ -242,6 +241,7 @@ rpcb_it:
 	rwlock_unlock(&svc_lock);
 	/* now register the information with the local binder service */
 	if (nconf) {
+		/*LINTED const castaway*/
 		dummy = rpcb_set(prog, vers, (struct netconfig *) nconf,
 		&((SVCXPRT *) xprt)->xp_ltaddr);
 		return (dummy);
@@ -258,22 +258,21 @@ svc_unreg(prog, vers)
 	const rpcvers_t vers;
 {
 	struct svc_callout *prev;
-	register struct svc_callout *s;
+	struct svc_callout *s;
 
 	/* unregister the information anyway */
 	(void) rpcb_unset(prog, vers, NULL);
 	rwlock_wrlock(&svc_lock);
-	while ((s = svc_find(prog, vers, &prev, NULL)) != NULL_SVC) {
-		if (prev == NULL_SVC) {
+	while ((s = svc_find(prog, vers, &prev, NULL)) != NULL) {
+		if (prev == NULL) {
 			svc_head = s->sc_next;
 		} else {
 			prev->sc_next = s->sc_next;
 		}
-		s->sc_next = NULL_SVC;
+		s->sc_next = NULL;
 		if (s->sc_netid)
-			mem_free((char *)s->sc_netid,
-					(u_int)sizeof (s->sc_netid) + 1);
-		mem_free((char *)s, (u_int) sizeof (struct svc_callout));
+			mem_free(s->sc_netid, sizeof (s->sc_netid) + 1);
+		mem_free(s, sizeof (struct svc_callout));
 	}
 	rwlock_unlock(&svc_lock);
 }
@@ -300,17 +299,18 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 	_DIAGASSERT(xprt != NULL);
 	_DIAGASSERT(dispatch != NULL);
 
-	if ((s = svc_find(prog, vers, &prev, NULL)) != NULL_SVC) {
+	if ((s = svc_find((rpcprog_t)prog, (rpcvers_t)vers, &prev, NULL)) !=
+	    NULL) {
 		if (s->sc_dispatch == dispatch)
 			goto pmap_it;  /* he is registering another xptr */
 		return (FALSE);
 	}
-	s = (struct svc_callout *)mem_alloc(sizeof(struct svc_callout));
-	if (s == (struct svc_callout *)0) {
+	s = mem_alloc(sizeof(struct svc_callout));
+	if (s == NULL) {
 		return (FALSE);
 	}
-	s->sc_prog = prog;
-	s->sc_vers = vers;
+	s->sc_prog = (rpcprog_t)prog;
+	s->sc_vers = (rpcvers_t)vers;
 	s->sc_dispatch = dispatch;
 	s->sc_next = svc_head;
 	svc_head = s;
@@ -333,14 +333,15 @@ svc_unregister(prog, vers)
 	struct svc_callout *prev;
 	struct svc_callout *s;
 
-	if ((s = svc_find(prog, vers, &prev, NULL)) == NULL_SVC)
+	if ((s = svc_find((rpcprog_t)prog, (rpcvers_t)vers, &prev, NULL)) ==
+	    NULL)
 		return;
-	if (prev == NULL_SVC) {
+	if (prev == NULL) {
 		svc_head = s->sc_next;
 	} else {
 		prev->sc_next = s->sc_next;
 	}
-	s->sc_next = NULL_SVC;
+	s->sc_next = NULL;
 	mem_free(s, sizeof(struct svc_callout));
 	/* now unregister the information with the local binder service */
 	(void)pmap_unset(prog, vers);
@@ -362,8 +363,8 @@ svc_find(prog, vers, prev, netid)
 
 	_DIAGASSERT(prev != NULL);
 
-	p = NULL_SVC;
-	for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+	p = NULL;
+	for (s = svc_head; s != NULL; s = s->sc_next) {
 		if (((s->sc_prog == prog) && (s->sc_vers == vers)) &&
 		    ((netid == NULL) || (s->sc_netid == NULL) ||
 		    (strcmp(netid, s->sc_netid) == 0)))
@@ -461,7 +462,7 @@ svcerr_systemerr(xprt)
  */
 void
 __svc_versquiet_on(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	u_long	tmp;
 
@@ -471,7 +472,7 @@ __svc_versquiet_on(xprt)
 
 void
 __svc_versquiet_off(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	u_long	tmp;
 
@@ -481,14 +482,14 @@ __svc_versquiet_off(xprt)
 
 void
 svc_versquiet(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	__svc_versquiet_on(xprt);
 }
 
 int
 __svc_versquiet_get(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	return ((int) xprt->xp_p3) & SVC_VERSQUIET;
 }
@@ -661,7 +662,7 @@ svc_getreq_common(fd)
 			prog_found = FALSE;
 			low_vers = (rpcvers_t) -1L;
 			high_vers = (rpcvers_t) 0L;
-			for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+			for (s = svc_head; s != NULL; s = s->sc_next) {
 				if (s->sc_prog == r.rq_prog) {
 					if (s->sc_vers == r.rq_vers) {
 						(*s->sc_dispatch)(&r, xprt);
@@ -713,7 +714,7 @@ svc_getreq_poll(pfdp, pollretval)
 	int fds_found;
 
 	for (i = fds_found = 0; fds_found < pollretval; i++) {
-		register struct pollfd *p = &pfdp[i];
+		struct pollfd *p = &pfdp[i];
 
 		if (p->revents) {
 			/* fd has input waiting */
