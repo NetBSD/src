@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.20 1996/05/30 05:45:45 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.21 1996/05/30 08:08:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.20 1996/05/30 05:45:45 mrg Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.21 1996/05/30 08:08:27 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -680,6 +680,7 @@ ttymode()
 	KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
 	KGET(TTY_TTYLIST, tty_head);
+	(void)printf(hdr);
 	for (tp = tty_head.tqh_first; tp; tp = tty.tty_link.tqe_next) {
 		if (tp == NULL)
 			return;
