@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.36 2003/09/17 05:34:15 atatat Exp $
+.\"	$NetBSD: su.1,v 1.36.2.1 2004/04/29 04:13:18 jmc Exp $
 .\"
 .Dd August 20, 2003
 .Dt SU 1
@@ -132,7 +132,6 @@ are modified as above.
 .Ev USER
 is set to the target login.
 .Ev PATH
-is set to
 is set to the path specified in the
 .Pa /etc/login.conf
 file (or to the default of
@@ -214,7 +213,7 @@ If defined, it specifies a group whose members are allowed to become
 by supplying their own password instead of the
 .Dq root
 one.
-.It SU_INDIRECT_GROOP
+.It SU_INDIRECT_GROUP
 If defined, the
 .Ar SU_GROUP
 and
