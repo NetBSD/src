@@ -1,11 +1,11 @@
-#	$NetBSD: LAMB,v 1.19 2002/04/14 01:42:53 mycroft Exp $
+#	$NetBSD: LAMB,v 1.20 2002/04/17 23:23:49 hubertf Exp $
 #
-#	GENERIC -- everything that's currently supported
+#	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32		# estimated number of users
 
