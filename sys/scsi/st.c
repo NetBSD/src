@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.24 1994/04/05 22:18:00 mycroft Exp $
+ *	$Id: st.c,v 1.25 1994/04/05 22:39:37 mycroft Exp $
  */
 
 /*
@@ -1652,7 +1652,6 @@ st_load(st, type, flags)
 		error = st_chkeod(st, FALSE, &nmarks, flags);
 		if (error)
 			return error;
-		sc_link->flags &= ~SDEV_MEDIA_LOADED;
 	}
 	if (st->quirks & ST_Q_IGNORE_LOADS)
 		return 0;
