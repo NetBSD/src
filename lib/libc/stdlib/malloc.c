@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.30 2000/04/07 14:56:13 enami Exp $	*/
+/*	$NetBSD: malloc.c,v 1.31 2000/04/07 15:15:08 enami Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -581,8 +581,7 @@ malloc_make_chunks(int bits)
 {
     struct  pginfo *bp;
     void *pp;
-    int i, k;
-    size_t l;
+    int i, k, l;
 
     /* Allocate a new bucket */
     pp = malloc_pages(malloc_pagesize);
@@ -598,7 +597,7 @@ malloc_make_chunks(int bits)
     if ((1<<(bits)) <= l+l) {
 	bp = (struct  pginfo *)pp;
     } else {
-	bp = (struct  pginfo *)imalloc(l);
+	bp = (struct  pginfo *)imalloc((size_t)l);
 	if (!bp) {
 	    ifree(pp);
 	    return 0;
