@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.175 2002/04/27 03:49:06 gson Exp $
+.\"	$NetBSD: main,v 1.176 2002/05/09 09:45:28 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,17 +126,21 @@ and
 if installing on a laptop.
 .\}
 .if r_macppc \{\
-bootloader
+files necessary to boot your system.  The files depend on what model you
+are using and how you plan to boot your machine.  For systems with 
+built-in floppy drives, fetch the bootloader
 .Pa installation/ofwboot.xcf 
 and the installation kernel
-.Pa installation/netbsd.ram.gz .
+.Pa binary/kernel/netbsd.INSTALL.gz .
+For systems without floppy drives, fetch the bootloader
+.Pa installation/ofwboot.xcf 
+and the installation kernel
+.Pa binary/kernel/netbsd.GENERIC_MD.gz .
 Alternatively, you can fetch the CD image,
 .Pa macppc_bootable.iso 
 or the boot floppy image
 .Pa installation/boot.fs
 which include the bootloader and installation kernel.
-You only need the installation kernel and bootloader, or the CD image to
-boot your system.
 .\}
 .if r_sparc \{\
 CD image,
@@ -198,11 +202,11 @@ directory may be of help.
 .if \n[macppc] \{
 .It
 If your mac has a floppy drive, copy
-.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+.Pa ofwboot.xcf No and Pa netbsd.INSTALL.gz
 to an MS-DOS formatted floppy disk and rename
-.Pa netbsd.ram.gz No to Pa netbsd.gz .
+.Pa netbsd.INSTALL.gz No to Pa netbsd.gz .
 Otherwise, drag 
-.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+.Pa ofwboot.xcf No and Pa netbsd.GENERIC_MD.gz
 to your hard drive icon (the top level of the drive, not the desktop).  If 
 you are making a CD, burn it now.
 .\}
@@ -268,7 +272,7 @@ floppy, the command is
 .Dq Ic "boot fd:,\eofwboot.xcf netbsd.gz" .
 For the install kernel and bootloader on your hard drive (Open Firmware
 3), the command is
-.Dq Ic "boot hd:\e,ofwboot.xcf netbsd.ram.gz" .
+.Dq Ic "boot hd:\e,ofwboot.xcf netbsd.GENERIC_MD.gz" .
 .Pp
 For boot CDs, the command is something like
 .Dq Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
