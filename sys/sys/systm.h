@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.110 2000/05/28 05:49:06 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.111 2000/06/10 18:44:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -87,6 +87,7 @@ struct vnode;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
+extern int doing_shutdown;	/* shutting down */
 
 extern char copyright[];	/* system copyright */
 extern char cpu_model[];	/* machine/cpu model name */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.73 2000/05/29 23:10:03 jhawk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.74 2000/06/10 18:44:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -146,6 +146,7 @@ struct	tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+int	doing_shutdown;	/* set to indicate shutdown in progress */
 
 /*
  * v_putc: routine to putc on virtual console
@@ -193,11 +194,12 @@ panic(fmt, va_alist)
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
-	if (panicstr)
+	if (doing_shutdown)
 		bootopt |= RB_NOSYNC;
-	else
+	if (!panicstr)
 		panicstr = fmt;
-
+	doing_shutdown = 1;
+	
 	va_start(ap, fmt);
 	printf("panic: ");
 	vprintf(fmt, ap);
