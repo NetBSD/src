@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.17.2.1 1998/11/09 06:06:36 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.17.2.2 1999/02/25 04:06:53 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1553,7 +1553,7 @@ restart:
 	 * handle wanted pages
 	 */
 	if (pg->flags & PG_WANTED) {
-		thread_wakeup(pg);
+		wakeup(pg);
 	}
 
 	/*
