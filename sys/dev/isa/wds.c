@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.39.2.5 2000/11/22 16:03:48 bouyer Exp $	*/
+/*	$NetBSD: wds.c,v 1.39.2.6 2001/04/02 06:54:18 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -11,7 +11,6 @@
 
 /*
  * XXX
- * sense data
  * aborts
  * resets
  */
@@ -200,7 +199,6 @@ void	wds_inquire_setup_information __P((struct wds_softc *));
 void    wdsminphys __P((struct buf *));
 void	wds_scsipi_request __P((struct scsipi_channel *,
 	    scsipi_adapter_req_t, void *));
-void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
 int	wds_poll __P((struct wds_softc *, struct scsipi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
@@ -760,12 +758,8 @@ wds_start_scbs(sc)
 #endif
 
 		/* Link scb to mbo. */
-		if (scb->flags & SCB_SENSE)
-			ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
-			    offsetof(struct wds_scb, sense), wmbo->scb_addr);
-		else
-			ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
-			    offsetof(struct wds_scb, cmd), wmbo->scb_addr);
+		ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
+		    offsetof(struct wds_scb, cmd), wmbo->scb_addr);
 		/* XXX What about aborts? */
 		wmbo->cmd = WDS_MBO_START;
 
@@ -804,106 +798,96 @@ wds_done(sc, scb, stat)
 		return;
 	}
 
-	/* Sense handling. */
-	if (xs->error == XS_SENSE) {
-		bcopy(&scb->sense_data, &xs->sense.scsi_sense,
-			sizeof (struct scsipi_sense_data));
-	} else {
-		/*
-		 * If we were a data transfer, unload the map that described
-		 * the data buffer.
-		 */
-		if (xs->datalen) {
-			bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
-			    scb->dmamap_xfer->dm_mapsize,
-			    (xs->xs_control & XS_CTL_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(dmat, scb->dmamap_xfer);
-		}
-		if (xs->error == XS_NOERROR) {
-			/* If all went well, or an error is acceptable. */
-			if (stat == WDS_MBI_OK) {
-				/* OK, set the result */
-				xs->resid = 0;
-			} else {
-				/* Check the mailbox status. */
-				switch (stat) {
-				case WDS_MBI_OKERR:
-					/*
-					 * SCSI error recorded in scb,
-					 * counts as WDS_MBI_OK
-					 */
-					switch (scb->cmd.venderr) {
-					case 0x00:
-						printf("%s: Is this "
-						    "an error?\n",
-						    sc->sc_dev.dv_xname);
-						/* Experiment. */
-						xs->error = XS_DRIVER_STUFFUP;
-						break;
-					case 0x01:
+	/*
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
+	if (xs->datalen) {
+		bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
+		    scb->dmamap_xfer->dm_mapsize,
+		    (xs->xs_control & XS_CTL_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dmat, scb->dmamap_xfer);
+	}
+	if (xs->error == XS_NOERROR) {
+		/* If all went well, or an error is acceptable. */
+		if (stat == WDS_MBI_OK) {
+			/* OK, set the result */
+			xs->resid = 0;
+		} else {
+			/* Check the mailbox status. */
+			switch (stat) {
+			case WDS_MBI_OKERR:
+				/*
+				 * SCSI error recorded in scb,
+				 * counts as WDS_MBI_OK
+				 */
+				switch (scb->cmd.venderr) {
+				case 0x00:
+					printf("%s: Is this "
+					    "an error?\n",
+					    sc->sc_dev.dv_xname);
+					/* Experiment. */
+					xs->error = XS_DRIVER_STUFFUP;
+					break;
+				case 0x01:
 #if 0
-						printf("%s: OK, see SCSI "
-						    "error field.\n",
-						    sc->sc_dev.dv_xname);
+					printf("%s: OK, see SCSI "
+					    "error field.\n",
+					    sc->sc_dev.dv_xname);
 #endif
-						if (scb->cmd.stat ==
-						    SCSI_CHECK) {
-							/* Do sense. */
-							wds_sense(sc, scb);
-							return;
-						} else if (scb->cmd.stat ==
-						    SCSI_BUSY) {
-							xs->error = XS_BUSY;
-						}
-						break;
-					case 0x40:
-#if 0
-						printf("%s: DMA underrun!\n",
-						    sc->sc_dev.dv_xname);
-#endif
-						/*
-						 * Hits this if the target
-						 * returns fewer that datalen
-						 * bytes (eg my CD-ROM, which
-						 * returns a short version
-						 * string, or if DMA is
-						 * turned off etc.
-						 */
-						xs->resid = 0;
-						break;
-					default:
-						printf("%s: VENDOR ERROR "
-						    "%02x, scsi %02x\n",
-						    sc->sc_dev.dv_xname,
-						    scb->cmd.venderr,
-						    scb->cmd.stat);
-						/* Experiment. */
-						xs->error = XS_DRIVER_STUFFUP;
-						break;
+					if (scb->cmd.stat == SCSI_CHECK ||
+					    scb->cmd.stat == SCSI_BUSY) {
+						xs->status = scb->cmd.stat;
+						xs->error = XS_BUSY;
 					}
 					break;
-				case WDS_MBI_ETIME:
+				case 0x40:
+#if 0
+					printf("%s: DMA underrun!\n",
+					    sc->sc_dev.dv_xname);
+#endif
 					/*
-					 * The documentation isn't clear on
-					 * what conditions might generate this,
-					 * but selection timeouts are the only
-					 * one I can think of.
+					 * Hits this if the target
+					 * returns fewer that datalen
+					 * bytes (eg my CD-ROM, which
+					 * returns a short version
+					 * string, or if DMA is
+					 * turned off etc.
 					 */
-					xs->error = XS_SELTIMEOUT;
+					xs->resid = 0;
 					break;
-				case WDS_MBI_ERESET:
-				case WDS_MBI_ETARCMD:
-				case WDS_MBI_ERESEL:
-				case WDS_MBI_ESEL:
-				case WDS_MBI_EABORT:
-				case WDS_MBI_ESRESET:
-				case WDS_MBI_EHRESET:
+				default:
+					printf("%s: VENDOR ERROR "
+					    "%02x, scsi %02x\n",
+					    sc->sc_dev.dv_xname,
+					    scb->cmd.venderr,
+					    scb->cmd.stat);
+					/* Experiment. */
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				}
+					break;
+			case WDS_MBI_ETIME:
+				/*
+				 * The documentation isn't clear on
+				 * what conditions might generate this,
+				 * but selection timeouts are the only
+				 * one I can think of.
+				 */
+				xs->error = XS_SELTIMEOUT;
+				break;
+			case WDS_MBI_ERESET:
+			case WDS_MBI_ETARCMD:
+			case WDS_MBI_ERESEL:
+			case WDS_MBI_ESEL:
+			case WDS_MBI_EABORT:
+			case WDS_MBI_ESRESET:
+			case WDS_MBI_EHRESET:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
 			}
-		} /* else sense */
+		}
 	} /* XS_NOERROR */
 
 	wds_free_scb(sc, scb);
@@ -1308,51 +1292,6 @@ wds_scsipi_request(chan, req, arg)
 		/* XXX How do we do this? */
 		return;
 	}
-}
-
-/*
- * Send a sense request.
- */
-void
-wds_sense(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
-{
-	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_sense *ss = (void *)&scb->sense.scb;
-	int s;
-
-	/* XXXXX */
-
-	/* Send sense request SCSI command. */
-	xs->error = XS_SENSE;
-	scb->flags |= SCB_SENSE;
-
-	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
-	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = xs->xs_periph->periph_lun << 5;
-	ss->length = sizeof(struct scsipi_sense_data);
-
-	/* Set up some of the command fields. */
-	scb->sense.targ = scb->cmd.targ;
-	scb->sense.write = 0x80;
-	scb->sense.opcode = WDSX_SCSICMD;
-	ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
-	    offsetof(struct wds_scb, sense_data), scb->sense.data);
-	ltophys(sizeof(struct scsipi_sense_data), scb->sense.len);
-
-	s = splbio();
-	wds_queue_scb(sc, scb);
-	splx(s);
-
-	/*
-	 * There's no reason for us to poll here.  There are two cases:
-	 * 1) If it's a polling operation, then we're called from the interrupt
-	 *    handler, and we return and continue polling.
-	 * 2) If it's an interrupt-driven operation, then it gets completed
-	 *    later on when the REQUEST SENSE finishes.
-	 */
 }
 
 /*
