@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.26 1999/05/07 14:49:53 drochner Exp $	*/
+/*	$NetBSD: libkern.h,v 1.27 1999/09/10 14:05:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -155,6 +155,7 @@ int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
 void	*memchr __P((const void *, int, size_t));
+int	 memcmp __P((const void *, const void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 void	*memmove __P((void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
