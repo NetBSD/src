@@ -1,5 +1,5 @@
 #
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1995/10/08 23:07:45 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/12/12 22:39:01 gwr Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -8,7 +8,7 @@ CBIN?=		instbin
 COMMONDIR=	${TOP}/common
 
 MOUNT_POINT?=	/mnt
-BDEV?=		/dev/rd0
+BDEV?=		/dev/md0
 DISKTYPE?=	xxx-disktype
 IMAGE?=		xxx-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec

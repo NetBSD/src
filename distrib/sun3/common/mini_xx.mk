@@ -1,9 +1,9 @@
 #
-# $NetBSD: mini_xx.mk,v 1.2 1996/10/09 00:13:36 jtc Exp $
+# $NetBSD: mini_xx.mk,v 1.3 1997/12/12 22:39:07 gwr Exp $
 # Hacks for re-linking some programs -static
 #
 
-MINI_XX = grep less tip vi
+MINI_XX = grep tip vi
 mini_xx : ${MINI_XX}
 
 clean_xx:
@@ -13,11 +13,6 @@ grep :
 	cd ${BSDSRCDIR}/gnu/usr.bin/grep ;\
 	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
 	    OUTDIR=${.CURDIR} ${.CURDIR}/grep
-
-less :
-	cd ${BSDSRCDIR}/usr.bin/less/less ;\
-	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
-	    OUTDIR=${.CURDIR} ${.CURDIR}/less
 
 tip :
 	cd ${BSDSRCDIR}/usr.bin/tip ;\
