@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.7 1999/02/26 10:49:30 chopps Exp $
+.\" $NetBSD: pkg_delete.1,v 1.8 1999/03/03 17:29:58 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd January 12, 1999
+.Dd March 3rd, 1999
 .Dt pkg_delete 1
 .Os FreeBSD 2.0
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl vDdnFf
+.Op Fl vDdnFfO
 .Op Fl p Ar prefix
 .Ar pkg-name ...
 .Sh DESCRIPTION
@@ -79,6 +79,9 @@ If a deinstallation script exists for a given package, do not execute it.
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
+.It Fl O
+Only delete the package's entries from the package database, do not
+touch the package or it's files itself. 
 .It Fl p Ar prefix
 Set
 .Ar prefix
