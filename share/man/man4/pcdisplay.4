@@ -1,4 +1,4 @@
-.\" $NetBSD: pcdisplay.4,v 1.4 2001/06/12 11:26:21 wiz Exp $
+.\" $NetBSD: pcdisplay.4,v 1.5 2001/09/22 15:58:13 wiz Exp $
 .Dd March 20, 1999
 .Os
 .Dt PCDISPLAY 4
@@ -7,7 +7,7 @@
 .Nd PC display adapter driver for wscons
 .Sh SYNOPSIS
 .Cd options PCDISPLAY_SOFTCURSOR
-
+.Pp
 .Cd "pcdisplay0 at isa?"
 .Cd "wsdisplay* at pcdisplay? console ?"
 .Sh DESCRIPTION
@@ -38,5 +38,5 @@ the cursor provided by the underlying display hardware.
 .El
 .Sh SEE ALSO
 .Xr isa 4 ,
-.Xr wscons 4 ,
-.Xr vga 4
+.Xr vga 4 ,
+.Xr wscons 4
