@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2000/07/10 09:50:48 joda Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2000/07/23 05:54:59 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -55,6 +55,9 @@ realall:	netbsd boot
 				fi; \
 				d=$$(($$d + 1)); \
 			done; \
+		else \
+			dd seek=$$(($${size} / 512 + 15)) count=1 \
+				if=/dev/zero of=${IMAGE1}; \
 		fi; \
 		echo; \
                 bytes=$$(($$dksize * $$disks - $$size));    \
