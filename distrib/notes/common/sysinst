@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.5 2000/11/14 03:36:57 tv Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.6 2000/11/14 17:25:10 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,7 +123,7 @@ usable by the
 .Tn ( PCMCIA
 interrupt controller). Assuming that this functions correctly, it
 should alleviate interrupt conflicts; however, I/O port conflicts are
-still possable.
+still possible.
 .Pp
 This problem will impact some, but not all, users of
 .Tn PCMCIA .
@@ -362,7 +362,7 @@ system, you would type something like:
 The Quick Installation
 .(bullet
 .ie \n[macppc]:\n[pmax]:\n[sparc] \{\
-Boot the system as desribed above.  You
+Boot the system as described above.  You
 should be at the
 .Ic sysinst
 main menu.
@@ -460,7 +460,7 @@ devices, so that they won't be found by
 .\} \" !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
 .ie \n[macppc]:\n[pmax]:\n[sparc] \{\
 .Pp
-Boot the system as desribed in the previous section.
+Boot the system as described in the previous section.
 .Pp
 You may want to read the
 boot messages, to notice your disk's name and geometry. Its name
