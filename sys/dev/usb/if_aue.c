@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.17 2000/02/02 08:05:31 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.18 2000/02/02 11:42:29 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -879,44 +879,40 @@ USB_ATTACH(aue)
 USB_DETACH(aue)
 {
 	USB_DETACH_START(aue, sc);
-#if defined(__FreeBSD__)
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
 	s = splusb();
 
-	ifp = &sc->arpcom.ac_if;
-
 	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
+
+	if (ifp->if_flags & IFF_RUNNING)
+		aue_stop(sc);
+
+#if defined(__NetBSD__)
+	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+#endif /* __NetBSD__ */
+
 	if_detach(ifp);
 
-	if (sc->aue_ep[AUE_ENDPT_TX] != NULL)
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_TX]);
-	if (sc->aue_ep[AUE_ENDPT_RX] != NULL)
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_RX]);
-	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL)
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
+#ifdef DIAGNOSTIC
+	if (sc->aue_ep[AUE_ENDPT_TX] != NULL ||
+	    sc->aue_ep[AUE_ENDPT_RX] != NULL ||
+	    sc->aue_ep[AUE_ENDPT_INTR] != NULL)
+		printf("%s: detach has active endpoints\n",
+		       USBDEVNAME(sc->aue_dev));
+#endif
 
 	splx(s);
 
 	return (0);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	sc = sc;		/* XXX use sc */
-	/* XXX deallocate */
-
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our refernce
-	 * to the ifnet.
-	 */
-	if_delref(sc->aue_ec.ec_if);
-#else
-	return (0);
-#endif
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -935,10 +931,7 @@ aue_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->aue_ec.ec_if);
-#endif
+		if_deactivate(&sc->aue_ec.ec_if);
 		sc->aue_dying = 1;
 		break;
 	}
@@ -1058,6 +1051,9 @@ aue_intr(xfer, priv, status)
 
 	DPRINTFN(15,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev),__FUNCTION__));
 
+	if (sc->aue_dying)
+		return;
+
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
@@ -1133,6 +1129,9 @@ aue_rxeof(xfer, priv, status)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev),__FUNCTION__));
+
+	if (sc->aue_dying)
+		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -1243,6 +1242,9 @@ aue_txeof(xfer, priv, status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
+	if (sc->aue_dying)
+		return;
+
 	s = splimp();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->aue_dev),
@@ -1294,6 +1296,9 @@ aue_tick(xsc)
 	DPRINTFN(15,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev),__FUNCTION__));
 
 	if (sc == NULL)
+		return;
+
+	if (sc->aue_dying)
 		return;
 
 	ifp = GET_IFP(sc);
@@ -1380,6 +1385,9 @@ aue_start(ifp)
 	DPRINTFN(5,("%s: %s: enter, link=%d\n", USBDEVNAME(sc->aue_dev),
 		    __FUNCTION__, sc->aue_link));
 
+	if (sc->aue_dying)
+		return;
+
 	if (!sc->aue_link)
 		return;
 
@@ -1422,6 +1430,9 @@ aue_init(xsc)
 	u_char			*eaddr;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
+
+	if (sc->aue_dying)
+		return;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -1547,6 +1558,9 @@ aue_ifmedia_upd(ifp)
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
+	if (sc->aue_dying)
+		return (0);
+
 	sc->aue_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
@@ -1590,6 +1604,9 @@ aue_ioctl(ifp, command, data)
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct mii_data		*mii;
 	int			s, error = 0;
+
+	if (sc->aue_dying)
+		return (EIO);
 
 	s = splimp();
 
