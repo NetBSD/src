@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of June 01, 1999.
+The following sites mirror NetBSD as of July 13, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -56,7 +56,7 @@ If you wish to become a distribution site for NetBSD, contact
 "Paris University" \
 "ftp://ftp.fr.netbsd.org/pub/NetBSD/"
 .mirror "ftp2.fr.netbsd.org" \
-"Universite Pierre et Marie Curie, Paris 05" \
+"Universite Pierre et Marie Curie, Paris 06" \
 "ftp://ftp2.fr.netbsd.org/pub/NetBSD/"
 .
 .Country "Germany"
@@ -122,15 +122,15 @@ If you wish to become a distribution site for NetBSD, contact
 "ftp://ftp.za.netbsd.org/pub/NetBSD/"
 .
 .Country "Sweden"
+.mirror "ftp.se.netbsd.org" \
+"Lulea University of Technology" \
+"ftp://ftp.se.netbsd.org/pub/NetBSD/"
 .mirror "ftp.stacken.kth.se" \
 "Royal Institute of Technology, Stockholm" \
 "ftp://ftp.stacken.kth.se/pub/OS/NetBSD/"
 .mirror "ftp.sunet.se" \
 "Swedish University NETwork, Uppsala" \
 "ftp://ftp.sunet.se/pub/os/NetBSD/"
-.mirror "gort.ludd.luth.se" \
-"Lulea University of Technology" \
-"ftp://gort.ludd.luth.se/pub/NetBSD"
 .
 .Country "UK"
 .mirror "ftp.uk.netbsd.org" \
@@ -154,6 +154,8 @@ If you wish to become a distribution site for NetBSD, contact
 "ftp://ftp.iastate.edu/pub/netbsd/"
 .mirror "ftp.op.net" \
 "ftp://ftp.op.net/pub/NetBSD/"
+.mirror "netbsd.stevens-tech.edu" \
+"ftp://netbsd.stevens-tech.edu/pub/NetBSD/"
 .El
 .It "AFS mirrors"
 .Bl -tag -width 3n
@@ -188,7 +190,7 @@ If you wish to become a distribution site for NetBSD, contact
 "Paris University" \
 "Instructions: Similar to sup.netbsd.org"
 .mirror "sup2.fr.netbsd.org" \
-"Universite Pierre et Marie Curie, Paris 05" \
+"Universite Pierre et Marie Curie, Paris 06" \
 "Instructions: Similar to sup.netbsd.org"
 .
 .Country "Germany"
@@ -242,7 +244,7 @@ If you wish to become a distribution site for NetBSD, contact
 "Paris University" \
 "http://www.fr.netbsd.org/"
 .mirror "www2.fr.netbsd.org" \
-"Universite Pierre et Marie Curie, Paris 05" \
+"Universite Pierre et Marie Curie, Paris 06" \
 "http://www2.fr.netbsd.org/"
 .
 .Country "Germany"
