@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.7 1998/02/02 05:20:35 perry Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.8 1998/08/29 08:32:41 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ typedef struct sigaltstack {
 .Ft int
 .Fn sigaltstack "const stack_t *ss" "stack_t *oss"
 .Sh DESCRIPTION
-.Fn Sigaltstack
+.Fn sigaltstack
 allows users to define an alternative stack on which signals
 are to be processed.
 If
@@ -139,7 +139,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Sigstack
+.Fn sigstack
 will fail and the signal stack context will remain unchanged
 if one of the following occurs.
 .Bl -tag -width Er

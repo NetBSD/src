@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.9 1998/04/28 06:00:53 fair Exp $
+.\"	$NetBSD: bind.2,v 1.10 1998/08/29 08:32:35 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,14 +45,14 @@
 .Ft int
 .Fn bind "int s" "const struct sockaddr *name" "int namelen"
 .Sh DESCRIPTION
-.Fn Bind
+.Fn bind
 assigns a name to an unnamed socket.
 When a socket is created 
 with
 .Xr socket 2
 it exists in a name space (address family)
 but has no name assigned.
-.Fn Bind
+.Fn bind
 requests that
 .Fa name
 be assigned to the socket.
@@ -77,10 +77,10 @@ The
 call will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa S
+.Fa s
 is not a valid descriptor.
 .It Bq Er ENOTSOCK
-.Fa S
+.Fa s
 is not a socket.
 .It Bq Er EADDRNOTAVAIL
 The specified address is not available from the local machine.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: write.2,v 1.11 1998/08/03 15:02:47 kleink Exp $
+.\"	$NetBSD: write.2,v 1.12 1998/08/29 08:32:43 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,21 +55,21 @@
 .Ft ssize_t
 .Fn pwritev "int d" "const struct iovec *iov" "int iovcnt" "off_t offset"
 .Sh DESCRIPTION
-.Fn Write
+.Fn write
 attempts to write
 .Fa nbytes
 of data to the object referenced by the descriptor
 .Fa d
 from the buffer pointed to by
 .Fa buf .
-.Fn Writev
+.Fn writev
 performs the same action, but gathers the output data
 from the 
 .Fa iovcnt
 buffers specified by the members of the
 .Fa iov
 array: iov[0], iov[1], ..., iov[iovcnt\|-\|1].
-.Fn Pwrite
+.Fn pwrite
 and
 .Fn pwritev
 perform the same functions, but write to the specified position in
@@ -94,7 +94,7 @@ Each
 .Fa iovec
 entry specifies the base address and length of an area
 in memory from which data should be written.
-.Fn Writev
+.Fn writev
 will always write a complete area before proceeding
 to the next.
 .Pp
@@ -136,7 +136,7 @@ is returned.  Otherwise a -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Write ,
+.Fn write ,
 .Fn writev ,
 .Fn pwrite ,
 and
@@ -144,7 +144,7 @@ and
 will fail and the file pointer will remain unchanged if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa D
+.Fa d
 is not a valid descriptor open for writing.
 .It Bq Er EPIPE
 An attempt is made to write to a pipe that is not open
@@ -188,7 +188,7 @@ and
 may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-.Fa Iovcnt
+.Fa iovcnt
 was less than or equal to 0, or greater than
 .Dv {IOV_MAX} .
 .It Bq Er EINVAL

@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.11 1998/08/28 22:21:23 perry Exp $
+.\"	$NetBSD: printf.3,v 1.12 1998/08/29 08:32:34 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ The
 family of functions produces output according to a
 .Fa format
 as described below.
-.Fn Printf
+.Fn printf
 and
 .Fn vprintf
 write output to
@@ -120,7 +120,7 @@ the number of characters printed
 .Ql \e0
 used to end output to strings).
 .Pp
-.Fn Asprintf
+.Fn asprintf
 and
 .Fn vasprintf
 return a pointer to a buffer sufficiently large to hold the
@@ -135,7 +135,7 @@ will return -1 and set
 .Fa ret
 to be a NULL pointer.
 .Pp
-.Fn Snprintf
+.Fn snprintf
 and
 .Fn vsnprintf
 will write at most
@@ -150,7 +150,7 @@ if the return value is greater than or equal to the
 argument, the string was too short
 and some of the printed characters were discarded.
 .Pp
-.Fn Sprintf
+.Fn sprintf
 and
 .Fn vsprintf
 effectively assume an infinite

@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostname.3,v 1.6 1998/05/06 19:48:39 kleink Exp $
+.\"	$NetBSD: gethostname.3,v 1.7 1998/08/29 08:32:33 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Ft int
 .Fn sethostname "const char *name" "size_t namelen"
 .Sh DESCRIPTION
-.Fn Gethostname
+.Fn gethostname
 returns the standard host name for the current processor, as
 previously set by
 .Fn sethostname .
@@ -60,7 +60,7 @@ specifies the size of the
 array.  The returned name is null-terminated unless insufficient
 space is provided.
 .Pp
-.Fn Sethostname
+.Fn sethostname
 sets the name of the host machine to be
 .Fa name ,
 which has length
