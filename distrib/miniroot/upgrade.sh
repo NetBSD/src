@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.6 1996/06/27 13:45:48 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.7 1996/08/25 14:49:06 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,7 +122,6 @@ if [ ! -f /mnt/etc/fstab ]; then
 	echo	"ERROR: no /etc/fstab!"
 	exit 1
 fi
-cp /mnt/etc/fstab /tmp/fstab
 
 # Grab the hosts table so we can use it.
 if [ ! -f /mnt/etc/hosts ]; then
@@ -174,28 +173,20 @@ __network_config_2
 esac
 
 # Now that the network has been configured, it is safe to configure the
-# fstab.  We remove all but ufs/ffs/nfs.
+# fstab.  We remove all but ufs/ffs.
 (
-	> /tmp/fstab.new
+	> /tmp/fstab
 	while read _dev _mp _fstype _rest ; do
 		if [ "X${_fstype}" = X"ufs" -o \
-		    "X${_fstype}" = X"ffs" -o \
-		    "X${_fstype}" = X"nfs" ]; then
+		     "X${_fstype}" = X"ffs" ]; then
 			if [ "X${_fstype}" = X"ufs" ]; then
 				# Convert ufs to ffs.
 				_fstype=ffs
 			fi
-			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab.new
+			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
 		fi
 	done
-) < /tmp/fstab
-
-if [ ! -f /tmp/fstab.new ]; then
-	echo	"ERROR: strange fstab!"
-	exit 1
-fi
-
-rm -f /tmp/fstab.new
+) < /mnt/etc/fstab
 
 echo	"The fstab is configured as follows:"
 echo	""
@@ -255,15 +246,11 @@ echo -n	"Converting ufs to ffs in /etc/fstab..."
 (
 	> /tmp/fstab
 	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" -o \
-		    "X${_fstype}" = X"ffs" -o \
-		    "X${_fstype}" = X"nfs" ]; then
-			if [ "X${_fstype}" = X"ufs" ]; then
-				# Convert ufs to ffs.
-				_fstype=ffs
-			fi
-			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
+		if [ "X${_fstype}" = X"ufs" ]; then
+			# Convert ufs to ffs.
+			_fstype=ffs
 		fi
+		echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
 	done
 ) < /mnt/etc/fstab
 echo	"done."
