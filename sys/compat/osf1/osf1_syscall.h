@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.h,v 1.40 2000/12/09 07:11:19 mycroft Exp $ */
+/* $NetBSD: osf1_syscall.h,v 1.41 2000/12/13 01:29:35 mycroft Exp $ */
 
 /*
  * System call numbers.
@@ -395,3 +395,4 @@
 #define	OSF1_SYS_setsysinfo	257
 
 #define	OSF1_SYS_MAXSYSCALL	262
+#define	OSF1_SYS_NSYSENT	512
