@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.128 1998/01/09 15:18:50 drochner Exp $
+#	$NetBSD: GENERIC,v 1.129 1998/01/14 15:27:44 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -246,7 +246,7 @@ bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
-uha1	at isa? port 0x334 irq ? drq ?
+uha1	at isa? port 0x340 irq ? drq ?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
@@ -303,7 +303,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their EEPROMs. Don't
 # uncomment it unless you are actually using it.
-#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 
 # Network Interfaces
