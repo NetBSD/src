@@ -1,4 +1,4 @@
-.\"	$NetBSD: console.4,v 1.5 2000/08/21 07:07:33 itohy Exp $
+.\"	$NetBSD: console.4,v 1.6 2001/04/02 20:38:54 wiz Exp $
 .\"
 .Dd May 12, 2000
 .Os
@@ -31,7 +31,7 @@ the
 bootblock command allows changing the console device on-the-fly.
 .Pp
 The kernel will use the same console device as the
-bootblock; no special kernel configuration is required.  
+bootblock; no special kernel configuration is required.
 .Pp
 To override
 the bootblock's choice of console, or to use a serial kernel console
@@ -43,7 +43,7 @@ The current option choices are:
 (with either the
 .Dq pc
 or the
-.Xr pcvt 4
+.Xr wscons 4
 driver)
 .It - standard PC serial ports
 (with
