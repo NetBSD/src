@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.12 1995/09/05 21:43:11 pk Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.13 1995/09/11 19:20:14 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
@@ -125,6 +125,8 @@ cgsix0 at sbus? slot ? offset ?
 cgsix* at sbus? slot ? offset ?
 
 scsibus* at esp?
+scsibus* at si?
+scsibus* at sw?
 
 # Map scsi-id 3 to  sd0; no questions asked. Map the remaining drives
 # in the default order. This is because SunOS's rom swaps scsi-id 3 to
