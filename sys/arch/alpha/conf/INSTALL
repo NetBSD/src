@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.11 1998/04/18 01:19:40 thorpej Exp $
+# $NetBSD: INSTALL,v 1.12 1998/04/24 18:18:41 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -171,7 +171,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 # Workstation Console attachments
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
-wskbd*	at	pckbd?
+wskbd*		at	pckbd?
 wsmouse*	at	psm?
 
 pseudo-device	loop		1

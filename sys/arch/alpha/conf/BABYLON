@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.5 1998/04/15 21:19:21 drochner Exp $
+# $NetBSD: BABYLON,v 1.6 1998/04/24 18:18:41 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -252,9 +252,9 @@ uk*	at	scsibus? target ? lun ?		# SCSI unknown
 #cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
-#wsdisplay* at	cfb?
+#wsdisplay*	at	cfb?
 #wsdisplay*	at	vga?
-#wsdisplay* at	sfb?
+#wsdisplay*	at	sfb?
 #wsdisplay*	at	tga?
 
 pseudo-device	bpfilter	16
