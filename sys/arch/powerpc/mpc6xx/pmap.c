@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2002/07/03 20:41:20 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2002/07/07 00:43:11 dbj Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2935,7 +2935,9 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",
 		    pbuf, cnt);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 
