@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp $
+$NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -81,6 +81,7 @@ vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
+vendor ZONET			0x8a01	Zonet Technology Inc.
 vendor CONTEC			0xc001	Contec
 vendor MACNICA			0xc00b	MACNICA
 vendor ROLAND			0xc00c	Roland
@@ -291,6 +292,10 @@ product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
 
 /* BUFFALO */
 product BUFFALO WLI_PCM_S11	0x0305	BUFFALO AirStation 11Mbps WLAN
+
+/* ZONET */
+product ZONET ZEN		0x0100	Zonet Zen 10/10
+
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
