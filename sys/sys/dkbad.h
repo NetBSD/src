@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.h,v 1.11 1998/03/25 09:55:49 leo Exp $	*/
+/*	$NetBSD: dkbad.h,v 1.12 2002/04/21 20:55:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -80,4 +80,7 @@ struct dkbad {
 #define	BSE	2
 #define	CONT	3
 
+#ifdef _KERNEL
+int isbad(struct dkbad *, int, int, int);
+#endif
 #endif /* _SYS_DKBAD_H_ */
