@@ -16,11 +16,6 @@ int debug = 1;
 int debug = 0;
 #endif
 
-#ifdef NETIF_DEBUG
-int netif_debug = 0;
-extern int toggle_netif_debug();
-#endif
-
 /* These get set by the bootp module */
 extern char rootpath[], bootfile[], hostname[], domainname[];
 
@@ -39,6 +34,9 @@ extern int set_gateway();
 extern int set_address();
 #ifdef LE_DEBUG
 extern int toggle_le_debug();
+#endif
+#ifdef NETIF_DEBUG
+extern int toggle_netif_debug();
 #endif
 
 struct cmds {
@@ -115,10 +113,8 @@ toggle_debug(s, argc, argv)
 	int s, argc;
 	char *argv[];
 {
-	if (debug)
-		debug = 0;
-	else
-		debug = 1;
+
+	debug = !debug;
 	printf("debug=%d\n", debug);
 }
 
@@ -129,23 +125,20 @@ toggle_le_debug(s, argc, argv)
 {
 	extern int le_debug;
 	
-	if (le_debug)
-		le_debug = 0;
-	else
-		le_debug = 1;
+	le_debug = !le_debug;
 	printf("le_debug=%d\n", le_debug);
 }
 #endif
 
 #ifdef NETIF_DEBUG
+int netif_debug = 0;
+
 toggle_netif_debug(s, argc, argv)
 	int s, argc;
 	char *argv[];
 {
-	if (netif_debug)
-		netif_debug = 0;
-	else
-		netif_debug = 1;
+
+	netif_debug = !netif_debug;
 	printf("netif_debug=%d\n", netif_debug);
 }
 #endif
@@ -331,7 +324,7 @@ main()
 	bootdev = -1;	/* network */
 	
 	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.1 $");
+	       getmachineid(), "$Revision: 1.2 $");
 
 	s = netif_open(NULL);	/* XXX machdep may be "le" */
 	if (s < 0)
