@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1995/06/26 03:24:17 christos Exp $
+#	$NetBSD: Makefile,v 1.21 1995/11/16 22:38:16 cgd Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -26,15 +26,6 @@
 
 S=	${.CURDIR}/../../..
 
-### find out what to use for libkern
-KERNREL=
-.include "$S/lib/libkern/Makefile.inc"
-.ifndef PROF
-LIBKERN=	${KERNLIB}
-.else
-LIBKERN=	${KERNLIB_PROF}
-.endif
-
 machine-links:
 	-rm -f machine && \
 	    ln -s ${.CURDIR}/../include machine
@@ -55,8 +46,8 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 # start.o should be first
 OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
-boot:	${OBJS} ${LIBKERN}
-	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS} ${LIBKERN}
+boot:	${OBJS}
+	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
 	cp boot boot.sym
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
