@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.112 2003/01/06 20:30:30 wiz Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.113 2003/01/16 09:44:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.112 2003/01/06 20:30:30 wiz Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.113 2003/01/16 09:44:13 kleink Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1226,13 +1226,13 @@ editit(void)
 {
 	int pid, xpid;
 	int status;
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGQUIT);
-	sigaddset(&sigset, SIGHUP);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGINT);
+	sigaddset(&nsigset, SIGQUIT);
+	sigaddset(&nsigset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 	while ((pid = fork()) < 0) {
 		if (errno != EAGAIN) {
 			sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);

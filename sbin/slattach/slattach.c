@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.25 2001/12/20 20:10:38 soren Exp $	*/
+/*	$NetBSD: slattach.c,v 1.26 2003/01/16 09:44:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.25 2001/12/20 20:10:38 soren Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.26 2003/01/16 09:44:17 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(argc, argv)
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;
-	sigset_t sigset;
+	sigset_t nsigset;
 	int opt_detach = 1;
 
 	while ((ch = getopt(argc, argv, "hHlmns:t:")) != -1) {
@@ -148,9 +148,9 @@ main(argc, argv)
 		err(1, "TIOCSETD");
 	if (opt_detach && daemon(0, 0) != 0)
 		err(1, "couldn't detach");
-	sigemptyset(&sigset);
+	sigemptyset(&nsigset);
 	for (;;)
-		sigsuspend(&sigset);
+		sigsuspend(&nsigset);
 }
 
 int

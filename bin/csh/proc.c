@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.24 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: proc.c,v 1.25 2003/01/16 09:38:40 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.24 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: proc.c,v 1.25 2003/01/16 09:38:40 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,15 +198,15 @@ void
 pnote(void)
 {
     struct process *pp;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
     int flags;
 
     neednote = 0;
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
     for (pp = proclist.p_next; pp != NULL; pp = pp->p_next) {
 	if (pp->p_flags & PNEEDNOTE) {
-	    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 	    pp->p_flags &= ~PNEEDNOTE;
 	    flags = pprint(pp, NUMBER | NAME | REASON);
 	    if ((flags & (PRUNNING | PSTOPPED)) == 0)
@@ -224,14 +224,14 @@ void
 pwait(void)
 {
     struct process *fp, *pp;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
 
     /*
      * Here's where dead procs get flushed.
      */
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     for (pp = (fp = &proclist)->p_next; pp != NULL; pp = (fp = pp)->p_next)
 	if (pp->p_pid == 0) {
 	    fp->p_next = pp->p_next;
@@ -255,7 +255,7 @@ void
 pjwait(struct process *pp)
 {
     struct process *fp;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
     int jobflags, reason;
 
     while (pp->p_pid != pp->p_jobid)
@@ -271,13 +271,13 @@ pjwait(struct process *pp)
      * target process, or any of its friends, are running
      */
     fp = pp;
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     for (;;) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGCHLD);
-	(void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGCHLD);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
 	jobflags = 0;
 	do
 	    jobflags |= fp->p_flags;
@@ -288,9 +288,9 @@ pjwait(struct process *pp)
 	(void)fprintf(csherr, "starting to sigsuspend for  SIGCHLD on %d\n",
 		       fp->p_pid);
 #endif				/* JOBDEBUG */
-	sigset = osigset;
-	(void)sigdelset(&sigset, SIGCHLD);
-	(void)sigsuspend(&sigset);
+	nsigset = osigset;
+	(void)sigdelset(&nsigset, SIGCHLD);
+	(void)sigsuspend(&nsigset);
     }
     (void)sigprocmask(SIG_SETMASK, &osigset, NULL);
     if (tpgrp > 0)		/* get tty back */
@@ -348,18 +348,18 @@ void
 dowait(Char **v, struct command *t)
 {
     struct process *pp;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
 
     pjobs++;
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 loop:
     for (pp = proclist.p_next; pp; pp = pp->p_next)
 	if (pp->p_pid &&	/* pp->p_pid == pp->p_jobid && */
 	    pp->p_flags & PRUNNING) {
-	    sigemptyset(&sigset);
-	    (void)sigsuspend(&sigset);
+	    sigemptyset(&nsigset);
+	    (void)sigsuspend(&nsigset);
 	    goto loop;
 	}
     (void)sigprocmask(SIG_SETMASK, &osigset, NULL);
@@ -998,16 +998,16 @@ pkill(Char **v, int signum)
 {
     struct process *pp, *np;
     Char *cp;
-    sigset_t sigset;
+    sigset_t nsigset;
     int err1, jobflags, pid;
 
     jobflags = 0;
     err1 = 0;    
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
     if (setintr)
-	(void)sigaddset(&sigset, SIGINT);
-    (void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void)sigaddset(&nsigset, SIGINT);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
     gflag = 0, tglob(v);
     if (gflag) {
 	v = globall(v);
@@ -1070,7 +1070,7 @@ cont:
     }
     if (gargv)
 	blkfree(gargv), gargv = 0;
-    (void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+    (void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
     if (err1)
 	stderror(ERR_SILENT);
 }
@@ -1082,13 +1082,13 @@ void
 pstart(struct process *pp, int foregnd)
 {
     struct process *np;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
     long jobflags;
 
     jobflags = 0;
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     np = pp;
     do {
 	jobflags |= np->p_flags;
@@ -1220,7 +1220,7 @@ int
 pfork(struct command *t /* command we are forking for */, int wanttty)
 {
     int pgrp, pid;
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
     bool ignint;
 
     ignint = 0;
@@ -1243,9 +1243,9 @@ pfork(struct command *t /* command we are forking for */, int wanttty)
     /*
      * Hold SIGCHLD until we have the process installed in our table.
      */
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGCHLD);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGCHLD);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     while ((pid = fork()) < 0)
 	if (setintr == 0)
 	    (void)sleep(FORKSLEEP);
@@ -1321,18 +1321,18 @@ okpcntl(void)
 void
 pgetty(int wanttty, int pgrp)
 {
-    sigset_t osigset, sigset;
+    sigset_t osigset, nsigset;
 
     /*
      * christos: I am blocking the tty signals till I've set things
      * correctly....
      */
     if (wanttty > 0) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGTSTP);
-	(void)sigaddset(&sigset, SIGTTIN);
-	(void)sigaddset(&sigset, SIGTTOU);
-	(void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGTSTP);
+	(void)sigaddset(&nsigset, SIGTTIN);
+	(void)sigaddset(&nsigset, SIGTTOU);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     }
     /*
      * From: Michael Schroeder <mlschroe@immd4.informatik.uni-erlangen.de>

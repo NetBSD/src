@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.20 2002/08/12 02:37:26 itojun Exp $ */
+/* $NetBSD: file.c,v 1.21 2003/01/16 09:38:39 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.20 2002/08/12 02:37:26 itojun Exp $");
+__RCSID("$NetBSD: file.c,v 1.21 2003/01/16 09:38:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,11 +143,11 @@ static void
 back_to_col_1(void)
 {
     struct termios tty, tty_normal;
-    sigset_t sigset, osigset;
+    sigset_t nsigset, osigset;
 
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGINT);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGINT);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     (void)tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_iflag &= ~INLCR;
@@ -166,15 +166,15 @@ pushback(Char *string)
 {
     struct termios tty, tty_normal;
     char buf[TTYHOG], svchars[TTYHOG];
-    sigset_t sigset, osigset;
+    sigset_t nsigset, osigset;
     Char *p;
     int bufidx, i, len_str, nbuf, nsv, onsv, retrycnt;
     char c;
 
     nsv = 0;
-    sigemptyset(&sigset);
-    (void)sigaddset(&sigset, SIGINT);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigaddset(&nsigset, SIGINT);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     (void)tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
@@ -468,11 +468,11 @@ free_items(Char **items)
 }
 
 #define FREE_ITEMS(items) { \
-	sigset_t sigset, osigset;\
+	sigset_t nsigset, osigset;\
 \
-	sigemptyset(&sigset);\
-	(void) sigaddset(&sigset, SIGINT);\
-	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);\
+	sigemptyset(&nsigset);\
+	(void) sigaddset(&nsigset, SIGINT);\
+	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);\
 	free_items(items);\
 	items = NULL;\
 	(void) sigprocmask(SIG_SETMASK, &osigset, NULL);\

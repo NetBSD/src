@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.24 2002/05/28 22:12:25 wiz Exp $ */
+/* $NetBSD: func.c,v 1.25 2003/01/16 09:38:39 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.24 2002/05/28 22:12:25 wiz Exp $");
+__RCSID("$NetBSD: func.c,v 1.25 2003/01/16 09:38:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ void
 doonintr(Char **v, struct command *t)
 {
     Char *cp, *vv;
-    sigset_t sigset;
+    sigset_t nsigset;
 
     vv = v[1];
     if (parintr == SIG_IGN)
@@ -145,9 +145,9 @@ doonintr(Char **v, struct command *t)
     xfree((ptr_t) cp);
     if (vv == 0) {
 	if (setintr) {
-	    sigemptyset(&sigset);
-	    (void)sigaddset(&sigset, SIGINT);
-	    (void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	    sigemptyset(&nsigset);
+	    (void)sigaddset(&nsigset, SIGINT);
+	    (void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
 	} else
 	    (void)signal(SIGINT, SIG_DFL);
 	gointr = 0;
@@ -477,18 +477,18 @@ dowhile(Char **v, struct command *t)
 static void
 preread(void)
 {
-    sigset_t sigset;
+    sigset_t nsigset;
 
     whyles->w_end.type = I_SEEK;
     if (setintr) {
-	sigemptyset(&sigset);
-	(void) sigaddset(&sigset, SIGINT);
-	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void) sigaddset(&nsigset, SIGINT);
+	(void) sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
     }
 
     search(T_BREAK, 0, NULL);		/* read the expression in */
     if (setintr)
-	(void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
     btell(&whyles->w_end);
 }
 
@@ -536,24 +536,24 @@ void
 dorepeat(Char **v, struct command *kp)
 {
     int i;
-    sigset_t sigset;
+    sigset_t nsigset;
 
     i = getn(v[1]);
     if (setintr) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
     }
     lshift(v, 2);
     while (i > 0) {
 	if (setintr)
-	    (void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    (void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
 	reexecute(kp);
 	--i;
     }
     donefds();
     if (setintr)
-	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	(void) sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
 }
 
 void
@@ -854,14 +854,14 @@ static void
 xecho(int sep, Char **v)
 {
     Char *cp;
-    sigset_t sigset;
+    sigset_t nsigset;
     int nonl;
 
     nonl = 0;
     if (setintr) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
     }
     v++;
     if (*v == 0)
@@ -893,7 +893,7 @@ done:
     else
 	(void)fflush(cshout);
     if (setintr)
-	(void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
     if (gargv)
 	blkfree(gargv), gargv = 0;
 }
@@ -903,16 +903,16 @@ void
 dosetenv(Char **v, struct command *t)
 {
     Char *lp, *vp;
-    sigset_t sigset;
+    sigset_t nsigset;
 
     v++;
     if ((vp = *v++) == 0) {
 	Char **ep;
 
 	if (setintr) {
-	    sigemptyset(&sigset);
-	    (void)sigaddset(&sigset, SIGINT);
-	    (void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    sigemptyset(&nsigset);
+	    (void)sigaddset(&nsigset, SIGINT);
+	    (void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
 	}
 	for (ep = STR_environ; *ep; ep++)
 	    (void)fprintf(cshout, "%s\n", vis_str(*ep));
