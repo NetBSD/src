@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.17 1994/08/17 14:43:51 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.18 1995/06/02 18:38:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -1579,7 +1579,7 @@ nfs_getreq(nd, has_header)
 			return (EBADRPC);
 		}
 		nfsm_dissect(tl, u_long *, (len + 2)*NFSX_UNSIGNED);
-		for (i = 1; i <= len; i++)
+		for (i = 0; i < len; i++)
 			if (i < NGROUPS)
 				nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
 			else
