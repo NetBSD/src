@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.35 2000/07/24 15:15:25 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.36 2000/08/22 14:20:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,13 +55,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.35 2000/07/24 15:15:25 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.36 2000/08/22 14:20:17 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -647,16 +648,22 @@ void
 log_compress(struct conf_entry *log, const char *fn)
 {
 	char tmp[MAXPATHLEN];
-	pid_t pid;
 
 	PRINFO(("gzip %s\n", fn));
 	if (!noaction) {
-		if ((pid = fork()) < 0)
-			err(EXIT_FAILURE, "fork");
+		pid_t pid;
+		int status;
+
+		if ((pid = vfork()) < 0)
+			err(EXIT_FAILURE, "vfork");
 		else if (pid == 0) {
 			execl(_PATH_GZIP, "gzip", "-f", fn, NULL);
-			err(EXIT_FAILURE, _PATH_GZIP);
+			_exit(EXIT_FAILURE);
 		}
+		while (waitpid(pid, &status, 0) != pid);
+
+		if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
+			errx(EXIT_FAILURE, "gzip failed");
 	}
 
 	snprintf(tmp, sizeof (tmp), "%s.gz", fn);
