@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.26 2000/07/21 04:48:57 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.27 2000/07/25 12:04:29 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -790,24 +790,6 @@ static int wi_read_record(sc, ltv)
 			p2ltv.wi_len = 2;
 			ltv = &p2ltv;
 			break;
-		case WI_RID_DEFLT_CRYPT_KEYS:
-		    {
-			int error;
-			struct wi_ltv_str	ws;
-			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
-
-			for (i = 0; i < 4; i++) {
-				ws.wi_len = 4;
-				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-				error = wi_read_record(sc,
-				    (struct wi_ltv_gen *)&ws);
-				if (error)
-					return error;
-				memcpy(&wk->wi_keys[i].wi_keydat, ws.wi_str, 5);
-				wk->wi_keys[i].wi_keylen = 5;
-			}
-			return 0;
-		    }
 		}
 	}
 
@@ -840,15 +822,28 @@ static int wi_read_record(sc, ltv)
 		ptr[i] = CSR_READ_2(sc, WI_DATA1);
 
 	if (sc->sc_prism2) {
-		switch (code) {
-		case WI_RID_P2_ENCRYPTION:
+		switch (oltv->wi_type) {
+		case WI_RID_TX_RATE:
+		case WI_RID_CUR_TX_RATE:
+			switch (ltv->wi_val) {
+			case 1: oltv->wi_val = 1; break;
+			case 2: oltv->wi_val = 2; break;
+			case 3:	oltv->wi_val = 6; break;
+			case 4: oltv->wi_val = 5; break;
+			case 7: oltv->wi_val = 7; break;
+			case 8: oltv->wi_val = 11; break;
+			case 15: oltv->wi_val = 3; break;
+			default: oltv->wi_val = 0x100 + ltv->wi_val; break;
+			}
+			break;
+		case WI_RID_ENCRYPTION:
 			oltv->wi_len = 2;
 			if (ltv->wi_val & 0x01)
 				oltv->wi_val = 1;
 			else
 				oltv->wi_val = 0;
 			break;
-		case WI_RID_P2_TX_CRYPT_KEY:
+		case WI_RID_TX_CRYPT_KEY:
 			oltv->wi_len = 2;
 			oltv->wi_val = ltv->wi_val;
 			break;
@@ -871,6 +866,21 @@ static int wi_write_record(sc, ltv)
 
 	if (sc->sc_prism2) {
 		switch (ltv->wi_type) {
+		case WI_RID_TX_RATE:
+			p2ltv.wi_type = WI_RID_TX_RATE;
+			p2ltv.wi_len = 2;
+			switch (ltv->wi_val) {
+			case 1: p2ltv.wi_val = 1; break;
+			case 2: p2ltv.wi_val = 2; break;
+			case 3:	p2ltv.wi_val = 15; break;
+			case 5: p2ltv.wi_val = 4; break;
+			case 6: p2ltv.wi_val = 3; break;
+			case 7: p2ltv.wi_val = 7; break;
+			case 11: p2ltv.wi_val = 8; break;
+			default: return EINVAL;
+			}
+			ltv = &p2ltv;
+			break;
 		case WI_RID_ENCRYPTION:
 			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
 			p2ltv.wi_len = 2;
