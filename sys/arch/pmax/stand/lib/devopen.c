@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 1999/02/22 08:24:47 simonb Exp $	*/
+/*	$NetBSD: devopen.c,v 1.10 1999/04/01 05:52:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -127,6 +127,9 @@ devopen(f, fname, file)
 	}
 	*ncp = '\0';
 
+#ifdef LIBSA_SINGLE_DEVICE
+	rc = DEV_OPEN(dp)(f, ctlr, unit, part);
+#else
 #ifdef SMALL
 	if (strcmp (namebuf, "rz")) {
 		printf ("Unknown device: %s\n", namebuf);
@@ -148,10 +151,13 @@ devopen(f, fname, file)
 fnd:
 #endif
 	rc = (dp->dv_open)(f, ctlr, unit, part);
+#endif
 	if (rc)
 		return (rc);
 
+#ifndef LIBSA_SINGLE_DEVICE
 	f->f_dev = dp;
+#endif
 	if (file && *cp != '\0')
 		*file = (char *)cp;	/* XXX */
 	return (0);
