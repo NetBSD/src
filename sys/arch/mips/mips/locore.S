@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 1997/06/15 17:44:46 mhitch Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 1997/06/16 23:41:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -779,15 +779,15 @@ sw1:
 	nop
 	nop
 # now map the p_addr pages
-	andi	v0, PG_ASID
+	andi	v0, MIPS3_PG_ASID
 	or	v0, s0
-	ori	t0, PG_G		# XXX set PG_G
-	ori	t1, PG_G		# XXX set PG_G
-	li	s1, PG_ODDPG
+	ori	t0, MIPS3_PG_G		# XXX set PG_G
+	ori	t1, MIPS3_PG_G		# XXX set PG_G
+	li	s1, MIPS3_PG_ODDPG
 	and	s1, v0				# does p_addr start on odd page
 	beq	s1, zero, 1f			# no, only one TLB entry needed
 # p_addr starts on an odd page, need to set up 2 TLB entries
-	addu	v0, v0, PG_ODDPG		# map second page
+	addu	v0, v0, MIPS3_PG_ODDPG		# map second page
 # see if this address currently exists in TLB
 	mtc0	v0, MACH_COP_0_TLB_HI
 	nop
@@ -806,14 +806,14 @@ sw1:
 	mtc0	v0, MACH_COP_0_TLB_HI		# restore high entry
 2:
 	mtc0	t1, MACH_COP_0_TLB_LO0		# even page to LO0
-	li	s1, PG_G		# XXX set PG_G
+	li	s1, MIPS3_PG_G		# XXX set PG_G
 	mtc0	s1, MACH_COP_0_TLB_LO1		# invalid page to LO1
 	li	s1, 2				# use TLB entry 2 for even page
 	mtc0	s1, MACH_COP_0_TLB_INDEX
 	nop
 	tlbwi					# write odd page TLB entry
 	move	t1, t0				# odd page to LO1
-	li	t0, PG_G		# XXX PG_G	# clear LO0
+	li	t0, MIPS3_PG_G		# XXX PG_G	# clear LO0
 	addi	v0, v0, -NBPG * 2		# backup to odd page mapping
 # set up TLB entry 1
 1:
@@ -2052,13 +2052,59 @@ END(stacktrace)
 
 #endif	/* DEBUG */
 
+
+/*
+ * The variables below are used to communicate the CPU and FPU
+ * version/revision level to  higher-level software.
+ * XXX  will need reworking for  SMP.
+ */
 	.data
 	.globl	_C_LABEL(cpu_id)
 	.globl	_C_LABEL(fpu_id)
+	.globl	_C_LABEL(cpu_arch)
 _C_LABEL(cpu_id):
 	.word	0
 _C_LABEL(fpu_id):
 	.word	0
+_C_LABEL(cpu_arch):
+	.word	0
+
+	.globl	_C_LABEL(machDataCacheSize)
+	.globl	_C_LABEL(machInstCacheSize)
+_C_LABEL(machDataCacheSize):
+	.word	0
+_C_LABEL(machInstCacheSize):
+	.word	0
+
+	.globl	_C_LABEL(machPrimaryDataCacheSize)
+	.globl	_C_LABEL(machPrimaryInstCacheSize)
+
+_C_LABEL(machPrimaryDataCacheSize):
+	.word	0
+_C_LABEL(machPrimaryInstCacheSize):
+	.word	0
+
+	.globl	_C_LABEL(machPrimaryDataCacheLSize)
+	.globl	_C_LABEL(machPrimaryInstCacheLSize)
+_C_LABEL(machPrimaryDataCacheLSize):
+	.word	0
+_C_LABEL(machPrimaryInstCacheLSize):
+	.word	0
+
+	.globl	_C_LABEL(machSecondaryCacheSize)
+	.globl	_C_LABEL(machSecondaryCacheLSize)
+_C_LABEL(machSecondaryCacheSize):
+	.word	0
+_C_LABEL(machSecondaryCacheLSize):
+	.word	0
+
+
+/*
+ * The variables below are used to communicate the CPU and FPU
+ * version/revision level to  higher-level software.
+ * XXX  will need reworking for  SMP.
+ */
+
 
 /*
  * Port-specific locore code moved to sys/arch/<port>/<port>/locore_machdep.S
