@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.11 1996/05/05 06:16:26 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.12 1996/10/11 00:24:40 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -82,7 +82,7 @@ ascattach(parent, dev, aux)
 	struct device *parent, *dev;
 	void   *aux;
 {
-	printf(" Apple sound chip.\n");
+	kprintf(" Apple sound chip.\n");
 }
 
 int 
@@ -163,7 +163,7 @@ asc_ringbell()
 		/* Fix this.  Need to find exact ASC sampling freq */
 		freq = 65536 * bell_freq / 466;
 
-		/* printf("beep: from %d, %02x %02x %02x %02x\n",
+		/* kprintf("beep: from %d, %02x %02x %02x %02x\n",
 		 * cur_beep.freq, (freq >> 24) & 0xff, (freq >> 16) & 0xff,
 		 * (freq >> 8) & 0xff, (freq) & 0xff); */
 		for (i = 0; i < 8; i++) {

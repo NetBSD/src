@@ -1,4 +1,4 @@
-/*	$NetBSD: bounds.h,v 1.3 1995/04/21 02:47:47 briggs Exp $	*/
+/*	$NetBSD: bounds.h,v 1.4 1996/10/11 00:24:42 christos Exp $	*/
 
 #if defined(CHECKBOUNDS)
 
@@ -8,9 +8,9 @@
 #define CHECKBOUNDS(a, i) {						\
 	if ( (((a) + (i)) < (a)) ||					\
 	     (((a) + (i)) >= ((a) + (sizeof(a) / sizeof(*(a))))) ) {	\
-		printf("index " #i " (%d) exceeded bounds of " #a	\
+		kprintf("index " #i " (%d) exceeded bounds of " #a	\
 			", '%s' line %d.\n", (i), __FILE__, __LINE__);	\
-		printf("halting...\n");					\
+		kprintf("halting...\n");					\
 		/*asm("	stop	#0x2700");*/				\
 	}								\
 }
@@ -18,10 +18,10 @@
 #define CHECKPOINTER(a, p) {						\
 	if ( ((p) < (a)) ||						\
 	     ((p) >= ((a) + (sizeof(a) / sizeof(*(a))))) ) {		\
-		printf("pointer " #p " (0x%X) exceeded bounds of " #a	\
+		kprintf("pointer " #p " (0x%X) exceeded bounds of " #a	\
 			" (0x%X), '%s' line %d.\n",			\
 			(p), (a), __FILE__, __LINE__);			\
-		printf("halting...\n");					\
+		kprintf("halting...\n");					\
 		/*asm("	stop	#0x2700");*/				\
 	}								\
 }

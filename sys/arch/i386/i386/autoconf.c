@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1996/10/11 00:26:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@ configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
+	kprintf("biomask %x netmask %x ttymask %x\n",
 	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
 	    (u_short)imask[IPL_TTY]);
 
@@ -154,7 +154,7 @@ setroot()
 	struct swdevt *swp;
 
 #if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
+	kprintf("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
@@ -174,7 +174,7 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("changing root device to %c%c%d%c\n",
+	kprintf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 

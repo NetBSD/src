@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.2 1996/04/11 22:15:08 cgd Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.3 1996/10/11 00:26:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -73,12 +73,12 @@ eisa_intr_map(ec, irq, ihp)
 {
 
 	if (irq >= ICU_LEN) {
-		printf("eisa_intr_map: bad IRQ %d\n", irq);
+		kprintf("eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
 		return 1;
 	}
 	if (irq == 2) {
-		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		kprintf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
 
@@ -96,7 +96,7 @@ eisa_intr_string(ec, ih)
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	ksprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
 }

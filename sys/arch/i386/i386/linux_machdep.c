@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.30 1996/10/11 00:26:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -356,7 +356,7 @@ linux_write_ldt(p, uap, retval)
 	sl.num = 1;
 
 #if 0
-	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
+	kprintf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
 	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
 #endif
 
@@ -512,7 +512,7 @@ linux_machdepioctl(p, v, retval)
 		break;
 #endif
 	default:
-		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
+		kprintf("linux_machdepioctl: invalid ioctl %08lx\n", com);
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;

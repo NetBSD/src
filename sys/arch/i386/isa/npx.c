@@ -1,9 +1,9 @@
-/*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.58 1996/10/11 00:27:09 christos Exp $	*/
 
 #if 0
-#define iprintf(x)	printf x
+#define IPRINTF(x)	kprintf x
 #else
-#define	iprintf(x)
+#define	IPRINTF(x)
 #endif
 
 /*-
@@ -327,16 +327,16 @@ npxattach(parent, self, aux)
 
 	switch (npx_type) {
 	case NPX_INTERRUPT:
-		printf("\n");
+		kprintf("\n");
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 		    IST_EDGE, IPL_NONE, npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
-		printf(": using exception 16\n");
+		kprintf(": using exception 16\n");
 		break;
 	case NPX_BROKEN:
-		printf(": error reporting broken; not using\n");
+		kprintf(": error reporting broken; not using\n");
 		npx_type = NPX_NONE;
 		return;
 	case NPX_NONE:
@@ -346,7 +346,7 @@ npxattach(parent, self, aux)
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0)
-		printf("WARNING: Pentium FDIV bug detected!\n");
+		kprintf("WARNING: Pentium FDIV bug detected!\n");
 	lcr0(rcr0() | (CR0_TS));
 }
 
@@ -375,12 +375,11 @@ npxintr(arg)
 	int code;
 
 	cnt.v_trap++;
-	iprintf(("Intr"));
+	IPRINTF(("Intr"));
 
 	if (p == 0 || npx_type == NPX_NONE) {
-		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
-		printf("npxintr: p = %lx, curproc = %lx, npx_type = %d\n",
-		       (u_long) p, (u_long) curproc, npx_type);
+		kprintf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
+		    p, curproc, npx_type);
 		panic("npxintr from nowhere");
 	}
 	/*
@@ -504,7 +503,7 @@ npxdna(p)
 	static u_short control = __INITIAL_NPXCW__;
 
 	if (npx_type == NPX_NONE) {
-		iprintf(("Emul"));
+		IPRINTF(("Emul"));
 		return (0);
 	}
 
@@ -518,7 +517,7 @@ npxdna(p)
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
 		p->p_md.md_flags |= MDP_USEDFPU;
-		iprintf(("Init"));
+		IPRINTF(("Init"));
 		if (npxproc != 0 && npxproc != p)
 			npxsave1();
 		else {
@@ -535,7 +534,7 @@ npxdna(p)
 			if (npxproc == p)
 				panic("npxdna: same process");
 #endif
-			iprintf(("Save"));
+			IPRINTF(("Save"));
 			npxsave1();
 		}
 		npxproc = p;
@@ -587,7 +586,7 @@ npxsave()
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxsave: masked");
 #endif
-	iprintf(("Fork"));
+	IPRINTF(("Fork"));
 	clts();
 	npxsave1();
 	stts();

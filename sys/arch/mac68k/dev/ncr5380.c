@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.33 1996/08/28 19:00:04 cgd Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.34 1996/10/11 00:24:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -254,7 +254,7 @@ void		*auxp;
 	 * Initialize machine-type specific things...
 	 */
 	scsi_mach_init(sc);
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * Initialize request queue freelist.
@@ -447,17 +447,17 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 	int	i  = 0;
 
 	if (!(xs->flags & SCSI_RESET)) {
-		printf("(%d:%d:%d,0x%x)-", xs->sc_link->scsibus,
+		kprintf("(%d:%d:%d,0x%x)-", xs->sc_link->scsibus,
 		    xs->sc_link->target, xs->sc_link->lun, xs->sc_link->flags);
 		while (i < xs->cmdlen) {
 			if (i)
-				printf(",");
-			printf("%x",b[i++]);
+				kprintf(",");
+			kprintf("%x",b[i++]);
 		}
-		printf("-\n");
+		kprintf("-\n");
 	}
 	else {
-		printf("(%d:%d:%d)-RESET-\n",
+		kprintf("(%d:%d:%d)-RESET-\n",
 		    xs->sc_link->scsibus,xs->sc_link->target, xs->sc_link->lun);
 	}
 }
@@ -1796,7 +1796,7 @@ struct ncr_softc *sc;
 		}
 	}
 	scsi_clr_ipend();
-	printf("-->");
+	kprintf("-->");
 	scsi_show();
 	ncr_aprint(sc, "Spurious interrupt.\n");
 	return (INTR_SPURIOUS);
@@ -1932,7 +1932,7 @@ ncr_tprint(SC_REQ *reqp, char *fmt, ...)
 
 	va_start(ap, fmt);
 	sc_print_addr(reqp->xs->sc_link);
-	printf("%:", fmt, ap);
+	kprintf("%:", fmt, ap);
 	va_end(ap);
 }
 
@@ -1945,7 +1945,7 @@ ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
 	va_list	ap;
 
 	va_start(ap, fmt);
-	printf("%s : %:", sc->sc_dev.dv_xname, fmt, ap);
+	kprintf("%s : %:", sc->sc_dev.dv_xname, fmt, ap);
 	va_end(ap);
 }
 /****************************************************************************
@@ -1963,13 +1963,13 @@ struct scsi_xfer	*xs;
 	p2 = (u_char *)&xs->sense;
 	if(*p2 == 0)
 		return;	/* No(n)sense */
-	printf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*p1));
+	kprintf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*p1));
 	for (i = 0; i < sz; i++)
-		printf("%x ", p1[i]);
-	printf("\nsense: ");
+		kprintf("%x ", p1[i]);
+	kprintf("\nsense: ");
 	for (i = 0; i < sizeof(xs->sense); i++)
-		printf("%x ", p2[i]);
-	printf("\n");
+		kprintf("%x ", p2[i]);
+	kprintf("\n");
 }
 
 static void
@@ -1977,7 +1977,7 @@ show_request(reqp, qtxt)
 SC_REQ	*reqp;
 char	*qtxt;
 {
-	printf("REQ-%s: %d %p[%ld] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
+	kprintf("REQ-%s: %d %p[%ld] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
 			reqp->xs->error, reqp->xs->resid, reqp->dr_flag,
@@ -1999,17 +1999,17 @@ u_char	dmstat, idstat;
 	int	j, need_pipe;
 
 	tmp = idstat | ((dmstat & 3) << 8);
-	printf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
+	kprintf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
 	for (mask = 1, j = need_pipe = 0; mask <= tmp; mask <<= 1, j++) {
 		if (tmp & mask)
-			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+			kprintf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
 	}
-	printf("\nDma status (%02x): ", dmstat);
+	kprintf("\nDma status (%02x): ", dmstat);
 	for (mask = 4, j = 10, need_pipe = 0; mask <= dmstat; mask <<= 1, j++) {
 		if (dmstat & mask)
-			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+			kprintf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 void
@@ -2022,7 +2022,7 @@ scsi_show()
 	int	i;
 #endif
 
-	printf("scsi_show: scsi_main is%s running\n",
+	kprintf("scsi_show: scsi_main is%s running\n",
 		main_running ? "" : " not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
@@ -2034,11 +2034,11 @@ scsi_show()
 	dmstat = GET_5380_REG(NCR5380_DMSTAT);
 	show_signals(dmstat, idstat);
 	if (connected)
-		printf("phase = %d, ", connected->phase);
-	printf("busy:%x, spl:%04x\n", busy, sps);
+		kprintf("phase = %d, ", connected->phase);
+	kprintf("busy:%x, spl:%04x\n", busy, sps);
 #ifdef	DBG_PID
 	for (i=0; i<DBG_PID; i++)
-		printf("\t%d\t%s\n", i, last_hit[i]);
+		kprintf("\t%d\t%s\n", i, last_hit[i]);
 #endif
 
 	splx(sps);

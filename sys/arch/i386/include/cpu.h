@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 1996/10/11 00:27:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,6 +134,9 @@ void	startrtclock __P((void));
 /* npx.c */
 void	npxdrop __P((void));
 void	npxsave __P((void));
+
+/* vm_machdep.c */
+int kvtop __P((caddr_t));
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */
