@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yplib.c,v 1.4 1993/06/12 19:46:33 deraadt Exp $";
+static char rcsid[] = "$Id: yplib.c,v 1.5 1993/07/24 18:29:16 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,11 @@ static struct ypmatch_ent {
 
 static void
 ypmatch_add(map, key, keylen, val, vallen)
-char *map, *key, *val;
+char *map;
+char *key;
+int keylen;
+char *val;
+int vallen;
 {
 	struct ypmatch_ent *ep;
 	time_t t;
@@ -129,7 +133,8 @@ char *map, *key, *val;
 
 static bool_t
 ypmatch_find(map, key, keylen, val, vallen)
-char *map, *key;
+char *map;
+char *key;
 int keylen;
 char **val;
 int *vallen;
@@ -342,7 +347,7 @@ int
 yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 char *indomain;
 char *inmap;
-char *inkey;
+const char *inkey;
 int inkeylen;
 char **outval;
 int *outvallen;
@@ -603,6 +608,7 @@ again:
 	return ypprot_err(ypro.status);
 }
 
+int
 yp_master(indomain, inmap, outname)
 char *indomain;
 char *inmap;
