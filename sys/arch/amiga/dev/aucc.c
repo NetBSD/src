@@ -156,8 +156,6 @@ unsigned char ulaw_to_lin[] = {
  */
 int	aucc_open __P((dev_t, int));
 void	aucc_close __P((void *));
-int	aucc_set_in_sr __P((void *, u_long));
-u_long	aucc_get_in_sr __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
 u_long	aucc_get_out_sr __P((void *));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
@@ -352,22 +350,6 @@ aucc_close(addr)
 }
 
 int
-aucc_set_in_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	/* no input possible.. */
-	return EINVAL;
-}
-
-u_long
-aucc_get_in_sr(addr)
-	void *addr;
-{
-	return 0; /* no input possible */ 
-}
-
-int
 aucc_set_out_sr(addr, sr)
 	void *addr;
 	u_long sr;
@@ -416,6 +398,13 @@ aucc_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 		
+	case 2:
+		strcpy(fp->name, AudioEulinear);
+		fp->encoding = AUDIO_ENCODING_ULINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+
 	default:
 		return(EINVAL);
 		/*NOTREACHED*/
@@ -432,6 +421,7 @@ aucc_set_params(addr, mode, p, q)
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_LINEAR:
+	case AUDIO_ENCODING_ULINEAR:
 		break;		
 	default:
 		return EINVAL;
@@ -448,6 +438,7 @@ aucc_set_params(addr, mode, p, q)
 	q->precision = p->precision;
 	q->channels = p->channels;
 	
+	aucc_set_out_sr(addr, p->sample_rate);
 	return 0;
 }
 
