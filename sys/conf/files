@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.428 2001/03/08 04:18:17 thorpej Exp $
+#	$NetBSD: files,v 1.429 2001/03/23 19:08:53 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -524,6 +524,10 @@ file	dev/ic/intersil7170.c		intersil7170
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
+
+# WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
+device	we: ether, ifnet, arp, dp8390nic
+file	dev/ic/we.c			we
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
