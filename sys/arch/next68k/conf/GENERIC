@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 1999/07/29 10:37:20 augustss Exp $
+# $NetBSD: GENERIC,v 1.18 1999/07/29 19:37:00 augustss Exp $
 #
 # GENERIC next68k
 #
@@ -182,6 +182,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipfilter		# ip filter
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
