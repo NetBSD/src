@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/03/10 06:26:19 scottr Exp $
-
-#	$Id: Makefile,v 1.1 1997/03/10 06:26:19 scottr Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/11 04:13:04 scottr Exp $
 
 PROG=	rpc.lockd
 SRCS=	nlm_prot_svc.c lockd.c lock_proc.c
