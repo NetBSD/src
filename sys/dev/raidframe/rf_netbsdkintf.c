@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.79 2000/05/19 18:54:30 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.80 2000/05/27 18:23:27 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1280,8 +1280,10 @@ raidioctl(dev, cmd, data, flag, p)
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0 */
-			return(EINVAL);
+			/* This makes no sense on a RAID 0, so tell the
+			   user it's done. */
+			*(int *) data = 100;
+			return(0);
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
 			*(int *) data = 100 * raidPtr->parity_rewrite_stripes_done / raidPtr->Layout.numStripe;
