@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470 2002/04/23 12:04:12 augustss Exp $
+# $NetBSD: mi,v 1.471 2002/04/23 12:07:52 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -2613,16 +2613,16 @@
 ./usr/share/man/man4/stf.4			man-sys-man
 ./usr/share/man/man4/stge.4			man-sys-man
 ./usr/share/man/man4/strip.4			man-sys-man
-./usr/share/man/man4/sun2/autoconf.4		man-sys-catman
-./usr/share/man/man4/sun2/bwtwo.4		man-sys-catman
-./usr/share/man/man4/sun2/ec.4			man-sys-catman
-./usr/share/man/man4/sun2/ie.4			man-sys-catman
-./usr/share/man/man4/sun2/intro.4		man-sys-catman
-./usr/share/man/man4/sun2/kbd.4			man-sys-catman
-./usr/share/man/man4/sun2/kmem.4		man-sys-catman
-./usr/share/man/man4/sun2/leds.4		man-sys-catman
-./usr/share/man/man4/sun2/mem.4			man-sys-catman
-./usr/share/man/man4/sun2/ms.4			man-sys-catman
+./usr/share/man/man4/sun2/autoconf.4		man-sys-man
+./usr/share/man/man4/sun2/bwtwo.4		man-sys-man
+./usr/share/man/man4/sun2/ec.4			man-sys-man
+./usr/share/man/man4/sun2/ie.4			man-sys-man
+./usr/share/man/man4/sun2/intro.4		man-sys-man
+./usr/share/man/man4/sun2/kbd.4			man-sys-man
+./usr/share/man/man4/sun2/kmem.4		man-sys-man
+./usr/share/man/man4/sun2/leds.4		man-sys-man
+./usr/share/man/man4/sun2/mem.4			man-sys-man
+./usr/share/man/man4/sun2/ms.4			man-sys-man
 ./usr/share/man/man4/sun3/bwtwo.4		man-sys-man
 ./usr/share/man/man4/sun3/cgfour.4		man-sys-man
 ./usr/share/man/man4/sun3/cgtwo.4		man-sys-man
