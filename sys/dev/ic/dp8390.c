@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.31 2000/02/02 13:06:16 itojun Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.32 2000/02/09 14:42:33 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -93,8 +93,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 
 	rv = 1;
 
-	sc->sc_configured = 0;
-
 	if (!sc->test_mem)
 		sc->test_mem = dp8390_test_mem;
 
@@ -156,8 +154,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	/* Print additional info when attached. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
-
-	sc->sc_configured = 1;
 
 	rv = 0;
 out:
@@ -1302,9 +1298,6 @@ dp8390_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
-#if 0
-		dp8390_disable(sc);
-#endif
 		break;
 	}
 	splx(s);
@@ -1321,21 +1314,17 @@ dp8390_detach(sc, flags)
 	/* dp8390_disable() checks sc->sc_enabled */
 	dp8390_disable(sc);
 
-	if (sc->sc_configured) {
-		/* Delete all media. */
-		ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 #if NRND > 0
-		rnd_detach_source(&sc->rnd_source);
+	rnd_detach_source(&sc->rnd_source);
 #endif
 #if NBPFILTER > 0
-		bpfdetach(ifp);
+	bpfdetach(ifp);
 #endif
-		ether_ifdetach(ifp);
-		if_detach(ifp);
-
-		sc->sc_configured = 0;
-	}
+	ether_ifdetach(ifp);
+	if_detach(ifp);
 
 	return (0);
 }

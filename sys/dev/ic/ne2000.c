@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.25 2000/02/02 11:41:57 itojun Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.26 2000/02/09 14:42:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
 void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
 
-void
+int
 ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	struct ne2000_softc *nsc;
 	u_int8_t *myea;
@@ -121,7 +121,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		if (nsc->sc_type == 0) {
 			printf("%s: where did the card go?\n",
 			    dsc->sc_dev.dv_xname);
-			return;
+			return (1);
 		}
 	}
 
@@ -206,7 +206,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		if (mstart == 0) {
 			printf("%s: cannot find start of RAM\n",
 			    dsc->sc_dev.dv_xname);
-			return;
+			return (1);
 		}
 
 		/* Search for the end of RAM. */
@@ -255,7 +255,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 
 	if (dp8390_config(dsc, media, nmedia, defmedia)) {
 		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
-		return;
+		return (1);
 	}
 
 	/*
@@ -264,6 +264,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	 */
 	dsc->mem_ring =
 	    dsc->mem_start + ((dsc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+	return (0);
 }
 
 /*
@@ -738,5 +739,6 @@ ne2000_detach(sc, flags)
 	struct ne2000_softc *sc;
 	int flags;
 {
-	return dp8390_detach(&sc->sc_dp8390, flags);
+
+	return (dp8390_detach(&sc->sc_dp8390, flags));
 }
