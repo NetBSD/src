@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.9 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.10 1999/01/19 23:39:56 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -230,7 +230,7 @@ ip_t *ip;
 
 		bo = ip->ip_len;
 		ip->ip_len = htons(bo);
-# if !SOLARIS	/* 4.4BSD converts this ip_input.c, but I don't in solaris.c */
+# if !SOLARIS && !defined(__NetBSD__)	/* 4.4BSD converts this ip_input.c, but I don't in solaris.c */
 		bo = ip->ip_id;
 		ip->ip_id = htons(bo);
 # endif

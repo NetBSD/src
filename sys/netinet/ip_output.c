@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.55 1999/01/11 22:35:06 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.56 1999/01/19 23:39:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ ip_output(m0, va_alist)
 		ipstat.ips_localout++;
 	} else {
 		hlen = ip->ip_hl << 2;
-		HTONS(ip->ip_id);
 	}
 	/*
 	 * Route packet.
