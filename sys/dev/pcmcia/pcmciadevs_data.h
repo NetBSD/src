@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.87 2000/04/12 21:13:12 scw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.88 2000/04/17 12:01:21 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp 
+ *	NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp 
  */
 
 /*-
@@ -337,6 +337,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Matsushita Electric Industrial Co.",
 	    "Panasonic 4X CD-ROM Interface Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC003,
+	    PCMCIA_CIS_PANASONIC_KXLC003,
+	    0,
+	    "Matsushita Electric Industrial Co.",
+	    "Panasonic 8X CD-ROM Interface Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
