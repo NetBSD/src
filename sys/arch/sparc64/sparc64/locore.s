@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.183 2003/11/24 20:41:15 cdi Exp $	*/
+/*	$NetBSD: locore.s,v 1.184 2003/11/25 05:14:58 cdi Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -104,19 +104,13 @@
 #define	TF_L	TF_LOCAL
 #define	TF_I	TF_IN
 
-	
 #undef	CURLWP
 #undef	CPCB
 #undef	FPLWP
-#ifndef MULTIPROCESSOR
-#define	CURLWP	_C_LABEL(curlwp)
-#define CPCB	_C_LABEL(cpcb)
-#define	FPLWP	_C_LABEL(fplwp)
-#else
+
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
 #define CPCB	(CPUINFO_VA+CI_CPCB)
 #define	FPLWP	(CPUINFO_VA+CI_FPLWP)
-#endif
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
@@ -7487,6 +7481,7 @@ ENTRY(switchexit)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
 #endif
+
 	 wrpr	%g0, PIL_SCHED, %pil		! Set splsched()
 
 	/*
@@ -7541,6 +7536,7 @@ ENTRY(switchexit)
 	stxa	%g0, [%o0] ASI_DMMU		! Clear out our context
 	membar	#Sync
 	/* FALLTHROUGH */
+
 /*
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.

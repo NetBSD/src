@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.158 2003/11/25 05:14:58 cdi Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2003/11/25 05:14:58 cdi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -803,7 +803,7 @@ dumpsys()
 	extern struct mem_region *mem;
 
 	/* copy registers to memory */
-	snapshot(cpcb);
+	snapshot(curpcb);
 	stackdump();
 
 	if (dumpdev == NODEV)
