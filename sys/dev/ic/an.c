@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.15 2001/06/21 12:49:06 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.16 2001/06/28 10:34:17 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -384,7 +384,8 @@ an_power(int why, void *arg)
 		an_stop(ifp, 1);
 		break;
 	case PWR_RESUME:
-		an_init(ifp);
+		if (ifp->if_flags & IFF_UP)
+			an_init(ifp);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
@@ -485,7 +486,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    (ifp->if_flags & IFF_PROMISC) ? 0xffff : 0);
 		else if (ifp->if_flags & IFF_UP)
 			error = an_init(ifp);
-		else if (sc->sc_enabled && !(ifp->if_flags & IFF_UP))
+		else if (sc->sc_enabled)
 			an_stop(ifp, 1);
 		sc->an_if_flags = ifp->if_flags;
 		break;
