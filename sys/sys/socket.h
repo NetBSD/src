@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.38 1998/09/05 19:03:25 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.39 1998/11/09 04:01:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -396,7 +396,7 @@ __END_DECLS
 #  include "opt_compat_hpux.h"
 # endif
 # if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD)
+     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_ULTRIX)
 #  define COMPAT_OLDSOCK
 #  define MSG_COMPAT	0x8000
 # endif
