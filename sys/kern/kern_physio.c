@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.27 1996/06/13 22:30:18 pk Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -168,7 +168,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			p->p_holdcnt++;
+			PHOLD(p);
 			vslock(bp->b_data, todo);
 			vmapbuf(bp, todo);
 
@@ -201,7 +201,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			vunmapbuf(bp, todo);
 			vsunlock(bp->b_data, todo);
-			p->p_holdcnt--;
+			PRELE(p);
 
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)
