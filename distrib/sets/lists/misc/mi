@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2000/02/08 14:01:49 tron Exp $
+# $NetBSD: mi,v 1.27 2000/02/08 16:54:41 tron Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -259,6 +259,7 @@
 ./usr/share/examples/usermgmt/.cshrc
 ./usr/share/examples/usermgmt/.login
 ./usr/share/examples/usermgmt/.profile
+./usr/share/sendmail/LICENSE
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
