@@ -1,0 +1,27 @@
+This menu provides access to various network configuration functions.
+
+Show or configure network adapters:
+This menu allows you to modify or configure any network adapters (NIC cards)
+that might be present on your machine.
+
+Modify the hosts file:
+This menu allows you to modify your /etc/hosts file.  You can add, delete or
+change entries located in this file.
+
+Show or configure basic routing:
+This menu allows you to view your current routing table, and set your
+default route.
+
+Modify this machine's hostname:
+Change or initially set your hostname.
+
+Modify NFS exported filesystems:
+This menu allows you to delete lines (unexport filesystems) in your
+/etc/exports file.  It will also allow you to add new filesystems to the
+export list, or modify parameters for existing ones.
+
+Setup or Configure NIS/YP:
+This menu allows you to set the domainname, or configure this machine as a
+NIS master, slave or client.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:25 garbled Exp $

@@ -1,0 +1,108 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:34 garbled Exp $
+
+IFFILE="/etc/ifconfig.$1"
+MTU=`echo "$12" | sed -e 's/^0*//'`
+IFS=" "
+ALIASES=`cat /etc/ifconfig.$1 | grep alias`
+unset IFS
+
+if [ "$2" = "boot" -o "$2" = "both" ]; then
+	echo -n "inet $3" > $IFFILE
+	if [ ! -z $4 ]; then
+		echo -n " netmask $4" >> $IFFILE
+	fi
+	if [ ! -z $5 ]; then
+		echo -n " broadcast $5" >> $IFFILE
+	fi
+	echo >> $IFFILE
+	if [ ! -z $6 ]; then
+		echo -n "media $6" >> $IFFILE
+	fi
+	if [ ! -z $7 ]; then
+		echo -n " mediaopt $7" >> $IFFILE
+	fi
+	echo >> $IFFILE
+	if [ ! -z $8 ]; then
+		echo -n "inet6 $8" >> $IFFILE
+	fi
+	if [ ! -z $9 ]; then
+		echo -n " prefixlen $9" >> $IFFILE
+	fi
+	echo >> $IFFILE
+	if [ ! -z $10 ]; then
+		echo -n "nwid $10" >> $IFFILE
+	fi
+	if [ ! -z $11 ]; then
+		LINK=`echo "$11" | sed -e 's/,/ /'`
+		echo -n " $LINK" >> $IFFILE
+	fi
+	ifconfig -m $1 | grep 'Ethernet' >/dev/null
+	if [ "$?" != "0" -o "$MTU" != "1500" ]; then 
+		if [ ! -z $MTU ]; then
+			echo -n " mtu $MTU" >> $IFFILE
+		fi
+	fi
+	if [ ! -z $13 -a $13 -ne 0 ]; then
+		echo -n " metric $13" >> $IFFILE
+	fi
+	echo >> $IFFILE
+	echo "$ALIASES" >> $IFFILE
+	IFS=" "
+	IFCON=`cat $IFFILE | sed -e 's/^$//' | sed -e 's/^ *//'`
+	echo "$IFCON" > $IFFILE
+	chown root:wheel $IFFILE
+	chmod 644 $IFFILE
+	echo "Modifications have been written to $IFFILE"
+	unset $IFS
+	echo
+	echo "$IFCON"
+fi
+
+if [ "$2" = "both" ]; then
+	(while read args; do
+		if [ -n "`eval echo '$args'`" ]; then
+			ifconfig $1 $args
+		fi
+	done) < $IFFILE
+fi
+
+if [ "$2" = "now" ]; then
+	NET=`echo -n "$1 inet $3"`
+	if [ ! -z $4 ]; then
+		NET=`echo -n " $NET netmask $4"`
+	fi
+	if [ ! -z $5 ]; then
+		NET=`echo -n " $NET broadcast $5"`
+	fi
+	if [ ! -z $6 ]; then
+		NET=`echo -n " $NET media $6"`
+	fi
+	if [ ! -z $7 ]; then
+		NET=`echo -n " $NET mediaopt $7"`
+	fi
+	if [ ! -z $8 ]; then
+		NET=`echo -n " $NET inet6 $8"`
+	fi
+	if [ ! -z $9 ]; then
+		NET=`echo -n " $NET prefixlen $9"`
+	fi
+	if [ ! -z $10 ]; then
+		NET=`echo -n " $NET nwid $10"`
+	fi
+	if [ ! -z $11 ]; then
+		LINK=`echo "$11" | sed -e 's/,/ /'`
+		NET=`echo -n " $NET $LINK"`
+	fi
+	ifconfig -m $1 | grep 'Ethernet' >/dev/null
+	if [ "$?" != "0" -o "$MTU" != "1500" ]; then 
+		if [ ! -z $MTU ]; then
+			NET=`echo -n " $NET mtu $MTU"`
+		fi
+	fi
+	if [ ! -z $13 -a $13 -ne 0 ]; then
+		NET=`echo -n " $NET metric $13"`
+	fi
+	ifconfig $NET
+	echo "Modifications have been made to $1"
+fi

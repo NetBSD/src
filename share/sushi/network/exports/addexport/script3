@@ -1,0 +1,13 @@
+#!/bin/sh
+# $NetBSD: script3,v 1.1 2001/04/25 03:43:27 garbled Exp $
+
+MAPROOT=`grep "$1 " /etc/exports | grep -- '-maproot'`
+if [ $? != 0 ]; then
+	cut -f 1 -d ':' /etc/passwd
+else
+	MAPROOT=`echo $MAPROOT | sed -e 's/.*-maproot=\(.*\) *.*/\1/'`
+	USER=`echo $MAPROOT | cut -f 1 -d ':'`
+	USER=`id -p $USER | grep uid | awk '{print $2}'`
+	echo $USER
+	cut -f 1 -d ':' /etc/passwd | grep -v "$USER$"
+fi

@@ -1,0 +1,5 @@
+Simply choose the exported filesystem that you no longer wish to export
+from your machine, and hit enter.  The filesystem will be deleted from
+your /etc/exports file permanently.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:28 garbled Exp $

@@ -1,0 +1,3 @@
+req-entry:40	Hostname
+req-ipv4:	IPV4 address
+entry:40	Optional Aliases (space separated)

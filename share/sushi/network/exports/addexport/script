@@ -1,0 +1,53 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:26 garbled Exp $
+
+IFS=" "
+EXPORTS=`cat /etc/exports`
+echo $EXPORTS | grep -v "^$1" | grep -v '^$' >/etc/exports
+LINE="$1"
+
+if [ "$2" = "YES" ]; then
+	LINE=`echo "$LINE -alldirs"`
+fi
+if [ "$3" = "YES" ]; then
+	LINE=`echo "$LINE -maproot=$4"`
+	if [ "$5" != " " ]; then
+		GROUPS=`echo "$5" | sed -e 's/,/:/g'`
+		LINE=`echo "$LINE"":$GROUPS"`
+	fi
+fi
+if [ "$6" = "YES" ]; then
+	LINE=`echo "$LINE -ro"`
+fi
+if [ "$7" = "YES" ]; then
+	LINE=`echo "$LINE -noresvport"`
+fi
+if [ "$8" = "YES" ]; then
+	LINE=`echo "$LINE -noresvmnt"`
+fi
+if [ "$9" != " " ]; then
+	LINE=`echo "$LINE -network $9"`
+fi
+if [ "$10" != " " ]; then
+	LINE=`echo "$LINE -mask $10"`
+fi
+if [ "$11" != " " ]; then
+	LINE=`echo "$LINE $11"`
+fi
+
+echo $LINE >>/etc/exports
+
+if [ "$?" = "0" ]; then
+	echo "Added or modified $1 in /etc/exports"
+else
+	echo "Failed to modify /etc/exports"
+fi
+
+if [ "$12" = "YES" ]; then
+	if [ -f "/var/run/mountd.pid" ]; then
+		kill -HUP `cat /var/run/mountd.pid`
+		echo "Restarted mountd."
+	else
+		echo "Mountd not running, cannot refresh."
+	fi
+fi

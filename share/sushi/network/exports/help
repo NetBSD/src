@@ -1,0 +1,9 @@
+Un-export currently exported filesystems:
+This function allows you to remove filesystems from your /etc/exports
+file.
+
+Add or change exported filesystems:
+This function allows you to edit existing exported filesystems in your
+/etc/exports file, or add new ones.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:26 garbled Exp $

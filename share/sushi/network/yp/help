@@ -1,0 +1,11 @@
+Modify the domainname:
+Modify or set this machine's NIS domainname.
+
+You may also:
+Initialize this machine as a YP/NIS client
+Initialize this machine as a YP/NIS slave
+Initialize this machine as a YP/NIS master
+
+by using the functions provided.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:36 garbled Exp $

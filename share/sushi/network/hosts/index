@@ -1,0 +1,7 @@
+#$NetBSD: index,v 1.1 2001/04/25 03:43:30 garbled Exp $
+addhost		addhost		Add an IPV4 host entry
+addv6host	addv6host	Add an IPV6 host entry
+modhost		modhost		Modify an IPV4 host entry
+modv6host	modv6host	Modify an IPV6 host entry
+delhost		delhost		Delete host entries
+

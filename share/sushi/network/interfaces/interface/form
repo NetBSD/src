@@ -1,0 +1,15 @@
+# $NetBSD: form,v 1.1 2001/04/25 03:43:33 garbled Exp $
+noedit:@@@1@@@				Changing interface:
+list:both,now,boot			Modify interface at boot-time, now, or both?
+req-ipv4script:script2,4,@@@1@@@	Interface IPV4 Address
+ipv4script:script2,n,@@@1@@@		Interface IPV4 Netmask
+ipv4script:script2,b,@@@1@@@		Interface IPV4 Broadcast Address
+script:script2,m,@@@1@@@		Media Type
+script:script2,o,@@@1@@@		Media Options
+ipv6script:script2,6,@@@1@@@		Interface IPV6 Address
+iscript:3,0,128,script2,pre,@@@1@@@	Interface IPV6 Prefix Length(netmask)
+escript:32,script2,i,@@@1@@@		Interface Network-ID
+#escript:15,script2,k,@@@1@@@		Interface Network-Key
+multilist:link0,link1,link2		Interface link options
+iscript:5,1,99999,script2,mtu,@@@1@@@	Interface MTU
+iscript:2,0,99,script2,met,@@@1@@@	Interface Metric

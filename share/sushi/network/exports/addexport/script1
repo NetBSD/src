@@ -1,0 +1,3 @@
+#!/bin/sh
+# $NetBSD: script1,v 1.1 2001/04/25 03:43:27 garbled Exp $
+df -l | egrep -v '(procfs|kernfs|mfs)' | awk '{print $6}' | grep -v Mounted

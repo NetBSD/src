@@ -1,0 +1,2 @@
+# $NetBSD: preform,v 1.1 2001/04/25 03:43:33 garbled Exp $
+script:script1		Select an interface to operate on:

@@ -1,0 +1,6 @@
+# $NetBSD: index,v 1.1 2001/04/25 03:43:36 garbled Exp $
+domainname	domainname	Modify the domainname
+client		ypclient	Initialize this machine as a YP/NIS client
+slave		yslave		Initialize this machine as a YP/NIS slave
+master		ypmaster	Initialize this machine as a YP/NIS master
+
