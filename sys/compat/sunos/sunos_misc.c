@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.82 1997/10/10 01:47:41 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.83 1997/10/10 22:16:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -481,7 +481,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if (eofflag || (len = buflen - auio.uio_resid) == 0)
+	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.34 1997/10/10 06:25:34 mycroft Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.35 1997/10/10 22:16:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -843,7 +843,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, dent);
 	resid = nbytes;
-	if (eofflag || (len = buflen - auio.uio_resid) == 0)
+	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
