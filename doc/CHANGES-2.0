@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.30 2004/04/02 14:56:29 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.31 2004/04/04 08:26:30 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -322,4 +322,11 @@ usr.bin/fstat/fstat.c				1.66
 	Fix fstat core dumps when some process holds a reference in a Linux
 	ext2fs filesystem.
 	[aymeric, ticket #50]
+
+xsrc/xfree/xc/fonts/util/bdftruncate.pl		1.4
+
+	*shudder* install perl scripts... perhaps we shouldn't, but while we
+	are, may as well give it a "#! /usr/bin/env perl" so it has a chance
+	of working...  unfortunately, this even fixes PR#22578 ;-)
+	[tron, ticket #48]
 
