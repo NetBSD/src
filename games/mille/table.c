@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 1995/03/24 05:02:18 cgd Exp $	*/
+/*	$NetBSD: table.c,v 1.5 1997/10/12 00:54:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1982, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: table.c,v 1.4 1995/03/24 05:02:18 cgd Exp $";
+__RCSID("$NetBSD: table.c,v 1.5 1997/10/12 00:54:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,16 +55,22 @@ static char rcsid[] = "$NetBSD: table.c,v 1.4 1995/03/24 05:02:18 cgd Exp $";
 
 # include	"mille.h"
 
-main() {
+int	main __P((int, char **));
 
-	reg int	i, j, count;
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int	i, j, count;
 
-	printf("   %16s -> %5s %5s %4s %s\n", "Card", "cards", "count", "need", "opposite");
+	printf("   %16s -> %5s %5s %4s %s\n", "Card", "cards", "count",
+	    "need", "opposite");
 	for (i = 0; i < NUM_CARDS - 1; i++) {
 		for (j = 0, count = 0; j < DECK_SZ; j++)
 			if (Deck[j] == i)
 				count++;
-		printf("%2d %16s -> %5d %5d %4d %s\n", i, C_name[i], Numcards[i], count, Numneed[i], C_name[opposite(i)]);
+		printf("%2d %16s -> %5d %5d %4d %s\n", i, C_name[i],
+		    Numcards[i], count, Numneed[i], C_name[opposite(i)]);
 	}
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: end.c,v 1.5 1997/05/23 23:09:36 jtc Exp $	*/
+/*	$NetBSD: end.c,v 1.6 1997/10/12 00:53:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: end.c,v 1.5 1997/05/23 23:09:36 jtc Exp $";
+__RCSID("$NetBSD: end.c,v 1.6 1997/10/12 00:53:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,10 +52,11 @@ static char rcsid[] = "$NetBSD: end.c,v 1.5 1997/05/23 23:09:36 jtc Exp $";
  *	print out the score as if it was final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
+void
 finalscore(pp)
-register PLAY	*pp;
+	PLAY	*pp;
 {
-	register int	temp, tot, num;
+	int	temp, tot, num;
 
 	if (pp->was_finished == Finished)
 		return;
@@ -151,4 +153,3 @@ undoex() {
 	}
 }
 # endif
-
