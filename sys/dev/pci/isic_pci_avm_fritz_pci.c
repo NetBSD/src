@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.3 2001/03/24 12:40:30 martin Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.4 2001/07/07 16:37:38 thorpej Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -1020,7 +1020,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 			if((chan->in_len + fifo_data_len) <= BCH_MAX_DATALEN)
 			{
 			   	/* OK to copy the data */
-				bcopy(scrbuf, chan->in_cbptr, fifo_data_len);
+				memcpy(chan->in_cbptr, scrbuf, fifo_data_len);
 				chan->in_cbptr += fifo_data_len;
 				chan->in_len += fifo_data_len;
 
@@ -1110,7 +1110,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 					  chan->in_cbptr = chan->in_mbuf->m_data;
 	
 					  /* OK to copy the data */
-					  bcopy(scrbuf, chan->in_cbptr, fifo_data_len);
+					  memcpy(chan->in_cbptr, scrbuf, fifo_data_len);
 
 					  chan->in_cbptr += fifo_data_len;
 					  chan->in_len = fifo_data_len;

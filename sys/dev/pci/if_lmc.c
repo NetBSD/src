@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.10 2001/06/13 10:46:04 wiz Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.11 2001/07/07 16:37:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -373,7 +373,7 @@ lmc_read_macaddr(lmc_softc_t * const sc)
 {
 	lmc_srom_read(sc);
 
-	bcopy(sc->lmc_rombuf + 20, sc->lmc_enaddr, 6);
+	memcpy(sc->lmc_enaddr, sc->lmc_rombuf + 20, 6);
 
 	return 0;
 }

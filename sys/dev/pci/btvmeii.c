@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.2 2000/03/12 11:23:06 drochner Exp $ */
+/* $NetBSD: btvmeii.c,v 1.3 2001/07/07 16:37:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -203,7 +203,7 @@ b3_2706_attach(parent, self, aux)
 	secbus = PPB_BUSINFO_SECONDARY(pci_conf_read(pc, pa->pa_tag,
 						     PPB_REG_BUSINFO));
 
-	bcopy(pa, &aa, sizeof(struct pci_attach_args));
+	memcpy(&aa, pa, sizeof(struct pci_attach_args));
 	aa.pa_device = 4;
 	aa.pa_function = 0;
 	aa.pa_tag = pci_make_tag(pc, secbus, 4, 0);
