@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.14 2004/01/18 00:54:55 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.15 2004/01/18 12:18:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.14 2004/01/18 00:54:55 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.15 2004/01/18 12:18:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -271,7 +271,7 @@ imc_watchdog_disable(void)
 
 	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
-	reg &= IMC_CPUCTRL0_WDOG;
+	reg &= ~(IMC_CPUCTRL0_WDOG);
         bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
 }
 
