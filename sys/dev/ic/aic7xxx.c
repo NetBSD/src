@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.84 2001/11/28 05:45:27 lukem Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.85 2002/01/12 16:03:11 tsutsui Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.84 2001/11/28 05:45:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.85 2002/01/12 16:03:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -810,12 +810,11 @@ ahc_alloc(struct ahc_softc *ahc, bus_space_handle_t sh, bus_space_tag_t st,
 {
 	struct scb_data *scb_data;
 
-	scb_data = malloc(sizeof (struct scb_data), M_DEVBUF, M_NOWAIT);
+	scb_data = malloc(sizeof (struct scb_data), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb_data == NULL) {
 		printf("%s: cannot malloc softc!\n", ahc_name(ahc));
 		return -1;
 	}
-	memset(scb_data, 0, sizeof (struct scb_data));
 	LIST_INIT(&ahc->pending_ccbs);
 	ahc->tag = st;
 	ahc->bsh = sh;
@@ -863,10 +862,9 @@ ahcinitscbdata(struct ahc_softc *ahc)
 	/* Allocate SCB resources */
 	scb_data->scbarray =
 	    (struct scb *)malloc(sizeof(struct scb) * AHC_SCB_MAX,
-				 M_DEVBUF, M_NOWAIT);
+				 M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
-	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
