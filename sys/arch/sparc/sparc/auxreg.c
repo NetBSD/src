@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.17 1996/12/10 23:17:42 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.18 1996/12/11 00:51:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,11 +133,18 @@ unsigned int
 auxregbisc(bis, bic)
 	int bis, bic;
 {
-	register int v, s = splhigh();
+	register int v, s;
 
+	if (auxio_reg == 0)
+		/*
+		 * Not all machines have an `aux' register; devices that
+		 * depend on it should not get configured if it's absent.
+		 */
+		panic("no aux register");
+
+	s = splhigh();
 	v = *AUXIO_REG;
 	*AUXIO_REG = ((v | bis) & ~bic) | AUXIO_MB1;
 	splx(s);
 	return v;
 }
-
