@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.3 (Berkeley) 6/22/90
+#	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	bsd.doc.mk bsd.lib.mk bsd.man.mk bsd.prog.mk bsd.subdir.mk sys.mk
 NOOBJ=	noobj

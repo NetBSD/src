@@ -1,4 +1,4 @@
-#	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
+#	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -20,10 +20,10 @@ BINMODE?=	555
 
 # prefer .s to a .c, add .po, remove stuff not used in the BSD libraries
 .SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .f .y .l .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .out .o .po .s .c .f .y .l .8 .7 .6 .5 .4 .3 .2 .1 .0 .m4
 
 .8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
-	nroff -mandoc ${.IMPSRC} > ${.TARGET}
+	nroff -man ${.IMPSRC} > ${.TARGET}
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 
@@ -48,6 +48,7 @@ BINMODE?=	555
 	@mv a.out ${.TARGET}
 
 MANALL=	${MAN1} ${MAN2} ${MAN3} ${MAN4} ${MAN5} ${MAN6} ${MAN7} ${MAN8}
+manpages: ${MANALL}
 
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
@@ -55,7 +56,10 @@ _LIBS=lib${LIB}.a lib${LIB}_p.a
 _LIBS=lib${LIB}.a
 .endif
 
-all: ${_LIBS} ${MANALL}# llib-l${LIB}.ln
+all: ${_LIBS} # llib-l${LIB}.ln
+.if !defined(NOMAN)
+all: ${MANALL}
+.endif
 
 OBJS+=	${SRCS:R:S/$/.o/g}
 
@@ -77,15 +81,19 @@ llib-l${LIB}.ln: ${SRCS}
 
 .if !target(clean)
 clean:
-	rm -f a.out Errs errs mklog core ${CLEANFILES} ${OBJS} ${POBJS} \
+	rm -f ${OBJS}
+	rm -f ${POBJS}
+	rm -f a.out [Ee]rrs mklog ${CLEANFILES} \
 	    profiled/*.o lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 .endif
 
 .if !target(cleandir)
 cleandir:
-	rm -f a.out Errs errs mklog core ${CLEANFILES} ${OBJS} ${POBJS} \
+	rm -f ${OBJS}
+	rm -f ${POBJS}
+	rm -f a.out [Ee]rrs mklog ${CLEANFILES} \
 	    profiled/*.o lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
-	rm -f ${MANALL} ${.CURDIR}/tags .depend
+	rm -f ${MANALL} .depend
 .endif
 
 .if !target(depend)
@@ -93,7 +101,7 @@ depend: .depend
 .depend: ${SRCS}
 	mkdep ${CFLAGS:M-[ID]*} ${AINC} ${.ALLSRC}
 	@(TMP=/tmp/_depend$$$$; \
-	    sed -e 's/^\([^\.]*\).o:/\1.o \1.po:/' < .depend > $$TMP; \
+	    sed -e 's/^\([^\.]*\).o *:/\1.o \1.po:/' < .depend > $$TMP; \
 	    mv $$TMP .depend)
 .endif
 
@@ -107,10 +115,12 @@ realinstall: beforeinstall
 	install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.if !defined(NOPROFILE)
 	ranlib lib${LIB}_p.a
 	install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
 #	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 #	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .if defined(LINKS) && !empty(LINKS)
@@ -127,7 +137,10 @@ realinstall: beforeinstall
 .endif
 
 install: afterinstall
-afterinstall: realinstall maninstall
+afterinstall: realinstall
+.if !defined(NOMAN)
+afterinstall: maninstall
+.endif
 .endif
 
 .if !target(lint)
@@ -136,8 +149,8 @@ lint:
 
 .if !target(tags)
 tags: ${SRCS}
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:M*.c} | \
-	    sed "s;\${.CURDIR}/;;" > tags
+	-ctags -f /dev/stdout ${.ALLSRC:M*.c} | \
+	    sed "s;\${.CURDIR}/;;" > ${.CURDIR}/tags
 .endif
 
 .include <bsd.man.mk>
