@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2003/03/18 16:40:22 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2003/06/12 08:43:07 scw Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -623,7 +623,10 @@ void bus_space_mallocok(void);
 #define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+/* Allow machine-dependent code to override BUS_DMA_COHERENT */
+#ifndef BUS_DMA_COHERENT
 #define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#endif
 #define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
@@ -658,6 +661,9 @@ typedef struct powerpc_bus_dmamap		*bus_dmamap_t;
 struct powerpc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+
+	/* Private fields. For use by the powerpc bus_dma implementation only */
+	vaddr_t		_ds_vaddr;	/* Virtual address of segment */
 };
 typedef struct powerpc_bus_dma_segment	bus_dma_segment_t;
 
