@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 1998/03/29 21:56:32 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.111 1998/04/01 14:03:26 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -219,8 +219,6 @@ cpu_startup()
 	 * room, so shift it over half a page.
 	 */
 	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
-
-	proc0.p_addr = proc0paddr;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
