@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.20 2003/12/31 00:42:46 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.21 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.20 2003/12/31 00:42:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.21 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -80,7 +80,6 @@ int
 rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		     RF_Config_t *cfgPtr)
 {
-	int     rc;
 
 	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
 	pool_init(&raidPtr->pss_pool, sizeof(RF_ReconParityStripeStatus_t), 0,
@@ -88,12 +87,8 @@ rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	pool_init(&raidPtr->pss_issued_pool,
 		  raidPtr->numCol * sizeof(char), 0,
 		  0, 0, "raidpssissuedpl", NULL);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownPSStatus(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
+
 	pool_sethiwat(&raidPtr->pss_pool, RF_MAX_FREE_PSS);
 	pool_sethiwat(&raidPtr->pss_issued_pool, RF_MAX_FREE_PSS);
 	pool_prime(&raidPtr->pss_pool, RF_PSS_INITIAL);

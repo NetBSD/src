@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.16 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.16 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -55,7 +55,7 @@ rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 	FREE(ent, M_RAIDFRAME);
 }
 
-int 
+void
 _rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
 		   void *arg, char *file, int line)
 {
@@ -68,16 +68,13 @@ _rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
 	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
 		M_RAIDFRAME, M_WAITOK); */
 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
-					   M_RAIDFRAME, M_NOWAIT);
-	if (ent == NULL)
-		return (ENOMEM);
+					   M_RAIDFRAME, M_WAITOK);
 	ent->cleanup = cleanup;
 	ent->arg = arg;
 	ent->file = file;
 	ent->line = line;
 	ent->next = *listp;
 	*listp = ent;
-	return (0);
 }
 
 int 

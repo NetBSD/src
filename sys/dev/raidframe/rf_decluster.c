@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.16 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.16 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -308,12 +308,8 @@ rf_ConfigureDeclusteredDS(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	rc = rf_ConfigureDeclustered(listp, raidPtr, cfgPtr);
 	if (rc)
 		return (rc);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownDeclusteredDS, raidPtr);
-	if (rc) {
-		RF_ERRORMSG1("Got %d adding shutdown event for DeclusteredDS\n", rc);
-		rf_ShutdownDeclusteredDS(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownDeclusteredDS, raidPtr);
+
 	return (0);
 }
 
