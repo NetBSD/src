@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 1998/02/24 05:36:03 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.12 1999/03/31 00:44:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,12 @@
 
 /* md.h -- Machine specific definitions for the i386 */
 
+
+#include <machine/cpu.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 /* i386 uses the mbr code. */
 #include "mbr.h"
@@ -125,6 +131,12 @@ EXTERN	char *disk_names[]
  */
 EXTERN	char *fdtype INIT("msdos");
 
+extern struct disklist *disklist;
+extern struct nativedisk_info *nativedisk;
+extern struct biosdisk_info *biosdisk;
+
+#define _PATH_MBR	"/usr/mdec/mbr"
+#define _PATH_BOOTSEL	"/usr/mdec/mbr.bootsel"
 
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.16 1999/03/19 15:44:59 he Exp $
+#	$NetBSD: TODO,v 1.17 1999/03/31 00:44:48 fvdl Exp $
 
 Things to do ....  in no specific order.
 
@@ -7,9 +7,6 @@ Things to do ....  in no specific order.
 	   is a directory and e.g. i386 is a symlink, whereas in 1.4
 	   the reverse is true.  Without this fix, extraction of base
 	   and comp will fail.
-
-	-  rework the fdisk/MBR code to be able to get the correct
-	   MBR geometry with much better probability.
 
 	-- On error messages, do something to allow the user to
 	   see any errors from anything run by run_prog().

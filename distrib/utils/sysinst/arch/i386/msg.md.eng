@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.8 1998/11/11 17:58:42 bouyer Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.9 1999/03/31 00:44:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,38 +65,6 @@ the the real geometry.  The two geometries are:
 
 disklabel: %d cylinders, %d heads, %d sectors
 real geom: %d cylinders, %d heads, %d sectors
-}
-
-message nobiosgeom
-{It appears that your disk, %s, did not have a valid Master Boot
-Record (MBR). This program gets the BIOS geometry of your disk by
-reading the MBR, so the BIOS geometry of your disk could not
-be determined in this case.  Your options are:
-    -- Abort the install. You can determine the actual BIOS
-       geometry in your BIOS setup and then come back and
-       enter the values. Or you can use another setup program to
-       initialize the MBR first.
-    -- Enter the BIOS geometry values yourself. Sysinst will initialize
-       the MBR for you.
-
-WARNING: Entering a new geometry will cause this program to initialize
-your master boot record (MBR) and destroy any boot program you may
-have installed.
-
-}
-
-message diagcyl
-{Some old BIOSs or old diagnostic programs may use the last cylinder of
-the disk for test purposes. This should no longer be the case with
-modern systems. If you have an old system and are uncertain if it
-may do this, you can exclude the last cylinder of your harddisk
-from use.
-
-If you exclude the last cylinder, both the real and BIOS geometry will
-be adjusted, you do not need to reenter them.
-
-Do you wish to exclude the last cylinder?
-
 }
 
 message part_head
@@ -209,3 +177,16 @@ message cyl1024
 ends beyond the 1024 BIOS cylinder boundary. To be sure that the system
 can be booted at all times, the entire root partition must lie below that
 limit. You can either: }
+
+message onebiosmatch
+{This disk matches the following BIOS disk:
+
+BIOS #  cylinders  heads  sectors\n}
+
+message biosmultmatch
+{This disk matches the following BIOS disks:
+
+   BIOS #  cylinders  heads  sectors\n}
+
+message pickdisk
+{Choose disk: }

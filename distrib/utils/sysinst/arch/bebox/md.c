@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1999/03/14 14:19:06 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.7 1999/03/31 00:44:49 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,73 +49,28 @@
 int mbr_present;
 int c1024_resp;
 
+char mbr[512];
+
 /* prototypes */
 
 
 int md_get_info()
 {
 
-	get_fdisk_info();
-
-	/* Check fdisk information */
-	if (part[0][ID] == 0 && part[1][ID] == 0 && part[2][ID] == 0 &&
-	    part[3][ID] == 0) {
-		mbr_present = 0;
-		process_menu(MENU_nobiosgeom);
-	} else {
-		mbr_present = 1;
-		msg_display(MSG_confirmbiosgeom);
-		process_menu(MENU_confirmbiosgeom);
-	}
-
-	/* Ask about disk type ... */
-	if (strncmp(disk->dd_name, "wd", 2) == 0) {
-		process_menu(MENU_wdtype);
-		disktype = "ST506";
-		/* Check against disk geometry. */
-		if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
-		    || disk->dd_sec != dlsec)
-			process_menu (MENU_dlgeom);
-	} else {
-		disktype = "SCSI";
-		if (disk->dd_cyl * disk->dd_head * disk->dd_sec !=
-		    disk->dd_totsec)
-		{
-			if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
-			    || disk->dd_sec != dlsec)
-				process_menu (MENU_scsigeom1);
-			else
-				process_menu (MENU_scsigeom2);
-		}
-	}
-
-	/* Compute the full sizes ... */
-	dlcylsize = dlhead*dlsec;
-	dlsize = dlcyl*dlcylsize;
-	bcylsize = bhead*bsec;
-	bsize = bcyl*bcylsize;
-
-	msg_display(MSG_diagcyl);
-	process_menu(MENU_noyes);
-	if (yesno) {
-		dlcyl--;
-		dlsize -= dlcylsize;
-		if (dlsize < bsize)
-			bcyl = dlsize / bcylsize;
-	}
+	read_mbr(diskdev, mbr, sizeof mbr);
+	md_bios_info(diskdev);
 	return edit_mbr();
 }
 
 void md_pre_disklabel()
 {
-	/* Fdisk the disk! */
 	printf ("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	set_fdisk_info ();
+	write_mbr(diskdev, mbr, sizeof mbr);
 }
 
-void md_post_disklabel (void)
+void md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
@@ -124,7 +79,7 @@ void md_post_disklabel (void)
 	}
 }
 
-void md_post_newfs (void)
+void md_post_newfs(void)
 {
 	/* boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
@@ -178,21 +133,21 @@ editlab:
 	emptylabel(bsdlabel);
 
 	/* Partitions C and D are predefined. */
-	bsdlabel[C][D_FSTYPE] = T_UNUSED;
-	bsdlabel[C][D_OFFSET] = ptstart;
-	bsdlabel[C][D_SIZE] = fsptsize;
+	bsdlabel[C].pi_fstype = FS_UNUSED;
+	bsdlabel[C].pi_offset = ptstart;
+	bsdlabel[C].pi_size = fsptsize;
 	
-	bsdlabel[D][D_FSTYPE] = T_UNUSED;
-	bsdlabel[D][D_OFFSET] = 0;
-	bsdlabel[D][D_SIZE] = fsdsize;
+	bsdlabel[D].pi_fstype = FS_UNUSED;
+	bsdlabel[D].pi_offset = 0;
+	bsdlabel[D].pi_size = fsdsize;
 
 	/* Standard fstypes */
-	bsdlabel[A][D_FSTYPE] = T_42BSD;
-	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	bsdlabel[E][D_FSTYPE] = T_UNUSED;
-	bsdlabel[F][D_FSTYPE] = T_UNUSED;
-	bsdlabel[G][D_FSTYPE] = T_UNUSED;
-	bsdlabel[H][D_FSTYPE] = T_UNUSED;
+	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[B].pi_fstype = FS_SWAP;
+	bsdlabel[E].pi_fstype = FS_UNUSED;
+	bsdlabel[F].pi_fstype = FS_UNUSED;
+	bsdlabel[G].pi_fstype = FS_UNUSED;
+	bsdlabel[H].pi_fstype = FS_UNUSED;
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
@@ -203,10 +158,10 @@ editlab:
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 
@@ -215,17 +170,17 @@ editlab:
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 
 		/* /usr */
 		partsize = fsptsize - (partstart - ptstart);
-		bsdlabel[E][D_FSTYPE] = T_42BSD;
-		bsdlabel[E][D_OFFSET] = partstart;
-		bsdlabel[E][D_SIZE] = partsize;
-		bsdlabel[E][D_BSIZE] = 8192;
-		bsdlabel[E][D_FSIZE] = 1024;
+		bsdlabel[E].pi_fstype = FS_BSDFFS;
+		bsdlabel[E].pi_offset = partstart;
+		bsdlabel[E].pi_size = partsize;
+		bsdlabel[E].pi_bsize = 8192;
+		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
 
 		break;
@@ -243,10 +198,10 @@ editlab:
 		msg_prompt (MSG_askfsroot, isize, isize, 20,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 		remain -= partsize;
@@ -260,8 +215,8 @@ editlab:
 		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 		remain -= partsize;
 		
@@ -279,11 +234,11 @@ editlab:
 			if (partsize > 0) {
 				if (remain - partsize < sizemult)
 					partsize = remain;
-				bsdlabel[part][D_FSTYPE] = T_42BSD;
-				bsdlabel[part][D_OFFSET] = partstart;
-				bsdlabel[part][D_SIZE] = partsize;
-				bsdlabel[part][D_BSIZE] = 8192;
-				bsdlabel[part][D_FSIZE] = 1024;
+				bsdlabel[part].pi_fstype = FS_BSDFFS;
+				bsdlabel[part].pi_offset = partstart;
+				bsdlabel[part].pi_size = partsize;
+				bsdlabel[part].pi_bsize = 8192;
+				bsdlabel[part].pi_fsize = 1024;
 				if (part == E)
 					strcpy (fsmount[E], "/usr");
 				msg_prompt_add (MSG_mountpoint, fsmount[part],
@@ -306,7 +261,7 @@ editlab:
 		return 0;
 	}
 
-	if ((bsdlabel[A][D_OFFSET] + bsdlabel[A][D_SIZE]) / bcylsize > 1024) {
+	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_bsize) / bcylsize > 1024) {
 		process_menu(MENU_cyl1024);
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
@@ -342,13 +297,13 @@ editlab:
 	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	for (i=0; i<8; i++) {
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
-			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
+			       'a'+i, fstype[bsdlabel[i].pi_fstype]);
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i][D_BSIZE],
-				       'a'+i, bsdlabel[i][D_FSIZE]);
+				       'a'+i, bsdlabel[i].pi_bsize,
+				       'a'+i, bsdlabel[i].pi_fsize);
 		if (i < 7)
 			(void)fprintf (f, "\\\n");
 		else

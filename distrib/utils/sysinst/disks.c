@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.22 1999/03/14 14:19:05 fvdl Exp $ */
+/*	$NetBSD: disks.c,v 1.23 1999/03/31 00:44:48 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,6 @@
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <sys/disklabel.h>
 
 #include "defs.h"
 #include "md.h"
@@ -84,8 +83,8 @@ static void get_disks(void)
 
 	while (*xd != NULL) {
 		for (i=0; i< MAX_DISKS; i++) {
-			snprintf (d_name, SSTRSIZE, "%s%d", *xd, i);
-			if (get_geom (d_name, &l) && numdisks < MAX_DISKS) {
+			snprintf(d_name, SSTRSIZE, "%s%d", *xd, i);
+			if (get_geom(d_name, &l) && numdisks < MAX_DISKS) {
 				strncpy (disks[numdisks].dd_name,
 					 d_name, SSTRSIZE);
 				strncat (disknames, d_name,
@@ -105,7 +104,7 @@ static void get_disks(void)
 }
 			
 
-int find_disks (void)
+int find_disks(void)
 {
 	char *tp;
 	char defname[STRSIZE];
@@ -124,30 +123,30 @@ int find_disks (void)
 
 	if (numdisks == 0) {
 		/* No disks found! */
-		msg_display (MSG_nodisk);
-		process_menu (MENU_ok);
+		msg_display(MSG_nodisk);
+		process_menu(MENU_ok);
 		/*endwin();*/
 		return -1;
 	} else if (numdisks == 1) {
 		/* One disk found! */
 		/* Remove that space we added. */
 		disknames[strlen(disknames)-1] = 0;
-		msg_display (MSG_onedisk, disknames, doingwhat);
-		process_menu (MENU_ok);
-		strcpy (diskdev, disknames);
+		msg_display(MSG_onedisk, disknames, doingwhat);
+		process_menu(MENU_ok);
+		strcpy(diskdev, disknames);
 	} else {
 		/* Multiple disks found! */
-		strcpy (defname, disknames);
+		strcpy(defname, disknames);
 		tp = defname;
 		strsep(&tp, " ");
-		msg_prompt (MSG_askdisk, defname,  diskdev, 10, disknames);
+		msg_prompt(MSG_askdisk, defname,  diskdev, 10, disknames);
 		tp = diskdev;
 		strsep(&tp, " ");
 		diskdev[strlen(diskdev)+1] = 0;
 		diskdev[strlen(diskdev)] = ' ';
 		while (!ISDISKSTART(*diskdev) ||
 		       strstr(disknames, diskdev) == NULL) {
-			msg_prompt (MSG_badname, defname,  diskdev, 10,
+			msg_prompt(MSG_badname, defname,  diskdev, 10,
 				    disknames);
 			tp = diskdev;
 			strsep(&tp, " ");
@@ -160,19 +159,24 @@ int find_disks (void)
 	}
 	
 	/* Set disk. */
-	for (i=0; i<numdisks; i++)
+	for (i = 0; i < numdisks; i++)
 		if (strcmp(diskdev, disks[i].dd_name) == 0)
 			disk = &disks[i];
 
 	sectorsize = disk->dd_secsize;
 	if (disk->dd_totsec == 0)
 		disk->dd_totsec = disk->dd_cyl * disk->dd_head * disk->dd_sec;
+	dlcyl = disk->dd_cyl;
+	dlhead = disk->dd_head;
+	dlsec = disk->dd_sec;
+	dlsize = disk->dd_totsec;
+	dlcylsize = dlhead * dlsec;
 
 	return numdisks;
 }
 
 
-void disp_cur_fspart (int disp, int showall)
+void disp_cur_fspart(int disp, int showall)
 {
 	int i;
 	int start, stop;
@@ -187,88 +191,29 @@ void disp_cur_fspart (int disp, int showall)
 	}
 
 	msg_display_add (MSG_fspart_head);
-	for (i=start; i<stop; i++) {
-		if (showall || bsdlabel[i][D_SIZE] > 0) {
-			poffset = bsdlabel[i][D_OFFSET] / sizemult;
-			psize = bsdlabel[i][D_SIZE] / sizemult;
+	for (i = start; i < stop; i++) {
+		if (showall || bsdlabel[i].pi_size > 0) {
+			poffset = bsdlabel[i].pi_offset / sizemult;
+			psize = bsdlabel[i].pi_size / sizemult;
 			if (psize == 0)
 				pend = 0;
 			else
-				pend = (bsdlabel[i][D_OFFSET] +
-				bsdlabel[i][D_SIZE]) / sizemult - 1;
-			msg_printf_add (" %c: %9d %9d %9d %6s",
+				pend = (bsdlabel[i].pi_offset +
+				bsdlabel[i].pi_size) / sizemult - 1;
+			msg_printf_add(" %c: %9d %9d %9d %6s",
 					'a'+i, psize, poffset, pend,
-					fstype[bsdlabel[i][D_FSTYPE]]);
-			if (bsdlabel[i][D_FSTYPE] == T_42BSD)
-				msg_printf_add ("%6d%6d %s",
-						bsdlabel[i][D_BSIZE],
-						bsdlabel[i][D_FSIZE],
+					fstypenames[bsdlabel[i].pi_fstype]);
+			if (bsdlabel[i].pi_fstype == FS_BSDFFS)
+				msg_printf_add("%6d%6d %s",
+						bsdlabel[i].pi_bsize,
+						bsdlabel[i].pi_fsize,
 						fsmount[i]);
-			else if (bsdlabel[i][D_FSTYPE] == T_MSDOS)
-				msg_printf_add ("%12s %s", "", fsmount[i]);
+			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
+				msg_printf_add("%12s %s", "", fsmount[i]);
 			msg_printf_add("\n");
 		}
 	}
 	msg_printf_add("\n");
-}
-
-
-/* choose a fake geometry. */
-void scsi_fake (void)
-{
-	long fact[20];
-	int  numf;
-
-	struct disk_geom geom[5] = {{0}};
-	int i, j;
-	int sects = disk->dd_totsec;
-	int head, sec;
-
-	int stop = disk->dd_cyl * disk->dd_head * disk->dd_sec;
-
-	i=0;
-	while (i < 4 && sects > stop) {
-	       factor (sects, fact, 20, &numf);
-	       if (numf >= 3) {
-		      head =  fact[0];
-		      j = 1;
-		      while (j < numf-2 && head*fact[j] < 50)
-			      head *= fact[j++];
-		      sec = fact[j++];
-		      while (j < numf-1 && sec*fact[j] < 500)
-			      sec *= fact[j++];
-		      if (head >= 5  &&
-			  sec >= 50) {
-			      geom[i].dg_cyl = sects / (head*sec);
-			      geom[i].dg_head = head;
-			      geom[i].dg_sec = sec;
-			      geom[i].dg_totsec = head * sec * geom[i].dg_cyl;
-			      i++;
-		      }
-	       }
-	       sects--;
-	}
-	while (i < 5) {
-		geom[i] = disk->dg;
-		geom[i].dg_totsec = stop;
-		i++;
-	}
-	
-	msg_display (MSG_scsi_fake, disk->dd_totsec,
-		     geom[0].dg_cyl, geom[0].dg_head, geom[0].dg_sec,
-			geom[0].dg_totsec,
-		     geom[1].dg_cyl, geom[1].dg_head, geom[1].dg_sec,
-			geom[1].dg_totsec,
-		     geom[2].dg_cyl, geom[2].dg_head, geom[2].dg_sec,
-			geom[2].dg_totsec,
-		     geom[3].dg_cyl, geom[3].dg_head, geom[3].dg_sec,
-			geom[3].dg_totsec,
-		     geom[4].dg_cyl, geom[4].dg_head, geom[4].dg_sec,
-			geom[4].dg_totsec);
-
-	process_menu (MENU_scsi_fake);
-	if (fake_sel >= 0)
-		disk->dg = geom[fake_sel];
 }
 
 
@@ -288,7 +233,7 @@ void write_disklabel (void)
 
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	printf ("%s", msg_string (MSG_dodisklabel));
+	printf("%s", msg_string (MSG_dodisklabel));
 	run_prog(0, 0, "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
 
@@ -296,20 +241,20 @@ void write_disklabel (void)
 
 
 
-void make_filesystems (void)
+void make_filesystems(void)
 {
 	int i;
 	char partname[STRSIZE];
 
 	/* Making new file systems and mounting them*/
 	msg_display(MSG_donewfs);
-	for (i=0; i<getmaxpartitions(); i++) {
+	for (i = 0; i < getmaxpartitions(); i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems. 
 		 * but if this is the  mounted-on root, don't touch it! 
 		 */
 	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a'+i);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD && 
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS && 
 		    !is_active_rootpart(partname)) {
 		    do_ffs_newfs(partname, i, fsmount[i]);
 		}
@@ -333,14 +278,14 @@ do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 	}
 }
 
-void make_fstab (void)
+void make_fstab(void)
 {
 	FILE *f;
 	int i;
 
 	/* Create the fstab. */
 	make_target_dir("/etc");
-	f = target_fopen ("/etc/fstab", "w");
+	f = target_fopen("/etc/fstab", "w");
 	if (logging)
 		(void)fprintf(log, "Creating %s/etc/fstab.\n", target_prefix());
 	if (scripting)
@@ -348,7 +293,7 @@ void make_fstab (void)
 
 	if (f == NULL) {
 #ifndef DEBUG
-		(void)fprintf (stderr, msg_string (MSG_createfstab));
+		(void)fprintf(stderr, msg_string (MSG_createfstab));
 		if (logging)
 			(void)fprintf(log, "Failed to make /etc/fstab!\n");
 		exit(1);
@@ -362,24 +307,24 @@ void make_fstab (void)
 	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
 	if (scripting)
 		(void)fprintf (script, "/dev/%sb none swap sw 0 0\n", diskdev);
-	for (i=getrawpartition()+1; i<getmaxpartitions(); i++)
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
+	for (i = getrawpartition() + 1; i < getmaxpartitions(); i++)
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
 			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
 				       diskdev, 'a'+i, fsmount[i]);
 			if (scripting)
 				(void)fprintf (script, "/dev/%s%c %s ffs rw 1 2\n",
 					diskdev, 'a'+i, fsmount[i]);
-		} else if (bsdlabel[i][D_FSTYPE] == T_MSDOS ) {
-			(void)fprintf (f, "/dev/%s%c %s msdos rw 0 0\n",
+		} else if (bsdlabel[i].pi_fstype == FS_MSDOS ) {
+			(void)fprintf(f, "/dev/%s%c %s msdos rw 0 0\n",
 				       diskdev, 'a'+i, fsmount[i]);
 			if (scripting)
-				(void)fprintf (script, "/dev/%s%c %s msdos rw 0 0\n",
+				(void)fprintf(script, "/dev/%s%c %s msdos rw 0 0\n",
 					diskdev, 'a'+i, fsmount[i]);
 		}
-	(void)fprintf (f, "/kern /kern kernfs rw\n");
+	(void)fprintf(f, "/kern /kern kernfs rw\n");
 	if (scripting) {
-		(void)fprintf (script, "/kern /kern kernfs rw\n");
-		(void)fprintf (script, "EOF\n");
+		(void)fprintf(script, "/kern /kern kernfs rw\n");
+		(void)fprintf(script, "EOF\n");
 	}
 #ifndef DEBUG
 	fclose(f);
@@ -409,7 +354,7 @@ static char mnt[MAXDEVS][STRSIZE];
 static int  devcnt = 0;
 
 static void
-foundffs (struct data *list, int num)
+foundffs(struct data *list, int num)
 {
 	if (strcmp(list[1].u.s_val, "/") != 0) {
 		strncpy(dev[devcnt], list[0].u.s_val, SSTRSIZE);
@@ -419,22 +364,27 @@ foundffs (struct data *list, int num)
 }
 
 static int
-inode_kind (char *dev)
+inode_kind(char *dev)
 {
-	union { struct fs fs; char pad[SBSIZE];} fs;
+	union {
+		struct fs fs;
+		char pad[SBSIZE];
+	} fs;
 	int fd;
 	int ret;
 
-	fd = open (dev, O_RDONLY, 0);
+	fd = open(dev, O_RDONLY, 0);
 	if (fd < 0)
 		return fd;
-        if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
+        if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1) {
+		close(fd);
                 return -1;
+	}
         if ((ret = read(fd, &fs, SBSIZE)) != SBSIZE) {
-		close (fd);
+		close(fd);
                 return -2;
 	}
-	close (fd);
+	close(fd);
 	if (fs.fs.fs_magic != FS_MAGIC)
 		return -3;
 	if (fs.fs.fs_inodefmt < FS_44INODEFMT)
@@ -469,17 +419,17 @@ do_fsck(const char *diskpart)
 	}
 	else if (inodetype == 0) {
 		/* Ask to upgrade */
-		msg_display (MSG_upgrinode, raw);
-		process_menu (MENU_yesno);
+		msg_display(MSG_upgrinode, raw);
+		process_menu(MENU_yesno);
 		if (yesno)
 			upgr = "-c ";
 	}
 
 	/*endwin();*/
 #ifdef	DEBUG_SETS
-	err = run_prog (0, 1, "/sbin/fsck_ffs %s%s", upgr, raw);
+	err = run_prog(0, 1, "/sbin/fsck_ffs %s%s", upgr, raw);
 #else
-	err = run_prog (0, 1, "/sbin/fsck_ffs -f %s%s", upgr, raw);
+	err = run_prog(0, 1, "/sbin/fsck_ffs -f %s%s", upgr, raw);
 #endif	
 		wrefresh(stdscr);
 	return err;
@@ -499,8 +449,8 @@ fsck_with_error_menu(const char *diskpart)
 #ifdef DEBUG
 		fprintf(stderr, "sysinst: do_fsck() returned err %d\n", error);
 #endif
-		msg_display (MSG_badfs, diskpart, "", error);
-		process_menu (MENU_ok);
+		msg_display(MSG_badfs, diskpart, "", error);
+		process_menu(MENU_ok);
 	}
 	return error;
 }
@@ -577,7 +527,7 @@ fsck_root()
 }
 
 int
-fsck_disks (void)
+fsck_disks(void)
 {	char *fstab;
 	int   fstabsize;
 	int   i;
@@ -601,18 +551,17 @@ fsck_disks (void)
 
 
 	/* Get fstab entries from the target-root /etc/fstab. */
-	fs_num = 0;
-	fstabsize = target_collect_file (T_FILE, &fstab, "/etc/fstab");
+	fstabsize = target_collect_file(T_FILE, &fstab, "/etc/fstab");
 	if (fstabsize < 0) {
 		/* error ! */
 		msg_display(MSG_badetcfstab, diskdev);
 		process_menu(MENU_ok);
 		return 0;
 	}
-	walk (fstab, fstabsize, fstabbuf, numfstabbuf);
+	walk(fstab, fstabsize, fstabbuf, numfstabbuf);
 	free(fstab);
 
-	for (i=0; i < devcnt; i++) {
+	for (i = 0; i < devcnt; i++) {
 	  	if (fsck_with_error_menu(dev[i]))
 			return 0;
 
