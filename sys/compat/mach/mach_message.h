@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.2 2002/10/30 15:04:17 christos Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.3 2002/11/10 02:18:03 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,5 +111,19 @@ typedef	struct {
 	mach_msg_size_t msgh_reserved;
 	mach_msg_id_t	msgh_id;
 } mach_msg_header_t;
+
+typedef u_int32_t mach_msg_trailer_type_t;
+typedef u_int32_t mach_msg_trailer_size_t;
+typedef struct { 
+	mach_msg_trailer_type_t       msgh_trailer_type;
+	mach_msg_trailer_size_t       msgh_trailer_size;
+} mach_msg_trailer_t;
+
+struct mach_subsystem_namemap {
+	int		map_id;
+	int		(*map_handler)	__P((mach_msg_header_t *));
+	const char	*map_name;
+};
+extern struct mach_subsystem_namemap mach_namemap[];
 
 #endif /* !_MACH_MESSAGE_H_ */
