@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.52 1995/04/19 22:04:33 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.53 1995/04/28 00:34:08 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -713,6 +713,10 @@ comeint(sc, stat)
 #endif
 		return;
 	}
+#ifdef COMCONSOLE
+	if ((stat & LSR_BI) && (sc->sc_dev.dv_unit == comconsole))
+		Debugger();
+#endif
 	if (stat & (LSR_BI | LSR_FE))
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
