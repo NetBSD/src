@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.22 2003/09/03 05:38:09 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.23 2003/09/03 07:09:39 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -69,6 +69,7 @@ ${_TL}: ${_SL}
 
 realall: ${LNFILES.t}
 
+.PHONY:   cleanlnfiles
 cleandir: cleanlnfiles
 cleanlnfiles:
 	rm -f ${LNFILES.t}
