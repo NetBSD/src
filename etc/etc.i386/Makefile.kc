@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.4 1994/07/18 06:37:20 glass Exp $
+#	$Id: Makefile.kc,v 1.5 1995/06/26 22:17:38 jtc Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -27,7 +27,7 @@ all:
 		install -d -o root -g wheel -m 755 ${MOUNT_POINT}$$d ; \
 	done
 	for d in ${BINDIRLIST} ; do \
-		install -d -o bin -g bin -m 755 ${MOUNT_POINT}$$d ; \
+		install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${MOUNT_POINT}$$d ; \
 	done
 	cp ${KERNEL} ${MOUNT_POINT}
 	cp ${.CURDIR}/etc.i386/MAKEDEV ${MOUNT_POINT}/dev
