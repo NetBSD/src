@@ -1,3 +1,5 @@
+/*	$NetBSD: hesiod.h,v 1.1.4.2 1997/05/23 20:31:39 lukem Exp $	*/
+
 /* This file contains definitions for use by the Hesiod name service and
  * applications.
  *
@@ -22,7 +24,6 @@
  *
  * Original version by Steve Dyer, IBM/Project Athena.
  *
- *	$Id: hesiod.h,v 1.1.4.1 1997/05/23 19:58:26 lukem Exp $
  */
 #ifndef _HESIOD_H_
 #define _HESIOD_H_
