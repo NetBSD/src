@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2002/07/10 15:49:33 scw Exp $
+#	$NetBSD: genassym.cf,v 1.3 2002/08/26 10:38:52 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@ define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURVSID		offsetof(struct cpu_info, ci_curvsid)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_PANICSTKPHYS		offsetof(struct cpu_info, ci_panicstkphys)
 define	CI_ESCRATCH		offsetof(struct cpu_info, ci_escratch)
 define	CI_TSCRATCH		offsetof(struct cpu_info, ci_tscratch)
 
@@ -218,6 +219,8 @@ define	ES_EXPEVT		offsetof(struct exc_scratch_frame, es_expevt)
 define	ES_INTEVT		offsetof(struct exc_scratch_frame, es_intevt)
 define	ES_TEA			offsetof(struct exc_scratch_frame, es_tea)
 define	ES_TRA			offsetof(struct exc_scratch_frame, es_tra)
+define	ES_SPC			offsetof(struct exc_scratch_frame, es_spc)
+define	ES_SSR			offsetof(struct exc_scratch_frame, es_ssr)
 
 # TLB Miss Scratch Frame Offsets
 define	TS_R0			offsetof(struct tlb_scratch_frame, ts_r[0])
