@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.13 1996/04/25 01:22:08 jtc Exp $
+#	$Id: Makefile,v 1.14 1996/04/29 20:52:52 jtc Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -20,13 +20,15 @@ includes:	${HDRS}
 		${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
 	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include/rpcsvc; \
+		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include/rpcsvc"; \
+		echo $$j; $$j; } \
 	done
-	@for i in $(RPCSRCS); do \
+	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
 	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/$$i \
-		${DESTDIR}/usr/include/rpcsvc; \
+		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include/rpcsvc"; \
+		echo $$j; $$j; } \
 	done
 
 # new suffixes have to go afterwards, because bsd.lib.mk clears them
