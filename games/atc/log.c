@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.4 1997/01/13 06:50:26 tls Exp $	*/
+/*	$NetBSD: log.c,v 1.5 1997/10/10 02:07:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,20 +45,26 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: log.c,v 1.4 1997/01/13 06:50:26 tls Exp $";
+__RCSID("$NetBSD: log.c,v 1.5 1997/10/10 02:07:25 lukem Exp $");
 #endif
 #endif not lint
 
 #include "include.h"
 #include "pathnames.h"
 
-compar(a, b)
-	SCORE	*a, *b;
+int
+compar(va, vb)
+	const void *va, *vb;
 {
+	SCORE	*a, *b;
+
+	a = (SCORE *)va;
+	b = (SCORE *)vb;
 	if (b->planes == a->planes)
 		return (b->time - a->time);
 	else
@@ -77,6 +83,7 @@ compar(a, b)
 
 char	*
 timestr(t)
+	int t;
 {
 	static char	s[80];
 
@@ -94,16 +101,16 @@ timestr(t)
 	return (s);
 }
 
+int
 log_score(list_em)
+	int list_em;
 {
-	register int	i, fd, num_scores = 0, good, changed = 0, found = 0;
+	int		i, fd, num_scores = 0, good, changed = 0, found = 0;
 	struct passwd	*pw;
 	FILE		*fp;
-	char		*cp, *index(), *rindex();
+	char		*cp;
 	SCORE		score[100], thisscore;
-#ifdef SYSV
 	struct utsname	name;
-#endif
 
 	umask(0);
 	fd = open(_PATH_SCORE, O_CREAT|O_RDWR, 0644);
@@ -149,18 +156,11 @@ log_score(list_em)
 			return (-1);
 		}
 		strcpy(thisscore.name, pw->pw_name);
-#ifdef BSD
-		if (gethostname(thisscore.host, sizeof (thisscore.host)) < 0) {
-			perror("gethostname");
-			return (-1);
-		}
-#endif
-#ifdef SYSV
 		uname(&name);
-		strcpy(thisscore.host, name.sysname);
-#endif
+		strncpy(thisscore.host, name.sysname, sizeof(thisscore.host)-1);
+		thisscore.host[sizeof(thisscore.host) - 1] = '\0';
 
-		cp = rindex(file, '/');
+		cp = strrchr(file, '/');
 		if (cp == NULL) {
 			fprintf(stderr, "log: where's the '/' in %s?\n", file);
 			return (-1);
@@ -240,7 +240,7 @@ log_score(list_em)
 		"game", "time", "real time", "planes safe");
 	puts("-------------------------------------------------------------------------------");
 	for (i = 0; i < num_scores; i++) {
-		cp = index(score[i].host, '.');
+		cp = strchr(score[i].host, '.');
 		if (cp != NULL)
 			*cp = '\0';
 		printf("%2d:  %-8s  %-8s  %-18s  %4d  %9s  %4d\n", i + 1,
@@ -250,4 +250,12 @@ log_score(list_em)
 	}
 	putchar('\n');
 	return (0);
+}
+
+void
+log_score_quit(dummy)
+	int dummy;
+{
+	(void)log_score(0);
+	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1997/10/10 02:07:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,24 +45,27 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $";
+__RCSID("$NetBSD: main.c,v 1.5 1997/10/10 02:07:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "include.h"
 #include "pathnames.h"
 
+
+int
 main(ac, av)
+	int	 ac;
 	char	*av[];
 {
 	int			seed;
@@ -74,8 +77,6 @@ main(ac, av)
 #ifdef BSD
 	struct itimerval	itv;
 #endif
-	extern char		*default_game(), *okay_game();
-	extern void		log_score(), quit(), update();
 
 	start_time = seed = time(0);
 
@@ -83,7 +84,7 @@ main(ac, av)
 	while (*av) {
 #ifndef SAVEDASH
 		if (**av == '-') 
-			*++*av;
+			++*av;
 		else
 			break;
 #endif
@@ -114,8 +115,7 @@ main(ac, av)
 				av++;
 				break;
 			default: 
-				fprintf(stderr, "Unknown option '%c'\n", *ptr,
-					name);
+				warnx("unknown option '%c'\n", *ptr);
 				f_usage++;
 				break;
 			}
@@ -162,8 +162,8 @@ main(ac, av)
 	signal(SIGTSTP, SIG_IGN);
 	signal(SIGSTOP, SIG_IGN);
 #endif
-	signal(SIGHUP, log_score);
-	signal(SIGTERM, log_score);
+	signal(SIGHUP, log_score_quit);
+	signal(SIGTERM, log_score_quit);
 
 	tcgetattr(fileno(stdin), &tty_start);
 	tty_new = tty_start;
@@ -203,7 +203,7 @@ main(ac, av)
 			alarm(0);
 #endif
 
-			update();
+			update(0);
 
 #ifdef BSD
 			itv.it_value.tv_sec = sp->update_secs;
@@ -219,6 +219,7 @@ main(ac, av)
 	}
 }
 
+int
 read_file(s)
 	char	*s;
 {
@@ -300,6 +301,7 @@ okay_game(s)
 	return (ret);
 }
 
+int
 list_games()
 {
 	FILE		*fp;

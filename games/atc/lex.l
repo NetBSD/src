@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: lex.l,v 1.3 1995/03/21 15:04:15 cgd Exp $	*/
+/*	$NetBSD: lex.l,v 1.4 1997/10/10 02:07:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,15 +46,18 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lex.l,v 1.3 1995/03/21 15:04:15 cgd Exp $";
+__RCSID("$NetBSD: lex.l,v 1.4 1997/10/10 02:07:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include "include.h"
 #include "y.tab.h"
+
 extern int	line;
 
 %}

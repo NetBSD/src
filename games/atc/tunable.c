@@ -1,4 +1,4 @@
-/*	$NetBSD: tunable.c,v 1.3 1995/03/21 15:04:33 cgd Exp $	*/
+/*	$NetBSD: tunable.c,v 1.4 1997/10/10 02:07:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,11 +45,12 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tunable.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: tunable.c,v 1.3 1995/03/21 15:04:33 cgd Exp $";
+__RCSID("$NetBSD: tunable.c,v 1.4 1997/10/10 02:07:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
