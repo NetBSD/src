@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.28 2000/12/22 22:28:09 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.29 2000/12/22 22:51:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.28 2000/12/22 22:28:09 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.29 2000/12/22 22:51:22 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -255,22 +255,8 @@ loadlocale(category)
 
 		switch (category) {
 		case LC_CTYPE:
-			if (_ctype_ != _C_ctype_) {
-				/* LINTED const castaway */
-				free((void *)_ctype_);
-				_ctype_ = _C_ctype_;
-			}
-			if (_toupper_tab_ != _C_toupper_) {
-				/* LINTED const castaway */
-				free((void *)_toupper_tab_);
-				_toupper_tab_ = _C_toupper_;
-			}
-			if (_tolower_tab_ != _C_tolower_) {
-				/* LINTED const castaway */
-				free((void *)_tolower_tab_);
-				_tolower_tab_ = _C_tolower_;
-			}
 			(void)_xpg4_setrunelocale("C");
+			(void)__runetable_to_netbsd_ctype("C");
 		}
 
 		(void)strlcpy(current_categories[category],
@@ -287,16 +273,19 @@ loadlocale(category)
 
 	switch (category) {
 	case LC_CTYPE:
-		if (!_xpg4_setrunelocale(new_categories[category]) &&
-		    !__runetable_to_netbsd_ctype()) {
-			(void)strlcpy(current_categories[category],
-			    new_categories[category],
-			    sizeof(current_categories[category]));
-			return current_categories[category];
-		} else {
-			__setlocale(LC_CTYPE, "C");
+		if (!_xpg4_setrunelocale(new_categories[category]))
+			return NULL;
+		if (!__runetable_to_netbsd_ctype(new_categories[category])) {
+			/* very unfortunate, but need to go to "C" locale */
+			(void)_xpg4_setrunelocale("C");
+			(void)__runetable_to_netbsd_ctype("C");
 			return NULL;
 		}
+
+		(void)strlcpy(current_categories[category],
+		    new_categories[category],
+		    sizeof(current_categories[category]));
+		return current_categories[category];
 
 	case LC_COLLATE:
 	case LC_MESSAGES:

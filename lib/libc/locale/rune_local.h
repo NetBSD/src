@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.1 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.2 2000/12/22 22:51:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -37,7 +37,7 @@ extern _RuneLocale *_findrunelocale __P((char *));
 extern int _newrunelocale __P((char *));
 
 /* runeglue.c */
-extern int __runetable_to_netbsd_ctype __P((void));
+extern int __runetable_to_netbsd_ctype __P((const char *));
 
 /* multibyte.c */
 int _mbsinit_rl __P((const mbstate_t *, _RuneLocale *));
