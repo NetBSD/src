@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.2 2000/05/13 14:00:19 jdolecek Exp $
+# $NetBSD: TODO,v 1.3 2000/05/13 20:18:29 jdolecek Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -8,8 +8,6 @@ Bugs:
 	is executed)
 
 Projects:
-* i386: official bootblocks with PS/2 support (it's necessary to compile
-	custom ones now - see stand/lib/gatea20.c & define IBM_L40)
 * bus_dma(8) support (primarily for AHA-1640 ATM)
 * 3Com 3c507 driver (prolly port of ef driver - originally, 1.3 ie driver
 	has been ported in MCA release 2.1 by Scott Telford, the ISA
