@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.17 2000/11/07 01:45:49 lukem Exp $
+.\"	$NetBSD: ed.1,v 1.18 2001/12/20 19:31:50 wiz Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -571,7 +571,7 @@ and
 .IR `V' .
 A newline alone in
 .I command-list
-is equivalent to a 
+is equivalent to a
 .I `p'
 command.
 
@@ -582,7 +582,7 @@ Interactively edits the addressed lines matching a regular expression
 For each matching line,
 the line is printed,
 the current address is set,
-and the user is prompted to enter a 
+and the user is prompted to enter a
 .IR command-list .
 At the end of the
 .I `G'
@@ -636,11 +636,11 @@ deleted or otherwise modified.
 (.,.)l
 Prints the addressed lines unambiguously.
 If a single line fills for than one screen (as might be the case
-when viewing a binary file, for instance), a `--More--' 
-prompt is printed on the last line. 
+when viewing a binary file, for instance), a `--More--'
+prompt is printed on the last line.
 .B ed
 waits until the RETURN key is pressed
-before displaying the next screen. 
+before displaying the next screen.
 The current address is set to the last line
 printed.
 
@@ -927,7 +927,7 @@ Prints the addressed line, and sets the current address to
 that line.
 
 .SH ENVIRONMENTAL VARIABLES
-.TP    
+.TP
 .I TMPDIR
 The location used to stored temporary files.
 
@@ -983,7 +983,7 @@ printed with the
 .I `h'
 (help) command.
 
-Since the 
+Since the
 .I `g'
 (global) command  masks any errors from failed searches and substitutions,
 it can be used to perform conditional operations in scripts; e.g.,
