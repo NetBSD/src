@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.3 1998/08/30 15:32:20 eeh Exp $	*/
+/*	$NetBSD: mul.S,v 1.4 1998/11/26 19:08:21 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
 #ifdef notdef
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: mul.S,v 1.3 1998/08/30 15:32:20 eeh Exp $"
+	.asciz "$NetBSD: mul.S,v 1.4 1998/11/26 19:08:21 eeh Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -81,6 +81,7 @@ FUNC(.mul)
 	blt,a	%icc, 1f
 	 mulx	%o0, %o1, %o0
 	mulx	%o1, %o0, %o0
+1:	
 	srax	%o0, 32, %o1
 	retl
 	 sll	%o0, 0, %o0	! Sign extend
