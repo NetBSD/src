@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2001/07/11 23:00:02 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -688,16 +688,19 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * We'll do the data segment up here since we know how big it is.
 	 * We'll do the text segment after we've read in the PROM translations
 	 * so we can figure out its size.
+	 *
+	 * The ctxbusy table takes about 64KB, the TSB up to 32KB, and the
+	 * rest should be less than 1K, so 100KB extra should be plenty.
 	 */
 	kdsize = round_page(ekdata - kdata);
 
 	if ((kdatap & (4*MEG-1)) == 0) {
 		/* We were at a 4MB boundary -- claim the rest */
-		psize_t szdiff = 4*MEG - kdsize;
+		psize_t szdiff = 4*MEG - (kdsize & (4*MEG-1));
 
-		if (kdsize > 3*MEG) {
-			/* We've overflowed, or soon will, get 8MB */
-			szdiff = 8*MEG - kdsize;
+		if (szdiff < 100*KB /* ~100KB slack */ ) {
+			/* We've overflowed, or soon will, get another page */
+			szdiff += 4*MEG;
 		}
 		if (szdiff) {
 			/* Claim the rest of the physical page. */
@@ -726,13 +729,10 @@ remap_data:
 		/* 
 		 * Either we're not at a 4MB boundary or we can't get the rest
 		 * of the 4MB extension.  We need to move the data segment.
+		 * Leave 1MB of extra fiddle space in the calculations.
 		 */
 
-		sz = 4*MEG;
-		if (kdsize > 3*MEG) {
-			/* We've overflowed, or soon will, get 8MB */
-			sz = 8*MEG;
-		}
+		sz = (kdsize + 4*MEG + 100*KB) & ~(4*MEG-1);
 		BDPRINTF(PDB_BOOT1, 
 			 ("Allocating new %lx kernel data at 4MB boundary\r\n",
 			  (u_long)sz));
@@ -786,6 +786,7 @@ remap_data:
 		OF_exit();
 	}
 	memsize = OF_getproplen(memh, "reg") + 2 * sizeof(struct mem_region);
+printf("size for `memory' %x\n", (int)memsize);
 	valloc(mem, struct mem_region, memsize);
 	bzero((caddr_t)mem, memsize);
 	if (OF_getprop(memh, "reg", mem, memsize) <= 0) {
@@ -823,6 +824,7 @@ remap_data:
 	 * Save the prom translations
 	 */
 	sz = OF_getproplen(vmemh, "translations");
+printf("size for `translations' %x\n", (int)sz);
 	valloc(prom_map, struct prom_map, sz);
 	if (OF_getprop(vmemh, "translations", (void*)prom_map, sz) <= 0) {
 		prom_printf("no translations installed?");
@@ -983,6 +985,7 @@ remap_data:
 	 * find out how much memory really is free.  
 	 */
 	sz = OF_getproplen(memh, "available") + sizeof(struct mem_region);
+printf("size for orig `available' %x\n", (int)sz);
 	valloc(orig, struct mem_region, sz);
 	bzero((caddr_t)orig, sz);
 	if (OF_getprop(memh, "available", orig, sz) <= 0) {
@@ -1000,6 +1003,7 @@ remap_data:
 		prom_printf("End of available physical memory\r\n");
 	}
 #endif
+printf("size for new `available' %x\n", (int)sz);
 	valloc(avail, struct mem_region, sz);
 	bzero((caddr_t)avail, sz);
 	for (pcnt = 0, mp = orig, mp1 = avail; (mp1->size = mp->size);
@@ -1012,6 +1016,7 @@ remap_data:
 	 * Allocate and initialize a context table
 	 */
 	numctx = maxctx;
+printf("size for orig `ctxbusy' %x\n", (int)CTXSIZE);
 	valloc(ctxbusy, paddr_t, CTXSIZE);
 	bzero((caddr_t)ctxbusy, CTXSIZE);
 
@@ -1035,6 +1040,7 @@ remap_data:
 #endif
 	BDPRINTF(PDB_BOOT, ("frobbed i, firstaddr before TSB=%x, %lx\r\n", 
 			    (int)i, (u_long)firstaddr));
+printf("size for orig `tsb' %x\n", (int)TSBSIZE);
 	valloc(tsb, pte_t, TSBSIZE);
 	bzero(tsb, TSBSIZE);
 
@@ -1914,6 +1920,9 @@ pmap_kenter_pa(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	int i, s;
 
+	ASSERT(va < INTSTACK || va > EINTSTACK);
+	ASSERT(va < kdata || va > ekdata);
+
 	/*
 	 * Construct the TTE.
 	 */
@@ -2020,6 +2029,9 @@ pmap_kremove(va, size)
 	int64_t data;
 	int i, s, flush = 0;
 
+	ASSERT(va < INTSTACK || va > EINTSTACK);
+	ASSERT(va < kdata || va > ekdata);
+
 	s = splvm();
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG
@@ -2119,17 +2131,10 @@ pmap_enter(pm, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
-	 * Is this part of the permanent 4MB mapping?
+	 * Is this part of the permanent mappings?
 	 */
-#ifdef DIAGNOSTIC
-	if (pm == pmap_kernel() && va >= ktext && 
-		va < roundup(ekdata, 4*MEG)) {
-		prom_printf("pmap_enter: va=%08x pa=%x:%08x in locked TLB\r\n", 
-			    va, (int)(pa>>32), (int)pa);
-		OF_enter();
-		return 0;
-	}
-#endif
+	ASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
 
 #ifdef DEBUG
 	/* Trap mapping of page zero */
@@ -2138,12 +2143,6 @@ pmap_enter(pm, va, pa, prot, flags)
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
 	}
-#endif
-#ifdef NOTDEF_DEBUG
-	if (pa>>32)
-		prom_printf("pmap_enter: va=%08x 64-bit pa=%x:%08x seg=%08x pte=%08x\r\n", 
-			    va, (int)(pa>>32), (int)pa, 
-			    (int)va_to_seg(va), (int)va_to_pte(va));
 #endif
 	/*
 	 * XXXX If a mapping at this address already exists, remove it.
@@ -2313,6 +2312,9 @@ pmap_remove(pm, va, endva)
 	 * free it.  It's just that linear scans of 8K pages gets expensive.
 	 */
 
+	ASSERT(pm != pmap_kernel() || endva < INTSTACK || va > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || endva < kdata || va > ekdata);
+
 	s = splvm();
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG
@@ -2430,6 +2432,9 @@ pmap_protect(pm, sva, eva, prot)
 	paddr_t pa;
 	int64_t data;
 	
+	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
+
 	if (prot & VM_PROT_WRITE) 
 		return;
 
@@ -2836,15 +2841,15 @@ pmap_clear_modify(pg)
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				if (tsb[i].tag.tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
 					tsb[i].data.data = /* data */ 0;
-/*
-				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
-*/
+				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
+					pv->pv_pmap->pm_ctx);
 			}
 			/* Then clear the mod bit in the pv */
 			if (pv->pv_va & PV_MOD)
 				changed |= 1;
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pv->pv_pmap->pm_lock);
+			dcache_flush_page(pa);
 		}
 	splx(s);
 	pv_check();
