@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.22 2004/03/21 14:13:15 pk Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.23 2004/03/21 15:09:25 pk Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.22 2004/03/21 14:13:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.23 2004/03/21 15:09:25 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -598,40 +598,6 @@ prom_stopself(void)
 	panic("sun4u_stopself: failed.");
 }
 #endif
-
-/* 
- * Low-level prom I/O routines.
- */
-
-static u_int stdin = 0;
-static u_int stdout = 0;
-
-int 
-OF_stdin() 
-{
-	u_int chosen;
-
-	if (stdin != 0)
-		return stdin;
-		
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
-	return stdin;
-}
-
-int
-OF_stdout()
-{
-	u_int chosen;
-
-	if (stdout != 0)
-		return stdout;
-		
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	return stdout;
-}
-
 
 #ifdef DEBUG
 int ofmapintrdebug = 0;
