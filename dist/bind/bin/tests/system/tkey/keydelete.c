@@ -1,4 +1,4 @@
-/*	$NetBSD: keydelete.c,v 1.1.1.1 2004/05/17 23:43:37 christos Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.1.1.2 2004/11/06 23:53:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydelete.c,v 1.4.206.2 2004/03/08 02:07:49 marka Exp */
+/* Id: keydelete.c,v 1.4.206.3 2004/06/11 00:30:53 marka Exp */
 
 #include <config.h>
 
@@ -156,6 +156,7 @@ main(int argc, char **argv) {
 	isc_logconfig_t *logconfig;
 	isc_task_t *task;
 	isc_result_t result;
+	int type;
 
 	RUNCHECK(isc_app_start());
 
@@ -224,9 +225,8 @@ main(int argc, char **argv) {
 	RUNCHECK(isc_app_onrun(mctx, task, sendquery, NULL));
 
 	dstkey = NULL;
-	result = dst_key_fromnamedfile(keyname,
-				       DST_TYPE_PUBLIC | DST_TYPE_PRIVATE,
-				       mctx, &dstkey);
+	type = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY;
+	result = dst_key_fromnamedfile(keyname, type, mctx, &dstkey);
 	CHECK("dst_key_fromnamedfile", result);
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey),
 					   DNS_TSIG_HMACMD5_NAME,

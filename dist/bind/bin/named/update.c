@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.1 2004/05/17 23:43:24 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.2 2004/11/06 23:53:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.88.2.5.2.17 2004/04/15 02:10:39 marka Exp */
+/* Id: update.c,v 1.88.2.5.2.23 2004/07/23 02:56:52 marka Exp */
 
 #include <config.h>
 
@@ -241,7 +241,7 @@ update_log(ns_client_t *client, dns_zone_t *zone,
 
 static isc_result_t
 checkupdateacl(ns_client_t *client, dns_acl_t *acl, const char *message,
-	       dns_name_t *zonename)
+	       dns_name_t *zonename, isc_boolean_t slave)
 {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char classbuf[DNS_RDATACLASS_FORMATSIZE];
@@ -249,7 +249,12 @@ checkupdateacl(ns_client_t *client, dns_acl_t *acl, const char *message,
 	const char *msg = "denied";
 	isc_result_t result;
 
-	result = ns_client_checkaclsilent(client, acl, ISC_FALSE);
+	if (slave && acl == NULL) {
+		result = DNS_R_NOTIMP;
+		level = ISC_LOG_DEBUG(3);
+		msg = "disabled";
+	} else
+		result = ns_client_checkaclsilent(client, acl, ISC_FALSE);
 
 	if (result == ISC_R_SUCCESS) {
 		level = ISC_LOG_DEBUG(3);
@@ -852,7 +857,8 @@ temp_check(isc_mem_t *mctx, dns_diff_t *temp, dns_db_t *db,
 						this name and type */
 
 			*typep = type = t->rdata.type;
-			if (type == dns_rdatatype_rrsig)
+			if (type == dns_rdatatype_rrsig ||
+			    type == dns_rdatatype_sig)
 				covers = dns_rdata_covers(&t->rdata);
 			else
 				covers = 0;
@@ -1101,14 +1107,16 @@ add_rr_prepare_action(void *data, rr_t *rr) {
 	isc_result_t result = ISC_R_SUCCESS;	
 	add_rr_prepare_ctx_t *ctx = data;
 	dns_difftuple_t *tuple = NULL;
+	isc_boolean_t equal;
 
 	/*
 	 * If the update RR is a "duplicate" of the update RR,
 	 * the update should be silently ignored.
 	 */
-	if (dns_rdata_compare(&rr->rdata, ctx->update_rr) == 0 &&
-	    rr->ttl == ctx->update_rr_ttl) {
+	equal = ISC_TF(dns_rdata_compare(&rr->rdata, ctx->update_rr) == 0);
+	if (equal && rr->ttl == ctx->update_rr_ttl) {
 		ctx->ignore_add = ISC_TRUE;
+		return (ISC_R_SUCCESS);
 	}
 
 	/*
@@ -1136,12 +1144,14 @@ add_rr_prepare_action(void *data, rr_t *rr) {
 					   &rr->rdata,
 					   &tuple));
 		dns_diff_append(&ctx->del_diff, &tuple);
-		CHECK(dns_difftuple_create(ctx->add_diff.mctx,
-					   DNS_DIFFOP_ADD, ctx->name,
-					   ctx->update_rr_ttl,
-					   &rr->rdata,
-					   &tuple));
-		dns_diff_append(&ctx->add_diff, &tuple);
+		if (!equal) {
+			CHECK(dns_difftuple_create(ctx->add_diff.mctx,
+						   DNS_DIFFOP_ADD, ctx->name,
+						   ctx->update_rr_ttl,
+						   &rr->rdata,
+						   &tuple));
+			dns_diff_append(&ctx->add_diff, &tuple);
+		}
 	}
  failure:
 	return (result);
@@ -1964,6 +1974,8 @@ send_update_event(ns_client_t *client, dns_zone_t *zone) {
 
 	evclient = NULL;
 	ns_client_attach(client, &evclient);
+	INSIST(client->nupdates == 0);
+	client->nupdates++;
 	event->ev_arg = evclient;
 
 	dns_zone_gettask(zone, &zonetask);
@@ -2049,7 +2061,7 @@ ns_update_start(ns_client_t *client, isc_result_t sigresult) {
 		break;
 	case dns_zone_slave:
 		CHECK(checkupdateacl(client, dns_zone_getforwardacl(zone),
-		      "update forwarding", zonename));
+				     "update forwarding", zonename, ISC_TRUE));
 		CHECK(send_forward_event(client, zone));
 		break;
 	default:
@@ -2258,9 +2270,10 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	result = ISC_R_SUCCESS;
 	if (ssutable == NULL)
 		CHECK(checkupdateacl(client, dns_zone_getupdateacl(zone),
-				     "update", zonename));
+				     "update", zonename, ISC_FALSE));
 	else if (client->signer == NULL)
-		CHECK(checkupdateacl(client, NULL, "update", zonename));
+		CHECK(checkupdateacl(client, NULL, "update", zonename,
+				     ISC_FALSE));
 	
 	if (dns_zone_getupdatedisabled(zone))
 		FAILC(DNS_R_REFUSED, "dynamic update temporarily disabled");
@@ -2469,8 +2482,9 @@ update_action(isc_task_t *task, isc_event_t *event) {
 				ctx.ignore_add = ISC_FALSE;
 				dns_diff_init(mctx, &ctx.del_diff);
 				dns_diff_init(mctx, &ctx.add_diff);
-				CHECK(foreach_rr(db, ver, name, rdata.type, covers,
-						 add_rr_prepare_action, &ctx));
+				CHECK(foreach_rr(db, ver, name, rdata.type,
+						 covers, add_rr_prepare_action,
+						 &ctx));
 
 				if (ctx.ignore_add) {
 					dns_diff_clear(&ctx.del_diff);
@@ -2623,26 +2637,29 @@ update_action(isc_task_t *task, isc_event_t *event) {
 
 			dns_journal_destroy(&journal);
 		}
+
+		/*
+		 * XXXRTH  Just a note that this committing code will have
+		 *	   to change to handle databases that need two-phase
+		 *	   commit, but this isn't a priority.
+		 */
+		update_log(client, zone, LOGLEVEL_DEBUG,
+			   "committing update transaction");
+		dns_db_closeversion(db, &ver, ISC_TRUE);
+
+		/*
+		 * Mark the zone as dirty so that it will be written to disk.
+		 */
+		dns_zone_markdirty(zone);
+
+		/*
+		 * Notify slaves of the change we just made.
+		 */
+		dns_zone_notify(zone);
+	} else {
+		update_log(client, zone, LOGLEVEL_DEBUG, "redundant request");
+		dns_db_closeversion(db, &ver, ISC_TRUE);
 	}
-
-	/*
-	 * XXXRTH  Just a note that this committing code will have to change
-	 *         to handle databases that need two-phase commit, but this
-	 *	   isn't a priority.
-	 */
-	update_log(client, zone, LOGLEVEL_DEBUG,
-		   "committing update transaction");
-	dns_db_closeversion(db, &ver, ISC_TRUE);
-
-	/*
-	 * Mark the zone as dirty so that it will be written to disk.
-	 */
-	dns_zone_markdirty(zone);
-
-	/*
-	 * Notify slaves of the change we just made.
-	 */
-	dns_zone_notify(zone);
 	result = ISC_R_SUCCESS;
 	goto common;
 
@@ -2690,6 +2707,8 @@ updatedone_action(isc_task_t *task, isc_event_t *event) {
 	INSIST(event->ev_type == DNS_EVENT_UPDATEDONE);
 	INSIST(task == client->task);
 
+	INSIST(client->nupdates > 0);
+	client->nupdates--;
 	respond(client, uev->result);
 	ns_client_detach(&client);
 	isc_event_free(&event);
@@ -2705,6 +2724,8 @@ forward_fail(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
+	INSIST(client->nupdates > 0);
+	client->nupdates--;
 	respond(client, DNS_R_SERVFAIL);
 	ns_client_detach(&client);
 	isc_event_free(&event);
@@ -2735,6 +2756,8 @@ forward_done(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
+	INSIST(client->nupdates > 0);
+	client->nupdates--;
 	ns_client_sendraw(client, uev->answer);
 	dns_message_destroy(&uev->answer);
 	isc_event_free(&event);
@@ -2776,6 +2799,8 @@ send_forward_event(ns_client_t *client, dns_zone_t *zone) {
 
 	evclient = NULL;
 	ns_client_attach(client, &evclient);
+	INSIST(client->nupdates == 0);
+	client->nupdates++;
 	event->ev_arg = evclient;
 
 	dns_zone_gettask(zone, &zonetask);

@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.1.1.1 2004/05/17 23:44:50 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.2 2004/11/06 23:55:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.77.2.1.10.6 2004/03/08 09:04:30 marka Exp */
+/* Id: journal.c,v 1.77.2.1.10.8 2004/05/14 05:27:47 marka Exp */
 
 #include <config.h>
 
@@ -1824,10 +1824,16 @@ dns_db_diff(isc_mem_t *mctx,
 	dns_fixedname_init(&fixname[0]);
 	dns_fixedname_init(&fixname[1]);
 
-	CHECK(dns_journal_open(mctx, journal_filename, ISC_TRUE, &journal));
+	result = dns_journal_open(mctx, journal_filename, ISC_TRUE, &journal);
+	if (result != ISC_R_SUCCESS)
+		return (result);
 
-	CHECK(dns_db_createiterator(db[0], ISC_FALSE, &dbit[0]));
-	CHECK(dns_db_createiterator(db[1], ISC_FALSE, &dbit[1]));
+	result = dns_db_createiterator(db[0], ISC_FALSE, &dbit[0]);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_journal;
+	result = dns_db_createiterator(db[1], ISC_FALSE, &dbit[1]);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_interator0;
 
 	itresult[0] = dns_dbiterator_first(dbit[0]);
 	itresult[1] = dns_dbiterator_first(dbit[1]);
@@ -1900,8 +1906,10 @@ dns_db_diff(isc_mem_t *mctx,
 
  failure:
 	dns_diff_clear(&resultdiff);
-	dns_dbiterator_destroy(&dbit[0]);
 	dns_dbiterator_destroy(&dbit[1]);
+ cleanup_interator0:
+	dns_dbiterator_destroy(&dbit[0]);
+ cleanup_journal:
 	dns_journal_destroy(&journal);
 	return (result);
 }
@@ -2117,6 +2125,7 @@ index_to_disk(dns_journal_t *j) {
 		}
 		INSIST(p == j->rawindex + rawbytes);
 
+		CHECK(journal_seek(j, sizeof(journal_rawheader_t)));
 		CHECK(journal_write(j, j->rawindex, rawbytes));
 	}
 failure:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dig.1,v 1.1.1.1 2004/05/17 23:43:17 christos Exp $
+.\"	$NetBSD: dig.1,v 1.1.1.2 2004/11/06 23:53:30 christos Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003  Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dig.1,v 1.14.2.4.2.5 2004/04/13 04:11:03 marka Exp
+.\" Id: dig.1,v 1.14.2.4.2.6 2004/06/23 09:11:01 marka Exp
 .\"
 .TH "DIG" "1" "Jun 30, 2000" "BIND9" ""
 .SH NAME
@@ -199,9 +199,10 @@ The search list is not used by default.
 Deprecated, treated as a synonym for \fI+[no]search\fR
 .TP
 \fB+[no]aaonly\fR
-This option does nothing. It is provided for compatibility with old
-versions of \fBdig\fR where it set an unimplemented
-resolver flag.
+Sets the "aa" flag in the query.
+.TP
+\fB+[no]aaflag\fR
+A synonym for \fI+[no]aaonly\fR.
 .TP
 \fB+[no]adflag\fR
 Set [do not set] the AD (authentic data) bit in the query. The AD bit

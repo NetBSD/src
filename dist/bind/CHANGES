@@ -1,4 +1,245 @@
 
+	--- 9.3.0 released ---
+
+1711.	[func]		'rndc unfreeze' has been deprecated by 'rndc thaw'.
+
+	--- 9.3.0rc4 released ---
+
+1709.	[port]		solaris: add SMF support.
+
+1708.	[cleanup]	Replaced dns_fullname_hash() with dns_name_fullhash()
+			for conformance to the name space convention.  Binary
+			backward compatibility to the old function name is
+			provided. [RT #12376]
+
+1707.	[contrib]	sdb/ldap updated to version 1.0-beta.
+
+1706.	[bug]		'rndc stop' failed to cause zones to be flushed
+			sometimes. [RT #12328]
+
+1704.	[port]		lwres needed a snprintf() implementation for
+			platforms without snprintf().  Add missing
+			"#include <isc/print.h>". [RT #12321]
+
+1703.	[bug]		named would loop sending NOTIFY messages when it
+			failed to receive a response. [RT #12322]
+
+1702.	[bug]		also-notify should not be applied to builtin zones.
+			[RT #12323]
+
+1701.	[doc]		A minimal named.conf man page.
+
+1700.	[func]		nslookup is no longer to be treated as deprecated.
+			Remove "deprecated" warning message.  Add man page.
+
+1699.	[bug]		dnssec-signzone can generate "not exact" errors
+			when resigning. [RT #12281]
+
+1698.	[doc]		Use reserved IPv6 documentation prefix.
+
+1697.	[bug]		xxx-source{,-v6} was not effective when it
+			specified one of listening addresses and a
+			different port than the listening port. [RT #12257]
+
+	--- 9.3.0rc3 released ---
+
+1696.	[bug]		dnssec-signzone failed to clean out nodes that
+			consisted of only NSEC and RRSIG records.
+			[RT #12154]
+
+1695.	[bug]		DS records when forwarding require special handling.
+			[RT #12133]
+
+1694.	[bug]		Report if the builtin views of "_default" / "_bind"
+			are defined in named.conf. [RT #12023]
+
+1693.	[bug]		max-journal-size was not effective for master zones
+			with ixfr-from-differences set. [RT# 12024]
+
+1692.	[bug]		Don't set -I, -L and -R flags when libcrypto is in
+			/usr/lib. [RT #11971]
+
+1691.	[bug]		sdb's attachversion was not complete. [RT #11990]
+
+1690.	[bug]		Delay detaching view from the client until UPDATE
+			processing completes when shutting down. [RT #11714]
+
+1689.	[bug]		DNS_NAME_TOREGION() and DNS_NAME_SPLIT() macros
+			contained gratuitous semicolons. [RT #11707]
+
+1688.	[bug]		LDFLAGS was not supported.
+
+1687.	[bug]		Race condition in dispatch. [RT #10272]
+
+1686.	[bug]		Named sent a extraneous NOTIFY when it received a
+			redundant UPDATE request. [RT #11943]
+
+	--- 9.3.0rc2 released ---
+
+1685.	[bug]		Change #1679 loop tests weren't quite right.
+
+1683.	[bug]		dig +sigchase could leak memory. [RT #11445]
+
+1682.	[port]		Update configure test for (long long) printf format.
+			[RT #5066]
+
+1681.	[bug]		Only set SO_REUSEADDR when a port is specified in
+			isc_socket_bind(). [RT #11742]
+
+1679.	[bug]		When there was a single nameserver with multiple
+			addresses for a zone not all addresses were tried.
+			[RT #11706]
+
+1678.	[bug]		RRSIG should use TYPEXXXXX for unknown types.
+
+1677.	[bug]		dig: +aaonly didn't work, +aaflag undocumented.
+
+1675.	[bug]		named would sometimes add extra NSEC records to
+			the authority section.
+			
+1674.	[port]		linux: increase buffer size used to scan
+			/proc/net/if_inet6.
+
+1673.	[port]		linux: issue a error messages if IPv6 interface
+			scans fails.
+
+1672.	[cleanup]	Tests which only function in a threaded build
+			now return R:THREADONLY (rather than R:UNTESTED)
+			in a non-threaded build.
+
+1671.	[contrib]	queryperf: add NAPTR to the list of known types.
+
+1670.	[func]		Log UPDATE requests to slave zones without an acl as
+			"disabled" at debug level 3. [RT# 11657]
+
+1668.	[bug]		DIG_SIGCHASE was making bin/dig/host dump core.
+
+1667.	[port]		linux: not all versions have IF_NAMESIZE.
+
+1666.	[bug]		The optional port on hostnames in dual-stack-servers
+			was being ignored.
+
+1663.	[func]		Look for OpenSSL by default.
+
+1661.	[bug]		Restore dns_name_concatenate() call in
+			adb.c:set_target().  [RT #11582]
+
+1660.	[bug]		win32: connection_reset_fix() was being called
+			unconditionally.  [RT #11595]
+
+	--- 9.3.0rc1 released ---
+
+1664.	[bug]		nsupdate needed KEY for SIG(0), not DNSKEY.
+
+1662.	[bug]		Change #1658 failed to change one use of 'type'
+			to 'keytype'.
+
+1659.	[cleanup]	Cleanup some messages that were referring to KEY vs
+			DNSKEY, NXT vs NSEC and SIG vs RRSIG.
+
+1658.	[func]		Update dnssec-keygen to default to KEY for HMAC-MD5
+			and DH.  Tighten which options apply to KEY and
+			DNSKEY records.
+
+1657.	[doc]		ARM: document query log output.
+
+1656.	[doc]		Update DNSSEC description in ARM to cover DS, NSEC
+			DNSKEY and RRSIG.  [RT #11542]
+
+1655.	[bug]		Logging multiple versions w/o a size was broken.
+			[RT #11446]
+
+1654.	[bug]		isc_result_totext() contained array bounds read
+			error.
+
+1653.	[func]		Add key type checking to dst_key_fromfilename(),
+			DST_TYPE_KEY should be used to read TSIG, TKEY and
+			SIG(0) keys.
+
+1652.	[bug]		TKEY still uses KEY.
+
+1651.	[bug]		dig: process multiple dash options.
+
+1650.	[bug]		dig, nslookup: flush standard out after each command.
+
+1649.	[bug]		Silence "unexpected non-minimal diff" message.
+			[RT #11206]
+
+1648.	[func]		Update dnssec-lookaside named.conf syntax to support
+			multiple dnssec-lookaside namespaces (not yet
+			implemented).  
+
+1647.	[bug]		It was possible trigger a INSIST when chasing a DS
+			record that required walking back over a empty node.
+			[RT #11445]
+
+1646.	[bug]		win32: logging file versions didn't work with
+			non-UNC filenames.  [RT#11486]
+
+1645.	[bug]		named could trigger a REQUIRE failure if multiple
+			masters with keys are specified.
+
+1644.	[bug]		Update the journal modification time after a
+			sucessfull refresh query. [RT #11436]
+
+1643.	[bug]		dns_db_closeversion() could leak memory / node
+			references. [RT #11163]
+
+1642.	[port]		Support OpenSSL implementations which don't have
+			DSA support. [RT #11360]
+
+1641.	[bug]		Update the check-names description in ARM. [RT #11389]
+
+	--- 9.3.0beta4 released ---
+
+1640.	[bug]		win32: isc_socket_cancel(ISC_SOCKCANCEL_ACCEPT) was
+			incorrectly closing the socket.  [RT #11291]
+
+1639.	[func]		Initial dlv system test.
+
+1638.	[bug]		"ixfr-from-differences" could generate a REQUIRE
+			failure if the journal open failed. [RT #11347]
+			
+1637.	[bug]		Node reference leak on error in addnoqname().
+
+1636.	[bug]		The dump done callback could get ISC_R_SUCCESS even if
+			a error had occured.  The database version no longer
+			matched the version of the database that was dumped.
+
+1635.	[bug]		Memory leak on error in query_addds().
+
+1634.	[bug]		named didn't supply a useful error message when it
+			detected duplicate views.  [RT #11208]
+
+1633.	[bug]		named should return NOTIMP to update requests to a
+			slaves without a allow-update-forwarding acl specified.
+			[RT #11331]
+
+1632.	[bug]		nsupdate failed to send prerequisite only UPDATE
+			messages. [RT #11288]
+
+1631.	[bug]		dns_journal_compact() could sometimes corrupt the
+			journal. [RT #11124]
+
+1630.	[contrib]	queryperf: add support for IPv6 transport.
+
+1629.	[func]		dig now supports IPv6 scoped addresses with the
+			extended format in the local-server part. [RT #8753]
+
+1628.	[bug]		Typo in Compaq Trucluster support. [RT# 11264]
+
+1627.	[bug]		win32: sockets were not being closed when the
+			last external reference was removed. [RT# 11179]
+
+1626.	[bug]		--enable-getifaddrs was broken. [RT#11259]
+
+1625.	[bug]		named failed to load/transfer RFC2535 signed zones
+			which contained CNAMES. [RT# 11237]
+
+1606.	[bug]	 	DLV insecurity proof was failing.
+
+1605.	[func]		New dns_db_find() option DNS_DBFIND_COVERINGNSEC.
+
 	--- 9.3.0beta3 released ---
 
 1624.	[bug]		zonemgr_putio() call should be locked. [RT# 11163]
@@ -1903,7 +2144,6 @@
 			files. [RT #1783]
 
 	--- 9.2.0rc4 released ---
-
 
 1013.	[bug]		It was possible to cancel a query twice when marking
 			a server as bogus or by having a blackhole acl.

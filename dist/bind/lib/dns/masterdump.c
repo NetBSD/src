@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.1 2004/05/17 23:44:49 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.2 2004/11/06 23:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.56.2.5.2.10 2004/03/08 09:04:30 marka Exp */
+/* Id: masterdump.c,v 1.56.2.5.2.12 2004/08/28 06:25:19 marka Exp */
 
 #include <config.h>
 
@@ -27,6 +27,7 @@
 #include <isc/file.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/task.h>
@@ -981,6 +982,7 @@ closeandrename(FILE *f, isc_result_t result, const char *temp, const char *file)
 static void
 dump_quantum(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
+	isc_result_t tresult;
 	dns_dumpctx_t *dctx;
 
 	REQUIRE(event != NULL);
@@ -996,11 +998,12 @@ dump_quantum(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 
-	if (dctx->file != NULL)
-		result = closeandrename(dctx->f, result,
-					dctx->tmpfile, dctx->file);
-	if (dctx->version != NULL)
-		dns_db_closeversion(dctx->db, &dctx->version, ISC_FALSE);
+	if (dctx->file != NULL) {
+		tresult = closeandrename(dctx->f, result,
+					 dctx->tmpfile, dctx->file);
+		if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
+			result = tresult;
+	}
 	(dctx->done)(dctx->done_arg, result);
 	isc_event_free(&event);
 	dns_dumpctx_detach(&dctx);

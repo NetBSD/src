@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.25.12.6 2004/03/08 09:04:16 marka Exp
+# Id: Makefile.in,v 1.25.12.7 2004/07/20 07:01:51 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -43,7 +43,7 @@ SRCS =		t_mem.c
 @BIND9_MAKE_RULES@
 
 t_mem@EXEEXT@: t_mem.@O@ ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ t_mem.@O@ ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ t_mem.@O@ ${LIBS}
 
 test: t_mem@EXEEXT@
 	-@./t_mem@EXEEXT@ -b @srcdir@ -q 300 -a

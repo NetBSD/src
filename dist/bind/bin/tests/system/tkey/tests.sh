@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.2.12.3 2004/03/08 09:04:17 marka Exp
+# Id: tests.sh,v 1.2.12.4 2004/06/11 00:30:53 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -28,7 +28,7 @@ RANDFILE=random.data
 
 echo "I:generating new DH key"
 ret=0
-dhkeyname=`$KEYGEN -a DH -b 768 -n host -r $RANDFILE client` || ret=1
+dhkeyname=`$KEYGEN -k -a DH -b 768 -n host -r $RANDFILE client` || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"
 	echo "I:exit status: $status"

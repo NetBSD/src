@@ -61,8 +61,9 @@
 2929:	Domain Name System (DNS) IANA Considerations
 2930:	Secret Key Establishment for DNS (TKEY RR)
 2931:	DNS Request and Transaction Signatures ( SIG(0)s )
-3007:   Secure Domain Name System (DNS) Dynamic Update
-3008:   Domain Name System Security (DNSSEC) Signing Authority
+3007:	Secure Domain Name System (DNS) Dynamic Update
+3008:	Domain Name System Security (DNSSEC) Signing Authority
+3071:	Reflections on the DNS, RFC 1591, and Categories of Domains
 3090:	DNS Security Extension Clarification on Zone Status
 3110:	RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System (DNS)
 3123:	A DNS RR Type for Lists of Address Prefixes (APL RR)
@@ -89,3 +90,5 @@
 	  Secret Key Transaction Authentication for DNS (GSS-TSIG)
 3655:	Redefinition of DNS Authenticated Data (AD) bit
 3658:	Delegation Signer (DS) Resource Record (RR)
+3833:	Threat Analysis of the Domain Name System (DNS)
+3845:	DNS Security (DNSSEC) NextSECure (NSEC) RDATA Format

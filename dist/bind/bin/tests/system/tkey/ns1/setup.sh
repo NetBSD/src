@@ -15,11 +15,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2.2.2.10.1 2004/03/06 10:22:35 marka Exp
+# Id: setup.sh,v 1.2.2.2.10.2 2004/06/11 00:30:54 marka Exp
 
 RANDFILE=../random.data
 
-keyname=`$KEYGEN -a DH -b 768 -n host -r $RANDFILE server`
+keyname=`$KEYGEN -k -a DH -b 768 -n host -r $RANDFILE server`
 keyid=`echo $keyname | $PERL -p -e 's/^.*\+0*//;'`
 rm -f named.conf
 perl -p -e "s/KEYID/$keyid/;" < named.conf.in > named.conf

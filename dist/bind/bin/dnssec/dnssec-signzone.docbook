@@ -16,7 +16,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-signzone.docbook,v 1.2.2.2.4.6 2004/03/10 02:55:51 marka Exp -->
+<!-- Id: dnssec-signzone.docbook,v 1.2.2.2.4.8 2004/06/11 01:17:35 marka Exp -->
 
 <refentry>
   <refentryinfo>
@@ -63,14 +63,12 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-        <command>dnssec-signzone</command> signs a zone.  It generates NSEC
-	and RRSIG records and produces a signed version of the zone.  If there
-	is a <filename>signedkey</filename> file from the zone's parent,
-	the parent's signatures will be incorporated into the generated
-	signed zone file.  The security status of delegations from the
-        signed zone (that is, whether the child zones are secure or not) is
-        determined by the presence or absence of a
-	<filename>signedkey</filename> file for each child zone.
+        <command>dnssec-signzone</command> signs a zone.  It generates
+	NSEC and RRSIG records and produces a signed version of the
+	zone. The security status of delegations from the signed zone
+	(that is, whether the child zones are secure or not) is
+	determined by the presence or absence of a
+	<filename>keyset</filename> file for each child zone.
     </para>
   </refsect1>
 
@@ -120,7 +118,7 @@
         <term>-d <replaceable class="parameter">directory</replaceable></term>
 	<listitem>
 	  <para>
-	       Look for <filename>signedkey</filename> files in
+	       Look for <filename>keyset</filename> files in
 	       <option>directory</option> as the directory 
 	  </para>
 	</listitem>
@@ -317,8 +315,8 @@
         The following command signs the <userinput>example.com</userinput>
 	zone with the DSA key generated in the <command>dnssec-keygen</command>
 	man page.  The zone's keys must be in the zone.  If there are
-	<filename>signedkey</filename> files associated with this zone
-	or any child zones, they must be in the current directory.
+	<filename>keyset</filename> files associated with child zones,
+	they must be in the current directory.
 	<userinput>example.com</userinput>, the following command would be
 	issued:
     </para>
@@ -343,10 +341,6 @@
         <refentrytitle>dnssec-keygen</refentrytitle>
 	<manvolnum>8</manvolnum>
       </citerefentry>,
-      <citerefentry>
-        <refentrytitle>dnssec-signkey</refentrytitle>
-	<manvolnum>8</manvolnum>
-      </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
       <citetitle>RFC 2535</citetitle>.
     </para>
@@ -355,7 +349,7 @@
   <refsect1>
     <title>AUTHOR</title>
     <para>
-        <corpauthor>Internet Software Consortium</corpauthor>
+        <corpauthor>Internet Systems Consortium</corpauthor>
     </para>
   </refsect1>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.1.1.1 2004/05/17 23:44:46 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.1.1.2 2004/11/06 23:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_print.c,v 1.3.2.1.4.4 2004/03/17 01:13:36 marka Exp";
+static const char rcsid[] = "Id: ns_print.c,v 1.3.2.1.4.5 2004/07/28 20:16:45 marka Exp";
 #endif
 
 /* Import. */
@@ -147,8 +147,6 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	addlen(x, &buf, &buflen);
 	len = SPRINTF((tmp, " %s %s", p_class(class), p_type(type)));
 	T(addstr(tmp, len, &buf, &buflen));
-	if (rdlen == 0U)
-		return (buf - obuf);
 	T(spaced = addtab(x + len, 16, spaced, &buf, &buflen));
 
 	/*
@@ -709,7 +707,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	int n, m;
 	char *p;
 
-	len = SPRINTF((tmp, "\\# %u (\t; %s", edata - rdata, comment));
+	len = SPRINTF((tmp, "\\# %u%s\t; %s", edata - rdata,
+		       rdlen != 0 ? " (" : "", comment));
 	T(addstr(tmp, len, &buf, &buflen));
 	while (rdata < edata) {
 		p = tmp;

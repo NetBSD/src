@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 2004/05/17 23:45:00 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.2 2004/11/06 23:55:47 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.88.2.3.2.12 2004/03/16 05:50:22 marka Exp
+ * Id: dst_api.c,v 1.88.2.3.2.15 2004/06/16 01:05:01 marka Exp
  */
 
 #include <config.h>
@@ -72,6 +72,7 @@ static dst_key_t *	get_key_struct(dns_name_t *name,
 				       dns_rdataclass_t rdclass,
 				       isc_mem_t *mctx);
 static isc_result_t	read_public_key(const char *filename,
+					int type,
 					isc_mem_t *mctx,
 					dst_key_t **keyp);
 static isc_result_t	write_public_key(const dst_key_t *key, int type,
@@ -147,9 +148,11 @@ dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
 	RETERR(dst__openssl_init());
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSAMD5]));
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA1]));
+#ifdef HAVE_OPENSSL_DSA
 	RETERR(dst__openssldsa_init(&dst_t_func[DST_ALG_DSA]));
-	RETERR(dst__openssldh_init(&dst_t_func[DST_ALG_DH]));
 #endif
+	RETERR(dst__openssldh_init(&dst_t_func[DST_ALG_DH]));
+#endif /* OPENSSL */
 #ifdef GSSAPI
 	RETERR(dst__gssapi_init(&dst_t_func[DST_ALG_GSSAPI]));
 #endif
@@ -391,7 +394,7 @@ dst_key_fromnamedfile(const char *filename, int type, isc_mem_t *mctx,
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
-	result = read_public_key(filename, mctx, &pubkey);
+	result = read_public_key(filename, type, mctx, &pubkey);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -825,7 +828,9 @@ get_key_struct(dns_name_t *name, unsigned int alg,
  * Reads a public key from disk
  */
 static isc_result_t
-read_public_key(const char *filename, isc_mem_t *mctx, dst_key_t **keyp) {
+read_public_key(const char *filename, int type,
+		isc_mem_t *mctx, dst_key_t **keyp)
+{
 	u_char rdatabuf[DST_KEY_MAXSIZE];
 	isc_buffer_t b;
 	dns_fixedname_t name;
@@ -840,7 +845,7 @@ read_public_key(const char *filename, isc_mem_t *mctx, dst_key_t **keyp) {
 	isc_lexspecials_t specials;
 	isc_uint32_t ttl;
 	isc_result_t result;
-	dns_rdatatype_t type;
+	dns_rdatatype_t keytype;
 
 	newfilenamelen = strlen(filename) + 5;
 	newfilename = isc_mem_get(mctx, newfilenamelen);
@@ -913,14 +918,20 @@ read_public_key(const char *filename, isc_mem_t *mctx, dst_key_t **keyp) {
 		BADTOKEN();
 
 	if (strcasecmp(DST_AS_STR(token), "DNSKEY") == 0)
-		type = dns_rdatatype_dnskey;
+		keytype = dns_rdatatype_dnskey;
 	else if (strcasecmp(DST_AS_STR(token), "KEY") == 0)
-		type = dns_rdatatype_key; /* SIG(0) */
+		keytype = dns_rdatatype_key; /* SIG(0), TKEY */
 	else
 		BADTOKEN();
 
+	if (((type & DST_TYPE_KEY) != 0 && keytype != dns_rdatatype_key) ||
+	    ((type & DST_TYPE_KEY) == 0 && keytype != dns_rdatatype_dnskey)) {
+		ret = DST_R_BADKEYTYPE;
+		goto cleanup;
+	}
+
 	isc_buffer_init(&b, rdatabuf, sizeof(rdatabuf));
-	ret = dns_rdata_fromtext(&rdata, rdclass, type, lex, NULL,
+	ret = dns_rdata_fromtext(&rdata, rdclass, keytype, lex, NULL,
 				 ISC_FALSE, mctx, &b, NULL);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup;
@@ -1138,10 +1149,12 @@ algorithm_status(unsigned int alg) {
 
 	if (dst_algorithm_supported(alg))
 		return (ISC_R_SUCCESS);
+#ifndef OPENSSL
 	if (alg == DST_ALG_RSAMD5 || alg == DST_ALG_RSASHA1 ||
 	    alg == DST_ALG_DSA || alg == DST_ALG_DH ||
 	    alg == DST_ALG_HMACMD5)
 		return (DST_R_NOCRYPTO);
+#endif
 	return (DST_R_UNSUPPORTEDALG);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.1 2004/05/17 23:45:09 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.2 2004/11/06 23:55:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.21.44.27 2004/04/15 23:56:34 marka Exp */
+/* Id: namedconf.c,v 1.21.44.28 2004/06/04 02:33:01 marka Exp */
 
 #include <config.h>
 
@@ -661,6 +661,28 @@ static cfg_type_t cfg_type_mustbesecure = {
 };
 
 /*
+ * dnssec-lookaside
+ */
+
+static keyword_type_t trustanchor_kw = { "trust-anchor", &cfg_type_astring };
+
+static cfg_type_t cfg_type_trustanchor = {
+	"trust-anchor", parse_keyvalue, print_keyvalue, doc_keyvalue,
+	&cfg_rep_string, &trustanchor_kw
+};
+
+static cfg_tuplefielddef_t lookaside_fields[] = {
+	{ "domain", &cfg_type_astring, 0 },
+	{ "trust-anchor", &cfg_type_trustanchor, 0 },
+	{ NULL, NULL, 0 }
+};
+
+static cfg_type_t cfg_type_lookaside = {
+	"lookaside", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	&cfg_rep_tuple, lookaside_fields
+};
+
+/*
  * Clauses that can be found within the 'view' statement,
  * with defaults in the 'options' statement.
  */
@@ -705,7 +727,7 @@ view_clauses[] = {
 	{ "disable-algorithms", &cfg_type_disablealgorithm,
 	  CFG_CLAUSEFLAG_MULTI },
 	{ "dnssec-enable", &cfg_type_boolean, 0 },
-	{ "dnssec-lookaside", &cfg_type_astring, 0 },
+	{ "dnssec-lookaside", &cfg_type_lookaside, CFG_CLAUSEFLAG_MULTI },
 	{ "dnssec-must-be-secure",  &cfg_type_mustbesecure,
 	   CFG_CLAUSEFLAG_MULTI },
 	{ NULL, NULL, 0 }
@@ -1203,6 +1225,7 @@ controls_clauses[] = {
 	  CFG_CLAUSEFLAG_MULTI|CFG_CLAUSEFLAG_NOTIMP },
 	{ NULL, NULL, 0 }
 };
+
 static cfg_clausedef_t *
 controls_clausesets[] = {
 	controls_clauses,

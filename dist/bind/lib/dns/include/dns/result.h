@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2004/05/17 23:44:58 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.2 2004/11/06 23:55:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.81.2.7.2.12 2004/04/15 23:56:32 marka Exp */
+/* Id: result.h,v 1.81.2.7.2.13 2004/05/14 05:06:41 marka Exp */
 
 #ifndef DNS_RESULT_H
 #define DNS_RESULT_H 1
@@ -144,8 +144,9 @@
 #define DNS_R_DYNAMIC			(ISC_RESULTCLASS_DNS + 98)
 #define DNS_R_UNKNOWNCOMMAND		(ISC_RESULTCLASS_DNS + 99)
 #define DNS_R_MUSTBESECURE		(ISC_RESULTCLASS_DNS + 100)
+#define DNS_R_COVERINGNSEC		(ISC_RESULTCLASS_DNS + 101)
 
-#define DNS_R_NRESULTS			101	/* Number of results */
+#define DNS_R_NRESULTS			102	/* Number of results */
 
 /*
  * DNS wire format rcodes.

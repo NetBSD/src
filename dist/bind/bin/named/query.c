@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.1 2004/05/17 23:43:23 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.2 2004/11/06 23:53:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.198.2.13.4.27 2004/04/15 02:10:38 marka Exp */
+/* Id: query.c,v 1.198.2.13.4.30 2004/06/30 14:13:05 marka Exp */
 
 #include <config.h>
 
@@ -1787,7 +1787,7 @@ query_addds(ns_client_t *client, dns_db_t *db, dns_dbnode_t *node) {
 	rdataset = query_newrdataset(client);
 	sigrdataset = query_newrdataset(client);
 	if (rdataset == NULL || sigrdataset == NULL)
-		return;
+		goto cleanup;
 
 	/*
 	 * Look for the DS record, which may or may not be present.
@@ -1841,13 +1841,16 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 	isc_buffer_t *dbuf, b;
 	dns_name_t *fname;
 	dns_rdataset_t *rdataset, *sigrdataset;
-	dns_fixedname_t tfixed;
-	dns_name_t *tname;
+	dns_fixedname_t wfixed;
+	dns_name_t *wname;
 	dns_dbnode_t *node;
 	unsigned int options;
-	unsigned int olabels, nlabels, i;
-	isc_boolean_t done;
+	unsigned int olabels, nlabels;
 	isc_result_t result;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_nsec_t nsec;
+	isc_boolean_t have_wname;
+	int order;
 
 	CTRACE("query_addwildcardproof");
 	fname = NULL;
@@ -1855,87 +1858,107 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 	sigrdataset = NULL;
 	node = NULL;
 
+	/*
+	 * Get the NOQNAME proof then if !ispositve
+	 * get the NOWILDCARD proof.
+	 *
+	 * DNS_DBFIND_NOWILD finds the NSEC records that covers the
+	 * name ignoring any wildcard.  From the owner and next names
+	 * of this record you can compute which wildcard (if it exists)
+	 * will match by finding the longest common suffix of the
+	 * owner name and next names with the qname and prefixing that
+	 * with the wildcard label.
+	 *
+	 * e.g.
+	 *   Given:
+	 *	example SOA
+	 *	example NSEC b.example
+	 * 	b.example A
+	 * 	b.example NSEC a.d.example
+	 * 	a.d.example A
+	 * 	a.d.example NSEC g.f.example
+	 * 	g.f.example A
+	 * 	g.f.example NSEC z.i.example
+	 * 	z.i.example A
+	 * 	z.i.example NSEC example
+	 *
+	 *   QNAME:
+	 *   a.example -> example NSEC b.example
+	 * 	owner common example
+	 * 	next common example
+	 * 	wild *.example
+	 *   d.b.example -> b.example NSEC a.d.example
+	 *	owner common b.example
+	 *	next common example
+	 *	wild *.b.example
+	 *   a.f.example -> a.d.example NSEC g.f.example
+	 *	owner common example
+	 *	next common f.example
+	 *	wild *.f.example
+	 *  j.example -> z.i.example NSEC example
+	 *	owner common example
+	 * 	next common example
+	 *	wild *.f.example
+	 */
 	options = client->query.dboptions | DNS_DBFIND_NOWILD;
+	dns_fixedname_init(&wfixed);
+	wname = dns_fixedname_name(&wfixed);
+ again:
+	have_wname = ISC_FALSE;
+	/*
+	 * We'll need some resources...
+	 */
+	dbuf = query_getnamebuf(client);
+	if (dbuf == NULL)
+		goto cleanup;
+	fname = query_newname(client, dbuf, &b);
+	rdataset = query_newrdataset(client);
+	sigrdataset = query_newrdataset(client);
+	if (fname == NULL || rdataset == NULL || sigrdataset == NULL)
+		goto cleanup;
 
-	if (ispositive) {
-		/*
-		 * We'll need some resources...
-		 */
-		dbuf = query_getnamebuf(client);
-		if (dbuf == NULL)
-			goto cleanup;
-		fname = query_newname(client, dbuf, &b);
-		rdataset = query_newrdataset(client);
-		sigrdataset = query_newrdataset(client);
-		if (fname == NULL || rdataset == NULL || sigrdataset == NULL)
-			goto cleanup;
-
-		result = dns_db_find(db, name, NULL,
-				     dns_rdatatype_nsec, options, 0, &node,
-				     fname, rdataset, sigrdataset);
-		if (node != NULL)
-			dns_db_detachnode(db, &node);
-		if (result == DNS_R_NXDOMAIN)
-			query_addrrset(client, &fname, &rdataset, &sigrdataset,
-				       dbuf, DNS_SECTION_AUTHORITY);
-		if (rdataset != NULL)
-			query_putrdataset(client, &rdataset);
-		if (sigrdataset != NULL)
-			query_putrdataset(client, &sigrdataset);
-		if (fname != NULL)
-			query_releasename(client, &fname);
-	}
-
-	olabels = dns_name_countlabels(dns_db_origin(db));
-	nlabels = dns_name_countlabels(name);
-	done = ISC_FALSE;
-
-	for (i = nlabels - 1; i >= olabels && !done; i--) {
-		/*
-		 * We'll need some resources...
-		 */
-		dbuf = query_getnamebuf(client);
-		if (dbuf == NULL)
-			goto cleanup;
-		fname = query_newname(client, dbuf, &b);
-		rdataset = query_newrdataset(client);
-		sigrdataset = query_newrdataset(client);
-		if (fname == NULL || rdataset == NULL || sigrdataset == NULL)
-			goto cleanup;
-
-		dns_fixedname_init(&tfixed);
-		tname = dns_fixedname_name(&tfixed);
-		dns_name_split(name, i, NULL, tname);
-		result = dns_name_concatenate(dns_wildcardname, tname, tname,
-					      NULL);
-		if (result != ISC_R_SUCCESS)
-			continue;
-
-		result = dns_db_find(db, tname, NULL, dns_rdatatype_nsec,
-				     client->query.dboptions, 0, &node,
-				     fname, rdataset, sigrdataset);
-		if (node != NULL)
-			dns_db_detachnode(db, &node);
-		/*
-		 * If this returns success, we've found the wildcard for a
-		 * successful answer, so we're done.
-		 */
-		if (result == ISC_R_SUCCESS && ispositive)
-			break;
-		if (result == DNS_R_NXDOMAIN || result == DNS_R_EMPTYNAME) {
-			if (!ispositive &&
-			    dns_name_issubdomain(name, fname))
-				done = ISC_TRUE;
-			query_addrrset(client, &fname, &rdataset, &sigrdataset,
-				       dbuf, DNS_SECTION_AUTHORITY);
+	result = dns_db_find(db, name, NULL, dns_rdatatype_nsec, options,
+			     0, &node, fname, rdataset, sigrdataset);
+	if (node != NULL)
+		dns_db_detachnode(db, &node);
+	if (result == DNS_R_NXDOMAIN) {
+		if (!ispositive)
+			result = dns_rdataset_first(rdataset);
+		if (result == ISC_R_SUCCESS) {
+			dns_rdataset_current(rdataset, &rdata);
+			result = dns_rdata_tostruct(&rdata, &nsec, NULL);
 		}
-		if (rdataset != NULL)
-			query_putrdataset(client, &rdataset);
-		if (sigrdataset != NULL)
-			query_putrdataset(client, &sigrdataset);
-		if (fname != NULL)
-			query_releasename(client, &fname);
+		if (result == ISC_R_SUCCESS) {
+			(void)dns_name_fullcompare(name, fname, &order,
+						   &olabels);
+			(void)dns_name_fullcompare(name, &nsec.next, &order,
+						   &nlabels);
+			if (olabels > nlabels)
+				dns_name_split(name, olabels, NULL, wname);
+			else
+				dns_name_split(name, nlabels, NULL, wname);
+			result = dns_name_concatenate(dns_wildcardname,
+						      wname, wname, NULL);
+			if (result == ISC_R_SUCCESS)
+				have_wname = ISC_TRUE;
+			dns_rdata_freestruct(&nsec);
+		}
+		query_addrrset(client, &fname, &rdataset, &sigrdataset,
+			       dbuf, DNS_SECTION_AUTHORITY);
 	}
+	if (rdataset != NULL)
+		query_putrdataset(client, &rdataset);
+	if (sigrdataset != NULL)
+		query_putrdataset(client, &sigrdataset);
+	if (fname != NULL)
+		query_releasename(client, &fname);
+	if (have_wname) {
+		ispositive = ISC_TRUE;	/* prevent loop */
+		if (!dns_name_equal(name, wname)) {
+			name = wname;
+			goto again;
+		}
+	} 
  cleanup:
 	if (rdataset != NULL)
 		query_putrdataset(client, &rdataset);

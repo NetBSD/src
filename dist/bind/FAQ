@@ -415,3 +415,40 @@ information in the chroot area.
 	OSF: /etc/zoneinfo/localtime
 
 	See also tzset(3) and zic(8).
+
+
+Q: I get the error message "named: capset failed: Operation not permitted"
+when starting named.
+
+A: The capset module has not been loaded into the kernel.  See insmod(8).
+
+
+Q: I get "rndc: connect failed: connection refused" when I try to run
+   rndc.
+
+A: This is usually a configuration error.
+
+   First ensure that named is running and no errors are being
+   reported at startup (/var/log/messages or equivalent).  Running
+   "named -g <usual arguements>" from a terminal can help at this
+   point.
+
+   Secondly ensure that named is configured to use rndc either by
+   "rndc-confgen -a", rndc-confgen or manually.  The Administators
+   Reference manual has details on how to do this.
+
+   Old versions of rndc-confgen used localhost rather than 127.0.0.1
+   in /etc/rndc.conf for the default server.  Update /etc/rndc.conf
+   if necessary so that the default server listed in /etc/rndc.conf
+   matches the addresses used in named.conf.  "localhost" has two
+   address (127.0.0.1 and ::1).
+
+   If you use "rndc-confgen -a" and named is running with -t or -u
+   ensure that /etc/rndc.conf has the correct ownership and that
+   a copy is in the chroot area.  You can do this by re-running
+   "rndc-confgen -a" with appropriate -t and -u arguements.
+
+
+Q: I don't get RRSIG's returned when I use "dig +dnssec".
+
+A: You need to ensure DNSSEC is enabled (dnssec-enable yes;).

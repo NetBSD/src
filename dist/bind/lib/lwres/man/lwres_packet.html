@@ -15,16 +15,16 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: lwres_packet.html,v 1.8.2.1.4.1 2004/03/06 08:15:42 marka Exp -->
+<!-- Id: lwres_packet.html,v 1.8.2.1.4.2 2004/08/22 23:39:05 marka Exp -->
 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_packet</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_packet</A
-></H1
+></A
+>lwres_packet</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -54,11 +54,11 @@ NAME="AEN12"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN13"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwpacket.h&gt;</PRE
@@ -125,9 +125,9 @@ struct lwres_lwpacket {
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->length</TT
+>length</CODE
 ></DT
 ><DD
 ><P
@@ -136,9 +136,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->version</TT
+>version</CODE
 ></DT
 ><DD
 ><P
@@ -152,9 +152,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->pktflags</TT
+>pktflags</CODE
 ></DT
 ><DD
 ><P
@@ -166,9 +166,9 @@ LWRES_LWPACKETFLAG_RESPONSE bit, which is set by the library in the
 lwres_gabn_*() and lwres_gnba_*() calls.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->serial</TT
+>serial</CODE
 ></DT
 ><DD
 ><P
@@ -179,9 +179,9 @@ may be dropped.
 This field must be set by the application.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->opcode</TT
+>opcode</CODE
 ></DT
 ><DD
 ><P
@@ -193,9 +193,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->result</TT
+>result</CODE
 ></DT
 ><DD
 ><P
@@ -206,9 +206,9 @@ This field is filled in by the lwres_gabn_*() and lwres_gnba_*()
 calls.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->recvlength</TT
+>recvlength</CODE
 ></DT
 ><DD
 ><P
@@ -218,9 +218,9 @@ is too large for replies.
 This field is supplied by the application.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->authtype</TT
+>authtype</CODE
 ></DT
 ><DD
 ><P
@@ -230,9 +230,9 @@ and types between 0x0000 and 0x0fff are reserved for library use.
 Currently these are not used and must be zero.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->authlen</TT
+>authlen</CODE
 ></DT
 ><DD
 ><P
@@ -250,9 +250,9 @@ Since packet authentication is currently not used, this must be zero.</P
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->NOOP</TT
+>NOOP</CODE
 ></DT
 ><DD
 ><P
@@ -260,9 +260,9 @@ CLASS="CONSTANT"
 The lwres_noop_*() functions should be used for this type.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->GETADDRSBYNAME</TT
+>GETADDRSBYNAME</CODE
 ></DT
 ><DD
 ><P
@@ -270,9 +270,9 @@ CLASS="CONSTANT"
 The lwres_gabn_*() functions should be used for this type.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->GETNAMEBYADDR</TT
+>GETNAMEBYADDR</CODE
 ></DT
 ><DD
 ><P
@@ -283,50 +283,40 @@ The lwres_gnba_*() functions should be used for this type.</P
 ></DIV
 ></P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_lwpacket_renderheader()</TT
+>lwres_lwpacket_renderheader()</CODE
 > transfers the
 contents of lightweight resolver packet structure
 <SPAN
 CLASS="TYPE"
 >lwres_lwpacket_t</SPAN
-> <TT
+> <VAR
 CLASS="PARAMETER"
-><I
->*pkt</I
-></TT
+>*pkt</VAR
 > in network
 byte order to the lightweight resolver buffer,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*b</I
-></TT
+>*b</VAR
 >.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_lwpacket_parseheader()</TT
+>lwres_lwpacket_parseheader()</CODE
 > performs the
 converse operation.  It transfers data in network byte order from
-buffer <TT
+buffer <VAR
 CLASS="PARAMETER"
-><I
->*b</I
-></TT
+>*b</VAR
 > to resolver packet
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*pkt</I
-></TT
+>*pkt</VAR
 >.  The contents of the buffer
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->b</I
-></TT
+>b</VAR
 > should correspond to a
 <SPAN
 CLASS="TYPE"
@@ -342,29 +332,25 @@ NAME="AEN107"
 >RETURN VALUES</H2
 ><P
 > Successful calls to
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_lwpacket_renderheader()</TT
+>lwres_lwpacket_renderheader()</CODE
 > and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_lwpacket_parseheader()</TT
+>lwres_lwpacket_parseheader()</CODE
 > return
 <SPAN
 CLASS="ERRORCODE"
 >LWRES_R_SUCCESS</SPAN
 >.  If there is insufficient
-space to copy data between the buffer <TT
+space to copy data between the buffer <VAR
 CLASS="PARAMETER"
-><I
->*b</I
-></TT
+>*b</VAR
 > and
-lightweight resolver packet <TT
+lightweight resolver packet <VAR
 CLASS="PARAMETER"
-><I
->*pkt</I
-></TT
+>*pkt</VAR
 > both functions
 return <SPAN
 CLASS="ERRORCODE"

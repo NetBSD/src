@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.2 2004/11/06 23:55:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.57.2.2.8.4 2004/03/08 09:04:53 marka Exp */
+/* Id: result.h,v 1.57.2.2.8.5 2004/05/15 03:46:13 jinmei Exp */
 
 #ifndef ISC_RESULT_H
 #define ISC_RESULT_H 1
@@ -84,11 +84,12 @@
 #define ISC_R_BADNUMBER			56	/* not a valid number */
 #define ISC_R_DISABLED			57	/* disabled */
 #define ISC_R_MAXSIZE			58	/* max size */
+#define ISC_R_BADADDRESSFORM		59	/* invalid address format */
 
 /*
  * Not a result code: the number of results.
  */
-#define ISC_R_NRESULTS 			59
+#define ISC_R_NRESULTS 			60
 
 ISC_LANG_BEGINDECLS
 

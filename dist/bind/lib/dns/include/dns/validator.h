@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.1.1.1 2004/05/17 23:44:58 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.2 2004/11/06 23:55:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.h,v 1.18.12.6 2004/04/15 23:56:33 marka Exp */
+/* Id: validator.h,v 1.18.12.7 2004/05/14 05:06:41 marka Exp */
 
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1
@@ -123,6 +123,8 @@ struct dns_validator {
 	dns_fixedname_t			wild;
 	ISC_LINK(dns_validator_t)	link;
 	dns_rdataset_t *		dlv;
+	dns_fixedname_t			dlvsep;
+	isc_boolean_t			havedlvsep;
 	isc_boolean_t			mustbesecure;
 };
 

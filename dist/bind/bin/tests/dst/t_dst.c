@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dst.c,v 1.1.1.1 2004/05/17 23:43:28 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.1.1.2 2004/11/06 23:53:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_dst.c,v 1.47.206.1 2004/03/06 10:21:43 marka Exp */
+/* Id: t_dst.c,v 1.47.206.2 2004/06/11 00:30:52 marka Exp */
 
 #include <config.h>
 
@@ -170,7 +170,7 @@ dh(dns_name_t *name1, int id1, dns_name_t *name2, int id2, isc_mem_t *mctx,
 	char		tmp[PATH_MAX + 1];
 	char		*p;
 	int		alg = DST_ALG_DH;
-	int		type = DST_TYPE_PUBLIC|DST_TYPE_PRIVATE;
+	int		type = DST_TYPE_PUBLIC|DST_TYPE_PRIVATE|DST_TYPE_KEY;
 	unsigned char	array1[1024], array2[1024];
 	isc_buffer_t	b1, b2;
 	isc_region_t	r1, r2;

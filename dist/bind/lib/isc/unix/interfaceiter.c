@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.1 2004/05/17 23:45:05 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.2 2004/11/06 23:55:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.c,v 1.22.2.1.10.12 2004/04/20 06:46:53 marka Exp */
+/* Id: interfaceiter.c,v 1.22.2.1.10.14 2004/08/28 06:25:22 marka Exp */
 
 #include <config.h>
 
@@ -38,6 +38,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/net.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
@@ -66,6 +67,11 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 	 char *ifname)
 {
 	struct sockaddr_in6 *sa6;
+
+#if !defined(ISC_PLATFORM_HAVEIFNAMETOINDEX) || \
+    !defined(ISC_PLATFORM_HAVESCOPEID)
+	UNUSED(ifname);
+#endif
 
 	/* clear any remaining value for safety */
 	memset(dst, 0, sizeof(*dst));

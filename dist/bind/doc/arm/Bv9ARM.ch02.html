@@ -1,11 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >BIND Resource Requirements</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
@@ -70,11 +70,11 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch02"
->Chapter 2. <SPAN
+></A
+>Chapter 2. <ACRONYM
 CLASS="acronym"
->BIND</SPAN
-> Resource Requirements</A
-></H1
+>BIND</ACRONYM
+> Resource Requirements</H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -118,25 +118,25 @@ NAME="AEN228"
 >2.1. Hardware requirements</A
 ></H1
 ><P
-><SPAN
+><ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > hardware requirements have traditionally been quite modest.
 For many installations, servers that have been pensioned off from
-active duty have performed admirably as <SPAN
+active duty have performed admirably as <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > servers.</P
 ><P
->The DNSSEC and IPv6 features of <SPAN
+>The DNSSEC and IPv6 features of <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 may prove to be quite
 CPU intensive however, so organizations that make heavy use of these
 features may wish to consider larger systems for these applications.
-<SPAN
+<ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 is fully multithreaded, allowing full utilization of
 multiprocessor systems for installations that need it.</P
 ></DIV
@@ -149,9 +149,9 @@ NAME="AEN236"
 >2.2. CPU Requirements</A
 ></H1
 ><P
->CPU requirements for <SPAN
+>CPU requirements for <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 range from i486-class machines
 for serving of static zones without caching, to enterprise-class
 machines if you intend to process many dynamic updates and DNSSEC
@@ -172,9 +172,9 @@ CLASS="command"
 >max-cache-size</B
 >
 option can be used to limit the amount of memory used by the cache,
-at the expense of reducing cache hit rates and causing more <SPAN
+at the expense of reducing cache hit rates and causing more <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 >
 traffic. It is still good practice to have enough memory to load
 all zone and cache data into memory &#8212; unfortunately, the best way
@@ -212,9 +212,9 @@ NAME="AEN248"
 >2.5. Supported Operating Systems</A
 ></H1
 ><P
->ISC <SPAN
+>ISC <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 compiles and runs on a large number
 of Unix-like operating system and on Windows NT / 2000.  For an up-to-date
 list of supported systems, see the README file in the top level directory

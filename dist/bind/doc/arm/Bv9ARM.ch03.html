@@ -1,11 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >Name Server Configuration</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
@@ -70,8 +70,8 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch03"
->Chapter 3. Name Server Configuration</A
-></H1
+></A
+>Chapter 3. Name Server Configuration</H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -203,9 +203,9 @@ NAME="AEN268"
 ></H1
 ><P
 >A primitive form of load balancing can be achieved in
-the <SPAN
+the <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > by using multiple A records for one name.</P
 ><P
 >For example, if you have three WWW servers with network addresses
@@ -214,11 +214,11 @@ following means that clients will connect to each machine one third
 of the time:</P
 ><DIV
 CLASS="informaltable"
+><P
+></P
 ><A
 NAME="AEN273"
 ></A
-><P
-></P
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -226,188 +226,128 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
-WIDTH="84"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Name</P
 ></TD
 ><TD
-WIDTH="48"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >TTL</P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >CLASS</P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >TYPE</P
 ></TD
 ><TD
-WIDTH="195"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Resource Record (RR) Data</P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="84"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->www</TT
+>www</VAR
 ></P
 ></TD
 ><TD
-WIDTH="48"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->600</TT
+>600</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->IN</TT
+>IN</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->A</TT
+>A</VAR
 ></P
 ></TD
 ><TD
-WIDTH="195"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->10.0.0.1</TT
+>10.0.0.1</VAR
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="84"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ></P
 ></TD
 ><TD
-WIDTH="48"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->600</TT
+>600</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->IN</TT
+>IN</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->A</TT
+>A</VAR
 ></P
 ></TD
 ><TD
-WIDTH="195"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->10.0.0.2</TT
+>10.0.0.2</VAR
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="84"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ></P
 ></TD
 ><TD
-WIDTH="48"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->600</TT
+>600</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->IN</TT
+>IN</VAR
 ></P
 ></TD
 ><TD
-WIDTH="72"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->A</TT
+>A</VAR
 ></P
 ></TD
 ><TD
-WIDTH="195"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->10.0.0.3</TT
+>10.0.0.3</VAR
 ></P
 ></TD
 ></TR
@@ -417,9 +357,9 @@ CLASS="literal"
 ></P
 ></DIV
 ><P
->When a resolver queries for these records, <SPAN
+>When a resolver queries for these records, <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > will rotate
     them and respond to the query with the records in a different
     order.  In the example above, clients will randomly receive
@@ -442,9 +382,9 @@ HREF="Bv9ARM.ch06.html#rrset_ordering"
 ></A
 >.
     This substatement is not supported in
-    <SPAN
+    <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9, and only the ordering scheme described above is
     available.</P
 ></DIV
@@ -517,41 +457,27 @@ from the command line.</P
 ><B
 CLASS="command"
 >dig</B
->  [@<TT
+>  [@<VAR
 CLASS="replaceable"
-><I
->server</I
-></TT
->]  <TT
+>server</VAR
+>]  <VAR
 CLASS="replaceable"
-><I
->domain</I
-></TT
->  [<TT
+>domain</VAR
+>  [<VAR
 CLASS="replaceable"
-><I
->query-type</I
-></TT
->] [<TT
+>query-type</VAR
+>] [<VAR
 CLASS="replaceable"
-><I
->query-class</I
-></TT
->] [+<TT
+>query-class</VAR
+>] [+<VAR
 CLASS="replaceable"
-><I
->query-option</I
-></TT
->] [-<TT
+>query-option</VAR
+>] [-<VAR
 CLASS="replaceable"
-><I
->dig-option</I
-></TT
->] [%<TT
+>dig-option</VAR
+>] [%<VAR
 CLASS="replaceable"
-><I
->comment</I
-></TT
+>comment</VAR
 >]</P
 ><P
 >The usual simple use of dig will take the form</P
@@ -585,41 +511,27 @@ can be extended with the use of options.</P
 ><B
 CLASS="command"
 >host</B
->  [-aCdlrTwv] [-c <TT
+>  [-aCdlrTwv] [-c <VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
->] [-N <TT
+>class</VAR
+>] [-N <VAR
 CLASS="replaceable"
-><I
->ndots</I
-></TT
->] [-t <TT
+>ndots</VAR
+>] [-t <VAR
 CLASS="replaceable"
-><I
->type</I
-></TT
->] [-W <TT
+>type</VAR
+>] [-W <VAR
 CLASS="replaceable"
-><I
->timeout</I
-></TT
->] [-R <TT
+>timeout</VAR
+>] [-R <VAR
 CLASS="replaceable"
-><I
->retries</I
-></TT
->]  <TT
+>retries</VAR
+>]  <VAR
 CLASS="replaceable"
-><I
->hostname</I
-></TT
->  [<TT
+>hostname</VAR
+>  [<VAR
 CLASS="replaceable"
-><I
->server</I
-></TT
+>server</VAR
 >]</P
 ><P
 >For more information and a list of available commands and
@@ -647,11 +559,9 @@ the name and requested information for a host or domain.</P
 ><B
 CLASS="command"
 >nslookup</B
->  [-option...] [<TT
+>  [-option...] [<VAR
 CLASS="replaceable"
-><I
->host-to-find</I
-></TT
+>host-to-find</VAR
 > | -  [server]]</P
 ><P
 >Interactive mode is entered when no arguments are given (the
@@ -695,10 +605,10 @@ CLASS="variablelist"
 ><DT
 ><A
 NAME="named-checkconf"
+></A
 ><B
 CLASS="command"
 >named-checkconf</B
-></A
 ></DT
 ><DD
 ><P
@@ -714,25 +624,21 @@ CLASS="filename"
 ><B
 CLASS="command"
 >named-checkconf</B
->  [-t <TT
+>  [-t <VAR
 CLASS="replaceable"
-><I
->directory</I
-></TT
->] [<TT
+>directory</VAR
+>] [<VAR
 CLASS="replaceable"
-><I
->filename</I
-></TT
+>filename</VAR
 >]</P
 ></DD
 ><DT
 ><A
 NAME="named-checkzone"
+></A
 ><B
 CLASS="command"
 >named-checkzone</B
-></A
 ></DT
 ><DD
 ><P
@@ -745,30 +651,24 @@ CLASS="command"
 ><B
 CLASS="command"
 >named-checkzone</B
->  [-dq] [-c <TT
+>  [-dq] [-c <VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
->]  <TT
+>class</VAR
+>]  <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
->  [<TT
+>zone</VAR
+>  [<VAR
 CLASS="replaceable"
-><I
->filename</I
-></TT
+>filename</VAR
 >]</P
 ></DD
 ><DT
 ><A
 NAME="rndc"
+></A
 ><B
 CLASS="command"
 >rndc</B
-></A
 ></DT
 ><DD
 ><P
@@ -787,36 +687,24 @@ CLASS="command"
 ><B
 CLASS="command"
 >rndc</B
->  [-c <TT
+>  [-c <VAR
 CLASS="replaceable"
-><I
->config</I
-></TT
->] [-s <TT
+>config</VAR
+>] [-s <VAR
 CLASS="replaceable"
-><I
->server</I
-></TT
->] [-p <TT
+>server</VAR
+>] [-p <VAR
 CLASS="replaceable"
-><I
->port</I
-></TT
->] [-y <TT
+>port</VAR
+>] [-y <VAR
 CLASS="replaceable"
-><I
->key</I
-></TT
->]  <TT
+>key</VAR
+>]  <VAR
 CLASS="replaceable"
-><I
->command</I
-></TT
->  [<TT
+>command</VAR
+>  [<VAR
 CLASS="replaceable"
-><I
->command</I
-></TT
+>command</VAR
 >...]</P
 ><P
 ><B
@@ -829,147 +717,113 @@ CLASS="command"
 CLASS="variablelist"
 ><DL
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->reload</B
-></TT
+>reload</KBD
 ></DT
 ><DD
 ><P
 >Reload configuration file and zones.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->reload <TT
+>reload <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
+>zone</VAR
 >
        [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
+>class</VAR
 >
            [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->view</I
-></TT
+>view</VAR
 ></SPAN
 >]</SPAN
->]</B
-></TT
+>]</KBD
 ></DT
 ><DD
 ><P
 >Reload the given zone.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->refresh <TT
+>refresh <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
+>zone</VAR
 >
        [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
+>class</VAR
 >
            [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->view</I
-></TT
+>view</VAR
 ></SPAN
 >]</SPAN
->]</B
-></TT
+>]</KBD
 ></DT
 ><DD
 ><P
 >Schedule zone maintenance for the given zone.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->retransfer <TT
+>retransfer <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
+>zone</VAR
 >
        [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
+>class</VAR
 >
            [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->view</I
-></TT
+>view</VAR
 ></SPAN
 >]</SPAN
->]</B
-></TT
+>]</KBD
 ></DT
 ><DD
 ><P
 >Retransfer the given zone from the master.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->freeze <TT
+>freeze <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
+>zone</VAR
 >
        [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
+>class</VAR
 >
            [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->view</I
-></TT
+>view</VAR
 ></SPAN
 >]</SPAN
->]</B
-></TT
+>]</KBD
 ></DT
 ><DD
 ><P
@@ -980,34 +834,26 @@ CLASS="replaceable"
     be refused while the zone is frozen.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->unfreeze <TT
+>unfreeze <VAR
 CLASS="replaceable"
-><I
->zone</I
-></TT
+>zone</VAR
 >
        [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->class</I
-></TT
+>class</VAR
 >
            [<SPAN
 CLASS="optional"
-><TT
+><VAR
 CLASS="replaceable"
-><I
->view</I
-></TT
+>view</VAR
 ></SPAN
 >]</SPAN
->]</B
-></TT
+>]</KBD
 ></DT
 ><DD
 ><P
@@ -1017,11 +863,9 @@ CLASS="replaceable"
     will no longer be refused.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->reconfig</B
-></TT
+>reconfig</KBD
 ></DT
 ><DD
 ><P
@@ -1036,22 +880,18 @@ CLASS="command"
    </P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->stats</B
-></TT
+>stats</KBD
 ></DT
 ><DD
 ><P
 >Write server statistics to the statistics file.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->querylog</B
-></TT
+>querylog</KBD
 ></DT
 ><DD
 ><P
@@ -1077,22 +917,18 @@ CLASS="filename"
 >.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->dumpdb</B
-></TT
+>dumpdb</KBD
 ></DT
 ><DD
 ><P
 >Dump the server's caches to the dump file. </P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->stop</B
-></TT
+>stop</KBD
 ></DT
 ><DD
 ><P
@@ -1102,11 +938,9 @@ CLASS="userinput"
    of the updated zones.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->halt</B
-></TT
+>halt</KBD
 ></DT
 ><DD
 ><P
@@ -1116,27 +950,21 @@ CLASS="userinput"
    is restarted.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->trace</B
-></TT
+>trace</KBD
 ></DT
 ><DD
 ><P
 >Increment the servers debugging level by one. </P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->trace <TT
+>trace <VAR
 CLASS="replaceable"
-><I
->level</I
-></TT
-></B
-></TT
+>level</VAR
+></KBD
 ></DT
 ><DD
 ><P
@@ -1144,33 +972,27 @@ CLASS="replaceable"
    value.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->notrace</B
-></TT
+>notrace</KBD
 ></DT
 ><DD
 ><P
 >Sets the server's debugging level to 0.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->flush</B
-></TT
+>flush</KBD
 ></DT
 ><DD
 ><P
 >Flushes the server's cache.</P
 ></DD
 ><DT
-><TT
+><KBD
 CLASS="userinput"
-><B
->status</B
-></TT
+>status</KBD
 ></DT
 ><DD
 ><P
@@ -1188,9 +1010,9 @@ explicit root zone configured.</P
 ></DL
 ></DIV
 ><P
->In <SPAN
+>In <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9.2, <B
 CLASS="command"
 >rndc</B
@@ -1225,9 +1047,9 @@ CLASS="command"
 CLASS="filename"
 >/etc/rndc.conf</TT
 >, but an alternate
-location can be specified with the <TT
+location can be specified with the <VAR
 CLASS="option"
->-c</TT
+>-c</VAR
 >
 option.  If the configuration file is not found,
 <B
@@ -1238,13 +1060,13 @@ CLASS="command"
 CLASS="filename"
 >/etc/rndc.key</TT
 > (or whatever
-<TT
+<VAR
 CLASS="varname"
->sysconfdir</TT
+>sysconfdir</VAR
 > was defined when
-the <SPAN
+the <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > build was configured).
 The <TT
 CLASS="filename"
@@ -1304,9 +1126,9 @@ CLASS="command"
 >default-server</B
 > takes a
 host name or address argument  and represents the server that will
-be contacted if no <TT
+be contacted if no <VAR
 CLASS="option"
->-s</TT
+>-s</VAR
 >
 option is provided on the command line.  
 <B
@@ -1347,19 +1169,15 @@ CLASS="command"
 CLASS="command"
 >key</B
 > statement in named.conf.
-The keyword <TT
+The keyword <KBD
 CLASS="userinput"
-><B
->key</B
-></TT
+>key</KBD
 > is
 followed by a key name, which must be a valid
 domain name, though it need not actually be hierarchical; thus,
-a string like "<TT
+a string like "<KBD
 CLASS="userinput"
-><B
->rndc_key</B
-></TT
+>rndc_key</KBD
 >" is a valid name.
 The <B
 CLASS="command"
@@ -1373,11 +1191,9 @@ CLASS="command"
 >secret</B
 >.
 While the configuration parser will accept any string as the argument
-to algorithm, currently only the string "<TT
+to algorithm, currently only the string "<KBD
 CLASS="userinput"
-><B
->hmac-md5</B
-></TT
+>hmac-md5</KBD
 >"
 has any meaning.  The secret is a base-64 encoded string.</P
 ><P
@@ -1389,11 +1205,9 @@ defined using the <B
 CLASS="command"
 >key</B
 > statement with a server.
-The keyword <TT
+The keyword <KBD
 CLASS="userinput"
-><B
->server</B
-></TT
+>server</KBD
 > is followed by a
 host name or address.  The <B
 CLASS="command"
@@ -1440,14 +1254,12 @@ CLASS="filename"
 >,
 would allow the command:</P
 ><P
-><TT
+><SAMP
 CLASS="prompt"
->$ </TT
-><TT
+>$ </SAMP
+><KBD
 CLASS="userinput"
-><B
->rndc reload</B
-></TT
+>rndc reload</KBD
 ></P
 ><P
 >to connect to 127.0.0.1 port 953 and cause the name server
@@ -1461,9 +1273,9 @@ CLASS="programlisting"
 </PRE
 ><P
 >and it had an identical key statement for
-<TT
+<VAR
 CLASS="literal"
->rndc_key</TT
+>rndc_key</VAR
 >.</P
 ><P
 >Running the <B
@@ -1518,11 +1330,11 @@ CLASS="command"
 > command.</P
 ><DIV
 CLASS="informaltable"
+><P
+></P
 ><A
 NAME="AEN683"
 ></A
-><P
-></P
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -1530,9 +1342,6 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
-WIDTH="108"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ><B
 CLASS="command"
@@ -1540,9 +1349,6 @@ CLASS="command"
 ></P
 ></TD
 ><TD
-WIDTH="384"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Causes the server to read <TT
 CLASS="filename"
@@ -1553,9 +1359,6 @@ reload the database. </P
 ></TR
 ><TR
 ><TD
-WIDTH="108"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ><B
 CLASS="command"
@@ -1563,18 +1366,12 @@ CLASS="command"
 ></P
 ></TD
 ><TD
-WIDTH="384"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Causes the server to clean up and exit.</P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="108"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 >&#13;<P
 ><B
 CLASS="command"
@@ -1583,9 +1380,6 @@ CLASS="command"
 >
 </TD
 ><TD
-WIDTH="384"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Causes the server to clean up and exit.</P
 ></TD
@@ -1642,9 +1436,9 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
-><SPAN
+><ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > Resource Requirements</TD
 ><TD
 WIDTH="34%"

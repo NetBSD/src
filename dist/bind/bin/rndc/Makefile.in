@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.32.2.3.8.7 2004/03/08 04:04:23 marka Exp
+# Id: Makefile.in,v 1.32.2.3.8.8 2004/07/20 07:01:50 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -74,11 +74,11 @@ rndc-confgen.@O@: rndc-confgen.c
 		-c ${srcdir}/rndc-confgen.c
 
 rndc@EXEEXT@: rndc.@O@ util.@O@ ${RNDCDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ rndc.@O@ util.@O@ \
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rndc.@O@ util.@O@ \
 		${RNDCLIBS}
 
 rndc-confgen@EXEEXT@: rndc-confgen.@O@ util.@O@ ${UOBJS} ${CONFDEPLIBS} 
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ rndc-confgen.@O@ util.@O@ \
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rndc-confgen.@O@ util.@O@ \
 		${UOBJS} ${CONFLIBS}
 
 doc man:: ${MANOBJS}

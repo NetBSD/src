@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.1 2004/05/17 23:43:23 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.2 2004/11/06 23:53:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.c,v 1.19.208.1 2004/03/06 10:21:21 marka Exp */
+/* Id: tkeyconf.c,v 1.19.208.2 2004/06/11 00:30:51 marka Exp */
 
 #include <config.h>
 
@@ -55,6 +55,7 @@ ns_tkeyctx_fromconfig(cfg_obj_t *options, isc_mem_t *mctx, isc_entropy_t *ectx,
 	dns_name_t *name;
 	isc_buffer_t b;
 	cfg_obj_t *obj;
+	int type;
 
 	result = dns_tkeyctx_create(mctx, ectx, &tctx);
 	if (result != ISC_R_SUCCESS)
@@ -71,9 +72,9 @@ ns_tkeyctx_fromconfig(cfg_obj_t *options, isc_mem_t *mctx, isc_entropy_t *ectx,
 		name = dns_fixedname_name(&fname);
 		RETERR(dns_name_fromtext(name, &b, dns_rootname,
 					 ISC_FALSE, NULL));
+		type = DST_TYPE_PUBLIC|DST_TYPE_PRIVATE|DST_TYPE_KEY;
 		RETERR(dst_key_fromfile(name, (dns_keytag_t) n, DNS_KEYALG_DH,
-					DST_TYPE_PUBLIC|DST_TYPE_PRIVATE,
-					NULL, mctx, &tctx->dhkey));
+					type, NULL, mctx, &tctx->dhkey));
 	}
 
 	obj = NULL;

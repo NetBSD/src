@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.1 2004/05/17 23:45:05 christos Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.2 2004/11/06 23:55:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_ioctl.c,v 1.19.2.5.2.10 2004/04/15 07:03:50 marka Exp */
+/* Id: ifiter_ioctl.c,v 1.19.2.5.2.14 2004/06/22 04:40:23 marka Exp */
 
 /*
  * Obtain the list of network interfaces using the SIOCGLIFCONF ioctl.
@@ -52,7 +52,7 @@
 #define VALID_IFITER(t)		ISC_MAGIC_VALID(t, IFITER_MAGIC)
 
 #define ISC_IF_INET6_SZ \
-	 sizeof("00000000000000000000000000000001 01 80 10 80       lo\n")
+    sizeof("00000000000000000000000000000001 01 80 10 80 XXXXXXloXXXXXXXX\n")
 
 struct isc_interfaceiter {
 	unsigned int		magic;		/* Magic number. */
@@ -101,6 +101,16 @@ struct isc_interfaceiter {
  */
 #define IFCONF_BUFSIZE_INITIAL	4096
 #define IFCONF_BUFSIZE_MAX	1048576
+
+#ifdef __linux
+#ifndef IF_NAMESIZE
+# ifdef IFNAMSIZ
+#  define IF_NAMESIZE  IFNAMSIZ  
+# else
+#  define IF_NAMESIZE 16
+# endif
+#endif
+#endif
 
 static isc_result_t
 getbuf4(isc_interfaceiter_t *iter) {
@@ -446,15 +456,28 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 
 	if (iter->valid != ISC_R_SUCCESS)
 		return (iter->valid);
-	if (iter->proc == NULL)
+	if (iter->proc == NULL) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:iter->proc == NULL");
 		return (ISC_R_FAILURE);
+	}
 
 	res = sscanf(iter->entry, "%32[a-f0-9] %x %x %x %x %16s\n",
 		     address, &ifindex, &prefix, &flag3, &flag4, name);
-	if (res != 6)
+	if (res != 6) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:sscanf() -> %d (expected 6)",
+			      res);
 		return (ISC_R_FAILURE);
-	if (strlen(address) != 32)
+	}
+	if (strlen(address) != 32) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:strlen(%s) != 32", address);
 		return (ISC_R_FAILURE);
+	}
 	for (i = 0; i < 16; i++) {
 		unsigned char byte;
 		static const char hex[] = "0123456789abcdef";
@@ -945,7 +968,7 @@ internal_next(isc_interfaceiter_t *iter) {
 #endif
 #ifdef HAVE_TRUCLUSTER
 	if (!iter->clua_done) {
-		clua_result = clua_getaliasaddress(&intr->clua_sa,
+		clua_result = clua_getaliasaddress(&iter->clua_sa,
 						   &iter->clua_context);
 		if (clua_result != CLUA_SUCCESS)
 			iter->clua_done = ISC_TRUE;
@@ -985,7 +1008,7 @@ void internal_first(isc_interfaceiter_t *iter) {
 #endif
 #ifdef HAVE_TRUCLUSTER
 	iter->clua_context = 0;
-	clua_result = clua_getaliasaddress(&intr->clua_sa,
+	clua_result = clua_getaliasaddress(&iter->clua_sa,
 					   &iter->clua_context);
 	iter->clua_done = ISC_TF(clua_result != CLUA_SUCCESS);
 #endif

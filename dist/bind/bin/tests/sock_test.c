@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.1.1.2 2004/11/06 23:53:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sock_test.c,v 1.47.12.3 2004/03/08 04:04:27 marka Exp */
+/* Id: sock_test.c,v 1.47.12.4 2004/08/28 06:25:32 marka Exp */
 
 #include <config.h>
 
@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/socket.h>
 #include <isc/timer.h>

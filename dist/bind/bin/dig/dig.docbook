@@ -16,7 +16,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dig.docbook,v 1.4.2.7.4.8 2004/04/13 03:00:05 marka Exp -->
+<!-- Id: dig.docbook,v 1.4.2.7.4.9 2004/06/23 04:19:41 marka Exp -->
 
 <refentry>
 
@@ -306,9 +306,12 @@ Deprecated, treated as a synonym for <parameter>+[no]search</parameter>
 
 <varlistentry><term><option>+[no]aaonly</option></term>
 <listitem><para>
-This option does nothing.  It is provided for compatibility with old
-versions of <command>dig</command> where it set an unimplemented
-resolver flag.
+Sets the "aa" flag in the query.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]aaflag</option></term>
+<listitem><para>
+A synonym for <parameter>+[no]aaonly</parameter>.
 </para></listitem></varlistentry>
 
 <varlistentry><term><option>+[no]adflag</option></term>

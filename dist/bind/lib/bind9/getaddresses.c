@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.c,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddresses.c,v 1.13.126.4 2004/03/08 09:04:27 marka Exp */
+/* Id: getaddresses.c,v 1.13.126.5 2004/05/15 03:46:12 jinmei Exp */
 
 #include <config.h>
 #include <string.h>
@@ -25,6 +25,7 @@
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/netdb.h>
+#include <isc/netscope.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
 #include <isc/util.h>
@@ -69,19 +70,67 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 	have_ipv4 = (isc_net_probeipv4() == ISC_R_SUCCESS);
 	have_ipv6 = (isc_net_probeipv6() == ISC_R_SUCCESS);
 
-	if (inet_pton(AF_INET6, hostname, &in6) == 1) {
-		if (!have_ipv6)
-			return (ISC_R_FAMILYNOSUPPORT);
-		isc_sockaddr_fromin6(&addrs[0], &in6, port);
-		*addrcount = 1;
-		return (ISC_R_SUCCESS);
-	} else if (inet_pton(AF_INET, hostname, &in4) == 1) {
+	/*
+	 * Try IPv4, then IPv6.  In order to handle the extended format
+	 * for IPv6 scoped addresses (address%scope_ID), we'll use a local
+	 * working buffer of 128 bytes.  The length is an ad-hoc value, but
+	 * should be enough for this purpose; the buffer can contain a string
+	 * of at least 80 bytes for scope_ID in addition to any IPv6 numeric
+	 * addresses (up to 46 bytes), the delimiter character and the
+	 * terminating NULL character.
+	 */
+	if (inet_pton(AF_INET, hostname, &in4) == 1) {
 		if (have_ipv4)
 			isc_sockaddr_fromin(&addrs[0], &in4, port);
 		else
 			isc_sockaddr_v6fromin(&addrs[0], &in4, port);
 		*addrcount = 1;
 		return (ISC_R_SUCCESS);
+	} else if (strlen(hostname) <= 127) {
+		char tmpbuf[128], *d;
+		isc_uint32_t zone = 0;
+
+		strcpy(tmpbuf, hostname);
+		d = strchr(tmpbuf, '%');
+		if (d != NULL)
+			*d = '\0';
+
+		if (inet_pton(AF_INET6, tmpbuf, &in6) == 1) {
+			isc_netaddr_t na;
+
+			if (!have_ipv6)
+				return (ISC_R_FAMILYNOSUPPORT);
+
+			if (d != NULL) {
+#ifdef ISC_PLATFORM_HAVESCOPEID
+				isc_result_t result;
+
+				result = isc_netscope_pton(AF_INET6, d + 1,
+							   &in6, &zone);
+				    
+				if (result != ISC_R_SUCCESS)
+					return (result);
+#else
+				/*
+				 * The extended format is specified while the
+				 * system does not provide the ability to use
+				 * it.  Throw an explicit error instead of
+				 * ignoring the specified value.
+				 */
+				return (ISC_R_BADADDRESSFORM);
+#endif
+			}
+
+			isc_netaddr_fromin6(&na, &in6);
+			isc_netaddr_setzone(&na, zone);
+			isc_sockaddr_fromnetaddr(&addrs[0],
+						 (const isc_netaddr_t *)&na,
+						 port);
+
+			*addrcount = 1;
+			return (ISC_R_SUCCESS);
+			
+		}
 	}
 #ifdef USE_GETADDRINFO
 	memset(&hints, 0, sizeof(hints));

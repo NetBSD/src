@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1.1.1 2004/05/17 23:44:47 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_mkupdate.c,v 1.1.2.1.4.2 2004/03/16 12:34:19 marka Exp";
+static const char rcsid[] = "Id: res_mkupdate.c,v 1.1.2.1.4.3 2004/06/03 04:44:48 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -352,13 +352,13 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 				bm[i] = 0;
 
 			while (getword_str(buf2, sizeof buf2, &startp, endp)) {
-				if ((n1 = res_servicenumber(buf2)) <= 0)
+				if ((n = res_servicenumber(buf2)) <= 0)
 					return (-1);
 
-				if (n1 < MAXPORT) {
-					bm[n1/8] |= (0x80>>(n1%8));
-					if (n1 > maxbm)
-						maxbm = n1;
+				if (n < MAXPORT) {
+					bm[n/8] |= (0x80>>(n%8));
+					if ((unsigned)n > maxbm)
+						maxbm = n;
 				} else
 					return (-1);
 			}

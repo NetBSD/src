@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.1 2004/05/17 23:43:06 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.2 2004/11/06 23:53:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.35.2.4.2.7 2004/03/08 04:04:12 marka Exp */
+/* Id: acconfig.h,v 1.35.2.4.2.8 2004/05/21 08:24:04 marka Exp */
 
 /***
  *** This file is not to be included by any public header files, because
@@ -138,3 +138,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if you are running under Compaq TruCluster..  */
 #undef HAVE_TRUCLUSTER
+
+/* Define if OpenSSL includes DSA support */
+#undef HAVE_OPENSSL_DSA

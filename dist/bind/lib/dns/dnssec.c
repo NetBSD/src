@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.1 2004/05/17 23:44:50 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.1.1.2 2004/11/06 23:55:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: dnssec.c,v 1.69.2.5.2.6 2004/03/08 21:06:26 marka Exp
+ * Id: dnssec.c,v 1.69.2.5.2.7 2004/06/11 00:30:54 marka Exp
  */
 
 
@@ -136,6 +136,8 @@ dns_dnssec_keyfromrdata(dns_name_t *name, dns_rdata_t *rdata, isc_mem_t *mctx,
 	INSIST(mctx != NULL);
 	INSIST(key != NULL);
 	INSIST(*key == NULL);
+	REQUIRE(rdata->type == dns_rdatatype_key ||
+		rdata->type == dns_rdatatype_dnskey);
 
 	dns_rdata_toregion(rdata, &r);
 	isc_buffer_init(&b, r.base, r.length);

@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION($Revision: 1.1.1.1 $)
+AC_REVISION($Revision: 1.1.1.2 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -343,7 +343,7 @@ AC_MSG_CHECKING(for OpenSSL library)
 AC_ARG_WITH(openssl,
 [  --with-openssl[=PATH]   Build with OpenSSL [yes|no|path].
                           (Required for DNSSEC)],
-    use_openssl="$withval", use_openssl="no")
+    use_openssl="$withval", use_openssl="auto")
 
 case "$use_openssl" in
 	no)
@@ -352,7 +352,7 @@ case "$use_openssl" in
 		USE_OPENSSL=""
 		;;
 	*)
-		if test "$use_openssl" = "yes"
+		if test "$use_openssl" = "yes" -o "$use_openssl" = "auto"
 		then
 		    	# User did not specify a path - guess it
 			openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg"
@@ -369,18 +369,30 @@ case "$use_openssl" in
 			    	AC_MSG_RESULT(not found)
 				AC_MSG_ERROR(
 [OpenSSL was not found in any of $openssldirs; use --with-openssl=/path])
+			elif test "$use_openssl" = "auto"
+			then
+				DST_OPENSSL_INC=""
+				USE_OPENSSL=""
+				AC_MSG_RESULT(not found)
+				break
 			fi
 		fi
 		USE_OPENSSL='-DOPENSSL'
-		DST_OPENSSL_INC="-I$use_openssl/include"
-		case $host in
-		*-solaris*)
-			DNS_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
-			;;
-		*)
-			DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
-			;;
-		esac
+		if test "$use_openssl" = "/usr"
+		then
+			DST_OPENSSL_INC=""
+			DNS_OPENSSL_LIBS="-lcrypto"
+		else
+			DST_OPENSSL_INC="-I$use_openssl/include"
+			case $host in
+			*-solaris*)
+				DNS_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
+				;;
+			*)
+				DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
+				;;
+			esac
+		fi
 		AC_MSG_RESULT(using openssl from $use_openssl/lib and $use_openssl/include)
 
 		saved_cflags="$CFLAGS"
@@ -467,6 +479,14 @@ int main() {
 		[AC_MSG_RESULT(not compatible)
 		 AC_MSG_ERROR(you need OpenSSL 0.9.6e/0.9.7-beta2 (or newer): CERT CA-2002-23)],
 		[AC_MSG_RESULT(assuming target platform has compatible version)]))
+		AC_MSG_CHECKING(for OpenSSL DSA support)
+		if test -f $use_openssl/include/openssl/dsa.h
+		then
+			AC_DEFINE(HAVE_OPENSSL_DSA)
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+		fi
 		CFLAGS="$saved_cflags"
 		LIBS="$saved_libs"
 		;;
@@ -835,6 +855,11 @@ AC_SUBST(ISC_PLATFORM_USETHREADS)
 
 ISC_THREAD_DIR=$thread_dir
 AC_SUBST(ISC_THREAD_DIR)
+
+#
+# In solaris 10, SMF can manage named service
+#
+AC_CHECK_LIB(scf, smf_enable_instance)
 
 #
 # flockfile is usually provided by pthreads, but we may want to use it
@@ -1567,7 +1592,7 @@ case $host in
 	# project handles the AF_INET6 case correctly.  We need to avoid
 	# using the former but prefer the latter unless overridden by
 	# --enable-getifaddrs=glibc.
-	if $use_getifaddrs = glibc
+	if test $use_getifaddrs = glibc
 	then
 		AC_CHECK_FUNC(getifaddrs, AC_DEFINE(HAVE_GETIFADDRS))
 	else
@@ -1655,17 +1680,23 @@ AC_TRY_COMPILE([
 ISC_PRINT_OBJS="print.$O"
 ISC_PRINT_SRCS="print.c"
 ISC_PLATFORM_NEEDSPRINTF="#define ISC_PLATFORM_NEEDSPRINTF"
+LWRES_PLATFORM_NEEDSPRINTF="#define LWRES_PLATFORM_NEEDSPRINTF"
 ],
-[ISC_PLATFORM_NEEDSPRINTF="#undef ISC_PLATFORM_NEEDSPRINTF"]
+[ISC_PLATFORM_NEEDSPRINTF="#undef ISC_PLATFORM_NEEDSPRINTF"
+ LWRES_PLATFORM_NEEDSPRINTF="#undef LWRES_PLATFORM_NEEDSPRINTF"]
 )
 AC_SUBST(ISC_PLATFORM_NEEDSPRINTF)
+AC_SUBST(LWRES_PLATFORM_NEEDSPRINTF)
 
 AC_CHECK_FUNC(vsnprintf,
-	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"],
+	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"
+	 LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"],
 	[ISC_PRINT_OBJS="print.$O"
 	 ISC_PRINT_SRCS="print.c"
-	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"])
+	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
+	 LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"])
 AC_SUBST(ISC_PLATFORM_NEEDVSNPRINTF)
+AC_SUBST(LWRES_PLATFORM_NEEDVSNPRINTF)
 ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS $ISC_PRINT_OBJS"
 ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS $ISC_PRINT_SRCS"
 
@@ -1674,19 +1705,32 @@ AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
 AC_SUBST(ISC_EXTRA_OBJS)
 AC_SUBST(ISC_EXTRA_SRCS)
 
-#
 # Determine the printf format characters to use when printing
-# values of type isc_int64_t.  We make the assumption that platforms
-# where a "long long" is the same size as a "long" (e.g., Alpha/OSF1)
-# want "%ld" and everyone else can use "%lld".  Win32 uses "%I64d",
-# but that's defined elsewhere since we don't use configure on Win32.
+# values of type isc_int64_t. This will normally be "ll", but where
+# the compiler treats "long long" as a alias for "long" and printf
+# doesn't know about "long long" use "l".  Hopefully the sprintf
+# will produce a inconsistant result in the later case.  If the compiler
+# fails due to seeing "%lld" we fall back to "l".
+#
+# Win32 uses "%I64d", but that's defined elsewhere since we don't use
+# configure on Win32.
 #
 AC_MSG_CHECKING(printf format modifier for 64-bit integers)
-AC_TRY_RUN([main() { exit(!(sizeof(long long int) == sizeof(long int))); }],
-	[AC_MSG_RESULT(l)
-	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'],
+AC_TRY_RUN([
+#include <stdio.h>
+main() {
+	long long int j = 0;
+	char buf[100];
+	buf[0] = 0;
+	sprintf(buf, "%lld", j);
+	exit((sizeof(long long int) != sizeof(long int))? 0 :
+	     (strcmp(buf, "0") != 0));
+} 
+],
 	[AC_MSG_RESULT(ll)
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'],
+	[AC_MSG_RESULT(l)
+	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'],
 	[AC_MSG_RESULT(assuming target platform uses ll)
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'])
 AC_SUBST(ISC_PLATFORM_QUADFORMAT)

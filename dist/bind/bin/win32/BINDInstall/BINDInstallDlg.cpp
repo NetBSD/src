@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.6.2.6.2.7 2004/04/19 06:39:55 marka Exp */
+/* Id: BINDInstallDlg.cpp,v 1.6.2.6.2.10 2004/05/18 01:20:04 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -113,7 +113,10 @@ const FileData installFiles[] =
 	{"msvcrt.dll", FileData::WinSystem, FileData::Critical, TRUE},
 #  endif
 #endif
-#if _MSC_VER > 1200
+#if _MSC_VER >= 1310
+	{"mfc71.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"msvcr71.dll", FileData::WinSystem, FileData::Critical, TRUE},
+#elif _MSC_VER > 1200
 	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 #endif
@@ -134,8 +137,6 @@ const FileData installFiles[] =
 	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-makekeyset.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-signkey.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"dnssec-signzone.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE},
