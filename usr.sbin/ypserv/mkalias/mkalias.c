@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.7 1998/06/24 10:26:09 kleink Exp $ */
+/*	$NetBSD: mkalias.c,v 1.8 1999/06/07 03:06:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.7 1998/06/24 10:26:09 kleink Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.8 1999/06/07 03:06:09 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -252,7 +252,7 @@ main(argc, argv)
 	
 		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
 			mapname);
-		mktemp(db_tempname);
+		mktemp(db_tempname);	/* OK */
 		snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
 			YPDB_SUFFIX);
 	
