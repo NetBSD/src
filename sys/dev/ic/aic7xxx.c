@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.71 2001/04/26 16:56:53 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.72 2001/04/27 14:49:11 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1378,8 +1378,16 @@ ahc_attach(struct ahc_softc *ahc)
 {
 	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
 	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
-	ahc->sc_adapter.adapt_openings = AHC_SCB_MAX;
-	ahc->sc_adapter.adapt_max_periph = AHC_SCB_MAX;
+	if (ahc->flags & AHC_PAGESCBS) {
+		ahc->sc_adapter.adapt_openings = AHC_SCB_MAX;
+		ahc->sc_adapter.adapt_max_periph = 16;
+	} else {
+		ahc->sc_adapter.adapt_openings =  ahc->scb_data->maxhscbs;
+		if (ahc->scb_data->maxhscbs >= 16)
+			ahc->sc_adapter.adapt_max_periph = 16;
+		else
+			ahc->sc_adapter.adapt_max_periph = 4;
+	}
 	ahc->sc_adapter.adapt_ioctl = ahc_ioctl;
 	ahc->sc_adapter.adapt_minphys = ahcminphys;
 	ahc->sc_adapter.adapt_request = ahc_action;
