@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.84 2000/12/19 15:51:50 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.85 2001/01/28 21:01:52 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -18,13 +18,13 @@ options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3300, 3400, 3500, 3600, 3800, 3900
 options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
-#options 	"VAX680"	# VAX 4000/500
+options 	"VAX680"	# VAX 4000/500
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
 options 	"VAX48"		# VS 4000 VLC
 options 	"VAX49"		# VS 4000/90
-#options 	"VAX53"		# VAX 4000/105A
+options 	"VAX53"		# VAX 4000/105A
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -142,7 +142,8 @@ rd*		at hdc0 drive?		# RD5x disks
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet (MV3400)
-#dz0		at ibus0		# VAX 4000/105A serial lines
+dz0		at ibus0		# VAX 4000/105A serial lines
+#asc0		at ibus0		# VAX 4000/105A SCSI-ctlr
 #shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI
@@ -215,8 +216,8 @@ wsmouse*	at lkms?
 pseudo-device   loop	1
 pseudo-device   pty			# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
-pseudo-device	sl	2
-pseudo-device	ppp	2
+#pseudo-device	sl	2
+#pseudo-device	ppp	2
 pseudo-device	tun	2
 #pseudo-device	gre	2		# generic L3 over IP tunnel
 pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
