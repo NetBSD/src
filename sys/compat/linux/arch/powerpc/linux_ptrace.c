@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.2 2001/02/04 14:24:38 manu Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.3 2001/02/04 22:59:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct linux_user {
 	unsigned long start_data;
 	unsigned long start_stack;
 	long int signal;	  
-	struct linux_pt_regs *u_ar0;			/* help gdb find registers */
+	struct linux_pt_regs *u_ar0;		/* help gdb find registers */
 	unsigned long magic;		  
 	char u_comm[32];	 
 };
@@ -120,19 +120,22 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	struct reg *regs = NULL;
 	struct fpreg *fpregs = NULL;
 	struct linux_pt_regs *linux_regs = NULL;
-	double *linux_fpreg=NULL;  /* it's an array, not a struct */
+	double *linux_fpreg = NULL;  /* it's an array, not a struct */
 	int addr;
 	int i;
 
-	request = SCARG(uap, request);
 
-	if ((request != LINUX_PTRACE_PEEKUSR) &&
-	    (request != LINUX_PTRACE_POKEUSR) &&
-	    (request != LINUX_PTRACE_GETREGS) &&
-	    (request != LINUX_PTRACE_SETREGS) &&
-	    (request != LINUX_PTRACE_GETFPREGS) &&
-	    (request != LINUX_PTRACE_SETFPREGS))
+	switch (request = SCARG(uap, request)) {
+	case LINUX_PTRACE_PEEKUSR:
+	case LINUX_PTRACE_POKEUSR:
+	case LINUX_PTRACE_GETREGS:
+	case LINUX_PTRACE_SETREGS:
+	case LINUX_PTRACE_GETFPREGS:
+	case LINUX_PTRACE_SETFPREGS:
+		break;
+	default:
 		return EIO;
+	}
 
 	/* Find the process we're supposed to be operating on. */
 	if ((t = pfind(SCARG(uap, pid))) == NULL)
@@ -169,7 +172,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	switch (request) {
 	case  LINUX_PTRACE_GETREGS:
 		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(struct linux_pt_regs),
+		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(*linux_regs),
 		    M_TEMP, M_WAITOK);
 
 		error = process_read_regs(t, regs);
@@ -180,7 +183,8 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			linux_regs->lgpr[i] = regs->fixreg[i];
 		linux_regs->lnip = regs->pc;
 		linux_regs->lmsr = 0;
-		linux_regs->lorig_gpr3 = regs->fixreg[3]; /* XXX Is that right? */
+		/* XXX Is that right? */
+		linux_regs->lorig_gpr3 = regs->fixreg[3];
 		linux_regs->lctr = regs->ctr;
 		linux_regs->llink = regs->lr;
 		linux_regs->lxer = regs->xer;
@@ -197,7 +201,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 	case  LINUX_PTRACE_SETREGS:
 		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(struct linux_pt_regs),
+		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(*linux_regs),
 		    M_TEMP, M_WAITOK);
 
 		error = copyin((caddr_t)SCARG(uap, data), linux_regs,

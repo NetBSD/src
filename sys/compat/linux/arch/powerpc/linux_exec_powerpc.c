@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.1 2001/01/19 01:36:51 manu Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.2 2001/02/04 22:59:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,10 +105,10 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 #ifdef LINUX_SHIFT
 	/* 
 	 * From Linux's arch/ppc/kernel/process.c:shove_aux_table(). GNU ld.so 
-	 * expects the ELF auxiliary table to start on a 16 bytes boundary on the
-	 * PowerPC.
+	 * expects the ELF auxiliary table to start on a 16 bytes boundary on
+	 * the PowerPC.
 	 */
-	(unsigned long) stack = ((unsigned long) stack + LINUX_SHIFT) & ~LINUX_SHIFT;
+	stack = (void *)(((unsigned long) stack + LINUX_SHIFT) & ~LINUX_SHIFT);
 #endif 
 
 	memset(ai, 0, sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES);
@@ -133,9 +133,9 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 #if 1
 		/*
 		 * The exec_package doesn't have a proc pointer and it's not
-		 * exactly trivial to add one since the credentials are changing.
-		 *
-		 * XXX Linux uses curproc's credentials. Why can't we use them too?
+		 * exactly trivial to add one since the credentials are
+		 * changing. XXX Linux uses curproc's credentials.
+		 * Why can't we use them too?
 		 */
 		a->a_type = LINUX_AT_EGID;
 		a->a_v = p->p_ucred->cr_gid;

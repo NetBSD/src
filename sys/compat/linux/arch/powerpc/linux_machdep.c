@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 2001/01/26 19:46:16 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.4 2001/02/04 22:59:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct linux_sigregs *fp, frame;
-	struct linux_pt_regs	linux_regs;
+	struct linux_pt_regs linux_regs;
 	struct linux_sigcontext sc;
 	int onstack;
 	int i;
@@ -147,11 +147,13 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	/* 
 	 * Allocate space for the signal handler context. 
 	 */
-	if (onstack)
-		fp = (struct linux_sigregs *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+	if (onstack) {
+		fp = (struct linux_sigregs *)
+		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 		    p->p_sigctx.ps_sigstk.ss_size);
-	else
+	} else {
 		fp = (struct linux_sigregs *)tf->fixreg[1];
+	}
 	fp = (struct linux_sigregs *)((int)(fp - 1) & ~0xf); 
 
 	/* 
@@ -168,7 +170,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 *
 	 * Save register context. 
 	 */
-	for (i=0; i<=31; i++) 
+	for (i = 0; i < 32; i++) 
 		linux_regs.lgpr[i] = tf->fixreg[i];
 	linux_regs.lnip = tf->srr0;	
 	linux_regs.lmsr = tf->srr1;
@@ -178,11 +180,11 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	linux_regs.lxer = tf->xer;
 	linux_regs.lccr = tf->cr; 
 	linux_regs.lmq = 0;  			/* Unused, 601 only */
-	linux_regs.ltrap = 0; 		/* XXX What is ltrap counterpart in NetBSD ? */
+	linux_regs.ltrap = 0; 	/* XXX What is ltrap counterpart in NetBSD ? */
 	linux_regs.ldar = tf->dar; 
 	linux_regs.ldsisr = tf->dsisr; 
 	linux_regs.lresult = tf->exc; 
-	bcopy (&linux_regs, &frame.lgp_regs, sizeof (frame.lgp_regs));
+	memcpy(&frame.lgp_regs, &linux_regs, sizeof(frame.lgp_regs));
 
 	/* 
 	 * NetBSD does not uses the FPU in the kernel, so there is no
@@ -190,14 +192,14 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * them to be saved on the stack. Therefore we just keep a 
 	 * gap of zero'ed data where the FP registers should be stored
 	 */
-	memset (&frame.lfp_regs, 0, sizeof (frame.lfp_regs));
+	memset(&frame.lfp_regs, 0, sizeof (frame.lfp_regs));
 
 	/*
-	 * Copy Linux's signal trampoline on the user stack It should not be used, 
-	 * but Linux binaries might expect him to be there.
+	 * Copy Linux's signal trampoline on the user stack It should not
+	 * be used, but Linux binaries might expect him to be there.
 	 */
-	frame.ltramp[0]=0x38997777; /* li r0, 0x7777 */
-	frame.ltramp[1]=0x44000002; /* sc */
+	frame.ltramp[0] = 0x38997777; /* li r0, 0x7777 */
+	frame.ltramp[1] = 0x44000002; /* sc */
 	
 	/*
 	 * Move it to the user stack
@@ -206,7 +208,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * binaries. But the Linux kernel seems to do without it, and it
 	 * just skip it when building the stack frame. Hence the LINUX_ABIGAP.
 	 */
-	if (copyout(&frame, fp, sizeof (frame) - LINUX_ABIGAP)) { 
+	if (copyout(&frame, fp, sizeof (frame) - LINUX_ABIGAP) != 0) { 
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instructoin to halt it in its tracks.
@@ -218,17 +220,19 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	/*
 	 * adjust stack pointer after the previous data copy
 	 */
-	(unsigned long)fp -= (sizeof (frame) - LINUX_ABIGAP);
+	fp = (struct linux_sigregs *)
+	    ((unsigned long)fp - (sizeof (frame) - LINUX_ABIGAP));
 
 	/*
 	 * "Mind the gap" Linux expects a gap here.
 	 */
-	(unsigned long)fp -= LINUX__SIGNAL_FRAMESIZE;
+	fp = (struct linux_sigregs *)
+	    ((unsigned long)fp - LINUX__SIGNAL_FRAMESIZE);
 
 	/*
 	 * Add a sigcontext on the stack
 	 */
-	if (copyout(&sc, fp, sizeof (struct linux_sigcontext))) {
+	if (copyout(&sc, fp, sizeof (struct linux_sigcontext)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instructoin to halt it in its tracks.
@@ -297,15 +301,15 @@ linux_sys_rt_sigreturn(p, v, retval)
 	scp = SCARG(uap, sfp);
 
 	/*
-	 * It seems we need a 16 bytes alignement here (it just works with it, don't
-	 * ask me why
+	 * It seems we need a 16 bytes alignement here (it just works with it,
+	 * don't ask me why
 	 */
-	(unsigned long)scp = (unsigned long) scp & ~0xfUL; 
+	scp = (linux_rt_sigframe *)((unsigned long)scp & ~0xfUL); 
 
 	/*
 	 * Get the context from user stack
 	 */
-	if (copyin((caddr_t)scp, &sigframe, sizeof(struct linux_rt_sigframe)) != 0)
+	if (copyin((caddr_t)scp, &sigframe, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/*
@@ -326,7 +330,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	    (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);  
 
-	for (i=0; i<=31; i++) 
+	for (i = 0; i < 32; i++) 
 		tf->fixreg[i] = sigframe.luc.luc_context.lregs->lgpr[i];
 	tf->lr = sigframe.luc.luc_context.lregs->llink;
 	tf->cr = sigframe.luc.luc_context.lregs->lccr;
@@ -380,15 +384,15 @@ linux_sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, scp);
 
 	/*
-	 * It seems we need a 16 bytes alignement here (it just works with it, don't
-	 * ask me why
+	 * It seems we need a 16 bytes alignement here (it just works with it,
+	 * don't ask me why
 	 */
 	(unsigned long)scp = (unsigned long) scp & ~0xfUL; 
 
 	/*
 	 * Get the context from user stack
 	 */
-	if (copyin((caddr_t)scp, &context, sizeof(struct linux_sigcontext)) != 0)
+	if (copyin(scp, &context, sizeof(struct linux_sigcontext)) != 0)
 		return (EFAULT);
 
 	/*
@@ -400,10 +404,11 @@ linux_sys_sigreturn(p, v, retval)
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
-	if ((context.lregs->lmsr & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+	if ((context.lregs->lmsr & PSL_USERSTATIC) !=
+	    (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);  
 
-	for (i=0; i<=31; i++) 
+	for (i = 0; i < 32; i++) 
 		tf->fixreg[i] = context.lregs->lgpr[i];
 	tf->lr = context.lregs->llink;
 	tf->cr = context.lregs->lccr;
@@ -421,9 +426,11 @@ linux_sys_sigreturn(p, v, retval)
 	 * XXX cannot find the onstack information in Linux sig context. 
 	 * Is signal stack really supported on Linux?
 	 */
-	/* if (sc.sc_onstack & SS_ONSTACK) 
+#if 0
+	if (sc.sc_onstack & SS_ONSTACK) 
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else */
+	else
+#endif
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
@@ -441,7 +448,8 @@ linux_sys_modify_ldt(p, v, retval)
 	register_t *retval;
 {
 	/* 
-	 * This syscall is not implemented in Linux/PowerPC: we should not be here
+	 * This syscall is not implemented in Linux/PowerPC: we should not
+	 * be here
 	 */
 #ifdef DEBUG_LINUX
 	printf("linux_sys_modify_ldt: should not be here.\n");	 
