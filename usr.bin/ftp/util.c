@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.36 1998/11/18 07:24:26 itohy Exp $	*/
+/*	$NetBSD: util.c,v 1.37 1998/12/29 14:27:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.36 1998/11/18 07:24:26 itohy Exp $");
+__RCSID("$NetBSD: util.c,v 1.37 1998/12/29 14:27:59 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -601,7 +601,7 @@ mkgmtime(tm)
 {
 
 	/* This is very clean, but not portable at all. */
-	return timegm(tm);
+	return (timegm(tm));
 }
 
 #else	/* not HAVE_TIMEGM */
@@ -646,7 +646,7 @@ sub_mkgmt(tm)
 			moff[tm->tm_mon] + tm->tm_mday - 1 + nleapdays) * 24 +
 		tm->tm_hour) * 60 + tm->tm_min) * 60 + tm->tm_sec;
 
-	return t < 0 ? (time_t) -1 : t;
+	return (t < 0 ? (time_t) -1 : t);
 }
 
 time_t
@@ -717,7 +717,7 @@ mkgmtime(tm)
 		}
 	}
 
-	return t < 0 ? (time_t) -1 : t;
+	return (t < 0 ? (time_t) -1 : t);
 }
 #endif	/* not HAVE_TIMEGM */
 
