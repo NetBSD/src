@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.25 2000/06/26 16:54:38 kleink Exp $	*/
+/*	$NetBSD: mman.h,v 1.26 2000/07/28 09:33:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -51,12 +51,12 @@ typedef	_BSD_SIZE_T_	size_t;
 
 #ifndef	mode_t
 typedef	__mode_t	mode_t
-#define	mode_t		mode_t
+#define	mode_t		__mode_t
 #endif
 
 #ifndef	off_t
 typedef	__off_t		off_t;		/* file offset */
-#define	off_t		off_t
+#define	off_t		__off_t
 #endif
 
 
