@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.6 1995/03/18 15:00:48 cgd Exp $	*/
+/*	$NetBSD: trace.h,v 1.7 1995/04/24 13:24:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -85,14 +85,16 @@ FILE	*ftrace;		/* output trace file */
 		ifp = if_iflookup(src); \
 		if (ifp) \
 			trace(&ifp->int_input, src, pack, size, \
-				ntohl(ifp->int_metric)); \
+			    ntohl(ifp->int_metric)); \
 	  } \
 	  if (tracepackets) \
-		dumppacket(ftrace, "from", src, pack, size, &now); \
+		dumppacket(ftrace, "from", (struct sockaddr_in *)src, pack, \
+		    size, &now); \
 	}
 #define	TRACE_OUTPUT(ifp, dst, size) { \
 	  if (tracehistory && ifp) \
 		trace(&ifp->int_output, dst, packet, size, ifp->int_metric); \
 	  if (tracepackets) \
-		dumppacket(ftrace, "to", dst, packet, size, &now); \
+		dumppacket(ftrace, "to", (struct sockaddr_in *)dst, packet, \
+		    size, &now); \
 	}

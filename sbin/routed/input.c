@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.10 1995/03/21 14:05:02 mycroft Exp $	*/
+/*	$NetBSD: input.c,v 1.11 1995/04/24 13:24:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.10 1995/03/21 14:05:02 mycroft Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.11 1995/04/24 13:24:30 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ rip_input(from, rip, size)
 	static struct sockaddr badfrom, badfrom2;
 
 	ifp = 0;
-	TRACE_INPUT(ifp, (struct sockaddr_in *)from, (char *)rip, size);
+	TRACE_INPUT(ifp, from, (char *)rip, size);
 	if (from->sa_family >= af_max ||
 	    (afp = &afswitch[from->sa_family])->af_hash == (int (*)())0) {
 		syslog(LOG_INFO,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.10 1995/03/18 15:00:47 cgd Exp $	*/
+/*	$NetBSD: trace.c,v 1.11 1995/04/24 13:24:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: trace.c,v 1.10 1995/03/18 15:00:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.11 1995/04/24 13:24:34 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -364,8 +364,8 @@ dumptrace(fd, dir, ifd)
 			t = ifd->ifd_records;
 		if (t->ift_size == 0)
 			continue;
-		dumppacket(fd, dir, &t->ift_who, t->ift_packet, t->ift_size,
-		    &t->ift_stamp);
+		dumppacket(fd, dir, (struct sockaddr_in *)&t->ift_who,
+		    t->ift_packet, t->ift_size, &t->ift_stamp);
 	}
 }
 
