@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.246 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.247 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -533,6 +533,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	amiga: Add screen types suitable for PAL displays to amidisplaycc(4) 
 		[jandberg 20031112]
 	named(8): Upgrade to BIND 8.3.7. [itojun 20031126]
+	binutils: updated to FSF binutils 2.14 release.  [mrg 20031126]
 	GDB: All platforms updated to GDB 5.3.  [mrg 20031127]
 	binutils: Switch all platforms to binutils 2.14.  [mrg 20031203]
 	sysctl: Switch to dynamic implementation.  [atatat 20031204]
