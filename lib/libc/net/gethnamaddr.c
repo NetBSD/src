@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.17 1999/05/04 13:51:39 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.18 1999/06/02 22:14:07 tron Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.17 1999/05/04 13:51:39 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.18 1999/06/02 22:14:07 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -791,21 +791,83 @@ _gethtbyname2(name, af)
 	int af;
 {
 	register struct hostent *p;
-	register char **cp;
-	
+	register char *tmpbuf, *ptr, **cp;
+	register int num;
+	register size_t len;
+
 	_sethtent(0);
-	while ((p = _gethtent()) != NULL) {
+	ptr = tmpbuf = NULL;
+	num = 0;
+	while ((p = _gethtent()) != NULL && num < MAXADDRS) {
 		if (p->h_addrtype != af)
 			continue;
-		if (strcasecmp(p->h_name, name) == 0)
-			break;
-		for (cp = p->h_aliases; *cp != 0; cp++)
-			if (strcasecmp(*cp, name) == 0)
-				goto found;
+		if (strcasecmp(p->h_name, name) != 0) {
+			for (cp = p->h_aliases; *cp != NULL; cp++)
+				if (strcasecmp(*cp, name) == 0)
+					break;
+			if (*cp == NULL) continue;
+		}
+
+		if (num == 0) {
+			register size_t bufsize;
+			register char *src;
+
+			bufsize = strlen(p->h_name) + 2 +
+				  MAXADDRS * p->h_length;
+			for (cp = p->h_aliases; *cp != NULL; cp++)
+				bufsize += strlen(*cp) + 1;
+
+			if ((tmpbuf = malloc(bufsize)) == NULL) {
+				h_errno = NETDB_INTERNAL;
+				return NULL;
+			}
+
+			ptr = tmpbuf;
+			src = p->h_name;
+			while ((*ptr++ = *src++) != '\0');
+			for (cp = p->h_aliases; *cp != NULL; cp++) {
+				src = *cp;
+				while ((*ptr++ = *src++) != '\0');
+			}
+			*ptr++ = '\0';
+		}
+
+		(void)memcpy(ptr, p->h_addr_list[0], (size_t)p->h_length);
+		ptr += p->h_length;
+		num++;
 	}
- found:
 	_endhtent();
-	return (p);
+	if (num == 0) return NULL;
+
+	len = ptr - tmpbuf;
+	if (len > sizeof(hostbuf)) {
+		free(tmpbuf);
+		errno = ENOSPC;
+		h_errno = NETDB_INTERNAL;
+		return NULL;
+	}
+	ptr = memcpy(hostbuf, tmpbuf, len);
+	free(tmpbuf);
+
+	host.h_name = ptr;
+	while (*ptr++);
+
+	cp = host_aliases;
+	while (*ptr) {
+		*cp++ = ptr;
+		while (*ptr++);
+	}
+	ptr++;
+	*cp = NULL;
+
+	cp = h_addr_ptrs;
+	while (num--) {
+		*cp++ = ptr;
+		ptr += host.h_length;
+	}
+	*cp = NULL;
+
+	return (&host);
 }
 
 /*ARGSUSED*/
