@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.11 2000/06/27 09:09:53 mrg Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.12 2000/06/27 18:46:17 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -151,7 +151,9 @@ struct	hdcsoftc {
 	int sc_diskblk;			/* Current block on disk */
 	int sc_bytecnt;			/* How much left to transfer */
 	int sc_xfer;			/* Current transfer size */
+	int sc_retries;
 	volatile u_char sc_status;	/* last status from interrupt */
+	char sc_intbit;
 };
 
 struct hdc_attach_args {
@@ -271,6 +273,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
 	sc->sc_dmabase = (caddr_t)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
+	sc->sc_intbit = va->va_maskno;
 	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
 
 	sc->sc_vd.vd_go = hdc_qstart;
@@ -380,6 +383,11 @@ hdcintr(void *arg)
 	if ((sc->sc_status & DKC_ST_TERMCOD) != DKC_TC_SUCCESS) {
 		int i;
 		u_char *g = (u_char *)&sc->sc_sreg;
+
+		if (sc->sc_retries++ < 3) { /* Allow 3 retries */
+			hdcstart(sc, bp);
+			return;
+		}
 		printf("%s: failed, status 0x%x\n",
 		    sc->sc_dev.dv_xname, sc->sc_status);
 		hdc_readregs(sc);
@@ -397,6 +405,8 @@ hdcintr(void *arg)
 		vsbus_copytoproc(bp->b_proc, sc->sc_dmabase, sc->sc_bufaddr,
 		    sc->sc_xfer);
 	}
+	sc->sc_diskblk += (sc->sc_xfer/DEV_BSIZE);
+	sc->sc_bytecnt -= sc->sc_xfer;
 	sc->sc_bufaddr += sc->sc_xfer;
 
 	if (sc->sc_bytecnt == 0) { /* Finished transfer */
@@ -470,6 +480,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct rdsoftc *rd;
 	struct buf *bp;
 	int cn, sn, tn, bn, blks;
+	volatile char ch;
 
 	if (sc->sc_active)
 		return; /* Already doing something */
@@ -483,6 +494,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 		sc->sc_bufaddr = bp->b_data;
 		sc->sc_diskblk = bp->b_rawblkno;
 		sc->sc_bytecnt = bp->b_bcount;
+		sc->sc_retries = 0;
 		bp->b_resid = 0;
 	} else
 		bp = ob;
@@ -526,8 +538,10 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 
 	/* Count up vars */
 	sc->sc_xfer = blks * DEV_BSIZE;
-	sc->sc_diskblk += blks;
-	sc->sc_bytecnt -= sc->sc_xfer;
+
+	ch = HDC_RSTAT; /* Avoid pending interrupts */
+	WAIT;
+	vsbus_clrintr(sc->sc_intbit); /* Clear pending int's */
 
 	if (bp->b_flags & B_READ) {
 		HDC_WCMD(DKC_CMD_READ_HDD);
