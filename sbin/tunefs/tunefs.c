@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.30 2004/03/21 20:38:08 dsl Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.31 2004/03/27 13:05:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.30 2004/03/21 20:38:08 dsl Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.31 2004/03/27 13:05:07 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,7 +355,7 @@ getsb(struct fs *fs, const char *file)
 		}
 		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
 			continue;
-		if (fs->fs_old_flags & FS_FLAGS_UPDATED
+		if ((is_ufs2 || fs->fs_old_flags & FS_FLAGS_UPDATED)
 		    && fs->fs_sblockloc != sblock_try[i])
 			continue;
 		break;
