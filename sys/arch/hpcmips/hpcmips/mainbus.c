@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2001/04/18 10:42:39 sato Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2001/09/15 11:13:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -51,12 +51,12 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, struct cfdata *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
-bus_space_tag_t mb_bus_space_init __P((void));
+static int	mbmatch(struct device *, struct cfdata *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
+bus_space_tag_t mb_bus_space_init(void);
 
-bus_space_tag_t	mb_bus_space_init __P((void));
+bus_space_tag_t	mb_bus_space_init(void);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
@@ -66,10 +66,7 @@ struct cfattach mainbus_ca = {
 static int mainbus_found;
 
 static int
-mbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -97,10 +94,7 @@ mb_bus_space_init()
 }
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	int i;
 	register struct device *mb = self;
@@ -130,7 +124,7 @@ mbattach(parent, self, aux)
 #endif /* TX39XX */
 	{
 		if (!system_bus_iot) 
-		    mb_bus_space_init();
+			mb_bus_space_init();
 		/* Now prepare extent */
 		hpcmips_init_bus_space_extent(system_bus_iot);
 		ma.ma_iot = system_bus_iot;
@@ -155,9 +149,7 @@ mbattach(parent, self, aux)
 
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
