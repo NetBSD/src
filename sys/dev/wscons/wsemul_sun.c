@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.4 1998/05/19 18:47:13 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.5 1998/05/24 10:56:16 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.4 1998/05/19 18:47:13 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.5 1998/05/24 10:56:16 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -368,13 +368,13 @@ wsemul_sun_control(edp, c)
 		    src, dst - src, edp->curattr);
 		break;
 
-	case 'E':		/* "Cursor Next Line (CNL)" */
-		edp->ccol = 0;
-		/* FALLTHRU */
 	case 'A':		/* "Cursor Up (CUU)" */
 		edp->crow -= min(NORMALIZE_ARG(0), edp->crow);
 		break;
 
+	case 'E':		/* "Cursor Next Line (CNL)" */
+		edp->ccol = 0;
+		/* FALLTHRU */
 	case 'B':		/* "Cursor Down (CUD)" */
 		edp->crow += min(NORMALIZE_ARG(0), ROWS_LEFT);
 		break;
