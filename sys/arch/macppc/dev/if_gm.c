@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.1 2000/02/27 18:00:55 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -187,8 +187,11 @@ gmac_attach(parent, self, aux)
 	}
 	p = (void *)roundup((vaddr_t)p, 0x800);
 	bzero(p, 2048 * (NRXBUF + NTXBUF) + 2 * 0x800);
-	sc->sc_rxlist = (void *)(p + 2048 * (NRXBUF + NTXBUF));
-	sc->sc_txlist = (void *)(p + 2048 * (NRXBUF + NTXBUF) + 0x800);
+
+	sc->sc_rxlist = (void *)p;
+	p += 0x800;
+	sc->sc_txlist = (void *)p;
+	p += 0x800;
 
 	dp = sc->sc_rxlist;
 	for (i = 0; i < NRXBUF; i++) {
@@ -207,10 +210,11 @@ gmac_attach(parent, self, aux)
 		p += 2048;
 	}
 
-	gmac_reset(sc);
-
 	printf(": Ethernet address %s\n", ether_sprintf(laddr));
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	gmac_reset(sc);
+	gmac_init_mac(sc);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -345,8 +349,9 @@ gmac_tint(sc)
 	volatile struct gmac_dma *dp;
 	int i;
 
-	i = sc->sc_txlast;
+	i = gmac_read_reg(sc, GMAC_TXDMACOMPLETE);
 	dp = &sc->sc_txlist[i];
+	dp->cmd = 0;				/* to be safe */
 	__asm __volatile ("sync");
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -481,11 +486,7 @@ gmac_start(ifp)
 		ifp->if_timer = 5;
 		ifp->if_opackets++;		/* # of pkts */
 
-#if 0
 		i = sc->sc_txnext;
-#else
-		i = 0;
-#endif
 		buff = sc->sc_txbuf[i];
 		tlen = gmac_put(sc, buff, m);
 
@@ -553,13 +554,25 @@ gmac_reset(sc)
 	gmac_write_reg(sc, GMAC_SOFTWARERESET, 3);
 	for (i = 10; i > 0; i--) {
 		delay(300000);				/* XXX long delay */
-		if (gmac_read_reg(sc, GMAC_SOFTWARERESET) == 0)
+		if ((gmac_read_reg(sc, GMAC_SOFTWARERESET) & 3) == 0)
 			break;
 	}
-	splx(s);
-
 	if (i == 0)
 		printf("%s: reset timeout\n", sc->sc_dev.dv_xname);
+
+	sc->sc_txnext = 0;
+	sc->sc_rxlast = 0;
+	for (i = 0; i < NRXBUF; i++)
+		sc->sc_rxlist[i].cmd = htole32(GMAC_OWN);
+	__asm __volatile ("sync");
+
+	gmac_write_reg(sc, GMAC_TXDMADESCBASEHI, 0);
+	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys(sc->sc_txlist));
+	gmac_write_reg(sc, GMAC_RXDMADESCBASEHI, 0);
+	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys(sc->sc_rxlist));
+	gmac_write_reg(sc, GMAC_RXDMAKICK, NRXBUF);
+
+	splx(s);
 }
 
 void
@@ -644,6 +657,7 @@ gmac_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	u_int x;
+	int i;
 
 	gmac_stop_txdma(sc);
 	gmac_stop_rxdma(sc);
@@ -657,14 +671,8 @@ gmac_init(sc)
 		x &= ~GMAC_RXMAC_PR;
 	gmac_write_reg(sc, GMAC_RXMACCONFIG, x);
 
-	gmac_write_reg(sc, GMAC_TXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys(sc->sc_txlist));
-	gmac_write_reg(sc, GMAC_RXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys(sc->sc_rxlist));
-
 	gmac_start_txdma(sc);
 	gmac_start_rxdma(sc);
-	gmac_write_reg(sc, GMAC_RXDMAKICK, NRXBUF);
 
 	gmac_write_reg(sc, GMAC_INTMASK, ~(GMAC_INT_TXDONE | GMAC_INT_RXDONE));
 
@@ -748,7 +756,7 @@ gmac_ioctl(ifp, cmd, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/* gmac_reset(sc); */
+			gmac_reset(sc);
 			gmac_init(sc);
 		}
 #ifdef GMAC_DEBUG
