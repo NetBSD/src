@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.4.4.2 2001/01/25 14:30:27 jhawk Exp $ */
+.\" $NetBSD: usermod.8,v 1.4.4.3 2001/02/26 15:16:09 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -127,6 +127,17 @@ or
 .Ql \&_ .
 .It Fl m
 moves the home directory from its old position to the new one.
+If
+.Fl d
+is not specified, the
+.Ar new-user
+argument of the
+.Fl l
+option is used; one of
+.Fl d
+and
+.Fl l
+is needed.
 .It Fl o
 allows duplicate uids to be given.
 .It Fl p Ar password
