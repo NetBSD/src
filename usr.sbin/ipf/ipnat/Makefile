@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.19.2.4 2004/04/01 16:09:01 tron Exp $
+#	$NetBSD: Makefile,v 1.19.2.5 2004/04/05 20:41:22 tron Exp $
 
 PROG=		ipnat
 SRCS=		ipnat.c ipnat_y.c ipnat_l.c
 MAN=		ipnat.8 ipnat.4 ipnat.5
 MLINKS=		ipnat.5 ipnat.conf.5
-DPADD+=		${LIBKVM}
-LDADD+=		-lkvm
 CPPFLAGS+=	-I.
 
 DPSRCS+=	ipnat_l.h ipnat_y.h
