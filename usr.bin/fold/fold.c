@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.8 1997/10/20 10:20:52 mrg Exp $	*/
+/*	$NetBSD: fold.c,v 1.9 1999/02/07 12:14:32 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.8 1997/10/20 10:20:52 mrg Exp $");
+__RCSID("$NetBSD: fold.c,v 1.9 1999/02/07 12:14:32 frueauf Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -173,7 +173,7 @@ fold(width)
 				indx -= last_space;
 				col = 0;
 				for (i = 0; i < indx; i++) {
-					col = new_column_position (col, ch);
+					col = new_column_position (col, buf[i]);
 				}
 			} else {
 				fwrite (buf, 1, indx, stdout);
