@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1997/05/25 10:07:38 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 1997/05/26 02:25:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,6 +255,11 @@ volatile u_int *Mach_reset_addr;
 
 
 void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
+
+#ifdef DEBUG
+/* stacktrace code violates prototypes to get callee's registers */
+extern void stacktrace __P((void)); /*XXX*/
+#endif
 
 
 /*
@@ -1016,7 +1021,7 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
@@ -1071,7 +1076,7 @@ sendsig(catcher, sig, mask, code)
 	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
