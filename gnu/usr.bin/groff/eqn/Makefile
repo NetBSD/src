@@ -10,6 +10,8 @@ DPADD+=		$(LIBGROFF)
 
 CLEANFILES+=	eqn.cc eqn.tab.h
 
+lex.o:	eqn.cc
+
 afterinstall:
 	sed -e 's/@g@/$(g)/g' $(.CURDIR)/neqn.sh > $(DESTDIR)$(BINDIR)/neqn
 	chown ${BINOWN}.${BINGRP} $(DESTDIR)$(BINDIR)/neqn
