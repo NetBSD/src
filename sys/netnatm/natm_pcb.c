@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.3 1996/10/13 02:00:02 christos Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.4 1996/11/09 03:26:27 chuck Exp $	*/
 
 /*
  *
@@ -172,6 +172,8 @@ done:
 
 #ifdef DDB
 
+int npcb_dump __P((void));
+
 int npcb_dump()
 
 {
@@ -180,7 +182,7 @@ int npcb_dump()
   printf("npcb dump:\n");
   for (cpcb = natm_pcbs.lh_first ; cpcb != NULL ; 
 					cpcb = cpcb->pcblist.le_next) {
-    printf("if=%s, vci=%d, vpi=%d, IP=0x%x, sock=0x%x, flags=0x%x, inq=%d\n",
+    printf("if=%s, vci=%d, vpi=%d, IP=0x%x, sock=%p, flags=0x%x, inq=%d\n",
 	cpcb->npcb_ifp->if_xname, cpcb->npcb_vci, cpcb->npcb_vpi,
 	cpcb->ipaddr.s_addr, cpcb->npcb_socket, 
 	cpcb->npcb_flags, cpcb->npcb_inq);
