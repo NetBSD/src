@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.84 2000/03/22 21:41:48 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.85 2000/03/26 10:24:51 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -439,6 +439,9 @@
 #define	PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX	{ "corega K.K.", "corega FastEther PCC-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX	-1
 #define	PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX	"Corega FastEther PCC-TX"
+#define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11	{ "corega K.K.", "Wireless LAN PCC-11", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11	-1
+#define	PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11	"Corega Wireless LAN PCC-11"
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
 #define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
