@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.6 1997/10/14 09:54:34 mark Exp $	*/
+/*	$NetBSD: blockio.S,v 1.7 1998/04/01 23:00:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -44,13 +44,6 @@
  */
 
 #include <machine/asm.h>
-
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-.text
 
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
