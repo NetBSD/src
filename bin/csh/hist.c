@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.6 1995/03/21 09:03:04 cgd Exp $	*/
+/*	$NetBSD: hist.c,v 1.7 1995/03/21 18:35:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: hist.c,v 1.6 1995/03/21 09:03:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: hist.c,v 1.7 1995/03/21 18:35:44 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,11 +127,15 @@ dohist(v, t)
     struct command *t;
 {
     int     n, rflg = 0, hflg = 0;
+    sigset_t sigset;
 
     if (getn(value(STRhistory)) == 0)
 	return;
-    if (setintr)
-	(void) sigsetmask(sigblock((sigset_t) 0) & ~sigmask(SIGINT));
+    if (setintr) {
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+    }
     while (*++v && **v == '-') {
 	Char   *vp = *v;
 
