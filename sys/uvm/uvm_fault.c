@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.25 1999/03/28 21:01:25 mycroft Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.26 1999/03/28 21:48:50 mycroft Exp $	*/
 
 /*
  *
@@ -950,7 +950,7 @@ ReFault:
 				pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
 				    enter_prot & MASK(ufi.entry),
-				    wired, access_type);
+				    wired, access_type & MASK(ufi.entry));
 
 				/* 
 				 * NOTE: page can't be PG_WANTED or PG_RELEASED
