@@ -1,4 +1,4 @@
-.\"	$NetBSD: de.4,v 1.3 2000/02/11 12:38:24 fair Exp $
+.\"	$NetBSD: de.4,v 1.4 2000/07/31 11:45:48 ad Exp $
 .Dd February 11, 2000
 .Dt DE 4
 .Os
@@ -62,7 +62,8 @@ bus, and the major controller chip has the
 logo on it, with one of the model numbers above, the
 .Nm
 driver should recognize and control it.
-Beware, however, that many NIC manufacturers change the ethernet
+Beware, however, that many NIC manufacturers change the
+.Tn Ethernet
 controller chip without changing the product model number, and
 a physical inspection of the NIC, or a probe of the NIC with a
 .Tn PCI
@@ -109,9 +110,10 @@ controller for
 .Xr pci 4 ,
 .Xr tlp 4 ,
 .Xr ifconfig 8 
-.Pa http://www.adaptec.com/
-.Pa http://www.asante.com/
-.Pa http://www.smc.com/
+.Pp
+.Pa http://www.adaptec.com/ ,
+.Pa http://www.asante.com/ ,
+.Pa http://www.smc.com/ ,
 .Pa http://www.znyx.com/
 .Sh HISTORY
 The
@@ -120,4 +122,4 @@ driver first appeared in
 .Nx 1.1
 .Sh AUTHOR
 Matt Thomas
-.Aq matt@3am-software.com
+.Aq matt@3am-software.com .

@@ -1,3 +1,5 @@
+.\"	$NetBSD: ti.4,v 1.3 2000/07/31 11:45:48 ad Exp $
+.\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
 .\"
@@ -29,7 +31,6 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" FreeBSD Id: src/share/man/man4/ti.4,v 1.5 2000/01/23 16:13:24 asmodai Exp
-.\" $NetBSD: ti.4,v 1.2 2000/07/09 13:43:42 jhawk Exp $
 .\"
 .Dd March 4, 1999
 .Dt TI 4
@@ -37,35 +38,46 @@
 .Sh NAME
 .Nm ti
 .Nd
-Alteon Networks Tigon I and Tigon II gigabit ethernet driver
+Alteon Networks Tigon I and Tigon II gigabit
+.Tn Ethernet
+driver
 .Sh SYNOPSIS
-.Cd "ti* at pci?"
+.Cd "ti* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI gigabit ethernet adapters based on
-the Alteon Networks Tigon gigabit ethernet controller chip. The Tigon
-contains an embedded R4000 CPU, gigabit MAC, dual DMA channels and
-a PCI interface unit. The Tigon II contains two R4000 CPUs and other
-refinements. Either chip can be used in either a 32-bit or 64-bit PCI
-slot. Communication with the chip is achieved via PCI shared memory
-and bus master DMA. The Tigon I and II support hardware multicast
+driver provides support for PCI gigabit
+.Tn Ethernet
+adapters based on the Alteon Networks Tigon gigabit 
+.Tn Ethernet
+controller chip.  The Tigon contains an embedded R4000 CPU, gigabit MAC, dual 
+DMA channels and a PCI interface unit.  The Tigon II contains two R4000 CPUs 
+and other refinements.  Either chip can be used in either a 32-bit or 64-bit
+PCI slot.  Communication with the chip is achieved via PCI shared memory
+and bus master DMA.  The Tigon I and II support hardware multicast
 address filtering, VLAN tag extraction and insertion, and jumbo
-ethernet frames sizes up to 9000 bytes. Note that the Tigon I chipset
-is no longer in active production: all new adapters should come equipped
-with Tigon II chipsets.
+.Tn Ethernet
+frames sizes up to 9000 bytes.  Note that the Tigon I chipset is no longer in
+active production: all new adapters should come equipped with Tigon II
+chipsets.
 .Pp
 There are several PCI boards available from both Alteon and other
-vendors that use the Tigon chipset under OEM contract. The
+vendors that use the Tigon chipset under OEM contract.  The
 .Nm
 driver has been tested with the following Tigon-based adapters:
 .Bl -bullet -offset indent
 .It
-The Alteon AceNIC V gigabit ethernet adapter
+The Alteon AceNIC V gigabit
+.Tn Ethernet
+adapter
 .It
-The 3Com 3c985-SX gigabit ethernet adapter
+The 3Com 3c985-SX gigabit
+.Tn Ethernet
+adapter
 .It
-The Netgear GA620 gigabit ethernet adapter
+The Netgear GA620 gigabit
+.Tn Ethernet
+adapter
 .It
 The Digital EtherWORKS 1000SX PCI Gigabit Adapter (DEGPA)
 .El
@@ -73,12 +85,14 @@ The Digital EtherWORKS 1000SX PCI Gigabit Adapter (DEGPA)
 The following should also be supported but have not yet been tested:
 .Bl -bullet -offset indent
 .It
-Silicon Graphics PCI gigabit ethernet adapter
+Silicon Graphics PCI gigabit
+.Tn Ethernet
+adapter
 .El
 .Pp
 While the Tigon chipset supports 10, 100 and 1000Mbps speeds, support for
 10 and 100Mbps speeds is only available on boards with the proper
-transceivers. Most adapters are only designed to work at 1000Mbps,
+transceivers.  Most adapters are only designed to work at 1000Mbps,
 however the driver should support those NICs that work at lower speeds
 as well.
 .Pp
@@ -97,14 +111,16 @@ driver supports the following media types:
 .It autoselect
 Enable autoselection of the media type and options.
 .It 10baseT/UTP
-Set 10Mbps operation. The
+Set 10Mbps operation.  The
 .Ar mediaopt
 option can also be used to select either
 .Ar full-duplex
 or
 .Ar half-duplex modes.
 .It 100baseTX
-Set 100Mbps (fast ethernet) operation. The
+Set 100Mbps (fast
+.Tn Ethernet )
+operation.  The
 .Ar mediaopt
 option can also be used to select either
 .Ar full-duplex
@@ -112,7 +128,9 @@ or
 .Ar half-duplex
 modes.
 .It 1000baseSX
-Set 1000Mbps (gigabit ethernet) operation. Only full
+Set 1000Mbps (gigabit
+.Tn Ethernet )
+operation.  Only full
 .Ar full-duplex
 mode is supported at this speed.
 .El
@@ -123,7 +141,7 @@ driver supports the following media options:
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It full-duplex
-Force full duplex operation
+Force full duplex operation.
 .It half-duplex
 Force half duplex operation.
 .El
@@ -141,14 +159,14 @@ The driver failed to allocate memory for jumbo frames during
 initialization.
 .It "ti%d: bios thinks we're in a 64 bit slot, but we aren't"
 The BIOS has programmed the NIC as though it had been installed in
-a 64-bit PCI slot, but in fact the NIC is in a 32-bit slot. This happens
-as a result of a bug in some BIOSes. This can be worked around on the
+a 64-bit PCI slot, but in fact the NIC is in a 32-bit slot.  This happens
+as a result of a bug in some BIOSes.  This can be worked around on the
 Tigon II, but on the Tigon I initialization will fail.
 .It "ti%d: board self-diagnostics failed!"
 The ROMFAIL bit in the CPU state register was set after system
 startup, indicating that the on-board NIC diagnostics failed.
 .It "ti%d: unknown hwrev"
-The driver detected a board with an unsupported hardware revision. The
+The driver detected a board with an unsupported hardware revision.  The
 .Nm
 driver supports revision 4 (Tigon 1) and revision 6 (Tigon 2) chips
 and has firmware only for those devices.
@@ -179,7 +197,7 @@ The driver currently tries to access some on-board memory transparently.
 This mapping (BUS_SPACE_MAP_LINEAR) fails on systems where the corresponding
 PCI memory range is located in "sparse" space only.
 .Pp
-VLAN tagging is not supported in 
+VLAN tag insertion and extraction is not yet supported on
+.Nx .
 .Pp
 This driver currently does not work on big-endian systems.
-.Nx .
