@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.16 1998/08/15 04:57:50 mycroft Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.17 2000/03/24 19:07:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,6 +162,27 @@ static __inline void
 write_eflags(u_long ef)
 {
 	__asm __volatile("pushl %0; popfl" : : "r" (ef));
+}
+
+static __inline u_int64_t
+rdmsr(u_int msr)
+{
+	u_int64_t rv;
+
+	__asm __volatile(".byte 0x0f, 0x32" : "=A" (rv) : "c" (msr));
+	return (rv);
+}
+
+static __inline void
+wrmsr(u_int msr, u_int64_t newval)
+{
+	__asm __volatile(".byte 0x0f, 0x30" : : "A" (newval), "c" (msr));
+}
+
+static __inline void
+wbinvd(void)
+{
+	__asm __volatile("wbinvd");
 }
 
 /* Break into DDB/KGDB. */
