@@ -84,11 +84,22 @@ device zstty: tty
 attach zstty at zsc
 file arch/macppc/dev/z8530tty.c			zstty needs-flag
 
-device adb
+device adb {}
 attach adb at obio
 file arch/macppc/dev/adb.c			adb needs-flag
 file arch/macppc/dev/adb_direct.c		adb
-file arch/macppc/dev/adbsys.c			adb
+
+device aed
+attach aed at adb
+file arch/macppc/dev/aed.c			aed needs-flag
+
+device akbd
+attach akbd at adb
+file arch/macppc/dev/akbd.c			akbd
+
+device ams
+attach ams at adb
+file arch/macppc/dev/ams.c			ams
 
 device nvram
 attach nvram at obio
