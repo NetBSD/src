@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.22 2001/06/19 07:19:35 jdolecek Exp $	*/
+/*	$NetBSD: lance.c,v 1.23 2001/07/07 05:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ void lance_watchdog __P((struct ifnet *));
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  Use this like bcmp().
+ * unrolled for speed.  Use this like memcmp().
  *
  * XXX: Add <machine/inlines.h> for stuff like this?
  * XXX: or maybe add it to libkern.h instead?
