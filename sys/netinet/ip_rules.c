@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rules.c,v 1.1.1.1 2004/03/28 08:56:49 martti Exp $	*/
+/*	$NetBSD: ip_rules.c,v 1.1.1.1.2.1 2004/04/27 18:57:33 jdc Exp $	*/
 
 /*
 * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,6 +8,7 @@
 * to the original author and the contributors.
 */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -15,7 +16,6 @@
 # include <sys/systm.h>
 #endif
 #include <sys/errno.h>
-#include <sys/param.h>
 #if !defined(__SVR4) && !defined(__svr4__) && !defined(__hpux)
 # include <sys/mbuf.h>
 #endif
