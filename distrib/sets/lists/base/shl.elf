@@ -1,13 +1,27 @@
-# $NetBSD: shl.elf,v 1.21 2000/05/02 12:46:05 simonb Exp $
+# $NetBSD: shl.elf,v 1.21.4.1 2000/06/21 06:39:03 thorpej Exp $
 ./usr/lib/libamu.so.1
+./usr/lib/libasn1.so.2
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
+./usr/lib/libcom_err.so.3
 ./usr/lib/libcrypt.so.0
+./usr/lib/libcrypto.so.0
 ./usr/lib/libcurses.so.3
+./usr/lib/libdes.so.5
 ./usr/lib/libedit.so.2
 ./usr/lib/libg2c.so.0
 ./usr/lib/libgnumalloc.so.0
+./usr/lib/libgssapi.so.0
+./usr/lib/libhdb.so.4
 ./usr/lib/libipsec.so.2
+./usr/lib/libkadm.so.4
+./usr/lib/libkadm5clnt.so.5
+./usr/lib/libkadm5srv.so.6
+./usr/lib/libkafs.so.4
+./usr/lib/libkdb.so.4
+./usr/lib/libkrb.so.4
+./usr/lib/libkrb5.so.11
+./usr/lib/libkstream.so.1
 ./usr/lib/libkvm.so.5
 ./usr/lib/libm.so.0
 ./usr/lib/libmenu.so.1
@@ -16,9 +30,13 @@
 ./usr/lib/libpcap.so.1
 ./usr/lib/libposix.so.0
 ./usr/lib/libresolv.so.1
+./usr/lib/libroken.so.8
 ./usr/lib/libskey.so.0
+./usr/lib/libsl.so.1
+./usr/lib/libss.so.3
+./usr/lib/libssl.so.0
 ./usr/lib/libstdc++.so.2
-./usr/lib/libtelnet.so.2
+./usr/lib/libtelnet.so.3
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libtermcap.so.0
 ./usr/lib/libtermlib.so.0
