@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615 2004/03/26 22:05:08 gendalia Exp $
+$NetBSD: pcidevs,v 1.615.2.1 2004/04/01 23:06:08 jmc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -460,7 +460,7 @@ vendor GALILEO		0x11ab	Galileo Technology
 vendor CANNON		0x11ac	Cannon IS
 vendor LITEON		0x11ad	Lite-On Communications
 vendor SCITEX		0x11ae	Scitex Corporation
-vendor PROLOG		0x11af	Pro-Log Corporation
+vendor AVID		0x11af	Avid Technology Inc.
 vendor V3		0x11b0	V3 Semiconductor
 vendor APRICOT		0x11b1	Apricot Computer
 vendor KODAK		0x11b2	Eastman Kodak
