@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12 1999/09/05 14:26:33 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.13 1999/09/09 16:29:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -908,6 +908,7 @@ ntfs_lookup(ap)
 
 		VREF(dvp);
 		*ap->a_vpp = dvp;
+		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		struct ntvattr *vap;
 
