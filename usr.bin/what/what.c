@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
+/*	$NetBSD: what.c,v 1.5 1997/10/20 02:31:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -33,22 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $";
+__RCSID("$NetBSD: what.c,v 1.5 1997/10/20 02:31:34 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 
 void search __P((void));
+int main __P((int, char **));
 
 /*
  * what
