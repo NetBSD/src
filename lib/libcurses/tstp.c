@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.12 1998/01/30 04:33:35 perry Exp $	*/
+/*	$NetBSD: tstp.c,v 1.13 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.12 1998/01/30 04:33:35 perry Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.13 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include <errno.h>
 #include <signal.h>
@@ -54,8 +54,8 @@ __RCSID("$NetBSD: tstp.c,v 1.12 1998/01/30 04:33:35 perry Exp $");
  *	Handle stop signals.
  */
 void
-__stop_signal_handler(signo)
-	int signo;
+__stop_signal_handler(/*ARGSUSED*/signo)
+	int	signo;
 {
 	sigset_t oset, set;
 
@@ -63,11 +63,11 @@ __stop_signal_handler(signo)
 	 * Block window change and timer signals.  The latter is because
 	 * applications use timers to decide when to repaint the screen.
 	 */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGALRM);
-	(void)sigaddset(&set, SIGWINCH);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	
+	(void) sigemptyset(&set);
+	(void) sigaddset(&set, SIGALRM);
+	(void) sigaddset(&set, SIGWINCH);
+	(void) sigprocmask(SIG_BLOCK, &set, &oset);
+
 	/*
 	 * End the window, which also resets the terminal state to the
 	 * original modes.
@@ -75,12 +75,12 @@ __stop_signal_handler(signo)
 	__stopwin();
 
 	/* Unblock SIGTSTP. */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGTSTP);
-	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
+	(void) sigemptyset(&set);
+	(void) sigaddset(&set, SIGTSTP);
+	(void) sigprocmask(SIG_UNBLOCK, &set, NULL);
 
 	/* Stop ourselves. */
-	(void)kill(0, SIGTSTP);
+	(void) kill(0, SIGTSTP);
 
 	/* Time passes ... */
 
@@ -88,10 +88,11 @@ __stop_signal_handler(signo)
 	__restartwin();
 
 	/* Reset the signals. */
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
-static void (*otstpfn) __P((int)) = SIG_DFL;
+static void (*otstpfn)
+__P((int)) = SIG_DFL;
 
 /*
  * Set the TSTP handler.
@@ -108,7 +109,7 @@ __set_stophandler()
 void
 __restore_stophandler()
 {
-	(void)signal(SIGTSTP, otstpfn);
+	(void) signal(SIGTSTP, otstpfn);
 }
 
 
@@ -118,10 +119,10 @@ __restore_stophandler()
 static struct termios save_termios;
 
 int
-__stopwin() 
+__stopwin()
 {
 	/* Get the current terminal state (which the user may have changed). */
-	(void)tcgetattr(STDIN_FILENO, &save_termios);
+	(void) tcgetattr(STDIN_FILENO, &save_termios);
 
 	__restore_stophandler();
 
@@ -129,14 +130,33 @@ __stopwin()
 		if (curscr->flags & __WSTANDOUT) {
 			tputs(SE, 0, __cputchar);
 			curscr->flags &= ~__WSTANDOUT;
+			if (*SE == *UE) {
+				curscr->flags &= ~__WUNDERSCORE;
+			}
+			if (*SE == *ME) {
+				curscr->flags &= ~__WATTRIBUTES;
+			}
+
 		}
-		__mvcur(curscr->cury, curscr->curx, curscr->maxy - 1, 0, 0);
+		if (curscr->flags & __WUNDERSCORE) {
+			tputs(SE, 0, __cputchar);
+			curscr->flags &= ~__WUNDERSCORE;
+			if (*UE == *ME) {
+				curscr->flags &= ~__WATTRIBUTES;
+			}
+		}
+		if (curscr->flags & __WATTRIBUTES) {
+			tputs(SE, 0, __cputchar);
+			curscr->flags &= ~__WATTRIBUTES;
+		}
+		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
 	}
 
-	(void)tputs(VE, 0, __cputchar);
-	(void)tputs(TE, 0, __cputchar);
-	(void)fflush(stdout);
-	(void)setvbuf(stdout, NULL, _IOLBF, 0);
+	(void) tputs(KE, 0, __cputchar);
+	(void) tputs(VE, 0, __cputchar);
+	(void) tputs(TE, 0, __cputchar);
+	(void) fflush(stdout);
+	(void) setvbuf(stdout, NULL, _IOLBF, 0);
 
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
@@ -150,10 +170,10 @@ __restartwin()
 	__set_stophandler();
 
 	/* save the new "default" terminal state */
-	(void)tcgetattr(STDIN_FILENO, &__orig_termios);
+	(void) tcgetattr(STDIN_FILENO, &__orig_termios);
 
 	/* Reset the terminal state to the mode just before we stopped. */
-	(void)tcsetattr(STDIN_FILENO, __tcaction ?
+	(void) tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios);
 
 	/* Restart the screen. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.10 1998/02/03 19:12:32 perry Exp $	*/
+/*	$NetBSD: printw.c,v 1.11 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.10 1998/02/03 19:12:32 perry Exp $");
+__RCSID("$NetBSD: printw.c,v 1.11 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -65,15 +65,15 @@ static int __winwrite __P((void *, const char *, int));
  */
 int
 #ifdef __STDC__
-printw(const char *fmt, ...)
+printw(const char *fmt,...)
 #else
 printw(fmt, va_alist)
-	char *fmt;
-	va_dcl
+	char   *fmt;
+va_dcl
 #endif
 {
 	va_list ap;
-	int ret;
+	int     ret;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
@@ -84,23 +84,22 @@ printw(fmt, va_alist)
 	va_end(ap);
 	return (ret);
 }
-
 /*
  * wprintw --
  *	Printf on the given window.
  */
 int
 #ifdef __STDC__
-wprintw(WINDOW * win, const char *fmt, ...)
+wprintw(WINDOW * win, const char *fmt,...)
 #else
 wprintw(win, fmt, va_alist)
 	WINDOW *win;
-	char *fmt;
-	va_dcl
+	char   *fmt;
+va_dcl
 #endif
 {
 	va_list ap;
-	int ret;
+	int     ret;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
@@ -111,7 +110,6 @@ wprintw(win, fmt, va_alist)
 	va_end(ap);
 	return (ret);
 }
-
 /*
  * mvprintw, mvwprintw --
  *	Implement the mvprintw commands.  Due to the variable number of
@@ -119,16 +117,16 @@ wprintw(win, fmt, va_alist)
  */
 int
 #ifdef __STDC__
-mvprintw(int y, int x, const char *fmt, ...)
+mvprintw(int y, int x, const char *fmt,...)
 #else
 mvprintw(y, x, fmt, va_alist)
-	int y, x;
-	char *fmt;
-	va_dcl
+	int     y, x;
+	char   *fmt;
+va_dcl
 #endif
 {
 	va_list ap;
-	int ret;
+	int     ret;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
@@ -145,17 +143,17 @@ mvprintw(y, x, fmt, va_alist)
 int
 #ifdef __STDC__
 mvwprintw(WINDOW * win, int y, int x,
-    const char *fmt, ...)
+    const char *fmt,...)
 #else
 mvwprintw(win, y, x, fmt, va_alist)
 	WINDOW *win;
-	int y, x;
-	char *fmt;
-	va_dcl
+	int     y, x;
+	char   *fmt;
+va_dcl
 #endif
 {
 	va_list ap;
-	int ret;
+	int     ret;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
@@ -169,25 +167,23 @@ mvwprintw(win, y, x, fmt, va_alist)
 	va_end(ap);
 	return (ret);
 }
-
 /*
  * Internal write-buffer-to-window function.
  */
 static int
 __winwrite(cookie, buf, n)
-	void *cookie;
+	void   *cookie;
 	const char *buf;
-	int n;
+	int     n;
 {
 	WINDOW *win;
-	int c;
+	int     c;
 
 	for (c = n, win = cookie; --c >= 0;)
 		if (waddch(win, *buf++) == ERR)
 			return (-1);
 	return (n);
 }
-
 /*
  * vwprintw --
  *	This routine actually executes the printf and adds it to the window.
@@ -198,10 +194,10 @@ vwprintw(win, fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	FILE *f;
+	FILE   *f;
 
 	if ((f = funopen(win, NULL, __winwrite, NULL, NULL)) == NULL)
 		return (ERR);
-	(void)vfprintf(f, fmt, ap);
+	(void) vfprintf(f, fmt, ap);
 	return (fclose(f) ? ERR : OK);
 }

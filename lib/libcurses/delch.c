@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.9 1998/02/03 19:12:21 perry Exp $	*/
+/*	$NetBSD: delch.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.9 1998/02/03 19:12:21 perry Exp $");
+__RCSID("$NetBSD: delch.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <string.h>
 
@@ -60,11 +60,11 @@ wdelch(win)
 	temp1 = &win->lines[win->cury]->line[win->curx];
 	temp2 = temp1 + 1;
 	while (temp1 < end) {
-		(void)memcpy(temp1, temp2, sizeof(__LDATA));
+		(void) memcpy(temp1, temp2, sizeof(__LDATA));
 		temp1++, temp2++;
 	}
 	temp1->ch = ' ';
 	temp1->attr = 0;
-	__touchline(win, win->cury, win->curx, win->maxx - 1, 0);
+	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1, 0);
 	return (OK);
 }
