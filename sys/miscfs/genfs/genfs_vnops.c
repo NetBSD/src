@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.16 2002/07/12 01:40:25 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.17 2002/07/16 14:06:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.16 2002/07/12 01:40:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.17 2002/07/16 14:06:12 nathanw Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1033,7 +1033,7 @@ genfs_putpages(void *v)
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t pagedaemon = curlwp == uvm.pagedaemon_proc;
+	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
