@@ -6,13 +6,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.11 2005/02/04 18:12:52 drochner Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.12 2005/02/06 18:36:32 christos Exp $")
 #endif
 
 ENTRY(memchr)
 	pushl	%esi
 	movl	8(%esp),%eax
-	movl	12(%esp),%ecx
+	movzbl	12(%esp),%ecx
 	movl	16(%esp),%esi
 
 	/*
@@ -29,6 +29,7 @@ ENTRY(memchr)
 	incl	%eax
 	decl	%esi
 	jnz	.Lalign
+	jmp	.Lzero
 
 .Lword_aligned:
 	/* copy char to all bytes in word */

@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strrchr.S,v 1.6 2005/02/04 18:12:52 drochner Exp $")
+	RCSID("$NetBSD: strrchr.S,v 1.7 2005/02/06 18:36:32 christos Exp $")
 #endif
 
 #ifdef RINDEX
@@ -18,7 +18,7 @@ ENTRY(strrchr)
 	pushl	%edi
 	pushl	%ebx
 	movl	16(%esp),%edx
-	movl	20(%esp),%ecx
+	movzbl	20(%esp),%ecx
 
 	/* zero return value */
 	xorl	%eax,%eax
