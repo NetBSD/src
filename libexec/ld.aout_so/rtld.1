@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
+.\"	$NetBSD: rtld.1,v 1.3 1997/05/26 00:40:39 cjs Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -54,8 +54,8 @@ After all shared libraries have been succesfully loaded,
 proceeds to resolve external references from both the main program and
 all objects loaded. A mechanism is provided for initialisation routines
 to be called, on a per-object basis, giving a shared object an opportunity
-to perfrom any extra set-up, before execution of the program proper begins.
-This is useful for C++ libraries that contain static constrictors.
+to perform any extra set-up, before execution of the program proper begins.
+This is useful for C++ libraries that contain static constructors.
 .Pp
 .Nm
 is itself a shared object that is initially loaded by the startup module
