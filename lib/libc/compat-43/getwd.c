@@ -1,4 +1,4 @@
-/*	$NetBSD: getwd.c,v 1.12 2000/01/22 22:30:08 mycroft Exp $	*/
+/*	$NetBSD: getwd.c,v 1.13 2002/11/17 01:51:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getwd.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: getwd.c,v 1.12 2000/01/22 22:30:08 mycroft Exp $");
+__RCSID("$NetBSD: getwd.c,v 1.13 2002/11/17 01:51:24 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,6 +64,6 @@ getwd(buf)
 
 	if ((p = getcwd(buf, MAXPATHLEN)) != NULL)
 		return(p);
-	(void)strncpy(buf, strerror(errno), MAXPATHLEN); /* XXX strncpy may be unsafe */
+	(void)strlcpy(buf, strerror(errno), MAXPATHLEN);
 	return((char *)NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.49 2002/11/11 19:49:00 thorpej Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.50 2002/11/17 01:51:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.49 2002/11/11 19:49:00 thorpej Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.50 2002/11/17 01:51:25 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,8 +135,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		 * Canonicalise hostname.
 		 * XXX: Should we really do this?
 		 */
-		strncpy(hbuf, res->ai_canonname, sizeof(hbuf) - 1);
-		hbuf[sizeof(hbuf) - 1] = '\0';
+		strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
 		*ahost = hbuf;
 	}
 
@@ -197,8 +196,7 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		return (-1);
 	}
 	if (res->ai_canonname) {
-		strncpy(hbuf, res->ai_canonname, sizeof(hbuf) - 1);
-		hbuf[sizeof(hbuf) - 1] = '\0';
+		strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
 		*ahost = hbuf;
 	}
 	
