@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.6 1995/02/02 02:09:34 jtc Exp $	*/
+/*	$NetBSD: fread.c,v 1.7 1997/07/13 20:15:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,15 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
+#else
+__RCSID("$NetBSD: fread.c,v 1.7 1997/07/13 20:15:03 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: fread.c,v 1.6 1995/02/02 02:09:34 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include "local.h"
 
 size_t
 fread(buf, size, count, fp)
