@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.12 2003/02/25 10:35:53 wiz Exp $
+.\"	$NetBSD: rsh.1,v 1.13 2003/04/07 01:46:41 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rsh.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd April 29, 1995
+.Dd March 29, 2003
 .Dt RSH 1
 .Os
 .Sh NAME
@@ -44,11 +44,14 @@
 .Op Fl Kdnx
 .Op Fl k Ar realm
 .Op Fl l Ar username
+.Op Fl p Ar port
 .Ar host
 .Op command
+
 .Nm
 .Op Fl Kdnx
 .Op Fl k Ar realm
+.Op Fl p Ar port
 .Ar username@host
 .Op command
 .Sh DESCRIPTION
@@ -107,6 +110,20 @@ option redirects input from the special device
 (see the
 .Sx BUGS
 section of this manual page).
+.It Fl p
+Uses the given
+.Pa port
+instead of the one assigned to the service "shell".
+May be given either as symbolic name or as number.
+If no command is given, note that 
+.Nm rlogin
+is started, which may need a different daemon 
+.Nm ( rlogind ,
+instead of 
+.Nm rshd )
+running on the server; You want to pass the 
+.Nm rshd 's
+port number in that case.
 .It Fl x
 The
 .Fl x

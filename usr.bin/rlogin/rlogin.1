@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.14 2003/02/25 10:35:52 wiz Exp $
+.\"	$NetBSD: rlogin.1,v 1.15 2003/04/07 01:46:42 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rlogin.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd April 29, 1995
+.Dd March 29, 2003
 .Dt RLOGIN 1
 .Os
 .Sh NAME
@@ -45,11 +45,14 @@
 .Op Fl e Ar char
 .Op Fl k Ar realm
 .Op Fl l Ar username
+.Op Fl p Ar port
 .Ar host
+
 .Nm
 .Op Fl 8EKLdx
 .Op Fl e Ar char
 .Op Fl k Ar realm
+.Op Fl p Ar port
 .Ar username@host
 .Sh DESCRIPTION
 .Nm
@@ -115,6 +118,11 @@ option specifies an alternate
 .Ar username
 for the remote login.
 If this option is not specified, your local username will be used.
+.It Fl p
+Uses the given
+.Pa port 
+instead of the one assigned to the service "login".
+May be given either as symbolic name or as number.
 .It Fl x
 The
 .Fl x
