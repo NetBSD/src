@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.3 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.4 1998/05/05 20:51:07 kleink Exp $	*/
 
 #define VM_PAGE_ALLOC_MEMORY_STATS
  
@@ -49,14 +49,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 
