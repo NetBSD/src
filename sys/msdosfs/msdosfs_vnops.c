@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.70 1998/03/01 02:25:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.71 1998/04/21 09:37:23 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1476,7 +1476,7 @@ msdosfs_readdir(v)
 	struct dirent dirbuf;
 	struct uio *uio = ap->a_uio;
 	off_t *cookies = NULL;
-	int ncookies = 0, nc;
+	int ncookies = 0, nc = 0;
 	off_t offset;
 	int chksum = -1;
 
@@ -1513,7 +1513,7 @@ msdosfs_readdir(v)
 	uio->uio_resid = count;
 
 	if (ap->a_ncookies) {
-		nc = uio->uio_resid / sizeof(struct direntry);
+		nc = uio->uio_resid / 16;
 		MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
@@ -1565,6 +1565,8 @@ msdosfs_readdir(v)
 				if (cookies) {
 					*cookies++ = offset;
 					ncookies++;
+					if (ncookies >= nc)
+						goto out;
 				}
 			}
 		}
@@ -1677,6 +1679,10 @@ msdosfs_readdir(v)
 			if (cookies) {
 				*cookies++ = offset + sizeof(struct direntry);
 				ncookies++;
+				if (ncookies >= nc) {
+					brelse(bp);
+					goto out;
+				}
 			}
 		}
 		brelse(bp);
