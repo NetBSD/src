@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.14 2005/01/30 19:19:24 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.15 2005/02/01 20:47:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.14 2005/01/30 19:19:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.15 2005/02/01 20:47:02 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -167,6 +167,7 @@ STATIC void gfe_tx_restart(void *);
 STATIC int gfe_tx_enqueue(struct gfe_softc *, enum gfe_txprio);
 STATIC uint32_t gfe_tx_done(struct gfe_softc *, enum gfe_txprio, uint32_t);
 STATIC void gfe_tx_cleanup(struct gfe_softc *, enum gfe_txprio, int);
+STATIC int gfe_tx_txqalloc(struct gfe_softc *, enum gfe_txprio);
 STATIC int gfe_tx_start(struct gfe_softc *, enum gfe_txprio);
 STATIC void gfe_tx_stop(struct gfe_softc *, enum gfe_whack_op);
 
@@ -175,6 +176,7 @@ STATIC void gfe_rx_get(struct gfe_softc *, enum gfe_rxprio);
 STATIC int gfe_rx_prime(struct gfe_softc *);
 STATIC uint32_t gfe_rx_process(struct gfe_softc *, uint32_t, uint32_t);
 STATIC int gfe_rx_rxqalloc(struct gfe_softc *, enum gfe_rxprio);
+STATIC int gfe_rx_rxqinit(struct gfe_softc *, enum gfe_rxprio);
 STATIC void gfe_rx_stop(struct gfe_softc *, enum gfe_whack_op);
 
 STATIC int gfe_intr(void *);
@@ -229,6 +231,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t enaddr[6];
 	int phyaddr;
 	uint32_t sdcr;
+	int error;
 
 	GT_ETHERFOUND(gt, ga);
 
@@ -267,6 +270,8 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 		aprint_normal(", phy %d (mii)", phyaddr);
 		sc->sc_pcxr &= ~ETH_EPCXR_RMIIEn;
 	}
+	if (sc->sc_dev.dv_cfdata->cf_flags & 2)
+		sc->sc_flags |= GE_NOFREE;
 	sc->sc_pcxr &= ~(3 << 14);
 	sc->sc_pcxr |= (ETH_EPCXR_MFL_1536 << 14);
 
@@ -327,6 +332,24 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = gfe_ifstart;
 	ifp->if_watchdog = gfe_ifwatchdog;
 
+	if (sc->sc_flags & GE_NOFREE) {
+		error = gfe_rx_rxqalloc(sc, GE_RXPRIO_HI);
+		if (!error)
+			error = gfe_rx_rxqalloc(sc, GE_RXPRIO_MEDHI);
+		if (!error)
+			error = gfe_rx_rxqalloc(sc, GE_RXPRIO_MEDLO);
+		if (!error)
+			error = gfe_rx_rxqalloc(sc, GE_RXPRIO_LO);
+		if (!error)
+			error = gfe_tx_txqalloc(sc, GE_TXPRIO_HI);
+		if (!error)
+			error = gfe_hash_alloc(sc);
+		if (error)
+			aprint_error(
+			    "%s: failed to allocate resources: %d\n",
+			    ifp->if_xname, error);
+	}
+
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 #if NBPFILTER > 0
@@ -345,6 +368,8 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 {
 	int error = 0;
 	GE_FUNC_ENTER(sc, "gfe_dmamem_alloc");
+
+	KASSERT(gdm->gdm_kva == NULL);
 	gdm->gdm_size = size;
 	gdm->gdm_maxsegs = maxsegs;
 
@@ -492,15 +517,6 @@ gfe_ifstart(struct ifnet *ifp)
 		return;
 	}
 
-	if (sc->sc_txq[GE_TXPRIO_HI] == NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-		printf("%s: ifstart: txq not yet created\n", ifp->if_xname);
-#endif
-		GE_FUNC_EXIT(sc, "");
-		return;
-	}
-
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL) {
@@ -512,14 +528,14 @@ gfe_ifstart(struct ifnet *ifp)
 		/*
 		 * No space in the pending queue?  try later.
 		 */
-		if (IF_QFULL(&sc->sc_txq[GE_TXPRIO_HI]->txq_pendq))
+		if (IF_QFULL(&sc->sc_txq[GE_TXPRIO_HI].txq_pendq))
 			break;
 
 		/*
 		 * Try to enqueue a mbuf to the device. If that fails, we
 		 * can always try to map the next mbuf.
 		 */
-		IF_ENQUEUE(&sc->sc_txq[GE_TXPRIO_HI]->txq_pendq, m);
+		IF_ENQUEUE(&sc->sc_txq[GE_TXPRIO_HI].txq_pendq, m);
 		GE_DPRINTF(sc, (">"));
 #ifndef GE_NOTX
 		(void) gfe_tx_enqueue(sc, GE_TXPRIO_HI);
@@ -538,11 +554,11 @@ void
 gfe_ifwatchdog(struct ifnet *ifp)
 {
 	struct gfe_softc * const sc = ifp->if_softc;
-	struct gfe_txqueue *txq;
+	struct gfe_txqueue * const txq = &sc->sc_txq[GE_TXPRIO_HI];
 
 	GE_FUNC_ENTER(sc, "gfe_ifwatchdog");
 	printf("%s: device timeout", sc->sc_dev.dv_xname);
-	if ((txq = sc->sc_txq[GE_TXPRIO_HI]) != NULL) {
+	if (ifp->if_flags & IFF_RUNNING) {
 		uint32_t curtxdnum = (bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, txq->txq_ectdp) - txq->txq_desc_busaddr) / sizeof(txq->txq_descs[0]);
 		GE_TXDPOSTSYNC(sc, txq, txq->txq_fi);
 		GE_TXDPOSTSYNC(sc, txq, curtxdnum);
@@ -562,48 +578,55 @@ gfe_ifwatchdog(struct ifnet *ifp)
 int
 gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 {
-	struct gfe_rxqueue *rxq;
-	volatile struct gt_eth_desc *rxd;
-	const bus_dma_segment_t *ds;
+	struct gfe_rxqueue * const rxq = &sc->sc_rxq[rxprio];
 	int error;
-	int idx;
-	bus_addr_t nxtaddr;
-	bus_size_t boff;
 
 	GE_FUNC_ENTER(sc, "gfe_rx_rxqalloc");
 	GE_DPRINTF(sc, ("(%d)", rxprio));
-	if (sc->sc_rxq[rxprio] != NULL) {
-		GE_FUNC_EXIT(sc, "");
-		return 0;
-	}
-
-	rxq = (struct gfe_rxqueue *) malloc(sizeof(*rxq), M_DEVBUF, M_NOWAIT);
-	if (rxq == NULL) {
-		GE_FUNC_EXIT(sc, "!");
-		return ENOMEM;
-	}
-
-	memset(rxq, 0, sizeof(*rxq));
 
 	error = gfe_dmamem_alloc(sc, &rxq->rxq_desc_mem, 1,
 	    GE_RXDESC_MEMSIZE, BUS_DMA_NOCACHE);
 	if (error) {
-		free(rxq, M_DEVBUF);
 		GE_FUNC_EXIT(sc, "!!");
 		return error;
 	}
+
 	error = gfe_dmamem_alloc(sc, &rxq->rxq_buf_mem, GE_RXBUF_NSEGS,
 	    GE_RXBUF_MEMSIZE, 0);
 	if (error) {
-		gfe_dmamem_free(sc, &rxq->rxq_desc_mem);
-		free(rxq, M_DEVBUF);
 		GE_FUNC_EXIT(sc, "!!!");
 		return error;
 	}
+	GE_FUNC_EXIT(sc, "");
+	return error;
+}
 
-	memset(rxq->rxq_desc_mem.gdm_kva, 0, GE_TXMEM_SIZE);
+int
+gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
+{
+	struct gfe_rxqueue * const rxq = &sc->sc_rxq[rxprio];
+	volatile struct gt_eth_desc *rxd;
+	const bus_dma_segment_t *ds;
+	int idx;
+	bus_addr_t nxtaddr;
+	bus_size_t boff;
 
-	sc->sc_rxq[rxprio] = rxq;
+	GE_FUNC_ENTER(sc, "gfe_rx_rxqinit");
+	GE_DPRINTF(sc, ("(%d)", rxprio));
+
+	if ((sc->sc_flags & GE_NOFREE) == 0) {
+		int error = gfe_rx_rxqalloc(sc, rxprio);
+		if (error) {
+			GE_FUNC_EXIT(sc, "!");
+			return error;
+		}
+	} else {
+		KASSERT(rxq->rxq_desc_mem.gdm_kva != NULL);
+		KASSERT(rxq->rxq_buf_mem.gdm_kva != NULL);
+	}
+
+	memset(rxq->rxq_desc_mem.gdm_kva, 0, GE_RXDESC_MEMSIZE);
+
 	rxq->rxq_descs =
 	    (volatile struct gt_eth_desc *) rxq->rxq_desc_mem.gdm_kva;
 	rxq->rxq_desc_busaddr = rxq->rxq_desc_mem.gdm_map->dm_segs[0].ds_addr;
@@ -661,14 +684,14 @@ gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		break;
 	}
 	GE_FUNC_EXIT(sc, "");
-	return error;
+	return 0;
 }
 
 void
 gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	struct gfe_rxqueue * const rxq = sc->sc_rxq[rxprio];
+	struct gfe_rxqueue * const rxq = &sc->sc_rxq[rxprio];
 	struct mbuf *m = rxq->rxq_curpkt;
 
 	GE_FUNC_ENTER(sc, "gfe_rx_get");
@@ -807,7 +830,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		uint32_t masks[(GE_RXDESC_MAX + 31) / 32];
 		int idx;
 		rxbits &= ~(1 << rxprio);
-		rxq = sc->sc_rxq[rxprio];
+		rxq = &sc->sc_rxq[rxprio];
 		sc->sc_idlemask |= (rxq->rxq_intrbits & ETH_IR_RxBits);
 		intrmask &= ~(rxq->rxq_intrbits & ETH_IR_RxBits);
 		if ((sc->sc_tickflags & GE_TICK_RX_RESTART) == 0) {
@@ -851,41 +874,41 @@ gfe_rx_prime(struct gfe_softc *sc)
 
 	GE_FUNC_ENTER(sc, "gfe_rx_prime");
 
-	error = gfe_rx_rxqalloc(sc, GE_RXPRIO_HI);
+	error = gfe_rx_rxqinit(sc, GE_RXPRIO_HI);
 	if (error)
 		goto bail;
-	rxq = sc->sc_rxq[GE_RXPRIO_HI];
+	rxq = &sc->sc_rxq[GE_RXPRIO_HI];
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
 		GE_WRITE(sc, EFRDP3, rxq->rxq_desc_busaddr);
 		GE_WRITE(sc, ECRDP3, rxq->rxq_desc_busaddr);
 	}
 	sc->sc_intrmask |= rxq->rxq_intrbits;
 
-	error = gfe_rx_rxqalloc(sc, GE_RXPRIO_MEDHI);
+	error = gfe_rx_rxqinit(sc, GE_RXPRIO_MEDHI);
 	if (error)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
-		rxq = sc->sc_rxq[GE_RXPRIO_MEDHI];
+		rxq = &sc->sc_rxq[GE_RXPRIO_MEDHI];
 		GE_WRITE(sc, EFRDP2, rxq->rxq_desc_busaddr);
 		GE_WRITE(sc, ECRDP2, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
 	}
 
-	error = gfe_rx_rxqalloc(sc, GE_RXPRIO_MEDLO);
+	error = gfe_rx_rxqinit(sc, GE_RXPRIO_MEDLO);
 	if (error)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
-		rxq = sc->sc_rxq[GE_RXPRIO_MEDLO];
+		rxq = &sc->sc_rxq[GE_RXPRIO_MEDLO];
 		GE_WRITE(sc, EFRDP1, rxq->rxq_desc_busaddr);
 		GE_WRITE(sc, ECRDP1, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
 	}
 
-	error = gfe_rx_rxqalloc(sc, GE_RXPRIO_LO);
+	error = gfe_rx_rxqinit(sc, GE_RXPRIO_LO);
 	if (error)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
-		rxq = sc->sc_rxq[GE_RXPRIO_LO];
+		rxq = &sc->sc_rxq[GE_RXPRIO_LO];
 		GE_WRITE(sc, EFRDP0, rxq->rxq_desc_busaddr);
 		GE_WRITE(sc, ECRDP0, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
@@ -899,7 +922,7 @@ gfe_rx_prime(struct gfe_softc *sc)
 void
 gfe_rx_cleanup(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 {
-	struct gfe_rxqueue *rxq = sc->sc_rxq[rxprio];
+	struct gfe_rxqueue *rxq = &sc->sc_rxq[rxprio];
 	GE_FUNC_ENTER(sc, "gfe_rx_cleanup");
 	if (rxq == NULL) {
 		GE_FUNC_EXIT(sc, "");
@@ -908,10 +931,10 @@ gfe_rx_cleanup(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 
 	if (rxq->rxq_curpkt)
 		m_freem(rxq->rxq_curpkt);
-	gfe_dmamem_free(sc, &rxq->rxq_desc_mem);
-	gfe_dmamem_free(sc, &rxq->rxq_buf_mem);
-	free(rxq, M_DEVBUF);
-	sc->sc_rxq[rxprio] = NULL;
+	if ((sc->sc_flags & GE_NOFREE) == 0) {
+		gfe_dmamem_free(sc, &rxq->rxq_desc_mem);
+		gfe_dmamem_free(sc, &rxq->rxq_buf_mem);
+	}
 	GE_FUNC_EXIT(sc, "");
 }
 
@@ -954,25 +977,25 @@ gfe_tick(void *arg)
 	if (tickflags & GE_TICK_RX_RESTART) {
 		intrmask |= sc->sc_idlemask;
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_3|ETH_IR_RxError_3)) {
-			struct gfe_rxqueue *rxq = sc->sc_rxq[GE_RXPRIO_HI];
+			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_HI];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, EFRDP3, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ECRDP3, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_2|ETH_IR_RxError_2)) {
-			struct gfe_rxqueue *rxq = sc->sc_rxq[GE_RXPRIO_MEDHI];
+			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDHI];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, EFRDP2, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ECRDP2, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_1|ETH_IR_RxError_1)) {
-			struct gfe_rxqueue *rxq = sc->sc_rxq[GE_RXPRIO_MEDLO];
+			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDLO];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, EFRDP1, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ECRDP1, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_0|ETH_IR_RxError_0)) {
-			struct gfe_rxqueue *rxq = sc->sc_rxq[GE_RXPRIO_LO];
+			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_LO];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, EFRDP0, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ECRDP0, rxq->rxq_desc_busaddr);
@@ -994,7 +1017,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 {
 	const int dcache_line_size = curcpu()->ci_ci.dcache_line_size;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	struct gfe_txqueue * const txq = sc->sc_txq[txprio];
+	struct gfe_txqueue * const txq = &sc->sc_txq[txprio];
 	volatile struct gt_eth_desc * const txd = &txq->txq_descs[txq->txq_lo];
 	uint32_t intrmask = sc->sc_intrmask;
 	size_t buflen;
@@ -1168,7 +1191,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 uint32_t
 gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 {
-	struct gfe_txqueue * const txq = sc->sc_txq[txprio];
+	struct gfe_txqueue * const txq = &sc->sc_txq[txprio];
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 
 	GE_FUNC_ENTER(sc, "gfe_tx_done");
@@ -1253,9 +1276,33 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 }
 
 int
+gfe_tx_txqalloc(struct gfe_softc *sc, enum gfe_txprio txprio)
+{
+	struct gfe_txqueue * const txq = &sc->sc_txq[txprio];
+	int error;
+
+	GE_FUNC_ENTER(sc, "gfe_tx_txqalloc");
+
+	error = gfe_dmamem_alloc(sc, &txq->txq_desc_mem, 1,
+	    GE_TXDESC_MEMSIZE, BUS_DMA_NOCACHE);
+	if (error) {
+		GE_FUNC_EXIT(sc, "");
+		return error;
+	}
+	error = gfe_dmamem_alloc(sc, &txq->txq_buf_mem, 1, GE_TXBUF_SIZE, 0);
+	if (error) {
+		gfe_dmamem_free(sc, &txq->txq_desc_mem);
+		GE_FUNC_EXIT(sc, "");
+		return error;
+	}
+	GE_FUNC_EXIT(sc, "");
+	return 0;
+}
+
+int
 gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 {
-	struct gfe_txqueue *txq;
+	struct gfe_txqueue * const txq = &sc->sc_txq[txprio];
 	volatile struct gt_eth_desc *txd;
 	unsigned int i;
 	bus_addr_t addr;
@@ -1265,31 +1312,15 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	sc->sc_intrmask &= ~(ETH_IR_TxEndHigh|ETH_IR_TxBufferHigh|
 			     ETH_IR_TxEndLow |ETH_IR_TxBufferLow);
 
-	if ((txq = sc->sc_txq[txprio]) == NULL) {
-		int error;
-		txq = (struct gfe_txqueue *) malloc(sizeof(*txq),
-		    M_DEVBUF, M_NOWAIT);
-		if (txq == NULL) {
-			GE_FUNC_EXIT(sc, "");
-			return ENOMEM;
-		}
-		memset(txq, 0, sizeof(*txq));
-		error = gfe_dmamem_alloc(sc, &txq->txq_desc_mem, 1,
-		    GE_TXMEM_SIZE, BUS_DMA_NOCACHE);
+	if (sc->sc_flags & GE_NOFREE) {
+		KASSERT(txq->txq_desc_mem.gdm_kva != NULL);
+		KASSERT(txq->txq_buf_mem.gdm_kva != NULL);
+	} else {
+		int error = gfe_tx_txqalloc(sc, txprio);
 		if (error) {
-			free(txq, M_DEVBUF);
-			GE_FUNC_EXIT(sc, "");
+			GE_FUNC_EXIT(sc, "!");
 			return error;
 		}
-		error = gfe_dmamem_alloc(sc, &txq->txq_buf_mem, 1,
-		    GE_TXBUF_SIZE, 0);
-		if (error) {
-			gfe_dmamem_free(sc, &txq->txq_desc_mem);
-			free(txq, M_DEVBUF);
-			GE_FUNC_EXIT(sc, "");
-			return error;
-		}
-		sc->sc_txq[txprio] = txq;
 	}
 
 	txq->txq_descs =
@@ -1317,7 +1348,7 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	txq->txq_descs[GE_TXDESC_MAX-1].ed_nxtptr =
 	    htogt32(txq->txq_desc_busaddr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map, 0,
-	    GE_TXMEM_SIZE, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    GE_TXDESC_MEMSIZE, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	switch (txprio) {
 	case GE_TXPRIO_HI:
@@ -1361,7 +1392,7 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 void
 gfe_tx_cleanup(struct gfe_softc *sc, enum gfe_txprio txprio, int flush)
 {
-	struct gfe_txqueue * const txq = sc->sc_txq[txprio];
+	struct gfe_txqueue * const txq = &sc->sc_txq[txprio];
 
 	GE_FUNC_ENTER(sc, "gfe_tx_cleanup");
 	if (txq == NULL) {
@@ -1374,10 +1405,10 @@ gfe_tx_cleanup(struct gfe_softc *sc, enum gfe_txprio txprio, int flush)
 		return;
 	}
 
-	gfe_dmamem_free(sc, &txq->txq_desc_mem);
-	gfe_dmamem_free(sc, &txq->txq_buf_mem);
-	free(txq, M_DEVBUF);
-	sc->sc_txq[txprio] = NULL;
+	if ((sc->sc_flags & GE_NOFREE) == 0) {
+		gfe_dmamem_free(sc, &txq->txq_desc_mem);
+		gfe_dmamem_free(sc, &txq->txq_buf_mem);
+	}
 	GE_FUNC_EXIT(sc, "-F");
 }
 
@@ -1569,8 +1600,10 @@ gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 	gfe_rx_stop(sc, GE_WHACK_STOP);
 #endif
 #ifndef GE_NOHASH
-	gfe_dmamem_free(sc, &sc->sc_hash_mem);
-	sc->sc_hashtable = NULL;
+	if ((sc->sc_flags & GE_NOFREE) == 0) {
+		gfe_dmamem_free(sc, &sc->sc_hash_mem);
+		sc->sc_hashtable = NULL;
+	}
 #endif
 
 	GE_FUNC_EXIT(sc, "");
