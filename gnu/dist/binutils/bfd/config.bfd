@@ -449,6 +449,7 @@ case "${targ}" in
   i[3456]86-*-netbsdelf*)
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs=i386netbsd_vec
+    targ64_selvecs=bfd_elf64_x86_64_vec
     ;;
   i[3456]86-*-netbsdpe*)
     targ_defvec=i386pe_vec
