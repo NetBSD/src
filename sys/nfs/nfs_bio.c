@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.76 2002/03/16 23:05:25 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.77 2002/03/23 05:00:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.76 2002/03/16 23:05:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.77 2002/03/23 05:00:57 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -972,7 +972,7 @@ nfs_doio(bp, p)
 	    struct vm_page *pgs[npages];
 	    boolean_t needcommit = TRUE;
 
-	    if ((bp->b_flags & B_ASYNC) != 0) {
+	    if ((bp->b_flags & B_ASYNC) != 0 && NFS_ISV3(vp)) {
 		    iomode = NFSV3WRITE_UNSTABLE;
 	    } else {
 		    iomode = NFSV3WRITE_FILESYNC;
