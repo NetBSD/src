@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60.8.1 2002/05/17 13:49:55 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60.8.2 2002/07/16 08:29:26 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60.8.1 2002/05/17 13:49:55 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60.8.2 2002/07/16 08:29:26 gehenna Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -66,9 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60.8.1 2002/05/17 13:49:55 gehenna Ex
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/pcb.h>
 #include <machine/bootinfo.h>
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
@@ -91,6 +94,11 @@ extern int i386_ndisks;
 #include <i386/pci/pcibios.h>
 #endif
 
+#include "opt_kvm86.h"
+#ifdef KVM86
+#include <machine/kvm86.h>
+#endif
+
 struct device *booted_device;
 int booted_partition;
 
@@ -110,6 +118,12 @@ cpu_configure()
 	pcibios_init();
 #endif
 
+	/* kvm86 needs a TSS */
+	i386_proc0_tss_ldt_init();
+#ifdef KVM86
+	kvm86_init();
+#endif
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
@@ -117,10 +131,10 @@ cpu_configure()
 	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
 	    (u_short)imask[IPL_TTY]);
 
-	spl0();
+	/* resync after FPU configuration */
+	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
 
-	/* Set up proc0's TSS and LDT (after the FPU is configured). */
-	i386_proc0_tss_ldt_init();
+	spl0();
 
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();
