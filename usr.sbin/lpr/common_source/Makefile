@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/11 19:42:34 veego Exp $
+#	$NetBSD: Makefile,v 1.3 1997/10/11 20:25:53 mycroft Exp $
 
 LIB=	common
 SRCS=	common.c displayq.c rmjob.c startdaemon.c
@@ -10,5 +10,3 @@ NOPIC=		nopic
 libinstall::
 
 .include <bsd.lib.mk>
-LDADD=
-DPADD=
