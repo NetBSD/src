@@ -52,7 +52,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	stty newcrt werase ^W intr ^C kill ^U erase ^?
 	echo ''
 
 	# mount the ramdisk read write
