@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 1997/01/05 21:21:43 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.14 1997/01/05 21:32:18 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,7 @@
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
+#	ipl	ip filter control
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -74,7 +75,7 @@ all)
 	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
 	sh MAKEDEV sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm ipl
 	sh MAKEDEV local
 	;;
 
@@ -290,6 +291,13 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 18 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	;;
 
 pty*)
