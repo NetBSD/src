@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.7 1996/08/21 19:42:36 mark Exp $ */
+/* $NetBSD: fault.c,v 1.8 1996/09/07 22:26:45 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -567,7 +567,7 @@ copyfault:
  */
  
 		panic("Domain Error - Halting\n");
-/*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
+/*		trapsignal(p, SIGSEGV, fault_status & FAULT_TYPE_MASK);*/
 		break;
 
 	case FAULT_PERM_P:		 /* Page Permission Fault*/
@@ -611,7 +611,7 @@ copyfault:
 				    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 				    fault_pc);
 				    postmortem(frame);
-				trapsignal(p, SIGBUS, FAULT_PERM_P);
+				trapsignal(p, SIGSEGV, FAULT_PERM_P);
 				goto out;
 			}
 
@@ -668,8 +668,7 @@ copyfault:
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
-			trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-			    ? SIGBUS : SIGSEGV, FAULT_PERM_P);
+			trapsignal(p, SIGSEGV, FAULT_PERM_P);
 			break;
 		}
 	}            
@@ -710,11 +709,11 @@ copyfault:
 		    fault_pc);
 		disassemble(fault_pc);
 		postmortem(frame);
-		trapsignal(p, SIGBUS, FAULT_PERM_S);
+		trapsignal(p, SIGSEGV, FAULT_PERM_S);
 		break;
 
 /*		panic("Section Permission Fault - Halting\n");
-		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);
+		trapsignal(p, SIGSEGV, fault_status & FAULT_TYPE_MASK);
 		break;*/
 
 	case FAULT_BUSTRNL1 | FAULT_USER: /* Bus Error Trans L1 Fault */
@@ -849,8 +848,7 @@ nogo:
 		    fault_pc);
 		disassemble(fault_pc);
 				postmortem(frame);
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, FAULT_TRANS_P);
+		trapsignal(p, SIGSEGV, FAULT_TRANS_P);
 		break;
 		}            
 /*		panic("Page Fault - Halting\n");*/
@@ -966,8 +964,7 @@ nogo1:
 			goto we_re_toast;
 		}
 		postmortem(frame);
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, FAULT_TRANS_S);
+		trapsignal(p, SIGSEGV, FAULT_TRANS_S);
 		break;
 		}            
 /*		panic("Section Fault - Halting\n");
@@ -1118,7 +1115,7 @@ prefetch_abort_handler(frame)
 		s = spltty();
 		printf("prefetch: pc (%08x) not in user process space\n", fault_pc);
 		postmortem(frame);
-		trapsignal(p, SIGBUS, FAULT_PERM_P);
+		trapsignal(p, SIGSEGV, FAULT_PERM_P);
 		(void)splx(s);
 		userret(p, frame->tf_pc, sticks);
 		return;
