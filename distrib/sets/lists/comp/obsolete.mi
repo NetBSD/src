@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.10 2000/01/10 17:18:04 kleink Exp $
+# $NetBSD: obsolete.mi,v 1.11 2000/02/18 09:40:56 veego Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -19,11 +19,16 @@
 /usr/include/dev/isa/pckbcvar.h
 /usr/include/dev/isa/wdlink.h
 /usr/include/dev/isa/wdreg.h
+/usr/include/dev/microcode/isp/asm_pci.h
+/usr/include/dev/microcode/isp/asm_sbus.h
+/usr/include/dev/microcode/isp
 /usr/include/dev/mii/generic_phy.h
 /usr/include/dev/mii/mii_adapter.h
 /usr/include/dev/mii/mii_adapters_id.h
 /usr/include/dev/mii/mii_phy.h
 /usr/include/dev/mii/tlphy.h
+/usr/include/dev/pci/if_fxpreg.h
+/usr/include/dev/pci/if_fxpvar.h
 /usr/include/dev/pci/ncr_reg.h
 /usr/include/dev/ramdisk.h
 /usr/include/dev/rcons/rcons_subr.h
@@ -274,6 +279,7 @@
 /usr/include/nfs/nfsv2.h
 /usr/include/null.h
 /usr/include/objc/list.h
+/usr/include/sys/dmap.h
 /usr/include/sys/vcmd.h
 /usr/include/sys/vlimit.h
 /usr/include/ufs/mfs/mfsiom.h
