@@ -1,11 +1,13 @@
+#	$NetBSD: builtin.3max,v 1.3.8.1 1998/01/29 10:58:36 mellon Exp $
+
 ########################################################################
 # Configuration for 3MAX (5000/200) which has turbochannel but no ASIC.#
 # 3MAX (5000/200) baseboard devices and on-baseboard "options"         #
 ########################################################################
-clock0	at mainbus0  			# RTC
 # DZ device configures on IOASIC for now
 #dc0	at mainbus0
 le0	at tc? #slot ?  offset ?	# TC ether "option" on baseboard
 asc0	at tc?				# TC scsi  "option" on baseboard
 # For now, pretend this machine has an IOASIC.
+clock0	at ioasic?	offset ?	# RTC
 dc0	at ioasic?	offset ?	# dc7083 four-port DZ device
