@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.6 1994/06/13 22:29:16 mycroft Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.7 1994/06/13 22:34:29 mycroft Exp $";
 #endif not lint
 
 /*
@@ -326,7 +326,7 @@ usage:
 		dp->d_flags |= D_BADSECT;
 		if (ioctl(f, DIOCWDINFO, dp) < 0) {
 			perror("label");
-			fprintf(stderr, "Can't write disklabel to enable bad secctor handling by the drive\n");
+			fprintf(stderr, "Can't write label to enable bad sector handling\n");
 			exit(1);
 		}
 	}
