@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.42 1998/08/15 05:10:26 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.43 1998/12/01 04:31:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,16 +92,16 @@
 #ifdef ICU_HARDWARE_MASK
 
 #define	MASK(irq_num, icu) \
-	movb	_imen + IRQ_BYTE(irq_num),%al				;\
+	movb	_C_LABEL(imen) + IRQ_BYTE(irq_num),%al			;\
 	orb	$IRQ_BIT(irq_num),%al					;\
-	movb	%al,_imen + IRQ_BYTE(irq_num)				;\
+	movb	%al,_C_LABEL(imen) + IRQ_BYTE(irq_num)			;\
 	FASTER_NOP							;\
 	outb	%al,$(icu+1)
 #define	UNMASK(irq_num, icu) \
 	cli								;\
-	movb	_imen + IRQ_BYTE(irq_num),%al				;\
+	movb	_C_LABEL(imen) + IRQ_BYTE(irq_num),%al			;\
 	andb	$~IRQ_BIT(irq_num),%al					;\
-	movb	%al,_imen + IRQ_BYTE(irq_num)				;\
+	movb	%al,_C_LABEL(imen) + IRQ_BYTE(irq_num)			;\
 	FASTER_NOP							;\
 	outb	%al,$(icu+1)						;\
 	sti
@@ -137,7 +137,7 @@
  * scattered cld's?
  */
 
-	.globl	_isa_strayintr
+	.globl	_C_LABEL(isa_strayintr)
 
 /*
  * Normal vectors.
@@ -157,10 +157,22 @@
  */
 
 #if defined(UVM)
-#define MY_COUNT _uvmexp
+#define MY_COUNT _C_LABEL(uvmexp)
 #else
-#define MY_COUNT _cnt
+#define MY_COUNT _C_LABEL(cnt)
 #endif
+
+/* XXX See comment in locore.s */
+#ifdef __ELF__
+#define	XINTR(irq_num)		Xintr/**/irq_num
+#define	XHOLD(irq_num)		Xhold/**/irq_num
+#define	XSTRAY(irq_num)		Xstray/**/irq_num
+#else
+#define	XINTR(irq_num)		_Xintr/**/irq_num
+#define	XHOLD(irq_num)		_Xhold/**/irq_num
+#define	XSTRAY(irq_num)		_Xstray/**/irq_num
+#endif
+
 #define	INTR(irq_num, icu, ack) \
 IDTVEC(resume/**/irq_num)						;\
 	cli								;\
@@ -170,7 +182,7 @@ IDTVEC(recurse/**/irq_num)						;\
 	pushl	%cs							;\
 	pushl	%esi							;\
 	cli								;\
-_Xintr/**/irq_num/**/:							;\
+XINTR(irq_num):								;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -178,18 +190,18 @@ _Xintr/**/irq_num/**/:							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
-	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
-1:	movl	_cpl,%eax		/* cpl to restore on exit */	;\
+	testb	$IRQ_BIT(irq_num),_C_LABEL(cpl) + IRQ_BYTE(irq_num)	;\
+	jnz	XHOLD(irq_num)		/* currently masked; hold it */	;\
+1:	movl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
 	pushl	%eax							;\
-	orl	_intrmask + (irq_num) * 4,%eax				;\
-	movl	%eax,_cpl		/* add in this intr's mask */	;\
+	orl	_C_LABEL(intrmask) + (irq_num) * 4,%eax			;\
+	movl	%eax,_C_LABEL(cpl)	/* add in this intr's mask */	;\
 	sti				/* safe to take intrs now */	;\
-	movl	_intrhand + (irq_num) * 4,%ebx	/* head of chain */	;\
+	movl	_C_LABEL(intrhand) + (irq_num) * 4,%ebx	/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
-	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
+	jz	XSTRAY(irq_num)		/* no handlears; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
-	incl	_intrcnt + (4*(irq_num))	/* XXX */		;\
+	incl	_C_LABEL(intrcnt) + (4*(irq_num))	/* XXX */	;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -204,15 +216,15 @@ _Xintr/**/irq_num/**/:							;\
 	jnz	7b							;\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
-	jmp	_Xdoreti		/* lower spl and do ASTs */	;\
+	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
-	call	_isa_strayintr						;\
+	call	_C_LABEL(isa_strayintr)					;\
 	addl	$4,%esp							;\
-	incl	_strayintrcnt + (4*(irq_num))				;\
+	incl	_C_LABEL(strayintrcnt) + (4*(irq_num))			;\
 	jmp	5b							;\
 IDTVEC(hold/**/irq_num)							;\
-	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
+	orb	$IRQ_BIT(irq_num),_C_LABEL(ipending) + IRQ_BYTE(irq_num) ;\
 	INTRFASTEXIT
 
 #if defined(DEBUG) && defined(notdef)
@@ -222,7 +234,7 @@ IDTVEC(hold/**/irq_num)							;\
 	orl	%eax,%esi
 #define	STRAY_TEST \
 	testl	%esi,%esi						;\
-	jz	_Xstray/**/irq_num
+	jz	XSTRAY(irq_num)
 #else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
@@ -258,58 +270,72 @@ INTR(15, IO_ICU2, ACK2)
  */
 /* interrupt service routine entry points */
 IDTVEC(intr)
-	.long   _Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
-	.long   _Xintr7, _Xintr8, _Xintr9, _Xintr10, _Xintr11, _Xintr12
-	.long   _Xintr13, _Xintr14, _Xintr15
+	.long	_C_LABEL(Xintr0), _C_LABEL(Xintr1)
+	.long	_C_LABEL(Xintr2), _C_LABEL(Xintr3)
+	.long	_C_LABEL(Xintr4), _C_LABEL(Xintr5)
+	.long	_C_LABEL(Xintr6), _C_LABEL(Xintr7)
+	.long	_C_LABEL(Xintr8), _C_LABEL(Xintr9)
+	.long	_C_LABEL(Xintr10), _C_LABEL(Xintr11)
+	.long	_C_LABEL(Xintr12), _C_LABEL(Xintr13)
+	.long	_C_LABEL(Xintr14), _C_LABEL(Xintr15)
 
 /*
  * These tables are used by Xdoreti() and Xspllower().
  */
 /* resume points for suspended interrupts */
 IDTVEC(resume)
-	.long   _Xresume0, _Xresume1, _Xresume2, _Xresume3, _Xresume4
-	.long   _Xresume5, _Xresume6, _Xresume7, _Xresume8, _Xresume9
-	.long   _Xresume10, _Xresume11, _Xresume12, _Xresume13, _Xresume14
-	.long   _Xresume15
+	.long	_C_LABEL(Xresume0), _C_LABEL(Xresume1)
+	.long	_C_LABEL(Xresume2), _C_LABEL(Xresume3)
+	.long	_C_LABEL(Xresume4), _C_LABEL(Xresume5)
+	.long	_C_LABEL(Xresume6), _C_LABEL(Xresume7)
+	.long	_C_LABEL(Xresume8), _C_LABEL(Xresume9)
+	.long	_C_LABEL(Xresume10), _C_LABEL(Xresume11)
+	.long	_C_LABEL(Xresume12), _C_LABEL(Xresume13)
+	.long	_C_LABEL(Xresume14), _C_LABEL(Xresume15)
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_Xsoftserial, _Xsoftnet, _Xsoftclock
+	.long	_C_LABEL(Xsoftserial), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
 /* fake interrupts to resume from splx() */
 IDTVEC(recurse)
-	.long   _Xrecurse0, _Xrecurse1, _Xrecurse2, _Xrecurse3, _Xrecurse4
-	.long   _Xrecurse5, _Xrecurse6, _Xrecurse7, _Xrecurse8, _Xrecurse9
-	.long   _Xrecurse10, _Xrecurse11, _Xrecurse12, _Xrecurse13, _Xrecurse14
-	.long   _Xrecurse15
+	.long	_C_LABEL(Xrecurse0), _C_LABEL(Xrecurse1)
+	.long	_C_LABEL(Xrecurse2), _C_LABEL(Xrecurse3)
+	.long	_C_LABEL(Xrecurse4), _C_LABEL(Xrecurse5)
+	.long	_C_LABEL(Xrecurse6), _C_LABEL(Xrecurse7)
+	.long	_C_LABEL(Xrecurse8), _C_LABEL(Xrecurse9)
+	.long	_C_LABEL(Xrecurse10), _C_LABEL(Xrecurse11)
+	.long	_C_LABEL(Xrecurse12), _C_LABEL(Xrecurse13)
+	.long	_C_LABEL(Xrecurse14), _C_LABEL(Xrecurse15)
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_Xsoftserial, _Xsoftnet, _Xsoftclock
+	.long	_C_LABEL(Xsoftserial), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
 
 
 /* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
-	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
+	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
 
 	/* Names */
-_intrnames:
+_C_LABEL(intrnames):
 	.asciz	"irq0", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"
 	.asciz	"irq8", "irq9", "irq10", "irq11"
 	.asciz	"irq12", "irq13", "irq14", "irq15"
-_strayintrnames:
+_C_LABEL(strayintrnames):
 	.asciz	"stray0", "stray1", "stray2", "stray3"
 	.asciz	"stray4", "stray5", "stray6", "stray7"
 	.asciz	"stray8", "stray9", "stray10", "stray11"
 	.asciz	"stray12", "stray13", "stray14", "stray15"
-_eintrnames:
+_C_LABEL(eintrnames):
 
 	/* And counters */
 	.data
 	.align 4
-_intrcnt:
+_C_LABEL(intrcnt):
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
-_strayintrcnt:
+_C_LABEL(strayintrcnt):
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
 	.text
