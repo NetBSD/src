@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.16 1997/10/10 09:32:03 mycroft Exp $	*/
+/*	$NetBSD: gram.y,v 1.17 1997/10/10 10:27:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,8 @@ static	void	check_maxpart __P((void));
 }
 
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DUMPS
-%token	ENDFILE XFILE FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
+%token	ENDFILE XFILE XOBJECT XLIBRARY FILE_SYSTEM FLAGS INCLUDE XMACHINE
+%token	MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
@@ -111,7 +112,7 @@ static	void	check_maxpart __P((void));
 
 %type	<list>	fopts fexpr fatom
 %type	<str>	fs_spec
-%type	<val>	fflgs fflag
+%type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
 %type	<attr>	attr
 %type	<devb>	devbase
@@ -173,6 +174,10 @@ dev_eof:
 file:
 	XFILE PATHNAME fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
+object:
+	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); } |
+	XLIBRARY PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
+
 /* order of options is important, must use right recursion */
 fopts:
 	fexpr				{ $$ = $1; } |
@@ -196,6 +201,13 @@ fflag:
 	NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; } |
 	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; };
 
+oflgs:
+	oflgs oflag			{ $$ = $1 | $2; } |
+	/* empty */			{ $$ = 0; };
+
+oflag:
+	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; };
+
 rule:
 	COMPILE_WITH WORD		{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
@@ -218,6 +230,7 @@ dev_def:
 
 one_def:
 	file |
+	object |
 	include |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
 	DEFOPT WORD			{ defoption($2); } |
@@ -311,6 +324,7 @@ spec:
 
 config_spec:
 	file |
+	object |
 	include |
 	FILE_SYSTEM fs_list |
 	OPTIONS opt_list |

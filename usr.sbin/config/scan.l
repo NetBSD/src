@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.15 1997/10/10 09:32:05 mycroft Exp $	*/
+/*	$NetBSD: scan.l,v 1.16 1997/10/10 10:27:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,6 +96,7 @@ file		return XFILE;
 file-system	return FILE_SYSTEM;
 flags		return FLAGS;
 include		return INCLUDE;
+library		return XLIBRARY;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
@@ -104,6 +105,7 @@ maxusers	return MAXUSERS;
 minor		return MINOR;
 needs-count	return NEEDS_COUNT;
 needs-flag	return NEEDS_FLAG;
+object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
 pseudo-device	return PSEUDO_DEVICE;
