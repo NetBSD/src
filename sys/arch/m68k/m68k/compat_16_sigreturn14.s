@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.10 2003/09/22 14:18:44 cl Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.1 2003/09/22 14:18:41 cl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -76,147 +76,43 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-#include "opt_compat_sunos.h"
-
 /*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/trap_subr.s>
+ * NOTICE: This file is included by <m68k/m68k/sigreturn.s>.
  */
 
 /*
- * Common fault handling code.  Called by exception vector handlers.
- * Registers have been saved, and type for trap() placed in d0.
+ * The compat_16_sigreturn14() syscall comes here.  It requires special
+ * handling because we must open a hole in the stack to fill in the
+ * (possibly much larger) original stack frame.
  */
-ASENTRY_NOPROFILE(fault)
-	movl	%usp,%a0		| get and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	clrl	%sp@-			| no VA arg
-	clrl	%sp@-			| or code arg
-	movl	%d0,%sp@-		| push trap type
-	jbsr	_C_LABEL(trap)		| handle trap
-	lea	%sp@(12),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore
+ENTRY_NOPROFILE(m68k_compat_16_sigreturn14_stub)
+	lea	%sp@(-84),%sp		| leave enough space for largest frame
+	movl	%sp@(84),%sp@		| move up current 8 byte frame
+	movl	%sp@(88),%sp@(4)
+	movl	#84,%sp@-		| default: adjust by 84 bytes
+	moveml	#0xFFFF,%sp@-		| save user registers
+	movl	%usp,%a0		| save the user SP
+	movl	%a0,%sp@(FR_SP)		|   in the savearea
+	movl	#SYS_compat_16___sigreturn14,%sp@- | push syscall number
+	jbsr	_C_LABEL(syscall)	| handle it
+	addql	#4,%sp			| pop syscall#
+	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most user regs
-	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Similar to above, but will tidy up the stack, if necessary.
- */
-ASENTRY(faultstkadj)
-	jbsr	_C_LABEL(trap)		| handle the error
-/* for 68060 Branch Prediction Error handler */
-_ASM_LABEL(faultstkadjnotrap):
-	lea	%sp@(12),%sp		| pop value args
-/* for new 68060 Branch Prediction Error handler */
-_ASM_LABEL(faultstkadjnotrap2):
-	movl	%sp@(FR_SP),%a0		| restore user SP
-	movl	%a0,%usp		|   from save area 
-	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	1f			| yes, go to it 
-	moveml	%sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss SSP and stkadj 
-	jra	_ASM_LABEL(rei)		| all done
-1:
 	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	addql	#8,%a1			| source pointer
-	movl	%a1,%a0			| source
-	addw	%d0,%a0			|  + hole size = dest pointer
-	movl	%a1@-,%a0@-		| copy
-	movl	%a1@-,%a0@-		|  8 bytes
-	movl	%a0,%sp@(FR_SP)		| new SSP
+	movw	%sp@(FR_ADJ),%d0	| do we need to adjust the stack?
+	jeq	Lsigr1			| no, just continue
+	moveq	#92,%d1			| total size
+	subw	%d0,%d1			|  - hole size = frame size
+	lea	%a1@(92),%a0		| destination
+	addw	%d1,%a1			| source
+	lsrw	#1,%d1			| convert to word count
+	subqw	#1,%d1			| minus 1 for dbf
+Lsigrlp:
+	movw	%a1@-,%a0@-		| copy a word
+	dbf	%d1,Lsigrlp		| continue
+	movl	%a0,%a1			| new HW frame base
+Lsigr1:
+	movl	%a1,%sp@(FR_SP)		| new SP value
 	moveml	%sp@+,#0x7FFF		| restore user registers
 	movl	%sp@,%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done
-
-#if defined(COMPAT_13) || defined(COMPAT_SUNOS)
-/*
- * Trap 1 - compat_13_sigreturn13
- */
-ENTRY_NOPROFILE(trap1)
-	jra	_C_LABEL(m68k_compat_13_sigreturn13_stub)
-#endif
-
-/*
- * Trap 2 - trace trap
- *
- * XXX SunOS uses this for a cache flush!  What do we do here?
- * XXX
- * XXX	movl	#IC_CLEAR,%d0
- * XXX	movc	%d0,%cacr
- * XXX	rte
- */
-ENTRY_NOPROFILE(trap2)
-	jra	_C_LABEL(trace)
-
-#if defined(COMPAT_16)
-/*
- * Trap 3 - sigreturn system call
- */
-ENTRY_NOPROFILE(trap3)
-	jra	_C_LABEL(m68k_compat_16_sigreturn14_stub)
-#endif
-
-/*
- * The following exceptions only cause four and six word stack frames
- * and require no post-trap stack adjustment.
- */
-ENTRY_NOPROFILE(illinst)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_ILLINST,%d0
-	jra	_ASM_LABEL(fault)
-
-ENTRY_NOPROFILE(zerodiv)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_ZERODIV,%d0
-	jra	_ASM_LABEL(fault)
-
-ENTRY_NOPROFILE(chkinst)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_CHKINST,%d0
-	jra	_ASM_LABEL(fault)
-
-ENTRY_NOPROFILE(trapvinst)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRAPVINST,%d0
-	jra	_ASM_LABEL(fault)
-
-ENTRY_NOPROFILE(privinst)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_PRIVINST,%d0
-	jra	_ASM_LABEL(fault)
-
-/*
- * Coprocessor and format errors can generate mid-instruction stack
- * frames and cause signal delivery, hence we need to check for potential
- * stack adjustment.
- */
-ENTRY_NOPROFILE(coperr)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	movl	%usp,%a0		| get and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	clrl	%sp@-			| no VA arg
-	clrl	%sp@-			| or code arg
-	movl	#T_COPERR,%sp@-		| push trap type
-	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
-					|   adjustments
-
-ENTRY_NOPROFILE(fmterr)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	movl	%usp,%a0		| get and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	clrl	%sp@-			| no VA arg
-	clrl	%sp@-			| or code arg
-	movl	#T_FMTERR,%sp@-		| push trap type
-	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
-					|   adjustments

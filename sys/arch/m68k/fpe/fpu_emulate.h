@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.9 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.10 2003/09/22 14:18:35 cl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -35,6 +35,9 @@
 #define _FPU_EMULATE_H_
 
 #include <sys/types.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
+#include <sys/siginfo.h>
 
 /*
  * Floating point emulator (tailored for SPARC/modified for m68k, but
@@ -289,7 +292,7 @@ int fpu_emul_fscale __P((struct fpemu *fe, struct instruction *insn));
  */
 #include "fpu_arith_proto.h"
 
-int fpu_emulate __P((struct frame *frame, struct fpframe *fpf));
+int fpu_emulate __P((struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi));
 
 /*
  * "helper" functions

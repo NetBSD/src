@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.11 2003/08/07 16:28:17 agc Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.12 2003/09/22 14:18:42 cl Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.11 2003/08/07 16:28:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.12 2003/09/22 14:18:42 cl Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -246,6 +246,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		 */
 		code = fuword(params);
 		params += sizeof(int);
+#if defined(COMPAT_13) || defined(COMPAT_16)
 		/*
 		 * XXX sigreturn requires special stack manipulation
 		 * that is only done if entered via the sigreturn
@@ -255,10 +256,13 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 #ifdef COMPAT_13
 		case SYS_compat_13_sigreturn13:
 #endif
-		case SYS___sigreturn14:
+#ifdef COMPAT_16
+		case SYS_compat_16___sigreturn14:
+#endif
 			code = nsys;
 			break;
 		}
+#endif
 		break;
 	case SYS___syscall:
 		/*
@@ -367,6 +371,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		 */
 		code = fuword(params);
 		params += sizeof(int);
+#if defined(COMPAT_13) || defined(COMPAT_16)
 		/*
 		 * XXX sigreturn requires special stack manipulation
 		 * that is only done if entered via the sigreturn
@@ -376,10 +381,13 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 #ifdef COMPAT_13
 		case SYS_compat_13_sigreturn13:
 #endif
-		case SYS___sigreturn14:
+#ifdef COMPAT_16
+		case SYS_compat_16___sigreturn14:
+#endif
 			code = nsys;
 			break;
 		}
+#endif
 		break;
 	case SYS___syscall:
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.24 2003/07/15 02:43:09 lukem Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.24 2003/07/15 02:43:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -49,6 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.24 2003/07/15 02:43:09 lukem Exp $
 #endif
 
 #include "fpu_emulate.h"
+
+#define	fpe_abort(tfp, ksi, signo, code) 		\
+    do {						\
+	    (ksi)->ksi_signo = (signo);			\
+	    (ksi)->ksi_code = (code);			\
+	    (ksi)->ksi_addr = (void *)(frame)->f_pc;	\
+	    return -1;					\
+    } while (/*CONSTCOND*/0)
 
 static int fpu_emul_fmovmcr __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_fmovm __P((struct fpemu *fe, struct instruction *insn));
@@ -73,9 +81,10 @@ static struct fpn *fpu_cmp __P((struct fpemu *fe));
  * (Typically: zero, SIGFPE, SIGILL, SIGSEGV)
  */
 int
-fpu_emulate(frame, fpf)
+fpu_emulate(frame, fpf, ksi)
      struct frame *frame;
      struct fpframe *fpf;
+     ksiginfo_t *ksi;
 {
     static struct instruction insn;
     static struct fpemu fe;
@@ -121,21 +130,21 @@ fpu_emulate(frame, fpf)
 #ifdef DEBUG
 	printf("fpu_emulate: fault reading opcode\n");
 #endif
-	return SIGSEGV;
+	fpe_abort(frame, ksi, SIGSEGV, SEGV_ACCERR);
     }
 
     if ((word & 0xf000) != 0xf000) {
 #ifdef DEBUG
 	printf("fpu_emulate: not coproc. insn.: opcode=0x%x\n", word);
 #endif
-	return SIGILL;
+	fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
     }
 
     if ((word & 0x0E00) != 0x0200) {
 #ifdef DEBUG
 	printf("fpu_emulate: bad coproc. id: opcode=0x%x\n", word);
 #endif
-	return SIGILL;
+	fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
     }
 
     insn.is_opcode = word;
@@ -146,7 +155,7 @@ fpu_emulate(frame, fpf)
 #ifdef DEBUG
 	printf("fpu_emulate: fault reading word1\n");
 #endif
-	return SIGSEGV;
+	fpe_abort(frame, ksi, SIGSEGV, SEGV_ACCERR);
     }
     insn.is_word1 = word;
     /* all FPU instructions are at least 4-byte long */
@@ -255,6 +264,8 @@ fpu_emulate(frame, fpf)
 	   fe.fe_fpsr, fe.fe_fpcr);
 #endif
 
+    if (sig)
+	fpe_abort(frame, ksi, sig, 0);
     return (sig);
 }
 
