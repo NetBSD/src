@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.2 2001/03/21 16:08:34 toshii Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.3 2001/05/22 17:54:50 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,8 @@
  */
 
 struct sacc_intrhand {
-	int (*ih_fun)(void *);
-	void *ih_arg;
+	void *ih_soft;
 	int ih_irq;
-#ifdef notyet
-	int ih_level;
-#endif
-	int ih_type;
 	struct sacc_intrhand *ih_next;
 };
 
@@ -61,8 +56,9 @@ struct sacc_softc {
 
 	u_int32_t sc_gpiomask;	/* SA1110 GPIO mask */
 
-	struct sacc_intrvec sc_imask[NIPL];
+	struct sacc_intrvec sc_imask;
 	struct sacc_intrhand *sc_intrhand[SACCIC_LEN];
+	int sc_intrtype[SACCIC_LEN];
 };
 
 typedef void *sacc_chipset_tag_t;
