@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.5 1997/07/29 17:39:52 veego Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.6 1997/07/29 23:41:12 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.5 1997/07/29 17:39:52 veego Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.6 1997/07/29 23:41:12 veego Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -271,7 +271,6 @@ main(ac, av)
 				    "definition file.\n");
 				return (1);
 			}
-				
 
 			/* Check for old interlace or doublescan modes */
 			uplim = gv->disp_height + (gv->disp_height / 4);
@@ -282,6 +281,8 @@ main(ac, av)
 				gv->vsync_start *= 2;
 				gv->vsync_stop *= 2;
 				gv->vtotal *= 2;
+				gv->disp_flags &= ~GRF_FLAGS_DBLSCAN;
+				gv->disp_flags |= GRF_FLAGS_LACE;
 				printf("grfconfig: Old and no longer "
 				    "supported vertical values for "
 				    "interlace modes.\n Wrong mode "
@@ -293,13 +294,14 @@ main(ac, av)
 				    "more information about the new mode "
 				    "definition file.\n");
 				return (1);
-			}
-			if (((gv->vtotal / 2) > lowlim) &&
+			} else if (((gv->vtotal / 2) > lowlim) &&
 			    ((gv->vtotal / 2) < uplim)) {
 				gv->vblank_start /= 2;
 				gv->vsync_start /= 2;
 				gv->vsync_stop /= 2;
 				gv->vtotal /= 2;
+				gv->disp_flags &= ~GRF_FLAGS_LACE;
+				gv->disp_flags |= GRF_FLAGS_DBLSCAN;
 				printf("grfconfig: Old and no longer "
 				    "supported vertical values for "
 				    "doublescan modes.\n Wrong mode "
