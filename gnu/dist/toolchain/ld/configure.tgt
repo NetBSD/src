@@ -55,7 +55,7 @@ sparc*-*-linux-gnu*)	targ_emul=elf32_sparc
 			tdir_sun4=sparc-sun-sunos4
 			;;
 sparc*-*-lynxos*)	targ_emul=sparclynx ;;
-sparc64-*-netbsd*)	targ_emul=elf64_sparc ;;
+sparc64-*-netbsd*)	targ_emul=elf64_sparc targ_extra_emuls=elf32_sparc ;;
 sparc*-*-netbsdelf*)	targ_emul=elf32_sparc ;;
 sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
 sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
@@ -229,8 +229,8 @@ mips*-sgi-irix*)	targ_emul=mipsbig ;;
 mips*el-*-ecoff*)	targ_emul=mipsidtl ;;
 mips*-*-ecoff*)		targ_emul=mipsidt ;;
 mips*-dec-bsd*)		targ_emul=mipsbsd ;;
-mips*el*-*-netbsd*)	targ_emul=elf32lmip ;;
-mips*eb*-*-netbsd*)	targ_emul=elf32bmip ;;
+mips*el*-*-netbsd*)	targ_emul=elf32lmip; targ_extra_emuls=elf32bmip ;;
+mips*eb*-*-netbsd*)	targ_emul=elf32bmip; targ_extra_emuls=elf32lmip ;;
 mips*-*-bsd*)		targ_emul=mipsbig ;;
 mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
 mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
