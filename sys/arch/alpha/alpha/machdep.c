@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.124 1998/06/06 20:39:04 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.125 1998/06/09 09:31:58 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 1998/06/06 20:39:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 1998/06/09 09:31:58 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1725,7 +1725,11 @@ sendsig(catcher, sig, mask, code)
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
+#if !defined(UVM)	/* this construct will balance braces for ctags(1) */
 	}
+#else
+	}
+#endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
