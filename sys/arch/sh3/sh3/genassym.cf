@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2002/03/28 15:34:20 uch Exp $
+#	$NetBSD: genassym.cf,v 1.5 2002/05/09 12:29:16 uch Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,10 +40,10 @@ include <sys/mbuf.h>
 include <uvm/uvm_extern.h>
 include <sh3/pcb.h>
 include <sh3/locore.h>
-include <machine/proc.h>
+include <sh3/proc.h>
 
 define	TF_SIZE			sizeof(struct trapframe)
-define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
+define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
 define	TF_UBC			offsetof(struct trapframe, tf_ubc)
 define	TF_SPC			offsetof(struct trapframe, tf_spc)
 define	TF_SSR			offsetof(struct trapframe, tf_ssr)
@@ -75,6 +75,7 @@ define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_MD			offsetof(struct proc, p_md)
 
 define	MD_UPTE			offsetof(struct mdproc, md_upte)
+define	MD_PCB			offsetof(struct mdproc,	md_pcb)
 
 define	SF_SIZE			sizeof(struct switchframe)
 define	SF_SR			offsetof(struct switchframe, sf_sr)
@@ -86,10 +87,8 @@ define	SF_R10			offsetof(struct switchframe, sf_r10)
 define	SF_R9			offsetof(struct switchframe, sf_r9)
 define	SF_R8			offsetof(struct switchframe, sf_r8)
 define	SF_PR			offsetof(struct switchframe, sf_pr)
-
-define	PCB_PAGEDIRREG		offsetof(struct pcb, pageDirReg)
-define	PCB_SP			offsetof(struct pcb, pcb_sp)
-define	PCB_FP			offsetof(struct pcb, pcb_fp)
+define	SF_R6_BANK		offsetof(struct switchframe, sf_r6_bank)
+define	SF_R7_BANK		offsetof(struct switchframe, sf_r7_bank)
 
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)
