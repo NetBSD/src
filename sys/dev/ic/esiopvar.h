@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.4 2002/04/24 09:43:14 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.5 2002/04/25 19:34:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -105,7 +105,6 @@ struct esiop_lun {
 	struct esiop_cmd *active; /* active non-tagged command */
 	struct esiop_cmd *tactive[ESIOP_NTAG]; /* active tagged commands */
 	int lun_flags; /* per-lun flags */
-#define LUNF_TAGTABLE 0x01 /* the LUN DSA points to the tag table */
 	struct esiop_dsatbl *lun_tagtbl; /* the tag DSA table */
 };
 
