@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1999/06/20 00:51:30 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.12 1999/08/10 21:08:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
+#define	cpu_number()	0
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
