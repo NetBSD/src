@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.17 2003/10/17 18:49:11 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.18 2003/10/18 23:27:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.17 2003/10/17 18:49:11 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.18 2003/10/18 23:27:36 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -374,9 +374,8 @@ ce_inc_search(EditLine *el, int dir)
 				    '\0';
 				if (el->el_line.cursor < el->el_line.buffer ||
 				    el->el_line.cursor > el->el_line.lastchar ||
-				    (ret = ce_search_line(el,
-				    &el->el_search.patbuf[LEN],
-				    newdir)) == CC_ERROR) {
+				    (ret = ce_search_line(el, newdir))
+				    == CC_ERROR) {
 					/* avoid c_setpat */
 					el->el_state.lastcmd =
 					    (el_action_t) newdir;
@@ -389,7 +388,6 @@ ce_inc_search(EditLine *el, int dir)
 						    el->el_line.lastchar :
 						    el->el_line.buffer;
 						(void) ce_search_line(el,
-						    &el->el_search.patbuf[LEN],
 						    newdir);
 					}
 				}
@@ -518,28 +516,47 @@ cv_search(EditLine *el, int dir)
  *	Look for a pattern inside a line
  */
 protected el_action_t
-ce_search_line(EditLine *el, char *pattern, int dir)
+ce_search_line(EditLine *el, int dir)
 {
-	char *cp;
+	char *cp = el->el_line.cursor;
+	char oc, *ocp = NULL;
+	char *pattern = el->el_search.patbuf;
 
 	if (dir == ED_SEARCH_PREV_HISTORY) {
-		char oc = el->el_line.cursor[1];
-		el->el_line.cursor[1] = '\0';
-		for (cp = el->el_line.cursor; cp >= el->el_line.buffer; cp--)
+		pattern += LEN;
+		if (cp + 1 < el->el_line.limit) {
+			ocp = cp + 1;
+			oc = *ocp;
+			*ocp = '\0';
+		}
+		for (; cp >= el->el_line.buffer; cp--) {
 			if (el_match(cp, pattern)) {
-				el->el_line.cursor[1] = oc;
+				if (ocp)
+					*ocp = oc;
 				el->el_line.cursor = cp;
 				return (CC_NORM);
 			}
-		el->el_line.cursor[1] = oc;
+		}
+		if (ocp)
+			*ocp = oc;
 		return (CC_ERROR);
 	} else {
-		for (cp = el->el_line.cursor; *cp != '\0' &&
-		    cp < el->el_line.limit; cp++)
-			if (el_match(cp, pattern)) {
+#ifdef ANCHOR
+		ocp = &pattern[1];
+		oc = *ocp;
+		*ocp = '^';
+#else
+		ocp = pattern;
+		oc = *ocp;
+#endif
+		for (; *cp != '\0' && cp < el->el_line.limit; cp++) {
+			if (el_match(cp, ocp)) {
+				*ocp = oc;
 				el->el_line.cursor = cp;
 				return (CC_NORM);
 			}
+		}
+		*ocp = oc;
 		return (CC_ERROR);
 	}
 }
