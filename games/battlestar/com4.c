@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.17 2000/09/24 09:46:57 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.18 2000/09/25 14:08:08 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.17 2000/09/24 09:46:57 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.18 2000/09/25 14:08:08 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,18 +75,17 @@ take(from)
 				if (value == MEDALION)
 					win--;
 			} else if (testbit(inven, value))
-				printf("You're already holding%s%s.\n",
-				    (is_plural_object(value) ? " " : " a "),
+				printf("You're already holding %s%s.\n",
+				    A_OR_AN_OR_BLANK(value),
 				    objsht[value]);
 			else if (!testbit(from, value))
 				printf("I don't see any %s around here.\n", objsht[value]);
 			else if (!heavy)
-				printf("The %s %s too heavy.\n", objsht[value],
-				    (is_plural_object(value) ? "are" : "is"));
+				printf("The %s %stoo heavy.\n", objsht[value],
+				    IS_OR_ARE(value));
 			else
-				printf("The %s %s too cumbersome to hold.\n",
-				    objsht[value],
-				    (is_plural_object(value) ? "are" : "is"));
+				printf("The %s %stoo cumbersome to hold.\n",
+				    objsht[value], IS_OR_ARE(value));
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
@@ -384,9 +383,8 @@ eat()
 			return (firstnumber);
 
 		default:
-			printf("You can't eat%s%s!\n",
-			    is_plural_object(value) ? " " : " a ",
-			    objsht[value]);
+			printf("You can't eat %s%s!\n",
+			    A_OR_AN_OR_BLANK(value), objsht[value]);
 			return (firstnumber);
 
 		case PAPAYAS:
