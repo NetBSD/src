@@ -1,8 +1,8 @@
-/*	$NetBSD: getif.c,v 1.5 2002/07/14 00:26:17 wiz Exp $	*/
+/*	$NetBSD: getif.c,v 1.6 2003/08/18 05:39:52 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getif.c,v 1.5 2002/07/14 00:26:17 wiz Exp $");
+__RCSID("$NetBSD: getif.c,v 1.6 2003/08/18 05:39:52 itojun Exp $");
 #endif
 
 /*
@@ -90,11 +90,13 @@ getif(int s, struct in_addr *addrp)
 	len = ifconf.ifc_len;
 	while (len > 0) {
 		ifrq = (struct ifreq *) p;
-		sip = (struct sockaddr_in *) &ifrq->ifr_addr;
-		m = nmatch((u_char *)addrp, (u_char *)&(sip->sin_addr));
-		if (m > maxmatch) {
-			maxmatch = m;
-			ifrmax = ifrq;
+		if (ifrq->ifr_addr.sa_family == AF_INET) {
+			sip = (struct sockaddr_in *) &ifrq->ifr_addr;
+			m = nmatch((u_char *)addrp, (u_char *)&(sip->sin_addr));
+			if (m > maxmatch) {
+				maxmatch = m;
+				ifrmax = ifrq;
+			}
 		}
 		/* XXX - Could this be just #ifndef IFNAMSIZ instead? -gwr */
 #if (BSD - 0) < 43
