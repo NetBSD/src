@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 1998/09/14 10:37:12 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.68 1998/09/15 13:12:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -343,6 +343,7 @@ void
 cpu_spinup(sc)
 	struct cpu_softc *sc;
 {
+#if defined(SUN4M)
 	struct cpu_info *cip = sc->sc_cpuinfo;
 	int n;
 extern void cpu_hatch __P((void));
@@ -384,6 +385,8 @@ extern void cpu_hatch __P((void));
 		}
 		delay(100);
 	}
+#endif
+	return;
 }
 
 /*
