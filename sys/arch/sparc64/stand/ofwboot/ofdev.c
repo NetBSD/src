@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4 1998/11/22 16:21:02 eeh Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5 2000/04/05 06:21:14 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -374,9 +374,7 @@ search_label(devp, off, buf, lp, off0)
 
 	bzero(buf, sizeof(buf));
 	return ("no disk label");
-	
 }
-
 
 int
 devopen(of, name, file)
