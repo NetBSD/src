@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.35 1998/09/13 02:14:02 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.36 1998/09/13 02:19:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -119,7 +119,7 @@
 #define	SIG_ERR		((void (*) __P((int))) -1)
 
 #ifndef _ANSI_SOURCE
-#if defined(__LIBC13_SOURCE__) || defined(_KERNEL)
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 typedef unsigned int sigset13_t;
 
 /*
