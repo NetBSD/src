@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.1 1996/03/02 01:16:53 cgd Exp 
+ *	NetBSD: tcdevs,v 1.2 1996/03/02 01:20:58 cgd Exp 
  */
 
 /*
@@ -36,7 +36,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	TC_PRODUCT_KTZSA_AA	"TZA FWD SCSI Adapter"
+#define	TC_PRODUCT_KZTSA_AA	"TZA FWD SCSI Adapter"
 #define	TC_PRODUCT_PMAD_AA	"LANCE Ethernet"
 #define	TC_PRODUCT_PMAGB_BA	"Smart Frame Buffer"
 #define	TC_PRODUCT_PMAG_AA	"Monochrome Frame Buffer"
