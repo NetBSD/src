@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1999/12/16 04:02:23 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1999/12/16 17:15:48 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.18 1999/12/16 04:02:23 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 1999/12/16 17:15:48 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -119,22 +119,27 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	while (argc > 0) {
+	curmode = (struct mode *)NULL;
+
+	for ( ; argc > 0; argc--, argv++) {
+		struct mode *p;
+
 		if (isdigit(argv[0][0])) {
 			naptime = atoi(argv[0]);
 			if (naptime <= 0)
 				naptime = 5;
-		} else {
-			struct mode *p;
-
-			p = lookup(&argv[0][0]);
-			if (p == (struct mode *)-1)
-				errx(1, "ambiguous request: %s", &argv[0][0]);
-			if (p == 0)
-				errx(1, "unknown request: %s", &argv[0][0]);
-			curmode = p;
+			continue;
 		}
-		argc--, argv++;
+
+		for (p = modes; p->c_name ; p++) {
+			if (strcmp(argv[0], p->c_name) == 0) {
+				curmode = p;
+				break;
+			}
+		}
+
+		if (!curmode)
+			error("%s: Unknown command.", argv[0]);
 	}
 
 	/*
