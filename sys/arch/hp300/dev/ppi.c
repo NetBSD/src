@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.9 1996/10/11 00:11:30 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.10 1996/10/13 03:14:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -111,7 +111,7 @@ ppiattach(hd)
 {
 	struct ppi_softc *sc = &ppi_softc[hd->hp_unit];
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_flags = PPIF_ALIVE;
 	sc->sc_dq.dq_softc = sc;
@@ -131,7 +131,7 @@ ppiopen(dev, flags)
 		return(ENXIO);
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppiopen(%x, %x): flags %x\n",
+		printf("ppiopen(%x, %x): flags %x\n",
 		       dev, flags, sc->sc_flags);
 #endif
 	if (sc->sc_flags & PPIF_OPEN)
@@ -152,7 +152,7 @@ ppiclose(dev, flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppiclose(%x, %x): flags %x\n",
+		printf("ppiclose(%x, %x): flags %x\n",
 		       dev, flags, sc->sc_flags);
 #endif
 	sc->sc_flags &= ~PPIF_OPEN;
@@ -164,7 +164,7 @@ ppistart(unit)
 {
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppistart(%x)\n", unit);
+		printf("ppistart(%x)\n", unit);
 #endif
 	ppi_softc[unit].sc_flags &= ~PPIF_DELAY;
 	wakeup(&ppi_softc[unit]);
@@ -177,7 +177,7 @@ ppitimo(unit)
 {
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppitimo(%x)\n", unit);
+		printf("ppitimo(%x)\n", unit);
 #endif
 	ppi_softc[unit].sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(&ppi_softc[unit]);
@@ -190,7 +190,7 @@ ppiread(dev, uio)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppiread(%x, %x)\n", dev, uio);
+		printf("ppiread(%x, %x)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -202,7 +202,7 @@ ppiwrite(dev, uio)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		kprintf("ppiwrite(%x, %x)\n", dev, uio);
+		printf("ppiwrite(%x, %x)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -224,7 +224,7 @@ ppirw(dev, uio)
 
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
-		kprintf("ppirw(%x, %x, %c): burst %d, timo %d, resid %x\n",
+		printf("ppirw(%x, %x, %c): burst %d, timo %d, resid %x\n",
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
@@ -254,7 +254,7 @@ again:
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)
-				kprintf("ppirw: uiomove/sleep timo, flags %x\n",
+				printf("ppirw: uiomove/sleep timo, flags %x\n",
 				       sc->sc_flags);
 #endif
 			if (sc->sc_flags & PPIF_TIMO) {
@@ -278,7 +278,7 @@ again:
 		hpibfree(&sc->sc_dq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
-			kprintf("ppirw: %s(%d, %d, %x, %x, %d) -> %d\n",
+			printf("ppirw: %s(%d, %d, %x, %x, %d) -> %d\n",
 			       uio->uio_rw == UIO_READ ? "recv" : "send",
 			       sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave,
 			       sc->sc_sec, cp, len, cnt);
@@ -305,7 +305,7 @@ again:
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)
-				kprintf("ppirw: timeout/done\n");
+				printf("ppirw: timeout/done\n");
 #endif
 			splx(s);
 			break;
@@ -352,14 +352,14 @@ again:
 		uio->uio_resid += (len - cnt);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
-			kprintf("ppirw: short write, adjust by %d\n",
+			printf("ppirw: short write, adjust by %d\n",
 			       len-cnt);
 #endif
 	}
 	free(buf, M_DEVBUF);
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
-		kprintf("ppirw: return %d, resid %d\n", error, uio->uio_resid);
+		printf("ppirw: return %d, resid %d\n", error, uio->uio_resid);
 #endif
 	return (error);
 }

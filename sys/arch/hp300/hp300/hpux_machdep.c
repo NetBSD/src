@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.3 1996/10/11 00:11:44 christos Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.4 1996/10/13 03:14:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -225,7 +225,7 @@ hpux_cpu_uname(ut)
 		if (machine_table[i].machine_id == machineid)
 			break;
 
-	ksprintf(ut->machine, "9000/%s", machine_table[i].machine_str);
+	sprintf(ut->machine, "9000/%s", machine_table[i].machine_str);
 }
 
 /*
