@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.35 1999/08/09 21:06:28 aidan Exp $
+.\"	$NetBSD: make.1,v 1.36 1999/09/12 00:17:50 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -509,6 +509,8 @@ This is identical to
 .Ql Cm M ,
 but selects all words which do not match
 the rest of the modifier.
+.It Cm O
+Order every word in variable alphabetically.
 .It Cm Q
 Quotes every shell meta-character in the variable, so that it can be passed
 safely through recursive invocations of
