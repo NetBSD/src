@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.19 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.20 2003/12/29 16:57:35 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.19 2003/12/29 05:01:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.20 2003/12/29 16:57:35 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -97,7 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.19 2003/12/29 05:01:14 oster Ex
 
 #define HASH_STRIPEID(_sid_)  ( (_sid_) & (rf_lockTableSize-1) )
 
-static void AddToWaitersQueue(RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
+static void AddToWaitersQueue(RF_StripeLockDesc_t * lockDesc, 
+			      RF_LockReqDesc_t * lockReqDesc);
 static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
 static void FreeStripeLockDesc(RF_StripeLockDesc_t * p);
 static RF_LockTableEntry_t *rf_MakeLockTable(void);
@@ -105,31 +106,49 @@ static RF_LockTableEntry_t *rf_MakeLockTable(void);
 static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
 #endif
 
-/* determines if two ranges overlap.  always yields false if either start value is negative  */
-#define SINGLE_RANGE_OVERLAP(_strt1, _stop1, _strt2, _stop2)                                     \
-  ( (_strt1 >= 0) && (_strt2 >= 0) && (RF_MAX(_strt1, _strt2) <= RF_MIN(_stop1, _stop2)) )
+/* determines if two ranges overlap.  always yields false if either
+   start value is negative */
+#define SINGLE_RANGE_OVERLAP(_strt1, _stop1, _strt2, _stop2)              \
+        ( (_strt1 >= 0) && (_strt2 >= 0) &&                               \
+          (RF_MAX(_strt1, _strt2) <= RF_MIN(_stop1, _stop2)) )
 
-/* determines if any of the ranges specified in the two lock descriptors overlap each other */
-#define RANGE_OVERLAP(_cand, _pred)                                                  \
-  ( SINGLE_RANGE_OVERLAP((_cand)->start,  (_cand)->stop,  (_pred)->start,  (_pred)->stop ) ||    \
-    SINGLE_RANGE_OVERLAP((_cand)->start2, (_cand)->stop2, (_pred)->start,  (_pred)->stop ) ||    \
-    SINGLE_RANGE_OVERLAP((_cand)->start,  (_cand)->stop,  (_pred)->start2, (_pred)->stop2) ||    \
-    SINGLE_RANGE_OVERLAP((_cand)->start2, (_cand)->stop2, (_pred)->start2, (_pred)->stop2) )
+/* determines if any of the ranges specified in the two lock
+   descriptors overlap each other */
 
-/* Determines if a candidate lock request conflicts with a predecessor lock req.
- * Note that the arguments are not interchangeable.
+#define RANGE_OVERLAP(_cand, _pred)                                       \
+  ( SINGLE_RANGE_OVERLAP((_cand)->start,  (_cand)->stop,                  \
+                         (_pred)->start,  (_pred)->stop ) ||              \
+    SINGLE_RANGE_OVERLAP((_cand)->start2, (_cand)->stop2,                 \
+                         (_pred)->start,  (_pred)->stop ) ||              \
+    SINGLE_RANGE_OVERLAP((_cand)->start,  (_cand)->stop,                  \
+                         (_pred)->start2, (_pred)->stop2) ||              \
+    SINGLE_RANGE_OVERLAP((_cand)->start2, (_cand)->stop2,                 \
+                         (_pred)->start2, (_pred)->stop2) )
+
+/* Determines if a candidate lock request conflicts with a predecessor
+ * lock req.  Note that the arguments are not interchangeable.
+ *
  * The rules are:
- *      a candidate read conflicts with a predecessor write if any ranges overlap
- *      a candidate write conflicts with a predecessor read if any ranges overlap
- *      a candidate write conflicts with a predecessor write if any ranges overlap
- */
-#define STRIPELOCK_CONFLICT(_cand, _pred)                                        \
-  RANGE_OVERLAP((_cand), (_pred)) &&                                        \
-  ( ( (((_cand)->type == RF_IO_TYPE_READ) && ((_pred)->type == RF_IO_TYPE_WRITE)) ||                      \
-      (((_cand)->type == RF_IO_TYPE_WRITE) && ((_pred)->type == RF_IO_TYPE_READ)) ||                      \
-      (((_cand)->type == RF_IO_TYPE_WRITE) && ((_pred)->type == RF_IO_TYPE_WRITE))                         \
-    )                                                                            \
-  )
+ *
+ *      a candidate read conflicts with a predecessor write if any
+ *      ranges overlap
+ *
+ *      a candidate write conflicts with a predecessor read if any
+ *      ranges overlap
+ *
+ *      a candidate write conflicts with a predecessor write if any
+ *      ranges overlap */
+
+#define STRIPELOCK_CONFLICT(_cand, _pred)                                 \
+        RANGE_OVERLAP((_cand), (_pred)) &&                                \
+        ( ( (((_cand)->type == RF_IO_TYPE_READ) &&                        \
+             ((_pred)->type == RF_IO_TYPE_WRITE)) ||                      \
+            (((_cand)->type == RF_IO_TYPE_WRITE) &&                       \
+             ((_pred)->type == RF_IO_TYPE_READ)) ||                       \
+            (((_cand)->type == RF_IO_TYPE_WRITE) &&                       \
+             ((_pred)->type == RF_IO_TYPE_WRITE))                         \
+          )                                                               \
+        )
 
 static struct pool rf_stripelock_pool;
 #define RF_MAX_FREE_STRIPELOCK 128
@@ -234,9 +253,9 @@ rf_ConfigureStripeLocks(
 }
 /* returns 0 if you've got the lock, and non-zero if you have to wait.
  * if and only if you have to wait, we'll cause cbFunc to get invoked
- * with cbArg when you are granted the lock.  We store a tag in *releaseTag
- * that you need to give back to us when you release the lock.
- */
+ * with cbArg when you are granted the lock.  We store a tag in
+ * *releaseTag that you need to give back to us when you release the
+ * lock.  */
 int 
 rf_AcquireStripeLock(
     RF_LockTableEntry_t * lockTable,
@@ -271,13 +290,14 @@ rf_AcquireStripeLock(
 	lockReqDesc->next = NULL;	/* just to be sure */
 
 	RF_LOCK_MUTEX(lockTable[hashval].mutex);
-	for (lockDesc = lockTable[hashval].descList; lockDesc; lockDesc = lockDesc->next) {
+	for (lockDesc = lockTable[hashval].descList; lockDesc; 
+	     lockDesc = lockDesc->next) {
 		if (lockDesc->stripeID == stripeID)
 			break;
 	}
 
-	if (!lockDesc) {	/* no entry in table => no one reading or
-				 * writing */
+	if (!lockDesc) {	
+		/* no entry in table => no one reading or writing */
 		lockDesc = AllocStripeLockDesc(stripeID);
 		lockDesc->next = lockTable[hashval].descList;
 		lockTable[hashval].descList = lockDesc;
@@ -296,9 +316,9 @@ rf_AcquireStripeLock(
 		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
 			lockDesc->nWriters++;
 
-		if (lockDesc->nWriters == 0) {	/* no need to search any lists
-						 * if there are no writers
-						 * anywhere */
+		if (lockDesc->nWriters == 0) {	
+			/* no need to search any lists if there are no
+			 * writers anywhere */
 			lockReqDesc->next = lockDesc->granted;
 			lockDesc->granted = lockReqDesc;
 #if RF_DEBUG_STRIPELOCK
@@ -310,8 +330,9 @@ rf_AcquireStripeLock(
 #endif
 		} else {
 
-			/* search the granted & waiting lists for a conflict.
-			 * stop searching as soon as we find one */
+			/* search the granted & waiting lists for a
+			 * conflict.  stop searching as soon as we
+			 * find one */
 			retcode = 0;
 			for (p = lockDesc->granted; p; p = p->next)
 				if (STRIPELOCK_CONFLICT(lockReqDesc, p)) {
@@ -325,8 +346,8 @@ rf_AcquireStripeLock(
 						break;
 					}
 			if (!retcode) {
-				lockReqDesc->next = lockDesc->granted;	/* no conflicts found =>
-									 * grant lock */
+				/* no conflicts found => grant lock */
+				lockReqDesc->next = lockDesc->granted;	
 				lockDesc->granted = lockReqDesc;
 #if RF_DEBUG_STRIPELOCK
 				if (rf_stripeLockDebug) {
@@ -390,7 +411,8 @@ rf_ReleaseStripeLock(
 	RF_LOCK_MUTEX(lockTable[hashval].mutex);
 
 	/* find the stripe lock descriptor */
-	for (ld_t = NULL, lockDesc = lockTable[hashval].descList; lockDesc; ld_t = lockDesc, lockDesc = lockDesc->next) {
+	for (ld_t = NULL, lockDesc = lockTable[hashval].descList; 
+	     lockDesc; ld_t = lockDesc, lockDesc = lockDesc->next) {
 		if (lockDesc->stripeID == stripeID)
 			break;
 	}
@@ -416,42 +438,46 @@ rf_ReleaseStripeLock(
 	if (lockReqDesc->type == RF_IO_TYPE_WRITE)
 		lockDesc->nWriters--;
 
-	/* search through the waiters list to see if anyone needs to be woken
-	 * up. for each such descriptor in the wait list, we check it against
-	 * everything granted and against everything _in front_ of it in the
-	 * waiters queue.  If it conflicts with none of these, we release it.
+	/* search through the waiters list to see if anyone needs to
+	 * be woken up. for each such descriptor in the wait list, we
+	 * check it against everything granted and against everything
+	 * _in front_ of it in the waiters queue.  If it conflicts
+	 * with none of these, we release it.
 	 * 
-	 * DON'T TOUCH THE TEMPLINK POINTER OF ANYTHING IN THE GRANTED LIST HERE.
-	 * This will roach the case where the callback tries to acquire a new
-	 * lock in the same stripe.  There are some asserts to try and detect
-	 * this.
+	 * DON'T TOUCH THE TEMPLINK POINTER OF ANYTHING IN THE GRANTED
+	 * LIST HERE.  
+	 *
+         * This will roach the case where the callback tries to
+         * acquire a new lock in the same stripe.  There are some
+         * asserts to try and detect this.
 	 * 
-	 * We apply 2 performance optimizations: (1) if releasing this lock
-	 * results in no more writers to this stripe, we just release
-	 * everybody waiting, since we place no restrictions on the number of
-	 * concurrent reads. (2) we consider as candidates for wakeup only
-	 * those waiters that have a range overlap with either the descriptor
-	 * being woken up or with something in the callbacklist (i.e.
-	 * something we've just now woken up). This allows us to avoid the
-	 * long evaluation for some descriptors. */
+	 * We apply 2 performance optimizations: (1) if releasing this
+	 * lock results in no more writers to this stripe, we just
+	 * release everybody waiting, since we place no restrictions
+	 * on the number of concurrent reads. (2) we consider as
+	 * candidates for wakeup only those waiters that have a range
+	 * overlap with either the descriptor being woken up or with
+	 * something in the callbacklist (i.e.  something we've just
+	 * now woken up). This allows us to avoid the long evaluation
+	 * for some descriptors. */
 
 	callbacklist = NULL;
 	if (lockDesc->nWriters == 0) {	/* performance tweak (1) */
 		while (lockDesc->waitersH) {
-
-			lr = lockDesc->waitersH;	/* delete from waiters
-							 * list */
+			/* delete from waiters list */
+			lr = lockDesc->waitersH; 
 			lockDesc->waitersH = lr->next;
 
 			RF_ASSERT(lr->type == RF_IO_TYPE_READ);
 
-			lr->next = lockDesc->granted;	/* add to granted list */
+			/* add to granted list */
+			lr->next = lockDesc->granted;	
 			lockDesc->granted = lr;
 
 			RF_ASSERT(!lr->templink);
-			lr->templink = callbacklist;	/* put on callback list
-							 * so that we'll invoke
-							 * callback below */
+			/* put on callback list so that we'll invoke
+                           callback below */
+			lr->templink = callbacklist;	
 			callbacklist = lr;
 #if RF_DEBUG_STRIPELOCK
 			if (rf_stripeLockDebug) {
@@ -461,11 +487,12 @@ rf_ReleaseStripeLock(
 			}
 #endif
 		}
-		lockDesc->waitersT = NULL;	/* we've purged the whole
-						 * waiters list */
+		lockDesc->waitersT = NULL;	
+		/* we've purged the whole waiters list */
 
 	} else
-		for (candidate_t = NULL, candidate = lockDesc->waitersH; candidate;) {
+		for (candidate_t = NULL, candidate = lockDesc->waitersH; 
+		     candidate;) {
 
 			/* performance tweak (2) */
 			consider_it = 0;
@@ -490,11 +517,14 @@ rf_ReleaseStripeLock(
 				candidate = candidate->next;
 				continue;
 			}
-			/* we have a candidate for release.  check to make
-			 * sure it is not blocked by any granted locks */
+			/* we have a candidate for release.  check to
+			 * make sure it is not blocked by any granted
+			 * locks */
 			release_it = 1;
-			for (predecessor = lockDesc->granted; predecessor; predecessor = predecessor->next) {
-				if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
+			for (predecessor = lockDesc->granted; predecessor; 
+			     predecessor = predecessor->next) {
+				if (STRIPELOCK_CONFLICT(candidate, 
+							predecessor)) {
 #if RF_DEBUG_STRIPELOCK
 					if (rf_stripeLockDebug) {
 						Dprintf8("[%d] Conflicts with granted lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
@@ -508,11 +538,15 @@ rf_ReleaseStripeLock(
 				}
 			}
 
-			/* now check to see if the candidate is blocked by any
-			 * waiters that occur before it it the wait queue */
+			/* now check to see if the candidate is
+			 * blocked by any waiters that occur before it
+			 * it the wait queue */
 			if (release_it)
-				for (predecessor = lockDesc->waitersH; predecessor != candidate; predecessor = predecessor->next) {
-					if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
+				for (predecessor = lockDesc->waitersH; 
+				     predecessor != candidate; 
+				     predecessor = predecessor->next) {
+					if (STRIPELOCK_CONFLICT(candidate, 
+								predecessor)) {
 #if RF_DEBUG_STRIPELOCK
 						if (rf_stripeLockDebug) {
 							Dprintf8("[%d] Conflicts with waiting lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
@@ -546,26 +580,26 @@ rf_ReleaseStripeLock(
 					if (!lockDesc->waitersH)
 						lockDesc->waitersT = NULL;
 				}
-				candidate->next = lockDesc->granted;	/* move it to the
-									 * granted list */
+				/* move it to the granted list */	
+				candidate->next = lockDesc->granted;	
 				lockDesc->granted = candidate;
 
 				RF_ASSERT(!candidate->templink);
-				candidate->templink = callbacklist;	/* put it on the list of
-									 * things to be called
-									 * after we release the
-									 * mutex */
+				/* put it on the list of things to be
+                                   called after we release the mutex */
+				candidate->templink = callbacklist;	
+
 				callbacklist = candidate;
 
 				if (!candidate_t)
 					candidate = lockDesc->waitersH;
 				else
-					candidate = candidate_t->next;	/* continue with the
-									 * rest of the list */
+					candidate = candidate_t->next;	
+				/* continue with the rest of the list */
 			} else {
 				candidate_t = candidate;
-				candidate = candidate->next;	/* continue with the
-								 * rest of the list */
+				/* continue with the rest of the list */
+				candidate = candidate->next;	
 			}
 		}
 
@@ -589,12 +623,12 @@ rf_ReleaseStripeLock(
 	}
 	RF_UNLOCK_MUTEX(lockTable[hashval].mutex);
 
-	/* now that we've unlocked the mutex, invoke the callback on all the
-	 * descriptors in the list */
-	RF_ASSERT(!((callbacklist) && (!lockDesc)));	/* if we deleted the
-							 * descriptor, we should
-							 * have no callbacks to
-							 * do */
+	/* now that we've unlocked the mutex, invoke the callback on
+	 * all the descriptors in the list */
+
+	/* if we deleted the descriptor, we should have no callbacks
+         * to do */
+	RF_ASSERT(!((callbacklist) && (!lockDesc)));	
 	for (candidate = callbacklist; candidate;) {
 		t = candidate;
 		candidate = candidate->templink;
@@ -655,13 +689,15 @@ PrintLockedStripes(lockTable)
 			foundone = 1;
 			for (p = lockTable[i].descList; p; p = p->next) {
 				printf("Stripe ID 0x%lx (%d) nWriters %d\n",
-				    (long) p->stripeID, (int) p->stripeID, p->nWriters);
+				    (long) p->stripeID, (int) p->stripeID, 
+				       p->nWriters);
 
 				if (!(p->granted))
 					printf("Granted: (none)\n");
 				else
 					printf("Granted:\n");
-				for (did = 1, j = 0, q = p->granted; q; j++, q = q->next) {
+				for (did = 1, j = 0, q = p->granted; q; 
+				     j++, q = q->next) {
 					printf("  %c(%ld-%ld", q->type, (long) q->start, (long) q->stop);
 					if (q->start2 != -1)
 						printf(",%ld-%ld) ", (long) q->start2,
@@ -681,7 +717,8 @@ PrintLockedStripes(lockTable)
 					printf("Waiting: (none)\n");
 				else
 					printf("Waiting:\n");
-				for (did = 1, j = 0, q = p->waitersH; q; j++, q = q->next) {
+				for (did = 1, j = 0, q = p->waitersH; q; 
+				     j++, q = q->next) {
 					printf("%c(%ld-%ld", q->type, (long) q->start, (long) q->stop);
 					if (q->start2 != -1)
 						printf(",%ld-%ld) ", (long) q->start2, (long) q->stop2);
