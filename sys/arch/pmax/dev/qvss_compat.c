@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.17 1999/06/18 05:13:46 thorpej Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.18 1999/06/22 14:51:58 oster Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 #include <sys/proc.h>
 #include <sys/mman.h>
 #include <sys/vnode.h>
+#include <sys/resourcevar.h>
 
 #include <vm/vm.h>
 
