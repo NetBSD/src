@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.69 2003/08/19 14:33:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.70 2003/09/27 10:47:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,18 +136,6 @@ message ask_disk
 
 message Available_disks	/* XXX translate */
 {Available disks}
-
-message pleasemountroot
-{Le système de fichiers racine n'est pas monté. Veuillez le monter.
-
-Votre disque de destination %s contient aussi le système de fichiers racine.
-J'ai besoin de savoir si je suis exécuté hors de la racine de
-destination (%sa), ou hors d'une racine alternative (disons %sb,
-votre partition de swap).
-Je ne peux pas le savoir tant que vous ne montez pas la racine de destination.
-
-J'abandonne et retourne au menu principal pour que vous lanciez un shell.
-}
 
 message cylinders
 {cylindres}
