@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.229 2004/06/19 06:20:02 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.230 2004/07/01 10:03:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.229 2004/06/19 06:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.230 2004/07/01 10:03:29 hannken Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -383,6 +383,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
+	mp->mnt_leaf = mp;
 	vfsp->vfs_refcount++;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';

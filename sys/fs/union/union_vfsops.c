@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.22 2004/05/31 02:04:35 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.23 2004/07/01 10:03:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.22 2004/05/31 02:04:35 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.23 2004/07/01 10:03:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,6 +256,7 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
 	mp->mnt_data = um;
+	mp->mnt_leaf = um->um_uppervp->v_mount->mnt_leaf;
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
