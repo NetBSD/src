@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.5 1997/08/27 11:22:56 bouyer Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.6 1997/09/02 13:18:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.5 1997/08/27 11:22:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.6 1997/09/02 13:18:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

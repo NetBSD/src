@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.5 1997/06/08 07:02:45 thorpej Exp $ */
+/* $NetBSD: kftxx.c,v 1.6 1997/09/02 13:20:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,10 +37,9 @@
  * i.e., handler for all TLSB I/O nodes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.5 1997/06/08 07:02:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.6 1997/09/02 13:20:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

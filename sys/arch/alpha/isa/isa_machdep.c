@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.8 1997/04/07 23:40:17 cgd Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.9 1997/09/02 13:18:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,10 +31,9 @@
  * Machine-specific functions for ISA autoconfiguration.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 1997/04/07 23:40:17 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 1997/09/02 13:18:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
