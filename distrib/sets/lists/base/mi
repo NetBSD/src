@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.395 2003/04/07 15:04:53 kleink Exp $
+# $NetBSD: mi,v 1.396 2003/04/09 20:17:07 jmmv Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1506,6 +1506,8 @@
 ./usr/share/nls/C/sushi.cat		base-sushi_locale-share
 ./usr/share/nls/Pig			base-locale-Pig
 ./usr/share/nls/Pig/libc.cat		base-locale-Pig
+./usr/share/nls/ca			base-locale-ca
+./usr/share/nls/ca/libc.cat		base-locale-ca
 ./usr/share/nls/cs			base-locale-cs
 ./usr/share/nls/cs/libc.cat		base-locale-cs
 ./usr/share/nls/de			base-locale-de
