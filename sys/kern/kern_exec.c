@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.127 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.128 2000/12/01 19:41:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -82,6 +82,10 @@ const struct emul emul_netbsd = {
 #endif
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_HAS_SYS___syscall,
 };
 
 /*
