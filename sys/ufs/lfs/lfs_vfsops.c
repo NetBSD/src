@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.29 1999/04/04 09:56:44 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.30 1999/04/11 23:31:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -322,6 +322,7 @@ lfs_mountfs(devvp, mp, p)
 	dev_t dev;
 	int error, i, ronly, size;
 	struct ucred *cred;
+        SEGUSE *sup;
 
 	cred = p ? p->p_ucred : NOCRED;
 	/*
@@ -441,6 +442,14 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_ivnode = vp;
 	VREF(vp);
 	vput(vp);
+
+	/*
+	 * Mark the current segment as ACTIVE, since we're going to 
+	 * be writing to it.
+	 */
+        LFS_SEGENTRY(sup, fs, datosn(fs, fs->lfs_offset), bp); 
+        sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+        (void) VOP_BWRITE(bp); 
 
 	return (0);
 out:
