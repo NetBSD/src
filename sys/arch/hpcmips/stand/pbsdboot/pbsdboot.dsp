@@ -109,6 +109,10 @@ SOURCE=.\elf.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\hpccmap.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\layout.c
 # End Source File
 # Begin Source File
