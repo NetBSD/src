@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.9 1997/07/13 18:19:08 christos Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.10 1998/02/10 04:12:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -76,9 +76,9 @@ typedef u_int bool;
 
 
 /* Program and version symbols, magic numbers */
-#define YPPROG		((unsigned long)100004)
-#define YPVERS		((unsigned long)2)
-#define YPVERS_ORIG	((unsigned long)1)
+#define YPPROG		((u_int32_t)100004)
+#define YPVERS		((u_int32_t)2)
+#define YPVERS_ORIG	((u_int32_t)1)
 
 #define YPMAXRECORD	1024
 #define YPMAXDOMAIN	64
@@ -103,7 +103,7 @@ typedef struct {
 struct ypmap_parms {
 	const char *domain;
 	const char *map;
-	unsigned int ordernum;
+	u_int32_t ordernum;
 	char *owner;
 };
 
@@ -120,9 +120,9 @@ struct ypreq_nokey {
 
 struct ypreq_xfr {
 	struct ypmap_parms map_parms;
-	unsigned int transid;
-	unsigned int proto;
-	unsigned int port;
+	u_int32_t transid;
+	u_int32_t proto;
+	u_int32_t port;
 };
 #define ypxfr_domain	map_parms.domain
 #define ypxfr_map	map_parms.map
@@ -147,7 +147,7 @@ struct ypresp_master {
 
 struct ypresp_order {
 	int status;
-	unsigned int ordernum;
+	u_int32_t ordernum;
 };
 
 struct ypmaplist {
@@ -161,18 +161,18 @@ struct ypresp_maplist {
 };
 
 /* ypserv procedure numbers */
-#define YPPROC_NULL		((unsigned long)0)
-#define YPPROC_DOMAIN		((unsigned long)1)
-#define YPPROC_DOMAIN_NONACK	((unsigned long)2)
-#define YPPROC_MATCH		((unsigned long)3)
-#define YPPROC_FIRST		((unsigned long)4)
-#define YPPROC_NEXT		((unsigned long)5)
-#define YPPROC_XFR		((unsigned long)6)
-#define YPPROC_CLEAR		((unsigned long)7)
-#define YPPROC_ALL		((unsigned long)8)
-#define YPPROC_MASTER		((unsigned long)9)
-#define YPPROC_ORDER		((unsigned long)10)
-#define YPPROC_MAPLIST		((unsigned long)11)
+#define YPPROC_NULL		((u_int32_t)0)
+#define YPPROC_DOMAIN		((u_int32_t)1)
+#define YPPROC_DOMAIN_NONACK	((u_int32_t)2)
+#define YPPROC_MATCH		((u_int32_t)3)
+#define YPPROC_FIRST		((u_int32_t)4)
+#define YPPROC_NEXT		((u_int32_t)5)
+#define YPPROC_XFR		((u_int32_t)6)
+#define YPPROC_CLEAR		((u_int32_t)7)
+#define YPPROC_ALL		((u_int32_t)8)
+#define YPPROC_MASTER		((u_int32_t)9)
+#define YPPROC_ORDER		((u_int32_t)10)
+#define YPPROC_MAPLIST		((u_int32_t)11)
 
 /* ypserv procedure return status values */
 #define YP_TRUE	 	((int)1)	/* general purpose success code */
@@ -203,11 +203,11 @@ struct dom_binding {
 	struct dom_binding *dom_pnext;
 	char dom_domain[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
-	u_short dom_server_port;
+	in_port_t dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
-	u_short dom_local_port;
-	long dom_vers;
+	in_port_t dom_local_port;
+	u_int32_t dom_vers;
 };
 
 /*
@@ -224,14 +224,14 @@ struct dom_binding {
  *			used by ypset.
  */
  
-#define YPBINDPROG		((unsigned long)100007)
-#define YPBINDVERS		((unsigned long)2)
-#define YPBINDVERS_ORIG		((unsigned long)1)
+#define YPBINDPROG		((u_int32_t)100007)
+#define YPBINDVERS		((u_int32_t)2)
+#define YPBINDVERS_ORIG		((u_int32_t)1)
 
 /* ypbind procedure numbers */
-#define YPBINDPROC_NULL		((unsigned long)0)
-#define YPBINDPROC_DOMAIN	((unsigned long)1)
-#define YPBINDPROC_SETDOM	((unsigned long)2)
+#define YPBINDPROC_NULL		((u_int32_t)0)
+#define YPBINDPROC_DOMAIN	((u_int32_t)1)
+#define YPBINDPROC_SETDOM	((u_int32_t)2)
 
 /* error code in ypbind_resp.ypbind_status */
 enum ypbind_resptype {
@@ -248,7 +248,7 @@ struct ypbind_binding {
 struct ypbind_resp {
 	enum ypbind_resptype	ypbind_status;
 	union {
-		unsigned int		ypbind_error;
+		u_int32_t		ypbind_error;
 		struct ypbind_binding	ypbind_bindinfo;
 	} ypbind_respbody;
 };
@@ -264,7 +264,7 @@ struct ypbind_resp {
 struct ypbind_setdom {
 	char ypsetdom_domain[YPMAXDOMAIN + 1];
 	struct ypbind_binding ypsetdom_binding;
-	unsigned int ypsetdom_vers;
+	u_int32_t ypsetdom_vers;
 };
 #define ypsetdom_addr ypsetdom_binding.ypbind_binding_addr
 #define ypsetdom_port ypsetdom_binding.ypbind_binding_port
@@ -281,16 +281,16 @@ struct ypbind_setdom {
  * This protocol is not implimented, naturally, because this YP
  * implimentation only does the client side.
  */
-#define YPPUSHVERS		((unsigned long)1)
-#define YPPUSHVERS_ORIG		((unsigned long)1)
+#define YPPUSHVERS		((u_int32_t)1)
+#define YPPUSHVERS_ORIG		((u_int32_t)1)
 
 /* yppush procedure numbers */
-#define YPPUSHPROC_NULL		((unsigned long)0)
-#define YPPUSHPROC_XFRRESP	((unsigned long)1)
+#define YPPUSHPROC_NULL		((u_int32_t)0)
+#define YPPUSHPROC_XFRRESP	((u_int32_t)1)
 
 struct yppushresp_xfr {
-	unsigned int	transid;
-	unsigned int	status;
+	u_int32_t	transid;
+	u_int32_t	status;
 };
 
 /* yppush status value in yppushresp_xfr.status */
