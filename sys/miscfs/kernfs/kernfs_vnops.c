@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.78 2001/11/15 09:48:22 lukem Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.78 2001/11/15 09:48:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ int	kernfs_pathconf	__P((void *));
 #define	kernfs_truncate	genfs_eopnotsupp
 #define	kernfs_update	genfs_nullop
 #define	kernfs_bwrite	genfs_eopnotsupp
+#define	kernfs_putpages	genfs_putpages
 
 int	kernfs_xread __P((const struct kern_target *, int, char **, int));
 int	kernfs_xwrite __P((const struct kern_target *, char *, int));
@@ -191,6 +192,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, kernfs_truncate },	/* truncate */
 	{ &vop_update_desc, kernfs_update },		/* update */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, kernfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc kernfs_vnodeop_opv_desc =

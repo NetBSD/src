@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.32 2001/11/10 13:33:41 lukem Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.33 2001/12/06 04:27:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.32 2001/11/10 13:33:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.33 2001/12/06 04:27:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,25 +508,4 @@ fifo_pathconf(void *v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Dummy putpages routine.
- */
-
-int
-fifo_putpages(void *v)
-{
-	struct vop_putpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offlo;
-		voff_t a_offhi;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct uvm_object *uobj = &vp->v_uobj;
-
-	KASSERT(uobj->uo_npages == 0);
-	simple_unlock(&uobj->vmobjlock);
-	return (0);
 }

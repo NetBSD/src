@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.38 2001/11/15 09:48:29 lukem Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.39 2001/12/06 04:27:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.38 2001/11/15 09:48:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.39 2001/12/06 04:27:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -978,7 +978,8 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
 	{ &vop_update_desc, genfs_eopnotsupp },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc *)NULL, (int (*) __P((void *)))NULL }
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc ntfs_vnodeop_opv_desc =
 	{ &ntfs_vnodeop_p, ntfs_vnodeop_entries };
