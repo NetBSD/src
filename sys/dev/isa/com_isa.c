@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.3 1997/08/12 17:25:44 drochner Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.4 1997/08/16 08:33:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -91,7 +91,7 @@ com_isa_probe(parent, match, aux)
 	iobase = ia->ia_iobase;
 
 	/* if it's in use as console, it's there. */
-	if (iobase != comconsaddr
+	if ((iobase != comconsaddr || comconsattached)
 #ifdef KGDB
 	    && iobase != com_kgdb_addr
 #endif
