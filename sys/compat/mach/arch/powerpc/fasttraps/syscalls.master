@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 2002/12/07 19:05:12 manu Exp $
+	$NetBSD: syscalls.master,v 1.4 2003/01/21 03:59:27 matt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -37,6 +37,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/mach/mach_types.h>
