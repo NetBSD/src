@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.65 2000/11/02 07:15:43 msaitoh Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.66 2000/11/03 09:07:24 toddpw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -319,9 +319,14 @@ struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
-    { PCMCIA_STR_SOCEKT_LP_ETHER_CF,
-      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
-      PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+    { PCMCIA_STR_SOCKET_LP_ETHER_CF,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
+      PCMCIA_CIS_SOCKET_LP_ETHER_CF,
+      0, -1, { 0x00, 0xc0, 0x1b } },
+
+    { PCMCIA_STR_SOCKET_LP_ETHER,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
+      PCMCIA_CIS_SOCKET_LP_ETHER,
       0, -1, { 0x00, 0xc0, 0x1b } },
 
     { PCMCIA_STR_XIRCOM_CFE_10,
