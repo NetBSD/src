@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.35 2003/01/27 21:12:29 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.36 2003/02/02 17:54:38 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.35 2003/01/27 21:12:29 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.36 2003/02/02 17:54:38 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: setterm.c,v 1.35 2003/01/27 21:12:29 jdc Exp $");
 static int zap(SCREEN *screen);
 
 static int does_esc_m(char *cap);
+static int does_ctrl_o(char *cap);
 
 struct tinfo *_cursesi_genbuf;
 
@@ -243,23 +244,16 @@ _cursesi_setterm(char *type, SCREEN *screen)
 				screen->mask_op &= ~__TERMATTR;
 		}
 	}
-	screen->mask_me = __ATTRIBUTES & ~__TERMATTR;
-	if (screen->tc_me != NULL) {
-		if (does_esc_m(screen->tc_me))
-			screen->mask_me &=
-			    ~(__STANDOUT | __UNDERSCORE | __COLOR);
-		else {
-			if (screen->tc_se != NULL &&
-			    !strcmp(screen->tc_me, screen->tc_se))
-				screen->mask_me &= ~__STANDOUT;
-			if (screen->tc_ue != NULL &&
-			    !strcmp(screen->tc_me, screen->tc_ue))
-				screen->mask_me &= ~__UNDERSCORE;
-			if (screen->tc_op != NULL &&
-			    !strcmp(screen->tc_me, screen->tc_op))
-				screen->mask_me &= ~__COLOR;
-		}
-	}
+	/*
+	 * Assume that "me" turns off all attributes apart from ACS.
+	 * It might turn off ACS, so check for that.
+	 */
+	if (screen->tc_me != NULL && does_ctrl_o(screen->tc_me))
+		screen->mask_me = 0;
+	else
+		screen->mask_me = __ALTCHARSET;
+
+	/* Check what turning off the attributes also turns off */
 	screen->mask_ue = __ATTRIBUTES & ~__UNDERSCORE;
 	if (screen->tc_ue != NULL) {
 		if (does_esc_m(screen->tc_ue))
@@ -281,7 +275,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	if (screen->tc_se != NULL) {
 		if (does_esc_m(screen->tc_se))
 			screen->mask_se &=
-				~(__UNDERSCORE | __TERMATTR | __COLOR);
+			    ~(__UNDERSCORE | __TERMATTR | __COLOR);
 		else {
 			if (screen->tc_ue != NULL &&
 			    !strcmp(screen->tc_se, screen->tc_ue))
@@ -437,34 +431,92 @@ getcap(char *name)
  * other attributes, so we check for this in the capability passed to us.
  * Note that we can't just do simple string comparison, as the capability
  * may contain multiple, ';' separated sequence parts.
- *
  */
 static int
 does_esc_m(char *cap)
 {
-#define CAP_LEN	253		/* termcap capability size - 3 */
-	char parts[CAP_LEN];
-	size_t len;
-	char *part;
-	const char *sep = ";";
+#define WAITING 0
+#define PARSING 1
+#define NUMBER 2
+#define FOUND 4
+	char *capptr;
+	int seq;
 
+#ifdef DEBUG
+	__CTRACE("does_esc_m: Checking %s\n", cap);
+#endif
 	/* Is it just "\E[m" or "\E[0m"? */
 	if (!strcmp(cap, "\x1b[m") || !strcmp(cap, "\x1b[0m"))
 		return 1;
 
-	/* Does it start "\E[" and end with "m"? */
-	if (strlen(cap) > 3 && cap[0] == '\x1b' && cap[1] == '[' &&
-	    cap[strlen(cap) - 1] == 'm') {
-		/* Check for a '0' between the ';'s */
-		len=strlen(cap);
-		strlcpy(parts, &cap[2],
-		    len - 2 > CAP_LEN ? CAP_LEN : len - 2);
-		part=strtok(parts, sep);
-		while (part != NULL) {
-			if (!strcmp(part, "0"))
+	/* Does it contain a "\E[...m" sequence? */
+	if (strlen(cap) < 4)
+		return 0;
+	capptr = cap;
+	seq = WAITING;
+	while (*capptr != NULL) {
+		switch (seq) {
+		/* Start of sequence */
+		case WAITING:
+			if (!strncmp(capptr, "\x1b[", 2)) {
+				capptr+=2;
+				if (*capptr == 'm')
+					return 1;
+				else {
+					seq=PARSING;
+					continue;
+				}
+			}
+			break;
+		/* Looking for '0' */
+		case PARSING:
+			if (*capptr == '0')
+				seq=FOUND;
+			else if (*capptr > '0' && *capptr <= '9')
+				seq=NUMBER;
+			else if (*capptr != ';')
+				seq=WAITING;
+			break;
+		/* Some other number */
+		case NUMBER:
+			if (*capptr == ';')
+				seq=PARSING;
+			else if (!(*capptr >= '0' && *capptr <= '9'))
+				seq=WAITING;
+			break;
+		/* Found a '0' */
+		case FOUND:
+			if (*capptr == 'm')
 				return 1;
-			part=strtok(NULL, "0");
+			else if (!((*capptr >= '0' && *capptr <= '9') ||
+			    *capptr == ';'))
+				seq=WAITING;
+			break;
+		default:
+			break;
 		}
+		capptr++;
+	}
+	return 0;
+}
+
+/*
+ * does_ctrl_o --
+ * A hack for vt100/xterm-like terminals where the "me" capability also
+ * unsets acs (i.e. it contains the character '\017').
+ */
+static int
+does_ctrl_o(char *cap)
+{
+	char *capptr = cap;
+
+#ifdef DEBUG
+	__CTRACE("does_ctrl_o: Looping on %s\n", capptr);
+#endif
+	while (*capptr != NULL) {
+		if (*capptr == '\x0f')
+			return 1;
+		capptr++;
 	}
 	return 0;
 }
