@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.135 2004/12/16 05:12:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.136 2005/03/17 18:17:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1529,3 +1529,43 @@ sys/compat/ultrix/ultrix_misc.c			patch
 
 	Bounds check syscall arguments where appropriate.
 	[david, ticket #1800]
+
+sys/dev/ic/siop_common.c			1.33
+sys/dev/ic/siopvar_common.h			1.27
+sys/dev/pci/siop_pci_common.c			1.22
+
+	The 1010-66 always generate AIP values on the bus, regardless of the
+	SCNTL4 settings. Disable AIP completely, as this confuse pre-Ultra160
+	drives.
+	[bouyer, ticket #1748]
+
+sys/dev/ic/esiop.c				1.28
+sys/dev/ic/esiopvar.h				1.9
+sys/dev/ic/siop.c				1.73
+sys/dev/ic/siop_common.c			1.34
+sys/dev/microcode/siop/esiop.out		regen
+sys/dev/microcode/siop/esiop.ss			1.17
+sys/dev/microcode/siop/oosiop.out		regen
+sys/dev/microcode/siop/osiop.out		regen
+
+	Properly compute xs->resid, instead of assuming it'll always be 0 when
+	a command is done.
+	[bouyer, ticket #1749]
+
+sys/dev/ic/esiop.c				1.29
+sys/dev/ic/esiopvar.h				1.10
+sys/dev/ic/siop.c				1.74
+sys/dev/ic/siop_common.c			1.35
+sys/dev/ic/siopvar_common.h			1.28
+sys/dev/microcode/siop/esiop.out		regen
+sys/dev/microcode/siop/esiop.ss			1.18
+sys/dev/microcode/siop/siop.out			regen
+sys/dev/microcode/siop/siop.ss			1.18
+
+	When an unexpected disconnect occurs only compute the resid; do the
+	real save data pointers when we get the message (or rather, at
+	disconnect time following the message).
+	Factor out code to do this, and to deal with xs->resid, in
+	siop_common.c.
+	[bouyer, ticket #1750]
+
