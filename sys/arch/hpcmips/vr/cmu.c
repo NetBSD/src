@@ -1,8 +1,8 @@
-/*	$NetBSD: cmu.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: cmu.c,v 1.2 2000/09/07 03:11:11 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,16 +47,22 @@
 
 #include <hpcmips/vr/cmureg.h>
 
+#include <machine/config_hook.h>
+
 struct vrcmu_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	config_hook_tag sc_hardpower;
+	int sc_save;
 };
 
 int  vrcmu_match __P((struct device *, struct cfdata *, void *));
 void vrcmu_attach __P((struct device *, struct device *, void *));
 
 int  vrcmu_supply __P((vrcmu_chipset_tag_t, u_int16_t, int));
+
+int vrcmu_hardpower __P((void *, int, long, void *));
 
 struct vrcmu_function_tag vrcmu_functions  = {
 	vrcmu_supply
@@ -92,8 +98,12 @@ vrcmu_attach(parent, self, aux)
 	}
 	vrip_cmu_function_register(va->va_vc, &vrcmu_functions, self);
 	printf ("\n");
-}
+	sc->sc_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_HARDPOWER,
+					CONFIG_HOOK_SHARE,
+						vrcmu_hardpower, sc);
 
+}
 /* For serial console */
 void
 __vrcmu_supply(mask, onoff)
@@ -138,3 +148,25 @@ vrcmu_supply(cc, mask, onoff)
 	return 0;
 }
 
+int
+vrcmu_hardpower(ctx, type, id, msg)
+	void *ctx;
+	int type;
+	long id;
+	void *msg;
+{
+	struct vrcmu_softc *sc = ctx;
+	int why =(int)msg;
+
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		sc->sc_save = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0, 0);
+		break;
+	case PWR_RESUME:
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0, sc->sc_save);
+		break;
+	}
+	return (0);
+}
