@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/08/14 15:38:32 drochner Exp $
+#	$NetBSD: Makefile,v 1.11 1997/08/14 17:00:23 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,8 +15,8 @@ CLEANFILES+= ${ROMSTART} ${PROG}.bin ${PROG}.rom ${PROG}.sym ${PROG}.list
 #CPPFLAGS+= -DNET_DEBUG
 #CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_TFTP
 CPPFLAGS+= -DSUPPORT_RARP -DSUPPORT_BOOTPARAM -DSUPPORT_NFS
-#uncomment to enable extended memory detection
-#CPPFLAGS+= -DEXTENDED_MEMDETECT
+#uncomment if there are problems with memory detection
+#CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall
