@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.22 1999/09/16 11:44:58 lukem Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.23 1999/09/20 04:38:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.22 1999/09/16 11:44:58 lukem Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.23 1999/09/20 04:38:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,16 +92,6 @@ realpath(path, resolved)
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(resolved != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (NULL);
-	}
-	if (resolved == NULL) {
-		errno = EINVAL;
-		return (NULL);
-	}
-#endif
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {

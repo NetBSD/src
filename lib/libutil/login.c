@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.11 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: login.c,v 1.12 1999/09/20 04:48:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.11 1999/09/16 11:45:50 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.12 1999/09/20 04:48:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,6 @@ login(ut)
 	int tty;
 
 	_DIAGASSERT(ut != NULL);
-#ifdef _DIAGNOSTIC
-	if (ut == NULL)
-		return;
-#endif
 
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {

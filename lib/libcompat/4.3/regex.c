@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
 #else
-__RCSID("$NetBSD: regex.c,v 1.10 1999/09/16 11:45:47 lukem Exp $");
+__RCSID("$NetBSD: regex.c,v 1.11 1999/09/20 04:48:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,10 +87,6 @@ re_exec(s)
 {
 	int rc;
 
-#ifdef _DIAGNOSTIC
-	if (s == NULL || *s == '\0')
-		return (-1);
-#endif
 
 	re_goterr = 0;
 	rc = regexec(re_regexp, s);
@@ -103,10 +99,6 @@ regerror(s)
 {
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		s = "ERROR: regerror() called with NULL pointer";
-#endif
 
 	re_goterr = 1;
 	if (re_errstr)

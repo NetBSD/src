@@ -1,4 +1,4 @@
-/*	$NetBSD: lcong48.c,v 1.5 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: lcong48.c,v 1.6 1999/09/20 04:39:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -27,10 +27,6 @@ void
 lcong48(unsigned short p[7])
 {
 	_DIAGASSERT(p != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL)
-		return;
-#endif
 
 	__rand48_seed[0] = p[0];
 	__rand48_seed[1] = p[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.24 1999/09/16 11:45:17 lukem Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.25 1999/09/20 04:39:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.24 1999/09/16 11:45:17 lukem Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.25 1999/09/20 04:39:17 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -268,10 +268,6 @@ __p_query(msg)
 {
 
 	_DIAGASSERT(msg != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL)
-		return;
-#endif
 
 	__fp_query(msg, stdout);
 }
@@ -289,10 +285,6 @@ __fp_resstat(statp, file)
 
 	_DIAGASSERT(file != NULL);
 	/* statp may be NULL */
-#ifdef _DIAGNOSTIC
-	if (file == NULL)
-		return;
-#endif
 
 	fprintf(file, ";; res options:");
 	if (!statp)
@@ -319,10 +311,6 @@ __fp_nquery(msg, len, file)
 
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL || file == NULL)
-		return;
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return;
@@ -450,10 +438,6 @@ __fp_query(msg, file)
 
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL || file == NULL)
-		return;
-#endif
 
 	fp_nquery(msg, PACKETSZ, file);
 }
@@ -469,10 +453,6 @@ __p_cdnname(cp, msg, len, file)
 
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL || file == NULL)
-		return (NULL);
-#endif
 
 	if ((n = dn_expand(msg, msg + len, cp, name, sizeof name)) < 0)
 		return (NULL);
@@ -492,10 +472,6 @@ __p_cdname(cp, msg, file)
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || msg == NULL || file == NULL)
-		return (NULL);
-#endif
 
 	return (p_cdnname(cp, msg, PACKETSZ, file));
 }
@@ -516,10 +492,6 @@ __p_fqnname(cp, msg, msglen, name, namelen)
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || msg == NULL || name == NULL)
-		return (NULL);
-#endif
 
 	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
 		return (NULL);
@@ -547,10 +519,6 @@ __p_fqname(cp, msg, file)
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || msg == NULL || file == NULL)
-		return (NULL);
-#endif
 
 	n = __p_fqnname(cp, msg, MAXCDNAME, name, sizeof name);
 	if (n == NULL)
@@ -579,10 +547,6 @@ __p_rr(cp, msg, file)
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || msg == NULL || file == NULL)
-		return (NULL);
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -1037,10 +1001,6 @@ __sym_ston(syms, name, success)
 	_DIAGASSERT(syms != NULL);
 	_DIAGASSERT(name != NULL);
 	/* success may be NULL */
-#ifdef _DIAGNOSTIC
-	if (syms == NULL || name == NULL)
-		return (NULL);
-#endif
 
 	for (; syms->name != 0; syms++) {
 		if (strcasecmp (name, syms->name) == 0) {
@@ -1064,10 +1024,6 @@ __sym_ntos(syms, number, success)
 
 	_DIAGASSERT(syms != NULL);
 	/* success may be NULL */
-#ifdef _DIAGNOSTIC
-	if (syms == NULL)
-		return (NULL);
-#endif
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -1094,10 +1050,6 @@ __sym_ntop(syms, number, success)
 
 	_DIAGASSERT(syms != NULL);
 	/* success may be NULL */
-#ifdef _DIAGNOSTIC
-	if (syms == NULL)
-		return (NULL);
-#endif
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -1422,10 +1374,6 @@ loc_aton(ascii, binary)
 
 	_DIAGASSERT(ascii != NULL);
 	_DIAGASSERT(binary != NULL);
-#ifdef _DIAGNOSTIC
-	if (ascii == NULL || binary == NULL)
-		return (0);
-#endif
 
 	cp = ascii;
 	maxcp = cp + strlen(ascii);
@@ -1545,10 +1493,6 @@ loc_ntoa(binary, ascii)
 
 	_DIAGASSERT(ascii != NULL);
 	_DIAGASSERT(binary != NULL);
-#ifdef _DIAGNOSTIC
-	if (ascii == NULL || binary == NULL)
-		return (NULL);
-#endif
 
 	versionval = *cp++;
 
@@ -1640,10 +1584,6 @@ __dn_count_labels(name)
 	int i, len, count;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (0);
-#endif
 
 	len = strlen(name);
 

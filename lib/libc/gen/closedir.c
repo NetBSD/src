@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.8 1999/09/16 11:44:56 lukem Exp $	*/
+/*	$NetBSD: closedir.c,v 1.9 1999/09/20 04:38:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-__RCSID("$NetBSD: closedir.c,v 1.8 1999/09/16 11:44:56 lukem Exp $");
+__RCSID("$NetBSD: closedir.c,v 1.9 1999/09/20 04:38:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,12 +65,6 @@ closedir(dirp)
 	int fd;
 
 	_DIAGASSERT(dirp != NULL);
-#ifdef _DIAGNOSTIC
-	if (dirp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	seekdir(dirp, dirp->dd_rewind);	/* free seekdir storage */
 	fd = dirp->dd_fd;

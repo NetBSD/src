@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.21 1999/09/16 11:45:19 lukem Exp $	*/
+/*	$NetBSD: res_send.c,v 1.22 1999/09/20 04:39:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.21 1999/09/16 11:45:19 lukem Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.22 1999/09/20 04:39:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -211,10 +211,6 @@ res_isourserver(inp)
 	int ns, ret;
 
 	_DIAGASSERT(inp != NULL);
-#ifdef _DIAGNOSTIC
-	if (inp == NULL)
-		return (0);
-#endif
 
 #ifdef INET6
 	ret = 0;
@@ -286,10 +282,6 @@ res_nameinquery(name, type, class, buf, eom)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(eom != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || buf == NULL || eom == NULL)
-		return (-1);
-#endif
 
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
@@ -332,10 +324,6 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 	_DIAGASSERT(eom1 != NULL);
 	_DIAGASSERT(buf2 != NULL);
 	_DIAGASSERT(eom2 != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf1 == NULL || eom1 == NULL || buf2 == NULL || eom2 == NULL)
-		return (-1);
-#endif
 
 	if (qdcount != ntohs(((const HEADER *)(const void *)buf2)->qdcount))
 		return (0);
@@ -370,12 +358,6 @@ res_send(buf, buflen, ans, anssiz)
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(ans != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || ans == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		/* errno should have been set by res_init() in this case. */

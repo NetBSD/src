@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.19 1999/09/17 00:21:12 lukem Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.20 1999/09/20 04:39:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.19 1999/09/17 00:21:12 lukem Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.20 1999/09/20 04:39:20 lukem Exp $");
 #endif
 #endif
 
@@ -98,10 +98,6 @@ clnt_sperror(rpch, s)
 
 	_DIAGASSERT(rpch != NULL);
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (rpch == NULL || s == NULL)
-		return (NULL);
-#endif
 
 	str = _buf();
 	if (str == 0)
@@ -188,13 +184,6 @@ clnt_perror(rpch, s)
 
 	_DIAGASSERT(rpch != NULL);
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (rpch == NULL || s == NULL) {
-		(void) fprintf(stderr,
-		    "ERROR: clnt_perror() called with NULL argument\n");
-		return;
-	}
-#endif
 
 	(void) fprintf(stderr, "%s\n", clnt_sperror(rpch,s));
 }
@@ -253,10 +242,6 @@ clnt_spcreateerror(s)
 	size_t len = buflen, i;
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		return (NULL);
-#endif
 
 	str = _buf();
 	if (str == 0)
@@ -304,13 +289,6 @@ clnt_pcreateerror(s)
 {
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL) {
-		(void) fprintf(stderr,
-		    "ERROR: clnt_pcreateerror() called with NULL argument\n");
-		return;
-	}
-#endif
 
 	(void) fprintf(stderr, "%s\n", clnt_spcreateerror(s));
 }

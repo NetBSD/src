@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.14 1999/09/16 11:44:56 lukem Exp $	*/
+/*	$NetBSD: execvp.c,v 1.15 1999/09/20 04:38:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.14 1999/09/16 11:44:56 lukem Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.15 1999/09/20 04:38:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,13 +77,6 @@ execvp(name, argv)
 	const char *bp;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		path = NULL;
-		goto done;
-	}
-#endif
 
 	/* "" is not a valid filename; check this before traversing PATH. */
 	if (name[0] == '\0') {

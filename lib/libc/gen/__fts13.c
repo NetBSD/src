@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.26 1999/09/16 11:44:55 lukem Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.27 1999/09/20 04:38:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.26 1999/09/16 11:44:55 lukem Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.27 1999/09/20 04:38:57 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,13 +126,6 @@ fts_open(argv, options, compar)
 	size_t len;
 
 	_DIAGASSERT(argv != NULL);
-#ifdef _DIAGNOSTIC
-	/* compar may be NULL */
-	if (argv == NULL) {
-		errno = ENOENT;
-		return (NULL);
-	}
-#endif
 
 	/* Options check. */
 	if (options & ~FTS_OPTIONMASK) {
@@ -267,12 +260,6 @@ fts_close(sp)
 	int saved_errno = 0;
 
 	_DIAGASSERT(sp != NULL);
-#ifdef _DIAGNOSTIC
-	if (sp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure
@@ -332,12 +319,6 @@ fts_read(sp)
 	int saved_errno;
 
 	_DIAGASSERT(sp != NULL);
-#ifdef _DIAGNOSTIC
-	if (sp == NULL) {
-		errno = EBADF;
-		return (NULL);
-	}
-#endif
 
 	/* If finished or unrecoverable error, return NULL. */
 	if (sp->fts_cur == NULL || ISSET(FTS_STOP))
@@ -533,16 +514,6 @@ fts_set(sp, p, instr)
 
 	_DIAGASSERT(sp != NULL);
 	_DIAGASSERT(p != NULL);
-#ifdef _DIAGNOSTIC
-	if (sp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (p == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (instr && instr != FTS_AGAIN && instr != FTS_FOLLOW &&
 	    instr != FTS_NOINSTR && instr != FTS_SKIP) {
@@ -562,12 +533,6 @@ fts_children(sp, instr)
 	int fd;
 
 	_DIAGASSERT(sp != NULL);
-#ifdef _DIAGNOSTIC
-	if (sp == NULL) {
-		errno = EBADF;
-		return (NULL);
-	}
-#endif
 
 	if (instr && instr != FTS_NAMEONLY) {
 		errno = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsearch.c,v 1.10 1999/09/16 11:45:33 lukem Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.11 1999/09/20 04:39:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.10 1999/09/16 11:45:33 lukem Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.11 1999/09/20 04:39:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,12 +78,6 @@ bsearch(key, base0, nmemb, size, compar)
 	_DIAGASSERT(key != NULL);
 	_DIAGASSERT(base0 != NULL);
 	_DIAGASSERT(compar != NULL);
-#ifdef _DIAGNOSTIC
-	if (key == NULL || base0 == NULL || compar == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
 		p = base + (lim >> 1) * size;

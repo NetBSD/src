@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.9 1999/09/16 11:44:59 lukem Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.10 1999/09/20 04:39:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.9 1999/09/16 11:44:59 lukem Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.10 1999/09/20 04:39:01 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,6 @@ getmntinfo(mntbufp, flags)
 	static size_t bufsize;
 
 	_DIAGASSERT(mntbufp != NULL);
-#ifdef _DIAGNOSTIC
-	if (mntbufp == NULL) {
-		errno = EFAULT;
-		return (0);
-	}
-#endif
 
 	if (mntsize <= 0 &&
 	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) < 0)

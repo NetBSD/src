@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.10 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.11 1999/09/20 04:39:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.10 1999/09/16 11:45:34 lukem Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.11 1999/09/20 04:39:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -163,12 +163,6 @@ heapsort(vbase, nmemb, size, compar)
 
 	_DIAGASSERT(vbase != NULL);
 	_DIAGASSERT(compar != NULL);
-#ifdef _DIAGNOSTIC
-	if (vbase == NULL || compar == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (nmemb <= 1)
 		return (0);

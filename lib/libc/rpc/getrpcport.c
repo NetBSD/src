@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.14 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.15 1999/09/20 04:39:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)getrpcport.c 1.3 87/08/11 SMI";
 static char *sccsid = "@(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: getrpcport.c,v 1.14 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: getrpcport.c,v 1.15 1999/09/20 04:39:22 lukem Exp $");
 #endif
 #endif
 
@@ -69,10 +69,6 @@ getrpcport(host, prognum, versnum, proto)
 	struct hostent *hp;
 
 	_DIAGASSERT(host != NULL);
-#ifdef _DIAGNOSTIC
-	if (host == NULL)
-		return (0);
-#endif
 
 	if ((hp = gethostbyname(host)) == NULL)
 		return (0);

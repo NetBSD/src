@@ -1,4 +1,4 @@
-/*	$NetBSD: getc.c,v 1.8 1999/09/16 11:45:28 lukem Exp $	*/
+/*	$NetBSD: getc.c,v 1.9 1999/09/20 04:39:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getc.c,v 1.8 1999/09/16 11:45:28 lukem Exp $");
+__RCSID("$NetBSD: getc.c,v 1.9 1999/09/20 04:39:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,12 +63,6 @@ getc(fp)
 	int r;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	FLOCKFILE(fp);
 	r = __sgetc(fp);
@@ -82,12 +76,6 @@ getc_unlocked(fp)
 {
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	return (__sgetc(fp));
 }

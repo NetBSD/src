@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.6 1999/09/16 11:45:47 lukem Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.7 1999/09/20 04:48:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,12 +64,6 @@ lsearch(key, base, nelp, width, compar)
 	_DIAGASSERT(key != NULL);
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(compar != NULL);
-#ifdef _DIAGNOSTIC
-	if (key == NULL || base == NULL || compar == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	return(linear_base(key, base, nelp, width, compar, 1));
 }
@@ -84,12 +78,6 @@ lfind(key, base, nelp, width, compar)
 	_DIAGASSERT(key != NULL);
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(compar != NULL);
-#ifdef _DIAGNOSTIC
-	if (key == NULL || base == NULL || compar == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	return(linear_base(key, base, nelp, width, compar, 0));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isatty.c,v 1.8 1999/09/16 11:45:01 lukem Exp $	*/
+/*	$NetBSD: isatty.c,v 1.9 1999/09/20 04:39:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)isatty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isatty.c,v 1.8 1999/09/16 11:45:01 lukem Exp $");
+__RCSID("$NetBSD: isatty.c,v 1.9 1999/09/20 04:39:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,11 +60,5 @@ isatty(fd)
 	struct termios t;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 	return(tcgetattr(fd, &t) != -1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.18 1999/09/16 11:45:38 lukem Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.19 1999/09/20 04:39:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.18 1999/09/16 11:45:38 lukem Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.19 1999/09/20 04:39:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,10 +70,6 @@ __strsignal(num, buf, buflen)
 #endif
 
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL)
-		return (NULL);
-#endif
 
 	signum = num;				/* convert to unsigned */
 	if (signum < sys_nsig) {

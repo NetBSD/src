@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.30 1999/09/16 11:44:57 lukem Exp $	*/
+/*	$NetBSD: getcap.c,v 1.31 1999/09/20 04:38:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.30 1999/09/16 11:44:57 lukem Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.31 1999/09/20 04:38:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,10 +160,6 @@ cgetcap(buf, cap, type)
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || cap == NULL)
-		return (NULL);
-#endif
 
 	bp = buf;
 	for (;;) {
@@ -220,12 +216,6 @@ cgetent(buf, db_array, name)
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(db_array != NULL);
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || db_array == NULL || name == NULL) {
-		errno = EFAULT;
-		return (-2);
-	}
-#endif
 
 	return (getent(buf, &dummy, db_array, -1, name, 0, NULL));
 }
@@ -688,10 +678,6 @@ cgetmatch(buf, name)
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || name == NULL)
-		return (-1);
-#endif
 
 	/*
 	 * Start search at beginning of record.
@@ -732,12 +718,6 @@ cgetfirst(buf, db_array)
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(db_array != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || db_array == NULL) {
-		errno = EFAULT;
-		return (-2);
-	}
-#endif
 
 	(void)cgetclose();
 	return (cgetnext(buf, db_array));
@@ -777,12 +757,6 @@ cgetnext(bp, db_array)
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(db_array != NULL);
-#ifdef _DIAGNOSTIC
-	if (bp == NULL || db_array == NULL) {
-		errno = EFAULT;
-		return (-2);
-	}
-#endif
 
 	if (dbp == NULL)
 		dbp = db_array;
@@ -918,12 +892,6 @@ cgetstr(buf, cap, str)
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || cap == NULL || str == NULL) {
-		errno = EFAULT;
-		return (-2);
-	}
-#endif
 
 	/*
 	 * Find string capability cap
@@ -1055,12 +1023,6 @@ cgetustr(buf, cap, str)
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || cap == NULL || str == NULL) {
-		errno = EFAULT;
-		return (-2);
-	}
-#endif
 
 	/*
 	 * Find string capability cap
@@ -1135,10 +1097,6 @@ cgetnum(buf, cap, num)
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
 	_DIAGASSERT(num != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || cap == NULL || num == NULL)
-		return (-1);
-#endif
 
 	/*
 	 * Find numeric capability cap

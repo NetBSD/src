@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.19 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.20 1999/09/20 04:39:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.19 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.20 1999/09/20 04:39:21 lukem Exp $");
 #endif
 #endif
 
@@ -144,13 +144,6 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 
 	_DIAGASSERT(raddr != NULL);
 	_DIAGASSERT(sockp != NULL);
-#ifdef _DIAGNOSTIC
-	if (raddr == NULL || sockp == NULL) {
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-		rpc_createerr.cf_error.re_errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	if (disrupt == 0)
 		disrupt = (u_int32_t)(long)raddr;

@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: remque.c,v 1.7 1999/09/16 11:45:47 lukem Exp $");
+__RCSID("$NetBSD: remque.c,v 1.8 1999/09/20 04:48:04 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -46,10 +46,6 @@ remque(element)
 	struct qelem *e = (struct qelem *) element;
 
 	_DIAGASSERT(e != 0);
-#ifdef _DIAGNOSTIC
-	if (e == 0)
-		return;
-#endif
 
 	e->q_forw->q_back = e->q_back;
 	e->q_back->q_forw = e->q_forw;

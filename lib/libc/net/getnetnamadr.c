@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.17 1999/09/16 11:45:12 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.18 1999/09/20 04:39:12 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.17 1999/09/16 11:45:12 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.18 1999/09/20 04:39:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -454,10 +454,6 @@ getnetbyname(net)
 	};
 
 	_DIAGASSERT(net != NULL);
-#ifdef _DIAGNOSTIC
-	if (net == NULL)
-		return NULL;
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -579,10 +575,6 @@ _ypnetent(line)
 	char *cp, *p, **q;
 
 	_DIAGASSERT(line != NULL);
-#ifdef _DIAGNOSTIC
-	if (line == NULL)
-		return (NULL);
-#endif
 
 	net_entry.n_name = line;
 	cp = strpbrk(line, " \t");

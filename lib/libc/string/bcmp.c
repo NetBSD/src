@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.12 1999/09/16 11:45:38 lukem Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.13 1999/09/20 04:39:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.12 1999/09/16 11:45:38 lukem Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.13 1999/09/20 04:39:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,6 @@ bcmp(b1, b2, length)
 
 	_DIAGASSERT(b1 != 0);
 	_DIAGASSERT(b2 != 0);
-#ifdef _DIAGNOSTIC
-	if (b1 == 0 || b2 == 0)
-		return(0);
-#endif
 
 	if (length == 0)
 		return(0);

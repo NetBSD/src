@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.15 1999/09/16 11:45:06 lukem Exp $	*/
+/*	$NetBSD: unvis.c,v 1.16 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.15 1999/09/16 11:45:06 lukem Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.16 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,10 +94,6 @@ __unvis13(cp, c, astate, flag)
 
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(astate != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || astate == NULL)
-		return (UNVIS_SYNBAD);
-#endif
 
 	if (flag & UNVIS_END) {
 		if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {
@@ -265,10 +261,6 @@ strunvis(dst, src)
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
-#ifdef _DIAGNOSTIC
-	if (src == NULL || dst == NULL)
-		return (-1);
-#endif
 
 	while ((c = *src++) != '\0') {
 	again:

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.12 1999/09/16 11:45:11 lukem Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.13 1999/09/20 04:39:11 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -195,10 +195,6 @@ freeaddrinfo(ai)
 	struct addrinfo *next;
 
 	_DIAGASSERT(ai != NULL);
-#ifdef _DIAGNOSTIC
-	if (ai == NULL)
-		return;
-#endif
 
 	do {
 		next = ai->ai_next;
@@ -258,12 +254,6 @@ getaddrinfo(hostname, servname, hints, res)
 	/* servname may be NULL */
 	/* hints may be NULL */
 	_DIAGASSERT(res != NULL);
-#ifdef _DIAGNOSTIC
-	if (res == NULL) {
-		errno = EFAULT;
-		return EAI_SYSTEM;
-	}
-#endif
 
 	/* initialize file static vars */
 	sentinel.ai_next = NULL;

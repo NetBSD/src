@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.3 1999/09/16 11:45:15 lukem Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.4 1999/09/20 04:39:15 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,10 +75,6 @@ inet6_option_init(bp, cmsgp, type)
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(cmsgp != NULL);
-#ifdef _DIAGNOSTIC
-	if (bp == NULL || cmsgp == NULL)
-		return (-1);
-#endif
 
 	ch = (struct cmsghdr *)bp;
 
@@ -117,10 +113,6 @@ inet6_option_append(cmsg, typep, multx, plusy)
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(typep != NULL);
-#ifdef _DIAGNOSTIC
-	if (cmsg == NULL || typep == NULL)
-		return (-1);
-#endif
 
 	bp = (u_char *)cmsg + cmsg->cmsg_len;
 	eh = (struct ip6_ext *)CMSG_DATA(cmsg);
@@ -201,10 +193,6 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	struct ip6_ext *eh;
 
 	_DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-	if (cmsg == NULL)
-		return(NULL);
-#endif
 
 	bp = (u_char *)cmsg + cmsg->cmsg_len;
 	eh = (struct ip6_ext *)CMSG_DATA(cmsg);
@@ -274,12 +262,6 @@ inet6_option_next(cmsg, tptrp)
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(tptrp != NULL);
-#ifdef _DIAGNOSTIC
-	if (cmsg == NULL || tptrp == NULL) {
-		/* XXX: can't set tptrp to non NULL for this error...  */
-		return (-1);
-	}
-#endif
 
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&
@@ -342,12 +324,6 @@ inet6_option_find(cmsg, tptrp, type)
 
 	_DIAGASSERT(cmsg != NULL);
 	_DIAGASSERT(tptrp != NULL);
-#ifdef _DIAGNOSTIC
-	if (cmsg == NULL || tptrp == NULL) {
-		/* XXX: can't set tptrp to non NULL for this error...  */
-		return (-1);
-	}
-#endif
 
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&

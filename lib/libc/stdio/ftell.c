@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.12 1999/09/16 11:45:28 lukem Exp $	*/
+/*	$NetBSD: ftell.c,v 1.13 1999/09/20 04:39:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.12 1999/09/16 11:45:28 lukem Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.13 1999/09/20 04:39:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,13 +60,6 @@ ftell(fp)
 {
 	fpos_t pos;
 
-#ifdef _DIAGNOSTIC
-	_DIAGASSERT(fp != NULL);
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	FLOCKFILE(fp);
 

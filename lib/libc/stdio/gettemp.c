@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.4 1999/09/16 11:45:28 lukem Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.5 1999/09/20 04:39:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.4 1999/09/16 11:45:28 lukem Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.5 1999/09/20 04:39:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,12 +73,6 @@ __gettemp(path, doopen, domkdir)
 
 	_DIAGASSERT(path != NULL);
 	/* doopen may be NULL */
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (NULL);
-	}
-#endif
 
 	pid = getpid();
 

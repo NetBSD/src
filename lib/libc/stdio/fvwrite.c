@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.12 1999/09/16 11:45:28 lukem Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.13 1999/09/20 04:39:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.12 1999/09/16 11:45:28 lukem Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.13 1999/09/20 04:39:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,16 +73,6 @@ __sfvwrite(fp, uio)
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(uio != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-	if (uio == NULL) {
-		errno = EFAULT;
-		return (EOF);
-	}
-#endif
 
 	if ((len = uio->uio_resid) == 0)
 		return (0);

@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stty.c,v 1.3 1999/09/16 11:45:46 lukem Exp $");
+__RCSID("$NetBSD: stty.c,v 1.4 1999/09/20 04:48:01 lukem Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -50,16 +50,6 @@ stty(fd, tty)
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(tty != 0);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (tty == 0) {
-		errno = EINVAL;
-		return (-1);
-	}
-#endif
 
 	return (ioctl(fd, TIOCSETP, tty));
 }

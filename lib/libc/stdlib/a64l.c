@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: a64l.c,v 1.6 1999/09/16 11:45:33 lukem Exp $");
+__RCSID("$NetBSD: a64l.c,v 1.7 1999/09/20 04:39:36 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -25,10 +25,6 @@ a64l(s)
 	int i;
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		return (0L);
-#endif
 
 	value = 0;
 	shift = 0;
