@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.106 1998/11/19 15:38:25 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.107 1998/11/25 13:44:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -292,6 +292,8 @@ audioattach(parent, self, aux)
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
+		if (mi.type == AUDIO_MIXER_CLASS)
+			continue;
 		au_check_ports(sc, &sc->sc_inports,  &mi, iclass, 
 			       AudioNsource, AudioNrecord, itable);
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
