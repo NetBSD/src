@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.5 2003/06/06 19:56:59 scw Exp $
+#	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -33,7 +33,7 @@ attach com at pxaip with pxauart
 file arch/arm/xscale/pxa2x0_com.c		pxauart
 file arch/arm/xscale/pxa2x0_a4x_space.c		pxauart | obio
 file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
-defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE COM_PXA2X0
+defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE
 
 # clock device
 # PXA2x0's built-in timer is compatible to SA-1110.
