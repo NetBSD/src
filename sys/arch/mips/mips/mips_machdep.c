@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.131 2002/06/01 13:45:46 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.132 2002/06/07 02:05:22 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.131 2002/06/01 13:45:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.132 2002/06/07 02:05:22 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -877,15 +877,15 @@ mips_vector_init(void)
 		cpu_reboot(RB_HALT, NULL);
 	}
 
+/* XXX simonb: ugg, another ugly #ifdef check... */
+#if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
 	/*
 	 * Install power-saving idle routines.
 	 */
 	if ((mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
-	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT)) {
-		void mips_wait_idle(void);	/* XXX prototype */
-
+	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
 		CPU_IDLE = (long *)mips_wait_idle;
-	}
+#endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 }
 
 void
