@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.24 1996/09/12 18:54:23 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.25 1996/10/04 22:22:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -836,10 +836,6 @@ hil_process_int(hilp, stat, c)
 	}
 }
 
-#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
-#define PANICBUTTON
-#endif
-
 /*
  * Optimized macro to compute:
  *	eq->head == (eq->tail + 1) % eq->size
@@ -862,20 +858,6 @@ hilevent(hilp)
 	int s, len0;
 	long tenths;
 
-#ifdef PANICBUTTON
-	static int first;
-	extern int panicbutton;
-
-	cp = hilp->hl_pollbuf;
-	if (panicbutton && (*cp & HIL_KBDDATA)) {
-		if (*++cp == 0x4E)
-			first = 1;
-		else if (first && *cp == 0x46 && !panicstr)
-			panic("are we having fun yet?");
-		else
-			first = 0;
-	}
-#endif
 #ifdef DEBUG
 	if (hildebug & HDB_EVENTS) {
 		printf("hilevent: dev %d pollbuf: ", hilp->hl_actdev);
