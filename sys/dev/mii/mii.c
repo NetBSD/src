@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.23 2001/03/28 14:13:06 drochner Exp $	*/
+/*	$NetBSD: mii.c,v 1.24 2001/04/13 11:14:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
-		ma.mii_flags = flags;
+		/*ma.mii_flags = flags; XXX unused */
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.21 2001/04/13 11:12:37 augustss Exp $	*/
+/*	$NetBSD: miivar.h,v 1.22 2001/04/13 11:14:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -144,7 +144,9 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
 #define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
 
+/* XXX ununsed
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
+*/
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
@@ -163,7 +165,7 @@ struct mii_attach_args {
 	int mii_id1;			/* PHY ID register 1 */
 	int mii_id2;			/* PHY ID register 2 */
 	int mii_capmask;		/* capability mask from BMSR */
-	int mii_flags;			/* flags from parent */
+	/*int mii_flags; XXX ununsed */	/* flags from parent */
 };
 typedef struct mii_attach_args mii_attach_args_t;
 
