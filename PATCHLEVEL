@@ -76,3 +76,6 @@ build kernels.
 [kernel/amiga]: Fix a problem with the A2410 driver on fast CPUs and another
 one which caused it to reject the last monitor definition.
 
+[kernel/amiga]: The driver would attempt to write a byte register with a word
+value, leading to wrong transfer counts in certain situations. Fix this.
+
