@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: disklabel.h,v 1.1 1994/05/08 05:53:57 chopps Exp $
+ *	$Id: disklabel.h,v 1.2 1994/07/04 19:39:59 chopps Exp $
  */
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
@@ -40,13 +40,12 @@
 
 /* 
  * used to encode disk minor numbers
+ * this should probably be moved to sys/disklabel.h
  */
-#define DISKUNITSHIFT	3 		/* log2(MAXPARTITIONS) */
-#define DISKUNIT(dev)	(minor(dev) >> DISKUNITSHIFT )
-#define DISKPARTMASK	((1 << DISKUNITSHIFT) - 1)
-#define DISKPART(dev)	(minor(dev) & DISKPARTMASK)
+#define DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
+#define DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define MAKEDISKDEV(maj, unit, part) \
-    (makedev((maj),((unit) << DISKUNITSHIFT) | ((part) & DISKPARTMASK)))
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
 /*
  * describes ados Rigid Disk Blocks
