@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.50 1997/03/10 23:09:55 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.51 1997/05/02 08:30:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,8 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-#include <sparc/sparc/intersil7170.h>
+#include <dev/ic/intersil7170.h>
+
 extern struct idprom idprom;
 
 #define intersil_command(run, interrupt) \
@@ -120,11 +121,11 @@ static int oldclk = 0;
 struct intersil7170 *i7;
 
 static long oclk_get_secs __P((void));
-static void oclk_get_dt __P((struct date_time *));
-static void dt_to_gmt __P((struct date_time *, long *));
-static void oclk_set_dt __P((struct date_time *));
+static void oclk_get_dt __P((struct intersil_dt *));
+static void dt_to_gmt __P((struct intersil_dt *, long *));
+static void oclk_set_dt __P((struct intersil_dt *));
 static void oclk_set_secs __P((long));
-static void gmt_to_dt __P((long *, struct date_time *));
+static void gmt_to_dt __P((long *, struct intersil_dt *));
 #endif
 
 static int oclockmatch __P((struct device *, struct cfdata *, void *));
@@ -999,7 +1000,7 @@ resettodr()
 static long
 oclk_get_secs()
 {
-        struct date_time dt;
+        struct intersil_dt dt;
         long gmt;
 
         oclk_get_dt(&dt);
@@ -1011,7 +1012,7 @@ static void
 oclk_set_secs(secs)
 	long secs;
 {
-        struct date_time dt;
+        struct intersil_dt dt;
         long gmt;
 
         gmt = secs;
@@ -1026,7 +1027,7 @@ oclk_set_secs(secs)
  */
 static void
 oclk_get_dt(dt)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         int s;
         register volatile char *src, *dst;
@@ -1050,7 +1051,7 @@ oclk_get_dt(dt)
 
 static void
 oclk_set_dt(dt)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         int s;
         register volatile char *src, *dst;
@@ -1094,7 +1095,7 @@ static int month_days[12] = {
 static void
 gmt_to_dt(tp, dt)
 	long *tp;
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         register int i;
         register long days, secs;
@@ -1135,7 +1136,7 @@ gmt_to_dt(tp, dt)
 
 static void
 dt_to_gmt(dt, tp)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 	long *tp;
 {
         register int i;
