@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.1 2004/11/11 01:42:17 christos Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.2 2004/11/24 22:13:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,29 +77,41 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.1 2004/11/11 01:42:17 christos Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.2 2004/11/24 22:13:08 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+
+#include <fs/ptyfs/ptyfs.h>
 
 #include <err.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <grp.h>
 
 #include <mntopts.h>
+
+#define ALTF_GROUP	1
+#define ALTF_MODE	2
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
+	{ "group", 0, ALTF_GROUP, 1 },
+	{ "mode", 0, ALTF_MODE, 1 },
 	{ NULL }
 };
 
 int	main(int, char *[]);
 int	mount_ptyfs(int argc, char **argv);
+
+static gid_t	getgrp(const char *name);
 static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
@@ -110,37 +122,84 @@ main(int argc, char *argv[])
 }
 #endif
 
+static gid_t
+getgrp(const char *name)
+{
+	char *ep;
+	struct group *grp;
+	long l;
+
+	if (name == NULL)
+		errx(1, "Missing group name");
+
+	l = strtol(name, &ep, 0);
+
+	if (name == ep || *ep)
+		grp = getgrnam(name);
+	else
+		grp = getgrgid((gid_t)l);
+
+	if (grp == NULL)
+		errx(1, "Cannot find group `%s'", name);
+
+	return grp->gr_gid;
+}
+
+
 int
 mount_ptyfs(int argc, char *argv[])
 {
-	int ch, mntflags = 0;
+	int ch, mntflags = 0, altflags = 0;
+	struct ptyfs_args args;
+	mntoptparse_t mp;
+
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "o:")) != -1)
+	args.version = PTYFS_ARGSVERSION;
+	args.gid = getgrp("tty");
+	args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
+
+	while ((ch = getopt(argc, argv, "g:m:o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			altflags = 0;
+			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
+			if (altflags & ALTF_GROUP)
+				args.gid = getgrp(getmntoptstr(mp, "group"));
+			if (altflags & ALTF_MODE)
+				args.mode = (mode_t)getmntoptnum(mp, "mode");
+			freemntopts(mp);
+			break;
+		case 'g':
+			args.gid = getgrp(optarg);
+			break;
+		case 'm':
+			args.mode = (mode_t)strtol(optarg, NULL, 0);
 			break;
 		case '?':
 		default:
 			usage();
 		}
+
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_PTYFS, argv[1], mntflags, NULL))
+	if (mount(MOUNT_PTYFS, argv[1], mntflags, &args))
 		err(1, "ptyfs on %s", argv[1]);
-	exit(0);
+	if (mntflags & MNT_GETARGS)
+		printf("version %d, gid=%lu, mode=0%o\n", args.version,
+		    (unsigned long)args.gid, args.mode);
+	return 0;
 }
 
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-o options] ptyfs mountpoint\n", getprogname());
+	    "Usage: %s [-g <group|gid>] [-m <mode>] [-o options] ptyfs mountpoint\n", getprogname());
 	exit(1);
 }
