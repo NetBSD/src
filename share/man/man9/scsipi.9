@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.3 2001/06/21 11:59:01 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.4 2001/07/18 20:35:36 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -58,6 +58,10 @@
 .Fn scsipi_done "struct scsipi_xfer *xs"
 .Ft void
 .Fn scsipi_printaddr "struct scsipi_periph *periph"
+.Ft int
+.Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
+.Ft int
+.Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback) __P((struct scsipi_channel *, void *))" "void *arg"
 .Sh DESCRIPTION
 The
 .Nm
@@ -527,6 +531,29 @@ callback.
 .It Fn scsipi_periph_thaw "struct scsipi_periph *periph"
 .It Fn scsipi_periph_timed_thaw "void *arg"
 Same as the channel counterparts, but only for one specific peripheral.
+.It Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
+detach the periph associated with this I_T_L nexus. Both 
+.Fa target
+and
+.Fa lun
+may be wildcarded using the magic value -1.
+.Fa flags
+is passed to
+.Fn config_detach ""
+\&.
+Returns 0 if successfull, or error code if a device couldn't be removed.
+.It Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback) __P((struct scsipi_channel *, void *))" "void *arg"
+.Fn callback
+will be called with
+.Fa chan
+and
+.Fa arg
+as arguments, from the channel completion thread. The callback is run at
+splbio.
+.Fn scsipi_thread_call_callback
+will freeze the channel by one, it's up to the caller to thaw it when
+appropriate. returns 0 if the callback was properly recorded, or EBUSY if the
+channel has already a callback pending.
 .El
 .Sh EXAMPLES
 The best examples are existing HBA drivers.  Most of them sit in the
