@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.51 1997/10/22 14:39:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -955,7 +955,7 @@ setup_console:
 
 	case 0:	/* keyboard/display */
 #if NKBD > 0
-		zs_unit = 0;
+		zs_unit = 1;	/* XXX - config info! */
 		channel = 0;
 		cn = &consdev_kd;
 		/* Set cn_dev, cn_pri in kd.c */
@@ -970,7 +970,7 @@ setup_console:
 	case PROMDEV_TTYA:
 	case PROMDEV_TTYB:
 		zstty_unit = inSource - PROMDEV_TTYA;
-		zs_unit = 0;
+		zs_unit = 0;	/* XXX - config info! */
 		channel = zstty_unit & 1;
 		cn = &consdev_tty;
 		cn->cn_dev = makedev(zs_major, zstty_unit);
