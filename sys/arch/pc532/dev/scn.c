@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.2 1993/09/13 07:25:06 phil Exp $
+ *	$Id: scn.c,v 1.3 1994/02/21 06:43:31 phil Exp $
  */
 
 #include "scn.h"
@@ -65,7 +65,8 @@
 #include "../pc532/icu.h"
 #include "sl.h"
 
-int 	scnprobe(), scnattach(), scnintr(), scnstart(), scnparam();
+int 	scnprobe(), scnattach(), scnintr(), scnparam();
+void	scnstart();
 
 struct	pc532_driver scndriver = {
 	scnprobe, scnattach, "scn"
@@ -782,9 +783,12 @@ commint(unit, com)
 }
 #endif
 
-scnioctl(dev, cmd, data, flag)
+scnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -793,10 +797,10 @@ scnioctl(dev, cmd, data, flag)
 	register int error;
  
 	tp = scn_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -900,7 +904,8 @@ scnparam(tp, t)
 
   return (error);
 }
- 
+
+void 
 scnstart(tp)
 	register struct tty *tp;
 {
