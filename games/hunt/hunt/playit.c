@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
+/*	$NetBSD: playit.c,v 1.5 2002/09/20 15:47:19 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,10 +7,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $");
+__RCSID("$NetBSD: playit.c,v 1.5 2002/09/20 15:47:19 mycroft Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
+# include	<sys/poll.h>
 # include	<err.h>
 # include	<errno.h>
 # include	<curses.h>
@@ -217,26 +218,23 @@ out:
 static unsigned char
 getchr()
 {
-	fd_set	readfds, s_readfds;
-	int	nfds, s_nfds;
+	struct	pollfd set[2];
+	int	nfds;
 
-	FD_ZERO(&s_readfds);
-	FD_SET(Socket, &s_readfds);
-	FD_SET(STDIN, &s_readfds);
-	s_nfds = (Socket > STDIN) ? Socket : STDIN;
-	s_nfds++;
+	set[0].fd = Socket;
+	set[0].events = POLLIN;
+	set[1].fd = STDIN;
+	set[1].events = POLLIN;
 
 one_more_time:
 	do {
 		errno = 0;
-		readfds = s_readfds;
-		nfds = s_nfds;
-		nfds = select(nfds, &readfds, NULL, NULL, NULL);
+		nfds = poll(set, 2, INFTIM);
 	} while (nfds <= 0 && errno == EINTR);
 
-	if (FD_ISSET(STDIN, &readfds))
+	if (set[1].revents && POLLIN)
 		send_stuff();
-	if (! FD_ISSET(Socket, &readfds))
+	if (! (set[0].revents & POLLIN))
 		goto one_more_time;
 	icnt = read(Socket, ibuf, sizeof ibuf);
 	if (icnt < 0) {
