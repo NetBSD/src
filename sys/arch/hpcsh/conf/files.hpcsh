@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.5 2001/02/07 15:29:21 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.6 2001/02/09 19:54:11 uch Exp $
 #
 maxpartitions 8
 
@@ -14,6 +14,7 @@ file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
+include "dev/hpc/files.bicons"
 
 #
 # Machine-independent SCSI drivers
