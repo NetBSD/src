@@ -1,12 +1,13 @@
-/* $NetBSD: db_machdep.h,v 1.2 2001/03/04 05:55:43 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 2001/05/09 15:17:45 matt Exp $ */
 
-void db_of_boot_cmd	(db_expr_t addr, int have_addr, db_expr_t count, char *modif);
-void db_of_enter_cmd	(db_expr_t addr, int have_addr, db_expr_t count, char *modif);
-void db_of_exit_cmd	(db_expr_t addr, int have_addr, db_expr_t count, char *modif);
+#include <arm/db_machdep.h>
+
+void db_of_boot_cmd (db_expr_t, int, db_expr_t, char *);
+void db_of_enter_cmd (db_expr_t, int, db_expr_t, char *);
+void db_of_exit_cmd (db_expr_t, int, db_expr_t, char *);
 
 #define ARM32_DB_COMMANDS \
 	{ "ofboot",	db_of_boot_cmd,		0, NULL }, \
 	{ "ofenter",	db_of_enter_cmd,	0, NULL }, \
 	{ "ofexit",	db_of_exit_cmd,		0, NULL }
 
-#include <arm/db_machdep.h>
