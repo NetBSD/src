@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.16 2003/04/01 23:19:10 thorpej Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.17 2003/09/21 15:12:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16 2003/04/01 23:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.17 2003/09/21 15:12:16 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -618,9 +618,9 @@ vidcvideo_cursor_init(int width, int height)
 
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_normal,
-	    (paddr_t *)&p_cursor_normal);
+	    (void *)&p_cursor_normal);
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
-	    (paddr_t *)&p_cursor_transparent);
+	    (void *)&p_cursor_transparent);
 
 	memset ( cursor_normal, 0x55, width*height );			/* white? */
 	memset ( cursor_transparent, 0x00, width*height );		/* to see the diffence */
