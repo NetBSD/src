@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.9 1998/07/26 15:13:14 mycroft Exp $	*/
+/*	$NetBSD: chpass.h,v 1.10 2001/02/05 01:37:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -66,7 +66,6 @@ int	 p_expire __P((const char *, struct passwd *, ENTRY *));
 int	 p_gecos __P((const char *, struct passwd *, ENTRY *));
 int	 p_gid __P((const char *, struct passwd *, ENTRY *));
 int	 p_hdir __P((const char *, struct passwd *, ENTRY *));
-int	 p_login __P((const char *, struct passwd *, ENTRY *));
 int	 p_login __P((const char *, struct passwd *, ENTRY *));
 int	 p_passwd __P((const char *, struct passwd *, ENTRY *));
 int	 p_shell __P((const char *, struct passwd *, ENTRY *));
