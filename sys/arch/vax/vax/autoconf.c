@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2000/06/04 18:02:35 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61 2000/06/05 03:45:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -68,6 +68,12 @@ int mastercpu;	/* chief of the system */
 struct device *booted_device;
 int booted_partition;	/* defaults to 0 (aka 'a' partition */
 
+struct evcnt softnet_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "net");
+struct evcnt softserial_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "serial");
+struct evcnt softclock_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "clock");
 
 #define MAINBUS	0
 
@@ -77,6 +83,10 @@ cpu_configure(void)
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
+
+	evcnt_attach_static(&softserial_intrcnt);
+	evcnt_attach_static(&softnet_intrcnt);
+	evcnt_attach_static(&softclock_intrcnt);
 
 	/*
 	 * We're ready to start up. Clear CPU cold start flag.
