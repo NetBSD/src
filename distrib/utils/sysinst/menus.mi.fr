@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.44 2003/05/06 05:35:09 itojun Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.45 2003/05/16 19:28:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,23 +41,7 @@
  *
  * Some menus may be called directly in the code rather than via the 
  * menu system.
- *
- *  This file must be first in the sed command line.
- *
  */
-
-{
-#include <stdio.h>
-#include <curses.h>
-#include "defs.h"
-#include "md.h"
-#include "msg_defs.h"
-#include "menu_defs.h"
-}
-
-default y=12, no exit, scrollable;
-
-allow dynamic menus;
 
 menu netbsd, title "NetBSD-@@VERSION@@ Programme d'installation",
     exit, exitstring "Quitter le programme d'installation";
@@ -304,6 +288,12 @@ menu fdok, title "Presser entrée pour continuer";
 	option "OK", exit, action { yesno = 1; };
 	option "Abandonner l'installation", exit, action { yesno = 0; };
 
+menu crypttype, title "Password cipher", y=16;	/* XXX translate */
+        option "DES", exit, action { yesno = 1; };
+	option "MD5", exit, action { yesno = 2; };
+	option "Blowfish 2^7 round", exit, action { yesno = 3; };
+	option "do not change", exit, action { yesno = 0; };
+				 
 
 menu cdromsource, title "Changer";
 	display action
@@ -392,12 +382,17 @@ menu namesrv6, title "  Choisissez un serveur de noms IPv6 :";
 		{ yesno = 0; };
 
 menu ip6autoconf, title "Faire la configuration automatique IPv6 ?";
-	option "Yes", exit, action  {yesno = 1;};
-	option "No",  exit, action  {yesno = 0;};
+	option "Oui", exit, action  {yesno = 1;};
+	option "Non", exit, action  {yesno = 0;};
 
 menu dhcpautoconf, title "Exécutez la configuration automatique de DHCP?";
-        option "Yes", exit, action  {yesno = 1;};
-        option "No",  exit, action  {yesno = 0;};
+        option "Oui", exit, action  {yesno = 1;};
+        option "Non", exit, action  {yesno = 0;};
+
+menu rootsh, title "Root shell";  	/* XXX translate */
+        option "/bin/csh", exit, action {shellpath = "/bin/csh";};
+	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
+	option "/bin/sh",  exit, action {shellpath = "/bin/sh";};
 
 menu extract, title "Methode d'indication de l'extraction d'ensemble ?";
 	option "Thermometre (recommendeé)", exit, action  { yesno = 1; };
