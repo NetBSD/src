@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.4 2003/02/11 09:43:37 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.5 2003/02/26 23:13:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -185,6 +185,10 @@ do {									\
  * future timeouts and 0 or negative for due timeouts.
  */
 
+#ifdef CALLOUT_EVENT_COUNTERS
+static struct evcnt callout_ev_late;
+#endif
+
 /*
  * callout_startup:
  *
@@ -199,6 +203,11 @@ callout_startup(void)
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
 	simple_lock_init(&callout_slock);
+
+#ifdef CALLOUT_EVENT_COUNTERS
+	evcnt_attach_dynamic(&callout_ev_late, EVCNT_TYPE_MISC,
+	    NULL, "callout", "late");
+#endif
 }
 
 /*
@@ -376,10 +385,9 @@ softclock(void *v)
 			CIRCQ_INSERT(&c->c_list,
 			    BUCKET((c->c_time - hardclock_ticks), c->c_time));
 		} else {
-#ifdef DEBUG	/* XXX evcnt */
+#ifdef CALLOUT_EVENT_COUNTERS
 			if (c->c_time - hardclock_ticks < 0)
-				printf("timeout delayed %d\n", c->c_time -
-				    hardclock_ticks);
+				callout_ev_late.ev_count++;
 #endif
 			c->c_flags = (c->c_flags  & ~CALLOUT_PENDING) |
 			    CALLOUT_FIRED;
