@@ -1,7 +1,7 @@
-/* $NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.5 1999/02/24 19:17:09 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 1999/02/24 19:17:09 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $")
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <vm/vm.h>
+
 #include <machine/alpha_cpu.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -57,40 +59,56 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $")
 #include <alpha/alpha/cpuvar.h>
 
 void	alpha_ipi_halt __P((void));
-void	alpha_ipi_imb __P((void));
 void	alpha_ipi_tbia __P((void));
 void	alpha_ipi_tbiap __P((void));
+void	alpha_ipi_imb __P((void));
 
+/*
+ * NOTE: This table must be kept in order with the bit definitions
+ * in <machine/intr.h>.
+ */
 ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_halt,
-	alpha_ipi_imb,
 	alpha_ipi_tbia,
 	alpha_ipi_tbiap,
+	pmap_do_tlb_shootdown,
+	alpha_pal_imb,
 };
 
 /*
  * Send an interprocessor interrupt.
  */
 void
-alpha_send_ipi(cpu_id, ipinum)
-	u_long cpu_id, ipinum;
+alpha_send_ipi(cpu_id, ipimask)
+	u_long cpu_id, ipimask;
 {
-	u_long ipimask;
 
 #ifdef DIAGNOSTIC
-	if (ipinum >= ALPHA_NIPIS)
-		panic("alpha_sched_ipi: bogus ipinum");
-
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
 	    cpu_info[cpu_id].ci_dev == NULL)
 		panic("alpha_sched_ipi: bogus cpu_id");
 #endif
 
-	ipimask = (1UL << ipinum);
 	alpha_atomic_setbits_q(&cpu_info[cpu_id].ci_ipis, ipimask);
 printf("SENDING IPI TO %lu\n", cpu_id);
 	alpha_pal_wripir(cpu_id);
 printf("IPI SENT\n");
+}
+
+/*
+ * Broadcast an IPI to all but ourselves.
+ */
+void
+alpha_broadcast_ipi(ipimask)
+	u_long ipimask;
+{
+	u_long i;
+
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		if (cpu_info[i].ci_dev == NULL)
+			continue;
+		alpha_send_ipi(i, ipimask);
+	}
 }
 
 void
@@ -112,15 +130,13 @@ alpha_ipi_halt()
 }
 
 void
-alpha_ipi_imb()
-{
-
-	alpha_pal_imb();
-}
-
-void
 alpha_ipi_tbia()
 {
+	u_long cpu_id = alpha_pal_whami();
+
+	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
+	alpha_atomic_clearbits_q(&cpu_info[cpu_id].ci_ipis,
+	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
 
 	ALPHA_TBIA();
 }
@@ -128,6 +144,8 @@ alpha_ipi_tbia()
 void
 alpha_ipi_tbiap()
 {
+
+	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
 
 	ALPHA_TBIAP();
 }
