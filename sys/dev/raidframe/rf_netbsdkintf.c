@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.76 2000/03/31 02:05:24 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.77 2000/04/27 00:57:48 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2991,6 +2991,7 @@ rf_create_configuration(ac,config,raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t *clabel;
+	int i;
 
 	clabel = ac->clabel;
 
@@ -3015,6 +3016,9 @@ rf_create_configuration(ac,config,raidPtr)
 		ac = ac->next;
 	}
 
+	for(i=0;i<RF_MAXDBGV;i++) {
+		config->debugVars[i][0] = NULL;
+	}
 }
 
 int
@@ -3158,6 +3162,9 @@ rf_auto_config_set(cset,unit)
 				/* XXX do something more intelligent here. */
 		return(1);
 	}
+
+	memset(config, 0, sizeof(RF_Config_t));
+
 	/* XXX raidID needs to be set correctly.. */
 
 	/* 
