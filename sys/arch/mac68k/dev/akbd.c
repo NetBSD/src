@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.9 2000/06/17 18:00:47 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.10 2000/07/03 08:59:27 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -78,7 +78,6 @@ static void	blinkleds __P((struct akbd_softc *));
 /*
  * Local variables.
  */
-static volatile int kbd_done;  /* Did ADBOp() complete? */
 
 /* Driver definition. */
 struct cfattach akbd_ca = {
@@ -87,7 +86,7 @@ struct cfattach akbd_ca = {
 
 extern struct cfdriver akbd_cd;
 
-int kbd_intr __P((adb_event_t *event));
+int kbd_intr __P((adb_event_t *event, struct akbd_softc *));
 int akbd_enable __P((void *, int));
 void akbd_set_leds __P((void *, int));
 int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
@@ -136,7 +135,7 @@ akbdattach(parent, self, aux)
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
-	int count, error;
+	int error, kbd_done;
 	short cmd;
 	u_char buffer[9];
 #if NWSKBD > 0
@@ -163,15 +162,9 @@ akbdattach(parent, self, aux)
 		printf("standard keyboard (ISO layout)\n");
 		break;
 	case ADB_EXTKBD:
-		kbd_done = 0;
 		cmd = ADBTALK(sc->adbaddr, 1);
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&kbd_done, cmd);
-
-		/* Wait until done, but no more than 2 secs */
-		count = 40000;
-		while (!kbd_done && count-- > 0)
-			delay(50);
+		kbd_done =
+		    (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0);
 
 		/* Ignore Logitech MouseMan/Trackman pseudo keyboard */
 		if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x20) {
@@ -337,7 +330,7 @@ kbd_processevent(event, ksc)
 #endif
 #if NWSKBD > 0
 		if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
-			kbd_intr(&new_event);
+			kbd_intr(&new_event, ksc);
 #else
 		/* do nothing */ ;
 #endif
@@ -350,7 +343,7 @@ kbd_processevent(event, ksc)
 #endif
 #if NWSKBD > 0
 			if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
-				kbd_intr(&new_event);
+				kbd_intr(&new_event, ksc);
 #else
 			/* do nothing */ ;
 #endif
@@ -371,14 +364,10 @@ getleds(addr)
 
 	leds = 0x00;	/* all off */
 	buffer[0] = 0;
-	kbd_done = 0;
 
 	cmd = ADBTALK(addr, 2);
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] > 0)
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+	    buffer[0] > 0)
 		leds = ~(buffer[2]) & 0x07;
 
 	return (leds);
@@ -404,14 +393,9 @@ setleds(ksc, leds)
 
 	addr = ksc->adbaddr;
 	buffer[0] = 0;
-	kbd_done = 0;
 
 	cmd = ADBTALK(addr, 2);
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] == 0)
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	leds = ~leds & 0x07;
@@ -419,17 +403,11 @@ setleds(ksc, leds)
 	buffer[2] |= leds;
 
 	cmd = ADBLISTEN(addr, 2);
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
+	adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 
 	/* talk R2 */
 	cmd = ADBTALK(addr, 2);
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] == 0)
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	ksc->sc_leds = ~((u_int8_t)buffer[2]) & 0x07;
@@ -473,10 +451,8 @@ int
 akbd_is_console()
 {
 	extern struct mac68k_machine_S mac68k_machine;
-	static int akbd_console_initted = 0;
 
-	return ((mac68k_machine.serial_console & 0x03) == 0) &&
-	    (++akbd_console_initted == 1);
+	return ((mac68k_machine.serial_console & 0x03) == 0);
 }
 
 int
@@ -529,13 +505,12 @@ static int polledkey;
 extern int adb_polling;
 
 int
-kbd_intr(event)
+kbd_intr(event, sc)
 	adb_event_t *event;
+	struct akbd_softc *sc;
 {
 	int key, press, val;
 	int type;
-
-	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
 	key = event->u.k.key;
 	press = ADBK_PRESS(key);
@@ -560,7 +535,9 @@ kbd_intr(event)
 int
 akbd_cnattach()
 {
-	if (!akbd_is_console())
+	static int akbd_console_initted = 0;
+
+	if ((++akbd_console_initted > 1) || !akbd_is_console())
 		return -1;
 
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
