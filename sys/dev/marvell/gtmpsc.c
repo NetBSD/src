@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.3 2003/03/17 16:42:47 matt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.4 2003/03/24 17:02:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -170,20 +170,19 @@ CFATTACH_DECL(gtmpsc, sizeof(struct gtmpsc_softc),
 
 extern struct cfdriver gtmpsc_cd;
 
-#if 0
-struct consdev consdev_gtmpsc = {
-	gtmpsccnprobe,
+static struct consdev gtmpsc_consdev = {
+	0,
 	gtmpsccninit,
 	gtmpsccngetc,
 	gtmpsccnputc,
 	gtmpsccnpollc,
 	NULL,		/* cn_bell */
-	NULL,		/* cn_flush */
 	gtmpsccnhalt,
+	NULL,		/* cn_flush */
+	NODEV,
+	CN_NORMAL
 };
-#endif
 
-STATIC int gtmpsc_nattached = 0;
 STATIC void *gtmpsc_sdma_ih = NULL;
 
 gtmpsc_softc_t *gtmpsc_scp[GTMPSC_NCHAN] = { 0 };
@@ -224,7 +223,6 @@ unsigned int gtmpsc_poll_putc_miss = 0;
 unsigned int gtmpsc_poll_putn_miss = 0;
 unsigned int gtmpsc_poll_getc_miss = 0;
 unsigned int gtmpsc_poll_pollc_miss = 0;
-
 
 #ifndef SDMA_COHERENT
 /*
@@ -388,7 +386,7 @@ compute_cdv(unsigned int baud)
 
 	if (baud == 0)
 		return 0;
-	cdv = (BRG_DEFAULT_INPUT_RATE / (baud * GTMPSC_CLOCK_DIVIDER) + 1) / 2 - 1;
+	cdv = (GT_MPSC_FREQUENCY / (baud * GTMPSC_CLOCK_DIVIDER) + 1) / 2 - 1;
 	if (cdv > BRG_BCR_CDV_MAX)
 		return -1;
 	return cdv;
@@ -441,10 +439,9 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	sc->gtmpsc_dmat = ga->ga_dmat;
 	sc->gtmpsc_unit = ga->ga_unit;
 
-	printf(", SDMA");
+	aprint_normal(": SDMA");
 	err = bus_dmamem_alloc(sc->gtmpsc_dmat, NBPG, NBPG, NBPG,
-		sc->gtmpsc_dma_segs, 1, &rsegs,
-		BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
+	    sc->gtmpsc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamem_alloc error 0x%x\n", err));
 		splx(s);
@@ -452,10 +449,10 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	}
 #ifndef SDMA_COHERENT
 	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, NBPG,
-		&kva, BUS_DMA_NOWAIT);
+	    &kva, BUS_DMA_NOWAIT);
 #else
 	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, NBPG,
-		&kva, BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
+	    &kva, BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
 #endif
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamem_map error 0x%x\n", err));
@@ -463,25 +460,45 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	bzero(kva, NBPG);	/* paranoid/superfluous */
+	err = bus_dmamap_create(sc->gtmpsc_dmat, NBPG, 1, NBPG, NBPG,
+	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->gtmpsc_dma_map);
+	if (err) {
+		PRINTF(("mpscattach: bus_dmamap_create error 0x%x\n", err));
+		splx(s);
+		return;
+	}
+
+	err = bus_dmamap_load(sc->gtmpsc_dmat, sc->gtmpsc_dma_map, kva, NBPG,
+	    NULL, 0);
+	if (err) {
+		PRINTF(("mpscattach: bus_dmamap_load error 0x%x\n", err));
+		splx(s);
+		return;
+	}
+	memset(kva, 0, NBPG);	/* paranoid/superfluous */
 
 	vmps = (gtmpsc_poll_sdma_t *)kva;				    /* KVA */
-	pmps = (gtmpsc_poll_sdma_t *)sc->gtmpsc_dma_segs[0].ds_addr;    /* PA */
+	pmps = (gtmpsc_poll_sdma_t *)sc->gtmpsc_dma_map->dm_segs[0].ds_addr;    /* PA */
 #ifdef DEBUG
 	printf(" at %p/%p", vmps, pmps);
 #endif
+	printf(" TX");
 	gtmpsc_txdesc_init(vmps, pmps);
+	printf(" RX");
 	gtmpsc_rxdesc_init(vmps, pmps);
 	sc->gtmpsc_poll_sdmapage = vmps;
 
+	printf(" TXflush");
 	if (gtmpsc_scp[sc->gtmpsc_unit] != NULL)
 		gtmpsc_txflush(gtmpsc_scp[sc->gtmpsc_unit]);
 
+	printf(" TTY");
 	sc->gtmpsc_tty = tp = ttymalloc();
 	tp->t_oproc = gtmpscstart;
 	tp->t_param = gtmpscparam;
 	tty_attach(tp);
 
+	printf(" Init");
 	gtmpscinit(sc);
 
 	gtmpsc_scp[sc->gtmpsc_unit] = sc;
@@ -496,7 +513,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, gtmpsc_softintr, sc);
 	if (sc->sc_si == NULL)
 		panic("mpscattach: cannot softintr_establish IPL_SOFTSERIAL");
-	printf(" irq %s", intr_string(IRQ_SDMA));
+	aprint_normal(" irq %s", intr_string(IRQ_SDMA));
 
 	shutdownhook_establish(gtmpsc_shutdownhook, sc);
 
@@ -505,7 +522,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		SDMA_IMASK_ENABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit));
 #endif	/* DDB */
 
-	printf("%s\n", (gt_reva_gtmpsc_bug) ? " [Rev A. bug]" : "");
+	aprint_normal("%s\n", (gt_reva_gtmpsc_bug) ? " [Rev A. bug]" : "");
 
 	splx(s);
 #ifdef KGDB
@@ -530,6 +547,12 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		kgdb_connect(1);
 	}
 #endif /* KGDB */
+
+	if (cn_tab->cn_dev == makedev(0, sc->gtmpsc_unit)) {
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&gtmpsc_cdevsw),
+		    sc->gtmpsc_dev.dv_unit);
+		printf("%s: console\n", sc->gtmpsc_dev.dv_xname);
+	}
 
 }
 
@@ -720,15 +743,13 @@ gtmpscstop(struct tty *tp, int flag)
 STATIC void
 gtmpscstart(struct tty *tp)
 {
-	struct gtmpsc_softc       *sc;
+	struct gtmpsc_softc *sc;
 	unsigned char *tba;
 	unsigned int unit;
 	int s, s2, tbc;
 
 	unit = GTMPSCUNIT(tp->t_dev);
-	if (unit >= GTMPSC_NCHAN)
-		return;
-	sc = gtmpsc_scp[unit];
+	sc = gtmpsc_cd.cd_devs[unit];
 	if (sc == NULL)
 		return;
 
@@ -790,7 +811,7 @@ gtmpscparam(struct tty *tp, struct termios *t)
 
 	s = splserial();
 
-	sc->gtmpsc_brg_bcr = BRG_BCR_EN | BRG_BCR_CLKS_TCLK | ospeed;
+	sc->gtmpsc_brg_bcr = BRG_BCR_EN | GT_MPSC_CLOCK_SOURCE | ospeed;
 	sc->gtmpsc_chr3 = GTMPSC_MAXIDLE(t->c_ospeed);
 
 	/* And copy to tty. */
@@ -1128,8 +1149,7 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 	/*
 	 * abort SDMA TX, RX for GTMPSC unit
 	 */
-	GT_WRITE(sc, SDMA_U_SDCM(unit),
-		SDMA_SDCM_AR|SDMA_SDCM_AT);
+	GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_AR|SDMA_SDCM_AT);
 
 	if (once == 0) {
 		/*
@@ -1235,8 +1255,8 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 		GT_WRITE(sc, GTMPSC_RCRR, r);
 		GT_WRITE(sc, GTMPSC_TCRR, r);
 	}
-	sc->gtmpsc_brg_bcr =
-	  BRG_BCR_EN | BRG_BCR_CLKS_TCLK | compute_cdv(GT_MPSC_DEFAULT_BAUD_RATE);
+	sc->gtmpsc_brg_bcr = BRG_BCR_EN | GT_MPSC_CLOCK_SOURCE |
+	    compute_cdv(GT_MPSC_DEFAULT_BAUD_RATE);
 	sc->gtmpsc_chr3 = GTMPSC_MAXIDLE(GT_MPSC_DEFAULT_BAUD_RATE);
 	gtmpsc_loadchannelregs(sc);
 
@@ -1297,79 +1317,35 @@ gtmpscinit(struct gtmpsc_softc *sc)
 void
 gtmpsccninit(struct consdev *cd)
 {
-	struct gtmpsc_softc *sc;
-	unsigned int unit;
-	extern struct powerpc_bus_space gt_mem_bs_tag;
-	extern bus_space_handle_t gt_memh;
-	int s;
-
-	unit = GTMPSCUNIT(cd->cn_dev);
-	DPRINTF(("gtmpsccninit unit 0x%x\n", unit));
-
-	s = splserial();
-
-	if (gtmpsc_nattached == 0) {
-		unsigned char *cp;
-		unsigned char c;
-		unsigned int i;
-
-		sc = &gtmpsc_fake_softc;
-		gtmpsc_hackinit(sc, &gt_mem_bs_tag, gt_memh, unit);
-		gtmpscinit(sc);
-		gtmpsccninit_done = 1;
-		cp = gtmpsc_earlybuf;
-		for (i=0; i < sizeof(gtmpsc_earlybuf); i++) {
-			c = *cp++;
-			if (c == 0)
-				break;
-			gtmpsc_common_putc(0, c);
-		}
-	} else {
-		gtmpsc_poll_sdma_t *vmps;
-		gtmpsc_poll_sdma_t *pmps;
-
-		sc = gtmpsc_scp[unit];
-
-		gtmpsc_txflush(gtmpsc_scp[sc->gtmpsc_unit]);
-		SDMA_IMASK_DISABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit)
-			| SDMA_INTR_TXBUF(sc->gtmpsc_unit));
-
-		gtmpscinit_stop(sc, 1);
-
-		pmps = (gtmpsc_poll_sdma_t *)sc->gtmpsc_dma_segs[0].ds_addr;
-		vmps = sc->gtmpsc_poll_sdmapage;
-		gtmpsc_txdesc_init(vmps, pmps);
-		gtmpsc_rxdesc_init(vmps, pmps);
-
-		gtmpscinit_start(sc, 1);
-	}
-
-	splx(s);
 }
 
 int
 gtmpsccngetc(dev_t dev)
 {
-	int s;
+	unsigned int unit = 0;
 	int c;
-	unsigned int unit;
 	
 	unit = GTMPSCUNIT(dev);
+	if (major(dev) != 0) {
+		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		if (sc == NULL)
+			return 0;
+		unit = sc->gtmpsc_unit;
+	}
 	if (unit >= GTMPSC_NCHAN)
 		return 0;
-	s = splserial();
 	c = gtmpsc_common_getc(unit);
-	splx(s);
 
 	return c;
 }
 
+void kcomcnputs(dev_t, const char *);
+
 void
 gtmpsccnputc(dev_t dev, int c)
 {
+	unsigned int unit = 0;
 	char ch = c;
-	int s;
-	unsigned int unit;
 	static int ix = 0;
 	
 	if (gtmpsccninit_done == 0) {
@@ -1379,13 +1355,17 @@ gtmpsccnputc(dev_t dev, int c)
 	}
 
 	unit = GTMPSCUNIT(dev);
-	DPRINTF(("gtmpsccninit unit 0x%x\n", unit));
+	if (major(dev) != 0) {
+		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		if (sc == NULL)
+			return;
+		unit = sc->gtmpsc_unit;
+	}
 
 	if (unit >= GTMPSC_NCHAN)
 		return;
-	s = splserial();
+
 	gtmpsc_common_putc(unit, ch);
-	splx(s);
 }
 
 void
@@ -1402,16 +1382,26 @@ gtmpsccnattach(bus_space_tag_t memt, bus_space_handle_t memh, int unit,
 	unsigned char c;
 	unsigned int i;
 
+	if (gtmpsccninit_done)
+		return 0;
+
+	DPRINTF(("gtmpsccnattach\n"));
 	gtmpsc_hackinit(sc, memt, memh, unit);
+	DPRINTF(("gtmpscinit\n"));
 	gtmpscinit(sc);
 	gtmpsccninit_done = 1;
 	cp = gtmpsc_earlybuf;
+	strcpy(gtmpsc_earlybuf, "\r\nMPSC Lives!\r\n");
 	for (i=0; i < sizeof(gtmpsc_earlybuf); i++) {
 		c = *cp++;
 		if (c == 0)
 			break;
-		gtmpsc_common_putc(0, c);
+		gtmpsc_common_putc(unit, c);
 	}
+	DPRINTF(("switching cn_tab\n"));
+	gtmpsc_consdev.cn_dev = makedev(0, unit);
+	cn_tab = &gtmpsc_consdev;
+	DPRINTF(("switched cn_tab!\n"));
 	return 0;
 }
 
@@ -1522,12 +1512,14 @@ gtmpsc_common_getc(unsigned int unit)
 		csr = desc_read(csrp);
 		if (csr & SDMA_CSR_RX_OWN) {
 			r = sc->gtmpsc_chr2 | GTMPSC_CHR2_CRD;
-			GT_WRITE(sc,
-				GTMPSC_U_CHRN(unit, 2), r);
+			GT_WRITE(sc, GTMPSC_U_CHRN(unit, 2), r);
 			do {
 
 				gtmpsc_poll_getc_miss++;
+				if (gtmpsc_poll_getc_miss % 100000 == 0)
+					printf("getc %d\n", gtmpsc_poll_getc_miss);
 				GTMPSC_CACHE_INVALIDATE(csrp);
+				DELAY(50);
 				csr = desc_read(csrp);
 			} while (csr & SDMA_CSR_RX_OWN);
 		}
@@ -1549,8 +1541,7 @@ gtmpsc_common_getc(unsigned int unit)
 		GTMPSC_CACHE_FLUSH(csrp);
 #ifdef KGDB
 		if (unit == comkgdbport && gt_reva_gtmpsc_bug)
-			GT_WRITE(sc, SDMA_ICAUSE,
-						~SDMA_INTR_RXBUF(unit));
+			GT_WRITE(sc, SDMA_ICAUSE, ~SDMA_INTR_RXBUF(unit));
 #endif
 	}
 	gtmpsc_poll_getc_cnt++;
@@ -1620,8 +1611,7 @@ gtmpsc_common_putn(struct gtmpsc_softc *sc)
 		sdcm = GT_READ(sc, SDMA_U_SDCM(unit));
 
 		if ((sdcm & SDMA_SDCM_TXD) == 0) {
-			GT_WRITE(sc, SDMA_U_SDCM(unit),
-							       SDMA_SDCM_TXD);
+			GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_TXD);
 		}
 	}
 }
@@ -1657,6 +1647,7 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 		if ((csr & SDMA_CSR_TX_OWN) == 0)
 			break;
 		gtmpsc_poll_putc_miss++;
+		DELAY(50);
 	}
 	if (csr & SDMA_CSR_TX_ES)
 		PRINTF(("mpsc 0 TX error, txdesc csr 0x%x\n", csr));
@@ -1675,8 +1666,7 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 	sdcm = GT_READ(sc, SDMA_U_SDCM(unit));
 
 	if ((sdcm & SDMA_SDCM_TXD) == 0) {
-		GT_WRITE(sc, SDMA_U_SDCM(unit),
-						       SDMA_SDCM_TXD);
+		GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_TXD);
 	}
 }
 
@@ -1722,19 +1712,11 @@ gtmpsc_poll(void *arg)
 		}
 	}
 #ifdef DDB
-#ifdef MPSC_CONSOLE
 	if (stat) {
-#if 0
-		struct consdev *ocd = cn_tab;
-		if (ocd->cn_init != gtmpsccninit) {
-			cn_tab = &constab[0];
+		if (cn_tab == &gtmpsc_consdev) {
 			Debugger();
-			cn_tab = ocd;
-		} else
-#endif
-			Debugger();
+		}
 	}
-#endif
 #endif
 	if (kick)
 		softintr_schedule(sc->sc_si);
@@ -1792,14 +1774,7 @@ gtmpsc_kgdb_poll(void *arg)
 
 #if 0
 void
-#ifdef __STDC__
 gtmpsc_printf(const char *fmt, ...)
-#else
-gtmpsc_printf(fmt, va_alist)
-        char *fmt;
-        va_dcl
-#endif
-
 {
 	struct consdev *ocd;
 	int s;
@@ -1817,19 +1792,11 @@ gtmpsc_printf(fmt, va_alist)
 #endif
 
 void
-#ifdef __STDC__
 gtmpsc_mem_printf(const char *fmt, ...)
-#else
-gtmpsc_mem_printf(fmt, va_alist)
-        char *fmt;
-        va_dcl
-#endif
 {
-	int s;
 	va_list ap;
 	static unsigned char *p = gtmpsc_print_buf;
 
-	s = splserial();
 	if (p >= &gtmpsc_print_buf[GTMPSC_PRINT_BUF_SIZE - 128]) {
 		bzero(gtmpsc_print_buf, GTMPSC_PRINT_BUF_SIZE);
 		p = gtmpsc_print_buf;
@@ -1837,7 +1804,6 @@ gtmpsc_mem_printf(fmt, va_alist)
 	va_start(ap, fmt);
 	p += vsprintf(p, fmt, ap);
 	va_end(ap);
-	splx(s);
 }
 
 void
@@ -1852,11 +1818,10 @@ void
 gtmpsccnhalt(dev_t dev)
 {
 	unsigned int unit;
-	gtmpsc_softc_t *sc = gtmpsc_scp[unit];
 	u_int32_t r;
 
 	for (unit = 0; unit < GTMPSC_NCHAN; unit++) {
-		sc = gtmpsc_scp[unit];
+		gtmpsc_softc_t *sc = gtmpsc_scp[unit];
 		if (sc == NULL)
 			continue;
 
@@ -1878,8 +1843,7 @@ gtmpsccnhalt(dev_t dev)
 		/*
 		 * abort SDMA RX for MPSC unit
 		 */
-		GT_WRITE(sc, SDMA_U_SDCM(unit),
-			SDMA_SDCM_AR);
+		GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_AR);
 	}
 }
 
