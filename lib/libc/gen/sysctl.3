@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.124 2003/11/23 07:11:04 jhawk Exp $
+.\"	$NetBSD: sysctl.3,v 1.125 2003/11/23 07:22:19 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -883,11 +883,12 @@ Returns 1 if the host accepts source routed packets.
 .It Li ip.subnetsarelocal
 Returns 1 if subnets are to be considered local addresses.
 .It Li ip.mtudisc
-If set to 1, Path MTU Discovery (RFC 1191) is enabled.  When Path MTU
-Discovery is enabled, the transmitted TCP segment size will be
-determined by the advertised maximum segment size (MSS) from the
-remote end, as constrained by the path MTU. If MTU Discovery is
-disabled, the transmitted segment size will never be greater than
+If set to 1, Path MTU Discovery (RFC 1191) is enabled.
+When Path MTU Discovery is enabled, the transmitted TCP segment
+size will be determined by the advertised maximum segment size
+(MSS) from the remote end, as constrained by the path MTU.
+If MTU Discovery is disabled, the transmitted segment size will
+never be greater than
 .Li tcp.mssdflt
 (the local maximum segment size).
 .It Li ip.anonportmin
@@ -927,11 +928,12 @@ The maximum number of fragmented packets the node will accept.
 \-1 means that the node will accept as many fragmented packets as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .It Li ip.checkinterface
-If set to non-zero, the host will reject packets addressed to it that arrive
-on an interface not bound to that address. Currently, this must be disabled
-if ipnat is used to translate the destination address to another local
-interface, or if addresses are added to the loopback interface instead of
-the interface where the packets for those packets are received.
+If set to non-zero, the host will reject packets addressed to it
+that arrive on an interface not bound to that address.
+Currently, this must be disabled if ipnat is used to translate the
+destination address to another local interface, or if addresses
+are added to the loopback interface instead of the interface where
+the packets for those packets are received.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li icmp.errppslimit
@@ -957,7 +959,7 @@ Returns the default TCP receive buffer size.
 .It Li tcp.mssdflt
 Returns the default maximum segment size both advertized to the peer
 and to use when either the peer does not advertize a maximum segment size to
-us during connection setup or Path MTU Discovery 
+us during connection setup or Path MTU Discovery
 .Li ( ip.mtudisc )
 is disabled.
 Do not change this value unless you really know what you are doing.
