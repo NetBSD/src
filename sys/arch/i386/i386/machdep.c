@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 1996/10/17 08:31:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212 1996/10/17 19:31:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1124,10 +1124,10 @@ init386(first_avail)
 	 * descriptor storage has already been allocated).
 	 */
 	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
-	    ioport_ex_storage, sizeof(ioport_ex_storage),
+	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	iomem_ex = extent_create("iomem", 0x0a0000, 0x100000, M_DEVBUF,
-	    iomem_ex_storage, sizeof(iomem_ex_storage),
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
