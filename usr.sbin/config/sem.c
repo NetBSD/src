@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.23 1999/09/21 15:50:19 is Exp $	*/
+/*	$NetBSD: sem.c,v 1.24 2000/01/23 23:37:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,6 +173,13 @@ setmaxusers(n)
 		error("warning: maxusers (%d) > %d", n, maxmaxusers);
 		errors--;
 	}
+}
+
+void
+setident(i)
+	const char *i;
+{
+	ident=intern(i);
 }
 
 /*
