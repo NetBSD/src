@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.7 1998/12/05 13:17:55 pk Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.8 1999/01/16 07:48:24 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.7 1998/12/05 13:17:55 pk Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.8 1999/01/16 07:48:24 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,11 +59,12 @@ __RCSID("$NetBSD: getnetnamadr.c,v 1.7 1998/12/05 13:17:55 pk Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
-#include <stdio.h>
-#include <netdb.h>
-#include <resolv.h>
 #include <ctype.h>
 #include <errno.h>
+#include <netdb.h>
+#include <nsswitch.h>
+#include <resolv.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef __weak_alias
@@ -72,14 +73,16 @@ __weak_alias(getnetbyname,_getnetbyname);
 #endif
 
 extern int h_errno;
+extern int _net_stayopen;
 
 #if defined(mips) && defined(SYSTYPE_BSD43)
 extern int errno;
 #endif
 
-/* XXX private header! */
-struct netent *__getnetbyaddr __P((unsigned long net, int type));
-struct netent *__getnetbyname __P((const char *name));
+int _getnetbyaddr __P((void *, void *, va_list));
+int _getnetbyname __P((void *, void *, va_list));
+int _dns_getnetbyaddr __P((void *, void *, va_list));
+int _dns_getnetbyname __P((void *, void *, va_list));
 
 #define BYADDR 0
 #define BYNAME 1
@@ -216,10 +219,38 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 	return (NULL);
 }
 
-struct netent *
-getnetbyaddr(net, net_type)
-	register u_long net;
-	register int net_type;
+int
+_getnetbyaddr(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	struct netent *p;
+	unsigned long net;
+	int type;
+
+	net = va_arg(ap, unsigned long);
+	type = va_arg(ap, int);
+
+	setnetent(_net_stayopen);
+	while ((p = getnetent()) != NULL)
+		if (p->n_addrtype == type && p->n_net == net)
+			break;
+	if (!_net_stayopen)
+		endnetent();
+	*((struct netent **)rv) = p;
+	if (p==NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
+	}
+	return NS_SUCCESS;
+}
+
+int
+_dns_getnetbyaddr(rv, cb_data, ap)
+	void    *rv;
+	void    *cb_data;
+	va_list  ap;
 {
 	unsigned int netbr[4];
 	int nn, anslen, i;
@@ -227,118 +258,171 @@ getnetbyaddr(net, net_type)
 	char qbuf[MAXDNAME];
 	unsigned long net2;
 	struct netent *net_entry;
-	char lookups[MAXDNSLUS];
+	unsigned long net;
+	int type;
 
-	if (net_type != AF_INET)
-		return (__getnetbyaddr(net, net_type));
+	net = va_arg(ap, unsigned long);
+	type = va_arg(ap, int);
+
+	if (type != AF_INET)
+		return NS_UNAVAIL;
+
+	for (nn = 4, net2 = net; net2; net2 >>= 8)
+		netbr[--nn] = (unsigned int)(net2 & 0xff);
+	switch (nn) {
+	default:
+		return NS_UNAVAIL;
+	case 3: 	/* Class A */
+		sprintf(qbuf, "0.0.0.%u.in-addr.arpa", netbr[3]);
+		break;
+	case 2: 	/* Class B */
+		sprintf(qbuf, "0.0.%u.%u.in-addr.arpa", netbr[3], netbr[2]);
+		break;
+	case 1: 	/* Class C */
+		sprintf(qbuf, "0.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
+		    netbr[1]);
+		break;
+	case 0: 	/* Class D - E */
+		sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
+		    netbr[1], netbr[0]);
+		break;
+	}
+	anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
+	    sizeof(buf));
+	if (anslen < 0) {
+#ifdef DEBUG
+		if (_res.options & RES_DEBUG)
+			printf("res_query failed\n");
+#endif
+		return NS_NOTFOUND;
+	}
+	net_entry = getnetanswer(&buf, anslen, BYADDR);
+	if (net_entry) {
+		/* maybe net should be unsigned? */
+		unsigned long u_net = net;
+
+		/* Strip trailing zeros */
+		while ((u_net & 0xff) == 0 && u_net != 0)
+			u_net >>= 8;
+		net_entry->n_net = u_net;
+	}
+	*((struct netent **)rv) = net_entry;
+	if (net_entry == NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
+	}
+	return NS_SUCCESS;
+}
+
+struct netent *
+getnetbyaddr(net, net_type)
+	register u_long net;
+	register int net_type;
+{
+	struct netent *net_entry;
+	static ns_dtab dtab[] = {
+		NS_FILES_CB(_getnetbyaddr, NULL),
+		{ NSSRC_DNS, _dns_getnetbyaddr, NULL },	/* force -DHESIOD */
+		{ NULL, NULL, NULL }
+	};
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
 
-	memcpy(lookups, _res.lookups, sizeof(lookups));
-	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof(lookups));
-
 	net_entry = NULL;
-	for (i = 0; i < MAXDNSLUS && net_entry == NULL && lookups[i]; i++) {
-		switch (lookups[i]) {
-		case 'b':
-			for (nn = 4, net2 = net; net2; net2 >>= 8)
-				netbr[--nn] = (unsigned int)(net2 & 0xff);
-			switch (nn) {
-			default:
-				return (NULL);
-			case 3: 	/* Class A */
-				sprintf(qbuf, "0.0.0.%u.in-addr.arpa",
-				    netbr[3]);
-				break;
-			case 2: 	/* Class B */
-				sprintf(qbuf, "0.0.%u.%u.in-addr.arpa",
-				    netbr[3], netbr[2]);
-				break;
-			case 1: 	/* Class C */
-				sprintf(qbuf, "0.%u.%u.%u.in-addr.arpa",
-				    netbr[3], netbr[2], netbr[1]);
-				break;
-			case 0: 	/* Class D - E */
-				sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-				     netbr[3], netbr[2], netbr[1], netbr[0]);
-				break;
-			}
-			anslen = res_query(qbuf, C_IN, T_PTR,
-			    (u_char *)(void *)&buf, sizeof(buf));
-			if (anslen < 0) {
-#ifdef DEBUG
-				if (_res.options & RES_DEBUG)
-					printf("res_query failed\n");
-#endif
-				break;
-			}
-			net_entry = getnetanswer(&buf, anslen, BYADDR);
-			if (net_entry) {
-				/* maybe net should be unsigned? */
-				unsigned long u_net = net;
-
-				/* Strip trailing zeros */
-				while ((u_net & 0xff) == 0 && u_net != 0)
-					u_net >>= 8;
-				net_entry->n_net = u_net;
-				break;
-			}
-			break;
-
-		case 'f':
-			net_entry = __getnetbyaddr(net, net_type);
-			break;
-		}
+	if (nsdispatch(&net_entry, dtab, NSDB_NETWORKS, net, net_type) !=
+	    NS_SUCCESS) {
+		h_errno = NETDB_INTERNAL;
+		return (NULL);
 	}
-
 	return (net_entry);
+}
+
+int
+_getnetbyname(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	struct netent *p;
+	char **cp;
+	const char *name;
+
+	name = va_arg(ap, const char *);
+	setnetent(_net_stayopen);
+	while ((p = getnetent()) != NULL) {
+		if (strcasecmp(p->n_name, name) == 0)
+			break;
+		for (cp = p->n_aliases; *cp != 0; cp++)
+			if (strcasecmp(*cp, name) == 0)
+				goto found;
+	}
+found:
+	if (!_net_stayopen)
+		endnetent();
+	*((struct netent **)rv) = p;
+	if (p==NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
+	}
+	return NS_SUCCESS;
+}
+
+int
+_dns_getnetbyname(rv, cb_data, ap)
+	void    *rv;
+	void    *cb_data;
+	va_list  ap;
+{
+	int anslen, i;
+	querybuf buf;
+	char qbuf[MAXDNAME];
+	struct netent *net_entry;
+	const char *net;
+
+	net = va_arg(ap, const char *);
+	strcpy(&qbuf[0], net);
+	anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
+	    sizeof(buf));
+	if (anslen < 0) {
+#ifdef DEBUG
+		if (_res.options & RES_DEBUG)
+			printf("res_query failed\n");
+#endif
+		return NS_NOTFOUND;
+	}
+	net_entry = getnetanswer(&buf, anslen, BYNAME);
+
+	*((struct netent **)rv) = net_entry;
+	if (net_entry == NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
+	}
+	return NS_SUCCESS;
 }
 
 struct netent *
 getnetbyname(net)
 	register const char *net;
 {
-	int anslen, i;
-	querybuf buf;
-	char qbuf[MAXDNAME];
 	struct netent *net_entry;
-	char lookups[MAXDNSLUS];
+	static ns_dtab dtab[] = {
+		NS_FILES_CB(_getnetbyname, NULL),
+		{ NSSRC_DNS, _dns_getnetbyname, NULL },	/* force -DHESIOD */
+		{ NULL, NULL, NULL }
+	};
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
 
-	memcpy(lookups, _res.lookups, sizeof(lookups));
-	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof(lookups));
-
 	net_entry = NULL;
-	for (i = 0; i < MAXDNSLUS && net_entry == NULL && lookups[i]; i++) {
-		switch (lookups[i]) {
-		case 'b':
-			strcpy(&qbuf[0], net);
-			anslen = res_search(qbuf, C_IN, T_PTR,
-			    (u_char *)(void *)&buf, sizeof(buf));
-			if (anslen < 0) {
-#ifdef DEBUG
-				if (_res.options & RES_DEBUG)
-					printf("res_query failed\n");
-#endif
-				break;
-			}
-			net_entry = getnetanswer(&buf, anslen, BYNAME);
-			break;
-		
-		case 'f':
-			net_entry = __getnetbyname(net);
-			break;
-		}
+	if (nsdispatch(&net_entry, dtab, NSDB_NETWORKS, net) != NS_SUCCESS) {
+		h_errno = NETDB_INTERNAL;
+		return (NULL);
 	}
-
 	return (net_entry);
 }
