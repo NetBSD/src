@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.61 2000/12/18 21:03:34 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.62 2000/12/23 19:00:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -633,7 +633,7 @@ do {									\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
-		IF_POLL((ifq), (m));					\
+		IF_DEQUEUE((ifq), (m));					\
 } while (0)
 
 #define	IFQ_POLL(ifq, m)						\
