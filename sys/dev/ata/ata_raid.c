@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.5 2003/07/14 15:47:01 lukem Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.6 2003/09/29 23:31:04 grant Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.5 2003/07/14 15:47:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.6 2003/09/29 23:31:04 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -238,7 +238,7 @@ ataraid_submatch(struct device *parent, struct cfdata *cf, void *aux)
 /*
  * ata_raid_check_component:
  *
- *	Check the componet for a RAID configuration structure.
+ *	Check the component for a RAID configuration structure.
  *	Called via autoconfiguration callback.
  */
 void
