@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/12/29 10:36:37 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/06 20:45:41 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -35,7 +35,7 @@ PROG=	tip
 CFLAGS+=-I${.CURDIR} -ansi -pedantic \
 	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
 	-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
-.PATH:	${.CURDIR}/aculib
+.PATH.c: ${.CURDIR}/aculib
 BINOWN=	uucp
 BINGRP=	dialer
 BINMODE=4510
