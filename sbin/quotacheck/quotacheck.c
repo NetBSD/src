@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.13 1996/09/27 23:25:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $";
+static char rcsid[] = "$NetBSD: quotacheck.c,v 1.13 1996/09/27 23:25:35 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,17 +71,19 @@ static char rcsid[] = "$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp
 #include <string.h>
 #include <err.h>
 
-char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
-char *quotagroup = QUOTAGROUP;
+#include "fsutil.h"
 
-union {
+static char *qfname = QUOTAFILENAME;
+static char *qfextension[] = INITQFNAMES;
+static char *quotagroup = QUOTAGROUP;
+
+static union {
 	struct	fs	sblk;
 	char	dummy[MAXBSIZE];
 } un;
 #define	sblock	un.sblk
-long dev_bsize;
-long maxino;
+static long dev_bsize;
+static long maxino;
 
 struct quotaname {
 	long	flags;
@@ -100,41 +102,39 @@ struct fileusage {
 	/* actually bigger */
 };
 #define FUHASH 1024	/* must be power of two */
-struct fileusage *fuhead[MAXQUOTAS][FUHASH];
+static struct fileusage *fuhead[MAXQUOTAS][FUHASH];
 
-int	aflag;			/* all file systems */
-int	gflag;			/* check group quotas */
-int	uflag;			/* check user quotas */
-int	vflag;			/* verbose */
-int	fi;			/* open disk file descriptor */
-u_long	highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
+static int	aflag;		/* all file systems */
+static int	gflag;		/* check group quotas */
+static int	uflag;		/* check user quotas */
+static int	vflag;		/* verbose */
+static int	fi;		/* open disk file descriptor */
+static u_long	highid[MAXQUOTAS];/* highest addid()'ed identifier per type */
 
-struct fileusage *
-	 addid __P((u_long, int, char *));
-char	*blockcheck __P((char *));
-void	 bread __P((daddr_t, char *, long));
-int	 chkquota __P((char *, char *, struct quotaname *));
-void	 freeinodebuf __P((void));
-struct dinode *
-	 getnextinode __P((ino_t));
-int	 getquotagid __P((void));
-int	 hasquota __P((struct fstab *, int, char **));
-struct fileusage *
-	 lookup __P((u_long, int));
-void	*needchk __P((struct fstab *));
-int	 oneof __P((char *, char*[], int));
-void	 resetinodebuf __P((void));
-int	 update __P((char *, char *, int));
-void	 usage __P((void));
+
+int main __P((int, char *[]));
+static void usage __P((void));
+static void *needchk __P((struct fstab *));
+static int chkquota __P((const char *, const char *, const char *, void *));
+static int update __P((const char *, const char *, int));
+static int oneof __P((char *, char *[], int));
+static int getquotagid __P((void));
+static int hasquota __P((struct fstab *, int, char **));
+static struct fileusage *lookup __P((u_long, int));
+static struct fileusage *addid __P((u_long, int, char *));
+static struct dinode *getnextinode __P((ino_t));
+static void resetinodebuf __P((void));
+static void freeinodebuf __P((void));
+static void bread __P((daddr_t, char *, long));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fstab *fs;
-	register struct passwd *pw;
-	register struct group *gr;
+	struct fstab *fs;
+	struct passwd *pw;
+	struct group *gr;
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs;
 	long done = 0;
@@ -184,7 +184,7 @@ main(argc, argv)
 		endpwent();
 	}
 	if (aflag)
-		exit(checkfstab(1, maxrun, needchk, chkquota));
+		exit(checkfstab(CHECK_PREEN, maxrun, needchk, chkquota));
 	if (setfsent() == 0)
 		err(1, "%s: can't open", FSTAB);
 	while ((fs = getfsent()) != NULL) {
@@ -193,7 +193,8 @@ main(argc, argv)
 		    (auxdata = needchk(fs)) &&
 		    (name = blockcheck(fs->fs_spec))) {
 			done |= 1 << argnum;
-			errs += chkquota(name, fs->fs_file, auxdata);
+			errs += chkquota(fs->fs_type, name, fs->fs_file,
+			    auxdata);
 		}
 	}
 	endfsent();
@@ -204,20 +205,21 @@ main(argc, argv)
 	exit(errs);
 }
 
-void
+static void
 usage()
 {
-	(void)fprintf(stderr, "usage:\t%s\n\t%s\n",
-		"quotacheck -a [-guv]",
-		"quotacheck [-guv] filesys ...");
+	extern char *__progname;
+	(void)fprintf(stderr,
+	    "Usage:\t%s -a [-guv]\n\t%s [-guv] filesys ...\n", __progname,
+	    __progname);
 	exit(1);
 }
 
-void *
+static void *
 needchk(fs)
-	register struct fstab *fs;
+	struct fstab *fs;
 {
-	register struct quotaname *qnp;
+	struct quotaname *qnp;
 	char *qfnp;
 
 	if (strcmp(fs->fs_vfstype, "ffs") ||
@@ -243,13 +245,14 @@ needchk(fs)
 /*
  * Scan the specified filesystem to check quota(s) present on it.
  */
-int
-chkquota(fsname, mntpt, qnp)
-	char *fsname, *mntpt;
-	register struct quotaname *qnp;
+static int
+chkquota(type, fsname, mntpt, v)
+	const char *type, *fsname, *mntpt;
+	void *v;
 {
-	register struct fileusage *fup;
-	register struct dinode *dp;
+	struct quotaname *qnp = v;
+	struct fileusage *fup;
+	struct dinode *dp;
 	int cg, i, mode, errs = 0;
 	ino_t ino;
 
@@ -310,14 +313,14 @@ chkquota(fsname, mntpt, qnp)
 /*
  * Update a specified quota file.
  */
-int
+static int
 update(fsname, quotafile, type)
-	char *fsname, *quotafile;
-	register int type;
+	const char *fsname, *quotafile;
+	int type;
 {
-	register struct fileusage *fup;
-	register FILE *qfi, *qfo;
-	register u_long id, lastid;
+	struct fileusage *fup;
+	FILE *qfi, *qfo;
+	u_long id, lastid;
 	struct dqblk dqbuf;
 	static int warned = 0;
 	static struct dqblk zerodqbuf;
@@ -359,7 +362,7 @@ update(fsname, quotafile, type)
 		    dqbuf.dqb_curblocks == fup->fu_curblocks) {
 			fup->fu_curinodes = 0;
 			fup->fu_curblocks = 0;
-			fseek(qfo, (long)sizeof(struct dqblk), 1);
+			(void) fseek(qfo, (long)sizeof(struct dqblk), 1);
 			continue;
 		}
 		if (vflag) {
@@ -367,10 +370,10 @@ update(fsname, quotafile, type)
 				printf("%s: ", fsname);
 			printf("%-8s fixed:", fup->fu_name);
 			if (dqbuf.dqb_curinodes != fup->fu_curinodes)
-				(void)printf("\tinodes %d -> %d",
+				(void)printf("\tinodes %d -> %ld",
 					dqbuf.dqb_curinodes, fup->fu_curinodes);
 			if (dqbuf.dqb_curblocks != fup->fu_curblocks)
-				(void)printf("\tblocks %d -> %d",
+				(void)printf("\tblocks %d -> %ld",
 					dqbuf.dqb_curblocks, fup->fu_curblocks);
 			(void)printf("\n");
 		}
@@ -388,29 +391,29 @@ update(fsname, quotafile, type)
 			dqbuf.dqb_itime = 0;
 		dqbuf.dqb_curinodes = fup->fu_curinodes;
 		dqbuf.dqb_curblocks = fup->fu_curblocks;
-		fwrite((char *)&dqbuf, sizeof(struct dqblk), 1, qfo);
+		(void) fwrite((char *)&dqbuf, sizeof(struct dqblk), 1, qfo);
 		(void) quotactl(fsname, QCMD(Q_SETUSE, type), id,
 		    (caddr_t)&dqbuf);
 		fup->fu_curinodes = 0;
 		fup->fu_curblocks = 0;
 	}
-	fclose(qfi);
-	fflush(qfo);
-	ftruncate(fileno(qfo),
+	(void) fclose(qfi);
+	(void) fflush(qfo);
+	(void) ftruncate(fileno(qfo),
 	    (off_t)((highid[type] + 1) * sizeof(struct dqblk)));
-	fclose(qfo);
+	(void) fclose(qfo);
 	return (0);
 }
 
 /*
  * Check to see if target appears in list of size cnt.
  */
-int
+static int
 oneof(target, list, cnt)
-	register char *target, *list[];
+	char *target, *list[];
 	int cnt;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < cnt; i++)
 		if (strcmp(target, list[i]) == 0)
@@ -421,12 +424,12 @@ oneof(target, list, cnt)
 /*
  * Determine the group identifier for quota files.
  */
-int
+static int
 getquotagid()
 {
 	struct group *gr;
 
-	if (gr = getgrnam(quotagroup))
+	if ((gr = getgrnam(quotagroup)) != NULL)
 		return (gr->gr_gid);
 	return (-1);
 }
@@ -434,13 +437,13 @@ getquotagid()
 /*
  * Check to see if a particular quota is to be enabled.
  */
-int
+static int
 hasquota(fs, type, qfnamep)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 {
-	register char *opt;
+	char *opt;
 	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
@@ -452,9 +455,9 @@ hasquota(fs, type, qfnamep)
 		    "%s%s", qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	(void) strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = strchr(opt, '='))
+		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;
@@ -478,12 +481,12 @@ hasquota(fs, type, qfnamep)
  *
  * Lookup an id of a specific type.
  */
-struct fileusage *
+static struct fileusage *
 lookup(id, type)
 	u_long id;
 	int type;
 {
-	register struct fileusage *fup;
+	struct fileusage *fup;
 
 	for (fup = fuhead[type][id & (FUHASH-1)]; fup != 0; fup = fup->fu_next)
 		if (fup->fu_id == id)
@@ -494,7 +497,7 @@ lookup(id, type)
 /*
  * Add a new file usage id if it does not already exist.
  */
-struct fileusage *
+static struct fileusage *
 addid(id, type, name)
 	u_long id;
 	int type;
@@ -503,7 +506,7 @@ addid(id, type, name)
 	struct fileusage *fup, **fhp;
 	int len;
 
-	if (fup = lookup(id, type))
+	if ((fup = lookup(id, type)) != NULL)
 		return (fup);
 	if (name)
 		len = strlen(name);
@@ -520,7 +523,7 @@ addid(id, type, name)
 	if (name)
 		memcpy(fup->fu_name, name, len + 1);
 	else
-		(void)sprintf(fup->fu_name, "%u", id);
+		(void)sprintf(fup->fu_name, "%lu", id);
 	return (fup);
 }
 
@@ -528,12 +531,12 @@ addid(id, type, name)
  * Special purpose version of ginode used to optimize pass
  * over all the inodes in numerical order.
  */
-ino_t nextino, lastinum;
-long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct dinode *inodebuf;
+static ino_t nextino, lastinum;
+static long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
+static struct dinode *inodebuf;
 #define	INOBUFSIZE	56*1024	/* size of buffer to read inodes */
 
-struct dinode *
+static struct dinode *
 getnextinode(inumber)
 	ino_t inumber;
 {
@@ -562,7 +565,7 @@ getnextinode(inumber)
 /*
  * Prepare to scan a set of inodes.
  */
-void
+static void
 resetinodebuf()
 {
 
@@ -590,7 +593,7 @@ resetinodebuf()
 /*
  * Free up data structures used to scan inodes.
  */
-void
+static void
 freeinodebuf()
 {
 
@@ -602,7 +605,7 @@ freeinodebuf()
 /*
  * Read specified disk blocks.
  */
-void
+static void
 bread(bno, buf, cnt)
 	daddr_t bno;
 	char *buf;
@@ -611,5 +614,5 @@ bread(bno, buf, cnt)
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
 	    read(fi, buf, cnt) != cnt)
-		err(1, "block %ld", bno);
+		err(1, "block %d", bno);
 }
