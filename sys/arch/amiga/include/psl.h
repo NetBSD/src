@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 2001/04/13 23:29:57 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 2001/05/08 06:09:30 is Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -6,6 +6,8 @@
 #include <m68k/psl.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+#include "opt_lev6_defer.h"
 
 #define	spl0()			_spl0()	/* we have real software interrupts */
 

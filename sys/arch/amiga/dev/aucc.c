@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.26 2000/09/03 02:04:53 mhitch Exp $	*/
+/*	$NetBSD: aucc.c,v 1.27 2001/05/08 06:09:30 is Exp $	*/
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -66,6 +66,8 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/auccvar.h>
+
+#include "opt_lev6_defer.h"
 
 
 #ifdef LEV6_DEFER

@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.10 1999/09/25 21:47:03 is Exp $	*/
+/*	$NetBSD: cc.h,v 1.11 2001/05/08 06:09:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,8 @@
 
 #include <sys/queue.h>
 #include <amiga/amiga/cc_registers.h>
+
+#include "opt_lev6_defer.h"
 
 #if ! defined (HIADDR)
 #define HIADDR(x) (u_short)((((unsigned long)(x))>>16)&0xffff)
