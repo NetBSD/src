@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2003/10/21 01:45:25 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.8 2004/02/11 01:01:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2003/10/21 01:45:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.8 2004/02/11 01:01:37 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_user_ldt.h"
@@ -398,7 +398,7 @@ cpu_coredump32(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	struct coreseg cseg;
 	int error;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_I386, 0);
 	chdr->c_hdrsize = ALIGN32(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN32(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
