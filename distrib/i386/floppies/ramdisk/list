@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 1997/12/19 01:03:39 fvdl Exp $
+#	$NetBSD: list,v 1.7 1998/11/11 18:52:50 he Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -66,8 +66,9 @@ COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
-# we need the boot blocks /usr/mdec
+# we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
+COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/group		etc/group
