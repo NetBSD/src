@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.17 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: scandir.c,v 1.18 2000/04/16 14:43:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.17 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.18 2000/04/16 14:43:57 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ int
 scandir(dirname, namelist, select, dcomp)
 	const char *dirname;
 	struct dirent ***namelist;
-	int (*select) __P((struct dirent *));
+	int (*select) __P((const struct dirent *));
 	int (*dcomp) __P((const void *, const void *));
 {
 	struct dirent *d, *p, **names;
