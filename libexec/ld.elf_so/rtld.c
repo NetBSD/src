@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.46 2001/12/14 21:21:27 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.47 2001/12/14 21:25:22 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -108,12 +108,8 @@ Library_Xform  *_rtld_xforms;
 char           *__progname;
 char          **environ;
 
-#ifdef OLD_GOT
-extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
-#else
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
 extern Elf_Dyn  _DYNAMIC;
-#endif
 
 static void _rtld_call_fini_functions __P((Obj_Entry *));
 static void _rtld_call_init_functions __P((Obj_Entry *));
@@ -201,11 +197,7 @@ _rtld_init(mapbase, pagesz)
 
 	objself.pltgot = NULL;
 
-#ifdef OLD_GOT
-	objself.dynamic = (Elf_Dyn *) _GLOBAL_OFFSET_TABLE_[0];
-#else
-	objself.dynamic = (Elf_Dyn *) & _DYNAMIC;
-#endif
+	objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
 #ifdef RTLD_RELOCATE_SELF
 	/* We have not been relocated yet, so fix the dynamic address */
