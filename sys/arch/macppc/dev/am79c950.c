@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.7 1999/05/18 23:52:53 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.7.12.1 2003/06/17 04:56:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -204,7 +204,6 @@ mcioctl(ifp, cmd, data)
 	struct ifreq *ifr;
 
 	int	s = splnet(), err = 0;
-	int	temp;
 
 	switch (cmd) {
 
@@ -263,9 +262,7 @@ mcioctl(ifp, cmd, data)
 			 * reset the interface to pick up any other changes
 			 * in flags
 			 */
-			temp = ifp->if_flags & IFF_UP;
 			mcreset(sc);
-			ifp->if_flags |= temp;
 			mcstart(ifp);
 		}
 		break;
@@ -282,9 +279,7 @@ mcioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			temp = ifp->if_flags & IFF_UP;
 			mcreset(sc);
-			ifp->if_flags |= temp;
 			err = 0;
 		}
 		break;
@@ -438,7 +433,7 @@ mcstop(sc)
 	DELAY(100);
 
 	sc->sc_if.if_timer = 0;
-	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_UP);
+	sc->sc_if.if_flags &= ~IFF_RUNNING;
 
 	splx(s);
 	return (0);
@@ -454,12 +449,9 @@ mcwatchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct mc_softc *sc = ifp->if_softc;
-	int temp;
 
 	printf("mcwatchdog: resetting chip\n");
-	temp = ifp->if_flags & IFF_UP;
 	mcreset(sc);
-	ifp->if_flags |= temp;
 }
 
 /*
