@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1997/09/26 15:05:10 gwr Exp $
+# $NetBSD: Makefile,v 1.3 1997/09/26 15:59:40 gwr Exp $
 
 LIB=	readline
 
@@ -18,11 +18,11 @@ CFLAGS+= -DHAVE_CONFIG_H
 .PATH:	$(srcdir)
 
 # From OBJECTS
-OBJS=     readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
-	  rltty.o complete.o bind.o isearch.o display.o signals.o \
-	  util.o kill.o undo.o macro.o input.o callback.o terminal.o \
-	  nls.o history.o histexpand.o histfile.o histsearch.o \
-	  shell.o tilde.o xmalloc.o
+SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
+	  rltty.c complete.c bind.c isearch.c display.c signals.c \
+	  util.c kill.c undo.c macro.c input.c callback.c terminal.c \
+	  nls.c history.c histexpand.c histfile.c histsearch.c \
+	  shell.c tilde.c xmalloc.c
 
 # This libraray is used only while building (not installed).
 libinstall:
