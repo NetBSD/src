@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+/* Need to define this before including the common nm-nbsd.h. */
+#define SVR4_SHARED_LIBS
+
 /* Get generic NetBSD native definitions. */
 #include "nm-nbsd.h"
 #include <machine/alpha_cpu.h>
@@ -43,9 +46,3 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 /* Supply our own version of child_resume() in alphanbsd-nat.c */
 
 #define	CHILD_RESUME
-
-#ifdef HAVE_LINK_H
-#include "elf/common.h"
-#include "solib.h"              /* Support for shared libraries. */
-#define SVR4_SHARED_LIBS
-#endif
