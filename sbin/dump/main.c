@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1997/09/15 07:58:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $";
+__RCSID("$NetBSD: main.c,v 1.15 1997/09/15 07:58:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
 
+int	main __P((int, char *[]));
 static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
@@ -517,6 +518,7 @@ main(argc, argv)
 	msg("DUMP IS DONE\n");
 	Exit(X_FINOK);
 	/* NOTREACHED */
+	exit(X_FINOK);		/* XXX: to satisfy gcc */
 }
 
 static void
