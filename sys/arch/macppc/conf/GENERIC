@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.52 2000/02/08 12:10:56 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.53 2000/02/09 13:10:15 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	32
 
@@ -114,6 +114,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
