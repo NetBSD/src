@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2001/01/27 07:59:58 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.50 2001/02/11 01:13:01 eeh Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -84,7 +84,7 @@
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		ptrace
 27	STD		{ int svr4_sys_alarm(unsigned sec); }
@@ -108,7 +108,7 @@
 44	UNIMPL		profil
 45	UNIMPL		plock
 46	NOARGS		{ int sys_setgid(gid_t gid); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 48	STD		{ int svr4_sys_signal(int signum, svr4_sig_t handler); }
 #ifdef SYSVMSG
 49	STD		{ int svr4_sys_msgsys(int what, int a2, int a3, \
@@ -415,3 +415,9 @@
 #else
 249	EXCL		ntp_adjtime
 #endif
+250	UNIMPL		lwp_mutex_unlock
+251	UNIMPL		lwp_mutex_trylock
+252	UNIMPL		lwp_mutex_init
+253	UNIMPL		cladm
+254	UNIMPL		lwp_sigtimedwait
+255	UNIMPL		umount2
