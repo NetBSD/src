@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.164 2004/03/24 07:47:33 junyoung Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.164.2.1 2004/03/31 18:04:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164 2004/03/24 07:47:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164.2.1 2004/03/31 18:04:40 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -699,10 +699,9 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end)
  *    we've found a virtual address.   note that kernel object offsets are
  *    always relative to vm_map_min(kernel_map).
  *
- * => if `align' is non-zero, we try to align the virtual address to
- *	the specified alignment.  this is only a hint; if we can't
- *	do it, the address will be unaligned.  this is provided as
- *	a mechanism for large pages.
+ * => if `align' is non-zero, we align the virtual address to the specified
+ *	alignment.
+ *	this is provided as a mechanism for large pages.
  *
  * => XXXCDC: need way to map in external amap?
  */
@@ -1651,13 +1650,11 @@ nextgap:
  wraparound:
 	UVMHIST_LOG(maphist, "<- failed (wrap around)", 0,0,0,0);
 
+	return (NULL);
+
  notfound:
-	if (align != 0) {
-		UVMHIST_LOG(maphist, "calling recursively, no align",
-		    0,0,0,0);
-		return (uvm_map_findspace(map, orig_hint,
-		    length, result, uobj, uoffset, 0, flags));
-	}
+	UVMHIST_LOG(maphist, "<- failed (notfound)", 0,0,0,0);
+
 	return (NULL);
 }
 
