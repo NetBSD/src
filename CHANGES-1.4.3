@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.41 2000/07/08 19:02:05 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.42 2000/07/09 21:52:45 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -886,3 +886,40 @@ libexec/ftpd/ftpd.c				1.97
 sys/arch/macppc/pci/pciide_machdep.c		patch
 
   Include pciidereg.h so that this file compiles again.
+
+sys/arch/sparc/stand/Makefile.booters		patch
+distrib/sets/lists/base/md.sparc		patch
+
+  Move the sparc boot loader close to the 4M limit, so that we
+  can boot the sysinst kernel without bumping into the boot
+  loader, and without exceeding the first 4M physical memory
+  bank.  Fixes PR#10059.
+
+share/man/man4/ti.4				patch
+
+  Say that this driver currently does not work on big-endian
+  systems, and remove ambiguity about when it was introduced.
+
+distrib/sets/makesums				1.1 (new)
+distrib/i386/Makefile				1.1 (new)
+etc/Makefile				1.119,1.123,1.135-1.136 via patch
+etc/etc.i386/Makefile.inc			1.15-1.16,1.21 via patch
+
+  Enhance the "make release" process:
+   o Build install notes on all platforms, put into release tree
+   o Document BUILD_KERNELS in etc/Makefile
+   o Always build GENERIC, and install the kernel in the kernel
+     release directory; checksum the kernel(s) there
+   o Use a separate script to compute checksums
+
+distrib/x68k/floppies/Makefile			1.6 via patch
+distrib/x68k/floppies/bootfloppy-common/Makefile.inc	patch
+distrib/x68k/floppies/ramdisk/Makefile		1.13 via patch
+etc/etc.x68k/Makefile.inc			1.7 via patch
+
+  Automatically descend to the distrib dir in ``make release''.
+
+distrib/sparc/bootfs/Makefile			patch
+
+  Use the boot loader at 3E0000 instead of 700000, to allow booting
+  on machines with only 4M in the first physical memory bank.
