@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.11 1997/09/29 19:35:31 mjacob Exp $
+.\"	$NetBSD: mt.1,v 1.12 1997/10/03 06:03:06 mikel Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,19 +127,21 @@ as specified in the SCSI2 specification.
 Read the logical block position of the tape (not all tape
 drives support this feature).
 .It Cm rdhpos
-Read the device block position of the tape (not all tape
+Read the hardware block position of the tape (not all tape
 drives support this feature).
 .It Cm setspos
-Read the logical block position of the tape to the count argument (not all tape
-drives support this feature).
+Set the logical block position of the tape to
+.Ar count
+(not all tape drives support this feature).
 .It Cm sethpos
-Read the hardware block position of the tape to the count argument (not all tape
-drives support this feature).
+Set the hardware block position of the tape to
+.Ar count
+(not all tape drives support this feature).
 .El
 .Pp
 If a tape name is not specified, and the environment variable
 .Ev TAPE
-does not exist;
+is not set, then
 .Nm mt
 uses the device
 .Pa /dev/rst0 .
@@ -160,18 +162,18 @@ argument
 .Ar tapename
 is not given.
 .Sh FILES
-.Bl -tag -width /dev/rst* -compact
+.Bl -tag -width src/sys/scsipi/scsi_tape.h -compact
 .It Pa /dev/rst*
 Raw SCSI tape interface
 .It Pa /dev/rmt*
 Raw magnetic tape interface
-.It Pa /usr/src/sys/scsi/scsi_tape.h
+.It Pa src/sys/scsipi/scsi_tape.h
 List of SCSI2 density codes
 .El
 .Sh SEE ALSO
-.\".Xr mtio 4 ,
 .Xr dd 1 ,
 .Xr ioctl 2 ,
+.\".Xr mtio 4 ,
 .Xr environ 7
 .Sh HISTORY
 The
