@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.4 1998/01/13 19:24:54 scottr Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.5 1998/05/02 16:45:31 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -49,7 +49,7 @@
 #include <machine/bus.h>
 #include <machine/psc.h>
 
-#include <mac68k/dev/obiovar.h>
+#include <mac68k/obio/obiovar.h>
 #include <mac68k/dev/if_mcreg.h>
 #include <mac68k/dev/if_mcvar.h>
 

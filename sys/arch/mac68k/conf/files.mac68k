@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.80 1998/04/24 05:15:25 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.81 1998/05/02 16:45:27 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -18,11 +18,11 @@ define obio_norm { [addr = -1], ["no drq" = -1], ["no hsk" = -1] }
 define obio_scsi5380 { [addr = -1], [drq = -1], [hsk = -1] }
 device	obio: obio_norm, obio_scsi5380
 attach	obio at mainbus
-file	arch/mac68k/dev/obio.c		obio
+file	arch/mac68k/obio/obio.c		obio
 
 device	nubus { }
 attach	nubus at mainbus
-file	arch/mac68k/dev/nubus.c		nubus
+file	arch/mac68k/nubus/nubus.c	nubus
 
 device	adb
 attach	adb at obio_norm
@@ -34,18 +34,18 @@ file	arch/mac68k/dev/pm_direct.c
 
 device	asc
 attach	asc at obio_norm
-file	arch/mac68k/dev/asc.c		asc needs-flag
+file	arch/mac68k/obio/asc.c		asc needs-flag
 
 define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus
 
 device	intvid: grfbus
 attach	intvid at obio_norm
-file	arch/mac68k/dev/grf_iv.c	intvid
+file	arch/mac68k/obio/grf_obio.c	intvid
 
 device	macvid: grfbus
 attach	macvid at nubus
-file	arch/mac68k/dev/grf_mv.c	macvid
+file	arch/mac68k/nubus/grf_nubus.c	macvid
 
 device	grf { }
 attach	grf at grfbus
@@ -57,20 +57,20 @@ file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
-file	arch/mac68k/dev/if_ae_nubus.c	ae_nubus
+file	arch/mac68k/nubus/if_ae_nubus.c	ae_nubus
 file	arch/mac68k/dev/if_ae.c		ae
 
 device	mc: ifnet, ether, arp
 attach	mc at obio_norm with mc_obio
 file	arch/mac68k/dev/if_mc.c		mc
-file	arch/mac68k/dev/if_mc_obio.c	mc_obio
+file	arch/mac68k/obio/if_mc_obio.c	mc_obio
 
 device	sn: ifnet, ether, arp
 attach	sn at obio_norm with sn_obio
 attach	sn at nubus with sn_nubus
 file	arch/mac68k/dev/if_sn.c		sn
-file	arch/mac68k/dev/if_sn_obio.c	sn_obio
-file	arch/mac68k/dev/if_sn_nubus.c	sn_nubus
+file	arch/mac68k/obio/if_sn_obio.c	sn_obio
+file	arch/mac68k/nubus/if_sn_nubus.c	sn_nubus
 
 include "dev/scsipi/files.scsipi"
 
@@ -82,12 +82,12 @@ file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 # Option 2 for ncr5380 support
 device	sbc: scsi, ncr5380sbc
 attach	sbc at obio_scsi5380 with sbc_obio
-file	arch/mac68k/dev/sbc_obio.c	sbc_obio
 file	arch/mac68k/dev/sbc.c		sbc
+file	arch/mac68k/obio/sbc_obio.c	sbc_obio
 
 device	esp: scsi, ncr53c9x
 attach	esp at obio_norm
-file	arch/mac68k/dev/esp.c		esp needs-flag
+file	arch/mac68k/obio/esp.c		esp needs-flag
 
 device	zsc { channel = -1 }
 attach	zsc at obio_norm

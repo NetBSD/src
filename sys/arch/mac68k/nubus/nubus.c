@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.43 1998/01/13 19:24:56 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.44 1998/05/02 16:45:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -50,7 +50,7 @@
 
 #include <vm/vm.h>
 
-#include <mac68k/dev/nubus.h>
+#include <mac68k/nubus/nubus.h>
 
 #ifdef DEBUG
 #define NDB_PROBE	0x1

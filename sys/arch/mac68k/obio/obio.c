@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 1998/01/12 19:22:16 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 1998/05/02 16:45:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <machine/bus.h>
 
-#include <mac68k/dev/obiovar.h>
+#include <mac68k/obio/obiovar.h>
 
 static int	obio_match __P((struct device *, struct cfdata *, void *));
 static void	obio_attach __P((struct device *, struct device *, void *));
