@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.17 1999/02/02 19:57:32 cjs Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.18 1999/08/24 16:10:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.17 1999/02/02 19:57:32 cjs Exp $";
+static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.18 1999/08/24 16:10:35 bouyer Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.15 1998/11/22 01:50:29 darrenr Exp ";
 #endif
@@ -197,8 +197,9 @@ nat_t *nat;
 	u_32_t sum;
 	int err;
 
-	if ((aps = nat->nat_aps) ||
-	    (aps = ap_new_session(nat->nat_ptr->in_apr, ip, fin, nat))) {
+	if ((aps = nat->nat_aps) == NULL)
+		aps = ap_new_session(nat->nat_ptr->in_apr, ip, fin, nat);
+	if ((aps != NULL) && (aps->aps_p == ip->ip_p)) {
 		if (ip->ip_p == IPPROTO_TCP) {
 			tcp = (tcphdr_t *)fin->fin_dp;
 			/*
