@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.23 1996/09/16 16:30:43 cgd Exp $
+#	$NetBSD: GENERIC,v 1.24 1996/09/27 17:08:32 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 
