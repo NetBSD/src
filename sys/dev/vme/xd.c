@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.19 2000/03/23 07:01:46 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.20 2000/04/10 02:16:15 chs Exp $	*/
 
 /*
  *
@@ -249,7 +249,7 @@ cdev_decl(xd);
 void xdc_md_setup __P((void));
 int	XDC_DELAY;
 
-#if defined(sparc)
+#if defined(__sparc__)
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 void xdc_md_setup()
@@ -259,7 +259,7 @@ void xdc_md_setup()
 	else
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
-#elif defined(sun3)
+#elif defined(__sun3__)
 void xdc_md_setup()
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
@@ -2091,7 +2091,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	int     errno = iorq->errno;
 	int     erract = errno & XD_ERA_MASK;
 	int     oldmode, advance;
-#ifdef sparc
+#ifdef __sparc__
 	int i;
 #endif
 
@@ -2111,7 +2111,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	    (iorq->mode & XD_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->sectcnt;
 		XDC_ADVANCE(iorq, advance);
-#ifdef sparc
+#ifdef __sparc__
 		if ((i = isbad(&iorq->xd->dkb, iorq->blockno / iorq->xd->sectpercyl,
 			    (iorq->blockno / iorq->xd->nsect) % iorq->xd->nhead,
 			    iorq->blockno % iorq->xd->nsect)) != -1) {
