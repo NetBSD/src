@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2000/03/20 00:50:14 erh Exp $
+	$NetBSD: syscalls.master,v 1.20 2000/11/01 20:38:49 jdolecek Exp $
 ;
 ; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
@@ -477,8 +477,8 @@
 #endif
 314	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 315	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
-316	UNIMPL		mlockall
-317	UNIMPL		munlockall
+316	NOARGS		{ int sys_mlockall(int flags); }
+317	NOARGS		{ int sys_munlockall(void); }
 318	UNIMPL		sysinfo
 319	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 320	UNIMPL		idle
