@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.1 2003/12/10 11:40:12 hannken Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.2 2003/12/11 17:12:11 wiz Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ command configures file system snapshot pseudo disk devices.
 It will associate the file system snapshot disk
 .Ar device
 with a snapshot of
-.Ar path  
+.Ar path
 allowing the latter to be accessed as though it were a disk.
 Data written through the
 .Ar path
@@ -81,7 +81,7 @@ in units of
 bytes.
 .Pp
 Options indicate an action to be performed:
-.Bl -tag -width indent
+.Bl -tag -width 3n
 .It Fl c
 Configures the device.
 If successful, references to
@@ -91,7 +91,7 @@ will access the contents of
 at the time the snapshot was taken.
 If
 .Ar backup
-is a directory a temporary file will be created in this directory.
+is a directory, a temporary file will be created in this directory.
 This file will be unlinked on exit.
 .It Fl l
 List the snapshot devices and indicate which ones are in use.
@@ -126,7 +126,8 @@ Configures the snapshot device
 .Pa fss0
 for a snapshot of the
 .Pa /usr
-file system. Data written through
+file system.
+Data written through
 .Pa /usr
 will be backed up in
 .Pa /tmp/back .
@@ -137,7 +138,8 @@ Configures the snapshot device
 .Pa fss1
 for a snapshot of the
 .Pa /
-file system. Data written through 
+file system.
+Data written through
 .Pa /
 will be backed up in
 .Pa /dev/rsd0e .
