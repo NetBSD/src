@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.12 1998/08/24 01:40:30 sakamoto Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.13 1998/10/03 21:53:04 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -182,9 +182,13 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * the caller can't handle that many segments (e.g. the
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
+	if (avail_end <= t->_bounce_thresh ||
+	    (flags & ISABUS_DMA_32BIT) != 0) {
+		/* Bouncing not necessary due to memory size. */
+		map->_dm_bounce_thresh = 0;
+	}
 	cookieflags = 0;
-	if ((avail_end > ISA_DMA_BOUNCE_THRESHOLD &&
-	    (flags & ISABUS_DMA_32BIT) == 0) ||
+	if (map->_dm_bounce_thresh != 0 ||
 	    ((map->_dm_size / NBPG) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
