@@ -11,12 +11,24 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: bi_funct.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:02  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:55:35  brennan
+ * Revision 5.3.1.2  1993/01/27  01:04:06  mike
+ * minor tuning to str_str()
+ *
+ * Revision 5.3.1.1  1993/01/15  03:33:35  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.3  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.2  1992/07/08  15:43:41  brennan
+ * patch2: length returns.  I am a wimp
+ *
+ * Revision 5.1  1991/12/05  07:55:35  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -41,9 +53,9 @@ static void  PROTO( fplib_err, (char *, double, char *) ) ;
 /* global for the disassembler */
 BI_REC  bi_funct[] = { /* info to load builtins */
 
+"length" , bi_length, 0, 1, /* special must come first */
 "index" , bi_index , 2, 2 ,
 "substr" , bi_substr, 2, 3,
-"length" , bi_length, 0, 1,
 "sprintf" , bi_sprintf, 1, 255,
 "sin", bi_sin , 1, 1 ,
 "cos", bi_cos , 1, 1 ,
@@ -62,16 +74,22 @@ BI_REC  bi_funct[] = { /* info to load builtins */
 (char *) 0, (PF_CP) 0, 0, 0 } ;
 
 
-
+/* load built-in functions in symbol table */
 void bi_funct_init()
-{ register BI_REC *p = bi_funct ;
+{ register BI_REC *p ; 
   register SYMTAB *stp ;
 
-  while ( p->name )
+  /* length is special (posix bozo) */
+  stp = insert(bi_funct->name) ;
+  stp->type = ST_LENGTH ;
+  stp->stval.bip = bi_funct ;
+
+  for( p = bi_funct + 1 ; p->name ; p++ )
   { stp = insert( p->name ) ;
     stp->type = ST_BUILTIN ;
-    stp->stval.bip = p++ ;
+    stp->stval.bip = p ;
   }
+
   /* seed rand() off the clock */
   { CELL c ;
 
@@ -102,23 +120,33 @@ CELL *bi_length(sp)
 }
 
 char *str_str(target, key , key_len)
-  register char *target, *key ;
+  register char *target;
+  char *key ;
   unsigned key_len ;
 { 
+  register int k = key[0] ;
+
   switch( key_len )
-  { case 0 :  return (char *) 0 ;
-    case 1 :  return strchr( target, *key) ;
+  {
+    case 0 :  return (char *) 0 ;
+    case 1 :  return strchr( target, k) ;
     case 2 :
-        while ( target = strchr(target, *key) )
-          if ( target[1] == key[1] )  return  target ;
-          else target++ ;
-        /*failed*/
-        return (char *) 0 ;
+	{ int k1 = key[1] ;
+		while ( target = strchr(target, k) )
+		  if ( target[1] == k1 )  return  target ;
+		  else target++ ;
+		/*failed*/
+		return (char *) 0 ;
+	}
   }
+
   key_len-- ;
-  while ( target = strchr(target, *key) )
-        if ( memcmp(target+1, key+1, SIZE_T(key_len)) == 0 ) return target ;
+  while ( target = strchr(target, k) )
+  {
+        if ( memcmp(target+1, key+1, SIZE_T(key_len)) == 0 )
+		 return target ;
         else target++ ;
+  }
   /*failed*/
   return (char *) 0 ;
 }
@@ -178,9 +206,9 @@ CELL *bi_substr(sp)
   }
   else
   { if ( TEST2(sp+1) != TWO_DOUBLES ) cast2_to_d(sp+1) ;
-    n = (int) sp[2].dval ;
+    n = d_to_i(sp[2].dval) ;
   }
-  i = (int) sp[1].dval - 1 ; /* i now indexes into string */
+  i = d_to_i(sp[1].dval) - 1 ; /* i now indexes into string */
 
   if ( i < 0 ) { n += i ; i = 0 ; }
   if ( n > len - i )  n = len - i ;
@@ -416,15 +444,10 @@ CELL *bi_sqrt(sp)
 #endif
 }
 
-#ifdef  __TURBOC__
-long  biostime(int, long) ;
-#define  time(x)  biostime(0,0L)
-#else
-#ifdef THINK_C
+#ifdef  HAVE_TIME_H
 #include <time.h>
 #else
 #include <sys/types.h>
-#endif
 #endif
 
 
@@ -460,7 +483,7 @@ CELL *bi_srand(sp)
   (void) cellcpy(&c, &cseed) ;
   if ( c.type == C_NOINIT )  cast1_to_d(&c) ;
 
-  seed =  c.type == C_DOUBLE ? ((int)c.dval & M) % M + 1 :
+  seed =  c.type == C_DOUBLE ? (d_to_i(c.dval) & M) % M + 1 :
                         hash(string(&c)->str) % M + 1 ;
 
   cell_destroy(&c) ;

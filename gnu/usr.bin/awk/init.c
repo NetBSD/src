@@ -12,12 +12,18 @@ the GNU General Public License, version 2, 1991.
 
 
 /* $Log: init.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:29  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.2  92/01/09  08:46:14  brennan
+ * Revision 5.4  1992/12/24  01:58:19  mike
+ * 1.1.2d changes for MsDOS
+ *
+ * Revision 5.3  1992/07/10  16:17:10  brennan
+ * MsDOS: remove NO_BINMODE macro
+ *
+ * Revision 5.2  1992/01/09  08:46:14  brennan
  * small change for MSC
- * 
+ *
  * Revision 5.1  91/12/05  07:56:07  brennan
  * 1.1 pre-release
  * 
@@ -37,6 +43,9 @@ the GNU General Public License, version 2, 1991.
 #include <console.h>
 #endif
 
+#if MSDOS
+#include <fcntl.h>
+#endif
 
 static void PROTO( process_cmdline , (int, char **) ) ;
 static void PROTO( set_ARGV, (int, char **, int)) ;
@@ -45,17 +54,20 @@ static void PROTO( bad_option, (char *)) ;
 extern  void PROTO( print_version, (void) ) ;
 extern  int  PROTO( is_cmdline_assign, (char*)) ;
 
-#if 0
-#if  MSDOS  &&  ! HAVE_REARGV
-#include <fcntl.h>
-static  void  PROTO(emit_prompt, (void) ) ;
+#if  MSDOS
+void PROTO(stdout_init,(void)) ;
+#if  HAVE_REARGV
+void PROTO(reargv, (int*,char***)) ;
 #endif
 #endif
 
+char *progname ;
 
 void initialize(argc, argv)
   int argc ; char **argv ;
 {
+  SET_PROGNAME() ;
+
   bi_vars_init() ; /* load the builtin variables */
   bi_funct_init() ; /* load the builtin functions */
   kw_init() ; /* load the keywords */
@@ -67,7 +79,7 @@ void initialize(argc, argv)
   argc = ccommand(&argv);
 #endif 
 
-#if   MSDOS  &&  NO_BINMODE==0
+#if   MSDOS  
   { char *p = getenv("MAWKBINMODE") ;
 
     if ( p )  set_binmode( atoi(p) ) ;
@@ -80,6 +92,10 @@ void initialize(argc, argv)
   code_init() ;
   fpe_init() ;
   set_stderr() ;
+
+#if  MSDOS
+  stdout_init() ;
+#endif
 }
 
 void  compile_cleanup()
@@ -169,7 +185,7 @@ static void  process_cmdline(argc, argv)
 		sprintf_limit = sprintf_buff + x ;
 	      }
 	    }
-#if  MSDOS  &&  NO_BINMODE==0
+#if  MSDOS  
 	    else
 	    if ( optarg[0] == 'B' )
 	    {

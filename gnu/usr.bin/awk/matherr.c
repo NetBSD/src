@@ -11,14 +11,13 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: matherr.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:57:39  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 1.2  1992/06/02  05:07:35  rich
- * Ported to 386bsd.  Changes from vax BSD4.3 include usage of
- * fmod in libm.a, usage of void pointers, and usage of vfprintf
- * in libc.a.  Floating point exceptions are not raised when
- * they should be, which causes the last fpe test to fail.
+ * Revision 5.2  1992/03/31  16:14:44  brennan
+ * patch2:
+ * TURN_ON_FPE_TRAPS() macro
+ * USE_IEEEFP_H macro
  *
  * Revision 5.1  91/12/05  07:56:18  brennan
  * 1.1 pre-release
@@ -27,6 +26,10 @@ the GNU General Public License, version 2, 1991.
 
 #include  "mawk.h"
 #include  <math.h>
+
+#ifdef  USE_IEEEFP_H
+#include <ieeefp.h>
+#endif
 
 #if   FPE_TRAPS_ON
 #include <signal.h>
@@ -48,12 +51,10 @@ static void  fpe_catch( signal, why)
 
   switch(why)
   {
-    case FPE_INTDIV_TRAP :
-    case FPE_FLTDIV_TRAP :
+    case FPE_ZERODIVIDE :
        rt_error("division by zero") ;
 
-    case FPE_INTOVF_TRAP :
-    case FPE_FLTOVF_TRAP :
+    case FPE_OVERFLOW  :
        rt_error("floating point overflow") ;
 
     default :
@@ -63,7 +64,10 @@ static void  fpe_catch( signal, why)
 }
 
 void   fpe_init()
-{ (void) signal(SIGFPE, fpe_catch) ; }
+{ 
+  TURN_ON_FPE_TRAPS() ;
+  (void) signal(SIGFPE, fpe_catch) ; 
+}
 
 #else  /* FPE_TRAPS_ON==0 */
 

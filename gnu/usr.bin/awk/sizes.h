@@ -1,7 +1,7 @@
 
 /********************************************
 sizes.h
-copyright 1991, Michael D. Brennan
+copyright 1991, 1992.  Michael D. Brennan
 
 This is a source file for mawk, an implementation of
 the AWK programming language.
@@ -11,12 +11,18 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: sizes.h,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:56  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:59:35  brennan
+ * Revision 5.3  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.2  1992/08/27  03:20:08  mike
+ * patch2: increase A_HASH_PRIME
+ *
+ * Revision 5.1  1991/12/05  07:59:35  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 /*  sizes.h  */
@@ -25,7 +31,7 @@ the GNU General Public License, version 2, 1991.
 #define  SIZES_H
 
 #if     ! HAVE_SMALL_MEMORY
-#define EVAL_STACK_SIZE  256  /* limit on recursion */
+#define EVAL_STACK_SIZE  256  /* initial size , can grow */
 /* number of fields at startup, must be a power of 2 
    and FBANK_SZ-1 must be divisible by 3! */
 #define  FBANK_SZ	256
@@ -51,8 +57,21 @@ the GNU General Public License, version 2, 1991.
   /* starting buffer size for input files, grows if 
      necessary */
 
+#if      LM_DOS
+/* trade some space for IO speed */
+#undef  BUFFSZ
+#define BUFFSZ		8192
+/* maximum input buffers that will fit in 64K */
+#define  MAX_BUFFS	((int)(0x10000L/BUFFSZ) - 1)
+#endif
+
 #define  HASH_PRIME  53
-#define  A_HASH_PRIME 37
+
+#if ! HAVE_SMALL_MEMORY
+#define  A_HASH_PRIME 199
+#else
+#define  A_HASH_PRIME  37
+#endif
 
 
 #define  MAX_COMPILE_ERRORS  5 /* quit if more than 4 errors */

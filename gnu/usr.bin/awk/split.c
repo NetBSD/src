@@ -11,12 +11,18 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: split.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:57  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:56:31  brennan
+ * Revision 5.2  1992/07/08  21:19:09  brennan
+ * patch2
+ * change in split() requires that
+ * bi_split() call load_array() even
+ * when cnt is 0.
+ *
+ * Revision 5.1  1991/12/05  07:56:31  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 /* split.c */
@@ -221,11 +227,8 @@ CELL *bi_split(sp)
   if ( sp->type < C_STRING )  cast1_to_s(sp) ;
 
   if ( string(sp)->len == 0 ) /* nothing to split */
-  { free_STRING( string(sp) ) ;
-    sp->type = C_DOUBLE ; sp->dval = 0.0 ;
-    return sp ;
-  }
-
+	cnt = 0 ;
+  else
   switch ( (sp+2)->type )
   {
     case C_RE :

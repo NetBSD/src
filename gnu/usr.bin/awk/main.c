@@ -11,12 +11,18 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: main.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:35  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:56:14  brennan
+ * Revision 5.2.1.1  1993/01/15  03:33:44  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.2  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.1  1991/12/05  07:56:14  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -32,42 +38,14 @@ the GNU General Public License, version 2, 1991.
 #include "files.h"
 #include <stdio.h>
 
-#if  MSDOS 
-void  reargv(int *, char ***) ;
-#endif
 
-#if LM_DOS && __TURBOC__
-extern unsigned  _stklen = 16 * 1024U ;
-   /*  4K of stack is enough for a user function call 
-       nesting depth of 75 so this is enough for 300 */
-#endif
-
-
-
-extern int program_fd ;
-char *progname ;
 short mawk_state ; /* 0 is compiling */
 int  exit_code ;
 
-
+int
 main(argc , argv )
   int argc ; char **argv ;
 { 
-
-#if   MSDOS
-  progname = "mawk" ;
-#if      HAVE_REARGV
-  reargv(&argc, &argv) ;
-#endif
-#else	/* MSDOS */
-#ifdef THINK_C
-  progname = "MacMAWK";
-#else	/* THINK_C */
-  { char *strrchr() ;
-    char *p = strrchr(argv[0], '/') ;
-    progname = p ? p+1 : argv[0] ; }
-#endif
-#endif
 
   initialize(argc, argv) ;
 

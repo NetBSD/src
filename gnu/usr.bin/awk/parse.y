@@ -11,12 +11,22 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: parse.y,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:44  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.2  92/01/08  16:11:42  brennan
+ * Revision 5.4.1.1  1993/05/05  00:08:26  mike
+ * patch4: forgot to set $$ in LENGTH alone production
+ *
+ * Revision 5.4  1992/08/08  17:17:20  brennan
+ * patch 2: improved timing of error recovery in
+ * bungled function definitions. Fixes a core dump
+ *
+ * Revision 5.3  1992/07/08  15:43:41  brennan
+ * patch2: length returns.  I am a wimp
+ *
+ * Revision 5.2  1992/01/08  16:11:42  brennan
  * code FE_PUSHA carefully for MSDOS large mode
- * 
+ *
  * Revision 5.1  91/12/05  07:50:22  brennan
  * 1.1 pre-release
  * 
@@ -113,7 +123,7 @@ PTR   ptr ;
 %token  <ptr> DOUBLE STRING_ RE  
 %token  <stp> ID   D_ID
 %token  <fbp> FUNCT_ID
-%token  <bip> BUILTIN 
+%token  <bip> BUILTIN  LENGTH
 %token   <cp>  FIELD 
 
 %token  PRINT PRINTF SPLIT MATCH_FUNC SUB GSUB 
@@ -149,11 +159,7 @@ program :       program_block
 
 program_block :  PA_block   /* pattern-action */
               |  function_def
-              |  error block
-                 { if (scope == SCOPE_FUNCT)
-                   { restore_ids() ; scope = SCOPE_MAIN ; }
-                   code_ptr = main_code_ptr ;
-                 }
+              |  outside_error block
               ;
 
 PA_block  :  block 
@@ -419,6 +425,11 @@ builtin :
               { code1(_PUSHINT) ;  code1($4) ; }
           code2(_BUILTIN , p->fp) ;
         }
+	| LENGTH   /* this is an irritation */
+	  { $$ = code_ptr ;
+	    code1(_PUSHINT) ; code1(0) ;
+	    code2(_BUILTIN, $1->fp) ;
+	  }
         ;
 
 /* an empty production to store the code_ptr */
@@ -977,6 +988,23 @@ f_args     :  ID
                 }
               }
            ;
+
+outside_error :  error
+                 {  /* we may have to recover from a bungled function
+		       definition */
+
+		   /* can have local ids, before code scope
+		      changes  */
+		    restore_ids() ;
+
+		    if (scope == SCOPE_FUNCT)
+                    { scope = SCOPE_MAIN ; 
+		      active_funct = (FBLOCK*) 0 ;
+		    }
+
+		    code_ptr = main_code_ptr ;
+                 }
+	     ;
 
 /* a call to a user defined function */
              

@@ -1,7 +1,7 @@
 
 /********************************************
 mawk.h
-copyright 1991, Michael D. Brennan
+copyright 1991 1992, Michael D. Brennan
 
 This is a source file for mawk, an implementation of
 the AWK programming language.
@@ -12,18 +12,24 @@ the GNU General Public License, version 2, 1991.
 
 
 /*   $Log: mawk.h,v $
-/*   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*   initial import of 386bsd-0.1 sources
+/*   Revision 1.2  1993/07/02 23:57:40  jtc
+/*   Updated to mawk 1.1.4
 /*
- * Revision 1.2  1992/06/02  05:07:35  rich
- * Ported to 386bsd.  Changes from vax BSD4.3 include usage of
- * fmod in libm.a, usage of void pointers, and usage of vfprintf
- * in libc.a.  Floating point exceptions are not raised when
- * they should be, which causes the last fpe test to fail.
+ * Revision 5.5.1.3  1993/01/22  15:04:50  mike
+ * pow2->mpow2 for linux
  *
- * Revision 5.4  92/03/03  16:34:41  brennan
+ * Revision 5.5.1.2  1993/01/20  12:53:10  mike
+ * d_to_l()
+ *
+ * Revision 5.5.1.1  1993/01/15  03:33:46  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.5  1992/07/06  20:15:49  brennan
+ * DONT_PROTO_OPEN macro
+ *
+ * Revision 5.4  1992/03/03  16:34:41  brennan
  * conditional around open() proto
- * 
+ *
  * Revision 5.3  92/01/09  08:46:58  brennan
  * cell destroy macro
  * 
@@ -68,6 +74,8 @@ char *strrchr() ;
 #include "types.h"
 
 
+
+
 /*----------------
  *  GLOBAL VARIABLES
  *----------------*/
@@ -94,7 +102,7 @@ char    _string_buff[MIN_SPRINTF] ;
 #define  SPRINTF_SZ	sizeof(tempbuff)
 
 /* help with casts */
-extern int pow2[] ;
+extern int mpow2[] ;
 
 
  /* these are used by the parser, scanner and error messages
@@ -117,7 +125,7 @@ extern  int  errno ;
 extern  char *progname ; /* for error messages */
 
 /* macro to test the type of two adjacent cells */
-#define TEST2(cp)  (pow2[(cp)->type]+pow2[((cp)+1)->type])
+#define TEST2(cp)  (mpow2[(cp)->type]+mpow2[((cp)+1)->type])
 
 /* macro to get at the string part of a CELL */
 #define string(cp) ((STRING *)(cp)->ptr)
@@ -141,6 +149,9 @@ void  PROTO( cast_to_RE, (CELL *) ) ;
 void  PROTO( cast_for_split, (CELL *) ) ;
 void  PROTO( check_strnum, (CELL *) ) ;
 void  PROTO( cast_to_REPL, (CELL *) ) ;
+long  PROTO( d_to_l, (double)) ;
+
+#define d_to_i(d)	((int)d_to_l(d))
 
 int   PROTO( test, (CELL *) ) ; /* test for null non-null */
 CELL *PROTO( cellcpy, (CELL *, CELL *) ) ;
@@ -165,13 +176,12 @@ void  PROTO( exit, (int) ) ;
 int   PROTO( close, (int) ) ;
 
 /* ANSI compilers won't like open() if they've ever seen open as
-   int open(char *,int, ...).  If so remove it.
+   int open(char *,int, ...).  If so , 
+   #define DONT_PROTO_OPEN
 */
 
-#ifndef _IBMR2 /* AIX */
-#ifndef __386BSD__
+#ifndef DONT_PROTO_OPEN
 int   PROTO( open, (char *,int, int) ) ;
-#endif
 #endif
 
 int   PROTO( read, (int , PTR, unsigned) ) ;
@@ -189,10 +199,7 @@ void PROTO( compile_error, ( char *, ...) ) ;
 void  PROTO( execute, (INST *, CELL *, CELL *) ) ;
 char *PROTO( find_kw_str, (int) ) ;
 
-#if ! HAVE_STDLIB_H
 double strtod() ;
-#endif
-
 double fmod() ;
 
 #endif  /* MAWK_H */
