@@ -1,6 +1,12 @@
 /*
- * Copyright (c) 1993 Adam Glass
+ * Copyright (c) 1993 Adam Glass.
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1980, 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +18,13 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -28,8 +36,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/m68k/m68k/copy.s,v 1.4 1993/10/12 05:25:41 glass Exp $
+ *	from: Utah Hdr: locore.s 1.58 91/04/22
+ *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	$Id: copy.s,v 1.5 1994/01/21 22:50:10 cgd Exp $
  */
+
+#ifdef sun3	/* but code this simple prolly won't work for sun3x -- cgd */
+#define	SETUP_SFC	moveq #FC_USERD, d1;   movec d1, sfc
+#define	RESTORE_SFC	moveq #FC_CONTROL, d1; movec d1, sfc
+#define	SETUP_DFC	moveq #FC_USERD, d1;   movec d1, dfc
+#define	RESTORE_DFC	moveq #FC_CONTROL, d1; movec d1, dfc
+#else
+#define	SETUP_SFC
+#define	RESTORE_SFC
+#define	SETUP_DFC
+#define	RESTORE_DFC
+#endif
 
 .text
 /*
@@ -44,8 +66,7 @@ ENTRY(copyinstr)
 	movl	#Lcisflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#FC_USERD, d1
-	movec	d1, sfc
+	SETUP_SFC
 	moveq	#0,d0
 	movw	sp@(14),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
@@ -58,8 +79,7 @@ Lcisloop:
 	jne	Lcisflt2		| ran out of room, error
 	moveq	#0,d0			| got a null, all done
 Lcisdone:
-	moveq   #FC_CONTROL, d1
-	movec	d1, sfc
+	RESTORE_SFC
 	tstl	sp@(16)			| return length desired?
 	jeq	Lcisret			| no, just return
 	subl	sp@(4),a0		| determine how much was copied
@@ -88,8 +108,7 @@ ENTRY(copyoutstr)
 	movl	#Lcosflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#FC_USERD, d1
-	movec	d1, dfc
+	SETUP_DFC
 	moveq	#0,d0
 	movw	sp@(14),d0		| d0 = maxlength
 	jlt	Lcosflt1		| negative count, error
@@ -102,8 +121,7 @@ Lcosloop:
 	jne	Lcosflt2		| ran out of room, error
 	moveq	#0,d0			| got a null, all done
 Lcosdone:
-	moveq   #FC_CONTROL, d1
-	movec	d1, dfc
+	RESTORE_DFC
 	tstl	sp@(16)			| return length desired?
 	jeq	Lcosret			| no, just return
 	subl	sp@(4),a0		| determine how much was copied
@@ -165,8 +183,7 @@ ENTRY(copyin)
 	movl	d2,sp@-			| scratch register
 	movl	_curpcb,a0		| current pcb
 	movl	#Lciflt,a0@(PCB_ONFAULT) | set up to catch faults
-	moveq	#FC_USERD, d1
-	movec	d1, sfc
+	SETUP_SFC
 	movl	sp@(16),d2		| check count
 	jlt	Lciflt			| negative, error
 	jeq	Lcidone			| zero, done
@@ -202,8 +219,7 @@ Lcibloop:
 Lcidone:
 	moveq	#0,d0			| success
 Lciexit:
-	moveq	#FC_CONTROL, d1
-	movec	d1, sfc
+	RESTORE_SFC
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault catcher
 	movl	sp@+,d2			| restore scratch reg
@@ -222,8 +238,7 @@ ENTRY(copyout)
 	movl	d2,sp@-			| scratch register
 	movl	_curpcb,a0		| current pcb
 	movl	#Lcoflt,a0@(PCB_ONFAULT) | catch faults
-	moveq	#FC_USERD, d1
-	movec	d1, dfc
+	SETUP_DFC
 	movl	sp@(16),d2		| check count
 	jlt	Lcoflt			| negative, error
 	jeq	Lcodone			| zero, done
@@ -259,8 +274,7 @@ Lcobloop:
 Lcodone:
 	moveq	#0,d0			| success
 Lcoexit:
-	moveq	#FC_CONTROL, d1
-	movec	d1, dfc
+	RESTORE_DFC
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault catcher
 	movl	sp@+,d2			| restore scratch reg
@@ -273,73 +287,76 @@ Lcoflt:
  * {fu,su},{byte,sword,word}
  */
 TWOENTRY(fuword,fuiword)
-	moveq	#FC_USERD, d1
-	movec	d1, sfc
+	SETUP_SFC
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lferr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsl	a0@,d0			| do read from user space
-	jra	Lfsdone
+	jra	Lfdone
 
 ENTRY(fusword)
-	moveq	#FC_USERD, d1
-	movec	d1, sfc
+	SETUP_SFC
 	movl	sp@(4),a0
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lferr,a1@(PCB_ONFAULT) | where to return to on a fault
 	moveq	#0,d0
 	movsw	a0@,d0			| do read from user space
-	jra	Lfsdone
+	jra	Lfdone
 
 TWOENTRY(fubyte,fuibyte)
-	moveq	#FC_USERD, d1
-	movec	d1, sfc
+	SETUP_SFC
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lferr,a1@(PCB_ONFAULT) | where to return to on a fault
 	moveq	#0,d0
 	movsb	a0@,d0			| do read from user space
-	jra	Lfsdone
+	jra	Lfdone
 
-Lfserr:
+Lferr:
 	moveq	#-1,d0			| error indicator
-Lfsdone:
-	moveq	#FC_CONTROL, d1
-	movec	d1, sfc
+Lfdone:
+	RESTORE_SFC
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 
 TWOENTRY(suword,suiword)
-	moveq	#FC_USERD, d1
-	movec	d1, dfc
+	SETUP_DFC
 	movl	sp@(4),a0		| address to write
 	movl	sp@(8),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsl	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lsdone
 
 ENTRY(susword)
-	moveq	#FC_USERD, d1
-	movec	d1, dfc
+	SETUP_DFC
 	movl	sp@(4),a0		| address to write
 	movw	sp@(10),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lsdone
 
 TWOENTRY(subyte,suibyte)
-	moveq	#FC_USERD, d1
-	movec	d1, dfc
+	SETUP_DFC
 	movl	sp@(4),a0		| address to write
 	movb	sp@(11),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
-	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	#Lserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lsdone
 
+Lserr:
+	moveq	#-1,d0			| error indicator
+Lsdone:
+	RESTORE_DFC
+	clrl	a1@(PCB_ONFAULT) 	| clear fault address
+	rts
 
+#undef	SETUP_SFC
+#undef	RESTORE_SFC
+#undef	SETUP_DFC
+#undef	RESTORE_DFC
