@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,18 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fio.c	5.24 (Berkeley) 2/3/91";*/
-static char rcsid[] = "$Id: fio.c,v 1.3 1994/04/01 01:44:59 cgd Exp $";
+static char sccsid[] = "from: @(#)fio.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$Id: fio.c,v 1.4 1994/06/29 05:09:22 deraadt Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
+
+#include <unistd.h>
 #include <paths.h>
 #include <errno.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -52,9 +54,11 @@ static char rcsid[] = "$Id: fio.c,v 1.3 1994/04/01 01:44:59 cgd Exp $";
 /*
  * Set up the input pointers while copying the mail file into /tmp.
  */
+void
 setptr(ibuf)
 	register FILE *ibuf;
 {
+	extern char *tmpdir;
 	register int c, count;
 	register char *cp, *cp2;
 	struct message this;
@@ -64,7 +68,7 @@ setptr(ibuf)
 	char linebuf[LINESIZE];
 
 	/* Get temporary file. */
-	(void)sprintf(linebuf, "%s/mail.XXXXXX", _PATH_TMP);
+	(void)sprintf(linebuf, "%s/mail.XXXXXX", tmpdir);
 	if ((c = mkstemp(linebuf)) == -1 ||
 	    (mestmp = Fdopen(c, "r+")) == NULL) {
 		(void)fprintf(stderr, "mail: can't open %s\n", linebuf);
@@ -142,6 +146,7 @@ setptr(ibuf)
  * If a write error occurs, return -1, else the count of
  * characters written, including the newline.
  */
+int
 putline(obuf, linebuf)
 	FILE *obuf;
 	char *linebuf;
@@ -161,9 +166,11 @@ putline(obuf, linebuf)
  * buffer.  Return the number of characters read.  Do not
  * include the newline at the end.
  */
+int
 readline(ibuf, linebuf, linesize)
 	FILE *ibuf;
 	char *linebuf;
+	int linesize;
 {
 	register int n;
 
@@ -186,7 +193,7 @@ setinput(mp)
 {
 
 	fflush(otf);
-	if (fseek(itf, positionof(mp->m_block, mp->m_offset), 0) < 0) {
+	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), 0) < 0) {
 		perror("fseek");
 		panic("temporary file seek");
 	}
@@ -197,6 +204,7 @@ setinput(mp)
  * Take the data out of the passed ghost file and toss it into
  * a dynamically allocated message structure.
  */
+void
 makemessage(f)
 	FILE *f;
 {
@@ -209,7 +217,7 @@ makemessage(f)
 	dot = message;
 	size -= sizeof (struct message);
 	fflush(f);
-	(void) lseek(fileno(f), sizeof *message, 0);
+	(void) lseek(fileno(f), (off_t)sizeof *message, 0);
 	if (read(fileno(f), (char *) message, size) != size)
 		panic("Message temporary file corrupted");
 	message[msgCount].m_size = 0;
@@ -221,6 +229,7 @@ makemessage(f)
  * Append the passed message descriptor onto the temp file.
  * If the write fails, return 1, else 0
  */
+int
 append(mp, f)
 	struct message *mp;
 	FILE *f;
@@ -231,6 +240,7 @@ append(mp, f)
 /*
  * Delete a file, but only if the file is a plain file.
  */
+int
 rm(name)
 	char *name;
 {
@@ -250,6 +260,7 @@ static int omask;
 /*
  * Hold signals SIGHUP, SIGINT, and SIGQUIT.
  */
+void
 holdsigs()
 {
 
@@ -260,6 +271,7 @@ holdsigs()
 /*
  * Release signals SIGHUP, SIGINT, and SIGQUIT.
  */
+void
 relsesigs()
 {
 
@@ -385,6 +397,7 @@ expand(name)
 /*
  * Determine the current folder directory name.
  */
+int
 getfold(name)
 	char *name;
 {

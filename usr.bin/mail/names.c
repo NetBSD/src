@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)names.c	5.16 (Berkeley) 6/25/90";*/
-static char rcsid[] = "$Id: names.c,v 1.2 1993/08/01 18:13:00 mycroft Exp $";
+static char sccsid[] = "from: @(#)names.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$Id: names.c,v 1.3 1994/06/29 05:09:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -43,6 +43,8 @@ static char rcsid[] = "$Id: names.c,v 1.2 1993/08/01 18:13:00 mycroft Exp $";
  */
 
 #include "rcv.h"
+#include <fcntl.h>
+#include "extern.h"
 
 /*
  * Allocate a single element of a name list,
@@ -52,6 +54,7 @@ static char rcsid[] = "$Id: names.c,v 1.2 1993/08/01 18:13:00 mycroft Exp $";
 struct name *
 nalloc(str, ntype)
 	char str[];
+	int ntype;
 {
 	register struct name *np;
 
@@ -88,6 +91,7 @@ tailof(name)
 struct name *
 extract(line, ntype)
 	char line[];
+	int ntype;
 {
 	register char *cp;
 	register struct name *top, *np, *t;
@@ -116,6 +120,7 @@ extract(line, ntype)
 char *
 detract(np, ntype)
 	register struct name *np;
+	int ntype;
 {
 	register int s;
 	register char *cp, *top;
@@ -255,6 +260,7 @@ outof(names, fo, hp)
 				(void) Fclose(fout);
 				goto cant;
 			}
+			(void) fcntl(image, F_SETFD, 1);
 			fprintf(fout, "From %s %s", myname, date);
 			puthead(hp, fout, GTO|GSUBJECT|GCC|GNL);
 			while ((c = getc(fo)) != EOF)
@@ -341,6 +347,7 @@ cant:
  * If any of the network metacharacters precedes any slashes, it can't
  * be a filename.  We cheat with .'s to allow path names like ./...
  */
+int
 isfileaddr(name)
 	char *name;
 {
@@ -403,6 +410,7 @@ struct name *
 gexpand(nlist, gh, metoo, ntype)
 	struct name *nlist;
 	struct grouphead *gh;
+	int metoo, ntype;
 {
 	struct group *gp;
 	struct grouphead *ngh;
@@ -624,6 +632,7 @@ put(list, node)
  * Determine the number of undeleted elements in
  * a name list and return it.
  */
+int
 count(np)
 	register struct name *np;
 {
@@ -670,6 +679,7 @@ delname(np, name)
  */
 
 /*
+void
 prettyprint(name)
 	struct name *name;
 {
