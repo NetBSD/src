@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.7 2001/11/29 17:15:44 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.8 2002/01/29 04:45:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.7 2001/11/29 17:15:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.8 2002/01/29 04:45:47 nisimura Exp $");
 
 #include "bpfilter.h"
 
@@ -1638,7 +1638,7 @@ pcn_init(struct ifnet *ifp)
 		 * our own MII layer.
 		 */
 		pcn_bcr_write(sc, LE_BCR32,
-		    pcn_csr_read(sc, LE_BCR32) & ~LE_B32_DANAS);
+		    pcn_csr_read(sc, LE_BCR32) | LE_B32_DANAS);
 	}
 
 	/*
