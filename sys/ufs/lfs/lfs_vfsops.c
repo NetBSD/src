@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.5 2000/01/15 17:52:06 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.6 2000/01/20 21:11:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -408,6 +408,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_writer = 0;
 	fs->lfs_dirops = 0;
 	fs->lfs_seglock = 0;
+	lockinit(&fs->lfs_freelock, PINOD, "lfs_freelock", 0, 0);
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -706,7 +707,7 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+	ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;
