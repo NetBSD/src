@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,23 +35,22 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)extract.c	5.5 (Berkeley) 3/12/91";
+static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
+
 #include <dirent.h>
-#include <unistd.h>
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "archive.h"
 #include "extern.h"
-
-extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
 
 /*
  * extract --
@@ -61,15 +60,15 @@ extern char *archive;			/* archive name */
  *	members date otherwise date is time of extraction.  Does not modify
  *	archive.
  */
+int
 extract(argv)
 	char **argv;
 {
-	register int afd, all, tfd;
+	char *file;
+	int afd, all, eval, tfd;
 	struct timeval tv[2];
 	struct stat sb;
 	CF cf;
-	int eval;
-	char *file;
 
 	eval = 0;
 	tv[0].tv_usec = tv[1].tv_usec = 0;
@@ -91,8 +90,7 @@ extract(argv)
 			continue;
 
 		if ((tfd = open(file, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
-			(void)fprintf(stderr, "ar: %s: %s.\n",
-			    file, strerror(errno));
+			warn("%s", file);
 			skip_arobj(afd);
 			eval = 1;
 			continue;
@@ -106,15 +104,13 @@ extract(argv)
 		copy_ar(&cf, chdr.size);
 
 		if (fchmod(tfd, (short)chdr.mode)) {
-			(void)fprintf(stderr, "ar: %s: chmod: %s\n",
-			    file, strerror(errno));
+			warn("chmod: %s", file);
 			eval = 1;
 		}
 		if (options & AR_O) {
 			tv[0].tv_sec = tv[1].tv_sec = chdr.date;
 			if (utimes(file, tv)) {
-				(void)fprintf(stderr, "ar: %s: utimes: %s\n",
-				    file, strerror(errno));
+				warn("utimes: %s", file);
 				eval = 1;
 			}
 		}
@@ -126,7 +122,7 @@ extract(argv)
 
 	if (*argv) {
 		orphans(argv);
-		return(1);
+		return (1);
 	}
-	return(0);
+	return (0);
 }	
