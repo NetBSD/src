@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.32 1998/03/31 22:49:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.33 1998/04/01 22:15:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,15 @@ extern struct mbuf *m_copypack();
 
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
+/*
+ * Knob to enable Congestion Window Monitoring.
+ */
+#ifdef TCP_CWM
+int	tcp_cwm = 1;
+#else
+int	tcp_cwm = 0;
+#endif
+
 static __inline void tcp_segsize __P((struct tcpcb *, int *, int *));
 static __inline void
 tcp_segsize(tp, txsegsizep, rxsegsizep)
@@ -170,21 +179,39 @@ tcp_output(tp)
 
 	tcp_segsize(tp, &txsegsize, &rxsegsize);
 
-	/*
-	 * Determine length of data that should be transmitted,
-	 * and flags that will be used.
-	 * If there is some data or critical controls (SYN, RST)
-	 * to send, then transmit; otherwise, investigate further.
-	 */
 	idle = (tp->snd_max == tp->snd_una);
-	if (idle && tp->t_idle >= tp->t_rxtcur)
+
+	if (tcp_cwm) {
 		/*
-		 * We have been idle for "a while" and no acks are
-		 * expected to clock out any data we send --
-		 * slow start to get ack "clock" running again.
+		 * Hughes/Touch/Heidemann Congestion Window Monitoring.
+		 * Count the number of packets currently pending
+		 * acknowledgement, and limit our congestion window
+		 * to the initial congestion window plus that count.
+		 * This prevents bursting once all pending packets have
+		 * been acknowledged (i.e. transmission is idle).
 		 */
-		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, txsegsize);
+		tp->snd_cwnd = min(tp->snd_cwnd,
+		    TCP_INITIAL_WINDOW(tcp_init_win, txsegsize) +
+		    (tp->snd_nxt - tp->snd_una));
+	} else {
+		if (idle && tp->t_idle >= tp->t_rxtcur) {
+			/*
+			 * We have been idle for "a while" and no acks are
+			 * expected to clock out any data we send --
+			 * slow start to get ack "clock" running again.
+			 */
+			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
+			    txsegsize);
+		}
+	}
+
 again:
+	/*
+	 * Determine length of data that should be transmitted, and
+	 * flags that should be used.  If there is some data or critical
+	 * controls (SYN, RST) to send, then transmit; otherwise,
+	 * investigate further.
+	 */
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;
 	win = min(tp->snd_wnd, tp->snd_cwnd);
