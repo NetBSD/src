@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.19.2.2 2000/07/21 18:45:46 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.19.2.3 2000/07/21 18:47:29 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -900,8 +900,11 @@ awi_watchdog(ifp)
 		awi_txint(sc);
 	}
 	if (sc->sc_rx_timer && --sc->sc_rx_timer == 0) {
-		printf("%s: no recent beacons from %s; rescanning\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_bss.bssid));
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: no recent beacons from %s; rescanning\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(sc->sc_bss.bssid));
+		}
 		ifp->if_flags &= ~IFF_RUNNING;
 		awi_start_scan(sc);
 	}
@@ -2028,18 +2031,21 @@ awi_sync_done(sc)
 		awi_drvstate(sc, AWI_DRV_INFSY);
 		awi_send_auth(sc, 1);
 	} else {
-		printf("%s: synced with", sc->sc_dev.dv_xname);
-		if (sc->sc_no_bssid)
-			printf(" no-bssid");
-		else {
-			printf(" %s ssid ", ether_sprintf(sc->sc_bss.bssid));
-			awi_print_essid(sc->sc_bss.essid);
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: synced with", sc->sc_dev.dv_xname);
+			if (sc->sc_no_bssid)
+				printf(" no-bssid");
+			else {
+				printf(" %s ssid ",
+				    ether_sprintf(sc->sc_bss.bssid));
+				awi_print_essid(sc->sc_bss.essid);
+			}
+			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
+				printf(" at chanset %d pattern %d\n",
+				    sc->sc_bss.chanset, sc->sc_bss.pattern);
+			else
+				printf(" at channel %d\n", sc->sc_bss.chanset);
 		}
-		if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
-			printf(" at chanset %d pattern %d\n",
-			    sc->sc_bss.chanset, sc->sc_bss.pattern);
-		else
-			printf(" at channel %d\n", sc->sc_bss.chanset);
 		awi_drvstate(sc, AWI_DRV_ADHSY);
 		sc->sc_status = AWI_ST_RUNNING;
 		ifp->if_flags |= IFF_RUNNING;
@@ -2306,15 +2312,16 @@ awi_recv_asresp(sc, m0)
 				rate = AWI_80211_RATE(asresp[2 + i]);
 		}
 	}
-	printf("%s: associated with %s ssid ",
-	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_bss.bssid));
-	awi_print_essid(sc->sc_bss.essid);
-	if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
-		printf(" chanset %d pattern %d",
-		    sc->sc_bss.chanset, sc->sc_bss.pattern);
-	else
-		printf(" channel %d", sc->sc_bss.chanset);
-	printf(" signal %d\n", sc->sc_bss.rssi);
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: associated with %s ssid ",
+		    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_bss.bssid));
+		awi_print_essid(sc->sc_bss.essid);
+		if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
+			printf(" chanset %d pattern %d\n",
+			    sc->sc_bss.chanset, sc->sc_bss.pattern);
+		else
+			printf(" channel %d\n", sc->sc_bss.chanset);
+	}
 	sc->sc_tx_rate = rate;
 	sc->sc_mgt_timer = 0;
 	sc->sc_rx_timer = 10;
