@@ -8944,7 +8944,7 @@ macarg1 (start, limit, macro, depthptr, newlines, comments, rest_args)
       ++*newlines;
       break;
     case '/':
-      if (macro)
+      if (macro && !put_out_comments)
 	break;
       if (bp[1] == '\\' && bp[2] == '\n')
 	newline_fix (bp + 1);
