@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.11 2002/06/16 22:24:01 itojun Exp $	*/
+/*	$NetBSD: factor.c,v 1.12 2002/06/17 15:43:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.11 2002/06/16 22:24:01 itojun Exp $");
+__RCSID("$NetBSD: factor.c,v 1.12 2002/06/17 15:43:52 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,10 +82,10 @@ __RCSID("$NetBSD: factor.c,v 1.11 2002/06/16 22:24:01 itojun Exp $");
 #else
 typedef long	BIGNUM;
 typedef u_long	BN_ULONG;
-#define BN_new()	((BIGNUM *)calloc(sizeof(BIGNUM), 1))
+#define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
 #define BN_dec2bn(pp, str)	(**(pp) = atol(str))
-#define BN_is_zero(v)	(*(v) == 0)
-#define BN_is_one(v)	(*(v) == 1)
+#define BN_is_zero(v)		(*(v) == 0)
+#define BN_is_one(v)		(*(v) == 1)
 #define BN_mod_word(a, b)	(*(a) % (b))
 #endif
 
@@ -102,12 +102,16 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 
 #define	PRIME_CHECKS	5
 
+#ifdef HAVE_OPENSSL 
+BN_CTX *ctx;				/* just use a global context */
+#endif
+
 int	main(int, char *[]);
-void	pr_fact(BIGNUM *);			/* print factors of a value */
+void	pr_fact(BIGNUM *);		/* print factors of a value */
 void	BN_print_dec_fp(FILE *, const BIGNUM *);
 void	usage(void) __attribute__((__noreturn__));
 #ifdef HAVE_OPENSSL
-void	pollard_pminus1(BIGNUM *);		/* print factors for big numbers */
+void	pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
 #else
 char	*BN_bn2dec(const BIGNUM *);
 BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
@@ -120,6 +124,9 @@ main(int argc, char *argv[])
 	int ch;
 	char *p, buf[LINE_MAX];		/* > max number of digits. */
 
+#ifdef HAVE_OPENSSL 
+	ctx = BN_CTX_new();
+#endif
 	val = BN_new();
 	if (val == NULL)
 		errx(1, "can't initialise bignum");
@@ -202,9 +209,18 @@ pr_fact(BIGNUM *val)
 		/* Watch for primes larger than the table. */
 		if (fact > pr_limit) {
 #ifdef HAVE_OPENSSL
-			pollard_pminus1(val);
+			BIGNUM *bnfact;
+
+			bnfact = BN_new();
+			BN_set_word(bnfact, *(fact - 1));
+			BN_sqr(bnfact, bnfact, ctx);
+			if (BN_cmp(bnfact, val) > 0) {
+				putchar(' ');
+				BN_print_dec_fp(stdout, val);
+			} else
+				pollard_pminus1(val);
 #else
-			(void)printf(" %s", BN_bn2dec(val));
+			printf(" %s", BN_bn2dec(val));
 #endif
 			break;
 		}
@@ -253,9 +269,6 @@ void
 pollard_pminus1(BIGNUM *val)
 {
 	BIGNUM *base, *num, *i, *x;
-	BN_CTX *ctx;
-
-	ctx = BN_CTX_new();
 
 	base = BN_new();
 	num = BN_new();
