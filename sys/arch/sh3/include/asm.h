@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2001/04/09 15:52:59 marcus Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 2001/04/09 20:31:20 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,6 +84,7 @@
 	_PROF_PROLOGUE
 
 #define	ALTENTRY(name)	.globl _C_LABEL(name); \
+	.type _C_LABEL(name),@function; \
 	_C_LABEL(name):
 
 #define	ASMSTR		.asciz
