@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.5 1998/07/28 19:22:54 mycroft Exp $	*/
+/*	$NetBSD: inode.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.5 1998/07/28 19:22:54 mycroft Exp $");
+__RCSID("$NetBSD: inode.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,8 @@ ckinode(dp, idesc)
 	idesc->id_entryno = 0;
 	idesc->id_filesize = fs2h32(dp->e2di_size);
 	mode = fs2h16(dp->e2di_mode) & IFMT;
-	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
-	    (fs2h32(dp->e2di_size) < EXT2_MAXSYMLINKLEN)))
+	if (mode == IFBLK || mode == IFCHR || mode == IFIFO ||
+	    (mode == IFLNK && (fs2h32(dp->e2di_size) < EXT2_MAXSYMLINKLEN)))
 		return (KEEPON);
 	dino = *dp;
 	ndb = howmany(fs2h32(dino.e2di_size), sblock.e2fs_bsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.5 1998/04/01 15:26:00 kleink Exp $	*/
+/*	$NetBSD: pass1.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.5 1998/04/01 15:26:00 kleink Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,21 +202,26 @@ checkinode(inumber, idesc)
 			}
 		}
 	}
-	for (j = ndb; j < NDADDR; j++)
-		if (dp->e2di_blocks[j] != 0) {
-			if (debug)
-				printf("bad direct addr: %d\n", fs2h32(dp->e2di_blocks[j]));
-			goto unknown;
+	/* Linux puts things in blocks for FIFO, so skip this check */
+	if (mode != IFIFO) {
+		for (j = ndb; j < NDADDR; j++)
+			if (dp->e2di_blocks[j] != 0) {
+				if (debug)
+					printf("bad direct addr: %d\n",
+					    fs2h32(dp->e2di_blocks[j]));
+				goto unknown;
+			}
+		for (j = 0, ndb -= NDADDR; ndb > 0; j++)
+			ndb /= NINDIR(&sblock);
+		for (; j < NIADDR; j++) {
+			if (dp->e2di_blocks[j+NDADDR] != 0) {
+				if (debug)
+					printf("bad indirect addr: %d\n",
+					    fs2h32(dp->e2di_blocks[j+NDADDR]));
+				goto unknown;
+			}
 		}
-	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(&sblock);
-	for (; j < NIADDR; j++)
-		if (dp->e2di_blocks[j+NDADDR] != 0) {
-			if (debug)
-				printf("bad indirect addr: %d\n",
-					fs2h32(dp->e2di_blocks[j+NDADDR]));
-			goto unknown;
-		}
+	}
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
