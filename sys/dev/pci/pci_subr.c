@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.47 2001/11/13 07:48:47 lukem Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.48 2002/03/22 20:03:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.47 2001/11/13 07:48:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.48 2002/03/22 20:03:20 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -149,6 +149,8 @@ const struct pci_class pci_subclass_communications[] = {
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
 	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
+	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	},
+	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
 	{ 0 },
 };
@@ -209,6 +211,8 @@ const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
+	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH,	},
+	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND,	},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
 	{ 0 },
 };
@@ -236,6 +240,8 @@ const struct pci_class pci_subclass_crypto[] = {
 const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
+	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,			},
+	{ "management",		PCI_SUBCLASS_DASP_MGMT,			},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
