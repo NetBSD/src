@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.14 1997/10/05 18:24:33 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.14.2.1 1998/11/23 03:12:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -447,7 +447,9 @@ cgfourmmap(dev, off, prot)
 	if (off & PGOFSET)
 		panic("cgfourmap");
 
-	if ((u_int)off >= NOOVERLAY) {
+	if (off < 0)
+		return (-1);
+	else if ((u_int)off >= NOOVERLAY) {
 		off -= NOOVERLAY;
 
 		/*
@@ -455,7 +457,7 @@ cgfourmmap(dev, off, prot)
 		 * there really is. We compensate by double-mapping the
 		 * first page for as many other pages as it wants
 		 */
-		while (off >= COLOR_SIZE)
+		while ((u_int)off >= COLOR_SIZE)
 			off -= COLOR_SIZE;	/* XXX thorpej ??? */
 
 		poff = off + PFOUR_COLOR_OFF_COLOR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.32 1997/03/24 21:16:59 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.32.8.1 1998/11/23 03:12:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,10 +198,10 @@ mmmmap(dev, off, prot)
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if (off > ctob(physmem) &&
+		if ((u_int)off > ctob(physmem) &&
 		    suser(p->p_ucred, &p->p_acflag) != 0)
 			return -1;
-		return i386_btop(off);
+		return i386_btop((u_int)off);
 
 /* minor device 1 is kernel memory */
 	case 1:
