@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.1 1997/09/17 18:30:51 drochner Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.2 1999/01/27 20:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -71,7 +71,7 @@ void bi_getbiosgeom()
 		      sizeof(bibg->disk[i].dosparts));
 		if(readsects(&d, 0, 1, buf, 0))
 			continue;
-		bcopy(&buf[DOSPARTOFF], bibg->disk[i].dosparts,
+		bcopy(&buf[MBR_PARTOFF], bibg->disk[i].dosparts,
 		      sizeof(bibg->disk[i].dosparts));
 	}
 
