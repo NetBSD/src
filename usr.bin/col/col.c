@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)col.c	5.3 (Berkeley) 2/2/91";*/
-static char rcsid[] = "$Id: col.c,v 1.2 1993/08/01 18:17:35 mycroft Exp $";
+static char rcsid[] = "$Id: col.c,v 1.3 1993/08/03 04:32:16 mycroft Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -425,8 +425,9 @@ flush_line(l)
 			if (compress_spaces && nspace > 1) {
 				int ntabs;
 
-				ntabs = this_col / 8 - last_col / 8;
-				nspace -= ntabs * 8;
+				ntabs = ((last_col % 8) +
+					 (this_col - last_col)) / 8;
+				nspace -= (ntabs * 8) - (last_col % 8);
 				while (--ntabs >= 0)
 					PUTC('\t');
 			}
