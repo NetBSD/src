@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.54 2002/06/09 19:59:55 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.55 2002/08/02 02:23:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.54 2002/06/09 19:59:55 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.55 2002/08/02 02:23:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,8 @@ __RCSID("$NetBSD: syslogd.c,v 1.54 2002/06/09 19:59:55 itojun Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <utmp.h>
 
+#include "utmpentry.h"
 #include "pathnames.h"
 
 #define SYSLOG_NAMES
@@ -951,27 +951,24 @@ void
 wallmsg(struct filed *f, struct iovec *iov)
 {
 	static int reenter;			/* avoid calling ourselves */
-	FILE *uf;
-	struct utmp ut;
 	int i;
 	char *p;
-	char line[sizeof(ut.ut_line) + 1];
+	static struct utmpentry *ohead = NULL;
+	struct utmpentry *ep;
 
 	if (reenter++)
 		return;
-	if ((uf = fopen(_PATH_UTMP, "r")) == NULL) {
-		logerror(_PATH_UTMP);
-		reenter = 0;
-		return;
+
+	(void)getutentries(NULL, &ep);
+	if (ep != ohead) {
+		freeutentries(ohead);
+		ohead = ep;
 	}
 	/* NOSTRICT */
-	while (fread((char *)&ut, sizeof(ut), 1, uf) == 1) {
-		if (ut.ut_name[0] == '\0')
-			continue;
-		strncpy(line, ut.ut_line, sizeof(ut.ut_line));
-		line[sizeof(ut.ut_line)] = '\0';
+	for (; ep; ep = ep->next) {
 		if (f->f_type == F_WALL) {
-			if ((p = ttymsg(iov, 6, line, TTYMSGTIME)) != NULL) {
+			if ((p = ttymsg(iov, 6, ep->line, TTYMSGTIME))
+			    != NULL) {
 				errno = 0;	/* already in msg */
 				logerror(p);
 			}
@@ -981,10 +978,9 @@ wallmsg(struct filed *f, struct iovec *iov)
 		for (i = 0; i < MAXUNAMES; i++) {
 			if (!f->f_un.f_uname[i][0])
 				break;
-			if (!strncmp(f->f_un.f_uname[i], ut.ut_name,
-			    UT_NAMESIZE)) {
-				if ((p = ttymsg(iov, 6, line, TTYMSGTIME))
-								!= NULL) {
+			if (strcmp(f->f_un.f_uname[i], ep->name) == 0) {
+				if ((p = ttymsg(iov, 6, ep->line, TTYMSGTIME))
+				    != NULL) {
 					errno = 0;	/* already in msg */
 					logerror(p);
 				}
@@ -992,7 +988,6 @@ wallmsg(struct filed *f, struct iovec *iov)
 			}
 		}
 	}
-	(void)fclose(uf);
 	reenter = 0;
 }
 
