@@ -1,0 +1,151 @@
+/*
+ * XXX This is going to go away!  It's still here as an example.
+ */
+
+/*
+ * This driver is a bit of a hack.  For efficiency reasons, it is not
+ * general enough to really be useful in itself.  The only useful
+ * purpose in making it separate from the isa driver is to get attach
+ * messages, and to check for addressing conflicts in the same way that
+ * all other ISA drivers do.
+ *
+ * There are two minor advantages to making it a separate driver:
+ *
+ * 1) It allows you to put the slave at a different irq on the master.
+ * Putting it at irq 5 might make the priorities do something more
+ * reasonable on an average machine.
+ *
+ * 2) It hides all of the initialization gunk.
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include "icureg.h"
+#include "icuvar.h"
+
+struct icu_softc {
+	struct device icu_dev;
+	u_short icu_port;
+	u_char icu_irq;
+	u_char icu_slaves;
+	u_char icu_mask;
+};
+
+static int icumatch __P((struct device *, struct cfdata *, void *));
+static void icuattach __P((struct device *, struct device *, void *));
+
+struct cfdriver icucd =
+{ NULL, "icu", icu_match, icu_attach, DV_DULL, sizeof(struct icu_softc), 0, 0};
+
+extern struct cfdriver isacd;
+
+static int
+icu_match(parent, cf, args)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+#ifdef DIAGNOSTIC
+	struct icu_attach_args *ia = aux;
+
+	switch (cf->cf_unit) {
+		case 0:
+			if (ia->port != ICU0) {
+				printf("%s0: must be at port 0x%x",
+				    icucd.cd_name, ICU0);
+				return 0;
+			}
+			break;
+		case 1:
+			if (ia->port != ICU1) {
+				printf("%s1: must be at port 0x%x",
+				    icucd.cd_name, ICU1);
+				return 0;
+			}
+			break;
+		default:
+			return 0;
+	}
+
+	if (cf->cf_driver == &isacd) {
+		/* master has no irq */
+		if (ia->irq != -1) {
+			printf("%s%d: irq not allowed\n", icucd.cd_name,
+			    cf->cf_unit);
+			return 0;
+		}
+	} else if (cf->cf_driver == &icucd) {
+		/* slave must have irq; no wildcarding yet */
+		if (ia->irq == -1) {
+			printf("%s%d: no irq\n", icucd.cd_name, cf->cf_unit);
+			return 0;
+		}
+		if (ia->irq > 7) {
+			printf("%s%d: invalid irq\n", icucd.cf_name,
+			    cf->cf_unit);
+			return 0;
+		}
+		/* only one level of nesting allowed */
+		if (parent->cf_driver == &icucd) {
+			printf("%s%d: multiple nesting\n", icucd.cd_name,
+			    cf->cf_unit);
+			return 0;
+		}
+	}
+#endif
+
+	return 1;
+}
+
+static void
+icu_reset(sc)
+	struct icu_softc *sc;
+{
+	/* initialization command words */
+	outb(sc->icu_port + 0, 0x11);		/* 1) reset; program device */
+	outb(sc->icu_port + 1,
+	    ICU_VEC + 8 * sc->icu_dev->cf_unit);/* 2) base interrupt vector */
+	outb(sc->icu_port + 1, sc->icu_slaves);	/* 3) slave mask */
+	outb(sc->icu_port + 1, 0x01);		/* 4) 8086 mode */
+	/* operation control words */
+	outb(sc->icu_port + 1, sc->icu_mask);	/* 1) interrupt mask */
+	outb(sc->icu_port + 0, 0x0a);		/* 3) return IRR on read */
+}
+
+static void
+icu_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct icu_softc *sc = (struct icu_softc *)self, *csc;
+	struct icu_attach_args *ia = aux;
+	struct cfdata *child;
+
+	sc->icu_port = ia->port;
+	sc->icu_irq = ia->irq;
+	sc->icu_slaves = 0;
+	sc->icu_mask = 0xff;
+
+	printf("\n");
+	while (1) {
+		child = config_search(NULL, self, NULL);
+		if (!child)
+			break;
+		config_attach(self, child, NULL, NULL);
+		csc = (struct icu_softc *)child->cf_aux;
+#ifdef DIAGNOSTIC
+		if (child->cf_driver != &icucd) {
+			printf("%s%d: child %s%d is not an %s\n",
+			    self->cf_driver->cd_name, self->cf_unit,
+			    child->cf_driver->cd_name, child->cf_unit,
+			    self->cf_driver->cd_name);
+			continue;
+		}
+#endif
+		if (csc->icu_irq != -1)
+			sc->icu_slaves |= 1 << csc->icu_irq;
+	}
+
+	icu_reset(sc);
+}

@@ -1,0 +1,59 @@
+#
+# PATEK -- Mycroft's 486 testing system
+#
+#	$Id: PATEK,v 1.1 1993/09/14 17:28:06 mycroft Exp $
+#
+
+machine		"i386"
+cpu		"I486_CPU"
+ident		PATEK
+timezone	5 dst
+maxusers	16
+options		INET,NFSCLIENT,NFSSERVER
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+options		"COMPAT_NOMID"
+options		XSERVER,UCONSOLE
+options		ISOFS
+options		MSDOSFS
+options		KERNFS
+options		SCSI
+options		DDB
+options		"DUMMY_NOPS"
+options		"SYMTAB_SPACE=65000"
+
+config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
+
+controller	isa0
+controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
+disk		sd0	at uha0 flags 0 drive ?
+disk		sd1	at uha0 flags 0 drive ?
+disk		sd2	at uha0 flags 0 drive ?
+disk		sd3	at uha0 flags 0 drive ?
+tape		st0	at uha0 flags 1 drive ?
+tape		st1	at uha0 flags 1 drive ?
+disk		cd0	at uha0 flags 2 drive ?
+disk		cd1	at uha0 flags 2 drive ?
+
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive 0
+disk		fd1	at fdc0 drive 1
+
+device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
+device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+
+#device		pms0	at isa? port "IO_KBD" tty vector pmsintr
+
+device		ed0	at isa? port 0x300 net irq 10 iomem 0xd8000 vector edintr
+
+pseudo-device	loop
+pseudo-device	ether
+pseudo-device	bpfilter 4
+pseudo-device	log
+pseudo-device	pty	32
+
+pseudo-device	swappager
+pseudo-device	vnodepager
+pseudo-device	devpager
