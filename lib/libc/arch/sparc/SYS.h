@@ -37,20 +37,26 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$Id: SYS.h,v 1.1 1993/10/07 00:21:21 cgd Exp $
+ *	$Id: SYS.h,v 1.2 1994/01/15 20:19:43 pk Exp $
  */
 
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
+#ifdef __STDC__
+#define _CAT(x,y) x##y
+#else
+#define _CAT(x,y) x/**/y
+#endif
+
 #ifdef PROF
 #define	ENTRY(x) \
-	.align 4; .globl _##x; .proc 1; _##x:; .data; .align 4; 1: .long 0; \
+	.align 4; .globl _CAT(_,x); .proc 1; _CAT(_,x):; .data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
 #define	ENTRY(x) \
-	.align 4; .globl _##x; .proc 1; _##x:
+	.align 4; .globl _CAT(_,x); .proc 1; _CAT(_,x):
 #endif
 
 /*
@@ -66,7 +72,7 @@
  * came at label 1....
  */
 #define	SYSCALL(x) \
-	ENTRY(x); mov SYS_##x,%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
@@ -74,14 +80,14 @@
  * and avoid a branch.
  */
 #define	RSYSCALL(x) \
-	ENTRY(x); mov (SYS_##x)|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
 #define	PSEUDO(x,y) \
-	ENTRY(x); mov (SYS_##y)|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
 #define	ASMSTR		.asciz
