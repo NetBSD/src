@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.29 1997/10/01 01:18:50 enami Exp $	*/
+/*	$NetBSD: ch.c,v 1.30 1997/10/01 05:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -620,7 +620,7 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	 */
 	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, SCSI_DATA_IN));
 }
 
 
