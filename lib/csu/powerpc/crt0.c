@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.20 2002/04/17 17:36:13 kleink Exp $ */
+/* $NetBSD: crt0.c,v 1.21 2002/04/26 23:28:53 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -68,9 +68,9 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
 	 * _SDA_BASE is defined in the SVR4 ABI for PPC.
 	 * _SDA2_BASE is defined in the E[mbedded] ABI for PPC.
 	 */
-	__asm(  "addis 13,0,_SDA_BASE_@ha;"
+	__asm(  "lis 13,_SDA_BASE_@ha;"
 		"addi 13,13,_SDA_BASE_@l;"
-		"addis 2,0,_SDA2_BASE_@ha;"
+		"lis 2,_SDA2_BASE_@ha;"
 		"addi 2,2,_SDA2_BASE_@l" );
 
 	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
@@ -105,7 +105,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.20 2002/04/17 17:36:13 kleink Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.21 2002/04/26 23:28:53 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
