@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.21 1999/06/05 14:34:22 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.22 1999/06/05 16:55:19 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -247,9 +247,12 @@ include "dev/wsfont/files.wsfont"
 # Binary compatiblity with previous NetBSD releases.
 file	arch/sparc64/sparc64/compat_13_machdep.c compat_13
 
-# NetBSD/sparc Binary compatibility (COMPAT_NETBSD32)
+# NetBSD/sparc 32-bit Binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
 file	arch/sparc64/sparc64/netbsd32_machdep.c	compat_netbsd32
+
+# NetBSD a.out Binary Compatibility (COMPAT_AOUT)
+include "compat/aout/files.aout"
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
