@@ -25,6 +25,7 @@
 ./usr/include/sh3/intcreg.h
 ./usr/include/sh3/intr.h
 ./usr/include/sh3/limits.h
+./usr/include/sh3/math.h
 ./usr/include/sh3/mmureg.h
 ./usr/include/sh3/param.h
 ./usr/include/sh3/pcb.h

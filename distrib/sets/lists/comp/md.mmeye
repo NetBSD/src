@@ -23,6 +23,7 @@
 ./usr/include/mmeye/intr.h
 ./usr/include/mmeye/limits.h
 ./usr/include/mmeye/loadfile_machdep.h
+./usr/include/mmeye/math.h
 ./usr/include/mmeye/mmeye.h
 ./usr/include/mmeye/param.h
 ./usr/include/mmeye/pcb.h
