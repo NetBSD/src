@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.8 2001/09/24 13:22:37 wiz Exp $	*/
+/*	$NetBSD: mapper.c,v 1.8.2.1 2002/06/04 11:56:40 lukem Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -921,6 +921,7 @@ int main(argc, argv)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
