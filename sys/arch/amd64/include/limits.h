@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.3 2003/04/28 23:16:17 bjh21 Exp $	*/
+/*	$NetBSD: limits.h,v 1.4 2003/05/25 19:29:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -64,7 +64,7 @@
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+#define	SSIZE_MAX	LONG_MAX		/* max value for a ssize_t */
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
     defined(_NETBSD_SOURCE)
@@ -74,7 +74,7 @@
 #endif
 
 #if defined(_NETBSD_SOURCE)
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
