@@ -1,6 +1,6 @@
-.\" $NetBSD: uax.4,v 1.1 2003/02/16 14:10:39 augustss Exp $
+.\" $NetBSD: uax.4,v 1.2 2003/03/03 07:03:41 wiz Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -73,11 +73,13 @@ driver supports the following media types:
 .It autoselect
 Enable automatic selection of the media type and options.
 .It 10baseT/UTP
-Set 10Mbps operation.  The
+Set 10Mbps operation.
+The
 .Ar mediaopt
 option can also be used to enable
 .Ar full-duplex
-operation.  Not specifying
+operation.
+Not specifying
 .Ar full duplex
 implies
 .Ar half-duplex
@@ -85,11 +87,13 @@ mode.
 .It 100baseTX
 Set 100Mbps (fast
 .Tn Ethernet )
-operation.  The
+operation.
+The
 .Ar mediaopt
 option can also be used to enable
 .Ar full-duplex
-operation.  Not specifying
+operation.
+Not specifying
 .Ar full duplex
 implies
 .Ar half-duplex
@@ -102,7 +106,8 @@ driver supports the following media options:
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It full-duplex
-Force full duplex operation.  The interface will operate in half duplex mode
+Force full duplex operation.
+The interface will operate in half duplex mode
 if this media option is not specified.
 .El
 .Pp
