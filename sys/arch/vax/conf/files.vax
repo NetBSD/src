@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.72 2000/07/06 17:43:38 ragge Exp $
+#       $NetBSD: files.vax,v 1.73 2000/07/22 05:03:23 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -16,9 +16,11 @@ device	cpu
 device	mem
 device	mba { drive = -1 }
 
-defopt	opt_cputype.h	VAX780 VAX750 VAX730 VAX8200 VAX8800 VAX8600
-	VAX6200 VAX6400 VAX6500 VAX6600 VAX410 VAX43 VAX46 VAX48
-	VAX49 VAX53 VAX630 VAX650 VAX660 VAX670 VAX680
+defopt	opt_cputype.h	VAX780 VAX750 VAX730
+        VAX8200 VAX8800 VAX8600
+	VAX6200 VAX6300 VAX6400 VAX6500 VAX6600
+	VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
+	VAX630 VAX640 VAX650 VAX660 VAX670 VAX680
 
 # NBI on KA88
 device	nmi { slot=-1 }
@@ -325,18 +327,21 @@ file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/crx.c		vax8200
 file	arch/vax/vax/ka88.c		vax8800
 file	arch/vax/vax/ka6400.c		vax6400
-file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
 file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/ka48.c		vax48
 file	arch/vax/vax/ka49.c		vax49
 file	arch/vax/vax/ka53.c		vax53
-file	arch/vax/vax/emulate.s		vax630 | vax650 | vax410
+file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/ka660.c		vax660
 file	arch/vax/vax/ka670.c		vax670
 file	arch/vax/vax/ka680.c		vax680
+file	arch/vax/vax/emulate.s		vax630|vax640|vax650|vax660|vax670|
+					vax680|
+					vax410|vax43|vax46|vax48|vax49|vax53|
+					vax6200|vax6300|vax6400|vax6500|vax6600
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
