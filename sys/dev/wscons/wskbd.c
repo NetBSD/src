@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.11 1998/07/23 14:33:02 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.12 1998/08/02 14:18:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.11 1998/07/23 14:33:02 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.12 1998/08/02 14:18:07 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,20 +115,14 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include "wskbd.h"
 
 struct wskbd_internal {
-	int	t_keydesc_len;
-	const struct wscons_keydesc *t_keydesc;
-	int	t_layout;		/* name of current translation map */
+	const struct wskbd_mapdata *t_keymap;
 
-	void	(*t_getc) __P((void *, u_int *, int *));
-	void	(*t_pollc) __P((void *, int));
-	void	(*t_set_leds) __P((void *, int));
+	const struct wskbd_consops *t_consops;
+	void	*t_consaccesscookie;
 
 	int	t_modifiers;
-	int	t_led_state;
 	int	t_composelen;		/* remaining entries in t_composebuf */
 	keysym_t t_composebuf[2];
-
-	void	*t_accesscookie;
 
 	struct wskbd_softc *t_sc;	/* back pointer */
 };
@@ -138,8 +132,10 @@ struct wskbd_softc {
 
 	struct wskbd_internal *id;
 
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-			      struct proc *p));
+	const struct wskbd_accessops *sc_accessops;
+	void *sc_accesscookie;
+
+	int	sc_ledstate;
 
 	int	sc_ready;		/* accepting events */
 	struct wseventvar sc_events;	/* event queue state */
@@ -157,6 +153,7 @@ struct wskbd_softc {
 
 	int	sc_maplen;		/* number of entries in sc_map */
 	struct wscons_keymap *sc_map;	/* current translation map */
+	kbd_t sc_layout; /* current layout */
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -297,25 +294,24 @@ wskbd_attach(parent, self, aux)
 	} else {
 		sc->id = malloc(sizeof(struct wskbd_internal),
 				M_DEVBUF, M_WAITOK);
-		sc->id->t_keydesc_len = ap->num_keydescs;
-		sc->id->t_keydesc = ap->keydesc;
-		sc->id->t_layout = ap->layout;
+		sc->id->t_keymap = ap->keymap;
 		sc->id->t_modifiers = 0;
-		sc->id->t_set_leds = ap->set_leds;
 	}
 
 	sc->id->t_sc = sc;
 
-	sc->ioctl = ap->ioctl;
-	sc->id->t_accesscookie = ap->accesscookie;
+	sc->sc_accessops = ap->accessops;
+	sc->sc_accesscookie = ap->accesscookie;
 	sc->sc_ready = 0;				/* sanity */
 	sc->sc_repeating = 0;
 	sc->sc_translating = 1;
+	sc->sc_ledstate = -1; /* force update */
 
-	if (wskbd_load_keymap(sc->id->t_layout,
-			      sc->id->t_keydesc, sc->id->t_keydesc_len,
+	if (wskbd_load_keymap(sc->id->t_keymap,
 			      &sc->sc_map, &sc->sc_maplen) != 0)
 		panic("cannot load keymap");
+
+	sc->sc_layout = sc->id->t_keymap->layout;
 
 	if (ap->console) {
 		KASSERT(wskbd_console_initted); 
@@ -331,26 +327,20 @@ wskbd_attach(parent, self, aux)
 }
 
 void    
-wskbd_cnattach(consargs)
-	const struct wskbddev_attach_args *consargs;
+wskbd_cnattach(consops, conscookie, mapdata)
+	const struct wskbd_consops *consops;
+	void *conscookie;
+	const struct wskbd_mapdata *mapdata;
 {
 
 	KASSERT(!wskbd_console_initted);
 
-	wskbd_console_data.t_keydesc_len = consargs->num_keydescs;
-	wskbd_console_data.t_keydesc = consargs->keydesc;
-	wskbd_console_data.t_layout = consargs->layout;
+	wskbd_console_data.t_keymap = mapdata;
 
-	wskbd_console_data.t_getc = consargs->getc;
-	wskbd_console_data.t_pollc = consargs->pollc;
-	wskbd_console_data.t_set_leds = consargs->set_leds;
-
-	wskbd_console_data.t_accesscookie = consargs->accesscookie;
+	wskbd_console_data.t_consops = consops;
+	wskbd_console_data.t_consaccesscookie = conscookie;
 
 	wsdisplay_set_cons_kbd(wskbd_cngetc, wskbd_cnpollc);
-
-	/* Force update of led state */
-	wskbd_console_data.t_led_state = -1;
 
 	wskbd_console_initted = 1;
 }
@@ -457,16 +447,33 @@ wskbd_holdscreen(sc, hold)
 
 	if (sc->sc_displaydv != NULL) {
 		wsdisplay_kbdholdscreen(sc->sc_displaydv, hold);
-		new_state = sc->id->t_led_state;
+		new_state = sc->sc_ledstate;
 		if (hold)
 			new_state |= WSKBD_LED_SCROLL;
 		else
 			new_state &= ~WSKBD_LED_SCROLL;
-		if (new_state != sc->id->t_led_state) {
-			(*sc->id->t_set_leds)(sc->id->t_accesscookie, new_state);
-			sc->id->t_led_state = new_state;
+		if (new_state != sc->sc_ledstate) {
+			(*sc->sc_accessops->set_leds)(sc->sc_accesscookie,
+						      new_state);
+			sc->sc_ledstate = new_state;
 		}
 	}
+}
+
+int
+wskbd_enable(dev, on)
+	struct device *dev;
+	int on;
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
+	int res;
+
+	/* XXX reference count? */
+	if (!on && (!sc->sc_translating || sc->sc_displaydv))
+		return (EBUSY);
+
+	res = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
+	return (res);
 }
 
 int
@@ -493,7 +500,7 @@ wskbdopen(dev, flags, mode, p)
 	sc->sc_translating = 0;
 	sc->sc_ready = 1;			/* start accepting events */
 
-	/* XXX ENABLE THE DEVICE IF NOT CONSOLE? */
+	wskbd_enable((struct device *)sc, 1);
 
 	return (0);
 #else
@@ -516,12 +523,13 @@ wskbdclose(dev, flags, mode, p)
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	/* XXX DISABLE THE DEVICE IF NOT CONSOLE? */
-
 	sc->sc_ready = 0;			/* stop accepting events */
 	sc->sc_translating = 1;
+
 	wsevent_fini(&sc->sc_events);
 	sc->sc_events.io = NULL;
+
+	wskbd_enable((struct device *)sc, 0);
 #endif /* NWSKBD > 0 */
 	return (0);
 }
@@ -608,6 +616,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
+	struct wskbd_mapdata md;
 	void *buf;
 	int len, error;
 
@@ -626,7 +635,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		return ((*sc->ioctl)(sc->id->t_accesscookie,
+		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)&sc->sc_bell_data, flag, p));
 
 	case WSKBDIO_COMPLEXBELL:
@@ -634,7 +643,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 			return (EACCES);
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
-		return ((*sc->ioctl)(sc->id->t_accesscookie,
+		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)ubdp, flag, p));
 
 	case WSKBDIO_SETBELL:
@@ -728,17 +737,17 @@ getkeyrepeat:
 		return(error);
 
 	case WSKBDIO_GETENCODING:
-		*((kbd_t *) data) = sc->id->t_layout;
+		*((kbd_t *) data) = sc->sc_layout;
 		return(0);
 
 	case WSKBDIO_SETENCODING:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		error = wskbd_load_keymap(*((kbd_t *)data), sc->id->t_keydesc,
-					  sc->id->t_keydesc_len, &sc->sc_map,
-					  &sc->sc_maplen);
+		md = *(sc->id->t_keymap); /* structure assignment */
+		md.layout = *((kbd_t *)data);
+		error = wskbd_load_keymap(&md, &sc->sc_map, &sc->sc_maplen);
 		if (error == 0)
-			sc->id->t_layout = *((kbd_t *)data);
+			sc->sc_layout = *((kbd_t *)data);
 		return(error);
 	}
 
@@ -748,7 +757,8 @@ getkeyrepeat:
 	 * -1 if we didn't recognize the request.
 	 */
 /* printf("kbdaccess\n"); */
-	error = (*sc->ioctl)(sc->id->t_accesscookie, cmd, data, flag, p);
+	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+					   flag, p);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (!error && cmd == WSKBDIO_SETMODE && *(int *)data == WSKBD_RAW) {
 		int s = spltty();
@@ -831,8 +841,8 @@ wskbd_cngetc(dev)
 		return 0;
 
 	for(;;) {
-		(*wskbd_console_data.t_getc)(wskbd_console_data.t_accesscookie,
-					     &type, &data);
+		(*wskbd_console_data.t_consops->getc)
+		    (wskbd_console_data.t_consaccesscookie, &type, &data);
 		ks = wskbd_translate(&wskbd_console_data, type, data);
 		
 		if (KS_GROUP(ks) == KS_GROUP_Ascii)
@@ -853,7 +863,8 @@ wskbd_cnpollc(dev, poll)
 	    !wskbd_console_device->sc_translating)
 		return;
 
-	(*wskbd_console_data.t_pollc)(wskbd_console_data.t_accesscookie, poll);
+	(*wskbd_console_data.t_consops->pollc)
+	    (wskbd_console_data.t_consaccesscookie, poll);
 }
 
 static inline void
@@ -872,9 +883,10 @@ update_leds(id)
 	if (id->t_modifiers & MOD_HOLDSCREEN)
 		new_state |= WSKBD_LED_SCROLL;
 
-	if (new_state != id->t_led_state) {
-		(*id->t_set_leds)(id->t_accesscookie, new_state);
-		id->t_led_state = new_state;
+	if (id->t_sc && new_state != id->t_sc->sc_ledstate) {
+		(*id->t_sc->sc_accessops->set_leds)
+		    (id->t_sc->sc_accesscookie, new_state);
+		id->t_sc->sc_ledstate = new_state;
 	}
 }
 
@@ -969,8 +981,7 @@ wskbd_translate(id, type, value)
 		kp = sc->sc_map + value;
 	} else {
 		kp = &kpbuf;
-		wskbd_get_mapentry(id->t_layout, id->t_keydesc,
-				   id->t_keydesc_len, value, kp);
+		wskbd_get_mapentry(id->t_keymap, value, kp);
 	}
 
 	/* if this key has a command, process it first */

@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.4 1998/07/23 14:33:01 drochner Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.5 1998/08/02 14:18:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -65,3 +65,4 @@ void	wskbd_set_display __P((struct device *, struct device *));
  */
 int	wskbd_displayioctl __P((struct device *dev, u_long cmd,
 	    caddr_t data, int flag, struct proc *p));
+int	wskbd_enable __P((struct device *, int));
