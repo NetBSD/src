@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.4 1996/09/26 20:48:55 cgd Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.5 1996/09/26 21:50:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -384,9 +384,7 @@ enum AuxID {
 	AUX_sun_rgid = 2003	/* rgid */
 };
 
-#if 0 /* notyet */
 #include <machine/elf_machdep.h>
-#endif
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr
