@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.81 2002/08/11 22:03:43 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.82 2002/08/12 16:56:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.81 2002/08/11 22:03:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.82 2002/08/12 16:56:39 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1212,7 +1212,7 @@ static int wi_write_record(sc, ltv)
 			struct wi_ltv_str	ws;
 			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
 
-			keylen = wk->wi_keys[sc->wi_tx_key].wi_keylen;
+			keylen = le16toh(wk->wi_keys[sc->wi_tx_key].wi_keylen);
 
 			for (i = 0; i < 4; i++) {
 				memset(&ws, 0, sizeof(ws));
@@ -2127,7 +2127,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	key[1] = sc->wi_icv >> 8;
 	key[2] = sc->wi_icv;
 
-	klen = sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen +
+	klen = le16toh(sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen) +
 	    IEEE80211_WEP_IVLEN;
 	klen = (klen >= RC4KEYLEN) ? RC4KEYLEN : RC4KEYLEN/2;
 	bcopy((char *)&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
