@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1996/10/17 02:49:04 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 1996/10/17 18:33:53 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -619,3 +619,12 @@ label:	ASCIZ msg;						\
  */
 #define	LDGP(reg)						\
 	ldgp	gp, 0(reg)
+
+/*
+ * WEAK_ALIAS: create a weak alias (ELF only).
+ */
+#ifdef __ELF__
+#define WEAK_ALIAS(alias,sym)					\
+	.weak alias;						\
+	alias = sym
+#endif
