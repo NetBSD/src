@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.9 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.10 2003/05/30 23:08:12 kristerw Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.9 2002/03/16 22:36:42 kristerw Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.10 2003/05/30 23:08:12 kristerw Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,13 +44,7 @@ __RCSID("$NetBSD: backupfile.c,v 1.9 2002/03/16 22:36:42 kristerw Exp $");
 
 #include <unistd.h>
 
-#if defined (_POSIX_VERSION)
-/* POSIX does not require that the d_ino field be present, and some
-   systems do not provide it. */
-#define REAL_DIR_ENTRY(dp) 1
-#else
-#define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
-#endif
+#define REAL_DIR_ENTRY(dp) ((dp)->d_fileno != 0)
 
 /* Which type of backup file names are generated. */
 enum backup_type backup_type = none;
@@ -62,7 +56,7 @@ char *simple_backup_suffix = "~";
 /* backupfile.c */
 static int max_backup_version(char *, char *);
 static char *make_version_name(char *, int);
-static int version_number(char *, char *, int);
+static int version_number(char *, char *, size_t);
 static char *concat(char *, char *);
 static char *dirname(char *);
 static int argmatch(char *, char **);
@@ -111,7 +105,7 @@ max_backup_version(char *file, char *dir)
   struct direct *dp;
   int highest_version;
   int this_version;
-  int file_name_length;
+  size_t file_name_length;
   
   dirp = opendir (dir);
   if (!dirp)
@@ -151,7 +145,7 @@ make_version_name(char *file, int version)
    BASE should already have ".~" appended to it. */
 
 static int
-version_number(char *base, char *backup, int base_length)
+version_number(char *base, char *backup, size_t base_length)
 {
   int version;
   char *p;
@@ -202,7 +196,7 @@ dirname(char *path)
 {
   char *newpath;
   char *slash;
-  int length;    /* Length of result, not including NUL. */
+  size_t length;    /* Length of result, not including NUL. */
 
   slash = strrchr (path, '/');
   if (slash == 0)
@@ -234,7 +228,7 @@ static int
 argmatch(char *arg, char **optlist)
 {
   int i;			/* Temporary index in OPTLIST. */
-  int arglen;			/* Length of ARG. */
+  size_t arglen;		/* Length of ARG. */
   int matchind = -1;		/* Index of first nonexact match. */
   int ambiguous = 0;		/* If nonzero, multiple nonexact match(es). */
   
@@ -303,4 +297,5 @@ get_version(char *version)
     return backup_types[i];
   invalid_arg ("version control type", version, i);
   exit (1);
+  /* NOTREACHED */
 }
