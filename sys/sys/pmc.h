@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.1 2002/08/07 05:16:28 briggs Exp $	*/
+/*	$NetBSD: pmc.h,v 1.2 2002/08/08 16:23:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -78,9 +78,9 @@ struct pmc_counter_cfg {
 
 #define PMC_VALUE_FLAGS_CHILDREN	0x00000001
 
-#include <machine/pmc.h>
-
 #endif	/* _KERNEL */
+
+#include <machine/pmc.h>
 
 #define PMC_OP_START		1
 #define PMC_OP_STOP		2
