@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.30 2003/11/09 18:56:48 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.31 2003/12/18 15:39:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.30 2003/11/09 18:56:48 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.31 2003/12/18 15:39:56 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -322,8 +322,11 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		/* Set up a stack and allocate space for a pthread_st. */
 		ret = pthread__stackalloc(&newthread);
-		if (ret != 0)
+		if (ret != 0) {
+			if (name)
+				free(name);
 			return ret;
+		}
 	}
 
 	/* 2. Set up state. */
