@@ -36,15 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	7.2 (Berkeley) 4/20/91
- *	$Id: device_pager.c,v 1.3 1993/07/02 10:26:49 cgd Exp $
+ *	$Id: device_pager.c,v 1.4 1993/08/30 07:09:20 deraadt Exp $
  */
 
 /*
  * Page to/from special files.
  */
-
-#include "devpager.h"
-#if NDEVPAGER > 0
 
 #include "param.h"
 #include "conf.h"
@@ -257,4 +254,3 @@ dev_pager_haspage(pager, offset)
 #endif
 	return(TRUE);
 }
-#endif
