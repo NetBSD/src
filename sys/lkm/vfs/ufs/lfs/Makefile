@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/22 20:19:21 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1996/08/23 05:39:31 mrg Exp $
 
-.PATH:	/sys/ufs/lfs
+.include "../Makefile.inc"
+
+.PATH:	$S/ufs/lfs
 
 NOMAN=	yep
 

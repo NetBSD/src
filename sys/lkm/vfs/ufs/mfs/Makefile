@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/22 20:19:26 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1996/08/23 05:39:33 mrg Exp $
 
-.PATH:	/sys/ufs/mfs ${.CURDIR}/../..
+.include "../Makefile.inc"
+
+.PATH:	$S/ufs/mfs ${.CURDIR}/../..
 
 NOMAN=	yep
 
