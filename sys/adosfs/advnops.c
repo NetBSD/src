@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.51 1999/08/03 20:19:17 wrstuden Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52 1999/08/19 03:42:23 itohy Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -114,7 +114,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
-	{ &vop_revoke_desc, adosfs_poll },		/* revoke */
+	{ &vop_revoke_desc, adosfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, adosfs_seek },		/* seek */
