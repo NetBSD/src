@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: sunbootcd.sh,v 1.2 2003/07/10 10:34:05 lukem Exp $
+# $NetBSD: sunbootcd.sh,v 1.3 2003/07/10 10:36:03 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-: ${SUNLABEL:=sunlabel}	# sunlabel(8)
+: ${SUNLABEL:=sunlabel}		# sunlabel(8)
 : ${CYLSIZE:=640}		# Cylinder size, in 512byte blocks
 
 PROGNAME=${0##*/}
