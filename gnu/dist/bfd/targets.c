@@ -860,7 +860,7 @@ const bfd_target *bfd_default_vector[] = {
 /* When there is an ambiguous match, bfd_check_format_matches puts the
    names of the matching targets in an array.  This variable is the maximum
    number of entries that the array could possibly need.  */
-const size_t _bfd_target_vector_entries = sizeof(bfd_target_vector)/sizeof(*bfd_target_vector);
+const size_t _bfd_target_vector_entries = sizeof(_bfd_target_vector)/sizeof(*_bfd_target_vector);
 
 /* This array maps configuration triplets onto BFD vectors.  */
 
