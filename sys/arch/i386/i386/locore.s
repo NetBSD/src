@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.51 1994/04/04 09:42:52 mycroft Exp $
+ *	$Id: locore.s,v 1.52 1994/04/04 15:56:47 mycroft Exp $
  */
 
 
@@ -1440,6 +1440,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	%eax,P_RLINK(%edi) /* isolate process to run */
 
+	/* It's okay to take interrupts here. */
+	sti
+
 	/* Skip context switch if same process. */
 	movl	_curproc,%esi
 	cmpl	%edi,%esi
@@ -1478,19 +1481,12 @@ swtch_exited:
 	/* Restore context. */
 	movl	P_ADDR(%edi),%edx
 
+	/* No interrupts while loading new state. */
+	cli
+
 	/* Switch address space. */
 	movl	PCB_CR3(%edx),%ebx
 	movl	%ebx,%cr3
-
-	movl	PCB_ESP(%edx),%esp
-	movl	PCB_EBP(%edx),%ebp
-	movl	PCB_FS(%edx),%eax
-	movl	%ax,%fs
-	movl	PCB_GS(%edx),%eax
-	movl	%ax,%gs
-
-	movl	%edi,_curproc		# into next process
-	movl	%edx,_curpcb
 
 #ifdef	USER_LDT
 	cmpl	$0,PCB_USERLDT(%edx)
@@ -1506,7 +1502,19 @@ swtch_exited:
 	popl	%edx
 2:
 #endif
-	sti				# splx() doesn't do an sti/cli
+
+	movl	PCB_ESP(%edx),%esp
+	movl	PCB_EBP(%edx),%ebp
+	movl	PCB_FS(%edx),%eax
+	movl	%ax,%fs
+	movl	PCB_GS(%edx),%eax
+	movl	%ax,%gs
+
+	movl	%edi,_curproc		# into next process
+	movl	%edx,_curpcb
+
+	/* Interrupts are okay again. */
+	sti
 
 swtch_return:
 	/* Old _cpl is already on the stack. */
