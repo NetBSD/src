@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.9 2003/10/28 11:34:14 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.10 2003/12/08 23:49:25 dmcmahill Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -178,15 +178,15 @@ BEGIN {
 
 # filter the two unneeded makedisk_p* routines, leave only
 # the one used
-/^makedisk_p8\(\) {/, /^}/ {
+/^makedisk_p8\(\) \{/, /^\}/ {
 	if (MKDISK != "makedisk_p8")
 		next;
 }
-/^makedisk_p16\(\) {/, /^}/ {
+/^makedisk_p16\(\) \{/, /^\}/ {
 	if (MKDISK != "makedisk_p16")
 		next;
 }
-/^makedisk_p16high\(\) {/, /^}/ {
+/^makedisk_p16high\(\) \{/, /^\}/ {
 	if (MKDISK != "makedisk_p16high")
 		next;
 }
