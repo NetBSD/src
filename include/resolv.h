@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.28 2004/06/09 18:04:05 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.29 2004/11/07 01:48:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -48,7 +48,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 1.7.2.11.4.1 2004/03/09 08:33:29 marka Exp
+ *	Id: resolv.h,v 1.7.2.11.4.2 2004/06/25 00:41:05 marka Exp
  */
 
 #ifndef _RESOLV_H_
@@ -256,6 +256,7 @@ union res_sockaddr_union {
 #define	RES_BLAST	0x00020000	/* blast all recursive servers */
 #define RES_NOTLDQUERY	0x00100000	/* don't unqualified name as a tld */
 #define RES_USE_DNSSEC	0x00200000	/* use DNSSEC using OK bit in OPT */
+/* #define RES_DEBUG2	0x00400000 */	/* nslookup internal */
 /* KAME extensions: use higher bit to avoid conflict with ISC use */
 #define RES_USE_DNAME	0x10000000	/* use DNAME */
 #define RES_USE_EDNS0	0x40000000	/* use EDNS0 if configured */

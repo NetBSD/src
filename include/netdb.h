@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.45 2004/08/17 04:24:16 jmc Exp $	*/
+/*	$NetBSD: netdb.h,v 1.46 2004/11/07 01:48:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
