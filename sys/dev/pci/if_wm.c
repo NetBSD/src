@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.85 2004/11/23 21:36:38 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.86 2004/11/23 23:05:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.85 2004/11/23 21:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.86 2004/11/23 23:05:33 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -276,6 +276,13 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
+
+			/* m_pullup() needed for Tx offload */
+	struct evcnt sc_ev_txpullup_needed;
+			/* ...failed due to no memory */
+	struct evcnt sc_ev_txpullup_nomem;
+			/* ...failed due to lack of space in first mbuf */
+	struct evcnt sc_ev_txpullup_fail;
 
 	struct evcnt sc_ev_txctx_init;	/* Tx cksum context cache initialized */
 	struct evcnt sc_ev_txctx_hit;	/* Tx cksum context cache hit */
@@ -1243,6 +1250,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_needed, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup needed");
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_nomem, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup nomem");
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
+
 	evcnt_attach_dynamic(&sc->sc_ev_txctx_init, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txctx init");
 	evcnt_attach_dynamic(&sc->sc_ev_txctx_hit, EVCNT_TYPE_MISC,
@@ -1325,13 +1339,13 @@ wm_shutdown(void *arg)
 }
 
 /*
- * wm_tx_cksum:
+ * wm_tx_offload:
  *
  *	Set up TCP/IP checksumming parameters for the
  *	specified packet.
  */
 static int
-wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
+wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
     uint8_t *fieldsp)
 {
 	struct mbuf *m0 = txs->txs_mbuf;
@@ -1369,12 +1383,33 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	}
 
 	if (m0->m_len < (offset + iphl)) {
+		/*
+		 * Packet headers aren't in the first mbuf.  Let's hope
+		 * there is space at the end if it for them.
+		 */
+		WM_EVCNT_INCR(&sc->sc_ev_txpullup_needed);
 		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			log(LOG_ERR, "%s: wm_tx_cksum: mbuf allocation failed, "
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_nomem);
+			log(LOG_ERR,
+			    "%s: wm_tx_offload: mbuf allocation failed, "
 			    "packet dropped\n", sc->sc_dev.dv_xname);
 			return (ENOMEM);
+		} else if (m0 != txs->txs_mbuf) {
+			/*
+			 * The DMA map has already been loaded, so we
+			 * would have to unload and reload it.  But then
+			 * if that were to fail, we are already committed
+			 * to transmitting the packet (can't put it back
+			 * on the queue), so we have to drop the packet.
+			 */
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_fail);
+			log(LOG_ERR, "%s: wm_tx_offload: packet headers did "
+			    "not fit in first mbuf, packet dropped\n",
+			    sc->sc_dev.dv_xname);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+			return (EINVAL);
 		}
-		m0 = txs->txs_mbuf;
 	}
 
 	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
@@ -1717,14 +1752,11 @@ wm_start(struct ifnet *ifp)
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_ndesc = segs_needed;
 
-		/*
-		 * Set up checksum offload parameters for
-		 * this packet.
-		 */
+		/* Set up offload parameters for this packet. */
 		if (m0->m_pkthdr.csum_flags &
 		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			if (wm_tx_cksum(sc, txs, &cksumcmd,
-					&cksumfields) != 0) {
+			if (wm_tx_offload(sc, txs, &cksumcmd,
+					  &cksumfields) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
 				continue;
