@@ -43,6 +43,9 @@ struct relocation_info_pc532 {
 		      r_jmptable :  1,	/* relocate to jump table */
 		      r_relative :  1,	/* load address relative */
 			  r_copy :  1;	/* run time copy */
+	unsigned char      r_bsr :  1,  /* Extra fields for the pc532. */
+			  r_disp :  2,
+			   r_pad :  5;
 };
 #define relocation_info	relocation_info_pc532
 
