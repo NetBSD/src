@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.46 1999/12/15 20:41:12 garbled Exp $
+# $NetBSD: md.sparc,v 1.47 1999/12/17 05:35:52 garbled Exp $
 ./sbin/edlabel
 ./usr/bin/fdformat
 ./usr/lkm/adosfs.o
@@ -22,3 +22,4 @@
 ./usr/mdec/installboot
 ./usr/sbin/eeprom
 ./usr/sbin/apmd
+./usr/sbin/tadepolectl
