@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.20 1995/12/02 18:18:50 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.21 1995/12/29 17:21:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -214,7 +214,11 @@ static char iconv[16] = {
 	MI_RI|MI_CD|MI_CTS|MI_DM
 };
 
-#define	NDCMPORT	4	/* XXX what about 8-port cards? */
+/*
+ * Note that 8-port boards appear as 2 4-port boards at consecutive
+ * select codes.
+ */
+#define	NDCMPORT	4
 
 struct	dcm_softc {
 	struct	hp_device *sc_hd;	/* device info */
@@ -228,7 +232,6 @@ struct	dcm_softc {
 
 	/*
 	 * Mask of soft-carrier bits in config flags.
-	 * XXX What about 8-port cards?
 	 */
 #define	DCM_SOFTCAR	0x0000000f
 
