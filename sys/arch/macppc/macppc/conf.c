@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 2002/06/18 05:22:51 itojun Exp $	*/
+/*	$NetBSD: conf.c,v 1.43 2002/06/18 12:35:09 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -254,7 +254,7 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),			/* 63: system call tracing */
 #endif
-	cdev_apm_init(NAPM,apm),	/* 64: Advancded Power Management */
+	cdev_apm_init(NAPM,apm),	/* 64: Advanced Power Management */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
