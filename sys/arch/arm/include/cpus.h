@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.5 2001/03/03 21:34:00 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.6 2001/03/04 14:32:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,6 +40,9 @@
  *
  * Created      : 26/12/95
  */
+
+#ifndef _ARM_CPUS_H_
+#define _ARM_CPUS_H_
 
 #define MAX_CPUS		2
 #define MAX_SLAVE_CPUS		0
@@ -102,3 +105,4 @@ extern cpu_t cpus[MAX_CPUS];
 #endif	/* _LOCORE */
 
 /* End of cpus.h */
+#endif
