@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.6 1997/10/19 23:36:28 lukem Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.7 1998/04/02 11:18:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.6 1997/10/19 23:36:28 lukem Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.7 1998/04/02 11:18:25 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: netcmds.c,v 1.6 1997/10/19 23:36:28 lukem Exp $");
  */
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 
