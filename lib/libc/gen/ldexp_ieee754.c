@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_ieee754.c,v 1.3 2003/10/27 03:09:43 mrg Exp $	*/
+/*	$NetBSD: ldexp_ieee754.c,v 1.4 2003/12/30 23:19:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_ieee754.c,v 1.3 2003/10/27 03:09:43 mrg Exp $");
+__RCSID("$NetBSD: ldexp_ieee754.c,v 1.4 2003/12/30 23:19:07 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -76,14 +76,14 @@ ldexp(double val, int expon)
 			 */
 			if (expon <= -DBL_FRACBITS) {
 				errno = ERANGE;
-				return (0.0);
+				return (val < 0.0 ? -0.0 : 0.0);
 			}
 			mul.dblu_d = 0.0;
 			mul.dblu_dbl.dbl_exp = expon + DBL_EXP_BIAS;
 			u.dblu_d *= mul.dblu_d;
 			if (u.dblu_d == 0.0) {
 				errno = ERANGE;
-				return (0.0);
+				return (val < 0.0 ? -0.0 : 0.0);
 			}
 			return (u.dblu_d);
 		} else {
@@ -113,7 +113,7 @@ ldexp(double val, int expon)
 		 */
 		if (newexp <= -DBL_FRACBITS) {
 			errno = ERANGE;
-			return (0.0);
+			return (val < 0.0 ? -0.0 : 0.0);
 		}
 		/*
 		 * Denormalize the result.  We do this with a multiply.  If
