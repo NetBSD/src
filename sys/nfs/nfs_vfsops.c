@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.31 1994/08/18 22:48:00 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.32 1994/08/23 09:31:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -335,8 +335,14 @@ nfs_decode_args(nmp, argp)
 	struct nfs_args *argp;
 {
 	int s;
+	int adjsock;
 
 	s = splnet();
+
+	/* Re-bind if rsrvd port requested and wasn't on one */
+	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)
+		  && (argp->flags & NFSMNT_RESVPORT);
+
 	/* Update flags atomically.  Don't change the lock bits. */
 	nmp->nm_flag =
 	    (argp->flags & ~NFSMNT_INTERNAL) | (nmp->nm_flag & NFSMNT_INTERNAL);
@@ -357,6 +363,7 @@ nfs_decode_args(nmp, argp)
 	}
 
 	if ((argp->flags & NFSMNT_WSIZE) && argp->wsize > 0) {
+		int osize = nmp->nm_wsize;
 		nmp->nm_wsize = argp->wsize;
 		/* Round down to multiple of blocksize */
 		nmp->nm_wsize &= ~0x1ff;
@@ -364,11 +371,13 @@ nfs_decode_args(nmp, argp)
 			nmp->nm_wsize = 512;
 		else if (nmp->nm_wsize > NFS_MAXDATA)
 			nmp->nm_wsize = NFS_MAXDATA;
+		adjsock |= (nmp->nm_wsize != osize);
 	}
 	if (nmp->nm_wsize > MAXBSIZE)
 		nmp->nm_wsize = MAXBSIZE;
 
 	if ((argp->flags & NFSMNT_RSIZE) && argp->rsize > 0) {
+		int osize = nmp->nm_rsize;
 		nmp->nm_rsize = argp->rsize;
 		/* Round down to multiple of blocksize */
 		nmp->nm_rsize &= ~0x1ff;
@@ -376,6 +385,7 @@ nfs_decode_args(nmp, argp)
 			nmp->nm_rsize = 512;
 		else if (nmp->nm_rsize > NFS_MAXDATA)
 			nmp->nm_rsize = NFS_MAXDATA;
+		adjsock |= (nmp->nm_rsize != osize);
 	}
 	if (nmp->nm_rsize > MAXBSIZE)
 		nmp->nm_rsize = MAXBSIZE;
@@ -392,6 +402,16 @@ nfs_decode_args(nmp, argp)
 	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
 		argp->deadthresh <= NQ_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
+
+	if (nmp->nm_so && adjsock) {
+		nfs_disconnect(nmp);
+		if (nmp->nm_sotype == SOCK_DGRAM)
+			while (nfs_connect(nmp, (struct nfsreq *)0)) {
+				printf("nfs_args: retrying connect\n");
+				(void) tsleep((caddr_t)&lbolt,
+					      PSOCK, "nfscon", 0);
+			}
+	}
 }
 
 /*
