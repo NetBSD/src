@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1999/05/31 00:14:00 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.44 1999/06/05 05:35:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -158,29 +158,29 @@ void	stackdump __P((void));
 /* 
  * This is the table that tells us how to access different bus space types.
  */ 
-
+#define BUS_BYPASS_ACCESS_ENABLED 0
 #if BUS_BYPASS_ACCESS_ENABLED == 1
 /*
  * Bypass access 
  */
-int bus_type_asi[LAST_BUS_SPACE] = {
-	ASI_PHYS_NON_CACHED,
-	ASI_PHYS_NON_CACHED,
-	ASI_PHYS_NON_CACHED_LITTLE,
-	ASI_PHYS_NON_CACHED_LITTLE,
-	ASI_PHYS_CACHED_LITTLE,
+int bus_type_asi[LAST_BUS_SPACE+1] = {
+	ASI_PHYS_NON_CACHED,			/* UPA */
+	ASI_PHYS_NON_CACHED,			/* SBUS */
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI memory space */
+	ASI_PHYS_CACHED_LITTLE,			/* PCI I/O space */
 	0
 };
 #else
 /*
- * MMU access 
+ * MMU access - we want to use the MMU for all this..
  */
-int bus_type_asi[LAST_BUS_SPACE] = {
+int bus_type_asi[LAST_BUS_SPACE+1] = {
 	ASI_PRIMARY,
 	ASI_PRIMARY,
-	ASI_PRIMARY_LITTLE,
-	ASI_PRIMARY_LITTLE,
-	ASI_PRIMARY_LITTLE,
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	ASI_PRIMARY,
 	0
 };
 #endif
@@ -339,11 +339,19 @@ mdallocsys(v)
 	caddr_t v;
 {
 
+#if 1	/* XXX this is from allocsys().  we have a copy as we use nbuf */
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+#endif
 	/*
 	 * Allocate DVMA slots for 1/4 of the number of I/O buffers
 	 * and one for each process too (PHYSIO).
 	 */
 	ndvmamap = maxproc + ((nbuf / 4) &~ 1);
+printf("mdallocsys: v = %p; nbuf = %d\n", v, (int)nbuf);
 	ALLOCSYS(v, dvmamap, struct map, ndvmamap);
 }
 
@@ -1640,8 +1648,8 @@ static	vaddr_t iobase = IODEV_BASE;
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 
 #ifdef NOTDEF_DEBUG
-	printf("\nsparc_bus_map: type %x addr %p virt %p paddr %llx\n",
-		       iospace, addr, *hp, (paddr_t)pa);
+	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
+		       (int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
 #endif
 	switch (iospace) {
 	case PCI_CONFIG_BUS_SPACE:
@@ -1649,7 +1657,7 @@ static	vaddr_t iobase = IODEV_BASE;
 		pm_flags = PMAP_NC|PMAP_LITTLE;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		pm_flags = PMAP_LITTLE|PMAP_NC;
 		break;
 	default:
 		pm_flags = PMAP_NC;
@@ -1658,8 +1666,7 @@ static	vaddr_t iobase = IODEV_BASE;
 
 	do {
 #ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
-		       (int)(pa>>32), (int)pa, v, (int)((*hp)>>32), (int)*hp);
+		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", (u_int64_t)pa, (char *)v, (u_int64_t)*hp);
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
@@ -1720,7 +1727,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 		return (0);
 
 	tmp = (caddr_t)bh;
-	result = (probeget(tmp + offset, size) != -1);
+	result = (probeget(bus_type_asi[tag->type], tmp + offset, size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);
