@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2002/04/18 20:08:10 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2002/04/21 22:05:45 kleink Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,6 +79,20 @@ define	IFRAME_R5		offsetof(struct intrframe, r5)
 define	IFRAME_R4		offsetof(struct intrframe, r4)
 define	IFRAME_R3		offsetof(struct intrframe, r3)
 define	IFRAME_R0		offsetof(struct intrframe, r0)
+
+define	SPFRAMELEN		SPFRAMELEN
+define	SPFRAME_R1		offsetof(struct spillframe, r1)
+define	SPFRAME_R12		offsetof(struct spillframe, r12)
+define	SPFRAME_R11		offsetof(struct spillframe, r11)
+define	SPFRAME_R10		offsetof(struct spillframe, r10)
+define	SPFRAME_R9		offsetof(struct spillframe, r9)
+define	SPFRAME_R8		offsetof(struct spillframe, r8)
+define	SPFRAME_R7		offsetof(struct spillframe, r7)
+define	SPFRAME_R6		offsetof(struct spillframe, r6)
+define	SPFRAME_R5		offsetof(struct spillframe, r5)
+define	SPFRAME_R4		offsetof(struct spillframe, r4)
+define	SPFRAME_R3		offsetof(struct spillframe, r3)
+define	SPFRAME_R0		offsetof(struct spillframe, r0)
 
 define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
 
