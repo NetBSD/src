@@ -1,4 +1,9 @@
-$NetBSD: version,v 1.8 1998/08/29 06:40:43 mrg Exp $
+$NetBSD: version,v 1.9 1999/01/15 00:48:03 mrg Exp $
+
+# The newvers.sh looks for the line below.  We use this method
+# rather than $3 of the dollar-NetBSD-dollar line above so that
+# this version can be on branch-files also.
+Version: 1.8
 
 1.1:
 1.2:	get it to work with V0 bootproms.
