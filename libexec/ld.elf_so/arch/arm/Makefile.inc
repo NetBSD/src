@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/09/09 19:28:36 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/09/10 14:19:18 mycroft Exp $
 
 SRCS+=	rtld_start.S mdreloc.c
 
@@ -8,8 +8,7 @@ CPPFLAGS+= -fpic
 CPPFLAGS+= -DELFSIZE=32 -DVARPSZ
 
 LDFLAGS+= -Bshareable -Bsymbolic -e _rtld_start
-.if (${MACHINE_ARCH} == "arm")
-LDFLAGS+= --script ${.CURDIR}/arch/arm/ld.so.script.le
-.else
-LDFLAGS+= --script ${.CURDIR}/arch/arm/ld.so.script.be
+LDFLAGS+= --script ${.CURDIR}/arch/arm/ld.so.script
+.if (${MACHINE_ARCH} == "armeb")
+LDFLAGS+= -EB
 .endif
