@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2002/05/03 14:20:55 lukem Exp $
+#	$NetBSD: list,v 1.5 2002/05/08 21:44:53 lukem Exp $
 
 COPY	${DESTDIR}/usr/mdec/boot.pmax	boot.pmax
-COPY	${OBJDIR}/install.gz		netbsd
+COPY	${OBJDIR}/netbsd-INSTALL.gz	netbsd
