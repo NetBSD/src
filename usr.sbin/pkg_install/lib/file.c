@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.8.2.1 1998/05/05 08:54:57 mycroft Exp $	*/
+/*	$NetBSD: file.c,v 1.8.2.2 1998/08/29 03:39:20 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.8.2.1 1998/05/05 08:54:57 mycroft Exp $");
+__RCSID("$NetBSD: file.c,v 1.8.2.2 1998/08/29 03:39:20 mellon Exp $");
 #endif
 #endif
 
@@ -30,12 +30,16 @@ __RCSID("$NetBSD: file.c,v 1.8.2.1 1998/05/05 08:54:57 mycroft Exp $");
  */
 
 #include "lib.h"
+
+#include <sys/wait.h>
+
 #include <err.h>
-#include <ftpio.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
-#include <sys/wait.h>
+
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode);
 
 /* Quick check to see if a file exists */
 Boolean
@@ -59,11 +63,26 @@ isdir(char *fname)
 	return FALSE;
 }
 
+/* Check if something is a link to a directory */
+Boolean
+islinktodir(char *fname)
+{
+    struct stat sb;
+
+    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode))
+        if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+	    return TRUE; /* link to dir! */
+        else
+	    return FALSE; /* link to non-dir */
+    else
+        return FALSE;  /* non-link */
+}
+
 /* Check to see if file is a dir, and is empty */
 Boolean
 isemptydir(char *fname)
 {
-    if (isdir(fname)) {
+    if (isdir(fname) || islinktodir(fname)) {
 	DIR *dirp;
 	struct dirent *dp;
 
@@ -174,7 +193,6 @@ fileURLFilename(char *fname, char *where, int max)
     return fname;
 }
 
-#define HOSTNAME_MAX	64
 /*
  * Try and fetch a file by URL, returning the directory name for where
  * it's unpacked, if successful.
@@ -182,8 +200,8 @@ fileURLFilename(char *fname, char *where, int max)
 char *
 fileGetURL(char *base, char *spec)
 {
-    char host[HOSTNAME_MAX], file[FILENAME_MAX];
-    char pword[HOSTNAME_MAX + 40], *uname, *cp, *rp;
+    char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
+    char pword[MAXHOSTNAMELEN + 40], *uname, *cp, *rp;
     char fname[FILENAME_MAX];
     char pen[FILENAME_MAX];
     struct passwd *pw;
@@ -226,7 +244,7 @@ fileGetURL(char *base, char *spec)
     }
     else
 	strcpy(fname, spec);
-    cp = fileURLHost(fname, host, HOSTNAME_MAX);
+    cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
     if (!*cp) {
 	warnx("URL `%s' has bad host part!", fname);
 	return NULL;
@@ -248,10 +266,11 @@ fileGetURL(char *base, char *spec)
 	strcpy(pword, "joe@");
     }
     else {
-	char me[HOSTNAME_MAX];
+	char me[MAXHOSTNAMELEN + 1];
 
-	gethostname(me, HOSTNAME_MAX);
-	snprintf(pword, HOSTNAME_MAX + 40, "%s@%s", pw->pw_name, me);
+	gethostname(me, sizeof me);
+	me[sizeof(me) - 1] = '\0';
+	snprintf(pword, sizeof pword, "%s@%s", pw->pw_name, me);
     }
     if (Verbose)
 	printf("Trying to fetch %s.\n", fname);
@@ -259,6 +278,7 @@ fileGetURL(char *base, char *spec)
     if (ftp) {
 	pen[0] = '\0';
 	if ((rp = make_playpen(pen, 0)) != NULL) {
+            rp=pen; /* XXX - pen is dynamic; make static? */
 	    if (Verbose)
 		printf("Extracting from FTP connection into %s\n", pen);
 	    tpid = fork();
@@ -283,7 +303,8 @@ fileGetURL(char *base, char *spec)
     else
 	printf("Error: FTP Unable to get %s: %s\n",
 	       fname,
-	       status ? ftpErrString(status) : hstrerror(h_errno));
+	       status ? "Error while performing FTP" :
+	       hstrerror(h_errno));
     return rp;
 }
 
@@ -560,4 +581,52 @@ format_cmd(char *buf, char *fmt, char *dir, char *name)
 	    *buf++ = *fmt++;
     }
     *buf = '\0';
+}
+
+
+/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+ * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
+ * etc.
+ */
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode)
+{
+  FILE *ftp;
+  pid_t pid_ftp;
+  int p[2];
+
+  *retcode=0;
+
+  if( pipe(p) < 0){
+    *retcode = 1;
+    return NULL;
+  }
+
+  pid_ftp = fork();
+  if(pid_ftp < 0){
+    *retcode = 1;
+    return NULL;
+  }
+  if(pid_ftp == 0){
+    /* child */
+    dup2(p[1],1);
+    close(p[1]);
+
+
+ fprintf(stderr, ">>> ftp -o - %s\n",url); 
+    execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+    exit(1);
+  }else{
+    /* parent */
+    ftp = fdopen(p[0],"r");
+
+    close(p[1]);
+    
+    if(ftp < 0){
+      *retcode = 1;
+      return NULL;
+    }
+  }
+  
+  return ftp;
 }
