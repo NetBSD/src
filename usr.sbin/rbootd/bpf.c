@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.6 1995/11/14 08:41:42 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.7 1997/01/27 22:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: bpf.c,v 1.6 1995/11/14 08:41:42 thorpej Exp $";
+static char rcsid[] = "$NetBSD: bpf.c,v 1.7 1997/01/27 22:51:50 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,14 +148,9 @@ BpfOpen()
 #endif
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	bcopy(&RmpMcastAddr[0], (char *)&ifr.ifr_addr.sa_data[0], RMP_ADDRLEN);
-	if (ioctl(BpfFd, SIOCADDMULTI, (caddr_t)&ifr) < 0) {
-		syslog(LOG_WARNING,
-		    "bpf: can't add mcast addr (%m), setting promiscuous mode");
-
-		if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) < 0) {
-			syslog(LOG_ERR, "bpf: can't set promiscuous mode: %m");
-			Exit(0);
-		}
+	if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) < 0) {
+		syslog(LOG_ERR, "bpf: can't set promiscuous mode: %m");
+		Exit(0);
 	}
 
 	/*
