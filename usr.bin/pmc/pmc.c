@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.6 2002/06/07 01:38:17 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.7 2002/06/07 04:07:08 gmcgarry Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -221,6 +221,53 @@ const struct pmc_name2val i686_names[] = {
 	{ "seg-rename-retire",		PMC6_RET_SEG_RENAMES,		0 },
 };
 
+const struct pmc_name2val k7_names[] = {
+	{ "seg-load-all",		K7_SEGMENT_REG_LOADS,		0x3f },
+	{ "seg-load-stall",		K7_SEGMENT_LOAD_STALL,		0 },
+	{ "l1cache-access",		K7_DATA_CACHE_ACCESS,		0 },
+	{ "l1cache-miss",		K7_DATA_CACHE_MISS,	 	0 },
+	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,	 	0x1f },
+	{ "l1cache-load",		K7_DATA_CACHE_REFILL_SYSTEM, 	0x1f },
+	{ "l1cache-writeback",		K7_DATA_CACHE_WBACK,	 	0 },
+	{ "l2cache-access",		K7_L2_REQUEST,			0xff },
+	{ "l2cache-access-busy",	K7_L2_REQUEST_BUSY,		0 },
+	{ "l2cache-hit",		K7_L2_DTLB_HIT,		 	0 },
+	{ "l2cache-miss",		K7_L2_DTLB_MISS,	 	0 },
+	{ "mem-misalign-ref",		K7_MISALIGNED_DATA_REF,		0 },
+	{ "mem-access",			K7_SYSTEM_REQUEST,		0 },
+	{ "ins-fetch",			K7_IFU_IFETCH,			0 },
+	{ "ins-fetch-miss",		K7_IFU_IFETCH_MISS,		0 },
+	{ "ins-refill-l2",		K7_IFU_REFILL_FROM_L2,		0 },
+	{ "ins-refill-mem",		K7_IFU_REFILL_FROM_SYSTEM,	0 },
+	{ "ins-fetch-stall",		K7_IFU_STALL,			0 },
+	{ "ins-retired",		K7_RETIRED_INST,		0 },
+	{ "ins-empty",			K7_INSTRUCTION_DECODER_EMPTY,	0 },
+	{ "itlb-miss-l1",		K7_ITLB_L1_MISS,		0 },
+	{ "itlb-miss-l2",		K7_ITLB_L2_MISS,		0 },
+	{ "ops-retired",		K7_RETIRED_OPS,			0 },
+	{ "branch-retired",		K7_RETIRED_BRANCHES,		0 },
+	{ "branch-miss-retired",	K7_RETIRED_BRANCH_MISPREDICTED,	0 },
+	{ "branch-taken-retired",	K7_RETIRED_TAKEN_BRANCH,	0 },
+	{ "branch-taked-miss-retired",
+	    K7_RETIRED_TAKEN_BRANCH_MISPREDICTED,	0 },
+	{ "branch-far-retired",
+	    K7_RETIRED_FAR_CONTROL_TRANSFER,		0 },
+	{ "branch-resync-retired",	K7_RETIRED_RESYNC_BRANCH,	0 },
+	{ "branch-near-retired",	K7_RETIRED_NEAR_RETURNS,	0 },
+	{ "branch-near-miss-retired",
+	    K7_RETIRED_NEAR_RETURNS_MISPREDICTED,	0 },
+	{ "branch-indirect-miss-retired",
+	    K7_RETIRED_INDIRECT_MISPREDICTED,	0 },
+	{ "int-hw",			K7_HW_INTR_RECV,		0 },
+	{ "int-cycles-masked",		K7_CYCLES_INT_MASKED,		0 },
+	{ "int-cycles-masked-pending",
+	    K7_CYCLES_INT_PENDING_AND_MASKED, 0 },
+	{ "break-match0",		K7_BP0_MATCH,			0 },
+	{ "break-match1",		K7_BP1_MATCH,			0 },
+	{ "break-match2",		K7_BP2_MATCH,			0 },
+	{ "break-match3",		K7_BP3_MATCH,			0 },
+};
+
 struct pmc_name2val_cpus {
 	int type;
 	const struct pmc_name2val *pmc_names;
@@ -229,7 +276,9 @@ struct pmc_name2val_cpus {
 	{ PMC_TYPE_I586, i586_names,
 	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
 	{ PMC_TYPE_I686, i686_names,
-	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
+	  sizeof(i686_names)/sizeof(struct pmc_name2val) },
+	{ PMC_TYPE_K7, k7_names,
+	  sizeof(k7_names)/sizeof(struct pmc_name2val) },
 };
 
 
@@ -308,7 +357,8 @@ main(int argc, char **argv)
 
 	pncp = pmc_lookup_cpu(pi.type);
 	if (pncp == NULL)
-		errx(3, "PMC counters are not supported by CPU");
+		errx(3, "PMC counters are not supported for your CPU (0x%x)",
+		    pi.type);
 
 	pnp = NULL;
 	while ((c = getopt(argc, argv, "Cc:h")) != -1) {
