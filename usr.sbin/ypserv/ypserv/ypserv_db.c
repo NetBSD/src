@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.10 1999/01/23 01:08:55 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.11 2001/06/19 13:42:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.10 1999/01/23 01:08:55 thorpej Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.11 2001/06/19 13:42:23 wiz Exp $");
 #endif
 
 /*
@@ -323,7 +323,7 @@ ypdb_open_db(domain, map, status, map_info)
 #endif
 		/*
 		 * if status != YP_TRUE, then this cached database is now
-		 * non-existant
+		 * non-existent
 		 */
 		if (*status != YP_TRUE) {
 #ifdef DEBUG
@@ -357,7 +357,7 @@ ypdb_open_db(domain, map, status, map_info)
 	}
 
 	/*
-	 * not cached and non-existant, return
+	 * not cached and non-existent, return
 	 */
 	if (*status != YP_TRUE)	
 		return (NULL);
