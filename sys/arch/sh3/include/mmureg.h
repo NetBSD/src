@@ -1,5 +1,5 @@
-/* $Id: mmureg.h,v 1.3 2000/03/20 20:30:33 msaitoh Exp $ */
-/* $NetBSD: mmureg.h,v 1.3 2000/03/20 20:30:33 msaitoh Exp $ */
+/* $Id: mmureg.h,v 1.4 2000/09/04 05:48:35 msaitoh Exp $ */
+/* $NetBSD: mmureg.h,v 1.4 2000/09/04 05:48:35 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -72,6 +72,8 @@
 #define MMUCR_TI	0x0004	/* TLB Invaliate */
 #define MMUCR_SV	0x0100	/* single virtual space mode */
 #define MMUCR_SQMD	0x0200  /* Store Queue mode */
+
+#define MMUCR_VALIDBITS 0xfcfcff05	/* XXX */
 
 /* alias */
 #define MMUCR_TF	MMUCR_TI
