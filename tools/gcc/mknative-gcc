@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.13 2004/07/01 13:22:25 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.14 2004/08/24 20:24:43 thorpej Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -14,6 +14,17 @@ _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*= ,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
 
 . $_TOP/tools/gcc/mknative.common
+
+##### gnu/lib/crtstuff #####
+
+get_crtstuff () {
+	mkdir -p $_TOP/gnu/lib/crtstuff3/arch
+
+	getvars gcc/Makefile \
+		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS \
+		tm_defines xm_file xm_defines \
+		| write_mk gnu/lib/crtstuff3/arch/$MACHINE_ARCH.mk
+}
 
 ##### gnu/lib/libg2c #####
 
@@ -157,6 +168,7 @@ get_gcc () {
 case $1 in
 libgcc)	# .mk and .h files for libgcc bootstrap (from host build)
 	get_libgcc
+	get_crtstuff
 	exit 0
 	;;
 
@@ -164,6 +176,7 @@ gcc3)
 	get_gcc
 	get_libg2c
 	get_libgcc
+	get_crtstuff
 	get_gcc3_libiberty
 	get_libobjc
 	get_libstdcxx_v3
