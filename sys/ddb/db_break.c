@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.4 1994/06/29 06:30:59 cgd Exp $	*/
+/*	$NetBSD: db_break.c,v 1.5 1994/10/09 08:19:32 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,10 +42,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_break.h>
-
-extern boolean_t db_map_equal();
-extern boolean_t db_map_current();
-extern vm_map_t db_map_addr();
 
 #define	NBREAKPOINTS	100
 struct db_breakpoint	db_break_table[NBREAKPOINTS];

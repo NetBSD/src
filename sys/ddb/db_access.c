@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.5 1994/06/29 06:30:55 cgd Exp $	*/
+/*	$NetBSD: db_access.c,v 1.6 1994/10/09 08:19:29 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,9 +39,6 @@
  * boundaries.
  */
 
-extern void	db_read_bytes();	/* machine-dependent */
-extern void	db_write_bytes();	/* machine-dependent */
-
 int db_extend[] = {	/* table for sign-extending */
 	0,
 	0xFFFFFF80,
@@ -52,12 +49,12 @@ int db_extend[] = {	/* table for sign-extending */
 db_expr_t
 db_get_value(addr, size, is_signed)
 	db_addr_t	addr;
-	register int	size;
+	register size_t size;
 	boolean_t	is_signed;
 {
 	char		data[sizeof(int)];
 	register db_expr_t value;
-	register int	i;
+	register size_t i;
 
 	db_read_bytes(addr, size, data);
 
@@ -67,9 +64,7 @@ db_get_value(addr, size, is_signed)
 #else	/* BYTE_LSF */
 	for (i = size - 1; i >= 0; i--)
 #endif
-	{
 	    value = (value << 8) + (data[i] & 0xFF);
-	}
 	    
 	if (size < 4) {
 	    if (is_signed && (value & db_extend[size]) != 0)
@@ -81,11 +76,11 @@ db_get_value(addr, size, is_signed)
 void
 db_put_value(addr, size, value)
 	db_addr_t	addr;
-	register int	size;
+	register size_t size;
 	register db_expr_t value;
 {
 	char		data[sizeof(int)];
-	register int	i;
+	register size_t i;
 
 #ifdef	BYTE_MSF
 	for (i = size - 1; i >= 0; i--)
@@ -99,4 +94,3 @@ db_put_value(addr, size, value)
 
 	db_write_bytes(addr, size, data);
 }
-

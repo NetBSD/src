@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.4 1994/06/29 06:31:11 cgd Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.5 1994/10/09 08:19:36 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,13 +32,13 @@
 /*
  * Lexical analyzer.
  */
-extern int	db_read_line();
-extern void	db_flush_line();
-extern int	db_read_char();
-extern void	db_unread_char(/* char c */);
-extern int	db_read_token();
-extern void	db_unread_token(/* int t */);
-extern void	db_flush_lex();
+int db_read_line __P((void));
+void db_flush_line __P((void));
+int db_read_char __P((void));
+void db_unread_char __P((int));
+int db_read_token __P((void));
+void db_unread_token __P((int));
+void db_flush_lex __P((void));
 
 extern int	db_tok_number;
 #define	TOK_STRING_SIZE		120 

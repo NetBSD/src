@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.4 1994/06/29 06:31:14 cgd Exp $	*/
+/*	$NetBSD: db_output.h,v 1.5 1994/10/09 08:19:36 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,7 +32,7 @@
 /*
  * Printing routines for kernel debugger.
  */
-extern void	db_force_whitespace();
-extern int	db_print_position();
-extern void	db_end_line();
-extern int	db_printf();
+void db_force_whitespace __P((void));
+int db_print_position __P((void));
+void db_end_line __P((void));
+int db_printf __P((char *, ...));

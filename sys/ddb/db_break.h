@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.5 1994/06/29 06:31:00 cgd Exp $	*/
+/*	$NetBSD: db_break.h,v 1.6 1994/10/09 08:19:33 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,7 +39,7 @@
  * Breakpoint.
  */
 
-struct db_breakpoint {
+typedef struct db_breakpoint {
 	vm_map_t map;			/* in this map */
 	db_addr_t address;		/* set here */
 	int	init_count;		/* number of times to skip bkpt */
@@ -49,15 +49,18 @@ struct db_breakpoint {
 #define	BKPT_TEMP		0x4	    /* temporary */
 	int	bkpt_inst;		/* saved instruction at bkpt */
 	struct db_breakpoint *link;	/* link in in-use or free chain */
-};
-typedef struct db_breakpoint *db_breakpoint_t;
+} *db_breakpoint_t;
 
-extern db_breakpoint_t	db_find_breakpoint();
-extern db_breakpoint_t	db_find_breakpoint_here();
-extern void		db_set_breakpoints();
-extern void		db_clear_breakpoints();
+db_breakpoint_t	db_find_breakpoint __P((vm_map_t, db_addr_t));
+db_breakpoint_t	db_find_breakpoint_here __P((db_addr_t));
+void db_set_breakpoints __P((void));
+void db_clear_breakpoints __P((void));
 
-extern db_breakpoint_t	db_set_temp_breakpoint(/* db_addr_t addr */);
-extern void		db_delete_temp_breakpoint(/* db_breakpoint_t bkpt */);
+db_breakpoint_t	db_set_temp_breakpoint __P((db_addr_t));
+void db_delete_temp_breakpoint __P((db_breakpoint_t));
+
+boolean_t db_map_equal __P((vm_map_t, vm_map_t));
+boolean_t db_map_current __P((vm_map_t));
+vm_map_t db_map_addr __P((vm_offset_t));
 
 #endif	_DDB_DB_BREAK_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.11 1994/06/29 06:30:57 cgd Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.12 1994/10/09 08:19:31 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -126,7 +126,8 @@ X_db_sym_init(symtab, esymtab, name)
 	    }
 	}
 
-	if (db_add_symbol_table(sym_start, sym_end, name, (char *)symtab) !=  -1) {
+	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
+	    (char *)symtab) !=  -1) {
 #ifndef	SYMTAB_SPACE
                 db_printf("[ preserving %d bytes of %s symbol table ]\n",
                           esymtab - (char *)symtab, name);

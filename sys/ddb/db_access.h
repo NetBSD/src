@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.h,v 1.4 1994/06/29 06:30:56 cgd Exp $	*/
+/*	$NetBSD: db_access.h,v 1.5 1994/10/09 08:19:30 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,9 +34,8 @@
  */
 #include <machine/db_machdep.h>		/* expression types */
 
-extern db_expr_t db_get_value(/* db_addr_t addr,
-				 int size,
-				 boolean_t is_signed */);
-extern void	 db_put_value(/* db_addr_t addr,
-				 int size,
-				 db_expr_t value */);
+db_expr_t db_get_value __P((db_addr_t, size_t, boolean_t));
+void db_put_value __P((db_addr_t, size_t, db_expr_t));
+
+void db_read_bytes __P((db_addr_t, size_t, char *));
+void db_write_bytes __P((db_addr_t, size_t, char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.4 1994/06/29 06:31:10 cgd Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.5 1994/10/09 08:19:35 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,8 @@
 /*
  * Lexical analyzer.
  */
+#include <sys/param.h>
+
 #include <ddb/db_lex.h>
 
 char	db_line[120];
@@ -77,6 +79,7 @@ db_read_char()
 
 void
 db_unread_char(c)
+	int c;
 {
 	db_look_char = c;
 }

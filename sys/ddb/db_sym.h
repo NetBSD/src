@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.5 1994/06/29 06:31:19 cgd Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.6 1994/10/09 08:19:41 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,19 +69,19 @@ extern boolean_t	db_qualify_ambiguous_names;
 /*
  * Functions exported by the symtable module
  */
-extern int	db_add_symbol_table();
+int db_add_symbol_table __P((char *, char *, char *, char *));
 					/* extend the list of symbol tables */
 
-extern void	db_del_symbol_table(/* char * */);
+void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
 
-extern int	db_value_of_name(/* char*, db_expr_t* */);
+int db_value_of_name __P((char *, db_expr_t *));
 					/* find symbol value given name */
 
-extern db_sym_t	db_search_symbol(/* db_expr_t, db_strategy_t, int* */);
+db_sym_t db_search_symbol __P((db_addr_t, db_strategy_t, db_expr_t *));
 					/* find symbol given value */
 
-extern void	db_symbol_values(/* db_sym_t, char**, db_expr_t* */);
+void db_symbol_values __P((db_sym_t, char **, db_expr_t *));
 					/* return name and value of symbol */
 
 #define db_find_sym_and_offset(val,namep,offp)	\
@@ -92,8 +92,8 @@ extern void	db_symbol_values(/* db_sym_t, char**, db_expr_t* */);
 	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,0)
 					/* ditto, but no locals */
 
-extern int	db_eqname(/* char*, char*, char */);
+int db_eqname __P((char *, char *, char));
 					/* strcmp, modulo leading char */
 
-extern void	db_printsym(/* db_expr_t, db_strategy_t */);
+void db_printsym __P((db_expr_t, db_strategy_t));
 					/* print closest symbol to a value */

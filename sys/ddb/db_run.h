@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.6 1994/10/09 08:19:44 mycroft Exp $	*/
+/*	$NetBSD: db_run.h,v 1.1 1994/10/09 08:19:39 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,30 +26,31 @@
  * rights to redistribute these changes.
  *
  * 	Author: David B. Golub, Carnegie Mellon University
- *	Date:	10/90
+ *	Date:	7/90
  */
 
-#ifndef	_DDB_DB_WATCH_
-#define	_DDB_DB_WATCH_
-
-#include <ddb/db_break.h>
+#ifndef	_DDB_DB_RUN_
+#define	_DDB_DB_RUN_
 
 /*
- * Watchpoint.
+ * Commands to run process.
  */
-typedef struct db_watchpoint {
-	vm_map_t map;			/* in this map */
-	db_addr_t loaddr;		/* from this address */
-	db_addr_t hiaddr;		/* to this address */
-	struct db_watchpoint *link;	/* link in in-use or free chain */
-} *db_watchpoint_t;
+#include <sys/param.h>
+#include <sys/proc.h>
 
-extern boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
-extern void db_set_watchpoints __P((void));
-extern void db_clear_watchpoints __P((void));
+#include <machine/db_machdep.h>
 
-extern void db_set_watchpoint __P((vm_map_t, db_addr_t, vm_size_t));
-extern void db_delete_watchpoint __P((vm_map_t, db_addr_t));
-extern void db_list_watchpoints __P((void));
+int		db_inst_count;
+int		db_load_count;
+int		db_store_count;
 
-#endif	_DDB_DB_WATCH_
+#ifndef db_set_single_step
+void		db_set_single_step __P((db_regs_t *));
+#endif
+#ifndef db_clear_single_step
+void		db_clear_single_step __P((db_regs_t *));
+#endif
+void		db_restart_at_pc __P((db_regs_t *, boolean_t));
+boolean_t	db_stop_at_pc __P((db_regs_t *, boolean_t *));
+
+#endif	_DDB_DB_RUN_
