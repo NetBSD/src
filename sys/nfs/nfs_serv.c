@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.68 2003/03/28 13:05:47 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.69 2003/03/28 15:24:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.68 2003/03/28 13:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.69 2003/03/28 15:24:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3146,7 +3146,8 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	struct nfsv3_fsinfo *sip;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, getret = 1, pref;
+	int error = 0, rdonly, cache, getret = 1;
+	uint32_t maxdata;
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	struct vnode *vp;
@@ -3185,16 +3186,16 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	 * For now, assume ufs.
 	 */
 	if (slp->ns_so->so_type == SOCK_DGRAM)
-		pref = NFS_MAXDGRAMDATA;
+		maxdata = NFS_MAXDGRAMDATA;
 	else
-		pref = NFS_MAXDATA;
-	sip->fs_rtmax = txdr_unsigned(NFS_MAXDATA);
-	sip->fs_rtpref = txdr_unsigned(pref);
+		maxdata = NFS_MAXDATA;
+	sip->fs_rtmax = txdr_unsigned(maxdata);
+	sip->fs_rtpref = txdr_unsigned(maxdata);
 	sip->fs_rtmult = txdr_unsigned(NFS_FABLKSIZE);
-	sip->fs_wtmax = txdr_unsigned(NFS_MAXDATA);
-	sip->fs_wtpref = txdr_unsigned(pref);
+	sip->fs_wtmax = txdr_unsigned(maxdata);
+	sip->fs_wtpref = txdr_unsigned(maxdata);
 	sip->fs_wtmult = txdr_unsigned(NFS_FABLKSIZE);
-	sip->fs_dtpref = txdr_unsigned(pref);
+	sip->fs_dtpref = txdr_unsigned(maxdata);
 	txdr_hyper(maxfsize, &sip->fs_maxfilesize);
 	sip->fs_timedelta.nfsv3_sec = 0;
 	sip->fs_timedelta.nfsv3_nsec = txdr_unsigned(1);
