@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.20 1997/05/17 17:52:50 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ auxregattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
+	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long));
 	if (CPU_ISSUN4M) {
 		auxio_reg = AUXIO4M_REG;
 		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
