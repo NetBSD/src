@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.18 2000/05/25 19:57:33 jhawk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19 2000/07/08 17:08:35 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1007,7 +1007,7 @@ db_disasm_esc(loc, inst, short_addr, size, seg)
 		 * Normal address modes.
 		 */
 		loc = db_read_address(loc, short_addr, regmodrm, &address);
-		db_printf(fp->f_name);
+		db_printf("%s", fp->f_name);
 		switch(fp->f_size) {
 		    case SNGL:
 			db_printf("s");
@@ -1203,11 +1203,11 @@ db_disasm(loc, altfmt)
 
 	if (i_size == SDEP) {
 		if (size == WORD)
-			db_printf(i_name);
+			db_printf("%s", i_name);
 		else
-			db_printf(ip->i_extra);
+			db_printf("%s", ip->i_extra);
 	} else {
-		db_printf(i_name);
+		db_printf("%s", i_name);
 		if (i_size != NONE) {
 			if (i_size == BYTE) {
 				db_printf("b");
