@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1998/05/15 15:12:31 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.6 1998/10/06 01:43:12 mark Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,16 +52,10 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+void backtowin(void);
 
 static u_int
 filecore_checksum(u_char *bootblock);
-
-/*
- * symbolic names for disk partitions
- */
-#define PART_ROOT A
-#define PART_RAW  C
-#define PART_USR  E
 
 /*
  * static u_int filecore_checksum(u_char *bootblock)
@@ -77,6 +71,7 @@ filecore_checksum(u_char *bootblock);
  * there is not much point writing it in assembly.
  */
  
+ /* NEEDS THE LASTEST CODE IMPORTING */
 static u_int
 filecore_checksum(bootblock)
 	u_char *bootblock;
@@ -116,23 +111,23 @@ int	md_get_info (void)
 	else
 		disktype = "SCSI";
 
-	snprintf (devname, 100, "/dev/r%sc", diskdev);
+	snprintf(devname, 100, "/dev/r%sc", diskdev);
 
-	fd = open (devname, O_RDONLY, 0);
+	fd = open(devname, O_RDONLY, 0);
 	if (fd < 0) {
 		endwin();
-		fprintf (stderr, "Can't open %s\n", devname);
+		fprintf(stderr, "Can't open %s\n", devname);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		endwin();
-		fprintf (stderr, "Can't read disklabel on %s.\n", devname);
+		fprintf(stderr, "Can't read disklabel on %s.\n", devname);
 		close(fd);
 		exit(1);
 	}
 
-	if (lseek(fd, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+	if (lseek(fd, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0
+	    || read(fd, bb, sizeof(bb)) < sizeof(bb)) {
 		endwin();
 		fprintf(stderr, msg_string(MSG_badreadbb));
 		close(fd);
@@ -146,8 +141,9 @@ int	md_get_info (void)
 		 * If found the NetBSD disklabel location is easy.
 		 */
 
-		offset = (fcbb->partition_cyl_low + (fcbb->partition_cyl_high << 8))
-		    * fcbb->heads * fcbb->secspertrack;
+		offset = (fcbb->partition_cyl_low +
+		    (fcbb->partition_cyl_high << 8)) *
+		    fcbb->heads * fcbb->secspertrack;
 
 		if (fcbb->partition_type == PARTITION_FORMAT_RISCBSD)
 			;
@@ -158,30 +154,34 @@ int	md_get_info (void)
 			 * Empty:
 			 */
 
-			struct riscix_partition_table *riscix_part = (struct riscix_partition_table *)bb;
+			struct riscix_partition_table *riscix_part =
+			    (struct riscix_partition_table *)bb;
+			struct riscix_partition *part;
 			int loop;
 
-			if (lseek(fd, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0 ||
-			    read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+			if (lseek(fd, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0
+			    || read(fd, bb, sizeof(bb)) < sizeof(bb)) {
 				endwin();
 				fprintf(stderr, msg_string(MSG_badreadriscix));
 				close(fd);
 				exit(1);
 			}
-			/* Break out as soon as we find a suitable partition */
 
+			/* Break out as soon as we find a suitable partition */
 			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
-				if (strcmp(riscix_part->partitions[loop].rp_name, "RiscBSD") == 0
-				    || strcmp(riscix_part->partitions[loop].rp_name, "NetBSD") == 0
-				    || strcmp(riscix_part->partitions[loop].rp_name, "Empty:") == 0) {
-					offset = riscix_part->partitions[loop].rp_start;
+				part = &riscix_part->partitions[loop];
+				if (strcmp(part->rp_name, "RiscBSD") == 0
+				    || strcmp(part->rp_name, "NetBSD") == 0
+				    || strcmp(part->rp_name, "Empty:") == 0) {
+					offset = part->rp_start;
 					break;
 				}
 			}
 			if (loop == NRISCIX_PARTITIONS) {
 				/*
-				 * Valid filecore boot block, RISCiX partition table
-				 * but no NetBSD partition. We should leave this disc alone.
+				 * Valid filecore boot block, RISCiX partition
+				 * table but no NetBSD partition. We should
+				 * leave this disc alone.
 				 */
 				endwin();
 				fprintf(stderr, msg_string(MSG_notnetbsdriscix));
@@ -224,6 +224,16 @@ int	md_get_info (void)
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
 
 	ptstart = offset;
+/*	endwin();
+	printf("dlcyl=%d\n", dlcyl);
+	printf("dlhead=%d\n", dlhead);
+	printf("dlsec=%d\n", dlsec);
+	printf("secsz=%d\n", sectorsize);
+	printf("cylsz=%d\n", dlcylsize);
+	printf("dlsz=%d\n", dlsize);
+	printf("pstart=%d\n", ptstart);
+	printf("pstart=%d\n", partsize);
+	backtowin();*/
 
 	return 1;
 }
@@ -240,9 +250,9 @@ void	md_post_newfs (void)
 {
 #if 0
 	/* XXX boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
+	printf(msg_string(MSG_dobootblks), diskdev);
 	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
 }
 
@@ -253,12 +263,13 @@ void	md_copy_filesystem (void)
 	}
 
 	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - -C / . |"
-		  "(cd /mnt ; tar --unlink -xpf - )");
+	printf("%s", msg_string(MSG_dotar));
+	run_prog("tar --one-file-system -cf - -C / . |"
+	    "(cd /mnt ; tar --unlink -xpf - )");
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
+	cp_to_target("/tmp/.hdprofile", "/.profile");
+	cp_to_target("/usr/share/misc/termcap", "/.termcap");
 }
 
 int md_make_bsd_partitions (void)
@@ -278,12 +289,20 @@ int md_make_bsd_partitions (void)
 	fsptsize = dlsize - ptstart;	/* netbsd partition -- same as above */
 	fsdmb = fsdsize / MEG;
 
+/*	endwin();
+	printf("ptsize=%d\n", ptsize);
+	printf("fsdsize=%d\n", fsdsize);
+	printf("fsptsize=%d\n", fsptsize);
+	printf("fsdmb=%d\n", fsdmb);
+	backtowin();*/
+
+/*editlab:*/
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
 			(1.0*fsptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-	process_menu (MENU_layout);
+	process_menu(MENU_layout);
 
 	if (layoutkind == 3) {
 		ask_sizemult();
@@ -308,6 +327,8 @@ int md_make_bsd_partitions (void)
 	bsdlabel[D][D_FSTYPE] = T_UNUSED;
 	bsdlabel[D][D_OFFSET] = 0;
 	bsdlabel[D][D_SIZE]   = ptstart;
+/*	if (ptstart > 0)
+		bsdlabel[D][D_FSTYPE] = T_FILECORE;*/
 	bsdlabel[E][D_FSTYPE] = T_UNUSED;	/* fill out below */
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
@@ -315,128 +336,106 @@ int md_make_bsd_partitions (void)
 
 
 	switch (layoutkind) {
-	case 1: /* standard: a root, b swap, c "unused", e /usr */
-	case 2: /* standard X: a root, b swap (big), c "unused", e /usr */
+	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
+	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
 		partstart = ptstart;
 
 		/* Root */
-#if 0
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		/* i386 md code uses: */
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-#else
-		/* By convention, NetBSD/arm32 uses a 32Mbyte root */
-		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
-#endif
+		i = NUMSEC(24+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+		    dlcylsize) - partstart;
 		bsdlabel[A][D_OFFSET] = partstart;
 		bsdlabel[A][D_SIZE] = partsize;
 		bsdlabel[A][D_BSIZE] = 8192;
 		bsdlabel[A][D_FSIZE] = 1024;
-		strcpy (fsmount[A], "/");
+		strcpy(fsmount[A], "/");
 		partstart += partsize;
 
 		/* swap */
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+		    MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+		    dlcylsize) - partstart - swapadj;
 		bsdlabel[B][D_OFFSET] = partstart;
 		bsdlabel[B][D_SIZE] = partsize;
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsdsize - partstart;
-		bsdlabel[PART_USR][D_FSTYPE] = T_42BSD;
-		bsdlabel[PART_USR][D_OFFSET] = partstart;
-		bsdlabel[PART_USR][D_SIZE] = partsize;
-		bsdlabel[PART_USR][D_BSIZE] = 8192;
-		bsdlabel[PART_USR][D_FSIZE] = 1024;
-		strcpy (fsmount[PART_USR], "/usr");
+		partsize = fsptsize - (partstart - ptstart);
+		bsdlabel[E][D_FSTYPE] = T_42BSD;
+		bsdlabel[E][D_OFFSET] = partstart;
+		bsdlabel[E][D_SIZE] = partsize;
+		bsdlabel[E][D_BSIZE] = 8192;
+		bsdlabel[E][D_FSIZE] = 1024;
+		strcpy(fsmount[E], "/usr");
 
 		break;
 
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult();
-		/* root */
 		partstart = ptstart;
-		remain = fsdsize - partstart;
-#if 0
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-#endif
-		partsize = NUMSEC (32, MEG/sectorsize,
-				   dlcylsize);
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt (MSG_askfsroot, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		remain = fsptsize;
+
+		/* root */
+		i = NUMSEC(24+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+		    dlcylsize) - partstart;
+		snprintf(isize, 20, "%d", partsize / sizemult);
+		msg_prompt(MSG_askfsroot, isize, isize, 20,
+		    remain/sizemult, multname);
+		partsize = NUMSEC(atoi(isize), sizemult, dlcylsize);
 		bsdlabel[A][D_OFFSET] = partstart;
 		bsdlabel[A][D_SIZE] = partsize;
 		bsdlabel[A][D_BSIZE] = 8192;
 		bsdlabel[A][D_FSIZE] = 1024;
-		strcpy (fsmount[A], "/");
+		strcpy(fsmount[A], "/");
 		partstart += partsize;
-		
+		remain -= partsize;
+	
 		/* swap */
-		remain = fsdsize - partstart;
-		i = NUMSEC(2 * (rammb < 32 ? 32 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
-			    remain/sizemult, multname);
+		i = NUMSEC(4 * (rammb < 32 ? 32 : rammb),
+		    MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+		    dlcylsize) - partstart - swapadj;
+		snprintf(isize, 20, "%d", partsize/sizemult);
+		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
+		    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
 		bsdlabel[B][D_OFFSET] = partstart;
 		bsdlabel[B][D_SIZE] = partsize;
 		partstart += partsize;
+		remain -= partsize;
 		
-		/* /usr */
-		remain = fsdsize - partstart;
-		partsize = fsdsize - partstart;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsusr, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		if (remain - partsize < sizemult)
-			partsize = remain;
-		bsdlabel[PART_USR][D_FSTYPE] = T_42BSD;
-		bsdlabel[PART_USR][D_OFFSET] = partstart;
-		bsdlabel[PART_USR][D_SIZE] = partsize;
-		bsdlabel[PART_USR][D_BSIZE] = 8192;
-		bsdlabel[PART_USR][D_FSIZE] = 1024;
-		strcpy (fsmount[PART_USR], "/usr");
-		partstart += partsize;
-
-		/* Others ... */
-		remain = fsdsize - partstart;
-		part = F;
+		/* Others E, F, G, H */
+		part = E;
 		if (remain > 0)
-			msg_display (MSG_otherparts);
+			msg_display(MSG_otherparts);
 		while (remain > 0 && part <= H) {
-			partsize = fsdsize - partstart;
+			partsize = remain;
 			snprintf (isize, 20, "%d", partsize/sizemult);
-			msg_prompt_add (MSG_askfspart, isize, isize, 20,
-					diskdev, partname[part],
-					remain/sizemult, multname);
+			msg_prompt_add(MSG_askfspart, isize, isize, 20,
+			    diskdev, partname[part], remain/sizemult, multname);
 			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-			if (remain - partsize < sizemult)
-				partsize = remain;
-			bsdlabel[part][D_FSTYPE] = T_42BSD;
-			bsdlabel[part][D_OFFSET] = partstart;
-			bsdlabel[part][D_SIZE] = partsize;
-			bsdlabel[part][D_BSIZE] = 8192;
-			bsdlabel[part][D_FSIZE] = 1024;
-			msg_prompt_add (MSG_mountpoint, NULL,
-					fsmount[part], 20);
-			partstart += partsize;
-			remain = fsdsize - partstart;
+			if (partsize > 0) {
+				if (remain - partsize < sizemult)
+					partsize = remain;
+				bsdlabel[part][D_FSTYPE] = T_42BSD;
+				bsdlabel[part][D_OFFSET] = partstart;
+				bsdlabel[part][D_SIZE] = partsize;
+				bsdlabel[part][D_BSIZE] = 8192;
+				bsdlabel[part][D_FSIZE] = 1024;
+				if (part == E)
+					strcpy(fsmount[E], "/usr");
+				msg_prompt_add(MSG_mountpoint, fsmount[part],
+				    fsmount[part], 20);
+				partstart += partsize;
+				remain -= partsize;
+			}
 			part++;
 		}
 
 		break;
 	}
-
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
@@ -448,38 +447,38 @@ int md_make_bsd_partitions (void)
 	}
 
 	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
+	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
-	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
-	f = fopen ("/tmp/disktab", "a");
+	f = fopen("/tmp/disktab", "a");
 #else
-	f = fopen ("/etc/disktab", "a");
+	run_prog("cp /etc/disktab.preinstall /etc/disktab");
+	f = fopen("/etc/disktab", "a");
 #endif
 	if (f == NULL) {
 		endwin();
-		(void) fprintf (stderr, "Could not open /etc/disktab");
+		(void) fprintf(stderr, "Could not open /etc/disktab");
 		exit (1);
 	}
-	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i=0; i<8; i++) {
-		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
+	(void)fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
+	(void)fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
+	(void)fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+	(void)fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+	(void)fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	for (i = 0; i < 8; i++) {
+		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i][D_SIZE],
 			       'a'+i, bsdlabel[i][D_OFFSET],
 			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
-			(void)fprintf (f, "b%c#%d:f%c#%d",
+			(void)fprintf(f, "b%c#%d:f%c#%d",
 				       'a'+i, bsdlabel[i][D_BSIZE],
 				       'a'+i, bsdlabel[i][D_FSIZE]);
 		if (i < 7)
-			(void)fprintf (f, "\\\n");
+			(void)fprintf(f, "\\\n");
 		else
-			(void)fprintf (f, "\n");
+			(void)fprintf(f, "\n");
 	}
 	fclose (f);
 
@@ -493,9 +492,9 @@ int
 md_update(void)
 {
 	endwin();
-	md_copy_filesystem ();
+	md_copy_filesystem();
 	md_post_newfs();
-	puts (CL);
+	puts(CL);
 	wrefresh(stdscr);
 	return 1;
 }
@@ -503,4 +502,19 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
+#ifndef DEBUG
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+
+	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
+	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
+
+	run_prog_or_die(
+	    "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
+	    realfrom, realto);
+	run_prog_or_die("mv -f %s %s", realto, realfrom);
+	run_prog("rm -f %s", target_expand("/sysinst"));
+	run_prog("rm -f %s", target_expand("/.termcap"));
+	run_prog("rm -f %s", target_expand("/.profile"));
+#endif
 }
