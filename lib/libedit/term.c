@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.10 1997/07/06 18:25:36 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.11 1997/10/13 16:09:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: term.c,v 1.10 1997/07/06 18:25:36 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.11 1997/10/13 16:09:01 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: term.c,v 1.10 1997/07/06 18:25:36 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "termcap.h"	/* XXX: should be <termcap.h> */
+#include <termcap.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
