@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.8 2001/02/06 18:48:41 christos Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.8 2001/02/06 18:48:41 christos Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.9 2001/05/26 13:18:42 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -379,10 +379,8 @@ mbsrtowcs(pwcs, s, n, ps)
 			(*s)++;
 			break;
 		case 0:
-			pwcs++;
-			cnt++;
 			(*s)++;
-			break;
+			goto bye;
 		default:
 			pwcs++;
 			cnt++;
@@ -473,10 +471,10 @@ wcsrtombs(s, pwcs, n, ps)
 		if (n - cnt < siz)
 			return cnt;
 		memcpy(s, buf, siz);
-		cnt += siz;
-		s += siz;
 		if (!**pwcs)
 			break;
+		cnt += siz;
+		s += siz;
 		(*pwcs)++;
 	}
 bye:
