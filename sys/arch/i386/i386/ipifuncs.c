@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.6 2002/11/28 16:37:35 fvdl Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.7 2003/02/05 12:18:02 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 #if defined(I586_CPU) || defined(I686_CPU)
-	tsc_microset,
+	cc_microset,
 #else
 	0,
 #endif

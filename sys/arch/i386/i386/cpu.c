@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2003/01/17 23:10:30 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2003/02/05 12:18:02 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -610,7 +610,7 @@ cpu_hatch(void *v)
 	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
 #if defined(I586_CPU) || defined(I686_CPU)
 	if (ci->ci_feature_flags & CPUID_TSC)
-		tsc_microset(ci);
+		cc_microset(ci);
 #endif
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);

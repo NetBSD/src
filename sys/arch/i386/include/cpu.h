@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95 2003/01/17 23:10:28 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.96 2003/02/05 12:18:04 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -146,12 +146,12 @@ struct cpu_info {
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
 
 	/*
-	 * Variables used by tsc_microtime().
+	 * Variables used by cc_microtime().
 	 */
-	struct timeval ci_tsc_time;
-	int64_t ci_tsc_tsc;
-	int64_t ci_tsc_ms_delta;
-	int64_t ci_tsc_denom;
+	struct timeval ci_cc_time;
+	int64_t ci_cc_cc;
+	int64_t ci_cc_ms_delta;
+	int64_t ci_cc_denom;
 
 	union descriptor *ci_gdt;
 
@@ -385,10 +385,11 @@ void	i8254_delay __P((int));
 void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
 
-/* tsc_microtime.c */
+/* kern_microtime.c */
 
-void	tsc_microtime __P((struct timeval *));
-void	tsc_microset __P((struct cpu_info *));
+extern struct timeval cc_microset_time;
+void	cc_microtime __P((struct timeval *));
+void	cc_microset __P((struct cpu_info *));
 
 /* cpu.c */
 

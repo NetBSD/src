@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.508 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.509 2003/02/05 12:18:03 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.508 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.509 2003/02/05 12:18:03 nakayama Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1875,7 +1875,7 @@ identifycpu(struct cpu_info *ci)
 		last_tsc = rdtsc();
 		delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-		microtime_func = tsc_microtime;
+		microtime_func = cc_microtime;
 	}
 	/* XXX end XXX */
 #endif

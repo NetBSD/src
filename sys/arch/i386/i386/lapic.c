@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.7 2003/01/07 18:51:15 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.8 2003/02/05 12:18:03 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -231,9 +231,8 @@ void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call tsc_microset once/sec */
+	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
-	extern struct timeval tsc_time;
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
@@ -246,12 +245,12 @@ lapic_clockintr(void *arg, struct intrframe frame)
 		    CPU_IS_PRIMARY(ci) &&
 #endif
 		    (microset_iter--) == 0) {
-			microset_iter = hz-1;
-			tsc_time = time;
+			microset_iter = hz - 1;
+			cc_microset_time = time;
 #if defined(MULTIPROCESSOR)
 			i386_broadcast_ipi(I386_IPI_MICROSET);
 #endif
-			tsc_microset(ci);
+			cc_microset(ci);
 		}
 	}
 #endif

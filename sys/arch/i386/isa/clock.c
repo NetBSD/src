@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.77 2002/12/10 23:24:33 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.78 2003/02/05 12:18:04 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.77 2002/12/10 23:24:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78 2003/02/05 12:18:04 nakayama Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -390,9 +390,8 @@ int
 clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call tsc_microset once/sec */
+	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
-	extern struct timeval tsc_time;
 	
 	/*
 	 * If we have a cycle counter, do the microset thing.
@@ -403,12 +402,12 @@ clockintr(void *arg, struct intrframe frame)
 		    CPU_IS_PRIMARY(ci) &&
 #endif
 		    (microset_iter--) == 0) {
-			tsc_time = time;
-			microset_iter = hz-1;
+			cc_microset_time = time;
+			microset_iter = hz - 1;
 #if defined(MULTIPROCESSOR)
 			i386_broadcast_ipi(I386_IPI_MICROSET);
 #endif
-			tsc_microset(ci);
+			cc_microset(ci);
 		}
 	}
 #endif
@@ -753,7 +752,6 @@ inittodr(base)
 	int s;
 #if defined(I586_CPU) || defined(I686_CPU)
 	struct cpu_info *ci = curcpu();
-	extern struct timeval tsc_time;
 #endif
 	/*
 	 * We mostly ignore the suggested time (which comes from the
@@ -819,8 +817,8 @@ inittodr(base)
 #endif
 #if defined(I586_CPU) || defined(I686_CPU)
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		tsc_time = time;
-		tsc_microset(ci);
+		cc_microset_time = time;
+		cc_microset(ci);
 	}
 #endif
 
