@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2000/01/25 17:02:43 aymeric Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.69 2000/01/31 22:51:53 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -273,10 +273,10 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "grfcc", simple_devprint);
 		config_found(dp, "fdc", simple_devprint);
 	}
-	if (is_a4000() || is_a1200())
-		config_found(dp, "idesc", simple_devprint);
-	if (is_a1200())
+	if (is_a4000() || is_a1200()) {
 		config_found(dp, "wdc", simple_devprint);
+		config_found(dp, "idesc", simple_devprint);
+	}
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(dp, "afsc", simple_devprint);
 	if (is_a3000())
@@ -322,13 +322,13 @@ mbprint(auxp, pnp)
 extern  struct cfdriver fd_cd;
 #endif
 #if NSD > 0
-extern  struct cfdriver sd_cd;  
+extern  struct cfdriver sd_cd;
 #endif
 #if NCD > 0
 extern  struct cfdriver cd_cd;
 #endif
 #if NWD > 0
-extern	struct cfdriver wd_cd;
+extern  struct cfdriver wd_cd;
 #endif
 
 struct cfdriver *genericconf[] = {
@@ -338,11 +338,11 @@ struct cfdriver *genericconf[] = {
 #if NSD > 0
 	&sd_cd,
 #endif
-#if NCD > 0
-	&cd_cd,
-#endif
 #if NWD > 0
 	&wd_cd,
+#endif
+#if NCD > 0
+	&cd_cd,
 #endif
 	NULL,
 };
