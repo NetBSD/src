@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)htable.h	5.5 (Berkeley) 2/6/91
- *	$Id: htable.h,v 1.2 1993/08/01 17:59:37 mycroft Exp $
+ *	$NetBSD: htable.h,v 1.3 1997/10/17 08:00:43 lukem Exp $
  */
 
 #include <sys/types.h>
@@ -68,6 +68,9 @@ struct gateway {
 #define	KW_GATEWAY	2
 #define	KW_HOST		3
 
-struct name *newname();
-
 char *infile;			/* Input file name */
+
+void		do_entry __P((int, struct addr *, struct name *, struct name *,
+	    	    struct name *, struct name *));
+struct name    *newname __P((char *));
+int		yylex __P((void));
