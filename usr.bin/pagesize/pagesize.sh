@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: pagesize.sh,v 1.2 1997/10/19 11:53:01 lukem Exp $
+#	$NetBSD: pagesize.sh,v 1.3 2000/03/22 17:35:56 tron Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 #	@(#)pagesize.sh	8.1 (Berkeley) 4/3/94
 #
 
-PATH=/bin:/usr/bin:/usr/sbin
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
 export PATH
 
-sysctl -n hw.pagesize
+exec sysctl -n hw.pagesize
