@@ -1,4 +1,4 @@
-.\" $Id: gzip.1,v 1.5 1999/07/25 07:06:06 simonb Exp $
+.\" $Id: gzip.1,v 1.6 2001/07/07 21:57:41 lukem Exp $
 .PU
 .TH GZIP 1
 .SH NAME
@@ -468,7 +468,6 @@ GNU tar. Make sure that the same block size (-b option of tar) is used
 for reading and writing compressed data on tapes.  (This example
 assumes you are using the GNU version of tar.)
 .SH BUGS
-The --list option reports incorrect sizes if they exceed 2 gigabytes.
 The --list option reports sizes as -1 and crc as ffffffff if the
 compressed file is on a non seekable media.
 
