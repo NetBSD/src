@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.11 1999/06/06 20:43:00 pk Exp $	*/
+/*	$NetBSD: getch.c,v 1.12 1999/06/06 21:05:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.11 1999/06/06 20:43:00 pk Exp $");
+__RCSID("$NetBSD: getch.c,v 1.12 1999/06/06 21:05:03 pk Exp $");
 #endif
 #endif					/* not lint */
 
@@ -71,7 +71,7 @@ struct key_entry {
 	union {
 		keymap_t *next;	/* next keymap is key is multi-key sequence */
 		int     symbol;	/* key symbol if key is a leaf entry */
-	}       value;
+	} value;
 };
 /* Types of key structures we can have */
 #define KEYMAP_MULTI  1		/* part of a multi char sequence */
@@ -83,8 +83,8 @@ struct key_entry {
 #define MAX_CHAR 256
 
 struct keymap {
-	int     count;		/* count of number of key structs allocated */
-	short   mapping[MAX_CHAR];	/* mapping of key to allocated structs */
+	int	count;		/* count of number of key structs allocated */
+	short	mapping[MAX_CHAR]; /* mapping of key to allocated structs */
 	key_entry_t **key;	/* dynamic array of keys */};
 
 
@@ -94,22 +94,22 @@ struct keymap {
 char    inbuf[INBUF_SZ];
 int     start, end, working;	/* pointers for manipulating inbuf data */
 
-#define INC_POINTER(ptr)  do {                                            \
-        (ptr)++;                                                          \
-        ptr %= INBUF_SZ;                                                  \
+#define INC_POINTER(ptr)  do {	\
+	(ptr)++;		\
+	ptr %= INBUF_SZ;	\
 } while(/*CONSTCOND*/0)
 
-short   state;			/* state of the inkey function */
+short	state;			/* state of the inkey function */
 
-#define INKEY_NORM       0	/* no key backlog to process */
+#define INKEY_NORM	 0	/* no key backlog to process */
 #define INKEY_ASSEMBLING 1	/* assembling a multi-key sequence */
-#define INKEY_BACKOUT    2	/* recovering from an unrecognised key */
-#define INKEY_TIMEOUT    3	/* multi-key sequence timeout */
+#define INKEY_BACKOUT	 2	/* recovering from an unrecognised key */
+#define INKEY_TIMEOUT	 3	/* multi-key sequence timeout */
 
 /* The termcap data we are interested in and the symbols they map to */
 struct tcdata {
-	char   *name;		/* name of termcap entry */
-	int     symbol;		/* the symbol associated with it */
+	char	*name;		/* name of termcap entry */
+	int	symbol;		/* the symbol associated with it */
 };
 
 const struct tcdata tc[] = {
@@ -158,14 +158,9 @@ const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 keymap_t *base_keymap;
 
 /* prototypes for private functions */
-keymap_t *
-new_keymap(void);	/* create a new keymap */
-
-key_entry_t *
-new_key(void);		/* create a new key entry */
-
-unsigned
-inkey(int, int);
+keymap_t	*new_keymap(void);	/* create a new keymap */
+key_entry_t	*new_key(void);		/* create a new key entry */
+unsigned	inkey(int, int);
 
 /*
  * Init_getch - initialise all the pointers & structures needed to make
@@ -176,10 +171,10 @@ void
 __init_getch(sp)
 	char   *sp;
 {
-	int     i, j, length;
+static	char termcap[1024];
+	char entry[1024], termname[1024], *p;
+	int i, j, length;
 	keymap_t *current;
-static	char    termcap[1024];
-	char    entry[1024], termname[1024], *p;
 	key_entry_t *the_key;
 
 	/* init the inkey state variable */
@@ -195,69 +190,70 @@ static	char    termcap[1024];
 	strncpy(termname, sp, 1022);
 	termname[1023] = 0;
 
-	if (tgetent(termcap, termname) > 0) {
-		for (i = 0; i < num_tcs; i++) {
-			p = entry;
-			if (tgetstr(tc[i].name, &p) != NULL) {
-				current = base_keymap;	/* always start with
-							 * base keymap. */
-				length = strlen(entry);
+	if (tgetent(termcap, termname) <= 0)
+		return;
 
-				for (j = 0; j < length - 1; j++) {
-					if (current->mapping[(unsigned) entry[j]] < 0) {
-						/* first time for this char */
-						current->mapping[(unsigned) entry[j]] = current->count;	/* map new entry */
-						the_key = new_key();
-						/* multikey coz we are here */
-						the_key->type = KEYMAP_MULTI;
+	for (i = 0; i < num_tcs; i++) {
 
-						/* need for next key */
-						the_key->value.next
-							= new_keymap();
-						
-						/* put into key array */
-						if ((current->key = realloc(current->key, (current->count + 1) * sizeof(key_entry_t *))) == NULL) {
-							fprintf(stderr,
-								"Could not malloc for key entry\n");
-							exit(1);
-						}
-						
-						current->key[current->count++]
-							= the_key;
+		p = entry;
+		if (tgetstr(tc[i].name, &p) == NULL)
+			continue;
 
-					}
-					/* next key uses this map... */
-					current = current->key[current->mapping[(unsigned) entry[j]]]->value.next;
-				}
+		current = base_keymap;	/* always start with base keymap. */
+		length = strlen(entry);
 
-				/* this is the last key in the sequence (it
-				 * may have been the only one but that does
-				 * not matter) this means it is a leaf key and
-				 * should have a symbol associated with it */
-				if (current->count > 0) {
-					  /* if there were other keys then
-					     we need to extend the mapping
-					     array */
-					if ((current->key =
-					     realloc(current->key,
-						     (current->count + 1) *
-						     sizeof(key_entry_t *)))
-					    == NULL) {
-						fprintf(stderr,
-							"Could not malloc for key entry\n");
-						exit(1);
-					}
-				}
-				current->mapping[(unsigned) entry[length - 1]]
-					= current->count;
+		for (j = 0; j < length - 1; j++) {
+			if (current->mapping[(unsigned) entry[j]] < 0) {
+				/* first time for this char */
+				current->mapping[(unsigned) entry[j]] = current->count;	/* map new entry */
 				the_key = new_key();
-				the_key->type = KEYMAP_LEAF;	/* leaf key */
+				/* multikey coz we are here */
+				the_key->type = KEYMAP_MULTI;
 
-				/* the associated symbol */
-				the_key->value.symbol = tc[i].symbol;
+				/* need for next key */
+				the_key->value.next = new_keymap();
+				
+				/* put into key array */
+				if ((current->key = realloc(current->key, (current->count + 1) * sizeof(key_entry_t *))) == NULL) {
+					fprintf(stderr,
+						"Could not malloc for key entry\n");
+					exit(1);
+				}
+				
 				current->key[current->count++] = the_key;
+
+			}
+			/* next key uses this map... */
+			current = current->key[current->mapping[(unsigned) entry[j]]]->value.next;
+		}
+
+		/*
+		 * This is the last key in the sequence (it may have been
+		 * the only one but that does not matter) this means it is
+		 * a leaf key and should have a symbol associated with it.
+		 */
+		if (current->count > 0) {
+			/*
+			 * If there were other keys then we need to
+			 * extend the mapping array.
+			 */
+			if ((current->key =
+				realloc(current->key,
+					(current->count + 1) *
+					sizeof(key_entry_t *))) == NULL) {
+
+				fprintf(stderr,
+					"Could not malloc for key entry\n");
+				exit(1);
 			}
 		}
+		current->mapping[(unsigned) entry[length - 1]] = current->count;
+		the_key = new_key();
+		the_key->type = KEYMAP_LEAF;	/* leaf key */
+
+		/* the associated symbol */
+		the_key->value.symbol = tc[i].symbol;
+		current->key[current->count++] = the_key;
 	}
 }
 
@@ -277,19 +273,20 @@ new_keymap(void)
 		perror("Inkey: Cannot allocate new keymap");
 		exit(2);
 	}
-	/* initialise the new map */
+
+	/* Initialise the new map */
 	new_map->count = 0;
 	for (i = 0; i < MAX_CHAR; i++) {
 		new_map->mapping[i] = -1;	/* no mapping for char */
 	}
 
-	  /* one does assume there will be at least one key mapped.... */
+	/* one does assume there will be at least one key mapped.... */
 	if ((new_map->key = malloc(sizeof(key_entry_t *))) == NULL) {
 		perror("Could not malloc first key ent");
 		exit(1);
 	}
 							
-	return new_map;
+	return (new_map);
 }
 
 /*
@@ -309,7 +306,7 @@ new_key(void)
 	new_one->type = 0;
 	new_one->value.next = NULL;
 
-	return new_one;
+	return (new_one);
 }
 
 /*
@@ -349,60 +346,58 @@ reread:
 			end = working;
 			state = INKEY_ASSEMBLING;	/* go to the assembling
 							 * state now */
-		} else
-			if (state == INKEY_BACKOUT) {
-				k = inbuf[working];
-				INC_POINTER(working);
-				if (working == end) {	/* see if we have run
-							 * out of keys in the
-							 * backlog */
+		} else if (state == INKEY_BACKOUT) {
+			k = inbuf[working];
+			INC_POINTER(working);
+			if (working == end) {	/* see if we have run
+						 * out of keys in the
+						 * backlog */
 
-					/* if we have then switch to
-					   assembling */
-					state = INKEY_ASSEMBLING;
-				}
-			} else if (state == INKEY_ASSEMBLING) {
-				/* assembling a key sequence */
-				if (delay)
-				{
-					if (__timeout(to ? DEFAULT_DELAY : delay) == ERR)
+				/* if we have then switch to
+				   assembling */
+				state = INKEY_ASSEMBLING;
+			}
+		} else if (state == INKEY_ASSEMBLING) {
+			/* assembling a key sequence */
+			if (delay) {
+				if (__timeout(to ? DEFAULT_DELAY : delay) == ERR)
 						return ERR;
-				} else {
-					if (to && (__timeout(DEFAULT_DELAY) == ERR))
-						return ERR;
-				}
-				if ((nchar = read(STDIN_FILENO, &c,
-						  sizeof(char))) < 0)
+			} else {
+				if (to && (__timeout(DEFAULT_DELAY) == ERR))
 					return ERR;
-				if ((to || delay) && (__notimeout() == ERR))
+			}
+			if ((nchar = read(STDIN_FILENO, &c,
+					  sizeof(char))) < 0)
+				return ERR;
+			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 				
-				k = (unsigned int) c;
+			k = (unsigned int) c;
 #ifdef DEBUG
-				__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
+			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
-				if (nchar == 0) {	/* inter-char timeout,
-							 * start backing out */
-					if (start == end)
-						goto reread; /* no chars in the
-							      * buffer, restart */
-					k = inbuf[start];
-					state = INKEY_TIMEOUT;
-				} else {
-					inbuf[working] = k;
-					INC_POINTER(working);
-					end = working;
-				}
+			if (nchar == 0) {	/* inter-char timeout,
+						 * start backing out */
+				if (start == end)
+					/* no chars in the buffer, restart */
+					goto reread;
+
+				k = inbuf[start];
+				state = INKEY_TIMEOUT;
 			} else {
-				fprintf(stderr,
-					"Inkey state screwed - exiting!!!");
-				exit(2);
+				inbuf[working] = k;
+				INC_POINTER(working);
+				end = working;
 			}
+		} else {
+			fprintf(stderr, "Inkey state screwed - exiting!!!");
+			exit(2);
+		}
 
 		/* Check key has no special meaning and we have not timed out */
 		if ((current->mapping[k] < 0) || (state == INKEY_TIMEOUT)) {
-			k = inbuf[start];	/* return the first key we
-						 * know about */
+			/* return the first key we know about */
+			k = inbuf[start];
 
 			INC_POINTER(start);
 			working = start;
@@ -420,20 +415,23 @@ reread:
 				start = working;	/* eat the key sequence
 							 * in inbuf */
 
-				if (start == end) {	/* check if inbuf empty
-							 * now */
-					state = INKEY_NORM; /* if it is go
-							       back to normal */
-				} else {	/* otherwise go to backout
-						 * state */
+				/* check if inbuf empty now */
+				if (start == end) {
+					/* if it is go back to normal */
+					state = INKEY_NORM;
+				} else {
+					/* otherwise go to backout state */
 					state = INKEY_BACKOUT;
 				}
 
 				/* return the symbol */
 				return current->key[current->mapping[k]]->value.symbol;
 
-			} else {/* step on to next part of the multi-key
-				 * sequence */
+			} else {
+				/*
+				 * Step on to next part of the multi-key
+				 * sequence.
+				 */
 				current = current->key[current->mapping[k]]->value.next;
 			}
 		}
@@ -500,9 +498,10 @@ wgetch(win)
 			}
 			break;
 		}
-		if ((nchar = read(STDIN_FILENO, &c, sizeof(char))) < 0)
+
+		if ((nchar = read(STDIN_FILENO, &c, sizeof(char))) < 0) {
 			inp = ERR;
-		else {
+		} else {
 			if (nchar == 0) {
 				__restore_termios();
 				return ERR;	/* we have timed out */
@@ -513,11 +512,13 @@ wgetch(win)
 #ifdef DEBUG
 	__CTRACE("wgetch got '%s'\n", unctrl(inp));
 #endif
-	if (win->delay > -1)
+	if (win->delay > -1) {
 		if (__delay() == ERR) {
 			__restore_termios();
 			return ERR;
 		}
+	}
+
 	__restore_termios();
 	if (__echoit) {
 		mvwaddch(curscr,
@@ -526,5 +527,6 @@ wgetch(win)
 	}
 	if (weset)
 		nocbreak();
+
 	return ((inp < 0) || (inp == ERR) ? ERR : inp);
 }
