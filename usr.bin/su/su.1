@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.14 1997/10/19 23:31:52 lukem Exp $
+.\"	$NetBSD: su.1,v 1.14.4.1 2000/01/08 18:35:58 he Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -112,12 +112,15 @@ are modified as above.
 is set to the target login.
 .Ev PATH
 is set to
-.Dq Pa /bin:/usr/bin .
+.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin .
 .Ev TERM
 is imported from your current environment.
 The invoked shell is the target login's, and
 .Nm
 will change directory to the target login's home directory.
+.It Fl
+Same as
+.Fl l
 .It Fl m
 Leave the environment unmodified.
 The invoked shell is your login shell, and no directory changes are made.
