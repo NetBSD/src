@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 1994/10/26 02:33:08 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 1995/03/09 07:47:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -511,18 +511,15 @@ out:
  * Process a system call.
  */
 syscall(code, frame)
-	u_int code;
+	register_t code;
 	struct frame frame;
 {
 	register caddr_t params;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, opc, numsys;
-	u_int argsize;
-	struct args {
-		int i[8];
-	} args;
-	int rval[2];
+	int error, opc, nsys;
+	size_t argsize;
+	register_t args[8], rval[2];
 	u_quad_t sticks;
 
 	cnt.v_syscall++;
@@ -532,11 +529,21 @@ syscall(code, frame)
 	sticks = p->p_sticks;
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
-	callp = sysent;
-	numsys = nsysent;
-	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
-	switch (code) {
 
+	switch (p->p_emul) {
+	case EMUL_NETBSD:
+		nsys = nsysent;
+		callp = sysent;
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		panic("invalid p_emul %d", p->p_emul);
+#endif
+	}
+
+	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
+
+	switch (code) {
 	case SYS_syscall:
 		/*
 		 * Code is first argument, followed by actual args.
@@ -549,44 +556,43 @@ syscall(code, frame)
 		 * trap.  Cannot allow it here so make sure we fail.
 		 */
 		if (code == SYS_sigreturn)
-			code = numsys;
+			code = nsys;
 		break;
-
 	case SYS___syscall:
 		/*
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
+		if (callp != sysent)
+			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
-
 	default:
-		/* nothing to do by default */
 		break;
 	}
-	if (code < numsys)
-		callp += code;
+	if (code < 0 || code >= nsys)
+		callp = &callp[0];		/* illegal */
 	else
-		callp += SYS_syscall;	/* => nosys */
+		callp = &callp[code];
 	argsize = callp->sy_argsize;
-	if (argsize && (error = copyin(params, (caddr_t)&args, argsize))) {
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize,
-			    args.i);
+	if (argsize)
+		error = copyin(params, (caddr_t)args, argsize);
+	else
+		error = 0;
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
 #endif
-		goto bad;
-	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
 #endif
+	if (error)
+		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
 	error = (*callp->sy_call)(p, &args, rval);
 	switch (error) {
-
 	case 0:
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
@@ -595,26 +601,28 @@ syscall(code, frame)
 		p = curproc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
-		frame.f_sr &= ~PSL_C;
+		frame.f_sr &= ~PSL_C;	/* carry bit */
 		break;
-
 	case ERESTART:
 		/*
-		 * Reconstruct pc, assuming trap #0 is 2 bytes.
+		 * We always enter through a `trap' instruction, which is 2
+		 * bytes, so adjust the pc by that amount.
 		 */
 		frame.f_pc = opc - 2;
 		break;
-
 	case EJUSTRETURN:
-		break;		/* nothing to do */
-
+		/* nothing to do */
+		break;
 	default:
 	bad:
 		frame.f_regs[D0] = error;
-		frame.f_sr |= PSL_C;
+		frame.f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
 
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval[0]);
+#endif
 	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
