@@ -1,5 +1,3 @@
-/*	$NetBSD: upap.c,v 1.1.1.3 1997/09/26 18:53:08 christos Exp $	*/
-
 /*
  * upap.c - User/Password Authentication Protocol.
  *
@@ -19,13 +17,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: upap.c,v 1.11 1997/04/30 05:59:56 paulus Exp ";
-#else
-__RCSID("$NetBSD: upap.c,v 1.1.1.3 1997/09/26 18:53:08 christos Exp $");
-#endif
+static char rcsid[] = "$Id: upap.c,v 1.1.1.4 1998/05/02 13:36:03 christos Exp $";
 #endif
 
 /*

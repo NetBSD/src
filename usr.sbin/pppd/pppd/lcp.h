@@ -1,5 +1,3 @@
-/*	$NetBSD: lcp.h,v 1.1.1.3 1997/09/26 18:52:13 christos Exp $	*/
-
 /*
  * lcp.h - Link Control Protocol definitions.
  *
@@ -18,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: lcp.h,v 1.12 1996/10/08 04:35:02 paulus Exp 
+ * $Id: lcp.h,v 1.1.1.4 1998/05/02 13:36:05 christos Exp $
  */
 
 /*

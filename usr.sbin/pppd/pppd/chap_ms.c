@@ -1,5 +1,3 @@
-/*	$NetBSD: chap_ms.c,v 1.1.1.3 1997/09/26 18:51:42 christos Exp $	*/
-
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
  *
@@ -33,21 +31,22 @@
  *   You should also use DOMAIN\\USERNAME as described in README.MSCHAP80
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.4 1997/05/22 06:46:19 paulus Exp ";
-#else
-__RCSID("$NetBSD: chap_ms.c,v 1.1.1.3 1997/09/26 18:51:42 christos Exp $");
-#endif
+static char rcsid[] = "$Id: chap_ms.c,v 1.1.1.4 1998/05/02 13:36:07 christos Exp $";
 #endif
 
 #ifdef CHAPMS
 
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <unistd.h>
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 #include "pppd.h"
 #include "chap.h"
@@ -67,8 +66,14 @@ typedef struct {
    in case this struct gets padded. */
 
 
+static void	ChallengeResponse __P((u_char *, u_char *, u_char *));
 static void	DesEncrypt __P((u_char *, u_char *, u_char *));
 static void	MakeKey __P((u_char *, u_char *));
+static u_char	Get7Bits __P((u_char *, int));
+static void	ChapMS_NT __P((char *, int, char *, int, MS_ChapResponse *));
+#ifdef MSLANMAN
+static void	ChapMS_LANMan __P((char *, int, char *, int, MS_ChapResponse *));
+#endif
 
 #ifdef USE_CRYPT
 static void	Expand __P((u_char *, u_char *));
@@ -84,7 +89,7 @@ ChallengeResponse(challenge, pwHash, response)
     char    ZPasswordHash[21];
 
     BZERO(ZPasswordHash, sizeof(ZPasswordHash));
-    BCOPY(pwHash, ZPasswordHash, 16);
+    BCOPY(pwHash, ZPasswordHash, MD4_SIGNATURE_SIZE);
 
 #if 0
     log_packet(ZPasswordHash, sizeof(ZPasswordHash), "ChallengeResponse - ZPasswordHash", LOG_DEBUG);
@@ -250,9 +255,9 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
     MS_ChapResponse    *response;
 {
     int			i;
-    MDstruct		md4Context;
+    MD4_CTX		md4Context;
+    u_char		hash[MD4_SIGNATURE_SIZE];
     u_char		unicodePassword[MAX_NT_PASSWORD * 2];
-    static int		low_byte_first = -1;
 
     /* Initialize the Unicode version of the secret (== password). */
     /* This implicitly supports 8-bit ISO8859/1 characters. */
@@ -260,23 +265,19 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
     for (i = 0; i < secret_len; i++)
 	unicodePassword[i * 2] = (u_char)secret[i];
 
-    MDbegin(&md4Context);
-    MDupdate(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
+    MD4Init(&md4Context);
+    MD4Update(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
 
-    if (low_byte_first == -1)
-	low_byte_first = (htons((unsigned short int)1) != 1);
-    if (low_byte_first == 0)
-	MDreverse(&md4Context);  /*  sfb 961105 */
+    MD4Final(hash, &md4Context); 	/* Tell MD4 we're done */
 
-    MDupdate(&md4Context, NULL, 0);	/* Tell MD4 we're done */
-
-    ChallengeResponse(rchallenge, (char *)md4Context.buffer, response->NTResp);
+    ChallengeResponse(rchallenge, hash, response->NTResp);
 }
 
 #ifdef MSLANMAN
 static u_char *StdText = (u_char *)"KGS!@#$%"; /* key from rasapi32.dll */
 
-static ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
+static void
+ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
     char *rchallenge;
     int rchallenge_len;
     char *secret;
@@ -285,7 +286,7 @@ static ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
 {
     int			i;
     u_char		UcasePassword[MAX_NT_PASSWORD]; /* max is actually 14 */
-    u_char		PasswordHash[16];
+    u_char		PasswordHash[MD4_SIGNATURE_SIZE];
 
     /* LANMan password is case insensitive */
     BZERO(UcasePassword, sizeof(UcasePassword));

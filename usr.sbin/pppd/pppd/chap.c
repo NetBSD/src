@@ -1,5 +1,3 @@
-/*	$NetBSD: chap.c,v 1.1.1.3 1997/09/26 18:51:35 christos Exp $	*/
-
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
  *
@@ -35,13 +33,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: chap.c,v 1.14 1997/04/30 05:51:08 paulus Exp ";
-#else
-__RCSID("$NetBSD: chap.c,v 1.1.1.3 1997/09/26 18:51:35 christos Exp $");
-#endif
+static char rcsid[] = "$Id: chap.c,v 1.1.1.4 1998/05/02 13:36:07 christos Exp $";
 #endif
 
 /*
@@ -593,9 +586,12 @@ ChapReceiveResponse(cstate, inp, id, len)
 	}
 	if (cstate->chal_interval != 0)
 	    TIMEOUT(ChapRechallenge, cstate, cstate->chal_interval);
+	syslog(LOG_NOTICE, "CHAP peer authentication succeeded for %s",
+	       rhostname);
 
     } else {
-	syslog(LOG_ERR, "CHAP peer authentication failed");
+	syslog(LOG_ERR, "CHAP peer authentication failed for remote host %s",
+	       rhostname);
 	cstate->serverstate = CHAPSS_BADAUTH;
 	auth_peer_fail(cstate->unit, PPP_CHAP);
     }

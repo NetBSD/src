@@ -1,5 +1,3 @@
-/*	$NetBSD: upap.h,v 1.1.1.3 1997/09/26 18:53:11 christos Exp $	*/
-
 /*
  * upap.h - User/Password Authentication Protocol definitions.
  *
@@ -18,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: upap.h,v 1.6 1996/07/01 01:21:45 paulus Exp 
+ * $Id: upap.h,v 1.1.1.4 1998/05/02 13:36:09 christos Exp $
  */
 
 /*

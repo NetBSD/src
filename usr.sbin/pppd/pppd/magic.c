@@ -1,5 +1,3 @@
-/*	$NetBSD: magic.c,v 1.1.1.3 1997/09/26 18:52:16 christos Exp $	*/
-
 /*
  * magic.c - PPP Magic Number routines.
  *
@@ -19,13 +17,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: magic.c,v 1.6 1996/04/04 03:58:41 paulus Exp ";
-#else
-__RCSID("$NetBSD: magic.c,v 1.1.1.3 1997/09/26 18:52:16 christos Exp $");
-#endif
+static char rcsid[] = "$Id: magic.c,v 1.1.1.4 1998/05/02 13:36:05 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,7 +46,7 @@ magic_init()
     struct timeval t;
 
     gettimeofday(&t, NULL);
-    seed = gethostid() ^ t.tv_sec ^ t.tv_usec ^ getpid();
+    seed = get_host_seed() ^ t.tv_sec ^ t.tv_usec ^ getpid();
     srand48(seed);
 }
 

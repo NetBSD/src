@@ -1,5 +1,3 @@
-/*	$NetBSD: lcp.c,v 1.1.1.3 1997/09/26 18:52:10 christos Exp $	*/
-
 /*
  * lcp.c - PPP Link Control Protocol.
  *
@@ -19,13 +17,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
-#else
-__RCSID("$NetBSD: lcp.c,v 1.1.1.3 1997/09/26 18:52:10 christos Exp $");
-#endif
+static char rcsid[] = "$Id: lcp.c,v 1.1.1.4 1998/05/02 13:36:05 christos Exp $";
 #endif
 
 /*
@@ -273,7 +266,7 @@ lcp_lowerup(unit)
      */
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, PPP_MRU, 0x00000000,
+    ppp_recv_config(unit, PPP_MRU, 0xffffffff,
 		    wo->neg_pcompression, wo->neg_accompression);
     peer_mru[unit] = PPP_MRU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
@@ -792,7 +785,7 @@ lcp_nakci(f, p, len)
      */
     if (go->neg_mru && go->mru != DEFMRU) {
 	NAKCISHORT(CI_MRU, neg_mru,
-		   if (cishort <= wo->mru || cishort < DEFMRU)
+		   if (cishort <= wo->mru || cishort <= DEFMRU)
 		       try.mru = cishort;
 		   );
     }
@@ -1491,13 +1484,8 @@ lcp_up(f)
     ppp_send_config(f->unit, MIN(ao->mru, (ho->neg_mru? ho->mru: PPP_MRU)),
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
-    /*
-     * If the asyncmap hasn't been negotiated, we really should
-     * set the receive asyncmap to ffffffff, but we set it to 0
-     * for backwards contemptibility.
-     */
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU),
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
@@ -1526,7 +1514,7 @@ lcp_down(f)
 
     ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(f->unit, PPP_MRU,
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
     peer_mru[f->unit] = PPP_MRU;
 }
@@ -1814,7 +1802,7 @@ LcpSendEchoRequest (f)
      * Detect the failure of the peer at this point.
      */
     if (lcp_echo_fails != 0) {
-        if (lcp_echos_pending++ >= lcp_echo_fails) {
+        if (lcp_echos_pending >= lcp_echo_fails) {
             LcpLinkFailure(f);
 	    lcp_echos_pending = 0;
 	}
@@ -1828,6 +1816,7 @@ LcpSendEchoRequest (f)
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
         fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+	++lcp_echos_pending;
     }
 }
 

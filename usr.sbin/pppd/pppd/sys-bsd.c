@@ -1,5 +1,3 @@
-/*	$NetBSD: sys-bsd.c,v 1.1.1.3 1997/09/26 18:53:04 christos Exp $	*/
-
 /*
  * sys-bsd.c - System-dependent procedures for setting up
  * PPP interfaces on bsd-4.4-ish systems (including 386BSD, NetBSD, etc.)
@@ -22,13 +20,9 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
-#else
-__RCSID("$NetBSD: sys-bsd.c,v 1.1.1.3 1997/09/26 18:53:04 christos Exp $");
-#endif
+static char rcsid[] = "$Id: sys-bsd.c,v 1.1.1.4 1998/05/02 13:36:03 christos Exp $";
+/*	$NetBSD: sys-bsd.c,v 1.1.1.4 1998/05/02 13:36:03 christos Exp $	*/
 #endif
 
 /*
@@ -65,7 +59,16 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.1.1.3 1997/09/26 18:53:04 christos Exp $");
 #include <netinet/in.h>
 
 #if RTM_VERSION >= 3
+#include <sys/param.h>
+#if defined(NetBSD) && (NetBSD >= 199703)
+#include <netinet/if_inarp.h>
+#else	/* NetBSD 1.2D or later */
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
+#endif
 #endif
 
 #include "pppd.h"
@@ -953,6 +956,7 @@ sifaddr(u, o, h, m)
     u_int32_t o, h, m;
 {
     struct ifaliasreq ifra;
+    struct ifreq ifr;
 
     strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name));
     SET_SA_FAMILY(ifra.ifra_addr, AF_INET);
@@ -964,6 +968,12 @@ sifaddr(u, o, h, m)
 	((struct sockaddr_in *) &ifra.ifra_mask)->sin_addr.s_addr = m;
     } else
 	BZERO(&ifra.ifra_mask, sizeof(ifra.ifra_mask));
+    BZERO(&ifr, sizeof(ifr));
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifr) < 0) {
+	if (errno != EADDRNOTAVAIL)
+	    syslog(LOG_WARNING, "Couldn't remove interface address: %m");
+    }
     if (ioctl(sockfd, SIOCAIFADDR, (caddr_t) &ifra) < 0) {
 	if (errno != EEXIST) {
 	    syslog(LOG_ERR, "Couldn't set interface address: %m");
@@ -1382,6 +1392,15 @@ GetMask(addr)
     }
 
     return mask;
+}
+
+/*
+ * Use the hostid as part of the random number seed.
+ */
+int
+get_host_seed()
+{
+    return gethostid();
 }
 
 /*

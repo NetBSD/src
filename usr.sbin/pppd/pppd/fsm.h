@@ -1,5 +1,3 @@
-/*	$NetBSD: fsm.h,v 1.1.1.3 1997/09/26 18:51:54 christos Exp $	*/
-
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
  *
@@ -18,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: fsm.h,v 1.7 1997/04/30 05:52:37 paulus Exp 
+ * $Id: fsm.h,v 1.1.1.4 1998/05/02 13:36:06 christos Exp $
  */
 
 /*
