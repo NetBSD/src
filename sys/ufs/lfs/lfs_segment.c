@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23 1999/03/30 16:11:43 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.24 1999/04/12 00:04:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -634,6 +634,7 @@ lfs_writeinode(fs, sp, ip)
 	int error, i, ndx;
 	int redo_ifile = 0;
 	struct timespec ts;
+	int gotblk=0;
 	
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE | IN_CLEANING)))
 		return(0);
@@ -649,8 +650,9 @@ lfs_writeinode(fs, sp, ip)
 		daddr = fs->lfs_offset;
 		fs->lfs_offset += fsbtodb(fs, 1);
 		sp->ibp = *sp->cbpp++ =
-			lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, daddr,
-				   fs->lfs_bsize);
+			getblk(VTOI(fs->lfs_ivnode)->i_devvp, daddr, fs->lfs_bsize, 0, 0);
+		gotblk++;
+
 		/* Zero out inode numbers */
 		for (i = 0; i < INOPB(fs); ++i)
 			((struct dinode *)sp->ibp->b_data)[i].di_inumber = 0;
@@ -679,6 +681,10 @@ lfs_writeinode(fs, sp, ip)
 	bp = sp->ibp;
 	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] =
 		ip->i_din.ffs_din;
+	if(gotblk) {
+		bp->b_flags |= B_LOCKED;
+		brelse(bp);
+	}
 	
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *)(sp->segsum))->ss_ninos;
