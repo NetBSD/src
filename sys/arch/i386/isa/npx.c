@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.69 1999/03/24 05:51:02 mrg Exp $	*/
+/*	$NetBSD: npx.c,v 1.70 1999/10/06 20:03:51 fvdl Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -137,6 +137,8 @@ static	enum npx_type		npx_type;
 static	int			npx_nointr;
 volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
+
+extern int			i386_fpu_present;
 
 static inline int
 npxprobe1(ia)
@@ -304,6 +306,7 @@ npxattach(parent, self, aux)
 	if (npx586bug1(4195835, 3145727) != 0)
 		printf("WARNING: Pentium FDIV bug detected!\n");
 	lcr0(rcr0() | (CR0_TS));
+	i386_fpu_present = 1;
 }
 
 /*
