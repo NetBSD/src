@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.8 2002/05/15 16:57:41 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9 2002/05/15 17:09:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -54,6 +54,8 @@ struct alpha_pci_chipset {
 			    struct device *, struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -66,9 +68,6 @@ struct alpha_pci_chipset {
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
-	/* alpha-specific */
-	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
-			    int *, int *);
 	void		*(*pc_pciide_compat_intr_establish)(void *,
 			    struct device *, struct pci_attach_args *, int,
 			    int (*)(void *), void *);
