@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.73 1997/10/11 11:29:15 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.74 1997/10/11 12:36:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -468,7 +468,7 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 3:
-		strcpy(fp->name, AudioElinear);
+		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = emul;
@@ -479,7 +479,7 @@ sbdsp_query_encoding(addr, fp)
 
         switch(fp->index) {
         case 4:
-		strcpy(fp->name, AudioElinear_le);
+		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
@@ -491,7 +491,7 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = emul;
 		return 0;
 	case 6:
-		strcpy(fp->name, AudioElinear_be);
+		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.46 1997/10/11 11:29:01 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.47 1997/10/11 12:36:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -4313,13 +4313,13 @@ gus_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioElinear);
+		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioElinear_le);
+		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
@@ -4337,7 +4337,7 @@ gus_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioElinear_be);
+		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
