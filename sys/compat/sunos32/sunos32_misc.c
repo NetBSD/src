@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.6 2001/02/06 13:13:44 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.7 2001/02/07 01:34:21 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -231,10 +231,11 @@ sunos32_sys_creat(p, v, retval)
 	struct sys_open_args ua;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SUNOS32TO64_UAP(mode);
+
+	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
 }
