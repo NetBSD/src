@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.1.1.3 1997/09/21 12:23:04 mrg Exp $	*/
+/*	$NetBSD: option.c,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -42,9 +42,10 @@
 static struct option *pendopt;
 public int plusoption = FALSE;
 
-static char *propt();
-static char *optstring();
-static int flip_triple();
+static int flip_triple __P((int, int));
+static char *propt __P((int));
+static void nostring __P((int));
+static char *optstring __P((char *, int));
 
 extern int screen_trashed;
 extern char *every_first_cmd;
