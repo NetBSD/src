@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.38 2003/01/15 22:20:06 bouyer Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.39 2003/10/22 00:12:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.38 2003/01/15 22:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.39 2003/10/22 00:12:36 christos Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -138,7 +138,8 @@ ne2000_attach(nsc, myea)
 	useword = NE2000_USE_WORD(nsc);
 
 	dsc->cr_proto = ED_CR_RD2;
-	if (nsc->sc_type == NE2000_TYPE_AX88190) {
+	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		dsc->rcr_proto = ED_RCR_INTT;
 		dsc->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 	} else
@@ -173,6 +174,7 @@ ne2000_attach(nsc, myea)
 		break;
 	case NE2000_TYPE_NE2000:
 	case NE2000_TYPE_AX88190:		/* XXX really? */
+	case NE2000_TYPE_AX88790:
 		memsize = 8192 * 2;
 		break;
 	case NE2000_TYPE_DL10019:
@@ -260,7 +262,8 @@ ne2000_attach(nsc, myea)
 
 	if (myea == NULL) {
 		/* Read the station address. */
-		if (nsc->sc_type == NE2000_TYPE_AX88190) {
+		if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+		    nsc->sc_type == NE2000_TYPE_AX88790) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,
@@ -888,6 +891,7 @@ ne2000_ipkdb_attach(kip)
 		    "dl10022" : "dl10019";
 		break;
 	case NE2000_TYPE_AX88190:
+	case NE2000_TYPE_AX88790:
 		dp->rcr_proto = ED_RCR_INTT;
 		dp->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 		dp->mem_start = dp->mem_size = 8192 * 2;
@@ -905,7 +909,8 @@ ne2000_ipkdb_attach(kip)
 		char romdata[16];
 
 		/* Read the station address. */
-		if (np->sc_type == NE2000_TYPE_AX88190) {
+		if (np->sc_type == NE2000_TYPE_AX88190 ||
+		    np->sc_type == NE2000_TYPE_AX88790) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,

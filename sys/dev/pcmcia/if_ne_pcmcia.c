@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.103 2003/09/02 12:43:02 ichiro Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.104 2003/10/22 00:12:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.103 2003/09/02 12:43:02 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.104 2003/10/22 00:12:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ static const struct ne2000dev {
     int flags;
 #define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 #define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
+#define	NE2000DVF_AX88790	0x0004		/* chip is ASIX AX88790 */
 } ne2000devs[] = {
     { PCMCIA_STR_EDIMAX_EP4000A,
       PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
@@ -455,6 +456,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_BUFFALO_LPC3_CLT,
       0, -1, { 0x00, 0x07, 0x40 } },
 
+    { PCMCIA_STR_BUFFALO_LPC4_CLX,
+      PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC4_CLX,
+      PCMCIA_CIS_BUFFALO_LPC4_CLX,
+      0, -1, { 0x00, 0x40, 0xfa }, NE2000DVF_AX88190 | NE2000DVF_AX88790 },
+
     { PCMCIA_STR_BILLIONTON_LNT10TN,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_BILLIONTON_LNT10TN,
@@ -794,8 +800,13 @@ again:
 		dsc->sc_media_init = ax88190_media_init;
 		dsc->sc_media_fini = ax88190_media_fini;
 
-		nsc->sc_type = NE2000_TYPE_AX88190;
-		typestr = " (AX88190)";
+		if ((ne_dev->flags & NE2000DVF_AX88790) != 0) {
+			nsc->sc_type = NE2000_TYPE_AX88790;
+			typestr = " (AX88790)";
+		} else {
+			nsc->sc_type = NE2000_TYPE_AX88190;
+			typestr = " (AX88190)";
+		}
 	}
 
 	if (enaddr != NULL) {
@@ -888,6 +899,7 @@ ne_pcmcia_enable(dsc)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	struct pcmcia_mem_handle pcmh;
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
@@ -901,12 +913,39 @@ ne_pcmcia_enable(dsc)
 	if (pcmcia_function_enable(psc->sc_pf))
 		goto fail_2;
 
-	if (nsc->sc_type == NE2000_TYPE_AX88190)
+	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		if (ne_pcmcia_ax88190_set_iobase(psc))
 			goto fail_3;
+		if (nsc->sc_type == NE2000_TYPE_AX88790) {
+			bus_size_t offset;
+			int mwindow;
+
+			if (pcmcia_mem_alloc(psc->sc_pf,
+			    AX88790_CSR_SIZE, &pcmh)) {
+				printf("%s: can't alloc mem for CSR\n",
+				    dsc->sc_dev.dv_xname);
+				goto fail_3;
+			}
+
+			if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
+			    AX88790_CSR, AX88790_CSR_SIZE,
+			    &pcmh, &offset, &mwindow)) {
+				printf("%s: can't map mem for CSR\n",
+				    dsc->sc_dev.dv_xname);
+				goto fail_4;
+			}
+
+			bus_space_write_1(pcmh.memt, pcmh.memh, offset, 0x4);
+			pcmcia_mem_unmap(psc->sc_pf, mwindow);
+			pcmcia_mem_free(psc->sc_pf, &pcmh);
+		}
+	}
 
 	return (0);
 
+ fail_4:
+	pcmcia_mem_free(psc->sc_pf, &pcmh);
  fail_3:
 	pcmcia_function_disable(psc->sc_pf);
  fail_2:

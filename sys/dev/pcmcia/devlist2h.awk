@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.4 2001/11/08 09:02:17 haya Exp $
+#	$NetBSD: devlist2h.awk,v 1.5 2003/10/22 00:12:36 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,6 +94,7 @@ BEGIN {
 	nproducts = nvendors = 0
 	dfile="pcmciadevs_data.h"
 	hfile="pcmciadevs.h"
+	line=""
 }
 NR == 1 {
 	VERSION = $0
