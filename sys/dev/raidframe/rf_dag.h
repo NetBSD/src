@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.15 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.16 2004/04/09 23:10:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,6 +43,7 @@
 #include "rf_layout.h"
 #include "rf_dagflags.h"
 #include "rf_acctrace.h"
+#include "rf_desc.h"
 
 #define RF_THREAD_CONTEXT   0	/* we were invoked from thread context */
 #define RF_INTR_CONTEXT     1	/* we were invoked from interrupt context */
@@ -174,10 +175,9 @@ struct RF_DagHeader_s {
 	RF_DagNode_t *nodes;    /* linked list of nodes used in this DAG */
 	RF_PhysDiskAddr_t *pda_cleanup_list; /* for PDAs that can't get 
 						cleaned up any other way... */
-	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned up at
-				     the end of this IO */
 	RF_Raid_t *raidPtr;	/* the descriptor for the RAID device this DAG
 				 * is for */
+	RF_RaidAccessDesc_t *desc;	/* ptr to descriptor for this access */
 	void   *bp;		/* the bp for this I/O passed down from the
 				 * file system. ignored outside kernel */
 };
