@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.20 1997/10/18 21:18:32 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.21 1997/11/08 02:35:23 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -99,8 +99,15 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 		size = tcp_mssdflt;
 
  out:
-	*txsegsizep = min(tp->t_maxseg, size);
+	*txsegsizep = min(tp->t_peermss, size);
 	*rxsegsizep = min(tp->t_ourmss, size);
+
+	if (*txsegsizep != tp->t_segsz) {
+		tp->snd_cwnd = (tp->snd_cwnd / tp->t_segsz) * *txsegsizep;
+		tp->snd_ssthresh = (tp->snd_ssthresh / tp->t_segsz) * 
+		    *txsegsizep;
+		tp->t_segsz = *txsegsizep;
+	}
 }
 
 /*
@@ -134,7 +141,7 @@ tcp_output(tp)
 		 * expected to clock out any data we send --
 		 * slow start to get ack "clock" running again.
 		 */
-		tp->snd_cwnd = tp->t_maxseg;
+		tp->snd_cwnd = txsegsize;
 again:
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;
