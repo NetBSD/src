@@ -1,7 +1,7 @@
-/*	$NetBSD: dmaaureg.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: dmaaureg.h,v 1.2 2001/01/19 11:42:21 sato Exp $	*/
 
 /*-
- * Copyright (c) 1999 SATO Kazumi. All rights reserved.
+ * Copyright (c) 1999,2000,2001 SATO Kazumi. All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,10 +55,10 @@
 
 
 #define	FIRBAL_REG_W		0x010		/* FIU DMA Base Low */
-#define	FIRBAL_REG_W		0x012		/* FIU DMA Base High */
+#define	FIRBAH_REG_W		0x012		/* FIU DMA Base High */
 
 
 #define	FIRAL_REG_W		0x014		/* FIU DMA Address Low */
-#define	FIRAL_REG_W		0x016		/* FIU DMA Address High */
+#define	FIRAH_REG_W		0x016		/* FIU DMA Address High */
 
 /* END dmaaureg.h */
