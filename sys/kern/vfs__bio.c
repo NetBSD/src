@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: vfs__bio.c,v 1.5 1993/07/04 04:01:38 cgd Exp $
+ *	$Id: vfs__bio.c,v 1.6 1993/07/17 16:23:05 mycroft Exp $
  */
 
 #include "param.h"
@@ -58,7 +58,7 @@
 #include "vm/vm.h"
 #include "resourcevar.h"
 
-struct buf *getnewbuf __P((int));
+static	struct buf *getnewbuf __P((int));
 extern	vm_map_t buffer_map;
 
 /*
