@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.44 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.hp300,v 1.45 2001/04/15 17:14:27 kleink Exp $
 ./usr/include/hp300		comp-c-include
 ./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/hp300/ieee.h		comp-c-include
 ./usr/include/hp300/ieeefp.h		comp-c-include
 ./usr/include/hp300/int_const.h		comp-c-include
+./usr/include/hp300/int_fmtio.h		comp-c-include
 ./usr/include/hp300/int_limits.h		comp-c-include
 ./usr/include/hp300/int_mwgwtypes.h		comp-c-include
 ./usr/include/hp300/int_types.h		comp-c-include
