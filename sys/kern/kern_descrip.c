@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.89 2002/04/27 21:31:41 enami Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.90 2002/04/27 21:36:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.89 2002/04/27 21:31:41 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.90 2002/04/27 21:36:50 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,27 +613,25 @@ fdalloc(struct proc *p, int want, int *result)
 	 * expanding the ofile array.
 	 */
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	for (;;) {
-		last = min(fdp->fd_nfiles, lim);
-		if ((i = want) < fdp->fd_freefile)
-			i = fdp->fd_freefile;
-		for (; i < last; i++) {
-			if (fdp->fd_ofiles[i] == NULL) {
-				fd_used(fdp, i);
-				if (want <= fdp->fd_freefile)
-					fdp->fd_freefile = i;
-				*result = i;
-				return (0);
-			}
+	last = min(fdp->fd_nfiles, lim);
+	if ((i = want) < fdp->fd_freefile)
+		i = fdp->fd_freefile;
+	for (; i < last; i++) {
+		if (fdp->fd_ofiles[i] == NULL) {
+			fd_used(fdp, i);
+			if (want <= fdp->fd_freefile)
+				fdp->fd_freefile = i;
+			*result = i;
+			return (0);
 		}
-
-		/* No space in current array.  Expand? */
-		if (fdp->fd_nfiles >= lim)
-			return (EMFILE);
-
-		/* Let the caller do it. */
-		return (ENOSPC);
 	}
+
+	/* No space in current array.  Expand? */
+	if (fdp->fd_nfiles >= lim)
+		return (EMFILE);
+
+	/* Let the caller do it. */
+	return (ENOSPC);
 }
 
 void
