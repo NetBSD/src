@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_denode.c,v 1.1 1993/04/09 19:38:04 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_denode.c,v 1.2 1993/04/26 06:52:39 cgd Exp $
  *
  */
 
@@ -181,7 +181,7 @@ loop:
 		 */
 		ldep->de_Attributes = ATTR_DIRECTORY;
 		ldep->de_StartCluster = PCFSROOT;
-		ldep->de_FileSize = pmp->pm_rootdirsize;
+		ldep->de_FileSize = pmp->pm_rootdirsize * 512; /* Jim Jegers */
 		/* fill in time and date so that dos2unixtime() doesn't
 		 * spit up when called from pcfs_getattr() with root denode */
 		ldep->de_Time = 0x0000;		/* 00:00:00	*/
