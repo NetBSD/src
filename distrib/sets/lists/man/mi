@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 1999/04/29 20:15:30 simonb Exp $
+# $NetBSD: mi,v 1.141 1999/05/03 19:04:10 cgd Exp $
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -610,6 +610,7 @@
 ./usr/share/man/cat8/chrtbl.0
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_freebsd.0
+./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sco.0
 ./usr/share/man/cat8/compat_solaris.0
@@ -1722,6 +1723,7 @@
 ./usr/share/man/man8/chrtbl.8
 ./usr/share/man/man8/clri.8
 ./usr/share/man/man8/compat_freebsd.8
+./usr/share/man/man8/compat_ibcs2.8
 ./usr/share/man/man8/compat_linux.8
 ./usr/share/man/man8/compat_sco.8
 ./usr/share/man/man8/compat_solaris.8
