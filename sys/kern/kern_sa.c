@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.32 2002/09/06 17:54:19 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.33 2002/09/26 19:45:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <uvm/uvm_extern.h>
 
 static int sa_newcachelwp(struct lwp *);
+
+void sa_upcall_getstate(struct sadata_upcall *, struct lwp *, struct lwp *);
 
 #define SA_DEBUG
 
@@ -364,7 +366,9 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	l->l_flag |= L_SA;
 
 	if (sa->sa_nstacks == 0) {
-		sau->sau_arg = arg; /* assign to assure that it gets freed */
+		/* assign to assure that it gets freed */
+		sau->sau_type = type & ~SA_UPCALL_DEFER;
+		sau->sau_arg = arg;
 		sadata_upcall_free(sau);
 		return (ENOMEM);
 	}
@@ -382,40 +386,59 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	KDASSERT((event == NULL) || (event != interrupted));
 
-	sau->sau_type = type;
+	sau->sau_flags = 0;
+	sau->sau_type = type & ~SA_UPCALL_DEFER;
 	sau->sau_argsize = argsize;
 	sau->sau_arg = arg;
-	sau->sau_event.sa_context = NULL;
-	sau->sau_interrupted.sa_context = NULL;
 	sau->sau_stack = *st;
 
-	if (event) {
-		getucontext(event, &sau->sau_e_ctx);
-		sau->sau_event.sa_context = (ucontext_t *)
-		    ((_UC_MACHINE_SP(&sau->sau_e_ctx) - sizeof(ucontext_t))
-#ifdef _UC_UCONTEXT_ALIGN
-			& _UC_UCONTEXT_ALIGN
-#endif
-			    );
-		sau->sau_event.sa_id = event->l_lid;
-		sau->sau_event.sa_cpu = 0; /* XXX extract from l_cpu */
-	}
-	if (interrupted) {
-		getucontext(interrupted, &sau->sau_i_ctx);
-		sau->sau_interrupted.sa_context = (ucontext_t *)
-		    ((_UC_MACHINE_SP(&sau->sau_i_ctx) - sizeof(ucontext_t))
-#ifdef _UC_UCONTEXT_ALIGN
-			& _UC_UCONTEXT_ALIGN
-#endif
-			    );
-		sau->sau_interrupted.sa_id = interrupted->l_lid;
-		sau->sau_interrupted.sa_cpu = 0; /* XXX extract from l_cpu */
-	}
+	if (type & SA_UPCALL_DEFER) {
+		sau->sau_state.deferred.e_lwp = event;
+		sau->sau_state.deferred.i_lwp = interrupted;
+		sau->sau_flags = SAU_FLAG_DEFERRED;
+	} else
+		sa_upcall_getstate(sau, event, interrupted);
 
 	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 	l->l_flag |= L_SA_UPCALL;
 	
 	return (0);
+}
+
+
+void
+sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
+    struct lwp *interrupted)
+{
+
+	if (event) {
+		getucontext(event, &sau->sau_state.captured.e_ctx);
+		sau->sau_state.captured.e_sa.sa_context = (ucontext_t *)
+		    ((_UC_MACHINE_SP(&sau->sau_state.captured.e_ctx) -
+			sizeof(ucontext_t))
+#ifdef _UC_UCONTEXT_ALIGN
+			& _UC_UCONTEXT_ALIGN
+#endif
+			    );
+		sau->sau_state.captured.e_sa.sa_id = event->l_lid;
+		sau->sau_state.captured.e_sa.sa_cpu = 0; /* XXX extract from l_cpu */
+	} else
+		sau->sau_state.captured.e_sa.sa_context = NULL;
+
+	if (interrupted) {
+		getucontext(interrupted, &sau->sau_state.captured.i_ctx);
+		sau->sau_state.captured.i_sa.sa_context = (ucontext_t *)
+		    ((_UC_MACHINE_SP(&sau->sau_state.captured.i_ctx) -
+			sizeof(ucontext_t))
+#ifdef _UC_UCONTEXT_ALIGN
+			& _UC_UCONTEXT_ALIGN
+#endif
+			    );
+		sau->sau_state.captured.i_sa.sa_id = interrupted->l_lid;
+		sau->sau_state.captured.i_sa.sa_cpu = 0; /* XXX extract from l_cpu */
+	} else
+		sau->sau_state.captured.i_sa.sa_context = NULL;
+
 }
 
 
@@ -799,6 +822,12 @@ sa_upcall_userret(struct lwp *l)
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls))
 		l->l_flag &= ~L_SA_UPCALL;
 
+	if (sau->sau_flags & SAU_FLAG_DEFERRED) {
+		sa_upcall_getstate(sau,
+		    sau->sau_state.deferred.e_lwp,
+		    sau->sau_state.deferred.i_lwp);
+	}
+
 	stack = (void *) 
 	    (((uintptr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size) 
 		& ~ALIGNBYTES);
@@ -809,35 +838,37 @@ sa_upcall_userret(struct lwp *l)
 	nsas = 1;
 	nevents = 0;
 	nint = 0;
-	if (sau->sau_event.sa_context != NULL) {
-		if (copyout(&sau->sau_e_ctx, sau->sau_event.sa_context, 
+	if (sau->sau_state.captured.e_sa.sa_context != NULL) {
+		if (copyout(&sau->sau_state.captured.e_ctx,
+		    sau->sau_state.captured.e_sa.sa_context, 
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
 		printf("sa_upcall_userret(%d.%d): couldn't copyout"
 		    " context of event LWP %d\n",
-		    p->p_pid, l->l_lid, sau->sau_event.sa_id);
+		    p->p_pid, l->l_lid, sau->sau_state.captured.e_sa.sa_id);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 		}
-		sas[nsas] = &sau->sau_event;
+		sas[nsas] = &sau->sau_state.captured.e_sa;
 		nsas++;
 		nevents = 1;
 	}
-	if (sau->sau_interrupted.sa_context != NULL) {
-		KDASSERT(sau->sau_interrupted.sa_context !=
-		    sau->sau_event.sa_context);
-		if (copyout(&sau->sau_i_ctx, sau->sau_interrupted.sa_context, 
+	if (sau->sau_state.captured.i_sa.sa_context != NULL) {
+		KDASSERT(sau->sau_state.captured.i_sa.sa_context !=
+		    sau->sau_state.captured.e_sa.sa_context);
+		if (copyout(&sau->sau_state.captured.i_ctx,
+		    sau->sau_state.captured.i_sa.sa_context, 
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
 		printf("sa_upcall_userret(%d.%d): couldn't copyout"
 		    " context of interrupted LWP %d\n",
-		    p->p_pid, l->l_lid, sau->sau_interrupted.sa_id);
+		    p->p_pid, l->l_lid, sau->sau_state.captured.i_sa.sa_id);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 		}
-		sas[nsas] = &sau->sau_interrupted;
+		sas[nsas] = &sau->sau_state.captured.i_sa;
 		nsas++;
 		nint = 1;
 	}
