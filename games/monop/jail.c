@@ -1,4 +1,4 @@
-/*	$NetBSD: jail.c,v 1.4 1997/10/12 17:45:14 christos Exp $	*/
+/*	$NetBSD: jail.c,v 1.5 1999/08/21 10:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: jail.c,v 1.4 1997/10/12 17:45:14 christos Exp $");
+__RCSID("$NetBSD: jail.c,v 1.5 1999/08/21 10:40:03 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: jail.c,v 1.4 1997/10/12 17:45:14 christos Exp $");
 void
 card()
 {
-
 	if (cur_p->loc != JAIL) {
 		printf("But you're not IN Jail\n");
 		return;
@@ -64,28 +63,28 @@ card()
 	cur_p->loc = 10;			/* just visiting	*/
 	cur_p->in_jail = 0;
 }
+
 /*
  *	This routine returns the players get-out-of-jail-free card
  * to a deck.
  */
 void
 ret_card(plr)
-PLAY	*plr;
+	PLAY *plr;
 {
-
 	plr->num_gojf--;
 	if (CC_D.gojf_used)
 		CC_D.gojf_used = FALSE;
 	else
 		CH_D.gojf_used = FALSE;
 }
+
 /*
  *	This routine deals with paying your way out of jail.
  */
 void
 pay()
 {
-
 	if (cur_p->loc != JAIL) {
 		printf("But you're not IN Jail\n");
 		return;
@@ -95,18 +94,19 @@ pay()
 	cur_p->in_jail = 0;
 	printf("That cost you $50\n");
 }
+
 /*
  *	This routine deals with a move in jail
  */
 int
 move_jail(r1, r2)
-int	r1, r2;
+	int r1, r2;
 {
-
 	if (r1 != r2) {
 		printf("Sorry, that doesn't get you out\n");
 		if (++(cur_p->in_jail) == 3) {
-			printf("It's your third turn and you didn't roll doubles.  You have to pay $50\n");
+			printf("It's your third turn and you didn't roll "
+			    "doubles.  You have to pay $50\n");
 			cur_p->money -= 50;
 moveit:
 			cur_p->loc = 10;
@@ -126,7 +126,6 @@ moveit:
 void
 printturn()
 {
-
 	if (cur_p->loc != JAIL)
 		return;
 	printf("(This is your ");

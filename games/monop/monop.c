@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $	*/
+/*	$NetBSD: monop.c,v 1.6 1999/08/21 10:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $");
+__RCSID("$NetBSD: monop.c,v 1.6 1999/08/21 10:40:03 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,9 @@ static void do_quit __P((int));
  */
 int
 main(ac, av)
-int		ac;
-char	*av[]; {
-
-
+	int ac;
+	char *av[];
+{
 	srand(getpid());
 	if (ac > 1) {
 		if (!rest_f(av[1]))
@@ -97,16 +96,16 @@ do_quit(n)
 {
 	quit();
 }
+
 /*
  *	This routine gets the names of the players
  */
 static void
 getplayers()
 {
-
-	char	*sp;
-	int		i, j;
-	char		buf[257];
+	char *sp;
+	int i, j;
+	char buf[257];
 
 blew_it:
 	for (;;) {
@@ -134,25 +133,28 @@ over:
 		for (j = i + 1; j < num_play; j++)
 			if (strcasecmp(name_list[i], name_list[j]) == 0) {
 				if (i != num_play - 1)
-					printf("Hey!!! Some of those are IDENTICAL!!  Let's try that again....\n");
+					printf("Hey!!! Some of those are "
+					    "IDENTICAL!!  Let's try that "
+					    "again....\n");
 				else
-					printf("\"done\" is a reserved word.  Please try again\n");
+					printf("\"done\" is a reserved word.  "
+					    "Please try again\n");
 				for (i = 0; i < num_play; i++)
 					free(play[i].name);
 				free(play);
 				goto blew_it;
 			}
 }
+
 /*
  *	This routine figures out who goes first
  */
 static void
 init_players()
 {
-
-	int	i, rl, cur_max;
-	bool	over = 0;
-	int	max_pl = 0;
+	int i, rl, cur_max;
+	bool over = 0;
+	int max_pl = 0;
 
 again:
 	putchar('\n');
@@ -175,15 +177,15 @@ again:
 	cur_p = &play[max_pl];
 	printf("%s (%d) goes first\n", cur_p->name, max_pl + 1);
 }
+
 /*
  *	This routine initalizes the monopoly structures.
  */
 static void
 init_monops() 
 {
-
-	MON	*mp;
-	int	i;
+	MON *mp;
+	int i;
 
 	for (mp = mon; mp < &mon[N_MON]; mp++) {
 		mp->name = mp->not_m;
