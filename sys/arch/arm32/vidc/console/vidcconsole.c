@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.15 1997/10/14 11:49:19 mark Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.16 1998/01/18 03:48:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1267,7 +1267,7 @@ int
 vidcconsole_flashintr(arg)
 	void *arg;
 {
-	struct vconsole *vc = arg;
+/*	struct vconsole *vc = arg;*/
 	if ( flash==0 )
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.21 1998/01/13 02:10:46 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.22 1998/01/18 03:48:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -282,7 +282,6 @@ vidcaudio_open(addr, flags)
 	int flags;
 {
 	struct vidcaudio_softc *sc = addr;
-	int s;
 
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_open called\n");
