@@ -1,4 +1,4 @@
-#	$NetBSD: getdirs.awk,v 1.1 2002/02/27 10:51:47 lukem Exp $
+#	$NetBSD: getdirs.awk,v 1.2 2002/05/19 13:32:44 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,27 +36,42 @@
 #
 
 
-function dirname(file) {
-	gsub(/\/[^\/]+$/, "", file);
-	return file;
-}
-
-/\// {
-	print;
-	file = $1;
-	do {
-		file = dirname(file);
-		dirs[file]++;
-	} while (file ~ /\//);
-	next;
-}
-
+function dirname(file) \
 {
-	print;
+	gsub(/\/[^\/]+$/, "", file)
+	return file
 }
 
-END {
+#	skip empty or whitespace-only lines, or lines with comments
+#
+/^[ 	]*(#|$)/ \
+{
+	next
+}
+
+#	skip mtree config lines
+#
+/^\/(un)?set/ \
+{
+	next
+}
+
+#	all other lines are parsed 
+#
+{
+	print
+	file = $1
+	items[file]++
+	do {
+		file = dirname(file)
+		dirs[file]++
+	} while (file ~ /\//)
+}
+
+END \
+{
 	for (file in dirs) {
-		print file;
+		if (! (file in items))
+			print file " optional"
 	}
 }
