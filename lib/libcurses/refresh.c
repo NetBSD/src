@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.14.6.1 2000/01/09 20:43:21 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.14.6.1 2000/01/09 20:43:21 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -353,6 +353,10 @@ makech(win, wy)
 						tputs(ME, 0, __cputchar);
 						curscr->wattr &= ~__TERMATTR;
 					}
+					if (curscr->wattr & __ALTCHARSET) {
+						tputs(AE, 0, __cputchar);
+						curscr->wattr &= ~__ALTCHARSET;
+					}
 					tputs(CE, 0, __cputchar);
 					lx = wx + win->begx;
 					while (wx++ <= clsp) {
@@ -493,6 +497,20 @@ makech(win, wy)
 				}
 			}
 
+			/* Enter/exit altcharset mode as appropriate. */
+			if (nsp->attr & __ALTCHARSET) {
+				if (!(curscr->wattr & __ALTCHARSET) &&
+				    AS != NULL && AE != NULL) {
+					tputs(AS, 0, __cputchar);
+					curscr->wattr |= __ALTCHARSET;
+				}
+			} else {
+				if (curscr->wattr & __ALTCHARSET) {
+					tputs(AE, 0, __cputchar);
+					curscr->wattr &= ~__ALTCHARSET;
+				}
+			}
+
 			wx++;
 			if (wx >= win->maxx && wy == win->maxy - 1 && !curwin)
 				if (win->flags & __SCROLLOK) {
@@ -607,12 +625,18 @@ makech(win, wy)
 		tputs(ME, 0, __cputchar);
 		curscr->wattr &= ~__TERMATTR;
 	}
+	/* Don't leave the screen with altcharset set. */
+	if (curscr->wattr & __ALTCHARSET) {
+		tputs(AE, 0, __cputchar);
+		curscr->wattr &= ~__ALTCHARSET;
+	}
 	return (OK);
 }
 
 /*
  * domvcur --
- *	Do a mvcur, leaving standout and attribute modes if necessary.
+ *	Do a mvcur, leaving standout, attribute and altcharset modes if
+ *	necessary.
  */
 static void
 domvcur(oy, ox, ny, nx)
@@ -635,6 +659,10 @@ domvcur(oy, ox, ny, nx)
 	if (curscr->wattr & __TERMATTR && !MS) {
 		tputs(ME, 0, __cputchar);
 		curscr->wattr &= ~__TERMATTR;
+	}
+	if (curscr->wattr & __ALTCHARSET) {
+		tputs(AE, 0, __cputchar);
+		curscr->wattr &= ~__ALTCHARSET;
 	}
 
 	__mvcur(oy, ox, ny, nx, 1);

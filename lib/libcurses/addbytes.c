@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.14.6.1 2000/01/09 20:43:17 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.14.6.1 2000/01/09 20:43:17 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -121,6 +121,8 @@ __waddbytes(win, bytes, count, attr)
 				attributes |= __BLANK;
 			if (win->wattr & __PROTECT || attr & __PROTECT)
 				attributes |= __PROTECT;
+			if (win->wattr & __ALTCHARSET || attr & __ALTCHARSET)
+				attributes |= __ALTCHARSET;
 #ifdef DEBUG
 			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
 			    y, x, *win->lines[y]->firstchp,
@@ -178,6 +180,10 @@ __waddbytes(win, bytes, count, attr)
 				lp->line[x].attr |= __PROTECT;
 			else
 				lp->line[x].attr &= ~__PROTECT;
+			if (attributes & __ALTCHARSET)
+				lp->line[x].attr |= __ALTCHARSET;
+			else
+				lp->line[x].attr &= ~__ALTCHARSET;
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
 			else
