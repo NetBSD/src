@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.74 2000/04/21 20:58:56 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.75 2000/04/23 00:47:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -302,8 +302,6 @@ usb_delay_ms(bus, ms)
 	usbd_bus_handle bus;
 	u_int ms;
 {
-	extern int cold;
-
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
@@ -526,7 +524,6 @@ usbd_set_config(dev, conf)
 	return (usbd_do_request(dev, &req, 0));
 }
 
-/* XXX should allow moving the device to the unconfigured state. */
 usbd_status
 usbd_set_config_no(dev, no, msg)
 	usbd_device_handle dev;
@@ -536,6 +533,9 @@ usbd_set_config_no(dev, no, msg)
 	int index;
 	usb_config_descriptor_t cd;
 	usbd_status err;
+
+	if (no == USB_UNCONFIG_NO)
+		return (usbd_set_config_index(dev, USB_UNCONFIG_INDEX, msg));
 
 	DPRINTFN(5,("usbd_set_config_no: %d\n", no));
 	/* Figure out what config index to use. */
@@ -549,7 +549,6 @@ usbd_set_config_no(dev, no, msg)
 	return (USBD_INVAL);
 }
 
-/* XXX should allow moving the device to the unconfigured state. */
 usbd_status
 usbd_set_config_index(dev, index, msg)
 	usbd_device_handle dev;
@@ -564,7 +563,7 @@ usbd_set_config_index(dev, index, msg)
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
 
 	/* XXX check that all interfaces are idle */
-	if (dev->config != 0) {
+	if (dev->config != USB_UNCONFIG_NO) {
 		DPRINTF(("usbd_set_config_index: free old config\n"));
 		/* Free all configuration data structures. */
 		nifc = dev->cdesc->bNumInterface;
@@ -574,7 +573,17 @@ usbd_set_config_index(dev, index, msg)
 		free(dev->cdesc, M_USB);
 		dev->ifaces = NULL;
 		dev->cdesc = NULL;
-		dev->config = 0;
+		dev->config = USB_UNCONFIG_NO;
+	}
+
+	if (index == USB_UNCONFIG_INDEX) {
+		/* We are unconfiguring the device, so leave unallocated. */
+		DPRINTF(("usbd_set_config_index: set config 0\n"));
+		err = usbd_set_config(dev, USB_UNCONFIG_NO);
+		if (err)
+			DPRINTF(("usbd_set_config_index: setting config=0 "
+				 "failed, error=%s\n", usbd_errstr(err)));
+		return (err);
 	}
 
 	/* Get the short descriptor. */
