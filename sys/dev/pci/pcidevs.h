@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.165 1999/09/29 00:20:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.166 1999/10/11 17:33:51 hannken Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp 
  */
 
 /*
@@ -635,6 +635,7 @@
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_389XU	0x8378		/* AHA-389X Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
+#define	PCI_PRODUCT_ADP_2940UP	0x8778		/* AHA-2940 Ultra Pro */
 
 #define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940 Ultra2 */
 #define	PCI_PRODUCT_ADP2_2930U2	0x0011		/* AHA-2930 Ultra2 */
