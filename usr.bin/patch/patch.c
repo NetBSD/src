@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.17 2003/05/30 23:08:13 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.18 2003/07/08 01:55:35 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.17 2003/05/30 23:08:13 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.18 2003/07/08 01:55:35 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -55,7 +55,7 @@ static void copy_till(LINENUM);
 static void spew_output(void);
 static void dump_line(LINENUM);
 static bool patch_match(LINENUM, LINENUM, LINENUM);
-static bool similar(char *, char *, size_t);
+static bool similar(const char *, const char *, size_t);
 int main(int, char *[]);
 
 /* TRUE if -E was specified on command line.  */
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
     /* Cons up the names of the temporary files.  */
     {
       /* Directory for temporary files.  */
-      char *tmpdir;
+      const char *tmpdir;
       size_t tmpname_len;
 
       tmpdir = getenv ("TMPDIR");
@@ -375,7 +375,7 @@ nextarg(void)
 /* Module for handling of long options. */
 
 struct option {
-    char *long_opt;
+    const char *long_opt;
     char short_opt;
 };
 
@@ -630,8 +630,8 @@ abort_hunk(void)
     LINENUM newfirst = pch_newfirst() + last_offset;
     LINENUM oldlast = oldfirst + pch_ptrn_lines() - 1;
     LINENUM newlast = newfirst + pch_repl_lines() - 1;
-    char *stars = (diff_type >= NEW_CONTEXT_DIFF ? " ****" : "");
-    char *minuses = (diff_type >= NEW_CONTEXT_DIFF ? " ----" : " -----");
+    const char *stars = (diff_type >= NEW_CONTEXT_DIFF ? " ****" : "");
+    const char *minuses = (diff_type >= NEW_CONTEXT_DIFF ? " ----" : " -----");
 
     fprintf(rejfp, "***************\n");
     for (i=0; i<=pat_end; i++) {
@@ -838,7 +838,7 @@ spew_output(void)
 static void
 dump_line(LINENUM line)
 {
-    char *s;
+    const char *s;
     char R_newline = '\n';
 
     /* Note: string is not null terminated. */
@@ -872,7 +872,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 /* Do two lines match with canonicalized white space? */
 
 static bool
-similar(char *a, char *b, size_t len)
+similar(const char *a, const char *b, size_t len)
 {
     while (len) {
 	if (isspace((unsigned char)*b)) {/* whitespace (or \n) to match? */
