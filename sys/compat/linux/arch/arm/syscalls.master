@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2003/06/23 21:25:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.14 2003/06/28 07:55:08 he Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -47,6 +47,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
