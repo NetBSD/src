@@ -6,7 +6,7 @@
 
 /* -*- C -*- */
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,13 +38,14 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.1.1.1 2000/06/16 19:18:30 thorpej Exp $ */
+/* $Id: roken.h,v 1.1.1.1.2.1 2001/04/05 23:25:56 he Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <signal.h>
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -71,6 +72,7 @@
 
 #include <roken-common.h>
 
+ROKEN_CPP_START
 
 
 
@@ -94,6 +96,8 @@ char * strlwr(char *);
 
 size_t strnlen(const char*, size_t);
 
+
+ssize_t strsep_copy(const char**, const char*, char*, size_t);
 
 
 
@@ -119,7 +123,9 @@ const char *get_default_username (void);
 
 
 
+#ifndef BSD4_4
 int mkstemp(char *);
+#endif
 
 
 
@@ -170,8 +176,10 @@ getipnodebyname (const char *name, int af, int flags, int *error_num);
 struct hostent *
 getipnodebyaddr (const void *src, size_t len, int af, int *error_num);
 
+#ifndef BSD4_4
 void
 freehostent (struct hostent *h);
+#endif
 
 struct hostent *
 copyhostent (const struct hostent *h);
@@ -189,8 +197,8 @@ getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
 		     char *serv, size_t servlen,
 		     int flags);
 
-int
-roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
+int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
+int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
 
 
@@ -206,6 +214,12 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_openlog(a,b,c) openlog(a,b,c)
 
+#define roken_getsockname(a,b,c) getsockname(a,b,c)
+
 void set_progname(char *argv0);
+const char *get_progname(void);
+
+ROKEN_CPP_END
+#define ROKEN_VERSION 0.3e
 
 #endif /* __ROKEN_H__ */
