@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.3 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: savar.h,v 1.4 2003/02/02 02:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <sys/lock.h>
 #include <sys/queue.h>
-#include <sys/mallocvar.h>
 
 struct sadata_upcall {
 	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
@@ -91,7 +90,11 @@ struct sadata {
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 
+#ifdef _KERNEL
+#include <sys/mallocvar.h>
+
 MALLOC_DECLARE(M_SA);
+#endif
 
 #define SA_NUMSTACKS	16	/* Number of stacks allocated. XXX */
 
