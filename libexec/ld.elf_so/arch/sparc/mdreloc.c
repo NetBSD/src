@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.7 1999/03/01 16:40:08 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.8 1999/03/01 18:59:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -248,14 +248,14 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	*where |= value;
 #ifdef RTLD_DEBUG_RELOC
 	if (RELOC_RESOLVE_SYMBOL(type)) {
-		rdbg(dodebug, "%s %s in %s --> %p %s", 
+		rdbg(dodebug, ("%s %s in %s --> %p %s", 
 		    reloc_names[type],
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path);
+		    (void *)*where, defobj->path));
 	}
 	else {
-		rdbg(dodebug, "%s --> %p", reloc_names[type],
-		    (void *)*where);
+		rdbg(dodebug, ("%s --> %p", reloc_names[type],
+		    (void *)*where));
 	}
 #endif
 	return (0);
@@ -288,9 +288,9 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 	value = (Elf_Addr) (defobj->relocbase + def->st_value);
 
-	rdbg(dodebug, "bind now %d/fixup in %s --> old=%p new=%p", 
+	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p", 
 	    (int)bind_now, defobj->strtab + def->st_name,
-	    (void *)*where, (void *)value);
+	    (void *)*where, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
