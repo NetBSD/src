@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.16 1999/12/15 22:25:21 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.17 2000/02/10 04:31:36 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.16 1999/12/15 22:25:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.17 2000/02/10 04:31:36 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ pci_kn300_pickintr(ccp, first)
 
 		kn300_pci_intr = alpha_shared_intr_alloc(NIRQ);
 		for (g = 0; g < NIRQ; g++) {
-			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 25);
+			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 100);
 			savirqs[g] = (char) -1;
 		}
 		set_iointr(kn300_iointr);
@@ -222,7 +222,6 @@ void
 dec_kn300_intr_disestablish(ccv, cookie)
 	void *ccv, *cookie;
 {
-
 	panic("dec_kn300_intr_disestablish not implemented");
 }
 
@@ -282,8 +281,33 @@ kn300_iointr(framep, vec)
 	}
 #endif
 
-	if (alpha_shared_intr_dispatch(kn300_pci_intr, irq))
+	if (alpha_shared_intr_dispatch(kn300_pci_intr, irq)) {
+		/*
+		 * Any claim of an interrupt at this level is a hint to
+		 * reset the stray interrupt count- elsewise a slow leak
+		 * over time will cause this level to be shutdown.
+		 *
+		 * Unfortunately, there's no clean mechanism to do this yet.
+		 */
 		return;
+	}
+
+	/*
+	 * If we haven't finished configuring yet, or there is no mcp
+	 * registered for this level yet, just return.
+	 */
+	mcp = alpha_shared_intr_get_private(kn300_pci_intr, irq);
+	if (mcp == NULL || mcp->mcpcia_cc == NULL)
+		return;
+
+	/*
+	 * We're getting an interrupt for a device we haven't enabled.
+	 * We had better not try and use -1 to find the right bit to disable.
+	 */
+	if (savirqs[irq] == -1) {
+		printf("kn300_iointr: stray interrupt vector 0x%lx\n", vec);
+		return;
+	}
 
 	/*
 	 * Stray interrupt; disable the IRQ on the appropriate MCPCIA
@@ -292,8 +316,6 @@ kn300_iointr(framep, vec)
 	alpha_shared_intr_stray(kn300_pci_intr, irq, "kn300 irq");
 	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, irq) == 0)
 		return;
-
-	mcp = alpha_shared_intr_get_private(kn300_pci_intr, irq);
 	kn300_disable_intr(mcp->mcpcia_cc, savirqs[irq]);
 }
 
