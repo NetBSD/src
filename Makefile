@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2001/10/24 03:21:20 tv Exp $
+#	$NetBSD: Makefile,v 1.144 2001/10/29 19:48:35 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -172,3 +172,18 @@ dependall-distrib depend-distrib all-distrib install-distrib includes-distrib:
 .include "${.CURDIR}/share/mk/bsd.subdir.mk"
 
 _M:=	-m ${.CURDIR}/share/mk
+
+# Rules for building the BUILDING.* documentation files.
+
+build-docs: ${.CURDIR}/BUILDING.txt ${.CURDIR}/BUILDING.html
+
+.SUFFIXES: .mdoc .html .txt
+
+.mdoc.html: ${.CURDIR}/Makefile
+	groff -mdoc2html -Tlatin1 -P-b -P-u -P-o -ww -mtty-char $< >$@
+
+# The awk expression changes line endings from LF to CR-LF to make
+# this readable on many more platforms than just Un*x.
+.mdoc.txt: ${.CURDIR}/Makefile
+	groff -mdoc -Tascii -P-b -P-u -P-o $< | \
+		awk 'BEGIN{ORS="\r\n"}{print}' >$@
