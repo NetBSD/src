@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.13 2002/03/31 18:04:12 bjh21 Exp $	*/
+/*	$NetBSD: config.h.in,v 1.14 2002/04/01 13:59:35 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -62,7 +62,6 @@
 #undef HAVE_LCHMOD
 #undef HAVE_LCHOWN
 #undef HAVE_LUTIMES
-#undef HAVE_MKDTEMP
 #undef HAVE_PREAD
 #undef HAVE_PWCACHE_USERDB
 #undef HAVE_PWRITE
