@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.9 2003/02/06 02:01:35 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.10 2003/02/06 03:01:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -76,6 +76,9 @@
 #define	VERDE_ATU_BASE			0x0100
 #define	VERDE_ATU_SIZE			0x0100
 
+#define	VERDE_MU_BASE			0x0300
+#define	VERDE_MU_SIZE			0x0100
+
 #define	VERDE_DMA_BASE			0x0400
 #define	VERDE_DMA_BASE0			(VERDE_DMA_BASE + 0x00)
 #define	VERDE_DMA_BASE1			(VERDE_DMA_BASE + 0x40)
@@ -86,10 +89,16 @@
 #define	VERDE_MCU_SIZE			0x0100
 
 #define	VERDE_SSP_BASE			0x0600
-#define	VERDE_SSP_SIZE			0x0100
+#define	VERDE_SSP_SIZE			0x0080
+
+#define	VERDE_PBIU_BASE			0x0680
+#define	VERDE_PBIU_SIZE			0x0080
 
 #define	VERDE_AAU_BASE			0x0800
 #define	VERDE_AAU_SIZE			0x0100
+
+#define	VERDE_I2C_BASE			0x1680
+#define	VERDE_I2C_SIZE			0x0080
 
 /*
  * Address Translation Unit
@@ -405,5 +414,60 @@
 #define	SSP_SSITR_TTFS		(1U << 5)/* Test Tx FIFO service */
 #define	SSP_SSITR_TRFS		(1U << 6)/* Test Rx FIFO service */
 #define	SSP_SSITR_TROR		(1U << 7)/* Test Rx overrun */
+
+/*
+ * Peripheral Bus Interface Unit
+ */
+
+#define PBIU_PBCR		0x00	/* PBIU Control Register */
+#define PBIU_PBBAR0		0x08	/* PBIU Base Address Register 0 */
+#define PBIU_PBLR0		0x0c	/* PBIU Limit Register 0 */
+#define PBIU_PBBAR1		0x10	/* PBIU Base Address Register 1 */
+#define PBIU_PBLR1		0x14	/* PBIU Limit Register 1 */
+#define PBIU_PBBAR2		0x18	/* PBIU Base Address Register 2 */
+#define PBIU_PBLR2		0x1c	/* PBIU Limit Register 2 */
+#define PBIU_PBBAR3		0x20	/* PBIU Base Address Register 3 */
+#define PBIU_PBLR3		0x24	/* PBIU Limit Register 3 */
+#define PBIU_PBBAR4		0x28	/* PBIU Base Address Register 4 */
+#define PBIU_PBLR4		0x2c	/* PBIU Limit Register 4 */
+#define PBIU_PBBAR5		0x30	/* PBIU Base Address Register 5 */
+#define PBIU_PBLR5		0x34	/* PBIU Limit Register 5 */
+#define PBIU_DSCR		0x38	/* PBIU Drive Strength Control Reg. */
+#define PBIU_MBR0		0x40	/* PBIU Memory-less Boot Reg. 0 */
+#define PBIU_MBR1		0x60	/* PBIU Memory-less Boot Reg. 1 */
+#define PBIU_MBR2		0x64	/* PBIU Memory-less Boot Reg. 2 */
+
+/*
+ * Messaging Unit
+ */
+#define MU_IMR0			0x0010	/* MU Inbound Message Register 0 */
+#define MU_IMR1			0x0014	/* MU Inbound Message Register 1 */
+#define MU_OMR0			0x0018	/* MU Outbound Message Register 0 */
+#define MU_OMR1			0x001c	/* MU Outbound Message Register 1 */
+#define MU_IDR			0x0020	/* MU Inbound Doorbell Register */
+#define MU_IISR			0x0024	/* MU Inbound Interrupt Status Reg */
+#define MU_IIMR			0x0028	/* MU Inbound Interrupt Mask Reg */
+#define MU_ODR			0x002c	/* MU Outbound Doorbell Register */
+#define MU_OISR			0x0030	/* MU Outbound Interrupt Status Reg */
+#define MU_OIMR			0x0034	/* MU Outbound Interrupt Mask Reg */
+#define MU_MUCR			0x0050	/* MU Configuration Register */
+#define MU_QBAR			0x0054	/* MU Queue Base Address Register */
+#define MU_IFHPR		0x0060	/* MU Inbound Free Head Pointer Reg */
+#define MU_IFTPR		0x0064	/* MU Inbound Free Tail Pointer Reg */
+#define MU_IPHPR		0x0068	/* MU Inbound Post Head Pointer Reg */
+#define MU_IPTPR		0x006c	/* MU Inbound Post Tail Pointer Reg */
+#define MU_OFHPR		0x0070	/* MU Outbound Free Head Pointer Reg */
+#define MU_OFTPR		0x0074	/* MU Outbound Free Tail Pointer Reg */
+#define MU_OPHPR		0x0078	/* MU Outbound Post Head Pointer Reg */
+#define MU_OPTPR		0x007c	/* MU Outbound Post Tail Pointer Reg */
+#define MU_IAR			0x0080	/* MU Index Address Register */
+
+#define MU_IIMR_IRI	(1 << 6)	/* Index Register Interrupt */
+#define MU_IIMR_OFQFI	(1 << 5)	/* Outbound Free Queue Full Int. */
+#define MU_IIMR_IPQI	(1 << 4)	/* Inbound Post Queue Interrupt */
+#define MU_IIMR_EDI	(1 << 3)	/* Error Doorbell Interrupt */
+#define MU_IIMR_IDI	(1 << 2)	/* Inbound Doorbell Interrupt */
+#define MU_IIMR_IM1I	(1 << 1)	/* Inbound Message 1 Interrupt */
+#define MU_IIMR_IM0I	(1 << 0)	/* Inbound Message 0 Interrupt */
 
 #endif /* _ARM_XSCALE_I80321REG_H_ */
