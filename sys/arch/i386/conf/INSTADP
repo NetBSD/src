@@ -1,4 +1,4 @@
-#	$NetBSD: INSTADP,v 1.24 1996/09/09 17:18:50 mycroft Exp $
+#	$NetBSD: INSTADP,v 1.25 1996/10/02 22:20:54 mycroft Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -55,6 +55,10 @@ options		COMPAT_12	# NetBSD 1.2,
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options	COMPAT_LINUX	# binary compatibility with Linux
 #options	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+#options	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 #options	USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
