@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emu.h,v 1.4 1994/10/27 04:15:30 cgd Exp $	*/
+/*	$NetBSD: math_emu.h,v 1.5 1995/05/03 00:17:16 mycroft Exp $	*/
 
 /*
  * linux/include/linux/math_emu.h
@@ -69,7 +69,7 @@ struct i387_struct {
 	long	st_space[20];	/* 8*10 bytes for each FP-reg = 80 bytes */
 };
 
-#define I387 (*(struct i387_struct *)&(curproc->p_addr->u_pcb.pcb_savefpu))
+#define I387 (*(struct i387_struct *)&(curpcb->pcb_savefpu))
 #define SWD (*(struct swd *) &I387.swd)
 #define ROUNDING ((I387.cwd >> 10) & 3)
 #define PRECISION ((I387.cwd >> 8) & 3)
