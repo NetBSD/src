@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.19 2002/09/12 18:28:53 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.20 2002/09/12 18:36:43 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -246,7 +246,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	i = (got[1] & 0x80000000) ? 2 : 1;
 	/* Relocate the local GOT entries */
 	while (i < obj->local_gotno)
-		got[i++] += (Elf_Word)obj->relocbase;
+		got[i++] += (Elf_Addr)obj->relocbase;
 	got += obj->local_gotno;
 	sym = obj->symtab + obj->gotsym;
 	/* Now do the global GOT entries */
@@ -259,18 +259,18 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			return -1;
 		if (sym->st_shndx == SHN_UNDEF ||
 		    sym->st_shndx == SHN_COMMON)
-			*got = def->st_value + (Elf_Word)defobj->relocbase;
+			*got = def->st_value + (Elf_Addr)defobj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
 		    *got != sym->st_value)
-			*got += (Elf_Word)obj->relocbase;
+			*got += (Elf_Addr)obj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 			if (sym->st_shndx == SHN_ABS)
 				*got = sym->st_value +
-				    (Elf_Word)obj->relocbase;
+				    (Elf_Addr)obj->relocbase;
 			/* else SGI stuff ignored */
 		} else
-			*got = def->st_value + (Elf_Word)defobj->relocbase;
+			*got = def->st_value + (Elf_Addr)defobj->relocbase;
 		++sym;
 		++got;
 	}
