@@ -1,4 +1,4 @@
-/*	$NetBSD: ncareg.h,v 1.1 1998/10/25 18:41:56 christos Exp $	*/
+/*	$NetBSD: ncr53c400reg.h,v 1.1 2000/03/18 13:05:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
