@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.61 2000/12/15 06:14:21 mycroft Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.62 2001/02/04 19:12:09 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -518,8 +518,11 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	if (!epp->ep_esch->u.elf_probe_func) {
 		pos = ELFDEFNNAME(NO_ADDR);
 	} else {
+		vaddr_t startp = 0;
+
 		error = (*epp->ep_esch->u.elf_probe_func)(p, epp, eh, interp,
-				(vaddr_t *)&pos);
+							  &startp);
+		pos = (Elf_Addr)startp;
 		if (error)
 			goto bad;
 	}
