@@ -338,11 +338,8 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 		return (1);
 	}
 
+	/* Get the next key. */
 	key = ikey.ch;
-	if (key > MAXVIKEY) {
-		msgq(sp, M_BERR, "%s isn't a vi command", charname(sp, key));
-		return (1);
-	}
 
 	/* Pick up optional buffer. */
 	if (key == '"') {
@@ -373,6 +370,12 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 		KEY(vp->buffer, 0);
 		F_SET(vp, VC_BUFFER);
 		KEY(key, TXT_MAPCOMMAND);
+	}
+
+	/* Check for an OOB command key. */
+	if (key > MAXVIKEY) {
+		msgq(sp, M_BERR, "%s isn't a vi command", charname(sp, key));
+		return (1);
 	}
 
 	/*
