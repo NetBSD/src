@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsinit - namespace initialization
- *              xRevision: 52 $
+ *              xRevision: 55 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.5 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __NSXFINIT_C__
 
@@ -382,7 +382,7 @@ AcpiNsInitOneObject (
 
     if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
     {
-        AcpiOsPrintf (".");
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "."));
     }
 
     /*
@@ -426,7 +426,7 @@ AcpiNsInitOneDevice (
 
     if ((AcpiDbgLevel <= ACPI_LV_ALL_EXCEPTIONS) && (!(AcpiDbgLevel & ACPI_LV_INFO)))
     {
-        AcpiOsPrintf (".");
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "."));
     }
 
     Info->DeviceCount++;
@@ -485,7 +485,7 @@ AcpiNsInitOneDevice (
             /* Ignore error and move on to next device */
 
     #ifdef ACPI_DEBUG_OUTPUT
-            NATIVE_CHAR *ScopeName = AcpiNsGetExternalPathname (ObjHandle);
+            char        *ScopeName = AcpiNsGetExternalPathname (ObjHandle);
 
             ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "%s._INI failed: %s\n",
                     ScopeName, AcpiFormatException (Status)));

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exfield - ACPI AML (p-code) execution - field manipulation
- *              xRevision: 116 $
+ *              xRevision: 118 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.5 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXFIELD_C__
 
@@ -202,7 +202,7 @@ AcpiExReadDataFromField (
          * Perform the read.
          * Note: Smbus protocol value is passed in upper 16-bits of Function
          */
-        Status = AcpiExAccessRegion (ObjDesc, 0, 
+        Status = AcpiExAccessRegion (ObjDesc, 0,
                         ACPI_CAST_PTR (ACPI_INTEGER, BufferDesc->Buffer.Pointer),
                         ACPI_READ | (ObjDesc->Field.Attribute << 16));
         AcpiExReleaseGlobalLock (Locked);
@@ -368,11 +368,11 @@ AcpiExWriteDataToField (
 
         Locked = AcpiExAcquireGlobalLock (ObjDesc->CommonField.FieldFlags);
 
-        /* 
+        /*
          * Perform the write (returns status and perhaps data in the same buffer)
          * Note: SMBus protocol type is passed in upper 16-bits of Function.
          */
-        Status = AcpiExAccessRegion (ObjDesc, 0, 
+        Status = AcpiExAccessRegion (ObjDesc, 0,
                         (ACPI_INTEGER *) Buffer,
                         ACPI_WRITE | (ObjDesc->Field.Attribute << 16));
         AcpiExReleaseGlobalLock (Locked);

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              xRevision: 163 $
+ *              xRevision: 166 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.5 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXDUMP_C__
 
@@ -499,13 +499,13 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    NATIVE_CHAR             *Ident,
+    char                    *Ident,
     UINT32                  NumLevels,
-    NATIVE_CHAR             *Note,
-    NATIVE_CHAR             *ModuleName,
+    char                    *Note,
+    char                    *ModuleName,
     UINT32                  LineNumber)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
     ACPI_OPERAND_OBJECT     **ObjDesc;
 
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
- *              xRevision: 115 $
+ *              xRevision: 117 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.3 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.4 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXOPARG2_C__
 
@@ -479,7 +479,7 @@ AcpiExOpcode_2A_1T_1R (
             Status = AE_NO_MEMORY;
             goto Cleanup;
         }
-        
+
         /* Allocate a new string buffer (Length + 1 for null terminator) */
 
         ReturnDesc->String.Pointer = ACPI_MEM_CALLOCATE (Length + 1);

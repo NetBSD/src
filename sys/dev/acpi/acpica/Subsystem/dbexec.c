@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              xRevision: 50 $
+ *              xRevision: 53 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.6 2002/12/23 00:22:07 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.7 2003/02/13 14:16:16 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -287,7 +287,6 @@ AcpiDbGetOutstandingAllocations (
 }
 
 
-
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbExecutionWalk
@@ -332,7 +331,7 @@ AcpiDbExecutionWalk (
 
     Status = AcpiEvaluateObject (Node, NULL, NULL, &ReturnObj);
 
-    AcpiOsPrintf ("[%4.4s] returned %s\n", Node->Name.Ascii, 
+    AcpiOsPrintf ("[%4.4s] returned %s\n", Node->Name.Ascii,
         AcpiFormatException (Status));
     AcpiGbl_MethodExecuting = FALSE;
 
@@ -357,8 +356,8 @@ AcpiDbExecutionWalk (
 
 void
 AcpiDbExecute (
-    NATIVE_CHAR             *Name,
-    NATIVE_CHAR             **Args,
+    char                    *Name,
+    char                    **Args,
     UINT32                  Flags)
 {
     ACPI_STATUS             Status;
@@ -429,7 +428,7 @@ AcpiDbExecute (
         if (ReturnObj.Length)
         {
             AcpiOsPrintf ("Execution of %s returned object %p Buflen %X\n",
-                AcpiGbl_DbMethodInfo.Pathname, ReturnObj.Pointer, 
+                AcpiGbl_DbMethodInfo.Pathname, ReturnObj.Pointer,
                 (UINT32) ReturnObj.Length);
             AcpiDbDumpObject (ReturnObj.Pointer, 1);
         }
@@ -507,9 +506,9 @@ AcpiDbMethodThread (
 
 void
 AcpiDbCreateExecutionThreads (
-    NATIVE_CHAR             *NumThreadsArg,
-    NATIVE_CHAR             *NumLoopsArg,
-    NATIVE_CHAR             *MethodNameArg)
+    char                    *NumThreadsArg,
+    char                    *NumLoopsArg,
+    char                    *MethodNameArg)
 {
     ACPI_STATUS             Status;
     UINT32                  NumThreads;
