@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 1998/10/06 02:59:19 mark Exp $
+# $NetBSD: Makefile.inc,v 1.6 1999/03/04 20:32:19 wrstuden Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -21,7 +21,7 @@ DISKTYPE=	floppy
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=144k count=10
 	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
-	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -B le -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \

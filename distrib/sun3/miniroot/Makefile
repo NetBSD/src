@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/09/05 14:46:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 1999/03/04 20:32:21 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,7 +33,7 @@ CLEANFILES= ${IMAGE}.gz install.sub
 all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3

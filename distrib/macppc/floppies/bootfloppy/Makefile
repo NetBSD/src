@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/04 20:32:20 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,7 +40,8 @@ all:	netbsd.ram.gz
 	# vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -m 0 -o space -i ${INO_BYTES} -c 80 -f 1024 -b 8192 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
+	    -f 1024 -b 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
