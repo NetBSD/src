@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.13 1996/02/05 01:56:47 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,9 +39,7 @@
 
 #ifndef	DB_NO_AOUT
 
-#define _AOUT_INCLUDE_
-#include <nlist.h>
-#include <stab.h>
+#include <ddb/db_aout.h>
 
 /*
  * An a.out symbol table as loaded into the kernel debugger:
