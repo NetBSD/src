@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.3 2004/05/13 07:20:47 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.4 2004/10/15 04:48:24 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -565,7 +565,6 @@ ethfoo_stop(struct ifnet *ifp, int disable)
 static int
 ethfoo_clone_create(struct if_clone *ifc, int unit)
 {
-	config_makeroom(unit, &ethfoo_cd); /* can panic */
 
 	if (config_attach_pseudo(ethfoo_cd.cd_name, unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
