@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.10 2000/05/23 01:03:05 thorpej Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.10.4.1 2000/10/18 00:39:47 tv Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -426,7 +426,7 @@ rf_get_next_nonblank_line(buf, len, fp, errmsg)
 		return (0);
 	}
 	if (errmsg)
-		RF_ERRORMSG(errmsg);
+		RF_ERRORMSG1("%s", errmsg);
 	return (1);
 }
 

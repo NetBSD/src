@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.7 1998/07/30 17:41:03 thorpej Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.7.12.1 2000/10/18 00:39:44 tv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.7 1998/07/30 17:41:03 thorpej Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.7.12.1 2000/10/18 00:39:44 tv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,7 +61,8 @@ static int preen = 0;
 
 extern char *__progname;
 
-static void vmsg __P((int, const char *, va_list));
+static void vmsg __P((int, const char *, va_list))
+     __attribute((__format__(__printf__,2,0)));
 
 void
 setcdevname(cd, pr)
