@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2003/02/25 10:35:25 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2003/03/30 17:51:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,18 +144,18 @@ Ite consoles
 Standard built-in serial ports (2), see
 .Xr \&tty 4
 . It Ar ttyE#
-Wscons
+wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . El
 .It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . El
 .It Pseudo terminals :
@@ -186,7 +186,7 @@ Packet filter, see
 Loadable kernel modules interface, see
 .Xr \&lkm 4
 . It Ar ipl
-Ip filter
+IP filter
 . It Ar random
 Random number generator
 . It Ar scsibus#

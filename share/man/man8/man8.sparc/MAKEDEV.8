@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.25 2003/03/10 08:17:02 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.26 2003/03/30 17:51:52 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,14 +141,14 @@ Memory pseudo-disk devices, see
 . It Ar console
 Standard console
 . It Ar ttyE#
-Wscons
+wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar mouse
 Standard sun mouse events
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . El
 .It Keyboard devices :
@@ -157,7 +157,7 @@ Wscons mouse events, see
 Standard sun keyboard events, see
 .Xr \&kbd 4
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . El
 .It Pseudo terminals :
@@ -262,7 +262,7 @@ CL18xx-based multiport serial cards
 Syscall tracer, see
 .Xr \&systrace 4
 . It Ar wsmux#
-Wscons event multiplexor, see
+wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar wsfont#
 Console font control

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2003/02/25 10:35:23 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2003/03/30 17:51:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,7 +129,7 @@ SCSI CD-ROM, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . It Ar ccd#
-Contatenated disk devices, see
+Concatenated disk devices, see
 .Xr \&ccd 4
 . It Ar raid#
 RAIDframe disk driver, see
@@ -138,22 +138,22 @@ RAIDframe disk driver, see
 .It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
-Pccons console
+pccons console
 . It Ar ttyE#
-Wscons
+wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar quadmouse#
 ``quadrature mouse''
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . El
 .It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . El
 .It Terminal ports :
@@ -274,7 +274,7 @@ RTC device
 . It Ar cfs#
 Coda file system device
 . It Ar wsmux#
-Wscons event multiplexor, see
+wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar systrace
 Syscall tracer, see

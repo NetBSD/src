@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2003/02/25 10:35:27 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2003/03/30 17:51:49 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ SCSI CD-ROM, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . It Ar ccd#
-Contatenated disk devices, see
+Concatenated disk devices, see
 .Xr \&ccd 4
 . It Ar cgd#
 Cryptographic disk devices, see
@@ -139,20 +139,20 @@ RAIDframe disk devices, see
 .It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
-Pccons
+pccons
 . It Ar ttyE#
-Wscons
+wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . El
 .It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . El
 .It Terminal ports :
@@ -206,11 +206,11 @@ File descriptors, see
 Packet filter, see
 .Xr \&bpf 4
 . It Ar ipl
-Ip filter
+IP filter
 . It Ar random
 Random number generator
 . It Ar speaker
-Pc speaker, see
+PC speaker, see
 .Xr \&speaker 4
 . It Ar lkm
 Loadable kernel modules interface, see
@@ -242,7 +242,7 @@ Coda file system device
 . It Ar wsfont
 Console font control
 . It Ar wsmux#
-Wscons event multiplexor, see
+wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar pci#
 PCI bus access devices, see
