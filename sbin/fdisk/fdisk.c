@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.13 1997/06/24 06:38:50 perry Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.14 1997/07/29 08:31:31 phil Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fdisk.c,v 1.13 1997/06/24 06:38:50 perry Exp $";
+static char rcsid[] = "$NetBSD: fdisk.c,v 1.14 1997/07/29 08:31:31 phil Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,7 @@ int partition = -1;
 int a_flag;		/* set active partition */
 int i_flag;		/* replace partition data */
 int u_flag;		/* update partition data */
+int s_flag;		/* Output data as shell defines */
 
 unsigned char bootcode[] = {
 0x33, 0xc0, 0xfa, 0x8e, 0xd0, 0xbc, 0x00, 0x7c, 0x8e, 0xc0, 0x8e, 0xd8, 0xfb, 0x8b, 0xf4, 0xbf,
@@ -226,8 +227,8 @@ main(argc, argv)
 	int ch;
 	int part;
 
-	a_flag = i_flag = u_flag = 0;
-	while ((ch = getopt(argc, argv, "0123aiu")) != -1)
+	a_flag = i_flag = u_flag = s_flag = 0;
+	while ((ch = getopt(argc, argv, "0123aius")) != -1)
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -249,11 +250,17 @@ main(argc, argv)
 		case 'u':
 			u_flag = 1;
 			break;
+		case 's':
+			s_flag = 1;
+			break;
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (s_flag && (a_flag || i_flag || u_flag ))
+		usage();
 
 	if (argc > 0)
 		disk = argv[0];
@@ -266,14 +273,18 @@ main(argc, argv)
 
 	intuit_translated_geometry();
 
-	printf("******* Working on device %s *******\n", disk);
+	if (!s_flag)
+		printf("******* Working on device %s *******\n", disk);
 	if (u_flag)
 		get_params_to_use();
 	else
 		print_params();
 
-	printf("Warning: BIOS sector numbering starts with sector 1\n");
-	printf("Information from DOS bootblock is:\n");
+	if (!s_flag) {
+		printf("Warning: BIOS sector numbering starts with sector 1\n");
+		printf("Information from DOS bootblock is:\n");
+	}
+
 	if (partition == -1) {
 		for (part = 0; part < NDOSPART; part++)
 			change_part(part);
@@ -299,6 +310,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "usage: fdisk [-aiu] [-0|-1|-2|-3] [device]\n");
+	(void)fprintf(stderr, "usage: fdisk -s [-0|-1|-2|-3] [device]\n");
 	exit(1);
 }
 
@@ -366,9 +378,34 @@ print_part(part)
 	int part;
 {
 	struct dos_partition *partp;
+	int empty;
 
 	partp = &mboot.parts[part];
-	if (!memcmp(partp, &mtpart, sizeof(struct dos_partition))) {
+	empty = !memcmp(partp, &mtpart, sizeof(struct dos_partition));
+
+	if (s_flag) {
+		if (empty) {
+			printf("PART%dSIZE=0\n", part);
+			return;
+		}
+
+		printf("PART%dID=%d\n", part, partp->dp_typ);
+		printf("PART%dSIZE=%d\n", part, getlong(&partp->dp_size));
+		printf("PART%dSTART=%d\n", part, getlong(&partp->dp_start));
+		printf("PART%dFLAG=%x\n", part, partp->dp_flag);
+		printf("PART%dBCYL=%d\n", part, DPCYL(partp->dp_scyl,
+						      partp->dp_ssect));
+		printf("PART%dBHEAD=%d\n", part, partp->dp_shd);
+		printf("PART%dBSEC=%d\n", part, DPSECT(partp->dp_ssect));
+		printf("PART%dECYL=%d\n", part, DPCYL(partp->dp_ecyl,
+						      partp->dp_esect));
+		printf("PART%dEHEAD=%d\n", part, partp->dp_ehd);
+		printf("PART%dESEC=%d\n", part, DPSECT(partp->dp_esect));
+		return;
+	}
+
+	/* Not s_flag. */
+	if (empty) {
 		printf("<UNUSED>\n");
 		return;
 	}
@@ -522,7 +559,8 @@ change_part(part)
 
 	partp = &mboot.parts[part];
 
-	printf("The data for partition %d is:\n", part);
+	if (!s_flag)
+		printf("The data for partition %d is:\n", part);
 	print_part(part);
 
 	if (!u_flag || !yesno("Do you want to change it?"))
@@ -590,6 +628,15 @@ void
 print_params()
 {
 
+	if (s_flag) {
+		printf ("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\n",
+			cylinders, heads, sectors);
+		printf ("BCYL=%d\nBHEAD=%d\nBSEC=%d\n",
+			dos_cylinders, dos_heads, dos_sectors);
+		return;
+	}
+
+	/* Not s_flag */
 	printf("parameters extracted from in-core disklabel are:\n");
 	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
 	    cylinders, heads, sectors, cylindersectors);
