@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.28 2000/05/24 06:04:12 soren Exp $	*/
+/*	$NetBSD: i82557.c,v 1.29 2000/05/24 07:49:13 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1375,7 +1375,7 @@ fxp_init(sc)
 		FXP_CDCONFIGSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((cbp->cb_status & FXP_CB_STATUS_C) == 0 && --i);
+	} while ((htole16(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
@@ -1407,7 +1407,7 @@ fxp_init(sc)
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((cb_ias->cb_status & FXP_CB_STATUS_C) == 0 && --i);
+	} while ((htole16(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
@@ -1870,7 +1870,7 @@ fxp_mc_setup(sc)
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0 && --count);
+	} while ((htole16(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
 	if (count == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
