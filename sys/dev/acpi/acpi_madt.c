@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.4 2003/01/08 12:33:03 fvdl Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.5 2003/05/11 21:21:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@ acpi_madt_map(void)
 			return Status;
 		if (!strncmp(header.Signature, APIC_SIG, 4)) {
 			Status = AcpiOsMapMemory(Address.Pointer.Value,
-			    (ACPI_SIZE)header.Length, (void **)&AcpiGbl_MADT);
+			    (ACPI_SIZE)header.Length, (void *)&AcpiGbl_MADT);
 			if (ACPI_FAILURE (Status))
 				return Status;
 			else
