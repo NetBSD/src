@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.17 2002/11/01 16:41:53 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.18 2002/11/01 18:34:52 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -623,4 +623,76 @@ sys/dev/scsipi/atapi_wdc.c			1.53
 	Do PIO transfers for len < 4 bytes. From Matthias Drochner in
 	private mail.
 	[bouyer, ticket #733]
+
+sys/arch/powerpc/mpc6xx/pmap.c			1.46
+
+	Set SR_PRKEY for user pmaps.  For the kernel SR(s) set
+	SR_SUKEY|SR_PRKEY. Note that we never use a PTE PP of 0 or 1
+	(supervisor protection) so the "key" is basically unused.  However,
+	use SR_PRKEY for user space is conceptionally the right thing to do.
+	Currently the kernel_pmap SR(s) are ignored but that is going to be
+	fixed shortly.
+	[matt, ticket #372]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.22
+
+	Revamp how SR(s) are loaded on the user/kernel boundary. We now load
+	all 16 SR registers when transitioning between kernel and user.  Also,
+	don't reload the kernel SR(s) on every trap but only on traps from
+	user space. Instead of loading magic SRs for the kernel, load the
+	kernel SRs from the kernel_pmap_. This makes trap_subr.S completely
+	ignorant of SR uses and so they can change with having to change
+	trap_subr.S. Also note that since the user and kernel get complete
+	SR sets, user VA space can now be increased to 4GB if desired.
+	[matt, ticket #373]
+
+sys/arch/powerpc/include/mpc6xx/vmparam.h	1.2
+
+	When not using the OLD pmap, bump kernel KVA space to 512MB (OLD pmap
+	stays at 256MB).
+	[matt, ticket #374]
+
+sys/dev/pci/if_sip.c				1.55
+sys/dev/pci/if_sipreg.h				1.11
+
+	* Give symbolic names to the CFG bits in the EEPROM.
+	* Get CFG_M64ADDR, CFG_T64ADDR, and CFG_DATA64_EN from the EEPROM.
+	  Note, we still disable CFG_M64ADDR and CFG_T64ADDR later (XXX need
+	  PCI bus capability flags for these).
+	* Print a message if we're in a 64-bit slot and 64-bit data is
+	  disabled in the EEPROM.  Make sure CFG_DATA64_EN is disabled if
+	  we're not in a 64-bit slot.
+	[thorpej, ticket #411]
+
+sys/dev/pci/if_sip.c				1.56
+
+	Implement a sliding interrupt delay window for Tx interrupts.
+	[thorpej, ticket #412]
+
+sys/dev/pci/if_sip.c				1.58
+
+	Update the TODO list: We have some Tx interrupt mitigation now, so
+	we need to do Rx interrupt mitigation next.
+	[thorpej, ticket #413]
+
+sys/dev/pci/if_sip.c				1.59
+
+	Load configuration data from the EEPROM on the DP83820 differently:
+	rather than grovel the EEPROM directly, initiate an "EEPROM load" in
+	the PCI test register, and fetch the values from the CFG register.
+	[thorpej, ticket #414]
+
+sys/dev/pci/if_sip.c				1.60
+
+	Add a table of known-64-bit DP83820-based cards.  Use this table
+	to enable 64-bit data transfers on 64-bit cards when plugged into
+	a 64-bit slot.  Right know the Asante GigaNIX is listed in that
+	table.
+
+	Sigh, there is an EEPROM bit that can be used to detect 64-bit vs
+	32-bit cards.  Unfortunately, at least 2 vendors of 32-bit cards
+	fail to clear the "DATA64_EN" bit in the EEPROM, which causes the
+	card to lose badly, because it still manages to detect that it's
+	plugged into a 64-bit PCI slot.  Yay, stupid hardware vendors.
+	[thorpej, ticket #415]
 
