@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.29 2001/11/13 07:11:23 lukem Exp $	*/
+/*	$NetBSD: dz.c,v 1.1 2002/02/25 14:58:08 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.29 2001/11/13 07:11:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.1 2002/02/25 14:58:08 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.29 2001/11/13 07:11:23 lukem Exp $");
 
 #include <machine/bus.h>
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 
 #define	DZ_READ_BYTE(adr) \
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
