@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2002/03/03 14:28:51 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2002/03/08 13:22:14 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
-#include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/mmeye.h>
 
@@ -120,8 +119,6 @@
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
 int dumpmem_low;
@@ -150,7 +147,6 @@ extern paddr_t avail_start, avail_end;
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *iomem_ex;
 
-void setup_bootinfo __P((void));
 void initSH3 __P((void *));
 void sh3_cache_on __P((void));
 void InitializeBsc __P((void));
@@ -469,11 +465,6 @@ initSH3(pc)
 	 */
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/*
-	 * set boot device information
-	 */
-	setup_bootinfo();
-
 #if 0
 	sh3_cache_on();
 #endif
@@ -486,34 +477,6 @@ initSH3(pc)
 	 *     So jump to return address directly.
 	 */
 	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
-}
-
-void
-setup_bootinfo(void)
-{
-	struct btinfo_bootdisk *help;
-
-	*(int *)bootinfo = 1;
-	help = (struct btinfo_bootdisk *)(bootinfo + sizeof(int));
-	help->biosdev = 0;
-	help->partition = 0;
-	((struct btinfo_common *)help)->len = sizeof(struct btinfo_bootdisk);
-	((struct btinfo_common *)help)->type = BTINFO_BOOTDISK;
-}
-
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while (n--) {
-		if (help->type == type)
-			return (help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return (0);
 }
 
 

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2001/09/19 06:38:44 chs Exp $
+#	$NetBSD: Makefile,v 1.13 2002/03/08 13:22:13 uch Exp $
 
 KDIR=	/sys/arch/mmeye/include
 INCSDIR= /usr/include/mmeye
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h bus.h \
-	cdefs.h coff_machdep.h conf.h cpu.h cpufunc.h cputypes.h \
+	bswap.h bus.h \
+	cdefs.h coff_machdep.h conf.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
@@ -14,9 +14,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	limits.h lock.h \
 	math.h mmeye.h \
-	param.h pcb.h pio.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
-	segments.h setjmp.h shbvar.h signal.h stdarg.h \
+	setjmp.h shbvar.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h
 

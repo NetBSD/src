@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/07 19:34:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/08 13:22:12 uch Exp $
 
 KDIR=	/sys/arch/evbsh3/include
 INCSDIR= /usr/include/evbsh3
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h bus.h \
+	bswap.h bus.h \
 	cdefs.h coff_machdep.h conf.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
