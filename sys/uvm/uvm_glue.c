@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.37 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.38 2000/06/27 17:29:22 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,8 +82,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

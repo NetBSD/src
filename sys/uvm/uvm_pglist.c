@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.10 2000/05/20 19:54:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.11 2000/06/27 17:29:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

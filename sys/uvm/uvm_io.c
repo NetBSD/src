@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.11 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
  *
@@ -44,8 +44,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

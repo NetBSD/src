@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.78 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.79 2000/06/27 17:29:26 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,8 +84,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#include <vm/vm.h>
 
 #define UVM_MAP
 #include <uvm/uvm.h>

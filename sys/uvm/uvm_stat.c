@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.13 2000/01/11 06:57:50 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.14 2000/06/27 17:29:35 mrg Exp $	 */
 
 /*
  *
@@ -42,8 +42,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

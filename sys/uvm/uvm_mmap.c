@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.42 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.43 2000/06/27 17:29:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -63,8 +63,6 @@
 #include <sys/stat.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
 
 #include <sys/syscallargs.h>
 

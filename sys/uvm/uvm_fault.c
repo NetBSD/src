@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.49 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.50 2000/06/27 17:29:21 mrg Exp $	*/
 
 /*
  *
@@ -47,8 +47,6 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 
