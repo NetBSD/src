@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.529 2003/04/28 08:17:30 haya Exp $
+$NetBSD: pcidevs,v 1.530 2003/04/28 08:29:52 haya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2217,6 +2217,9 @@ product	TI	TSB43AA22A	0x8023	TSB43AA22/A OHCI IEEE 1394 Host Controller
 product	TI	TSB43AA23	0x8024	TSB43AA23 OHCI IEEE 1394 Host Controller
 product TI	TSB43AB21	0x8026	TSB43AA21 OHCI IEEE 1394 Host Controller
 product TI	PCI4451LYNX	0x8027	PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
+product TI	PCI4510LYNX	0x8029	PCI4510 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
+product TI	PCI4520LYNX	0x802A	PCI4520 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
+product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
 product TI	ACX100		0x8400	ACX100 802.11b
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
@@ -2235,9 +2238,23 @@ product TI	PCI2050		0xac28	PCI2050 PCI-PCI Bridge
 product TI	PCI4450YENTA	0xac40	PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
 product TI	PCI4410YENTA	0xac41	PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
 product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI4510YENTA	0xac44	PCI4510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI4520YENTA	0xac46	PCI4520 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI7510YENTA	0xac47	PCI7510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI7610YENTA	0xac48	PCI7610 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI7410YENTA	0xac49	PCI7410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI7610SM	0xac4A	PCI7610 PCI-CardBus Bridge (Smart Card mode)
+product TI	PCI7410SD	0xac4B	PCI7[46]10 PCI-CardBus Bridge (SD/MMC mode)
+product TI	PCI7410MS	0xac4C	PCI7[46]10 PCI-CardBus Bridge (Memory stick mode)
 product TI	PCI1410		0xac50	PCI1410 PCI-CardBus Bridge
 product TI	PCI1420		0xac51	PCI1420 PCI-CardBus Bridge
 product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
+product TI	PCI1421		0xac53	PCI1421 PCI-CardBus Bridge
+product TI	PCI1620		0xac54	PCI1620 PCI-CardBus Bridge
+product TI	PCI1520		0xac55	PCI1520 PCI-CardBus Bridge
+product TI	PCI1510		0xac56	PCI1510 PCI-CardBus Bridge
+product TI	PCI1530		0xac57	PCI1530 PCI-CardBus Bridge
+product TI	PCI1515		0xac58	PCI1515 PCI-CardBus Bridge
 product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
 
 /* Titan Electronics products */
