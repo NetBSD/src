@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.3 1993/11/25 04:03:20 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.4 1993/11/27 19:49:09 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ get_xs(sc_link, flags)
 			return 0;
 		}
 		sc_link->flags |= SDEV_WAITING;
-		sleep(sc_link, PRIBIO);
+		(void) tsleep(sc_link, PRIBIO, "get_xs", 0);
 	}
 	sc_link->opennings--;
 	if (xs = next_free_xs) {
@@ -408,7 +408,7 @@ retry:
 			return retval;	/* will sleep (or not) elsewhere */
 		s = splbio();
 		while (!(xs->flags & ITSDONE))
-			sleep(xs, PRIBIO + 1);
+			tsleep(xs, PRIBIO + 1, "scsi_scsi_cmd", 0);
 		splx(s);
 		/* fall through to check success of completed command */
 	case COMPLETE:		/* Polling command completed ok */
