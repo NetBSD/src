@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.20 1997/02/12 04:31:35 scottr Exp $
+#	$NetBSD: PUMA,v 1.21 1997/05/06 00:31:50 lukem Exp $
 #
 # PUMA
 
@@ -6,7 +6,7 @@ include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-options		DDB
+options 	DDB
 
 # Filesystem
 file-system	FFS
@@ -20,29 +20,29 @@ file-system	FDESC		# user file descriptor filesystem
 file-system	PROCFS		# Process filesystem
 
 # File system options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		NFSSERVER	# Sun NFS-compatible filesystem
+options 	FIFO		# POSIX fifo support (in all filesystems)
+options 	NFSSERVER	# Sun NFS-compatible filesystem
 
-options		LKM		# Loadable Kernel Modules
+options 	LKM		# Loadable Kernel Modules
 
-options		SCSI
+options 	SCSI
 
 # Networking options
-options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-options		COMPAT_42
-options		COMPAT_43
-options		NS
-options		MAPMEM
-options		SYSVSHM,SYSVSEM,SYSVMSG
+options 	INET
+options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP packet forwarding
+options 	COMPAT_42
+options 	COMPAT_43
+options 	NS
+options 	MAPMEM
+options 	SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		M68030
-options		COMPAT_NOMID
-options		COMPAT_SUNOS
-options		COMPAT_09
-options		COMPAT_10
+options 	M68030
+options 	COMPAT_NOMID
+options 	COMPAT_SUNOS
+options 	COMPAT_09
+options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 
@@ -77,4 +77,4 @@ pseudo-device	sl
 # Puma-specific options
 
 # Try linked commands on all targets
-options		TRY_SCSI_LINKED_COMMANDS=0x7f
+options 	TRY_SCSI_LINKED_COMMANDS=0x7f
