@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.3.2.1 1999/11/09 21:54:58 he Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1213,21 +1213,25 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
 		} else
-			if (dataQueueLength < mirrorQueueLength) {
+			if (raidPtr->parity_good == RF_RAID_DIRTY) {
+				/* Trust only the main disk */
 				usemirror = 0;
 			} else
-				if (mirrorQueueLength < dataQueueLength) {
-					usemirror = 1;
-				} else {
-					/* queues are equal length. attempt
-					 * cleverness. */
-					if (SNUM_DIFF(dataQueue->last_deq_sector, data_pda->startSector)
-					    <= SNUM_DIFF(mirrorQueue->last_deq_sector, mirror_pda->startSector)) {
-						usemirror = 0;
-					} else {
+				if (dataQueueLength < mirrorQueueLength) {
+					usemirror = 0;
+				} else
+					if (mirrorQueueLength < dataQueueLength) {
 						usemirror = 1;
+					} else {
+						/* queues are equal length. attempt
+						 * cleverness. */
+						if (SNUM_DIFF(dataQueue->last_deq_sector, data_pda->startSector)
+						    <= SNUM_DIFF(mirrorQueue->last_deq_sector, mirror_pda->startSector)) {
+							usemirror = 0;
+						} else {
+							usemirror = 1;
+						}
 					}
-				}
 
 	if (usemirror) {
 		/* use mirror (parity) disk, swap params 0 & 4 */
