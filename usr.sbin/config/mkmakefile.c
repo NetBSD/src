@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.8 1993/05/24 11:04:45 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.9 1993/06/17 08:21:42 andrew Exp $";
 #endif /* not lint */
 
 /*
@@ -178,7 +178,7 @@ makefile()
 	} else
 		up = &users[machine-1];
 	if (maxfdescs == 0) {
-		printf("maxfdescs not specifid; %d assumed\n", DEF_MAXFDESCS);
+		printf("maxfdescs not specified; %d assumed\n", DEF_MAXFDESCS);
 		maxfdescs = DEF_MAXFDESCS;
 	}
 	if (maxusers == 0) {
