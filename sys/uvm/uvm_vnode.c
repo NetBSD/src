@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.44 2001/02/08 06:43:05 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.45 2001/02/18 19:40:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -299,29 +299,16 @@ uvn_releasepg(pg, nextpgp)
 }
 
 /*
- * NOTE: currently we have to use VOP_READ/VOP_WRITE because they go
- * through the buffer cache and allow I/O in any size.  These VOPs use
- * synchronous i/o.  [vs. VOP_STRATEGY which can be async, but doesn't
- * go through the buffer cache or allow I/O sizes larger than a
- * block].  we will eventually want to change this.
- *
  * issues to consider:
- *   uvm provides the uvm_aiodesc structure for async i/o management.
  * there are two tailq's in the uvm. structure... one for pending async
  * i/o and one for "done" async i/o.   to do an async i/o one puts
- * an aiodesc on the "pending" list (protected by splbio()), starts the
+ * a buf on the "pending" list (protected by splbio()), starts the
  * i/o and returns VM_PAGER_PEND.    when the i/o is done, we expect
  * some sort of "i/o done" function to be called (at splbio(), interrupt
- * time).   this function should remove the aiodesc from the pending list
+ * time).   this function should remove the buf from the pending list
  * and place it on the "done" list and wakeup the daemon.   the daemon
  * will run at normal spl() and will remove all items from the "done"
- * list and call the "aiodone" hook for each done request (see uvm_pager.c).
- * [in the old vm code, this was done by calling the "put" routine with
- * null arguments which made the code harder to read and understand because
- * you had one function ("put") doing two things.]  
- *
- * so the current pager needs: 
- *   int uvn_aiodone(struct uvm_aiodesc *)
+ * list and call the iodone hook for each done request (see uvm_pager.c).
  *
  * => return KERN_SUCCESS (aio finished, free it).  otherwise requeue for
  *	later collection.
@@ -413,6 +400,15 @@ uvn_flush(uobj, start, stop, flags)
 	UVMHIST_LOG(maphist, "uobj %p start 0x%x stop 0x%x flags 0x%x",
 		    uobj, start, stop, flags);
 	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
+
+	if (uobj->uo_npages == 0) {
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
+		    (vp->v_flag & VONWORKLST)) {
+			vp->v_flag &= ~VONWORKLST;
+			LIST_REMOVE(vp, v_synclist);
+		}
+		return TRUE;
+	}
 
 #ifdef DEBUG
 	if (uvn->u_size == VSIZENOTSET) {
