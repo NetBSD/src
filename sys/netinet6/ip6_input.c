@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.10 2000/01/06 02:52:29 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.11 2000/01/06 06:41:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,12 +105,12 @@
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #include <netinet/in_pcb.h>
 #endif
-#include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
 #if !((defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802))
 #include <netinet6/in6_pcb.h>
 #endif
-#include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
@@ -1282,6 +1282,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_use_deprecated);
 	case IPV6CTL_RR_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
+#if defined(__NetBSD__) && !defined(INET6_BINDV6ONLY)
+	case IPV6CTL_BINDV6ONLY:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+				&ip6_bindv6only);
+#endif
 	default:
 		return EOPNOTSUPP;
 	}
