@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.185 2003/03/18 01:41:54 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.186 2003/03/19 15:13:57 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.185 2003/03/18 01:41:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.186 2003/03/19 15:13:57 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -5269,6 +5269,8 @@ artisea_chip_map(sc, pa)
 	 * XXX Configure LEDs to show activity.
 	 */
 
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
