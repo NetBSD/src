@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.110 2004/08/16 16:43:29 mrg Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.111 2005/01/16 08:51:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.110 2004/08/16 16:43:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.111 2005/01/16 08:51:55 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -914,7 +914,7 @@ pccbb_chipinit(sc)
 
 	/* CSC Interrupt: Card detect interrupt on */
 	reg = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
-	reg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
+	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;  /* Card detect intr is turned on. */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, reg);
 	/* reset interrupt */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
@@ -1092,6 +1092,11 @@ pccbbintr(arg)
 			    pci113x_insert, sc);
 			sc->sc_flags |= CBB_INSERTING;
 		}
+	}
+
+	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		sc->sc_pwrcycle++;
+		wakeup(&sc->sc_pwrcycle);
 	}
 
 	return (1);
@@ -1281,10 +1286,10 @@ pccbb_power(ct, command)
 	int command;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
-
 	u_int32_t status, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
+	int on = 0, pwrcycle;
 
 	DPRINTF(("pccbb_power: %s and %s [0x%x]\n",
 	    (command & CARDBUS_VCCMASK) == CARDBUS_VCC_UC ? "CARDBUS_VCC_UC" :
@@ -1307,6 +1312,7 @@ pccbb_power(ct, command)
 	case CARDBUS_VCC_UC:
 		break;
 	case CARDBUS_VCC_5V:
+		on++;
 		if (CB_SOCKET_STAT_5VCARD & status) {	/* check 5 V card */
 			sock_ctrl &= ~CB_SOCKET_CTRL_VCCMASK;
 			sock_ctrl |= CB_SOCKET_CTRL_VCC_5V;
@@ -1317,6 +1323,7 @@ pccbb_power(ct, command)
 		}
 		break;
 	case CARDBUS_VCC_3V:
+		on++;
 		if (CB_SOCKET_STAT_3VCARD & status) {
 			sock_ctrl &= ~CB_SOCKET_CTRL_VCCMASK;
 			sock_ctrl |= CB_SOCKET_CTRL_VCC_3V;
@@ -1349,11 +1356,34 @@ pccbb_power(ct, command)
 		break;
 	}
 
+	pwrcycle = sc->sc_pwrcycle;
+
 #if 0
 	DPRINTF(("sock_ctrl: 0x%x\n", sock_ctrl));
 #endif
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
+
+	if (on) {
+		int s;
+		struct timeval before, after, diff;
+
+		microtime(&before);
+		s = splbio();
+		while (pwrcycle == sc->sc_pwrcycle)
+			tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr", 0);
+		splx(s);
+		microtime(&after);
+		timersub(&after, &before, &diff);
+		printf("%s: wait took %ld.%06lds\n", sc->sc_dev.dv_xname,
+		    diff.tv_sec, diff.tv_usec);
+	}
+
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
+
+	if (on) {
+		if ((status & CB_SOCKET_STAT_PWRCYCLE) == 0)
+			printf("%s: power on failed?\n", sc->sc_dev.dv_xname);
+	}
 
 	if (status & CB_SOCKET_STAT_BADVCC) {	/* bad Vcc request */
 		printf("%s: bad Vcc request. sock_ctrl 0x%x, sock_status 0x%x\n",
@@ -1362,10 +1392,8 @@ pccbb_power(ct, command)
 		sock_ctrl &= ~CB_SOCKET_CTRL_VCCMASK;
 		sock_ctrl &= ~CB_SOCKET_CTRL_VPPMASK;
 		bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
-#if 0
-		bus_space_write_4(memt, memh, CB_SOCKET_FORCE,
-		    CB_SOCKET_FORCE_BADVCC);
-#endif
+		status &= ~CB_SOCKET_STAT_BADVCC;
+		bus_space_write_4(memt, memh, CB_SOCKET_STAT, status);
 		printf("new status 0x%x\n", bus_space_read_4(memt, memh,
 		    CB_SOCKET_STAT));
 		return 0;
@@ -2433,17 +2461,6 @@ pccbb_pcmcia_socket_enable(pch)
 	if (pccbb_power(sc, voltage) == 0)
 		return;
 
-	/*
-	 * Table 4-18 and figure 4-6 of the PC Card specifiction say:
-	 * Vcc Rising Time (Tpr) = 100ms
-	 * RESET Width (Th (Hi-z RESET)) = 1ms
-	 * RESET Width (Tw (RESET)) = 10us
-	 *
-	 * some machines require some more time to be settled
-	 * (100ms is added here).
-	 */
-	pccbb_pcmcia_delay(ph, 200 + 1, "pccen1");
-
 	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
 	Pcic_write(ph, PCIC_INTR, intr);
@@ -3417,7 +3434,7 @@ pccbb_powerhook(why, arg)
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 		/* Card detect intr is turned on. */
-		reg |= CB_SOCKET_MASK_CD;
+		reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
 		bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
 		/* reset interrupt */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);

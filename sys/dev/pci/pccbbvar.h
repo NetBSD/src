@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.21 2004/07/22 16:39:51 mycroft Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.22 2005/01/16 08:51:55 mycroft Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -157,6 +157,7 @@ struct pccbb_softc {
 
 	struct proc *sc_event_thread;
 	SIMPLEQ_HEAD(, pcic_event) sc_events;
+	int sc_pwrcycle;
 
 	/* interrupt handler list on the bridge */
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
