@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotacheck.8,v 1.15 2004/01/05 17:27:17 wiz Exp $
+.\"	$NetBSD: quotacheck.8,v 1.16 2004/01/05 17:43:44 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)quotacheck.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd January 5, 2004
 .Dt QUOTACHECK 8
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl gquv
 .Ar filesystem Ar ...
 .Nm
+.Op Fl l Ar maxparallel
 .Op Fl gquv
 .Fl a
 .Sh DESCRIPTION
@@ -70,6 +71,13 @@ to be read-write with disk quotas.
 By default only the types of quotas listed in
 .Pa /etc/fstab
 are checked.
+.It Fl l Ar maxparallel
+Limit the number of parallel checks to the number specified in
+the following argument.  By default, the limit is the number of
+disks, running one process per disk.  If a smaller limit is
+given, the disks are checked round-robin, one file system at a time.
+This option is only valid with
+.Fl a .
 .It Fl g
 Only group quotas listed in
 .Pa /etc/fstab
