@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1998/06/21 13:46:02 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1998/06/26 14:18:08 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -934,15 +934,26 @@ cpu_reboot(howto, what)
 		vfs_shutdown();		/* sync */
 		resettodr();		/* set wall clock */
 	}
+
 	splhigh();
+
+	if (!cold && (howto & RB_DUMP))
+		dumpsys();
+
+	doshutdownhooks();
+
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#if NADB > 0
+		powermac_powerdown();
+		printf("WARNING: powerdown failed!\n");
+#endif
+	}
+
 	if (howto & RB_HALT) {
-		doshutdownhooks();
 		printf("halted\n\n");
 		ppc_exit();
 	}
-	if (!cold && (howto & RB_DUMP))
-		dumpsys();
-	doshutdownhooks();
+
 	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
