@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strsignal.c,v 1.4 1994/10/10 04:53:01 jtc Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.5 1994/10/19 03:09:00 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -65,7 +65,7 @@ __strsignal(num, buf)
 #ifdef NLS
 		strcpy(buf, catgets(catd, 2, signum, sys_siglist[signum])); 
 #else
-		return(sys_siglist[signum]);
+		return((char *)sys_siglist[signum]);
 #endif
 	} else {
 #ifdef NLS
