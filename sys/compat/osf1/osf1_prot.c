@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.6 2003/03/05 18:47:39 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.6 2003/03/05 18:47:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,22 +86,13 @@ osf1_sys_setgid(l, v, retval)
 {
 	struct osf1_sys_setgid_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
 	gid_t gid = SCARG(uap, gid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    gid != pc->p_rgid && gid != pc->p_svgid)
-		return (error);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = gid;
-	if (error == 0) {
-		pc->p_rgid = gid;
-		pc->p_svgid = gid;
-	}
-	p->p_flag |= P_SUGID;
-	return (0);
+	error = do_setresgid(l, gid, gid, gid, 0);
+	if (error != 0)
+		error = do_setresgid(l, -1, gid, -1, ID_E_EQ_R | ID_E_EQ_S );
+	return error;
 }
 
 /*
@@ -126,22 +117,11 @@ osf1_sys_setuid(l, v, retval)
 {
 	struct osf1_sys_setuid_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
 	uid_t uid = SCARG(uap, uid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    uid != pc->p_ruid && uid != pc->p_svuid)
-		return (error);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = uid;
-	if (error == 0) {
-	        (void)chgproccnt(pc->p_ruid, -1);
-	        (void)chgproccnt(uid, 1);
-		pc->p_ruid = uid;
-		pc->p_svuid = uid;
-	}
-	p->p_flag |= P_SUGID;
-	return (0);
+	error = do_setresuid(l, uid, uid, uid, 0);
+	if (error != 0)
+		error = do_setresuid(l, -1, uid, -1, ID_E_EQ_R | ID_E_EQ_S );
+	return error;
 }
