@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.13 1998/12/24 04:51:59 marc Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.14 1999/10/15 06:07:31 haya Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -111,6 +111,11 @@ pcmcia_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct pcmciabus_attach_args *paa = aux;
+
+	if (strcmp(paa->paa_busname, match->cf_driver->cd_name)) {
+	    return 0;
+	}
 	/* if the autoconfiguration got this far, there's a socket here */
 	return (1);
 }
