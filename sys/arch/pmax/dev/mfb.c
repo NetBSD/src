@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.40 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.40 1999/12/09 00:16:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -148,12 +148,16 @@ static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
 static __inline void  bt431_cursor_off __P((struct fbinfo *fi));
 static __inline void  bt431_cursor_on __P((struct fbinfo *fi));
 
-
 /*
- * old pmax-framebuffer hackery
+ * The default cursor.
  */
-extern u_short defCursor[32];
+static u_short defCursor[32] = {
+/* plane A */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
+	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
+/* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
+              0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 
+};
 
 /*
  * "driver" (member functions) for the raster-console (rcons) pseudo-device.
