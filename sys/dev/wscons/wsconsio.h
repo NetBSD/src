@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.22 2000/01/06 11:38:02 ad Exp $ */
+/* $NetBSD: wsconsio.h,v 1.23 2000/01/07 03:13:23 enami Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -274,8 +274,9 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_PCVT 2
 	int fontwidth, fontheight, stride;
 	int bitorder, byteorder;
-#define WSDISPLAY_FONTORDER_L2R 0
-#define WSDISPLAY_FONTORDER_R2L 1
+#define	WSDISPLAY_FONTORDER_KNOWN 0		/* i.e, no need to convert */
+#define	WSDISPLAY_FONTORDER_L2R 1
+#define	WSDISPLAY_FONTORDER_R2L 2
 	void *data;
 };
 #define WSDISPLAYIO_LDFONT	_IOW('W', 77, struct wsdisplay_font)
