@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.10 2000/05/31 05:50:06 blymn Exp $	*/
+/*	$NetBSD: tset.c,v 1.11 2000/06/07 13:18:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.10 2000/05/31 05:50:06 blymn Exp $");
+__RCSID("$NetBSD: tset.c,v 1.11 2000/06/07 13:18:36 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -175,7 +175,10 @@ main(argc, argv)
 #ifdef TIOCGWINSZ
 		/* Set window size */
 		(void)ioctl(STDERR_FILENO, TIOCGWINSZ, &win);
-		if (win.ws_row == 0 && win.ws_col == 0 &&
+		if (win.ws_row > 0 && win.ws_col > 0) {
+			lines = win.ws_row;
+			columns = win.ws_col;
+		} else if (win.ws_row == 0 && win.ws_col == 0 &&
 		    lines > 0 && columns > 0) {
 			win.ws_row = lines;
 			win.ws_col = columns;
