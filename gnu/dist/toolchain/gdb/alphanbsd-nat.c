@@ -91,6 +91,14 @@ supply_regs (regs)
 }
 
 static void
+unsupply_regs (regs)
+     struct reg *regs;
+{
+  memcpy (&regs->r_regs[0], &registers[REGISTER_BYTE (V0_REGNUM)], 31 * 8);
+  memcpy (&regs->r_regs[31], &registers[REGISTER_BYTE (PC_REGNUM)], 8);
+}
+
+static void
 supply_fpregs (fregs)
      char *fregs;
 {
@@ -102,6 +110,42 @@ supply_fpregs (fregs)
   supply_register (FPCR_REGNUM, fregs + (32 * 8));
 }
 
+static void
+unsupply_fpregs (fregs)
+     struct fpreg *fregs;
+{
+  memcpy (&fregs->fpr_regs[0], &registers[REGISTER_BYTE (FP0_REGNUM)], 31 * 8);
+  memcpy (&fregs->fpr_cr, &registers[REGISTER_BYTE (FPCR_REGNUM)], 8);
+}
+
+void
+nbsd_reg_to_internal (regs)
+     char *regs;
+{
+  supply_regs (regs);
+}
+
+void
+nbsd_fpreg_to_internal (fregs)
+     char *fregs;
+{
+  supply_fpregs (fregs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+     char *regs;
+{
+	unsupply_regs (regs);
+}
+
+void
+nbsd_internal_to_fpreg (fregs)
+     char *fregs;
+{
+	unsupply_fpregs (fregs);
+}
+
 void
 fetch_inferior_registers (regno)
      int regno;
@@ -111,15 +155,15 @@ fetch_inferior_registers (regno)
 
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
-      ptrace (PT_GETREGS, inferior_pid,
-              (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+      ptrace (PT_GETREGS, GET_PROCESS (inferior_pid),
+              (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP (inferior_pid));
       supply_regs ((char *) &inferior_registers);
     }
 
   if (regno == -1 || regno >= FP0_REGNUM)
     {
-      ptrace (PT_GETFPREGS, inferior_pid,
-              (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+      ptrace (PT_GETFPREGS, GET_PROCESS (inferior_pid),
+              (PTRACE_ARG3_TYPE) &inferior_fp_registers, GET_LWP (inferior_pid));
       supply_fpregs ((char *) &inferior_fp_registers);
     }
 
@@ -144,20 +188,20 @@ store_inferior_registers (regno)
       inferior_registers.r_regs[R_ZERO] =
         *(long *) &registers[REGISTER_BYTE (PC_REGNUM)];    
 
-      ptrace (PT_SETREGS, inferior_pid,
-	      (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+      ptrace (PT_SETREGS, GET_PROCESS (inferior_pid),
+	      (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP (inferior_pid));
     }
 
   if (regno == -1 || regno >= FP0_REGNUM)
     {
       memcpy (&inferior_fp_registers.fpr_regs[0],
 	      &registers[REGISTER_BYTE (FP0_REGNUM)],
-	      sizeof(inferior_fp_registers.fpr_regs));
+	      sizeof (inferior_fp_registers.fpr_regs));
       memcpy (&inferior_fp_registers.fpr_cr,
 	      &registers[REGISTER_BYTE (FPCR_REGNUM)],
-	      sizeof(inferior_fp_registers.fpr_cr));
-      ptrace (PT_SETFPREGS, inferior_pid,
-	      (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+	      sizeof (inferior_fp_registers.fpr_cr));
+      ptrace (PT_SETFPREGS, GET_PROCESS (inferior_pid),
+	      (PTRACE_ARG3_TYPE) &inferior_fp_registers, GET_LWP (inferior_pid));
     }
 }
 

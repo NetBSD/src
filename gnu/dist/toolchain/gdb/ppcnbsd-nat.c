@@ -46,6 +46,25 @@ supply_regs (regs)
 }
 
 static void
+unsupply_regs (regs)
+     struct reg *regs;
+{
+  memcpy (regs->fixreg, &registers[REGISTER_BYTE (GP0_REGNUM)],
+	  sizeof (regs->fixreg));
+  memcpy (&regs->pc, &registers[REGISTER_BYTE (PC_REGNUM)],
+	  sizeof (regs->pc));
+  memcpy (&regs->cr, &registers[REGISTER_BYTE (CR_REGNUM)],
+	  sizeof (regs->cr));
+  memcpy (&regs->lr, &registers[REGISTER_BYTE (LR_REGNUM)],
+	  sizeof (regs->lr));
+  memcpy (&regs->ctr, &registers[REGISTER_BYTE (CTR_REGNUM)],
+	  sizeof (regs->ctr));
+  memcpy (&regs->xer, &registers[REGISTER_BYTE (XER_REGNUM)],
+	  sizeof (regs->xer));
+
+}
+
+static void
 supply_fpregs (fregs)
      char *fregs;
 {
@@ -53,6 +72,43 @@ supply_fpregs (fregs)
 
   for (i = 0; i < 32; i++)
     supply_register (FP0_REGNUM + i, fregs + (i * 8));
+}
+
+static void
+unsupply_fpregs (fregs)
+     struct fpreg *fregs;
+{
+  memset (fregs, 0, sizeof (*fregs));
+  memcpy (fregs->fpreg, &registers[REGISTER_BYTE (FP0_REGNUM)], sizeof (fregs->fpreg));
+}
+
+void
+nbsd_reg_to_internal (regs)
+     char *regs;
+{
+  supply_regs (regs);
+}
+
+void
+nbsd_fpreg_to_internal (fregs)
+     char *fregs;
+{
+  supply_fpregs (fregs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+     char *regs;
+{
+  unsupply_regs (regs);
+}
+
+
+void
+nbsd_internal_to_fpreg (regs)
+     char *regs;
+{
+  unsupply_fpregs (regs);
 }
 
 void
@@ -63,11 +119,13 @@ fetch_inferior_registers (regno)
   struct fpreg inffpreg;
 
   /* Integer registers */
-  ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
+  ptrace (PT_GETREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &infreg, 
+      GET_LWP (inferior_pid));
   supply_regs ((char *) &infreg);
 
   /* Floating point registers */
-  ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
+  ptrace (PT_GETFPREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP (inferior_pid));
   supply_fpregs ((char *) &inffpreg);
 }
 
@@ -78,28 +136,14 @@ store_inferior_registers (regno)
   struct reg infreg;
   struct fpreg inffpreg;
 
-  /* Integer registers */
-  memcpy (infreg.fixreg, &registers[REGISTER_BYTE (GP0_REGNUM)],
-	  sizeof (infreg.fixreg));
-  memcpy (&infreg.pc, &registers[REGISTER_BYTE (PC_REGNUM)],
-	  sizeof (infreg.pc));
-  memcpy (&infreg.cr, &registers[REGISTER_BYTE (CR_REGNUM)],
-	  sizeof (infreg.cr));
-  memcpy (&infreg.lr, &registers[REGISTER_BYTE (LR_REGNUM)],
-	  sizeof (infreg.lr));
-  memcpy (&infreg.ctr, &registers[REGISTER_BYTE (CTR_REGNUM)],
-	  sizeof (infreg.ctr));
-  memcpy (&infreg.xer, &registers[REGISTER_BYTE (XER_REGNUM)],
-	  sizeof (infreg.xer));
-
-  ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
+  unsupply_regs ((char *)&infreg);
+  ptrace(PT_SETREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &infreg,
+      GET_LWP (inferior_pid));
 
   /* Floating point registers */
-  memset(&inffpreg, 0, sizeof(inffpreg));
-  memcpy(inffpreg.fpreg, &registers[REGISTER_BYTE (FP0_REGNUM)],
-	 sizeof(inffpreg.fpreg));
-
-  ptrace(PT_SETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
+  unsupply_fpregs (&inffpreg);
+  ptrace (PT_SETFPREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP (inferior_pid));
 }
 
 static void
