@@ -34,13 +34,19 @@
 #include "krb_locl.h"
 #include <klog.h>
 
-RCSID("$Id: logging.c,v 1.1.1.1 2000/06/16 18:45:54 thorpej Exp $");
+RCSID("$Id: logging.c,v 1.2 2000/10/05 14:22:24 sommerfeld Exp $");
 
 struct krb_log_facility {
     char filename[MaxPathLen]; 
     FILE *file; 
     krb_log_func_t func;
 };
+
+static int log_tty(FILE *, const char *, va_list)
+	__attribute__((__format__(__printf__, 2, 0)));
+static int
+log_with_timestamp_and_nl(FILE *file, const char *format, va_list args)
+	__attribute__((__format__(__printf__, 2, 0)));
 
 int
 krb_vlogger(struct krb_log_facility *f, const char *format, va_list args)
@@ -91,7 +97,7 @@ krb_openlog(struct krb_log_facility *f,
 /* ------------------------------------------------------------
    Compatibility functions from warning.c
    ------------------------------------------------------------ */
-
+	
 static int
 log_tty(FILE *f, const char *format,  va_list args)
 {

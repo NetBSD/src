@@ -34,43 +34,47 @@
 #include "krb5_locl.h"
 #include <err.h>
 
-RCSID("$Id: warn.c,v 1.1.1.2 2000/08/02 19:59:44 assar Exp $");
+RCSID("$Id: warn.c,v 1.2 2000/10/05 14:17:12 sommerfeld Exp $");
 
+static krb5_error_code _warnerr(krb5_context context, int do_errtext, 
+	 krb5_error_code code, int level, const char *fmt, va_list ap)
+	__attribute__((__format__(__printf__, 5, 0)));
+	
 static krb5_error_code
 _warnerr(krb5_context context, int do_errtext, 
 	 krb5_error_code code, int level, const char *fmt, va_list ap)
 {
-    char xfmt[7] = "";
-    const char *args[2], **arg;
     char *msg = NULL;
     
-    arg = args;
     if(fmt){
-	strcat(xfmt, "%s");
-	if(do_errtext)
-	    strcat(xfmt, ": ");
 	vasprintf(&msg, fmt, ap);
 	if(msg == NULL)
 	    return ENOMEM;
-	*arg++ = msg;
     }
     if(context && do_errtext){
 	const char *err_msg;
 
-	strcat(xfmt, "%s");
-
 	err_msg = krb5_get_err_text(context, code);
-	if (err_msg)
-	    *arg++ = err_msg;
-	else
-	    *arg++ = "<unknown error>";
+	if (!err_msg)
+	    err_msg = "<unknown error>";
+	if (msg) {
+	    char *nmsg = NULL;
+	    
+	    asprintf(&nmsg, "%s: %s", msg, err_msg);
+
+	    free(msg);
+	    if (nmsg == NULL)
+		return ENOMEM;
+	    msg = nmsg;
+	}
     }
 	
     if(context && context->warn_dest)
-	krb5_log(context, context->warn_dest, level, xfmt, args[0], args[1]);
+	krb5_log(context, context->warn_dest, level, "%s", msg ? msg : "");
     else
-	warnx(xfmt, args[0], args[1]);
-    free(msg);
+	warnx("%s", msg ? msg : "");
+    if (msg)
+	free(msg);
     return 0;
 }
 
