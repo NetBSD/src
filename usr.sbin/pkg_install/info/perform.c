@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.22 1999/03/22 05:02:41 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.22 1999/03/22 05:02:41 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $");
 #endif
 #endif
 
@@ -109,7 +109,7 @@ pkg_do(char *pkg)
 
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			pkg);
-		if (!fexists(log_dir)) {
+		if (!fexists(log_dir) || !isdir(log_dir)) {
 			warnx("can't find package `%s' installed or in a file!", pkg);
 			return 1;
 		}
