@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.7 1995/04/29 06:49:13 jtc Exp $	*/
+/*	$NetBSD: search.h,v 1.8 1995/07/30 22:10:45 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -15,6 +15,13 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
+typedef enum {
+	preorder,
+	postorder,
+	endorder,
+	leaf
+} VISIT;
+
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
 			      int (*)(const void *, const void *)));
@@ -24,6 +31,14 @@ extern void	*lsearch __P((const void *, const void *, size_t *, size_t,
 			      int (*)(const void *, const void *)));
 extern void	 insque __P((void *, void *));
 extern void	 remque __P((void *));
+
+extern void	*tdelete __P((const void *, void **,
+			      int (*)(const void *, const void *)));
+extern void	*tfind __P((const void *, void **,
+			      int (*)(const void *, const void *)));
+extern void	*tsearch __P((const void *, void **, 
+			      int (*)(const void *, const void *)));
+extern void      twalk __P((const void *, void (*)(const void *, VISIT, int)));
 __END_DECLS
 
 #endif
