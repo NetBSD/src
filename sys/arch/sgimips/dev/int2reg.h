@@ -1,4 +1,4 @@
-/*	$NetBSD: int2reg.h,v 1.2 2004/01/18 00:54:55 sekiya Exp $	*/
+/*	$NetBSD: int2reg.h,v 1.3 2004/07/06 23:56:13 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -37,6 +37,7 @@
 #define	INT_IP24		0x1fbd9880
 
 #define INT2_LOCAL0_STATUS	0x00
+#define INT2_LOCAL0_STATUS_FIFO	0x01
 #define INT2_LOCAL0_MASK	0x04
 #define INT2_LOCAL1_STATUS	0x08
 #define INT2_LOCAL1_MASK	0x0c
