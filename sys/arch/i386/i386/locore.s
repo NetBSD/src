@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.11 1993/05/21 11:06:13 cgd Exp $
+ *	$Id: locore.s,v 1.12 1993/05/27 16:44:13 cgd Exp $
  */
 
 
@@ -578,95 +578,10 @@ _bcopy:
 	cld
 	ret
 
-
-/*
- * copyout (src, dst, len)
- *	to is in userspace, so each page must be checked for
- *	user addressability and write protections.
- *	first check all pages, then copy it over.
- */
+#ifdef notdef
 	.globl	_copyout
 	ALIGN32
 _copyout:
-	movl	_curpcb, %eax
-	movl	$cpyflt, PCB_ONFAULT(%eax) # in case we page/protection violate
-	pushl	%esi		/* Note: The same registers must be */
-	pushl	%edi		/* pushed/popped in copyout, copyin and copyflt */
-	pushl	%ebx
-	movl	16(%esp), %esi
-	movl	20(%esp), %edi
-	movl	24(%esp), %ebx
-	orl	%ebx, %ebx
-	jz	done_copyio
-
-			/* compute number of pages */
-	movl	%edi, %ecx
-	andl	$0x0fff, %ecx
-	addl	%ebx, %ecx
-	decl	%ecx
-	shrl	$12, %ecx	/* IDXSHIFT+2 */
-	incl	%ecx
-
-			/* compute PTE offset for start address */
-	movl	%edi, %edx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-
-1:			/* check PTE for each page */
-	movb	_PTmap(%edx), %al
-	andb	$0x07, %al	/* Pages must be VALID + USERACC + WRITABLE */
-	cmpb	$0x07, %al
-	je	2f
-				
-				/* simulate a trap */
-	pushl	%edx
-	pushl	%ecx
-	shll	$IDXSHIFT, %edx
-	pushl	%edx
-	call	_trapwrite	/* XXX trapwrite(addr) */
-	popl	%edx
-	popl	%ecx
-	popl	%edx
-
-	orl	%eax, %eax	/* if not ok, return EFAULT */
-	jnz	cpyflt
-
-2:
-	addl	$4, %edx
-	decl	%ecx
-	jnz	1b		/* check next page */
-
-do_copyio:			/* now copy it over */
-				/* bcopy (%esi, %edi, %ebx) */
-	cld
-	movl	%ebx, %ecx
-	shrl	$2, %ecx
-	rep
-	movsl
-	movb	%bl, %cl
-	andb	$3, %cl
-	rep
-	movsb
-
-done_copyio:
-	popl	%ebx
-	popl	%edi
-	popl	%esi
-	xorl	%eax,%eax
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
-	ret
-
-
-/*
- * copyin(src, dst, len)
- *	src is in user space; check if user-addressable.
- *	This is the same code as copyout, but here the src is checked,
- *	and only for READ protection
- */
-	.globl	_copyin
-	ALIGN32
-_copyin:
 	movl	_curpcb, %eax
 	movl	$cpyflt, PCB_ONFAULT(%eax) # in case we page/protection violate
 	pushl	%esi
@@ -675,55 +590,89 @@ _copyin:
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
 	movl	24(%esp), %ebx
-	orl	%ebx, %ebx
-	jz	done_copyio
 
-			/* compute number of pages */
-	movl	%esi, %ecx
-	andl	$0x0fff, %ecx
-	addl	%ebx, %ecx
-	decl	%ecx
-	shrl	$12, %ecx
-	incl	%ecx
+ 				/* first, check to see if "write fault" */
+1:	movl	%edi, %eax
+#ifdef notyet
+	shrl	$IDXSHIFT, %eax	/* fetch pte associated with address */
+	andb	$0xfc, %al
+	movl	_PTmap(%eax), %eax
 
-			/* compute PTE offset for start address */
-	movl	%esi, %edx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-
-1:			/* check PTE for each page */
-	movb	_PTmap(%edx), %al
-	andb	$0x05, %al	/* Pages must be VALID + USERACC */
-	cmpb	$0x05, %al
-	je	2f
-				
-				/* simulate a trap */
-	pushl	%edx
-	pushl	%ecx
-	shll	$IDXSHIFT, %edx
-	pushl	%edx
-	call	_trapread	/* XXX trapread(addr) */
-	popl	%edx
-	popl	%ecx
+	andb	$7, %al		/* if we are the one case that won't trap... */
+	cmpb	$5, %al
+	jne	2f
+				/* ... then simulate the trap! */
+	pushl	%edi
+	call	_trapwrite	/* trapwrite(addr) */
 	popl	%edx
 
-	orl	%eax, %eax	/* if not ok, return EFAULT */
-	jnz	cpyflt
-
+	cmpl	$0, %eax	/* if not ok, return */
+	jne	cpyflt
+				/* otherwise, continue with reference */
 2:
-	addl	$4, %edx
-	decl	%ecx
-	jnz	1b		/* check next page */
+	movl	%edi, %eax	/* calculate remainder this pass */
+	andl	$0xfffff000, %eax
+	movl	$NBPG, %ecx
+	subl	%eax, %ecx
+	cmpl	%ecx, %ebx
+	jle	3f
+	movl	%ebx, %ecx
+3:	subl	%ecx, %ebx
+	movl	%ecx, %edx
+#else
+	movl	%ebx, %ecx
+	movl	%ebx, %edx
+#endif
 
-	jmp	do_copyio	/* do the copy operation */
+	shrl	$2,%ecx			/* movem */
+	cld
+	rep
+	movsl
+	movl	%edx, %ecx		/* don't depend on ecx here! */
+	andl	$3, %ecx
+	rep
+	movsb
 
+#ifdef notyet
+	cmpl	$0, %ebx
+	jl	1b
+#endif
 
-	/*
-	 * copyflt
-	 * is jumped to either directly from copyin/copyout, or when a
-	 * protection fault is handled while in copyin/out.
-	 * Simply returns EFAULT to the caller of copyin/out.
-	 */
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	movl	_curpcb,%edx
+	movl	%eax,PCB_ONFAULT(%edx)
+	ret
+
+	.globl	_copyin
+	ALIGN32
+_copyin:
+	movl	_curpcb,%eax
+	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
+	pushl	%esi
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%ecx
+	shrl	$2,%ecx
+	cld
+	rep
+	movsl
+	movl	20(%esp),%ecx
+	andl	$3,%ecx
+	rep
+	movsb
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	movl	_curpcb,%edx
+	movl	%eax,PCB_ONFAULT(%edx)
+	ret
+
 	ALIGN32
 cpyflt:
 	popl	%ebx
@@ -733,199 +682,66 @@ cpyflt:
 	movl	$0,PCB_ONFAULT(%edx)
 	movl	$ EFAULT,%eax
 	ret
-
-/*
- * copyoutstr(from, to, maxlen, int *lencopied)
- *	copy a string from from to to, stop when a 0 character is reached.
- *	return ENAMETOOLONG if string is longer than maxlen, and
- *	EFAULT on protection violations. If lencopied is non-zero,
- *	return the actual length in *lencopied.
- */
-	.globl	_copyoutstr
+#else
+	.globl	_copyout
 	ALIGN32
-_copyoutstr:
+_copyout:
+	movl	_curpcb,%eax
+	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
 	pushl	%esi
 	pushl	%edi
-	pushl	%ebx
-	movl	_curpcb, %ecx
-	movl	$cpystrflt, PCB_ONFAULT(%ecx)
-
-	movl	16(%esp), %esi			# %esi = from
-	movl	20(%esp), %edi			# %edi = to
-	movl	24(%esp), %ebx			# %ebx = maxlen
-1:
-	movl	%edi, %edx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %al
-	andb	$7, %al
-	cmpb	$7, %al
-	je	2f
-
-			/* simulate trap */
-	pushl	%edi
-	call	_trapwrite
-	popl	%edi
-	orl	%eax, %eax
-	jnz	cpystrflt
-
-2:			/* copy up to end of this page */
-	movl	%edi, %eax
-	andl	$0x0fff, %eax
-	movl	$NBPG, %ecx
-	subl	%eax, %ecx	/* ecx = NBPG - (src % NBPG) */
-	cmpl	%ecx, %ebx
-	jge	3f
-	movl	%ebx, %ecx	/* ecx = min (ecx, ebx) */
-3:
-	orl	%ecx, %ecx
-	jz	4f
-	decl	%ecx
-	decl	%ebx
-	movb	0(%esi), %al
-	movb	%al, 0(%edi)
-	incl	%esi
-	incl	%edi
-	orb	%al, %al
-	jnz	3b
-
-			/* Success -- 0 byte reached */
-	xorl	%eax, %eax
-	jmp	6f
-
-4:			/* next page */
-	orl	%ebx, %ebx
-	jnz	1b
-			/* ebx is zero -- return ENAMETOOLONG */
-	movl	$ENAMETOOLONG, %eax
-	jmp	6f
-
-
-/*
- * copyinstr(from, to, maxlen, int *lencopied)
- *	copy a string from from to to, stop when a 0 character is reached.
- *	return ENAMETOOLONG if string is longer than maxlen, and
- *	EFAULT on protection violations. If lencopied is non-zero,
- *	return the actual length in *lencopied.
- */
-	.globl	_copyinstr
-	ALIGN32
-_copyinstr:
-	pushl	%esi
-	pushl	%edi
-	pushl	%ebx
-	movl	_curpcb, %ecx
-	movl	$cpystrflt, PCB_ONFAULT(%ecx)
-
-	movl	16(%esp), %esi			# %esi = from
-	movl	20(%esp), %edi			# %edi = to
-	movl	24(%esp), %ebx			# %ebx = maxlen
-1:
-	movl	%esi, %edx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %al
-	andb	$5, %al
-	cmpb	$5, %al
-	je	2f
-
-			/* simulate trap */
-	pushl	%esi
-	call	_trapread
-	popl	%esi
-	orl	%eax, %eax
-	jnz	cpystrflt
-
-2:			/* copy up to end of this page */
-	movl	%esi, %eax
-	andl	$0x0fff, %eax
-	movl	$NBPG, %ecx
-	subl	%eax, %ecx	/* ecx = NBPG - (src % NBPG) */
-	cmpl	%ecx, %ebx
-	jge	3f
-	movl	%ebx, %ecx	/* ecx = min (ecx, ebx) */
-3:
-	orl	%ecx, %ecx
-	jz	4f
-	decl	%ecx
-	decl	%ebx
-	movb	0(%esi), %al
-	movb	%al, 0(%edi)
-	incl	%esi
-	incl	%edi
-	orb	%al, %al
-	jnz	3b
-
-			/* Success -- 0 byte reached */
-	xorl	%eax, %eax
-	jmp	6f
-
-4:			/* next page */
-	orl	%ebx, %ebx
-	jnz	1b
-			/* ebx is zero -- return ENAMETOOLONG */
-	movl	$ENAMETOOLONG, %eax
-	jmp	6f
-
-cpystrflt:
-	movl	$EFAULT, %eax
-6:			/* set *lencopied and return %eax */
-	movl	_curpcb, %ecx
-	movl	$0, PCB_ONFAULT(%ecx)
-	movl	28(%esp), %edx
-	orl	%edx, %edx
-	jz	7f
-	movl	24(%esp), %ecx
-	subl	%ebx, %ecx
-	movl	%ecx, 0(%edx)
-7:
-	popl	%ebx
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%ecx
+	shrl	$2,%ecx
+	cld
+	rep
+	movsl
+	movl	20(%esp),%ecx
+	andl	$3,%ecx
+	rep
+	movsb
 	popl	%edi
 	popl	%esi
+	xorl	%eax,%eax
+	movl	_curpcb,%edx
+	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
-
-/*
- * copystr(from, to, maxlen, int *lencopied)
- */
- 	.globl	_copystr
- 	ALIGN32
- _copystr:
-	pushl	%ebx
-
-	movl	8(%esp), %edx			# %edx = from
-	movl	12(%esp), %ecx			# %ecx = to
-	movl	16(%esp), %ebx			# %ebx = maxlen
-1:
-	orl	%ebx, %ebx
-	jz	4f
-	decl	%ebx
-	movb	0(%edx), %al
-	movb	%al, 0(%ecx)
-	incl	%edx
-	incl	%ecx
-	orb	%al, %al
-	jnz	1b
-
-			/* Success -- 0 byte reached */
-	xorl	%eax, %eax
-	jmp	6f
-
-4:			/* ebx is zero -- return ENAMETOOLONG */
-	movl	$ENAMETOOLONG, %eax
-
-6:			/* set *lencopied and return %eax */
-	movl	20(%esp), %edx
-	orl	%edx, %edx
-	jz	7f
-	movl	16(%esp), %ecx
-	subl	%ebx, %ecx
-	movl	%ecx, 0(%edx)
-7:
-	popl	%ebx
+	.globl	_copyin
+	ALIGN32
+_copyin:
+	movl	_curpcb,%eax
+	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%ecx
+	shrl	$2,%ecx
+	cld
+	rep
+	movsl
+	movl	20(%esp),%ecx
+	andl	$3,%ecx
+	rep
+	movsb
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	movl	_curpcb,%edx
+	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
+	ALIGN32
+cpyflt: popl	%edi
+	popl	%esi
+	movl	_curpcb,%edx
+	movl	$0,PCB_ONFAULT(%edx)
+	movl	$ EFAULT,%eax
+	ret
 
+#endif
 
 	# insb(port,addr,cnt)
 	.globl	_insb
@@ -1129,152 +945,139 @@ _ssdtosd:
 	popl	%ebx
 	ret
 
-
 /*
- * fubyte family: get a byte/word from userspace.
+ * {fu,su},{byte,word}
  */
 	ALIGN32
-	.globl	_fubyte, _fuibyte
-_fubyte:
-_fuibyte:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movzbl	0(%edx), %eax
-	jmp	fu_checkpte
-
-	ALIGN32
-	.globl	_fusword
-_fusword:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movzwl	0(%edx), %eax
-	jmp	fu_checkpte
-
-	ALIGN32
-	.globl	_fuword, _fuiword
-_fuword:
-_fuiword:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movl	0(%edx), %eax
-
-fu_checkpte:
-	shrl	$IDXSHIFT, %edx		/* check PTE of address */
-	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %dl
-	andb	$0x5, %dl		/* Page must be VALID + USERACC */
-	cmpb	$0x5, %dl
-	jne	1f
-	movl	$0, PCB_ONFAULT(%ecx)
+ALTENTRY(fuiword)
+ENTRY(fuword)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	4(%esp),%edx
+	.byte	0x65		# use gs
+	movl	0(%edx),%eax
+	movl	$0,PCB_ONFAULT(%ecx)
 	ret
-
-1:
-	/* should we call trapread here ? */
-fusufault:	
-	xorl	%eax, %eax
-	movl	_curpcb, %ecx
-	movl	%eax, PCB_ONFAULT(%ecx)
+	
+	ALIGN32
+ENTRY(fusword)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp),%edx
+	.byte	0x65		# use gs
+	movzwl	0(%edx),%eax
+	movl	$0,PCB_ONFAULT(%ecx)
+	ret
+	
+	ALIGN32
+ALTENTRY(fuibyte)
+ENTRY(fubyte)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp),%edx
+	.byte	0x65		# use gs
+	movzbl	0(%edx),%eax
+	movl	$0,PCB_ONFAULT(%ecx)
+	ret
+	
+	ALIGN32
+fusufault:
+	movl	_curpcb,%ecx
+	xorl	%eax,%eax
+	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	decl	%eax
 	ret
 
-
-/*
- * subyte family: write a byte/word to userspace.
- * These routines differ only in one instruction (the data move).
- */
 	ALIGN32
-	.globl	_subyte, _suibyte
-_subyte:
-_suibyte:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movl	%edx, %ecx
-	shrl	$IDXSHIFT, %edx
+ALTENTRY(suiword)
+ENTRY(suword)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp),%edx
+	movl	8(%esp),%eax
+
+#ifdef notdef
+	shrl	$IDXSHIFT, %edx	/* fetch pte associated with address */
 	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %dl
-	andb	$0x7, %dl		/* must be VALID + USERACC + WRITE */
-	cmpb	$0x7, %dl
-	je	1f
-					/* simulate a trap */
-	pushl	%ecx
-	call	_trapwrite
+	movl	_PTmap(%edx), %edx
+
+	andb	$7, %dl		/* if we are the one case that won't trap... */
+	cmpb	$5 , %edx
+	jne	1f
+				/* ... then simulate the trap! */
+	pushl	%edi
+	call	_trapwrite	/* trapwrite(addr) */
 	popl	%edx
-	orl	%eax, %eax
-	jnz	fusufault
+	cmpl	$0, %eax	/* if not ok, return */
+	jne	fusufault
+	movl	8(%esp),%eax	/* otherwise, continue with reference */
 1:
-	movl	4(%esp), %edx
-	movl	8(%esp), %eax
-	movb	%al, 0(%edx)
-	xorl	%eax, %eax
-	movl	_curpcb, %ecx
-	movl	%eax, PCB_ONFAULT(%ecx)
+	movl	4(%esp),%edx
+#endif
+	.byte	0x65		# use gs
+	movl	%eax,0(%edx)
+	xorl	%eax,%eax
+	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	ret
+	
+	ALIGN32
+ENTRY(susword)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp),%edx
+	movl	8(%esp),%eax
+#ifdef notdef
+shrl	$IDXSHIFT, %edx	/* calculate pte address */
+andb	$0xfc, %dl
+movl	_PTmap(%edx), %edx
+andb	$7, %edx	/* if we are the one case that won't trap... */
+cmpb	$5 , %edx
+jne	1f
+/* ..., then simulate the trap! */
+	pushl	%edi
+	call	_trapwrite	/* trapwrite(addr) */
+	popl	%edx
+movl	_curpcb, %ecx	# restore trashed registers
+cmpl	$0, %eax	/* if not ok, return */
+jne	fusufault
+movl	8(%esp),%eax
+1: movl	4(%esp),%edx
+#endif
+	.byte	0x65		# use gs
+	movw	%ax,0(%edx)
+	xorl	%eax,%eax
+	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	ret
 
-
-
 	ALIGN32
-	.globl	_susword
-_susword:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movl	%edx, %ecx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %dl
-	andb	$0x7, %dl		/* must be VALID + USERACC + WRITE */
-	cmpb	$0x7, %dl
-	je	1f
-					/* simulate a trap */
-	pushl	%ecx
-	call	_trapwrite
+ALTENTRY(suibyte)
+ENTRY(subyte)
+	movl	_curpcb,%ecx
+	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp),%edx
+	movl	8(%esp),%eax
+#ifdef notdef
+shrl	$IDXSHIFT, %edx	/* calculate pte address */
+andb	$0xfc, %dl
+movl	_PTmap(%edx), %edx
+andb	$7, %edx	/* if we are the one case that won't trap... */
+cmpb	$5 , %edx
+jne	1f
+/* ..., then simulate the trap! */
+	pushl	%edi
+	call	_trapwrite	/* trapwrite(addr) */
 	popl	%edx
-	orl	%eax, %eax
-	jnz	fusufault
-1:
-	movl	4(%esp), %edx
-	movl	8(%esp), %eax
-	movw	%ax, 0(%edx)
-	xorl	%eax, %eax
-	movl	_curpcb, %ecx
-	movl	%eax, PCB_ONFAULT(%ecx)
+movl	_curpcb, %ecx	# restore trashed registers
+cmpl	$0, %eax	/* if not ok, return */
+jne	fusufault
+movl	8(%esp),%eax
+1: movl	4(%esp),%edx
+#endif
+	.byte	0x65		# use gs
+	movb	%eax,0(%edx)
+	xorl	%eax,%eax
+	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	ret
-
-
-
-	ALIGN32
-	.globl	_suword, _suiword
-_suword:
-_suiword:
-	movl	_curpcb, %ecx
-	movl	$fusufault, PCB_ONFAULT(%ecx)
-	movl	4(%esp), %edx
-	movl	%edx, %ecx
-	shrl	$IDXSHIFT, %edx
-	andb	$0xfc, %dl
-	movb	_PTmap(%edx), %dl
-	andb	$0x7, %dl		/* must be VALID + USERACC + WRITE */
-	cmpb	$0x7, %dl
-	je	1f
-					/* simulate a trap */
-	pushl	%ecx
-	call	_trapwrite
-	popl	%edx
-	orl	%eax, %eax
-	jnz	fusufault
-1:
-	movl	4(%esp), %edx
-	movl	8(%esp), %eax
-	movl	%eax, 0(%edx)
-	xorl	%eax, %eax
-	movl	_curpcb, %ecx
-	movl	%eax, PCB_ONFAULT(%ecx)
-	ret
-
 
 	ALIGN32
 	ENTRY(setjmp)

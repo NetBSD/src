@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.18 1993/05/21 12:23:31 cgd Exp $
+ *	$Id: machdep.c,v 1.19 1993/05/27 16:44:20 cgd Exp $
  */
 
 #include "param.h"
@@ -548,7 +548,7 @@ boot(arghowto)
 	splhigh();
 	devtype = major(rootdev);
 	if (howto&RB_HALT) {
-		printf("\nThe operating system has halted. Please press any key to reboot.\n\n");
+		printf("\nThe operating system has halted. Please press any key to reboot.\n\n> ");
 		cngetc();
 	} else {
 		if (howto & RB_DUMP) {
@@ -1117,8 +1117,6 @@ _remque(element)
 
 vmunaccess() {}
 
-#ifdef notanymore
-/* assembler versions now in locore.s */
 /*
  * Below written in C to allow access to debugging code
  */
@@ -1179,4 +1177,3 @@ copystr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
 	if(lencopied) *lencopied = tally;
 	return(ENAMETOOLONG);
 }
-#endif
