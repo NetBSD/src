@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2004/05/31 03:22:45 schmonz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -273,6 +273,8 @@ loaded:
 	*cp = '-';
 	if (boothowto & RB_ASKNAME)
 		*++cp = 'a';
+	if (boothowto & RB_USERCONF)
+		*++cp = 'c';
 	if (boothowto & RB_SINGLE)
 		*++cp = 's';
 	if (boothowto & RB_KDB)
