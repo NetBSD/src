@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.131 2004/04/26 01:31:57 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.132 2004/05/18 16:47:08 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.131 2004/04/26 01:31:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.132 2004/05/18 16:47:08 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1461,9 +1461,9 @@ ip_pcbopts(pcbopt, m)
 			 * Then copy rest of options back
 			 * to close up the deleted entry.
 			 */
-			memmove(&cp[IPOPT_OFFSET+1],
-			    (caddr_t)(&cp[IPOPT_OFFSET+1] + sizeof(struct in_addr)),
-			    (unsigned)cnt + sizeof(struct in_addr));
+			(void)memmove(&cp[IPOPT_OFFSET+1],
+			    &cp[IPOPT_OFFSET+1] + sizeof(struct in_addr),
+			    (unsigned)cnt - (IPOPT_MINOFF - 1));
 			break;
 		}
 	}
