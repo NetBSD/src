@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/11/15 20:36:31 perry Exp $
+#	$NetBSD: Makefile,v 1.9 2000/08/30 23:51:54 jhawk Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -51,7 +51,7 @@ DGEN!=	find -H /sys ! -path "/sys/arch*" -name "*.[chs]" | \
 
 tags::
 	-for i in ${ARCH}; do \
-	    (cd ../arch/$$i && make ${MFLAGS} tags); done
+	    (cd ../arch/$$i && ${MAKE} ${MFLAGS} tags); done
 
 links::
 	rm -f ${SYSTAGS}
@@ -59,4 +59,4 @@ links::
 	-for i in ${DGEN}; do \
 	    (cd ../$$i && { rm -f tags; ln -s ${SYSTAGS} tags; }); done
 	-for i in ${ARCH}; do \
-	    (cd ../arch/$$i && make ${MFLAGS} SYSTAGS=${SYSTAGS} links); done
+	    (cd ../arch/$$i && ${MAKE} ${MFLAGS} SYSTAGS=${SYSTAGS} links); done

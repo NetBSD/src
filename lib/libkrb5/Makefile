@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2000/08/09 02:16:20 thorpej Exp $
+# $NetBSD: Makefile,v 1.7 2000/08/30 23:51:53 jhawk Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/doc
@@ -8,7 +8,7 @@ MKLINT= no
 
 LIB=	krb5
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
 
 krb5_err.c krb5_err.h: krb5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/krb5_err.et

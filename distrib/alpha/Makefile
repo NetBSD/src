@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/03/08 14:28:54 cjs Exp $
+#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:46 jhawk Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -13,10 +13,10 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-CDHDTAPEOBJ != cd instkernel/cd-hd-tape; make print-objdir
-FDSETOBJ != cd instkernel/fdset; make print-objdir
-INSTKERNOBJ != cd instkernel/instkernel; make print-objdir
-GENERICOBJ != cd floppy-GENERIC; make print-objdir
+CDHDTAPEOBJ != cd instkernel/cd-hd-tape; ${MAKE} print-objdir
+FDSETOBJ != cd instkernel/fdset; ${MAKE} print-objdir
+INSTKERNOBJ != cd instkernel/instkernel; ${MAKE} print-objdir
+GENERICOBJ != cd floppy-GENERIC; ${MAKE} print-objdir
 
 release:
 .for i in floppy diskimage instkernel tapeimage

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/07/06 18:16:35 jhawk Exp $
+#	$NetBSD: Makefile,v 1.3 2000/08/30 23:51:49 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -70,7 +70,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in ramdiskbin.conf but is built here.
 ${CBIN}: libhack.o
