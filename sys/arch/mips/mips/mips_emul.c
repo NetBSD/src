@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.4 2003/06/29 11:35:16 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.5 2003/06/29 12:21:32 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -191,7 +191,8 @@ MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
 
 	default:
 		if (!allowNonBranch)
-			panic("MachEmulateBranch: Non-branch instruction");
+			panic("MachEmulateBranch: Non-branch instruction at "
+			    "pc 0x%lx", (long)instpc);
 		nextpc = instpc + 4;
 	}
 	return nextpc;
