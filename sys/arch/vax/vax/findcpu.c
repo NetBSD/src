@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.3 1999/08/07 10:36:48 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.4 1999/08/19 20:50:18 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,6 +77,7 @@ findcpu()
 	case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
 	case VAX_TYP_MARIAH:
+	case VAX_TYP_NVAX:
 	case VAX_TYP_SOC:
 		vax_siedata = *(int *)(0x20040004);	/* SIE address */
 		vax_boardtype |= vax_siedata >> 24;
