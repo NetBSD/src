@@ -72,8 +72,11 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.3 1994/02/22 00:59:34 briggs Exp $
+ *	$Id: pte.h,v 1.4 1994/04/21 23:15:32 briggs Exp $
  */
+
+#ifndef _MACHINE_PTE_H_
+#define _MACHINE_PTE_H_	1
 
 /*
  * Mac hardware segment/page table entries
@@ -93,7 +96,7 @@ struct pte {
 	unsigned int	pg_w:1;		/* is wired */
 	unsigned int	:1;		/* reserved at zero */
 	unsigned int	pg_ci:1;	/* cache inhibit bit */
-	unsigned int	:1;		/* reserved at zero */
+	unsigned int	pg_cm1:1;	/* cache mode, lsb (68040) */
 	unsigned int	pg_m:1;		/* hardware modified (dirty) bit */
 	unsigned int	pg_u:1;		/* hardware used (reference) bit */
 	unsigned int	pg_prot:1;	/* write protect bit */
@@ -112,6 +115,12 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	SG_RO		0x00000004
 #define	SG_RW		0x00000000
 #define	SG_FRAME	0xfffff000
+#define	SG_IMASK1	0xfe000000
+#define	SG_IMASK2	0x01fc0000
+#define	SG_040IMASK	0xfffc0000
+#define	SG_040PMASK	0x0003f000
+#define	SG_ISHIFT1	25
+#define	SG_040ISHIFT	18
 #define	SG_IMASK	0xffc00000
 #define	SG_PMASK	0x003ff000
 #define	SG_ISHIFT	22
@@ -125,11 +134,16 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	PG_W		0x00000100
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
-#define	PG_FRAME	0xfffff000
 #define	PG_CI		0x00000040
+#define	PG_CC		0x00000020
+#define	PG_CIN		0x00000060
+#define	PG_FRAME	0xfffff000
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
+#define MAC_040RTSIZE	512		/* root (level 1) table size */
+#define MAC_040STSIZE	512		/* segment (level 2) table size */
+#define MAC_040PTSIZE	128		/* page (level 3) table size */
 #define MAC_STSIZE	MAC_PAGE_SIZE	/* segment table size */
 #define MAC_MAX_PTSIZE	MAC_SEG_SIZE	/* max size of UPT */
 #define MAC_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
@@ -147,3 +161,5 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
+
+#endif /* _MACHINE_PTE_H_ */
