@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.17 1996/02/05 01:53:55 christos Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.18 1996/05/20 17:40:02 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,7 +69,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -324,6 +326,8 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 */
 			UNLOCK_MAP;
 			cnt.v_pageins++;
+			if (curproc)
+				curproc->p_addr->u_stats.p_ru.ru_majflt++;
 			rv = vm_pager_get(object->pager, m, TRUE);
 
 			/*
