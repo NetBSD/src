@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2001/11/28 23:48:35 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2002/01/02 14:48:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_sdcache_align);
+	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_dcache_align);
 	extent_destroy(ioext);
 	extent_destroy(memext);
 
