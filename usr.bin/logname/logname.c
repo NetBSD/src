@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)logname.c	5.1 (Berkeley) 6/28/91";*/
-static char rcsid[] = "$Id: logname.c,v 1.3 1993/08/28 04:52:12 jtc Exp $";
+static char rcsid[] = "$Id: logname.c,v 1.4 1993/12/31 19:27:18 jtc Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,6 +47,8 @@ static char rcsid[] = "$Id: logname.c,v 1.3 1993/08/28 04:52:12 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void usage __P((void));
 
 main(argc, argv)
 	int argc;
@@ -66,6 +68,7 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: logname\n");
