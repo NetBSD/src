@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.12 2002/10/02 02:09:16 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.13 2002/10/02 03:10:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.12 2002/10/02 02:09:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.13 2002/10/02 03:10:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct aic_isa_softc {
 };
 
 CFATTACH_DECL(aic_isa, sizeof(struct aic_isa_softc),
-	aic_isa_probe, aic_isa_attach, NULL, NULL);
+    aic_isa_probe, aic_isa_attach, NULL, NULL);
 
 
 /*
