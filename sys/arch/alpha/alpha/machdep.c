@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.190 2000/01/19 02:52:16 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2000/01/19 02:52:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2007,14 +2007,14 @@ microtime(tvp)
 	*tvp = time;
 #ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 #endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

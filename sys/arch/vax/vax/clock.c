@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2000/01/17 04:55:26 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.30 2000/01/19 02:52:21 msaitoh Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -84,13 +84,13 @@ microtime(tvp)
 	}
 	i += tick; /* Get current interval count */
 	tvp->tv_usec += i;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1999/07/02 15:33:36 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2000/01/19 02:52:18 msaitoh Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -146,7 +146,7 @@ microtime(tvp)
 	asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.10 1998/08/22 10:55:34 scw Exp $	*/
+/*      $NetBSD: clock.c,v 1.11 2000/01/19 02:52:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -192,13 +192,13 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
