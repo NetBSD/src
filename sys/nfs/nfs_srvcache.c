@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.29 2003/11/20 16:17:25 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.30 2003/11/20 16:18:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.29 2003/11/20 16:17:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.30 2003/11/20 16:18:49 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -92,54 +92,54 @@ static void nfsrv_unlockcache(struct nfsrvcache *rp);
  * Static array that defines which nfs rpc's are nonidempotent
  */
 const int nonidempotent[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
+	FALSE,	/* NULL */
+	FALSE,	/* GETATTR */
+	TRUE,	/* SETATTR */
+	FALSE,	/* LOOKUP */
+	FALSE,	/* ACCESS */
+	FALSE,	/* READLINK */
+	FALSE,	/* READ */
+	TRUE,	/* WRITE */
+	TRUE,	/* CREATE */
+	TRUE,	/* MKDIR */
+	TRUE,	/* SYMLINK */
+	TRUE,	/* MKNOD */
+	TRUE,	/* REMOVE */
+	TRUE,	/* RMDIR */
+	TRUE,	/* RENAME */
+	TRUE,	/* LINK */
+	FALSE,	/* READDIR */
+	FALSE,	/* READDIRPLUS */
+	FALSE,	/* FSSTAT */
+	FALSE,	/* FSINFO */
+	FALSE,	/* PATHCONF */
+	FALSE,	/* COMMIT */
+	FALSE,	/* GETLEASE */
+	FALSE,	/* VACATED */
+	FALSE,	/* EVICTED */
+	FALSE,	/* NOOP */
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
 static const int nfsv2_repstat[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
+	FALSE,	/* NULL */
+	FALSE,	/* GETATTR */
+	FALSE,	/* SETATTR */
+	FALSE,	/* NOOP */
+	FALSE,	/* LOOKUP */
+	FALSE,	/* READLINK */
+	FALSE,	/* READ */
+	FALSE,	/* Obsolete WRITECACHE */
+	FALSE,	/* WRITE */
+	FALSE,	/* CREATE */
+	TRUE,	/* REMOVE */
+	TRUE,	/* RENAME */
+	TRUE,	/* LINK */
+	TRUE,	/* SYMLINK */
+	FALSE,	/* MKDIR */
+	TRUE,	/* RMDIR */
+	FALSE,	/* READDIR */
+	FALSE,	/* STATFS */
 };
 
 /*
