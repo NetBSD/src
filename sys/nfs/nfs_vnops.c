@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.150 2002/05/12 23:04:37 matt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.151 2002/05/19 20:51:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.150 2002/05/12 23:04:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.151 2002/05/19 20:51:04 tls Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2545,9 +2545,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			    nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
-			    vrele(newvp);
-			    if (newvp != vp)
-				VOP_UNLOCK(vp, 0);
+			    if (newvp == vp) 
+				vrele(newvp); 
+			    else 
+				vput(newvp);
 			    newvp = NULLVP;
 			}
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -2584,9 +2585,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		dnp->n_direofoffset = uiop->uio_offset;
 nfsmout:
 	if (newvp != NULLVP) {
-		vrele(newvp);
-		if (newvp != vp)
-			VOP_UNLOCK(vp, 0);
+		if(newvp == vp)
+		    vrele(newvp);
+		else
+		    vput(newvp);
 	}
 	return (error);
 }
