@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.3 2003/08/07 16:27:51 agc Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.3 2003/08/07 16:27:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -57,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.3 2003/08/07 16:27:51 agc Exp $");
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, ulen)
-	vaddr_t va;
-	size_t ulen;
+kgdb_acc(vaddr_t va, size_t ulen)
 {
 
 	/* Just let the trap handler deal with it. */
@@ -71,8 +69,7 @@ kgdb_acc(va, ulen)
  * (gdb only understands unix signal numbers).
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	int sigval;
 
@@ -218,9 +215,7 @@ kgdb_signal(type)
 	KGDB_MOVEREG(63, tf_cr30)	/* uaddr */
 
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 #define	KGDB_MOVEREG(i, f) gdb_regs[i] = regs->f
 	KGDB_MOVEREGS;
@@ -228,9 +223,7 @@ kgdb_getregs(regs, gdb_regs)
 }
 
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 #define	KGDB_MOVEREG(i, f) regs->f = gdb_regs[i]
 	KGDB_MOVEREGS;
@@ -242,8 +235,7 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
 	if (kgdb_dev < 0)
@@ -266,7 +258,7 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 { 
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
