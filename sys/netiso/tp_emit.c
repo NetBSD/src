@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.15 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.16 2003/04/17 12:52:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,7 +76,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.16 2003/04/17 12:52:21 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,8 +350,10 @@ tp_emit(dutype, tpcb, seq, eot, data)
 					x = 0;
 					ADDOPTION(TPP_alt_class, hdr, 1, x);
 				}
+#if 0
 				if (hdr->tpdu_li > MLEN)
 					panic("tp_emit CR/CC");
+#endif
 			}
 			break;
 
@@ -721,11 +723,16 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		}
 
 	}
-	ASSERT(((int) hdr->tpdu_li > 0) && ((int) hdr->tpdu_li < MLEN));
+	ASSERT((int) hdr->tpdu_li != 0);
+#if 0
+ 	ASSERT((int) hdr->tpdu_li < MLEN);
+#endif
 
 	m->m_next = data;
 
+#if 0
 	ASSERT(hdr->tpdu_li < MLEN);	/* leave this in */
+#endif
 	ASSERT(hdr->tpdu_li != 0);	/* leave this in */
 
 	m->m_len = hdr->tpdu_li;
@@ -959,7 +966,9 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 			ADDOPTION(TPP_checksum, hdr, 2, csum_offset /* dummy argument */ );
 			csum_offset = hdr->tpdu_li - 2;
 		}
+#if 0
 	ASSERT(hdr->tpdu_li < MLEN);
+#endif
 
 	if (dutype == ER_TPDU_type) {
 		/* copy the errant tpdu into another 'variable part' */
