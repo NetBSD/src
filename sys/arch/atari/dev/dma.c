@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.8 1996/06/18 11:10:11 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.9 1996/07/05 19:22:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -212,6 +212,7 @@ int	sr;	/* sr at time of interrupt */
 		else {
 			spl1();
 			(*int_func)(softc);
+			spl0();
 		}
 	}
 	else printf("DMA interrupt discarded\n");
