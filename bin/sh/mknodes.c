@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.18 2000/07/27 04:06:49 cgd Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.19 2002/05/25 23:09:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mknodes.c,v 1.18 2000/07/27 04:06:49 cgd Exp $";
+    "$NetBSD: mknodes.c,v 1.19 2002/05/25 23:09:06 wiz Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,7 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 
 #define MAXTYPES 50		/* max number of node types */
 #define MAXFIELDS 20		/* max fields in a structure */
@@ -270,13 +265,8 @@ output(file)
 	fputs("\tstruct nodelist *next;\n", hfile);
 	fputs("\tunion node *n;\n", hfile);
 	fputs("};\n\n\n", hfile);
-	fputs("#ifdef __STDC__\n", hfile);
 	fputs("union node *copyfunc(union node *);\n", hfile);
 	fputs("void freefunc(union node *);\n", hfile);
-	fputs("#else\n", hfile);
-	fputs("union node *copyfunc();\n", hfile);
-	fputs("void freefunc();\n", hfile);
-	fputs("#endif\n", hfile);
 
 	fputs(writer, cfile);
 	while (fgets(line, sizeof line, patfile) != NULL) {
@@ -451,21 +441,11 @@ readline()
 
 
 static void
-#ifdef __STDC__
 error(const char *msg, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
 {
 	va_list va;
-#ifdef __STDC__
+
 	va_start(va, msg);
-#else
-	char *msg;
-	va_start(va);
-	msg = va_arg(va, char *);
-#endif
 
 	(void) fprintf(stderr, "line %d: ", linno);
 	(void) vfprintf(stderr, msg, va);
