@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.145 2002/12/31 15:10:28 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.146 2003/01/01 15:51:00 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -295,6 +295,7 @@ cpu_mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
+	struct { u_int32_t va; u_int32_t size; } *mbprop = NULL;
 	struct openprom_addr *rrp = NULL;
 	struct cpu_info *cpi;
 	int mid, node;
@@ -309,9 +310,20 @@ cpu_mainbus_attach(parent, self, aux)
 	/*
 	 * Map CPU mailbox if available
 	 */
-	if (node != 0 && (error = PROM_getprop(node, "mailbox",
+	if (node != 0 && (error = PROM_getprop(node, "mailbox-virtual",
+					sizeof(*mbprop),
+					&n, (void **)&mbprop)) == 0) {
+		cpi->mailbox = mbprop->va;
+		free(mbprop, M_DEVBUF);
+	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
-					 &n, (void **)&rrp)) == 0) {
+					&n, (void **)&rrp)) == 0) {
+		if (rrp[0].oa_space != 0)
+			panic("%s: mailbox in I/O space", self->dv_xname);
+
+		/* XXX - map cached/uncached? If cached, deal with
+		 *	 cache congruency!
+		 */
 		if (bus_space_map(ma->ma_bustag,
 				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 				rrp[0].oa_size,
@@ -1587,6 +1599,8 @@ viking_hotfix(sc)
 	} else {
 		sc->cache_flush = viking_cache_flush;
 	}
+	if (cpus != NULL && cpus[0]->mxcc != sc->mxcc)
+		panic("[MXCC module mismatch]");
 
 	/* XXX! */
 	if (sc->mxcc)
