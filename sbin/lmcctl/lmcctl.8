@@ -1,4 +1,4 @@
-.\"     $NetBSD: lmcctl.8,v 1.1 1999/04/16 23:40:52 explorer Exp $
+.\"     $NetBSD: lmcctl.8,v 1.2 1999/04/16 23:56:22 explorer Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -38,7 +38,7 @@
 .Os NetBSD
 .Sh NAME
 .Nm lmcctl
-.Nd configuration utility for Lan Media high speed serial, HSSI, and DS3 cards.
+.Nd configuration utility for Lan Media SSI, HSSI, and DS3 cards.
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl i Ar interface
@@ -46,8 +46,10 @@
 .Op Fl cCeEkKsSoO
 .Sh DESCRIPTION
 .Nm ""
-is the user-land control program for the Lan Media high speed serial,
-HSSI, and DS3 network interfaces.
+is the user-land control program for the Lan Media SSI,
+HSSI, and DS3 network interfaces.  The SSI is the LMC1000, and runs at
+various speeds up to 10Mbps.  The DS3 is the LMC5245 and runs at a speed of
+45Mbps.  The HSSI is the LMC5200, and has no internal clock generator.
 .Nm ""
 is used to configure various media and protocol options dealing with HDLC
 serial links and hardware configurations.
