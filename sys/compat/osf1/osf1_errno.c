@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_errno.c,v 1.1 1999/04/23 05:37:41 cgd Exp $ */
+/* $NetBSD: osf1_errno.c,v 1.2 1999/04/24 06:58:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <compat/osf1/osf1_errno.h>
+#include <compat/osf1/osf1.h>
 
 /*
  * This table is used to translate NetBSD errnos to OSF/1 errnos
