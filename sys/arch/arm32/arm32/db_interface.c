@@ -1,8 +1,4 @@
-<<<<<<< db_interface.c
-/*	$NetBSD: db_interface.c,v 1.26.2.2 1999/04/12 21:27:04 pk Exp $	*/
-=======
-/*	$NetBSD: db_interface.c,v 1.26.2.2 1999/04/12 21:27:04 pk Exp $	*/
->>>>>>> 1.28
+/*	$NetBSD: db_interface.c,v 1.26.2.3 1999/04/12 21:32:47 pk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -17,11 +13,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
-<<<<<<< db_interface.c
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
-=======
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
->>>>>>> 1.28
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 

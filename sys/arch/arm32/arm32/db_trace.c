@@ -1,8 +1,4 @@
-<<<<<<< db_trace.c
-/*	$NetBSD: db_trace.c,v 1.9.2.2 1999/04/12 21:27:04 pk Exp $	*/
-=======
-/*	$NetBSD: db_trace.c,v 1.9.2.2 1999/04/12 21:27:04 pk Exp $	*/
->>>>>>> 1.11
+/*	$NetBSD: db_trace.c,v 1.9.2.3 1999/04/12 21:31:33 pk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -17,11 +13,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
-<<<<<<< db_trace.c
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
-=======
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
->>>>>>> 1.11
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
