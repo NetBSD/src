@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.15.2.4 2004/11/02 07:50:22 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.15.2.5 2004/11/28 11:30:03 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.15.2.4 2004/11/02 07:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.15.2.5 2004/11/28 11:30:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,11 +661,11 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
+fdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd;
 	const struct fd_type *type;
@@ -691,11 +691,11 @@ fdopen(dev, flags, mode, p)
 }
 
 int
-fdclose(dev, flags, mode, p)
+fdclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 
@@ -1110,12 +1110,12 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
+fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;
