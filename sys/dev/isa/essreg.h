@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.7 1999/02/15 04:54:35 hubertf Exp $	*/
+/*	$NetBSD: essreg.h,v 1.8 1999/03/02 20:36:51 nathanw Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.7 $ (SHARK) $Date: 1999/02/15 04:54:35 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.8 $ (SHARK) $Date: 1999/03/02 20:36:51 $
 **
 **++
 **
@@ -125,8 +125,12 @@
 #define   ESS_DRQ_CTRL_PU	0x10
 #define   ESS_DRQ_CTRL_EXT	0x40
 #define ESS_XCMD_VOLIN_CTRL	0xB4	/* stereo input volume control */
+#define ESS_1788_XCMD_AUDIO_CTRL0	0xB6
+#define   ESS_CTRL0_SIGNED	0x00  
+#define   ESS_CTRL0_UNSIGNED	0x80	
 #define ESS_XCMD_AUDIO1_CTRL1	0xB7	/* */
 #define	  ESS_AUDIO1_CTRL1_FIFO_CONNECT	0x80	/* 1=connected */
+#define	  ESS_AUDIO1_CTRL1_FIFO_MONO    0x40    /* 0=stereo/1=mono */
 #define	  ESS_AUDIO1_CTRL1_FIFO_SIGNED	0x20	/* 0=unsigned/1=signed */
 #define	  ESS_AUDIO1_CTRL1_FIFO_STEREO	0x08	/* 0=mono/1=stereo */
 #define	  ESS_AUDIO1_CTRL1_FIFO_SIZE	0x04	/* 0=8-bit/1=16-bit */
@@ -225,12 +229,19 @@
 #define ESS_DSP_READ		0x0A
 #define ESS_DSP_WRITE		0x0C
 
-#define	ESS_DSP_RW_STATUS   	0x0C
 #define ESS_CLEAR_INTR		0x0E
 
-#define	ESS_DSP_READ_STATUS   	0x0C
-#define	ESS_DSP_READ_MASK      	0x40
-#define	ESS_DSP_READ_READY     	0x40
+#define ESS_DSP_READ_STATUS	0x0C
+#define   ESS_DSP_READ_READY	0x40
+#define   ESS_DSP_READ_FULL	0x20 /* FIFO full */
+#define   ESS_DSP_READ_EMPTY	0x10 /* FIFO empty */
+#define   ESS_DSP_READ_HALF	0x08 /* FIFO half-empty */
+#define   ESS_DSP_READ_IRQ	0x04 /* IRQ generated */
+#define   ESS_DSP_READ_HALF_IRQ	0x02 /*      " from half-empty flag change */
+#define   ESS_DSP_READ_OFLOW	0x01 /*      " from DMA counter overflow */
+#define   ESS_DSP_READ_ANYIRQ	(ESS_DSP_READ_IRQ | \
+				 ESS_DSP_READ_HALF_IRQ | \
+				 ESS_DSP_READ_OFLOW)
 
 #define	ESS_DSP_WRITE_STATUS	0x0C
 #define	ESS_DSP_WRITE_MASK	0x80
@@ -245,6 +256,23 @@
 /*
  * ESS Mixer registers
  */
+#define ESS_MREG_VOLUME_VOICE	0x14
+#define ESS_MREG_VOLUME_MIC	0x1A
+#define ESS_MREG_ADC_SOURCE	0x1C
+#define   ESS_SOURCE_MIC	0x00
+#define   ESS_SOURCE_CD		0x02
+#define   ESS_SOURCE_LINE	0x06
+#define   ESS_SOURCE_MIXER	0x07
+#define ESS_MREG_VOLUME_MASTER	0x32
+#define ESS_MREG_VOLUME_SYNTH	0x36
+#define ESS_MREG_VOLUME_CD	0x38
+#define ESS_MREG_VOLUME_AUXB	0x3A
+#define ESS_MREG_VOLUME_PCSPKR	0x3C
+#define ESS_MREG_VOLUME_LINE	0x3E
+#define ESS_MREG_VOLUME_LEFT	0x60
+#define ESS_MREG_VOLUME_RIGHT	0x62
+#define   ESS_VOLUME_MUTE	0x40
+#define ESS_MREG_VOLUME_CTRL	0x64
 #define ESS_MREG_SAMPLE_RATE	0x70	/* sample rate for Audio2 channel */
 #define ESS_MREG_FILTER_CLOCK	0x72	/* filter clock for Audio2 channel */
 #define ESS_MREG_XFER_COUNTLO	0x74	/* low-byte of DMA transfer size */

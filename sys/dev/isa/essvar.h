@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.11 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: essvar.h,v 1.12 1999/03/02 20:36:51 nathanw Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.11 $ (SHARK) $Date: 1999/02/19 16:15:06 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.12 $ (SHARK) $Date: 1999/03/02 20:36:51 $
 **
 **++
 **
@@ -74,21 +74,25 @@
 #define ESS_PCSPEAKER_VOL	8
 #define ESS_OUTPUT_CLASS	9
 
-#define ESS_DAC_REC_VOL		10
-#define ESS_MIC_REC_VOL		11
-#define ESS_LINE_REC_VOL	12
-#define ESS_SYNTH_REC_VOL	13
-#define ESS_CD_REC_VOL		14
-#define ESS_AUXB_REC_VOL	15
-#define ESS_MIC_PREAMP		16
-#define ESS_RECORD_VOL		17
-#define	ESS_RECORD_SOURCE	18
-#define ESS_RECORD_CLASS	19
+#define ESS_RECORD_MONITOR	10
+#define ESS_MONITOR_CLASS	11
 
-#define ESS_RECORD_MONITOR	20
-#define ESS_MONITOR_CLASS	21
+#define ESS_RECORD_VOL		12
+#define	ESS_RECORD_SOURCE	13
+#define ESS_RECORD_CLASS	14
 
-#define ESS_NDEVS		22
+#define ESS_1788_NDEVS		15
+
+#define ESS_DAC_REC_VOL		15
+#define ESS_MIC_REC_VOL		16
+#define ESS_LINE_REC_VOL	17
+#define ESS_SYNTH_REC_VOL	18
+#define ESS_CD_REC_VOL		19
+#define ESS_AUXB_REC_VOL	20
+#define ESS_MIC_PREAMP		21
+
+#define ESS_1888_NDEVS		22
+#define ESS_MAX_NDEVS		22
 
 struct ess_audio_channel
 {
@@ -116,7 +120,8 @@ struct ess_softc
 
 	u_short	sc_open;		/* reference count of open calls */
 
-	u_char	gain[ESS_NDEVS][2];	/* kept in input levels */
+	int ndevs; 
+	u_char	gain[ESS_MAX_NDEVS][2];	/* kept in input levels */
 #define ESS_LEFT 0
 #define ESS_RIGHT 1
 	
@@ -134,6 +139,7 @@ struct ess_softc
 #define ESS_1888	1
 #define ESS_1887	2
 #define ESS_888		3
+#define ESS_1788	4
 
 	u_int	sc_version;		/* Legacy ES688/ES1688 ID */
 };
