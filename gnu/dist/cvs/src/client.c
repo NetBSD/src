@@ -3974,16 +3974,11 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostname)
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	int fd;
+	FILE *fp = stdio_buffer_get_file(lto_server);
+	int fd = fp ? fileno(fp) : -1;
 	struct stat s;
 
-	if ((intptr_t) lto_server->closure > INT_MAX)
-	{
-	    error (1, 0, "file descriptor out of range");
-	}
-	fd = (intptr_t)lto_server->closure;
-
-	if (fstat (fd, &s) < 0 || !S_ISSOCK(s.st_mode))
+	if ((fd < 0) || (fstat (fd, &s) < 0) || !S_ISSOCK(s.st_mode))
 	{
 	    error (1, 0, "gserver currently only enabled for socket connections");
 	}
