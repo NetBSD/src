@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 1997/03/24 19:54:35 perry Exp $
+#	$NetBSD: Makefile,v 1.15 1997/04/16 16:49:28 christos Exp $
 
-PROG=	ld
-SRCS=	ld.c symbol.c lib.c shlib.c warnings.c etc.c rrs.c xbits.c md.c
-CFLAGS += -g -I$(.CURDIR) -I$(.CURDIR)/$(MACHINE_ARCH)
-
-LDADD+=	-lgnumalloc
-DPADD+= /usr/lib/libgnumalloc.a
-
-SUBDIR=	ldconfig ldd
-
-.PATH: $(.CURDIR)/$(MACHINE_ARCH)
+SUBDIR=	ld ldconfig ldd
 
 .include <bsd.own.mk>	# for NOPIC definition
 
