@@ -1,6 +1,10 @@
 #!/bin/sh
 #
-#	$NetBSD: ndc.sh,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $
+#	$NetBSD: ndc.sh,v 1.2 1999/02/17 13:36:00 lukem Exp $
+
+if [ -f /etc/rc.conf ]; then
+	. /etc/rc.conf
+fi
 
 USAGE='echo \
 	"usage: $0 \
@@ -51,7 +55,7 @@ do
 			continue
 		}
 		rm -f $PIDFILE
-		%NAMED% && {
+		%NAMED% $named_flags && {
 			sleep 5
 			echo Name Server Started
 		}
@@ -72,7 +76,7 @@ do
 			kill $PID && sleep 5
 		}
 		rm -f $PIDFILE
-		%NAMED% && {
+		%NAMED% $named_flags && {
 			sleep 5
 			echo Name Server Restarted
 		}
