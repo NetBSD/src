@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2000/07/17 14:08:43 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2000/07/17 17:06:00 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4261,7 +4261,7 @@ sparc_intr_retry:
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "sparc_interrupt:  calling %lx(%lx) sp = %p\r\n")
 	mov	%i0, %o2		! arg
-	mov	%g0, %o3		! sp
+	mov	%i6, %o3		! sp
 	GLOBTOLOC
 	call	prom_printf
 	 mov	%i4, %o1		! fun
@@ -4449,12 +4449,12 @@ sparc_intr_retry:
 	/* all done: restore registers and go return */
 #endif
 intrcmplt:
-#ifdef INTERRUPT_VECTOR
-	rd	SOFTINT, %l7			! %l5 contains #intr handled.
-	mov	1, %l3				! Ack softint
-	sll	%l3, %l6, %l3			! Generate IRQ mask
-	btst	%l3, %l7			! leave mask in %l3 for retry code
-	bnz,pn	%icc, sparc_interrupt_retry
+#ifdef VECTORED_INTERRUPTS
+	rd	SOFTINT, %l7		! %l5 contains #intr handled.
+	mov	1, %l3			! Ack softint
+	sll	%l3, %l6, %l3		! Generate IRQ mask
+	btst	%l3, %l7		! leave mask in %l3 for retry code
+	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5
 #endif
 #ifdef DEBUG
