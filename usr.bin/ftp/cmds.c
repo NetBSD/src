@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.78 1999/11/09 22:03:49 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.79 1999/11/11 02:53:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.78 1999/11/09 22:03:49 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.79 1999/11/11 02:53:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1142,8 +1142,10 @@ cd(argc, argv)
 			    ttyout);
 		r = command("XCWD %s", argv[1]);
 	}
-	if (r == COMPLETE)
+	if (r == COMPLETE) {
 		dirchange = 1;
+		updateremotepwd();
+	}
 }
 
 /*
@@ -2352,8 +2354,10 @@ cdup(argc, argv)
 			    ttyout);
 		r = command("XCUP");
 	}
-	if (r == COMPLETE)
+	if (r == COMPLETE) {
 		dirchange = 1;
+		updateremotepwd();
+	}
 }
 
 /*

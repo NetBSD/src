@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.48 1999/10/24 12:31:38 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.49 1999/11/11 02:53:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -242,6 +242,7 @@ int	strsuftoi __P((const char *));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
 void	unsetoption __P((int, char **));
+void	updateremotepwd __P((void));
 void	usage __P((void));
 void	user __P((int, char **));
 int	xconnect __P((int, const struct sockaddr *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.80 1999/11/09 07:26:50 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.81 1999/11/11 02:53:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.80 1999/11/09 07:26:50 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.81 1999/11/11 02:53:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -224,6 +224,7 @@ setpeer(argc, argv)
 "Remember to set tenex mode when transferring binary files from this machine.\n",
 				    ttyout);
 		}
+		updateremotepwd();
 		verbose = overbose;
 	}
 }
@@ -251,6 +252,8 @@ cleanuppeer()
 		anonftp = 0;
 	data = -1;
 	epsv4bad = 0;
+	if (username)
+		free(username);
 	if (!proxy)
 		macnum = 0;
 }
@@ -406,6 +409,7 @@ ftp_login(host, user, pass)
 		goto cleanup_ftp_login;
 	}
 	rval = 1;
+	username = xstrdup(user);
 	if (proxy)
 		goto cleanup_ftp_login;
 
@@ -656,6 +660,45 @@ remotemodtime(file, noisy)
 	if (rtime == -1)
 		code = ocode;
 	return (rtime);
+}
+
+/*
+ * update global `remotepwd', which contains the state of the remote cwd
+ */
+void
+updateremotepwd()
+{
+	int	 overbose, ocode, i;
+	char	*cp;
+
+	overbose = verbose;
+	ocode = code;
+	if (debug == 0)
+		verbose = -1;
+	if (command("PWD") != COMPLETE)
+		goto badremotepwd;
+	cp = strchr(reply_string, ' ');
+	if (cp == NULL || cp[0] == '\0' || cp[1] != '"')
+		goto badremotepwd;
+	cp += 2;
+	for (i = 0; *cp && i < sizeof(remotepwd) - 1; i++, cp++) {
+		if (cp[0] == '"') {
+			if (cp[1] == '"')
+				cp++;
+			else
+				break;
+		}
+		remotepwd[i] = *cp;
+	}
+	remotepwd[i] = '\0';
+	if (debug)
+		fprintf(ttyout, "got remotepwd as `%s'\n", remotepwd);
+	goto cleanupremotepwd;
+ badremotepwd:
+	remotepwd[0]='\0';
+ cleanupremotepwd:
+	verbose = overbose;
+	code = ocode;
 }
 
 #ifndef	NO_PROGRESS
