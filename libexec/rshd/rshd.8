@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.5 1997/10/07 10:37:32 mrg Exp $
+.\"	$NetBSD: rshd.8,v 1.6 1997/10/20 02:53:32 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nm rshd
 .Nd remote shell server
 .Sh SYNOPSIS
-.Nm rshd
+.Nm
 .Op Fl alnL
 .Sh DESCRIPTION
 The
-.Nm rshd
+.Nm
 server
 is the server for the 
 .Xr rcmd 3
@@ -54,7 +54,7 @@ program.  The server provides remote execution facilities
 with authentication based on privileged port numbers from trusted hosts.
 .Pp
 The
-.Nm rshd
+.Nm
 server
 listens for service requests at the port indicated in
 the ``cmd'' service specification; see
@@ -116,7 +116,7 @@ shell is retrieved on the initial socket.  The length of
 the command is limited by the upper bound on the size of
 the system's argument list.  
 .It
-.Nm Rshd
+.Nm
 then validates the user using
 .Xr ruserok 3 ,
 which uses the file
@@ -140,7 +140,7 @@ and the command line is passed to the normal login
 shell of the user.  The
 shell inherits the network connections established
 by
-.Nm rshd .
+.Nm "" .
 .El
 .Pp
 Transport-level keepalive messages are enabled unless the
