@@ -1,5 +1,6 @@
-# $NetBSD: obsolete.mi,v 1.29 2000/10/20 06:10:48 simonb Exp $
+# $NetBSD: obsolete.mi,v 1.30 2000/11/08 16:28:01 itojun Exp $
 /usr/bin/genclass
+/usr/bin/gettextize
 /usr/include/bfd
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
