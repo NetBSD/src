@@ -1,4 +1,37 @@
-/*	$NetBSD: rlogind.c,v 1.19 1999/12/31 08:01:26 itojun Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.20 2000/01/31 14:20:13 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by WIDE Project and
+ *    its contributors.
+ * 4. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.19 1999/12/31 08:01:26 itojun Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.20 2000/01/31 14:20:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,15 +128,17 @@ int	log_success = 0;
 
 struct	passwd *pwd;
 
-void	doit __P((int, struct sockaddr_in *));
+void	doit __P((int, struct sockaddr *));
 int	control __P((int, char *, int));
 void	protocol __P((int, int));
 void	cleanup __P((int));
 void	fatal __P((int, char *, int));
-int	do_rlogin __P((struct sockaddr_in *, char *));
+int	do_rlogin __P((struct sockaddr *, char *));
 void	getstr __P((char *, int, char *));
 void	setup_term __P((int));
-int	do_krb_login __P((struct sockaddr_in *));
+#if 0
+int	do_krb_login __P((union sockunion *));
+#endif
 void	usage __P((void));
 int	local_domain __P((char *));
 char	*topdomain __P((char *));
@@ -115,7 +150,7 @@ main(argc, argv)
 	char *argv[];
 {
 	extern int __check_rhosts_file;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int ch, fromlen, on;
 
 	openlog("rlogind", LOG_PID, LOG_AUTH);
@@ -143,7 +178,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	fromlen = sizeof (from);
+	fromlen = sizeof (from); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR,"Can't get peer name of remote host: %m");
 		fatal(STDERR_FILENO, "Can't get peer name of remote host", 1);
@@ -152,10 +187,14 @@ main(argc, argv)
 	if (keepalive &&
 	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
-	on = IPTOS_LOWDELAY;
-	if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
-		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
-	doit(0, &from);
+#if defined(IP_TOS)
+	if (((struct sockaddr *)&from)->sa_family == AF_INET) {
+		on = IPTOS_LOWDELAY;
+		if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
+			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+	}
+#endif
+	doit(0, (struct sockaddr *)&from);
 	/* NOTREACHED */
 #ifdef __GNUC__
 	exit(0);
@@ -173,15 +212,26 @@ struct winsize win = { 0, 0, 0, 0 };
 void
 doit(f, fromp)
 	int f;
-	struct sockaddr_in *fromp;
+	struct sockaddr *fromp;
 {
 	int master, pid, on = 1;
 	int authenticated = 0;
-	struct hostent *hp;
 	char utmphost[UT_HOSTSIZE + 1];
 	char *hostname;
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 	char c;
+	char naddr[NI_MAXHOST];
+	char saddr[NI_MAXHOST];
+	char raddr[NI_MAXHOST];
+	int af = fromp->sa_family;
+	u_int16_t *portp;
+	struct addrinfo hints, *res, *res0;
+	int gaierror;
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+#endif
 
 	alarm(60);
 	read(f, &c, 1);
@@ -190,48 +240,79 @@ doit(f, fromp)
 		exit(1);
 
 	alarm(0);
-	fromp->sin_port = ntohs((in_port_t)fromp->sin_port);
-	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
-	    fromp->sin_family);
-	if (hp) {
+	switch (af) {
+	case AF_INET:
+		portp = &((struct sockaddr_in *)fromp)->sin_port;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		portp = &((struct sockaddr_in6 *)fromp)->sin6_port;
+		break;
+#endif
+	default:
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
+		exit(1);
+	}
+	if (getnameinfo((struct sockaddr *)fromp, fromp->sa_len,
+		    naddr, sizeof(naddr), NULL, 0, niflags) != 0) {
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
+		exit(1);
+	}
+
+	if (getnameinfo((struct sockaddr *)fromp, fromp->sa_len,
+		    saddr, sizeof(saddr), NULL, 0, NI_NAMEREQD) == 0) {
 		/*
 		 * If name returned by gethostbyaddr is in our domain,
 		 * attempt to verify that we haven't been fooled by someone
 		 * in a remote net; look up the name and check that this
 		 * address corresponds to the name.
 		 */
-		hostname = hp->h_name;
-		if (check_all || local_domain(hp->h_name)) {
-			strncpy(hostnamebuf, hp->h_name,
-			    sizeof(hostnamebuf) - 1);
+		hostname = saddr;
+		if (check_all || local_domain(saddr)) {
+			strncpy(hostnamebuf, saddr, sizeof(hostnamebuf) - 1);
 			hostnamebuf[sizeof(hostnamebuf) - 1] = 0;
-			hp = gethostbyname(hostnamebuf);
-			if (hp == NULL) {
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = fromp->sa_family;
+			hints.ai_socktype = SOCK_STREAM;
+			hints.ai_flags = AI_CANONNAME;
+			gaierror = getaddrinfo(hostnamebuf, "0", &hints, &res0);
+			if (gaierror) {
 				syslog(LOG_INFO,
-				    "Couldn't look up address for %s",
-				    hostnamebuf);
-				hostname = inet_ntoa(fromp->sin_addr);
-			} else for (; ; hp->h_addr_list++) {
-				if (hp->h_addr_list[0] == NULL) {
+				    "Couldn't look up address for %s: %s",
+				    hostnamebuf, gai_strerror(gaierror));
+				hostname = naddr;
+			} else {
+				for (res = res0; res; res = res->ai_next) {
+					if (res->ai_family != fromp->sa_family)
+						continue;
+					if (res->ai_addrlen != fromp->sa_len)
+						continue;
+					if (getnameinfo(res->ai_addr,
+						res->ai_addrlen,
+						raddr, sizeof(raddr), NULL, 0,
+						niflags) == 0
+					 && strcmp(naddr, raddr) == 0) {
+						hostname = res->ai_canonname
+							? res->ai_canonname
+							: saddr;
+						break;
+					}
+				}
+				if (res == NULL) {
 					syslog(LOG_NOTICE,
 					  "Host addr %s not listed for host %s",
-					    inet_ntoa(fromp->sin_addr),
-					    hp->h_name);
-					hostname = inet_ntoa(fromp->sin_addr);
-					break;
+					    naddr, res0->ai_canonname
+						    ? res0->ai_canonname
+						    : saddr);
+					hostname = naddr;
 				}
-				if (!memcmp(hp->h_addr_list[0],
-				    (caddr_t)&fromp->sin_addr,
-				    sizeof(fromp->sin_addr))) {
-					hostname = hp->h_name;
-					break;
-				}
+				freeaddrinfo(res0);
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
 				   sizeof(hostnamebuf) - 1);
 	} else
-		hostname = strncpy(hostnamebuf, inet_ntoa(fromp->sin_addr),
+		hostname = strncpy(hostnamebuf, naddr,
 				   sizeof(hostnamebuf) - 1);
 
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
@@ -239,19 +320,17 @@ doit(f, fromp)
 	if (strlen(hostname) < sizeof(utmphost))
 		(void)strcpy(utmphost, hostname);
 	else
-		(void)strncpy(utmphost, inet_ntoa(fromp->sin_addr),
-				sizeof(utmphost));
+		(void)strncpy(utmphost, hostname, sizeof(utmphost));
 	utmphost[sizeof(utmphost) - 1] = '\0';
 
-	if (fromp->sin_family != AF_INET ||
-	    fromp->sin_port >= IPPORT_RESERVED ||
-	    fromp->sin_port < IPPORT_RESERVED/2) {
+	if (ntohs(*portp) >= IPPORT_RESERVED ||
+	    ntohs(*portp) < IPPORT_RESERVED/2) {
 		syslog(LOG_NOTICE, "Connection from %s on illegal port",
-			inet_ntoa(fromp->sin_addr));
+		       naddr);
 		fatal(f, "Permission denied", 0);
 	}
 #ifdef IP_OPTIONS
-	{
+	if (fromp->sa_family == AF_INET) {
 		u_char optbuf[BUFSIZ/3], *cp;
 		char lbuf[BUFSIZ], *lp;
 		int optsize = sizeof(optbuf), ipproto;
@@ -538,7 +617,7 @@ fatal(f, msg, syserr)
 
 int
 do_rlogin(dest, host)
-	struct sockaddr_in *dest;
+	struct sockaddr *dest;
 	char *host;
 {
 	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c */
@@ -554,8 +633,9 @@ do_rlogin(dest, host)
 		    "%s@%s as %s: unknown login.", rusername, host, lusername);
 		return (-1);
 	}
-	retval = iruserok(dest->sin_addr.s_addr, pwd->pw_uid == 0, rusername,
-			    lusername);
+
+	retval = iruserok_sa(dest, dest->sa_len, pwd->pw_uid == 0, rusername,
+		lusername);
 /* XXX put inet_ntoa(dest->sin_addr.s_addr) into all messages below */
 	if (retval == 0) {
 		if (log_success)
