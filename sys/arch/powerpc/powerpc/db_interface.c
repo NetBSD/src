@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.29 2003/07/15 02:54:47 lukem Exp $ */
+/*	$NetBSD: db_interface.c,v 1.30 2003/09/25 17:36:33 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2003/09/25 17:36:33 matt Exp $");
 
 #define USERACC
 
@@ -98,17 +98,9 @@ kdb_trap(type, v)
 	struct trapframe *frame = v;
 
 #ifdef DDB
-	switch (type) {
-	case T_BREAKPOINT:
-	case -1:
-		break;
-	default:
-		if (!db_onpanic && db_recover == 0)
-			return 0;
-		if (db_recover != 0) {
-			db_error("Faulted in DDB; continuing...\n");
-			/*NOTREACHED*/
-		}
+	if (db_recover != 0 && (type != -1 && type != T_BREAKPOINT)) {
+		db_error("Faulted in DDB; continuing...\n");
+		/* NOTREACHED */
 	}
 #endif
 
