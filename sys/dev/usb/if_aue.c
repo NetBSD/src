@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.9 2000/01/16 18:34:42 itojun Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.10 2000/01/16 23:18:56 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -73,6 +73,7 @@
  * add thread to avoid register reads from interrupt context
  * more error checks
  * investigate short rx problem
+ * proper cleanup on errors
  */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -156,7 +157,7 @@ int	auedebug = 0;
 #endif
 
 /*
- * Various supported device vendors/types and their names.
+ * Various supported device vendors/products.
  */
 static struct aue_type aue_devs[] = {
 	{ USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_USB100 },
@@ -695,16 +696,16 @@ USB_ATTACH(aue)
 	struct mii_data		*mii;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
+	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
-	usbd_status		err;
 	int			i;
 
 #ifdef __FreeBSD__
 	bzero(sc, sizeof(struct aue_softc));
 #endif
 
-	DPRINTFN(5,(" : uan_attach: sc=%p", sc));
+	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
 	usbd_devinfo(dev, 0, devinfo);
 	USB_ATTACH_SETUP;
