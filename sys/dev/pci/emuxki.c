@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.5 2001/11/15 09:48:11 lukem Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.6 2001/12/23 22:54:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.5 2001/11/15 09:48:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.6 2001/12/23 22:54:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,17 +105,17 @@ static void   *emuxki_rmem_alloc(struct emuxki_softc *, size_t,int,int);
 
 /* Emu10k1 voice mgmt */
 static struct emuxki_voice *emuxki_voice_new(struct emuxki_softc *,
-					u_int8_t);
+					     u_int8_t);
 static void   emuxki_voice_delete(struct emuxki_voice *);
 static int    emuxki_voice_set_audioparms(struct emuxki_voice *, u_int8_t,
-					 u_int8_t, u_int32_t);
+					  u_int8_t, u_int32_t);
 /* emuxki_voice_set_fxparms will come later, it'll need channel distinction */
 static int emuxki_voice_set_bufparms(struct emuxki_voice *,
-				      void *, u_int32_t, u_int16_t);
+				     void *, u_int32_t, u_int16_t);
 static void emuxki_voice_commit_parms(struct emuxki_voice *);
 static u_int32_t emuxki_voice_curaddr(struct emuxki_voice *);
 static void emuxki_voice_start(struct emuxki_voice *,
-				      void (*) (void *), void *);
+			       void (*) (void *), void *);
 static void emuxki_voice_halt(struct emuxki_voice *);
 
 /*
@@ -125,7 +125,7 @@ static void emuxki_voice_halt(struct emuxki_voice *);
 static struct emuxki_stream *emuxki_stream_new(struct emu10k1 *);
 static void   emuxki_stream_delete(struct emuxki_stream *);
 static int    emuxki_stream_set_audio_params(struct emuxki_stream *, u_int8_t,
-					    u_int8_t, u_int8_t, u_int16_t);
+					     u_int8_t, u_int8_t, u_int16_t);
 static void   emuxki_stream_start(struct emuxki_stream *);
 static void   emuxki_stream_halt(struct emuxki_stream *);
 #endif
@@ -137,8 +137,8 @@ static void	emuxki_close(void *);
 
 static int	emuxki_query_encoding(void *, struct audio_encoding *);
 static int	emuxki_set_params(void *, int, int,
-				      struct audio_params *,
-				      struct audio_params *);
+				  struct audio_params *,
+				  struct audio_params *);
 
 static size_t	emuxki_round_buffersize(void *, int, size_t);
 
@@ -146,8 +146,8 @@ static int	emuxki_trigger_output(void *, void *, void *, int,
 				      void (*)(void *), void *,
 				      struct audio_params *);
 static int	emuxki_trigger_input(void *, void *, void *, int,
-				      void (*) (void *), void *,
-				      struct audio_params *);
+				     void (*) (void *), void *,
+				     struct audio_params *);
 static int	emuxki_halt_output(void *);
 static int	emuxki_halt_input(void *);
 
@@ -156,7 +156,7 @@ static int	emuxki_set_port(void *, mixer_ctrl_t *);
 static int	emuxki_get_port(void *, mixer_ctrl_t *);
 static int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 
-static void   *emuxki_allocm(void *, int, size_t, int, int);
+static void    *emuxki_allocm(void *, int, size_t, int, int);
 static void	emuxki_freem(void *, void *, int);
 
 static paddr_t	emuxki_mappage(void *, void *, off_t, int);
@@ -170,6 +170,7 @@ static int  emuxki_ac97_attach(void *, struct ac97_codec_if *);
 static int  emuxki_ac97_read(void *, u_int8_t, u_int16_t *);
 static int  emuxki_ac97_write(void *, u_int8_t, u_int16_t);
 static void emuxki_ac97_reset(void *);
+static enum ac97_host_flags emuxki_ac97_flags(void *);
 
 /*
  * Autoconfig goo.
@@ -340,7 +341,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 	sc->hostif.read = emuxki_ac97_read;
 	sc->hostif.write = emuxki_ac97_write;
 	sc->hostif.reset = emuxki_ac97_reset;
-	sc->hostif.flags = NULL;
+	sc->hostif.flags = emuxki_ac97_flags;
 	return (ac97_attach(&(sc->hostif)));
 }
 
@@ -2032,4 +2033,10 @@ emuxki_ac97_write(void *arg, u_int8_t reg, u_int16_t val)
 static void
 emuxki_ac97_reset(void *arg)
 {
+}
+
+enum ac97_host_flags
+emuxki_ac97_flags(void *arg)
+{
+  return (AC97_HOST_SWAPPED_CHANNELS);
 }
