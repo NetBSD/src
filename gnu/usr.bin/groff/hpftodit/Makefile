@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2002/01/01 00:27:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2002/01/01 01:38:27 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/utils/hpftodit
 .PATH:		${DIST}
 
-PROG=		hpftodit
-PROG_CXX=
+PROG_CXX=	hpftodit
 SRCS=		hpftodit.cc
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
