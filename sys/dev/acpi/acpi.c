@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.20 2002/12/30 01:56:44 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.21 2002/12/30 09:33:25 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.20 2002/12/30 01:56:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.21 2002/12/30 09:33:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,6 +567,11 @@ acpi_print(void *aux, const char *pnp)
 		}
 #endif
 		printf("at %s", pnp);
+	} else {
+		printf(" (%s", aa->aa_node->ad_devinfo.HardwareId);
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID)
+			printf("-%s", aa->aa_node->ad_devinfo.UniqueId);
+		printf(")");
 	}
 
 	return (UNCONF);
