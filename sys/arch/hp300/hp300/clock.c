@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.4 1993/11/12 05:54:35 cgd Exp $
+ *	$Id: clock.c,v 1.5 1993/12/06 13:30:52 mycroft Exp $
  */
 
 #include "param.h"
@@ -78,6 +78,8 @@ struct hil_dev *bbcaddr = NULL;
  * This is because the counter decrements to zero after N+1 enabled clock
  * periods where N is the value loaded into the counter.
  */
+
+clockattach() {}
 
 /*
  * Start the real-time clock.
