@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.22 2003/01/03 17:25:07 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.23 2003/01/05 22:38:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -711,17 +711,6 @@ sys___sigreturn14(l, v, retval)
 }
 
 /*
- * Scheduler activations upcall frame (see also locore.s:upcallcode)
- */
-struct saframe {
-	int		sa_type;
-	struct sa_t**	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-	void*		sa_arg;
-};
-
-/*
  * cpu_upcall:
  *
  *	Send an an upcall to userland.
@@ -730,57 +719,30 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
-	struct saframe *sf, frame;
 	struct trapframe *tf;
-	int addr, newsp, oldsp;
-	/*
-	 * note: sf,sapp,stack,up,oldsp,newsp,addr are user space addresses
-	 */
-	extern char sigcode[], upcallcode[];
+	vaddr_t addr;
 
 	tf = l->l_md.md_tf;
-	oldsp = tf->tf_out[6];
-
-	/* Ensure stack is double-word aligned. */
-	sp = (void *)((u_int32_t)sp & ~0x7);
-
-	/* Space for outgoing args, but at least 7 words */
-	sf = (struct saframe *)((u_int32_t)sp - max(sizeof(frame), 7*4));
-
-	/* Above the arguments: space for struct pointer word and rwindow */
-	newsp = (int)sf - 4 - sizeof(struct rwindow);
+	addr = (vaddr_t) upcall;
 
 	/* Arguments to the upcall... */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-
-	/* ... first 6 args are in the out registers */
-	memcpy(tf->tf_out, &frame, min(sizeof(frame), 6*4));
-
-	write_user_windows();
-
-	/* ... the rest are on the stack */
-	if (rwindow_save(l) || copyout(&frame, sf, sizeof frame) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = (vaddr_t) sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = (vaddr_t) ap;
 
 	/*
-	 * Arrange to continue execution at the code copied out in exec().
-	 * It needs the function to call in %g1, and a new stack pointer.
+	 * Ensure the stack is double-word aligned, and provide an
+	 * rwindow save area.
 	 */
-	addr = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
-			((caddr_t)upcallcode - (caddr_t)sigcode));
-	tf->tf_global[1] = (int)upcall;
+	sp = (void *)(((vaddr_t)sp & ~0x7) - sizeof(struct rwindow));
+
+	/* Arrange to begin execution at the upcall handler. */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (int)newsp;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 void
