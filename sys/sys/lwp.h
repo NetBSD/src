@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.11 2003/09/16 13:46:26 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.12 2003/11/02 16:26:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,9 +118,11 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
 #define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
 #define	L_DETACHED	0x800000 /* Won't be waited for. */
-#define L_SA_WANTS_VP   0x1000000 /* SA LWP wants a virtual processor */
+#define	L_SA_WANTS_VP   0x1000000 /* SA LWP wants a virtual processor */
 #define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
-#define L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+#define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
+#define	L_SA_IDLE	0x20000000 /* VP is idle */
 
 /*
  * Status values.
