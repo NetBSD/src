@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.6 2003/10/06 15:43:35 thorpej Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.7 2004/05/17 22:00:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.6 2003/10/06 15:43:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.7 2004/05/17 22:00:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ const struct bus_space i80321_bs_tag_template = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -117,7 +117,7 @@ const struct bus_space i80321_bs_tag_template = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
