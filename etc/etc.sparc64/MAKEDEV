@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27 2002/01/19 18:59:23 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2002/01/24 22:22:26 eeh Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,9 @@
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk driver
 #	md*	memory pseudo-disk devices
+# Terminals:
+#	tty*	Z88530 serial controllers
+#	ttyC*	NS16550 serial controllers
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # ISDN devices:
@@ -102,7 +105,7 @@ do
 case $i in
 
 all)
-	sh -$- $0 std ttya ttyb ttyc ttyd
+	sh -$- $0 std ttya ttyb ttyc ttyd ttyC00 ttyC01
 	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 ss0 ch0 uk0 uk1
 	sh -$- $0 wd0 wd1 wd2 wd3 cd0 st0 st1 fd0 md0 md1
 	sh -$- $0 audio0 audio1 audio2 audio3
@@ -163,6 +166,14 @@ tty[abcd])
 	mknod tty$unit c 12 $(($index + $dialin ))
 	mknod dty$unit c 12 $(($index + $dialout))
 	chown uucp.wheel tty$unit dty$unit
+	;;
+
+ttyC*)
+        unit=${i#ttyC}
+        rm -f ttyC$unit dtyC$unit
+        mknod ttyC$unit c 36 $(($unit + $dialin ))
+        mknod dtyC$unit c 36 $(($unit + $dialout))
+        chown uucp.wheel ttyC$unit dtyC$unit
 	;;
 
 fd)
