@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 1997/06/26 05:40:30 perry Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.8.1 1998/10/09 17:57:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,7 +44,9 @@
 #define	b_cylin	b_resid
 
 int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
-		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+		    DOSPTYP_FAT16B, DOSPTYP_FAT32,
+		    DOSPTYP_FAT32L, DOSPTYP_FAT16L, 
+		    -1 };
 
 /*
  * Attempt to read a disk label from a device
@@ -122,6 +124,8 @@ readdisklabel(dev, strat, lp, osdep)
 				    if (dp->dp_typ == *ip)
 					pp->p_fstype = FS_MSDOS;
 				}
+				if (dp->dp_typ == DOSPTYP_LNXEXT2)
+					pp->p_fstype = FS_EX2FS;
 
 				/* is this ours? */
 				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
