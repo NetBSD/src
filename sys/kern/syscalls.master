@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.94 1999/06/29 22:15:31 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.95 1999/07/12 21:55:21 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -159,7 +159,7 @@
 66	STD		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	STD		{ int sys_sbrk(int incr); }
+69	STD		{ int sys_sbrk(intptr_t incr); }
 70	STD		{ int sys_sstk(int incr); }
 71	COMPAT_43	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
@@ -565,3 +565,5 @@
 			    struct stat *sb); }
 300	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
+301	STD		{ int sys_getcontext(struct ucontext *ucp); }
+302	STD		{ int sys_setcontext(const struct ucontext *ucp); }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 1999/06/09 04:50:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.9 1999/07/12 21:55:20 kleink Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -139,7 +139,7 @@
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	STD		{ int compat_netbsd32_sbrk(int incr); }
+69	STD		{ int compat_netbsd32_sbrk(netbsd32_intptr_t incr); }
 70	STD		{ int compat_netbsd32_sstk(int incr); }
 71	COMPAT_43	{ int compat_netbsd32_ommap(netbsd32_caddr_t addr, netbsd32_size_t len, int prot, int flags, int fd, netbsd32_long pos); }
 72	STD		{ int compat_netbsd32_ovadvise(int anom); } vadvise

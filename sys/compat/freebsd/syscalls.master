@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 1999/06/09 12:33:18 drochner Exp $
+	$NetBSD: syscalls.master,v 1.24 1999/07/12 21:55:20 kleink Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -160,7 +160,7 @@
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int sys_sbrk(int incr); }
+69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
 71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
