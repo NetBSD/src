@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.38 2002/03/20 18:54:49 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.39 2002/03/21 00:43:42 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -121,9 +121,9 @@ typedef u_int64_t	bus_size_t;
  */
 #define	sparc_promaddr_to_handle(tag, promaddr, hp)	\
 	do {						\
-		hp->_ptr = (uint64_t)promaddr;		\
-		hp->_asi = ASI_PRIMARY;			\
-		hp->_sasi = ASI_PRIMARY;		\
+		(hp)->_ptr = (uint64_t)(promaddr);	\
+		(hp)->_asi = ASI_PRIMARY;		\
+		(hp)->_sasi = ASI_PRIMARY;		\
 	} while (0)
 
 /* For buses which have an iospace. */
