@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.h,v 1.8 1994/03/16 04:34:01 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.h,v 1.9 1994/05/04 05:24:36 gwr Exp $
  */
 
 /*
@@ -93,5 +93,8 @@ void obio_probe __P((caddr_t addr));
 #ifdef KERNEL
 
 extern vm_offset_t eeprom_va;
+extern vm_offset_t memerr_va;
+extern vm_offset_t zs0_va;	/* ttya, ttyb */
+extern vm_offset_t zs1_va;	/* kbd, mouse */
 
 #endif
