@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.8 2003/10/29 21:50:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.8 2003/10/29 21:50:57 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -194,23 +194,9 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	}
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
 
-	if (ic->ic_opmode != IEEE80211_M_STA) {
-		ni = ieee80211_find_node(ic, eh.ether_dhost);
-		if (ni == NULL) {
-			/*
-			 * When not in station mode the
-			 * destination address should always be
-			 * in the node table unless this is a
-			 * multicast/broadcast frame.
-			 */
-			if (!IEEE80211_IS_MULTICAST(eh.ether_dhost)) {
-				/* ic->ic_stats.st_tx_nonode++; XXX statistic */
-				goto bad;
-			}
-			ni = ic->ic_bss;
-		}
-	} else
-		ni = ic->ic_bss;
+	if ((ni = ieee80211_find_txnode(ic, eh.ether_dhost)) == NULL)
+		goto bad;
+
 	ni->ni_inact = 0;
 
 	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));

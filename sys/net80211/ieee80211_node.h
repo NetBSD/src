@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.6 2003/10/15 11:43:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.7 2003/10/29 21:50:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -169,6 +169,10 @@ extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
 extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
+		u_int8_t *);
+extern	struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
+		struct ieee80211_frame *);
+extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 		u_int8_t *macaddr, struct ieee80211_channel *);
