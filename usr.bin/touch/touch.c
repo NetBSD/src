@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.5 (Berkeley) 3/7/93";*/
-static char rcsid[] = "$Id: touch.c,v 1.5 1993/08/01 18:04:42 mycroft Exp $";
+static char rcsid[] = "$Id: touch.c,v 1.6 1993/08/07 04:50:32 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,8 +61,9 @@ void	stime_arg2 __P((char *, int, struct timeval *));
 void	stime_file __P((char *, struct timeval *));
 void	usage __P((void));
 
-/*temporary we aren't 4.4 portability hack*/
+#ifndef notyet
 #define TIMET_TO_TIMEVAL(timevalp, tp) (timevalp)->tv_sec = *(tp);
+#endif
 
 int
 main(argc, argv)
@@ -152,11 +153,17 @@ main(argc, argv)
 				continue;
 
 		if (!aflag)
-/*			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);*/
+#ifdef notyet
+			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
+#else
 			TIMET_TO_TIMEVAL(&tv[0], &sb.st_atime);
+#endif
 		if (!mflag)
-/*			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);*/
+#ifdef notyet
+			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+#else
 			TIMET_TO_TIMEVAL(&tv[1], &sb.st_mtime);
+#endif
 
 
 		/* Try utimes(2). */
@@ -285,10 +292,16 @@ stime_file(fname, tvp)
 
 	if (stat(fname, &sb))
 		err(1, "%s", fname);
-/*	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);*/
+#ifdef notyet
+	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);
+#else
 	TIMET_TO_TIMEVAL(tvp, &sb.st_atime);
-/*	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);*/
+#endif
+#ifdef notyet
+	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
+#else
 	TIMET_TO_TIMEVAL(tvp + 1, &sb.st_mtime);
+#endif
 }
 
 int
