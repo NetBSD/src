@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.15.8.1 2002/05/16 13:32:31 gehenna Exp $
+#	$NetBSD: files.news68k,v 1.15.8.2 2002/05/17 15:09:14 gehenna Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -31,8 +31,6 @@ file	arch/news68k/news68k/trap.c
 file	arch/news68k/news68k/vm_machdep.c
 file	dev/clock_subr.c
 file	dev/cons.c
-
-major { vnd = 6 }
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
@@ -113,10 +111,6 @@ file arch/news68k/dev/fd.c			fdc | fd needs-flag
 
 # Machine-independent SCSI driver
 include "dev/scsipi/files.scsipi"
-major { sd = 0 }
-major { fd = 1 }
-major { cd = 16 }
-major { st = 17 }
 
 # Sony CXD1180 SCSI controller
 device si: scsi, ncr5380sbc
@@ -124,11 +118,7 @@ file arch/news68k/dev/si.c			si needs-flag
 attach si at hb
 
 # memory disk
-major {md = 2}
 file	dev/md_root.c				memory_disk_hooks
-
-# RAIDframe
-major {raid = 32}
 
 # NetBSD m68k a.out binary compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"

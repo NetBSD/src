@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.20.2.1 2002/05/16 13:32:00 gehenna Exp $
+#	$NetBSD: files.cats,v 1.20.2.2 2002/05/17 15:09:04 gehenna Exp $
 #
 # CATS-specific configuration info
 #
@@ -26,7 +26,6 @@ include "arch/arm/conf/files.footbridge"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 16}
 
 #
 # time of day clock
@@ -43,18 +42,12 @@ file	arch/arm/footbridge/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-major	{md = 18}
-
-# RAIDframe
-major	{raid = 71}
 
 #
 # Machine-independent SCSI/ATAPI drivers
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 24}
-major	{cd = 26}
 
 file	arch/arm/arm32/conf.c
 

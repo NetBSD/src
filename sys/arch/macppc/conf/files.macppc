@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.50.2.1 2002/05/16 13:32:21 gehenna Exp $
+#	$NetBSD: files.macppc,v 1.50.2.2 2002/05/17 15:09:11 gehenna Exp $
 #
 # macppc-specific configuration info
 
@@ -24,7 +24,6 @@ file dev/cons.c
 # Memory Disk for install floppy
 #
 file dev/md_root.c				memory_disk_hooks
-major {md = 9}
 
 #
 # Compatibility modules
@@ -40,34 +39,24 @@ file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
 file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
-# RAIDframe
-#
-major {raid = 12}
-
-#
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major {sd = 4}
-major {cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major {wd = 10}
 
 #
 # Generic OpenFirmware device support
 #
 include "dev/ofw/files.ofw"
-major {ofdisk = 0}
 
 #
 # Machine-independent I2O drivers
 #
 include "dev/i2o/files.i2o"
-major {ld = 13}
 
 #
 # System bus types

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.38.2.1 2002/05/16 13:31:56 gehenna Exp $
+#	$NetBSD: files.arc,v 1.38.2.2 2002/05/17 15:09:03 gehenna Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -80,7 +80,6 @@ file	arch/arc/arc/arcbios.c
 ##	Machine-independent ATAPI drivers
 ##
 include "dev/ata/files.ata"
-major	{ wd = 4 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -155,8 +154,6 @@ include "dev/i2o/files.i2o"
 
 #	Use machine independent SCSI driver routines
 include	"dev/scsipi/files.scsipi"
-major	{sd = 0}
-major	{cd = 3}
 
 #	Symbios 53C94 SCSI interface driver on Jazz-Internal bus
 device	asc: scsi
@@ -176,7 +173,6 @@ file	arch/arc/jazz/fdc_jazzio.c	fdc_jazzio
 
 device	fd: disk
 attach	fd at fdc
-major	{fd = 7}
 
 #	bus independent raster console glue
 device	rasdisplay: wsemuldisplaydev, pcdisplayops
@@ -275,10 +271,6 @@ file	arch/arc/pci/pci_vga.c		pcivga
 #
 # memory disk for installation
 file dev/md_root.c			memory_disk_hooks
-major {md = 8}
-
-# RAIDframe
-major {raid = 9}
 
 # USB
 include "dev/usb/files.usb"

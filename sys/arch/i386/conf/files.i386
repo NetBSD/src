@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.206.2.1 2002/05/16 13:32:14 gehenna Exp $
+#	$NetBSD: files.i386,v 1.206.2.2 2002/05/17 15:09:09 gehenna Exp $
 #
 # new style config file for i386 architecture
 #
@@ -100,25 +100,15 @@ file	crypto/blowfish/arch/i386/bf_enc.S	ipsec & ipsec_esp
 #
 
 include	"dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include	"dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 17}
-
-# RAIDframe
-major	{raid = 18}
-
-# Logical disk
-major	{ld = 19}
 
 #
 # Machine-independent I2O drivers
@@ -200,8 +190,6 @@ file	arch/i386/isa/joy_timer.c	joy
 #
 
 include	"dev/isa/files.isa"
-major	{mcd = 7}
-#major	{scd = 15}
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
@@ -266,7 +254,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{fd = 2}
 
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
@@ -287,8 +274,6 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 device	mca {[slot = -1]} : bioscall
 include	"dev/mca/files.mca"
 file	arch/i386/mca/mca_machdep.c	mca
-
-major	{ ed = 20 }
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
