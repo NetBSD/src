@@ -1667,7 +1667,7 @@ L1:
 proffault:
 	/* if we get a fault, then kill profiling all together */
 	movl $0,PCB_ONFAULT(%edx)	/* squish the fault handler */
- 	movl 12(%ebp),%ecx
+	movl 12(%ebp),%ecx
 	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
 	leave
 	ret
