@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.100 2001/02/20 15:35:21 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.101 2001/02/23 19:49:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.100 2001/02/20 15:35:21 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.101 2001/02/23 19:49:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2854,9 +2854,10 @@ usage()
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       %s -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n"
 		"       %s -l [ -b ] [ -d ] [ -u ] [ -s ]\n"
+		"       %s -C\n"
 		"       %s interface create\n"
 		"       %s interface destroy\n",
-		progname, progname, progname, progname, progname);
+		progname, progname, progname, progname, progname, progname);
 	exit(1);
 }
 
