@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.25 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: inode.h,v 1.26 2001/10/26 05:46:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ufs/quota.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <miscfs/genfs/genfs_node.h>
