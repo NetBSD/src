@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2000/09/13 15:00:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2000/09/15 17:15:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1805,6 +1805,43 @@ pmap_zero_page(phys)
 		npte |= PG_CCB;
 	}
 #endif
+
+	s = splimp();
+
+	*caddr1_pte = npte;
+	TBIS((vaddr_t)CADDR1);
+
+	zeropage(CADDR1);
+
+#ifdef DEBUG
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+#endif
+
+	splx(s);
+}
+
+/*
+ * pmap_zero_page_uncached:
+ *
+ *	Same as above, except uncached.  Used in uvm_pageidolezero,
+ *	through PMAP_PAGEIDLEZERO macro.
+ */
+void
+pmap_zero_page_uncached(phys)
+	paddr_t phys;
+{
+	int s, npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		DCPP(phys);
+	}
+#endif
+
+	npte = phys | PG_V | PG_CI;
 
 	s = splimp();
 
