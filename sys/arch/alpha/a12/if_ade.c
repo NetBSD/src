@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.5 1998/09/23 21:17:17 ross Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.1 1998/09/24 05:36:05 ross Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -199,7 +199,7 @@
 
 #define	TULIP_HZ	10
 
-#include <alpha/pci/if_adevar.h>
+#include <alpha/a12/if_adevar.h>
 tulip_softc_t * debug_sc;	/* XXX */
 /*
  * This module supports

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_adevar.h,v 1.2 1998/09/23 21:17:18 ross Exp $	*/
+/*	$NetBSD: if_adevar.h,v 1.1 1998/09/24 05:36:05 ross Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
