@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.3 2000/09/16 08:27:58 wdk Exp $	*/
+/*	$NetBSD: prom.h,v 1.4 2000/09/19 07:50:50 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct mips_prom {
 	 *      range.
 	 */
 	void	(*prom_flushcache)	__P((void));
-	void	(*prom_clearcache)	__P((void));
+	void	(*prom_clearcache)	__P((void *, size_t));
 
 	/*
 	 * Libc compatible functions
