@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.3 1998/10/17 05:08:27 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.4 1998/11/12 01:16:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <util.h>
 
 #include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsipiconf.h>
 
@@ -75,11 +76,13 @@ struct	scsi_addr dvaddr;		/* SCSI device's address */
 
 extern const char *__progname;		/* from crt0.o */
 
+void	device_format __P((int, char *[]));
 void	device_identify __P((int, char *[]));
 void	device_reassign __P((int, char *[]));
 void	device_reset __P((int, char *[]));
 
 struct command device_commands[] = {
+	{ "format",	device_format },
 	{ "identify",	device_identify },
 	{ "reassign",	device_reassign },
 	{ "reset",	device_reset },
@@ -169,6 +172,50 @@ usage()
 /*
  * DEVICE COMMANDS
  */
+
+/*
+ * device_format:
+ *
+ *	Format a direct access device.
+ *
+ *	XXX Does not handle defect list management or geometry settings.
+ */
+void
+device_format(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scsi_format_unit cmd;
+	struct {
+		struct scsi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+		struct page_disk_format format_page;
+	} data;
+
+	/* No arguments. */
+	if (argc != 0)
+		goto usage;
+
+	/*
+	 * Get the DISK FORMAT mode page.  SCSI-2 recommends specifying the
+	 * interleave read from this page in the FORMAT UNIT command.
+	 */
+	scsi_mode_sense(fd, 0x03, 0x00, &data, sizeof(data));
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.opcode = SCSI_FORMAT_UNIT;
+	memcpy(cmd.interleave, data.format_page.interleave,
+	    sizeof(cmd.interleave));
+
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 60000, 0);
+
+	return;
+
+ usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
+	exit(1);
+}
 
 /*
  * device_identify:
