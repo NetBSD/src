@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.4 1999/10/04 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -37,7 +37,6 @@
 #define CCB_ABORT	0x02	/* abort has been issued on this CCB */
 #define CCB_INTR	0x04	/* HBA interrupted for this CCB */
 #define CCB_PRIVATE	0x08	/* ours; don't talk to scsipi when done */ 
-#define CCB_SYNC	0x10	/* write data synchronously */
 
 struct dpt_ccb {
 	struct eata_cp	ccb_eata_cp;		/* EATA command packet */
@@ -75,6 +74,7 @@ struct dpt_softc {
 	u_int32_t	sc_scrpa;	/* scratch area physical address */
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
+	int		sc_open;	/* device is open */
 	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;/* pending commands */
 };
@@ -82,6 +82,23 @@ struct dpt_softc {
 int	dpt_intr __P((void *));
 int	dpt_readcfg __P((struct dpt_softc *));
 void	dpt_init __P((struct dpt_softc *, const char *));
+void	dpt_shutdown __P((void *));
+void	dpt_timeout __P((void *));
+void	dpt_minphys __P((struct buf *));
+int	dpt_scsi_cmd __P((struct scsipi_xfer *));
+int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
+int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
+int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
+void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
+void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
+void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
+void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
+int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
+int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
+struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
+#ifdef DEBUG
+void	dpt_dump_sp __P((struct eata_sp *));
+#endif
 
 #endif	/* _KERNEL */
 #endif	/* !defined _IC_DPTVAR_H_ */
