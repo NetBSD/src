@@ -42,7 +42,7 @@
  *	@(#)cgthree.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cgthree.c,v 1.6 92/11/26 02:28:06 torek Exp 
- * $Id: cgthree.c,v 1.1 1993/10/02 10:23:47 deraadt Exp $
+ * $Id: cgthree.c,v 1.2 1993/10/11 02:45:51 deraadt Exp $
  */
 
 /*
@@ -54,12 +54,12 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/fbio.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 
+#include <machine/fbio.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>

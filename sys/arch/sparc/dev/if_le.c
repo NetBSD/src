@@ -33,7 +33,7 @@
  *	@(#)if_le.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: if_le.c,v 1.23 93/04/21 02:39:38 torek Exp 
- * $Id: if_le.c,v 1.1 1993/10/02 10:23:53 deraadt Exp $
+ * $Id: if_le.c,v 1.2 1993/10/11 02:45:52 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -154,7 +154,9 @@ struct	cfdriver lecd =
 
 /* Forwards */
 void	leattach(struct device *, struct device *, void *);
+#ifdef	MULTICAST
 void	lesetladrf(struct le_softc *);
+#endif
 void	lereset(struct device *);
 int	leinit(int);
 int	lestart(struct ifnet *);
@@ -255,7 +257,10 @@ if (!ISQUADALIGN(a))
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
+#ifdef MULTICAST
+	ifp->if_flags |= IFF_MULTICAST;
+#endif
 #ifdef IFF_NOTRAILERS
 	/* XXX still compile when the blasted things are gone... */
 	ifp->if_flags |= IFF_NOTRAILERS;
@@ -274,6 +279,7 @@ if (!ISQUADALIGN(a))
 		bootdv = &sc->sc_dev;
 }
 
+#ifdef MULTICAST
 /*
  * Setup the logical address filter
  */
@@ -348,6 +354,7 @@ lesetladrf(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 }
+#endif	/* MULTICAST */
 
 void
 lereset(dev)
@@ -367,8 +374,10 @@ lereset(dev)
 	ler1->ler1_rap = LE_CSR0;
 	ler1->ler1_rdp = LE_C0_STOP;
 
+#ifdef MULTICAST
 	/* Setup the logical address filter */
 	lesetladrf(sc);
+#endif
 
 	/* init receive and transmit rings */
 a = LANCE_ADDR(&ler2->ler2_rbuf[0][0]);
@@ -743,9 +752,14 @@ leread(sc, pkt, len)
 		break;
 
 	case ETHERTYPE_ARP:
+#ifdef NETISR_ARP
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
 		break;
+#else
+		arpinput((struct arpcom *)ifp, m);
+		return;
+#endif /* NETISR_ARP */
 #endif
 #ifdef NS
 	case ETHERTYPE_NS:
@@ -953,6 +967,7 @@ leioctl(ifp, cmd, data)
 		}
 		break;
 
+#ifdef MULTICAST
 	case SIOCADDMULTI:
 		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
 		goto update_multicast;
@@ -969,7 +984,7 @@ leioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
-
+#endif
 	default:
 		error = EINVAL;
 	}
