@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.17 1999/11/28 03:47:24 lukem Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.18 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_simple.c,v 1.17 1999/11/28 03:47:24 lukem Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.18 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: svc_simple.c,v 1.17 1999/11/28 03:47:24 lukem Exp $");
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
-__weak_alias(registerrpc,_registerrpc);
+__weak_alias(registerrpc,_registerrpc)
 #endif
 
 static struct proglst {

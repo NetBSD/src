@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.8 1998/09/26 23:52:30 christos Exp $	*/
+/*	$NetBSD: pause.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pause.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: pause.c,v 1.8 1998/09/26 23:52:30 christos Exp $");
+__RCSID("$NetBSD: pause.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: pause.c,v 1.8 1998/09/26 23:52:30 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(pause,_pause);
+__weak_alias(pause,_pause)
 #endif
 
 /*

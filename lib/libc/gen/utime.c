@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.c,v 1.10 1999/09/20 04:39:06 lukem Exp $	*/
+/*	$NetBSD: utime.c,v 1.11 2000/01/22 22:19:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utime.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utime.c,v 1.10 1999/09/20 04:39:06 lukem Exp $");
+__RCSID("$NetBSD: utime.c,v 1.11 2000/01/22 22:19:13 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: utime.c,v 1.10 1999/09/20 04:39:06 lukem Exp $");
 #include <utime.h>
 
 #ifdef __weak_alias
-__weak_alias(utime,_utime);
+__weak_alias(utime,_utime)
 #endif
 
 int

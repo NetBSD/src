@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostname.c,v 1.9 1999/11/18 22:12:53 is Exp $	*/
+/*	$NetBSD: gethostname.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gethostname.c,v 1.9 1999/11/18 22:12:53 is Exp $");
+__RCSID("$NetBSD: gethostname.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: gethostname.c,v 1.9 1999/11/18 22:12:53 is Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(gethostname,_gethostname);
+__weak_alias(gethostname,_gethostname)
 #endif
 
 int

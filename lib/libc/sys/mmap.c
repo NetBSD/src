@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.10 1998/11/15 17:23:00 christos Exp $	*/
+/*	$NetBSD: mmap.c,v 1.11 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: mmap.c,v 1.10 1998/11/15 17:23:00 christos Exp $");
+__RCSID("$NetBSD: mmap.c,v 1.11 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: mmap.c,v 1.10 1998/11/15 17:23:00 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(mmap,_mmap);
+__weak_alias(mmap,_mmap)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.14 1999/09/20 04:39:23 lukem Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.14 1999/09/20 04:39:23 lukem Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -61,12 +61,12 @@ __RCSID("$NetBSD: rpc_prot.c,v 1.14 1999/09/20 04:39:23 lukem Exp $");
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
-__weak_alias(xdr_accepted_reply,_xdr_accepted_reply);
-__weak_alias(xdr_callhdr,_xdr_callhdr);
-__weak_alias(xdr_des_block,_xdr_des_block);
-__weak_alias(xdr_opaque_auth,_xdr_opaque_auth);
-__weak_alias(xdr_rejected_reply,_xdr_rejected_reply);
-__weak_alias(xdr_replymsg,_xdr_replymsg);
+__weak_alias(xdr_accepted_reply,_xdr_accepted_reply)
+__weak_alias(xdr_callhdr,_xdr_callhdr)
+__weak_alias(xdr_des_block,_xdr_des_block)
+__weak_alias(xdr_opaque_auth,_xdr_opaque_auth)
+__weak_alias(xdr_rejected_reply,_xdr_rejected_reply)
+__weak_alias(xdr_replymsg,_xdr_replymsg)
 #endif
 
 static void accepted __P((enum accept_stat, struct rpc_err *));

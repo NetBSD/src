@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.9 1998/10/08 12:18:18 kleink Exp $	*/
+/*	$NetBSD: asctime.c,v 1.10 2000/01/22 22:19:21 mycroft Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	7.9";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.9 1998/10/08 12:18:18 kleink Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.10 2000/01/22 22:19:21 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -23,7 +23,7 @@ __RCSID("$NetBSD: asctime.c,v 1.9 1998/10/08 12:18:18 kleink Exp $");
 #include "tzfile.h"
 
 #ifdef __weak_alias
-__weak_alias(asctime_r,_asctime_r);
+__weak_alias(asctime_r,_asctime_r)
 #endif
 
 /*

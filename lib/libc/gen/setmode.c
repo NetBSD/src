@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.25 2000/01/20 03:15:04 enami Exp $	*/
+/*	$NetBSD: setmode.c,v 1.26 2000/01/22 22:19:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.25 2000/01/20 03:15:04 enami Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.26 2000/01/22 22:19:12 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: setmode.c,v 1.25 2000/01/20 03:15:04 enami Exp $");
 #endif
 
 #ifdef __weak_alias
-__weak_alias(getmode,_getmode);
-__weak_alias(setmode,_setmode);
+__weak_alias(getmode,_getmode)
+__weak_alias(setmode,_setmode)
 #endif
 
 #define	SET_LEN	6		/* initial # of bitcmd struct to malloc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.20 1998/11/13 12:31:52 christos Exp $	*/
+/*	$NetBSD: sleep.c,v 1.21 2000/01/22 22:19:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sleep.c,v 1.20 1998/11/13 12:31:52 christos Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.21 2000/01/22 22:19:12 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: sleep.c,v 1.20 1998/11/13 12:31:52 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(sleep,_sleep);
+__weak_alias(sleep,_sleep)
 #endif
 
 unsigned int

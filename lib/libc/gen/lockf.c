@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.c,v 1.1 1997/12/20 20:23:18 kleink Exp $	*/
+/*	$NetBSD: lockf.c,v 1.2 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: lockf.c,v 1.1 1997/12/20 20:23:18 kleink Exp $");
+__RCSID("$NetBSD: lockf.c,v 1.2 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: lockf.c,v 1.1 1997/12/20 20:23:18 kleink Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(lockf,_lockf);
+__weak_alias(lockf,_lockf)
 #endif
 
 

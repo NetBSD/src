@@ -1,4 +1,4 @@
-/*	$NetBSD: alarm.c,v 1.8 1998/11/12 15:36:16 christos Exp $	*/
+/*	$NetBSD: alarm.c,v 1.9 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)alarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: alarm.c,v 1.8 1998/11/12 15:36:16 christos Exp $");
+__RCSID("$NetBSD: alarm.c,v 1.9 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: alarm.c,v 1.8 1998/11/12 15:36:16 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(alarm,_alarm);
+__weak_alias(alarm,_alarm)
 #endif
 
 unsigned int

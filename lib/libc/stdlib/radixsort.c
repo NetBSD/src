@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.13 1999/09/20 04:39:41 lukem Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.14 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.13 1999/09/20 04:39:41 lukem Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.14 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,8 +66,8 @@ __RCSID("$NetBSD: radixsort.c,v 1.13 1999/09/20 04:39:41 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(radixsort,_radixsort);
-__weak_alias(sradixsort,_sradixsort);
+__weak_alias(radixsort,_radixsort)
+__weak_alias(sradixsort,_sradixsort)
 #endif
 
 typedef struct {

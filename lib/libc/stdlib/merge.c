@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.9 1999/09/20 04:39:40 lukem Exp $	*/
+/*	$NetBSD: merge.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.9 1999/09/20 04:39:40 lukem Exp $");
+__RCSID("$NetBSD: merge.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: merge.c,v 1.9 1999/09/20 04:39:40 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(mergesort,_mergesort);
+__weak_alias(mergesort,_mergesort)
 #endif
 
 static void setup __P((u_char *, u_char *, size_t, size_t,
