@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.2 2001/02/27 14:11:30 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3 2001/02/27 17:42:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2001/02/27 14:11:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2001/02/27 17:42:16 bjh21 Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2001/02/27 14:11:30 bjh21 Exp $"
 #include <sys/systm.h>
 #include <sys/user.h>
 
-#ifdef arm26
 #include <arm/armreg.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
