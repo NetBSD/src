@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 1997/01/30 18:33:52 scottr Exp $
+#	$NetBSD: GENERIC,v 1.22 1997/01/31 05:56:12 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -32,17 +32,20 @@ options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
 
+# Filesystems
+file-system 	FFS		# fast filesystem
+file-system 	CD9660		# CD-ROM ISO-9660 filesystem
+file-system 	NFSCLIENT	# Network filesystem client
+file-system 	UNION		# Union filesystem (req. for FDESC)
+file-system 	KERNFS		# kernel data-structure filesystem
+file-system 	FDESC		# user file descriptor filesystem
+file-system 	PROCFS		# /proc filesystem
+file-system 	MFS		# Memory-based filesystem
+
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
-options 	FFS,QUOTA	# fast filesystem with user and group quotas
-options         CD9660		# CD-ROM ISO-9660 filesystem
+options 	QUOTA		# User and group quotas in FFS
 options 	NFSSERVER	# Network filesystem server
-options 	NFSCLIENT	# Network filesystem client
-options 	UNION		# Union filesystem (req. for FDESC)
-options 	KERNFS		# kernel data-structure filesystem
-options 	FDESC		# user file descriptor filesystem
-options 	PROCFS		# /proc filesystem
-options 	MFS		# Memory-based filesystem
 
 # Networking options
 options 	INET		# Internet protocols
@@ -80,7 +83,7 @@ options 	DDB		# Kernel Dynamic Debugger
 # (Warning: this compiles in a large string table)
 options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
-config		netbsd swap generic
+config		netbsd root on ? type ?
 
 mainbus0	at root		# root "bus"
 
