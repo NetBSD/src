@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.11 1999/04/02 03:11:57 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.12 1999/04/02 07:34:49 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -326,15 +326,7 @@ main(argc, argv)
 	}
 
 	{
-
-#define BBPAD   0x1e0
-	struct bb {
-		char    bb_pad[BBPAD];  /* disklabel lives in here, actually */
-		long    bb_secsize;     /* size of secondary boot block */
-		long    bb_secstart;    /* start of secondary boot block */
-		long    bb_flags;       /* unknown; always zero */
-		long    bb_cksum;       /* checksum of the the boot block, as longs. */
-	} bb;
+	struct boot_block bb;
 	long *lp, *ep;
 
 	if (lseek(devfd, 0, SEEK_SET) != 0)
