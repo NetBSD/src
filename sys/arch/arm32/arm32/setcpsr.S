@@ -1,4 +1,4 @@
-/*	$NetBSD: setcpsr.S,v 1.3 1997/10/14 09:54:38 mark Exp $	*/
+/*	$NetBSD: setcpsr.S,v 1.4 1998/04/01 22:59:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -49,22 +49,13 @@
 
 #include <machine/asm.h>
 
-fp      .req    r11
-ip      .req    r12
-sp      .req    r13
-lr	.req	r14
-pc	.req	r15
-
-.text
-
-
 /* Sets and clears bits in the CPSR register
  *
  *  r0 - bic mask
  *  r1 - eor mask
  */
 
-ENTRY(SetCPSR)
+ENTRY_NP(SetCPSR)
         mrs     r3, cpsr_all		/* Set the CPSR */
 	bic	r2, r3, r0
         eor     r2, r2, r1
@@ -80,7 +71,7 @@ ENTRY(SetCPSR)
  * Returns the CPSR in r0
  */
 
-ENTRY(GetCPSR)
+ENTRY_NP(GetCPSR)
         mrs     r0, cpsr_all		/* Get the CPSR */
 
 	mov	pc, lr
