@@ -494,9 +494,18 @@ nbsd_pid_to_str (pid)
      int pid;
 {
   static char buf[100];
+  td_thread_t *th;
+  int retval;
+  char name[32];
 
   if (IS_THREAD (pid))
-    sprintf (buf, "Thread %d", GET_THREAD (pid));
+    {
+      if ((td_map_id2thr (main_ta, GET_THREAD(pid), &th) == 0) &&
+	  (td_thr_getname (th, name, 32) == 0))
+	sprintf (buf, "Thread %d (%s)", GET_THREAD (pid), name);
+      else
+	sprintf (buf, "Thread %d", GET_THREAD (pid));
+    }
   else
     sprintf (buf, "LWP %d", GET_LWP (pid));
 
@@ -761,12 +770,17 @@ info_cb (th, s)
   td_thread_info_t ti, ti2;
   td_sync_t *ts;
   td_sync_info_t tsi;
+  char name[32];
 
   if ((ret = td_thr_info (th, &ti)) == 0)
     {
       if (ti.thread_type != TD_TYPE_USER)
 	return 0;
+      td_thr_getname(th, name, 32);
       printf_filtered ("%p: thread %4d ", ti.thread_addr, ti.thread_id);
+      if (name[0] != '\0')
+	      printf_filtered("(%s) ", name);
+
       switch (ti.thread_state)
 	{
 	default:
