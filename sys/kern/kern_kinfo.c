@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.11 1994/01/07 19:13:17 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.12 1994/01/07 19:26:44 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -242,8 +242,8 @@ fill_eproc(p, ep)
 		bzero(&ep->e_vm, sizeof(ep->e_vm));
 	else
 		ep->e_vm = *p->p_vmspace;
-#ifdef pmap_resident_count
-	ep->e_vm.vm_rssize = pmap_resident_count(&vm->vm_pmap); /*XXX*/
+#ifdef pmap_resident_count	/* XXX */
+	ep->e_vm.vm_rssize = pmap_resident_count(&p->p_vmspace->vm_pmap);
 #endif
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
