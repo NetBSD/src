@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.40 1998/03/01 08:17:36 ross Exp $ */
+/* $NetBSD: pmap.old.c,v 1.41 1998/03/02 00:22:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.40 1998/03/01 08:17:36 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.41 1998/03/02 00:22:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1114,6 +1114,8 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
+ * pmap_enter:
+ *
  *	Insert the given physical page (p) at
  *	the specified virtual address (v) in the
  *	target physical map with the protection requested.
@@ -1121,22 +1123,21 @@ pmap_protect(pmap, sva, eva, prot)
  *	If specified, the page will be wired down, meaning
  *	that the related pte can not be reclaimed.
  *
- *	NB:  This is the only routine which MAY NOT lazy-evaluate
+ *	Note:  This is the only routine which MAY NOT lazy-evaluate
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
 void
 pmap_enter(pmap, va, pa, prot, wired)
 	register pmap_t pmap;
-	vm_offset_t va;
-	register vm_offset_t pa;
+	vm_offset_t va, pa;
 	vm_prot_t prot;
 	boolean_t wired;
 {
-	register pt_entry_t *pte;
-	register pt_entry_t npte;
+	boolean_t managed;
+	pt_entry_t *pte, npte;
 	vm_offset_t opa;
-	boolean_t checkpv = TRUE;
+	boolean_t wiring_only = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1146,63 +1147,103 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap == NULL)
 		return;
 
+	managed = PAGE_IS_MANAGED(pa);
+
+	if (pmap == pmap_kernel()) {
 #ifdef PMAPSTATS
-	if (pmap == pmap_kernel())
-		enter_stats.kernel++;
-	else
+		enter_stats.kernel++
+#endif
+		/*
+		 * All kernel level 2 and 3 page tables are
+		 * pre-allocated and mapped in.  Therefore, the
+		 * level 1 and level 2 PTEs must already be valid.
+		 */
+		if (pmap_pte_v(&pmap->pm_lev1map[kvtol1pte(va)]) == 0)
+			panic("pmap_enter: kernel level 1 PTE not valid");
+		if (pmap_ste_v(pmap, va) == 0)
+			panic("pmap_enter: kernel level 2 PTE not valid");
+	} else {
+#ifdef PMAPSTATS
 		enter_stats.user++;
 #endif
-	/*
-	 * For user mapping, allocate kernel VM resources if necessary.
-	 */
-	if (pmap->pm_ptab == NULL)
-#if defined(UVM)
-		pmap->pm_ptab = (pt_entry_t *)
-			uvm_km_valloc_wait(pt_map, ALPHA_MAX_PTSIZE);
+		/*
+		 * If this is the first user mapping, allocate KVA
+		 * space for the user level 3 page tables.
+		 */
+		if (pmap->pm_ptab == NULL)
+#ifdef UVM
+			pmap->pm_ptab = (pt_entry_t *)
+			    uvm_km_valloc_wait(pt_map, ALPHA_MAX_PTSIZE);
 #else
-		pmap->pm_ptab = (pt_entry_t *)
-			kmem_alloc_wait(pt_map, ALPHA_MAX_PTSIZE);
+			pmap->pm_ptab = (pt_entry_t *)
+			    kmem_alloc_wait(pt_map, ALPHA_MAX_PTSIZE);
 #endif
-	/*
-	 * Segment table entry not valid, we need a new PT page
-	 */
-	if (!pmap_ste_v(pmap, va))
-		pmap_enter_ptpage(pmap, va);
+		/*
+		 * Check to see if the level 2 PTE is valid, and
+		 * allocate a new level 3 page table page if it's not.
+		 */
+		if (pmap_ste_v(pmap, va) == 0)
+			pmap_enter_ptpage(pmap, va);
+	}
 
-	pa = alpha_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
-	opa = pmap_pte_pa(pte);
-#ifdef DEBUG
-	if (pmapdebug & PDB_ENTER)
-		printf("enter: pte %p, *pte %lx\n", pte, *pte);
-#endif
 
 	/*
-	 * Mapping has not changed, must be protection or wiring change.
+	 * Check to see if the old mapping is valid.  If not,
+	 * validate the new one immediately.
 	 */
+	if (pmap_pte_v(pte) == 0) {
+		if (pmap != pmap_kernel()) {
+			/*
+			 * Increase the wiring count on this level 3
+			 * page table page.  Level 3 page table pages
+			 * are wired down as long as there is a valid
+			 * mapping in the page.
+			 */
+#ifdef UVM
+			(void) uvm_map_pageable(pt_map, trunc_page(pte),
+			    round_page(pte+1), FALSE);
+#else
+			(void) vm_map_pageable(pt_map, trunc_page(pte), 
+			    round_page(pte+1), FALSE);
+#endif
+		}
+		goto validate_enterpv;
+	}
+
+	opa = pmap_pte_pa(pte);
 	if (opa == pa) {
+		/*
+		 * Mapping has not changed; must be a protection or
+		 * wiring change.
+		 */
 #ifdef PMAPSTATS
 		enter_stats.pwchange++;
 #endif
-		/*
-		 * Wiring change, just update stats.
-		 * We don't worry about wiring PT pages as they remain
-		 * resident as long as there are valid mappings in them.
-		 * Hence, if a user page is wired, the PT page will be also.
-		 */
 		if (pmap_pte_w_chg(pte, wired ? PG_WIRED : 0)) {
 #ifdef DEBUG
 			if (pmapdebug & PDB_ENTER)
-				printf("enter: wiring change -> %x\n", wired);
+				printf("pmap_enter: wiring change -> %d\n",
+				    wired);
 #endif
+			/*
+			 * Adjust the wiring count.
+			 */
 			if (wired)
 				pmap->pm_stats.wired_count++;
 			else
 				pmap->pm_stats.wired_count--;
+
+			/*
+			 * Check to see if this is a wiring-only
+			 * change.
+			 */
+			if (pmap_pte_prot(pte) == pte_prot(pmap, prot)) {
+				wiring_only = TRUE;
 #ifdef PMAPSTATS
-			if (pmap_pte_prot(pte) == pte_prot(pmap, prot))
 				enter_stats.wchange++;
 #endif
+			}
 		}
 #ifdef PMAPSTATS
 		else if (pmap_pte_prot(pte) != pte_prot(pmap, prot))
@@ -1211,73 +1252,47 @@ pmap_enter(pmap, va, pa, prot, wired)
 			enter_stats.nochange++;
 #endif
 		/*
-		 * Retain cache inhibition status
+		 * Set the PTE.
 		 */
-		checkpv = FALSE;
 		goto validate;
 	}
 
 	/*
-	 * Mapping has changed, invalidate old range and fall through to
-	 * handle validating new mapping.
+	 * The mapping has changed.  We need to invalidate the
+	 * old mapping before creating the new one.
 	 */
-	if (opa) {
 #ifdef DEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("enter: removing old mapping %lx\n", va);
+	if (pmapdebug & PDB_ENTER)
+		printf("pmap_enter: removing old mapping 0x%lx\n", va);
 #endif
-		pmap_remove_mapping(pmap, va, pte, PRM_TFLUSH|PRM_CFLUSH);
+	pmap_remove_mapping(pmap, va, pte, PRM_TFLUSH|PRM_CFLUSH);
 #ifdef PMAPSTATS
-		enter_stats.mchange++;
-#endif
-	}
-
-	/*
-	 * If this is a new user mapping, increment the wiring count
-	 * on this PT page.  PT pages are wired down as long as there
-	 * is a valid mapping in the page.
-	 */
-	if (pmap != pmap_kernel())
-#if defined(UVM)
-		(void) uvm_map_pageable(pt_map, trunc_page(pte),
-				       round_page(pte+1), FALSE);
-#else
-		(void) vm_map_pageable(pt_map, trunc_page(pte),
-				       round_page(pte+1), FALSE);
+	enter_stats.mchange++;
 #endif
 
+ validate_enterpv:
 	/*
-	 * Enter on the PV list if part of our managed memory
-	 * (raise IPL since we may be called at interrupt time).
+	 * Enter the mapping into the pv_table if appropriate.
 	 */
-	if (PAGE_IS_MANAGED(pa)) {
-		int s;
-#ifdef PMAPSTATS
-		enter_stats.managed++;
-#endif
-		s = splimp();
+	if (managed) {
+		int s = splimp();
 		pmap_enter_pv(pmap, pa, va);
 		splx(s);
-	} else if (pmap_initialized) {
-		checkpv = FALSE;
-#ifdef PMAPSTATS
-		enter_stats.unmanaged++;
-#endif
 	}
 
 	/*
-	 * Increment counters
+	 * Increment counters.
 	 */
 	pmap->pm_stats.resident_count++;
 	if (wired)
 		pmap->pm_stats.wired_count++;
 
-validate:
+ validate:
 	/*
 	 * Build the new PTE.
 	 */
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap, prot) | PG_V;
-	if (PAGE_IS_MANAGED(pa)) {
+	if (managed) {
 		struct pv_head *pvh = pa_to_pvh(pa);
 
 		if ((pvh->pvh_attrs & PMAP_ATTR_REF) == 0)
@@ -1289,15 +1304,20 @@ validate:
 		npte |= PG_WIRED;
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("enter: new pte value %lx\n", npte);
+		printf("pmap_enter: new pte = 0x%lx\n", npte);
 #endif
+
 	/*
-	 * Remember if this was a wiring-only change.
-	 * If so, we need not flush the TLB and caches.
+	 * Set the new PTE.
 	 */
-	wired = ((*pte ^ npte) == PG_WIRED);
 	*pte = npte;
-	if (!wired && active_pmap(pmap)) {
+
+	/*
+	 * Invalidate the TLB entry for this VA and any appropriate
+	 * caches.  Note that this is not necessary for wiring-only
+	 * changes.
+	 */
+	if (wiring_only == FALSE && active_pmap(pmap)) {
 		ALPHA_TBIS(va);
 		if (prot & VM_PROT_EXECUTE)
 			alpha_pal_imb();
