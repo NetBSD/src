@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.36 1997/05/12 07:53:58 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.37 1997/07/23 07:17:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -936,7 +936,7 @@ itematch(parent, cf, aux)
 		return 0;
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)(gm->fbbase + gm->fboff));
 
-	return (pa == (vm_offset_t)mac68k_vidphys);
+	return (pa == (vm_offset_t)m68k_trunc_page(mac68k_vidphys));
 }
 
 static void 
@@ -1233,7 +1233,6 @@ itecnprobe(struct consdev * cp)
 void
 itereset()
 {
-	ite_initted = 1;
 	width = videosize & 0xffff;
 	height = (videosize >> 16) & 0xffff;
 	scrrows = height / CHARHEIGHT;
