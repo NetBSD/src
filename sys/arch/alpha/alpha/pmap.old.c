@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.31 1998/02/13 02:09:07 cgd Exp $ */
+/* $NetBSD: pmap.old.c,v 1.32 1998/02/14 02:04:05 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.31 1998/02/13 02:09:07 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.32 1998/02/14 02:04:05 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2317,7 +2317,7 @@ pmap_emulate_reference(p, v, user, write)
 #endif
 #ifdef DIAGNOSTIC
 	if (!PAGE_IS_MANAGED(pa))
-		printf("WARNING: pmap_emulate_reference(%p, 0x%lx, %d, %d): pa 0x%lx not managed\n", p, v, user, write, pa);
+		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): pa 0x%lx not managed", p, v, user, write, pa);
 #endif
 
 	/*
