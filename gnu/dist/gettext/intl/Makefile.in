@@ -113,10 +113,10 @@ install: install-exec install-data
 install-exec: all
 	if test "$(PACKAGE)" = "gettext" \
 	   && test '@INTLOBJS@' = '$(GETTOBJS)'; then \
-	  if test -r $(MKINSTALLDIRS); then \
+	  if test -x $(MKINSTALLDIRS); then \
 	    $(MKINSTALLDIRS) $(libdir) $(includedir); \
 	  else \
-	    $(top_srcdir)/mkinstalldirs $(libdir) $(includedir); \
+	    $(SHELL) $(top_srcdir)/mkinstalldirs $(libdir) $(includedir); \
 	  fi; \
 	  $(INSTALL_DATA) intlh.inst $(includedir)/libintl.h; \
 	  $(INSTALL_DATA) libintl.a $(libdir)/libintl.a; \
@@ -125,10 +125,10 @@ install-exec: all
 	fi
 install-data: all
 	if test "$(PACKAGE)" = "gettext"; then \
-	  if test -r $(MKINSTALLDIRS); then \
+	  if test -x $(MKINSTALLDIRS); then \
 	    $(MKINSTALLDIRS) $(gettextsrcdir); \
 	  else \
-	    $(top_srcdir)/mkinstalldirs $(gettextsrcdir); \
+	    $(SHELL) $(top_srcdir)/mkinstalldirs $(gettextsrcdir); \
 	  fi; \
 	  $(INSTALL_DATA) VERSION $(gettextsrcdir)/VERSION; \
 	  dists="$(DISTFILES.common)"; \
