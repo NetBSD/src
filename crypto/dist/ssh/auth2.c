@@ -444,7 +444,7 @@ userauth_pubkey(Authctxt *authctxt)
 				packet_put_string(pkblob, blen);
 				packet_send();
 				packet_write_wait();
-				authenticated = -1;
+				authctxt->postponed = 1;
 			}
 		}
 		if (authenticated != 1)
