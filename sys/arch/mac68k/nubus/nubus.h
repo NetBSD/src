@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.56 2002/04/10 04:38:50 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.57 2002/04/13 17:49:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -46,18 +46,24 @@
 #include <machine/cpu.h>
 
 #define NUBUS_CATEGORY_BOARD	0x0001
+#define  NUBUS_TYPE_BOARD	0x0000	/* We want these for minimal board */
+#define   NUBUS_DRSW_BOARD	0x0000	/* ROMs that come with nothing but */  
+#define    NUBUS_DRHW_BOARD	0x0000	/* a board resource (old NI_GPIB) */
 
 #define NUBUS_CATEGORY_DISPLAY	0x0003
 #define  NUBUS_TYPE_VIDEO	0x0001
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001	/* Apple Toby Frame Buffer */
+#define    NUBUS_DRHW_BAER	0x0002  /* Formac Baers color card */
 #define    NUBUS_DRHW_WVC	0x0006	/* Apple Workstation Video Card */
 #define	   NUBUS_DRHW_COLORMAX	0x0007	/* Sigma Designs ColorMax */
 #define    NUBUS_DRHW_SE30	0x0009	/* Apple SE/30 pseudo-slot video */
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
 #define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
+#define    NUBUS_DRHW_VSC	0x0020	/* Apple Macintosh Duo MiniDock */
+#define    NUBUS_DRHW_JET	0x0029	/* Apple Macintosh DuoDock II */
 #define    NUBUS_DRHW_BOOGIE	0x002b	/* Apple Macintosh 24AC Video Card */
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
@@ -115,8 +121,11 @@
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
+#define  NUBUS_TYPE_IEEE488	0x0004
 #define   NUBUS_DRSW_HDS	0x0102
-#define    NUBUS_DRHW_HDS	0x0102
+#define   NUBUS_DRSW_NI488	0x0104
+#define    NUBUS_DRHW_HDS	0x0102	/* Creative Solutions Hustler serial */
+#define    NUBUS_DRHW_NB_GPIB_TNT	0x0102	/* NatInst NB-GPIB/TNT */
 
 #define NUBUS_CATEGORY_MEMORY	0x0009	/* Also KanjiTalk Font Card? */
 #define  NUBUS_TYPE_RAMCACHE	0x010C	/* From Apple PDS card */
@@ -135,8 +144,27 @@
 #define    NUBUS_DRHW_AWGSPDS_SCSI	0x0100
 #define   NUBUS_DRSW_PLI		0x0108
 #define    NUBUS_DRHW_PLI		0x0100
-#define   NUBUS_DRSW_FWB		0x010C
+#define  NUBUS_TYPE_SCSIW	0x000B  /* FWB JackHammer Fast/Wide */
+#define   NUBUS_DRSW_FWB	0x0001	/* XXX Allen says 0x010C */
 #define    NUBUS_DRHW_FWB		0x0100
+
+#define NUBUS_CATEGORY_DOCK	0x0020
+#define  NUBUS_TYPE_STATION	0x0001
+#define  NUBUS_TYPE_DESK	0x0002
+#define  NUBUS_TYPE_TRAVEL	0x0003
+/* #define   NUBUS_DRSW_APPLE	0x0001 */
+#define   NUBUS_DRSW_NEWERTECH	0x0101
+
+/* Station */
+#define    NUBUS_DRHW_DUODOCK	0x0001	/* Apple DuoDock */
+#define    NUBUS_DRHW_DUODOCKII	0x0002	/* Apple DuoDock II */
+
+/* Desk */
+#define    NUBUS_DRHW_DUOMINIDOCK 0x0001 /* Apple Duo MiniDock */
+
+/* Travel */
+#define	   NUBUS_DRHW_MICROSCSI 0x0100	/* Newer Technology  SCSI MicroDock */
+
 
 /*
  * This is the same as Apple's Format Block for a card, with the
@@ -210,6 +238,29 @@ typedef struct _nubus_rsrc {
 	u_int32_t	data;
 } nubus_rsrc;
 
+/*
+ * On a NuBus master, an sMemory resource (this is a second-level 
+ * resource list) holds a list of address ranges for onboard 
+ * RAM, ROM and IO resources.
+ */
+typedef struct _nubus_smem_range {	
+	u_int32_t	length;
+	u_int32_t	offset;
+} nubus_smem_range;
+
+/*
+ * XXX This is mapped on the range list we get back out of the sMemory
+ * resources. I would have liked the range[] array to be of undefined 
+ * size but the compiler does not let me.
+ * Maybe it's just too much grief, and we should work with an array 
+ * of u_int32_t.
+ */ 
+typedef struct _nubus_smem_rangelist {	
+	u_int32_t		length;
+	nubus_smem_range	range[1];
+} nubus_smem_rangelist;
+
+
 /* Resource IDs for NUBUS_CATEGORY_* (All) */
 #define NUBUS_RSRC_TYPE		0x01	/* Type (required)		*/
 #define NUBUS_RSRC_NAME		0x02	/* Name (required)		*/
@@ -226,6 +277,7 @@ typedef struct _nubus_rsrc {
 #define NUBUS_RSRC_CICN		0x0F	/* Color icon			*/
 #define NUBUS_RSRC_ICL8		0x10	/* 8-bit icon data		*/
 #define NUBUS_RSRC_ICL4		0x11	/* 4-bit icon data		*/
+#define NUBUS_RSRC_SMEMORY	0x6C	/* Resource list for master	*/
 
 /* Resource IDs for NUBUS_CATEGORY_DISPLAY */
 #define NUBUS_RSRC_GAMMADIR	0x40	/* ID for gamma directory	*/
@@ -251,6 +303,15 @@ typedef struct _nubus_rsrc {
 #define NUBUS_RSRC_VEND_REV	0x03	/* Card design's revision level	*/
 #define NUBUS_RSRC_VEND_PART	0x04	/* Card part number		*/
 #define NUBUS_RSRC_VEND_DATE	0x05	/* Card revision date		*/
+
+/* Resource IDs for NUBUS_RSRC_SMEMORY master sMemory resource list */
+#define NUBUS_RSRC_SMEM_MINOR_RAMADDR	0x80	/* Minor RAM address ranges */
+#define NUBUS_RSRC_SMEM_MAJOR_RAMADDR	0x81	/* Major RAM address ranges */
+#define NUBUS_RSRC_SMEM_MINOR_ROMADDR	0x82	/* Minor ROM address ranges */
+#define NUBUS_RSRC_SMEM_MAJOR_ROMADDR	0x83	/* Major ROM address ranges */
+#define NUBUS_RSRC_SMEM_MINOR_DEVADDR	0x84	/* Minor device address ranges */
+#define NUBUS_RSRC_SMEM_MAJOR_DEVADDR	0x85	/* Major device address ranges */
+
 
 typedef struct _NUBUS_DRIVER {
 	u_int8_t	drvr_id;
@@ -298,6 +359,7 @@ struct nubus_softc {
 	struct	device	sc_dev;
 };
 
+
 void	nubus_get_main_dir __P((nubus_slot *slot, nubus_dir *dir_return));
 void	nubus_get_dir_from_rsrc __P((nubus_slot *slot, nubus_dirent *dirent,
 	    nubus_dir *dir_return));
@@ -311,6 +373,8 @@ int	nubus_get_ind_data __P((bus_space_tag_t, bus_space_handle_t,
 int	nubus_get_c_string __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot, nubus_dirent *dirent,
 	    caddr_t data_return, int max_bytes));
+int	nubus_get_smem_addr_rangelist __P((bus_space_tag_t, bus_space_handle_t,
+    	    nubus_slot *fmt, nubus_dirent *dirent, caddr_t data_return));
 
 char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot, int rsrc));
