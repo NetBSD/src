@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.78 2004/12/27 21:35:03 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.79 2004/12/28 00:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -453,10 +453,11 @@ typedef struct {
 #define	STV_PROTECTED		3	/* visible, not preemptible */
 
 /* st_info/st_other utility macros */
-#define	ELF_ST_BIND(info)		((Elf_Byte)(info) >> 4)
-#define	ELF_ST_TYPE(info)		((Elf_Byte)(info) & 0xf)
-#define	ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
-#define	ELF_ST_VISIBILITY(other)	((Elf_Byte)(other) & 3)
+#define	ELF_ST_BIND(info)		((uint32_t)(info) >> 4)
+#define	ELF_ST_TYPE(info)		((uint32_t)(info) & 0xf)
+#define	ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | \
+					 ((type) & 0xf)))
+#define	ELF_ST_VISIBILITY(other)	((uint32_t)(other) & 3)
 
 /*
  * Special section indexes
