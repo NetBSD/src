@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.1 2000/02/27 00:59:23 groo Exp $
+.\"	$NetBSD: lm.4,v 1.2 2000/03/01 20:12:45 groo Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd National Semiconductor LM78, LM79 and compatible hardware monitors
 .Sh SYNOPSIS
 .Cd "lm0 at isa? port 0x290"
-.Cd "lm0 at pnpbios0 index ?"
+.\" .Cd "lm0 at pnpbios0 index ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -93,6 +93,8 @@ W83781D and W83782D (untested)
 .Xr envsys 4
 .Sh BUGS
 Interrupt support is unimplemented.
+.Pp
+There are currently no known pnpbios IDs assigned to LM chips. 
 .Sh HISTORY
 The
 .Nm
