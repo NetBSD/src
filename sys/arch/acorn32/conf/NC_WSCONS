@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.28 2004/03/13 18:25:25 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.29 2004/03/13 19:27:40 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -183,8 +183,8 @@ iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
 
-#wsqms*		at iomd?		# ws quadmouse driver
-#wsmouse*	at wsqms?		# wsmouse on ws quadmouse
+#qms*		at iomd?		# ws quadmouse driver
+#wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
 
