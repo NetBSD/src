@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.60 2000/01/26 14:56:42 leo Exp $
+#	$NetBSD: GENERIC,v 1.61 2000/02/12 03:31:49 thorpej Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -137,7 +137,6 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
