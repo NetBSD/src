@@ -1,4 +1,4 @@
-/* $NetBSD: a12creg.h,v 1.1 1998/01/29 21:42:52 ross Exp $ */
+/* $NetBSD: a12creg.h,v 1.2 1998/03/02 06:56:16 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -35,10 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef a12creg_h_INCLUDED
-#define a12creg_h_INCLUDED
+#ifndef _ALPHA_PCI_A12CREG_H_
+#define _ALPHA_PCI_A12CREG_H_
 
-#define	REGVAL(r)	(*(volatile long *)ALPHA_PHYS_TO_K0SEG(r))
+#define	A12CREG()	/* generate ctags(1) key */
+
+#define	REGADDR(r)	((volatile long *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*REGADDR(r))
 /*
  *                         --   A  d  d  r  e  s  s     L  i  n  e  --
  * 
@@ -95,15 +98,51 @@
 #define A12_PCITarget	0x8030000000L
 
 #define A12_PCIMasterAbort 	0x8000		/* GSR */
-#define A12_PCIAddr2 		0x1000		/* OMR */
-#define A12_PCIConfigCycle 	0x800		/* OMR */
-#define A12_CBMAOFFSET		0x100
+
+#define A12_OMR_PCIAddr2 	0x1000L		/* OMR */
+#define A12_OMR_PCIConfigCycle 	0x0800L		/* OMR */
+#define A12_OMR_ICW_ENABLE 	0x0400L		/* OMR */
+#define A12_OMR_IEI_ENABLE 	0x0200L		/* OMR */
+#define A12_OMR_TEI_ENABLE 	0x0100L		/* OMR */
+#define A12_OMR_PCI_ENABLE 	0x0080L		/* OMR */
+#define A12_OMR_OMF_ENABLE 	0x0040L		/* OMR */
+
+#define	A12_MCSR_DMAOUT		0x4000	/* Outgoing DMA channel armed */
+#define	A12_MCSR_DMAIN		0x2000	/* Incoming DMA channel armed */
+#define	A12_MCSR_OMFE		0x1000	/* Outgoing message fifo empty */
+#define	A12_MCSR_OMFF		0x0800	/* Outgoing message fifo full */
+#define	A12_MCSR_OMFAF		0x0400	/* Outgoing message fifo almost full */
+#define	A12_MCSR_IMFAE		0x0200	/* Incoming message fifo almost empty */
+#define	A12_MCSR_IMP		0x0100	/* Incoming message pending */
+#define	A12_MCSR_TBC		0x0080	/* Transmit Block Complete */
+#define	A12_MCSR_RBC		0x0040	/* Receive Block Complete */
+
+#define	A12_GSR_PDI     	0x0040	/* PCI device interrupt asserted */
+#define	A12_GSR_PEI     	0x0080	/* PCI SERR# pulse received */
+#define	A12_GSR_MCE     	0x0100	/* Missing Close Error Flag */
+#define	A12_GSR_ECE     	0x0200	/* Embedded Close Error Flag */
+#define	A12_GSR_TEI     	0x0400	/* Timer event interrupt pending */
+#define	A12_GSR_IEI     	0x0800	/* Interval event interrupt pending */
+#define	A12_GSR_FORUN   	0x1000	/* FIFO Overrun Error */
+#define	A12_GSR_FURUN   	0x2000	/* FIFO Underrun Error */
+#define	A12_GSR_ICW     	0x4000	/* Incoming Control Word */
+#define	A12_GSR_ABORT   	0x8000	/* PCI Master or Target Abort */
+
+#define	A12_ALL_WIRED		0xffc0	/* Core logic wires these bits */
+#define	A12_ALL_FIRST		     6	/* ...starting at this one */
+#define	A12_ALL_EXTRACT(r)	(((r) & A12_ALL_WIRED) >> A12_ALL_FIRST)
+
+#define A12_CBMAOFFSET		0x0100
 
 #define	A12_XBAR_CHANNEL_MAX 	14
 #define	A12_TMP_PID_COUNT	12
 
-#endif	/* a12creg_h_INCLUDED */
+#define	A12CONS_CPU_LOCAL	0x40	/* our switch channel */
+#define	A12CONS_CPU_ETHER	0x41	/* route to outside world */
+#define	A12CONS_CPU_GLOBAL	0x42	/* location in the big picture */
 
-#define	DIE()	do { printf("Nice try file=%s line=%d\n", \
-			__FILE__, __LINE__); panic("Nice try."); } while(0)
-#define	What() printf("%s: line %d. What?\n", __FILE__, __LINE__)
+#define	DIE()		NICETRY()
+#define	NICETRY()	panic("Nice try @ %s:%d\n", __FILE__, __LINE__)
+#define	What()		printf("%s:%d. What?\n",    __FILE__, __LINE__)
+
+#endif
