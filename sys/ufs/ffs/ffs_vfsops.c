@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.14 1995/03/09 12:06:08 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.15 1995/04/12 21:21:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -162,7 +162,6 @@ ffs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
-		error = 0;
 		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
@@ -170,12 +169,22 @@ ffs_mount(mp, path, data, ndp, p)
 			if (vfs_busy(mp))
 				return (EBUSY);
 			error = ffs_flushfiles(mp, flags, p);
+			if (error == 0 &&
+			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
+			    fs->fs_clean & FS_WASCLEAN) {
+				fs->fs_clean = FS_ISCLEAN;
+				(void) ffs_sbupdate(ump, MNT_WAIT);
+			}
 			vfs_unbusy(mp);
+			if (error)
+				return (error);
+			fs->fs_ronly = 1;
 		}
-		if (!error && (mp->mnt_flag & MNT_RELOAD))
+		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
-		if (error)
-			return (error);
+			if (error)
+				return (error);
+		}
 		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
@@ -192,6 +201,8 @@ ffs_mount(mp, path, data, ndp, p)
 				VOP_UNLOCK(devvp);
 			}
 			fs->fs_ronly = 0;
+			fs->fs_clean <<= 1;
+			fs->fs_fmod = 1;
 		}
 		if (args.fspec == 0) {
 			/*
@@ -252,6 +263,15 @@ ffs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	if (fs->fs_fmod != 0) {	/* XXX */
+		fs->fs_fmod = 0;
+		if (fs->fs_clean & FS_WASCLEAN)
+			fs->fs_time = time.tv_sec;
+		else
+			printf("%s: file system not clean; please fsck(8)\n",
+			    mp->mnt_stat.f_mntfromname);
+		(void) ffs_cgupdate(ump, MNT_WAIT);
+	}
 	return (0);
 }
 
@@ -436,8 +456,10 @@ ffs_mountfs(devvp, mp, p)
 	bp = NULL;
 	fs = ump->um_fs;
 	fs->fs_ronly = ronly;
-	if (ronly == 0)
+	if (ronly == 0) {
+		fs->fs_clean <<= 1;
 		fs->fs_fmod = 1;
+	}
 	size = fs->fs_cssize;
 	blks = howmany(size, fs->fs_fsize);
 	if (fs->fs_contigsumsize > 0)
@@ -543,6 +565,12 @@ ffs_unmount(mp, mntflags, p)
 		return (error);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	if (fs->fs_ronly == 0 &&
+	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
+	    fs->fs_clean & FS_WASCLEAN) {
+		fs->fs_clean = FS_ISCLEAN;
+		(void) ffs_sbupdate(ump, MNT_WAIT);
+	}
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
@@ -661,7 +689,7 @@ ffs_sync(mp, waitfor, cred, p)
 		}
 		fs->fs_fmod = 0;
 		fs->fs_time = time.tv_sec;
-		allerror = ffs_sbupdate(ump, waitfor);
+		allerror = ffs_cgupdate(ump, waitfor);
 	}
 	/*
 	 * Write back each (modified) inode.
@@ -864,9 +892,7 @@ ffs_sbupdate(mp, waitfor)
 {
 	register struct fs *dfs, *fs = mp->um_fs;
 	register struct buf *bp;
-	int blks;
-	caddr_t space;
-	int i, size, error = 0;
+	int i, error = 0;
 
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
@@ -889,6 +915,21 @@ ffs_sbupdate(mp, waitfor)
 		error = bwrite(bp);
 	else
 		bawrite(bp);
+	return (error);
+}
+
+int
+ffs_cgupdate(mp, waitfor)
+	struct ufsmount *mp;
+	int waitfor;
+{
+	register struct fs *fs = mp->um_fs;
+	register struct buf *bp;
+	int blks;
+	caddr_t space;
+	int i, size, error = 0, allerror = 0;
+
+	allerror = ffs_sbupdate(mp, waitfor);
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);
 	space = (caddr_t)fs->fs_csp[0];
 	for (i = 0; i < blks; i += fs->fs_frag) {
@@ -904,5 +945,7 @@ ffs_sbupdate(mp, waitfor)
 		else
 			bawrite(bp);
 	}
-	return (error);
+	if (!allerror && error)
+		allerror = error;
+	return (allerror);
 }
