@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.lib.mk,v 1.91 1997/03/27 17:33:34 christos Exp $
-#	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
+#	$NetBSD: bsd.lib.mk,v 1.92 1997/03/29 08:02:50 mikel Exp $
+#	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -268,7 +268,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if !defined(BUILD)
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 .endif
- 
+
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} \
 		${.TARGET}

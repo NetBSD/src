@@ -1,7 +1,7 @@
-#	$NetBSD: sys.mk,v 1.29 1996/10/18 02:33:38 thorpej Exp $
-#	@(#)sys.mk	5.11 (Berkeley) 3/13/91
+#	$NetBSD: sys.mk,v 1.30 1997/03/29 08:02:58 mikel Exp $
+#	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
-unix=		We run NetBSD.
+unix?=		We run NetBSD.
 
 .SUFFIXES: .out .a .ln .o .c .cc .C .F .f .r .y .l .s .S .cl .p .h .sh .m4
 
@@ -32,7 +32,7 @@ CPP?=		cpp
 CPPFLAGS?=	
 
 FC?=		f77
-FFLAGS?=		-O
+FFLAGS?=	-O
 RFLAGS?=
 COMPILE.f?=	${FC} ${FFLAGS} -c
 LINK.f?=	${FC} ${FFLAGS} ${LDFLAGS}

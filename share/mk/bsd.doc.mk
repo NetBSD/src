@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.23 1997/03/24 21:54:14 christos Exp $
+#	$NetBSD: bsd.doc.mk,v 1.24 1997/03/29 08:02:48 mikel Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -19,7 +19,6 @@ BINMODE?=	444
 
 .include <bsd.own.mk>
 
-  
 .PATH: ${.CURDIR}
 
 .if !target(all)
