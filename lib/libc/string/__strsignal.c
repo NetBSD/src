@@ -33,13 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strsignal.c,v 1.9 1995/06/15 00:07:11 jtc Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.10 1996/10/11 00:51:08 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#include <limits.h>
 #include <nl_types.h>
 #endif
 
@@ -65,14 +66,16 @@ __strsignal(num, buf)
 	signum = num;				/* convert to unsigned */
 	if (signum < NSIG) {
 #ifdef NLS
-		strcpy(buf, catgets(catd, 2, signum,
-		    (char *)sys_siglist[signum])); 
+		stnrcpy(buf, catgets(catd, 2, signum,
+		    (char *)sys_siglist[signum]), NL_TEXTMAX); 
+		buf[NL_TEXTMAX - 1] = '\0';
 #else
 		return((char *)sys_siglist[signum]);
 #endif
 	} else {
 #ifdef NLS
-		sprintf(buf, catgets(catd, 1, 0xffff, UPREFIX), signum);
+		snprintf(buf, NL_TEXTMAX, 
+	            catgets(catd, 1, 0xffff, UPREFIX), signum);
 #else
 		sprintf(buf, UPREFIX, signum);
 #endif
