@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.128 2003/08/14 00:13:34 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.129 2003/08/14 00:19:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.128 2003/08/14 00:13:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.129 2003/08/14 00:19:43 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -796,7 +796,6 @@ if_clone_lookup(name, unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
-	size_t i;
 	int unit;
 
 	/* separate interface name from unit */
@@ -818,8 +817,8 @@ if_clone_lookup(name, unitp)
 		return (NULL);
 
 	unit = 0;
-	while (cp - name < IFNAMSIZ && *cp && unit * 10 < INT_MAX) {
-		if (*cp < '0' || *cp > '9') {
+	while (cp - name < IFNAMSIZ && *cp) {
+		if (*cp < '0' || *cp > '9' || unit > INT_MAX / 10) {
 			/* Bogus unit number. */
 			return (NULL);
 		}
