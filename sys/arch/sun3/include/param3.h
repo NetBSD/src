@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
+/*	$NetBSD: param3.h,v 1.35 1996/12/13 19:46:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -77,7 +77,8 @@
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		0x10000 	/* max raw I/O transfer size */
+#define	MAXBSIZE	 0x8000 	/* max FS block size - XXX */
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
