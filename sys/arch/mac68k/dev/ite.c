@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.6 1994/08/02 17:55:24 briggs Exp $
+ *	$Id: ite.c,v 1.7 1994/09/12 03:38:30 briggs Exp $
  */
 
 /*
@@ -303,12 +303,15 @@ static void scrollup (void)
 	to = (unsigned long *)videoaddr;
 	from = to + linelongs;
 
-	tocopy = (scrrows - 1) * linelongs * sizeof (long);
+	tocopy = (scrrows - 1) * linelongs;
 	while (tocopy > 0) {
-		copying = (tocopy > 65535) ? 65535 : tocopy;
-		bcopy (from, to, copying);
+		copying = (tocopy > 16383) ? 16383 : tocopy;
+		bcopy (from, to, copying*4);
+		from += copying;
+		to += copying;
 		tocopy -= copying;
 	}
+	to = (unsigned long *)videoaddr;
 	bzero (to + (scrrows - 1) * linelongs, linelongs * sizeof (long));
 }
 
