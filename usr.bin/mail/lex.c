@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.15 2000/07/06 14:12:31 ad Exp $	*/
+/*	$NetBSD: lex.c,v 1.16 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.15 2000/07/06 14:12:31 ad Exp $");
+__RCSID("$NetBSD: lex.c,v 1.16 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,10 @@ __RCSID("$NetBSD: lex.c,v 1.15 2000/07/06 14:12:31 ad Exp $");
  *
  * Lexical processing of commands.
  */
+
+extern char *version;
+extern const struct cmd cmdtab[];
+extern char *tempMesg;
 
 char	*prompt = "& ";
 
@@ -69,7 +73,6 @@ setfile(name)
 	char isedit = *name != '%' || getuserid(myname) != getuid();
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
-	extern char *tempMesg;
 
 	if ((name = expand(name)) == NOSTR)
 		return -1;
@@ -502,7 +505,6 @@ const struct cmd *
 lex(word)
 	char word[];
 {
-	extern const struct cmd cmdtab[];
 	const struct cmd *cp;
 
 	for (cp = &cmdtab[0]; cp->c_name != NOSTR; cp++)
@@ -690,8 +692,6 @@ int
 pversion(v)
 	void *v;
 {
-	extern char *version;
-
 	printf("Version %s\n", version);
 	return(0);
 }

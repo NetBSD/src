@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.13 2000/02/10 12:34:42 tron Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.14 2001/02/05 02:07:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.13 2000/02/10 12:34:42 tron Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.14 2001/02/05 02:07:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: cmd1.c,v 1.13 2000/02/10 12:34:42 tron Exp $");
  *
  * User commands.
  */
+extern const struct cmd cmdtab[];
 
 /*
  * Print the current active headings.
@@ -235,7 +236,6 @@ int
 pcmdlist(v)
 	void *v;
 {
-	extern const struct cmd cmdtab[];
 	const struct cmd *cp;
 	int cc;
 

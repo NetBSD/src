@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.12 2000/09/19 01:12:48 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.13 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.12 2000/09/19 01:12:48 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.13 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: send.c,v 1.12 2000/09/19 01:12:48 christos Exp $");
  *
  * Mail to others.
  */
+
+extern char *tempMail;
 
 /*
  * Send message described by the passed pointer to the
@@ -448,7 +450,6 @@ infix(hp, fi)
 	struct header *hp;
 	FILE *fi;
 {
-	extern char *tempMail;
 	FILE *nfo, *nfi;
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.7 1997/11/25 17:58:17 bad Exp $	*/
+/*	$NetBSD: edit.c,v 1.8 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.7 1997/11/25 17:58:17 bad Exp $");
+__RCSID("$NetBSD: edit.c,v 1.8 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: edit.c,v 1.7 1997/11/25 17:58:17 bad Exp $");
  *
  * Perform message editing functions.
  */
+extern char *tempEdit;
 
 /*
  * Edit a message list.
@@ -156,7 +157,6 @@ run_editor(fp, size, type, readonly)
 	time_t modtime;
 	char *edit;
 	struct stat statb;
-	extern char *tempEdit;
 
 	if ((t = creat(tempEdit, readonly ? 0400 : 0600)) < 0) {
 		perror(tempEdit);

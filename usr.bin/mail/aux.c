@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.10 1998/12/19 16:30:52 christos Exp $	*/
+/*	$NetBSD: aux.c,v 1.11 2001/02/05 02:07:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: aux.c,v 1.10 1998/12/19 16:30:52 christos Exp $");
+__RCSID("$NetBSD: aux.c,v 1.11 2001/02/05 02:07:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -628,7 +628,7 @@ anyof(s1, s2)
  * Convert c to upper case
  */
 int
-raise(c)
+upcase(c)
 	int c;
 {
 

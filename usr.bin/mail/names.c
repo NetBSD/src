@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.8 1998/12/19 16:33:40 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.9 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.8 1998/12/19 16:33:40 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.9 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: names.c,v 1.8 1998/12/19 16:33:40 christos Exp $");
 
 #include "rcv.h"
 #include "extern.h"
+
+extern char *tempEdit;
 
 /*
  * Allocate a single element of a name list,
@@ -229,7 +231,6 @@ outof(names, fo, hp)
 	char *date, *fname;
 	FILE *fout, *fin;
 	int ispipe;
-	extern char *tempEdit;
 
 	top = names;
 	np = names;
