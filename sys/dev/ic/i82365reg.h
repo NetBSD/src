@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.4 2000/01/01 21:57:46 sommerfeld Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.5 2000/02/01 22:39:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -46,13 +46,9 @@
  * the same device.
  */
 
-#define	PCIC_CHIP0_BASE		0x00
-#define	PCIC_CHIP1_BASE		0x80
-
-/* Each PCIC chip can drive two sockets */
-
-#define	PCIC_SOCKETA_INDEX	0x00
-#define	PCIC_SOCKETB_INDEX	0x40
+/* pcic can have 2 controllers offset by 0x80 and 2 sockets offset by 0x40 */
+#define	PCIC_CHIP_OFFSET	0x80
+#define	PCIC_SOCKET_OFFSET	0x40
 
 /* general setup registers */
 
@@ -117,6 +113,7 @@
 #define	PCIC_ADDRWIN_ENABLE_MEM1		0x02
 #define	PCIC_ADDRWIN_ENABLE_MEM0		0x01
 
+/* this is _not_ available on cirrus chips */
 #define	PCIC_CARD_DETECT			0x16	/* RW */
 #define	PCIC_CARD_DETECT_RESERVED		0xC0
 #define	PCIC_CARD_DETECT_SW_INTR		0x20
