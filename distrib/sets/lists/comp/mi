@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.539 2003/03/01 16:06:11 bjh21 Exp $
+#	$NetBSD: mi,v 1.540 2003/03/04 00:32:55 nathanw Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1644,6 +1644,7 @@
 ./usr/share/man/cat3/bswap16.0	comp-c-catman
 ./usr/share/man/cat3/bswap32.0	comp-c-catman
 ./usr/share/man/cat3/bswap64.0	comp-c-catman
+./usr/share/man/cat3/btowc.0	comp-c-catman
 ./usr/share/man/cat3/btree.0	comp-c-catman
 ./usr/share/man/cat3/byteorder.0	comp-c-catman
 ./usr/share/man/cat3/bzero.0	comp-c-catman
@@ -3128,6 +3129,7 @@
 ./usr/share/man/cat3/wcsspn.0		comp-c-catman
 ./usr/share/man/cat3/wcsstr.0		comp-c-catman
 ./usr/share/man/cat3/wcstombs.0	comp-c-catman
+./usr/share/man/cat3/wctob.0		comp-c-catman
 ./usr/share/man/cat3/wctomb.0	comp-c-catman
 ./usr/share/man/cat3/wdelch.0		comp-c-catman
 ./usr/share/man/cat3/wdeleteln.0		comp-c-catman
@@ -4685,6 +4687,7 @@
 ./usr/share/man/man3/bswap16.3		comp-c-man
 ./usr/share/man/man3/bswap32.3		comp-c-man
 ./usr/share/man/man3/bswap64.3		comp-c-man
+./usr/share/man/man3/btowc.3		comp-c-man
 ./usr/share/man/man3/btree.3		comp-c-man
 ./usr/share/man/man3/byteorder.3		comp-c-man
 ./usr/share/man/man3/bzero.3		comp-c-man
@@ -6169,6 +6172,7 @@
 ./usr/share/man/man3/wcsspn.3		comp-c-man
 ./usr/share/man/man3/wcsstr.3		comp-c-man
 ./usr/share/man/man3/wcstombs.3	comp-c-man
+./usr/share/man/man3/wctob.3	comp-c-man
 ./usr/share/man/man3/wctomb.3	comp-c-man
 ./usr/share/man/man3/wdelch.3		comp-c-man
 ./usr/share/man/man3/wdeleteln.3		comp-c-man
