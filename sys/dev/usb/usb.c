@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.32 1999/11/20 01:15:25 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.33 1999/11/22 21:57:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -88,10 +88,10 @@ MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 int	usbdebug = 0;
 #ifdef UHCI_DEBUG
-extern int uhcidebug;
+int	uhcidebug;
 #endif
 #ifdef OHCI_DEBUG
-extern int ohcidebug;
+int	ohcidebug;
 #endif
 int	usb_noexplore = 0;
 #else
