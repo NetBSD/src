@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.18 2001/08/20 13:44:08 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,8 +40,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.18 2001/08/20 13:44:08 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $");
 #endif /* not lint */
+
+#include <sys/types.h>
 
 #include <sys/endian.h>
 #include <sys/ioctl.h>
