@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.32 2003/08/12 18:34:50 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.33 2003/08/24 16:33:41 chs Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.32 2003/08/12 18:34:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2003/08/24 16:33:41 chs Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -114,9 +114,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
 	extern int trapexit[], sctrapexit[];
-#ifdef PPC_OEA
-	extern int end[];
-#endif
 	boolean_t full = FALSE;
 	boolean_t in_kernel = 1;
 
@@ -162,25 +159,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	for (;;) {
 		if (frame < PAGE_SIZE)
 			break;
-#ifdef PPC_OEA
-		if (kernel_only && !cold &&
-		    ((frame > (db_addr_t) end &&
-		      frame < VM_MIN_KERNEL_ADDRESS) ||
-		     frame >= VM_MAX_KERNEL_ADDRESS))
-			break;
-#endif 
 		frame = *(db_addr_t *)frame;
 	    next_frame:
 		args = (db_addr_t *)(frame + 8);
 		if (frame < PAGE_SIZE)
 			break;
-#ifdef PPC_OEA
-		if (kernel_only && !cold &&
-		    ((frame > (db_addr_t) end &&
-		      frame < VM_MIN_KERNEL_ADDRESS) ||
-		     frame >= VM_MAX_KERNEL_ADDRESS))
-			break;
-#endif
 	        if (count-- == 0)
 			break;
 
