@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.5 1998/07/21 22:27:33 thorpej Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.6 1998/07/25 00:41:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -63,6 +63,11 @@
 #define	CS8900_IOSIZE	16
 
 /*
+ * The CS8900 has a 4k memory space.
+ */
+#define	CS8900_MEMSIZE	4096
+
+/*
  * Size of the DMA area used for packet reception.
  */
 #if 0
@@ -70,6 +75,13 @@
 #else
 #define	CS8900_DMASIZE	(16*1024)
 #endif
+
+/*
+ * Validate various parameters.
+ */
+#define	CS8900_MEMBASE_ISVALID(x)	(((x) & (CS8900_MEMSIZE - 1)) == 0)
+#define	CS8900_IRQ_ISVALID(x)		((x) == 5 || (x) == 10 ||	\
+					 (x) == 11 || (x) == 12)
 
 /* Chip Identification (PacketPage registers) */
 
