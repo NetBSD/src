@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.6 2002/03/18 16:00:55 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.7 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,6 +61,10 @@ typedef struct el_key_t {
 #define	XK_STR	1
 #define	XK_NOD	2
 #define	XK_EXE	3
+
+#undef key_end
+#undef key_clear
+#undef key_print
 
 protected int		 key_init(EditLine *);
 protected void		 key_end(EditLine *);
