@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.4 2005/02/27 08:16:47 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.5 2005/02/28 11:58:17 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.4 2005/02/27 08:16:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.5 2005/02/28 11:58:17 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -232,7 +232,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Now initialize the final portion of that block of
 		 * descriptors to map Sysmap.
 		 */
-		pte = ((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
+		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
 		epte = &pte[NPTEPG/SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
