@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.63 1997/01/09 16:57:14 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.63.2.1 1997/01/14 21:27:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -71,9 +71,11 @@
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
 
+struct device;
 struct proc;
 struct uio;
 struct tty;
+struct vnode;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
@@ -101,6 +103,8 @@ extern int dumpsize;		/* size of dump in pages */
 
 extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
+extern struct device *root_device; /* device equivalent to above */
+extern const char *rootspec;	/* how root device was specified */
 
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
@@ -237,6 +241,17 @@ void	setstatclockrate __P((int hzrate));
 void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
+
+/*
+ * Mountroot hooks.  Device drivers establish these to be executed
+ * just before (*mountroot)() if the passed device is selected
+ * as the root device.
+ */
+void	*mountroothook_establish __P((void (*)(struct device *),
+	    struct device *));
+void	mountroothook_disestablish __P((void *));
+void	mountroothook_destroy __P((void));
+void	domountroothook __P((void));
 
 int	uiomove __P((void *, int, struct uio *));
 

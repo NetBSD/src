@@ -24,27 +24,26 @@ options		COMPAT_09
 options		COMPAT_10
 options		COMPAT_12
 
-options		FFS
-options		MFS
+file-system 	FFS
+file-system 	MFS
+file-system 	NFS
+file-system 	CD9660
+file-system 	MSDOSFS
+file-system 	FDESC
+file-system 	KERNFS
+file-system 	NULLFS
+file-system 	PORTAL
+file-system 	PROCFS
+file-system 	UMAPFS
+file-system 	UNION
 
-options		NFSCLIENT
-options		NFSSERVER
-
-options		CD9660
-options		MSDOSFS
-options		FDESC
 options		FIFO
-options		KERNFS
-options		NULLFS
-options		PORTAL
-options		PROCFS
-options		UMAPFS
-options		UNION
+options		NFSSERVER
 
 options		INET
 options		NMBCLUSTERS=1024
 
-config		netbsd	swap generic
+config		netbsd	root on ? type ?
 
 ofroot*		at root
 

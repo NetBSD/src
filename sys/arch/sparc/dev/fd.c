@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 1997/01/01 23:46:29 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.46.2.1 1997/01/14 21:26:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -618,7 +618,7 @@ fdattach(parent, self, aux)
 	 * Establish a mountroot_hook anyway in case we booted
 	 * with RB_ASKNAME and get selected as the boot device.
 	 */
-	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dv);
+	mountroothook_establish(fd_mountroot_hook, &fd->sc_dv);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);

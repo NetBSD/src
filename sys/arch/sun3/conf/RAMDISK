@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.8 1996/12/28 23:27:30 pk Exp $
+#	$NetBSD: RAMDISK,v 1.8.2.1 1997/01/14 21:26:25 thorpej Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -30,10 +30,11 @@ options 	MEMORY_DISK_HOOKS
 options 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
-# May need NFSCLIENT to get miniroot image
-options 	NFSCLIENT	# nfs client support
+# May need NFS to get miniroot image
+file-system 	NFS		# nfs client support
 # Need FFS for the ramdisk image
-options 	FFS		# ufs file system
+file-system 	FFS		# ufs file system
+
 options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
@@ -53,9 +54,7 @@ options 	UCONSOLE	# Allow non-root TIOCCONS
 # Sun3-specific debugging options
 options 	DIAGNOSTIC
 
-# The config program assumes all devices have partions...
-# Is it OK to put swap on a non-existent partition?
-config		netbsd root on md0a swap on md0b
+config		netbsd root on ? type ?
 
 #
 # Serial ports

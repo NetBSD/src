@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1996/12/17 21:11:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.2.1 1997/01/14 21:26:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,9 +67,23 @@
 
 int cold;
 
+static int net_mkunit __P((int, int));
+static int sd_mkunit __P((int, int));
+static int xx_mkunit __P((int, int));
+
+struct devnametobdevmaj sun3_nam2blk[] = {
+	{ "xy",		3 },
+	{ "sd",		7 },
+	{ "xd",		10 },
+	{ "md",		13 },
+	{ "cd",		18 },
+	{ NULL,		0 },
+};
+
 void configure()
 {
-	struct device *mainbus;
+	struct device *mainbus, *booted_device;
+	int booted_partition;
 
 	/* General device autoconfiguration. */
 	mainbus = config_rootfound("mainbus", NULL);
@@ -77,34 +91,106 @@ void configure()
 		panic("configure: mainbus not found");
 
 	/* Choose root and swap devices. */
-	swapgeneric();
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	     booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, sun3_nam2blk);
+
 	swapconf();
 	dumpconf();
 	cold = 0;
 }
 
 /*
- * Configure swap space and related parameters.
+ * Support code to find the boot device.
  */
-void
-swapconf()
+
+/*
+ * Map Sun PROM device names to unit numbers.
+ */
+static int
+net_mkunit(ctlr, unit)
+	int ctlr, unit;
 {
-	struct swdevt *swp;
-	u_int maj;
-	int nblks;
 
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+	/* XXX - Not sure which is set. */
+	return (ctlr + unit);
+}
 
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev) /* paranoid? */
+static int
+sd_mkunit(ctlr, unit)
+	int ctlr, unit;
+{
+	int target, lun;
+
+	/* This only supports LUNs 0, 1 */
+	target = unit >> 3;
+	lun = unit & 1;
+	return (target * 2 + lun);
+}
+
+static int
+xx_mkunit(ctlr, unit)
+	int ctlr, unit;
+{
+
+	return (ctlr * 2 + unit);
+}
+
+static struct {
+	const char *name;
+	int (*mkunit) __P((int, int));
+} name2unit[] = {
+	{ "ie",		net_mkunit },
+	{ "le",		net_mkunit },
+	{ "sd",		sd_mkunit },
+	{ "xy",		xx_mkunit },
+	{ "xd",		xx_mkunit },
+	{ NULL,		0 },
+};
+
+void
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
+{
+	struct device *dv;
+	MachMonBootParam *bpp;
+	char name[32];
+	int unit, part, i;
+
+	/* Default to "Not found". */
+	*devpp = NULL;
+	*partp = 0;
+
+	bpp = *romp->bootParam;
+
+	/* Extract device name (always two letters). */
+	name[0] = bpp->devName[0];
+	name[1] = bpp->devName[1];
+	name[3] = '\0';
+
+	/* Do we know how to get a unit number for this device? */
+	for (i = 0; name2unit[i].name != NULL; i++)
+		if (name2unit[i].name[0] == name[0] &&
+		    name2unit[i].name[1] == name[1])
 			break;
+	if (name2unit[i].name == NULL)
+		return;
 
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks > 0 &&
-				(swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
+	unit = (*name2unit[i].mkunit)(bpp->ctlrNum, bpp->unitNum);
+	part = bpp->partNum;
+
+	/* Look up the device. */
+	sprintf(name, "%s%d", name2unit[i].name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL;
+	    dv = dv->dv_list.tqe_next) {
+		if (strcmp(name, dv->dv_xname) == 0) {
+			*devpp = dv;
+			*partp = part;
+			return;
 		}
 	}
 }

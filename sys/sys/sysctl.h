@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.18 1997/01/09 05:33:42 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.18.2.1 1997/01/14 21:27:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -138,7 +138,9 @@ struct ctlname {
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
 #define KERN_AUTONICETIME	27	/* int: proc time before autonice */
 #define KERN_AUTONICEVAL	28	/* int: auto nice value */
-#define	KERN_MAXID		29	/* number of valid kern ids */
+#define	KERN_RTC_OFFSET		29	/* int: offset of rtc from gmt */
+#define	KERN_ROOT_DEVICE	30	/* string: root device */
+#define	KERN_MAXID		31	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -170,6 +172,8 @@ struct ctlname {
 	{ "timex", CTLTYPE_STRUCT }, \
 	{ "autonicetime", CTLTYPE_INT }, \
 	{ "autoniceval", CTLTYPE_INT }, \
+	{ "rtc_offset", CTLTYPE_INT }, \
+	{ "root_device", CTLTYPE_STRING }, \
 }
 
 /*

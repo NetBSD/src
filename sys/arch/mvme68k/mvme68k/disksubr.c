@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1996/11/08 20:50:55 chuck Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11.2.1 1997/01/14 21:25:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -89,7 +89,7 @@ dk_establish(dk, dev)
 
         	if (sbsc->sc_link[target][lun] != NULL &&
             	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bootdv = dev;
+			booted_device = dev;
                 	return;
 		}
         }

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.11 1996/11/13 18:42:18 gwr Exp $	*/
+/*	$NetBSD: scan.l,v 1.11.2.1 1997/01/14 21:28:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,7 @@ define		return DEFINE;
 device		return DEVICE;
 dumps		return DUMPS;
 file		return XFILE;
+file-system	return FILE_SYSTEM;
 flags		return FLAGS;
 include		return INCLUDE;
 machine		return XMACHINE;
@@ -108,6 +109,7 @@ pseudo-device	return PSEUDO_DEVICE;
 root		return ROOT;
 source		return SOURCE;
 swap		return SWAP;
+type		return TYPE;
 with		return WITH;
 
 {PATH}	{

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.19 1996/12/28 23:15:09 pk Exp $
+#	$NetBSD: ATARITT,v 1.19.2.1 1997/01/14 21:25:00 thorpej Exp $
 #
 # ATARI-TT
 #
@@ -37,15 +37,18 @@ options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #
 options		INET		# Basic networking support
 
-options		FFS		# Berkeley fast file system
-options		MFS		# Memory based filesystem
-options		PROCFS		# Process filesystem
-options		KERNFS		# Kernel parameter filesystem
-options		NULLFS		# Loopback filesystem
-options		UNION		# union file system
-options		MSDOSFS		# MSDOS filesystem
-options		CD9660		# ISO 9660 filesystem with Rock Ridge
+# File systems
+file-system 	FFS		# Berkeley fast file system
+file-system 	MFS		# Memory based filesystem
+#file-system 	NFS		# Network File System client side code
+file-system 	PROCFS		# Process filesystem
+file-system 	KERNFS		# Kernel parameter filesystem
+file-system 	UNION		# union file system
+file-system 	NULLFS		# Loopback filesystem
+file-system 	MSDOSFS		# MSDOS filesystem
+file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 
+# File system options
 options		FIFO		# FIFO operations on vnodes
 
 #
@@ -53,11 +56,6 @@ options		FIFO		# FIFO operations on vnodes
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
 options		DDB		# Kernel debugger
-
-#
-# File system related options
-#
-#options		NFSCLIENT	# Network File System client side code
 
 #
 # Compatability options for various existing systems
@@ -95,7 +93,7 @@ options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #
 # Build one kernel that can boot from any disk.
 #
-config		netbsd swap on generic
+config		netbsd root on ? type ?
 
 pseudo-device	mouse	1	# mouse
 pseudo-device	view	4	# View (graphics mapping)

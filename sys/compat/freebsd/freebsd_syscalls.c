@@ -169,7 +169,7 @@ char *freebsd_syscallnames[] = {
 	"#152 (unimplemented)",		/* 152 = unimplemented */
 	"#153 (unimplemented)",		/* 153 = unimplemented */
 	"#154 (unimplemented)",		/* 154 = unimplemented */
-#if defined(NFSCLIENT) || defined(NFSSERVER)
+#if defined(NFS) || defined(NFSSERVER)
 	"nfssvc",			/* 155 = nfssvc */
 #else
 	"#155 (unimplemented)",		/* 155 = unimplemented */
@@ -179,7 +179,7 @@ char *freebsd_syscallnames[] = {
 	"fstatfs",			/* 158 = fstatfs */
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
-#ifdef NFSCLIENT
+#ifdef NFS
 	"getfh",			/* 161 = getfh */
 #else
 	"#161 (unimplemented getfh)",		/* 161 = unimplemented getfh */
