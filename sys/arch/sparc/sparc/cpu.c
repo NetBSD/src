@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.155 2003/01/08 17:22:09 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.156 2003/01/09 05:55:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -785,7 +785,7 @@ mp_pause_cpus()
 		if (CPU_NOTREADY(cpi))
 			continue;
 
-		cpi->msg_lev15.tag = XPMSG11_PAUSECPU;
+		cpi->msg_lev15.tag = XPMSG15_PAUSECPU;
 		raise_ipi(cpi,15);	/* high priority intr */
 	}
 }
