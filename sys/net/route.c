@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.58 2003/08/07 16:32:57 agc Exp $	*/
+/*	$NetBSD: route.c,v 1.59 2004/04/21 04:17:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.58 2003/08/07 16:32:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.59 2004/04/21 04:17:28 matt Exp $");
 
 #include "opt_ns.h"
 
@@ -180,7 +180,7 @@ rtalloc(ro)
 
 struct rtentry *
 rtalloc1(dst, report)
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	int report;
 {
 	struct radix_node_head *rnh = rt_tables[dst->sa_family];
@@ -282,7 +282,7 @@ ifafree(ifa)
  */
 void
 rtredirect(dst, gateway, netmask, flags, src, rtp)
-	struct sockaddr *dst, *gateway, *netmask, *src;
+	const struct sockaddr *dst, *gateway, *netmask, *src;
 	int flags;
 	struct rtentry **rtp;
 {
@@ -454,7 +454,7 @@ rtioctl(req, data, p)
 struct ifaddr *
 ifa_ifwithroute(flags, dst, gateway)
 	int flags;
-	struct sockaddr	*dst, *gateway;
+	const struct sockaddr	*dst, *gateway;
 {
 	struct ifaddr *ifa;
 	if ((flags & RTF_GATEWAY) == 0) {
@@ -502,7 +502,7 @@ ifa_ifwithroute(flags, dst, gateway)
 int
 rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	int req, flags;
-	struct sockaddr *dst, *gateway, *netmask;
+	const struct sockaddr *dst, *gateway, *netmask;
 	struct rtentry **ret_nrt;
 {
 	struct rt_addrinfo info;
@@ -539,12 +539,12 @@ rt_getifa(info)
 	 */
 	if (info->rti_ifp == NULL && ifpaddr != NULL
 	    && ifpaddr->sa_family == AF_LINK &&
-	    (ifa = ifa_ifwithnet((struct sockaddr *)ifpaddr)) != NULL)
+	    (ifa = ifa_ifwithnet((const struct sockaddr *)ifpaddr)) != NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 	if (info->rti_ifa == NULL && ifaaddr != NULL)
 		info->rti_ifa = ifa_ifwithaddr(ifaaddr);
 	if (info->rti_ifa == NULL) {
-		struct sockaddr *sa;
+		const struct sockaddr *sa;
 
 		sa = ifaaddr != NULL ? ifaaddr :
 		    (gateway != NULL ? gateway : dst);
@@ -704,9 +704,9 @@ bad:
 int
 rt_setgate(rt0, dst, gate)
 	struct rtentry *rt0;
-	struct sockaddr *dst, *gate;
+	const struct sockaddr *dst, *gate;
 {
-	caddr_t new, old;
+	char *new, *old;
 	u_int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
 	struct rtentry *rt = rt0;
 
@@ -718,7 +718,7 @@ rt_setgate(rt0, dst, gate)
 		Bzero(new, dlen + glen);
 		rt->rt_nodes->rn_key = new;
 	} else {
-		new = rt->rt_nodes->rn_key;
+		new = (void *)rt->rt_nodes->rn_key;
 		old = 0;
 	}
 	Bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
@@ -751,11 +751,13 @@ rt_setgate(rt0, dst, gate)
 
 void
 rt_maskedcopy(src, dst, netmask)
-	struct sockaddr *src, *dst, *netmask;
+	const struct sockaddr *src;
+	struct sockaddr *dst;
+	const struct sockaddr *netmask;
 {
-	u_char *cp1 = (u_char *)src;
+	const u_char *cp1 = (u_char *)src;
 	u_char *cp2 = (u_char *)dst;
-	u_char *cp3 = (u_char *)netmask;
+	const u_char *cp3 = (u_char *)netmask;
 	u_char *cplim = cp2 + *cp3;
 	u_char *cplim2 = cp2 + *cp1;
 
