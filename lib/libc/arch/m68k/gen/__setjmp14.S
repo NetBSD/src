@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.5 2003/08/07 16:42:10 agc Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.6 2003/10/25 17:13:57 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.5 2003/08/07 16:42:10 agc Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.6 2003/10/25 17:13:57 cl Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,18 +91,3 @@ ENTRY(__setjmp14)
 	clrl	%d0		/* return 0 */
 	rts
 
-ENTRY(__longjmp14)
-	movl	%sp@(4),%a0	/* save area pointer */
-	tstl	%a0@(8)		/* ensure non-zero SP */
-	jeq	botch		/* oops! */
-	movl	%sp@(8),%d0	/* grab return value */
-	jne	ok		/* non-zero ok */
-	moveq	#1,%d0		/* else make non-zero */
-ok:
-	moveml	%a0@(44),#0x3CFC /* restore non-scratch regs */
-	movl	%a0,%sp@-	 /* let sigreturn */
-	jbsr	PIC_PLT(_C_LABEL(__sigreturn14)) /* finish for us */
-
-botch:
-	jbsr	PIC_PLT(_C_LABEL(longjmperror))
-	stop	#0
