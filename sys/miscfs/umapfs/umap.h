@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.3 1994/08/19 11:25:40 mycroft Exp $	*/
+/*	$NetBSD: umap.h,v 1.4 1995/03/29 22:09:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ struct umap_mount {
 	    group mapping in ficus */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * A cache of vnode references
  */
@@ -89,4 +89,4 @@ extern struct vnode *umap_checkvp __P((struct vnode *vp, char *fil, int lno));
 
 extern int (**umap_vnodeop_p)();
 extern struct vfsops umap_vfsops;
-#endif /* KERNEL */
+#endif /* _KERNEL */

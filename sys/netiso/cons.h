@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.6 1995/03/26 20:35:17 jtc Exp $	*/
+/*	$NetBSD: cons.h,v 1.7 1995/03/29 22:09:44 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ struct dte_addr {
 	u_char	dtea_niblen;
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 
 #define CONN_OPEN		0x33
 #define CONN_CONFIRM	0x30

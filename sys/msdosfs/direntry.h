@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.8 1994/10/29 07:59:31 cgd Exp $	*/
+/*	$NetBSD: direntry.h,v 1.9 1995/03/29 22:08:52 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -95,9 +95,9 @@ struct direntry {
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
 void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
 int dos2unixfn __P((u_char dn[11], u_char *un));
 void unix2dosfn __P((u_char *un, u_char dn[11], int unlen));
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

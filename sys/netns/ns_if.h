@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_if.h,v 1.5 1994/06/29 06:41:39 cgd Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.6 1995/03/29 22:09:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -77,7 +77,7 @@ struct nsip_req {
 };
 #endif
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 struct	ns_ifaddr *ns_ifaddr;
 struct	ns_ifaddr *ns_iaonnetof();
 struct	ifqueue	nsintrq;	/* XNS input packet queue */

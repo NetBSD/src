@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.2 1994/10/26 05:36:52 cgd Exp $	*/
+/*	$NetBSD: printf.c,v 1.3 1995/03/29 21:57:43 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -65,9 +65,9 @@
  * Note that stdarg.h and the ANSI style va_start macro is used for both
  * ANSI and traditional C compilers.
  */
-#define KERNEL
+#define _KERNEL
 #include <machine/stdarg.h>
-#undef KERNEL
+#undef _KERNEL
 
 static void kprintn __P((u_long, int));
 

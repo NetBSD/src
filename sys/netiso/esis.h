@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.7 1995/03/26 20:35:20 jtc Exp $	*/
+/*	$NetBSD: esis.h,v 1.8 1995/03/29 22:09:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -114,6 +114,6 @@ struct esis_stat {
 	u_short		es_rdrcvd;			/* RD rcvd */
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 struct esis_stat esis_stat;
 #endif	/* _KERNEL */

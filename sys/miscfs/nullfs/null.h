@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.3 1994/08/19 11:25:33 mycroft Exp $	*/
+/*	$NetBSD: null.h,v 1.4 1995/03/29 22:08:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ struct null_mount {
 	struct vnode	*nullm_rootvp;	/* Reference to root null_node */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * A cache of vnode references
  */
@@ -72,4 +72,4 @@ extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
 
 extern int (**null_vnodeop_p)();
 extern struct vfsops null_vfsops;
-#endif /* KERNEL */
+#endif /* _KERNEL */

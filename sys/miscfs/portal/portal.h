@@ -1,4 +1,4 @@
-/*	$NetBSD: portal.h,v 1.4 1994/06/29 06:34:37 cgd Exp $	*/
+/*	$NetBSD: portal.h,v 1.5 1995/03/29 22:08:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@ struct portal_cred {
 	gid_t		pcr_groups[NGROUPS];	/* From ucred */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct portalmount {
 	struct vnode	*pm_root;	/* Root node */
 	struct file	*pm_server;	/* Held reference to server socket */
@@ -70,4 +70,4 @@ struct portalnode {
 
 extern int (**portal_vnodeop_p)();
 extern struct vfsops portal_vfsops;
-#endif /* KERNEL */
+#endif /* _KERNEL */

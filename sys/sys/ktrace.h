@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.9 1995/03/26 20:24:18 jtc Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.10 1995/03/29 22:09:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -147,7 +147,7 @@ struct ktr_csw {
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 
-#ifndef	KERNEL
+#ifndef	_KERNEL
 
 #include <sys/cdefs.h>
 
