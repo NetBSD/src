@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2004/03/06 07:50:56 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2004/03/25 15:06:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2004/03/06 07:50:56 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2004/03/25 15:06:37 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -404,6 +404,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr3 = mips1_clock_intr;
 		platform.clkread = mips1_clkread;
 		break;
+#ifdef MIPS3
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
@@ -431,6 +432,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
+#endif /* MIPS3 */
 	default:
 		panic("IP%d architecture not supported", mach_type);
 		break;
