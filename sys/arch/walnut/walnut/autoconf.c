@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/06/13 06:02:00 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2001/10/29 01:52:09 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,7 +66,6 @@ u_int *heathrow_FCR = NULL;
 void
 cpu_configure(void)
 {
-	int msr;
 
 	calc_delayconst();
 
@@ -82,8 +81,7 @@ cpu_configure(void)
 	/*
 	 * Now allow hardware interrupts.
 	 */
-	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-		      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
+	asm volatile ("wrteei 1");
 }
 
 /*
