@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.8 1994/08/15 22:36:40 mycroft Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.9 1994/09/05 01:09:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -82,6 +82,7 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
+	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
