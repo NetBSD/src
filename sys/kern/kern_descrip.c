@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.77 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.78 2001/06/16 08:28:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -567,6 +567,7 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 	switch (fp->f_type) {
 
 	case DTYPE_SOCKET:
+	case DTYPE_PIPE:
 		if (SCARG(uap, name) != _PC_PIPE_BUF)
 			error = EINVAL;
 		else

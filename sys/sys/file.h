@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.27 2001/06/14 20:32:48 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.28 2001/06/16 08:28:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,6 +58,7 @@ struct file {
 	int		f_flag;		/* see fcntl.h */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
+#define	DTYPE_PIPE	3		/* pipe */
 	short		f_type;		/* descriptor type */
 	short		f_count;	/* reference count */
 	short		f_msgcount;	/* references from message queue */
