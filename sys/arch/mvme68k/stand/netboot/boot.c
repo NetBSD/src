@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2001/06/10 14:12:49 scw Exp $ */
+/*	$NetBSD: boot.c,v 1.8 2001/07/07 09:06:44 scw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -58,7 +58,7 @@ main()
 
 	printf(">> %s MVME%x netboot (via %s) [%s]\n",
 		bootprog_name, bugargs.cputyp, bugargs.arg_start, bootprog_rev);
-	if (bcmp("sboot", bugargs.arg_start, 5) == 0)
+	if (memcmp("sboot", bugargs.arg_start, 5) == 0)
 		sboot = 1;
 	/* cycle in the correct args */
 	bugargs.arg_start = bugargs.nbarg_start;
