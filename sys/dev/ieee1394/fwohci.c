@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.70 2003/01/05 08:03:45 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.71 2003/01/05 08:11:33 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.70 2003/01/05 08:03:45 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.71 2003/01/05 08:11:33 jmc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -5749,6 +5749,7 @@ fwohci_it_ctx_writedata(ieee1394_it_tag_t it, int ndata,
 				if (fwohci_itd_link(itc->itc_buf_linkend, itdn)) {
 					printf("fwohci_it_ctx_writedata:"
 					    " cannot link correctly\n");
+					splx(s);
 					return -1;
 				}
 				itc->itc_buf_linkend = itdn;
