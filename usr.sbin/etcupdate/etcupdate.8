@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.7 2003/03/17 08:19:22 wiz Exp $
+.\"	$NetBSD: etcupdate.8,v 1.8 2003/04/02 03:07:30 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,6 +46,7 @@
 .Op Fl a
 .Op Fl b Ar srcdir
 .Op Fl h
+.Op Fl l
 .Op Fl p Ar pager
 .Op Fl s Ar srcdir
 .Op Fl t Ar temproot
@@ -114,6 +115,18 @@ to store MD5 checksums in
 .Pa /var/etcupdate
 and use these checksums to determine if there have been any
 local modifications.
+.Pp
+Inversely, if given the
+.Fl l
+flag,
+.Nm
+will automatically skip files which have been modified strictly
+locally.
+(As an exception, files distributed without RCS IDs will not be
+skipped, since the logic for this flag requires their presence.)
+This flag may be used together with the
+.Fl a
+flag described above.
 .Sh ENVIRONMENT
 .Bl -tag -width TEMPROOT
 .It Ev TEMPROOT
