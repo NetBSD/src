@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.3 2001/10/21 18:49:20 thorpej Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.4 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,17 +119,17 @@ opti_read_config(struct channel_softc *chp, int reg)
 	int s = splhigh();
 
 	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_features);
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_features);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_iohs[wd_features], 0);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_iohs[wd_features], 0);
 
 	/* Followed by an 8-bit write of 0x3 to register #2 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, 0x03u);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, 0x03u);
 
 	/* Now we can read the required register */
-	rv = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, reg);
+	rv = bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[reg], 0);
 
 	/* Restore the real registers */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, 0x83u);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, 0x83u);
 
 	splx(s);
 
@@ -142,17 +142,17 @@ opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
 	int s = splhigh();
 
 	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_features);
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_features);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_iohs[wd_features], 0);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_iohs[wd_features], 0);
 
 	/* Followed by an 8-bit write of 0x3 to register #2 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, 0x03u);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, 0x03u);
 
 	/* Now we can write the required register */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, reg, val);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[reg], 0, val);
 
 	/* Restore the real registers */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, 0x83u);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, 0x83u);
 
 	splx(s);
 }

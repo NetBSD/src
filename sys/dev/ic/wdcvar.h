@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.43 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.44 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -59,10 +59,11 @@ struct channel_softc { /* Per channel data */
 	struct wdc_softc *wdc;
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
-	bus_space_handle_t    cmd_ioh;
+	bus_space_handle_t    cmd_baseioh;
+	bus_space_handle_t    cmd_iohs[WDC_NREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
-	/* data32{iot,ioh} are only used for 32 bit xfers */
+	/* data32{iot,ioh} are only used for 32 bit data xfers */
 	bus_space_tag_t         data32iot;
 	bus_space_handle_t      data32ioh;
 	/* Our state */
