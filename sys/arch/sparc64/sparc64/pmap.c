@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1999/04/11 04:04:10 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1999/04/25 17:23:04 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1829,6 +1829,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 						tsb_enter(npv->pv_pmap->pm_ctx,(npv->pv_va&PV_VAMASK),
 							  pseg_get(npv->pv_pmap, va));
 #else
+						i = ptelookup_va(va);
 						if (tsb[i].tag.tag > 0 && tsb[i].tag.tag == 
 						    TSB_TAG(0,pm->pm_ctx,va)) {
 							/* 
