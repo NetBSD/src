@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.5 2002/10/29 13:50:11 junyoung Exp $	*/
+/*	$NetBSD: machfb.c,v 1.6 2002/10/29 17:54:40 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -248,10 +248,10 @@ void	mach64_adjust_frame(struct mach64_softc *, int, int);
 void	mach64_init_lut(struct mach64_softc *);
 void	mach64_switch_screen(struct mach64_softc *);
 void	mach64_init_screen(struct mach64_softc *, struct mach64screen *,
-	    const struct wsscreen_descr *, int, long *);
+	    const struct wsscreen_descr *, int, long *, int);
 void	mach64_restore_screen(struct mach64screen *,
 	    const struct wsscreen_descr *, u_int16_t *);
-void 	mach64_set_screentype(struct mach64_softc *,
+int 	mach64_set_screentype(struct mach64_softc *,
 	    const struct wsscreen_descr *);
 int	mach64_is_console(struct pci_attach_args *);
 
@@ -460,6 +460,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	int console;
 	long defattr;
+	int setmode;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -529,8 +530,10 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef __sparc__
 	mach64_get_mode(sc, &default_mode);
+	setmode = 0;
 #else
-	memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode)) ;
+	memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode));
+	setmode = 1;
 #endif
 
 	sc->bits_per_pixel = 8;
@@ -567,7 +570,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_defaultscreen.ncols = mach64_rasops_info.ri_cols;
 
 	mach64_init_screen(sc, &mach64_console_screen,
-	    &mach64_defaultscreen, 1, &defattr);
+	    &mach64_defaultscreen, 1, &defattr, setmode);
 
 	mach64_rasops_info.ri_ops.allocattr(&mach64_rasops_info, 0, 0, 0,
 	    &defattr);
@@ -587,11 +590,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 void
 mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
-    const struct wsscreen_descr *type, int existing, long *attrp)
+    const struct wsscreen_descr *type, int existing, long *attrp, int setmode)
 {
-#if !defined(__sparc__)
-	struct videomode *mode = (struct videomode *)type->modecookie;
-#endif
 
 	scr->sc = sc;
 	scr->type = type;
@@ -606,12 +606,10 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 		    M_DEVBUF, M_WAITOK);
 		scr->active = 1;
 
-#if !defined(__sparc__)
-		if (mach64_modeswitch(sc, mode)) {
+		if (setmode && mach64_set_screentype(sc, type)) {
 			panic("%s: failed to switch video mode",
 			    sc->sc_dev.dv_xname);
 		}
-#endif
 	} else {
 		scr->active = 0;
 		scr->mem = NULL;
@@ -1117,10 +1115,17 @@ mach64_restore_screen(struct mach64screen *scr,
 
 }
 
-void
+int
 mach64_set_screentype(struct mach64_softc *sc, const struct wsscreen_descr *des)
 {
+	struct mach64_crtcregs regs;
 
+	if (mach64_calc_crtcregs(sc, &regs,
+	    (struct videomode *)des->modecookie))
+		return 1;
+
+	mach64_set_crtcregs(sc, &regs);
+	return 0;
 }
 
 int
@@ -1222,7 +1227,7 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		sc->screens.lh_first->mem = scr->mem;
 
 	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK);
-	mach64_init_screen(sc, scr, type, 0, defattrp);
+	mach64_init_screen(sc, scr, type, 0, defattrp, 0);
 
 	if (sc->nscreens == 1) {
 		scr->active = 1;
