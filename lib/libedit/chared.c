@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.10 2000/11/11 22:18:57 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.11 2001/01/04 15:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.10 2000/11/11 22:18:57 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.11 2001/01/04 15:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -403,13 +403,18 @@ cv__endword(char *p, char *high, int n)
 protected int
 ch_init(EditLine *el)
 {
-	el->el_line.buffer		= (char *)  el_malloc(EL_BUFSIZ);
+	el->el_line.buffer		= (char *) el_malloc(EL_BUFSIZ);
+	if (el->el_line.buffer == NULL)
+		return (-1);
+
 	(void) memset(el->el_line.buffer, 0, EL_BUFSIZ);
 	el->el_line.cursor		= el->el_line.buffer;
 	el->el_line.lastchar		= el->el_line.buffer;
 	el->el_line.limit		= &el->el_line.buffer[EL_BUFSIZ - 2];
 
-	el->el_chared.c_undo.buf	= (char *)  el_malloc(EL_BUFSIZ);
+	el->el_chared.c_undo.buf	= (char *) el_malloc(EL_BUFSIZ);
+	if (el->el_chared.c_undo.buf == NULL)
+		return (-1);
 	(void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ);
 	el->el_chared.c_undo.action	= NOP;
 	el->el_chared.c_undo.isize	= 0;
@@ -421,6 +426,8 @@ ch_init(EditLine *el)
 	el->el_chared.c_vcmd.ins	= el->el_line.buffer;
 
 	el->el_chared.c_kill.buf	= (char *) el_malloc(EL_BUFSIZ);
+	if (el->el_chared.c_kill.buf == NULL)
+		return (-1);
 	(void) memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ);
 	el->el_chared.c_kill.mark	= el->el_line.buffer;
 	el->el_chared.c_kill.last	= el->el_chared.c_kill.buf;
@@ -436,7 +443,9 @@ ch_init(EditLine *el)
 	el->el_chared.c_macro.nline	= NULL;
 	el->el_chared.c_macro.level	= -1;
 	el->el_chared.c_macro.macro	= (char **) el_malloc(EL_MAXMACRO *
-								sizeof(char *));
+	    sizeof(char *));
+	if (el->el_chared.c_macro.macro == NULL)
+		return (-1);
 	return (0);
 }
 

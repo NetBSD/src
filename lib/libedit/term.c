@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.27 2000/12/30 22:46:05 jdolecek Exp $	*/
+/*	$NetBSD: term.c,v 1.28 2001/01/04 15:56:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.27 2000/12/30 22:46:05 jdolecek Exp $");
+__RCSID("$NetBSD: term.c,v 1.28 2001/01/04 15:56:32 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -258,9 +258,9 @@ private struct termcapval {
 /* do two or more of the attributes use me */
 
 private void	term_setflags(EditLine *);
-private void	term_rebuffer_display(EditLine *);
+private int	term_rebuffer_display(EditLine *);
 private void	term_free_display(EditLine *);
-private void	term_alloc_display(EditLine *);
+private int	term_alloc_display(EditLine *);
 private void	term_alloc(EditLine *, struct termcapstr *, char *);
 private void	term_init_arrow(EditLine *);
 private void	term_reset_arrow(EditLine *);
@@ -323,15 +323,26 @@ term_init(EditLine *el)
 {
 
 	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
+	if (el->el_term.t_buf == NULL)
+		return (-1);
 	el->el_term.t_cap = (char *) el_malloc(TC_BUFSIZE);
+	if (el->el_term.t_cap == NULL)
+		return (-1);
 	el->el_term.t_fkey = (fkey_t *) el_malloc(A_K_NKEYS * sizeof(fkey_t));
+	if (el->el_term.t_fkey == NULL)
+		return (-1);
 	el->el_term.t_loc = 0;
 	el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char *));
+	if (el->el_term.t_str == NULL)
+		return (-1);
 	(void) memset(el->el_term.t_str, 0, T_str * sizeof(char *));
 	el->el_term.t_val = (int *) el_malloc(T_val * sizeof(int));
+	if (el->el_term.t_val == NULL)
+		return (-1);
 	(void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
 	term_outfile = el->el_outfile;
-	(void) term_set(el, NULL);
+	if (term_set(el, NULL) == -1)
+		return (-1);
 	term_init_arrow(el);
 	return (0);
 }
@@ -421,7 +432,7 @@ term_alloc(EditLine *el, struct termcapstr *t, char *cap)
 /* term_rebuffer_display():
  *	Rebuffer the display after the screen changed size
  */
-private void
+private int
 term_rebuffer_display(EditLine *el)
 {
 	coord_t *c = &el->el_term.t_size;
@@ -431,14 +442,16 @@ term_rebuffer_display(EditLine *el)
 	c->h = Val(T_co);
 	c->v = (EL_BUFSIZ * 4) / c->h + 1;
 
-	term_alloc_display(el);
+	if (term_alloc_display(el) == -1)
+		return (-1);
+	return (0);
 }
 
 
 /* term_alloc_display():
  *	Allocate a new display.
  */
-private void
+private int
 term_alloc_display(EditLine *el)
 {
 	int i;
@@ -446,17 +459,27 @@ term_alloc_display(EditLine *el)
 	coord_t *c = &el->el_term.t_size;
 
 	b = (char **) el_malloc((size_t) (sizeof(char *) * (c->v + 1)));
-	for (i = 0; i < c->v; i++)
+	if (b == NULL)
+		return (-1);
+	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
+		if (b[i] == NULL)
+			return (-1);
+	}
 	b[c->v] = NULL;
 	el->el_display = b;
 
 	b = (char **) el_malloc((size_t) (sizeof(char *) * (c->v + 1)));
-	for (i = 0; i < c->v; i++)
+	if (b == NULL)
+		return (-1);
+	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
+		if (b[i] == NULL)
+			return (-1);
+	}
 	b[c->v] = NULL;
 	el->el_vdisplay = b;
-
+	return (0);
 }
 
 
@@ -927,7 +950,8 @@ term_set(EditLine *el, char *term)
 
 				/* get the correct window size */
 	(void) term_get_size(el, &lins, &cols);
-	term_change_size(el, lins, cols);
+	if (term_change_size(el, lins, cols) == -1)
+		return (-1);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	term_bind_arrow(el);
 	return (i <= 0 ? -1 : 0);
@@ -974,7 +998,7 @@ term_get_size(EditLine *el, int *lins, int *cols)
 /* term_change_size():
  *	Change the size of the terminal
  */
-protected void
+protected int
 term_change_size(EditLine *el, int lins, int cols)
 {
 	/*
@@ -983,8 +1007,11 @@ term_change_size(EditLine *el, int lins, int cols)
 	Val(T_co) = (cols < 2) ? 80 : cols;
 	Val(T_li) = (lins < 1) ? 24 : lins;
 
-	term_rebuffer_display(el);	/* re-make display buffers */
+	/* re-make display buffers */
+	if (term_rebuffer_display(el) == -1)
+		return (-1);
 	re_clear_display(el);
+	return (0);
 }
 
 
@@ -1294,7 +1321,8 @@ term_settc(EditLine *el, int argc, char **argv)
 				return (-1);
 			}
 			term_setflags(el);
-			term_change_size(el, Val(T_li), Val(T_co));
+			if (term_change_size(el, Val(T_li), Val(T_co)) == -1)
+				return (-1);
 			return (0);
 		} else {
 			long i;
@@ -1310,7 +1338,9 @@ term_settc(EditLine *el, int argc, char **argv)
 			el->el_term.t_size.v = Val(T_co);
 			el->el_term.t_size.h = Val(T_li);
 			if (tv == &tval[T_co] || tv == &tval[T_li])
-				term_change_size(el, Val(T_li), Val(T_co));
+				if (term_change_size(el, Val(T_li), Val(T_co))
+				    == -1)
+					return (-1);
 			return (0);
 		}
 	}
