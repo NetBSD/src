@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.34 2004/10/25 22:59:12 peter Exp $	*/
+/*	$NetBSD: lkm.h,v 1.35 2004/11/06 13:49:17 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -179,7 +179,6 @@ union lkm_generic {
  * Per module information structure
  */
 struct lkm_table {
-	int	id;		/* Identifier */
 	char	refcnt;		/* Reference count */
 	char	forced;		/* Forced load, skipping compatibility check */
 
@@ -196,6 +195,7 @@ struct lkm_table {
 	u_long	sym_offset;	/* offset of next symbol chunk */
 	u_long	sym_symsize;	/* size of symbol part only */
 
+	int	id;		/* Identifier */
 	TAILQ_ENTRY(lkm_table) link;
 };
 
