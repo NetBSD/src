@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.4 2000/01/10 07:43:07 mark Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.5 2000/04/17 17:39:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -67,6 +67,9 @@ struct bus_space footbridge_bs_tag = {
 	/* allocation/deallocation */
 	footbridge_bs_alloc,
 	footbridge_bs_free,
+
+	/* get kernel virtual address */
+	footbridge_bs_vaddr,
 
 	/* barrier */
 	footbridge_bs_barrier,
@@ -291,6 +294,15 @@ footbridge_bs_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + (offset << ((int)t));
 	return (0);
+}
+
+void *
+footbridge_bs_vaddr(t, bsh)
+	void *t;
+	bus_space_handle_t bsh;
+{
+
+	return ((void *)bsh);
 }
 
 void
