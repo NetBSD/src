@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.80.6.1 2005/02/12 14:35:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80.6.1 2005/02/12 14:35:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -230,7 +230,7 @@ iommu_attach(parent, self, aux)
 			    size, 0, &mlist, 1, 0) != 0)
 		panic("iommu_attach: no memory");
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("iommu_attach: no memory");
 
