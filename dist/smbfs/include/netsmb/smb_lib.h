@@ -244,8 +244,8 @@ int   nls_setrecode(const char *, const char *);
 int   nls_setlocale(const char *);
 char* nls_str_toext(char *, const char *);
 char* nls_str_toloc(char *, const char *);
-void* nls_mem_toext(void *, const void *, int);
-void* nls_mem_toloc(void *, const void *, int);
+void* nls_mem_toext(void *, const void *, size_t);
+void* nls_mem_toloc(void *, const void *, size_t);
 char* nls_str_upper(char *, const char *);
 char* nls_str_lower(char *, const char *);
 
