@@ -1,4 +1,10 @@
-# $NetBSD: acpidevs,v 1.2 2003/02/04 00:49:56 perry Exp $
+# $NetBSD: acpidevs,v 1.3 2003/02/04 01:12:06 perry Exp $
+#
+# Extracted from:
+# http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
+# XXX we should rig it up to make importation simpler, though we
+# probably need to add IDs that are not in that file, too. The list is
+# far from comprehensive :(
 #
 # ***** System Devices - PNP0xxx **************************
 # --Interrupt Controllers--
