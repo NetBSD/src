@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.5.6.1 2000/06/29 23:55:22 thorpej Exp $
+.\"	$NetBSD: wiconfig.8,v 1.5.6.2 2000/07/03 22:10:20 thorpej Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -43,7 +43,10 @@
 .Ar interface
 .Op Fl o
 .Op Fl e Ar 0|1
-.Op Fl k Ar key "[ -v 1|2|3|4 ]"
+.Oo
+.Fl k Ar key
+.Op Fl v Ar 1|2|3|4
+.Oc
 .Op Fl t Ar tx rate
 .Op Fl n Ar network name
 .Op Fl s Ar station name
@@ -99,7 +102,9 @@ Enable or disable WEP encryption. Permitted values are
 (encryption disabled) or
 .Ar 1
 (encryption enabled). Encryption is off by default.
-.It Fl k Ar key "[ -v 1|2|3|4 ]"
+.It Fl k Ar key Xo
+.Op Fl v Ar 1|2|3|4
+.Xc
 Set WEP encryption keys. There are four default encryption keys that can be
 programmed. A specific key can be set using the
 .Fl v
