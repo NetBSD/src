@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.4 2003/06/14 17:01:08 thorpej Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.5 2003/06/14 21:10:20 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -149,19 +149,17 @@ isabr_dti_intr_status()
 
 	isa_outb(IO_ICU1, 0x0f);	/* Poll */
 	vector = isa_inb(IO_ICU1);
-	if (vector < 0) /* XXX: OpenBSD source had a bug, re-look this */
-		return (-1);
 	isa_vector = vector & 7;
-	if (isa_vector == 2) {
+	if (vector > 0 || isa_vector == 2) {
 		isa_outb(IO_ICU2, 0x0f);
 		vector = isa_inb(IO_ICU2);
 		if (vector > 0) {
-			printf("isa: spurious interrupt.\n");
-			return (-1);
+			printf("isabr_dti_intr_status: spurious interrupt\n");
+			return -1;
 		}
 		isa_vector = (vector & 7) | 8;
 	}
-	return (isa_vector);
+	return isa_vector;
 }
 
 /*
