@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1998/06/05 12:24:44 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1998/06/24 15:13:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 0: Openfirmware disk */
@@ -61,7 +63,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_lkm_dummy(),		/* 7 */
 	bdev_lkm_dummy(),		/* 8 */
-	bdev_lkm_dummy(),		/* 9 */
+	bdev_disk_init(NMD,md),		/* 9: memory disk driver */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 };
@@ -138,7 +140,7 @@ struct cdevsw cdevsw[] = {
 	cdev_rnd_init(NRND,rnd),	/* 24: random source pseudo-device */
 	cdev_disk_init(NVND,vnd),	/* 25: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 26: concatenated disk driver */
-	cdev_lkm_dummy(),		/* 27: */
+	cdev_disk_init(NMD,md),		/* 27: memory disk driver */
 	cdev_mouse_init(NADB,adb),	/* 28: ADB event interface */
 	cdev_lkm_dummy(),		/* 29: */
 	cdev_lkm_dummy(),		/* 30: */
@@ -205,7 +207,7 @@ static int chrtoblktbl[] = {
 	/* 24 */	NODEV,
 	/* 25 */	2,
 	/* 26 */	3,
-	/* 27 */	NODEV,
+	/* 27 */	9,
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
