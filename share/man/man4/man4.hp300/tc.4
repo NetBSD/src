@@ -1,4 +1,4 @@
-.\"	$NetBSD: tc.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: tc.4,v 1.6 2001/04/11 19:07:34 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ series 300
 Terminal Emulator) defaults.  The device can also be used as a graphics output
 device.
 .Pp
-The 
+The
 .Xr ioctl 2
 calls supported by the
 .Bx
@@ -113,7 +113,7 @@ describing Topcat/Catseye devices is defined in
 .El
 .Pp
 For further information about the use of
-.Xr ioctl
+.Xr ioctl 2
 see the man page.
 .Sh EXAMPLE
 A small example of opening, mapping and using the device is given below.
@@ -121,7 +121,7 @@ For more examples of the details on the behavior of the device, see the device
 dependent source files for the X Window System, in the
 .Pa /usr/src/new/X/libhp
 directory.
-.Bd -literal 
+.Bd -literal
 struct tcboxfb *tc;
 u_char *Addr, frame_buffer;
 struct grfinfo gi;
@@ -170,7 +170,7 @@ no such device.
 Another process has the device open.
 .It Bq Er EINVAL
 Invalid
-.Xr ioctl
+.Xr ioctl 2
 specification.
 .El
 .Sh SEE ALSO
