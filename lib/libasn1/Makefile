@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2000/11/13 15:08:16 jdolecek Exp $
+# $NetBSD: Makefile,v 1.6 2000/11/17 09:57:55 pk Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -92,6 +92,8 @@ CPPFLAGS+= -I.					\
 
 ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${MAKE} print-objdir
 ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
+
+${SRCS}: asn1.h
 
 ${gen_files} asn1.hx: k5.asn1 ${ASN1_COMPILE}
 	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1
