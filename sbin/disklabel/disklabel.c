@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.117 2003/08/04 16:51:56 dsl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.118 2003/08/07 10:04:12 agc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.117 2003/08/04 16:51:56 dsl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.118 2003/08/07 10:04:12 agc Exp $");
 #endif
 #endif	/* not lint */
 
