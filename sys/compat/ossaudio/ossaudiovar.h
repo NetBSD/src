@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.6 1999/04/13 20:31:32 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.7 1999/11/17 00:06:39 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ struct oss_sys_ioctl_args {
 #define _OSS_IOR(x,y,t)     _OSS_IOCTL(OSS_IOC_OUT, x, y, sizeof(t))
 #define _OSS_IOW(x,y,t)     _OSS_IOCTL(OSS_IOC_IN, x, y, sizeof(t))
 #define _OSS_IOWR(x,y,t)    _OSS_IOCTL(OSS_IOC_INOUT, x, y, sizeof(t))
+
+#define OSS_IOCTL_SIZE(x) (((x) >> 16) & OSS_IOCPARM_MASK)
 
 #define	OSS_SNDCTL_DSP_RESET		_OSS_IO  ('P', 0)
 #define	OSS_SNDCTL_DSP_SYNC		_OSS_IO  ('P', 1)
@@ -146,6 +148,21 @@ struct oss_sys_ioctl_args {
 
 #define OSS_SOUND_MIXER_WRITE_RECSRC	OSS_MIXER_WRITE(OSS_SOUND_MIXER_RECSRC)
 #define OSS_SOUND_MIXER_WRITE_R_RECSRC	OSS_MIXER_WRITE_R(OSS_SOUND_MIXER_RECSRC)
+
+struct oss_mixer_info {
+	char id[16];
+	char name[32];
+	int  modify_counter;
+	int  fillers[10];
+};
+
+struct oss_old_mixer_info {
+	char id[16];
+	char name[32];
+};
+
+#define OSS_SOUND_MIXER_INFO		_OSS_IOR('M', 101, struct oss_mixer_info)
+#define OSS_SOUND_OLD_MIXER_INFO	_OSS_IOR('M', 101, struct oss_old_mixer_info)
 
 #define OSS_GET_DEV(com) ((com) & 0xff)
 
