@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 1994/11/30 04:26:06 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 1994/12/01 09:53:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -750,7 +750,7 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
- * This is called by configure to set dumplo, dumpsize.
+ * This is called by configure to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
@@ -761,31 +761,29 @@ dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
-	int (*getsize)();
 
 	if (dumpdev == NODEV)
 		return;
-
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	getsize = bdevsw[maj].d_psize;
-	if (getsize == NULL)
+	if (bdevsw[maj].d_psize == NULL)
 		return;
-	nblks = (*getsize)(dumpdev);
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
-	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem; /* pages */
-	dumplo = nblks - ctod(dumpsize);
-	dumplo &= ~(ctod(1)-1);
+	dumpsize = physmem;
 
-	/* If it does not fit, truncate it by moving dumplo. */
-	if (dumplo < ctod(1)) {
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
 		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
 		dumpsize = dtoc(nblks - dumplo);
-	}
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }
 
 /*
@@ -799,10 +797,13 @@ dumpsys()
 
 	if (dumpdev == NODEV)
 		return;
-	if ((minor(dumpdev)&07) != 1)
-		return;
-	dumpsize = physmem;
+	if (dumpsize == 0) {
+		dumpconf();
+		if (dumpsize == 0)
+			return;
+	}
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
 	printf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
 
