@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.52 1994/08/17 06:04:49 deraadt Exp $
+ *	$Id: if_ep.c,v 1.53 1994/08/23 19:30:12 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -128,17 +128,18 @@ static struct epcard {
 static int nepcards;
 
 static void
-epaddcard(p, i, mode)
-	short p;
-	u_short i;
-	char mode;
+epaddcard(iobase, irq, bus32bit)
+	u_short iobase;
+	u_short irq;
+	char bus32bit;
 {
-	if (nepcards >= sizeof(epcards)/sizeof(epcards[0]))
+
+	if (nepcards >= MAXEPCARDS)
 		return;
-	epcards[nepcards].iobase = p;
-	epcards[nepcards].irq = 1 << ((i == 2) ? 9 : i);
+	epcards[nepcards].iobase = iobase;
+	epcards[nepcards].irq = 1 << ((irq == 2) ? 9 : irq);
 	epcards[nepcards].available = 1;
-	epcards[nepcards].bus32bit = mode;
+	epcards[nepcards].bus32bit = bus32bit;
 	nepcards++;
 }
 	
@@ -181,14 +182,17 @@ epprobe(parent, self, aux)
 				continue;
 			}
 
+#ifdef notyet
 			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 			delay(10);
 			outb(iobase + EISA_CONTROL, EISA_ENABLE);
 			/* Wait for reset? */
 			delay(1000);
+#endif
 
 			k = inw(iobase + EP_W0_ADDRESS_CFG);
 			k = (k & 0x1f) * 0x10 + 0x200;
+
 			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
 			epaddcard(iobase, k2, 1);
@@ -348,18 +352,19 @@ epinit(sc)
 	register struct ep_softc *sc;
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int     s, i;
+	int s, i;
 
-	if (ifp->if_addrlist == NULL)
+	/* Address not known. */
+	if (ifp->if_addrlist == 0)
 		return;
 
 	s = splimp();
+
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 
 	GO_WINDOW(0);
-	outw(BASE + EP_W0_CONFIG_CTRL, 0);	/* Disable the card */
-
+	outw(BASE + EP_W0_CONFIG_CTRL, 0);		/* Disable the card */
 	outw(BASE + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);	/* Enable the card */
 
 	GO_WINDOW(2);
@@ -377,9 +382,12 @@ epinit(sc)
 	    S_TX_COMPLETE | S_TX_AVAIL);
 	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
 	    S_TX_COMPLETE | S_TX_AVAIL);
+
 	/*
-	 * attemp to get rid of stray interrupts. on the i386 this isn't
-	 * totally possible since they may queue.
+	 * Attempt to get rid of any stray interrupts that occured during
+	 * configuration.  On the i386 this isn't possible because one may
+	 * already be queued.  However, a single stray interrupt is
+	 * unimportant.
 	 */
 	outw(BASE + EP_COMMAND, ACK_INTR | 0xff);
 
@@ -389,11 +397,15 @@ epinit(sc)
 	outw(BASE + EP_COMMAND, RX_ENABLE);
 	outw(BASE + EP_COMMAND, TX_ENABLE);
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;	/* just in case */
 	epmbuffill(sc);
 
+	/* Interface is now `running', with no output active. */
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* Attempt to start output, if any. */
 	epstart(ifp);
+
 	splx(s);
 }
 
@@ -442,29 +454,26 @@ epsetlink(sc)
 	}
 }
 
-static const char padmap[] = {0, 3, 2, 1};
-
+/*
+ * Start outputting on the interface.
+ * Always called as splimp().
+ */
 static int
 epstart(ifp)
 	struct ifnet *ifp;
 {
 	register struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
 	struct mbuf *m, *m0;
-	int     s, sh, len, pad;
+	int sh, len, pad;
 
-	s = splimp();
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) {
-		splx(s);
-		return (0);
-	}
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+		return;
 
 startagain:
 	/* Sneak a peek at the next packet */
 	m0 = sc->sc_arpcom.ac_if.if_snd.ifq_head;
-	if (m0 == NULL) {
-		splx(s);
-		return (0);
-	}
+	if (m0 == 0)
+		return;
 #if 0
 	len = m0->m_pkthdr.len;
 #else
@@ -472,7 +481,7 @@ startagain:
 		len += m->m_len;
 #endif
 
-	pad = padmap[len & 3];
+	pad = (4 - len) & 3;
 
 	/*
 	 * The 3c509 automatically pads short packets to minimum ethernet
@@ -491,17 +500,15 @@ startagain:
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 		/* not enough room in FIFO */
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
-		splx(s);
-		return (0);
+		return;
 	} else {
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | 2044);
 	}
 
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
-	if (m0 == NULL) {		/* not really needed */
-		splx(s);
-		return (0);
-	}
+	if (m0 == 0)		/* not really needed */
+		return;
+
 	outw(BASE + EP_COMMAND, SET_TX_START_THRESH |
 	    (len / 4 + sc->tx_start_thresh));
 
@@ -510,7 +517,12 @@ startagain:
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
 #endif
 
+	/*
+	 * Do the output at splhigh() so that an interrupt from another device
+	 * won't cause a FIFO underrun.
+	 */
 	sh = splhigh();
+
 	outw(BASE + EP_W1_TX_PIO_WR_1, len);
 	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
 	if (sc->bus32bit) {
@@ -538,19 +550,19 @@ startagain:
 	}
 	while (pad--)
 		outb(BASE + EP_W1_TX_PIO_WR_1, 0);
+
 	splx(sh);
 
 	++sc->sc_arpcom.ac_if.if_opackets;
 
-	/*
-	 * Is another packet coming in? We don't want to overflow the
-	 * tiny RX fifo.
-	 */
 readcheck:
-	if (inw(BASE + EP_W1_RX_STATUS) & RX_BYTES_MASK) {
-		splx(s);
-		return (0);
-	}
+	/*
+	 * If a packet is being received, stop outputting now so we can catch
+	 * the receive interrupt and avoid overflowing the receive FIFO.
+	 */
+	if (inw(BASE + EP_W1_RX_STATUS) & RX_BYTES_MASK)
+		return;
+
 	goto startagain;
 }
 
@@ -560,6 +572,7 @@ eptxstat(sc)
 	register struct ep_softc *sc;
 {
 	int i;
+
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
@@ -569,14 +582,12 @@ eptxstat(sc)
 
 		if (i & TXS_JABBER) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
-			untimeout(epmbuffill, sc);
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
-			untimeout(epmbuffill, sc);
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       sc->sc_dev.dv_xname, i,
@@ -601,14 +612,23 @@ epintr(sc)
 	register struct ep_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_short		status;
-	int		i, ret = 0;
+	u_short status;
+	int i, ret = 0;
 
-	status = inw(BASE + EP_STATUS) &
-	    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
-	while (status) {
+	for (;;) {
+		status = inw(BASE + EP_STATUS) &
+		    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
+		if (status == 0)
+			break;
+
 		ret = 1;
-		/* important that we do this first. */
+
+		/*
+		 * Acknowledge any interrupts.  It's important that we do this
+		 * first, since there would otherwise be a race condition.
+		 * Due to the i386 interrupt queueing, we may get spurious
+		 * interrupts occasionally.
+		 */
 		outw(BASE + EP_COMMAND, ACK_INTR | status);
 
 		if (status & S_RX_COMPLETE)
@@ -628,9 +648,8 @@ epintr(sc)
 			eptxstat(sc);
 			epstart(ifp);
 		}
-		status = inw(BASE + EP_STATUS) &
-		    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
 	}	
+
 	/* no more interrupts */
 	outw(BASE + EP_COMMAND, C_INTR_LATCH);
 	return (ret);
@@ -646,7 +665,7 @@ epread(sc)
 	int     save_totlen, sh;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
-	m0 = NULL;
+	m0 = 0;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) {
 		int err = totlen & ERR_MASK;
@@ -671,9 +690,9 @@ epread(sc)
 			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
 	}
 
-	if (totlen & (ERR_INCOMPLETE|ERR_RX)) {
+	if (totlen & (ERR_INCOMPLETE | ERR_RX)) {
 		++sc->sc_arpcom.ac_if.if_ierrors;
-		goto out;
+		goto abort;
 	}
 
 	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
@@ -681,11 +700,12 @@ epread(sc)
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = NULL;
 
-	if (m == NULL) {
+	if (m == 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL)
-			goto out;
-	} else {		/* Convert one of our saved mbuf's */
+		if (m == 0)
+			goto abort;
+	} else {
+		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
@@ -696,14 +716,21 @@ epread(sc)
 #define EOFF    (EROUND - sizeof(struct ether_header))
 	m0->m_data += EOFF;
 
+	/*
+	 * We read the packet at splhigh() so that an interrupt from another
+	 * device doesn't cause the card's buffer to overflow while we're
+	 * reading it.  We may still lose packets at other times.
+	 */
 	sh = splhigh();
 
 	/* Read what should be the header. */
 	insw(BASE + EP_W1_RX_PIO_RD_1,
 	    mtod(m0, caddr_t), sizeof(struct ether_header) / 2);
-	m->m_len = sizeof(struct ether_header);
+	m0->m_len = sizeof(struct ether_header);
 	totlen -= sizeof(struct ether_header);
-	eh = mtod(m, struct ether_header *);
+	eh = mtod(m0, struct ether_header *);
+
+	/* Read packet data. */
 	while (totlen > 0) {
 		lenthisone = min(totlen, M_TRAILINGSPACE(m));
 		if (lenthisone < 4) {
@@ -711,11 +738,11 @@ epread(sc)
 			mcur = m;
 			m = sc->mb[sc->next_mb];
 			sc->mb[sc->next_mb] = 0;
-			if (!m) {
+			if (m == 0) {
 				MGET(m, M_DONTWAIT, MT_DATA);
-				if (!m) {
+				if (m == 0) {
 					splx(sh);
-					goto out;
+					goto abort;
 				}
 			} else {
 				timeout(epmbuffill, sc, 1);
@@ -749,13 +776,18 @@ epread(sc)
 			totlen -= lenthisone;
 		}
 	}
+
+	splx(sh);
+
 	m0->m_pkthdr.len = save_totlen;
 	m0->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
-	splx(sh);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
+
 	++sc->sc_arpcom.ac_if.if_ipackets;
+
 #if NBPFILTER > 0
 	if (sc->sc_arpcom.ac_if.if_bpf) {
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
@@ -774,41 +806,49 @@ epread(sc)
 		}
 	}
 #endif
+
 	m_adj(m0, sizeof(struct ether_header));
 	ether_input(&sc->sc_arpcom.ac_if, eh, m0);
 	return;
 
-out:	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
+abort:
+	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 	if (m0)
 		m_freem(m0);
 }
 
-
-/*
- * Look familiar?
- */
 static int
-epioctl(ifp, cmd, data)
+epioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	int     cmd;
+	int command;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
-	struct ifreq *ifr = (struct ifreq *) data;
-	int error = 0;
+	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int s, error = 0;
 
-	switch (cmd) {
+	s = splimp();
+
+	switch (command) {
+
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			epinit(sc);	/* before arpwhohas */
-			((struct arpcom *) ifp)->ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *) ifp, &IA_SIN(ifa)->sin_addr);
+			/*
+			 * See if another station has *our* IP address.
+			 * i.e.: There is an address conflict! If a
+			 * conflict exists, a message is sent to the
+			 * console.
+			 */
+			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
 			break;
 #endif
 #ifdef NS
@@ -819,12 +859,11 @@ epioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else {
-				ifp->if_flags &= ~IFF_RUNNING;
+			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
-			}
+			/* Set new address. */
 			epinit(sc);
 			break;
 		    }
@@ -834,15 +873,23 @@ epioctl(ifp, cmd, data)
 			break;
 		}
 		break;
+
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			ifp->if_flags &= ~IFF_RUNNING;
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
 			epstop(sc);
 			epmbufempty(sc);
-			break;
+			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
 			epinit(sc);
 		} else {
 			/*
@@ -854,18 +901,14 @@ epioctl(ifp, cmd, data)
 			epsetlink(sc);
 		}
 		break;
-#ifdef notdef
-	case SIOCGHWADDR:
-		bcopy((caddr_t) sc->sc_addr, (caddr_t) &ifr->ifr_data,
-		    sizeof(sc->sc_addr));
-		break;
-#endif
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (cmd == SIOCADDMULTI) ?
+		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
+
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -875,9 +918,12 @@ epioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
+
 	default:
 		error = EINVAL;
 	}
+
+	splx(s);
 	return (error);
 }
 
@@ -885,8 +931,10 @@ static void
 epreset(sc)
 	struct ep_softc *sc;
 {
-	int s = splimp();
+	int s;
 
+	s = splimp();
+	untimeout(epmbuffill, sc);
 	epstop(sc);
 	epinit(sc);
 	splx(s);
@@ -894,11 +942,11 @@ epreset(sc)
 
 static int
 epwatchdog(unit)
-	int     unit;
+	int unit;
 {
 	register struct ep_softc *sc = epcd.cd_devs[unit];
 
-	log(LOG_ERR, "%s: watchdog\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	epreset(sc);
 	return 0;
 }
@@ -941,7 +989,7 @@ epreadeeprom(id_port, offset)
 	int     id_port;
 	int     offset;
 {
-	int     i, data = 0;
+	int i, data = 0;
 
 	outb(id_port, 0x80 + offset);
 	delay(1000);
@@ -954,7 +1002,7 @@ static int
 epbusyeeprom(sc)
 	struct ep_softc *sc;
 {
-	int     i = 100, j;
+	int i = 100, j;
 
 	while (i--) {
 		j = inw(BASE + EP_W0_EEPROM_COMMAND);
