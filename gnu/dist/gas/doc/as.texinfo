@@ -15,7 +15,7 @@
 @c defaults, config file may override:
 @set have-stabs
 @c ---
-@include asconfig.texi
+@include all.texi
 @c ---
 @c common OR combinations of conditions
 @ifset AOUT
