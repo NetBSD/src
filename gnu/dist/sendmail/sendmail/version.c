@@ -1,11 +1,11 @@
-/* $NetBSD: version.c,v 1.14 2003/09/17 20:23:00 tron Exp $ */
+/* $NetBSD: version.c,v 1.15 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: version.c,v 1.14 2003/09/17 20:23:00 tron Exp $");
+__RCSID("$NetBSD: version.c,v 1.15 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -19,6 +19,6 @@ __RCSID("$NetBSD: version.c,v 1.14 2003/09/17 20:23:00 tron Exp $");
 
 #include <sm/gen.h>
 
-SM_RCSID("@(#)Id: version.c,v 8.104.2.15 2003/03/19 21:19:53 ca Exp")
+SM_RCSID("@(#)Id: version.c,v 8.104.2.26 2004/01/13 00:29:26 ca Exp")
 
-char	Version[] = "8.12.9p1";
+char	Version[] = "8.12.11";

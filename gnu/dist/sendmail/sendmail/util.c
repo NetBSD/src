@@ -1,11 +1,11 @@
-/* $NetBSD: util.c,v 1.10 2003/06/01 14:07:09 atatat Exp $ */
+/* $NetBSD: util.c,v 1.11 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.10 2003/06/01 14:07:09 atatat Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: util.c,v 1.10 2003/06/01 14:07:09 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: util.c,v 8.363.2.5 2002/12/12 22:50:41 ca Exp")
+SM_RCSID("@(#)Id: util.c,v 8.363.2.10 2003/10/15 17:19:14 ca Exp")
 
 #include <sysexits.h>
 #include <sm/xtrap.h>
@@ -396,7 +396,7 @@ truncate_at_delim(str, len, delim)
 		*p = '\0';
 		if (p - str + 4 < len)
 		{
-			*p++ = ':';
+			*p++ = (char) delim;
 			*p = '\0';
 			(void) sm_strlcat(str, "...", len);
 			return;
@@ -2386,7 +2386,8 @@ str2prt(s)
 				*h++ = 'r';
 				break;
 			  default:
-				(void) sm_snprintf(h, l, "%03o", (int) c);
+				(void) sm_snprintf(h, l, "%03o",
+					(unsigned int)((unsigned char) c));
 
 				/*
 				**  XXX since l is unsigned this may
@@ -2420,7 +2421,7 @@ str2prt(s)
 **		false -- otherwise
 */
 
-int
+bool
 path_is_dir(pathname, createflag)
 	char *pathname;
 	bool createflag;
