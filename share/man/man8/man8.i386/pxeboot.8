@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.5 2003/05/25 21:19:06 fair Exp $
+.\"	$NetBSD: pxeboot.8,v 1.6 2003/11/17 20:27:45 drochner Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -124,15 +124,34 @@ the following fields in the
 reply are interpreted:
 .Bl -tag -width xxxx
 .It Bootfile name
-specifies the filename of the
+specifies the protocol to be used, and the filename of the
 .Nx
-kernel to be booted, and the protocol to be used.
-If the bootfile name contains a colon, the preceding part is used
-as protocol specification.
-Available options are
+kernel to be booted, separated by a colon.
+Available protocols are
 .Dq nfs
 and
 .Dq tftp .
+The kernel filename part is interpreted relatively to the NFS root directory
+(see the
+.Em Root path
+reply field below) or the TFTP server's root directory (which might be a
+subdirectory within the TFTP server's filesystem, depending on the
+implementation), respectively.
+If the
+.Em Bootfile name
+field replied by the DHCP server does not contain a colon,
+it is ignored, and the
+.Va filename
+typed in at the
+.Nm
+command line prompt (or the
+.Dq netbsd
+default, see the section about the
+.Em Bootfile name
+field in the DHCP request above) is used.
+If no protocol was specified,
+.Dq nfs
+is assumed.
 .It Swap server
 can be used to override the
 .Dq server IP address
@@ -189,15 +208,31 @@ Leave the
 program.
 .El
 .Sh EXAMPLES
+The first
+.Pa /etc/dhcpd.conf
+example shows a simple configuration which just loads a file
+.Dq netbsd
+from the client's NFS root directory, using the defaults for
+protocol and kernel filename. Similar setups should be
+possible with any BOOTP/DHCP server.
+.Pp
+.Bd -literal
+host myhost {
+    hardware ethernet 00:00:00:00:00:00;
+    fixed-address myhost;
+    option host-name "myhost";
+    filename "pxeboot_ia32.bin";
+    option swap-server mynfsserver;
+    option root-path "/export/myhost";
+}
+.Ed
+.Pp
 The following
 .Pa /etc/dhcpd.conf
-entry shows how the PXE ROM can be told to load the
-.Nx
-.Nm
-program and how different kernels can be loaded depending on
+entry shows how different system installations can be booted depending on
 the user's input on the
 .Nm
-command line:
+command line.
 .Pp
 .Bd -literal
 host myhost {
@@ -212,9 +247,9 @@ host myhost {
         option swap-server mynfsserver;
         option root-path "/export/myhost";
         if filename = "generic" {
-            filename "gennetbsd";
+            filename "nfs:gennetbsd";
         } else {
-            filename "netbsd";
+            filename "nfs:netbsd";
         }
     }
 }
