@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.26 1997/12/05 17:19:48 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.27 1997/12/26 01:58:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-static int network_up = 0;
+int network_up = 0;
 
 /* Get the list of network interfaces. */
 
@@ -105,6 +105,12 @@ static void get_ifinterface_info(void)
 				if (strcmp(t, "0x0") != 0)
 					strcpy(net_mask, t);
 			}
+			else if (strcmp(t, "media:") == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "none") != 0 &&
+				    strcmp(t, "manual") != 0)
+					strcpy(net_media, t);
+			}
 		}
 	}
 
@@ -120,7 +126,7 @@ int config_network (void)
 {	char *tp;
 	char defname[255];
 	int  octet0;
-	int  pass;
+	int  pass, needmedia;
 
 	FILE *f;
 	time_t now;
@@ -161,6 +167,7 @@ int config_network (void)
 	/* Preload any defaults we can find */
 	get_ifinterface_info ();
 	pass = strlen(net_mask) == 0 ? 0 : 1;
+	needmedia = strlen(net_media) == 0 ? 0 : 1;
 	
 	/* Get other net information */
 	msg_display (MSG_netinfo);
@@ -183,10 +190,14 @@ int config_network (void)
 				STRSIZE);
 		msg_prompt_add (MSG_net_namesrv, net_namesvr, net_namesvr,
 				STRSIZE);
+		if (needmedia)
+			msg_prompt_add(MSG_net_media, net_media, net_media,
+				       STRSIZE);
 
 		msg_display (MSG_netok, net_domain, net_host, net_ip, net_mask,
 			     *net_namesvr == '\0' ? "<none>" : net_namesvr,
-			     *net_defroute == '\0' ? "<none>" : net_defroute);
+			     *net_defroute == '\0' ? "<none>" : net_defroute,
+			     *net_media == '\0' ? "<default>" : net_media);
 		process_menu (MENU_yesno);
 		if (!yesno)
 			msg_display (MSG_netagain);
@@ -216,8 +227,12 @@ int config_network (void)
 	}
 
 	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
-	run_prog ("/sbin/ifconfig %s inet %s netmask %s", net_dev, net_ip,
-		  net_mask);
+	if (*net_media != '\0')
+		run_prog("/sbin/ifconfig %s inet %s netmask %s media %s",
+			  net_dev, net_ip, net_mask, net_media);
+	else
+		run_prog("/sbin/ifconfig %s inet %s netmask %s", net_dev,
+			  net_ip, net_mask);
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
@@ -318,7 +333,7 @@ again:
 	run_prog("/sbin/umount /mnt2  2> /dev/null");
 	
 	/* Mount it */
-	if (run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+	if (run_prog("/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
 		msg_display (MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu (MENU_nfsbadmount);
 		if (!yesno)
@@ -362,7 +377,8 @@ mnt_net_config(void)
 		if (*ans == 'y') {
 
 			/* If not running in target, copy resolv.conf there. */
-			dup_file_into_target("/etc/resolv.conf");
+			if (strcmp(net_namesvr, "") != 0)
+				dup_file_into_target("/etc/resolv.conf");
 			/* 
 			 * Add IPaddr/hostname to  /etc/hosts.
 			 * Be careful not to clobber any existing contents.
@@ -381,8 +397,12 @@ mnt_net_config(void)
 				  "/etc/ifconfig.%s", net_dev);
 			f = target_fopen(ifconfig_fn, "w");
 			if (f != 0) {
-				fprintf(f, "%s netmask %s\n",
-					net_ip, net_mask);
+				if (*net_media != '\0')
+					fprintf(f, "%s netmask %s media %s\n",
+						net_ip, net_mask, net_media);
+				else
+					fprintf(f, "%s netmask %s\n",
+						net_ip, net_mask);
 				fclose(f);
 			}
 
