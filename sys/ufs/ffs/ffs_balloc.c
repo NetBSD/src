@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.29 2001/11/08 05:27:25 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.30 2002/06/05 05:23:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.29 2001/11/08 05:27:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.30 2002/06/05 05:23:51 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -439,7 +439,7 @@ fail:
 			    0);
 			if (bp->b_flags & B_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
-				    bp->b_blkno)));
+				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
