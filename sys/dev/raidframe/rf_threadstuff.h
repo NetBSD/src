@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.11 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.12 2002/08/08 02:54:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,6 +64,7 @@ _rf_init_managed_threadgroup(RF_ShutdownList_t ** listp,
     RF_ThreadGroup_t * g, char *file, int line);
 
 #include <sys/lock.h>
+
 #define decl_simple_lock_data(a,b) a struct simplelock b;
 #define simple_lock_addr(a) ((struct simplelock *)&(a))
 
@@ -80,6 +81,18 @@ typedef void *RF_ThreadArg_t;
 
 #define RF_LOCK_MUTEX(_m_)              simple_lock(&(_m_))
 #define RF_UNLOCK_MUTEX(_m_)            simple_unlock(&(_m_))
+
+
+/* non-spinlock */
+#define decl_lock_data(a,b) a struct lock b;
+
+#define RF_DECLARE_LKMGR_MUTEX(_m_)           decl_lock_data(,(_m_))
+#define RF_DECLARE_LKMGR_STATIC_MUTEX(_m_)    decl_lock_data(static,(_m_))
+#define RF_DECLARE_LKMGR_EXTERN_MUTEX(_m_)    decl_lock_data(extern,(_m_))
+
+#define RF_LOCK_LKMGR_MUTEX(_m_)        lockmgr(&(_m_),LK_EXCLUSIVE,NULL)
+#define RF_UNLOCK_LKMGR_MUTEX(_m_)      lockmgr(&(_m_),LK_RELEASE,NULL)
+
 
 /*
  * In NetBSD, kernel threads are simply processes which share several
@@ -164,12 +177,19 @@ struct RF_ThreadGroup_s {
 }
 #endif
 
-
 int     rf_mutex_init(struct simplelock *);
 int     rf_mutex_destroy(struct simplelock *);
 int 
 _rf_create_managed_mutex(RF_ShutdownList_t **, struct simplelock *,
     char *, int);
+
+int     rf_lkmgr_mutex_init(struct lock *);
+int     rf_lkmgr_mutex_destroy(struct lock *);
+int 
+_rf_create_managed_lkmgr_mutex(RF_ShutdownList_t **, struct lock *,
+    char *, int);
+
+
 int 
 _rf_create_managed_cond(RF_ShutdownList_t ** listp, int *,
     char *file, int line);
