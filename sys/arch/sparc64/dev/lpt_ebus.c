@@ -1,7 +1,7 @@
-/*	$NetBSD: lpt_ebus.c,v 1.3 2000/04/05 14:30:44 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.4 2000/04/08 04:33:10 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,9 @@ lpt_ebus_attach(parent, self, aux)
 	 *	- normal lpt registers
 	 *	- ns873xx configuration registers
 	 *	- DMA space
+	 * The `lpt' driver does not use DMA accesses, so we can
+	 * ignore that for now.  We should enable the lpt port in
+	 * the ns873xx registers here. XXX
 	 *
 	 * Use the prom address if there.
 	 */

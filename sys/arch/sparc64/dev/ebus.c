@@ -1,7 +1,7 @@
-/*	$NetBSD: ebus.c,v 1.4 2000/04/05 12:30:42 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.5 2000/04/08 04:33:09 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,6 +114,7 @@ ebus_attach(parent, self, aux)
 	printf("%s: %s, revision 0x%02x\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	sc->sc_parent = (struct psycho_softc *)parent;
 	sc->sc_bustag = pa->pa_memt;
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
