@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.12 2002/07/22 14:39:44 lukem Exp $
+.\"	$NetBSD: netboot,v 1.13 2002/11/18 12:39:49 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,7 +251,7 @@ group {
                 # Note: Plain (ELF) kernels won't work, you
                 # have to use the corresponding *.img file.
                 #
-                filename                "netbsd.INSTALL.img"
+                filename                "netbsd-INSTALL.img"
 .\}
 .el .if !\n[sparc] \{\
 
@@ -471,7 +471,7 @@ looking for the kernel.
 .el \{\
 .Pp
 You can either boot a kernel, or the RAM disk-based installer
-.Pa binary/kernel/netbsd.INSTALL.img.gz .
+.Pa binary/kernel/netbsd-INSTALL.img.gz .
 In the first case you'll also need an NFS-mounted userland.
 .\}
 Let's set up the NFS server.
@@ -523,7 +523,7 @@ If you are netbooting the installer, you can use either
 the traditional miniroot-based installer
 .Pa installation/miniroot/miniroot.fs.gz
 or the experimental RAM disk-based installer
-.Pa binary/kernel/netbsd.RAMDISK.gz .
+.Pa binary/kernel/netbsd-RAMDISK.gz .
 .Pp
 To use the miniroot-based installer, mount the miniroot file system on your
 netboot server.
@@ -553,8 +553,8 @@ Also, copy the distribution files to the client's root directory.
 .Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
-.No # Ic "gunzip netbsd.RAMDISK.gz"
-.No # Ic "mv netbsd.RAMDISK /export/client/root/netbsd"
+.No # Ic "gunzip netbsd-RAMDISK.gz"
+.No # Ic "mv netbsd-RAMDISK /export/client/root/netbsd"
 .disp)
 .Pp
 If you are running your \*M diskless, simply use
@@ -562,14 +562,14 @@ If you are running your \*M diskless, simply use
 .\}
 .if \n[macppc] \{\
 If you are netbooting the installer, use
-.Pa binary/kernel/netbsd.GENERIC_MD.gz
+.Pa binary/kernel/netbsd-GENERIC_MD.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
-.No # Ic "gunzip netbsd.GENERIC_MD.gz"
-.No # Ic "mv netbsd.GENERIC_MD /export/client/root/netbsd"
+.No # Ic "gunzip netbsd-GENERIC_MD.gz"
+.No # Ic "mv netbsd-GENERIC_MD /export/client/root/netbsd"
 .disp)
 .Pp
 If you are running your \*M diskless, simply use
@@ -577,11 +577,11 @@ If you are running your \*M diskless, simply use
 .\}
 .if \n[next68k] \{\
 Use
-.Pa binary/kernel/netbsd.GENERIC.gz .
+.Pa binary/kernel/netbsd-GENERIC.gz .
 .Pp
 .(disp
-.No # Ic "gunzip netbsd.GENERIC.gz"
-.No # Ic "mv netbsd.GENERIC /export/client/root/netbsd"
+.No # Ic "gunzip netbsd-GENERIC.gz"
+.No # Ic "mv netbsd-GENERIC /export/client/root/netbsd"
 .disp)
 .\}
 .if \n[sparc] \{\
@@ -605,14 +605,14 @@ the client's root directory and extract the tools from
 .\}
 .if \n[walnut] \{\
 If you are netbooting the installer, use
-.Pa binary/kernel/netbsd.INSTALL.img.gz
+.Pa binary/kernel/netbsd-INSTALL.img.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
-.No # Ic "gunzip netbsd.INSTALL.img.gz"
-.No # Ic "mv netbsd.INSTALL.img /export/client/root/netbsd"
+.No # Ic "gunzip netbsd-INSTALL.img.gz"
+.No # Ic "mv netbsd-INSTALL.img /export/client/root/netbsd"
 .disp)
 .Pp
 If you are running your \*M diskless, simply use

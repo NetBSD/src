@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.17 2002/10/14 16:16:09 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.18 2002/11/18 12:39:43 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -15,7 +15,7 @@
 #			${FILENAME}.symbols.gz), and gzipped into
 #			${FILENAME}.gz.
 #
-#			If FILENAME is "-", use "netbsd.${KERNEL}" as
+#			If FILENAME is "-", use "netbsd-${KERNEL}" as
 #			the target name.
 #
 # Optional variables:
@@ -50,7 +50,7 @@
 .for _K _I _F in ${MDSETTARGETS}			# {
 _FILENAME:=${_F}		# work around obscure issue in make(1)
 .if ${_FILENAME} == "-"
-_KERNEL.${_K}.${_F}:=	netbsd.${_K}
+_KERNEL.${_K}.${_F}:=	netbsd-${_K}
 .else
 _KERNEL.${_K}.${_F}:=	${_F}
 .endif

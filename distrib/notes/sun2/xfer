@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.3 2002/06/30 12:57:29 lukem Exp $
+.\"	$NetBSD: xfer,v 1.4 2002/11/18 12:39:53 lukem Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -122,7 +122,7 @@ The netboot program will query a bootparamd server to find the
 NFS server address and path name for its root, and then load a
 kernel from that location.
 The server should have a copy of the
-.Pa netbsd.RAMDISK
+.Pa netbsd-RAMDISK
 kernel in the root area for your client, hard-linked
 under the names
 .Pa netbsd
@@ -140,7 +140,7 @@ If you will be installing
 on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
 as they only use the
-.Pa netbsd.RAMDISK
+.Pa netbsd-RAMDISK
 kernel.
 There will be no conflict
 between clients because the RAM-disk kernel will not use the NFS root.
@@ -168,7 +168,7 @@ and
 .Pa binary/kernel
 (which you get via FTP).
 Once you have booted
-.Pa netbsd.RAMDISK
+.Pa netbsd-RAMDISK
 (the RAM-disk kernel)
 and loaded the miniroot, you can load any of the distribution sets
 over the net using FTP.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/10/16 04:00:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/11/18 12:39:46 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,7 +20,7 @@ MDSETTARGETS=		INSTALL		${RAMDISK_B}	-	\
 			INSTALL_SMALL	${RAMDISK_S}	-	\
 			INSTALL_TINY	${RAMDISK_T}	-	\
 			INSTALL_PS2	${RAMDISK_S}	-	\
-			INSTALL_TINY	${RESCUE_T}	netbsd.RESCUE_TINY
+			INSTALL_TINY	${RESCUE_T}	netbsd-RESCUE_TINY
 
 MDSET_RELEASEDIR=	binary/kernel
 
