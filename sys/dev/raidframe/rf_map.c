@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.21 2002/09/24 00:12:55 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.22 2003/12/21 19:36:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.21 2002/09/24 00:12:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.22 2003/12/21 19:36:31 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -355,7 +355,7 @@ rf_ConfigureMapModule(listp)
 	    RF_PDA_INC, sizeof(RF_PhysDiskAddr_t));
 	if (rf_pda_freelist == NULL) {
 		RF_FREELIST_DESTROY(rf_asmhdr_freelist, next, (RF_AccessStripeMapHeader_t *));
-		RF_FREELIST_DESTROY(rf_pda_freelist, next, (RF_PhysDiskAddr_t *));
+		RF_FREELIST_DESTROY(rf_asm_freelist, next, (RF_AccessStripeMap_t *));
 		return (ENOMEM);
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
