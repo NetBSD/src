@@ -1,4 +1,4 @@
-# $Id: Makefile.sun3,v 1.20 1994/06/28 21:40:34 gwr Exp $
+# $Id: Makefile.sun3,v 1.21 1994/07/18 14:59:47 gwr Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -126,6 +126,9 @@ autoconf.o: Makefile
 
 # depends on device configuration
 conf.o : Makefile
+
+# depends on network or filesystem configuration
+uipc_proto.o vfs_conf.o : Makefile
 
 # depends on value of SYMTAB_SPACE
 db_aout.o : Makefile
