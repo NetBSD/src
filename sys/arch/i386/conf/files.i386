@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.62 1996/02/22 05:53:16 scottr Exp $
+#	$NetBSD: files.i386,v 1.63 1996/02/27 00:08:29 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -47,7 +47,6 @@ major	{cd = 6}
 device	isa at root {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
-#device	eisa at root {...}
 device	pci at root {[bus = -1], [dev = -1]}
 #device	mca at root {...}
 
@@ -112,8 +111,6 @@ file	dev/isa/if_le.c			le
 #
 
 include "../../../dev/eisa/files.eisa"
-# XXX not yet:
-# file	arch/i386/eisa/eisa_machdep.c	eisa
 
 #
 # PCI-only drivers
