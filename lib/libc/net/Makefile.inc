@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.5 1993/08/31 19:00:11 jtc Exp $
+#	$Id: Makefile.inc,v 1.6 1993/09/17 19:23:15 phil Exp $
 
 # net sources
 .PATH: ${.CURDIR}/${MACHINE}/net ${.CURDIR}/net
@@ -17,6 +17,8 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 .elif (${MACHINE} == "i386")
 SRCS+=	htonl.s htons.s ntohl.s ntohs.s
+.elif (${MACHINE} == "pc532")
+SRCS+=	ntoh.s
 .elif (${MACHINE} == "tahoe")
 SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 .elif (${MACHINE} == "vax")
