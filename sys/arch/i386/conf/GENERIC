@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.354.2.14 2001/05/06 14:44:50 he Exp $
+#	$NetBSD: GENERIC,v 1.354.2.15 2001/05/06 15:18:54 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.354.2.14 $"
+#ident 		"GENERIC-$Revision: 1.354.2.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -690,6 +690,7 @@ ugen*	at uhub? port ?
 # PCI audio devices
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
@@ -734,6 +735,7 @@ opl*	at ym?
 #audio*	at aria?
 audio*	at auvia?
 audio*	at clcs?
+audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at esm?
@@ -762,6 +764,7 @@ mpu*	at ym?
 
 # MIDI support
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
+#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
