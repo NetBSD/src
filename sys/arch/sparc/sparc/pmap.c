@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 1999/02/14 14:37:45 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.138 1999/03/12 22:42:30 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -836,7 +836,7 @@ sortm(mp, n)
 			if (addr < mpj->addr)
 				break;
 		/* slide up any additional entries */
-		ovbcopy(mpj, mpj + 1, (i - j) * sizeof(*mp));
+		memmove(mpj + 1, mpj, (i - j) * sizeof(*mp));
 		mpj->addr = addr;
 		mpj->len = len;
 	}

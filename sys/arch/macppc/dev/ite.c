@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.3 1998/07/13 19:14:43 tsubai Exp $	*/
+/*	$NetBSD: ite.c,v 1.4 1999/03/12 22:42:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -440,7 +440,7 @@ scrollup()
 	from = to + linebytes;
 
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
-		ovbcopy(from, to, screenrowbytes);
+		memmove(to, from, screenrowbytes);
 		from += videorowbytes;
 		to += videorowbytes;
 	}
@@ -464,7 +464,7 @@ scrolldown()
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
 		from -= videorowbytes;
 		to -= videorowbytes;
-		ovbcopy(from, to, screenrowbytes);
+		memmove(to, from, screenrowbytes);
 	}
 	for (i = CHARHEIGHT; i > 0; i--) {
 		to -= videorowbytes;
