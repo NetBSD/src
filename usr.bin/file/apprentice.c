@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.22 2001/03/27 00:49:12 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.23 2001/05/09 14:05:52 simonb Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -45,7 +45,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.34 2001/03/11 20:29:16 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.22 2001/03/27 00:49:12 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.23 2001/05/09 14:05:52 simonb Exp $");
 #endif
 #endif	/* lint */
 
@@ -86,6 +86,35 @@ static int maxmagic = 0;
 
 struct mlist mlist;
 
+#ifdef COMPILE_ONLY
+const char *magicfile;
+char *progname;
+int lineno;
+
+int main __P((int, char *[]));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int ret;
+
+	if ((progname = strrchr(argv[0], '/')) != NULL)
+		progname++;
+	else
+		progname = argv[0];
+
+	if (argc != 2) {
+		(void)fprintf(stderr, "usage: %s file\n", progname);
+		exit(1);
+	}
+	magicfile = argv[1];
+
+	exit(apprentice(magicfile, COMPILE));
+}
+#endif /* COMPILE_ONLY */
+
 
 /*
  * Handle one file.
@@ -108,11 +137,14 @@ apprentice_1(fn, action)
 		else
 			return rv;
 	}
+#ifndef COMPILE_ONLY
 	if ((rv = apprentice_map(&magic, &nmagic, fn, action)) != 0)
 		(void)fprintf(stderr, "%s: Using regular magic file `%s'\n",
 		    progname, fn);
-#endif
+#endif /* COMPILE_ONLY */
+#endif /* QUICK */
 		
+#ifndef COMPILE_ONLY
 	if (rv != 0)
 		rv = apprentice_file(&magic, &nmagic, fn, action);
 
@@ -137,6 +169,7 @@ apprentice_1(fn, action)
 	mlist.prev = ml;
 
 	return rv;
+#endif /* COMPILE_ONLY */
 }
 
 
@@ -773,6 +806,7 @@ eatsize(p)
 }
 
 #ifdef QUICK
+#ifndef COMPILE_ONLY
 /*
  * handle an mmaped file.
  */
@@ -843,6 +877,7 @@ error:
 	}
 	return -1;
 }
+#endif /* COMPILE_ONLY */
 
 /*
  * handle an mmaped file.
