@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.h,v 1.15 2001/01/29 10:35:00 sakane Exp $	*/
+/*	$KAME: pfkey.h,v 1.16 2001/03/05 18:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,6 +28,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+struct pfkey_satype {
+	u_int8_t	ps_satype;
+	const char	*ps_name;
+};
+
+extern const struct pfkey_satype pfkey_satypes[];
+extern const int pfkey_nsatypes;
 
 extern int pfkey_handler __P((void));
 extern vchar_t *pfkey_dump_sadb __P((int));
