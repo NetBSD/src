@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1993, 1996-1997 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1993
@@ -11,7 +11,7 @@
 # the sendmail distribution.
 #
 #
-#	Id: Build,v 8.155.4.11 2001/08/16 02:13:48 geir Exp
+#	Id: Build,v 8.179.2.3 2002/12/23 23:02:37 ca Exp
 #
 
 #
@@ -61,6 +61,29 @@ while [ ! -z "$1" ]
 do
 	case $1
 	in
+	  -src)	# Specify pathname of source directory relative to
+		# root of cvs tree.  This relative pathname may have
+		# multiple components, as in 'foo/bar/baz', and will also
+		# be used to form the pathname of the object directory.
+		shift
+		arg=$1
+		if [ -z "$arg" ]
+		then
+			echo "Missing arg for -src" >&2
+			exit $EX_USAGE
+		fi
+		case $arg
+		in
+		  /*)	echo "Arg for -src must not begin with / ($arg)" >&2
+			exit $EX_USAGE
+			;;
+		esac
+		src_dir="$arg"
+		absolute_base_dir=`echo ${full_src_dir} | sed "s;/${src_dir}$;;"`
+		obj_rel_base_dir=`echo x/${src_dir} | sed "s;[^/][^/]*;..;g"`
+		SMROOT=${absolute_base_dir}
+		shift
+		;;
 	  -c)	# clean out existing $obj tree
 		cflag=1
 		SENDMAIL_BUILD_FLAGS="$SENDMAIL_BUILD_FLAGS $1"
@@ -217,7 +240,7 @@ do
 		shift
 		;;
 
-  	  -v)	# Select a build variant: debug, optimized, purify, whatever.
+	  -v)	# Select a build variant: debug, optimized, purify, whatever.
 		shift
 		build_variant=$1
 		if [ -z "$build_variant" ]
@@ -360,10 +383,26 @@ in
   DYNIX-ptx)	os=PTX;;
   Paragon*)	os=Paragon;;
   HP-UX)	rel=`echo $rel | sed -e 's/^[^.]*\.0*//'`;;
-  AIX)		rela=$rel
-		rel=`uname -v`
+  AIX)		osl=""
+		if [ -x /bin/lslpp ]
+		then
+			osl=`/bin/lslpp -Lcq bos.rte | cut -f3 -d: | cut -f1-3 -d. 2>/dev/null`
+			if [ $? = 0  -a -n "$osl" ]
+			then
+				rel=$osl
+			else
+				# command failed; fall back to old method
+				osl=""
+			fi
+		fi
+		# check whether it worked
+		if [ -z "$osl" ]
+		then
+			rela=$rel
+			rel=`uname -v`
+			rel=$rel.$rela
+		fi
 		arch=PPC
-		rel=$rel.$rela
 		;;
   BSD-386)	os=BSD-OS;;
   SCO_SV)	os=SCO; rel=`uname -X | sed -n 's/Release = 3.2v//p'`;;
@@ -439,7 +478,7 @@ then
 	echo "Configuration: pfx=$pfx, os=$os, rel=$rel, rbase=$rbase, rroot=$rroot, arch=$arch, sfx=$sfx, variant=$build_variant"
 fi
 
-SMROOT=${SMROOT-..}
+SMROOT=${SMROOT-`(cd ..;pwd)`}
 BUILDTOOLS=${BUILDTOOLS-$SMROOT/devtools}
 export SMROOT BUILDTOOLS
 
@@ -471,34 +510,34 @@ fi
 
 # now try to find a reasonable object directory
 if [ -r ${OBJ_ROOT}/obj${prefix}.$os.$rel.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rel.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rel.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os.$rroot.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rroot.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rroot.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os.$rbase.x.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rbase.x.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rbase.x.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os.$rel$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rel$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rel$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os.$rbase.x$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rbase.x$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rbase.x$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$rel.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$rel.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$rel.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$rbase.x.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$rbase.x.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$rbase.x.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$os$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$os$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$arch$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$arch$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$arch$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$rel$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$rel$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$rel$sfx
 elif [ -r ${OBJ_ROOT}/obj${prefix}.$sfx ]; then
-	obj=${OBJ_ROOT}/obj${prefix}.$sfx
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$sfx
 fi
 
-if [ -n "$obj" ]
+if [ -n "$abs_obj_dir" ]
 then
-	obj=${obj}/${src_dir}
+	obj=${abs_obj_dir}/${src_dir}
 fi
 
 # Print the directory which would be used for the build and exit
@@ -544,7 +583,8 @@ fi
 # If we didn't detect an existing obj directory, makeup a new obj name.
 if [ -z "$obj" ]
 then
-	obj=${OBJ_ROOT}/obj${prefix}.$os.$rel.$arch$sfx/${src_dir}
+	abs_obj_dir=${OBJ_ROOT}/obj${prefix}.$os.$rel.$arch$sfx
+	obj=${abs_obj_dir}/${src_dir}
 fi
 
 # Check if obj directory exists
@@ -605,7 +645,7 @@ then
 	elif [ -r $BUILDTOOLS/OS/$rel$sfx ]; then
 		oscf=$rel$sfx
 	else
-		echo "Cannot determine how to support $arch.$os.$rel" >&2
+		echo "Cannot determine how to support $os.$rel.$arch" >&2
 		exit $EX_UNAVAILABLE
 	fi
 	M4=`sh $BUILDTOOLS/bin/find_m4.sh`
@@ -666,6 +706,7 @@ then
 	cd $cur_dir
 	echo "ifdef(\`bldABS_OBJ_DIR',,\`define(\`bldABS_OBJ_DIR', \`$absolute_obj_dir')')" >> $obj/.settings$$
 	rel_src_dir="$obj_rel_base_dir/$src_dir"
+	echo "define(\`bldSRC_NAME', \`$src_dir')" >> $obj/.settings$$
 	echo "define(\`bldREL_SRC_DIR', \`$rel_src_dir')" >> $obj/.settings$$
 
 	if [ ! -z "$pfx" ]
@@ -715,6 +756,7 @@ then
 		echo "define(\`confINCDIRS', \`\`$incdirs'' confINCDIRS)" >> $obj/.settings$$
 	fi
 	echo "define(\`_SRC_PATH_', \`\`$obj_rel_base_dir'')" >> $obj/.settings$$
+	echo "define(\`bldSRC_PATH', \`\`$obj_rel_base_dir'')" >> $obj/.settings$$
 	echo 'divert(0)dnl' >> $obj/.settings$$
 	libdirs=`(cat $obj/.settings$$; echo "_SRIDBIL_= confLIBDIRS" ) | \
 		sed -e 's/\(.\)include/\1_include_/g' -e 's/#define/#_define_/g' | \

@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: library.m4,v 8.6.18.4 2001/02/14 04:07:22 gshapiro Exp
+#	Id: library.m4,v 8.10 2001/02/14 04:39:38 gshapiro Exp
 #
 divert(0)dnl
 include(confBUILDTOOLSDIR`/M4/'bldM4_TYPE_DIR`/links.m4')dnl

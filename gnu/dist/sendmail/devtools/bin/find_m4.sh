@@ -8,7 +8,7 @@
 # the sendmail distribution.
 #
 #
-#       Id: find_m4.sh,v 8.7.24.4 2001/01/23 01:48:03 gshapiro Exp
+#       Id: find_m4.sh,v 8.13 2001/01/23 01:47:45 gshapiro Exp
 #
 
 # Try to find a working M4 program.
@@ -22,6 +22,11 @@ include(NoSuchFile)')
 define(\`BadNumber', \`10')
 ifdef(\`BadNumber', \`',
 \`errprint(\`This version of m4 is broken: trailing zero problem')
+include(NoSuchFile)')
+define(\`LongList', \` assert.c debug.c exc.c heap.c match.c rpool.c strdup.c strerror.c strl.c clrerr.c fclose.c feof.c ferror.c fflush.c fget.c fpos.c findfp.c flags.c fopen.c fprintf.c fpurge.c fput.c fread.c fscanf.c fseek.c fvwrite.c fwalk.c fwrite.c get.c makebuf.c put.c refill.c rewind.c rget.c setvbuf.c smstdio.c snprintf.c sscanf.c stdio.c strio.c syslogio.c ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vsnprintf.c vsprintf.c vsscanf.c wbuf.c wsetup.c stringf.c xtrap.c strto.c test.c path.c strcasecmp.c signal.c clock.c config.c shm.c ')
+define(\`SameList', \`substr(LongList, 0, index(LongList, \`.'))\`'substr(LongList, index(LongList, \`.'))')
+ifelse(len(LongList), len(SameList), \`',
+\`errprint(\`This version of m4 is broken: length problem')
 include(NoSuchFile)')"
 
 if [ "$M4" ]

@@ -79,7 +79,7 @@ confBLDVARIANT	    OPTIMIZED		This controls which object variant will
 					fully implemented on any platforms
 					yet. Other variants can be added as
 					needed in the future. Changing this
-					macro from its default will effect
+					macro from its default will affect
 					other default values.
 confBUILDBIN	    ../../devtools/bin	The location of the build support
 					binaries, relative to the obj.*
@@ -94,12 +94,20 @@ confDEPEND_TYPE	    generic		How to build dependencies.  This should
 					devtools/M4/depend
 confDEPLIBS	    [empty]		Dependent libraries when building 
 					shared objects.	
+confDONT_INSTALL_CATMAN  [undefined]	Don't install the formatted manual
+		    			pages.
 confEBINDIR	    /usr/libexec	The location for binaries executed
 					from other binaries, e.g., mail.local
 					or smrsh.
 confENVDEF	    [empty]		-D flags passed to C compiler.
 confFORCE_RMAIL	    [undefined]		If defined, install the rmail program
 					without question.
+confGBINGRP	    smmsp		The group for set-group-ID binaries.
+confGBINMODE	    2555		The mode for set-group-ID binaries.
+confGBINOWN	    root		The owner for set-group-ID binaries.
+confMSPQOWN	    smmsp		The owner of the MSP queue.
+confMSP_QUEUE_DIR   /var/spool/clientmqueue   The MSP queue directory.
+confMSP_STFILE	    sm-client.st	Name of the MSP statistics file.
 confHFDIR	    /etc/mail		Location of the sendmail helpfile.
 confHFFILE	    helpfile		Name of the installed helpfile.
 confINCDIRS	    [empty]		-I flags passed to C compiler.
@@ -131,6 +139,7 @@ confLINKS	    ${UBINDIR}/newaliases ${UBINDIR}/mailq \
 		    ${UBINDIR}/hoststat ${UBINDIR}/purgestat
 					Names of links to sendmail.
 confLN		    ln			The command used to create links.
+confLNOPTS	    -f -s		The parameters for confLN.
 confMAN1	    confMANROOT 1	The location of man1 files.
 confMAN1EXT	    1			The extension on files in confMAN1.
 confMAN1SRC	    0			The source for man pages installed
@@ -161,11 +170,14 @@ confMANROOTMAN	    /usr/share/man/man	The root of the man subtree, for
 confMAPDEF	    [varies]		The map definitions, e.g.,
 					-DNDBM -DNEWDB.  -DNEWDB is always
 					added if libdb.* can be found.
-confMBINDIR	    /usr/sbin		The location of the MTA (sendmail)
-					binary.
-*confMTCCOPTS	    [empty]		Additional options for compiling
+confMBINDIR	    /usr/sbin		The location of the MTA (sm-mta,
+					sendmail) binary.
+confMBINGRP	    bin			The group of the MTA binary (sm-mta).
+confMBINMODE	    550			The mode of the MTA binary (sm-mta).
+confMBINOWN	    root		The owner of the MTA binary (sm-mta).
+confMTCCOPTS	    [empty]		Additional options for compiling
 					multi-threaded object files.
-*confMTLDOPTS	    [empty]		Additional linker options for
+confMTLDOPTS	    [empty]		Additional linker options for
 					linking multithreaded binaries.
 confNO_HELPFILE_INSTALL  [undefined]	If defined, don't install the sendmail
 					helpfile by default.
@@ -184,16 +196,23 @@ confOPTIMIZE	    -O			Flags passed to C compiler as ${O}.
 confRANLIB	    echo		The path to the program to use
 					as ranlib.
 confRANLIBOPTS      [empty]		Options to pass to ranlib.
+confREQUIRE_LIBSM   [empty]		Define if libsm is required.
 confSBINDIR	    /usr/sbin		The location of root-oriented
 					commands, such as makemap.
-confSBINGRP	    bin			The group for setuid binaries.
-confSBINMODE	    4555		The mode for setuid binaries.
-confSBINOWN	    root		The owner for setuid binaries.
+confSBINGRP	    bin			The group for set-user-ID binaries.
+confSBINMODE	    4555		The mode for set-user-ID binaries.
+confSBINOWN	    root		The owner for set-user-ID binaries.
+confSETUSERID_INSTALL	[undefined]	Needs to be defined to enable the
+					install-set-user-id target for
+					sendmail.  See sendmail/SECURITY.
 confSHAREDLIB_EXT   .so              	Shared library file extenion name.
 confSHAREDLIB_SUFFIX [empty]		Shared object version suffix.	
 confSHAREDLIBDIR    /usr/lib		Directory for installing shared 
 					library. 
 confSHELL	    /bin/sh		The shell to use inside make.
+confSM_OS_HEADER    [varies]		The name of the platform specific
+					include file.  Undefine this if
+					libsm is not used.
 confSMOBJADD	    [empty]		Objects that should be included in
 					when linking sendmail.  See also
 					confSMSRCADD.
@@ -213,12 +232,10 @@ confSRCDIR	    [varies]		The root of the source directories
 					Build script.
 confSONAME	    [empty]		ld flag	for recording the shared object
 					name into shared object.
-confSTDIO_TYPE	    portable		Buffered file implementation
-					(based on stdio library).  Either
-					portable or torek.
 confSTDIR	    /etc/mail		The directory in which to store the
 					sendmail statistics file.
 confSTFILE	    statistics		Name of the installed statistics file.
+confSTMODE	    0600		Mode of the installed statistics file.
 confSTRIP	    strip		What program to use for stripping
 					executables.
 confSTRIPOPTS	    [empty]		Options to pass to the strip program.
@@ -230,7 +247,7 @@ confUBINOWN	    bin			The owner for user-executable binaries.
 
 There are also program specific variables for each of the programs
 in the sendmail distribution.  Each has the form `conf_prog_ENVDEF',
-for example, `conf_sendmail_ENVDEF'.  If the program name consists
+for example, `conf_sendmail_ENVDEF'.  If the program name contains
 a '.' it must be replaced by '_' first, e.g., use `conf_mail_local_LIBS'
 instead of `conf_mail.local_LIBS'.  The variables are:
 
@@ -330,12 +347,20 @@ bldSOURCES - This should be defined to a space separated list of source
 files that make up the executable.
 
 bldBIN_TYPE - This determines where the binaries will be installed and what
-permissions they will have.  Available types are `U', `K', `S', and `E'.
+permissions they will have.  Available types are `M', `U', `K', `S', and `E'.
 See M4/UNIX/make/executable.m4 for what the different types mean.
 
 bldTARGET_LINKS - This determines where additional symbolic links to the
 executable are placed.  These should be full pathnames, separated by
 spaces.
+
+
+test
+----
+
+This is just like 'executable', but is used for test programs.
+The program cannot be installed.  Each time it is built, it is executed
+by make with no arguments.
 
 
 manpage
@@ -346,6 +371,8 @@ This builds manpages from source using *roff.
 bldSOURCES - This should be defined to a space separated list of man source
 files.
 
+bldINSTALLABLE - This should be set if the library should be installed in
+confLIBDIR.
 
 library
 -------
@@ -355,7 +382,5 @@ This builds a static library from C sources.
 bldSOURCES - This should be defined to a space separated list of C source
 files that make up the library.
 
-bldINSTALLABLE - This should be set if the library should be installed in
-confLIBDIR.
 
-Revision: 8.65.4.9, Last updated Date: 2001/05/30 19:50:37
+Revision: 8.91.2.3, Last updated Date: 2002/09/23 21:28:48

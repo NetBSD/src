@@ -1,13 +1,15 @@
-MAIL.LOCAL(8)                                       MAIL.LOCAL(8)
 
+
+
+MAIL.LOCAL(8)                                       MAIL.LOCAL(8)
 
 
 NNAAMMEE
        mail.local - store mail in a mailbox
 
 SSYYNNOOPPSSIISS
-       mmaaiill..llooccaall  [--77]  [--bb]  [--dd] [--ll] [--ff _f_r_o_m] [--rr _f_r_o_m] _u_s_e_r
-       _._._.
+       mmaaiill..llooccaall [--77] [--bb] [--dd] [--DD _m_b_d_b] [--ll] [--ff _f_r_o_m|--rr _f_r_o_m]
+       [--hh _f_i_l_e_n_a_m_e ] _u_s_e_r _._._.
 
 DDEESSCCRRIIPPTTIIOONN
        MMaaiill..llooccaall reads the standard input up to  an  end-of-file
@@ -22,34 +24,56 @@ DDEESSCCRRIIPPTTIIOONN
                  error if a mailbox exceeds quota.
 
        --dd        Specify this is a delivery (for backward compat-
-                 ibility).
+                 ibility).  This option has no effect.
+
+       --DD _m_b_d_b   Specify  the  name of the mailbox database which
+                 is used to look up local recipient names.   This
+                 option  defaults to "pw", which means use getpw-
+                 nam().
 
        --ff _f_r_o_m   Specify the sender's name.
 
        --ll        Turn on LMTP mode.
 
        --rr _f_r_o_m   Specify the sender's name (for backward compati-
-                 bility).
+                 bility).  Same as -f.
 
-       Individual mail messages in the mailbox are  delimited  by
+       --hh _f_i_l_e_n_a_m_e
+                 Store  incoming  mail  in _f_i_l_e_n_a_m_e in the user's
+                 home directory instead of a  system  mail  spool
+                 directory.
+
+       Individual  mail  messages in the mailbox are delimited by
        an empty line followed by a line beginning with the string
-       ``From ''.  A line containing the string  ``From  '',  the
+       ``From  ''.   A  line containing the string ``From '', the
        sender's name and a time stamp is prepended to each deliv-
-       ered mail message.  A blank line is appended to each  mes-
-       sage.   A  greater-than  character (``>'') is prepended to
-       any line in the message which  could  be  mistaken  for  a
-       ``From  ''  delimiter line (that is, a line beginning with
+       ered  mail message.  A blank line is appended to each mes-
+       sage.  A greater-than character (``>'')  is  prepended  to
+       any  line  in  the  message  which could be mistaken for a
+       ``From '' delimiter line (that is, a line  beginning  with
        the five characters ``From '' following a blank line).
 
-       The mail files are exclusively locked with flock(2)  while
-       mail  is  appended,  and  a uusseerr..lloocckk file also is created
-       while the mailbox is locked for compatibility  with  older
+       The  mail files are exclusively locked with flock(2) while
+       mail is appended, and a uusseerr..lloocckk  file  also  is  created
+       while  the  mailbox is locked for compatibility with older
        MUAs.
 
-       If  the  ``biff'' service is returned by getservbyname(3),
+
+
+
+                   Date: 2001/04/05 23:27:35                 1
+
+
+
+
+
+MAIL.LOCAL(8)                                       MAIL.LOCAL(8)
+
+
+       If the ``biff'' service is returned  by  getservbyname(3),
        the biff server is notified of delivered mail.
 
-       The mmaaiill..llooccaall utility exits 0 on success, and  >0  if  an
+       The  mmaaiill..llooccaall  utility  exits 0 on success, and >0 if an
        error occurs.
 
 EENNVVIIRROONNMMEENNTT
@@ -58,8 +82,9 @@ EENNVVIIRROONNMMEENNTT
 
 FFIILLEESS
        /tmp/local.XXXXXX     temporary files
-       /var/mail/user        user's mailbox directory
-       /var/mail/user.lock   lock file for a user's mailbox
+       /var/mail/user        user's default mailbox directory
+       /var/mail/user.lock   lock file for a user's default mail-
+                             box
 
 SSEEEE AALLSSOO
        mail(1), xsend(1), flock(2), getservbyname(3),  comsat(8),
@@ -78,4 +103,30 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/12/29 18:12:16     MAIL.LOCAL(8)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2001/04/05 23:27:35                 2
+
+
