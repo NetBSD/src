@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.1 2001/11/09 20:58:58 thorpej Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.2 2001/11/09 22:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,8 +101,8 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 */
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_SECONDARY(pbus);
-	sbus = PPB_BUSINFO_SECONDARY(sbus);
+	pbus = PPB_BUSINFO_PRIMARY(reg);
+	sbus = PPB_BUSINFO_SECONDARY(reg);
 
 	/*
 	 * XXX We don't know how to map interrupts on the Primary
@@ -144,7 +144,7 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	/* Now read the PPB's secondary bus number. */
 	reg = pci_conf_read(pa->pa_pc, tag, PPB_REG_BUSINFO);
-	sbus = PPB_BUSINFO_SECONDARY(sbus);
+	sbus = PPB_BUSINFO_SECONDARY(reg);
 
 	if (pa->pa_bus == sbus && pa->pa_device == 0 &&
 	    pa->pa_function == 0) {
