@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/02/26 22:54:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/05 20:29:36 thorpej Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -12,9 +12,8 @@ RAMDISKS=	RAMDISK_S	ramdisk-rescuesmall	\
 		RAMDISK_T	ramdisk-rescuetiny
 
 .for V F in ${RAMDISKS}
-${V}!=		cd ${TOP}/${F}/; \
-	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/${F}.fs\n" | \
-		${MAKE} -s -f-
+${V}DIR!=	cd ${TOP}/${F} && ${PRINTOBJDIR}
+${V}=		${${V}DIR}/${F}.fs
 .endfor
 
 #	create netbsd.*.gz targets

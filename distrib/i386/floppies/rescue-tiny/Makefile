@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/08 04:53:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/03/05 20:29:36 thorpej Exp $
+
+.include <bsd.own.mk>
 
 TOP=	${.CURDIR}/..
 
@@ -7,13 +9,13 @@ TOP=	${.CURDIR}/..
 IMAGE=	rescue-tiny.fs
 KDIR=	${TOP}/kernel-rescue
 KNAME=	INSTALL_TINY
-KERN!=	cd ${KDIR}; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.${KNAME}.gz\n" | \
-	${MAKE} -s -f-
+
+KERNDIR!=	cd ${KDIR} && ${PRINTOBJDIR}
+KERN=		${KERNDIR}/netbsd.${KNAME}.gz
 
 DISKSIZE=	2400
 
 .include "${TOP}/common/Makefile.bootfloppy"
 
 ${KERN}:
-	cd ${KDIR}; ${MAKE}
+	cd ${KDIR} && ${MAKE}
