@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.19 2000/07/14 08:02:12 jun Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.20 2000/10/17 10:13:46 haya Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -60,6 +60,8 @@ struct cis_state {
 };
 
 int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
+static int decode_funce __P((struct pcmcia_tuple *, struct pcmcia_function *));
+
 
 void
 pcmcia_read_cis(sc)
@@ -529,6 +531,13 @@ pcmcia_print_cis(sc)
 			break;
 		case PCMCIA_FUNCTION_DISK:
 			printf("fixed disk");
+			switch (pf->pf_funce_disk_interface) {
+			case PCMCIA_TPLFE_DDI_PCCARD_ATA:
+				printf("(ata)");
+				break;
+			default:
+				break;
+			}
 			break;
 		case PCMCIA_FUNCTION_VIDEO:
 			printf("video adapter");
@@ -827,6 +836,16 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		state->pf->function = pcmcia_tuple_read_1(tuple, 0);
 
 		DPRINTF(("CISTPL_FUNCID\n"));
+		break;
+	case PCMCIA_CISTPL_FUNCE:
+		if (state->pf == NULL || state->pf->function <= 0) {
+			DPRINTF(("CISTPL_FUNCE is not followed by "
+			    "valid CISTPL_FUNCID\n"));
+			break;
+		}
+		if (tuple->length >= 2) {
+			decode_funce(tuple, state->pf);
+		}
 		break;
 	case PCMCIA_CISTPL_CONFIG:
 		if (tuple->length < 3) {
@@ -1282,4 +1301,42 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	}
 
 	return (0);
+}
+
+
+
+static int
+decode_funce(tuple, pf)
+	struct pcmcia_tuple *tuple;
+	struct pcmcia_function *pf;
+{
+	int type = pcmcia_tuple_read_1(tuple, 0);
+
+	switch (pf->function) {
+	case PCMCIA_FUNCTION_DISK:
+		if (type == PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE) {
+			pf->pf_funce_disk_interface
+			    = pcmcia_tuple_read_1(tuple, 1);
+		}
+		break;
+	case PCMCIA_FUNCTION_NETWORK:
+		if (type == PCMCIA_TPLFE_TYPE_LAN_NID) {
+			int i;
+			int len = pcmcia_tuple_read_1(tuple, 1);
+			if (tuple->length < 2 + len || len > 8) {
+				/* tuple length not enough or nid too long */
+				break;
+			}
+			for (i = 0; i < len; ++i) {
+				pf->pf_funce_lan_nid[i]
+				    = pcmcia_tuple_read_1(tuple, 2 + i);
+			}
+			pf->pf_funce_lan_nidlen = len;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return 0;
 }
