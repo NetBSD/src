@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c.old,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
+/*	$NetBSD: ofw_machdep.c.old,v 1.2 1997/01/31 02:05:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -43,10 +43,6 @@
 #include <sys/systm.h>
 
 #include <dev/ofw/openfirm.h>
-
-#if defined(FFS) && defined(CD9660)
-#include <ufs/ffs/fs.h>
-#endif
 
 #include <machine/powerpc.h>
 
@@ -95,7 +91,8 @@ ppc_boot(str)
 }
 
 /*
- * Establish a list of all available disks to allow specifying the root/swap/dump dev.
+ * Establish a list of all available disks to allow specifying the
+ * root/swap/dump dev.
  */
 struct ofb_disk {
 	LIST_ENTRY(ofb_disk) ofb_list;
@@ -121,7 +118,7 @@ dk_establish(dk, dev)
 	od->ofb_dk = dk;
 	od->ofb_dev = dev;
 	od->ofb_phandle = ofp->sc_phandle;
-	if (dev->dv_class == DV_DISK)					/* XXX */
+	if (dev->dv_class == DV_DISK)				/* XXX */
 		od->ofb_unit = ofp->sc_unit;
 	else
 		od->ofb_unit = -1;
@@ -143,143 +140,78 @@ dk_cleanup()
 	}
 }
 
-#if defined(FFS) && defined(CD9660)
-static int
-dk_match_ffs()
-{
-	int error;
-	struct partinfo dpart;
-	int bsize = DEV_BSIZE;
-	int secpercyl = 1;
-	struct buf *bp;
-	struct fs *fs;
-
-	if (bdevsw[major(rootdev)].d_ioctl(rootdev, DIOCGPART, (caddr_t)&dpart, FREAD, 0) == 0
-	    && dpart.disklab->d_secsize != 0) {
-		bsize = dpart.disklab->d_secsize;
-		secpercyl = dpart.disklab->d_secpercyl;
-	}
-
-	bp = geteblk(SBSIZE);
-	bp->b_dev = rootdev;
-
-	/* Try to read the superblock */
-	bp->b_blkno = SBOFF / bsize;
-	bp->b_bcount = SBSIZE;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = bp->b_blkno / (bsize / DEV_BSIZE) / secpercyl;
-	bdevsw[major(rootdev)].d_strategy(bp);
-
-	if (error = biowait(bp))
-		goto done;
-
-	fs = (struct fs *)bp->b_data;
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE
-	    || fs->fs_bsize < sizeof(struct fs))
-		error = EIO;
-done:
-	brelse(bp);
-	return error;
-}
-#endif
-
-/* These should probably be somewhere else!				XXX */
-extern int ffs_mountroot __P((void *));
-extern int cd9660_mountroot __P((void *));
-extern char *nfsbootdevname;
-extern int nfs_mountroot __P((void *));
-
-extern int (*mountroot) __P((void *));
-
 static void
 dk_setroot(od, part)
 	struct ofb_disk *od;
 	int part;
 {
 	char type[8];
-	int maj, min;
-	struct partinfo dpart;
+	int maj, unit;
+	struct disklabel *lp;
+	dev_t tmpdev;
 	char *cp;
 
 	if (OF_getprop(od->ofb_phandle, "device_type", type, sizeof type) < 0)
 		panic("OF_getproperty");
-#if defined(FFS) || defined(CD9660)
-	if (!strcmp(type, "block")) {
+
+	if (strcmp(type, "block") == 0) {
 		for (maj = 0; maj < nblkdev; maj++) {
-			if (bdevsw[maj].d_strategy == od->ofb_dk->dk_driver->d_strategy)
+			if (bdevsw[maj].d_strategy ==
+			    od->ofb_dk->dk_driver->d_strategy)
 				break;
 		}
 		if (maj >= nblkdev)
-			panic("dk_setroot");
+			panic("dk_setroot: impossible");
 
 		/*
 		 * Find the unit.
 		 */
-		min = 0;
+		unit = 0;
 		for (cp = od->ofb_dk->dk_name; *cp; cp++) {
 			if (*cp >= '0' && *cp <= '9')
-				min = min * 10 + *cp - '0';
+				unit = unit * 10 + *cp - '0';
 			else
 				/* Start anew */
-				min = 0;
+				unit = 0;
 		}
 
+		/*
+		 * Find a default partition; try partition `a', then
+		 * fall back on RAW_PART.
+		 */
 		if (part == -1) {
-			/* Try to open partition 'a' first */
-			rootdev = makedev(maj, min * MAXPARTITIONS);
+			/*
+			 * Open the disk to force an update of the in-core
+			 * disklabel.  Use RAW_PART because all disk
+			 * drivers allow RAW_PART to be opened.
+			 */
+			tmpdev = MAKEDISKDEV(maj, unit, RAW_PART);
 
-			if (bdevsw[maj].d_open(rootdev, FREAD, S_IFBLK, 0) < 0)
-				panic("dk_setroot");
-			dpart.part = 0;
-			bdevsw[major(rootdev)].d_ioctl(rootdev, DIOCGPART,
-						       (caddr_t)&dpart, FREAD, 0);
-			bdevsw[maj].d_close(rootdev, FREAD, S_IFBLK, 0);
-			if (!dpart.part || dpart.part->p_size <= 0) {
-				/* Now we use the whole disk */
-				rootdev = makedev(maj, min * MAXPARTITIONS + RAW_PART);
+			if (bdevsw[maj].d_open(tmpdev, FREAD, S_IFBLK, 0)) {
+				/*
+				 * Open failed.  Device is probably not
+				 * configured.  setroot() can handle this.
+				 */
+				return;
 			}
-		} else
-			rootdev = makedev(maj, min * MAXPARTITIONS + part);
-#if defined(FFS) && defined(CD9660)
-		/*
-		 * Find out whether to use ffs or cd9660.
-		 */
-		if (bdevsw[maj].d_open(rootdev, FREAD, S_IFBLK, 0) < 0)
-			panic("dk_setroot");
-		if (!dk_match_ffs())
-			mountroot = ffs_mountroot;
-		else							/* XXX */
-			mountroot = cd9660_mountroot;
-		bdevsw[maj].d_close(rootdev, FREAD, S_IFBLK, 0);
-#elif defined(FFS)
-		mountroot = ffs_mountroot;
-#elif defined(CD9660)
-		mountroot = cd9660_mountroot;
-#else				/* Cannot occur */
-		panic("dk_setroot: No disk filesystem");
-#endif
+			(void)bdevsw[maj].d_close(tmpdev, FREAD, S_IFBLK, 0);
+			lp = od->ofb_dk->dk_label;
 
-		/*
-		 * Now setup the swap/dump device
-		 */
-		dumpdev = makedev(major(rootdev), min * MAXPARTITIONS + 1);
-		swdevt[0].sw_dev = dumpdev;
-		swdevt[1].sw_dev = NODEV;
+			/* Check for a valid `a' partition. */
+			if (lp->d_partitions[0]->p_size > 0 &&
+			    lp->d_partitions[0]->p_fstype != FS_UNUSED)
+				part = 0;
+			else
+				part = RAW_PART;
+		}
+		booted_device = od->ofb_dev;
+		booted_partition = part;
+	} else if (strcmp(type, "network") == 0) {
+		booted_device = od->ofb_dev;
+		booted_partition = 0;
+	}
 
-		return;
-	}
-#endif	/* defined(FFS) || defined(CD9660) */
-#ifdef	NFSCLIENT
-	if (!strcmp(type, "network")) {
-		mountroot = nfs_mountroot;
-		nfsbootdevname = od->ofb_dev->dv_xname;
-		rootdev = NODEV;
-		dumpdev = NODEV;
-		swdevt[0].sw_dev = NODEV;
-		return;
-	}
-#endif
-	panic("Where were we booted from?");
+	/* "Not found."  setroot() will ask for the root device. */
 }
 
 /*
@@ -303,12 +235,12 @@ dk_match(name)
 		 */
 		l = strlen(od->ofb_dev->dv_xname);
 		if (!bcmp(name, od->ofb_dev->dv_xname, l)) {
-			if (!name[l]) {
+			if (name[l] == '\0') {
 				/* Default partition, (or none at all) */
 				dk_setroot(od, -1);
 				return 0;
 			}
-			if (!name[l + 1]) {
+			if (name[l + 1] == '\0') {
 				switch (name[l]) {
 				case '*':
 					/* Default partition */
