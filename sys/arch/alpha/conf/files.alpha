@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.99 1998/11/26 15:35:59 pk Exp $
+# $NetBSD: files.alpha,v 1.100 1999/02/18 21:27:54 mycroft Exp $
 #
 # alpha-specific configuration info
 
@@ -454,14 +454,20 @@ defopt	PCIC_ISA_INTR_ALLOC_MASK
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller on ISA bus.
 attach	pcic at isa with pcic_isa
 file	dev/isa/i82365_isa.c		pcic_isa
-file	dev/isa/i82365_isasubr.c	pcic_isa
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller on PCI bus.
 attach	pcic at pci with pcic_pci
 file	dev/pci/i82365_pci.c		pcic_pci
+
+# PCIC pcmcia controller on PnP board
+attach pcic at isapnp with pcic_isapnp
+file	dev/isapnp/i82365_isapnp.c	pcic_isapnp
+
+# Code common to ISA and ISAPnP attachments
+file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 
 
 # this wants to be probed as late as possible.
