@@ -7,6 +7,7 @@ From most convenient to least convenient, they are:
 
 	2. Copying a bootable diskimage onto the beginning of a disk
 	   and installing onto that disk 
+
 	3. installation using a helper machine to set up a bootable
 	   NetBSD/pmax  root filesystem, and moving the disk
 	   to the target.
