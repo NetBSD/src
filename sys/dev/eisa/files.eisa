@@ -1,8 +1,10 @@
-#	$NetBSD: files.eisa,v 1.14 1997/07/20 20:31:34 pk Exp $
+#	$NetBSD: files.eisa,v 1.15 1997/09/13 08:49:00 enami Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
+
+defopt	EISAVERBOSE
 
 device	eisa {[slot = -1]}
 attach	eisa at eisabus
