@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2001/02/12 10:32:14 shin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2001/05/11 01:42:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2001/02/12 10:32:14 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2001/05/11 01:42:32 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -220,7 +220,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(p, code, (register_t *)args);
 #endif
 
 	frame->f_regs[V0] = 0;
@@ -246,7 +246,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(p, code, error, (register_t*) &frame->f_regs[V0]);
 #endif
 
 	userret(p);
@@ -338,7 +338,7 @@ syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(p, code, (register_t*)args);
 #endif
 
 #ifdef KTRACE
@@ -371,7 +371,7 @@ syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(p, code, error, (register_t *)&frame->f_regs[V0]);
 #endif
 
 	userret(p);
