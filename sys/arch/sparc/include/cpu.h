@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2001/09/27 02:05:42 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.46 2001/11/12 16:32:25 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,7 +202,6 @@ caddr_t	reserve_dumppages __P((caddr_t));
 /* clock.c */
 struct timeval;
 void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
@@ -221,8 +220,6 @@ int	xldcontrolb __P((caddr_t, struct pcb *));
 void	copywords __P((const void *, void *, size_t));
 void	qcopy __P((const void *, void *, size_t));
 void	qzero __P((void *, size_t));
-/* locore2.c */
-void	remrunqueue __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
