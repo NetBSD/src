@@ -1,4 +1,4 @@
-.\"	$NetBSD: date.1,v 1.28 2001/12/20 19:31:50 wiz Exp $
+.\"	$NetBSD: date.1,v 1.29 2001/12/20 20:04:19 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,6 +140,27 @@ Everything but the minutes is optional.
 .Pp
 Time changes for Daylight Saving and Standard time and leap seconds
 and years are handled automatically.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm "" :
+.Bl -tag -width iTZ
+.It Ev TZ
+The timezone to use when displaying dates.
+See
+.Xr environ 7
+for more information.
+.El
+.Sh FILES
+.Bl -tag -width /var/log/messages -compact
+.It Pa /etc/localtime
+Symlink pointing to system's default timezone information file in
+.Pa /usr/share/zoneinfo
+directory.
+.It Pa /var/log/wtmp
+A record of date resets and time changes.
+.It Pa /var/log/messages
+A record of the user setting the time.
+.El
 .Sh EXAMPLES
 The command:
 .Bd -literal -offset indent
@@ -168,38 +189,6 @@ date 1432
 sets the time to
 .Li "2:32 PM" ,
 without modifying the date.
-.Sh ENVIRONMENT VARIABLES
-The following environment variables affect the execution of
-.Nm "" :
-.Bl -tag -width iTZ
-.It Ev TZ
-The timezone to use when displaying dates.
-See
-.Xr environ 7
-for more information.
-.El
-.Sh FILES
-.Bl -tag -width /var/log/messages -compact
-.It Pa /etc/localtime
-Symlink pointing to system's default timezone information file in
-.Pa /usr/share/zoneinfo
-directory.
-.It Pa /var/log/wtmp
-A record of date resets and time changes.
-.It Pa /var/log/messages
-A record of the user setting the time.
-.El
-.Sh SEE ALSO
-.Xr gettimeofday 2 ,
-.Xr settimeofday 2 ,
-.Xr strftime 3 ,
-.Xr utmp 5 ,
-.Xr timed 8
-.Rs
-.%T "TSP: The Time Synchronization Protocol for UNIX 4.3BSD"
-.%A R. Gusella
-.%A S. Zatti
-.Re
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 if unable to set the date, and 2
 if able to set the local date, but unable to set it globally.
@@ -220,6 +209,17 @@ between
 and
 timed
 fails.
+.Sh SEE ALSO
+.Xr gettimeofday 2 ,
+.Xr settimeofday 2 ,
+.Xr strftime 3 ,
+.Xr utmp 5 ,
+.Xr timed 8
+.Rs
+.%T "TSP: The Time Synchronization Protocol for UNIX 4.3BSD"
+.%A R. Gusella
+.%A S. Zatti
+.Re
 .Sh STANDARDS
 The
 .Nm
