@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.1 2000/05/15 07:48:25 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.2 2000/05/23 17:08:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -76,12 +76,22 @@ struct siop_cmd {
 	struct siop_target *siop_target; /* pointer to our target def */
 	struct scsipi_xfer *xs; /* xfer from the upper level */
 	struct siop_xfer *siop_table; /* tables dealing with this xfer */
+	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
 	struct scsipi_sense rs_cmd; /* request sense command buffer */
 	int       status;
 	int       flags;
+};
+
+/* command block descriptors: an array of siop_cmd + an array of siop_xfer */
+
+struct siop_cbd {
+	TAILQ_ENTRY (siop_cbd) next;
+	struct siop_cmd *cmds;
+	struct siop_xfer *xfers;
+	bus_dmamap_t xferdma; /* DMA map for this block of xfers */
 };
 
 /* status defs */
