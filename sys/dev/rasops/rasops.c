@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.43 2003/05/03 18:32:42 uwe Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.44 2003/11/08 22:49:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.43 2003/05/03 18:32:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.44 2003/11/08 22:49:28 uwe Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -90,9 +90,31 @@ const u_char rasops_cmap[256*3] = {
 			_CMWHITE _CMWHITE _CMWHITE _CMWHITE
 	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
 	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
-	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 /* but not the last one */
 #undef _CMWHITE16
 #undef _CMWHITE
+
+	/*
+	 * For the cursor the fg/bg indices are bit inverted, so
+	 * provide complimentary colors in the upper 16 entries.
+	 */
+	0x7f, 0x7f, 0x7f, /* black */
+	0xff, 0x00, 0x00, /* red */
+	0x00, 0xff, 0x00, /* green */
+	0xff, 0xff, 0x00, /* brown */
+	0x00, 0x00, 0xff, /* blue */
+	0xff, 0x00, 0xff, /* magenta */
+	0x00, 0xff, 0xff, /* cyan */
+	0xff, 0xff, 0xff, /* white */
+
+	0x00, 0x00, 0x00, /* black */
+	0x7f, 0x00, 0x00, /* red */
+	0x00, 0x7f, 0x00, /* green */
+	0x7f, 0x7f, 0x00, /* brown */
+	0x00, 0x00, 0x7f, /* blue */
+	0x7f, 0x00, 0x7f, /* magenta */
+	0x00, 0x7f, 0x7f, /* cyan */
+	0xc7, 0xc7, 0xc7, /* white - XXX too dim? */
 };
 
 /* True if color is gray */
