@@ -163,21 +163,24 @@ _low_level_init ()
 
   /* SCSI Polled  (Reduced space.)  Addresses FFD00000 - FFDFFFFF */
   for (ix = 0x100; ix < 0x200; ix++)
-    WR_ADR(int,p1 + ix*4, 0x30000043 + ((ix - 0x100)<<12));
+    WR_ADR(int, p1 + ix*4, 0x30000043 + ((ix - 0x100)<<12));
 
-  /* SCSI "DMA"  (Reduced space.)  Addresses FFE00000 - FFEFFFFF */
-  for (ix = 0x200; ix < 0x300; ix++)
-    WR_ADR(int,p1 + ix*4, 0x38000043 + ((ix - 0x200)<<12));
+  /* SCSI "DMA"  (Reduced space.)  Addresses FFE00000 - FFEEFFFF */
+  for (ix = 0x200; ix < 0x2ff; ix++)
+    WR_ADR(int, p1 + ix*4, 0x38000043 + ((ix - 0x200)<<12));
+
+  /* SCSI "DMA" With A22 (EOP)  Addresses FFEF0000 - FFEFFFFF */
+  WR_ADR(int, p1 + 0x2ff*4, 0x388ff043);
 
   /* The e-prom  Addresses FFF00000 - FFF3FFFF */
   for (ix = 0x300; ix < 0x340; ix++)
-    WR_ADR(int,p1 + ix*4, 0x10000043 + ((ix - 0x300)<<12));
+    WR_ADR(int, p1 + ix*4, 0x10000043 + ((ix - 0x300)<<12));
 
   /* Finally the ICU!  Addresses FFFFF000 - FFFFFFFF */
   WR_ADR(int, p1+4*0x3ff, 0xFFFFF043);
 
   /* Add the memory mapped I/O entry in the directory. */
-  WR_ADR(int,p0+4*1023, p1 + 0x43);
+  WR_ADR(int, p0+4*1023, p1 + 0x43);
 
 
   /* Map the kernel pages starting at FE00000 and at 0.
