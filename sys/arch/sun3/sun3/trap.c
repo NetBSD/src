@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103.6.2 2001/11/18 19:39:03 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.103.6.3 2001/11/25 10:36:04 scw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -181,15 +181,6 @@ userret(l, tf, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
 
 	/* Invoke per-process kernel-exit handling, if any */
 	if (p->p_userret)
@@ -448,6 +439,8 @@ trap(type, code, v, tf)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		if (want_resched)
+			preempt(NULL);
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
