@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.1 2003/04/24 19:56:43 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.2 2003/04/25 07:35:21 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -213,7 +213,7 @@ ksyms_init(caddr_t start, caddr_t end)
 #ifdef DEBUG
 	printf("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
-	    kernel_symtab.sd_symsize/sizeof(Elf_Sym));
+	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
 #endif
 
 #if NKSYMS
