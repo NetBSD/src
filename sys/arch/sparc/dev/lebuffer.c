@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.1 1996/12/06 21:52:01 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.2 1997/03/23 22:54:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -86,6 +86,7 @@ lebufattach(parent, self, aux)
 	int node;
 	struct confargs oca;
 	char *name;
+	int sbusburst;
 
 	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
 		ca->ca_ra.ra_vaddr =
@@ -103,12 +104,17 @@ lebufattach(parent, self, aux)
 	/*
 	 * Get transfer burst size from PROM
 	 */
+	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	if (sbusburst == 0)
+		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
+
 	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
-	if (sc->sc_burst == -1) {
-		/* Check parent SBus for burst sizes */
-		int burst = ((struct sbus_softc *)parent)->sc_burst;
-		sc->sc_burst = burst ? burst : (SBUS_BURST_32 - 1);
-	}
+	if (sc->sc_burst == -1)
+		/* take SBus burst sizes */
+		sc->sc_burst = sbusburst;
+
+	/* Clamp at parent's burst sizes */
+	sc->sc_burst &= sbusburst;
 
 	printf("\n");
 
