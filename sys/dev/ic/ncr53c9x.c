@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.16 1997/07/30 12:01:53 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.17 1997/08/04 08:16:49 fair Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -1087,7 +1087,7 @@ gotit:
 					ti->period = ncr53c9x_cpb2stp(sc, p);
 #ifdef NCR53C9X_DEBUG
 					sc_print_addr(ecb->xs->sc_link);
-					printf("max sync rate %d.%02dMb/s\n",
+					printf("max sync rate %d.%02dMB/s\n",
 						r, s);
 #endif
 					if ((sc->sc_flags&NCR_SYNCHNEGO)
