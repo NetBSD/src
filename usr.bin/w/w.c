@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.26 1997/10/20 02:49:17 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.27 1997/10/20 03:08:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.26 1997/10/20 02:49:17 mrg Exp $");
+__RCSID("$NetBSD: w.c,v 1.27 1997/10/20 03:08:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ main(argc, argv)
 	}
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, p)) != EOF)
+	while ((ch = getopt(argc, argv, p)) != -1)
 		switch (ch) {
 		case 'h':
 			header = 0;
