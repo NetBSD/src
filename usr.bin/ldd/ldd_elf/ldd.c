@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.4 1999/05/31 14:56:00 kleink Exp $	*/
+/*	$NetBSD: ldd.c,v 1.5 1999/06/26 11:28:26 hannken Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -55,6 +55,9 @@ Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
+#ifdef  VARPSZ
+int _rtld_pagesz = 8192;	/* XXX fake variable page size */
+#endif
 
 Search_Path *_rtld_paths;
 

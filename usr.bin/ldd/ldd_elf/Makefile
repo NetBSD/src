@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/12/17 22:34:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1999/06/26 11:28:26 hannken Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -11,6 +11,9 @@ MAN=	ldd.1
 CPPFLAGS+= -DELFSIZE=64
 .else
 CPPFLAGS+= -DELFSIZE=32
+.endif
+.if (${MACHINE_ARCH} == "sparc")
+CPPFLAGS+= -DVARPSZ
 .endif
 
 LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
