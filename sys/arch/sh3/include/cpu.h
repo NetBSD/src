@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1999/09/13 10:31:16 itojun Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
+#define	cpu_number()			0
 
 /*
  * Arguments to hardclock, softclock and statclock

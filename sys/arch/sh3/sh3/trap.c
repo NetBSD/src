@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 1999/09/13 10:31:33 itojun Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -47,7 +47,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,38 +360,11 @@ trap(p1, p2, p3, p4, frame)
 			}
 		}
 
-/*
- * PMAP_NEW allocates PTPs at pmap_enter time, not here.
- */
-#if !defined(PMAP_NEW)
-		/* Create a page table page if necessary, and wire it. */
-		if ((PTD[pdei(va)] & PG_V) == 0) {
-			v = trunc_page(vtopte(va));
-			rv = uvm_map_pageable(map, v, v + NBPG, FALSE);
-			if (rv != KERN_SUCCESS)
-				goto nogo;
-		}
-#endif	/* PMAP_NEW */
-
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, 0, ftype);
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-
-#if !defined(PMAP_NEW)
-			/*
-			 * If this is a pagefault for a PT page,
-			 * wire it. Normally we fault them in
-			 * ourselves, but this can still happen on
-			 * a 386 in copyout & friends.
-			 */
-			if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
-				va < UPT_MAX_ADDRESS) {
-				va = trunc_page(va);
-				uvm_map_pageable(map, va, va + NBPG, FALSE);
-			}
-#endif
 
 			if (type == T_PAGEFLT)
 				return;
@@ -708,42 +680,12 @@ tlb_handler(p1, p2, p3, p4, frame)
 	}
 #endif
 
-/*
- * PMAP_NEW allocates PTPs at pmap_enter time, not here.
- */
-#if !defined(PMAP_NEW)
-	/* Create a page table page if necessary, and wire it. */
-	pde = (u_long *)pd_top[pde_index];
-	if (((u_long)pde & PG_V) == 0) {
-		unsigned v;
-
-		v = trunc_page(vtopte(va));
-		rv = uvm_map_pageable(map, v, v + NBPG, FALSE);
-		if (rv != KERN_SUCCESS)
-			goto nogo;
-	}
-#endif	/* PMAP_NEW */
-
 	/* Fault the original page in. */
 	rv = uvm_fault(map, va, 0, ftype);
 	if (rv == KERN_SUCCESS) {
 #if 1
 		if (nss > vm->vm_ssize)
 			vm->vm_ssize = nss;
-#endif
-
-#if !defined(PMAP_NEW)
-		/*
-		 * If this is a pagefault for a PT page,
-		 * wire it. Normally we fault them in
-		 * ourselves, but this can still happen on
-		 * a 386 in copyout & friends.
-		 */
-		if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
-		    va < UPT_MAX_ADDRESS) {
-			va = trunc_page(va);
-			uvm_map_pageable(map, va, va + NBPG, FALSE);
-		}
 #endif
 
 		va = va_save;

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.1 1999/09/13 10:31:13 itojun Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -48,8 +48,8 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 
-#include <sh3/sh3/shpcicreg.h>
-#include <sh3/sh3/shpcicvar.h>
+#include <sh3/dev/shpcicreg.h>
+#include <sh3/dev/shpcicvar.h>
 
 #include "locators.h"
 
@@ -278,7 +278,7 @@ shpcic_create_event_thread(arg)
 		panic("shpcic_create_event_thread: unknown pcic socket");
 	}
 
-	if (kthread_create(shpcic_event_thread, h, &h->event_thread,
+	if (kthread_create1(shpcic_event_thread, h, &h->event_thread,
 	    "%s,%s", h->sc->dev.dv_xname, cs)) {
 		printf("%s: unable to create event thread for sock 0x%02x\n",
 		    h->sc->dev.dv_xname, h->sock);
@@ -386,7 +386,7 @@ shpcic_init_socket(h)
 	if (h->event_thread != NULL)
 		panic("shpcic_attach_socket: event thread");
 #endif
-	kthread_create_deferred(shpcic_create_event_thread, h);
+	kthread_create(shpcic_create_event_thread, h);
 
 	/* if there's a card there, then attach it. */
 

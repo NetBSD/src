@@ -1,4 +1,4 @@
-/* $NetBSD: pcic_shb.c,v 1.1 1999/09/13 10:31:08 itojun Exp $ */
+/* $NetBSD: pcic_shb.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $ */
 
 #define	PCICSHBDEBUG
 
@@ -60,8 +60,8 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
 
-#include <sh3/sh3/shpcicreg.h>
-#include <sh3/sh3/shpcicvar.h>
+#include <sh3/dev/shpcicreg.h>
+#include <sh3/dev/shpcicvar.h>
 
 #ifdef TODO
 #include <dev/isa/i82365_isavar.h>
