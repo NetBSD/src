@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2003/03/05 23:56:09 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2003/03/06 00:47:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1681,6 +1681,8 @@ init_x86_64(first_avail)
 		extern int *esym;
 		struct btinfo_symtab *symtab;
 		vaddr_t tssym, tesym;
+
+		db_machine_init();
 
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
 		if (symtab) {
