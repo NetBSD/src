@@ -1,86 +1,85 @@
-#	$NetBSD: list,v 1.1 2001/01/16 16:53:58 nonaka Exp $
+#	$NetBSD: list,v 1.2 2002/04/12 14:40:55 lukem Exp $
 
-# copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/ramdiskbin		ramdiskbin
-LINK	ramdiskbin			sysinst
-LINK	ramdiskbin			bin/cat
-LINK	ramdiskbin			bin/chmod
-LINK	ramdiskbin			bin/cp
-LINK	ramdiskbin			bin/dd
-LINK	ramdiskbin			bin/df
-LINK	ramdiskbin			bin/ed
-LINK	ramdiskbin			bin/ln
-LINK	ramdiskbin			bin/ls
-LINK	ramdiskbin			bin/mkdir
-LINK	ramdiskbin			bin/mv
-LINK	ramdiskbin			bin/pax
-LINK	ramdiskbin			bin/pwd
-LINK	ramdiskbin			bin/rcmd
-LINK	ramdiskbin			bin/rcp
-LINK	ramdiskbin			bin/rm
-LINK	ramdiskbin			bin/sh
-LINK	ramdiskbin			bin/stty
-LINK	ramdiskbin			bin/sync
-LINK	ramdiskbin			bin/test
-LINK	ramdiskbin			bin/[
-LINK	ramdiskbin			sbin/disklabel
-LINK	ramdiskbin			sbin/dmesg
-LINK	ramdiskbin			sbin/fsck
-LINK	ramdiskbin			sbin/fsck_ffs
-LINK	ramdiskbin			sbin/halt
-LINK	ramdiskbin			sbin/ifconfig
-LINK	ramdiskbin			sbin/init
-LINK	ramdiskbin			sbin/mknod
-LINK	ramdiskbin			sbin/mount
-LINK	ramdiskbin			sbin/mount_cd9660
-LINK	ramdiskbin			sbin/mount_ffs
-LINK	ramdiskbin			sbin/mount_kernfs
-LINK	ramdiskbin			sbin/mount_mfs
-LINK	ramdiskbin			sbin/mount_msdos
-LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/newfs
-LINK	ramdiskbin			sbin/ping
-LINK	ramdiskbin			sbin/reboot
-LINK	ramdiskbin			sbin/restore
-LINK	ramdiskbin			sbin/route
-LINK	ramdiskbin			sbin/rrestore
-LINK	ramdiskbin			sbin/shutdown
-LINK	ramdiskbin			sbin/umount
-LINK	ramdiskbin			usr/bin/chgrp
-LINK	ramdiskbin			usr/bin/ftp
-LINK	ramdiskbin			usr/bin/gunzip
-LINK	ramdiskbin			usr/bin/gzcat
-LINK	ramdiskbin			usr/bin/gzip
-LINK	ramdiskbin			usr/bin/more
-LINK	ramdiskbin			usr/bin/sed
-LINK	ramdiskbin			usr/bin/tar
-LINK	ramdiskbin			usr/bin/tset
-LINK	ramdiskbin			usr/sbin/chown
-LINK	ramdiskbin			usr/sbin/chroot
-SPECIAL	/bin/rm ramdiskbin
+SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-SPECIAL cd dev; sh MAKEDEV ramdisk
-SPECIAL /bin/rm dev/MAKEDEV
+PROG	bin/cat
+PROG	bin/chmod
+PROG	bin/cp
+PROG	bin/dd
+PROG	bin/df
+PROG	bin/ed
+PROG	bin/ln
+PROG	bin/ls
+PROG	bin/mkdir
+PROG	bin/mv
+PROG	bin/pax		usr/bin/tar
+PROG	bin/pwd
+PROG	bin/rcmd	usr/bin/rsh
+PROG	bin/rcp
+PROG	bin/rm
+PROG	bin/sh
+PROG	bin/stty
+PROG	bin/sync
+
+PROG	sbin/disklabel
+PROG	sbin/dmesg
+PROG	sbin/fdisk
+PROG	sbin/fsck
+PROG	sbin/fsck_ffs
+PROG	sbin/ifconfig
+PROG	sbin/init
+PROG	sbin/mknod
+PROG	sbin/mount
+PROG	sbin/mount_cd9660
+PROG	sbin/mount_ffs
+PROG	sbin/mount_kernfs
+PROG	sbin/mount_msdos
+PROG	sbin/mount_nfs
+PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/ping
+PROG	sbin/reboot	sbin/halt
+PROG	sbin/restore	sbin/rrestore
+PROG	sbin/route
+PROG	sbin/shutdown
+PROG	sbin/umount
+
+PROG	usr/bin/ftp
+PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/gzcat
+PROG	usr/bin/more	usr/bin/less
+PROG	usr/bin/sed
+PROG	usr/bin/tip
+PROG	usr/bin/tset
+
+PROG	usr/sbin/chown	usr/bin/chgrp
+PROG	usr/sbin/chroot
+
+# init invokes the shell as -sh
+ARGVLN	sh -sh
+
+SPECIAL	dmesg		srcdir	distrib/utils/x_dmesg
+SPECIAL	ftp		srcdir	distrib/utils/x_ftp
+SPECIAL	gzip		srcdir	distrib/utils/x_gzip
+SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	more		srcdir	distrib/utils/more
+SPECIAL	ping		srcdir	distrib/utils/x_ping
+SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	sysinst		srcdir	distrib/utils/sysinst
+SPECIAL	sysinst		srcdir	distrib/utils/sysinst/arch/prep
+
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz
 
 # and the termcap file
 COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
 
 # various files that we need in /etc for the install
-COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
-COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
-COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../../etc/services	etc/services
-SPECIAL	pwd_mkdb -p -d . etc/master.passwd
-SPECIAL	rm etc/pwd.db etc/spwd.db
+COPY	${_SRC_TOP_}/etc/group		etc/group
+COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
+COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
+COPY	${_SRC_TOP_}/etc/protocols	etc/protocols
+COPY	${_SRC_TOP_}/etc/services	etc/services
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the installation scripts
 COPY	${CURDIR}/dot.profile			.profile
-
-# Minimize use of MFS
-SYMLINK	/tmp	var/tmp
