@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.13 2000/06/08 16:17:29 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.14 2000/06/19 22:29:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -244,7 +244,7 @@ sabre_init(sc, pba)
 	struct psycho_pbm *pp;
 	bus_space_handle_t bh;
 	u_int64_t csr;
-	int node;
+	unsigned int node;
 	int sabre_br[2], simba_br[2];
 
 	/* who? said a voice, incredulous */
@@ -295,7 +295,7 @@ sabre_init(sc, pba)
 	for (node = firstchild(sc->sc_node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 		char *model, who;
-		struct psycho_registers *regs;
+		struct psycho_registers *regs = NULL;
 		int nregs, fn;
 
 		if (strcmp(name, ROM_PCI_NAME) != 0)
