@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.40 2004/11/11 00:40:13 he Exp $
+# $NetBSD: HACKS,v 1.41 2004/12/30 16:29:48 bjh21 Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -228,7 +228,8 @@ port	arm
 	hack	gcc 3.3.2/arm sys/kern/uipc_socket.c
 	cdate	Tue Oct 28 18:02:16 GMT 2003
 	who	skrll
-	file	sys/conf/arm/Makefile.arm : 1.19
+	pr	23044
+	file	sys/arch/arm/conf/Makefile.arm : 1.19
 	descr
 		Performing a build.sh tools on a CATS with NFS mounted 
 		obj and src directories results in "panic: receive 1"
