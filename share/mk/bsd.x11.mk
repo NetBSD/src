@@ -1,11 +1,12 @@
-#	$NetBSD: bsd.x11.mk,v 1.45 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.45.2.1 2005/04/06 21:08:07 tron Exp $
 
 .include <bsd.init.mk>
-
 
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
 MANDIR=			${X11MANDIR}
+
+COPTS+=			-fno-strict-aliasing
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 
