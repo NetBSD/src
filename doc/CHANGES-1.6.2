@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.121 2003/08/24 09:34:27 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.122 2003/08/25 17:54:01 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1341,3 +1341,18 @@ sys/kern/kern_sysctl.c				1.142 (via patch)
 	make proc.curproc.* check more strict.  atatat
 	[itojun, ticket #1435]
 
+sys/netinet6/esp_core.c				1.30
+sys/netkey/key.c				1.83
+
+	Clear scheduled key before freeing, for safety.
+	[itojun, ticket #1383]
+
+sys/netkey/key.c				1.84
+
+	Clear enc/auth key before freeing for safety.
+	[itojun, ticket #1384]
+
+distrib/utils/sysinst/target.c			1.40
+
+	Fix realpath vuln, just like SA2003-011.
+	[itojun, ticket #1400]
