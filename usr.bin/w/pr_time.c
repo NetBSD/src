@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.12 2001/01/05 04:59:21 mjl Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.13 2002/10/21 10:18:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.12 2001/01/05 04:59:21 mjl Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.13 2002/10/21 10:18:23 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: pr_time.c,v 1.12 2001/01/05 04:59:21 mjl Exp $");
 
 /*
  * pr_attime --
- *	Print the time since the user logged in. 
+ *	Print the time since the user logged in.
  *
  *	Note: SCCS forces the bizarre string manipulation, things like
  *	%I% get replaced in the source code.
