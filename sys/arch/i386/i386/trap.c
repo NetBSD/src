@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 1995/03/22 23:25:13 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 1995/03/26 08:03:50 cgd Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -641,7 +641,7 @@ syscall(frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
+		ktrsyscall(p->p_tracep, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
