@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.9 1994/02/01 05:40:11 mycroft Exp $
+ *	$Id: mem.c,v 1.10 1994/03/18 03:11:47 cgd Exp $
  */
 
 /*
@@ -55,11 +55,7 @@
 
 #include "machine/cpu.h"
 
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include "vm/vm.h"
 
 extern        char *vmmap;            /* poor name! */
 /*ARGSUSED*/
