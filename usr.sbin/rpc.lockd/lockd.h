@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.h,v 1.1 1997/03/10 06:26:21 scottr Exp $	*/
+/*	$NetBSD: lockd.h,v 1.1.10.1 2000/06/22 18:01:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,3 +34,5 @@
  */
 
 extern int	debug_level;
+extern int	grace_expired;
+void sigchild_handler __P((int));

@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
+ * 3. Neither the name of Internet Software Consortium nor the names
  *    of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -43,11 +43,11 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.15 2000/04/22 08:18:17 mellon Exp $ Copyright 1995-2000 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.15.2.1 2000/06/22 18:00:54 minoura Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
-"Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
+"Copyright 1995-2000 Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
 static char message [] = "Internet Software Consortium DHCP Server";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
@@ -60,16 +60,10 @@ static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.htm
 static void usage PROTO ((void));
 
 TIME cur_time;
-struct group root_group;
 struct binding_scope global_scope;
 
 struct iaddr server_identifier;
 int server_identifier_matched;
-
-u_int16_t local_port;
-u_int16_t remote_port;
-
-struct in_addr limited_broadcast;
 
 /* This is the standard name service updater that is executed whenever a
    lease is committed.   Right now it's not following the DHCP-DNS draft
@@ -164,11 +158,12 @@ int main (argc, argv, envp)
 	omapi_object_t *listener;
 	unsigned seed;
 	struct interface_info *ip;
-	struct data_string fname;
+	struct data_string db;
 	struct option_cache *oc;
 	struct option_state *options = (struct option_state *)0;
 	struct parse *parse;
 	int lose;
+	u_int16_t omapi_port;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
@@ -303,18 +298,21 @@ int main (argc, argv, envp)
 	/* Initialize the omapi system. */
 	result = omapi_init ();
 	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s\n",
+		log_fatal ("Can't initialize OMAPI: %s",
 			   isc_result_totext (result));
 
 	/* Set up the OMAPI wrappers for various server database internal
 	   objects. */
 	dhcp_db_objects_setup ();
+	dhcp_common_objects_setup ();
 
 	/* Set up the initial dhcp option universe. */
 	initialize_common_option_spaces ();
 	initialize_server_option_spaces ();
 
-	root_group.authoritative = 0;
+	if (!group_allocate (&root_group, MDL))
+		log_fatal ("Can't allocate root group!");
+	root_group -> authoritative = 0;
 
 #if defined (NSUPDATE)
 	/* Set up the standard name service updater routine. */
@@ -326,7 +324,7 @@ int main (argc, argv, envp)
 		log_fatal ("can't parse standard name service updater!");
 
 	if (!(parse_executable_statements
-	      (&root_group.statements, parse, &lose, context_any))) {
+	      (&root_group -> statements, parse, &lose, context_any))) {
 		end_parse (&parse);
 		log_fatal ("can't parse standard name service updater!");
 	}
@@ -348,47 +346,119 @@ int main (argc, argv, envp)
 				     (struct lease *)0,
 				     (struct option_state *)0,
 				     options, &global_scope,
-				     &root_group,
+				     root_group,
 				     (struct group *)0);
-	memset (&fname, 0, sizeof fname);
+	memset (&db, 0, sizeof db);
 	oc = lookup_option (&server_universe, options, SV_LEASE_FILE_NAME);
 	if (oc &&
-	    evaluate_option_cache (&fname, (struct packet *)0,
+	    evaluate_option_cache (&db, (struct packet *)0,
 				   (struct lease *)0, options,
 				   (struct option_state *)0,
 				   &global_scope, oc, MDL)) {
-		s = dmalloc (fname.len + 1, MDL);
+		s = dmalloc (db.len + 1, MDL);
 		if (!s)
 			log_fatal ("no memory for lease db filename.");
-		memcpy (s, fname.data, fname.len);
-		s [fname.len] = 0;
-		data_string_forget (&fname, MDL);
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
 		path_dhcpd_db = s;
 	}
 	
 	oc = lookup_option (&server_universe, options, SV_PID_FILE_NAME);
 	if (oc &&
-	    evaluate_option_cache (&fname, (struct packet *)0,
+	    evaluate_option_cache (&db, (struct packet *)0,
 				   (struct lease *)0, options,
 				   (struct option_state *)0,
 				   &global_scope, oc, MDL)) {
-		s = dmalloc (fname.len + 1, MDL);
+		s = dmalloc (db.len + 1, MDL);
 		if (!s)
 			log_fatal ("no memory for lease db filename.");
-		memcpy (s, fname.data, fname.len);
-		s [fname.len] = 0;
-		data_string_forget (&fname, MDL);
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
 		path_dhcpd_pid = s;
+	}
+
+	omapi_port = OMAPI_PROTOCOL_PORT;
+	oc = lookup_option (&server_universe, options, SV_OMAPI_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			omapi_port = getUShort (db.data);
+		} else
+			log_fatal ("invalid omapi port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_LOCAL_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			local_port = htons (getUShort (db.data));
+		} else
+			log_fatal ("invalid local port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_REMOTE_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			remote_port = htons (getUShort (db.data));
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options,
+			    SV_LIMITED_BROADCAST_ADDRESS);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 4) {
+			memcpy (&limited_broadcast, db.data, 4);
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options,
+			    SV_LOCAL_ADDRESS);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 4) {
+			memcpy (&local_address, db.data, 4);
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
 	}
 
 	/* Don't need the options anymore. */
 	option_state_dereference (&options, MDL);
 	
+	group_write_hook = group_writer;
+
 	/* Start up the database... */
 	db_startup (lftest);
 
 	if (lftest)
 		exit (0);
+
+	dhcp_interface_setup_hook = dhcpd_interface_setup_hook;
 
 	/* Discover all the network interfaces and initialize them. */
 	discover_interfaces (DISCOVER_SERVER);
@@ -415,13 +485,17 @@ int main (argc, argv, envp)
 	listener = (omapi_object_t *)0;
 	result = omapi_generic_new (&listener, MDL);
 	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't allocate new generic object: %s\n",
+		log_fatal ("Can't allocate new generic object: %s",
 			   isc_result_totext (result));
-	result = omapi_protocol_listen (listener,
-					OMAPI_PROTOCOL_PORT, 1);
+	result = omapi_protocol_listen (listener, omapi_port, 1);
 	if (result != ISC_R_SUCCESS)
 		log_fatal ("Can't start OMAPI protocol: %s",
 			   isc_result_totext (result));
+
+#if defined (FAILOVER_PROTOCOL)
+	/* Start the failover protocol. */
+	dhcp_failover_startup ();
+#endif
 
 #ifndef DEBUG
 	if (daemon) {
@@ -451,7 +525,7 @@ int main (argc, argv, envp)
 				pidfilewritten = 1;
 			}
 		} else
-			log_fatal ("There's already a DHCP server running.\n");
+			log_fatal ("There's already a DHCP server running.");
 	}
 
 	/* If we were requested to log to stdout on the command line,
@@ -528,21 +602,25 @@ void lease_pinged (from, packet, length)
 	if (!outstanding_pings)
 		return;
 
-	lp = find_lease_by_ip_addr (from);
-
-	if (!lp) {
-		log_info ("unexpected ICMP Echo Reply from %s", piaddr (from));
+	lp = (struct lease *)0;
+	if (!find_lease_by_ip_addr (&lp, from, MDL)) {
+		log_debug ("unexpected ICMP Echo Reply from %s",
+			   piaddr (from));
 		return;
 	}
 
 	if (!lp -> state) {
-		log_error ("ICMP Echo Reply for %s late or spurious.\n",
-		      piaddr (from));
-		return;
+#if defined (FAILOVER_PROTOCOL)
+		if (!lp -> pool ||
+		    !lp -> pool -> failover_peer)
+#endif
+			log_debug ("ICMP Echo Reply for %s late or spurious.",
+				   piaddr (from));
+		goto out;
 	}
 
 	if (lp -> ends > cur_time) {
-		log_error ("ICMP Echo reply while lease %s valid\n",
+		log_debug ("ICMP Echo reply while lease %s valid.",
 			   piaddr (from));
 	}
 
@@ -555,6 +633,8 @@ void lease_pinged (from, packet, length)
 	abandon_lease (lp, "pinged before offer");
 	cancel_timeout (lease_ping_timeout, lp);
 	--outstanding_pings;
+      out:
+	lease_dereference (&lp, MDL);
 }
 
 void lease_ping_timeout (vlp)
@@ -578,4 +658,60 @@ void lease_ping_timeout (vlp)
 #if defined (DEBUG_MEMORY_LEAKAGE) || defined (DEBUG_MALLOC_POOL)
 	dmalloc_dump_outstanding ();
 #endif
+}
+
+int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia)
+{
+	struct subnet *subnet;
+	struct shared_network *share;
+	isc_result_t status;
+
+	/* Special case for fallback network - not sure why this is
+	   necessary. */
+	if (!ia) {
+		const char *fnn = "fallback-net";
+		char *s;
+		status = shared_network_allocate (&ip -> shared_network, MDL);
+		if (status != ISC_R_SUCCESS)
+			log_fatal ("No memory for shared subnet: %s",
+				   isc_result_totext (status));
+		ip -> shared_network -> name = dmalloc (strlen (fnn) + 1, MDL);
+		strcpy (ip -> shared_network -> name, fnn);
+		return 1;
+	}
+
+	/* If there's a registered subnet for this address,
+	   connect it together... */
+	subnet = (struct subnet *)0;
+	if (find_subnet (&subnet, *ia, MDL)) {
+		/* If this interface has multiple aliases on the same
+		   subnet, ignore all but the first we encounter. */
+		if (!subnet -> interface) {
+			subnet -> interface = ip;
+			subnet -> interface_address = *ia;
+		} else if (subnet -> interface != ip) {
+			log_error ("Multiple interfaces match the %s: %s %s", 
+				   "same subnet",
+				   subnet -> interface -> name, ip -> name);
+		}
+		share = subnet -> shared_network;
+		if (ip -> shared_network &&
+		    ip -> shared_network != share) {
+			log_fatal ("Interface %s matches multiple shared %s",
+				   ip -> name, "networks");
+		} else {
+			if (!ip -> shared_network)
+				shared_network_reference
+					(&ip -> shared_network, share, MDL);
+		}
+		
+		if (!share -> interface) {
+			interface_reference (&share -> interface, ip, MDL);
+		} else if (share -> interface != ip) {
+			log_error ("Multiple interfaces match the %s: %s %s", 
+				   "same shared network",
+				   share -> interface -> name, ip -> name);
+		}
+	}
+	return 1;
 }

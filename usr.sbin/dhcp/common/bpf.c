@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1.1.7 2000/04/22 07:11:32 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.1.1.7.2.1 2000/06/22 18:00:45 minoura Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -237,9 +237,9 @@ void if_register_receive (info)
 	u_int32_t addr;
 	struct bpf_program p;
 	u_int32_t bits;
-#ifdef DEC_FDDI
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	int link_layer;
-#endif /* DEC_FDDI */
+#endif /* DEC_FDDI || NETBSD_FDDI */
 
 	/* Open a BPF device and hang it on this interface... */
 	info -> rfdesc = if_register_bpf (info);
@@ -286,7 +286,7 @@ void if_register_receive (info)
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
 
-#ifdef DEC_FDDI
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	/* See if this is an FDDI interface, flag it for later. */
 	if (ioctl(info -> rfdesc, BIOCGDLT, &link_layer) >= 0 &&
 	    link_layer == DLT_FDDI) {
@@ -310,7 +310,7 @@ void if_register_receive (info)
 		}
 		p.bf_insns = bpf_fddi_filter;
 	} else
-#endif /* DEC_FDDI */
+#endif /* DEC_FDDI || NETBSD_FDDI */
 	p.bf_insns = dhcp_bpf_filter;
 
         /* Patch the server port into the BPF  program...
@@ -515,18 +515,16 @@ int can_receive_unicast_unconfigured (ip)
 void maybe_setup_fallback ()
 {
 	isc_result_t status;
-	struct interface_info *fbi;
-	fbi = setup_fallback ();
-	if (fbi) {
+	struct interface_info *fbi = (struct interface_info *)0;
+	if (setup_fallback (&fbi, MDL)) {
 		if_register_fallback (fbi);
-		fbi -> refcnt = 1;
-		fbi -> type = dhcp_type_interface;
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't register I/O handle for %s: %s",
 				   fbi -> name, isc_result_totext (status));
+		interface_dereference (&fbi, MDL);
 	}
 }
 #endif

@@ -33,7 +33,7 @@
 .include <bsd.own.mk>
 
 SUBDIR=	scripts
-SRCS   = dhclient.c clparse.c omapi.c
+SRCS   = dhclient.c clparse.c
 PROG   = dhclient
 MAN    = dhclient.8 dhclient.conf.5 dhclient.leases.5 dhclient-script.8
 

@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.7 2000/04/22 07:11:34 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.7.2.1 2000/06/22 18:00:46 minoura Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -80,7 +80,8 @@ void icmp_startup (routep, handler)
 		log_fatal ("attempted to reinitialize icmp protocol");
 
 	result = omapi_object_type_register (&dhcp_type_icmp,
-					     "icmp", 0, 0, 0, 0, 0, 0, 0, 0);
+					     "icmp", 0, 0, 0, 0, 0, 0, 0, 0,
+					     0, 0, sizeof (struct icmp_state));
 
 	if (result != ISC_R_SUCCESS)
 		log_fatal ("Can't register icmp object type: %s",

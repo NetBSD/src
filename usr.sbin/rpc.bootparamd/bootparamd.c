@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.23 2000/04/27 09:48:59 itojun Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.23.2.1 2000/06/22 18:01:09 minoura Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.23 2000/04/27 09:48:59 itojun Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.23.2.1 2000/06/22 18:01:09 minoura Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,7 +134,12 @@ main(argc, argv)
 
 	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
 	    IPPROTO_UDP))
-		errx(1, "unable to register BOOTPARAMPROG version %ld, udp",
+/*
+ * Do NOT change the "%u" in the format string below to "%lu". If your
+ * build fails update the "rpcgen" program and use "make cleandir" and
+ * "make includes" in "src/lib/librpcsvc" afterwards.
+ */
+		errx(1, "unable to register BOOTPARAMPROG version %u, udp",
 		    BOOTPARAMVERS);
 
 	svc_run();

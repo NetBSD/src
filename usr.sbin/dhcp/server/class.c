@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.1 2000/04/22 07:11:59 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.1.2.1 2000/06/22 18:00:53 minoura Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -113,10 +113,10 @@ int check_collection (packet, lease, collection)
 				   packet -> options, (struct option_state *)0,
 				   &lease -> scope, class -> submatch));
 			if (status) {
-				if ((nc = ((struct class *)
-					   hash_lookup (class -> hash,
-							data.data,
-							data.len)))) {
+				nc = (struct class *)0;
+				if (class_hash_lookup (&nc, class -> hash,
+						       (const char *)data.data,
+						       data.len, MDL)) {
 #if defined (DEBUG_CLASS_MATCHING)
 					log_info ("matches subclass %s.",
 					      print_hex_1 (data.len,
@@ -168,10 +168,11 @@ int check_collection (packet, lease, collection)
 				data_string_forget (&data, MDL);
 				if (!class -> hash)
 					class -> hash = new_hash (0, 0, 0);
-				add_hash (class -> hash,
-					  nc -> hash_string.data,
-					  nc -> hash_string.len,
-					  (unsigned char *)nc);
+				class_hash_add (class -> hash,
+						(const char *)
+						nc -> hash_string.data,
+						nc -> hash_string.len,
+						nc, MDL);
 				classify (packet, nc);
 			}
 		}
@@ -196,7 +197,8 @@ void classify (packet, class)
 	struct class *class;
 {
 	if (packet -> class_count < PACKET_MAX_CLASSES)
-		packet -> classes [packet -> class_count++] = class;
+		class_reference (&packet -> classes [packet -> class_count++],
+				 class, MDL);
 	else
 		log_error ("too many groups for %s",
 		      print_hw_addr (packet -> raw -> htype,
@@ -204,18 +206,19 @@ void classify (packet, class)
 				     packet -> raw -> chaddr));
 }
 
-struct class *find_class (name)
-	const char *name;
+isc_result_t find_class (struct class **class, const char *name,
+			 const char *file, int line)
 {
 	struct collection *lp;
 	struct class *cp;
 
 	for (lp = collections; lp; lp = lp -> next) {
 		for (cp = lp -> classes; cp; cp = cp -> nic)
-			if (cp -> name && !strcmp (name, cp -> name))
-				return cp;
+			if (cp -> name && !strcmp (name, cp -> name)) {
+				return class_reference (class, cp, file, line);
+			}
 	}
-	return (struct class *)0;
+	return ISC_R_NOTFOUND;
 }
 
 int unbill_class (lease, class)
@@ -232,8 +235,8 @@ int unbill_class (lease, class)
 		      piaddr (lease -> ip_addr));
 		return 0;
 	}
-	lease -> billing_class = (struct class *)0;
-	class -> billed_leases [i] = (struct lease *)0;
+	class_dereference (&lease -> billing_class, MDL);
+	lease_dereference (&class -> billed_leases [i], MDL);
 	class -> leases_consumed--;
 	return 1;
 }
@@ -256,8 +259,8 @@ int bill_class (lease, class)
 		return 0;
 	}
 
-	class -> billed_leases [i] = lease;
-	lease -> billing_class = class;
+	lease_reference (&class -> billed_leases [i], lease, MDL);
+	class_reference (&lease -> billing_class, class, MDL);
 	class -> leases_consumed++;
 	return 1;
 }

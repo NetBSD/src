@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.11 2000/05/08 19:25:10 matt Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.11.2.1 2000/06/22 18:00:53 minoura Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -52,7 +52,7 @@ void bootp (packet)
 	struct packet *packet;
 {
 	int result;
-	struct host_decl *hp;
+	struct host_decl *hp = (struct host_decl *)0;
 	struct host_decl *host = (struct host_decl *)0;
 	struct packet outgoing;
 	struct dhcp_packet raw;
@@ -68,6 +68,7 @@ void bootp (packet)
 	struct option_cache *oc;
 	char msgbuf [1024];
 	int ignorep;
+	int peer_has_leases = 0;
 
 	if (packet -> raw -> op != BOOTREQUEST)
 		return;
@@ -87,51 +88,66 @@ void bootp (packet)
 		return;
 	}
 
-	hp = find_hosts_by_haddr (packet -> raw -> htype,
-				  packet -> raw -> chaddr,
-				  packet -> raw -> hlen);
+	find_hosts_by_haddr (&hp, packet -> raw -> htype,
+			     packet -> raw -> chaddr,
+			     packet -> raw -> hlen, MDL);
 
-	lease = find_lease (packet, packet -> shared_network, 0);
+	lease  = (struct lease *)0;
+	find_lease (&lease, packet, packet -> shared_network, 0, MDL);
 
 	/* Find an IP address in the host_decl that matches the
 	   specified network. */
+	subnet = (struct subnet *)0;
 	if (hp)
-		subnet = find_host_for_network (&hp, &ip_address,
-						packet -> shared_network);
-	else
-		subnet = (struct subnet *)0;
+		find_host_for_network (&subnet, &hp, &ip_address,
+				       packet -> shared_network);
 
 	if (!subnet) {
+		struct host_decl *h;
 		/* We didn't find an applicable host declaration.
 		   Just in case we may be able to dynamically assign
 		   an address, see if there's a host declaration
 		   that doesn't have an ip address associated with it. */
-		if (hp) {
-			for (; hp; hp = hp -> n_ipaddr) {
-				if (!hp -> fixed_addr) {
-					host = hp;
-					break;
-				}
+		for (h = hp; h; h = h -> n_ipaddr) {
+			if (!h -> fixed_addr) {
+				host_reference (&host, h, MDL);
+				break;
 			}
 		}
+		if (hp) {
+			host_dereference (&hp, MDL);
+			if (host)
+				host_reference (&hp, host, MDL);
+		}			
 
 		/* If a lease has already been assigned to this client,
 		   use it. */
 		if (lease) {
+			if (host && host != lease -> host) {
+				if (lease -> host)
+					host_dereference (&lease -> host, MDL);
+				host_reference (&lease -> host, host, MDL);
+			}
 			ack_lease (packet, lease, 0, 0, msgbuf, 0);
-			return;
+			goto out;
 		}
 
 		/* Otherwise, try to allocate one. */
-		lease = allocate_lease (packet,
-					packet -> shared_network -> pools, 0);
+		allocate_lease (&lease, packet,
+				packet -> shared_network -> pools,
+				&peer_has_leases);
 		if (lease) {
-			lease -> host = host;
+			if (host && host != lease -> host) {
+				if (lease -> host)
+					host_dereference (&lease -> host, MDL);
+				host_reference (&lease -> host, host, MDL);
+			} else if (lease -> host)
+				host_dereference (&lease -> host, MDL);
 			ack_lease (packet, lease, 0, 0, msgbuf, 0);
-			return;
+			goto out;
 		}
 		log_info ("%s: no available leases", msgbuf);
-		return;
+		goto out;
 	}
 
 	/* Run the executable statements to compute the client and server
@@ -163,9 +179,7 @@ void bootp (packet)
 					    &lease -> scope, oc, MDL)) {
 		if (!ignorep)
 			log_info ("%s: bootp disallowed", msgbuf);
-		option_state_dereference (&options, MDL);
-		static_lease_dereference (lease, MDL);
-		return;
+		goto out;
 	} 
 
 	if ((oc = lookup_option (&server_universe,
@@ -175,9 +189,7 @@ void bootp (packet)
 					    &lease -> scope, oc, MDL)) {
 		if (!ignorep)
 			log_info ("%s: booting disallowed", msgbuf);
-		option_state_dereference (&options, MDL);
-		static_lease_dereference (lease, MDL);
-		return;
+		goto out;
 	}
 
 	/* Set up the outgoing packet... */
@@ -345,7 +357,7 @@ void bootp (packet)
 					      (struct packet *)0,
 					      &raw, outgoing.packet_length,
 					      from, &to, &hto);
-			return;
+			goto out;
 		}
 
 	/* If it comes from a client that already knows its address
@@ -367,4 +379,17 @@ void bootp (packet)
 	result = send_packet (packet -> interface,
 			      packet, &raw, outgoing.packet_length,
 			      from, &to, &hto);
+      out:
+	if (options)
+		option_state_dereference (&options, MDL);
+	if (lease) {
+		static_lease_dereference (lease, MDL);
+		lease_dereference (&lease, MDL);
+	}
+	if (hp)
+		host_dereference (&hp, MDL);
+	if (host)
+		host_dereference (&host, MDL);
+	if (subnet)
+		subnet_dereference (&subnet, MDL);
 }

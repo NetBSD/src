@@ -1,6 +1,9 @@
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+.\"	$NetBSD: traceroute6.8,v 1.4.2.1 2000/06/22 18:01:16 minoura Exp $
+.\"	$KAME: traceroute6.8,v 1.8 2000/06/12 16:29:18 itojun Exp $
+.\"
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -12,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,9 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: traceroute6.8,v 1.4 2000/02/16 06:10:15 itojun Exp $
-.\"     KAME Id: traceroute6.8,v 1.4 2000/02/16 06:08:39 itojun Exp
-.\"
 .Dd May 17, 1998
 .Dt TRACEROUTE6 8
 .Os
@@ -37,20 +37,48 @@
 .Nd "print the route IPv6 packets will take to the destination"
 .\"
 .Sh SYNOPSIS
-.Nm
+.Nm traceroute6
+.Bk -words
 .Op Fl dlnrv
+.Ek
+.Bk -words
+.Op Fl f Ar firsthop
+.Ek
+.Bk -words
+.Op Fl g Ar gateway
+.Ek
+.Bk -words
 .Op Fl m Ar hoplimit
+.Ek
+.Bk -words
 .Op Fl p Ar port
+.Ek
+.Bk -words
 .Op Fl q Ar probes
+.Ek
+.Bk -words
 .Op Fl s Ar src
+.Ek
+.Bk -words
 .Op Fl w Ar waittime
+.Ek
+.Bk -words
 .Ar target
 .Op Ar datalen
+.Ek
 .\"
 .Sh DESCRIPTION
 .Bl -tag -width Ds
 .It Fl d
 Debug mode.
+.It Fl f Ar firsthop
+Specify how many hops to skip in trace.
+.It Fl g Ar gateway
+Specify intermediate gateway
+.Po
+.Nm
+uses routing header
+.Pc .
 .It Fl m Ar hoplimit
 Specify maximum hoplimit.
 .It Fl l
@@ -81,8 +109,9 @@ Specify the delay time between probes.
 .El
 .\"
 .Sh RETURN VALUES
-.Nm Traceroute6
-will exit with 0 on success, and non-zero on errors.
+The
+.Nm
+command will exit with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr ping 8 ,
@@ -93,6 +122,3 @@ will exit with 0 on success, and non-zero on errors.
 The
 .Nm
 command first appeared in WIDE hydrangea IPv6 protocol stack kit.
-.\"
-.\" .Sh BUGS
-.\" (to be written)

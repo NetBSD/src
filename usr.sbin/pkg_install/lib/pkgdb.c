@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.6 2000/02/22 01:24:33 hubertf Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.6.2.1 2000/06/22 18:01:08 minoura Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.6 2000/02/22 01:24:33 hubertf Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.6.2.1 2000/06/22 18:01:08 minoura Exp $");
 #endif
 
 /*
@@ -83,8 +83,10 @@ pkgdb_open(int ro)
 void
 pkgdb_close(void)
 {
-	if (pkgdbp != NULL)
+	if (pkgdbp != NULL) {
 		(void) (pkgdbp->close) (pkgdbp);
+		pkgdbp = NULL;
+	}
 }
 
 /*

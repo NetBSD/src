@@ -43,17 +43,25 @@
 
 #define DEFAULT_HASH_SIZE	97
 
-typedef int (*hash_reference) (void *, void *, const char *, int);
-typedef int (*hash_dereference) (void *, const char *, int);
+/* The purpose of the hashed_object_t struct is to not match anything else. */
+typedef struct {
+	int foo;
+} hashed_object_t;
+
+typedef void (*hash_foreach_func) (const unsigned char *,
+				   unsigned, hashed_object_t *);
+typedef int (*hash_reference) (hashed_object_t **, hashed_object_t *,
+			       const char *, int);
+typedef int (*hash_dereference) (hashed_object_t **, const char *, int);
 
 struct hash_bucket {
 	struct hash_bucket *next;
 	const unsigned char *name;
 	unsigned len;
-	void *value;
+	hashed_object_t *value;
 };
 
-typedef int (*hash_comparator_t)(const void *, const void *, size_t);
+typedef int (*hash_comparator_t)(const void *, const void *, unsigned long);
 
 struct hash_table {
 	unsigned hash_count;
@@ -69,3 +77,46 @@ struct named_hash {
 	const char *name;
 	struct hash_table *hash;
 };
+
+#define HASH_FUNCTIONS_DECL(name, bufarg, type)				      \
+void name##_hash_add (struct hash_table *, bufarg, unsigned, type *,	      \
+		      const char *, int);				      \
+void name##_hash_delete (struct hash_table *, bufarg, unsigned,		      \
+			 const char *, int);				      \
+int name##_hash_lookup (type **, struct hash_table *, bufarg, unsigned,	      \
+			const char *, int);				      \
+int name##_hash_foreach (struct hash_table *,				      \
+			 void (*) (bufarg, unsigned, type *));
+
+
+#define HASH_FUNCTIONS(name, bufarg, type)				      \
+void name##_hash_add (struct hash_table *table,				      \
+		      bufarg buf, unsigned len, type *ptr,		      \
+		      const char *file, int line)			      \
+{									      \
+	add_hash (table,						      \
+		  (const unsigned char *)buf,				      \
+		  len, (hashed_object_t *)ptr, file, line);		      \
+}									      \
+									      \
+void name##_hash_delete (struct hash_table *table,			      \
+			 bufarg buf, unsigned len, const char *file, int line)\
+{									      \
+	delete_hash_entry (table, (const unsigned char *)buf,		      \
+			   len, file, line);				      \
+}									      \
+									      \
+int name##_hash_lookup (type **ptr, struct hash_table *table,		      \
+			bufarg buf, unsigned len, const char *file, int line) \
+{									      \
+	return hash_lookup ((hashed_object_t **)ptr, table,		      \
+			    (const unsigned char *)buf, len, file, line);     \
+}									      \
+									      \
+int name##_hash_foreach (struct hash_table *table,			      \
+			 void (*func) (bufarg, unsigned, type *))	      \
+{									      \
+	return hash_foreach (table, (hash_foreach_func)func);		      \
+}
+
+			    

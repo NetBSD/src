@@ -53,6 +53,9 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 server
 ]
 [
+.B -w
+]
+[
 .I if0
 [
 .I ...ifN
@@ -196,6 +199,18 @@ particularly useful if, for example,
 or
 .B RUNDIR
 has not yet been mounted when the DHCP client is started.
+.PP
+The DHCP client normally exits if it isn't able to identify any
+network interfaces to configure.   On laptop computers and other
+computers with hot-swappable I/O buses, it is possible that a
+broadcast interface may be added after system startup.   The
+.B -w
+flag can be used to cause the client not to exit when it doesn't find
+any such interfaces.   The
+.B dhcpccp (8)
+program can then be used to notify the client when a network interface
+has been added or removed, so that the client can configure an IP
+address on that interface.
 .SH CONFIGURATION
 The syntax of the dhclient.conf(8) file is discussed seperately.
 .SH FILES

@@ -43,6 +43,9 @@
 
 #include <omapip/omapip_p.h>
 
+OMAPI_OBJECT_ALLOC (omapi_message,
+		    omapi_message_object_t, omapi_type_message)
+
 omapi_message_object_t *omapi_registered_messages;
 
 isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
