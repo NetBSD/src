@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.46 1996/07/04 03:17:53 chuck Exp $	*/
+/*	$NetBSD: icu.s,v 1.47 1996/08/15 15:34:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -118,6 +118,7 @@ IDTVEC(doreti)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
+	jmp	2b
 3:	INTRFASTEXIT
 
 
