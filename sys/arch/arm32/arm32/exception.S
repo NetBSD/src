@@ -1,7 +1,7 @@
-/* $NetBSD: exception.S,v 1.8 1996/11/23 04:02:40 mark Exp $ */
+/*	$NetBSD: exception.S,v 1.9 1997/02/04 06:49:08 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -54,7 +54,7 @@
  * Since the current mode is used, the SVC R14 field is not defined.
  */
 
-#ifdef CPU_SA110
+#if 1
 
 #define PUSHFRAME \
 	str	lr, [sp, #-4]!;		/* Push the return address */ \
@@ -114,7 +114,7 @@
  * R14 in SVC mode.  
  */
 
-#ifdef CPU_SA110
+#if 1
 
 #define PUSHFRAMEINSVC \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */ \
