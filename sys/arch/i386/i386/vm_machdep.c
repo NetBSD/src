@@ -138,11 +138,8 @@ cpu_exit(p)
 #endif
 
 	vm = p->p_vmspace;
-	if (vm->vm_refcnt == 1) {
-		vm_map_lock(&vm->vm_map);
-		vm_map_delete(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-		vm_map_unlock(&vm->vm_map);
-	}
+	if (vm->vm_refcnt == 1)
+		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
 	swtch_exit(p);
 }
