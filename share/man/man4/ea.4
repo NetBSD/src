@@ -1,5 +1,6 @@
+.\" $NetBSD: ea.4,v 1.1 2001/04/10 21:11:11 bjh21 Exp $
 .\"
-.\" Copyright (c) 1995 Mark Brinicombe
+.\" Copyright (c) 2000, 2001 Ben Harris
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -10,12 +11,9 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Mark Brinicombe.
-.\" 4. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission
-.\"
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\" 
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,35 +25,47 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: eb.4,v 1.8 1999/12/17 16:23:23 abs Exp $
-.\"
-.Dd
-.Dt EB 4 arm32
+.Dd April 06, 2001
 .Os
+.Dt EA 4
 .Sh NAME
-.Nm eb
-.Nd Ethernet driver for SEQ8005 based network slot Ethernet interfaces.
+.Nm ea
+.Nd Atomwide
+.Dq Ether3
+Ethernet driver
 .Sh SYNOPSIS
-.Cd "eb0 at podulebus?"
+.Cd ea* at podulebus0 slot ?
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to a 10 Mb/s Ethernet network via the
-SEEQ 8005 Ethernet chip.
-.Sh HARDWARE
-The Ethernet cards supported by the
-.Nm
-interface are:
-.Pp
-.Bl -tag -width -offset indent -compact
-.It Acorn AEH61 network slot card
-.It ANT EtherB network slot card
+driver provides access to a 10 Mb/s Ethernet network through a
+card based on the SEEQ 8005 Advanced Ethernet Data Link Controller.
+
+The cards supported by this driver are generally those supported by the
+.Dq Ether3
+driver under
+.Tn RISC OS .
+These include:
+
+.Bl -bullet -compact
+.It
+Atomwide A-1005
+.It
+Atomwide A-1006
+.It
+Atomwide A-1007
+.It
+Acorn
+.Tn AEH54
 .El
+
+Media selection on these cards is through links on the board, so there
+are no media options available through the driver.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
-.Xr intro 4 ,
-.Xr ea 4 ,
-.Xr eh 4 ,
-.Xr em 4 ,
-.Xr es 4 ,
-.Xr ie 4
+.Xr eb 4 ,
+.Xr netintro 4 ,
+.Xr podulebus 4
+.Sh BUGS
+The driver doesn't support 8-bit cards like the A-1009, A-1010, A-1011
+and A-1012.
