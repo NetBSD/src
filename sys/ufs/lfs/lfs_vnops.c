@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25.2.1.2.1 1999/06/21 01:31:13 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.1.2.2 1999/06/21 15:50:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+
+#include <ufs/ffs/ffs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
