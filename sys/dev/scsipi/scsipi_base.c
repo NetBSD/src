@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.75 2002/05/17 18:56:05 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.76 2002/06/03 16:17:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.75 2002/05/17 18:56:05 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.76 2002/06/03 16:17:57 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2452,7 +2452,7 @@ scsipi_async_event_channel_reset(chan)
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun <  chan->chan_nluns; lun++) {
-			scsipi_lookup_periph(chan, target, lun);
+			periph = scsipi_lookup_periph(chan, target, lun);
 			if (periph) {
 				xs = periph->periph_xscheck;
 				if (xs)
