@@ -66,7 +66,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: idesc.c,v 1.3 1994/06/13 08:12:56 chopps Exp $
+ *	$Id: idesc.c,v 1.4 1994/06/22 16:20:48 chopps Exp $
  *
  *
  */
@@ -220,6 +220,7 @@ struct idec_softc
 #define	IDECF_ACTIVE	0x02
 #define	IDECF_SINGLE	0x04	/* sector at a time mode */
 #define	IDECF_READ	0x08	/* Current operation is read */
+#define	IDECF_A1200	0x10	/* A1200 IDE */
 	struct ide_softc *sc_cur; /* drive we are currently doing work for */
 	int	state;
 	int	saved;
@@ -296,6 +297,8 @@ int idegetctlr __P((struct ide_softc *));
 #define wait_for_ready(ide) idewait(ide, IDES_READY | IDES_SEEKCMPLT)
 #define wait_for_unbusy(ide) idewait(ide,0)
 
+int ide_no_int = 0;
+
 #ifdef DEBUG 
 
 int ide_debug = 0;
@@ -325,7 +328,7 @@ idescmatch(pdp, cdp, auxp)
 	char *mbusstr;
 
 	mbusstr = auxp;
-	if (is_a4000() && matchname(auxp, "idesc"))
+	if ((is_a4000() || is_a1200()) && matchname(auxp, "idesc"))
 		return(1);
 	return(0);
 }
@@ -340,7 +343,13 @@ idescattach(pdp, dp, auxp)
 	int i;
 
 	sc = (struct idec_softc *)dp;
-	sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xdd2020);
+	if (is_a4000())
+		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xdd2020);
+	else {
+		/* Let's hope the A1200 will work with the same regs */
+		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
+		sc->sc_flags |= IDECF_A1200;
+	}
 
 #ifdef DEBUG
 	if (ide_debug)
@@ -509,7 +518,7 @@ ide_donextcmd(dev)
 		idereset(dev);
 
 	dev->sc_stat[0] = -1;
-	if (flags & SCSI_NOMASK) 
+	if (flags & SCSI_NOMASK || ide_no_int)
 		stat = ideicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen/*, phase*/);
 	else if (idego(dev, xs) == 0)
@@ -1087,13 +1096,20 @@ idesc_intr()
 	if (idesccd.cd_ndevs == 0 || (dev = idesccd.cd_devs[0]) == NULL)
 		return (0);
 	regs = dev->sc_cregs;
-	if (regs->ide_intpnd >= 0)
-		return (0);
+	if (dev->sc_flags & IDECF_A1200) {
+		if (regs->ide_intpnd < 0)
+			return (0);
+	} else {
+		if (regs->ide_intpnd >= 0)
+			return (0);
+	}
 	dummy = regs->ide_status;
 #ifdef DEBUG
 	if (ide_debug)
 		printf ("idesc_intr: %02x\n", dummy);
 #endif
+	if ((dev->sc_flags & IDECF_ACTIVE) == 0)
+		return (1);
 	dev->sc_flags &= ~IDECF_ACTIVE;
 	if (wait_for_unbusy(dev) < 0)
 		printf ("idesc_intr: timeout waiting for unbusy\n");
