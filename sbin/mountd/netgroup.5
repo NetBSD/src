@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)netgroup.5	8.2 (Berkeley) 12/11/93
+.\"     from: @(#)netgroup.5	8.2 (Berkeley) 12/11/93
+.\"	$Id: netgroup.5,v 1.2 1994/12/04 22:35:51 christos Exp $
 .\"
 .Dd December 11, 1993
 .Dt NETGROUP 5
@@ -63,7 +64,7 @@ and
 are character string names for the corresponding component.
 Any of the comma separated fields may be empty to specify a ``wildcard'' value
 or may consist of the string ``-'' to specify ``no valid value''.
-The members of the list may be separated by whitespace and/or commas;
+The members of the list may be separated by whitespace;
 the ``\e'' character may be used at the end of a line to specify
 line continuation.
 The functions specified in
@@ -72,13 +73,34 @@ should normally be used to access the
 .Nm netgroup
 database.
 .Pp
+These functions operate on the
+.Xr db
+version of the 
+.Nm netgroup
+.Nm (netgroup.db)
+file which can be generated using
+.Xr netgroup_mkdb .
+If that file is not present, and the system supports
+.Sy NIS,
+then the 
+.Nm netgroup
+.Sy NIS
+maps are used. The 
+.Sy NIS
+maps are also used if the
+.Nm netgroup
+file contains a 
+.Sy +
+entry.
+.Pp
 Lines that begin with a # are treated as comments.
 .Sh FILES
-.Bl -tag -width /etc/netgroup -compact
-.It Pa /etc/netgroup
+.Bl -tag -width /etc/netgroup.db -compact
+.It Pa /etc/netgroup.db
 the netgroup database.
 .El
 .Sh SEE ALSO
+.Xr netgroup_mkdb 8 ,
 .Xr getnetgrent 3 ,
 .Xr exports 5
 .Sh COMPATIBILITY
@@ -87,5 +109,3 @@ appears that not all vendors use an identical format.
 .Sh BUGS
 The interpretation of access restrictions based on the member tuples of a
 netgroup is left up to the various network applications.
-Also, it is not obvious how the domain specification
-applies to the BSD environment.
