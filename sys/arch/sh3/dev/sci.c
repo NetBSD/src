@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.7 2000/03/23 06:43:52 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.8 2000/03/27 16:24:08 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -238,6 +238,7 @@ u_int sci_rbuf_lowat = (SCI_RING_SIZE * 3) / 4;
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int sciconscflag = CONMODE;
+int sciisconsole = 0;
 
 #ifdef SCICN_SPEED
 int scicn_speed = SCICN_SPEED;
@@ -466,14 +467,13 @@ sci_match(parent, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-#if 0
-	struct shb_attach_args *ia = aux;
-#endif
+	struct shb_attach_args *sa = aux;
 
 	if (strcmp(cfp->cf_driver->cd_name, "sci")
 	    || cfp->cf_unit >= SCI_MAX_UNITS)
 		return 0;
 
+	sa->ia_iosize = 0x10;
 	return 1;
 }
 
@@ -493,8 +493,14 @@ sci_attach(parent, self, aux)
 
 	irq = ia->ia_irq;
 
-	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
-	SET(sc->sc_hwflags, SCI_HW_CONSOLE);
+	if (sciisconsole) {
+		SET(sc->sc_hwflags, SCI_HW_CONSOLE);
+		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
+		printf("\n%s: console\n", sc->sc_dev.dv_xname);
+	} else {
+		InitializeSci(9600);
+		printf("\n");
+	}
 
 	callout_init(&sc->sc_diag_ch);
 
@@ -510,9 +516,7 @@ sci_attach(parent, self, aux)
 	}
 #endif
 
-	printf("\n");
-
-	printf("%s: console\n", sc->sc_dev.dv_xname);
+	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
 	tp->t_oproc = scistart;
@@ -1515,6 +1519,7 @@ scicninit(cp)
 {
 
 	InitializeSci(scicn_speed);
+	sciisconsole = 1;
 }
 
 #define sci_getc GetcSci
