@@ -1,5 +1,5 @@
 /* Common definitions for backends based on IBM RS/6000 "XCOFF64" files.
-   Copyright 2000
+   Copyright 2000, 2001
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 

@@ -1,5 +1,6 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -159,9 +160,9 @@ static reloc_howto_type mips_elf64_howto_table_rel[] =
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
-				   bits must match the PC.  */
+				   bits must match the PC + 4.  */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MIPS_26",		/* name */
 	 true,			/* partial_inplace */
@@ -712,9 +713,9 @@ static reloc_howto_type mips_elf64_howto_table_rela[] =
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
-				   bits must match the PC.  */
+				   bits must match the PC + 4.  */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MIPS_26",		/* name */
 	 true,			/* partial_inplace */
@@ -1389,7 +1390,7 @@ static CONST struct elf_reloc_map mips_reloc_map[] =
 
 static reloc_howto_type *
 mips_elf64_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
@@ -1413,7 +1414,7 @@ mips_elf64_reloc_type_lookup (abfd, code)
 
 static long
 mips_elf64_get_reloc_upper_bound (abfd, sec)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec;
 {
   return (sec->reloc_count * 3 + 1) * sizeof (arelent *);
@@ -2187,4 +2188,21 @@ const struct elf_size_info mips_elf64_size_info =
 #define bfd_elf64_archive_update_armap_timestamp \
 				_bfd_archive_coff_update_armap_timestamp
 
+#include "elf64-target.h"
+
+/* Support for traditional mips targets */
+
+#define INCLUDED_TARGET_FILE            /* More a type of flag */
+
+#undef TARGET_LITTLE_SYM
+#undef TARGET_LITTLE_NAME
+#undef TARGET_BIG_SYM
+#undef TARGET_BIG_NAME
+
+#define TARGET_LITTLE_SYM               bfd_elf64_tradlittlemips_vec
+#define TARGET_LITTLE_NAME              "elf64-tradlittlemips"
+#define TARGET_BIG_SYM                  bfd_elf64_tradbigmips_vec
+#define TARGET_BIG_NAME                 "elf64-tradbigmips"
+
+/* Include the target file again for this target */
 #include "elf64-target.h"

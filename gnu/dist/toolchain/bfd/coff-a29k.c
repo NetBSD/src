@@ -1,5 +1,5 @@
 /* BFD back-end for AMD 29000 COFF binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 97, 98, 99, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001
    Free Software Foundation, Inc.
    Contributed by David Wood at New York University 7/8/91.
 

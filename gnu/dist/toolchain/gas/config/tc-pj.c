@@ -1,6 +1,6 @@
 /*-
    tc-pj.c -- Assemble code for Pico Java
-   Copyright (C) 1999 Free Software Foundation.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

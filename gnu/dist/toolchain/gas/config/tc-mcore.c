@@ -1,5 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright (C) 1999, 2000 Free Software Foundation.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -92,12 +92,9 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define UNCD_JUMP  2
 
 #define UNDEF_DISP      0
-#define COND12          1
-#define COND32          2
-#define UNCD12          1
-#define UNCD32          2
-#define UNDEF_WORD_DISP 4
-#define END             5
+#define DISP12          1
+#define DISP32          2
+#define UNDEF_WORD_DISP 3
 
 #define C12_LEN	        2
 #define C32_LEN	       10	/* allow for align */
@@ -114,21 +111,24 @@ cpu_type;
 cpu_type cpu = M340;
 
 /* Initialize the relax table.  */
-const relax_typeS md_relax_table[] =
-{
-{    1,     1,	     0, 0 },			/* 0: unused */
-{    1,     1,	     0, 0 },			/* 1: unused */
-{    1,     1,	     0, 0 },			/* 2: unused */
-{    1,     1,	     0, 0 },			/* 3: unused */
-{    1,     1,	     0, 0 },			/* 4: unused */
-{ 2048, -2046, C12_LEN, C(COND_JUMP, COND32) },	/* 5: C(COND_JUMP, COND12) */
-{    0,     0, C32_LEN, 0 },			/* 6: C(COND_JUMP, COND32) */
-{    1,     1,	     0, 0 },			/* 7: unused */
-{    1,     1,	     0, 0 },			/* 8: unused */
-{ 2048, -2046, U12_LEN, C(UNCD_JUMP, UNCD32) },	/* 9: C(UNCD_JUMP, UNCD12) */
-{    0,     0, U32_LEN, 0 },			/*10: C(UNCD_JUMP, UNCD32) */
-{    1,     1,	     0, 0 },			/*11: unused */
-{    0,     0,	     0, 0 }			/*12: unused */
+const relax_typeS md_relax_table[] = {
+  {    0,     0, 0,	  0 },
+  {    0,     0, 0,	  0 },
+  {    0,     0, 0,	  0 },
+  {    0,     0, 0,	  0 },
+
+  /* COND_JUMP */
+  {    0,     0, 0,	  0 },			  /* UNDEF_DISP */
+  { 2048, -2046, C12_LEN, C(COND_JUMP, DISP32) }, /* DISP12 */
+  {    0,     0, C32_LEN, 0 },			  /* DISP32 */
+  {    0,     0, C32_LEN, 0 },			  /* UNDEF_WORD_DISP */
+
+  /* UNCD_JUMP */
+  {    0,     0, 0,	  0 },			  /* UNDEF_DISP */     
+  { 2048, -2046, U12_LEN, C(UNCD_JUMP, DISP32) }, /* DISP12 */         
+  {    0,     0, U32_LEN, 0 },			  /* DISP32 */         
+  {    0,     0, U32_LEN, 0 }			  /* UNDEF_WORD_DISP */
+
 };
 
 /* Literal pool data structures.  */
@@ -705,8 +705,8 @@ dump_literals (isforce)
       symbol_table_insert (brarsym);
 
       output = frag_var (rs_machine_dependent,
-			 md_relax_table[C (UNCD_JUMP, UNCD32)].rlx_length,
-			 md_relax_table[C (UNCD_JUMP, UNCD12)].rlx_length,
+			 md_relax_table[C (UNCD_JUMP, DISP32)].rlx_length,
+			 md_relax_table[C (UNCD_JUMP, DISP12)].rlx_length,
 			 C (UNCD_JUMP, 0), brarsym, 0, 0);
       output[0] = INST_BYTE0 (MCORE_INST_BR);	/* br .+xxx */
       output[1] = INST_BYTE1 (MCORE_INST_BR);
@@ -1558,8 +1558,8 @@ md_assemble (str)
       op_end = input_line_pointer;
 
       output = frag_var (rs_machine_dependent,
-			 md_relax_table[C (COND_JUMP, COND32)].rlx_length,
-			 md_relax_table[C (COND_JUMP, COND12)].rlx_length,
+			 md_relax_table[C (COND_JUMP, DISP32)].rlx_length,
+			 md_relax_table[C (COND_JUMP, DISP12)].rlx_length,
 			 C (COND_JUMP, 0), e.X_add_symbol, e.X_add_number, 0);
       isize = C32_LEN;
       break;
@@ -1569,8 +1569,8 @@ md_assemble (str)
       op_end = input_line_pointer;
 
       output = frag_var (rs_machine_dependent,
-			 md_relax_table[C (UNCD_JUMP, UNCD32)].rlx_length,
-			 md_relax_table[C (UNCD_JUMP, UNCD12)].rlx_length,
+			 md_relax_table[C (UNCD_JUMP, DISP32)].rlx_length,
+			 md_relax_table[C (UNCD_JUMP, DISP12)].rlx_length,
 			 C (UNCD_JUMP, 0), e.X_add_symbol, e.X_add_number, 0);
       isize = U32_LEN;
       break;
@@ -1904,8 +1904,8 @@ md_convert_frag (abfd, sec, fragP)
 
   switch (fragP->fr_subtype)
     {
-    case C (COND_JUMP, COND12):
-    case C (UNCD_JUMP, UNCD12):
+    case C (COND_JUMP, DISP12):
+    case C (UNCD_JUMP, DISP12):
       {
 	/* Get the address of the end of the instruction.  */
 	int next_inst = fragP->fr_fix + fragP->fr_address + 2;
@@ -1935,11 +1935,10 @@ md_convert_frag (abfd, sec, fragP)
 	  }
 
 	fragP->fr_fix += 2;
-	fragP->fr_var = 0;
       }
       break;
 
-    case C (COND_JUMP, COND32):
+    case C (COND_JUMP, DISP32):
     case C (COND_JUMP, UNDEF_WORD_DISP):
       {
 	/* A conditional branch wont fit into 12 bits so:
@@ -2026,12 +2025,10 @@ md_convert_frag (abfd, sec, fragP)
 	    else
 	      buffer[1] = 4;	/* jmpi, ptr, and the 'tail pad' */
 	  }
-
-	fragP->fr_var = 0;
       }
       break;
 
-    case C (UNCD_JUMP, UNCD32):
+    case C (UNCD_JUMP, DISP32):
     case C (UNCD_JUMP, UNDEF_WORD_DISP):
       {
 	/* An unconditional branch will not fit in 12 bits, make code which
@@ -2082,8 +2079,6 @@ md_convert_frag (abfd, sec, fragP)
 		     fragP->fr_symbol, fragP->fr_offset, 0, BFD_RELOC_32);
 	    fragP->fr_fix += U32_LEN;
 	  }
-
-	fragP->fr_var = 0;
       }
       break;
 
@@ -2247,28 +2242,24 @@ md_estimate_size_before_relax (fragP, segment_type)
 {
   switch (fragP->fr_subtype)
     {
+    default:
+      abort ();
+
     case C (UNCD_JUMP, UNDEF_DISP):
       /* Used to be a branch to somewhere which was unknown.  */
       if (!fragP->fr_symbol)
 	{
-	  fragP->fr_subtype = C (UNCD_JUMP, UNCD12);
-	  fragP->fr_var = md_relax_table[C (UNCD_JUMP, UNCD12)].rlx_length;
+	  fragP->fr_subtype = C (UNCD_JUMP, DISP12);
 	}
       else if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
-	  fragP->fr_subtype = C (UNCD_JUMP, UNCD12);
-	  fragP->fr_var = md_relax_table[C (UNCD_JUMP, UNCD12)].rlx_length;
+	  fragP->fr_subtype = C (UNCD_JUMP, DISP12);
 	}
       else
 	{
 	  fragP->fr_subtype = C (UNCD_JUMP, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (UNCD_JUMP, UNCD32)].rlx_length;
-	  return md_relax_table[C (UNCD_JUMP, UNCD32)].rlx_length;
 	}
       break;
-
-    default:
-      abort ();
 
     case C (COND_JUMP, UNDEF_DISP):
       /* Used to be a branch to somewhere which was unknown.  */
@@ -2277,27 +2268,32 @@ md_estimate_size_before_relax (fragP, segment_type)
 	{
 	  /* Got a symbol and it's defined in this segment, become byte
 	     sized - maybe it will fix up */
-	  fragP->fr_subtype = C (COND_JUMP, COND12);
-	  fragP->fr_var = md_relax_table[C (COND_JUMP, COND12)].rlx_length;
+	  fragP->fr_subtype = C (COND_JUMP, DISP12);
 	}
       else if (fragP->fr_symbol)
 	{
 	  /* Its got a segment, but its not ours, so it will always be long.  */
 	  fragP->fr_subtype = C (COND_JUMP, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (COND_JUMP, COND32)].rlx_length;
-	  return md_relax_table[C (COND_JUMP, COND32)].rlx_length;
 	}
       else
 	{
 	  /* We know the abs value.  */
-	  fragP->fr_subtype = C (COND_JUMP, COND12);
-	  fragP->fr_var = md_relax_table[C (COND_JUMP, COND12)].rlx_length;
+	  fragP->fr_subtype = C (COND_JUMP, DISP12);
 	}
+      break;
 
+    case C (UNCD_JUMP, DISP12):
+    case C (UNCD_JUMP, DISP32):
+    case C (UNCD_JUMP, UNDEF_WORD_DISP):
+    case C (COND_JUMP, DISP12):
+    case C (COND_JUMP, DISP32):
+    case C (COND_JUMP, UNDEF_WORD_DISP):
+      /* When relaxing a section for the second time, we don't need to
+	 do anything besides return the current size.  */
       break;
     }
 
-  return fragP->fr_var;
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
 /* Put number into target byte order.  */

@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF64" files.
-   Copyright 2000
+   Copyright 2000, 2001
    Free Software Foundation, Inc.
    Written Clinton Popetz.
    Contributed by Cygnus Support.

@@ -1,4 +1,4 @@
-#   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+#   Copyright 1999, 2000 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,7 +192,11 @@ proc readelf_test { options binary_file regexp_file xfails } {
 
     set target_machine ""
     if [istarget "mips*-*-*"] then {
-      set target_machine mips
+	if { [istarget mips*el-*-*] || [istarget "mips*-*-*linux*"] } then {
+	    set target_machine tmips
+	} else {
+	    set target_machine mips
+	}
     }
 
     if { $target_machine != "" && [file exists $srcdir/$subdir/$regexp_file-$readelf_size-$target_machine] } then {
@@ -218,7 +222,20 @@ proc readelf_test { options binary_file regexp_file xfails } {
 # For now be paranoid and assume that if ELF is not mentioned
 # in the target string, then the target is not an ELF based port.
 
-if ![istarget "*-*elf"] then {
+if { ![istarget *-*-elf*] \
+     && ![istarget *-*-linux*] \
+     && ![istarget i?86-*-sysv4*] \
+     && ![istarget i?86-*-unixware] \
+     && ![istarget mips*-*-irix5*] \
+     && ![istarget mips*-*-irix6*] \
+     && ![istarget powerpc-*-sysv4*] \
+     && ![istarget sparc*-*-solaris2*] } {
+    verbose "$READELF is only intended for ELF targets" 2
+    return
+}
+
+if { [istarget *-*-linux*oldld*] \
+     || [istarget *-*-linux*aout*] } {
     verbose "$READELF is only intended for ELF targets" 2
     return
 }
@@ -270,4 +287,4 @@ if [is_remote host] {
 # The xfail targets here do not default to DWARF2 format debug information
 # The symptom is that the output of 'readelf -wi' is empty.
 
-readelf_test -wi $tempfile readelf.wi {v850*-*-* cris-*-*}
+readelf_test -wi $tempfile readelf.wi {v850*-*-* cris-*-* *-*-linux*}

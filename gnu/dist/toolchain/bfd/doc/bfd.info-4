@@ -16,6 +16,56 @@ END-INFO-DIR-ENTRY
 section entitled "GNU Free Documentation License".
 
 
+File: bfd.info,  Node: Targets,  Next: Architectures,  Prev: Core Files,  Up: BFD front end
+
+Targets
+=======
+
+   *Description*
+Each port of BFD to a different machine requries the creation of a
+target back end. All the back end provides to the root part of BFD is a
+structure containing pointers to functions which perform certain low
+level operations on files. BFD translates the applications's requests
+through a pointer into calls to the back end routines.
+
+   When a file is opened with `bfd_openr', its format and target are
+unknown. BFD uses various mechanisms to determine how to interpret the
+file. The operations performed are:
+
+   * Create a BFD by calling the internal routine `_bfd_new_bfd', then
+     call `bfd_find_target' with the target string supplied to
+     `bfd_openr' and the new BFD pointer.
+
+   * If a null target string was provided to `bfd_find_target', look up
+     the environment variable `GNUTARGET' and use that as the target
+     string.
+
+   * If the target string is still `NULL', or the target string is
+     `default', then use the first item in the target vector as the
+     target type, and set `target_defaulted' in the BFD to cause
+     `bfd_check_format' to loop through all the targets.  *Note
+     bfd_target::.  *Note Formats::.
+
+   * Otherwise, inspect the elements in the target vector one by one,
+     until a match on target name is found. When found, use it.
+
+   * Otherwise return the error `bfd_error_invalid_target' to
+     `bfd_openr'.
+
+   * `bfd_openr' attempts to open the file using `bfd_open_file', and
+     returns the BFD.
+   Once the BFD has been opened and the target selected, the file
+format may be determined. This is done by calling `bfd_check_format' on
+the BFD with a suggested format.  If `target_defaulted' has been set,
+each possible target type is tried to see if it recognizes the
+specified format.  `bfd_check_format' returns `true' when the caller
+guesses right.
+
+* Menu:
+
+* bfd_target::
+
+
 File: bfd.info,  Node: bfd_target,  Prev: Targets,  Up: Targets
 
 bfd_target
@@ -468,6 +518,10 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_m68040 6
      #define bfd_mach_m68060 7
      #define bfd_mach_cpu32  8
+     #define bfd_mach_mcf5200  9
+     #define bfd_mach_mcf5206e 10
+     #define bfd_mach_mcf5307  11
+     #define bfd_mach_mcf5407  12
        bfd_arch_vax,       /* DEC Vax */
        bfd_arch_i960,      /* Intel 960 */
          /* The order of the following is important.
@@ -519,6 +573,7 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_mips6000              6000
      #define bfd_mach_mips8000              8000
      #define bfd_mach_mips10000             10000
+     #define bfd_mach_mips12000             12000
      #define bfd_mach_mips16                16
      #define bfd_mach_mips32                32
      #define bfd_mach_mips32_4k             3204113 /* 32, 04, octal 'K' */
@@ -1234,43 +1289,4 @@ Called when the macro `bfd_cache_lookup' fails to find a quick answer.
 Find a file descriptor for ABFD.  If necessary, it open it.  If there
 are already more than `BFD_CACHE_MAX_OPEN' files open, it tries to
 close one first, to avoid running out of file descriptors.
-
-
-File: bfd.info,  Node: Linker Functions,  Next: Hash Tables,  Prev: File Caching,  Up: BFD front end
-
-Linker Functions
-================
-
-   The linker uses three special entry points in the BFD target vector.
-It is not necessary to write special routines for these entry points
-when creating a new BFD back end, since generic versions are provided.
-However, writing them can speed up linking and make it use
-significantly less runtime memory.
-
-   The first routine creates a hash table used by the other routines.
-The second routine adds the symbols from an object file to the hash
-table.  The third routine takes all the object files and links them
-together to create the output file.  These routines are designed so
-that the linker proper does not need to know anything about the symbols
-in the object files that it is linking.  The linker merely arranges the
-sections as directed by the linker script and lets BFD handle the
-details of symbols and relocs.
-
-   The second routine and third routines are passed a pointer to a
-`struct bfd_link_info' structure (defined in `bfdlink.h') which holds
-information relevant to the link, including the linker hash table
-(which was created by the first routine) and a set of callback
-functions to the linker proper.
-
-   The generic linker routines are in `linker.c', and use the header
-file `genlink.h'.  As of this writing, the only back ends which have
-implemented versions of these routines are a.out (in `aoutx.h') and
-ECOFF (in `ecoff.c').  The a.out routines are used as examples
-throughout this section.
-
-* Menu:
-
-* Creating a Linker Hash Table::
-* Adding Symbols to the Hash Table::
-* Performing the Final Link::
 

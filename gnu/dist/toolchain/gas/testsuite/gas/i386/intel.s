@@ -576,7 +576,6 @@ short_foo:
 bar:
  call	gs_foo
  call	short_foo
- lea	eax, .LC0@GOTOFF[ebx]
  fstp   QWORD PTR [eax+edx*8]
  mov	ecx, OFFSET FLAT:ss
  mov	BYTE PTR [esi+edx], al
@@ -616,5 +615,4 @@ rot5:
  jmp	[eax]
  jmp	[bar]
  jmp	bar
- mov	eax, DWORD PTR gs_foo@GOT[ebx]
  .p2align 4,0

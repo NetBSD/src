@@ -1,5 +1,5 @@
 /* tc-m68hc11.c -- Assembler code for the Motorola 68HC11 & 68HC12.
-   Copyright (C) 1999, 2000, 2001 Free Software Foundation.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
    This file is part of GAS, the GNU Assembler.
@@ -49,6 +49,8 @@ const char FLT_CHARS[] = "dD";
 
 /* This macro has no side-effects.  */
 #define ENCODE_RELAX(what,length) (((what) << 2) + (length))
+#define RELAX_STATE(s) ((s) >> 2)
+#define RELAX_LENGTH(s) ((s) & 3)
 
 #define IS_OPCODE(C1,C2)        (((C1) & 0x0FF) == ((C2) & 0x0FF))
 
@@ -2563,145 +2565,153 @@ md_estimate_size_before_relax (fragP, segment)
      fragS *fragP;
      asection *segment;
 {
-  int old_fr_fix;
-  char *buffer_address = fragP->fr_fix + fragP->fr_literal;
-
-  old_fr_fix = fragP->fr_fix;
-
-  switch (fragP->fr_subtype)
+  if (RELAX_LENGTH (fragP->fr_subtype) == STATE_UNDF)
     {
-    case ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF):
-
-      /* This relax is only for bsr and bra.  */
-      assert (IS_OPCODE (fragP->fr_opcode[0], M6811_BSR)
-	      || IS_OPCODE (fragP->fr_opcode[0], M6811_BRA)
-	      || IS_OPCODE (fragP->fr_opcode[0], M6812_BSR));
-
-      /* A relaxable case.  */
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  && relaxable_symbol (fragP->fr_symbol))
+      if (S_GET_SEGMENT (fragP->fr_symbol) != segment
+	  || !relaxable_symbol (fragP->fr_symbol))
 	{
-	  fragP->fr_subtype = ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE);
-	}
-      else
-	{
-	  if (flag_fixed_branchs)
-	    as_bad_where (fragP->fr_file, fragP->fr_line,
-			  _("bra or bsr with undefined symbol."));
+	  /* Non-relaxable cases.  */
+	  int old_fr_fix;
+	  char *buffer_address;
 
-	  /* The symbol is undefined or in a separate section.  Turn bra into a
-	     jmp and bsr into a jsr.  The insn becomes 3 bytes long (instead of
-	     2).  A fixup is necessary for the unresolved symbol address.  */
+	  old_fr_fix = fragP->fr_fix;
+	  buffer_address = fragP->fr_fix + fragP->fr_literal;
 
-	  fragP->fr_opcode[0] = convert_branch (fragP->fr_opcode[0]);
+	  switch (RELAX_STATE (fragP->fr_subtype))
+	    {
+	    case STATE_PC_RELATIVE:
 
-	  fragP->fr_fix++;
-	  fix_new (fragP, old_fr_fix - 1, 2, fragP->fr_symbol,
-		   fragP->fr_offset, 0, BFD_RELOC_16);
+	      /* This relax is only for bsr and bra.  */
+	      assert (IS_OPCODE (fragP->fr_opcode[0], M6811_BSR)
+		      || IS_OPCODE (fragP->fr_opcode[0], M6811_BRA)
+		      || IS_OPCODE (fragP->fr_opcode[0], M6812_BSR));
+
+	      if (flag_fixed_branchs)
+		as_bad_where (fragP->fr_file, fragP->fr_line,
+			      _("bra or bsr with undefined symbol."));
+
+	      /* The symbol is undefined or in a separate section.
+		 Turn bra into a jmp and bsr into a jsr.  The insn
+		 becomes 3 bytes long (instead of 2).  A fixup is
+		 necessary for the unresolved symbol address.  */
+	      fragP->fr_opcode[0] = convert_branch (fragP->fr_opcode[0]);
+
+	      fragP->fr_fix++;
+	      fix_new (fragP, old_fr_fix - 1, 2, fragP->fr_symbol,
+		       fragP->fr_offset, 0, BFD_RELOC_16);
+	      break;
+
+	    case STATE_CONDITIONAL_BRANCH:
+	      assert (current_architecture & cpu6811);
+
+	      fragP->fr_opcode[0] ^= 1;	/* Reverse sense of branch.  */
+	      fragP->fr_opcode[1] = 3;	/* Skip next jmp insn (3 bytes).  */
+
+	      /* Don't use fr_opcode[2] because this may be
+		 in a different frag.  */
+	      buffer_address[0] = M6811_JMP;
+
+	      fragP->fr_fix++;
+	      fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
+		       fragP->fr_offset, 0, BFD_RELOC_16);
+	      fragP->fr_fix += 2;
+	      break;
+
+	    case STATE_INDEXED_OFFSET:
+	      assert (current_architecture & cpu6812);
+
+	      /* Switch the indexed operation to 16-bit mode.  */
+	      fragP->fr_opcode[0] = fragP->fr_opcode[0] << 3;
+	      fragP->fr_opcode[0] |= 0xe2;
+	      fragP->fr_fix++;
+	      fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
+		       fragP->fr_offset, 0, BFD_RELOC_16);
+	      fragP->fr_fix++;
+	      break;
+
+	    case STATE_XBCC_BRANCH:
+	      assert (current_architecture & cpu6812);
+
+	      fragP->fr_opcode[0] ^= 0x20;	/* Reverse sense of branch.  */
+	      fragP->fr_opcode[1] = 3;	/* Skip next jmp insn (3 bytes).  */
+
+	      /* Don't use fr_opcode[2] because this may be
+		 in a different frag.  */
+	      buffer_address[0] = M6812_JMP;
+
+	      fragP->fr_fix++;
+	      fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
+		       fragP->fr_offset, 0, BFD_RELOC_16);
+	      fragP->fr_fix += 2;
+	      break;
+
+	    case STATE_CONDITIONAL_BRANCH_6812:
+	      assert (current_architecture & cpu6812);
+
+	      /* Translate into a lbcc branch.  */
+	      fragP->fr_opcode[1] = fragP->fr_opcode[0];
+	      fragP->fr_opcode[0] = M6811_OPCODE_PAGE2;
+
+	      fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
+		       fragP->fr_offset, 0, BFD_RELOC_16_PCREL);
+	      fragP->fr_fix += 2;
+	      break;
+
+	    default:
+	      as_fatal (_("Subtype %d is not recognized."), fragP->fr_subtype);
+	    }
 	  frag_wane (fragP);
+
+	  /* Return the growth in the fixed part of the frag.  */
+	  return fragP->fr_fix - old_fr_fix;
 	}
-      break;
 
-    case ENCODE_RELAX (STATE_CONDITIONAL_BRANCH, STATE_UNDF):
-      assert (current_architecture & cpu6811);
-
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  && relaxable_symbol (fragP->fr_symbol))
+      /* Relaxable cases.  */
+      switch (RELAX_STATE (fragP->fr_subtype))
 	{
+	case STATE_PC_RELATIVE:
+	  /* This relax is only for bsr and bra.  */
+	  assert (IS_OPCODE (fragP->fr_opcode[0], M6811_BSR)
+		  || IS_OPCODE (fragP->fr_opcode[0], M6811_BRA)
+		  || IS_OPCODE (fragP->fr_opcode[0], M6812_BSR));
+
+	  fragP->fr_subtype = ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE);
+	  break;
+
+	case STATE_CONDITIONAL_BRANCH:
+	  assert (current_architecture & cpu6811);
+
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_CONDITIONAL_BRANCH,
 					    STATE_BYTE);
-	}
-      else
-	{
-	  fragP->fr_opcode[0] ^= 1;	/* Reverse sense of branch.  */
-	  fragP->fr_opcode[1] = 3;	/* Skip next jmp insn (3 bytes).  */
+	  break;
 
-	  /* Don't use fr_opcode[2] because this may be
-             in a different frag.  */
-	  buffer_address[0] = M6811_JMP;
+	case STATE_INDEXED_OFFSET:
+	  assert (current_architecture & cpu6812);
 
-	  fragP->fr_fix++;
-	  fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		   fragP->fr_offset, 0, BFD_RELOC_16);
-	  fragP->fr_fix += 2;
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_INDEXED_OFFSET, STATE_UNDF):
-      assert (current_architecture & cpu6812);
-
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  && relaxable_symbol (fragP->fr_symbol))
-	{
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_INDEXED_OFFSET,
 					    STATE_BITS5);
-	}
-      else
-	{
-	  /* Switch the indexed operation to 16-bit mode.  */
-	  fragP->fr_opcode[0] = fragP->fr_opcode[0] << 3;
-	  fragP->fr_opcode[0] |= 0xe2;
-	  fragP->fr_fix++;
-	  fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		   fragP->fr_offset, 0, BFD_RELOC_16);
-	  fragP->fr_fix++;
-	  frag_wane (fragP);
-	}
-      break;
+	  break;
 
-    case ENCODE_RELAX (STATE_XBCC_BRANCH, STATE_UNDF):
-      assert (current_architecture & cpu6812);
+	case STATE_XBCC_BRANCH:
+	  assert (current_architecture & cpu6812);
 
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  && relaxable_symbol (fragP->fr_symbol))
-	{
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_XBCC_BRANCH, STATE_BYTE);
-	}
-      else
-	{
-	  fragP->fr_opcode[0] ^= 0x20;	/* Reverse sense of branch.  */
-	  fragP->fr_opcode[1] = 3;	/* Skip next jmp insn (3 bytes).  */
+	  break;
 
-	  /* Don't use fr_opcode[2] because this may be
-             in a different frag.  */
-	  buffer_address[0] = M6812_JMP;
+	case STATE_CONDITIONAL_BRANCH_6812:
+	  assert (current_architecture & cpu6812);
 
-	  fragP->fr_fix++;
-	  fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		   fragP->fr_offset, 0, BFD_RELOC_16);
-	  fragP->fr_fix += 2;
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_CONDITIONAL_BRANCH_6812, STATE_UNDF):
-      assert (current_architecture & cpu6812);
-
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  && relaxable_symbol (fragP->fr_symbol))
-	{
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_CONDITIONAL_BRANCH_6812,
 					    STATE_BYTE);
+	  break;
 	}
-      else
-	{
-	  /* Translate into a lbcc branch.  */
-	  fragP->fr_opcode[1] = fragP->fr_opcode[0];
-	  fragP->fr_opcode[0] = M6811_OPCODE_PAGE2;
-
-	  fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		   fragP->fr_offset, 0, BFD_RELOC_16_PCREL);
-	  fragP->fr_fix += 2;
-	  frag_wane (fragP);
-	}
-      break;
-
-    default:
-      as_fatal (_("Subtype %d is not recognized."), fragP->fr_subtype);
     }
 
-  return (fragP->fr_fix - old_fr_fix);
+  if (fragP->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    as_fatal (_("Subtype %d is not recognized."), fragP->fr_subtype);
+
+  /* Return the size of the variable part of the frag.  */
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
 int

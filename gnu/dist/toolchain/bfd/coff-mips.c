@@ -1,5 +1,6 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000, 2001
    Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.

@@ -1,6 +1,7 @@
 /* vms.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 97, 98, 99, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
 
@@ -241,67 +242,67 @@ vms_initialize (abfd)
     return false;
 
 #ifdef __ALPHA
-  PRIV(is_vax) = 0;
+  PRIV (is_vax) = 0;
 #else
-  PRIV(is_vax) = 1;
+  PRIV (is_vax) = 1;
 #endif
-  PRIV(vms_buf) = 0;
-  PRIV(buf_size) = 0;
-  PRIV(rec_length) = 0;
-  PRIV(file_format) = FF_UNKNOWN;
-  PRIV(fixup_done) = false;
-  PRIV(sections) = NULL;
+  PRIV (vms_buf) = 0;
+  PRIV (buf_size) = 0;
+  PRIV (rec_length) = 0;
+  PRIV (file_format) = FF_UNKNOWN;
+  PRIV (fixup_done) = false;
+  PRIV (sections) = NULL;
 
-  PRIV(stack) = ((struct stack_struct *)
+  PRIV (stack) = ((struct stack_struct *)
 		 bfd_malloc (sizeof (struct stack_struct) * STACKSIZE));
-  if (PRIV(stack) == 0)
+  if (PRIV (stack) == 0)
     {
      vms_init_no_mem1:
       free (abfd->tdata.any);
       abfd->tdata.any = 0;
       return false;
     }
-  PRIV(stackptr) = 0;
+  PRIV (stackptr) = 0;
 
-  PRIV(vms_symbol_table) = ((struct bfd_hash_table *)
+  PRIV (vms_symbol_table) = ((struct bfd_hash_table *)
 			     bfd_malloc (sizeof (struct bfd_hash_table)));
-  if (PRIV(vms_symbol_table) == 0)
+  if (PRIV (vms_symbol_table) == 0)
     {
      vms_init_no_mem2:
-      free (PRIV(stack));
-      PRIV(stack) = 0;
+      free (PRIV (stack));
+      PRIV (stack) = 0;
       goto vms_init_no_mem1;
     }
 
-  if (!bfd_hash_table_init (PRIV(vms_symbol_table), _bfd_vms_hash_newfunc))
+  if (!bfd_hash_table_init (PRIV (vms_symbol_table), _bfd_vms_hash_newfunc))
     return false;
 
-  PRIV(location_stack) = ((struct location_struct *)
+  PRIV (location_stack) = ((struct location_struct *)
 			  bfd_malloc (sizeof (struct location_struct)
 				      * LOCATION_SAVE_SIZE));
-  if (PRIV(location_stack) == 0)
+  if (PRIV (location_stack) == 0)
     {
      vms_init_no_mem3:
-      free (PRIV(vms_symbol_table));
-      PRIV(vms_symbol_table) = 0;
+      free (PRIV (vms_symbol_table));
+      PRIV (vms_symbol_table) = 0;
       goto vms_init_no_mem2;
     }
 
   for (i = 0; i < VMS_SECTION_COUNT; i++)
-    PRIV(vms_section_table)[i] = NULL;
+    PRIV (vms_section_table)[i] = NULL;
 
-  PRIV(output_buf) = (unsigned char *) malloc (MAX_OUTREC_SIZE);
-  if (PRIV(output_buf) == 0)
+  PRIV (output_buf) = (unsigned char *) malloc (MAX_OUTREC_SIZE);
+  if (PRIV (output_buf) == 0)
     {
-      free (PRIV(location_stack));
-      PRIV(location_stack) = 0;
+      free (PRIV (location_stack));
+      PRIV (location_stack) = 0;
       goto vms_init_no_mem3;
     }
-  PRIV(push_level) = 0;
-  PRIV(pushed_size) = 0;
-  PRIV(length_pos) = 2;
-  PRIV(output_size) = 0;
-  PRIV(output_alignment) = 1;
+  PRIV (push_level) = 0;
+  PRIV (pushed_size) = 0;
+  PRIV (length_pos) = 2;
+  PRIV (output_size) = 0;
+  PRIV (output_alignment) = 1;
 
   return true;
 }
@@ -357,7 +358,7 @@ static boolean
 vms_fixup_sections (abfd)
      bfd *abfd;
 {
-  if (PRIV(fixup_done))
+  if (PRIV (fixup_done))
     return true;
 
   /*
@@ -365,11 +366,11 @@ vms_fixup_sections (abfd)
    */
 
   /* can't provide section count as argument to fill_section_ptr().  */
-  priv_section_count = PRIV(section_count);
-  bfd_hash_traverse (PRIV(vms_symbol_table), fill_section_ptr,
-		    (PTR) (PRIV(sections)));
+  priv_section_count = PRIV (section_count);
+  bfd_hash_traverse (PRIV (vms_symbol_table), fill_section_ptr,
+		    (PTR) (PRIV (sections)));
 
-  PRIV(fixup_done) = true;
+  PRIV (fixup_done) = true;
 
   return true;
 }
@@ -421,7 +422,7 @@ vms_object_p (abfd)
 	}
 
       if ((prev_type == EOBJ_S_C_EGSD)
-	   && (PRIV(rec_type) != EOBJ_S_C_EGSD))
+	   && (PRIV (rec_type) != EOBJ_S_C_EGSD))
 	{
 	  if (vms_fixup_sections (abfd) == false)
 	    {
@@ -433,7 +434,7 @@ vms_object_p (abfd)
 	    }
 	}
 
-      prev_type = PRIV(rec_type);
+      prev_type = PRIV (rec_type);
 
       if (target_vector == 0)
 	{
@@ -589,7 +590,7 @@ vms_write_object_contents (abfd)
 
   if (abfd->section_count > 0)			/* we have sections */
     {
-      if (PRIV(is_vax))
+      if (PRIV (is_vax))
 	{
 	  if (_bfd_vms_write_hdr (abfd, OBJ_S_C_HDR) != 0)
 	    return false;
@@ -649,17 +650,17 @@ vms_close_and_cleanup (abfd)
   if (abfd == 0)
     return true;
 
-  if (PRIV(vms_buf) != NULL)
+  if (PRIV (vms_buf) != NULL)
     {
-      free (PRIV(vms_buf));
-      PRIV(vms_buf) = NULL;
+      free (PRIV (vms_buf));
+      PRIV (vms_buf) = NULL;
     }
-  PRIV(buf_size) = 0;
+  PRIV (buf_size) = 0;
 
-  if (PRIV(output_buf) != 0)
+  if (PRIV (output_buf) != 0)
     {
-      free (PRIV(output_buf));
-      PRIV(output_buf) = 0;
+      free (PRIV (output_buf));
+      PRIV (output_buf) = 0;
     }
 
   sec = abfd->sections;
@@ -670,40 +671,40 @@ vms_close_and_cleanup (abfd)
       sec = sec->next;
     }
 
-  if (PRIV(sections) != NULL)
+  if (PRIV (sections) != NULL)
     {
-      free (PRIV(sections));
-      PRIV(sections) = NULL;
+      free (PRIV (sections));
+      PRIV (sections) = NULL;
     }
 
-  if (PRIV(vms_symbol_table))
+  if (PRIV (vms_symbol_table))
     {
-      bfd_hash_table_free (PRIV(vms_symbol_table));
-      PRIV(vms_symbol_table) = 0;
+      bfd_hash_table_free (PRIV (vms_symbol_table));
+      PRIV (vms_symbol_table) = 0;
     }
 
-  if (PRIV(stack))
+  if (PRIV (stack))
     {
-      free (PRIV(stack));
-      PRIV(stack) = 0;
+      free (PRIV (stack));
+      PRIV (stack) = 0;
     }
 
-  if (PRIV(location_stack))
+  if (PRIV (location_stack))
     {
-      free (PRIV(location_stack));
-      PRIV(location_stack) = 0;
+      free (PRIV (location_stack));
+      PRIV (location_stack) = 0;
     }
 
   for (i = 0; i < VMS_SECTION_COUNT; i++)
     {
-      es = PRIV(vms_section_table)[i];
+      es = PRIV (vms_section_table)[i];
       while (es != NULL)
 	{
 	  es1 = es->next;
 	  free (es);
 	  es = es1;
 	}
-      PRIV(vms_section_table)[i] = NULL;
+      PRIV (vms_section_table)[i] = NULL;
    }
 
   free (abfd->tdata.any);
@@ -735,18 +736,18 @@ vms_new_section_hook (abfd, section)
 #endif
   bfd_set_section_alignment(abfd, section, 4);
 
-  if (abfd->section_count > PRIV(section_count))
+  if (abfd->section_count > PRIV (section_count))
     {
-      PRIV(sections) = ((asection **)
-			    bfd_realloc (PRIV(sections), abfd->section_count * sizeof (asection *)));
-      if (PRIV(sections) == 0)
+      PRIV (sections) = ((asection **)
+			    bfd_realloc (PRIV (sections), abfd->section_count * sizeof (asection *)));
+      if (PRIV (sections) == 0)
 	return false;
-      PRIV(section_count) = abfd->section_count;
+      PRIV (section_count) = abfd->section_count;
     }
 #if VMS_DEBUG
-  vms_debug (6, "section_count: %d\n", PRIV(section_count));
+  vms_debug (6, "section_count: %d\n", PRIV (section_count));
 #endif
-  PRIV(sections)[section->index] = section;
+  PRIV (sections)[section->index] = section;
 #if VMS_DEBUG
   vms_debug (7, "%d: %s\n", section->index, section->name);
 #endif
@@ -1082,9 +1083,9 @@ vms_get_symtab_upper_bound (abfd)
      bfd *abfd;
 {
 #if VMS_DEBUG
-  vms_debug (1, "vms_get_symtab_upper_bound(%p), %d symbols\n", abfd, PRIV(gsd_sym_count));
+  vms_debug (1, "vms_get_symtab_upper_bound(%p), %d symbols\n", abfd, PRIV (gsd_sym_count));
 #endif
-  return (PRIV(gsd_sym_count)+1) * sizeof (asymbol *);
+  return (PRIV (gsd_sym_count)+1) * sizeof (asymbol *);
 }
 
 /* Copy symbols from hash table to symbol vector
@@ -1100,9 +1101,9 @@ copy_symbols (entry, arg)
   bfd *abfd = (bfd *) arg;
 
   if (entry == NULL)	/* init counter */
-    PRIV(symnum) = 0;
+    PRIV (symnum) = 0;
   else			/* fill vector, inc counter */
-    PRIV(symcache)[PRIV(symnum)++] = ((vms_symbol_entry *)entry)->symbol;
+    PRIV (symcache)[PRIV (symnum)++] = ((vms_symbol_entry *)entry)->symbol;
 
   return true;
 }
@@ -1126,12 +1127,12 @@ vms_get_symtab (abfd, symbols)
 
 	/* traverse table and fill symbols vector */
 
-  PRIV(symcache) = symbols;
-  bfd_hash_traverse(PRIV(vms_symbol_table), copy_symbols, (PTR)abfd);
+  PRIV (symcache) = symbols;
+  bfd_hash_traverse(PRIV (vms_symbol_table), copy_symbols, (PTR)abfd);
 
-  symbols[PRIV(gsd_sym_count)] = NULL;
+  symbols[PRIV (gsd_sym_count)] = NULL;
 
-  return PRIV(gsd_sym_count);
+  return PRIV (gsd_sym_count);
 }
 
 /* Create a new asymbol structure for the BFD abfd and return a pointer
@@ -1181,8 +1182,6 @@ vms_print_symbol (abfd, file, symbol, how)
       case bfd_print_symbol_name:
       case bfd_print_symbol_more:
 	fprintf ((FILE *)file," %s", symbol->name);
-      break;
-
       break;
 
       case bfd_print_symbol_all:

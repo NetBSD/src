@@ -1,7 +1,8 @@
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+   2000
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.

@@ -1,5 +1,5 @@
 /* b.out object file format
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 2000
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.

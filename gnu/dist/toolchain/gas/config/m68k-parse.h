@@ -1,5 +1,5 @@
 /* m68k-parse.h -- header file for m68k assembler
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 96, 1999
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.

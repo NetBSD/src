@@ -1,5 +1,6 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright (C) 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -54,9 +55,9 @@ extern void m32r_prepare_relax_scan ();
 #define md_prepare_relax_scan(fragP, address, aim, this_state, this_type) \
 m32r_prepare_relax_scan (fragP, address, aim, this_state, this_type)
 #else
-extern long m32r_relax_frag PARAMS ((fragS *, long));
-#define md_relax_frag(fragP, stretch) \
-m32r_relax_frag (fragP, stretch)
+extern long m32r_relax_frag PARAMS ((segT, fragS *, long));
+#define md_relax_frag(segment, fragP, stretch) \
+m32r_relax_frag (segment, fragP, stretch)
 #endif
 /* Account for nop if 32 bit insn falls on odd halfword boundary.  */
 #define TC_CGEN_MAX_RELAX(insn, len) (6)

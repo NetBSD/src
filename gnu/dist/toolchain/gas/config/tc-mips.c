@@ -1,5 +1,5 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
-   Copyright (C) 1993, 94, 95, 96, 97, 98, 1999, 2000
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
    Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
@@ -126,7 +126,8 @@ mips_target_format ()
 #ifdef TE_TMIPS
       /* This is traditional mips */
       return (target_big_endian
-	      ? "elf32-tradbigmips" : "elf32-tradlittlemips");
+	      ? (mips_64 ? "elf64-tradbigmips" : "elf32-tradbigmips")
+	      : (mips_64 ? "elf64-tradlittlemips" : "elf32-tradlittlemips"));
 #else
       return (target_big_endian
 	      ? (mips_64 ? "elf64-bigmips" : "elf32-bigmips")
@@ -240,7 +241,7 @@ static int mips_gp32 = 0;
    (ISA) == ISA_MIPS3                \
    || (ISA) == ISA_MIPS4             \
    || (ISA) == ISA_MIPS5             \
-   || (ISA) == ISA_MIPS32            \
+   || (ISA) == ISA_MIPS64            \
    )
 
 /* Whether the processor uses hardware interlocks to protect
@@ -792,6 +793,11 @@ static const pseudo_typeS mips_pseudo_table[] =
   {"stabn", s_mips_stab, 'n'},
   {"text", s_change_sec, 't'},
   {"word", s_cons, 2},
+
+#ifdef MIPS_STABS_ELF
+  { "extern", ecoff_directive_extern, 0},
+#endif
+
   { NULL, NULL, 0 },
 };
 
@@ -1378,6 +1384,7 @@ mips16_mark_labels ()
   if (mips_opts.mips16)
     {
       struct insn_label_list *l;
+      valueT val;
 
       for (l = insn_labels; l != NULL; l = l->next)
 	{
@@ -1385,8 +1392,9 @@ mips16_mark_labels ()
 	  if (OUTPUT_FLAVOR == bfd_target_elf_flavour)
 	    S_SET_OTHER (l->label, STO_MIPS16);
 #endif
-	  if ((S_GET_VALUE (l->label) & 1) == 0)
-	    S_SET_VALUE (l->label, S_GET_VALUE (l->label) + 1);
+	  val = S_GET_VALUE (l->label);
+	  if ((val & 1) == 0)
+	    S_SET_VALUE (l->label, val + 1);
 	}
     }
 }
@@ -1697,12 +1705,15 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 
 	  for (l = insn_labels; l != NULL; l = l->next)
 	    {
+	      valueT val;
+
 	      assert (S_GET_SEGMENT (l->label) == now_seg);
 	      symbol_set_frag (l->label, frag_now);
-	      S_SET_VALUE (l->label, (valueT) frag_now_fix ());
+	      val = (valueT) frag_now_fix ();
 	      /* mips16 text labels are stored as odd.  */
 	      if (mips_opts.mips16)
-		S_SET_VALUE (l->label, S_GET_VALUE (l->label) + 1);
+		val += 1;
+	      S_SET_VALUE (l->label, val);
 	    }
 
 #ifndef NO_ECOFF_DEBUGGING
@@ -2400,12 +2411,15 @@ mips_emit_delays (insns)
 
 	  for (l = insn_labels; l != NULL; l = l->next)
 	    {
+	      valueT val;
+
 	      assert (S_GET_SEGMENT (l->label) == now_seg);
 	      symbol_set_frag (l->label, frag_now);
-	      S_SET_VALUE (l->label, (valueT) frag_now_fix ());
+	      val = (valueT) frag_now_fix ();
 	      /* mips16 text labels are stored as odd.  */
 	      if (mips_opts.mips16)
-		S_SET_VALUE (l->label, S_GET_VALUE (l->label) + 1);
+		val += 1;
+	      S_SET_VALUE (l->label, val);
 	    }
 	}
     }
@@ -3936,7 +3950,7 @@ macro (ip)
 	  if (mips_trap)
 	    macro_build ((char *) NULL, &icnt, NULL, "teq", "s,t", 0, 0);
 	  else
-	      macro_build ((char *) NULL, &icnt, NULL, "break", "c", 7);
+	    macro_build ((char *) NULL, &icnt, NULL, "break", "c", 7);
 	  return;
 	}
 
@@ -3957,7 +3971,7 @@ macro (ip)
 	  macro_build ((char *) NULL, &icnt, NULL,
 		       dbl ? "ddiv" : "div",
 		       "z,s,t", sreg, treg);
-	    macro_build ((char *) NULL, &icnt, NULL, "break", "c", 7);
+	  macro_build ((char *) NULL, &icnt, NULL, "break", "c", 7);
 	}
       expr1.X_add_number = -1;
       macro_build ((char *) NULL, &icnt, &expr1,
@@ -3996,7 +4010,7 @@ macro (ip)
 	     that later insns are available for delay slot filling.  */
 	  --mips_opts.noreorder;
 
-	    macro_build ((char *) NULL, &icnt, NULL, "break", "c", 6);
+	  macro_build ((char *) NULL, &icnt, NULL, "break", "c", 6);
 	}
       macro_build ((char *) NULL, &icnt, NULL, s, "d", dreg);
       break;
@@ -4213,9 +4227,13 @@ macro (ip)
 	}
       else if (mips_pic == SVR4_PIC && ! mips_big_got)
 	{
+	  int lw_reloc_type = (int) BFD_RELOC_MIPS_GOT16;
+
 	  /* If this is a reference to an external symbol, and there
 	     is no constant, we want
 	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
+	     or if tempreg is PIC_CALL_REG
+	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_CALL16)
 	     For a local symbol, we want
 	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
 	       nop
@@ -4242,9 +4260,11 @@ macro (ip)
 	  expr1.X_add_number = offset_expr.X_add_number;
 	  offset_expr.X_add_number = 0;
 	  frag_grow (32);
+	  if (expr1.X_add_number == 0 && tempreg == PIC_CALL_REG)
+	    lw_reloc_type = (int) BFD_RELOC_MIPS_CALL16;
 	  macro_build ((char *) NULL, &icnt, &offset_expr,
 		       dbl ? "ld" : "lw",
-		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT16, GP);
+		       "t,o(b)", tempreg, lw_reloc_type, GP);
 	  if (expr1.X_add_number == 0)
 	    {
 	      int off;
@@ -4350,12 +4370,18 @@ macro (ip)
       else if (mips_pic == SVR4_PIC)
 	{
 	  int gpdel;
+	  int lui_reloc_type = (int) BFD_RELOC_MIPS_GOT_HI16;
+	  int lw_reloc_type = (int) BFD_RELOC_MIPS_GOT_LO16;
 
 	  /* This is the large GOT case.  If this is a reference to an
 	     external symbol, and there is no constant, we want
 	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
 	       addu	$tempreg,$tempreg,$gp
 	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_GOT_LO16)
+	     or if tempreg is PIC_CALL_REG
+	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_CALL_HI16)
+	       addu	$tempreg,$tempreg,$gp
+	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_CALL_LO16)
 	     For a local symbol, we want
 	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
 	       nop
@@ -4394,8 +4420,13 @@ macro (ip)
 	    gpdel = 4;
 	  else
 	    gpdel = 0;
+	  if (expr1.X_add_number == 0 && tempreg == PIC_CALL_REG)
+	    {
+	      lui_reloc_type = (int) BFD_RELOC_MIPS_CALL_HI16;
+	      lw_reloc_type = (int) BFD_RELOC_MIPS_CALL_LO16;
+	    }
 	  macro_build ((char *) NULL, &icnt, &offset_expr, "lui", "t,u",
-		       tempreg, (int) BFD_RELOC_MIPS_GOT_HI16);
+		       tempreg, lui_reloc_type);
 	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
 		       ((bfd_arch_bits_per_address (stdoutput) == 32
 			 || ! ISA_HAS_64BIT_REGS (mips_opts.isa))
@@ -4403,8 +4434,7 @@ macro (ip)
 		       "d,v,t", tempreg, tempreg, GP);
 	  macro_build ((char *) NULL, &icnt, &offset_expr,
 		       dbl ? "ld" : "lw",
-		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT_LO16,
-		       tempreg);
+		       "t,o(b)", tempreg, lw_reloc_type, tempreg);
 	  if (expr1.X_add_number == 0)
 	    {
 	      int off;
@@ -8737,6 +8767,7 @@ my_getExpression (ep, str)
      char *str;
 {
   char *save_in;
+  valueT val;
 
   save_in = input_line_pointer;
   input_line_pointer = str;
@@ -8754,8 +8785,8 @@ my_getExpression (ep, str)
       && S_GET_SEGMENT (ep->X_add_symbol) == now_seg
       && symbol_get_frag (ep->X_add_symbol) == frag_now
       && symbol_constant_p (ep->X_add_symbol)
-      && S_GET_VALUE (ep->X_add_symbol) == frag_now_fix ())
-    S_SET_VALUE (ep->X_add_symbol, S_GET_VALUE (ep->X_add_symbol) + 1);
+      && (val = S_GET_VALUE (ep->X_add_symbol)) == frag_now_fix ())
+    S_SET_VALUE (ep->X_add_symbol, val + 1);
 }
 
 /* Turn a string in input_line_pointer into a floating point constant
@@ -9057,6 +9088,7 @@ md_parse_option (c, arg)
       g_switch_value = 0x7fffffff;
       break;
 
+#ifdef OBJ_ELF
       /* When generating ELF code, we permit -KPIC and -call_shared to
 	 select SVR4_PIC, and -non_shared to select no PIC.  This is
 	 intended to be compatible with Irix 5.  */
@@ -9090,6 +9122,7 @@ md_parse_option (c, arg)
     case OPTION_XGOT:
       mips_big_got = 1;
       break;
+#endif /* OBJ_ELF */
 
     case 'G':
       if (! USE_GLOBAL_POINTER_OPT)
@@ -9107,6 +9140,7 @@ md_parse_option (c, arg)
       g_switch_seen = 1;
       break;
 
+#ifdef OBJ_ELF
       /* The -32 and -64 options tell the assembler to output the 32
          bit or the 64 bit MIPS ELF format.  */
     case OPTION_32:
@@ -9120,7 +9154,9 @@ md_parse_option (c, arg)
 	list = bfd_target_list ();
 	for (l = list; *l != NULL; l++)
 	  if (strcmp (*l, "elf64-bigmips") == 0
-	      || strcmp (*l, "elf64-littlemips") == 0)
+	      || strcmp (*l, "elf64-littlemips") == 0
+	      || strcmp (*l, "elf64-tradbigmips") == 0
+	      || strcmp (*l, "elf64-tradlittlemips") == 0)
 	    break;
 	if (*l == NULL)
 	  as_fatal (_("No compiled in support for 64 bit object file format"));
@@ -9128,6 +9164,7 @@ md_parse_option (c, arg)
 	mips_64 = 1;
       }
       break;
+#endif /* OBJ_ELF */
 
     case OPTION_GP32:
       mips_gp32 = 1;
@@ -9250,6 +9287,7 @@ MIPS options:\n\
   show (stream, "6000", &column, &first);
   show (stream, "8000", &column, &first);
   show (stream, "10000", &column, &first);
+  show (stream, "12000", &column, &first);
   show (stream, "mips32-4k", &column, &first);
   show (stream, "sb-1", &column, &first);
   fputc ('\n', stream);
@@ -9483,7 +9521,8 @@ md_apply_fix (fixP, valueP)
      valueT *valueP;
 {
   unsigned char *buf;
-  long insn, value;
+  long insn;
+  valueT value;
 
   assert (fixP->fx_size == 4
 	  || fixP->fx_r_type == BFD_RELOC_16
@@ -9498,27 +9537,28 @@ md_apply_fix (fixP, valueP)
 #ifdef OBJ_ELF
   if (fixP->fx_addsy != NULL && OUTPUT_FLAVOR == bfd_target_elf_flavour)
     {
-    if (S_GET_OTHER (fixP->fx_addsy) == STO_MIPS16
-        || S_IS_WEAK (fixP->fx_addsy)
-        || (symbol_used_in_reloc_p (fixP->fx_addsy)
-            && (((bfd_get_section_flags (stdoutput,
-                                         S_GET_SEGMENT (fixP->fx_addsy))
-                  & SEC_LINK_ONCE) != 0)
-                || !strncmp (segment_name (S_GET_SEGMENT (fixP->fx_addsy)),
-                             ".gnu.linkonce",
-                             sizeof (".gnu.linkonce") - 1))))
+      if (S_GET_OTHER (fixP->fx_addsy) == STO_MIPS16
+	  || S_IS_WEAK (fixP->fx_addsy)
+	  || (symbol_used_in_reloc_p (fixP->fx_addsy)
+	      && (((bfd_get_section_flags (stdoutput,
+					   S_GET_SEGMENT (fixP->fx_addsy))
+		    & SEC_LINK_ONCE) != 0)
+		  || !strncmp (segment_name (S_GET_SEGMENT (fixP->fx_addsy)),
+			       ".gnu.linkonce",
+			       sizeof (".gnu.linkonce") - 1))))
 
-      {
-        value -= S_GET_VALUE (fixP->fx_addsy);
-        if (value != 0 && ! fixP->fx_pcrel)
-          {
-            /* In this case, the bfd_install_relocation routine will
-               incorrectly add the symbol value back in.  We just want
-               the addend to appear in the object file.
-	       FIXME: If this makes VALUE zero, we're toast.  */
-            value -= S_GET_VALUE (fixP->fx_addsy);
-          }
-      }
+	{
+	  valueT symval = S_GET_VALUE (fixP->fx_addsy);
+	  value -= symval;
+	  if (value != 0 && ! fixP->fx_pcrel)
+	    {
+	      /* In this case, the bfd_install_relocation routine will
+		 incorrectly add the symbol value back in.  We just want
+		 the addend to appear in the object file.
+		 FIXME: If this makes VALUE zero, we're toast.  */
+	      value -= symval;
+	    }
+	}
 
       /* This code was generated using trial and error and so is
 	 fragile and not trustworthy.  If you change it, you should
@@ -9668,7 +9708,7 @@ md_apply_fix (fixP, valueP)
 	 up deleting a LO16 reloc.  See the 'o' case in mips_ip.  */
       if (fixP->fx_done)
 	{
-	  if (value < -0x8000 || value > 0x7fff)
+	  if (value + 0x8000 > 0xffff)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("relocation overflow"));
 	  buf = (unsigned char *) fixP->fx_frag->fr_literal + fixP->fx_where;
@@ -9686,7 +9726,7 @@ md_apply_fix (fixP, valueP)
        */
       if ((value & 0x3) != 0)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
-		      _("Branch to odd address (%lx)"), value);
+		      _("Branch to odd address (%lx)"), (long) value);
 
       if (!fixP->fx_done && value != 0)
 	break;
@@ -9696,7 +9736,7 @@ md_apply_fix (fixP, valueP)
       if (!fixP->fx_done)
 	value -= fixP->fx_frag->fr_address + fixP->fx_where;
 
-      value >>= 2;
+      value = (offsetT) value >> 2;
 
       /* update old instruction data */
       buf = (unsigned char *) (fixP->fx_where + fixP->fx_frag->fr_literal);
@@ -9705,7 +9745,7 @@ md_apply_fix (fixP, valueP)
       else
 	insn = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
 
-      if (value >= -0x8000 && value < 0x8000)
+      if (value + 0x8000 <= 0xffff)
 	insn |= value & 0xffff;
       else
 	{
@@ -10722,6 +10762,7 @@ mips16_extended_frag (fragp, sec, stretch)
   offsetT val;
   int mintiny, maxtiny;
   segT symsec;
+  fragS *sym_frag;
 
   if (RELAX_MIPS16_USER_SMALL (fragp->fr_subtype))
     return 0;
@@ -10755,12 +10796,13 @@ mips16_extended_frag (fragp, sec, stretch)
       maxtiny = (1 << (op->nbits - 1)) - 1;
     }
 
+  sym_frag = symbol_get_frag (fragp->fr_symbol);
+
   /* We can't always call S_GET_VALUE here, because we don't want to
      lock in a particular frag address.  */
   if (symbol_constant_p (fragp->fr_symbol))
     {
-      val = (S_GET_VALUE (fragp->fr_symbol)
-	     + symbol_get_frag (fragp->fr_symbol)->fr_address);
+      val = S_GET_VALUE (fragp->fr_symbol) + sym_frag->fr_address;
       symsec = S_GET_SEGMENT (fragp->fr_symbol);
     }
   else if (symbol_equated_p (fragp->fr_symbol)
@@ -10773,7 +10815,7 @@ mips16_extended_frag (fragp, sec, stretch)
       val = (S_GET_VALUE (eqsym)
 	     + symbol_get_frag (eqsym)->fr_address
 	     + symbol_get_value_expression (fragp->fr_symbol)->X_add_number
-	     + symbol_get_frag (fragp->fr_symbol)->fr_address);
+	     + sym_frag->fr_address);
       symsec = S_GET_SEGMENT (eqsym);
     }
   else
@@ -10796,6 +10838,7 @@ mips16_extended_frag (fragp, sec, stretch)
 	}
       else
 	{
+	  /* Must have been called from md_estimate_size_before_relax.  */
 	  if (symsec != sec)
 	    {
 	      fragp->fr_subtype =
@@ -10808,16 +10851,22 @@ mips16_extended_frag (fragp, sec, stretch)
 
 	      return 1;
 	    }
+	  if (fragp != sym_frag && sym_frag->fr_address == 0)
+	    /* Assume non-extended on the first relaxation pass.
+	       The address we have calculated will be bogus if this is
+	       a forward branch to another frag, as the forward frag
+	       will have fr_address == 0.  */
+	    return 0;
 	}
 
       /* In this case, we know for sure that the symbol fragment is in
-	 the same section.  If the fr_address of the symbol fragment
-	 is greater then the address of this fragment we want to add
+	 the same section.  If the relax_marker of the symbol fragment
+	 differs from the relax_marker of this fragment, we have not
+	 yet adjusted the symbol fragment fr_address.  We want to add
 	 in STRETCH in order to get a better estimate of the address.
 	 This particularly matters because of the shift bits.  */
       if (stretch != 0
-	  && (symbol_get_frag (fragp->fr_symbol)->fr_address
-	      >= fragp->fr_address))
+	  && sym_frag->relax_marker != fragp->relax_marker)
 	{
 	  fragS *f;
 
@@ -10827,9 +10876,7 @@ mips16_extended_frag (fragp, sec, stretch)
              This doesn't handle the fr_subtype field, which specifies
              a maximum number of bytes to skip when doing an
              alignment.  */
-	  for (f = fragp;
-	       f != NULL && f != symbol_get_frag (fragp->fr_symbol);
-	       f = f->fr_next)
+	  for (f = fragp; f != NULL && f != sym_frag; f = f->fr_next)
 	    {
 	      if (f->fr_type == rs_align || f->fr_type == rs_align_code)
 		{
@@ -12014,6 +12061,12 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
   { "10000",          0,      ISA_MIPS4,      CPU_R10000, },
   { "10k",            0,      ISA_MIPS4,      CPU_R10000, },
   { "r10k",           0,      ISA_MIPS4,      CPU_R10000, },
+
+  /* R12000 CPU */
+  { "R12000",         0,      ISA_MIPS4,      CPU_R12000, },
+  { "12000",          0,      ISA_MIPS4,      CPU_R12000, },
+  { "12k",            0,      ISA_MIPS4,      CPU_R12000, },
+  { "r12k",           0,      ISA_MIPS4,      CPU_R12000, },
 
   /* VR4100 CPU */
   { "VR4100",         0,      ISA_MIPS3,      CPU_VR4100, },

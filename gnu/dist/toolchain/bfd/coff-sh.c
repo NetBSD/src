@@ -1,5 +1,6 @@
 /* BFD back-end for Hitachi Super-H COFF binaries.
-   Copyright 1993, 94, 95, 96, 97, 98, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.

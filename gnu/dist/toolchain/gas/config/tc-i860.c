@@ -1,5 +1,5 @@
 /* tc-i860.c -- Assembler for the Intel i860 architecture.
-   Copyright (C) 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000
+   Copyright 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000
    Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked

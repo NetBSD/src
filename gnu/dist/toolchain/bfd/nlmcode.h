@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright (C) 1993, 94, 95, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1998, 2000 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.

@@ -1,5 +1,6 @@
 /* bfd back-end for mips support
-   Copyright (C) 1990, 91-97, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -54,6 +55,7 @@ enum
   I_mips6000,
   I_mips8000,
   I_mips10000,
+  I_mips12000,
   I_mips16,
   I_mips32,
   I_mips32_4k,
@@ -80,6 +82,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (32, 32, bfd_mach_mips6000, "mips:6000",      false, NN(I_mips6000)),
   N (64, 64, bfd_mach_mips8000, "mips:8000",      false, NN(I_mips8000)),
   N (64, 64, bfd_mach_mips10000,"mips:10000",     false, NN(I_mips10000)),
+  N (64, 64, bfd_mach_mips12000,"mips:12000",     false, NN(I_mips12000)),
   N (64, 64, bfd_mach_mips16,   "mips:16",        false, NN(I_mips16)),
   N (32, 32, bfd_mach_mips32,   "mips:mips32",    false, NN(I_mips32)),
   N (32, 32, bfd_mach_mips32_4k,"mips:mips32-4k", false, NN(I_mips32_4k)),

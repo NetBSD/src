@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993, 94, 95, 96, 97, 1999, 2000
+   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001
    Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
@@ -49,7 +49,7 @@ struct expressionS;
    relocation: */
 #define MAX_GPREL_OFFSET (0x7FF4)
 
-#define md_relax_frag(fragp, stretch) mips_relax_frag(fragp, stretch)
+#define md_relax_frag(segment, fragp, stretch) mips_relax_frag(fragp, stretch)
 extern int mips_relax_frag PARAMS ((struct frag *, long));
 
 #define md_undefined_symbol(name)	(0)

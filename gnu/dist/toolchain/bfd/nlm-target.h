@@ -1,5 +1,5 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright (C) 1993, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

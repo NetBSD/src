@@ -1,5 +1,5 @@
 /* Motorola MCore specific support for 32-bit ELF
-   Copyright 1994, 1995, 1999 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

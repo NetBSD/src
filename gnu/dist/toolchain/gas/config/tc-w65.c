@@ -1,5 +1,5 @@
 /* tc-w65.c -- Assemble code for the W65816
-   Copyright (C) 1995, 1998, 2000 Free Software Foundation.
+   Copyright 1995, 1998, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -101,7 +101,25 @@ int X;				/* X flag */
 #define WORD_F 32767
 #define WORD_B 32768
 
-relax_typeS md_relax_table[C (END, 0)];
+relax_typeS md_relax_table[C (END, 0)] = {
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+
+  /* COND_BRANCH */
+  { 0,       0,       0,  0 },				/* UNDEF_BYTE_DISP */
+  { BYTE_F,  BYTE_B,  2,  C (COND_BRANCH, WORD_DISP) },	/* BYTE_DISP */
+  { WORD_F,  WORD_B,  5,  0 },				/* WORD_DISP */
+  { 0,       0,       5,  0 },				/* UNDEF_WORD_DISP */
+
+  /* UNCOND_BRANCH */
+  { 0,       0,       0,  0 },				  /* UNDEF_BYTE_DISP */
+  { BYTE_F,  BYTE_B,  2,  C (UNCOND_BRANCH, WORD_DISP) }, /* BYTE_DISP */
+  { WORD_F,  WORD_B,  3,  0 },				  /* WORD_DISP */
+  { 0,       0,       3,  0 }				  /* UNDEF_WORD_DISP */
+
+};
 
 /* This function is called once, at assembler startup time.  This
    should set up all the tables, etc that the MD part of the assembler
@@ -131,7 +149,6 @@ s_longa (xmode)
 void
 md_begin ()
 {
-  relax_typeS *table;
   struct opinfo *opcode;
   char *prev_name = "";
 
@@ -152,29 +169,6 @@ md_begin ()
 	  opcode->name = prev_name;
 	}
     }
-
-  /* Initialize the relax table.  We use a local variable to avoid
-     warnings about modifying a supposedly const data structure.  */
-  table = (relax_typeS *) md_relax_table;
-  table[C (COND_BRANCH, BYTE_DISP)].rlx_forward = BYTE_F;
-  table[C (COND_BRANCH, BYTE_DISP)].rlx_backward = BYTE_B;
-  table[C (COND_BRANCH, BYTE_DISP)].rlx_length = 2;
-  table[C (COND_BRANCH, BYTE_DISP)].rlx_more = C (COND_BRANCH, WORD_DISP);
-
-  table[C (COND_BRANCH, WORD_DISP)].rlx_forward = WORD_F;
-  table[C (COND_BRANCH, WORD_DISP)].rlx_backward = WORD_B;
-  table[C (COND_BRANCH, WORD_DISP)].rlx_length = 5;
-  table[C (COND_BRANCH, WORD_DISP)].rlx_more = 0;
-
-  table[C (UNCOND_BRANCH, BYTE_DISP)].rlx_forward = BYTE_F;
-  table[C (UNCOND_BRANCH, BYTE_DISP)].rlx_backward = BYTE_B;
-  table[C (UNCOND_BRANCH, BYTE_DISP)].rlx_length = 2;
-  table[C (UNCOND_BRANCH, BYTE_DISP)].rlx_more = C (UNCOND_BRANCH, WORD_DISP);
-
-  table[C (UNCOND_BRANCH, WORD_DISP)].rlx_forward = WORD_F;
-  table[C (UNCOND_BRANCH, WORD_DISP)].rlx_backward = WORD_B;
-  table[C (UNCOND_BRANCH, WORD_DISP)].rlx_length = 3;
-  table[C (UNCOND_BRANCH, WORD_DISP)].rlx_more = 0;
 
   flag_signed_overflow_ok = 1;
 }
@@ -1148,31 +1142,43 @@ md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
      register segT segment_type;
 {
-  int what = GET_WHAT (fragP->fr_subtype);
+  int what;
 
   switch (fragP->fr_subtype)
     {
     default:
       abort ();
+
     case C (COND_BRANCH, UNDEF_BYTE_DISP):
     case C (UNCOND_BRANCH, UNDEF_BYTE_DISP):
+      what = GET_WHAT (fragP->fr_subtype);
       /* Used to be a branch to somewhere which was unknown.  */
       if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
 	  /* Got a symbol and it's defined in this segment, become byte
 	     sized - maybe it will fix up.  */
 	  fragP->fr_subtype = C (what, BYTE_DISP);
-	  fragP->fr_var = md_relax_table[C (what, BYTE_DISP)].rlx_length;
 	}
       else
 	{
 	  /* Its got a segment, but its not ours, so it will always be
              long.  */
 	  fragP->fr_subtype = C (what, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (what, WORD_DISP)].rlx_length;
-	  return md_relax_table[C (what, WORD_DISP)].rlx_length;
 	}
+      break;
+
+    case C (COND_BRANCH, BYTE_DISP):
+    case C (COND_BRANCH, WORD_DISP):
+    case C (COND_BRANCH, UNDEF_WORD_DISP):
+    case C (UNCOND_BRANCH, BYTE_DISP):
+    case C (UNCOND_BRANCH, WORD_DISP):
+    case C (UNCOND_BRANCH, UNDEF_WORD_DISP):
+      /* When relaxing a section for the second time, we don't need to
+	 do anything besides return the current size.  */
+      break;
     }
+
+  fragP->fr_var = md_relax_table[fragP->fr_subtype].rlx_length;
   return fragP->fr_var;
 }
 

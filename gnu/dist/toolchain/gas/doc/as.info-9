@@ -324,6 +324,7 @@ Index
 * common variable storage:               bss.
 * compare and jump expansions, i960:     Compare-and-branch-i960.
 * compare/branch instructions, i960:     Compare-and-branch-i960.
+* comparison expressions:                Infix Ops.
 * conditional assembly:                  If.
 * constant, single character:            Chars.
 * constants:                             Constants.
@@ -446,6 +447,7 @@ Index
 * expr (internal section):               As Sections.
 * expression arguments:                  Arguments.
 * expressions:                           Expressions.
+* expressions, comparison:               Infix Ops.
 * expressions, empty:                    Empty Exprs.
 * expressions, integer:                  Integer Exprs.
 * extAuxRegister directive, ARC:         ARC Directives.
@@ -555,7 +557,7 @@ Index
 * i386 instruction naming:               i386-Mnemonics.
 * i386 instruction prefixes:             i386-Prefixes.
 * i386 intel_syntax pseudo op:           i386-Syntax.
-* i386 jump optimization:                i386-jumps.
+* i386 jump optimization:                i386-Jumps.
 * i386 jump, call, return:               i386-Syntax.
 * i386 jump/call operands:               i386-Syntax.
 * i386 memory references:                i386-Memory.
@@ -651,8 +653,8 @@ Index
 * joining text and data sections:        R.
 * jump instructions, i386:               i386-Mnemonics.
 * jump instructions, x86-64:             i386-Mnemonics.
-* jump optimization, i386:               i386-jumps.
-* jump optimization, x86-64:             i386-jumps.
+* jump optimization, i386:               i386-Jumps.
+* jump optimization, x86-64:             i386-Jumps.
 * jump/call operands, i386:              i386-Syntax.
 * jump/call operands, x86-64:            i386-Syntax.
 * label (:):                             Statements.
@@ -1158,7 +1160,7 @@ Index
 * x86-64 immediate operands:             i386-Syntax.
 * x86-64 instruction naming:             i386-Mnemonics.
 * x86-64 intel_syntax pseudo op:         i386-Syntax.
-* x86-64 jump optimization:              i386-jumps.
+* x86-64 jump optimization:              i386-Jumps.
 * x86-64 jump, call, return:             i386-Syntax.
 * x86-64 jump/call operands:             i386-Syntax.
 * x86-64 memory references:              i386-Memory.

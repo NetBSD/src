@@ -1,5 +1,5 @@
 /* This file is tc-h8500.h
-   Copyright (C) 1993, 95, 97, 98, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1997, 1998, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -33,37 +33,37 @@ section entitled "GNU Free Documentation License".
 
 Indirect:
 binutils.info-1: 1680
-binutils.info-2: 51584
-binutils.info-3: 99084
+binutils.info-2: 42164
+binutils.info-3: 91804
 
 Tag Table:
 (Indirect)
 Node: Top1680
-Node: ar3177
-Node: ar cmdline5351
-Node: ar scripts13479
-Node: nm19158
-Node: objcopy26576
-Node: objdump40217
-Node: ranlib50835
-Node: size51584
-Node: strings54315
-Node: strip56140
-Node: c++filt59105
-Ref: c++filt-Footnote-162042
-Node: addr2line62148
-Node: nlmconv64743
-Node: windres67347
-Node: dlltool72399
-Node: readelf81740
-Node: Selecting The Target System84908
-Node: Target Selection85925
-Node: Architecture Selection88626
-Node: Linker Emulation Selection89857
-Node: Reporting Bugs90735
-Node: Bug Criteria91511
-Node: Bug Reporting92057
-Node: GNU Free Documentation License99084
-Node: Index117512
+Node: ar3179
+Node: ar cmdline5353
+Node: ar scripts13481
+Node: nm19160
+Node: objcopy26578
+Node: objdump42164
+Node: ranlib52782
+Node: size53531
+Node: strings56262
+Node: strip58087
+Node: c++filt61052
+Ref: c++filt-Footnote-163989
+Node: addr2line64095
+Node: nlmconv66690
+Node: windres69294
+Node: dlltool74346
+Node: readelf83687
+Node: Selecting The Target System86855
+Node: Target Selection87872
+Node: Architecture Selection90573
+Node: Linker Emulation Selection91804
+Node: Reporting Bugs92682
+Node: Bug Criteria93458
+Node: Bug Reporting94004
+Node: GNU Free Documentation License101031
+Node: Index119459
 
 End Tag Table

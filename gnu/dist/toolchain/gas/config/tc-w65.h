@@ -1,5 +1,5 @@
 /* This file is tc-w65.h
-   Copyright (C) 1995, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1997, 1998, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,5 +1,6 @@
 /* Support for the generic parts of PE/PEI, for BFD.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -221,9 +222,9 @@ coff_swap_filehdr_in (abfd, src, dst)
 }
 
 #ifdef COFF_IMAGE_WITH_PE
-#define coff_swap_filehdr_out _bfd_pei_only_swap_filehdr_out
+# define coff_swap_filehdr_out _bfd_XXi_only_swap_filehdr_out
 #else
-#define coff_swap_filehdr_out _bfd_pe_only_swap_filehdr_out
+# define coff_swap_filehdr_out _bfd_pe_only_swap_filehdr_out
 #endif
 
 static void
@@ -302,6 +303,14 @@ pe_mkobject (abfd)
 
   /* in_reloc_p is architecture dependent.  */
   pe->in_reloc_p = in_reloc_p;
+
+#ifdef PEI_FORCE_MINIMUM_ALIGNMENT
+  pe->force_minimum_alignment = 1;
+#endif
+#ifdef PEI_TARGET_SUBSYSTEM
+  pe->target_subsystem = PEI_TARGET_SUBSYSTEM;
+#endif
+
   return true;
 }
 
@@ -365,7 +374,7 @@ pe_print_private_bfd_data (abfd, vfile)
 {
   FILE *file = (FILE *) vfile;
 
-  if (!_bfd_pe_print_private_bfd_data_common (abfd, vfile))
+  if (!_bfd_XX_print_private_bfd_data_common (abfd, vfile))
     return false;
 
   if (pe_saved_coff_bfd_print_private_bfd_data != NULL)
@@ -385,7 +394,7 @@ static boolean
 pe_bfd_copy_private_bfd_data (ibfd, obfd)
      bfd *ibfd, *obfd;
 {
-  if (!_bfd_pe_bfd_copy_private_bfd_data_common (ibfd, obfd))
+  if (!_bfd_XX_bfd_copy_private_bfd_data_common (ibfd, obfd))
     return false;
 
   if (pe_saved_coff_bfd_copy_private_bfd_data)
@@ -395,9 +404,9 @@ pe_bfd_copy_private_bfd_data (ibfd, obfd)
 }
 
 #define coff_bfd_copy_private_section_data \
-  _bfd_pe_bfd_copy_private_section_data
+  _bfd_XX_bfd_copy_private_section_data
 
-#define coff_get_symbol_info _bfd_pe_get_symbol_info
+#define coff_get_symbol_info _bfd_XX_get_symbol_info
 
 #ifdef COFF_IMAGE_WITH_PE
 

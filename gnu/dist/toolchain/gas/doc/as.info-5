@@ -17,6 +17,49 @@ Software Foundation, Inc.
 section entitled "GNU Free Documentation License".
 
 
+File: as.info,  Node: HPPA-Dependent,  Next: ESA/390-Dependent,  Prev: H8/500-Dependent,  Up: Machine Dependencies
+
+HPPA Dependent Features
+=======================
+
+* Menu:
+
+* HPPA Notes::                Notes
+* HPPA Options::              Options
+* HPPA Syntax::               Syntax
+* HPPA Floating Point::       Floating Point
+* HPPA Directives::           HPPA Machine Directives
+* HPPA Opcodes::              Opcodes
+
+
+File: as.info,  Node: HPPA Notes,  Next: HPPA Options,  Up: HPPA-Dependent
+
+Notes
+-----
+
+   As a back end for GNU CC `as' has been throughly tested and should
+work extremely well.  We have tested it only minimally on hand written
+assembly code and no one has tested it much on the assembly output from
+the HP compilers.
+
+   The format of the debugging sections has changed since the original
+`as' port (version 1.3X) was released; therefore, you must rebuild all
+HPPA objects and libraries with the new assembler so that you can debug
+the final executable.
+
+   The HPPA `as' port generates a small subset of the relocations
+available in the SOM and ELF object file formats.  Additional relocation
+support will be added as it becomes necessary.
+
+
+File: as.info,  Node: HPPA Options,  Next: HPPA Syntax,  Prev: HPPA Notes,  Up: HPPA-Dependent
+
+Options
+-------
+
+   `as' has no machine-dependent command-line options for the HPPA.
+
+
 File: as.info,  Node: HPPA Syntax,  Next: HPPA Floating Point,  Prev: HPPA Options,  Up: HPPA-Dependent
 
 Syntax
@@ -459,7 +502,7 @@ architecture extending the Intel architecture to 64-bits.
 * i386-Regs::                   Register Naming
 * i386-Prefixes::               Instruction Prefixes
 * i386-Memory::                 Memory References
-* i386-jumps::                  Handling of Jump Instructions
+* i386-Jumps::                  Handling of Jump Instructions
 * i386-Float::                  Floating Point
 * i386-SIMD::                   Intel's MMX and AMD's 3DNow! SIMD Operations
 * i386-16bit::                  Writing 16-bit Code
@@ -708,7 +751,7 @@ and will not work with all prefixes.
      operands.
 
 
-File: as.info,  Node: i386-Memory,  Next: i386-jumps,  Prev: i386-Prefixes,  Up: i386-Dependent
+File: as.info,  Node: i386-Memory,  Next: i386-Jumps,  Prev: i386-Prefixes,  Up: i386-Dependent
 
 Memory References
 -----------------
@@ -778,7 +821,7 @@ AT&T: `symbol(%rip)', Intel: `[rip + symbol]'
 except registers used are 64-bit instead of 32-bit.
 
 
-File: as.info,  Node: i386-jumps,  Next: i386-Float,  Prev: i386-Memory,  Up: i386-Dependent
+File: as.info,  Node: i386-Jumps,  Next: i386-Float,  Prev: i386-Memory,  Up: i386-Dependent
 
 Handling of Jump Instructions
 -----------------------------
@@ -786,11 +829,11 @@ Handling of Jump Instructions
    Jump instructions are always optimized to use the smallest possible
 displacements.  This is accomplished by using byte (8-bit) displacement
 jumps whenever the target is sufficiently close.  If a byte displacement
-is insufficient a long (32-bit) displacement is used.  We do not support
-word (16-bit) displacement jumps in 32-bit mode (i.e. prefixing the jump
+is insufficient a long displacement is used.  We do not support word
+(16-bit) displacement jumps in 32-bit mode (i.e. prefixing the jump
 instruction with the `data16' instruction prefix), since the 80386
 insists upon masking `%eip' to 16 bits after the word displacement is
-added.
+added. (See also *note i386-Arch::)
 
    Note that the `jcxz', `jecxz', `loop', `loopz', `loope', `loopnz'
 and `loopne' instructions only come in byte displacements, so that if
@@ -804,7 +847,7 @@ get around this problem by expanding `jcxz foo' to
      cx_nonzero:
 
 
-File: as.info,  Node: i386-Float,  Next: i386-SIMD,  Prev: i386-jumps,  Up: i386-Dependent
+File: as.info,  Node: i386-Float,  Next: i386-SIMD,  Prev: i386-Jumps,  Up: i386-Dependent
 
 Floating Point
 --------------
@@ -942,13 +985,29 @@ The choices for CPU_TYPE are:
 `pentiumpro'   `pentium4'     `k6'           `athlon'
 `sledgehammer'                               
 
-   Apart from the warning, there is only one other effect on `as'
-operation;  If you specify a CPU other than `i486', then shift by one
-instructions such as `sarl $1, %eax' will automatically use a two byte
-opcode sequence.  The larger three byte opcode sequence is used on the
-486 (and when no architecture is specified) because it executes faster
-on the 486.  Note that you can explicitly request the two byte opcode
-by writing `sarl %eax'.
+   Apart from the warning, there are only two other effects on `as'
+operation;  Firstly, if you specify a CPU other than `i486', then shift
+by one instructions such as `sarl $1, %eax' will automatically use a
+two byte opcode sequence.  The larger three byte opcode sequence is
+used on the 486 (and when no architecture is specified) because it
+executes faster on the 486.  Note that you can explicitly request the
+two byte opcode by writing `sarl %eax'.  Secondly, if you specify
+`i8086', `i186', or `i286', _and_ `.code16' or `.code16gcc' then byte
+offset conditional jumps will be promoted when necessary to a two
+instruction sequence consisting of a conditional jump of the opposite
+sense around an unconditional jump to the target.
+
+   Following the CPU architecture, you may specify `jumps' or `nojumps'
+to control automatic promotion of conditional jumps.  `jumps' is the
+default, and enables jump promotion;  All external jumps will be of the
+long variety, and file-local jumps will be promoted as necessary.
+(*note i386-Jumps::)  `nojumps' leaves external conditional jumps as
+byte offset jumps, and warns about file-local conditional jumps that
+`as' promotes.  Unconditional jumps are treated as for `jumps'.
+
+   For example
+
+      .arch i8086,nojumps
 
 
 File: as.info,  Node: i386-Notes,  Prev: i386-Bugs,  Up: i386-Dependent
@@ -1212,50 +1271,4 @@ Floating Point
 
    `as' generates IEEE floating-point numbers for the directives
 `.float', `.double', `.extended', and `.single'.
-
-
-File: as.info,  Node: Directives-i960,  Next: Opcodes for i960,  Prev: Floating Point-i960,  Up: i960-Dependent
-
-i960 Machine Directives
------------------------
-
-`.bss SYMBOL, LENGTH, ALIGN'
-     Reserve LENGTH bytes in the bss section for a local SYMBOL,
-     aligned to the power of two specified by ALIGN.  LENGTH and ALIGN
-     must be positive absolute expressions.  This directive differs
-     from `.lcomm' only in that it permits you to specify an alignment.
-     *Note `.lcomm': Lcomm.
-
-`.extended FLONUMS'
-     `.extended' expects zero or more flonums, separated by commas; for
-     each flonum, `.extended' emits an IEEE extended-format (80-bit)
-     floating-point number.
-
-`.leafproc CALL-LAB, BAL-LAB'
-     You can use the `.leafproc' directive in conjunction with the
-     optimized `callj' instruction to enable faster calls of leaf
-     procedures.  If a procedure is known to call no other procedures,
-     you may define an entry point that skips procedure prolog code
-     (and that does not depend on system-supplied saved context), and
-     declare it as the BAL-LAB using `.leafproc'.  If the procedure
-     also has an entry point that goes through the normal prolog, you
-     can specify that entry point as CALL-LAB.
-
-     A `.leafproc' declaration is meant for use in conjunction with the
-     optimized call instruction `callj'; the directive records the data
-     needed later to choose between converting the `callj' into a `bal'
-     or a `call'.
-
-     CALL-LAB is optional; if only one argument is present, or if the
-     two arguments are identical, the single argument is assumed to be
-     the `bal' entry point.
-
-`.sysproc NAME, INDEX'
-     The `.sysproc' directive defines a name for a system procedure.
-     After you define it using `.sysproc', you can use NAME to refer to
-     the system procedure identified by INDEX when calling procedures
-     with the optimized call instruction `callj'.
-
-     Both arguments are required; INDEX must be between 0 and 31
-     (inclusive).
 

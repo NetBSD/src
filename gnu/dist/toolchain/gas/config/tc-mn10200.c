@@ -1,5 +1,6 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1284,29 +1285,19 @@ md_estimate_size_before_relax (fragp, seg)
      fragS *fragp;
      asection *seg;
 {
-  if (fragp->fr_subtype == 0)
-    return 2;
-  if (fragp->fr_subtype == 3)
-    return 3;
-  if (fragp->fr_subtype == 6)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol)
-	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 7;
-	  return 5;
-	}
-      return 3;
-    }
-  if (fragp->fr_subtype == 8)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 10;
-	  return 5;
-	}
-      return 2;
-    }
+  if (fragp->fr_subtype == 6
+      && (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 7;
+  else if (fragp->fr_subtype == 8
+	   && (!S_IS_DEFINED (fragp->fr_symbol)
+	       || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 10;
+
+  if (fragp->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    abort ();
+
+  return md_relax_table[fragp->fr_subtype].rlx_length;
 }
 
 long

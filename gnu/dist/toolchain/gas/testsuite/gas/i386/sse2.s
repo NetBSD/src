@@ -125,7 +125,7 @@ foo:
 	cvtdq2ps	%xmm0, %xmm1
 	cvtpd2ps	%xmm0, %xmm1
 	cvtps2pd	%xmm0, %xmm1
-	cvtps2dq	%xmm0, %mm1
+	cvtps2dq	%xmm0, %xmm1
 	cvtsd2ss	%xmm0, %xmm1
 	cvtss2sd	%xmm0, %xmm1
 	cvttpd2dq	%xmm0, %xmm1
@@ -135,8 +135,8 @@ foo:
 	movdqa		%xmm0, %xmm1
 	movdqu		%xmm0, %xmm1
 	movdqu		%xmm0, %xmm1
-	movdq2q		%mm0, %xmm1
-	movq2dq		%xmm0, %mm1
+	movdq2q		%xmm0, %mm1
+	movq2dq		%mm0, %xmm1
 	pmuludq		%xmm0, %xmm1
 	pmuludq		%xmm0, %xmm1
 	pshufd		$1, %xmm0, %xmm1

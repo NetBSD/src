@@ -358,8 +358,22 @@ static boolean
 elf64_hppa_object_p (abfd)
      bfd *abfd;
 {
-  unsigned int flags = elf_elfheader (abfd)->e_flags;
+  Elf_Internal_Ehdr * i_ehdrp;
+  unsigned int flags;
 
+  i_ehdrp = elf_elfheader (abfd);
+  if (strcmp (bfd_get_target (abfd), "elf64-hppa-linux") == 0)
+    {
+      if (i_ehdrp->e_ident[EI_OSABI] != ELFOSABI_LINUX)
+	return false;
+    }
+  else
+    {
+      if (i_ehdrp->e_ident[EI_OSABI] != ELFOSABI_HPUX)
+	return false;
+    }
+
+  flags = i_ehdrp->e_flags;
   switch (flags & (EF_PARISC_ARCH | EF_PARISC_WIDE))
     {
     case EFA_PARISC_1_0:

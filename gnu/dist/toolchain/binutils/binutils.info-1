@@ -37,7 +37,7 @@ Introduction
 ************
 
    This brief manual contains preliminary documentation for the GNU
-binary utilities (collectively version 2.11):
+binary utilities (collectively version 2.11.2):
 
    This document is distributed under the terms of the GNU Free
 Documentation License.  A copy of the license is included in the
@@ -690,6 +690,7 @@ objcopy
              [ -S | --strip-all ]  [ -g | --strip-debug ]
              [ -K SYMBOLNAME | --keep-symbol=SYMBOLNAME ]
              [ -N SYMBOLNAME | --strip-symbol=SYMBOLNAME ]
+             [ -G SYMBOLNAME | --keep-global-symbol=SYMBOLNAME]
              [ -L SYMBOLNAME | --localize-symbol=SYMBOLNAME ]
              [ -W SYMBOLNAME | --weaken-symbol=SYMBOLNAME ]
              [ -x | --discard-all ]  [ -X | --discard-locals ]
@@ -710,6 +711,11 @@ objcopy
              [ --change-leading-char ] [ --remove-leading-char ]
              [ --srec-len=IVAL ] [ --srec-forceS3 ]
              [ --redefine-sym OLD=NEW ] [ --weaken ]
+             [ --keep-symbols=FILENAME ]
+             [ --strip-symbols=FILENAME ]
+             [ --keep-global-symbols=FILENAME ]
+             [ --localize-symbols=FILENAME ]
+             [ --weaken-symbols=FILENAME ]
              [ -v | --verbose ] [ -V | --version ]  [ --help ]
              INFILE [OUTFILE]
 
@@ -802,6 +808,12 @@ endianness or which have no endianness (eg `srec').
 `-N SYMBOLNAME'
 `--strip-symbol=SYMBOLNAME'
      Do not copy symbol SYMBOLNAME from the source file.  This option
+     may be given more than once.
+
+`-G SYMBOLNAME'
+`--keep-global-symbol=SYMBOLNAME'
+     Keep only symbol SYMBOLNAME global.  Make all other symbols local
+     to the file, so that they are not visible externally.  This option
      may be given more than once.
 
 `-L SYMBOLNAME'
@@ -983,6 +995,36 @@ endianness or which have no endianness (eg `srec').
      effective when using an object file format which supports weak
      symbols.
 
+`--keep-symbols=FILENAME'
+     Apply `--keep-symbol' option to each symbol listed in the file
+     FILENAME.  FILENAME is simply a flat file, with one symbol name
+     per line.  Line comments may be introduced by the hash character.
+     This option may be given more than once.
+
+`--strip-symbols=FILENAME'
+     Apply `--strip-symbol' option to each symbol listed in the file
+     FILENAME.  FILENAME is simply a flat file, with one symbol name
+     per line.  Line comments may be introduced by the hash character.
+     This option may be given more than once.
+
+`--keep-global-symbols=FILENAME'
+     Apply `--keep-global-symbol' option to each symbol listed in the
+     file FILENAME.  FILENAME is simply a flat file, with one symbol
+     name per line.  Line comments may be introduced by the hash
+     character.  This option may be given more than once.
+
+`--localize-symbols=FILENAME'
+     Apply `--localize-symbol' option to each symbol listed in the file
+     FILENAME.  FILENAME is simply a flat file, with one symbol name
+     per line.  Line comments may be introduced by the hash character.
+     This option may be given more than once.
+
+`--weaken-symbols=FILENAME'
+     Apply `--weaken-symbol' option to each symbol listed in the file
+     FILENAME.  FILENAME is simply a flat file, with one symbol name
+     per line.  Line comments may be introduced by the hash character.
+     This option may be given more than once.
+
 `-V'
 `--version'
      Show the version number of `objcopy'.
@@ -994,317 +1036,4 @@ endianness or which have no endianness (eg `srec').
 
 `--help'
      Show a summary of the options to `objcopy'.
-
-
-File: binutils.info,  Node: objdump,  Next: ranlib,  Prev: objcopy,  Up: Top
-
-objdump
-*******
-
-     objdump [ -a | --archive-headers ]
-             [ -b BFDNAME | --target=BFDNAME ]
-             [ -C | --demangle[=STYLE] ]
-             [ -d | --disassemble ]
-             [ -D | --disassemble-all ]
-             [ -z | --disassemble-zeroes ]
-             [ -EB | -EL | --endian={big | little } ]
-             [ -f | --file-headers ]
-             [ --file-start-context ]
-             [ -g | --debugging ]
-             [ -h | --section-headers | --headers ]
-             [ -i | --info ]
-             [ -j SECTION | --section=SECTION ]
-             [ -l | --line-numbers ]
-             [ -S | --source ]
-             [ -m MACHINE | --architecture=MACHINE ]
-             [ -M OPTIONS | --disassembler-options=OPTIONS]
-             [ -p | --private-headers ]
-             [ -r | --reloc ]
-             [ -R | --dynamic-reloc ]
-             [ -s | --full-contents ]
-             [ -G | --stabs ]
-             [ -t | --syms ]
-             [ -T | --dynamic-syms ]
-             [ -x | --all-headers ]
-             [ -w | --wide ]
-             [ --start-address=ADDRESS ]
-             [ --stop-address=ADDRESS ]
-             [ --prefix-addresses]
-             [ --[no-]show-raw-insn ]
-             [ --adjust-vma=OFFSET ]
-             [ -V | --version ]
-             [ -H | --help ]
-             OBJFILE...
-
-   `objdump' displays information about one or more object files.  The
-options control what particular information to display.  This
-information is mostly useful to programmers who are working on the
-compilation tools, as opposed to programmers who just want their
-program to compile and work.
-
-   OBJFILE... are the object files to be examined.  When you specify
-archives, `objdump' shows information on each of the member object
-files.
-
-   The long and short forms of options, shown here as alternatives, are
-equivalent.  At least one option from the list
-`-a,-d,-D,-f,-g,-G,-h,-H,-p,-r,-R,-S,-t,-T,-V,-x' must be given.
-
-`-a'
-`--archive-header'
-     If any of the OBJFILE files are archives, display the archive
-     header information (in a format similar to `ls -l').  Besides the
-     information you could list with `ar tv', `objdump -a' shows the
-     object file format of each archive member.
-
-`--adjust-vma=OFFSET'
-     When dumping information, first add OFFSET to all the section
-     addresses.  This is useful if the section addresses do not
-     correspond to the symbol table, which can happen when putting
-     sections at particular addresses when using a format which can not
-     represent section addresses, such as a.out.
-
-`-b BFDNAME'
-`--target=BFDNAME'
-     Specify that the object-code format for the object files is
-     BFDNAME.  This option may not be necessary; OBJDUMP can
-     automatically recognize many formats.
-
-     For example,
-          objdump -b oasys -m vax -h fu.o
-
-     displays summary information from the section headers (`-h') of
-     `fu.o', which is explicitly identified (`-m') as a VAX object file
-     in the format produced by Oasys compilers.  You can list the
-     formats available with the `-i' option.  *Note Target Selection::,
-     for more information.
-
-`-C'
-`--demangle[=STYLE]'
-     Decode ("demangle") low-level symbol names into user-level names.
-     Besides removing any initial underscore prepended by the system,
-     this makes C++ function names readable.  Different compilers have
-     different mangling styles. The optional demangling style argument
-     can be used to choose an appropriate demangling style for your
-     compiler. *Note c++filt::, for more information on demangling.
-
-`-G'
-
-`--debugging'
-     Display debugging information.  This attempts to parse debugging
-     information stored in the file and print it out using a C like
-     syntax.  Only certain types of debugging information have been
-     implemented.
-
-`-d'
-`--disassemble'
-     Display the assembler mnemonics for the machine instructions from
-     OBJFILE.  This option only disassembles those sections which are
-     expected to contain instructions.
-
-`-D'
-`--disassemble-all'
-     Like `-d', but disassemble the contents of all sections, not just
-     those expected to contain instructions.
-
-`--prefix-addresses'
-     When disassembling, print the complete address on each line.  This
-     is the older disassembly format.
-
-`--disassemble-zeroes'
-     Normally the disassembly output will skip blocks of zeroes.  This
-     option directs the disassembler to disassemble those blocks, just
-     like any other data.
-
-`-EB'
-`-EL'
-`--endian={big|little}'
-     Specify the endianness of the object files.  This only affects
-     disassembly.  This can be useful when disassembling a file format
-     which does not describe endianness information, such as S-records.
-
-`-f'
-`--file-header'
-     Display summary information from the overall header of each of the
-     OBJFILE files.
-
-`--file-start-context'
-     Specify that when displaying interlisted source code/disassembly
-     (assumes '-S') from a file that has not yet been displayed, extend
-     the context to the start of the file.
-
-`-h'
-`--section-header'
-`--header'
-     Display summary information from the section headers of the object
-     file.
-
-     File segments may be relocated to nonstandard addresses, for
-     example by using the `-Ttext', `-Tdata', or `-Tbss' options to
-     `ld'.  However, some object file formats, such as a.out, do not
-     store the starting address of the file segments.  In those
-     situations, although `ld' relocates the sections correctly, using
-     `objdump -h' to list the file section headers cannot show the
-     correct addresses.  Instead, it shows the usual addresses, which
-     are implicit for the target.
-
-`--help'
-     Print a summary of the options to `objdump' and exit.
-
-`-i'
-`--info'
-     Display a list showing all architectures and object formats
-     available for specification with `-b' or `-m'.
-
-`-j NAME'
-`--section=NAME'
-     Display information only for section NAME.
-
-`-l'
-`--line-numbers'
-     Label the display (using debugging information) with the filename
-     and source line numbers corresponding to the object code or relocs
-     shown.  Only useful with `-d', `-D', or `-r'.
-
-`-m MACHINE'
-`--architecture=MACHINE'
-     Specify the architecture to use when disassembling object files.
-     This can be useful when disassembling object files which do not
-     describe architecture information, such as S-records.  You can
-     list the available architectures with the `-i' option.
-
-`-M OPTIONS'
-`--disassembler-options=OPTIONS'
-     Pass target specific information to the disassembler.  Only
-     supported on some targets.
-
-     If the target is an ARM architecture then this switch can be used
-     to select which register name set is used during disassembler.
-     Specifying `-M reg-name-std' (the default) will select the
-     register names as used in ARM's instruction set documentation, but
-     with register 13 called 'sp', register 14 called 'lr' and register
-     15 called 'pc'.  Specifying `-M reg-names-apcs' will select the
-     name set used by the ARM Procedure Call Standard, whilst
-     specifying `-M reg-names-raw' will just use `r' followed by the
-     register number.
-
-     There are also two variants on the APCS register naming scheme
-     enabled by `-M reg-names-atpcs' and `-M reg-names-special-atpcs'
-     which use the ARM/Thumb Procedure Call Standard naming
-     conventions.  (Eiuther with the normal register name sor the
-     special register names).
-
-     This option can also be used for ARM architectures to force the
-     disassembler to interpret all instructions as THUMB instructions by
-     using the switch `--disassembler-options=force-thumb'.  This can be
-     useful when attempting to disassemble thumb code produced by other
-     compilers.
-
-`-p'
-`--private-headers'
-     Print information that is specific to the object file format.  The
-     exact information printed depends upon the object file format.
-     For some object file formats, no additional information is printed.
-
-`-r'
-`--reloc'
-     Print the relocation entries of the file.  If used with `-d' or
-     `-D', the relocations are printed interspersed with the
-     disassembly.
-
-`-R'
-`--dynamic-reloc'
-     Print the dynamic relocation entries of the file.  This is only
-     meaningful for dynamic objects, such as certain types of shared
-     libraries.
-
-`-s'
-`--full-contents'
-     Display the full contents of any sections requested.
-
-`-S'
-`--source'
-     Display source code intermixed with disassembly, if possible.
-     Implies `-d'.
-
-`--show-raw-insn'
-     When disassembling instructions, print the instruction in hex as
-     well as in symbolic form.  This is the default except when
-     `--prefix-addresses' is used.
-
-`--no-show-raw-insn'
-     When disassembling instructions, do not print the instruction
-     bytes.  This is the default when `--prefix-addresses' is used.
-
-`-G'
-
-`--stabs'
-     Display the full contents of any sections requested.  Display the
-     contents of the .stab and .stab.index and .stab.excl sections from
-     an ELF file.  This is only useful on systems (such as Solaris 2.0)
-     in which `.stab' debugging symbol-table entries are carried in an
-     ELF section.  In most other file formats, debugging symbol-table
-     entries are interleaved with linkage symbols, and are visible in
-     the `--syms' output.  For more information on stabs symbols, see
-     *Note Stabs: (stabs.info)Top.
-
-`--start-address=ADDRESS'
-     Start displaying data at the specified address.  This affects the
-     output of the `-d', `-r' and `-s' options.
-
-`--stop-address=ADDRESS'
-     Stop displaying data at the specified address.  This affects the
-     output of the `-d', `-r' and `-s' options.
-
-`-t'
-`--syms'
-     Print the symbol table entries of the file.  This is similar to
-     the information provided by the `nm' program.
-
-`-T'
-`--dynamic-syms'
-     Print the dynamic symbol table entries of the file.  This is only
-     meaningful for dynamic objects, such as certain types of shared
-     libraries.  This is similar to the information provided by the `nm'
-     program when given the `-D' (`--dynamic') option.
-
-`--version'
-     Print the version number of `objdump' and exit.
-
-`-x'
-`--all-header'
-     Display all available header information, including the symbol
-     table and relocation entries.  Using `-x' is equivalent to
-     specifying all of `-a -f -h -r -t'.
-
-`-w'
-`--wide'
-     Format some lines for output devices that have more than 80
-     columns.
-
-
-File: binutils.info,  Node: ranlib,  Next: readelf,  Prev: objdump,  Up: Top
-
-ranlib
-******
-
-     ranlib [-vV] ARCHIVE
-
-   `ranlib' generates an index to the contents of an archive and stores
-it in the archive.  The index lists each symbol defined by a member of
-an archive that is a relocatable object file.
-
-   You may use `nm -s' or `nm --print-armap' to list this index.
-
-   An archive with such an index speeds up linking to the library and
-allows routines in the library to call each other without regard to
-their placement in the archive.
-
-   The GNU `ranlib' program is another form of GNU `ar'; running
-`ranlib' is completely equivalent to executing `ar -s'.  *Note ar::.
-
-`-v'
-`-V'
-`--version'
-     Show the version number of `ranlib'.
 

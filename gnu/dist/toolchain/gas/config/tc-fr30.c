@@ -1,5 +1,5 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright (C) 1998, 1999, 2000 Free Software Foundation.
+   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -208,7 +208,8 @@ const relax_typeS md_relax_table[] =
 };
 
 long
-fr30_relax_frag (fragP, stretch)
+fr30_relax_frag (segment, fragP, stretch)
+     segT    segment;
      fragS * fragP;
      long    stretch;
 {
@@ -235,7 +236,7 @@ fr30_relax_frag (fragP, stretch)
     }
   else
     {
-      growth = relax_frag (fragP, stretch);
+      growth = relax_frag (segment, fragP, stretch);
 
       /* Long jump on odd halfword boundary?  */
       if (fragP->fr_subtype == 2 && (address & 3) != 0)
@@ -264,8 +265,6 @@ md_estimate_size_before_relax (fragP, segment)
      fragS * fragP;
      segT    segment;
 {
-  int    old_fr_fix = fragP->fr_fix;
-
   /* The only thing we have to handle here are symbols outside of the
      current segment.  They may be undefined or in a different segment in
      which case linker scripts may place them anywhere.
@@ -274,6 +273,8 @@ md_estimate_size_before_relax (fragP, segment)
 
   if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
     {
+      int    old_fr_fix = fragP->fr_fix;
+
       /* The symbol is undefined in this segment.
 	 Change the relaxation subtype to the max allowable and leave
 	 all further handling to md_convert_frag.  */
@@ -296,6 +297,7 @@ md_estimate_size_before_relax (fragP, segment)
 
       /* Mark this fragment as finished.  */
       frag_wane (fragP);
+      return fragP->fr_fix - old_fr_fix;
 #else
       {
 	const CGEN_INSN * insn;
@@ -322,7 +324,8 @@ md_estimate_size_before_relax (fragP, segment)
 #endif
     }
 
-  return (fragP->fr_var + fragP->fr_fix - old_fr_fix);
+  /* Return the size of the variable part of the frag.  */
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
 /* *fragP has been relaxed to its final size, and now needs to have

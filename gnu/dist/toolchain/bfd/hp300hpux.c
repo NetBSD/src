@@ -1,5 +1,6 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright (C) 1990, 91, 94, 95, 97, 99, 2000 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2000, 2001
+   Free Software Foundation, Inc.
    Written by Glenn Engel.
 
 This file is part of BFD, the Binary File Descriptor library.

@@ -1,5 +1,6 @@
 /* i370-specific support for 32-bit ELF
-   Copyright 1994, 95, 96, 97, 98, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001
+   Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
 
