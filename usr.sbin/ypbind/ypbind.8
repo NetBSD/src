@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.9 1997/10/06 01:20:15 lukem Exp $
+.\"	$NetBSD: ypbind.8,v 1.10 1998/01/23 13:36:57 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,9 @@
 .Op Fl ypsetme
 .Sh DESCRIPTION
 .Nm
-finds the server for a particular YP domain and stores information about it
+finds the server for a particular
+.Tn YP
+domain and stores information about it
 in a
 .Pa binding file.
 This binding information includes the IP address of the server associated with
@@ -60,7 +62,9 @@ in a file named with the convention
 where
 .Aq domain
 is the relevant domain.
-The YP system only supplies information on version 2.
+The
+.Tn YP
+system only supplies information on version 2.
 .Pp
 If
 .Nm
@@ -68,12 +72,16 @@ is started without the
 .Fl broadcast
 option,
 .Nm
-steps through the list of YP servers specified in
+steps through the list of
+.Tn YP
+servers specified in
 .Pa /var/yp/binding/<domain>.ypservers
 and contacts each in turn attempting to bind to that server. 
 It is strongly recommended that these hosts are in the local
 hosts file, and that hosts are looked up in local files before
-the YP hosts map.
+the
+.Tn YP
+hosts map.
 .Pp
 If
 .Nm
@@ -100,14 +108,17 @@ marks the domain as bound and resumes its periodic check.
 The options are as follows:
 .Bl -tag -width "-broadcast"
 .It Fl broadcast
-sends a broadcast requesting a YP server to which to bind.
+sends a broadcast requesting a
+.Tn YP
+server to which to bind.
 .It Fl insecure
-do not require that clients make requests from reserved ports.
-This may be necessary for
+do not require that the server is running on a reserved port.
+This may be necessary when connecting to
 .Tn SunOS 3.x
 or
 .Tn ULTRIX
-clients.
+.Tn YP
+servers.
 .It Fl ypset
 .Xr ypset 8
 may be used to change the server to which a domain is bound.
