@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.27 1996/10/11 00:46:26 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.28 1996/10/13 02:59:38 christos Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -270,7 +270,7 @@ cgsixattach(parent, self, args)
 		break;
 
 	case BUS_MAIN:
-		kprintf("cgsix on mainbus?\n");
+		printf("cgsix on mainbus?\n");
 		return;
 	}
 
@@ -284,7 +284,7 @@ cgsixattach(parent, self, args)
 	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	kprintf(": %s, %d x %d", nam, fb->fb_type.fb_width,
+	printf(": %s, %d x %d", nam, fb->fb_type.fb_width,
 	    fb->fb_type.fb_height);
 
 #if defined(SUN4)
@@ -310,7 +310,7 @@ cgsixattach(parent, self, args)
 
 	sc->sc_fhcrev = (*sc->sc_fhc >> FHC_REV_SHIFT) &
 	    (FHC_REV_MASK >> FHC_REV_SHIFT);
-	kprintf(", rev %d", sc->sc_fhcrev);
+	printf(", rev %d", sc->sc_fhcrev);
 
 	/* reset cursor & frame buffer controls */
 	cg6_reset(sc);
@@ -324,7 +324,7 @@ cgsixattach(parent, self, args)
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
 	if (isconsole) {
-		kprintf(" (console)\n");
+		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		sc->sc_fb.fb_pixels = (caddr_t)
 			mapiodev(ca->ca_ra.ra_reg, O(cg6_ram[0]),
@@ -332,7 +332,7 @@ cgsixattach(parent, self, args)
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
-		kprintf("\n");
+		printf("\n");
 #if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
