@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.1 2003/08/01 00:08:55 jonathan Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.2 2003/08/21 20:00:15 jonathan Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -124,10 +124,6 @@ static	int 	ubsec_dma_malloc(struct ubsec_softc *, bus_size_t,
 				 struct ubsec_dma_alloc *, int);
 static	void	ubsec_dma_free(struct ubsec_softc *, struct ubsec_dma_alloc *);
 static	int	ubsec_dmamap_aligned(bus_dmamap_t);
-
-#ifdef	__OpenBSD__
-struct ubsec_softc *ubsec_kfind(struct cryptkop *);
-#endif
 
 static	int	ubsec_kprocess(void*, struct cryptkop *, int);
 static	int	ubsec_kprocess_modexp_sw(struct ubsec_softc *,
@@ -710,21 +706,11 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 	SHA1_CTX sha1ctx;
 	int i, sesn;
 
-	if (sidp == NULL || cri == NULL || sc == NULL)
-		return (EINVAL);
-
-#ifdef __OpenBSD__
-	for (i = 0; i < ubsec_cd.cd_ndevs; i++) {
-		sc = ubsec_cd.cd_devs[i];
-		if (sc == NULL || sc->sc_cid == (*sidp))
-			break;
-	}
-	if (sc == NULL)
-		return (EINVAL);
-#else
 	sc = arg;
 	KASSERT(sc != NULL /*, ("ubsec_newsession: null softc")*/);
-#endif /* __OpenBSD__ */
+
+	if (sidp == NULL || cri == NULL || sc == NULL)
+		return (EINVAL);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		if (c->cri_alg == CRYPTO_MD5_HMAC ||
@@ -863,17 +849,8 @@ ubsec_freesession(void *arg, u_int64_t tid)
 	int session;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
-#ifdef __OpenBSD__
-	int card;
-
-	card = UBSEC_CARD(sid);
-	if (card >= ubsec_cd.cd_ndevs || ubsec_cd.cd_devs[card] == NULL)
-		return (EINVAL);
-	sc = ubsec_cd.cd_devs[card];
-#else
 	sc = arg;
 	KASSERT(sc != NULL /*, ("ubsec_freesession: null softc")*/);
-#endif
 
 	session = UBSEC_SESSION(sid);
 	if (session >= sc->sc_nsessions)
@@ -919,6 +896,9 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	struct ubsec_pktctx ctx;
 	struct ubsec_dma *dmap = NULL;
 
+	sc = arg;
+	KASSERT(sc != NULL /*, ("ubsec_process: null softc")*/);
+
 	if (crp == NULL || crp->crp_callback == NULL || sc == NULL) {
 		ubsecstats.hst_invalid++;
 		return (EINVAL);
@@ -927,19 +907,6 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		ubsecstats.hst_badsession++;
 		return (EINVAL);
 	}
-#ifdef __OpenBSD__
-	card = UBSEC_CARD(crp->crp_sid);
-	if (card >= ubsec_cd.cd_ndevs || ubsec_cd.cd_devs[card] == NULL) {
-		ubsecstats.hst_invalid++;
-		return (EINVAL);
-	}
-	sc = ubsec_cd.cd_devs[card];
-#else
-	sc = arg;
-	KASSERT(sc != NULL /*, ("ubsec_process: null softc")*/);
-#endif
-
-
 
 	s = splnet();
 
