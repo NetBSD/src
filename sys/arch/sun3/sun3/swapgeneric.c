@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.12 1995/02/24 04:59:51 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.13 1995/04/07 03:02:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -91,7 +91,7 @@ static int sd_mkunit(ctlr, unit)
 	/* This only supports LUNs 0, 1 */
 	target = unit >> 3;
 	lun = unit & 1;
-	return (target + lun);
+	return (target * 2 + lun);
 }
 
 static int xx_mkunit(ctlr, unit)
