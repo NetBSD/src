@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.80 1999/02/11 17:10:13 tv Exp $
+#	$NetBSD: NetBSD.dist,v 1.81 1999/03/27 05:13:55 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1701,6 +1701,11 @@ ms
 # ./usr/share/nls
 nls
 # ./usr/share/nls
+..
+
+# ./usr/share/postfix
+postfix
+# ./usr/share/postfix
 ..
 
 # ./usr/share/sendmail
