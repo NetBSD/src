@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.18 2000/06/03 14:05:29 fvdl Exp $	*/
+/*	$NetBSD: rusers.c,v 1.19 2000/06/03 19:30:03 fvdl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.18 2000/06/03 14:05:29 fvdl Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.19 2000/06/03 19:30:03 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,21 +63,28 @@ struct timeval timeout = { 25, 0 };
 int longopt;
 int allopt;
 
-void	allhosts __P((void));
-int	main __P((int, char *[]));
-void	onehost __P((char *));
-void	remember_host __P((struct in_addr));
-int	rusers_reply __P((char *, struct sockaddr_in *));
-int	search_host __P((struct in_addr));
-void	usage __P((void));
+void	allhosts(void);
+int	main(int, char *[]);
+void	onehost(char *);
+void	remember_host(struct sockaddr *);
+int	rusers_reply(char *, struct netbuf *, struct netconfig *);
+int	search_host(struct sockaddr *);
+void	usage(void);
 
 struct host_list {
 	struct host_list *next;
-	struct in_addr addr;
+	int family;
+	union {
+		struct in6_addr _addr6;
+		struct in_addr _addr4;
+	} addr;
 } *hosts;
 
+#define addr6 addr._addr6
+#define addr4 addr._addr4
+
 int
-search_host(struct in_addr addr)
+search_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
 	
@@ -85,45 +92,69 @@ search_host(struct in_addr addr)
 		return(0);
 
 	for (hp = hosts; hp != NULL; hp = hp->next) {
-		if (hp->addr.s_addr == addr.s_addr)
-			return(1);
+		switch (hp->family) {
+		case AF_INET6:
+			if (!memcmp(&hp->addr6,
+			    &((struct sockaddr_in6 *)sa)->sin6_addr,
+			    sizeof (struct in6_addr)))
+				return 1;
+			break;
+		case AF_INET:
+			if (!memcmp(&hp->addr4,
+			    &((struct sockaddr_in *)sa)->sin_addr,
+			    sizeof (struct in_addr)))
+				return 1;
+			break;
+		default:
+		}
 	}
 	return(0);
 }
 
 void
-remember_host(struct in_addr addr)
+remember_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
 
-	if (!(hp = (struct host_list *)malloc(sizeof(struct host_list))))
-		errx(1, "no memory");
-	hp->addr.s_addr = addr.s_addr;
+	if (!(hp = (struct host_list *)malloc(sizeof(struct host_list)))) {
+		err(1, "malloc");
+		/* NOTREACHED */
+	}
+	hp->family = sa->sa_family;
 	hp->next = hosts;
+	switch (sa->sa_family) {
+	case AF_INET6:
+		memcpy(&hp->addr6, &((struct sockaddr_in6 *)sa)->sin6_addr,
+		    sizeof (struct in6_addr));
+		break;
+	case AF_INET:
+		memcpy(&hp->addr4, &((struct sockaddr_in *)sa)->sin_addr,
+		    sizeof (struct in_addr));
+		break;
+	default:
+		err(1, "unknown address family");
+		/* NOTREACHED */
+	}
 	hosts = hp;
 }
 
 int
-rusers_reply(char *replyp, struct sockaddr_in *raddrp)
+rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 {
+	char host[NI_MAXHOST];
 	int x;
-	struct hostent *hp;
 	struct utmpidlearr *up = (struct utmpidlearr *)replyp;
-	char *host;
+	struct sockaddr *sa = raddrp->buf;
 	
-	if (search_host(raddrp->sin_addr))
+	if (search_host(sa))
 		return(0);
 
 	if (!allopt && !up->uia_cnt)
 		return(0);
-	
-	hp = gethostbyaddr((char *)&raddrp->sin_addr.s_addr,
-			   sizeof(struct in_addr), AF_INET);
-	if (hp)
-		host = hp->h_name;
-	else
-		host = inet_ntoa(raddrp->sin_addr);
-	
+
+	if (getnameinfo(sa, sa->sa_len, host, sizeof host, NULL, 0, 0))
+		return 0;
+
 #define HOSTWID (int)sizeof(up->uia_arr[0]->ui_utmp.ut_host)
 #define LINEWID (int)sizeof(up->uia_arr[0]->ui_utmp.ut_line)
 #define NAMEWID (int)sizeof(up->uia_arr[0]->ui_utmp.ut_name)
@@ -186,7 +217,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 	if (!longopt)
 		putchar('\n');
 	
-	remember_host(raddrp->sin_addr);
+	remember_host(sa);
 	return(0);
 }
 
@@ -196,12 +227,9 @@ onehost(char *host)
 	struct utmpidlearr up;
 	CLIENT *rusers_clnt;
 	enum clnt_stat clnt_stat;
-	struct sockaddr_in addr;
-	struct hostent *hp;
-	
-	hp = gethostbyname(host);
-	if (hp == NULL)
-		errx(1, "unknown host \"%s\"", host);
+	struct netbuf nb;
+	struct addrinfo *ai;
+	int ecode;
 
 	rusers_clnt = clnt_create(host, RUSERSPROG, RUSERSVERS_IDLE, "udp");
 	if (rusers_clnt == NULL) {
@@ -209,13 +237,19 @@ onehost(char *host)
 		exit(1);
 	}
 
+	ecode = getaddrinfo(host, NULL, NULL, &ai);
+	if (ecode != 0)
+		err(1, "%s", gai_strerror(ecode));
+
 	memset((char *)&up, 0, sizeof(up));
 	clnt_stat = clnt_call(rusers_clnt, RUSERSPROC_NAMES, xdr_void, NULL,
 	    xdr_utmpidlearr, &up, timeout);
 	if (clnt_stat != RPC_SUCCESS)
 		errx(1, "%s", clnt_sperrno(clnt_stat));
-	addr.sin_addr.s_addr = *(int *)hp->h_addr;
-	rusers_reply((char *)&up, &addr);
+	nb.buf = ai->ai_addr;
+	nb.len = nb.maxlen = ai->ai_addrlen;
+	rusers_reply((char *)&up, &nb, NULL);
+	freeaddrinfo(ai);
 }
 
 void
@@ -225,9 +259,9 @@ allhosts(void)
 	enum clnt_stat clnt_stat;
 
 	memset((char *)&up, 0, sizeof(up));
-	clnt_stat = clnt_broadcast(RUSERSPROG, RUSERSVERS_IDLE,
+	clnt_stat = rpc_broadcast(RUSERSPROG, RUSERSVERS_IDLE,
 	    RUSERSPROC_NAMES, xdr_void, NULL, xdr_utmpidlearr,
-	    (char *)&up, (resultproc_t)rusers_reply);
+	    (char *)&up, (resultproc_t)rusers_reply, "udp");
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
 		errx(1, "%s", clnt_sperrno(clnt_stat));
 }
