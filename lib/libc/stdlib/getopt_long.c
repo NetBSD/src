@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.11 2001/02/12 23:59:17 cgd Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.12 2001/04/24 09:07:43 joda Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.11 2001/02/12 23:59:17 cgd Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.12 2001/04/24 09:07:43 joda Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -97,8 +97,8 @@ static const char recargchar[] = "option requires an argument -- %c";
 static const char recargstring[] = "option requires an argument -- %s";
 static const char ambig[] = "ambiguous option -- %.*s";
 static const char noarg[] = "option doesn't take an argument -- %.*s";
-static const char illoptchar[] = "illegal option -- %c";
-static const char illoptstring[] = "illegal option -- %s";
+static const char illoptchar[] = "unknown option -- %c";
+static const char illoptstring[] = "unknown option -- %s";
 
 
 /*

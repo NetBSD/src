@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.20 2001/02/19 22:43:21 cgd Exp $	*/
+/*	$NetBSD: getopt.c,v 1.21 2001/04/24 09:07:43 joda Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.20 2001/02/19 22:43:21 cgd Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.21 2001/04/24 09:07:43 joda Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +106,7 @@ getopt(nargc, nargv, ostr)
 			++optind;
 		if (opterr && *ostr != ':')
 			(void)fprintf(stderr,
-			    "%s: illegal option -- %c\n", getprogname(),
+			    "%s: unknown option -- %c\n", getprogname(),
 			    optopt);
 		return (BADCH);
 	}
