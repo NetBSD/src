@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.2 2004/04/23 08:44:33 kleink Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.3 2004/04/26 17:26:58 tron Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct statvfs {
 #define VFS_MNAMELEN	_VFS_MNAMELEN
 #endif
 
-#define	ST_RDONLY	MNT_READONLY
+#define	ST_RDONLY	MNT_RDONLY
 #define	ST_NOEXEC	MNT_NOEXEC
 #define	ST_NOSUID	MNT_NOSUID
 #define	ST_NODEV	MNT_NODEV
