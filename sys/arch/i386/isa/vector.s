@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.4 1993/10/13 01:20:17 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.5 1993/10/13 02:23:12 mycroft Exp $
  */
 
 #include "i386/isa/icu.h"
@@ -101,7 +101,7 @@ IDTVEC(irq_num) ; \
 	enable_icus ; 		/* reenable hw interrupts */ \
 Vresume/**/irq_num: ; \
 	incl	_cnt+V_INTR ; 	/* increment statistical counters */ \
-	incl	_intrcnt + 4*irq_num ; \
+	incl	_intrcnt_actv + 4*irq_num ; \
 	movl	_cpl,%eax ; 	/* finish interrupt frame */ \
 	pushl	%eax ; 		/* old spl level for intrframe */ \
 	orl	_intrmask + 4*irq_num,%eax ; /* add interrupt's spl mask */ \
@@ -185,8 +185,8 @@ Vresume:			/* where to resume intr handler after unpend */
 	.data
 	.globl	_intrcnt
 _intrcnt:			/* used by vmstat to calc size of table */
-	.globl	_intrcnt
-_intrcnt:	.space	16 * 4	/* total interrupts */
+	.globl	_intrcnt_actv
+_intrcnt_actv:	.space	16 * 4	/* total interrupts */
 	.globl	_intrcnt_pend
 _intrcnt_pend:	.space	16 * 4	/* masked interrupts */
 	.globl	_intrcnt_stray
