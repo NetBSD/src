@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.5 2002/07/04 23:30:40 itojun Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.6 2002/07/10 19:30:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -804,11 +804,12 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 	if (i < 0)
 		return (-1);
 	dn += i;
-	for (b = blen; b > 7; b -= 8, cp++)
+	for (b = blen; b > 7; b -= 8, cp++) {
 		i = SPRINTF((dn, "%02x", *cp & 0xff));
 		if (i < 0)
 			return (-1);
 		dn += i;
+	}
 	if (b > 4) {
 		tc = *cp++;
 		i = SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
