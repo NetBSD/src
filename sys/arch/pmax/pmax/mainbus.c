@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 1996/04/10 17:38:25 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 1996/05/19 01:47:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -129,8 +129,14 @@ mbattach(parent, self, aux)
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
 	nca.ca_addr = 0;
+#ifdef notyet
 	config_found(mb, &nca, mbprint);
-
+#else
+	{
+	  extern void cpu_identify __P((void));
+	  cpu_identify();
+	}
+#endif
 
 #if	defined(DS_5000) || defined(DS5000_240) || defined(DS_5000_100) || \
 	defined(DS_5000_25)
