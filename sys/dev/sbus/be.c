@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.11 1999/12/21 21:07:42 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.12 1999/12/22 16:05:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,6 +133,14 @@ struct be_softc {
 #define sc_media	sc_mii.mii_media/* shorthand */
 	int		sc_phys[2];	/* MII instance -> phy */
 
+	/*
+	 * Some `mii_softc' items we need to emulate MII operation
+	 * for our internal transceiver.
+	 */
+	int		sc_mii_inst;	/* instance of internal phy */
+	int		sc_mii_active;	/* currently active medium */
+	int		sc_mii_ticks;	/* tick counter */
+
 	struct	qec_softc *sc_qec;	/* QEC parent */
 
 	bus_space_handle_t	sc_qr;	/* QEC registers */
@@ -144,8 +152,6 @@ struct be_softc {
 
 	int	sc_channel;		/* channel number */
 	int	sc_burst;
-	int	sc_conf;
-#define BE_CONF_MII	1
 
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 
@@ -193,8 +199,10 @@ static int	be_mii_reset __P((struct be_softc *, int));
 static int	be_tcvr_read_bit __P((struct be_softc *, int));
 static void	be_tcvr_write_bit __P((struct be_softc *, int, int));
 
-void		be_tick __P((void *));
-void		be_internal_phy_auto __P((struct be_softc *));
+void	be_tick __P((void *));
+void	be_intphy_auto __P((struct be_softc *));
+void	be_intphy_status __P((struct be_softc *));
+int	be_intphy_service __P((struct be_softc *, struct mii_data *, int));
 
 
 struct cfattach be_ca = {
@@ -384,7 +392,6 @@ beattach(parent, self, aux)
 
 			/* Mark our current media setting */
 			be_pal_gate(sc, BE_PHY_EXTERNAL);
-			sc->sc_conf |= BE_CONF_MII;
 			instance++;
 		}
 
@@ -398,6 +405,7 @@ beattach(parent, self, aux)
 		 * ourselves.
 		 */
 
+		sc->sc_mii_inst = instance;
 		sc->sc_phys[instance] = BE_PHY_INTERNAL;
 
 		/* Use `ifm_data' to store BMCR bits */
@@ -417,16 +425,15 @@ beattach(parent, self, aux)
 			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance),
 			    0, NULL);
 
+		be_mii_reset(sc, BE_PHY_INTERNAL);
 		/* Only set default medium here if there's no external PHY */
 		if (instance == 0) {
 			be_pal_gate(sc, BE_PHY_INTERNAL);
 			ifmedia_set(&sc->sc_media,
 				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
-		} else {
-			/* Isolate internal transceiver */
-			be_mii_writereg((struct device *)sc,
-					BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
-		}
+		} else
+			be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -649,10 +656,9 @@ bestop(sc)
 
 	untimeout(be_tick, sc);
 
-	if (sc->sc_conf & BE_CONF_MII) {
-		/* Down the MII. */
-		mii_down(&sc->sc_mii);
-	}
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_DOWN);
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);
@@ -1067,6 +1073,7 @@ beinit(sc)
 	be_mii_sync(sc);
 
 	bestop(sc);
+	be_ifmedia_upd(ifp);
 
 	ea = sc->sc_enaddr;
 	bus_space_write_4(t, br, BE_BRI_MACADDR0, (ea[0] << 8) | ea[1]);
@@ -1255,6 +1262,7 @@ be_pal_gate(sc, phy)
 	bus_space_handle_t tr = sc->sc_tr;
 	u_int32_t v;
 
+printf("  gating phy %d\n", phy);
 	be_mii_sync(sc);
 
 	v = ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE | TCVR_PAL_LTENABLE);
@@ -1264,66 +1272,6 @@ be_pal_gate(sc, phy)
 	bus_space_write_4(t, tr, BE_TRI_TCVRPAL, v);
 	(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
 }
-
-#if 0
-/*
- * Initialize the transceiver and figure out whether we're using the
- * external or internal one.
- */
-void be_tcvr_init(struct be_softc *);
-void
-be_tcvr_init(sc)
-	struct be_softc *sc;
-{
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t tr = sc->sc_tr;
-	u_int32_t v;
-
-	be_mii_sync(sc);
-
-	if (sc->sc_rev != 1) {
-		printf("%s: rev %d PAL not supported.\n",
-			sc->sc_dev.dv_xname,
-			sc->sc_rev);
-		return;
-	}
-
-	bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-			  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO |
-			  MGMT_PAL_DCLOCK);
-	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-
-	bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-			  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO);
-	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-	DELAY(200);
-
-	v = bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-#ifdef BEDEBUG
-	if (sc->sc_debug != 0) {
-		char bits[64];
-		printf("be_tcvr_init: MGMTPAL=%s\n",
-		       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
-	}
-#endif
-
-	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
-		sc->sc_conf |= BE_CONF_MII;
-		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
-				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
-				    TCVR_PAL_LTENABLE));
-		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	} else if ((v & MGMT_PAL_INT_MDIO) != 0) {
-		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
-				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
-				    TCVR_PAL_LTENABLE | TCVR_PAL_SERIAL));
-		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	} else {
-		printf("%s: no internal or external transceiver found.\n",
-			sc->sc_dev.dv_xname);
-	}
-}
-#endif
 
 static int
 be_tcvr_read_bit(sc, phy)
@@ -1368,19 +1316,14 @@ be_tcvr_write_bit(sc, phy, bit)
 	if (phy == BE_PHY_INTERNAL) {
 		v = ((bit & 1) << MGMT_PAL_INT_MDIO_SHIFT) |
 			MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit | MGMT_PAL_DCLOCK);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	} else {
 		v = ((bit & 1) << MGMT_PAL_EXT_MDIO_SHIFT)
 			| MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v | MGMT_PAL_DCLOCK);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	}
+	bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
+	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
+	bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v | MGMT_PAL_DCLOCK);
+	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 }
 
 static void
@@ -1464,6 +1407,7 @@ be_mii_reset(sc, phy)
 
 	for (n = 16; n >= 0; n--) {
 		int bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
+printf("be_mii_reset: bmcr = 0x%x\n", bmcr);
 		if ((bmcr & BMCR_RESET) == 0)
 			break;
 		DELAY(20);
@@ -1473,6 +1417,20 @@ be_mii_reset(sc, phy)
 		return (EIO);
 	}
 	return (0);
+}
+
+void
+be_tick(arg)
+	void	*arg;
+{
+	struct be_softc *sc = arg;
+	int s = splnet();
+
+	mii_tick(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_TICK);
+
+	splx(s);
+	timeout(be_tick, sc, hz);
 }
 
 void
@@ -1503,66 +1461,6 @@ be_mii_statchg(self)
 	be_pal_gate(sc, sc->sc_phys[instance]);
 }
 
-void
-be_tick(arg)
-	void	*arg;
-{
-	struct be_softc *sc = arg;
-	int s = splnet();
-
-	if ((sc->sc_conf & BE_CONF_MII) != 0)
-		mii_tick(&sc->sc_mii);
-	else
-		be_internal_phy_auto(sc);
-
-	splx(s);
-	timeout(be_tick, sc, hz);
-}
-
-void
-be_internal_phy_auto(sc)
-	struct be_softc *sc;
-{
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int bmcr, bmsr;
-	int bmcr_s100_bit;
-
-	/*
-	 * Check link status; if we don't have a link, try another
-	 * speed. We can't detect duplex mode, so half-duplex is
-	 * what we have to settle for.
-	 */
-
-	/* Only used for automatic media selection */
-	if (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media) != IFM_AUTO)
-		return;
-
-	/* Don't bother if interface isn't up */
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
-
-	if ((bmsr & BMSR_LINK) != 0) {
-		/* We have a carrier */
-		return;
-	}
-
-	/* Note current fast speed bit */
-	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
-	bmcr_s100_bit = bmcr & BMCR_S100;
-
-	if (be_mii_reset(sc, BE_PHY_INTERNAL) != 0)
-		return;
-
-	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
-	/* Just flip the fast speed bit */
-	bmcr ^= bmcr_s100_bit;
-	be_mii_writereg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
-}
-
 /*
  * Get current media settings.
  */
@@ -1572,15 +1470,153 @@ be_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct be_softc *sc = ifp->if_softc;
-	int media_active, media_status;
+
+	mii_pollstat(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_POLLSTAT);
+
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	return;
+}
+
+/*
+ * Set media options.
+ */
+int
+be_ifmedia_upd(ifp)
+	struct ifnet *ifp;
+{
+	struct be_softc *sc = ifp->if_softc;
+	int error;
+
+	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
+		return (error);
+
+	return (be_intphy_service(sc, &sc->sc_mii, MII_MEDIACHG));
+}
+
+/*
+ * Service routine for our pseudo-MII internal transceiver.
+ */
+int
+be_intphy_service(sc, mii, cmd)
+	struct be_softc *sc;
+	struct mii_data *mii;
+	int cmd;
+{
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmcr, bmsr;
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-		mii_pollstat(&sc->sc_mii);
-		ifmr->ifm_status = sc->sc_mii.mii_media_status;
-		ifmr->ifm_active = sc->sc_mii.mii_media_active;
-		return;
+	switch (cmd) {
+	case MII_POLLSTAT:
+		/*
+		 * If we're not polling our PHY instance, just return.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst)
+			return (0);
+
+		break;
+
+	case MII_MEDIACHG:
+
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+
+		/*
+		 * If the media indicates a different PHY instance,
+		 * isolate ourselves.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
+printf(" MII_MEDIACHG: isolating; bmcr = 0x%x\n", bmcr);
+			be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+			return (0);
+		}
+
+
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_100_TX)
+			bmcr |= BMCR_S100;
+		else if (IFM_SUBTYPE(ife->ifm_media) == IFM_10_T)
+			bmcr &= ~BMCR_S100;
+
+		if ((IFM_OPTIONS(ife->ifm_media) & IFM_FDX) != 0)
+			bmcr |= BMCR_FDX;
+		else
+			bmcr &= ~BMCR_FDX;
+
+		/* Select the new mode and take out of isolation */
+		bmcr &= ~BMCR_ISO;
+		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+		break;
+
+	case MII_TICK:
+		/*
+		 * If we're not currently selected, just return.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst)
+			return (0);
+
+		/* Only used for automatic media selection */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			return (0);
+
+		/* Is the interface even up? */
+		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+			return (0);
+
+		/*
+		 * Check link status; if we don't have a link, try another
+		 * speed. We can't detect duplex mode, so half-duplex is
+		 * what we have to settle for.
+		 */
+
+		/* Read twice in case the register is latched */
+		bmsr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR) |
+		       be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR);
+
+		if ((bmsr & BMSR_LINK) != 0) {
+			/* We have a carrier */
+			return (0);
+		}
+
+		/* Only retry autonegotiation every 5 seconds. */
+		if (++sc->sc_mii_ticks != 5)
+			return(0);
+
+		sc->sc_mii_ticks = 0;
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		/* Just flip the fast speed bit */
+printf(" MII_TICK: flipping: 0x%x -> ", bmcr);
+		bmcr ^= BMCR_S100;
+printf("0x%x\n", bmcr);
+		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+
+		break;
+
+	case MII_DOWN:
+		return (0);
 	}
+
+	/* Update the media status. */
+	be_intphy_status(sc);
+
+	/* Callback if something changed. */
+	if (sc->sc_mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
+		(*mii->mii_statchg)((struct device *)sc);
+		sc->sc_mii_active = mii->mii_media_active;
+	}
+	return (0);
+}
+
+/*
+ * Determine status of internal transceiver
+ */
+void
+be_intphy_status(sc)
+	struct be_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	int media_active, media_status;
+	int bmcr, bmsr;
 
 	media_status = IFM_AVALID;
 	media_active = 0;
@@ -1611,108 +1647,6 @@ be_ifmedia_sts(ifp, ifmr)
 	if (bmsr & BMSR_LINK)
 		media_status |=  IFM_ACTIVE;
 
-	ifmr->ifm_status = media_status;
-	ifmr->ifm_active = media_active;
-}
-
-/*
- * Set media options.
- */
-int
-be_ifmedia_upd(ifp)
-	struct ifnet *ifp;
-{
-	struct be_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
-	int newmedia = ifm->ifm_media;
-	int n, error, bmcr;
-	char *speed, *mode;
-	bus_space_tag_t t;
-	bus_space_handle_t br;
-	u_int32_t v;
-	u_int instance, phy;
-
-	instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
-
-#ifdef DIAGNOSTIC
-	if (instance > 1)
-		panic("be_mii_statchg: instance %d out of range", instance);
-#endif
-
-	phy = sc->sc_phys[instance];
-
-	if (IFM_TYPE(newmedia) != IFM_ETHER)
-		return (EINVAL);
-
-	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
-		return (error);
-
-	if (phy == BE_PHY_EXTERNAL) {
-		/* Isolate the internal transceiver */
-		be_mii_writereg((struct device *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
-		sc->sc_conf |= BE_CONF_MII;
-		return (0);
-	}
-
-
-	/*
-	 * The rest of this routine is devoted to the
-	 * not-quite-a-phy internal transceiver case.
-	 */
-	t = sc->sc_bustag;
-	br = sc->sc_br;
-
-	/* Mark out current configuration */
-	sc->sc_conf &= ~BE_CONF_MII;
-
-	/* Change to appropriate gate in transceiver PAL */
-	be_pal_gate(sc, phy);
-
-	/* Why must we reset the device? */
-	if ((error = be_mii_reset(sc, phy)) != 0)
-		return (error);
-
-	bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
-
-	if (IFM_SUBTYPE(newmedia) == IFM_100_TX) {
-		bmcr |= BMCR_S100;
-		speed = "100baseTX";
-	} else if (IFM_SUBTYPE(newmedia) == IFM_10_T) {
-		bmcr &= ~BMCR_S100;
-		speed = "10baseT";
-	} else {
-		speed = "auto sense";
-	}
-
-	printf("%s: selecting %s", sc->sc_dev.dv_xname, speed);
-
-	v = bus_space_read_4(t, br, BE_BRI_TXCFG);
-	if ((IFM_OPTIONS(newmedia) & IFM_FDX) != 0) {
-		bmcr |= BMCR_FDX;
-		v |= BE_BR_TXCFG_FULLDPLX;
-		mode = "full";
-	} else {
-		bmcr &= ~BMCR_FDX;
-		v &= ~BE_BR_TXCFG_FULLDPLX;
-		mode = "half";
-	}
-	bus_space_write_4(t, br, BE_BRI_TXCFG, v);
-	printf(" %s-duplex\n", mode);
-
-	/* Select the new mode and take out of isolation */
-	be_mii_writereg((struct device *)sc, phy, MII_BMCR, bmcr & ~BMCR_ISO);
-
-	for (n = 32; n >= 0; n--) {
-		bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
-		if ((bmcr & BMCR_ISO) == 0)
-			break;
-		DELAY(20);
-	}
-	if (n == 0) {
-		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-
-	return (0);
+	mii->mii_media_status = media_status;
+	mii->mii_media_active = media_active;
 }
