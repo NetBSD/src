@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.27 2003/01/18 09:43:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.28 2003/05/25 13:00:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.27 2003/01/18 09:43:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.28 2003/05/25 13:00:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,14 +104,14 @@ sys_obreak(l, v, retval)
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",
 				new - old, error);
-			return error;
+			return (error);
 		}
 		vm->vm_dsize += atop(new - old);
 	} else {
 		uvm_deallocate(&vm->vm_map, new, old - new);
 		vm->vm_dsize -= atop(old - new);
 	}
-	return 0;
+	return (0);
 }
 
 /*
