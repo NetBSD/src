@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.1.1.1 2005/02/12 11:12:35 manu Exp $ */
+/* $Id: main.c,v 1.2 2005/02/18 06:28:52 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,7 +77,7 @@
 #include "backupsa.h"
 #include "vendorid.h"
 
-#include "../../package_version.h"
+#include "package_version.h"
 
 int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
