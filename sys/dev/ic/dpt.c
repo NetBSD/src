@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.20 2000/02/29 11:14:46 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.21 2000/03/16 15:13:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.20 2000/02/29 11:14:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.21 2000/03/16 15:13:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ dpt_shutdown(xxx_sc)
 {
 	struct dpt_softc *sc;
 
-	printf("shutting down DPT HBAs...");
+	printf("shutting down dpt devices...");
 
 	for (sc = TAILQ_FIRST(&dpt_hba); sc != NULL; 
 	    sc = TAILQ_NEXT(sc, sc_chain))
@@ -444,7 +444,7 @@ dpt_poll(sc, ccb)
 	for (i = ccb->ccb_timeout * 20; i; i--) {
 		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0) {
 			dpt_intr(sc);
-	       	 if ((ccb->ccb_flg & CCB_INTR) != 0)
+			if ((ccb->ccb_flg & CCB_INTR) != 0)
 				return (0);
 		}
 		DELAY(50);
@@ -613,7 +613,7 @@ dpt_init_ccb(sc, ccb)
 	
 	if (error) {
 		printf("%s: can't create ccb dmamap (%d)\n", 
-		   sc->sc_dv.dv_xname, error);
+		    sc->sc_dv.dv_xname, error);
 		return (error);
 	}
 
