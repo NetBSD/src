@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.21.4.1 1996/05/28 20:01:03 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.21.4.2 1996/05/30 03:20:14 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -999,7 +999,7 @@ idego(dev, xs)
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
 	case WRITE_COMMAND:
-		lba = *((long *)xs->cmd) & 0x000fffff;
+		lba = *((long *)xs->cmd) & 0x001fffff;
 		nblks = xs->cmd->bytes[3];
 		if (nblks == 0)
 			nblks = 256;
