@@ -547,7 +547,7 @@ do {									\
    Differs only in explicit emulation selection.  */
 #undef LINK_SPEC
 #define	LINK_SPEC							\
- "-m m68kelf								\
+ "-m m68kelfnbsd							\
   %{assert*}								\
   %{shared:-shared}							\
   %{!shared:								\
