@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.108 2000/07/19 18:56:36 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.109 2000/07/19 22:05:02 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1150,7 +1150,6 @@ XNESTED(MachFPTrap)
 /*
  * Send a floating point exception signal to the current process.
  */
-3:
 	li	t0, 0xFFFFFF00
 	and	a1, a1, t0
 	ori	a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
@@ -1161,7 +1160,24 @@ XNESTED(MachFPTrap)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
 	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE
+	li	a1, SIGILL
+
+	b	FPReturn
+	nop
+
+/*
+ * Send a FPE signal to the current process if it tripped the any of
+ * the VZOUI bits.
+ */
+3:
+	REG_PROLOGUE
+	REG_S	a1, FRAME_CAUSE(a3)
+	REG_EPILOGUE
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	jal	_C_LABEL(trapsignal)
+	li	a1, SIGFPE			# BDSLOT
 
 	b	FPReturn
 	nop
