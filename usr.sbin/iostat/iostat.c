@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.33 2003/03/01 05:38:11 christos Exp $	*/
+/*	$NetBSD: iostat.c,v 1.34 2003/03/01 07:40:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.33 2003/03/01 05:38:11 christos Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.34 2003/03/01 07:40:58 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,6 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
-static int	ndrives;
 
 #define ISSET(x, a)	((x) & (a))
 #define SHOW_CPU	1<<0
@@ -117,14 +116,14 @@ static void disk_statsx(double);
 static void header(int);
 static void usage(void);
 static void display(void);
-static void selectdrives(int, char **);
+static int selectdrives(int, char *[]);
 
-int main(int, char **);
+int main(int, char *[]);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, hdrcnt;
+	int ch, hdrcnt, ndrives, lines;
 	struct timespec	tv;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
@@ -180,7 +179,17 @@ main(int argc, char *argv[])
 
 	dkinit(0);
 	dkreadstats();
-	selectdrives(argc, argv);
+	ndrives = selectdrives(argc, argv);
+	if (ndrives == 0) {
+		/* No drives are selected.  No need to show disk stats. */
+		todo &= ~SHOW_STATS_ALL;
+		if (todo == 0)
+			errx(1, "no drives");
+	}
+	if (ISSET(todo, SHOW_STATS_X))
+		lines = ndrives;
+	else
+		lines = 1;
 
 	tv.tv_sec = interval;
 	tv.tv_nsec = 0;
@@ -189,7 +198,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGCONT, header);
 
 	for (hdrcnt = 1;;) {
-		if (!--hdrcnt) {
+		if ((hdrcnt -= lines) <= 0) {
 			header(0);
 			hdrcnt = 20;
 		}
@@ -260,7 +269,7 @@ header(int signo)
 	if (ISSET(todo, SHOW_STATS_2))
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
-				(void)printf("   KB xfr time ");
+				(void)printf("   KB  xfr time ");
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
@@ -413,16 +422,21 @@ static void
 display(void)
 {
 	double	etime;
-	int newline = 1;
 
 	/* Sum up the elapsed ticks. */
 	etime = cur.cp_etime;
 
-	/* If we're showing totals only, then don't divide by the
+	/*
+	 * If we're showing totals only, then don't divide by the
 	 * system time.
 	 */
 	if (ISSET(todo, SHOW_TOTALS))
 		etime = 1.0;
+
+	if (ISSET(todo, SHOW_STATS_X)) {
+		disk_statsx(etime);
+		goto out;
+	}
 
 	if (ISSET(todo, SHOW_TTY))
 		printf("%4.0f %4.0f", cur.tk_nin / etime, cur.tk_nout / etime);
@@ -433,23 +447,19 @@ display(void)
 	if (ISSET(todo, SHOW_STATS_2))
 		disk_stats2(etime);
 
-	if (ISSET(todo, SHOW_STATS_X)) {
-		disk_statsx(etime);
-		newline = 0;
-	}
-
 	if (ISSET(todo, SHOW_CPU))
 		cpustats();
 
-	if (newline)
-		(void)printf("\n");
+	(void)printf("\n");
+
+out:
 	(void)fflush(stdout);
 }
 
-static void
+static int
 selectdrives(int argc, char *argv[])
 {
-	int	i;
+	int	i, maxdrives, ndrives, tried;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -462,21 +472,35 @@ selectdrives(int argc, char *argv[])
 	 */
 
 #define	BACKWARD_COMPATIBILITY
-	for (ndrives = 0; *argv; ++argv) {
-#ifdef	BACKWARD_COMPATIBILITY
+	for (tried = ndrives = 0; *argv; ++argv) {
+#ifdef BACKWARD_COMPATIBILITY
 		if (isdigit(**argv))
 			break;
 #endif
+		tried++;
 		for (i = 0; i < dk_ndrive; i++) {
-			if (cur.dk_select[i])
-				continue;
-			if (strcmp(cur.dk_name[i], *argv) != 0)
+			if (strcmp(cur.dk_name[i], *argv))
 				continue;
 			cur.dk_select[i] = 1;
 			++ndrives;
 		}
 	}
-#ifdef	BACKWARD_COMPATIBILITY
+
+	if (ndrives == 0 && tried == 0) {
+		/*
+		 * Pick up to 4 (or all if -x is given) drives
+		 * if none specified.
+		 */
+		maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : 4;
+		for (i = 0; i < maxdrives; i++) {
+			cur.dk_select[i] = 1;
+			++ndrives;
+			if (!ISSET(todo, SHOW_STATS_X) && ndrives == 4)
+				break;
+		}
+	}
+
+#ifdef BACKWARD_COMPATIBILITY
 	if (*argv) {
 		interval = atoi(*argv);
 		if (*++argv)
@@ -491,14 +515,5 @@ selectdrives(int argc, char *argv[])
 		if (reps)
 			interval = 1;
 
-	/* Pick up to 4 drives if none specified. */
-	if (ndrives == 0) {
-		int maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : 4;
-		for (i = 0; i < dk_ndrive && ndrives < maxdrives; i++) {
-			if (cur.dk_select[i])
-				continue;
-			cur.dk_select[i] = 1;
-			++ndrives;
-		}
-	}
+	return (ndrives);
 }
