@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.128 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.129 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -338,4 +338,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	file(1): update to 4.00. [pooka 20030326]
 	libmagic: add libmagic, which is currently used by file(1)
 		[pooka 20030326]
-	wall(1): added "-g group".  [lukem 20030328]
+	wall(1): added "-g group".  [lukem 20030327]
+	dump(8), dump_lfs(8): remove setgid tty, as "wall -g operator"
+		is now used to notify operators.  [lukem 20030327]
