@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.184 2000/01/24 07:25:04 mycroft Exp $
+# $NetBSD: mi,v 1.185 2000/01/24 15:05:34 augustss Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -573,6 +573,7 @@
 ./usr/include/net/if_ieee80211.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
+./usr/include/net/if_ieee80211.h
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
