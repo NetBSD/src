@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2002/07/05 18:45:22 matt Exp $
+#	$NetBSD: genassym.cf,v 1.5 2002/07/24 05:44:37 chs Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@ define	IFRAME_R1		offsetof(struct intrframe, r1)
 define	IFRAME_SRR1		offsetof(struct intrframe, srr1)
 define	IFRAME_SRR0		offsetof(struct intrframe, srr0)
 define	IFRAME_PRI		offsetof(struct intrframe, pri)
-define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intr_depth)
+define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intrdepth)
 define	IFRAME_VRSAVE		offsetof(struct intrframe, vrsave)
 define	IFRAME_CTR		offsetof(struct intrframe, ctr)
 define	IFRAME_XER		offsetof(struct intrframe, xer)
