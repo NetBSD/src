@@ -1,14 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.5 2003/06/23 09:20:55 dyoung Exp $
+# $NetBSD: listpkgs,v 1.6 2003/11/25 07:19:46 dyoung Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
 
 # set defaults
-MAKE="${MAKE:-make} -j 1"
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | ${MAKE} -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | ${MAKE} -s -f-`}
+. ./sets.defaults
+
 setd=`dirname $0`
 prefix=/
 
@@ -18,7 +17,7 @@ usage() {
 exec 1>&2
 
 echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] setname"
-echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]"
+echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]"
 echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
 echo "	-s setsdir	directory to find sets			[$setd]"
 echo "	setname set to list packages for"
@@ -30,7 +29,7 @@ exit 1
 while : ; do
 	case $1 in
 	-a*)
-		arch=$2; shift
+		machine_arch=$2; shift
 		;;
 	-m*)
 		machine=$2; shift
@@ -56,13 +55,13 @@ else
 fi
 
 # Convert mipse[lb] to mips after processing command line arguments.
-arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
+machine_arch=`echo $machine_arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
 
 # Compute toolchain  used on target cpu.
-if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "sparc64" -o "$arch" = "i386" -o "$arch" = "arm" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
+if [ "$machine_arch" = "mips" -o "$machine" = "alpha" -o "$machine_arch" = "powerpc" -o "$machine_arch" = "sparc" -o "$machine_arch" = "sparc64" -o "$machine_arch" = "i386" -o "$machine_arch" = "arm" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
 	shlib=elf
 else
-	if [ "$arch" = "sh3" ]; then
+	if [ "$machine_arch" = "sh3" ]; then
 		shlib=
 	else
 		shlib=aout

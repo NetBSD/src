@@ -42,7 +42,7 @@ list_set_files () {
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.4 2003/10/29 23:05:55 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.5 2003/11/25 07:19:46 dyoung Exp $
 # 	.			base-sys-root
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -157,5 +157,13 @@ list_set_lists () {
 			echo $setd/lists/$setname/rescue.ad.${machine_cpu}.shl
 		fi
 	fi
+}
+
+arch_to_cpu () {
+MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo \${MACHINE_CPU}
+EOF
 }
 
