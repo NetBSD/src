@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.164 2002/03/04 06:00:15 manu Exp $
+.\"	$NetBSD: options.4,v 1.165 2002/03/10 20:05:42 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -792,6 +792,7 @@ viewed in a window without requiring a suid root program to do it.
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the
+.Xr md 4
 .Tn RAM
 disk driver is configured.
 This can result in automatically loading a
@@ -799,10 +800,17 @@ This can result in automatically loading a
 disk from floppy on open (among other things).
 .It Cd options MEMORY_DISK_IS_ROOT
 Forces the
+.Xr md 4
 .Tn RAM
 disk to be the root device.
 This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
+.It Cd options MEMORY_DISK_SIZE=integer
+Allocates the given number of 512 byte blocks as memory for the
+.Xr md 4
+.Tn RAM
+disk, to be populated with
+.Xr mdsetimage 8 .
 .It Cd options VNODE_OP_NOINLINE
 Do not inline the VOP_*() calls in the kernel.
 On i386 GENERIC, this saves 36k of kernel text.  Useful
@@ -1872,12 +1880,14 @@ bolded
 .Xr inet 4 ,
 .Xr iso 4 ,
 .Xr lkm 4 ,
+.Xr md 4 ,
 .Xr ns 4 ,
 .Xr pcibios 4 ,
 .Xr pcmcia 4 ,
 .Xr config 8 ,
 .Xr edquota 8 ,
 .Xr init 8 ,
+.Xr mdsetimage 8 ,
 .Xr mount_cd9660 8 ,
 .Xr mount_fdesc 8 ,
 .Xr mount_kernfs 8 ,
