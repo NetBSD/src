@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sigsetops.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sigsetops.c,v 1.6 1994/01/10 23:02:09 jtc Exp $";
+static char *rcsid = "$Id: sigsetops.c,v 1.7 1994/02/07 04:47:49 proven Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/signal.h>
@@ -66,7 +66,7 @@ sigaddset(set, signo)
 	sigset_t *set;
 	int signo;
 {
-	if (signo < 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -79,7 +79,7 @@ sigdelset(set, signo)
 	sigset_t *set;
 	int signo;
 {
-	if (signo < 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -92,9 +92,9 @@ sigismember(set, signo)
 	const sigset_t *set;
 	int signo;
 {
-	if (signo < 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG) {
 		errno = EINVAL;
 		return -1;
 	}
-	return ((*set & ~sigmask(signo)) != 0);
+	return ((*set & sigmask(signo)) != 0);
 }
