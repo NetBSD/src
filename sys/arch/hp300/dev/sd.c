@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.36 1998/01/12 18:31:10 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.37 2000/01/21 23:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -230,6 +230,8 @@ sdattach(parent, self, aux)
 {
 	struct sd_softc *sc = (struct sd_softc *)self;
 	struct oscsi_attach_args *osa = aux;
+
+	BUFQ_INIT(&sc->sc_tab);
 
 	/*
 	 * XXX formerly 0 meant unused but now pid 0 can legitimately
@@ -587,7 +589,7 @@ sdclose(dev, flag, mode, p)
 	if (dk->dk_openmask == 0) {
 		sc->sc_flags |= SDF_CLOSING;
 		s = splbio();
-		while (sc->sc_tab.b_active) {
+		while (sc->sc_active) {
 			sc->sc_flags |= SDF_WANTED;
 			sleep((caddr_t)&sc->sc_tab, PRIBIO);
 		}
@@ -704,7 +706,6 @@ sdstrategy(bp)
 {
 	int unit = sdunit(bp->b_dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	struct buf *dp = &sc->sc_tab;
 	struct partition *pinfo;
 	daddr_t bn;
 	int sz, s;
@@ -715,7 +716,7 @@ sdstrategy(bp)
 			bp->b_error = EPERM;
 			goto bad;
 		}
-		bp->b_cylin = 0;
+		bp->b_cylinder = 0;
 	} else {
 		if (sc->sc_flags & SDF_ERROR) {
 			bp->b_error = EIO;
@@ -767,12 +768,12 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + offset) >> sc->sc_bshift;
+		bp->b_cylinder = (bn + offset) >> sc->sc_bshift; /* XXX */
 	}
 	s = splbio();
-	disksort(dp, bp);
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	disksort_cylinder(&sc->sc_tab, bp);	/* XXX */
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		sdustart(unit);
 	}
 	splx(s);
@@ -858,17 +859,16 @@ sdfinish(sc, bp)
 	struct sd_softc *sc;
 	struct buf *bp;
 {
-	struct buf *dp = &sc->sc_tab;
 
-	dp->b_errcnt = 0;
-	dp->b_actf = bp->b_actf;
+	sc->sc_errcnt = 0;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
 	bp->b_resid = 0;
 	biodone(bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
-	if (dp->b_actf)
+	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
 		sdustart(sc->sc_dev.dv_unit);
 	else {
-		dp->b_active = 0;
+		sc->sc_active = 0;
 		if (sc->sc_flags & SDF_WANTED) {
 			sc->sc_flags &= ~SDF_WANTED;
 			wakeup((caddr_t)dp);
@@ -887,10 +887,10 @@ sdstart(arg)
 	 * so check now.
 	 */
 	if (sc->sc_format_pid >= 0 && legal_cmds[sc->sc_cmdstore.cdb[0]] > 0) {
-		struct buf *bp = sc->sc_tab.b_actf;
+		struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 		int sts;
 
-		sc->sc_tab.b_errcnt = 0;
+		sc->sc_errcnt = 0;
 		while (1) {
 			sts = scsi_immed_command(sc->sc_dev.dv_parent->dv_unit,
 			    sc->sc_target, sc->sc_lun, &sc->sc_cmdstore,
@@ -900,7 +900,7 @@ sdstart(arg)
 			if ((sts & 0xfe) == 0 ||
 			    (sts = sderror(sc, sts)) == 0)
 				break;
-			if (sts > 0 || sc->sc_tab.b_errcnt++ >= SDRETRY) {
+			if (sts > 0 || sc->sc_errcnt++ >= SDRETRY) {
 				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				break;
@@ -917,7 +917,7 @@ sdgo(arg)
 	void *arg;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int pad;
 	struct scsi_fmt_cdb *cmd;
 
@@ -935,7 +935,7 @@ sdgo(arg)
 			return;
 		}
 		cmd = bp->b_flags & B_READ? &sd_read_cmd : &sd_write_cmd;
-		*(int *)(&cmd->cdb[2]) = bp->b_cylin;
+		*(int *)(&cmd->cdb[2]) = bp->b_cylinder;	/* XXX */
 		pad = howmany(bp->b_bcount, sc->sc_blksize);
 		*(u_short *)(&cmd->cdb[7]) = pad;
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
@@ -961,8 +961,8 @@ sdgo(arg)
 		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %ld\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
-		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
-		       sc->sc_tab.b_errcnt);
+		       bp->b_un.b_addr, bp->b_cylinder, bp->b_bcount,
+		       sc->sc_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
@@ -975,7 +975,7 @@ sdintr(arg, stat)
 	int stat;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int cond;
 	
 	if (bp == NULL) {
@@ -993,12 +993,12 @@ sdintr(arg, stat)
 #endif
 		cond = sderror(sc, stat);
 		if (cond) {
-			if (cond < 0 && sc->sc_tab.b_errcnt++ < SDRETRY) {
+			if (cond < 0 && sc->sc_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
 					printf("%s: retry #%ld\n",
 					    sc->sc_dev.dv_xname,
-					    sc->sc_tab.b_errcnt);
+					    sc->sc_errcnt);
 #endif
 				sdstart(sc);
 				return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.25 1998/05/17 17:09:55 hpeyerl Exp $	*/
+/*	$NetBSD: st.c,v 1.26 2000/01/21 23:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ stattach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_tab.b_actb = &sc->sc_tab.b_actf;
+	BUFQ_INIT(&sc->sc_tab);
 
 	bzero(vendor, sizeof(vendor));
 	bzero(product, sizeof(product));
@@ -695,20 +695,15 @@ ststrategy(bp)
 	struct buf *bp;
 {
 	struct st_softc *sc;
-	struct buf *dp;
 	int unit, s;
 
 	unit = UNIT(bp->b_dev);
 	sc = st_cd.cd_devs[unit];
 
-	dp = &sc->sc_tab;
-	bp->b_actf = NULL;
 	s = splbio();
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		stustart(unit);
 	}
 	splx(s);
@@ -740,7 +735,7 @@ stgo(arg)
 {
 	struct st_softc *sc = arg;
 	struct scsi_fmt_cdb *cmd;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int pad, stat;
 	long nblks;
 
@@ -821,20 +816,15 @@ stfinish(sc, bp)
 	struct st_softc *sc;
 	struct buf *bp;
 {
-	struct buf *dp;
 
-	sc->sc_tab.b_errcnt = 0;
-	if ((dp = bp->b_actf))
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
-	iodone(bp);
+	sc->sc_errcnt = 0;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
+	biodone(bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
-	if (sc->sc_tab.b_actf)
+	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
 		stustart(sc->sc_dev.dv_unit);
 	else
-		sc->sc_tab.b_active = 0;
+		sc->sc_active = 0;
 }
 
 int
@@ -962,7 +952,7 @@ stintr(arg, stat)
 {
 	struct st_softc *sc = arg;
 	struct st_xsense *xp = &sc->sc_sense;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 
 #ifdef DEBUG
 	if (bp == NULL) {
@@ -1224,7 +1214,7 @@ again:
 	bp->b_blkno = 0;
 	bp->b_error = 0;
 	ststrategy(bp);
-	iowait(bp);
+	biowait(bp);
 	if (bp->b_flags & B_WANTED)
 		wakeup((caddr_t)bp);
 	bp->b_flags &= B_ERROR;

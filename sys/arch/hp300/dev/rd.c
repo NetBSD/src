@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.36 1998/01/12 18:31:06 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.37 2000/01/21 23:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -316,6 +316,8 @@ rdattach(parent, self, aux)
 {
 	struct rd_softc *sc = (struct rd_softc *)self;
 	struct hpibbus_attach_args *ha = aux;
+
+	BUFQ_INIT(&sc->sc_tab);
 
 	if (rdident(parent, sc, ha) == 0) {
 		printf("\n%s: didn't respond to describe command!\n",
@@ -635,7 +637,7 @@ rdclose(dev, flag, mode, p)
 	if (dk->dk_openmask == 0) {
 		rs->sc_flags |= RDF_CLOSING;
 		s = splbio();
-		while (rs->sc_tab.b_active) {
+		while (rs->sc_active) {
 			rs->sc_flags |= RDF_WANTED;
 			sleep((caddr_t)&rs->sc_tab, PRIBIO);
 		}
@@ -652,7 +654,6 @@ rdstrategy(bp)
 {
 	int unit = rdunit(bp->b_dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
-	struct buf *dp = &rs->sc_tab;
 	struct partition *pinfo;
 	daddr_t bn;
 	int sz, s;
@@ -701,11 +702,11 @@ rdstrategy(bp)
 			goto bad;
 		}
 	}
-	bp->b_cylin = bn + offset;
+	bp->b_cylinder = bn + offset;		/* XXX */
 	s = splbio();
-	disksort(dp, bp);
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	disksort_cylinder(&rs->sc_tab, bp);	/* XXX */
+	if (rs->sc_active == 0) {
+		rs->sc_active = 1;
 		rdustart(rs);
 	}
 	splx(s);
@@ -734,7 +735,7 @@ rdustart(rs)
 {
 	struct buf *bp;
 
-	bp = rs->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&rs->sc_tab);
 	rs->sc_addr = bp->b_un.b_addr;
 	rs->sc_resid = bp->b_bcount;
 	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
@@ -746,16 +747,15 @@ rdfinish(rs, bp)
 	struct rd_softc *rs;
 	struct buf *bp;
 {
-	struct buf *dp = &rs->sc_tab;
 
-	dp->b_errcnt = 0;
-	dp->b_actf = bp->b_actf;
+	rs->sc_errcnt = 0;
+	BUFQ_REMOVE(&rs->sc_tab, bp);
 	bp->b_resid = 0;
 	biodone(bp);
 	hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-	if (dp->b_actf)
-		return (dp->b_actf);
-	dp->b_active = 0;
+	if ((bp = BUFQ_FIRST(&rs->sc_tab)) != NULL)
+		return (bp);
+	rs->sc_active = 0;
 	if (rs->sc_flags & RDF_WANTED) {
 		rs->sc_flags &= ~RDF_WANTED;
 		wakeup((caddr_t)dp);
@@ -768,7 +768,7 @@ rdstart(arg)
 	void *arg;
 {
 	struct rd_softc *rs = arg;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&rs->sc_tab);
 	int part, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
@@ -786,7 +786,7 @@ again:
 	rs->sc_ioc.c_volume = C_SVOL(0);
 	rs->sc_ioc.c_saddr = C_SADDR;
 	rs->sc_ioc.c_hiaddr = 0;
-	rs->sc_ioc.c_addr = RDBTOS(bp->b_cylin);
+	rs->sc_ioc.c_addr = RDBTOS(bp->b_cylinder);	/* XXX */
 	rs->sc_ioc.c_nop2 = C_NOP;
 	rs->sc_ioc.c_slen = C_SLEN;
 	rs->sc_ioc.c_len = rs->sc_resid;
@@ -821,12 +821,12 @@ again:
 	if (rddebug & RDB_ERROR)
 		printf("%s: rdstart: cmd %x adr %lx blk %d len %d ecnt %ld\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
-		       bp->b_blkno, rs->sc_resid, rs->sc_tab.b_errcnt);
+		       bp->b_blkno, rs->sc_resid, rs->sc_errcnt);
 	rs->sc_stats.rdretries++;
 #endif
 	rs->sc_flags &= ~RDF_SEEK;
 	rdreset(rs);
-	if (rs->sc_tab.b_errcnt++ < RDRETRY)
+	if (rs->sc_errcnt++ < RDRETRY)
 		goto again;
 	printf("%s: rdstart err: cmd 0x%x sect %ld blk %d len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
@@ -847,7 +847,7 @@ rdgo(arg)
 	void *arg;
 {
 	struct rd_softc *rs = arg;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&rs->sc_tab);
 	int rw, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
@@ -871,7 +871,7 @@ rdintr(arg)
 {
 	struct rd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&rs->sc_tab);
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -922,7 +922,7 @@ rdintr(arg)
 #ifdef DEBUG
 		rs->sc_stats.rdretries++;
 #endif
-		if (rs->sc_tab.b_errcnt++ < RDRETRY) {
+		if (rs->sc_errcnt++ < RDRETRY) {
 			if (restart)
 				rdstart(rs);
 			return;
@@ -1017,7 +1017,7 @@ rderror(unit)
 	 */
 	if (sp->c_fef & FEF_IMR) {
 		extern int hz;
-		int rdtimo = RDWAITC << rs->sc_tab.b_errcnt;
+		int rdtimo = RDWAITC << rs->sc_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
 		       rs->sc_dev.dv_xname, rdtimo);
@@ -1032,7 +1032,7 @@ rderror(unit)
 	 * threshhold.  By default, this will only report after the
 	 * retry limit has been exceeded.
 	 */
-	if (rs->sc_tab.b_errcnt < rderrthresh)
+	if (rs->sc_errcnt < rderrthresh)
 		return(1);
 
 	/*
@@ -1040,7 +1040,7 @@ rderror(unit)
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
-	bp = rs->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&rs->sc_tab);
 	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {

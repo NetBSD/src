@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.23 1998/01/12 18:30:44 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.24 2000/01/21 23:29:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -115,7 +115,8 @@ struct	ct_softc {
 	struct	ct_ulcmd sc_ul;
 	struct	ct_wfmcmd sc_wfm;
 	struct	ct_clearcmd sc_clear;
-	struct	buf sc_tab;
+	struct	buf_queue sc_tab;
+	int	sc_active;
 	struct	buf *sc_bp;
 	struct	buf sc_bufstore;	/* XXX */
 	int	sc_blkno;
@@ -222,7 +223,7 @@ ctattach(parent, self, aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	sc->sc_tab.b_actb = &sc->sc_tab.b_actf;
+	BUFQ_INIT(&sc->sc_tab);
 
 	/* Initialize hpib job queue entry. */
 	sc->sc_hq.hq_softc = sc;
@@ -481,7 +482,7 @@ ctcommand(dev, cmd, cnt)
 #endif
 		}
 		ctstrategy(bp);
-		iowait(bp);
+		biowait(bp);
 	}
 	bp->b_flags = 0;
 	sc->sc_flags &= ~CTF_CMD;
@@ -493,21 +494,16 @@ void
 ctstrategy(bp)
 	struct buf *bp;
 {
-	struct buf *dp;
 	int s, unit;
 	struct ct_softc *sc;
 
 	unit = UNIT(bp->b_dev);
 	sc = ct_cd.cd_devs[unit];
 
-	dp = &sc->sc_tab;
-	bp->b_actf = NULL;
 	s = splbio();
-	bp->b_actb = dp->b_actb;
-	*(dp->b_actb) = bp;
-	dp->b_actb = &bp->b_actf;
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		ctustart(sc);
 	}
 	splx(s);
@@ -519,7 +515,7 @@ ctustart(sc)
 {
 	struct buf *bp;
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	sc->sc_addr = bp->b_un.b_addr;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
@@ -537,7 +533,7 @@ ctstart(arg)
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
 	slave = sc->sc_slave;
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -648,7 +644,7 @@ ctgo(arg)
 	struct buf *bp;
 	int rw;
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_dev.dv_parent->dv_unit, sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
@@ -744,7 +740,7 @@ ctintr(arg)
 	slave = sc->sc_slave;
 	unit = sc->sc_dev.dv_unit;
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", sc->sc_dev.dv_xname);
 		return;
@@ -880,17 +876,12 @@ ctdone(sc, bp)
 	struct ct_softc *sc;
 	struct buf *bp;
 {
-	struct buf *dp;
 
-	if ((dp = bp->b_actf) != NULL)
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
 	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (sc->sc_tab.b_actf == NULL) {
-		sc->sc_tab.b_active = 0;
+	if (BUFQ_FIRST(&sc->sc_tab) == NULL) {
+		sc->sc_active = 0;
 		return;
 	}
 	ctustart(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.41 1999/12/04 21:20:04 ragge Exp $	*/
+/*	$NetBSD: fd.c,v 1.42 2000/01/21 23:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -68,7 +68,6 @@ enum fd_parttypes {
 #define FDBBSIZE	(8192)
 #define FDSBSIZE	(8192)
 
-#define b_cylin	b_resid
 #define FDUNIT(dev)	DISKUNIT(dev)
 #define FDPART(dev)	DISKPART(dev)
 #define FDMAKEDEV(m, u, p)	MAKEDISKDEV((m), (u), (p))
@@ -142,7 +141,8 @@ struct fdtype {
 struct fd_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
-	struct buf bufq;	/* queue of buf's */
+	struct buf_queue bufq;	/* queue pending I/O operations */
+	struct buf curbuf;	/* state of current I/O operation */
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
 	int cachetrk;		/* cahced track -1 for none */
@@ -384,6 +384,8 @@ fdattach(pdp, dp, auxp)
 
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
+
+	BUFQ_INIT(&sc->bufq);
 
 	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;
@@ -660,7 +662,6 @@ fdstrategy(bp)
 {
 	struct disklabel *lp;
 	struct fd_softc *sc;
-	struct buf *dp;
 	int unit, part, s;
 
 	unit = FDUNIT(bp->b_dev);
@@ -692,8 +693,7 @@ fdstrategy(bp)
 	 * queue the buf and kick the low level code
 	 */
 	s = splbio();
-	dp = &sc->bufq;
-	disksort(dp, bp);
+	disksort_cylinder(&sc->bufq, bp);
 	fdstart(sc);
 	splx(s);
 	return;
@@ -813,7 +813,7 @@ fdgetdisklabel(sc, dev)
 	bp = (void *)geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
 	bp->b_flags = B_BUSY | B_READ;
 	fdstrategy(bp);
@@ -923,7 +923,7 @@ fdputdisklabel(sc, dev)
 	bp = (void *)geteblk((int)lp->d_secsize);
 	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
 	bp->b_flags = B_BUSY | B_READ;
 	fdstrategy(bp);
@@ -935,7 +935,7 @@ fdputdisklabel(sc, dev)
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_flags = B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);
@@ -1207,8 +1207,8 @@ fdstart(sc)
 	/*
 	 * get next buf if there.
 	 */
-	dp = &sc->bufq;
-	if ((bp = dp->b_actf) == NULL) {
+	dp = &sc->curbuf;
+	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL) {
 #ifdef FDDEBUG
 		printf("  nothing to do\n");
 #endif
@@ -1241,15 +1241,15 @@ printf("fdstart: disk changed\n");
 		for (;;) {
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			if (bp->b_actf == NULL)
+			if (BUFQ_NEXT(bp) == NULL)
 				break;
 			biodone(bp);
-			bp = bp->b_actf;
+			bp = BUFQ_NEXT(bp);
 		}
 		/*
 		 * do fddone() on last buf to allow other units to start.
 		 */
-		dp->b_actf = bp;
+		BUFQ_INSERT_HEAD(&sc->bufq, bp);
 		fddone(sc);
 		return;
 	}
@@ -1325,8 +1325,8 @@ fdcont(sc)
 	struct buf *dp, *bp;
 	int trk, write;
 
-	dp = &sc->bufq;
-	bp = dp->b_actf;
+	dp = &sc->curbuf;
+	bp = BUFQ_FIRST(&sc->bufq);
 	dp->b_data += (dp->b_bcount - bp->b_resid);
 	dp->b_blkno += (dp->b_bcount - bp->b_resid) / FDSECSIZE;
 	dp->b_bcount = bp->b_resid;
@@ -1571,8 +1571,8 @@ fddone(sc)
 	if (sc->flags & FDF_MOTOROFF)
 		goto nobuf;
 
-	dp = &sc->bufq;
-	if ((bp = dp->b_actf) == NULL)
+	dp = &sc->curbuf;
+	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL)
 		panic ("fddone");
 	/*
 	 * check for an error that may have occured
@@ -1612,7 +1612,7 @@ fddone(sc)
 	/*
 	 * remove from queue.
 	 */
-	dp->b_actf = bp->b_actf;
+	BUFQ_REMOVE(&sc->bufq, bp);
 
 	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
 
@@ -1658,7 +1658,7 @@ fdfindwork(unit)
 		 * and it has no buf's queued do it now
 		 */
 		if (sc->flags & FDF_MOTOROFF) {
-			if (sc->bufq.b_actf == NULL)
+			if (BUFQ_FIRST(&sc->bufq) == NULL)
 				fdmotoroff(sc);
 			else {
 				/*
@@ -1678,7 +1678,7 @@ fdfindwork(unit)
 		 * if we have no start unit and the current unit has
 		 * io waiting choose this unit to start.
 		 */
-		if (ssc == NULL && sc->bufq.b_actf)
+		if (ssc == NULL && BUFQ_FIRST(&sc->bufq) != NULL)
 			ssc = sc;
 	}
 	if (ssc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.10 1998/01/12 18:31:03 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.11 2000/01/21 23:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,8 @@ struct	mt_softc {
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	struct	hpibqueue sc_hq; /* HPIB device queue member */
 	tpr_t	sc_ttyp;
-	struct buf sc_tab;	/* buf queue */
+	struct buf_queue sc_tab;/* buf queue */
+	int	sc_active;
 	struct buf sc_bufstore;	/* XXX buffer storage */
 };
 
@@ -178,7 +179,7 @@ mtattach(parent, self, aux)
 	hpibno = parent->dv_unit;
 	slave = ha->ha_slave;
 
-	sc->sc_tab.b_actb = &sc->sc_tab.b_actf;
+	BUFQ_INIT(&sc->sc_tab);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
@@ -439,7 +440,7 @@ mtcommand(dev, cmd, cnt)
 	do {
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
-		iowait(bp);
+		biowait(bp);
 		if (bp->b_flags & B_ERROR) {
 			error = (int) (unsigned) bp->b_error;
 			break;
@@ -461,7 +462,6 @@ mtstrategy(bp)
 	struct buf *bp;
 {
 	struct mt_softc *sc;
-	struct buf *dp;
 	int unit;
 	int s;
 
@@ -500,18 +500,14 @@ mtstrategy(bp)
 #endif
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			iodone(bp);
+			biodone(bp);
 			return;
 		}
 	}
-	dp = &sc->sc_tab;
-	bp->b_actf = NULL;
 	s = splbio();
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		mtustart(sc);
 	}
 	splx(s);
@@ -560,7 +556,7 @@ mtstart(arg)
 
 	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -739,15 +735,11 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	iodone(bp);
-	if ((dp = bp->b_actf))
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
+	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if ((bp = dp) == NULL)
-		sc->sc_tab.b_active = 0;
+	if ((bp = BUFQ_FIRST(&sc->sc_tab)) == NULL)
+		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }
@@ -766,7 +758,7 @@ mtgo(arg)
 	int rw;
 
 	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
 	    bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
@@ -781,7 +773,7 @@ mtintr(arg)
 	int i;
 	u_char cmdbuf[4];
 
-	bp = sc->sc_tab.b_actf;
+	bp = BUFQ_FIRST(&sc->sc_tab);
 	if (bp == NULL) {
 		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
@@ -928,19 +920,11 @@ mtintr(arg)
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	iodone(bp);
-	if ((dp = bp->b_actf))
-		dp->b_actb = bp->b_actb;
-	else
-		sc->sc_tab.b_actb = bp->b_actb;
-	*bp->b_actb = dp;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
+	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-#if 0
-	if (bp /*sc->sc_tab.b_actf*/ == NULL)
-#else
-	if (sc->sc_tab.b_actf == NULL)
-#endif
-		sc->sc_tab.b_active = 0;
+	if (BUFQ_FIRST(&sc->sc_tab) == NULL)
+		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }

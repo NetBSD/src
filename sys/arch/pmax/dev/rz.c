@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.54 2000/01/10 03:24:33 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.55 2000/01/21 23:29:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.54 2000/01/10 03:24:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.55 2000/01/21 23:29:06 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -184,7 +184,8 @@ static	struct rz_softc {
 #define	sc_copenpart	sc_dkdev.dk_copenmask	/* XXX compat */
 #define	sc_bshift	sc_dkdev.dk_blkshift	/* XXX compat */
 	struct	rzstats sc_stats;	/* statisic counts */
-	struct	buf sc_tab;		/* queue of pending operations */
+	struct	buf_queue sc_tab;	/* queue of pending operations */
+	int	sc_active;		/* number of active requests */
 	struct	buf sc_buf;		/* buf for doing I/O */
 	struct	buf sc_errbuf;		/* buf for doing REQUEST_SENSE */
 	struct	ScsiCmd sc_cmd;		/* command for controller */
@@ -227,7 +228,6 @@ int	rzdebug = RZB_ERROR;
 
 #define	rzunit(x)	(minor(x) >> 3)
 #define rzpart(x)	(minor(x) & 0x7)
-#define	b_cylin		b_resid
 
 struct scsi_mode_sense_data {
 	struct scsi_mode_header header;
@@ -282,8 +282,7 @@ rzready(sc)
 		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 		sc->sc_buf.b_bcount = 0;
 		sc->sc_buf.b_un.b_addr = (caddr_t)0;
-		sc->sc_buf.b_actf = (struct buf *)0;
-		sc->sc_tab.b_actf = &sc->sc_buf;
+		BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 
 		sc->sc_cmd.cmd = sc->sc_cdb.cdb;
 		sc->sc_cmd.cmdlen = sc->sc_cdb.len;
@@ -330,8 +329,7 @@ rzready(sc)
 			sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_buf.b_bcount = 0;
 			sc->sc_buf.b_un.b_addr = (caddr_t)0;
-			sc->sc_buf.b_actf = (struct buf *)0;
-			sc->sc_tab.b_actf = &sc->sc_buf;
+			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 			rzstart(sc->sc_cmd.unit);
 			if (biowait(&sc->sc_buf))
 				return (0);
@@ -387,8 +385,7 @@ rz_getsize(sc, flags)
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 	sc->sc_buf.b_bcount = 8; /* XXX 8 was sizeof(sc->sc_capbuf). */
 	sc->sc_buf.b_un.b_addr = (caddr_t)sc->sc_capbuf;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_tab.b_actf = &sc->sc_buf;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	sc->sc_flags |= RZF_ALTCMD;
 	rzstart(sc->sc_cmd.unit);
 	sc->sc_flags &= ~RZF_ALTCMD;
@@ -426,6 +423,8 @@ rzprobe(xxxsd)
 	if (sd->sd_unit >= NRZ)
 		return (0);
 
+	BUFQ_INIT(&sc->sc_tab);
+
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
 	sc->sc_cmd.sd = sd;
@@ -451,8 +450,7 @@ rzprobe(xxxsd)
 	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 	sc->sc_buf.b_bcount = sizeof(inqbuf);
 	sc->sc_buf.b_un.b_addr = (caddr_t)&inqbuf;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_tab.b_actf = &sc->sc_buf;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	rzstart(sd->sd_unit);
 
 /*XXX*/	/*printf("probe rz%d\n", sd->sd_unit);*/
@@ -673,7 +671,7 @@ rzstrategy(bp)
 			bp->b_error = EPERM;
 			goto bad;
 		}
-		bp->b_cylin = 0;
+		bp->b_cylinder = 0;
 	} else {
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
@@ -713,15 +711,15 @@ rzstrategy(bp)
 			rzlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + pp->p_offset) >> sc->sc_bshift;
+		bp->b_cylinder = (bn + pp->p_offset) >> sc->sc_bshift; /* XXX */
 	}
 	/* don't let disksort() see sc_errbuf */
 	while (sc->sc_flags & RZF_SENSEINPROGRESS)
 		printf("SENSE\n"); /* XXX */
 	s = splbio();
-	disksort(&sc->sc_tab, bp);
-	if (sc->sc_tab.b_active == 0) {
-		sc->sc_tab.b_active = 1;
+	disksort_cylinder(&sc->sc_tab, bp);	/* XXX */
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		rzstart(unit);
 	}
 	splx(s);
@@ -737,7 +735,7 @@ rzstart(unit)
 	int unit;
 {
 	struct rz_softc *sc = &rz_softc[unit];
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int n;
 
 	sc->sc_cmd.buf = bp->b_un.b_addr;
@@ -759,7 +757,7 @@ rzstart(unit)
 		}
 		sc->sc_cmd.cmd = (u_char *)&sc->sc_rwcmd;
 		sc->sc_cmd.cmdlen = sizeof(sc->sc_rwcmd);
-		n = bp->b_cylin;
+		n = bp->b_cylinder;
 		sc->sc_rwcmd.highAddr = n >> 24;
 		sc->sc_rwcmd.midHighAddr = n >> 16;
 		sc->sc_rwcmd.midLowAddr = n >> 8;
@@ -797,7 +795,7 @@ rzdone(unit, error, resid, status)
 	int status;		/* SCSI status byte */
 {
 	struct rz_softc *sc = &rz_softc[unit];
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	struct pmax_scsi_device *sd = sc->sc_sd;
 
 	if (bp == NULL) {
@@ -813,7 +811,8 @@ rzdone(unit, error, resid, status)
 
 	if (sc->sc_flags & RZF_SENSEINPROGRESS) {
 		sc->sc_flags &= ~RZF_SENSEINPROGRESS;
-		sc->sc_tab.b_actf = bp = bp->b_actf;	/* remove sc_errbuf */
+		BUFQ_REMOVE(&sc->sc_tab, bp);	/* remove sc_errbuf */
+		bp = BUFQ_FIRST(&sc->sc_tab);
 
 		if (error || (status & SCSI_STATUS_CHECKCOND)) {
 #ifdef DEBUG
@@ -866,8 +865,7 @@ rzdone(unit, error, resid, status)
 			sc->sc_errbuf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_errbuf.b_bcount = sizeof(sc->sc_sense.sense);
 			sc->sc_errbuf.b_un.b_addr = (caddr_t)sc->sc_sense.sense;
-			sc->sc_errbuf.b_actf = bp;
-			sc->sc_tab.b_actf = &sc->sc_errbuf;
+			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_errbuf);
 			rzstart(unit);
 			return;
 		}
@@ -876,12 +874,12 @@ rzdone(unit, error, resid, status)
 		bp->b_resid = resid;
 	}
 
-	sc->sc_tab.b_actf = bp->b_actf;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
 	biodone(bp);
-	if (sc->sc_tab.b_actf)
+	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
 		rzstart(unit);
 	else {
-		sc->sc_tab.b_active = 0;
+		sc->sc_active = 0;
 		/* finish close protocol */
 		if (sc->sc_openpart == 0)
 			wakeup((caddr_t)&sc->sc_tab);
@@ -1098,7 +1096,7 @@ rzclose(dev, flags, mode, p)
 	 */
 	if (sc->sc_openpart == 0) {
 		s = splbio();
-		while (sc->sc_tab.b_actf)
+		while (BUFQ_FIRST(&sc->sc_tab) != NULL)
 			sleep((caddr_t)&sc->sc_tab, PZERO - 1);
 		splx(s);
 #if 0
@@ -1400,8 +1398,7 @@ rz_command(sc, scsi_cmd, cmdlen, data_addr, datalen, nretries, timeout,
 	    (flags & SCSI_DATA_IN) ? B_READ : B_WRITE;
 	sc->sc_buf.b_bcount = datalen;
 	sc->sc_buf.b_un.b_addr = (caddr_t)data_addr;
-	sc->sc_buf.b_actf = (struct buf *)0;
-	sc->sc_tab.b_actf = &sc->sc_buf;
+	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	sc->sc_flags |= RZF_ALTCMD;
 	rzstart(sc->sc_cmd.unit);
 	sc->sc_flags &= ~RZF_ALTCMD;
@@ -1734,8 +1731,7 @@ rzdump(dev, blkno, va, size)
 		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_WRITE;
 		sc->sc_buf.b_bcount = nwrt * sectorsize;
 		sc->sc_buf.b_un.b_addr = va;
-		sc->sc_buf.b_actf = (struct buf *)0;
-		sc->sc_tab.b_actf = &sc->sc_buf;
+		BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 
 		sc->sc_cmd.flags = SCSICMD_DATA_TO_DEVICE;
 		sc->sc_cmd.cmd = (u_char *)&sc->sc_rwcmd;

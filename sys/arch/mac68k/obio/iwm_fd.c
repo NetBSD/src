@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.3 1999/10/25 14:31:50 kleink Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.4 2000/01/21 23:29:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -322,6 +322,8 @@ iwm_attach(parent, self, auxp)
 
 	printf(": Apple GCR floppy disk controller\n");
 	iwm = (iwm_softc_t *)self;
+
+	BUFQ_INIT(&iwm->bufQueue);
 
 	iwmErr = iwmInit();
 	if (TRACE_CONFIG)
@@ -1125,8 +1127,8 @@ fdstrategy(bp)
 		}
 		spl = splbio();
 		untimeout(motor_off, fd);
-		disksort(&fd->bufQueue, bp);
-		if (fd->bufQueue.b_active == 0)
+		disksort_cylinder(&fd->bufQueue, bp);
+		if (fd->sc_active == 0)
 			fdstart(fd);
 		splx(spl);
 	}
@@ -1240,7 +1242,7 @@ fdstart_Init(fd)
 	 * Get the first entry from the queue. This is the buf we gave to
 	 * fdstrategy(); disksort() put it into our softc.
 	 */
-	bp = fd->bufQueue.b_actf;
+	bp = BUFQ_FIRST(&fd->bufQueue);
 	if (NULL == bp) {
 		if (TRACE_STRAT)
 			printf("Queue empty: Nothing to do");
@@ -1643,7 +1645,7 @@ fdstart_Exit(fd)
 			    fd->pos.track, fd->pos.side, fd->pos.sector);
 #endif
 
-	bp = fd->bufQueue.b_actf;
+	bp = BUFQ_FIRST(&fd->bufQueue);
 
 	bp->b_resid = fd->bytesLeft;
 	bp->b_error = (0 == fd->iwmErr) ? 0 : EIO;
@@ -1660,10 +1662,10 @@ fdstart_Exit(fd)
 	 * Remove requested buf from beginning of queue
 	 * and release it.
 	 */
-	fd->bufQueue.b_actf = bp->b_actf;
+	BUFQ_REMOVE(&fd->bufQueue, bp);
 	if (DISABLED && TRACE_STRAT)
-		printf(" Next buf (bufQueue.b_actf) at %p\n",
-		    fd->bufQueue.b_actf);
+		printf(" Next buf (bufQueue first) at %p\n",
+		    BUFQ_FIRST(&fd->bufQueue));
 	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid);
 	biodone(bp);
 	/* 
