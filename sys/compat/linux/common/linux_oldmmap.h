@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.h,v 1.1 1998/10/01 04:00:20 erh Exp $	*/
+/*	$NetBSD: linux_oldmmap.h,v 1.2 1998/10/07 23:06:17 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,23 +58,5 @@ struct linux_oldmmap {
 	int lm_fd;
 	int lm_pos;
 };
-
-/*
- * Pretend the linux_sys_mmap syscall exists:
- */
-struct linux_sys_mmap_args {
-	syscallarg(unsigned long) addr;
-	syscallarg(size_t) len;
-	syscallarg(int) prot;
-	syscallarg(int) flags;
-	syscallarg(int) fd;
-	syscallarg(off_t) offset;
-};
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-int linux_sys_mmap __P((struct proc *p, void *v, register_t *retval));
-__END_DECLS
-#endif /* !_KERNEL */
 
 #endif /* !_MULTIARCH_LINUX_OLDMMAP_H */
