@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.1 2001/05/11 03:11:20 thorpej Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.2 2001/06/07 12:10:34 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -129,10 +129,39 @@ struct hpc_dma_desc {
 
 #define HPC_ENETR_BC		0x00001000	/* Recv: DMA byte cnt/flags */
 #define HPC_ENETR_CTL		0x00001004	/* Recv: DMA control flags */
+
+#define ENETR_CTL_STAT_5_0	0x003f		/* Seeq irq status: bits 0-5 */
+#define ENETR_CTL_STAT_6	0x0040		/* Irq status: late_rxdc */
+#define ENETR_CTL_STAT_7	0x0080		/* Irq status: old/new bit */
+#define ENETR_CTL_LENDIAN	0x0100		/* DMA channel endian mode */
+#define ENETR_CTL_ACTIVE	0x0200		/* DMA channel active? */
+#define ENETR_CTL_ACTIVE_MSK	0x0400		/* DMA channel active? */
+#define ENETR_CTL_RBO		0x0800		/* Recv buffer overflow */
+
 #define HPC_ENETR_GIO		0x00001008	/* Recv: GIO DMA FIFO ptr */
 #define HPC_ENETR_DEV		0x0000100c	/* Recv: Device DMA FIFO ptr */
 #define HPC_ENETR_RESET		0x00001014	/* Recv: Ethernet chip reset */
+
+#define ENETR_RESET_CH		0x0001		/* Reset controller & chan */
+#define ENETR_RESET_CLRINT	0x0002		/* Clear channel interrupt */
+#define ENETR_RESET_LOOPBK	0x0004		/* External loopback enable */
+#define ENETR_RESET_CLRRBO	0x0008		/* Clear RBO condition (??) */
+
 #define HPC_ENETR_DMACFG	0x00001018	/* Recv: DMA configururation */
+
+#define	ENETR_DMACFG_D1		0x0000f		/* DMA D1 state cycles */
+#define	ENETR_DMACFG_D2		0x000f0		/* DMA D2 state cycles */
+#define	ENETR_DMACFG_D3		0x00f00		/* DMA D3 state cycles */
+#define	ENETR_DMACFG_WRCTL	0x01000		/* Enable IPG write */
+
+/* 
+ * The following three bits work around bugs in the Seeq 8003; if you 
+ * don't set them, the Seeq gets wonky pretty often.
+ */
+#define	ENETR_DMACFG_FIX_RXDC	0x02000		/* Clear EOP bits on RXDC */
+#define	ENETR_DMACFG_FIX_EOP	0x04000		/* Enable rxintr timeout */
+#define	ENETR_DMACFG_FIX_INTR	0x08000		/* Enable EOP timeout */
+#define	ENETR_DMACFG_TIMO	0x30000		/* Timeout for above two */
 
 #define HPC_ENETR_PIOCFG	0x0000101c	/* Recv: PIO configururation */
 
@@ -141,6 +170,15 @@ struct hpc_dma_desc {
 
 #define HPC_ENETX_BC		0x00003000	/* Xmit: DMA byte cnt/flags */
 #define HPC_ENETX_CTL		0x00003004	/* Xmit: DMA control flags */
+
+#define ENETX_CTL_STAT_5_0	0x003f		/* Seeq irq status: bits 0-5 */
+#define ENETX_CTL_STAT_6	0x0040		/* Irq status: late_rxdc */
+#define ENETX_CTL_STAT_7	0x0080		/* Irq status: old/new bit */
+#define ENETX_CTL_LENDIAN	0x0100		/* DMA channel endian mode */
+#define ENETX_CTL_ACTIVE	0x0200		/* DMA channel active? */
+#define ENETX_CTL_ACTIVE_MSK	0x0400		/* DMA channel active? */
+#define ENETX_CTL_RBO		0x0800		/* Recv buffer overflow */
+
 #define HPC_ENETX_GIO		0x00003008	/* Xmit: GIO DMA FIFO ptr */
 #define HPC_ENETX_DEV		0x0000300c	/* Xmit: Device DMA FIFO ptr */
 
