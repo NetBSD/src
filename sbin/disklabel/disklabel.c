@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.86 2000/07/13 01:47:22 hubertf Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.87 2000/08/14 22:37:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.86 2000/07/13 01:47:22 hubertf Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.87 2000/08/14 22:37:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -904,7 +904,7 @@ makebootarea(boot, dp, f)
 	}
 	lp = (struct disklabel *)
 		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
-	(void) memset(lp, 0, sizeof *lp);
+	(void) memset(lp, 0, sizeof(*lp));
 #ifdef SAVEBOOTAREA
 	/*
 	 * We must read the current bootarea so we don't clobber the
@@ -916,7 +916,7 @@ makebootarea(boot, dp, f)
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, boot, BBSIZE) < BBSIZE)
 			err(4, "%s", specname);
-		(void) memset(lp, 0, sizeof *lp);
+		(void) memset(lp, 0, sizeof(*lp));
 	}
 #endif
 #if NUMBOOT > 0
@@ -941,7 +941,7 @@ makebootarea(boot, dp, f)
 			if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 			    read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
-			(void) memset(lp, 0, sizeof *lp);
+			(void) memset(lp, 0, sizeof(*lp));
 		}
 		return (lp);
 	}
@@ -1287,7 +1287,7 @@ edit(lp, f)
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
-	(void)snprintf(tmpfil, sizeof (tmpfil), "%s/%s", tmpdir, TMPFILE);
+	(void)snprintf(tmpfil, sizeof(tmpfil), "%s/%s", tmpdir, TMPFILE);
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		warn("%s", tmpfil);
 		return (1);
@@ -1435,7 +1435,7 @@ getasciilabel(f, lp)
 				tp = "unknown";
 			cpp = dktypenames;
 			for (; cpp < &dktypenames[DKMAXTYPES]; cpp++)
-				if ((s = *cpp) && !strcmp(s, tp)) {
+				if ((s = *cpp) && !strcasecmp(s, tp)) {
 					lp->d_type = cpp - dktypenames;
 					goto next;
 				}
@@ -1449,11 +1449,11 @@ getasciilabel(f, lp)
 		if (!strcmp(cp, "flags")) {
 			for (v = 0; (cp = tp) && *cp != '\0';) {
 				tp = word(cp);
-				if (!strcmp(cp, "removable"))
+				if (!strcasecmp(cp, "removable"))
 					v |= D_REMOVABLE;
-				else if (!strcmp(cp, "ecc"))
+				else if (!strcasecmp(cp, "ecc"))
 					v |= D_ECC;
-				else if (!strcmp(cp, "badsect"))
+				else if (!strcasecmp(cp, "badsect"))
 					v |= D_BADSECT;
 				else {
 					warnx("line %d: bad flag: %s",
@@ -1485,11 +1485,11 @@ getasciilabel(f, lp)
 		if (tp == NULL)
 			tp = "";
 		if (!strcmp(cp, "disk")) {
-			strncpy(lp->d_typename, tp, sizeof (lp->d_typename));
+			strncpy(lp->d_typename, tp, sizeof(lp->d_typename));
 			continue;
 		}
 		if (!strcmp(cp, "label")) {
-			strncpy(lp->d_packname, tp, sizeof (lp->d_packname));
+			strncpy(lp->d_packname, tp, sizeof(lp->d_packname));
 			continue;
 		}
 		if (!strcmp(cp, "bytes/sector")) {
