@@ -1,5 +1,4 @@
-/*	$NetBSD: st.c,v 1.150 2002/03/20 14:53:59 christos Exp $ */
-
+/*	$NetBSD: st.c,v 1.151 2002/03/22 02:03:30 mjacob Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.150 2002/03/20 14:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.151 2002/03/22 02:03:30 mjacob Exp $");
 
 #include "opt_scsi.h"
 
