@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1995/07/04 18:55:11 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1995/07/05 03:48:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2711,10 +2711,10 @@ get_mapping (void)
 				printf("get_mapping(): IIvx kludge. "
 					" False start.\n");
 			else {
-				addr = videoaddr;
-				mac68k_vidlog = addr;
+				mac68k_vidlog = videoaddr;
 				mac68k_vidphys = phys;
 				mac68k_vidlen = 32768;
+				addr = videoaddr+32768;
 				while (get_physical(addr, &phys)) {
 					if (   (phys - mac68k_vidphys)
 					    !=  mac68k_vidlen+32768)
