@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.23 2001/01/23 22:07:59 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.24 2001/03/17 20:34:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.23 2001/01/23 22:07:59 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.24 2001/03/17 20:34:43 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: if_ea.c,v 1.23 2001/01/23 22:07:59 bjh21 Exp $");
 #include <net/if_ether.h>
 
 #include <arm26/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #include <arm26/podulebus/if_eareg.h>
 #include <dev/ic/seeq8005var.h>

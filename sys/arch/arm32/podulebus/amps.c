@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.4 1998/08/04 20:09:37 mark Exp $	*/
+/*	$NetBSD: amps.c,v 1.5 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,10 +62,10 @@
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/ampsreg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#include <dev/podulebus/podules.h>
 
 #include "locators.h"
 
