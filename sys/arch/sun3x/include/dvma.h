@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.1.1.1 1997/01/14 20:57:05 gwr Exp $	*/
+/*	$NetBSD: dvma.h,v 1.2 1997/10/07 16:10:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,9 @@
 #define DVMA_SLAVE_BASE 	0xFF000000
 #define DVMA_SLAVE_MASK 	0x00FFffff	/* 16MB */
 
+/* Compatibility with the sun3... */
+#define DVMA_OBIO_SLAVE_BASE DVMA_SLAVE_BASE
+
 /*
  * DVMA is the last 16MB, but the PROM owns the last 1M.
  * See mon.h: MON_DVMA_BASE, MON_DVMA_SIZE.
@@ -72,4 +75,7 @@ void dvma_mapout __P((void * dvma_addr, int len));
 
 /* Convert a kernel DVMA pointer to a slave address. */
 u_long dvma_kvtopa __P((void * kva, int bus));
+
+/* Allocate actual pages of DVMA space. */
+void * dvma_malloc __P((size_t bytes));
 
