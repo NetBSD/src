@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.29 2004/07/10 04:00:09 christos Exp $	*/
+/*	$NetBSD: comsat.c,v 1.30 2004/07/10 07:10:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.29 2004/07/10 04:00:09 christos Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.30 2004/07/10 07:10:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,13 +203,14 @@ mailfor(const char *name)
 	struct utmpentry *ep;
 	char *cp, *fn;
 	off_t offset;
+	intmax_t val;
 
 	if (!(cp = strchr(name, '@')))
 		return;
 	*cp = '\0';
 	errno = 0;
-	offset = strtol(cp + 1, &fn, 10);
-	if (errno == ERANGE && (offset == LONG_MAX || offset == LONG_MIN))
+	offset = val = strtoimax(cp + 1, &fn, 10);
+	if (errno == ERANGE || offset != val)
 		return;
 	if (fn && *fn && *fn != '\n') {
 		/*
