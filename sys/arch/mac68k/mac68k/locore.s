@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 1999/11/05 19:06:39 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 1999/11/06 22:44:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -818,7 +818,7 @@ ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
+ENTRY_NOPROFILE(intrhand)
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
 	clrw	sp@-
@@ -860,7 +860,7 @@ ENTRY_NOPROFILE(rtclock_intr)
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	addql	#4,sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
-	addql	#1,_C_LABEL(intrcnt)+32
+	addql	#1,_C_LABEL(intrcnt)+32	| record a clock interrupt
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
