@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.60 2001/04/29 20:12:01 christos Exp $	*/
+/* $NetBSD: wi.c,v 1.1 2001/05/06 03:26:39 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,7 +74,6 @@
 
 #include "opt_inet.h"
 #include "bpfilter.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +84,6 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/proc.h>
-
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -109,34 +104,13 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <dev/pcmcia/if_wireg.h>
-
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/pcmcia/if_wi_ieee.h>
-#include <dev/pcmcia/if_wivar.h>
-
-#ifdef foo
-static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
-#endif
-
-struct wi_pcmcia_product {
-	u_int32_t	pp_vendor;	/* vendor ID */
-	u_int32_t	pp_product;	/* product ID */
-	const char	*pp_cisinfo[4]; /* CIS information */
-	const char	*pp_name;	/* product name */
-	int		pp_prism2;	/* prism2 chipset */
-};
-
-static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
-static int wi_match		__P((struct device *, struct cfdata *, void *));
-static void wi_attach		__P((struct device *, struct device *, void *));
-static int wi_detach		__P((struct device *, int));
-static int wi_activate		__P((struct device *, enum devact));
-
-static int wi_intr __P((void *arg));
+#include <dev/ic/wi_ieee.h>
+#include <dev/ic/wireg.h>
+#include <dev/ic/wivar.h>
 
 static void wi_reset		__P((struct wi_softc *));
 static int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
@@ -162,10 +136,7 @@ static void wi_inquire		__P((void *));
 static int wi_setdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_getdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
-static void wi_shutdown		__P((void *));
 
-static int wi_enable __P((struct wi_softc *));
-static void wi_disable __P((struct wi_softc *));
 static int wi_media_change __P((struct ifnet *));
 static void wi_media_status __P((struct ifnet *, struct ifmediareq *));
 
@@ -180,244 +151,19 @@ static int wi_sync_media __P((struct wi_softc *, int, int));
 static int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
 static int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
-struct cfattach wi_ca = {
-	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
-};
-
-static const struct wi_pcmcia_product wi_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_STR_LUCENT_WAVELAN_IEEE,
-	  0 },
-
-	{ PCMCIA_VENDOR_3COM,
-	  PCMCIA_PRODUCT_3COM_3CRWE737A,
-	  PCMCIA_CIS_3COM_3CRWE737A,
-	  PCMCIA_STR_3COM_3CRWE737A,
-	  1 },
-
-	{ PCMCIA_VENDOR_COREGA,
-	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
-	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
-	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11,
-	  1 },
-
-	{ PCMCIA_VENDOR_COREGA,
-	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
-	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
-	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCA_11,
-	  1 },
-
-	{ PCMCIA_VENDOR_INTERSIL,
-	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
-	  PCMCIA_CIS_INTERSIL_PRISM2,
-	  PCMCIA_STR_INTERSIL_PRISM2,
-	  1 },
-
-	{ PCMCIA_VENDOR_SAMSUNG,
-	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
-	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
-	  PCMCIA_STR_SAMSUNG_SWL_2000N,
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_SMC_2632W,
-	  PCMCIA_STR_SMC_2632W,
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NANOSPEED_PRISM2,
-	  PCMCIA_STR_NANOSPEED_PRISM2,
-	  1 },
-
-	{ PCMCIA_VENDOR_ELSA,
-	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
-	  PCMCIA_CIS_ELSA_XI300_IEEE,
-	  PCMCIA_STR_ELSA_XI300_IEEE,
-	  1 },
-
-	{ PCMCIA_VENDOR_COMPAQ,
-	  PCMCIA_PRODUCT_COMPAQ_NC5004,
-	  PCMCIA_CIS_COMPAQ_NC5004,
-	  PCMCIA_STR_COMPAQ_NC5004,
-	  1 },
-
-	{ PCMCIA_VENDOR_CONTEC,
-	  PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
-	  PCMCIA_CIS_CONTEC_FX_DS110_PCC,
-	  PCMCIA_STR_CONTEC_FX_DS110_PCC,
-	  1 },
-
-	{ PCMCIA_VENDOR_TDK,
-	  PCMCIA_PRODUCT_TDK_LAK_CD011WL,
-	  PCMCIA_CIS_TDK_LAK_CD011WL,
-	  PCMCIA_STR_TDK_LAK_CD011WL,
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NEC_CMZ_RT_WP,
-	  PCMCIA_STR_NEC_CMZ_RT_WP,
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NTT_ME_WLAN,
-	  PCMCIA_STR_NTT_ME_WLAN,
-	  1 },
-
-	{ PCMCIA_VENDOR_IODATA2,
-	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
-	  PCMCIA_CIS_IODATA2_WNB11PCM,
-	  PCMCIA_STR_IODATA2_WNB11PCM,
-	  1 },
-
-	{ 0,
-	  0,
-	  { NULL, NULL, NULL, NULL },
-	  NULL,
-	  0 }
-};
-
-static const struct wi_pcmcia_product *
-wi_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct wi_pcmcia_product *pp;
-
-	/*
-	 * match by CIS information first
-	 * XXX: Farallon SkyLINE 11mb uses PRISM II but vendor ID
-	 *	and product ID is the same as Lucent WaveLAN
-	 */
-	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
-		if (pa->card->cis1_info[0] != NULL &&
-		    pp->pp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], pp->pp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    pp->pp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], pp->pp_cisinfo[1]) == 0)
-			return pp;
-	}
-
-	/* match by vendor/product id */
-	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == pp->pp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == pp->pp_product)
-			return pp;
-	}
-
-	return NULL;
-}
-
-static int
-wi_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct pcmcia_attach_args *pa = aux;
-
-	if (wi_lookup(pa) != NULL)
-		return 1;
-	return 0;
-}
-
 int
-wi_enable(sc)
+wi_attach(sc)
 	struct wi_softc *sc;
 {
-
-	if (sc->sc_enabled != 0)
-		return (0);
-
-	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, wi_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-	if (pcmcia_function_enable(sc->sc_pf) != 0) {
-		printf("%s: couldn't enable card\n", sc->sc_dev.dv_xname);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-		return (EIO);
-	}
-
-	sc->sc_enabled = 1;
-	return (0);
-}
-
-void
-wi_disable(sc)
-	struct wi_softc *sc;
-{
-
-	if (sc->sc_enabled == 0)
-		return;
-
-	pcmcia_function_disable(sc->sc_pf);
-	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-	sc->sc_enabled = 0;
-}
-
-/*
- * Attach the card.
- */
-void
-wi_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
-{
-	struct wi_softc *sc = (void *) self;
-	struct pcmcia_attach_args *pa = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	const struct wi_pcmcia_product *pp;
-	struct wi_ltv_macaddr	mac;
-	struct wi_ltv_gen	gen;
-	char devinfo[256];
+	struct ifnet *ifp = sc->sc_ifp;
+	struct wi_ltv_macaddr   mac;
+	struct wi_ltv_gen       gen;
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
+	int s;
 
-	/* Print out what we are. */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
-
-	/* Enable the card. */
-	sc->sc_pf = pa->pf;
-	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
-	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
-		goto enable_failed;
-	}
-
-	/* Allocate/map I/O space. */
-	if (pcmcia_io_alloc(sc->sc_pf, 0, WI_IOSIZ, WI_IOSIZ,
-	    &sc->sc_pcioh) != 0) {
-		printf("%s: can't allocate i/o space\n",
-		    sc->sc_dev.dv_xname);
-		goto ioalloc_failed;
-	}
-	printf("%s:", sc->sc_dev.dv_xname);
-	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
-	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
-		printf(" can't map i/o space\n");
-		goto iomap_failed;
-	}
-	sc->wi_btag = sc->sc_pcioh.iot;
-	sc->wi_bhandle = sc->sc_pcioh.ioh;
-
-	pp = wi_lookup(pa);
-	if (pp == NULL) {
-		/* should not happen */
-		sc->sc_prism2 = 0;
-	} else
-		sc->sc_prism2 = pp->pp_prism2;
+	s = splnet();
 
 	callout_init(&sc->wi_inquire_ch);
 
@@ -444,10 +190,10 @@ wi_attach(parent, self, aux)
 	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
 		printf("%s: could not get mac address, attach failed\n",
 		    sc->sc_dev.dv_xname);
-		goto bad_enaddr;
+			return 1;
 	}
 
-	printf(", 802.11 address %s\n", ether_sprintf(sc->sc_macaddr));
+	printf(" 802.11 address %s\n", ether_sprintf(sc->sc_macaddr));
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -457,6 +203,9 @@ wi_attach(parent, self, aux)
 	ifp->if_init = wi_init;
 	ifp->if_stop = wi_stop;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef IFF_NOTRAILERS
+	ifp->if_flags |= IFF_NOTRAILERS;
+#endif
 	IFQ_SET_READY(&ifp->if_snd);
 
 	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
@@ -524,25 +273,11 @@ wi_attach(parent, self, aux)
 
 	ifp->if_baudrate = IF_Mbps(2);
 
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-	    RND_TYPE_NET, 0);
-#endif
+	/* Attach is successful. */
+	sc->sc_attached = 1;
 
-	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
-
-	/* Disable the card now, and turn it on when the interface goes up */
-	pcmcia_function_disable(sc->sc_pf);
-	return;
-
- bad_enaddr:
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
- iomap_failed:
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
- ioalloc_failed:
-	pcmcia_function_disable(sc->sc_pf);
- enable_failed:
-	sc->sc_iowin = -1;
+	splx(s);
+	return 0;
 }
 
 static void wi_rxeof(sc)
@@ -554,7 +289,7 @@ static void wi_rxeof(sc)
 	struct mbuf		*m;
 	int			id;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ifp;
 
 	id = CSR_READ_2(sc, WI_RX_FID);
 
@@ -652,12 +387,10 @@ static void wi_rxeof(sc)
 }
 
 static void wi_txeof(sc, status)
-	struct wi_softc		*sc;
-	int			status;
+	struct wi_softc	*sc;
+	int		status;
 {
-	struct ifnet		*ifp;
-
-	ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet	*ifp = sc->sc_ifp;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -797,13 +530,11 @@ int wi_intr(arg)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		wi_start(ifp);
 
-#if NRND > 0
-	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 	return 1;
 }
 
-static int wi_cmd(sc, cmd, val)
+static int 
+wi_cmd(sc, cmd, val)
 	struct wi_softc		*sc;
 	int			cmd;
 	int			val;
@@ -812,14 +543,8 @@ static int wi_cmd(sc, cmd, val)
 
 	/* wait for the busy bit to clear */
 	for (i = 0; i < WI_TIMEOUT; i++) {
-		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY)) {
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
-		}
-		DELAY(10*1000); /* 10 m sec */
-	}
-
-	if (i == WI_TIMEOUT) {
-		return(ETIMEDOUT);
 	}
 
 	CSR_WRITE_2(sc, WI_PARAM0, val);
@@ -827,27 +552,19 @@ static int wi_cmd(sc, cmd, val)
 	CSR_WRITE_2(sc, WI_PARAM2, 0);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
+	/* wait for the cmd completed bit */
 	for (i = 0; i < WI_TIMEOUT; i++) {
-		/*
-		 * Wait for 'command complete' bit to be
-		 * set in the event status register.
-		 */
-		s = CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD;
-		if (s) {
-			/* Ack the event and read result code. */
-			s = CSR_READ_2(sc, WI_STATUS);
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
-#ifdef foo
-			if ((s & WI_CMD_CODE_MASK) != (cmd & WI_CMD_CODE_MASK))
-				return(EIO);
-#endif
-			if (s & WI_STAT_CMD_RESULT)
-				return(EIO);
+		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
 			break;
-		}
-		if (cmd == WI_CMD_INI)
-			DELAY(100);
+		DELAY(10);
 	}
+
+	/* Ack the command */
+	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
+
+	s = CSR_READ_2(sc, WI_STATUS);
+	if (s & WI_STAT_CMD_RESULT)
+		return(EIO);
 
 	if (i == WI_TIMEOUT)
 		return(ETIMEDOUT);
@@ -855,11 +572,11 @@ static int wi_cmd(sc, cmd, val)
 	return(0);
 }
 
-static void wi_reset(sc)
+static void 
+wi_reset(sc)
 	struct wi_softc		*sc;
 {
-	DELAY(100*1000); /* 100 m sec */
-
+	DELAY(100*1000); /* 100 m sec */ 
 	if (wi_cmd(sc, WI_CMD_INI, 0))
 		printf("%s: init failed\n", sc->sc_dev.dv_xname);
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -1027,6 +744,7 @@ static int wi_write_record(sc, ltv)
 	CSR_WRITE_2(sc, WI_DATA1, ltv->wi_len);
 	CSR_WRITE_2(sc, WI_DATA1, ltv->wi_type);
 
+	/* Write data */
 	ptr = &ltv->wi_val;
 	for (i = 0; i < ltv->wi_len - 1; i++)
 		CSR_WRITE_2(sc, WI_DATA1, ptr[i]);
@@ -1392,7 +1110,8 @@ wi_getdef(sc, wreq)
 	return (error);
 }
 
-static int wi_ioctl(ifp, command, data)
+static int
+wi_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -1411,11 +1130,39 @@ static int wi_ioctl(ifp, command, data)
 
 	ifr = (struct ifreq *)data;
 	switch (command) {
+	case SIOCSIFADDR:
+	case SIOCGIFADDR:
+	case SIOCSIFMTU:
+		error = ether_ioctl(ifp, command, data);
+		break;
+	case SIOCSIFFLAGS:
+		if (!(ifp->if_flags & IFF_UP)) {
+			if (sc->sc_disable)
+				(*sc->sc_disable)(sc);
+			sc->sc_enabled = 0;
+			ifp->if_flags &= ~IFF_RUNNING;
+		} 
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->sc_ethercom) :
+			ether_delmulti(ifr, &sc->sc_ethercom);
+		if (error == ENETRESET) {
+			if (sc->sc_enabled != 0) {
+			/*
+			 * Multicast list has changed.  Set the
+			 * hardware filter accordingly.
+			 */
+			wi_setmulti(sc);
+			}
+			error = 0;
+		}
+		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
-
 	case SIOCGWAVELAN:
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
@@ -1514,22 +1261,11 @@ static int wi_ioctl(ifp, command, data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (sc->sc_enabled != 0) {
-				/*
-				 * Multicast list has changed.  Set the
-				 * hardware filter accordingly.
-				 */
-				wi_setmulti(sc);
-			}
-			error = 0;
-		}
+		error = EINVAL;
 		break;
 	}
 
 	splx(s);
-
 	return (error);
 }
 
@@ -1542,8 +1278,11 @@ wi_init(ifp)
 	struct wi_ltv_macaddr mac;
 	int error, id = 0;
 
-	if ((error = wi_enable(sc)) != 0)
-		goto out;
+	if (!sc->sc_enabled) {
+		if((error = (*sc->sc_enable)(sc)) != 0)
+			goto out;
+		sc->sc_enabled = 1;
+	}
 
 	wi_stop(ifp, 0);
 	wi_reset(sc);
@@ -1645,7 +1384,8 @@ wi_init(ifp)
 	return (error);
 }
 
-static void wi_start(ifp)
+static void 
+wi_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct wi_softc		*sc;
@@ -1734,7 +1474,8 @@ static void wi_start(ifp)
 	return;
 }
 
-static int wi_mgmt_xmit(sc, data, len)
+static int 
+wi_mgmt_xmit(sc, data, len)
 	struct wi_softc		*sc;
 	caddr_t			data;
 	int			len;
@@ -1779,14 +1520,18 @@ wi_stop(ifp, disable)
 
 	callout_stop(&sc->wi_inquire_ch);
 
-	if (disable)
-		wi_disable(sc);
+	if (disable) {
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
 }
 
-static void wi_watchdog(ifp)
+static void 
+wi_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct wi_softc		*sc;
@@ -1802,17 +1547,22 @@ static void wi_watchdog(ifp)
 	return;
 }
 
-static void wi_shutdown(arg)
-	void			*arg;
+void
+wi_shutdown(sc)
+	struct wi_softc *sc;
 {
-	struct wi_softc		*sc;
+        int s;
 
-	sc = arg;
-	wi_disable(sc);
-	return;
+        s = splnet();
+        if (sc->sc_enabled) {
+                if (sc->sc_disable)
+                        (*sc->sc_disable)(sc);
+                sc->sc_enabled = 0;
+        }
+	splx(s);
 }
 
-static int
+int
 wi_activate(self, act)
 	struct device *self;
 	enum devact act;
@@ -1834,37 +1584,62 @@ wi_activate(self, act)
 	return (rv);
 }
 
-static int
-wi_detach(self, flags)
-	struct device *self;
-	int flags;
+int
+wi_detach(sc)
+	struct wi_softc *sc;
 {
-	struct wi_softc *sc = (struct wi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ifp;
+	int s;
 
-	if (sc->sc_iowin == -1)
-		/* Nothing to detach. */
+	if (!sc->sc_attached)
 		return (0);
 
+	s = splnet();
 	callout_stop(&sc->wi_inquire_ch);
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
-	wi_disable(sc);
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	/* Unmap and free our i/o windows */
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-
+	if (sc->sc_enabled) {
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
+	splx(s);
 	return (0);
+}
+
+void
+wi_power(sc, why)
+	struct wi_softc *sc;
+	int why;
+{
+	int s;
+
+	if (!sc->sc_enabled)
+		return;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		wi_stop(sc->sc_ifp, 0);
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		break;
+	case PWR_RESUME:
+		sc->sc_enabled = 0;
+		wi_init(sc->sc_ifp);
+		(void)wi_intr(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }
 
 static int

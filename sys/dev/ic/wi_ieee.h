@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_ieee.h,v 1.8 2000/08/23 19:01:05 jhawk Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.1 2001/05/06 03:26:39 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
