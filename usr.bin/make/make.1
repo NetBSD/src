@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.42 2000/06/01 02:29:21 sjg Exp $
+.\"	$NetBSD: make.1,v 1.43 2000/09/05 17:57:52 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -602,6 +602,9 @@ potentially affected, the latter whether multiple substitutions can
 potentially occur within each affected word.
 .It Cm T
 Replaces each word in the variable with its last component.
+.It Cm u
+Remove adjacent duplicate words (like
+.Xr uniq 1 ).
 .It Cm ? Ar true_string Cm : Ar false_string
 If the variable evaluates to true, return as its value the
 .Ar true_string,
