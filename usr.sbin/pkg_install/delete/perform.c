@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.14 1999/03/01 12:11:42 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.15 1999/03/02 02:31:23 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.14 1999/03/01 12:11:42 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.15 1999/03/02 02:31:23 hubertf Exp $");
 #endif
 #endif
 
@@ -205,6 +205,14 @@ require_delete(char *home)
     rec_del_t *rdp;
     int rv, fail;
     char *tmp;
+    char *oldcwd;
+
+    /* save current working directory */
+    oldcwd = getcwd(NULL, FILENAME_MAX);
+    if (oldcwd == NULL) {
+	perror("error in getcwd");
+	return 1;
+    }
 
     (void)snprintf(pkgdir, sizeof(pkgdir), "%s",
 	(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
@@ -215,7 +223,7 @@ require_delete(char *home)
     for (; rdp; rdp = TAILQ_NEXT(rdp, rd_link)) {
 	/* go to the db dir */
 	if (chdir(pkgdir) == FAIL) {
-	    warnx("unable to change directory to %s! deinstall failed",
+	    warnx("unable to change directory to %s, deinstall failed",
 		pkgdir);
 	    fail = 1;
 	    break;
@@ -268,15 +276,15 @@ require_delete(char *home)
     }
 
     /* return to the log dir */
-    if (chdir(LogDir) == FAIL) {
-	warnx("unable to change directory to %s! deinstall failed", LogDir);
+    if (chdir(oldcwd) == FAIL) {
+	warnx("unable to change directory to %s! deinstall failed", oldcwd);
 	fail = 1;
     }
 
     return (fail);
 }
 
-/* recursively find all packages */
+/* recursively find all packages, return 1 on errors */
 int
 recurse_require_find(rec_del_t *thisrdp)
 {
@@ -285,8 +293,8 @@ recurse_require_find(rec_del_t *thisrdp)
     FILE *cfile;
     char *nl, *tmp;
 
-    /* see if we are on the find queue -- ciruclar dependency */
-    if ((rdp = find_on_queue(&rdfindq, rdp->rd_name))) {
+    /* see if we are on the find queue -- circular dependency */
+    if ((rdp = find_on_queue(&rdfindq, thisrdp->rd_name))) {
 	warnx("circular dependency found for pkg %s", rdp->rd_name);
 	return (1);
     }
@@ -306,7 +314,7 @@ recurse_require_find(rec_del_t *thisrdp)
     if (isemptyfile(REQUIRED_BY_FNAME))
 	return (0);
 
-    /* get packages that ditectly require us */
+    /* get packages that directly require us */
     cfile = fopen(REQUIRED_BY_FNAME, "r");
     if (!cfile) {
 	warnx("cannot open requirements file `%s'", REQUIRED_BY_FNAME);
@@ -425,9 +433,10 @@ pkg_do(char *pkg)
 		if (!Force || Recurse)
 			return (1);
 	}
-	if (!Recurse)
-		require_print(1);
-	else
+	if (!Recurse) {
+	    require_print(1);
+	    return 1;
+	} else
 	    require_delete(home);
     }
     sanity_check(LogDir);
