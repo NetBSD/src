@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.58 1999/10/17 22:09:47 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.59 1999/10/17 23:13:21 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -756,3 +756,9 @@ usr.bin/w/w.c					1.32
 
   Make various utilities skip "dty" as well as "tty" on terminals,
   so that the actually used tty is visiable instead of just 'dt'.
+
+sys/kern/kern_synch.c				1.66
+
+  Correct use of `wrong' clock for %cpu calculation.  (This is not
+  a functional change at present because all clock frequencies are
+  the same.)
