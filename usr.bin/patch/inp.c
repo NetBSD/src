@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.9 2002/03/11 23:29:02 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.10 2002/03/16 22:36:42 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.9 2002/03/11 23:29:02 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.10 2002/03/16 22:36:42 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -15,6 +15,10 @@ __RCSID("$NetBSD: inp.c,v 1.9 2002/03/11 23:29:02 kristerw Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+static bool plan_a(char *);
+static void plan_b(char *);
+static bool rev_in_string(char *);
 
 /* Input-file-with-indexable-lines abstract type. */
 
@@ -72,7 +76,7 @@ scan_input(char *filename)
 /*
  * Try keeping everything in memory.
  */
-bool
+static bool
 plan_a(char *filename)
 {
 	int ifd, statfailed;
@@ -252,7 +256,7 @@ plan_a(char *filename)
 /*
  * Keep (virtually) nothing in memory.
  */
-void
+static void
 plan_b(char *filename)
 {
 	FILE *ifp;
@@ -351,7 +355,7 @@ ifetch(LINENUM line, int whichbuf)
 /*
  * True if the string argument contains the revision number we want.
  */
-bool
+static bool
 rev_in_string(char *string)
 {
 	char *s;

@@ -1,8 +1,10 @@
-/*	$NetBSD: util.c,v 1.11 2002/03/11 23:29:02 kristerw Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.11 2002/03/11 23:29:02 kristerw Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $");
 #endif /* not lint */
+
+#include <sys/param.h>
 
 #include "EXTERN.h"
 #include "common.h"
@@ -21,7 +23,7 @@ __RCSID("$NetBSD: util.c,v 1.11 2002/03/11 23:29:02 kristerw Exp $");
 int
 move_file(char *from, char *to)
 {
-	char bakname[512];
+	char bakname[MAXPATHLEN];
 	char *s;
 	int i;
 	int fromfd;
@@ -49,8 +51,6 @@ move_file(char *from, char *to)
 	} else {
 #ifndef NODIR
 		char *backupname = find_backup_file_name(to);
-		if (backupname == NULL)
-			fatal("out of memory\n");
 		Strcpy(bakname, backupname);
 		free(backupname);
 #else /* NODIR */
@@ -169,6 +169,32 @@ copy_file(char *from, char *to)
 }
 
 /*
+ * malloc with result test.
+ */
+void *
+xmalloc(size_t size)
+{
+	void *p;
+
+	if ((p = malloc(size)) == NULL)
+		fatal("out of memory\n");
+	return p;
+}
+
+/*
+ * strdup with result test.
+ */
+char *
+xstrdup(const char *s)
+{
+	char *p;
+
+	if ((p = strdup(s)) == NULL)
+		fatal("out of memory\n");
+	return p;
+}
+
+/*
  * Allocate a unique area for a string.
  */
 char *
@@ -196,7 +222,7 @@ savestr(char *s)
 }
 
 /*
- * Vanilla terminal output (buffered).
+ * Vanilla terminal output.
  */
 void
 say(const char *pat, ...)
@@ -322,9 +348,9 @@ ignore_signals()
 void
 makedirs(char *filename, bool striplast)
 {
-	char tmpbuf[256];
+	char tmpbuf[MAXPATHLEN];
 	char *s = tmpbuf;
-	char *dirv[20];		/* Point to the NULs between elements.  */
+	char *dirv[MAXPATHLEN];	/* Point to the NULs between elements.  */
 	int i;
 	int dirvp = 0;		/* Number of finished entries in dirv. */
 
@@ -374,7 +400,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 	char *fullname;
 	char *name;
 	char *t;
-	char tmpbuf[200];
+	char tmpbuf[MAXPATHLEN];
 	int sleading = strip_leading;
 
 	if (!at)
@@ -391,7 +417,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		filename_is_dev_null = TRUE;
 		return NULL;
 	}
-	name = fullname = t = savestr(at);
+	name = fullname = t = xstrdup(at);
 
 	/* Strip off up to `sleading' leading slashes and null terminate. */
 	for (; *t && !isspace((unsigned char)*t); t++)
@@ -415,7 +441,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		}
 	}
 
-	name = savestr(name);
+	name = xstrdup(name);
 	free(fullname);
 
 	if (stat(name, &filestat) && !assume_exists) {

@@ -1,9 +1,9 @@
-/*	$NetBSD: util.h,v 1.7 2002/03/11 18:47:51 kristerw Exp $	*/
-
-EXT char serrbuf[BUFSIZ];		/* buffer for stderr */
+/*	$NetBSD: util.h,v 1.8 2002/03/16 22:36:42 kristerw Exp $	*/
 
 int move_file(char *, char *);
 void copy_file(char *, char *);
+void *xmalloc(size_t);
+char *xstrdup(const char *);
 char *savestr(char *);
 void say(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));

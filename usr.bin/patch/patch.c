@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.11 2002/03/11 18:47:51 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.11 2002/03/11 18:47:51 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -78,7 +78,6 @@ main(int argc, char *argv[])
     int failtotal = 0;
     int i;
 
-    setbuf(stderr, serrbuf);
     for (i = 0; i<MAXFILEC; i++)
 	filearg[i] = NULL;
 
@@ -96,28 +95,28 @@ main(int argc, char *argv[])
       }
       tmpname_len = strlen (tmpdir) + 20;
 
-      TMPOUTNAME = malloc (tmpname_len);
+      TMPOUTNAME = xmalloc(tmpname_len);
       strcpy (TMPOUTNAME, tmpdir);
       strcat (TMPOUTNAME, "/patchoXXXXXX");
       if ((i = mkstemp(TMPOUTNAME)) < 0)
         pfatal("can't create %s", TMPOUTNAME);
       Close(i);
 
-      TMPINNAME = malloc (tmpname_len);
+      TMPINNAME = xmalloc(tmpname_len);
       strcpy (TMPINNAME, tmpdir);
       strcat (TMPINNAME, "/patchiXXXXXX");
       if ((i = mkstemp(TMPINNAME)) < 0)
         pfatal("can't create %s", TMPINNAME);
       Close(i);
 
-      TMPREJNAME = malloc (tmpname_len);
+      TMPREJNAME = xmalloc(tmpname_len);
       strcpy (TMPREJNAME, tmpdir);
       strcat (TMPREJNAME, "/patchrXXXXXX");
       if ((i = mkstemp(TMPREJNAME)) < 0)
         pfatal("can't create %s", TMPREJNAME);
       Close(i);
 
-      TMPPATNAME = malloc (tmpname_len);
+      TMPPATNAME = xmalloc(tmpname_len);
       strcpy (TMPPATNAME, tmpdir);
       strcat (TMPPATNAME, "/patchpXXXXXX");
       if ((i = mkstemp(TMPPATNAME)) < 0)
@@ -154,7 +153,7 @@ main(int argc, char *argv[])
     ) {					/* for each patch in patch file */
 
 	if (outname == NULL)
-	    outname = savestr(filearg[0]);
+	    outname = xstrdup(filearg[0]);
     
 	/* for ed script just up and do it and exit */
 	if (diff_type == ED_DIFF) {
@@ -467,7 +466,7 @@ get_some_switches(void)
 	    if (filec == 1 && filearg[filec] != NULL)
 		fatal("-i option and patchfile argument are mutually\
 exclusive\n");
-	    filearg[filec++] = savestr(s);
+	    filearg[filec++] = xstrdup(s);
 	}
 	else {
 	    char opt;
@@ -481,10 +480,10 @@ exclusive\n");
 
 	    switch (opt) {
 	    case 'b':
-		simple_backup_suffix = savestr(nextarg());
+		simple_backup_suffix = xstrdup(nextarg());
 		break;
 	    case 'B':
-		origprae = savestr(nextarg());
+		origprae = xstrdup(nextarg());
 		break;
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
@@ -522,7 +521,7 @@ exclusive\n");
 	    case 'i':
 		if (filearg[1] != NULL)
 		    free(filearg[1]);
-		filearg[1] = savestr(nextarg());
+		filearg[1] = xstrdup(nextarg());
 		break;
 	    case 'l':
 		canonicalize = TRUE;
@@ -534,7 +533,7 @@ exclusive\n");
 		noreverse = TRUE;
 		break;
 	    case 'o':
-		outname = savestr(nextarg());
+		outname = xstrdup(nextarg());
 		break;
 	    case 'p':
 		if (*++s == '=')

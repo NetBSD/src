@@ -1,6 +1,4 @@
-/*	$NetBSD: pch.h,v 1.6 2002/03/11 18:47:51 kristerw Exp $	*/
-
-EXT FILE *pfp INIT(NULL);		/* patch file pointer */
+/*	$NetBSD: pch.h,v 1.7 2002/03/16 22:36:42 kristerw Exp $	*/
 
 void re_patch(void);
 void open_patch_file(char *);
