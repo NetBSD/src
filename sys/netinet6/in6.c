@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.6 1999/09/19 21:31:34 is Exp $	*/
+/*	$NetBSD: in6.c,v 1.7 1999/09/26 20:08:15 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1150,6 +1150,7 @@ in6_ifinit(ifp, ia, sin6, scrub)
 	}
 
 	switch (ifp->if_type) {
+	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
 		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
