@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: runenone.c,v 1.3 2000/12/25 01:39:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.2 2000/12/21 11:29:47 itojun Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.3 2000/12/25 01:39:48 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,7 +104,7 @@ _none_sputrune(rl, c, string, n, result, state)
 	size_t n;
 	void *state;
 {
-	if (n >= 1) {
+	if (n >= 1 && (c & ~0xff) == 0) {
 		if (string)
 			*string = c;
 		if (result)
