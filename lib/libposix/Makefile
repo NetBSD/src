@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/01/08 08:30:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/11/13 18:55:00 tv Exp $
 
 LIB=	posix
 
@@ -16,9 +16,6 @@ ARCHDIR=	${.CURDIR}/../libc/arch/${MACHINE_CPU}
 .endif
 
 AINC=	-I${ARCHDIR}
-.if defined(DESTDIR)
-AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
 
 .include "${.CURDIR}/sys/Makefile.inc"
 
