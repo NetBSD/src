@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_addr.c,v 1.7 1995/03/18 15:00:08 cgd Exp $	*/
+/*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,6 +34,7 @@
  *
  *	@(#)ccitt_addr.c	8.1 (Berkeley) 6/5/93
  */
+
 /*
  * parse CCITT addresses
  *
