@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.59 2001/09/14 01:52:39 jlam Exp $
+.\"	$NetBSD: packages.7,v 1.60 2001/11/03 20:49:56 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -778,10 +778,6 @@ Default sequence for
 .Dq all
 is:  fetch checksum extract patch configure build.
 .Pp
-.\" Please read the comments in the targets section below, you
-.\" should be able to use the pre-* or post-* targets/scripts
-.\" (which are available for every stage except checksum) or
-.\" override the do-* targets to do pretty much anything you want.
 NEVER override the
 .Dq regular
 targets unless you want to open a major can of worms.
