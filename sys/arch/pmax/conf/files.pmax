@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.103 2002/10/26 13:50:40 jdolecek Exp $
+#	$NetBSD: files.pmax,v 1.104 2003/05/25 14:04:45 tsutsui Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -186,6 +186,8 @@ file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
 file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
+
+file arch/mips/mips/softintr.c
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
