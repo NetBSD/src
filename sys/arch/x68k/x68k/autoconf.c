@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1999/09/17 20:07:21 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1999/09/23 15:14:59 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -156,6 +156,7 @@ config_console()
 }
 
 dev_t	bootdev = 0;
+struct device *booted_device;
 
 static void
 findroot(devpp, partp)
@@ -170,6 +171,11 @@ findroot(devpp, partp)
 	 */
 	*devpp = NULL;
 	*partp = 0;
+
+	if (booted_device) {
+		*devpp = booted_device;
+		return;
+	}
 
 	if (boothowto & RB_ASKNAME)
 		return;		/* Don't bother looking */
@@ -199,6 +205,42 @@ findroot(devpp, partp)
 
 	if ((*devpp = find_dev_byname(buf)) != NULL)
 		*partp = part;
+}
+
+static const char *const name_netif[] = { X68K_BOOT_NETIF_STRINGS };
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	int majdev;
+	char tname[16];
+
+	/*
+	 * Handle network interfaces here, the attachment information is
+	 * not available driver independantly later.
+	 * For disks, there is nothing useful available at attach time.
+	 */
+	if (dev->dv_class == DV_IFNET) {
+		majdev = B_TYPE(bootdev);
+		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
+			sprintf(tname, "%s%d",
+				name_netif[255 - majdev], B_UNIT(bootdev));
+			if (!strcmp(tname, dev->dv_xname))
+				goto found;
+		}
+	}
+	return;
+
+found:
+	if (booted_device) {
+		/* XXX should be a "panic()" */
+		printf("warning: double match for boot device (%s, %s)\n",
+		       booted_device->dv_xname, dev->dv_xname);
+		return;
+	}
+	booted_device = dev;
 }
 
 static const char *const name_scsiif[] = { X68K_BOOT_SCSIIF_STRINGS };
