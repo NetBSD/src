@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.11 2000/03/27 15:53:04 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -39,14 +39,6 @@
  * parallel port interface
  */
 
-#include "par.h"
-#if NPAR > 0
-
-#if NPAR > 1
-#undef NPAR
-#define NPAR 1
-#endif
-
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/uio.h>
@@ -58,29 +50,29 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 
+#include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/parioctl.h>
 
-#include <x68k/x68k/iodevice.h>
-
-void partimo __P((void *));
-void parstart __P((void *);)
-void parintr __P((void *));
-int parrw __P((dev_t, struct uio *));
-int parhztoms __P((int));
-int parmstohz __P((int));
-int parsendch __P((u_char));
-int parsend __P((u_char *, int));
+#include <arch/x68k/dev/intiovar.h>
 
 struct	par_softc {
-	struct	device sc_dev;
-	int	sc_flags;
-	struct	parparam sc_param;
-#define sc_burst sc_param.burst
-#define sc_timo  sc_param.timo
-#define sc_delay sc_param.delay
-	struct callout sc_timo_ch;
-	struct callout sc_start_ch;
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
+	int			sc_flags;
+	struct parparam		sc_param;
+#define sc_burst 	sc_param.burst
+#define sc_timo  	sc_param.timo
+#define sc_delay 	sc_param.delay
+	struct callout		sc_timo_ch;
+	struct callout		sc_start_ch;
 } ;
+
+/* par registers */
+#define PAR_DATA	1
+#define PAR_STROBE	3
 
 /* sc_flags values */
 #define	PARF_ALIVE	0x01	
@@ -91,6 +83,16 @@ struct	par_softc {
 #define PARF_OREAD	0x40	/* no support */
 #define PARF_OWRITE	0x80
 
+
+void partimo __P((void *));
+void parstart __P((void *);)
+void parintr __P((void *));
+int parrw __P((dev_t, struct uio *));
+int parhztoms __P((int));
+int parmstohz __P((int));
+int parsendch __P((struct par_softc*, u_char));
+int parsend __P((struct par_softc*, u_char *, int));
+
 static struct callout intr_callout = CALLOUT_INITIALIZER;
 
 #define UNIT(x)		minor(x)
@@ -100,15 +102,12 @@ static struct callout intr_callout = CALLOUT_INITIALIZER;
 #define PDB_IO		0x02
 #define PDB_INTERRUPT   0x04
 #define PDB_NOCHECK	0x80
-#if 0
+#ifdef PARDEBUG
 int	pardebug = PDB_FOLLOW | PDB_IO | PDB_INTERRUPT;
 #else
 int	pardebug = 0;
 #endif
 #endif
-
-#define	PRTI_EN	0x01
-#define	PRT_INT	0x20
 
 cdev_decl(par);
 
@@ -116,7 +115,7 @@ int parmatch __P((struct device *, struct cfdata *, void *));
 void parattach __P((struct device *, struct device *, void *));
 
 struct cfattach par_ca = {
-	sizeof(struct par_softc), (void *)parmatch, parattach
+	sizeof(struct par_softc), parmatch, parattach
 };
 
 extern struct cfdriver par_cd;
@@ -127,9 +126,18 @@ parmatch(pdp, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
+	struct intio_attach_args *ia = aux;
+
 	/* X680x0 has only one parallel port */
-	if (strcmp(aux, "par") || cfp->cf_unit > 0)
+	if (strcmp(ia->ia_name, "par") || cfp->cf_unit > 0)
 		return 0;
+
+	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
+		ia->ia_addr = 0xe8c000;
+	ia->ia_size = 0x2000;
+	if (intio_map_allocate_region (pdp, ia, INTIO_MAP_TESTONLY))
+		return 0;
+
 	return 1;
 }
 
@@ -139,10 +147,29 @@ parattach(pdp, dp, aux)
 	void *aux;
 {
 	register struct par_softc *sc = (struct par_softc *)dp;
+	struct intio_attach_args *ia = aux;
+	int r;
 	
 	sc->sc_flags = PARF_ALIVE;
 	printf(": parallel port (write only, interrupt)\n");
-	ioctlr.intr &= (~PRTI_EN);
+	ia->ia_size = 0x2000;
+	r = intio_map_allocate_region (pdp, ia, INTIO_MAP_ALLOCATE);
+#ifdef DIAGNOSTIC
+	if (r)
+		panic ("IO map for PAR corruption??");
+#endif
+	sc->sc_bst = ia->ia_bst;
+	r = bus_space_map (sc->sc_bst,
+			   ia->ia_addr, ia->ia_size,
+			   BUS_SPACE_MAP_SHIFTED,
+			   &sc->sc_bsh);
+#ifdef DIAGNOSTIC
+	if (r)
+		panic ("Cannot map IO space for PAR.");
+#endif
+
+	intio_set_sicilian_intr(intio_get_sicilian_intr() &
+				~SICILIAN_INTR_PAR);
 
 	callout_init(&sc->sc_timo_ch);
 	callout_init(&sc->sc_start_ch);
@@ -155,9 +182,12 @@ paropen(dev, flags, mode, p)
 	struct proc *p;
 {
 	register int unit = UNIT(dev);
-	register struct par_softc *sc = par_cd.cd_devs[unit];
+	register struct par_softc *sc;
 	
-	if (unit >= NPAR || !(sc->sc_flags & PARF_ALIVE))
+	if (unit != 0)
+		return(ENXIO);
+	sc = par_cd.cd_devs[unit];
+	if (!(sc->sc_flags & PARF_ALIVE))
 		return(ENXIO);
 	if (sc->sc_flags & PARF_OPEN)
 		return(EBUSY);
@@ -172,6 +202,7 @@ paropen(dev, flags, mode, p)
 	sc->sc_burst = PAR_BURST;
 	sc->sc_timo = parmstohz(PAR_TIMO);
 	sc->sc_delay = parmstohz(PAR_DELAY);
+
 	return(0);
 }
 
@@ -189,7 +220,8 @@ parclose(dev, flags, mode, p)
 
 	/* don't allow interrupts any longer */
 	s = spl1();
-	ioctlr.intr &= (~PRTI_EN);
+	intio_set_sicilian_intr(intio_get_sicilian_intr() &
+				~SICILIAN_INTR_PAR);
 	splx(s);
 
 	return (0);
@@ -292,7 +324,7 @@ parrw(dev, uio)
 		/*
 		 * Perform the operation
 		 */
-		cnt = parsend(cp, len);
+		cnt = parsend(sc, cp, len);
 		if (cnt < 0) {
 			error = -cnt;
 			break;
@@ -444,7 +476,8 @@ parintr(arg)
 	mask = (int)arg;
 	s = splclock();
 
-	ioctlr.intr &= (~PRTI_EN);
+	intio_set_sicilian_intr(intio_get_sicilian_intr() &
+				~SICILIAN_INTR_PAR);
 
 #ifdef DEBUG
 	if (pardebug & PDB_INTERRUPT)
@@ -469,7 +502,8 @@ parintr(arg)
 }
 
 int
-parsendch(ch)
+parsendch(sc, ch)
+	struct par_softc *sc;
 	u_char ch;
 {
 	int error = 0;
@@ -480,7 +514,7 @@ parsendch(ch)
 	s = spl1();
 	while (!error 
 	       && (parsend_pending 
-		   || !(ioctlr.intr & PRT_INT)))
+		   || !(intio_get_sicilian_intr() & SICILIAN_STAT_PAR)))
 		{
 			extern int hz;
 			
@@ -511,12 +545,13 @@ parsendch(ch)
 		if (pardebug & PDB_INTERRUPT)
 			printf ("#%d", ch);
 #endif
-		printer.data = ch;
+		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_DATA, ch);
 		DELAY(1);	/* (DELAY(1) == 1us) > 0.5us */
-		printer.strobe = 0x00;
-		ioctlr.intr |= PRTI_EN;
+		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_STROBE, 0);
+		intio_set_sicilian_intr (intio_get_sicilian_intr() |
+					 SICILIAN_INTR_PAR);
 		DELAY(1);
-		printer.strobe = 0x01;
+		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_STROBE, 1);
 		parsend_pending = 1;
 	}
 	
@@ -527,18 +562,17 @@ parsendch(ch)
 
 
 int
-parsend(buf, len)
+parsend(sc, buf, len)
+	struct par_softc *sc;
 	u_char *buf;
 	int len;
 {
 	int err, orig_len = len;
 	
 	for (; len; len--, buf++)
-		if ((err = parsendch (*buf)))
+		if ((err = parsendch (sc, *buf)))
 			return err < 0 ? -EINTR : -err;
 	
 	/* either all or nothing.. */
 	return orig_len;
 }
-
-#endif
