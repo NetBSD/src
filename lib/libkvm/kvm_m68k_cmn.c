@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.5 1997/08/26 08:21:40 kleink Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.6 1997/10/12 10:56:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.5 1997/08/26 08:21:40 kleink Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.6 1997/10/12 10:56:46 briggs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.5 1997/08/26 08:21:40 kleink Exp $");
  * Common m68k machine dependent routines for kvm.
  *
  * Note: This file has to build on ALL m68k machines,
- * so do NOT include any <machine/*.h> files here.
+ * so do NOT include any <machine / *.h> files here.
  */
 
 #include <sys/types.h>
