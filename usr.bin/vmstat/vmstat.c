@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.68 2000/09/21 22:38:28 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.69 2000/09/23 00:39:19 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.68 2000/09/21 22:38:28 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.69 2000/09/23 00:39:19 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,7 +967,7 @@ domem()
 void
 dopool()
 {
-	int first;
+	int first, ovflw;
 	long addr;
 	long total = 0, inuse = 0;
 	TAILQ_HEAD(,pool) pool_head;
@@ -1011,21 +1011,35 @@ dopool()
 		if (pp->pr_maxpages == UINT_MAX)
 			sprintf(maxp, "inf");
 		else
-			sprintf(maxp, "%6u", pp->pr_maxpages);
-		(void)printf(
-		    "%-11s%5u%9lu%5lu%9lu%6lu%6lu%6d%6d%6d%6s%5lu\n",
-			name, 
-			pp->pr_size,
-			pp->pr_nget,
-			pp->pr_nfail,
-			pp->pr_nput,
-			pp->pr_npagealloc,
-			pp->pr_npagefree,
-			pp->pr_npages,
-			pp->pr_hiwat,
-			pp->pr_minpages,
-			maxp,
-			pp->pr_nidle);
+			sprintf(maxp, "%u", pp->pr_maxpages);
+/*
+ * Print single word.  `ovflow' is number of characters didn't fit
+ * on the last word.  `fmt' is a format string to print this word.
+ * It must contain asterisk for field width.  `width' is a width
+ * occupied by this word.  `fixed' is a number of constant chars in
+ * `fmt'.  `val' is a value to be printed using format string `fmt'.
+ */
+#define	PRWORD(ovflw, fmt, width, fixed, val) do {	\
+	(ovflw) += printf((fmt),			\
+	    (width) - (fixed) - (ovflw) > 0 ?		\
+	    (width) - (fixed) - (ovflw) : 0,		\
+	    (val)) - (width);				\
+	if ((ovflw) < 0)				\
+		(ovflw) = 0;				\
+} while (/* CONSTCOND */0)
+		ovflw = 0;
+		PRWORD(ovflw, "%-*s", 11, 0, name);
+		PRWORD(ovflw, " %*u", 5, 1, pp->pr_size);
+		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
+		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
+		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
+		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
+		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
+		PRWORD(ovflw, " %*s", 6, 1, maxp);
+		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
 
 		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
 		total += pp->pr_npages * pp->pr_pagesz;
