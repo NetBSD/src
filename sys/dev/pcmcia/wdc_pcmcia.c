@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.24 1999/11/27 01:03:34 soren Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.25 1999/12/09 03:22:41 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -324,14 +324,17 @@ wdc_pcmcia_attach(parent, self, aux)
 	 * So whether the work around like above is necessary or not
 	 * is unknown.  XXX.
 	 */
-	if (cfe->num_iospace > 1 &&
-	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-		printf(": can't map second I/O space\n");
-		return;
-	} else
+	if (cfe->num_iospace <= 1)
 		sc->sc_auxiowindow = -1;
+	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
+	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
+			printf(": can't map second I/O space\n");
+			return;
+	}
 
+	if ((wpp != NULL) && (wpp->wpp_name != NULL))
+		printf(": %s", wpp->wpp_name);
+	
 	printf("\n");
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
@@ -376,7 +379,8 @@ wdc_pcmcia_detach(self, flags)
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
 
-	free(sc->wdc_channel.ch_queue, M_DEVBUF);
+	if (sc->wdc_channel.ch_queue != NULL)
+		free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o window and i/o space. */
 	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
