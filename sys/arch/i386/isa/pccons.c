@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.4 1993/04/10 12:05:22 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.5 1993/04/11 07:09:29 deraadt Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -273,7 +273,7 @@ struct isa_device *dev;
 		}
 	}
 
-	return (1);
+	return (8);
 }
 
 pcattach(dev)
@@ -285,7 +285,8 @@ struct isa_device *dev;
 	printf("pc%d: ", dev->id_unit);
 	if (vs.color == 0)
 		printf("mono");
-	else	printf("color");
+	else
+		printf("color");
 	printf("\n");
 	cursor(0);
 }
