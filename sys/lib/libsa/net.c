@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.4 1995/02/20 11:04:08 mycroft Exp $	*/
+/*	$NetBSD: net.c,v 1.5 1995/09/11 21:11:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -129,7 +129,10 @@ sendudp(d, pkt, len)
 	return (cc - (sizeof(*ip) + sizeof(*uh)));
 }
 
-/* Check that packet is a valid udp packet for us */
+/*
+ * Receive a UDP packet and validate it is for us.
+ * Caller leaves room for the headers (Ether, IP, UDP)
+ */
 size_t
 readudp(d, pkt, len, tleft)
 	register struct iodesc *d;
@@ -138,11 +141,11 @@ readudp(d, pkt, len, tleft)
 	time_t tleft;
 {
 	register size_t hlen;
-	register struct ether_header *eh;
 	register struct ip *ip;
 	register struct udphdr *uh;
 	register struct udpiphdr *ui;
 	struct ip tip;
+	u_int16_t etype;	/* host order */
 
 #ifdef NET_DEBUG
 	if (debug)
@@ -152,25 +155,27 @@ readudp(d, pkt, len, tleft)
 	uh = (struct udphdr *)pkt - 1;
 	ip = (struct ip *)uh - 1;
 
-	len = readether(d, ip, len + sizeof(*ip) + sizeof(*uh), tleft);
+	len = readether(d, ip, len + sizeof(*ip) + sizeof(*uh),
+					 tleft, &etype);
 	if (len == -1 || len < sizeof(*ip) + sizeof(*uh))
 		goto bad;
 
-	eh = (struct ether_header *)ip - 1;
-	/* Must be to us */
-	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
-	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
-#ifdef NET_DEBUG
-		if (debug)
-			printf("readudp: not ours. myea=%s bcea=%s\n",
-				ether_sprintf(d->myea), ether_sprintf(bcea));
-#endif
+	/* Ethernet address checks now in readether() */
+
+	/* Need to respond to ARP requests. */
+	if (etype == ETHERTYPE_ARP) {
+		struct arphdr *ah = (void *)ip;
+        if (ah->ar_op == htons(ARPOP_REQUEST)) {
+			/* Send ARP reply */
+			arp_reply(d, ah);
+		}
 		goto bad;
 	}
-	if (ntohs(eh->ether_type) != ETHERTYPE_IP) {
+
+	if (etype != ETHERTYPE_IP) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: not IP. ether_type=%x\n", eh->ether_type);
+			printf("readudp: not IP. ether_type=%x\n", etype);
 #endif
 		goto bad;
 	}
@@ -230,7 +235,7 @@ readudp(d, pkt, len, tleft)
 
 	if (uh->uh_sum) {
 		len = ntohs(uh->uh_ulen) + sizeof(*ip);
-		if (len > RECV_SIZE - sizeof(*eh)) {
+		if (len > RECV_SIZE - ETHER_SIZE) {
 			printf("readudp: huge packet, udp len %d\n", len);
 			goto bad;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.6 1995/06/27 15:27:24 gwr Exp $	*/
+/*	$NetBSD: rarp.c,v 1.7 1995/09/11 21:11:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -140,15 +140,15 @@ rarprecv(d, pkt, len, tleft)
 	register size_t len;
 	time_t tleft;
 {
-	register struct ether_header *eh;
 	register struct ether_arp *ap;
+	u_int16_t etype;	/* host order */
 
 #ifdef RARP_DEBUG
  	if (debug)
 		printf("rarprecv: ");
 #endif
 
-	len = readether(d, pkt, len, tleft);
+	len = readether(d, pkt, len, tleft, &etype);
 	if (len == -1 || len < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
@@ -157,11 +157,10 @@ rarprecv(d, pkt, len, tleft)
 		goto bad;
 	}
 
-	eh = (struct ether_header *)pkt - 1;
-	if (eh->ether_type != htons(ETHERTYPE_REVARP)) {
+	if (etype != ETHERTYPE_REVARP) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad type=0x%x\n", ntohs(eh->ether_type));
+			printf("bad type=0x%x\n", etype);
 #endif
 		goto bad;
 	}
