@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.23 2001/02/25 21:31:15 bjh21 Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.24 2001/04/10 18:58:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -73,6 +73,9 @@ static int timer0_count;
 
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
 static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+#ifdef DIAGNOSTIC
+static void checkdelay	__P((void));
+#endif
 
 struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
@@ -197,6 +200,24 @@ setstatclockrate(hz)
 }
 
 
+#ifdef DIAGNOSTIC
+static void
+checkdelay()
+{
+	struct timeval start, end, diff;
+
+	microtime(&start);
+	delay(10000);
+	microtime(&end);
+	timersub(&end, &start, &diff);
+	if (diff.tv_sec > 0)
+		return;
+	if (diff.tv_usec > 10000)
+		return;
+	printf("WARNING: delay(10000) took %ld us\n", diff.tv_usec);
+}
+#endif
+
 /*
  * void cpu_initclocks(void)
  *
@@ -243,6 +264,9 @@ cpu_initclocks()
 			panic("%s: Cannot installer timer 1 IRQ handler\n",
 			    clock_sc->sc_dev.dv_xname);
 	}
+#ifdef DIAGNOSTIC
+	checkdelay();
+#endif
 }
 
 
