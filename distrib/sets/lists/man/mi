@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 1999/09/07 15:45:09 perry Exp $
+# $NetBSD: mi,v 1.161 1999/09/08 14:02:25 soren Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -450,7 +450,6 @@
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rtfps.0
-./usr/share/man/cat4/rtpphy.0
 ./usr/share/man/cat4/sb.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/sd.0
@@ -486,6 +485,7 @@
 ./usr/share/man/cat4/uhid.0
 ./usr/share/man/cat4/uk.0
 ./usr/share/man/cat4/ukbd.0
+./usr/share/man/cat4/ukphy.0
 ./usr/share/man/cat4/ulpt.0
 ./usr/share/man/cat4/umodem.0
 ./usr/share/man/cat4/umass.0
@@ -1630,6 +1630,7 @@
 ./usr/share/man/man4/uhid.4
 ./usr/share/man/man4/uk.4
 ./usr/share/man/man4/ukbd.4
+./usr/share/man/man4/ukphy.4
 ./usr/share/man/man4/ulpt.4
 ./usr/share/man/man4/umodem.4
 ./usr/share/man/man4/umass.4
