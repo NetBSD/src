@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.81 2004/08/11 01:04:40 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.82 2004/08/11 01:51:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.81 2004/08/11 01:04:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.82 2004/08/11 01:51:41 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1438,6 +1438,9 @@ pcic_chip_socket_enable(pch)
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
 	pcic_write(h, PCIC_INTR, intr);
 
+	/* zero out the address windows */
+	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
+
 	/* power down the socket to reset it, clear the card reset pin */
 	pwr = 0;
 	pcic_write(h, PCIC_PWRCTL, pwr);
@@ -1522,9 +1525,6 @@ pcic_chip_socket_enable(pch)
 #endif
 	/* wait for the chip to finish initializing */
 	pcic_wait_ready(h);
-
-	/* zero out the address windows */
-	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
 	/* reinstall all the memory and io mappings */
 	for (win = 0; win < PCIC_MEM_WINS; win++)
