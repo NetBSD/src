@@ -12,4 +12,4 @@ TARGET=/usr/pkg/cross/bin/shel-netbsdcoff
 make AR=$TARGET-ar AS=$TARGET-as CC=$TARGET-gcc LD=$TARGET-ld NM=$TARGET-nm \
 	RANLIB=$TARGET-ranlib SIZE=$TARGET-size \
 	STRIP=$TARGET-strip OBJCOPY=$TARGET-objcopy \
-	CPP=$TARGET-cpp CXX=$TARGET-c++ $*
+	CXX=$TARGET-c++ $*
