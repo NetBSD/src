@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.14 1999/08/07 23:14:17 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.15 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ usbd_status	usbd_get_report
 	__P((usbd_interface_handle iface,int type,int id,void *data,int len));
 usbd_status	usbd_set_idle 
 	__P((usbd_interface_handle iface, int duration, int id));
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 usbd_status	usbd_alloc_report_desc
 	__P((usbd_interface_handle ifc, void **descp, int *sizep, int mem));
 #elif defined(__FreeBSD__)
