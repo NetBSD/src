@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.14 1997/03/10 17:29:05 thorpej Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.15 1997/03/12 18:13:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.14 1997/03/10 17:29:05 thorpej Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.15 1997/03/12 18:13:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -299,11 +299,7 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	register int nr, nw;
 	int serrno;
 	char *p;
-#ifdef XXX_BROKEN_GCC
-	static char buf[MAXBSIZE];
-#else
 	char buf[MAXBSIZE];
-#endif
 
 	/*
 	 * Mmap and write if less than 8M (the limit is so we don't totally
