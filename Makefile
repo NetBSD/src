@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 1999/04/25 19:13:05 scottr Exp $
+#	$NetBSD: Makefile,v 1.97 1999/05/27 21:03:31 christos Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -27,13 +27,13 @@
 #	libraries installed in DESTDIR.
 #   EXPORTABLE_SYSTEM, when set, ensures that non-exportable crypto code
 #	is not compiled or installed. EXPORTABLE_SYSTEM is ignored if
-#	the `domestic' subtree does not exist.
-#   FORCE_DOMESTIC, when set, forces a descent into the domestic tree
+#	the `domestic/crypto-us' subtree does not exist.
+#   FORCE_DOMESTIC, when set, forces a descent into the domestic/crypto-us tree
 #	when handling the `all', `includes', and `install' targets. This
 #	flag is incompatible with the `build' target. It's generally a
 #	bad idea to use FORCE_DOMESTIC unless the ramifications are well
 #	understood, and should never be enabled by default. FORCE_DOMESTIC
-#	is ignored if the `domestic' subtree does not exist.
+#	is ignored if the `domestic/crypto-us' subtree does not exist.
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR.
@@ -63,7 +63,7 @@ SUBDIR+= gnu
 # This is needed for libstdc++ and gen-params.
 includes-gnu: includes-include includes-sys
 
-# Descend into the domestic tree if it exists AND
+# Descend into the domestic/crypto-us tree if it exists AND
 #  1) the target is clean, cleandir, or obj, OR
 #  2) the the target is install or includes AND
 #     NOT compiling only "exportable" code AND
@@ -74,12 +74,18 @@ includes-gnu: includes-include includes-sys
 # clean, cleandir, and obj targets on the command line in conjunction
 # with any other target may produce unexpected results.
 
-.if exists(domestic) && \
+.if exists(domestic)
+DOMESTIC=domestic
+.elif exists(crypto-us)
+DOMESTIC=crypto-us
+.endif
+
+.if defined(DOMESTIC) && \
     (make(clean) || make(cleandir) || make(obj) || \
     ((make(includes) || make(install)) && \
 	!defined(EXPORTABLE_SYSTEM) && defined(_DISTRIB)) || \
     defined(FORCE_DOMESTIC))
-SUBDIR+= domestic
+SUBDIR+= ${DOMESTIC}
 .endif
 
 .if exists(regress)
@@ -151,8 +157,8 @@ build: beforeinstall
 	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no MKINFO=no && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
 	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
-.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
-	(cd ${.CURDIR}/domestic && ${MAKE} ${_J} _SLAVE_BUILD= build)
+.if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_J} _SLAVE_BUILD= build)
 .endif
 	${MAKE} whatis.db
 	@echo -n "Build finished at: "
