@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.4 2002/11/16 20:00:29 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.5 2002/11/17 01:24:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.4 2002/11/16 20:00:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.5 2002/11/17 01:24:03 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,5 +106,5 @@ mach_host_basic_info(info)
 	info->avail_cpus = 1; /* XXX */
 	info->memory_size = (uvmexp.active + uvmexp.inactive) * PAGE_SIZE;
 	info->cpu_type = MACHO_CPU_TYPE_POWERPC;
-	info->cpu_subtype = MACHO_CPU_SUBTYPE_POWERPC_604; /* XXX */
+	info->cpu_subtype = (mfpvr() >> 16);
 }
