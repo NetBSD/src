@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.18 1999/12/23 15:34:18 ad Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.19 1999/12/30 00:29:53 simonb Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -74,7 +74,7 @@ fbclose(dev, flag, mode, p)
 	 * was using the framebuffer) did to the keyboard.  The X11R6 server
 	 * changes the keyboard state, and doesn't reset it.
 	 */
-	lk_mapchar(fbtty->kbddev, fbtty->KBDPutc);
+	lk_reset(fbtty->kbddev, fbtty->KBDPutc);
 
 	bzero((caddr_t)fi->fi_pixels, fi->fi_pixelsize);
 	(*fi->fi_driver->fbd_poscursor)
