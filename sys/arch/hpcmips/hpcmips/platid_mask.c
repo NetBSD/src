@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.24 2000/09/21 03:18:04 sato Exp $ */
+/* $Id: platid_mask.c,v 1.25 2000/10/21 07:30:34 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -250,6 +250,14 @@ platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E15 = {{
 platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E55 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_CASIO_CASSIOPEIAE_E55
+}};
+platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_FORDOCOMO = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_CASIO_CASSIOPEIAE_FORDOCOMO
+}};
+platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E65 = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_CASIO_CASSIOPEIAE_E65
 }};
 platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_EXXX = {{
 	PLATID_WILD,
