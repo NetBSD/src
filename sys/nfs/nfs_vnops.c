@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.23 1994/02/15 21:26:01 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.24 1994/02/15 21:43:09 mycroft Exp $
  */
 
 /*
@@ -400,16 +400,18 @@ nfs_setattr(vp, vap, cred, p)
 	sp->sa_atime.tv_usec = txdr_unsigned(vap->va_flags);
 #else
 	if (vap->va_atime.tv_sec == VNOVAL &&
-	    np->n_delayed_atime.tv_sec != VNOVAL)
+	    np->n_delayed_atime.tv_sec != VNOVAL) {
 		txdr_time(&np->n_delayed_atime, &sp->sa_atime);
-	else
+	} else {
 		txdr_time(&vap->va_atime, &sp->sa_atime);
+	}
 #endif
 	if (vap->va_mtime.tv_sec == VNOVAL &&
-	    np->n_delayed_mtime.tv_sec != VNOVAL)
+	    np->n_delayed_mtime.tv_sec != VNOVAL) {
 		txdr_time(&np->n_delayed_mtime, &sp->sa_mtime);
-	else
+	} else {
 		txdr_time(&vap->va_mtime, &sp->sa_mtime);
+	}
 	np->n_delayed_atime.tv_sec = VNOVAL;
 	np->n_delayed_mtime.tv_sec = VNOVAL;
 
