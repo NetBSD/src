@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.5 1995/06/27 01:02:23 cgd Exp $
+#	$NetBSD: files.alpha,v 1.6 1995/08/03 00:09:25 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -25,6 +25,28 @@ include "../../../scsi/files.scsi"
 major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
+
+#
+# ansi/sun console emulator
+#
+define	ansicons
+file	dev/pseudo/ansicons.c		ansicons
+
+#
+# raster console routines
+#
+define	rcons
+file	dev/pseudo/raster_op.c		rcons
+file	dev/pseudo/raster_text.c	rcons
+file	dev/pseudo/rcons_init.c		rcons
+file	dev/pseudo/rcons_subr.c		rcons
+
+#
+# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+# XXX should be pseudo-device, with an ansicons attribute.
+#
+define	wsc				# XXX should be pseudo-dev
+file	arch/alpha/pci/wscons.c		wsc		needs-flag
 
 #
 # TurboChannel Devices
@@ -93,6 +115,12 @@ device	sio at pci { }
 file	arch/alpha/pci/sio.c		sio
 file	arch/alpha/pci/sio_pic.c	sio
 
+device	tga at pci: rcons, wsc, ansicons
+file	arch/alpha/pci/tga.c		tga		needs-flag
+
+device	pcivga at pci: wsc, ansicons
+file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
+
 #
 # ISA Devices
 #
@@ -106,6 +134,12 @@ include "../../../dev/isa/files.isa"
 file	arch/alpha/isa/isa_machdep.c	isa		needs-flag # XXX
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
+
+device  pckbd at isa
+file    arch/alpha/isa/pckbd.c           pckbd needs-flag
+device  pms at isa
+file    arch/alpha/isa/pms.c             pms needs-flag
+
 
 #
 # EISA Devices
@@ -152,3 +186,8 @@ file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
 
 # XXX
 file	arch/alpha/alpha/promcons.c
+
+# XXX
+file	arch/alpha/alpha/dec_3000_500.c	dec_3000_500
+file	arch/alpha/alpha/dec_3000_300.c	dec_3000_300
+file	arch/alpha/alpha/dec_2100_a50.c	dec_2100_a50

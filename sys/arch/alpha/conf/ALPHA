@@ -1,10 +1,9 @@
-#	$NetBSD: ALPHA,v 1.5 1995/06/27 00:54:55 cgd Exp $
+#	$NetBSD: ALPHA,v 1.6 1995/08/03 00:09:17 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 machine		alpha
 
-makeoptions	CC="gcc -Werror"
 makeoptions	DEBUG="-g"
 
 maxusers 8
@@ -62,8 +61,8 @@ options		COMPAT_43
 #options	COMPAT_09
 #options	COMPAT_10
 
-# OSF/1 binary compatibility
-options		COMPAT_OSF1
+# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
+#options	COMPAT_OSF1
 
 # System V-like message queues
 options		SYSVMSG
