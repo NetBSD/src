@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.25 1995/10/08 06:39:16 cgd Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.26 1995/10/08 06:54:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.25 1995/10/08 06:39:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.26 1995/10/08 06:54:36 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -794,6 +794,7 @@ dointr()
 			if (evcnt.ev_count)
 				(void)printf("%-12s %8ld %8ld\n", dev.dv_xname,
 				    evcnt.ev_count, evcnt.ev_count / uptime);
+			inttotal += evcnt.ev_count++;
 		}
 		allevents = evcnt.ev_next;
 	}
