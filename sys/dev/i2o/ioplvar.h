@@ -1,4 +1,4 @@
-/*	$NetBSD: ioplvar.h,v 1.2 2001/08/22 09:43:15 ad Exp $	*/
+/*	$NetBSD: ioplvar.h,v 1.3 2002/05/04 16:43:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #define	IOPL_TICK_HZ		3
 #define	IOPL_DESCRIPTORS	128
-#define	IOPL_MAX_SEGS		8		/* XXX */
+#define	IOPL_MAX_SEGS		16
 #define	IOPL_MAX_BATCH		4
 #define	IOPL_MAX_MULTI		256
 #define	IOPL_BATCHING_ENABLED	1
