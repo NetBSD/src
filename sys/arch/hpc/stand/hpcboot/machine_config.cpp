@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.3 2001/05/07 11:12:10 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.4 2001/05/16 11:13:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_SIGMARION           ,       16,      640,      240,     1280, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_SHARP_TRIPAD_PV6000         ,       16,      640,      480,     1280, 0xaa200000 },
         { PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_PENCENTRA_130       ,        8,      640,      480,      640, 0xb0201e00 },
+	{ PLATID_CPU_MIPS_VR_4122, PLATID_MACH_VICTOR_INTERLINK_MPC303     ,       16,      800,      600,        0, 0x00000000 },
 	// TX39 (can't determine frame buffer address)
 	{ PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2010               ,        8,      640,      240,        0, 0x00000000 },
 	{ PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2015               ,        8,      640,      240,        0, 0x00000000 },
