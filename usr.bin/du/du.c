@@ -42,17 +42,18 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)du.c	5.17 (Berkeley) 5/20/92";*/
-static char rcsid[] = "$Id: du.c,v 1.4 1993/08/06 17:10:02 mycroft Exp $";
+static char rcsid[] = "$Id: du.c,v 1.5 1993/10/13 18:34:03 jtc Exp $";
 #endif /* not lint */
 
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/errno.h>
-#include <dirent.h>
 #include <stdio.h>
-#include <fts.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <fts.h>
 
 void	 err __P((const char *, ...));
 char	*getbsize __P((char *, int *, long *, int));
