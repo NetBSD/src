@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.29 1999/10/15 19:31:25 jdolecek Exp $	*/
+/*	$NetBSD: ps.c,v 1.30 1999/10/15 20:01:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.29 1999/10/15 19:31:25 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.30 1999/10/15 20:01:33 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -411,7 +411,7 @@ getkinfo_kvm(kd, what, flag, nentriesp, needuser)
 	{
 		if ((kinfo = malloc((*nentriesp) * sizeof(*kinfo))) == NULL)
 			err(1, "%s", "");
-		for (i = *nentriesp; --i >= 0; ++kp) {
+		for (i = (*nentriesp); i-- > 0; kp++) {
 			kinfo[i].ki_p = kp;
 			if (needuser)
 				saveuser(&kinfo[i]);
@@ -450,7 +450,7 @@ saveuser(ki)
 	struct usave *usp;
 
 	usp = &ki->ki_u;
-	if (kd && kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
+	if (kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
 	    (char *)&pstats, sizeof(pstats)) == sizeof(pstats)) {
 		/*
 		 * The u-area might be swapped out, and we can't get
