@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.32.2.1 1996/12/07 02:04:55 cgd Exp $
+#	$NetBSD: files.alpha,v 1.32.2.2 1996/12/08 19:21:05 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -7,19 +7,20 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-# wscons devices: display, display with emulator, keyboard, and mouse
-define  wsdisplaydev { }
-define  wsemuldisplaydev {[console = -1]}
-define  wskbddev {[console = -1]}
-define	wsmousedev { }
+#
+# Common code
+#
+
+include	"arch/alpha/wscons/files.wscons"
 
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
-file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
-					dec_kn20aa
+file	arch/alpha/common/shared_intr.c
+		alpha_shared_intr | dec_eb164 | dec_kn20aa
 
 device	vga: wsemuldisplaydev
 file	arch/alpha/common/vga.c		vga
+
 
 #
 # Bus-independent devices
@@ -48,55 +49,6 @@ file	dev/ramdisk.c			rd		needs-flag
 file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
 major { rd = 6 }
 
-#
-# raster console routines
-#
-
-define	raster
-include "dev/rcons/files.rcons"
-file	arch/alpha/wscons/wscons_rinit.c	raster
-file	arch/alpha/wscons/wscons_rops.c		raster
-
-
-#
-# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
-#
-# These files are included with strange conditions because of the hairy
-# interactions between them.  In particular, chunks of the glue,
-# keyboard, and mouse code are called directly by other chunks.  Also,
-# each hardware driver can make calls into its (child) interface driver.
-# This could all be cleaned up, but it's not clear that it's worth the
-# trouble.
-#
-
-device	wsdisplay
-attach	wsdisplay at wsemuldisplaydev with wsdisplay_emul
-attach	wsdisplay at wsdisplaydev with wsdisplay_noemul
-device	wskbd
-attach	wskbd at wskbddev
-device	wsmouse
-attach	wsmouse at wsmousedev
-
-file	arch/alpha/wscons/wscons_glue.c
-		wsdisplaydev | wsemuldisplaydev | wskbddev
-file	arch/alpha/wscons/wsdisplay.c
-		wsdisplay | wsdisplaydev | wsemuldisplaydev | wskbddev
-		needs-flag
-file	arch/alpha/wscons/wsemulconf.c
-		wsdisplaydev | wsemuldisplaydev | wskbddev
-file	arch/alpha/wscons/wsemul_dumb.c
-		(wsdisplaydev | wsemuldisplaydev | wskbddev) & !wsemul_no_dumb
-file	arch/alpha/wscons/wsemul_sun.c
-		(wsdisplaydev | wsemuldisplaydev | wskbddev) & wsemul_sun
-file	arch/alpha/wscons/wsevent.c
-		wsdisplaydev | wsmousedev
-file	arch/alpha/wscons/wskbd.c
-		wskbd | wsdisplaydev | wsemuldisplaydev | wskbddev
-		needs-flag
-file	arch/alpha/wscons/wsmouse.c
-		wsmouse | wsmousedev
-		needs-flag
-
 
 #
 # TurboChannel Devices
@@ -117,12 +69,12 @@ attach	ioasic at tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
 # Color Frame buffer
-device	cfb: raster, wsemuldisplaydev
+device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb
 
 # Smart Frame buffer
-device	sfb: raster, wsemuldisplaydev
+device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
@@ -238,7 +190,7 @@ attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-device	tga: raster, wsemuldisplaydev
+device	tga: wsemuldisplaydev, wsrasteremulops
 attach	tga at pci
 file	arch/alpha/pci/tga.c		tga		needs-flag
 file	arch/alpha/pci/tga_conf.c	tga
