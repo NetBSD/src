@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.21 2004/06/22 12:50:41 itojun Exp $	*/
+/*	$NetBSD: pfil.c,v 1.22 2004/07/18 11:36:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.21 2004/06/22 12:50:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.22 2004/07/18 11:36:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -63,7 +63,7 @@ pfil_run_hooks(struct pfil_head *ph, struct mbuf **mp, struct ifnet *ifp,
 	struct mbuf *m = NULL;
 	int rv = 0;
 
-	if (mp)
+	if ((dir & PFIL_ALL) && mp)
 		m = *mp;
 	for (pfh = pfil_hook_get(dir, ph); pfh != NULL;
 	     pfh = TAILQ_NEXT(pfh, pfil_link)) {
@@ -82,7 +82,7 @@ pfil_run_hooks(struct pfil_head *ph, struct mbuf **mp, struct ifnet *ifp,
 		}
 	}
 
-	if (mp)
+	if ((dir & PFIL_ALL) && mp)
 		*mp = m;
 	return (rv);
 }
