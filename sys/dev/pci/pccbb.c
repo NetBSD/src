@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.75 2002/03/05 11:56:33 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.76 2002/05/31 09:54:52 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.75 2002/03/05 11:56:33 haya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.76 2002/05/31 09:54:52 haya Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2969,6 +2969,17 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 		if (align < 16) {
 			return 1;
 		}
+		/*
+		 * XXX: align more than 0x1000 to avoid overwrapping
+		 * memory windows for two or more devices.  0x1000
+		 * means memory window's granularity.
+		 *
+		 * Two or more devices should be able to share same
+		 * memory window region.  However, overrapping memory
+		 * window is not good because some devices, such as
+		 * 3Com 3C575[BC], have a broken address decoder and
+		 * intrude other's memory region.
+		 */
 		if (align < 0x1000) {
 			align = 0x1000;
 		}
