@@ -1,7 +1,7 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystem's, Inc. - All Right's Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.1 2000/06/02 23:11:15 fvdl Exp $
+.\"	$NetBSD: rpcbind.3,v 1.2 2000/06/03 18:47:28 fvdl Exp $
 .Dd May 7, 1993
 .Dt RPCBIND 3
 .Os
@@ -28,7 +28,7 @@
 .Ft bool_t
 .Fn rpcb_set "const rpcprog_t prognum" "const rpcvers_t versnum" "const struct netconfig *netconf" "const struct netbuf *svcaddr"
 .Ft bool_t
-.Fn rpcb_unset "const rpcprog_t prognum" "const rpcvers_t versnum"
+.Fn rpcb_unset "const rpcprog_t prognum" "const rpcvers_t versnum" "const struct netconfig *netconf"
 .Sh DESCRIPTION
 These routines allow client C programs to make procedure
 calls to the RPC binder service.
