@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.227 2002/02/11 21:05:34 mjl Exp $
+$NetBSD: usbdevs,v 1.228 2002/02/16 18:17:35 thorpej Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -627,6 +627,9 @@ product FTDI SERIAL		0x8372	Serial converter
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
+
+/* Genesys Logic products */
+product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Card Reader
