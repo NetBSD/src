@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.5 1993/08/07 08:54:02 cgd Exp $
+ *	$Id: machdep.c,v 1.6 1993/08/07 16:24:41 mycroft Exp $
  */
 
 #include "param.h"
@@ -298,7 +298,7 @@ again:
          * Allocate a submap for buffer space allocations.
          */
         buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 bufpages*NBPG, TRUE);
+                                 bufpages * CLBYTES, TRUE);
 
 #endif /* notdef */
 
