@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.6 1997/07/28 00:23:10 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.7 1997/07/30 22:40:43 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,8 @@ The audio device is normally accessed with
 or
 .Xr write 2
 calls, but it can also be mapped into user memory with
-.Xr mmap 2 .
+.Xr mmap 2 
+(when supported by the device).
 Once the device has been mapped it can no longer be accessed
 by read or write; all access is by reading and writing to
 the mapped memory.  The device appears as a block of memory
@@ -183,10 +184,6 @@ To query
 all the supported encodings, start with an index field of zero and
 continue with successive encodings (1, 2, ...) until the command returns
 an error.
-.It Dv AUDIO_GETFD (int)
-This command fetches a non-zero value into its integer argument if the
-hardware is in full-duplex mode, or a zero value if the hardware
-is not in full-duplex mode.
 .It Dv AUDIO_SETFD (int)
 This command sets the device into full-duplex operation if its integer
 argument has a non-zero value, or into half-duplex operation if it
