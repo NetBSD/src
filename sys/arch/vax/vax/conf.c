@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1998/05/21 13:02:20 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1998/06/04 15:52:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -147,11 +147,22 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
+#include "lkc.h"
+#if NLKC
+#define	smgcngetc lkccngetc
+#else
+#define	smgcngetc nullcngetc
+#endif
+
+#define smgcnputc wsdisplay_cnputc
+
 cons_decl(gen);
 cons_decl(dz);
 cons_decl(qd);
+cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
+#include "smg.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX780 || VAX750 || VAX650 || VAX630
@@ -170,6 +181,9 @@ struct	consdev constab[]={
 #if NQD
 	cons_init(qd),
 #endif
+#endif
+#if 0 /* NSMG XXX fails due to wscons */
+	cons_init(smg),
 #endif
 
 #ifdef notyet
@@ -355,6 +369,13 @@ cdev_decl(uk);
 
 dev_decl(filedesc,open);
 
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -425,6 +446,12 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
 	cdev_rnd_init(NRND,rnd),	/* 67: random source pseudo-device */
+	cdev_wsdisplay_init(NWSDISPLAY,
+			wsdisplay),	/* 68: frame buffers, etc. */
+
+	cdev_mouse_init(NWSKBD, wskbd),	/* 69: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+			wsmouse),	/* 70: mice */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
