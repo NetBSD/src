@@ -1,4 +1,4 @@
-/*      $NetBSD: n_lgamma.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
+/*      $NetBSD: n_lgamma.c,v 1.3.12.1 2002/06/18 13:40:08 lukem Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,12 +72,12 @@ static char sccsid[] = "@(#)lgamma.c	8.2 (Berkeley) 11/30/93";
  *	non-positive integer	returns +Inf.
  *	NaN			returns NaN
 */
-static int endian;
 #if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 /* double and float have same size exponent field */
 #define TRUNC(x)	x = (double) (float) (x)
 #else
+static int endian;
 #define _IEEE		1
 #define TRUNC(x)	*(((int *) &x) + endian) &= 0xf8000000
 #define infnan(x)	0.0
@@ -86,7 +86,7 @@ static int endian;
 static double small_lgam(double);
 static double large_lgam(double);
 static double neg_lgam(double);
-static double one = 1.0;
+static const double one = 1.0;
 int signgam;
 
 #define UNDERFL (1e-1020 * 1e-1020)
@@ -147,7 +147,9 @@ lgamma(double x)
 	double r;
 
 	signgam = 1;
+#if _IEEE
 	endian = ((*(int *) &one)) ? 1 : 0;
+#endif
 
 	if (!finite(x)) {
 		if (_IEEE)
@@ -272,7 +274,7 @@ static double
 neg_lgam(double x)
 {
 	int xi;
-	double y, z, one = 1.0, zero = 0.0;
+	double y, z, zero = 0.0;
 
 	/* avoid destructive cancellation as much as possible */
 	if (x > -170) {
