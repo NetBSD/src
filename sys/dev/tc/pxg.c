@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.1 2000/12/17 13:52:04 ad Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.2 2000/12/22 13:30:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/callout.h>
+#include <sys/proc.h>
 
 #if defined(pmax)
 #include <mips/cpuregs.h>
@@ -72,20 +73,22 @@
 #define	PXG_STIC_POLL_OFFSET	0x000000	/* STIC DMA poll space */
 #define	PXG_STAMP_OFFSET	0x0c0000	/* pixelstamp space on STIC */
 #define	PXG_STIC_OFFSET		0x180000	/* STIC registers */
-#define	PXG_SRAM_OFFSET		0x200000	/* N10 SRAM */
-#define	PXG_HOST_INTR_OFFSET	0x280000	/* N10 host interrupt */
-#define	PXG_COPROC_INTR_OFFSET	0x2c0000	/* N10 coprocessor interrupt */
+#define	PXG_SRAM_OFFSET		0x200000	/* i860 SRAM */
+#define	PXG_HOST_INTR_OFFSET	0x280000	/* i860 host interrupt */
+#define	PXG_COPROC_INTR_OFFSET	0x2c0000	/* i860 coprocessor interrupt */
 #define	PXG_VDAC_OFFSET		0x300000	/* VDAC registers (bt459) */
 #define	PXG_VDAC_RESET_OFFSET	0x340000	/* VDAC reset register */
 #define	PXG_ROM_OFFSET		0x380000	/* ROM code */
-#define	PXG_N10_START_OFFSET	0x380000	/* N10 start register */
-#define	PXG_N10_RESET_OFFSET	0x3c0000	/* N10 stop register */
+#define	PXG_I860_START_OFFSET	0x380000	/* i860 start register */
+#define	PXG_I860_RESET_OFFSET	0x3c0000	/* i860 stop register */
 
 static void	pxg_attach(struct device *, struct device *, void *);
 static int	pxg_intr(void *);
 static int	pxg_match(struct device *, struct cfdata *, void *);
 
 static void	pxg_init(struct stic_info *);
+static int	pxg_ioctl(struct stic_info *, u_long, caddr_t, int,
+			  struct proc *);
 static u_int32_t	*pxg_pbuf_get(struct stic_info *);
 static int	pxg_pbuf_post(struct stic_info *, u_int32_t *);
 static int	pxg_probe_planes(struct stic_info *);
@@ -198,9 +201,10 @@ pxg_init(struct stic_info *si)
 
 	si->si_pbuf_get = pxg_pbuf_get;
 	si->si_pbuf_post = pxg_pbuf_post;
+	si->si_ioctl = pxg_ioctl;
 
 	/* Disable the co-processor. */
-	slot[PXG_N10_RESET_OFFSET >> 2] = 0;
+	slot[PXG_I860_RESET_OFFSET >> 2] = 0;
 	tc_syncbus();
 	slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
 	tc_syncbus();
@@ -214,7 +218,7 @@ pxg_init(struct stic_info *si)
 
 #ifdef notdef
 	/* Restart the co-processor and enable STIC interrupts */
-	slot[PXG_N10_START_OFFSET >> 2] = 1;
+	slot[PXG_I860_START_OFFSET >> 2] = 1;
 	tc_syncbus();
 	DELAY(2000);
 	sr->sr_sticsr = STIC_INT_WE | STIC_INT_CLR;
@@ -314,7 +318,7 @@ pxg_pbuf_get(struct stic_info *si)
 #ifdef notdef
 	volatile u_int32_t *poll;
 
-	/* Ask N10 which buffer to use */
+	/* Ask i860 which buffer to use */
 	poll = si->si_slotkva;
 	poll += PXG_COPROC_INTR_OFFSET >> 2;
 
@@ -386,7 +390,7 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 			poll[2] = 0;
 			tc_wmb();
 #endif
-			return (0);
+				return (0);
 		}
 
 		DELAY(STAMP_DELAY);
@@ -395,4 +399,25 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	/* STIC has lost the plot, punish it. */
 	stic_reset(si);
 	return (-1);
+}
+
+static int
+pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
+	  struct proc *p)
+{
+	int rv;
+
+	if (cmd == STICIO_START860 || cmd == STICIO_RESET860) {
+		if ((rv = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (rv);
+		if (cmd == STICIO_START860)
+			si->si_slotkva[PXG_I860_START_OFFSET >> 2] = 1;
+		else
+			si->si_slotkva[PXG_I860_RESET_OFFSET >> 2] = 0;
+		tc_syncbus();
+		rv = 0;
+	} else
+		rv = ENOTTY;
+
+	return (rv);
 }
