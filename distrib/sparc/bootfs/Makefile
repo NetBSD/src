@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.11 1999/04/08 21:17:14 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
 
-IMAGE=		boot${REV}.fs
 KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
@@ -16,14 +15,13 @@ VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
-IMAGE?=		xxx.fs
-KERN?=		netbsd-xxx
+IMAGE?=		boot-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${.CURDIR}/list
 RAMDISK!=	cd ${TOP}/ramdisk/; \
-		    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-		    ${MAKE} -s -f-
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" |\
+		${MAKE} -s -f-
 
 DISKTYPE=	floppy
 
@@ -32,7 +30,7 @@ DISKTYPE=	floppy
 #   6144	1147k, 189 inodes free
 #  16384	1159k,  93 inodes free
 # 204800	1167k,  29 inodes free
-INO_BYTES?=	204800
+INO_BYTES=	204800
 
 CLEANFILES+=	netbsd.ram.gz netbsd.tmp
 
