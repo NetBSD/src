@@ -36,7 +36,7 @@
  *
  *	from: Id: portald.c,v 1.3 1992/05/27 07:09:27 jsp Exp jsp
  *	from: @(#)mount_portal.c	8.1 (Berkeley) 6/5/93
- *	$Id: mount_portal.c,v 1.1 1994/01/12 20:01:45 cgd Exp $
+ *	$Id: mount_portal.c,v 1.2 1994/01/13 17:45:37 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -151,12 +151,10 @@ char *v[];
 		exit(1);
 	}
 
-#ifdef notdef
 	/*
 	 * Everything is ready to go - now is a good time to fork
 	 */
 	daemon(0, 0);
-#endif
 
 	/*
 	 * Start logging (and change name)
@@ -221,7 +219,6 @@ char *v[];
 		/*
 		 * Now fork a new child to deal with the connection
 		 */
-#ifdef notdef
 	eagain:;
 		switch (pid = fork()) {
 		case -1:
@@ -239,7 +236,6 @@ char *v[];
 			(void) close(so2);
 			break;
 		}
-#endif
 		activate(&q, so2);
 	}
 	syslog(LOG_INFO, "%s unmounted", mountpt);
