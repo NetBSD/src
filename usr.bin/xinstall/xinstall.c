@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.5 1994/11/14 04:57:19 jtc Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.6 1994/12/18 22:05:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.5 1994/11/14 04:57:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.6 1994/12/18 22:05:40 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -383,4 +383,5 @@ usage()
 usage: install [-cs] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
        install [-cs] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
        install  -d   [-g group] [-m mode] [-o owner] directory ...\n");
+	exit(1);
 }
