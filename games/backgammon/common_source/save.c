@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.6 1998/08/29 22:53:04 hubertf Exp $	*/
+/*	$NetBSD: save.c,v 1.7 1998/09/13 15:41:34 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.6 1998/08/29 22:53:04 hubertf Exp $");
+__RCSID("$NetBSD: save.c,v 1.7 1998/09/13 15:41:34 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ save(n)
 		}
 		*fs = '\0';
 		if ((fdesc = open(fname, O_RDWR)) == -1 && errno == ENOENT) {
-			if ((fdesc = creat(fname, 0700)) != -1)
+			if ((fdesc = creat(fname, 0600)) != -1)
 				break;
 		}
 		if (fdesc != -1) {
