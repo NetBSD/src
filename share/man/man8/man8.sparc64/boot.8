@@ -1,0 +1,171 @@
+.\"	$NetBSD: boot.8,v 1.1 2003/04/30 12:32:29 martin Exp $
+.\"
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd April 30, 2003
+.Dt BOOT 8 sparc64
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+system bootstrapping procedures
+.Sh SYNOPSIS
+.Nm boot
+.Op Fl adqsv
+.Oo
+.Ar -- \*[Lt]boot string\*[Gt]
+.Oc
+.Sh DESCRIPTION
+.Ss Power fail and crash recovery
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed
+as described in
+.Xr fsck 8 .
+and unless this fails, the system will resume multi-user operations.
+.Ss Cold starts
+The
+.Nx
+boot
+.Pa netbsd
+from the default boot device, configured via OpenFirmware environment
+variables. See below for details.
+.Ss Boot program options
+.Bl -tag -width xxx
+.It Fl a
+Prompt for the root file system device, the system crash dump
+device, and the path to
+.Xr init 8 .
+.It Fl d
+Bring the system up in debug mode.
+Here it waits for a kernel debugger connect; see
+.Xr gdb 1 .
+.It Fl q
+Boot the system in quiet mode.
+.It Fl s
+Bring the system up in single-user mode.
+.It Fl v
+Boot the system in verbose mode.
+.El
+.Pp
+Any extra flags or arguments, or the
+.Ar \*[Lt]boot string\*[Gt]
+after the -- separator are passed to the boot PROM.
+Other flags are currently ignored.
+.Pp
+At any time you can break back to the ROM by pressing the `L1' and `a'
+keys at the same time (if the console is a serial port the same is
+achieved by sending a `break').
+If you do this accidentally you can continue whatever was in progress
+by typing `go'.
+.Sh BOOT DEVICES
+Since machines vary in the way their devices are connected greatly, there
+are aliases defined by the firmware. You can either use the full qualified
+OpenFirmware path of a device node, or the alias.
+.Pp
+A typical list of usable boot devices (extracted from the output of
+the OpenFirmware command 
+.Em devalias )
+is:
+.Bd -literal -offset indent
+net                      /sbus/SUNW,hme@e,8c00000
+disk                     /sbus/SUNW,fas@e,8800000/sd@0,0
+cdrom                    /sbus/SUNW,fas@e,8800000/sd@6,0:f
+disk6                    /sbus/SUNW,fas@e,8800000/sd@6,0
+disk5                    /sbus/SUNW,fas@e,8800000/sd@5,0
+disk4                    /sbus/SUNW,fas@e,8800000/sd@4,0
+disk3                    /sbus/SUNW,fas@e,8800000/sd@3,0
+disk2                    /sbus/SUNW,fas@e,8800000/sd@2,0
+disk1                    /sbus/SUNW,fas@e,8800000/sd@1,0
+disk0                    /sbus/SUNW,fas@e,8800000/sd@0,0
+.Ed
+.Pp
+If a device specification includes a partition letter (for example cdrom
+in above list) this partition is used by default, otherwise the first (a)
+partition is used. If booting from the net device, there is no partition
+involved.
+.Pp
+The boot device is an optional first part of the boot string, if no device
+is specified the default device is used (see below).
+.Sh FIRMWARE ENVIRONMENT VARIABLES
+All OpenFirmware environment variables can be printed with the
+.Em printenv
+command and changed with
+.Em setenv .
+The boot process relevant variables and their suggested value for
+booting NetBSD are:
+.Bd -literal -offset indent
+boot-command          boot
+auto-boot?            true
+boot-file
+boot-device           disk
+diag-switch?          false
+.Ed
+.Pp
+Of course you may select any other boot device, if you do not want to boot
+from the device aliased to
+.Em disk ,
+see the discussion on devices above.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+boot cdrom
+.Ed
+Boot from CDROM. Note that some multi-arch CDs are not able to use the
+default sparc64 partition for CDROMs (f), so they may require an explicit
+partition letter, for example
+.Bd -literal -offset indent
+boot cdrom:c
+.Ed
+Another example:
+.Bd -literal -offset indent
+boot net -sd
+.Ed
+to boot single user from network and break into the kernel debugger as
+soon as possible.
+.Sh FILES
+.Bl -tag -width /netbsdxx -compact
+.It Pa /netbsd
+system code
+.It Pa /boot
+system bootstrap
+.El
+.Sh SEE ALSO
+.Xr crash 8 ,
+.Xr disklabel 8 ,
+.Xr fsck 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr installboot 8 ,
+.Xr rc 8 ,
+.Xr shutdown 8 ,
+.Xr syslogd 8
