@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.70 2002/07/11 15:00:57 scw Exp $
+#	$NetBSD: sys.mk,v 1.71 2002/11/26 18:42:30 thorpej Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -16,11 +16,7 @@ AS?=		as
 AFLAGS?=
 COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
-.if defined(HAVE_GCC3)
-COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-.else
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
-.endif
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
