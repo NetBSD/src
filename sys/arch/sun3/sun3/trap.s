@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.s,v 1.10 1994/12/20 05:32:59 gwr Exp $	*/
+/*	$NetBSD: trap.s,v 1.11 1995/02/11 21:08:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -123,15 +123,13 @@ Lbe10:
 sun3_mmu_specific:
 	clrl d0				| make sure top bits are cleard too
 	movl d1, sp@-			| save d1
-	movl d2, sp@-			| save d2
-	movc sfc, d2			| save sfc to d2
-	moveq #FC_CONTROL, d1		| need to set source to control space
-	movc d1, sfc			| control space source established
+	movc sfc, d1			| save sfc to d1
+	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
+	movc d0, sfc
 	movsb BUSERR_REG, d0		| get value of bus error register
-	movc d2, sfc			| stop using control space (potential)
-	movl sp@+, d2			| restore d2
+	movc d1, sfc			| restore sfc
 	movl sp@+, d1			| restore d1
-	andb #0xC0, d0 			| test INVALID|PROTERR
+	andb #BUSERR_MMU, d0 		| is this an MMU fault?
 	jeq Lisberr			| non-MMU bus error
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
