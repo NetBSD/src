@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.37 1998/06/24 19:56:11 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.38 1999/01/03 01:50:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.37 1998/06/24 19:56:11 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.38 1999/01/03 01:50:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,6 +327,8 @@ again:
 			    " file(s) are on you should start\n",
 			    "with the last volume and work",
 			    " towards the first.\n");
+			fprintf(stderr,
+			    "(Use 1 for the first volume/tape, etc.)\n");
 		} else {
 			fprintf(stderr, "You have read volumes");
 			strcpy(buf, ": ");
@@ -393,7 +395,9 @@ gethdr:
 		goto again;
 	}
 	if (tmpbuf.c_volume != volno) {
-		fprintf(stderr, "Wrong volume (%d)\n", tmpbuf.c_volume);
+	  	fprintf(stderr,
+		"Volume mismatch: expecting %d, tape header claims it is %d\n",
+		    volno, tmpbuf.c_volume);
 		volno = 0;
 		goto again;
 	}

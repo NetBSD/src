@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.14 1998/01/10 08:27:54 enami Exp $	*/
+/*	$NetBSD: interactive.c,v 1.15 1999/01/03 01:50:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.14 1998/01/10 08:27:54 enami Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.15 1999/01/03 01:50:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,6 +316,7 @@ getcmd(curdir, cmd, name, ap)
 	char *cp;
 	static char input[BUFSIZ];
 	char output[BUFSIZ];
+	int globretval;
 #	define rawname input	/* save space by reusing input buffer */
 
 	/*
@@ -377,8 +378,23 @@ getnext:
 		(void) strcat(output, rawname);
 		canon(output, name);
 	}
-	if (glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob) < 0)
-		fprintf(stderr, "%s: out of memory\n", ap->cmd);
+	if ((globretval = glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob)) < 0) {
+		fprintf(stderr, "%s: %s: ", ap->cmd, name);
+		switch (globretval) {
+		case GLOB_NOSPACE:
+			fprintf(stderr, "out of memory\n");
+			break;
+		case GLOB_NOMATCH:
+			fprintf(stderr, "no filename match.\n");
+			break;
+		case GLOB_ABORTED:
+			fprintf(stderr, "glob() aborted.\n");
+			break;
+		default:
+			fprintf(stderr, "unknown error!\n");
+			break;
+		}
+	}
 	if (ap->glob.gl_pathc == 0)
 		return;
 	ap->freeglob = 1;
