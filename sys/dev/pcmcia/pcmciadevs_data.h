@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.89 2000/05/11 19:24:36 is Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.90 2000/06/05 23:05:31 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp 
+ *	NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp 
  */
 
 /*-
@@ -113,6 +113,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com/Megahertz 3CCFEM556BI Ethernet/Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_COMPAQ2, PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100,
+	    PCMCIA_CIS_COMPAQ2_CPQ_10_100,
+	    0,
+	    "Compaq",
+	    "Compaq Netelligent 10/100 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
@@ -239,6 +246,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "IBM Corporation",
 	    "IBM EtherJet Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_EEPRO100,
+	    PCMCIA_CIS_INTEL_EEPRO100,
+	    0,
+	    "Intel",
+	    "Intel EtherExpress PRO/100"	},
 	},
 	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
@@ -416,45 +430,52 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK LAC-CF010"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,
-	    PCMCIA_CIS_TDK_XIR_CE_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE,
+	    PCMCIA_CIS_XIRCOM_CE,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CEM_10,
-	    PCMCIA_CIS_TDK_XIR_CEM_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE2,
+	    PCMCIA_CIS_XIRCOM_CE2,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
+	    "Xircom CreditCard Ethernet II"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE3,
+	    PCMCIA_CIS_XIRCOM_CE3,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard 10/100 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM,
+	    PCMCIA_CIS_XIRCOM_CEM,
+	    0,
+	    "Xircom",
 	    "Xircom CreditCard Ethernet + Modem"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10,
-	    PCMCIA_CIS_TDK_XIR_PS_CE2_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM28,
+	    PCMCIA_CIS_XIRCOM_CEM28,
 	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard CE2 Ethernet"	},
+	    "Xircom",
+	    "Xircom CreditCard Ethernet + Modem 28"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE3_10_100,
-	    PCMCIA_CIS_TDK_XIR_CE3_10_100,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CNW_801,
+	    PCMCIA_CIS_XIRCOM_CNW_801,
 	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard CE3 10/100 Ethernet"	},
-	},
-	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_801,
-	    PCMCIA_CIS_TDK_XIR_CNW_801,
-	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Netwave (Canada)"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_802,
-	    PCMCIA_CIS_TDK_XIR_CNW_802,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CNW_802,
+	    PCMCIA_CIS_XIRCOM_CNW_802,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Netwave (US)"	},
 	},
 	{
