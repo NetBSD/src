@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.2 2000/06/21 06:40:36 thorpej Exp $
+#	$NetBSD: mi,v 1.231.2.3 2000/07/07 16:22:15 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2361,7 +2361,7 @@
 ./usr/share/man/cat3/scalbnf.0	comp-c-catman
 ./usr/share/man/cat3/scandir.0	comp-c-catman
 ./usr/share/man/cat3/scanf.0	comp-c-catman
-./usr/share/man/cat3/securepath.0	comp-c-catman
+./usr/share/man/cat3/secure_path.0	comp-c-catman
 ./usr/share/man/cat3/seed48.0	comp-c-catman
 ./usr/share/man/cat3/seekdir.0	comp-c-catman
 ./usr/share/man/cat3/setbuf.0	comp-c-catman
@@ -3963,7 +3963,7 @@
 ./usr/share/man/man3/scalbnf.3		comp-c-man
 ./usr/share/man/man3/scandir.3		comp-c-man
 ./usr/share/man/man3/scanf.3		comp-c-man
-./usr/share/man/man3/securepath.3		comp-c-man
+./usr/share/man/man3/secure_path.3		comp-c-man
 ./usr/share/man/man3/seed48.3		comp-c-man
 ./usr/share/man/man3/seekdir.3		comp-c-man
 ./usr/share/man/man3/setbuf.3		comp-c-man
