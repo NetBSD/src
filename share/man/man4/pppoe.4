@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.2 2001/12/11 00:08:52 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.3 2001/12/18 13:33:18 ad Exp $
 .\"
 .\" Copyright (c) 2001 Martin Husemann. All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .Os
 .Sh NAME
 .Nm pppoe
-.Nd PPP over ethernet protocol network interface
+.Nd PPP over Ethernet protocol network interface
 .Sh SYNOPSIS
 .Nm pseudo-device pppoe
 .Sh DESCRIPTION
@@ -36,19 +36,19 @@ The
 .Nm
 interface encapsulatates
 .Em Point-to-Point Protocol (PPP)
-packets inside ethernet frames as defined by
+packets inside Ethernet frames as defined by
 .Li RFC2516 .
 .Pp
 This is often used to connect a router via a DSL modem to
 an access concentrator.  The
 .Nm
 interface does not by itself transmit or receive frames,
-but needs an ethernet interface to do so.  This ethernet interface
+but needs an Ethernet interface to do so.  This Ethernet interface
 is connected to the
 .Nm
 interface via
 .Xr pppoectl 8 .
-The ethernet interface needs to be marked UP, but does not need to have an
+The Ethernet interface needs to be marked UP, but does not need to have an
 IP address.
 .Pp
 There are two basic modes of operation, controlled via the
@@ -71,7 +71,7 @@ are necessary:
 .It
 create the interface
 .It
-connect an ethernet interface
+connect an Ethernet interface
 This interface is used for the physical communication.  As noted above it
 must be marked UP, but need not have an IP address.
 .It
@@ -80,7 +80,8 @@ The PPP session needs to identify the client to the peer.  For more details
 on the available options see
 .Xr pppoectl 8 .
 .El
-This all is typically done in an
+.Pp
+This all is typically accomplished using an
 .Pa /etc/ifconfig.pppoe0
 file.
 .Sh EXAMPLES
