@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.4 1999/08/03 23:37:14 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.5 1999/08/04 00:14:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -828,7 +828,7 @@ fxp_intr(arg)
 		/*
 		 * Free any finished transmit mbuf chains.
 		 */
-		if (statack & FXP_SCB_STATACK_CXTNO) {
+		if (statack & (FXP_SCB_STATACK_CXTNO|FXP_SCB_STATACK_CNA)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 			     i = FXP_NEXTTX(i), sc->sc_txpending--) {
