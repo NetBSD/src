@@ -1,10 +1,10 @@
-.\"	$NetBSD: ccd.conf.5,v 1.1 2002/06/11 13:33:48 grant Exp $
+.\"	$NetBSD: ccd.conf.5,v 1.2 2002/06/11 13:45:35 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Jason R. Thorpe.
+.\" by Grant Beattie.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -37,8 +37,6 @@
 .Dd June 11, 2002
 .Dt CCD.CONF 5
 .Os
-.\" turn off hyphenation
-.hym 999
 .Sh NAME
 .Nm ccd.conf
 .Nd concatenated disk driver configuration file
@@ -66,7 +64,7 @@ argument to
 .Ar ileave
 .Op Ar flags
 .Ar dev
-.Op Ar ...
+.Op Ar
 .Ed
 .Pp
 .Bl -tag -width preserveX
@@ -79,7 +77,7 @@ The interleave, expressed in units of
 The flags for the device, which may be represented as a decimal number,
 a hexadecimal number, a comma-separated list of strings, or the word
 .Dq none .
-.It Ar dev Op Ar ...
+.It Ar dev Op Ar
 The component partitions to be concatenated, which should be of type
 .Dv FS_CCD .
 .El
@@ -95,18 +93,17 @@ A
 .Sq \e
 preceding any character (other than the end of line) prevents that
 character's special meaning from taking effect.
-.Pp
 .Sh FILES
 .Pa /etc/ccd.conf
 .Sh EXAMPLES
 An example
 .Pa /etc/ccd.conf :
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 #
 # /etc/ccd.conf
 # Configuration file for concatenated disk devices
 #
-.Pp
+
 # ccd           ileave  flags   component devices
 ccd0            16      none    /dev/sd2e /dev/sd3e
 .Ed
