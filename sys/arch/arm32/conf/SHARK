@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.22 1999/04/09 00:22:43 hubertf Exp $
+#	$NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -98,8 +98,11 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
 
-#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in KBytes
+options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_SIZE=0	# Size in blocks
+#options 	MINIROOTSIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
 options 	XSERVER			# also need INSECURE for now
 options 	INSECURE		# disable kernel securelevel
 
