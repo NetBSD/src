@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.47.2.1 2001/05/01 10:42:41 he Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.1 2001/05/01 10:42:41 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ cdev_decl(ucom);
 /* open, close, read, write */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
