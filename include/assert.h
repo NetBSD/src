@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.13 2003/06/05 17:27:14 bjh21 Exp $	*/
+/*	$NetBSD: assert.h,v 1.14 2003/06/05 18:37:45 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
 #ifdef NDEBUG
 # ifndef lint
 #  define assert(e)	(__static_cast(void,0))
-#  endif
 # else /* !lint */
 #  define assert(e)
 # endif /* lint */
