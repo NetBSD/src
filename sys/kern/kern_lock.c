@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.8 1998/08/04 04:03:12 perry Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.9 1998/09/24 22:30:11 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -58,7 +58,7 @@
 #define COUNT(p, x)
 #endif
 
-#if NCPUS > 1
+#if defined(MULTIPROCESSOR)
 
 /*
  * For multiprocessor system, try spin lock first.
@@ -80,7 +80,7 @@ int lock_wait_time = 100;
 		if (!(wanted))						\
 			break;
 
-#else /* NCPUS == 1 */
+#else /* ! MULTIPROCESSOR */
 
 /*
  * It is an error to spin on a uniprocessor as nothing will ever cause
@@ -88,7 +88,7 @@ int lock_wait_time = 100;
  */
 #define PAUSE(lkp, wanted)
 
-#endif /* NCPUS == 1 */
+#endif /* MULTIPROCESSOR */
 
 /*
  * Acquire a resource.
@@ -445,7 +445,7 @@ lockmgr_printinfo(lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(LOCKDEBUG) && NCPUS == 1
+#if defined(LOCKDEBUG) && !defined(MULTIPROCESSOR)
 #include <sys/kernel.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -556,4 +556,4 @@ _simple_unlock(alp, id, l)
 	if (curproc)
 		curproc->p_simple_locks--;
 }
-#endif /* LOCKDEBUG && NCPUS == 1 */
+#endif /* LOCKDEBUG && ! MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.10 1998/05/20 01:32:29 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.11 1998/09/24 22:30:11 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -44,10 +44,9 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_uvm.h"
 #endif
-
-#define NCPUS 1		/* XXX */
 
 /*
  * Placeholder for simple lock structure until spinlocks are
@@ -199,12 +198,15 @@ void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
 #else /* !LOCKDEBUG */
-#if NCPUS == 1 /* no multiprocessor locking is necessary */
+#if defined(MULTIPROCESSOR)
+#include <machine/lock.h>	/* pull in machine-dependent spin lock defs */
+#else
+/* single-processor; no locking neecessary */
 #define	simple_lock_init(alp)	(alp)->lock_data = 0
-#define	simple_lock(alp)
-#define	simple_lock_try(alp)	(1)	/* always succeeds */
-#define	simple_unlock(alp)
-#endif /* NCPUS == 1 */
-#endif /* !LOCKDEBUG */
+#define	simple_lock(alp)	(void)(alp)
+#define	simple_lock_try(alp)	((void)(alp), (1))	/* always succeeds */
+#define	simple_unlock(alp)	(void)(alp)
+#endif /* MULTIPROCESSOR */
+#endif /* LOCKDEBUG */
 
 #endif /* _SYS_LOCK_H_ */
