@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.60 2003/04/26 11:05:13 ragge Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.61 2003/05/02 14:36:38 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -760,12 +760,7 @@ initarm(argc, argv, bi)
 #endif
 
 #ifdef DDB
-	{
-		static struct undefined_handler uh;
-
-		uh.uh_handler = db_trapper;
-		install_coproc_handler_static(0, &uh);
-	}
+	db_machine_init();
 #endif
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
