@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1996/02/05 02:11:16 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1996/02/05 20:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -67,6 +67,7 @@ extern struct proc *fpu_proc;
  * Setup the child's stackframe to return to child_return
  * via proc_trampoline from cpu_switch.
  */
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
