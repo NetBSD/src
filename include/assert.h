@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.10 2000/12/19 14:32:59 kleink Exp $	*/
+/*	$NetBSD: assert.h,v 1.11 2000/12/20 18:35:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -99,9 +99,12 @@
 #define	__assert_function__	((const void *)0)
 #endif
 
+#ifndef __ASSERT_DECLARED
+#define __ASSERT_DECLARED
 __BEGIN_DECLS
 void __assert __P((const char *, int, const char *));
 void __assert13 __P((const char *, int, const char *, const char *));
 void __diagassert __P((const char *, int, const char *));
 void __diagassert13 __P((const char *, int, const char *, const char *));
 __END_DECLS
+#endif /* __ASSERT_DECLARED */
