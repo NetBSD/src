@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 2003/01/01 01:51:24 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.31 2003/01/28 12:35:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ zs_config(zsc, zs, vector, pclk)
 		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
+		simple_lock_init(&cs->cs_lock);
 
 		/*
 		 * If we're the console, copy the channel state, and
