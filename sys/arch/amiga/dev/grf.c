@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf.c 1.31 91/01/21
- *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.3 1993/09/02 18:07:56 mw Exp $
+ * from: Utah $Hdr: grf.c 1.31 91/01/21$
+ *
+ *	@(#)grf.c	7.8 (Berkeley) 5/7/91
  */
 
 /*
@@ -413,7 +413,6 @@ grfaddr(gp, off)
 {
 	register struct grfinfo *gi = &gp->g_display;
 
-#if 0
 	/* control registers */
 	if (off >= 0 && off < gi->gd_regsize)
 		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
@@ -423,7 +422,6 @@ grfaddr(gp, off)
 		off -= gi->gd_regsize;
 		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
-#endif
 	/* bogus */
 	return(-1);
 }
@@ -452,8 +450,9 @@ grfmmap(dev, addrp, p)
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+  	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags,
+			(caddr_t)&vn, 0);
 	return(error);
 }
 

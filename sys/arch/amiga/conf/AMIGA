@@ -7,6 +7,7 @@ maxusers	16
 
 # Standard options
 #options	QUOTA
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
 options		NFS,NFSSERVER,NFSCLIENT
 options		MFS
@@ -52,7 +53,7 @@ master		gvp11scsi0	at manufacturer 2017	product 11
 device		ser0	at manufacturer	1	product	3
 #device		clock	at manufacturer	1	product 4
 #device		kbd	at manufacturer	1	product 5
-#device		par	at manufacturer	1	product	6
+device		par0	at manufacturer	1	product	6
 #device		mouse	at manufacturer	1	product	8
 
 disk		sd0	at a3000scsi0 slave 0
@@ -113,7 +114,3 @@ pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
 pseudo-device	vn	10
-
-pseudo-device	devpager
-pseudo-device	swappager
-pseudo-device	vnodepager

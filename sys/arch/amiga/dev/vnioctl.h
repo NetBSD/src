@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: fdioctl.h 1.1 90/07/09
- *	from: @(#)vnioctl.h	7.3 (Berkeley) 5/7/91
- *	$Id: vnioctl.h,v 1.2 1993/08/01 19:23:25 mycroft Exp $
+ * from: Utah $Hdr: fdioctl.h 1.1 90/07/09$
+ *
+ *	@(#)vnioctl.h	7.3 (Berkeley) 5/7/91
  */
 
 /*

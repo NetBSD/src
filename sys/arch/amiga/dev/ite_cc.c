@@ -1,5 +1,3 @@
-/*	$Id: ite_cc.c,v 1.3 1993/09/02 18:08:03 mw Exp $ */
-
 #include "ite.h"
 #if NITE > 0
 

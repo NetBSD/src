@@ -114,8 +114,13 @@ unsigned char NCRStdPalette[16*3] = {
    struct MonDef MON_768_600_80  = { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
           4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255};      
 
+#if 0
    struct MonDef MON_1024_768_80 = { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
           4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255};      
+#else
+   struct MonDef MON_1024_768_80 = { 90000000, 0, 1024, 768,  257,258,278,321,320, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255};      
+#endif
 
    struct MonDef MON_1024_1024_59= { 90000000, 24, 1024,1024,  129,130,141,173,170,1025,1059,1076,1087,1087,
           4, NCRStdPalette,128, 128, 16384,    8,     8, kernel_font,   32,  255};      
@@ -150,7 +155,33 @@ struct MonDef monitor_defs[] = {
    { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
           4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255},
 
+
+
    { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 100000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 110000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 120000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 13000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 72000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+   { 75000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+
+
+
+
+   { 90000000, 24, 1024, 768,  129,130,139,161,160, 769, 770, 783, 804, 804,
           4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
 
    { 90000000, 24, 1024,1024,  129,130,141,173,170,1025,1059,1076,1087,1087,
@@ -268,6 +299,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	/* hmm... */
 	fb[0x8000] = 0;
 
+		/* enable extension registers */
+	WSeq (ba, SEQ_ID_EXTENDED_ENABLE,	0x05);
+
+#if 0
 	/* program the clock oscillator */	
 	vgaw (ba, GREG_MISC_OUTPUT_W, 0xe3 | ((clksel & 3) * 0x04));
 	vgaw (ba, GREG_FEATURE_CONTROL_W, 0x00);
@@ -285,9 +320,26 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	/* XXXX I think this order of setting RESET is wrong... */
 	WSeq (ba, SEQ_ID_RESET, 		0x01);  
 	WSeq (ba, SEQ_ID_RESET, 		0x03);  
+#else
+	WSeq (ba, SEQ_ID_RESET, 		0x01);  
+
+		/* set font width + rest of clocks */
+	WSeq (ba, SEQ_ID_EXT_CLOCK_MODE,	0x30 | (FW & 0x0f) | ((clksel & 4) / 4 * 0x40) );  
+		/* another clock bit, plus hw stuff */  
+	WSeq (ba, SEQ_ID_MISC_FEATURE_SEL,	0xf4 | (clksel & 8) );  
+
+	/* program the clock oscillator */	
+	vgaw (ba, GREG_MISC_OUTPUT_W, 		0xe3 | ((clksel & 3) * 0x04));
+	vgaw (ba, GREG_FEATURE_CONTROL_W, 	0x00);
 	
-		/* enable extension registers *
-	WSeq (ba, SEQ_ID_EXTENDED_ENABLE,	0x05);
+	WSeq (ba, SEQ_ID_CLOCKING_MODE, 	0x01 | ((md->FLG & MDF_CLKDIV2)/ MDF_CLKDIV2 * 8));  
+	WSeq (ba, SEQ_ID_MAP_MASK, 		0x0f);  
+	WSeq (ba, SEQ_ID_CHAR_MAP_SELECT, 	0x00);
+		/* odd/even write select + extended memory */  
+	WSeq (ba, SEQ_ID_MEMORY_MODE, 		0x06);
+	WSeq (ba, SEQ_ID_RESET, 		0x03);  
+#endif
+	
 		/* monochrome cursor */
 	WSeq (ba, SEQ_ID_CURSOR_CONTROL,	0x00);  
 		/* bank0 */
@@ -300,8 +352,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO,	0x00);  
 		/* 1M-chips + ena SEC + ena EMem + rw PrimA0/rw Sec/B0 */
 	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,	0x3 | 0x4 | 0x10 | 0x40);
+#if 0
 		/* set font width + rest of clocks */
 	WSeq (ba, SEQ_ID_EXT_CLOCK_MODE,	0x30 | (FW & 0x0f) | ((clksel & 4) / 4 * 0x40) );  
+#endif
 		/* no ext-chain4 + no host-addr-bit-16 */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,	0x00);  
 		/* no packed/nibble + no 256bit gfx format */
@@ -312,8 +366,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	WSeq (ba, SEQ_ID_COLOR_EXP_WFG,		0x01); 
 	WSeq (ba, SEQ_ID_COLOR_EXP_WBG,		0x00);
 	WSeq (ba, SEQ_ID_EXT_RW_CONTROL,	0x00);
+#if 0
 		/* another clock bit, plus hw stuff */  
 	WSeq (ba, SEQ_ID_MISC_FEATURE_SEL,	0xf4 | (clksel & 8) );  
+#endif
 		/* don't tristate PCLK and PIX */
 	WSeq (ba, SEQ_ID_COLOR_KEY_CNTL,	0x40 ); 
 		/* reset CRC circuit */
