@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_clnt.c,v 1.2.2.2 1999/12/04 17:05:36 he Exp $	*/
+/*	$NetBSD: ctl_clnt.c,v 1.2.2.3 2001/01/28 17:09:18 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_clnt.c,v 8.14 1999/10/13 16:39:33 vixie Exp";
+static const char rcsid[] = "Id: ctl_clnt.c,v 8.15 2000/11/14 01:10:36 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -263,11 +263,11 @@ new_tran(struct ctl_cctx *ctx, ctl_clntdone donefunc, void *uap, int w) {
 	buffer_init(new->outbuf);
 	new->donefunc = donefunc;
 	new->uap = uap;
+	INIT_LINK(new, link);
+	INIT_LINK(new, wlink);
 	APPEND(ctx->tran, new, link);
 	if (w)
 		APPEND(ctx->wtran, new, wlink);
-	else
-		INIT_LINK(new, wlink);
 	return (new);
 }
 

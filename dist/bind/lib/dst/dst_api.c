@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1.2.3 2000/10/10 21:19:03 he Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.1.2.4 2001/01/28 17:09:17 he Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/dst_api.c,v 1.1.1.1.2.3 2000/10/10 21:19:03 he Exp $";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/dst_api.c,v 1.16 2000/11/13 04:09:23 vixie Exp";
 #endif
 
 /*
@@ -335,7 +335,7 @@ dst_read_key(const char *in_keyname, const u_int16_t in_id,
 			 in_alg));
 		return (NULL);
 	}
-	if ((type && (DST_PUBLIC | DST_PRIVATE)) == 0) 
+	if ((type & (DST_PUBLIC | DST_PRIVATE)) == 0) 
 		return (NULL);
 	if (in_keyname == NULL) {
 		EREPORT(("dst_read_private_key(): Null key name passed in\n"));
@@ -772,8 +772,7 @@ dst_buffer_to_key(const char *key_name,		/* name of the key */
 
 	if (dkey == NULL)
 		return (NULL);
-	if (dkey->dk_func != NULL &&
-	    dkey->dk_func->from_dns_key != NULL) {
+	if (dkey->dk_func != NULL && dkey->dk_func->from_dns_key != NULL) {
 		if (dkey->dk_func->from_dns_key(dkey, key_buf, key_len) < 0) {
 			EREPORT(("dst_buffer_to_key(): dst_buffer_to_hmac failed\n"));
 			return (dst_free_key(dkey));
@@ -788,9 +787,9 @@ dst_key_to_buffer(DST_KEY *key, u_char *out_buff, int buf_len)
 {
 	int len;
   /* this function will extrac the secret of HMAC into a buffer */
-	if(key == NULL) 
+	if (key == NULL) 
 		return (0);
-	if(key->dk_func != NULL && key->dk_func != NULL) {
+	if (key->dk_func != NULL && key->dk_func->to_dns_key != NULL) {
 		len = key->dk_func->to_dns_key(key, out_buff, buf_len);
 		if (len < 0)
 			return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.2.2.2 1999/12/04 16:57:16 he Exp $	*/
+/*	$NetBSD: debug.c,v 1.2.2.3 2001/01/28 17:09:16 he Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -55,7 +55,7 @@
 
 #ifndef lint
 static const char sccsid[] = "@(#)debug.c	5.26 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: debug.c,v 8.15 1999/10/13 16:39:16 vixie Exp";
+static const char rcsid[] = "Id: debug.c,v 8.17 2000/11/08 06:47:31 marka Exp";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,9 @@ static const char rcsid[] = "Id: debug.c,v 8.15 1999/10/13 16:39:16 vixie Exp";
 /*
  *  Imported from res_debug.c
  */
+#ifndef HAVE_DECL_RES_OPCODES
 extern char *_res_opcodes[];
+#endif
 
 /*
  *  Used to highlight the start of a record when printing it.
@@ -623,8 +625,15 @@ Print_rr(const u_char *ocp, const u_char *msg, const u_char *eom, FILE *file) {
 	case T_KEY:
 	default: {
 		char buf[2048];	/* XXX need to malloc/realloc. */
+		char rrname[NS_MAXDNAME];
 
-		if (ns_sprintrrf(msg, eom - msg, "?", (ns_class)class,
+		cp2 = p_fqnname(ocp, msg, NS_MAXCDNAME, rrname, sizeof rrname);
+		if (cp2 == NULL) {
+			fprintf(file, "(name truncated?)\n");
+			return (NULL);                  /* compression error */
+		}
+
+		if (ns_sprintrrf(msg, eom - msg, rrname, (ns_class)class,
 				 (ns_type)type, rrttl, cp1, dlen, NULL, NULL,
 				 buf, sizeof buf) < 0) {
 			perror("ns_sprintrrf");

@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.c,v 1.1.1.1.2.3 2000/10/08 16:16:57 he Exp $	*/
+/*	$NetBSD: dig.c,v 1.1.1.1.2.4 2001/01/28 17:09:13 he Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";
+static const char rcsid[] = "Id: dig.c,v 8.44 2000/12/23 08:14:31 vixie Exp";
 #endif
 
 /*
@@ -169,6 +169,7 @@ static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";
 
 #include <isc/dst.h>
 
+#include <assert.h>
 #include <ctype.h> 
 #include <errno.h>
 #include <fcntl.h>
@@ -186,8 +187,8 @@ static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";
 
 /* Global. */
 
-#define VERSION 82
-#define VSTRING "8.2"
+#define VERSION 83
+#define VSTRING "8.3"
 
 #define PRF_DEF		0x2ff9
 #define PRF_MIN		0xA930
@@ -202,7 +203,6 @@ static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";
 
 static int		eecode = 0;
 static FILE *		qfp;
-static int		sockFD;
 static char		*defsrv, *srvmsg;
 static char		defbuf[40] = "default -- ";
 static char		srvbuf[60];
@@ -229,7 +229,7 @@ char		*pager = NULL;
 /* Forward. */
 
 static void		Usage(void);
-static int		SetOption(const char *);
+static int		setopt(const char *);
 static void		res_re_init(void);
 static int		xstrtonum(char *);
 static int		printZone(ns_type, const char *,
@@ -272,19 +272,17 @@ main(int argc, char **argv) {
 	ns_type xfr = ns_t_invalid;
         int bytes_out, bytes_in;
 
-	char cmd[256];
+	char cmd[512];
 	char domain[MAXDNAME];
-        char msg[120], *msgptr;
-	char **vtmp;
+        char msg[120], **vtmp;
 	char *args[DIG_MAXARGS];
 	char **ax;
 	int once = 1, dofile = 0; /* batch -vs- interactive control */
-	char fileq[100];
+	char fileq[384];
 	int  fp;
 	int wait=0, delay;
 	int envset=0, envsave=0;
 	struct __res_state res_x, res_t;
-	char *pp;
 
 	ns_tsig_key key;
 	char *keyfile = NULL, *keyname = NULL;
@@ -350,6 +348,7 @@ main(int argc, char **argv) {
 
 	res.id = 1;
 	gettimeofday(&tv1, NULL);
+	assert(tv1.tv_usec >= 0 && tv1.tv_usec < 1000000);
 
 /*
  * Main section: once if cmd-line query
@@ -359,8 +358,10 @@ main(int argc, char **argv) {
 	while ((dofile && fgets(fileq, sizeof fileq, qfp) != NULL) || 
 	       (!dofile && once--)) 
 	{
-		if (*fileq == '\n' || *fileq == '#' || *fileq==';')
-			continue;	/* ignore blank lines & comments */
+		if (*fileq == '\n' || *fileq == '#' || *fileq==';') {
+			printf("%s", fileq);	/* echo but otherwise ignore */
+			continue;		/* blank lines and comments  */
+		}
 
 /*
  * "Sticky" requests that before current parsing args
@@ -400,7 +401,7 @@ main(int argc, char **argv) {
 			if (**argv == '%')
 				continue;
 			if (**argv == '+') {
-				SetOption(*argv+1);
+				setopt(*argv+1);
 				continue;
 			}
 			if (**argv == '=') {
@@ -424,11 +425,16 @@ main(int argc, char **argv) {
 			if (**argv == '-') {
 				switch (argv[0][1]) { 
 				case 'T':
-					wait = atoi(*++argv);
+					if (*++argv == NULL)
+						printf("; no arg for -T?\n");
+					else
+						wait = atoi(*argv);
 					break;
 				case 'c': 
-					if ((tmp = atoi(*++argv))
-					    || *argv[0]=='0') {
+					if(*++argv == NULL) 
+						printf("; no arg for -c?\n");
+					else if ((tmp = atoi(*argv))
+						  || *argv[0] == '0') {
 						queryClass = tmp;
 					} else if ((tmp = StringToClass(*argv,
 								       0, NULL)
@@ -441,7 +447,9 @@ main(int argc, char **argv) {
 					}
 					break;
 				case 't': 
-					if ((tmp = atoi(*++argv))
+					if (*++argv == NULL)
+						printf("; no arg for -t?\n");
+					else if ((tmp = atoi(*argv))
 					    || *argv[0]=='0') {
 						queryType = tmp;
 						qtypeSet++;
@@ -454,17 +462,15 @@ main(int argc, char **argv) {
 						printf(
 						   "; invalid type specified\n"
 						       );
-						}
+					}
 					break;
 				case 'x':
 					if (!qtypeSet) {
 						queryType = T_ANY;
 						qtypeSet++;
 					}
-					if (!(addrc = *++argv)) {
-						printf(
-						       "; no arg for -x?\n"
-						       );
+					if ((addrc = *++argv) == NULL) {
+						printf("; no arg for -x?\n");
 						break;
 					}
 					addrend = addrc + strlen(addrc);
@@ -482,8 +488,10 @@ main(int argc, char **argv) {
 				case 'p':
 					if (argv[0][2] != '\0')
 						port = ntohs(atoi(argv[0]+2));
+					else if (*++argv == NULL)
+						printf("; no arg for -p?\n");
 					else
-						port = htons(atoi(*++argv));
+						port = htons(atoi(*argv));
 					break;
 				case 'P':
 					if (argv[0][2] != '\0')
@@ -494,16 +502,21 @@ main(int argc, char **argv) {
 				case 'n':
 					if (argv[0][2] != '\0')
 						res.ndots = atoi(argv[0]+2);
+					else if (*++argv == NULL)
+						printf("; no arg for -n?\n");
 					else
-						res.ndots = atoi(*++argv);
+						res.ndots = atoi(*argv);
 					break;
 				case 'b': {
 					char *a, *p;
 
 					if (argv[0][2] != '\0')
 						a = argv[0]+2;
-					else
-						a = *++argv;
+					else if (*++argv == NULL) {
+						printf("; no arg for -b?\n");
+						break;
+					} else
+						a = *argv;
 					if ((p = strchr(a, ':')) != NULL) {
 						*p++ = '\0';
 						myaddress.sin_port =
@@ -514,14 +527,18 @@ main(int argc, char **argv) {
 							";; bad -b addr\n");
 						exit(1);
 					}
-				  }
+				    }
+				    break;
 				case 'k':
 					/* -k keydir:keyname */
 					
 					if (argv[0][2] != '\0')
 						keyfile = argv[0]+2;
-					else
-						keyfile = *++argv;
+					else if (*++argv == NULL) {
+						printf("; no arg for -k?\n");
+						break;
+					} else
+						keyfile = *argv;
 
 					keyname = strchr(keyfile, ':');
 					if (keyname == NULL) {
@@ -847,6 +864,7 @@ main(int argc, char **argv) {
 		if (res.pfcode & RES_PRF_HEAD1)
 			fp_resstat(&res, stdout);
 		(void) gettimeofday(&start_time, NULL);
+		assert(start_time.tv_usec >= 0 && start_time.tv_usec < 1000000);
 		if (keyfile)
 			n = res_nsendsigned(&res, packet, n, &key, answer, sizeof answer);
 		else
@@ -871,10 +889,9 @@ main(int argc, char **argv) {
 			}
 		}
 		(void) gettimeofday(&end_time, NULL);
+		assert(end_time.tv_usec >= 0 && end_time.tv_usec < 1000000);
 
 		if (res.pfcode & RES_PRF_STATS) {
-			time_t t;
-
 			query_time = difftv(start_time, end_time);
 			printf(";; Total query time: ");
 			prnttime(query_time);
@@ -904,6 +921,7 @@ main(int argc, char **argv) {
  * batches started at different sites somewhat synchronized.
  */
 		gettimeofday(&tv2, NULL);
+		assert(tv2.tv_usec >= 0 && tv2.tv_usec < 1000000);
 		delay = (int)(tv2.tv_sec - tv1.tv_sec);
 		if (delay < wait) {
 			sleep(wait - delay);
@@ -948,13 +966,13 @@ where:	server,\n\
 	fputs("\
 notes:	defname and search don't work; use fully-qualified names.\n\
 	this is DiG version " VSTRING "\n\
-	Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp\n\
+	Id: dig.c,v 8.44 2000/12/23 08:14:31 vixie Exp\n\
 ", stderr);
 }
 
 static int
-SetOption(const char *string) {
-	char option[NAME_LEN], type[NAME_LEN], *ptr;
+setopt(const char *string) {
+	char option[NAME_LEN], *ptr;
 	int i;
 
 	i = pickString(string, option, sizeof option);
@@ -1106,6 +1124,7 @@ res_re_init() {
 	static char localdomain[] = "LOCALDOMAIN";
 	u_long pfcode = res.pfcode, options = res.options;
 	unsigned ndots = res.ndots;
+	int retrans = res.retrans, retry = res.retry;
 	char *buf;
 
 	/*
@@ -1118,6 +1137,8 @@ res_re_init() {
 	res.pfcode = pfcode;
 	res.options = options;
 	res.ndots = ndots;
+	res.retrans = retrans;
+	res.retry = retry;
 }
 
 /*
@@ -1175,19 +1196,18 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 	static int answerLen = 0;
 
 	querybuf buf;
-	HEADER *headerPtr;
 	int msglen, amtToRead, numRead, result = 0, sockFD, len;
 	int count, type, class, rlen, done, n;
 	int numAnswers = 0, numRecords = 0, soacnt = 0;
 	u_char *cp, tmp[NS_INT16SZ];
-	char dname[2][NS_MAXDNAME], file[NAME_LEN];
+	char dname[2][NS_MAXDNAME];
 	enum { NO_ERRORS, ERR_READING_LEN, ERR_READING_MSG, ERR_PRINTING }
 		error = NO_ERRORS;
 	pid_t zpid;
 	u_char *newmsg;
 	int newmsglen;
 	ns_tcp_tsig_state tsig_state;
-	int tsig_ret;
+	int tsig_ret, tsig_required, tsig_present;
 
 	switch (xfr) {
 	case ns_t_axfr:
@@ -1405,18 +1425,6 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 			break;
 		}
 
-		/*
-		 * Verify the TSIG
-		 */
-
-		if (key) {
-			tsig_ret = ns_verify_tcp(answer, &len, &tsig_state, 1);
-			if (tsig_ret == 0)
-				printf("; TSIG ok\n");
-			else
-				printf("; TSIG invalid\n");
-		}
-
 		result = print_axfr(stdout, answer, len);
 		if (result != 0) {
 			error = ERR_PRINTING;
@@ -1477,6 +1485,30 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 				break;
 			}
 		}
+
+		/*
+		 * Verify the TSIG
+		 */
+
+		if (key) {
+			if (ns_find_tsig(answer, answer + len) != NULL)
+				tsig_present = 1;
+			else
+				tsig_present = 0;
+			if (numAnswers == 1 || soacnt > 1)
+				tsig_required = 1;
+			else
+				tsig_required = 0;
+			tsig_ret = ns_verify_tcp(answer, &len, &tsig_state,
+						 tsig_required);
+			if (tsig_ret == 0) {
+				if (tsig_present)
+					printf("; TSIG ok\n");
+			}
+			else
+				printf("; TSIG invalid\n");
+		}
+
 	}
 
 	printf(";; Received %d answer%s (%d record%s).\n",
@@ -1572,8 +1604,12 @@ print_axfr(FILE *file, const u_char *msg, size_t msglen) {
 		}
 		name = ns_rr_name(rr);
 		if (origin[0] == '\0' && name[0] != '\0') {
-			fprintf(file, "$ORIGIN %s.\n", name);
-			strcpy(origin, name);
+			if (strcmp(name, ".") != 0)
+				strcpy(origin, name);
+			fprintf(file, "$ORIGIN %s.\n", origin);
+			if (strcmp(name, ".") == 0)
+				strcpy(origin, name);
+			strcpy(name_ctx, "@");
 		}
 		if (ns_sprintrr(&handle, &rr, name_ctx, origin,
 				buf, sizeof buf) < 0) {

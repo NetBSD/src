@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_lexer.h,v 1.1.1.1.2.3 2000/10/10 21:12:49 he Exp $	*/
+/*	$NetBSD: ns_lexer.h,v 1.1.1.1.2.4 2001/01/28 17:09:15 he Exp $	*/
 
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
