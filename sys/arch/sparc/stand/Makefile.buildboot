@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.6 1999/04/28 15:22:25 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7 1999/06/12 12:49:24 pk Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -17,7 +17,8 @@ RELOC_SUN4M=	0x440000
 # Note: a `RELOC' value of 0x340000 seems to work on most machines
 RELOC?=		${RELOC_SUN4C}
 
-CPPFLAGS+=	-D_STANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
+CPPFLAGS+=	-D_STANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS\
+		-DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O2
