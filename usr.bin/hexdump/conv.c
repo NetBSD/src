@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.3 1997/01/09 20:19:52 tls Exp $	*/
+/*	$NetBSD: conv.c,v 1.4 1997/07/11 06:28:26 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,19 +34,23 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)conv.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: conv.c,v 1.3 1997/01/09 20:19:52 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)conv.c	5.4 (Berkeley) 6/1/90";
+#else
+static char rcsid[] = "$NetBSD: conv.c,v 1.4 1997/07/11 06:28:26 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <ctype.h>
+#include <stdio.h>
 #include "hexdump.h"
 
+void
 conv_c(pr, p)
 	PR *pr;
 	u_char *p;
 {
-	extern int deprecated;
 	char buf[10], *str;
 
 	switch(*p) {
@@ -92,12 +96,12 @@ strpr:		*pr->cchar = 's';
 	}
 }
 
+void
 conv_u(pr, p)
 	PR *pr;
 	u_char *p;
 {
-	extern int deprecated;
-	static char *list[] = {
+	static const char *list[] = {
 		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
 		 "bs",  "ht",  "lf",  "vt",  "ff",  "cr",  "so",  "si",
 		"dle", "dcl", "dc2", "dc3", "dc4", "nak", "syn", "etb",

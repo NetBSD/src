@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 1997/01/09 20:19:59 tls Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 1997/07/11 06:28:30 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,20 +34,24 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$NetBSD: parse.c,v 1.4 1997/01/09 20:19:59 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";
+#else
+static char rcsid[] = "$NetBSD: parse.c,v 1.5 1997/07/11 06:28:30 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/file.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 #include "hexdump.h"
 
 FU *endfu;					/* format at end-of-data */
 
+void
 addfile(name)
 	char *name;
 {
@@ -61,7 +65,7 @@ addfile(name)
 		exit(1);
 	}
 	while (fgets(buf, sizeof(buf), fp)) {
-		if (!(p = index(buf, '\n'))) {
+		if (!(p = strchr(buf, '\n'))) {
 			(void)fprintf(stderr, "hexdump: line too long.\n");
 			while ((ch = getchar()) != '\n' && ch != EOF);
 			continue;
@@ -75,6 +79,7 @@ addfile(name)
 	(void)fclose(fp);
 }
 
+void
 add(fmt)
 	char *fmt;
 {
@@ -82,7 +87,7 @@ add(fmt)
 	static FS **nextfs;
 	FS *tfs;
 	FU *tfu, **nextfu;
-	char *savep, *emalloc();
+	char *savep;
 
 	/* start new linked list of format units */
 	/* NOSTRICT */
@@ -149,7 +154,9 @@ add(fmt)
 	}
 }
 
-static char *spec = ".#-+ 0123456789";
+static const char *spec = ".#-+ 0123456789";
+
+int
 size(fs)
 	FS *fs;
 {
@@ -171,7 +178,7 @@ size(fs)
 			 * skip any special chars -- save precision in
 			 * case it's a %s format.
 			 */
-			while (index(spec + 1, *++fmt));
+			while (strchr(spec + 1, *++fmt));
 			if (*fmt == '.' && isdigit(*++fmt)) {
 				prec = atoi(fmt);
 				while (isdigit(*++fmt));
@@ -203,6 +210,7 @@ size(fs)
 	return(cursize);
 }
 
+void
 rewrite(fs)
 	FS *fs;
 {
@@ -243,10 +251,10 @@ rewrite(fs)
 			if (fu->bcnt) {
 				sokay = USEBCNT;
 				/* skip to conversion character */
-				for (++p1; index(spec, *p1); ++p1);
+				for (++p1; strchr(spec, *p1); ++p1);
 			} else {
 				/* skip any special chars, field width */
-				while (index(spec + 1, *++p1));
+				while (strchr(spec + 1, *++p1));
 				if (*p1 == '.' && isdigit(*++p1)) {
 					sokay = USEPREC;
 					prec = atoi(p1);
@@ -442,7 +450,7 @@ sw2:					switch(fu->bcnt) {
 	}
 }
 
-
+void
 escape(p1)
 	register char *p1;
 {
@@ -485,6 +493,7 @@ escape(p1)
 	}
 }
 
+void
 badcnt(s)
 	char *s;
 {
@@ -493,6 +502,7 @@ badcnt(s)
 	exit(1);
 }
 
+void
 badsfmt()
 {
 	(void)fprintf(stderr,
@@ -500,6 +510,7 @@ badsfmt()
 	exit(1);
 }
 
+void
 badfmt(fmt)
 	char *fmt;
 {
@@ -507,6 +518,7 @@ badfmt(fmt)
 	exit(1);
 }
 
+void
 badconv(ch)
 	char *ch;
 {

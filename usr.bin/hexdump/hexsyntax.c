@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.3 1997/01/09 20:19:56 tls Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.4 1997/07/11 06:28:29 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,29 +34,30 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$NetBSD: hexsyntax.c,v 1.3 1997/01/09 20:19:56 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";
+#else
+static char rcsid[] = "$NetBSD: hexsyntax.c,v 1.4 1997/07/11 06:28:29 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "hexdump.h"
 
 off_t skip;				/* bytes to skip */
 
+void
 newsyntax(argc, argvp)
 	int argc;
 	char ***argvp;
 {
-	extern enum _vflag vflag;
-	extern FS *fshead;
-	extern char *optarg;
-	extern int length, optind;
 	int ch;
 	char *p, **argv;
 
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "bcde:f:n:os:vx")) != EOF)
+	while ((ch = getopt(argc, argv, "bcde:f:n:os:vx")) != -1)
 		switch (ch) {
 		case 'b':
 			add("\"%07.7_Ax\n\"");
@@ -125,6 +126,7 @@ newsyntax(argc, argvp)
 	*argvp += optind;
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr,

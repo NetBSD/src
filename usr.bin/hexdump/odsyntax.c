@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.5 1997/01/09 20:19:58 tls Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.6 1997/07/11 06:28:30 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,32 +34,34 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$NetBSD: odsyntax.c,v 1.5 1997/01/09 20:19:58 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";
+#else
+static char rcsid[] = "$NetBSD: odsyntax.c,v 1.6 1997/07/11 06:28:30 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "hexdump.h"
 
 int deprecated;
 
+static void odprecede __P((void));
+
+void
 oldsyntax(argc, argvp)
 	int argc;
 	char ***argvp;
 {
-	extern enum _vflag vflag;
-	extern FS *fshead;
-	extern char *optarg;
-	extern int length, optind;
 	int ch;
 	char **argv;
-	static void odprecede();
 
 	deprecated = 1;
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIiLlOoPpswvXx")) != EOF)
+	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIiLlOoPpswvXx")) != -1)
 		switch (ch) {
 		case 'a':
 			odprecede();
@@ -150,13 +152,14 @@ oldsyntax(argc, argvp)
 }
 
 #define	ishexdigit(c) \
-	(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F')
+	((c >= '0' && c <= '9') || \
+	 (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
 
+void
 odoffset(argc, argvp)
 	int argc;
 	char ***argvp;
 {
-	extern off_t skip;
 	register char *num, *p;
 	int base;
 	char *end;
@@ -171,7 +174,7 @@ odoffset(argc, argvp)
 	 * multiplied the number by 512 or 1024 byte units.  There was
 	 * no way to assign a block count to a hex offset.
 	 *
-	 * We assumes it's a file if the offset is bad.
+	 * We assume it's a file if the offset is bad.
 	 */
 	p = **argvp;
 	if (!p)
