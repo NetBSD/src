@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.5 2002/10/05 22:45:46 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.6 2002/10/06 18:49:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,7 @@
 #define _RF__RF_RECONMAP_H_
 
 #include <dev/raidframe/raidframevar.h>
+#include <sys/pool.h>
 
 #include "rf_threadstuff.h"
 
@@ -51,7 +52,8 @@ struct RF_ReconMap_s {
 	RF_StripeCount_t totalParityStripes;	/* total number of parity
 						 * stripes in array */
 	RF_ReconMapListElem_t **status;	/* array of ptrs to list elements */
-	        RF_DECLARE_MUTEX(mutex)
+	struct pool elem_pool;          /* pool of RF_ReconMapListElem_t's */
+	RF_DECLARE_MUTEX(mutex)
 };
 /* a list element */
 struct RF_ReconMapListElem_s {
