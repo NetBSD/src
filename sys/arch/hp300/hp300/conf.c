@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.15 1994/06/24 13:57:01 hpeyerl Exp $
+ *	$Id: conf.c,v 1.15.2.1 1994/08/08 06:25:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -218,7 +218,7 @@ cdev_decl(st);
 cdev_decl(sd);
 cdev_decl(rd);
 
-/* XXX shouldn't this be optional? */
+#include "grf.h"
 cdev_decl(grf);
 /* open, close, ioctl, select, map -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
@@ -300,7 +300,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
 	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
 	cdev_disk_init(NRD,rd),		/* 9: hpib disk */
-	cdev_grf_init(1,grf),		/* 10: frame buffer */
+	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */

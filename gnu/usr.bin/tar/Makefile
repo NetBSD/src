@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/06/19 00:03:41 cgd Exp $
+#	$Id: Makefile,v 1.9.2.1 1994/08/08 06:22:32 mycroft Exp $
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -15,7 +15,7 @@ LDSTATIC= -static
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
 
-NOMAN=noman
+MAN1=tar.0
 CLEANFILES+=y.tab.h
 
 .include <bsd.prog.mk>
