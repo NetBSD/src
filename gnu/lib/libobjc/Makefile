@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/08/18 14:02:35 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/18 17:38:38 tv Exp $
 
 LIB=		objc
 SRCS=		hash.c sarray.c class.c sendmsg.c init.c archive.c \
@@ -18,9 +18,9 @@ ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 CLEANFILES+=	rtscratch rtscratch.s
 runtime-info.h:
 	@touch rtscratch
-	`${CC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
+	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
 
-sendmsg.o: runtime-info.h
+sendmsg.o sendmsg.so sendmsg.po: runtime-info.h
 
 .PATH:		${DIST}/objc
 
