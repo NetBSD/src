@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.49 2004/08/20 06:39:38 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.50 2004/08/20 20:53:20 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.49 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.50 2004/08/20 20:53:20 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -390,6 +390,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 {
 	char tb[DEV_BSIZE];
 	struct ata_command ata_c;
+	struct ata_channel *chp = drvp->chnl_softc;
+	struct atac_softc *atac = chp->ch_atac;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
@@ -420,7 +422,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
 	ata_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
+	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
+						&ata_c) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
@@ -468,6 +471,8 @@ int
 ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
 	struct ata_command ata_c;
+	struct ata_channel *chp = drvp->chnl_softc;
+	struct atac_softc *atac = chp->ch_atac;
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 	memset(&ata_c, 0, sizeof(struct ata_command));
@@ -479,7 +484,8 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	ata_c.r_count = mode;
 	ata_c.flags = flags;
 	ata_c.timeout = 1000; /* 1s */
-	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE)
+	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
+						&ata_c) != ATACMD_COMPLETE)
 		return CMD_AGAIN;
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
