@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.8 1997/02/18 19:26:00 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.9 1997/02/19 18:11:15 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -374,7 +374,8 @@ arpresolve(ifp, rt, m, dst, desten)
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > time.tv_sec) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
-		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+		bcopy(LLADDR(sdl), desten,
+		    min(sdl->sdl_alen, ifp->if_data.ifi_addrlen));
 		return 1;
 	}
 	/*
