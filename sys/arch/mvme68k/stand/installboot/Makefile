@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/10/31 01:51:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2001/10/31 21:39:03 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CLEANFILES+= machine
 
 .PATH.c: ${LIBSA}
 
-SRCS=	installboot.c loadfile.c loadfile_aout.c loadfile_elf32.c
+SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
 
 machine::
 	-rm -f $@
