@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.45 1994/12/28 19:55:50 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.46 1994/12/30 05:23:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -109,7 +109,7 @@ struct st_quirk_inquiry_pattern {
 
 struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
-	 "unknown ", "unknown         ", "????", 0, 0, {
+	 "        ", "                ", "    ", 0, 0, {
 		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
 		ST_Q_FORCE_BLKSIZE, 512, QIC_24,	/* minor 4-7 */
 		ST_Q_FORCE_BLKSIZE, 0, HALFINCH_1600,	/* minor 8-11 */
