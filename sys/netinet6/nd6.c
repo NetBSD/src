@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.9 1999/09/19 21:31:35 is Exp $	*/
+/*	$NetBSD: nd6.c,v 1.10 1999/09/20 02:35:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1492,9 +1492,14 @@ nd6_output(ifp, m0, dst, rt0)
 	 * XXX: we currently do not make neighbor cache on any interface
 	 * other than ARCnet, Ethernet and FDDI.
 	 */
-	if (ifp->if_type != IFT_ARCNET &&
-	    ifp->if_type != IFT_ETHER && ifp->if_type != IFT_FDDI)
+	switch (ifp->if_type) {
+	case IFT_ARCNET:
+	case IFT_ETHER:
+	case IFT_FDDI:
+		break;
+	default:
 		goto sendpkt;
+	}
 
 	/*
 	 * next hop determination. This routine is derived from ether_outpout. 
