@@ -1,2 +1,0 @@
-server:/export/client/root / nfs rw
-server:/export/netbsd.sun3/usr /usr nfs ro

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1994/11/23 06:46:25 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1994/11/21 21:38:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -579,7 +579,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	u_long code;
+	unsigned code;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -786,7 +786,7 @@ void
 sun_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	u_long code;
+	unsigned code;
 {
 	register struct proc *p = curproc;
 	register struct sun_sigframe *fp;
@@ -1195,7 +1195,7 @@ void boot(howto)
  * SunOS reboot system call (for compatibility).
  * Sun lets you pass in a boot string which the PROM
  * saves and provides to the next boot program.
- * XXX - Stuff this into sunos_sysent at boot time?
+ * XXX - Stuff this into sun_sysent at boot time?
  */
 static struct sun_howto_conv {
 	int sun_howto;
@@ -1254,9 +1254,9 @@ int sun_reboot(p, uap, retval)
  */
 static void hack_sun_reboot()
 {
-	extern struct sysent sunos_sysent[];
-	sunos_sysent[55].sy_narg = 2;
-	sunos_sysent[55].sy_call = sun_reboot;
+	extern struct sysent sun_sysent[];
+	sun_sysent[55].sy_narg = 2;
+	sun_sysent[55].sy_call = sun_reboot;
 }
 #endif	/* COMPAT_SUNOS */
 
@@ -1464,9 +1464,8 @@ cpu_exec_aout_makecmds(p, epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds
-		__P((struct proc *, struct exec_package *));
-	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
+	extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif
 	return error;
