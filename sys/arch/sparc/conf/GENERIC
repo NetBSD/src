@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.105 2000/05/08 13:49:49 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.106 2000/05/27 20:56:51 matt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 maxusers	32
 
@@ -225,6 +225,7 @@ sbus*	at xbox?
 ## Auxiliary system registers on sun4c and sun4m
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
+auxiotwo0 at obio0				# only on Tadpole SPARCbook.
 
 ## Power status and control register on Sun4m systems
 power0	at obio0
@@ -560,8 +561,13 @@ tcx*		at sbus? slot ? offset ?
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen0	at obio0			# sun4m
 
+# P9100-based display on Tadpole SPARCbook 3.
+pnozz0		at sbus? slot ? offset ?
 
 #### Other device configuration
+
+# Tadpole microcontroller
+tctrl0 at obio0
 
 ## Pseudo ttys, required for network logins and programs like screen.
 ## 32 is a good number for average systems; you may have as many as you
