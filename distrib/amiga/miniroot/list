@@ -1,13 +1,17 @@
-#	$NetBSD: list,v 1.16 2002/05/29 04:11:02 lukem Exp $
+#	$NetBSD: list,v 1.17 2002/07/23 03:52:02 mhitch Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
 PROG	sbin/mount_ados
 PROG	sbin/mount_kernfs
+PROG	usr/bin/file
 PROG	usr/bin/netstat
 PROG	usr/bin/printf
 PROG	usr/bin/vi
 PROG	usr/sbin/loadkmap
+
+# usr/bin/file needs libz
+LIBS	-lz
 
 # crunchgen source directory specials
 SPECIAL	loadkmap	srcdir sys/arch/amiga/stand/loadkmap
@@ -25,6 +29,9 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # and the termcap file
 COPY	${ARCHDIR}/termcap.vt		usr/share/misc/termcap
+
+# and the magic file
+COPY	${DESTDIR}/usr/share/misc/magic usr/share/misc/magic
 
 # and the installation scripts
 COPY	${ARCHDIR}/install.md		install.md
