@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.4 2002/07/13 11:35:35 itojun Exp $	*/
+/*	$NetBSD: device.c,v 1.5 2002/08/22 07:18:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.4 2002/07/13 11:35:35 itojun Exp $");
+__RCSID("$NetBSD: device.c,v 1.5 2002/08/22 07:18:42 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -105,7 +105,7 @@ deviceOpen(ifname, proto, trans)
 {
 	struct if_info *p, tmp;
 
-	strcpy(tmp.if_name,ifname);
+	strlcpy(tmp.if_name, ifname, sizeof(tmp.if_name));
 	tmp.iopen   = pfInit;
 	
 	switch (proto) {
