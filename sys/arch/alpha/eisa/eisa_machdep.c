@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.2 2000/08/10 23:30:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.2 2000/08/10 23:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,41 +88,22 @@ paddr_t eisa_config_header_addr;
 
 struct ecu_mem {
 	SIMPLEQ_ENTRY(ecu_mem) ecum_list;
-	bus_addr_t ecum_addr;
-	bus_size_t ecum_size;
-	int	ecum_isram;
-	int	ecum_decode;
-	int	ecum_unitsize;
+	struct eisa_cfg_mem ecum_mem;
 };
 
 struct ecu_irq {
 	SIMPLEQ_ENTRY(ecu_irq) ecui_list;
-	int	ecui_irq;
-	int	ecui_ist;
-	int	ecui_shared;
+	struct eisa_cfg_irq ecui_irq;
 };
 
 struct ecu_dma {
 	SIMPLEQ_ENTRY(ecu_dma) ecud_list;
-	int	ecud_drq;
-	int	ecud_shared;
-	int	ecud_size;
-#define	ECUD_SIZE_8BIT		0
-#define	ECUD_SIZE_16BIT		1
-#define	ECUD_SIZE_32BIT		2
-#define	ECUD_SIZE_RESERVED	3
-	int	ecud_timing;
-#define	ECUD_TIMING_ISA		0
-#define	ECUD_TIMING_TYPEA	1
-#define	ECUD_TIMING_TYPEB	2
-#define	ECUD_TIMING_TYPEC	3
+	struct eisa_cfg_dma ecud_dma;
 };
 
 struct ecu_io {
 	SIMPLEQ_ENTRY(ecu_io) ecuio_list;
-	bus_addr_t ecuio_addr;
-	bus_size_t ecuio_size;
-	int	ecuio_shared;
+	struct eisa_cfg_io ecuio_io;
 };
 
 struct ecu_func {
@@ -183,20 +164,21 @@ eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
 	for (i = 0; i < ECUF_MEM_ENTRY_CNT; i++) {
 		ecum = malloc(sizeof(*ecum), M_DEVBUF, M_WAITOK);
 
-		ecum->ecum_isram = dp[0] & 0x1;
-		ecum->ecum_unitsize = dp[1] & 0x3;
-		ecum->ecum_decode = (dp[1] >> 2) & 0x3;
-		ecum->ecum_addr = (dp[2] | (dp[3] << 8) | (dp[4] << 16)) << 8;
-		ecum->ecum_size = (dp[5] | (dp[6] << 8)) << 10;
-		if (ecum->ecum_size == 0)
-			ecum->ecum_size = (1 << 26);
+		ecum->ecum_mem.ecm_isram = dp[0] & 0x1;
+		ecum->ecum_mem.ecm_unitsize = dp[1] & 0x3;
+		ecum->ecum_mem.ecm_decode = (dp[1] >> 2) & 0x3;
+		ecum->ecum_mem.ecm_addr =
+		    (dp[2] | (dp[3] << 8) | (dp[4] << 16)) << 8;
+		ecum->ecum_mem.ecm_size = (dp[5] | (dp[6] << 8)) << 10;
+		if (ecum->ecum_mem.ecm_size == 0)
+			ecum->ecum_mem.ecm_size = (1 << 26);
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_mem, ecum, ecum_list);
 
 #if 0
 		printf("MEM 0x%lx 0x%lx %d %d %d\n",
-		    ecum->ecum_addr, ecum->ecum_size,
-		    ecum->ecum_isram, ecum->ecum_unitsize,
-		    ecum->ecum_decode);
+		    ecum->ecum_mem.ecm_addr, ecum->ecum_mem.ecm_size,
+		    ecum->ecum_mem.ecm_isram, ecum->ecum_mem.ecm_unitsize,
+		    ecum->ecum_mem.ecm_decode);
 #endif
 
 		if ((dp[0] & 0x80) == 0)
@@ -214,15 +196,15 @@ eisa_parse_irq(struct ecu_func *ecuf, u_int8_t *dp)
 	for (i = 0; i < ECUF_IRQ_ENTRY_CNT; i++) {
 		ecui = malloc(sizeof(*ecui), M_DEVBUF, M_WAITOK);
 
-		ecui->ecui_irq = dp[0] & 0xf;
-		ecui->ecui_ist = (dp[0] & 0x20) ? IST_LEVEL : IST_EDGE;
-		ecui->ecui_shared = (dp[0] & 0x40) ? 1 : 0;
+		ecui->ecui_irq.eci_irq = dp[0] & 0xf;
+		ecui->ecui_irq.eci_ist = (dp[0] & 0x20) ? IST_LEVEL : IST_EDGE;
+		ecui->ecui_irq.eci_shared = (dp[0] & 0x40) ? 1 : 0;
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_irq, ecui, ecui_list);
 
 #if 0
-		printf("IRQ %d %s%s\n", ecui->ecui_irq,
-		    ecui->ecui_ist == IST_LEVEL ? "level" : "edge",
-		    ecui->ecui_shared ? " shared" : "");
+		printf("IRQ %d %s%s\n", ecui->eci_irq.ecui_irq,
+		    ecui->eci_irq.ecui_ist == IST_LEVEL ? "level" : "edge",
+		    ecui->eci_irq.ecui_shared ? " shared" : "");
 #endif
 
 		if ((dp[0] & 0x80) == 0)
@@ -240,16 +222,16 @@ eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
 	for (i = 0; i < ECUF_DMA_ENTRY_CNT; i++) {
 		ecud = malloc(sizeof(*ecud), M_DEVBUF, M_WAITOK);
 
-		ecud->ecud_drq = dp[0] & 0x7;
-		ecud->ecud_shared = dp[0] & 0x40;
-		ecud->ecud_size = (dp[1] >> 2) & 0x3;
-		ecud->ecud_timing = (dp[1] >> 4) & 0x3;
+		ecud->ecud_dma.ecd_drq = dp[0] & 0x7;
+		ecud->ecud_dma.ecd_shared = dp[0] & 0x40;
+		ecud->ecud_dma.ecd_size = (dp[1] >> 2) & 0x3;
+		ecud->ecud_dma.ecd_timing = (dp[1] >> 4) & 0x3;
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_dma, ecud, ecud_list);
 
 #if 0
-		printf("DRQ %d%s %d %d\n", ecud->ecud_drq,
-		    ecud->ecud_shared ? " shared" : "",
-		    ecud->ecud_size, ecud->ecud_timing);
+		printf("DRQ %d%s %d %d\n", ecud->ecud_dma.ecd_drq,
+		    ecud->ecud_dma.ecd_shared ? " shared" : "",
+		    ecud->ecud_dma.ecd_size, ecud->ecud_dma.ecd_timing);
 #endif
 
 		if ((dp[0] & 0x80) == 0)
@@ -267,14 +249,14 @@ eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
 	for (i = 0; i < ECUF_IO_ENTRY_CNT; i++) {
 		ecuio = malloc(sizeof(*ecuio), M_DEVBUF, M_WAITOK);
 
-		ecuio->ecuio_addr = dp[1] | (dp[2] << 8);
-		ecuio->ecuio_size = (dp[0] & 0x1f) + 1;
-		ecuio->ecuio_shared = (dp[0] & 0x40) ? 1 : 0;
+		ecuio->ecuio_io.ecio_addr = dp[1] | (dp[2] << 8);
+		ecuio->ecuio_io.ecio_size = (dp[0] & 0x1f) + 1;
+		ecuio->ecuio_io.ecio_shared = (dp[0] & 0x40) ? 1 : 0;
 
 #if 0
-		printf("IO 0x%lx 0x%lx%s\n", ecuio->ecuio_addr,
-		    ecuio->ecuio_size,
-		    ecuio->ecuio_shared ? " shared" : "");
+		printf("IO 0x%lx 0x%lx%s\n", ecuio->ecuio_io.ecio_addr,
+		    ecuio->ecuio_io.ecio_size,
+		    ecuio->ecuio_io.ecio_shared ? " shared" : "");
 #endif
 
 		if ((dp[0] & 0x80) == 0)
