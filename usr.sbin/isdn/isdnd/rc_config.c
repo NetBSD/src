@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.4 2001/10/19 22:57:54 tv Exp $ 
+ *	$Id: rc_config.c,v 1.5 2002/01/04 12:24:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -61,6 +61,7 @@ static void set_config_defaults(void);
 static void check_config(void);
 static void print_config(void);
 static void parse_valid(int entrycount, char *dt);
+static void clear_config(void);
 
 static int nregexpr = 0;
 static int nregprog = 0;
@@ -79,6 +80,7 @@ configure(char *filename, int reread)
 
 	if(reread)
 	{
+		clear_config();
 		reset_scanner(yyin);
 	}
 	
@@ -116,6 +118,25 @@ yyerror(const char *msg)
 {
 	log(LL_ERR, "configuration error: %s at line %d, token \"%s\"", msg, lineno+1, yytext);
 	config_error_flag++;
+}
+
+static void
+clear_config(void)
+{
+	cfg_entry_t *cep = &cfg_entry_tab[0];	/* ptr to config entry */
+	int i;
+
+	for(i=0; i < CFG_ENTRY_MAX; i++, cep++)
+	{
+		if (cep->ppp_expect_name)
+		    free(cep->ppp_expect_name);
+		if (cep->ppp_expect_password)
+		    free(cep->ppp_expect_password);
+		if (cep->ppp_send_name)
+		    free(cep->ppp_send_name);
+		if (cep->ppp_send_password)
+		    free(cep->ppp_send_password);
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -234,16 +255,12 @@ cfg_set_controller_default(void)
 	isdn_ctrl_tab[controllercount].protocol = PROTOCOL_DSS1;
 }
 
-#define PPP_PAP		0xc023
-#define PPP_CHAP	0xc223
-
 static void
 set_isppp_auth(int entry)
 {
 	cfg_entry_t *cep = &cfg_entry_tab[entry];	/* ptr to config entry */
 
-	struct ifreq ifr;
-	struct spppreq spr;
+	struct spppauthcfg spcfg;
 	int s;
 	int doioctl = 0;
 
@@ -260,19 +277,20 @@ set_isppp_auth(int entry)
 
 	if ((cep->ppp_expect_auth == AUTH_CHAP 
 	     || cep->ppp_expect_auth == AUTH_PAP)
-	    && cep->ppp_expect_name[0] != 0
-	    && cep->ppp_expect_password[0] != 0)
+	    && cep->ppp_expect_name != NULL
+	    && cep->ppp_expect_password != NULL)
 		doioctl = 1;
 
 	if ((cep->ppp_send_auth == AUTH_CHAP || cep->ppp_send_auth == AUTH_PAP)
-			&& cep->ppp_send_name[0] != 0
-			&& cep->ppp_send_password[0] != 0)
+			&& cep->ppp_send_name != NULL
+			&& cep->ppp_send_password != NULL)
 		doioctl = 1;
 
 	if(!doioctl)
 		return;
 
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "isp%d", cep->usrdeviceunit);
+	memset(&spcfg, 0, sizeof spcfg);
+	snprintf(spcfg.ifname, sizeof(spcfg.ifname), "isp%d", cep->usrdeviceunit);
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -280,11 +298,9 @@ set_isppp_auth(int entry)
 		config_error_flag++;
 		return;
 	}
-	spr.cmd = (int)SPPPIOGDEFS;
-	ifr.ifr_data = (caddr_t)&spr;
 
-	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1) {
-		log(LL_ERR, "ERROR fetching active PPP authentication info for %s at line %d!", ifr.ifr_name, lineno);
+	if (ioctl(s, SPPPGETAUTHCFG, &spcfg) == -1) {
+		log(LL_ERR, "ERROR fetching active PPP authentication info for %s at line %d!", spcfg.ifname, lineno);
 		close(s);
 		config_error_flag++;
 		return;
@@ -293,49 +309,51 @@ set_isppp_auth(int entry)
 	{
 		if(cep->ppp_expect_auth == AUTH_NONE)
 		{
-			spr.defs.hisauth.proto = 0;
+			spcfg.hisauth = SPPP_AUTHPROTO_NONE;
 		}
 		else if ((cep->ppp_expect_auth == AUTH_CHAP 
 			  || cep->ppp_expect_auth == AUTH_PAP)
-			 && cep->ppp_expect_name[0] != 0
-			 && cep->ppp_expect_password[0] != 0)
+			 && cep->ppp_expect_name != NULL
+			 && cep->ppp_expect_password != NULL)
 		{
-			spr.defs.hisauth.proto = cep->ppp_expect_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
-			strncpy(spr.defs.hisauth.name, cep->ppp_expect_name, AUTHNAMELEN);
-			strncpy(spr.defs.hisauth.secret, cep->ppp_expect_password, AUTHKEYLEN);
+			spcfg.hisauth = cep->ppp_expect_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+			spcfg.hisname = cep->ppp_expect_name;
+			spcfg.hisname_length = strlen(cep->ppp_expect_name)+1;
+			spcfg.hissecret = cep->ppp_expect_password;
+			spcfg.hissecret_length = strlen(cep->ppp_expect_password)+1;
 		}
 	}
 	if (cep->ppp_send_auth != AUTH_UNDEF)
 	{
 		if(cep->ppp_send_auth == AUTH_NONE)
 		{
-			spr.defs.myauth.proto = 0;
+			spcfg.myauth = SPPP_AUTHPROTO_NONE;
 		}
 		else if ((cep->ppp_send_auth == AUTH_CHAP 
 			  || cep->ppp_send_auth == AUTH_PAP)
 			 && cep->ppp_send_name[0] != 0
 			 && cep->ppp_send_password[0] != 0)
 		{
-			spr.defs.myauth.proto = cep->ppp_send_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
-			strncpy(spr.defs.myauth.name, cep->ppp_send_name, AUTHNAMELEN);
-			strncpy(spr.defs.myauth.secret, cep->ppp_send_password, AUTHKEYLEN);
+			spcfg.myauth = cep->ppp_send_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+			spcfg.myname = cep->ppp_send_name;
+			spcfg.myname_length = strlen(cep->ppp_send_name)+1;
+			spcfg.mysecret = cep->ppp_send_password;
+			spcfg.mysecret_length = strlen(cep->ppp_send_password)+1;
 
 			if(cep->ppp_auth_flags & AUTH_REQUIRED)
-				spr.defs.hisauth.flags &= ~AUTHFLAG_NOCALLOUT;
+				spcfg.hisauthflags &= ~SPPP_AUTHFLAG_NOCALLOUT;
 			else
-				spr.defs.hisauth.flags |= AUTHFLAG_NOCALLOUT;
+				spcfg.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
 
 			if(cep->ppp_auth_flags & AUTH_RECHALLENGE)
-				spr.defs.hisauth.flags &= ~AUTHFLAG_NORECHALLENGE;
+				spcfg.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
 			else
-				spr.defs.hisauth.flags |= AUTHFLAG_NORECHALLENGE;
+				spcfg.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
 		}
 	}
 
-	spr.cmd = (int)SPPPIOSDEFS;
-
-	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1) {
-		log(LL_ERR, "ERROR setting new PPP authentication parameters for %s at line %d!", ifr.ifr_name, lineno);
+	if (ioctl(s, SPPPSETAUTHCFG, &spcfg) == -1) {
+		log(LL_ERR, "ERROR setting new PPP authentication parameters for %s at line %d!", spcfg.ifname, lineno);
 		config_error_flag++;
 	}
 	close(s);
@@ -804,13 +822,17 @@ cfg_setval(int keyword)
 
 		case PPP_EXPECT_NAME:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: ppp-expect-name = %s", entrycount, yylval.str)));
-			strncpy(cfg_entry_tab[entrycount].ppp_expect_name, yylval.str, sizeof(cfg_entry_tab[entrycount].ppp_expect_name) -1);
+			if (cfg_entry_tab[entrycount].ppp_expect_name)
+			    free(cfg_entry_tab[entrycount].ppp_expect_name);
+			cfg_entry_tab[entrycount].ppp_expect_name = strdup(yylval.str);
 			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_EXPECT_PASSWORD:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: ppp-expect-password = %s", entrycount, yylval.str)));
-			strncpy(cfg_entry_tab[entrycount].ppp_expect_password, yylval.str, sizeof(cfg_entry_tab[entrycount].ppp_expect_password) -1);
+			if (cfg_entry_tab[entrycount].ppp_expect_password)
+			    free(cfg_entry_tab[entrycount].ppp_expect_password);
+			cfg_entry_tab[entrycount].ppp_expect_password = strdup(yylval.str);
 			set_isppp_auth(entrycount);
 			break;
 
@@ -833,13 +855,17 @@ cfg_setval(int keyword)
 
 		case PPP_SEND_NAME:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: ppp-send-name = %s", entrycount, yylval.str)));
-			strncpy(cfg_entry_tab[entrycount].ppp_send_name, yylval.str, sizeof(cfg_entry_tab[entrycount].ppp_send_name) -1);
+			if (cfg_entry_tab[entrycount].ppp_send_name)
+			    free(cfg_entry_tab[entrycount].ppp_send_name);
+			cfg_entry_tab[entrycount].ppp_send_name = strdup(yylval.str);
 			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_SEND_PASSWORD:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: ppp-send-password = %s", entrycount, yylval.str)));
-			strncpy(cfg_entry_tab[entrycount].ppp_send_password, yylval.str, sizeof(cfg_entry_tab[entrycount].ppp_send_password) -1);
+			if (cfg_entry_tab[entrycount].ppp_send_password)
+			    free(cfg_entry_tab[entrycount].ppp_send_password);
+			cfg_entry_tab[entrycount].ppp_send_password = strdup(yylval.str);
 			set_isppp_auth(entrycount);
 			break;
 
@@ -1276,12 +1302,12 @@ check_config(void)
 		}
 		if((cep->ppp_expect_auth == AUTH_PAP) || (cep->ppp_expect_auth == AUTH_CHAP))
 		{
-			if(cep->ppp_expect_name[0] == 0)
+			if(cep->ppp_expect_name == NULL)
 			{
 				log(LL_ERR, "check_config: no local authentification name in entry %d!", i);
 				error++;
 			}
-			if(cep->ppp_expect_password[0] == 0)
+			if(cep->ppp_expect_password == NULL)
 			{
 				log(LL_ERR, "check_config: no local authentification secret in entry %d!", i);
 				error++;

@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.2 2001/04/09 21:18:00 martin Exp $ 
+ *	$Id: isdnd.h,v 1.3 2002/01/04 12:24:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -367,11 +367,11 @@ typedef struct cfg_entry {
 #define AUTH_RECHALLENGE 0x01
 #define AUTH_REQUIRED    0x02
 
-	char	ppp_expect_name[AUTHNAMELEN];	/* PPP PAP/CHAP login name */
-	char	ppp_send_name[AUTHNAMELEN];
+	char	*ppp_expect_name;	/* PPP PAP/CHAP login name */
+	char	*ppp_send_name;
 
-	char	ppp_expect_password[AUTHKEYLEN];
-	char	ppp_send_password[AUTHKEYLEN];
+	char	*ppp_expect_password;
+	char	*ppp_send_password;
 
 	int	day;				/* days valid */
 #define		SU	0x01
