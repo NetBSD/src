@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.12 1996/02/09 21:32:02 christos Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.13 1996/07/12 13:15:29 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -481,9 +481,18 @@ cd9660_rrip_extref(v, ana)
 	ISO_RRIP_ANALYZE *ana;
 {
 	ISO_RRIP_EXTREF *p = v;
-	if (isonum_711(p->len_id) != 10
-	    || bcmp((char *)p + 8,"RRIP_1991A",10)
-	    || isonum_711(p->version) != 1)
+
+	if (isonum_711(p->version) != 1)
+		return 0;
+	if (isonum_711(p->len_id) != 9
+	    && isonum_711(p->len_id) != 10)
+		return 0;
+	if (isonum_711(p->len_id) == 9
+	    && bcmp((char *)p + 8, "IEEE_1282", 9))
+		return 0;
+	if (isonum_711(p->len_id) == 10
+	    && bcmp((char *)p + 8, "IEEE_P1282", 10)
+	    && bcmp((char *)p + 8, "RRIP_1991A", 10))
 		return 0;
 	ana->fields &= ~ISO_SUSP_EXTREF;
 	return ISO_SUSP_EXTREF;
