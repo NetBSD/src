@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.3 1999/12/07 17:08:11 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.4 2000/08/18 07:33:14 sato Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -345,7 +345,7 @@ __txcsbus_alloc_cstag(sc, csh)
 
 		} else {
 			panic("__txcsbus_alloc_cstag: CS%d 8bit mode is"
-			      "not allowed");
+			      "not allowed", cs);
 		}
 	}
 	
