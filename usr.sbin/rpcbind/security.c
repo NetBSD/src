@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.2 2000/06/04 04:51:50 thorpej Exp $	*/
+/*	$NetBSD: security.c,v 1.3 2000/06/04 12:06:44 fvdl Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -105,6 +105,8 @@ check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, int rpcbvers)
 	}
 
 #ifdef LIBWRAP
+	if (addr->sa_family == AF_LOCAL)
+		return 1;
 	request_init(&req, RQ_DAEMON, "rpcbind", RQ_CLIENT_SIN, addr, 0);
 	sock_methods(&req);
 	if(!hosts_access(&req)) {
