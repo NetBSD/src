@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.651 2004/09/18 08:48:29 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.652 2004/09/30 21:59:06 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.651 2004/09/18 08:47:46 martin Exp 
+ *	NetBSD: pcidevs,v 1.652 2004/09/30 21:58:26 cube Exp 
  */
 
 /*
@@ -5956,6 +5956,10 @@ const struct pci_product pci_products[] = {
 	    "82875P AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_CSA,
+	    "82875P PCI-CSA Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
 	    "82915P Host",
 	},
@@ -5964,12 +5968,44 @@ const struct pci_product pci_products[] = {
 	    "82915P PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
+	    "6300ESB LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
 	    "6300ESB IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SATA,
 	    "6300ESB SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB,
+	    "6300ESB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0,
+	    "6300ESB USB UHCI Controller #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_1,
+	    "6300ESB USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT,
+	    "6300ESB Watchdog Timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_APIC,
+	    "6300ESB Advanced Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_EHCI,
+	    "6300ESB USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_PCIX,
+	    "6300ESB PCI-X Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
@@ -9668,4 +9704,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1841;
+const int pci_nproducts = 1850;
