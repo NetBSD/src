@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.6 1999/01/26 21:21:14 hwr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.7 1999/03/12 22:42:31 perry Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ gre_output(ifp, m, dst, rt)
 				m->m_data-=msiz;
 				m->m_len+=msiz;
 				m->m_pkthdr.len+=msiz;
-				ovbcopy((caddr_t) inp, mtod(m, caddr_t), sizeof(struct ip));
+				memmove(mtod(m, caddr_t), inp, sizeof(struct ip));
 			}
 			inp=mtod(m,struct ip *);
 			memcpy((caddr_t) (inp+1), &mob_h, (unsigned) msiz);

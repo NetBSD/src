@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.87 1999/01/28 00:05:17 msaitoh Exp $	*/
+/*	$NetBSD: systm.h,v 1.88 1999/03/12 22:42:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -205,7 +205,6 @@ void    *memset __P((void *, int, size_t));
 /* XXX b*() are now macros. should remove these prototypes soon */
 #if 0
 void	bcopy __P((const void *, void *, size_t));
-void	ovbcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 int	bcmp __P((const void *, const void *, size_t));
 #endif
@@ -215,7 +214,6 @@ int	kcopy __P((const void *, void *, size_t));
 #endif
 
 #define bcopy(src, dst, len)	memcpy(dst, src, len)
-#define ovbcopy(src, dst, len)	memmove(dst, src, len)
 #define bzero(src, len)		memset(src, 0, len)
 #define bcmp(a, b, len)		memcmp(a, b, len)
 
