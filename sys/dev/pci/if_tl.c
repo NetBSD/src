@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.48 2002/01/12 16:17:06 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.49 2002/02/28 00:52:21 christos Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.48 2002/01/12 16:17:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.49 2002/02/28 00:52:21 christos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -387,6 +387,7 @@ tl_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	sc->tl_if.if_softc = sc;
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
 	if (sc->tl_ih == NULL) {
@@ -445,7 +446,6 @@ tl_pci_attach(parent, self, aux)
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
-	sc->tl_if.if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
