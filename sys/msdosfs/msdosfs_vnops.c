@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.79 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.80 1999/04/21 17:13:22 abs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1757,7 +1757,6 @@ msdosfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
-	struct msdosfsmount *pmp = dep->de_pmp;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = dep->de_devvp;
@@ -1769,7 +1768,7 @@ msdosfs_bmap(v)
 		 */
 		*ap->a_runp = 0;
 	}
-	return (pcbmap(dep, de_bn2cn(pmp, ap->a_bn), ap->a_bnp, 0, 0));
+	return (pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0));
 }
 
 int
