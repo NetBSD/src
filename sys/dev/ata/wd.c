@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.47 1994/02/26 17:13:44 mycroft Exp $
+ *	$Id: wd.c,v 1.48 1994/02/26 17:59:46 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -735,11 +735,8 @@ outt:
 	    
 			/* see if more to transfer */
 			if (du->dk_bc > 0 && (du->dk_flags & DKFL_ERROR) == 0) {
-				if ((du->dk_flags & DKFL_SINGLE) ||
-				    (bp->b_flags & B_READ) == 0) {
-					wdstart(ctrlr);
-					return;	/* next chunk is started */
-				}
+				wdstart(ctrlr);
+				return;	/* next chunk is started */
 			} else if ((du->dk_flags & (DKFL_SINGLE | DKFL_ERROR)) == DKFL_ERROR) {
 				du->dk_skip = 0;
 				du->dk_skipm = 0;
