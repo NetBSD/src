@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.9 1997/09/06 14:02:13 drochner Exp $
+# $NetBSD: Makefile.inc,v 1.10 1997/09/06 14:26:47 drochner Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
 
 .BEGIN: ${.OBJDIR}/machine
-depend all: ${.OBJDIR}/machine
+beforedepend all: ${.OBJDIR}/machine
 CLEANFILES+= ${.OBJDIR}/machine
 
 ${.OBJDIR}/machine::
