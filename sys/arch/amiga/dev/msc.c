@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.17 2001/01/13 02:09:27 aymeric Exp $	*/
+/*	$NetBSD: msc.c,v 1.18 2001/05/02 10:32:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -495,6 +495,21 @@ mscwrite(dev, uio, flag)
 	return tp->t_linesw->l_write(tp, uio, flag);
 }
 
+int
+mscpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct tty *tp;
+  
+	tp = msc_tty[MSCTTY(dev)];
+
+	if (! tp)
+		return ENXIO;
+
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
 
 /*
  * This interrupt is periodically invoked in the vertical blank 

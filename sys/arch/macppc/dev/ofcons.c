@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.6 2000/11/03 18:50:49 wrstuden Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.7 2001/05/02 10:32:17 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -180,6 +180,18 @@ ofcwrite(dev, uio, flag)
 	struct tty *tp = sc->of_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
+}
+
+int
+ofcpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->of_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

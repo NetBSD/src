@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.66 2001/03/31 00:35:21 enami Exp $	*/
+/*	$NetBSD: dc.c,v 1.67 2001/05/02 10:32:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.66 2001/03/31 00:35:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.67 2001/05/02 10:32:18 scw Exp $");
 
 /*
  * devDC7085.c --
@@ -578,6 +578,20 @@ dcwrite(dev, uio, flag)
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dcpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct dc_softc *sc;
+	struct tty *tp;
+
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	tp = sc->dc_tty[DCLINE(dev)];
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
