@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.11 1994/08/30 03:06:10 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.12 1994/12/13 22:11:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -418,7 +418,7 @@ unp_bind(unp, nam, p)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS;
-	LEASE_CHECK(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	if (error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr))
 		return (error);
 	vp = nd.ni_vp;

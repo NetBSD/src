@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.4 1994/06/29 06:35:22 cgd Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.5 1994/12/13 21:59:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -567,10 +567,10 @@ union_copyfile(fvp, tvp, cred, p)
 	uio.uio_offset = 0;
 
 	VOP_UNLOCK(fvp);				/* XXX */
-	LEASE_CHECK(fvp, p, cred, LEASE_READ);
+	VOP_LEASE(fvp, p, cred, LEASE_READ);
 	VOP_LOCK(fvp);					/* XXX */
 	VOP_UNLOCK(tvp);				/* XXX */
-	LEASE_CHECK(tvp, p, cred, LEASE_WRITE);
+	VOP_LEASE(tvp, p, cred, LEASE_WRITE);
 	VOP_LOCK(tvp);					/* XXX */
 
 	buf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
@@ -756,8 +756,8 @@ union_mkshadow(um, dvp, cnp, vpp)
 	va.va_type = VDIR;
 	va.va_mode = um->um_cmode;
 
-	/* LEASE_CHECK: dvp is locked */
-	LEASE_CHECK(dvp, p, p->p_ucred, LEASE_WRITE);
+	/* VOP_LEASE: dvp is locked */
+	VOP_LEASE(dvp, p, p->p_ucred, LEASE_WRITE);
 
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
 	return (error);
@@ -837,7 +837,7 @@ union_vn_create(vpp, un, p)
 	VATTR_NULL(vap);
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
-	LEASE_CHECK(un->un_dirvp, p, cred, LEASE_WRITE);
+	VOP_LEASE(un->un_dirvp, p, cred, LEASE_WRITE);
 	if (error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap))
 		return (error);
 
