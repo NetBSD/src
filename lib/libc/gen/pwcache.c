@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.4 1995/02/27 04:35:47 cgd Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pwcache.c,v 1.4 1995/02/27 04:35:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ static char rcsid[] = "$NetBSD: pwcache.c,v 1.4 1995/02/27 04:35:47 cgd Exp $";
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <string.h>
 #include <utmp.h>
 
 #define	NCACHE	64			/* power of 2 */
