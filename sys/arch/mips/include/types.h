@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.29 2002/02/28 03:17:34 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.30 2002/03/05 15:41:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ typedef int		register_t;
 
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_SYSCALL_INTERN
-#ifdef MIPS3
+#ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
 #endif
 
