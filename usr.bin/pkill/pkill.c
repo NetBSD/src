@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
+/*	$NetBSD: pkill.c,v 1.6 2004/01/06 07:35:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.6 2004/01/06 07:35:58 itojun Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 
 	plist = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*plist), &nproc);
 	if (plist == NULL)
-		errx(STATUS_ERROR, "kvm_getprocs2() failed");
+		errx(STATUS_ERROR, "kvm_getproc2() failed");
 
 	/*
 	 * Allocate memory which will be used to keep track of the
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 		}
 
 		for (i = 0, kp = plist; i < nproc; i++, kp++) {
-			if ((kp->p_flag & P_SYSTEM) != 0)
+			if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 				continue;
 
 			if (matchargs) {
