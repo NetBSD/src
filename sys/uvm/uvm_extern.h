@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.86 2003/12/18 08:15:42 pk Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.87 2003/12/18 15:02:04 pk Exp $	*/
 
 /*
  *
@@ -594,13 +594,15 @@ vaddr_t			uvm_km_alloc1 __P((struct vm_map *, vsize_t,
 void			uvm_km_free __P((struct vm_map *, vaddr_t, vsize_t));
 void			uvm_km_free_wakeup __P((struct vm_map *, vaddr_t,
 			    vsize_t));
+vaddr_t			uvm_km_kmemalloc1 __P((struct vm_map *, struct
+			    uvm_object *, vsize_t, vsize_t, voff_t, int));
 vaddr_t			uvm_km_kmemalloc __P((struct vm_map *, struct
 			    uvm_object *, vsize_t, int));
 struct vm_map		*uvm_km_suballoc __P((struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, boolean_t,
 			    struct vm_map *));
 vaddr_t			uvm_km_valloc1 __P((struct vm_map *, vsize_t,
-				vsize_t, voff_t, uvm_flag_t));
+			    vsize_t, voff_t, uvm_flag_t));
 vaddr_t			uvm_km_valloc __P((struct vm_map *, vsize_t));
 vaddr_t			uvm_km_valloc_align __P((struct vm_map *, vsize_t,
 			    vsize_t));
@@ -611,14 +613,35 @@ vaddr_t			uvm_km_alloc_poolpage1 __P((struct vm_map *,
 			    struct uvm_object *, boolean_t));
 void			uvm_km_free_poolpage1 __P((struct vm_map *, vaddr_t));
 
-#define uvm_km_valloc(map, size)					\
-	uvm_km_valloc1(map, size, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT)
-#define uvm_km_valloc_align(map, size, align)				\
-	uvm_km_valloc1(map, size, align, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT)
-#define uvm_km_valloc_prefer_wait(map, size, prefer)			\
-	uvm_km_valloc1(map, size, 0, prefer, 0)
-#define uvm_km_valloc_wait(map, size)					\
-	uvm_km_valloc1(map, size, 0, UVM_UNKNOWN_OFFSET, 0)
+extern __inline__ vaddr_t
+uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t sz, int flags)
+{
+	return uvm_km_kmemalloc1(map, obj, sz, 0, UVM_UNKNOWN_OFFSET, flags);
+}
+
+extern __inline__ vaddr_t
+uvm_km_valloc(struct vm_map *map, vsize_t sz)
+{
+	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
+}
+
+extern __inline__ vaddr_t
+uvm_km_valloc_align(struct vm_map *map, vsize_t sz, vsize_t align)
+{
+	return uvm_km_valloc1(map, sz, align, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
+}
+
+extern __inline__ vaddr_t
+uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t sz, voff_t prefer)
+{
+	return uvm_km_valloc1(map, sz, 0, prefer, 0);
+}
+
+extern __inline__ vaddr_t
+uvm_km_valloc_wait(struct vm_map *map, vsize_t sz)
+{
+	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, 0);
+}
 
 #define	uvm_km_alloc_poolpage(waitok)					\
 	uvm_km_alloc_poolpage1(kmem_map, NULL, (waitok))
