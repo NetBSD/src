@@ -434,6 +434,11 @@ BUILDING
                    directory ``regress''.  Runs the compiled regression tests
                    on the local host.
 
+     sets          Create distribution sets from DESTDIR into
+                   RELEASEDIR/MACHINE/binary/sets.  Should be run after ``make
+                   distribution'' (as ``make build'' does not install all of
+                   the required files).
+
    The "build.sh" script
      This script file is a Bourne shell script designed to build the entire
      NetBSD system on any host with a Bourne shell in /bin/sh, including many
@@ -482,6 +487,8 @@ BUILDING
 
      install=idir  Install the contents of DESTDIR to idir, using ``make
                    installworld''.
+
+     sets          Perform ``make sets''.
 
      The following command line options alter the behaviour of the above oper-
      ations: The following command line options alter the behaviour of the

@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.86 2003/01/26 05:34:32 lukem Exp $
+#	$NetBSD: build.sh,v 1.87 2003/01/26 06:19:12 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -107,6 +107,7 @@ initdefaults()
 	do_release=false
 	do_kernel=false
 	do_install=false
+	do_sets=false
 }
 
 getarch()
@@ -242,6 +243,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     release		Run "make release" (includes kernels & distrib media)
 
  Other operations:
+    help		Show this message (and exit)
     makewrapper		Create ${toolprefix}make-${MACHINE} wrapper and ${toolprefix}make.  (Always done)
     obj			Run "make obj" (default unless -o is used)
     tools 		Build and install tools
@@ -452,7 +454,11 @@ parseoptions()
 
 		case "$op" in
 
-		makewrapper|obj|tools|build|distribution|release)
+		help)
+			usage
+			;;
+
+		makewrapper|obj|tools|build|distribution|release|sets)
 			;;
 
 		kernel=*)
@@ -681,7 +687,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.86 2003/01/26 05:34:32 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.87 2003/01/26 06:19:12 lukem Exp $
 #
 
 EOF
@@ -803,7 +809,7 @@ main()
 			buildtools
 			;;
 
-		obj|build|distribution|release)
+		obj|build|distribution|release|sets)
 			${runcmd} "$makewrapper" $parallel $op ||
 			    bomb "failed to make $op"
 			;;
