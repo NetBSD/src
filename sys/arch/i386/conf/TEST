@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.9 1993/10/16 07:48:04 mycroft Exp $
+#	$Id: TEST,v 1.10 1993/10/20 23:04:57 cgd Exp $
 #
 
 # standard options
@@ -18,7 +18,6 @@ options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 options		DDB			# kernel debugger; recommended
 options		DIAGNOSTIC		# internal consistency checking
 
-options		ACCOUNTING		# process accounting
 options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken

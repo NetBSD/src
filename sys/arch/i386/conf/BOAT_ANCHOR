@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.25 1993/09/13 18:19:26 brezak Exp $
+#	$Id: BOAT_ANCHOR,v 1.26 1993/10/20 23:04:54 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -25,8 +25,6 @@ options		"MACHINE_NONCONTIG"
 options		LKM
 
 options		DDB
-
-options		ACCOUNTING
 
 config		netbsd	root on wd0 swap on wd0
 

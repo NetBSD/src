@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.28 1993/09/19 19:11:24 brezak Exp $
+#	$Id: ALL,v 1.29 1993/10/20 23:04:52 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -40,9 +40,6 @@ options		FIFO
 # System V-like memory sharing; BROKEN
 #options		SYSVSHM
 #options		SHMMAXPGS=1024
-
-# process accounting
-options		ACCOUNTING
 
 # generic SCSI system
 options		SCSI
