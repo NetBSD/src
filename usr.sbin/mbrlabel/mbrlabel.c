@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.3.2.1 1999/08/20 05:06:06 cgd Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.3.2.1 1999/08/20 05:06:06 cgd Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -138,8 +138,9 @@ getparts(sd, np, off)
 	u_int32_t off;
 {
 	unsigned char buf[DEV_BSIZE];
-	struct mbr_partition *mpart, *epart;
+	struct mbr_partition parts[NMBRPART];
 	off_t loff = 0;	/* XXX this nonsense shuts up GCC 2.7.2.2 */
+	int i;
 
 	loff = (off_t)off * DEV_BSIZE;
 
@@ -153,9 +154,9 @@ getparts(sd, np, off)
 	}
 	if (buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
 		return np;
-	mpart = (void *)(buf + MBR_PARTOFF);
-	for (epart = mpart + NMBRPART; mpart < epart; mpart++) {
-		switch (mpart->mbrp_typ) {
+	memcpy(parts, buf + MBR_PARTOFF, sizeof parts);
+	for (i = 0; i < NMBRPART; i++) {
+		switch (parts[i].mbrp_typ) {
 		case 0:
 			/* Nothing to do */
 			break;
@@ -164,9 +165,9 @@ getparts(sd, np, off)
 			/* Will be handled below */
 			break;
 		default:
-			label.d_partitions[np].p_size = getlong(&mpart->mbrp_size);
-			label.d_partitions[np].p_offset = getlong(&mpart->mbrp_start) + off;
-			label.d_partitions[np].p_fstype = nbsdtype(mpart->mbrp_typ);
+			label.d_partitions[np].p_size = getlong(&parts[i].mbrp_size);
+			label.d_partitions[np].p_offset = getlong(&parts[i].mbrp_start) + off;
+			label.d_partitions[np].p_fstype = nbsdtype(parts[i].mbrp_typ);
 			switch (label.d_partitions[np].p_fstype) {
 			case FS_BSDFFS:
 				label.d_partitions[np].p_size = 16384;
@@ -191,12 +192,11 @@ getparts(sd, np, off)
 		if (np == RAW_PART)
 			np++;
 	}
-	mpart = (void *)(buf + MBR_PARTOFF);
-	for (epart = mpart + NMBRPART; mpart < epart; mpart++) {
-		switch (mpart->mbrp_typ) {
+	for (i = 0; i < NMBRPART; i++) {
+		switch (parts[i].mbrp_typ) {
 		case MBR_PTYPE_EXT:
 		case MBR_PTYPE_EXT_LBA:
-			np = getparts(sd, np, getlong(&mpart->mbrp_start) + off);
+			np = getparts(sd, np, getlong(&parts[i].mbrp_start) + off);
 			break;
 		default:
 			break;
@@ -210,7 +210,7 @@ getparts(sd, np, off)
 void
 usage()
 {
-	fprintf(stderr, "Usage: mbrlabel { rawdisk }\n");
+	fprintf(stderr, "usage: mbrlabel rawdisk\n");
 	exit(1);
 }
 
