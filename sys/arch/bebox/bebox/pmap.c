@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 1997/10/14 06:47:48 sakamoto Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 1997/12/18 09:08:00 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,21 +34,15 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/msgbuf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pageout.h>
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 
-vm_page_t vm_page_alloc1 __P((void));
-void vm_page_free1 __P((vm_page_t));
-
 pte_t *ptable;
-int ptab_cnt = 0;
+int ptab_cnt;
 u_int ptab_mask;
 #define	HTABSIZE	(ptab_cnt * 64)
 
@@ -62,18 +56,11 @@ LIST_HEAD(pte_ovtab, pte_ovfl) *potable; /* Overflow entries for ptable */
 struct pmap kernel_pmap_;
 
 int physmem;
-static vm_offset_t phys_mem_start;
-static vm_size_t phys_mem_size;
-extern caddr_t msgbufaddr;
+static int npgs;
+static u_int nextavail;
+extern vm_offset_t  bebox_mb_reg, msgbuf_vaddr, msgbuf_paddr;
 
-/*
- * Given a map and a machine independent protection code,
- * convert to a vax protection code.
- */
-vm_offset_t	avail_start;	/* PA of first available physical page */
-vm_offset_t	avail_end;	/* PA of last available physical page */
-vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+static struct mem_region *mem, *avail;
 
 /*
  * This is a cache of referenced/modified bits.
@@ -290,31 +277,99 @@ pte_spill(addr)
  * This is called during initppc, before the system is really initialized.
  */
 void
-pmap_bootstrap(kernelstart, kernelend, size)
-	u_int kernelstart, kernelend, size;
+pmap_bootstrap(kernelstart, kernelend)
+	u_int kernelstart, kernelend;
 {
-	int i;
-	u_int sz;
+	struct mem_region *mp, *mp1;
+	int cnt, i;
+	u_int s, e, sz;
 
-	phys_mem_start = 0;			/* physical memory start 0x0 */
-	phys_mem_size = (vm_size_t)size;	/* from BeBox's BootROM */
-	physmem = btoc(phys_mem_size);		/* all page size */
+	/*
+	 * Get memory.
+	 */
+	mem_regions(&mem, &avail);
+	for (mp = mem; mp->size; mp++)
+		physmem += btoc(mp->size);
 
-	avail_start = (kernelend + PGOFSET) & ~PGOFSET;
-	avail_end = ctob(physmem);
-	virtual_avail = (vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT);
-	virtual_end = virtual_avail + SEGMENT_LENGTH;
+	/*
+	 * Count the number of available entries.
+	 */
+	for (cnt = 0, mp = avail; mp->size; mp++)
+		cnt++;
 
-	/* allow for msgbuf */
-	msgbufaddr = (caddr_t)virtual_avail;
-	virtual_avail += round_page(MSGBUFSIZE);
-	avail_end -= round_page(MSGBUFSIZE);
+	/*
+	 * Page align all regions.
+	 * Non-page aligned memory isn't very interesting to us.
+	 * Also, sort the entries for ascending addresses.
+	 */
+	kernelstart &= ~PGOFSET;
+	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
+	for (mp = avail; mp->size; mp++) {
+		s = mp->start;
+		e = mp->start + mp->size;
+		/*
+		 * Check whether this region holds all of the kernel.
+		 */
+		if (s < kernelstart && e > kernelend) {
+			avail[cnt].start = kernelend;
+			avail[cnt++].size = e - kernelend;
+			e = kernelstart;
+		}
+		/*
+		 * Look whether this regions starts within the kernel.
+		 */
+		if (s >= kernelstart && s < kernelend) {
+			if (e <= kernelend)
+				goto empty;
+			s = kernelend;
+		}
+		/*
+		 * Now look whether this region ends within the kernel.
+		 */
+		if (e > kernelstart && e <= kernelend) {
+			if (s >= kernelstart)
+				goto empty;
+			e = kernelstart;
+		}
+		/*
+		 * Now page align the start and size of the region.
+		 */
+		s = s & ~PGOFSET;
+		e = e & ~PGOFSET;
+		sz = e - s;
+		/*
+		 * Check whether some memory is left here.
+		 */
+		if (sz == 0) {
+		empty:
+			bcopy(mp + 1, mp,
+			      (cnt - (mp - avail)) * sizeof *mp);
+			cnt--;
+			mp--;
+			continue;
+		}
+		/*
+		 * Do an insertion sort.
+		 */
+		npgs += btoc(sz);
+		for (mp1 = avail; mp1 < mp; mp1++)
+			if (s < mp1->start)
+				break;
+		if (mp1 < mp) {
+			bcopy(mp1, mp1 + 1, (void *)mp - (void *)mp1);
+			mp1->start = s;
+			mp1->size = sz;
+		} else {
+			mp->start = s;
+			mp->size = sz;
+		}
+	}
 
 #ifdef	HTABENTS
 	ptab_cnt = HTABENTS;
 #else /* HTABENTS */
 	for (i = 0; i < 32; i++)	/* XXX 32bit Implementation */
-		if ((0x80000000 >> i) & avail_end) {
+		if ((0x80000000 >> i) & ctob(physmem)) {
 			ptab_cnt = (0x80000000 >> i) >> 7;
 			break;
 		}
@@ -322,19 +377,79 @@ pmap_bootstrap(kernelstart, kernelend, size)
 		ptab_cnt <<= 1;
 	ptab_cnt /= 64;
 #endif /* HTABENTS */
-	avail_start = (avail_start + (HTABSIZE - 1)) & ~(HTABSIZE - 1);
-	ptable = (pte_t *)avail_start;		/* HASH TABLE */
+
+	/*
+	 * Find suitably aligned memory for HTAB.
+	 */
+	for (mp = avail; mp->size; mp++) {
+		s = mp->size % HTABSIZE;
+		if (mp->size < s + HTABSIZE)
+			continue;
+		ptable = (pte_t *)(mp->start + s);
+		if (mp->size == s + HTABSIZE) {
+			if (s)
+				mp->size = s;
+			else {
+				bcopy(mp + 1, mp,
+				      (cnt - (mp - avail)) * sizeof *mp);
+				mp = avail;
+			}
+			break;
+		}
+		if (s != 0) {
+			bcopy(mp, mp + 1,
+			      (cnt - (mp - avail)) * sizeof *mp);
+			mp++->size = s;
+		}
+		mp->start += s + HTABSIZE;
+		mp->size -= s + HTABSIZE;
+		break;
+	}
+	if (!mp->size)
+		panic("not enough memory?");
+
+	npgs -= btoc(HTABSIZE);
 	bzero((void *)ptable, HTABSIZE);
 	ptab_mask = ptab_cnt - 1;
-	avail_start += HTABSIZE;
 
-	sz = round_page(sizeof(struct pte_ovtab) * ptab_cnt);
-	potable = (struct pte_ovtab *)avail_start;
-	avail_start += sz;
+	/*
+	 * We cannot do pmap_steal_memory here,
+	 * since we don't run with translation enabled yet.
+	 */
+	s = sizeof(struct pte_ovtab) * ptab_cnt;
+	sz = round_page(s);
+	for (mp = avail; mp->size; mp++)
+		if (mp->size >= sz)
+			break;
+	if (!mp->size)
+		panic("not enough memory?");
 
+	npgs -= btoc(sz);
+	potable = (struct pte_ovtab *)mp->start;
+	mp->size -= sz;
+	mp->start += sz;
+	if (mp->size <= 0)
+		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
+
+	/*
+	 * allow for msgbuf
+	 */
+	sz = round_page(MSGBUFSIZE);
+	for (mp = avail; mp->size; mp++)
+		if (mp->size >= sz)
+			break;
+	if (!mp->size)
+		panic("not enough memory?");
+
+	npgs -= btoc(sz);
+	msgbuf_paddr = mp->start;
+	mp->size -= sz;
+	mp->start += sz;
+	if (mp->size <= 0)
+		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 
 	/*
 	 * Initialize kernel pmap and hardware.
@@ -354,24 +469,7 @@ pmap_bootstrap(kernelstart, kernelend, size)
 	asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)ptable | (ptab_mask >> 10)));
 	tlbia();
-}
-
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	vm_size_t sz;
-	vm_offset_t val;
-
-	sz = round_page(size);
-	val = avail_start;
-	avail_start += sz;
-	if (avail_start > avail_end)
-		panic("pmap_bootstrap_alloc");
-
-	bzero((caddr_t)val, size);
-
-	return ((void *)val);
+	nextavail = avail->start;
 }
 
 /*
@@ -382,15 +480,19 @@ pmap_real_memory(start, size)
 	vm_offset_t *start;
 	vm_size_t *size;
 {
-	if (*start + *size > phys_mem_start
-	    && *start < phys_mem_start + phys_mem_size) {
-		if (*start < phys_mem_start) {
-			*size -= phys_mem_start - *start;
-			*start = phys_mem_start;
+	struct mem_region *mp;
+	
+	for (mp = mem; mp->size; mp++) {
+		if (*start + *size > mp->start
+		    && *start < mp->start + mp->size) {
+			if (*start < mp->start) {
+				*size -= mp->start - *start;
+				*start = mp->start;
+			}
+			if (*start + *size > mp->start + mp->size)
+				*size = mp->start + mp->size - *start;
+			return;
 		}
-		if (*start + *size > phys_mem_start + phys_mem_size)
-			*size = phys_mem_start + phys_mem_size - *start;
-		return;
 	}
 	*size = 0;
 }
@@ -400,26 +502,23 @@ pmap_real_memory(start, size)
  * Called during vm_init().
  */
 void
-pmap_init(vmstart, vmend)
-	vm_offset_t vmstart;
-	vm_offset_t vmend;
+pmap_init()
 {
 	struct pv_entry *pv;
 	vm_size_t sz;
 	vm_offset_t addr;
 	int i, s;
 	
-	sz = (vm_size_t)((sizeof(struct pv_entry) + 1)
-		* btoc(vmend - vmstart));
+	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
 	addr = (vm_offset_t)kmem_alloc(kernel_map, sz);
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
-	for (i = btoc(vmend - vmstart); --i >= 0;)
+	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
 	LIST_INIT(&pv_page_freelist);
 	pmap_attrib = (char *)pv;
-	bzero(pv, btoc(vmend - vmstart));
+	bzero(pv, npgs);
 	pmap_initialized = 1;
 	splx(s);
 }
@@ -431,12 +530,63 @@ int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
-	if (phys_mem_start < pa && pa < (phys_mem_start + phys_mem_size)) {
-		pa &= ~PGOFSET;
-		return (btoc(pa));
-	} else {
-		return (-1);
+	struct mem_region *mp;
+	vm_size_t pre;
+	
+	pa &= ~PGOFSET;
+	for (pre = 0, mp = avail; mp->size; mp++) {
+		if (pa >= mp->start
+		    && pa < mp->start + mp->size)
+			return btoc(pre + (pa - mp->start));
+		pre += mp->size;
 	}
+	return -1;
+}
+
+/*
+ * How much virtual space is available to the kernel?
+ */
+void
+pmap_virtual_space(start, end)
+	vm_offset_t *start, *end;
+{
+	/*
+	 * Reserve one segment for kernel virtual memory
+	 */
+	*start = (vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT);
+	*end = *start + SEGMENT_LENGTH;
+}
+
+/*
+ * Return the number of possible page indices returned
+ * from pmap_page_index for any page provided by pmap_next_page.
+ */
+u_int
+pmap_free_pages()
+{
+	return npgs;
+}
+
+/*
+ * If there are still physical pages available, put the address of
+ * the next available one at paddr and return TRUE.  Otherwise,
+ * return FALSE to indicate that there are no more free pages.
+ */
+int
+pmap_next_page(paddr)
+	vm_offset_t *paddr;
+{
+	static int lastidx = -1;
+	
+	if (lastidx < 0
+	    || nextavail >= avail[lastidx].start + avail[lastidx].size) {
+		if (avail[++lastidx].size == 0)
+			return FALSE;
+		nextavail = avail[lastidx].start;
+	}
+	*paddr = nextavail;
+	nextavail += NBPG;
+	return TRUE;
 }
 
 /*
@@ -665,7 +815,7 @@ poalloc()
 		 * Since we cannot use maps for potable allocation,
 		 * we have to steal some memory from the VM system.			XXX
 		 */
-		mem = vm_page_alloc1();
+		mem = vm_page_alloc(NULL, NULL);
 		po_pcnt++;
 		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
 		pop->pop_pgi.pgi_page = mem;
@@ -701,7 +851,7 @@ pofree(po, freepage)
 		po_nfree -= NPOPPG - 1;
 		po_pcnt--;
 		LIST_REMOVE(pop, pop_pgi.pgi_list);
-		vm_page_free1(pop->pop_pgi.pgi_page);
+		vm_page_free(pop->pop_pgi.pgi_page);
 		return;
 	case 1:
 		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);
@@ -816,12 +966,13 @@ pmap_enter(pm, va, pa, prot, wired)
 	int idx, i, s;
 	pte_t pte;
 	struct pte_ovfl *po;
+	struct mem_region *mp;
 
 	/*
 	 * Have to remove any existing mapping first.
 	 */
 	pmap_remove(pm, va, va + NBPG - 1);
-	
+
 	/*
 	 * Compute the HTAB index.
 	 */
@@ -834,16 +985,17 @@ pmap_enter(pm, va, pa, prot, wired)
 	pte.pte_hi = ((sr & SR_VSID) << PTE_VSID_SHFT)
 		| ((va & ADDR_PIDX) >> ADDR_API_SHFT);
 	pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
-
-	if (pa >= phys_mem_start && pa < phys_mem_start + phys_mem_size) {
-		pte.pte_lo &= ~(PTE_I | PTE_G);
+	for (mp = mem; mp->size; mp++) {
+		if (pa >= mp->start && pa < mp->start + mp->size) {
+			pte.pte_lo &= ~(PTE_I | PTE_G);
+			break;
+		}
 	}
-
 	if (prot & VM_PROT_WRITE)
 		pte.pte_lo |= PTE_RW;
 	else
 		pte.pte_lo |= PTE_RO;
-	
+
 	/*
 	 * Now record mapping for later back-translation.
 	 */
@@ -854,7 +1006,7 @@ pmap_enter(pm, va, pa, prot, wired)
 			 */
 			syncicache((void *)pa, NBPG);
 		}
-	
+
 	s = splimp();
 	/*
 	 * Try to insert directly into HTAB.
@@ -863,6 +1015,7 @@ pmap_enter(pm, va, pa, prot, wired)
 		splx(s);
 		return;
 	}
+
 	/*
 	 * Have to allocate overflow entry.
 	 *
@@ -1177,89 +1330,4 @@ pmap_page_protect(pa, prot)
 		}
 	}
 	splx(s);
-}
-
-/*
- *	vm_page_alloc1:
- *
- *	Allocate and return a memory cell with no associated object.
- */
-vm_page_t
-vm_page_alloc1()
-{
-	register vm_page_t	mem;
-	int		spl;
-
-	spl = splimp();				/* XXX */
-	simple_lock(&vm_page_queue_free_lock);
-	if (vm_page_queue_free.tqh_first == NULL) {
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-		return (NULL);
-	}
-
-	mem = vm_page_queue_free.tqh_first;
-	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
-
-	cnt.v_free_count--;
-	simple_unlock(&vm_page_queue_free_lock);
-	splx(spl);
-
-	mem->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
-	mem->wire_count = 0;
-
-	/*
-	 *	Decide if we should poke the pageout daemon.
-	 *	We do this if the free count is less than the low
-	 *	water mark, or if the free count is less than the high
-	 *	water mark (but above the low water mark) and the inactive
-	 *	count is less than its target.
-	 *
-	 *	We don't have the counts locked ... if they change a little,
-	 *	it doesn't really matter.
-	 */
-
-	if (cnt.v_free_count < cnt.v_free_min ||
-	    (cnt.v_free_count < cnt.v_free_target &&
-	     cnt.v_inactive_count < cnt.v_inactive_target))
-		thread_wakeup((void *)&vm_pages_needed);
-	return (mem);
-}
-
-/*
- *	vm_page_free1:
- *
- *	Returns the given page to the free list,
- *	disassociating it with any VM object.
- *
- *	Object and page must be locked prior to entry.
- */
-void
-vm_page_free1(mem)
-	register vm_page_t	mem;
-{
-
-	if (mem->flags & PG_ACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
-		mem->flags &= ~PG_ACTIVE;
-		cnt.v_active_count--;
-	}
-
-	if (mem->flags & PG_INACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
-		mem->flags &= ~PG_INACTIVE;
-		cnt.v_inactive_count--;
-	}
-
-	if (!(mem->flags & PG_FICTITIOUS)) {
-		int	spl;
-
-		spl = splimp();
-		simple_lock(&vm_page_queue_free_lock);
-		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
-
-		cnt.v_free_count++;
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-	}
 }
