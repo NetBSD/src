@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.79 2004/07/01 12:42:57 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.80 2004/09/03 18:14:09 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -63,6 +63,7 @@ struct sockbuf {
 					   socket buffer */
 	int	sb_flags;		/* flags, see below */
 	int	sb_timeo;		/* timeout for read/write */
+	u_long	sb_overflowed;		/* # of drops due to full buffer */
 };
 
 #ifndef SB_MAX
