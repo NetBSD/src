@@ -1,4 +1,4 @@
-/* $NetBSD: if_eareg.h,v 1.2 2000/08/12 11:56:46 bjh21 Exp $ */
+/* $NetBSD: if_eareg.h,v 1.3 2000/08/12 14:06:30 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -30,14 +30,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * if_eareg.h
- *
- * Ether3 device driver
- *
- * Created      : 08/07/95
+ */
+/*
+ * if_eareg.h - Ether3 device driver
  */
 
 /*
@@ -45,23 +40,21 @@
  */
 
 #define EA_8005_BASE	0x000
+#define EA_8005_SHIFT	6
 
 /*
- * SEEQ 8005 registers
+ * SEEQ 8005 registers (A[3:1] -- A[0] is ignored in 16-bit mode)
  */
 
-
-#define EA_8005_COMMAND		0x000
-#define EA_8005_STATUS		0x000
-#define EA_8005_CONFIG1		0x040
-#define EA_8005_CONFIG2		0x080
-#define EA_8005_RX_END		0x0c0
-#define EA_8005_BUFWIN		0x100
-#define EA_8005_RX_PTR		0x140
-#define EA_8005_TX_PTR		0x180
-#define EA_8005_DMA_ADDR	0x1c0
-
-/*  */
+#define EA_8005_COMMAND		0
+#define EA_8005_STATUS		0
+#define EA_8005_CONFIG1		1
+#define EA_8005_CONFIG2		2
+#define EA_8005_RX_END		3
+#define EA_8005_BUFWIN		4
+#define EA_8005_RX_PTR		5
+#define EA_8005_TX_PTR		6
+#define EA_8005_DMA_ADDR	7
 
 #define EA_CMD_DMA_INTEN	(1 << 0)
 #define EA_CMD_RX_INTEN		(1 << 1)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.13 2000/08/12 13:35:08 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.14 2000/08/12 14:06:29 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -44,6 +44,8 @@
  *	- Does not currently support DMA
  *	- Does not currently support multicasts
  *	- Does not transmit multiple packets in one go
+ *	- Does not support big-endian hosts
+ *	- Does not support 8-bit busses
  */
 
 #include "opt_inet.h"
@@ -52,7 +54,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.13 2000/08/12 13:35:08 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.14 2000/08/12 14:06:29 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -97,6 +99,9 @@ __RCSID("$NetBSD: if_ea.c,v 1.13 2000/08/12 13:35:08 bjh21 Exp $");
 #ifndef EA_TIMEOUT
 #define EA_TIMEOUT	60
 #endif
+
+#define EA_TX_BUFFER_SIZE	0x4000
+#define EA_RX_BUFFER_SIZE	0xC000
 
 /*#define EA_TX_DEBUG*/
 /*#define EA_RX_DEBUG*/
@@ -223,8 +228,6 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	
-	/* Look for a network slot interface */
-
 	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE,
 			 PODULE_ATOMWIDE_ETHER3, -1) == 0)
 	    && (matchpodule(pa, MANUFACTURER_ACORN,
@@ -325,7 +328,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 
 
 /*
- * Test the RAM on the ethernet card. This does not work yet
+ * Test the RAM on the ethernet card.
  */
 
 void
