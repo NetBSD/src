@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2000/05/02 04:41:11 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2000/07/01 06:41:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -47,9 +47,9 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	__asm__ __volatile ("1:;bbssi $0, (%0), 1b"
+	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
 		: /* No output */
-		: "r"(alp));
+		: "m"(*alp));
 }
 
 static __inline void
@@ -61,11 +61,11 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	register int ret;
+	int ret;
 
-	__asm__ __volatile ("movl $0,%0;bbssi $0,(%1),1f;incl %0;1:"
-		: "&=r"(ret)
-		: "r"(alp));
+	__asm__ __volatile ("movl $0,%0;bbssi $0,%1,1f;incl %0;1:"
+		: "=&r"(ret)
+		: "m"(*alp));
 
 	return ret;
 }
