@@ -1579,7 +1579,6 @@ relax_addressT segment_address_in_file;
 	    break;
 	case RELOC_32:
 	    if (flagseen['k'] && S_IS_EXTERNAL(fixP->fx_addsy)) {
-fprintf(stderr, "reloc_32, flags = %02x\n", r_flags);
 		r_symbolnum = fixP->fx_addsy->sy_number;
 		r_flags |= 8;	/* set extern bit */
 	    }
