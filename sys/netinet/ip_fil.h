@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.20.2.4 1998/11/24 07:19:23 cgd Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.20.2.5 1998/12/12 00:21:28 cgd Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -13,10 +13,6 @@
 
 #ifndef _NETINET_IP_FIL_H_
 #define _NETINET_IP_FIL_H_
-
-#if defined(__NetBSD__) && defined(PFIL_HOOKS)
-#include "opt_pfil_hooks.h"
-#endif
 
 /*
  * Pathnames for various IP Filter control devices.  Used by LKM
