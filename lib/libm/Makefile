@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.56 2001/12/28 01:32:39 lukem Exp $
+#  $NetBSD: Makefile,v 1.57 2002/01/27 21:59:19 thorpej Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -52,6 +52,8 @@ USE_SHLIBDIR=	yes
 WARNS?=		1
 
 .if (${MACHINE_ARCH} == "alpha")
+# XXX Build with -mieee for now.
+COPTS+=	-mieee
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
