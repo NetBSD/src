@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.57 2002/04/23 12:55:26 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.58 2002/04/23 17:33:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.57 2002/04/23 12:55:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58 2002/04/23 17:33:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,47 +158,9 @@ void
 siop_attach(sc)
 	struct siop_softc *sc;
 {
-	int error, i;
-	bus_dma_segment_t seg;
-	int rseg;
+	if (siop_common_attach(&sc->sc_c) != 0)
+		return;
 
-	/*
-	 * Allocate DMA-safe memory for the script and map it.
-	 */
-	if ((sc->sc_c.features & SF_CHIP_RAM) == 0) {
-		error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, 
-		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to allocate script DMA memory, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
-		    (caddr_t *)&sc->sc_c.sc_script,
-		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-		if (error) {
-			printf("%s: unable to map script DMA memory, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamap_create(sc->sc_c.sc_dmat, PAGE_SIZE, 1,
-		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_c.sc_scriptdma);
-		if (error) {
-			printf("%s: unable to create script DMA map, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamap_load(sc->sc_c.sc_dmat, sc->sc_c.sc_scriptdma,
-		    sc->sc_c.sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to load script DMA map, "
-			    "error = %d\n", sc->sc_c.sc_dev.dv_xname, error);
-			return;
-		}
-		sc->sc_c.sc_scriptaddr =
-		    sc->sc_c.sc_scriptdma->dm_segs[0].ds_addr;
-		sc->sc_c.ram_size = PAGE_SIZE;
-	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
 	TAILQ_INIT(&sc->lunsw_list);
@@ -209,44 +171,9 @@ siop_attach(sc)
 	    (u_int32_t)sc->sc_c.sc_scriptaddr, sc->sc_c.sc_script);
 #endif
 
-	sc->sc_c.sc_adapt.adapt_dev = &sc->sc_c.sc_dev;
-	sc->sc_c.sc_adapt.adapt_nchannels = 1;
-	sc->sc_c.sc_adapt.adapt_openings = 0;
 	sc->sc_c.sc_adapt.adapt_max_periph = SIOP_NTAG - 1;
-	sc->sc_c.sc_adapt.adapt_ioctl = siop_ioctl;
-	sc->sc_c.sc_adapt.adapt_minphys = minphys;
 	sc->sc_c.sc_adapt.adapt_request = siop_scsipi_request;
 
-	memset(&sc->sc_c.sc_chan, 0, sizeof(sc->sc_c.sc_chan));
-	sc->sc_c.sc_chan.chan_adapter = &sc->sc_c.sc_adapt;
-	sc->sc_c.sc_chan.chan_bustype = &scsi_bustype;
-	sc->sc_c.sc_chan.chan_channel = 0;
-	sc->sc_c.sc_chan.chan_flags = SCSIPI_CHAN_CANGROW;
-	sc->sc_c.sc_chan.chan_ntargets =
-	    (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
-	sc->sc_c.sc_chan.chan_nluns = 8;
-	sc->sc_c.sc_chan.chan_id =
-	    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCID);
-	if (sc->sc_c.sc_chan.chan_id == 0 ||
-	    sc->sc_c.sc_chan.chan_id >= sc->sc_c.sc_chan.chan_ntargets)
-		sc->sc_c.sc_chan.chan_id = SIOP_DEFAULT_TARGET;
-
-	for (i = 0; i < 16; i++)
-		sc->sc_c.targets[i] = NULL;
-
-	/* find min/max sync period for this chip */
-	sc->sc_c.maxsync = 0;
-	sc->sc_c.minsync = 255;
-	for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++) {
-		if (sc->sc_c.clock_period != scf_period[i].clock)
-			continue;
-		if (sc->sc_c.maxsync < scf_period[i].period)
-			sc->sc_c.maxsync = scf_period[i].period;
-		if (sc->sc_c.minsync > scf_period[i].period)
-			sc->sc_c.minsync = scf_period[i].period;
-	}
-	if (sc->sc_c.maxsync == 255 || sc->sc_c.minsync == 0)
-		panic("siop: can't find my sync parameters\n");
 	/* Do a bus reset, so that devices fall back to narrow/async */
 	siop_resetbus(&sc->sc_c);
 	/*
@@ -798,7 +725,8 @@ scintr:
 					siop_target->target_c.status =
 					    TARST_SYNC_NEG;
 					siop_sdtr_msg(&siop_cmd->cmd_c, 0,
-					    sc->sc_c.minsync, sc->sc_c.maxoff);
+					    sc->sc_c.st_minsync,
+					    sc->sc_c.maxoff);
 					siop_table_sync(siop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
