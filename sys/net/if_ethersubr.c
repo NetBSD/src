@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.48 1999/09/15 20:48:19 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.49 1999/09/21 22:18:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,7 +168,7 @@ ether_output(ifp, m0, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
-	u_int16_t etype;
+	u_int16_t etype = 0;
 	int s, error = 0, hdrcmplt = 0;
  	u_char esrc[6], edst[6];
 	struct mbuf *m = m0;
@@ -306,7 +306,6 @@ ether_output(ifp, m0, dst, rt0)
 			    sizeof(llc.llc_snap_org_code));
 			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
 			bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
-			etype = htons(m->m_pkthdr.len);
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
@@ -366,7 +365,6 @@ ether_output(ifp, m0, dst, rt0)
 		M_PREPEND(m, 3, M_DONTWAIT);
 		if (m == NULL)
 			return (0);
-		etype = htons(m->m_pkthdr.len);
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
@@ -403,7 +401,6 @@ ether_output(ifp, m0, dst, rt0)
 				      (caddr_t)eh->ether_shost, sizeof (edst));
 			}
 		}
-		etype = htons(m->m_pkthdr.len);
 #ifdef LLC_DEBUG
 		{
 			int i;
@@ -451,6 +448,8 @@ ether_output(ifp, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
+	if (etype == 0)
+		etype = htons(m->m_pkthdr.len);
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));

@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.3 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: aarp.c,v 1.4 1999/09/21 22:18:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -194,8 +194,7 @@ aarpwhohas(ifp, sat)
 	if (aa->aa_flags & AFA_PHASE2) {
 		bcopy(atmulticastaddr, eh->ether_dhost,
 		    sizeof(eh->ether_dhost));
-		eh->ether_type = htons(sizeof(struct llc) +
-		    sizeof(struct ether_aarp));
+		eh->ether_type = 0;	/* if_output will treat as 802 */
 		M_PREPEND(m, sizeof(struct llc), M_WAIT);
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
@@ -453,8 +452,6 @@ at_aarpinput(ifp, m)
 	bcopy(ea->aarp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
 
 	if (aa->aa_flags & AFA_PHASE2) {
-		eh->ether_type = htons(sizeof(struct llc) +
-		    sizeof(struct ether_aarp));
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
 		if (m == NULL)
 			return;
@@ -467,6 +464,7 @@ at_aarpinput(ifp, m)
 
 		bcopy(ea->aarp_spnet, ea->aarp_tpnet, sizeof(ea->aarp_tpnet));
 		bcopy(&ma.s_net, ea->aarp_spnet, sizeof(ea->aarp_spnet));
+		eh->ether_type = 0;	/* if_output will treat as 802 */
 	} else {
 		eh->ether_type = htons(ETHERTYPE_AARP);
 	}
@@ -588,8 +586,7 @@ aarpprobe(arp)
 	if (aa->aa_flags & AFA_PHASE2) {
 		bcopy(atmulticastaddr, eh->ether_dhost,
 		    sizeof(eh->ether_dhost));
-		eh->ether_type = htons(sizeof(struct llc) +
-		    sizeof(struct ether_aarp));
+		eh->ether_type = 0;	/* if_output will treat as 802 */
 		M_PREPEND(m, sizeof(struct llc), M_WAIT);
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
