@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.33 2001/04/24 04:31:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.34 2001/05/25 04:06:12 chs Exp $	*/
 
 /*
  *
@@ -146,7 +146,7 @@ udv_attach(arg, accessprot, off, size)
 	/*
 	 * Check that the specified range of the device allows the
 	 * desired protection.
-	 * 
+	 *
 	 * XXX assumes VM_PROT_* == PROT_*
 	 * XXX clobbers off and size, but nothing else here needs them.
 	 */
@@ -164,7 +164,7 @@ udv_attach(arg, accessprot, off, size)
 	for (;;) {
 
 		/*
-		 * first, attempt to find it on the main list 
+		 * first, attempt to find it on the main list
 		 */
 
 		simple_lock(&udv_lock);
@@ -260,7 +260,7 @@ udv_attach(arg, accessprot, off, size)
 	}
 	/*NOTREACHED*/
 }
-	
+
 /*
  * udv_reference
  *
@@ -279,7 +279,7 @@ udv_reference(uobj)
 
 	simple_lock(&uobj->vmobjlock);
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
+	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)",
 		    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
@@ -307,7 +307,7 @@ again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
 		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
+		UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d",
 			  uobj,uobj->uo_refs,0,0);
 		return;
 	}
@@ -397,16 +397,16 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 * we do not allow device mappings to be mapped copy-on-write
 	 * so we kill any attempt to do so here.
 	 */
-	
+
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
 		entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 		return(EIO);
 	}
 
 	/*
-	 * get device map function.   
+	 * get device map function.
 	 */
 
 	device = udv->u_device;
@@ -423,7 +423,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	curr_offset = entry->offset + (vaddr - entry->start);
 	/* pmap va = vaddr (virtual address of pps[0]) */
 	curr_va = vaddr;
-	
+
 	/*
 	 * loop over the page range entering in as needed
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.13 2001/03/15 06:10:57 chs Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.14 2001/05/25 04:06:13 chs Exp $	*/
 
 /*
  *
@@ -105,7 +105,7 @@ uvm_io(map, uio)
 		 */
 
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
-			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
+			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG |
 			    UVM_EXTRACT_FIXPROT);
 		if (error) {
 
