@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.10 1994/01/29 11:58:01 brezak Exp $
+ *	$Id: ip_input.c,v 1.11 1994/02/02 05:59:04 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -273,7 +273,6 @@ next:
 				goto ours;
 		}
 	}
-#ifdef MULTICAST
 	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
 		struct in_multi *inm;
 #ifdef MROUTING
@@ -327,7 +326,6 @@ next:
 		}
 		goto ours;
 	}
-#endif
 	if (ip->ip_dst.s_addr == (u_long)INADDR_BROADCAST)
 		goto ours;
 	if (ip->ip_dst.s_addr == INADDR_ANY)
