@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.39 2001/04/25 17:53:40 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.40 2001/04/27 21:36:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1384,6 +1384,9 @@ scsipi_complete(xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
+
+	if (periph->periph_switch->psw_done)
+		periph->periph_switch->psw_done(xs);
 	if ((bp = xs->bp) != NULL) {
 		if (error) {
 			bp->b_error = error;
