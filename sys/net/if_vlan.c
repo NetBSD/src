@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.6 2000/09/28 07:35:36 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.7 2000/09/28 08:28:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -232,9 +232,11 @@ vlan_unconfig(struct ifnet *ifp)
 	struct ifvlan *ifv;
 	int s;
 
-	s = splsoftnet();
-
 	ifv = ifp->if_softc;
+	if (ifv->ifv_p == NULL)
+		return (0);
+
+	s = splsoftnet();
 
 	/*
  	 * Since the interface is being unconfigured, we need to empty the
