@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.18 1998/12/29 14:29:53 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.19 1999/01/03 01:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1035,15 +1035,16 @@ usbd_do_request(dev, req, data)
 	usb_device_request_t *req;
 	void *data;
 {
-	return (usbd_do_request_flags(dev, req, data, 0));
+	return (usbd_do_request_flags(dev, req, data, 0, 0));
 }
 
 usbd_status
-usbd_do_request_flags(dev, req, data, flags)
+usbd_do_request_flags(dev, req, data, flags, actlen)
 	usbd_device_handle dev;
 	usb_device_request_t *req;
 	void *data;
 	u_int16_t flags;
+	int *actlen;
 {
 	usbd_request_handle reqh;
 	usbd_status r;
@@ -1074,6 +1075,8 @@ usbd_do_request_flags(dev, req, data, flags)
 		       UGETW(reqh->request.wLength), 
 		       reqh->length, reqh->actlen);
 #endif
+	if (actlen)
+		*actlen = reqh->actlen;
 	if (r == USBD_STALLED) {
 		/* 
 		 * The control endpoint has stalled.  Control endpoints
