@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.2 2002/10/06 17:13:58 thorpej Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.3 2003/09/06 11:31:22 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -29,9 +29,10 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#ifndef _IFPGAVAR_H_
+#define _IFPGAVAR_H_
 
-#include "locators.h"
+#include <machine/bus.h>
 
 /* We statically map the UARTS at boot so that we can access the console
    before we've probed for the IFPGA. */
@@ -77,7 +78,35 @@ struct ifpga_attach_args {
 	 */
 };
 
+/* There are roughly 32 interrupt sources.  */
+#define NIRQ		32
+struct intrhand {
+	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
+	int (*ih_func)(void *);		/* handler */
+	void *ih_arg;			/* arg for handler */
+	int ih_ipl;			/* IPL_* */
+	int ih_irq;			/* IRQ number */
+};
+
+#define IRQNAMESIZE	sizeof("tmr 0 hard")
+
+struct intrq {
+	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
+	struct evcnt iq_ev;		/* event counter */
+	int iq_mask;			/* IRQs to mask while handling */
+	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_ist;			/* share type */
+};
+
+
+void ifpga_intr_init(void);
+void ifpga_intr_postinit(void);
+void *ifpga_intr_establish(int, int, int (*)(void *), void *);
+void ifpga_intr_disestablish(void *);
+
 void ifpga_create_io_bs_tag(struct bus_space *, void *);
 void ifpga_create_mem_bs_tag(struct bus_space *, void *);
 
 void ifpga_reset(void);
+
+#endif /* _IFPGAVAR_H */
