@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edit.c	5.2 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: edit.c,v 1.2 1993/08/01 18:17:58 mycroft Exp $";
+static char rcsid[] = "$Id: edit.c,v 1.3 1994/08/17 19:54:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ verify(pw)
 	register char *p;
 	FILE *fp;
 	int len;
-	char buf[LINE_MAX];
+	static char buf[LINE_MAX];
 
 	if (!(fp = fopen(tempname, "r")))
 		pw_error(tempname, 1, 1);
