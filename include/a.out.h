@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.7 1993/09/01 08:44:05 deraadt Exp $
+ *	$Id: a.out.h,v 1.8 1993/09/12 02:37:05 glass Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -39,7 +39,7 @@
 
 #include <sys/exec.h>
 
-#if defined(amiga)
+#if defined(amiga) || defined(sun3)
 #define	__LDPGSZ	8192
 #endif
 #if defined(hp300) || defined(i386) || defined(pc532)
