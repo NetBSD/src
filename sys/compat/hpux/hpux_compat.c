@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.54.2.9 2002/08/13 02:19:11 nathanw Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.54.2.10 2002/10/05 01:40:21 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.9 2002/08/13 02:19:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.10 2002/10/05 01:40:21 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1191,8 +1191,8 @@ hpux_sys_alarm_6x(l, v, retval)
 	int s;
 	struct itimerval *itp, it;
 
-	if (p->p_timers && p->p_timers[ITIMER_REAL])
-		itp = &p->p_timers[ITIMER_REAL]->pt_time;
+	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
 	else
 		itp = NULL;
 
@@ -1202,7 +1202,7 @@ hpux_sys_alarm_6x(l, v, retval)
 	 * Clear any pending timer alarms.
 	 */
 	if (itp) {
-		callout_stop(&p->p_timers[ITIMER_REAL]->pt_ch);
+		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
 		timerclear(&itp->it_interval);
 		if (timerisset(&itp->it_value) &&
 		    timercmp(&itp->it_value, &time, >))
@@ -1239,12 +1239,15 @@ hpux_sys_alarm_6x(l, v, retval)
 	}
 	if (p->p_timers == NULL)
 		timers_alloc(p);
-	if (p->p_timers[ITIMER_REAL] == NULL) {
-		p->p_timers[ITIMER_REAL] = pool_get(&ptimer_pool, PR_WAITOK);
-		p->p_timers[ITIMER_REAL]->pt_ev.sigev_notify = SIGEV_SIGNAL;
-		p->p_timers[ITIMER_REAL]->pt_ev.sigev_signo = SIGALRM;
-		p->p_timers[ITIMER_REAL]->pt_type = CLOCK_REALTIME;
-		callout_init(&p->p_timers[ITIMER_REAL]->pt_ch);
+	if (p->p_timers->pts_timers[ITIMER_REAL] == NULL) {
+		p->p_timers->pts_timers[ITIMER_REAL] = 
+		    pool_get(&ptimer_pool, PR_WAITOK);
+		p->p_timers->pts_timers[ITIMER_REAL]->pt_ev.sigev_notify =
+		    SIGEV_SIGNAL;
+		p->p_timers->pts_timers[ITIMER_REAL]->pt_ev.sigev_signo =
+		    SIGALRM;
+		p->p_timers->pts_timers[ITIMER_REAL]->pt_type = CLOCK_REALTIME;
+		callout_init(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
 	}
 
 	if (timerisset(&it.it_value)) {
@@ -1253,11 +1256,11 @@ hpux_sys_alarm_6x(l, v, retval)
 		 * callout_reset() does it for us.
 		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		callout_reset(&p->p_timers[ITIMER_REAL]->pt_ch,
-		    hzto(&p->p_timers[ITIMER_REAL]->pt_time.it_value),
-		    realtimerexpire, p->p_timers[ITIMER_REAL]);
+		callout_reset(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch,
+		    hzto(&p->p_timers->pts_timers[ITIMER_REAL]->pt_time.it_value),
+		    realtimerexpire, p->p_timers->pts_timers[ITIMER_REAL]);
 	}
-	p->p_timers[ITIMER_REAL]->pt_time = it;
+	p->p_timers->pts_timers[ITIMER_REAL]->pt_time = it;
 	splx(s);
 
 	return (0);
