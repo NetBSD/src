@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 1998/05/09 00:13:57 mycroft Exp $
+#	$NetBSD: MAKEDEV,v 1.22 1998/05/10 16:52:14 mhitch Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -50,8 +50,8 @@ do
 case $i in
 
 all)
-	sh $0 std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
-	sh $0 rz8 rz9 rz10 rz11 rz12 tz2 tz3
+	sh $0 std fd rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
+	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
 	sh $0 dc0 scc0 
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
@@ -138,7 +138,7 @@ rz*|vnd*|ccd*)
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
 	esac
 	case $unit in
-	[0-6]|8|9|1[0-4])
+	[0-9]|1[0-4])
 		rm -f ${name}${unit}[a-h] r${name}${unit}[a-h]
 		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
 		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
