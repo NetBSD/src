@@ -35,14 +35,14 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 martin Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $");
 
 #include "opt_isicpci.h"
 #ifdef ISICPCI_AVM_A1
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 m
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_mbuf.h>
@@ -105,24 +106,46 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 m
 
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
+static isdn_link_t *avma1pp_ret_linktab(void *token, int channel);
+static void avma1pp_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+
+void n_connect_request(u_int cdid);
+void n_connect_response(u_int cdid, int response, int cause);
+void n_disconnect_request(u_int cdid, int cause);
+void n_alert_request(u_int cdid);
+void n_mgmt_command(int bri, int cmd, void *parm);
+
+const struct isdn_l3_driver_functions
+ifpci_l3_driver = {
+	avma1pp_ret_linktab,
+	avma1pp_set_link,
+	n_connect_request,
+	n_connect_response,
+	n_disconnect_request,
+	n_alert_request,
+	NULL,
+	NULL,
+	n_mgmt_command
+};
+
 /* prototypes */
-static void avma1pp_disable(struct l1_softc *);
-static int isic_hscx_fifo(l1_bchan_state_t *chan, struct l1_softc *sc);
+static void avma1pp_disable(struct isic_softc *);
+static int isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc);
 
 static int avma1pp_intr(void*);
-static void avma1pp_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size);
-static void avma1pp_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size);
-static void avma1pp_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data);
-static u_int8_t avma1pp_read_reg(struct l1_softc *sc, int what, bus_size_t offs);
-static void hscx_write_fifo(int chan, const void *buf, size_t len, struct l1_softc *sc);
-static void hscx_read_fifo(int chan, void *buf, size_t len, struct l1_softc *sc);
-static void hscx_write_reg(int chan, u_int off, u_int val, struct l1_softc *sc);
-static u_char hscx_read_reg(int chan, u_int off, struct l1_softc *sc);
-static u_int hscx_read_reg_int(int chan, u_int off, struct l1_softc *sc);
+static void avma1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void avma1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size);
+static void avma1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static u_int8_t avma1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc);
+static void hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc);
+static void hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc);
+static u_char hscx_read_reg(int chan, u_int off, struct isic_softc *sc);
+static u_int hscx_read_reg_int(int chan, u_int off, struct isic_softc *sc);
 static void avma1pp_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
-static void avma1pp_map_int(struct pci_l1_softc *sc, struct pci_attach_args *pa);
+static void avma1pp_map_int(struct pci_isic_softc *sc, struct pci_attach_args *pa);
 static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int activate);
-static void avma1pp_init_linktab(struct l1_softc *);
+static void avma1pp_init_linktab(struct isic_softc *);
 
 /*---------------------------------------------------------------------------*
  *	AVM PCI Fritz!Card special registers
@@ -228,7 +251,7 @@ static void avma1pp_init_linktab(struct l1_softc *);
  *	txl = transmit length
  *	cmd = the command to be executed
  *
- * The fields are defined as u_char in struct l1_softc.
+ * The fields are defined as u_char in struct isic_softc.
  *
  * Macro to coalesce the byte fields into a u_int
  */
@@ -262,7 +285,7 @@ static void
 avma1pp_read_fifo(void *buf, const void *base, size_t len)
 {
 	int unit;
-	struct l1_softc *sc;
+	struct isic_softc *sc;
 
 	unit = (int)base & 0xff;
 	sc = &l1_sc[unit];
@@ -284,7 +307,7 @@ avma1pp_read_fifo(void *buf, const void *base, size_t len)
 }
 
 static void
-hscx_read_fifo(int chan, void *buf, size_t len, struct l1_softc *sc)
+hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc)
 {
 	u_int *ip;
 	size_t cnt;
@@ -304,7 +327,7 @@ hscx_read_fifo(int chan, void *buf, size_t len, struct l1_softc *sc)
 #else
 
 static void
-avma1pp_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+avma1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	switch (what) {
 		case ISIC_WHAT_ISAC:
@@ -321,7 +344,7 @@ avma1pp_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 }
 
 static void
-hscx_read_fifo(int chan, void *buf, size_t len, struct l1_softc *sc)
+hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc)
 {
 	u_int32_t *ip;
 	size_t cnt;
@@ -348,7 +371,7 @@ static void
 avma1pp_write_fifo(void *base, const void *buf, size_t len)
 {
 	int unit;
-	struct l1_softc *sc;
+	struct isic_softc *sc;
 
 	unit = (int)base & 0xff;
 	sc = &l1_sc[unit];
@@ -370,7 +393,7 @@ avma1pp_write_fifo(void *base, const void *buf, size_t len)
 }
 
 static void
-hscx_write_fifo(int chan, const void *buf, size_t len, struct l1_softc *sc)
+hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 {
 	register const u_int *ip;
 	register size_t cnt;
@@ -402,7 +425,7 @@ hscx_write_fifo(int chan, const void *buf, size_t len, struct l1_softc *sc)
 #else
 
 static void
-avma1pp_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+avma1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	switch (what) {
 		case ISIC_WHAT_ISAC:
@@ -419,7 +442,7 @@ avma1pp_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 }
 
 static void
-hscx_write_fifo(int chan, const void *buf, size_t len, struct l1_softc *sc)
+hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 {
 	u_int32_t *ip;
 	size_t cnt;
@@ -458,7 +481,7 @@ static void
 avma1pp_write_reg(u_char *base, u_int offset, u_int v)
 {
 	int unit;
-	struct l1_softc *sc;
+	struct isic_softc *sc;
 	u_char reg_bank;
 
 	unit = (int)base & 0xff;
@@ -486,7 +509,7 @@ avma1pp_write_reg(u_char *base, u_int offset, u_int v)
 }
 
 static void
-hscx_write_reg(int chan, u_int off, u_int val, struct l1_softc *sc)
+hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc)
 {
 	/* HACK */
 	if (off == H_MASK)
@@ -499,7 +522,7 @@ hscx_write_reg(int chan, u_int off, u_int val, struct l1_softc *sc)
 #else
 
 static void
-avma1pp_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+avma1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	u_char reg_bank;
 	switch (what) {
@@ -522,7 +545,7 @@ avma1pp_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 }
 
 static void
-hscx_write_reg(int chan, u_int off, u_int val, struct l1_softc *sc)
+hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc)
 {
 	/* HACK */
 	if (off == H_MASK)
@@ -543,7 +566,7 @@ static u_char
 avma1pp_read_reg(u_char *base, u_int offset)
 {
 	int unit;
-	struct l1_softc *sc;
+	struct isic_softc *sc;
 	u_char reg_bank;
 
 	unit = (int)base & 0xff;
@@ -566,7 +589,7 @@ avma1pp_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-avma1pp_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+avma1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	u_char reg_bank;
 	switch (what) {
@@ -589,7 +612,7 @@ avma1pp_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 #endif
 
 static u_char
-hscx_read_reg(int chan, u_int off, struct l1_softc *sc)
+hscx_read_reg(int chan, u_int off, struct isic_softc *sc)
 {
 	return(hscx_read_reg_int(chan, off, sc) & 0xff);
 }
@@ -599,7 +622,7 @@ hscx_read_reg(int chan, u_int off, struct l1_softc *sc)
  * byte.
  */
 static u_int
-hscx_read_reg_int(int chan, u_int off, struct l1_softc *sc)
+hscx_read_reg_int(int chan, u_int off, struct isic_softc *sc)
 {
 	/* HACK */
 	if (off == H_ISTA)
@@ -621,7 +644,7 @@ hscx_read_reg_int(int chan, u_int off, struct l1_softc *sc)
 int
 isic_attach_avma1pp(int unit, u_int iobase1, u_int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[unit];
+	struct isic_softc *sc = &l1_sc[unit];
 	u_int v;
 
 	/* check max unit range */
@@ -778,9 +801,9 @@ isic_attach_avma1pp(int unit, u_int iobase1, u_int iobase2)
 #else
 
 void
-isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
+isic_attach_fritzPci(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	u_int v;
 
 	/* setup io mappings */
@@ -913,8 +936,11 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	sc->sc_freeflag2 = 0;
 
 	/* init higher protocol layers */
-	
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
+	sc->sc_l3token = isdn_attach_bri(sc->sc_dev.dv_xname, 
+	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver);
+	sc->sc_l2.driver = &isic_std_driver;
+	sc->sc_l2.l1_token = sc;
+	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
 }
 
 #endif
@@ -923,7 +949,7 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
  * this is the real interrupt routine
  */
 static void
-avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
+avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 {
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int activity = -1;
@@ -1038,7 +1064,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				if (stat & HSCX_STAT_RME)
@@ -1083,7 +1109,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 							hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 							hdr.dir = FROM_NT;
 							hdr.count = ++sc->sc_trace_bcount;
-							isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+							isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 						}
 
 					  if(!(isic_hscx_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
@@ -1158,7 +1184,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 		 * a look at isic_bchannel_start() in i4b_bchan.c !
 		 */
 
-		NDBGL1(L1_H_IRQ, "unit %d, chan %d - XPR, Tx Fifo Empty!", sc->sc_unit, h_chan);
+		NDBGL1(L1_H_IRQ, "%s: chan %d - XPR, Tx Fifo Empty!", sc->sc_dev.dv_xname, h_chan);
 
 		if(chan->out_mbuf_cur == NULL) 	/* last frame is transmitted */
 		{
@@ -1182,7 +1208,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 				
 				if(chan->bprot == BPROT_NONE)
@@ -1211,7 +1237,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
  * the real interrupt routine as appropriate
  */
 static void
-avma1pp_hscx_int_handler(struct l1_softc *sc)
+avma1pp_hscx_int_handler(struct isic_softc *sc)
 {
 	u_int stat;
 
@@ -1225,7 +1251,7 @@ avma1pp_hscx_int_handler(struct l1_softc *sc)
 }
 
 static void
-avma1pp_disable(struct l1_softc *sc)
+avma1pp_disable(struct isic_softc *sc)
 {
 #ifdef __FreeBSD__
 	outb(sc->sc_port + STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
@@ -1236,7 +1262,7 @@ avma1pp_disable(struct l1_softc *sc)
 
 #ifdef __FreeBSD__
 static void
-avma1pp_intr(struct l1_softc *sc)
+avma1pp_intr(struct isic_softc *sc)
 {
 #define OURS	/* no return value accumulated */
 #define	ISICINTR(sc)	isicintr_sc(sc)
@@ -1244,7 +1270,7 @@ avma1pp_intr(struct l1_softc *sc)
 static int
 avma1pp_intr(void * parm)
 {
-	struct l1_softc *sc = parm;
+	struct isic_softc *sc = parm;
 	int ret = 0;
 #define OURS	ret = 1
 #define	ISICINTR(sc)	isicintr(sc)
@@ -1288,7 +1314,7 @@ avma1pp_intr(void * parm)
 void
 avma1pp_map_int(pcici_t config_id, void *pisc, unsigned *net_imask)
 {
-	struct l1_softc *sc = (struct l1_softc *)pisc;
+	struct isic_softc *sc = (struct isic_softc *)pisc;
 
 #ifdef AVMA1PCI_DEBUG
 	/* may need the irq later */
@@ -1317,9 +1343,9 @@ avma1pp_map_int(pcici_t config_id, void *pisc, unsigned *net_imask)
 }
 #else
 static void
-avma1pp_map_int(struct pci_l1_softc *psc, struct pci_attach_args *pa)
+avma1pp_map_int(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -1346,13 +1372,13 @@ avma1pp_map_int(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 #endif
 
 static void
-avma1pp_hscx_init(struct l1_softc *sc, int h_chan, int activate)
+avma1pp_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 {
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	u_int param = 0;
 
-	NDBGL1(L1_BCHAN, "unit=%d, channel=%d, %s",
-		sc->sc_unit, h_chan, activate ? "activate" : "deactivate");
+	NDBGL1(L1_BCHAN, "%s: channel=%d, %s",
+		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
 
 	if (activate == 0)
 	{
@@ -1401,7 +1427,7 @@ avma1pp_hscx_init(struct l1_softc *sc, int h_chan, int activate)
 static void
 avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
@@ -1413,12 +1439,11 @@ avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 		avma1pp_hscx_init(sc, h_chan, activate);
 	}
 		
-	NDBGL1(L1_BCHAN, "unit=%d, channel=%d, %s",
-		sc->sc_unit, h_chan, activate ? "activate" : "deactivate");
+	NDBGL1(L1_BCHAN, "%s: channel=%d, %s",
+		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
 
 	/* general part */
 
-	chan->unit = sc->sc_unit;	/* unit number */
 	chan->channel = h_chan;		/* B channel */
 	chan->bprot = bprot;		/* B channel protocol */
 	chan->state = HSCX_IDLE;	/* B channel state */
@@ -1465,7 +1490,7 @@ avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 static void
 avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 	int activity = -1;
@@ -1513,7 +1538,7 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
 	isic_hscx_fifo(chan, sc);
@@ -1530,9 +1555,11 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
  *	return the address of isic drivers linktab	
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
-avma1pp_ret_linktab(isdn_layer1token t, int channel)
+avma1pp_ret_linktab(void *token, int channel)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct l2_softc *l2sc = token;
+	struct isic_softc *sc = l2sc->l1_token;
+
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	return(&chan->isdn_linktab);
@@ -1542,9 +1569,10 @@ avma1pp_ret_linktab(isdn_layer1token t, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-avma1pp_set_link(isdn_layer1token t, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc)
+avma1pp_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct l2_softc *l2sc = token;
+	struct isic_softc *sc = l2sc->l1_token;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	chan->l4_driver = l4_driver;
@@ -1562,18 +1590,10 @@ avma1pp_l4_bchannel_functions = {
  *	initialize our local linktab
  *---------------------------------------------------------------------------*/
 static void
-avma1pp_init_linktab(struct l1_softc *sc)
+avma1pp_init_linktab(struct isic_softc *sc)
 {
 	l1_bchan_state_t *chan = &sc->sc_chan[HSCX_CH_A];
 	isdn_link_t *lt = &chan->isdn_linktab;
-
-	/* make sure the hardware driver is known to layer 4 */
-	/* avoid overwriting if already set */
-	if (ctrl_types[CTRL_PASSIVE].set_l4_driver == NULL)
-	{
-		ctrl_types[CTRL_PASSIVE].set_l4_driver = avma1pp_set_link;
-		ctrl_types[CTRL_PASSIVE].get_linktab = avma1pp_ret_linktab;
-	}
 
 	/* local setup */
 	lt->l1token = sc;
@@ -1608,7 +1628,7 @@ avma1pp_init_linktab(struct l1_softc *sc)
 static void
 avma1pp_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
@@ -1628,7 +1648,7 @@ avma1pp_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
  *	Put this here until it can go into i4b_hscx.c
  *---------------------------------------------------------------------------*/
 static int
-isic_hscx_fifo(l1_bchan_state_t *chan, struct l1_softc *sc)
+isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 {
 	int len;
 	int nextlen;
@@ -1686,7 +1706,7 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct l1_softc *sc)
 					hdr.type = (chan->channel == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 			}
 			else

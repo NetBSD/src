@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.2 2001/03/24 12:40:31 martin Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.3 2002/03/24 20:35:58 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.2 2001/03/24 12:40:31 martin Exp $ 
+ *	$Id: i4b_l2.h,v 1.3 2002/03/24 20:35:58 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -361,5 +361,6 @@ extern int i4b_dl_establish_cnf ( int bri );
 extern int i4b_dl_unit_data_ind ( int bri, struct mbuf *m );
 extern int i4b_dl_data_ind ( int bri, struct mbuf *m );
 int i4b_mdl_command_req(int bri, int, void *);
+void * isdn_find_softc_by_bri(int bri);
 
 #endif /* _I4B_L2_H_ */

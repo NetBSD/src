@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.6 2002/02/10 12:26:23 wiz Exp $ 
+ *	$Id: isic_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.6 2002/02/10 12:26:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -75,14 +75,16 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.6 2002/02/10 12:26:23 wiz Exp $");
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_trace.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
-
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_trace.h>
-#include <netisdn/i4b_l1l2.h>
 #include <dev/pci/isic_pci.h>
 
 #include "opt_isicpci.h"
@@ -94,11 +96,11 @@ static void isic_pci_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
 #ifdef ISICPCI_ELSA_QS1PCI
-static void isic_pci_isdn_attach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
+static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname));
 #endif
 
 struct cfattach isic_pci_ca = {
-	sizeof(struct pci_l1_softc), isic_pci_match, isic_pci_attach
+	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach
 };
 
 
@@ -107,8 +109,8 @@ static const struct isic_pci_product {
 	pci_product_id_t npp_product;
 	int cardtype;
 	const char * name;
-	void (*attach)(struct pci_l1_softc *psc, struct pci_attach_args *pa);
-	void (*pciattach)(struct pci_l1_softc *psc, struct pci_attach_args *pa);
+	void (*attach)(struct pci_isic_softc *psc, struct pci_attach_args *pa);
+	void (*pciattach)(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
 } isic_pci_products[] = {
 
 #ifdef ISICPCI_ELSA_QS1PCI
@@ -177,8 +179,8 @@ isic_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_l1_softc *psc = (void*) self;
-	struct l1_softc *sc = &psc->sc_isic;
+	struct pci_isic_softc *psc = (void*) self;
+	struct isic_softc *sc = &psc->sc_isic;
 	struct pci_attach_args *pa = aux;
 	const struct isic_pci_product * prod;
 
@@ -186,7 +188,6 @@ isic_pci_attach(parent, self, aux)
 	prod = find_matching_card(pa);
 	if (prod == NULL) return; /* oops - not found?!? */
 
-	sc->sc_unit = sc->sc_dev.dv_unit;
 	printf(": %s\n", prod->name);
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
@@ -198,7 +199,7 @@ isic_pci_attach(parent, self, aux)
 	prod->attach(psc, pa);
 
 	/* generic setup, if needed for this card */
-	if (prod->pciattach) prod->pciattach(psc, pa);
+	if (prod->pciattach) prod->pciattach(psc, pa, prod->name);
 }
 
 /*---------------------------------------------------------------------------*
@@ -206,11 +207,12 @@ isic_pci_attach(parent, self, aux)
  *---------------------------------------------------------------------------*/
 #ifdef ISICPCI_ELSA_QS1PCI
 static void
-isic_pci_isdn_attach(psc, pa)
-	struct pci_l1_softc *psc;
+isic_pci_isdn_attach(psc, pa, cardname)
+	struct pci_isic_softc *psc;
 	struct pci_attach_args *pa;
+	const char *cardname;
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -353,7 +355,7 @@ isic_pci_isdn_attach(psc, pa)
 #endif
 	
 	/* init higher protocol layers */
-	
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
+
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
 #endif

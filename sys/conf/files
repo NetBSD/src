@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.504 2002/03/24 17:09:26 manu Exp $
+#	$NetBSD: files,v 1.505 2002/03/24 20:35:44 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1467,7 +1467,6 @@ file	netisdn/i4b_rbch.c		isdnbchan		needs-count
 file	netisdn/i4b_tel.c		isdntel			needs-count
 file	netisdn/i4b_trace.c		isdntrc			needs-count
 
-file	netisdn/i4b_l1l2.c		passive_isdn
 file	netisdn/i4b_mbuf.c		passive_isdn
 file	netisdn/i4b_l2.c		passive_isdn
 file	netisdn/i4b_l2fsm.c		passive_isdn

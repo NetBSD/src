@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.8 2002/03/19 20:10:45 martin Exp $
+ *	$Id: i4b_trace.c,v 1.9 2002/03/24 20:36:03 martin Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.8 2002/03/19 20:10:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.9 2002/03/24 20:36:03 martin Exp $");
 
 #include "isdntrc.h"
 
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.8 2002/03/19 20:10:45 martin Exp $")
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_l3l4.h>
-#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 static struct ifqueue trace_queue[NISDNTRC];
 static int device_state[NISDNTRC];
@@ -131,9 +131,8 @@ isdntrcattach()
  *	device's queue the data is put into.
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
+isdn_layer2_trace_ind(struct l2_softc *sc, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
-	struct l2_softc *sc = (struct l2_softc*)t;
 	struct mbuf *m;
 	int bri, x;
 	int trunc = 0;
@@ -270,8 +269,8 @@ isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		analyzemode = 0;		
 		outunit = -1;
 		
-		rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
-		tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+		rx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(rxunit);
+		tx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(txunit);
 
 		if (rx_l2sc != NULL)
 			rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
@@ -285,7 +284,7 @@ isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		rxunit = -1;
 		txunit = -1;
 	} else {
-		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 		if (l2sc != NULL) {
 			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 			x = splnet();
@@ -361,7 +360,7 @@ isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error = 0;
 	int bri = minor(dev);
 	i4b_trace_setupa_t *tsa;
-	l2_softc_t * l2sc = isdn_find_l2_by_bri(bri);
+	l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 
 	switch(cmd)
 	{
@@ -393,8 +392,8 @@ isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			else
 			{
 				l2_softc_t * rx_l2sc, * tx_l2sc;
-				rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
-				tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+				rx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(rxunit);
+				tx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(txunit);
 
 				if (l2sc == NULL || rx_l2sc == NULL || tx_l2sc == NULL)
 					return ENOTTY;

@@ -62,7 +62,7 @@ struct daic_connection {
  */
 struct daic_unit {
 	struct daic_softc *du_sc;	/* pointer to softc */
-	int du_bri;			/* global bri number of this port */
+	const struct isdn_l3_driver *du_l3;
 	int du_port;			/* port number (on multi BRI cards) */
 	int du_state;			/* state of board, see below */
 #define	DAIC_STATE_COLD		0	/* nothing happened to the board */

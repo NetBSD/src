@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.6 2002/03/22 09:54:17 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.7 2002/03/24 20:36:00 martin Exp $
  *
  * $FreeBSD$
  *
@@ -46,9 +46,6 @@
 #define T313VAL	(hz*4)			/* 4 seconds timeout		*/
 #define T400DEF	(hz*10)			/* 10 seconds timeout		*/
 
-#define N_CALL_DESC (MAX_CONTROLLERS*2)	/* no of call descriptors */
-
-extern int nctrl;		/* number of controllers detected in system */
 
 typedef struct bchan_statistics {
 	int outbytes;
@@ -69,13 +66,6 @@ typedef struct i4b_isdn_bchan_linktab {
 } isdn_link_t;
 
 struct isdn_l4_driver_functions;
-
-/* global linktab functions for controller types (aka hardware drivers) */
-struct ctrl_type_desc {
-	isdn_link_t* (*get_linktab)(void*, int channel);
-	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
-};
-extern struct ctrl_type_desc ctrl_types[];
 
 /*---------------------------------------------------------------------------*
  *	this structure describes one call/connection on one B-channel
@@ -179,7 +169,8 @@ typedef struct
 	char	datetime[DATETIME_MAX];	/* date/time information element*/	
 } call_desc_t;
 
-extern call_desc_t call_desc[N_CALL_DESC];
+extern call_desc_t call_desc[];
+extern int num_call_desc;
 
 /*
  * Set of functions layer 4 drivers calls to manipulate the B channel
@@ -229,15 +220,38 @@ const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int uni
 struct isdn_diagnostic_request;
 struct isdn_dr_prot;
 
+/*
+ * functions exported by a layer 3 driver to layer 4
+ */
+struct isdn_l3_driver_functions {
+	isdn_link_t* (*get_linktab)(void*, int channel);
+	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+	
+	void	(*N_CONNECT_REQUEST)	(unsigned int);	
+	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
+	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
+	void	(*N_ALERT_REQUEST)	(unsigned int);
+	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
+	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
+	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
+};
+
 /*---------------------------------------------------------------------------*
- *	this structure "describes" one controller
+ *	this structure "describes" one BRI (typically identical to one
+ *	controller, but when one controller drives multiple BRIs, this
+ *	is just one of those BRIs)
  *---------------------------------------------------------------------------*/
-typedef struct
-{
-	void*	l1_token;		/* softc of hardware driver	*/
-	int	bri;
-	int	ctrl_type;		/* controller type   (CTRL_XXX)	*/
-	int	card_type;		/* card manufacturer (CARD_XXX) */
+struct isdn_l3_driver {
+	SIMPLEQ_ENTRY(isdn_l3_driver) l3drvq;
+	void*	l1_token;		/* softc of hardware driver, actually
+					 * this is the l2_softc (!!) for
+					 * passive cards, and something else
+					 * for active cards (maybe actually
+					 * the softc there) */
+	int	bri;			/* BRI id assigned to this */
+	char *devname;			/* pointer to autoconf identifier */
+					/* e.g. "isic0" or "daic0 port 2" */
+	char *card_name;		/* type of card */
 
 	int	protocol;		/* D-channel protocol type */
 
@@ -253,16 +267,14 @@ typedef struct
 	int	tei;			/* current tei or -1 if invalid */
 
 	/* pointers to functions to be called from L4 */
-	
-	void	(*N_CONNECT_REQUEST)	(unsigned int);	
-	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
-	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
-	void	(*N_ALERT_REQUEST)	(unsigned int);
-	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
-	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
-	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
-} ctrl_desc_t;
+	const struct isdn_l3_driver_functions * l3driver;
+};
 
-extern ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];
+struct isdn_l3_driver * isdn_attach_bri(const char *devname,
+    const char *cardname, void *l1_token, 
+    const struct isdn_l3_driver_functions * l3driver);
+int isdn_detach_bri(const struct isdn_l3_driver *);
+struct isdn_l3_driver *isdn_find_l3_by_bri(int bri);
+int isdn_count_bri(int *maxbri);
 
 #endif /* _I4B_Q931_H_ */

@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.7 2002/03/22 09:54:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.8 2002/03/24 20:35:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static void daic_connect_response(unsigned int, int, int);
 static void daic_disconnect_request(unsigned int, int);
 static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize));
 static int daic_handle_intr __P((struct daic_softc *sc, int port));
-static int daic_register_port(struct daic_softc *sc, int port);
+static void daic_register_port(struct daic_softc *sc, int port);
 static void daic_request(struct daic_softc *sc, int port, u_int req, u_int id, bus_size_t parmsize, const u_int8_t *parms);
 static u_int daic_assign(struct daic_softc *sc, int port, u_int instance, bus_size_t parmsize, const u_int8_t *parms);
 static void daic_indicate_ind(struct daic_softc *sc, int port);
@@ -83,6 +83,7 @@ static void daic_bch_tx_start(void *, int channel);
 static void daic_set_link(void *softc, int channel,
 	const struct isdn_l4_driver_functions *l4_driver, void *l4_inst );
 static void daic_mgmt_command(int bri, int cmd, void *parm);
+static void daic_alert_request(unsigned int);
 
 static isdn_link_t *daic_ret_linktab(void *softc, int channel);
 
@@ -173,7 +174,9 @@ daic_attach(self, sc)
 		return;
 	}
 
-	printf(": EICON.Diehl %s\n", cardtypename(sc->sc_cardtype));
+	printf("\n");
+	printf("%s: EICON.Diehl %s\n", sc->sc_dev.dv_xname,
+	    cardtypename(sc->sc_cardtype));
 	printf("%s: %d kByte on board RAM\n", sc->sc_dev.dv_xname, memsize);
 	num_ports = sc->sc_cardtype == DAIC_TYPE_QUAD ? 4 : 1;
 	for (i = 0; i < num_ports; i++)
@@ -655,44 +658,39 @@ daic_l4_driver = {
 	daic_stat
 };
 
+static const struct isdn_l3_driver_functions
+daic_l3_functions =  {
+	daic_ret_linktab,
+	daic_set_link,
+	daic_connect_request,
+	daic_connect_response,
+	daic_disconnect_request,
+	daic_alert_request,
+	daic_download,
+	daic_diagnostic,
+	daic_mgmt_command
+};
+
 /*---------------------------------------------------------------------------*
  *	Register one port and attach it to the upper layers
  *---------------------------------------------------------------------------*/
-static int
+static void
 daic_register_port(struct daic_softc *sc, int port)
 {
 	int chan;
-	/* XXX */
-	static int next_bri = 0;
-	int bri = next_bri++;
+	char cardname[80], devname[80];
 
-	sc->sc_port[port].du_bri = bri;
 	sc->sc_port[port].du_port = port;
 	sc->sc_port[port].du_sc = sc;
 
 	/* make sure this hardware driver type is known to layer 4 */
-	ctrl_types[CTRL_DAIC].set_l4_driver = daic_set_link;
-	ctrl_types[CTRL_DAIC].get_linktab = daic_ret_linktab;
-
-	/* setup function pointers */
-	ctrl_desc[nctrl].N_CONNECT_REQUEST = daic_connect_request;
-	ctrl_desc[nctrl].N_CONNECT_RESPONSE = daic_connect_response;
-	ctrl_desc[nctrl].N_DISCONNECT_REQUEST = daic_disconnect_request;
-	ctrl_desc[nctrl].N_DOWNLOAD = daic_download;
-	ctrl_desc[nctrl].N_DIAGNOSTICS = daic_diagnostic;
-	ctrl_desc[nctrl].N_MGMT_COMMAND = daic_mgmt_command;
-
-	/* init type and unit */
-	ctrl_desc[nctrl].l1_token = &sc->sc_port[port];
-	ctrl_desc[nctrl].bri = bri;
-	ctrl_desc[nctrl].ctrl_type = CTRL_DAIC;
-	ctrl_desc[nctrl].card_type = sc->sc_cardtype + 1;
-
-	/* state fields */
-	ctrl_desc[nctrl].dl_est = DL_DOWN;
-	ctrl_desc[nctrl].bch_state[0] = BCH_ST_FREE;
-	ctrl_desc[nctrl].bch_state[1] = BCH_ST_FREE;
-	nctrl++;
+	if (sc->sc_cardtype == DAIC_TYPE_QUAD)
+		sprintf(devname, "%s port %d", sc->sc_dev.dv_xname, port);
+	else
+		strcpy(devname, sc->sc_dev.dv_xname);
+	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
+	sc->sc_port[port].du_l3 = isdn_attach_bri(
+	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
 
 	/* initialize linktabs for this port */
 	for (chan = 0; chan < 2; chan++) {
@@ -703,8 +701,6 @@ daic_register_port(struct daic_softc *sc, int port)
 		lt->rx_queue = &sc->sc_con[port*2+chan].rx_queue;
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
-
-	return bri;
 }
 
 /*---------------------------------------------------------------------------*
@@ -1068,6 +1064,15 @@ static void daic_bch_tx_start(void *token, int channel)
  *	TODO:
  *---------------------------------------------------------------------------*/
 static void
-daic_mgmt_command(int bri, int cmd, void *parm)
+daic_mgmt_command(int whatever, int cmd, void *parm)
 {
 }
+
+/*---------------------------------------------------------------------------*
+ *	TODO:
+ *---------------------------------------------------------------------------*/
+static void
+daic_alert_request(unsigned int whatever)
+{
+}
+

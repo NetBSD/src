@@ -27,7 +27,7 @@
  *	i4b_l2timer.c - layer 2 timer handling
  *	--------------------------------------
  *
- *	$Id: i4b_l2timer.c,v 1.4 2001/11/13 01:06:22 lukem Exp $ 
+ *	$Id: i4b_l2timer.c,v 1.5 2002/03/24 20:35:59 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.4 2001/11/13 01:06:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.5 2002/03/24 20:35:59 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -65,11 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.4 2001/11/13 01:06:22 lukem Exp $"
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
 /*---------------------------------------------------------------------------*

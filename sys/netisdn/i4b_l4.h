@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.3 2002/03/17 20:54:05 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.4 2002/03/24 20:36:01 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -63,8 +63,8 @@ extern void i4b_l4_status_ind ( call_desc_t *cd );
 extern void i4b_l4_proceeding_ind ( call_desc_t *cd );
 extern void i4b_idle_check(call_desc_t *cdp);
 extern call_desc_t * cd_by_cdid ( unsigned int cdid );
-extern call_desc_t * cd_by_unitcr ( int unit, int cr, int crf );
 extern void freecd_by_cd ( call_desc_t *cd );
+call_desc_t *cd_by_bricr(int bri, int cr, int crf);
 extern unsigned char get_rand_cr ( int unit );
 extern call_desc_t * reserve_cd ( void );
 extern void T400_start ( call_desc_t *cd );
