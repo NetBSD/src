@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.3 2002/03/30 06:55:17 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/03/31 03:39:55 thorpej Exp $
 #
 #	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
+KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
 
