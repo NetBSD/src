@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.35 2003/09/29 20:34:23 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.36 2003/12/31 18:53:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,14 +132,15 @@
 /*
  * There is a 128-byte region in the superblock reserved for in-core
  * pointers to summary information. Originally this included an array
- * of pointers to blocks of struct csum; now there are just three
+ * of pointers to blocks of struct csum; now there are just four
  * pointers and the remaining space is padded with fs_ocsp[].
  * NOCSPTRS determines the size of this padding. One pointer (fs_csp)
  * is taken away to point to a contiguous array of struct csum for
  * all cylinder groups; a second (fs_maxcluster) points to an array
  * of cluster sizes that is computed as cylinder groups are inspected;
- * and the third points to an array that tracks the creation of new
- * directories.
+ * the third (fs_contigdirs) points to an array that tracks the
+ * creation of new directories; and the fourth (fs_active) is used
+ * by snapshots.
  */
 #define	NOCSPTRS	((128 / sizeof(void *)) - 4)
 
