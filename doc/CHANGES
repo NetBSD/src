@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.45 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.46 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -187,3 +187,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	postfix: upgrade to 1.1.12.  [itojun 20021126]
 	mk.conf(5): removed support for SYS_INCLUDE=symlinks; <sys/*.h>
 		include files are always copied now.  [lukem 20021126]
+	strsuftoll(3), strsuftollx(3): Add functions to parse numbers
+		with optional suffices and/or products.  [lukem 20021129]
