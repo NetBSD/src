@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.21 1999/08/05 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.22 2000/08/21 02:06:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -201,6 +201,7 @@ splx(ncpl)
  * Miscellaneous
  */
 #define	splhigh()	splraise(imask[IPL_HIGH])
+#defien	splsched()	splhigh()
 #define	spl0()		splx(imask[IPL_ZERO])
 #define splnone()	spl0()
 

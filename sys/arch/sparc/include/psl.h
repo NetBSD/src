@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.21 2000/06/09 10:43:52 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.22 2000/08/21 02:06:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -229,6 +229,8 @@ static __inline int splhigh()
 	    "r" (psr), "n" (PSR_PIL));
 	return (oldipl);
 }
+
+#define	splsched()	splhigh()
 
 /* splx does not have a return value */
 static __inline void splx(newipl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2000/04/15 22:05:52 soda Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2000/08/21 02:06:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,6 +106,7 @@ extern void _clrsoftintr __P((int));
 #define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
 
+#define	splsched()	splhigh()
 #define spllpt()	spltty()		/* lpt driver */
 
 struct splvec {

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 1999/08/05 18:08:09 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 2000/08/21 02:06:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -81,6 +81,8 @@
 #define splstatclock()	raisespl(_SPL_CLOCK)
 #define splserial()	raisespl(_SPL_SERIAL)
 #define splhigh()	raisespl(_SPL_HIGH)
+
+#define	splsched()	splhigh()
 
 #ifdef _KERNEL
 #ifndef _LOCORE
