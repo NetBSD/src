@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.3 2001/01/11 16:09:43 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -86,15 +86,6 @@ struct rtc_softc {
 #define RTC_LEAP	0x17
 #define RTC_UNUSED2	0x19
 
-
-#define FEBRUARY	2
-#define	STARTOFTIME	1970
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
-
-#define	leapyear(year)		((year) % 4 == 0)
 #define	range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
 
 #endif /* _RTCLOCKVAR_H_ */
