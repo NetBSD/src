@@ -2,16 +2,17 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_xdr.new 1.1 89/04/06 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
+.\" $NetBSD: rpc_xdr.3,v 1.2 2001/04/09 12:25:37 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_XDR 3
 .Os
 .Sh NAME
-.Nm xdr_accepted_reply,
-.Nm xdr_authsys_parms,
-.Nm xdr_callhdr,
-.Nm xdr_callmsg,
-.Nm xdr_opaque_auth,
-.Nm xdr_rejected_reply,
+.Nm xdr_accepted_reply ,
+.Nm xdr_authsys_parms ,
+.Nm xdr_callhdr ,
+.Nm xdr_callmsg ,
+.Nm xdr_opaque_auth ,
+.Nm xdr_rejected_reply ,
 .Nm xdr_replymsg
 .Nd XDR library routines for remote procedure calls
 .Sh LIBRARY
@@ -51,7 +52,7 @@ data structure.
 Used to translate between RPC
 reply messages and their external representation.
 It includes the status of the RPC
-call in the XDR language format. 
+call in the XDR language format.
 In the case of success, it also includes the call results.
 .Pp
 .It Fn xdr_authsys_parms
