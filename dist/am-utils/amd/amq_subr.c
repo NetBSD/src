@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.6 2002/11/29 23:06:22 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.7 2002/12/06 03:57:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -75,7 +75,7 @@ amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp)
   static am_node *mp;
 
   mp = find_ap(*(char **) argp);
-  return (amq_mount_tree_p *) &mp;
+  return (void *) &mp;
 }
 
 
@@ -101,7 +101,7 @@ amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp)
 amq_mount_stats *
 amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp)
 {
-  return (amq_mount_stats *) &amd_stats;
+  return (void *) &amd_stats;
 }
 
 
@@ -167,7 +167,7 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
 amq_mount_info_list *
 amqproc_getmntfs_1_svc(voidp argp, struct svc_req *rqstp)
 {
-  return (amq_mount_info_list *) &mfhead;	/* XXX */
+  return (void *) &mfhead;	/* XXX */
 }
 
 
@@ -284,7 +284,7 @@ xdr_amq_mount_tree(XDR *xdrs, amq_mount_tree *objp)
   if (!xdr_amq_mount_tree_node(xdrs, objp)) {
     return (FALSE);
   }
-  if (!xdr_pointer(xdrs, (char **) &mnil, sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
+  if (!xdr_pointer(xdrs, (void *) &mnil, sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
     return (FALSE);
   }
   if (!xdr_pointer(xdrs, (char **) &mp->am_child, sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
