@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.h,v 1.6 1997/10/19 08:13:35 mrg Exp $	*/
+/*	$NetBSD: finger.h,v 1.7 2001/02/05 01:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,5 +70,3 @@ typedef struct where {
 	char tty[UT_LINESIZE+1];	/* null terminated tty line */
 	char host[UT_HOSTSIZE+1];	/* null terminated remote host name */
 } WHERE;
-
-#include "extern.h"
