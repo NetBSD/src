@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parse.y	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: parse.y,v 1.3 1994/12/23 16:47:06 cgd Exp $";
+#if 0
+static char sccsid[] = "from: @(#)parse.y	5.5 (Berkeley) 6/1/90";
+#else
+__RCSID("$NetBSD: parse.y,v 1.4 1997/10/17 08:00:49 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -159,6 +163,9 @@ Proto	:	NAME
 
 extern int yylineno;
 
+void	yyerror __P((char *));
+
+void
 yyerror(msg)
 	char *msg;
 {
