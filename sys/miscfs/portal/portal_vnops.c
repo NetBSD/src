@@ -37,7 +37,7 @@
  * From:
  *	Id: portal_vnops.c,v 1.5 1993/09/22 17:57:20 jsp Exp
  *
- *	$Id: portal_vnops.c,v 1.3 1994/01/12 20:01:39 cgd Exp $
+ *	$Id: portal_vnops.c,v 1.4 1994/01/13 18:29:03 mycroft Exp $
  */
 
 /*
@@ -648,7 +648,9 @@ portal_reclaim(vp)
 		free((caddr_t) pt->pt_arg, M_TEMP);
 		pt->pt_arg = 0;
 	}
+#ifdef PORTAL_DIAGNOSTIC
 	printf("portal_reclaim(%x)\n", vp);
+#endif
 	return (0);
 }
 
