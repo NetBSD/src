@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2002/02/26 22:54:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2002/02/27 13:42:35 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
+.include <bsd.own.mk>
+
 .include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
-.include <bsd.own.mk>
 
 #	create ${RAMDISK_*} variables
 #
