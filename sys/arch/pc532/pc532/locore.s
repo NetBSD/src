@@ -159,6 +159,16 @@ here_we_go:	/* This is the actual start of the locore code! */
 	sprd	fp, __save_fp(pc)  	/* save monitor's fp. */
 	sprd	intbase, __old_intbase(pc)  /* save monitor's intbase. */
 
+.globl	_bootdev
+.globl	_boothowto
+	/* Save the registers loaded by the boot program ... if the kernel
+		was loaded by the boot program. */
+	cmpd	0xc1e86394, r3
+	bne	zero_bss
+	movd	r7, _boothowto(pc)
+	movd	r6, _bootdev(pc)
+
+zero_bss:	
 	/* Zero the bss segment. */
 	addr	_end(pc),r0	# setup to zero the bss segment.
 	addr	_edata(pc),r1
