@@ -342,6 +342,39 @@ gnu/usr.bin/ld/ld/ld.1				1.13-1.16
   --export-dynamic) for compatibility with ELF ports and
   to aid migration to bintils.  (jonathan)
 
+sys/arch/atari/dev/atari5380.c			1.29
+
+  Disable SCSI interrupts while polling for the transfer to
+  finish.  This fixes spurious panics while some Hades systems.
+  This bug could also occur on a TT030.  (leo)
+
+sys/arch/atari/dev/grfabs_et.c			1.8-1.9
+
+  Let et4000 work with other RAMDAC than STG1703.  Use NOWAIT when
+  malloc()-ing a buffer for switching screens. It might be running
+  from an interrupt handler.  (leo)
+
+sys/arch/atari/dev/grfabs_fal.c			1.11
+
+  Fix a bug in the colormap handling.  (leo)
+
+sys/arch/atari/stand/bootxx/bootxx.c		1.3
+
+  Accept an 68060 as cpu type.  (leo)
+
+sys/arch/pmax/tc/scc.c				patch
+
+  Fix a problem preventing kernels from being built with no
+  frame buffer or rconsole devices.  (mrg)
+
+libexec/ld.elf_so/link.h			1.3
+gnu/dist/gdb/solib.c				1.6
+
+  Fix gdb shared-lib handling on mips.  (gdb expects link.h,
+  if it exists, to include certain symbols from elf_machdep.h.
+  Also, work around non-relocation and misfeatures in mips ELF
+  to avoid heuristic fencepost errors.)  (jonathan)
+
 
 NOT YET PULLED UP (expecting patches):
 
