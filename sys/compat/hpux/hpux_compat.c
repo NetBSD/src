@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.68 2003/11/01 17:48:20 tsutsui Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.69 2004/06/01 11:05:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.68 2003/11/01 17:48:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.69 2004/06/01 11:05:40 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -785,12 +785,6 @@ hpux_sys_ioctl(l, v, retval)
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(l, SCARG(uap, fd), com, SCARG(uap, data)));
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
-		return (EBADF);
-
 	/*
 	 * Interpret high order word to find
 	 * amount of data to be copied to/from the
@@ -799,18 +793,27 @@ hpux_sys_ioctl(l, v, retval)
 	size = IOCPARM_LEN(com);
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
+
 	if (size > sizeof (stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		dt = memp;
 	}
+
 	if (com&IOC_IN) {
 		if (size) {
 			error = copyin(SCARG(uap, data), dt, (u_int)size);
-			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
-			}
+			if (error)
+				goto out;
 		} else
 			*(caddr_t *)dt = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
@@ -897,6 +900,8 @@ hpux_sys_ioctl(l, v, retval)
 	 */
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(dt, SCARG(uap, data), (u_int)size);
+out:
+	FILE_UNUSE(fp, p);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
