@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.9 2001/01/20 12:24:22 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.10 2001/01/21 05:00:28 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -74,6 +74,7 @@ int	vrpiu_debug = 0;
 
 #define	PIUSIVL_SCANINTVAL_MIN	333			/* 10msec	*/
 #define	PIUSIVL_SCANINTVAL_MAX	PIUSIVL_SCANINTVAL_MASK	/* 60msec	*/
+#define VRPIU_TP_SCAN_TIMEOUT	(hz/10)		/* timeout is 100msec	*/
 
 #define TP_INTR	(PIUINT_ALLINTR & ~PIUINT_PADADPINTR)
 #define AD_INTR	(PIUINT_PADADPINTR)
@@ -102,6 +103,8 @@ static void	vrpiu_dump_cntreg __P((unsigned int cmd));
 static int	vrpiu_tp_enable __P((void *));
 static int	vrpiu_tp_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static void	vrpiu_tp_disable __P((void *));
+static void	vrpiu_tp_up __P((struct vrpiu_softc *));
+static void	vrpiu_tp_timeout __P((void *));
 int		vrpiu_ad_enable __P((void *));
 void		vrpiu_ad_disable __P((void *));
 static void	vrpiu_start_powerstate __P((void *));
@@ -186,6 +189,10 @@ vrpiuattach(parent, self, aux)
 	 */
 	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
+	/* initialize touch panel timeout structure	*/
+	callout_init(&sc->sc_tptimeout);
+
+	/* initialize calibration context	*/
 	tpcalib_init(&sc->sc_tpcalib);
 #if 1
 	/*
@@ -590,38 +597,47 @@ vrpiu_tp_intr(sc)
 	DPRINTF(("\n"));
 #endif
 	if (intrstat & (PIUINT_PADPAGE0INTR | PIUINT_PADPAGE1INTR)) {
-	    if (!((tpx0 & PIUPB_VALID) && (tpx1 & PIUPB_VALID) &&
-		(tpy0 & PIUPB_VALID) && (tpy1 & PIUPB_VALID))) {
-		printf("vrpiu: internal error, data is not valid!\n");
-	    } else {
-		tpx0 &= PIUPB_PADDATA_MASK;
-		tpx1 &= PIUPB_PADDATA_MASK;
-		tpy0 &= PIUPB_PADDATA_MASK;
-		tpy1 &= PIUPB_PADDATA_MASK;
+	    /*
+	     * just ignore scan data if status isn't Touch.
+	     */
+	    if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
+		/* reset tp scan timeout	*/
+		callout_reset(&sc->sc_tptimeout, VRPIU_TP_SCAN_TIMEOUT,
+			      vrpiu_tp_timeout, sc);
+
+		if (!((tpx0 & PIUPB_VALID) && (tpx1 & PIUPB_VALID) &&
+		    (tpy0 & PIUPB_VALID) && (tpy1 & PIUPB_VALID))) {
+		    printf("vrpiu: internal error, data is not valid!\n");
+		} else {
+		    tpx0 &= PIUPB_PADDATA_MASK;
+		    tpx1 &= PIUPB_PADDATA_MASK;
+		    tpy0 &= PIUPB_PADDATA_MASK;
+		    tpy1 &= PIUPB_PADDATA_MASK;
 #define ISVALID(n, c, m)	((c) - (m) < (n) && (n) < (c) + (m))
-		if (ISVALID(tpx0 + tpx1, 1024, 200) &&
-		    ISVALID(tpx0 + tpx1, 1024, 200)) {
+		    if (ISVALID(tpx0 + tpx1, 1024, 200) &&
+			ISVALID(tpy0 + tpy1, 1024, 200)) {
 #if 0
-		    DPRINTF(("%04x %04x %04x %04x\n",
-			tpx0, tpx1, tpy0, tpy1));
-		    DPRINTF(("%3d %3d (%4d %4d)->", tpx0, tpy0,
-			tpx0 + tpx1, tpy0 + tpy1));
+			DPRINTF(("%04x %04x %04x %04x\n",
+				 tpx0, tpx1, tpy0, tpy1));
+			DPRINTF(("%3d %3d (%4d %4d)->", tpx0, tpy0,
+				 tpx0 + tpx1, tpy0 + tpy1));
 #endif
-		    xraw = tpy1 * 1024 / (tpy0 + tpy1);
-		    yraw = tpx1 * 1024 / (tpx0 + tpx1);
-		    DPRINTF(("%3d %3d", xraw, yraw));
+			xraw = tpy1 * 1024 / (tpy0 + tpy1);
+			yraw = tpx1 * 1024 / (tpx0 + tpx1);
+			DPRINTF(("%3d %3d", xraw, yraw));
 
-		    tpcalib_trans(&sc->sc_tpcalib, xraw, yraw, &x, &y);
+			tpcalib_trans(&sc->sc_tpcalib, xraw, yraw, &x, &y);
 
-		    DPRINTF(("->%4d %4d", x, y));
-		    wsmouse_input(sc->sc_wsmousedev,
-			(cnt & PIUCNT_PENSTC) ? 1 : 0,
-			x, /* x */
-			y, /* y */
-			0, /* z */
-			WSMOUSE_INPUT_ABSOLUTE_X |
-			WSMOUSE_INPUT_ABSOLUTE_Y);
-		    DPRINTF(("\n"));
+			DPRINTF(("->%4d %4d", x, y));
+			wsmouse_input(sc->sc_wsmousedev,
+				      1, /* button 0 down */
+				      x, /* x */
+				      y, /* y */
+				      0, /* z */
+				      WSMOUSE_INPUT_ABSOLUTE_X |
+				      WSMOUSE_INPUT_ABSOLUTE_Y);
+			DPRINTF(("\n"));
+		    }
 		}
 	    }
 	}
@@ -637,19 +653,13 @@ vrpiu_tp_intr(sc)
 		 * We should not report button down event while
 		 * we don't know where it occur.
 		 */
+
+		/* set tp scan timeout	*/
+		callout_reset(&sc->sc_tptimeout, VRPIU_TP_SCAN_TIMEOUT,
+			      vrpiu_tp_timeout, sc);
 	    }
 	} else {
-	    if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
-		/*
-		 * pen release
-		 */
-		DPRINTF(("RELEASE\n"));
-		sc->sc_tpstat = VRPIU_TP_STAT_RELEASE;
-		/* button 0 UP */
-		wsmouse_input(sc->sc_wsmousedev,
-		    0,
-		    0, 0, 0, 0);
-	    }
+	    vrpiu_tp_up(sc);
 	}
 
 	if (intrstat & PIUINT_PADDLOSTINTR) {
@@ -658,6 +668,43 @@ vrpiu_tp_intr(sc)
 	}
 
 	return;
+}
+
+void
+vrpiu_tp_up(sc)
+	struct vrpiu_softc *sc;
+{
+	if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
+	    /*
+	     * pen release
+	     */
+	    DPRINTF(("RELEASE\n"));
+	    sc->sc_tpstat = VRPIU_TP_STAT_RELEASE;
+
+	    /* clear tp scan timeout	*/
+	    callout_stop(&sc->sc_tptimeout);
+
+	    /* button 0 UP */
+	    wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0);
+	}
+}
+
+/* touch panel timeout handler */
+void
+vrpiu_tp_timeout(v)
+	void *v;
+{
+	struct vrpiu_softc *sc = (struct vrpiu_softc *)v;
+
+#ifdef VRPIUDEBUG
+	{
+	    unsigned int cnt = vrpiu_read(sc, PIUCNT_REG_W);
+	    DPRINTF(("TIMEOUT: stat=%s  reg=%s\n",
+		(sc->sc_tpstat == VRPIU_TP_STAT_TOUCH)?"touch":"release",
+		(cnt & PIUCNT_PENSTC)?"touch":"release"));
+	}
+#endif
+	vrpiu_tp_up(sc);
 }
 
 /*
