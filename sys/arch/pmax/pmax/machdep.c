@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 1999/04/26 09:23:26 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 1999/04/26 09:23:26 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -439,11 +439,22 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/*
 	 * Load the rest of the available pages into the VM system.
+	 * Put the first 8M of RAM onto a lower-priority free list, since
+	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
+	 * into this region, and we want them to have a fighting chance of
+	 * allocating their DMA memory during autoconfiguratoin.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	if (last <= (8 * 1024 * 1024)) {
+		uvm_page_physload(atop(first), atop(last), atop(first),
+		    atop(last), VM_FREELIST_DEFAULT);
+	} else {
+		uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
+		    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
+		uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
+		    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
