@@ -27,21 +27,21 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.6 2000/12/24 13:57:37 lukem Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.7 2000/12/24 14:01:12 lukem Exp $
 .\"
 .Dd December 24, 2000
 .Dt MBRLABEL 8
 .Os
 .Sh NAME
 .Nm mbrlabel
-.Nd generate incore disk label from MBR label(s)
+.Nd update disk label from MBR label(s)
 .Sh SYNOPSIS
 .Nm
 .Op Fl fq
 .Ar device
 .Sh DESCRIPTION
 .Nm
-is used to update an incore
+is used to update a
 .Nx
 disk label from the Master Boot Record (MBR) label(s) found
 on disks that were previously used on DOS/Windows systems (or
@@ -53,9 +53,9 @@ then walks through every extended partition found and generating
 additional partition entries for the disk from the MBRs found in
 those extended partitions.
 .Pp
-Each MBR partition which does not have an equivalent partition in incore
+Each MBR partition which does not have an equivalent partition in the
 disk label (equivalent in having the same size and offset) is added to
-the first free partition slot in the incore disk label. A free
+the first free partition slot in the disk label. A free
 partition slot is defined as one with an
 .Dv fstype
 of
@@ -64,7 +64,7 @@ and a
 .Dv size
 of zero
 .Pq Sq 0 .
-If there are not enough free slots in the incore disk label, a warning
+If there are not enough free slots in the disk label, a warning
 will be issued.
 .Pp
 The raw partition (typically partition
@@ -75,7 +75,7 @@ on i386 and some othe platforms) is left alone during this process.
 .Pp
 If
 .Fl f
-is given, then the incore disk label is updated.
+is given, then the on-disk and in-core disk labels are updated.
 Otherwise, the proposed changed disk label will be displayed and no
 update will occur.
 .Pp
