@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.5 1996/06/19 14:18:40 pk Exp $
+#	$NetBSD: install.md,v 1.6 1996/06/26 21:35:32 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,23 +83,50 @@ md_native_fsopts() {
 
 md_checkfordisklabel() {
 	# $1 is the disk to check
+	local rval
 
 	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval="1"
+		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval="2"
+		rval=2
 	else
-		rval="0"
+		rval=0
 	fi
 
 	rm -f /tmp/checkfordisklabel
+	return $rval
 }
 
 md_prep_disklabel()
 {
+	local _disk
+
+	_disk=$1
+	md_checkfordisklabel $_disk
+	case $? in
+	0)
+		echo -n "Do you wish to edit the disklabel on $_disk? [y]"
+		;;
+	1)
+		echo "WARNING: Disk $_disk has no label"
+		echo -n "Do you want to create one with the disklabel editor? [y]"
+		;;
+	2)
+		echo "WARNING: Label on disk $_disk is corrupted"
+		echo -n "Do you want to try and repair the damage using the disklabel editor? [y]"
+		;;
+	esac
+
+	getresp "y"
+	case "$resp" in
+	y*|Y*) ;;
+	*)	return ;;
+	esac
+
 	# display example
 	cat << \__md_prep_disklabel_1
+
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. Make sure these size/offset
@@ -122,8 +149,8 @@ in case you have defined less than eight partitions.
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
-	disklabel -W ${ROOTDISK}
-	disklabel -e ${ROOTDISK}
+	disklabel -W ${_disk}
+	disklabel -e ${_disk}
 }
 
 md_copy_kernel() {
