@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.20 1998/07/03 13:59:56 is Exp $	*/
+/*	$NetBSD: reboot.c,v 1.21 1998/07/06 05:21:07 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.20 1998/07/03 13:59:56 is Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.21 1998/07/06 05:21:07 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,15 +192,15 @@ main(argc, argv)
 	 * Wait for up to 30 seconds for processes that need a long 
 	 * time to shut down (e.g., X servers on old slow notebook PCs with
 	 * only 8 MB of RAM and a slow disk; or databases), but probe at
-	 * 3 second intervals and continue immediately if none are left.
+	 * 1 second intervals and continue immediately if none are left.
 	 */
-	for (i=0; i<10; ++i) {
+	for (i=0; i<30; ++i) {
 		if (kill(-1, 0) == -1) {
 			if (errno == ESRCH)
 				break;
 			goto restart;
 		}
-		sleep(3);
+		sleep(1);
 	}
 
 	/*
