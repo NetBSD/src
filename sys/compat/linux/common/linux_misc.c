@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.88 2001/05/20 09:29:10 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.89 2001/05/27 21:17:16 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1223,6 +1223,7 @@ linux_sys_ptrace(p, v, retval)
 	} */ *uap = v;
 	const int *ptr;
 	int request;
+	int error;
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1247,7 +1248,20 @@ linux_sys_ptrace(p, v, retval)
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (caddr_t) 1;
 			
-			return sys_ptrace(p, &pta, retval);
+			error = sys_ptrace(p, &pta, retval);
+			if (!error) 
+				switch (request) {
+					case LINUX_PTRACE_PEEKTEXT:
+					case LINUX_PTRACE_PEEKDATA:
+						error = copyout (retval, 
+						    (caddr_t)SCARG(&pta, data), 
+						    sizeof retval);
+						*retval = SCARG(&pta, data);
+						break;
+					default:	
+						break;
+				}
+			return error;
 		}
 		else
 			ptr++;
