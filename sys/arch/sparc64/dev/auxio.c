@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.11 2003/07/15 03:36:04 lukem Exp $	*/
+/*	$NetBSD: auxio.c,v 1.12 2004/09/29 04:45:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.11 2003/07/15 03:36:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.12 2004/09/29 04:45:05 mrg Exp $");
 
 #include "opt_auxio.h"
 
@@ -98,6 +98,9 @@ static struct callout blink_ch = CALLOUT_INITIALIZER;
 
 static void auxio_blink(void *);
 
+/* let someone disable it if it's already turned on; XXX sysctl? */
+int do_blink = 1;
+
 static void
 auxio_blink(x)
 	void *x;
@@ -105,6 +108,9 @@ auxio_blink(x)
 	struct auxio_softc *sc = x;
 	int s;
 	u_int32_t led;
+
+	if (do_blink == 0)
+		return;
 
 	s = splhigh();
 	if (sc->sc_flags & AUXIO_EBUS)
