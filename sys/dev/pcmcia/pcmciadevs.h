@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.73 2000/01/25 21:58:23 soren Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.74 2000/01/26 01:06:03 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.73 2000/01/26 01:05:23 thorpej Exp 
  */
 
 /*-
@@ -196,6 +196,9 @@
 #define	PCMCIA_STR_LEXARMEDIA_COMPATFLASH	"Lexar Media CompactFlash"
 
 /* Linksys corporation */
+#define	PCMCIA_CIS_LINKSYS_ETHERFAST	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_ETHERFAST	0x0230
+#define	PCMCIA_STR_LINKSYS_ETHERFAST	"Linksys Etherfast 10/100 Ethernet"
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_1	0x0265
 #define	PCMCIA_STR_LINKSYS_ECARD_1	"Linksys EthernetCard or D-Link DE-650"
