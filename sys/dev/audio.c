@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.83 1998/04/28 09:07:12 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.84 1998/04/28 23:19:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1742,17 +1742,17 @@ audio_pint_silence(sc, cb, inp, cc)
 		      s <= q && q <= e)) {
 			if (s <= p)
 				sc->sc_sil_count = max(sc->sc_sil_count, q-s);
-			DPRINTFN(2, ("audio_pint_silence: fill cc=%d inp=%p, count=%d size=%d\n", 
+			DPRINTFN(5, ("audio_pint_silence: fill cc=%d inp=%p, count=%d size=%d\n", 
                                     cc, inp, sc->sc_sil_count, (int)(cb->end - cb->start)));
 			audio_fill_silence(&sc->sc_pparams, inp, cc);
 		} else {
-			DPRINTFN(2, ("audio_pint_silence: already silent cc=%d inp=%p\n", cc, inp));
+			DPRINTFN(5, ("audio_pint_silence: already silent cc=%d inp=%p\n", cc, inp));
 			
 		}
 	} else {
 		sc->sc_sil_start = inp;
 		sc->sc_sil_count = cc;
-		DPRINTFN(2, ("audio_pint_silence: start fill %p %d\n", 
+		DPRINTFN(5, ("audio_pint_silence: start fill %p %d\n", 
                              inp, cc));
 		audio_fill_silence(&sc->sc_pparams, inp, cc);
 	}
