@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.12.2.1 2000/01/23 12:03:21 he Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.12.2.1 2000/01/23 12:03:21 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,7 +137,6 @@ u_int32_t tdst = 0;		/* Address where trace is sent (last-hop) */
 
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see kern.c) */
-extern int errno;
 
 u_long			byteswap __P((u_long));
 char *			inet_name __P((u_int32_t addr));
