@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.8 1999/02/10 12:29:48 hubertf Exp $	*/
+/*	$NetBSD: teach.c,v 1.9 1999/07/19 00:34:00 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.8 1999/02/10 12:29:48 hubertf Exp $");
+__RCSID("$NetBSD: teach.c,v 1.9 1999/07/19 00:34:00 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -71,6 +71,9 @@ main(argc, argv)
 	char   *argv[];
 {
 	int     i;
+
+	/* revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	signal(SIGINT, getout);
 	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
