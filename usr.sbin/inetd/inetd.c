@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.6 1993/12/14 21:31:53 pk Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.7 1994/05/17 20:47:29 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -176,7 +176,7 @@ char	*curdom;
 
 /* Reserve some descriptors, 3 stdio + at least: 1 log, 1 conf. file */
 #define FD_MARGIN	(8)
-int	rlim_ofile_cur = OPEN_MAX;
+typeof(((struct rlimit *)0)->rlim_cur)	rlim_ofile_cur = OPEN_MAX;
 
 #ifdef RLIMIT_NOFILE
 struct rlimit	rlim_ofile;
