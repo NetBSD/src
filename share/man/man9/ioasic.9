@@ -1,4 +1,4 @@
-.\"     $NetBSD: ioasic.9,v 1.5 2002/02/13 08:18:42 ross Exp $
+.\"     $NetBSD: ioasic.9,v 1.6 2002/10/14 13:34:41 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,22 +67,25 @@ The
 .Nm
 device provides support for the DEC proprietary IOCTL ASIC found on
 all DEC TURBOchannel machines with MIPS (DECstation 5000 series,
-excluding the 5000/200) and Alpha (3000-series) systems.  The
+excluding the 5000/200) and Alpha (3000-series) systems.
+The
 .Nm
 is memory-mapped into the TURBOchannel system slot to interface up to
-sixteen I/O devices.  It connects the TURBOchannel to a 16-bit wide
-I/O bus and supplies various control signals to the devices that share
-this bus.
+sixteen I/O devices.
+It connects the TURBOchannel to a 16-bit wide I/O bus and supplies
+various control signals to the devices that share this bus.
 .Pp
 The
 .Nm
-provides hardware DMA channels and interrupt support.  DMA transfers
-are between one and four 32-bit words (16 bytes) in length, depending
-on the device.  The
+provides hardware DMA channels and interrupt support.
+DMA transfers are between one and four 32-bit words (16 bytes) in
+length, depending on the device.
+The
 .Nm
-stores the data in internal data registers.  The data is transferred
-to and from the registers in 16-bit words to the device.  Various
-interrupts are signalled on DMA pointer-related conditions.
+stores the data in internal data registers.
+The data is transferred to and from the registers in 16-bit words
+to the device.
+Various interrupts are signalled on DMA pointer-related conditions.
 .Sh DATA TYPES
 Drivers for devices attached to the
 .Nm
@@ -91,7 +94,8 @@ will make use of the following data types:
 .It Fa struct ioasicdev_attach_args
 A structure used to inform the driver of the
 .Nm
-device properties.  It contains the following members:
+device properties.
+It contains the following members:
 .Bd -literal
 	char			iada_modname
 	tc_offset_t		iada_offset
@@ -156,18 +160,20 @@ and
 .Fn ioasic_intr_evcnt
 functions are likely to used by all
 .Nm
-device drivers.  The
+device drivers.
+The
 .Fn ioasic_attach_devs
 function is used by ioasic driver internally and is of interest to
 driver writers because it must be aware of your device for it to be
 found during autoconfiguration.
 .Sh AUTOCONFIGURATION
-The IOASIC is a direct-connection bus.  During autoconfiguration,
-machine-dependent code will provide an array of
+The IOASIC is a direct-connection bus.
+During autoconfiguration, machine-dependent code will provide an array of
 .Fa struct ioasic_devs
 describing devices attached to the
 .Nm
-to be used by the ioasic driver.  The ioasic driver will pass this array to
+to be used by the ioasic driver.
+The ioasic driver will pass this array to
 .Fn ioasic_attach_devs
 to attach the drivers with the devices.
 .Pp
@@ -189,25 +195,25 @@ interface.
 The
 .Nm
 provides two pairs of DMA address pointers (transmitting and
-receiving) for each DMA-capable device.  The pair of address pointers
-point to consecutive (but not necesarily contiguous) DMA blocks of
-size IOASIC_DMA_BLOCKSIZE.  Upon successful transfer of the first
-block, DMA continues to the next block and an interrupt is posted to
-signal an address pointer update.  DMA transfers are enabled and
-disabled by bits inside the
+receiving) for each DMA-capable device.
+The pair of address pointers point to consecutive (but not necessarily
+contiguous) DMA blocks of size IOASIC_DMA_BLOCKSIZE.
+Upon successful transfer of the first block, DMA continues to the next
+block and an interrupt is posted to signal an address pointer update.
+DMA transfers are enabled and disabled by bits inside the
 .Nm
 status (CSR) register.
 .Pp
 The interrupt handler must update the address pointers to point to the
-next block in the DMA transfer.  The address pointer update must be
-completed before the completion of the second DMA block, otherwise a
-DMA overrun error condition will occur.
+next block in the DMA transfer.
+The address pointer update must be completed before the completion of
+the second DMA block, otherwise a DMA overrun error condition will occur.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent IOASIC subsystem can be found.  All pathnames are
-relative to
+machine-independent IOASIC subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The IOASIC subsystem itself is implemented within the file
