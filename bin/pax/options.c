@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.47 2002/10/15 16:16:29 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.48 2002/10/16 03:46:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.47 2002/10/15 16:16:29 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.48 2002/10/16 03:46:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ static int getline_error;
 #define	OPT_NORECURSE			12
 #define	OPT_FORCE_LOCAL			13
 #define	OPT_INSECURE			14
+#define	OPT_STRICT			15
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -698,6 +699,8 @@ struct option tar_longopts[] = {
 	{ "exclude-from",	required_argument,	0,	'X' },
 	{ "compress",		no_argument,		0,	'Z' },
 	{ "uncompress",		no_argument,		0,	'Z' },
+	{ "strict",		no_argument,		0,
+						OPT_STRICT },
 	{ "atime-preserve",	no_argument,		0,
 						OPT_ATIME_PRESERVE },
 	{ "unlink",		no_argument,		0,
@@ -843,12 +846,12 @@ tar_options(int argc, char **argv)
 			 * this is a create or extract operation.
 			 */
 			if (act == ARCHIVE) {
+				/* GNU tar: write V7 format archives. */
+				Oflag = 1;
 				/* 4.2BSD: don't add directory entries. */
 				if (opt_add("write_opt=nodir") < 0)
 					tar_usage();
 
-				/* GNU tar: write V7 format archives. */
-				frmt = &(fsub[F_TAR]);
 			} else {
 				/* SUS: don't preserve owner/group. */
 				pids = 0;
@@ -1013,6 +1016,10 @@ tar_options(int argc, char **argv)
 			break;
 		case OPT_INSECURE:
 			secure = 0;
+			break;
+		case OPT_STRICT:
+			/* disable gnu extensions */
+			is_gnutar = 0;
 			break;
 		default:
 			tar_usage();
@@ -1685,10 +1692,16 @@ bad_opt(void)
 	/*
 	 * print all we were given
 	 */
-	tty_warn(1,"These format options are not supported");
+	tty_warn(1," These format options are not supported for %s",
+	    frmt->name);
 	while ((opt = opt_next()) != NULL)
 		(void)fprintf(stderr, "\t%s = %s\n", opt->name, opt->value);
-	pax_usage();
+	if (strcmp(NM_TAR, argv0) == 0)
+		tar_usage();
+	else if (strcmp(NM_CPIO, argv0) == 0)
+		cpio_usage();
+	else
+		pax_usage();
 	return(0);
 }
 
@@ -1873,7 +1886,7 @@ void
 pax_usage(void)
 {
 	fprintf(stderr,
-"usage: pax [-cdnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
+"Usage: pax [-cdnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
 "           [-U user] ... [-G group] ... [-T [from_date][,to_date]] ...\n"
 "           [pattern ...]\n");
 	fprintf(stderr,
@@ -1901,7 +1914,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("usage: tar -{crtux}[-befhmopqvwzHLOPXZ014578] [archive] "
+	(void)fputs("Usage: tar -{crtux}[-befhmopqvwzHLOPXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);
@@ -1920,23 +1933,23 @@ cpio_usage(void)
 
 #if 1
 	(void)fputs(
-	    "usage: cpio -i [-BcdfmrStuv] [ -C blksize ] [ -H header ]\n",
+	    "Usage: cpio -i [-BcdfmrStuv] [ -C blksize ] [ -H header ]\n",
 	    stderr);
 	(void)fputs("  [ -I file ] [ pattern ... ]\n", stderr);
-	(void)fputs("usage: cpio -o [-aABcLv] [ -C bufsize ] [ -H header ]\n",
+	(void)fputs("Usage: cpio -o [-aABcLv] [ -C bufsize ] [ -H header ]\n",
 	    stderr);
 	(void)fputs("  [ -O file ]\n", stderr);
-	(void)fputs("usage: cpio -p [ adlLmuv ] directory\n", stderr);
+	(void)fputs("Usage: cpio -p [ adlLmuv ] directory\n", stderr);
 #else
 	/* no E, M, R, V, b, k or s */
-	(void)fputs("usage: cpio -i [-bBcdfkmrsStuvV] [ -C bufsize ]\n", stderr);
+	(void)fputs("Usage: cpio -i [-bBcdfkmrsStuvV] [ -C bufsize ]\n", stderr);
 	(void)fputs("  [ -E file ] [ -H header ] [ -I file [ -M message ] ]\n",
 	    stderr);
 	(void)fputs("  [ -R id ] [ pattern ... ]\n", stderr);
-	(void)fputs("usage: cpio -o [-aABcLvV] [ -C bufsize ] [ -H header ]\n",
+	(void)fputs("Usage: cpio -o [-aABcLvV] [ -C bufsize ] [ -H header ]\n",
 	    stderr);
 	(void)fputs("  [ -O file [ -M message ] ]\n", stderr);
-	(void)fputs("usage: cpio -p [ adlLmuvV ] [ -R id ] directory\n", stderr);
+	(void)fputs("Usage: cpio -p [ adlLmuvV ] [ -R id ] directory\n", stderr);
 #endif
 	exit(1);
 	/* NOTREACHED */

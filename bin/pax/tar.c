@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.25 2002/10/13 17:21:50 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.26 2002/10/16 03:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.25 2002/10/13 17:21:50 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.26 2002/10/16 03:46:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: tar.c,v 1.25 2002/10/13 17:21:50 christos Exp $");
  * Routines for reading, writing and header identify of various versions of tar
  */
 
+static void longlink(ARCHD *);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
@@ -80,8 +81,12 @@ static int ull_oct(unsigned long long, char *, int, int);
  */
 
 static int tar_nodir;			/* do not write dirs under old tar */
-int is_oldgnutar;			/* skip end-ofvolume checks */
+int is_gnutar = 1;			/* behave like gnu tar; enable gnu
+					 * extensions and skip end-ofvolume
+					 * checks
+					 */
 char *gnu_hack_string;			/* ././@LongLink hackery */
+int gnu_hack_len;			/* len of gnu_hack_string */
 
 /*
  * tar_endwr()
@@ -729,8 +734,9 @@ ustar_id(char *blk, int size)
 		return(-1);
 	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
 		return(-1);
-	if (!strncmp(hd->magic, "ustar  ", 8))
-		is_oldgnutar = 1;
+	/* This is GNU tar */
+	if (strncmp(hd->magic, "ustar  ", 8) != 0)
+		is_gnutar = 0;
 	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
 		return(-1);
 	return(0);
@@ -775,7 +781,14 @@ ustar_rd(ARCHD *arcn, char *buf)
 		*dest++ = '/';
 		cnt++;
 	}
-	arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+	if (gnu_hack_string) {
+		arcn->nlen = strlcpy(dest, gnu_hack_string,
+		    sizeof(arcn->name) - cnt);
+		free(gnu_hack_string);
+		gnu_hack_string = NULL;
+	} else {
+		arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+	}
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
@@ -865,6 +878,27 @@ ustar_rd(ARCHD *arcn, char *buf)
 		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
 			sizeof(arcn->ln_name));
 		break;
+	case LONGLINKTYPE:
+		if (is_gnutar)
+			arcn->type = PAX_GLL;
+		/* FALLTHROUGH */
+	case LONGNAMETYPE:
+		if (is_gnutar) {
+			/*
+			 * GNU long link/file; we tag these here and let the
+			 * pax internals deal with it -- too ugly otherwise.
+			 */
+			if (hd->typeflag != LONGLINKTYPE)
+				arcn->type = PAX_GLF;
+			arcn->pad = TAR_PAD(arcn->sb.st_size);
+			arcn->skip = arcn->sb.st_size;
+			arcn->ln_name[0] = '\0';
+			arcn->ln_nlen = 0;
+		} else {
+			tty_warn(1, "GNU Long %s found in posix ustar archive.",
+			    hd->typeflag == LONGLINKTYPE ? "Link" : "File");
+		}
+		break;
 	case CONTTYPE:
 	case AREGTYPE:
 	case REGTYPE:
@@ -880,6 +914,37 @@ ustar_rd(ARCHD *arcn, char *buf)
 		break;
 	}
 	return(0);
+}
+
+
+static void
+longlink(ARCHD *arcn)
+{
+	ARCHD larc;
+
+	memset(&larc, 0, sizeof(larc));
+
+	switch (arcn->type) {
+	case PAX_SLK:
+	case PAX_HRG:
+	case PAX_HLK:
+		larc.type = PAX_GLL;
+		larc.ln_nlen = strlcpy(larc.ln_name, "././@LongLink",
+		    sizeof(larc.ln_name));
+		gnu_hack_string = arcn->ln_name;
+		gnu_hack_len = arcn->ln_nlen + 1;
+		break;
+	default:
+		larc.nlen = strlcpy(larc.name, "././@LongLink",
+		    sizeof(larc.name));
+		gnu_hack_string = arcn->name;
+		gnu_hack_len = arcn->nlen + 1;
+		larc.type = PAX_GLF;
+	}
+	/*
+	 * We need a longlink now.
+	 */
+	ustar_wr(&larc);
 }
 
 /*
@@ -914,9 +979,15 @@ ustar_wr(ARCHD *arcn)
 	 * check the length of the linkname
 	 */
 	if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
-	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen >= sizeof(hd->linkname))){
-		tty_warn(1, "Link name too long for ustar %s", arcn->ln_name);
-		return(1);
+	    (arcn->type == PAX_HRG)) &&
+	    (arcn->ln_nlen >= sizeof(hd->linkname))){
+		if (is_gnutar) {
+			longlink(arcn);
+		} else {
+			tty_warn(1, "Link name too long for ustar %s",
+			    arcn->ln_name);
+			return(1);
+		}
 	}
 
 	/*
@@ -924,8 +995,14 @@ ustar_wr(ARCHD *arcn)
 	 * pt != arcn->name, the name has to be split
 	 */
 	if ((pt = name_split(arcn->name, arcn->nlen)) == NULL) {
-		tty_warn(1, "File name too long for ustar %s", arcn->name);
-		return(1);
+		if (is_gnutar) {
+			longlink(arcn);
+			pt = arcn->name;
+		} else {
+			tty_warn(1, "File name too long for ustar %s",
+			    arcn->name);
+			return(1);
+		}
 	}
 
 	/*
@@ -981,38 +1058,58 @@ ustar_wr(ARCHD *arcn)
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
+	case PAX_GLL:
 	case PAX_SLK:
 	case PAX_HLK:
 	case PAX_HRG:
 		if (arcn->type == PAX_SLK)
 			hd->typeflag = SYMTYPE;
+		else if (arcn->type == PAX_GLL)
+			hd->typeflag = LONGLINKTYPE;
 		else
 			hd->typeflag = LNKTYPE;
 		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (ul_oct((u_long)gnu_hack_len, hd->size,
+		    sizeof(hd->size), 3))
 			goto out;
 		break;
+	case PAX_GLF:
 	case PAX_REG:
 	case PAX_CTG:
 	default:
 		/*
 		 * file data with this type, set the padding
 		 */
-		if (arcn->type == PAX_CTG)
-			hd->typeflag = CONTTYPE;
-		else
-			hd->typeflag = REGTYPE;
-		arcn->pad = TAR_PAD(arcn->sb.st_size);
-		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 3)) {
-			tty_warn(1,"File is too long for ustar %s",
-			    arcn->org_name);
-			return(1);
+		if (arcn->type == PAX_GLF) {
+			hd->typeflag = LONGNAMETYPE;
+			arcn->pad = TAR_PAD(gnu_hack_len);
+			if (OFFT_OCT((u_long)gnu_hack_len, hd->size,
+			    sizeof(hd->size), 3)) {
+				tty_warn(1,"File is too long for ustar %s",
+				    arcn->org_name);
+				return(1);
+			}
+		} else {
+			if (arcn->type == PAX_CTG)
+				hd->typeflag = CONTTYPE;
+			else
+				hd->typeflag = REGTYPE;
+			arcn->pad = TAR_PAD(arcn->sb.st_size);
+			if (OFFT_OCT(arcn->sb.st_size, hd->size,
+			    sizeof(hd->size), 3)) {
+				tty_warn(1,"File is too long for ustar %s",
+				    arcn->org_name);
+				return(1);
+			}
 		}
 		break;
 	}
 
 	strncpy(hd->magic, TMAGIC, TMAGLEN);
-	strncpy(hd->version, TVERSION, TVERSLEN);
+	if (is_gnutar)
+		hd->magic[TMAGLEN - 1] = hd->magic[TMAGLEN] = ' ';
+	else
+		strncpy(hd->version, TVERSION, TVERSLEN);
 
 	/*
 	 * set the remaining fields. Some versions want all 16 bits of mode
@@ -1040,6 +1137,16 @@ ustar_wr(ARCHD *arcn)
 		return(-1);
 	if (wr_skip((off_t)(BLKMULT - sizeof(HD_USTAR))) < 0)
 		return(-1);
+	if (gnu_hack_string) {
+		int res = wr_rdbuf(gnu_hack_string, gnu_hack_len);
+		int pad = gnu_hack_len;
+		gnu_hack_string = NULL;
+		gnu_hack_len = 0;
+		if (res < 0)
+			return(-1);
+		if (wr_skip((off_t)(BLKMULT - (pad % BLKMULT))) < 0)
+			return(-1);
+	}
 	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG))
 		return(0);
 	return(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.26 2002/10/13 17:19:33 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.27 2002/10/16 03:46:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.26 2002/10/13 17:19:33 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.27 2002/10/16 03:46:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -776,7 +776,7 @@ ar_read(char *buf, int cnt)
 	lstrval = res;
 	if (res < 0)
 		syswarn(1, errno, "Failed read on archive volume %d", arvol);
-	else if (!is_oldgnutar)
+	else if (!is_gnutar)
 		tty_warn(0, "End of archive volume %d reached", arvol);
 	return(res);
 }
@@ -1395,7 +1395,7 @@ ar_next(void)
 	if (sigprocmask(SIG_SETMASK, &o_mask, (sigset_t *)NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
-	if (done || !wr_trail || is_oldgnutar || force_one_volume)
+	if (done || !wr_trail || is_gnutar || force_one_volume)
 		return(-1);
 
 	tty_prnt("\nATTENTION! %s archive volume change required.\n", argv0);
