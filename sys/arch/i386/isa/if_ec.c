@@ -1,5 +1,3 @@
-#include "ec.h"
-#if NEC > 0
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -86,6 +84,8 @@
 #include "i386/isa/isa_device.h"
 #include "i386/isa/if_ec.h"
 
+#include "ec.h"
+
 /*
  * Ethernet software status per interface.
  *
@@ -97,7 +97,7 @@ struct	ec_softc {
 	struct	arpcom ec_ac;		/* Ethernet common part 	*/
 #define	ec_if	ec_ac.ac_if		/* network-visible interface 	*/
 #define	ec_addr	ec_ac.ac_enaddr		/* hardware Ethernet address 	*/
-
+#define ns_addrp ec_ac.ac_enaddr	/* hardware Ethernet address (for ns)*/
 	u_char	ec_flags;		/* software state		*/
 #define	EC_RUNNING	0x01
 #define EC_TXBUSY	0x02
@@ -604,7 +604,7 @@ caddr_t data;
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->ns_addr);
+				ina->x_host = *(union ns_host *)(sc->ns_addrp);
 			else {
 				/* 
 				 * The manual says we can't change the address 
@@ -613,7 +613,7 @@ caddr_t data;
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->ns_addr, sizeof(sc->ns_addr));
+				    (caddr_t)sc->ns_addrp, sizeof(sc->ns_addrp));
 			}
 			ec_init(ifp->if_unit); /* does ne_setaddr() */
 			break;
@@ -774,4 +774,3 @@ ecget(buf, totlen, off0, ifp, sc)
 	}
 	return (top);
 }
-#endif /* NEC > 0 */
