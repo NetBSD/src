@@ -11,16 +11,18 @@ MAN8=	timed.0
 
 .if ${MACHINE} == "i386"
 CLEANFILES+=cksum.i386.c
+.elif ${MACHINE} == "hp300"
+CLEANFILES+=cksum.hp300.c
 .endif
 
-cksum.i386.c:
+cksum.hp300.c cksum.i386.c:
 	@if [ -d ${.CURDIR}/obj ]; then \
-		/bin/rm -rf ${.CURDIR}/obj/cksum.i386.c ; \
-		ln -s ${.CURDIR}/cksum.tahoe.c ${.CURDIR}/obj/cksum.i386.c ; \
+		/bin/rm -rf ${.CURDIR}/obj/$@ ; \
+		ln -s ${.CURDIR}/cksum.tahoe.c ${.CURDIR}/obj/$@ ; \
 	else \
 		true; \
-		/bin/rm -rf ${.CURDIR}/cksum.i386.c ; \
-		ln -s ${.CURDIR}/cksum.tahoe.c ${.CURDIR}/cksum.i386.c ; \
+		/bin/rm -rf ${.CURDIR}/$@ ; \
+		ln -s ${.CURDIR}/cksum.tahoe.c ${.CURDIR}/$@ ; \
 	fi
 
 .include "../../Makefile.inc"
