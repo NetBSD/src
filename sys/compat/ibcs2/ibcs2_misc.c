@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.55.2.4 2002/04/01 07:43:54 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.55.2.5 2002/04/01 22:09:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.4 2002/04/01 07:43:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.5 2002/04/01 22:09:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1637,7 +1637,6 @@ ibcs2_sys_scoinfo(l, v, retval)
 		syscallarg(int) len;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
 	caddr_t sg = stackgap_init(p, 0);
 	struct scoutsname *utsp = stackgap_alloc(p, &sg,
 						 sizeof(struct scoutsname));
