@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1997/04/08 06:02:04 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 1997/04/09 07:22:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -592,7 +592,9 @@ copyfault:
 out:
 	userret(p, &frame, sticks, v, 1); 
 
+#ifdef COMPAT_SUNOS
 done:
+#endif
 }
 
 #if defined(M68040)
