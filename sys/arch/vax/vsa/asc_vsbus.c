@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.9 2000/04/17 20:36:23 ragge Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.10 2000/04/18 21:25:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.9 2000/04/17 20:36:23 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.10 2000/04/18 21:25:31 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.9 2000/04/17 20:36:23 ragge Exp $");
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/rpb.h>
 #include <machine/scb.h>
 #include <machine/vsbus.h>
 #include <machine/clock.h>	/* for SCSI ctlr ID# XXX */
@@ -217,7 +216,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_id = 6;	/* XXX need to get this from VMB */
 		break;
 	}
-printf("SCSIid: %d ", sc->sc_id);
+
 	sc->sc_freq = ASC_FREQUENCY;
 
 	/* gimme Mhz */
@@ -264,14 +263,6 @@ printf("SCSIid: %d ", sc->sc_id);
 	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
 	sc->sc_adapter.scsipi_minphys = minphys;
 	ncr53c9x_attach(sc, &asc_vsbus_dev);
-
-	/*
-	 * Register this device as boot device if we booted from it.
-	 * This will fail if there are more than one le in a machine,
-	 * fortunately there may be only one.
-	 */
-	if (B_TYPE(bootdev) == BDEV_SD)
-		booted_from = self;
 }
 
 /*
