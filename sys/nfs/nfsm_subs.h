@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.16 1997/06/24 23:40:43 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.17 1997/07/14 20:46:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -188,7 +188,7 @@
 
 #define	nfsm_loadattr(v, a) \
 		{ struct vnode *ttvp = (v); \
-		if ((t1 = nfs_loadattrcache(&ttvp, &md, &dpos, (a))) != 0) { \
+		if ((t1 = nfsm_loadattrcache(&ttvp, &md, &dpos, (a))) != 0) { \
 			error = t1; \
 			m_freem(mrep); \
 			goto nfsmout; \
@@ -199,7 +199,7 @@
 		{ struct vnode *ttvp = (v); \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (((f) = fxdr_unsigned(int, *tl)) != 0) { \
-			if ((t1 = nfs_loadattrcache(&ttvp, &md, &dpos, \
+			if ((t1 = nfsm_loadattrcache(&ttvp, &md, &dpos, \
 				(struct vattr *)0)) != 0) { \
 				error = t1; \
 				(f) = 0; \
