@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.9 1994/02/10 04:30:30 briggs Exp $
+ * $Id: console.c,v 1.10 1994/02/22 01:07:40 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -148,6 +148,7 @@ static struct font font[NFONT]; /* for now, 0 = large, 1 = small */
 int curvt; /* Current virtual terminal -- Used by adb */
 int numsb;  /* Number of lines scrolling back -- Used by adb */
 static int cursoron, cursorlit, cursortype = C_BLOCK | C_SOLID;
+int	screen_is_cool = 0;
 
 void	macconputchar(int, u_char);
 void	macputchar(dev_t, u_char);
@@ -166,7 +167,7 @@ static getvideoparams()
 	  vt[i].numgrows=(videosize >>16) & 0xffff;
 
 	  vt[i].numbits=videobitdepth;
-	  vt[i].linelen=videorowbytes;
+	  vt[i].linelen=videorowbytes*videobitdepth;	/* HACK -- LAK */
 	  vt[i].screen = (unsigned char *)videoaddr;
   }
   vt[0].visible=1;
@@ -400,7 +401,7 @@ if (initt) {
     vt[i].sbtail = 0;
     vt[i].sblen = 0;
     /* BARF: Here should check if SE/30 and set it to font[1] as default: */
-    if (vt[i].numgcols >= 640) 
+    if ((vt[i].numgcols >= 640) && (vt[i].numgrows >= 480))
       vt[i].font = &font[0];
     else
       vt[i].font = &font[1];
@@ -769,12 +770,12 @@ static scrollup(int vtnum)
 
   from = (long *)&v->screen[v->toptrow*v->font->height * v->linelen];
   to = (long *)&v->screen[(v->toptrow-1)*v->font->height * v->linelen];
-  maxx = v->numbits*(v->numgcols+31)/32;
+  maxx = v->numbits*(v->numgcols+31)/32;	/* 32 == bits per long */
   j = v->linelen / 4 - maxx;
   for (i = (v->bottrow-v->toptrow)*v->font->height; i; i--)
   {
     int depth;
-    for (depth = v->numbits ; depth ; depth --) {
+/*    for (depth = v->numbits ; depth ; depth --) */ { /* HACK */
       x = maxx;
       while (x >= 16) { /* assume at least 512 pixel wide screen. */
         CL; CL; CL; CL;
@@ -805,32 +806,33 @@ static clearline(int vtnum, int which)
 {
   /* which=0=to end of line, 1=to beginning of line, 2=all line */
 
-  int start , end, i, j, b;
-  struct vt *v = &vt[vtnum];
+  int		start, end, i, j, b;
+  struct vt	*v = &vt[vtnum];
 
   switch (which)
   {
-    case 0: start=v->x; end=v->numtcols-1; break;
-    case 1: start=0; end=v->x; break;
-    case 2: start=0; end=v->numtcols-1; break;
+    case 0: start=v->x; end=v->numtcols; break;
+    case 1: start=0; end=v->x+1; break;
+    case 2: start=0; end=v->numtcols; break;
   }
-  for (j = start; j <= end; j++)
+  for (j = start; j < end; j++)
   {
     v->scr[v->y][j] = 32;
     v->att[v->y][j] = T_NORMAL;
   }
 
-  if (!v->visible )
+  if (!v->visible)
     return;
 
   if (v->font->width%8 == 0 || v->numbits == 8) {
     start = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
     end   = v->y*v->font->height*v->linelen + end*v->font->width*v->numbits/8;
-    for (i = start; i <= end; i++)
+    for (i = start; i < end; i++)
       for (j = 0; j < v->font->height; j++)
         v->screen[i + j * v->linelen] = 0;
   } else {
-    if (b = (start*v->font->width*v->numbits % 8)) {
+    b = start*v->font->width*v->numbits % 8;
+    if (b > 0) {
       start = i = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
       for (j = 0; j < v->font->height; j++)
 	v->screen[i + j * v->linelen] &= ~((1<<(8-b))-1);
@@ -839,7 +841,7 @@ static clearline(int vtnum, int which)
     	start = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
     }
     end   = v->y*v->font->height*v->linelen + end*v->font->width*v->numbits/8;
-    for (i = start; i <= end; i++)
+    for (i = start; i < end; i++)
       for (j = 0; j < v->font->height; j++)
         v->screen[i + j * v->linelen] = 0;
   }
@@ -908,7 +910,7 @@ static scrolldown(int vtnum)
   for (i = (v->bottrow-v->toptrow)*v->font->height; i; i--)
   { 
     int depth;
-    for (depth = v->numbits ; depth ; depth --) {
+/*    for (depth = v->numbits ; depth ; depth --) */ { /* HACK */
       x = maxx;
       while (x >= 16) { /* assume at least 512 pixel wide screen. */
         CL; CL; CL; CL;
@@ -1758,15 +1760,10 @@ macprobe(struct consdev *cp)
    cp->cn_pri = CN_INTERNAL;
 }
 
-macinit(struct consdev *cntab)
+void
+macserinit(struct consdev *cntab)
 {
   unsigned char *chr;
-  static int alreadyinit = 0;  /* is this necessary? */
-
-  if (alreadyinit) return;
-  alreadyinit = 1;
-
-  conattach(NCON);
 
   if (serial_boot_echo) {
     chr = ser_init_str;
@@ -1777,6 +1774,19 @@ macinit(struct consdev *cntab)
       *sccaddr = *chr++;
     }
   }
+}
+
+macinit(struct consdev *cntab)
+{
+	static int	alreadyinit=0;
+
+	if (alreadyinit) return;
+	alreadyinit = 1;
+
+	conattach(NCON);
+	screen_is_cool = 1;
+
+	macserinit(cntab);
 }
 
 #if 0
@@ -1885,36 +1895,12 @@ macserputchar(unsigned char c)
 {
   int delay, s;
 
-#if 0
-  delay = 100000;
-  while (outlen == OUTBUFLEN && delay--)  /* Wait if buffer full */
-    /* DO NOTHING */;
-  if (outlen < OUTBUFLEN)
-  {
-    outbuf[outhead] = c;
-    outhead = (outhead + 1) % OUTBUFLEN;
-    s = splhigh();
-    outlen++; /* Must be exclusive access to "outlen" */
-    splx(s);
-  }
-
-  /* If delay == 0, then we timed out and output next character: */
-  if (write_ack == 0 || delay == 0) /* If nothing pending */
-  {
-    c = outbuf[outtail];
-    outtail = (outtail + 1) % OUTBUFLEN;
-    s = splhigh(); /* Don't want interrupt after write: */
-    *(sccaddr+4) = c;
-    write_ack = 1;
-    outlen--;
-    splx(s);
-  }
-#endif
-
 /* What was there and working before: */
   for(delay = 1; delay < 3000 && write_ack == 0; delay++);
   write_ack = 0;
+/* BARF */
   *(sccaddr+4) = c;
+  *((unsigned char *) 0x50004004) = c;
 }
 
 void
@@ -1923,7 +1909,8 @@ macputchar(dev_t dev, u_char c)
   if (serial_boot_echo && minor(dev) == 0)
 	macserputchar((unsigned char)c); 
   restoresb();  /* Try to take this line out */
-  macconputchar(minor(dev), c);
+  if (screen_is_cool)
+  	macconputchar(minor(dev), c);
 }
 
 macconputstr(char *str)
