@@ -278,6 +278,49 @@ arm_addr_bits_remove (CORE_ADDR val)
     return (val & 0xfffffffc);
 }
 
+#ifdef ARM_26BIT_R15
+#define R15_PC		0x03fffffc
+#define R15_PSR_DIRECT	0xf0000003 /* Bits in the same places in R15 & PSR */
+#define R15_IF		0x0c000000 /* Bits which must be shifted... */
+#define PSR_IF		0x000000c0
+#define IF_SHIFT	20	   /* ... by this much */
+
+/* Functions to unpack and pack R15 on 26-bit ARMs.  Within GDB, R15
+   is always stored with the program counter in PC_REGNUM, and the
+   flags in PS_REGNUM.  PS_REGNUM has the I and F flags in their
+   32-bit positions.  Targets can use these functions to convert
+   between this format and the format used on 26-bit processors, where
+   the PC and PSR are packed into R15. */
+
+void
+arm_supply_26bit_r15 (char *val)
+{
+  ULONGEST r15, pc, psr;
+  char rawpc[4], rawpsr[4];
+
+  r15 = extract_unsigned_integer (val, 4);
+
+  pc = r15 & R15_PC;
+  store_unsigned_integer (rawpc, 4, pc);
+  supply_register (PC_REGNUM, rawpc);
+
+  psr = (r15 & R15_PSR_DIRECT) | ((r15 & R15_IF) >> IF_SHIFT);
+  store_unsigned_integer (rawpsr, 4, psr);
+  supply_register (PS_REGNUM, rawpsr);
+}
+
+void
+arm_read_26bit_r15 (char *myaddr)
+{
+  ULONGEST r15, pc, psr;
+
+  pc = read_register (PC_REGNUM);
+  psr = read_register (PS_REGNUM);
+  r15 = pc | (psr & R15_PSR_DIRECT) | ((psr & PSR_IF) << IF_SHIFT);
+  store_unsigned_integer (myaddr, r15, 4);
+}
+#endif
+
 CORE_ADDR
 arm_saved_pc_after_call (struct frame_info *frame)
 {

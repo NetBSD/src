@@ -34,4 +34,7 @@
 extern int
 arm_register_u_addr PARAMS ((int, int));
 
+/* We'd like the functions for handling 26-bit modes, please. */
+#define ARM_26BIT_R15
+
 #endif /* NM_NBSD_H */
