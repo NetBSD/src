@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.127 2003/11/05 10:18:38 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.128 2003/11/08 05:35:11 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.127 2003/11/05 10:18:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.128 2003/11/08 05:35:11 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -758,6 +758,7 @@ next_sblock:
 
 	if (sblock_try[i] == -1) {
 		error = EINVAL;
+		fs = NULL;
 		goto out;
 	}
 
@@ -775,7 +776,7 @@ next_sblock:
 #else
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			error = EROFS;
-			goto out2;
+			goto out;
 		}
 #endif
 	}
@@ -869,7 +870,7 @@ next_sblock:
 			      cred, &bp);
 		if (error) {
 			free(fs->fs_csp, M_UFSMNT);
-			goto out2;
+			goto out;
 		}
 #ifdef FFS_EI
 		if (needswap)
@@ -935,9 +936,9 @@ next_sblock:
 		}
 	}
 	return (0);
-out2:
-	free(fs, M_UFSMNT);
 out:
+	if (fs)
+		free(fs, M_UFSMNT);
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
@@ -945,6 +946,10 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	VOP_UNLOCK(devvp, 0);
 	if (ump) {
+#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
+		if (ump->um_opostsave != NULL)
+			free(ump->um_opostsave, M_UFSMNT);
+#endif
 		free(ump, M_UFSMNT);
 		mp->mnt_data = NULL;
 	}
