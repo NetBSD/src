@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $	*/
+/*	$NetBSD: sh.h,v 1.2.4.1 2000/01/23 12:00:48 he Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $ */
+/* $NetBSD: sh.h,v 1.2.4.1 2000/01/23 12:00:48 he Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -117,7 +117,6 @@ void *memmove ARGS((void *d, const void *s, size_t n));
 #endif /* HAVE_PROTOTYPES */
 
 #include <errno.h>
-extern int errno;
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
