@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.601 2003/09/02 05:26:44 mrg Exp $
+# $NetBSD: mi,v 1.602 2003/09/03 10:25:45 he Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -181,6 +181,7 @@
 ./usr/share/man/cat1/less.0			man-util-catman
 ./usr/share/man/cat1/lesskey.0			man-util-catman
 ./usr/share/man/cat1/limit.0			man-util-catman
+./usr/share/man/cat1/linkfarm.0			man-pkgutil-catman
 ./usr/share/man/cat1/ln.0			man-util-catman
 ./usr/share/man/cat1/locale.0			man-util-catman
 ./usr/share/man/cat1/locate.0			man-util-catman
@@ -280,6 +281,7 @@
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman
+./usr/share/man/cat1/pkg_view.0			man-pkgutil-catman
 ./usr/share/man/cat1/pkill.0			man-util-catman
 ./usr/share/man/cat1/pmap.0			man-util-catman
 ./usr/share/man/cat1/pmc.0			man-util-catman
@@ -2000,6 +2002,7 @@
 ./usr/share/man/man1/less.1			man-util-man
 ./usr/share/man/man1/lesskey.1			man-util-man
 ./usr/share/man/man1/limit.1			man-util-man
+./usr/share/man/man1/linkfarm.1			man-pkgutil-man
 ./usr/share/man/man1/ln.1			man-util-man
 ./usr/share/man/man1/locale.1			man-util-man
 ./usr/share/man/man1/locate.1			man-util-man
@@ -2099,6 +2102,7 @@
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_delete.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_info.1			man-pkgutil-man
+./usr/share/man/man1/pkg_view.1			man-pkgutil-man
 ./usr/share/man/man1/pkill.1			man-util-man
 ./usr/share/man/man1/pmap.1			man-util-man
 ./usr/share/man/man1/pmc.1			man-util-man
