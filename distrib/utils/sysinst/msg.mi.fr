@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1.2.2 1997/12/04 13:27:30 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.1.2.3 1997/12/05 08:24:36 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -334,7 +334,7 @@ message dev
 message nfssource
 {Donnez le nom du serveur nfs et du répertoire où ce trouvent les distributions.
 Rappelez vous que le répertoire doit contenir les fichiers .tgz et qu'il doit
-être "montable" par nfs.
+être accessible par nfs.
 
 serveur:    %s
 répertoire: %s
@@ -601,3 +601,13 @@ message etc_hosts
 127.0.0.1 localhost
 }
 
+message partitions_overlap
+{Les partitions %c et %c se recouvrent.}
+
+message edit_partitions_again
+{
+Vous pouvez soit éditer la table des partitions à la main, ou abandonner et
+retourner au menu principal
+
+Voulez-vous éditer la table des partitions à nouveau ?
+}
