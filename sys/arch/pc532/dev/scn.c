@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.39 1997/04/21 16:16:16 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.39.8.1 1997/10/22 23:10:47 mellon Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -287,6 +287,14 @@ const struct {
 #define DEV_DIALOUT(x)	(minor(x) & 0x80)
 
 extern struct tty *constty;
+
+/* TRUE and FALSE */
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 #ifdef KGDB
 extern int kgdb_dev;
