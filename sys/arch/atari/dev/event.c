@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5.42.1 2001/09/09 18:48:42 thorpej Exp $	*/
+/*	$NetBSD: event.c,v 1.5.42.2 2001/09/12 17:43:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,7 +209,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &ev->ev_sel.si_klist;
-		kn->kn_fop = &wsevent_filtops;
+		kn->kn_fop = &ev_filtops;
 		break;
 
 	default:
