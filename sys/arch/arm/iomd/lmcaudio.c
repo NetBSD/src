@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.10 2002/10/02 15:45:12 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.11 2003/04/01 23:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -235,11 +235,11 @@ lmcaudio_attach(parent, self, aux)
 
 	/* Program the silence buffer and reset the DMA channel */
 
-	ag.silence = uvm_km_alloc(kernel_map, NBPG);
-	ag.beep = uvm_km_zalloc(kernel_map, NBPG);
+	ag.silence = uvm_km_alloc(kernel_map, PAGE_SIZE);
+	ag.beep = uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	if (ag.silence == NULL || ag.beep == NULL)
 		panic("lmcaudio: Cannot allocate memory");
-	memset((char *)ag.silence, 0, NBPG);
+	memset((char *)ag.silence, 0, PAGE_SIZE);
 	memcpy((char *)ag.beep, (char *)beep_waveform, sizeof(beep_waveform));
 
 	conv_jap((u_char *)ag.beep, sizeof(beep_waveform));
@@ -381,14 +381,14 @@ lmcaudio_round_blocksize(addr, blk)
 	int blk;
 {
 
-	if (blk > NBPG)
-		blk = NBPG;
+	if (blk > PAGE_SIZE)
+		blk = PAGE_SIZE;
 	else if (blk & 0x0f)	/* quad word */
 		blk &= ~0x0f;
 	return (blk);
 }
 
-#define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
+#define ROUND(s)  ( ((int)s) & (~(PAGE_SIZE-1)) )
 
 int
 lmcaudio_start_output(addr, p, cc, intr, arg)
@@ -406,10 +406,10 @@ lmcaudio_start_output(addr, p, cc, intr, arg)
 		/*
 		 * Not on quad word boundary.
 		 */
-		memcpy((char *)ag.silence, p, (cc > NBPG ? NBPG : cc));
+		memcpy((char *)ag.silence, p, (cc > PAGE_SIZE ? PAGE_SIZE : cc));
 		p = (void *)ag.silence;
-		if (cc > NBPG) {
-			cc = NBPG;
+		if (cc > PAGE_SIZE) {
+			cc = PAGE_SIZE;
 		}
 	}
 	lmcaudio_dma_program((vaddr_t)p, (vaddr_t)(p+cc), intr, arg);
@@ -609,12 +609,12 @@ lmcaudio_shutdown()
 	printf ( "lmcaudio: stop output\n" );
 #endif
 
-	memset((char *)ag.silence, 0, NBPG);
+	memset((char *)ag.silence, 0, PAGE_SIZE);
 
 	PHYS(ag.silence, &pa);
 
 	IOMD_WRITE_WORD(IOMD_SD0CURA, pa);
-	IOMD_WRITE_WORD(IOMD_SD0ENDA, (pa + NBPG - 16) | 0x80000000);
+	IOMD_WRITE_WORD(IOMD_SD0ENDA, (pa + PAGE_SIZE - 16) | 0x80000000);
 	disable_irq(sdma_channel);
 	IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
 }
@@ -702,7 +702,7 @@ lmcaudio_intr(arg)
 		ag.arg = NULL;
 	}
 	if (ag.drain == 1) {
-		lmcaudio_dma_program(ag.silence, ag.silence+NBPG,
+		lmcaudio_dma_program(ag.silence, ag.silence+PAGE_SIZE,
 			lmcaudio_dummy_routine, NULL);
 	}
 	return 0;

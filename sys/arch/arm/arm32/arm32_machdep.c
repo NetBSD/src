@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.28 2003/02/23 23:40:01 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.29 2003/04/01 23:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -222,8 +222,8 @@ cpu_startup()
 
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * NBPG,
-		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
+		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -279,7 +279,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (loop * MAXBSIZE);
-		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -315,7 +315,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

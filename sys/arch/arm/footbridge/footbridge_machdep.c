@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.9 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.10 2003/04/01 23:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.9 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.10 2003/04/01 23:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,5 +64,5 @@ void
 footbridge_sa110_cc_setup(void)
 {
 	sa1_cache_clean_addr = DC21285_CACHE_FLUSH_VBASE;
-	sa1_cache_clean_size = (NBPG * 4);
+	sa1_cache_clean_size = (PAGE_SIZE * 4);
 }

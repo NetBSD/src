@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2002/10/23 09:10:40 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2003/04/01 23:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.8 2002/10/23 09:10:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2003/04/01 23:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -114,10 +114,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)memhook + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)memhook,
-			    (vaddr_t)memhook + NBPG);
+			    (vaddr_t)memhook + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 
@@ -142,10 +142,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.13 2002/10/02 15:45:13 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.14 2003/04/01 23:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.13 2002/10/02 15:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.14 2003/04/01 23:19:11 thorpej Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -216,11 +216,11 @@ vidcaudio_attach(parent, self, aux)
 	vidcaudio_rate(32); /* 24*1024*/
 
 	/* Program the silence buffer and reset the DMA channel */
-	ag.silence = uvm_km_alloc(kernel_map, NBPG);
+	ag.silence = uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (ag.silence == NULL)
 		panic("vidcaudio: Cannot allocate memory");
 
-	memset((char *)ag.silence, 0, NBPG);
+	memset((char *)ag.silence, 0, PAGE_SIZE);
 	memcpy((char *)ag.silence, (char *)beep_waveform, sizeof(beep_waveform));
 
 	ag.buffer = 0;
@@ -255,7 +255,7 @@ vidcaudio_attach(parent, self, aux)
 
 	printf("\n");
 
-	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
+	vidcaudio_dma_program(ag.silence, ag.silence+PAGE_SIZE-16,
 	    vidcaudio_dummy_routine, NULL);
 
 	audio_attach_mi(&vidcaudio_hw_if, sc, &sc->device);
@@ -343,12 +343,12 @@ vidcaudio_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	if (blk > NBPG)
-		blk = NBPG;
+	if (blk > PAGE_SIZE)
+		blk = PAGE_SIZE;
 	return (blk);
 }
 
-#define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
+#define ROUND(s)  ( ((int)s) & (~(PAGE_SIZE-1)) )
 
 int
 vidcaudio_start_output(addr, p, cc, intr, arg)
@@ -374,7 +374,7 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 		printf("vidcaudio: DMA over page boundary requested."
 		    "  Fixing up\n");
 #endif
-		memcpy(p, (char *)ag.silence, cc > NBPG ? NBPG : cc);
+		memcpy(p, (char *)ag.silence, cc > PAGE_SIZE ? PAGE_SIZE : cc);
 		p = (void *)ag.silence;
 
 		/*
@@ -386,9 +386,9 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 		 * truncate the buffer and tell the user.
 		 */
 
-		if (cc > NBPG) {
+		if (cc > PAGE_SIZE) {
 			printf("vidcaudio: DMA buffer truncated. I could fix this up\n");
-			cc = NBPG;
+			cc = PAGE_SIZE;
 		}
 	}
 	vidcaudio_dma_program((vaddr_t)p, (vaddr_t)((char *)p+cc),
@@ -595,7 +595,7 @@ vidcaudio_shutdown(void)
 	printf("vidcaudio: stop output\n");
 #endif
 	IOMD_WRITE_WORD(IOMD_SD0CURB, ag.silence);
-	IOMD_WRITE_WORD(IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30));
+	IOMD_WRITE_WORD(IOMD_SD0ENDB, (ag.silence + PAGE_SIZE - 16) | (1<<30));
 	disable_irq(sound_dma_intr);
 }
 
