@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.58 2001/03/15 06:10:56 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.59 2001/04/25 18:09:52 thorpej Exp $	*/
 
 /*
  *
@@ -462,7 +462,7 @@ struct vmspace {
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
-	segsz_t vm_rssize; 	/* current resident set size in pages */
+	segsz_t vm_rssize;	/* current resident set size in pages */
 	segsz_t vm_swrss;	/* resident set size before last swap */
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
@@ -494,11 +494,7 @@ extern vm_map_t	phys_map;
 
 #endif /* _KERNEL */
 
-#ifdef	pmap_resident_count
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
-#else
-#define vm_resident_count(vm) ((vm)->vm_rssize)
-#endif
 
 /* XXX clean up later */
 struct buf;
