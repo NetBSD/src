@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.6 1995/08/27 20:51:50 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.7 1995/09/19 22:37:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -441,15 +441,16 @@ bsd_termios_to_linux_termios(bts, lts)
  * work their and converting back the data afterwards.
  */
 int
-linux_ioctl(p, uap, retval)
+linux_ioctl(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct linux_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd;
 	unsigned long com;
 	caddr_t data, sg;
