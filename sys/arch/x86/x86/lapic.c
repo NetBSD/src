@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.8 2004/06/05 07:15:57 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.9 2004/06/30 14:46:07 kochi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.8 2004/06/05 07:15:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.9 2004/06/30 14:46:07 kochi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -89,7 +89,7 @@ struct pic local_pic = {
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = lapic_hwmask,
 	.pic_hwunmask = lapic_hwunmask,
-	.pic_delroute =lapic_setup,
+	.pic_addroute =lapic_setup,
 	.pic_delroute = lapic_setup,
 };
 
