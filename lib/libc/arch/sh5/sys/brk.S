@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
+/*	$NetBSD: brk.S,v 1.3 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
+	RCSID("$NetBSD: brk.S,v 1.3 2003/03/24 14:29:34 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,14 +97,21 @@ WEAK_ALIAS(brk,_brk)
 #endif
 
 ENTRY(_brk)
-	LEA(_C_LABEL(__minbrk), r0)
+	PIC_PROLOGUE
+	PIC_LEA(_C_LABEL(__minbrk), r0)
 	LDPTR	r0, 0, r0
 	cmpgtu	r0, r2, r1		/* r1 == 1 if setting brk below _end */
 	cmvne	r1, r0, r2		/* Clamp brk at _end if r1 == 1 */
 	or	r2, r63, r3		/* Save new brk in r3 */
-	SYSCALL(break)
+	SYSTRAP(break)
+	pta/u	1f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
-	LEA(_C_LABEL(__curbrk), r0)
+	PIC_LEA(_C_LABEL(__curbrk), r0)
 	STPTR	r0, 0, r3		/* Otherwise, update __curbrk */
 	movi	0, r2
+	PIC_EPILOGUE
+	blink	tr0, r63
+
+1:	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63

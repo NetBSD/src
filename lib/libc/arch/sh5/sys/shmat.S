@@ -1,4 +1,4 @@
-/*	$NetBSD: shmat.S,v 1.1 2002/07/05 13:31:35 scw Exp $	*/
+/*	$NetBSD: shmat.S,v 1.2 2003/03/24 14:29:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,10 +70,4 @@
 
 #include "SYS.h"
 
-ENTRY(shmat)
-	SYSTRAP(shmat)
-	ptabs/l	r18, tr0
-	pt/u	_C_LABEL(__cerror_rv), tr1
-	cmvne	r0, r63, r1
-	bne/u	r0, r63, tr1
-	blink	tr0, r63
+RSYSCALL(shmat)

@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.5 2002/09/28 10:38:55 scw Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -213,7 +213,10 @@ ENTRY_NOPROFILE(_longjmp)
 	ptabs/l	r18, tr0
 	blink	tr0, r63
 
-Lbotch:	pta/l	_C_LABEL(longjmperror), tr0
+Lbotch:	LINK_FRAME(0)
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(longjmperror), r0, tr0)
 	blink	tr0, r18
-	pta/l	_C_LABEL(abort), tr0
-	blink	tr0, r63
+	PIC_PTAL(_C_LABEL(abort), r0, tr0)
+	blink	tr0, r18
+	brk

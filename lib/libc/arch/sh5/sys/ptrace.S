@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.1 2002/07/05 13:31:34 scw Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.2 2003/03/24 14:29:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,20 +78,21 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.1 2002/07/05 13:31:34 scw Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.2 2003/03/24 14:29:35 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
 ENTRY(ptrace)
+	PIC_PROLOGUE
 #ifdef	_REENTRANT
 	addi	r15, -40, r15
 	st.q	r15, 0, r18
+	PIC_PTAL(_C_LABEL(__errno), r0, tr0)
 	st.q	r15, 8, r2
 	st.q	r15, 16, r3
 	st.q	r15, 24, r4
 	st.q	r15, 32, r5
-	pt/l	_C_LABEL(__errno), tr0
 	blink	tr0, r18
 	or	r2, r63, r0
 	ld.q	r15, 0, r18
@@ -101,9 +102,15 @@ ENTRY(ptrace)
 	ld.q	r15, 32, r5
 	addi	r15, 40, r15
 #else
-	LEA(_C_LABEL(errno), r0)
+	PIC_LEA(_C_LABEL(errno), r0)
 #endif
 	st.l	r0, 0, r63
-	SYSCALL(ptrace)
+	SYSTRAP(ptrace)
+	pta/u	1f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
+	PIC_EPILOGUE
+	blink	tr0, r63
+
+1:	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2003/03/24 14:29:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.3 2003/03/24 14:29:35 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,12 +97,19 @@ WEAK_ALIAS(sbrk,_sbrk)
 #endif
 
 ENTRY(_sbrk)
-	LEA(_C_LABEL(__curbrk), r3)
+	PIC_PROLOGUE
+	PIC_LEA(_C_LABEL(__curbrk), r3)
 	LDPTR	r3, 0, r0
 	add	r2, r0, r2
 	or	r2, r63, r4
-	SYSCALL(break)
+	SYSTRAP(break)
+	pta/u	1f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
 	LDPTR	r3, 0, r2
 	STPTR	r3, 0, r4
+	PIC_EPILOGUE
+	blink	tr0, r63
+
+1:	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63

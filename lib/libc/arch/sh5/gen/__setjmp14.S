@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2002/09/28 10:38:55 scw Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,8 +133,10 @@ ENTRY_NOPROFILE(__setjmp14)
 
 	or	r2, r63, r28		/* r28 is a safe-haven for jmpbuf */
 
+	PIC_PROLOGUE
+
 	/* Get signal information */
-	pta/l	_C_LABEL(__sigprocmask14), tr0
+	PIC_PTAL(_C_LABEL(__sigprocmask14), r0, tr0)
 	movi	0, r2			/* how */
 	movi	0, r3			/* set (NULL) */
 	movi	_JB_SIGMASK, r0
@@ -142,7 +144,7 @@ ENTRY_NOPROFILE(__setjmp14)
 	blink	tr0, r18
 
 	/* Prepare to fetch the current signal stack state */
-	pta/l	_C_LABEL(__sigaltstack14), tr0
+	PIC_PTAL(_C_LABEL(__sigaltstack14), r0, tr0)
 #ifndef _LP64
 	addi	r15, -16, r15		/* ALIGN(sizeof(struct sigaltstack)) */
 #else
@@ -158,6 +160,9 @@ ENTRY_NOPROFILE(__setjmp14)
 	ld.l	r15, 16, r0		/* Fetch oss->ss_flags */
 	addi	r15, 24, r15		/* Clear stack */
 #endif
+
+	PIC_EPILOGUE
+
 	ld.q	r28, _JB_R18, r18	/* Restore return address */
 	pta/u	Lbotch, tr0		/* Exit on error */
 	bgt/u	r63, r2, tr0
@@ -172,11 +177,15 @@ ENTRY_NOPROFILE(__setjmp14)
 
 
 ENTRY_NOPROFILE(__longjmp14)
-	pta/l	_C_LABEL(__sigreturn14), tr0
+	LINK_FRAME(0)
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__sigreturn14), r0, tr0)
 	movi	1, r1
 	cmveq	r3, r1, r3		/* Ensure a non-zero return value */
 	st.q	r2, _JB_R2, r3		/* Modify jmp_buf's copy of r2 */
 	blink	tr0, r18
+	PIC_EPILOGUE
+	UNLINK_FRAME(0)
 
 	/*
 	 * The call to __sigreturn14 will only return here on error.
@@ -184,8 +193,11 @@ ENTRY_NOPROFILE(__longjmp14)
 	 * is invalid in some way.
 	 */
 
-Lbotch:	pta/l	_C_LABEL(longjmperror), tr0
+Lbotch:	LINK_FRAME(0)
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(longjmperror), r0, tr0)
 	blink	tr0, r18
-	pta/l	_C_LABEL(abort), tr0
-	blink	tr0, r63
+	PIC_PTAL(_C_LABEL(abort), r0, tr0)
+	blink	tr0, r18
+	brk
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2002/07/10 11:02:24 scw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,17 +52,21 @@ ENTRY(__clone)
 	or	r2, r63, r6	/* Preserve "fn" in r6 (syscall won't trash) */
 	or	r3, r63, r2	/* Shuffle syscall args: stack */
 	or	r4, r63, r3	/* Shuffle syscall args: flags */
-	SYSCALL(__clone)
+	SYSTRAP(__clone)
+	pta/u	2f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
 	bne/l	r2, r63, tr0	/* If parent, just return. */
 	ptabs/l	r6, tr0		/* Clone's "fn" was safe in r6 */
 	or	r5, r63, r2	/* Clone's "arg" was safe in r5 */
 	blink	tr0, r18	/* Invoke the clone */
-	pt/l	_C_LABEL(_exit), tr0
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(_exit), r0, tr0)
 	blink	tr0, r63	/* If clone returns, invoke _exit(3) */
 	/*NOTREACHED*/
 
 1:	movi	EINVAL, r2
-	pt/l	_C_LABEL(__cerror), tr0
+2:	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63
 	/*NOTREACHED*/

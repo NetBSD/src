@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.3 2003/02/13 02:50:50 nathanw Exp $	*/
+/*	$NetBSD: fork.S,v 1.4 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,12 +78,18 @@
 #if 0
 	RCSID("from: @(#)fork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: fork.S,v 1.3 2003/02/13 02:50:50 nathanw Exp $")
+	RCSID("$NetBSD: fork.S,v 1.4 2003/03/24 14:29:34 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(__fork)
-	SYSCALL(fork)
+	SYSTRAP(fork)
+	pta/u	1f, tr0
+	bne/u	r0, r63, tr0
 	ptabs/l	r18, tr0
 	cmvne	r3, r63, r2
+	blink	tr0, r63
+
+1:	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63
