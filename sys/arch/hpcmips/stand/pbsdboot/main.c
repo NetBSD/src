@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2000/02/27 05:47:34 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2000/03/06 13:24:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -244,6 +244,7 @@ TCHAR* path_list[] = {
 	TEXT("\\"),
 	TEXT("\\My Documents\\"),
 	TEXT("\\Storage Card\\"),
+	TEXT("\\Storage Card1\\"),
 	TEXT("\\Storage Card2\\"),
 #ifdef UNDER_CE
 	unicode_memory_card,
