@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.2 2000/06/16 23:33:47 matt Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.2.2.1 2000/06/22 16:39:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ struct vax_boot_block {
 #define	VAX_BOOT_VOLINFO_SS		0x01	/* single sided */
 #define	VAX_BOOT_VOLINFO_DS		0x81	/* double sided */
 
-#define	VAX_BOOT_SIZE			16	/* 16 blocks */
+#define	VAX_BOOT_SIZE			15	/* 15 blocks */
 #define	VAX_BOOT_LOAD			0	/* no load offset */
 #define	VAX_BOOT_ENTRY			0x200	/* one block in */
 
