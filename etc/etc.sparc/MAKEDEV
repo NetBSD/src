@@ -60,9 +60,11 @@
 #	cgfour*
 #	cgsix*
 #	cgeight*
+#	tcx*
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	rd*	memory disk driver
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -133,6 +135,10 @@ cgeight*)
 	mknod cgeight$unit	c 64 $unit; chmod 666 cgeight$unit
 	;;
 
+tcx*)
+	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
+	;;
+
 audio)
 	mknod audio		c 69 0; chmod 666 audio
 	;;
@@ -153,6 +159,13 @@ tun*)
 	mknod tun$unit c 111 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
+	;;
+
+rd*)
+	rm -f rd$unit
+	mknod rd$unit b 5 $unit
+	chown root.operator rd$unit
+	chmod 640 rd$unit
 	;;
 
 ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
