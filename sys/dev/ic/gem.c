@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.4 2001/10/18 03:33:33 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.5 2001/10/18 06:28:17 thorpej Exp $ */
 
 /*
  * 
@@ -764,27 +764,7 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_MAC_RX_MASK, 0); /* XXXX */
 	bus_space_write_4(t, h, GEM_MAC_TX_MASK, 0xffff); /* XXXX */
 	bus_space_write_4(t, h, GEM_MAC_CONTROL_MASK, 0); /* XXXX */
-#if 0
-	if (!sc->sc_pci) {
-		/* Config SBus */
-		switch (sc->sc_burst) {
-		default:
-			v = 0;
-			break;
-		case 16:
-			v = GEM_SEB_CFG_BURST16;
-			break;
-		case 32:
-			v = GEM_SEB_CFG_BURST32;
-			break;
-		case 64:
-			v = GEM_SEB_CFG_BURST64;
-			break;
-		}
-		bus_space_write_4(t, seb, GEM_SEBI_CFG, 
-			v|GE_SIOCFG_PARITY|GE_SIOCFG_BMODE64);
-	}
-#endif
+
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
