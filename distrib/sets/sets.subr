@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.15 2004/01/03 14:17:06 lukem Exp $
+#	$NetBSD: sets.subr,v 1.16 2004/01/03 15:21:30 lukem Exp $
 #
 
 #
@@ -28,9 +28,10 @@
 #	MKLINT
 #	MKPOSTFIX
 #	MKSENDMAIL
+#	MKSKEY
 #	MKYP
 
-MKVARS="MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKHESIOD MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKSENDMAIL MKYP"
+MKVARS="MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKHESIOD MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKSENDMAIL MKSKEY MKYP"
 
 oIFS=$IFS
 IFS="
@@ -88,7 +89,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.15 2004/01/03 14:17:06 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.16 2004/01/03 15:21:30 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -117,6 +118,7 @@ fi
 #	lint			<bsd.own.mk> ${MKLINT} != no
 #	postfix			<bsd.own.mk> ${MKPOSTFIX} != no
 #	sendmail		<bsd.own.mk> ${MKSENDMAIL} != no
+#	skey			<bsd.own.mk> ${MKSKEY} != no
 #	yp			<bsd.own.mk> ${MKYP} != no
 #
 list_set_files()
