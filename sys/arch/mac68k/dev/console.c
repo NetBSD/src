@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.13 1994/07/02 13:00:37 briggs Exp $
+ * $Id: console.c,v 1.14 1994/07/04 23:05:34 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -416,8 +416,8 @@ if (initt) {
       vt[i].font = &font[0];
     else
       vt[i].font = &font[1];
-    vt[i].numtcols = vt[i].numgcols/vt[i].font->width;
-    vt[i].numtrows = vt[i].numgrows/vt[i].font->height;
+    vt[i].numtcols = min(vt[i].numgcols/vt[i].font->width, 132);
+    vt[i].numtrows = min(vt[i].numgrows/vt[i].font->height, 50);
     vt[i].toptrow = 1;
     vt[i].bottrow = vt[i].numtrows;
     if (i==0) {
@@ -430,6 +430,8 @@ if (initt) {
   }
 
   drawcursor(curvt);
+strprintf("numtcols", vt[0].numtcols);
+strprintf("numtrows", vt[0].numtrows);
 }
 
 static void flashscreen(int vtnum)
@@ -737,7 +739,7 @@ static scrollup(int vtnum)
   register int i, j, x, maxx;
   register long *from, *to;
   register struct vt *v = &vt[vtnum];
-  char tempbuf[129];
+  char tempbuf[132];
   int buflen, s;
 
   /* Save the top line: */
