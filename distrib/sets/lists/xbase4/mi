@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2003/03/01 07:31:36 tron Exp $
+# $NetBSD: mi,v 1.8 2003/07/22 11:46:53 mrg Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -6,7 +6,6 @@
 ./usr/X11R6/bin/bdftruncate
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/cxpm
-./usr/X11R6/bin/dga
 ./usr/X11R6/bin/dpsexec
 ./usr/X11R6/bin/dpsinfo
 ./usr/X11R6/bin/fc-cache
@@ -37,24 +36,6 @@
 ./usr/X11R6/bin/xtrapreset
 ./usr/X11R6/bin/xtrapstats
 ./usr/X11R6/bin/xvinfo
-./usr/X11R6/include/X11/bitmaps/card.xbm
-./usr/X11R6/include/X11/bitmaps/down.xbm
-./usr/X11R6/include/X11/bitmaps/keyboard.xbm
-./usr/X11R6/include/X11/bitmaps/left.xbm
-./usr/X11R6/include/X11/bitmaps/monitor.xbm
-./usr/X11R6/include/X11/bitmaps/mouse.xbm
-./usr/X11R6/include/X11/bitmaps/narrower.xbm
-./usr/X11R6/include/X11/bitmaps/right.xbm
-./usr/X11R6/include/X11/bitmaps/shorter.xbm
-./usr/X11R6/include/X11/bitmaps/taller.xbm
-./usr/X11R6/include/X11/bitmaps/up.xbm
-./usr/X11R6/include/X11/bitmaps/wider.xbm
-./usr/X11R6/include/X11/pixmaps/card.xpm
-./usr/X11R6/include/X11/pixmaps/computer.xpm
-./usr/X11R6/include/X11/pixmaps/keyboard.xpm
-./usr/X11R6/include/X11/pixmaps/monitor.xpm
-./usr/X11R6/include/X11/pixmaps/mouse.xpm
-./usr/X11R6/lib/X11/Options
 ./usr/X11R6/lib/X11/Xcms.txt
 ./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/UXTerm
@@ -416,7 +397,6 @@
 ./usr/X11R6/man/cat1/bdftruncate.0
 ./usr/X11R6/man/cat1/beforelight.0
 ./usr/X11R6/man/cat1/cxpm.0
-./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/dpsexec.0
 ./usr/X11R6/man/cat1/dpsinfo.0
 ./usr/X11R6/man/cat1/fc-cache.0
@@ -427,7 +407,6 @@
 ./usr/X11R6/man/cat1/makepsres.0
 ./usr/X11R6/man/cat1/mkcfm.0
 ./usr/X11R6/man/cat1/mkfontscale.0
-./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/pswrap.0
 ./usr/X11R6/man/cat1/revpath.0
 ./usr/X11R6/man/cat1/rman.0

@@ -1,0 +1,3 @@
+# $NetBSD: md.sparc,v 1.1 2003/07/22 11:46:55 mrg Exp $
+./usr/X11R6/lib/X11/fonts/local
+./usr/X11R6/lib/X11/fonts/local/fonts.dir
