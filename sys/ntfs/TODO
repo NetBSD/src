@@ -13,21 +13,20 @@ NTFS - list of things to do in no particular order:
 - cleanup the mess with several *readattr*() functions if possible
 
 - avoid allocation temporary buffer to hold result of read()/data
-  to be written in ntfs_read() & ntfs_write(): it's very easy
-  to panic the kernel that way, with simple
-	read(open(...), NULL, some_very_big_number);
-  The data should be transfered directly to the user buffer
+  to be written in ntfs_read() & ntfs_write() - besides being
+  unefficient, the user is able to panic the kernel with simple
+  open()/lseek()/read() sequence.
 	(from Chuq)
   * finishing testing, even gained about 3-5% performance improvement
     for simple cat file >/dev/null test
 
-- ntfs_ntvattrget() identify if it's worth the efford to use some hashing
+- ntfs_ntvattrget(): find out if it's worth the efford to use some hashing
   for the list of ntnodes, so that it's not all scanned each time; it would
   be fine to migrate the found ntnode towards the start of the list too;
   the list search code is duplicated on two places, eliminate the duplicity
   somehow
   
-- convert to code to do caching in buffer cache indexed by
+- convert the code to do caching in buffer cache indexed by
   file-vnode/file-offset so that NTFS would take advantage of UBC;
   it should also improve performance somewhat, because if it's necessary
   to find some offset in a file, it's possible to check if the data
@@ -36,3 +35,8 @@ NTFS - list of things to do in no particular order:
 
 - working VOP_BALLOC()
 	(from Chuq)
+
+- add pathconf(2) support
+	(from Klaus Klein)
+
+- make ntfs exportable, for the completeness sake
