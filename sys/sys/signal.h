@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.32 1998/09/11 12:50:13 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.33 1998/09/12 11:04:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -124,7 +124,7 @@ typedef unsigned int sigset13_t;
 #define	__sigdelset13(s, n)	(*(s) &= ~__sigmask13(n))
 #define	__sigismember13(s, n)	(*(s) & __sigmask13(n))
 #define	__sigemptyset13(s)	(*(s) = 0)
-#define	__sigfillset13(s)	(*(s) = ~(sigset_t)0)
+#define	__sigfillset13(s)	(*(s) = ~(sigset13_t)0)
 
 /*
  * Signal vector "template" used in sigaction call.
