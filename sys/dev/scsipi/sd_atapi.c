@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.4 1999/09/11 21:42:58 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -61,7 +61,8 @@ int	sd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_atapibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sd_atapibus_ca = {
-	sizeof(struct sd_softc), sd_atapibus_match, sd_atapibus_attach
+	sizeof(struct sd_softc), sd_atapibus_match, sd_atapibus_attach,
+	sddetach, sdactivate,
 };
 
 struct scsipi_inquiry_pattern sd_atapibus_patterns[] = {
