@@ -19,19 +19,25 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$Id: hilinfo.c,v 1.1 1994/04/04 21:52:25 cgd Exp $
+ *	$NetBSD: hilinfo.c,v 1.2 1997/10/17 07:06:04 lukem Exp $
  */
 
-#include <stdio.h>
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: hilinfo.c,v 1.2 1997/10/17 07:06:04 lukem Exp $");
+#endif
+
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/ioctl.h>
 #include <dev/hilioctl.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 int aflg = 0;
 int tflg = 1;
-char *pname;
-char *dname, *tname();
+char *dname;
 struct _hilbuf11 hi;
 struct _hilbuf16 sc;
 
@@ -40,24 +46,29 @@ struct hil_info {
 	u_char	hil_hi;
 	char	*hil_name;
 } info[] = {
-	0xA0,	0xFF,	"keyboard",
-	0x60,	0x6B,	"mouse",
-	0x90,	0x97,	"tablet",
-	0x34,	0x34,	"id-module",
-	0x30,	0x30,	"button-box",
-	0x00,	0x00,	"unknown",
+	{0xA0,	0xFF,	"keyboard"},
+	{0x60,	0x6B,	"mouse"},
+	{0x90,	0x97,	"tablet"},
+	{0x34,	0x34,	"id-module"},
+	{0x30,	0x30,	"button-box"},
+	{0x00,	0x00,	"unknown"},
 };
 
+int	getinfo __P((void));
+int	main __P((int, char **));
+char   *tname __P((void));
+void	printall __P((void));
+void	usage __P((void));
+
+int
 main(argc, argv)
+	int argc;
 	char **argv;
 {
-	extern int optind, optopt;
-	extern char *optarg;
-	register int c;
+	int c;
 	int multi;
 
-	pname = argv[0];
-	while ((c = getopt(argc, argv, "at")) != EOF)
+	while ((c = getopt(argc, argv, "at")) != -1)
 		switch (c) {
 		/* everything */
 		case 'a':
@@ -91,6 +102,7 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 getinfo()
 {
 	int f;
@@ -112,9 +124,10 @@ getinfo()
 	return(1);
 }
 
+void
 printall()
 {
-	register int i;
+	int i;
 
 	printf("%s: %s, info: ", dname, tname());
 	for (i = 0; i < 11; i++)
@@ -130,7 +143,7 @@ printall()
 char *
 tname()
 {
-	register struct hil_info *hp;
+	struct hil_info *hp;
 
 	for (hp = info; hp->hil_lo; hp++)
 		if (hi.string[0] >= hp->hil_lo && hi.string[0] <= hp->hil_hi)
@@ -140,8 +153,11 @@ tname()
 	return(hp->hil_name);
 }
 
+void
 usage()
 {
-	fprintf(stderr, "usage: %s [-at] device\n", pname);
+	extern char *__progname;	/* from crt0.o */
+
+	fprintf(stderr, "usage: %s [-at] device\n", __progname);
 	exit(1);
 }
