@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1997/07/01 07:31:26 mikel Exp $
-#	@(#)Makefile	5.4 (Berkeley) 5/11/90
+#	$NetBSD: Makefile,v 1.5 1997/10/17 08:05:18 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	rmt
 MAN=	rmt.8
