@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.9 2002/05/16 01:01:40 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.10 2002/06/05 00:23:01 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.9 2002/05/16 01:01:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.10 2002/06/05 00:23:01 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -122,7 +122,7 @@ static struct mspcic_pci_map mspcic_pci_iomap[2] = {
 
 /* fixed mem and two sets of mem cycle translation registers */
 static struct mspcic_pci_map mspcic_pci_memmap[3] = {
-	{ 0x30100000, 0x30100000, 0x00f00000 }	/* fixed mem (pass through) */
+	{ 0x30100000, 0x00100000, 0x00f00000 }	/* fixed mem (pass through) */
 };
 
 struct mspcic_cookie {
@@ -580,7 +580,7 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
  * Install an interrupt handler.
  *
  * Bus-specific interrupt argument is 'line', an interrupt input line
- * for ms-IIep.  The PIL for is programmable via pcic interrupt
+ * for ms-IIep.  The PIL for each line is programmable via pcic interrupt
  * assignment select registers (but we use existing assignments).
  */
 static void *
