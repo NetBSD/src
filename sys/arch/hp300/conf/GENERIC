@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1998/06/26 01:53:54 lukem Exp $
+#	$NetBSD: GENERIC,v 1.40 1998/08/28 04:56:15 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -53,6 +53,7 @@ file-system	MFS		# Memory-based filesystem
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network filesystem server
+options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
