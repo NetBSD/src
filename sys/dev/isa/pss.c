@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.50 1998/12/05 10:49:24 dbj Exp $	*/
+/*	$NetBSD: pss.c,v 1.51 1999/02/17 02:37:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -242,7 +242,7 @@ struct audio_hw_if pss_audio_if = {
 	pss_query_devinfo,
 	ad1848_isa_malloc,
 	ad1848_isa_free,
-	ad1848_isa_round,
+	ad1848_isa_round_buffersize,
         ad1848_isa_mappage,
 	ad1848_isa_get_props,
 };

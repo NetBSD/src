@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.30 1998/08/17 21:16:11 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.31 1999/02/17 02:37:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -111,9 +111,9 @@ struct audio_hw_if {
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
 	
 	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
-	void	*(*allocm)__P((void *, unsigned long, int, int));
+	void	*(*allocm)__P((void *, int, size_t, int, int));
 	void	(*freem)__P((void *, void *, int));
-	unsigned long (*round_buffersize)__P((void *, unsigned long));
+	size_t	(*round_buffersize)__P((void *, int, size_t));
 	int	(*mappage)__P((void *, void *, int, int));
 
 	int 	(*get_props)__P((void *)); /* device properties */
