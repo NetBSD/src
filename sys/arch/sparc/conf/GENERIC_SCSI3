@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.28 1996/05/21 19:06:29 pk Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.29 1996/06/19 13:23:30 pk Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -250,6 +250,10 @@ cgsix0	at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 # Sun "cgeight" 24-bit framebuffer
 cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/300 P4
 cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+
+# Sun "tcx" accelerated color framebuffer.
+tcx0	at sbus? slot ? offset ?
+tcx*	at sbus? slot ? offset ?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
