@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.27.2.5 2002/07/02 04:20:11 lukem Exp $
+.\"	$NetBSD: prep,v 1.27.2.6 2002/07/09 14:32:26 lukem Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1581,7 +1581,7 @@ This section describes how to create your own bootable
 .Nx*M
 CD-R.
 We recommend that you use the official
-.Nx*M-\*V
+.Nx*M Ns \-\*V
 CD-R image, as described in the section above.
 .Pp
 Place
@@ -1674,7 +1674,7 @@ This section describes how to create your own bootable
 .Nx*M
 CD-R.
 We recommend that you use the official
-.Nx*M-\*V
+.Nx*M Ns \-\*V
 CD-R image, as described two sections above.
 .Pp
 Place
