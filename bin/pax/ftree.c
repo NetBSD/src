@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.13 2001/10/25 13:54:54 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.14 2001/10/26 15:58:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.13 2001/10/25 13:54:54 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.14 2001/10/26 15:58:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,8 +428,8 @@ next_file(ARCHD *arcn)
 		if (snprintf(curpath, sizeof(curpath), "%s%s%s",
 		    curdir, curdirlen ? "/" : "", ftnode->name)
 		    >= sizeof(curpath)) {
-			tty_warn(1, "line %d: %s: %s",
-			    ftnode->lineno, curdir, strerror(ENAMETOOLONG));
+			tty_warn(1, "line %d: %s: %s", (int)ftnode->lineno,
+			    curdir, strerror(ENAMETOOLONG));
 			return (-1);
 		}
 		ftnode->flags |= F_VISIT;	/* mark node visited */
@@ -449,7 +449,7 @@ next_file(ARCHD *arcn)
 #define NODETEST(t, m)							\
 			if (!(t)) {					\
 				tty_warn(1, "line %d: %s: %s not specified", \
-				    ftnode->lineno, ftent->fts_path, m); \
+				    (int)ftnode->lineno, ftent->fts_path, m); \
 				return(-1);				\
 			}
 			statbuf.st_mode = nodetoino(ftnode->type);
@@ -470,7 +470,7 @@ next_file(ARCHD *arcn)
 		    nodetoino(ftnode->type) != (statbuf.st_mode & S_IFMT)) {
 			tty_warn(1,
 			    "line %d: %s: type mismatch: specfile %s, tree %s",
-			    ftnode->lineno, ftent->fts_path,
+			    (int)ftnode->lineno, ftent->fts_path,
 			    inotype(nodetoino(ftnode->type)),
 			    inotype(statbuf.st_mode));
 			return(-1);
