@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.3 1993/05/22 11:40:52 cgd Exp $
+ *	$Id: ite.c,v 1.4 1993/05/27 09:35:18 deraadt Exp $
  */
 
 /*
@@ -58,7 +58,6 @@
 #include "conf.h"
 #include "proc.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "systm.h"
 #include "malloc.h"
@@ -108,7 +107,7 @@ int	iteburst = 64;
 
 int	nite = NITE;
 struct  tty *kbd_tty = NULL;
-struct	tty ite_tty[NITE];
+struct	tty *ite_tty[NITE];
 struct  ite_softc ite_softc[NITE];
 
 int	itestart();
@@ -129,7 +128,7 @@ iteon(dev, flag)
 	dev_t dev;
 {
 	int unit = UNIT(dev);
-	struct tty *tp = &ite_tty[unit];
+	struct tty *tp = ite_tty[unit];
 	struct ite_softc *ip = &ite_softc[unit];
 
 	if (unit < 0 || unit >= NITE || (ip->flags&ITE_ALIVE) == 0)
@@ -216,10 +215,17 @@ iteopen(dev, mode, devtype, p)
 #endif
 {
 	int unit = UNIT(dev);
-	register struct tty *tp = &ite_tty[unit];
+	register struct tty *tp;
 	register struct ite_softc *ip = &ite_softc[unit];
 	register int error;
 	int first = 0;
+
+	if(!ite_tty[unit]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		ite_tty[unit] = tp;
+	} else
+		tp = ite_tty[unit];
 
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
@@ -258,11 +264,13 @@ iteclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = &ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
+	FREE(dev, M_TTYS);
+	ite_tty[UNIT(dev)] = (struct tty *)NULL;
 	return(0);
 }
 
@@ -270,7 +278,7 @@ iteread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -280,7 +288,7 @@ itewrite(dev, uio, flag)
 	struct uio *uio;
 {
 	int unit = UNIT(dev);
-	register struct tty *tp = &ite_tty[unit];
+	register struct tty *tp = ite_tty[unit];
 
 	if ((ite_softc[unit].flags & ITE_ISCONS) && constty &&
 	    (constty->t_state&(TS_CARR_ON|TS_ISOPEN))==(TS_CARR_ON|TS_ISOPEN))
@@ -292,7 +300,7 @@ iteioctl(dev, cmd, addr, flag)
 	dev_t dev;
 	caddr_t addr;
 {
-	register struct tty *tp = &ite_tty[UNIT(dev)];
+	register struct tty *tp = ite_tty[UNIT(dev)];
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag);
@@ -316,11 +324,11 @@ itestart(tp)
 		return;
 	}
 	tp->t_state |= TS_BUSY;
-	cc = tp->t_outq.c_cc;
+	cc = RB_LEN(&tp->t_out);
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
+			wakeup(&tp->t_out);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -335,7 +343,7 @@ itestart(tp)
 	while (--cc >= 0) {
 		register int c;
 
-		c = getc(&tp->t_outq);
+		c = getc(&tp->t_out);
 		/*
 		 * iteputchar() may take a long time and we don't want to
 		 * block all interrupts for long periods of time.  Since
@@ -661,7 +669,7 @@ ignore:
 		break;
 
 	case CTRL('G'):
-		if (&ite_tty[unit] == kbd_tty)
+		if (ite_tty[unit] == kbd_tty)
 			kbdbell();
 		break;
 
@@ -841,7 +849,7 @@ itecnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, unit);
-	cp->cn_tp = &ite_tty[unit];
+	cp->cn_tp = ite_tty[unit];
 	cp->cn_pri = pri;
 }
 
@@ -854,7 +862,7 @@ itecninit(cp)
 	ip->attrbuf = console_attributes;
 	iteinit(cp->cn_dev);
 	ip->flags |= (ITE_ACTIVE|ITE_ISCONS);
-	kbd_tty = &ite_tty[unit];
+	kbd_tty = ite_tty[unit];
 }
 
 /*ARGSUSED*/

@@ -38,7 +38,7 @@
  * from: $Hdr: dcm.c 1.26 91/01/21$
  *
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.3 1993/05/22 11:40:46 cgd Exp $
+ *	$Id: dcm.c,v 1.4 1993/05/27 09:35:15 deraadt Exp $
  */
 
 /*
@@ -55,12 +55,12 @@
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/ioctl.h"
-#include "sys/select.h"
 #include "sys/tty.h"
 #include "sys/proc.h"
 #include "sys/conf.h"
 #include "sys/file.h"
 #include "sys/uio.h"
+#include "sys/malloc.h"
 #include "sys/kernel.h"
 #include "sys/syslog.h"
 #include "sys/time.h"
@@ -83,7 +83,7 @@ struct	driver dcmdriver = {
 
 #define NDCMLINE (NDCM*4)
 
-struct	tty dcm_tty[NDCMLINE];
+struct	tty *dcm_tty[NDCMLINE];
 struct	modemreg *dcm_modem[NDCMLINE];
 char	mcndlast[NDCMLINE];	/* XXX last modem status for line */
 int	ndcm = NDCMLINE;
@@ -353,7 +353,12 @@ dcmopen(dev, flag, mode, p)
 	brd = BOARD(unit);
 	if (unit >= NDCMLINE || (dcm_active & (1 << brd)) == 0)
 		return (ENXIO);
-	tp = &dcm_tty[unit];
+	if(!dcm_tty[unit]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		dcm_tty[unit] = tp;
+	} else
+		tp = dcm_tty[unit];
 	tp->t_oproc = dcmstart;
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
@@ -413,7 +418,7 @@ dcmclose(dev, flag, mode, p)
 	int unit;
  
 	unit = UNIT(dev);
-	tp = &dcm_tty[unit];
+	tp = dcm_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	if (tp->t_cflag&HUPCL || tp->t_state&TS_WOPEN ||
 	    (tp->t_state&TS_ISOPEN) == 0)
@@ -424,6 +429,8 @@ dcmclose(dev, flag, mode, p)
 			unit, tp->t_state, tp->t_flags);
 #endif
 	ttyclose(tp);
+	FREE(tp, M_TTYS);
+	dcm_tty[unit] = (struct tty *)NULL;
 	return (0);
 }
  
@@ -433,7 +440,7 @@ dcmread(dev, uio, flag)
 {
 	register struct tty *tp;
  
-	tp = &dcm_tty[UNIT(dev)];
+	tp = dcm_tty[UNIT(dev)];
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
@@ -444,7 +451,7 @@ dcmwrite(dev, uio, flag)
 	int unit = UNIT(dev);
 	register struct tty *tp;
  
-	tp = &dcm_tty[unit];
+	tp = dcm_tty[unit];
 	/*
 	 * XXX we disallow virtual consoles if the physical console is
 	 * a serial port.  This is in case there is a display attached that
@@ -567,7 +574,7 @@ dcmpint(unit, code, dcm)
 	int unit, code;
 	struct dcmdevice *dcm;
 {
-	struct tty *tp = &dcm_tty[unit];
+	struct tty *tp = dcm_tty[unit];
 
 	if (code & IT_SPEC)
 		dcmreadbuf(unit, dcm, tp);
@@ -583,7 +590,7 @@ dcmrint(brd, dcm)
 	register struct tty *tp;
 
 	unit = MKUNIT(brd, 0);
-	tp = &dcm_tty[unit];
+	tp = dcm_tty[unit];
 	for (i = 0; i < 4; i++, tp++, unit++)
 		dcmreadbuf(unit, dcm, tp);
 }
@@ -697,7 +704,7 @@ dcmmint(unit, mcnd, dcm)
 		printf("dcmmint: port %d mcnd %x mcndlast %x\n",
 		       unit, mcnd, mcndlast[unit]);
 #endif
-	tp = &dcm_tty[unit];
+	tp = dcm_tty[unit];
 	delta = mcnd ^ mcndlast[unit];
 	mcndlast[unit] = mcnd;
 	if ((delta & MI_CTS) && (tp->t_state & TS_ISOPEN) &&
@@ -738,7 +745,7 @@ dcmioctl(dev, cmd, data, flag)
 		printf("dcmioctl: unit %d cmd %x data %x flag %x\n",
 		       unit, cmd, *data, flag);
 #endif
-	tp = &dcm_tty[unit];
+	tp = dcm_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
@@ -897,18 +904,18 @@ dcmstart(tp)
 	if (dcmdebug & DDB_OUTPUT)
 		printf("dcmstart(%d): state %x flags %x outcc %d\n",
 		       UNIT(tp->t_dev), tp->t_state, tp->t_flags,
-		       tp->t_outq.c_cc);
+		       RB_LEN(&tp->t_out));
 #endif
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
+	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t)&tp->t_out);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (tp->t_outq.c_cc == 0) {
+	if (RB_LEN(&tp->t_out) == 0) {
 #ifdef IOSTATS
 		dsp->xempty++;
 #endif
@@ -925,7 +932,12 @@ dcmstart(tp)
 		goto out;
 	fifo = &dcm->dcm_tfifos[3-port][tail];
 again:
+#if 0
 	nch = q_to_b(&tp->t_outq, buf, (head - next) & TX_MASK);
+#else
+	nch = rbunpack(&tp->t_out, buf, nch);
+#endif
+
 #ifdef IOSTATS
 	tch += nch;
 #endif
@@ -958,7 +970,7 @@ again:
 	 * Head changed while we were loading the buffer,
 	 * go back and load some more if we can.
 	 */
-	if (tp->t_outq.c_cc && head != (pp->t_head & TX_MASK)) {
+	if (RB_LEN(&tp->t_out) && head != (pp->t_head & TX_MASK)) {
 #ifdef IOSTATS
 		dsp->xrestarts++;
 #endif
@@ -979,8 +991,8 @@ again:
 	}
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTR)
-		printf("dcmstart(%d): head %x tail %x outqcc %d\n",
-		       UNIT(tp->t_dev), head, tail, tp->t_outq.c_cc);
+		printf("dcmstart(%d): head %x tail %x outlen %d\n",
+		       UNIT(tp->t_dev), head, tail, RB_LEN(&tp->t_out));
 #endif
 out:
 #ifdef IOSTATS
@@ -1101,7 +1113,7 @@ dcmsetischeme(brd, flags)
 	 * chars for any port on the board.
 	 */
 	if (!perchar) {
-		register struct tty *tp = &dcm_tty[MKUNIT(brd, 0)];
+		register struct tty *tp = dcm_tty[MKUNIT(brd, 0)];
 		int c;
 
 		for (i = 0; i < 4; i++, tp++) {
@@ -1161,7 +1173,7 @@ dcmcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcmmajor, unit);
-	cp->cn_tp = &dcm_tty[unit];
+	cp->cn_tp = dcm_tty[unit];
 	switch (dcm_addr[BOARD(unit)]->dcm_rsid) {
 	case DCMID:
 		cp->cn_pri = CN_NORMAL;
