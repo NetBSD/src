@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.8 1995/03/21 13:34:08 mycroft Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.9 1995/09/21 23:39:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -83,15 +83,16 @@ struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
  * -1/errno is return on error.
  */
 int
-lfs_markv(p, uap, retval)
+lfs_markv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct segment *sp;
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
@@ -259,15 +260,16 @@ err1:
  * -1/errno is return on error.
  */
 int
-lfs_bmapv(p, uap, retval)
+lfs_bmapv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct lfs_bmapv_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	BLOCK_INFO *blkp;
 	struct mount *mntp;
 	struct vnode *vp;
@@ -319,14 +321,15 @@ lfs_bmapv(p, uap, retval)
  * -1/errno is return on error.
  */
 int
-lfs_segclean(p, uap, retval)
+lfs_segclean(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct lfs_segclean_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(u_long) segment;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
@@ -379,14 +382,15 @@ lfs_segclean(p, uap, retval)
  * -1/errno is return on error.
  */
 int
-lfs_segwait(p, uap, retval)
+lfs_segwait(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct lfs_segwait_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval *) tv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	extern int lfs_allclean_wakeup;
 	struct mount *mntp;
 	struct timeval atv;
