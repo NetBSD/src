@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.17 2002/09/13 17:16:00 tron Exp $	*/
+/*	$NetBSD: modstat.c,v 1.18 2002/09/18 22:59:36 lha Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.17 2002/09/13 17:16:00 tron Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.18 2002/09/18 22:59:36 lha Exp $");
 #endif
 
 #include <sys/param.h>
@@ -113,13 +113,18 @@ dostat(devfd, modnum, modname)
 	 * Decode this stat buffer...
 	 */
 	offset = (long)sbuf.offset;
-	if (offset < 0)
-		(void) strlcpy(offset_string, "-", sizeof (offset_string));
+	if (sbuf.type == LM_DEV)
+		(void) snprintf(offset_string, sizeof(offset_string), 
+		    "%3d/%-3d", 
+		    LKM_BLOCK_MAJOR(offset), 
+		    LKM_CHAR_MAJOR(offset));
+	else if (offset < 0)
+		(void) strlcpy(offset_string, " -", sizeof (offset_string));
 	else
-		(void) snprintf(offset_string, sizeof (offset_string), "%3ld",
+		(void) snprintf(offset_string, sizeof (offset_string), " %3ld",
 		    offset);
 
-	printf("%-7s %3d %3s %0*lx %04lx %0*lx %3ld %s\n",
+	printf("%-7s %3d %7s %0*lx %04lx %0*lx %3ld %s\n",
 	    (sbuf.type < tn_nentries) ? type_names[sbuf.type] : "(UNKNOWN)", 
 	    sbuf.id,		/* module id */
 	    offset_string,	/* offset into modtype struct */
@@ -192,7 +197,7 @@ main(argc, argv)
 
 	atexit(cleanup);
 
-	printf("Type    Id  Off %-*s Size %-*s Rev Module Name\n", 
+	printf("Type    Id   Offset %-*s Size %-*s Rev Module Name\n", 
 	    POINTERSIZE, "Loadaddr", 
 	    POINTERSIZE, "Info");
 
