@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.8 2001/06/20 03:13:19 uwe Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.9 2002/03/11 16:27:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,10 +149,9 @@ com_obio_match(parent, cf, aux)
 	if (need_probe) {
 		bus_space_handle_t ioh;
 
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset, sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR, 0,
-				 &ioh) == 0) {
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot, sa->sa_offset, sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR, &ioh) == 0) {
 			rv = comprobe1(sa->sa_bustag, ioh);
 #if 0
 			printf("modem: probe: lcr=0x%02x iir=0x%02x\n",
@@ -201,10 +200,9 @@ com_obio_attach(parent, self, aux)
 			    B9600, sc->sc_frequency, (CLOCAL | CREAD | CS8));
 
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    sbus_bus_map(sc->sc_iot, sa->sa_slot,
-			 sc->sc_iobase, sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, 0,
-			 &sc->sc_ioh) != 0) {
+	    sbus_bus_map(sc->sc_iot,
+			 sa->sa_slot, sc->sc_iobase, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &sc->sc_ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}

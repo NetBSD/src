@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.4 2002/02/18 04:50:57 uwe Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.5 2002/03/11 16:27:56 pk Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -110,7 +110,7 @@ int	ebus_print(void *, const char *);
  * here are our bus space and bus dma routines.
  */
 static paddr_t	ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int	_ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
+static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
 			      bus_size_t, int, vaddr_t, bus_space_handle_t *);
 static void	*ebus_intr_establish(bus_space_tag_t, int, int, int,
 				     int (*)(void *), void *);
@@ -453,13 +453,12 @@ ebus_alloc_dma_tag(sc, pdt)
  * about PCI physical addresses, which also applies to ebus.
  */
 static int
-_ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
+_ebus_bus_map(t, ba, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;	/* unused now that bus_addr_t is 64 bit */
-	bus_addr_t addr;	/* encodes bar/offset */
+	bus_addr_t ba;	/* encodes bar/offset */
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t va;
 	bus_space_handle_t *hp;
 {
 	struct ebus_softc *sc = t->cookie;
@@ -467,13 +466,13 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 	paddr_t offset;
 	int i;
 
-	bar = BUS_ADDR_IOSPACE(addr);
-	offset = BUS_ADDR_PADDR(addr);
+	bar = BUS_ADDR_IOSPACE(ba);
+	offset = BUS_ADDR_PADDR(ba);
 
 	DPRINTF(EDB_BUSMAP,
 		("\n_ebus_bus_map: bar %d offset %08x sz %x flags %x va %p\n",
 		 (int)bar, (u_int32_t)offset, (u_int32_t)size,
-		 flags, (void *)vaddr));
+		 flags, (void *)va));
 
 	/* EBus has only two BARs */
 	if (PCI_MAPREG_NUM(bar) > 1) {
@@ -511,7 +510,7 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 
 		/* pass it onto the pci controller */
 		return (bus_space_map2(sc->sc_bustag, 0, pciaddr, size,
-				       flags, vaddr, hp));
+				       flags, va, hp));
 	}
 
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
@@ -519,9 +518,9 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 }
 
 static paddr_t
-ebus_bus_mmap(t, paddr, off, prot, flags)
+ebus_bus_mmap(t, ba, off, prot, flags)
 	bus_space_tag_t t;
-	bus_addr_t paddr;
+	bus_addr_t ba;
 	off_t off;
 	int prot;
 	int flags;

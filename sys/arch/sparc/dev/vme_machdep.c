@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.34 2001/09/26 20:53:05 eeh Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.35 2002/03/11 16:27:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ static void *	sparc_vme_intr_establish __P((void *, vme_intr_handle_t, int,
 static void	sparc_vme_intr_disestablish __P((void *, void *));
 
 static int	vmebus_translate __P((struct sparcvme_softc *, vme_am_t,
-				      vme_addr_t, bus_type_t *, bus_addr_t *));
+				      vme_addr_t, bus_addr_t *));
 #if defined(SUN4M)
 static void	sparc_vme_iommu_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					  bus_size_t, bus_size_t, int));
@@ -393,22 +393,22 @@ vmeattach_iommu(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)ia->iom_reg[0].ior_iospace,
-			  (bus_addr_t)ia->iom_reg[0].ior_pa,
+	if (bus_space_map(ia->iom_bustag,
+			  (bus_addr_t) BUS_ADDR(ia->iom_reg[0].ior_iospace,
+						ia->iom_reg[0].ior_pa),
 			  (bus_size_t)ia->iom_reg[0].ior_size,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &bh) != 0) {
+			  &bh) != 0) {
 		panic("%s: can't map vmebusreg", self->dv_xname);
 	}
 	sc->sc_reg = (struct vmebusreg *)bh;
 
-	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)ia->iom_reg[1].ior_iospace,
-			  (bus_addr_t)ia->iom_reg[1].ior_pa,
+	if (bus_space_map(ia->iom_bustag,
+			  (bus_addr_t) BUS_ADDR(ia->iom_reg[1].ior_iospace,
+						ia->iom_reg[1].ior_pa),
 			  (bus_size_t)ia->iom_reg[1].ior_size,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &bh) != 0) {
+			  &bh) != 0) {
 		panic("%s: can't map vmebusvec", self->dv_xname);
 	}
 	sc->sc_vec = (struct vmebusvec *)bh;
@@ -416,22 +416,24 @@ vmeattach_iommu(parent, self, aux)
 	/*
 	 * Map VME IO cache tags and flush control.
 	 */
-	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)ia->iom_reg[1].ior_iospace,
-			  (bus_addr_t)ia->iom_reg[1].ior_pa + VME_IOC_TAGOFFSET,
+	if (bus_space_map(ia->iom_bustag,
+			  (bus_addr_t) BUS_ADDR(
+				ia->iom_reg[1].ior_iospace,
+				ia->iom_reg[1].ior_pa + VME_IOC_TAGOFFSET),
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &bh) != 0) {
+			  &bh) != 0) {
 		panic("%s: can't map IOC tags", self->dv_xname);
 	}
 	sc->sc_ioctags = (u_int32_t *)bh;
 
-	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)ia->iom_reg[1].ior_iospace,
-			  (bus_addr_t)ia->iom_reg[1].ior_pa+VME_IOC_FLUSHOFFSET,
+	if (bus_space_map(ia->iom_bustag,
+			  (bus_addr_t) BUS_ADDR(
+				ia->iom_reg[1].ior_iospace,
+				ia->iom_reg[1].ior_pa + VME_IOC_FLUSHOFFSET),
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &bh) != 0) {
+			  &bh) != 0) {
 		panic("%s: can't map IOC flush registers", self->dv_xname);
 	}
 	sc->sc_iocflush = (u_int32_t *)bh;
@@ -484,23 +486,22 @@ sparc_vme_error()
 #endif
 
 int
-vmebus_translate(sc, mod, addr, btp, bap)
+vmebus_translate(sc, mod, addr, bap)
 	struct sparcvme_softc *sc;
 	vme_am_t	mod;
 	vme_addr_t	addr;
-	bus_type_t	*btp;
 	bus_addr_t	*bap;
 {
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
+		struct rom_range *rp = &sc->sc_range[i];
 
-		if (sc->sc_range[i].cspace != mod)
+		if (rp->cspace != mod)
 			continue;
 
 		/* We've found the connection to the parent bus */
-		*bap = sc->sc_range[i].poffset + addr;
-		*btp = sc->sc_range[i].pspace;
+		*bap = BUS_ADDR(rp->pspace, rp->poffset + addr);
 		return (0);
 	}
 	return (ENOENT);
@@ -535,13 +536,12 @@ sparc_vme_probe(cookie, addr, len, mod, datasize, callback, arg)
 	void *arg;
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
-	bus_type_t iospace;
 	bus_addr_t paddr;
 	bus_size_t size;
 	struct vmeprobe_myarg myarg;
 	int res, i;
 
-	if (vmebus_translate(sc, mod, addr, &iospace, &paddr) != 0)
+	if (vmebus_translate(sc, mod, addr, &paddr) != 0)
 		return (EINVAL);
 
 	size = (datasize == VME_D8 ? 1 : (datasize == VME_D16 ? 2 : 4));
@@ -551,14 +551,14 @@ sparc_vme_probe(cookie, addr, len, mod, datasize, callback, arg)
 		myarg.cbarg = arg;
 		myarg.tag = sc->sc_bustag;
 		myarg.res = 0;
-		res = bus_space_probe(sc->sc_bustag, iospace, paddr, size, 0,
+		res = bus_space_probe(sc->sc_bustag, paddr, size, 0,
 				      0, vmeprobe_mycb, &myarg);
 		return (res ? 0 : (myarg.res ? myarg.res : EIO));
 	}
 
 	for (i = 0; i < len / size; i++) {
 		myarg.res = 0;
-		res = bus_space_probe(sc->sc_bustag, iospace, paddr, size, 0,
+		res = bus_space_probe(sc->sc_bustag, paddr, size, 0,
 				      0, 0, 0);
 		if (res == 0)
 			return (EIO);
@@ -580,16 +580,15 @@ sparc_vme_map(cookie, addr, size, mod, datasize, swap, tp, hp, rp)
 	vme_mapresc_t *rp;
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
-	bus_type_t iospace;
 	bus_addr_t paddr;
 	int error;
 
-	error = vmebus_translate(sc, mod, addr, &iospace, &paddr);
+	error = vmebus_translate(sc, mod, addr, &paddr);
 	if (error != 0)
 		return (error);
 
 	*tp = sc->sc_bustag;
-	return (bus_space_map2(sc->sc_bustag, iospace, paddr, size, 0, 0, hp));
+	return (bus_space_map(sc->sc_bustag, paddr, size, 0, hp));
 }
 
 int
@@ -599,15 +598,14 @@ sparc_vme_mmap_cookie(addr, mod, hp)
 	bus_space_handle_t *hp;
 {
 	struct sparcvme_softc *sc = sparcvme_sc;
-	bus_type_t iospace;
 	bus_addr_t paddr;
 	int error;
 
-	error = vmebus_translate(sc, mod, addr, &iospace, &paddr);
+	error = vmebus_translate(sc, mod, addr, &paddr);
 	if (error != 0)
 		return (error);
 
-	return (bus_space_mmap(sc->sc_bustag, BUS_ADDR(iospace, paddr), 0, 
+	return (bus_space_mmap(sc->sc_bustag, paddr, 0, 
 		0/*prot is ignored*/, 0));
 }
 

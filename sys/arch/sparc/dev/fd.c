@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88 2001/09/26 20:53:05 eeh Exp $	*/
+/*	$NetBSD: fd.c,v 1.89 2002/03/11 16:27:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -301,7 +301,6 @@ static int fdconf __P((struct fdc_softc *));
 static void establish_chip_type __P((
 		struct fdc_softc *,
 		bus_space_tag_t,
-		bus_type_t,
 		bus_addr_t,
 		bus_size_t,
 		bus_space_handle_t));
@@ -345,7 +344,6 @@ fdcmatch_mainbus(parent, match, aux)
 		return (0);
 
 	return (bus_space_probe(ma->ma_bustag,
-				ma->ma_iospace,
 				ma->ma_paddr,
 				1,	/* probe size */
 				0,	/* offset */
@@ -374,18 +372,19 @@ fdcmatch_obio(parent, match, aux)
 	if (strcmp("SUNW,fdtwo", sa->sa_name) != 0)
 		return (0);
 
-	return (bus_space_probe(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
-				1,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL));
+	return (bus_space_probe(sa->sa_bustag,
+			sbus_bus_addr(sa->sa_bustag,
+					sa->sa_slot, sa->sa_offset),
+			1,	/* probe size */
+			0,	/* offset */
+			0,	/* flags */
+			NULL, NULL));
 }
 
 static void
-establish_chip_type(fdc, tag, type, addr, size, handle)
+establish_chip_type(fdc, tag, addr, size, handle)
 	struct fdc_softc	*fdc;
 	bus_space_tag_t		tag;
-	bus_type_t		type;
 	bus_addr_t		addr;
 	bus_size_t		size;
 	bus_space_handle_t	handle;
@@ -405,7 +404,7 @@ establish_chip_type(fdc, tag, type, addr, size, handle)
 		return;
 
 	/* Then probe the DOR register offset */
-	if (bus_space_probe(tag, type, addr,
+	if (bus_space_probe(tag, addr,
 			    1,			/* probe size */
 			    FDREG77_DOR,	/* offset */
 			    0,			/* flags */
@@ -523,13 +522,11 @@ fdcattach_mainbus(parent, self, aux)
 
 	fdc->sc_bustag = ma->ma_bustag;
 
-	if (bus_space_map2(
+	if (bus_space_map(
 			ma->ma_bustag,
-			ma->ma_iospace,
 			ma->ma_paddr,
 			ma->ma_size,
 			BUS_SPACE_MAP_LINEAR,
-			0,
 			&fdc->sc_handle) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
@@ -537,7 +534,6 @@ fdcattach_mainbus(parent, self, aux)
 
 	establish_chip_type(fdc,
 			    ma->ma_bustag,
-			    ma->ma_iospace,
 			    ma->ma_paddr,
 			    ma->ma_size,
 			    fdc->sc_handle);
@@ -562,23 +558,19 @@ fdcattach_obio(parent, self, aux)
 
 	fdc->sc_bustag = sa->sa_bustag;
 
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
-			 0,
-			 &fdc->sc_handle) != 0) {
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &fdc->sc_handle) != 0) {
 		printf("%s: cannot map control registers\n",
 			self->dv_xname);
 		return;
 	}
 
 	establish_chip_type(fdc,
-			    sa->sa_bustag,
-			    sa->sa_slot,
-			    sa->sa_offset,
-			    sa->sa_size,
-			    fdc->sc_handle);
+		sa->sa_bustag,
+		sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset),
+		sa->sa_size,
+		fdc->sc_handle);
 
 	if (strcmp(PROM_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
 		printf(": no drives attached\n");

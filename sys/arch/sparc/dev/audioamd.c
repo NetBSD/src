@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.7 2001/10/03 00:04:48 augustss Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.8 2002/03/11 16:27:01 pk Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -229,13 +229,11 @@ audioamd_mainbus_attach(parent, self, aux)
 
 	sc->sc_bt = ma->ma_bustag;
 
-	if (bus_space_map2(
+	if (bus_space_map(
 			ma->ma_bustag,
-			ma->ma_iospace,
 			ma->ma_paddr,
 			AM7930_DREG_SIZE,
 			BUS_SPACE_MAP_LINEAR,
-			0,
 			&bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
@@ -256,13 +254,10 @@ audioamd_sbus_attach(parent, self, aux)
 
 	sc->sc_bt = sa->sa_bustag;
 
-	if (sbus_bus_map(
-			sa->sa_bustag,
-			sa->sa_slot,
-			sa->sa_offset,
-			AM7930_DREG_SIZE,
-			0, 0,
-			&bh) != 0) {
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset,
+			 AM7930_DREG_SIZE,
+			 0, &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.11 1999/04/28 18:49:40 fair Exp $ */
+/*	$NetBSD: power.c,v 1.12 2002/03/11 16:27:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -88,11 +88,8 @@ powerattach(parent, self, aux)
 
 	/* Map the power configuration register. */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset,
-			 sizeof(u_int8_t),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 sa->sa_slot, sa->sa_offset, sizeof(u_int8_t),
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map register\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.8 2000/08/22 21:28:31 pk Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.9 2002/03/11 16:27:01 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ cgsixmatch(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0,
+	return (bus_space_probe(oba->oba_bustag,
 				oba->oba_paddr + CGSIX_FHC_OFFSET,
 				4,	/* probe size */
 				0,	/* offset */
@@ -132,7 +132,6 @@ cgsixattach(parent, self, aux)
 
 	/* Remember cookies for cgsix_mmap() */
 	sc->sc_bustag = oba->oba_bustag;
-	sc->sc_btype = (bus_type_t)0;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
 	fb->fb_device = &sc->sc_dev;
@@ -147,51 +146,51 @@ cgsixattach(parent, self, aux)
 	 * the video RAM mapped.  Just map what we care about for ourselves
 	 * (the FHC, THC, and Brooktree registers).
 	 */
-	if (bus_space_map2(oba->oba_bustag, 0,
-			   oba->oba_paddr + CGSIX_BT_OFFSET,
-			   sizeof(*sc->sc_bt),
-			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_BT_OFFSET,
+			  sizeof(*sc->sc_bt),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map brooktree registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_bt = (struct bt_regs *)bh;
 
-	if (bus_space_map2(oba->oba_bustag, 0,
-			   oba->oba_paddr + CGSIX_FHC_OFFSET,
-			   sizeof(*sc->sc_fhc),
-			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_FHC_OFFSET,
+			  sizeof(*sc->sc_fhc),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map FHC registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_fhc = (int *)bh;
 
-	if (bus_space_map2(oba->oba_bustag, 0,
-			   oba->oba_paddr + CGSIX_THC_OFFSET,
-			   sizeof(*sc->sc_thc),
-			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_THC_OFFSET,
+			  sizeof(*sc->sc_thc),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map THC registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_thc = (struct cg6_thc *)bh;
 
-	if (bus_space_map2(oba->oba_bustag, 0,
-			   oba->oba_paddr + CGSIX_TEC_OFFSET,
-			   sizeof(*sc->sc_tec),
-			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_TEC_OFFSET,
+			  sizeof(*sc->sc_tec),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map TEC registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_tec = (struct cg6_tec_xxx *)bh;
 
-	if (bus_space_map2(oba->oba_bustag, 0,
-			   oba->oba_paddr + CGSIX_FBC_OFFSET,
-			   sizeof(*sc->sc_fbc),
-			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_FBC_OFFSET,
+			  sizeof(*sc->sc_fbc),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map FBC registers\n", self->dv_xname);
 		return;
 	}
@@ -217,11 +216,11 @@ cgsixattach(parent, self, aux)
 
 	if (isconsole && cgsix_use_rasterconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (bus_space_map2(oba->oba_bustag, 0,
-				   oba->oba_paddr + CGSIX_RAM_OFFSET,
-				   ramsize,
-				   BUS_SPACE_MAP_LINEAR,
-				   0, &bh) != 0) {
+		if (bus_space_map(oba->oba_bustag,
+				  oba->oba_paddr + CGSIX_RAM_OFFSET,
+				  ramsize,
+				  BUS_SPACE_MAP_LINEAR,
+				  &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}

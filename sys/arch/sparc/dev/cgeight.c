@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.25 2001/09/24 23:49:31 eeh Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.26 2002/03/11 16:27:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -115,8 +115,7 @@ struct cgeight_softc {
 	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	bus_type_t	sc_btype;	/* phys address description */
-	bus_addr_t	sc_paddr;	/* for device mmap() */
+	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
 
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union bt_cmap	sc_cmap;	/* Brooktree color map */
@@ -168,7 +167,7 @@ cgeightmatch(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				4,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -202,15 +201,13 @@ cgeightattach(parent, self, aux)
 	int ramsize, i, isconsole;
 
 	sc->sc_bustag = oba->oba_bustag;
-	sc->sc_btype = (bus_type_t)0;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
 	/* Map the pfour register. */
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0,
-			 sizeof(u_int32_t),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+			  sizeof(u_int32_t),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map pfour register\n", self->dv_xname);
 		return;
 	}
@@ -270,11 +267,11 @@ cgeightattach(parent, self, aux)
 #endif
 
 	/* Map the Brooktree. */
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 PFOUR_COLOR_OFF_CMAP,
-			 sizeof(struct fbcontrol),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + PFOUR_COLOR_OFF_CMAP,
+			  sizeof(struct fbcontrol),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}

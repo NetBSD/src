@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.50 2001/09/24 23:49:31 eeh Exp $	*/
+/*	$NetBSD: obio.c,v 1.51 2002/03/11 16:27:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ static	int obioprint  __P((void *, const char *));
 static	int obiosearch   __P((struct device *, struct cfdata *, void *));
 static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 			       int, int));
-static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
 
@@ -225,37 +225,36 @@ obioprint(args, busname)
 }
 
 int
-_obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
+_obio_bus_map(t, ba, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
+	bus_addr_t ba;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t va;
 	bus_space_handle_t *hp;
 {
 	struct obio4_softc *sc = t->cookie;
 
 	if ((flags & OBIO_BUS_MAP_USE_ROM) != 0 &&
-	     obio_find_rom_map(paddr, PMAP_OBIO, size, hp) == 0)
+	     obio_find_rom_map(ba, size, hp) == 0)
 		return (0);
 
-	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr,
-				size, flags, vaddr, hp));
+	return (bus_space_map2(sc->sc_bustag,
+			BUS_ADDR(PMAP_OBIO, ba), size, flags, va, hp));
 }
 
 paddr_t
-obio_bus_mmap(t, paddr, off, prot, flags)
+obio_bus_mmap(t, ba, off, prot, flags)
 	bus_space_tag_t t;
-	bus_addr_t paddr;
+	bus_addr_t ba;
 	off_t off;
 	int prot;
 	int flags;
 {
 	struct obio4_softc *sc = t->cookie;
 
-	paddr = BUS_ADDR(PMAP_OBIO, paddr);
-	return (bus_space_mmap(sc->sc_bustag, paddr, off, prot, flags));
+	return (bus_space_mmap(sc->sc_bustag,
+			BUS_ADDR(PMAP_OBIO, ba), off, prot, flags));
 }
 
 int
@@ -310,9 +309,8 @@ obiosearch(parent, cf, aux)
  * Else, create a new mapping.
  */
 int
-obio_find_rom_map(pa, iospace, len, hp)
+obio_find_rom_map(pa, len, hp)
 	bus_addr_t	pa;
-	bus_type_t	iospace;
 	int		len;
 	bus_space_handle_t *hp;
 {
@@ -326,7 +324,7 @@ obio_find_rom_map(pa, iospace, len, hp)
 		return (EINVAL);
 
 	pf = pa >> PGSHIFT;
-	pgtype = PMAP_T2PTE_4(iospace);
+	pgtype = PMAP_T2PTE_4(PMAP_OBIO);
 
 	for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
 		pte = getpte(va);
