@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.11 1994/06/29 06:44:27 cgd Exp $	*/
+/*	$NetBSD: ipc.h,v 1.12 1994/10/20 04:27:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,8 +50,6 @@
  */
 #ifndef _SYS_IPC_H_
 #define _SYS_IPC_H_
-
-typedef	long	key_t;	/* XXX should be in types.h */
 
 struct ipc_perm {
 	ushort	cuid;	/* creator user id */
