@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.8 2001/04/13 23:29:58 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.9 2001/05/13 13:47:23 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -59,7 +59,7 @@
 #define IPL_HIGH	12
 #define NIPL		IPL_HIGH + 1
 
-#if defined(_KERNEL) && !defined(ASSEMBLER)
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 #define splsoftnet()	raisespl(IPL_SOFTNET)
 #define splsoft()	splsoftnet()
