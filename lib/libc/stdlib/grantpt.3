@@ -1,4 +1,4 @@
-.\" $NetBSD: grantpt.3,v 1.1 2004/05/27 02:58:48 christos Exp $
+.\" $NetBSD: grantpt.3,v 1.2 2004/05/28 00:06:50 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@ group.
 If the slave pseudo-terminal device was being accessed by other file
 descriptors at the time, all such access will be revoked.
 .Sh RETURN VALUES
-If successful, 
+If successful,
 .Fn grantpt
 returns 0; otherwise a value of -1 is returned and
 .Va errno
