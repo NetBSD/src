@@ -16,4 +16,5 @@ port-pmax
 port-sparc
 port-sun3
 port-vax
+port-x68k
 standards
