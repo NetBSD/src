@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.49 2000/02/03 09:23:03 enami Exp $	*/
+/*	$NetBSD: socket.h,v 1.50 2000/02/18 05:19:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -396,18 +396,20 @@ struct cmsghdr {
 };
 
 /* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg)		((u_char *)((cmsg) + 1))
+#define	CMSG_DATA(cmsg) \
+	((u_char *)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 /*
  * Alignment requirement for CMSG struct manipulation.
  * This is different from ALIGN() defined in ARCH/include/param.h.
  * XXX think again carefully about architecture dependencies.
  */
-#define CMSG_ALIGN(n)		(((n) + 3) & ~3)
+#define CMSG_ALIGN(n)	(((n) + (sizeof(long) - 1)) & ~(sizeof(long) - 1))
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((caddr_t)(cmsg) + (cmsg)->cmsg_len + sizeof(struct cmsghdr) > \
+	(((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len) + \
+			    CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (((caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)NULL : \
 	    (struct cmsghdr *)((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)))
