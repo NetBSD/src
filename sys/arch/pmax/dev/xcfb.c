@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.14 1996/04/08 00:57:40 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.14.4.1 1996/05/30 04:04:01 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -194,11 +194,11 @@ xcfbmatch(parent, match, aux)
 	void *aux;
 {
 	/*struct cfdata *cf = match;*/
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
 	/* Make sure that it's an xcfb. */
-	if (!TC_BUS_MATCHNAME(ca, "PMAG-DV ")  &&
-	    strcmp(ca->ca_name, "xcfb") != 0)
+	if (!TC_BUS_MATCHNAME(ta, "PMAG-DV ")  &&
+	    strcmp(ta->ta_modname, "xcfb") != 0)
 		return (0);
 
 	return (1);
@@ -210,9 +210,9 @@ xcfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
-	if (!xcfbinit(NULL, (caddr_t)ca->ca_addr, self->dv_unit, 0));
+	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0));
 		return;
 
 	/* no interrupts for XCFB */

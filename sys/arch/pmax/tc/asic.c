@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.9 1996/03/17 01:47:09 thorpej Exp $	*/
+/*	$NetBSD: asic.c,v 1.9.4.1 1996/05/30 04:13:19 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
@@ -62,7 +63,7 @@ extern int cputype;
 
 struct asic_softc {
 	struct	device sc_dv;
-	caddr_t	sc_base;
+	tc_addr_t sc_base;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -131,8 +132,6 @@ struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
 #define IOASIC_DPRINTF(x)	(void) x
 #endif
 
-caddr_t ioasic_base;		/* XXX XXX XXX */
-
 int
 asicmatch(parent, cfdata, aux)
 	struct device *parent;
@@ -140,10 +139,10 @@ asicmatch(parent, cfdata, aux)
 	void *aux;
 {
 	struct cfdata *cf = cfdata;
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
 	IOASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
-		ca->ca_name, ca->ca_slot, ca->ca_offset, ca->ca_slotpri));
+		ta->ta_modname, ta->ta_slot, ta->ta_offset, (int)ta->ta_cookie));
 
 	/* An IOCTL asic can only occur on the turbochannel, anyway. */
 #ifdef notyet
@@ -152,13 +151,13 @@ asicmatch(parent, cfdata, aux)
 #endif
 
 	/* The 3MAX (kn02) is special. */
-	if (TC_BUS_MATCHNAME(ca, KN02_ASIC_NAME)) {
+	if (TC_BUS_MATCHNAME(ta, KN02_ASIC_NAME)) {
 		printf("(configuring KN02 system slot as asic)\n");
 		goto gotasic;
 	}
 
 	/* Make sure that we're looking for this type of device. */
-	if (!TC_BUS_MATCHNAME(ca, "IOCTL   "))
+	if (!TC_BUS_MATCHNAME(ta, "IOCTL   "))
 		return (0);
 gotasic:
 
@@ -198,8 +197,9 @@ asicattach(parent, self, aux)
 	void *aux;
 {
 	struct asic_softc *sc = (struct asic_softc *)self;
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 	struct confargs *nca;
+	struct ioasicdev_attach_args ioasicdev;
 	int i;
 	extern int cputype;
 
@@ -208,7 +208,7 @@ asicattach(parent, self, aux)
 
 	IOASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
-	sc->sc_base = (caddr_t)ca->ca_addr;
+	sc->sc_base = ta->ta_addr;
 
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
 
@@ -226,7 +226,7 @@ asicattach(parent, self, aux)
 		printf(": fast mode\n");
 	
 	/* Decstations use hand-craft code to enable asic interrupts */
-	BUS_INTR_ESTABLISH(ca, asic_intr, sc);
+	BUS_INTR_ESTABLISH(ta, asic_intr, sc);
 
 #endif 	/* Alpha AXP: select ASIC speed  */
 
@@ -250,8 +250,13 @@ asicattach(parent, self, aux)
 		       nca->ca_name, nca->ca_slot, nca->ca_offset,
 		       nca->ca_addr));
 
+		strncpy(ioasicdev.iada_modname, nca->ca_name, TC_ROM_LLEN);
+		ioasicdev.iada_modname[TC_ROM_LLEN] = '\0';
+		ioasicdev.iada_offset = nca->ca_offset;
+		ioasicdev.iada_addr = nca->ca_addr;
+		ioasicdev.iada_cookie = (void *)nca->ca_slotpri;
                 /* Tell the autoconfig machinery we've found the hardware. */
-                config_found(self, nca, asicprint);
+                config_found(self, &ioasicdev, asicprint);
         }
 	IOASIC_DPRINTF(("asicattach: done\n"));
 }
@@ -261,23 +266,22 @@ asicprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 
 	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
-	printf(" offset 0x%lx", ca->ca_offset);
-	printf(" priority %d", ca->ca_slotpri);
+		printf("%s at %s", d->iada_modname, pnp);
+	printf(" offset 0x%x", d->iada_offset);
+	printf(" priority %d", (int)d->iada_cookie);
 	return (UNCONF);
 }
 
 int
 ioasic_submatch(match, d)
 	struct cfdata *match;
-	/*struct ioasicdev_attach_args *d;*/
-	struct confargs *d;
+	struct ioasicdev_attach_args *d;
 {
 
-	return ((match->ioasiccf_offset == /*d->iada_offset*/ d->ca_offset) ||
+	return ((match->ioasiccf_offset == d->iada_offset) ||
 		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
 }
 
@@ -317,7 +321,7 @@ asic_intr_establish(ca, handler, val)
 #if defined(IOASIC_DEBUG) && 0
 	printf("asic: %s:  intr for entry %d slot %d pri %d\n", 
 		 ca->ca_name, ca->ca_slot, ca->ca_slotpri,
-		 asic_slots[ca->ca_slot].as_val);
+		 (int)asic_slots[ca->ca_slot].as_val);
 #endif	/*IOASIC_DEBUG*/
 
 #ifdef pmax

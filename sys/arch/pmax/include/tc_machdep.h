@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.3 1996/04/14 00:55:19 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.3.4.1 1996/05/30 04:07:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -87,8 +87,8 @@ typedef int32_t		tc_offset_t;
  */
 struct confargs;
 
-#define TC_BUS_MATCHNAME(ca, name) \
-     (strncmp( (ca)->ca_name, (name), TC_ROM_LLEN+1) == 0)
+#define TC_BUS_MATCHNAME(ta, name) \
+     (strncmp( (ta)->ta_modname, (name), TC_ROM_LLEN+1) == 0)
 
 /*
  * Port-specific declarations:

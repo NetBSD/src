@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-asic-conf.c,v 1.5 1996/01/29 22:52:38 jonathan Exp $	*/
+/*	$NetBSD: ds-asic-conf.c,v 1.5.4.1 1996/05/30 04:13:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -42,13 +42,13 @@ struct asic_slot kn03_asic_slots[] =
 
 struct asic_slot xine_asic_slots[] =
 {
-	{ { "lance",	   0, (u_int) (3 * 0x40000), 0, KN03_LANCE_SLOT },
-	    KN03_INTR_LANCE, asic_intrnull, (void*) KN03_LANCE_SLOT, },
+	{ { "lance",	   0, (u_int) (3 * 0x40000), 0, XINE_LANCE_SLOT },
+	    XINE_INTR_LANCE, asic_intrnull, (void*) XINE_LANCE_SLOT, },
 
-	{ { "scc",	   1, (u_int) (4 * 0x40000),  0, KN03_SCC0_SLOT },
-	    KN03_INTR_SCC_0, asic_intrnull, (void *)KN03_SCC0_SLOT, },
+	{ { "scc",	   1, (u_int) (4 * 0x40000),  0, XINE_SCC0_SLOT },
+	    XINE_INTR_SCC_0, asic_intrnull, (void *) XINE_SCC0_SLOT, },
 
-	{ { "mc146818",  2, 0, (u_int) (8* 0x40000), },
+	{ { "mc146818",    2, (u_int) (8* 0x40000), 0, 0},
 	    0, asic_intrnull, (void *)(long) 16 /*XXX*/, },
 
 	{ { "isdn",	   3, (u_int) (9 * 0x40000), 0, XINE_ISDN_SLOT },

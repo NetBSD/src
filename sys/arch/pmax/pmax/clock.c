@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1996/04/10 17:38:19 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.12.4.1 1996/05/30 04:10:34 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,18 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <pmax/pmax/clockreg.h>
+
+#include "tc.h"			/* Is a Turbochannel configured? */
+
+#if NTC>0
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+#endif
+
 
 /*
  * Machine-dependent clock routines.
@@ -135,8 +142,10 @@ volatile struct chiptime *Mach_clock_addr;
 
 /* global autoconfiguration variables -- bus type*/
 extern struct cfdriver mainbus_cd;
+#if NTC>0
 extern struct cfdriver ioasic_cd;
 extern struct cfdriver tc_cd;
+#endif
 
 
 /* Definition of the driver for autoconfig. */
@@ -166,17 +175,30 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 #ifdef notdef /* XXX */
 	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
 #endif
 	int nclocks;
 
+#if NTC>0
 	if (parent->dv_cfdata->cf_driver != &ioasic_cd &&
 	    parent->dv_cfdata->cf_driver != &tc_cd &&
 	    parent->dv_cfdata->cf_driver != &mainbus_cd)
+#else
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
+#endif
 		return(0);
 
 	/* make sure that we're looking for this type of device. */
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd) {
+		if (strcmp(d->iada_modname, "mc146818") != 0)
+			return (0);
+	} else
+#endif
 	if (strcmp(ca->ca_name, "mc146818") != 0)
 		return (0);
 
@@ -197,12 +219,21 @@ clockattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 #ifndef pmax
 	register volatile struct chiptime *c;
 #endif
 
-	Mach_clock_addr = (struct chiptime *)
-		MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
+		Mach_clock_addr = (struct chiptime *)
+			MACH_PHYS_TO_UNCACHED(d->iada_addr);
+	else
+#endif
+		Mach_clock_addr = (struct chiptime *)
+			MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 
 #ifdef pmax
 	printf("\n");
@@ -229,7 +260,10 @@ void
 cpu_initclocks()
 {
 	register volatile struct chiptime *c;
-	extern int tickadj, fixtick;
+	extern int tickadj;
+#ifdef NTP
+	extern int fixtick;
+#endif
 	register long tmp;
 
 	if (Mach_clock_addr == NULL)
@@ -237,7 +271,10 @@ cpu_initclocks()
 
 	hz = HZ;		/* Clock Hz is a configuration parameter */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	fixtick = tickfix = 1000000 - (hz * tick);
+#ifdef NTP
+	fixtick =
+#endif
+	tickfix = 1000000 - (hz * tick);
 	if (tickfix) {
 		int ftp;
 
