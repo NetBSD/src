@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.42 2000/10/05 03:21:01 enami Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.43 2000/12/22 23:11:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.42 2000/10/05 03:21:01 enami Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.43 2000/12/22 23:11:19 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -581,10 +581,10 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 			kp2p->p_holdcnt = kp->kp_proc.p_holdcnt;
 
-			memcpy(&kp2p->p_siglist, &kp->kp_proc.p_siglist, sizeof(ki_sigset_t));
-			memcpy(&kp2p->p_sigmask, &kp->kp_proc.p_sigmask, sizeof(ki_sigset_t));
-			memcpy(&kp2p->p_sigignore, &kp->kp_proc.p_sigignore, sizeof(ki_sigset_t));
-			memcpy(&kp2p->p_sigcatch, &kp->kp_proc.p_sigcatch, sizeof(ki_sigset_t));
+			memcpy(&kp2p->p_siglist, &kp->kp_proc.p_sigctx.ps_siglist, sizeof(ki_sigset_t));
+			memcpy(&kp2p->p_sigmask, &kp->kp_proc.p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
+			memcpy(&kp2p->p_sigignore, &kp->kp_proc.p_sigctx.ps_sigignore, sizeof(ki_sigset_t));
+			memcpy(&kp2p->p_sigcatch, &kp->kp_proc.p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
 			kp2p->p_stat = kp->kp_proc.p_stat;
 			kp2p->p_priority = kp->kp_proc.p_priority;
