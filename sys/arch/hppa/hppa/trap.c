@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2004/03/14 01:08:47 cl Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -723,8 +723,7 @@ trap(int type, struct trapframe *frame)
 		else {
 			map = &vm->vm_map;
 			if (l->l_flag & L_SA) {
-				KDASSERT(p != NULL && p->p_sa != NULL);
-				p->p_sa->sa_vp_faultaddr = va;
+				l->l_savp->savp_faultaddr = va;
 				l->l_flag |= L_SA_PAGEFAULT;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.81 2004/01/02 18:52:17 cl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.82 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.81 2004/01/02 18:52:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.82 2004/03/14 01:08:47 cl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -862,7 +862,7 @@ timerupcall(struct lwp *l, void *arg)
 
 	KDASSERT(l->l_proc->p_sa);
 	/* Bail out if we do not own the virtual processor */
-	if (l->l_proc->p_sa->sa_vp != l)
+	if (l->l_savp->savp_lwp != l)
 		return ;
 	
 	KERNEL_PROC_LOCK(l);
@@ -1194,7 +1194,9 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
+	struct sadata_vp *vp;
 	int s;
+	unsigned int i;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
@@ -1216,8 +1218,6 @@ itimerfire(struct ptimer *pt)
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
-		struct sadata *sa = p->p_sa;
-		unsigned int i;
 
 		if (p->p_userret == NULL) {
 			/*
@@ -1234,9 +1234,12 @@ itimerfire(struct ptimer *pt)
 			p->p_userret_arg = p->p_timers;
 			
 			SCHED_LOCK(s);
-			if (sa->sa_vp->l_flag & L_SA_IDLE) {
-				sa->sa_vp->l_flag &= ~L_SA_IDLE;
-				sched_wakeup(sa->sa_vp);
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
+					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
+					sched_wakeup(vp->savp_lwp);
+					break;
+				}
 			}
 			SCHED_UNLOCK(s);
 		} else if (p->p_userret == timerupcall) {

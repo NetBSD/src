@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.186 2004/03/11 22:34:26 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.187 2004/03/14 01:08:47 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.186 2004/03/11 22:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.187 2004/03/14 01:08:47 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -993,6 +993,7 @@ static void
 kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 {
 	struct lwp *l, *suspended = NULL;
+	struct sadata_vp *vp;
 	int	s = 0, prop, allsusp;
 	sig_t	action;
 	int	signum = ksi->ksi_signo;
@@ -1095,17 +1096,24 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		SCHED_LOCK(s);
 
 	if (p->p_flag & P_SA) {
-		l = p->p_sa->sa_vp;
 		allsusp = 0;
+		l = NULL;
 		if (p->p_stat == SACTIVE) {
-			KDASSERT(l != NULL);
-			if (l->l_flag & L_SA_IDLE) {
-				/* wakeup idle LWP */
-			} else if (l->l_flag & L_SA_YIELD) {
-				/* idle LWP is already waking up */
-				goto out;
-				/*NOTREACHED*/
-			} else {
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				l = vp->savp_lwp;
+				KDASSERT(l != NULL);
+				if (l->l_flag & L_SA_IDLE) {
+					/* wakeup idle LWP */
+					goto found;
+					/*NOTREACHED*/
+				} else if (l->l_flag & L_SA_YIELD) {
+					/* idle LWP is already waking up */
+					goto out;
+					/*NOTREACHED*/
+				}
+			}
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				l = vp->savp_lwp;
 				if (l->l_stat == LSRUN ||
 				    l->l_stat == LSONPROC) {
 					signotify(p);
@@ -1115,21 +1123,18 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 				if (l->l_stat == LSSLEEP && 
 				    l->l_flag & L_SINTR) {
 					/* ok to signal vp lwp */
-				} else if (signum == SIGKILL) {
-					/*
-					 * get a suspended lwp from
-					 * the cache to send KILL
-					 * signal
-					 * XXXcl add signal checks at resume points
-					 */
-					suspended = sa_getcachelwp(p);
-					allsusp = 1;
 				} else
 					l = NULL;
 			}
+			if (l == NULL)
+				allsusp = 1;
 		} else if (p->p_stat == SSTOP) {
-			if (l->l_stat != LSSLEEP || (l->l_flag & L_SINTR) == 0)
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				l = vp->savp_lwp;
+				if (l->l_stat == LSSLEEP && (l->l_flag & L_SINTR) != 0)
+					break;
 				l = NULL;
+			}
 		}
 	} else if (p->p_nrlwps > 0 && (p->p_stat != SSTOP)) {
 		/*
@@ -1161,6 +1166,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		}
 	}
 
+ found:
 	switch (p->p_stat) {
 	case SACTIVE:
 
@@ -1210,8 +1216,19 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			 * make this happen by unsuspending one of
 			 * them.
 			 */
-			if (allsusp && (signum == SIGKILL))
+			if (allsusp && (signum == SIGKILL)) {
+				if (p->p_flag & P_SA) {
+					/*
+					 * get a suspended lwp from
+					 * the cache to send KILL
+					 * signal
+					 * XXXcl add signal checks at resume points
+					 */
+					suspended = sa_getcachelwp
+						(SLIST_FIRST(&p->p_sa->sa_vps));
+				}
 				lwp_continue(suspended);
+			}
 			goto done;
 		}
 		/*
@@ -1403,13 +1420,9 @@ issignal(struct lwp *l)
 	int		dolock = (l->l_flag & L_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
-	if (l->l_flag & L_SA) {
-		struct sadata *sa = p->p_sa;	
-
-		/* Bail out if we do not own the virtual processor */
-		if (sa->sa_vp != l)
-			return 0;
-	}
+	/* Bail out if we do not own the virtual processor */
+	if (l->l_flag & L_SA && l->l_savp->savp_lwp != l)
+		return 0;
 
 	if (p->p_stat == SSTOP) {
 		/*
@@ -1598,6 +1611,7 @@ proc_stop(struct proc *p, int wakeup)
 {
 	struct lwp *l;
 	struct proc *parent;
+	struct sadata_vp *vp;
 
 	SCHED_ASSERT_LOCKED();
 
@@ -1615,19 +1629,21 @@ proc_stop(struct proc *p, int wakeup)
 		 * because the VP-LWP in stopped state cannot be
 		 * repossessed.
 		 */
-		l = p->p_sa->sa_vp;
-		if (l->l_stat == LSONPROC && l->l_cpu == curcpu()) {
-			l->l_stat = LSSTOP;
-			p->p_nrlwps--;
-		} else if (l->l_stat == LSRUN) {
-			/* Remove LWP from the run queue */
-			remrunqueue(l);
-			l->l_stat = LSSTOP;
-			p->p_nrlwps--;
-		} else if (l->l_stat == LSSLEEP &&
-		    l->l_flag & L_SA_IDLE) {
-			l->l_flag &= ~L_SA_IDLE;
-			l->l_stat = LSSTOP;
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			l = vp->savp_lwp;
+			if (l->l_stat == LSONPROC && l->l_cpu == curcpu()) {
+				l->l_stat = LSSTOP;
+				p->p_nrlwps--;
+			} else if (l->l_stat == LSRUN) {
+				/* Remove LWP from the run queue */
+				remrunqueue(l);
+				l->l_stat = LSSTOP;
+				p->p_nrlwps--;
+			} else if (l->l_stat == LSSLEEP &&
+			    l->l_flag & L_SA_IDLE) {
+				l->l_flag &= ~L_SA_IDLE;
+				l->l_stat = LSSTOP;
+			}
 		}
 		goto out;
 	}
@@ -1701,6 +1717,7 @@ struct lwp *
 proc_unstop(struct proc *p)
 {
 	struct lwp *l, *lr = NULL;
+	struct sadata_vp *vp;
 	int cantake = 0;
 
 	SCHED_ASSERT_LOCKED();
@@ -1737,12 +1754,15 @@ proc_unstop(struct proc *p)
 	}
 	if (p->p_flag & P_SA) {
 		/* Only consider returning the LWP on the VP. */
-		lr = p->p_sa->sa_vp;
-		if (lr->l_stat == LSSLEEP) {
-			if (lr->l_flag & L_SA_YIELD)
-				setrunnable(lr);
-			else if (lr->l_flag & L_SINTR)
-				return lr;
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			lr = vp->savp_lwp;
+			if (lr->l_stat == LSSLEEP) {
+				if (lr->l_flag & L_SA_YIELD) {
+					setrunnable(lr);
+					break;
+				} else if (lr->l_flag & L_SINTR)
+					return lr;
+			}
 		}
 		return NULL;
 	}

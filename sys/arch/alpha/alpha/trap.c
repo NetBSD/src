@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.90 2004/02/19 17:06:06 drochner Exp $ */
+/* $NetBSD: trap.c,v 1.91 2004/03/14 01:08:47 cl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2004/02/19 17:06:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2004/03/14 01:08:47 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,8 +438,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (user) {
 				KERNEL_PROC_LOCK(l);
 				if (l->l_flag & L_SA) {
-					KDASSERT(l->l_proc != NULL && l->l_proc->p_sa != NULL);
-					l->l_proc->p_sa->sa_vp_faultaddr = (vaddr_t)a0;
+					l->l_savp->savp_faultaddr = (vaddr_t)a0;
 					l->l_flag |= L_SA_PAGEFAULT;
 				}
 			} else {

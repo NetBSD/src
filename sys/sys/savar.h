@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.14 2004/01/02 18:52:17 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.15 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,24 +84,32 @@ struct sastack {
 	unsigned int		sast_gen;
 };
 
+struct sadata_vp {
+	int	savp_id;		/* "virtual processor" identifier */
+	SLIST_ENTRY(sadata_vp)	savp_next; /* link to next sadata_vp */
+	struct simplelock	savp_lock; /* lock on these fields */
+	struct lwp	*savp_lwp;	/* lwp on "virtual processor" */
+	struct lwp	*savp_blocker;	/* recently blocked lwp */
+	struct lwp	*savp_wokenq_head; /* list of woken lwps */
+	struct lwp	**savp_wokenq_tailp; /* list of woken lwps */
+	vaddr_t	savp_faultaddr;		/* page fault address */
+	vaddr_t	savp_ofaultaddr;	/* old page fault address */
+	LIST_HEAD(, lwp)	savp_lwpcache; /* list of available lwps */
+	int	savp_ncached;		/* list length */
+	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* pending upcalls */
+};
+
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
-	struct lwp	*sa_vp;		/* "virtual processor" allocation */
-	struct lwp	*sa_vp_blocker;	/* recently blocked lwp */
-	struct lwp	*sa_wokenq_head;	/* list of woken lwps */
-	struct lwp	**sa_wokenq_tailp;	/* list of woken lwps */
-	vaddr_t	sa_vp_faultaddr;	/* page fault address */
-	vaddr_t	sa_vp_ofaultaddr;	/* old page fault address */
-	int	sa_concurrency;		/* desired concurrency */
-	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of available lwps */
-	int	sa_ncached;		/* list length */
+	int	sa_concurrency;		/* current concurrency */
+	int	sa_maxconcurrency;	/* requested concurrency */
 	SPLAY_HEAD(sasttree, sastack) sa_stackstree; /* tree of upcall stacks */
 	struct sastack	*sa_stacknext;	/* next free stack */
 	ssize_t	sa_stackinfo_offset;	/* offset from ss_sp to stackinfo data */
 	int	sa_nstacks;		/* number of upcall stacks */
-	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
+	SLIST_HEAD(, sadata_vp)	sa_vps;	/* list of "virtual processors" */
 };
 
 #define SA_FLAG_ALL	SA_FLAG_PREEMPT
@@ -109,6 +117,7 @@ struct sadata {
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 extern struct pool sastack_pool;	/* memory pool for sastack structs */
+extern struct pool savp_pool;		/* memory pool for sadata_vp structures */
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
@@ -128,7 +137,7 @@ void	sa_yield(struct lwp *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
-struct lwp *sa_getcachelwp(struct proc *);
+struct lwp *sa_getcachelwp(struct sadata_vp *);
 
 
 void	sa_unblock_userret(struct lwp *);

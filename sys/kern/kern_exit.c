@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.138 2004/03/05 07:27:22 dbj Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.139 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.138 2004/03/05 07:27:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.139 2004/03/14 01:08:47 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -532,6 +532,7 @@ exit_lwps(struct lwp *l)
 {
 	struct proc *p;
 	struct lwp *l2;
+	struct sadata_vp *vp;
 	int s, error;
 	lwpid_t		waited;
 
@@ -545,23 +546,28 @@ exit_lwps(struct lwp *l)
 	p->p_userret_arg = NULL;
 
 	if (p->p_sa) {
-		/*
-		 * Make SA-cached LWPs normal process runnable LWPs so
-		 * that they'll also self-destruct.
-		 */
-		DPRINTF(("exit_lwps: Making cached LWPs of %d runnable: ",
-		    p->p_pid));
-		SCHED_LOCK(s);
-		while ((l2 = sa_getcachelwp(p)) != 0) {
-			l2->l_priority = l2->l_usrpri;
-			setrunnable(l2);
-			DPRINTF(("%d ", l2->l_lid));
-		}
-		DPRINTF(("\n"));
-		SCHED_UNLOCK(s);
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			/*
+			 * Make SA-cached LWPs normal process runnable
+			 * LWPs so that they'll also self-destruct.
+			 */
+			DPRINTF(("exit_lwps: Making cached LWPs of %d on VP %d runnable: ",
+				    p->p_pid, vp->savp_id));
+			SCHED_LOCK(s);
+			while ((l2 = sa_getcachelwp(vp)) != 0) {
+				l2->l_priority = l2->l_usrpri;
+				setrunnable(l2);
+				DPRINTF(("%d ", l2->l_lid));
+			}
+			SCHED_UNLOCK(s);
+			DPRINTF(("\n"));
 
-		/* Clear wokenq, the LWPs on the queue will run below */
-		p->p_sa->sa_wokenq_head = NULL;
+			/*
+			 * Clear wokenq, the LWPs on the queue will
+			 * run below.
+			 */
+			vp->savp_wokenq_head = NULL;
+		}
 	}
 	
 	/*
@@ -571,9 +577,6 @@ exit_lwps(struct lwp *l)
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
-
-		if (p->p_sa && l2->l_wchan == p->p_sa)
-			l2->l_flag |= L_SINTR;
 
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
