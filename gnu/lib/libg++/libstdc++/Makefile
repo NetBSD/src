@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/12/20 01:04:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/12/22 13:35:51 pk Exp $
 
 LIB=	stdc++
 
@@ -21,6 +21,11 @@ NOMAN=	    noman
 NOLINT=	    nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
+
+.if (${MACHINE} != "alpha")
+LDADD=	${DESTDIR}/usr/lib/c++rt0.o
+DPADD=	${DESTDIR}/usr/lib/c++rt0.o
+.endif
 
 .include <bsd.lib.mk>
 
