@@ -1,18 +1,17 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/16 17:40:54 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/21 01:26:02 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
 
 LIB=	xtt
-.PATH:	${X11SRCDIR.xc}/extras/X-TrueType
-.PATH:	${X11SRCDIR.xc}/extras/FreeType/lib/arch/unix
-.PATH:	${X11SRCDIR.xc}/extras/FreeType/lib/extend
-.PATH:	${X11SRCDIR.xc}/lib/font/X-TrueType/module
 
 # XXX we are building module only version
-SRCS=	xttprop.c xttfuncs.c xttcconv.c xttcap.c xttmisc.c xttblit.c \
-	freetype.c ftxcmap.c ftxsbit.c xttmodule.c
+.PATH:	${X11SRCDIR.xc}/lib/font/FreeType
+SRCS=	xttcap.c
+
+.PATH:	${X11SRCDIR.xc}/lib/font/FreeType/module
+SRCS+=	xttmodule.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
 		-I${X11SRCDIR.xc}/lib/font/X-TrueType \
@@ -43,11 +42,3 @@ libinstall::
 .endif
 
 .include <bsd.lib.mk>
-
-SUBDIR=	ARABIC BIG5HKSCS GBK ISO8859_10 ISO8859_15 ISO8859_4 ISO8859_7 \
-	JISX0201 KOI8 MULEENCODING VISCII ARMSCII8 DOSENCODING GEORGIAN \
-	ISO8859_11 ISO8859_2 ISO8859_5 ISO8859_8 JISX0208 KSC5601 BIG5 \
-	GB2312 ISO8859_1 ISO8859_14 ISO8859_3 ISO8859_6 ISO8859_9 \
-	JISX0212 KSCJOHAB TCVN
-
-.include <bsd.subdir.mk>
