@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.19 1999/05/05 20:01:12 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.20 1999/07/03 20:04:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,12 +54,13 @@ struct iovec;
  */
 struct file {
 	LIST_ENTRY(file) f_list;/* list of active files */
-	short	f_flag;		/* see fcntl.h */
+	int	f_flag;		/* see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 	short	f_type;		/* descriptor type */
 	short	f_count;	/* reference count */
 	short	f_msgcount;	/* references from message queue */
+	short	f_pad0;		/* spare */
 	struct	ucred *f_cred;	/* credentials associated with descriptor */
 	struct	fileops {
 		int	(*fo_read)	__P((struct file *fp, off_t *offset,
