@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.47 2000/03/30 13:57:51 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.48 2000/03/31 12:58:54 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,8 +121,10 @@
 #include <sparc/dev/cgsixvar.h>
 #include <sparc/dev/pfourreg.h>
 
+#ifdef RASTERCONSOLE
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsconsio.h>
+#endif
 
 static void	cg6_unblank __P((struct device *));
 
@@ -136,24 +138,14 @@ static struct fbdriver cg6_fbdriver = {
 	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap
 };
 
-/*
- * Unlike the bw2 and cg3 drivers, we do not need to provide an rconsole
- * interface, as the cg6 is fast enough.. but provide a knob to turn it
- * on anyway.
- *
- * Actually, the new rasops stuff is a LOT faster!  --thorpej
- *
- * Especially with the cg6 accelerated blits :-)  --Mouse
- */
-#ifdef RASTERCONSOLE
-int cgsix_use_rasterconsole = 1;
-#endif
-
 static void cg6_reset __P((struct cgsix_softc *));
 static void cg6_loadcmap __P((struct cgsix_softc *, int, int));
 static void cg6_loadomap __P((struct cgsix_softc *));
 static void cg6_setcursor __P((struct cgsix_softc *));/* set position */
 static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
+
+#ifdef RASTERCONSOLE
+int cgsix_use_rasterconsole = 1;	/* Testing knob */
 
 /*
  * cg6 accelerated console routines.
@@ -447,6 +439,7 @@ cg6_ras_do_cursor(struct rasops_info *ri)
 	CG6_DRAW_WAIT(fbc);
 	CG6_DRAIN(fbc);
 }
+#endif /* RASTERCONSOLE */
 
 void
 cg6attach(sc, name, isconsole)
