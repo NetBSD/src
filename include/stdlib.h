@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.37 1998/07/27 11:14:35 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.38 1998/07/27 16:05:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -183,6 +183,7 @@ int	 mkstemp __P((char *));
 #ifndef __AUDIT__
 char	*mktemp __P((char *));
 #endif
+char	*mktempdir __P((char *));
 
 int	 setkey __P((const char *));
 

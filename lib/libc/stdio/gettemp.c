@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,9 +54,10 @@ __RCSID("$NetBSD: gettemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $");
 #include "local.h"
 
 int
-__gettemp(path, doopen)
+__gettemp(path, doopen, domkdir)
 	char *path;
 	int *doopen;
+	int domkdir;
 {
 	char *start, *trv;
 	struct stat sbuf;
@@ -127,8 +128,12 @@ __gettemp(path, doopen)
 				return (1);
 			if (errno != EEXIST)
 				return (0);
-		}
-		else if (lstat(path, &sbuf))
+		} else if (domkdir) {
+			if (mkdir(path, 0700) >= 0)
+				return (1);
+			if (errno != EEXIST)
+				return (0);
+		} else if (lstat(path, &sbuf))
 			return (errno == ENOENT ? 1 : 0);
 
 		/* tricky little algorithm for backward compatibility */
