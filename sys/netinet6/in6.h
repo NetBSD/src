@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.38 2002/05/13 15:20:30 kleink Exp $	*/
+/*	$NetBSD: in6.h,v 1.39 2002/05/14 10:27:28 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ struct in6_pktinfo {
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
-	{ "bindv6only", CTLTYPE_INT }, \
+	{ "v6only", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
