@@ -1,25 +1,25 @@
-#	$NetBSD: mtree.common,v 1.1 2002/02/08 02:18:54 lukem Exp $
+#	$NetBSD: mtree.common,v 1.2 2003/02/20 12:06:54 lukem Exp $
 
 /set				type=dir uname=root gname=wheel mode=0755
 
 .
 ./bin
 ./dev
-./dist
-./dist/base_obsolete		type=file mode=644 optional
-./dist/comp_obsolete		type=file mode=644 optional
-./dist/etc_obsolete		type=file mode=644 optional
-./dist/games_obsolete		type=file mode=644 optional
-./dist/man_obsolete		type=file mode=644 optional
-./dist/misc_obsolete		type=file mode=644 optional
-./dist/text_obsolete		type=file mode=644 optional
-./dist/xbase_obsolete		type=file mode=644 optional
-./dist/xcomp_obsolete		type=file mode=644 optional
-./dist/xcontrib_obsolete	type=file mode=644 optional
-./dist/xfont_obsolete		type=file mode=644 optional
-./dist/xserver_obsolete		type=file mode=644 optional
-./dist/xmisc_obsolete		type=file mode=644 optional
 ./etc
+./etc/obsolete
+./etc/obsolete/base		type=file mode=644 optional
+./etc/obsolete/comp		type=file mode=644 optional
+./etc/obsolete/etc		type=file mode=644 optional
+./etc/obsolete/games		type=file mode=644 optional
+./etc/obsolete/man		type=file mode=644 optional
+./etc/obsolete/misc		type=file mode=644 optional
+./etc/obsolete/text		type=file mode=644 optional
+./etc/obsolete/xbase		type=file mode=644 optional
+./etc/obsolete/xcomp		type=file mode=644 optional
+./etc/obsolete/xcontrib		type=file mode=644 optional
+./etc/obsolete/xfont		type=file mode=644 optional
+./etc/obsolete/xserver		type=file mode=644 optional
+./etc/obsolete/xmisc		type=file mode=644 optional
 ./mnt
 ./mnt2
 ./kern
