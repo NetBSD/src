@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.22 2002/07/03 17:17:35 pooka Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.23 2002/12/04 13:08:35 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.22 2002/07/03 17:17:35 pooka Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.23 2002/12/04 13:08:35 grant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -293,7 +293,7 @@ user_from_uid(uid_t uid, int noname)
 	if ((pw = (*_pwcache_getpwuid)(uid)) == NULL) {
 		/*
 		 * no match for this uid in the local password file
-		 * a string that is the uid in numberic format
+		 * a string that is the uid in numeric format
 		 */
 		if (ptr == NULL)
 			return (NULL);
