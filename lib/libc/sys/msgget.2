@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgget.2,v 1.12 2003/04/16 13:34:54 wiz Exp $
+.\"	$NetBSD: msgget.2,v 1.12.2.1 2004/05/14 07:38:30 tron Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 25, 1999
+.Dd May 13, 2004
 .Dt MSGGET 2
 .Os
 .Sh NAME
@@ -58,6 +58,16 @@ does not have a message queue identifier associated with it and the
 .Dv IPC_CREAT
 bit is set in
 .Fa msgflg .
+If both the
+.Dv IPC_CREAT
+bit and the
+.Dv IPC_EXCL
+bit are set in
+.Fa msgflg ,
+and
+.Fa key
+has a message queue identifier associated with it already,
+the operation will fail.
 .Pp
 If a new message queue is created, the data structure associated with it (the
 .Va msqid_ds
