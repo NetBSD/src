@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.3 2002/07/09 19:05:00 matt Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.4 2002/07/16 16:39:12 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -268,7 +268,8 @@ mpc6xx_init(void (*handler)(void))
 	/*
 	 * external interrupt handler install
 	 */
-	mpc6xx_install_extint(handler);
+	if (handler)
+		mpc6xx_install_extint(handler);
 
 	__syncicache(0, EXC_LAST + 0x100);
 
@@ -393,7 +394,7 @@ mpc6xx_install_extint(void (*handler)(void))
 
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
-		panic("install_extint: too far away");
+		panic("install_extint: %p too far away (%#x)", handler, offset);
 #endif
 	__asm __volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 	    :	"=r" (omsr), "=r" (msr)
