@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.2 2000/06/29 08:58:50 mrg Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.3 2001/02/27 19:07:53 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.3 2001/02/27 19:07:53 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
