@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.22 2000/01/23 04:03:21 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.23 2000/01/24 03:08:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -346,8 +346,7 @@ getaddrinfo(hostname, servname, hints, res)
 	 */
 	if (MATCH_FAMILY(pai->ai_family, PF_INET, 1)
 	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)) {
-		/* call to get_portmatch() can conterminate *pai */
-		ai0 = *pai;
+		ai0 = *pai;	/* backup *pai */
 
 		if (pai->ai_family == PF_UNSPEC)
 			pai->ai_family = PF_INET6;
@@ -987,8 +986,13 @@ get_port(ai, servname, matchonly)
 
 	if (servname == NULL)
 		return 0;
-	if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+	switch (ai->ai_family) {
+	case AF_INET:
+	case AF_INET6:
+		break;
+	default:
 		return 0;
+	}
 
 	switch (ai->ai_socktype) {
 	case SOCK_RAW:
