@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.115 2003/02/20 07:00:47 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.116 2003/02/20 10:05:20 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3722,3 +3722,18 @@ distrib/utils/sysinst/arch/sparc/menus.md.pl	1.3
 	[mrg, ticket #1177]
 
 Moved RC2 tag for these last 6 files.
+
+crypto/dist/openssl/ssl/s3_pkt.c		1.2
+
+	In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+	via timing by performing a MAC computation even if incorrect
+	block cipher padding has been found.  This is a countermeasure
+	against active attacks where the attacker has to distinguish
+	between bad padding and a MAC verification error. (CAN-2003-0078)
+	[wiz, ticket #1179]
+
+share/mk/bsd.own.mk				1.304-1.305
+
+	Use XFree86 4.x on macppc and cats.
+	[jmc, ticket #1178]
+
