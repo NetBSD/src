@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1997/02/02 08:27:15 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 1998/02/21 19:03:26 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,16 +44,22 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -85,9 +91,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vm_offset_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 
@@ -137,9 +143,15 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#ifdef UVM
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

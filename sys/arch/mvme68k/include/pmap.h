@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1998/02/18 02:05:34 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1998/02/21 19:03:25 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -142,19 +142,15 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-#ifndef MACHINE_NONCONTIG
+#ifndef MACHINE_NEW_NONCONTIG
 #define pmap_page_index(pa)		atop(pa - vm_first_phys)
 #endif
-#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
-
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-
 #endif /* _KERNEL */
 
 #endif /* !_MACHINE_PMAP_H_ */
