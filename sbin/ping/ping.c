@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.25 1997/03/18 19:06:51 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.26 1997/03/19 12:36:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.25 1997/03/18 19:06:51 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.26 1997/03/19 12:36:03 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -709,7 +709,7 @@ pinger(void)
 	opack_icmp.icmp_type = ICMP_ECHO;
 	opack_icmp.icmp_id = ident;
 	if (pingflags & F_TIMING)
-		*(struct timeval *)&opack_icmp.icmp_data[0] = now;
+		(void) memcpy(opack_icmp.icmp_data, &now, sizeof(now));
 	cc = datalen+PHDR_LEN;
 	opack_icmp.icmp_cksum = 0;
 	opack_icmp.icmp_cksum = in_cksum((u_short*)&opack_icmp, cc);
@@ -838,8 +838,10 @@ pr_pack(u_char *buf,
 			first_rx = last_rx;
 		nreceived++;
 		if (pingflags & F_TIMING) {
-			triptime = diffsec(&last_rx, 
-					   (struct timeval*)icp->icmp_data);
+			struct timeval tv;
+			(void) memcpy(&tv, icp->icmp_data, sizeof(tv));
+			triptime = diffsec(&last_rx, &tv);
+					   
 			tsum += triptime;
 			if (triptime < tmin)
 				tmin = triptime;
@@ -1179,8 +1181,8 @@ ck_pr_icmph(struct icmp *icp,
 	    int override)		/* 1=override VERBOSE if interesting */
 {
 	int	hlen;
-	struct ip *ip;
-	struct icmp *icp2;
+	struct ip ip;
+	struct icmp icp2;
 	int res;
 
 	if (pingflags & F_VERBOSE) {
@@ -1190,12 +1192,12 @@ ck_pr_icmph(struct icmp *icp,
 		res = 0;
 	}
 
-	ip = (struct ip *)icp->icmp_data;
-	hlen = ip->ip_hl << 2;
-	if (ip->ip_p == IPPROTO_ICMP
+	(void) memcpy(&ip, icp->icmp_data, sizeof(ip));
+	hlen = ip.ip_hl << 2;
+	if (ip.ip_p == IPPROTO_ICMP
 	    && hlen + 6 <= cc) {
-		icp2 = (struct icmp *)((unsigned char *)ip + hlen);
-		if (icp2->icmp_id == ident) {
+		(void) memcpy(&icp2, &icp->icmp_data[hlen], sizeof(icp2));
+		if (icp2.icmp_id == ident) {
 			/* remember to clear route cached in kernel
 			 * if this ICMP message was for one of our packet.
 			 */
@@ -1432,21 +1434,23 @@ pr_iph(struct icmp *icp,
 {
 	int	hlen;
 	u_char	*cp;
-	struct ip *ip = (struct ip *)icp->icmp_data;
+	struct ip ip;
 
-	hlen = ip->ip_hl << 2;
-	cp = (unsigned char *)ip + 20;	/* point to options */
+	(void) memcpy(&ip, icp->icmp_data, sizeof(ip));
+
+	hlen = ip.ip_hl << 2;
+	cp = &icp->icmp_data[20];	/* point to options */
 
 	(void)printf("\n Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src	     Dst\n");
 	(void)printf("  %1x  %1x  %02x %04x %04x", 
-		     ip->ip_v, ip->ip_hl, ip->ip_tos, ip->ip_len, ip->ip_id);
+		     ip.ip_v, ip.ip_hl, ip.ip_tos, ip.ip_len, ip.ip_id);
 	(void)printf("   %1x %04x", 
-		     ((ip->ip_off)&0xe000)>>13, (ip->ip_off)&0x1fff);
+		     ((ip.ip_off)&0xe000)>>13, (ip.ip_off)&0x1fff);
 	(void)printf("  %02x  %02x %04x", 
-		     ip->ip_ttl, ip->ip_p, ip->ip_sum);
+		     ip.ip_ttl, ip.ip_p, ip.ip_sum);
 	(void)printf(" %15s ", 
-		     inet_ntoa(*(struct in_addr *)&ip->ip_src.s_addr));
-	(void)printf(" %s ", inet_ntoa(*(struct in_addr *)&ip->ip_dst.s_addr));
+		     inet_ntoa(*(struct in_addr *)&ip.ip_src.s_addr));
+	(void)printf(" %s ", inet_ntoa(*(struct in_addr *)&ip.ip_dst.s_addr));
 	/* dump any option bytes */
 	while (hlen-- > 20 && cp < (u_char*)icp+cc) {
 		(void)printf("%02x", *cp++);
@@ -1501,31 +1505,36 @@ pr_retip(struct icmp *icp,
 {
 	int	hlen;
 	unsigned char	*cp;
-	struct ip *ip = (struct ip *)icp->icmp_data;
+	struct ip ip;
+
+	(void) memcpy(&ip, icp->icmp_data, sizeof(ip));
 
 	if (pingflags & F_VERBOSE)
 		pr_iph(icp, cc);
 
-	hlen = ip->ip_hl << 2;
-	cp = (unsigned char *)ip + hlen;
+	hlen = ip.ip_hl << 2;
+	cp = &icp->icmp_data[hlen];
 
-	if (ip->ip_p == IPPROTO_TCP) {
+	if (ip.ip_p == IPPROTO_TCP) {
 		if (pingflags & F_VERBOSE)
 			(void)printf("\n  TCP: from port %u, to port %u", 
 				     (*cp*256+*(cp+1)), (*(cp+2)*256+*(cp+3)));
-	} else if (ip->ip_p == IPPROTO_UDP) {
+	} else if (ip.ip_p == IPPROTO_UDP) {
 		if (pingflags & F_VERBOSE)
 			(void)printf("\n  UDP: from port %u, to port %u", 
 				     (*cp*256+*(cp+1)), (*(cp+2)*256+*(cp+3)));
-	} else if (ip->ip_p == IPPROTO_ICMP
-		   && ((struct icmp *)cp)->icmp_type == ICMP_ECHO) {
-		if (pingflags & F_VERBOSE)
-			(void)printf("\n  ID=%u icmp_seq=%u", 
-				     ((struct icmp *)cp)->icmp_id, 
-				     ((struct icmp *)cp)->icmp_seq);
-		else
-			(void)printf(" for icmp_seq=%u", 
-				     ((struct icmp *)cp)->icmp_seq);
+	} else if (ip.ip_p == IPPROTO_ICMP) {
+		struct icmp icp2;
+		(void) memcpy(&icp2, cp, sizeof(icp2));
+		if (icp2.icmp_type == ICMP_ECHO) {
+			if (pingflags & F_VERBOSE)
+				(void)printf("\n  ID=%u icmp_seq=%u", 
+					     icp2.icmp_id, 
+					     icp2.icmp_seq);
+			else
+				(void)printf(" for icmp_seq=%u", 
+					     icp2.icmp_seq);
+		}
 	}
 }
 
