@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.8 2001/01/24 07:46:23 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.9 2001/01/24 08:29:56 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1004,6 +1004,10 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	}
 	ftp->list[i] = NULL;
 	pclose(file);
+	if (i == 0) {
+		ftp->list[0] = "";
+		ftp->list[1] = NULL;
+	}
 }
 
 static char *
