@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1996/12/02 07:07:18 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -146,7 +146,14 @@ struct alpha_bus_space {
 			    bus_size_t, u_int64_t, bus_size_t));
 
 	/* copy */
-	/* XXX IMPLEMENT */
+	void		(*abs_c_1) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_2) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_4) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_8) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
 };
 
 
@@ -174,6 +181,8 @@ struct alpha_bus_space {
 #endif
 #define	__abs_set(type, sz, t, h, o, v, c)				\
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c)
+#define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
+	(*(t)->__abs_opname(c,sz))((t)->abs_cookie, h1, o1, h2, o2, cnt)
 
 
 /*
@@ -306,6 +315,13 @@ struct alpha_bus_space {
 /*
  * Copy operations.
  */
-/* XXX IMPLEMENT */
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	__abs_copy(1, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	__abs_copy(2, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	__abs_copy(4, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+	__abs_copy(8, t, h1, o1, h2, o2, c)
 
 #endif /* _ALPHA_BUS_H_ */
