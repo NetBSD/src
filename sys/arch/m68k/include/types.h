@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 1994/10/26 07:50:57 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.9 1995/07/06 03:39:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,9 @@
 #ifndef	_M68K_TYPES_H_
 #define	_M68K_TYPES_H_
 
+#include <sys/cdefs.h>
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct _physadr {
 	short r[1];
 } *physadr;
@@ -44,6 +47,7 @@ typedef struct _physadr {
 typedef struct label_t {		/* consistent with HP-UX */
 	int val[15];
 } label_t;
+#endif
 
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
