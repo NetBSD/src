@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.80 2004/04/23 02:13:29 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.81 2004/04/25 22:18:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.80 2004/04/23 02:13:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.81 2004/04/25 22:18:08 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ sys_getpriority(l, v, retval)
 {
 	struct sys_getpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
@@ -139,7 +139,7 @@ sys_setpriority(l, v, retval)
 {
 	struct sys_setpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 		syscallarg(int) prio;
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
