@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/03/23 18:05:45 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/07/02 22:00:17 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -79,7 +79,7 @@ all:	netbsd boot
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
-	: ${STRIP} netbsd.tmp
+	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
