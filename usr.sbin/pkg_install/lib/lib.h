@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43.2.3 2003/07/23 23:03:01 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.4 2003/08/17 04:55:22 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -96,6 +96,7 @@
 
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
+#define PKG_VIEW		"PKG_VIEW"
 
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.25.2.2 2003/07/23 20:48:00 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.25.2.3 2003/08/17 04:55:21 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.25.2.2 2003/07/23 20:48:00 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.2.3 2003/08/17 04:55:21 jlam Exp $");
 #endif
 #endif
 
@@ -37,9 +37,12 @@ __RCSID("$NetBSD: main.c,v 1.25.2.2 2003/07/23 20:48:00 jlam Exp $");
 #include "add.h"
 #include "verify.h"
 
-static char Options[] = "IMRSVfhnp:s:t:uv";
+static char Options[] = "ILMRSVW:fhnp:s:t:uvw:";
 
 char   *Prefix = NULL;
+char   *View = NULL;
+char   *Viewbase = NULL;
+Boolean NoView = FALSE;
 Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
 
@@ -55,9 +58,10 @@ Boolean	Replace = FALSE;
 static void
 usage(void)
 {
-	(void) fprintf(stderr, "%s\n%s\n",
-	    "usage: pkg_add [-hVvInfRMSu] [-t template] [-p prefix]",
-	    "               [-s verification-type] pkg-name [pkg-name ...]");
+	(void) fprintf(stderr, "%s\n%s\n%s\n",
+	    "usage: pkg_add [-fhILMnRSuVv] [-p prefix] [-s verification-type]",
+	    "               [-t template] [-W viewbase] [-w view]",
+	    "               pkg-name [pkg-name ...]");
 	exit(1);
 }
 
@@ -72,7 +76,28 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1) {
 		switch (ch) {
-		case 'v':
+		case 'f':
+			Force = TRUE;
+			break;
+
+		case 'I':
+			NoInstall = TRUE;
+			break;
+
+		case 'L':
+			NoView = TRUE;
+			break;
+
+		case 'M':
+			AddMode = MASTER;
+			break;
+
+		case 'R':
+			NoRecord = TRUE;
+			break;
+
+		case 'n':
+			Fake = TRUE;
 			Verbose = TRUE;
 			break;
 
@@ -80,21 +105,8 @@ main(int argc, char **argv)
 			Prefix = optarg;
 			break;
 
-		case 'I':
-			NoInstall = TRUE;
-			break;
-
-		case 'R':
-			NoRecord = TRUE;
-			break;
-
-		case 'f':
-			Force = TRUE;
-			break;
-
-		case 'n':
-			Fake = TRUE;
-			Verbose = TRUE;
+		case 'S':
+			AddMode = SLAVE;
 			break;
 
 		case 's':
@@ -105,21 +117,26 @@ main(int argc, char **argv)
 			strlcpy(FirstPen, optarg, sizeof(FirstPen));
 			break;
 
-		case 'S':
-			AddMode = SLAVE;
-			break;
-
-		case 'M':
-			AddMode = MASTER;
+		case 'u':
+			Replace = 1;
 			break;
 
 		case 'V':
 			show_version();
 			/* NOTREACHED */
 
-		case 'u':
-			Replace = 1;
+		case 'v':
+			Verbose = TRUE;
 			break;
+
+		case 'W':
+			Viewbase = optarg;
+			break;
+
+		case 'w':
+			View = optarg;
+			break;
+
 		case 'h':
 		case '?':
 		default:

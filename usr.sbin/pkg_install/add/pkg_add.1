@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.4.1 2003/07/13 09:45:21 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.4.2 2003/08/17 04:55:21 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,10 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl fIMnRSuVv
+.Op Fl fILMnRSuVv
+.Bk -words
+.Op Fl p Ar prefix
+.Ek
 .Bk -words
 .Op Fl s Ar verification-type
 .Ek
@@ -33,7 +36,10 @@
 .Op Fl t Ar template
 .Ek
 .Bk -words
-.Op Fl p Ar prefix
+.Op Fl W Ar viewbase
+.Ek
+.Bk -words
+.Op Fl w Ar view
 .Ek
 .Ar \fR[ftp://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
 .Sh DESCRIPTION
@@ -105,6 +111,8 @@ will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
+.It Fl L
+Don't add the package to any views after installation.
 .It Fl M
 Run in
 .Cm MASTER
@@ -223,6 +231,21 @@ See below for a more detailed description of the process.
 Print version number and exit.
 .It Fl v
 Turn on verbose output.
+.It Fl W Ar viewbase
+Set
+.Ar viewbase
+as the base directory for the managed views.
+The default
+.Ar viewbase
+directory is set by
+.Xr pkg_view 1 .
+.It Fl w Ar view
+Set the
+.Ar view
+to which packages should be added after installation.
+The default view is the empty view but may be overridden by the
+.Ev PKG_VIEW
+environment variable.
 .El
 .Pp
 One or more
@@ -444,6 +467,8 @@ Where to register packages instead of
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
+.Ss PKG_VIEW
+The default view to which packages are added after installation.
 .Sh EXAMPLES
 In all cases,
 .Nm

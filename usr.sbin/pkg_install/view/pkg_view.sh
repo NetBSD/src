@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.20 2003/07/29 06:08:18 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.21 2003/08/17 04:55:23 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -51,7 +51,7 @@ sedprog=/usr/bin/sed
 touchprog=/usr/bin/touch
 
 usage() {
-	echo 'Usage: pkg_view [-i ignore] [-v viewname] [-d stowdir] [-p prefix] add|check|delete pkgname...'
+	echo 'Usage: pkg_view [-v] [-i ignore] [-w viewname] [-d stowdir] [-W viewbase] add|check|delete pkgname...'
 	exit 1
 }
 
@@ -70,10 +70,11 @@ checkpkg() {
 }
 
 stowdir=""
-prefix=${PREFIX:-/usr/pkg}
+viewbase=${PKG_VIEWBASE:-/usr/pkg}
 view=${PKG_VIEW:-""}
 ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
 dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
+verbose=no
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -81,10 +82,11 @@ while [ $# -gt 0 ]; do
 	-d*)		stowdir=`echo $1 | $sedprog -e 's|^-d||'` ;;
 	-i)		ignorefiles="$ignorefiles $2"; shift ;;
 	-i*)		ignorefiles="$ignorefiles `echo $1 | $sedprog -e 's|^-i||'`" ;;
-	-p)		prefix=$2; shift ;;
-	-p*)		prefix=`echo $1 | $sedprog -e 's|^-p||'` ;;
 	-V)		version ;;
-	-v)		view=$2; shift ;;
+	-v)		verbose=yes ;;
+	-W)		viewbase=$2; shift ;;
+	-W*)		viewbase=`echo $1 | $sedprog -e 's|^-p||'` ;;
+	-w)		view=$2; shift ;;
 	--view=*)	view=`echo $1 | $sedprog -e 's|--view=||'` ;;
 	--)		shift; break ;;
 	*)		break ;;
@@ -106,7 +108,7 @@ esac
 shift
 
 case "${stowdir}" in
-"")	depot_pkg_dbdir=${prefix}/packages ;;
+"")	depot_pkg_dbdir=${viewbase}/packages ;;
 *)	depot_pkg_dbdir=${stowdir} ;;
 esac
 
@@ -118,12 +120,12 @@ view=""
 case "$view" in
 "")
 	pkg_dbdir=${dflt_pkg_dbdir}
-	targetdir=${prefix}
+	targetdir=${viewbase}
 	viewstr="the standard view"
 	;;
 *)
-	pkg_dbdir=${prefix}/${view}/.pkgdb
-	targetdir=${prefix}/${view}
+	pkg_dbdir=${viewbase}/${view}/.pkgdb
+	targetdir=${viewbase}/${view}
 	viewstr="view \"${view}\""
 	;;
 esac
@@ -134,6 +136,9 @@ while [ $# -gt 0 ]; do
 		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "Package $1 already exists in $viewstr."
 		else
+			if [ "${verbose}" = "yes" ]; then
+				echo "Adding package $1 to $viewstr in ${viewbase}."
+			fi
 			checkpkg $1 ${depot_pkg_dbdir}
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
@@ -155,6 +160,9 @@ while [ $# -gt 0 ]; do
 		fi
 		;;
 	check)
+		if [ "${verbose}" = "yes" ]; then
+			echo "Checking package $1 in $viewstr in ${viewbase}."
+		fi
 		checkpkg $1 ${depot_pkg_dbdir}
 		$linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 		exit $?
@@ -163,6 +171,9 @@ while [ $# -gt 0 ]; do
 		if [ ! -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "Package $1 does not exist in $viewstr."
 		else
+			if [ "${verbose}" = "yes" ]; then
+				echo "Deleting package $1 from $viewstr in ${viewbase}."
+			fi
 			if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
 				$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
 				$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
