@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.4 2002/01/21 20:04:36 tv Exp $	*/
+/*	$NetBSD: config.h.in,v 1.5 2002/01/21 23:22:17 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -133,8 +133,10 @@ ssize_t pwrite(int, const void *, size_t, off_t);
 mode_t getmode(const void *, mode_t);
 void *setmode(const char *);
 
-/* Eliminate RCS Id strings embedded in binaries. */
+/* Eliminate RCS Id strings, assertions embedded in binaries. */
 
+#undef _DIAGASSERT
+#define _DIAGASSERT(x) /**/
 #define lint
 
 /* Assume an ANSI compiler for the host. */
