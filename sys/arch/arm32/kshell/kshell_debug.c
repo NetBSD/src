@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_debug.c,v 1.4 1996/10/13 03:05:48 christos Exp $ */
+/* $NetBSD: kshell_debug.c,v 1.5 1997/01/03 23:15:44 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Melvin Tang-Richardson (Nut)
@@ -52,6 +52,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#ifdef KSHELL
 int
 debug_count_processes_on_q(queue)
 	int queue;
@@ -247,5 +248,6 @@ debug_show_pmap(pmap)
 	}
 	(void)splx(s);
 }
+#endif	/* KSHELL */
 
 /* End of debug.c */
