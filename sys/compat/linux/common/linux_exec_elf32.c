@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.36 1998/10/04 16:51:18 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.37 1998/10/07 22:17:57 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
