@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.6 1996/02/09 18:00:35 scottr Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.7 2001/05/27 09:09:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -133,6 +133,7 @@ struct ct_describe {
 #define	CT7912PID	0x209
 #define	CT7914PID	0x20B
 #define	CT88140		1
+#define	CT35401ID	0x270
 
 /* convert bytes to 1k tape block and back */
 #define CTBTOK(x)	((x) >> 10)
