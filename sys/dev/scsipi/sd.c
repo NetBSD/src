@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.226 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.227 2004/09/25 04:11:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.226 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.227 2004/09/25 04:11:23 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -164,7 +164,7 @@ const struct cdevsw sd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver sddkdriver = { sdstrategy };
+static struct dkdriver sddkdriver = { sdstrategy, sdminphys };
 
 static const struct scsipi_periphsw sd_switch = {
 	sd_interpret_sense,	/* check our error handler first */
@@ -218,8 +218,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	char pbuf[9];
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
-
-	lockinit(&sd->sc_lock, PRIBIO | PCATCH, "sdlock", 0, 0);
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	if (sd->type == T_SIMPLE_DIRECT)
@@ -319,6 +317,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&sd->sc_dk);
 }
 
 static int
@@ -361,6 +362,9 @@ sddetach(struct device *self, int flags)
 	/* kill any pending restart */
 	callout_stop(&sd->sc_callout);
 
+	/* Delete all of our wedges. */
+	dkwedge_delall(&sd->sc_dk);
+
 	s = splbio();
 
 	/* Kill off any queued buffers. */
@@ -377,8 +381,6 @@ sddetach(struct device *self, int flags)
 	scsipi_kill_pending(sd->sc_periph);
 
 	splx(s);
-
-	lockmgr(&sd->sc_lock, LK_DRAIN, 0);
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
@@ -416,9 +418,22 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
+	part = SDPART(dev);
+
+	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
+	
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (sd->sc_dk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
+
 	periph = sd->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
-	part = SDPART(dev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
@@ -430,10 +445,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	 */
 	if (sd->sc_dk.dk_openmask == 0 &&
 	    (error = scsipi_adapter_addref(adapt)) != 0)
-		return (error);
-
-	if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		goto bad4;
+		goto bad1;
 
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
 		/*
@@ -443,7 +455,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 &&
 		    (part != RAW_PART || fmt != S_IFCHR)) {
 			error = EIO;
-			goto bad3;
+			goto bad2;
 		}
 	} else {
 		int silent;
@@ -482,7 +494,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		if (error) {
 			if (silent)
 				goto out;
-			goto bad3;
+			goto bad2;
 		}
 
 		periph->periph_flags |= PERIPH_OPEN;
@@ -493,7 +505,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_MEDIA_CHANGE);
 			if (error)
-				goto bad;
+				goto bad3;
 		}
 
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
@@ -511,7 +523,8 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			if ((param_error = sd_get_parms(sd, &sd->params, 0))
 			     == SDGP_RESULT_OFFLINE) {
 				error = ENXIO;
-				goto bad2;
+				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
+				goto bad3;
 			}
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
@@ -529,10 +542,10 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    (part >= sd->sc_dk.dk_label->d_npartitions ||
 	     sd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
-		goto bad;
+		goto bad3;
 	}
 
-out:	/* Insure only one open at a time. */
+ out:	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
 		sd->sc_dk.dk_copenmask |= (1 << part);
@@ -545,13 +558,10 @@ out:	/* Insure only one open at a time. */
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
+	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (0);
 
-bad2:
-	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-
-bad:
+ bad3:
 	if (sd->sc_dk.dk_openmask == 0) {
 		if (periph->periph_flags & PERIPH_REMOVABLE)
 			scsipi_prevent(periph, PR_ALLOW,
@@ -560,11 +570,12 @@ bad:
 		periph->periph_flags &= ~PERIPH_OPEN;
 	}
 
-bad3:
-	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
-bad4:
+ bad2:
 	if (sd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
+
+ bad1:
+	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (error);
 }
 
@@ -581,7 +592,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int part = SDPART(dev);
 	int error;
 
-	if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
 	switch (fmt) {
@@ -625,7 +636,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsipi_adapter_delref(adapt);
 	}
 
-	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
+	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -1070,7 +1081,8 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+		if ((error = lockmgr(&sd->sc_dk.dk_openlock,
+				     LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
 		sd->flags |= SDF_LABELLING;
 
@@ -1089,7 +1101,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		sd->flags &= ~SDF_LABELLING;
-		lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
+		(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
@@ -1184,6 +1196,37 @@ bad:
 		} else
 			error = 0;
 		return (error);
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+	
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+	
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) addr;
+
+		return (dkwedge_list(&sd->sc_dk, dkwl, p));
+	    }
 
 	default:
 		if (part != RAW_PART)
