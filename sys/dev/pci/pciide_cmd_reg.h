@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.6.4.2 2000/08/02 17:06:17 bouyer Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.6.4.3 2000/08/03 17:15:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -37,8 +37,9 @@
  * Available from http://www.cmd.com/
  */
 
-/* revision of the 0646U2 */
+/* Interesting revision of the 0646 */
 #define CMD0646U2_REV 0x05
+#define CMD0646U_REV 0x03
 
 /* Configuration (RO) */
 #define CMD_CONF 0x50
