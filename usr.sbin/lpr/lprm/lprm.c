@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.11 2002/07/03 22:10:28 wiz Exp $	*/
+/*	$NetBSD: lprm.c,v 1.12 2002/07/03 22:28:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.11 2002/07/03 22:10:28 wiz Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.12 2002/07/03 22:28:28 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 					wait_time = atoi(*++argv);
 				}
 				if (wait_time < 0)
-					errx(1, "wait time must be postive: %d",
+					errx(1, "wait time must be positive: %d",
 					    wait_time);
 				if (wait_time < 30)
 				    warnx("warning: wait time less than 30 seconds");
