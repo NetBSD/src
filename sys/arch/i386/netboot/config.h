@@ -1,20 +1,12 @@
 /* netboot
  *
- * $Log: config.h,v $
- * Revision 1.1  1993/07/08 16:03:55  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
  * source in this file came from
  */
 
 #if !defined(__config_h_)
 #define __config_h_
 
-/* $Id: config.h,v 1.1 1993/07/08 16:03:55 brezak Exp $
+/* $Id: config.h,v 1.2 1994/02/15 15:10:21 mycroft Exp $
    configuration items shared between .c and .s files
  */
 
