@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.9 2002/03/14 12:32:41 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.10 2002/09/04 00:09:23 wiz Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -164,7 +164,7 @@ and FR_OUTQUE (see above).  This ioctl is also implemented for
 or just all those which are not established if passed 1.
 
 .IP "\fBGeneral Logging Flags\fP" 0
-There are two flags which can be set to log packets independantly of the
+There are two flags which can be set to log packets independently of the
 rules used.  These allow for packets which are either passed or blocked
 to be logged.  To set (and clear)/get these flags, two ioctls are
 provided:
@@ -262,7 +262,7 @@ ipf(4) will not look at decapsulated packets on inbound,
 nor packets prior to encapsulation on outbound.
 .PP
 When tunneled packets arrive at the node and are handled by a
-tunnelling pseudo interface like gif(4),
+tunneling pseudo interface like gif(4),
 the packets may go through ipf(4) twice, before and after decapsulation.
 In some cases it may be necessary to check, in the ipf(4) rules,
-if the inbound interface is a tunnelling pseudo interface or not.
+if the inbound interface is a tunneling pseudo interface or not.
