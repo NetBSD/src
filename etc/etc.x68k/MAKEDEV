@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.59 2002/12/01 09:01:07 isaki Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2003/03/30 20:18:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -96,7 +96,7 @@
 #
 # Special purpose devices:
 #	clockctl clock control for non root users
-#	grf*	builtin video
+#	grf*	built-in video
 #	kbd	keyboard
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface
