@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.666 2004/11/19 10:01:20 tacha Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.667 2004/11/22 04:24:25 rumble Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.667 2004/11/19 09:58:42 tacha Exp 
+ *	NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp 
  */
 
 /*
@@ -9253,7 +9253,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
-	    "VT3606 IEEE 1394 Host Controller",
+	    "VT6306 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
