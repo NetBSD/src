@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_ecn.c,v 1.3 1999/07/03 21:24:45 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ip_ecn.c,v 1.2 1999/07/01 08:12:50 itojun Exp $
+ * $Id: ip_ecn.c,v 1.3 1999/07/03 21:24:45 thorpej Exp $
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.

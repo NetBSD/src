@@ -1,3 +1,5 @@
+/*	$NetBSD: mld6_var.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.

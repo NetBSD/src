@@ -1,3 +1,5 @@
+/*	$NetBSD: key.h,v 1.3 1999/07/03 21:32:48 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: key.h,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
+/* $Id: key.h,v 1.3 1999/07/03 21:32:48 thorpej Exp $ */
 
 #ifndef _NETKEY_KEY_H_
 #define _NETKEY_KEY_H_
