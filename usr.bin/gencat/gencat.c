@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: gencat.c,v 1.5 1997/02/09 14:33:50 veego Exp $	*/
+
+/*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
