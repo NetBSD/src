@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.10 2000/02/02 05:02:25 dmcmahill Exp $	*/
+/*	$NetBSD: record.c,v 1.10.4.1 2002/01/29 23:18:12 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -48,18 +48,20 @@
 #include <unistd.h>
 
 #include "libaudio.h"
+#include "auconv.h"
 
 audio_info_t info, oinfo;
 ssize_t	total_size = -1;
-char	*device;
-char	*ctldev;
+const char *device;
+const char *ctldev;
+int	format = AUDIO_FORMAT_SUN;
 char	*header_info;
 char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 int	audiofd, ctlfd, outfd;
 int	qflag, aflag, fflag;
 int	verbose;
-int	monvol, omonvol;
-int	volume;
+int	monitor_gain, omonitor_gain;
+int	gain;
 int	balance;
 int	port;
 int	encoding;
@@ -70,12 +72,18 @@ int	channels;
 struct timeval record_time;
 struct timeval start_time;	/* XXX because that's what gettimeofday returns */
 
-void usage __P((void));
-int main __P((int, char *[]));
-int timeleft __P((struct timeval *, struct timeval *));
-void cleanup __P((int)) __attribute__((__noreturn__));
-void write_header __P((void));
-void rewrite_header __P((void));
+void (*conv_func) (u_char *, size_t);
+
+void usage (void);
+int main (int, char *[]);
+int timeleft (struct timeval *, struct timeval *);
+void cleanup (int) __attribute__((__noreturn__));
+int write_header_sun (void **, size_t *, int *);
+int write_header_wav (void **, size_t *, int *);
+void write_header (void);
+void rewrite_header (void);
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -86,7 +94,7 @@ main(argc, argv)
 	size_t	len, bufsize;
 	int	ch, no_time_limit = 1;
 
-	while ((ch = getopt(argc, argv, "ab:C:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "ab:C:F:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
@@ -98,6 +106,12 @@ main(argc, argv)
 			break;
 		case 'C':
 			ctldev = optarg;
+			break;
+		case 'F':
+			format = audio_format_from_str(optarg);
+			if (format < 0)
+				errx(1, "Unknown audio format; "
+				    "supported formats: \"sun\" and \"wav\"");
 			break;
 		case 'c':
 			decode_int(optarg, &channels);
@@ -117,15 +131,16 @@ main(argc, argv)
 			header_info = optarg;
 			break;
 		case 'm':
-			decode_int(optarg, &monvol);
-			if (monvol < 0 || monvol > 255)
+			decode_int(optarg, &monitor_gain);
+			if (monitor_gain < 0 || monitor_gain > 255)
 				errx(1, "monitor volume must be between 0 and 255\n");
 			break;
 		case 'P':
 			decode_int(optarg, &precision);
-			if (precision != 8 && precision != 16 &&
-			    precision != 24 && precision != 32)
-				errx(1, "precision must be between 8, 16, 24 or 32");
+			if (precision != 4 && precision != 8 &&
+			    precision != 16 && precision != 24 &&
+			    precision != 32)
+				errx(1, "precision must be between 4, 8, 16, 24 or 32");
 			break;
 		case 'p':
 			len = strlen(optarg);
@@ -157,8 +172,8 @@ main(argc, argv)
 			verbose++;
 			break;
 		case 'v':
-			decode_int(optarg, &volume);
-			if (volume < 0 || volume > 255)
+			decode_int(optarg, &gain);
+			if (gain < 0 || gain > 255)
 				errx(1, "volume must be between 0 and 255\n");
 			break;
 		/* case 'h': */
@@ -195,7 +210,7 @@ main(argc, argv)
 	bufsize = oinfo.record.buffer_size;
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
-	omonvol = oinfo.monitor_gain;
+	omonitor_gain = oinfo.monitor_gain;
 
 	buffer = malloc(bufsize);
 	if (buffer == NULL)
@@ -214,22 +229,8 @@ main(argc, argv)
 		outfd = STDOUT_FILENO;
 
 	/*
-	 * set up audio device for recording with the speified parameters
+	 * convert the encoding string into a value.
 	 */
-	AUDIO_INITINFO(&info);
-
-	/*
-	 * for these, get the current values for stuffing into the header
-	 **/
-	if (sample_rate)
-		info.record.sample_rate = sample_rate;
-	else
-		sample_rate = oinfo.record.sample_rate;
-	if (channels)
-		info.record.channels = channels;
-	else
-		channels = oinfo.record.channels;
-
 	if (encoding_str) {
 		encoding = audio_enc_to_val(encoding_str);
 		if (encoding == -1)
@@ -238,18 +239,28 @@ main(argc, argv)
 	else
 		encoding = AUDIO_ENCODING_ULAW;
 
-	if (precision)
-		info.record.precision = precision;
-	if (encoding)
-		info.record.encoding = encoding;
-	if (volume)
-		info.record.gain = volume;
-	if (port)
-		info.record.port = port;
-	if (balance)
-		info.record.balance = (u_char)balance;
-	if (monvol)
-		info.monitor_gain = monvol;
+	/*
+	 * set up audio device for recording with the speified parameters
+	 */
+	AUDIO_INITINFO(&info);
+
+	/*
+	 * for these, get the current values for stuffing into the header
+	 */
+#define SETINFO(x)	if (x) info.record.x = x; else x = oinfo.record.x
+	SETINFO (sample_rate);
+	SETINFO (channels);
+	SETINFO (precision);
+	SETINFO (encoding);
+	SETINFO (gain);
+	SETINFO (port);
+	SETINFO (balance);
+#undef SETINFO
+
+	if (monitor_gain)
+		info.monitor_gain = monitor_gain;
+	else
+		monitor_gain = oinfo.monitor_gain;
 
 	info.mode = AUMODE_RECORD;
 	if (ioctl(ctlfd, AUDIO_SETINFO, &info) < 0)
@@ -263,6 +274,8 @@ main(argc, argv)
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
 		if (read(audiofd, buffer, bufsize) != bufsize)
 			err(1, "read failed");
+		if (conv_func)
+			(*conv_func)(buffer, bufsize);
 		if (write(outfd, buffer, bufsize) != bufsize)
 			err(1, "write failed");
 		total_size += bufsize;
@@ -292,9 +305,9 @@ cleanup(signo)
 	close(audiofd);
 	rewrite_header();
 	close(outfd);
-	if (omonvol) {
+	if (omonitor_gain) {
 		AUDIO_INITINFO(&info);
-		info.monitor_gain = omonvol;
+		info.monitor_gain = omonitor_gain;
 		if (ioctl(ctlfd, AUDIO_SETINFO, &info) < 0)
 			err(1, "failed to reset audio info");
 	}
@@ -302,38 +315,308 @@ cleanup(signo)
 	exit(0);
 }
 
-void
-write_header()
+int
+write_header_sun(hdrp, lenp, leftp)
+	void **hdrp;
+	size_t *lenp;
+	int *leftp;
 {
-	sun_audioheader auh;
-	struct iovec iv[3];
-	int veclen = 0, left, tlen = 0;
+	static int warned = 0;
+	static sun_audioheader auh;
+	int sunenc, oencoding = encoding;
+
+	if (encoding == AUDIO_ENCODING_ULINEAR_LE) {
+		if (precision == 16)
+			conv_func = swap_bytes;
+		else if (precision == 32)
+			conv_func = swap_bytes32;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
+	} else if (encoding == AUDIO_ENCODING_ULINEAR_BE) {
+		if (precision == 16)
+			conv_func = change_sign16_be;
+		else if (precision == 32)
+			conv_func = change_sign32_be;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
+	} else if (encoding == AUDIO_ENCODING_SLINEAR_LE) {
+		if (precision == 16)
+			conv_func = change_sign16_swap_bytes_le;
+		else if (precision == 32)
+			conv_func = change_sign32_swap_bytes_le;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
+	}
+	
+	/* if we can't express this as a Sun header, don't write any */
+	if (audio_encoding_to_sun(encoding, precision, &sunenc) != 0) {
+		if (!qflag && !warned)
+			warnx("failed to convert to sun encoding from %d:%d; "
+			      "Sun audio header not written",
+			      oencoding, precision);
+		conv_func = 0;
+		warned = 1;
+		return -1;
+	}
 
 	auh.magic = htonl(AUDIO_FILE_MAGIC);
 	if (outfd == STDOUT_FILENO)
 		auh.data_size = htonl(AUDIO_UNKNOWN_SIZE);
 	else
 		auh.data_size = htonl(total_size);
-	auh.encoding = htonl(encoding);
+	auh.encoding = htonl(sunenc);
 	auh.sample_rate = htonl(sample_rate);
 	auh.channels = htonl(channels);
 	if (header_info) {
 		int 	len, infolen;
 
 		infolen = ((len = strlen(header_info)) + 7) & 0xfffffff8;
-		left = infolen - len;
+		*leftp = infolen - len;
 		auh.hdr_size = htonl(sizeof(auh) + infolen);
 	} else {
-		left = sizeof(default_info);
-		auh.hdr_size = htonl(sizeof(auh) + left);
+		*leftp = sizeof(default_info);
+		auh.hdr_size = htonl(sizeof(auh) + *leftp);
+	}
+	*(sun_audioheader **)hdrp = &auh;
+	*lenp = sizeof auh;
+	return 0;
+}
+
+int
+write_header_wav(hdrp, lenp, leftp)
+	void **hdrp;
+	size_t *lenp;
+	int *leftp;
+{
+	/*
+	 * WAV header we write looks like this:
+	 *
+	 *      bytes   purpose
+	 *      0-3     "RIFF"
+	 *      4-7     file length (minus 8)
+	 *      8-15    "WAVEfmt "
+	 *      16-19   format size
+	 *      20-21   format tag
+	 *      22-23   number of channels
+	 *      24-27   sample rate
+	 *      28-31   average bytes per second
+	 *      32-33   block alignment
+	 *      34-35   bits per sample
+	 *
+	 * then for ULAW and ALAW outputs, we have an extended chunk size
+	 * and a WAV "fact" to add:
+	 *
+	 *      36-37   length of extension (== 0)
+	 *      38-41   "fact"
+	 *      42-45   fact size
+	 *      46-49   number of samples written
+	 *      50-53   "data"
+	 *      54-57   data length
+	 *      58-     raw audio data
+	 *
+	 * for PCM outputs we have just the data remaining:
+	 *
+	 *      36-39   "data"
+	 *      40-43   data length
+	 *      44-     raw audio data
+	 *
+	 *	RIFF\^@^C^@WAVEfmt ^P^@^@^@^A^@^B^@D<AC>^@^@^P<B1>^B^@^D^@^P^@data^@^@^C^@^@^@^@^@^@^@^@^@^@
+	 */
+	char	wavheaderbuf[64], *p = wavheaderbuf;
+	const char *riff = "RIFF",
+	    *wavefmt = "WAVEfmt ",
+	    *fact = "fact",
+	    *data = "data";
+	u_int32_t filelen, fmtsz, sps, abps, factsz = 4, nsample, datalen;
+	u_int16_t fmttag, nchan, align, bps, extln = 0;
+
+	if (header_info)
+		warnx("header information not supported for WAV");
+	*leftp = NULL;
+
+	switch (precision) {
+	case 8:
+		bps = 8;
+		break;
+	case 16:
+		bps = 16;
+		break;
+	case 32:
+		bps = 32;
+		break;
+	default:
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				warnx("can not support precision of %d\n", precision);
+				warned = 1;
+			}
+		}
+		return (-1);
 	}
 
-	iv[veclen].iov_base = &auh;
-	iv[veclen].iov_len = sizeof(auh);
-	tlen = iv[veclen++].iov_len;
+	switch (encoding) {
+	case AUDIO_ENCODING_ULAW:
+		fmttag = WAVE_FORMAT_MULAW;
+		fmtsz = 18;
+		align = channels;
+		break;
+	case AUDIO_ENCODING_ALAW:
+		fmttag = WAVE_FORMAT_ALAW;
+		fmtsz = 18;
+		align = channels;
+		break;
+	/*
+	 * we could try to support RIFX but it seems to be more portable
+	 * to output little-endian data for WAV files.
+	 */
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (bps == 16)
+			conv_func = change_sign16_swap_bytes_be;
+		else if (bps == 32)
+			conv_func = change_sign32_swap_bytes_be;
+		goto fmt_pcm;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		if (bps == 16)
+			conv_func = swap_bytes;
+		else if (bps == 32)
+			conv_func = swap_bytes32;
+		goto fmt_pcm;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		if (bps == 16)
+			conv_func = change_sign16_le;
+		else if (bps == 32)
+			conv_func = change_sign32_le;
+		/* FALLTHROUGH */
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_PCM16:
+fmt_pcm:
+		fmttag = WAVE_FORMAT_PCM;
+		fmtsz = 16;
+		align = channels * (bps / 8);
+		break;
+	default:
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				warnx("can not support encoding of %s\n", wav_enc_from_val(encoding));
+				warned = 1;
+			}
+		}
+		return (-1);
+	}
+
+	nchan = channels;
+	sps = sample_rate;
+
+	/* data length */
+	if (outfd == STDOUT_FILENO)
+		datalen = 0;
+	else
+		datalen = total_size;
+
+	/* file length */
+	filelen = 4 + (8 + fmtsz) + (8 + datalen);
+	if (fmttag != WAVE_FORMAT_PCM)
+		filelen += 8 + factsz;
+
+	abps = (double)align*sample_rate / (double)1 + 0.5;
+
+	nsample = (datalen / bps) / sample_rate;
+	
+	/*
+	 * now we've calculated the info, write it out!
+	 */
+#define put32(x) do { \
+	u_int32_t _f; \
+	putle32(_f, (x)); \
+	memcpy(p, &_f, 4); \
+} while (0)
+#define put16(x) do { \
+	u_int16_t _f; \
+	putle16(_f, (x)); \
+	memcpy(p, &_f, 2); \
+} while (0)
+	memcpy(p, riff, 4);
+	p += 4;				/* 4 */
+	put32(filelen);
+	p += 4;				/* 8 */
+	memcpy(p, wavefmt, 8);
+	p += 8;				/* 16 */
+	put32(fmtsz);
+	p += 4;				/* 20 */
+	put16(fmttag);
+	p += 2;				/* 22 */
+	put16(nchan);
+	p += 2;				/* 24 */
+	put32(sps);
+	p += 4;				/* 28 */
+	put32(abps);
+	p += 4;				/* 32 */
+	put16(align);
+	p += 2;				/* 34 */
+	put16(bps);
+	p += 2;				/* 36 */
+	/* NON PCM formats have an extended chunk; write it */
+	if (fmttag != WAVE_FORMAT_PCM) {
+		put16(extln);
+		p += 2;			/* 38 */
+		memcpy(p, fact, 4);
+		p += 4;			/* 42 */
+		put32(factsz);
+		p += 4;			/* 46 */
+		put32(nsample);
+		p += 4;			/* 50 */
+	}
+	memcpy(p, data, 4);
+	p += 4;				/* 40/54 */
+	put32(datalen);
+	p += 4;				/* 44/58 */
+#undef put32
+#undef put16
+
+	*hdrp = wavheaderbuf;
+	*lenp = (p - wavheaderbuf);
+
+	return 0;
+}
+
+void
+write_header()
+{
+	struct iovec iv[3];
+	int veclen, left, tlen;
+	void *hdr;
+	size_t hdrlen;
+
+	switch (format) {
+	case AUDIO_FORMAT_SUN:
+		if (write_header_sun(&hdr, &hdrlen, &left) != 0)
+			return;
+		break;
+	case AUDIO_FORMAT_WAV:
+		if (write_header_wav(&hdr, &hdrlen, &left) != 0)
+			return;
+		break;
+	case AUDIO_FORMAT_NONE:
+		return;
+	default:
+		errx(1, "unknown audio format");
+	}
+
+	veclen = 0;
+	tlen = 0;
+		
+	if (hdrlen != 0) {
+		iv[veclen].iov_base = hdr;
+		iv[veclen].iov_len = hdrlen;
+		tlen += iv[veclen++].iov_len;
+	}
 	if (header_info) {
 		iv[veclen].iov_base = header_info;
-		iv[veclen].iov_len = (int)strlen(header_info);
+		iv[veclen].iov_len = (int)strlen(header_info) + 1;
 		tlen += iv[veclen++].iov_len;
 	}
 	if (left) {
@@ -341,6 +624,9 @@ write_header()
 		iv[veclen].iov_len = left;
 		tlen += iv[veclen++].iov_len;
 	}
+
+	if (tlen == 0)
+		return;
 
 	if (writev(outfd, iv, veclen) != tlen)
 		err(1, "could not write audio header");
@@ -362,18 +648,17 @@ rewrite_header()
 void
 usage()
 {
-	extern char *__progname;
-
 	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n", __progname);
 	fprintf(stderr, "Options:\n\t"
 	    "-C audio control device\n\t"
+	    "-F format\n\t"
 	    "-b balance (0-63)\n\t"
 	    "-c channels\n\t"
 	    "-d audio device\n\t"
 	    "-e encoding\n\t"
 	    "-i header information\n\t"
 	    "-m monitor volume\n\t"
-	    "-P precision bits (8, 16, 24 or 32)\n\t"
+	    "-P precision bits (4, 8, 16, 24 or 32)\n\t"
 	    "-p input port\n\t"
 	    "-s sample rate\n\t"
 	    "-t recording time\n\t"
