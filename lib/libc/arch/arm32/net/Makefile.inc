@@ -1,3 +1,3 @@
-# $NetBSD: Makefile.inc,v 1.1 1996/02/16 20:48:31 mark Exp $
+# $NetBSD: Makefile.inc,v 1.2 1997/10/06 00:03:13 mark Exp $
 
-SRCS+= htonl.c htons.c ntohl.c ntohs.c
+SRCS+= htonl.S htons.S ntohl.S ntohs.S
