@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.81 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.82 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -184,11 +184,11 @@ int	sbdsp_set_in_ports __P((struct sbdsp_softc *, int));
 void	sbdsp_set_ifilter __P((void *, int));
 int	sbdsp_get_ifilter __P((void *));
 
-static	int sbdsp_dma_setup_input __P((struct sbdsp_softc *sc));
-static	int sbdsp_dma_setup_output __P((struct sbdsp_softc *sc));
+int	sbdsp_block_output __P((void *));
+int	sbdsp_block_input __P((void *));
 static	int sbdsp_adjust __P((int, int));
 
-void	sbdsp_midi_intr __P((struct sbdsp_softc *));
+int	sbdsp_midi_intr __P((void *));
 
 #ifdef AUDIO_DEBUG
 void	sb_printsc __P((struct sbdsp_softc *));
@@ -538,8 +538,8 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 		model = SB_16;	/* later models work like SB16 */
 
 	/* Set first record info, then play info */
-	for(mode = AUMODE_RECORD; mode != -1; 
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+	for (mode = AUMODE_RECORD; mode != -1; 
+	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
 			continue;
 
@@ -1144,331 +1144,272 @@ sbdsp16_set_rate(sc, cmd, rate)
 }
 
 int
-sbdsp_dma_init_input(addr, buf, cc)
+sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *addr;
-	void *buf;
-	int cc;
-{
-	struct sbdsp_softc *sc = addr;
-
-	if (sc->sc_model == SB_1)
-		return 0;
-	sc->sc_i.run = SB_DMARUNNING;
-	DPRINTF(("sbdsp: dma start loop input addr=%p cc=%d chan=%d\n", 
-		 buf, cc, sc->sc_i.dmachan));
-	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, buf,
-		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-	return 0;
-}
-
-static int
-sbdsp_dma_setup_input(sc)
-	struct sbdsp_softc *sc;
-{
-	int stereo = sc->sc_i.modep->channels == 2;
-	int filter;
-
-	/* Initialize the PCM */
-	if (ISSBPRO(sc)) {
-		if (sbdsp_wdsp(sc, sc->sc_i.modep->cmdchan) < 0)
-			return 0;
-		filter = stereo ? SBP_FILTER_OFF : sc->in_filter;
-		sbdsp_mix_write(sc, SBP_INFILTER,
-				(sbdsp_mix_read(sc, SBP_INFILTER) &
-				 ~SBP_IFILTER_MASK) | filter);
-	}
-	
-	if (ISSB16CLASS(sc)) {
-		if (sbdsp16_set_rate(sc, SB_DSP16_INPUTRATE, 
-				     sc->sc_i.rate)) {
-			DPRINTF(("sbdsp_dma_setup_input: rate=%d set failed\n",
-				 sc->sc_i.rate));
-			return 0;
-		}
-	} else {
-		if (sbdsp_set_timeconst(sc, sc->sc_i.tc)) {
-			DPRINTF(("sbdsp_dma_setup_input: tc=%d set failed\n",
-				 sc->sc_i.rate));
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int
-sbdsp_dma_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
+	void *start, *end;
+	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
+	struct audio_params *param;
 {
 	struct sbdsp_softc *sc = addr;
-	
-	DPRINTFN(2, ("sbdsp_dma_input: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
-		    addr, p, cc, intr, arg));
+	int stereo = param->channels == 2;
+	int width = param->precision * param->factor;
+	int filter;
+
 #ifdef DIAGNOSTIC
-	if (sc->sc_i.modep->channels == 2 && (cc & 1)) {
-		DPRINTF(("stereo record odd bytes (%d)\n", cc));
-		return EIO;
+	if (stereo && (blksize & 1)) {
+		DPRINTF(("stereo record odd bytes (%d)\n", blksize));
+		return (EIO);
 	}
 #endif
 
-	if (sc->sc_i.modep->precision == 8) {
+	sc->sc_intrr = intr;
+	sc->sc_argr = arg;
+
+	if (width == 8) {
 #ifdef DIAGNOSTIC
 		if (sc->sc_i.dmachan != sc->sc_drq8) {
-			printf("sbdsp_dma_input: prec=%d bad chan %d\n",
-			       sc->sc_i.modep->precision, sc->sc_i.dmachan);
-			return EIO;
+			printf("sbdsp_trigger_input: width=%d bad chan %d\n",
+			    width, sc->sc_i.dmachan);
+			return (EIO);
 		}
 #endif
-		sc->sc_intr8 = intr;
-		sc->sc_arg8 = arg;
+		sc->sc_intr8 = sbdsp_block_input;
+		sc->sc_arg8 = addr;
 	} else {
 #ifdef DIAGNOSTIC
 		if (sc->sc_i.dmachan != sc->sc_drq16) {
-			printf("sbdsp_dma_input: prec=%d bad chan %d\n",
-			       sc->sc_i.modep->precision, sc->sc_i.dmachan);
-			return EIO;
+			printf("sbdsp_trigger_input: width=%d bad chan %d\n",
+			    width, sc->sc_i.dmachan);
+			return (EIO);
 		}
 #endif
-		sc->sc_intr16 = intr;
-		sc->sc_arg16 = arg;
+		sc->sc_intr16 = sbdsp_block_input;
+		sc->sc_arg16 = addr;
 	}
-		
-	switch(sc->sc_i.run) {
-	case SB_NOTRUNNING:
-		/* Non-looping mode, not initialized */
-		sc->sc_i.run = SB_RUNNING;
-		if (!sbdsp_dma_setup_input(sc))
-			goto giveup;
-		/* fall into */
-	case SB_RUNNING:
-		/* Non-looping mode, start DMA */
-		DPRINTFN(3,("sbdsp_dma_input: dmastart buf=%p cc=%d chan=%d\n",
-			   p, cc, sc->sc_i.dmachan));
-		isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, p,
-			     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
-		/* Start PCM in non-looping mode */
-		if ((sc->sc_model == SB_JAZZ && sc->sc_i.dmachan > 3) ||
-		    (sc->sc_model != SB_JAZZ && sc->sc_i.modep->precision == 16))
-			cc >>= 1;
-		--cc;
+	if ((sc->sc_model == SB_JAZZ) ? (sc->sc_i.dmachan > 3) : (width == 16))
+		blksize >>= 1;
+	--blksize;
+	sc->sc_i.blksize = blksize;
+
+	if (ISSBPRO(sc)) {
+		if (sbdsp_wdsp(sc, sc->sc_i.modep->cmdchan) < 0)
+			return (EIO);
+		filter = stereo ? SBP_FILTER_OFF : sc->in_filter;
+		sbdsp_mix_write(sc, SBP_INFILTER,
+		    (sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK) |
+		    filter);
+	}
+	
+	if (ISSB16CLASS(sc)) {
+		if (sbdsp16_set_rate(sc, SB_DSP16_INPUTRATE, sc->sc_i.rate)) {
+			DPRINTF(("sbdsp_trigger_input: rate=%d set failed\n",
+				 sc->sc_i.rate));
+			return (EIO);
+		}
+	} else {
+		if (sbdsp_set_timeconst(sc, sc->sc_i.tc)) {
+			DPRINTF(("sbdsp_trigger_input: tc=%d set failed\n",
+				 sc->sc_i.rate));
+			return (EIO);
+		}
+	}
+
+	DPRINTF(("sbdsp: dma start loop input start=%p end=%p chan=%d\n", 
+	    start. end, sc->sc_i.dmachan));
+	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, start, end - start, NULL,
+	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+
+	return sbdsp_block_input(addr);
+}
+
+int
+sbdsp_block_input(addr)
+	void *addr;
+{
+	struct sbdsp_softc *sc = addr;
+	int cc = sc->sc_i.blksize;
+	
+	DPRINTFN(2, ("sbdsp_block_input: sc=%p cc=%d\n", addr, cc));
+
+	if (sc->sc_i.run != SB_NOTRUNNING)
+		sc->sc_intrr(sc->sc_argr);
+
+	if (sc->sc_model == SB_1) {
+		/* Non-looping mode, start DMA */
 		if (sbdsp_wdsp(sc, sc->sc_i.modep->cmd) < 0 ||
 		    sbdsp_wdsp(sc, cc) < 0 ||
 		    sbdsp_wdsp(sc, cc >> 8) < 0) {
-			DPRINTF(("sbdsp_dma_input: SB1 DMA start failed\n"));
-			goto giveup;
+			DPRINTF(("sbdsp_block_input: SB1 DMA start failed\n"));
+			return (EIO);
 		}
-		break;
-	case SB_DMARUNNING:
-		/* Looping mode, not initialized */
-		sc->sc_i.run = SB_PCMRUNNING;
-		if (!sbdsp_dma_setup_input(sc))
-			goto giveup;
-		if ((sc->sc_model == SB_JAZZ && sc->sc_i.dmachan > 3) ||
-		    (sc->sc_model != SB_JAZZ && sc->sc_i.modep->precision == 16))
-			cc >>= 1;
-		--cc;
+		sc->sc_i.run = SB_RUNNING;
+	} else if (sc->sc_i.run == SB_NOTRUNNING) {
 		/* Initialize looping PCM */
 		if (ISSB16CLASS(sc)) {
 			DPRINTFN(3, ("sbdsp16 input command cmd=0x%02x bmode=0x%02x cc=%d\n",
-				   sc->sc_i.modep->cmd, sc->sc_i.bmode, cc));
+			    sc->sc_i.modep->cmd, sc->sc_i.bmode, cc));
 			if (sbdsp_wdsp(sc, sc->sc_i.modep->cmd) < 0 || 
 			    sbdsp_wdsp(sc, sc->sc_i.bmode) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_input: SB16 DMA start failed\n"));
-				DPRINTF(("sbdsp16 input command cmd=0x%02x bmode=0x%02x cc=%d\n",
-					 sc->sc_i.modep->cmd, sc->sc_i.bmode, cc));
-				goto giveup;
+				DPRINTF(("sbdsp_block_input: SB16 DMA start failed\n"));
+				return (EIO);
 			}
 		} else {
-			DPRINTF(("sbdsp_dma_input: set blocksize=%d\n", cc));
+			DPRINTF(("sbdsp_block_input: set blocksize=%d\n", cc));
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_input: SB2 DMA blocksize failed\n"));
-				goto giveup;
+				DPRINTF(("sbdsp_block_input: SB2 DMA blocksize failed\n"));
+				return (EIO);
 			}
 			if (sbdsp_wdsp(sc, sc->sc_i.modep->cmd) < 0) {
-				DPRINTF(("sbdsp_dma_input: SB2 DMA start failed\n"));
-				goto giveup;
+				DPRINTF(("sbdsp_block_input: SB2 DMA start failed\n"));
+				return (EIO);
 			}
 		}
-		break;
-	case SB_PCMRUNNING:
-		/* Looping mode, nothing to do */
-		break;
+		sc->sc_i.run = SB_LOOPING;
 	}
-	return 0;
 
-giveup:
-	sbdsp_reset(sc);
-	return EIO;
+	return (0);
 }
 
 int
-sbdsp_dma_init_output(addr, buf, cc)
+sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
-	void *buf;
-	int cc;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
 {
 	struct sbdsp_softc *sc = addr;
-
-	if (sc->sc_model == SB_1)
-		return 0;
-	sc->sc_o.run = SB_DMARUNNING;
-	DPRINTF(("sbdsp: dma start loop output buf=%p cc=%d chan=%d\n",
-		 buf, cc, sc->sc_o.dmachan));
-	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, buf,
-		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-	return 0;
-}
-
-static int
-sbdsp_dma_setup_output(sc)
-	struct sbdsp_softc *sc;
-{
-	int stereo = sc->sc_o.modep->channels == 2;
+	int stereo = param->channels == 2;
+	int width = param->precision * param->factor;
 	int cmd;
+
+#ifdef DIAGNOSTIC
+	if (stereo && (blksize & 1)) {
+		DPRINTF(("stereo playback odd bytes (%d)\n", blksize));
+		return (EIO);
+	}
+#endif
+
+	sc->sc_intrp = intr;
+	sc->sc_argp = arg;
+
+	if (width == 8) {
+#ifdef DIAGNOSTIC
+		if (sc->sc_o.dmachan != sc->sc_drq8) {
+			printf("sbdsp_trigger_output: width=%d bad chan %d\n",
+			    width, sc->sc_o.dmachan);
+			return (EIO);
+		}
+#endif
+		sc->sc_intr8 = sbdsp_block_output;
+		sc->sc_arg8 = addr;
+	} else {
+#ifdef DIAGNOSTIC
+		if (sc->sc_o.dmachan != sc->sc_drq16) {
+			printf("sbdsp_trigger_output: width=%d bad chan %d\n",
+			    width, sc->sc_o.dmachan);
+			return (EIO);
+		}
+#endif
+		sc->sc_intr16 = sbdsp_block_output;
+		sc->sc_arg16 = addr;
+	}
+
+	if ((sc->sc_model == SB_JAZZ) ? (sc->sc_o.dmachan > 3) : (width == 16))
+		blksize >>= 1;
+	--blksize;
+	sc->sc_o.blksize = blksize;
 
 	if (ISSBPRO(sc)) {
 		/* make sure we re-set stereo mixer bit when we start output. */
 		sbdsp_mix_write(sc, SBP_STEREO,
-				(sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
-				(stereo ?  SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
+		    (sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
+		    (stereo ?  SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
 		cmd = sc->sc_o.modep->cmdchan;
 		if (cmd && sbdsp_wdsp(sc, cmd) < 0)
-			return 0;
+			return (EIO);
 	}
 	
 	if (ISSB16CLASS(sc)) {
-		if (sbdsp16_set_rate(sc, SB_DSP16_OUTPUTRATE,
-				     sc->sc_o.rate)) {
-			DPRINTF(("sbdsp_dma_setup_output: rate=%d set failed\n",
+		if (sbdsp16_set_rate(sc, SB_DSP16_OUTPUTRATE, sc->sc_o.rate)) {
+			DPRINTF(("sbdsp_trigger_output: rate=%d set failed\n",
 				 sc->sc_o.rate));
-			return 0;
+			return (EIO);
 		}
 	} else {
 		if (sbdsp_set_timeconst(sc, sc->sc_o.tc)) {
-			DPRINTF(("sbdsp_dma_setup_output: tc=%d set failed\n",
+			DPRINTF(("sbdsp_trigger_output: tc=%d set failed\n",
 				 sc->sc_o.rate));
-			return 0;
+			return (EIO);
 		}
 	}
-	return 1;
+
+	DPRINTF(("sbdsp: dma start loop output start=%p end=%p chan=%d\n",
+	    start, end, sc->sc_o.dmachan));
+	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, start, end - start, NULL,
+	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+
+	return sbdsp_block_output(addr);
 }
 
 int
-sbdsp_dma_output(addr, p, cc, intr, arg)
+sbdsp_block_output(addr)
 	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
 {
 	struct sbdsp_softc *sc = addr;
+	int cc = sc->sc_o.blksize;
 	
-	DPRINTFN(2, ("sbdsp_dma_output: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
-		   addr, p, cc, intr, arg));
-#ifdef DIAGNOSTIC
-	if (sc->sc_o.modep->channels == 2 && (cc & 1)) {
-		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
-		return EIO;
-	}
-#endif
+	DPRINTFN(2, ("sbdsp_block_output: sc=%p cc=%d\n", addr, cc));
 
-	if (sc->sc_o.modep->precision == 8) {
-#ifdef DIAGNOSTIC
-		if (sc->sc_o.dmachan != sc->sc_drq8) {
-			printf("sbdsp_dma_output: prec=%d bad chan %d\n",
-			       sc->sc_o.modep->precision, sc->sc_o.dmachan);
-			return EIO;
-		}
-#endif
-		sc->sc_intr8 = intr;
-		sc->sc_arg8 = arg;
-	} else {
-#ifdef DIAGNOSTIC
-		if (sc->sc_o.dmachan != sc->sc_drq16) {
-			printf("sbdsp_dma_output: prec=%d bad chan %d\n",
-			       sc->sc_o.modep->precision, sc->sc_o.dmachan);
-			return EIO;
-		}
-#endif
-		sc->sc_intr16 = intr;
-		sc->sc_arg16 = arg;
-	}
+	if (sc->sc_o.run != SB_NOTRUNNING)
+		sc->sc_intrp(sc->sc_argp);
 
-	switch(sc->sc_o.run) {
-	case SB_NOTRUNNING:
-		/* Non-looping mode, not initialized */
-		sc->sc_o.run = SB_RUNNING;
-		if (!sbdsp_dma_setup_output(sc))
-			goto giveup;
-		/* fall into */
-	case SB_RUNNING:
+	if (sc->sc_model == SB_1) {
 		/* Non-looping mode, initialized. Start DMA and PCM */
-		DPRINTFN(3, ("sbdsp: start dma out addr=%p, cc=%d, chan=%d\n",
-			    p, cc, sc->sc_o.dmachan));
-		isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, p,
-			     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
-		if ((sc->sc_model == SB_JAZZ && sc->sc_o.dmachan > 3) ||
-		    (sc->sc_model != SB_JAZZ && sc->sc_o.modep->precision == 16))
-			cc >>= 1;
-		--cc;
 		if (sbdsp_wdsp(sc, sc->sc_o.modep->cmd) < 0 ||
 		    sbdsp_wdsp(sc, cc) < 0 ||
 		    sbdsp_wdsp(sc, cc >> 8) < 0) {
-			DPRINTF(("sbdsp_dma_output: SB1 DMA start failed\n"));
-			goto giveup;
+			DPRINTF(("sbdsp_block_output: SB1 DMA start failed\n"));
+			return (EIO);
 		}
-		break;
-	case SB_DMARUNNING:
-		/* Looping mode, not initialized */
-		sc->sc_o.run = SB_PCMRUNNING;
-		if (!sbdsp_dma_setup_output(sc))
-			goto giveup;
-		if ((sc->sc_model == SB_JAZZ && sc->sc_o.dmachan > 3) ||
-		    (sc->sc_model != SB_JAZZ && sc->sc_o.modep->precision == 16))
-			cc >>= 1;
-		--cc;
+		sc->sc_o.run = SB_RUNNING;
+	} else if (sc->sc_o.run == SB_NOTRUNNING) {
 		/* Initialize looping PCM */
 		if (ISSB16CLASS(sc)) {
-			DPRINTF(("sbdsp_dma_output: SB16 cmd=0x%02x bmode=0x%02x cc=%d\n", 
-				 sc->sc_o.modep->cmd,sc->sc_o.bmode, cc));
+			DPRINTF(("sbdsp_block_output: SB16 cmd=0x%02x bmode=0x%02x cc=%d\n", 
+			    sc->sc_o.modep->cmd,sc->sc_o.bmode, cc));
 			if (sbdsp_wdsp(sc, sc->sc_o.modep->cmd) < 0 || 
 			    sbdsp_wdsp(sc, sc->sc_o.bmode) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_output: SB16 DMA start failed\n"));
-				goto giveup;
+				DPRINTF(("sbdsp_block_output: SB16 DMA start failed\n"));
+				return (EIO);
 			}
 		} else {
-			DPRINTF(("sbdsp_dma_output: set blocksize=%d\n", cc));
+			DPRINTF(("sbdsp_block_output: set blocksize=%d\n", cc));
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
-				DPRINTF(("sbdsp_dma_output: SB2 DMA blocksize failed\n"));
-				goto giveup;
+				DPRINTF(("sbdsp_block_output: SB2 DMA blocksize failed\n"));
+				return (EIO);
 			}
 			if (sbdsp_wdsp(sc, sc->sc_o.modep->cmd) < 0) {
-				DPRINTF(("sbdsp_dma_output: SB2 DMA start failed\n"));
-				goto giveup;
+				DPRINTF(("sbdsp_block_output: SB2 DMA start failed\n"));
+				return (EIO);
 			}
 		}
-		break;
-	case SB_PCMRUNNING:
-		/* Looping mode, nothing to do */
-		break;
+		sc->sc_o.run = SB_LOOPING;
 	}
-	return 0;
 
-giveup:
-	sbdsp_reset(sc);
-	return EIO;
+	return (0);
 }
 
 /*
@@ -1486,7 +1427,6 @@ sbdsp_intr(arg)
 	void *arg;
 {
 	struct sbdsp_softc *sc = arg;
-	int loop = sc->sc_model != SB_1;
 	u_char irq;
 
 	DPRINTFN(2, ("sbdsp_intr: intr8=%p, intr16=%p\n",
@@ -1498,31 +1438,18 @@ sbdsp_intr(arg)
 			return 0;
 		}
 	} else {
-		if (!loop && !isa_dmafinished(sc->sc_ic, sc->sc_drq8))
-			return 0;
+		/* XXXX CHECK FOR INTERRUPT */
 		irq = SBP_IRQ_DMA8;
 	}
+
 	sc->sc_interrupts++;
 	delay(10);		/* XXX why? */
-	if (sc->sc_intr8 == 0 && sc->sc_intr16 == 0 && sc->sc_intrm == 0) {
-		DPRINTF(("sbdsp_intr: Unexpected interrupt 0x%x\n", irq));
-		/* XXX return 0;*/	/* Did not expect an interrupt */
-	}
 
 	/* clear interrupt */
 	if (irq & SBP_IRQ_DMA8) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK8);
-#if NMIDI > 0
-		if (sc->sc_open == SB_OPEN_MIDI)
-			sbdsp_midi_intr(sc);
-		else 
-#endif
-		{
-			if (!loop)
-				isa_dmadone(sc->sc_ic, sc->sc_drq8);
-			if (sc->sc_intr8)
-				sc->sc_intr8(sc->sc_arg8);
-		}
+		if (sc->sc_intr8)
+			sc->sc_intr8(sc->sc_arg8);
 	}
 	if (irq & SBP_IRQ_DMA16) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK16);
@@ -1530,7 +1457,7 @@ sbdsp_intr(arg)
 			sc->sc_intr16(sc->sc_arg16);
 	}
 #if NMIDI > 0
-	if ((irq & SBP_IRQ_MPU401) & sc->sc_hasmpu) {
+	if ((irq & SBP_IRQ_MPU401) && sc->sc_hasmpu) {
 		mpu401_intr(&sc->sc_mpu_sc);
 	}
 #endif
@@ -2318,6 +2245,8 @@ sbdsp_midi_open(addr, flags, iintr, ointr, arg)
 			return EIO;
 	sc->sc_open = SB_OPEN_MIDI;
 	sc->sc_openflags = flags;
+	sc->sc_intr8 = sbdsp_midi_intr;
+	sc->sc_arg8 = addr;
 	sc->sc_intrm = iintr;
 	sc->sc_argm = arg;
 	return 0;
@@ -2362,11 +2291,12 @@ sbdsp_midi_getinfo(addr, mi)
 	mi->props = MIDI_PROP_CAN_INPUT;
 }
 
-void
+int
 sbdsp_midi_intr(sc)
 	struct sbdsp_softc *sc;
 {
 	sc->sc_intrm(sc->sc_argm, sbdsp_rdsp(sc));
+	return (0);
 }
 
 #endif
