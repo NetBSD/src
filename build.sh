@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.23 2001/11/12 23:16:17 tv Exp $
+#  $NetBSD: build.sh,v 1.24 2001/11/13 19:03:08 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -245,8 +245,9 @@ fi
 
 # Find DESTDIR and TOOLDIR.
 if [ "$runcmd" = "echo" ]; then
-	DESTDIR="$DESTDIR"
-	TOOLDIR="$TOOLDIR"
+	# shown symbolically with -n because these may come from mk.conf
+	DESTDIR='$DESTDIR'
+	TOOLDIR='$TOOLDIR'
 else
 	DESTDIR=`getmakevar DESTDIR`; echo "===> DESTDIR path: $DESTDIR"
 	TOOLDIR=`getmakevar TOOLDIR`; echo "===> TOOLDIR path: $TOOLDIR"
@@ -308,7 +309,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.23 2001/11/12 23:16:17 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.24 2001/11/13 19:03:08 tv Exp $
 #
 
 EOF
