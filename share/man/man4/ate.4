@@ -1,4 +1,4 @@
-.\"	$NetBSD: ate.4,v 1.3 2000/10/10 14:16:49 ad Exp $
+.\"	$NetBSD: ate.4,v 1.4 2001/03/31 00:48:03 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 4, 1999
+.Dd March 31, 2001
 .Dt ATE 4
 .Os
 .Sh NAME
@@ -41,11 +41,14 @@
 Ethernet driver based on Fujitsu MB8696xA controllers
 .Sh SYNOPSIS
 .Cd "ate0 at isa? port 0x2a0 irq ?"
+.Cd "ate* at mca? slot ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports
 .Tn ISA
+and
+.Tn MCA
 bus
 .Tn Ethernet
 adapters based on the
@@ -57,13 +60,15 @@ Supported boards include:
 .Pp
 .Bl -tag -width xxxx -offset indent
 .It Tn Allied-Telesis AT1700T/AT1700BT/AT1700FT/AT1700AT
+.It Tn Allied-Telesus AT1720T/AT1720BT/AT1720FT/AT1720AT
 .It Tn Allied-Telesis RE2000 series
 .El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
-.Xr pci 4
+.Xr isa 4 ,
+.Xr mca 4
 .Sh HISTORY
 The
 .Nm
