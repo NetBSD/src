@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.37 1997/03/30 20:53:33 fvdl Exp $	*/
+/*	$NetBSD: mountd.c,v 1.38 1997/06/24 23:50:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.37 1997/03/30 20:53:33 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.38 1997/06/24 23:50:57 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ struct exportlist {
 	int		ex_flag;
 	fsid_t		ex_fs;
 	char		*ex_fsdir;
+	char		*ex_indexfile;
 };
 /* ex_flag bits */
 #define	EX_LINKED	0x1
@@ -1333,6 +1334,15 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 		} else if (!strcmp(cpopt, "noresvport")) {
 			opt_flags |= OP_NORESPORT;
 			*exflagsp |= MNT_EXNORESPORT;
+		} else if (!strcmp(cpopt, "public")) {
+			*exflagsp |= (MNT_EXNORESPORT|MNT_EXPUBLIC);
+			opt_flags |= OP_NORESPORT;
+		} else if (!strcmp(cpopt, "webnfs")) {
+			*exflagsp |= (MNT_EXNORESPORT|MNT_EXPUBLIC|MNT_EXRDONLY|
+				      MNT_EXPORTANON);
+			opt_flags |= (OP_MAPALL|OP_NORESPORT);
+		} else if (cpoptarg && !strcmp(cpopt, "index")) {
+			ep->ex_indexfile = strdup(cpoptarg);
 #ifdef ISO
 		} else if (cpoptarg && !strcmp(cpopt, "iso")) {
 			if (get_isoaddr(cpoptarg, grp)) {
@@ -1452,6 +1462,8 @@ free_exp(ep)
 	}
 	if (ep->ex_fsdir)
 		free(ep->ex_fsdir);
+	if (ep->ex_indexfile)
+		free(ep->ex_indexfile);
 	free_dir(ep->ex_dirl);
 	free((caddr_t)ep);
 }
@@ -1559,6 +1571,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	args.ua.fspec = 0;
 	args.ua.export.ex_flags = exflags;
 	args.ua.export.ex_anon = *anoncrp;
+	args.ua.export.ex_indexfile = ep->ex_indexfile;
 	memset(&sin, 0, sizeof(sin));
 	memset(&imask, 0, sizeof(imask));
 	sin.sin_family = AF_INET;
