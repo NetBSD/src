@@ -101,7 +101,7 @@ netbsd32_setregs(p, pack, stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of PS_STRINGS (used by crt0)
+	 *	%g1: address of p->p_psstr (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
