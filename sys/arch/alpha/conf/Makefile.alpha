@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.49 1999/02/23 01:00:51 thorpej Exp $
+# $NetBSD: Makefile.alpha,v 1.50 1999/05/31 02:46:17 ross Exp $
 
 # Makefile for NetBSD
 #
@@ -170,7 +170,7 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
 	    ${ALPHA}/alpha/locore.s
-	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
+	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
 	    ${ALPHA}/alpha/transfer.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	test -z "${SFILES}" || \
