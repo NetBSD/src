@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.h,v 1.1 1998/07/28 16:58:37 mycroft Exp $	*/
+/*	$NetBSD: pwcache.h,v 1.2 2000/06/03 13:21:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -52,10 +52,10 @@
  */
 #define UNMLEN		32	/* >= user name found in any protocol */
 #define GNMLEN		32	/* >= group name found in any protocol */
-#define UID_SZ		317	/* size of user_name/uid cache */
-#define UNM_SZ		317	/* size of user_name/uid cache */
-#define GID_SZ		251	/* size of group_name/gid cache */
-#define GNM_SZ		251	/* size of group_name/gid cache */
+#define UID_SZ		317	/* size of uid to user_name cache */
+#define UNM_SZ		317	/* size of user_name to uid cache */
+#define GID_SZ		251	/* size of gid to group_name cache */
+#define GNM_SZ		251	/* size of group_name to gid cache */
 #define VALID		1	/* entry and name are valid */
 #define INVALID		2	/* entry valid, name NOT valid */
 
