@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1999/03/16 16:30:21 minoura Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1999/05/13 14:24:27 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,7 +46,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 #define X68K_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
 #define X68K_SEG_SIZE	NBSEG
@@ -94,7 +94,7 @@ typedef struct pmap	*pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
 }
 
 /*
@@ -104,7 +104,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;			/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -143,8 +143,8 @@ extern struct pmap	kernel_pmap_store;
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+#define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
