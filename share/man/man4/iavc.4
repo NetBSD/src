@@ -1,3 +1,4 @@
+.\" $NetBSD: iavc.4,v 1.2 2003/09/25 17:38:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -33,7 +34,7 @@
 .Nm iavc
 .Nd isdn4bsd AVM B1 driver
 .Sh SYNOPSIS
-.Cd iavc* at pci?
+.Cd "iavc* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -43,8 +44,8 @@ driver and the
 .Em isdn4bsd
 package.
 Currently only the AVM B1 PCI is supported.
-Support for the AVM B1 ISA and the AVM T1 PCI cards should be quite easy
-to add, since support already exists in the
+Support for the AVM B1 ISA and the AVM T1 PCI cards should be quite
+easy to add, since support already exists in the
 .Fx
 version of the driver.
 .Pp
@@ -54,12 +55,12 @@ from
 .Pa ftp://ftp.avm.de/
 and load it to the card using
 .Xr isdnd 8 .
+.Sh SEE ALSO
+.Xr isdncapi 4 ,
+.Xr isdnd 8
 .Sh STANDARDS
 CAPI 2.0
 .Pq Pa http://www.capi.org/
-.Sh SEE ALSO
-.Xr isdncapi 4 ,
-.Xr isdnd 8 .
 .Sh AUTHORS
 .An -nosplit
 The
