@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.18 2000/12/14 18:10:35 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.19 2000/12/29 22:06:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ __END_DECLS
 #define LINUX_KDSKBMODE   0x4b45
 #define LINUX_KDMKTONE    0x4b30
 #define LINUX_KDSETMODE   0x4b3a
+#define LINUX_KDGETMODE   0x4b3b
 #define LINUX_KDENABIO    0x4b36
 #define LINUX_KDDISABIO   0x4b37
 #define LINUX_KDGETLED    0x4b31
