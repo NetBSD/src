@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.9 1998/12/19 16:05:18 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.9.2.1 1999/11/05 07:30:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.9 1998/12/19 16:05:18 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.9.2.1 1999/11/05 07:30:50 cgd Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -77,18 +77,18 @@ int	mark;			/* Last place we saw a head line */
 
 char	*headnames[] = {"To", "Subject", "Cc", 0};
 
-void	fmt __P((FILE *));
-int	ispref __P((char *, char *));
-int	ishead __P((char *));
-void	leadin __P((void));
+static void	fmt __P((FILE *));
+static int	ispref __P((const char *, const char *));
+static void	leadin __P((void));
+static void	oflush __P((void));
+static void	pack __P((const char *, int));
+static void	prefix __P((const char *, int));
+static void	setout __P((void));
+static void	split __P((const char *, int));
+static void	tabulate __P((char *));
+
+int	ishead __P((const char *));
 int	main __P((int, char **));
-void	oflush __P((void));
-void	pack __P((char *, int));
-void	prefix __P((char *));
-char   *savestr __P((char *));
-void	setout __P((void));
-void	split __P((char *));
-void	tabulate __P((char *));
 
 /*
  * Drive the whole formatter by managing input files.  Also,
@@ -154,13 +154,13 @@ main(argc, argv)
  * doing ^H processing, expanding tabs, stripping trailing blanks,
  * and sending each line down for analysis.
  */
-void
+static void
 fmt(fi)
 	FILE *fi;
 {
 	char linebuf[BUFSIZ], canonb[BUFSIZ];
 	char *cp, *cp2;
-	int c, col;
+	int c, col, add_space;
 
 	c = getc(fi);
 	while (c != EOF) {
@@ -186,10 +186,47 @@ fmt(fi)
 		*cp = '\0';
 
 		/*
-		 * Toss anything remaining on the input line.
+		 * By default, add space after the end of current input
+		 * (normally end of line)
 		 */
-		while (c != '\n' && c != EOF)
-			c = getc(fi);
+		add_space = 1;
+
+		/*
+		 * If the input line is longer than linebuf buffer can hold,
+		 * process the data read so far as if it was a separate line -
+		 * if there is any whitespace character in the read data,
+		 * process all the data up to it, otherwise process all.
+		 */
+		if (c != '\n' && c != EOF && !isspace(c)) {
+			/*
+			 * Find out if any whitespace character has been read.
+			 */
+			for(cp2 = cp; cp2 >= linebuf
+				&& !isspace((unsigned char)*cp2); cp2--);
+
+			if (cp2 < linebuf) {
+				/*
+				 * ungetc() last read character so that it
+				 * won't get lost.
+				 */
+				ungetc(c, fi);
+				/*
+				 * Don't append space on the end in split().
+				 */
+				add_space = 0;
+			} else {
+				/*
+				 * To avoid splitting a word in a middle,
+				 * ungetc() all characters after last
+				 * whitespace char.
+				 */
+				while (!isspace(c) && (cp >= linebuf)) {
+					ungetc(c, fi);
+					c = *--cp;
+				}
+				*cp = '\0';
+			}
+		}
 		
 		/*
 		 * Expand tabs on the way to canonb.
@@ -217,7 +254,7 @@ fmt(fi)
 		for (cp2--; cp2 >= canonb && *cp2 == ' '; cp2--)
 			;
 		*++cp2 = '\0';
-		prefix(canonb);
+		prefix(canonb, add_space);
 		if (c != EOF)
 			c = getc(fi);
 	}
@@ -230,11 +267,13 @@ fmt(fi)
  * Finally, if the line minus the prefix is a mail header, try to keep
  * it on a line by itself.
  */
-void
-prefix(line)
-	char line[];
+static void
+prefix(line, add_space)
+	const char line[];
+	int add_space;
 {
-	char *cp, **hp;
+	const char *cp;
+	char **hp;
 	int np, h;
 
 	if (strlen(line) == 0) {
@@ -264,11 +303,11 @@ prefix(line)
 	if (!h && (h = (*cp == '.')))
 		oflush();
 	pfx = np;
-	if (h)
+	if (h) {
 		pack(cp, strlen(cp));
-	else	split(cp);
-	if (h)
 		oflush();
+	} else
+		split(cp, add_space);
 	lineno++;
 }
 
@@ -278,11 +317,13 @@ prefix(line)
  * attached at the end.  Pass these words along to the output
  * line packer.
  */
-void
-split(line)
-	char line[];
+static void
+split(line, add_space)
+	const char line[];
+	int add_space;
 {
-	char *cp, *cp2;
+	const char *cp;
+	char *cp2;
 	char word[BUFSIZ];
 	int wordl;		/* LIZ@UOM 6/18/85 */
 
@@ -306,7 +347,7 @@ split(line)
 		 * Guarantee a space at end of line. Two spaces after end of
 		 * sentence punctuation. 
 		 */
-		if (*cp == '\0') {
+		if (*cp == '\0' && add_space) {
 			*cp2++ = ' ';
 			if (strchr(".:!", cp[-1]))
 				*cp2++ = ' ';
@@ -336,7 +377,7 @@ char	*outp;				/* Pointer in above */
 /*
  * Initialize the output section.
  */
-void
+static void
 setout()
 {
 	outp = NOSTR;
@@ -362,12 +403,12 @@ setout()
  * pack(word)
  *	char word[];
  */
-void
+static void
 pack(word,wl)
-	char word[];
+	const char word[];
 	int wl;
 {
-	char *cp;
+	const char *cp;
 	int s, t;
 
 	if (outp == NOSTR)
@@ -401,7 +442,7 @@ pack(word,wl)
  * its way.  Set outp to NOSTR to indicate the absence of the current
  * line prefix.
  */
-void
+static void
 oflush()
 {
 	if (outp == NOSTR)
@@ -415,7 +456,7 @@ oflush()
  * Take the passed line buffer, insert leading tabs where possible, and
  * output on standard output (finally).
  */
-void
+static void
 tabulate(line)
 	char line[];
 {
@@ -455,7 +496,7 @@ tabulate(line)
  * Initialize the output line with the appropriate number of
  * leading blanks.
  */
-void
+static void
 leadin()
 {
 	int b;
@@ -467,31 +508,11 @@ leadin()
 }
 
 /*
- * Save a string in dynamic space.
- * This little goodie is needed for
- * a headline detector in head.c
- */
-char *
-savestr(str)
-	char str[];
-{
-	char *top;
-
-	top = malloc(strlen(str) + 1);
-	if (top == NOSTR) {
-		fprintf(stderr, "fmt:  Ran out of memory\n");
-		exit(1);
-	}
-	strcpy(top, str);
-	return (top);
-}
-
-/*
  * Is s1 a prefix of s2??
  */
-int
+static int
 ispref(s1, s2)
-	char *s1, *s2;
+	const char *s1, *s2;
 {
 
 	while (*s1++ == *s2)
