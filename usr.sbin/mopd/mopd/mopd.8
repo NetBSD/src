@@ -1,4 +1,4 @@
-.\"	$NetBSD: mopd.8,v 1.5 2002/06/07 11:23:55 wiz Exp $
+.\"	$NetBSD: mopd.8,v 1.6 2002/07/19 10:05:34 mrg Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -35,6 +35,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl adf
+.Op Fl s Ar mopdir
 .Op Ar interface
 .Sh DESCRIPTION
 .Nm
@@ -53,8 +54,11 @@ must know what image to load.
 Upon receiving a request,
 .Nm
 checks if the requested file exists in
-.Pa /tftpboot/mop ,
-the filename is normaly uppercase and with an extension of
+.Pa /tftpboot/mop
+(unless the
+.Fl s
+option is given, see below) the filename is normaly uppercase and with an
+extension of
 .Pa .SYS .
 If the filename isn't given, the ethernet address of the target is used as
 filename, e.g.
@@ -84,6 +88,11 @@ Run in debug mode, with all the output to stdout. The process will run in
 the foreground.
 .It Fl f
 Run in the foreground.
+.It Fl s
+Change the directory to look for files in from
+.Pa /tftpboot/mop
+to
+.Ar mopdir .
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact

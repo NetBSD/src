@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.8 2001/02/19 23:22:45 cgd Exp $	*/
+/*	$NetBSD: mopd.c,v 1.9 2002/07/19 10:05:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.8 2001/02/19 23:22:45 cgd Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.9 2002/07/19 10:05:34 mrg Exp $");
 #endif
 
 /*
@@ -72,6 +72,7 @@ int	VersionFlag = 0;	/* print version              */
 int	Not3Flag = 0;		/* Not MOP V3 messages.       */
 int	Not4Flag = 0;		/* Not MOP V4 messages.       */
 int	promisc = 1;		/* Need promisc mode    */
+char	*MopdDir = MOP_FILE_PATH;  /* Path to mop directory  */
 
 int
 main(argc, argv)
@@ -83,7 +84,7 @@ main(argc, argv)
 
 	extern char version[];
 
-	while ((c = getopt(argc, argv, "34adfv")) != -1)
+	while ((c = getopt(argc, argv, "34adfs:v")) != -1)
 		switch (c) {
 			case '3':
 				Not3Flag++;
@@ -99,6 +100,9 @@ main(argc, argv)
 				break;
 			case 'f':
 				ForegroundFlag++;
+				break;
+			case 's':
+				MopdDir = optarg;
 				break;
 			case 'v':
 				VersionFlag++;
