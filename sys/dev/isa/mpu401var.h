@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu401var.h,v 1.1 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: mpu401var.h,v 1.2 1998/08/20 10:46:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct mpu401_softc {
 	bus_space_handle_t ioh;		/* handle */
 	int	iobase;
 	int	open;
-	void	(*intr)(void*, int);	/* midi input intr handler */
+	void	(*intr)__P((void*, int)); /* midi input intr handler */
 	void	*arg;			/* arg for intr() */
 };
 
