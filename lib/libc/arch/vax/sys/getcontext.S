@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1 2003/01/19 19:32:39 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.2 2003/01/20 00:18:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,11 @@
 
 #include "SYS.h"
 
+/*
+ * Can't use R4 or R5 since those needed by the phread_switch code.
+ */
 ENTRY(getcontext, 0)
+	clrl	%r0			/* assume success */
 	chmk	$SYS_getcontext		/* getcontext(oucp) */
 	jcc	1f
 	jmp	CERROR+2		/* badness happened */
@@ -53,7 +57,7 @@ ENTRY(getcontext, 0)
 	 * we aren't executing the caller's code (yet).  So it's
 	 * the callers state but we still have control.
 	 */
-	.align  2
+	_ALIGN_TEXT
 2:	movq	%ap,(36+12*4)(%r2)	/* adjust AP + SP */
 	movl	%fp,(36+14*4)(%r2)	/* adjust FP */
 	movl	%r3,(36+15*4)(%r2)	/* adjust PC */
