@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.4 2000/05/03 17:03:10 itojun Exp $
+# $NetBSD: sendmail,v 1.5 2000/05/13 08:45:09 lukem Exp $
 #
 
 # PROVIDE: mail
@@ -11,7 +11,6 @@
 ## REQUIRE: DAEMON
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="sendmail"
 command="/usr/sbin/${name}"
@@ -23,4 +22,5 @@ if [ -f "/etc/${name}.cf" ]; then
 	err 1 "${name} was not started, move /etc/${name}.cf to /etc/mail."
 fi
 
+load_rc_config $name
 run_rc_command "$1"

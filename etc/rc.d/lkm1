@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: lkm1,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: lkm1,v 1.2 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: beforenetlkm
 # REQUIRE: root
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="lkm1"
 start_cmd="lkm1_start"
@@ -35,4 +34,5 @@ lkm1_stop()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"
