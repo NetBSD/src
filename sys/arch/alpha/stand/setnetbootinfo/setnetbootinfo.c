@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.8 1998/02/04 23:41:45 thorpej Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.9 1998/12/03 04:16:18 ross Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -190,8 +190,8 @@ main(argc, argv)
 	netbbinfop = NULL;
 	for (qp = (u_int64_t *)netbb; qp < (u_int64_t *)(netbb + sb.st_size);
 	    qp++) {
-		if (((struct netbbinfo *)qp)->magic1 == 0xfeedbabedeadbeef &&
-		    ((struct netbbinfo *)qp)->magic2 == 0xfeedbeefdeadbabe) {
+		if (((struct netbbinfo *)qp)->magic1 == 0xfeedbabedeadbeefLL &&
+		    ((struct netbbinfo *)qp)->magic2 == 0xfeedbeefdeadbabeLL) {
 			netbbinfop = (struct netbbinfo *)qp;
 			break;
 		}
@@ -206,8 +206,8 @@ main(argc, argv)
 	if (verbose)
 		printf("setting netbbinfo structure...\n");
 	bzero(netbbinfop, sizeof *netbbinfop);
-	netbbinfop->magic1 = 0xfeedbabedeadbeef;
-	netbbinfop->magic2 = 0xfeedbeefdeadbabe;
+	netbbinfop->magic1 = 0xfeedbabedeadbeefLL;
+	netbbinfop->magic2 = 0xfeedbeefdeadbabeLL;
 	netbbinfop->set = unset ? 0 : 1;
 	if (netbbinfop->set) {
 		for (i = 0; i < 6; i++)
