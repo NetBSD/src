@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.3 1995/06/18 14:46:44 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.4 1995/09/19 22:44:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -189,15 +189,16 @@ bsd2osf_statfs(bsfs, osfs)
 }
 
 int
-osf1_statfs(p, uap, retval)
+osf1_statfs(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_statfs_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct osf1_statfs *) buf;
 		syscallarg(int) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct mount *mp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -219,15 +220,16 @@ osf1_statfs(p, uap, retval)
 }
 
 int
-osf1_fstatfs(p, uap, retval)
+osf1_fstatfs(p, v, retval)
 	struct proc *p;
-	struct osf1_fstatfs_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct osf1_statfs *) buf;
-		syscallarg(int) len;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_fstatfs_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct osf1_statfs *) buf;   
+		syscallarg(int) len;
+	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -247,15 +249,16 @@ osf1_fstatfs(p, uap, retval)
 }
 
 int
-osf1_getfsstat(p, uap, retval)
+osf1_getfsstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct osf1_getfsstat_args /* {
 		syscallarg(struct osf1_statfs *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -299,14 +302,15 @@ osf1_getfsstat(p, uap, retval)
 }
 
 int
-osf1_unmount(p, uap, retval)
+osf1_unmount(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_unmount_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct unmount_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -322,16 +326,17 @@ osf1_unmount(p, uap, retval)
 }
 
 int
-osf1_mount(p, uap, retval)
+osf1_mount(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_mount_args /* {
 		syscallarg(int) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct mount_args a;
 	int error;
 

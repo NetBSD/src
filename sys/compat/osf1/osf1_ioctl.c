@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.1 1995/02/13 21:39:04 cgd Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.2 1995/09/19 22:44:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,15 +57,16 @@ int osf1_ioctl_t	__P((struct proc *p, struct ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
 
 int
-osf1_ioctl(p, uap, retval)
+osf1_ioctl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
