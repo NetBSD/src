@@ -1,12 +1,18 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2002/07/20 02:59:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2002/07/22 04:46:04 lukem Exp $
 #
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.include <bsd.kernobj.mk>
+
 
 # we use compressed tar, SparkPlug doesn't handle gzipped tar
 ARCHIVE=BtNetBSD.tar.Z
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 
-all:
+all: ${ARCHIVE}
 
 release: check_RELEASEDIR .WAIT ${ARCHIVE}
 	mv -f ${ARCHIVE} ${RELEASEDIR}/installation/misc/
@@ -31,11 +37,7 @@ tmp/BtNetBSD:
 	cd tmp/BtNetBSD && cp -R '!BtNetBSD/native' unixfs
 
 clean:
-	@rm -f BtNetBSD.tar.Z
+	@rm -f ${ARCHIVE}
 	@if [ -d tmp ]; then rm -rf tmp; fi
 
-.include <bsd.subdir.mk>
-
-.include <bsd.obj.mk>
-.include <bsd.kernobj.mk>
-
+.include <bsd.prog.mk>
