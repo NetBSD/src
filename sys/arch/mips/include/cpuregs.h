@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.45 2001/08/15 14:27:00 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.46 2001/08/17 07:53:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -367,45 +367,47 @@
 /*
  * Coprocessor 0 registers:
  *
- *  0	MIPS_COP_0_TLB_INDEX	TLB Index.
- *  1	MIPS_COP_0_TLB_RANDOM	TLB Random.
- *  2	MIPS_COP_0_TLB_LOW	r3k TLB entry low.
- *  2	MIPS_COP_0_TLB_LO0	r4k TLB entry low.
- *  3	MIPS_COP_0_TLB_LO1	r4k TLB entry low, extended.
- *  4	MIPS_COP_0_TLB_CONTEXT	TLB Context.
- *  5	MIPS_COP_0_TLB_PG_MASK	TLB Page Mask register.
- *  6	MIPS_COP_0_TLB_WIRED	Wired TLB number.
- *  8	MIPS_COP_0_BAD_VADDR	Bad virtual address.
- *  9	MIPS_COP_0_COUNT	Count register.
- * 10	MIPS_COP_0_TLB_HI	TLB entry high.
- * 11	MIPS_COP_0_COMPARE	Compare (against Count).
- * 12	MIPS_COP_0_STATUS	Status register.
- * 13	MIPS_COP_0_CAUSE	Exception cause register.
- * 14	MIPS_COP_0_EXC_PC	Exception PC.
- * 15	MIPS_COP_0_PRID		Processor revision identifier.
- * 16	MIPS_COP_0_CONFIG	Configuration register.
- * 16/1	MIPS_COP_0_CONFIG1	Configuration register 1.
- * 16/2	MIPS_COP_0_CONFIG2	Configuration register 2.
- * 16/3	MIPS_COP_0_CONFIG3	Configuration register 3.
- * 17	MIPS_COP_0_LLADDR	Load Linked Address.
- * 18	MIPS_COP_0_WATCH_LO	WatchLo register.
- * 19	MIPS_COP_0_WATCH_HI	WatchHi register.
- * 20	MIPS_COP_0_TLB_XCONTEXT TLB XContext register.
- * 23	MIPS_COP_0_DEBUG	Debug JTAG register.
- * 24	MIPS_COP_0_DEPC		DEPC JTAG register.
- * 25	MIPS_COP_0_PERFCNT	Performance Counter register.
- * 26	MIPS_COP_0_ECC		ECC / Error Control register.
- * 27	MIPS_COP_0_CACHE_ERR	Cache Error register.
- * 28/0	MIPS_COP_0_TAG_LO	Cache TagLo register (instr).
- * 28/1	MIPS_COP_0_DATA_LO	Cache DataLo register (instr).
- * 28/2	MIPS_COP_0_TAG_LO	Cache TagLo register (data).
- * 28/3	MIPS_COP_0_DATA_LO	Cache DataLo register (data).
- * 29/0	MIPS_COP_0_TAG_HI	Cache TagHi register (instr).
- * 29/1	MIPS_COP_0_DATA_HI	Cache DataHi register (instr).
- * 29/2	MIPS_COP_0_TAG_HI	Cache TagHi register (data).
- * 29/3	MIPS_COP_0_DATA_HI	Cache DataHi register (data).
- * 30	MIPS_COP_0_ERROR_PC	Error EPC register.
- * 31	MIPS_COP_0_DESAVE	DESAVE JTAG register.
+ *				v--- width for mips I,III,32,64
+ *				     (3=32bit, 6=64bit, i=impl dep)
+ *  0	MIPS_COP_0_TLB_INDEX	3333 TLB Index.
+ *  1	MIPS_COP_0_TLB_RANDOM	3333 TLB Random.
+ *  2	MIPS_COP_0_TLB_LOW	3... r3k TLB entry low.
+ *  2	MIPS_COP_0_TLB_LO0	.636 r4k TLB entry low.
+ *  3	MIPS_COP_0_TLB_LO1	.636 r4k TLB entry low, extended.
+ *  4	MIPS_COP_0_TLB_CONTEXT	3636 TLB Context.
+ *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
+ *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
+ *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
+ *  9	MIPS_COP_0_COUNT	.333 Count register.
+ * 10	MIPS_COP_0_TLB_HI	3636 TLB entry high.
+ * 11	MIPS_COP_0_COMPARE	.333 Compare (against Count).
+ * 12	MIPS_COP_0_STATUS	3333 Status register.
+ * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
+ * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
+ * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
+ * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
+ * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
+ * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
+ * 16/3	MIPS_COP_0_CONFIG3	..33 Configuration register 3.
+ * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
+ * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
+ * 19	MIPS_COP_0_WATCH_HI	.333 WatchHi register.
+ * 20	MIPS_COP_0_TLB_XCONTEXT .6.6 TLB XContext register.
+ * 23	MIPS_COP_0_DEBUG	.... Debug JTAG register.
+ * 24	MIPS_COP_0_DEPC		.... DEPC JTAG register.
+ * 25	MIPS_COP_0_PERFCNT	..36 Performance Counter register.
+ * 26	MIPS_COP_0_ECC		.3ii ECC / Error Control register.
+ * 27	MIPS_COP_0_CACHE_ERR	.3ii Cache Error register.
+ * 28/0	MIPS_COP_0_TAG_LO	.3ii Cache TagLo register (instr).
+ * 28/1	MIPS_COP_0_DATA_LO	..ii Cache DataLo register (instr).
+ * 28/2	MIPS_COP_0_TAG_LO	..ii Cache TagLo register (data).
+ * 28/3	MIPS_COP_0_DATA_LO	..ii Cache DataLo register (data).
+ * 29/0	MIPS_COP_0_TAG_HI	.3ii Cache TagHi register (instr).
+ * 29/1	MIPS_COP_0_DATA_HI	..ii Cache DataHi register (instr).
+ * 29/2	MIPS_COP_0_TAG_HI	..ii Cache TagHi register (data).
+ * 29/3	MIPS_COP_0_DATA_HI	..ii Cache DataHi register (data).
+ * 30	MIPS_COP_0_ERROR_PC	.636 Error EPC register.
+ * 31	MIPS_COP_0_DESAVE	.... DESAVE JTAG register.
  */
 #define MIPS_COP_0_TLB_INDEX	$0
 #define MIPS_COP_0_TLB_RANDOM	$1
