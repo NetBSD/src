@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.5 1996/12/20 20:49:47 cgd Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.6 1997/03/13 19:47:42 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$NetBSD: getrpcent.c,v 1.5 1996/12/20 20:49:47 cgd Exp $";
+static char *rcsid = "$NetBSD: getrpcent.c,v 1.6 1997/03/13 19:47:42 mycroft Exp $";
 #endif
 
 /*
@@ -79,18 +79,15 @@ struct rpcent *
 getrpcbynumber(number)
 	register int number;
 {
-	register struct rpcdata *d = _rpcdata();
-	register struct rpcent *p;
+	struct rpcent *rpc;
 
-	if (d == 0)
-		return (0);
 	setrpcent(0);
-	while (p = getrpcent()) {
-		if (p->r_number == number)
+	while (rpc = getrpcent()) {
+		if (rpc->r_number == number)
 			break;
 	}
 	endrpcent();
-	return (p);
+	return (rpc);
 }
 
 struct rpcent *
@@ -103,14 +100,14 @@ getrpcbyname(name)
 	setrpcent(0);
 	while (rpc = getrpcent()) {
 		if (strcmp(rpc->r_name, name) == 0)
-			return (rpc);
+			break;
 		for (rp = rpc->r_aliases; *rp != NULL; rp++) {
 			if (strcmp(*rp, name) == 0)
-				return (rpc);
+				break;
 		}
 	}
 	endrpcent();
-	return (NULL);
+	return (rpc);
 }
 
 void
