@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.22 1999/03/19 21:46:26 perseant Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.23 1999/07/08 01:19:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,23 +54,11 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <miscfs/umapfs/umap.h>
+#include <miscfs/genfs/layer_extern.h>
 
 int	umapfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
-int	umapfs_start __P((struct mount *, int, struct proc *));
 int	umapfs_unmount __P((struct mount *, int, struct proc *));
-int	umapfs_root __P((struct mount *, struct vnode **));
-int	umapfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
-int	umapfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	umapfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	umapfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	umapfs_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	umapfs_vptofh __P((struct vnode *, struct fid *));
-int	umapfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct proc *));
 
 /*
  * Mount umap layer
@@ -85,7 +73,6 @@ umapfs_mount(mp, path, data, ndp, p)
 {
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
-	struct vnode *umapm_rootvp;
 	struct umap_mount *amp;
 	size_t size;
 	int error;
@@ -102,14 +89,6 @@ umapfs_mount(mp, path, data, ndp, p)
 #endif
 
 	/*
-	 * Update is a no-op
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		return (EOPNOTSUPP);
-		/* return (VFS_MOUNT(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, path, data, ndp, p));*/
-	}
-
-	/*
 	 * Get argument
 	 */
 	error = copyin(data, (caddr_t)&args, sizeof(struct umap_args));
@@ -117,10 +96,22 @@ umapfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/*
+	 * Update only does export updating.
+	 */
+	if (mp->mnt_flag & MNT_UPDATE) {
+		amp = MOUNTTOUMAPMOUNT(mp);
+		if (args.umap_target == 0)
+			return (vfs_export(mp, &amp->umapm_export,
+					&args.umap_export));
+		else
+			return (EOPNOTSUPP);
+	}
+
+	/*
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT|LOCKLEAF,
-		UIO_USERSPACE, args.target, p);
+		UIO_USERSPACE, args.umap_target, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -145,11 +136,12 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
+	memset((caddr_t)amp, 0, sizeof(struct umap_mount));
 
-	/*
-	 * Save reference to underlying FS
-	 */
+	mp->mnt_data = (qaddr_t) amp;
 	amp->umapm_vfs = lowerrootvp->v_mount;
+	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
 
 	/* 
 	 * Now copy in the number of entries and maps for umap mapping.
@@ -158,8 +150,10 @@ umapfs_mount(mp, path, data, ndp, p)
 	amp->info_gnentries = args.gnentries;
 	error = copyin(args.mapdata, (caddr_t)amp->info_mapdata, 
 	    2*sizeof(u_long)*args.nentries);
-	if (error)
+	if (error) {
+		vput(lowerrootvp);
 		return (error);
+	}
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:nentries %d\n",args.nentries);
@@ -170,8 +164,10 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
 	    2*sizeof(u_long)*args.gnentries);
-	if (error)
+	if (error) {
+		vput(lowerrootvp);
 		return (error);
+	}
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:gnentries %d\n",args.gnentries);
@@ -181,63 +177,55 @@ umapfs_mount(mp, path, data, ndp, p)
 	 	    amp->info_gmapdata[i][1]);
 #endif
 
+	/*
+	 * Make sure the mount point's sufficiently initialized
+	 * that the node create call will work.
+	 */
+	vfs_getnewfsid(mp, MOUNT_UMAP);
+	amp->umapm_size = sizeof(struct umap_node);
+	amp->umapm_tag = VT_UMAP;
+	amp->umapm_bypass = umap_bypass;
+	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
+	amp->umapm_vnodeop_p = umap_vnodeop_p;
+	simple_lock_init(&amp->umapm_hashlock);
+	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, M_WAITOK,
+			&amp->umapm_node_hash);
+
 
 	/*
-	 * Save reference.  Each mount also holds
-	 * a reference on the root vnode.
+	 * fix up umap node for root vnode.
 	 */
-	error = umap_node_create(mp, lowerrootvp, &vp);
-	/*
-	 * Unlock the node (either the lower or the alias)
-	 */
-	VOP_UNLOCK(vp, 0);
+	error = layer_node_create(mp, lowerrootvp, &vp);
 	/*
 	 * Make sure the node alias worked
 	 */
 	if (error) {
-		vrele(lowerrootvp);
+		vput(lowerrootvp);
 		free(amp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
+	/*
+	 * Unlock the node (either the lower or the alias)
+	 */
+	VOP_UNLOCK(vp, 0);
 
 	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in umapfs_unmount.
 	 */
-	umapm_rootvp = vp;
-	umapm_rootvp->v_flag |= VROOT;
-	amp->umapm_rootvp = umapm_rootvp;
-	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t) amp;
-	vfs_getnewfsid(mp, MOUNT_UMAP);
+	vp->v_flag |= VROOT;
+	amp->umapm_rootvp = vp;
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.target, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
-	    &size);
+	(void) copyinstr(args.umap_target, mp->mnt_stat.f_mntfromname,
+		MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
 	return (0);
-}
-
-/*
- * VFS start.  Nothing needed here - the start routine
- * on the underlying filesystem will have been called
- * when that filesystem was mounted.
- */
-int
-umapfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
-{
-
-	return (0);
-	/* return (VFS_START(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, flags, p)); */
 }
 
 /*
@@ -249,7 +237,7 @@ umapfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	struct vnode *umapm_rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
+	struct vnode *rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
 	int flags = 0;
 
@@ -270,170 +258,28 @@ umapfs_unmount(mp, mntflags, p)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (umapm_rootvp->v_usecount > 1)
+	if (rootvp->v_usecount > 1)
 		return (EBUSY);
-	if ((error = vflush(mp, umapm_rootvp, flags)) != 0)
+	if ((error = vflush(mp, rootvp, flags)) != 0)
 		return (error);
 
 #ifdef UMAPFS_DIAGNOSTIC
-	vprint("alias root of lower", umapm_rootvp);
+	vprint("alias root of lower", rootvp);
 #endif	 
 	/*
 	 * Release reference on underlying root vnode
 	 */
-	vrele(umapm_rootvp);
+	vrele(rootvp);
 	/*
 	 * And blow it away for future re-use
 	 */
-	vgone(umapm_rootvp);
+	vgone(rootvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);
-}
-
-int
-umapfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
-{
-	struct vnode *vp;
-
-#ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_root(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
-	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
-#endif
-
-	/*
-	 * Return locked reference to root.
-	 */
-	vp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
-	VREF(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	*vpp = vp;
-	return (0);
-}
-
-int
-umapfs_quotactl(mp, cmd, uid, arg, p)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
-{
-
-	return (VFS_QUOTACTL(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, cmd, uid, arg, p));
-}
-
-int
-umapfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
-{
-	int error;
-	struct statfs mstat;
-
-#ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_statfs(mp = %p, vp = %p->%p)\n", mp,
-	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
-	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
-#endif
-
-	memset(&mstat, 0, sizeof(mstat));
-
-	error = VFS_STATFS(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, &mstat, p);
-	if (error)
-		return (error);
-
-	/* now copy across the "interesting" information and fake the rest */
-	sbp->f_type = mstat.f_type;
-	sbp->f_flags = mstat.f_flags;
-	sbp->f_bsize = mstat.f_bsize;
-	sbp->f_iosize = mstat.f_iosize;
-	sbp->f_blocks = mstat.f_blocks;
-	sbp->f_bfree = mstat.f_bfree;
-	sbp->f_bavail = mstat.f_bavail;
-	sbp->f_files = mstat.f_files;
-	sbp->f_ffree = mstat.f_ffree;
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	return (0);
-}
-
-int
-umapfs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
-{
-
-	/*
-	 * XXX - Assumes no data cached at umap layer.
-	 */
-	return (0);
-}
-
-int
-umapfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
-{
-	
-	return (VFS_VGET(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, ino, vpp));
-}
-
-int
-umapfs_fhtovp(mp, fidp, vpp)
-	struct mount *mp;
-	struct fid *fidp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-umapfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred**credanonp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-umapfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-umapfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	return (EOPNOTSUPP);
 }
 
 extern struct vnodeopv_desc umapfs_vnodeop_opv_desc;
@@ -446,18 +292,18 @@ struct vnodeopv_desc *umapfs_vnodeopv_descs[] = {
 struct vfsops umapfs_vfsops = {
 	MOUNT_UMAP,
 	umapfs_mount,
-	umapfs_start,
+	layerfs_start,
 	umapfs_unmount,
-	umapfs_root,
-	umapfs_quotactl,
-	umapfs_statfs,
-	umapfs_sync,
-	umapfs_vget,
-	umapfs_fhtovp,
-	umapfs_vptofh,
-	umapfs_init,
-	umapfs_sysctl,
+	layerfs_root,
+	layerfs_quotactl,
+	layerfs_statfs,
+	layerfs_sync,
+	layerfs_vget,
+	layerfs_fhtovp,
+	layerfs_vptofh,
+	layerfs_init,
+	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */
-	umapfs_checkexp,
+	layerfs_checkexp,
 	umapfs_vnodeopv_descs,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.11 1999/03/05 21:09:49 mycroft Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.12 1999/07/08 01:18:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,6 +158,45 @@ genfs_eopnotsupp(v)
 	return (EOPNOTSUPP);
 }
 
+/*
+ * Called when an fs doesn't support a particular vop but the vop needs to
+ * vrele, vput, or vunlock passed in vnodes.
+ */
+int
+genfs_eopnotsupp_rele(v)
+	void *v;
+{
+	struct vop_generic_args /*
+		struct vnodeop_desc *a_desc;
+		/ * other random data follows, presumably * / 
+	} */ *ap = v;
+	struct vnodeop_desc *desc = ap->a_desc;
+	struct vnode *vp;
+	int flags, i, j, offset;
+
+	flags = desc->vdesc_flags;
+	for (i = 0; i < VDESC_MAX_VPS; flags >>=1, i++) {
+		if ((offset = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
+			break;	/* stop at end of list */
+		if ((j = flags & VDESC_VP0_WILLPUT)) {
+			vp = *VOPARG_OFFSETTO(struct vnode**,offset,ap);
+			switch (j) {
+			case VDESC_VP0_WILLPUT:
+				vput(vp);
+				break;
+			case VDESC_VP0_WILLUNLOCK:
+				VOP_UNLOCK(vp, 0);
+				break;
+			case VDESC_VP0_WILLRELE:
+				vrele(vp);
+				break;
+			}
+		}
+	}
+
+	return (EOPNOTSUPP);
+}
+
 /*ARGSUSED*/
 int
 genfs_ebadf(v)
@@ -242,12 +281,58 @@ genfs_revoke(v)
 	return (0);
 }
 
+/*
+ * Lock the node.
+ */
+int
+genfs_lock(v)
+	void *v;
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+}
+
+/*
+ * Unlock the node.
+ */
+int
+genfs_unlock(v)
+	void *v;
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE,
+		&vp->v_interlock));
+}
+
+/*
+ * Return whether or not the node is locked.
+ */
+int
+genfs_islocked(v)
+	void *v;
+{
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	return (lockstatus(&vp->v_lock));
+}
 
 /*
  * Stubs to use when there is no locking to be done on the underlying object.
- * A minimal shared lock is necessary to ensure that the underlying object
- * is not revoked while an operation is in progress. So, an active shared
- * count is maintained in an auxillary vnode lock structure.
  */
 int
 genfs_nolock(v)
@@ -259,51 +344,6 @@ genfs_nolock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-#ifdef notyet
-	/*
-	 * This code cannot be used until all the non-locking filesystems
-	 * (notably NFS) are converted to properly lock and release nodes.
-	 * Also, certain vnode operations change the locking state within
-	 * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
-	 * and symlink). Ideally these operations should not change the
-	 * lock state, but should be changed to let the caller of the
-	 * function unlock them. Otherwise all intermediate vnode layers
-	 * (such as union, umapfs, etc) must catch these functions to do
-	 * the necessary locking at their layer. Note that the inactive
-	 * and lookup operations also change their lock state, but this 
-	 * cannot be avoided, so these two operations will always need
-	 * to be handled in intermediate layers.
-	 */
-	struct vnode *vp = ap->a_vp;
-	int vnflags, flags = ap->a_flags;
-
-	if (vp->v_vnlock == NULL) {
-		if ((flags & LK_TYPE_MASK) == LK_DRAIN)
-			return (0);
-		MALLOC(vp->v_vnlock, struct lock *, sizeof(struct lock),
-		    M_VNODE, M_WAITOK);
-		lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
-	}
-	switch (flags & LK_TYPE_MASK) {
-	case LK_DRAIN:
-		vnflags = LK_DRAIN;
-		break;
-	case LK_EXCLUSIVE:
-	case LK_SHARED:
-		vnflags = LK_SHARED;
-		break;
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-	case LK_DOWNGRADE:
-		return (0);
-	case LK_RELEASE:
-	default:
-		panic("vop_nolock: bad operation %d", flags & LK_TYPE_MASK);
-	}
-	if (flags & LK_INTERLOCK)
-		vnflags |= LK_INTERLOCK;
-	return(lockmgr(vp->v_vnlock, vnflags, &vp->v_interlock));
-#else /* for now */
 	/*
 	 * Since we are not using the lock manager, we must clear
 	 * the interlock here.
@@ -311,43 +351,20 @@ genfs_nolock(v)
 	if (ap->a_flags & LK_INTERLOCK)
 		simple_unlock(&ap->a_vp->v_interlock);
 	return (0);
-#endif
 }
 
-/*
- * Decrement the active use count.
- */
 int
 genfs_nounlock(v)
 	void *v;
 {
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockmgr(vp->v_vnlock, LK_RELEASE, NULL));
+	return (0);
 }
 
-/*
- * Return whether or not the node is in use.
- */
 int
 genfs_noislocked(v)
 	void *v;
 {
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockstatus(vp->v_vnlock));
+	return (0);
 }
 
 /*

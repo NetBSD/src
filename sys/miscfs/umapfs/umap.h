@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.8 1998/03/01 02:21:51 fvdl Exp $	*/
+/*	$NetBSD: umap.h,v 1.9 1999/07/08 01:19:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,22 +39,28 @@
  *	@(#)umap.h	8.4 (Berkeley) 8/20/94
  */
 
+#include <miscfs/genfs/layer.h>
+
 #define MAPFILEENTRIES 64
 #define GMAPFILEENTRIES 16
 #define NOBODY 32767
 #define NULLGROUP 65534
 
 struct umap_args {
-	char		*target;	/* Target of loopback  */
+	struct layer_args la;		/* generic layerfs args. Includes
+					 * target and export info */
+#define	umap_target	la.target
+#define	umap_export	la.export
 	int 		nentries;       /* # of entries in user map array */
 	int 		gnentries;	/* # of entries in group map array */
 	u_long 		(*mapdata)[2];	/* pointer to array of user mappings */
 	u_long 		(*gmapdata)[2];	/* pointer to array of group mappings */
 };
 
+#ifdef _KERNEL
+
 struct umap_mount {
-	struct mount	*umapm_vfs;
-	struct vnode	*umapm_rootvp;	/* Reference to root umap_node */
+	struct layer_mount lm;		
 	int             info_nentries;  /* number of uid mappings */
 	int		info_gnentries;	/* number of gid mappings */
 	u_long		info_mapdata[MAPFILEENTRIES][2]; /* mapping data for 
@@ -62,27 +68,39 @@ struct umap_mount {
 	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
 	    group mapping in ficus */
 };
+#define	umapm_vfs		lm.layerm_vfs
+#define	umapm_rootvp		lm.layerm_rootvp
+#define	umapm_export		lm.layerm_export
+#define	umapm_flags		lm.layerm_flags
+#define	umapm_size		lm.layerm_size
+#define	umapm_tag		lm.layerm_tag
+#define	umapm_bypass		lm.layerm_bypass
+#define	umapm_alloc		lm.layerm_alloc
+#define	umapm_vnodeop_p		lm.layerm_vnodeop_p
+#define	umapm_node_hashtbl	lm.layerm_node_hashtbl
+#define	umapm_node_hash		lm.layerm_node_hash
+#define	umapm_hashlock		lm.layerm_hashlock
 
-#ifdef _KERNEL
 /*
  * A cache of vnode references
  */
 struct umap_node {
-	LIST_ENTRY(umap_node) umap_hash;	/* Hash list */
-	struct vnode	*umap_lowervp;	/* Aliased vnode - VREFed once */
-	struct vnode	*umap_vnode;	/* Back pointer to vnode/umap_node */
+	struct	layer_node	ln;
 };
 
-extern int umap_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
-extern u_long umap_reverse_findid __P((u_long id, u_long map[][2], int nentries));
-extern void umap_mapids __P((struct mount *v_mount, struct ucred *credp));
+u_long umap_reverse_findid __P((u_long id, u_long map[][2], int nentries));
+void umap_mapids __P((struct mount *v_mount, struct ucred *credp));
+
+#define	umap_hash	ln.layer_hash
+#define	umap_lowervp	ln.layer_lowervp
+#define	umap_vnode	ln.layer_vnode
+#define	umap_flags	ln.layer_flags
 
 #define	MOUNTTOUMAPMOUNT(mp) ((struct umap_mount *)((mp)->mnt_data))
 #define	VTOUMAP(vp) ((struct umap_node *)(vp)->v_data)
 #define UMAPTOV(xp) ((xp)->umap_vnode)
 #ifdef UMAPFS_DIAGNOSTIC
-extern struct vnode *umap_checkvp __P((struct vnode *vp, char *fil, int lno));
-#define	UMAPVPTOLOWERVP(vp) umap_checkvp((vp), __FILE__, __LINE__)
+#define	UMAPVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	UMAPVPTOLOWERVP(vp) (VTOUMAP(vp)->umap_lowervp)
 #endif
@@ -90,6 +108,8 @@ extern struct vnode *umap_checkvp __P((struct vnode *vp, char *fil, int lno));
 extern int (**umap_vnodeop_p) __P((void *));
 extern struct vfsops umapfs_vfsops;
 
-void umapfs_init __P((void));
+int     umap_bypass     __P((void *));
+
+#define NUMAPNODECACHE	16
 
 #endif /* _KERNEL */
