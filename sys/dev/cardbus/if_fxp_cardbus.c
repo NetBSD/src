@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.16 2002/09/30 20:52:28 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.17 2002/10/02 16:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.16 2002/09/30 20:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.17 2002/10/02 16:33:42 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -114,7 +114,7 @@ struct fxp_cardbus_softc {
 };
 
 CFATTACH_DECL(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
-    fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate)
+    fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate);
 
 #ifdef CBB_DEBUG
 #define DPRINTF(X) printf X

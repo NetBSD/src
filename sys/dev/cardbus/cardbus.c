@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.45 2002/09/30 20:52:26 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.46 2002/10/02 16:33:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.45 2002/09/30 20:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.46 2002/10/02 16:33:40 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -88,7 +88,7 @@ static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
 CFATTACH_DECL(cardbus, sizeof(struct cardbus_softc),
-    cardbusmatch, cardbusattach, NULL, NULL)
+    cardbusmatch, cardbusattach, NULL, NULL);
 
 #ifndef __NetBSD_Version__
 struct cfdriver cardbus_cd = {

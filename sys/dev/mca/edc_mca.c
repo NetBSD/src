@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.19 2002/09/30 21:36:45 thorpej Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.20 2002/10/02 16:34:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.19 2002/09/30 21:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.20 2002/10/02 16:34:07 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -120,7 +120,7 @@ int	edc_mca_probe	__P((struct device *, struct cfdata *, void *));
 void	edc_mca_attach	__P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(edc_mca, sizeof(struct edc_mca_softc),
-    edc_mca_probe, edc_mca_attach, NULL, NULL)
+    edc_mca_probe, edc_mca_attach, NULL, NULL);
 
 static int	edc_intr __P((void *));
 static void	edc_dump_status_block __P((struct edc_mca_softc *,

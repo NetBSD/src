@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.8 2002/09/30 20:52:26 thorpej Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.9 2002/10/02 16:33:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.8 2002/09/30 20:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.9 2002/10/02 16:33:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
 int	ahc_cardbus_detach __P((struct device *, int));
 
 CFATTACH_DECL(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
-    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate)
+    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
 
 int
 ahc_cardbus_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.5 2002/09/30 20:41:18 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.6 2002/10/02 16:33:37 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.5 2002/09/30 20:41:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.6 2002/10/02 16:33:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int	acpilid_match(struct device *, struct cfdata *, void *);
 void	acpilid_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpilid, sizeof(struct acpilid_softc),
-    acpilid_match, acpilid_attach, NULL, NULL)
+    acpilid_match, acpilid_attach, NULL, NULL);
 
 void	acpilid_status_changed(void *);
 void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *context);

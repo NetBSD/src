@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.4 2002/09/30 21:17:58 thorpej Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.5 2002/10/02 16:33:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.4 2002/09/30 21:17:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.5 2002/10/02 16:33:33 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -81,7 +81,7 @@ int	ld_icp_match(struct device *, struct cfdata *, void *);
 int	ld_icp_start(struct ld_softc *, struct buf *);
 
 CFATTACH_DECL(ld_icp, sizeof(struct ld_icp_softc),
-    ld_icp_match, ld_icp_attach, NULL, NULL)
+    ld_icp_match, ld_icp_attach, NULL, NULL);
 
 int
 ld_icp_match(struct device *parent, struct cfdata *match, void *aux)

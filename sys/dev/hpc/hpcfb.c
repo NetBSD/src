@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.26 2002/10/02 10:43:06 reinoud Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.26 2002/10/02 10:43:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.26 2002/10/02 10:43:06 reinoud Exp $";
+    "$NetBSD: hpcfb.c,v 1.27 2002/10/02 16:33:49 thorpej Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ struct wsdisplay_emulops hpcfb_emulops = {
  *  static variables
  */
 CFATTACH_DECL(hpcfb, sizeof(struct hpcfb_softc),
-    hpcfbmatch, hpcfbattach, NULL, NULL)
+    hpcfbmatch, hpcfbattach, NULL, NULL);
 
 struct wsscreen_descr hpcfb_stdscreen = {
 	"std",

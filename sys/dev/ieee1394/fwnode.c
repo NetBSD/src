@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.16 2002/09/30 21:21:07 thorpej Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.17 2002/10/02 16:33:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.16 2002/09/30 21:21:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.17 2002/10/02 16:33:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ int     fwnodedebug = 1;
 #endif
 
 CFATTACH_DECL(fwnode, sizeof(struct fwnode_softc),
-    fwnode_match, fwnode_attach, fwnode_detach, NULL)
+    fwnode_match, fwnode_attach, fwnode_detach, NULL);
 
 int
 fwnode_match(struct device *parent, struct cfdata *match, void *aux)

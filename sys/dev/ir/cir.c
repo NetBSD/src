@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.6 2002/09/30 21:22:22 thorpej Exp $	*/
+/*	$NetBSD: cir.c,v 1.7 2002/10/02 16:33:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ int cir_activate(struct device *self, enum devact act);
 int cir_detach(struct device *self, int flags);
 
 CFATTACH_DECL(cir, sizeof(struct cir_softc),
-    cir_match, cir_attach, cir_detach, cir_activate)
+    cir_match, cir_attach, cir_detach, cir_activate);
 
 extern struct cfdriver cir_cd;
 

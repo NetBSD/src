@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.26 2002/09/30 20:52:28 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.26 2002/09/30 20:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -122,7 +122,7 @@ struct ex_cardbus_softc {
 };
 
 CFATTACH_DECL(ex_cardbus, sizeof(struct ex_cardbus_softc),
-    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate)
+    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate);
 
 const struct ex_cardbus_product {
 	u_int32_t	ecp_prodid;	/* CardBus product ID */

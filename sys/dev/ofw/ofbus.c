@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.15 2002/09/30 22:10:08 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.16 2002/10/02 16:34:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.15 2002/09/30 22:10:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.16 2002/10/02 16:34:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ void ofbus_attach __P((struct device *, struct device *, void *));
 static int ofbus_print __P((void *, const char *));
 
 CFATTACH_DECL(ofbus, sizeof(struct device),
-    ofbus_match, ofbus_attach, NULL, NULL)
+    ofbus_match, ofbus_attach, NULL, NULL);
 
 static int
 ofbus_print(aux, pnp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.9 2002/09/30 21:09:35 thorpej Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.10 2002/10/02 16:33:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.9 2002/09/30 21:09:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.10 2002/10/02 16:33:49 thorpej Exp $");
 
 #define BTNMGRDEBUG
 
@@ -90,7 +90,7 @@ static int btnmgr_hook(void *, int, long, void *);
  * global/static data
  */
 CFATTACH_DECL(btnmgr, sizeof(struct btnmgr_softc),
-    btnmgrmatch, btnmgrattach, NULL, NULL)
+    btnmgrmatch, btnmgrattach, NULL, NULL);
 
 #ifdef notyet
 dev_type_open(btnmgropen);

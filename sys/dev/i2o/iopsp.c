@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.15 2002/09/30 21:11:46 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.16 2002/10/02 16:33:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.15 2002/09/30 21:11:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.16 2002/10/02 16:33:52 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -84,7 +84,7 @@ static void	iopsp_scsipi_request(struct scsipi_channel *,
 				     scsipi_adapter_req_t, void *);
 
 CFATTACH_DECL(iopsp, sizeof(struct iopsp_softc),
-    iopsp_match, iopsp_attach, NULL, NULL)
+    iopsp_match, iopsp_attach, NULL, NULL);
 
 /*
  * Match a supported device.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.21 2002/09/30 21:59:30 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.22 2002/10/02 16:34:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.21 2002/09/30 21:59:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.22 2002/10/02 16:34:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,7 +71,7 @@ void	mscp_initds __P((struct mscp_softc *));
 int	mscp_waitstep __P((struct mscp_softc *, int, int));
 
 CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
-    mscp_match, mscp_attach, NULL, NULL)
+    mscp_match, mscp_attach, NULL, NULL);
 
 #define	READ_SA		(bus_space_read_2(mi->mi_iot, mi->mi_sah, 0))
 #define	READ_IP		(bus_space_read_2(mi->mi_iot, mi->mi_iph, 0))

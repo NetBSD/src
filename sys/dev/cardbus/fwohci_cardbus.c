@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.7 2002/09/30 20:52:28 thorpej Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.8 2002/10/02 16:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.7 2002/09/30 20:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.8 2002/10/02 16:33:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int fwohci_cardbus_detach(struct device *, int);
 
 CFATTACH_DECL(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
     fwohci_cardbus_match, fwohci_cardbus_attach,
-    fwohci_cardbus_detach, fwohci_activate)
+    fwohci_cardbus_detach, fwohci_activate);
 
 #define CARDBUS_OHCI_MAP_REGISTER PCI_OHCI_MAP_REGISTER
 #define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.8 2002/09/30 21:04:25 thorpej Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.9 2002/10/02 16:33:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.8 2002/09/30 21:04:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.9 2002/10/02 16:33:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ static int	dpt_eisa_irq(bus_space_tag_t, bus_space_handle_t, int *);
 static int	dpt_eisa_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(dpt_eisa, sizeof(struct dpt_softc),
-    dpt_eisa_match, dpt_eisa_attach, NULL, NULL)
+    dpt_eisa_match, dpt_eisa_attach, NULL, NULL);
 
 static const char * const dpt_eisa_boards[] = {
 	"DPT2402",

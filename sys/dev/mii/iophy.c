@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.19 2002/09/30 21:57:48 thorpej Exp $	*/
+/*	$NetBSD: iophy.c,v 1.20 2002/10/02 16:34:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.19 2002/09/30 21:57:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.20 2002/10/02 16:34:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ int	iophymatch(struct device *, struct cfdata *, void *);
 void	iophyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iophy, sizeof(struct mii_softc),
-    iophymatch, iophyattach, mii_phy_detach, mii_phy_activate)
+    iophymatch, iophyattach, mii_phy_detach, mii_phy_activate);
 
 int	iophy_service(struct mii_softc *, struct mii_data *, int);
 void	iophy_status(struct mii_softc *);

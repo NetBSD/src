@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.9 2002/09/30 21:57:46 thorpej Exp $	*/
+/*	$NetBSD: acphy.c,v 1.10 2002/10/02 16:34:14 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.9 2002/09/30 21:57:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.10 2002/10/02 16:34:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int	acphymatch(struct device *, struct cfdata *, void *);
 void	acphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acphy, sizeof(struct mii_softc),
-    acphymatch, acphyattach, mii_phy_detach, mii_phy_activate)
+    acphymatch, acphyattach, mii_phy_detach, mii_phy_activate);
 
 int	acphy_service(struct mii_softc *, struct mii_data *, int);
 void	acphy_status(struct mii_softc *);

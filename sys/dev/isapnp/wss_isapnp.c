@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.13 2002/09/30 21:31:54 thorpej Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.14 2002/10/02 16:34:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.13 2002/09/30 21:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.14 2002/10/02 16:34:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ int	wss_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	wss_isapnp_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(wss_isapnp, sizeof(struct wss_softc),
-    wss_isapnp_match, wss_isapnp_attach, NULL, NULL)
+    wss_isapnp_match, wss_isapnp_attach, NULL, NULL);
 
 /*
  * Probe / attach routines.

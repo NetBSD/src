@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.16 2002/09/30 21:36:45 thorpej Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.17 2002/10/02 16:34:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.16 2002/09/30 21:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.17 2002/10/02 16:34:06 thorpej Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -86,7 +86,7 @@ static int     ed_mca_probe   __P((struct device *, struct cfdata *, void *));
 static void    ed_mca_attach  __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
-    ed_mca_probe, ed_mca_attach, NULL, NULL)
+    ed_mca_probe, ed_mca_attach, NULL, NULL);
 
 extern struct cfdriver ed_cd;
 

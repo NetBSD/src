@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.39 2002/09/30 21:31:53 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.40 2002/10/02 16:34:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.39 2002/09/30 21:31:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.40 2002/10/02 16:34:03 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -90,7 +90,7 @@ static void isapnp_attach __P((struct device *, struct device *, void *));
 static void isapnp_callback __P((struct device *));
 
 CFATTACH_DECL(isapnp, sizeof(struct isapnp_softc),
-    isapnp_match, isapnp_attach, NULL, NULL)
+    isapnp_match, isapnp_attach, NULL, NULL);
 
 /*
  * This keeps track if which ISA's we have been probed on.
