@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/04/01 12:16:12 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/04/03 19:23:08 scw Exp $
 
 IMAGESIZE=	7m
-MAKEFS_FLAGS=	-f 94
+MAKEFS_FLAGS=	-o density=4096
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/install.md \
