@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 2000/06/09 17:58:31 wrstuden Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2000/07/01 21:41:41 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -81,7 +81,7 @@
 #	ipl	ip filter
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
-#	audio	audio device
+#	audio*	audio devices
 #	tun*	network tunnel driver
 #	scsibus* SCSI busses
 #	ss*	SCSI scanner
@@ -104,9 +104,18 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	sh $0 random tty00 tty01 tty10 pty0 pty1 adb grf0 wscons
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1 ipl usbs ttyCZ0
+	sh $0 tun0 tun1 ipl usbs ttyCZ0 audio
+	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	;;
+
+audio)
+	sh $0 audio0 audio1 audio2 audio3
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer
+	ln -fs audioctl0 audioctl
 	;;
 
 floppy)
@@ -198,6 +207,46 @@ wsmouse*)
 	mknod $wsmouse c $major $unit
 	chown root.wheel $wsmouse
 	chmod 600 $wsmouse
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit 
+	major=48
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=49
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chown root.wheel $rmidi
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=50
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chown root.wheel $music $sequencer
+	chmod 666 $music $sequencer
 	;;
 
 fd)
