@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.11 2003/08/07 09:53:33 wiz Exp $
+.\"	$NetBSD: callout.9,v 1.12 2003/10/19 14:37:12 he Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ Once the timer expires,
 the handle is marked as
 .Em EXPIRED
 and
-.Em RUNNING
+.Em INVOKING ,
 and the
 .Em PENDING
 status is cleared.
@@ -162,10 +162,9 @@ The
 function stops the timer associated the callout handle
 .Fa c .
 The
-.Em PENDING ,
-.Em EXPIRED ,
+.Em PENDING
 and
-.Em RUNNING
+.Em EXPIRED
 status for the callout handle is cleared.
 It is safe to call
 .Fn callout_stop
