@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.32 2003/09/07 16:22:21 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.33 2004/03/01 23:06:21 itojun Exp $
 .\"	$KAME: getaddrinfo.3,v 1.32 2003/04/30 06:06:42 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -447,7 +447,7 @@ for (res = res0; res; res = res-\*[Gt]ai_next) {
 	break;	/* okay we got one */
 }
 if (s \*[Lt] 0) {
-	err(1, cause);
+	err(1, "%s", cause);
 	/*NOTREACHED*/
 }
 freeaddrinfo(res0);
@@ -495,7 +495,7 @@ for (res = res0; res \*[Am]\*[Am] nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next)
 	nsock++;
 }
 if (nsock == 0) {
-	err(1, cause);
+	err(1, "%s", cause);
 	/*NOTREACHED*/
 }
 freeaddrinfo(res0);
