@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.149 2001/09/22 08:43:28 chs Exp $
+.\"	$NetBSD: options.4,v 1.150 2001/09/22 16:39:25 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -389,7 +389,7 @@ problems.
 Defines the number of entries in the malloc log.
 Default is 100000 entries.
 .It Cd options UVMHIST
-Enables the UVM history logs, which create in-memory traces of 
+Enables the UVM history logs, which create in-memory traces of
 various UVM activities. These logs can be displayed be calling
 .Fn uvmhist_dump
 or
@@ -1422,7 +1422,7 @@ Sets the default size limit of a process' data segment, the value that
 will be returned as the soft limit for
 .Dv RLIMIT_DATA
 (as returned by
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
@@ -1431,7 +1431,7 @@ Sets the maximum size limit of a process' data segment, the value that
 will be returned as the hard limit for
 .Dv RLIMIT_DATA
 (as returned by
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
@@ -1440,7 +1440,7 @@ Sets the default size limit of a process' stack segment, the value that
 will be returned as the soft limit for
 .Dv RLIMIT_STACK
 (as returned by
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
@@ -1449,7 +1449,7 @@ Sets the maximum size limit of a process' stack segment, the value that
 will be returned as the hard limit for
 .Dv RLIMIT_STACK
 (as returned by
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
