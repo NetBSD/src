@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.52 2003/04/01 02:20:14 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.53 2003/04/09 23:32:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2003/04/01 02:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2003/04/09 23:32:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,8 +291,48 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer_direct(t, map,
-		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
+		if (m->m_len == 0)
+			continue;
+		/* XXX Could be better about coalescing. */
+		/* XXX Doesn't check boundaries. */
+		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
+		case M_EXT|M_EXT_CLUSTER:
+			/* XXX KDASSERT */
+			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_ext.ext_paddr +
+			    (m->m_data - m->m_ext.ext_buf);
+ have_addr:
+			if (first == 0 &&
+			    ++seg >= map->_dm_segcnt) {
+				error = EFBIG;
+				break;
+			}
+
+			/*
+			 * If we're beyond the current DMA window, indicate
+			 * that and try to fall back into SGMAPs.
+			 */
+			if (t->_wsize != 0 && lastaddr >= t->_wsize) {
+				error = EINVAL;
+				break;
+			}
+			lastaddr |= t->_wbase;
+
+			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_len = m->m_len;
+			lastaddr += m->m_len;
+			break;
+
+		case 0:
+			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			    (m->m_data - M_BUFADDR(m));
+			goto have_addr;
+
+		default:
+			error = _bus_dmamap_load_buffer_direct(t, map,
+			    m->m_data, m->m_len, NULL, flags, &lastaddr,
+			    &seg, first);
+		}
 		first = 0;
 	}
 	if (error == 0) {
