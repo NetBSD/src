@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.33 1998/08/17 00:49:02 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.34 1998/10/10 02:35:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -374,23 +374,6 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB4;
 		return (0);
 	}
-#if NSCSIBUS > 0
-	case SCIOCREPROBE: {
-		struct scsi_addr *sca = (struct scsi_addr *)addr;
-		if (sca->type != TYPE_SCSI)
-			return (ENODEV);
-		return (scsi_probe_busses(sca->addr.scsi.scbus,
-		    sca->addr.scsi.target, sca->addr.scsi.lun));
-	}
-#if defined(COMPAT_12) || defined(COMPAT_FREEBSD)
-	/* SCIOCREPROBE before ATAPI staff merge */
-	case OSCIOCREPROBE: {
-		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
-
-		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
-	}
-#endif
-#endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
 		return (EINVAL);
