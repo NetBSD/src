@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.23 2004/11/17 07:11:10 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.23 2004/11/17 07:11:10 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.69.2.23 2004/11/17 07:11:10 thorpej Exp $");
 #define	MAXLINE		1024		/* maximum line length */
 #define	MAXSVLINE	120		/* maximum saved line length */
 #define DEFUPRI		(LOG_USER|LOG_NOTICE)
-#define DEFSPRI		(LOG_KERN|LOG_CRIT)
+#define DEFSPRI		(LOG_KERN|LOG_NOTICE)
 #define TIMERINTVL	30		/* interval for checking flush, mark */
 #define TTYMSGTIME	1		/* timeout passed to ttymsg */
 
