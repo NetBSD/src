@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.22 2000/03/06 21:02:01 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.23 2000/03/20 07:52:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1959,6 +1959,7 @@ fxp_detach(sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }
