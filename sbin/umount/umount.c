@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.31 2004/03/12 21:26:43 dsl Exp $	*/
+/*	$NetBSD: umount.c,v 1.32 2004/03/12 21:48:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.31 2004/03/12 21:26:43 dsl Exp $");
+__RCSID("$NetBSD: umount.c,v 1.32 2004/03/12 21:48:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ int	 main(int, char *[]);
 int	 namematch(const struct addrinfo *);
 int	 sacmp(const struct sockaddr *, const struct sockaddr *);
 int	 selected(int);
-int	 umountfs(char *, char **);
+int	 umountfs(const char *, char **);
 void	 usage(void);
 int	 xdr_dir(XDR *, char *);
 
@@ -158,17 +158,19 @@ main(int argc, char *argv[])
 }
 
 int
-umountfs(char *name, char **typelist)
+umountfs(const char *name, char **typelist)
 {
 	enum clnt_stat clnt_stat;
 	struct stat sb;
 	struct timeval try;
 	CLIENT *clp;
-	char *type, *delimp, *hostp, *mntpt, rname[MAXPATHLEN];
+	char *type, *hostp, rname[MAXPATHLEN];
 	mntwhat what;
 	struct addrinfo *ai, hints;
+	const char *mntpt;
 
-	delimp = NULL;
+	hostp = NULL;
+	ai = NULL;
 
 	if (raw) {
 		mntpt = name;
@@ -214,15 +216,18 @@ umountfs(char *name, char **typelist)
 			return (1);
 
 		memset(&hints, 0, sizeof hints);
-		ai = NULL;
 		if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
+			char *delimp;
 			/* look for host:mountpoint */
 			if ((delimp = strrchr(name, ':')) != NULL) {
-				*delimp = '\0';
-				hostp = name;
+				int len = delimp - name;
+				hostp = malloc(len + 1);
+				if (hostp == NULL)
+				    	return 1;
+				memcpy(hostp, name, len);
+				hostp[len] = 0;
+				name += len + 1;
 				getaddrinfo(hostp, NULL, &hints, &ai);
-				name = delimp + 1;
-				*delimp = ':';
 			}
 		}
 
@@ -240,9 +245,7 @@ umountfs(char *name, char **typelist)
 		return (1);
 	}
 
-	if (!raw && !strncmp(type, MOUNT_NFS, MFSNAMELEN) &&
-	    (ai != NULL) && !(fflag & MNT_FORCE)) {
-		*delimp = '\0';
+	if (ai != NULL && !(fflag & MNT_FORCE)) {
 		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, "udp");
 		if (clp  == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
