@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2005/01/13 16:12:35 is Exp $
+# $NetBSD: GENERIC,v 1.208 2005/01/17 15:28:51 cube Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 
 maxusers	8
@@ -458,6 +458,7 @@ pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
