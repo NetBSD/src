@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $
+# $NetBSD: Makefile,v 1.2 2002/10/12 11:18:37 jdolecek Exp $
 
 CLEANFILES+= afile
 
@@ -6,7 +6,8 @@ CLEANFILES+= afile
 
 regress: ${PROG}
 	touch afile
-	./${PROG} afile &
+	./${PROG} -n 3 afile &
+	@sleep 1
 	@echo foo1 >> afile && sleep 1
 	@echo foo2 >> afile && sleep 1
 	@echo foo3 >> afile && sleep 1
