@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.12 1995/01/25 04:58:17 cgd Exp $
+#	$NetBSD: DISKLESS,v 1.13 1995/08/22 19:43:11 jtc Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -12,7 +12,7 @@ options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
-#options	DUMMY_NOPS	# speed hack; recommanded
+#options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 

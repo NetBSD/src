@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.60 1995/06/18 20:14:44 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.61 1995/08/22 19:43:25 jtc Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -10,7 +10,7 @@ options		I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 

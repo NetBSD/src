@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 1995/07/24 03:33:12 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.20 1995/08/22 19:43:14 jtc Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -10,7 +10,7 @@ options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
-#options	DUMMY_NOPS	# speed hack; recommanded
+#options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
 options		MACHINE_NONCONTIG

@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.49 1995/04/19 19:07:33 mycroft Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.50 1995/08/22 19:43:06 jtc Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -10,7 +10,7 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 
