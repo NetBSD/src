@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.12 1997/01/09 16:31:05 tls Exp $	*/
+/*	$NetBSD: date.c,v 1.13 1997/01/24 18:17:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: date.c,v 1.12 1997/01/09 16:31:05 tls Exp $";
+static char rcsid[] = "$NetBSD: date.c,v 1.13 1997/01/24 18:17:17 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,19 +78,14 @@ main(argc, argv)
 {
 	extern int optind;
 	extern char *optarg;
-	struct timezone tz;
 	int ch, rflag;
 	char *format, buf[1024];
 
 	setlocale(LC_ALL, "");
 
-	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "d:nr:ut:")) != -1)
+	while ((ch = getopt(argc, argv, "nr:u")) != -1)
 		switch((char)ch) {
-		case 'd':		/* daylight savings time */
-			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
-			break;
 		case 'n':		/* don't set network */
 			nflag = 1;
 			break;
@@ -101,26 +96,11 @@ main(argc, argv)
 		case 'u':		/* do everything in GMT */
 			(void)setenv("TZ", "GMT0", 1);
 			break;
-		case 't':		/* minutes west of GMT */
-					/* error check; don't allow "PST" */
-			if (isdigit(*optarg)) {
-				tz.tz_minuteswest = atoi(optarg);
-				break;
-			}
-			/* FALLTHROUGH */
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
-
-	/*
-	 * If -d or -t, set the timezone or daylight savings time; this
-	 * doesn't belong here, there kernel should not know about either.
-	 */
-	if ((tz.tz_minuteswest || tz.tz_dsttime) &&
-	    settimeofday(NULL, &tz))
-		err(1, "settimeofday");
 
 	if (!rflag && time(&tval) == -1)
 		err(1, "time");
@@ -240,7 +220,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: date [-nu] [-d dst] [-r seconds] [-t west] [+format]\n");
+	    "usage: date [-nu] [-r seconds] [+format]\n");
 	(void)fprintf(stderr, "            [yy[mm[dd[hh]]]]mm[.ss]]\n");
 	exit(1);
 }
