@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.19 2004/11/21 21:49:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.19 2004/11/21 21:49:08 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -997,9 +997,12 @@ SYSCTL_SETUP(sysctl_vfs_cd9660_setup, "sysctl vfs.cd9660 subtree setup")
 		       SYSCTL_DESCR("ISO-9660 file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 14, CTL_EOL);
-	/*
-	 * XXX the "14" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "14" is the order as taken from sys/mount.h
-	 */
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "utf8_joliet", 
+		       SYSCTL_DESCR("Encode Joliet file names to UTF-8"),
+		       NULL, 0, &cd9660_utf8_joliet, 0,
+		       CTL_VFS, 14, CD9660_UTF8_JOLIET, CTL_EOL);
+
 }
