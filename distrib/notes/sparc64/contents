@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.1 2000/08/19 13:16:00 mrg Exp $
+.\"	$NetBSD: contents,v 1.2 2000/09/17 21:03:32 mrg Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -535,7 +535,7 @@ install this distribution set.
 .if r_pc532 .Em 457k gzipped, 910k uncompressed
 .if r_pmax .Em 792k gzipped, 2.1M uncompressed
 .if r_sparc .Em 2.9M gzipped, 6.7M uncompressed
-XX.if r_sparc .Em 2.9M gzipped, 6.7M uncompressed
+.if r_sparc64 .Em 1.5M gzipped, 4.7M uncompressed
 .if r_vax .Em 517k gzipped, 1M uncompressed
 .if r_x68k .Em 627k gzipped, 1.4M uncompressed
 .\}
@@ -664,9 +664,6 @@ Binary sets for the X Window system are distributed with
 Unfortunately there is no R6.3 Xserver for NetBSD/hp300 yet,
 so we can only distribute the X clients this time.
 .\}
-.if r_sparc64 \{\
-There are no X clients or server provided for NetBSD/sparc64 at this time.
-.\}
 The sets are:
 .Bl -tag -width xcontribmmm
 .It Sy xbase
@@ -684,6 +681,7 @@ the X servers.
 .if r_macppc .Em 2.8M gzipped, 8.3M uncompressed
 .if r_pmax .Em 3.1M gzipped, 11M uncompressed
 .if r_sparc .Em 2.7M gzipped, 8.6M uncompressed
+.if r_sparc64 .Em 2.7M gzipped, 8.6M uncompressed
 .if r_x68k .Em 2.4M gzippeed, 7.7M uncompressed
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
@@ -698,6 +696,7 @@ The extra libraries and include files needed to compile X source code.
 .if r_macppc .Em 1.9M gzipped, 8.2M uncompressed
 .if r_pmax .Em 2.1M gzipped, 9.8M uncompressed
 .if r_sparc .Em 1.7M gzipped, 7.4M uncompressed
+.if r_sparc64 .Em 1.7M gzipped, 7.4M uncompressed
 .if r_x68k .Em 1.6M gzipped, 6.8M uncompressed
 .It Sy xcontrib
 Programs that were contributed to X.
@@ -712,6 +711,7 @@ Programs that were contributed to X.
 .if r_macppc .Em 188k gzipped, 580k uncompressed
 .if r_pmax .Em 206k gzipped, 770k uncompressed
 .if r_sparc .Em 205k gzipped, 750k uncompressed
+.if r_sparc64 .Em 205k gzipped, 750k uncompressed
 .if r_x68k .Em 179k gzipped, 670k uncompressed
 .It Sy xfont
 Fonts needed by X.
@@ -726,6 +726,7 @@ Fonts needed by X.
 .if r_macppc .Em 5.7M gzipped, 7.0M uncompressed
 .if r_pmax .Em 5.5M gzipped, 6.7M uncompressed
 .if r_sparc .Em 5.7M gzipped, 7.0M uncompressed
+.if r_sparc64 .Em 5.7M gzipped, 7.0M uncompressed
 .if r_x68k .Em 5.7M gzipped, 7.0M uncompressed
 .
 .if r_atari \{\
@@ -775,6 +776,15 @@ server with man page.
 .It Sy xserver
 .No The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.
+.br
+.Em 3.3M gzipped, 8.4M uncompressed
+.\}
+.if r_sparc64 \{\
+.Pp
+.It Sy xserver
+.No The Xsun, Xsun24, XsunMono and Xprt
+servers with man pages.  The 64-bit X server current has problems with
+pixmaps.
 .br
 .Em 3.3M gzipped, 8.4M uncompressed
 .\}
