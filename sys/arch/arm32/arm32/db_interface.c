@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 1998/08/09 00:00:57 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23 1998/08/29 03:21:33 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -187,6 +187,40 @@ kdb_kbd_trap(tf)
 }
 
 
+static int
+db_validate_address(addr)
+	vm_offset_t addr;
+{
+	pt_entry_t *ptep;
+	pd_entry_t *pdep;
+	struct proc *p = curproc;
+
+	/*
+	 * If we have a valid pmap for curproc, use it's page directory
+	 * otherwise use the kernel pmap's page directory.
+	 */
+	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)
+		pdep = kernel_pmap->pm_pdir;
+	else
+		pdep = p->p_vmspace->vm_map.pmap->pm_pdir;
+
+	/* Make sure the address we are reading is valid */
+	switch ((pdep[(addr >> 20) + 0] & L1_MASK)) {
+	case L1_SECTION:
+		break;
+	case L1_PAGE:
+		/* Check the L2 page table for validity */
+		ptep = vtopte(addr);
+		if ((*ptep & L2_MASK) != L2_INVAL)
+			break;
+		/* FALLTHROUGH */
+	default:
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Read bytes from kernel address space for debugger.
  */
@@ -197,22 +231,10 @@ db_read_bytes(addr, size, data)
 	char	*data;
 {
 	char	*src;
-	pt_entry_t *ptep;
-	pd_entry_t *pdep;
 
-	pdep = (pd_entry_t *)CURRENT_PAGEDIR_BASE;
 	src = (char *)addr;
 	while (--size >= 0) {
-		/* Make sure the address we are reading is valid */
-		switch ((pdep[((u_int)src >> 20) + 0] & L1_MASK)) {
-		case L1_SECTION:
-			break;
-		case L1_PAGE:
-			ptep = vtopte((vm_offset_t)src);
-			if ((*ptep & L2_MASK) != L2_INVAL)
-				break;
-			/* FALLTHROUGH */
-		default:
+		if (db_validate_address((u_int)src)) {
 			db_printf("address %p is invalid\n", src);
 			return;
 		}
@@ -225,23 +247,19 @@ db_write_text(dst, ch)
 	unsigned char *dst;
 	int ch;
 {        
-	pt_entry_t *ptep, pte, pteo;
-	int s;
+	pt_entry_t *ptep, pteo;
 	vm_offset_t va;
 
-	s = splimp();
 	va = (unsigned long)dst & (~PGOFSET);
 	ptep = vtopte(va);
 
-	if ((*ptep & L2_MASK) == L2_INVAL) { 
+	if (db_validate_address((u_int)dst)) {
 		db_printf(" address %p not a valid page\n", dst);
-		(void)splx(s);
 		return;
 	}
 
-	pteo = ReadWord(ptep);
-	pte = pteo | PT_AP(AP_KRW);
-	WriteWord(ptep, pte);
+	pteo = *ptep;
+	*ptep = pteo | PT_AP(AP_KRW);
 	cpu_tlb_flushD_SE(va);
 
 	*dst = (unsigned char)ch;
@@ -249,9 +267,8 @@ db_write_text(dst, ch)
 	/* make sure the caches and memory are in sync */
 	cpu_cache_syncI_rng((u_int)dst, 4);
 
-	WriteWord(ptep, pteo);
+	*ptep = pteo;
 	cpu_tlb_flushD_SE(va);
-	(void)splx(s);
 }
 
 /*
@@ -260,24 +277,32 @@ db_write_text(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
+	int	size;
+	char	*data;
 {
 	extern char	etext[];
-	register char	*dst;
-	register int	loop;
+	char	*dst;
+	int	loop;
 
 	dst = (char *)addr;
 	loop = size;
 	while (--loop >= 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
+		if ((dst >= (char *)KERNEL_TEXT_BASE) && (dst < etext))
 			db_write_text(dst, *data);
-		else
+		else {
+			if (db_validate_address((u_int)dst)) {
+				db_printf("address %p is invalid\n", dst);
+				return;
+			}
 			*dst = *data;
+		}
 		dst++, data++;
 	}
 	/* make sure the caches and memory are in sync */
 	cpu_cache_syncI_rng(addr, size);
+
+	/* In case the current page tables have been modified ... */
+	cpu_tlb_flushID();
 }
 
 void
@@ -335,7 +360,7 @@ extern u_int end;
 void
 db_machine_init()
 {
-	struct exec *kernexec = (struct exec *)KERNEL_BASE;
+	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	int len;
 
 	/*
