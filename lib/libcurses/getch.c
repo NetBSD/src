@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.13 1999/06/15 04:50:28 simonb Exp $	*/
+/*	$NetBSD: getch.c,v 1.14 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.13 1999/06/15 04:50:28 simonb Exp $");
+__RCSID("$NetBSD: getch.c,v 1.14 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif					/* not lint */
 
@@ -212,14 +212,14 @@ static	char termcap[1024];
 
 				/* need for next key */
 				the_key->value.next = new_keymap();
-				
+
 				/* put into key array */
 				if ((current->key = realloc(current->key, (current->count + 1) * sizeof(key_entry_t *))) == NULL) {
 					fprintf(stderr,
 						"Could not malloc for key entry\n");
 					exit(1);
 				}
-				
+
 				current->key[current->count++] = the_key;
 
 			}
@@ -285,7 +285,7 @@ new_keymap(void)
 		perror("Could not malloc first key ent");
 		exit(1);
 	}
-							
+
 	return (new_map);
 }
 
@@ -371,7 +371,7 @@ reread:
 				return ERR;
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
-				
+
 			k = (unsigned int) c;
 #ifdef DEBUG
 			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
