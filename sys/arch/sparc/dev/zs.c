@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.74 2000/03/06 21:36:11 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.75 2000/03/14 21:20:51 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
+#include <sparc/sparc/auxiotwo.h>
 #include <sparc/dev/cons.h>
 
 #include "kbd.h"	/* NKBD */
@@ -186,6 +187,10 @@ static struct intrhand levelsoft = { zssoft };
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
+/* Power management hooks */
+int  zs_enable __P((struct zs_chanstate *));
+void zs_disable __P((struct zs_chanstate *));
+
 
 /*
  * Is the zs chip present?
@@ -258,6 +263,8 @@ zs_attach_obio(parent, self, aux)
 	if (uoba->uoba_isobio4 == 0) {
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 		void *va;
+		struct zs_chanstate *cs;
+		int channel;
 
 		if (sa->sa_nintr == 0) {
 			printf(" no interrupt lines\n");
@@ -282,6 +289,19 @@ zs_attach_obio(parent, self, aux)
 				return; 
 			}
 			va = (void *)bh;
+		}
+
+		/*
+		 * Check if power state can be set, e.g. Tadpole 3GX
+		 */
+		if (getpropint(sa->sa_node, "pwr-on-auxio2", 0))
+		{
+			printf (" powered via auxio2");
+			for (channel = 0; channel < 2; channel++) {
+				cs = &zsc->zsc_cs_store[channel];
+				cs->enable = zs_enable;
+				cs->disable = zs_disable;
+			}
 		}
 
 		zsc->zsc_bustag = sa->sa_bustag;
@@ -1073,4 +1093,25 @@ setup_console:
 #ifdef	KGDB
 	zs_kgdb_init();
 #endif
+}
+
+/*
+ * Power management hooks for zsopen() and zsclose().
+ * We use them to power on/off the ports, if necessary.
+ */
+int
+zs_enable(cs)
+	struct zs_chanstate *cs;
+{
+	auxiotwoserialendis (ZS_ENABLE);
+	cs->enabled = 1;
+	return(0);
+}
+
+void
+zs_disable(cs)
+	struct zs_chanstate *cs;
+{
+	auxiotwoserialendis (ZS_DISABLE);
+	cs->enabled = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.12 1999/03/27 01:22:36 wrstuden Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.13 2000/03/14 21:20:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -113,6 +113,12 @@ struct zs_chanstate {
 
 	char	cs_softreq;		/* need soft interrupt call */
 	char	cs_spare1;  	/* (for skippy :) */
+
+	/* power management hooks */
+	int	(*enable) __P((struct zs_chanstate *));
+	void	(*disable) __P((struct zs_chanstate *));
+	int	enabled;
+
 	/* MD code might define a larger variant of this. */
 };
 
