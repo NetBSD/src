@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_intr.h,v 1.1 2003/01/02 23:37:56 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_intr.h,v 1.2 2003/08/01 00:40:18 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -46,6 +46,9 @@
  * reserved. we map software interrupts to those unused bits.
  */   
 #define	SI_TO_IRQBIT(si)  ((si)==SI_SOFTSERIAL? (1<<9) : (1U<<(ICU_LEN+(si))))
+
+#define	get_pending_softint()	(softint_pending & intr_mask)
+#define	update_softintr_mask()	/* empty */
 
 #include <arm/s3c2xx0/s3c2xx0_intr.h>
 
