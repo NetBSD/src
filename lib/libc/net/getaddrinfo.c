@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.58 2002/06/29 12:23:10 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.59 2002/07/01 07:42:49 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.58 2002/06/29 12:23:10 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.59 2002/07/01 07:42:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -236,7 +236,7 @@ static const struct afd *find_afd __P((int));
 static int addrconfig __P((const struct addrinfo *));
 #endif
 #ifdef INET6
-static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+static u_int32_t ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
 #endif
 
 static struct addrinfo *getanswer __P((const querybuf *, int, const char *, int,
@@ -354,8 +354,9 @@ str_isnumber(p)
 	if (*p == '\0')
 		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -848,7 +849,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
@@ -1058,12 +1059,13 @@ addrconfig(pai)
 
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
-static int
+static u_int32_t
 ip6_str2scopeid(scope, sin6)
 	char *scope;
 	struct sockaddr_in6 *sin6;
 {
-	int scopeid;
+	u_int32_t scopeid;
+	u_long lscopeid;
 	struct in6_addr *a6;
 	char *ep;
 
@@ -1098,8 +1100,10 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
   trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	scopeid = lscopeid & 0xffffffff;
+	if (errno == 0 && ep && *ep == '\0' && scopeid == lscopeid)
 		return scopeid;
 	else
 		return -1;
