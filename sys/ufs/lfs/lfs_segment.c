@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67.2.12 2003/01/08 17:06:42 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.13 2003/01/08 17:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.12 2003/01/08 17:06:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.13 2003/01/08 17:19:12 thorpej Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2348,7 +2348,6 @@ lfs_vunref(struct vnode *vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-	KASSERT(VTOI(vp)->i_ffs_effnlink != 0);
 	/*
 	 * insert at tail of LRU list
 	 */
@@ -2383,7 +2382,6 @@ lfs_vunref_head(struct vnode *vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-	KASSERT(VTOI(vp)->i_ffs_effnlink != 0);
 	/*
 	 * insert at head of LRU list
 	 */
