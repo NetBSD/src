@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.9 1998/09/27 18:04:12 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.10 1999/02/07 14:34:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.9 1998/09/27 18:04:12 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.10 1999/02/07 14:34:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -84,7 +84,7 @@ private ttyperm_t ttyperm = {
 		     C_SH(C_PGOFF)|C_SH(C_PAGE)|C_SH(C_STATUS)), 0 }
     },
     {
-	{ "iflag:", 0, IXON | IXOFF },
+	{ "iflag:", 0, IXON | IXOFF | INLCR | ICRNL },
 	{ "oflag:", 0, 0 },
 	{ "cflag:", 0, 0 },
 	{ "lflag:", 0, ISIG | IEXTEN },
@@ -803,7 +803,7 @@ protected int
 tty_rawmode(el)
     EditLine *el;
 {
-    if (el->el_tty.t_mode == ED_IO)
+    if (el->el_tty.t_mode == ED_IO || el->el_tty.t_mode == QU_IO)
 	return (0);
 
     if (tty_getty(el, &el->el_tty.t_ts) == -1) {
