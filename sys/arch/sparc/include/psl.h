@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 1996/02/01 22:32:32 mycroft Exp $ */
+/*	$NetBSD: psl.h,v 1.9 1996/02/03 16:10:58 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,17 +136,6 @@ SPL(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
 
-/* network hardware interrupts are at level 6 */
-#define	PIL_NET	6
-SPL(splnet, PIL_NET)
-
-/* tty input runs at software level 6 */
-#define	PIL_TTY	6
-SPL(spltty, PIL_TTY)
-
-/* Memory allocation (must be as high as highest network or tty device) */
-SPL(splimp, 7)
-
 /* audio software interrupts are at software level 4 */
 #define	PIL_AUSOFT	4
 SPL(splausoft, PIL_AUSOFT)
@@ -155,7 +144,21 @@ SPL(splausoft, PIL_AUSOFT)
 #define PIL_FDSOFT	4
 SPL(splfdsoft, PIL_FDSOFT)
 
-SPL(splbio, 9)
+/* Block devices */
+SPL(splbio, 5)
+
+/* network hardware interrupts are at level 6 */
+#define	PIL_NET	6
+SPL(splnet, PIL_NET)
+
+/* tty input runs at software level 6 */
+#define	PIL_TTY	6
+SPL(spltty, PIL_TTY)
+
+/*
+ * Memory allocation (must be as high as highest network, tty, or disk device)
+ */
+SPL(splimp, 7)
 
 SPL(splclock, PIL_CLOCK)
 
