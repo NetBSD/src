@@ -1,4 +1,4 @@
-.\" $NetBSD: bpm.1,v 1.1 2003/12/21 11:31:46 agc Exp $ */
+.\" $NetBSD: bpm.1,v 1.2 2003/12/21 11:39:17 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
@@ -38,7 +38,7 @@
 .Nd menu-based binary package manager
 .Sh SYNOPSIS
 .Nm
-.Op Fl Vhnv
+.Op Fl hnVv
 .Op Fl b Ar baseURL
 .Op Fl m Ar machine
 .Op Fl r Ar release
@@ -51,8 +51,6 @@ reachable URL.
 .Pp
 The following command-line options are supported:
 .Bl -tag -width indent
-.It Fl V
-Print version number and exit.
 .It Fl b Ar baseURL
 Specify a base URL from which to download binary packages.
 The default URL is
@@ -71,11 +69,13 @@ Use
 .Ar release
 as the operating system release to be used, instead of that returned by
 .Xr uname 1 .
+.It Fl V
+Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .It Fl w Ar seconds
 The number of
-.Ar seconds 
+.Ar seconds
 to wait after displaying an error message and returning to
 normal menu operations.
 .El
@@ -86,8 +86,7 @@ provides a menu-based binary package manager for
 .Nm
 first connects to the URL using
 .Xr ftp 1 ,
-and displays a list of categories
-for which binary packages exist.
+and displays a list of categories for which binary packages exist.
 If no categories are displayed, it could
 be that the machine architecture or operating system release string
 have been wrongly interpreted, and that it will be necessary to override
@@ -101,9 +100,9 @@ It is also possible to change the category currently being examined,
 and to quit from the utility, simply by selecting the appropriate choices
 on the menu.
 .Sh ENVIRONMENT
-.Pp
-The environment variables which govern the behaviour
+The environment variables which govern the behaviour of
 .Xr ftp 1
+and
 .Xr pkg_add 1
 are valid for
 .Nm .
