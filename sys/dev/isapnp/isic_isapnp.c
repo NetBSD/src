@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.8 2002/03/24 20:35:50 martin Exp $ 
+ *	$Id: isic_isapnp.c,v 1.9 2002/03/30 19:13:45 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.8 2002/03/24 20:35:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.9 2002/03/30 19:13:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -346,10 +346,6 @@ isic_isapnp_attach(parent, self, aux)
 	callout_init(&sc->sc_T4_callout);
 #endif
 
-	/* init higher protocol layers and save l2 handle */
-
-	isic_attach_bri(sc, desc->name, &isic_std_driver);
-
 	/* announce chip versions */
 	
 	if(sc->sc_isac_version >= ISAC_UNKN)
@@ -380,6 +376,10 @@ isic_isapnp_attach(parent, self, aux)
 				ISIC_PARM,
 				HSCXversion[sc->sc_hscx_version]);
 	}
+
+	/* init higher protocol layers and save l2 handle */
+	isic_enable_intr(sc, 0);
+	isic_attach_bri(sc, desc->name, &isic_std_driver);
 }
 
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.8 2002/03/30 17:54:17 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.9 2002/03/30 19:13:44 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -328,6 +328,7 @@ enum I430commands {
 
 extern void isic_recover __P((struct isic_softc *sc));
 extern int isicintr __P((void *));
+extern void isic_enable_intr __P((struct isic_softc *sc, int enabled));
 extern int isicprobe __P((struct isic_attach_args *ia));
 extern int isic_attach_avma1 __P((struct isic_softc *sc));
 extern int isic_attach_s016 __P((struct isic_softc *sc));
