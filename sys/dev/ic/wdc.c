@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66 1999/04/01 21:46:29 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.67 1999/04/11 20:50:28 bouyer Exp $ */
 
 
 /*
@@ -231,9 +231,9 @@ wdcprobe(chp)
 
 	/*
 	 * Test presence of drives. First test register signatures looking for
-	 * ATAPI devices , then rescan and try an ATA command, in case it's an
-	 * old drive.
-	 * Fill in drive_flags accordingly
+	 * ATAPI devices. If it's not an ATAPI and reset said there may be
+	 * something here assume it's ATA or OLD. Ghost will be killed later in
+	 * attach routine.
 	 */
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
@@ -253,63 +253,16 @@ wdcprobe(chp)
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
 		 * sc is supposted to be 0x1 for ATAPI but at last one drive
-		 * set it to 0x0.
+		 * set it to 0x0 - or maybe it's the controller.
 		 */
 		if ((sc == 0x00 || sc == 0x01) && sn == 0x01 &&
 		    cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
-		} else if (sc == 0x01 && sn == 0x01 &&
-		    cl == 0x00 && ch == 0x00) {
-			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
-		}
-	}
-	/*
-	 * Maybe there's an old device, try to detect it if we didn't
-	 * find a ATA or ATAPI device.
-	 */
-	if ((chp->ch_drive[0].drive_flags & DRIVE) != 0 ||
-	    (chp->ch_drive[1].drive_flags & DRIVE) != 0)
-		return (ret_value);	
-	for (drive = 0; drive < 2; drive++) {
-		if ((ret_value & (0x01 << drive)) == 0)
-			continue;
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | (drive << 4));
-		delay(10);
-		/*
-		 * Test registers writability (Error register not writable,
-		 * but cyllo is), then try an ATA command.
-		 */
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_error, 0x58);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo, 0xa5);
-		if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error) ==
-		    0x58 ||
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) !=
-		    0xa5) {
-			WDCDEBUG_PRINT(("%s:%d:%d: register writability "
-			    "failed\n",
-			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-			    chp->channel, drive), DEBUG_PROBE);
-			ret_value &= ~(0x01 << drive);
-			continue;
-		}
-		if (wait_for_ready(chp, 10000) != 0) {
-			WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
-			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-			    chp->channel, drive), DEBUG_PROBE);
-			ret_value &= ~(0x01 << drive);
-			continue;
-		}
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command,
-		    WDCC_RECAL);
-		if (wait_for_ready(chp, 10000) == 0) {
-			chp->ch_drive[drive].drive_flags |=
-			    DRIVE_OLD;
 		} else {
-			WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
-			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-			    chp->channel, drive), DEBUG_PROBE);
-			ret_value &= ~(0x01 << drive);
+			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
+			if (chp->wdc == NULL ||
+			    (chp->wdc->cap & WDC_CAPABILITY_PREATA) != 0)
+				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
 		}
 	}
 	return (ret_value);	
@@ -351,12 +304,42 @@ wdcattach(chp)
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 		    WDC_CAPABILITY_DATA32)
 			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
+			continue;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
-		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) !=
+		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
 		    CMD_OK) {
+			/* If IDENTIFY succeded, this is not an OLD ctrl */
+			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
+			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
+		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
+			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
+			    chp->wdc->sc_dev.dv_xname,
+			    chp->channel, i), DEBUG_PROBE);
+			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
+				continue;
+			/* Pre-ATA drive ? */
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | (i << 4));
+			delay(100);
+			if (wait_for_ready(chp, 10000) != 0) {
+				WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
+				    chp->wdc->sc_dev.dv_xname,
+				    chp->channel, i), DEBUG_PROBE);
+				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+				continue;
+			}
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_command, WDCC_RECAL);
+			if (wait_for_ready(chp, 10000) != 0) {
+				WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
+				    chp->wdc->sc_dev.dv_xname,
+				    chp->channel, i), DEBUG_PROBE);
+				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+			}
 		}
 	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -365,6 +348,11 @@ wdcattach(chp)
 	WDCDEBUG_PRINT(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
 	    DEBUG_PROBE);
+
+	/* If no drives, abort here */
+	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
+	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
+		return;
 
 	/*
 	 * Attach an ATAPI bus, if needed.
@@ -391,7 +379,8 @@ wdcattach(chp)
 	}
 
 	for (i = 0; i < 2; i++) {
-		if ((chp->ch_drive[i].drive_flags & DRIVE_ATA) == 0) {
+		if ((chp->ch_drive[i].drive_flags &
+		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
 			continue;
 		}
 		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
