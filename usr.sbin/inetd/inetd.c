@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.26 1997/03/13 18:08:19 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.27 1997/03/13 18:19:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.26 1997/03/13 18:08:19 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.27 1997/03/13 18:19:35 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -580,9 +580,11 @@ main(argc, argv, envp)
 				    eval_client(&req), service, sep->se_proto);
 			}
 #endif /* LIBWRAP */
-			if (sep->se_bi)
+			if (sep->se_bi) {
 				(*sep->se_bi->bi_fn)(ctrl, sep);
-			else {
+				if (dofork)
+					exit(0);
+			} else {
 				if ((pwd = getpwnam(sep->se_user)) == NULL) {
 					syslog(LOG_ERR,
 					    "%s/%s: %s: No such user",
@@ -1518,7 +1520,6 @@ echo_stream(s, sep)		/* Echo service -- echo data back */
 	while ((i = read(s, buffer, sizeof(buffer))) > 0 &&
 	    write(s, buffer, i) > 0)
 		;
-	exit(0);
 }
 
 /* ARGSUSED */
@@ -1549,7 +1550,6 @@ discard_stream(s, sep)		/* Discard service -- ignore data */
 	while ((errno = 0, read(s, buffer, sizeof(buffer)) > 0) ||
 			errno == EINTR)
 		;
-	exit(0);
 }
 
 /* ARGSUSED */
@@ -1610,7 +1610,6 @@ chargen_stream(s, sep)		/* Character generator */
 		if (write(s, text, sizeof(text)) != sizeof(text))
 			break;
 	}
-	exit(0);
 }
 
 /* ARGSUSED */
