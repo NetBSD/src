@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.59 2001/06/04 15:34:15 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.60 2001/06/04 21:37:12 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -94,6 +94,7 @@ struct cpu_mp_dep {
 #define	IPI_SEND_CNCHAR	2	/* Write char to console, kernel printf */
 #define	IPI_RUNNING	3	/* This CPU just started to run */
 #define	IPI_TBIA	4	/* Flush the TLB */
+#define	IPI_DDB		5	/* Jump into the DDB loop */
 
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */
@@ -133,10 +134,12 @@ struct cpu_info {
 	vaddr_t ci_istack;		/* Interrupt stack location */
 	int ci_flags;			/* See below */
 	long ci_ipimsgs;		/* Sent IPI bits */
+	struct trapframe *ci_ddb_regs;	/* Used by DDB */
 #endif
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */
+#define	CI_STOPPED	4		/* Stopped (in debugger) */
 
 #if defined(MULTIPROCESSOR)
 /*
