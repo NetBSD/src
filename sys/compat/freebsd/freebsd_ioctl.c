@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.3 1997/05/06 23:56:43 augustss Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.4 2000/10/09 06:19:31 onoe Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,8 +35,11 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/sockio.h>
 
 #include <sys/syscallargs.h>
+
+#include <net/if.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
@@ -69,6 +72,42 @@ struct oss_sys_ioctl_args *rap;
         SCARG(rap, data) = SCARG(uap, data);
 }
 
+
+static void freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap,
+				      struct sys_ioctl_args *nap);
+
+static void
+freebsd_to_netbsd_ifioctl(uap, nap)
+	struct freebsd_sys_ioctl_args *uap;
+	struct sys_ioctl_args *nap;
+{
+	u_long ocmd, ncmd;
+	ocmd = SCARG(uap, com);
+	switch (ocmd) {
+	case FREEBSD_SIOCALIFADDR:
+		ncmd =SIOCALIFADDR;
+		break;
+	case FREEBSD_SIOCGLIFADDR:
+		ncmd =SIOCGLIFADDR;
+		break;
+	case FREEBSD_SIOCDLIFADDR:
+		ncmd =SIOCDLIFADDR;
+		break;
+	case FREEBSD_SIOCGIFMTU:
+		ncmd = SIOCGIFMTU;
+		break;
+	case FREEBSD_SIOCSIFMTU:
+		ncmd = SIOCSIFMTU;
+		break;
+	default:
+		ncmd = ocmd;
+		break;
+	}
+	SCARG(nap, fd) = SCARG(uap, fd);
+	SCARG(nap, com) = ncmd;
+	SCARG(nap, data) = SCARG(uap, data);
+}
+
 int
 freebsd_sys_ioctl(p, v, retval)
 	struct proc *p;
@@ -81,6 +120,7 @@ freebsd_sys_ioctl(p, v, retval)
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
         struct oss_sys_ioctl_args ap;
+	struct sys_ioctl_args nap;
 
 	/*
 	 * XXX - <sys/cdio.h>'s incompatibility
@@ -101,6 +141,9 @@ freebsd_sys_ioctl(p, v, retval)
 	case 'P':
         	freebsd_to_oss(uap, &ap);
 		return oss_ioctl_audio(p, &ap, retval);
+	case 'i':
+		freebsd_to_netbsd_ifioctl(uap, &nap);
+		return sys_ioctl(p, &nap, retval);
 	default:
 		return sys_ioctl(p, uap, retval);
 	}
