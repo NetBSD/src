@@ -1,4 +1,4 @@
-/* $NetBSD: gzio_compat.c,v 1.2 1999/10/26 22:16:48 itojun Exp $ */
+/* $NetBSD: gzio_compat.c,v 1.3 2003/03/08 07:42:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
 /*
  * Backward compatibility wrapper for old (incorrect) z_off_t definition.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gzio_compat.c,v 1.3 2003/03/08 07:42:34 lukem Exp $");
 
 #include <stdio.h>
 
