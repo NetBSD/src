@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.20 2002/02/14 03:21:07 jonb Exp $	*/
+/*	$NetBSD: join.c,v 1.21 2002/07/24 17:03:00 jonb Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.20 2002/02/14 03:21:07 jonb Exp $");
+__RCSID("$NetBSD: join.c,v 1.21 2002/07/24 17:03:00 jonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,8 @@ typedef struct {
 	u_long fieldcnt;	/* line field(s) count */
 	u_long fieldalloc;	/* line field(s) allocated count */
 } LINE;
+
+LINE noline = {"", 0, 0, 0, 0};	/* arg for outfield if no line to output */
 
 typedef struct {
 	FILE *fp;		/* file descriptor */
@@ -433,6 +435,8 @@ outoneline(F, lp)
 		for (cnt = 0; cnt < olistcnt; ++cnt) {
 			if (olist[cnt].fileno == F->number)
 				outfield(lp, olist[cnt].fieldno);
+			else
+				outfield(&noline, 1);
 		}
 	else
 		for (cnt = 0; cnt < lp->fieldcnt; ++cnt)
