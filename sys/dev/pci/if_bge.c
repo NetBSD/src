@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.5 2002/06/27 22:31:30 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.6 2002/06/27 23:21:34 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2349,6 +2349,9 @@ bge_encap(sc, m_head, txidx)
 	    BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
+	n = sc->ethercom.ec_nvlans ?
+	    m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN) : NULL;
+
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
 		if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
@@ -2357,7 +2360,6 @@ bge_encap(sc, m_head, txidx)
 		f->bge_len = dmamap->dm_segs[i].ds_len;
 		f->bge_flags = csum_flags;
 
-		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
 		if (n != NULL) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
 			f->bge_vlan_tag = *mtod(n, int *);
