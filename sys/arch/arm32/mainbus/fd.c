@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 1996/03/28 21:52:41 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 1996/04/26 22:03:37 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -641,7 +641,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if (fd = fdc->sc_drives.tqh_first)
+	if ((fd = fdc->sc_drives.tqh_first))
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -787,7 +787,7 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-	int iobase = fdc->sc_iobase;
+/*	int iobase = fdc->sc_iobase;*/
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iobase, NE7CMD_SENSEI);
@@ -863,7 +863,7 @@ fdcintr(arg)
 	struct fd_softc *fd;
 	struct buf *bp;
 	int iobase = fdc->sc_iobase;
-	int read, head, trac, sec, i, s, nblks;
+	int read, head, /*trac,*/ sec, i, /*s,*/ nblks;
 	struct fd_type *type;
 
 loop:
