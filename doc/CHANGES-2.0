@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.383 2004/08/12 04:09:58 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.384 2004/08/12 04:17:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6417,3 +6417,10 @@ xfree/xc/programs/Xserver/hw/xfree86/loader/loadmod.c		1.2
 
 	Enable loadable module support for the sgimips X server
 	[sekiya, ticket #745]
+
+sys/arch/sgimips/mace/if_mec_mace.c		1.5
+
+	- It turns out alignment restriction for TX descs is 8kbytes, not 
+	  64kbytes.
+	- Use MEC_TX_ALIAS register to set/clear TX interrupt enable bit.
+	[tsutsui, ticket #746]
