@@ -1,4 +1,4 @@
-/* $NetBSD: tc_sgmap.h,v 1.1.2.2 1997/06/04 05:48:26 thorpej Exp $ */
+/* $NetBSD: tc_sgmap.h,v 1.1.2.3 1997/06/06 00:36:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	SGMAP_TYPE		tc
+#define	SGMAP_TYPE		tc_sgmap
 #define	SGMAP_PTE_TYPE		u_int32_t
 #define	SGMAP_PTE_SPACING	2
 
