@@ -7,14 +7,14 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission.
+ *    derived from this software without specific prior written permission.
  * Disclaimer:  This software is provided by the author "as is".  The author
  * shall not be liable for any damages caused in any way by this software.
  *
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
  *
- *	$Id: units.c,v 1.1 1993/10/27 03:31:53 cgd Exp $
+ *	$Id: units.c,v 1.2 1994/01/29 01:43:47 jtc Exp $
  */
 
 #include <stdio.h>

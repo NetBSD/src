@@ -14,7 +14,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Winning Strategies, Inc.
  * 4. The name of Winning Strategies, Inc. may not be used to endorse or 
- *    promote products derived from this software withough specific prior
+ *    promote products derived from this software without specific prior
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: uname.c,v 1.4 1994/01/27 18:00:06 jtc Exp $";
+static char rcsid[] = "$Id: uname.c,v 1.5 1994/01/29 01:43:43 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
