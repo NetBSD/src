@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.31 1994/04/10 10:29:06 cgd Exp $
+ *	$Id: com.c,v 1.32 1994/07/31 11:34:38 mycroft Exp $
  */
 
 /*
@@ -557,11 +557,6 @@ comparam(tp, t)
 
 	s = spltty();
 
-	/* and copy to tty */
-	tp->t_ispeed = t->c_ispeed;
-	tp->t_ospeed = t->c_ospeed;
-	tp->t_cflag = t->c_cflag;
-
 	if (ospeed == 0)
 		outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_DTR);
 	else
@@ -591,7 +586,7 @@ comparam(tp, t)
 	    (tp->t_cflag & CRTSCTS) != (t->c_cflag & CRTSCTS)) {
 		if ((t->c_cflag & CRTSCTS) == 0) {
 			tp->t_state &= ~TS_TTSTOP;
-			ttstart(tp);
+			(*linesw[tp->t_line].l_start)(tp);
 		} else
 			tp->t_state |= TS_TTSTOP;
 	}
@@ -605,10 +600,15 @@ comparam(tp, t)
 	    (tp->t_cflag & MDMBUF) != (t->c_cflag & MDMBUF)) {
 		if ((t->c_cflag & MDMBUF) == 0) {
 			tp->t_state &= ~TS_TTSTOP;
-			ttstart(tp);
+			(*linesw[tp->t_line].l_start)(tp);
 		} else
 			tp->t_state |= TS_TTSTOP;
 	}
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
 
 	splx(s);
 	return 0;
@@ -722,7 +722,7 @@ commint(sc)
 		/* the line is up and we want to do rts/cts flow control */
 		if (msr & MSR_CTS) {
 			tp->t_state &= ~TS_TTSTOP;
-			ttstart(tp);
+			(*linesw[tp->t_line].l_start)(tp);
 		} else
 			tp->t_state |= TS_TTSTOP;
 	}
