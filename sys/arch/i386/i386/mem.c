@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.13 1994/03/27 08:55:31 cgd Exp $
+ *	$Id: mem.c,v 1.14 1994/04/25 05:15:07 mycroft Exp $
  */
 
 /*
@@ -58,18 +58,21 @@
 #include <vm/vm.h>
 
 extern        char *vmmap;            /* poor name! */
+
 /*ARGSUSED*/
-mmclose(dev, uio, flags)
+mmclose(dev, uio, mode)
 	dev_t dev;
 	struct uio *uio;
-	int flags;
+	int mode;
 {
-	struct trapframe *fp;
 
 	switch (minor(dev)) {
 	case 14:
-		fp = (struct trapframe *)curproc->p_regs;
-		fp->tf_eflags &= ~PSL_IOPL;
+		if (mode & FWRITE) {
+			struct trapframe *fp;
+			fp = (struct trapframe *)curproc->p_regs;
+			fp->tf_eflags &= ~PSL_IOPL;
+		}
 		break;
 	default:
 		break;
@@ -78,17 +81,19 @@ mmclose(dev, uio, flags)
 }
 
 /*ARGSUSED*/
-mmopen(dev, uio, flags)
+mmopen(dev, uio, mode)
 	dev_t dev;
 	struct uio *uio;
-	int flags;
+	int mode;
 {
-	struct trapframe *fp;
 
 	switch (minor(dev)) {
 	case 14:
-		fp = (struct trapframe *)curproc->p_regs;
-		fp->tf_eflags |= PSL_IOPL;
+		if (mode & FWRITE) {
+			struct trapframe *fp;
+			fp = (struct trapframe *)curproc->p_regs;
+			fp->tf_eflags |= PSL_IOPL;
+		}
 		break;
 	default:
 		break;
