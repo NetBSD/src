@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.29 1999/03/25 23:21:38 thorpej Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.30 2000/03/30 12:45:33 augustss Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -161,8 +161,8 @@ hpprobe(dvp)
 	struct isa_device *dvp;
 {
 	int     val, i, s, sum, pat;
-	register struct hp_softc *ns = &hp_softc[0];
-	register hpc;
+	struct hp_softc *ns = &hp_softc[0];
+	int hpc;
 
 #ifdef lint
 	hpintr(0);
@@ -224,7 +224,7 @@ hpfetch(ns, up, ad, len)
 	caddr_t up;
 {
 	u_char  cmd;
-	register hpc = ns->ns_port;
+	int	hpc = ns->ns_port;
 	int     counter = 100000;
 
 	outb(hpc + hp_option, inb(hpc + hp_option) | HP_DATA);
@@ -286,7 +286,7 @@ hpput(ns, up, ad, len)
 	caddr_t up;
 {
 	u_char  cmd;
-	register hpc = ns->ns_port;
+	int	hpc = ns->ns_port;
 	int     counter = 100000;
 
 	outb(hpc + hp_option, inb(hpc + hp_option) | HP_DATA);
@@ -358,8 +358,8 @@ hpput(ns, up, ad, len)
 hpreset(unit, uban)
 	int     unit, uban;
 {
-	register struct hp_softc *ns = &hp_softc[unit];
-	register hpc = ns->ns_port;
+	struct hp_softc *ns = &hp_softc[unit];
+	int	hpc = ns->ns_port;
 	if (unit >= NHP)
 		return;
 	printf("hp%d: reset\n", unit);
@@ -407,8 +407,8 @@ hpattach(dvp)
 	struct isa_device *dvp;
 {
 	int     unit = dvp->id_unit;
-	register struct hp_softc *ns = &hp_softc[unit];
-	register struct ifnet *ifp = &ns->ns_if;
+	struct hp_softc *ns = &hp_softc[unit];
+	struct ifnet *ifp = &ns->ns_if;
 
 	ifp->if_unit = unit;
 	ifp->if_name = hpdriver.name;
@@ -442,12 +442,12 @@ hpattach(dvp)
 hpinit(unit)
 	int     unit;
 {
-	register struct hp_softc *ns = &hp_softc[unit];
+	struct hp_softc *ns = &hp_softc[unit];
 	struct ifnet *ifp = &ns->ns_if;
 	int     s;
 	int     i;
 	char   *cp;
-	register hpc = ns->ns_port;
+	int hpc = ns->ns_port;
 
 	if (ifp->if_addrlist == (struct ifaddr *) 0)
 		return;
@@ -523,11 +523,11 @@ hpinit(unit)
 hpstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct hp_softc *ns = &hp_softc[ifp->if_unit];
+	struct hp_softc *ns = &hp_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
 	int     buffer;
 	int     len, i, total;
-	register hpc = ns->ns_port;
+	int	hpc = ns->ns_port;
 
 	/*
 	       * The DS8390 has only one transmit buffer, if it is busy we
@@ -604,9 +604,9 @@ hpstart(ifp)
  */
 hpintr(unit)
 {
-	register struct hp_softc *ns = &hp_softc[unit];
+	struct hp_softc *ns = &hp_softc[unit];
 	u_char  cmd, isr;
-	register hpc = ns->ns_port;
+	int	hpc = ns->ns_port;
 	u_char  err;
 
 	/* Save cmd, clear interrupt */
@@ -796,14 +796,14 @@ loop:
  * We deal with the trailer protocol here.
  */
 hpread(ns, buf, len)
-	register struct hp_softc *ns;
+	struct hp_softc *ns;
 	char   *buf;
 	int     len;
 {
-	register struct ether_header *eh;
+	struct ether_header *eh;
 	struct mbuf *m;
 	int     off, resid;
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	u_short etype;
 
 	/*
@@ -875,7 +875,7 @@ hpget(buf, totlen, off0, ifp)
 {
 	struct mbuf *top, **mp, *m, *p;
 	int     off = off0, len;
-	register caddr_t cp = buf;
+	caddr_t cp = buf;
 	char   *epkt;
 
 	buf += sizeof(struct ether_header);
@@ -937,11 +937,11 @@ hpget(buf, totlen, off0, ifp)
  * Process an ioctl request.
  */
 hpioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long	cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct hp_softc *ns = &hp_softc[ifp->if_unit];
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s = splnet(), error = 0;
@@ -964,7 +964,7 @@ hpioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 			{
-				register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+				struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 				if (ns_nullhost(*ina))
 					ina->x_host = *(union ns_host *) (ns->ns_addrp);

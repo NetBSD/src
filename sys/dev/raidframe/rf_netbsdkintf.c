@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.73 2000/03/26 22:38:28 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.74 2000/03/30 12:45:40 augustss Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -644,9 +644,9 @@ raidclose(dev, flags, fmt, p)
 
 void
 raidstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int s;
+	int s;
 
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
@@ -1756,7 +1756,7 @@ KernelWakeupFunc(vbp)
 	struct buf *bp;
 	struct raid_softc *rs;
 	int     unit;
-	register int s;
+	int s;
 
 	s = splbio();
 	db1_printf(("recovering the request queue:\n"));

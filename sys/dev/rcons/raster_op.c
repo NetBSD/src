@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.8 1999/11/23 01:52:52 scottr Exp $ */
+/*	$NetBSD: raster_op.c,v 1.9 2000/03/30 12:45:41 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -698,10 +698,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -771,10 +771,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -846,10 +846,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -917,10 +917,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -1109,8 +1109,8 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1199,14 +1199,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else if ( dst->depth == 2 ) 
 	{
 	/* Two-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1306,14 +1306,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else if ( dst->depth == 4 ) 
 	{
 	/* Two-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1411,14 +1411,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else if ( dst->depth == 8)
 	{
 	/* Eight-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1516,14 +1516,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else 
 	{
 	/* Sixteen-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1640,12 +1640,12 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
     int srclininc, dstlininc;
     u_int32_t* srclin;
     u_int32_t* dstlin;
-    register int prevleftshift, currrightshift;
+    int prevleftshift, currrightshift;
     int longinc;
-    register u_int32_t* srclong;
-    register u_int32_t* dstlong;
-    register u_int32_t* dstlong2;
-    register u_int32_t dl, lm, nlm, rm, nrm;
+    u_int32_t* srclong;
+    u_int32_t* dstlong;
+    u_int32_t* dstlong2;
+    u_int32_t dl, lm, nlm, rm, nrm;
 
     prevleftshift = ( srcleftignore - dstleftignore ) & 31;
 
@@ -1818,7 +1818,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
     else
 	{
 	/* General case, with shifting and everything. */
-	register u_int32_t sl, prevsl;
+	u_int32_t sl, prevsl;
 
 	currrightshift = 32 - prevleftshift;
 	if ( srclongs == 1 && dstlongs == 1 )

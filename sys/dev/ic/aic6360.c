@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.68 2000/03/30 02:02:53 simonb Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.69 2000/03/30 12:45:29 augustss Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -803,7 +803,7 @@ abort:
  */
 void
 aic_sched(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	struct aic_acb *acb;
 	struct scsipi_link *sc_link;
@@ -971,7 +971,7 @@ aic_dequeue(sc, acb)
  */
 void
 aic_msgin(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1248,7 +1248,7 @@ out:
  */
 void
 aic_msgout(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1442,13 +1442,13 @@ out:
  */
 int
 aic_dataout_pio(sc, p, n)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_char dmastat = 0;
+	u_char dmastat = 0;
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
@@ -1493,7 +1493,7 @@ aic_dataout_pio(sc, p, n)
 
 			p += DOUTAMOUNT;
 		} else {
-			register int xfer;
+			int xfer;
 
 			xfer = n;
 			AIC_MISC(("%d> ", xfer));
@@ -1588,13 +1588,13 @@ phasechange:
  */
 int
 aic_datain_pio(sc, p, n)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_char dmastat;
+	u_char dmastat;
 	int in = 0;
 #define DINAMOUNT 128		/* Full FIFO */
 
@@ -1637,7 +1637,7 @@ aic_datain_pio(sc, p, n)
 
 			p += DINAMOUNT;
 		} else {
-			register int xfer;
+			int xfer;
 
 			xfer = min(bus_space_read_1(iot, ioh, FIFOSTAT), n);
 			AIC_MISC((">%d ", xfer));
@@ -1714,12 +1714,12 @@ int
 aicintr(arg)
 	void *arg;
 {
-	register struct aic_softc *sc = arg;
+	struct aic_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat0, sstat1;
-	register struct aic_acb *acb;
-	register struct scsipi_link *sc_link;
+	struct aic_acb *acb;
+	struct scsipi_link *sc_link;
 	struct aic_tinfo *ti;
 	int n;
 

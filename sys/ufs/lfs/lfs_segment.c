@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.41 2000/03/13 23:52:41 soren Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.42 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ int	 lfs_match_dindir __P((struct lfs *, struct buf *));
 int	 lfs_match_indir __P((struct lfs *, struct buf *));
 int	 lfs_match_tindir __P((struct lfs *, struct buf *));
 void	 lfs_newseg __P((struct lfs *));
-void	 lfs_shellsort __P((struct buf **, ufs_daddr_t *, register int));
+void	 lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));
 void	 lfs_supercallback __P((struct buf *));
 void	 lfs_updatemeta __P((struct segment *));
 int	 lfs_vref __P((struct vnode *));
@@ -1600,10 +1600,10 @@ void
 lfs_shellsort(bp_array, lb_array, nmemb)
 	struct buf **bp_array;
 	ufs_daddr_t *lb_array;
-	register int nmemb;
+	int nmemb;
 {
 	static int __rsshell_increments[] = { 4, 1, 0 };
-	register int incr, *incrp, t1, t2;
+	int incr, *incrp, t1, t2;
 	struct buf *bp_temp;
 	u_long lb_temp;
 
@@ -1627,7 +1627,7 @@ lfs_shellsort(bp_array, lb_array, nmemb)
  */
 int
 lfs_vref(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 	/*
 	 * If we return 1 here during a flush, we risk vinvalbuf() not
@@ -1649,7 +1649,7 @@ lfs_vref(vp)
  */
 void
 lfs_vunref(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
@@ -1697,7 +1697,7 @@ lfs_vunref(vp)
  */
 void
 lfs_vunref_head(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.29 1999/06/01 19:18:00 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.30 2000/03/30 12:45:34 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -354,8 +354,8 @@ pdq_pci_attach(
     void *aux)
 {
     pdq_softc_t *sc = (pdq_softc_t *) self;
-    register struct isa_attach_args *ia = (struct isa_attach_args *) aux;
-    register struct ifnet *ifp = &sc->sc_if;
+    struct isa_attach_args *ia = (struct isa_attach_args *) aux;
+    struct ifnet *ifp = &sc->sc_if;
     int i;
 
     sc->sc_if.if_unit = sc->sc_dev.dv_unit;

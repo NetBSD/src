@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.32 2000/03/29 08:46:57 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.33 2000/03/30 12:41:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -104,13 +104,13 @@ extern u_char *fragtbl[];
  */
 int
 ffs_alloc(ip, lbn, bpref, size, cred, bnp)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t lbn, bpref;
 	int size;
 	struct ucred *cred;
 	ufs_daddr_t *bnp;
 {
-	register struct fs *fs;
+	struct fs *fs;
 	ufs_daddr_t bno;
 	int cg;
 #ifdef QUOTA
@@ -172,14 +172,14 @@ nospace:
  */
 int
 ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t lbprev;
 	ufs_daddr_t bpref;
 	int osize, nsize;
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
@@ -569,10 +569,10 @@ ffs_valloc(v)
 		struct ucred *a_cred;
 		struct vnode **a_vpp;
 	} */ *ap = v;
-	register struct vnode *pvp = ap->a_pvp;
-	register struct inode *pip;
-	register struct fs *fs;
-	register struct inode *ip;
+	struct vnode *pvp = ap->a_pvp;
+	struct inode *pip;
+	struct fs *fs;
+	struct inode *ip;
 	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
@@ -630,7 +630,7 @@ noinodes:
  */
 static ino_t
 ffs_dirpref(fs)
-	register struct fs *fs;
+	struct fs *fs;
 {
 	int cg, minndir, mincg, avgifree;
 
@@ -679,8 +679,8 @@ ffs_blkpref(ip, lbn, indx, bap)
 	int indx;
 	ufs_daddr_t *bap;
 {
-	register struct fs *fs;
-	register int cg;
+	struct fs *fs;
+	int cg;
 	int avgbfree, startcg;
 	ufs_daddr_t nextblk;
 
@@ -754,7 +754,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 	int size;	/* size for data blocks, mode for inodes */
 	ufs_daddr_t (*allocator) __P((struct inode *, int, ufs_daddr_t, int));
 {
-	register struct fs *fs;
+	struct fs *fs;
 	long result;
 	int i, icg = cg;
 
@@ -806,8 +806,8 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 	long bprev;
 	int osize, nsize;
 {
-	register struct fs *fs;
-	register struct cg *cgp;
+	struct fs *fs;
+	struct cg *cgp;
 	struct buf *bp;
 	long bno;
 	int frags, bbase;
@@ -986,7 +986,7 @@ ffs_alloccgblk(ip, bp, bpref)
 	ufs_daddr_t bno, blkno;
 	int cylno, pos, delta;
 	short *cylbp;
-	register int i;
+	int i;
 	struct fs *fs = ip->i_fs;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
@@ -1105,8 +1105,8 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	ufs_daddr_t bpref;
 	int len;
 {
-	register struct fs *fs;
-	register struct cg *cgp;
+	struct fs *fs;
+	struct cg *cgp;
 	struct buf *bp;
 	int i, got, run, bno, bit, map;
 	u_char *mapp;
@@ -1220,10 +1220,10 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 	ufs_daddr_t ipref;
 	int mode;
 {
-	register struct cg *cgp;
+	struct cg *cgp;
 	struct buf *bp;
 	int error, start, len, loc, map, i;
-	register struct fs *fs = ip->i_fs;
+	struct fs *fs = ip->i_fs;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -1301,15 +1301,15 @@ gotit:
  */
 void
 ffs_blkfree(ip, bno, size)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t bno;
 	long size;
 {
-	register struct cg *cgp;
+	struct cg *cgp;
 	struct buf *bp;
 	ufs_daddr_t blkno;
 	int i, error, cg, blk, frags, bbase;
-	register struct fs *fs = ip->i_fs;
+	struct fs *fs = ip->i_fs;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
@@ -1488,9 +1488,9 @@ ffs_freefile(v)
 		ino_t a_ino;
 		int a_mode;
 	} */ *ap = v;
-	register struct cg *cgp;
-	register struct inode *pip = VTOI(ap->a_pvp);
-	register struct fs *fs = pip->i_fs;
+	struct cg *cgp;
+	struct inode *pip = VTOI(ap->a_pvp);
+	struct fs *fs = pip->i_fs;
 	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
@@ -1545,8 +1545,8 @@ ffs_freefile(v)
  */
 static ufs_daddr_t
 ffs_mapsearch(fs, cgp, bpref, allocsiz)
-	register struct fs *fs;
-	register struct cg *cgp;
+	struct fs *fs;
+	struct cg *cgp;
 	ufs_daddr_t bpref;
 	int allocsiz;
 {

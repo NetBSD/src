@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.30 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.31 2000/03/30 12:45:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -704,7 +704,7 @@ ex_mchash(addr)
  */
 void
 ex_set_mc(sc)
-	register struct ex_softc *sc;
+	struct ex_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1285,7 +1285,7 @@ ex_intr(arg)
 
 int
 ex_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -1310,7 +1310,7 @@ ex_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
@@ -1645,7 +1645,7 @@ static void
 ex_shutdown(arg)
 	void *arg;
 {
-	register struct ex_softc *sc = arg;
+	struct ex_softc *sc = arg;
 
 	ex_stop(sc);
 }

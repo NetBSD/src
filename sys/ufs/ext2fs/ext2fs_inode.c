@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.13 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.14 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -129,7 +129,7 @@ ext2fs_update(v)
 		struct timespec *a_modify;
 		int a_waitfor;
 	} */ *ap = v;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct inode *ip;
 	int error;
@@ -183,17 +183,17 @@ ext2fs_truncate(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *ovp = ap->a_vp;
-	register ufs_daddr_t lastblock;
-	register struct inode *oip;
+	struct vnode *ovp = ap->a_vp;
+	ufs_daddr_t lastblock;
+	struct inode *oip;
 	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	register int i;
+	int i;
 	int aflags, error, allerror;
 	off_t osize;
 
@@ -393,16 +393,16 @@ done:
  */
 static int
 ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t lbn, lastbn;
 	ufs_daddr_t dbn;
 	int level;
 	long *countp;
 {
-	register int i;
+	int i;
 	struct buf *bp;
-	register struct m_ext2fs *fs = ip->i_e2fs;
-	register ufs_daddr_t *bap;
+	struct m_ext2fs *fs = ip->i_e2fs;
+	ufs_daddr_t *bap;
 	struct vnode *vp;
 	ufs_daddr_t *copy = NULL, nb, nlbn, last;
 	long blkcount, factor;

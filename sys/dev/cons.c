@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.34 2000/03/06 21:36:12 thorpej Exp $	*/
+/*	$NetBSD: cons.c,v 1.35 2000/03/30 12:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,7 @@ cngetc()
 
 void
 cnputc(c)
-	register int c;
+	int c;
 {
 
 	if (cn_tab == NULL)

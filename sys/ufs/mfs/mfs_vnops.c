@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.19 2000/01/21 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.20 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -141,8 +141,8 @@ mfs_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct mfsnode *mfsp;
+	struct buf *bp = ap->a_bp;
+	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
 
@@ -175,7 +175,7 @@ mfs_strategy(v)
  */
 void
 mfs_doio(bp, base)
-	register struct buf *bp;
+	struct buf *bp;
 	caddr_t base;
 {
 	base += (bp->b_blkno << DEV_BSHIFT);
@@ -228,9 +228,9 @@ mfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct mfsnode *mfsp = VTOMFS(vp);
-	register struct buf *bp;
+	struct vnode *vp = ap->a_vp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
 	int error;
 
 	/*
@@ -297,7 +297,7 @@ mfs_reclaim(v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	FREE(vp->v_data, M_MFSNODE);
 	vp->v_data = NULL;
@@ -314,7 +314,7 @@ mfs_print(v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
+	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);

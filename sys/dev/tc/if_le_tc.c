@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.10 1999/03/04 01:39:04 nisimura Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.11 2000/03/30 12:45:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -86,8 +86,8 @@ le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (void *)self;
-	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct tc_attach_args *d = aux;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.25 1999/08/23 12:12:42 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.26 2000/03/30 12:45:31 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1969,7 +1969,7 @@ iestop(sc)
 
 int
 i82586_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

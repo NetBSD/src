@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.59 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.60 2000/03/30 12:45:43 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@
 
 
 /*#define	readback(a)	{ register int foo; wbflush(); foo = (a); }*/
-#define	readback(a)	{ register int foo;  foo = (a); }
+#define	readback(a)	{ int foo;  foo = (a); }
 
 /*
  * In 4ns ticks.
@@ -235,8 +235,8 @@ typedef struct script {
 	int		condition;	/* expected state at interrupt time */
 		
 	int		(*action)	/* extra operations */
-		 __P((register struct asc_softc *asc, register int status, 
-			 register int  ss, register int ir));
+		 __P((struct asc_softc *asc, int status, 
+			 int  ss, int ir));
 	int		command;	/* command to the chip */
 	struct script	*next;		/* index into asc_scripts for next state */
 } script_t;
@@ -253,8 +253,8 @@ typedef struct script {
  * A typedef for a script function, to use in forward declarations.
  */
 typedef int
-script_fn_t __P((register struct asc_softc *asc, register int status, 
-		 register int  ss, register int ir));
+script_fn_t __P((struct asc_softc *asc, int status, 
+		 int  ss, int ir));
 
 
 /* forward decls of script actions */
@@ -419,7 +419,7 @@ struct scsipi_device asc_dev = {
 /*
  * Definition of the controller for the old auto-configuration program.
  */
-void	asc_start __P((register ScsiCmd *scsicmd));
+void	asc_start __P((ScsiCmd *scsicmd));
 int	asc_intr __P ((void *asc));
 struct	pmax_driver ascdriver = {
 	"asc", NULL, asc_start, 0, asc_intr,
@@ -434,10 +434,10 @@ extern struct cfdriver asc_cd;
  */
 void
 ascattach(asc, bus_speed)
-	register asc_softc_t asc;
+	asc_softc_t asc;
 	int bus_speed;
 {
-	register asc_regmap_t *regs;
+	asc_regmap_t *regs;
 	int id, s;
 
 	int unit;
@@ -556,10 +556,10 @@ asc_minphys(bp)
  */
 void
 asc_start(scsicmd)
-	register ScsiCmd *scsicmd;	/* command to start */
+	ScsiCmd *scsicmd;	/* command to start */
 {
-	register struct pmax_scsi_device *sdp = scsicmd->sd;
-	register asc_softc_t asc = asc_cd.cd_devs[sdp->sd_ctlr];
+	struct pmax_scsi_device *sdp = scsicmd->sd;
+	asc_softc_t asc = asc_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -657,9 +657,9 @@ asc_startcmd(asc, target)
 	asc_softc_t asc;
 	int target;
 {
-	register asc_regmap_t *regs;
-	register ScsiCmd *scsicmd;
-	register State *state;
+	asc_regmap_t *regs;
+	ScsiCmd *scsicmd;
+	State *state;
 	int len;
 
 	/*
@@ -815,12 +815,12 @@ int
 asc_intr(sc)
 	void *sc;
 {
-	register asc_softc_t asc = (asc_softc_t) sc;
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = NULL;			/* XXX shut gcc up */
-	register script_t *scpt;
-	register int ss, ir, status;
-	register unsigned char cmd_was;
+	asc_softc_t asc = (asc_softc_t) sc;
+	asc_regmap_t *regs = asc->regs;
+	State *state = NULL;			/* XXX shut gcc up */
+	script_t *scpt;
+	int ss, ir, status;
+	unsigned char cmd_was;
 	static int ill_cmd_count = 0;			/* XXX */
 
 	/* collect ephemeral information */
@@ -893,7 +893,7 @@ again:
 
 	/* check for message in or out */
 	if ((ir & ~ASC_INT_FC) == ASC_INT_BS) {
-		register int len, fifo;
+		int len, fifo;
 
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
@@ -1108,7 +1108,7 @@ again:
 
 	/* check for SCSI bus reset */
 	if (ir & ASC_INT_RESET) {
-		register int i;
+		int i;
 
 		printf("%s: SCSI bus reset!!\n", asc->sc_dev.dv_xname);
 		/* need to flush any pending commands */
@@ -1301,8 +1301,8 @@ abort:
 /* ARGSUSED */
 static int
 script_nop(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
 	return (1);
 }
@@ -1310,11 +1310,11 @@ script_nop(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_get_status(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register int data;
+	asc_regmap_t *regs = asc->regs;
+	int data;
 
 	/*
 	 * Get the last two bytes in the FIFO.
@@ -1359,12 +1359,12 @@ asc_get_status(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_end(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register ScsiCmd *scsicmd;
-	register State *state;
-	register int i, target;
+	ScsiCmd *scsicmd;
+	State *state;
+	int i, target;
 
 	asc->state = ASC_STATE_IDLE;
 	target = asc->target;
@@ -1444,12 +1444,12 @@ asc_end(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_dma_in(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len;
 
 	/* check for previous chunk in buffer */
 	if (state->flags & DMA_IN_PROGRESS) {
@@ -1526,12 +1526,12 @@ asc_dma_in(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_last_dma_in(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len, fifo;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len, fifo;
 
 	ASC_TC_GET(regs, len);
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
@@ -1557,12 +1557,12 @@ asc_last_dma_in(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_resume_in(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len;
 
 	/* setup to start reading the next chunk */
 	len = state->buflen;
@@ -1595,12 +1595,12 @@ asc_resume_in(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_resume_dma_in(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len, off;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len, off;
 
 	/* setup to finish reading the current chunk */
 	len = state->dmaresid;
@@ -1639,12 +1639,12 @@ asc_resume_dma_in(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_dma_out(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len, fifo;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len, fifo;
 
 	if (state->flags & DMA_IN_PROGRESS) {
 		/* check to be sure previous chunk was finished */
@@ -1698,12 +1698,12 @@ asc_dma_out(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_last_dma_out(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len, fifo;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len, fifo;
 
 	ASC_TC_GET(regs, len);
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
@@ -1728,12 +1728,12 @@ asc_last_dma_out(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_resume_out(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len;
 
 	/* setup for this chunk */
 	len = state->buflen;
@@ -1766,12 +1766,12 @@ asc_resume_out(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_resume_dma_out(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int len, off;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int len, off;
 
 	/* setup to finish writing this chunk */
 	len = state->dmaresid;
@@ -1813,11 +1813,11 @@ asc_resume_dma_out(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_sendsync(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
 
 	/* send the extended synchronous negotiation message */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
@@ -1838,11 +1838,11 @@ asc_sendsync(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_replysync(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
 
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1878,12 +1878,12 @@ asc_replysync(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_msg_in(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register asc_regmap_t *regs = asc->regs;
-	register State *state = &asc->st[asc->target];
-	register int msg;
+	asc_regmap_t *regs = asc->regs;
+	State *state = &asc->st[asc->target];
+	int msg;
 	int i;
 
 	/* read one message byte */
@@ -2072,13 +2072,13 @@ done:
 /* ARGSUSED */
 static int
 asc_disconnect(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
 	int i;
 #ifdef DIAGNOSTIC
 	/* later Mach driver checks for late asych disconnect here. */
-	register State *state = &asc->st[asc->target];
+	State *state = &asc->st[asc->target];
 
 	if (!(state->flags & DISCONN)) {
 		printf("asc_disconnect: device %d: DISCONN not set!\n",
@@ -2127,8 +2127,8 @@ void
 asc_DumpLog(str)
 	char *str;
 {
-	register struct asc_log *lp;
-	register u_int status;
+	struct asc_log *lp;
+	u_int status;
 
 	printf("asc: %s: cmd %x bn %d cnt %d\n", str, asc_debug_cmd,
 		asc_debug_bn, asc_debug_sz);

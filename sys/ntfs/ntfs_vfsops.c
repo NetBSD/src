@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.26 2000/03/30 02:47:18 simonb Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.27 2000/03/30 12:47:02 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -84,7 +84,7 @@ static int	ntfs_sync __P((struct mount *, int, struct ucred *,
 static int	ntfs_unmount __P((struct mount *, int, struct proc *));
 static int	ntfs_vget __P((struct mount *mp, ino_t ino,
 			       struct vnode **vpp));
-static int	ntfs_mountfs __P((register struct vnode *, struct mount *, 
+static int	ntfs_mountfs __P((struct vnode *, struct mount *, 
 				  struct ntfs_args *, struct proc *));
 static int	ntfs_vptofh __P((struct vnode *, struct fid *));
 
@@ -117,13 +117,13 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
  */
 static int
 ntfs_checkexp(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
-	register struct netcred *np;
-	register struct ntfsmount *ntm = VFSTONTFS(mp);
+	struct netcred *np;
+	struct ntfsmount *ntm = VFSTONTFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
@@ -415,7 +415,7 @@ success:
  */
 int
 ntfs_mountfs(devvp, mp, argsp, p)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct ntfs_args *argsp;
 	struct proc *p;
@@ -631,7 +631,7 @@ ntfs_unmount(
 	int mntflags,
 	struct proc *p)
 {
-	register struct ntfsmount *ntmp;
+	struct ntfsmount *ntmp;
 	int error, ronly = 0, flags, i;
 
 	dprintf(("ntfs_unmount: unmounting...\n"));
@@ -858,8 +858,8 @@ ntfs_vptofh(
 	struct vnode *vp,
 	struct fid *fhp)
 {
-	register struct ntnode *ntp;
-	register struct ntfid *ntfhp;
+	struct ntnode *ntp;
+	struct ntfid *ntfhp;
 	struct fnode *fn;
 
 	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat->f_mntonname,
@@ -889,7 +889,7 @@ ntfs_vgetex(
 	struct vnode **vpp) 
 {
 	int error;
-	register struct ntfsmount *ntmp;
+	struct ntfsmount *ntmp;
 	struct ntnode *ip;
 	struct fnode *fp;
 	struct vnode *vp;

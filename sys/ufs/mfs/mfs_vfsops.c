@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.24 2000/03/29 04:03:08 simonb Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.25 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -209,7 +209,7 @@ mfs_initminiroot(base)
 /* ARGSUSED */
 int
 mfs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
@@ -218,8 +218,8 @@ mfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct mfs_args args;
 	struct ufsmount *ump;
-	register struct fs *fs;
-	register struct mfsnode *mfsp;
+	struct fs *fs;
+	struct mfsnode *mfsp;
 	size_t size;
 	int flags, error;
 
@@ -294,10 +294,10 @@ mfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct vnode *vp = VFSTOUFS(mp)->um_devvp;
-	register struct mfsnode *mfsp = VTOMFS(vp);
-	register struct buf *bp;
-	register caddr_t base;
+	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
+	caddr_t base;
 	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.14 2000/01/28 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.15 2000/03/30 12:41:11 augustss Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -267,7 +267,7 @@ ext2fs_lookup(v)
 	struct vnode *vdp;	/* vnode for directory being searched */
 	struct inode *dp;	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	register struct ext2fs_direct *ep; /* the current directory entry */
+	struct ext2fs_direct *ep; /* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {NONE, COMPACT, FOUND} slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */
@@ -706,7 +706,7 @@ found:
 static int
 ext2fs_dirbadentry(dp, de, entryoffsetinblock)
 	struct vnode *dp;
-	register struct ext2fs_direct *de;
+	struct ext2fs_direct *de;
 	int entryoffsetinblock;
 {
 	int	dirblksize = VTOI(dp)->i_e2fs->e2fs_bsize;
@@ -750,10 +750,10 @@ int
 ext2fs_direnter(ip, dvp, cnp)
 	struct inode *ip;
 	struct vnode *dvp;
-	register struct componentname *cnp;
+	struct componentname *cnp;
 {
-	register struct ext2fs_direct *ep, *nep;
-	register struct inode *dp;
+	struct ext2fs_direct *ep, *nep;
+	struct inode *dp;
 	struct buf *bp;
 	struct ext2fs_direct newdir;
 	struct iovec aiov;
@@ -897,7 +897,7 @@ ext2fs_dirremove(dvp, cnp)
 	struct vnode *dvp;
 	struct componentname *cnp;
 {
-	register struct inode *dp;
+	struct inode *dp;
 	struct ext2fs_direct *ep;
 	struct buf *bp;
 	int error;
@@ -970,13 +970,13 @@ ext2fs_dirrewrite(dp, ip, cnp)
  */
 int
 ext2fs_dirempty(ip, parentino, cred)
-	register struct inode *ip;
+	struct inode *ip;
 	ino_t parentino;
 	struct ucred *cred;
 {
-	register off_t off;
+	off_t off;
 	struct ext2fs_dirtemplate dbuf;
-	register struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
+	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
 	int error, namlen;
 	size_t count;
 		 

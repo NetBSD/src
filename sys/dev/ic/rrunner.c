@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.14 2000/01/21 23:39:58 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.15 2000/03/30 12:45:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -461,9 +461,9 @@ bad_dmamem_map:
 
 void
 eshinit(sc)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct rr_ring_ctl *ring;
@@ -1487,7 +1487,7 @@ int
 eshintr(arg)
 	void *arg;
 {
-	register struct esh_softc *sc = arg;
+	struct esh_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_if;
@@ -1991,7 +1991,7 @@ void
 eshstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct esh_softc *sc = ifp->if_softc;
+	struct esh_softc *sc = ifp->if_softc;
 	struct esh_send_ring_ctl *send = &sc->sc_send;
 	struct mbuf *m = NULL;
 	int error;
@@ -2227,7 +2227,7 @@ esh_send(sc)
 
 static void
 eshstart_cleanup(sc, consumer, error)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 {
@@ -2410,7 +2410,7 @@ bogosity:
 
 static void
 esh_read_snap_ring(sc, consumer, error)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 {
@@ -2702,7 +2702,7 @@ esh_init_fp_rings(sc)
 
 static void
 esh_read_fp_ring(sc, consumer, error, ulp)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 	int ulp;
@@ -3014,7 +3014,7 @@ esh_flush_fp_ring(sc, recv, di)
 
 int
 eshioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -3067,7 +3067,7 @@ eshioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		{
-			register struct ns_addr *ina = 
+			struct ns_addr *ina = 
 				&IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
@@ -3388,7 +3388,7 @@ eshwatchdog(ifp)
 
 void
 eshstop(sc)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;

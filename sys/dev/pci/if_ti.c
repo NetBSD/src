@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.7 2000/03/17 09:25:22 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.8 2000/03/30 12:45:35 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -215,7 +215,7 @@ static u_int32_t ti_eeprom_putbyte(sc, byte)
 	struct ti_softc		*sc;
 	int			byte;
 {
-	register int		i, ack = 0;
+	int		i, ack = 0;
 
 	/*
 	 * Make sure we're in TX mode.
@@ -262,7 +262,7 @@ static u_int8_t ti_eeprom_getbyte(sc, addr, dest)
 	int			addr;
 	u_int8_t		*dest;
 {
-	register int		i;
+	int		i;
 	u_int8_t		byte = 0;
 
 	EEPROM_START;
@@ -478,7 +478,7 @@ static void ti_cmd_ext(sc, cmd, arg, len)
 	int			len;
 {
 	u_int32_t		index;
-	register int		i;
+	int		i;
 
 	index = sc->ti_cmd_saved_prodidx;
 	CSR_WRITE_4(sc, TI_GCR_CMDRING + (index * 4), *(u_int32_t *)(cmd));
@@ -581,7 +581,7 @@ static int ti_alloc_jumbo_mem(sc)
 	struct ti_softc		*sc;
 {
 	caddr_t			ptr;
-	register int		i;
+	int		i;
 	struct ti_jpool_entry   *entry;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg;
@@ -944,7 +944,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 static int ti_init_rx_ring_std(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 	struct ti_cmd_desc	cmd;
 
 	for (i = 0; i < TI_SSLOTS; i++) {
@@ -961,7 +961,7 @@ static int ti_init_rx_ring_std(sc)
 static void ti_free_rx_ring_std(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	for (i = 0; i < TI_STD_RX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_rx_std_chain[i] != NULL) {
@@ -982,7 +982,7 @@ static void ti_free_rx_ring_std(sc)
 static int ti_init_rx_ring_jumbo(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 	struct ti_cmd_desc	cmd;
 
 	for (i = 0; i < (TI_JSLOTS - 20); i++) {
@@ -999,7 +999,7 @@ static int ti_init_rx_ring_jumbo(sc)
 static void ti_free_rx_ring_jumbo(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_rx_jumbo_chain[i] != NULL) {
@@ -1016,7 +1016,7 @@ static void ti_free_rx_ring_jumbo(sc)
 static int ti_init_rx_ring_mini(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	for (i = 0; i < TI_MSLOTS; i++) {
 		if (ti_newbuf_mini(sc, i, NULL, 0) == ENOBUFS)
@@ -1032,7 +1032,7 @@ static int ti_init_rx_ring_mini(sc)
 static void ti_free_rx_ring_mini(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 
 	for (i = 0; i < TI_MINI_RX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_rx_mini_chain[i] != NULL) {
@@ -1053,7 +1053,7 @@ static void ti_free_rx_ring_mini(sc)
 static void ti_free_tx_ring(sc)
 	struct ti_softc		*sc;
 {
-	register int		i;
+	int		i;
 	struct txdmamap_pool_entry *dma;
 
 	if (sc->ti_rdata->ti_tx_ring == NULL)
@@ -2485,7 +2485,7 @@ ti_ether_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			 register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			 if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.40 2000/01/19 00:03:05 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.41 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -892,7 +892,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	struct dinode *dinp;
 	int *need_unlock;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct vnode *vp;
 	struct ufsmount *ump;
 	dev_t dev;

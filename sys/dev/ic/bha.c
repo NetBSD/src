@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.35 2000/03/23 07:01:29 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.36 2000/03/30 12:45:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -697,7 +697,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	u_char *ibuf, *obuf;
 {
 	const char *name;
-	register int i;
+	int i;
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];

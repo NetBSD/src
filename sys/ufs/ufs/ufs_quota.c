@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.14 2000/03/16 18:26:49 jdolecek Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.15 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -67,7 +67,7 @@ static char *quotatypes[] = INITQFNAMES;
  */
 int
 getinoquota(ip)
-	register struct inode *ip;
+	struct inode *ip;
 {
 	struct ufsmount *ump;
 	struct vnode *vp = ITOV(ip);
@@ -100,13 +100,13 @@ getinoquota(ip)
  */
 int
 chkdq(ip, change, cred, flags)
-	register struct inode *ip;
+	struct inode *ip;
 	long change;
 	struct ucred *cred;
 	int flags;
 {
-	register struct dquot *dq;
-	register int i;
+	struct dquot *dq;
+	int i;
 	int ncurblocks, error;
 
 #ifdef DIAGNOSTIC
@@ -165,7 +165,7 @@ chkdqchg(ip, change, cred, type)
 	struct ucred *cred;
 	int type;
 {
-	register struct dquot *dq = ip->i_dquot[type];
+	struct dquot *dq = ip->i_dquot[type];
 	long ncurblocks = dq->dq_curblocks + change;
 
 	/*
@@ -215,13 +215,13 @@ chkdqchg(ip, change, cred, type)
  */
 int
 chkiq(ip, change, cred, flags)
-	register struct inode *ip;
+	struct inode *ip;
 	long change;
 	struct ucred *cred;
 	int flags;
 {
-	register struct dquot *dq;
-	register int i;
+	struct dquot *dq;
+	int i;
 	int ncurinodes, error;
 
 #ifdef DIAGNOSTIC
@@ -280,7 +280,7 @@ chkiqchg(ip, change, cred, type)
 	struct ucred *cred;
 	int type;
 {
-	register struct dquot *dq = ip->i_dquot[type];
+	struct dquot *dq = ip->i_dquot[type];
 	long ncurinodes = dq->dq_curinodes + change;
 
 	/*
@@ -332,10 +332,10 @@ chkiqchg(ip, change, cred, type)
  */
 void
 chkdquot(ip)
-	register struct inode *ip;
+	struct inode *ip;
 {
 	struct ufsmount *ump = VFSTOUFS(ITOV(ip)->v_mount);
-	register int i;
+	int i;
 
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (ump->um_quotas[i] == NULLVP ||
@@ -360,7 +360,7 @@ int
 quotaon(p, mp, type, fname)
 	struct proc *p;
 	struct mount *mp;
-	register int type;
+	int type;
 	caddr_t fname;
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -434,7 +434,7 @@ int
 quotaoff(p, mp, type)
 	struct proc *p;
 	struct mount *mp;
-	register int type;
+	int type;
 {
 	struct vnode *vp;
 	struct vnode *qvp, *nextvp;
@@ -510,7 +510,7 @@ setquota(mp, id, type, addr)
 	int type;
 	caddr_t addr;
 {
-	register struct dquot *dq;
+	struct dquot *dq;
 	struct dquot *ndq;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dqblk newlim;
@@ -570,7 +570,7 @@ setuse(mp, id, type, addr)
 	int type;
 	caddr_t addr;
 {
-	register struct dquot *dq;
+	struct dquot *dq;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dquot *ndq;
 	struct dqblk usage;
@@ -705,8 +705,8 @@ int
 dqget(vp, id, ump, type, dqp)
 	struct vnode *vp;
 	u_long id;
-	register struct ufsmount *ump;
-	register int type;
+	struct ufsmount *ump;
+	int type;
 	struct dquot **dqp;
 {
 	struct dquot *dq;
@@ -832,7 +832,7 @@ dqref(dq)
 void
 dqrele(vp, dq)
 	struct vnode *vp;
-	register struct dquot *dq;
+	struct dquot *dq;
 {
 
 	if (dq == NODQUOT)
@@ -854,7 +854,7 @@ dqrele(vp, dq)
 int
 dqsync(vp, dq)
 	struct vnode *vp;
-	register struct dquot *dq;
+	struct dquot *dq;
 {
 	struct vnode *dqvp;
 	struct iovec aiov;
@@ -904,9 +904,9 @@ dqsync(vp, dq)
  */
 void
 dqflush(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
-	register struct dquot *dq, *nextdq;
+	struct dquot *dq, *nextdq;
 	struct dqhash *dqh;
 
 	/*

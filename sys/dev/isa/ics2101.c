@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.7 1998/06/17 08:17:25 augustss Exp $ */
+/* $NetBSD: ics2101.c,v 1.8 2000/03/30 12:45:33 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,9 +81,9 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	bus_space_tag_t iot = sc->sc_iot;
 	unsigned char flip_left[6] = {0x01, 0x01, 0x01, 0x02, 0x01, 0x02};
 	unsigned char flip_right[6] = {0x02, 0x02, 0x02, 0x01, 0x02, 0x01};
-	register unsigned char ctrl_addr;
-	register unsigned char attn_addr;
-	register unsigned char normal;
+	unsigned char ctrl_addr;
+	unsigned char attn_addr;
+	unsigned char normal;
 	int s;
 
 	if (chan < ICSMIX_CHAN_0 || chan > ICSMIX_CHAN_5)

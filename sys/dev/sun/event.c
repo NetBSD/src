@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.3 1996/09/12 01:35:34 mrg Exp $	*/
+/*	$NetBSD: event.c,v 1.4 2000/03/30 12:45:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@
  */
 void
 ev_init(ev)
-	register struct evvar *ev;
+	struct evvar *ev;
 {
 
 	ev->ev_get = ev->ev_put = 0;
@@ -79,7 +79,7 @@ ev_init(ev)
  */
 void
 ev_fini(ev)
-	register struct evvar *ev;
+	struct evvar *ev;
 {
 
 	free(ev->ev_q, M_DEVBUF);
@@ -91,7 +91,7 @@ ev_fini(ev)
  */
 int
 ev_read(ev, uio, flags)
-	register struct evvar *ev;
+	struct evvar *ev;
 	struct uio *uio;
 	int flags;
 {
@@ -148,7 +148,7 @@ ev_read(ev, uio, flags)
 
 int
 ev_poll(ev, events, p)
-	register struct evvar *ev;
+	struct evvar *ev;
 	int events;
 	struct proc *p;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.32 2000/01/24 02:40:30 matt Exp $	*/
+/*	$NetBSD: uda.c,v 1.33 2000/03/30 12:45:39 augustss Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -392,8 +392,8 @@ udasaerror(usc, doreset)
 	int doreset;
 {
 	struct	uda_softc *sc = (void *)usc;
-	register int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
-	register struct saerr *e;
+	int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
+	struct saerr *e;
 
 	if ((code & MP_ERR) == 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.11 1999/02/03 20:22:28 mycroft Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.12 2000/03/30 12:45:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -231,8 +231,8 @@ zsc_intr_hard(arg)
 	void *arg;
 {
 	struct zsc_softc *zsc = arg;
-	register struct zs_chanstate *cs;
-	register u_char rr3;
+	struct zs_chanstate *cs;
+	u_char rr3;
 
 	/* First look at channel A. */
 	cs = zsc->zsc_cs[0];
@@ -281,9 +281,9 @@ int
 zsc_intr_soft(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc = arg;
-	register struct zs_chanstate *cs;
-	register int rval, chan;
+	struct zsc_softc *zsc = arg;
+	struct zs_chanstate *cs;
+	int rval, chan;
 
 	rval = 0;
 	for (chan = 0; chan < 2; chan++) {

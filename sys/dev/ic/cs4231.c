@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.2 2000/01/28 15:49:44 pk Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.3 2000/03/30 12:45:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ cs4231_regdump(label, sc)
 
 void
 cs4231_init(sc)
-	register struct cs4231_softc *sc;
+	struct cs4231_softc *sc;
 {
 	char *buf;
 #if 0
@@ -328,7 +328,7 @@ void
 cs4231_close(addr)
 	void *addr;
 {
-	register struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = addr;
 
 	DPRINTF(("sa_close: sc=%p\n", sc));
 	/*
@@ -422,7 +422,7 @@ cs4231_get_props(addr)
 int
 cs4231_query_devinfo(addr, dip)
 	void *addr;
-	register mixer_devinfo_t *dip;
+	mixer_devinfo_t *dip;
 {
 
 	switch(dip->index) {

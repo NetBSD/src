@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.29 2000/02/20 06:34:46 wiz Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.30 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -111,10 +111,10 @@ ufs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct inode *dp;	/* inode for directory being searched */
+	struct vnode *vdp;		/* vnode for directory being searched */
+	struct inode *dp;		/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	register struct direct *ep;	/* the current directory entry */
+	struct direct *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {NONE, COMPACT, FOUND} slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */
@@ -634,10 +634,10 @@ ufs_dirbad(ip, offset, how)
 int
 ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	struct vnode *dp;
-	register struct direct *ep;
+	struct direct *ep;
 	int entryoffsetinblock;
 {
-	register int i;
+	int i;
 	int namlen;
 	const int needswap = UFS_MPNEEDSWAP(dp->v_mount);
 
@@ -1043,13 +1043,13 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
  */
 int
 ufs_dirempty(ip, parentino, cred)
-	register struct inode *ip;
+	struct inode *ip;
 	ino_t parentino;
 	struct ucred *cred;
 {
-	register off_t off;
+	off_t off;
 	struct dirtemplate dbuf;
-	register struct direct *dp = (struct direct *)&dbuf;
+	struct direct *dp = (struct direct *)&dbuf;
 	int error, namlen;
 	size_t count;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)

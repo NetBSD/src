@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.12 1998/08/15 03:51:31 mycroft Exp $	*/
+/*	$NetBSD: elink.c,v 1.13 2000/03/30 12:45:32 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,10 +117,10 @@ void
 elink_idseq(iot, ioh, p)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	register u_char p;
+	u_char p;
 {
-	register int i;
-	register u_char c;
+	int i;
+	u_char c;
 
 	c = 0xff;
 	for (i = 255; i; i--) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.35 1999/08/25 22:46:16 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.36 2000/03/30 12:45:33 augustss Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -862,7 +862,7 @@ iyintr(arg)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	register u_short status;
+	u_short status;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1071,7 +1071,7 @@ struct iy_softc *sc;
 
 int
 iyioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.14 2000/01/10 13:32:02 simonb Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.15 2000/03/30 12:45:43 augustss Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -95,10 +95,10 @@ le_pmax_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (void *)self;
-	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	register u_char *cp;
-	register struct ibus_attach_args *ia = aux;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	u_char *cp;
+	struct ibus_attach_args *ia = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
@@ -131,11 +131,11 @@ le_dec_copytobuf_gap2(sc, fromv, boff, len)
 	struct lance_softc *sc;  
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;  
+	caddr_t from = fromv;
+	volatile u_int16_t *bptr;  
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -162,9 +162,9 @@ le_dec_copyfrombuf_gap2(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -191,7 +191,7 @@ le_dec_zerobuf_gap2(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
+	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);

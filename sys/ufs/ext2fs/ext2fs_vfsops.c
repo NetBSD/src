@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.34 2000/03/16 18:08:32 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.35 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -195,7 +195,7 @@ ext2fs_mountroot()
  */
 int
 ext2fs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void * data;
 	struct nameidata *ndp;
@@ -204,7 +204,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	size_t size;
 	int error, flags;
 	mode_t accessmode;
@@ -354,11 +354,11 @@ ext2fs_mount(mp, path, data, ndp, p)
  */
 int
 ext2fs_reload(mountp, cred, p)
-	register struct mount *mountp;
+	struct mount *mountp;
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct m_ext2fs *fs;
@@ -479,14 +479,14 @@ loop:
  */
 int
 ext2fs_mountfs(devvp, mp, p)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	struct buf *bp;
-	register struct ext2fs *fs;
-	register struct m_ext2fs *m_fs;
+	struct ext2fs *fs;
+	struct m_ext2fs *m_fs;
 	dev_t dev;
 	struct partinfo dpart;
 	int error, i, size, ronly;
@@ -618,8 +618,8 @@ ext2fs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct m_ext2fs *fs;
+	struct ufsmount *ump;
+	struct m_ext2fs *fs;
 	int error, flags;
 
 	flags = 0;
@@ -654,12 +654,12 @@ ext2fs_unmount(mp, mntflags, p)
  */
 int
 ext2fs_flushfiles(mp, flags, p)
-	register struct mount *mp;
+	struct mount *mp;
 	int flags;
 	struct proc *p;
 {
 	extern int doforce;
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	int error;
 
 	if (!doforce)
@@ -675,11 +675,11 @@ ext2fs_flushfiles(mp, flags, p)
 int
 ext2fs_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct m_ext2fs *fs;
+	struct ufsmount *ump;
+	struct m_ext2fs *fs;
 	u_int32_t overhead, overhead_per_group;
 	int i, ngroups;
 
@@ -929,14 +929,14 @@ ext2fs_vget(mp, ino, vpp)
  */
 int
 ext2fs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct vnode *nvp;
 	int error;
-	register struct ufid *ufhp;
+	struct ufid *ufhp;
 	struct m_ext2fs *fs;
 
 	ufhp = (struct ufid *)fhp;
@@ -969,8 +969,8 @@ ext2fs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct inode *ip;
-	register struct ufid *ufhp;
+	struct inode *ip;
+	struct ufid *ufhp;
 
 	ip = VTOI(vp);
 	ufhp = (struct ufid *)fhp;
@@ -1001,8 +1001,8 @@ ext2fs_sbupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct m_ext2fs *fs = mp->um_e2fs;
-	register struct buf *bp;
+	struct m_ext2fs *fs = mp->um_e2fs;
+	struct buf *bp;
 	int error = 0;
 
 	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, 0);
@@ -1019,8 +1019,8 @@ ext2fs_cgupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct m_ext2fs *fs = mp->um_e2fs;
-	register struct buf *bp;
+	struct m_ext2fs *fs = mp->um_e2fs;
+	struct buf *bp;
 	int i, error = 0, allerror = 0;
 
 	allerror = ext2fs_sbupdate(mp, waitfor);

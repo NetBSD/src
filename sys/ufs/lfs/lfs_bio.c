@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.16 1999/12/15 07:10:34 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.17 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ lfs_bwrite(v)
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
+	struct buf *bp = ap->a_bp;
 
 #ifdef DIAGNOSTIC
         if(VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0
@@ -317,7 +317,7 @@ lfs_flush(fs, flags)
 	struct lfs *fs;
 	int flags;
 {
-	register struct mount *mp, *nmp;
+	struct mount *mp, *nmp;
 	
 	if(lfs_dostats) 
 		++lfs_stats.write_exceeded;
@@ -478,9 +478,9 @@ lfs_countlocked(count, bytes)
 	int *count;
 	long *bytes;
 {
-	register struct buf *bp;
-	register int n = 0;
-	register long int size = 0L;
+	struct buf *bp;
+	int n = 0;
+	long int size = 0L;
 
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
 	    bp = bp->b_freelist.tqe_next) {

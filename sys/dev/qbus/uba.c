@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.49 2000/01/24 02:40:30 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.50 2000/03/30 12:45:39 augustss Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -115,7 +115,7 @@ void
 ubareset(uban)
 	int uban;
 {
-	register struct uba_softc *uh = uba_cd.cd_devs[uban];
+	struct uba_softc *uh = uba_cd.cd_devs[uban];
 	int s, i;
 
 	s = splimp();

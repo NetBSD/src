@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.34 2000/03/23 07:01:32 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.35 2000/03/30 12:45:32 augustss Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -907,12 +907,12 @@ bah_reconwatch(arg)
  */
 int
 bah_ioctl(ifp, command, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long command;
 	caddr_t data;
 {
 	struct bah_softc *sc;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error;
 

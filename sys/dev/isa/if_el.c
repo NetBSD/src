@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.59 1999/08/25 22:46:16 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.60 2000/03/30 12:45:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -505,7 +505,7 @@ int
 elintr(arg)
 	void *arg;
 {
-	register struct el_softc *sc = arg;
+	struct el_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t rxstat;
@@ -573,7 +573,7 @@ elintr(arg)
  */
 void
 elread(sc, len)
-	register struct el_softc *sc;
+	struct el_softc *sc;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -689,7 +689,7 @@ bad:
  */
 int
 elioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -715,7 +715,7 @@ elioctl(ifp, cmd, data)
 		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =

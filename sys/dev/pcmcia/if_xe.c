@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
-/*	$NetBSD: if_xe.c,v 1.5 2000/03/06 21:02:03 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.6 2000/03/30 12:45:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -1110,7 +1110,7 @@ xe_watchdog(ifp)
 
 void
 xe_stop(sc)
-	register struct xe_softc *sc;
+	struct xe_softc *sc;
 {
 	/* Disable interrupts. */
 	PAGE(sc, 0);

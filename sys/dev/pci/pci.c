@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.45 2000/03/22 00:47:26 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.46 2000/03/30 12:45:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -295,7 +295,7 @@ pciprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	register struct pci_attach_args *pa = aux;
+	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	const struct pci_quirkdata *qd;
 

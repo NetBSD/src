@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.27 2000/03/23 17:51:51 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.28 2000/03/30 12:45:28 augustss Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -148,7 +148,7 @@ aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	u_char *ibuf, *obuf;
 {
 	const char *name;
-	register int i;
+	int i;
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];

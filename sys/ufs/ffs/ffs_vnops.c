@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.25 2000/03/29 03:43:34 simonb Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.26 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -354,7 +354,7 @@ ffs_reclaim(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	int error;
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)

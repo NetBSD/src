@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.14 1999/10/01 09:19:42 nisimura Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.15 2000/03/30 12:45:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.14 1999/10/01 09:19:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.15 2000/03/30 12:45:43 augustss Exp $");
 
 #include "opt_inet.h"
 
@@ -119,8 +119,8 @@ le_ioasic_attach(parent, self, aux)
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
-	register struct le_softc *lesc = (void *)self;
-	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 
 	ioasic_lance_dma_setup(parent);
 
@@ -162,11 +162,11 @@ le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
 	struct lance_softc *sc;  
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;  
+	caddr_t from = fromv;
+	volatile u_int16_t *bptr;  
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -193,9 +193,9 @@ le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -227,11 +227,11 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 	struct lance_softc *sc;
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register caddr_t bptr;
+	caddr_t from = fromv;
+	caddr_t bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -241,7 +241,7 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 	 * 16-byte aligned.
 	 */
 	if (boff) {
-		register int xfer;
+		int xfer;
 		xfer = min(len, 16 - boff);
 		bcopy(from, bptr + boff, xfer);
 		from += xfer;
@@ -255,9 +255,9 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 		case 2:
 			/*  Ethernet headers make this the dominant case. */
 		do {
-			register u_int32_t *dst = (u_int32_t*)bptr;
-			register u_int16_t t0;
-			register u_int32_t t1,  t2, t3, t4;
+			u_int32_t *dst = (u_int32_t*)bptr;
+			u_int16_t t0;
+			u_int32_t t1,  t2, t3, t4;
 
 			/* read from odd-16-bit-aligned, cached src */
 			t0 = *(u_int16_t*)from;
@@ -280,9 +280,9 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 
 		case 0:
 		do {
-			register u_int32_t *src = (u_int32_t*)from;
-			register u_int32_t *dst = (u_int32_t*)bptr;
-			register u_int32_t t0, t1, t2, t3;
+			u_int32_t *src = (u_int32_t*)from;
+			u_int32_t *dst = (u_int32_t*)bptr;
+			u_int32_t t0, t1, t2, t3;
 
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
 			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
@@ -314,15 +314,15 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register caddr_t bptr;
+	caddr_t to = tov;
+	caddr_t bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
 
 	/* Dispose of boff. source of copy is subsequently 16-byte aligned. */
 	if (boff) {
-		register int xfer;
+		int xfer;
 		xfer = min(len, 16 - boff);
 		bcopy(bptr+boff, to, xfer);
 		to += xfer;
@@ -337,8 +337,8 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 		 * make this the dominant case (98% or more).
 		 */
 		do {
-			register u_int32_t *src = (u_int32_t*)bptr;
-			register u_int32_t t0, t1, t2, t3;
+			u_int32_t *src = (u_int32_t*)bptr;
+			u_int32_t t0, t1, t2, t3;
 
 			/* read from uncached aligned DMA buf */
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
@@ -357,9 +357,9 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 	case 0:
 		/* 32-bit aligned aligned copy. Rare. */
 		do {
-			register u_int32_t *src = (u_int32_t*)bptr;
-			register u_int32_t *dst = (u_int32_t*)to;
-			register u_int32_t t0, t1, t2, t3;
+			u_int32_t *src = (u_int32_t*)bptr;
+			u_int32_t *dst = (u_int32_t*)to;
+			u_int32_t t0, t1, t2, t3;
 
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
 			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
@@ -389,8 +389,8 @@ le_ioasic_zerobuf_gap16(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.9 2000/03/06 21:02:39 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.10 2000/03/30 12:45:35 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -990,7 +990,7 @@ cnw_intr(arg)
  */
 int
 cnw_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

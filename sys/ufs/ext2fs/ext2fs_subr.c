@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.3 1998/03/04 06:50:25 cgd Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.4 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -62,7 +62,7 @@ ext2fs_blkatoff(v)
 		struct buf **a_bpp;
 	} */ *ap = v;
 	struct inode *ip;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn;
 	int error;
@@ -88,8 +88,8 @@ ext2fs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
-	register struct buf *ebp, *ep;
-	register ufs_daddr_t start, last;
+	struct buf *ebp, *ep;
+	ufs_daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];

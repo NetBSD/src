@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.14 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15 2000/03/30 12:41:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,7 +76,7 @@ ffs_blkatoff(v)
 		struct buf **a_bpp;
 	} */ *ap = v;
 	struct inode *ip;
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn;
 	int bsize, error;
@@ -111,8 +111,8 @@ ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 	int needswap;
 {
 	int inblk;
-	register int field, subfield;
-	register int siz, pos;
+	int field, subfield;
+	int siz, pos;
 
 	inblk = (int)(fragtbl[fs->fs_frag][fragmap]) << 1;
 	fragmap <<= 1;
@@ -142,8 +142,8 @@ ffs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
-	register struct buf *ebp, *ep;
-	register ufs_daddr_t start, last;
+	struct buf *ebp, *ep;
+	ufs_daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];

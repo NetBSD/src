@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.37 2000/03/30 12:45:44 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37 2000/03/30 12:45:44 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1163,11 +1163,11 @@ wsdisplaypoll(dev, events, p)
 
 void
 wsdisplaystart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
-	register int s, n;
+	int s, n;
 	u_char *buf;
 		
 	s = spltty();

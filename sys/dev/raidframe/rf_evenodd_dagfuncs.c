@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.5 2000/03/13 23:52:36 soren Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.6 2000/03/30 12:45:40 augustss Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -313,11 +313,11 @@ rf_e_EncOneSect(
 #if RF_EO_MATRIX_DIM > 17
 	int     shortsPerEU = bytesPerEU / sizeof(short);
 	short  *destShortBuf, *srcShortBuf1, *srcShortBuf2;
-	register short temp1;
+	short temp1;
 #elif RF_EO_MATRIX_DIM == 17
 	int     longsPerEU = bytesPerEU / sizeof(long);
 	long   *destLongBuf, *srcLongBuf1, *srcLongBuf2;
-	register long temp1;
+	long temp1;
 #endif
 
 #if RF_EO_MATRIX_DIM > 17
@@ -472,7 +472,7 @@ rf_doubleEOdecode(
 	int     shortsPerEU = bytesPerEU / sizeof(short);
 	short  *rrdbuf_current, *pbuf_current, *ebuf_current;
 	short  *dest_smaller, *dest_smaller_current, *dest_larger, *dest_larger_current;
-	register short *temp;
+	short *temp;
 	short  *P;
 
 	RF_ASSERT(bytesPerEU % sizeof(short) == 0);
@@ -482,7 +482,7 @@ rf_doubleEOdecode(
 	int     longsPerEU = bytesPerEU / sizeof(long);
 	long   *rrdbuf_current, *pbuf_current, *ebuf_current;
 	long   *dest_smaller, *dest_smaller_current, *dest_larger, *dest_larger_current;
-	register long *temp;
+	long *temp;
 	long   *P;
 
 	RF_ASSERT(bytesPerEU % sizeof(long) == 0);
