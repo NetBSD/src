@@ -1,7 +1,7 @@
-/* $NetBSD: shm.c,v 1.1.1.3 2004/03/25 19:02:19 atatat Exp $ */
+/* $NetBSD: shm.c,v 1.1.1.4 2005/03/15 02:05:55 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shm.c,v 1.1.1.3 2004/03/25 19:02:19 atatat Exp $");
+__RCSID("$NetBSD: shm.c,v 1.1.1.4 2005/03/15 02:05:55 atatat Exp $");
 #endif
 
 /*
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: shm.c,v 1.1.1.3 2004/03/25 19:02:19 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: shm.c,v 1.10.2.6 2003/06/13 21:17:48 ca Exp")
+SM_RCSID("@(#)Id: shm.c,v 1.16 2003/06/13 21:18:08 ca Exp")
 
 #if SM_CONF_SHM
 # include <stdlib.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: shm.h,v 1.1.1.3 2004/03/25 19:01:57 atatat Exp $ */
+/* $NetBSD: shm.h,v 1.1.1.4 2005/03/15 02:05:52 atatat Exp $ */
 /*
  * Copyright (c) 2000-2003 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: shm.h,v 1.8.2.2 2003/05/17 18:34:16 ca Exp
+ *	Id: shm.h,v 1.10 2003/05/17 18:34:54 ca Exp
  */
 
 #ifndef SM_SHM_H

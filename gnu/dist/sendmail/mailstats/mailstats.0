@@ -23,6 +23,7 @@ DDEESSCCRRIIPPTTIIOONN
               bbyytteess__ttoo    Kbytes to the mailer.
               mmssggssrreejj     Number of messages rejected.
               mmssggssddiiss     Number of messages discarded.
+              mmssggssqquurr     Number of messages quarantined.
               MMaaiilleerr      The name of the mailer.
 
        After this display, a line totaling the values for all of  the  mailers
@@ -60,4 +61,4 @@ SSEEEE AALLSSOO
 
 
 
-                         Date: 2002/09/26 23:03:39             MAILSTATS(8)
+                         Date: 2002/06/27 22:47:29             MAILSTATS(8)

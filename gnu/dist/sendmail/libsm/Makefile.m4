@@ -1,12 +1,12 @@
-dnl Id: Makefile.m4,v 1.64.2.1 2002/06/21 21:58:29 ca Exp
-dnl $NetBSD: Makefile.m4,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $
+dnl Id: Makefile.m4,v 1.67 2004/08/20 20:42:14 ca Exp
+dnl $NetBSD: Makefile.m4,v 1.1.1.3 2005/03/15 02:05:53 atatat Exp $
 define(`confREQUIRE_LIBUNIX')
 include(confBUILDTOOLSDIR`/M4/switch.m4')
 
 define(`confREQUIRE_LIBSM', `true')
 PREPENDDEF(`confENVDEF', `confMAPDEF')
 bldPRODUCT_START(`library', `libsm')
-define(`bldSOURCES', ` assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c strerror.c strl.c clrerr.c fclose.c feof.c ferror.c fflush.c fget.c fpos.c findfp.c flags.c fopen.c fprintf.c fpurge.c fput.c fread.c fscanf.c fseek.c fvwrite.c fwalk.c fwrite.c get.c makebuf.c put.c refill.c rewind.c setvbuf.c smstdio.c snprintf.c sscanf.c stdio.c strio.c ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vsnprintf.c vsprintf.c vsscanf.c wbuf.c wsetup.c string.c stringf.c xtrap.c strto.c test.c path.c strcasecmp.c strrevcmp.c signal.c clock.c config.c shm.c mbdb.c strexit.c cf.c ldap.c niprop.c mpeix.c ')
+define(`bldSOURCES', ` assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c strerror.c strl.c clrerr.c fclose.c feof.c ferror.c fflush.c fget.c fpos.c findfp.c flags.c fopen.c fprintf.c fpurge.c fput.c fread.c fscanf.c fseek.c fvwrite.c fwalk.c fwrite.c get.c makebuf.c put.c refill.c rewind.c setvbuf.c smstdio.c snprintf.c sscanf.c stdio.c strio.c ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vsnprintf.c wbuf.c wsetup.c string.c stringf.c xtrap.c strto.c test.c path.c strcasecmp.c strrevcmp.c signal.c clock.c config.c shm.c mbdb.c strexit.c cf.c ldap.c niprop.c mpeix.c ')
 bldPRODUCT_END
 dnl sem.c msg.c
 dnl syslogio.c
