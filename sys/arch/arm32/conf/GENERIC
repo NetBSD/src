@@ -32,10 +32,9 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 # For standard RiscPC's with StrongARM CPUs
 #options	CPU_SA110	# Support the SA110 core
 
-
 # FPA options
 
-#options		FPE		# Single precision FPE
+#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
@@ -91,13 +90,23 @@ options		RAMDISK_HOOKS	# boottime setup of ramdisk
 options		RAMDISK_SIZE=0	# Size in KBytes
 options		PLIP		# Build plip device into lpt driver
 
+# Miscellaneous kernel options
+options		KTRACE		# system call tracing, a la ktrace(1)
+options		IRQSTATS	# manage IRQ statistics
+options		LKM		# loadable kernel modules
+
 # Development options
 
+options		MOUSE_IOC_ACK	# acknowledge state change ioctls
+#options	ARM700BUGTRACK	# track the ARM700 swi bug
+#options	HYDRA		# Experimental hydra support
+#options	MPSUPPORT	# Experimental MP support
+#options	PORTMASTER	# Enable PortMaster only options
 options		DIAGNOSTIC	# internally consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
-options		IRQSTATS	# IRQ statistics
 options		POSTMORTEM	# perform postmortem on panic
-#options		ROTTEN_INNARDS	# show the gory bit of the postmortem
+#options	ROTTEN_INNARDS	# show the gory bit of the postmortem
+#options	BLOCK_IRQS	# Block IRQ's during faults, syscalls and
+				# undefined instructions
 options		KSHELL		# kernel developemnt shell (debug)
 options		LKM		# loadable kernel modules
 #options	DEBUGTERM	# create a debug console
@@ -141,7 +150,8 @@ fd0     at fdc? drive ?
 kbd0	at mainbus? base 0x00000000
 
 # quadrature mouse
-quadmouse0	at mainbus? base 0x00000000
+quadmouse0	at mainbus? base 0x00000000 irq 6	# TMR1
+#quadmouse0	at mainbus? base 0x00000000 irq 3	# VSYNC
 
 # PS2 mouse
 pms0	at mainbus? base 0x00000000
@@ -155,6 +165,9 @@ lpt0    at mainbus? base 0x002109e0 irq 0
 
 # Crude sound device
 beep0	at mainbus? base 0x00000000
+
+# Audio device
+vidcaudio0	at mainbus? base 0x00000000
 
 # IIC bus device
 iic0	at mainbus?
