@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 1996/02/11 13:28:25 ragge Exp $
+#	$NetBSD: GENERIC,v 1.10 1996/03/02 14:19:47 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -6,6 +6,7 @@
 include "std.vax"
 
 # Here are all different supported CPU types listed.
+options         "VAX780"
 options         "VAX750"
 options         "VAX630"
 options         "VAX650"
@@ -98,6 +99,9 @@ qe0		at uba? csr 0174440	# DEQNA/DELQA
 tmscp0		at uba? csr 0174500	# TMSCP ctlr
 tms0		at tmscp0 drive ?	# TMSCP tape
 ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+
+# Terminal lines
+dhu0		at uba? csr 0160440	# DHU-11
 
 pseudo-device   loop	1
 pseudo-device   pty	48
