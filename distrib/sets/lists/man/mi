@@ -373,6 +373,7 @@
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/esp.0
 ./usr/share/man/cat4/ess.0
+./usr/share/man/cat4/ex.0
 ./usr/share/man/cat4/exphy.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fea.0
@@ -1005,6 +1006,13 @@
 ./usr/share/man/cat9/pgsignal.0
 ./usr/share/man/cat9/physio.0
 ./usr/share/man/cat9/pool.0
+./usr/share/man/cat9/pool_create.0
+./usr/share/man/cat9/pool_destroy.0
+./usr/share/man/cat9/pool_get.0
+./usr/share/man/cat9/pool_put.0
+./usr/share/man/cat9/pool_prime.0
+./usr/share/man/cat9/pool_sethiwat.0
+./usr/share/man/cat9/pool_setlowat.0
 ./usr/share/man/cat9/printf.0
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/readdisklabel.0
@@ -1470,6 +1478,7 @@
 ./usr/share/man/man4/esis.4
 ./usr/share/man/man4/esp.4
 ./usr/share/man/man4/ess.4
+./usr/share/man/man4/ex.4
 ./usr/share/man/man4/exphy.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fea.4
