@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.38 2003/04/13 10:22:40 yamt Exp $	*/
+/*	$NetBSD: utilities.c,v 1.39 2003/04/14 18:50:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.38 2003/04/13 10:22:40 yamt Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.39 2003/04/14 18:50:52 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,12 +279,12 @@ ckfini()
 		return;
 	}
 	flush(fswritefd, &sblk);
-	if (havesb && is_ufs2 && sblk.b_bno !=
-	    sblock->fs_sblockloc / dev_bsize &&
+	if (havesb && bflag != 0 &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
-		printf("sblk.b_bno %lld sblockloc %lld\n",
-		    (long long)sblk.b_bno, (long long)sblock->fs_sblockloc);
-		sblk.b_bno = sblock->fs_sblockloc / dev_bsize;
+		if (!is_ufs2 && (sblock->fs_old_flags & FS_FLAGS_UPDATED) == 0)
+			sblk.b_bno = SBLOCK_UFS1 / dev_bsize;
+		else
+			sblk.b_bno = sblock->fs_sblockloc / dev_bsize;
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
