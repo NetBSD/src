@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.5 2001/08/30 23:22:26 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.6 2001/11/17 00:46:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -609,10 +609,8 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(arg)
-	void *arg;
+upcallret(struct lwp *l)
 {
-	struct lwp *l = curproc;
 
 	userret(l);
 }
