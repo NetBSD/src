@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.18 2003/08/07 09:44:12 agc Exp $	*/
+/*	$NetBSD: inet.h,v 1.19 2004/05/21 01:53:17 christos Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -92,6 +92,8 @@ int		 inet_aton __P((const char *, struct in_addr *));
 char *		 inet_neta __P((u_long, char *, size_t));
 char		*inet_net_ntop __P((int, const void *, int, char *, size_t));
 int		 inet_net_pton __P((int, const char *, void *, size_t));
+char		*inet_cidr_ntop __P((int, const void *, int, char *, size_t));
+int		 inet_cidr_pton __P((int, const char *, void *, int *));
 u_int		 inet_nsap_addr __P((const char *, u_char *, int));
 char		*inet_nsap_ntoa __P((int, const u_char *, char *));
 #endif
