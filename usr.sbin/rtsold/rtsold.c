@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.12 2002/01/11 04:20:56 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.13 2002/03/25 19:55:41 wiz Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ ifconfig(char *ifname)
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __FUNCTION__,
-			"interface %s was already cofigured", ifname);
+			"interface %s was already configured", ifname);
 		free(sdl);
 		return(-1);
 	}
