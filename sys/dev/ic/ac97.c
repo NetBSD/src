@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.56 2004/08/08 03:50:56 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.57 2004/08/08 03:52:19 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.56 2004/08/08 03:50:56 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.57 2004/08/08 03:52:19 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ static const struct ac97_codecid {
 	 * http://www.cmedia.com.tw/doc/CMI9739%206CH%20Audio%20Codec%20SPEC_Ver12.pdf
 	 */
 	{ AC97_CODEC_ID('C', 'M', 'I', 0x61),
-	  AC97_VENDOR_ID_MASK,		"C-Media CMI9739"	},
+	  0xffffffff,			"C-Media CMI9739"	},
 	{ AC97_CODEC_ID('C', 'M', 'I', 0),
 	  AC97_VENDOR_ID_MASK,		"C-Media unknown"	},
 
