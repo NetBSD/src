@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.203 2002/05/07 02:06:32 eeh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.204 2002/07/01 19:29:31 fredette Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -123,6 +123,17 @@ CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC -DBIGPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?= -KPIC
+
+.elif ${MACHINE_ARCH} == "hppa"
+
+FPICFLAGS ?= -fPIC
+CPICFLAGS?= -fPIC -DPIC
+CPPPICFLAGS?= -DPIC 
+CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
+APICFLAGS?= -k
+# XXX libraries often need the millicode functions in libgcc.a,
+# so we have to work around the -nostdlib:
+LDADD+= `$(CC) -print-libgcc-file-name`
 
 .else
 
