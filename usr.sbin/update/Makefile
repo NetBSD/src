@@ -2,6 +2,7 @@
 
 PROG=	update
 MAN8=	update.0
+DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
 .include <bsd.prog.mk>
