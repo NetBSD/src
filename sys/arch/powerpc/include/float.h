@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.1 1996/09/30 16:34:24 ws Exp $	*/
+/*	$NetBSD: float.h,v 1.1.14.1 1998/05/08 08:30:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -41,14 +41,14 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int __flt_rounds();
+extern int __flt_rounds __P((void));
 __END_DECLS
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	__flt_rounds()
 
 #define FLT_MANT_DIG	24		/* p */
-#define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
+#define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
 #define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
 #define FLT_MIN_EXP	(-125)		/* emin */
 #define FLT_MIN		1.17549435E-38F	/* b**(emin-1) */
