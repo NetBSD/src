@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.5 1996/05/06 00:47:20 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.6 1996/05/12 21:42:44 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -1173,7 +1173,7 @@ do_render_noscroll(c, vc)
     {
 	if (((vc->flags)&(LOSSY))==0)
 	{
-          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != (c | cdata->attribs) )
+          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c | cdata->attribs)
           {
 	    if ( vc==vconsole_current )
 	        vc->RENDER ( vc, c );
@@ -1286,7 +1286,7 @@ do_render(c, vc)
 	{
 	    if ( cdata->irm == 0 )
 	    {
-                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= (c | cdata->attribs) )
+                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= c | cdata->attribs )
                 {
 	            if ( vc==vconsole_current )
 	                vc->RENDER ( vc, c );
@@ -1343,7 +1343,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
     cdata = (struct vt220_info *)vc->data;
 
     /* A piece of saftey code */
-    if ( vconsole_current->vtty == 0 )
+    if ( vc->vtty == 0 )
 	return 0;
 
 #ifdef SIMPLE_CURSOR
@@ -1364,6 +1364,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
 	cdata->flags &= ~F_LASTCHAR;
 
 #ifndef RC7500
+#ifdef DIAGNOSTIC
 /* Middle mouse button freezes the display while active */
 
         while ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_MIDDLE) == 0);
@@ -1372,7 +1373,8 @@ TERMTYPE_PUTSTRING(string, length, vc)
 
         if ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_LEFT) == 0)
           delay(5000);
-#endif
+#endif /* DIAGNOSTIC */
+#endif /* RC7500 */
 
 /* Always process characters in the range of 0x00 to 0x1f */
 
