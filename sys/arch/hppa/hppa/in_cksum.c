@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 2003/08/31 01:26:35 chs Exp $	*/
 
 /*	$OpenBSD: in_cksum.c,v 1.1 2001/01/13 00:00:20 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.3 2003/08/31 01:26:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,15 +81,15 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
 
 int
 in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+	struct mbuf *m;
+	int len;
 {
-	register u_int sum = 0;
-	register u_int bins = 0;
+	u_int sum = 0;
+	u_int bins = 0;
 
 	for (; m && len; m = m->m_next) {
-		register int mlen = m->m_len;
-		register u_char *w;
+		int mlen = m->m_len;
+		u_char *w;
 
 		if (!mlen)
 			continue;

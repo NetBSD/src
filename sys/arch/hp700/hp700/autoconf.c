@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2003/08/07 16:27:44 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2003/08/31 01:26:31 chs Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2003/08/07 16:27:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/08/31 01:26:31 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -197,7 +197,7 @@ hp700_led_ctl(int off, int on, int toggle)
 	else {
 #define	HP700_LED_DATA		0x01
 #define	HP700_LED_STROBE	0x02
-		register int b;
+		int b;
 		for (b = 0x80; b; b >>= 1) {
 			*machine_ledaddr = (r & b)? HP700_LED_DATA : 0;
 			DELAY(1);
@@ -458,7 +458,7 @@ pdc_scanbus(self, bus, maxmod, callback)
 {
 	struct pdc_memmap pdc_memmap;
 	struct device_path dp;
-	register int i;
+	int i;
 
 	for (i = maxmod; i--; ) {
 		struct confargs nca;
@@ -496,7 +496,7 @@ const char *
 hppa_mod_info(type, sv)
 	int type, sv;
 {
-	register const struct hppa_mod_info *mi;
+	const struct hppa_mod_info *mi;
 	static char fakeid[32];
 
 	for (mi = hppa_knownmods; mi->mi_type >= 0 &&

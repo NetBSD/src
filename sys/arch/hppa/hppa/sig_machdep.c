@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 2003/08/07 16:27:51 agc Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/08/07 16:27:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/08/07 16:27:51 agc Exp $");
 #include <sys/signalvar.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -148,7 +149,8 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp, kf;
 	caddr_t sp;
@@ -156,7 +158,7 @@ sendsig(sig, mask, code)
 	int onstack, fsize;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = (struct trapframe *)l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -224,7 +226,7 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -252,7 +254,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	tf->tf_sp = (int)sp;
@@ -274,14 +276,15 @@ sendsig(sig, mask, code)
 }
 
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp;
 	struct trapframe *tf;
 	struct sigcontext tsigc;
@@ -314,7 +317,7 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	tf = (struct trapframe *) p->p_md.md_regs;
+	tf = (struct trapframe *)l->l_md.md_regs;
 
 	/*
 	 * Grab pointer to hardware state information.

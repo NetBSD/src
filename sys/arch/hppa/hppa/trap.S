@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.6 2003/06/23 11:01:16 martin Exp $	*/
+/*	$NetBSD: trap.S,v 1.7 2003/08/31 01:26:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@
  */
 
 #include "opt_compat_osf1.h"
+#include "opt_cputype.h"
 
 /* 
  * NOTICE: This is not a standalone file.  To use it, #include it in
@@ -200,7 +201,7 @@ gateway_page_end
 $syscall
 	/*
 	 *
-	 * t1:	curproc
+	 * t1:	curlwp
 	 * t2:	user
 	 * t3:	args
 	 * t4:	user stack
@@ -211,9 +212,9 @@ $syscall
 	 *	the whole context later on return anyway.
 	 * XXXXXX this is very bad. everything must be saved
 	 */
-	ldil	L%curproc, t3
-	ldw	R%curproc(sr1, t3), t3
-	ldw	P_ADDR(sr1, t3), t2	/* XXX can use ,sl */
+	ldil	L%curlwp, t3
+	ldw	R%curlwp(sr1, t3), t3
+	ldw	L_ADDR(sr1, t3), t2	/* XXX can use ,sl */
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	/*
@@ -386,9 +387,9 @@ $syscall
 	bv,n	0(r1)
 	nop
 
-	ldil	L%curproc, r1
-	ldw	R%curproc(r1), r1
-	ldw	P_MD(r1), t3
+	ldil	L%curlwp, r1
+	ldw	R%curlwp(r1), r1
+	ldw	L_MD(r1), t3
 
 	.exit
 	.procend
@@ -1904,7 +1905,7 @@ ENTRY(TLABEL(all),0)
 	 * Set up the kernel stack pointer.  If the trap happened 
 	 * while we were in unprivileged code, or in privileged
 	 * code in the SYSCALLGATE page, move to the kernel stack
-	 * in curproc's PCB; otherwise, start a new stack frame
+	 * in curlwp's PCB; otherwise, start a new stack frame
 	 * on whatever kernel stack we're already on.
 	 *
 	 * This used to check only for a trap while we were in 
@@ -2161,18 +2162,18 @@ $trapnowvirt
 	nop
 
 	ldw	-HPPA_FRAME_SIZE+4(sp), t3
-	/* see if curproc have changed */
+	/* see if curlwp has changed */
 	ldw	TF_FLAGS(t3), arg0
 	bb,>=,n	arg0, TFF_LAST_POS, $trap_return
 	nop
 
-	/* see if curproc have really changed */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), t2
+	/* see if curlwp has really changed */
+	ldil	L%curlwp, t1
+	ldw	R%curlwp(t1), t2
 	comb,=,n r0, t2, $trap_return
 
-	/* means curproc have actually changed */
-	ldw	P_MD(t2), t3
+	/* means curlwp has actually changed */
+	ldw	L_MD(t2), t3
 
 $trap_return
 	ldil	L%$syscall_return, t1

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2003/07/15 02:29:26 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2003/08/31 01:26:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2003/07/15 02:29:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2003/08/31 01:26:32 chs Exp $");
 
 #undef BTLBDEBUG
 
@@ -1263,7 +1263,7 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 	struct confargs nca;
 	bus_space_handle_t ioh;
@@ -1312,7 +1312,7 @@ hppa_hpa_t
 cpu_gethpa(n)
 	int n;
 {
-	register struct mainbus_softc *sc;
+	struct mainbus_softc *sc;
 
 	sc = mainbus_cd.cd_devs[0];
 
@@ -1348,8 +1348,8 @@ mbsubmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register int ret;
+	struct confargs *ca = aux;
+	int ret;
 	int saved_irq;
 
 	saved_irq = ca->ca_irq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2003/06/23 11:01:15 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2003/08/31 01:26:33 chs Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -187,6 +187,8 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
 
+#define cpu_proc_fork(p1, p2)
+
 #define MD_CACHE_FLUSH 0
 #define MD_CACHE_PURGE 1
 #define	HPPA_SID_KERNEL 0
@@ -207,17 +209,17 @@ kvtop (const caddr_t va)
 
 extern int (*cpu_desidhash) __P((void));
 
-void	delay __P((u_int us));
-void	hppa_init __P((paddr_t start));
-void	trap __P((int type, struct trapframe *frame));
-int	dma_cachectl __P((caddr_t p, int size));
-int	spcopy __P((pa_space_t ssp, const void *src,
-		    pa_space_t dsp, void *dst, size_t size));
-int	spstrcpy __P((pa_space_t ssp, const void *src,
-		      pa_space_t dsp, void *dst, size_t size, size_t *rsize));
+void	delay __P((u_int));
+void	hppa_init __P((paddr_t));
+void	trap __P((int, struct trapframe *));
+int	dma_cachectl __P((caddr_t, int));
+int	spcopy __P((pa_space_t, const void *,
+		    pa_space_t, void *, size_t));
+int	spstrcpy __P((pa_space_t, const void *,
+		      pa_space_t, void *, size_t, size_t *));
 int	copy_on_fault __P((void));
 void	switch_trampoline __P((void));
-void	switch_exit __P((struct proc *p));
+void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((void));
 #endif

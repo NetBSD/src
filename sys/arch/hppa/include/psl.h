@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 2003/08/31 01:26:37 chs Exp $	*/
 
 /*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
@@ -95,7 +95,7 @@
 #define	PSW_R	(1 << (31-PSW_R_POS))	/* Recover Counter Enable */
 #define	PSW_Q	(1 << (31-PSW_Q_POS))	/* Interrupt State Collection Enable */
 #define	PSW_P	(1 << (31-PSW_P_POS))	/* Protection Identifier Validation Enable */
-#define	PSW_D	(1 << (31-PSW_D_POS))	/* Data Adress Translation Enable */
+#define	PSW_D	(1 << (31-PSW_D_POS))	/* Data Address Translation Enable */
 #define	PSW_I	(1 << (31-PSW_I_POS))	/* External Interrupt, Power Failure
 					   Interrupt, and Low-Priority Machine
 					   Check Interrupt unmask */

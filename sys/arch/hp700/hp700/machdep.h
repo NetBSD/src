@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 2002/08/11 19:53:42 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 2003/08/31 01:26:32 chs Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -74,6 +74,10 @@
  */
 
 #ifdef _KERNEL
+
+#ifdef _KERNEL_OPT
+#include "opt_useleds.h"
+#endif
 
 #include <hppa/hppa/machdep.h>
 

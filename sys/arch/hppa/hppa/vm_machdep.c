@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2003/07/15 02:29:41 lukem Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2003/07/15 02:29:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2003/07/15 02:29:41 lukem Exp $")
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, core)
-	struct proc *p;
+cpu_coredump(l, vp, cred, core)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *core;
 {
+	struct proc *p = l->l_proc;
 	struct md_coredump md_core;
 	struct coreseg cseg;
 	off_t off;
@@ -76,7 +77,7 @@ cpu_coredump(p, vp, cred, core)
 	core->c_seghdrsize = ALIGN(sizeof(cseg));
 	core->c_cpusize = sizeof(md_core);
 
-	process_read_regs(p, &md_core.md_reg);
+	process_read_regs(l, &md_core.md_reg);
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ZERO, CORE_CPU);
 	cseg.c_addr = 0;
@@ -104,7 +105,7 @@ cpu_coredump(p, vp, cred, core)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
 	paddr_t pa;
@@ -127,44 +128,44 @@ pagemove(from, to, size)
 }
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(l)
+	struct lwp *l;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	/*
 	 * Stash the physical for the pcb of U for later perusal
 	 */
-	p->p_addr->u_pcb.pcb_uva = (vaddr_t)p->p_addr;
-	tf->tf_cr30 = kvtop((caddr_t)p->p_addr);
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr, sizeof(p->p_addr->u_pcb));
+	l->l_addr->u_pcb.pcb_uva = (vaddr_t)l->l_addr;
+	tf->tf_cr30 = kvtop((caddr_t)l->l_addr);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sizeof(l->l_addr->u_pcb));
 
 #ifdef HPPA_REDZONE
 	/* Create the kernel stack red zone. */
-	pmap_redzone((vaddr_t)p->p_addr + HPPA_REDZONE,
-		(vaddr_t)p->p_addr + USPACE, 1);
+	pmap_redzone((vaddr_t)l->l_addr + HPPA_REDZONE,
+		(vaddr_t)l->l_addr + USPACE, 1);
 #endif
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(l)
+	struct lwp *l;
 {
 
-	/* Flush this process out of the FPU. */
-	hppa_fpu_flush(p);
+	/* Flush this LWP out of the FPU. */
+	hppa_fpu_flush(l);
 }
 
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	register struct pcb *pcbp;
-	register struct trapframe *tf;
+	struct pcb *pcbp;
+	struct trapframe *tf;
 	register_t sp, osp;
 
 #ifdef DIAGNOSTIC
@@ -173,25 +174,25 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	/* Flush the parent process out of the FPU. */
-	hppa_fpu_flush(p1);
+	hppa_fpu_flush(l1);
 
 	/* Now copy the parent PCB into the child. */
-	pcbp = &p2->p_addr->u_pcb;
-	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
+	pcbp = &l2->l_addr->u_pcb;
+	bcopy(&l1->l_addr->u_pcb, pcbp, sizeof(*pcbp));
 
-	sp = (register_t)p2->p_addr + PAGE_SIZE;
-	p2->p_md.md_regs = tf = (struct trapframe *)sp;
+	sp = (register_t)l2->l_addr + PAGE_SIZE;
+	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
-	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
+	bcopy(l1->l_md.md_regs, tf, sizeof(*tf));
 
 	/*
 	 * cpu_swapin() is supposed to fill out all the PAs
 	 * we gonna need in locore
 	 */
-	cpu_swapin(p2);
+	cpu_swapin(l2);
 
 	/* Activate this process' pmap. */
-	pmap_activate(p2);
+	pmap_activate(l2);
 
 	/*
 	 * theoretically these could be inherited from the father,
@@ -205,7 +206,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Set up return value registers as libc:fork() expects
 	 */
-	tf->tf_ret0 = p1->p_pid;
+	tf->tf_ret0 = l1->l_proc->p_pid;
 	tf->tf_ret1 = 1;	/* ischild */
 	tf->tf_t1 = 0;		/* errno */
 
@@ -227,7 +228,13 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*(register_t*)(sp + HPPA_FRAME_CRP) =
 		(register_t)switch_trampoline;
 	tf->tf_sp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	printf("cpu_setfunc not implemented\n");
 }
 
 #if 0
@@ -250,16 +257,16 @@ cpu_set_kpc(p, pc, arg)
 #endif
 
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
 	(void) splsched();
 	uvmexp.swtch++;
 
-	/* Flush the process out of the FPU. */
-	hppa_fpu_flush(p);
-	curproc = NULL;
-	switch_exit(p);
+	/* Flush the LWP out of the FPU. */
+	hppa_fpu_flush(l);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 2003/08/31 01:26:34 chs Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.3 2003/08/31 01:26:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1248,8 +1248,8 @@ static int
 iExInit(void)
 {
 	static int unasm_initted = 0;
-	register const struct inst *i;
-	register struct majoropcode *m;
+	const struct inst *i;
+	struct majoropcode *m;
 	u_int	shft, mask;
 
 	if (unasm_initted)
@@ -1554,7 +1554,7 @@ ldDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register int d = Disp(w);
+	int d = Disp(w);
 	char s[2];
 
 	s[1] = '\0';
@@ -1583,7 +1583,7 @@ stDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register int d = Disp(w);
+	int d = Disp(w);
 	char s[2];
 
 	db_printf("\t%%r%d,",Rta(w));
@@ -1611,7 +1611,7 @@ ldxDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register const char *p;
+	const char *p;
 
 	if (ShortDisp(w)) {
 		db_printf("s");
@@ -1647,7 +1647,7 @@ stsDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register const char *p;
+	const char *p;
 	if (Modify(w))
 		db_printf(",m%s", ModBefore(w)? "b":"a");
 
@@ -1672,7 +1672,7 @@ stbysDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register const char *p;
+	const char *p;
 	db_printf(ModBefore(w)? ",e":",b");
 	if (Modify(w))
 		db_printf(",m");
@@ -1709,8 +1709,8 @@ blDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register OFS tgtofs = ofs + 8 + Bdisp(w);
-	register u_int link = Rtb(w);
+	OFS tgtofs = ofs + 8 + Bdisp(w);
+	u_int link = Rtb(w);
 
 	if (link && !Match("gate"))
 		db_printf("l");
@@ -1755,8 +1755,8 @@ beDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register int d = Bdisp(w);
-	register const char *p;
+	int d = Bdisp(w);
+	const char *p;
 	char s[2];
 
 	s[1] = '\0';
@@ -1780,7 +1780,7 @@ cbDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register OFS tgtofs = ofs + 8 + Cbdisp(w);
+	OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movb"))
 		db_printf(edDCond(Cond(w)));
@@ -1800,7 +1800,7 @@ cbiDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register OFS tgtofs = ofs + 8 + Cbdisp(w);
+	OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movib"))
 		db_printf(edDCond(Cond(w)));
@@ -1820,8 +1820,8 @@ bbDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register OFS tgtofs = ofs + 8 + Cbdisp(w);
-	register const char *p;
+	OFS tgtofs = ofs + 8 + Cbdisp(w);
+	const char *p;
 
 	db_printf(edDCond(Cond(w)));
 	p = Nu(w)? ",n":"";
@@ -1962,7 +1962,7 @@ floatDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register u_int op1, r1, fmt, t;
+	u_int op1, r1, fmt, t;
 	u_int op2, r2, dfmt;
 	char *p;
 
@@ -2065,8 +2065,8 @@ fcoprDasm(w, op1, op2)
 	int w;
 	u_int op1, op2;
 {
-	register u_int r1, r2, t, fmt, dfmt;
-	register char *p;
+	u_int r1, r2, t, fmt, dfmt;
+	char *p;
 
 	if (AstNu(w) && op1 == ((1<<4) | 2)) {
 		if (op2 == 0 || op2 == 1 || op2 == 2) {
@@ -2148,10 +2148,10 @@ coprDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register u_int uid = Uid(w);
-	register int load = 0;
-	register char *pfx = uid > 1 ? "c" : "f";
-	register int dreg;
+	u_int uid = Uid(w);
+	int load = 0;
+	char *pfx = uid > 1 ? "c" : "f";
+	int dreg;
 
 	if (Match("copr")) {
 		if (uid) {
@@ -2197,7 +2197,7 @@ coprDasm(i, ofs, w)
 	case PREFETCH:	db_printf(",p"); break;
 	}
 	if (load) {
-		register const char *p;
+		const char *p;
 
 		if (dreg)
 			p = fdreg[(Rtc(w)<<1)+(uid&1)];
@@ -2213,7 +2213,7 @@ coprDasm(i, ofs, w)
 		else
 			db_printf("(%%r%d),%%f%s",Rsb(w), p);
 	} else {
-		register const char *p;
+		const char *p;
 
 		if (dreg)
 			p = fdreg[(Rsc(w)<<1)+(uid&1)];
@@ -2313,7 +2313,7 @@ fmpyaddDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register const char
+	const char
 		*ms1 = SinglePrec(w) ? fsreg[Ms1(w)] : fdreg[Ms1(w)],
 		*ms2 = SinglePrec(w) ? fsreg[Ms2(w)] : fdreg[Ms2(w)],
 		*mt  = SinglePrec(w) ? fsreg[Mt(w)]  : fdreg[Mt(w)],
@@ -2335,9 +2335,9 @@ db_disasm(loc, flag)
 	vaddr_t loc;
 	boolean_t flag;
 {
-	register const struct inst *i;
-	register const struct majoropcode *m;
-	register u_int ext;
+	const struct inst *i;
+	const struct majoropcode *m;
+	u_int ext;
 	int instruct;
 	OFS ofs = 0;
 

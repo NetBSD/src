@@ -1,8 +1,13 @@
-#	$NetBSD: files.hppa,v 1.2 2002/06/06 19:50:20 fredette Exp $
+#	$NetBSD: files.hppa,v 1.3 2003/08/31 01:26:34 chs Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
 # hppa-specific configuration info
+
+# Processor type options.
+defflag	opt_cputype.h	HP7000_CPU HP7100_CPU HP7150_CPU HP7100LC_CPU
+			HP7200_CPU HP7250_CPU HP7300LC_CPU
+			HP8000_CPU HP8200_CPU HP8500_CPU HP8600_CPU
 
 file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
