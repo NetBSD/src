@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.2 2001/12/10 01:52:26 thorpej Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.2 2001/12/10 01:52:26 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -182,7 +182,7 @@ ELFNAMEEND(coredump)(struct proc *p, struct vnode *vp, struct ucred *cred)
 #ifdef DIAGNOSTIC
 	if (ws.offset != notestart)
 		panic("coredump: offset %lld != notestart %lld",
-		    ws.offset, notestart);
+		    (long long) ws.offset, (long long) notestart);
 #endif
 
 	/* Write out the notes. */
@@ -193,7 +193,7 @@ ELFNAMEEND(coredump)(struct proc *p, struct vnode *vp, struct ucred *cred)
 #ifdef DIAGNOSTIC
 	if (round_page(ws.offset) != secstart)
 		panic("coredump: offset %lld != secstart %lld",
-		    round_page(ws.offset), secstart);
+		    (long long) round_page(ws.offset), (long long) secstart);
 #endif
 
 	/* ...and finally, the sections themselves. */
