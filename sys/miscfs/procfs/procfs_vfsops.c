@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vfsops.c,v 1.5 1993/08/25 14:35:20 mycroft Exp $
+ *	$Id: procfs_vfsops.c,v 1.6 1993/08/25 14:41:19 mycroft Exp $
  */
 
 /*
@@ -171,8 +171,8 @@ pfs_statfs(mp, sbp, p)
 	sbp->f_blocks = 0;
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
-	sbp->f_files = maxproc;
-	sbp->f_ffree = maxproc - (nprocs + 2);
+	sbp->f_files = maxproc + 3;
+	sbp->f_ffree = maxproc - nprocs;
 
 	return 0;
 }
