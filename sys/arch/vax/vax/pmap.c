@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1998/01/31 12:17:34 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.46 1998/03/02 17:00:01 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,10 @@
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
 
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #include <machine/pte.h>
 #include <machine/pcb.h>
 #include <machine/mtpr.h>
@@ -55,12 +59,12 @@
 /* 
  * This code uses bitfield operators for most page table entries.  
  */
-#define PROTSHIFT       27
-#define PROT_KW         (PG_KW >> PROTSHIFT)
-#define PROT_KR         (PG_KR >> PROTSHIFT) 
-#define PROT_RW         (PG_RW >> PROTSHIFT)
-#define PROT_RO         (PG_RO >> PROTSHIFT)
-#define PROT_URKW       (PG_URKW >> PROTSHIFT)
+#define PROTSHIFT	27
+#define PROT_KW		(PG_KW >> PROTSHIFT)
+#define PROT_KR		(PG_KR >> PROTSHIFT) 
+#define PROT_RW		(PG_RW >> PROTSHIFT)
+#define PROT_RO		(PG_RO >> PROTSHIFT)
+#define PROT_URKW	(PG_URKW >> PROTSHIFT)
 
 struct pmap kernel_pmap_store;
 
@@ -69,6 +73,9 @@ void	*scratch;
 
 vm_offset_t ptemapstart, ptemapend;
 vm_map_t pte_map;
+#if defined(UVM)
+struct	vm_map	pte_map_store;
+#endif
 
 extern	caddr_t msgbufaddr;
 
@@ -121,7 +128,7 @@ pmap_bootstrap()
 	/* reverse mapping struct */
 	sysptsize += (avail_end >> PGSHIFT) * 2;
 	/* User Page table area. This may grow big */
-#define	USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
+#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
 	sysptsize += ((USRPTSIZE * 4) / NBPG) * maxproc;
 	/* Kernel stacks per process */
 	sysptsize += UPAGES * maxproc;
@@ -178,8 +185,13 @@ pmap_bootstrap()
 	blkclr((void *)istack, (avail_start + KERNBASE) - istack);
 
 	/* Set logical page size */
+#if defined(UVM)
+	uvmexp.pagesize = CLBYTES;
+	uvm_setpagesize();
+#else
 	PAGE_SIZE = CLBYTES;
 	vm_set_page_size();
+#endif
 
 	/*
 	 * We move SCB here from physical address 0 to an address
@@ -227,10 +239,28 @@ pmap_bootstrap()
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
+#if defined(UVM)
+	uvm_page_physload(avail_start >> CLSHIFT, avail_end >> CLSHIFT,
+	    avail_start >> CLSHIFT, avail_end >> CLSHIFT);
+#endif
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);
 }
 
+#if defined(UVM)
+/*
+ * How much virtual space does this kernel have?
+ * (After mapping kernel text, data, etc.)
+ */
+void
+pmap_virtual_space(v_start, v_end)
+	vm_offset_t *v_start;
+	vm_offset_t *v_end;
+{
+	*v_start = virtual_avail;
+	*v_end	 = virtual_end;
+}
+#endif
 
 /*
  * pmap_init() is called as part of vm init after memory management
@@ -238,13 +268,22 @@ pmap_bootstrap()
  * Here we allocate virtual memory for user page tables.
  */
 void 
+#if defined(UVM)
+pmap_init() 
+#else
 pmap_init(start, end) 
 	vm_offset_t start, end;
+#endif
 {
 
 	/* reserve place on SPT for UPT */
+#if !defined(UVM)
 	pte_map = kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
 	    USRPTSIZE * 4 * maxproc, TRUE);
+#else
+	pte_map = uvm_km_suballoc(kernel_map, &ptemapstart, &ptemapend, 
+	    USRPTSIZE * 4 * maxproc, TRUE, FALSE, &pte_map_store);
+#endif
 }
 
 
@@ -284,9 +323,12 @@ pmap_pinit(pmap)
 	 * Allocate PTEs and stash them away in the pmap.
 	 * XXX Ok to use kmem_alloc_wait() here?
 	 */
-	bytesiz = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE + MAXSSIZ) *
-	    sizeof(struct pte);
+	bytesiz = USRPTSIZE * sizeof(struct pte);
+#if defined(UVM)
+	pmap->pm_p0br = (void *)uvm_km_valloc_wait(pte_map, bytesiz);
+#else
 	pmap->pm_p0br = (void *)kmem_alloc_wait(pte_map, bytesiz);
+#endif
 	pmap->pm_p0lr = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
 	pmap->pm_p1br = (void *)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - btoc(MAXSSIZ));
@@ -314,8 +356,13 @@ if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 #endif
 
 	if (pmap->pm_p0br)
+#if defined(UVM)
+		uvm_km_free_wakeup(pte_map, (vm_offset_t)pmap->pm_p0br, 
+		    USRPTSIZE * sizeof(struct pte));
+#else
 		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_p0br, 
 		    USRPTSIZE * sizeof(struct pte));
+#endif
 }
 
 
@@ -392,9 +439,11 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x, prot %x w %x\n",
 	if ((patch[i] & ~PG_M) == nypte)
 		return;
 
-#ifdef DIAGNOSTIC
 	if ((patch[i] & PG_FRAME) &&
 	    ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)))
+#if defined(UVM)
+		pmap_page_protect((patch[i] & PG_FRAME) << PGSHIFT, 0);
+#else
 		panic("pmap_enter: mapping onto old map");
 #endif
 
@@ -482,7 +531,7 @@ pmap_extract(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
 {
-        struct pte *pte;
+	struct pte *pte;
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
@@ -492,19 +541,19 @@ if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
 		printf("Warning, pmap_extract va not aligned\n");
 #endif
 
-        if (va < 0x40000000) {
-                pte = pmap->pm_p0br;
-                if ((va >> PGSHIFT) > (pmap->pm_p0lr & ~AST_MASK))
-                        return 0;
-        } else if (va & KERNBASE) {
+	if (va < 0x40000000) {
+		pte = pmap->pm_p0br;
+		if ((va >> PGSHIFT) > (pmap->pm_p0lr & ~AST_MASK))
+			return 0;
+	} else if (va & KERNBASE) {
 		pte = Sysmap;
 	} else {
-                pte = pmap->pm_p1br;
-                if (POFF(va) < pmap->pm_p1lr)
-                        return 0;
-        }
+		pte = pmap->pm_p1br;
+		if (POFF(va) < pmap->pm_p1lr)
+			return 0;
+	}
 
-        return (pte[POFF(va)].pg_pfn << PGSHIFT);
+	return (pte[POFF(va)].pg_pfn << PGSHIFT);
 }
 
 /*
@@ -620,7 +669,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
  */
 boolean_t
 pmap_is_referenced(pa)
-	vm_offset_t     pa;
+	vm_offset_t	pa;
 {
 	struct	pv_entry *pv;
 
