@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.87 2001/09/15 20:36:42 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.88 2001/10/30 01:11:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_vfsops.c	8.31 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.88 2001/10/30 01:11:54 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.14 2001/10/29 11:26:35 lukem Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.15 2001/10/30 01:11:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.15 2001/10/30 01:11:53 lukem Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
