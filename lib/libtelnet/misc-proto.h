@@ -1,4 +1,4 @@
-/*	$NetBSD: misc-proto.h,v 1.7 1998/07/27 01:45:10 mycroft Exp $	*/
+/*	$NetBSD: misc-proto.h,v 1.8 2000/02/01 02:25:30 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,12 +63,12 @@
 void auth_encrypt_init __P((const char *, const char *, const char *, int));
 void auth_encrypt_user __P((const char *));
 void auth_encrypt_connect __P((int));
-void printd __P((unsigned char *, int));
+void printd __P((const unsigned char *, int));
 
 /*
  * These functions are imported from the application
  */
-int net_write __P((unsigned char *, int));
+int telnet_net_write __P((unsigned char *, int));
 void net_encrypt __P((void));
 int telnet_spin __P((void));
 char *telnet_getenv __P((char *));
