@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.25 1997/12/19 10:20:02 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.26 1997/12/21 01:59:44 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -47,13 +47,18 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # PREFIX		- Where to install things in general (default: /usr/pkg).
 # MASTER_SITES	- Primary location(s) for distribution files if not found
 #				  locally.
+# MASTER_SITE_SUBDIR - Directory that "%SUBDIR%" in MASTER_SITES is
+#				  replaced by.
 # PATCH_SITES	- Primary location(s) for distribution patch files
 #				  (see PATCHFILES below) if not found locally.
+# PATCH_SITE_SUBDIR - Directory that "%SUBDIR%" in PATCH_SITES is
+#				  replaced by.
 #
 # MASTER_SITE_BACKUP - Backup location(s) for distribution files and patch
 #				  files if not found locally and ${MASTER_SITES}/${PATCH_SITES}
 #				  (default:
-#				  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
+#				  ftp://ftp.netbsd.org/pub/NetBSD/packages/distfiles/${DIST_SUBDIR}/
+#				  and ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
 # MASTER_SITE_OVERRIDE - If set, override the MASTER_SITES setting with this
 #				  value.
 # MASTER_SITE_FREEBSD - If set, only use ${MASTER_SITE_BACKUP} for
