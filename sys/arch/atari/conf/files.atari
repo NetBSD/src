@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.6 1995/04/27 12:09:45 christos Exp $
+#	$NetBSD: files.atari,v 1.7 1995/05/28 19:58:18 leo Exp $
 #
 
 maxpartitions 16
@@ -99,6 +99,10 @@ file	arch/atari/atari/trap.c
 file	arch/atari/atari/misc.c
 file	arch/atari/atari/vm_machdep.c
 file	arch/m68k/m68k/copy.s
+
+# Emulation modules
+# 6888x emulator (FPU_EMULATE)
+file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
 
 # Compatibility modules
 
