@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.5 1996/10/18 02:34:43 thorpej Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.6 1996/10/22 19:41:47 explorer Exp $
 
 S!=	cd ${.CURDIR}/..;pwd
 
@@ -12,7 +12,7 @@ KERN=	$S/kern
 
 .include <bsd.own.mk>
 
-CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I${.CURDIR} -I$S -I$S/arch
+CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
 CLEANFILES+=	machine ${MACHINE}
 
@@ -50,7 +50,7 @@ cleandir: _SUBDIRUSE clean
 # if no beforedepend target is defined, generate an empty target here
 #
 .if !target(beforedepend)
-beforedepend:
+beforedepend: machine
 .endif
 
 #
