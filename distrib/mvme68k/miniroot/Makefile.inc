@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/04/03 19:23:08 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/04/12 03:21:10 lukem Exp $
 
 IMAGESIZE=	7m
 MAKEFS_FLAGS=	-o density=4096
@@ -9,6 +9,3 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/install.md \
 		${KERNOBJDIR}/GENERIC/netbsd \
 		${_SRC_TOP_}/share/termcap/termcap.src
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
-
-image_md_post:
-

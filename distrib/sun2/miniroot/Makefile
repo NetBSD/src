@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/06 12:14:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/12 03:21:11 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -82,8 +82,7 @@ release:
 .else	# RELEASEDIR
 release: ${IMAGE}.gz
 	-mkdir -p ${RELEASEDIR}/installation/miniroot
-	cp -p ${IMAGE}.gz \
-	 ${RELEASEDIR}/installation/miniroot/${IMAGE}.gz
+	${RELINSTALL} ${IMAGE}.gz ${RELEASEDIR}/installation/miniroot
 .endif	# RELEASEDIR
 
 # Standard rules needed by the above...
