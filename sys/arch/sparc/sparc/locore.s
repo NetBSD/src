@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.3 1993/11/10 03:13:43 deraadt Exp $
+ * $Id: locore.s,v 1.4 1993/11/24 02:39:31 deraadt Exp $
  */
 
 #define	LOCORE
@@ -583,7 +583,7 @@ Lpanic_red:
 	wr	t2, 0, %psr; \
 	wr	t2, PSR_ET, %psr;	/* turn on traps */ \
 	nop; nop; nop; \
-	save	%sp, -96, %sp;		/* preserve current window */ \
+	save	%sp, -CCFSZ, %sp;	/* preserve current window */ \
 	sethi	%hi(Lpanic_red), %o0; \
 	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
 7:
@@ -2286,8 +2286,8 @@ dostart:
 	stba	%g0, [%g1] ASI_CONTROL
 	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
 	mov	1, %g1			! set pcb_wim (log2(%wim) = 1)
-	sethi	%hi(_u0 + PCB_WIM), %g2
-	st	%g1, [%g2 + %lo(_u0 + PCB_WIM)]
+	sethi	%hi(_u0 - KERNBASE + PCB_WIM), %g2
+	st	%g1, [%g2 + %lo(_u0 - KERNBASE + PCB_WIM)]
 
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
