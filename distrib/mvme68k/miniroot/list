@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2003/03/07 17:00:23 he Exp $
+#	$NetBSD: list,v 1.13.2.1 2004/04/05 06:43:06 tron Exp $
 
 # mvme68k's extras
 PROG	sbin/disklabel
@@ -8,7 +8,7 @@ PROG	sbin/mount_kernfs
 PROG	usr/bin/basename
 PROG	usr/bin/cksum usr/bin/sum
 PROG	usr/bin/cut
-PROG	usr/bin/gawk usr/bin/awk
+PROG	usr/bin/awk
 PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
