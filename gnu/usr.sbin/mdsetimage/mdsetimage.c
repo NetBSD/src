@@ -1,8 +1,8 @@
-/* $NetBSD: mdsetimage.c,v 1.1 2001/10/22 03:19:29 simonb Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.2 2002/01/03 06:21:47 cgd Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou
+ * Copyright (c) 1996, 2002 Christopher G. Demetriou
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.1 2001/10/22 03:19:29 simonb Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.2 2002/01/03 06:21:47 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,8 @@ struct symbols {
 	{ NULL }
 };
 
+#define	CHUNKSIZE	(64 * 1024)
+
 int		main __P((int, char *[]));
 static void	usage __P((void)) __attribute__((noreturn));
 static int	find_md_root __P((bfd *, struct symbols symbols[]));
@@ -90,6 +92,7 @@ main(argc, argv)
 	char *mappedkfile;
 	char *bfdname = NULL;
 	bfd *abfd;
+	ssize_t left_to_copy;
 
 	setprogname(argv[0]);
 
@@ -136,8 +139,8 @@ main(argc, argv)
 	if (ksb.st_size != (size_t)ksb.st_size)
 		errx(1, "%s too big to map", kfile);
 
-	if ((mappedkfile = mmap(NULL, ksb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_SHARED, kfd, 0)) == (caddr_t)-1)
+	if ((mappedkfile = mmap(NULL, ksb.st_size, PROT_READ,
+	    MAP_FILE | MAP_PRIVATE, kfd, 0)) == (caddr_t)-1)
 		err(1, "mmap %s", kfile);
 	if (verbose)
 		fprintf(stderr, "mapped %s\n", kfile);
@@ -145,6 +148,7 @@ main(argc, argv)
 	md_root_offset = md_root_symbols[X_MD_ROOT_IMAGE].offset;
 	md_root_size = bfd_get_32(abfd,
 	    &mappedkfile[md_root_symbols[X_MD_ROOT_SIZE].offset]);
+	munmap(mappedkfile, ksb.st_size);
 
 	if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
 		err(1, "open %s", fsfile);
@@ -159,19 +163,33 @@ main(argc, argv)
 	if (verbose)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
 		    kfile);
-	if ((rv = read(fsfd, mappedkfile + md_root_offset,
-	    fssb.st_size)) != fssb.st_size) {
-		if (rv == -1)
-			err(1, "read %s", fsfile);
-		else
-			errx(1, "unexpected EOF reading %s", fsfile);
+
+	left_to_copy = fssb.st_size;
+	if (lseek(kfd, md_root_offset, SEEK_SET) != md_root_offset)
+		err(1, "seek %s", kfile);
+	while (left_to_copy > 0) {
+		char buf[CHUNKSIZE];
+		ssize_t todo;
+
+		todo = (left_to_copy > CHUNKSIZE) ? CHUNKSIZE : left_to_copy;
+		if ((rv = read(fsfd, buf, todo)) != todo) {
+			if (rv == -1)
+				err(1, "read %s", fsfile);
+			else
+				errx(1, "unexpected EOF reading %s", fsfile);
+		}
+		if ((rv = write(kfd, buf, todo)) != todo) {
+			if (rv == -1)
+				err(1, "write %s", kfile);
+			else
+				errx(1, "short write writing %s", kfile);
+		}
+		left_to_copy -= todo;
 	}
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
 	
 	close(fsfd);
-
-	munmap(mappedkfile, ksb.st_size);
 	close(kfd);
 
 	if (verbose)
