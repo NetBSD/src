@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.2 2003/03/05 05:27:25 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.3 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -37,6 +37,8 @@
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <powerpc/altivec.h>
 #include <powerpc/spr.h>
@@ -227,7 +229,7 @@ save_vec_lwp(l)
 void
 vzeropage(paddr_t pa)
 {
-	const paddr_t ea = pa + NBPG;
+	const paddr_t ea = pa + PAGE_SIZE;
 	uint32_t vec[7], *vp = (void *) roundup((uintptr_t) vec, 16);
 	register_t omsr, msr;
 
@@ -286,7 +288,7 @@ vzeropage(paddr_t pa)
 void
 vcopypage(paddr_t dst, paddr_t src)
 {
-	const paddr_t edst = dst + NBPG;
+	const paddr_t edst = dst + PAGE_SIZE;
 	uint32_t vec[11], *vp = (void *) roundup((uintptr_t) vec, 16);
 	register_t omsr, msr;
 

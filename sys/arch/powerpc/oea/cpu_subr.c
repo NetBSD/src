@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.5 2003/03/29 18:18:54 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.6 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -111,8 +111,8 @@ cpu_probe_cache(void)
 		assoc = 4;
 		break;
 	default:
-		curcpu()->ci_ci.dcache_size = NBPG;
-		curcpu()->ci_ci.icache_size = NBPG;
+		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+		curcpu()->ci_ci.icache_size = PAGE_SIZE;
 		assoc = 1;
 #undef	K
 	}
