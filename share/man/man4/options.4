@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.94 2000/01/22 23:53:08 tron Exp $
+.\"	$NetBSD: options.4,v 1.95 2000/01/28 17:19:36 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -354,9 +354,13 @@ Includes code implementing the Berkeley Fast File System
 Most machines need this if they are not running diskless.
 .It Cd file-system EXT2FS
 Includes code implementing the Second Extended File System
-.Em ( EXT2FS ) .
-This is the most commonly used file system on the Linux operating system,
-and is provided here for compatibility.
+.Em ( EXT2FS )
+, revision 0 and revision 1 with the
+.Em filetype
+and
+.Em spase_super
+options.  This is the most commonly used file system on the Linux operating
+system, and is provided here for compatibility.
 Some of the specific features of
 .Em EXT2FS
 like the "behavior on errors" are not implemented.
