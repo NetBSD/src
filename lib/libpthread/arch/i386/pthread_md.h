@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.8 2002/10/22 01:26:42 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.9 2002/12/06 21:22:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ pthread__sp(void)
 	(uc)->uc_mcontext.__gregs[_REG_SS]     = (sc)->sc_ss;		\
 	(uc)->uc_mcontext.__gregs[_REG_TRAPNO] = (sc)->sc_trapno;	\
 	(uc)->uc_mcontext.__gregs[_REG_ERR]    = (sc)->sc_err;		\
+	(uc)->uc_flags &= ~_UC_USER;					\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
