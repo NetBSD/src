@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2002/08/26 10:33:33 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2002/08/30 10:50:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,8 @@
 
 #ifndef	_SH5_PMAP_H
 #define	_SH5_PMAP_H
+
+#include "opt_kernel_ipt.h"
 
 #include <sh5/pte.h>
 
