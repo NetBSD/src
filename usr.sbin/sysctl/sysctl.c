@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.19 1999/04/26 22:13:52 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.20 1999/07/02 08:58:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.19 1999/04/26 22:13:52 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.20 1999/07/02 08:58:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,27 @@ __RCSID("$NetBSD: sysctl.c,v 1.19 1999/04/26 22:13:52 thorpej Exp $");
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+
+#ifdef INET6
+#include <netinet6/in6_systm.h>
+#include <netinet6/ip6.h>
+#include <netinet6/icmp6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/udp6.h>
+#include <netinet6/udp6_var.h>
+#ifdef TCP6
+#include <netinet6/tcp6.h>
+#include <netinet6/tcp6_timer.h>
+#include <netinet6/tcp6_var.h>
+#endif
+#include <netinet6/pim6_var.h>
+#endif /* INET6 */
+
+#ifdef IPSEC
+#include <net/route.h>
+#include <netinet6/ipsec.h>
+#include <netkey/key_var.h>
+#endif /* IPSEC */
 
 #include <err.h>
 #include <ctype.h>
@@ -138,6 +159,12 @@ static void listall __P((char *, struct list *));
 static void parse __P((char *, int));
 static void debuginit __P((void));
 static int sysctl_inet __P((char *, char **, int[], int, int *));
+#ifdef INET6
+static int sysctl_inet6 __P((char *, char **, int[], int, int *));
+#endif
+#ifdef IPSEC
+static int sysctl_key __P((char *, char **, int[], int, int *));
+#endif
 static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 static int sysctl_mbuf __P((char *, char **, int[], int, int *));
@@ -344,6 +371,22 @@ parse(string, flags)
 				break;
 			return;
 		}
+#ifdef INET6
+		else if (mib[1] == PF_INET6) {
+			len = sysctl_inet6(string, &bufp, mib, flags, &type);
+			if (len >= 0)
+				break;
+			return;
+		}
+#endif /* INET6 */
+#ifdef IPSEC
+		else if (mib[1] == PF_KEY) {
+			len = sysctl_key(string, &bufp, mib, flags, &type);
+			if (len >= 0)
+				break;
+			return;
+		}
+#endif /* IPSEC */
 		if (flags == 0)
 			return;
 		warnx("Use netstat to view %s information", string);
@@ -539,9 +582,12 @@ struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
 struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
+#ifdef IPSEC
+struct ctlname ipsecname[] = IPSECCTL_NAMES;
+#endif
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
-	{ ipname, IPCTL_MAXID },	/* ip */
+/*0*/	{ ipname, IPCTL_MAXID },	/* ip */
 	{ icmpname, ICMPCTL_MAXID },	/* icmp */
 	{ 0, 0 },			/* igmp */
 	{ 0, 0 },			/* ggmp */
@@ -551,7 +597,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },			/* egp */
 	{ 0, 0 },
-	{ 0, 0 },
+/*10*/	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },			/* pup */
 	{ 0, 0 },
@@ -559,6 +605,29 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ udpname, UDPCTL_MAXID },	/* udp */
+	{ 0, 0 },
+	{ 0, 0 },
+/*20*/	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },			/* idp */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+/*30*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*40*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+#ifdef IPSEC
+	{ ipsecname, IPSECCTL_MAXID },	/* esp - for backward compatibility */
+	{ ipsecname, IPSECCTL_MAXID },	/* ah */
+#else
+	{ 0, 0 },
+	{ 0, 0 },
+#endif
 };
 
 /*
@@ -582,7 +651,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	if ((indx = findname(string, "third", bufpp, &inetlist)) == -1)
 		return (-1);
 	mib[2] = indx;
-	if (indx <= IPPROTO_UDP && inetvars[indx].list != NULL)
+	if (indx <= IPPROTO_MAXID && inetvars[indx].list != NULL)
 		lp = &inetvars[indx];
 	else if (!flags)
 		return (-1);
@@ -600,6 +669,147 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	*typep = lp->list[indx].ctl_type;
 	return (4);
 }
+
+#ifdef INET6
+struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
+struct ctlname ip6name[] = IPV6CTL_NAMES;
+struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
+#ifdef TCP6
+struct ctlname tcp6name[] = TCP6CTL_NAMES;
+#endif
+struct ctlname udp6name[] = UDP6CTL_NAMES;
+struct ctlname pim6name[] = PIMCTL_NAMES;
+struct ctlname ipsec6name[] = IPSEC6CTL_NAMES;
+struct list inet6list = { inet6name, IPV6PROTO_MAXID };
+struct list inet6vars[] = {
+/*0*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 },
+#ifdef TCP6
+	{ tcp6name, TCP6CTL_MAXID },	/* tcp6 */
+#else
+	{ 0, 0 },
+#endif
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+/*10*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ udp6name, UDP6CTL_MAXID },	/* udp6 */
+	{ 0, 0 },
+	{ 0, 0 },
+/*20*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*30*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*40*/	{ 0, 0 },
+	{ ip6name, IPV6CTL_MAXID },	/* ipv6 */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+#ifdef IPSEC
+/*50*/	{ ipsec6name, IPSECCTL_MAXID },	/* esp6 - for backward compatibility */
+	{ ipsec6name, IPSECCTL_MAXID },	/* ah6 */
+#else
+	{ 0, 0 },
+	{ 0, 0 },
+#endif
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ icmp6name, ICMPV6CTL_MAXID },	/* icmp6 */
+	{ 0, 0 },
+/*60*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*70*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*80*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*90*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*100*/	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ pim6name, PIMCTL_MAXID },	/* pim6 */
+};
+
+/*
+ * handle internet6 requests
+ */
+static int
+sysctl_inet6(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &inet6list);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &inet6list)) == -1)
+		return (-1);
+	mib[2] = indx;
+	if (indx <= sizeof(inet6vars)/sizeof(inet6vars[0])
+	 && inet6vars[indx].list != NULL) {
+		lp = &inet6vars[indx];
+	} else if (!flags) {
+		return (-1);
+	} else {
+		fprintf(stderr, "%s: no variables defined for this protocol\n",
+		    string);
+		return (-1);
+	}
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return (-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (4);
+}
+#endif /* INET6 */
+
+#ifdef IPSEC
+struct ctlname keynames[] = KEYCTL_NAMES;
+struct list keylist = { keynames, KEYCTL_MAXID };
+
+/*
+ * handle key requests
+ */
+static int
+sysctl_key(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &keylist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &keylist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	lp = &keylist;
+	*typep = lp->list[indx].ctl_type;
+	return 3;
+}
+#endif /*IPSEC*/
 
 struct ctlname ffsname[] = FFS_NAMES;
 struct ctlname nfsname[] = NFS_NAMES;
