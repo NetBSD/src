@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.116 1997/11/16 22:05:48 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.117 1998/01/09 21:28:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -200,6 +200,8 @@ int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
 #define	KBD_DELAY \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
