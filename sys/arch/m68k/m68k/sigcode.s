@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.4 1998/09/30 22:38:17 thorpej Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.5 1998/10/01 00:22:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,7 +71,7 @@ GLOBAL(sigcode)
 	movl	sp@(12),a0	| signal handler addr	(4 bytes)
 	jsr	a0@		| call signal handler	(2 bytes)
 	addql	#4,sp		| pop signal number	(2 bytes)
-	movew	#SYS___sigreturn14,d0			(4 bytes)
+	movew	#SYS___sigreturn14,d0 |			(4 bytes)
 	trap	#3		| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)	| save errno		(4 bytes)
 	moveq	#SYS_exit,d0	| syscall == exit	(2 bytes)
