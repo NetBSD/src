@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.5 1997/06/06 23:48:03 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.6 1998/07/21 17:30:27 drochner Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -15,6 +15,7 @@
 
 #define	PCNET_PCI_RDP	0x10
 #define	PCNET_PCI_RAP	0x12
+#define	PCNET_PCI_BDP	0x16
 
 /*
  * Ethernet software status per interface.
@@ -24,7 +25,7 @@
  * This structure contains the output queue for the interface, its address, ...
  */
 struct le_softc {
-	struct	am7990_softc sc_am7990;	/* glue to MI code */
+	struct	am79900_softc sc_am79900;	/* glue to MI code */
 
 	void	*sc_ih;
 	bus_space_tag_t sc_iot;		/* space cookie */
