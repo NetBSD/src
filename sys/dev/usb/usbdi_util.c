@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.33 2000/06/01 15:51:27 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.34 2001/07/04 16:23:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -405,6 +405,7 @@ usbd_alloc_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 				       *sizep, *descp);
 	if (err) {
 		free(*descp, mem);
+		*descp = NULL;
 		return (err);
 	}
 	return (USBD_NORMAL_COMPLETION);
