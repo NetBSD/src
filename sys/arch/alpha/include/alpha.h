@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.6.2.1 2000/11/20 19:56:47 bouyer Exp $ */
+/* $NetBSD: alpha.h,v 1.6.2.2 2000/12/08 09:23:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,18 +95,21 @@ void	trap_init(void);
 void	enable_nsio_ide(bus_space_tag_t);
 char *	dot_conv(unsigned long);
 
-void	release_fpu(int);
-void	synchronize_fpstate(struct proc *, int);
+void	fpusave_cpu(struct cpu_info *, int);
+void	fpusave_proc(struct proc *, int);
 
 /* Multiprocessor glue; cpu.c */
 struct cpu_info;
 int	cpu_iccb_send(long, const char *);
 void	cpu_iccb_receive(void);
 void	cpu_hatch(struct cpu_info *);
-void	cpu_halt_secondary(unsigned long);
+void	cpu_halt(void) __attribute__((__noreturn__));
 void	cpu_spinup_trampoline(void);				/* MAGIC */
 void	cpu_pause(unsigned long);
 void	cpu_resume(unsigned long);
+#if defined(DDB)
+void	cpu_debug_dump(void);
+#endif
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_H_ */

@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.12.12.1 2000/11/20 20:04:05 bouyer Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.12.12.2 2000/12/08 09:26:24 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.10 1999/11/12 07:37:21 mark Exp 
+ *	NetBSD: podules,v 1.14 2000/12/05 00:43:55 bjh21 Exp 
  */
 
 /*
@@ -70,11 +70,19 @@ static struct podule_description podules_armadillo[] = {
 };
 
 static struct podule_description podules_wildvision[] = {
+	{ PODULE_WILDVISION_COLOURCARD,	"ColourCard" },
 	{ PODULE_WILDVISION_HAWKV9,	"hawk v9 mark2" },
+	{ PODULE_WILDVISION_SOUNDSAMPLER,	"Sound Sampler" },
+	{ PODULE_WILDVISION_CENTRONICS,	"Bi-directional Centronics" },
 	{ PODULE_WILDVISION_SCANLIGHTV256,	"scanlight video 256" },
 	{ PODULE_WILDVISION_EAGLEM2,	"eagle M2" },
 	{ PODULE_WILDVISION_LARKA16,	"lark A16" },
 	{ PODULE_WILDVISION_MIDIMAX,	"MIDI max" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_hccs[] = {
+	{ PODULE_HCCS_IDE,	"IDE interface" },
 	{ 0x0000, NULL }
 };
 
@@ -145,14 +153,15 @@ static struct podule_description podules_aleph1[] = {
 };
 
 static struct podule_description podules_icubed[] = {
-	{ PODULE_ICUBED_ETHERLAN600,	"etherlan 600 network slot interface" },
-	{ PODULE_ICUBED_ETHERLAN600A,	"etherlan 600A network slot interface" },
-	{ PODULE_ICUBED_ETHERLAN500,	"etherlen 500 interface" },
-	{ PODULE_ICUBED_ETHERLAN500A,	"etherlen 500A interface" },
-	{ PODULE_ICUBED_ETHERLAN200,	"etherlen 200 interface" },
-	{ PODULE_ICUBED_ETHERLAN200A,	"etherlen 200A interface" },
-	{ PODULE_ICUBED_ETHERLAN100,	"etherlen 100 interface" },
-	{ PODULE_ICUBED_ETHERLAN100A,	"etherlen 100A interface" },
+	{ PODULE_ICUBED_ETHERLAN600,	"EtherLan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN600A,	"EtherLan 600A network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN500,	"EtherLan 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN500A,	"EtherLan 500A interface" },
+	{ PODULE_ICUBED_ETHERLAN200,	"EtherLan 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN200A,	"EtherLan 200A interface" },
+	{ PODULE_ICUBED_ETHERLAN100,	"EtherLan 100 interface" },
+	{ PODULE_ICUBED_ETHERLAN100LK,	"EtherLan 100Lk interface" },
+	{ PODULE_ICUBED_ETHERLAN100A,	"EtherLan 100A interface" },
 	{ 0x0000, NULL }
 };
 
@@ -201,6 +210,7 @@ static struct podule_description podules_yes[] = {
 
 static struct podule_description podules_mcs[] = {
 	{ PODULE_MCS_SCSI,	"Connect32 SCSI II interface" },
+	{ PODULE_MCS_MIDICONNECT,	"Midi-Connect" },
 	{ 0x0000, NULL }
 };
 
@@ -217,6 +227,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_CCONCEPTS, 	"Computer Concepts", 	podules_cconcepts },
 	{ MANUFACTURER_ARMADILLO, 	"Armadillo Systems", 	podules_armadillo },
 	{ MANUFACTURER_WILDVISION, 	"Wild Vision", 	podules_wildvision },
+	{ MANUFACTURER_HCCS, 		"HCCS", 	podules_hccs },
 	{ MANUFACTURER_ATOMWIDE, 	"Atomwide", 	podules_atomwide },
 	{ MANUFACTURER_ATOMWIDE2, 	"Atomwide", 	podules_atomwide2 },
 	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },

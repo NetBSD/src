@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130.2.2 2000/11/22 15:59:44 bouyer Exp $
+# $NetBSD: GENERIC,v 1.130.2.3 2000/12/08 09:23:35 bouyer Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.130.2.2 $"
+#ident 		"GENERIC-$Revision: 1.130.2.3 $"
 
 maxusers 32
 
@@ -370,7 +370,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-lsu*	at	cac? unit ?
+ld*	at	cac? unit ?
 
 # USB bus support
 usb*	at uhci?

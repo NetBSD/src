@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.1.6.1 2000/11/20 19:57:18 bouyer Exp $ */
+/* $NetBSD: tsc.c,v 1.1.6.2 2000/12/08 09:23:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.6.1 2000/11/20 19:57:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.6.2 2000/12/08 09:23:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,8 +180,18 @@ tspattach(parent, self, aux)
 
 	printf("\n");
 	pcp = tsp_init(1, t->tsp_slot);
+
 	tsp_dma_init(pcp);
+	
+	/*
+	 * Do PCI memory initialization that needs to be deferred until
+	 * malloc is safe.  On the Tsunami, we need to do this after
+	 * DMA is initialized, as well.
+	 */
+	tsp_bus_mem_init2(&pcp->pc_memt, pcp);
+
 	pci_6600_pickintr(pcp);
+
 	pba.pba_busname = "pci";
 	pba.pba_iot = &pcp->pc_iot;
 	pba.pba_memt = &pcp->pc_memt;

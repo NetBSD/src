@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.5.2.2 2000/11/20 20:15:21 bouyer Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.5.2.3 2000/12/08 09:28:34 bouyer Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -236,9 +236,6 @@ void	_bus_dmamap_sync_030 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 void	_bus_dmamap_sync_0460 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
-/* Set to the appropriate function in machdep.c */
-extern void (*_bus_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int);
 
 int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
 	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,

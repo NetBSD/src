@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.17.2.1 2000/11/20 18:11:33 bouyer Exp $	*/
+/*	$NetBSD: namei.h,v 1.17.2.2 2000/12/08 09:19:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -192,6 +192,7 @@ void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));
 struct mount;
 void cache_purgevfs __P((struct mount *));
+void namecache_print(struct vnode *, void (*)(const char *, ...));
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbio.h,v 1.1.6.2 2000/11/20 20:45:53 bouyer Exp $	*/
+/*	$NetBSD: hpcfbio.h,v 1.1.6.3 2000/12/08 09:26:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -99,7 +99,7 @@ struct hpcfb_fbconf {
 	short	hf_width;		/* how many pixels in a line   	*/
 
 	u_long	hf_baseaddr;		/* frame buffer start address  	*/
-	u_long	hf_offset;		/* frame buffer start offset   	*/
+	u_long	hf_offset;		/* frame buffer start offset for mmap*/
 	short	hf_bytes_per_line;	/**/
 	short	hf_nplanes;		/**/
 	long	hf_bytes_per_plane;	/**/
@@ -110,7 +110,7 @@ struct hpcfb_fbconf {
 
 	u_long	hf_access_flags;	/* HPCFB_ACCESS_*		*/
 	u_long	hf_swap_flags;		/* HPCFB_SWAP_*			*/
-	u_long	hf_accel_flags;   	/* this value is 0		*/
+	u_long	hf_reg_offset;   	/* hardware register offset for mmap */
 	u_long	hf_reserved[3];
 
 	/*

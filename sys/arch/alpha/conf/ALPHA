@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.107.2.2 2000/11/22 15:59:43 bouyer Exp $
+# $NetBSD: ALPHA,v 1.107.2.3 2000/12/08 09:23:34 bouyer Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.107.2.2 $"
+ident		"ALPHA-$Revision: 1.107.2.3 $"
 
 maxusers 32
 
@@ -406,7 +406,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-lsu*	at	cac? unit ?
+ld*	at	cac? unit ?
 
 # USB bus support
 usb*	at uhci?

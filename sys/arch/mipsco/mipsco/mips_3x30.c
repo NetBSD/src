@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.3.2.2 2000/11/20 20:14:11 bouyer Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.3.2.3 2000/12/08 09:28:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,16 +49,17 @@
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 
-extern void MachFPInterrupt __P((u_int, u_int, u_int, struct frame *));
+extern void MachFPInterrupt (u_int, u_int, u_int, struct frame *);
 
 /* Local functions */
-void pizazz_intr __P((u_int, u_int, u_int, u_int));
-int  pizazz_level0_intr __P((void *));
-void pizazz_level5_intr __P((int, int, int));
-void pizazz_intr_establish  __P((int, int (*)(void *), void *));
+void pizazz_init (void);
+void pizazz_intr (u_int, u_int, u_int, u_int);
+int  pizazz_level0_intr (void *);
+void pizazz_level5_intr (int, int, int);
+void pizazz_intr_establish  (int, int (*)(void *), void *);
 
 void
-pizazz_init()
+pizazz_init(void)
 {
 	platform.iobus = "obio";
 	platform.cons_init = NULL;
@@ -87,7 +88,7 @@ pizazz_intr(status, cause, pc, ipending)
 {
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {	        /* Timer Interrupt */
-	        void rambo_clkintr __P((struct clockframe *));
+	        void rambo_clkintr (struct clockframe *);
 	        struct clockframe cf;
 		
 		cf.pc = pc;
@@ -169,7 +170,7 @@ pizazz_level5_intr(pc, cause, status)
 void
 pizazz_intr_establish(level, func, arg)
 	int level;
-	int (*func) __P((void *));
+	int (*func) (void *);
 	void *arg;
 {
 	if (level < 0 || level >= MAX_INTR_COOKIES)

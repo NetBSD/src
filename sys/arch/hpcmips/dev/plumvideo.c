@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.15.2.2 2000/11/20 20:46:15 bouyer Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.15.2.3 2000/12/08 09:26:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -239,8 +239,8 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 	/* configuration name		*/
 	fb->hf_height		= height;
 	fb->hf_width		= width;
-	fb->hf_baseaddr		= mips_ptob(mips_btop(fbvaddr));
-	fb->hf_offset		= (u_long)fbvaddr - fb->hf_baseaddr;
+	fb->hf_baseaddr		= (u_long)fbvaddr;
+	fb->hf_offset		= (u_long)fbvaddr - mips_ptob(mips_btop(fbvaddr));
 	/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= (width * depth) / NBBY;
 	fb->hf_nplanes		= 1;

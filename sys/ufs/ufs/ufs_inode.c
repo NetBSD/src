@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13.8.1 2000/11/20 18:11:54 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.8.2 2000/12/08 09:20:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -55,6 +55,8 @@
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 
+#include <uvm/uvm.h>
+
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
@@ -73,7 +75,7 @@ ufs_inactive(v)
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
-		vprint("ffs_inactive: pushing active", vp);
+		vprint("ufs_inactive: pushing active", vp);
 
 	/*
 	 * Ignore inodes related to stale file handles.
@@ -102,8 +104,9 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
+
 	if (ip->i_ffs_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, NULL, p);
 	return (error);
 }
 
@@ -145,4 +148,152 @@ ufs_reclaim(vp, p)
 	}
 #endif
 	return (0);
+}
+
+/*
+ * allocate a range of blocks in a file.
+ * after this function returns, any page entirely contained within the range
+ * will map to invalid data and thus must be overwritten before it is made
+ * accessible to others.
+ */
+
+int
+ufs_balloc_range(vp, off, len, cred, flags)
+	struct vnode *vp;
+	off_t off, len;
+	struct ucred *cred;
+	int flags;
+{
+	off_t oldeof, neweof, oldeob, neweob, oldpagestart, pagestart;
+	struct uvm_object *uobj;
+	int i, delta, error, npages1, npages2;
+	int bshift = vp->v_mount->mnt_fs_bshift;
+	int bsize = 1 << bshift;
+	int ppb = max(bsize >> PAGE_SHIFT, 1);
+	struct vm_page *pgs1[ppb], *pgs2[ppb];
+	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
+		    vp, off, len, vp->v_uvm.u_size);
+
+	oldeof = vp->v_uvm.u_size;
+	error = VOP_SIZE(vp, oldeof, &oldeob);
+	if (error) {
+		return error;
+	}
+
+	neweof = max(vp->v_uvm.u_size, off + len);
+	error = VOP_SIZE(vp, neweof, &neweob);
+	if (error) {
+		return error;
+	}
+
+	error = 0;
+	uobj = &vp->v_uvm.u_obj;
+	pgs1[0] = pgs2[0] = NULL;
+
+	/*
+	 * if the last block in the file is not a full block (ie. it is a
+	 * fragment), and this allocation is causing the fragment to change
+	 * size (either to expand the fragment or promote it to a full block),
+	 * cache the old last block (at its new size).
+	 */
+
+	oldpagestart = trunc_page(oldeof) & ~(bsize - 1);
+	if ((oldeob & (bsize - 1)) != 0 && oldeob != neweob) {
+		npages1 = min(ppb, (round_page(neweob) - oldpagestart) >>
+			      PAGE_SHIFT);
+		memset(pgs1, 0, npages1 * sizeof(struct vm_page *));
+		simple_lock(&uobj->vmobjlock);
+		error = VOP_GETPAGES(vp, oldpagestart, pgs1, &npages1,
+		    0, VM_PROT_READ, 0, PGO_SYNCIO|PGO_PASTEOF);
+		if (error) {
+			goto out;
+		}
+		simple_lock(&uobj->vmobjlock);
+		uvm_lock_pageq();
+		for (i = 0; i < npages1; i++) {
+			UVMHIST_LOG(ubchist, "got pgs1[%d] %p", i, pgs1[i],0,0);
+			KASSERT((pgs1[i]->flags & PG_RELEASED) == 0);
+			pgs1[i]->flags &= ~PG_CLEAN;
+			uvm_pageactivate(pgs1[i]);
+		}
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
+	}
+
+	/*
+	 * cache the new range as well.  this will create zeroed pages
+	 * where the new block will be and keep them locked until the
+	 * new block is allocated, so there will be no window where
+	 * the old contents of the new block is visible to racing threads.
+	 */
+
+	pagestart = trunc_page(off) & ~(bsize - 1);
+	if (pagestart != oldpagestart || pgs1[0] == NULL) {
+		npages2 = min(ppb, (round_page(neweob) - pagestart) >>
+			      PAGE_SHIFT);
+		memset(pgs2, 0, npages2 * sizeof(struct vm_page *));
+		simple_lock(&uobj->vmobjlock);
+		error = VOP_GETPAGES(vp, pagestart, pgs2, &npages2, 0,
+		    VM_PROT_READ, 0, PGO_SYNCIO|PGO_PASTEOF);
+		if (error) {
+			goto out;
+		}
+		simple_lock(&uobj->vmobjlock);
+		uvm_lock_pageq();
+		for (i = 0; i < npages2; i++) {
+			UVMHIST_LOG(ubchist, "got pgs2[%d] %p", i, pgs2[i],0,0);
+			KASSERT((pgs2[i]->flags & PG_RELEASED) == 0);
+			pgs2[i]->flags &= ~PG_CLEAN;
+			uvm_pageactivate(pgs2[i]);
+		}
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
+	}
+
+	/*
+	 * adjust off to be block-aligned.
+	 */
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	/*
+	 * now allocate the range.
+	 */
+
+	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL);
+	error = VOP_BALLOCN(vp, off, len, cred, flags);
+	lockmgr(&vp->v_glock, LK_RELEASE, NULL);
+
+	/*
+	 * unbusy any pages we are holding.
+	 * if we got an error, set the vnode size back to what it was before.
+	 * this will free any pages we created past the old eof.
+	 */
+
+out:
+	simple_lock(&uobj->vmobjlock);
+	if (error) {
+		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
+		    PGO_FREE);
+	}
+	if (pgs1[0] != NULL) {
+		uvm_page_unbusy(pgs1, npages1);
+
+		/*
+		 * The data in the frag might be moving to a new disk location.
+		 * We need to flush pages to the new disk locations.
+		 */
+
+		(uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
+		    min((oldeof + bsize) & ~(bsize - 1), neweof),
+		    PGO_CLEANIT | ((flags & B_SYNC) ? PGO_SYNCIO : 0));
+	}
+	if (pgs2[0] != NULL) {
+		uvm_page_unbusy(pgs2, npages2);
+	}
+	simple_unlock(&uobj->vmobjlock);
+	return error;
 }

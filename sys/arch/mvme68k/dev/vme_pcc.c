@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.6.16.1 2000/11/20 20:15:19 bouyer Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6.16.2 2000/12/08 09:28:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -167,11 +167,20 @@ vme_pcc_attach(parent, self, aux)
 	sc = (struct vme_pcc_softc *) self;
 	pa = aux;
 
-	sc->sc_bust = pa->pa_bust;
-
 	/* Map the VMEchip's registers */
-	bus_space_map(sc->sc_bust, pa->pa_offset, VME1REG_SIZE, 0,
+	bus_space_map(pa->pa_bust, pa->pa_offset, VME1REG_SIZE, 0,
 	    &sc->sc_bush);
+
+	/* Initialise stuff used by the mvme68k common VMEbus front-end */
+	sc->sc_mvmebus.sc_bust = pa->pa_bust;
+	sc->sc_mvmebus.sc_dmat = pa->pa_dmat;
+	sc->sc_mvmebus.sc_chip = sc;
+	sc->sc_mvmebus.sc_nmasters = VME1_NMASTERS;
+	sc->sc_mvmebus.sc_masters = &vme_pcc_masters[0];
+	sc->sc_mvmebus.sc_nslaves = VME1_NSLAVES;
+	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
+	sc->sc_mvmebus.sc_intr_establish = vme_pcc_intr_establish;
+	sc->sc_mvmebus.sc_intr_disestablish = vme_pcc_intr_disestablish;
 
 	/* Initialize the chip. */
 	reg = vme1_reg_read(sc, VME1REG_SCON) & ~VME1_SCON_SYSFAIL;
@@ -237,16 +246,6 @@ vme_pcc_attach(parent, self, aux)
 		    pcc_slave_base_addr + mem_clusters[0].size - 1;
 	} else
 		sc->sc_slave[VME1_SLAVE_A32].vr_am = MVMEBUS_AM_DISABLED;
-
-	/* Attach to the mvme68k common VMEbus front-end */
-	sc->sc_mvmebus.sc_dmat = pa->pa_dmat;
-	sc->sc_mvmebus.sc_chip = sc;
-	sc->sc_mvmebus.sc_nmasters = VME1_NMASTERS;
-	sc->sc_mvmebus.sc_masters = &vme_pcc_masters[0];
-	sc->sc_mvmebus.sc_nslaves = VME1_NSLAVES;
-	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
-	sc->sc_mvmebus.sc_intr_establish = vme_pcc_intr_establish;
-	sc->sc_mvmebus.sc_intr_disestablish = vme_pcc_intr_disestablish;
 
 	vme_pcc_attached = 1;
 

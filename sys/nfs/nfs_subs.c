@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.71.2.2 2000/11/22 16:06:34 bouyer Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.71.2.3 2000/12/08 09:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1665,17 +1665,14 @@ nfs_loadattrcache(vpp, fp, vaper)
 		vap->va_filerev = 0;
 	}
 	if (vap->va_size != np->n_size) {
-		if (vap->va_type == VREG) {
-			if (np->n_flag & NMODIFIED) {
-				if (vap->va_size < np->n_size)
-					vap->va_size = np->n_size;
-				else
-					np->n_size = vap->va_size;
-			} else
-				np->n_size = vap->va_size;
-			uvm_vnp_setsize(vp, np->n_size);
-		} else
+		if ((np->n_flag & NMODIFIED) && vap->va_size < np->n_size) {
+			vap->va_size = np->n_size;
+		} else {
 			np->n_size = vap->va_size;
+			if (vap->va_type == VREG) {
+				uvm_vnp_setsize(vp, np->n_size);
+			}
+		}
 	}
 	np->n_attrstamp = time.tv_sec;
 	if (vaper != NULL) {
@@ -2366,7 +2363,6 @@ netaddr_match(family, haddr, nam)
 	return (0);
 }
 
-
 /*
  * The write verifier has changed (probably due to a server reboot), so all
  * B_NEEDCOMMIT blocks will have to be written again. Since they are on the
@@ -2377,17 +2373,14 @@ void
 nfs_clearcommit(mp)
 	struct mount *mp;
 {
-	struct vnode *vp, *nvp;
-	struct buf *bp, *nbp;
+	struct vnode *vp;
 	struct nfsnode *np;
+	struct vm_page *pg;
 	int s;
 
 	s = splbio();
-loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
-		if (vp->v_mount != mp)	/* Paranoia */
-			goto loop;
-		nvp = vp->v_mntvnodes.le_next;
+	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		KASSERT(vp->v_mount == mp);
 		if (vp->v_type == VNON)
 			continue;
 		np = VTONFS(vp);
@@ -2395,12 +2388,11 @@ loop:
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
-			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
-				== (B_DELWRI | B_NEEDCOMMIT))
-				bp->b_flags &= ~B_NEEDCOMMIT;
+		simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+		TAILQ_FOREACH(pg, &vp->v_uvm.u_obj.memq, listq) {
+			pg->flags &= ~PG_NEEDCOMMIT;
 		}
+		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 	}
 	splx(s);
 }
@@ -2432,47 +2424,47 @@ nfs_merge_commit_ranges(vp)
 }
 
 int
-nfs_in_committed_range(vp, bp)
+nfs_in_committed_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
 		return 0;
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	return (lo >= np->n_pushedlo && hi <= np->n_pushedhi);
 }
 
 int
-nfs_in_tobecommitted_range(vp, bp)
+nfs_in_tobecommitted_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
 		return 0;
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	return (lo >= np->n_pushlo && hi <= np->n_pushhi);
 }
 
 void
-nfs_add_committed_range(vp, bp)
+nfs_add_committed_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
 		np->n_pushedlo = lo;
@@ -2491,9 +2483,9 @@ nfs_add_committed_range(vp, bp)
 }
 
 void
-nfs_del_committed_range(vp, bp)
+nfs_del_committed_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2501,8 +2493,8 @@ nfs_del_committed_range(vp, bp)
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
 		return;
 
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	if (lo > np->n_pushedhi || hi < np->n_pushedlo)
 		return;
@@ -2528,15 +2520,15 @@ nfs_del_committed_range(vp, bp)
 }
 
 void
-nfs_add_tobecommitted_range(vp, bp)
+nfs_add_tobecommitted_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID)) {
 		np->n_pushlo = lo;
@@ -2555,9 +2547,9 @@ nfs_add_tobecommitted_range(vp, bp)
 }
 
 void
-nfs_del_tobecommitted_range(vp, bp)
+nfs_del_tobecommitted_range(vp, off, len)
 	struct vnode *vp;
-	struct buf *bp;
+	off_t off, len;
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2565,8 +2557,8 @@ nfs_del_tobecommitted_range(vp, bp)
 	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
 		return;
 
-	lo = (off_t)bp->b_blkno * DEV_BSIZE;
-	hi = lo + bp->b_dirtyend;
+	lo = off;
+	hi = lo + len;
 
 	if (lo > np->n_pushhi || hi < np->n_pushlo)
 		return;

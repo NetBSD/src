@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.9.12.1 2000/11/20 20:04:05 bouyer Exp $
+$NetBSD: podules,v 1.9.12.2 2000/12/08 09:26:24 bouyer Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -41,6 +41,7 @@ manufacturer	WATFORD		0x0003	Watford Electronics
 manufacturer	CCONCEPTS	0x0004	Computer Concepts
 manufacturer	ARMADILLO	0x0007	Armadillo Systems
 manufacturer	WILDVISION	0x0009	Wild Vision
+manufacturer	HCCS		0x000c	HCCS
 manufacturer	ATOMWIDE	0x0011	Atomwide
 manufacturer	ATOMWIDE2	0x0017	Atomwide
 manufacturer	LINGENUITY	0x001a	Lingenuity
@@ -82,11 +83,17 @@ podule	CCONCEPTS	LASERDIRECT	0x0014	laser direct (Canon LBP-4)
 
 podule	ARMADILLO	A448		0x0016	A448 sound sampler
 
+/* From an Issue 2.0 ColourCard (others may differ) */
+podule	WILDVISION	COLOURCARD	0x0050	ColourCard
 podule	WILDVISION	HAWKV9		0x0052	hawk v9 mark2
+podule	WILDVISION	SOUNDSAMPLER	0x0054	Sound Sampler
+podule	WILDVISION	CENTRONICS	0x006f	Bi-directional Centronics
 podule	WILDVISION	SCANLIGHTV256	0x00cb	scanlight video 256
 podule	WILDVISION	EAGLEM2		0x00cc	eagle M2
 podule	WILDVISION	LARKA16		0x00ce	lark A16
 podule	WILDVISION	MIDIMAX		0x0200	MIDI max
+
+podule	HCCS		IDE		0x0022	IDE interface
 
 podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
 
@@ -150,6 +157,8 @@ podule	SIMTEC		IDE		0x0131	16 bit IDE interface
 
 podule	YES		RAPIDE		0x0114	RapIDE32 interface
 
+/* MCS also call themselves ACE (Acorn Computer Entertainment) */
 podule	MCS		SCSI		0x0125	Connect32 SCSI II interface
+podule	MCS		MIDICONNECT	0x0133	Midi-Connect
 
 podule	EESOX		SCSI		0x008c	EESOX SCSI II interface

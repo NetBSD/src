@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.2.2 2000/11/22 16:01:00 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.2.3 2000/12/08 09:28:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_aout_m68k.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_linux.h"
@@ -85,11 +86,15 @@
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
+#include <compat/sunos/sunos_exec.h>
 #endif
 
 #ifdef COMPAT_LINUX
 extern struct emul emul_linux;
+#endif
+
+#ifdef COMPAT_AOUT_M68K
+extern struct emul emul_netbsd_aoutm68k;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -993,7 +998,7 @@ syscall(code, frame)
 	struct frame frame;
 {
 	caddr_t params;
-	struct const sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -1069,10 +1074,10 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
-			break;
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
+		if (p->p_emul->e_flags & EMUL_HAS_SYS___syscall) {
+			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+			params += sizeof(quad_t);
+		}
 		break;
 	default:
 		break;
@@ -1132,6 +1137,14 @@ syscall(code, frame)
 	case 0:
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
+#ifdef COMPAT_AOUT_M68K
+		/*
+		 * Some pre-m68k ELF libc assembler stubs assume
+		 * %a0 is preserved across system calls...
+		 */
+		if (p->p_emul != &emul_netbsd_aoutm68k)
+			frame.f_regs[A0] = rval[0];
+#endif
 		frame.f_sr &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccreg.h,v 1.2.18.1 2000/11/20 20:15:19 bouyer Exp $	*/
+/*	$NetBSD: vme_pccreg.h,v 1.2.18.2 2000/12/08 09:28:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,9 +138,9 @@
  * Convenience macros for reading and writing the registers
  */
 #define	vme1_reg_read(sc,r)	\
-		bus_space_read_1((sc)->sc_bust, (sc)->sc_bush, (r))
+		bus_space_read_1((sc)->sc_mvmebus.sc_bust, (sc)->sc_bush, (r))
 #define	vme1_reg_write(sc,r,v)	\
-		bus_space_write_1((sc)->sc_bust, (sc)->sc_bush, (r), (v))
+		bus_space_write_1((sc)->sc_mvmebus.sc_bust, (sc)->sc_bush, (r), (v))
 
 /*
  * The Type 1 VMEchip decoder maps VME address space to system addresses

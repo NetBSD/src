@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2.2.3 2000/11/22 16:00:58 bouyer Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.2.4 2000/12/08 09:28:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,12 +67,13 @@ ssir_pending(volatile unsigned char *ssptr)
 	int __rv;
 
 	__asm __volatile(
-		"	moveq	#0, %1	\n"
-		"	tas	%0	\n"
+		"	moveq	#0, %0	\n"
+		"	tas	%1	\n"
 		"	jne	1f	\n"
-		"	moveq	#1, %1	\n"
+		"	moveq	#1, %0	\n"
 		"1:			\n"
-		: "=m" (*ssptr), "=d" (__rv));
+		: "=d" (__rv)
+		: "m" (*ssptr));
 
 	return (__rv);
 }
@@ -119,14 +120,14 @@ softintr_dispatch()
 {
 	struct mvme68k_soft_intr *msi;
 	struct mvme68k_soft_intrhand *sih;
-	int i;
 
 	while (ssir_pending(&ssir)) {
-		for (i = 0; i < IPL_NSOFT; i++) {
-			if (ssir_pending(&mvme68k_soft_intrs[i].msi_ssir) == 0)
-				continue;
+		for (msi = mvme68k_soft_intrs;
+		    msi < &mvme68k_soft_intrs[IPL_NSOFT];
+		    msi++) {
 
-			msi = &mvme68k_soft_intrs[i];
+			if (ssir_pending(&msi->msi_ssir) == 0)
+				continue;
 
 			msi->msi_evcnt.ev_count++;
 

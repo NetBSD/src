@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.6.2.3 2000/12/08 09:23:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.3 2000/12/08 09:23:22 bouyer Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,17 +59,18 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp 
 #include <machine/cpuvar.h>
 #include <machine/intr.h>
 #include <machine/rpb.h>
+#include <machine/prom.h>
 
-typedef void (*ipifunc_t)(void);
+typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
 
-void	alpha_ipi_halt(void);
-void	alpha_ipi_tbia(void);
-void	alpha_ipi_tbiap(void);
-void	alpha_ipi_imb(void);
-void	alpha_ipi_ast(void);
-void	alpha_ipi_synch_fpu(void);
-void	alpha_ipi_discard_fpu(void);
-void	alpha_ipi_pause(void);
+void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_tbia(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_tbiap(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_synch_fpu(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_discard_fpu(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -123,7 +125,7 @@ alpha_ipi_init(struct cpu_info *ci)
  * Process IPIs for a CPU.
  */
 void
-alpha_ipi_process(struct cpu_info *ci)
+alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 {
 	struct cpu_softc *sc = ci->ci_softc;
 	u_long pending_ipis, bit;
@@ -151,7 +153,7 @@ alpha_ipi_process(struct cpu_info *ci)
 	for (bit = 0; bit < ALPHA_NIPIS; bit++) {
 		if (pending_ipis & (1UL << bit)) {
 			sc->sc_evcnt_which_ipi[bit].ev_count++;
-			(*ipifuncs[bit])();
+			(*ipifuncs[bit])(ci, framep);
 		}
 	}
 }
@@ -214,102 +216,116 @@ alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 }
 
 void
-alpha_ipi_halt(void)
+alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = cpu_number();
-	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
+	u_long cpu_id = ci->ci_cpuid;
+	u_long wait_mask = (1UL << cpu_id);
 
 	/* Disable interrupts. */
 	(void) splhigh();
 
-	printf("%s: shutting down...\n",
-	    cpu_info[cpu_id].ci_softc->sc_dev.dv_xname);
-	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
+	if (cpu_id != hwrpb->rpb_primary_cpu_id) {
+		/*
+		 * If we're not the primary, we just halt now.
+		 */
+		cpu_halt();
+	}
 
-	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
-	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
-	alpha_pal_halt();
+	/*
+	 * We're the primary.  We need to wait for all the other
+	 * secondary CPUs to halt, then we can drop back to the
+	 * console.
+	 */
+	printf("%s: waiting for secondary CPUs to halt...\n",
+	    ci->ci_softc->sc_dev.dv_xname);
+	alpha_mb();
+	for (;;) {
+		alpha_mb();
+		if (cpus_running == wait_mask)
+			break;
+		delay(1000);
+	}
+
+	prom_halt(boothowto & RB_HALT);
 	/* NOTREACHED */
 }
 
 void
-alpha_ipi_tbia(void)
+alpha_ipi_tbia(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = cpu_number();
 
 	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
-	atomic_clearbits_ulong(&cpu_info[cpu_id].ci_ipis,
+	atomic_clearbits_ulong(&ci->ci_ipis,
 	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
 	
-	pmap_tlb_shootdown_q_drain(cpu_id, TRUE);
+	pmap_tlb_shootdown_q_drain(ci->ci_cpuid, TRUE);
 
 	ALPHA_TBIA();
 }
 
 void
-alpha_ipi_tbiap(void)
+alpha_ipi_tbiap(struct cpu_info *ci, struct trapframe *framep)
 {
 
 	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
 
-	pmap_tlb_shootdown_q_drain(cpu_number(), FALSE);
+	pmap_tlb_shootdown_q_drain(ci->ci_cpuid, FALSE);
 
 	ALPHA_TBIAP();
 }
 
 void
-alpha_ipi_imb(void)
+alpha_ipi_imb(struct cpu_info *ci, struct trapframe *framep)
 {
 
 	alpha_pal_imb();
 }
 
 void
-alpha_ipi_ast(void)
+alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 {
 
-	aston(curcpu());
+	aston(ci);
 }
 
 void
-alpha_ipi_synch_fpu(void)
+alpha_ipi_synch_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
-	release_fpu(1);
+	fpusave_cpu(ci, 1);
 }
 
 void
-alpha_ipi_discard_fpu(void)
+alpha_ipi_discard_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
-	release_fpu(0);
+	fpusave_cpu(ci, 0);
 }
 
 void
-alpha_ipi_pause(void)
+alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpumask = (1UL << cpu_number());
+	u_long cpumask = (1UL << ci->ci_cpuid);
 	int s;
-
-	/*
-	 * XXX Problematic -- this always puts a PS of IPL_HIGH
-	 * XXX into the DDB register state.
-	 */
 
 	s = splhigh();
 
-#if defined(DDB) || defined(KGDB)
-	/* XXX Dump register state into cpu_info */
-#endif
+	/* Point debuggers at our trapframe for register state. */
+	ci->ci_db_regs = framep;
+
+	atomic_setbits_ulong(&ci->ci_flags, CPUF_PAUSED);
 
 	/* Spin with interrupts disabled until we're resumed. */
 	do {
 		alpha_mb();
 	} while (cpus_paused & cpumask);
 
-#if defined(DDB) || defined(KGDB)
-	/* XXX Restore register state from cpu_info into trapframe */
-#endif
+	atomic_clearbits_ulong(&ci->ci_flags, CPUF_PAUSED);
+
+	ci->ci_db_regs = NULL;
 
 	splx(s);
+
+	/* Do an IMB on the way out, in case the kernel text was changed. */
+	alpha_pal_imb();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.84.2.1 2000/11/20 18:11:20 bouyer Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.84.2.2 2000/12/08 09:19:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -689,6 +689,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
+	mp->mnt_fs_bshift = DEV_BSHIFT;
+	mp->mnt_dev_bshift = -1;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);

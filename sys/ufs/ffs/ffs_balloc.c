@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.8.1 2000/11/20 18:11:44 bouyer Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.8.2 2000/12/08 09:20:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,6 +57,8 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#include <uvm/uvm.h>
+
 /*
  * Balloc defines the structure of file system storage
  * by allocating the physical blocks on a device given
@@ -72,7 +74,7 @@ ffs_balloc(v)
 		int a_size;
 		struct ucred *a_cred;
 		int a_flags;
-		struct buf *a_bpp;
+		struct buf **a_bpp;
 	} */ *ap = v;
 	ufs_daddr_t lbn;
 	int size;
@@ -88,15 +90,22 @@ ffs_balloc(v)
 	int deallocated, osize, nsize, num, i, error;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
+	struct buf **bpp = ap->a_bpp;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
+	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
 	lbn = lblkno(fs, ap->a_startoffset);
 	size = blkoff(fs, ap->a_startoffset) + ap->a_size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
-	*ap->a_bpp = NULL;
+	if (bpp != NULL) {
+		*bpp = NULL;
+	}
+	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
+
+	KASSERT(size <= fs->fs_bsize);
 	if (lbn < 0)
 		return (EFBIG);
 	cred = ap->a_cred;
@@ -107,71 +116,109 @@ ffs_balloc(v)
 	 * and the file is currently composed of a fragment
 	 * this fragment has to be extended to be a full block.
 	 */
+
 	nb = lblkno(fs, ip->i_ffs_size);
 	if (nb < NDADDR && nb < lbn) {
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
 				ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
-				osize, (int)fs->fs_bsize, cred, &bp);
+				osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
 			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb,
-				    dbtofsb(fs, bp->b_blkno),
+				softdep_setup_allocdirect(ip, nb, newb,
 				    ufs_rw32(ip->i_ffs_db[nb], needswap),
-				    fs->fs_bsize, osize, bp);
-			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
+				    fs->fs_bsize, osize, bpp ? *bpp : NULL);
+			ip->i_ffs_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-			ip->i_ffs_db[nb] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
-			    needswap);
+			ip->i_ffs_db[nb] = ufs_rw32(newb, needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (flags & B_SYNC)
-				bwrite(bp);
-			else
-				bawrite(bp);
+			if (bpp) {
+				if (flags & B_SYNC)
+					bwrite(*bpp);
+				else
+					bawrite(*bpp);
+			}
 		}
 	}
+
 	/*
 	 * The first NDADDR blocks are direct blocks
 	 */
+
 	if (lbn < NDADDR) {
 		nb = ufs_rw32(ip->i_ffs_db[lbn], needswap);
-		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
-			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
-			if (error) {
-				brelse(bp);
-				return (error);
+		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
+
+			/*
+			 * The block is an already-allocated direct block
+			 * and the file already extends past this block,
+			 * thus this must be a whole block.
+			 * Just read the block (if requested).
+			 */
+
+			if (bpp != NULL) {
+				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
+					      bpp);
+				if (error) {
+					brelse(*bpp);
+					return (error);
+				}
 			}
-			*ap->a_bpp = bp;
 			return (0);
 		}
 		if (nb != 0) {
+
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
+
 			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
-				error = bread(vp, lbn, osize, NOCRED, &bp);
-				if (error) {
-					brelse(bp);
-					return (error);
+
+				/*
+				 * The existing block is already
+				 * at least as big as we want.
+				 * Just read the block (if requested).
+				 */
+
+				if (bpp != NULL) {
+					error = bread(vp, lbn, osize, NOCRED,
+						      bpp);
+					if (error) {
+						brelse(*bpp);
+						return (error);
+					}
 				}
+				return 0;
 			} else {
+
+				/*
+				 * The existing block is smaller than we want,
+				 * grow it.
+				 */
+
 				error = ffs_realloccg(ip, lbn,
 				    ffs_blkpref(ip, lbn, (int)lbn,
 					&ip->i_ffs_db[0]), osize, nsize, cred,
-					&bp);
+					bpp, &newb);
 				if (error)
 					return (error);
 				if (DOINGSOFTDEP(vp))
 					softdep_setup_allocdirect(ip, lbn,
-					    dbtofsb(fs, bp->b_blkno), nb,
-					    nsize, osize, bp);
+					    newb, nb, nsize, osize,
+					    bpp ? *bpp : NULL);
 			}
 		} else {
-			if (ip->i_ffs_size < (lbn + 1) * fs->fs_bsize)
+
+			/*
+			 * the block was not previously allocated,
+			 * allocate a new block or fragment.
+			 */
+
+			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
@@ -180,18 +227,20 @@ ffs_balloc(v)
 				nsize, cred, &newb);
 			if (error)
 				return (error);
-			bp = getblk(vp, lbn, nsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
-			if (flags & B_CLRBUF)
-				clrbuf(bp);
-			if (DOINGSOFTDEP(vp))
+			if (bpp != NULL) {
+				bp = getblk(vp, lbn, nsize, 0, 0);
+				bp->b_blkno = fsbtodb(fs, newb);
+				if (flags & B_CLRBUF)
+					clrbuf(bp);
+				*bpp = bp;
+			}
+			if (DOINGSOFTDEP(vp)) {
 				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bp);
+				    nsize, 0, bpp ? *bpp : NULL);
+			}
 		}
-		ip->i_ffs_db[lbn] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
-			needswap);
+		ip->i_ffs_db[lbn] = ufs_rw32(newb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		*ap->a_bpp = bp;
 		return (0);
 	}
 	/*
@@ -200,6 +249,7 @@ ffs_balloc(v)
 	pref = 0;
 	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
 		return(error);
+
 #ifdef DIAGNOSTIC
 	if (num < 1)
 		panic ("ffs_balloc: ufs_bmaparray returned indirect block\n");
@@ -311,14 +361,20 @@ ffs_balloc(v)
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
-		if (flags & B_CLRBUF)
-			clrbuf(nbp);
+		if (bpp != NULL) {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			if (flags & B_CLRBUF)
+				clrbuf(nbp);
+			*bpp = nbp;
+		}
 		if (DOINGSOFTDEP(vp))
 			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[num].in_off, nb, 0, nbp);
+			    indirs[num].in_off, nb, 0, bpp ? *bpp : NULL);
 		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
+		if (allocib == NULL && unwindidx < 0) {
+			unwindidx = i - 1;
+		}
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -328,21 +384,23 @@ ffs_balloc(v)
 		} else {
 			bdwrite(bp);
 		}
-		*ap->a_bpp = nbp;
 		return (0);
 	}
 	brelse(bp);
-	if (flags & B_CLRBUF) {
-		error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
-		if (error) {
-			brelse(nbp);
-			goto fail;
+	if (bpp != NULL) {
+		if (flags & B_CLRBUF) {
+			error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
+			if (error) {
+				brelse(nbp);
+				goto fail;
+			}
+		} else {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			clrbuf(nbp);
 		}
-	} else {
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		*bpp = nbp;
 	}
-	*ap->a_bpp = nbp;
 	return (0);
 fail:
 	/*
@@ -400,4 +458,63 @@ fail:
 	}
 	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
 	return (error);
+}
+
+
+int
+ffs_ballocn(v)
+	void *v;
+{
+	struct vop_ballocn_args /* {
+		struct vnode *a_vp;
+		off_t a_offset;
+		off_t a_length;
+		struct ucred *a_cred;
+		int a_flags;
+	} */ *ap = v;
+
+	off_t off, len;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	int error, delta, bshift, bsize;
+
+	error = 0;
+	bshift = fs->fs_bshift;
+	bsize = 1 << bshift;
+
+	off = ap->a_offset;
+	len = ap->a_length;
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	while (len > 0) {
+		bsize = min(bsize, len);
+
+		error = VOP_BALLOC(vp, off, bsize, ap->a_cred, ap->a_flags,
+				   NULL);
+		if (error) {
+			goto out;
+		}
+
+		/*
+		 * increase file size now, VOP_BALLOC() requires that
+		 * EOF be up-to-date before each call.
+		 */
+
+		if (ip->i_ffs_size < off + bsize) {
+			ip->i_ffs_size = off + bsize;
+			if (vp->v_uvm.u_size < ip->i_ffs_size) {
+				uvm_vnp_setsize(vp, ip->i_ffs_size);
+			}
+		}
+
+		off += bsize;
+		len -= bsize;
+	}
+
+out:
+	return error;
 }

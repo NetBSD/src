@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.2.2 2000/11/20 20:02:43 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.3.2.3 2000/12/08 09:26:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -109,6 +109,13 @@
  */
 #define NKMEMPAGES_MIN_DEFAULT 0
 #define NKMEMPAGES_MAX_DEFAULT 32
+
+/*
+ * Reduce UBC KVM usage from its default (8Mb when I looked).
+ */
+#ifndef UBC_NWINS
+#define UBC_NWINS 128
+#endif
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))

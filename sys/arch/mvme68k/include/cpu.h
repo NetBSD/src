@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.2.2 2000/11/22 16:00:53 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.2.3 2000/12/08 09:28:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,7 +189,6 @@ extern	u_char mvme_ea[6];
 struct frame;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
-int	badaddr __P((caddr_t, int));
 int	nmihand __P((void *));
 void	mvme68k_abort __P((const char *));
 void	physaccess __P((caddr_t, caddr_t, int, int));

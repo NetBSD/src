@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.39.14.1 2000/11/22 16:00:08 bouyer Exp $	*/
+/*	$NetBSD: dca.c,v 1.39.14.2 2000/12/08 09:26:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -573,10 +573,7 @@ dcaintr(arg)
 			if (tp == NULL)
 				break;
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
-				(*tp->t_linesw->l_start)(tp);
-			else
-				dcastart(tp);
+			(*tp->t_linesw->l_start)(tp);
 			break;
 		case IIR_RLS:
 			dcaeint(sc, dca->dca_lsr);

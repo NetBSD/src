@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.45.2.1 2000/11/20 20:09:24 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.45.2.2 2000/12/08 09:26:38 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,8 +1,9 @@
-/*	$NetBSD: vrpiu.c,v 1.5.4.2 2000/11/20 20:48:05 bouyer Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.5.4.3 2000/12/08 09:26:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 2000 SATO Kazumi, All rights reserved.
+ * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,10 +28,16 @@
  *
  */
 
+/*
+ * A/D polling part written by SATO Kazumi.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/callout.h>
+#include <sys/boot_flag.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -38,8 +45,11 @@
 #include <machine/bus.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/config_hook.h>
 
+#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/dev/tpcalibvar.h>
+
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
@@ -52,10 +62,15 @@
 #ifdef VRPIUDEBUG
 int	vrpiu_debug = 0;
 #define	DPRINTF(arg) if (vrpiu_debug) printf arg;
+#define	VPRINTF(arg) if (bootverbose || vrpiu_debug) printf arg;
 #else
 #define	DPRINTF(arg)
+#define	VPRINTF(arg) if (bootverbose) printf arg;
 #endif
 
+#ifndef VRPIU_AD_POLL_INTERVAL
+#define VRPIU_AD_POLL_INTERVAL	60	/* interval is 60 sec */
+#endif /* VRPIU_AD_POLL_INTERTVAL */
 /*
  * data types
  */
@@ -71,13 +86,20 @@ static void	vrpiu_write __P((struct vrpiu_softc *, int, unsigned short));
 static u_short	vrpiu_read __P((struct vrpiu_softc *, int));
 
 static int	vrpiu_intr __P((void *));
+static void	vrpiu_tp_intr __P((struct vrpiu_softc *));
+static void	vrpiu_ad_intr __P((struct vrpiu_softc *));
 #ifdef DEBUG
 static void	vrpiu_dump_cntreg __P((unsigned int cmd));
 #endif
 
-static int	vrpiu_enable __P((void *));
-static int	vrpiu_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static void	vrpiu_disable __P((void *));
+static int	vrpiu_tp_enable __P((void *));
+static int	vrpiu_tp_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static void	vrpiu_tp_disable __P((void *));
+int		vrpiu_ad_enable __P((void *));
+void		vrpiu_ad_disable __P((void *));
+static void	vrpiu_start_powerstate __P((void *));
+static void	vrpiu_calc_powerstate __P((struct vrpiu_softc *));
+static void	vrpiu_power __P((int, void *));
 
 /* mra is defined in mra.c */
 int mra_Y_AX1_BX2_C __P((int *y, int ys, int *x1, int x1s, int *x2, int x2s,
@@ -91,10 +113,12 @@ struct cfattach vrpiu_ca = {
 };
 
 const struct wsmouse_accessops vrpiu_accessops = {
-	vrpiu_enable,
-	vrpiu_ioctl,
-	vrpiu_disable,
+	vrpiu_tp_enable,
+	vrpiu_tp_ioctl,
+	vrpiu_tp_disable,
 };
+
+int vrpiu_ad_poll_interval = VRPIU_AD_POLL_INTERVAL;
 
 /*
  * function definitions
@@ -150,7 +174,7 @@ vrpiuattach(parent, self, aux)
 	/*
 	 * disable device until vrpiu_enable called
 	 */
-	sc->sc_stat = VRPIU_STAT_DISABLE;
+	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
 	tpcalib_init(&sc->sc_tpcalib);
 #if 1
@@ -199,7 +223,7 @@ vrpiuattach(parent, self, aux)
 	}
 
 	/* mask level2 interrupt, stop scan sequencer and mask clock to piu */
-	vrpiu_disable(sc);
+	vrpiu_tp_disable(sc);
 
 	printf("\n");
 
@@ -210,18 +234,35 @@ vrpiuattach(parent, self, aux)
 	 * attach the wsmouse
 	 */
 	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint);
+
+	/*
+	 * power management events
+	 */
+	sc->sc_power_hook = powerhook_establish(vrpiu_power, sc);
+ 
+	/*
+	 * init A/D port polling.
+	 */
+	sc->sc_battery.n_values = 3;
+	sc->sc_battery.value[0] = -1;
+	sc->sc_battery.value[1] = -1;
+	sc->sc_battery.value[2] = -1;
+	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
+	callout_init(&sc->sc_adpoll);
+	callout_reset(&sc->sc_adpoll, hz,
+			  vrpiu_start_powerstate, sc);
 }
 
 int
-vrpiu_enable(v)
+vrpiu_ad_enable(v)
 	void *v;
 {
 	struct vrpiu_softc *sc = v;
 	int s;
 	unsigned int cnt;
 
-	DPRINTF(("%s(%d): vrpiu_enable()\n", __FILE__, __LINE__));
-	if (sc->sc_stat != VRPIU_STAT_DISABLE)
+	DPRINTF(("%s(%d): vrpiu_ad_enable()\n", __FILE__, __LINE__));
+	if (sc->sc_adstat != VRPIU_AD_STAT_DISABLE)
 		return EBUSY;
 
 	/* supply clock to PIU */
@@ -233,7 +274,7 @@ vrpiu_enable(v)
 	s = spltty();
 
 	/* clear interrupt status */
-	vrpiu_write(sc, PIUINT_REG_W, PIUINT_ALLINTR);
+	vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
 
 	/* Disable -> Standby */
 	cnt = PIUCNT_PIUPWR |
@@ -241,11 +282,82 @@ vrpiu_enable(v)
 		PIUCNT_PADATSTART | PIUCNT_PADATSTOP;
 	vrpiu_write(sc, PIUCNT_REG_W, cnt);
 
+	/* Level2 interrupt register setting */
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_PADADPINTR, 1);
+
 	/* save pen status, touch or release */
 	cnt = vrpiu_read(sc, PIUCNT_REG_W);
 
+	/*
+	 * Enable scan sequencer operation
+	 * Standby -> WaitPenTouch
+	 */
+	cnt |= PIUCNT_PIUSEQEN;
+	vrpiu_write(sc, PIUCNT_REG_W, cnt);
+
+	sc->sc_adstat = VRPIU_AD_STAT_ENABLE;
+
+	splx(s);
+
+	return 0;
+}
+
+void
+vrpiu_ad_disable(v)
+	void *v;
+{
+	struct vrpiu_softc *sc = v;
+
+	DPRINTF(("%s(%d): vrpiu_ad_disable()\n", __FILE__, __LINE__));
+
+	/* Set level2 interrupt register to mask interrupts */
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_PADADPINTR, 0);
+
+	sc->sc_adstat = VRPIU_AD_STAT_DISABLE;
+
+	if (sc->sc_tpstat == VRPIU_TP_STAT_DISABLE){
+		/* Disable scan sequencer operation and power off */
+		vrpiu_write(sc, PIUCNT_REG_W, 0);
+
+		/* mask clock to PIU */
+		__vrcmu_supply(CMUMSKPIU, 1);
+	}
+}
+
+int
+vrpiu_tp_enable(v)
+	void *v;
+{
+	struct vrpiu_softc *sc = v;
+	int s;
+	unsigned int cnt;
+
+	DPRINTF(("%s(%d): vrpiu_tp_enable()\n", __FILE__, __LINE__));
+	if (sc->sc_tpstat != VRPIU_TP_STAT_DISABLE)
+		return EBUSY;
+
+	/* supply clock to PIU */
+	__vrcmu_supply(CMUMSKPIU, 1);
+
+	/* Scan interval 0x7FF is maximum value */
+	vrpiu_write(sc, PIUSIVL_REG_W, 0x7FF);
+
+	s = spltty();
+
+	/* clear interrupt status */
+	vrpiu_write(sc, PIUINT_REG_W, PIUINT_ALLINTR&~PIUINT_PADADPINTR);
+
+	/* Disable -> Standby */
+	cnt = PIUCNT_PIUPWR |
+		PIUCNT_PIUMODE_COORDINATE |
+		PIUCNT_PADATSTART | PIUCNT_PADATSTOP;
+	vrpiu_write(sc, PIUCNT_REG_W, cnt);
+
 	/* Level2 interrupt register setting */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR, 1);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR&~PIUINT_PADADPINTR, 1);
+
+	/* save pen status, touch or release */
+	cnt = vrpiu_read(sc, PIUCNT_REG_W);
 
 	/*
 	 * Enable scan sequencer operation
@@ -255,8 +367,8 @@ vrpiu_enable(v)
 	vrpiu_write(sc, PIUCNT_REG_W, cnt);
 
 	/* transit status DISABLE -> TOUCH or RELEASE */
-	sc->sc_stat = (cnt & PIUCNT_PENSTC) ?
-		VRPIU_STAT_TOUCH : VRPIU_STAT_RELEASE;
+	sc->sc_tpstat = (cnt & PIUCNT_PENSTC) ?
+		VRPIU_TP_STAT_TOUCH : VRPIU_TP_STAT_RELEASE;
 
 	splx(s);
 
@@ -264,27 +376,29 @@ vrpiu_enable(v)
 }
 
 void
-vrpiu_disable(v)
+vrpiu_tp_disable(v)
 	void *v;
 {
 	struct vrpiu_softc *sc = v;
 
-	DPRINTF(("%s(%d): vrpiu_disable()\n", __FILE__, __LINE__));
+	DPRINTF(("%s(%d): vrpiu_tp_disable()\n", __FILE__, __LINE__));
 
 	/* Set level2 interrupt register to mask interrupts */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR, 0);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR&~PIUINT_PADADPINTR, 0);
 
-	sc->sc_stat = VRPIU_STAT_DISABLE;
+	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
-	/* Disable scan sequencer operation and power off */
-	vrpiu_write(sc, PIUCNT_REG_W, 0);
+	if (sc->sc_adstat == VRPIU_AD_STAT_DISABLE){
+		/* Disable scan sequencer operation and power off */
+		vrpiu_write(sc, PIUCNT_REG_W, 0);
 
-	/* mask clock to PIU */
-	__vrcmu_supply(CMUMSKPIU, 1);
+		/* mask clock to PIU */
+		__vrcmu_supply(CMUMSKPIU, 1);
+	}
 }
 
 int
-vrpiu_ioctl(v, cmd, data, flag, p)
+vrpiu_tp_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
@@ -293,7 +407,7 @@ vrpiu_ioctl(v, cmd, data, flag, p)
 {
 	struct vrpiu_softc *sc = v;
 
-	DPRINTF(("%s(%d): vrpiu_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
+	DPRINTF(("%s(%d): vrpiu_tp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
@@ -316,13 +430,51 @@ vrpiu_ioctl(v, cmd, data, flag, p)
 }
 
 /*
- * PIU interrupt handler.
+ * PIU AD interrupt handler.
  */
-int
-vrpiu_intr(arg)
-	void *arg;
+void
+vrpiu_ad_intr(sc)
+	struct vrpiu_softc *sc;
 {
-        struct vrpiu_softc *sc = arg;
+	unsigned int i;
+	unsigned int intrstat;
+
+	intrstat = vrpiu_read(sc, PIUINT_REG_W);
+
+	if (sc->sc_adstat == VRPIU_AD_STAT_DISABLE) {
+		/*
+		 * the device isn't enabled. just clear interrupt.
+		 */
+		vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
+		return;
+	}
+
+	if (intrstat & PIUINT_PADADPINTR) {
+		sc->sc_battery.value[0] = (unsigned int)vrpiu_read(sc, PIUAB(0));
+		sc->sc_battery.value[1] = (unsigned int)vrpiu_read(sc, PIUAB(1));
+		sc->sc_battery.value[2] = (unsigned int)vrpiu_read(sc, PIUAB(2));
+	}
+
+	if (intrstat & PIUINT_PADADPINTR) {
+		for (i = 0; i < 3; i++) {
+			if (sc->sc_battery.value[i] & PIUAB_VALID)
+				sc->sc_battery.value[i] &= PIUAB_PADDATA_MASK;
+			else
+				sc->sc_battery.value[i] = 0;
+		}
+		vrpiu_calc_powerstate(sc);
+	}
+	vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
+
+	return;
+}
+/*
+ * PIU TP interrupt handler.
+ */
+void
+vrpiu_tp_intr(sc)
+	struct vrpiu_softc *sc;
+{
 	unsigned int cnt, i;
 	unsigned int intrstat, page;
 	int tpx0, tpx1, tpy0, tpy1;
@@ -330,12 +482,12 @@ vrpiu_intr(arg)
 
 	intrstat = vrpiu_read(sc, PIUINT_REG_W);
 
-	if (sc->sc_stat == VRPIU_STAT_DISABLE) {
-		/*
+	if (sc->sc_tpstat == VRPIU_TP_STAT_DISABLE) {
+	/*
 		 * the device isn't enabled. just clear interrupt.
 		 */
-		vrpiu_write(sc, PIUINT_REG_W, intrstat);
-		return (0);
+		vrpiu_write(sc, PIUINT_REG_W, intrstat&~PIUINT_PADADPINTR);
+		return;
 	}
 
 	page = (intrstat & PIUINT_OVP) ? 1 : 0;
@@ -359,7 +511,7 @@ vrpiu_intr(arg)
 #endif
 
 	/* clear interrupt status */
-	vrpiu_write(sc, PIUINT_REG_W, intrstat);
+	vrpiu_write(sc, PIUINT_REG_W, intrstat&~PIUINT_PADADPINTR);
 
 #if 0
 	DPRINTF(("vrpiu_intr: OVP=%d", page));
@@ -416,24 +568,24 @@ vrpiu_intr(arg)
 	}
 
 	if (cnt & PIUCNT_PENSTC) {
-		if (sc->sc_stat == VRPIU_STAT_RELEASE) {
+		if (sc->sc_tpstat == VRPIU_TP_STAT_RELEASE) {
 			/*
 			 * pen touch
 			 */
 			DPRINTF(("PEN TOUCH\n"));
-			sc->sc_stat = VRPIU_STAT_TOUCH;
+			sc->sc_tpstat = VRPIU_TP_STAT_TOUCH;
 			/*
 			 * We should not report button down event while
 			 * we don't know where it occur.
 			 */
 		}
 	} else {
-		if (sc->sc_stat == VRPIU_STAT_TOUCH) {
+		if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
 			/*
 			 * pen release
 			 */
 			DPRINTF(("RELEASE\n"));
-			sc->sc_stat = VRPIU_STAT_RELEASE;
+			sc->sc_tpstat = VRPIU_TP_STAT_RELEASE;
 			/* button 0 UP */
 			wsmouse_input(sc->sc_wsmousedev,
 				      0,
@@ -446,7 +598,86 @@ vrpiu_intr(arg)
 		vrpiu_write(sc, PIUCNT_REG_W, cnt);
 	}
 
+	return;
+}
+
+/*
+ * PIU interrupt handler.
+ */
+int
+vrpiu_intr(arg)
+	void *arg;
+{
+        struct vrpiu_softc *sc = arg;
+
+	vrpiu_ad_intr(sc);
+	vrpiu_tp_intr(sc);
+
 	return 0;
+}
+
+void
+vrpiu_start_powerstate(v)
+	void *v;
+{
+	int mask;
+	struct vrpiu_softc *sc = (struct vrpiu_softc *)v;
+
+	vrpiu_ad_enable(sc);
+	mask = vrpiu_read(sc, PIUAMSK_REG_W);
+	mask &= 0xff8f; /* XXX */
+	vrpiu_write(sc, PIUAMSK_REG_W, mask);
+	vrpiu_write(sc, PIUASCN_REG_W, PIUACN_ADPSSTART);
+	/*
+	 * restart next A/D polling
+	 */
+	callout_reset(&sc->sc_adpoll, hz*vrpiu_ad_poll_interval,
+			 vrpiu_start_powerstate, sc);
+}
+
+void
+vrpiu_calc_powerstate(sc)
+	struct vrpiu_softc *sc;
+{
+	extern void vrgiu_diff_io __P((void));
+	vrpiu_ad_disable(sc);
+	VPRINTF(("vrpiu:AD: %d, %d, %d\n",
+		sc->sc_battery.value[0],
+		sc->sc_battery.value[1],
+		sc->sc_battery.value[2]));
+	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
+#ifdef notyet
+	config_hook_call(CONFIG_HOOK_PMEVENT,
+			 CONFIG_HOOK_PMEVENT_BATTERYVAL,
+			 (void *)&sc->sc_battery);
+#endif /* notyet */
+	/*
+	 * restart next A/D polling if change polling timming.
+	 */
+	if (sc->sc_battery.nextpoll != hz*vrpiu_ad_poll_interval)
+		callout_reset(&sc->sc_adpoll, sc->sc_battery.nextpoll,
+				 vrpiu_start_powerstate, sc);
+	if (bootverbose)
+		vrgiu_diff_io();
+		
+}
+
+static void 
+vrpiu_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct vrpiu_softc *sc = arg;
+
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		break;
+	case PWR_RESUME:
+		callout_reset(&sc->sc_adpoll, hz,
+				  vrpiu_start_powerstate, sc);
+		break;
+	}
 }
 
 #ifdef DEBUG

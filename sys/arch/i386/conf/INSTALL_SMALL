@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.42.2.2 2000/11/22 16:00:17 bouyer Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.42.2.3 2000/12/08 09:26:34 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -255,7 +255,7 @@ com2	at isa? port 0x3e8 irq 5
 # I2O devices
 #iop*	at pci? dev ? function ?	# I/O processor
 #iopsp*	at iop? tid ?			# SCSI/FC-AL ports
-#lsu*	at iop? tid ?			# block devices
+#ld*	at iop? tid ?			# block devices
 
 # SCSI Controllers and Devices
 
@@ -323,8 +323,8 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #cac*	at eisa?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-#lsu*	at cac? unit ?			# Compaq array disk devices
-#lsu*	at twe? unit ?			# 3ware array disk devices
+#ld*	at cac? unit ?			# Compaq array disk devices
+#ld*	at twe? unit ?			# 3ware array disk devices
 
 # IDE and related devices
 

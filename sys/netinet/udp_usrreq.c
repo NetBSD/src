@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.52.2.1 2000/11/20 18:10:38 bouyer Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.52.2.2 2000/12/08 09:18:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -554,7 +554,7 @@ udp4_realinput(src, dst, m, off)
 	dst4 = &dst->sin_addr;
 	dport = &dst->sin_port;
 
-	if (IN_MULTICAST(src4->s_addr) ||
+	if (IN_MULTICAST(dst4->s_addr) ||
 	    in_broadcast(*dst4, m->m_pkthdr.rcvif)) {
 		struct inpcb *last;
 		/*
@@ -704,7 +704,7 @@ udp6_realinput(af, src, dst, m, off)
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in6_addr *src6, *dst6;
-	struct in_addr *src4;
+	struct in_addr *dst4;
 	struct in6pcb *in6p;
 
 	rcvcnt = 0;
@@ -719,10 +719,10 @@ udp6_realinput(af, src, dst, m, off)
 	sport = &src->sin6_port;
 	dst6 = &dst->sin6_addr;
 	dport = &dst->sin6_port;
-	src4 = (struct in_addr *)&src->sin6_addr.s6_addr32[12];
+	dst4 = (struct in_addr *)&dst->sin6_addr.s6_addr32[12];
 
 	if (IN6_IS_ADDR_MULTICAST(dst6)
-	 || (af == AF_INET && IN_MULTICAST(src4->s_addr))) {
+	 || (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
 		struct in6pcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets

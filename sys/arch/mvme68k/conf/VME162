@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.1.4.2 2000/11/20 20:15:15 bouyer Exp $
+#	$NetBSD: VME162,v 1.1.4.3 2000/12/08 09:28:27 bouyer Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -8,10 +8,10 @@ options 	MVME162
 # Needed on m68040 boards to emulate some missing FP instructions
 options 	FPSP
 
-maxusers	16
+maxusers	8
 
-options 	DDB
-options 	DIAGNOSTIC, DEBUG
+#options 	DDB
+#options 	DIAGNOSTIC, DEBUG
 
 #options 	SYSVSHM
 options 	KTRACE
@@ -21,6 +21,7 @@ file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
 file-system 	MFS
+file-system 	CD9660
 #file-system	MSDOSFS
 #file-system	UNION
 
@@ -29,12 +30,13 @@ file-system 	MFS
 
 # Networking options
 options 	INET
-options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
+#options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        GATEWAY         # IP packet forwarding
 #options        ISO             # OSI networking
 #options        TPIP
 #options        EON
 
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_14, COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
@@ -57,6 +59,7 @@ pseudo-device	vnd 2
 mainbus0	at root
 
 pcctwo0		at mainbus0
+memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 zsc*		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
@@ -76,7 +79,4 @@ scsibus*	at ncrsc?
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
-#cd*		at scsibus? target ? lun ?
-#ch*		at scsibus? target ? lun ?
-#ss*		at scsibus? target ? lun ?	# SCSI scanners
-#uk*		at scsibus? target ? lun ?	# SCSI unknown
+cd*		at scsibus? target ? lun ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.2.1 2000/11/20 20:12:59 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.2 2000/12/08 09:28:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,74 +82,13 @@ void setsoftnet   __P((void));
 void clearsoftnet __P((void));
 int  splsoftnet   __P((void));
 
-void do_pending_int __P((void));
+int splraise __P((int));
+int spllower __P((int));
+void splx __P((int));
+void softintr __P((int));
 
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
-static __inline void softintr __P((int));
-
-extern volatile int cpl, ipending, astpending, tickspending;
+extern volatile int astpending, tickspending;
 extern int imask[];
-
-/*
- *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
- */
-static __inline int
-splraise(ncpl)
-	int ncpl;
-{
-	int ocpl;
-
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
-	ocpl = cpl;
-	cpl = ocpl | ncpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	return (ocpl);
-}
-
-static __inline void
-splx(ncpl)
-	int ncpl;
-{
-
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	cpl = ncpl;
-	if (ipending & ~ncpl)
-		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-}
-
-static __inline int
-spllower(ncpl)
-	int ncpl;
-{
-	int ocpl;
-
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	ocpl = cpl;
-	cpl = ncpl;
-	if (ipending & ~ncpl)
-		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	return (ocpl);
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-softintr(ipl)
-	int ipl;
-{
-	int msrsave;
-
-	__asm__ volatile("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= 1 << ipl;
-	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
-}
 
 #define ICU_LEN		64
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4.2.2 2000/11/20 20:02:52 bouyer Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4.2.3 2000/12/08 09:26:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.4.2.2 2000/11/20 20:02:52 bouyer Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.4.2.3 2000/12/08 09:26:23 bouyer Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -99,9 +99,10 @@ rtcmatch(parent, cf, aux)
 	void *aux;
 {
 	struct iicbus_attach_args *ib = aux;
+	char buf[1];
 
 	if ((ib->ib_addr & PCF8583_MASK) == PCF8583_ADDR &&
-	    iic_control(parent, ib->ib_addr | IIC_READ, NULL, 0) == 0)
+	    iic_control(parent, ib->ib_addr | IIC_READ, buf, 1) == 0)
 		return 1;
 	return 0;
 }

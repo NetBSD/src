@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4.14.1 2000/11/20 20:15:29 bouyer Exp $ */
+/*	$NetBSD: installboot.c,v 1.4.14.2 2000/12/08 09:28:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <err.h>
-#include <a.out.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -54,25 +53,28 @@
 #include <unistd.h>
 #include <sys/disklabel.h>
 
+#include "loadfile.h"
+
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
+
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
-	{ { "_block_size" } },
 #define X_BLOCK_COUNT	1
-	{ { "_block_count" } },
 #define X_BLOCK_TABLE	2
-	{ { "_block_table" } },
-	{ {NULL} }
+	{ "block_size" },
+	{ "block_count" },
+	{ "block_table" },
+	{ NULL }
 };
 
 int *block_size_p;		/* block size var. in prototype image */
 int *block_count_p;		/* block count var. in prototype image */
-daddr_t	*block_table;	/* block number array in prototype image */
+daddr_t	*block_table;		/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
-char		*loadprotoblocks __P((char *, long *));
+char		*loadprotoblocks __P((char *, size_t *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
@@ -95,7 +97,7 @@ main(argc, argv)
 	int	c;
 	int	devfd;
 	char	*protostore;
-	long	protosize;
+	size_t	protosize;
 
 	while ((c = getopt(argc, argv, "vnh")) != -1) {
 		switch (c) {
@@ -136,7 +138,7 @@ main(argc, argv)
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto bootblock bad size=%ld", protosize);
+		err(1, "proto bootblock bad size=%d", protosize);
 
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
@@ -176,95 +178,51 @@ main(argc, argv)
 char *
 loadprotoblocks(fname, size)
 	char *fname;
-	long *size;
+	size_t *size;
 {
 	int	fd;
-	size_t	tdsize;		/* text+data size */
-	size_t	bbsize;		/* boot block size (block aligned) */
-	char	*bp;
-	struct	nlist *nlp;
-	struct	exec eh;
-	long	off;
+	u_long	marks[MARK_MAX], bp, offs;
 
 	fd = -1;
-	bp = NULL;
 
 	/* Locate block number array in proto file */
 	if (nlist(fname, nl) != 0) {
 		warnx("nlist: %s: symbols not found", fname);
 		return NULL;
 	}
-	/* Validate symbol types (global data). */
-	for (nlp = nl; nlp->n_un.n_name; nlp++) {
-		if (nlp->n_type != (N_DATA | N_EXT)) {
-			warnx("nlist: %s: wrong type", nlp->n_un.n_name);
-			return NULL;
-		}
-	}
 
-	if ((fd = open(fname, O_RDONLY)) < 0) {
-		warn("open: %s", fname);
+	marks[MARK_START] = 0;
+	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		return NULL;
-	}
-	if (read(fd, &eh, sizeof(eh)) != sizeof(eh)) {
-		warn("read: %s", fname);
-		goto bad;
-	}
-	if (N_GETMAGIC(eh) != OMAGIC) {
-		warn("bad magic: 0x%lx", eh.a_midmag);
-		goto bad;
-	}
-	/*
-	 * We have to include the exec header in the beginning of
-	 * the buffer, and leave extra space at the end in case
-	 * the actual write to disk wants to skip the header.
-	 */
-	tdsize = eh.a_text + eh.a_data;
-	bbsize = tdsize + sizeof(eh);
-	bbsize = roundup(bbsize, DEV_BSIZE);
+	(void)close(fd);
 
-	/*
-	 * Allocate extra space here because the caller may copy
-	 * the boot block starting at the end of the exec header.
-	 * This prevents reading beyond the end of the buffer.
-	 */
-	if ((bp = calloc(bbsize + sizeof(eh), 1)) == NULL) {
-		warnx("malloc: %s: no memory", fname);
-		goto bad;
-	}
-	/* Copy the exec header and read the rest of the file. */
-	memcpy(bp, &eh, sizeof(eh));
-	if (read(fd, bp+sizeof(eh), tdsize) != tdsize) {
-		warn("read: %s", fname);
-		goto bad;
-	}
+	*size = roundup(marks[MARK_END] - marks[MARK_START], DEV_BSIZE);
+	bp = (u_long)malloc(*size);
 
-	*size = bbsize;	/* aligned to DEV_BSIZE */
+	offs = marks[MARK_START];
+	marks[MARK_START] = bp - offs;
+
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+		return NULL;
+	(void)close(fd);
 
 	/* Calculate the symbols' locations within the proto file */
-	off = N_DATOFF(eh) - N_DATADDR(eh) - (eh.a_entry - N_TXTADDR(eh));
-	block_size_p  =   (int *) (bp + nl[X_BLOCK_SIZE ].n_value + off);
-	block_count_p =   (int *) (bp + nl[X_BLOCK_COUNT].n_value + off);
-	block_table = (daddr_t *) (bp + nl[X_BLOCK_TABLE].n_value + off);
+	block_size_p  =   (int *) (bp + (nl[X_BLOCK_SIZE ].n_value - offs));
+	block_count_p =   (int *) (bp + (nl[X_BLOCK_COUNT].n_value - offs));
+	block_table = (daddr_t *) (bp + (nl[X_BLOCK_TABLE].n_value - offs));
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		printf("%s: entry point %#lx\n", fname, eh.a_entry);
-		printf("proto bootblock size %ld\n", *size);
+		printf("%s: entry point %#lx\n", fname, marks[MARK_ENTRY]);
+		printf("proto bootblock size %d\n", *size);
 		printf("room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
-	close(fd);
-	if (!hflag)
-		bp += sizeof(struct exec);
-	return bp;
+	return (char *) bp;
 
- bad:
 	if (bp)
-		free(bp);
-	if (fd >= 0)
-		close(fd);
+		free((void *)bp);
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.8.2.1 2000/11/20 20:11:41 bouyer Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.8.2.2 2000/12/08 09:28:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,38 +77,3 @@ GLOBAL(sigcode)
 	trap	#0		| exit(errno)			(2 bytes)
 	.align	2
 GLOBAL(esigcode)
-
-#ifdef COMPAT_SUNOS
- 	.data
- 	.align	2
-GLOBAL(sunos_sigcode)
-	movl	%sp@(12),%a0	| signal handler addr	(4 bytes)
-	jsr	%a0@		| call signal handler	(2 bytes)
-	addql	#4,%sp		| pop signal number	(2 bytes)
-	trap	#1		| special syscall entry	(2 bytes)
-	movl	%d0,%sp@(4)	| save errno		(4 bytes)
-	moveq	#1,%d0		| syscall == exit	(2 bytes)
-	trap	#0		| exit(errno)		(2 bytes)
-	.align	2
-GLOBAL(sunos_esigcode)
-#endif /* COMPAT_SUNOS */
-
-#ifdef COMPAT_SVR4
-	.data
-	.align	2
-GLOBAL(svr4_sigcode)
-	movl	%sp@(SVR4_SIGF_HANDLER),%a0	| signal handler addr
-	jsr	%a0@				| call signal handler
-	lea	%sp@(SVR4_SIGF_UC),%a0		| ucontext to resume addr
-	movl	%a0,%sp@-			| push pointer to ucontext
-	movl	#SVR4_SETCONTEXT,%sp@-		| push context() subcode
-	subql	#4,%sp				| padding for call frame layout
-	movql	#SVR4_SYS_context,%d0		| setcontext(&sf.sf_uc)
-	trap	#0				|  shouldn't return
-	movl	%d0,%sp@(4)			|  so save `errno'
-	moveq	#SVR4_SYS_exit,%d0		|  and exit hard
-	trap	#0				| _exit(errno)
-	.align	2
-GLOBAL(svr4_esigcode)
-#endif /* COMPAT_SVR4 */
-

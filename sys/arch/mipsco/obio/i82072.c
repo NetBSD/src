@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.2.2.2 2000/11/20 20:14:11 bouyer Exp $	*/
+/*	$NetBSD: i82072.c,v 1.2.2.3 2000/12/08 09:28:26 bouyer Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,11 +41,20 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/mainboard.h>
 #include <machine/bus.h>
+
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_ioctl(fdioctl);
+dev_type_size(fdsize);
+dev_type_dump(fddump);
+dev_type_strategy(fdstrategy);
+
 
 #define	I82072_STATUS	0x000003
 #define	I82072_DATA	0x000007
@@ -59,29 +68,24 @@ struct	fd_softc {
         int     unit;
 };
 
-static int	fd_match __P((struct device *, struct cfdata *, void *));
-static void	fd_attach __P((struct device *, struct device *, void *));
-static void     fd_reset __P((struct fd_softc *));
+static int	fd_match (struct device *, struct cfdata *, void *);
+static void	fd_attach (struct device *, struct device *, void *);
+static void     fd_reset (struct fd_softc *);
 
 struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fd_match, fd_attach
 };
 
-static int	fd_intr __P((void *));
+static int	fd_intr (void *);
 
 int
-fd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+fd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 1;
 }
 
 void
-fd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fd_attach(struct device *parent, struct device *self, void *aux)
 {
         struct fd_softc *sc = (void *)self;
 	struct confargs *ca = aux;
@@ -104,8 +108,7 @@ fd_attach(parent, self, aux)
 }
 
 void
-fd_reset(sc)
-        struct fd_softc *sc;
+fd_reset(struct fd_softc *sc)
 {
 	/* This clears any pending interrupts from the i82072 FDC */
 	bus_space_write_1(sc->fd_bst, sc->fd_bsh, I82072_STATUS, 0x80);
@@ -114,29 +117,41 @@ fd_reset(sc)
 	DELAY(1000);
 }
 
-void
-fdopen()
-{}
+int
+fdopen(dev_t dev, int flags, int mode, struct proc *p)
+{
+	return (EBADF);
+}
+
+int
+fdclose(dev_t dev, int flags, int mode, struct proc *p)
+{
+	return 0;
+}
 
 void
-fdclose()
-{}
+fdstrategy(struct buf *bp)
+{
+	panic("fdstrategy");
+}
 
-void
-fdstrategy()
-{}
+int
+fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+{
+	return (EINVAL);
+}
 
-void
-fdioctl()
-{}
+int
+fddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+{
+	return (ENODEV);
+}
 
-void
-fddump()
-{}
-
-void
-fdsize()
-{}
+int
+fdsize(dev_t dev)
+{
+	return (0);
+}
 
 static int
 fd_intr(arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.7.2.2 2000/11/22 16:06:20 bouyer Exp $	*/
+/*	$NetBSD: in6.c,v 1.7.2.3 2000/12/08 09:18:51 bouyer Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -411,7 +411,8 @@ in6_control(so, cmd, data, ifp, p)
 			}
 		}
 		ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-	}
+	} else
+		ia = NULL;
 
 	switch (cmd) {
 

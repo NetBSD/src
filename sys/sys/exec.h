@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.67.14.2 2000/11/22 16:06:37 bouyer Exp $	*/
+/*	$NetBSD: exec.h,v 1.67.14.3 2000/12/08 09:19:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -114,7 +114,7 @@ struct execsw {
 			struct exec_package *));
 	} u;
 	const struct  emul *es_emul;	/* os emulation */
-	int	es_flags;		/* miscellaneous flags */
+	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
 	void	*(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
@@ -123,6 +123,10 @@ struct execsw {
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
 				  u_long));
 };
+
+#define EXECSW_PRIO_ANY		0x000	/* default, no preference */
+#define EXECSW_PRIO_FIRST	0x001	/* this should be among first */
+#define EXECSW_PRIO_LAST	0x002	/* this should be among last */
 
 /* exec vmspace-creation command set; see below */
 struct exec_vmcmd_set {

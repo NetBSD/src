@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.8.1 2000/11/20 18:11:45 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.8.2 2000/12/08 09:20:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -170,37 +170,25 @@ ffs_truncate(v)
 	struct vnode *ovp = ap->a_vp;
 	ufs_daddr_t lastblock;
 	struct inode *oip;
-	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct fs *fs;
-	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, blocksreleased = 0;
 	int i;
-	int aflags, error, allerror = 0;
+	int error, allerror = 0;
 	off_t osize;
 
 	if (length < 0)
 		return (EINVAL);
 	oip = VTOI(ovp);
-#if 1
-	/*
-	 * XXX. Was in Kirk's patches. Is it good behavior to just
-	 * return and not update modification times?
-	 */
-	if (oip->i_ffs_size == length)
-		return (0);
-#endif
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
 	      oip->i_din.ffs_din.di_blocks == 0))) {
-#ifdef DIAGNOSTIC
-		if (length != 0)
-			panic("ffs_truncate: partial truncate of symlink");
-#endif
-		memset((char *)&oip->i_ffs_shortlink, 0, (u_int)oip->i_ffs_size);
+		KDASSERT(length == 0);
+		memset(&oip->i_ffs_shortlink, 0, (size_t)oip->i_ffs_size);
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
@@ -214,12 +202,56 @@ ffs_truncate(v)
 		return (error);
 #endif
 	fs = oip->i_fs;
+	if (length > fs->fs_maxfilesize)
+		return (EFBIG);
+
 	osize = oip->i_ffs_size;
 	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 
+	/*
+	 * Lengthen the size of the file. We must ensure that the
+	 * last byte of the file is allocated. Since the smallest
+	 * value of osize is 0, length will be at least 1.
+	 */
+
+	if (osize < length) {
+		ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
+		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+	}
+
+	/*
+	 * When truncating a regular file down to a non-block-aligned size,
+	 * we must zero the part of last block which is past the new EOF.
+	 * We must synchronously flush the zeroed pages to disk
+	 * since the new pages will be invalidated as soon as we
+	 * inform the VM system of the new, smaller size.
+	 * We must to this before acquiring the GLOCK, since fetching
+	 * the pages will acquire the GLOCK internally.
+	 * So there is a window where another thread could see a whole
+	 * zeroed page past EOF, but that's life.
+	 */
+
+	offset = blkoff(fs, length);
+	if (ovp->v_type == VREG && length < osize && offset != 0) {
+		struct uvm_object *uobj;
+		voff_t eoz;
+
+		size = blksize(fs, oip, lblkno(fs, length));
+		eoz = min(lblktosize(fs, lblkno(fs, length)) + size, osize);
+		uvm_vnp_zerorange(ovp, length, eoz - length);
+		uobj = &ovp->v_uvm.u_obj;
+		simple_lock(&uobj->vmobjlock);
+		uobj->pgops->pgo_flush(uobj, length, eoz,
+		    PGO_CLEANIT|PGO_DEACTIVATE|PGO_SYNCIO);
+		simple_unlock(&ovp->v_uvm.u_obj.vmobjlock);
+	}
+
+	lockmgr(&ovp->v_glock, LK_EXCLUSIVE, NULL);
+
 	if (DOINGSOFTDEP(ovp)) {
 		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
 		if (length > 0) {
 			/*
 			 * If a file is only partially truncated, then
@@ -231,73 +263,26 @@ ffs_truncate(v)
 			 * so that it will have no data structures left.
 			 */
 			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
-			    0, 0, ap->a_p)) != 0)
+			    0, 0, ap->a_p)) != 0) {
+				lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
 				return (error);
+			}
 		} else {
 #ifdef QUOTA
  			(void) chkdq(oip, -oip->i_ffs_blocks, NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length);
 			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
+			lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
+
 	/*
-	 * Lengthen the size of the file. We must ensure that the
-	 * last byte of the file is allocated. Since the smallest
-	 * value of osize is 0, length will be at least 1.
+	 * Reduce the size of the file.
 	 */
-	if (osize < length) {
-		if (length > fs->fs_maxfilesize)
-			return (EFBIG);
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
-		if (error)
-			return (error);
-		oip->i_ffs_size = length;
-		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
-	}
-	/*
-	 * Shorten the size of the file. If the file is not being
-	 * truncated to a block boundary, the contents of the
-	 * partial block following the end of the file must be
-	 * zero'ed in case it ever becomes accessible again because
-	 * of subsequent file growth. Directories however are not
-	 * zero'ed as they should grow back initialized to empty.
-	 */
-	offset = blkoff(fs, length);
-	if (offset == 0) {
-		oip->i_ffs_size = length;
-	} else {
-		lbn = lblkno(fs, length);
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
-		if (error)
-			return (error);
-		oip->i_ffs_size = length;
-		size = blksize(fs, oip, lbn);
-		(void) uvm_vnp_uncache(ovp);
-		if (ovp->v_type != VDIR)
-			memset((char *)bp->b_data + offset, 0,
-			       (u_int)(size - offset));
-		allocbuf(bp, size);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
-	}
+	oip->i_ffs_size = length;
 	uvm_vnp_setsize(ovp, length);
 	/*
 	 * Calculate index into inode's block list of
@@ -431,6 +416,7 @@ done:
 	oip->i_ffs_blocks -= blocksreleased;
 	if (oip->i_ffs_blocks < 0)			/* sanity */
 		oip->i_ffs_blocks = 0;
+	lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);

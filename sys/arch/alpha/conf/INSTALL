@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30.2.1 2000/11/20 19:56:43 bouyer Exp $
+# $NetBSD: INSTALL,v 1.30.2.2 2000/12/08 09:23:35 bouyer Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -279,7 +279,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-lsu*	at	cac? unit ?
+ld*	at	cac? unit ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.51.2.1 2000/11/20 18:11:17 bouyer Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.51.2.2 2000/12/08 09:19:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1729,7 +1729,6 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 		}
 out:
 		if (!error) {
-			(void)uvm_vnp_uncache(vp);
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			nqsrv_getl(vp, ND_WRITE);
 			error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
@@ -1904,7 +1903,6 @@ out:
 		nqsrv_getl(fromnd.ni_dvp, ND_WRITE);
 		nqsrv_getl(tdvp, ND_WRITE);
 		if (tvp) {
-			(void)uvm_vnp_uncache(tvp);
 			nqsrv_getl(tvp, ND_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
@@ -3389,12 +3387,12 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 				break;
 			}
 		}
+
 		/*
-		 * If there's shared text associated with
-		 * the inode, try to free it up once.  If
-		 * we fail, we can't allow writing.
+		 * If the vnode is in use as a process's text,
+		 * we can't allow writing.
 		 */
-		if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+		if (vp->v_flag & VTEXT) 
 			return (ETXTBSY);
 	}
 	error = VOP_GETATTR(vp, &vattr, cred, p);

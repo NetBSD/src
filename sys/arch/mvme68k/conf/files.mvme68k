@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.29.2.2 2000/11/22 16:00:50 bouyer Exp $
+#	$NetBSD: files.mvme68k,v 1.29.2.3 2000/12/08 09:28:27 bouyer Exp $
 
 # config file for mvme68k
 
@@ -78,8 +78,13 @@ file arch/mvme68k/dev/if_ie.c			ie_pcctwo
 attach clmpcc at pcctwo with clmpcc_pcctwo
 file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
+# MVME16x and MVME17x Memory Controller ASICs
+device memc
+attach memc at pcctwo
+file arch/mvme68k/dev/memc.c			memc
+
 # Memory disk for boot tape
-file arch/mvme68k/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 
 include "dev/scsipi/files.scsipi"
 
@@ -130,6 +135,9 @@ file dev/cninit.c
 
 # Motorola 68060 support package
 include "arch/m68k/060sp/files.060sp"
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4.32.1 2000/11/20 20:15:21 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4.32.2 2000/12/08 09:28:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -147,5 +147,5 @@ struct cpu_disklabel {
 	u_short	cfg_rsvc2;
 	u_long	magic2;
 	u_char	cfg_4[192];
-};
+} __attribute__((__packed__));
 #endif _MACHINE_DISKLABEL_H_

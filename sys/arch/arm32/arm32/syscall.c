@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25.2.1 2000/11/20 20:03:53 bouyer Exp $	*/
+/*	$NetBSD: syscall.c,v 1.25.2.2 2000/12/08 09:26:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -87,7 +87,7 @@ syscall(frame, code)
 	int code;
 {
 	caddr_t params;
-	struct sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, opc;
 	u_int argsize;

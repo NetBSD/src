@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.12.8.1 2000/11/20 20:15:18 bouyer Exp $	*/
+/*	$NetBSD: pcc.c,v 1.12.8.2 2000/12/08 09:28:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ pccattach(parent, self, args)
 	/*
 	 * Attach configured children.
 	 */
+	npa._pa_base = ma->ma_offset;
 	for (i = 0; pcc_devices[i].pcc_name != NULL; ++i) {
 		/*
 		 * Note that IPL is filled in by match function.
@@ -238,7 +239,7 @@ pccprint(aux, cp)
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset);
+	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
 	if (pa->pa_ipl != -1)
 		printf(" ipl %d", pa->pa_ipl);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.2 2000/11/20 20:07:00 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.3 2000/12/08 09:26:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -115,7 +115,7 @@ void
 mach_init(memsize)
 	unsigned int memsize;
 {
-	caddr_t kernend, v, p0;
+	caddr_t kernend, v;
         u_long first, last;
 	vsize_t size;
 	extern char edata[], end[];
@@ -208,11 +208,11 @@ mach_init(memsize)
 	mips_init_msgbuf();
 
 	/*
-	 * Allocate space for proc0's USPACE
+	 * Allocate space for proc0's USPACE.
 	 */
-	p0 = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
-	proc0.p_addr = proc0paddr = (struct user *)p0;
-	proc0.p_md.md_regs = (struct frame *)(p0 + USPACE) - 1;
+	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

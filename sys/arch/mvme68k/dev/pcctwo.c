@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2.8.2 2000/11/22 16:00:51 bouyer Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.2.8.3 2000/12/08 09:28:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ struct pcctwo_device {
  */
 static struct pcctwo_device pcctwo_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
+	{"memc", PCCTWO_MEMC1_OFF},
+	{"memc", PCCTWO_MEMC2_OFF},
 	{"clmpcc", PCCTWO_SCC_OFF},
 	{"ie", PCCTWO_IE_OFF},
 	{"ncrsc", PCCTWO_NCRSC_OFF},
@@ -128,6 +130,8 @@ static int pcctwo_vec2icsr_1x7[] = {
  */
 static struct pcctwo_device mcchip_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
+	{"memc", PCCTWO_MEMC1_OFF},
+	{"memc", PCCTWO_MEMC2_OFF},
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
 	{"ie", PCCTWO_IE_OFF},
@@ -261,6 +265,7 @@ pcctwoattach(parent, self, args)
 	/*
 	 * Attach configured children.
 	 */
+	npa._pa_base = ma->ma_offset;
 	while (pd->pcc_name != NULL) {
 		/*
 		 * Note that IPL is filled in by match function.
@@ -289,7 +294,7 @@ pcctwoprint(aux, cp)
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset);
+	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
 	if (pa->pa_ipl != -1)
 		printf(" ipl %d", pa->pa_ipl);
 

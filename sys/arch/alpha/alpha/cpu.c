@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39.2.2 2000/11/22 15:59:39 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,8 +66,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.2 2000/11/22 15:59:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $");
 
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -481,9 +482,6 @@ cpu_boot_secondary(ci)
 void
 cpu_pause_resume(u_long cpu_id, int pause)
 {
-#if 1
-	return;
-#else
 	u_long cpu_mask = (1UL << cpu_id);
 
 	if (pause) {
@@ -491,7 +489,6 @@ cpu_pause_resume(u_long cpu_id, int pause)
 		alpha_send_ipi(cpu_id, ALPHA_IPI_PAUSE);
 	} else
 		atomic_clearbits_ulong(&cpus_paused, cpu_mask);
-#endif
 }
 
 void
@@ -509,38 +506,21 @@ cpu_pause_resume_all(int pause)
 }
 
 void
-cpu_halt_secondary(cpu_id)
-	u_long cpu_id;
+cpu_halt(void)
 {
-	long timeout;
-	u_long cpumask = (1UL << cpu_id);
+	struct cpu_info *ci = curcpu();
+	u_long cpu_id = cpu_number();
+	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
 
-#ifdef DIAGNOSTIC
-	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_softc == NULL)
-		panic("cpu_halt_secondary: bogus cpu_id");
-#endif
+	printf("%s: shutting down...\n", ci->ci_softc->sc_dev.dv_xname);
 
-	alpha_mb();
-	if ((cpus_running & cpumask) == 0) {
-		/* Processor not running. */
-		return;
-	}
+	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
+	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
 
-	/* Send the HALT IPI to the secondary. */
-	alpha_send_ipi(cpu_id, ALPHA_IPI_HALT);
+	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
 
-	/* ...and wait for it to shut down. */
-	for (timeout = 10000; timeout != 0; timeout--) {
-		alpha_mb();
-		if ((cpus_running & cpumask) == 0)
-			return;
-		delay(1000);
-	}
-
-	/* Erk, secondary failed to halt. */
-	printf("WARNING: %s (ID %lu) failed to halt\n",
-	    cpu_info[cpu_id].ci_softc->sc_dev.dv_xname, cpu_id);
+	alpha_pal_halt();
+	/* NOTREACHED */
 }
 
 void
@@ -644,4 +624,37 @@ cpu_iccb_receive()
 	hwrpb->rpb_txrdy = 0;
 	alpha_mb();
 }
+
+#if defined(DDB)
+
+#include <ddb/db_output.h>
+#include <machine/db_machdep.h>
+
+/*
+ * Dump CPU information from DDB.
+ */
+void
+cpu_debug_dump(void)
+{
+	struct cpu_info *ci;
+	int i;
+
+	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
+	for (i = 0; i < ALPHA_MAXPROCS; i++) {
+		ci = &cpu_info[i];
+		if (ci->ci_softc == NULL)
+			continue;
+		db_printf("%p	%s	%lu	%lx	%lx	%p	%p\n",
+		    ci,
+		    ci->ci_softc->sc_dev.dv_xname,
+		    ci->ci_cpuid,
+		    ci->ci_flags,
+		    ci->ci_ipis,
+		    ci->ci_curproc,
+		    ci->ci_fpcurproc);
+	}
+}
+
+#endif /* DDB */
+
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.53.2.1 2000/11/20 19:56:44 bouyer Exp $
+# $NetBSD: Makefile.alpha,v 1.53.2.2 2000/12/08 09:23:36 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -116,15 +116,10 @@ LINKFLAGS+=	-S
 %LOAD
 
 # Use awk to cross-build assym.h from the genassym.s file.
-assym.h: genassym.o $S/kern/genassym.awk
-	awk -f $S/kern/genassym.awk < genassym.s > $@
-
-# The above rule lists genassym.o as a prerequisite so that the
-# generated .depend rule is effective, even though we actually
-# use genassym.s instead.   This always creates both.
-genassym.o: ${ALPHA}/alpha/genassym.c
-	${CC} ${CPPFLAGS} -S $<
-	${CC} -c $*.s
+assym.h: $S/kern/genassym.sh ${ALPHA}/alpha/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${ALPHA}/alpha/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -181,7 +176,6 @@ depend: .depend
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	test -z "${SFILES}" || \
 	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/genassym.c
 
 dependall: depend all
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.7 1998/03/18 15:57:29 bouyer Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.7.14.1 2000/12/08 09:20:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,6 +82,7 @@ struct ufsmount {
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
 	struct	ucred *um_cred[MAXQUOTAS];	/* quota file access cred */
 	u_long	um_nindir;			/* indirect ptrs per block */
+	u_long	um_lognindir;			/* log2 of um_nindir */
 	u_long	um_bptrtodb;			/* indir ptr to disk block */
 	u_long	um_seqinc;			/* inc between seq blocks */
 	time_t	um_btime[MAXQUOTAS];		/* block quota time limit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.8.12.1 2000/11/20 20:09:21 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.8.12.2 2000/12/08 09:26:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_vm86.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

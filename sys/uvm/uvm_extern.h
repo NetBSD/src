@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.34.2.1 2000/11/20 18:11:59 bouyer Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.34.2.2 2000/12/08 09:20:53 bouyer Exp $	*/
 
 /*
  *
@@ -193,6 +193,21 @@ typedef struct vm_page  *vm_page_t;
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
+ * the following defines are for ubc_alloc's flags
+ */
+#define UBC_READ	0
+#define UBC_WRITE	1
+
+/*
+ * flags for uvn_findpages().
+ */
+#define UFP_ALL		0x0
+#define UFP_NOWAIT	0x1
+#define UFP_NOALLOC	0x2
+#define UFP_NOCACHE	0x4
+#define UFP_NORDONLY	0x8
+
+/*
  * lockflags that control the locking behavior of various functions.
  */
 #define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
@@ -213,7 +228,10 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct pool;
 struct simplelock;
+
+extern struct pool *uvm_aiobuf_pool;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -233,9 +251,15 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
-	int zeropages;	/* number of zero'd pages */
+	/* XXX: Adding anything before this line will break binary
+	 *      compatibility with top(1) on NetBSD 1.5.
+	 */
+	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
-	int reserve_kernel; /* number of pages reserved for kernel */
+	int reserve_kernel;	/* number of pages reserved for kernel */
+	int anonpages;		/* number of pages used by anon pagers */
+	int vnodepages;		/* number of pages used by vnode page cache */
+	int vtextpages;		/* number of pages used by vtext vnodes */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
@@ -246,7 +270,6 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
-	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
@@ -310,10 +333,92 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	
+
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
 	struct uvm_object *mb_object;
+};
+
+/*
+ * The following structure is 64-bit alignment safe.  New elements
+ * should only be added to the end of this structure so binary
+ * compatibility can be preserved.
+ */
+struct uvmexp_sysctl {
+	int64_t	pagesize;
+	int64_t	pagemask;
+	int64_t	pageshift;
+	int64_t	npages;
+	int64_t	free;
+	int64_t	active;
+	int64_t	inactive;
+	int64_t	paging;
+	int64_t	wired;
+	int64_t	zeropages;
+	int64_t	reserve_pagedaemon;
+	int64_t	reserve_kernel;
+	int64_t	freemin;
+	int64_t	freetarg;
+	int64_t	inactarg;
+	int64_t	wiredmax;
+	int64_t	nswapdev;
+	int64_t	swpages;
+	int64_t	swpginuse;
+	int64_t	swpgonly;
+	int64_t	nswget;
+	int64_t	nanon;
+	int64_t	nanonneeded;
+	int64_t	nfreeanon;
+	int64_t	faults;
+	int64_t	traps;
+	int64_t	intrs;
+	int64_t	swtch;
+	int64_t	softs;
+	int64_t	syscalls;
+	int64_t	pageins;
+	int64_t	swapins;
+	int64_t	swapouts;
+	int64_t	pgswapin;
+	int64_t	pgswapout;
+	int64_t	forks;
+	int64_t	forks_ppwait;
+	int64_t	forks_sharevm;
+	int64_t	pga_zerohit;
+	int64_t	pga_zeromiss;
+	int64_t	zeroaborts;
+	int64_t	fltnoram;
+	int64_t	fltnoanon;
+	int64_t	fltpgwait;
+	int64_t	fltpgrele;
+	int64_t	fltrelck;
+	int64_t	fltrelckok;
+	int64_t	fltanget;
+	int64_t	fltanretry;
+	int64_t	fltamcopy;
+	int64_t	fltnamap;
+	int64_t	fltnomap;
+	int64_t	fltlget;
+	int64_t	fltget;
+	int64_t	flt_anon;
+	int64_t	flt_acow;
+	int64_t	flt_obj;
+	int64_t	flt_prcopy;
+	int64_t	flt_przero;
+	int64_t	pdwoke;
+	int64_t	pdrevs;
+	int64_t	pdswout;
+	int64_t	pdfreed;
+	int64_t	pdscans;
+	int64_t	pdanscan;
+	int64_t	pdobscan;
+	int64_t	pdreact;
+	int64_t	pdbusy;
+	int64_t	pdpageouts;
+	int64_t	pdpending;
+	int64_t	pddeact;
+	int64_t	anonpages;
+	int64_t	vnodepages;
+	int64_t	vtextpages;
 };
 
 #ifdef _KERNEL
@@ -414,9 +519,16 @@ void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
 void			uao_reference_locked __P((struct uvm_object *));
 
+/* uvm_bio.c */
+void			ubc_init __P((void));
+void *			ubc_alloc __P((struct uvm_object *, voff_t, vsize_t *,
+				       int));
+void			ubc_release __P((void *, vsize_t));
+void			ubc_flush __P((struct uvm_object *, voff_t, voff_t));
+
 /* uvm_fault.c */
-int			uvm_fault __P((vm_map_t, vaddr_t, 
-				vm_fault_t, vm_prot_t));
+int			uvm_fault __P((vm_map_t, vaddr_t, vm_fault_t,
+				       vm_prot_t));
 				/* handle a page fault */
 
 /* uvm_glue.c */
@@ -454,6 +566,7 @@ struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
 				vaddr_t *, vsize_t, int,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
+vaddr_t			uvm_km_valloc_align __P((vm_map_t, vsize_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_prefer_wait __P((vm_map_t, vsize_t,
 					voff_t));
@@ -510,8 +623,14 @@ void			uvm_page_physload __P((paddr_t, paddr_t,
 					       paddr_t, paddr_t, int));
 void			uvm_setpagesize __P((void));
 
+/* uvm_pager.c */
+void			uvm_aio_biodone1 __P((struct buf *));
+void			uvm_aio_biodone __P((struct buf *));
+void			uvm_aio_aiodone __P((struct buf *));
+
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void *));
+void			uvm_aiodone_daemon __P((void *));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
@@ -537,10 +656,11 @@ int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 /* uvm_vnode.c */
 void			uvm_vnp_setsize __P((struct vnode *, voff_t));
 void			uvm_vnp_sync __P((struct mount *));
-void 			uvm_vnp_terminate __P((struct vnode *));
-				/* terminate a uvm/uvn object */
-boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+void			uvn_findpages __P((struct uvm_object *, voff_t,
+					   int *, struct vm_page **, int));
+void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
+void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t));
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages __P((void));

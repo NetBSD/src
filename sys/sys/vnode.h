@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.65.2.1 2000/11/20 18:11:39 bouyer Exp $	*/
+/*	$NetBSD: vnode.h,v 1.65.2.2 2000/12/08 09:19:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,8 +85,10 @@ LIST_HEAD(buflists, buf);
  */
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
-	u_long	v_flag;				/* vnode flags (see below) */
-	long	v_usecount;			/* reference count of users */
+#define v_flag v_uvm.u_flags
+#define v_usecount v_uvm.u_obj.uo_refs
+#define v_interlock v_uvm.u_obj.vmobjlock
+#define v_numoutput v_uvm.u_nio
 	long	v_writecount;			/* reference count of writers */
 	long	v_holdcnt;			/* page & buffer references */
 	daddr_t	v_lastr;			/* last read (read-ahead) */
@@ -97,13 +99,11 @@ struct vnode {
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
-	long	v_numoutput;			/* num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
 	enum	vtype v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
-		caddr_t		vu_vmdata;	/* private data for vm (VREG) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
@@ -114,15 +114,14 @@ struct vnode {
 	int	v_clen;				/* length of current cluster */
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
-	struct	simplelock v_interlock;		/* lock on usecount and flag */
 	struct	lock	v_lock;			/* lock for this vnode */
+	struct	lock	v_glock;		/* getpage lock */
 	struct	lock *v_vnlock;			/* pointer to vnode lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
-#define	v_vmdata	v_un.vu_vmdata
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
 /*
@@ -143,7 +142,9 @@ struct vnode {
  */
 #define	VROOT		0x0001	/* root of its file system */
 #define	VTEXT		0x0002	/* vnode is a pure text prototype */
+	/* VSYSTEM only used to skip vflush()ing quota files */
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
+	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
@@ -152,6 +153,9 @@ struct vnode {
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
+#define VDIRTY		0x8000	/* vnode possibly has dirty pages */
+
+#define VSIZENOTSET	((voff_t)-1)
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -452,6 +456,10 @@ struct vop_generic_args {
  * VOCALL calls an op given an ops vector.  We break it out because BSD's
  * vclean changes the ops vector and then wants to call ops with the old
  * vector.
+ */
+/*
+ * actually, vclean doesn't use it anymore, but nfs does,
+ * for device specials and fifos.
  */
 #define VOCALL(OPSV,OFF,AP) (( *((OPSV)[(OFF)])) (AP))
 

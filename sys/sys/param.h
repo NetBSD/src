@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.73.2.2 2000/11/22 16:06:39 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.73.2.3 2000/12/08 09:19:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  105110000	/* NetBSD 1.5K */
+#define __NetBSD_Version__  105120000	/* NetBSD 1.5L */
 
 /*
  * Historical NetBSD #define
@@ -251,5 +251,16 @@
  */
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define FSCALE	(1<<FSHIFT)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSIZE
+#define UBC_WINSIZE 8192
+#endif
+#ifndef UBC_NWINS
+#define UBC_NWINS 1024
+#endif
 
 #endif /* !_SYS_PARAM_H_ */

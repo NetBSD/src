@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.48.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
+/*	$NetBSD: nubus.h,v 1.48.2.2 2000/12/08 09:28:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -58,6 +58,7 @@
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
 #define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
+#define    NUBUS_DRHW_BOOGIE	0x002b	/* Apple Macintosh 24AC Video Card */
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
@@ -115,7 +116,10 @@
 #define   NUBUS_DRSW_HDS	0x0102
 #define    NUBUS_DRHW_HDS	0x0102
 
-#define NUBUS_CATEGORY_FONT	0x0009	/* KanjiTalk Font Card? */
+#define NUBUS_CATEGORY_MEMORY	0x0009	/* Also KanjiTalk Font Card? */
+#define  NUBUS_TYPE_RAMCACHE	0x010C	/* From Apple PDS card */
+#define   NUBUS_DRSW_AWGSPDS	0x0100
+#define    NUBUS_DRHW_AWGSPDS	0x0100
 
 #define NUBUS_CATEGORY_CPU	0x000A
 #define  NUBUS_TYPE_68000	0x0002
@@ -125,8 +129,12 @@
 
 #define NUBUS_CATEGORY_INTBUS	0x000C
 #define  NUBUS_TYPE_SCSI	0x0008
+#define   NUBUS_DRSW_AWGSPDS	0x0006
+#define    NUBUS_DRHW_AWGSPDS	0x0100
 #define   NUBUS_DRSW_PLI	0x0108
 #define    NUBUS_DRHW_PLI	0x0100
+#define   NUBUS_DRSW_FWB	0x010C
+#define    NUBUS_DRHW_FWB	0x0100
 
 /*
  * This is the same as Apple's Format Block for a card, with the

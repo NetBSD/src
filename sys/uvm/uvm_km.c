@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.32.2.1 2000/11/20 18:12:01 bouyer Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.32.2.2 2000/12/08 09:20:54 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -329,12 +329,8 @@ uvm_km_pgremove(uobj, start, end)
 	vaddr_t curoff;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
-	simple_lock(&uobj->vmobjlock);		/* lock object */
-
-#ifdef DIAGNOSTIC
-	if (__predict_false(uobj->pgops != &aobj_pager))
-		panic("uvm_km_pgremove: object %p not an aobj", uobj);
-#endif
+	KASSERT(uobj->pgops == &aobj_pager);
+	simple_lock(&uobj->vmobjlock);
 
 	/* choose cheapest traversal */
 	by_list = (uobj->uo_npages <=
@@ -369,15 +365,14 @@ uvm_km_pgremove(uobj, start, end)
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
 		}
-		/* done */
 	}
 	simple_unlock(&uobj->vmobjlock);
 	return;
 
 loop_by_list:
 
-	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = ppnext) {
-		ppnext = pp->listq.tqe_next;
+	for (pp = TAILQ_FIRST(&uobj->memq); pp != NULL; pp = ppnext) {
+		ppnext = TAILQ_NEXT(pp, listq);
 		if (pp->offset < start || pp->offset >= end) {
 			continue;
 		}
@@ -385,7 +380,6 @@ loop_by_list:
 		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 
-		/* now do the actual work */
 		if (pp->flags & PG_BUSY) {
 			/* owner must check for this when done */
 			pp->flags |= PG_RELEASED;
@@ -401,10 +395,8 @@ loop_by_list:
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
 		}
-		/* done */
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return;
 }
 
 
@@ -429,12 +421,8 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 	vaddr_t curoff;
 	UVMHIST_FUNC("uvm_km_pgremove_intrsafe"); UVMHIST_CALLED(maphist);
 
+	KASSERT(UVM_OBJ_IS_INTRSAFE_OBJECT(uobj));
 	simple_lock(&uobj->vmobjlock);		/* lock object */
-
-#ifdef DIAGNOSTIC
-	if (__predict_false(UVM_OBJ_IS_INTRSAFE_OBJECT(uobj) == 0))
-		panic("uvm_km_pgremove_intrsafe: object %p not intrsafe", uobj);
-#endif
 
 	/* choose cheapest traversal */
 	by_list = (uobj->uo_npages <=
@@ -447,21 +435,15 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 
 	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
 		pp = uvm_pagelookup(uobj, curoff);
-		if (pp == NULL)
+		if (pp == NULL) {
 			continue;
+		}
 
 		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
-#ifdef DIAGNOSTIC
-		if (__predict_false(pp->flags & PG_BUSY))
-			panic("uvm_km_pgremove_intrsafe: busy page");
-		if (__predict_false(pp->pqflags & PQ_ACTIVE))
-			panic("uvm_km_pgremove_intrsafe: active page");
-		if (__predict_false(pp->pqflags & PQ_INACTIVE))
-			panic("uvm_km_pgremove_intrsafe: inactive page");
-#endif
-
-		/* free the page */
+		KASSERT((pp->flags & PG_BUSY) == 0);
+		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
+		KASSERT((pp->pqflags & PQ_INACTIVE) == 0);
 		uvm_pagefree(pp);
 	}
 	simple_unlock(&uobj->vmobjlock);
@@ -469,29 +451,20 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 
 loop_by_list:
 
-	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = ppnext) {
-		ppnext = pp->listq.tqe_next;
+	for (pp = TAILQ_FIRST(&uobj->memq); pp != NULL; pp = ppnext) {
+		ppnext = TAILQ_NEXT(pp, listq);
 		if (pp->offset < start || pp->offset >= end) {
 			continue;
 		}
 
 		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
-
-#ifdef DIAGNOSTIC
-		if (__predict_false(pp->flags & PG_BUSY))
-			panic("uvm_km_pgremove_intrsafe: busy page");
-		if (__predict_false(pp->pqflags & PQ_ACTIVE))
-			panic("uvm_km_pgremove_intrsafe: active page");
-		if (__predict_false(pp->pqflags & PQ_INACTIVE))
-			panic("uvm_km_pgremove_intrsafe: inactive page");
-#endif
-
-		/* free the page */
+		KASSERT((pp->flags & PG_BUSY) == 0);
+		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
+		KASSERT((pp->pqflags & PQ_INACTIVE) == 0);
 		uvm_pagefree(pp);
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return;
 }
 
 
@@ -519,14 +492,9 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
-
 	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
-	map, obj, size, flags);
-#ifdef DIAGNOSTIC
-	/* sanity check */
-	if (__predict_false(vm_map_pmap(map) != pmap_kernel()))
-		panic("uvm_km_kmemalloc: invalid map");
-#endif
+		    map, obj, size, flags);
+	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	/*
 	 * setup for call
@@ -555,6 +523,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%x)", kva,0,0,0);
 		return(kva);
 	}
+
 	/*
 	 * recover object offset from virtual address
 	 */
@@ -598,6 +567,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		 * (because if pmap_enter wants to allocate out of kmem_object
 		 * it will need to lock it itself!)
 		 */
+
 		if (UVM_OBJ_IS_INTRSAFE_OBJECT(obj)) {
 			pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_ALL);
@@ -610,7 +580,6 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
 }
@@ -625,7 +594,6 @@ uvm_km_free(map, addr, size)
 	vaddr_t addr;
 	vsize_t size;
 {
-
 	uvm_unmap(map, trunc_page(addr), round_page(addr+size));
 }
 
@@ -671,11 +639,7 @@ uvm_km_alloc1(map, size, zeroit)
 	UVMHIST_FUNC("uvm_km_alloc1"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(map=0x%x, size=0x%x)", map, size,0,0);
-
-#ifdef DIAGNOSTIC
-	if (vm_map_pmap(map) != pmap_kernel())
-		panic("uvm_km_alloc1");
-#endif
+	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
 	kva = vm_map_min(map);		/* hint */
@@ -768,15 +732,20 @@ uvm_km_valloc(map, size)
 	vm_map_t map;
 	vsize_t size;
 {
+	return(uvm_km_valloc_align(map, size, 0));
+}
+
+vaddr_t
+uvm_km_valloc_align(map, size, align)
+	vm_map_t map;
+	vsize_t size;
+	vsize_t align;
+{
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
-
-#ifdef DIAGNOSTIC
-	if (__predict_false(vm_map_pmap(map) != pmap_kernel()))
-		panic("uvm_km_valloc");
-#endif
+	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
 	kva = vm_map_min(map);		/* hint */
@@ -786,7 +755,7 @@ uvm_km_valloc(map, size)
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					    UVM_INH_NONE, UVM_ADV_RANDOM,
 					    0)) != KERN_SUCCESS)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
@@ -815,11 +784,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
-
-#ifdef DIAGNOSTIC
-	if (__predict_false(vm_map_pmap(map) != pmap_kernel()))
-		panic("uvm_km_valloc_wait");
-#endif
+	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
 	if (size > vm_map_max(map) - vm_map_min(map))

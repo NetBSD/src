@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.3 1999/02/20 17:19:41 scw Exp $
+#	$NetBSD: RAMDISK,v 1.3.8.1 2000/12/08 09:28:26 bouyer Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -6,13 +6,83 @@
 # a NetBSD/mvme68k installation, and install
 # the miniroot in a swap partition.
 #
+# It is not designed to be used in a production enviroment
+# due to its cut-down nature.
+#
 
-include 	"arch/mvme68k/conf/GENERIC"
+include		"arch/mvme68k/conf/std.mvme68k"
+
+# Boards this kernel supports
+options 	MVME147
+options 	MVME162
+options 	MVME167
+options 	MVME172
+options 	MVME177
+
+maxusers	2
+
+# Needed on m68040 boards to emulate some missing FP instructions
+options 	FPSP
+
+# Needed on m68060 boards
+options 	M060SP
+
+# File-system options
+file-system 	FFS
+file-system 	NFS	
+file-system 	KERNFS
+file-system 	CD9660
+
+# Networking options
+options 	INET
+options 	INET6		# IPV6
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
-options 	MINIROOTSIZE=768
+options 	MINIROOTSIZE=1024
 
-# Include one instance of the memory driver
+## "generic" boot (put root on boot device)
+config netbsd		root on ? type ?
+
+# Which protocol to use when booting over NFS
+options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
+
+pseudo-device	sl
+pseudo-device	ppp 2
+pseudo-device	loop
+pseudo-device	bpfilter
+pseudo-device	pty			# pseudo-terminals
 pseudo-device 	md 1
+
+mainbus0	at root
+
+# MVME147 specific devices
+pcc0		at mainbus0
+clock0		at pcc? ipl 5
+zsc*		at pcc? ipl 4
+le0		at pcc? ipl 3
+wdsc0		at pcc? ipl 2
+lpt0		at pcc? ipl 1
+
+# MVME1x2 and MVME1x7 shared devices
+pcctwo0		at mainbus0
+clock0		at pcctwo? ipl 5
+ie0		at pcctwo? ipl 3
+ncrsc0		at pcctwo? ipl 2
+
+# MVME162/MVME172 specific devices
+zsc*		at pcctwo? ipl 4
+
+# MVME167/MVME177 specific devices
+clmpcc0		at pcctwo? ipl 4
+lpt0		at pcctwo? ipl 1
+
+# Common front-end for MVME147 and MVME1x2 `zs' device
+zstty*		at zsc? channel ?
+
+scsibus*	at wdsc?
+scsibus*	at ncrsc?
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?
+cd*		at scsibus? target ? lun ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.6.2.2 2000/11/20 20:15:19 bouyer Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.6.2.3 2000/12/08 09:28:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 
 struct vme_pcc_softc {
 	struct mvmebus_softc	sc_mvmebus;
-	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
 	struct mvmebus_range	sc_slave[VME1_NSLAVES];
 };

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.2.1 2000/11/20 20:09:21 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.17.2.2 2000/12/08 09:26:35 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,9 +74,11 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
+if defined(_KERNEL) && !defined(_LKM)
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
+endif
 
 include <sys/param.h>
 include <sys/proc.h>
@@ -91,7 +93,9 @@ include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
 
+if defined(_KERNEL) && !defined(_LKM)
 include "apm.h"
+endif
 if NAPM > 0
 include <machine/bioscall.h>
 include <machine/apmvar.h>
@@ -110,7 +114,9 @@ ifdef COMPAT_FREEBSD
 include <machine/freebsd_machdep.h>
 endif
 
+if defined(_KERNEL) && !defined(_LKM)
 include "isa.h"
+endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.12.2.2 2000/11/20 20:45:49 bouyer Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.12.2.3 2000/12/08 09:26:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.12.2.2 2000/11/20 20:45:49 bouyer Exp $";
+    "$Id: bivideo.c,v 1.12.2.3 2000/12/08 09:26:31 bouyer Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +204,9 @@ bivideo_init(fb)
 					/* configuration name		*/
 	fb->hf_height		= bootinfo->fb_height;
 	fb->hf_width		= bootinfo->fb_width;
-	fb->hf_baseaddr		= mips_ptob(mips_btop(bootinfo->fb_addr));
-	fb->hf_offset		= (u_long)bootinfo->fb_addr - fb->hf_baseaddr;
+	fb->hf_baseaddr		= (u_long)bootinfo->fb_addr;
+	fb->hf_offset		= (u_long)bootinfo->fb_addr -
+				      mips_ptob(mips_btop(bootinfo->fb_addr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= bootinfo->fb_line_bytes;
 	fb->hf_nplanes		= 1;
@@ -468,5 +469,5 @@ bivideo_mmap(ctx, offset, prot)
 		sc->sc_fbconf.hf_offset) <  offset)
 		return -1;
 
-	return mips_btop(sc->sc_fbconf.hf_baseaddr + offset);
+	return mips_btop((u_long)bootinfo->fb_addr + offset);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.15.2.2 2000/11/20 20:45:53 bouyer Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.15.2.3 2000/12/08 09:26:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,8 @@
  */
 
 /*
- * multiscreen, virtual text vram and hpcfb_emulops functions
+ * jump scroll, scroll thread, multiscreen, virtual text vram 
+ * and hpcfb_emulops functions
  * written by SATO Kazumi.
  */
 
@@ -45,11 +46,17 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.15.2.2 2000/11/20 20:45:53 bouyer Exp $";
+    "$Id: hpcfb.c,v 1.15.2.3 2000/12/08 09:26:31 bouyer Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/kthread.h>
+#include <sys/lock.h>
+#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
@@ -83,6 +90,13 @@ int	hpcfb_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
+#ifndef HPCFB_MAX_COLUMN
+#define HPCFB_MAX_COLUMN 130
+#endif /* HPCFB_MAX_COLUMN */
+#ifndef HPCFB_MAX_ROW
+#define HPCFB_MAX_ROW 80
+#endif /* HPCFB_MAX_ROW */
+
 /*
  * currently experimental
 #define HPCFB_JUMP
@@ -95,6 +109,12 @@ struct hpcfb_vchar {
 	long attr;
 };
 
+struct hpcfb_tvrow {
+	int maxcol;
+	int spacecol;
+	struct hpcfb_vchar col[HPCFB_MAX_COLUMN];
+};
+
 struct hpcfb_devconfig {
 	struct rasops_info	dc_rinfo;	/* rasops infomation */
 
@@ -102,23 +122,26 @@ struct hpcfb_devconfig {
 	struct hpcfb_softc *dc_sc;
 	int dc_rows;
 	int dc_cols;
-	struct hpcfb_vchar *dc_tvram;
+	struct hpcfb_tvrow *dc_tvram;
 	int dc_curx;
 	int dc_cury;
 #ifdef HPCFB_JUMP
 	int dc_min_row;
 	int dc_max_row;
 	int dc_scroll;
-	struct callout *dc_scroll_ch;
+	struct callout dc_scroll_ch;
 	int dc_scroll_src;
 	int dc_scroll_dst;
 	int dc_scroll_num;
 #endif /* HPCFB_JUMP */
 	int dc_state;
 #define HPCFB_DC_CURRENT		0x80000000
-#define HPCFB_DC_DRAWING		0x01
-#define HPCFB_DC_SCROLLPENDING		0x02
-#define HPCFB_DC_UPDATE			0x04
+#define HPCFB_DC_DRAWING		0x01	/* drawing raster ops */
+#define HPCFB_DC_TDRAWING		0x02	/* drawing tvram */
+#define HPCFB_DC_SCROLLPENDING		0x04	/* scroll is pending */
+#define HPCFB_DC_UPDATE			0x08	/* tvram update */
+#define HPCFB_DC_SCRDELAY		0x10	/* scroll time but delay it */
+#define HPCFB_DC_SCRTHREAD		0x20	/* in scroll thread or callout */
 #ifdef HPCFB_BSTORE
 	u_char *dc_bstore;
 #endif /* HPCFB_BSTORE */
@@ -142,10 +165,15 @@ struct hpcfb_softc {
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
 	int nscreens;
-	void			*sc_powerhook;	/* power management hook */
+	void *sc_powerhook;	/* power management hook */
 	struct device *sc_wsdisplay;
 	int sc_screen_resumed;
+	int sc_polling;
+	int sc_mapping;
+	struct proc *sc_thread;
+	struct lock sc_lock;
 };
+
 /*
  *  function prototypes
  */
@@ -156,6 +184,12 @@ int	hpcfbprint __P((void *aux, const char *pnp));
 int	hpcfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 paddr_t	hpcfb_mmap __P((void *, off_t, int));
 void	hpcfb_refresh_screen __P((struct hpcfb_softc *sc));
+
+#ifdef HPCFB_JUMP
+static void	hpcfb_create_thread __P((void *));
+static void	hpcfb_thread __P((void *));
+#endif /* HPCFB_JUMP */
+
 static int	hpcfb_init __P((struct hpcfb_fbconf *fbconf,
 				struct hpcfb_devconfig *dc));
 static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -163,6 +197,9 @@ static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void	hpcfb_free_screen __P((void *, void *));
 static int	hpcfb_show_screen __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
+#ifdef notyet
+static void     hpcfb_pollc __P((void *, int));
+#endif /* notyet */
 static void	hpcfb_power __P((int, void *));
 static void	hpcfb_cmap_reorder __P((struct hpcfb_fbconf *,
 					struct hpcfb_devconfig *));
@@ -176,10 +213,16 @@ void    hpcfb_copycols __P((void *c, int row, int srccol,
 			int dstcol, int ncols));
 void    hpcfb_erasecols __P((void *c, int row, int startcol, 
 			int ncols, long attr));
-void    hpcfb_redraw __P((void *c, int row, int nrows));
+void    hpcfb_redraw __P((void *c, int row, int nrows, int all));
 void    hpcfb_copyrows __P((void *c, int srcrow, int dstrow, int nrows));
 void    hpcfb_eraserows __P((void *c, int row, int nrows, long attr));
 int     hpcfb_alloc_attr __P((void *c, int fg, int bg, int flags, long *attr));
+
+#ifdef HPCFB_JUMP
+void	hpcfb_scroll_update __P((void *));
+void	hpcfb_do_scroll __P((void *));
+void	hpcfb_check_scroll __P((void *));
+#endif /* HPCFB_JUMP */
 
 struct wsdisplay_emulops hpcfb_emulops = {
 	hpcfb_cursor,
@@ -223,7 +266,10 @@ struct wsdisplay_accessops hpcfb_accessops = {
 	hpcfb_alloc_screen,
 	hpcfb_free_screen,
 	hpcfb_show_screen,
-	0 /* load_font */
+	0 /* load_font */,
+#ifdef notyet
+	hpcfb_pollc
+#endif /* not yet */
 };
 
 void    hpcfb_tv_putchar __P((struct hpcfb_devconfig *, int, int, u_int, long));
@@ -237,7 +283,7 @@ struct wsdisplay_emulops rasops_emul;
 static int hpcfbconsole;
 struct hpcfb_devconfig hpcfb_console_dc;
 struct wsscreen_descr hpcfb_console_wsscreen;
-struct hpcfb_vchar hpcfb_console_tvram[200*200];
+struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
 
 /*
  *  function bodies
@@ -258,10 +304,6 @@ hpcfbmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-#if 0
-	struct hpcfb_attach_args *ha = aux;
-#endif
-
 	return (1);
 }
 
@@ -299,6 +341,8 @@ hpcfbattach(parent, self, aux)
 		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		sc->sc_dc->dc_sc = sc;
 	}
+	sc->sc_polling = 0; /* XXX */
+	sc->sc_mapping = 0; /* XXX */
 	hpcfb_stdscreen.nrows = sc->sc_dc->dc_rows;
         hpcfb_stdscreen.ncols = sc->sc_dc->dc_cols;
 	hpcfb_stdscreen.capabilities = sc->sc_dc->dc_rinfo.ri_caps;
@@ -334,7 +378,54 @@ hpcfbattach(parent, self, aux)
 	wa.accesscookie = sc;
 
 	sc->sc_wsdisplay = config_found(self, &wa, wsemuldisplaydevprint);
+
+#ifdef HPCFB_JUMP
+	/*
+	 * Create a kernel thread to scroll,
+	 */
+	kthread_create(hpcfb_create_thread, sc);
+#endif /* HPCFB_JUMP */
 }
+
+#ifdef HPCFB_JUMP
+void
+hpcfb_create_thread(arg)
+	void *arg;
+{
+	struct hpcfb_softc *sc = arg;
+
+	if (kthread_create1(hpcfb_thread, sc, &sc->sc_thread,
+			    "%s", sc->sc_dev.dv_xname) == 0)
+		return;
+
+	/*
+	 * We were unable to create the HPCFB thread; bail out.
+	 */
+	sc->sc_thread = 0;
+	printf("%s: unable to create thread, kernel hpcfb scroll support disabled\n",
+	       sc->sc_dev.dv_xname);
+}
+
+void
+hpcfb_thread(arg)
+	void *arg;
+{
+	struct hpcfb_softc *sc = arg;
+
+	/*
+	 * Loop forever, doing a periodic check for APM events.
+	 */
+	for (;;) {
+		/* HPCFB_LOCK(apmsc); */
+		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
+		if (sc->sc_mapping)
+			hpcfb_scroll_update(sc->sc_dc);
+		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
+		/* APM_UNLOCK(apmsc); */
+		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7);
+	}
+}
+#endif /* HPCFB_JUMP */
 
 /* Print function (for parent devices). */
 int
@@ -342,10 +433,6 @@ hpcfbprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-#if 0
-	struct hpcfb_attach_args *ha = aux;
-#endif
-
 	if (pnp)
 		printf("hpcfb at %s", pnp);
 
@@ -391,7 +478,7 @@ hpcfb_init(fbconf, dc)
 	struct rasops_info *ri;
 	vaddr_t fbaddr;
 
-	fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
+	fbaddr = (vaddr_t)fbconf->hf_baseaddr;
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
@@ -406,7 +493,7 @@ hpcfb_init(fbconf, dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
-	if (rasops_init(ri, 200, 200)) {
+	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
 
@@ -421,7 +508,7 @@ hpcfb_init(fbconf, dc)
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
 	dc->dc_scroll = 0;
-	callout_init(dc->dc_scroll_ch);
+	callout_init(&dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
 	dc->dc_tvram = hpcfb_console_tvram;
 	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
@@ -432,7 +519,7 @@ hpcfb_init(fbconf, dc)
 	if (dc->dc_bstore == NULL) {
 		dc->dc_bstore =
 			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
-		bzero(dc->dc_bsrore, dc->dc_memsize);
+		bzero(dc->dc_bstore, dc->dc_memsize);
 	}
 #endif /* HPCFB_BSTORE */
 #ifdef HPCFB_MULTI
@@ -453,7 +540,7 @@ hpcfb_cmap_reorder(fbconf, dc)
 	struct rasops_info *ri = &dc->dc_rinfo;
 	int reverse = fbconf->hf_access_flags & HPCFB_ACCESS_REVERSE;
 	int *cmap = ri->ri_devcmap;
-	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
+	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr;
 	int i, j, bg, fg, tmp;
 
 	/*
@@ -530,7 +617,21 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 		wdf->depth = dc->dc_rinfo.ri_depth;
 		wdf->cmsize = 256;	/* XXXX */
 		return 0;		
-		
+	
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){
+			if (sc->sc_mapping)
+				hpcfb_refresh_screen(sc);
+			sc->sc_mapping = 0;
+		} else {
+#ifdef HPCFB_JUMP
+			if (!sc->sc_mapping)
+				hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
+			sc->sc_mapping = 1;
+		}
+		return 0;	
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 	case WSDISPLAYIO_GETPARAM:
@@ -618,6 +719,13 @@ hpcfb_refresh_screen(sc)
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	int x, y;
 
+#ifdef HPCFB_JUMP
+	if (dc->dc_state&HPCFB_DC_SCROLLPENDING) {
+		dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
+		dc->dc_state &= ~HPCFB_DC_UPDATE;
+		callout_stop(&dc->dc_scroll_ch);
+	}
+#endif /* HPCFB_JUMP */
 	/*
 	 * refresh screen
 	 */
@@ -626,7 +734,7 @@ hpcfb_refresh_screen(sc)
 	if (0 <= x && 0 <= y)
 		hpcfb_cursor(dc, 0,  y, x); /* disable cursor */
 	/* redraw all text */
-	hpcfb_redraw(dc, 0, dc->dc_rows);
+	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 	if (0 <= x && 0 <= y)
 		hpcfb_cursor(dc, 1,  y, x); /* enable cursor */
 }
@@ -664,24 +772,21 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	dc->dc_cury = -1;
 	dc->dc_rows = sc->sc_dc->dc_rinfo.ri_rows;
 	dc->dc_cols = sc->sc_dc->dc_rinfo.ri_cols;
-	dc->dc_memsize = ri->ri_stride * ri->ri_height;
+	dc->dc_memsize = sc->sc_dc->dc_rinfo.ri_stride * sc->sc_dc->dc_rinfo.ri_height;
 #ifdef HPCFB_BSTORE
 	if (dc->dc_bstore == NULL) {
 		dc->dc_bstore = 
 			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
 		bzero(dc->dc_bstore, dc->dc_memsize);
 	}
-#endif /* HPCFB_BSTORE */
 	dc->dc_rinfo.ri_bits  = dc->dc_bstore;
+#endif /* HPCFB_BSTORE */
 	if (dc->dc_tvram == NULL){
 		dc->dc_tvram = 
-			malloc(sizeof(struct hpcfb_vchar)
-				* dc->dc_rows
-				* dc->dc_cols , M_DEVBUF, M_WAITOK);	
+			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
+				M_DEVBUF, M_WAITOK);
 		bzero(dc->dc_tvram, 
-				sizeof(struct hpcfb_vchar)
-				* dc->dc_rows
-				* dc->dc_cols);
+				sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 	}
 				
 	*curxp = 0;
@@ -738,28 +843,37 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	DPRINTF(("%s(%d): hpcfb_show_screen()\n", __FILE__, __LINE__));
 
 #ifdef HPCFB_MULTI
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 	/* save current screen image */
 	dc->dc_rinfo.ri_bits = sc->sc_dc->dc_rinfo.ri_bits;
 	sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
+	/* switch screen image */
+	dc->dc_state |= HPCFB_DC_CURRENT;
 #ifdef HPCFB_BSTORE
 	if (sc->sc_dc->dc_bstore)
 		bcopy(sc->sc_dc->dc_rinfo.ri_bits, sc->sc_dc->dc_bstore,
 			sc->sc_dc->dc_memsize);
-#endif /* HPCFB_BSTORE */
-	/* switch screen image */
 	sc->sc_dc->dc_rinfo.ri_bits = sc->sc_dc->dc_bstore;
-	dc->dc_state |= HPCFB_DC_CURRENT;
-	dc->dc_state |= HPCFB_DC_DRAWING;
+#endif /* HPCFB_BSTORE */
+
 	sc->sc_dc = dc;
+#ifdef HPCFB_BSTORE
 	if (dc->dc_bstore) {
+		dc->dc_state |= HPCFB_DC_DRAWING;
 		bcopy(dc->dc_bstore, dc->dc_rinfo.ri_bits, dc->dc_memsize);
 		dc->dc_state &= ~HPCFB_DC_DRAWING;
 	} else {
-		hpcfb_redraw(dc, 0, dc->dc_rows);
-		dc->dc_state &= ~HPCFB_DC_DRAWING;
+		hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 		if (dc->dc_curx > 0 && dc->dc_cury > 0)
 			hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
 	}
+#else /* HPCFB_BSTORE */
+	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
+	if (dc->dc_curx > 0 && dc->dc_cury > 0)
+		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+#endif /* HPCFB_BSTORE */
 #else /* HPCFB_MULTI */
 	hpcfb_refresh_screen(sc);
 #endif /* !HPCFB_MULTI */
@@ -767,6 +881,19 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
+#ifdef notyet
+static void
+hpcfb_pollc(v, on)
+	void *v;
+	int on;
+{
+	struct hpcfb_softc *sc = v;
+
+	sc->sc_polling = on;
+
+	return;
+}
+#endif /* notyet */
 /*
  * cursor
  */
@@ -801,10 +928,10 @@ hpcfb_cursor(cookie, on, row, col)
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->cursor) {
-		xoff = col * ri->ri_xscale;
-		yoff = row * ri->ri_yscale;
+		xoff = col * ri->ri_font->fontwidth;
+		yoff = row * ri->ri_font->fontheight;
 		curheight = ri->ri_font->fontheight;
-		curwidth = ri->ri_xscale;
+		curwidth = ri->ri_font->fontwidth;
 		(*sc->sc_accessops->cursor)(sc->sc_accessctx,
 				on, xoff, yoff, curwidth, curheight);
 	} else 
@@ -837,10 +964,14 @@ hpcfb_tv_putchar(dc, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *vc = 
-		(vscn + row * dc->dc_cols + col);
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
+	struct hpcfb_vchar *vc = &vscn[row].col[col];
+	struct hpcfb_vchar *vcb;
 
+	if (vscn == 0)
+		return;
+
+	dc->dc_state |= HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	if (row < dc->dc_min_row)
 		dc->dc_min_row = row;
@@ -848,10 +979,19 @@ hpcfb_tv_putchar(dc, row, col, uc, attr)
 		dc->dc_max_row = row;
 
 #endif /* HPCFB_JUMP */
-	if (vscn == 0)
-		return;
+	if (vscn[row].maxcol +1 == col)
+		vscn[row].maxcol = col;
+	else if (vscn[row].maxcol < col) {
+		vcb =  &vscn[row].col[vscn[row].maxcol+1];
+		bzero(vcb, sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
+		vscn[row].maxcol = col;
+	}
 	vc->c = uc;
 	vc->attr = attr;
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 void
@@ -881,11 +1021,10 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 		return;
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
-	dc->dc_state &= ~HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->putchar 
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		yoff = row * ri->ri_yscale;
-		xoff =  col * ri->ri_xscale;
+		yoff = row * ri->ri_font->fontheight;
+		xoff =  col * ri->ri_font->fontwidth;
 		fclr = ri->ri_devcmap[((u_int)attr >> 24) & 15];
 		uclr = ri->ri_devcmap[((u_int)attr >> 16) & 15];
 
@@ -893,6 +1032,10 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 				xoff, yoff, font, fclr, uclr, uc, attr);
 	} else
 		rasops_emul.putchar(ri, row, col, uc, attr);
+	dc->dc_state &= ~HPCFB_DC_DRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 /*
@@ -903,12 +1046,14 @@ hpcfb_tv_copycols(dc, row, srccol, dstcol, ncols)
 	struct hpcfb_devconfig *dc;
 	int row, srccol, dstcol, ncols;
 {
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = 
-		(vscn + row * dc->dc_cols + srccol);
-	struct hpcfb_vchar *dvc = 
-		(vscn + row * dc->dc_cols + dstcol);
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
+	struct hpcfb_vchar *svc = &vscn[row].col[srccol];
+	struct hpcfb_vchar *dvc = &vscn[row].col[dstcol];
 
+	if (vscn == 0)
+		return;
+
+	dc->dc_state |= HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	if (row < dc->dc_min_row)
 		dc->dc_min_row = row;
@@ -916,10 +1061,15 @@ hpcfb_tv_copycols(dc, row, srccol, dstcol, ncols)
 		dc->dc_max_row = row;
 #endif /* HPCFB_JUMP */
 
-	if (vscn == 0)
-		return;
-
 	bcopy(svc, dvc, ncols*sizeof(struct hpcfb_vchar));
+	if (vscn[row].maxcol < srccol+ncols-1)
+		vscn[row].maxcol = srccol+ncols-1;
+	if (vscn[row].maxcol < dstcol+ncols-1)
+		vscn[row].maxcol = dstcol+ncols-1;
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 void
@@ -945,19 +1095,22 @@ hpcfb_copycols(cookie, row, srccol, dstcol, ncols)
 		return;
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
-	dc->dc_state &= ~HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->bitblit
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		srcxoff = srccol * ri->ri_xscale;
-		srcyoff = row * ri->ri_yscale;
-		dstxoff = dstcol * ri->ri_xscale;
-		dstyoff = row * ri->ri_yscale;
-		width = ncols * ri->ri_xscale;
-		height = ri->ri_yscale;
+		srcxoff = srccol * ri->ri_font->fontwidth;
+		srcyoff = row * ri->ri_font->fontheight;
+		dstxoff = dstcol * ri->ri_font->fontwidth;
+		dstyoff = row * ri->ri_font->fontheight;
+		width = ncols * ri->ri_font->fontwidth;
+		height = ri->ri_font->fontheight;
 		(*sc->sc_accessops->bitblit)(sc->sc_accessctx,
 			srcxoff, srcyoff, dstxoff, dstyoff, height, width);
 	} else
 		rasops_emul.copycols(ri, row, srccol, dstcol, ncols);
+	dc->dc_state &= ~HPCFB_DC_DRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 
@@ -970,11 +1123,12 @@ hpcfb_tv_erasecols(dc, row, startcol, ncols, attr)
 	int row, startcol, ncols;
 	long attr;
 {
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = vscn + row * cols + startcol;
-	int i;
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 
+	if (vscn == 0)
+		return;
+
+	dc->dc_state |= HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	if (row < dc->dc_min_row)
 		dc->dc_min_row = row;
@@ -982,14 +1136,13 @@ hpcfb_tv_erasecols(dc, row, startcol, ncols, attr)
 		dc->dc_max_row = row;
 #endif /* HPCFB_JUMP */
 
-	if (vscn == 0)
-		return;
-
-	for (i = 0; i < ncols; i++) {
-		svc->c = ' ';
-		svc->attr = attr;
-		svc++;
-	}
+	vscn[row].maxcol = startcol-1;
+	if (vscn[row].spacecol < startcol+ncols-1)
+		vscn[row].spacecol = startcol+ncols-1;
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 void
@@ -1015,17 +1168,20 @@ hpcfb_erasecols(cookie, row, startcol, ncols, attr)
 		return;
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
-	dc->dc_state &= ~HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->erase
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		xoff = startcol * ri->ri_xscale;
-		yoff = row * ri->ri_yscale;
-		width = ncols * ri->ri_xscale;
-		height = ri->ri_yscale;
+		xoff = startcol * ri->ri_font->fontwidth;
+		yoff = row * ri->ri_font->fontheight;
+		width = ncols * ri->ri_font->fontwidth;
+		height = ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 			xoff, yoff, height, width, attr);
 	} else 
 		rasops_emul.erasecols(ri, row, startcol, ncols, attr);
+	dc->dc_state &= ~HPCFB_DC_DRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 /*
@@ -1036,33 +1192,61 @@ hpcfb_tv_copyrows(dc, src, dst, num)
 	struct hpcfb_devconfig *dc;
 	int src, dst, num;
 {
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *svc = vscn + src * cols;
-	struct hpcfb_vchar *dvc = vscn + dst * cols;
-
-#ifdef HPCFB_JUMP
-	if (dst < dc->dc_min_row)
-		dc->dc_min_row = dst;
-	if (dst + num > dc->dc_max_row)
-		dc->dc_max_row = dst + num;
-#endif /* HPCFB_JUMP */
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
+	struct hpcfb_tvrow *svc = &vscn[src];
+	struct hpcfb_tvrow *dvc = &vscn[dst];
+	int i;
+	int d;
 
 	if (vscn == 0)
 		return;
 
-	bcopy(svc, dvc, num*cols*sizeof(struct hpcfb_vchar));
+	dc->dc_state |= HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	if (dst < dc->dc_min_row)
+		dc->dc_min_row = dst;
+	if (dst + num > dc->dc_max_row)
+		dc->dc_max_row = dst + num -1;
+#endif /* HPCFB_JUMP */
+
+	if (svc > dvc)
+		d = 1;
+	else if (svc < dvc) {
+		svc += num-1;
+		dvc += num-1;
+		d = -1;
+	} else  {
+		dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+		hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
+		return;	
+	}
+
+	for (i = 0; i < num; i++) {
+		bcopy(&svc->col[0], &dvc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
+		if (svc->maxcol < dvc->maxcol && dvc->spacecol < dvc->maxcol)
+			dvc->spacecol = dvc->maxcol;
+		dvc->maxcol = svc->maxcol;
+		svc+=d;
+		dvc+=d;
+	}
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 void
-hpcfb_redraw(cookie, row, num)
+hpcfb_redraw(cookie, row, num, all)
 	void *cookie;
 	int row, num;
+	int all;
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct rasops_info *ri = &dc->dc_rinfo;
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
+	int cols;
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	struct hpcfb_vchar *svc;
 	int i, j;
 
@@ -1078,67 +1262,81 @@ hpcfb_redraw(cookie, row, num)
 	if (ri->ri_bits == NULL)
 		return;
 
+	dc->dc_state |= HPCFB_DC_DRAWING;
+	dc->dc_state |= HPCFB_DC_TDRAWING;
 	for (i = 0; i < num; i++) {
-		for (j = 0; j < cols; j++) {
-			svc = vscn + (row+i) * cols + j;
+		cols = vscn[row+i].maxcol;
+		for (j = 0; j <= cols; j++) {
+			svc = &vscn[row+i].col[j];
 			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
 		}
+		if (all)
+			cols = dc->dc_cols;
+		else
+			cols = vscn[row+i].spacecol;
+		for (; j <= cols; j++) {
+			rasops_emul.putchar(ri, row + i, j, ' ', 0);
+		}
+		vscn[row+i].spacecol = 0;
 	}
+	dc->dc_state &= ~HPCFB_DC_DRAWING;
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 #ifdef HPCFB_JUMP
 void
-hpcfb_realscroll(dc)
-	struct hpcfb_devconfig *dc;
+hpcfb_scroll_update(v)
+	void *v;
 {
-	struct rasops_info *ri = &dc->dc_rinfo;
-	struct hpcfb_softc *sc = dc->dc_sc;
-	int srcyoff, dstyoff;
-	int width, height;
-	int src, dst, num;
+	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-
-	if (ri->ri_bits == NULL)
-		return;
-
-	src = dc->dc_scroll_src;
-	dst = dc->dc_scroll_dst;
-	num = dc->dc_scroll_num;
-
-	if (sc && sc->sc_accessops->bitblit
-	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		srcyoff = src * ri->ri_yscale;
-		dstyoff = dst * ri->ri_yscale;
-		width = ri->ri_stride;
-		height = num * ri->ri_yscale;
-		(*sc->sc_accessops->bitblit)(sc->sc_accessctx,
-			0, srcyoff, 0, dstyoff, height, width);
-	} else
-		hpcfb_redraw(dc, dst, num);
+	/* callout_stop(&dc->dc_scroll_ch); */
+	dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
+	if (dc->dc_curx > 0 && dc->dc_cury > 0)
+		hpcfb_cursor(dc, 0,  dc->dc_cury, dc->dc_curx); 
+	if ((dc->dc_state&HPCFB_DC_UPDATE)) {
+		hpcfb_redraw(dc, dc->dc_min_row, 
+				dc->dc_max_row - dc->dc_min_row, 0);
+	} else {
+		hpcfb_redraw(dc, dc->dc_scroll_dst, dc->dc_scroll_num, 0);
+	}
+	if (dc->dc_curx > 0 && dc->dc_cury > 0)
+		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
 }
 
 void
-hpcfb_do_scroll(dc)
-	struct hpcfb_devconfig *dc;
+hpcfb_do_scroll(v)
+	void *v;
 {
-	struct rasops_info *ri = &dc->dc_rinfo;
-	struct hpcfb_softc *sc = dc->dc_sc;
-	int srcyoff, dstyoff;
-	int width, height;
-	int src, dst, num;
+	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-	/* callout_stop(dc->dc_scroll_ch); */
-	dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
-	dc->dc_state |= HPCFB_DC_DRAWING;
-	if ((dc->dc_state&HPCFB_DC_UPDATE)) {
-		hpcfb_redraw(cookie, dc->dc_min_row, 
-				dc->dc_max_row - dc->dc_min_row);
-	} else {
-		hpcfb_realscroll(dc);
-	}
-	dc->dc_state &= ~HPCFB_DC_DRAWING;
+	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
+	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
+		dc->dc_state |= HPCFB_DC_SCRDELAY;
+	else if (!dc->dc_sc->sc_mapping)
+		hpcfb_scroll_update(v);
+	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 }
 
+void
+hpcfb_check_scroll(v)
+	void *v;
+{
+	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
+
+	if (dc->dc_sc->sc_polling && (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
+		callout_stop(&dc->dc_scroll_ch);
+		dc->dc_state &= ~HPCFB_DC_SCRDELAY;
+		hpcfb_scroll_update(v);
+	}
+	else if (dc->dc_state&HPCFB_DC_SCRDELAY){
+		dc->dc_state &= ~HPCFB_DC_SCRDELAY;
+		hpcfb_scroll_update(v);
+	}
+}
 #endif /* HPCFB_JUMP */
 
 void
@@ -1154,52 +1352,55 @@ hpcfb_copyrows(cookie, src, dst, num)
 
 	hpcfb_tv_copyrows(cookie, src, dst, num);
 
-#ifdef HPCFB_JUMP
-	if ((dc->dc_state&HPCFB_DC_SCROLLPENDING) == 0) {
-		dc->dc_state |= HPCFB_DC_SCROLLPENDING;
-		dc->dc_scroll = 1;
-		dc->dc_scroll_src = src;
-		dc->dc_scroll_dst = dst;
-		dc->dc_scroll_num = num;
-		callout_reset(dc->sc_scroll_ch, HZ/100, &hpcfb_realscroll, dc);
-		return;
-	} else if (dc->dc_scroll++ < dc-> dc_rows / HPCFB_MAX_JUMP) {
-		dc->dc_state |= HPCFB_DC_UPDATE;
-		return;
-	} else {
-		dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
-		callout_stop(dc->sc_scroll_ch);
-	}
-	if (dc->dc_state&HPCFB_DC_UPDATE) {
-		dc->dc_state &= ~HPCFB_DC_UPDATE;
-		dc->dc_state |= HPCFB_DC_DRAWING;
-		hpcfb_redraw(cookie, dc->dc_min_row, 
-				dc->dc_max_row - dc->dc_min_row);
-		dc->dc_max_row = 0;
-		dc->dc_min_row = dc->dc_rows;
-		dc->dc_state &= ~HPCFB_DC_DRAWING;
-		if (dc->dc_curx > 0 && dc->dc_cury > 0)
-			hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
-		return;
-	}
-#endif /* HPCFB_JUMP */
-
 	if (ri->ri_bits == NULL)
 		return;
 
-
-	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->bitblit
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		srcyoff = src * ri->ri_yscale;
-		dstyoff = dst * ri->ri_yscale;
-		width = ri->ri_stride;
-		height = num * ri->ri_yscale;
+		dc->dc_state |= HPCFB_DC_DRAWING;
+		srcyoff = src * ri->ri_font->fontheight;
+		dstyoff = dst * ri->ri_font->fontheight;
+		width = dc->dc_cols * ri->ri_font->fontwidth;
+		height = num * ri->ri_font->fontheight;
 		(*sc->sc_accessops->bitblit)(sc->sc_accessctx,
 			0, srcyoff, 0, dstyoff, height, width);
-	} else
-		hpcfb_redraw(cookie, dst, num);
-	dc->dc_state &= ~HPCFB_DC_DRAWING;
+		dc->dc_state &= ~HPCFB_DC_DRAWING;
+	}
+	else {
+#ifdef HPCFB_JUMP
+		if (dc->dc_sc->sc_polling) {
+			hpcfb_check_scroll(dc);
+		} else if ((dc->dc_state&HPCFB_DC_SCROLLPENDING) == 0) {
+			dc->dc_state |= HPCFB_DC_SCROLLPENDING;
+			dc->dc_scroll = 1;
+			dc->dc_scroll_src = src;
+			dc->dc_scroll_dst = dst;
+			dc->dc_scroll_num = num;
+			callout_reset(&dc->dc_scroll_ch, hz/100, &hpcfb_do_scroll, dc);
+			return;
+		} else if (dc->dc_scroll++ < dc->dc_rows/HPCFB_MAX_JUMP) {
+			dc->dc_state |= HPCFB_DC_UPDATE;
+			return;
+		} else {
+			dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
+			callout_stop(&dc->dc_scroll_ch);
+		}
+		if (dc->dc_state&HPCFB_DC_UPDATE) {
+			dc->dc_state &= ~HPCFB_DC_UPDATE;
+			hpcfb_redraw(cookie, dc->dc_min_row, 
+					dc->dc_max_row - dc->dc_min_row, 0);
+			dc->dc_max_row = 0;
+			dc->dc_min_row = dc->dc_rows;
+			if (dc->dc_curx > 0 && dc->dc_cury > 0)
+				hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+			return;
+		}
+#endif /* HPCFB_JUMP */
+		hpcfb_redraw(cookie, dst, num, 0);
+	}
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 /*
@@ -1211,11 +1412,15 @@ hpcfb_tv_eraserows(dc, row, nrow, attr)
 	int row, nrow;
 	long attr;
 {
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = vscn + row * dc->dc_cols;
+	struct hpcfb_tvrow *vscn = dc->dc_tvram;
+	int cols;
 	int i;
-	int j;
 
+	if (vscn == 0)
+		return;
+
+	dc->dc_state |= HPCFB_DC_TDRAWING;
+	dc->dc_state &= ~HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	if (row < dc->dc_min_row)
 		dc->dc_min_row = row;
@@ -1223,16 +1428,15 @@ hpcfb_tv_eraserows(dc, row, nrow, attr)
 		dc->dc_max_row = row + nrow;
 #endif /* HPCFB_JUMP */
 
-	if (vscn == 0)
-		return;
-
 	for (i = 0; i < nrow; i++) {
-		for (j = 0; j < dc->dc_cols; j++) {
-			svc->c = ' ';
-			svc->attr = attr;
-			svc++;
-		}
+		cols = vscn[row+i].maxcol;
+		if (vscn[row+i].spacecol < cols)
+			vscn[row+i].spacecol = cols;
+		vscn[row+i].maxcol = -1;
 	}
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 void
@@ -1261,14 +1465,17 @@ hpcfb_eraserows(cookie, row, nrow, attr)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->erase
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		yoff = row * ri->ri_yscale;
-		width = ri->ri_stride;
-		height = nrow * ri->ri_yscale;
+		yoff = row * ri->ri_font->fontheight;
+		width = dc->dc_cols * ri->ri_font->fontwidth;
+		height = nrow * ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 			0, yoff, height, width, attr);
 	} else 
 		rasops_emul.eraserows(ri, row, nrow, attr);
 	dc->dc_state &= ~HPCFB_DC_DRAWING;
+#ifdef HPCFB_JUMP
+	hpcfb_check_scroll(dc);
+#endif /* HPCFB_JUMP */
 }
 
 /*

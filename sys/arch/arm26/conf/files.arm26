@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.2 2000/11/20 20:02:38 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.3 2000/12/08 09:26:22 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -170,6 +170,11 @@ file	arch/arm26/podulebus/if_ei.c		ei
 device	ea: ether, ifnet, arp, seeq8005
 attach	ea at podulebus
 file	arch/arm26/podulebus/if_ea.c		ea
+
+# i-cubed EtherLAN 100, 200 and 500
+device	eh: ether, ifnet, arp, dp8390nic
+attach	eh at podulebus
+file	arch/arm26/podulebus/if_eh.c		eh
 
 # D.T. software IDE
 device	dtide {[channel = -1]}: wdc_base, ata, atapi

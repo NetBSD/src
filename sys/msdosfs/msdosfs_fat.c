@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.31.2.1 2000/11/20 18:09:53 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.31.2.2 2000/12/08 09:22:08 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -965,6 +965,7 @@ fillinusemap(pmp)
  * the de_flag field of the denode and it does not change the de_FileSize
  * field.  This is left for the caller to do.
  */
+
 int
 extendfile(dep, count, bpp, ncp, flags)
 	struct denode *dep;
@@ -974,8 +975,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	int flags;
 {
 	int error;
-	u_long frcn;
-	u_long cn, got;
+	u_long frcn = 0, cn, got, origcount;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 
@@ -1002,16 +1002,19 @@ extendfile(dep, count, bpp, ncp, flags)
 			return (error);
 	}
 
+	origcount = count;
 	while (count > 0) {
+
 		/*
 		 * Allocate a new cluster chain and cat onto the end of the
-		 * file.  * If the file is empty we make de_StartCluster point
+		 * file.  If the file is empty we make de_StartCluster point
 		 * to the new block.  Note that de_StartCluster being 0 is
 		 * sufficient to be sure the file is empty since we exclude
 		 * attempts to extend the root directory above, and the root
 		 * dir is the only file with a startcluster of 0 that has
 		 * blocks allocated (sort of).
 		 */
+
 		if (dep->de_StartCluster == 0)
 			cn = 0;
 		else
@@ -1046,40 +1049,32 @@ extendfile(dep, count, bpp, ncp, flags)
 		}
 
 		/*
-		 * Update the "last cluster of the file" entry in the denode's fat
-		 * cache.
+		 * Update the "last cluster of the file" entry in the
+		 * denode's fat cache.
 		 */
-		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
 
-		if (flags & DE_CLEAR) {
+		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
+		if ((flags & DE_CLEAR) &&
+		    (dep->de_Attributes & ATTR_DIRECTORY)) {
 			while (got-- > 0) {
-				/*
-				 * Get the buf header for the new block of the file.
-				 */
-				if (dep->de_Attributes & ATTR_DIRECTORY)
-					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
-						    pmp->pm_bpcluster, 0, 0);
-				else {
-					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
+				bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
 					    pmp->pm_bpcluster, 0, 0);
-					/*
-					 * Do the bmap now, as in msdosfs_write
-					 */
-					if (pcbmap(dep,
-					    de_bn2cn(pmp, bp->b_lblkno),
-					    &bp->b_blkno, 0, 0))
-						bp->b_blkno = -1;
-					if (bp->b_blkno == -1)
-						panic("extendfile: pcbmap");
-				}
 				clrbuf(bp);
 				if (bpp) {
 					*bpp = bp;
-					bpp = NULL;
-				} else
+						bpp = NULL;
+				} else {
 					bdwrite(bp);
+				}					
 			}
 		}
+	}
+
+	if ((flags & DE_CLEAR) && !(dep->de_Attributes & ATTR_DIRECTORY)) {
+		int cnshift = pmp->pm_cnshift;
+
+		uvm_vnp_zerorange(DETOV(dep), frcn << cnshift,
+				  origcount << cnshift);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.2.2.2 2000/11/22 16:00:15 bouyer Exp $
+#	$NetBSD: CARDBUS,v 1.2.2.3 2000/12/08 09:26:33 bouyer Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.2.2.2 $"
+#ident		"CARDBUS-$Revision: 1.2.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -386,7 +386,7 @@ lpt2	at isa? port 0x3bc
 # I2O devices
 #iop*	at pci? dev ? function ?	# I/O processor
 #iopsp*	at iop? tid ?			# SCSI/FC-AL ports
-#lsu*	at iop? tid ?			# block devices
+#ld*	at iop? tid ?			# block devices
 
 
 # SCSI Controllers and Devices
@@ -472,8 +472,8 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 #cac*	at eisa?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-#lsu*	at cac? unit ?			# Compaq array disk devices
-#lsu*	at twe? unit ?			# 3ware array disk devices
+#ld*	at cac? unit ?			# Compaq array disk devices
+#ld*	at twe? unit ?			# 3ware array disk devices
 
 
 # IDE and related devices

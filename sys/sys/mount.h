@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.77.2.1 2000/11/20 18:11:32 bouyer Exp $	*/
+/*	$NetBSD: mount.h,v 1.77.2.2 2000/12/08 09:19:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -131,6 +131,8 @@ struct mount {
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
+	int		mnt_fs_bshift;		/* offset shift for lblkno */
+	int		mnt_dev_bshift;		/* shift for device sectors */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */

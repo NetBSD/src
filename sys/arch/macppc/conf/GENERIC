@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39.2.2 2000/11/22 16:00:36 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.3 2000/12/08 09:28:19 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.2 $"
+#ident 		"GENERIC-$Revision: 1.39.2.3 $"
 
 maxusers	32
 
@@ -272,7 +272,7 @@ ugen*	at uhub? port ? configuration ? interface ?
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller 
+#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
@@ -329,4 +329,4 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
-pseudo-device	openfirm		# /dev/openfim
+pseudo-device	openfirm		# /dev/openfirm

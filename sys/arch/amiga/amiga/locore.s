@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112.2.1 2000/11/20 19:58:20 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.112.2.2 2000/12/08 09:26:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1031,6 +1031,12 @@ _proc_trampoline:
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
+#ifdef COMPAT_SUNOS
+#include <m68k/m68k/sunos_sigcode.s>
+#endif
+#ifdef COMPAT_SVR4
+#include <m68k/m68k/svr4_sigcode.s>
+#endif
 
 /*
  * Primitives
@@ -1254,8 +1260,8 @@ Lsw2:
 #endif
 	tstb	%a2@				| null state frame?
 	jeq	Lswnofpsave			| yes, all done
-	fmovem	%fp0-%fp7,%a2@(216)		| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a2@(312)	| save FP control registers
+	fmovem	%fp0-%fp7,%a2@(FPF_REGS)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,%a2@(FPF_FPCR)	| save FP control registers
 #ifdef M68060
 	jra	Lswnofpsave
 #endif
@@ -1264,10 +1270,10 @@ Lsw2:
 Lsavfp60:
 	tstb	%a2@(2)				| null state frame?
 	jeq	Lswnofpsave			| yes, all done
-	fmovem	%fp0-%fp7,%a2@(216)		| save FP general registers
-	fmovem	%fpcr,%a2@(312)			| save FP control registers
-	fmovem	%fpsr,%a2@(316)
-	fmovem	%fpi,%a2@(320)
+	fmovem	%fp0-%fp7,%a2@(FPF_REGS)	| save FP general registers
+	fmovem	%fpcr,%a2@(FPF_FPCR)		| save FP control registers
+	fmovem	%fpsr,%a2@(FPF_FPSR)
+	fmovem	%fpi,%a2@(FPF_FPI)
 #endif
 Lswnofpsave:
 #endif
@@ -1322,8 +1328,8 @@ Lresnonofpatall:
 #endif
 	tstb	%a0@				| null state frame?
 	jeq	Lresfprest2			| yes, easy
-	fmovem	%a0@(312),%fpcr/%fpsr/%fpi	| restore FP control registers
-	fmovem	%a0@(216),%fp0-%fp7		| restore FP general registers
+	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control registers
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
 Lresfprest2:
 	frestore %a0@				| restore state
 	movw	%a1@(PCB_PS),%sr		| no, restore PS
@@ -1335,10 +1341,10 @@ Lresfprest2:
 Lresfp60rest1:
 	tstb	%a0@(2)				| null state frame?
 	jeq	Lresfp60rest2			| yes, easy
-	fmovem	%a0@(312),%fpcr			| restore FP control registers
-	fmovem	%a0@(316),%fpsr
-	fmovem	%a0@(320),%fpi
-	fmovem	%a0@(216),%fp0-%fp7		| restore FP general registers
+	fmovem	%a0@(FPF_FPCR),%fpcr		| restore FP control registers
+	fmovem	%a0@(FPF_FPSR),%fpsr
+	fmovem	%a0@(FPF_FPI),%fpi
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
 Lresfp60rest2:
 	frestore %a0@				| restore state
 	movw	%a1@(PCB_PS),%sr		| no, restore PS
@@ -1372,8 +1378,8 @@ ENTRY(savectx)
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lsavedone			| yes, all done
-	fmovem	fp0-fp7,a0@(216)		| save FP general registers
-	fmovem	fpcr/fpsr/fpi,a0@(312)		| save FP control registers
+	fmovem	fp0-fp7,a0@(FPF_REGS)		| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control registers
 #ifdef	M68060
 	moveq	#0,d0
 	rts
@@ -1383,10 +1389,10 @@ ENTRY(savectx)
 Lsavctx60:
 	tstb	a0@(2)
 	jeq	Lsavedone
-	fmovem	fp0-fp7,a0@(216)		| save FP general registers
-	fmovem	fpcr,a0@(312)			| save FP control registers
-	fmovem	fpsr,a0@(316)
-	fmovem	fpi,a0@(320)
+	fmovem	fp0-fp7,a0@(FPF_REGS)		| save FP general registers
+	fmovem	fpcr,a0@(FPF_FPCR)		| save FP control registers
+	fmovem	fpsr,a0@(FPF_FPSR)
+	fmovem	fpi,a0@(FPF_FPI)
 #endif
 #endif
 Lsavedone:
@@ -1610,8 +1616,8 @@ ENTRY(m68881_save)
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lm68881sdone			| yes, all done
-	fmovem fp0-fp7,a0@(216)			| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)		| save FP control registers
+	fmovem fp0-fp7,a0@(FPF_REGS)		| save FP general registers
+	fmovem fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control registers
 Lm68881sdone:
 	rts
 #endif
@@ -1620,10 +1626,10 @@ Lm68881sdone:
 Lm68060fpsave:
 	tstb	a0@(2)				| null state frame?
 	jeq	Lm68060sdone			| yes, all done
-	fmovem fp0-fp7,a0@(216)			| save FP general registers
-	fmovem	fpcr,a0@(312)			| save FP control registers
-	fmovem	fpsr,a0@(316)
-	fmovem	fpi,a0@(320)
+	fmovem fp0-fp7,a0@(FPF_REGS)		| save FP general registers
+	fmovem	fpcr,a0@(FPF_FPCR)		| save FP control registers
+	fmovem	fpsr,a0@(FPF_FPSR)
+	fmovem	fpi,a0@(FPF_FPI)
 Lm68060sdone:
 	rts
 #endif
@@ -1637,8 +1643,8 @@ ENTRY(m68881_restore)
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lm68881rdone			| yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi		| restore FP control registers
-	fmovem	a0@(216),fp0-fp7		| restore FP general registers
+	fmovem	a0@(FPF_FPCR),fpcr/fpsr/fpi	| restore FP control registers
+	fmovem	a0@(FPF_REGS),fp0-fp7		| restore FP general registers
 Lm68881rdone:
 	frestore a0@				| restore state
 	rts
@@ -1648,10 +1654,10 @@ Lm68881rdone:
 Lm68060fprestore:
 	tstb	a0@(2)				| null state frame?
 	jeq	Lm68060fprdone			| yes, easy
-	fmovem	a0@(312),fpcr			| restore FP control registers
-	fmovem	a0@(316),fpsr
-	fmovem	a0@(320),fpi
-	fmovem	a0@(216),fp0-fp7		| restore FP general registers
+	fmovem	a0@(FPF_FPCR),fpcr		| restore FP control registers
+	fmovem	a0@(FPF_FPSR),fpsr
+	fmovem	a0@(FPF_FPI),fpi
+	fmovem	a0@(FPF_REGS),fp0-fp7		| restore FP general registers
 Lm68060fprdone:
 	frestore a0@				| restore state
 	rts

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.2.2.2 2000/11/20 19:57:08 bouyer Exp $ */
+/* $NetBSD: irongate.c,v 1.2.2.3 2000/12/08 09:23:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.2.2.2 2000/11/20 19:57:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.2.2.3 2000/12/08 09:23:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,12 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AMD 751 Core Logic + AGP Chipset, rev. %d\n", icp->ic_rev);
 
 	irongate_dma_init(icp);
+
+	/*
+	 * Do PCI memory initialization that needs to be deferred until
+	 * malloc is safe.
+	 */
+	irongate_bus_mem_init2(&icp->ic_memt, icp);
 
 	switch (cputype) {
 #ifdef API_UP1000

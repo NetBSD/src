@@ -1,11 +1,11 @@
-/*	$NetBSD: md_root.c,v 1.7.8.1 2000/11/20 20:15:17 bouyer Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.2.2.2 2000/12/08 09:28:36 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Christos Zoulas and Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,58 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/systm.h>
-#include <sys/param.h>
-#include <sys/reboot.h>
+#ifndef __MACHINE_LOADFILE_MACHDEP_H
+#define __MACHINE_LOADFILE_MACHDEP_H
 
-#include <dev/md.h>
+#define BOOT_AOUT
+#define BOOT_ELF
+#define ELFSIZE 32
 
-#include "opt_mdsize.h"
+#define LOAD_KERNEL	LOAD_ALL
+#define COUNT_KERNEL	COUNT_ALL
 
-extern int boothowto;
+#define LOADADDR(a)		(((u_long)(a)) + offset)
+#define ALIGNENTRY(a)		((u_long)(a))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
 
-#ifndef MINIROOTSIZE
-#define MINIROOTSIZE 512
+#ifdef _STANDALONE
+
+#define WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
+#define OKMAGIC(a)		((a) == NMAGIC)
+
+#else
+
+#define WARN(a)			warn a
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		malloc(a)
+#define FREE(a, b)		free(a)
+#define OKMAGIC(a)		((a) == OMAGIC)
+
 #endif
 
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
-
-/*
- * This array will be patched to contain a file-system image.
- * See the program:  src/distrib/sun3/common/rdsetroot.c
- */
-int md_root_size = ROOTBYTES;
-char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
-
-/*
- * This is called during autoconfig.
- */
-void
-md_attach_hook(unit, md)
-	int unit;
-	struct md_conf *md;
-{
-
-	if (unit == 0) {
-		/* Setup root ramdisk */
-		md->md_addr = (caddr_t) md_root_image;
-		md->md_size = (size_t) md_root_size;
-		md->md_type = MD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
-	}
-}
-/*
- * This is called during open (i.e. mountroot)
- */
-/* ARGSUSED */
-void
-md_open_hook(unit, md)
-	int unit;
-	struct md_conf *md;
-{
-
-	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
-	}
-}
+#endif /* __MACHINE_LOADFILE_MACHDEP_H */

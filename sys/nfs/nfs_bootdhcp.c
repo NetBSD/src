@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.12.2.1 2000/11/20 18:11:15 bouyer Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.12.2.2 2000/12/08 09:19:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -547,6 +547,9 @@ bootpc_call(nd, procp)
 	bootp->bp_hlen  = halen;	/* Hardware address length */
 	bootp->bp_xid = ++xid;
 	memcpy(bootp->bp_chaddr, haddr, halen);
+#ifdef NFS_BOOT_BOOTP_REQFILE
+	strncpy(bootp->bp_file, NFS_BOOT_BOOTP_REQFILE, sizeof(bootp->bp_file));
+#endif
 	/* Fill-in the vendor data. */
 	memcpy(bootp->bp_vend, vm_rfc1048, 4);
 #ifdef NFS_BOOT_DHCP

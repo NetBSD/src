@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.29.2.2 2000/11/22 16:06:33 bouyer Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29.2.3 2000/12/08 09:19:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -140,7 +140,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 loop:
 	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
-		    memcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
+		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
 		if (vget(vp, LK_EXCLUSIVE))
@@ -159,10 +159,11 @@ loop:
 	nvp->v_vnlock = 0;	/* XXX At least untill we do locking */
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
-	memset((caddr_t)np, 0, sizeof *np);
+	memset(np, 0, sizeof *np);
 	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
+
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
@@ -171,11 +172,21 @@ loop:
 		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
 	} else
 		np->n_fhp = &np->n_fh;
-	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
+	memcpy(np->n_fhp, fhp, fhsize);
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
-	memset(np->n_vattr, 0, sizeof (struct vattr));
+
+	/*
+	 * XXXUBC doing this while holding the nfs_hashlock is bad,
+	 * but there's no alternative at the moment.
+	 */
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
+	if (error) {
+		return error;
+	}
+	uvm_vnp_setsize(vp, np->n_vattr->va_size);
+
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);
@@ -227,7 +238,7 @@ nfs_inactive(v)
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
 		vrele(sp->s_dvp);
-		FREE((caddr_t)sp, M_NFSREQ);
+		FREE(sp, M_NFSREQ);
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
@@ -272,12 +283,18 @@ nfs_reclaim(v)
 		FREE(np->n_dircache, M_NFSDIROFF);
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
-		free((caddr_t)np->n_fhp, M_NFSBIGFH);
+		free(np->n_fhp, M_NFSBIGFH);
 	}
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);
+	if (np->n_rcred) {
+		crfree(np->n_rcred);
+	}
+	if (np->n_wcred) {
+		crfree(np->n_wcred);
+	}
 	cache_purge(vp);
 	pool_put(&nfs_node_pool, vp->v_data);
-	vp->v_data = (void *)0;
+	vp->v_data = NULL;
 	return (0);
 }
