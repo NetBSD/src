@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.19 2003/02/25 08:48:24 toshii Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.20 2003/03/03 23:49:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.19 2003/02/25 08:48:24 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.20 2003/03/03 23:49:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -213,8 +213,10 @@ static struct audio_hw_if emuxki_hw_if = {
 
 static const int emuxki_recsrc_adcrates[] =
     { 48000, 44100, 32000, 24000, 22050, 16000, 11025, 8000, -1 };
+#if 0
 static const int emuxki_recsrc_intrmasks[EMU_NUMRECSRCS] =
     { EMU_INTE_MICBUFENABLE, EMU_INTE_ADCBUFENABLE, EMU_INTE_EFXBUFENABLE };
+#endif
 static const u_int32_t emuxki_recsrc_bufaddrreg[EMU_NUMRECSRCS] =
     { EMU_MICBA, EMU_ADCBA, EMU_FXBA };
 static const u_int32_t emuxki_recsrc_idxreg[EMU_NUMRECSRCS] =
