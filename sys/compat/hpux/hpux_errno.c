@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_errno.c,v 1.1 1998/10/18 17:00:32 christos Exp $	*/
+/*	$NetBSD: hpux_errno.c,v 1.2 1998/10/24 19:04:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #define BERR	1000
 
 /* indexed by BSD errno */
-int hpux_error[NERR] = {
+int native_to_hpux_errno[NERR] = {
 /*00*/	  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,
 /*10*/	 10,  45,  12,  13,  14,  15,  16,  17,  18,  19,
 /*20*/	 20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
