@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.321 1999/10/12 17:08:56 jdolecek Exp $
+#	$NetBSD: files,v 1.322 1999/10/13 18:37:12 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -375,6 +375,10 @@ file    dev/ic/wdc.c wdc_base
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 device	tlp: arp, ether, ifnet, mii
 file	dev/ic/tulip.c			tlp
+
+# Adaptec AIC-6915 Ethernet interface
+device	sf: arp, ether, ifnet, mii
+file	dev/ic/aic6915.c		sf
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
