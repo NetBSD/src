@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.116 1999/05/06 17:12:26 christos Exp $
+#	$NetBSD: INSTALL,v 1.117 1999/05/19 14:41:54 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -332,8 +332,11 @@ wdc*    at isapnp?
 wdc*    at pcmcia? function ?   
 
 # ISA ST506, ESDI, and IDE controllers
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
+# Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
+# fall back to 16bits I/O if 32bits I/O are not functionnal).
+# Some controllers pass the initial 32bit test, but will fail later.
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
