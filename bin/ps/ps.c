@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.42 2001/06/14 19:04:49 cyber Exp $	*/
+/*	$NetBSD: ps.c,v 1.43 2001/07/20 21:59:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.42 2001/06/14 19:04:49 cyber Exp $");
+__RCSID("$NetBSD: ps.c,v 1.43 2001/07/20 21:59:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,8 +461,10 @@ scanvars()
 
 	for (vent = vhead; vent; vent = vent->next) {
 		v = vent->var;
-		if (v->flag & COMM)
+		if (v->flag & COMM) {
 			needcomm = 1;
+			break;
+		}
 	}
 }
 
