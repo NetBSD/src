@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.22 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.23 1998/07/10 04:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.22 1998/06/04 08:28:35 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.23 1998/07/10 04:39:04 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -233,7 +233,7 @@ url_get(origline, proxyenv, outfile)
 		goto cleanup_url_get;
 	}
 
-	while (connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+	while (xconnect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
 		if (errno == EINTR)
 			continue;
 		if (hp && hp->h_addr_list[1]) {
@@ -407,6 +407,7 @@ url_get(origline, proxyenv, outfile)
 	if (oldintp)
 		(void)signal(SIGPIPE, oldintp);
 
+	resetsockbufsize();
 	close(s);
 	if (closefunc != NULL)
 		(*closefunc)(fout);
@@ -424,6 +425,7 @@ improper:
 	warnx("Improper response from %s", host);
 
 cleanup_url_get:
+	resetsockbufsize();
 	if (s != -1)
 		close(s);
 	if (closefunc != NULL && fout != NULL)
