@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.53 2003/02/02 08:37:28 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.54 2003/04/01 15:15:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -612,7 +612,7 @@ fdattach(parent, self, aux)
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
 
-	fd->sc_copybuf = (u_char *)malloc(NBPG, M_DEVBUF, M_WAITOK);
+	fd->sc_copybuf = (u_char *)malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	if (fd->sc_copybuf == 0)
 		printf("fdprobe: WARNING!! malloc() failed.\n");
 	fd->sc_flags |= FD_ALIVE;

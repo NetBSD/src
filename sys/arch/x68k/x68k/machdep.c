@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2003/03/23 05:01:22 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2003/04/01 15:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -246,8 +246,8 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
@@ -306,7 +306,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vsize_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -346,7 +346,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -601,7 +601,7 @@ cpu_init_kcore_hdr()
 	 * Initialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -700,7 +700,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space in
+ * Dumps always skip the first PAGE_SIZE of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -730,7 +730,7 @@ cpu_dumpconf()
 		dumpsize += btoc(m->ram_segs[i].size);
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first NBPG in case there is a disk label there.
+	 * first PAGE_SIZE in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -793,15 +793,15 @@ dumpsys()
 		goto bad;
 
 	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/NBPG)
+#define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
 		if (maddr == 0) {
 			/* Skip first page */
-			maddr += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 			continue;
 		}
 		while (maddr >=
@@ -817,12 +817,12 @@ dumpsys()
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
-		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
  bad:
 		switch (error) {
 		case 0:
-			maddr += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 			break;
 
 		case ENXIO:
@@ -876,7 +876,7 @@ initcpu()
 	 * VAC machines as it loses big time.
 	 */
 	if ((int) mappedcopysize == -1) {
-		mappedcopysize = NBPG;
+		mappedcopysize = PAGE_SIZE;
 	}
 #endif
 
@@ -1164,8 +1164,8 @@ mem_exists(mem, basemax)
 	nofault = (int *) &faultbuf;
 	if (setjmp ((label_t *)nofault)) {
 		nofault = (int *) 0;
-		pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
-		pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+		pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
+		pmap_remove(pmap_kernel(), base_v, base_v+PAGE_SIZE);
 		pmap_update(pmap_kernel());
 		DPRINTF (("Fault!!! Returning 0.\n"));
 		return 0;
@@ -1218,8 +1218,8 @@ out:
 asm("end_check_mem:");
 
 	nofault = (int *)0;
-	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
-	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+	pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
+	pmap_remove(pmap_kernel(), base_v, base_v+PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
 	DPRINTF ((" End.\n"));
@@ -1242,8 +1242,8 @@ setmemrange(void)
 	 * VM system is not started yet.  Use the first and second avalable
 	 * pages to map the (possible) target memory and its shadow.
 	 */
-	mem_v = virtual_avail;	/* target */
-	base_v = mem_v + NBPG;	/* shadow */
+	mem_v = virtual_avail;		/* target */
+	base_v = mem_v + PAGE_SIZE;	/* shadow */
 
 	{	/* Turn off the processor cache. */
 		register int cacr;
