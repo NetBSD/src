@@ -38,7 +38,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\n\
 	The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: seq.c,v 1.1 2005/01/20 04:13:42 ginsbach Exp $");
+__RCSID("$NetBSD: seq.c,v 1.2 2005/01/20 09:20:03 wiz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 
 	if (errflg) {
 		fprintf(stderr,
-		    "usage: %s [-f format] [-s str] [-t str] [-w] [first [incr]] last\n",
+		    "usage: %s [-w] [-f format] [-s string] [-t string] [first [incr]] last\n",
 		    getprogname());
 		exit(1);
 	}
