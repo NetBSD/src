@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.156 2004/02/02 23:13:44 he Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.157 2004/02/07 08:02:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.156 2004/02/02 23:13:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.157 2004/02/07 08:02:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3977,6 +3977,16 @@ again:
 	/*
 	 * there's no free entry for this vm_map.
 	 * now we need to allocate some vm_map_entry.
+	 *
+	 * if kmem_map is already up, allocate a entry from it
+	 * so that we won't try to vm_map_lock recursively.
+	 * XXX assuming usage pattern of kmem_map.
+	 */
+
+	if (__predict_true(kmem_map != NULL) && map != kmem_map)
+		return uvm_kmapent_alloc(kmem_map, flags);
+
+	/*
 	 * for simplicity, always allocate one page chunk of them at once.
 	 */
 
