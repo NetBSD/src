@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.64 1996/10/10 23:34:20 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.65 1996/10/12 23:23:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -106,11 +106,11 @@ scsiprint(aux, pnp)
 
 	/* only "scsibus"es can attach to "scsi"s; easy. */
 	if (pnp)
-		kprintf("scsibus at %s", pnp);
+		printf("scsibus at %s", pnp);
 
 	/* don't print channel if the controller says there can be only one. */
 	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
-		kprintf(" channel %d", l->channel);
+		printf(" channel %d", l->channel);
 
 	return (UNCONF);
 }
@@ -151,10 +151,10 @@ scsibusattach(parent, self, aux)
 
 	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
-	kprintf("\n");
+	printf("\n");
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 2
-	kprintf("%s: waiting for scsi devices to settle\n",
+	printf("%s: waiting for scsi devices to settle\n",
 		sb->sc_dev.dv_xname);
 #else	/* SCSI_DELAY > 2 */
 #undef	SCSI_DELAY
@@ -436,7 +436,7 @@ scsibusprint(aux, pnp)
 	int target, lun;
 
 	if (pnp != NULL)
-		kprintf("%s", pnp);
+		printf("%s", pnp);
 
 	inqbuf = sa->sa_inqbuf;
 
@@ -512,7 +512,7 @@ scsibusprint(aux, pnp)
         scsi_strvis(product, inqbuf->product, 16);
         scsi_strvis(revision, inqbuf->revision, 4);
 
-        kprintf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
+        printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
             target, lun, vendor, product, revision,
             inqbuf->version & SID_ANSII, type, dtype,
             removable ? "removable" : "fixed", qtype);
@@ -643,7 +643,7 @@ scsi_probedev(scsi, target, lun)
 		config_attach((struct device *)scsi, cf, &sa, scsibusprint);
 	} else {
 		scsibusprint(&sa, scsi->sc_dev.dv_xname);
-		kprintf(" not configured\n");
+		printf(" not configured\n");
 		goto bad;
 	}
 
@@ -696,7 +696,7 @@ scsi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 		priority += len;
 
 #if SCSIDEBUG
-		kprintf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
+		printf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
 		    priority, match->type, match->removable,
 		    match->vendor, match->product, match->revision);
 #endif

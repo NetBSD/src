@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.95 1996/10/10 23:34:14 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.96 1996/10/12 23:23:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -198,7 +198,7 @@ cdattach(parent, self, aux)
 	if ((sa->sa_inqbuf->version & SID_ANSII) == 0)
 		cd->flags |= CDF_ANCIENT;
 
-	kprintf("\n");
+	printf("\n");
 }
 
 /*
@@ -588,7 +588,7 @@ cdstart(v)
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))) {
 			disk_unbusy(&cd->sc_dk, 0);
-			kprintf("%s: not queued", cd->sc_dev.dv_xname);
+			printf("%s: not queued", cd->sc_dev.dv_xname);
 		}
 	}
 }

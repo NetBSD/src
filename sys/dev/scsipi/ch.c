@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.23 1996/10/10 23:34:16 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.24 1996/10/12 23:23:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -145,16 +145,16 @@ chattach(parent, self, aux)
 	link->device_softc = sc;
 	link->openings = 1;
 
-	kprintf("\n");
+	printf("\n");
 
 	/*
 	 * Get information about the device.  Note we can't use
 	 * interrupts yet.
 	 */
 	if (ch_get_params(sc, SCSI_AUTOCONF))
-		kprintf("%s: offline\n", sc->sc_dev.dv_xname);
+		printf("%s: offline\n", sc->sc_dev.dv_xname);
 	else {
-		kprintf("%s: %d slot%s, %d drive%s, %d picker%s",
+		printf("%s: %d slot%s, %d drive%s, %d picker%s",
 		    sc->sc_dev.dv_xname,
 		    sc->sc_counts[CHET_ST], (sc->sc_counts[CHET_ST] > 1) ?
 		    "s" : "",
@@ -163,15 +163,15 @@ chattach(parent, self, aux)
 		    sc->sc_counts[CHET_MT], (sc->sc_counts[CHET_MT] > 1) ?
 		    "s" : "");
 		if (sc->sc_counts[CHET_IE])
-			kprintf(", %d portal%s", sc->sc_counts[CHET_IE],
+			printf(", %d portal%s", sc->sc_counts[CHET_IE],
 			    (sc->sc_counts[CHET_IE] > 1) ? "s" : "");
-		kprintf("\n");
+		printf("\n");
 #ifdef CHANGER_DEBUG
-		kprintf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
+		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
 		    sc->sc_dev.dv_xname,
 		    sc->sc_movemask[CHET_MT], sc->sc_movemask[CHET_ST],
 		    sc->sc_movemask[CHET_IE], sc->sc_movemask[CHET_DT]);
-		kprintf("%s: exchange mask: 0x%x 0x%x 0x%x 0x%x\n",
+		printf("%s: exchange mask: 0x%x 0x%x 0x%x 0x%x\n",
 		    sc->sc_dev.dv_xname,
 		    sc->sc_exchangemask[CHET_MT], sc->sc_exchangemask[CHET_ST],
 		    sc->sc_exchangemask[CHET_IE], sc->sc_exchangemask[CHET_DT]);
@@ -521,7 +521,7 @@ ch_usergetelemstatus(sc, chet, uptr)
 	st_hdr = (struct read_element_status_header *)data;
 	avail = _2btol(st_hdr->count);
 	if (avail != sc->sc_counts[chet])
-		kprintf("%s: warning, READ ELEMENT STATUS avail != count\n",
+		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
 		    sc->sc_dev.dv_xname);
 
 	user_data = (u_int8_t *)malloc(avail, M_DEVBUF, M_WAITOK);
@@ -605,7 +605,7 @@ ch_get_params(sc, scsiflags)
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
-		kprintf("%s: could not sense element address page\n",
+		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -634,7 +634,7 @@ ch_get_params(sc, scsiflags)
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
-		kprintf("%s: could not sense capabilities page\n",
+		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}

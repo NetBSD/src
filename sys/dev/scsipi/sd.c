@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.103 1996/10/10 23:34:22 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.104 1996/10/12 23:23:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -205,14 +205,14 @@ sdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	kprintf("\n");
-	kprintf("%s: ", sd->sc_dev.dv_xname);
+	printf("\n");
+	printf("%s: ", sd->sc_dev.dv_xname);
 	if (scsi_start(sd->sc_link, SSS_START,
 	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
-		kprintf("drive offline\n");
+		printf("drive offline\n");
 	else
-	        kprintf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize);
 }
@@ -603,7 +603,7 @@ sdstart(v)
 		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
 		if (error)
-			kprintf("%s: not queued, error %d\n",
+			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
 	}
 }
@@ -801,7 +801,7 @@ sdgetdisklabel(sd)
 	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
 				  sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
-		kprintf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
+		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}
 }
@@ -918,12 +918,12 @@ sd_get_parms(sd, flags)
 fake_it:
 	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
 		if (error == 0)
-			kprintf("%s: mode sense (%d) returned nonsense",
+			printf("%s: mode sense (%d) returned nonsense",
 			    sd->sc_dev.dv_xname, page);
 		else
-			kprintf("%s: could not mode sense (4/5)",
+			printf("%s: could not mode sense (4/5)",
 			    sd->sc_dev.dv_xname);
-		kprintf("; using fictitious geometry\n");
+		printf("; using fictitious geometry\n");
 	}
 	/*
 	 * use adaptec standard fictitious geometry
@@ -1070,7 +1070,7 @@ sddump(dev, blkno, va, size)
 			return ENXIO;
 #else	/* SD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		kprintf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
+		printf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
 		delay(500 * 1000);	/* half a second */
 #endif	/* SD_DUMP_NOT_TRUSTED */
 
