@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.19.8.2 1997/05/14 21:24:59 thorpej Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.19.8.3 1997/05/17 00:06:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -295,7 +295,8 @@ void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
 int		 vm_page_alloc_memory __P((vm_size_t, vm_offset_t,
-			vm_offset_t, vm_offset_t, struct pglist *, int, int));
+			vm_offset_t, vm_offset_t, vm_offset_t,
+			struct pglist *, int, int));
 void		 vm_page_free_memory __P((struct pglist *));
 #ifdef MACHINE_NONCONTIG
 void		 vm_page_bootstrap __P((vm_offset_t *, vm_offset_t *));
