@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.17 2003/03/25 23:17:29 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.18 2003/03/26 03:40:02 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.17 2003/03/25 23:17:29 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.18 2003/03/26 03:40:02 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -627,8 +627,10 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			continue;
 		}
 
-		if (filter_parse(line, &filter) == -1)
+		if (filter_parse(line, &filter) == -1) {
+			printf("Parse error.\n");
 			continue;
+		}
 
 		TAILQ_INSERT_TAIL(fls, filter, next);
 		action = filter_evaluate(tls, fls, icpid);
