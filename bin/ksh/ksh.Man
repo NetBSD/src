@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.1.1.1.6.1 2001/04/26 12:22:15 he Exp $
+.\" $NetBSD: ksh.Man,v 1.1.1.1.6.2 2002/02/26 19:50:59 he Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1450,7 +1450,7 @@ the \fB()\fP notation:
 the \fB$0\fP parameter is set to the name of the function
 (Bourne-style functions leave \fB$0\fP untouched).
 .IP \ \ \(bu
-parameter assignments preceeding function calls are not kept in
+parameter assignments preceding function calls are not kept in
 the shell environment
 (executing Bourne-style functions will keep assignments).
 .IP \ \ \(bu
@@ -2204,14 +2204,13 @@ condition command of \fBif\fP and \fBwhile\fP statements.
 The following basic expressions are available:
 .sp
 .TS
-afB ltw(2.8i).
+afB ltw(3.2i).
 \fIstr\fP	T{
 \fIstr\fP has non-zero length.  Note that there is the potential
 for problems if \fIstr\fP turns out to be an operator (\fIe.g.\fP, \fB-r\fP)
 - it is generally better to use a test like
-.RS
+.ce
 \fB[ X"\fP\fIstr\fP\fB" != X ]\fP
-.RE
 instead (double quotes are used in case \fIstr\fP contains spaces or file
 globing characters).
 T}
@@ -2279,9 +2278,8 @@ T}
 shell \fIoption\fP is set (see \fBset\fP command above for list of options).
 As a non-standard extension, if the option starts with a \fB!\fP, the test
 is negated; the test always fails if option doesn't exist (thus
-.RS
+.ce
 \fB[ -o \fP\fIfoo\fP \fB-o -o !\fP\fIfoo\fP \fB]\fP
-.RE
 returns true if and only if option \fIfoo\fP exists).
 T}
 \fIfile\fP \-nt \fIfile\fP	T{
@@ -2415,7 +2413,7 @@ Sets trap handler that is to be executed when any of the specified signals
 are received.
 \fBHandler\fP is either a null string, indicating the signals are to
 be ignored, a minus (\fB\-\fP), indicating that the default action is to
-be taken for the signals (see signal(2 or 3)), or a string containing shell
+be taken for the signals (see signal(3)), or a string containing shell
 commands to be evaluated and executed at the first opportunity (\fIi.e.\fP,
 when the current command completes, or before printing the next \fBPS1\fP
 prompt) after receipt of one of the signals.
@@ -2513,7 +2511,7 @@ T}
 \-p	T{
 Print complete typeset commands that can be used to re-create the
 attributes (but not the values) of parameters.
-This is the default action (option exists for ksh93 compatability).
+This is the default action (option exists for ksh93 compatibility).
 T}
 \-r	T{
 Readonly attribute: parameters with the this attribute may not be assigned to
