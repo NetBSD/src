@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.4 1997/07/21 23:02:37 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.5 1998/07/18 05:04:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -160,7 +160,7 @@ svr4_add_socket(p, path, st)
 		return error;
 	}
 
-	e->sock.sun_family = AF_UNIX;
+	e->sock.sun_family = AF_LOCAL;
 	e->sock.sun_len = len;
 
 	TAILQ_INSERT_HEAD(&svr4_head, e, entries);

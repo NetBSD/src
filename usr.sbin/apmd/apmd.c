@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.7 1997/10/17 04:57:33 lukem Exp $	*/
+/*	$NetBSD: apmd.c,v 1.8 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -150,11 +150,11 @@ bind_socket(const char *sockname, mode_t mode, uid_t uid, gid_t gid)
     int sock;
     struct sockaddr_un s_un;
 
-    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    sock = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (sock == -1)
 	err(1, "cannot create local socket");
 
-    s_un.sun_family = AF_UNIX;
+    s_un.sun_family = AF_LOCAL;
     strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
     s_un.sun_len = SUN_LEN(&s_un);
     /* remove it if present, we're moving in */

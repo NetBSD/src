@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.21 1998/03/19 18:21:25 tv Exp $	*/
+/*	$NetBSD: popen.c,v 1.22 1998/07/18 05:04:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.21 1998/03/19 18:21:25 tv Exp $");
+__RCSID("$NetBSD: popen.c,v 1.22 1998/07/18 05:04:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,7 +85,7 @@ popen(command, type)
 	if (strchr(type, '+')) {
 		twoway = 1;
 		type = "r+";
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, pdes) < 0)
+		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, pdes) < 0)
 			return (NULL);
 	} else  {
 		twoway = 0;

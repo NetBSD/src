@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.33 1998/07/16 00:46:50 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.34 1998/07/18 05:04:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  *	rethink name space problems
  *	need a proper out-of-band
  */
-struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_UNIX };
+struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 struct mbuf *unp_addsockcred __P((struct proc *, struct mbuf *));
