@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 1995/03/08 07:12:28 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 1995/03/09 09:00:01 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -681,7 +681,7 @@ syscall(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval[0]);
+	scdebug_ret(p, code, error, rval);
 #endif
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
