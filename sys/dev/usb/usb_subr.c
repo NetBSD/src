@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.76 2000/04/27 15:26:50 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.77 2000/05/31 16:15:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -440,15 +440,17 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	int altidx;
 {
 	usbd_interface_handle ifc = &dev->ifaces[ifaceidx];
+	usb_interface_descriptor_t *idesc;
 	char *p, *end;
 	int endpt, nendpt;
 
 	DPRINTFN(4,("usbd_fill_iface_data: ifaceidx=%d altidx=%d\n",
 		    ifaceidx, altidx));
-	ifc->device = dev;
-	ifc->idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
-	if (ifc->idesc == 0)
+	idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
+	if (idesc == NULL)
 		return (USBD_INVAL);
+	ifc->device = dev;
+	ifc->idesc = idesc;
 	ifc->index = ifaceidx;
 	ifc->altindex = altidx;
 	nendpt = ifc->idesc->bNumEndpoints;
@@ -494,8 +496,10 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	if (ifc->endpoints != NULL)
+	if (ifc->endpoints != NULL) {
 		free(ifc->endpoints, M_USB);
+		ifc->endpoints = NULL;
+	}
 	return (USBD_INVAL);
 }
 
