@@ -115,6 +115,7 @@
 ./usr/share/man/cat4/sun3/ie.0
 ./usr/share/man/cat4/sun3/kmem.0
 ./usr/share/man/cat4/sun3/le.0
+./usr/share/man/cat4/sun3/leds.0
 ./usr/share/man/cat4/sun3/mem.0
 ./usr/share/man/cat4/vax/acc.0
 ./usr/share/man/cat4/vax/ad.0
@@ -200,3 +201,7 @@
 ./usr/share/man/cat8/vax/installboot.0
 ./usr/share/man/cat8/vax/makedev.0
 ./usr/share/man/cat8/x68k/boot.0
+./usr/share/man/cat9/sun3/isr_add.0
+./usr/share/man/cat9/sun3/isr_add_autovect.0
+./usr/share/man/cat9/sun3/isr_add_custom.0
+./usr/share/man/cat9/sun3/isr_add_vectored.0
