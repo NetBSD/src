@@ -1,8 +1,10 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$NetBSD: Makefile.dev,v 1.23 1999/02/13 02:54:26 lukem Exp $
+#	$NetBSD: Makefile.dev,v 1.24 1999/02/13 03:47:59 lukem Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
+
+.include <bsd.own.mk>
 
 DEVICES_=no_libraries
 .include "../Makefile.cfg"
