@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1995/08/11 02:12:56 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1995/08/17 22:28:30 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,7 +67,7 @@ int	pmax_boardtype;		/* Mother board type */
 extern u_long asic_base;
 
 /* does this machine have an ASIC? */
-#define ASIC_LE_0() \
+#define SYSTEM_HAS_ASIC() \
   (pmax_boardtype == DS_MAXINE || pmax_boardtype == DS_3MIN || \
    pmax_boardtype == DS_3MAXPLUS)
 
@@ -81,7 +81,7 @@ extern u_long asic_base;
 #else /* Alpha */
 
 typedef  u_int64 word_t;
-#define ASIC_LE_0() \
+#define SYSTEM_HAS_ASIC() \
  (hwrpb->rpb_type == ST_DEC_3000_300 || hwrpb->rpb_type == ST_DEC_3000_500)
 
 #include <machine/rpb.h>
@@ -95,12 +95,6 @@ typedef  u_int64 word_t;
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
-
-#ifdef pmax
-#undef SPARSE
-#else
-#define	SPARSE
-#endif
 
 /* access LANCE registers */
 void lewritereg();
@@ -178,10 +172,9 @@ lematch(parent, match, aux)
 
 	/* XXX CHECK BUS */
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAD-BA ") &&	/* untested */
+	if (!BUS_MATCHNAME(ca, "PMAD-BA ") &&	/* untested alpha TC option */
 	    !BUS_MATCHNAME(ca, "PMAD-AA ") && /* KN02 baseboard, old option */
-	    !BUS_MATCHNAME(ca, "le") &&		/* kn01 config name (?) */
-	    !BUS_MATCHNAME(ca, "lance"))	/* Alpha config name (?) */
+	    !BUS_MATCHNAME(ca, "lance"))	/* NetBSD name for b'board  */
 		return (0);
 
 #ifdef notdef /* XXX */
@@ -208,28 +201,14 @@ leattach(parent, self, aux)
 	u_char *cp;	/* pointer to MAC address */
 	int i;
 
-	if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
-		/* It's on the baseboard, attached directly to mainbus. */
-
-		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
-
-/*XXX*/		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(0x19000000);
-/*XXX*/		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
-
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap16;
-		sc->sc_copyfrombuf = copyfrombuf_gap2;
-		sc->sc_zerobuf = zerobuf_gap2;
-	}
-	else if	(sc->sc_dev.dv_unit == 0 && ASIC_LE_0()) {
+	if (sc->sc_dev.dv_unit == 0 && SYSTEM_HAS_ASIC()) {
 		/* It's on the system ASIC */
 		volatile u_int *ldp;
 		word_t dma_mask;
 
 		sc->sc_r1 = (struct lereg1 *)
 		    MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
-#ifdef SPARSE
+#ifdef alpha
 		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
 #endif
 		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(le_iomem);
@@ -246,14 +225,31 @@ leattach(parent, self, aux)
 		 */
 		ldp = (volatile u_int *) (ASIC_REG_LANCE_DMAPTR(asic_base));
 		dma_mask = ((word_t)le_iomem << 3);
-#ifndef pmax /* alpha */
+#ifdef alpha
+		/* Set upper 64 bits of DMA mask */
 		dma_mask  = (dma_mask & ~(word_t)0x1f) |
 			(((word_t)le_iomem >> 29) & 0x1f);
-#endif
+#endif /*alpha*/
 		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
 		    ASIC_CSR_DMAEN_LANCE;
 		wbflush();
-	} else {
+	}
+#ifdef pmax
+	 else if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
+		/* It's on the baseboard, attached directly to mainbus. */
+
+		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
+/*XXX*/		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(0x19000000);
+/*XXX*/		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
+
+		sc->sc_copytodesc = copytobuf_gap2;
+		sc->sc_copyfromdesc = copyfrombuf_gap2;
+		sc->sc_copytobuf = copytobuf_gap2;
+		sc->sc_copyfrombuf = copyfrombuf_gap2;
+		sc->sc_zerobuf = zerobuf_gap2;
+	}
+#endif
+	else {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
 		sc->sc_r1 = (struct lereg1 *)
 		    (BUS_CVTADDR(ca) + LE_OFFSET_LANCE);
@@ -288,9 +284,11 @@ leattach(parent, self, aux)
 #else
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
 #endif
-	/* XXX YEECH!!! */
-	*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
-	wbflush();
+	if (SYSTEM_HAS_ASIC()) {
+		/* XXX YEECH!!! */
+		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
+		wbflush();
+	}
 }
 
 /*
