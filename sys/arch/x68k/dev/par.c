@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.19 2003/08/07 16:30:25 agc Exp $	*/
+/*	$NetBSD: par.c,v 1.20 2003/11/01 12:43:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.19 2003/08/07 16:30:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.20 2003/11/01 12:43:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -158,7 +158,7 @@ parattach(pdp, dp, aux)
 	struct device *pdp, *dp;
 	void *aux;
 {
-	register struct par_softc *sc = (struct par_softc *)dp;
+	struct par_softc *sc = (struct par_softc *)dp;
 	struct intio_attach_args *ia = aux;
 	int r;
 	
@@ -196,8 +196,8 @@ paropen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
-	register struct par_softc *sc;
+	int unit = UNIT(dev);
+	struct par_softc *sc;
 	
 	if (unit != 0)
 		return(ENXIO);
@@ -285,12 +285,12 @@ parwrite(dev, uio, flag)
 int
 parrw(dev, uio)
 	dev_t dev;
-	register struct uio *uio;
+	struct uio *uio;
 {
 	int unit = UNIT(dev);
-	register struct par_softc *sc = par_cd.cd_devs[unit];
-	register int s, len, cnt;
-	register char *cp;
+	struct par_softc *sc = par_cd.cd_devs[unit];
+	int s, len, cnt;
+	char *cp;
 	int error = 0;
 	int buflen;
 	char *buf;
@@ -454,7 +454,7 @@ parhztoms(h)
 	int h;
 {
 	extern int hz;
-	register int m = h;
+	int m = h;
 	
 	if (m > 0)
 		m = m * 1000 / hz;
@@ -466,7 +466,7 @@ parmstohz(m)
 	int m;
 {
 	extern int hz;
-	register int h = m;
+	int h = m;
 	
 	if (h > 0) {
 		h = h * hz / 1000;
