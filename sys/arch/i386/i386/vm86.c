@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.18 1997/10/09 08:53:18 jtc Exp $	*/
+/*	$NetBSD: vm86.c,v 1.19 1997/10/16 04:57:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+#include <sys/ktrace.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -67,7 +67,6 @@
 #include <sys/shm.h>
 #endif
 
-#include <sys/ktrace.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
