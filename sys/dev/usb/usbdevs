@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54 1999/10/15 14:41:43 augustss Exp $
+$NetBSD: usbdevs,v 1.55 1999/10/19 21:15:35 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
+vendor ALTEC		0x04d2	Altec Lansing
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
@@ -186,6 +187,9 @@ product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
+
+/* Altec Lansing products */
+product	ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
