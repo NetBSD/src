@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.92 1999/07/23 15:21:17 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.93 1999/10/17 16:00:00 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1299,7 +1299,7 @@ ip_forward(m, srcrt)
 		    ntohl(ip->ip_src.s_addr),
 		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
 #endif
-	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
+	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
 		return;
