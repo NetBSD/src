@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.89 2000/05/11 19:24:35 is Exp $
+$NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@ product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 product 3COM 3CXEM556INT	0x003d 3Com/Megahertz 3CXEM556-INT Ethernet/Modem
 product 3COM 3CCFEM556BI	0x0556 3Com/Megahertz 3CCFEM556BI Ethernet/Modem
 
+/* Compaq Products */
+product COMPAQ2 CPQ_10_100	0x010a Compaq Netelligent 10/100 Ethernet
+
 /* Compex Products */
 product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
 
@@ -128,6 +131,9 @@ product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
 product IBM PORTABLE_CDROM	0x002d PCMCIA Portable CD-ROM Drive
 product IBM ETHERJET		0x003f IBM EtherJet Ethernet
+
+/* Intel Products */
+product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
@@ -179,16 +185,14 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 product TDK LAK_CF010		0x0900 TDK LAC-CF010
 
-/* TDK Vendor ID also used by Xircom! */
-product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
-product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
-product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
-product TDK XIR_CE3_10_100	0x010a Xircom CreditCard CE3 10/100 Ethernet
-/* conflicts with above
- * product TDK XIR_CFE_10	0x010a Xircom CompactCard CFE-10
- */
-product TDK XIR_CNW_801		0x0801 Xircom CreditCard Netwave (Canada)
-product TDK XIR_CNW_802		0x0802 Xircom CreditCard Netwave (US)
+/* Xircom Products */
+product XIRCOM CE		0x0108 Xircom CreditCard Ethernet
+product XIRCOM CE2		0x010b Xircom CreditCard Ethernet II
+product XIRCOM CE3		0x010a Xircom CreditCard 10/100 Ethernet
+product XIRCOM CEM		0x110a Xircom CreditCard Ethernet + Modem
+product XIRCOM CEM28		0x110b Xircom CreditCard Ethernet + Modem 28
+product XIRCOM CNW_801		0x0801 Xircom CreditCard Netwave (Canada)
+product XIRCOM CNW_802		0x0802 Xircom CreditCard Netwave (US)
 
 /* New Media Products */
 product NEWMEDIA BASICS		0x0019 New Media BASICS Ethernet
