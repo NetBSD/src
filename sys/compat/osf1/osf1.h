@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.2 1999/04/26 01:24:26 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.3 1999/04/26 03:07:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,11 @@
 
 /* type definitions used by structures */
 
+typedef int16_t		osf1_short;
+typedef int32_t		osf1_int;
+typedef int64_t		osf1_long;
+typedef u_int32_t	osf1_u_int;
+
 typedef int32_t		osf1_dev_t;
 typedef u_int32_t	osf1_ino_t;
 typedef u_int32_t	osf1_mode_t;
@@ -54,12 +59,56 @@ typedef u_int32_t	osf1_uid_t;
 typedef u_int32_t	osf1_gid_t;
 typedef u_int64_t	osf1_off_t;
 typedef int32_t		osf1_time_t;
-typedef int32_t		osf1_int;
 typedef u_int32_t	osf1_uint_t;
 typedef u_int64_t	osf1_sigset_t;
 typedef u_int64_t	osf1_size_t;
-typedef void		*osf1_void_ptr;	/* XXX hard to fix size */
+typedef u_int64_t	osf1_fsid_t;
+typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
+
+
+/* auxv.h */
+
+union osf1_auxv_data {
+	osf1_long	a_val;
+	osf1_data_ptr	a_ptr;
+	osf1_fcn_ptr	a_fcn;
+};
+
+struct osf1_auxv {
+	osf1_int	a_type;
+	union osf1_auxv_data a_un;
+};
+
+/* auxv entry types */
+#define OSF1_AT_NULL			0
+#define OSF1_AT_IGNORE			1
+#define OSF1_AT_EXECFD			2
+#define OSF1_AT_PHDR			3
+#define OSF1_AT_PHENT			4
+#define OSF1_AT_PHNUM			5
+#define OSF1_AT_PAGESZ			6
+#define OSF1_AT_BASE			7
+#define OSF1_AT_FLAGS			8
+#define OSF1_AT_ENTRY			9
+#define OSF1_AT_EXEC_FILENAME		1001
+#define OSF1_AT_EXEC_LOADER_FILENAME	1002
+#define OSF1_AT_EXEC_LOADER_FLAGS	1003
+
+
+/* exec.h/ldr_exec.h */
+
+#define	OSF1_LDR_EXEC_DEFAULT_LOADER	"/sbin/loader"
+
+/* exec_with_loader()/OSF1_AT_EXEC_LOADER_FLAGS flags regions */
+#define	OSF1_LDR_EXEC_SYSTEM_MASK	0xffff0000
+#define	OSF1_LDR_EXEC_USER_MASK		0xffff0000
+
+/* OSF1_AT_EXEC_LOADER_FLAGS flags */
+#define	OSF1_LDR_EXEC_NOPRIVS_F		0x10000000
+#define	OSF1_LDR_EXEC_PTRACE_F		0x20000000
+#define	OSF1_LDR_EXEC_SETGID_F		0x40000000
+#define	OSF1_LDR_EXEC_SETUID_F		0x80000000
 
 
 /* fcntl.h */
@@ -159,13 +208,96 @@ typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
 
 /* mount.h */
 
-#if 0
-osf1_mount.c:struct osf1_statfs {
-osf1_mount.c:struct osf1_ufs_args {
-osf1_mount.c:struct osf1_cdfs_args {
-osf1_mount.c:struct osf1_mfs_args {
-osf1_mount.c:struct osf1_nfs_args {
-#endif
+/* file system type numbers */
+#define OSF1_MOUNT_NONE		0
+#define OSF1_MOUNT_UFS		1
+#define OSF1_MOUNT_NFS		2
+#define OSF1_MOUNT_MFS		3
+#define OSF1_MOUNT_PC		4
+#define OSF1_MOUNT_S5FS		5
+#define OSF1_MOUNT_CDFS		6
+#define OSF1_MOUNT_DFS		7
+#define OSF1_MOUNT_EFS		8
+#define OSF1_MOUNT_PROCFS	9
+#define OSF1_MOUNT_MSFS		10
+#define OSF1_MOUNT_FFM		11
+#define OSF1_MOUNT_FDFS		12
+#define OSF1_MOUNT_ADDON	13
+#define OSF1_MOUNT_NFS3		14
+
+#define OSF1_MNAMELEN		90
+
+/* MFS mount argument structure */
+struct osf1_mfs_args {
+	osf1_data_ptr	name;
+	osf1_data_ptr	base;
+	osf1_u_int	size;
+};
+
+/* NFS mount argument structure */
+struct osf1_nfs_args {
+	osf1_data_ptr	addr;
+	osf1_data_ptr	fh;
+	osf1_int	flags;
+	osf1_int	wsize;
+	osf1_int	rsize;
+	osf1_int	timeo;
+	osf1_int	retrans;
+	osf1_data_ptr	hostname;
+	osf1_int	acregmin;
+	osf1_int	acregmax;
+	osf1_int	acdirmin;
+	osf1_int	acdirmax;
+	osf1_data_ptr	netname;
+	osf1_data_ptr	pathconf;
+};
+
+/* NFS mount argument structure flags */
+#define OSF1_NFSMNT_SOFT	0x00000001
+#define OSF1_NFSMNT_WSIZE	0x00000002
+#define OSF1_NFSMNT_RSIZE	0x00000004
+#define OSF1_NFSMNT_TIMEO	0x00000008
+#define OSF1_NFSMNT_RETRANS	0x00000010
+#define OSF1_NFSMNT_HOSTNAME	0x00000020
+#define OSF1_NFSMNT_INT		0x00000040
+#define OSF1_NFSMNT_NOCONN	0x00000080
+#define OSF1_NFSMNT_NOAC	0x00000100
+#define OSF1_NFSMNT_ACREGMIN	0x00000200
+#define OSF1_NFSMNT_ACREGMAX	0x00000400
+#define OSF1_NFSMNT_ACDIRMIN	0x00000800
+#define OSF1_NFSMNT_ACDIRMAX	0x00001000
+#define OSF1_NFSMNT_NOCTO	0x00002000
+#define OSF1_NFSMNT_POSIX	0x00004000
+#define OSF1_NFSMNT_AUTO	0x00008000
+#define OSF1_NFSMNT_SEC		0x00010000
+#define OSF1_NFSMNT_TCP		0x00020000
+#define OSF1_NFSMNT_PROPLIST	0x00040000
+/* no				0x00080000+ */
+
+/* union of all mount argument structures */
+union osf1_mount_info {
+	struct osf1_mfs_args mfs_args;
+	struct osf1_nfs_args nfs_args;
+	char		pad[80];
+};
+
+/* statfs structure */
+struct osf1_statfs {
+	osf1_short	f_type;
+	osf1_short	f_flags;
+	osf1_int	f_fsize;
+	osf1_int	f_bsize;
+	osf1_int	f_blocks;
+	osf1_int	f_bfree;
+	osf1_int	f_bavail;
+	osf1_int	f_files;
+	osf1_int	f_ffree;
+	osf1_fsid_t	f_fsid;
+	osf1_int	f_spare[9];
+	char		f_mntonname[OSF1_MNAMELEN];
+	char		f_mntfromname[OSF1_MNAMELEN];
+	union osf1_mount_info mount_info;
+};
 
 
 /* reboot.h */
@@ -197,7 +329,7 @@ struct osf1_sigaction {
 
 /* actually from sysmisc.h */
 struct osf1_sigaltstack {
-	osf1_void_ptr	ss_sp;
+	osf1_data_ptr	ss_sp;
 	osf1_int	ss_flags;
 	osf1_size_t	ss_size;
 };
@@ -264,7 +396,7 @@ struct osf1_stat {
  * the not-in-int bits being zero.  (The non-X/Open version uses int.)
  */
 struct osf1_iovec {
-	osf1_void_ptr	iov_base;
+	osf1_data_ptr	iov_base;
 	osf1_int	iov_len;
 };
 
