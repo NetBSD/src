@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.122 1999/02/10 12:29:50 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.123 1999/02/15 18:41:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -970,7 +970,8 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCSTOP:
 		return (scsipi_start(cd->sc_link, SSS_STOP, 0));
 	case CDIOCCLOSE:
-		return (scsipi_start(cd->sc_link, SSS_START|SSS_LOEJ, 0));
+		return (scsipi_start(cd->sc_link, SSS_START|SSS_LOEJ, 
+		    SCSI_IGNORE_MEDIA_CHANGE));
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
 			/*
