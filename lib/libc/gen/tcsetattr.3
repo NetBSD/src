@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tcsetattr.3	5.2 (Berkeley) 3/4/92
-.\"	$Id: tcsetattr.3,v 1.3 1993/11/30 00:50:58 jtc Exp $
+.\"	$Id: tcsetattr.3,v 1.4 1993/12/15 20:32:49 jtc Exp $
 .\"
 .Dd "March 4, 1992"
 .Dt TCSETATTR 3
@@ -48,11 +48,11 @@
 .Sh SYNOPSIS
 .Fd #include <termios.h>
 .Ft speed_t
-.Fn cfgetispeed "struct termios *t"
+.Fn cfgetispeed "const struct termios *t"
 .Ft int
 .Fn cfsetispeed "struct termios *t" "speed_t speed"
 .Ft speed_t
-.Fn cfgetospeed "struct termios *t"
+.Fn cfgetospeed "const struct termios *t"
 .Ft int
 .Fn cfsetospeed "struct termios *t" "speed_t speed"
 .Ft void
@@ -62,7 +62,7 @@
 .Ft int
 .Fn tcgetattr "int fd" "struct termios *t"
 .Ft int
-.Fn tcsetattr "int fd" "int action" "struct termios *t"
+.Fn tcsetattr "int fd" "int action" "const struct termios *t"
 .Sh DESCRIPTION
 The
 .Nm cfmakeraw ,
