@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.19 2001/03/15 03:01:40 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.20 2002/05/31 19:59:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -182,9 +182,11 @@ _ENTRY(_C_LABEL(fdchwintr))
 	inc	%l6
 	st	%l6, [R_fdc + FDC_EVCNT]
 
-	! load chips register addresses
-	! NOTE: we ignore the bus tag here and assume the bus handle
-	!	is the virtual address of the chip's registers.
+	/*
+	 * load chips register addresses
+	 * NOTE: we ignore the bus tag here and assume the bus handle
+	 *	 is the virtual address of the chip's registers.
+	 */
 	ld	[R_fdc + FDC_REG_HANDLE], %l7	! get chip registers bus handle
 	ld	[R_fdc + FDC_REG_MSR], R_msr	! get chip MSR reg addr
 	add	R_msr, %l7, R_msr
