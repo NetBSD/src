@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/10/13 05:40:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1994/06/29 06:19:16 cgd Exp $
 
 SUBDIR+= lib arch/${MACHINE}
 
