@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.8 1994/01/09 22:35:10 mycroft Exp $
+ *	$Id: db_command.c,v 1.9 1994/01/09 22:56:07 mycroft Exp $
  */
 
 /*
@@ -435,7 +435,7 @@ db_command_loop()
 	db_next = db_dot;
 
 	db_cmd_loop_done = 0;
-	(void) setjmp(db_recover = &db_jmpbuf);
+	(void) setjmp(*(db_recover = &db_jmpbuf));
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)
@@ -458,7 +458,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(db_recover, 1);
+	longjmp(*db_recover, 1);
 }
 
 
