@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.7 2001/11/15 09:48:01 lukem Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.8 2002/10/23 13:16:41 scw Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.7 2001/11/15 09:48:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.8 2002/10/23 13:16:41 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -240,8 +240,8 @@ compat_14_netbsd32_msgctl(p, v, retval)
 	cmd = SCARG(uap, cmd);
 
 	if (cmd == IPC_SET) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, buf), &omsqbuf,
-		    sizeof(omsqbuf));
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
+		    &omsqbuf, sizeof(omsqbuf));
 		if (error) 
 			return (error);
 		netbsd32_msqid_ds14_to_native(&omsqbuf, &msqbuf);
@@ -252,8 +252,8 @@ compat_14_netbsd32_msgctl(p, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		native_to_netbsd32_msqid_ds14(&msqbuf, &omsqbuf);     
-		error = copyout(&omsqbuf, (caddr_t)(u_long)SCARG(uap, buf),
-		    sizeof(omsqbuf));
+		error = copyout(&omsqbuf,
+		    (caddr_t)NETBSD32PTR64(SCARG(uap, buf)), sizeof(omsqbuf));
 	}
 
 	return (error);
@@ -293,7 +293,7 @@ compat_14_netbsd32___semctl(p, v, retval)
 	}
 
 	if (pass_arg != NULL) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, arg), &arg,
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, arg)), &arg,
 		    sizeof(arg));
 		if (error)
 			return (error);  
@@ -334,8 +334,8 @@ compat_14_netbsd32_shmctl(p, v, retval)
 	cmd = SCARG(uap, cmd);
 
 	if (cmd == IPC_SET) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, buf), &oshmbuf,
-		    sizeof(oshmbuf));
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
+		    &oshmbuf, sizeof(oshmbuf));
 		if (error) 
 			return (error);
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
@@ -346,8 +346,8 @@ compat_14_netbsd32_shmctl(p, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		native_to_netbsd32_shmid_ds14(&shmbuf, &oshmbuf);     
-		error = copyout(&oshmbuf, (caddr_t)(u_long)SCARG(uap, buf),
-		    sizeof(oshmbuf));
+		error = copyout(&oshmbuf,
+		    (caddr_t)NETBSD32PTR64(SCARG(uap, buf)), sizeof(oshmbuf));
 	}
 
 	return (error);

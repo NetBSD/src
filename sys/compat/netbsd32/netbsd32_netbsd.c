@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.65 2002/09/21 21:14:58 manu Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.66 2002/10/23 13:16:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.65 2002/09/21 21:14:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.66 2002/10/23 13:16:44 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -368,7 +368,7 @@ netbsd32_break(p, v, retval)
 	} */ *uap = v;
 	struct sys_obreak_args ua;
 
-	SCARG(&ua, nsize) = (char *)(u_long)SCARG(uap, nsize);
+	SCARG(&ua, nsize) = (char *)NETBSD32PTR64(SCARG(uap, nsize));
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(p, &ua, retval));
 }
@@ -943,8 +943,7 @@ netbsd32_getgroups(p, v, retval)
 	ngrp = pc->pc_ucred->cr_ngroups;
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
 	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-			(caddr_t)(u_long)SCARG(uap, gidset), 
-			ngrp * sizeof(gid_t));
+	    (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)), ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	*retval = ngrp;
@@ -1650,8 +1649,8 @@ netbsd32_getrlimit(p, v, retval)
 
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout(&p->p_rlimit[which], (caddr_t)(u_long)SCARG(uap, rlp),
-	    sizeof(struct rlimit)));
+	return (copyout(&p->p_rlimit[which],
+	    (caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), sizeof(struct rlimit)));
 }
 
 int
@@ -1668,7 +1667,8 @@ netbsd32_setrlimit(p, v, retval)
 	struct rlimit alim;
 	int error;
 
-	error = copyin((caddr_t)(u_long)SCARG(uap, rlp), &alim, sizeof(struct rlimit));
+	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
+	    sizeof(struct rlimit));
 	if (error)
 		return (error);
 	return (dosetrlimit(p, p->p_cred, which, &alim));
