@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.127 2002/06/14 09:02:00 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.128 2002/06/14 09:12:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.127 2002/06/14 09:02:00 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.128 2002/06/14 09:12:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1242,7 +1242,8 @@ setia6eui64(cmd, val)
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
+		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		    strcmp(ifa->ifa_name, name) == 0) {
 			sin6 = (const struct sockaddr_in6 *)ifa->ifa_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 				lladdr = &sin6->sin6_addr;
