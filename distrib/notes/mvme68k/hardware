@@ -1,12 +1,17 @@
-.\"	$NetBSD: hardware,v 1.7 2000/11/01 10:58:29 scw Exp $
+.\"	$NetBSD: hardware,v 1.8 2000/11/21 12:38:59 scw Exp $
 .
 .Nx*M
 \*V runs on Motorola
 .Tn MVME147
 ,
-.Tn MVME162-LX
-and
+.Tn MVME162
+,
 .Tn MVME167
+,
+.Tn MVME172
+,
+and
+.Tn MVME177
 Single Board Computers.
 .Pp
 The minimal configuration requires 8 MB of RAM and ~200 MB of disk space.
@@ -82,17 +87,17 @@ Any VMEbus interface cards with Machine Independent drivers
 .bullet)
 .bullet)
 .
-.Ss2 Supported VME162-LX hardware
+.Ss2 Supported VME162/VME172 hardware
 .(bullet -offset indent
 Serial ports (RS232)
 .(bullet -compact
 built-in console
 .It
-ttyZ1
+ttyC1
 .It
-ttyZ2
+ttyC2
 .It
-ttyZ3
+ttyC3
 .bullet)
 .It
 Network interfaces:
@@ -117,7 +122,7 @@ Any VMEbus interface cards with Machine Independent drivers
 .bullet)
 .bullet)
 .
-.Ss2 Supported VME167 hardware
+.Ss2 Supported VME167/VME177 hardware
 .(bullet -offset indent
 Serial ports (RS232)
 .(bullet -compact
