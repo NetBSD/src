@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 2000/11/27 21:51:02 matt Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 2000/12/17 07:37:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,10 +304,14 @@ fdcattach(fdc)
 	struct fdc_softc *fdc;
 {
 	struct fdc_attach_args fa;
+        bus_space_tag_t iot;
+        bus_space_handle_t ioh;
 #if defined(i386)
 	int type;
 #endif
 
+        iot = fdc->sc_iot;
+        ioh = fdc->sc_ioh;
 	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
@@ -322,6 +326,26 @@ fdcattach(fdc)
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
+ 
+        /* 
+         * Reset the controller to get it into a known state. Not all
+         * probes necessarily need do this to discover the controller up
+         * front, so don't assume anything.
+         */
+         
+        bus_space_write_1(iot, ioh, fdout, 0);
+        delay(100);
+        bus_space_write_1(iot, ioh, fdout, FDO_FRST);
+ 
+        /* see if it can handle a command */
+        if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0) {
+            printf ("%s: can't reset controller\n",
+                    fdc->sc_dev.dv_xname);
+            return;
+        }
+        out_fdc(iot, ioh, 0xdf);
+        out_fdc(iot, ioh, 2);
+  
 
 #if defined(i386)
 	/*
