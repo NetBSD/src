@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.12 2002/02/07 07:00:51 ross Exp $
+.\" $NetBSD: pcap.3,v 1.12.2.1 2003/01/27 06:48:59 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Fn pcap_lookupdev "char *errbuf"
 .Ft int
 .Fn pcap_lookupnet "char *device" "bpf_u_int32 *netp" \
-bpf_u_int32 *maskp" "char *errbuf"
+"bpf_u_int32 *maskp" "char *errbuf"
 .Ft int
 .Fn pcap_dispatch "pcap_t *p" "int cnt" \
 "pcap_handler callback" "u_char *user"
@@ -61,7 +61,7 @@ bpf_u_int32 *maskp" "char *errbuf"
 "bpf_uint32 netmask" "char *errbuf"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
-.Ft u_char *
+.Ft const u_char *
 .Fn pcap_next "pcap_t *p" "struct pcap_pkthdr *h"
 .Ft int
 .Fn pcap_datalink "pcap_t *p"
@@ -301,8 +301,14 @@ returns the minor number of the version of the pcap used to write the
 savefile.
 .Pp
 .Fn pcap_file
-returns the name of the
-.Dq savefile .
+returns the standard I/O stream of the
+.Dq savefile ,
+if a
+.Dq savefile
+was opened with
+.Fn pcap_open_offline ,
+or NULL, if a network device was opened with
+.Fn pcap_open_live .
 .Pp
 .Fn pcap_stats
 returns 0 and fills in a
@@ -316,8 +322,13 @@ or
 .Fn pcap_geterr .
 .Pp
 .Fn pcap_fileno
-returns the file descriptor number of the
-.Dq savefile .
+returns the file descriptor number from which captured packets are read
+if a network device was opened with
+.Fn pcap_open_live ,
+or \-1, if a
+.Dq savefile
+was opened with
+.Fn pcap_open_offline .
 .Pp
 .Fn pcap_perror
 prints the text of the last pcap library error on
