@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.89 2000/05/11 19:24:36 is Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.90 2000/06/05 23:05:30 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp 
+ *	NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp 
  */
 
 /*-
@@ -122,6 +122,11 @@
 #define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
 #define	PCMCIA_STR_3COM_3CCFEM556BI	"3Com/Megahertz 3CCFEM556BI Ethernet/Modem"
 
+/* Compaq Products */
+#define	PCMCIA_CIS_COMPAQ2_CPQ_10_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100	0x010a
+#define	PCMCIA_STR_COMPAQ2_CPQ_10_100	"Compaq Netelligent 10/100 Ethernet"
+
 /* Compex Products */
 #define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B	0x0100
@@ -191,6 +196,11 @@
 #define	PCMCIA_CIS_IBM_ETHERJET	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_ETHERJET	0x003f
 #define	PCMCIA_STR_IBM_ETHERJET	"IBM EtherJet Ethernet"
+
+/* Intel Products */
+#define	PCMCIA_CIS_INTEL_EEPRO100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
+#define	PCMCIA_STR_INTEL_EEPRO100	"Intel EtherExpress PRO/100"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
@@ -292,28 +302,28 @@
 #define	PCMCIA_PRODUCT_TDK_LAK_CF010	0x0900
 #define	PCMCIA_STR_TDK_LAK_CF010	"TDK LAC-CF010"
 
-/* TDK Vendor ID also used by Xircom! */
-#define	PCMCIA_CIS_TDK_XIR_CE_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CE_10	0x0108
-#define	PCMCIA_STR_TDK_XIR_CE_10	"Xircom CreditCard Ethernet"
-#define	PCMCIA_CIS_TDK_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CEM_10	0x110a
-#define	PCMCIA_STR_TDK_XIR_CEM_10	"Xircom CreditCard Ethernet + Modem"
-#define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
-#define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
-#define	PCMCIA_CIS_TDK_XIR_CE3_10_100	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CE3_10_100	0x010a
-#define	PCMCIA_STR_TDK_XIR_CE3_10_100	"Xircom CreditCard CE3 10/100 Ethernet"
-/* conflicts with above
- * product TDK XIR_CFE_10	0x010a Xircom CompactCard CFE-10
- */
-#define	PCMCIA_CIS_TDK_XIR_CNW_801	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CNW_801	0x0801
-#define	PCMCIA_STR_TDK_XIR_CNW_801	"Xircom CreditCard Netwave (Canada)"
-#define	PCMCIA_CIS_TDK_XIR_CNW_802	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CNW_802	0x0802
-#define	PCMCIA_STR_TDK_XIR_CNW_802	"Xircom CreditCard Netwave (US)"
+/* Xircom Products */
+#define	PCMCIA_CIS_XIRCOM_CE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CE	0x0108
+#define	PCMCIA_STR_XIRCOM_CE	"Xircom CreditCard Ethernet"
+#define	PCMCIA_CIS_XIRCOM_CE2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CE2	0x010b
+#define	PCMCIA_STR_XIRCOM_CE2	"Xircom CreditCard Ethernet II"
+#define	PCMCIA_CIS_XIRCOM_CE3	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CE3	0x010a
+#define	PCMCIA_STR_XIRCOM_CE3	"Xircom CreditCard 10/100 Ethernet"
+#define	PCMCIA_CIS_XIRCOM_CEM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CEM	0x110a
+#define	PCMCIA_STR_XIRCOM_CEM	"Xircom CreditCard Ethernet + Modem"
+#define	PCMCIA_CIS_XIRCOM_CEM28	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CEM28	0x110b
+#define	PCMCIA_STR_XIRCOM_CEM28	"Xircom CreditCard Ethernet + Modem 28"
+#define	PCMCIA_CIS_XIRCOM_CNW_801	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CNW_801	0x0801
+#define	PCMCIA_STR_XIRCOM_CNW_801	"Xircom CreditCard Netwave (Canada)"
+#define	PCMCIA_CIS_XIRCOM_CNW_802	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CNW_802	0x0802
+#define	PCMCIA_STR_XIRCOM_CNW_802	"Xircom CreditCard Netwave (US)"
 
 /* New Media Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
