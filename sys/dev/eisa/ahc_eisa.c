@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.9 1996/10/13 01:37:10 christos Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -199,7 +199,7 @@ aic7770probe(void)
 #define bootverbose	0
 #endif
 
-int	ahc_eisa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
+int	ahc_eisa_irq __P((bus_space_tag_t, bus_space_handle_t));
 int	ahc_eisa_match __P((struct device *, void *, void *));
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
@@ -212,15 +212,15 @@ struct cfattach ahc_eisa_ca = {
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_eisa_irq(bc, ioh)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+ahc_eisa_irq(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 {
 	int irq;
 	u_char intdef;
 
-	ahc_reset("ahc_eisa", bc, ioh);
-	intdef = bus_io_read_1(bc, ioh, INTDEF);
+	ahc_reset("ahc_eisa", iot, ioh);
+	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	switch (irq = (intdef & 0xf)) {
 	case 9:
 	case 10:
@@ -249,8 +249,8 @@ ahc_eisa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int irq;
 
 	/* must match one of our known ID strings */
@@ -263,13 +263,13 @@ ahc_eisa_match(parent, match, aux)
 	    )
 		return (0);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-	    AHC_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	irq = ahc_eisa_irq(bc, ioh);
+	irq = ahc_eisa_irq(iot, ioh);
 
-	bus_io_unmap(bc, ioh, AHC_EISA_IOSIZE);
+	bus_space_unmap(iot, ioh, AHC_EISA_IOSIZE);
 
 	return (irq >= 0);
 }
@@ -341,17 +341,17 @@ ahc_eisa_attach(parent, self, aux)
 
 	struct ahc_data *ahc = (void *)self;
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int irq;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-		       AHC_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
 		panic("ahc_eisa_attach: could not map I/O addresses");
-	if ((irq = ahc_eisa_irq(bc, ioh)) < 0)
+	if ((irq = ahc_eisa_irq(iot, ioh)) < 0)
 		panic("ahc_eisa_attach: ahc_eisa_irq failed!");
 
 	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
@@ -374,7 +374,7 @@ ahc_eisa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
 		    ahc->sc_dev.dv_xname, irq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.7 1996/07/16 22:11:11 chuck Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.8 1996/10/21 22:34:33 thorpej Exp $	*/
 
 /*
  *
@@ -101,9 +101,9 @@ struct en_softc {
   struct ifnet enif;		/* network ifnet handle */
 
   /* bus glue */
-  bus_chipset_tag_t en_bc;	/* for EN_READ/EN_WRITE */
-  bus_mem_handle_t en_base;	/* base of en card */
-  bus_mem_size_t en_obmemsz;	/* size of en card (bytes) */
+  bus_space_tag_t en_memt;	/* for EN_READ/EN_WRITE */
+  bus_space_handle_t en_base;	/* base of en card */
+  bus_size_t en_obmemsz;	/* size of en card (bytes) */
 
   /* serv list */
   u_int32_t hwslistp;		/* hw pointer to service list (byte offset) */

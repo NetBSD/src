@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.1 1996/09/24 18:02:36 christos Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.2 1996/10/21 22:34:19 thorpej Exp $	*/
 
 /*
  * cy_var.h
@@ -40,12 +40,12 @@
 /*
  * read/write cd1400 registers (when sc_softc-structure is available)
  */
-#define cd_read_reg(sc,chip,reg) bus_mem_read_1(sc->sc_bc, \
-    sc->sc_memh, sc->sc_cd1400_offs[chip] + \
+#define cd_read_reg(sc,chip,reg) bus_space_read_1(sc->sc_memt, \
+    sc->sc_bsh, sc->sc_cd1400_offs[chip] + \
     (((reg << 1)) << sc->sc_bustype))
 
-#define cd_write_reg(sc,chip,reg,val) bus_mem_write_1(sc->sc_bc, \
-    sc->sc_memh, sc->sc_cd1400_offs[chip] + \
+#define cd_write_reg(sc,chip,reg,val) bus_space_write_1(sc->sc_memt, \
+    sc->sc_bsh, sc->sc_cd1400_offs[chip] + \
     (((reg << 1))<< sc->sc_bustype), (val))
 
 /*
@@ -87,8 +87,9 @@ struct cy_port {
 struct cy_softc {
 	struct device   sc_dev;
 	void           *sc_ih;
-	bus_chipset_tag_t sc_bc;
-	bus_mem_handle_t sc_memh;
+	bus_space_tag_t sc_memt;
+	bus_space_tag_t sc_iot;		/* only used by PCI card */
+	bus_space_handle_t sc_bsh;
 	int             sc_bustype;
 	int		sc_nchips;	/* Number of cd1400's on this card */
 	int             sc_cd1400_offs[CY_MAX_CD1400s];

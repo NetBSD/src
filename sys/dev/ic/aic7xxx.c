@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.16 1996/10/13 01:37:18 christos Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.17 1996/10/21 22:34:04 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -416,10 +416,10 @@ ahc_alloc(unit, iobase, type, flags)
 	u_long iobase;
 #elif defined(__NetBSD__)
 void
-ahc_construct(ahc, bc, ioh, type, flags)
+ahc_construct(ahc, iot, ioh, type, flags)
 	struct  ahc_data *ahc;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -453,7 +453,7 @@ ahc_construct(ahc, bc, ioh, type, flags)
 #if defined(__FreeBSD__)
 	ahc->baseport = iobase;
 #elif defined(__NetBSD__)
-	ahc->sc_bc = bc;
+	ahc->sc_iot = iot;
 	ahc->sc_ioh = ioh;
 #endif
 	ahc->type = type;
@@ -481,10 +481,10 @@ void
 ahc_reset(iobase)
 	u_long iobase;
 #elif defined(__NetBSD__)
-ahc_reset(devname, bc, ioh)
+ahc_reset(devname, iot, ioh)
 	char *devname;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 #endif
 {
         u_char hcntrl;
@@ -496,9 +496,9 @@ ahc_reset(devname, bc, ioh)
 
 	outb(HCNTRL + iobase, CHIPRST | PAUSE);
 #elif defined(__NetBSD__)
-	hcntrl = (bus_io_read_1(bc, ioh, HCNTRL) & IRQMS) | INTEN;
+	hcntrl = (bus_space_read_1(iot, ioh, HCNTRL) & IRQMS) | INTEN;
 
-	bus_io_write_1(bc, ioh, HCNTRL, CHIPRST | PAUSE);
+	bus_space_write_1(iot, ioh, HCNTRL, CHIPRST | PAUSE);
 #endif
 	/*
 	 * Ensure that the reset has finished
@@ -507,7 +507,7 @@ ahc_reset(devname, bc, ioh)
 #if defined(__FreeBSD__)
 	while (--wait && !(inb(HCNTRL + iobase) & CHIPRSTACK))
 #elif defined(__NetBSD__)
-	while (--wait && !(bus_io_read_1(bc, ioh, HCNTRL) & CHIPRSTACK))
+	while (--wait && !(bus_space_read_1(iot, ioh, HCNTRL) & CHIPRSTACK))
 #endif
 		DELAY(1000);
 	if(wait == 0) {
@@ -522,7 +522,7 @@ ahc_reset(devname, bc, ioh)
 #if defined(__FreeBSD__)
 	outb(HCNTRL + iobase, hcntrl | PAUSE);
 #elif defined(__NetBSD__)
-	bus_io_write_1(bc, ioh, HCNTRL, hcntrl | PAUSE);
+	bus_space_write_1(iot, ioh, HCNTRL, hcntrl | PAUSE);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.4 1996/10/13 01:37:11 christos Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.5 1996/10/21 22:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -67,8 +67,8 @@ bha_eisa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int rv;
 
 	/* must match one of our known ID strings */
@@ -76,13 +76,13 @@ bha_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "BUS4202"))
 		return (0);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET,
-	    BHA_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = bha_find(bc, ioh, NULL);
+	rv = bha_find(iot, ioh, NULL);
 
-	bus_io_unmap(bc, ioh, BHA_EISA_IOSIZE);
+	bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
 
 	return (rv);
 }
@@ -97,8 +97,8 @@ bha_eisa_attach(parent, self, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
@@ -111,13 +111,13 @@ bha_eisa_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET,
-	    BHA_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE, 0, &ioh))
 		panic("bha_attach: could not map I/O addresses");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!bha_find(bc, ioh, sc))
+	if (!bha_find(iot, ioh, sc))
 		panic("bha_attach: bha_find failed!");
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {

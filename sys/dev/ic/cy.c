@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.4 1996/10/13 01:37:21 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.5 1996/10/21 22:34:15 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -17,9 +17,6 @@
  * Lots of debug output can be enabled by defining CY_DEBUG
  * Some debugging counters (number of receive/transmit interrupts etc.)
  * can be enabled by defining CY_DEBUG1
- *
- * This version uses the bus_mem/io_??() stuff
- *
  */
 
 #include <sys/types.h>
@@ -36,6 +33,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+
 #include <machine/bus.h>
 
 #include <dev/ic/cd1400reg.h>
@@ -74,14 +72,14 @@ cy_find(sc)
 {
 	int cy_chip, chip;
 	u_char firmware_ver;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_mem_handle_t memh = sc->sc_memh;
+	bus_space_tag_t tag = sc->sc_memt;
+	bus_space_handle_t bsh = sc->sc_bsh;
 	int bustype = sc->sc_bustype;
 
 	/* Cyclom card hardware reset */
-	bus_mem_write_1(bc, memh, CY16_RESET << bustype, 0);
+	bus_space_write_1(tag, bsh, CY16_RESET << bustype, 0);
 	DELAY(500);		/* wait for reset to complete */
-	bus_mem_write_1(bc, memh, CY_CLEAR_INTR << bustype, 0);
+	bus_space_write_1(tag, bsh, CY_CLEAR_INTR << bustype, 0);
 
 #ifdef CY_DEBUG
 	printf("cy: card reset done\n");
@@ -106,7 +104,7 @@ cy_find(sc)
 
 		/* wait until the chip is ready for command */
 		DELAY(1000);
-		if (bus_mem_read_1(bc, memh, chip + 
+		if (bus_space_read_1(tag, bsh, chip + 
 		    ((CD1400_CCR << 1) << bustype)) != 0) {
 #ifdef CY_DEBUG
 			printf("not ready for command\n");
@@ -114,7 +112,7 @@ cy_find(sc)
 			break;
 		}
 		/* clear the firmware version reg. */
-		bus_mem_write_1(bc, memh, chip +
+		bus_space_write_1(tag, bsh, chip +
 		    ((CD1400_GFRCR << 1) << bustype), 0);
 
 		/*
@@ -124,19 +122,19 @@ cy_find(sc)
 	         * cleared chip 0 GFRCR. In that case we have a 16 port card.
 	         */
 		if (cy_chip == 4 &&
-		    bus_mem_read_1(bc, memh, chip +
+		    bus_space_read_1(tag, bsh, chip +
 		       ((CD1400_GFRCR << 1) << bustype)) == 0)
 			break;
 
 		/* reset the chip */
-		bus_mem_write_1(bc, memh, chip +
+		bus_space_write_1(tag, bsh, chip +
 		    ((CD1400_CCR << 1) << bustype),
 		    CD1400_CCR_CMDRESET | CD1400_CCR_FULLRESET);
 
 		/* wait for the chip to initialize itself */
 		for (i = 0; i < 200; i++) {
 			DELAY(50);
-			firmware_ver = bus_mem_read_1(bc, memh, chip +
+			firmware_ver = bus_space_read_1(tag, bsh, chip +
 			    ((CD1400_GFRCR << 1) << bustype));
 			if ((firmware_ver & 0xf0) == 0x40) /* found a CD1400 */
 				break;
@@ -214,7 +212,7 @@ cy_attach(parent, self, aux)
 	printf(" (%d ports)\n", port);
 
 	/* ensure an edge for the next interrupt */
-	bus_mem_write_1(sc->sc_bc, sc->sc_memh,
+	bus_space_write_1(sc->sc_memt, sc->sc_bsh,
 	    CY_CLEAR_INTR << sc->sc_bustype, 0);
 }
 
@@ -1314,7 +1312,7 @@ cy_intr(arg)
 	}			/* for(...all CD1400s on a card) */
 
 	/* ensure an edge for next interrupt */
-	bus_mem_write_1(sc->sc_bc, sc->sc_memh,
+	bus_space_write_1(sc->sc_memt, sc->sc_bsh,
 			CY_CLEAR_INTR << sc->sc_bustype, 0);
 	return int_serviced;
 }

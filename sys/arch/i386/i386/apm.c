@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.11 1996/10/16 22:30:34 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.12 1996/10/21 22:24:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/poll.h>
 #include <sys/conf.h>
 
+#include <machine/bus.h>
 #include <machine/stdarg.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -866,12 +867,13 @@ apmattach(parent, self, aux)
 			/*
 			 * need page zero or biosbasemem area mapping.
 			 */
-			bus_mem_handle_t memh;
+			bus_space_handle_t memh;
 			/* XXX cheat and use knowledge of
-			   bus_mem_map() implementation on i386 */
-			(void) bus_mem_map(0, apminfo.apm_data_seg_base,
-					   apminfo.apm_data_seg_len, 0, &memh);
-			DPRINTF((": mapping bios data area %x @ %p\n%s",
+			   bus_space_map() implementation on i386 */
+			(void) bus_space_map(I386_BUS_SPACE_MEM,
+			    apminfo.apm_data_seg_base,
+			    apminfo.apm_data_seg_len, 0, &memh);
+			DPRINTF((": mapping bios data area %x @ 0x%lx\n%s",
 				 apminfo.apm_data_seg_base, memh,
 				 apmsc->sc_dev.dv_xname));
 			setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,

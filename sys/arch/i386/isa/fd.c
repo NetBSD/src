@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96 1996/10/13 03:19:59 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.97 1996/10/21 22:27:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -96,8 +96,8 @@ struct fdc_softc {
 	struct isadev sc_id;
 	void *sc_ih;
 
-	bus_chipset_tag_t sc_bc;	/* ISA chipset identifier */
-	bus_io_handle_t   sc_ioh;	/* ISA io handle */
+	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
+	bus_space_handle_t   sc_ioh;	/* ISA io handle */
 
 	int sc_drq;
 
@@ -207,7 +207,7 @@ void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
 void fd_motor_on __P((void *arg));
 int fdcresult __P((struct fdc_softc *fdc));
-int out_fdc __P((bus_chipset_tag_t bc, bus_io_handle_t ioh, u_char x));
+int out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
 void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
@@ -223,27 +223,27 @@ fdcprobe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int rv;
 
-	bc = ia->ia_bc;
+	iot = ia->ia_iot;
 	rv = 0;
 
 	/* Map the i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, FDC_NPORT, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
 		return 0;
 
 	/* reset */
-	bus_io_write_1(bc, ioh, fdout, 0);
+	bus_space_write_2(iot, ioh, fdout, 0);
 	delay(100);
-	bus_io_write_1(bc, ioh, fdout, FDO_FRST);
+	bus_space_write_2(iot, ioh, fdout, FDO_FRST);
 
 	/* see if it can handle a command */
-	if (out_fdc(bc, ioh, NE7CMD_SPECIFY) < 0)
+	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0)
 		goto out;
-	out_fdc(bc, ioh, 0xdf);
-	out_fdc(bc, ioh, 2);
+	out_fdc(iot, ioh, 0xdf);
+	out_fdc(iot, ioh, 2);
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
@@ -255,9 +255,9 @@ fdcprobe(parent, match, aux)
 			goto out;
 
 		/* reset it again */
-		bus_io_write_1(bc, ioh, fdout, 0);
+		bus_space_write_2(iot, ioh, fdout, 0);
 		delay(100);
-		bus_io_write_1(bc, ioh, fdout, FDO_FRST);
+		bus_space_write_2(iot, ioh, fdout, FDO_FRST);
 	}
 #endif
 
@@ -266,7 +266,7 @@ fdcprobe(parent, match, aux)
 	ia->ia_msize = 0;
 
  out:
-	bus_io_unmap(bc, ioh, FDC_NPORT);
+	bus_space_unmap(iot, ioh, FDC_NPORT);
 	return rv;
 }
 
@@ -284,9 +284,9 @@ fdcforceintr(aux)
 
 	/* the motor is off; this should generate an error with or
 	   without a disk drive present */
-	out_fdc(bc, ioh, NE7CMD_SEEK);
-	out_fdc(bc, ioh, 0);
-	out_fdc(bc, ioh, 0);
+	out_fdc(iot, ioh, NE7CMD_SEEK);
+	out_fdc(iot, ioh, 0);
+	out_fdc(iot, ioh, 0);
 }
 #endif
 
@@ -323,19 +323,19 @@ fdcattach(parent, self, aux)
 	void *aux;
 {
 	struct fdc_softc *fdc = (void *)self;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
 	struct fdc_attach_args fa;
 	int type;
 
-	bc = ia->ia_bc;
+	iot = ia->ia_iot;
 
 	/* Re-map the I/O space. */
-	if (bus_io_map(bc, ia->ia_iobase, FDC_NPORT, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
 		panic("fdcattach: couldn't map I/O ports");
 
-	fdc->sc_bc = bc;
+	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
 
 	fdc->sc_drq = ia->ia_drq;
@@ -380,8 +380,8 @@ fdprobe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
-	bus_chipset_tag_t bc = fdc->sc_bc;
-	bus_io_handle_t ioh = fdc->sc_ioh;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
@@ -395,14 +395,14 @@ fdprobe(parent, match, aux)
 		return 0;
 
 	/* select drive and turn on motor */
-	bus_io_write_1(bc, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
+	bus_space_write_2(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
 	delay(250000);
-	out_fdc(bc, ioh, NE7CMD_RECAL);
-	out_fdc(bc, ioh, drive);
+	out_fdc(iot, ioh, NE7CMD_RECAL);
+	out_fdc(iot, ioh, drive);
 	/* wait for recalibrate */
 	delay(2000000);
-	out_fdc(bc, ioh, NE7CMD_SENSEI);
+	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
 	{
@@ -414,7 +414,7 @@ fdprobe(parent, match, aux)
 	}
 #endif
 	/* turn off motor */
-	bus_io_write_1(bc, ioh, fdout, FDO_FRST);
+	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 
 	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
 		return 0;
@@ -663,7 +663,7 @@ fd_set_motor(fdc, reset)
 	for (n = 0; n < 4; n++)
 		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
 			status |= FDO_MOEN(n);
-	bus_io_write_1(fdc->sc_bc, fdc->sc_ioh, fdout, status);
+	bus_space_write_2(fdc->sc_iot, fdc->sc_ioh, fdout, status);
 }
 
 void
@@ -698,14 +698,14 @@ int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
-	bus_chipset_tag_t bc = fdc->sc_bc;
-	bus_io_handle_t ioh = fdc->sc_ioh;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	u_char i;
 	int j = 100000,
 	    n = 0;
 
 	for (; j; j--) {
-		i = bus_io_read_1(bc, ioh, fdsts) &
+		i = bus_space_read_1(iot, ioh, fdsts) &
 		    (NE7_DIO | NE7_RQM | NE7_CB);
 		if (i == NE7_RQM)
 			return n;
@@ -714,7 +714,7 @@ fdcresult(fdc)
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return -1;
 			}
-			fdc->sc_status[n++] = bus_io_read_1(bc, ioh, fddata);
+			fdc->sc_status[n++] = bus_space_read_1(iot, ioh, fddata);
 		}
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
@@ -722,20 +722,20 @@ fdcresult(fdc)
 }
 
 int
-out_fdc(bc, ioh, x)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+out_fdc(iot, ioh, x)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	u_char x;
 {
 	int i = 100000;
 
-	while ((bus_io_read_1(bc, ioh, fdsts) & NE7_DIO) && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_DIO) && i-- > 0);
 	if (i <= 0)
 		return -1;
-	while ((bus_io_read_1(bc, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
 	if (i <= 0)
 		return -1;
-	bus_io_write_1(bc, ioh, fddata, x);
+	bus_space_write_2(iot, ioh, fddata, x);
 	return 0;
 }
 
@@ -809,7 +809,7 @@ fdcstatus(dv, n, s)
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 
 	if (n == 0) {
-		out_fdc(fdc->sc_bc, fdc->sc_ioh, NE7CMD_SENSEI);
+		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
 		(void) fdcresult(fdc);
 		n = 2;
 	}
@@ -881,8 +881,8 @@ fdcintr(arg)
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
 	struct buf *bp;
-	bus_chipset_tag_t bc = fdc->sc_bc;
-	bus_io_handle_t ioh = fdc->sc_ioh;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 
@@ -937,13 +937,13 @@ loop:
 		if (fd->sc_cylin == bp->b_cylin)
 			goto doio;
 
-		out_fdc(bc, ioh, NE7CMD_SPECIFY);/* specify command */
-		out_fdc(bc, ioh, fd->sc_type->steprate);
-		out_fdc(bc, ioh, 6);		/* XXX head load time == 6ms */
+		out_fdc(iot, ioh, NE7CMD_SPECIFY);/* specify command */
+		out_fdc(iot, ioh, fd->sc_type->steprate);
+		out_fdc(iot, ioh, 6);		/* XXX head load time == 6ms */
 
-		out_fdc(bc, ioh, NE7CMD_SEEK);	/* seek function */
-		out_fdc(bc, ioh, fd->sc_drive);	/* drive number */
-		out_fdc(bc, ioh, bp->b_cylin * fd->sc_type->step);
+		out_fdc(iot, ioh, NE7CMD_SEEK);	/* seek function */
+		out_fdc(iot, ioh, fd->sc_drive);	/* drive number */
+		out_fdc(iot, ioh, bp->b_cylin * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
@@ -983,24 +983,24 @@ loop:
 		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #endif
-		bus_io_write_1(bc, ioh, fdctl, type->rate);
+		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
 #endif
 		if (read)
-			out_fdc(bc, ioh, NE7CMD_READ);	/* READ */
+			out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
 		else
-			out_fdc(bc, ioh, NE7CMD_WRITE);	/* WRITE */
-		out_fdc(bc, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(bc, ioh, fd->sc_cylin);		/* track */
-		out_fdc(bc, ioh, head);
-		out_fdc(bc, ioh, sec + 1);		/* sector +1 */
-		out_fdc(bc, ioh, type->secsize);	/* sector size */
-		out_fdc(bc, ioh, type->sectrac);	/* sectors/track */
-		out_fdc(bc, ioh, type->gap1);		/* gap1 size */
-		out_fdc(bc, ioh, type->datalen);	/* data length */
+			out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
+		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
+		out_fdc(iot, ioh, fd->sc_cylin);		/* track */
+		out_fdc(iot, ioh, head);
+		out_fdc(iot, ioh, sec + 1);		/* sector +1 */
+		out_fdc(iot, ioh, type->secsize);	/* sector size */
+		out_fdc(iot, ioh, type->sectrac);	/* sectors/track */
+		out_fdc(iot, ioh, type->gap1);		/* gap1 size */
+		out_fdc(iot, ioh, type->datalen);	/* data length */
 		fdc->sc_state = IOCOMPLETE;
 
 		disk_busy(&fd->sc_dk);
@@ -1020,7 +1020,7 @@ loop:
 		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
 
 		/* Make sure seek really happened. */
-		out_fdc(bc, ioh, NE7CMD_SENSEI);
+		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
@@ -1100,14 +1100,14 @@ loop:
 		untimeout(fdctimeout, fdc);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
-			out_fdc(bc, ioh, NE7CMD_SENSEI);
+			out_fdc(iot, ioh, NE7CMD_SENSEI);
 			(void) fdcresult(fdc);
 		}
 
 		/* fall through */
 	case DORECAL:
-		out_fdc(bc, ioh, NE7CMD_RECAL);	/* recalibrate function */
-		out_fdc(bc, ioh, fd->sc_drive);
+		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recalibrate function */
+		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
 		timeout(fdctimeout, fdc, 5 * hz);
 		return 1;			/* will return later */
@@ -1120,7 +1120,7 @@ loop:
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
-		out_fdc(bc, ioh, NE7CMD_SENSEI);
+		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.4 1996/09/29 11:19:43 christos Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.5 1996/10/21 22:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -331,7 +331,7 @@
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
 #define PROD_ID				0x5090
-#define GO_WINDOW(x) 			bus_io_write_2(sc->sc_bc, \
+#define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
 #define AUI 				0x1
 #define BNC 				0x2

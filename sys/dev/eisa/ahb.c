@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.5 1996/10/13 01:37:09 christos Exp $	*/
+/*	$NetBSD: ahb.c,v 1.6 1996/10/21 22:30:56 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -87,9 +87,9 @@
 
 struct ahb_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;
 
-	bus_io_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh;
 	int sc_irq;
 	void *sc_ih;
 
@@ -108,7 +108,7 @@ void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
-int ahb_find __P((bus_chipset_tag_t, bus_io_handle_t, struct ahb_softc *));
+int ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_softc *));
 void ahb_init __P((struct ahb_softc *));
 void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
@@ -157,8 +157,8 @@ ahbmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int rv;
 
 	/* must match one of our known ID strings */
@@ -168,12 +168,13 @@ ahbmatch(parent, match, aux)
 	    strcmp(ea->ea_idstring, "ADP0400"))
 		return (0);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
+	    EISA_SLOT_SIZE, 0, &ioh))
 		return (0);
 
-	rv = !ahb_find(bc, ioh, NULL);
+	rv = !ahb_find(iot, ioh, NULL);
 
-	bus_io_unmap(bc, ioh, EISA_SLOT_SIZE);
+	bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
 
 	return (rv);
 }
@@ -188,8 +189,8 @@ ahbattach(parent, self, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
@@ -206,12 +207,13 @@ ahbattach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
+	   EISA_SLOT_SIZE, 0, &ioh))
 		panic("ahbattach: could not map I/O addresses");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (ahb_find(bc, ioh, sc))
+	if (ahb_find(iot, ioh, sc))
 		panic("ahbattach: ahb_find failed!");
 
 	ahb_init(sc);
@@ -262,12 +264,12 @@ ahb_send_mbox(sc, opcode, ecb)
 	int opcode;
 	struct ahb_ecb *ecb;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int wait = 300;	/* 1ms should be enough */
 
 	while (--wait) {
-		if ((bus_io_read_1(bc, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
+		if ((bus_space_read_1(iot, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
 		delay(10);
@@ -277,8 +279,8 @@ ahb_send_mbox(sc, opcode, ecb)
 		Debugger();
 	}
 
-	bus_io_write_4(bc, ioh, MBOXOUT0, KVTOPHYS(ecb)); /* don't know this will work */
-	bus_io_write_1(bc, ioh, ATTN, opcode | ecb->xs->sc_link->target);
+	bus_space_write_4(iot, ioh, MBOXOUT0, KVTOPHYS(ecb)); /* don't know this will work */
+	bus_space_write_1(iot, ioh, ATTN, opcode | ecb->xs->sc_link->target);
 
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -293,12 +295,12 @@ ahb_send_immed(sc, cmd, ecb)
 	u_long cmd;
 	struct ahb_ecb *ecb;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int wait = 100;	/* 1 ms enough? */
 
 	while (--wait) {
-		if ((bus_io_read_1(bc, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
+		if ((bus_space_read_1(iot, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
 		delay(10);
@@ -308,9 +310,9 @@ ahb_send_immed(sc, cmd, ecb)
 		Debugger();
 	}
 
-	bus_io_write_4(bc, ioh, MBOXOUT0, cmd);	/* don't know this will work */
-	bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
-	bus_io_write_1(bc, ioh, ATTN, OP_IMMED | ecb->xs->sc_link->target);
+	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);	/* don't know this will work */
+	bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
+	bus_space_write_1(iot, ioh, ATTN, OP_IMMED | ecb->xs->sc_link->target);
 
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -324,8 +326,8 @@ ahbintr(arg)
 	void *arg;
 {
 	struct ahb_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ahb_ecb *ecb;
 	u_char ahbstat;
 	u_long mboxval;
@@ -334,7 +336,7 @@ ahbintr(arg)
 	printf("%s: ahbintr ", sc->sc_dev.dv_xname);
 #endif /* AHBDEBUG */
 
-	if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
+	if ((bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
 		return 0;
 
 	for (;;) {
@@ -342,9 +344,9 @@ ahbintr(arg)
 		 * First get all the information and then
 		 * acknowlege the interrupt
 		 */
-		ahbstat = bus_io_read_1(bc, ioh, G2INTST);
-		mboxval = bus_io_read_4(bc, ioh, MBOXIN0);
-		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		ahbstat = bus_space_read_1(iot, ioh, G2INTST);
+		mboxval = bus_space_read_4(iot, ioh, MBOXIN0);
+		bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 
 #ifdef	AHBDEBUG
 		printf("status = 0x%x ", ahbstat);
@@ -386,7 +388,7 @@ ahbintr(arg)
 		ahb_done(sc, ecb);
 
 	next:
-		if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
+		if ((bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
 			return 1;
 	}
 }
@@ -580,16 +582,16 @@ done:
  * Start the board, ready for normal operation
  */
 int
-ahb_find(bc, ioh, sc)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+ahb_find(iot, ioh, sc)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct ahb_softc *sc;
 {
 	u_char intdef;
 	int i, irq, busid;
 	int wait = 1000;	/* 1 sec enough? */
 
-	bus_io_write_1(bc, ioh, PORTADDR, PORTADDR_ENHANCED);
+	bus_space_write_1(iot, ioh, PORTADDR, PORTADDR_ENHANCED);
 
 #define	NO_NO 1
 #ifdef NO_NO
@@ -597,12 +599,12 @@ ahb_find(bc, ioh, sc)
 	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
-	bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_HARD_RESET);
+	bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_HARD_RESET);
 	delay(1000);
-	bus_io_write_1(bc, ioh, G2CNTRL, 0);
+	bus_space_write_1(iot, ioh, G2CNTRL, 0);
 	delay(10000);
 	while (--wait) {
-		if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_BUSY) == 0)
+		if ((bus_space_read_1(iot, ioh, G2STAT) & G2STAT_BUSY) == 0)
 			break;
 		delay(1000);
 	}
@@ -612,23 +614,23 @@ ahb_find(bc, ioh, sc)
 #endif /* AHBDEBUG */
 		return ENXIO;
 	}
-	i = bus_io_read_1(bc, ioh, MBOXIN0);
+	i = bus_space_read_1(iot, ioh, MBOXIN0);
 	if (i) {
 		printf("self test failed, val = 0x%x\n", i);
 		return EIO;
 	}
 
 	/* Set it again, just to be sure. */
-	bus_io_write_1(bc, ioh, PORTADDR, PORTADDR_ENHANCED);
+	bus_space_write_1(iot, ioh, PORTADDR, PORTADDR_ENHANCED);
 #endif
 
-	while (bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) {
+	while (bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND) {
 		printf(".");
-		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 		delay(10000);
 	}
 
-	intdef = bus_io_read_1(bc, ioh, INTDEF);
+	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
 		irq = 9;
@@ -653,10 +655,10 @@ ahb_find(bc, ioh, sc)
 		return EIO;
 	}
 
-	bus_io_write_1(bc, ioh, INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
+	bus_space_write_1(iot, ioh, INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
 	/* who are we on the scsi bus? */
-	busid = (bus_io_read_1(bc, ioh, SCSIDEF) & HSCSIID);
+	busid = (bus_space_read_1(iot, ioh, SCSIDEF) & HSCSIID);
 
 	/* if we want to fill in softc, do so now */
 	if (sc != NULL) {
@@ -884,15 +886,15 @@ ahb_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {				/* in msec  */
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND)
+		if (bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND)
 			ahbintr(sc);
 		if (xs->flags & ITSDONE)
 			return 0;

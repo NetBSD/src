@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.8 1996/10/13 01:37:14 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -156,22 +156,29 @@ pdq_eisa_devinit(
     pdq_softc_t *sc)
 {
     pdq_uint8_t data;
+    pdq_bus_t tag;
+
+#if defined(__NetBSD__)
+    tag = sc->sc_iotag;
+#else
+    tag = sc->sc_bc;
+#endif
 
     /*
      * Do the standard initialization for the DEFEA registers.
      */
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_FUNCTION_CTRL, 0x23);
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (sc->sc_iobase >> 8) & 0xF0);
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (sc->sc_iobase >> 8) & 0xF0);
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_SLOT_CTRL, 0x01);
-    data = PDQ_OS_IORD_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_FUNCTION_CTRL, 0x23);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (sc->sc_iobase >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (sc->sc_iobase >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_SLOT_CTRL, 0x01);
+    data = PDQ_OS_IORD_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
 #if defined(PDQ_IOMAPPED)
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data & ~1);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data & ~1);
 #else
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data | 1);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data | 1);
 #endif
-    data = PDQ_OS_IORD_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0);
-    PDQ_OS_IOWR_8(sc->sc_bc, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0, data | DEFEA_INTRENABLE);
+    data = PDQ_OS_IORD_8(tag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0, data | DEFEA_INTRENABLE);
 }
 
 #if defined(__FreeBSD__)
@@ -462,27 +469,37 @@ pdq_eisa_attach(
     eisa_intr_handle_t ih;
     const char *intrstr;
 
-    sc->sc_bc = ea->ea_bc;
+    sc->sc_iotag = ea->ea_iot;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    if (bus_io_map(sc->sc_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &sc->sc_iobase)) {
+    /*
+     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is
+     * an alias for sc_csrhandle.  sc_iobase is used here to
+     * check the card's configuration.
+     */
+
+    if (bus_space_map(sc->sc_iotag, EISA_SLOT_ADDR(ea->ea_slot),
+      EISA_SLOT_SIZE, 0, &sc->sc_iobase)) {
 	printf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
-    pdq_eisa_subprobe(sc->sc_bc, sc->sc_iobase, &maddr, &msize, &irq);
+    pdq_eisa_subprobe(sc->sc_iotag, sc->sc_iobase, &maddr, &msize, &irq);
 
-#if !defined(PDQ_IOMAPPED)
+#if defined(PDQ_IOMAPPED)
+    sc->sc_csrtag = sc->sc_iotag;
+    sc->sc_csrhandle = sc->sc_iobase;
+#else
     if (maddr == 0 || msize == 0) {
 	printf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
 	    sc->sc_dev.dv_xname);
 	return;
     }
 
-    if (bus_mem_map(sc->sc_bc, maddr, msize, 0, &sc->sc_membase)) {
-	bus_io_unmap(sc->sc_bc, sc->sc_iobase, EISA_SLOT_SIZE);
+    if (bus_space_map(sc->sc_csrtag, maddr, msize, 0, &sc->sc_csrhandle)) {
+	bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
 	printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
 	    sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
 	return;

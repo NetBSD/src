@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.9 1996/10/08 03:04:05 gibbs Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.10 1996/10/21 22:34:09 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -70,15 +70,15 @@
 	outsl((ahc)->baseport+(port), valp, size)
 #elif defined(__NetBSD__)
 #define	AHC_INB(ahc, port)	\
-	bus_io_read_1((ahc)->sc_bc, (ahc)->sc_ioh, port)
+	bus_space_read_1((ahc)->sc_iot, (ahc)->sc_ioh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
-	bus_io_read_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_read_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTB(ahc, port, val)	\
-	bus_io_write_1((ahc)->sc_bc, (ahc)->sc_ioh, port, val)
+	bus_space_write_1((ahc)->sc_iot, (ahc)->sc_ioh, port, val)
 #define	AHC_OUTSB(ahc, port, valp, size)	\
-	bus_io_write_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_io_write_multi_4((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_4((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
@@ -211,8 +211,8 @@ struct ahc_data {
 #elif defined(__NetBSD__)
 	struct device sc_dev;
 	void	*sc_ih;
-	bus_chipset_tag_t sc_bc;
-	bus_io_handle_t sc_ioh;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -290,16 +290,18 @@ struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_fla
 
 #define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
 
-void ahc_reset __P((char *devname, bus_chipset_tag_t bc, bus_io_handle_t ioh));
-void ahc_construct __P((struct ahc_data *ahc, bus_chipset_tag_t bc, bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
+void	ahc_reset __P((char *devname, bus_space_tag_t iot,
+	    bus_space_handle_t ioh));
+void	ahc_construct __P((struct ahc_data *ahc, bus_space_tag_t iot,
+	    bus_space_handle_t ioh, ahc_type type, ahc_flag flags));
 #endif
-void ahc_free __P((struct ahc_data *));
-int ahc_init __P((struct ahc_data *));
-int ahc_attach __P((struct ahc_data *));
+void	ahc_free __P((struct ahc_data *));
+int	ahc_init __P((struct ahc_data *));
+int	ahc_attach __P((struct ahc_data *));
 #if defined(__FreeBSD__)
-void ahc_intr __P((void *arg));
+void	ahc_intr __P((void *arg));
 #elif defined(__NetBSD__)
-int ahc_intr __P((void *arg));
+int	ahc_intr __P((void *arg));
 #endif
 
 #endif  /* _AIC7XXX_H_ */
