@@ -1,6 +1,6 @@
-# $NetBSD: shl.mi,v 1.185 2002/11/29 13:16:27 lukem Exp $
+# $NetBSD: shl.mi,v 1.186 2002/11/30 03:04:44 lukem Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
-./lib/libc.so.12.90			base-sys-shlib
+./lib/libc.so.12.91			base-sys-shlib
 ./lib/libcrypt.so.0.1			base-sys-shlib
 ./lib/libcrypto.so.1.1			base-crypto-shlib
 ./lib/libdes.so.6.0			base-crypto-shlib
@@ -10,7 +10,7 @@
 ./lib/libm.so.0.1			base-sys-shlib
 ./lib/libtermcap.so.0.5			base-sys-shlib
 ./lib/libtermlib.so.0.5			base-sys-shlib
-./lib/libutil.so.6.4			base-sys-shlib
+./lib/libutil.so.7.0			base-sys-shlib
 ./lib/libz.so.0.3			base-sys-shlib
 ./usr/lib/i18n/libBIG5.so.4.0		base-i18n-shlib
 ./usr/lib/i18n/libEUC.so.4.0		base-i18n-shlib
@@ -21,7 +21,7 @@
 ./usr/lib/libamu.so.2.1			base-amd-shlib
 ./usr/lib/libasn1.so.6.1		base-krb5-shlib
 ./usr/lib/libbz2.so.1.0			base-sys-shlib
-./usr/lib/libc.so.12.90			base-sys-shlib
+./usr/lib/libc.so.12.91			base-sys-shlib
 ./usr/lib/libcdk.so.1.0			base-sys-shlib
 ./usr/lib/libcom_err.so.4.1		base-krb5-shlib
 ./usr/lib/libcrypt.so.0.1		base-sys-shlib
@@ -60,6 +60,6 @@
 ./usr/lib/libtermcap.so.0.5		base-sys-shlib
 ./usr/lib/libtermlib.so.0.5		base-sys-shlib
 ./usr/lib/libusbhid.so.1.0		base-sys-shlib
-./usr/lib/libutil.so.6.4		base-sys-shlib
+./usr/lib/libutil.so.7.0		base-sys-shlib
 ./usr/lib/libwrap.so.0.2		base-net-shlib
 ./usr/lib/libz.so.0.3			base-sys-shlib
