@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.16 1996/01/06 05:18:06 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.17 1996/01/06 15:56:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -54,9 +54,9 @@
 	static char *last_hit[DBG_PID];
 #	define	PID(a)	\
 	{ int i; \
-	  for (i=0; i< DBG_PID; i++) \
+	  for (i=0; i< DBG_PID-1; i++) \
 		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID] = a; } \
+	  last_hit[DBG_PID-1] = a; } \
 		/* olast_hit = last_hit; last_hit = a; */
 #else
 #	define	PID(a)
@@ -1490,12 +1490,12 @@ dma_ready()
 	 */
 	if (!is_edma && !(dmstat & (SC_END_DMA|SC_BSY_ERR))
 		     && (dmstat & SC_PHS_MTCH) ) {
-		ncr_tprint(reqp, "dma_ready: spurious call"
+		ncr_tprint(reqp, "dma_ready: spurious call "
 				 "(dm:%x,last_hit: %s)\n",
 #ifdef DBG_PID
-							dmstat, last_hit[DBG_PID]);
+					dmstat, last_hit[DBG_PID-1]);
 #else
-							dmstat, "unknown");
+					dmstat, "unknown");
 #endif
 		return (0);
 	}
@@ -1994,7 +1994,7 @@ scsi_show()
 		printf("phase = %d, ", connected->phase);
 	printf("busy:%x, spl:%04x\n", busy, sps);
 #ifdef	DBG_PID
-	for (i=0; i<=DBG_PID; i++)
+	for (i=0; i<DBG_PID; i++)
 		printf("\t%d\t%s\n", i, last_hit[i]);
 #endif
 
