@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.28 2003/05/28 20:19:42 dsl Exp $	*/
+/*	$NetBSD: tstp.c,v 1.29 2003/07/10 12:50:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.28 2003/05/28 20:19:42 dsl Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.29 2003/07/10 12:50:18 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -145,8 +145,8 @@ __stopwin(void)
 
 	_cursesi_screen->endwin = 1;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
-			  TCSASOFT | TCSADRAIN : TCSADRAIN,
+	return (tcsetattr(fileno(_cursesi_screen->infd),
+			  __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
 			  &_cursesi_screen->orig_termios) ? ERR : OK);
 }
 
@@ -166,8 +166,7 @@ __restartwin(void)
 
 	/* Reset the terminal state to the mode just before we stopped. */
 	(void) tcsetattr(fileno(_cursesi_screen->infd),
-			 __tcaction ?
-			 TCSASOFT | TCSADRAIN : TCSADRAIN,
+			 __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
 			 &_cursesi_screen->save_termios);
 
 	/* Restore colours */
@@ -189,6 +188,9 @@ __restartwin(void)
 int
 def_prog_mode(void)
 {
+	if (_cursesi_screen->endwin)
+		return ERR;
+
 	return (tcgetattr(fileno(_cursesi_screen->infd),
 			  &_cursesi_screen->save_termios) ? ERR : OK);
 }
@@ -196,8 +198,10 @@ def_prog_mode(void)
 int
 reset_prog_mode(void)
 {
-	__restartwin();
-	return(OK);
+
+	return tcsetattr(fileno(_cursesi_screen->infd),
+			 __tcaction ? TCSASOFT | TCSADRAIN : TCSADRAIN,
+			 &_cursesi_screen->save_termios) ? ERR : OK;
 }
 
 int
