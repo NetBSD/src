@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.36 1999/02/23 03:20:01 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.37 1999/02/24 23:35:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.36 1999/02/23 03:20:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.37 1999/02/24 23:35:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,18 +80,17 @@ interrupt(a0, a1, a2, framep)
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
 	    {
-		struct cpu_info *ci;
+		struct cpu_info *ci = &cpu_info[cpu_id];
 		u_long pending_ipis, bit;
 
-#if 1
+#if 0
 		printf("CPU %lu got IPI\n", cpu_id);
 #endif
 
 #ifdef DIAGNOSTIC
-		if (cpu_info[cpu_id].ci_dev == NULL) {
+		if (ci->ci_dev == NULL) {
 			/* XXX panic? */
-			printf("WARNING: no device for ID %lu\n",
-			    cpu_id);
+			printf("WARNING: no device for ID %lu\n", cpu_id);
 			return;
 		}
 #endif
