@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.4 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.5 1998/07/28 18:24:49 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -253,7 +253,7 @@ uvm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
 		    offset, UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 
@@ -261,7 +261,7 @@ uvm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 		

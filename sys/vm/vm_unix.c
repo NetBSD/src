@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.21 1998/03/01 02:24:03 fvdl Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.22 1998/07/28 18:25:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,7 +227,7 @@ vm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
 		    offset, UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 
@@ -235,7 +235,7 @@ vm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 
