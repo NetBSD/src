@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.22 1996/05/16 22:38:04 pk Exp $
+#	$NetBSD: files.sparc,v 1.23 1996/05/21 19:06:26 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -21,7 +21,7 @@ file	arch/sparc/dev/obio.c		obio | vmel | vmes
 
 device audio
 attach audio at mainbus, obio
-file	arch/sparc/dev/amd7930.c		audio needs-flag
+file	arch/sparc/dev/amd7930.c		audio
 
 device auxreg
 attach auxreg at mainbus, obio
@@ -83,15 +83,13 @@ major { cd = 18 }
 
 device dma {}
 attach dma at sbus, obio
-device espdma {}
-attach espdma at sbus
 device ledma {}
 attach ledma at sbus
-file	arch/sparc/dev/dma.c		dma | espdma | ledma needs-flag
+file	arch/sparc/dev/dma.c		dma | ledma
 
 device esp: scsi
-attach esp at sbus, espdma, dma, obio
-file	arch/sparc/dev/esp.c		esp needs-flag
+attach esp at sbus, dma, obio
+file	arch/sparc/dev/esp.c		esp
 
 # Brooktree DAC attribute
 define bt_dac
