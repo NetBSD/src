@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.83 2003/08/08 18:53:13 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.84 2003/10/19 07:52:22 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.83 2003/08/08 18:53:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.84 2003/10/19 07:52:22 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -507,20 +507,6 @@ const struct execsw execsw_builtin[] = {
 #endif /* EXEC_ELF64 */
 
 #if defined(EXEC_MACHO)
-#ifdef COMPAT_MACH
-	/* Mach MACH-O (native word size) */
-	{ sizeof (struct exec_macho_fat_header),
-	  exec_macho_makecmds,
-	  { .mach_probe_func = exec_mach_probe },
-	  &emul_mach,
-	  EXECSW_PRIO_ANY,
-	  MAXPATHLEN + 1,
-	  exec_mach_copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
-#endif
-
 #ifdef COMPAT_DARWIN
 	/* Darwin Mach-O (native word size) */
 	{ sizeof (struct exec_macho_fat_header),
@@ -530,6 +516,20 @@ const struct execsw execsw_builtin[] = {
 	  EXECSW_PRIO_ANY,
 	  MAXPATHLEN + 1,
 	  exec_darwin_copyargs,
+	  NULL,
+	  coredump_netbsd,
+	  exec_setup_stack },
+#endif
+
+#ifdef COMPAT_MACH
+	/* Mach MACH-O (native word size) */
+	{ sizeof (struct exec_macho_fat_header),
+	  exec_macho_makecmds,
+	  { .mach_probe_func = exec_mach_probe },
+	  &emul_mach,
+	  EXECSW_PRIO_ANY,
+	  MAXPATHLEN + 1,
+	  exec_mach_copyargs,
 	  NULL,
 	  coredump_netbsd,
 	  exec_setup_stack },
