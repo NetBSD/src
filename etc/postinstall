@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.22 2002/06/29 19:47:02 itojun Exp $
+# $NetBSD: postinstall,v 1.23 2002/06/29 22:25:23 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -484,9 +484,6 @@ do_wscons()
 	op=$1
 
 	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
-
-	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc \
-		644 wscons.conf || return 1
 
 	failed=0
 	while read _type _arg1 _rest; do
