@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.9,v 1.8 2001/06/21 11:59:00 wiz Exp $
+.\"	$NetBSD: access.9,v 1.9 2001/12/26 00:24:16 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,12 +72,10 @@ considers
 to represent an user space address.
 The process context to use for this operation is taken from the global variable
 .Va curproc .
-.Pp
 .Sh RETURN VALUES
 Both functions return 1 if the type of access specified by
 .Fa rw
 is permitted.
 Otherwise 0 is returned.
-.Pp
 .Sh BUGS
 The process pointer should be passed in as an argument.
