@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 1997/11/13 23:03:10 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 1998/01/15 21:55:51 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -219,10 +219,6 @@ config_console()
  */
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, NULL, 0
 };
 
 int
