@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.17 2002/12/04 18:52:28 jdolecek Exp $
+$NetBSD: mcadevs,v 1.18 2003/06/29 14:48:21 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ product 0x0301 "Wichita 6298 (ADP 3702) Adapter"			[6]
 product 0x0425 "Superfax Modem Adapter"					[6]
 product 0x04FF "Viking PS/2 Display Controller"				[7]
 product 0x0500 "CORE CNT-MCK Fixed Disk Adapter"			[6]
-product 0x0708 "BusTek BT-640A SCSI Host Adapter"			[6]
+product 0x0708 BT640A "BusTek BT-640A SCSI Host Adapter"		[6]
 product 0x0803 "Madge MCA Ring Node Adapter"				[6]
 product 0x0808 "BICC Isolan 4110 Ethernet Adapter"			[1]
 product 0x0F1F AHA1640 "Adaptec AHA-1640 SCSI Adapter"		AHA-1640 ADF
