@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.24.2.1 2002/06/28 12:43:15 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.24.2.2 2002/07/21 04:41:30 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24.2.1 2002/06/28 12:43:15 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.24.2.2 2002/07/21 04:41:30 lukem Exp $");
 #endif
 
 /*
@@ -420,7 +420,7 @@ main(int argc, char *argv[])
 		while (*argv != NULL) {
 			/* args specified */
 			int     rc;
-			char *basep, *dir;
+			const char *basep, *dir;
 			char *cwd;
 			char base[FILENAME_MAX];
 
@@ -458,7 +458,7 @@ main(int argc, char *argv[])
 		while (*argv != NULL) {
 			/* args specified */
 			int     rc;
-			char *basep, *dir;
+			const char *basep, *dir;
 			char *cwd;
 			char base[FILENAME_MAX];
 			char *p;
