@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2000/07/10 01:15:17 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.79 2000/07/11 21:55:11 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -345,12 +345,13 @@ setregs(p, pack, stack)
 	 */
 #ifdef __arch64__
 	/* Check what memory model is requested */
-#define	EF_SPARCV9_MM	0x3
-#define	EF_SPARCV9_TSO	0x0
-#define	EF_SPARCV9_PSO	0x1
-#define	EF_SPARCV9_RMO	0x2
-#define	EF_SPARC_SUN_U1	0x000200
-#define	EF_SPARC_HAL_R1	0x000400
+#define	EF_SPARCV9_MM		0x3
+#define	EF_SPARCV9_TSO		0x0
+#define	EF_SPARCV9_PSO		0x1
+#define	EF_SPARCV9_RMO		0x2
+#define	EF_SPARC_SUN_US1	0x000200
+#define	EF_SPARC_HAL_R1		0x000400
+#define	EF_SPARC_SUN_US3	0x000800
 
 	switch ((eh->e_flags & EF_SPARCV9_MM)) {
 	default:
