@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.15 2003/08/04 00:32:49 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.16 2003/08/11 15:39:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -129,10 +129,14 @@
 GLOBAL(powersave)
 	.long	-1
 
+	.rodata
+.Lqspanic:
+	.string	"cpu_switch: queue %d [%08x] is empty!" 
+
 	.text
 	.align 2
 /*
- * No processes are runnable, so loop waiting for one.
+ * No lwps are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
  * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
@@ -200,7 +204,7 @@ ENTRY(switch_exit)
 	 */
 	addi	%r1,%r6,USPACE-CALLFRAMELEN
 	/*
-	 * Schedule the vmspace and stack to be freed (the proc arg is
+	 * Schedule the vmspace and stack to be freed (the lwp arg is
 	 * already in r3).  Function to call is in r4.
 	 */
 	mtctr	%r4
@@ -210,12 +214,12 @@ ENTRY(switch_exit)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
-/* Fall through to cpu_switch to actually select another proc */
-	li	%r3,0			/* indicate exited process */
+/* Fall through to cpu_switch to actually select another lwp */
+	li	%r3,0			/* indicate exited lwp */
 
 /*
  * void cpu_switch(struct lwp *l)
- * Find a runnable process and switch to it.
+ * Find a runnable lwp and switch to it.
  */
 ENTRY_NOPROFILE(cpu_switch)
 	mflr	%r0			/* save lr */
@@ -228,7 +232,7 @@ ENTRY_NOPROFILE(cpu_switch)
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
 	GET_CPUINFO(%r7)
-	cmpwi	%r30,0			/* old process was exiting? */
+	cmpwi	%r30,0			/* old lwp was exiting? */
 	beq	1f
 
 #if defined(PPC_OEA) && !defined(PPC_OEA64)
@@ -286,7 +290,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
-/* Find a new process */
+/* Find a new lwp */
 	lis	%r8,_C_LABEL(sched_whichqs)@ha
 	ldint	%r9,_C_LABEL(sched_whichqs)@l(%r8)
 
@@ -299,10 +303,19 @@ ENTRY_NOPROFILE(cpu_switch)
 	slwi	%r3,%r10,3
 	add	%r3,%r3,%r4		/* select queue */
 
-	ldptr	%r31,L_FORW(%r3)	/* unlink first proc from queue */
-	ldptr	%r4,L_FORW(%r31)
-	streg	%r4,L_FORW(%r3)
-	streg	%r3,L_BACK(%r4)
+	ldptr	%r31,L_FORW(%r3)	/* get first lwp from queue */
+	cmplw	%r31,%r3		/* empty queue? */
+	bne+	1f			/*     nope.  skip panic */
+	mr	%r5,%r9			/* save sched_whichqs value */
+	mr	%r4,%r10		/* save the bit # */
+	lis	%r8,.Lqspanic@ha	/* get panic string (HI) */
+	addi	%r3,%r8,.Lqspanic@l	/* get panic string (LO) */
+	bl	_C_LABEL(panic)		/* now panic */
+1:
+					/* unlink first lwp from queue */
+	ldptr	%r4,L_FORW(%r31)	/* next = l->l_forw */
+	streg	%r4,L_FORW(%r3)		/* qh->qh_flink = next; */
+	streg	%r3,L_BACK(%r4)		/* next->l_back = qh */
 
 	cmpl	%cr0,%r3,%r4		/* queue empty? */
 	bne	1f
@@ -324,11 +337,11 @@ switch_common:
 	streg	%r4,L_CPU(%r31)		/* l->l_cpu = curcpu() */
 #endif
 
-	/* Process now running on a processor. */
+	/* lwp now running on a processor. */
 	li	%r3,LSONPROC		/* l->l_stat = LSONPROC */
 	stint	%r3,L_STAT(%r31)
 
-	/* record new process */
+	/* record new lwp */
 	stptr	%r31,CI_CURLWP(%r4)
 	ldptr	%r4,L_ADDR(%r31)
 
@@ -369,7 +382,7 @@ switch_exited:
 #endif
 	isync
 
-	ldreg	%r1,PCB_SP(%r4)		/* get new procs SP */
+	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
 	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
@@ -444,7 +457,7 @@ ENTRY(cpu_switchto)
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
 	GET_CPUINFO(%r7)
-	cmpwi	%r30,0			/* old process was exiting? */
+	cmpwi	%r30,0			/* old lwp was exiting? */
 	beq	1f
 
 #if defined(PPC_OEA) && !defined(PPC_OEA64)
