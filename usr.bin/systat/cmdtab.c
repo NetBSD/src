@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.12 1999/12/22 14:46:14 kleink Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.13 2000/01/08 23:12:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.12 1999/12/22 14:46:14 kleink Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.13 2000/01/08 23:12:37 itojun Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -121,6 +121,16 @@ struct mode modes[] = {
 	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
+#ifdef INET6
+	{ "inet6.ip6",	showip6,	fetchip6,	labelip6,
+	  initip6,	openip6,	closeip6,	0,
+	  CF_LOADAV },
+#endif
+#ifdef IPSEC
+	{ "ipsec",	showipsec,	fetchipsec,	labelipsec,
+	  initipsec,	openipsec,	closeipsec,	0,
+	  CF_LOADAV },
+#endif
 	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
 	  initiostat,	openiostat,	closeiostat,	iostat_commands,
 	  CF_LOADAV },

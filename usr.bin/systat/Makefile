@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2000/01/05 11:59:12 itojun Exp $
+#	$NetBSD: Makefile,v 1.22 2000/01/08 23:12:36 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	systat
@@ -17,6 +17,7 @@ BINMODE=2555
 LINKS=	${BINDIR}/systat ${BINDIR}/sysstat
 MLINKS+=systat.1 sysstat.1
 
-CPPFLAGS+=-DINET6
+CPPFLAGS+=-DINET6 -DIPSEC
+SRCS+=	ip6.c ipsec.c
 
 .include <bsd.prog.mk>

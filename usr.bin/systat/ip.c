@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.3 2000/01/04 15:17:00 msaitoh Exp $ */
+/*	$NetBSD: ip.c,v 1.4 2000/01/08 23:12:37 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.3 2000/01/04 15:17:00 msaitoh Exp $");
+__RCSID("$NetBSD: ip.c,v 1.4 2000/01/08 23:12:37 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: ip.c,v 1.3 2000/01/04 15:17:00 msaitoh Exp $");
 
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str);
-#define SHOW(stat, row, col)	mvwprintw(wnd, row, col, "%9llu", curstat.stat)
+#define SHOW(stat, row, col) \
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
 
 struct mystat {
 	struct ipstat i;
