@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.18 1998/08/29 03:53:18 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.19 1998/08/31 00:11:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -171,6 +171,9 @@ void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
+			     vm_offset_t pa, vm_size_t size, u_int acc,
+			     u_int flg));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 caddr_t allocsys		__P((caddr_t v));
@@ -331,7 +334,6 @@ initarm(prom_id)
 {
 	int loop;
 	int loop1;
-	u_int logical;
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	u_int l2pagetable;
@@ -665,57 +667,57 @@ initarm(prom_id)
 	 */
 
 #ifdef VERBOSE_INIT_ARM
+	printf("Creating L1 page table\n");
+#endif
+
+	/*
+	 * Now we start consturction of the L1 page table
+	 * We start by mapping the L2 page tables into the L1.
+	 * This means that we can replace L1 mappings later on if necessary
+	 */
+	l1pagetable = kernel_l1pt.physical - physical_start;
+
+	/* Map the L2 pages tables in the L1 page table */
+	map_pagetable(l1pagetable, 0x00000000,
+	    kernel_pt_table[KERNEL_PT_SYS]);
+	map_pagetable(l1pagetable, KERNEL_BASE,
+	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
+		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	    kernel_ptpt.physical);
+	map_pagetable(l1pagetable, VMEM_VBASE,
+	    kernel_pt_table[KERNEL_PT_VMEM]);
+
+#ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel code/data */
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL] - physical_start;
 
-#if 0
-	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
-#ifdef PROM_DEBUG
-		printf("[ktext read-only] ");
-		printf("[%08x %08x %08x] \n", kerneldatasize, kernexec->a_text,
-		    (kernexec->a_text+kernexec->a_data+kernexec->a_bss));
-#if 0
-		printf("physical start=%08lx physical freestart=%08lx\n",
-		    physical_start, physical_freestart);
-#endif
-#endif
-
-		for (logical = 0; logical < 0x00/*kernexec->a_text*/;
-		    logical += NBPG)
-			map_entry_ro(l2pagetable, logical, physical_start + reserv_mem
-			    + logical);
-		for (; logical < kerneldatasize; logical += NBPG)
-			map_entry(l2pagetable, logical, physical_start + reserv_mem
-			    + logical);
-	} else
-#endif
-		for (logical = 0; logical < kerneldatasize; logical += NBPG)
-			map_entry(l2pagetable, logical, physical_start + reserv_mem
-			    + logical);
+	map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
+	    physical_start + reserv_mem, kerneldatasize,
+	    AP_KRW, PT_CACHEABLE);
 
 #ifdef VERBOSE_INIT_ARM
-	printf("Constructing page tables\n");
+	printf("Constructing L2 page tables\n");
 #endif
 
 	/* Map the stack pages */
-	map_entry(l2pagetable, fiqstack.physical - physical_start,
-	    fiqstack.physical);
-	map_entry(l2pagetable, irqstack.physical - physical_start,
-	    irqstack.physical);
-	map_entry(l2pagetable, abtstack.physical - physical_start,
-	    abtstack.physical); 
- 	for (loop = 0; loop < UND_STACK_SIZE; ++loop)
-		map_entry(l2pagetable, undstack.physical - physical_start + NBPG * loop,
-		    undstack.physical + NBPG * loop); 
-	for (loop = 0; loop < UPAGES; ++loop)
-		map_entry(l2pagetable, kernelstack.physical - physical_start + NBPG * loop,
-		    kernelstack.physical + NBPG * loop); 
-	for (loop = 0; loop < (PD_SIZE / NBPG); ++loop)
-		map_entry_nc(l2pagetable, kernel_l1pt.physical - physical_start + NBPG * loop,
-		    kernel_l1pt.physical + NBPG * loop);
+	map_chunk(0, l2pagetable, fiqstack.virtual, fiqstack.physical,
+	    FIQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, irqstack.virtual, irqstack.physical,
+	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, abtstack.virtual, abtstack.physical,
+	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, undstack.virtual, undstack.physical,
+	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, kernelstack.virtual, kernelstack.physical,
+	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, kernel_l1pt.virtual, kernel_l1pt.physical,
+	    PD_SIZE, AP_KRW, 0);
 
 	/* Map the page table that maps the kernel pages */
 	map_entry_nc(l2pagetable, kernel_ptpt.physical - physical_start,
@@ -733,10 +735,10 @@ initarm(prom_id)
 
 	l2pagetable = kernel_pt_table[KERNEL_PT_VMEM] - physical_start;
 
-	for (logical = 0; logical < videodram_size; logical += NBPG) {
-		map_entry(l2pagetable, logical, vdrambase + logical);
-		map_entry(l2pagetable, logical + videodram_size, vdrambase + logical);
-	}
+	map_chunk(0, l2pagetable, VMEM_VBASE, vdrambase,
+	    videodram_size, AP_KRW, PT_CACHEABLE);
+	map_chunk(0, l2pagetable, VMEM_VBASE + videodram_size, vdrambase,
+	    videodram_size, AP_KRW, PT_CACHEABLE);
 
 	/*
 	 * Map entries in the page table used to map PTE's
@@ -765,9 +767,6 @@ initarm(prom_id)
 	l2pagetable = kernel_pt_table[KERNEL_PT_SYS] - physical_start;
 	map_entry(l2pagetable, 0x0000000, systempage.physical);
 
-	/* Now we construct the L1 pagetable */
-	l1pagetable = kernel_l1pt.physical - physical_start;
-
 	/* Map the VIDC20, IOMD, COMBO and podules */
 
 	/* Map the VIDC20 */
@@ -778,19 +777,6 @@ initarm(prom_id)
 
 	/* Map the COMBO (and module space) */
 	map_section(l1pagetable, IO_BASE, IO_HW_BASE, 0);
-
-	/* Map the L2 pages tables in the L1 page table */
-	map_pagetable(l1pagetable, 0x00000000,
-	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_pagetable(l1pagetable, KERNEL_BASE,
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    kernel_ptpt.physical);
-	map_pagetable(l1pagetable, VMEM_VBASE,
-	    kernel_pt_table[KERNEL_PT_VMEM]);
 
 #ifdef PROM_DEBUG
 	/* Bit more debugging info */
