@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 2003/04/10 22:07:06 christos Exp $
+#	$NetBSD: INSTALL,v 1.55 2003/09/06 03:25:32 itojun Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.54 $"
+#ident 		"INSTALL-$Revision: 1.55 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -334,4 +334,4 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-#pseudo-device	rnd
+pseudo-device	rnd

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.1 2003/05/15 14:02:00 fvdl Exp $
+# $NetBSD: INSTALL_ACPI,v 1.2 2003/09/06 03:25:24 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.1 $"
+#ident 		"INSTALL-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -606,7 +606,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 #pseudo-device	clockctl		# user control of clock subsystem
 

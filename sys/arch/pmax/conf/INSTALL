@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.49 2003/04/10 22:07:02 christos Exp $
+# 	$NetBSD: INSTALL,v 1.50 2003/09/06 03:25:30 itojun Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -147,3 +147,5 @@ pseudo-device	ccd		 4	# concatenated disks
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 1	# only 1 framebuffer supported
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

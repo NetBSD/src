@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23 2002/09/18 02:43:56 lukem Exp $
+#	$NetBSD: INSTALL,v 1.24 2003/09/06 03:25:25 itojun Exp $
 #
 # First try for BEBOX config file
 #
@@ -140,3 +140,5 @@ ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+pseudo-device	rnd			# /dev/random and in-kernel generator
