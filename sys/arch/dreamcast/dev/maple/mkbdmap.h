@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdmap.h,v 1.1 2001/01/16 00:33:01 marcus Exp $	*/
+/*	$NetBSD: mkbdmap.h,v 1.2 2001/01/16 00:56:29 marcus Exp $	*/
 
 /*
  * Copyright (c) 2001 Marcus Comstedt
@@ -147,12 +147,55 @@ static const keysym_t mkbd_keydesc_jp[] = {
     KC(0x107),	KS_Meta_R,
 };
 
+
+static const keysym_t mkbd_keydesc_uk[] = {
+/*  pos		normal		shifted */
+
+    KC(32),	KS_3,		KS_sterling,
+
+    KC(35),	KS_6,		KS_asciicircum,
+    KC(36),	KS_7,		KS_ampersand,
+    KC(37),	KS_8,		KS_asterisk,
+    KC(38),	KS_9,		KS_parenleft,
+    KC(39),	KS_0,		KS_parenright,
+
+    KC(45),	KS_minus,	KS_underscore,
+    KC(46),	KS_equal,	KS_plus,
+    KC(47),	KS_bracketleft,	KS_braceleft,
+    KC(48),	KS_bracketright,KS_braceright,
+
+    KC(50),	KS_numbersign,	KS_asciitilde,
+    KC(51),	KS_semicolon,	KS_colon,
+    KC(52),	KS_apostrophe,	KS_at,
+    KC(53),	KS_grave,	KS_notsign,	KS_brokenbar,
+
+    KC(83),	KS_Num_Lock,
+    KC(84),	KS_KP_Divide,
+    KC(85),	KS_KP_Multiply,
+    KC(86),	KS_KP_Subtract,
+    KC(87),	KS_KP_Add,
+    KC(88),	KS_KP_Enter,
+    KC(89),	KS_KP_1,
+    KC(90),	KS_KP_2,
+    KC(91),	KS_KP_3,
+    KC(92),	KS_KP_4,
+    KC(93),	KS_KP_5,
+    KC(94),	KS_KP_6,
+    KC(95),	KS_KP_7,
+    KC(96),	KS_KP_8,
+    KC(97),	KS_KP_9,
+    KC(98),	KS_KP_0,
+    KC(99),	KS_KP_Decimal,
+
+    KC(100),	KS_backslash,	KS_bar,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
 static const struct wscons_keydesc mkbd_keydesctab[] = {
 	KBD_MAP(KB_JP,			0,	mkbd_keydesc_jp),
-/*	KBD_MAP(KB_UK,		    KB_JP,	mkbd_keydesc_uk),  */
+	KBD_MAP(KB_UK,		    KB_JP,	mkbd_keydesc_uk),
 	{0, 0, 0, 0}
 };
 
