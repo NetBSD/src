@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.63 2001/11/24 21:58:42 perry Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.64 2001/12/10 08:54:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.63 2001/11/24 21:58:42 perry Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.64 2001/12/10 08:54:38 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -513,7 +513,7 @@ install(char *from_name, char *to_name, u_int flags)
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 	if (dorename) {
-		(void)snprintf(tmpl, sizeof(tmpl), "%sinst.XXXXXX",
+		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
 		    xdirname(to_name));
 		oto_name = to_name;
 		to_name = tmpl;
