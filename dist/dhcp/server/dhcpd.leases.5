@@ -48,7 +48,7 @@ for a given lease, the last one in the file is the current one.
 When dhcpd is first installed, there is no lease database.   However,
 dhcpd requires that a lease database be present before it will start.
 To make the initial lease database, just create an empty file called
-DBDIR/dhcpd.leases.   You can do this with:
+/var/db/dhcpd.leases.   You can do this with:
 .PP
 .nf
 	touch DBDIR/dhcpd.leases
@@ -57,7 +57,7 @@ DBDIR/dhcpd.leases.   You can do this with:
 In order to prevent the lease database from growing without bound, the
 file is rewritten from time to time.   First, a temporary lease
 database is created and all known leases are dumped to it.   Then, the
-old lease database is renamed DBDIR/dhcpd.leases~.   Finally, the
+old lease database is renamed /var/db/dhcpd.leases~.   Finally, the
 newly written lease database is moved into place.
 .SH FORMAT
 Lease descriptions are stored in a format that is parsed by the same
@@ -133,7 +133,7 @@ actual date.
 .PP
 The hardware statement records the MAC address of the network
 interface on which the lease will be used.   It is specified as a
-series of hexadecimal octets, seperated by colons.
+series of hexadecimal octets, separated by colons.
 .PP
 .B uid \fIclient-identifier\fB;\fR
 .PP
@@ -144,7 +144,7 @@ send one.   Client identifiers are normally an ARP type (1 for
 ethernet) followed by the MAC address, just like in the \fBhardware\fI
 statement, but this is not required.
 .PP
-The client identifier is recorded as a colon-seperated hexadecimal
+The client identifier is recorded as a colon-separated hexadecimal
 list or as a quoted string.   If it is recorded as a quoted string and
 it contains one or more non-printable characters, those characters are
 represented as octal escapes - a backslash character followed by three
@@ -229,7 +229,7 @@ record.   The name to which the PTR record points will be either the
 The \fBon\fI statement records a list of statements to execute if a
 certain event occurs.   The possible events that can occur for an
 active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
-can be specified - if so, the events are seperated by '|' characters.
+can be specified - if so, the events are separated by '|' characters.
 .SH THE FAILOVER PEER STATE DECLARATION
 The state of any failover peering arrangements is also recorded in the
 lease file, using the \fBfailover peer\fR statement:

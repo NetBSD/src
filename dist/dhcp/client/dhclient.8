@@ -7,7 +7,7 @@
 .\" file, or you are not sure the one you have is correct, you may
 .\" obtain an applicable copy of the license at:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\"             http://www.isc.org/isc-license-1.0.html.
 .\"
 .\" This file is part of the ISC DHCP distribution.   The documentation
 .\" associated with this file is listed in the file DOCUMENTATION,
@@ -17,7 +17,7 @@
 .\" http://www.isc.org for more information.
 .TH dhclient 8
 .SH NAME
-dhclient - Dynamic Host Configuration Protocol Client
+dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 .SH SYNOPSIS
 .B dhclient
 [
@@ -80,6 +80,11 @@ The Internet Software Consortium DHCP Client, dhclient, provides a
 means for configuring one or more network interfaces using the Dynamic
 Host Configuration Protocol, BOOTP protocol, or if these protocols
 fail, by statically assigning an address.
+.SH SYSTEM REQUIREMENTS
+You must have the Berkeley
+Packet Filter (bpf) configured in your NetBSD kernel.   You must have
+at least one /dev/bpf* file for each broadcast network interface that
+is attached to your system.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host to contact a central server which
@@ -200,13 +205,13 @@ flag cause dhclient to try once to get a lease.  If it fails, dhclient exits
 with exit code two.
 .PP
 The DHCP client normally gets its configuration information from
-.B ETCDIR/dhclient.conf,
+.B /etc/dhclient.conf,
 its lease database from
-.B DBDIR/dhclient.leases,
+.B /var/db/dhclient.leases,
 stores its process ID in a file called
-.B RUNDIR/dhclient.pid,
+.B /var/run/dhclient.pid,
 and configures the network interface using
-.B CLIENTBINDIR/dhclient-script
+.B /sbin/dhclient-script
 To specify different names and/or locations for these files, use the
 .B -cf,
 .B -lf,
@@ -215,9 +220,9 @@ and
 .B -sf
 flags, respectively, followed by the name of the file.   This can be
 particularly useful if, for example,
-.B DBDIR
+.B /var/db
 or
-.B RUNDIR
+.B /var/run
 has not yet been mounted when the DHCP client is started.
 .PP
 The DHCP client normally exits if it isn't able to identify any
@@ -245,7 +250,7 @@ supplying the
 .B -nw
 flag.
 .SH CONFIGURATION
-The syntax of the dhclient.conf(8) file is discussed seperately.
+The syntax of the dhclient.conf(5) file is discussed separately.
 .SH OMAPI
 The DHCP client provides some ability to control it while it is
 running, without stopping it.  This capability is provided using OMAPI,
@@ -278,11 +283,11 @@ do a DHCPRELEASE.   To pause it, set its state attribute to 3.   To
 resume it, set its state attribute to 4.
 .PP
 .SH FILES
-.B CLIENTBINDIR/dhclient-script,
-.B ETCDIR/dhclient.conf, DBDIR/dhclient.leases, RUNDIR/dhclient.pid,
-.B DBDIR/dhclient.leases~.
+.B /sbin/dhclient-script,
+.B /etc/dhclient.conf, DBDIR/dhclient.leases, RUNDIR/dhclient.pid,
+.B /var/db/dhclient.leases~.
 .SH SEE ALSO
-dhcpd(8), dhcrelay(8), dhclient-script (8), dhclient.conf(5),
+dhcpd(8), dhcrelay(8), dhclient-script(8), dhclient.conf(5),
 dhclient.leases(5).
 .SH AUTHOR
 .B dhclient(8)
