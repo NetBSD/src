@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.3 2001/09/21 22:34:53 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.4 2001/11/17 00:53:13 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.3 2001/09/21 22:34:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.4 2001/11/17 00:53:13 nathanw Exp $");
 
 #include "assym.h"
 
@@ -306,8 +306,7 @@ NESTED(sigcode,0,0,ra,0,0)
  *      a1	pointer to sa_t array
  *      a2	count of "event" SAs	
  *	a3	count of "interrupted" SAs
- *	a4	signal number
- *	a5	signal specific code
+ *	a4	arg
  *      pv	address of upcallhandler
  */
 

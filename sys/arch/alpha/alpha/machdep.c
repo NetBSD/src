@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.6 2001/09/21 22:34:54 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.7 2001/11/17 00:53:13 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.6 2001/09/21 22:34:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.7 2001/11/17 00:53:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.6 2001/09/21 22:34:54 nathanw Ex
 #include <sys/exec_ecoff.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
@@ -1671,11 +1672,13 @@ cpu_upcall(struct lwp *l)
 	struct sadata_upcall *sau;
 	struct trapframe *tf;
 	void *stack;
+	void *ap;
 	ucontext_t u, *up;
 	int i, nsas, nevents, nint;
-	int x,y;
 
 	extern char sigcode[], upcallcode[];
+	extern struct pool siginfo_pool;
+
 
 	tf = l->l_md.md_tf;
 
@@ -1735,18 +1738,32 @@ cpu_upcall(struct lwp *l)
 	for (i = nsas - 1; i >= 0; i--) {
 		sap--;
 		sapp--;
-		if (((x = copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
-		    ((y = copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
+		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
+		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
 			/* Copying onto the stack didn't work. Die. */
 			pool_put(&saupcall_pool, sau);
 #ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout sa_t %d" 
-		    " for %d.%d (x=%d, y=%d)\n",
-		    i, l->l_proc->p_pid, l->l_lid, x, y);
+		printf("cpu_upcall: couldn't copyout sa_t %d for %d.%d\n",
+		    i, l->l_proc->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
+	}
+
+	/* Copy out the arg, if any */
+	/* xxx assume alignment works out; everything so far has been
+	 * a structure, so...
+	 */
+	if (sau->sau_arg) {
+		ap = (char *)sapp - sau->sau_argsize;
+		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
+			/* Copying onto the stack didn't work. Die. */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	} else {
+		ap = 0;
 	}
 
 	tf->tf_regs[FRAME_PC] = ((u_int64_t)p->p_sigctx.ps_sigcode) +
@@ -1755,11 +1772,20 @@ cpu_upcall(struct lwp *l)
 	tf->tf_regs[FRAME_A1] = (u_int64_t)sapp;
 	tf->tf_regs[FRAME_A2] = nevents;
 	tf->tf_regs[FRAME_A3] = nint;
-	tf->tf_regs[FRAME_A4] = sau->sau_sig;
-	tf->tf_regs[FRAME_A5] = sau->sau_code;
-	/* XXX arg on stack ! */
+	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
 	tf->tf_regs[FRAME_T12] = (u_int64_t)sd->sa_upcall;  /* t12 is pv */
 	alpha_pal_wrusp((unsigned long)sapp);
+
+	/* XXX we have to know what the origin of arg is in order to
+	 * do the right thing here. Sucks to be a non-garbage-collected
+	 * kernel.
+	 */
+	if (sau->sau_arg) {
+		if (sau->sau_type == SA_UPCALL_SIGNAL)
+			pool_put(&siginfo_pool, sau->sau_arg);
+		else
+			panic("cpu_upcall: unknown type of non-null arg");
+	}
 
 	pool_put(&saupcall_pool, sau);
 }
