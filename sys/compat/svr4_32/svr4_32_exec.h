@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.7 2003/06/29 22:29:50 fvdl Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.8 2003/10/31 14:04:36 drochner Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -65,10 +65,6 @@ int svr4_32_copyargs __P((struct proc *, struct exec_package *, struct ps_string
 #else
 #define SVR4_32_INTERP_ADDR	0xff3c0000U
 #endif
-#endif
-
-#ifndef SVR4_32_INTERP_ADDR
-# define SVR4_32_INTERP_ADDR	ELFDEFNNAME(NO_ADDR)
 #endif
 
 extern const struct emul emul_svr4_32;
