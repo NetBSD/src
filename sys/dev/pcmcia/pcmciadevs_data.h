@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.140 2001/10/09 03:18:38 imp Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.141 2001/10/14 18:09:42 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.140 2001/10/09 03:17:22 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.141 2001/10/14 18:09:22 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -555,6 +555,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Matsushita Electric Industrial Co.",
 	    "Panasonic 8X CD-ROM Interface Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC005,
+	    PCMCIA_CIS_PANASONIC_KXLC005,
+	    0,
+	    "Matsushita Electric Industrial Co.",
+	    "Panasonic 16X CD-ROM Interface Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
