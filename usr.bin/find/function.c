@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	5.17 (Berkeley) 5/24/91";*/
-static char rcsid[] = "$Id: function.c,v 1.8 1993/09/16 21:41:30 cgd Exp $";
+static char rcsid[] = "$Id: function.c,v 1.9 1993/10/27 17:52:41 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -709,6 +709,16 @@ f_print(plan, entry)
 	(void)printf("%s\n", entry->fts_path);
 	return(1);
 }
+
+/* ARGSUSED */
+f_print0(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	(void)fputs(entry->fts_path, stdout);
+	(void)fputc('\0', stdout);
+	return(1);
+}
  
 PLAN *
 c_print()
@@ -716,6 +726,14 @@ c_print()
 	isoutput = 1;
 
 	return(palloc(N_PRINT, f_print));
+}
+
+PLAN *
+c_print0()
+{
+	isoutput = 1;
+
+	return(palloc(N_PRINT0, f_print0));
 }
  
 /*

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	5.8 (Berkeley) 6/4/91";*/
-static char rcsid[] = "$Id: option.c,v 1.3 1993/08/01 18:16:08 mycroft Exp $";
+static char rcsid[] = "$Id: option.c,v 1.4 1993/10/27 17:52:44 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,6 +84,7 @@ OPTION options[] = {
 	"-or",		N_OR,		c_or,		O_ZERO,
 	"-perm",	N_PERM,		c_perm,		O_ARGV,
 	"-print",	N_PRINT,	c_print,	O_ZERO,
+	"-print0",	N_PRINT0,	c_print0,	O_ZERO,
 	"-prune",	N_PRUNE,	c_prune,	O_ZERO,
 	"-size",	N_SIZE,		c_size,		O_ARGV,
 	"-type",	N_TYPE,		c_type,		O_ARGV,
