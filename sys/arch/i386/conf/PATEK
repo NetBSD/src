@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.12 1994/05/09 23:10:43 cgd Exp $
+#	$Id: PATEK,v 1.13 1994/05/19 07:17:37 cgd Exp $
 #
 
 machine		"i386"
@@ -22,8 +22,8 @@ options		DDB
 #options	DIAGNOSTIC
 options		KTRACE
 options		FIFO
-options		SYSVMSG
-options		SYSVSEM
+#options	SYSVMSG
+#options	SYSVSEM
 #options	SYSVSHM
 #options	"SHMMAXPGS=1024"
 options		LKM
