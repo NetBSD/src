@@ -1,11 +1,10 @@
-/*	$NetBSD: ld.so.script,v 1.1 2002/07/10 15:12:39 fredette Exp $	*/
+/*	$NetBSD: ld.so.script,v 1.2 2003/10/06 16:08:35 matt Exp $	*/
 
 /* Script for ld --shared: link shared library */
-OUTPUT_FORMAT("elf32-hppa", "elf32-hppa",
-	      "elf32-hppa")
+OUTPUT_FORMAT("elf32-hppa-linux", "elf32-hppa-linux",
+	      "elf32-hppa-linux")
 OUTPUT_ARCH(hppa:hppa1.1)
-ENTRY(_start)
- SEARCH_DIR("/usr/pkg/hppa--netbsd/lib");
+ENTRY($rtld_start)
 /* Do we need any of these for elf?
    __DYNAMIC = 0;    */
 SECTIONS
