@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63 2002/03/04 13:24:08 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.64 2002/03/17 02:46:27 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.63 $"
+#ident		"GENERIC-$Revision: 1.64 $"
 
 maxusers	32		# estimated number of users
 
@@ -301,7 +301,7 @@ ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 ne*		at pci? dev ? function ?	# NE2000-compatible
 pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-rtk*		at pci? dev ? function ?	# Tealtek 8129/8139
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
 #options 	TLP_MATCH_21040
