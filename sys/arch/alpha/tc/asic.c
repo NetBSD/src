@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.1 1995/02/13 23:08:49 cgd Exp $	*/
+/*	$NetBSD: asic.c,v 1.2 1995/03/08 00:39:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -99,14 +99,9 @@ asicmatch(parent, cfdata, aux)
 
 	/* See if the unit number is valid. */
 	switch (hwrpb->rpb_type) {
-#ifdef DEC_3000_300
-	case ST_DEC_3000_300:
-		if (cf->cf_unit > 0)
-			return (0);
-		break;
-#endif
-#ifdef DEC_3000_500
+#if defined(DEC_3000_500) || defined(DEC_3000_300)
 	case ST_DEC_3000_500:
+	case ST_DEC_3000_300:
 		if (cf->cf_unit > 0)
 			return (0);
 		break;
@@ -127,6 +122,7 @@ asicattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct confargs *nca;
 	int i;
+	extern int cputype;
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1995/02/13 23:08:59 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1995/03/08 00:39:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -300,8 +300,8 @@ le_setup(unit, aux, sc)
 {
 	struct confargs *ca = aux;
 
-	if (unit == 0 && (hwrpb->rpb_type == ST_DEC_3000_500 ||
-	    hwrpb->rpb_type == ST_DEC_3000_300)) {
+	if (unit == 0 && (hwrpb->rpb_type == ST_DEC_3000_300 ||
+	    hwrpb->rpb_type == ST_DEC_3000_500)) {
 		/* It's on the system ASIC */
 		volatile u_int *ldp;
 

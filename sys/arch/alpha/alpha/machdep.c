@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1995/02/13 23:07:02 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1995/03/08 00:38:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -109,10 +109,24 @@ u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
-char	cpu_model[64];
+char	*cpu_model;
 char	*model_names[] = {
-    "UNKNOWN (0)", "Alpha ADU", "DEC 4000", "DEC 7000", "DEC 3000/[4568]00",
-    "UNKNOWN (5)", "DEC 2000/300", "DEC 3000/300",
+	"UNKNOWN (0)",
+	"Alpha Demonstration Unit",
+	"DEC 4000 (\"Cobra\")",
+	"DEC 7000 (\"Ruby\")",
+	"DEC 3000/500 (\"Flamingo\") family",
+	"UNKNOWN (5)",
+	"DEC 2000/300 (\"Jensen\")",
+	"DEC 3000/300 (\"Pelican\")",
+	"UNKNOWN (8)",
+	"DEC 2100/A500 (\"Sable\")",
+	"AXPvme 64",
+	"AXPpci 33 (\"NoName\")",
+	"UNKNOWN (12)",
+	"DEC 2100/A50 (\"Avanti\")",
+	"Mustang",
+	"DEC 1000 (\"Mikasa\")",
 };
 int	nmodel_names = sizeof model_names/sizeof model_names[0];
 
@@ -135,11 +149,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	u_long argc;
 	char *argv[], *envp[];
 {
-#ifdef __GNUC__							/* XXX */
-	extern char _end[];					/* XXX */
-#else /* __GNUC__ */						/* XXX */
-	extern char end[];					/* XXX */
-#endif /* __GNUC__ */						/* XXX */
+	extern char _end[];
 	caddr_t start, v;
 	struct mddt *mddtp;
 	int i;
@@ -192,9 +202,29 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	 */
 	mddtp = (struct mddt *)(((caddr_t)hwrpb) + hwrpb->rpb_memdat_off);
 	physmem = 0;
-	if (mddtp->mddt_cluster_cnt != 2)
+	if (mddtp->mddt_cluster_cnt != 2) {
 		printf("warning: strange number of memory clusters (%d).\n",
 		    mddtp->mddt_cluster_cnt);
+		printf("memory cluster information:\n");
+		for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
+			printf("mddt %d:\n", i);
+			printf("\tpfn %lx\n",
+			    mddtp->mddt_clusters[i].mddt_pfn);
+			printf("\tcnt %lx\n",
+			    mddtp->mddt_clusters[i].mddt_pg_cnt);
+			printf("\ttest %lx\n",
+			    mddtp->mddt_clusters[i].mddt_pg_test);
+			printf("\tbva %lx\n",
+			    mddtp->mddt_clusters[i].mddt_v_bitaddr);
+			printf("\tbpa %lx\n",
+			    mddtp->mddt_clusters[i].mddt_p_bitaddr);
+			printf("\tbcksum %lx\n",
+			    mddtp->mddt_clusters[i].mddt_bit_cksum);
+			printf("\tusage %lx\n",
+			    mddtp->mddt_clusters[i].mddt_usage);
+		}
+	}
+
 	physmem = 0;
 	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
 		/* add up physmem, stopping on first OS-available space. */
@@ -213,11 +243,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	 */
 	PAGE_SIZE = hwrpb->rpb_page_size;
 
-#ifdef __GNUC__							/* XXX */
-	v = (caddr_t)alpha_round_page(_end);			/* XXX */
-#else /* __GNUC__ */						/* XXX */
-	v = (caddr_t)alpha_round_page(end);			/* XXX */
-#endif /* __GNUC__ */						/* XXX */
+	v = (caddr_t)alpha_round_page(_end);
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
@@ -234,28 +260,131 @@ alpha_init(pfn, ptb, argc, argv, envp)
 #ifdef ADU
 	case ST_ADU:
 		THIS SYSTEM NOT SUPPORTED
-#endif /* ADU */
+#endif
+
 #ifdef DEC_4000
 	case ST_DEC_4000:
 		THIS SYSTEM NOT SUPPORTED
-#endif /* DEC_4000 */
+#endif
+
 #ifdef DEC_7000
 	case ST_DEC_7000:
 		THIS SYSTEM NOT SUPPORTED
-#endif /* DEC_7000 */
-#ifdef DEC_3000_500				/* and 400, and 600 and 800 */
+#endif
+
+#ifdef DEC_3000_500				/* and 400, [6-9]00 */
 	case ST_DEC_3000_500:
-		/* XXX XXX XXX */
+		switch (hwrpb->rpb_variation & SV_ST_MASK) {
+		case SV_ST_SANDPIPER:
+systype_sandpiper:
+			cpu_model = "DEC 3000/400 (\"Sandpiper\")";
+			break;
+
+		case SV_ST_FLAMINGO:
+systype_flamingo:
+			cpu_model = "DEC 3000/500 (\"Flamingo\")";
+			break;
+
+		case SV_ST_HOTPINK:
+			cpu_model = "DEC 3000/500X (\"Hot Pink\")";
+			break;
+
+		case SV_ST_FLAMINGOPLUS:
+		case SV_ST_ULTRA:
+			cpu_model = "DEC 3000/800 (\"Flamingo+\")";
+			break;
+
+		case SV_ST_SANDPLUS:
+			cpu_model = "DEC 3000/600 (\"Sandpiper+\")";
+			break;
+
+		case SV_ST_SANDPIPER45:
+			cpu_model = "DEC 3000/700 (\"Sandpiper45\")";
+			break;
+
+		case SV_ST_FLAMINGO45:
+			cpu_model = "DEC 3000/900 (\"Flamingo45\")";
+			break;
+
+		case SV_ST_RESERVED: /* this is how things used to be done */
+			if (hwrpb->rpb_variation & SV_GRAPHICS)
+				goto systype_flamingo;
+			else
+				goto systype_sandpiper;
+			/* NOTREACHED */
+
+		default:
+			printf("unknown system variation %lx\n",
+			    hwrpb->rpb_variation & SV_ST_MASK);
+		}
 		break;
-#endif /* DEC_3000_500 */
+#endif
+
 #ifdef DEC_2000_300
 	case ST_DEC_2000_300:
-		THIS SYSTEM NOT SUPPORTED
-#endif /* DEC_2000_300 */
+		/* XXX XXX XXX */
+		break;
+#endif
+
 #ifdef DEC_3000_300
-	case DEC_3000_300:
+	case ST_DEC_3000_300:
+		switch (hwrpb->rpb_variation & SV_ST_MASK) {
+		case SV_ST_PELICAN:
+			cpu_model = "DEC 3000/300 (\"Pelican\")";
+			break;
+
+		case SV_ST_PELICANL:
+			cpu_model = "DEC 3000/300L (\"???\")";
+			break;
+
+		case SV_ST_PELICANX:
+			cpu_model = "DEC 3000/300X (\"???\")";
+			break;
+
+		case SV_ST_PELICANLX:
+			cpu_model = "DEC 3000/300LX (\"???\")";
+			break;
+
+		default:
+			printf("unknown system variation %lx\n",
+			    hwrpb->rpb_variation & SV_ST_MASK);
+		}
+		break;
+#endif
+
+#ifdef DEC_2100_A500
+	case ST_DEC_2100_A500:
 		THIS SYSTEM NOT SUPPORTED
-#endif /* DEC_3000_300*/
+#endif
+
+#ifdef DEC_AXPVME_64
+	case ST_DEC_AXPVME_64:
+		THIS SYSTEM NOT SUPPORTED
+#endif
+
+#ifdef DEC_AXPPCI_33
+	case ST_DEC_AXPPCI_33:
+		THIS SYSTEM NOT SUPPORTED
+#endif
+
+#ifdef DEC_2100_A50
+	case ST_DEC_2100_A50:
+		/* XXX */
+		printf("unknown system variation %lx\n",
+		    hwrpb->rpb_variation & SV_ST_MASK);
+		break;
+#endif
+
+#ifdef DEC_MUSTANG
+	case ST_DEC_MUSTANG:
+		THIS SYSTEM NOT SUPPORTED
+#endif
+
+#ifdef DEC_1000
+	case ST_DEC_1000:
+		THIS SYSTEM NOT SUPPORTED
+#endif
+
 	default:
 		if (cputype > nmodel_names)
 			panic("Unknown system type %d", cputype);
@@ -263,7 +392,8 @@ alpha_init(pfn, ptb, argc, argv, envp)
 			panic("Support for %s system type not in kernel.",
 			    model_names[cputype]);
 	}
-	strcpy(cpu_model, model_names[cputype]);
+	if (cpu_model == NULL)
+		cpu_model = model_names[cputype];
 
 #if NLE > 0
 	/*
@@ -576,6 +706,8 @@ boot(howto)
 
 	/* If system is cold, just halt. */
 	if (cold) {
+		while (1);
+
 		howto |= RB_HALT;
 		goto haltsys;
 	}

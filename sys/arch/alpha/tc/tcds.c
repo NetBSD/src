@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.2 1995/03/03 01:38:56 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.3 1995/03/08 00:39:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -61,7 +61,6 @@ int     tcds_matchname __P((struct confargs *, char *));
 int	tcds_intr __P((void *));
 int	tcds_intrnull __P((void *));
 
-#define	TCDS_MAX_NSLOTS	2
 #define	TCDS_SLOT_SCSI0	0
 #define	TCDS_SLOT_SCSI1	1
 
@@ -69,7 +68,7 @@ struct tcds_slot {
 	struct confargs	ts_ca;
 	intr_handler_t	ts_handler;
 	void		*ts_val;
-} tcds_slots[TCDS_MAX_NSLOTS] = {
+} tcds_slots[] = {
 	{ { "esp",	0, 0x0, },
 	    tcds_intrnull, (void *)(long)TCDS_SLOT_SCSI0, },
 	{ { "esp",	1, 0x0, },
@@ -105,6 +104,7 @@ tcdsattach(parent, self, aux)
 	struct confargs *nca;
 	volatile u_int32_t *cir, *imer;
 	int i;
+	extern int cputype;
 
 	printf("\n");
 
@@ -128,12 +128,15 @@ tcdsattach(parent, self, aux)
 	*imer = 0;
 	MB();
 
-	/* Try to configure each CPU-internal device. */
-	for (i = 0; i < TCDS_MAX_NSLOTS; i++) {
-		nca = &tcds_slots[i].ts_ca;
-		nca->ca_bus = &sc->sc_bus;
+	/* find the hardware attached to the TCDS ASIC */
+	nca = &tcds_slots[TCDS_SLOT_SCSI0].ts_ca;
+	nca->ca_bus = &sc->sc_bus;
+	config_found(self, nca, tcdsprint);
 
-		/* Tell the autoconfig machinery we've found the hardware. */
+	/* the second SCSI chip isn't present on the 3000/300 series. */
+	if (cputype != ST_DEC_3000_300) {
+		nca = &tcds_slots[TCDS_SLOT_SCSI1].ts_ca;
+		nca->ca_bus = &sc->sc_bus;
 		config_found(self, nca, tcdsprint);
 	}
 }
@@ -167,9 +170,11 @@ tcds_intr_establish(ca, handler, val)
 	case TCDS_SLOT_SCSI0:
 		tcds_scsi_reset(0);
 		break;
+
 	case TCDS_SLOT_SCSI1:
 		tcds_scsi_reset(1);
 		break;
+
 	default:
 		panic("tcds_intr_establish: unknown slot number %d",
 		    ca->ca_slot);
@@ -193,10 +198,12 @@ tcds_intr_disestablish(ca)
 		tcds_dma_disable(0);
 		tcds_scsi_disable(0);
 		break;
+
 	case TCDS_SLOT_SCSI1:
 		tcds_dma_disable(1);
 		tcds_scsi_disable(1);
 		break;
+
 	default:
 		panic("tcds_intr_disestablish: unknown slot number %d",
 		    ca->ca_slot);
@@ -250,6 +257,7 @@ tcds_scsi_reset(unit)
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_RESET);
 		MB();
 		break;
+
 	case 1:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_RESET);
 		MB();
@@ -257,6 +265,7 @@ tcds_scsi_reset(unit)
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_RESET);
 		MB();
 		break;
+
 	default:
 		panic("tcds_scsi_disable: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -286,10 +295,12 @@ tcds_scsi_enable(unit)
 		*imer |= TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB;
 		MB();
 		break;
+
 	case 1:
 		*imer |= TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB;
 		MB();
 		break;
+
 	default:
 		panic("tcds_scsi_enable: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -310,10 +321,12 @@ tcds_scsi_disable(unit)
 		*imer &= ~(TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB);
 		MB();
 		break;
+
 	case 1:
 		*imer &= ~(TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB);
 		MB();
 		break;
+
 	default:
 		panic("tcds_scsi_disable: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -334,12 +347,14 @@ tcds_dma_init(dsc, unit)
 		dsc->dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD0);
 		dsc->dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD1);
 		break;
+
 	case 1:
 		dsc->sda = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_ADDR);
 		dsc->dic = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_INTR);
 		dsc->dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD0);
 		dsc->dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD1);
 		break;
+
 	default:
 		panic("tcds_dma_init: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -361,10 +376,12 @@ tcds_dma_enable(unit)
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_DMAENA);
 		MB();
 		break;
+
 	case 1:
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_DMAENA);
 		MB();
 		break;
+
 	default:
 		panic("tcds_dma_enable: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -386,10 +403,12 @@ tcds_dma_disable(unit)
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_DMAENA);
 		MB();
 		break;
+
 	case 1:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_DMAENA);
 		MB();
 		break;
+
 	default:
 		panic("tcds_dma_disable: unknown unit number\n", unit);
 		/* NOTREACHED */
@@ -417,6 +436,7 @@ tcds_scsi_isintr(unit, clear)
 			return (1);
 		}
 		break;
+
 	case 1:
 		if (ir & TCDS_CIR_SCSI1_INT) {
 			if (clear) {
@@ -426,6 +446,7 @@ tcds_scsi_isintr(unit, clear)
 			return (1);
 		}
 		break;
+
 	default:
 		panic("tcds_scsi_isintr: unknown unit number\n", unit);
 		/* NOTREACHED */

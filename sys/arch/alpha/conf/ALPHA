@@ -1,11 +1,11 @@
-#	$NetBSD: ALPHA,v 1.2 1995/02/27 16:36:31 cgd Exp $
+#	$NetBSD: ALPHA,v 1.3 1995/03/08 00:38:55 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include "std.alpha"
 
-makeoptions   CC="gcc -Werror"
-makeoptions   DEBUG="-g"
+makeoptions	CC="gcc -Werror"
+makeoptions	DEBUG="-g"
 
 maxusers 8
 
@@ -13,7 +13,10 @@ maxusers 8
 options		GENERIC
 
 # CPU Support
-options		DEC_3000_500		# 3000/400, /500, /600, and /700
+options		DEC_3000_500	# Flamingo family:	3000/[4-9]00*
+options		DEC_2000_300	# "Jensen":		2000/300
+options		DEC_3000_300	# Pelican family:	3000/300*
+options		DEC_2100_A50	# "Avanti":		AlphaStation 400 4/233
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -75,8 +78,8 @@ options		SYSVSHM
 # Loadable kernel modules
 options		LKM
 
-config		netbsd	root on sd0 swap on sd0
-#config		netbsd	swap generic
+config		netbsd	swap generic
+#config		netbsd	root on sd0 swap on sd0
 #config		netbsd	root nfs swap nfs
 
 tc*	at	mainbus0

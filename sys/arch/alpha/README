@@ -67,9 +67,12 @@ So, some details on the status of the port, and a list of supported hardware:
 			At this time neither the Smart Frame Buffer nor the
 			ISDN/Audio interface is supported.
 
+		DEC 3000/300 (with the same hardware supported as above;
+		I've not tested these very much at all, on any of the
+		3000/300 models.)
+
 	Unfortunately, at this time none of the following systems are
 	supported:
-		DEC 3000/300s (these shouldn't be too much work)
 		AlphaPCs -- the EISA-bus Alpha systems
 		AlphaStations -- the PCI-bus Alpha systems
 		The Futurebus-based Alpha server systems
