@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.135 2003/09/03 05:38:09 lukem Exp $
+#	$NetBSD: bsd.README,v 1.136 2003/09/13 02:52:05 erh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -255,6 +255,19 @@ USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
 		If MKYP is "no", USE_YP will also be forced to "no".
 
+COPTS.lib<lib>
+LDADD.lib<lib>
+CPPFLAGS.lib<lib>
+CXXFLAGS.lib<lib>
+COPTS.<prog>
+LDADD.<prog>
+CPPFLAGS.<prog>
+CXXFLAGS.<prog>		These provide a way to specify additions to the
+		associated variables in a way that applies only to a particular
+		library or program.  <lib> corresponds to the LIB variable set
+		in the library's makefile.  <prog> corresponds to either PROG
+		or PROG_CXX (if set).  For example, if COPTS.libcrypto is set to "g",
+		"-g" will be added to COPTS only when compiling the crypto library.
 
 =-=-=-=-=   sys.mk   =-=-=-=-=
 
