@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.67 2000/06/10 08:01:07 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.68 2000/06/13 01:08:43 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.67 2000/06/10 08:01:07 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.68 2000/06/13 01:08:43 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2124,14 +2124,14 @@ get_net(cp, net, maskflg)
 		if (getaddrinfo(cp, NULL, &hints, &ai) == 0)
 			sa = ai->ai_addr;
 		else
-			return 1;
+			goto fail;
 	} else
-		return 1;
+		goto fail;
 
 	ecode = getnameinfo(sa, sa->sa_len, netname, sizeof netname,
 	    NULL, 0, NI_NUMERICHOST);
 	if (ecode != 0)
-		return 1;
+		goto fail;
 
 	if (maskflg)
 		net->nt_len = countones(sa);
@@ -2139,7 +2139,7 @@ get_net(cp, net, maskflg)
 		if (opt_flags & OP_MASKLEN) {
 			preflen = strtol(prefp, NULL, 10);
 			if (preflen == LONG_MIN && errno == ERANGE)
-				return 1;
+				goto fail;
 			net->nt_len = (int)preflen;
 			*p = '/';
 		}
@@ -2173,6 +2173,11 @@ get_net(cp, net, maskflg)
 	if (ai)
 		freeaddrinfo(ai);
 	return 0;
+
+fail:
+	if (ai)
+		freeaddrinfo(ai);
+	return 1;
 }
 
 /*
@@ -2427,18 +2432,10 @@ static void
 free_grp(grp)
 	struct grouplist *grp;
 {
-	struct addrinfo *ai;
 
 	if (grp->gr_type == GT_HOST) {
-		if (grp->gr_ptr.gt_addrinfo != NULL) {
-			ai = grp->gr_ptr.gt_addrinfo;
-			do {
-				if (ai->ai_flags & AI_CANONNAME)
-					free(ai->ai_canonname);
-				ai = ai->ai_next;
-			} while (ai != NULL);
+		if (grp->gr_ptr.gt_addrinfo != NULL)
 			freeaddrinfo(grp->gr_ptr.gt_addrinfo);
-		}
 	} else if (grp->gr_type == GT_NET) {
 		if (grp->gr_ptr.gt_net.nt_name)
 			free(grp->gr_ptr.gt_net.nt_name);
