@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.13 2003/02/22 05:32:00 igy Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.14 2003/03/06 06:17:43 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,7 +77,6 @@
  */
 
 
-#include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
@@ -1232,15 +1231,10 @@ ixpcomintr(void* arg)
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-	setsoftserial();
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 	return (1);
 }
-
