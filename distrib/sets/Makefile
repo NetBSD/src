@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2003/12/26 06:20:40 jmc Exp $
+#	$NetBSD: Makefile,v 1.37 2003/12/28 09:27:41 jmc Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -108,6 +108,7 @@ do-sum-${tar}: .PHONY ${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz
 		${TOOL_CAT} ${RELEASEDIR}/${MACHINE}/binary/sets/$$i >> ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; \
 	done
 .endfor
+.ORDER: ${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
 
 .PRECIOUS: installsets
 installsets: check_DESTDIR
