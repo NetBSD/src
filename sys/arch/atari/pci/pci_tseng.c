@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.4 2001/05/21 14:30:41 leo Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.5 2002/09/02 12:14:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -46,7 +46,7 @@ static void et6000_init(volatile u_char *, u_char *, int);
  * Use tables for the card init...
  */
 static u_char seq_tab[] = {
- 	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00 };
+ 	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4 };
 
 static u_char gfx_tab[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x0f, 0xff };
