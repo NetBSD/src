@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.20 1999/03/19 21:18:32 tron Exp $
+.\"	$NetBSD: slattach.8,v 1.21 1999/09/03 13:29:44 proff Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)slattach.8	8.2 (Berkeley) 4/1/94
 .\"
-.Dd April 1, 1994
+.Dd Sep 3, 1999
 .Dt SLATTACH 8
 .Os BSD 4.3
 .Sh NAME
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl t Ar ldisc
-.Op Fl hHlm
+.Op Fl hHlmn
 .Op Fl s Ar baudrate
 .Ar ttyname
 .Sh DESCRIPTION
@@ -63,6 +63,8 @@ without modem control signals (e.g. DTR, DSR, DCD).
 .It Fl m
 Maintain modem control signals after closing the line.  Specifically,
 this disables HUPCL.
+.It Fl n
+Don't detach from invoking tty.
 .It Fl s Ar baudrate
 Specifies the speed of the connection.  If not specified, the
 default of 9600 is used.
@@ -128,6 +130,7 @@ requested address is unknown, the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr daemon 3 ,
 .Xr netintro 4 ,
 .Xr sl 4 ,
 .Xr strip 4 ,
