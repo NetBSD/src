@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.14 2000/12/13 11:30:15 enami Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.15 2001/03/03 00:52:58 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1589,6 +1589,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 					len = m->m_ext.ext_size;
 				m_copydata(pkt->fp_m, off, len,
 				    mtod(m, caddr_t));
+				m->m_len = len;
 				ndesc++;
 			}
 			m_freem(pkt->fp_m);
@@ -1699,6 +1700,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 	fc->fc_bufcnt++;
 	TAILQ_INSERT_TAIL(&fc->fc_buf, fb, fb_list);
+	pkt->fp_m = NULL;
 	return 0;
 }
 
@@ -2319,6 +2321,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return IEEE1394_RCODE_COMPLETE;
+	m->m_len = 16;
 	if (len + m->m_len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -2326,7 +2329,6 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 			return IEEE1394_RCODE_COMPLETE;
 		}
 	}
-	m->m_len = 16;
 	n = (pkt->fp_hdr[1] >> 16) & OHCI_NodeId_NodeNumber;
 	if (sc->sc_uidtbl == NULL || n > sc->sc_rootid ||
 	    sc->sc_uidtbl[n].fu_valid != 0x3) {
@@ -2508,7 +2510,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	splx(s);
 	m0 = pkt.fp_m;
   end:
-	if (error) {
+	if (m0 != NULL) {
 		if (callback)
 			(*callback)(sc->sc_sc1394.sc1394_if, m0);
 		else
