@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.4 2003/02/18 17:08:44 drochner Exp $ Copyright 1995-2003 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.5 2004/10/29 21:19:32 dsl Exp $ Copyright 1995-2003 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -272,7 +272,7 @@ int main (argc, argv, envp)
 			if (++i == argc)
 				usage ();
 			for (s = argv [i]; *s; s++)
-				if (!isdigit (*s))
+				if (!isdigit ((unsigned char)*s))
 					log_fatal ("%s: not a valid UDP port",
 					       argv [i]);
 			status = atoi (argv [i]);

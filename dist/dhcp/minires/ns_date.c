@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_date.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: ns_date.c,v 1.2 2004/10/29 21:19:32 dsl Exp $";
 #endif
 
 /* Import. */
@@ -117,7 +117,7 @@ datepart(const char *buf, int size, int min, int max, int *errp) {
 	int i;
 
 	for (i = 0; i < size; i++) {
-		if (!isdigit(buf[i]))
+		if (!isdigit((unsigned char)buf[i]))
 			*errp = 1;
 		result = (result * 10) + buf[i] - '0';
 	}

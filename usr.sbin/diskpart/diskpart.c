@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.15 2004/10/29 21:21:42 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,7 +504,7 @@ gettype(t, names)
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
 			return (nm - names);
-	if (isdigit(*t))
+	if (isdigit((unsigned char)*t))
 		return (atoi(t));
 	return (-1);
 }
