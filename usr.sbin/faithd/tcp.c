@@ -1,5 +1,5 @@
-/*	$NetBSD: tcp.c,v 1.3 2000/09/14 00:36:10 itojun Exp $	*/
-/*	$KAME: tcp.c,v 1.4 2000/07/28 08:05:00 itojun Exp $	*/
+/*	$NetBSD: tcp.c,v 1.4 2001/02/15 17:58:55 itojun Exp $	*/
+/*	$KAME: tcp.c,v 1.5 2000/09/29 03:48:31 sakane Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -194,7 +194,8 @@ relay(int s_rcv, int s_snd, const char *service, int direction)
 	FD_ZERO(&exceptfds);
 	fcntl(s_snd, F_SETFD, O_NONBLOCK);
 	oreadfds = readfds; owritefds = writefds; oexceptfds = exceptfds;
-	FD_SET(s_rcv, &readfds); FD_SET(s_rcv, &exceptfds);
+	FD_SET(s_rcv, &readfds);
+	FD_SET(s_rcv, &exceptfds);
 	oob_exists = 0;
 	maxfd = (s_rcv > s_snd) ? s_rcv : s_snd;
 
