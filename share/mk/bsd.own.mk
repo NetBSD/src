@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.177 2001/08/26 06:00:30 eeh Exp $
+#	$NetBSD: bsd.own.mk,v 1.178 2001/09/08 11:10:41 thomas Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -117,7 +117,8 @@ NOPIC?=1
     ${MACHINE} == "hp300" || \
     ${MACHINE} == "news68k" || \
     ${MACHINE} == "cesfic" || \
-    ${MACHINE} == "arm26"
+    ${MACHINE} == "arm26" || \
+    ${MACHINE} == "atari"
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
