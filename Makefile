@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.213 2003/07/18 02:15:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.214 2003/07/18 08:26:01 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -19,17 +19,20 @@
 #   DESTDIR is the target directory for installation of the compiled
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
-#   MKMAN, if set to `no', will prevent building of manual pages.
-#   MKOBJDIRS, if not set to `no', will build object directories at
+#   MKMAN, if `no', will prevent building of manual pages.
+#   MKOBJDIRS, if not `no', will build object directories at
 #	an appropriate point in a build.
-#   MKSHARE, if set to `no', will prevent building and installing
+#   MKSHARE, if `no', will prevent building and installing
 #	anything in /usr/share.
-#   UPDATE, if defined, will avoid a `make cleandir' at the start of
+#   MKUPDATE, if not `no', will avoid a `make cleandir' at the start of
 #	`make build', as well as having the effects listed in
 #	/usr/share/mk/bsd.README.
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
 #	of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
+#
+#   See mk.conf(5) for more details.
+#
 #
 # Targets:
 #   build:
@@ -123,7 +126,7 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-.if defined(UNPRIVED)
+.if ${MKUNPRIVED} != "no"
 NOPOSTINSTALL=	# defined
 .endif
 
@@ -131,7 +134,7 @@ afterinstall:
 .if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
-.if defined(UNPRIVED) && (${MKINFO} != "no")
+.if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")
 	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
 .if !defined(NOPOSTINSTALL)
@@ -159,7 +162,7 @@ postinstall-fix-obsolete: .NOTMAIN
 #
 
 BUILDTARGETS+=	check-tools
-.if !defined(UPDATE) && !defined(NOCLEANDIR)
+.if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
 .endif
 .if ${MKOBJDIRS} != "no"
@@ -370,9 +373,10 @@ params:
 .for var in	BSDSRCDIR BSDOBJDIR BUILDID DESTDIR EXTERNAL_TOOLCHAIN \
 		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
 		MACHINE MACHINE_ARCH MAKECONF MAKEFLAGS \
-		MAKEOBJDIR MAKEOBJDIRPREFIX MKOBJDIRS \
+		MAKEOBJDIR MAKEOBJDIRPREFIX \
+		MKOBJDIRS MKUNPRIVED MKUPDATE \
 		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR \
-		UNPRIVED UPDATE USETOOLS
+		USETOOLS
 .if defined(${var})
 	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
 .else

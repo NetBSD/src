@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.59 2003/07/10 10:34:35 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.60 2003/07/18 08:26:06 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -31,7 +31,7 @@ FILES?=		${SRCS}
 .for F in Makefile ${FILES:O:u} ${EXTRA}
 _F:=		${DESTDIR}${DOCDIR}/${DIR}/${F}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __docinstall			# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install

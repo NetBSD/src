@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.30 2003/07/14 00:50:04 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.31 2003/07/18 08:26:07 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -53,7 +53,7 @@ _FDIR:=		${INFODIR_${F}:U${INFODIR}}		# dir overrides
 _FNAME:=	${INFONAME_${F}:U${INFONAME:U${F:T}}}	# name overrides
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __infoinstall			# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install
