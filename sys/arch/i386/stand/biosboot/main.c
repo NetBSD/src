@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1999/09/10 16:38:47 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2000/03/29 14:29:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -309,7 +309,7 @@ command_quit(arg)
 	char *arg;
 {
 
-	printf("Rebooting... goodbye...\n");
+	printf("Exiting...\n");
 	delay(1000000);
 	reboot();
 	/* Note: we shouldn't get to this point! */
