@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.2 2002/06/06 23:04:35 fvdl Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -21,7 +21,7 @@ ENTRY(__flt_rounds)
 	shrl $10,%eax
 	andl $3,%eax
 #ifdef PIC
-	movq PIC_GOT(_map),%rcx
+	leaq PIC_GOT(_map),%rcx
 	movb (%rcx,%rax,1),%al
 #else
 	movb _map(,%rax,1),%al
