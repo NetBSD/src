@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.8 1998/04/23 09:22:15 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.9 1998/05/11 20:43:43 thomas Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -566,13 +566,19 @@ et_sv_reg_t		*regs;
 	 * XXX: This works for depth == 4. I need some better docs
 	 * to fix the other modes....
 	 */
-	vgaw(ba, VDAC_MASK, 0xff);
+	/*
+	 * What we need would be probe functions for RAMDAC/clock chip
+	 */
+	vgar(ba, VDAC_ADDRESS);		/* clear old state */
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 
-	vgaw(ba, VDAC_MASK, 0);
+	vgaw(ba, VDAC_MASK, 0);		/* set to palette */
+	vgar(ba, VDAC_ADDRESS);		/* clear state */
+
+	vgaw(ba, VDAC_MASK, 0xff);
 	/*
 	 * End of depth stuff
 	 */
