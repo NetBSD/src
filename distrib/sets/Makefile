@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/05 03:51:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/22 23:15:32 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -68,3 +68,5 @@ makesums: check_RELEASEDIR
 
 sets: maketars makesums
 	@true
+
+.include <bsd.sys.mk>
