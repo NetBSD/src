@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.41 2004/02/13 10:00:54 wiz Exp $
+.\"$NetBSD: hardware,v 1.41.2.1 2004/11/12 06:02:09 jmc Exp $
 .
 Currently,
 .Nx*M
@@ -113,24 +113,25 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 .Pp
 .(bullet -compact
 Apple original iBook, iBook SE, iBook (Dual USB), iBook (Late 2001),
-iBook (16VRAM), and iBook (14.1 LCD 32 VRAM)
+iBook (16VRAM), iBook (Opaque 16 VRAM), iBook (32 VRAM), 
+iBook (14.1 LCD 32 VRAM), and iBook G4
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading),
-iMac (Summer 2000), iMac (Early 2001), and iMac (Summer 2001)
+iMac (Summer 2000), iMac (Early 2001), iMac (Summer 2001), and iMac (USB 2.0)
 .It
-Apple original eMac
+Apple original eMac and eMac (ATI Graphics)
 .It
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
 Apple PowerBook (G4 (Titanium), G4 (Gigabit Ethernet), G4 (DVI), 
-G4 (12-inch), and G4 (17-inch))
+G4 (12-inch), G4 (17-inch), G4 (12-inch DVI))
 .It
 Apple PowerMacintosh G3 (Blue and White)
 .It
 Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
-(Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), G4 (FW 800), 
-and G4 Cube)
+(Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), 
+G4 (Mirrored Drive Doors), G4 (FW 800), and G4 Cube)
 .It
 Apple original Xserve and Xserve (Slot Load)
 .bullet)
@@ -163,11 +164,11 @@ Systems with a Motorola 68k microprocessor (these systems are supported by
 Systems upgraded from any of the above (unless the motherboard is replaced as
 part of the upgrade)
 .It
-Systems released in the second half of 2003 and later (future releases of
+Systems released in late 2004 and later (future releases of
 .Nx*M
 will support these systems)
 .It
-Systems released before the second half of 2003, but not listed
+Systems released before late 2004, but not listed
 above.
 These models might work, but have not been tested as of the release of
 .Nx \*V .
@@ -178,7 +179,7 @@ These models might work, but have not been tested as of the release of
 CPU upgrades
 .(bullet -compact
 Only one CPU in a multiprocessor system is supported with the GENERIC kernel.
-All CPUs are supported with the experimental GENERIC.MP kernel.
+All CPUs are supported with the GENERIC.MP kernel.
 .It
 Most CPU upgrades are supported.
 Some older models will not automatically enable the L2 and/or L3 caches on
@@ -384,6 +385,12 @@ has been thoroughly tested
 .bullet)
 .It
 Serial ports
+.br
+.Nx*M refers to the on-board serial ports as 
+.Pq Em tty00
+and
+.Pq Em tty01 .
+Firmware uses the names listed below.
 .(bullet -compact
 On-board serial ports (the modem and printer ports)
 .Pq Em ttya No and Em ttyb
