@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.137 2002/08/04 01:41:25 gmcgarry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.138 2002/08/04 01:43:03 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.137 2002/08/04 01:41:25 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.138 2002/08/04 01:43:03 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -831,7 +831,8 @@ mips_vector_init(void)
 	 */
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = !(mips_cpu_flags & CPU_MIPS_NO_LLSC);
+	mips_has_llsc =
+	    (CPUISMIPS3 ? !(mips_cpu_flags & CPU_MIPS_NO_LLSC) : 0);
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
