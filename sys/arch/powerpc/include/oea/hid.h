@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
+/*	$NetBSD: hid.h,v 1.2 2003/03/29 18:08:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -61,7 +61,9 @@
 #define HID0_SGE	0x00000080  /* Enable store gathering */
 #define HID0_DCFA	0x00000040  /* Data cache flush assist */
 #define HID0_BTIC	0x00000020  /* Enable BTIC */
+#define HID0_LRSTK	0x00000010  /* Link register stack enable (7450) */
 #define HID0_ABE	0x00000008  /* Enable address broadcast */
+#define HID0_FOLD	0x00000008  /* Branch folding enable (7450) */
 #define HID0_BHT	0x00000004  /* Enable branch history table */
 #define HID0_NOPTI	0x00000001  /* No-op the dcbt(st) */
 
