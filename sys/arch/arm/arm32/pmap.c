@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2002/04/04 04:43:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2002/04/04 05:42:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2002/04/04 04:43:20 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2002/04/04 05:42:29 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3464,7 +3464,7 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	KASSERT(((va | pa) & (L1_SEC_SIZE - 1)) == 0);
 
-	pde[va >> PDSHIFT] = L1_SECPTE(pa & PD_MASK, ap, fl);
+	pde[va >> PDSHIFT] = L1_SECPTE(pa, ap, fl);
 }
 
 /*
