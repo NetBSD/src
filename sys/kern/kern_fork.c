@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.106 2003/01/24 01:42:53 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.107 2003/03/19 11:36:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.106 2003/01/24 01:42:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.107 2003/03/19 11:36:33 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -204,13 +204,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc	*p1, *p2, *tp;
+	struct proc	*p1, *p2;
 	uid_t		uid;
 	struct lwp	*l2;
 	int		count, s;
 	vaddr_t		uaddr;
 	boolean_t	inmem;
-	static int	nextpid, pidchecked;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -267,7 +266,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 
 	/* Allocate new proc. */
-	p2 = pool_get(&proc_pool, PR_WAITOK);
+	p2 = proc_alloc();
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -335,14 +334,20 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit->p_refcnt++;
 	}
 
+	/* Inherit STOPFORK and STOPEXEC flags */
+	p2->p_flag |= p1->p_flag & (P_STOPFORK | P_STOPEXEC);
+
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
-	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
-	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
+
+	s = proclist_lock_write();
+	LIST_INSERT_AFTER(p1, p2, p_pglist);
+	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
+	proclist_unlock_write(s);
 
 #ifdef KTRACE
 	/*
@@ -390,89 +395,18 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
 
 	/*
-	 * Finish creating the child process.  It will return through a
-	 * different path later.
+	 * Finish creating the child process.
+	 * It will return through a different path later.
 	 */
 	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize, 
 	    (func != NULL) ? func : child_return, 
 	    arg, &l2);
 
-	/*
-	 * BEGIN PID ALLOCATION.
-	 */
+	/* Now safe for scheduler to see child process */
 	s = proclist_lock_write();
-
-	/*
-	 * Find an unused process ID.  We remember a range of unused IDs
-	 * ready to use (from nextpid+1 through pidchecked-1).
-	 */
-	nextpid++;
- retry:
-	/*
-	 * If the process ID prototype has wrapped around,
-	 * restart somewhat above 0, as the low-numbered procs
-	 * tend to include daemons that don't exit.
-	 */
-	if (nextpid >= PID_MAX) {
-		nextpid = PID_SKIP;
-		pidchecked = 0;
-	}
-	if (nextpid >= pidchecked) {
-		const struct proclist_desc *pd;
-
-		pidchecked = PID_MAX;
-		/*
-		 * Scan the process lists to check whether this pid
-		 * is in use.  Remember the lowest pid that's greater
-		 * than nextpid, so we can avoid checking for a while.
-		 */
-		pd = proclists;
- again:
-		LIST_FOREACH(tp, pd->pd_list, p_list) {
-			while (tp->p_pid == nextpid ||
-			    tp->p_pgrp->pg_id == nextpid ||
-			    tp->p_session->s_sid == nextpid) {
-				nextpid++;
-				if (nextpid >= pidchecked)
-					goto retry;
-			}
-			if (tp->p_pid > nextpid && pidchecked > tp->p_pid)
-				pidchecked = tp->p_pid;
-
-			if (tp->p_pgrp->pg_id > nextpid && 
-			    pidchecked > tp->p_pgrp->pg_id)
-				pidchecked = tp->p_pgrp->pg_id;
-
-			if (tp->p_session->s_sid > nextpid &&
-			    pidchecked > tp->p_session->s_sid)
-				pidchecked = tp->p_session->s_sid;
-		}
-
-		/*
-		 * If there's another list, scan it.  If we have checked
-		 * them all, we've found one!
-		 */
-		pd++;
-		if (pd->pd_list != NULL)
-			goto again;
-	}
-
-	/*
-	 * Put the proc on allproc before unlocking PID allocation
-	 * so that waiters won't grab it as soon as we unlock.
-	 */
-
 	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_pid = nextpid;
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
-
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
-
-	/*
-	 * END PID ALLOCATION.
-	 */
 	proclist_unlock_write(s);
 
 #ifdef SYSTRACE
@@ -502,14 +436,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		setrunqueue(l2);
 	}
 	SCHED_UNLOCK(s);
-
-	/*
-	 * Inherit STOPFORK and STOPEXEC flags 
-	 */
-	if (p1->p_flag & P_STOPFORK)
-		p2->p_flag |= P_STOPFORK;
-	if (p1->p_flag & P_STOPEXEC)
-		p2->p_flag |= P_STOPEXEC;
 
 	/*
 	 * Now can be swapped.

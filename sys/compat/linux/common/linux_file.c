@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.57 2003/02/27 16:04:16 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.58 2003/03/19 11:36:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.57 2003/02/27 16:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.58 2003/03/19 11:36:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ linux_sys_fcntl(l, v, retval)
 
 		/* set tty pg_id appropriately */
 		if (cmd == LINUX_F_GETOWN) {
-			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			return 0;
 		}
 		if ((long)arg <= 0) {

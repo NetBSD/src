@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.161 2003/03/12 22:16:31 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.162 2003/03/19 11:36:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -74,7 +74,6 @@ struct session {
  * One structure allocated per process group.
  */
 struct pgrp {
-	LIST_ENTRY(pgrp) pg_hash;	/* Hash chain */
 	LIST_HEAD(, proc) pg_members;	/* Pointer to pgrp members */
 	struct session	*pg_session;	/* Pointer to session */
 	pid_t		pg_id;		/* Pgrp id */
@@ -170,7 +169,7 @@ struct proc {
 	char		p_pad1[3];
 
 	pid_t		p_pid;		/* Process identifier. */
-	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
+	SLIST_ENTRY(proc) p_dead;	/* Processes waiting for reaper */
 	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp. */
 	struct proc 	*p_pptr;	/* Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
@@ -340,24 +339,18 @@ MALLOC_DECLARE(M_SESSION);
 MALLOC_DECLARE(M_SUBPROC);
 
 /*
- * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
- * as it is used to represent "no process group".
+ * We use process IDs <= PID_MAX until there are > 16k processes.
+ * NO_PGID is used to represent "no process group" for a tty.
  */
 #define	PID_MAX		30000
-#define	NO_PID		30001
-
-/*
- * Process IDs <0,PID_SKIP-1> are not considered for new processes
- * once the prototype wraps around.
- */
-#define PID_SKIP	500
+#define	NO_PGID		(-(pid_t)1)
 
 #define	SESS_LEADER(p)	((p)->p_session->s_leader == (p))
 #define	SESSHOLD(s)	((s)->s_count++)
 #define	SESSRELE(s)							\
 do {									\
 	if (--(s)->s_count == 0)					\
-		FREE(s, M_SESSION);					\
+		sessdelete(s);						\
 } while (/* CONSTCOND */ 0)
 
 
@@ -371,14 +364,6 @@ do {									\
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
 #define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
 #define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
-
-#define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
-extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
-extern u_long		pidhash;
-
-#define	PGRPHASH(pgid)	(&pgrphashtbl[(pgid) & pgrphash])
-extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
-extern u_long		pgrphash;
 
 /*
  * Allow machine-dependent code to override curproc in <machine/cpu.h> for
@@ -403,14 +388,13 @@ extern struct lock	proclist_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 
-extern struct proclist deadproc;	/* List of dead processes */
+extern SLIST_HEAD(deadprocs, proc) deadprocs;	/* List of dead processes */
 extern struct simplelock deadproc_slock;
 
 extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
 
-extern struct pool	proc_pool;	/* Memory pool for procs */
 extern struct pool	pcred_pool;	/* Memory pool for pcreds */
 extern struct pool	plimit_pool;	/* Memory pool for plimits */
 extern struct pool 	pstats_pool;	/* memory pool for pstats */
@@ -426,6 +410,7 @@ int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
 void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p, struct proc *q);
 int	leavepgrp(struct proc *p);
+void	sessdelete(struct session *);
 void	yield(void);
 struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *pgrp);
@@ -440,7 +425,10 @@ void	reaper(void *);
 void	exit1(struct lwp *, int);
 void	exit2(struct lwp *);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
+struct proc *proc_alloc(void);
+void	proc0_insert(struct proc *, struct lwp *, struct pgrp *, struct session *);
 void	proc_free(struct proc *);
+void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
@@ -462,13 +450,13 @@ void	cpu_wait __P((struct lwp *));
 
 void	child_return(void *);
 
-int	proc_isunder(struct proc *, struct proc*);
+int	proc_isunder(struct proc *, struct proc *);
 
 void	proclist_lock_read(void);
 void	proclist_unlock_read(void);
 int	proclist_lock_write(void);
 void	proclist_unlock_write(int);
-void	p_sugid(struct proc*);
+void	p_sugid(struct proc *);
 
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\
