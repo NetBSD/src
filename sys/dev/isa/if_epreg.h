@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.8 1994/07/21 03:40:53 mycroft Exp $
+ *	$Id: if_epreg.h,v 1.9 1994/07/28 08:44:49 mycroft Exp $
  */
 
 /*
@@ -293,4 +293,6 @@
 #define	EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
 #define	EISA_MODEL		0x0c82	/* model number (2 ports) */
 #define	EISA_CONTROL		0x0c84
-#define	 EISA_DISABLE		0x01
+#define	 EISA_RESET		0x04
+#define	 EISA_ERROR		0x02
+#define	 EISA_ENABLE		0x01
