@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.14 1999/01/03 01:15:01 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.15 1999/01/03 11:06:31 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.15 1999/01/03 01:12:41 augustss Exp 
+ *	NetBSD: usbdevs,v 1.16 1999/01/03 10:56:33 augustss Exp 
  */
 
 /*
@@ -55,6 +55,7 @@
 #define	USB_VENDOR_NANAO	0x0440		/* Nanao */
 #define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
 #define	USB_VENDOR_GENIUS	0x0458		/* Genius */
+#define	USB_VENDOR_KENSINGTON	0x0461		/* Kensington */
 #define	USB_VENDOR_CHERRY	0x046a		/* Cherry */
 /* Behavior Technology Corporation */
 #define	USB_VENDOR_BTC	0x046e		/* BTC */
@@ -101,6 +102,9 @@
 /* Genius products */
 #define	USB_PRODUCT_GENIUS_NICHE	0x0001		/* Niche mouse */
 #define	USB_PRODUCT_GENIUS_FLIGHT2000	0x1004		/* Flight 2000 joystick */
+
+/* Kensington products */
+#define	USB_PRODUCT_KENSINGTON_MOUSEINABOX	0x4d02		/* Mouse-in-a-Box */
 
 /* Cherry products */
 #define	USB_PRODUCT_CHERRY_MY3000KBD	0x0001		/* My3000 keyboard */
