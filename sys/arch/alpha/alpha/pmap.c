@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.156 2001/01/14 03:33:34 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.157 2001/03/15 06:10:33 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2001/01/14 03:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2001/03/15 06:10:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1700,9 +1700,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		       pmap, va, pa, prot, flags);
 #endif
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
-
 	managed = PAGE_IS_MANAGED(pa);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
 	wired = (flags & PMAP_WIRED) != 0;
@@ -1753,7 +1750,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 */
 		if (pmap->pm_lev1map == kernel_lev1map) {
 			error = pmap_lev1map_create(pmap, cpu_id);
-			if (error != KERN_SUCCESS) {
+			if (error) {
 				if (flags & PMAP_CANFAIL)
 					return (error);
 				panic("pmap_enter: unable to create lev1map");
@@ -1770,7 +1767,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (pmap_pte_v(l1pte) == 0) {
 			pmap_physpage_addref(l1pte);
 			error = pmap_ptpage_alloc(pmap, l1pte, PGU_L2PT);
-			if (error != KERN_SUCCESS) {
+			if (error) {
 				pmap_l1pt_delref(pmap, l1pte, cpu_id);
 				if (flags & PMAP_CANFAIL)
 					return (error);
@@ -1795,7 +1792,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (pmap_pte_v(l2pte) == 0) {
 			pmap_physpage_addref(l2pte);
 			error = pmap_ptpage_alloc(pmap, l2pte, PGU_L3PT);
-			if (error != KERN_SUCCESS) {
+			if (error) {
 				pmap_l2pt_delref(pmap, l1pte, l2pte, cpu_id);
 				if (flags & PMAP_CANFAIL)
 					return (error);
@@ -1901,7 +1898,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (managed) {
 		error = pmap_pv_enter(pmap, pa, va, pte, TRUE);
-		if (error != KERN_SUCCESS) {
+		if (error) {
 			pmap_l3pt_delref(pmap, va, pte, cpu_id, NULL);
 			if (flags & PMAP_CANFAIL)
 				return (error);
@@ -1986,7 +1983,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*
@@ -3062,7 +3059,7 @@ pmap_pv_enter(pmap_t pmap, paddr_t pa, vaddr_t va, pt_entry_t *pte,
 	 */
 	newpv = pmap_pv_alloc();
 	if (newpv == NULL)
-		return (KERN_RESOURCE_SHORTAGE);
+		return ENOMEM;
 	newpv->pv_va = va;
 	newpv->pv_pmap = pmap;
 	newpv->pv_pte = pte;
@@ -3095,7 +3092,7 @@ pmap_pv_enter(pmap_t pmap, paddr_t pa, vaddr_t va, pt_entry_t *pte,
 	if (dolock)
 		simple_unlock(&pvh->pvh_slock);
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*
@@ -3535,7 +3532,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
 	if (l1pt == NULL) {
 		simple_unlock(&pmap_growkernel_slock);
-		return (KERN_RESOURCE_SHORTAGE);
+		return ENOMEM;
 	}
 
 	pmap->pm_lev1map = l1pt;
@@ -3550,7 +3547,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		pmap_asn_alloc(pmap, cpu_id);
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*
@@ -3697,7 +3694,7 @@ pmap_ptpage_alloc(pmap_t pmap, pt_entry_t *pte, int usage)
 		 * another pmap!
 		 */
 		if (pmap_ptpage_steal(pmap, usage, &ptpa) == FALSE)
-			return (KERN_RESOURCE_SHORTAGE);
+			return ENOMEM;
 	}
 
 	/*
@@ -3707,7 +3704,7 @@ pmap_ptpage_alloc(pmap_t pmap, pt_entry_t *pte, int usage)
 	    PG_V | PG_KRE | PG_KWE | PG_WIRED |
 	    (pmap == pmap_kernel() ? PG_ASM : 0));
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.5 2000/09/13 15:00:24 thorpej Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.6 2001/03/15 06:10:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -58,7 +58,7 @@ vax1k_map_readvn(p, cmd)
 	int error;
 
 	if (cmd->ev_len == 0)
-		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
+		return 0;
 	
 	oaddr = cmd->ev_addr;
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
@@ -68,7 +68,6 @@ vax1k_map_readvn(p, cmd)
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
-
 	if (error)
 		return error;
 
@@ -85,11 +84,11 @@ vax1k_map_readvn(p, cmd)
 		 * it mapped read-only, so now we are going to have to call
 		 * uvm_map_protect() to fix up the protection.  ICK.
 		 */
-		return(uvm_map_protect(&p->p_vmspace->vm_map, 
+		return uvm_map_protect(&p->p_vmspace->vm_map, 
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
-				cmd->ev_prot, FALSE));
+				cmd->ev_prot, FALSE);
 	} else {
-		return(KERN_SUCCESS);
+		return 0;
 	}
 }

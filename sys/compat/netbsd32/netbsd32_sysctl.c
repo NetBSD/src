@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.1 2001/02/08 13:19:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.2 2001/03/15 06:10:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -242,10 +242,11 @@ netbsd32___sysctl(p, v, retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		if (uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
-		    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
+		error = uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
+		    VM_PROT_READ|VM_PROT_WRITE);
+		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
-			return (EFAULT);
+			return error;
 		}
 		oldlen = savelen;
 	}

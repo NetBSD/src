@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2000/12/23 09:35:51 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 2001/03/15 06:10:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -625,16 +625,16 @@ trap(type, code, v, frame)
 		 */
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				unsigned nss;
 
 				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			} else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
 				if (cputype == CPU_68040)
@@ -656,7 +656,7 @@ trap(type, code, v, frame)
 			panictrap(type, code, v, &frame);
 		}
 		ucode = v;
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.8 2001/03/10 22:46:48 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.9 2001/03/15 06:10:56 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -183,8 +183,7 @@ ubc_init(void)
 	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva,
 		    ubc_nwins * ubc_winsize, &ubc_object.uobj, 0, (vsize_t)va,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE))
-	    != KERN_SUCCESS) {
+				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object\n");
 	}
 	UVMHIST_INIT(ubchist, 300);

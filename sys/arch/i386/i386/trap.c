@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154 2001/02/05 11:12:05 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.155 2001/03/15 06:10:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ trap(frame)
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
-		int rv;
+		int error;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss;
@@ -406,9 +406,9 @@ trap(frame)
 		/* Fault the original page in. */
 		onfault = p->p_addr->u_pcb.pcb_onfault;
 		p->p_addr->u_pcb.pcb_onfault = NULL;
-		rv = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, 0, ftype);
 		p->p_addr->u_pcb.pcb_onfault = onfault;
-		if (rv == KERN_SUCCESS) {
+		if (error == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
@@ -421,10 +421,10 @@ trap(frame)
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-			    map, va, ftype, rv);
+			    map, va, ftype, error);
 			goto we_re_toast;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (error == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -518,8 +518,7 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
-	    != KERN_SUCCESS)
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE) != 0)
 		return 1;
 
 	if (nss > vm->vm_ssize)

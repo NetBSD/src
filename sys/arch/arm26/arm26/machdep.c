@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2000/09/13 15:00:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2001/03/15 06:10:36 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2000/09/13 15:00:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2001/03/15 06:10:36 chs Exp $");
 
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -138,7 +138,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;

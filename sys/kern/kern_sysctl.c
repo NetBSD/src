@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.87 2001/03/15 06:10:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -214,10 +214,11 @@ sys___sysctl(p, v, retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		if (uvm_vslock(p, SCARG(uap, old), oldlen,
-		    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
+		error = uvm_vslock(p, SCARG(uap, old), oldlen,
+		    VM_PROT_READ|VM_PROT_WRITE);
+		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
-			return (EFAULT);
+			return error;
 		}
 		savelen = oldlen;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2001/03/09 12:13:15 toshii Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2001/03/15 06:10:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -393,7 +393,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(bufsize),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+	    UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate UVM space for buffers");
 	minaddr = (vm_offset_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {

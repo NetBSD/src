@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184 2001/03/05 07:04:01 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.185 2001/03/15 06:10:49 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1942,10 +1942,6 @@ pv_changepte4_4c(pv0, bis, bic)
 	ctx = getcontext4();
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
-#ifdef DIAGNOSTIC
-		if(pm == NULL)
-			panic("pv_changepte: pm == NULL");
-#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -2262,10 +2258,6 @@ pv_changepte4m(pv0, bis, bic)
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		int tpte;
 		pm = pv->pv_pmap;
-#ifdef DIAGNOSTIC
-		if (pm == NULL)
-			panic("pv_changepte: pm == NULL");
-#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		rp = &pm->pm_regmap[vr];
@@ -3722,8 +3714,6 @@ pmap_destroy(pm)
 {
 	int count;
 
-	if (pm == NULL)
-		return;
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
 		printf("pmap_destroy(%p)\n", pm);
@@ -3851,9 +3841,6 @@ pmap_remove(pm, va, endva)
 	vaddr_t nva;
 	int vr, vs, s, ctx;
 	void (*rm)(struct pmap *, vaddr_t, vaddr_t, int, int);
-
-	if (pm == NULL)
-		return;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
@@ -4618,9 +4605,6 @@ pmap_protect4_4c(pm, sva, eva, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL || prot & VM_PROT_WRITE)
-		return;
-
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -4962,9 +4946,6 @@ pmap_protect4m(pm, sva, eva, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL || prot & VM_PROT_WRITE)
-		return;
-
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -5139,15 +5120,12 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	u_int pfn;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pm == NULL)
-		return (KERN_SUCCESS);
-
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
 		printf("pmap_enter: pm %p, va 0x%lx, pa 0x%lx: in MMU hole\n",
 			pm, va, pa);
 #endif
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 #ifdef DEBUG
@@ -5179,7 +5157,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	else
 		pmap_enu4_4c(pm, va, prot, wired, pv, pteproto);
 	setcontext4(ctx);
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5540,9 +5518,6 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	u_int pfn;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pm == NULL)
-		return (KERN_SUCCESS);
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter[curpid %d, ctx %d]"
@@ -5592,7 +5567,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 		pmap_enu4m(pm, va, prot, wired, pv, pteproto);
 
 	setcontext4m(ctx);
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5911,13 +5886,6 @@ pmap_extract4_4c(pm, va, pap)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("pmap_extract: null pmap\n");
-#endif
-		return (FALSE);
-	}
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -5986,14 +5954,6 @@ pmap_extract4m(pm, va, pap)
 	struct regmap *rm;
 	struct segmap *sm;
 	int pte;
-
-	if (pm == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("pmap_extract: null pmap\n");
-#endif
-		return (FALSE);
-	}
 
 	if ((rm = pm->pm_regmap) == NULL) {
 #ifdef DEBUG

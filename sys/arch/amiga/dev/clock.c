@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2000/06/29 08:44:05 mrg Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2001/03/15 06:10:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -478,8 +478,8 @@ clockunmmap(dev, addr, p)
 
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
-	return(rv == KERN_SUCCESS ? 0 : EINVAL);
+	uvm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
+	return 0;
 }
 
 startclock()

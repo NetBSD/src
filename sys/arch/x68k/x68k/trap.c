@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2001/02/21 12:39:17 minoura Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2001/03/15 06:10:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -653,10 +653,10 @@ trap(type, code, v, frame)
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
-			if (rv != KERN_SUCCESS) {
+			if (rv != 0) {
 				bva = HPMMBASEADDR(va);
 				rv = uvm_fault(map, bva, 0, ftype);
-				if (rv == KERN_SUCCESS)
+				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
@@ -676,16 +676,16 @@ trap(type, code, v, frame)
 		 */
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				unsigned nss;
 
 				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			} else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
 				if (cputype == CPU_68040)
@@ -705,7 +705,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		ucode = v;
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?

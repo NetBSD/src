@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2001/02/22 07:11:12 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2001/03/15 06:10:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -526,16 +526,16 @@ trap(type, code, v, tf)
 		 * error.
 		 */
 		if ((map != kernel_map) && ((caddr_t)va >= vm->vm_maxsaddr)) {
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				unsigned nss;
 
 				nss = btoc((u_int)(USRSTACK-va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			} else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS)
+		if (rv == 0)
 			goto finish;
 
 		if ((type & T_USER) == 0) {
@@ -554,7 +554,7 @@ trap(type, code, v, tf)
 			goto dopanic;
 		}
 		ucode = v;
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2001/03/06 21:58:23 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2001/03/15 06:10:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -365,7 +365,7 @@ trap(p1, p2, p3, p4, frame)
 
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, 0, ftype);
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
@@ -382,7 +382,7 @@ trap(p1, p2, p3, p4, frame)
 				   map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -774,17 +774,17 @@ tlb_handler(p1, p2, p3, p4, frame)
 #endif
 	    va >= (vaddr_t) vm->vm_maxsaddr &&
 	    va < USRSTACK) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			u_int nss;
 
 			nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
 
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		va = va_save;
 		SHREG_PTEH = pteh_save;
 		pde_index = pdei(va);
@@ -865,7 +865,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 		goto dopanic;
 	}
 
-	if (rv == KERN_RESOURCE_SHORTAGE) {
+	if (rv == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 		       p->p_pid, p->p_comm,
 		       p->p_cred && p->p_ucred ?
