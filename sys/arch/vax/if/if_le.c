@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 2000/01/27 16:58:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 void	lance_copytobuf_gap2 __P((struct lance_softc *, void *, int, int));
 void	lance_copyfrombuf_gap2 __P((struct lance_softc *, void *, int, int));
 void	lance_zerobuf_gap2 __P((struct lance_softc *, int, int));
-void	leintr __P((int));
 
 struct cfattach le_ibus_ca = {
 	sizeof(struct le_softc), le_ibus_match, le_ibus_attach
@@ -188,7 +187,7 @@ le_ibus_attach(parent, self, aux)
 	i = scb_vecref(&vec, &br);
 	if (i == 0 || vec == 0)
 		return;
-	scb_vecalloc(vec, leintr, self->dv_unit, SCB_ISTACK);
+	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc, SCB_ISTACK);
 
 	printf(": vec %o ipl %x\n%s", vec, br, self->dv_xname);
 	/*
@@ -323,11 +322,4 @@ lance_zerobuf_gap2(sc, boff, len)
 		bptr += 2;
 		len -= 2;
 	}
-}
-
-void
-leintr(unit)
-	int unit;
-{
-	am7990_intr(le_cd.cd_devs[unit]);
 }
