@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.9 2003/12/21 03:18:31 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.10 2004/08/06 17:22:01 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -180,7 +180,7 @@ public:
 	void boot(void);
 
 	// Progress bar.
-	void progress(void);
+	void progress(const char * = NULL);
 	void unprogress(void);
 
 	// Console window interface.

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.12 2004/03/16 22:30:36 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.13 2004/08/06 17:22:01 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -337,9 +337,9 @@ HpcMenuInterface::setup_bootinfo(struct bootinfo &bi)
 
 // Progress bar
 void
-HpcMenuInterface::progress()
+HpcMenuInterface::progress(const char *msg)
 {
-	_root->progress();
+	_root->progress(msg);
 }
 
 void
