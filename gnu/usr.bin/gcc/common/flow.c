@@ -769,6 +769,18 @@ uses_reg_or_mem (x)
   int i, j;
   char *fmt;
 
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+  /*
+   * This is a patch for a bug found when implementing arm32 PIC support
+   * that has been fixed in 2.8
+   */
+  if(code == IF_THEN_ELSE) {
+      if(!uses_reg_or_mem (XEXP (x, 1)) && !uses_reg_or_mem (XEXP (x, 2)))
+          return 0;
+      return 1;
+  }
+#endif
+
   if (code == REG
       || (code == MEM
 	  && ! (GET_CODE (XEXP (x, 0)) == SYMBOL_REF
@@ -1608,11 +1620,26 @@ propagate_block (old, first, last, final, significant, bnum)
 		     call-clobbered reg, and mark_set_regs has already had
 		     a chance to handle it.  */
 
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+  /*
+   * This is a patch for a bug found when implementing arm32 PIC support
+   * that has been fixed in 2.8
+   */
+		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++) {
+		    if (call_used_regs[i] && ! global_regs[i]
+#if defined (PIC_OFFSET_TABLE_REGNUM) && !defined (PIC_OFFSET_TABLE_REG_CALL_CLOBBERED)
+                        &&  (i != PIC_OFFSET_TABLE_REGNUM || !flag_pic)
+#endif
+                        )
+  		      dead[i / REGSET_ELT_BITS]
+			|= ((REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS));
+                  }
+#else
 		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
 		    if (call_used_regs[i] && ! global_regs[i])
 		      dead[i / REGSET_ELT_BITS]
 			|= ((REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS));
-
+#endif
 		  /* The stack ptr is used (honorarily) by a CALL insn.  */
 		  live[STACK_POINTER_REGNUM / REGSET_ELT_BITS]
 		    |= ((REGSET_ELT_TYPE) 1

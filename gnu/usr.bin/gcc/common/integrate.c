@@ -177,6 +177,21 @@ function_cannot_inline_p (fndecl)
   if (current_function_has_nonlocal_goto)
     return "function with nonlocal goto cannot be inline";
 
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+  /*
+   * This is a patch for a bug found when implementing arm32 PIC support
+   * that should be fixed in 2.8
+   */
+  for (insn = get_insns ();
+    insn && ! (GET_CODE (insn) == NOTE
+    && NOTE_LINE_NUMBER (insn) == NOTE_INSN_FUNCTION_BEG);
+    insn = NEXT_INSN (insn))
+      {
+        if((GET_CODE(insn) == CODE_LABEL)
+          && (LABEL_PRESERVE_P(insn)))
+            return "looks like exception stuff";
+      }
+#endif
   return 0;
 }
 
