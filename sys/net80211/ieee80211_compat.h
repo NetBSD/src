@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_compat.h,v 1.2 2003/09/14 01:14:54 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_compat.h,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -29,48 +29,22 @@
 #define _NET80211_IEEE80211_COMPAT_H_
 
 #ifdef __NetBSD__
-extern int if_printf(struct ifnet *ifp, const char *fmt, ...);
+#undef KASSERT
+#define KASSERT(cond, complaint) if (!(cond)) panic complaint
+#endif
+
+#ifdef __NetBSD__
+void if_printf(struct ifnet *, const char *, ...);
 #endif
 
 #ifdef __NetBSD__
 #define ieee80211_node_critsec_decl(v) int v
-#define ieee80211_node_critsec_begin(ic, v) do { v = splnet() } while (0)
+#define ieee80211_node_critsec_begin(ic, v) do { v = splnet(); } while (0)
 #define ieee80211_node_critsec_end(ic, v) splx(v)
 #else
 #define ieee80211_node_critsec_decl(v) /* empty */
 #define ieee80211_node_critsec_begin(ic, v) mtx_lock(&(ic)->ic_nodelock)
 #define ieee80211_node_critsec_end(ic, v) mtx_unlock(&ic->ic_nodelock)
-#endif
-
-#ifdef __NetBSD__
-#define ieee80211_node_incref(ni)			\
-	do {						\
-		int _s = splnet();			\
-		(ni)->ni_refcnt++;			\
-		splx(_s);				\
-	} while (0)
-
-static __inline int
-ieee80211_node_decref(struct ieee80211_node *ni)
-{
-	int refcnt, s;
-	s = splnet();
-	refcnt = --ni->ni_refcnt;
-	splx(s);
-	return refcnt;
-}
-
-#else
-#define ieee80211_node_incref(ni) atomic_add_int(&(ni)->ni_refcnt, 1)
-static __inline int
-ieee80211_node_decref(struct ieee80211_node *ni)
-{
-	int orefcnt;
-	do {
-		orefcnt = ni->ni_refcnt;
-	} while (atomic_cmpset_int(&ni->ni_refcnt, orefcnt, orefcnt - 1) == 0);
-	return orefcnt - 1;
-}
 #endif
 
 #endif /* _NET80211_IEEE80211_COMPAT_H_ */
