@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.8 1994/01/25 20:45:08 cgd Exp $";
+static char rcsid[] = "$Id: print.c,v 1.9 1994/03/27 09:29:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,18 +113,10 @@ printlong(dp)
 			(void)printf("%3d, %3d ",
 			    major(sp->st_rdev), minor(sp->st_rdev));
 		else if (dp->bcfile)
-#ifdef notyet
 			(void)printf("%*s%*qd ",
-#else
-			(void)printf("%*s%*ld ",
-#endif
 			    8 - dp->s_size, "", dp->s_size, sp->st_size);
 		else
-#ifdef notyet
 			(void)printf("%*qd ", dp->s_size, sp->st_size);
-#else
-			(void)printf("%*ld ", dp->s_size, sp->st_size);
-#endif
 		if (f_accesstime)
 			printtime(sp->st_atime);
 		else if (f_statustime)
