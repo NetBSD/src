@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.15 1995/06/21 03:03:13 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.16 1995/07/04 14:38:34 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -115,7 +115,7 @@ struct ncr5380_softc {
 };
 /* From Guide to Mac II family hardware, p. 137 */
 /* These are "adjusted" in the init routine. */
-vm_offset_t SCSIBase = 0;
+extern vm_offset_t SCSIBase;
 static volatile sci_padded_regmap_t *ncr = (sci_regmap_t *) 0x10000;
 static volatile long *sci_4byte_addr = (long *) 0x6000;
 static volatile u_char *sci_1byte_addr = (u_char *) 0x12000;
@@ -208,7 +208,6 @@ ncrattach(parent, dev, aux)
 	struct device *parent, *dev;
 	void   *aux;
 {
-	register volatile sci_padded_regmap_t *regs = ncr;
 	int     unit = dev->dv_unit;
 	struct ncr5380_softc *ncr5380;
 	int     r;
@@ -228,6 +227,7 @@ ncrattach(parent, dev, aux)
 
 	config_found(dev, &(ncr5380->sc_link), ncr_print);
 }
+
 #define MIN_PHYS	65536	/* BARF!!!! */
 static void
 ncr5380_minphys(struct buf * bp)
