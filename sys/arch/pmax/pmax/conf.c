@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1996/09/07 12:40:38 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1997/05/24 05:28:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "vnd.h"
-bdev_decl(vnd);
+
 bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
@@ -57,8 +56,12 @@ bdev_decl(tz);
 bdev_decl(sd);
 #include "st.h"
 bdev_decl(st);
+#include "cd.h"
+bdev_decl(cd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "vnd.h"
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -86,7 +89,17 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 21: ?? SCSI disk */ /*XXX*/
 	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
+
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
+	bdev_disk_init(NCD,cd),		/* 25: SCSI CD-ROM */
+
+	bdev_lkm_dummy(),		/* 26 */
+	bdev_lkm_dummy(),		/* 27 */
+	bdev_lkm_dummy(),		/* 28 */
+	bdev_lkm_dummy(),		/* 29 */
+	bdev_lkm_dummy(),		/* 30 */
+	bdev_lkm_dummy(),		/* 31 */
+
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -119,7 +132,12 @@ cdev_decl(log);
 cdev_decl(fd);
 cdev_decl(sd);
 cdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 cdev_decl(vnd);
+cdev_decl(cd);
 cdev_decl(ccd);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -144,7 +162,10 @@ cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
 dev_decl(filedesc,open);
-
+#include "tun.h"
+cdev_decl(tun);
+cdev_decl(vnd);
+#include "ipfilter.h"
 
 /* a framebuffer with an attached mouse: */
 /* open, close, ioctl, poll, mmap */
@@ -167,7 +188,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_notdef(),			/* 8: old 2100/3100 frame buffer */
-	cdev_notdef(),			/* 9: old slot for SCSI disk */
+	cdev_disk_init(NSD,sd),		/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
@@ -207,7 +228,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 44: dmb */
 	cdev_notdef(),		/* 45:  vax ss, mips scc */
 	cdev_tape_init(NST,st),	/* 46: st */
-	cdev_disk_init(NSD,sd),	/* 47: sd */
+	cdev_disk_init(NCD,cd),	/* 47: sd */
 	cdev_notdef(),		/* 48: Ultrix /dev/trace */
 	cdev_notdef(),		/* 49: sm (sysV shm?) */
 	cdev_notdef(),		/* 50 sg */
@@ -248,6 +269,12 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
+	cdev_notdef(),		/* 87: reserved for wscons fb */
+	cdev_notdef(),		/* 88: reserved for wscons kbd */
+	cdev_notdef(),		/* 89: reserved for wscons mouse */
+	cdev_bpftun_init(NTUN,tun),	/* 90: network tunnel */
+
+	cdev_ipf_init(NIPFILTER,ipl),	/* 91: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -374,6 +401,10 @@ static int chrtoblktbl[] =  {
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
 	/* 87 */	24,
+	/* 88 */	NODEV,
+	/* 89 */	NODEV,
+	/* 90 */	NODEV,
+	/* 91 */	NODEV,
 };
 
 /*
