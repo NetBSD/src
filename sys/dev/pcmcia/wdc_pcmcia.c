@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.2 1998/01/23 01:14:13 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.3 1998/04/25 17:43:27 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -100,11 +100,12 @@ wdc_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->card->cis1_info[0] != NULL &&
-	    strcmp(pa->card->cis1_info[0], "Digital Equipment Corporation.") == 0 &&
-	    pa->card->cis1_info[1] != NULL &&
-	    strcmp(pa->card->cis1_info[1], "Digital Mobile Media CD-ROM") == 0)
-		return 1;
+	if (pa->card->manufacturer == 0x100 && pa->card->product == 0xd00) {
+		if (pa->card->cis1_info[1] != NULL &&
+		    strcmp(pa->card->cis1_info[1], "Digital Mobile Media CD-ROM") == 0)
+			return 1;
+	}
+
 
 	return 0;
 }
