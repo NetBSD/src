@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.1.16.3 2002/03/25 19:26:20 ad Exp $	*/
+/*	$NetBSD: pm.c,v 1.1.16.4 2002/09/18 18:17:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.3 2002/03/25 19:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.4 2002/09/18 18:17:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,19 +571,9 @@ pm_cnattach(void)
 
 	ri = &pm_ri;
 
-	printf("pm_cnattach: 0\n");
-
 	pm_common_init();
-
-	printf("pm_cnattach: 1\n");
-
 	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
-
-	printf("pm_cnattach: 2\n");
-
 	wsdisplay_cnattach(&pm_stdscreen, ri, 0, 0, defattr);
-
-	printf("pm_cnattach: 3\n");
 
 	return (1);
 }
