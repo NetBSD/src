@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1997/10/17 06:33:57 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1997/10/19 08:55:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -225,6 +225,7 @@ delay(n)
 {
 	u_int i;
 
+	if (n == 0) return;
 	while (--n > 0) {
 		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
