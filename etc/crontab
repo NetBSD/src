@@ -1,7 +1,16 @@
-0,15,30,45 * * * *	root /usr/libexec/atrun
-#0 1 * * *	daemon	/usr/contrib/news/daily
-#0 0 * * *	uucp	/etc/uucp.daily
-#7 5,12,18 * * *	uucp	/etc/uucp.6hours
-0 2 * * *	root	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "daily output" root
-30 3 * * 6	root	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "weekly output" root
-30 5 1 * *	root	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "monthlyoutput" root
+# (/root/root.cron installed on Sun Mar 28 20:31:41 1993)
+# (Cron version -- $Header: /cvsroot/src/etc/crontab,v 1.2 1993/04/02 07:18:24 glass Exp $)
+# (crontab.386bsd installed on Sun Mar 28 16:52:10 1993)
+# (Cron version -- $Header: /cvsroot/src/etc/crontab,v 1.2 1993/04/02 07:18:24 glass Exp $)
+# /etc/crontab.src - root's crontab for Vixie's cron
+#
+SHELL=/bin/sh
+PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
+HOME=/var/log
+#
+#minute	hour	mday	month	wday	command
+#
+#0/15	*	*	*	*	/usr/libexec/atrun
+0	2	*	*	*	/etc/daily > /var/log/daily.out 2>&1
+30	3	*	*	6	/etc/weekly > /var/log/weekly.out 2>&1
+30	5	1	*	*	/etc/monthly > /var/log/monthly.out 2>&1
