@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.62 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.63 2004/04/05 01:39:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.62 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.63 2004/04/05 01:39:07 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -580,7 +580,7 @@ uao_init(void)
 	simple_lock_init(&uao_list_lock);
 
 	/*
-	 * NOTE: Pages fror this pool must not come from a pageable
+	 * NOTE: Pages for this pool must not come from a pageable
 	 * kernel map!
 	 */
 
