@@ -54,9 +54,9 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	sunos[[34]]* | solaris1* | solaris2.[[0-5]]* | sunos5.[[0-5]]* )
+	sunos[[34]]* | solaris1* | solaris2.[[0-5]] | sunos5.[[0-5]] | solaris2.5.* | sunos5.5.* )
 		ac_cv_os_cflags="" ;;
-	solaris* | sunos* )
+	solaris2* | sunos5* )
 		# turn on 64-bit file offset interface
 		case "${CC}" in
 			* )
@@ -72,7 +72,7 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	darwin* )
+	darwin* | rhapsody* )
 		ac_cv_os_cflags="-D_P1003_1B_VISIBLE"
 		;;
 	* )

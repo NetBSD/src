@@ -14,7 +14,7 @@ else
   ac_map_name=$2
 fi
 # store variable name of map
-ac_upcase_map_name=`echo $2 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+ac_upcase_map_name=`echo $ac_map_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_MAP_$ac_upcase_map_name
 # check for cache and set it if needed
 AMU_CACHE_CHECK_DYNAMIC(for $ac_map_name maps,

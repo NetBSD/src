@@ -45,6 +45,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/check_autofs_style.m4			\
 	m4/macros/check_checkmount_style.m4		\
 	m4/macros/check_extern.m4			\
+	m4/macros/check_extern_ldap.m4			\
 	m4/macros/check_fhandle.m4			\
 	m4/macros/check_field.m4			\
 	m4/macros/check_fs_headers.m4			\
@@ -52,6 +53,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/check_gnu_getopt.m4			\
 	m4/macros/check_hide_mount_type.m4		\
 	m4/macros/check_lib2.m4				\
+	m4/macros/check_libwrap_severity.m4		\
 	m4/macros/check_map_funcs.m4			\
 	m4/macros/check_mnt2_cdfs_opt.m4		\
 	m4/macros/check_mnt2_gen_opt.m4			\
@@ -108,7 +110,6 @@ EXTRA_DIST_M4 =				\
 	m4/macros/struct_mnttab.m4			\
 	m4/macros/struct_nfs_args.m4			\
 	m4/macros/struct_nfs_fh.m4			\
-	m4/macros/struct_nfs_fh3.m4			\
 	m4/macros/struct_nfs_gfs_mount.m4		\
 	m4/macros/try_compile_anyfs.m4			\
 	m4/macros/try_compile_nfs.m4			\
@@ -275,7 +276,8 @@ EXTRA_DIST =			\
 	\
 	BUGS			\
 	LSM.am-utils		\
-	MIRRORS			\
+	MIRRORS.txt		\
+	MIRRORS.html		\
 	README.autofs		\
 	README.ldap		\
 	README.y2k		\
@@ -303,7 +305,7 @@ libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 
 # make a snapshots and put them in the ftp snapshots directory
-FTPTOP=/proj/bank/ftp/pub/am-utils
+FTPTOP=/var/ftp/pub/am-utils
 snapshot: dist install-snapshot
 install-snapshot:
 	snap=`/bin/ls -1 am-utils*.tar.gz` && \
@@ -314,7 +316,7 @@ install-snapshot:
 	(cd $(FTPTOP) && ${MAKE} ${MFLAGS}) && \
 	(cd $(FTPTOP)/snapshots && ${MAKE} ${MFLAGS})
 test-snapshot: dist
-	mv -f am-utils*.tar.gz /proj/bank/ftp/private/ezk
+	mv -f am-utils*.tar.gz /var/ftp/private/ezk
 
 # dist hook: change directory modes so they are not world writable
 dist-hook:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_headers1.h,v 1.1.1.3 2002/11/29 22:59:04 christos Exp $	*/
+/*	$NetBSD: mount_headers1.h,v 1.1.1.4 2004/11/27 01:01:05 christos Exp $	*/
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -133,17 +133,12 @@
 #ifdef HAVE_UFS_UFS_MOUNT_H
 # include <ufs/ufs_mount.h>
 #endif /* HAVE_UFS_UFS_MOUNT_H */
-#ifdef HAVE_UFS_UFS_UFSMOUNT_H
-# ifndef MAXQUOTAS
-#  define MAXQUOTAS     2
-# endif /* not MAXQUOTAS */
-struct netexport { int this_is_SO_wrong; }; /* for bsdi-2.1 */
-/* netbsd-1.4 does't protect <ufs/ufs/ufsmount.h> */
-# ifndef _UFS_UFS_UFSMOUNT_H
-#  include <ufs/ufs/ufsmount.h>
-#  define _UFS_UFS_UFSMOUNT_H
-# endif /* not _UFS_UFS_UFSMOUNT_H */
-#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
+#ifdef	HAVE_UFS_UFS_UFSMOUNT_H_off
+# error do not include this file here because on *bsd it
+# error causes errors with other header files.  Instead, add it to the
+# error specific conf/nfs_prot_*.h file.
+# include <ufs/ufs/ufsmount.h>
+#endif	/* HAVE_UFS_UFS_UFSMOUNT_H_off */
 
 #ifdef HAVE_CDFS_CDFS_MOUNT_H
 # include <cdfs/cdfs_mount.h>

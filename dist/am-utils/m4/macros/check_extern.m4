@@ -75,6 +75,10 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
 # endif /* not XDRPROC_T_TYPE */
 #endif /* HAVE_RPC_RPC_H */
 
+#if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
+# include <tcpd.h>
+#endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
+
 ], eval "ac_cv_extern_$1=yes", eval "ac_cv_extern_$1=no")
 ])
 # check if need to define variable

@@ -1,7 +1,7 @@
-/*	$NetBSD: info_nis.c,v 1.1.1.6 2003/03/09 01:13:15 christos Exp $	*/
+/*	$NetBSD: info_nis.c,v 1.1.1.7 2004/11/27 01:00:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_nis.c,v 1.13 2002/12/27 22:43:49 ezk Exp
+ * Id: info_nis.c,v 1.14 2004/01/06 03:56:20 ezk Exp
  *
  */
 

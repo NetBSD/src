@@ -120,12 +120,12 @@ case "${host_os}" in
 	       ac_cv_autofs_style=default ;;
        solaris2.5* )
                ac_cv_autofs_style=solaris_v1 ;;
-       # Solaris 8+ uses the AutoFS V3 protocol, but it's very similar to V2,
-       # so use one style for both.
+       # Solaris 8+ uses the AutoFS V3/V4 protocols, but they are very similar
+       # to V2, so use one style for all.
        solaris* )
                ac_cv_autofs_style=solaris_v2_v3 ;;
-#       irix* )
-#	       ac_cv_autofs_style=solaris_v1 ;;
+       irix6* )
+	       ac_cv_autofs_style=solaris_v1 ;;
        linux* )
                ac_cv_autofs_style=linux ;;
        * )
@@ -135,9 +135,11 @@ esac
 # always make a link and include the file name, otherwise on systems where
 # autofs support has not been ported yet check_fs_{headers, mntent}.m4 add
 # ops_autofs.o to AMD_FS_OBJS, but there's no way to build it.
-am_utils_autofs_style=$srcdir"/conf/autofs/autofs_"$ac_cv_autofs_style".h"
-am_utils_link_files=${am_utils_link_files}amd/ops_autofs.c:conf/autofs/autofs_${ac_cv_autofs_style}.c" "
-AC_SUBST_FILE(am_utils_autofs_style)
+am_utils_link_files=${am_utils_link_files}amd/ops_autofs.c:conf/autofs/autofs_${ac_cv_autofs_style}.c" "amu_autofs_prot.h:conf/autofs/autofs_${ac_cv_autofs_style}.h" "
+
+# set headers in a macro for Makefile.am files to use (for dependencies)
+AMU_AUTOFS_PROT_HEADER='${top_builddir}/'amu_autofs_prot.h
+AC_SUBST(AMU_AUTOFS_PROT_HEADER)
 ])
 dnl ======================================================================
 
@@ -249,6 +251,10 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
 # endif /* not XDRPROC_T_TYPE */
 #endif /* HAVE_RPC_RPC_H */
 
+#if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
+# include <tcpd.h>
+#endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
+
 ], eval "ac_cv_extern_$1=yes", eval "ac_cv_extern_$1=no")
 ])
 # check if need to define variable
@@ -268,6 +274,107 @@ for ac_tmp_arg in $1
 do
 AMU_CHECK_EXTERN($ac_tmp_arg)
 done
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
+dnl check for external definition for an LDAP function (not external variables)
+dnl Usage AMU_CHECK_EXTERN_LDAP(extern)
+dnl Checks for external definition for "extern" that is delimited on the
+dnl left and the right by a character that is not a valid symbol character.
+dnl
+dnl Note that $pattern below is very carefully crafted to match any system
+dnl external definition, with __P posix prototypes, with or without an extern
+dnl word, etc.  Think twice before changing this.
+AC_DEFUN(AMU_CHECK_EXTERN_LDAP,
+[
+# store variable name for external definition
+ac_upcase_extern_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+ac_safe=HAVE_EXTERN_$ac_upcase_extern_name
+# check for cached value and set it if needed
+AMU_CACHE_CHECK_DYNAMIC(external function definition for $1,
+ac_cv_extern_$1,
+[
+# the old pattern assumed that the complete external definition is on one
+# line but on some systems it is split over several lines, so only match
+# beginning of the extern definition including the opening parenthesis.
+#pattern="(extern)?.*[^a-zA-Z0-9_]$1[^a-zA-Z0-9_]?.*\(.*\).*;"
+dnl This expression is a bit different than check_extern.m4 because of the
+dnl way that openldap wrote their externs in <ldap.h>.
+pattern="(extern)?.*([[^a-zA-Z0-9_]])?$1[[^a-zA-Z0-9_]]?.*\("
+AC_EGREP_CPP(${pattern},
+[
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif /* HAVE_SYS_WAIT_H */
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else /* not TIME_WITH_SYS_TIME */
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else /* not HAVE_SYS_TIME_H */
+#  include <time.h>
+# endif /* not HAVE_SYS_TIME_H */
+#endif /* not TIME_WITH_SYS_TIME */
+
+#ifdef HAVE_STDIO_H
+# include <stdio.h>
+#endif /* HAVE_STDIO_H */
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif /* HAVE_STDLIB_H */
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#if HAVE_STRING_H
+# include <string.h>
+#endif /* HAVE_STRING_H */
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif /* HAVE_STRINGS_H */
+#ifdef HAVE_NETDB_H
+# include <netdb.h>
+#endif /* HAVE_NETDB_H */
+#ifdef HAVE_CLUSTER_H
+# include <cluster.h>
+#endif /* HAVE_CLUSTER_H */
+#ifdef HAVE_RPC_RPC_H
+/*
+ * Turn on PORTMAP, so that additional header files would get included
+ * and the important definition for UDPMSGSIZE is included too.
+ */
+# ifndef PORTMAP
+#  define PORTMAP
+# endif /* not PORTMAP */
+# include <rpc/rpc.h>
+# ifndef XDRPROC_T_TYPE
+typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
+# endif /* not XDRPROC_T_TYPE */
+#endif /* HAVE_RPC_RPC_H */
+
+#if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
+# include <tcpd.h>
+#endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
+
+#ifdef HAVE_LDAP_H
+# include <ldap.h>
+#endif /* HAVE_LDAP_H */
+#ifdef HAVE_LBER_H
+# include <lber.h>
+#endif /* HAVE_LBER_H */
+
+], eval "ac_cv_extern_$1=yes", eval "ac_cv_extern_$1=no")
+])
+# check if need to define variable
+if test "`eval echo '$''{ac_cv_extern_'$1'}'`" = yes
+then
+  AC_DEFINE_UNQUOTED($ac_safe)
+fi
 ])
 dnl ======================================================================
 
@@ -377,6 +484,9 @@ typedef struct mnttab mntent_t;
 #ifdef HAVE_MSDOSFS_MSDOSFSMOUNT_H
 # include <msdosfs/msdosfsmount.h>
 #endif /* HAVE_MSDOSFS_MSDOSFSMOUNT_H */
+#ifdef HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H
+# include <fs/msdosfs/msdosfsmount.h>
+#endif /* HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H */
 
 #ifdef HAVE_SYS_FS_EFS_CLNT_H
 # include <sys/fs/efs_clnt.h>
@@ -678,7 +788,7 @@ int main()
 ],[
 ac_cv_sys_gnu_getopt="`cat conftestresult`"
 ],[
-AC_MSG_ERROR(could not test for getopt())
+ac_cv_sys_gnu_getopt="fail"
 ])
 ])
 if test "$ac_cv_sys_gnu_getopt" = "yes"
@@ -790,6 +900,49 @@ fi
 
 
 dnl ######################################################################
+dnl check if libwrap (if exists), requires the caller to define the variables
+dnl deny_severity and allow_severity.
+AC_DEFUN(AMU_CHECK_LIBWRAP_SEVERITY,
+[
+AC_CACHE_CHECK([if libwrap wants caller to define allow_severity and deny_severity], ac_cv_need_libwrap_severity_vars, [
+# save, then reset $LIBS back to original value
+SAVEDLIBS="$LIBS"
+LIBS="$LIBS -lwrap"
+# run program one without defining our own severity variables
+AC_TRY_RUN(
+[
+int main()
+{
+   exit(0);
+}
+],[ac_tmp_val1="yes"],[ac_tmp_val1="no"])
+# run program two with defining our own severity variables
+AC_TRY_RUN(
+[
+int deny_severity, allow_severity;
+int main()
+{
+   exit(0);
+}
+],[ac_tmp_val2="yes"],[ac_tmp_val2="no"])
+# restore original value of $LIBS
+LIBS="$SAVEDLIBS"
+# now decide what to do
+if test "$ac_tmp_val1" = "no" && test "$ac_tmp_val2" = "yes"
+then
+	ac_cv_need_libwrap_severity_vars="yes"
+else
+	ac_cv_need_libwrap_severity_vars="no"
+fi
+])
+if test "$ac_cv_need_libwrap_severity_vars" = "yes"
+then
+	AC_DEFINE(NEED_LIBWRAP_SEVERITY_VARIABLES)
+fi
+])
+
+
+dnl ######################################################################
 dnl check if a map exists (if some library function exists).
 dnl Usage: AC_CHECK_MAP_FUNCS(<functions>..., <map>, [<mapsymbol>])
 dnl Check if any of the functions <functions> exist.  If any exist, then
@@ -805,7 +958,7 @@ else
   ac_map_name=$2
 fi
 # store variable name of map
-ac_upcase_map_name=`echo $2 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+ac_upcase_map_name=`echo $ac_map_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_MAP_$ac_upcase_map_name
 # check for cache and set it if needed
 AMU_CACHE_CHECK_DYNAMIC(for $ac_map_name maps,
@@ -1823,7 +1976,7 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=sunos3 ;;
 	sunos4* | solaris1* )
 			ac_cv_nfs_prot_headers=sunos4 ;;
-	sunos5.[[0-3]]* | solaris2.[[0-3]]* )
+	sunos5.[[0-3]] | solaris2.[[0-3]] )
 			ac_cv_nfs_prot_headers=sunos5_3 ;;
 	sunos5.4* | solaris2.4* )
 			ac_cv_nfs_prot_headers=sunos5_4 ;;
@@ -1833,7 +1986,7 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=sunos5_6 ;;
 	sunos5.7* | solaris2.7* )
 			ac_cv_nfs_prot_headers=sunos5_7 ;;
-	sunos* | solaris* )
+	sunos5* | solaris2* )
 			ac_cv_nfs_prot_headers=sunos5_8 ;;
 	bsdi2*)
 			ac_cv_nfs_prot_headers=bsdi2 ;;
@@ -2812,6 +2965,9 @@ AH_TEMPLATE([MNTTAB_OPT_FSID],
 AH_TEMPLATE([MNTTAB_OPT_POSIX],
 [Mount Table option string: Get static pathconf for mount])
 
+AH_TEMPLATE([MNTTAB_OPT_PRIVATE],
+[Mount Table option string: Use local locking])
+
 AH_TEMPLATE([MNTTAB_OPT_MAP],
 [Mount Table option string: Automount map])
 
@@ -2865,6 +3021,9 @@ AH_TEMPLATE([MNT2_GEN_OPT_ASYNC],
 
 AH_TEMPLATE([MNT2_GEN_OPT_AUTOMNTFS],
 [automounter filesystem (ignore) flag, used in bsdi-4.1])
+
+AH_TEMPLATE([MNT2_GEN_OPT_AUTOMOUNTED],
+[automounter filesystem flag, used in Mac OS X / Darwin])
 
 AH_TEMPLATE([MNT2_GEN_OPT_BIND],
 [directory hardlink])
@@ -3052,6 +3211,9 @@ AH_TEMPLATE([MNT2_NFS_OPT_NQNFS],
 AH_TEMPLATE([MNT2_NFS_OPT_POSIX],
 [static pathconf kludge info])
 
+AH_TEMPLATE([MNT2_NFS_OPT_PRIVATE],
+[Use local locking])
+
 AH_TEMPLATE([MNT2_NFS_OPT_RCVLOCK],
 [Rcv socket lock])
 
@@ -3061,7 +3223,7 @@ AH_TEMPLATE([MNT2_NFS_OPT_RDIRALOOK],
 AH_TEMPLATE([MNT2_NFS_OPT_PROPLIST],
 [allow property list operations (ACLs over NFS)])
 
-AH_TEMPLATE([MNT2_NFS_OPTS_RDIRPLUS],
+AH_TEMPLATE([MNT2_NFS_OPT_RDIRPLUS],
 [Use Readdirplus for NFSv3])
 
 AH_TEMPLATE([MNT2_NFS_OPT_READAHEAD],
@@ -3346,6 +3508,9 @@ AH_TEMPLATE([HAVE_EXTERN_GETTABLESIZE],
 AH_TEMPLATE([HAVE_EXTERN_GETPAGESIZE],
 [does extern definition for getpagesize() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_HOSTS_CTL],
+[does extern definition for hosts_ctl() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_INNETGR],
 [does extern definition for innetgr() exist?])
 
@@ -3384,6 +3549,18 @@ AH_TEMPLATE([HAVE_EXTERN_XDR_CALLMSG],
 
 AH_TEMPLATE([HAVE_EXTERN_XDR_OPAQUE_AUTH],
 [does extern definition for xdr_opaque_auth() exist?])
+
+AH_TEMPLATE([NEW_DBM_H],
+[Defined to the header file containing ndbm-compatible definitions])
+
+AH_TEMPLATE([HAVE_LIBWRAP],
+[does libwrap exist?])
+
+AH_TEMPLATE([NEED_LIBWRAP_SEVERITY_VARIABLES],
+[does libwrap expect caller to define the variables allow_severity and deny_severity])
+
+AH_TEMPLATE([HAVE_EXTERN_LDAP_ENABLE_CACHE],
+[does extern definition for ldap_enable_cache() exist?])
 
 
 dnl ######################################################################
@@ -3618,8 +3795,8 @@ elif test "$enableval" = mem; then
   AC_MSG_RESULT(mem)
   AC_DEFINE(DEBUG)
   AC_DEFINE(DEBUG_MEM)
-  AC_CHECK_LIB(mapmalloc, malloc_verify)
-  AC_CHECK_LIB(malloc, mallinfo)
+  AC_CHECK_FUNC(malloc_verify,,AC_CHECK_LIB(mapmalloc, malloc_verify))
+  AC_CHECK_FUNC(mallinfo,,AC_CHECK_LIB(malloc, mallinfo))
   ac_cv_opt_debug=mem
 else
   AC_MSG_RESULT(no)
@@ -3738,9 +3915,9 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	sunos[[34]]* | solaris1* | solaris2.[[0-5]]* | sunos5.[[0-5]]* )
+	sunos[[34]]* | solaris1* | solaris2.[[0-5]] | sunos5.[[0-5]] | solaris2.5.* | sunos5.5.* )
 		ac_cv_os_cflags="" ;;
-	solaris* | sunos* )
+	solaris2* | sunos5* )
 		# turn on 64-bit file offset interface
 		case "${CC}" in
 			* )
@@ -3756,7 +3933,7 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	darwin* )
+	darwin* | rhapsody* )
 		ac_cv_os_cflags="-D_P1003_1B_VISIBLE"
 		;;
 	* )
@@ -4071,70 +4248,6 @@ dnl ======================================================================
 
 
 dnl ######################################################################
-dnl Find the structure of an NFS V3 filehandle.
-dnl if found, defined am_nfs_fh3 to it, else leave it undefined.
-AC_DEFUN(AMU_STRUCT_NFS_FH3,
-[
-AC_CACHE_CHECK(for type/structure of NFS V3 filehandle,
-ac_cv_struct_nfs_fh3,
-[
-# try to compile a program which may have a definition for the type
-dnl need a series of compilations, which will test out every possible type
-dnl such as struct nfs_fh3, fhandle3_t, nfsv3fh_t, etc.
-# set to a default value
-ac_cv_struct_nfs_fh3=notfound
-
-# look for "nfs_fh3_freebsd3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3_freebsd3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3_freebsd3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "struct nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ struct nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="struct nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfsv3fh_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfsv3fh_t nh;
-], ac_cv_struct_nfs_fh3="nfsv3fh_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "fhandle3_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ fhandle3_t nh;
-], ac_cv_struct_nfs_fh3="fhandle3_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-])
-
-if test "$ac_cv_struct_nfs_fh3" != notfound
-then
-  AC_DEFINE_UNQUOTED(am_nfs_fh3, $ac_cv_struct_nfs_fh3)
-fi
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
 dnl Find if struct nfs_gfs_mount exists anywhere in typical headers
 AC_DEFUN(AMU_STRUCT_NFS_GFS_MOUNT,
 [
@@ -4286,6 +4399,9 @@ AC_TRY_COMPILE(
 #ifdef HAVE_MSDOSFS_MSDOSFSMOUNT_H
 # include <msdosfs/msdosfsmount.h>
 #endif /* HAVE_MSDOSFS_MSDOSFSMOUNT_H */
+#ifdef HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H
+# include <fs/msdosfs/msdosfsmount.h>
+#endif /* HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H */
 
 #ifdef HAVE_SYS_FS_TMP_H
 # include <sys/fs/tmp.h>

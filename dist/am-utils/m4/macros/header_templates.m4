@@ -343,6 +343,9 @@ AH_TEMPLATE([MNTTAB_OPT_FSID],
 AH_TEMPLATE([MNTTAB_OPT_POSIX],
 [Mount Table option string: Get static pathconf for mount])
 
+AH_TEMPLATE([MNTTAB_OPT_PRIVATE],
+[Mount Table option string: Use local locking])
+
 AH_TEMPLATE([MNTTAB_OPT_MAP],
 [Mount Table option string: Automount map])
 
@@ -396,6 +399,9 @@ AH_TEMPLATE([MNT2_GEN_OPT_ASYNC],
 
 AH_TEMPLATE([MNT2_GEN_OPT_AUTOMNTFS],
 [automounter filesystem (ignore) flag, used in bsdi-4.1])
+
+AH_TEMPLATE([MNT2_GEN_OPT_AUTOMOUNTED],
+[automounter filesystem flag, used in Mac OS X / Darwin])
 
 AH_TEMPLATE([MNT2_GEN_OPT_BIND],
 [directory hardlink])
@@ -583,6 +589,9 @@ AH_TEMPLATE([MNT2_NFS_OPT_NQNFS],
 AH_TEMPLATE([MNT2_NFS_OPT_POSIX],
 [static pathconf kludge info])
 
+AH_TEMPLATE([MNT2_NFS_OPT_PRIVATE],
+[Use local locking])
+
 AH_TEMPLATE([MNT2_NFS_OPT_RCVLOCK],
 [Rcv socket lock])
 
@@ -592,7 +601,7 @@ AH_TEMPLATE([MNT2_NFS_OPT_RDIRALOOK],
 AH_TEMPLATE([MNT2_NFS_OPT_PROPLIST],
 [allow property list operations (ACLs over NFS)])
 
-AH_TEMPLATE([MNT2_NFS_OPTS_RDIRPLUS],
+AH_TEMPLATE([MNT2_NFS_OPT_RDIRPLUS],
 [Use Readdirplus for NFSv3])
 
 AH_TEMPLATE([MNT2_NFS_OPT_READAHEAD],
@@ -877,6 +886,9 @@ AH_TEMPLATE([HAVE_EXTERN_GETTABLESIZE],
 AH_TEMPLATE([HAVE_EXTERN_GETPAGESIZE],
 [does extern definition for getpagesize() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_HOSTS_CTL],
+[does extern definition for hosts_ctl() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_INNETGR],
 [does extern definition for innetgr() exist?])
 
@@ -915,3 +927,15 @@ AH_TEMPLATE([HAVE_EXTERN_XDR_CALLMSG],
 
 AH_TEMPLATE([HAVE_EXTERN_XDR_OPAQUE_AUTH],
 [does extern definition for xdr_opaque_auth() exist?])
+
+AH_TEMPLATE([NEW_DBM_H],
+[Defined to the header file containing ndbm-compatible definitions])
+
+AH_TEMPLATE([HAVE_LIBWRAP],
+[does libwrap exist?])
+
+AH_TEMPLATE([NEED_LIBWRAP_SEVERITY_VARIABLES],
+[does libwrap expect caller to define the variables allow_severity and deny_severity])
+
+AH_TEMPLATE([HAVE_EXTERN_LDAP_ENABLE_CACHE],
+[does extern definition for ldap_enable_cache() exist?])

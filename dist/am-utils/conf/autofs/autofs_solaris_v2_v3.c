@@ -1,8 +1,8 @@
-/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.2 2003/03/09 01:13:20 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.3 2004/11/27 01:00:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v2_v3.c,v 1.27 2002/12/27 22:43:54 ezk Exp
+ * Id: autofs_solaris_v2_v3.c,v 1.38 2004/07/30 21:13:07 ezk Exp
  *
  */
 
@@ -402,9 +402,9 @@ xdr_autofs_rddirargs(XDR *xdrs, autofs_rddirargs *objp)
 {
   if (!xdr_string(xdrs, &objp->rda_map, AUTOFS_MAXPATHLEN))
     return (FALSE);
-  if (!xdr_u_int(xdrs, (int *) &objp->rda_offset))
+  if (!xdr_u_int(xdrs, (u_int *) &objp->rda_offset))
     return (FALSE);
-  if (!xdr_u_int(xdrs, (int *) &objp->rda_count))
+  if (!xdr_u_int(xdrs, (u_int *) &objp->rda_count))
     return (FALSE);
   return (TRUE);
 }
@@ -478,13 +478,14 @@ xdr_amd_rddirres(XDR *xdrs, amd_rddirres *objp)
 static int
 autofs_lookup_2_req(autofs_lookupargs *m,
 		    autofs_lookupres *res,
-		    struct authunix_parms *cred)
+		    struct authunix_parms *cred,
+		    SVCXPRT *transp)
 {
   int err;
-  am_node *mp, *ap;
-  mntfs *mf, **temp_mf;
+  am_node *mp, *new_mp;
+  mntfs *mf;
 
-  dlog("LOOKUP REQUEST: name=%s[%s] map=%s opts=%s path=%s direct=%d\n",
+  dlog("LOOKUP REQUEST: name=%s[%s] map=%s opts=%s path=%s direct=%d",
        m->name, m->subdir, m->map, m->opts,
        m->path, m->isdirect);
 
@@ -500,76 +501,25 @@ autofs_lookup_2_req(autofs_lookupargs *m,
   }
 
   mf = mp->am_mnt;
-  ap = mf->mf_ops->lookup_child(mp, m->name, &err, VLOOK_CREATE);
-  if (!ap) {
-    if (err > 0) {
-      err = AUTOFS_NOENT;
-      goto out;
-    }
-    /* we're working on it */
-    amd_stats.d_drops++;
-    return 1;
+  new_mp = mf->mf_ops->lookup_child(mp, m->name, &err, VLOOK_LOOKUP);
+  if (!new_mp) {
+    err = AUTOFS_NOENT;
+    goto out;
   }
 
   if (err == 0) {
     plog(XLOG_ERROR, "autofs requests to mount an already mounted node???");
-    err = AUTOFS_OK;
-    if (ap->am_link) {
-      res->lu_type.action = AUTOFS_LINK_RQ;
-      res->lu_type.lookup_result_type_u.lt_linka.dir = strdup(ap->am_name);
-      res->lu_type.lookup_result_type_u.lt_linka.link = strdup(ap->am_link);
-    } else
-      res->lu_type.action = AUTOFS_NONE;
-
-    if (ap->am_mfarray) {
-      mntfs **temp_mf;
-      for (temp_mf = ap->am_mfarray; *temp_mf; temp_mf++)
-	free_mntfs(*temp_mf);
-      XFREE(ap->am_mfarray);
-      ap->am_mfarray = 0;
-    }
-    goto out;
-  }
-
-  err = AUTOFS_OK;
-  for (temp_mf = ap->am_mfarray; *temp_mf; temp_mf++)
-    if (!(*temp_mf)->mf_fo->opt_sublink) {
-      free_mntfs(*temp_mf);
-      *temp_mf = 0;
-    } else if (temp_mf != ap->am_mfarray) {
-      ap->am_mfarray[0] = *temp_mf;
-      *temp_mf = 0;
-    }
-
-  if (!ap->am_mfarray[0]) {
-    res->lu_type.action = AUTOFS_NONE;
-    free_map(ap);
-    goto out;
-  }
-
-  ap = mf->mf_ops->mount_child(ap, &err);
-  if (!ap) {
-    if (err > 0) {
-      err = AUTOFS_NOENT;
-      goto out;
-    }
-    /* we're working on it */
-    amd_stats.d_drops++;
-    return 1;
-  }
-  if (err == 0) {
-    res->lu_type.action = AUTOFS_LINK_RQ;
-    res->lu_type.lookup_result_type_u.lt_linka.dir = strdup(ap->am_name);
-    res->lu_type.lookup_result_type_u.lt_linka.link = strdup(ap->am_link);
   } else {
-    res->lu_type.action = AUTOFS_NONE;
-    err = AUTOFS_OK;
+    free_map(new_mp);
   }
-out:
+  err = AUTOFS_OK;
+  res->lu_type.action = AUTOFS_NONE;
+
+ out:
   res->lu_res = err;
   res->lu_verbose = 1;
 
-  dlog("LOOKUP REPLY: status=%d\n", res->lu_res);
+  dlog("LOOKUP REPLY: status=%d", res->lu_res);
   return 0;
 }
 
@@ -596,13 +546,14 @@ autofs_lookup_2_free(autofs_lookupres *res)
 static int
 autofs_mount_2_req(autofs_lookupargs *m,
 		   autofs_mountres *res,
-		   struct authunix_parms *cred)
+		   struct authunix_parms *cred,
+		   SVCXPRT *transp)
 {
   int err = AUTOFS_OK;
-  am_node *mp, *ap;
+  am_node *mp, *new_mp;
   mntfs *mf;
 
-  dlog("MOUNT REQUEST: name=%s[%s] map=%s opts=%s path=%s direct=%d\n",
+  dlog("MOUNT REQUEST: name=%s[%s] map=%s opts=%s path=%s direct=%d",
        m->name, m->subdir, m->map, m->opts,
        m->path, m->isdirect);
 
@@ -619,10 +570,12 @@ autofs_mount_2_req(autofs_lookupargs *m,
   }
 
   mf = mp->am_mnt;
-  ap = mf->mf_ops->lookup_child(mp, m->name + m->isdirect, &err, VLOOK_CREATE);
-  if (ap && err < 0)
-    ap = mf->mf_ops->mount_child(ap, &err);
-  if (ap == NULL) {
+  new_mp = mf->mf_ops->lookup_child(mp, m->name + m->isdirect, &err, VLOOK_CREATE);
+  if (new_mp && err < 0) {
+    /* new_mp->am_transp = transp; */
+    new_mp = mf->mf_ops->mount_child(new_mp, &err);
+  }
+  if (new_mp == NULL) {
     if (err < 0) {
       /* we're working on it */
       amd_stats.d_drops++;
@@ -633,21 +586,37 @@ autofs_mount_2_req(autofs_lookupargs *m,
     goto out;
   }
 
+  if (gopt.flags & CFM_AUTOFS_USE_LOFS ||
+      new_mp->am_mnt->mf_flags & MFF_ON_AUTOFS) {
+    res->mr_type.status = AUTOFS_DONE;
+    res->mr_type.mount_result_type_u.error = AUTOFS_OK;
+  } else {
+    struct action_list *list = malloc(sizeof(struct action_list));
+    char *target;
+    if (new_mp->am_link)
+      target = new_mp->am_link;
+    else
+      target = new_mp->am_mnt->mf_mount;
+    list->action.action = AUTOFS_LINK_RQ;
+    list->action.action_list_entry_u.linka.dir = strdup(new_mp->am_name);
+    list->action.action_list_entry_u.linka.link = strdup(target);
+    list->next = NULL;
+    res->mr_type.status = AUTOFS_ACTION;
+    res->mr_type.mount_result_type_u.list = list;
+  }
+
 out:
   res->mr_verbose = 1;
 
   switch (res->mr_type.status) {
   case AUTOFS_ACTION:
-    dlog("MOUNT REPLY: status=%d, AUTOFS_ACTION\n",
-	 err);
+    dlog("MOUNT REPLY: status=%d, AUTOFS_ACTION", err);
     break;
   case AUTOFS_DONE:
-    dlog("MOUNT REPLY: status=%d, AUTOFS_DONE\n",
-	 err);
+    dlog("MOUNT REPLY: status=%d, AUTOFS_DONE", err);
     break;
   default:
-    dlog("MOUNT REPLY: status=%d, UNKNOWN\n",
-	 err);
+    dlog("MOUNT REPLY: status=%d, UNKNOWN(%d)", err, res->mr_type.status);
   }
 
   if (err) {
@@ -663,13 +632,41 @@ out:
 }
 
 
-/* XXX not implemented */
 static void
 autofs_mount_2_free(struct autofs_mountres *res)
 {
-  if (res->mr_type.status == AUTOFS_ACTION) {
-    dlog("freeing action list\n");
-    /*     free_action_list(res->mr_type.mount_result_type_u.list); */
+  if (res->mr_type.status == AUTOFS_ACTION &&
+      res->mr_type.mount_result_type_u.list != NULL) {
+    autofs_action action;
+    dlog("freeing action list");
+    action = res->mr_type.mount_result_type_u.list->action.action;
+    if (action == AUTOFS_LINK_RQ) {
+      /*
+       * Free link information
+       */
+      struct linka *link;
+      link = &(res->mr_type.mount_result_type_u.list->action.action_list_entry_u.linka);
+      if (link->dir)
+	XFREE(link->dir);
+      if (link->link)
+	XFREE(link->link);
+    } else if (action == AUTOFS_MOUNT_RQ) {
+      struct mounta *mnt;
+      mnt = &(res->mr_type.mount_result_type_u.list->action.action_list_entry_u.mounta);
+      if (mnt->spec)
+	XFREE(mnt->spec);
+      if (mnt->dir)
+	XFREE(mnt->dir);
+      if (mnt->fstype)
+	XFREE(mnt->fstype);
+      if (mnt->dataptr)
+	XFREE(mnt->dataptr);
+#ifdef HAVE_MOUNTA_OPTPTR
+      if (mnt->optptr)
+	XFREE(mnt->optptr);
+#endif /* HAVE_MOUNTA_OPTPTR */
+    }
+    XFREE(res->mr_type.mount_result_type_u.list);
   }
 }
 
@@ -677,18 +674,19 @@ autofs_mount_2_free(struct autofs_mountres *res)
 static int
 autofs_unmount_2_req(umntrequest *ul,
 		     umntres *res,
-		     struct authunix_parms *cred)
+		     struct authunix_parms *cred,
+		     SVCXPRT *transp)
 {
   int mapno, err;
   am_node *mp = NULL;
 
 #ifdef HAVE_STRUCT_UMNTREQUEST_DEVID
-  dlog("UNMOUNT REQUEST: dev=%lx rdev=%lx %s\n",
+  dlog("UNMOUNT REQUEST: dev=%lx rdev=%lx %s",
        (u_long) ul->devid,
        (u_long) ul->rdevid,
        ul->isdirect ? "direct" : "indirect");
 #else  /* not HAVE_STRUCT_UMNTREQUEST_DEVID */
-  dlog("UNMOUNT REQUEST: mntresource='%s' mntpnt='%s' fstype='%s' mntopts='%s' %s\n",
+  dlog("UNMOUNT REQUEST: mntresource='%s' mntpnt='%s' fstype='%s' mntopts='%s' %s",
        ul->mntresource,
        ul->mntpnt,
        ul->fstype,
@@ -700,13 +698,12 @@ autofs_unmount_2_req(umntrequest *ul,
   res->status = 0;
 
 #ifdef HAVE_STRUCT_UMNTREQUEST_DEVID
-  for (mapno = 0; mapno <= last_used_map; mapno++) {
-    mp = exported_ap[mapno];
-    if (mp &&
-	mp->am_dev == ul->devid &&
+  for (mp = get_first_exported_ap(&mapno);
+       mp;
+       mp = get_next_exported_ap(&mapno)) {
+    if (mp->am_dev == ul->devid &&
 	mp->am_rdev == ul->rdevid)
       break;
-    mp = NULL;
   }
 #else  /* not HAVE_STRUCT_UMNTREQUEST_DEVID */
   mp = find_ap(ul->mntpnt);
@@ -714,9 +711,9 @@ autofs_unmount_2_req(umntrequest *ul,
 
   if (mp) {
     /* save RPC context */
-    if (!mp->am_transp && current_transp) {
+    if (!mp->am_transp && transp) {
       mp->am_transp = (SVCXPRT *) xmalloc(sizeof(SVCXPRT));
-      *(mp->am_transp) = *current_transp;
+      *(mp->am_transp) = *transp;
     }
 
     mapno = mp->am_mapno;
@@ -726,12 +723,12 @@ autofs_unmount_2_req(umntrequest *ul,
       /* backgrounded, don't reply yet */
       return 1;
 
-    if (exported_ap[mapno])
+    if (get_exported_ap(mapno))
       /* unmounting failed, tell the kernel */
       res->status = 1;
   }
 
-  dlog("UNMOUNT REPLY: status=%d\n", res->status);
+  dlog("UNMOUNT REPLY: status=%d", res->status);
   return 0;
 }
 
@@ -749,14 +746,14 @@ autofs_postunmount_2_req(postumntreq *req,
 {
   postumntreq *ul = req;
 
-  dlog("POSTUNMOUNT REQUEST: dev=%lx rdev=%lx\n",
+  dlog("POSTUNMOUNT REQUEST: dev=%lx rdev=%lx",
        (u_long) ul->devid,
        (u_long) ul->rdevid);
 
   /* succeed unconditionally */
   res->status = 0;
 
-  dlog("POSTUNMOUNT REPLY: status=%d\n", res->status);
+  dlog("POSTUNMOUNT REPLY: status=%d", res->status);
   return 0;
 }
 
@@ -765,15 +762,16 @@ autofs_postunmount_2_req(postumntreq *req,
 static int
 autofs_postmount_2_req(postmountreq *req,
 		       postmountres *res,
-		       struct authunix_parms *cred)
+		       struct authunix_parms *cred,
+		       SVCXPRT *transp)
 {
-  dlog("POSTMOUNT REQUEST: %s\tdev=%lx\tspecial=%s %s\n",
+  dlog("POSTMOUNT REQUEST: %s\tdev=%lx\tspecial=%s %s",
        req->mountp, (u_long) req->devid, req->special, req->mntopts);
 
   /* succeed unconditionally */
   res->status = 0;
 
-  dlog("POSTMOUNT REPLY: status=%d\n", res->status);
+  dlog("POSTMOUNT REPLY: status=%d", res->status);
   return 0;
 }
 #endif /* AUTOFS_POSTUNMOUNT */
@@ -782,13 +780,14 @@ autofs_postmount_2_req(postmountreq *req,
 static int
 autofs_readdir_2_req(struct autofs_rddirargs *req,
 		     struct amd_rddirres *res,
-		     struct authunix_parms *cred)
+		     struct authunix_parms *cred,
+		     SVCXPRT *transp)
 {
   am_node *mp;
   int err;
   static nfsentry e_res[MAX_READDIR_ENTRIES];
 
-  dlog("READDIR REQUEST: %s @ %d\n",
+  dlog("READDIR REQUEST: %s @ %d",
        req->rda_map, (int) req->rda_offset);
 
   mp = find_ap(req->rda_map);
@@ -811,7 +810,7 @@ autofs_readdir_2_req(struct autofs_rddirargs *req,
   res->rd_bufsize = req->rda_count;
 
 out:
-  dlog("READDIR REPLY: status=%d\n", res->rd_status);
+  dlog("READDIR REPLY: status=%d", res->rd_status);
   return 0;
 }
 
@@ -942,7 +941,7 @@ autofs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
 }
 
 
-autofs_fh_t *
+int
 autofs_get_fh(am_node *mp)
 {
   autofs_fh_t *fh;
@@ -980,7 +979,8 @@ autofs_get_fh(am_node *mp)
   else
     fh->key = "";
 
-  return fh;
+  mp->am_autofs_fh = fh;
+  return 0;
 }
 
 
@@ -988,19 +988,33 @@ void
 autofs_mounted(am_node *mp)
 {
   /* We don't want any timeouts on autofs nodes */
-  mp->am_ttl = NEVER;
+  mp->am_autofs_ttl = NEVER;
 }
 
 
 void
-autofs_release_fh(autofs_fh_t *fh)
+autofs_release_fh(am_node *mp)
 {
-  if (fh) {
+  autofs_fh_t *fh = mp->am_autofs_fh;
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
-    free(fh->addr.buf);
+  free(fh->addr.buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
-    XFREE(fh);
-  }
+  XFREE(fh);
+  mp->am_autofs_fh = NULL;
+}
+
+
+void
+autofs_get_mp(am_node *mp)
+{
+  /* nothing to do */
+}
+
+
+void
+autofs_release_mp(am_node *mp)
+{
+  /* nothing to do */
 }
 
 
@@ -1009,6 +1023,7 @@ autofs_add_fdset(fd_set *readfds)
 {
   /* nothing to do */
 }
+
 
 int
 autofs_handle_fdset(fd_set *readfds, int nsel)
@@ -1037,26 +1052,95 @@ destroy_autofs_service(void)
 }
 
 
-static void
-autofs_free_data(autofs_data_t *data)
-{
-  if (data->next)
-    autofs_free_data(data->next);
-  XFREE(data);
-}
-
-
 int
-autofs_link_mount(am_node *mp)
+autofs_mount_fs(am_node *mp, mntfs *mf)
 {
+  int err = 0;
+  char *target, *target2 = NULL;
+  struct stat buf;
+
+  /*
+   * For sublinks, we could end up here with an already mounted f/s.
+   * Don't do anything in that case.
+   */
+  if (!(mf->mf_flags & MFF_MOUNTED))
+    err = mf->mf_ops->mount_fs(mp, mf);
+
+  if (err || mf->mf_flags & MFF_ON_AUTOFS)
+    /* Nothing else to do */
+    return err;
+
+  if (!(gopt.flags & CFM_AUTOFS_USE_LOFS))
+    /* Symlinks will be requested in autofs_mount_succeeded */
+    return 0;
+
+  if (mp->am_link)
+    target = mp->am_link;
+  else
+    target = mf->mf_mount;
+
+  if (target[0] != '/')
+    target2 = str3cat(NULL, mp->am_parent->am_path, "/", target);
+  else
+    target2 = strdup(target);
+
+  plog(XLOG_INFO, "autofs: converting from link to lofs (%s -> %s)", mp->am_path, target2);
+
+  /*
+   * we need to stat() the destination, because the bind mount does not
+   * follow symlinks and/or allow for non-existent destinations.
+   * we fall back to symlinks if there are problems.
+   *
+   * we need to temporarily change pgrp, otherwise our stat() won't
+   * trigger whatever cascading mounts are needed.
+   *
+   * WARNING: we will deadlock if this function is called from the master
+   * amd process and it happens to trigger another auto mount. Therefore,
+   * this function should be called only from a child amd process, or
+   * at the very least it should not be called from the parent unless we
+   * know for sure that it won't cause a recursive mount. We refuse to
+   * cause the recursive mount anyway if called from the parent amd.
+   */
+  if (!foreground) {
+    if ((err = stat(target2, &buf)))
+      goto out;
+  }
+  if ((err = lstat(target2, &buf)))
+    goto out;
+
+  if ((err = mount_lofs(mp->am_path, target2, mf->mf_mopts, 1))) {
+    errno = err;
+    goto out;
+  }
+
+ out:
+  if (target2)
+    free(target2);
+
+  if (err)
+    return errno;
   return 0;
 }
 
 
 int
-autofs_link_umount(am_node *mp)
+autofs_umount_fs(am_node *mp, mntfs *mf)
 {
-  return 0;
+  int err = 0;
+  if (!(mf->mf_flags & MFF_ON_AUTOFS) &&
+      gopt.flags & CFM_AUTOFS_USE_LOFS) {
+    err = UMOUNT_FS(mp->am_path, mnttab_file_name, 1);
+    if (err)
+      return err;
+  }
+
+  /*
+   * Multiple sublinks could reference this f/s.
+   * Don't actually unmount it unless we're holding the last reference.
+   */
+  if (mf->mf_refc == 1)
+    err = mf->mf_ops->umount_fs(mp, mf);
+  return err;
 }
 
 
@@ -1116,7 +1200,8 @@ autofs_mount_succeeded(am_node *mp)
   /*
    * Store dev and rdev -- but not for symlinks
    */
-  if (!mp->am_link) {
+  if (gopt.flags & CFM_AUTOFS_USE_LOFS ||
+      mp->am_mnt->mf_flags & MFF_ON_AUTOFS) {
     if (!lstat(mp->am_path, &stb)) {
       mp->am_dev = stb.st_dev;
       mp->am_rdev = stb.st_rdev;
@@ -1126,31 +1211,15 @@ autofs_mount_succeeded(am_node *mp)
   }
 
   if (transp) {
-    if (mp->am_link) {
-      /* this was a lookup request */
-      autofs_lookupres res;
-      res.lu_type.action = AUTOFS_LINK_RQ;
-      res.lu_type.lookup_result_type_u.lt_linka.dir = strdup(mp->am_name);
-      res.lu_type.lookup_result_type_u.lt_linka.link = strdup(mp->am_link);
-      res.lu_res = AUTOFS_OK;
-      res.lu_verbose = 1;
+    autofs_mountres res;
+    res.mr_type.status = AUTOFS_DONE;
+    res.mr_type.mount_result_type_u.error = AUTOFS_OK;
+    res.mr_verbose = 1;
 
-      if (!svc_sendreply(transp,
-			 (XDRPROC_T_TYPE) xdr_autofs_lookupres,
-			 (SVC_IN_ARG_TYPE) &res))
-	svcerr_systemerr(transp);
-    } else {
-      /* this was a mount request */
-      autofs_mountres res;
-      res.mr_type.status = AUTOFS_DONE;
-      res.mr_type.mount_result_type_u.error = AUTOFS_OK;
-      res.mr_verbose = 1;
-
-      if (!svc_sendreply(transp,
-			 (XDRPROC_T_TYPE) xdr_autofs_mountres,
-			 (SVC_IN_ARG_TYPE) &res))
-	svcerr_systemerr(transp);
-    }
+    if (!svc_sendreply(transp,
+		       (XDRPROC_T_TYPE) xdr_autofs_mountres,
+		       (SVC_IN_ARG_TYPE) &res))
+      svcerr_systemerr(transp);
 
     dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
     XFREE(transp);
@@ -1167,27 +1236,15 @@ autofs_mount_failed(am_node *mp)
   SVCXPRT *transp = mp->am_transp;
 
   if (transp) {
-    if (mp->am_link) {
-      /* this was a lookup request */
-      autofs_lookupres res;
-      res.lu_res = AUTOFS_NOENT;
-      res.lu_verbose = 1;
-      if (!svc_sendreply(transp,
-			 (XDRPROC_T_TYPE) xdr_autofs_lookupres,
-			 (SVC_IN_ARG_TYPE) &res))
-	svcerr_systemerr(transp);
-    } else {
-      /* this was a mount request */
-      autofs_mountres res;
-      res.mr_type.status = AUTOFS_DONE;
-      res.mr_type.mount_result_type_u.error = AUTOFS_NOENT;
-      res.mr_verbose = 1;
+    autofs_mountres res;
+    res.mr_type.status = AUTOFS_DONE;
+    res.mr_type.mount_result_type_u.error = AUTOFS_NOENT;
+    res.mr_verbose = 1;
 
-      if (!svc_sendreply(transp,
-			 (XDRPROC_T_TYPE) xdr_autofs_mountres,
-			 (SVC_IN_ARG_TYPE) &res))
-	svcerr_systemerr(transp);
-    }
+    if (!svc_sendreply(transp,
+		       (XDRPROC_T_TYPE) xdr_autofs_mountres,
+		       (SVC_IN_ARG_TYPE) &res))
+      svcerr_systemerr(transp);
 
     dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
     XFREE(transp);
@@ -1217,5 +1274,5 @@ autofs_compute_mount_flags(mntent_t *mntp)
 void autofs_timeout_mp(am_node *mp)
 {
   /* We don't want any timeouts on autofs nodes */
-  mp->am_ttl = NEVER;
+  mp->am_autofs_ttl = NEVER;
 }

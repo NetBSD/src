@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_default.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
+/*	$NetBSD: umount_default.c,v 1.1.1.7 2004/11/27 01:00:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_default.c,v 1.9 2002/12/27 22:44:03 ezk Exp
+ * Id: umount_default.c,v 1.12 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -55,17 +55,10 @@
 
 
 int
-umount_fs(char *mntdir, const char *mnttabname)
-{
-  return umount_fs2(mntdir, mntdir, mnttabname);
-}
-
-int
-umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
+umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
 {
   mntlist *mlist, *mp, *mp_save = 0;
   int error = 0;
-  char *mnt_dir_save;
 
   mp = mlist = read_mtab(mntdir, mnttabname);
 
@@ -91,10 +84,16 @@ umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
     unlock_mntlist();
 #endif /* MOUNT_TABLE_ON_FILE */
 
-    mnt_dir_save = mp_save->mnt->mnt_dir;
-    mp_save->mnt->mnt_dir = real_mntdir;
-    error = UNMOUNT_TRAP(mp_save->mnt);
-    mp_save->mnt->mnt_dir = mnt_dir_save;
+#ifdef NEED_AUTOFS_SPACE_HACK
+    if (on_autofs) {
+      char *mnt_dir_save = mp_save->mnt->mnt_dir;
+      mp_save->mnt->mnt_dir = autofs_strdup_space_hack(mnt_dir_save);
+      error = UNMOUNT_TRAP(mp_save->mnt);
+      XFREE(mp_save->mnt->mnt_dir);
+      mp_save->mnt->mnt_dir = mnt_dir_save;
+    } else
+#endif /* NEED_AUTOFS_SPACE_HACK */
+      error = UNMOUNT_TRAP(mp_save->mnt);
     if (error < 0) {
       switch (error = errno) {
       case EINVAL:
@@ -104,8 +103,13 @@ umount_fs2(char *mntdir, char *real_mntdir, const char *mnttabname)
 	break;
 
       case ENOENT:
+	/*
+	 * This could happen if the kernel insists on following symlinks
+	 * when we try to unmount a direct mountpoint. We need to propagate
+	 * the error up so that the top layers know it failed and don't
+	 * try to rmdir() the mountpoint or other silly things.
+	 */
 	plog(XLOG_ERROR, "mount point %s: %m", mp_save->mnt->mnt_dir);
-	error = 0;		/* Not really an error (?) */
 	break;
 
       default:

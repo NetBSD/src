@@ -39,6 +39,8 @@ bld_cmd=""
 bld_flags=""
 cnf_cmd=""
 cnf_flags="-C"			# use config.cache cache file
+inst_cmd=""
+inst_flags=""
 mkcnf_cmd=""
 vars=""
 expvars=""
@@ -104,6 +106,19 @@ case "$1" in
 	shift
     ;;
 
+    -i )
+	# look for GNU make if possible
+	gmake --version -f /dev/null > /dev/null 2>&1
+	if [ $? = 0 ]
+	then
+	    inst_cmd="${MAKE:-gmake} install"
+	else
+	    inst_cmd="${MAKE:-make} install"
+	fi
+	default=no
+	shift
+    ;;
+
     -c )
 	cnf_cmd="../configure --enable-debug=yes"
 #	add_gcc_flags1
@@ -161,12 +176,14 @@ case "$1" in
 
     -Ds )
 	cnf_cmd="../configure -enable-debug=yes"
+#	cnf_cmd="../configure -enable-debug=mem"
 #  	cnf_cmd="../configure --prefix=/usr/local/AMD --enable-debug=yes --enable-shared --disable-static \
 #  	    --enable-cppflags=\"-I${HOME}/ldap/include -I${HOME}/hesiod/include\" \
 #  	    --enable-ldflags=\"-L${HOME}/ldap/lib -L${HOME}/hesiod/lib\""
 #	cnf_cmd="$cnf_cmd \
 #  	    --enable-cppflags=-I${HOME}/ldap/include \
 #  	    --enable-ldflags=-L${HOME}/ldap/lib"
+#	cnf_cmd="../configure -enable-debug=yes --enable-cppflags=-I/usr/local/include --enable-ldflags=-L/usr/local/lib"
 	add_prefix_flags
 	add_shared_flags
 	add_gcc_flags2
@@ -212,6 +229,7 @@ Usage: buildall [-b] [-[cCdD][s]] [-K] [-q] [-h] [-- configopts]
      -D:  configure in /usr/local/AMD (strict compile, debugging)
      -Ds: configure in /usr/local/AMD (strict compile, debugging, shared libs)
      -K: run mkconf to update *.in files (developers only)
+     -i: build and install
      -q: quick configure only (run config.status)
      -h: print usage
      configopts: options to pass to configure (must be last and after a --)
@@ -315,11 +333,11 @@ if test -n "$cnf_cmd"; then
 	:
     fi
     if test -z "${cnf_flags}${extra_cnf_flags}"; then
-	echo $cnf_cmd
-	$cnf_cmd "$cmdline_cnf_flags" || exit 1
+	echo $cnf_cmd $cmdline_cnf_flags
+	$cnf_cmd $cmdline_cnf_flags || exit 1
     else
-	echo $cnf_cmd "$cnf_flags" "$extra_cnf_flags" 
-	$cnf_cmd "$cnf_flags" "$extra_cnf_flags" "$cmdline_cnf_flags" || exit 1
+	echo $cnf_cmd "$cnf_flags" "$extra_cnf_flags" $cmdline_cnf_flags
+	$cnf_cmd "$cnf_flags" "$extra_cnf_flags" $cmdline_cnf_flags || exit 1
     fi
 else
     :
@@ -328,8 +346,17 @@ fi
 ##############################################################################
 # if need to [re]build
 if test -n "$bld_cmd"; then
-    echo $bld_cmd
-    $bld_cmd || exit 1
+    echo $bld_cmd $bld_flags
+    $bld_cmd $bld_flags || exit 1
+else
+    :
+fi
+
+##############################################################################
+# if need to install
+if test -n "$inst_cmd"; then
+    echo $inst_cmd $inst_flags
+    $inst_cmd $inst_flags || exit 1
 else
     :
 fi

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_netbsd.h,v 1.1.1.6 2003/03/09 01:13:28 christos Exp $	*/
+/*	$NetBSD: nfs_prot_netbsd.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_netbsd.h,v 1.7 2002/12/27 22:44:00 ezk Exp
+ * Id: nfs_prot_netbsd.h,v 1.9 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -165,58 +165,6 @@ typedef writeargs nfswriteargs;
 
 # define MOUNT_NFS3 MOUNT_NFS
 # define MNTOPT_NFS3 "nfs"
-
-#define FHSIZE3 64		/* size in bytes of a file handle (v3) */
-#define	NFS3_FHSIZE 64
-#define	MOUNTVERS3 ((unsigned long)(3))
-#define	NFS_V3 ((unsigned long)(3))
-
-typedef struct {
-  u_int fhandle3_len;
-  char *fhandle3_val;
-} fhandle3;
-
-enum mountstat3 {
-  MNT3_OK = 0,
-  MNT3ERR_PERM = 1,
-  MNT3ERR_NOENT = 2,
-  MNT3ERR_IO = 5,
-  MNT3ERR_ACCES = 13,
-  MNT3ERR_NOTDIR = 20,
-  MNT3ERR_INVAL = 22,
-  MNT3ERR_NAMETOOLONG = 63,
-  MNT3ERR_NOTSUPP = 10004,
-  MNT3ERR_SERVERFAULT = 10006
-};
-typedef enum mountstat3 mountstat3;
-
-struct mountres3_ok {
-  fhandle3 fhandle;
-  struct {
-    u_int auth_flavors_len;
-    int *auth_flavors_val;
-  } auth_flavors;
-};
-typedef struct mountres3_ok mountres3_ok;
-
-struct mountres3 {
-  mountstat3 fhs_status;
-  union {
-    mountres3_ok mountinfo;
-  } mountres3_u;
-};
-typedef struct mountres3 mountres3;
-
-struct nfs_fh3 {
-  u_int fh3_length;
-  union nfs_fh3_u {
-    struct nfs_fh3_i {
-      fhandle_t fh3_i;
-    } nfs_fh3_i;
-    char data[NFS3_FHSIZE];
-  } fh3_u;
-};
-typedef struct nfs_fh3 nfs_fh3;
 
 #endif /* NFSMNT_NFSV3 */
 

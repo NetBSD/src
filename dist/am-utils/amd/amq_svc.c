@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_svc.c,v 1.1.1.6 2003/03/09 01:13:09 christos Exp $	*/
+/*	$NetBSD: amq_svc.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_svc.c,v 1.9 2002/12/27 22:43:48 ezk Exp
+ * Id: amq_svc.c,v 1.15 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -51,6 +51,55 @@
 
 /* typedefs */
 typedef char *(*amqsvcproc_t)(voidp, struct svc_req *);
+
+#if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
+# ifdef NEED_LIBWRAP_SEVERITY_VARIABLES
+/*
+ * Some systems that define libwrap already define these two variables
+ * in libwrap, while others don't: so I need to know precisely iff
+ * to define these two severity variables.
+ */
+int allow_severity=0, deny_severity=0;
+# endif /* NEED_LIBWRAP_SEVERITY_VARIABLES */
+
+/*
+ * check if remote amq is authorized to access this amd.
+ * Returns: 1=allowed, 0=denied.
+ */
+static int
+amqsvc_is_client_allowed(const struct sockaddr_in *addr, char *remote)
+{
+  struct hostent *h;
+  char *name, **ad;
+
+  /* Check IP address */
+  if (hosts_ctl(AMD_SERVICE_NAME, "", remote, ""))
+    return 1;
+  /* Get address */
+  if (!(h = gethostbyaddr((const char *)&(addr->sin_addr),
+                          sizeof(addr->sin_addr),
+                          AF_INET)))
+    return 0;
+  if (!(name = alloca(strlen(h->h_name)+1)))
+    return 0;
+  strcpy(name, h->h_name);
+  /* Paranoia check */
+  if (!(h = gethostbyname(name)))
+    return 0;
+  for (ad = h->h_addr_list; *ad; ad++)
+    if (!memcmp(*ad, &(addr->sin_addr), h->h_length))
+      break;
+  if (!*ad)
+    return 0;
+  if (hosts_ctl(AMD_SERVICE_NAME, "", h->h_name, ""))
+    return 1;
+  /* Check aliases */
+  for (ad = h->h_aliases; *ad; ad++)
+    if (hosts_ctl(AMD_SERVICE_NAME, "", *ad, ""))
+      return 1;
+  return 0;
+}
+#endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
 
 
 void
@@ -64,6 +113,21 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
   char *result;
   xdrproc_t xdr_argument, xdr_result;
   amqsvcproc_t local;
+
+#if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
+  if (gopt.flags & CFM_USE_TCPWRAPPERS) {
+    struct sockaddr_in *remote_addr = svc_getcaller(rqstp->rq_xprt);
+    char *remote_hostname = inet_ntoa(remote_addr->sin_addr);
+
+    if (!amqsvc_is_client_allowed(remote_addr, remote_hostname)) {
+      plog(XLOG_WARNING, "Amd denied remote amq service to %s", remote_hostname);
+      svcerr_auth(transp, AUTH_FAILED);
+      return;
+    } else {
+      dlog("Amd allowed remote amq service to %s", remote_hostname);
+    }
+  }
+#endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
 
   switch (rqstp->rq_proc) {
 

@@ -6,15 +6,11 @@ This file lists the ones who contributed major code changes, in no
 particular order, and I thank them all.  This is of course not to diminish
 the smaller contributes of the many others.  Thank you all.
 
-* Erez Zadok <ezk@cs.columbia.edu>
+* Erez Zadok <ezk@cs.sunysb.edu>
 
 The most significant changes were made by Erez Zadok in terms of bug fixes,
 ports, and new features added.  Erez Zadok is the current maintainer of
 am-utils, as of January 1997.
-
-There is a mailing list dedicated to developers of am-utils.  To subscribe
-to it, send mail to majordomo@majordomo.cs.columbia.edu, with the body of
-the message having the single line "subscribe amd-dev".
 
 * Ion Badulescu <ion@cs.columbia.edu>
 
@@ -175,6 +171,9 @@ version 2, and try again later.
 November 29, 2002: compile fixes for NetBSD, a couple of bug fixes (one
 already fixed by maintainers)
 
+April 12, 2003: support new "unmount" option, useful to timeout removable
+local media mounts.
+
 * Bill Paul <wpaul@ctr.columbia.edu>
 
 November 5, 1997: NFS v.3 support for AIX 4.2.1, which does *not* include
@@ -314,6 +313,8 @@ November 21, 2000: recognize proplist mnttab flag.
 * Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
 November 21, 2000: lots of NetBSD fixes (many of which are generic).
 
+April 18, 2003: patch to reference am-utils info pages in man page.
+
 * Olaf Kirch <okir@caldera.de>
 February 1, 2001: important Linux NFS error number mapping fixed
 
@@ -333,6 +334,9 @@ documentation fix.
 November 28, 2001: Bug fix.  Support "nolock" as an NFS option, not a
 generic mount option.
 
+July 17, 2003: pref:=null core dump fix.  libgdbm portability.  tcpd/librap
+support.  And a few other things for the 6.0 branch.
+
 * Trond Myklebust <trond.myklebust@fys.uio.no>
 January 10, 2002: Proper initialization of the timeo parameter on Linux, TCP
 _must_ have a timeout 2 orders of magnitude larger than UDP
@@ -349,3 +353,31 @@ June 14, 2002: patch to use "xlatecookie" NFS mount option.
 
 * Jun-ichiro itojun Hagino <itojun@iijlab.net>.
 June 11, 2002: minor fixes to support NetBSD 1.6A.
+
+* Sean Fagan <sef@apple.com>
+March 14, 2003: detect and use the MNT2_GEN_OPT_AUTOMNTFS mount flag
+on OS X / Darwin.
+
+* Hendrik Scholz <hscholz@raisdorf.net>
+June 9, 2003: mk-amd-map should open temp db file using O_EXCL.
+
+* Mark Davies <mark@mcs.vuw.ac.nz>
+July 14, 2003: define "xlatecookie" mnttab option if not defined (for
+NetBSD).  Support null hesiod entries if they start with a ".".
+
+* Eric S. Raymond <esr@thyrsus.com>
+December 9, 2003: fix unbalanced [] typo in fsinfo man page.
+
+* Martin Blapp <mb@imp.ch>
+July 6, 2004: recognize fields in pcfs_args_t in FreeBSD 5.
+
+* Dan Nelson <dnelson@allantgroup.com>
+August 2, 2004: pawd to recognize "host" type mounts.
+
+* Hauke Fath <hauke@Espresso.Rhein-Neckar.DE>
+August 3, 2004: pawd to recognize "linkx" type mounts.
+
+* Michael van Elst <M.van.Elst@science-computing.de>
+September 1, 2004: bug fix to avoid race condition in calls to mntctl on
+AIX.
+

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_linkx.c,v 1.1.1.6 2003/03/09 01:13:07 christos Exp $	*/
+/*	$NetBSD: amfs_linkx.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_linkx.c,v 1.12 2002/12/27 22:43:47 ezk Exp
+ * Id: amfs_linkx.c,v 1.16 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -55,6 +55,7 @@
 
 /* forward declarations */
 static int amfs_linkx_mount(am_node *mp, mntfs *mf);
+static int amfs_linkx_umount(am_node *mp, mntfs *mf);
 
 /*
  * linkx operations
@@ -65,14 +66,15 @@ struct am_ops amfs_linkx_ops =
   amfs_link_match,
   0,				/* amfs_linkx_init */
   amfs_linkx_mount,
-  amfs_link_umount,
+  amfs_linkx_umount,
   amfs_error_lookup_child,
   amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_linkx_readlink */
   0,				/* amfs_linkx_mounted */
   0,				/* amfs_linkx_umounted */
-  find_amfs_auto_srvr,
+  amfs_generic_find_srvr,
+  0,				/* amfs_linkx_get_wchan */
   FS_MBACKGROUND,
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_LINKX_FS_FLAGS,
@@ -102,5 +104,12 @@ amfs_linkx_mount(am_node *mp, mntfs *mf)
   if (lstat(ln, &stb) < 0)
     return errno;
 
+  return 0;
+}
+
+
+static int
+amfs_linkx_umount(am_node *mp, mntfs *mf)
+{
   return 0;
 }

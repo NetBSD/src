@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_bsdi2.h,v 1.1.1.6 2003/03/09 01:13:25 christos Exp $	*/
+/*	$NetBSD: nfs_prot_bsdi2.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_bsdi2.h,v 1.9 2002/12/27 22:43:59 ezk Exp
+ * Id: nfs_prot_bsdi2.h,v 1.11 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -61,6 +61,15 @@
 #ifdef HAVE_RPCSVC_MOUNT_H
 # include <rpcsvc/mount.h>
 #endif /* HAVE_RPCSVC_MOUNT_H */
+
+#ifdef HAVE_UFS_UFS_UFSMOUNT_H
+# ifndef MAXQUOTAS
+#  define MAXQUOTAS     2
+# endif /* not MAXQUOTAS */
+/* fake structure: too difficult to include other headers here */
+struct netexport { int this_is_SO_wrong; };
+# include <ufs/ufs/ufsmount.h>
+#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
 
 /*
  * <msdosfs/msdosfsmount.h> is for kernel only on bsdi2, so do not

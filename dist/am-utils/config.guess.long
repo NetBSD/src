@@ -31,11 +31,20 @@ case "${GCONFIG}" in
 	GCONFIG=`echo ${GCONFIG} | sed -e 's/i.86/i386/' -e 's/linux-gnu/linux/'`
 	if test -f /etc/redhat-release ; then
 	    long=`getver /etc/redhat-release`
-	    echo ${GCONFIG}-rh${long}
+	    # determine if it's Red Hat or Fedora
+	    if grep -qi fedora /etc/redhat-release ; then
+		echo ${GCONFIG}-fc${long}
+	    else
+		echo ${GCONFIG}-rh${long}
+	    fi
 	    exit 0
 	elif test -f /etc/SuSE-release ; then
 	    long=`getver /etc/SuSE-release`
 	    echo ${GCONFIG}-suse${long}
+	    exit 0
+	elif test -f /etc/debian_version ; then
+	    long=`getver /etc/debian_version`
+	    echo ${GCONFIG}-deb${long}
 	    exit 0
 	else
 	    echo ${GCONFIG}

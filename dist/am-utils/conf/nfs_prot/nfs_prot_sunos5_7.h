@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_sunos5_7.h,v 1.1.1.6 2003/03/09 01:13:31 christos Exp $	*/
+/*	$NetBSD: nfs_prot_sunos5_7.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_sunos5_7.h,v 1.13 2002/12/27 22:44:02 ezk Exp
+ * Id: nfs_prot_sunos5_7.h,v 1.15 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -105,6 +105,11 @@
 #define	NFSPROC_STATFS ((unsigned long)(17))
 
 #define AUTOFS_CONFTYPE "ticotsord"
+
+/* Sun has incomplete ldap headers, but libraries are ok */
+#ifndef LDAP_VERSION_MAX
+#define LDAP_VERSION_MAX LDAP_VERSION3
+#endif /* LDAP_VERSION_MAX */
 
 
 /*
@@ -213,6 +218,11 @@ extern void *nfsproc_root_2_svc(void *, struct svc_req *);
 extern void *nfsproc_writecache_2(void *, CLIENT *);
 extern void *nfsproc_writecache_2_svc(void *, struct svc_req *);
 extern int nfs_program_2_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
+
+/* Sun has incomplete ldap headers, but libraries are ok */
+#ifdef HAVE_LDAP_H
+extern int ldap_set_option(LDAP *, int, const void *);
+#endif /* HAVE_LDAP_H */
 
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_osf.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
+/*	$NetBSD: umount_osf.c,v 1.1.1.7 2004/11/27 01:00:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_osf.c,v 1.8 2002/12/27 22:44:03 ezk Exp
+ * Id: umount_osf.c,v 1.10 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -55,13 +55,7 @@
 
 
 int
-umount_fs(char *mntdir, const char *mnttabname)
-{
-  return umount_fs2(mntdir, mntdir, mnttabname);
-}
-
-int
-umount_fs2(char *fs_name, char *unused, const char *mnttabname)
+umount_fs(char *fs_name, const char *mnttabname, int on_autofs)
 {
   int error;
 

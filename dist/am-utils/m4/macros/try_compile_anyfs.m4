@@ -126,6 +126,9 @@ AC_TRY_COMPILE(
 #ifdef HAVE_MSDOSFS_MSDOSFSMOUNT_H
 # include <msdosfs/msdosfsmount.h>
 #endif /* HAVE_MSDOSFS_MSDOSFSMOUNT_H */
+#ifdef HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H
+# include <fs/msdosfs/msdosfsmount.h>
+#endif /* HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H */
 
 #ifdef HAVE_SYS_FS_TMP_H
 # include <sys/fs/tmp.h>

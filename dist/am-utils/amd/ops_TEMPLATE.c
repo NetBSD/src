@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.6 2003/03/09 01:13:17 christos Exp $	*/
+/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.7 2004/11/27 01:00:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_TEMPLATE.c,v 1.12 2002/12/27 22:43:50 ezk Exp
+ * Id: ops_TEMPLATE.c,v 1.15 2004/07/23 18:29:22 ezk Exp
  *
  */
 
@@ -66,11 +66,11 @@ static int foofs_init(mntfs *mf);
 static int foofs_mount(am_node *mp, mntfs *mf);
 static int foofs_umount(am_node *mp, mntfs *mf);
 static am_node *foofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
-static int foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
+static int foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, u_int count);
 static am_node *foofs_readlink(am_node *mp, int *error_return);
 static void foofs_mounted(am_node *am, mntfs *mf);
 static void foofs_umounted(am_node *mp, mntfs *mf);
-fserver *foofs_ffserver(mntfs *mf);
+static fserver *foofs_ffserver(mntfs *mf);
 
 
 /*
@@ -91,6 +91,7 @@ am_ops foofs_ops =
   foofs_mounted,		/* after-mount extra actions */
   foofs_umounted,		/* after-umount extra actions */
   foofs_ffserver,		/* find a file server */
+  foofs_get_wchan,		/* return the waiting channel */
   FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_TEMPLATE_FS_FLAGS,
@@ -221,7 +222,7 @@ foofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
  * If OK, fills in ep with chain of directory entries.
  */
 static int
-foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count)
+foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, u_int count)
 {
   int error = 0;
 
@@ -285,10 +286,22 @@ foofs_umounted(am_node *mp)
  * Find a file server.
  * Returns: fserver of found server, or NULL if not found.
  */
-fserver *
+static fserver *
 foofs_ffserver(mntfs *mf)
 {
   plog(XLOG_INFO, "entering foofs_ffserver...");
 
   return NULL;
+}
+
+
+/*
+ * Normally just return mf. Only inherit needs to do special tricks.
+ */
+static wchan_t *
+foofs_get_wchan(mntfs *mf)
+{
+  plog(XLOG_INFO, "entering foofs_get_wchan...");
+
+  return mf;
 }

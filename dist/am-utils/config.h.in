@@ -146,8 +146,11 @@
 /* Define to 1 if you have the `clnt_create' function. */
 #undef HAVE_CLNT_CREATE
 
-/* Define to 1 if you have the `clnt_create_timed' function. */
-#undef HAVE_CLNT_CREATE_TIMED
+/* Define to 1 if you have the `clnt_create_vers' function. */
+#undef HAVE_CLNT_CREATE_VERS
+
+/* Define to 1 if you have the `clnt_create_vers_timed' function. */
+#undef HAVE_CLNT_CREATE_VERS_TIMED
 
 /* Define to 1 if you have the `clnt_spcreateerror' function. */
 #undef HAVE_CLNT_SPCREATEERROR
@@ -222,8 +225,14 @@
 /* does extern definition for get_myaddress() exist? */
 #undef HAVE_EXTERN_GET_MYADDRESS
 
+/* does extern definition for hosts_ctl() exist? */
+#undef HAVE_EXTERN_HOSTS_CTL
+
 /* does extern definition for innetgr() exist? */
 #undef HAVE_EXTERN_INNETGR
+
+/* does extern definition for ldap_enable_cache() exist? */
+#undef HAVE_EXTERN_LDAP_ENABLE_CACHE
 
 /* does extern definition for mkstemp() exist? */
 #undef HAVE_EXTERN_MKSTEMP
@@ -270,6 +279,9 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define if `fds_bits' is member of `fd_set'. */
+#undef HAVE_FD_SET_FDS_BITS
+
 /* Define to 1 if you have the `fgets' function. */
 #undef HAVE_FGETS
 
@@ -309,6 +321,9 @@
 /* Define if have MFS filesystem */
 #undef HAVE_FS_MFS
 
+/* Define to 1 if you have the <fs/msdosfs/msdosfsmount.h> header file. */
+#undef HAVE_FS_MSDOSFS_MSDOSFSMOUNT_H
+
 /* Define if have NFS filesystem */
 #undef HAVE_FS_NFS
 
@@ -338,6 +353,9 @@
 
 /* Define if have XFS filesystem (irix) */
 #undef HAVE_FS_XFS
+
+/* Define to 1 if you have the <gdbm/ndbm.h> header file. */
+#undef HAVE_GDBM_NDBM_H
 
 /* Define to 1 if you have the `getccent' function. */
 #undef HAVE_GETCCENT
@@ -426,9 +444,6 @@
 /* Define to 1 if you have the `ldap_open' function. */
 #undef HAVE_LDAP_OPEN
 
-/* Define to 1 if you have the `gdbm' library (-lgdbm). */
-#undef HAVE_LIBGDBM
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -452,6 +467,9 @@
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 #undef HAVE_LIBRT
+
+/* does libwrap exist? */
+#undef HAVE_LIBWRAP
 
 /* Define to 1 if you have the <linux/auto_fs4.h> header file. */
 #undef HAVE_LINUX_AUTO_FS4_H
@@ -564,6 +582,9 @@
 /* Define to 1 if you have the `mount' function. */
 #undef HAVE_MOUNT
 
+/* Define if `optptr' is member of `mounta'. */
+#undef HAVE_MOUNTA_OPTPTR
+
 /* Define to 1 if you have the `mountsyscall' function. */
 #undef HAVE_MOUNTSYSCALL
 
@@ -605,6 +626,9 @@
 
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
+
+/* Define to 1 if you have the <nfsclient/nfsargs.h> header file. */
+#undef HAVE_NFSCLIENT_NFSARGS_H
 
 /* Define if `acdirmin' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_ACDIRMIN
@@ -683,6 +707,9 @@
 
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
+
+/* Define if `dirmask' is member of `pcfs_args_t'. */
+#undef HAVE_PCFS_ARGS_T_DIRMASK
 
 /* Define if `dsttime' is member of `pcfs_args_t'. */
 #undef HAVE_PCFS_ARGS_T_DSTTIME
@@ -1048,6 +1075,9 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define to 1 if you have the <tcpd.h> header file. */
+#undef HAVE_TCPD_H
+
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 
@@ -1074,6 +1104,9 @@
 
 /* Define if `ufs_pgthresh' is member of `ufs_args_t'. */
 #undef HAVE_UFS_ARGS_T_UFS_PGTHRESH
+
+/* Define to 1 if you have the <ufs/ufs/extattr.h> header file. */
+#undef HAVE_UFS_UFS_EXTATTR_H
 
 /* Define to 1 if you have the <ufs/ufs_mount.h> header file. */
 #undef HAVE_UFS_UFS_MOUNT_H
@@ -1185,9 +1218,6 @@
 
 /* Define to 1 if you have the `xdr_mountlist' function. */
 #undef HAVE_XDR_MOUNTLIST
-
-/* Define to 1 if you have the `xdr_mountres3' function. */
-#undef HAVE_XDR_MOUNTRES3
 
 /* Define to 1 if you have the `xdr_name' function. */
 #undef HAVE_XDR_NAME
@@ -1312,6 +1342,9 @@
 /* automounter filesystem (ignore) flag, used in bsdi-4.1 */
 #undef MNT2_GEN_OPT_AUTOMNTFS
 
+/* automounter filesystem flag, used in Mac OS X / Darwin */
+#undef MNT2_GEN_OPT_AUTOMOUNTED
+
 /* directory hardlink */
 #undef MNT2_GEN_OPT_BIND
 
@@ -1392,9 +1425,6 @@
 
 /* Union mount */
 #undef MNT2_GEN_OPT_UNION
-
-/* Use Readdirplus for NFSv3 */
-#undef MNT2_NFS_OPTS_RDIRPLUS
 
 /* set max secs for dir attr cache */
 #undef MNT2_NFS_OPT_ACDIRMAX
@@ -1504,6 +1534,9 @@
 /* static pathconf kludge info */
 #undef MNT2_NFS_OPT_POSIX
 
+/* Use local locking */
+#undef MNT2_NFS_OPT_PRIVATE
+
 /* allow property list operations (ACLs over NFS) */
 #undef MNT2_NFS_OPT_PROPLIST
 
@@ -1512,6 +1545,9 @@
 
 /* Do lookup with readdir (nqnfs) */
 #undef MNT2_NFS_OPT_RDIRALOOK
+
+/* Use Readdirplus for NFSv3 */
+#undef MNT2_NFS_OPT_RDIRPLUS
 
 /* set read ahead */
 #undef MNT2_NFS_OPT_READAHEAD
@@ -1680,6 +1716,9 @@
 
 /* Mount Table option string: Get static pathconf for mount */
 #undef MNTTAB_OPT_POSIX
+
+/* Mount Table option string: Use local locking */
+#undef MNTTAB_OPT_PRIVATE
 
 /* Mount Table option string: support property lists (ACLs) */
 #undef MNTTAB_OPT_PROPLIST
@@ -1855,6 +1894,13 @@
 
 /* Type of the mount-type field in the mount() system call */
 #undef MTYPE_TYPE
+
+/* does libwrap expect caller to define the variables allow_severity and
+   deny_severity */
+#undef NEED_LIBWRAP_SEVERITY_VARIABLES
+
+/* Defined to the header file containing ndbm-compatible definitions */
+#undef NEW_DBM_H
 
 /* Define the field name for the filehandle within nfs_args_t */
 #undef NFS_FH_FIELD

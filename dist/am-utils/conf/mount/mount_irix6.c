@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_irix6.c,v 1.1.1.6 2003/03/09 01:13:21 christos Exp $	*/
+/*	$NetBSD: mount_irix6.c,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_irix6.c,v 1.8 2002/12/27 22:43:56 ezk Exp
+ * Id: mount_irix6.c,v 1.10 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -95,6 +95,18 @@ mount_irix(char *fsname, char *dir, int flags, MTYPE_TYPE type, voidp data)
     return mount(fsname, dir, (MNT2_GEN_OPT_FSS | MNT2_GEN_OPT_DATA | flags),
 		 type, (efs_args_t *) data, sizeof(efs_args_t));
 #endif /* HAVE_FS_EFS */
+
+#ifdef HAVE_FS_AUTOFS
+  if (STREQ(type, MOUNT_TYPE_AUTOFS))
+    return mount(fsname, dir, (MNT2_GEN_OPT_FSS | MNT2_GEN_OPT_DATA | flags),
+		 type, (autofs_args_t *) data, sizeof(autofs_args_t));
+#endif /* HAVE_FS_AUTOFS */
+
+#ifdef HAVE_FS_LOFS
+  if (STREQ(type, MOUNT_TYPE_LOFS))
+    return mount(fsname, dir, (MNT2_GEN_OPT_FSS | MNT2_GEN_OPT_DATA | flags),
+		 type, (char *) NULL, 0);
+#endif /* HAVE_FS_LOFS */
 
   return EINVAL;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.6 2003/03/09 01:13:27 christos Exp $	*/
+/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_linux.h,v 1.17 2002/12/27 22:44:00 ezk Exp
+ * Id: nfs_prot_linux.h,v 1.20 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -86,13 +86,6 @@
 # define MNTTYPE_NFS3	"nfs"
 #endif /* not MNTTYPE_NFS3 */
 
-#ifndef MOUNTVERS3
-# define MOUNTVERS3	3
-#endif /* not MOUNTVERS3 */
-
-#ifndef NFS3_FHSIZE
-# define NFS3_FHSIZE 64
-#endif /* not NFS3_FHSIZE */
 #endif /* HAVE_FS_NFS3 */
 
 /* XXX: hack until we have a better way to detect /dev/loop devices */
@@ -258,52 +251,6 @@ struct nfs_args {
   struct nfs3_fh	root;		/* 4 */
 };
 typedef struct nfs_args nfs_args_t;
-
-#ifdef HAVE_FS_NFS3
-typedef struct {
-  u_int fhandle3_len;
-  char *fhandle3_val;
-} fhandle3;
-
-enum mountstat3 {
-       MNT_OK = 0,
-       MNT3ERR_PERM = 1,
-       MNT3ERR_NOENT = 2,
-       MNT3ERR_IO = 5,
-       MNT3ERR_ACCES = 13,
-       MNT3ERR_NOTDIR = 20,
-       MNT3ERR_INVAL = 22,
-       MNT3ERR_NAMETOOLONG = 63,
-       MNT3ERR_NOTSUPP = 10004,
-       MNT3ERR_SERVERFAULT = 10006,
-};
-typedef enum mountstat3 mountstat3;
-
-struct mountres3_ok {
-       fhandle3 fhandle;
-       struct {
-               u_int auth_flavors_len;
-               int *auth_flavors_val;
-       } auth_flavors;
-};
-typedef struct mountres3_ok mountres3_ok;
-
-struct mountres3 {
-       mountstat3 fhs_status;
-       union {
-               mountres3_ok mountinfo;
-       } mountres3_u;
-};
-typedef struct mountres3 mountres3;
-
-struct nfs_fh3 {
-  u_int fh3_length;
-  union nfs_fh3_u {
-    char data[NFS3_FHSIZE];
-  } fh3_u;
-};
-typedef struct nfs_fh3 am_nfs_fh3;
-#endif /* HAVE_FS_NFS3 */
 
 /*
  * Missing definitions on redhat alpha linux

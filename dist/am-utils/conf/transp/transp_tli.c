@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.6 2003/03/09 01:13:33 christos Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.7 2004/11/27 01:00:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_tli.c,v 1.14 2002/12/27 22:44:03 ezk Exp
+ * Id: transp_tli.c,v 1.23 2004/04/28 04:22:13 ib42 Exp
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -53,12 +53,16 @@
 
 struct netconfig *nfsncp;
 
+/* provide a definition for systems that don't have this */
+#ifndef INADDR_LOOPBACK
+# define INADDR_LOOPBACK	0x7f000001
+#endif /* not INADDR_LOOPBACK */
 
 /*
  * find the IP address that can be used to connect to the local host
  */
 void
-amu_get_myaddress(struct in_addr *iap)
+amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
 {
   int ret;
   voidp handlep;
@@ -68,21 +72,23 @@ amu_get_myaddress(struct in_addr *iap)
 
   handlep = setnetconfig();
   ncp = getnetconfig(handlep);
-  service.h_host = HOST_SELF_CONNECT;
+  service.h_host = (preferred_localhost ? (char *) preferred_localhost : HOST_SELF_CONNECT);
   service.h_serv = (char *) NULL;
 
   ret = netdir_getbyname(ncp, &service, &addrs);
 
   if (ret || !addrs || addrs->n_cnt < 1) {
     plog(XLOG_FATAL, "cannot get local host address. using 127.0.0.1");
-    iap->s_addr = 0x7f000001;
+    iap->s_addr = htonl(INADDR_LOOPBACK);
   } else {
     /*
      * XXX: there may be more more than one address for this local
      * host.  Maybe something can be done with those.
      */
     struct sockaddr_in *sinp = (struct sockaddr_in *) addrs->n_addrs[0].buf;
-    iap->s_addr = htonl(sinp->sin_addr.s_addr);
+    if (preferred_localhost)
+      plog(XLOG_INFO, "localhost_address \"%s\" requested", preferred_localhost);
+    iap->s_addr = sinp->sin_addr.s_addr; /* XXX: used to be htonl() */
   }
 
   endnetconfig(handlep);	/* free's up internal resources too */
@@ -558,82 +564,40 @@ free_knetconfig(struct knetconfig *kncp)
 }
 
 
-/* get the best possible NFS version for a host and transport */
-static CLIENT *
-amu_clnt_create_best_vers(const char *hostname, u_long program, u_long *out_version, u_long low_version, u_long high_version, const char *nettype)
+/*
+ * Check if the portmapper is running and reachable
+ */
+int check_pmap_up(char *host, struct sockaddr_in* sin)
 {
-  CLIENT *clnt;
-  enum clnt_stat rpc_stat;
-  struct rpc_err rpcerr;
-  struct timeval tv;
-  u_long lo, hi;
+  CLIENT *client;
+  enum clnt_stat clnt_stat = RPC_TIMEDOUT; /* assume failure */
+  int socket = RPC_ANYSOCK;
+  struct timeval timeout;
 
-  /* 3 seconds is more than enough for a LAN */
-  tv.tv_sec = 3;
-  tv.tv_usec = 0;
-
-#ifdef HAVE_CLNT_CREATE_TIMED
-  clnt = clnt_create_timed(hostname, program, high_version, nettype, &tv);
-  if (!clnt) {
-    plog(XLOG_INFO, "failed to create RPC client to \"%s\" after %d seconds",
-	 hostname, (int) tv.tv_sec);
-    return NULL;
+  memset(&timeout, 0, sizeof(timeout));
+  timeout.tv_sec = 3;
+  timeout.tv_usec = 0;
+  sin->sin_port = htons(PMAPPORT);
+  client = clntudp_create(sin, PMAPPROG, PMAPVERS, timeout, &socket);
+  if (client != (CLIENT *) NULL) {
+    /* Ping the portmapper on a remote system by calling the nullproc */
+    clnt_stat = clnt_call(client,
+			  PMAPPROC_NULL,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  NULL,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  NULL,
+			  timeout);
+    clnt_destroy(client);
   }
-#else /* not HAVE_CLNT_CREATE_TIMED */
-  /* Solaris 2.3 and earlier didn't have clnt_create_timed() */
-  clnt = clnt_create(hostname, program, high_version, nettype);
-  if (!clnt) {
-    plog(XLOG_INFO, "failed to create RPC client to \"%s\"", hostname);
-    return NULL;
-  }
-#endif /* not HAVE_CLNT_CREATE_TIMED */
+  close(socket);
+  sin->sin_port = 0;
 
-  rpc_stat = clnt_call(clnt,
-		       NULLPROC,
-		       (XDRPROC_T_TYPE) xdr_void,
-		       NULL,
-		       (XDRPROC_T_TYPE) xdr_void,
-		       NULL,
-		       tv);
-  if (rpc_stat == RPC_SUCCESS) {
-    *out_version = high_version;
-    return clnt;
+  if (clnt_stat == RPC_TIMEDOUT) {
+    plog(XLOG_ERROR, "check_pmap_up: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
+    return 0;
   }
-  while (low_version < high_version) {
-    if (rpc_stat != RPC_PROGVERSMISMATCH)
-      break;
-    clnt_geterr(clnt, &rpcerr);
-    lo = rpcerr.re_vers.low;
-    hi = rpcerr.re_vers.high;
-    if (hi < high_version)
-      high_version = hi;
-    else
-      high_version--;
-    if (lo > low_version)
-      low_version = lo;
-    if (low_version > high_version)
-      goto out;
-
-    CLNT_CONTROL(clnt, CLSET_VERS, (char *)&high_version);
-    rpc_stat = clnt_call(clnt,
-			 NULLPROC,
-			 (XDRPROC_T_TYPE) xdr_void,
-			 NULL,
-			 (XDRPROC_T_TYPE) xdr_void,
-			 NULL,
-			 tv);
-    if (rpc_stat == RPC_SUCCESS) {
-      *out_version = high_version;
-      return clnt;
-    }
-  }
-  clnt_geterr(clnt, &rpcerr);
-
-out:
-  rpc_createerr.cf_stat = rpc_stat;
-  rpc_createerr.cf_error = rpcerr;
-  clnt_destroy(clnt);
-  return NULL;
+  return 1;
 }
 
 
@@ -645,6 +609,7 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
 {
   CLIENT *clnt = NULL;
   u_long versout;
+  struct timeval tv;
 
   /*
    * If not set or set wrong, then try from NFS_VERS_MAX on down. If
@@ -662,9 +627,16 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
 	 (int) NFS_VERSION, (int) nfs_version, proto, host);
   }
 
-  /* get the best NFS version, and timeout quickly if remote host is down */
-  clnt = amu_clnt_create_best_vers(host, NFS_PROGRAM, &versout,
-				   NFS_VERSION, nfs_version, proto);
+  /* 3 seconds is more than enough for a LAN */
+  memset(&tv, 0, sizeof(tv));
+  tv.tv_sec = 3;
+  tv.tv_usec = 0;
+
+#ifdef HAVE_CLNT_CREATE_VERS_TIMED
+  clnt = clnt_create_vers_timed(host, NFS_PROGRAM, &versout, NFS_VERSION, nfs_version, proto, &tv);
+#else /* not HAVE_CLNT_CREATE_VERS_TIMED */
+  clnt = clnt_create_vers(host, NFS_PROGRAM, &versout, NFS_VERSION, nfs_version, proto);
+#endif	/* not HAVE_CLNT_CREATE_VERS_TIMED */
 
   if (clnt == NULL) {
     if (nfs_version == NFS_VERSION)
@@ -746,7 +718,7 @@ register_autofs_service(char *autofs_conftype, void (*autofs_dispatch)())
 
   tbp = (struct t_bind *) t_alloc(fd, T_BIND, T_ADDR);
   if (!tbp) {
-    plog(XLOG_ERROR, "register_autofs_service: t_alloca failed");
+    plog(XLOG_ERROR, "register_autofs_service: t_alloc failed");
     goto out;
   }
 

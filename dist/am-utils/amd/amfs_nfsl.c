@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_nfsl.c,v 1.1.1.6 2003/03/09 01:13:07 christos Exp $	*/
+/*	$NetBSD: amfs_nfsl.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_nfsl.c,v 1.15 2003/01/25 01:46:23 ib42 Exp
+ * Id: amfs_nfsl.c,v 1.21 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -71,18 +71,19 @@ static fserver *amfs_nfsl_ffserver(mntfs *mf);
  */
 am_ops amfs_nfsl_ops =
 {
-  "nfsl",			/* name of file system */
-  amfs_nfsl_match,		/* match */
-  amfs_nfsl_init,		/* initialize */
-  amfs_nfsl_mount,		/* mount vnode */
-  amfs_nfsl_umount,		/* unmount vnode */
-  amfs_error_lookup_child,	/* lookup path-name */
+  "nfsl",
+  amfs_nfsl_match,
+  amfs_nfsl_init,
+  amfs_nfsl_mount,
+  amfs_nfsl_umount,
+  amfs_error_lookup_child,
   amfs_error_mount_child,
-  amfs_error_readdir,		/* read directory */
-  0,				/* read link */
-  0,				/* after-mount extra actions */
-  amfs_nfsl_umounted,		/* after-umount extra actions */
-  amfs_nfsl_ffserver,		/* find a file server */
+  amfs_error_readdir,
+  0,				/* amfs_nfsl_readlink */
+  0,				/* amfs_nfsl_mounted */
+  amfs_nfsl_umounted,
+  amfs_nfsl_ffserver,
+  0,				/* amfs_nfsl_get_wchan */
   FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_NFSL_FS_FLAGS,
@@ -97,9 +98,15 @@ am_ops amfs_nfsl_ops =
 static char *
 amfs_nfsl_match(am_opts *fo)
 {
-  char *cp = fo->opt_fs;
+  char *cp;
   char *ho = fo->opt_rhost;
+  char *retval;
   struct stat stb;
+
+  if (fo->opt_sublink)
+    cp = fo->opt_sublink;
+  else
+    cp = fo->opt_fs;
 
   if (!cp || !ho) {
     plog(XLOG_USER, "amfs_nfsl: host $fs and $rhost must be specified");
@@ -108,20 +115,20 @@ amfs_nfsl_match(am_opts *fo)
 
   /*
    * If this host is not the same as $rhost, or if link does not exist,
-   * perform nfs_match(), same as for type:=nfs.
-   * If link value exists (or same host), then perform amfs_link_match(),
-   * same as for linkx.
+   * call nfs_ops.fs_match().
+   * If link value exists (or same host), call amfs_link_ops.fs_match().
    */
   if (!STRCEQ(ho, am_get_hostname())) {
     plog(XLOG_INFO, "amfs_nfsl: \"%s\" is not local host, using type:=nfs", ho);
-    return nfs_match(fo);
+    retval = nfs_ops.fs_match(fo);
   } else if (lstat(cp, &stb) < 0) {
     plog(XLOG_INFO, "amfs_nfsl: \"%s\" does not exist, using type:=nfs", cp);
-    return nfs_match(fo);
+    retval = nfs_ops.fs_match(fo);
   } else {
     plog(XLOG_INFO, "amfs_nfsl: \"%s\" exists, using type:=link", cp);
-    return amfs_link_match(fo);
+    retval = amfs_link_ops.fs_match(fo);
   }
+  return retval;
 }
 
 
@@ -132,15 +139,15 @@ amfs_nfsl_match(am_opts *fo)
 static int
 amfs_nfsl_init(mntfs *mf)
 {
-  /*
-   * If a link, do nothing (same as type:=link).
-   * If non-link, do nfs_init (same as type:=nfs).
-   */
+  int ret = 0;
   if (mf->mf_flags & MFF_NFSLINK) {
-    return 0;
+    if (amfs_link_ops.fs_init)
+      ret = amfs_link_ops.fs_init(mf);
   } else {
-    return nfs_init(mf);
+    if (nfs_ops.fs_init)
+      ret = nfs_ops.fs_init(mf);
   }
+  return ret;
 }
 
 
@@ -151,15 +158,15 @@ amfs_nfsl_init(mntfs *mf)
 static int
 amfs_nfsl_mount(am_node *mp, mntfs *mf)
 {
-  /*
-   * If a link, do run amfs_link_fmount() (same as type:=link)
-   * If non-link, do nfs_fmount (same as type:=nfs).
-   */
+  int ret = 0;
   if (mf->mf_flags & MFF_NFSLINK) {
-    return amfs_link_mount(mp, mf);
+    if (amfs_link_ops.mount_fs)
+      ret = amfs_link_ops.mount_fs(mp, mf);
   } else {
-    return nfs_mount(mp, mf);
+    if (nfs_ops.mount_fs)
+      ret = nfs_ops.mount_fs(mp, mf);
   }
+  return ret;
 }
 
 
@@ -170,15 +177,15 @@ amfs_nfsl_mount(am_node *mp, mntfs *mf)
 static int
 amfs_nfsl_umount(am_node *mp, mntfs *mf)
 {
-  /*
-   * If a link, do run amfs_link_umount() (same as type:=link)
-   * If non-link, do nfs_umount (same as type:=nfs).
-   */
+  int ret = 0;
   if (mf->mf_flags & MFF_NFSLINK) {
-    return amfs_link_umount(mp, mf);
+    if (amfs_link_ops.umount_fs)
+      ret = amfs_link_ops.umount_fs(mp, mf);
   } else {
-    return nfs_umount(mp, mf);
+    if (nfs_ops.umount_fs)
+      ret = nfs_ops.umount_fs(mp, mf);
   }
+  return ret;
 }
 
 
@@ -191,25 +198,12 @@ amfs_nfsl_umount(am_node *mp, mntfs *mf)
 static void
 amfs_nfsl_umounted(mntfs *mf)
 {
-  /*
-   * If a link, do nothing (same as type:=link)
-   * If non-link, do nfs_umount (same as type:=nfs).
-   */
   if (mf->mf_flags & MFF_NFSLINK) {
-    return;
+    if (amfs_link_ops.umounted)
+      amfs_link_ops.umounted(mf);
   } else {
-    nfs_umounted(mf);
-    /*
-     * MUST remove mount point directories, because if they remain
-     * behind, the next nfsl access will think they are a link
-     * type file system, and not NFS! (when it performs link target
-     * existence test)
-     */
-    if (mf->mf_flags & MFF_MKMNT) {
-      rmdirs(mf->mf_real_mount);
-      mf->mf_flags &= ~MFF_MKMNT;
-    }
-    return;
+    if (nfs_ops.umounted)
+      nfs_ops.umounted(mf);
   }
 }
 
@@ -221,20 +215,26 @@ amfs_nfsl_umounted(mntfs *mf)
 static fserver *
 amfs_nfsl_ffserver(mntfs *mf)
 {
-  char *cp = mf->mf_fo->opt_fs;
+  char *cp;
   char *ho = mf->mf_fo->opt_rhost;
   struct stat stb;
 
+  if (mf->mf_fo->opt_sublink)
+    cp = mf->mf_fo->opt_sublink;
+  else
+    cp = mf->mf_fo->opt_fs;
+
   /*
    * If this host is not the same as $rhost, or if link does not exist,
-   * perform find_nfs_srvr(), same as for type:=nfs.
-   * If link value exists (or same host), then perform
-   * find_amfs_auto_srvr(), same as for linkx.
+   * call amfs_link_ops.ffserver().
+   * If link value exists (or same host), then call ops_nfs.ffserver().
    */
   if (!STRCEQ(ho, am_get_hostname()) || lstat(cp, &stb) < 0) {
-    return find_nfs_srvr(mf);
+    return nfs_ops.ffserver(mf);
   } else {
     mf->mf_flags |= MFF_NFSLINK;
-    return find_amfs_auto_srvr(mf);
+    /* remove the FS_MKMNT flag, we don't want amd touching the mountpoint */
+    mf->mf_fsflags &= ~FS_MKMNT;
+    return amfs_link_ops.ffserver(mf);
   }
 }

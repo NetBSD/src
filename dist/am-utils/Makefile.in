@@ -72,6 +72,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 AMD_FS_OBJS = @AMD_FS_OBJS@
 AMD_INFO_OBJS = @AMD_INFO_OBJS@
 AMTAR = @AMTAR@
+AMU_AUTOFS_PROT_HEADER = @AMU_AUTOFS_PROT_HEADER@
 AMU_CFLAGS = @AMU_CFLAGS@
 AMU_LIB_OBJS = @AMU_LIB_OBJS@
 AMU_NFS_PROT_HEADER = @AMU_NFS_PROT_HEADER@
@@ -92,12 +93,14 @@ LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIBTOOL_LDFLAGS = @LIBTOOL_LDFLAGS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAINT = @MAINT@
 OBJDUMP = @OBJDUMP@
 PACKAGE = @PACKAGE@
 PERL = @PERL@
 RANLIB = @RANLIB@
 STRIP = @STRIP@
 VERSION = @VERSION@
+WRAPLIB = @WRAPLIB@
 YACC = @YACC@
 am__include = @am__include@
 am__quote = @am__quote@
@@ -145,6 +148,7 @@ EXTRA_DIST_M4 = \
 	m4/macros/check_autofs_style.m4			\
 	m4/macros/check_checkmount_style.m4		\
 	m4/macros/check_extern.m4			\
+	m4/macros/check_extern_ldap.m4			\
 	m4/macros/check_fhandle.m4			\
 	m4/macros/check_field.m4			\
 	m4/macros/check_fs_headers.m4			\
@@ -152,6 +156,7 @@ EXTRA_DIST_M4 = \
 	m4/macros/check_gnu_getopt.m4			\
 	m4/macros/check_hide_mount_type.m4		\
 	m4/macros/check_lib2.m4				\
+	m4/macros/check_libwrap_severity.m4		\
 	m4/macros/check_map_funcs.m4			\
 	m4/macros/check_mnt2_cdfs_opt.m4		\
 	m4/macros/check_mnt2_gen_opt.m4			\
@@ -208,7 +213,6 @@ EXTRA_DIST_M4 = \
 	m4/macros/struct_mnttab.m4			\
 	m4/macros/struct_nfs_args.m4			\
 	m4/macros/struct_nfs_fh.m4			\
-	m4/macros/struct_nfs_fh3.m4			\
 	m4/macros/struct_nfs_gfs_mount.m4		\
 	m4/macros/try_compile_anyfs.m4			\
 	m4/macros/try_compile_nfs.m4			\
@@ -378,7 +382,8 @@ EXTRA_DIST = \
 	\
 	BUGS			\
 	LSM.am-utils		\
-	MIRRORS			\
+	MIRRORS.txt		\
+	MIRRORS.html		\
 	README.autofs		\
 	README.ldap		\
 	README.y2k		\
@@ -395,7 +400,7 @@ EXTRA_DIST = \
 DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
 
 # make a snapshots and put them in the ftp snapshots directory
-FTPTOP = /proj/bank/ftp/pub/am-utils
+FTPTOP = /var/ftp/pub/am-utils
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -421,18 +426,18 @@ all: config.h
 
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno
-$(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  --ignore-deps Makefile
-Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
+Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)
 
 $(top_builddir)/config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
-$(srcdir)/configure:  $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+$(srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
 	cd $(srcdir) && $(AUTOCONF)
 
-$(ACLOCAL_M4):  configure.in acinclude.m4
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ configure.in acinclude.m4
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 config.h: stamp-h1
@@ -445,7 +450,7 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
 
-$(srcdir)/config.h.in:  $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	touch $(srcdir)/config.h.in
 
@@ -775,7 +780,7 @@ install-snapshot:
 	(cd $(FTPTOP) && ${MAKE} ${MFLAGS}) && \
 	(cd $(FTPTOP)/snapshots && ${MAKE} ${MFLAGS})
 test-snapshot: dist
-	mv -f am-utils*.tar.gz /proj/bank/ftp/private/ezk
+	mv -f am-utils*.tar.gz /var/ftp/private/ezk
 
 # dist hook: change directory modes so they are not world writable
 dist-hook:

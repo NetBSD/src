@@ -31,6 +31,7 @@ amd_SOURCES =			\
 	amfs_auto.c		\
 	amfs_direct.c		\
 	amfs_error.c		\
+	amfs_generic.c		\
 	amfs_host.c		\
 	amfs_inherit.c		\
 	amfs_link.c		\
@@ -53,6 +54,7 @@ amd_SOURCES =			\
 	nfs_start.c		\
 	nfs_subr.c		\
 	opts.c			\
+	readdir.c		\
 	restart.c		\
 	rpc_fwd.c		\
 	sched.c			\
@@ -95,7 +97,7 @@ EXTRA_amd_SOURCES =	\
 EXTRA_amd_OBJECTS = @AMD_FS_OBJS@ @AMD_INFO_OBJS@
 LDADD = $(EXTRA_amd_OBJECTS) get_args.o ../libamu/libamu.la
 # must manually add f/lex library to LIBS, and not to LDADD.
-LIBS = @LIBS@ @LEXLIB@
+LIBS = @LIBS@ @LEXLIB@ @WRAPLIB@
 
 # additional files to distribute and clean
 EXTRA_DIST = ops_TEMPLATE.c $(man_MANS) $(TESTS)
@@ -125,8 +127,9 @@ $(amd_OBJECTS) $(EXTRA_amd_OBJECTS):		\
 	$(top_srcdir)/include/am_xdr_func.h	\
 	$(top_srcdir)/include/amq_defs.h	\
 	@AMU_NFS_PROT_HEADER@			\
+	@AMU_AUTOFS_PROT_HEADER@		\
 	$(noinst_HEADERS)
 
 # auto-generate build number
-build_version.h: $(OBJECTS) $(EXTRA_amd_OBJECTS) get_args.c
+build_version.h: $(amd_OBJECTS) $(EXTRA_amd_OBJECTS) get_args.c
 	$(top_srcdir)/m4/update_build_version

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_error.c,v 1.1.1.6 2003/03/09 01:13:06 christos Exp $	*/
+/*	$NetBSD: amfs_error.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_error.c,v 1.13 2002/12/27 22:43:47 ezk Exp
+ * Id: amfs_error.c,v 1.17 2004/07/23 18:29:22 ezk Exp
  *
  */
 
@@ -78,7 +78,8 @@ am_ops amfs_error_ops =
   0,				/* amfs_error_readlink */
   0,				/* amfs_error_mounted */
   0,				/* amfs_error_umounted */
-  find_amfs_auto_srvr,
+  amfs_generic_find_srvr,
+  0,				/* amfs_error_get_wchan */
   FS_DISCARD,			/* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_ERROR_FS_FLAGS,
@@ -146,7 +147,7 @@ amfs_error_mount_child(am_node *ap, int *error_return)
  * If we do then just give an error.
  */
 int
-amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count)
+amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, u_int count)
 {
   return ESTALE;
 }
