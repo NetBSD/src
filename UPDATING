@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.114.2.1 2004/07/23 08:45:42 tron Exp $
+$NetBSD: UPDATING,v 1.114.2.2 2004/08/03 22:32:12 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -27,6 +27,32 @@ Recent changes:
 	The method by which athhal-elf.o gets pulled into i386
 	kernel builds has been changed again.  The latest version
 	of bsd.files.mk is no longer required.
+
+20040426:
+	Support for the original dynamic sysctl node structure has
+	been removed in favor of the newer layout.  This affects
+	consumers of the create and delete interface, as well as
+	the dynamic discovery mechanism.  This is believed only to
+	be the sysctl(8) binary itself, at this point in time, so
+	the only effect of this should be that a sysctl binary
+	built from sources dated between 2003/12/04 and 2004/03/24
+	will not work on a kernel built from sources dated after
+	2004/04/25.  If you need a new sysctl binary but build.sh
+	does not work, make sure that your revision of
+	src/sys/sys/sysctl.h is 1.112 (or later), and then the
+	do the following:
+
+	cd /usr/src (or wherever your source tree is)
+	make USETOOLS=no includes
+	cd lib/libc
+	make USETOOLS=no dependall install
+	cd ../../sbin/sysctl
+	make USETOOLS=no dependall install
+
+	If you are using older sysctl binary, GNU autoconf would fail to
+	identify your machine architecture, and tries to build binary for
+	"unknown-unknown-netbsd20F" or something like that.  if that happens,
+	make sure to follow the above steps.
 
 20040326:
 
