@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/11/01 07:58:01 garbled Exp $
+#	$NetBSD: Makefile,v 1.1 2001/01/07 09:30:19 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -55,7 +55,7 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	mount -o softdep ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \

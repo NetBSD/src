@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile.m4,v 1.2 2000/08/19 13:23:27 mrg Exp $
+# $NetBSD: dot.profile.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -67,8 +67,11 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# examine the dmesg state
 	mount -t kernfs /kern /kern
 
+	# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
+	ls -l /dev/* > /dev/null 2>&1
+
 	# mount the ramdisk read write
-	mount -u /kern/rootdev /
+	mount -t ffs -u /kern/rootdev /
 
 	# run the installation or upgrade script.
 	sysinst

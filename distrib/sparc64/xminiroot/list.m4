@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.5 2000/11/16 23:32:00 mrg Exp $
+#	$NetBSD: list.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -36,11 +36,14 @@ LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
 LINK	ramdiskbin			sbin/mount_ext2fs
 LINK	ramdiskbin			sbin/mount_ffs
+LINK	ramdiskbin			sbin/mount_lfs
 LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
+LINK	ramdiskbin			sbin/mount_mfs
 LINK	ramdiskbin			sbin/mount_nfs
 LINK	ramdiskbin			sbin/msdos
 LINK	ramdiskbin			sbin/newfs
+LINK	ramdiskbin			sbin/newfs_lfs
 LINK	ramdiskbin			sbin/nfs
 LINK	ramdiskbin			sbin/ping
 LINK	ramdiskbin			sbin/reboot
@@ -53,19 +56,20 @@ LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/fdisk)
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/mbrlabel)
-LINK	ramdiskbin		usr/bin/chgrp
-LINK	ramdiskbin		usr/bin/ftp
-LINK	ramdiskbin		usr/bin/gunzip
-LINK	ramdiskbin		usr/bin/gzcat
-LINK	ramdiskbin		usr/bin/gzip
-LINK	ramdiskbin		usr/bin/less
-LINK	ramdiskbin		usr/bin/more
-LINK	ramdiskbin		usr/bin/sed
-LINK	ramdiskbin		usr/bin/tar
-LINK	ramdiskbin		usr/bin/tip
-LINK	ramdiskbin		usr/mdec/installboot
-LINK	ramdiskbin		usr/sbin/chown
-LINK	ramdiskbin		usr/sbin/chroot
+LINK	ramdiskbin			usr/libexec/lfs_cleanerd
+LINK	ramdiskbin			usr/bin/chgrp
+LINK	ramdiskbin			usr/bin/ftp
+LINK	ramdiskbin			usr/bin/gunzip
+LINK	ramdiskbin			usr/bin/gzcat
+LINK	ramdiskbin			usr/bin/gzip
+LINK	ramdiskbin			usr/bin/less
+LINK	ramdiskbin			usr/bin/more
+LINK	ramdiskbin			usr/bin/sed
+LINK	ramdiskbin			usr/bin/tar
+LINK	ramdiskbin			usr/bin/tip
+LINK	ramdiskbin			usr/mdec/installboot
+LINK	ramdiskbin			usr/sbin/chown
+LINK	ramdiskbin			usr/sbin/chroot
 ifelse(MACHINE,i386,	LINK	ramdiskbin	usr/sbin/bad144)
 ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/chat)
 ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/pppd)
