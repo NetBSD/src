@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.57 2002/07/17 06:19:45 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.58 2003/01/18 06:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,6 @@ extern int cputyp;
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 #endif /* _LOCORE */
-
 
 /*
  * microSPARC-IIep is a sun4m but with an integrated PCI controller.

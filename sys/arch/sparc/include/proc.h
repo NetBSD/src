@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10 2003/01/12 16:29:01 pk Exp $ */
+/*	$NetBSD: proc.h,v 1.11 2003/01/18 06:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,14 +44,20 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _SPARC_PROC_H_
+#define _SPARC_PROC_H_
+
 /*
  * Machine-dependent part of the proc structure for SPARC.
  */
-struct mdproc {
+struct mdlwp {
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
 	u_long	md_flags;
 	struct cpu_info	*md_fpu;	/* Module holding FPU state */
+};
+
+struct mdproc {
 };
 
 /* md_flags */
@@ -70,3 +76,5 @@ extern struct simplelock	fpulock;
 	simple_unlock(&fpulock);	\
 	splx(s);			\
 } while (/* CONSTCOND */ 0)
+
+#endif /* _SPARC_PROC_H_ */

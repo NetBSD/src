@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2003/01/09 23:25:24 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.10 2003/01/18 06:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,6 +97,54 @@ struct sigcontext {
 	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
+
+#ifdef __arch64__
+#define	_MCONTEXT_TO_SIGCONTEXT_32_64(uc, sc)				\
+do {									\
+	(sc)->sc_tstate =						\
+	    ((uc)->uc_mcontext.__gregs[_REG_CCR] << TSTATE_CCR_SHIFT) |	\
+	    ((uc)->uc_mcontext.__gregs[_REG_ASI] << TSTATE_ASI_SHIFT);	\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_CCR] =				\
+	    ((sc)->sc_tstate & TSTATE_CCR) >> TSTATE_CCR_SHIFT;		\
+	(uc)->uc_mcontext.__gregs[_REG_ASI] =				\
+	    ((sc)->sc_tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;		\
+} while (/*CONSTCOND*/0)
+#else /* ! __arch64__ */
+#define	_MCONTEXT_TO_SIGCONTEXT_32_64(uc, sc)				\
+do {									\
+	(sc)->sc_psr = (uc)->uc_mcontext.__gregs[_REG_PSR];		\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_PSR] = (sc)->sc_psr;		\
+} while (/*CONSTCOND*/0)
+#endif /* __arch64__ */
+
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	(sc)->sc_sp  = (uc)->uc_mcontext.__gregs[_REG_O6];		\
+	(sc)->sc_pc  = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(sc)->sc_npc = (uc)->uc_mcontext.__gregs[_REG_nPC];		\
+	_MCONTEXT_TO_SIGCONTEXT_32_64((uc), (sc));			\
+	(sc)->sc_g1  = (uc)->uc_mcontext.__gregs[_REG_G1];		\
+	(sc)->sc_o0  = (uc)->uc_mcontext.__gregs[_REG_O0];		\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_O6]  = (sc)->sc_sp;		\
+	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
+	(uc)->uc_mcontext.__gregs[_REG_nPC] = (sc)->sc_npc;		\
+	_SIGCONTEXT_TO_MCONTEXT_32_64((sc), (uc));			\
+	(uc)->uc_mcontext.__gregs[_REG_G1]  = (sc)->sc_g1;		\
+	(uc)->uc_mcontext.__gregs[_REG_O0]  = (sc)->sc_o0;		\
+} while (/*CONSTCOND*/0)
+
 #else /* _LOCORE */
 /* XXXXX These values don't work for _LP64 */
 #define	SC_SP_OFFSET	8

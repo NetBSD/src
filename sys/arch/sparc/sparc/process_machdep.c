@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 1999/12/29 15:21:27 pk Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.8 2003/01/18 06:45:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -75,28 +75,28 @@
 
 int
 process_read_regs(p, regs)
-	struct proc *p;
+	struct lwp *p;
 	struct reg *regs;
 {
 	/* NOTE: struct reg == struct trapframe */
-	bcopy(p->p_md.md_tf, (caddr_t)regs, sizeof(struct reg));
+	bcopy(p->l_md.md_tf, (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
 
 int
 process_write_regs(p, regs)
-	struct proc *p;
+	struct lwp *p;
 	struct reg *regs;
 {
-	int	psr = p->p_md.md_tf->tf_psr & ~PSR_ICC;
-	bcopy((caddr_t)regs, p->p_md.md_tf, sizeof(struct reg));
-	p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
+	int	psr = p->l_md.md_tf->tf_psr & ~PSR_ICC;
+	bcopy((caddr_t)regs, p->l_md.md_tf, sizeof(struct reg));
+	p->l_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return (0);
 }
 
 int
 process_sstep(p, sstep)
-	struct proc *p;
+	struct lwp *p;
 	int sstep;
 {
 	if (sstep)
@@ -106,42 +106,42 @@ process_sstep(p, sstep)
 
 int
 process_set_pc(p, addr)
-	struct proc *p;
+	struct lwp *p;
 	caddr_t addr;
 {
-	p->p_md.md_tf->tf_pc = (u_int)addr;
-	p->p_md.md_tf->tf_npc = (u_int)addr + 4;
+	p->l_md.md_tf->tf_pc = (u_int)addr;
+	p->l_md.md_tf->tf_npc = (u_int)addr + 4;
 	return (0);
 }
 
 int
 process_read_fpregs(p, regs)
-	struct proc	*p;
+	struct lwp	*p;
 	struct fpreg	*regs;
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate		*statep = &initfpstate;
 
 	/* NOTE: struct fpreg == prefix of struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
+	if (p->l_md.md_fpstate)
+		statep = p->l_md.md_fpstate;
 	bcopy(statep, regs, sizeof(struct fpreg));
 	return (0);
 }
 
 int
 process_write_fpregs(p, regs)
-	struct proc	*p;
+	struct lwp	*p;
 	struct fpreg	*regs;
 {
-	if (p->p_md.md_fpstate == NULL)
+	if (p->l_md.md_fpstate == NULL)
 		return (EINVAL);
 
 	/* Write new values to the FP registers */
-	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
+	bcopy(regs, p->l_md.md_fpstate, sizeof(struct fpreg));
 
 	/* Reset FP queue in this process `fpstate' */
-	p->p_md.md_fpstate->fs_qsize = 0;
+	p->l_md.md_fpstate->fs_qsize = 0;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2003/01/16 16:57:44 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.62 2003/01/18 06:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,13 +85,14 @@
  * referenced in generic code
  */
 #define	curcpu()		(cpuinfo.ci_self)
-#define	curproc			(cpuinfo.ci_curproc)
+#define	curlwp			(cpuinfo.ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	(cpuinfo.ci_cpuid)
+#define	cpu_swapin(p)		/* nothing */
+#define	cpu_swapout(p)		/* nothing */
+#define	cpu_wait(p)		/* nothing */
+#define	cpu_number()		(cpuinfo.ci_cpuid)
+#define	cpu_proc_fork(p1, p2)	/* nothing */
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));
@@ -202,7 +203,7 @@ int	probeget(caddr_t, int);
 void	write_all_windows(void);
 void	write_user_windows(void);
 void 	proc_trampoline(void);
-void	switchexit(struct proc *);
+void	switchexit(struct lwp *, void (*)(struct lwp *));
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
@@ -211,8 +212,8 @@ void	copywords(const void *, void *, size_t);
 void	qcopy(const void *, void *, size_t);
 void	qzero(void *, size_t);
 /* trap.c */
-void	kill_user_windows(struct proc *);
-int	rwindow_save(struct proc *);
+void	kill_user_windows(struct lwp *);
+int	rwindow_save(struct lwp *);
 /* cons.c */
 int	cnrom(void);
 /* zs.c */
@@ -232,7 +233,7 @@ void kgdb_panic(void);
 #endif
 /* emul.c */
 struct trapframe;
-int fixalign(struct proc *, struct trapframe *);
+int fixalign(struct lwp *, struct trapframe *);
 int emulinstr(int, struct trapframe *);
 /* cpu.c */
 void mp_pause_cpus(void);
