@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.55 1995/05/28 03:26:37 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.56 1995/06/01 21:26:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -199,9 +199,9 @@ comattach(parent, self, aux)
 			sc->sc_hwflags |= COM_HW_FIFO;
 			printf(": ns16550a, working fifo\n");
 		} else
-			printf(": ns82550 or ns16550, broken fifo\n");
+			printf(": ns16550, broken fifo\n");
 	else
-		printf(": ns82450 or ns16450, no fifo\n");
+		printf(": ns8250 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
 
 	/* disable interrupts */
