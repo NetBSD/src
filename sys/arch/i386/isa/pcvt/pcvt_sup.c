@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_sup.c,v 1.7 1994/10/30 21:44:42 cgd Exp $	*/
+/*	$NetBSD: pcvt_sup.c,v 1.8 1995/04/19 18:33:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -1622,14 +1622,13 @@ switch_screen(int n, int dontsave)
 	/* update global screen pointers/variables */
 
 	current_video_screen = n;	/* current screen no */
+	vsp = &vs[n];			/* current video state ptr */
 
 #if !PCVT_NETBSD
 	pcconsp = &pccons[n];		/* current tty */
 #else
-	pcconsp = pc_tty[n];		/* current tty */
+	pcconsp = vsp->vs_tty;		/* current tty */
 #endif /* !PCVT_NETBSD */
-
-	vsp = &vs[n];			/* current video state ptr */
 
 	/* kernel memory -> video board memory */
 

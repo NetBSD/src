@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.13 1995/04/18 00:59:58 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.14 1995/04/19 18:33:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1047,15 +1047,11 @@ EXTERN	u_short	kern_attr;		/* kernel messages char attributes */
 EXTERN	u_short	user_attr;		/* character attributes */
 
 #if !PCVT_EMU_MOUSE
-#if PCVT_NETBSD
-EXTERN struct tty *pc_tty[PCVT_NSCREENS];
-#else
+#if !PCVT_NETBSD
 EXTERN struct tty pccons[PCVT_NSCREENS];
 #endif /* PCVT_NETBSD */
 #else /* PCVT_EMU_MOUSE */
-#if PCVT_NETBSD
-EXTERN struct tty *pc_tty[PCVT_NSCREENS + 1];
-#else
+#if !PCVT_NETBSD
 EXTERN struct tty pccons[PCVT_NSCREENS + 1];
 #endif
 #endif /* PCVT_EMU_MOUSE */
@@ -1225,11 +1221,16 @@ struct mousestat {
 
 #if PCVT_NETBSD > 9
 
+struct vt_softc {
+	struct	device sc_dev;
+	void	*sc_ih;
+};
+
 int pcprobe (struct device *, void *, void *);
 void pcattach (struct device *, struct device *, void *);
 
 struct cfdriver vtcd = {
-	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct device)
+	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct vt_softc)
 };
 
 #else
@@ -1482,9 +1483,11 @@ int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
+struct tty *
+	pctty ( Dev_t dev );
 int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
-int	pcrint ( void * );
+int	pcintr ( void * );
 int	pcparam ( struct tty *tp, struct termios *t );
 void	pccnprobe ( struct consdev *cp );
 void	pccninit ( struct consdev *cp );
