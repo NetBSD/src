@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 1995/02/13 23:07:43 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 1996/07/11 03:46:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,9 +30,7 @@
 #include <machine/frame.h>
 #include <machine/reg.h>
 
-/*
- * XXX where did this info come from?
- */
+#include <machine/alpha_cpu.h>
 
 /*
  * PCB: process control block
@@ -48,14 +46,7 @@
  * So we cache the physical address of the pcb in the md_proc struct.
  */
 struct pcb {
-	u_int64_t	pcb_ksp;		/* kernel stack ptr	[HW] */
-	u_int64_t	pcb_usp;		/* user stack ptr	[HW] */
-	u_int64_t	pcb_ptbr;		/* page table base reg	[HW] */
-	u_int32_t	pcb_pcc;		/* process cycle cntr	[HW] */
-	u_int32_t	pcb_asn;		/* address space number	[HW] */
-	u_int64_t	pcb_unique;		/* process unique value	[HW] */
-	u_int64_t	pcb_fen;		/* FP enable (in bit 0)	[HW] */
-	u_int64_t	pcb_decrsv[2];		/* DEC reserved		[HW] */
+	struct alpha_pcb pcb_hw;		/* PALcode defined */
 	u_int64_t	pcb_context[9];		/* s[0-6], ra, ps	[SW] */
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	caddr_t		pcb_onfault;		/* for copy faults	[SW] */

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 1995/02/13 23:07:39 cgd Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 1996/07/11 03:46:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,9 +30,7 @@
 #ifndef _ALPHA_FRAME_H_
 #define	_ALPHA_FRAME_H_
 
-/*
- * XXX where did this info come from?
- */
+#include <machine/alpha_cpu.h>
 
 /*
  * Trap and syscall frame.
@@ -78,12 +76,7 @@
 
 struct trapframe {
 	u_int64_t	tf_regs[FRAME_NSAVEREGS]; /* GPRs (listed above) */
-	u_int64_t	tf_ps;			/* processor status [HW] */
-	u_int64_t	tf_pc;			/* program counter [HW] */
-	u_int64_t	tf_gp;			/* global pointer [HW] */
-	u_int64_t	tf_a0;			/* saved a0 [HW] */
-	u_int64_t	tf_a1;			/* saved a1 [HW] */
-	u_int64_t	tf_a2;			/* saved a2 [HW] */
+	struct alpha_frame tf_af;		/* hardware-defined frame */
 };
 
 #endif /* _ALPHA_FRAME_H_ */
