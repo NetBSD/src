@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.10 2000/02/06 12:49:47 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.11 2000/02/28 12:08:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -237,38 +237,6 @@ struct ipsecstat {
 	{ 0, 0 }, \
 	{ "ecn", CTLTYPE_INT }, \
 	{ "debug", CTLTYPE_INT }, \
-}
-
-#define IPSECCTL_VARS { \
-	0, \
-	0, \
-	&ip4_def_policy.policy, \
-	&ip4_esp_trans_deflev, \
-	&ip4_esp_net_deflev, \
-	&ip4_ah_trans_deflev, \
-	&ip4_ah_net_deflev, \
-	&ip4_inbound_call_ike, \
-	&ip4_ah_cleartos, \
-	&ip4_ah_offsetmask, \
-	&ip4_ipsec_dfbit, \
-	&ip4_ipsec_ecn, \
-	&ipsec_debug, \
-}
-
-#define IPSEC6CTL_VARS { \
-	0, \
-	0, \
-	&ip6_def_policy.policy, \
-	&ip6_esp_trans_deflev, \
-	&ip6_esp_net_deflev, \
-	&ip6_ah_trans_deflev, \
-	&ip6_ah_net_deflev, \
-	&ip6_inbound_call_ike, \
-	0, \
-	0, \
-	0, \
-	&ip6_ipsec_ecn, \
-	&ipsec_debug, \
 }
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.16 2000/02/25 00:29:55 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.17 2000/02/28 12:08:23 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.49 2000/02/23 08:52:52 jinmei Exp $	*/
 
 /*
@@ -3221,8 +3221,6 @@ u_char	ipsecctlermap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-int *ipsec_sysvars[] = IPSECCTL_VARS;
-
 int
 ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -3316,8 +3314,6 @@ u_char	ipsec6ctlermap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	ENOPROTOOPT
 };
-
-int *ipsec6_sysvars[] = IPSEC6CTL_VARS;
 
 int
 ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

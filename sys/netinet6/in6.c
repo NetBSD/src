@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.21 2000/02/26 08:39:19 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.22 2000/02/28 12:08:22 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.55 2000/02/25 00:32:23 itojun Exp $	*/
 
 /*
@@ -1742,11 +1742,7 @@ in6_ifawithscope(oifp, dst)
 	 * Comparing an interface with the outgoing interface will be done
 	 * only at the final stage of tiebreaking.
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-#else
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-#endif
 	{
 		/*
 		 * We can never take an address that breaks the scope zone
@@ -1755,12 +1751,8 @@ in6_ifawithscope(oifp, dst)
 		if (in6_addr2scopeid(ifp, dst) != in6_addr2scopeid(oifp, dst))
 			continue;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 		for (ifa = ifp->if_addrlist.tqh_first; ifa;
 		     ifa = ifa->ifa_list.tqe_next)
-#endif
 		{
 			int tlen = -1, dscopecmp, bscopecmp, matchcmp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.12 2000/02/19 17:32:07 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.13 2000/02/28 12:08:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -557,33 +557,6 @@ struct in6_pktinfo {
 	{ "bindv6only", CTLTYPE_INT }, \
 }
 
-#define IPV6CTL_VARS { \
-	0, \
-	&ip6_forwarding, \
-	&ip6_sendredirects, \
-	&ip6_defhlim, \
-	0, \
-	&ip6_forward_srcrt, \
-	0, \
-	0, \
-	0, \
-	&ip6_maxfragpackets, \
-	&ip6_sourcecheck, \
-	&ip6_sourcecheck_interval, \
-	&ip6_accept_rtadv, \
-	&ip6_keepfaith, \
-	&ip6_log_interval, \
-	&ip6_hdrnestlimit, \
-	&ip6_dad_count, \
-	&ip6_auto_flowlabel, \
-	&ip6_defmcasthlim, \
-	&ip6_gif_hlim, \
-	0, \
-	&ip6_use_deprecated, \
-	&ip6_rr_prune, \
-	0, \
-	&ip6_bindv6only, \
-}
 #endif /* !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
