@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.24 2001/12/24 03:02:34 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.25 2001/12/25 12:06:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.24 2001/12/24 03:02:34 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.25 2001/12/25 12:06:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
@@ -155,7 +156,7 @@ alarmcatch(int dummy)
 			    "  DUMP: %s: (\"yes\" or \"no\") ",
 			    attnmessage);
 		else
-			msgtail("\7\7");
+			msgtail("\a\a");
 	} else {
 		if (timeout) {
 			msgtail("\n");
@@ -287,7 +288,7 @@ sendmes(char *tty, char *message)
 		setbuf(f_tty, buf);
 		(void) fprintf(f_tty,
 		    "\n\
-\7\7\7Message from the dump program to all operators at %d:%02d ...\r\n\n\
+\a\a\aMessage from the dump program to all operators at %d:%02d ...\r\n\n\
 DUMP: NEEDS ATTENTION: ",
 		    localclock->tm_hour, localclock->tm_min);
 		for (cp = lastmsg; ; cp++) {
@@ -433,11 +434,11 @@ allocfsent(struct fstab *fs)
 }
 
 struct	pfstab {
-	struct	pfstab *pf_next;
+	SLIST_ENTRY(pfstab) pf_list;
 	struct	fstab *pf_fstab;
 };
 
-static	struct pfstab *table;
+static	SLIST_HEAD(, pfstab) table;
 
 void
 getfstab(void)
@@ -466,8 +467,7 @@ getfstab(void)
 		fs = allocfsent(fs);
 		pf = (struct pfstab *)xmalloc(sizeof (*pf));
 		pf->pf_fstab = fs;
-		pf->pf_next = table;
-		table = pf;
+		SLIST_INSERT_HEAD(&table, pf, pf_list);
 	}
 	(void) endfsent();
 }
@@ -490,7 +490,7 @@ fstabsearch(const char *key)
 	struct fstab *fs;
 	char *rn;
 
-	for (pf = table; pf != NULL; pf = pf->pf_next) {
+	SLIST_FOREACH(pf, &table, pf_list) {
 		fs = pf->pf_fstab;
 		if (strcmp(fs->fs_file, key) == 0 ||
 		    strcmp(fs->fs_spec, key) == 0)
