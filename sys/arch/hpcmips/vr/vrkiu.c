@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.35 2003/10/23 20:25:40 he Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.36 2004/03/13 17:23:32 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.35 2003/10/23 20:25:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.36 2004/03/13 17:23:32 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.35 2003/10/23 20:25:40 he Exp $");
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #include <dev/hpc/pckbd_encode.h>
 #endif
