@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.15 1994/10/26 07:23:34 cgd Exp $	*/
+/*	$NetBSD: dcm.c,v 1.16 1995/04/10 01:01:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1135,6 +1135,7 @@ dcmsetischeme(brd, flags)
  */
 #include <dev/cons.h>
 
+void
 dcmcnprobe(cp)
 	struct consdev *cp;
 {
@@ -1200,6 +1201,7 @@ dcmcnprobe(cp)
 #endif
 }
 
+void
 dcmcninit(cp)
 	struct consdev *cp;
 {
@@ -1275,6 +1277,7 @@ dcmcngetc(dev)
 /*
  * Console kernel output character routine.
  */
+void
 dcmcnputc(dev, c)
 	dev_t dev;
 	int c;
