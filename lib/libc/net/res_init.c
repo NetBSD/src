@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.10 1997/01/23 14:02:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$Id: res_init.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.10 1997/01/23 14:02:08 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -317,7 +317,7 @@ res_init()
 	if (_res.defdname[0] == 0) {
 		if (gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
 		   (cp = strchr(buf, '.')))
-			(void)strcpy(_res.defdname, cp + 1);
+			(void)strncpy(_res.defdname, cp + 1, sizeof(_res.defdname) - 1);
 	}
 
 	/* find components of local domain that might be searched */

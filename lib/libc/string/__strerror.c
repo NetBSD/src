@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.8 1996/10/11 00:51:07 jtc Exp $";
+static char *rcsid = "$Id: __strerror.c,v 1.9 1997/01/23 14:02:21 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -58,9 +58,10 @@ static char *rcsid = "$Id: __strerror.c,v 1.8 1996/10/11 00:51:07 jtc Exp $";
  */
 
 char *
-__strerror(num, buf)
+__strerror(num, buf, buflen)
 	int num;
 	char *buf;
+	int buflen;
 {
 #define	UPREFIX	"Unknown error: %u"
 	register unsigned int errnum;
@@ -84,7 +85,7 @@ __strerror(num, buf)
 		snprintf(buf, NL_TEXTMAX, 
 		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
 #else
-		sprintf(buf, UPREFIX, errnum);
+		snprintf(buf, buflen, UPREFIX, errnum);
 #endif
 	}
 

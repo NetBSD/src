@@ -224,14 +224,14 @@ struct request_info *request;
     int     ch;
     FILE   *fp;
 
-    sprintf(path, "%s/%s", value, eval_daemon(request));
+    (void)snprintf(path, sizeof path, "%s/%s", value, eval_daemon(request));
     if ((fp = fopen(path, "r")) != 0) {
 	while ((ch = fgetc(fp)) == 0)
 	    write(request->fd, "", 1);
 	ungetc(ch, fp);
-	while (fgets(ibuf, sizeof(ibuf) - 1, fp)) {
+	while (fgets(ibuf, sizeof(ibuf) - 2, fp)) {
 	    if (split_at(ibuf, '\n'))
-		strcat(ibuf, "\r\n");
+		strcat(ibuf, "\r\n");	/* XXX strcat is safe */
 	    percent_x(obuf, sizeof(obuf), ibuf, request);
 	    write(request->fd, obuf, strlen(obuf));
 	}

@@ -61,7 +61,7 @@ char   *name;
     if (strchr(name, '.') == 0 || strlen(name) >= MAXHOSTNAMELEN - 1) {
 	return (gethostbyname(name));
     } else {
-	sprintf(dot_name, "%s.", name);
+	(void)snprintf(dot_name, sizeof dot_name, "%s.", name);
 	return (gethostbyname(dot_name));
     }
 }
@@ -213,7 +213,8 @@ struct host_info *host;
 	    tcpd_warn("host name/address mismatch: %s != %s",
 		      inet_ntoa(sin->sin_addr), hp->h_name);
 	}
-	strcpy(host->name, paranoid);		/* name is bad, clobber it */
+	/* name is bad, clobber it */
+	(void)strncpy(host->name, paranoid, sizeof(host->name) - 1);
     }
 }
 

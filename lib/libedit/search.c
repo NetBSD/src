@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 1997/01/11 06:48:09 lukem Exp $	*/
+/*	$NetBSD: search.c,v 1.4 1997/01/23 14:02:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: search.c,v 1.3 1997/01/11 06:48:09 lukem Exp $";
+static char rcsid[] = "$NetBSD: search.c,v 1.4 1997/01/23 14:02:47 mrg Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -467,10 +467,11 @@ cv_search(el, dir)
 	}
 #ifdef ANCHOR
 	if (el->el_search.patbuf[0] != '.' && el->el_search.patbuf[0] != '*') {
-	    (void) strcpy(tmpbuf, el->el_search.patbuf);
+	    (void)strncpy(tmpbuf, el->el_search.patbuf, sizeof(tmpbuf) - 1);
 	    el->el_search.patbuf[0] = '.';
 	    el->el_search.patbuf[1] = '*';
-	    (void) strcpy(&el->el_search.patbuf[2], tmpbuf);
+	    (void)strncpy(&el->el_search.patbuf[2], tmpbuf,
+		sizeof(el->el_search.patbuf) - 3);
 	    el->el_search.patlen++;
 	    el->el_search.patbuf[el->el_search.patlen++] = '.';
 	    el->el_search.patbuf[el->el_search.patlen++] = '*';
@@ -484,7 +485,8 @@ cv_search(el, dir)
 	tmpbuf[tmplen++] = '*';
 #endif
 	tmpbuf[tmplen] = '\0';
-	(void) strcpy(el->el_search.patbuf, tmpbuf);
+	(void)strncpy(el->el_search.patbuf, tmpbuf,
+	    sizeof(el->el_search.patbuf) - 1);
 	el->el_search.patlen = tmplen;
     }
     el->el_state.lastcmd = (el_action_t) dir; /* avoid c_setpat */

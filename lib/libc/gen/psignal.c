@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.8 1995/02/27 04:35:42 cgd Exp $	*/
+/*	$NetBSD: psignal.c,v 1.9 1997/01/23 14:01:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: psignal.c,v 1.8 1995/02/27 04:35:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: psignal.c,v 1.9 1997/01/23 14:01:57 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: psignal.c,v 1.8 1995/02/27 04:35:42 cgd Exp $";
 #include <unistd.h>
 #include <limits.h>
 
-extern char *__strsignal __P((int , char *));
+extern char *__strsignal __P((int , char *, int));
 
 void
 psignal(sig, s)
@@ -61,7 +61,7 @@ psignal(sig, s)
 	register const char *c;
 	register int n;
 
-	c = __strsignal(sig, buf);
+	c = __strsignal(sig, buf, NL_TEXTMAX);
 	if (s && *s) {
 		n = strlen(s);
 		(void)write(STDERR_FILENO, s, n);

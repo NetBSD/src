@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.6 1997/01/17 08:23:26 mikel Exp $	*/
+/*	$NetBSD: ethers.c,v 1.7 1997/01/23 14:02:03 mrg Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -29,7 +29,7 @@ ether_ntoa(e)
 {
 	static char a[] = "xx:xx:xx:xx:xx:xx";
 
-	sprintf(a, "%02x:%02x:%02x:%02x:%02x:%02x",
+	snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
@@ -69,7 +69,7 @@ ether_ntohost(hostname, e)
 	char trybuf[sizeof "xx:xx:xx:xx:xx:xx"];
 	int trylen;
 
-	sprintf(trybuf, "%x:%x:%x:%x:%x:%x", 
+	(void)snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.4 1996/12/13 08:26:09 mikel Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.5 1997/01/23 14:03:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -55,7 +55,8 @@ pcap_stats(pcap_t *p, struct pcap_stat *ps)
 	struct bpf_stat s;
 
 	if (ioctl(p->fd, BIOCGSTATS, (caddr_t)&s) < 0) {
-		sprintf(p->errbuf, "BIOCGSTATS: %s", pcap_strerror(errno));
+		(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCGSTATS: %s",
+		    pcap_strerror(errno));
 		return (-1);
 	}
 
@@ -99,7 +100,8 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 				/* fall through */
 #endif
 			}
-			sprintf(p->errbuf, "read: %s", pcap_strerror(errno));
+			(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "read: %s",
+			    pcap_strerror(errno));
 			return (-1);
 		}
 		bp = p->buffer;
@@ -142,7 +144,7 @@ bpf_open(pcap_t *p, char *errbuf)
 	 * Go through all the minors and find one that isn't in use.
 	 */
 	do {
-		(void)sprintf(device, "/dev/bpf%d", n++);
+		(void)snprintf(device, sizeof device, "/dev/bpf%d", n++);
 		fd = open(device, O_RDONLY);
 	} while (fd < 0 && errno == EBUSY);
 
@@ -150,7 +152,8 @@ bpf_open(pcap_t *p, char *errbuf)
 	 * XXX better message for all minors used
 	 */
 	if (fd < 0)
-		sprintf(errbuf, "%s: %s", device, pcap_strerror(errno));
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", device,
+		    pcap_strerror(errno));
 
 	return (fd);
 }
@@ -166,7 +169,8 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
-		sprintf(ebuf, "malloc: %s", pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+		    pcap_strerror(errno));
 		return (NULL);
 	}
 	bzero(p, sizeof(*p));
@@ -178,22 +182,26 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	p->snapshot = snaplen;
 
 	if (ioctl(fd, BIOCVERSION, (caddr_t)&bv) < 0) {
-		sprintf(ebuf, "BIOCVERSION: %s", pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCVERSION: %s",
+		    pcap_strerror(errno));
 		goto bad;
 	}
 	if (bv.bv_major != BPF_MAJOR_VERSION ||
 	    bv.bv_minor < BPF_MINOR_VERSION) {
-		sprintf(ebuf, "kernel bpf filter out of date");
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
+		    "kernel bpf filter out of date");
 		goto bad;
 	}
 	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
-		sprintf(ebuf, "%s: %s", device, pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s: %s", device,
+		    pcap_strerror(errno));
 		goto bad;
 	}
 	/* Get the data link layer type. */
 	if (ioctl(fd, BIOCGDLT, (caddr_t)&v) < 0) {
-		sprintf(ebuf, "BIOCGDLT: %s", pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGDLT: %s",
+		    pcap_strerror(errno));
 		goto bad;
 	}
 	p->linktype = v;
@@ -204,8 +212,8 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		to.tv_sec = to_ms / 1000;
 		to.tv_usec = (to_ms * 1000) % 1000000;
 		if (ioctl(p->fd, BIOCSRTIMEOUT, (caddr_t)&to) < 0) {
-			sprintf(ebuf, "BIOCSRTIMEOUT: %s",
-				pcap_strerror(errno));
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
+			    "BIOCSRTIMEOUT: %s", pcap_strerror(errno));
 			goto bad;
 		}
 	}
@@ -214,13 +222,15 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		(void)ioctl(p->fd, BIOCPROMISC, NULL);
 
 	if (ioctl(fd, BIOCGBLEN, (caddr_t)&v) < 0) {
-		sprintf(ebuf, "BIOCGBLEN: %s", pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGBLEN: %s",
+		    pcap_strerror(errno));
 		goto bad;
 	}
 	p->bufsize = v;
 	p->buffer = (u_char *)malloc(p->bufsize);
 	if (p->buffer == NULL) {
-		sprintf(ebuf, "malloc: %s", pcap_strerror(errno));
+		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+		    pcap_strerror(errno));
 		goto bad;
 	}
 
@@ -237,7 +247,8 @@ pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 	if (p->sf.rfile != NULL)
 		p->fcode = *fp;
 	else if (ioctl(p->fd, BIOCSETF, (caddr_t)fp) < 0) {
-		sprintf(p->errbuf, "BIOCSETF: %s", pcap_strerror(errno));
+		(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCSETF: %s",
+		    pcap_strerror(errno));
 		return (-1);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.7 1996/09/10 22:04:30 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.8 1997/01/23 14:02:29 mrg Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -296,9 +296,9 @@ register struct state * const	sp;
 				return -1;
 			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
 				return -1;
-			(void) strcpy(fullname, p);
-			(void) strcat(fullname, "/");
-			(void) strcat(fullname, name);
+			(void) strcpy(fullname, p);	/* XXX strcpy is safe */
+			(void) strcat(fullname, "/");	/* XXX strcat is safe */
+			(void) strcat(fullname, name);	/* XXX strcat is safe */
 			/*
 			** Set doaccess if '.' (as in "../") shows up in name.
 			*/
@@ -964,7 +964,7 @@ tzset P((void))
 		return;
 	lcl_is_set = (strlen(name) < sizeof(lcl_TZname));
 	if (lcl_is_set)
-		(void) strcpy(lcl_TZname, name);
+		(void)strncpy(lcl_TZname, name, sizeof(lcl_TZname) - 1);
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
@@ -983,7 +983,7 @@ tzset P((void))
 		lclptr->timecnt = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
-		(void) strcpy(lclptr->chars, gmt);
+		(void)strncpy(lclptr->chars, gmt, sizeof(lclptr->chars) - 1);
 	} else if (tzload(name, lclptr) != 0)
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
 			(void) gmtload(lclptr);

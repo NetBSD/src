@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strsignal.c,v 1.11 1996/10/11 20:59:20 cgd Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.12 1997/01/23 14:02:22 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -51,9 +51,10 @@ static char *rcsid = "$Id: __strsignal.c,v 1.11 1996/10/11 20:59:20 cgd Exp $";
 #include <string.h>
 
 char *
-__strsignal(num, buf)
+__strsignal(num, buf, buflen)
 	int num;
 	char *buf;
+	int buflen;
 {
 #define	UPREFIX	"Unknown signal: %u"
 	register unsigned int signum;
@@ -66,7 +67,7 @@ __strsignal(num, buf)
 	signum = num;				/* convert to unsigned */
 	if (signum < NSIG) {
 #ifdef NLS
-		strncpy(buf, catgets(catd, 2, signum,
+		(void)strncpy(buf, catgets(catd, 2, signum,
 		    (char *)sys_siglist[signum]), NL_TEXTMAX); 
 		buf[NL_TEXTMAX - 1] = '\0';
 #else
@@ -74,10 +75,10 @@ __strsignal(num, buf)
 #endif
 	} else {
 #ifdef NLS
-		snprintf(buf, NL_TEXTMAX, 
+		(void)snprintf(buf, NL_TEXTMAX, 
 	            catgets(catd, 1, 0xffff, UPREFIX), signum);
 #else
-		sprintf(buf, UPREFIX, signum);
+		(void)snprintf(buf, buflen, UPREFIX, signum);
 #endif
 	}
 

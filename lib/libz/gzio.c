@@ -1,4 +1,4 @@
-/*	$NetBSD: gzio.c,v 1.4 1996/09/13 00:30:06 cgd Exp $	*/
+/*	$NetBSD: gzio.c,v 1.5 1997/01/23 14:03:27 mrg Exp $	*/
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -91,7 +91,8 @@ local gzFile gz_open (path, mode, fd)
     if (s->path == NULL) {
         return destroy(s), (gzFile)Z_NULL;
     }
-    strcpy(s->path, path); /* do this early for debugging */
+    /* do this early for debugging */
+    (void)strcpy(s->path, path);	/* XXX strcpy is safe */
 
     s->mode = '\0';
     do {
@@ -167,7 +168,7 @@ gzFile gzdopen (fd, mode)
     char name[20];
 
     if (fd < 0) return (gzFile)Z_NULL;
-    sprintf(name, "<fd:%d>", fd); /* for debugging */
+    (void)snprintf(name, sizeof name, "<fd:%d>", fd); /* for debugging */
 
     return gz_open (name, mode, fd);
 }
@@ -532,8 +533,8 @@ const char*  gzerror (file, errnum)
 
     TRYFREE(s->msg);
     s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
-    strcpy(s->msg, s->path);
-    strcat(s->msg, ": ");
-    strcat(s->msg, m);
+    (void)strcpy(s->msg, s->path);	/* XXX strcpy is safe */
+    strcat(s->msg, ": ");		/* XXX strcat is safe */
+    strcat(s->msg, m);			/* XXX strcat is safe */
     return (const char*)s->msg;
 }
