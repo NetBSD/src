@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.3 1999/02/24 18:31:00 christos Exp $	*/
+/*	$NetBSD: paths.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -43,68 +43,66 @@
 #include "debug.h"
 #include "rtld.h"
 
-Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
+static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
 
-Search_Path *
-_rtld_find_path(
-    Search_Path *path,
-    const char *pathstr,
-    size_t pathlen)
+static Search_Path *
+_rtld_find_path(path, pathstr, pathlen)
+	Search_Path *path;
+	const char *pathstr;
+	size_t pathlen;
 {
-    for (; path != NULL; path = path->sp_next) {
-	if (pathlen == path->sp_pathlen
-		&& memcmp(path->sp_path, pathstr, pathlen) == 0)
-	    return path;
-    }
-    return NULL;
+	for (; path != NULL; path = path->sp_next) {
+		if (pathlen == path->sp_pathlen &&
+		    memcmp(path->sp_path, pathstr, pathlen) == 0)
+			return path;
+	}
+	return NULL;
 }
 
 void
-_rtld_add_paths(
-    Search_Path **path_p,
-    const char *pathstr,
-    bool dodebug)
+_rtld_add_paths(path_p, pathstr, dodebug)
+	Search_Path ** path_p;
+	const char *pathstr;
+	bool dodebug;
 {
-    Search_Path *path, **head_p = path_p;
+	Search_Path *path, **head_p = path_p;
 
-    if (pathstr == NULL)
-	return;
+	if (pathstr == NULL)
+		return;
 
-    if (pathstr[0] == ':') {
-	/*
-	 * Leading colon means append to current path
-	 */
-	while ((*path_p) != NULL)
-	    path_p = &(*path_p)->sp_next;
-	pathstr++;
-    }
-
-    for (;;) {
-	const char *bp = pathstr;
-	const char *ep = strchr(bp, ':');
-	if (ep == NULL)
-	    ep = &pathstr[strlen(pathstr)];
-
-	if (bp < ep && (path = _rtld_find_path(*head_p, bp, ep - bp)) == NULL) {
-	    char *cp;
-	    path = CNEW(Search_Path);
-	    path->sp_pathlen = ep - bp;
-	    cp = xmalloc(path->sp_pathlen + 1);
-	    strncpy(cp, bp, path->sp_pathlen);
-	    cp[path->sp_pathlen] = '\0';
-	    path->sp_path = cp;
-	    path->sp_next = (*path_p);
-	    (*path_p) = path;
-	    path_p = &path->sp_next;
-
-	    if (dodebug)
-		dbg(" added path \"%s\"", path->sp_path);
+	if (pathstr[0] == ':') {
+		/*
+		 * Leading colon means append to current path
+		 */
+		while ((*path_p) != NULL)
+			path_p = &(*path_p)->sp_next;
+		pathstr++;
 	}
+	for (;;) {
+		const char *bp = pathstr;
+		const char *ep = strchr(bp, ':');
+		if (ep == NULL)
+			ep = &pathstr[strlen(pathstr)];
 
-	if (ep[0] == '\0')
-	    break;
-	pathstr = ep + 1;
-    }
+		if (bp < ep &&
+		    (path = _rtld_find_path(*head_p, bp, ep - bp)) == NULL) {
+			char *cp;
+
+			path = CNEW(Search_Path);
+			path->sp_pathlen = ep - bp;
+			cp = xmalloc(path->sp_pathlen + 1);
+			strncpy(cp, bp, path->sp_pathlen);
+			cp[path->sp_pathlen] = '\0';
+			path->sp_path = cp;
+			path->sp_next = (*path_p);
+			(*path_p) = path;
+			path_p = &path->sp_next;
+
+			if (dodebug)
+				dbg((" added path \"%s\"", path->sp_path));
+		}
+		if (ep[0] == '\0')
+			break;
+		pathstr = ep + 1;
+	}
 }
-
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.2 1997/10/08 08:55:35 mrg Exp $	*/
+/*	$NetBSD: malloc.c,v 1.3 1999/03/01 16:40:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -48,6 +48,7 @@
  * This is designed for use in a virtual memory environment.
  */
 
+#include <sys/cdefs.h>
 #include "rtldenv.h"
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.2 1998/03/25 04:13:02 mhitch Exp $	*/
+/*	$NetBSD: symbol.c,v 1.3 1999/03/01 16:40:08 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,20 +57,20 @@
  * this.  It is specified by the System V ABI.
  */
 unsigned long
-_rtld_elf_hash(
-    const char *name)
+_rtld_elf_hash(name)
+	const char *name;
 {
-    const unsigned char *p = (const unsigned char *) name;
-    unsigned long h = 0;
-    unsigned long g;
+	const unsigned char *p = (const unsigned char *) name;
+	unsigned long   h = 0;
+	unsigned long   g;
 
-    while(*p != '\0') {
-	h = (h << 4) + *p++;
-	if ((g = h & 0xf0000000) != 0)
-	    h ^= g >> 24;
-	h &= ~g;
-    }
-    return h;
+	while (*p != '\0') {
+		h = (h << 4) + *p++;
+		if ((g = h & 0xf0000000) != 0)
+			h ^= g >> 24;
+		h &= ~g;
+	}
+	return h;
 }
 
 /*
@@ -82,40 +82,39 @@ _rtld_elf_hash(
  * eliminates many recomputations of the hash value.
  */
 const Elf_Sym *
-_rtld_symlook_obj(
-    const char *name,
-    unsigned long hash,
-    const Obj_Entry *obj,
-    bool in_plt)
+_rtld_symlook_obj(name, hash, obj, in_plt)
+	const char *name;
+	unsigned long hash;
+	const Obj_Entry *obj;
+	bool in_plt;
 {
-    unsigned long symnum = obj->buckets[hash % obj->nbuckets];
+	unsigned long symnum = obj->buckets[hash % obj->nbuckets];
 
-    while (symnum != ELF_SYM_UNDEFINED) {
-	const Elf_Sym *symp;
-	const char *strp;
+	while (symnum != ELF_SYM_UNDEFINED) {
+		const Elf_Sym  *symp;
+		const char     *strp;
 
-	assert(symnum < obj->nchains);
-	symp = obj->symtab + symnum;
-	strp = obj->strtab + symp->st_name;
+		assert(symnum < obj->nchains);
+		symp = obj->symtab + symnum;
+		strp = obj->strtab + symp->st_name;
 #if 0
-	assert(symp->st_name != 0);
+		assert(symp->st_name != 0);
 #endif
-	if (strcmp(name, strp) == 0) {
-	    if (symp->st_shndx != Elf_eshn_undefined
-#if !defined(__mips__)	/* Following doesn't work on MIPS? mhitch */
-		|| (!in_plt && symp->st_value != 0 &&
-		    ELF_SYM_TYPE(symp->st_info) == Elf_estt_func)) {
+		if (strcmp(name, strp) == 0) {
+			if (symp->st_shndx != Elf_eshn_undefined
+#if !defined(__mips__)		/* Following doesn't work on MIPS? mhitch */
+			    || (!in_plt && symp->st_value != 0 &&
+			    ELF_SYM_TYPE(symp->st_info) == Elf_estt_func)) {
 #else
-	    ) {
+				) {
 #endif
-		return symp;
-	    }
+				return symp;
+			}
+		}
+		symnum = obj->chains[symnum];
 	}
 
-	symnum = obj->chains[symnum];
-    }
-
-    return NULL;
+	return NULL;
 }
 
 /*
@@ -125,51 +124,55 @@ _rtld_symlook_obj(
  * defining object via the reference parameter DEFOBJ_OUT.
  */
 const Elf_Sym *
-_rtld_find_symdef(
-    const Obj_Entry *obj_list,
-    Elf_Word r_info,
-    const char *name,
-    const Obj_Entry *refobj,
-    const Obj_Entry **defobj_out,
-    bool in_plt)
+_rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
+	const Obj_Entry *obj_list;
+	Elf_Word r_info;
+	const char *name;
+	const Obj_Entry *refobj;
+	const Obj_Entry **defobj_out;
+	bool in_plt;
 {
-    Elf_Word symnum = ELF_R_SYM(r_info);
-    const Elf_Sym *ref;
-    const Obj_Entry *obj;
-    unsigned long hash;
+	Elf_Word symnum = ELF_R_SYM(r_info);
+	const Elf_Sym  *ref;
+	const Obj_Entry *obj;
+	unsigned long   hash;
 
-    if (name == NULL) {
-	ref = refobj->symtab + symnum;
-	name = refobj->strtab + ref->st_name;
-    }
-    hash = _rtld_elf_hash(name);
-
-    if (refobj->symbolic) {	/* Look first in the referencing object */
-	const Elf_Sym *def = _rtld_symlook_obj(name, hash, refobj, in_plt);
-	if (def != NULL) {
-	    *defobj_out = refobj;
-	    return def;
+	if (name == NULL) {
+		ref = refobj->symtab + symnum;
+		name = refobj->strtab + ref->st_name;
 	}
-    }
+	hash = _rtld_elf_hash(name);
 
-    /*
-     * Look in all loaded objects.  Skip the referencing object, if
-     * we have already searched it.
-     */
-    for (obj = obj_list;  obj != NULL;  obj = obj->next) {
-	if (obj != refobj || !refobj->symbolic) {
-	    const Elf_Sym *def = _rtld_symlook_obj(name, hash, obj, in_plt);
-	    if (def != NULL) {
-		*defobj_out = obj;
-		return def;
-	    }
+	if (refobj->symbolic) {	/* Look first in the referencing object */
+		const Elf_Sym *def;
+
+		def = _rtld_symlook_obj(name, hash, refobj, in_plt);
+		if (def != NULL) {
+			*defobj_out = refobj;
+			return def;
+		}
 	}
-    }
+	/*
+         * Look in all loaded objects.  Skip the referencing object, if
+         * we have already searched it.
+         */
+	for (obj = obj_list; obj != NULL; obj = obj->next) {
+		if (obj != refobj || !refobj->symbolic) {
+			const Elf_Sym *def;
 
-    if (ELF_R_TYPE(r_info) != R_TYPE(NONE)) {
-	_rtld_error("%s: Undefined %ssymbol \"%s\" (reloc type = %d, symnum = %d)",
-	      refobj->path, in_plt ? "PLT " : "", name,
-	      ELF_R_TYPE(r_info), symnum);
-    }
-    return NULL;
+			def = _rtld_symlook_obj(name, hash, obj, in_plt);
+			if (def != NULL) {
+				*defobj_out = obj;
+				return def;
+			}
+		}
+	}
+
+	if (ELF_R_TYPE(r_info) != R_TYPE(NONE)) {
+		_rtld_error(
+	    "%s: Undefined %ssymbol \"%s\" (reloc type = %d, symnum = %d)",
+		    refobj->path, in_plt ? "PLT " : "", name,
+		    ELF_R_TYPE(r_info), symnum);
+	}
+	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.2 1999/02/24 18:31:00 christos Exp $	*/
+/*	$NetBSD: load.c,v 1.3 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -61,49 +61,49 @@
  * on failure.
  */
 Obj_Entry *
-_rtld_load_object(
-    char *filepath,
-    bool dodebug)
+_rtld_load_object(filepath, dodebug)
+	char *filepath;
+	bool dodebug;
 {
-    Obj_Entry *obj;
+	Obj_Entry *obj;
 
-    for (obj = _rtld_objlist->next;  obj != NULL;  obj = obj->next)
-	if (strcmp(obj->path, filepath) == 0)
-	    break;
+	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
+		if (strcmp(obj->path, filepath) == 0)
+			break;
 
-    if (obj == NULL) {	/* First use of this object, so we must map it in */
-	int fd;
+	if (obj == NULL) { /* First use of this object, so we must map it in */
+		int fd;
 
-	if ((fd = open(filepath, O_RDONLY)) == -1) {
-	    _rtld_error("Cannot open \"%s\"", filepath);
-	    return NULL;
-	}
-	obj = _rtld_map_object(filepath, fd);
-	close(fd);
-	if (obj == NULL) {
-	    free(filepath);
-	    return NULL;
-	}
+		if ((fd = open(filepath, O_RDONLY)) == -1) {
+			_rtld_error("Cannot open \"%s\"", filepath);
+			return NULL;
+		}
+		obj = _rtld_map_object(filepath, fd);
+		(void)close(fd);
+		if (obj == NULL) {
+			free(filepath);
+			return NULL;
+		}
+		obj->path = filepath;
+		_rtld_digest_dynamic(obj);
 
-	obj->path = filepath;
-	_rtld_digest_dynamic(obj);
-
-	*_rtld_objtail = obj;
-	_rtld_objtail = &obj->next;
+		*_rtld_objtail = obj;
+		_rtld_objtail = &obj->next;
 #ifdef RTLD_LOADER
-	_rtld_linkmap_add(obj);		/* for GDB */
+		_rtld_linkmap_add(obj);	/* for GDB */
 #endif
-	if (dodebug) {
-	    dbg("  %p .. %p: %s", obj->mapbase,
-		obj->mapbase + obj->mapsize - 1, obj->path);
-	    if (obj->textrel)
-		dbg("  WARNING: %s has impure text", obj->path);
-	}
-    } else
-	free(filepath);
+		if (dodebug) {
+			dbg(("  %p .. %p: %s", obj->mapbase,
+			    obj->mapbase + obj->mapsize - 1, obj->path));
+			if (obj->textrel)
+				dbg(("  WARNING: %s has impure text",
+				    obj->path));
+		}
+	} else
+		free(filepath);
 
-    ++obj->refcount;
-    return obj;
+	++obj->refcount;
+	return obj;
 }
 
 /*
@@ -112,32 +112,33 @@ _rtld_load_object(
  * returns -1 on failure.
  */
 int
-_rtld_load_needed_objects(
-    Obj_Entry *first)
+_rtld_load_needed_objects(first)
+	Obj_Entry *first;
 {
-    Obj_Entry *obj;
-    int status = 0;
+	Obj_Entry *obj;
+	int status = 0;
 
-    for (obj = first;  obj != NULL;  obj = obj->next) {
-	Needed_Entry *needed;
+	for (obj = first; obj != NULL; obj = obj->next) {
+		Needed_Entry *needed;
 
-	for (needed = obj->needed;  needed != NULL;  needed = needed->next) {
-	    const char *name = obj->strtab + needed->name;
-	    char *libpath = _rtld_find_library(name, obj);
+		for (needed = obj->needed; needed != NULL;
+		    needed = needed->next) {
+			const char *name = obj->strtab + needed->name;
+			char *libpath = _rtld_find_library(name, obj);
 
-	    if (libpath == NULL) {
-		status = -1;
-	    } else {
-		needed->obj = _rtld_load_object(libpath, true);
-		if (needed->obj == NULL)
-		    status = -1;		/* FIXME - cleanup */
-	    }
+			if (libpath == NULL) {
+				status = -1;
+			} else {
+				needed->obj = _rtld_load_object(libpath, true);
+				if (needed->obj == NULL)
+					status = -1;	/* FIXME - cleanup */
+			}
 #ifdef RTLD_LOADER
-	    if (status == -1)
-		return status;
+			if (status == -1)
+				return status;
 #endif
+		}
 	}
-    }
 
-    return status;
+	return status;
 }
