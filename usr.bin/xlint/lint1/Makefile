@@ -1,0 +1,16 @@
+#	$Id: Makefile,v 1.1.1.1 1995/07/03 20:56:35 cgd Exp $
+
+PROG=	lint1
+SRCS=	cgram.c scan.c mem1.c mem.c err.c main1.c decl.c tree.c func.c \
+	init.c emit.c emit1.c
+NOMAN=
+LDADD+=	-ll
+DPADD+=	${LIBL}
+YFLAGS=	-d
+CFLAGS+=-I.
+LINTFLAGS=-aehpz
+CLEANFILES+=y.tab.h cgram.c scan.c
+
+BINDIR=	/usr/libexec
+
+.include <bsd.prog.mk>
