@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.4 2002/01/13 10:06:51 pooka Exp $ */
+/* $NetBSD: esa.c,v 1.5 2002/01/13 14:44:15 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -964,13 +964,12 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* create suspend save area */
 	len = sizeof(u_int16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT);
+	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->savemem == NULL) {
 		printf("%s: unable to allocate suspend buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(sc->savemem, 0, len);
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;
