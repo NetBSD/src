@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1998/12/02 00:58:43 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 1999/03/05 07:59:13 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@
 	.text; .align 2; .globl x; .type x,@function; x:
 
 #ifdef GPROF
-# define _PROF_PROLOGUE	XXX
+# define _PROF_PROLOGUE	mflr 0; stw 0,4(1); bl _mcount
 #else
 # define _PROF_PROLOGUE
 #endif
