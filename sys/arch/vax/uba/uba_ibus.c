@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_ibus.c,v 1.2 2001/05/01 13:20:02 ragge Exp $	   */
+/*	$NetBSD: uba_ibus.c,v 1.3 2001/05/13 15:24:18 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -106,6 +106,7 @@ qba_attach(parent, self, aux)
 	sc->uv_sc.uh_ubainit = qba_init;
 	sc->uv_sc.uh_iot = &vax_mem_bus_space;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
+	sc->uv_sc.uh_type = UBA_QBUS;
 
 	/*
 	 * Fill in variables used by the sgmap system.
@@ -117,6 +118,7 @@ qba_attach(parent, self, aux)
 	if (vax_boardtype == VAX_BTYP_610) {
 		sc->uv_sc.uh_dmat = &vax_bus_dma_tag;
 		sc->uv_sc.uh_beforescan = NULL;
+		sc->uv_sc.uh_type = UBA_MVI;
 	} else
 #endif
 		uba_dma_init(sc);
