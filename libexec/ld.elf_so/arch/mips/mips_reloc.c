@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.7 2002/09/05 16:33:58 junyoung Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.8 2002/09/05 17:58:04 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -49,7 +49,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
-	def = _rtld_find_symdef(a0 << 8, obj, &defobj, true);
+	def = _rtld_find_symdef(ELF_R_INFO(a0, 0), obj, &defobj, true);
 	if (def) {
 		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
 		    (def->st_value + defobj->relocbase);
@@ -67,7 +67,6 @@ _rtld_setup_pltgot(obj)
 	const Elf_Sym *sym = obj->symtab;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Word info;
 	int i;
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
@@ -83,22 +82,20 @@ _rtld_setup_pltgot(obj)
 				obj->symtabno - obj->gotsym - i - 1, 
 				sym, sym->st_name + obj->strtab, *got));
 
-		info = ELF32_R_INFO(obj->symtabno - i - 1, sym->st_info);
-		def = _rtld_find_symdef(info, obj, &defobj, true);
-
+		def = _rtld_find_symdef(ELF_R_INFO(obj->symtabno - i - 1, 0),
+		    obj, &defobj, true);
 		if (def == NULL)
 			_rtld_error(
-	    "%s: Undefined PLT symbol \"%s\" (reloc type = %ld, symnum = %ld)",
+	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
 			    obj->path, sym->st_name + obj->strtab,
-			    (u_long) ELF_R_TYPE(info), 
+			    (u_long) ELF_ST_TYPE(sym->st_info), 
 			    (u_long) obj->symtabno - i - 1);
 		else {
 
 			if (sym->st_shndx == SHN_UNDEF) {
 #if 0	/* These don't seem to work? */
 
-				if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-				    STT_FUNC) {
+				if (ELF_ST_TYPE(sym->st_info) == STT_FUNC) {
 					if (sym->st_value)
 						*got = sym->st_value +
 						    (Elf_Word)obj->relocbase;
@@ -112,13 +109,11 @@ _rtld_setup_pltgot(obj)
 			} else if (sym->st_shndx == SHN_COMMON) {
 				*got = def->st_value +
 				    (Elf_Word)defobj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_FUNC &&
+			} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
 			    *got != sym->st_value) {
 				*got += (Elf_Word)obj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
-			    STB_GLOBAL) {
+			} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
+			    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				if (sym->st_shndx == SHN_ABS)
 					*got = sym->st_value +
 					    (Elf_Word)obj->relocbase;
@@ -135,4 +130,119 @@ _rtld_setup_pltgot(obj)
 	obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
 	/* XXX only if obj->pltgot[1] & 0x80000000 ?? */
 	obj->pltgot[1] |= (Elf_Addr) obj;
+}
+
+int
+_rtld_relocate_nonplt_object(obj, rela, dodebug)
+	Obj_Entry *obj;
+	const Elf_Rela *rela;
+	bool dodebug;
+{
+	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	const Elf_Sym   *def;
+	const Obj_Entry *defobj;
+
+	switch (ELF_R_TYPE(rela->r_info)) {
+
+	case R_TYPE(NONE):
+		break;
+
+	case R_TYPE(REL32):
+		/* 32-bit PC-relative reference */
+		def = obj->symtab + ELF_R_SYM(rela->r_info);
+
+		if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
+		  (ELF_ST_TYPE(def->st_info) == STT_SECTION ||
+		   ELF_ST_TYPE(def->st_info) == STT_NOTYPE)) {
+			/*
+			 * XXX: ABI DIFFERENCE!
+			 * 
+			 * Old NetBSD binutils would generate shared libs
+			 * with section-relative relocations being already
+			 * adjusted for the start address of the section.
+			 * 
+			 * New binutils, OTOH, generate shared libs with
+			 * the same relocations being based at zero, so we
+			 * need to add in the start address of the section.  
+			 * 
+			 * We assume that all section-relative relocs with
+			 * contents less than the start of the section need 
+			 * to be adjusted; this should work with both old
+			 * and new shlibs.
+			 * 
+			 * --rkb, Oct 6, 2001
+			 */
+			if (def->st_info == STT_SECTION && 
+				    (*where < def->st_value))
+			    *where += (Elf_Addr) def->st_value;
+
+			*where += (Elf_Addr)obj->relocbase;
+
+			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+			    obj->strtab + def->st_name, obj->path,
+			    (void *)*where, obj->path));
+		} else {
+			/* XXX maybe do something re: bootstrapping? */
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
+			if (def == NULL)
+				return -1;
+			*where += (Elf_Addr)(defobj->relocbase + def->st_value);
+			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		}
+		break;
+
+	default:
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+		    "addend = %p, contents = %p, symbol = %s",
+		    (u_long)ELF_R_SYM(rela->r_info),
+		    (u_long)ELF_R_TYPE(rela->r_info),
+		    (void *)rela->r_offset, (void *)rela->r_addend,
+		    (void *)*where,
+		    def ? defobj->strtab + def->st_name : "??"));
+		_rtld_error("%s: Unsupported relocation type %ld "
+		    "in non-PLT relocations\n",
+		    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
+		return -1;
+	}
+	return 0;
+}
+
+int
+_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+	Obj_Entry *obj;
+	const Elf_Rela *rela;
+	caddr_t *addrp;
+	bool bind_now;
+	bool dodebug;
+{
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr new_value;
+
+	/* Fully resolve procedure addresses now */
+
+	if (!obj->mainprog) {
+		/* Just relocate the GOT slots pointing into the PLT */
+		new_value = *where + (Elf_Addr)(obj->relocbase);
+		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
+		    (void *)*where));
+	} else {
+		return 0;
+	}
+	/*
+         * Since this page is probably copy-on-write, let's not write
+         * it unless we really really have to.
+         */
+	if (*where != new_value)
+		*where = new_value;
+	if (addrp != NULL) {
+		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset);
+#if defined(__vax__)
+		*addrp -= rela->r_addend;
+#endif
+	}
+	return 0;
 }

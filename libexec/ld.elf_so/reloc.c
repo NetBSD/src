@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.57 2002/09/05 17:06:11 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.58 2002/09/05 17:58:02 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -147,7 +147,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 }
 
 
-#if !defined(__sparc__) && !defined(__x86_64__)
+#if !defined(__sparc__) && !defined(__x86_64__) && !defined(__mips__)
 
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
@@ -158,9 +158,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if !defined(__mips__)
 	Elf_Addr         tmp;
-#endif
 
 	switch (ELF_R_TYPE(rela->r_info)) {
 
@@ -368,74 +366,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #endif /* ! __alpha__ */
 #endif /* __alpha__ || __i386__ || __m68k__ || __sh__ */
 
-#if !defined(__mips__)
-	case R_TYPE(COPY):
-		/*
-		 * These are deferred until all other relocations have
-		 * been done.  All we do here is make sure that the COPY
-		 * relocation is not in a shared library.  They are allowed
-		 * only in executable files.
-		 */
-		if (!obj->mainprog) {
-			_rtld_error(
-			"%s: Unexpected R_COPY relocation in shared library",
-			    obj->path);
-			return -1;
-		}
-		rdbg(dodebug, ("COPY (avoid in main)"));
-		break;
-#endif /* __alpha__ || __hppa__ || __i386__ || __m68k__ || __sh__ */
-
-#if defined(__mips__)
-	case R_TYPE(REL32):
-		/* 32-bit PC-relative reference */
-		def = obj->symtab + ELF_R_SYM(rela->r_info);
-
-		if (ELFDEFNNAME(ST_BIND)(def->st_info) == STB_LOCAL &&
-		  (ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_SECTION ||
-		   ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_NOTYPE)) {
-			/*
-			 * XXX: ABI DIFFERENCE!
-			 * 
-			 * Old NetBSD binutils would generate shared libs
-			 * with section-relative relocations being already
-			 * adjusted for the start address of the section.
-			 * 
-			 * New binutils, OTOH, generate shared libs with
-			 * the same relocations being based at zero, so we
-			 * need to add in the start address of the section.  
-			 * 
-			 * We assume that all section-relative relocs with
-			 * contents less than the start of the section need 
-			 * to be adjusted; this should work with both old
-			 * and new shlibs.
-			 * 
-			 * --rkb, Oct 6, 2001
-			 */
-			if (def->st_info == STT_SECTION && 
-				    (*where < def->st_value))
-			    *where += (Elf_Addr) def->st_value;
-
-			*where += (Elf_Addr)obj->relocbase;
-
-			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
-			    obj->strtab + def->st_name, obj->path,
-			    (void *)*where, obj->path));
-		} else {
-			/* XXX maybe do something re: bootstrapping? */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
-			if (def == NULL)
-				return -1;
-			*where += (Elf_Addr)(defobj->relocbase + def->st_value);
-			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
-		}
-		break;
-
-#endif /* __mips__ */
-
 #if defined(__powerpc__) || defined(__vax__)
 	case R_TYPE(32):	/* word32 S + A */
 	case R_TYPE(GLOB_DAT):	/* word32 S + A */
@@ -618,6 +548,22 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __hppa__ */
 
+	case R_TYPE(COPY):
+		/*
+		 * These are deferred until all other relocations have
+		 * been done.  All we do here is make sure that the COPY
+		 * relocation is not in a shared library.  They are allowed
+		 * only in executable files.
+		 */
+		if (!obj->mainprog) {
+			_rtld_error(
+			"%s: Unexpected R_COPY relocation in shared library",
+			    obj->path);
+			return -1;
+		}
+		rdbg(dodebug, ("COPY (avoid in main)"));
+		break;
+
 	default:
 		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
@@ -651,7 +597,6 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 	/* Fully resolve procedure addresses now */
 
-#if !defined(__mips__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
@@ -674,9 +619,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		    (int)bind_now,
 		    defobj->strtab + def->st_name,
 		    (void *)*where, (void *)new_value));
-	} else
-#endif /* !__mips__ */
-	if (!obj->mainprog) {
+	} else if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
 		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
@@ -701,7 +644,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 #endif /* __powerpc__  || __hppa__ */
 
-#endif /* __sparc__ || __x86_64__ */
+#endif /* __sparc__ || __x86_64__ || __mips__ */
 
 caddr_t
 _rtld_bind(obj, reloff)
