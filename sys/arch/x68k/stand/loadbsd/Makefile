@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/11/14 00:58:51 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/07 06:52:14 minoura Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -36,3 +36,8 @@ ${PROG}: ${BASE}1 ${BASE}2
 ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
 	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-Ttext -Wl,${i}${i}000 ${OBJS} ${LDLIBS}
 .endfor
+
+.ifdef RELEASEDIR
+release: ${PROG}
+	cp -ip ${PROG} ${RELEASEDIR}/installation/misc
+.endif
