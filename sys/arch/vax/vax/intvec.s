@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.48 2000/06/10 05:24:46 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.49 2000/06/12 11:13:14 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -41,13 +41,7 @@
 #include "arp.h"
 #include "ppp.h"
 
-#include "opt_vax410.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
-#include "opt_vax630.h"
-#include "opt_vax650.h"
-
+#include "opt_cputype.h"
 
 #define ENTRY(name) \
 	.text			; \

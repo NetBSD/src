@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.46 2000/05/20 13:38:59 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.47 2000/06/12 11:13:14 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,19 +51,7 @@
 #include <machine/nexus.h>
 #include <machine/rpb.h>
 
-#include "opt_vax780.h"
-#include "opt_vax750.h"
-#include "opt_vax8600.h"
-#include "opt_vax8200.h"
-#include "opt_vax410.h"
-#include "opt_vax43.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
-#include "opt_vax630.h"
-#include "opt_vax650.h"
-#include "opt_vax660.h"
-#include "opt_vax670.h"
+#include "opt_cputype.h"
 
 void	start(struct rpb *);
 void	main(void);
@@ -80,6 +68,7 @@ extern struct cpu_dep ka780_calls;
 extern struct cpu_dep ka750_calls;
 extern struct cpu_dep ka860_calls;
 extern struct cpu_dep ka820_calls;
+extern struct cpu_dep ka88_calls;
 extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
@@ -108,6 +97,7 @@ start(struct rpb *prpb)
 
 	findcpu(); /* Set up the CPU identifying variables */
 
+	cpu_model[0] = 0; /* Be sure */
 	if (vax_confdata & 0x80)
 		strcpy(cpu_model, "MicroVAX ");
 	else
@@ -232,6 +222,13 @@ start(struct rpb *prpb)
 		mastercpu = mfpr(PR_BINID);
 		dep_call = &ka820_calls;
 		strcpy(cpu_model, "VAX 8200");
+		break;
+#endif
+#if VAX8800
+	case VAX_BTYP_8PS:
+	case VAX_BTYP_8800: /* Matches all other KA88-machines also */
+		strcpy(cpu_model, "VAX 8800");
+		dep_call = &ka88_calls;
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 2000/05/08 17:53:24 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.47 2000/06/12 11:13:15 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,18 +43,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "opt_vax8600.h"
-#include "opt_vax8200.h"
-#include "opt_vax780.h"
-#include "opt_vax750.h"
-#include "opt_vax670.h"
-#include "opt_vax650.h"
-#include "opt_vax630.h"
-#include "opt_vax410.h"
-#include "opt_vax43.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
+#include "opt_cputype.h"
 
 #include "hp.h" /* 0 */
 bdev_decl(hp);
