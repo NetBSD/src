@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.3 1997/09/02 13:19:27 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.4 1998/01/17 03:40:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.3 1997/09/02 13:19:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.4 1998/01/17 03:40:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ dwlpx_dma_init(ccp)
 	sprintf(exname, "%s_sgmap_a", ccp->cc_sc->dwlpx_dev.dv_xname);
 	alpha_sgmap_init(t, &ccp->cc_sgmap, exname,
 	    (8*1024*1024), 0, (8*1024*1024), sizeof(u_int32_t),
-	    (void *)page_table);
+	    (void *)page_table, 0);
 
 	/*
 	 * Set up DMA windows for this DWLPx.
