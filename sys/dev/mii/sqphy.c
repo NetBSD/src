@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.1 1998/11/03 23:51:29 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.2 1998/11/04 22:15:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,14 +101,6 @@ struct cfattach sqphy_ca = {
 	sizeof(struct sqphy_softc), sqphymatch, sqphyattach
 };
 
-#define	SQPHY_READ(sc, reg) \
-    (*(sc)->sc_mii.mii_pdata->mii_readreg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg))
-
-#define	SQPHY_WRITE(sc, reg, val) \
-    (*(sc)->sc_mii.mii_pdata->mii_writereg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg), (val))
-
 int	sqphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	sqphy_reset __P((struct sqphy_softc *));
 void	sqphy_auto __P((struct sqphy_softc *));
@@ -155,7 +147,7 @@ sqphyattach(parent, self, aux)
 
 	sqphy_reset(sc);
 
-	sc->sc_capabilities = SQPHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->sc_capabilities = PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
@@ -190,8 +182,8 @@ sqphy_service(self, mii, cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
-			reg = SQPHY_READ(sc, MII_BMCR);
-			SQPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+			reg = PHY_READ(&sc->sc_mii, MII_BMCR);
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 
@@ -206,7 +198,7 @@ sqphy_service(self, mii, cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (SQPHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
+			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
 			sqphy_auto(sc);
 			break;
@@ -219,8 +211,9 @@ sqphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			SQPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
-			SQPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			PHY_WRITE(&sc->sc_mii, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -248,7 +241,8 @@ sqphy_service(self, mii, cmd)
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		reg = SQPHY_READ(sc, MII_BMSR) | SQPHY_READ(sc, MII_BMSR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMSR) |
+		    PHY_READ(&sc->sc_mii, MII_BMSR);
 		if (reg & BMSR_LINK)
 			return (0);
 
@@ -285,11 +279,12 @@ sqphy_status(sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = SQPHY_READ(sc, MII_BMSR) | SQPHY_READ(sc, MII_BMSR);
+	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
+	    PHY_READ(&sc->sc_mii, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = SQPHY_READ(sc, MII_BMCR);
+	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -305,7 +300,7 @@ sqphy_status(sc)
 		return;
 	}
 
-	status = SQPHY_READ(sc, MII_SQPHY_STATUS);
+	status = PHY_READ(&sc->sc_mii, MII_SQPHY_STATUS);
 	if (status & STATUS_SPD_DET)
 		mii->mii_media_active |= IFM_100_TX;
 	else
@@ -320,13 +315,13 @@ sqphy_auto(sc)
 {
 	int bmsr, i;
 
-	SQPHY_WRITE(sc, MII_ANAR,
+	PHY_WRITE(&sc->sc_mii, MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	SQPHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 
 	/* Wait 500ms for it to complete. */
 	for (i = 0; i < 500; i++) {
-		if ((bmsr = SQPHY_READ(sc, MII_BMSR)) & BMSR_ACOMP)
+		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
 			return;
 		delay(1000);
 	}
@@ -343,11 +338,11 @@ sqphy_reset(sc)
 {
 	int reg, i;
 
-	SQPHY_WRITE(sc, MII_BMCR, BMCR_RESET|BMCR_ISO);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
 
 	/* Wait 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = SQPHY_READ(sc, MII_BMCR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -355,5 +350,5 @@ sqphy_reset(sc)
 
 	/* Make sure the PHY is isolated. */
 	if (sc->sc_mii.mii_inst != 0)
-		SQPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }
