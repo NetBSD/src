@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.27 1996/04/12 08:44:37 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28 1996/04/18 08:36:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -175,7 +175,7 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 	     (linux_esigcode - linux_sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
