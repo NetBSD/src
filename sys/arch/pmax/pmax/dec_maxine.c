@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.6.4.15 1999/11/19 11:06:28 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.6.4.16 1999/11/30 08:49:53 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.15 1999/11/19 11:06:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.16 1999/11/30 08:49:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,10 +189,7 @@ dec_maxine_init()
 void
 dec_maxine_bus_reset()
 {
-	/*
-	 * Reset interrupts, clear any error conditions from probes
-	 */
-
+	/* clear any memory error condition */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
@@ -348,7 +345,8 @@ void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_IMSK */
-	__asm __volatile("lw $0,%0" :: "i"(0xbc040120));
+	__asm __volatile("lw $0,%0" ::
+	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
 }
 
 unsigned
@@ -378,7 +376,7 @@ static struct tc_builtin tc_ioasic_builtins[] = {
 struct tcbus_attach_args xine_tc_desc = {	/* global not a const */
 	NULL, 0,
 	TC_SPEED_12_5_MHZ,
-	4, tc_maxine_slots,
+	XINE_TC_NSLOTS, tc_maxine_slots,
 	2, tc_ioasic_builtins,
 	ioasic_intr_establish, ioasic_intr_disestablish,
 	NULL,
