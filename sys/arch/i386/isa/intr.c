@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.5 1993/10/26 15:45:18 mycroft Exp $
+ *	$Id: intr.c,v 1.6 1993/10/27 06:48:39 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -209,6 +209,10 @@ isa_defaultirq()
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
+
+	/* enable interrupts, but all masked */
+	splhigh();
+	enable_intr();
 }
 
 /*
@@ -218,12 +222,14 @@ void
 isa_flushintrs()
 {
 	register int i;
+	extern unsigned ipending;
 
 	/* clear any pending interrupts */
 	for (i = 0; i < 8; i++) {
 		outb(IO_ICU1, ICU_EOI);
 		outb(IO_ICU2, ICU_EOI);
 	}
+	ipending = 0;
 }
 
 /*
