@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.21 2003/07/14 15:47:23 lukem Exp $ */
+/* $NetBSD: esa.c,v 1.22 2003/10/25 18:31:11 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.21 2003/07/14 15:47:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.22 2003/10/25 18:31:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -267,6 +267,8 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 			p = rec;
 			ch = &vc->rec;
 			break;
+		default:
+			return EINVAL;
 		}
 
 		if (p->sample_rate < ESA_MINRATE ||

@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.48 2003/09/26 22:23:58 wiz Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.49 2003/10/25 18:29:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.48 2003/09/26 22:23:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.49 2003/10/25 18:29:12 christos Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -975,7 +975,7 @@ static int
 pppoe_send_padi(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	int len, l1, l2;
+	int len, l1 = 0, l2 = 0; /* XXX: gcc */
 	u_int8_t *p;
 
 	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
@@ -1211,7 +1211,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
 	u_int8_t *p;
-	size_t len, l1;
+	size_t len, l1 = 0; /* XXX: gcc */
 
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return EIO;

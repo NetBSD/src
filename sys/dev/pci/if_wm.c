@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.58 2003/10/23 12:53:02 ragge Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.59 2003/10/25 18:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.58 2003/10/23 12:53:02 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.59 2003/10/25 18:31:11 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1386,7 +1386,7 @@ wm_start(struct ifnet *ifp)
 #endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx, ofree, seg;
+	int error, nexttx, lasttx = -1, ofree, seg;
 	uint32_t cksumcmd, cksumfields;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -1554,6 +1554,8 @@ wm_start(struct ifnet *ifp)
 			    (uint32_t) dmamap->dm_segs[seg].ds_addr,
 			    (uint32_t) dmamap->dm_segs[seg].ds_len));
 		}
+
+		KASSERT(lasttx != -1);
 
 		/*
 		 * Set up the command byte on the last descriptor of
