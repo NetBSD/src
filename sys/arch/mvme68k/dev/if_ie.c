@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.3 1999/07/08 18:08:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ ie_pcctwo_attach(parent, self, args)
 	sc->sc_reg = PCCTWO_VADDR(pa->pa_offset);
 	memset(ether_data_buff, 0, ether_data_buff_size);
 
-	sc->sc_iobase = (void *)pmap_extract(pmap_kernel(),
-					(vaddr_t)sc->sc_maddr);
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr,
+	    (paddr_t *)&sc->sc_iobase);
 
 	sc->hwreset = ie_reset;
 	sc->hwinit = ie_hwinit;

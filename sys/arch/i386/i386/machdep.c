@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.359 1999/06/17 00:12:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.360 1999/07/08 18:05:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2334,7 +2334,8 @@ i386_memio_unmap(t, bsh, size)
 			panic("i386_memio_unmap: overflow");
 #endif
 
-		bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
 
 		/*
 		 * Free the kernel virtual mapping.
@@ -2811,7 +2812,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, vaddr);
+		(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 1999/06/30 19:31:33 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.68 1999/07/08 18:11:02 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -719,10 +719,11 @@ if(startpmapdebug)
 	return(virtuell+(count-pstart)+0x80000000);
 }
 
-paddr_t 
-pmap_extract(pmap, va)
+boolean_t 
+pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	int	*pte, sva = (va & 0x3fffffff) >> VAX_PGSHIFT;
 
@@ -736,17 +737,21 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 
 	if (va < 0x40000000) {
 		if (sva > (pmap->pm_p0lr & ~AST_MASK))
-			return 0;
+			return FALSE;
 		pte = (int *)pmap->pm_p0br;
 	} else if (va & KERNBASE) {
 		pte = (int *)Sysmap;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return 0;
+			return FALSE;
 		pte = (int *)pmap->pm_p1br;
 	}
-
-	return (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
+	if (pte[sva] & PG_V) {
+		if (pap != NULL)
+			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
+		return (TRUE);
+	}
+	return (FALSE);
 }
 
 /*

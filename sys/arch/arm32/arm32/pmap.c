@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 1999/06/17 19:23:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 1999/07/08 18:05:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1109,7 +1109,8 @@ pmap_allocpagedir(pmap)
 	}
 #endif	/* DIAGNOSTIC */
 	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
-	pmap->pm_pptpt = pmap_extract(kernel_pmap, pmap->pm_vptpt) & PG_FRAME;
+	(void) pmap_extract(kernel_pmap, pmap->pm_vptpt, &pmap->pm_pptpt);
+	pmap->pm_pptpt &= PG_FRAME;
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
 	pte = pmap_pte(kernel_pmap, pmap->pm_vptpt);
@@ -1321,8 +1322,8 @@ pmap_activate(p)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	pcb->pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
-	    (vm_offset_t)pmap->pm_pdir);
+	(void) pmap_extract(kernel_pmap, (vaddr_t)pmap->pm_pdir,
+	    (paddr_t *)&pcb->pcb_pagedir);
 
 	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
 	    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
@@ -2369,13 +2370,14 @@ pmap_pte(pmap, va)
  *           Extract the physical page address associated
  *           with the given map/virtual_address pair.
  */
-vm_offset_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t pmap;
-	vm_offset_t va;
+	vaddr_t va;
+	paddr_t *pap;
 {
 	pt_entry_t *pte;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
 
@@ -2386,11 +2388,11 @@ pmap_extract(pmap, va)
   
 	pte = pmap_pte(pmap, va);
 	if (!pte)
-		return(0);
+		return(FALSE);
 
 	/* Is the pte valid ? If not then no paged is actually mapped here */
 	if (!pmap_pte_v(pte))
-		return(0);
+		return(FALSE);
 
 	/* Return the physical address depending on the PTE type */
 	/* XXX What about L1 section mappings ? */
@@ -2401,7 +2403,9 @@ pmap_extract(pmap, va)
 		PDEBUG(5, printf("pmap_extract: LPAGE pa = P%08lx\n",
 		    (pa | (va & (L2_LPAGE_SIZE - 1)))));
 
-		return(pa | (va & (L2_LPAGE_SIZE - 1)));
+		if (pap != NULL)
+			*pap = pa | (va & (L2_LPAGE_SIZE - 1));
+		return (TRUE);
 	} else {
 		/* Extract the physical address from the pte */
 		pa = pmap_pte_pa(pte);
@@ -2409,7 +2413,9 @@ pmap_extract(pmap, va)
 		PDEBUG(5, printf("pmap_extract: SPAGE pa = P%08lx\n",
 		    (pa | (va & ~PG_FRAME))));
 
-		return(pa | (va & ~PG_FRAME));
+		if (pap != NULL)
+			*pap = pa | (va & ~PG_FRAME);
+		return (TRUE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.7 1999/03/25 18:48:55 mrg Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.8 1999/07/08 18:11:03 thorpej Exp $	*/
 
 /*
  *
@@ -58,8 +58,7 @@ uvm_pageratop(kva)
 {
 	paddr_t pa;
  
-	pa = pmap_extract(pmap_kernel(), kva);
-	if (pa == 0)
+	if (pmap_extract(pmap_kernel(), kva, &pa) == FALSE)
 		panic("uvm_pageratop");
 	return (PHYS_TO_VM_PAGE(pa));
 } 
