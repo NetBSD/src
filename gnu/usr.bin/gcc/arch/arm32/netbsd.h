@@ -19,6 +19,9 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+/* Default to -msoft-float */
+#define DEFAULT_TO_SOFT_FLOAT
+
 /* Ok it either ARM2 or ARM3 code is produced we need to define the
  * appropriate symbol and delete the ARM6 symbol
  */
@@ -35,9 +38,15 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define DEFAULT_SIGNED_CHAR  0
 
-/* ARM600 default cpu */
+/* ARM600 default cpu, soft-float */
 
-#define TARGET_DEFAULT 8
+#define DEFAULT_TO_SOFT_FLOAT
+
+#ifdef DEFAULT_TO_SOFT_FLOAT
+#define TARGET_DEFAULT 0x408
+#else
+#define TARGET_DEFAULT 0x008
+#endif	/* DEFAULT_TO_SOFT_FLOAT */
 
 /* Since we always use GAS as our assembler we support stabs */
 
@@ -47,9 +56,19 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "arm32/arm32.h"
 
+/* NetBSD assembler can cope with $ in labels so lets be compatible */
+
+#undef DOLLARS_IN_IDENTIFIERS
+#undef NO_DOLLAR_IN_LABEL
+
 /* Gets redefined in config/netbsd.h */
 
 #undef TARGET_MEM_FUNCTIONS
+
+/* Output a #ident directive.  */
+#undef ASM_OUTPUT_IDENT
+#define ASM_OUTPUT_IDENT(STREAM,STRING) \
+  fprintf (STREAM, "\t.ident \"%s\"\n", STRING);
 
 #include <netbsd.h>
 
@@ -70,6 +89,15 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 	 %{m2:-Uarm32} %{m3:-Uarm32}					\
 	%{posix:-D_POSIX_SOURCE}"
 
+/* Provide a LIB_SPEC appropriate for NetBSD.  Select the appropriate
+   libc, depending on whether we're doing profiling, similarly for
+   libposix. IF compiling soft-float then add in a soft-float library*/
+
+#undef LIB_SPEC
+#define LIB_SPEC							\
+  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
+   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
 
@@ -87,15 +115,16 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define HANDLE_SYSV_PRAGMA
 
+#undef TYPE_OPERAND_FMT
+#define TYPE_OPERAND_FMT	"#%s"
 
 /* We don't have any limit on the length as out debugger is GDB */
 
 #undef DBX_CONTIN_LENGTH
 
-/* NetBSD does its profiling differently to the Acorn compiler. We don't need
-   a word following mcount call and to skip if requires an assembly stub of
-   use of fomit-frame-pointer when compiling the profiling functions.
-   Since we break Acorn CC compatibility below a little more won't hurt */
+/* NetBSD does its profiling differently to the Acorn compiler. Text areas are
+   write only and profiling information is held separately so we don't need
+   a word following mcount call for profiling info. */
 
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(STREAM,LABELNO)  				    \
