@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndaeltest.c,v 1.4 2001/05/27 01:58:18 itojun Exp $	*/
+/*	$NetBSD: rijndaeltest.c,v 1.5 2003/08/28 22:31:46 uwe Exp $	*/
 /*	$KAME: rijndaeltest.c,v 1.7 2001/05/27 01:56:45 itojun Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <err.h>
 
 #include <crypto/rijndael/rijndael.h>
+#include <crypto/rijndael/rijndael-api-fst.h>
 
 /* decrypt test */
 struct {
