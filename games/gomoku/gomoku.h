@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.7 1999/09/13 17:18:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -276,7 +276,7 @@ void	cursfini __P((void));
 void	cursinit __P((void));
 void	bdwho __P((int));
 void	panic __P((const char *)) __attribute__((__noreturn__));
-void	log __P((const char *));
+void	glog __P((const char *));
 void	dlog __P((const char *));
 void	quit __P((void)) __attribute__((__noreturn__));
 void	quitsig __P((int)) __attribute__((__noreturn__));

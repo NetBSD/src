@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 1999/07/28 01:45:43 hubertf Exp $	*/
+/*	$NetBSD: init.c,v 1.10 1999/09/13 17:18:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.9 1999/07/28 01:45:43 hubertf Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 1999/09/13 17:18:57 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -56,7 +56,7 @@ initialize(filename)
 	puts("Admiral D.W. Riggle\n");
 	location = dayfile;
 	srand(getpid());
-	getutmp(uname);
+	getutmp(username);
 	wordinit();
 	if (filename == NULL) {
 		direction = NORTH;
@@ -73,7 +73,7 @@ initialize(filename)
 		restore(savefile);
 		free(savefile);
 	}
-	wiz = wizard(uname);
+	wiz = wizard(username);
 	signal(SIGINT, diesig);
 }
 
