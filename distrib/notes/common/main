@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.173 2002/04/21 17:37:05 nsmrtks Exp $
+.\"	$NetBSD: main,v 1.174 2002/04/23 19:48:42 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -421,7 +421,10 @@ writes but possibly up to 100% in certain setups.
 .It
 The
 .Xr siop 4
-driver has improved in performance and robustness.
+driver has improved in performance and robustness. A
+.Xr esiop 4
+driver has been added, which improves performances for 53c825, 53c875 and
+newer controllers.
 .It
 Support for cloning pseudo-interfaces has been added. See
 .Xr ifconfig 8 .

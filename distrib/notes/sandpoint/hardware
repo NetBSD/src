@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.1 2001/10/24 18:30:34 briggs Exp $
+.\"$NetBSD: hardware,v 1.2 2002/04/23 19:48:43 bouyer Exp $
 .
 Currently,
 .Nx*M
@@ -94,7 +94,7 @@ DPT SmartCache/SmartRAID
 .Pq Em dpt
 .It
 NCR/Symbios 53C8xx
-.Pq Em ncr No or Em siop
+.Pq Em siop No or Em esiop
 .It
 Many other PCI SCSI controllers should work, but no one has tried them
 .It

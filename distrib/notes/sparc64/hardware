@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 2001/08/23 14:33:14 mrg Exp $
+.\"	$NetBSD: hardware,v 1.8 2002/04/23 19:48:43 bouyer Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -54,7 +54,7 @@ ncr53c9x based controllers
 .Pq Em esp
 .It
 ncr53c8xx based controllers
-.Pq Em siop
+.Pq Em siop No or Em esiop
 .It
 ISP10x0 based controllers
 .Pq Em isp
