@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.101 2001/03/21 00:38:47 pk Exp $
+#	$NetBSD: files.sparc,v 1.102 2001/06/08 04:49:45 mrg Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -257,10 +257,12 @@ include "dev/wsfont/files.wsfont"
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
+file	arch/sparc/sparc/svr4_sigcode.s	compat_svr4
 file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
+file	arch/sparc/sparc/sunos_sigcode.s compat_sunos
 file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 
 # NetBSD a.out Binary Compatibility (COMPAT_AOUT)
