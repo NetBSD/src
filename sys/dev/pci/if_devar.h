@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.9 1997/03/26 01:33:35 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.10 1997/04/13 19:48:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -474,8 +474,9 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
-    bus_space_tag_t tulip_bustag;
-    bus_space_handle_t tulip_bushandle;	/* CSR region handle */
+
+    bus_space_tag_t tulip_bustag;	/* tag of CSR region being used */
+    bus_space_handle_t tulip_bushandle;	/* handle for CSR region being used */
     pci_chipset_tag_t tulip_pc;
     struct ethercom tulip_ec;
     u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
