@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.9 2002/08/22 20:42:22 martin Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.10 2002/08/26 17:00:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,49 +71,6 @@
  */
 
 
-struct ad1848_volume {
-	u_char	left;
-	u_char	right;
-};
-
-struct ad1848_softc {
-	struct	device sc_dev;		/* base device */
-	bus_space_tag_t sc_iot;		/* tag */
-	bus_space_handle_t sc_ioh;	/* handle */
-
-	int	(*sc_readreg)__P((struct ad1848_softc *, int));
-	void	(*sc_writereg)__P((struct ad1848_softc *, int, int));
-#define ADREAD(sc, index)		(*(sc)->sc_readreg)(sc, index)
-#define ADWRITE(sc, index, data)	(*(sc)->sc_writereg)(sc, index, data)
-
-	void	*parent;
-
-	/* We keep track of these */
-	struct ad1848_volume gains[6];
-	struct ad1848_volume rec_gain;
-
-	int	rec_port;		/* recording port */
-
-	/* ad1848 */
-	u_char	MCE_bit;
-	char	mic_gain_on;		/* CS4231 only */
-        char    mute[6];
-
-	char	*chip_name;
-	int	mode;
-	int	is_ad1845;
-
-	u_int	precision;		/* 8/16 bits */
-	int	channels;
-
-	u_char	speed_bits;
-	u_char	format_bits;
-	u_char	need_commit;
-
-	u_char	wave_mute_status;
-	int	open_mode;
-};
-
 #define MUTE_LEFT       1
 #define MUTE_RIGHT      2
 #define MUTE_ALL        (MUTE_LEFT | MUTE_RIGHT)
@@ -136,6 +93,51 @@ struct ad1848_softc {
 #define AD1848_MONO_CHANNEL	4
 #define AD1848_OUT_CHANNEL	5
 #define AD1848_MONITOR_CHANNEL	6 /* Doesn't seem to be on all later chips */
+
+#define	AD1848_NUM_CHANNELS	7
+
+struct ad1848_volume {
+	u_char	left;
+	u_char	right;
+};
+
+struct ad1848_softc {
+	struct	device sc_dev;		/* base device */
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
+
+	int	(*sc_readreg)__P((struct ad1848_softc *, int));
+	void	(*sc_writereg)__P((struct ad1848_softc *, int, int));
+#define ADREAD(sc, index)		(*(sc)->sc_readreg)(sc, index)
+#define ADWRITE(sc, index, data)	(*(sc)->sc_writereg)(sc, index, data)
+
+	void	*parent;
+
+	/* We keep track of these */
+	struct ad1848_volume gains[AD1848_NUM_CHANNELS];
+	struct ad1848_volume rec_gain;
+
+	int	rec_port;		/* recording port */
+
+	/* ad1848 */
+	u_char	MCE_bit;
+	char	mic_gain_on;		/* CS4231 only */
+        char    mute[AD1848_NUM_CHANNELS];
+
+	char	*chip_name;
+	int	mode;
+	int	is_ad1845;
+
+	u_int	precision;		/* 8/16 bits */
+	int	channels;
+
+	u_char	speed_bits;
+	u_char	format_bits;
+	u_char	need_commit;
+
+	u_char	wave_mute_status;
+	int	open_mode;
+};
 
 /*
  * Ad1848 registers.
