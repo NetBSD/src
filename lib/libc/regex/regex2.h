@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.6 1997/04/06 19:29:14 cgd Exp $	*/
+/*	$NetBSD: regex2.h,v 1.7 1998/11/14 16:43:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -77,36 +77,37 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
-typedef long sopno;
-#define	OPRMASK	0xf8000000L
-#define	OPDMASK	0x07ffffffL
-#define	OPSHIFT	((unsigned)27)
+typedef u_int32_t sop;	/* strip operator */
+typedef int32_t sopno;
+#define	OPRMASK	((u_int32_t)0xf8000000UL)
+#define	OPDMASK	((u_int32_t)0x07ffffffUL)
+#define	OPSHIFT	((u_int32_t)27)
+#define OPC(n)	(((u_int32_t)(n))<<OPSHIFT)
 #define	OP(n)	((n)&OPRMASK)
-#define	OPND(n)	((n)&OPDMASK)
+#define	OPND(n)	((int32_t)((n)&OPDMASK))
 #define	SOP(op, opnd)	((op)|(opnd))
-/* operators			   meaning	operand			*/
-/*						(back, fwd are offsets)	*/
-#define	OEND	(1L<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2L<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	(3L<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4L<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5L<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6L<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7L<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8L<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9L<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10L<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11L<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12L<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13L<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14L<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15L<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16L<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17L<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18L<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19L<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20L<<OPSHIFT)	/* end word	-			*/
+/* operators		   meaning	operand			*/
+/*					(back, fwd are offsets)	*/
+#define	OEND	OPC(1)	/* endmarker	-			*/
+#define	OCHAR	OPC(2)	/* character	unsigned char		*/
+#define	OBOL	OPC(3)	/* left anchor	-			*/
+#define	OEOL	OPC(4)	/* right anchor	-			*/
+#define	OANY	OPC(5)	/* .		-			*/
+#define	OANYOF	OPC(6)	/* [...]	set number		*/
+#define	OBACK_	OPC(7)	/* begin \d	paren number		*/
+#define	O_BACK	OPC(8)	/* end \d	paren number		*/
+#define	OPLUS_	OPC(9)	/* + prefix	fwd to suffix		*/
+#define	O_PLUS	OPC(10)	/* + suffix	back to prefix		*/
+#define	OQUEST_	OPC(11)	/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	OPC(12)	/* ? suffix	back to prefix		*/
+#define	OLPAREN	OPC(13)	/* (		fwd to )		*/
+#define	ORPAREN	OPC(14)	/* )		back to (		*/
+#define	OCH_	OPC(15)	/* begin choice	fwd to OOR2		*/
+#define	OOR1	OPC(16)	/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	OPC(17)	/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	OPC(18)	/* end choice	back to OOR1		*/
+#define	OBOW	OPC(19)	/* begin word	-			*/
+#define	OEOW	OPC(20)	/* end word	-			*/
 
 /*
  * Structure for [] character-set representation.  Character sets are

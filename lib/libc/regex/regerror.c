@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.10 1998/07/26 12:17:51 mycroft Exp $	*/
+/*	$NetBSD: regerror.c,v 1.11 1998/11/14 16:43:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.10 1998/07/26 12:17:51 mycroft Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.11 1998/11/14 16:43:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 /* === regerror.c === */
-static char *regatoi __P((const regex_t *preg, char *localbuf, int buflen));
+static char *regatoi __P((const regex_t *preg, char *localbuf, size_t buflen));
 
 #ifdef __cplusplus
 }
@@ -145,8 +145,10 @@ size_t errbuf_size;
 				break;
 	
 		if (errcode&REG_ITOA) {
-			if (r->code != 0)
+			if (r->code != 0) {
 				(void)strncpy(convbuf, r->name, sizeof convbuf);
+				convbuf[sizeof(convbuf) - 1] = '\0';
+			}
 			else
 				(void)snprintf(convbuf, sizeof convbuf,
 				    "REG_0x%x", target);
@@ -172,7 +174,7 @@ static char *
 regatoi(preg, localbuf, buflen)
 const regex_t *preg;
 char *localbuf;
-int buflen;
+size_t buflen;
 {
 	const struct rerr *r;
 
