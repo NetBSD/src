@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_mkdb.8,v 1.8 1996/10/12 00:51:44 cgd Exp $
+.\"	$NetBSD: kvm_mkdb.8,v 1.9 1997/10/17 10:15:04 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,10 @@
 .Nm kvm_mkdb
 .Nd create kernel database
 .Sh SYNOPSIS
-.Nm kvm_mkdb
+.Nm
 .Op file
 .Sh DESCRIPTION
-.Nm Kvm_mkdb
+.Nm
 creates a database,
 .Pa /var/db/kvm.db ,
 containing information about the specified file.
@@ -68,5 +68,5 @@ information about the current system.
 .Xr kvm_nlist 3
 .Sh HISTORY
 The
-.Nm kvm_mkdb
+.Nm
 utility first appeared in 4.4BSD.

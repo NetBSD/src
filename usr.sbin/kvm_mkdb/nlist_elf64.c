@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf64.c,v 1.1 1996/09/29 02:19:59 cgd Exp $	*/
+/*	$NetBSD: nlist_elf64.c,v 1.2 1997/10/17 10:15:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char e64rcsid[] = "$NetBSD: nlist_elf64.c,v 1.1 1996/09/29 02:19:59 cgd Exp $";
+__IDSTRING(e64rcsid,
+    "$NetBSD: nlist_elf64.c,v 1.2 1997/10/17 10:15:32 lukem Exp $");
 #endif /* not lint */
 
 #define	ELFSIZE		64

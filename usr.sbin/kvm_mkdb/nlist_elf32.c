@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.2 1996/10/03 04:56:11 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.3 1997/10/17 10:15:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$NetBSD: nlist_elf32.c,v 1.2 1996/10/03 04:56:11 cgd Exp $";
+__RCSID("$NetBSD: nlist_elf32.c,v 1.3 1997/10/17 10:15:28 lukem Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.3 1996/10/03 23:06:44 cgd Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.4 1997/10/17 10:15:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: nlist_aout.c,v 1.3 1996/10/03 23:06:44 cgd Exp $";
+__RCSID("$NetBSD: nlist_aout.c,v 1.4 1997/10/17 10:15:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +126,7 @@ create_knlist_aout(name, db)
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
 	if (!(strtab = malloc(strsize))) {
-		warn(NULL);
+		warn("malloc");
 		punt();
 	}
 	if ((nr = read(fd, strtab, strsize)) != strsize)
