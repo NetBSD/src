@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.4 1997/10/03 15:13:29 enami Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.5 1998/01/15 02:21:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -29,33 +29,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ATAPI_MODE_SELECT	0x55
-struct atapi_mode_select {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define AMS_SP  0x01
-#define AMS_PF  0x10
+struct atapi_cdrom_page {
 	u_int8_t page;
-	u_int8_t unused[4];
-	u_int8_t length[2];
-	u_int8_t unused2[7];
-};
-
-#define ATAPI_MODE_SENSE	0x5a
-struct atapi_mode_sense {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t page;
-	u_int8_t reserved1[4];
-	u_int8_t length[2];
-	u_int8_t reserved2[7];
+	u_int8_t length;
+	u_int8_t reserved;
+	u_int8_t inact_mult;
+	u_int8_t spm[2];
+	u_int8_t fps[2];
 };
 
 struct atapi_cap_page {
 	/* Capabilities page */
 	u_int8_t page_code;
 	u_int8_t param_len;  
-	u_int8_t reserved2[2];
+	u_int8_t reserved1[2];
 
 	u_int8_t cap1;
 #define AUDIO_PLAY 0x01		/* audio play supported */
@@ -94,53 +81,31 @@ struct atapi_cap_page {
 	u_int8_t buf_size[2];	/* internal buffer size in bytes/1024 */
 	u_int8_t cur_speed[2];	/* current data rate in bytes/1000  */
 	/* Digital drive output format description (optional?) */
-	u_int8_t reserved3;
-	u_int8_t dig_output; /* Digital drive output format description */
-	u_int8_t reserved4[2];
-};
-
-struct atapi_cdrom_page {
-	u_int8_t page;
-	u_int8_t length;
 	u_int8_t reserved2;
-	u_int8_t inact_mult;
-	u_int8_t spm[2];
-	u_int8_t fps[2];
+	u_int8_t dig_output; /* Digital drive output format description */
+	u_int8_t reserved3[2];
 };
 
-struct atapi_mode_data {
-	struct mode_header {
-		u_int8_t length[2];
-		u_int8_t medium;
-#define MDT_UNKNOWN	0x00
-#define MDT_DATA_120	0x01
-#define MDT_AUDIO_120	0x02
-#define MDT_COMB_120	0x03
-#define MDT_PHOTO_120	0x04
-#define MDT_DATA_80	0x05
-#define MDT_AUDIO_80	0x06
-#define MDT_COMB_80	0x07
-#define MDT_PHOTO_80	0x08
-#define MDT_NO_DISC	0x70
-#define MDT_DOOR_OPEN	0x71
-#define MDT_FMT_ERROR	0x72
-		u_int8_t reserved[5];
-	} header;
 #define ATAPI_CDROM_PAGE	0x0d
 #define ATAPI_AUDIO_PAGE	0x0e
 #define ATAPI_AUDIO_PAGE_MASK	0x4e
 #define ATAPI_CAP_PAGE		0x2a
-	union {
-		u_int8_t page_code;
-		struct atapi_cdrom_page cdrom;
-		struct atapi_cap_page cap;
-		struct cd_audio_page audio;
-	} page;
+
+union atapi_cd_pages {
+	u_int8_t page_code;
+	struct atapi_cdrom_page cdrom;
+	struct atapi_cap_page cap;
+	struct cd_audio_page audio;
+};
+
+struct atapi_cd_mode_data {
+	struct atapi_mode_header header;
+	union atapi_cd_pages pages;
 };
 
 #define AUDIOPAGESIZE \
-	sizeof(struct cd_audio_page)+sizeof(struct mode_header)
+	(sizeof(struct atapi_mode_header) + sizeof(struct cd_audio_page))
 #define CDROMPAGESIZE \
-	sizeof(struct atapi_cdrom_page)+sizeof(struct mode_header)
+	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cdrom_page))
 #define CAPPAGESIZE \
-	sizeof(struct atapi_cap_page)+sizeof(struct mode_header)
+	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cap_page))

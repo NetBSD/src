@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.57 1997/12/30 21:36:51 is Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.58 1998/01/15 02:21:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -108,6 +108,15 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags)) == NULL)
 		return (ENOMEM);
+
+	/*
+	 * Set the LUN in the CDB if we have an older device.  We also
+	 * set it for more modern SCSI-II devices "just in case".
+	 */
+	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) <= 2)
+		xs->cmd->bytes[0] |=
+		    ((sc_link->scsipi_scsi.lun << SCSI_CMD_LUN_SHIFT) &
+			SCSI_CMD_LUN_MASK);
 
 	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
 		return (0);

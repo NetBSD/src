@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.4 1997/10/01 01:19:08 enami Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.5 1998/01/15 02:21:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -78,17 +78,6 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	xs->retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
-
-	/*
-	 * Set the LUN in the CDB if we have an older device.  We also
-	 * set it for more modern SCSI-II devices "just in case".
-	 */
-
-	if ((sc_link->type == BUS_SCSI) &&
-	    ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) <= 2))
-		xs->cmd->bytes[0] |=
-		    ((sc_link->scsipi_scsi.lun << SCSI_CMD_LUN_SHIFT) &
-			SCSI_CMD_LUN_MASK);
 
 	return (xs);
 }

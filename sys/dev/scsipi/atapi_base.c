@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.4 1997/12/30 21:36:55 is Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.5 1998/01/15 02:21:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -45,8 +45,8 @@
 #include <sys/proc.h>
 
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_disk.h>
+#include <dev/scsipi/atapi_all.h>
+#include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 
@@ -230,5 +230,50 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	 * check if anyone else needs to be started up.
 	 */
 	scsipi_free_xs(xs, flags);
+	return (error);
+}
+
+int
+atapi_mode_select(l, data, len, flags, retries, timeout)
+	struct scsipi_link *l;
+	struct atapi_mode_header *data;
+	int len, flags, retries, timeout;
+{
+	struct atapi_mode_select scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = ATAPI_MODE_SELECT;
+	scsipi_cmd.byte2 = AMS_PF;
+	_lto2b(len, scsipi_cmd.length);
+
+	/* length is reserved when doing mode select; zero it */
+	_lto2l(0, data->length);
+
+	error = scsipi_command(l, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | SCSI_DATA_OUT);
+	SC_DEBUG(l, SDEV_DB2, ("atapi_mode_select: error=%d\n", error));
+	return (error);
+}
+
+int
+atapi_mode_sense(l, page, data, len, flags, retries, timeout)
+	struct scsipi_link *l;
+	int page, len, flags, retries, timeout;
+	struct atapi_mode_header *data;
+{
+	struct atapi_mode_sense scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = ATAPI_MODE_SENSE;
+	scsipi_cmd.page = page;
+	_lto2b(len, scsipi_cmd.length);
+
+	error = scsipi_command(l, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | SCSI_DATA_IN);
+	SC_DEBUG(l, SDEV_DB2, ("atapi_mode_sense: error=%d\n", error));
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.6 1997/12/15 07:15:57 scottr Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.7 1998/01/15 02:21:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -188,7 +188,7 @@ struct scsipi_link {
 			int max_target;		/* XXX max target supported
 						   by adapter */
 		} scsipi_scsi;
-		struct atascsipi_link {		/* XXX this must be in sync
+		struct atapi_link {		/* XXX this must be in sync
 						   with wd_link */
 			u_int8_t type;		/* 0 = ATA, 1 = ATAPI, from
 						   wdlink.h */
@@ -242,7 +242,8 @@ struct scsipi_xfer {
 	 */
 	int	req_sense_length;	/* Explicit request sense length */
 	u_int8_t status;		/* SCSI status */
-	struct	scsipi_generic cmdstore;/* stash the command in here */
+	struct	scsipi_generic cmdstore
+	    __attribute__ ((aligned (4)));/* stash the command in here */
 };
 
 /*
@@ -250,7 +251,7 @@ struct scsipi_xfer {
  */
 #define	SCSI_NOSLEEP	0x0001	/* don't sleep */
 #define	SCSI_POLL	0x0002	/* poll for completion */
-#define	SCSI_AUTOCONF	0x0003	/* shorthand for SCSI_POLL | SCSI_NOSLEEP */
+#define	SCSI_AUTOCONF	(SCSI_NOSLEEP | SCSI_POLL)
 #define	SCSI_USER	0x0004	/* Is a user cmd, call scsipi_user_done	*/
 #define	ITSDONE		0x0008	/* the transfer is as done as it gets	*/
 #define	INUSE		0x0010	/* The scsipi_xfer block is in use	*/
@@ -312,7 +313,7 @@ struct scsi_quirk_inquiry_pattern {
 /*
  * Macro to issue a SCSI command.  Treat it like a function:
  *
- *	int scsipi_command __P((struct scsi_link *link,
+ *	int scsipi_command __P((struct scsipi_link *link,
  *	    struct scsipi_generic *scsipi_cmd, int cmdlen,
  *	    u_char *data_addr, int datalen, int retries,
  *	    int timeout, struct buf *bp, int flags));
