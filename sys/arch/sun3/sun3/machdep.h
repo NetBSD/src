@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.29 2003/08/07 16:29:58 agc Exp $	*/
+/*	$NetBSD: machdep.h,v 1.30 2003/09/22 14:27:12 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -113,7 +113,7 @@ void	enable_fpu __P((int));
 void	enable_init __P((void));
 void	enable_video __P((int));
 
-int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
+int 	fpu_emulate __P((struct trapframe *, struct fpframe *, ksiginfo_t *));
 
 /* Backward compatibility... */
 #define getsr	_getsr

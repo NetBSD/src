@@ -1,4 +1,4 @@
-| $NetBSD: vectors.s,v 1.8 2002/09/11 01:46:36 mycroft Exp $
+| $NetBSD: vectors.s,v 1.9 2003/09/22 14:27:11 cl Exp $
 
 | This file was taken from from mvme68k/mvme68k/vectors.s
 | should probably be re-synced when needed.
@@ -90,7 +90,11 @@ GLOBAL(vectab)
 	VECTOR(illinst)	
 #endif
 	VECTOR(trap2)		/* 34: trace */
-	VECTOR(trap3)		/* 35: sigreturn special syscall */
+#ifdef COMPAT_16
+	VECTOR(trap3)		/* 35: compat_16_sigreturn */
+#else
+	VECTOR(illinst)	
+#endif
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */
 	VECTOR(illinst)		/* 38: TRAP instruction vector */

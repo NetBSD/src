@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2003/09/17 23:17:47 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 2003/09/22 14:27:14 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2003/09/17 23:17:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2003/09/22 14:27:14 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,9 +275,14 @@ again:
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
 #endif
 		} else if ((sig = writeback(fp, fromtrap))) {
+			ksiginfo_t ksi;
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(l, sig, faultaddr);
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = sig;
+			ksi.ksi_addr = (void *)faultaddr;
+			ksi.ksi_code = BUS_OBJERR;
+			trapsignal(l, &ksi);
 			goto again;
 		}
 	}
@@ -317,13 +322,15 @@ trap(type, code, v, frame)
 	extern char fubail[], subail[];
 	struct lwp *l;
 	struct proc *p;
-	int i, s;
-	u_int ucode;
+	ksiginfo_t ksi;
+	int s;
 	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 
 	uvmexp.traps++;
 	l = curlwp;
-	ucode = 0;
+
+	(void)memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_trap = type & ~T_USER;
 
 	/* I have verified that this DOES happen! -gwr */
 	if (l == NULL)
@@ -397,8 +404,10 @@ trap(type, code, v, frame)
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
-		ucode = v;
-		i = SIGBUS;
+		ksi.ksi_addr = (void *)v;
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = (type == (T_BUSERR|T_USER)) ?
+			BUS_OBJERR : BUS_ADRERR;
 		break;
 
 	case T_COPERR:		/* kernel coprocessor violation */
@@ -415,14 +424,17 @@ trap(type, code, v, frame)
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
-		i = SIGILL;
-		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_addr = (void *)(int)frame.f_format;
+				/* XXX was ILL_RESAD_FAULT */
+		ksi.ksi_code = (type == T_COPERR) ?
+			ILL_COPROC : ILL_ILLOPC;
 		break;
 
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 	/* What is a proper response here? */
-		ucode = 0;
-		i = SIGFPE;
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_FLTINV;
 		break;
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
@@ -435,8 +447,8 @@ trap(type, code, v, frame)
 	 * 3 bits of the status are defined as 0 so there is
 	 * no clash.
 	 */
-		ucode = code;
-		i = SIGFPE;
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)code;
 		break;
 
 	/*
@@ -462,8 +474,9 @@ trap(type, code, v, frame)
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef FPU_EMULATE
-		i = fpu_emulate(&frame, &l->l_addr->u_pcb.pcb_fpregs);
-		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+		if (fpu_emulate(&frame, &l->l_addr->u_pcb.pcb_fpregs,
+			&ksi) == 0)
+			; /* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
 		break;
 #elif defined(M68040) || defined(M68060)
 		/* XXX need to FSAVE */
@@ -472,15 +485,16 @@ trap(type, code, v, frame)
 		       frame.f_format == 2 ? "instruction" : "data type",
 		       frame.f_pc, frame.f_fmt2.f_iaddr);
 		/* XXX need to FRESTORE */
-		i = SIGFPE;
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_FLTINV;
 		break;
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux) {
-			ucode = HPUX_ILL_ILLINST_TRAP;
-			i = SIGILL;
+			ksi.ksi_addr = (void *)HPUX_ILL_ILLINST_TRAP;
+			ksi.ksi_signo = SIGILL;
 			break;
 		}
 		/* fall through */
@@ -488,47 +502,54 @@ trap(type, code, v, frame)
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_ILL_PRIV_TRAP;
+			ksi.ksi_addr = (void *)HPUX_ILL_PRIV_TRAP;
 		else
 #endif
-		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
-		i = SIGILL;
+		ksi.ksi_addr = (void *)(int)frame.f_format;
+				/* XXX was ILL_PRIVIN_FAULT */
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = (type == (T_PRIVINST|T_USER)) ?
+			ILL_PRVOPC : ILL_ILLOPC;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_FPE_INTDIV_TRAP;
+			ksi.ksi_addr = (void *)HPUX_FPE_INTDIV_TRAP;
 		else
 #endif
-		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
-		i = SIGFPE;
+		ksi.ksi_addr = (void *)(int)frame.f_format;
+				/* XXX was FPE_INTDIV_TRAP */
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_FLTDIV;
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux) {
 			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_CHK_TRAP;
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_addr = (void *)HPUX_ILL_CHK_TRAP;
 			break;
 		}
 #endif
-		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
-		i = SIGFPE;
+		ksi.ksi_addr = (void *)(int)frame.f_format;
+				/* XXX was FPE_SUBRNG_TRAP */
+		ksi.ksi_signo = SIGFPE;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux) {
 			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_TRAPV_TRAP;
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_addr = (void *)HPUX_ILL_TRAPV_TRAP;
 			break;
 		}
 #endif
-		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
-		i = SIGFPE;
+		ksi.ksi_addr = (void *)(int)frame.f_format;
+				/* XXX was FPE_INTOVF_TRAP */
+		ksi.ksi_signo = SIGFPE;
 		break;
 
 	/*
@@ -571,7 +592,7 @@ trap(type, code, v, frame)
 	case T_TRACE:		/* tracing a trap instruction */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
+		ksi.ksi_signo = SIGTRAP;
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
@@ -734,8 +755,7 @@ trap(type, code, v, frame)
 				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == EACCES)
-				rv = EFAULT;
+			}
 		}
 		if (rv == 0) {
 			if (type == T_MMUFLT) {
@@ -748,6 +768,11 @@ trap(type, code, v, frame)
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
+		if (rv == EACCES) {
+			ksi.ksi_code = SEGV_ACCERR;
+			rv = EFAULT;
+		} else
+			ksi.ksi_code = SEGV_MAPERR;
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
@@ -758,21 +783,21 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		l->l_flag &= ~L_SA_PAGEFAULT;
-		ucode = v;
+		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			i = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
 		} else {
-			i = SIGSEGV;
+			ksi.ksi_signo = SIGSEGV;
 		}
 		break;
 	    }
 	}
-	if (i)
-		trapsignal(l, i, ucode);
+	if (ksi.ksi_signo)
+		trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
 out:

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2003/04/08 22:57:56 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.26 2003/09/22 14:27:09 cl Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -219,7 +219,7 @@ define	FPF_FPI			offsetof(struct fpframe, fpf_fpiar)
 # system calls
 define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
-define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 
 # errno

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 2003/08/07 16:29:53 agc Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 2003/09/22 14:27:15 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ void	cninit __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
-int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
+int 	fpu_emulate __P((struct trapframe *, struct fpframe *, ksiginfo_t *));
 
 int 	getdfc __P((void));
 int 	getsfc __P((void));
