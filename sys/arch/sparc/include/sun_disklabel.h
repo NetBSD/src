@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.5 1995/06/26 22:09:47 pk Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.6 1996/01/07 22:03:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,5 +111,5 @@ struct sun_disklabel {			/* total size = 512 bytes */
 int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
 
 /* compatability dk ioctl's */
-int	sun_dkioctl __P((struct dkdevice *, u_long, caddr_t, int));
+int	sun_dkioctl __P((struct disk *, u_long, caddr_t, int));
 #endif
