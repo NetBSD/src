@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2003/07/15 03:35:56 lukem Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2003/10/22 21:09:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2003/07/15 03:35:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/10/22 21:09:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == 0 && sym == 0) {
 			printf("symbol not found\n");
 			break;
 		}
