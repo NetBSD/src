@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.30.2.2 1997/11/09 20:19:06 mellon Exp $
+.\"	$NetBSD: options.4,v 1.30.2.3 1997/11/27 08:15:37 mellon Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -176,6 +176,9 @@ Compiles in a kernel debugger for diagnosing kernel problems. See
 for details. 
 .Em NOTE:
 not available on all architectures.
+.It Cd options DDB_HISTORY_SIZE=integer
+If this is non-zero, enable history editing in the kernel debugger
+and set the size of the history to this value.
 .It Cd options DDB_ONPANIC
 If set to non-zero, the DDB will be entered upon kernel panic.  The
 default if not specified is "1". Note that this sets the value of
@@ -515,13 +518,13 @@ is not an integer, the
 .Em NTP
 option also enables extended-precision arithmetic to keep track of
 fractional clock ticks at NTP time-format precision.
-.It Cd options PPS
+.It Cd options PPS_SYNC
 This option enables a kernel serial line discipline for receiving time
 phase signals from an external reference clock such as a radio clock.
 (The
 .Em NTP
 option (which see) must be on if the
-.Em PPS
+.Em PPS_SYNC
 option is used.)
 Some reference clocks generate a pulse per second (PPS) signal in
 phase with their time source. The
