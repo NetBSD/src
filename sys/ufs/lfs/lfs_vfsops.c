@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.57 2000/07/05 22:25:44 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.58 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -423,6 +423,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 	fs->lfs_uinodes = 0;
+	fs->lfs_ravail = 0;
 #ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = 0;
 #endif
@@ -430,8 +431,6 @@ lfs_mountfs(devvp, mp, p)
 	for (i=0;i<LFS_THROTTLE;i++)
 		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
 #endif
-	if (fs->lfs_minfreeseg == 0)
-		fs->lfs_minfreeseg = MIN_FREE_SEGS;
 
 	/* Set up the ifile and lock aflags */
 	fs->lfs_doifile = 0;
@@ -751,12 +750,12 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
+#ifdef DIAGNOSTIC
 	if(vp->v_type == VNON) {
-		printf("lfs_vget: ino %d is type VNON! (ifmt %o)\n", ip->i_number, (ip->i_ffs_mode&IFMT)>>12);
-#ifdef DDB
-		Debugger();
-#endif
+		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
+		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
 	}
+#endif
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.48 2000/07/13 17:35:03 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.49 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -169,6 +169,7 @@ sys_lfs_markv(p, v, retval)
 	int j;
 #endif
 	int numlocked=0, numrefed=0;
+	ino_t maxino;
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
@@ -180,7 +181,10 @@ sys_lfs_markv(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	
+
+	maxino = (dbtofsb(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks) -
+		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+
 	origcnt = cnt = SCARG(uap, blkcnt);
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO));
@@ -240,6 +244,11 @@ sys_lfs_markv(p, v, retval)
 			}
 		}
 #endif /* LFS_TRACK_IOS */
+		/* Bounds-check incoming data, avoid panic for failed VGET */
+		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
+			error = EINVAL;
+			goto again;
+		}
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
 		 * exists.
@@ -779,9 +788,10 @@ sys_lfs_segclean(p, v, retval)
 	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize);
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
 		fs->lfs_avail -= btodb(LFS_SBPAD);
-	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
-		sup->su_ninos * btodb(fs->lfs_bsize);
-	fs->lfs_dmeta -= sup->su_nsums + fsbtodb(fs, sup->su_ninos);
+	fs->lfs_bfree += sup->su_nsums * btodb(LFS_SUMMARY_SIZE) +
+		fsbtodb(fs, sup->su_ninos);
+	fs->lfs_dmeta -= sup->su_nsums * btodb(LFS_SUMMARY_SIZE) +
+		fsbtodb(fs, sup->su_ninos);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
@@ -791,6 +801,8 @@ sys_lfs_segclean(p, v, retval)
 	++cip->clean;
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
+	cip->bfree = fs->lfs_bfree;
+	cip->avail = fs->lfs_avail - fs->lfs_ravail;
 	(void) VOP_BWRITE(bp);
 	wakeup(&fs->lfs_avail);
 
