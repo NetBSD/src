@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.9 1998/01/09 23:51:09 perry Exp $
+#	$NetBSD: aliases,v 1.10 1998/01/22 16:23:32 perry Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -22,7 +22,6 @@ games:		root
 ingres:		root
 nobody:		root
 toor:		root
-uucp:		root
 
 # Well-known aliases -- these should be filled in!
 # root:
