@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.8 2001/04/05 14:21:31 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.9 2001/04/05 19:55:01 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -48,8 +48,12 @@
 # define DPRINTF while (0) printf
 #endif
 
+/* sc_flags values */
+#define AWACS_CAP_BSWAP		0x0001
+
 struct awacs_softc {
 	struct device sc_dev;
+	int sc_flags;
 
 	void (*sc_ointr)(void *);	/* dma completion intr handler */
 	void *sc_oarg;			/* arg for sc_ointr() */
@@ -209,10 +213,6 @@ awacs_match(parent, match, aux)
 	if (ca->ca_nreg < 24 || ca->ca_nintr < 12)
 		return 0;
 
-	/* XXX for now */
-	if (ca->ca_nintr > 12)
-		return 0;
-
 	return 1;
 }
 
@@ -224,6 +224,7 @@ awacs_attach(parent, self, aux)
 {
 	struct awacs_softc *sc = (struct awacs_softc *)self;
 	struct confargs *ca = aux;
+	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
@@ -236,12 +237,28 @@ awacs_attach(parent, self, aux)
 	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 
-	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_AUDIO, awacs_intr, sc);
-	intr_establish(ca->ca_intr[1], IST_LEVEL, IPL_AUDIO, awacs_intr, sc);
-	intr_establish(ca->ca_intr[2], IST_LEVEL, IPL_AUDIO, awacs_intr, sc);
+	if (ca->ca_nintr == 24) {
+		cirq = ca->ca_intr[0];
+		oirq = ca->ca_intr[2];
+		iirq = ca->ca_intr[4];
+		cirq_type = ca->ca_intr[1] ? IST_LEVEL : IST_EDGE;
+		oirq_type = ca->ca_intr[3] ? IST_LEVEL : IST_EDGE;
+		iirq_type = ca->ca_intr[5] ? IST_LEVEL : IST_EDGE;
+	} else {
+		cirq = ca->ca_intr[0];
+		oirq = ca->ca_intr[1];
+		iirq = ca->ca_intr[2];
+		cirq_type = oirq_type = iirq_type = IST_LEVEL;
+	}
+	intr_establish(cirq, cirq_type, IPL_AUDIO, awacs_intr, sc);
+	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
+	/* intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc); */
 
-	printf(": irq %d,%d,%d\n",
-		ca->ca_intr[0], ca->ca_intr[1], ca->ca_intr[2]);
+	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
+
+	/* XXX Uni-North based models don't have byteswap capability. */
+	if (OF_finddevice("/uni-n") == -1)
+		sc->sc_flags |= AWACS_CAP_BSWAP;
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
 		AWACS_RATE_44100;
@@ -364,6 +381,10 @@ awacs_query_encoding(h, ae)
 	void *h;
 	struct audio_encoding *ae;
 {
+	struct awacs_softc *sc = h;
+
+	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+
 	switch (ae->index) {
 	case 0:
 		strcpy(ae->name, AudioEslinear);
@@ -381,31 +402,28 @@ awacs_query_encoding(h, ae)
 		strcpy(ae->name, AudioEslinear_le);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		ae->precision = 16;
-		ae->flags = 0;
+		if (sc->sc_flags & AWACS_CAP_BSWAP)
+			ae->flags = 0;
 		return 0;
 	case 3:
 		strcpy(ae->name, AudioEulinear_be);
 		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 4:
 		strcpy(ae->name, AudioEulinear_le);
 		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 5:
 		strcpy(ae->name, AudioEmulaw);
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 6:
 		strcpy(ae->name, AudioEalaw);
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	default:
 		return EINVAL;
@@ -429,6 +447,16 @@ mono16_to_stereo16(v, p, cc)
 		*--dst = x;
 		cc -= 2;
 	}
+}
+
+static void
+swap_bytes_mono16_to_stereo16(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	swap_bytes(v, p, cc);
+	mono16_to_stereo16(v, p, cc);
 }
 
 int
@@ -475,48 +503,63 @@ awacs_set_params(h, setmode, usemode, play, rec)
 		switch (p->encoding) {
 
 		case AUDIO_ENCODING_SLINEAR_LE:
-			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
+			if (sc->sc_flags & AWACS_CAP_BSWAP)
+				awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
+			else {
+				if (p->channels == 2 && p->precision == 16) {
+					p->sw_code = swap_bytes;
+					break;
+				}
+				if (p->channels == 1 && p->precision == 16) {
+					p->factor = 2;
+					p->sw_code =
+					    swap_bytes_mono16_to_stereo16;
+					break;
+				}
+				return EINVAL;
+			}
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->channels == 1) {
+			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
 				p->sw_code = mono16_to_stereo16;
 				break;
 			}
-			if (p->precision != 16)
-				return EINVAL;
-				/* p->sw_code = change_sign8; */
-			break;
+			if (p->channels == 2 && p->precision == 16)
+				break;
+
+			return EINVAL;
 
 		case AUDIO_ENCODING_ULINEAR_LE:
-			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
-			if (p->channels == 2 && p->precision == 16)
-				p->sw_code = change_sign16_le;
-			else
-				return EINVAL;
-			break;
+			if (p->channels == 2 && p->precision == 16) {
+				p->sw_code = swap_bytes_change_sign16_be;
+				break;
+			}
+			return EINVAL;
 
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->channels == 2 && p->precision == 16)
+			if (p->channels == 2 && p->precision == 16) {
 				p->sw_code = change_sign16_be;
-			else
-				return EINVAL;
-			break;
+				break;
+			}
+			return EINVAL;
 
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = mulaw_to_slinear16_be;
+				break;
 			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
+				break;		/* XXX */
+
+			return EINVAL;
 
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_be;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
+				break;
+			}
+			return EINVAL;
 
 		default:
 			return EINVAL;
