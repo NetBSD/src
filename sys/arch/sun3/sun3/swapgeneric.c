@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 1993 Adam Glass 
- * Copyright (c) 1982, 1986 Regents of the University of California.
+ * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,26 +12,30 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	This product includes software developed by Gordon Ross.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	swapgeneric.c,v 1.2 1993/05/22 07:57:44 cgd Exp
+ *	$Id: swapgeneric.c,v 1.9 1994/09/20 16:49:51 gwr Exp $
+ */
+
+/*
+ * Generic configuration (one kernel fits all 8-)
+ * Some ideas taken from i386 port but no code.
+ *
+ * Allow root/swap on any of: le,sd
+ * Eventually, allow: ie,st,xd,xy
  */
 
 #include <sys/param.h>
@@ -41,127 +44,348 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-/*#include <../dev/device.h>*/
+#include <machine/mon.h>
 
-/*#include "sd.h" XXX */
-#define NSD 0
+#ifdef	FFS
+extern int ffs_mountroot();
+#else	/* FFS */
+static int ffs_mountroot() { return ENOSYS; }
+#endif	/* FFS */
+
+#ifdef	NFSCLIENT
+extern int nfs_mountroot();
+#else	/* NFSCLIENT */
+static int nfs_mountroot() { return ENOSYS; }
+#endif	/* NFSCLIENT */
+
+int (*mountroot)();
+
+dev_t	rootdev = NODEV;
+dev_t	dumpdev = NODEV;
+
+struct	swdevt swdevt[] = {
+	{ NODEV,	0,	0 },
+	{ NODEV,	0,	0 },
+};
+
+#define NAMESZ 16
+char boot_ifname[NAMESZ];
 
 /*
- * Generic configuration;  all in one
+ * Devices which MIGHT be available.
+ * If gc_root is NODEV, use NFS root.
  */
-dev_t	rootdev = NODEV;
-dev_t	argdev = NODEV;
-dev_t	dumpdev = NODEV;
-int	nswap;
-struct	swdevt swdevt[] = {
-	{ -1,	1,	0 },
-	{ 0,	0,	0 },
-};
-struct	genericconf {
-	caddr_t	gc_driver;
-	char	*gc_name;
-	dev_t	gc_root;
-} genericconf[] = {
-#if NSD > 0
-	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
-#endif
+static struct genconf {
+	char gc_name[4];
+	int  gc_major;
+} genconf[] = {
+	{ "ie", -1 },
+	{ "le", -1 },
+	{ "xy",	3 },
+	{ "sd",	7 },
+	{ "xd",	10 },
 	{ 0 },
 };
 
-setconf()
+static struct genconf *
+gc_lookup(name)
+	char *name;
 {
-	register struct genericconf *gc;
-	register char *cp;
-	int unit, swaponroot = 0;
+	struct genconf *gc;
 
-	if (rootdev != NODEV)
-		goto doswap;
-	unit = 0;
-	if (boothowto & RB_ASKNAME) {
-		char name[128];
-retry:
-		printf("root device? ");
-		gets(name);
-		for (gc = genericconf; gc->gc_driver; gc++)
-			if (gc->gc_name[0] == name[0] &&
-			    gc->gc_name[1] == name[1])
-				goto gotit;
-		printf("use one of:");
-		for (gc = genericconf; gc->gc_driver; gc++)
-			printf(" %s%%d", gc->gc_name);
-		printf("\n");
-		goto retry;
-gotit:
-		if (*++cp < '0' || *cp > '9') {
-			printf("bad/missing unit number\n");
-			goto retry;
-		}
-		while (*cp >= '0' && *cp <= '9')
-			unit = 10 * unit + *cp++ - '0';
-		if (*cp == '*')
-			swaponroot++;
-		goto found;
+	gc = genconf;
+	while (gc->gc_major) {
+		if ((gc->gc_name[0] == name[0]) &&
+			(gc->gc_name[1] == name[1]))
+			return gc;
+		gc++;
 	}
-	for (gc = genericconf; gc->gc_driver; gc++) {
-#if 0	    
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
-			if (hd->hp_alive == 0)
-				continue;
-			if (hd->hp_unit == 0 && hd->hp_driver ==
-			    (struct driver *)gc->gc_driver) {
-				printf("root on %s0\n", hd->hp_driver->d_name);
-				goto found;
-			}
-		}
-#endif
-	}
-	printf("no suitable root");
-	sun3_rom_halt();
-found:
-	gc->gc_root = makedev(major(gc->gc_root), unit*8);
-	rootdev = gc->gc_root;
-doswap:
-	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev)+1);
-	/* swap size and dumplo set during autoconfigure */
-	if (swaponroot)
-		rootdev = dumpdev;
+	return NULL;
 }
 
+static void gc_print_all()
+{
+	struct genconf *gc;
+
+	gc = genconf;
+	for (;;) {
+		printf("%s", gc->gc_name);
+		gc++;
+		if (gc->gc_major == 0)
+			break;
+		printf(", ");
+	}
+	printf("\n");
+}
+	
+
+struct devspec {
+	int  major;
+	int  unit;
+	int  part;
+	char name[4];
+};
+
+/*
+ * Set devspec from a string like: "sd0a"
+ * Return length of recognized part.
+ */
+static int ds_parse(ds, str)
+	struct devspec *ds;
+	char *str;
+{
+	struct genconf *gc;
+	int unit, part;
+	char *p;
+
+	bzero((caddr_t)ds, sizeof(*ds));
+	while (*str == ' ')
+		str++;
+	p = str;
+
+	gc = gc_lookup(p);
+	if (!gc) return 0;
+
+	/* Major number from the genconf table. */
+	ds->major = gc->gc_major;
+
+	/* Device name (always two letters on Suns) */
+	ds->name[0] = *p++;
+	ds->name[1] = *p++;
+
+	/* Unit number */
+	unit = 0;
+	while ('0' <= *p && *p <= '9') {
+		unit *= 10;
+		unit += (*p++ - '0');
+	}
+	ds->unit = unit & 0x1F;
+
+	/* Partition letter */
+	part = 0;
+	if ('a' <= *p && *p <= 'h')
+		part = *p++ - 'a';
+	ds->part = part;
+
+	return (p - str);
+}
+
+/*
+ * Format a devspec into a string like: "sd0a"
+ * Returns length of string.
+ */
+static int ds_tostr(ds, str)
+	struct devspec *ds;
+	char *str;
+{
+	struct genconf *gc;
+	int unit, part;
+	char *p;
+
+	p = str;
+
+	/* Device name (always two letters on Suns) */
+	*p++ = ds->name[0];
+	*p++ = ds->name[1];
+
+	/* Unit number */
+	unit = ds->unit & 0x1f;
+	if (unit >= 10) {
+		*p++ = '0' + (unit / 10);
+		unit = unit % 10;
+	}
+	*p++ = '0' + unit;
+
+	/* Partition letter (only for disks). */
+	if (ds->major >= 0) {
+		part = ds->part & 7;
+		*p++ = 'a' + part;
+	}
+
+	*p = '\0';
+	return (p - str);
+}
+
+/*
+ * Set the devspec to the device we booted from.
+ * (Just converts PROM boot parameters.)
+ */
+static void ds_from_boot(ds)
+	struct devspec *ds;
+{
+	MachMonBootParam *bpp;
+	struct genconf *gc;
+	char *p;
+	int len, unit, part;
+
+	bpp = *romp->bootParam;
+
+	bzero((caddr_t)ds, sizeof(*ds));
+
+	/* Device name (always two letters) */
+	ds->name[0] = bpp->devName[0];
+	ds->name[1] = bpp->devName[1];
+
+	/* Unit number */
+	unit = (bpp->ctlrNum << 3) & 3;
+	unit |= (bpp->unitNum & 7);
+	ds->unit = unit;
+
+	/* Partition letter */
+	part = bpp->partNum & 7;
+	ds->part = part;
+
+	gc = gc_lookup(ds->name);
+	if (gc)
+		ds->major = gc->gc_major;
+	else {
+		/* Boot device not in genconf, so ask. */
+		boothowto |= RB_ASKNAME;
+	}
+}
+
+/*
+ * Fill in the devspec by asking the operator.
+ * The ds passed may hold a default value.
+ */
+static void ds_query(ds, what)
+	struct devspec *ds;
+	char *what;
+{
+	struct genconf *gc;
+	char *p;
+	int len, minor;
+	char buf[64];
+
+	for (;;) {
+		len = ds_tostr(ds, buf);
+		printf("%s device? [%s] ", what, buf);
+
+		gets(buf);
+		if (buf[0] == '\0')
+			return;
+
+		len = ds_parse(ds, buf);
+		if (len > 2)
+			break;
+
+		printf("Invalid name.  Use one of: ");
+		gc_print_all();
+	}
+}
+
+static dev_t ds_todev(ds)
+	struct devspec *ds;
+{
+	int minor;
+	if (ds->major < 0)
+		return NODEV;
+	minor = (ds->unit << 3) + (ds->part & 7);
+	return (makedev(ds->major, minor));
+}
+
+/*
+ * Choose the root and swap device, either by asking,
+ * (if RB_ASKNAME) or from the PROM boot parameters.
+ */
+swapgeneric()
+{
+	struct genconf *gc;
+	dev_t root, swap, dump;
+	int minor;
+	struct devspec ds;
+	char buf[NAMESZ];
+
+	/*
+	 * Choose the root device.
+	 * Default is boot device.
+	 */
+	ds_from_boot(&ds);
+	if (boothowto & RB_ASKNAME)
+		ds_query(&ds, "root");
+	else {
+		ds_tostr(&ds, buf);
+		printf("root on %s\n", buf);
+	}
+	rootdev = ds_todev(&ds);
+
+	/*
+	 * Choose the root fstype.
+	 * XXX - Hard coded for now.
+	 */
+	if (rootdev == NODEV) {
+		mountroot = nfs_mountroot;
+		/* XXX - Set boot interface name for nfs_mountroot. */
+		ds_tostr(&ds, boot_ifname);
+	} else {
+		/* XXX - Should ask for the root fstype here. -gwr */
+		mountroot = ffs_mountroot;
+	}
+
+	/*
+	 * Choose the swap device.  (Default from root)
+	 */
+	ds.part = 1;
+	if (boothowto & RB_ASKNAME)
+		ds_query(&ds, "swap");
+	else {
+		ds_tostr(&ds, buf);
+		printf("swap on %s\n", buf);
+	}
+	swdevt[0].sw_dev = ds_todev(&ds);
+
+	/*
+	 * Choose the dump device.  (Default from swap)
+	 */
+	if (boothowto & RB_ASKNAME)
+		ds_query(&ds, "dump");
+	else {
+		ds_tostr(&ds, buf);
+		printf("dump on %s\n", buf);
+	}
+	dumpdev = ds_todev(&ds);
+}
+
+/* XXX - Isn't this in some common file? */
 gets(cp)
 	char *cp;
 {
 	register char *lp;
 	register c;
 
+ top:
 	lp = cp;
 	for (;;) {
-		cnputc(c = cngetc());
+		c = cngetc();
 		switch (c) {
+
 		case '\n':
 		case '\r':
+			cnputc('\n');
 			*lp++ = '\0';
 			return;
+
 		case '\b':
 		case '\177':
 			if (lp > cp) {
 				lp--;
-				cnputc(' ');
-				cnputc('\b');
+				printf("\b \b");
 			}
 			continue;
-		case '#':
-			lp--;
-			if (lp < cp)
-				lp = cp;
-			continue;
-		case '@':
-		case 'u'&037:
-			lp = cp;
+
+		case ('U'&037):
 			cnputc('\n');
-			continue;
+			goto top;
+
 		default:
+			if (c < ' ') {
+				cnputc('^');
+				*lp++ = '^';
+				c |= 0100;
+			}
+			cnputc(c);
 			*lp++ = c;
+			break;
 		}
 	}
 }
