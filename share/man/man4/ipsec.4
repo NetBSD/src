@@ -1,6 +1,9 @@
+.\"	$NetBSD: ipsec.4,v 1.5 2000/04/20 08:08:33 itojun Exp $
+.\"	$KAME: ipsec.4,v 1.7 2000/04/20 08:01:41 itojun Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -12,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,9 +27,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"	$NetBSD: ipsec.4,v 1.4 2000/01/19 06:59:32 itojun Exp $
-.\"	KAME Id: ipsec.4,v 1.4 2000/01/19 06:56:51 itojun Exp
 .\"
 .Dd January 29, 1999
 .Dt IPSEC 4
@@ -65,10 +65,10 @@ Transport mode is for protecting peer-to-peer commuication between end nodes.
 Tunnel mode includes IP-in-IP encapsulation operation
 and is designed for security gateways, like VPN configurations.
 .\"
-.Sh KERNEL INTERFACE
+.Ss Kernel interface
 .Nm
-is controlled by key management engine, and policy engine in the
-operating system kernel.
+is controlled by key management engine and policy engine,
+in the operating system kernel.
 .Pp
 Key management engine can be accessed from the userland by using
 .Dv PF_KEY
@@ -85,7 +85,7 @@ operations, and
 .Xr sysctl 3
 interface.
 The kernel implements
-extended version of 
+extended version of
 .Dv PF_KEY
 interface, and allows you to define IPsec policy like per-packet filters.
 .Xr setsockopt 2
@@ -96,36 +96,54 @@ interface is used to define host-wide default behavior.
 The kernel code does not implement dynamic encryption key exchange protocol
 like IKE
 .Pq Internet Key Exchange .
-That should be implemented as userland programs, or daemons, by using
-the above described APIs.
+That should be implemented as userland programs
+.Pq usually as daemons ,
+by using the above described APIs.
 .\"
-.Sh POLICY MANAGEMENT
-The policy management code is experimental, but this is almostly
-conformed to RFC2401.  You can manage the SPD by two way.  One is the way to use
-.Xr setkey 8 ,
-and other is the way to use
+.Ss Policy management
+The kernel implements experimental policy management code.
+You can manage the IPsec policy in two ways.
+One is to configure per-socket policy using
 .Xr setsockopt 3 .
-.Xr setkey 8
-can define either
-.Nm default , use
-or
-.Nm require
-like filtering rule.
-and
-.Xr setsockopt 3
-can define either
-.Nm entrust , ipsec
-or
-.Nm bypass
-as Security level per socket.
+The other is to configure kernel packet filter-based policy using
+.Dv PF_KEY
+interface, via
+.Xr setkey 8 .
+In both cases, IPsec policy must be specified with syntax described in
+.Xr ipsec_set_policy 3 .
 .Pp
-When
-.Nm default
-(or
-.Nm entrust
-)
-is defined, Policy engine consults to system wide default defined
+With
+.Xr setsockopt 3 ,
+you can define IPsec policy in per-socket basis.
+You can enforce particular IPsec policy onto packets that go through
+particular socket.
+.Pp
+With
+.Xr setkey 8
+you can define IPsec policy against packets,
+using sort of packet filtering rule.
+Refer to
+.Xr setkey 8
+on how to use it.
+.Pp
+In the latter case,
+.Dq Li default
+policy is allowed for use with
+.Xr setkey 8 .
+By configuring policy to
+.Li default ,
+you can refer system-wide
 .Xr sysctl 8
+variable for default settings.
+The following variables are available.
+.Li 1
+means
+.Dq Li use ,
+and
+.Li 2
+means
+.Dq Li require
+in the syntax.
 .Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
 .It Sy Name	Type	Changeable
 .It net.inet.ipsec.esp_trans_deflev	integer	yes
@@ -138,17 +156,22 @@ is defined, Policy engine consults to system wide default defined
 .It net.inet6.ipsec6.ah_net_deflev	integer	yes
 .El
 .Pp
-They are 1:use or 2:require.
-.Pp
-If kernel doesn't find out policy entry, then system wide default is applied.
-You can specify the system wide default as discarding packet or not to do IPsec.
+If kernel finds no matching policy system wide default value is applied.
+System wide default is specified by the following
+.Xr sysctl 8
+variables.
+.Li 0
+means
+.Dq Li discard
+which asks the kernel to drop the packet.
+.Li 1
+means
+.Dq Li none .
 .Bl -column net.inet6.ipsec6.def_policy integerxxx
 .It Sy Name	Type	Changeable
 .It net.inet.ipsec.def_policy	integer	yes
 .It net.inet6.ipsec6.def_policy	integer	yes
 .El
-.Pp
-They are 0:discard or 1:none.
 .\"
 .Sh PROTOCOLS
 The
@@ -161,7 +184,7 @@ protocols.
 Therefore,
 .Nm
 supports most of the protocols defined upon those IP-layer protocols.
-Some of the protocols, like 
+Some of the protocols, like
 .Xr icmp 4
 or
 .Xr icmp6 4 ,
@@ -178,6 +201,7 @@ routines from looking into IP payload.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
+.Xr ipsec_set_policy 3 ,
 .Xr icmp6 4 ,
 .Xr intro 4 ,
 .Xr ip6 4 ,
@@ -205,6 +229,10 @@ The IPsec support is subject to change as the IPsec protocols develop.
 .Pp
 There is no single standard for policy engine API,
 so the policy engine API described herein is just for KAME implementation.
+.Pp
+AH tunnel may not work as you might expect.
+Packets will be exchanged just fine, however,
+policy engine will not consider the encapsulated packet to be authentic.
 .\"
 .Sh HISTORY
 The implementation described herein appeared in WIDE/KAME IPv6/IPsec stack.
