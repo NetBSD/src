@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2002/09/26 23:28:52 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2002/09/27 02:14:38 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -51,9 +51,8 @@ ENTRY(_rtld_start, 0)
 	pushl	%r0		/* &_DYNAMIC */
 	calls	$2,_rtld_relocate_nonplt_self
 
-	movl	%sp,%r0
 	pushl	%r10		/* relocbase */
-	pushl	%r0		/* sp */
+	pushal	4(%sp)		/* sp */
 	calls	$2,_rtld	/* entry = _rtld(sp, relocbase) */
 
 	movq	(%sp)+,%r7	/* grab cleanup and obj_main into %r7/%r8 */
