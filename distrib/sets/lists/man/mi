@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.726 2004/09/24 13:50:06 wiz Exp $
+# $NetBSD: mi,v 1.727 2004/09/24 18:22:40 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -815,7 +815,7 @@
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/tc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp700/asc.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/asp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/cpu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/dino.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/gsc.0		man-sys-catman		.cat
@@ -2961,7 +2961,7 @@
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/tc.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man		.man
-./usr/share/man/man4/hp700/asc.4		man-sys-man		.man
+./usr/share/man/man4/hp700/asp.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/cpu.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/dino.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/gsc.4		man-sys-man		.man
