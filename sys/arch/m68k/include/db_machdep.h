@@ -57,6 +57,7 @@ struct mc68020_saved_state {
         int             a5;
         int             a6;
         int             sp;             /* stack pointer */
+	short		empty;
         unsigned short  sr;             /* status register */
         unsigned int    pc;             /* program counter - UNALIGNED!!! */
         unsigned int    stkfmt  : 4;    /* rte stack frame format */
