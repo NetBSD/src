@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.10 1997/10/15 02:41:28 enami Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.11 1997/10/16 17:30:34 thorpej Exp $	*/
 
 #include "bpfilter.h"
 
@@ -104,6 +104,14 @@ ep_pcmcia_enable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
+	/* establish the interrupt. */
+	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, epintr, sc);
+	if (sc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
+
 	return (pcmcia_function_enable(psc->sc_pf));
 }
 
@@ -114,6 +122,8 @@ ep_pcmcia_disable(sc)
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
 	pcmcia_function_disable(psc->sc_pf);
+
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }
 
 void
@@ -219,13 +229,6 @@ ep_pcmcia_attach(parent, self, aux)
 
 	epconfig(sc, EP_CHIPSET_3C509, enaddr);
 
-	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, epintr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 	sc->enabled = 0;
 
 	pcmcia_function_disable(pa->pf);
