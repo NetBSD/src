@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.190 2003/08/08 20:46:09 jonathan Exp $
+#	$NetBSD: files.pci,v 1.191 2003/08/26 21:11:00 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -605,3 +605,10 @@ file	dev/pci/machfb.c		machfb
 device	txp: ether, ifnet, arp
 attach	txp at pci
 file	dev/pci/if_txp.c		txp
+
+# SysKonnect
+device	skc { }
+attach	skc at pci
+device	sk: ether, ifnet, arp, mii
+attach	sk at skc
+file	dev/pci/if_sk.c			skc | sk
