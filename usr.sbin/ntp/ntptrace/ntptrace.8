@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntptrace.8,v 1.4 2001/04/27 00:10:08 wiz Exp $
+.\"	$NetBSD: ntptrace.8,v 1.5 2002/01/19 11:44:58 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -17,9 +17,9 @@
 .Nm
 determines where a given Network Time Protocol (NTP)
 server gets its time from, and follows the chain of NTP servers back to
-their master time source. If given no arguments, it starts with 
+their master time source. If given no arguments, it starts with
 .Pa localhost .
-Here is an example of the output from 
+Here is an example of the output from
 .Nm "" :
 .Pp
 .nf
@@ -30,7 +30,7 @@ usndh.edu: stratum 1, offset 0.0019298, synch distance 0.011993, refid 'WWVB'
 .fi
 .Pp
 On each line, the fields are (left to right): the host name, the host stratum,
-the time offset between that host and the local host (as measured by 
+the time offset between that host and the local host (as measured by
 .Nm
 ;
 this is why it is not always zero for
@@ -56,6 +56,6 @@ Sets the retransmission timeout (in seconds) (default = 2).
 Prints verbose information about the NTP servers.
 .El
 .Sh BUGS
-This program makes no attempt to improve accuracy by doing multiple samples. 
+This program makes no attempt to improve accuracy by doing multiple samples.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
