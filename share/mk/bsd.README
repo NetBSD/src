@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.30 1997/08/20 10:53:04 agc Exp $
+#	$NetBSD: bsd.README,v 1.31 1997/09/30 23:16:03 hubertf Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -464,7 +464,7 @@ The include file <bsd.port.mk> is used in the FreeBSD ports system.
 Various common definitions for use in the FreeBSD ports are specified
 here.  The only main changes between the NetBSD version and the
 original FreeBSD version are that some NetBSD paths have been
-changed (PORTSDIR is now /usr/pkg/src, rather than the /usr/ports
+changed (PORTSDIR is now /usr/pkgsrc, rather than the /usr/ports
 directory used in FreeBSD, and PREFIX is now /usr/pkg, rather than
 /usr/local directory used in FreeBSD).
 
@@ -472,5 +472,5 @@ directory used in FreeBSD, and PREFIX is now /usr/pkg, rather than
 
 The include file <bsd.port.subdir.mk> is used in the FreeBSD ports
 system, and controls the sub-directory usage in the system. Once
-again, the only change is the PORTSDIR veriable (now /usr/pkg/src
+again, the only change is the PORTSDIR veriable (now /usr/pkgsrc
 rather than the /usr/ports used in FreeBSD).
