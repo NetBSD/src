@@ -60,7 +60,6 @@ static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #include <ctype.h>
 #include <db.h>
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
@@ -68,6 +67,7 @@ static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <kvm.h>
 
 #include "kvm_private.h"
 
@@ -424,8 +424,8 @@ _kvm_pa2off(kd, pa)
 }
 
 int
-kvm_dump_mkheader(kd_live, kd_dump, dump_off)
-kvm_t	*kd_live, *kd_dump;
+kvm_dump_mkheader(kd, dump_off)
+kvm_t	*kd;
 off_t	dump_off;
 {
 	kcore_hdr_t	kch;
@@ -434,74 +434,70 @@ off_t	dump_off;
 	int		hdr_size;
 
 	hdr_size = 0;
-	if (kd_dump->kcore_hdr != NULL) {
-	    _kvm_err(kd_dump, kd_dump->program, "already has a dump header");
+	if (kd->kcore_hdr != NULL) {
+	    _kvm_err(kd, kd->program, "already has a dump header");
 	    return (-1);
 	}
-	if (!ISALIVE(kd_live) || ISALIVE(kd_dump)) {
-		_kvm_err(kd_live, kd_live->program, "wrong arguments");
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, kd->program, "don't use on live kernel");
 		return (-1);
 	}
 
 	/*
 	 * Check for new format crash dump
 	 */
-	if (Lseek(kd_dump, kd_dump->pmfd, dump_off, SEEK_SET) == -1)
+	if (Lseek(kd, kd->pmfd, dump_off, SEEK_SET) == -1)
 		return (-1);
-	if (Read(kd_dump, kd_dump->pmfd, &kseg, sizeof(kseg)) != sizeof(kseg))
+	if (Read(kd, kd->pmfd, &kseg, sizeof(kseg)) != sizeof(kseg))
 		return (-1);
 	if ((CORE_GETMAGIC(kseg) == KCORE_MAGIC)
 	     && ((CORE_GETMID(kseg) == MID_MACHINE))) {
 		hdr_size += ALIGN(sizeof(kcore_seg_t));
-		if (Lseek(kd_dump, kd_dump->pmfd, dump_off+hdr_size, SEEK_SET)
-									== -1)
+		if (Lseek(kd, kd->pmfd, dump_off+hdr_size, SEEK_SET) == -1)
 			return (-1);
-		if (Read(kd_dump, kd_dump->pmfd, &ckhdr, sizeof(ckhdr))
-							!= sizeof(ckhdr))
+		if (Read(kd, kd->pmfd, &ckhdr, sizeof(ckhdr)) != sizeof(ckhdr))
 			return (-1);
 		hdr_size += kseg.c_size;
-		if (Lseek(kd_dump, kd_dump->pmfd, dump_off+hdr_size, SEEK_SET)
-									== -1)
+		if (Lseek(kd, kd->pmfd, dump_off+hdr_size, SEEK_SET) == -1)
 			return (-1);
-		kd_dump->cpu_hdr = (cpu_kcore_hdr_t *)
-				_kvm_malloc(kd_dump, sizeof(cpu_kcore_hdr_t));
-		*kd_dump->cpu_hdr = ckhdr;
+		kd->cpu_hdr = (cpu_kcore_hdr_t *)
+				_kvm_malloc(kd, sizeof(cpu_kcore_hdr_t));
+		*kd->cpu_hdr = ckhdr;
 	}
 
 	/*
 	 * Create a kcore_hdr.
 	 */
-	kd_dump->kcore_hdr = (kcore_hdr_t *)
-				_kvm_malloc(kd_dump, sizeof(kcore_hdr_t));
-	if (kd_dump->kcore_hdr == NULL) {
-		if (kd_dump->cpu_hdr != NULL) {
-			free((void *)kd_dump->cpu_hdr);
-			kd_dump->cpu_hdr = NULL;
+	kd->kcore_hdr = (kcore_hdr_t *) _kvm_malloc(kd, sizeof(kcore_hdr_t));
+	if (kd->kcore_hdr == NULL) {
+		if (kd->cpu_hdr != NULL) {
+			free((void *)kd->cpu_hdr);
+			kd->cpu_hdr = NULL;
 		}
 		return (-1);
 	}
 
-	kd_dump->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
-	kd_dump->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
-	kd_dump->kcore_hdr->c_nseg       = 2;
-	CORE_SETMAGIC(*(kd_dump->kcore_hdr), KCORE_MAGIC, MID_MACHINE,0);
+	kd->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
+	kd->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
+	kd->kcore_hdr->c_nseg       = 2;
+	CORE_SETMAGIC(*(kd->kcore_hdr), KCORE_MAGIC, MID_MACHINE,0);
 
 	/*
 	 * If there is no cpu_hdr at this point, we probably have an
 	 * old format crash dump.....bail out
 	 */
-	if (kd_dump->cpu_hdr == NULL) {
-		free((void *)kd_dump->kcore_hdr);
-		kd_dump->kcore_hdr = NULL;
-		_kvm_err(kd_dump, kd_dump->program, "invalid dump");
+	if (kd->cpu_hdr == NULL) {
+		free((void *)kd->kcore_hdr);
+		kd->kcore_hdr = NULL;
+		_kvm_err(kd, kd->program, "invalid dump");
 	}
 
-	kd_dump->dump_off  = dump_off + hdr_size;
+	kd->dump_off  = dump_off + hdr_size;
 
 	/*
 	 * Now that we have a valid header, enable translations.
 	 */
-	_kvm_initvtop(kd_dump);
+	_kvm_initvtop(kd);
 
 	return(hdr_size);
 }
