@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.67 2002/07/09 04:35:30 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.68 2002/07/13 16:38:00 toshii Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.67 2002/07/09 04:35:30 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.68 2002/07/13 16:38:00 toshii Exp $");
 #endif
 #endif
 
@@ -603,7 +603,7 @@ pkg_do(char *pkg)
 				if (!done) {
 					done = installprereq(pkg, p->name, &errc);
 				}
-				if (!done) {
+				if (!done && !Force) {
 					errc = 1;
 				}
 			}
