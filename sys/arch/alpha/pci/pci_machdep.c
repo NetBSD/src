@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.11 1997/09/02 13:19:48 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.12 1998/04/15 20:46:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 1997/09/02 13:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 1998/04/15 20:46:34 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 1997/09/02 13:19:48 thorpej Exp
 
 #include "vga_pci.h"
 #if NVGA_PCI
-#include <alpha/pci/vga_pcivar.h>
+#include <dev/pci/vga_pcivar.h>
 #endif
 
 #include "tga.h"
 #if NTGA
-#include <alpha/pci/tgavar.h>
+#include <dev/pci/tgavar.h>
 #endif
 
 void
@@ -67,7 +67,7 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	pcitag_t tag;
 	pcireg_t id, class;
 	int match, nmatch;
-	void (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	int (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 	    int, int, int));
 
 	tag = pci_make_tag(pc, bus, device, function);
@@ -84,14 +84,14 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	nmatch = DEVICE_IS_VGA_PCI(class, id);
 	if (nmatch > match) {
 		match = nmatch;
-		fn = vga_pci_console;
+		fn = vga_pci_cnattach;
 	}
 #endif
 #if NTGA
 	nmatch = DEVICE_IS_TGA(class, id);
 	if (nmatch > match) {
 		match = nmatch;
-		fn = tga_console;
+		fn = tga_cnattach;
 	}
 #endif
 
