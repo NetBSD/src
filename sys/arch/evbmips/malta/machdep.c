@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:12 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2004/04/03 06:43:59 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2004/04/03 06:43:59 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -363,7 +363,7 @@ cpu_startup()
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
@@ -391,7 +391,7 @@ cpu_startup()
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
