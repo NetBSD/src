@@ -1,26 +1,25 @@
-#	$NetBSD: Makefile,v 1.1 1998/09/01 19:55:32 itohy Exp $
+#	$NetBSD: Makefile,v 1.2 1998/11/20 10:59:22 itohy Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
 STRIPFLAG=		# not an a.out
 BINMODE=444		# not to be run on NetBSD
 SRCS=	start.S loadbsd.c xprintf.c trampoline.S
-MAN=	${BASE}.8
 
+NOMAN=	noman
 BINDIR=		/usr/mdec
-MANSUBDIR=	/${MACHINE}
 
 .PATH:	${.CURDIR}/../common
 
-AOUT2HUX!=cd ${.CURDIR}/../aout2hux; echo `${MAKE} print-objdir`/aout2hux
-LIBDOS!=cd ${.CURDIR}/../libdos; ${MAKE} print-objdir
-LIBIOCS!=cd ${.CURDIR}/../libiocs; ${MAKE} print-objdir
+AOUT2HUX!=cd ${.CURDIR}/../aout2hux && echo `${MAKE} print-objdir`/aout2hux
+LIBDOS!=cd ${.CURDIR}/../libdos && ${MAKE} print-objdir
+LIBIOCS!=cd ${.CURDIR}/../libiocs && ${MAKE} print-objdir
 
 CPPFLAGS=	-W -Wall -O -fomit-frame-pointer
 CPPFLAGS+=	-m68000 -Wa,-mc68000
 CPPFLAGS+=	-I${.CURDIR}/../libdos -I${.CURDIR}/../libiocs
 LDFLAGS=	-nostdlib -static -N
-LDLIBS=		-L${LIBDOS} -ldos -L${LIBIOCS} -liocs -lc
+LDLIBS=		-L${LIBDOS} -ldos -L${LIBIOCS} -liocs -L${DESTDIR}/usr/lib -lc
 DPADD+=		${AOUT2HUX}
 
 CLEANFILES+=	${BASE}1 ${BASE}2
