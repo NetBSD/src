@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.7 1995/11/28 19:43:42 jtc Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.8 1996/05/24 08:52:41 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$Id: quot.c,v 1.7 1995/11/28 19:43:42 jtc Exp $";
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
+#include <unistd.h>
 
 /* some flags of what to do: */
 static char estimate;
