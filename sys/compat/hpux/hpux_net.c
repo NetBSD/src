@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.15 1998/06/25 21:18:11 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.16 1998/10/03 19:47:54 eeh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,8 +68,6 @@
 #include <compat/hpux/hpux_syscallargs.h>
 #include <compat/hpux/hpux_util.h>
 
-
-#define syscallarg(x)   union { x datum; register_t pad; }
 
 struct hpux_sys_setsockopt_args {
 	syscallarg(int) s;
