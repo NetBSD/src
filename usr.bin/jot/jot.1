@@ -1,4 +1,4 @@
-.\"	$NetBSD: jot.1,v 1.7 2003/08/07 11:14:11 agc Exp $
+.\"	$NetBSD: jot.1,v 1.8 2004/11/22 17:34:24 peter Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,18 +37,18 @@
 .Nd print sequential or random data
 .Sh SYNOPSIS
 .Nm
-.Op Fl rcn
+.Op Fl cnr
 .Bk -words
 .Op Fl b Ar word
 .Ek
 .Bk -words
-.Op Fl w Ar word
+.Op Fl p Ar precision
 .Ek
 .Bk -words
 .Op Fl s Ar string
 .Ek
 .Bk -words
-.Op Fl p Ar precision
+.Op Fl w Ar word
 .Ek
 .Oo Ar reps
 .Oo Ar begin
@@ -65,29 +65,12 @@ or redundant data (usually numbers) one per line.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl r
-Generate random data instead of sequential data, the default.
 .It Fl b Ar word
 Just print
 .Ar word
 repetitively.
-.It Fl w Ar word
-Print
-.Ar word
-with the generated data appended to it.
-Octal, hexadecimal, exponential, ASCII, zero padded,
-and right-adjusted representations
-are possible by using the appropriate
-.Xr printf 3
-conversion specification inside
-.Ar word ,
-in which case the data are inserted rather than appended.
 .It Fl c
 This is an abbreviation for \fB\-w %c\fP.
-.It Fl s Ar string
-Print data separated by
-.Ar string .
-Normally, newlines separate data.
 .It Fl n
 Do not print the final newline normally appended to the output.
 .It Fl p Ar precision
@@ -106,6 +89,23 @@ option is overridden by whatever appears in a
 .Xr printf 3
 conversion following
 .Fl w .
+.It Fl r
+Generate random data instead of sequential data, the default.
+.It Fl s Ar string
+Print data separated by
+.Ar string .
+Normally, newlines separate data.
+.It Fl w Ar word
+Print
+.Ar word
+with the generated data appended to it.
+Octal, hexadecimal, exponential, ASCII, zero padded,
+and right-adjusted representations
+are possible by using the appropriate
+.Xr printf 3
+conversion specification inside
+.Ar word ,
+in which case the data are inserted rather than appended.
 .El
 .Pp
 The last four arguments indicate, respectively,
