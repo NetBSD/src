@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.5 2003/05/17 08:27:58 scw Exp $
+#	$NetBSD: files.discovery,v 1.6 2003/05/27 11:39:50 scw Exp $
 #
 # Config file and device description for machine-independent support for
 # the Moverll (formerly Galileo Technologies) Discovery system controllers.
@@ -25,6 +25,7 @@ defparam	opt_marvell.h	GT_PCI0_MEMBASE GT_PCI0_MEMSIZE
 defparam	opt_marvell.h	GT_PCI1_MEMBASE GT_PCI1_MEMSIZE
 defparam	opt_marvell.h	GT_PCI0_IOBASE GT_PCI0_IOSIZE
 defparam	opt_marvell.h	GT_PCI1_IOBASE GT_PCI1_IOSIZE
+defflag 	opt_marvell.h	GT_PCI0_EXT_ARBITER GT_PCI1_EXT_ARBITER
 defflag 	opt_marvell.h	GT_ECC
 
 define	gt { [unit = -1] }
