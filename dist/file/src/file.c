@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.10 2004/09/16 13:49:07 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.11 2004/12/13 10:35:03 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    This product includes software developed by Ian F. Darwin and others.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -80,9 +75,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.93 2004/04/07 14:23:55 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.95 2004/09/27 15:28:37 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.10 2004/09/16 13:49:07 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.11 2004/12/13 10:35:03 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -321,6 +316,7 @@ main(int argc, char *argv[])
 			process(argv[optind], wid);
 	}
 
+	magic_close(magic);
 	return 0;
 }
 
