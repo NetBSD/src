@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.h,v 1.2 1994/02/04 23:17:58 cgd Exp $
+**	$NetBSD: identd.h,v 1.3 1996/08/30 17:41:36 thorpej Exp $
 **
 ** identd.h                 Common variables for the Pidentd daemon
 **

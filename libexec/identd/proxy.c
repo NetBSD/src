@@ -1,5 +1,5 @@
 /*
-**	$Id: proxy.c,v 1.2 1994/02/04 23:18:04 cgd Exp $
+**	$NetBSD: proxy.c,v 1.3 1996/08/30 17:41:42 thorpej Exp $
 **
 ** proxy.c                         This file implements the proxy() call.
 **

@@ -1,5 +1,5 @@
 /*
-**	$Id: error.h,v 1.2 1994/02/04 23:17:53 cgd Exp $
+**	$NetBSD: error.h,v 1.3 1996/08/30 17:41:31 thorpej Exp $
 **
 ** error.h                                               Error handling macros
 **
