@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixm1200,v 1.1 2002/07/15 17:13:31 ichiro Exp $
+#	$NetBSD: std.ixm1200,v 1.2 2002/08/17 16:42:22 briggs Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
@@ -16,6 +16,8 @@ options 	ARM32
 
 makeoptions	LOADADDRESS="0xC0200000"
 makeoptions	BOARDTYPE="ixm1200"
+
+options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_IXM1200
 
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE
