@@ -476,6 +476,7 @@
 ./usr/share/man/cat5/genassym.cf.0
 ./usr/share/man/cat5/gettytab.0
 ./usr/share/man/cat5/group.0
+./usr/share/man/cat5/hesiod.conf.0
 ./usr/share/man/cat5/hosts.0
 ./usr/share/man/cat5/hosts.allow.0
 ./usr/share/man/cat5/hosts.deny.0
@@ -1551,6 +1552,7 @@
 ./usr/share/man/man5/genassym.cf.5
 ./usr/share/man/man5/gettytab.5
 ./usr/share/man/man5/group.5
+./usr/share/man/man5/hesiod.conf.5
 ./usr/share/man/man5/hosts.5
 ./usr/share/man/man5/hosts.allow.5
 ./usr/share/man/man5/hosts.deny.5
