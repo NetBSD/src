@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.606 2003/09/12 20:01:14 christos Exp $
+# $NetBSD: mi,v 1.607 2003/09/25 16:50:11 pooka Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -725,6 +725,7 @@
 ./usr/share/man/cat4/i386/npx.0			man-sys-catman
 ./usr/share/man/cat4/i386/pcibios.0		man-sys-catman
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman
+./usr/share/man/cat4/iavc.0			man-sys-catman
 ./usr/share/man/cat4/icmp.0			man-sys-catman
 ./usr/share/man/cat4/icmp6.0			man-sys-catman
 ./usr/share/man/cat4/icp.0			man-sys-catman
@@ -762,6 +763,7 @@
 ./usr/share/man/cat4/isapnp.0			man-sys-catman
 ./usr/share/man/cat4/isdn.0			man-sys-catman
 ./usr/share/man/cat4/isdnbchan.0		man-sys-catman
+./usr/share/man/cat4/isdncapi.0			man-sys-catman
 ./usr/share/man/cat4/isdnctl.0			man-sys-catman
 ./usr/share/man/cat4/isdntel.0			man-sys-catman
 ./usr/share/man/cat4/isdntrc.0			man-sys-catman
@@ -2549,6 +2551,7 @@
 ./usr/share/man/man4/i386/npx.4			man-sys-man
 ./usr/share/man/man4/i386/pcibios.4		man-sys-man
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man
+./usr/share/man/man4/iavc.4			man-sys-man
 ./usr/share/man/man4/icmp.4			man-sys-man
 ./usr/share/man/man4/icmp6.4			man-sys-man
 ./usr/share/man/man4/icp.4			man-sys-man
@@ -2586,6 +2589,7 @@
 ./usr/share/man/man4/isapnp.4			man-sys-man
 ./usr/share/man/man4/isdn.4			man-sys-man
 ./usr/share/man/man4/isdnbchan.4		man-sys-man
+./usr/share/man/man4/isdncapi.4			man-sys-man
 ./usr/share/man/man4/isdnctl.4			man-sys-man
 ./usr/share/man/man4/isdntel.4			man-sys-man
 ./usr/share/man/man4/isdntrc.4			man-sys-man
