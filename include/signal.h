@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 1998/09/12 10:53:26 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 1998/09/12 11:10:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -89,34 +89,40 @@ int	sigprocmask __P((int, const sigset_t *, sigset_t *)) __RENAME(__sigprocmask1
 int	sigsuspend __P((const sigset_t *)) __RENAME(__sigsuspend14);
 
 #if defined(__GNUC__) && defined(__STDC__)
-extern __inline int sigaddset(sigset_t *set, int signo) {
+extern __inline int
+sigaddset(sigset_t *set, int signo)
+{
 	extern int errno;
 
 	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
-		return -1;
+		return (-1);
 	}
 	__sigaddset(set, signo);
 	return (0);
 }
 
-extern __inline int sigdelset(sigset_t *set, int signo) {
+extern __inline int
+sigdelset(sigset_t *set, int signo)
+{
 	extern int errno;
 
 	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
-		return -1;
+		return (-1);
 	}
 	__sigdelset(set, signo);
 	return (0);
 }
 
-extern __inline int sigismember(const sigset_t *set, int signo) {
+extern __inline int
+sigismember(const sigset_t *set, int signo)
+{
 	extern int errno;
 
 	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
-		return -1;
+		return (-1);
 	}
 	return (__sigismember(set, signo));
 }
