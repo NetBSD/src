@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.6 2000/02/21 13:46:04 shin Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.7 2000/04/11 17:57:43 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@ extern struct platform {
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
-	void	(*iointr) __P((void *, unsigned long));
+	int	(*iointr) __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 	void	(*clockintr) __P((void *));
 	void	(*fb_init) __P((caddr_t*));
 	void	(*mem_init) __P((paddr_t));
