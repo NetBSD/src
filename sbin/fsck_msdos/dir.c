@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.9 1997/09/08 14:05:30 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.10 1997/09/14 14:40:12 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -35,8 +35,9 @@
  */
 
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.9 1997/09/08 14:05:30 ws Exp $";
+__RCSID("$NetBSD: dir.c,v 1.10 1997/09/14 14:40:12 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
