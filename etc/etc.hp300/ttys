@@ -1,11 +1,11 @@
-#	$NetBSD: ttys,v 1.10 2003/10/03 14:54:21 dsl Exp $
+#	$NetBSD: ttys,v 1.11 2003/10/04 07:41:12 dsl Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-constty "/usr/libexec/getty Pc"		hp300h	on secure
+console "/usr/libexec/getty Pc"		hp300h	on secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
