@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
 
 /*
  * 
@@ -56,6 +56,11 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.5  1998/09/25 15:01:13  rvb
+ * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
+ * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
+ * make coda an lkm.
+ *
  * Revision 1.4  1998/09/15 02:03:00  rvb
  * Final piece of rename cfs->coda
  *
@@ -298,12 +303,12 @@ struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_default_desc, coda_vop_error },
     { &vop_lookup_desc, coda_lookup },		/* lookup */
     { &vop_create_desc, coda_create },		/* create */
-    { &vop_mknod_desc, coda_vop_error },		/* mknod */
+    { &vop_mknod_desc, coda_vop_error },	/* mknod */
     { &vop_open_desc, coda_open },		/* open */
     { &vop_close_desc, coda_close },		/* close */
     { &vop_access_desc, coda_access },		/* access */
-    { &vop_getattr_desc, coda_getattr },		/* getattr */
-    { &vop_setattr_desc, coda_setattr },		/* setattr */
+    { &vop_getattr_desc, coda_getattr },	/* getattr */
+    { &vop_setattr_desc, coda_setattr },	/* setattr */
     { &vop_read_desc, coda_read },		/* read */
     { &vop_write_desc, coda_write },		/* write */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
@@ -315,28 +320,29 @@ struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_rename_desc, coda_rename },		/* rename */
     { &vop_mkdir_desc, coda_mkdir },		/* mkdir */
     { &vop_rmdir_desc, coda_rmdir },		/* rmdir */
-    { &vop_symlink_desc, coda_symlink },		/* symlink */
-    { &vop_readdir_desc, coda_readdir },		/* readdir */
+    { &vop_symlink_desc, coda_symlink },	/* symlink */
+    { &vop_readdir_desc, coda_readdir },	/* readdir */
     { &vop_readlink_desc, coda_readlink },	/* readlink */
-    { &vop_abortop_desc, coda_abortop },		/* abortop */
+    { &vop_abortop_desc, coda_abortop },	/* abortop */
     { &vop_inactive_desc, coda_inactive },	/* inactive */
-    { &vop_reclaim_desc, coda_reclaim },		/* reclaim */
+    { &vop_reclaim_desc, coda_reclaim },	/* reclaim */
     { &vop_lock_desc, coda_lock },		/* lock */
     { &vop_unlock_desc, coda_unlock },		/* unlock */
     { &vop_bmap_desc, coda_bmap },		/* bmap */
     { &vop_strategy_desc, coda_strategy },	/* strategy */
-    { &vop_print_desc, coda_vop_error },		/* print */
+    { &vop_print_desc, coda_vop_error },	/* print */
     { &vop_islocked_desc, coda_islocked },	/* islocked */
     { &vop_pathconf_desc, coda_vop_error },	/* pathconf */
-    { &vop_advlock_desc, coda_vop_nop },		/* advlock */
+    { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
     { &vop_lease_desc, coda_vop_nop },		/* lease */
     { &vop_blkatoff_desc, coda_vop_error },	/* blkatoff */
     { &vop_valloc_desc, coda_vop_error },	/* valloc */
-    { &vop_vfree_desc, coda_vop_error },		/* vfree */
+    { &vop_vfree_desc, coda_vop_error },	/* vfree */
     { &vop_truncate_desc, coda_vop_error },	/* truncate */
     { &vop_update_desc, coda_vop_error },	/* update */
     { &vop_seek_desc, genfs_seek },		/* seek */
+    { &vop_poll_desc, genfs_poll },		/* poll */
 
     { (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
@@ -497,11 +503,15 @@ coda_close(v)
 
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
+#ifdef	DIAGNOSTIC
 	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
 		    vp->v_usecount, cp->c_ovp, vp, cp);
+#endif
 	    vgone(cp->c_ovp);
 	} else {
+#ifdef	DIAGNOSTIC
 	    printf("coda_close: NO container vp %p/cp %p\n", vp, cp);
+#endif
 	}
 	return ENODEV;
     } else {
@@ -1044,7 +1054,7 @@ coda_inactive(v)
 #endif
 	lockmgr(&cp->c_lock, LK_RELEASE, &vp->v_interlock);
     } else {
-#ifdef DIAGNOSTIC
+#ifdef OLD_DIAGNOSTIC
 	if (CTOV(cp)->v_usecount) {
 	    panic("coda_inactive: nonzero reference count");
 	}
@@ -1318,11 +1328,11 @@ coda_create(v)
 		panic("unlocked parent but couldn't lock child");
 	    }
 	}
-#ifdef DIAGNOSTIC
+#ifdef OLD_DIAGNOSTIC
 	else {
 	    printf("coda_create: LOCKLEAF not set!\n");
 	}
-#endif /* DIAGNOSTIC */
+#endif
     }
     /* Have to free the previously saved name */
     /* 
@@ -1514,13 +1524,13 @@ coda_rename(v)
 
     /* Hmmm.  The vnodes are already looked up.  Perhaps they are locked?
        This could be Bad. XXX */
-#ifdef DIAGNOSTIC
+#ifdef OLD_DIAGNOSTIC
     if ((fcnp->cn_cred != tcnp->cn_cred)
 	|| (fcnp->cn_proc != tcnp->cn_proc))
     {
 	panic("coda_rename: component names don't agree");
     }
-#endif DIAGNOSTIC
+#endif
 
     /* Check for rename involving control object. */ 
     if (IS_CTL_NAME(odvp, fnm, flen) || IS_CTL_NAME(ndvp, tnm, tlen)) {
@@ -1973,13 +1983,13 @@ coda_reclaim(v)
 	}
 #endif
     } else {
-#ifdef DIAGNOSTIC
+#ifdef OLD_DIAGNOSTIC
 	if (vp->v_usecount != 0) 
-	    vprint("coda_reclaim: pushing active", vp);
+	    print("coda_reclaim: pushing active %p\n", vp);
 	if (VTOC(vp)->c_ovp) {
 	    panic("coda_reclaim: c_ovp not void");
 	}
-#endif DIAGNOSTIC
+#endif
     }
     cache_purge(vp);
     coda_free(VTOC(vp));

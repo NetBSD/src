@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
 
 /*
  * 
@@ -46,6 +46,11 @@
 /*
  * HISTORY
  * $Log: coda_subr.c,v $
+ * Revision 1.5  1998/09/25 15:01:13  rvb
+ * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
+ * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
+ * make coda an lkm.
+ *
  * Revision 1.4  1998/09/15 02:02:59  rvb
  * Final piece of rename cfs->coda
  *
@@ -213,7 +218,11 @@
  * 4.	coda_cacheprint (under DEBUG) prints names with vnode/cnode address
  */
 
+#ifdef	_LKM
+#define	NVCODA 4
+#else
 #include <vcoda.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,6 +476,7 @@ coda_unmounting(whoIam)
 }
 
 #ifdef	DEBUG
+void
 coda_checkunmounting(mp)
 	struct mount *mp;
 {	
@@ -488,7 +498,7 @@ loop:
 	}
 }
 
-int
+void
 coda_cacheprint(whoIam)
 	struct mount *whoIam;
 {	
@@ -497,7 +507,7 @@ coda_cacheprint(whoIam)
 	int count = 0;
 
 	printf("coda_cacheprint: coda_ctlvp %p, cp %p", coda_ctlvp, VTOC(coda_ctlvp));
-	coda_nc_name(coda_ctlvp);
+	coda_nc_name(VTOC(coda_ctlvp));
 	printf("\n");
 
 	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
