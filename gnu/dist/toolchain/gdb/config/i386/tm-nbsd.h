@@ -22,6 +22,7 @@
 #define TM_NBSD_H
 
 #define HAVE_I387_REGS
+#define HAVE_SSE_REGS
 
 #include "i386/tm-i386.h"
 #include <tm-nbsd.h>
