@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.35 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.36 1999/11/17 20:08:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1289,10 +1289,10 @@ lfs_writeseg(fs, sp)
 		}
 #endif
 
+		s = splbio();
 		if(fs->lfs_iocount >= LFS_THROTTLE) {
 			tsleep(&fs->lfs_iocount, PRIBIO+1, "lfs throttle", 0);
 		}
-		s = splbio();
 		++fs->lfs_iocount;
 #ifdef LFS_TRACK_IOS
 		for(j=0;j<LFS_THROTTLE;j++) {
@@ -1426,13 +1426,13 @@ lfs_writesuper(fs, daddr)
 	 * If we can write one superblock while another is in
 	 * progress, we risk not having a complete checkpoint if we crash.
 	 * So, block here if a superblock write is in progress.
-	 *
-	 * XXX - should be a proper lock, not this hack
 	 */
+	s = splbio();
 	while(fs->lfs_sbactive) {
 		tsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0);
 	}
 	fs->lfs_sbactive = daddr;
+	splx(s);
 #endif
 	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
 	strategy = VTOI(fs->lfs_ivnode)->i_devvp->v_op[VOFFSET(vop_strategy)];
