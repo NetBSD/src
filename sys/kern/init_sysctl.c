@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.17 2003/12/28 22:19:59 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.18 2003/12/28 22:24:12 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.17 2003/12/28 22:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.18 2003/12/28 22:24:12 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1108,7 +1108,9 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 
 #ifndef MULTIPROCESSOR
 
-	if (namelen == 1 && name[0] == 0) {
+	if (namelen == 1) {
+		if (name[0] != 0)
+			return (ENOENT);
 		/*
 		 * you're allowed to ask for the zero'th processor
 		 */
@@ -1147,7 +1149,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
-			return (EINVAL); /* ENOSUCHPROCESSOR */
+			return (ENOENT); /* ENOSUCHPROCESSOR */
 		node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
 		n = name[0];
 		/*
