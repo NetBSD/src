@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1995/12/06 22:33:49 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.52 1995/12/11 12:34:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -842,20 +842,22 @@ int bt2pmt[] = {
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
- *	mydev = (struct mydev *)mapdev(myioaddr, 0, sizeof(struct mydev), pmtype);
+ *	mydev = (struct mydev *)mapdev(myioaddr, 0,
+ *				       0, sizeof(struct mydev), pmtype);
  *
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, size, bustype)
-	register void *phys;
-	register int virt, size;
+mapdev(phys, virt, offset, size, bustype)
+	register struct rom_reg *phys;
+	register int offset, virt, size;
 	register int bustype;
 {
 	register vm_offset_t v;
+	register vm_offset_t pa;
 	register void *ret;
 	static vm_offset_t iobase;
-	int pmtype = bt2pmt[bustype];
+	int pmtype;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -870,13 +872,20 @@ mapdev(phys, virt, size, bustype)
 			panic("mapiodev");
 	}
 	ret = (void *)v;
-	phys = (void *)trunc_page(phys);
+
+	pa = trunc_page(phys->rr_paddr + offset);
+#ifdef notyet
+	pmtype = (cputyp == CPU_SUN4M)
+			? (phys->rr_iospace << PMAP_SHFT4M)
+			: bt2pmt[bustype];
+#else
+	pmtype = bt2pmt[bustype];
+#endif
 	do {
-		pmap_enter(pmap_kernel(), v,
-		    (vm_offset_t)phys | pmtype | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE, 1);
+		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
+			   VM_PROT_READ | VM_PROT_WRITE, 1);
 		v += PAGE_SIZE;
-		phys += PAGE_SIZE;
+		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
 	return (ret);
 }
