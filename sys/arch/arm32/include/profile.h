@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 1997/11/05 00:34:15 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.8 1998/04/19 04:16:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -67,10 +67,13 @@
 	__asm__("ldmfd	sp!, {r0-r3, pc}");
 
 #ifdef _KERNEL
+#include <machine/cpufunc.h>
 /*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
+ * splhigh() and splx() are heavyweight, and call mcount().  Therefore
+ * we disabled interrupts (IRQ, but not FIQ) directly on the CPU.
+ *
+ * We're lucky that the CPSR and 's' both happen to be 'int's.
  */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER	s = SetCPSR(0x0080, 0x0080);	/* set IRQ disable bit */
+#define	MCOUNT_EXIT	SetCPSR(0xffffffff, s);		/* restore old value */
 #endif /* _KERNEL */
