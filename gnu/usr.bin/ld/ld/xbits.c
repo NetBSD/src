@@ -1,3 +1,5 @@
+/*	$NetBSD: xbits.c,v 1.5 1998/01/05 22:01:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: xbits.c,v 1.4 1994/01/29 02:03:18 jtc Exp $
  */
 
 /*

@@ -1,10 +1,11 @@
+/*	$NetBSD: symseg.h,v 1.4 1998/01/05 22:01:00 cgd Exp $	*/
+
 /*-
  *
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
  *
  *	from: @(#)symseg.h	5.4 (Berkeley) 4/30/91
- *	$Id: symseg.h,v 1.3 1993/12/08 10:14:07 pk Exp $
  */
 
 /* GDB symbol table format definitions.

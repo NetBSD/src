@@ -1,3 +1,5 @@
+/*	$NetBSD: cplus-dem.c,v 1.3 1998/01/05 22:00:54 cgd Exp $	*/
+
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -5,7 +7,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cplus-dem.c	5.4 (Berkeley) 4/30/91";*/
-static char rcsid[] = "$Id: cplus-dem.c,v 1.2 1993/08/01 18:46:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: cplus-dem.c,v 1.3 1998/01/05 22:00:54 cgd Exp $";
 #endif /* not lint */
 
 /* Demangler for GNU C++ 

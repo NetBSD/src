@@ -1,3 +1,5 @@
+/*	$NetBSD: ld.c,v 1.51 1998/01/05 22:00:56 cgd Exp $	*/
+
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -31,10 +33,6 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 /* Written by Richard Stallman with some help from Eric Albert.
    Set, indirect, and warning symbol features added by Randy Smith. */
 
-/*
- *	$Id: ld.c,v 1.50 1997/04/08 23:16:27 pk Exp $
- */
-   
 /* Define how to initialize system-dependent header fields.  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: rrs.c,v 1.19 1998/01/05 22:00:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: rrs.c,v 1.18 1995/08/04 21:49:08 pk Exp $
  */
 
 #include <sys/param.h>

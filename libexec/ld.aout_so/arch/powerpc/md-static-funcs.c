@@ -1,6 +1,6 @@
+/*	$NetBSD: md-static-funcs.c,v 1.2 1998/01/05 22:00:43 cgd Exp $	*/
+
 /*
- *	$NetBSD: md-static-funcs.c,v 1.1 1996/11/03 18:06:50 ws Exp $
- *
  * Called by ld.so when onanating.
  * This *must* be a static function, so it is not called through a jmpslot.
  */

@@ -1,3 +1,4 @@
+/*	$NetBSD: md-static-funcs.c,v 1.4 1998/01/05 22:00:38 cgd Exp $	*/
 
 /*
  * Called by ld.so when onanating.

@@ -1,3 +1,5 @@
+/*	$NetBSD: mdprologue.S,v 1.2 1998/01/05 22:00:44 cgd Exp $	*/
+
 /*
  * PowerPC run-time link editor entry points.
  */
