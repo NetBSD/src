@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.26 2002/11/14 23:02:44 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.27 2002/12/04 22:40:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.26 2002/11/14 23:02:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.27 2002/12/04 22:40:41 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1067,7 +1067,7 @@ resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
 
-	LIST_FOREACH(l, &p->p_lwps, l_list)
+	LIST_FOREACH(l, &p->p_lwps, l_sibling)
 	    resetpriority(l);
 }
 
