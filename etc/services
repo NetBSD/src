@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.57 2002/09/19 02:09:52 heinz Exp $
+#	$NetBSD: services,v 1.58 2002/10/21 22:44:34 thorpej Exp $
 #
 # Network services, Internet style
 #
@@ -208,6 +208,7 @@ radius-acct	1813/tcp		radacct
 radius-acct	1813/udp		radacct
 cvspserver	2401/tcp
 cvspserver	2401/udp
+iscsi		3260/tcp
 mysql		3306/tcp		# MySQL
 mysql		3306/udp		# MySQL
 rfe		5002/tcp		# Radio Free Ethernet
