@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.33 2002/10/01 12:56:44 fvdl Exp $
+#	$NetBSD: IOPENER,v 1.34 2003/02/16 17:35:16 augustss Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.33 $"
+#ident 		"IOPENER-$Revision: 1.34 $"
 
 maxusers	32		# estimated number of users
 
@@ -330,6 +330,8 @@ uaudio*	at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
