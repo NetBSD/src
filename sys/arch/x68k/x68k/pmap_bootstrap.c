@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.16 1999/03/17 12:29:56 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.17 1999/03/23 04:18:50 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,18 +68,6 @@ extern int pmap_aliasmask;
 u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
 
 void	pmap_bootstrap __P((paddr_t, paddr_t));
-
-#ifdef EXTENDED_MEMORY
-static int mem_exists __P((caddr_t, u_long));
-static void setmemrange __P((paddr_t));
-
-/*
- * These are used to map the non-contiguous memory.
- */
-int numranges; /* = 0 == don't use the ranges */
-u_long low[8];
-u_long high[8];
-#endif
 
 #ifndef EIOMAPSIZE
 #define EIOMAPSIZE 0
@@ -163,16 +151,7 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-#ifdef EXTENDED_MEMORY
-	setmemrange(firstpa);
-#if 0
-	if (nextpa > high[0]) {
-		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
-			nextpa, high[0]);
-		panic("You're hosed!\n");
-	}
-#endif
-#endif
+
 	/*
 	 * Initialize segment table and kernel page table map.
 	 *
@@ -451,36 +430,6 @@ pmap_bootstrap(nextpa, firstpa)
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
-#ifdef EXTENDED_MEMORY
-	{
-		int i;
-		psize_t av_rem = 0;
-		int av_rng = -1;
-		int nranges = RELOC(numranges, int);
-		u_long *l = RELOCA(low, u_long *);
-		u_long *h = RELOCA(high, u_long *);
-
-		for (i = 0; i < nranges; i++) {
-			if (nextpa >= l[i] && nextpa < h[i]) {
-				av_rng = i;
-				av_rem = h[i] - nextpa;
-			} else if (av_rng != -1) {
-				av_rem += (h[i] - l[i]);
-			}
-		}
-
-		RELOC(physmem, int) = m68k_btop(av_rem + nextpa - firstpa);
-		av_rem -= m68k_round_page(MSGBUFSIZE);
-		h[nranges - 1] -= m68k_round_page(MSGBUFSIZE);
-		/* XXX -- this doesn't look correct to me. */
-		while (h[nranges - 1] < l[nranges - 1]) {
-			RELOC(numranges, int) = --nranges;
-			h[nranges - 1] -= l[nranges] - h[nranges];
-		}
-		av_rem = m68k_trunc_page(av_rem);
-		RELOC(avail_end, paddr_t) = nextpa + av_rem;
-	}
-#endif
 	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vaddr_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -570,163 +519,3 @@ pmap_bootstrap(nextpa, firstpa)
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }
-
-#ifdef EXTENDED_MEMORY
-static struct memlist {
-	caddr_t base;
-	psize_t min;
-	psize_t max;
-} memlist[] = {
-	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
-	(caddr_t)0x10000000, 0x00400000, 0x08000000, /* 060turbo SIMM slot (4--128MB) */
-};
-
-
-asm("	.text\n\
-	.even\n\
-_badaddr_nommu:\n\
-	movc	vbr,a1\n\
-	addql	#8,a1			| bus error vector\n\
-	movl	a1@,d0			| save original vector\n\
-	movl	sp,d1			| save original sp\n\
-	pea	pc@(Laddrbad)\n\
-	movl	sp@+,a1@\n\
-	tstw	a0@			| test address\n\
-	movl	d0,a1@			| restore vector\n\
-	clrl	d0\n\
-	rts				| d0 == 0, ZF = 1\n\
-Laddrbad:\n\
-	movl	d1,sp			| restore sp\n\
-	movl	d0,a1@			| restore vector\n\
-	rts				| d0 != 0, ZF = 0\n\
-");
-
-#define badaddr_nommu(addr)					\
-	({	int val asm("d0"); caddr_t a asm("a0") = addr;	\
-		asm("jbsr	_badaddr_nommu" :		\
-			"=d"(val) : "a"(a) : "d1", "a1");	\
-		val; })
-
-/*
- * check memory existency
- */
-static int
-mem_exists(mem, basemax)
-	caddr_t mem;
-	u_long basemax;
-{
-	/* most variables must be register! */
-	register volatile unsigned char *m, *b;
-	register unsigned char save_m, save_b;
-	register int baseismem;
-	register int exists = 0;
-	caddr_t base;
-	caddr_t begin_check, end_check;
-
-	if (badaddr_nommu(mem))
-		return 0;
-
-	/* only 24bits are significant on normal X680x0 systems */
-	base = (caddr_t)((u_long)mem & 0x00FFFFFF);
-
-	/* This is somewhat paranoid -- avoid overwriting myself */
-	asm("lea pc@(begin_check_mem),%0" : "=a"(begin_check));
-	asm("lea pc@(end_check_mem),%0" : "=a"(end_check));
-	if (base >= begin_check && base < end_check) {
-		size_t off = end_check - begin_check;
-
-		mem -= off;
-		base -= off;
-	}
-
-	m = mem;
-	b = base;
-
-	/*
-	 * Can't check by writing if the corresponding
-	 * base address isn't memory.
-	 *
-	 * I hope this would be no harm....
-	 */
-	baseismem = base < (caddr_t)basemax;
-
-	/* save original value (base must be saved first) */
-	if (baseismem)
-		save_b = *b;
-	save_m = *m;
-
-asm("begin_check_mem:");
-	/*
-	 * stack and other data segment variables are unusable
-	 * til end_check_mem, because they may be clobbered.
-	 */
-
-	/*
-	 * check memory by writing/reading
-	 */
-	if (baseismem)
-		*b = 0x55;
-	*m = 0xAA;
-	if ((baseismem && *b != 0x55) || *m != 0xAA)
-		goto out;
-
-	*m = 0x55;
-	if (baseismem)
-		*b = 0xAA;
-	if (*m != 0x55 || (baseismem && *b != 0xAA))
-		goto out;
-
-	exists = 1;
-out:
-	*m = save_m;
-	if (baseismem)
-		*b = save_b;
-
-asm("end_check_mem:");
-
-	return exists;
-}
-
-static void
-setmemrange(firstpa)
-	paddr_t firstpa;
-{
-	int i;
-	psize_t s, min, max;
-	u_long *l = RELOCA(low, u_long *);
-	u_long *h = RELOCA(high, u_long *);
-	struct memlist *mlist = RELOCA(memlist, struct memlist *);
-	int nranges;
-
-	/* first, x68k base memory */
-	nranges = 0;
-	l[nranges]  = 0x00000000;
-	h[nranges] = *(u_long *)0x00ED0008;
-	nranges++;
-
-	/* second, discover extended memory */
-	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
-		min = mlist[i].min;
-		max = mlist[i].max;
-		/*
-		 * Normally, x68k hardware is NOT 32bit-clean.
-		 * But some type of extended memory is in 32bit address space.
-		 * Check whether.
-		 */
-		if (!mem_exists(mlist[i].base, h[0]))
-			continue;
-		l[nranges] = (u_long)mlist[i].base;
-		h[nranges] = 0;
-		/* range check */
-		for (s = min; s <= max; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, h[0]))
-				break;
-			h[nranges] = (u_long)(mlist[i].base + s);
-		}
-		if (l[nranges] < h[nranges])
-			nranges++;
-	}
-
-	RELOC(numranges, int) = nranges;
-}
-#endif
