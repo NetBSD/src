@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of September 08, 1999.
+The following sites mirror NetBSD as of September 15, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -143,6 +143,11 @@ If you wish to become a distribution site for NetBSD, contact
 .El
 .It "rsync mirrors"
 .Bl -tag -width 3n
+.
+.Country "France"
+.mirror "rsync.fr.netbsd.org" \
+"Universite Pierre et Marie Curie, Paris 06" \
+"rsync://rsync.fr.netbsd.org/"
 .
 .Country "Japan"
 .mirror "rsync.jp.netbsd.org" \
