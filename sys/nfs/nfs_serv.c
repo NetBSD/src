@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.42 1998/03/01 02:24:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.43 1998/06/05 19:53:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3079,7 +3079,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	for_ret = VOP_GETATTR(vp, &bfor, cred, procp);
-	error = VOP_FSYNC(vp, cred, MNT_WAIT, procp);
+	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, procp);
 	aft_ret = VOP_GETATTR(vp, &aft, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);

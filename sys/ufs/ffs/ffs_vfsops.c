@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.34 1998/03/18 15:57:28 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.35 1998/06/05 19:53:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -802,7 +802,8 @@ loop:
 				goto loop;
 			continue;
 		}
-		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
+		if ((error = VOP_FSYNC(vp, cred,
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -811,7 +812,8 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
+	if ((error = VOP_FSYNC(ump->um_devvp, cred,
+	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 		allerror = error;
 #ifdef QUOTA
 	qsync(mp);

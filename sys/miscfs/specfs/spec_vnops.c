@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.39 1998/03/01 02:21:34 fvdl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.40 1998/06/05 19:53:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -465,13 +465,13 @@ spec_fsync(v)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
-		int  a_waitfor;
+		int  a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type == VBLK)
-		vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
+		vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 	return (0);
 }
 
