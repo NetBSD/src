@@ -1,5 +1,5 @@
-/*	$NetBSD: ndp.c,v 1.25 2002/06/03 19:27:40 itojun Exp $	*/
-/*	$KAME: ndp.c,v 1.100 2002/06/03 19:25:27 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.26 2002/07/17 13:08:28 itojun Exp $	*/
+/*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -1020,14 +1020,14 @@ ifinfo(ifname, argc, argv)
 	if (ND.flags) {
 		printf("\nFlags: ");
 		if ((ND.flags & ND6_IFF_PERFORMNUD))
-			printf("PERFORMNUD ");
+			printf("nud ");
 #ifdef ND6_IFF_ACCEPT_RTADV
 		if ((ND.flags & ND6_IFF_ACCEPT_RTADV))
-			printf("ACCEPT_RA ");
+			printf("accept_rtadv ");
 #endif
 #ifdef ND6_IFF_PREFER_SOURCE
 		if ((ND.flags & ND6_IFF_PREFER_SOURCE))
-			printf("PREFER_SRC ");
+			printf("prefer_source ");
 #endif
 	}
 	putc('\n', stdout);
