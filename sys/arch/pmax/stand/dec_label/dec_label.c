@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_label.c,v 1.3 1994/10/26 21:10:53 cgd Exp $	*/
+/*	$NetBSD: dec_label.c,v 1.4 1997/05/25 21:39:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993
