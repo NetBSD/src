@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.167 2001/02/12 23:26:20 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.175 2001/03/18 23:30:55 deraadt Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -51,7 +51,7 @@ RCSID("$OpenBSD: sshd.c,v 1.167 2001/02/12 23:26:20 markus Exp $");
 #include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
-#include "pty.h"
+#include "sshpty.h"
 #include "packet.h"
 #include "mpaux.h"
 #include "log.h"
@@ -144,11 +144,12 @@ char *server_version_string = NULL;
  * not very useful.  Currently, memory locking is not implemented.
  */
 struct {
-	Key	*server_key;		/* empheral server key */
+	Key	*server_key;		/* ephemeral server key */
 	Key	*ssh1_host_key;		/* ssh1 host key */
 	Key	**host_keys;		/* all private host keys */
 	int	have_ssh1_key;
 	int	have_ssh2_key;
+	u_char	ssh1_cookie[SSH_SESSION_KEY_LENGTH];
 } sensitive_data;
 
 /*
@@ -267,15 +268,25 @@ grace_alarm_handler(int sig)
  * problems.
  */
 static void
-generate_empheral_server_key(void)
+generate_ephemeral_server_key(void)
 {
+	u_int32_t rand = 0;
+	int i;
+
 	log("Generating %s%d bit RSA key.", sensitive_data.server_key ? "new " : "",
 	    options.server_key_bits);
 	if (sensitive_data.server_key != NULL)
 		key_free(sensitive_data.server_key);
 	sensitive_data.server_key = key_generate(KEY_RSA1, options.server_key_bits);
-	arc4random_stir();
 	log("RSA key generation complete.");
+
+	for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++) {
+		if (i % 4 == 0)
+			rand = arc4random();
+		sensitive_data.ssh1_cookie[i] = rand & 0xff;
+		rand >>= 8;
+	}
+	arc4random_stir();
 }
 
 static void
@@ -323,7 +334,8 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		memset(buf, 0, sizeof(buf)); 
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomic_read(sock_in, &buf[i], 1) != 1) {
-				log("Did not receive ident string from %s.", get_remote_ipaddr());
+				log("Did not receive identification string from %s.",
+				    get_remote_ipaddr());
 				fatal_cleanup();
 			}
 			if (buf[i] == '\r') {
@@ -363,6 +375,12 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	      remote_major, remote_minor, remote_version);
 
 	compat_datafellows(remote_version);
+
+	if (datafellows & SSH_BUG_SCANNER) {
+		log("scanned from %s with %s.  Don't panic.",
+		    get_remote_ipaddr(), client_version_string);
+		fatal_cleanup();
+	}
 
 	mismatch = 0;
 	switch(remote_major) {
@@ -432,6 +450,7 @@ destroy_sensitive_data(void)
 		}
 	}
 	sensitive_data.ssh1_host_key = NULL;
+	memset(sensitive_data.ssh1_cookie, 0, SSH_SESSION_KEY_LENGTH);
 }
 static Key *
 load_private_key_autodetect(const char *filename)
@@ -719,7 +738,7 @@ main(int ac, char **av)
 		options.protocol &= ~SSH_PROTO_2;
 	}
 	if (!(options.protocol & (SSH_PROTO_1|SSH_PROTO_2))) {
-		log("sshd: no hostkeys available -- exiting.\n");
+		log("sshd: no hostkeys available -- exiting.");
 		exit(1);
 	}
 
@@ -797,7 +816,7 @@ main(int ac, char **av)
 		 */
 		debug("inetd sockets after dupping: %d, %d", sock_in, sock_out);
 		if (options.protocol & SSH_PROTO_1)
-			generate_empheral_server_key();
+			generate_ephemeral_server_key();
 	} else {
 		for (ai = options.listen_addrs; ai; ai = ai->ai_next) {
 			if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
@@ -874,7 +893,7 @@ main(int ac, char **av)
 			}
 		}
 		if (options.protocol & SSH_PROTO_1)
-			generate_empheral_server_key();
+			generate_ephemeral_server_key();
 
 		/* Arrange to restart on SIGHUP.  The handler needs listen_sock. */
 		signal(SIGHUP, sighup_handler);
@@ -920,7 +939,7 @@ main(int ac, char **av)
 			if (ret < 0 && errno != EINTR)
 				error("select: %.100s", strerror(errno));
 			if (key_used && key_do_regen) {
-				generate_empheral_server_key();
+				generate_ephemeral_server_key();
 				key_used = 0;
 				key_do_regen = 0;
 			}
@@ -1324,14 +1343,6 @@ do_ssh1_kex(void)
 		    sensitive_data.server_key->rsa) < 0)
 			rsafail++;
 	}
-
-	compute_session_id(session_id, cookie,
-	    sensitive_data.ssh1_host_key->rsa->n,
-	    sensitive_data.server_key->rsa->n);
-
-	/* Destroy the private and public keys.  They will no longer be needed. */
-	destroy_sensitive_data();
-
 	/*
 	 * Extract session key from the decrypted integer.  The key is in the
 	 * least significant 256 bits of the integer; the first byte of the
@@ -1349,23 +1360,44 @@ do_ssh1_kex(void)
 			memset(session_key, 0, sizeof(session_key));
 			BN_bn2bin(session_key_int,
 			    session_key + sizeof(session_key) - len);
+
+			compute_session_id(session_id, cookie,
+			    sensitive_data.ssh1_host_key->rsa->n,
+			    sensitive_data.server_key->rsa->n);
+			/*
+			 * Xor the first 16 bytes of the session key with the
+			 * session id.
+			 */
+			for (i = 0; i < 16; i++)
+				session_key[i] ^= session_id[i];
 		}
 	}
 	if (rsafail) {
+		int bytes = BN_num_bytes(session_key_int);
+		char *buf = xmalloc(bytes);
+		MD5_CTX md;
+
 		log("do_connection: generating a fake encryption key");
-		for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++) {
-			if (i % 4 == 0)
-				rand = arc4random();
-			session_key[i] = rand & 0xff;
-			rand >>= 8;
-		}
+		BN_bn2bin(session_key_int, buf);
+		MD5_Init(&md);
+		MD5_Update(&md, buf, bytes);
+		MD5_Update(&md, sensitive_data.ssh1_cookie, SSH_SESSION_KEY_LENGTH);
+		MD5_Final(session_key, &md);
+		MD5_Init(&md);
+		MD5_Update(&md, session_key, 16);
+		MD5_Update(&md, buf, bytes);
+		MD5_Update(&md, sensitive_data.ssh1_cookie, SSH_SESSION_KEY_LENGTH);
+		MD5_Final(session_key + 16, &md);
+		memset(buf, 0, bytes);
+		xfree(buf);
+		for (i = 0; i < 16; i++)
+			session_id[i] = session_key[i] ^ session_key[i + 16];
 	}
+	/* Destroy the private and public keys.  They will no longer be needed. */
+	destroy_sensitive_data();
+
 	/* Destroy the decrypted integer.  It is no longer needed. */
 	BN_clear_free(session_key_int);
-
-	/* Xor the first 16 bytes of the session key with the session id. */
-	for (i = 0; i < 16; i++)
-		session_key[i] ^= session_id[i];
 
 	/* Set the session key.  From this on all communications will be encrypted. */
 	packet_set_encryption_key(session_key, SSH_SESSION_KEY_LENGTH, cipher_type);
@@ -1480,7 +1512,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 /* KEXDH */
 	/* generate DH key */
 	dh = dh_new_group1();			/* XXX depends on 'kex' */
-	dh_gen_key(dh);
+	dh_gen_key(dh, kex->we_need * 8);
 
 	debug("Wait SSH2_MSG_KEXDH_INIT.");
 	packet_read_expect(&payload_len, SSH2_MSG_KEXDH_INIT);
@@ -1623,7 +1655,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 
 	/* Compute our exchange value in parallel with the client */
 
-	dh_gen_key(dh);
+	dh_gen_key(dh, kex->we_need * 8);
 
 	debug("Wait SSH2_MSG_KEX_DH_GEX_INIT.");
 	packet_read_expect(&payload_len, SSH2_MSG_KEX_DH_GEX_INIT);
