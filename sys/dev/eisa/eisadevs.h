@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.21 2000/08/21 14:11:45 ad Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.22 2000/09/01 17:19:36 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.19 2000/08/21 14:11:07 ad Exp 
+ *	NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp 
  */
 
 /*
@@ -61,7 +61,7 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
-#define	EISA_PRODUCT_BUS6301	"BusLogic Et763E Ethernet"
+#define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
 /* Compaq products */
 #define	EISA_PRODUCT_CPQ4001	"Compaq IDA array controller"
