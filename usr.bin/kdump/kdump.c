@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.69 2003/11/24 16:53:38 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.70 2003/11/24 22:12:14 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.69 2003/11/24 16:53:38 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.70 2003/11/24 22:12:14 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -895,7 +895,8 @@ ktrmool(mool, len)
 {
 	size_t size = mool->size;
 
-	printf("%d/0x%x bytes at %p\n", size, size, mool->uaddr);
+	printf("%ld/0x%lx bytes at %p\n", 
+	    (u_long)size, (u_long)size, mool->uaddr);
 	mool++;
 	hexdump_buf(mool, size, word_size ? word_size : 4);
 }
