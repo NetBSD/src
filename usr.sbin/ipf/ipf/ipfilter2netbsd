@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -60,7 +60,7 @@ esac
 echo preparing directory $d
 rm -rf $d
 mkdir -p $d; cd $d
-mkdir -p src/sbin/ipf src/sys/netinet src/usr.sbin/ipfstat src/usr.sbin/ipmon src/usr.sbin/ipftest src/usr.sbin/ipnat src/sys/lkm/netinet/if_ipl
+mkdir -p src/sbin/ipf src/sys/netinet src/usr.sbin/ipf/ipfstat src/usr.sbin/ipf/ipftest src/usr.sbin/ipf/ipmon src/usr.sbin/ipf/ipnat src/usr.sbin/ipf/ipresend src/usr.sbin/ipf/ipsend src/usr.sbin/ipf/iptest src/sys/lkm/netinet/if_ipl
 
 ### start ipf ###############################
 cd $r
@@ -76,11 +76,12 @@ mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
 MAN=	ipf.8 ipf.4 ipf.5 ipl.4
+MLINKS=	ipl.4 ipfilter.4
 
 .include <bsd.prog.mk>
 __eof_makefile
@@ -92,19 +93,19 @@ echo ipfstat:
 src='kmem.c kmem.h fils.c'
 man=ipfstat.8
 
-pax -rvw $src $d/src/usr.sbin/ipfstat
-cd man; pax -rvw $man $d/src/usr.sbin/ipfstat; cd ..
+pax -rvw $src $d/src/usr.sbin/ipf/ipfstat
+cd man; pax -rvw $man $d/src/usr.sbin/ipf/ipfstat; cd ..
 
-cd $d/src/usr.sbin/ipfstat
+cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
 MAN=	ipfstat.8
-CFLAGS+=        -I${.CURDIR}/../../sbin/ipf
+CFLAGS+=-I${.CURDIR}/../../sbin/ipf
 
 .PATH: ${.CURDIR}/../../sbin/ipf
 .include <bsd.prog.mk>
@@ -112,24 +113,47 @@ __eof_makefile
 
 ### end ipfstat ###############################
 
+### start ipftest ###############################
+cd $r
+echo ipftest:
+src='ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ipt.h snoop.h'
+
+pax -rvw $src test $d/src/usr.sbin/ipf/ipftest
+
+cd $d/src/usr.sbin/ipf/ipftest
+
+echo creating Makefile
+cat > Makefile<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+
+PROG=	ipftest
+SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c
+NOMAN=	yes
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../../sbin/ipf -I${.CURDIR}/../../../sys
+
+.PATH: ${.CURDIR}/../../../sbin/ipf ${.CURDIR}/../../../sys/netinet
+.include <bsd.prog.mk>
+__eof_makefile
+### end ipftest ###############################
+
 ### start ipmon ###############################
 cd $r
 echo ipmon:
 src=ipmon.c
 man=ipmon.8
 
-pax -rvw $src $d/src/usr.sbin/ipmon
+pax -rvw $src $d/src/usr.sbin/ipf/ipmon
 cd man; pax -rvw $man $d/src/usr.sbin/ipmon; cd ..
 
-cd $d/src/usr.sbin/ipmon
+cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
-CFLAGS+=        -DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../../sbin/ipf
+CFLAGS+=-DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../../sbin/ipf
 
 .PATH: .${CURDIR}/../../sbin/ipf
 .include <bsd.prog.mk>
@@ -142,48 +166,94 @@ echo ipnat:
 src=ipnat.c
 man='ipnat.1 ipnat.4 ipnat.5'
 
-pax -rvw $src $d/src/usr.sbin/ipnat
+pax -rvw $src $d/src/usr.sbin/ipf/ipnat
 cd man; pax -rvw $man $d/src/usr.sbin/ipnat; cd ..
 
-cd $d/src/usr.sbin/ipnat
+cd $d/src/usr.sbin/ipf/ipnat
 mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
 MAN=	ipnat.8 ipnat.4 ipnat.5
-CFLAGS+=	-I${.CURDIR}/../../sbin/ipf -I${.CURDIR}/../ipfstat
+CFLAGS+=-I${.CURDIR}/../../sbin/ipf -I${.CURDIR}/../ipfstat
 
 .PATH: ${.CURDIR}/../../sbin/ipf ${.CURDIR}/../ipfstat
 .include <bsd.prog.mk>
 __eof_makefile
 ### end ipnat ###############################
 
-### start ipftest ###############################
+### start of ipresend ##############################
 cd $r
-echo ipftest:
-src='ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ipt.h snoop.h'
+echo ipresend:
+src='ipresend.c resend.c'
 
-pax -rvw $src test $d/src/usr.sbin/ipftest
+pax -rvw $src $d/src/usr.sbin/ipf/ipresend
 
-cd $d/src/usr.sbin/ipftest
+cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
-PROG=	ipftest
-SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c
+PROG=	ipresend
+SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
 NOMAN=	yes
-CFLAGS+=	-I${.CURDIR}/../../sbin/ipf
+CFLAGS+=-I${.CURDIR}/../ipfstat -I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../../../sbin/ipf
 
-.PATH: ${.CURDIR}/../../sbin/ipf
+.PATH: ${.CURDIR}/../../../sbin/ipf ${.CURDIR}/../ipfstat ${.CURDIR}/../ipsend ${.CURDIR}/../ipftest
 .include <bsd.prog.mk>
 __eof_makefile
-### end ipftest ###############################
+### end of ipresend ###############################
+
+### start of ipsend ##############################
+cd $r
+echo ipsend:
+src='44arp.c ip.c ip_compat.h ipsend.c ipsopt.c sbpf.c'
+
+pax -rvw $src $d/src/usr.sbin/ipf/ipsend
+
+cd $d/src/usr.sbin/ipf/ipsend
+
+echo creating Makefile
+cat > Makefile<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+
+PROG=	ipsend
+SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c
+NOMAN=	yes
+CFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../../../sbin/ipf
+
+.PATH: ${.CURDIR}/../../../sbin/ipf
+.include <bsd.prog.mk>
+__eof_makefile
+### end of ipsend ###############################
+
+### start of iptest ##############################
+cd $r
+echo iptest:
+src='iptest.c iptests.c sock.c'
+
+pax -rvw $src $d/src/usr.sbin/ipf/iptest
+
+cd $d/src/usr.sbin/ipf/iptest
+
+echo creating Makefile
+cat > Makefile<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+
+PROG=	iptest
+SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
+NOMAN=	yes
+CFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../../../sbin/ipf
+
+.PATH: ${.CURDIR}/../../../sbin/ipf ${.CURDIR}/../ipsend
+.include <bsd.prog.mk>
+__eof_makefile
+### end of iptest ###############################
 
 ### start ipfilter in kernel #######################
 cd $r
@@ -204,7 +274,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -228,7 +298,7 @@ find $d -name '*.[ch]' -print | while read c; do
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $	*/
 
 __eof_header
 cat $c
