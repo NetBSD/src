@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.17 2003/12/29 04:39:29 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.18 2003/12/29 05:01:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.17 2003/12/29 04:39:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.18 2003/12/29 05:01:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -166,8 +166,6 @@ rf_FreeReconControl(raidPtr)
 		reconCtrlPtr->floatingRbufs = t->next;
 		rf_FreeReconBuffer(t);
 	}
-	rf_mutex_destroy(&reconCtrlPtr->rb_mutex);
-	rf_mutex_destroy(&reconCtrlPtr->eq_mutex);
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
 	RF_Free(reconCtrlPtr->perDiskInfo, 

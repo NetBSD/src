@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.18 2003/12/29 04:56:26 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.19 2003/12/29 05:01:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.18 2003/12/29 04:56:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.19 2003/12/29 05:01:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -196,16 +196,12 @@ rf_MakeLockTable()
 static void 
 rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable)
 {
-	int     i;
 
 #if RF_DEBUG_STRIPELOCK
 	if (rf_stripeLockDebug) {
 		PrintLockedStripes(lockTable);
 	}
 #endif
-	for (i = 0; i < rf_lockTableSize; i++) {
-		rf_mutex_destroy(&lockTable[i].mutex);
-	}
 	RF_Free(lockTable, rf_lockTableSize * sizeof(RF_LockTableEntry_t));
 }
 

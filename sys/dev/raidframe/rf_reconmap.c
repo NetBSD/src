@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.20 2003/12/29 04:56:26 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.21 2003/12/29 05:01:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.20 2003/12/29 04:56:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.21 2003/12/29 05:01:14 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -303,7 +303,6 @@ rf_FreeReconMap(mapPtr)
 		}
 	}
 	pool_destroy(&mapPtr->elem_pool);
-	rf_mutex_destroy(&mapPtr->mutex);
 	RF_Free(mapPtr->status, mapPtr->totalRUs * 
 		sizeof(RF_ReconMapListElem_t *));
 	RF_Free(mapPtr, sizeof(RF_ReconMap_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.17 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.18 2003/12/29 05:01:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.17 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.18 2003/12/29 05:01:14 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -313,7 +313,6 @@ rf_ConfigureParityLogging(
 	rc = rf_cond_init(&raidPtr->regionBufferPool.cond);
 	if (rc) {
 		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		rf_mutex_destroy(&raidPtr->regionBufferPool.mutex);
 		return (ENOMEM);
 	}
 	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity * 
@@ -335,7 +334,6 @@ rf_ConfigureParityLogging(
 		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t), 
 		  (caddr_t *));
 	if (raidPtr->regionBufferPool.buffers == NULL) {
-		rf_mutex_destroy(&raidPtr->regionBufferPool.mutex);
 		rf_cond_destroy(&raidPtr->regionBufferPool.cond);
 		return (ENOMEM);
 	}
@@ -347,7 +345,6 @@ rf_ConfigureParityLogging(
 			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
-			rf_mutex_destroy(&raidPtr->regionBufferPool.mutex);
 			rf_cond_destroy(&raidPtr->regionBufferPool.cond);
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->regionBufferPool.buffers[i], 
@@ -381,7 +378,6 @@ rf_ConfigureParityLogging(
 	rc = rf_cond_init(&raidPtr->parityBufferPool.cond);
 	if (rc) {
 		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		rf_mutex_destroy(&raidPtr->parityBufferPool.mutex);
 		return (ENOMEM);
 	}
 	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity * 
@@ -404,7 +400,6 @@ rf_ConfigureParityLogging(
 		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t), 
 		  (caddr_t *));
 	if (raidPtr->parityBufferPool.buffers == NULL) {
-		rf_mutex_destroy(&raidPtr->parityBufferPool.mutex);
 		rf_cond_destroy(&raidPtr->parityBufferPool.cond);
 		return (ENOMEM);
 	}
@@ -416,7 +411,6 @@ rf_ConfigureParityLogging(
 			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->parityBufferPool.buffers == NULL) {
-			rf_mutex_destroy(&raidPtr->parityBufferPool.mutex);
 			rf_cond_destroy(&raidPtr->parityBufferPool.cond);
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->parityBufferPool.buffers[i], 
@@ -487,7 +481,6 @@ rf_ConfigureParityLogging(
 		rc = rf_mutex_init(&raidPtr->regionInfo[i].reintMutex);
 		if (rc) {
 			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			rf_mutex_destroy(&raidPtr->regionInfo[i].mutex);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
 			RF_Free(raidPtr->regionInfo, 
@@ -531,8 +524,6 @@ rf_ConfigureParityLogging(
 			   sizeof(RF_DiskMap_t)), 
 			  (RF_DiskMap_t *));
 		if (raidPtr->regionInfo[i].diskMap == NULL) {
-			rf_mutex_destroy(&raidPtr->regionInfo[i].mutex);
-			rf_mutex_destroy(&raidPtr->regionInfo[i].reintMutex);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
 			RF_Free(raidPtr->regionInfo, 
@@ -609,8 +600,6 @@ FreeRegionInfo(
 		RF_ASSERT(raidPtr->regionInfo[regionID].diskCount == 0);
 	}
 	RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
-	rf_mutex_destroy(&raidPtr->regionInfo[regionID].mutex);
-	rf_mutex_destroy(&raidPtr->regionInfo[regionID].reintMutex);
 }
 
 
@@ -631,7 +620,6 @@ FreeParityLogQueue(
 		RF_Free(l2, sizeof(RF_ParityLog_t));
 	}
 	RF_UNLOCK_MUTEX(queue->mutex);
-	rf_mutex_destroy(&queue->mutex);
 }
 
 
@@ -649,7 +637,6 @@ FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 		RF_Free(queue->buffers[i], queue->bufferSize);
 	RF_Free(queue->buffers, queue->totalBuffers * sizeof(caddr_t));
 	RF_UNLOCK_MUTEX(queue->mutex);
-	rf_mutex_destroy(&queue->mutex);
 }
 
 static void 
@@ -737,7 +724,6 @@ rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 	}
 	while (raidPtr->parityLogDiskQueue.freeCommonList) {
 		c = raidPtr->parityLogDiskQueue.freeCommonList;
-		rf_mutex_destroy(&c->mutex);
 		raidPtr->parityLogDiskQueue.freeCommonList = 
 			raidPtr->parityLogDiskQueue.freeCommonList->next;
 		RF_Free(c, sizeof(RF_CommonLogData_t));
