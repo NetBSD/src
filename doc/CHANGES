@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.4 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.5 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -651,6 +651,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	postfix(1): update to 2.0.19 [heas 20040327]
 	ipf(8): updated to version 4.1.1. [martti 20040328]
 	libcurses: add *echochar() functions. [jdc 20040328]
+	sgimips: Add IP12 support.  [pooka 20040411]
 	wscons(4): Added scrolling support [christos 20040531]
 	acorn32: Generate sparkive with new bootloader for install
 		[gavan/abs 20040608]
