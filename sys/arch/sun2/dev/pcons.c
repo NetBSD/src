@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.1.6.1 2002/05/17 15:40:50 gehenna Exp $	*/
+/*	$NetBSD: pcons.c,v 1.1.6.2 2002/06/08 09:12:29 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -238,13 +238,6 @@ pconstty(dev)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
-}
-
-void
-pconsstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
 }
 
 static void

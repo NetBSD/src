@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1.6.1 2002/05/19 07:41:24 gehenna Exp $	*/
+/*	$NetBSD: kd.c,v 1.1.6.2 2002/06/08 09:12:29 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -364,15 +364,6 @@ kdioctl(dev, cmd, data, flag, p)
 
 	return EPASSTHROUGH;
 }
-
-void
-kdstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
-}
-
 
 static int
 kdparam(tp, t)
