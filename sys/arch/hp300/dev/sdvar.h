@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.7 1997/03/31 07:40:07 scottr Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.7.16.1 2000/10/12 21:32:15 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -62,6 +62,9 @@ struct	sd_softc {
 	struct sdstats sc_stats; /* debugging stats */
 	struct scsi_fmt_cdb sc_cmdstore;
 	struct scsi_fmt_sense sc_sensestore;
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /* sc_flags values */
