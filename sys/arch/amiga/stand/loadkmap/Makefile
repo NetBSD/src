@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 1996/09/27 03:23:13 chopps Exp $
+# $NetBSD: Makefile,v 1.6 1997/08/06 17:08:15 veego Exp $
 
 PROG=loadkmap
 NOMAN=loadkmap
 BINDIR=/usr/sbin
-SUBDIR=din sw us
+SUBDIR=din fr sw us
 
 .include <bsd.prog.mk>
