@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.21 2003/04/08 18:13:41 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.22 2003/04/08 21:10:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.21 2003/04/08 18:13:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.22 2003/04/08 21:10:33 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,11 @@ smb_rq_new(struct smb_rq *rqp, u_char cmd)
 	mb_put_uint16le(mbp, vcp->vc_hflags2);
 	mb_put_mem(mbp, NULL, 12, MB_MZERO);
 	rqp->sr_rqtid = mb_reserve(mbp, sizeof(u_int16_t));
-	mb_put_uint16le(mbp, 1 /*scred->sc_p->p_pid & 0xffff*/);
+	/*
+	 * SMB packet PID is used for lock validation. Besides that,
+	 * it's opaque for the server.
+	 */
+	mb_put_uint16le(mbp, 1 /*rqp->sr_cred->scr_p->p_pid & 0xffff*/);
 	rqp->sr_rquid = mb_reserve(mbp, sizeof(u_int16_t));
 	mb_put_uint16le(mbp, rqp->sr_mid);
 	return 0;
