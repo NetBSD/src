@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.14 2002/11/24 07:41:30 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.15 2002/12/17 12:04:30 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -825,10 +825,8 @@ mips3_get_cache_config(int csizebase)
 
 #if defined(MIPS32) || defined(MIPS64)
 
-#ifdef MIPS_DISABLE_L1_CACHE
-static void cache_noop(void);
+static void cache_noop(void) __attribute__((__unused__));
 static void cache_noop(void) {}
-#endif
 
 static void
 mips_config_cache_modern(void)
@@ -957,36 +955,47 @@ mips_config_cache_modern(void)
 	switch (mips_pdcache_line_size) {
 	case 16:
 		mips_cache_ops.mco_pdcache_wbinv_all =
+		    mips_cache_ops.mco_intern_pdcache_wbinv_all =
 		    mipsNN_pdcache_wbinv_all_16;
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_16;
 		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    mips_cache_ops.mco_intern_pdcache_wbinv_range_index =
 		    mipsNN_pdcache_wbinv_range_index_16;
 		mips_cache_ops.mco_pdcache_inv_range =
 		    mipsNN_pdcache_inv_range_16;
 		mips_cache_ops.mco_pdcache_wb_range =
+		    mips_cache_ops.mco_intern_pdcache_wb_range =
 		    mipsNN_pdcache_wb_range_16;
 		break;
 	case 32:
 		mips_cache_ops.mco_pdcache_wbinv_all =
+		    mips_cache_ops.mco_intern_pdcache_wbinv_all =
 		    mipsNN_pdcache_wbinv_all_32;
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_32;
 		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    mips_cache_ops.mco_intern_pdcache_wbinv_range_index =
 		    mipsNN_pdcache_wbinv_range_index_32;
 		mips_cache_ops.mco_pdcache_inv_range =
 		    mipsNN_pdcache_inv_range_32;
 		mips_cache_ops.mco_pdcache_wb_range =
+		    mips_cache_ops.mco_intern_pdcache_wb_range =
 		    mipsNN_pdcache_wb_range_32;
 		break;
 #ifdef MIPS_DISABLE_L1_CACHE
 	case 0:
 		mips_cache_ops.mco_pdcache_wbinv_all = (void *)cache_noop;
+		mips_cache_ops.mco_intern_pdcache_wbinv_all =
+		    (void *)cache_noop;
 		mips_cache_ops.mco_pdcache_wbinv_range = (void *)cache_noop;
 		mips_cache_ops.mco_pdcache_wbinv_range_index =
 		    (void *)cache_noop;
+		mips_cache_ops.mco_intern_pdcache_wbinv_range_index =
+		    (void *)cache_noop;
 		mips_cache_ops.mco_pdcache_inv_range = (void *)cache_noop;
 		mips_cache_ops.mco_pdcache_wb_range = (void *)cache_noop;
+		mips_cache_ops.mco_intern_pdcache_wb_range = (void *)cache_noop;
 		break;
 #endif
 	default:
@@ -995,5 +1004,29 @@ mips_config_cache_modern(void)
 	}
 
 	mipsNN_cache_init(cfg, cfg1);
+
+	if (mips_cpu_flags &
+	    (CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_I_D_CACHE_COHERENT)) {
+#ifdef CACHE_DEBUG
+		printf("  Dcache is coherent\n");
+#endif
+		mips_cache_ops.mco_pdcache_wbinv_all = (void *)cache_noop;
+		mips_cache_ops.mco_pdcache_wbinv_range = (void *)cache_noop;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    (void *)cache_noop;
+		mips_cache_ops.mco_pdcache_inv_range = (void *)cache_noop;
+		mips_cache_ops.mco_pdcache_wb_range = (void *)cache_noop;
+	}
+	if (mips_cpu_flags & CPU_MIPS_I_D_CACHE_COHERENT) {
+#ifdef CACHE_DEBUG
+		printf("  Icache is coherent against Dcache\n");
+#endif
+		mips_cache_ops.mco_intern_pdcache_wbinv_all =
+		    (void *)cache_noop;
+		mips_cache_ops.mco_intern_pdcache_wbinv_range_index =
+		    (void *)cache_noop;
+		mips_cache_ops.mco_intern_pdcache_wb_range =
+		    (void *)cache_noop;
+	}
 }
 #endif /* MIPS32 || MIPS64 */
