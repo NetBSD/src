@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.47 1994/12/29 22:16:19 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.48 1994/12/29 22:21:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -968,7 +968,6 @@ nfs_mknod(ap)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	u_long rdev;
 
-	isnq = (VFSTONFS(dvp->v_mount)->nm_flag & NFSMNT_NQNFS);
 	if (vap->va_type == VCHR || vap->va_type == VBLK)
 		rdev = txdr_unsigned(vap->va_rdev);
 #ifdef FIFO
@@ -987,6 +986,7 @@ nfs_mknod(ap)
 	}
 	newvp = NULLVP;
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
+	isnq = (VFSTONFS(dvp->v_mount)->nm_flag & NFSMNT_NQNFS);
 	nfsm_reqhead(dvp, NFSPROC_CREATE,
 	  NFSX_FH+NFSX_UNSIGNED+nfsm_rndup(cnp->cn_namelen)+NFSX_SATTR(isnq));
 	nfsm_fhtom(dvp);
@@ -1062,8 +1062,8 @@ nfs_create(ap)
 		u_quad_t qval = 0;
 
 		txdr_hyper(&qval, &sp->sa_nqsize);
-		sp->sa_nqflags = 0;
 		sp->sa_nqrdev = -1;
+		sp->sa_nqflags = 0;
 		txdr_nqtime(&vap->va_atime, &sp->sa_nqatime);
 		txdr_nqtime(&vap->va_mtime, &sp->sa_nqmtime);
 	} else {
