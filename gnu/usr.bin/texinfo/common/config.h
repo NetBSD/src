@@ -11,16 +11,7 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-/* For gettext (NLS) */
-/* #undef ENABLE_NLS */
-#ifdef ENABLE_NLS
-#include <libintl.h>
-#define _(String) gettext (String)
-#define N_(String) (String)
-#else
-#define _(String) (String)
-#define N_(String) (String)
-#endif
+#define ENABLE_NLS 1
 
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 /* #undef GWINSZ_IN_SYS_IOCTL */

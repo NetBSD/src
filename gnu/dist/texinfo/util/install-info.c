@@ -1,4 +1,4 @@
-/*	$NetBSD: install-info.c,v 1.6 2003/07/03 15:09:21 wiz Exp $	*/
+/*	$NetBSD: install-info.c,v 1.7 2003/09/08 13:33:02 wiz Exp $	*/
 
 /* install-info -- create Info directory entry(ies) for an Info file.
    Id: install-info.c,v 1.9 2003/05/19 13:10:59 karl Exp
@@ -1126,11 +1126,9 @@ main (argc, argv)
   setlocale (LC_ALL, "");
 #endif
 
-#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-#endif
 
   while (1)
     {
