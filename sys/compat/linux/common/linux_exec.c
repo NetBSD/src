@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.33 1998/10/04 00:02:31 fvdl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.34 1998/10/07 22:17:57 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
