@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.18 2000/06/04 08:51:23 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.18.2.1 2000/07/30 06:29:13 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -190,9 +190,9 @@ struct addrinfo {
 #define	EAI_SERVICE	 9	/* servname not supported for ai_socktype */
 #define	EAI_SOCKTYPE	10	/* ai_socktype not supported */
 #define	EAI_SYSTEM	11	/* system error returned in errno */
-#define EAI_BADHINTS	12
-#define EAI_PROTOCOL	13
-#define EAI_MAX		14
+#define	EAI_BADHINTS	12
+#define	EAI_PROTOCOL	13
+#define	EAI_MAX		14
 #endif /* !_XOPEN_SOURCE */
 
 /*
@@ -234,12 +234,12 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
-#define NI_WITHSCOPEID	0x00000020	/*KAME extension*/
+#define	NI_WITHSCOPEID	0x00000020	/*KAME extension*/
 
 /*
  * Scope delimit character
  */
-#define SCOPE_DELIMITER '%'		/*KAME extension*/
+#define	SCOPE_DELIMITER '%'		/*KAME extension*/
 #endif /* !_XOPEN_SOURCE */
 
 /*
