@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.29 2000/01/17 04:55:26 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,6 +43,14 @@
 #include <machine/cpu.h>
 #include <machine/uvax.h>
 
+#include "opt_vax750.h"
+#include "opt_vax780.h"
+#include "opt_vax650.h"
+#include "opt_vax670.h"
+#include "opt_vax8500.h"
+#include "opt_vax8200.h"
+#include "opt_vax46.h"
+
 int	yeartonum __P((int));
 int	numtoyear __P((int));
 
@@ -62,7 +70,7 @@ microtime(tvp)
 	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
 
 	switch (vax_boardtype) {
-#ifdef VAX46
+#if VAX46
 	case VAX_BTYP_46: {
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);

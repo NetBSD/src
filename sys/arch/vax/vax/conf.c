@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 2000/01/17 04:55:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,6 +43,19 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include "opt_vax8600.h"
+#include "opt_vax8200.h"
+#include "opt_vax780.h"
+#include "opt_vax750.h"
+#include "opt_vax670.h"
+#include "opt_vax650.h"
+#include "opt_vax630.h"
+#include "opt_vax410.h"
+#include "opt_vax43.h"
+#include "opt_vax46.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
+
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
@@ -66,7 +79,7 @@ bdev_decl(ts);
 #include "mu.h"
 bdev_decl(mu);
 
-#if defined(VAX750)
+#if VAX750
 #define NCTU	1
 #else
 #define NCTU	0
