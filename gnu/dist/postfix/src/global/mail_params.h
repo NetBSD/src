@@ -50,7 +50,7 @@ extern uid_t var_owner_uid;
 extern gid_t var_owner_gid;
 
 #define VAR_SGID_GROUP		"setgid_group"
-#define DEF_SGID_GROUP		"postdrop"
+#define DEF_SGID_GROUP		"maildrop"
 extern char *var_sgid_group;
 extern gid_t var_sgid_gid;
 
