@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2004/03/24 19:44:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130.2.1 2004/04/01 23:31:53 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2004/03/24 19:44:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130.2.1 2004/04/01 23:31:53 jmc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -253,6 +253,12 @@ void
 cpu_startup()
 {
 	oea_startup(NULL);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
+#endif
 }
 
 /*
