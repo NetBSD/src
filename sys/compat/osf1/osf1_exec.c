@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.12 2000/11/21 00:37:54 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.13 2000/11/22 03:48:33 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -56,9 +56,6 @@ struct osf1_exec_emul_arg {
 	char	exec_name[MAXPATHLEN+1];
 	char	loader_name[MAXPATHLEN+1];
 };
-
-static void *osf1_copyargs(struct exec_package *pack,
-    struct ps_strings *arginfo, void *stack, void *argp);
 
 static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
 
@@ -138,7 +135,7 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * copy arguments onto the stack in the normal way, then copy out
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
-static void *
+void *
 osf1_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
