@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.2 2001/11/07 00:33:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.3 2001/11/08 03:28:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -67,6 +67,8 @@
 #include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>
 
+#include <dev/pci/ppbreg.h>
+
 #include <evbarm/iq80310/iq80310reg.h>
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
@@ -127,7 +129,8 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define KERNEL_PT_VMDATA	2	/* Page tables for mapping kernel VM */
+#define	KERNEL_PT_IOPXS		2	/* Page table for mapping i80312 */
+#define KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
@@ -323,8 +326,32 @@ initarm(void)
 	printf("\nNetBSD/evbarm (IQ80310) booting ...\n");
 
 	/*
-	 * Okay, RedBoot has provided us with the following memory map:
+	 * Reset the secondary PCI bus.  RedBoot doesn't stop devices
+	 * on the PCI bus before handing us control, so we have to
+	 * do this.
 	 *
+	 * XXX This is arguably a bug in RedBoot, and doing this reset
+	 * XXX could be problematic in the future if we encounter an
+	 * XXX application where the PPB in the i80312 is used as a
+	 * XXX PPB.
+	 */
+	{
+		uint32_t reg;
+
+		printf("Resetting secondary PCI bus...\n");
+		reg = bus_space_read_4(&obio_bs_tag,
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL);
+		bus_space_write_4(&obio_bs_tag,
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL,
+		    reg | PPB_BC_SECONDARY_RESET);
+		delay(10 * 1000);	/* 10ms enough? */
+		bus_space_write_4(&obio_bs_tag,
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL,
+		    reg);
+	}
+
+	/*
+	 * Okay, RedBoot has provided us with the following memory map:
 	 *
 	 * Physical Address Range     Description 
 	 * -----------------------    ---------------------------------- 
@@ -380,8 +407,8 @@ initarm(void)
 	 * Fetch the SDRAM start/size from the i80312 SDRAM configration
 	 * registers.
 	 */
-	i80312_sdram_bounds(&obio_bs_tag, I80312_MEM_BASE, &memstart,
-	    &memsize);
+	i80312_sdram_bounds(&obio_bs_tag, I80312_PMMR_BASE + I80312_MEM_BASE,
+	    &memstart, &memsize);
 
 	printf("initarm: Configuring system ...\n");
 
@@ -528,6 +555,8 @@ initarm(void)
 	    kernel_pt_table[KERNEL_PT_SYS]);
 	map_pagetable(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	map_pagetable(l1pagetable, IQ80310_IOPXS_VBASE,
+	    kernel_pt_table[KERNEL_PT_IOPXS]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
@@ -614,7 +643,9 @@ initarm(void)
 	l2pagetable = kernel_pt_table[KERNEL_PT_SYS];
 	map_entry(l2pagetable, 0x00000000, systempage.pv_pa);
 
-	/* Map the core memory needed before autoconfig */
+	/*
+	 * Map devices we can map w/ section mappings.
+	 */
 	loop = 0;
 	while (l1_sec_table[loop].size) {
 		vm_size_t sz;
@@ -630,6 +661,38 @@ initarm(void)
 			    l1_sec_table[loop].flags);
 		++loop;
 	}
+
+	/*
+	 * Map the PCI I/O spaces and i80312 registers.  These are too
+	 * small to be mapped w/ section mappings.
+	 */
+	l2pagetable = kernel_pt_table[KERNEL_PT_IOPXS];
+#ifdef VERBOSE_INIT_ARM
+	printf("Mapping PIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
+	    I80312_PCI_XLATE_PIOW_BASE,
+	    I80312_PCI_XLATE_PIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
+	    IQ80310_PIOW_VBASE);
+#endif
+	map_chunk(0, l2pagetable, IQ80310_PIOW_VBASE,
+	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+
+#ifdef VERBOSE_INIT_ARM
+	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
+	    I80312_PCI_XLATE_SIOW_BASE,
+	    I80312_PCI_XLATE_SIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
+	    IQ80310_SIOW_VBASE);
+#endif
+	map_chunk(0, l2pagetable, IQ80310_SIOW_VBASE,
+	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+
+#ifdef VERBOSE_INIT_ARM
+	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
+	    I80312_PMMR_BASE,
+	    I80312_PMMR_BASE + I80312_PMMR_SIZE - 1,
+	    IQ80310_80312_VBASE);
+#endif
+	map_chunk(0, l2pagetable, IQ80310_80312_VBASE,
+	    I80312_PMMR_BASE, I80312_PMMR_SIZE, AP_KRW, 0);
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
