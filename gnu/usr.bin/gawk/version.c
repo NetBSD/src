@@ -1,4 +1,3 @@
-/* DO NOT CHANGE VERSION STRING TO USE A REAL SCCS OR RCS ID */
 char *version_string = "@(#)Gnu Awk (gawk) 2.15";
 
 /* 1.02		fixed /= += *= etc to return the new Left Hand Side instead

@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: array.c,v 1.4 1994/02/17 01:21:57 jtc Exp $";
-#endif
-
 /*
  * Tree walks (``for (iggy in foo)'') and array deletions use expensive
  * linear searching.  So what we do is start out with small arrays and
@@ -115,6 +111,7 @@ NODE *symbol;
 	free(symbol->var_array);
 	symbol->var_array = NULL;
 	symbol->array_size = symbol->table_size = 0;
+	symbol->flags &= ~ARRAYMAXED;
 }
 
 /*
@@ -233,11 +230,19 @@ int hash1;
 
 	for (bucket = symbol->var_array[hash1]; bucket; bucket = bucket->ahnext) {
 		if (cmp_nodes(bucket->ahname, subs) == 0) {
+#if 0
+	/*
+	 * Disable this code for now.  It screws things up if we have
+	 * a ``for (iggy in foo)'' in progress.  Interestingly enough,
+	 * this was not a problem in 2.15.3, only in 2.15.4.  I'm not
+	 * sure why it works in 2.15.3.
+	 */
 			if (prev) {	/* move found to front of chain */
 				prev->ahnext = bucket->ahnext;
 				bucket->ahnext = symbol->var_array[hash1];
 				symbol->var_array[hash1] = bucket;
 			}
+#endif
 			return bucket;
 		} else
 			prev = bucket;	/* save previous list entry */
@@ -288,6 +293,7 @@ NODE *symbol, *subs;
 	if (symbol->var_array == 0) {
 		symbol->type = Node_var_array;
 		symbol->array_size = symbol->table_size = 0;	/* sanity */
+		symbol->flags &= ~ARRAYMAXED;
 		grow_table(symbol);
 		hash1 = hash(subs->stptr, subs->stlen,
 				(unsigned long) symbol->array_size);
@@ -372,7 +378,8 @@ NODE *symbol, *tree;
 		memset(symbol->var_array, '\0',
 			sizeof(NODE *) * symbol->array_size);
 		symbol->table_size = symbol->array_size = 0;
-		free(symbol->var_array);
+		symbol->flags &= ~ARRAYMAXED;
+		free((char *) symbol->var_array);
 		symbol->var_array = NULL;
 	}
 }
@@ -382,32 +389,54 @@ assoc_scan(symbol, lookat)
 NODE *symbol;
 struct search *lookat;
 {
-	if (symbol->var_array == NULL) {
-		lookat->retval = NULL;
-		return;
-	}
-	lookat->arr_ptr = symbol->var_array;
-	lookat->arr_end = lookat->arr_ptr + symbol->array_size;
-	lookat->bucket = symbol->var_array[0];
-	assoc_next(lookat);
+	lookat->sym = symbol;
+	lookat->idx = 0;
+	lookat->bucket = NULL;
+	lookat->retval = NULL;
+	if (symbol->var_array != NULL)
+		assoc_next(lookat);
 }
 
 void
 assoc_next(lookat)
 struct search *lookat;
 {
-	while (lookat->arr_ptr < lookat->arr_end) {
-		if (lookat->bucket != 0) {
-			lookat->retval = lookat->bucket->ahname;
-			lookat->bucket = lookat->bucket->ahnext;
+	register NODE *symbol = lookat->sym;
+	
+	if (symbol == NULL)
+		fatal("null symbol in assoc_next");
+	if (symbol->var_array == NULL || lookat->idx > symbol->array_size) {
+		lookat->retval = NULL;
+		return;
+	}
+	/*
+	 * This is theoretically unsafe.  The element bucket might have
+	 * been freed if the body of the scan did a delete on the next
+	 * element of the bucket.  The only way to do that is by array
+	 * reference, which is unlikely.  Basically, if the user is doing
+	 * anything other than an operation on the current element of an
+	 * assoc array while walking through it sequentially, all bets are
+	 * off.  (The safe way is to register all search structs on an
+	 * array with the array, and update all of them on a delete or
+	 * insert)
+	 */
+	if (lookat->bucket != NULL) {
+		lookat->retval = lookat->bucket->ahname;
+		lookat->bucket = lookat->bucket->ahnext;
+		return;
+	}
+	for (; lookat->idx < symbol->array_size; lookat->idx++) {
+		NODE *bucket;
+
+		if ((bucket = symbol->var_array[lookat->idx]) != NULL) {
+			lookat->retval = bucket->ahname;
+			lookat->bucket = bucket->ahnext;
+			lookat->idx++;
 			return;
 		}
-		lookat->arr_ptr++;
-		if (lookat->arr_ptr < lookat->arr_end)
-			lookat->bucket = *(lookat->arr_ptr);
-		else
-			lookat->retval = NULL;
 	}
+	lookat->retval = NULL;
+	lookat->bucket = NULL;
 	return;
 }
 

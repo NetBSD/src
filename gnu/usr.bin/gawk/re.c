@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: re.c,v 1.4 1994/02/17 01:22:33 jtc Exp $";
-#endif
-
 #include "awk.h"
 
 /* Generate compiled regular expressions */

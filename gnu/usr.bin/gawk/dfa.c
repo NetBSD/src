@@ -18,10 +18,6 @@
 /* Written June, 1988 by Mike Haertel
    Modified July, 1988 by Arthur David Olson to assist BMG speedups  */
 
-#ifndef lint
-static char rcsid[] = "$Id: dfa.c,v 1.4 1994/02/17 01:22:06 jtc Exp $";
-#endif
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -88,6 +84,9 @@ extern void free();
 typedef void *ptr_t;
 #else
 typedef char *ptr_t;
+#ifndef const
+#define const
+#endif
 #endif
 
 static void dfamust _RE_ARGS((struct dfa *dfa));
@@ -985,7 +984,7 @@ insert(p, s)
   position t1, t2;
 
   for (i = 0; i < s->nelem && p.index < s->elems[i].index; ++i)
-    ;
+    continue;
   if (i < s->nelem && p.index == s->elems[i].index)
     s->elems[i].constraint |= p.constraint;
   else
@@ -1569,7 +1568,7 @@ dfastate(s, d, trans)
 
 	  /* If there are no characters left, there's no point in going on. */
 	  for (j = 0; j < CHARCLASS_INTS && !matches[j]; ++j)
-	    ;
+	    continue;
 	  if (j == CHARCLASS_INTS)
 	    continue;
 	}
@@ -1587,7 +1586,7 @@ dfastate(s, d, trans)
 	     matches. */
 	  intersectf = 0;
 	  for (k = 0; k < CHARCLASS_INTS; ++k)
-	    (intersect[k] = matches[k] & labels[j][k]) ? intersectf = 1 : 0;
+	    (intersect[k] = matches[k] & labels[j][k]) ? (intersectf = 1) : 0;
 	  if (! intersectf)
 	    continue;
 
@@ -1598,8 +1597,8 @@ dfastate(s, d, trans)
 	      /* Even an optimizing compiler can't know this for sure. */
 	      int match = matches[k], label = labels[j][k];
 
-	      (leftovers[k] = ~match & label) ? leftoversf = 1 : 0;
-	      (matches[k] = match & ~label) ? matchesf = 1 : 0;
+	      (leftovers[k] = ~match & label) ? (leftoversf = 1) : 0;
+	      (matches[k] = match & ~label) ? (matchesf = 1) : 0;
 	    }
 
 	  /* If there were leftovers, create a new group labeled with them. */
@@ -2033,9 +2032,9 @@ dfafree(d)
       free((ptr_t) d->trans[i]);
     else if (d->fails[i])
       free((ptr_t) d->fails[i]);
-  free((ptr_t) d->realtrans);
-  free((ptr_t) d->fails);
-  free((ptr_t) d->newlines);
+  if (d->realtrans) free((ptr_t) d->realtrans);
+  if (d->fails) free((ptr_t) d->fails);
+  if (d->newlines) free((ptr_t) d->newlines);
   for (dm = d->musts; dm; dm = ndm)
     {
       ndm = dm->next;
@@ -2263,7 +2262,7 @@ comsubs(left, right)
       while (rcp != NULL)
 	{
 	  for (i = 1; lcp[i] != '\0' && lcp[i] == rcp[i]; ++i)
-	    ;
+	    continue;
 	  if (i > len)
 	    len = i;
 	  rcp = index(rcp + 1, *lcp);

@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: eval.c,v 1.4 1994/02/17 01:22:11 jtc Exp $";
-#endif
-
 #include "awk.h"
 
 extern double pow P((double x, double y));
@@ -140,6 +136,10 @@ register NODE *volatile tree;
 	NODE **volatile lhs;	/* lhs == Left Hand Side for assigns, etc */
 	NODE *volatile stable_tree;
 	int volatile traverse = 1;	/* True => loop thru tree (Node_rule_list) */
+
+	/* avoid false source indications */
+	source = NULL;
+	sourceline = 0;
 
 	if (tree == NULL)
 		return 1;
@@ -385,7 +385,7 @@ register NODE *tree;
 	register int di;
 	AWKNUM x, x1, x2;
 	long lx;
-#ifdef CRAY
+#ifdef _CRAY
 	long lx2;
 #endif
 
@@ -400,14 +400,18 @@ register NODE *tree;
 		if ((char)tree->var_value->stref <= 0) cant_happen();
 		return tree->var_value;
 	}
-	if (tree->type == Node_param_list) {
-		if (stack_ptr[tree->param_cnt] == NULL)
-			return Nnull_string;
-		else
-			return stack_ptr[tree->param_cnt]->var_value;
-	}
 #endif
+
+	if (tree->type == Node_param_list) {
+		tree = stack_ptr[tree->param_cnt];
+		if (tree == NULL)
+			return Nnull_string;
+	}
+
 	switch (tree->type) {
+	case Node_var:
+		return tree->var_value;
+
 	case Node_and:
 		return tmp_number((AWKNUM) (eval_condition(tree->lnode)
 					    && eval_condition(tree->rnode)));
@@ -450,7 +454,7 @@ register NODE *tree;
 		return *lhs;
 
 	case Node_var_array:
-		fatal("attempt to use an array in a scalar context");
+		fatal("attempt to use array `%s' in a scalar context", tree->vname);
 
 	case Node_unary_minus:
 		t1 = tree_eval(tree->subnode);
@@ -534,6 +538,7 @@ register NODE *tree;
 		}
 		*strp = NULL;
 		emalloc(str, char *, len+2, "tree_eval");
+		str[len] = str[len+1] = '\0';	/* for good measure */
 		dest = str;
 		strp = strlist;
 		while (*strp) {
@@ -655,7 +660,7 @@ register NODE *tree;
 		return tmp_number(x1 - x2);
 
 	case Node_var_array:
-		fatal("attempt to use an array in a scalar context");
+		fatal("attempt to use array `%s' in a scalar context", tree->vname);
 
 	default:
 		fatal("illegal type (%d) in tree_eval", tree->type);
@@ -970,12 +975,14 @@ NODE *arg_list;		/* Node_expression_list of calling args. */
 		if (arg->type == Node_param_list)
 			arg = stack_ptr[arg->param_cnt];
 		n = *sp++;
-		if (arg->type == Node_var && n->type == Node_var_array) {
+		if ((arg->type == Node_var || arg->type == Node_var_array)
+		    && n->type == Node_var_array) {
 			/* should we free arg->var_value ? */
 			arg->var_array = n->var_array;
 			arg->type = Node_var_array;
 			arg->array_size = n->array_size;
 			arg->table_size = n->table_size;
+			arg->flags = n->flags;
 		}
 		/* n->lnode overlays the array size, don't unref it if array */
 		if (n->type != Node_var_array)
@@ -1022,7 +1029,7 @@ Func_ptr *assign;
 
 	switch (ptr->type) {
 	case Node_var_array:
-		fatal("attempt to use an array in a scalar context");
+		fatal("attempt to use array `%s' in a scalar context", ptr->vname);
 	case Node_var:
 		aptr = &(ptr->var_value);
 #ifdef DEBUG
@@ -1198,7 +1205,7 @@ set_ORS()
 	ORS[ORSlen] = '\0';
 }
 
-static NODE **fmt_list = NULL;
+NODE **fmt_list = NULL;
 static int fmt_ok P((NODE *n));
 static int fmt_index P((NODE *n));
 

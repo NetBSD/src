@@ -1,8 +1,7 @@
 README:
 
-This is GNU Awk 2.15. It should be upwardly compatible with the
-System V Release 4 awk.  It is almost completely compliant with draft 11.3
-of POSIX 1003.2.
+This is GNU Awk 2.15. It should be upwardly compatible with the System
+V Release 4 awk.  It is almost completely compliant with POSIX 1003.2.
 
 This release adds new features -- see NEWS for details.
 
@@ -28,7 +27,7 @@ INSTALLATION:
 
 Check whether there is a system-specific README file for your system.
 
-A quick overview of the installation process is in the file INSTALLATION.
+A quick overview of the installation process is in the file INSTALL.
 
 Makefile.in may need some tailoring.  The only changes necessary should
 be to change installation targets or to change compiler flags.

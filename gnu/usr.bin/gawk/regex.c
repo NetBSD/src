@@ -24,10 +24,6 @@
   #pragma alloca
 #endif
 
-#ifndef lint
-static char rcsid[] = "$Id: regex.c,v 1.4 1994/02/17 01:22:35 jtc Exp $";
-#endif
-
 #define _GNU_SOURCE
 
 #ifdef HAVE_CONFIG_H
