@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84.2.1 1997/08/23 07:10:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.84.2.2 1997/09/01 20:12:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,12 +196,15 @@ Lstart1:
 	jra	Lstart2
 
 Lget040TC:
-#ifdef __notyet__			| XXX necessary for Quadra AV?
+	movl	_C_LABEL(current_mac_model),a1	 | if an AV Mac, save current
+	cmpl	#MACH_CLASSAV,a1@(CPUINFO_CLASS) | TC so internal video will
+	jne	LnotAV				 | get configured
 	.long	0x4e7a0003		| movc tc,d0
-#else
-	movql	#0,d0
+	jra	LsaveTC
+LnotAV:	
+	movql	#0,d0			| otherwise,
 	.long	0x4e7b0003		| movc d0,tc ;Disable MMU
-#endif
+LsaveTC:	
 	movl	d0,a0@
 
 Lstart2:
