@@ -1,7 +1,7 @@
-/*	$NetBSD: fusu.S,v 1.5 1998/04/01 23:00:14 mark Exp $	*/
+/*	$NetBSD: fusu.S,v 1.6 1998/08/16 02:11:32 mark Exp $	*/
 
 /*
- * Copyright (c) 1996 Mark Brinicombe.
+ * Copyright (c) 1996-1998 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -157,6 +157,12 @@ ENTRY(fusword)
  */
 
 ENTRY(fuswintr)
+	ldr	r2, Lblock_userspace_access
+	ldr	r2, [r2]
+	teq	r2, #0
+	mvnne	r0, #0
+	movne	pc, lr
+
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -182,6 +188,16 @@ ENTRY(fuswintr)
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
 	mov	pc, lr
+
+Lblock_userspace_access:
+	.word	_block_userspace_access
+
+	.data
+	.align	0
+	.global	_block_userspace_access
+_block_userspace_access:
+	.word	0
+	.text
 
 /*
  * fubyte(caddr_t uaddr);
@@ -297,6 +313,12 @@ ENTRY(suword)
  */
 
 ENTRY(suswintr)
+	ldr	r2, Lblock_userspace_access
+	ldr	r2, [r2]
+	teq	r2, #0
+	mvnne	r0, #0
+	movne	pc, lr
+
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
