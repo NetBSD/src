@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.7 2002/03/23 17:10:13 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.8 2002/03/23 18:10:24 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7 2002/03/23 17:10:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.8 2002/03/23 18:10:24 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct fb_devconfig {
 	struct vidc_mode   mode_info;
 	struct rasops_info rinfo;
 
-	/* origional rasops functions for deligation */
+	/* Origional rasops functions for deligation */
 	struct wsdisplay_emulops orig_ri_ops;
 };
 
