@@ -1,6 +1,5 @@
-# $NetBSD: md.alpha,v 1.43 2003/02/26 22:31:10 thorpej Exp $
+# $NetBSD: md.alpha,v 1.44 2003/09/19 08:15:48 mrg Exp $
 ./usr/include/alpha	comp-c-include
-./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
 ./usr/include/alpha/ansi.h	comp-c-include
 ./usr/include/alpha/aout_machdep.h	comp-c-include

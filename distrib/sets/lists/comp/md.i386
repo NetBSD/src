@@ -1,7 +1,6 @@
-# $NetBSD: md.i386,v 1.74 2003/06/05 15:45:17 jwise Exp $
+# $NetBSD: md.i386,v 1.75 2003/09/19 08:15:48 mrg Exp $
 ./lib/libm387.so			comp-sys-shlib
 ./usr/include/i386		comp-c-include
-./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
 ./usr/include/i386/apmvar.h		comp-c-include

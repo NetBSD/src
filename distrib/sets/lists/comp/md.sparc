@@ -1,6 +1,5 @@
-# $NetBSD: md.sparc,v 1.58 2003/08/26 15:19:35 uwe Exp $
+# $NetBSD: md.sparc,v 1.59 2003/09/19 08:15:48 mrg Exp $
 ./usr/include/sparc	comp-c-include
-./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
 ./usr/include/sparc/aout_machdep.h	comp-c-include
 ./usr/include/sparc/apmvar.h	comp-c-include
