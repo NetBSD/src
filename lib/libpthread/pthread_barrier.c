@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.4 2003/01/31 04:59:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.5 2003/02/15 00:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <sys/cdefs.h>
 
