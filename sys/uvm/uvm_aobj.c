@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.59 2003/08/11 16:54:11 pk Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.60 2003/08/28 13:12:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.59 2003/08/11 16:54:11 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.60 2003/08/28 13:12:18 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -417,7 +417,7 @@ uao_free(aobj)
 				for (j = 0; j < UAO_SWHASH_CLUSTER_SIZE; j++) {
 					int slot = elt->slots[j];
 
-					if (slot == 0) {
+					if (slot > 0) {
 						continue;
 					}
 					uvm_swap_free(slot, 1);
@@ -439,7 +439,7 @@ uao_free(aobj)
 		for (i = 0; i < aobj->u_pages; i++) {
 			int slot = aobj->u_swslots[i];
 
-			if (slot) {
+			if (slot > 0) {
 				uvm_swap_free(slot, 1);
 				swpgonlydelta++;
 			}
