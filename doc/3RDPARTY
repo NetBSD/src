@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.26 2002/12/03 08:45:51 enami Exp $
+#	$NetBSD: 3RDPARTY,v 1.27 2002/12/07 13:09:56 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -511,7 +511,7 @@ veresion date "20020626" identifies the fix.
 
 Package:	OpenSSL
 Version:	0.9.6g
-Current Vers:	0.9.6g
+Current Vers:	0.9.6h
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
