@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.23 2000/09/13 15:51:20 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.24 2000/09/13 16:09:53 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.24 2000/05/13 23:43:07 perseant Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.20 2000/09/13 15:50:26 thorpej Exp 
+ *	NetBSD: vnode_if.sh,v 1.21 2000/09/13 16:09:27 thorpej Exp 
  */
 
 /*
@@ -45,6 +45,15 @@
 
 #ifndef _SYS_VNODE_IF_H_
 #define _SYS_VNODE_IF_H_
+
+#ifdef _KERNEL
+#ifdef _LKM
+/* LKMs always use non-inlined vnode ops. */
+#define	VNODE_OP_NOINLINE
+#else
+#include "opt_vnode_op_noinline.h"
+#endif
+#endif /* _KERNEL */
 
 extern struct vnodeop_desc vop_default_desc;
 
