@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.8 1997/10/16 05:18:42 lukem Exp $
+#	$NetBSD: amd2netbsd,v 1.9 1997/10/18 06:42:30 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -335,7 +335,10 @@ LIBAMU != cd ${.CURDIR}/../libamu;\
 CFLAGS += -I${.CURDIR}/../include -I${.CURDIR} -I${LIBAMU} -I. -DHAVE_CONFIG_H
 LDADD += -L${LIBAMU} -lamu -lrpcsvc -ll
 DPADD += ${LIBAMU}/libamu.a ${LIBRPCSVC} ${LIBL}
-BINDIR = /usr/sbin
+
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
+.endif
 %% file usr.sbin/amd/amd/Makefile
 %% NetBSD #
 

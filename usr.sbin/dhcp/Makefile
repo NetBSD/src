@@ -32,5 +32,6 @@
 
 SUBDIR=	common server client relay
 
-.include <bsd.subdir.mk>
+all-server all-client all-relay: all-common
 
+.include <bsd.subdir.mk>

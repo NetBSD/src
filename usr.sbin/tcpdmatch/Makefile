@@ -1,6 +1,6 @@
 #	$Netbsd$
 
-WARNS?=	1
+WARNS?=	0
 PROG=	tcpdmatch
 SRCS=	tcpdmatch.c fakelog.c inetcf.c scaffold.c percent_m.c
 MAN=	tcpdmatch.8

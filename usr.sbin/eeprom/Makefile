@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.4 1997/09/24 07:22:39 jeremy Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 06:42:45 lukem Exp $
 
 .if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc"
 PROG=	eeprom
@@ -21,7 +21,5 @@ CLEANFILES+=getdate.c y.tab.h
 .endif
 
 MAN=	eeprom.8
-
-WARNS=1
 
 .include <bsd.prog.mk>
