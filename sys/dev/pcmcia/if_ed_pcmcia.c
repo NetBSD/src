@@ -50,6 +50,9 @@ struct ne2000dev {
     { "DEC DEPCM-BA", 
       0x0000, 0x0000, "DIGITAL", "DEPCM-XX", 0,
       0x0ff0, { 0x00, 0x00, 0xe8 } },
+    { "EthernetCard",
+      0x0149, 0x0265, "LINKSYS", "E-CARD",
+      0, -1, { 0x00, 0x80, 0xc8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -286,26 +289,29 @@ ed_pcmcia_attach(parent, self, aux)
 	    int mhandle, window;
 	    int i;
 
-	    if (pcmcia_mem_alloc(pa->pf, ETHER_ADDR_LEN*2, &enaddrt,
-				 &enaddrh, &mhandle, NULL)) {
-		printf(": allocating mem for enet addr failed\n");
-		return;
+	    if (ne_dev->enet_maddr >= 0) {
+		    if (pcmcia_mem_alloc(pa->pf, ETHER_ADDR_LEN*2, &enaddrt,
+					 &enaddrh, &mhandle, NULL)) {
+			    printf(": allocating mem for enet addr failed\n");
+			    return;
+		    }
+		    if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
+				       ETHER_ADDR_LEN*2,
+				       enaddrt, enaddrh, ne_dev->enet_maddr,
+				       &offset, &window)) {
+			    printf(": mapping mem for enet addr failed\n");
+			    return;
+		    }
+
+		    for (i=0; i<ETHER_ADDR_LEN; i++)
+			    sc->sc_enaddr[i] = bus_space_read_1(enaddrt,
+								enaddrh,
+								offset+i*2);
+
+		    pcmcia_mem_unmap(pa->pf, window);
+		    pcmcia_mem_free(pa->pf, ETHER_ADDR_LEN*2, enaddrt, enaddrh,
+				    mhandle);
 	    }
-	    if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR, ETHER_ADDR_LEN*2,
-			       enaddrt, enaddrh, ne_dev->enet_maddr,
-			       &offset, &window)) {
-		printf(": mapping mem for enet addr failed\n");
-		return;
-	    }
-
-	    for (i=0; i<ETHER_ADDR_LEN; i++)
-		sc->sc_enaddr[i] = bus_space_read_1(enaddrt, enaddrh,
-						    offset+i*2);
-
-	    pcmcia_mem_unmap(pa->pf, window);
-	    pcmcia_mem_free(pa->pf, ETHER_ADDR_LEN*2, enaddrt, enaddrh,
-			    mhandle);
-
 	    if ((sc->sc_enaddr[0] != ne_dev->enet_vendor[0]) ||
 		(sc->sc_enaddr[1] != ne_dev->enet_vendor[1]) ||
 		(sc->sc_enaddr[2] != ne_dev->enet_vendor[2])) {
