@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.37 2002/05/15 22:48:17 matt Exp $
+$NetBSD: miidevs,v 1.38 2002/06/22 14:35:52 fvdl Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
+model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
