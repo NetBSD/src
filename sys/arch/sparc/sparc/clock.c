@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 1996/04/22 02:50:20 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.39 1996/04/23 19:25:25 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,6 +200,8 @@ void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
 
+static int timerblurb = 10; /* Guess a value; used before clock is attached */
+
 /*
  * old clock match routine
  */
@@ -240,8 +242,8 @@ oclockattach(parent, self, aux)
 	oldclk = 1;  /* we've got an oldie! */
 	printf("\n");
 
-	i7 = (volatile struct intersil7170 *) mapiodev(ra->ra_reg, 0,
-		sizeof(*i7), ca->ca_bustype);
+	i7 = (volatile struct intersil7170 *)
+		mapiodev(ra->ra_reg, 0, sizeof(*i7), ca->ca_bustype);
 
 	idp = &idprom;
 	h = idp->id_machine << 24;
@@ -249,6 +251,29 @@ oclockattach(parent, self, aux)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
+
+#ifdef SUN4_DLYCAL /* XXX - Needs testing.. */
+	/* Calibrate delay() */
+	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
+	for (timerblurb = 1; ; timerblurb++) {
+		int ireg;
+		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
+		intersil_enable(i7);		/* enable clock */
+		delay(10000);			/* Probe 1/100 sec delay */
+		intersil_disable(i7);		/* disable clock */
+		ireg = intersil_clear(i7);	/* clear interrupts */
+		if (ireg & INTERSIL_INTER_PENDING)
+			break;
+	}
+#else
+	/*
+	 * feel free to improve this code
+	 */
+	if (cpumod == SUN4_100)
+		timerblurb = 3; /* 4/100, untested */
+	else
+		timerblurb = (cacheinfo.c_enabled) ? 6 : 3; /* 4/200 */
+#endif
 #endif /* SUN4 */
 }
 
@@ -474,6 +499,46 @@ timerattach(parent, self, aux)
 			     sizeof(struct timerreg_4), ca->ca_bustype);
 
 	timerok = 1;
+
+	/*
+	 * Calibrate delay() by tweaking the magic constant
+	 * until a delay(100) actually reads (at least) 100 us on the clock.
+	 * Note: sun4m clocks tick with 500ns periods.
+	 */
+	for (timerblurb = 1; ; timerblurb++) {
+		volatile int discard;
+		register int t0, t1;
+
+		/* Reset counter register by writing some large limit value */
+		if (CPU_ISSUN4M) {
+			discard = counterreg_4m->t_limit;
+			counterreg_4m->t_limit = tmr_ustolim(TMR_MASK-1);
+		} else {
+			discard = timerreg4->t_c14.t_limit;
+			timerreg4->t_c14.t_limit = tmr_ustolim(TMR_MASK-1);
+		}
+
+		t0 = ((CPU_ISSUN4M
+			? counterreg_4m->t_counter
+			: timerreg4->t_c14.t_counter)
+			>> TMR_SHIFT) & TMR_MASK;
+
+		delay(100);
+
+		t1 = CPU_ISSUN4M
+			? counterreg_4m->t_counter
+			: timerreg4->t_c14.t_counter;
+
+		if (t1 & TMR_LIMIT)
+			panic("delay calibration");
+
+		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
+
+		if (t1 >= t0 + 100)
+			break;
+
+	}
+
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
 
@@ -524,64 +589,22 @@ myetheraddr(cp)
 	cp[5] = idp->id_ether[5];
 }
 
+
 /*
- * Delay: wait for `about' n microseconds to pass.
- * This is easy to do on the SparcStation since we have
- * freerunning microsecond timers -- no need to guess at
- * cpu speed factors.  We just wait for it to change n times
- * (if we calculated a limit, we might overshoot, and precision
- * is irrelevant here---we want less object code).
+ * Delay: wait for about n microseconds to pass.
+ * (note: we want this to be a "leaf" routine, so we incur no
+ * unpredictable delays by taking register window overflow traps).
  */
 void
 delay(n)
-	register volatile unsigned int n;
+	register unsigned int n;
 {
-	register int c, t;
+	register int i;
+	volatile int dummy;
 
-#if defined(SUN4)
-	if (oldclk) {
-		register volatile int lcv;
-
-		/*
-		 * feel free to improve this code
-		 */
-		if (cpumod == SUN4_100)
-			t = 1; /* 4/100, untested */
-		else
-			t = (cacheinfo.c_enabled) ? 3 : 1; /* 4/200 */
-
-		while (n-- > 0) {
-			for (lcv = 0 ; lcv < t ; lcv++)
-				;
-		}
-		return;
-	}
-#endif /* SUN4 */
-
-	if (timerok == 0)
-		return;
-
-	if (timer_cd.cd_ndevs == 0)
-		panic("delay");
-
-	if (CPU_ISSUN4M) {
-		n <<= 1;	/* Clock ticks with 500ns period */
-		c = timerreg_4m->t_counter;
-		while (n-- > 0) {
-			while ((t = timerreg_4m->t_counter) == c)
-				continue;
-			c = t;
-		}
-	}
-
-	if (CPU_ISSUN4OR4C) {
-		c = timerreg4->t_c10.t_counter;
-		while (n-- > 0) {
-			while ((t = timerreg4->t_c10.t_counter) == c)
-				continue;
-			c = t;
-		}
-	}
+	while (n-- > 0)
+		for (i = 0; i < timerblurb; i++)
+			dummy = i;
 }
 
 /*
