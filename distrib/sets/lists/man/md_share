@@ -113,7 +113,7 @@
 ./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/speaker.0
-./usr/share/man/cat4/i386/wd.0
+./usr/share/man/cat4/i386/wdc.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
 ./usr/share/man/cat4/mac68k/autoconf.0
@@ -406,7 +406,7 @@
 ./usr/share/man/man4/i386/pcvt.4
 ./usr/share/man/man4/i386/pms.4
 ./usr/share/man/man4/i386/speaker.4
-./usr/share/man/man4/i386/wd.4
+./usr/share/man/man4/i386/wdc.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
 ./usr/share/man/man4/mac68k/autoconf.4
