@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.24 2002/04/22 07:59:48 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.25 2002/04/29 08:23:35 lukem Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -199,7 +199,7 @@ will send the output to the standard error instead of the system log.
 .It Fl f Ar configuration_file
 Specifies the name of the configuration file.
 The default is
-.Pa /etc/ssh/sshd.conf .
+.Pa /etc/ssh/sshd_config .
 .Nm
 refuses to start if there is no configuration file.
 .It Fl g Ar login_grace_time
@@ -317,7 +317,7 @@ to use IPv6 addresses only.
 .Sh CONFIGURATION FILE
 .Nm
 reads configuration data from
-.Pa /etc/ssh/sshd.conf
+.Pa /etc/ssh/sshd_config
 (or the file specified with
 .Fl f
 on the command line).
@@ -1177,7 +1177,7 @@ cvs.openbsd.org,199.185.137.3 ssh-rsa AAAA1234.....=
 .Ed
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa /etc/ssh/sshd.conf
+.It Pa /etc/ssh/sshd_config
 Contains configuration data for
 .Nm sshd .
 This file should be writable by root only, but it is recommended

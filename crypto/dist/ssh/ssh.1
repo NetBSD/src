@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.19 2002/04/22 07:59:46 itojun Exp $
+.\"	$NetBSD: ssh.1,v 1.20 2002/04/29 08:23:35 lukem Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -580,7 +580,7 @@ option below.
 Specifies an alternative per-user configuration file.
 If a configuration file is given on the command line,
 the system-wide configuration file
-.Pq Pa /etc/ssh/ssh.conf
+.Pq Pa /etc/ssh/ssh_config
 will be ignored.
 The default for the per-user configuration file is
 .Pa $HOME/.ssh/config .
@@ -655,7 +655,7 @@ the following order:
 command line options, user's configuration file
 .Pq Pa $HOME/.ssh/config ,
 and system-wide configuration file
-.Pq Pa /etc/ssh/ssh.conf .
+.Pq Pa /etc/ssh/ssh_config .
 For each parameter, the first obtained value
 will be used.
 The configuration files contain sections bracketed by
@@ -1399,7 +1399,7 @@ to verify the client host when logging in; other names are needed because
 does not convert the user-supplied name to a canonical name before
 checking the key, because someone with access to the name servers
 would then be able to fool host authentication.
-.It Pa /etc/ssh/ssh.conf
+.It Pa /etc/ssh/ssh_config
 Systemwide configuration file.
 This file provides defaults for those
 values that are not specified in the user's configuration file, and
@@ -1504,7 +1504,7 @@ If you have
 in
 .Pa $HOME/.ssh/config
 or
-.Pa /etc/ssh.conf ,
+.Pa /etc/ssh_config ,
 you will need to change this (e.g. to
 .Dq Cm Cipher No 3des ) .
 Also, if you have private keys encrypted with IDEA, you will need to
