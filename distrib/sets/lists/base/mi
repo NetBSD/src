@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.200 2000/12/29 02:41:55 itojun Exp $
+# $NetBSD: mi,v 1.201 2000/12/29 02:43:42 itojun Exp $
 .
 ./altroot
 ./bin
@@ -53,6 +53,7 @@
 ./etc/openssl/misc
 ./etc/openssl/private
 ./etc/postfix
+./etc/racoon
 ./etc/rc.conf.d
 ./etc/rc.d
 ./etc/skel
