@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.1 2005/02/13 00:52:59 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.2 2005/02/13 05:57:26 christos Exp $	*/
 /*	$OpenBSD: dns.c,v 1.10 2004/06/21 17:36:31 avsm Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include "dns.h"
 #include "log.h"
 #include "uuencode.h"
+#include "getrrsetbyname.h"
 
 extern char *__progname;
 RCSID("$OpenBSD: dns.c,v 1.10 2004/06/21 17:36:31 avsm Exp $");

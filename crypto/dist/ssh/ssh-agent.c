@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.23 2003/09/18 12:42:33 itojun Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.24 2005/02/13 05:57:27 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,8 +36,8 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.108 2003/03/13 11:44:50 markus Exp $");
-__RCSID("$NetBSD: ssh-agent.c,v 1.23 2003/09/18 12:42:33 itojun Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.120 2004/08/11 21:43:05 avsm Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.24 2005/02/13 05:57:27 christos Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.23 2003/09/18 12:42:33 itojun Exp $");
 #include "authfd.h"
 #include "compat.h"
 #include "log.h"
-#include "readpass.h"
 #include "misc.h"
 #include "getpeereid.h"
 
@@ -178,7 +177,7 @@ confirm_key(Identity *id)
 	p = read_passphrase(prompt, RP_ALLOW_EOF);
 	if (p != NULL) {
 		/*
-		 * Accept empty responses and responses consisting 
+		 * Accept empty responses and responses consisting
 		 * of the word "yes" as affirmative.
 		 */
 		if (*p == '\0' || *p == '\n' || strcasecmp(p, "yes") == 0)
@@ -579,13 +578,29 @@ static void
 process_add_smartcard_key (SocketEntry *e)
 {
 	char *sc_reader_id = NULL, *pin;
-	int i, version, success = 0;
+	int i, version, success = 0, death = 0, confirm = 0;
 	Key **keys, *k;
 	Identity *id;
 	Idtab *tab;
 
 	sc_reader_id = buffer_get_string(&e->request, NULL);
 	pin = buffer_get_string(&e->request, NULL);
+
+	while (buffer_len(&e->request)) {
+		switch (buffer_get_char(&e->request)) {
+		case SSH_AGENT_CONSTRAIN_LIFETIME:
+			death = time(NULL) + buffer_get_int(&e->request);
+			break;
+		case SSH_AGENT_CONSTRAIN_CONFIRM:
+			confirm = 1;
+			break;
+		default:
+			break;
+		}
+	}
+	if (lifetime && !death)
+		death = time(NULL) + lifetime;
+
 	keys = sc_get_keys(sc_reader_id, pin);
 	xfree(sc_reader_id);
 	xfree(pin);
@@ -601,9 +616,9 @@ process_add_smartcard_key (SocketEntry *e)
 		if (lookup_identity(k, version) == NULL) {
 			id = xmalloc(sizeof(Identity));
 			id->key = k;
-			id->comment = xstrdup("smartcard key");
-			id->death = 0;
-			id->confirm = 0;
+			id->comment = sc_get_key_label(k);
+			id->death = death;
+			id->confirm = confirm;
 			TAILQ_INSERT_TAIL(&tab->idlist, id, next);
 			tab->nentries++;
 			success = 1;
@@ -747,6 +762,7 @@ process_message(SocketEntry *e)
 		break;
 #ifdef SMARTCARD
 	case SSH_AGENTC_ADD_SMARTCARD_KEY:
+	case SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED:
 		process_add_smartcard_key(e);
 		break;
 	case SSH_AGENTC_REMOVE_SMARTCARD_KEY:
@@ -768,8 +784,7 @@ new_socket(sock_type type, int fd)
 {
 	u_int i, old_alloc, new_alloc;
 
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-		error("fcntl O_NONBLOCK: %s", strerror(errno));
+	set_nonblock(fd);
 
 	if (fd > max_fd)
 		max_fd = fd;
@@ -800,7 +815,7 @@ new_socket(sock_type type, int fd)
 }
 
 static int
-prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl, int *nallocp)
+prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl, u_int *nallocp)
 {
 	u_int i, sz;
 	int n = 0;
@@ -931,7 +946,7 @@ after_select(fd_set *readset, fd_set *writeset)
 }
 
 static void
-cleanup_socket(void *p)
+cleanup_socket(void)
 {
 	if (socket_name[0])
 		unlink(socket_name);
@@ -939,17 +954,17 @@ cleanup_socket(void *p)
 		rmdir(socket_dir);
 }
 
-static void
+void
 cleanup_exit(int i)
 {
-	cleanup_socket(NULL);
-	exit(i);
+	cleanup_socket();
+	_exit(i);
 }
 
 static void
 cleanup_handler(int sig)
 {
-	cleanup_socket(NULL);
+	cleanup_socket();
 	_exit(2);
 }
 
@@ -986,7 +1001,8 @@ int
 main(int ac, char **av)
 {
 	int c_flag = 0, d_flag = 0, k_flag = 0, s_flag = 0;
-	int sock, fd,  ch, nalloc;
+	int sock, fd,  ch;
+	u_int nalloc;
 	char *shell, *format, *pidstr, *agentsocket = NULL;
 	fd_set *readsetp = NULL, *writesetp = NULL;
 	struct sockaddr_un sunaddr;
@@ -1073,7 +1089,7 @@ main(int ac, char **av)
 
 	if (agentsocket == NULL) {
 		/* Create private directory for agent socket */
-		strlcpy(socket_dir, "/tmp/ssh-XXXXXXXX", sizeof socket_dir);
+		strlcpy(socket_dir, "/tmp/ssh-XXXXXXXXXX", sizeof socket_dir);
 		if (mkdtemp(socket_dir) == NULL) {
 			perror("mkdtemp: private socket dir");
 			exit(1);
@@ -1102,7 +1118,7 @@ main(int ac, char **av)
 		perror("bind");
 		cleanup_exit(1);
 	}
-	if (listen(sock, 128) < 0) {
+	if (listen(sock, SSH_LISTEN_BACKLOG) < 0) {
 		perror("listen");
 		cleanup_exit(1);
 	}
@@ -1171,7 +1187,6 @@ main(int ac, char **av)
 	}
 
 skip:
-	fatal_add_cleanup(cleanup_socket, NULL);
 	new_socket(AUTH_SOCKET, sock);
 	if (ac > 0) {
 		signal(SIGALRM, check_parent_exists);

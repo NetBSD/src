@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.7 2003/07/10 01:09:48 lukem Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.8 2005/02/13 05:57:27 christos Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,8 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.11 2003/04/02 14:36:26 markus Exp $");
-__RCSID("$NetBSD: ssh-keysign.c,v 1.7 2003/07/10 01:09:48 lukem Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.16 2004/04/18 23:10:26 djm Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.8 2005/02/13 05:57:27 christos Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -44,7 +44,8 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.7 2003/07/10 01:09:48 lukem Exp $");
 #include "pathnames.h"
 #include "readconf.h"
 
-uid_t original_real_uid;	/* XXX readconf.c needs this */
+/* XXX readconf.c needs these */
+uid_t original_real_uid;
 
 static int
 valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
@@ -121,6 +122,7 @@ valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
 	/* end of message */
 	if (buffer_len(&b) != 0)
 		fail++;
+	buffer_free(&b);
 
 	debug3("valid_request: fail %d", fail);
 
@@ -158,7 +160,7 @@ main(int argc, char **argv)
 	/* verify that ssh-keysign is enabled by the admin */
 	original_real_uid = getuid();	/* XXX readconf.c needs this */
 	initialize_options(&options);
-	(void)read_config_file(_PATH_HOST_CONFIG_FILE, "", &options);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, "", &options, 0);
 	fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",
@@ -224,7 +226,8 @@ main(int argc, char **argv)
 	/* send reply */
 	buffer_clear(&b);
 	buffer_put_string(&b, signature, slen);
-	ssh_msg_send(STDOUT_FILENO, version, &b);
+	if (ssh_msg_send(STDOUT_FILENO, version, &b) == -1)
+		fatal("ssh_msg_send failed");
 
 	return (0);
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.13 2003/07/24 15:31:54 itojun Exp $	*/
-/*	$OpenBSD: readconf.h,v 1.47 2003/04/02 09:48:07 markus Exp $	*/
+/*	$NetBSD: readconf.h,v 1.14 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: readconf.h,v 1.64 2004/07/11 17:48:47 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -28,20 +28,21 @@ typedef struct {
 }       Forward;
 /* Data structure for representing option data. */
 
+#define MAX_SEND_ENV	256
+
 typedef struct {
 	int     forward_agent;	/* Forward authentication agent. */
 	int     forward_x11;	/* Forward X11 display. */
+	int     forward_x11_trusted;	/* Trust Forward X11 display. */
 	char   *xauth_location;	/* Location for xauth program */
 	int     gateway_ports;	/* Allow remote connects to forwarded ports. */
 	int     use_privileged_port;	/* Don't use privileged port if false. */
-	int     rhosts_authentication;	/* Try rhosts authentication. */
 	int     rhosts_rsa_authentication;	/* Try rhosts with RSA
 						 * authentication. */
 	int     rsa_authentication;	/* Try RSA authentication. */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
 	int     challenge_response_authentication;
-					/* Try S/Key or TIS, authentication. */
 #if defined(KRB4) || defined(KRB5)
 	int     kerberos_authentication;	/* Try Kerberos authentication. */
 #endif
@@ -51,6 +52,9 @@ typedef struct {
 #ifdef AFS
 	int     afs_token_passing;	/* Try AFS token passing. */
 #endif
+					/* Try S/Key or TIS, authentication. */
+	int     gss_authentication;	/* Try GSS authentication */
+	int     gss_deleg_creds;	/* Delegate GSS credentials */
 	int     password_authentication;	/* Try password
 						 * authentication. */
 	int     kbd_interactive_authentication; /* Try keyboard-interactive auth. */
@@ -61,12 +65,15 @@ typedef struct {
 	int     compression;	/* Compress packets in both directions. */
 	int     compression_level;	/* Compression level 1 (fast) to 9
 					 * (best). */
-	int     keepalives;	/* Set SO_KEEPALIVE. */
+	int     tcp_keep_alive;	/* Set SO_KEEPALIVE. */
 	LogLevel log_level;	/* Level for logging. */
 
 	int     port;		/* Port to connect. */
+	int     address_family;
 	int     connection_attempts;	/* Max attempts (seconds) before
 					 * giving up */
+	int     connection_timeout;	/* Max time (seconds) before
+					 * aborting connection attempt */
 	int     number_of_password_prompts;	/* Max number of password
 						 * prompts. */
 	int     cipher;		/* Cipher to use. */
@@ -87,6 +94,7 @@ typedef struct {
 	char   *preferred_authentications;
 	char   *bind_address;	/* local socket address for connection to sshd */
 	char   *smartcard_device; /* Smartcard reader device */
+	int	verify_host_key_dns;	/* Verify host key using DNS */
 
 	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];
@@ -104,12 +112,21 @@ typedef struct {
 	int	enable_ssh_keysign;
 	int	rekey_limit;
 	int	no_host_authentication_for_localhost;
+	int	identities_only;
+	int	server_alive_interval;
+	int	server_alive_count_max;
+
+	int     num_send_env;
+	char   *send_env[MAX_SEND_ENV];
+
+	char	*control_path;
+	int	control_master;
 }       Options;
 
 
 void     initialize_options(Options *);
 void     fill_default_options(Options *);
-int	 read_config_file(const char *, const char *, Options *);
+int	 read_config_file(const char *, const char *, Options *, int);
 
 int
 process_config_line(Options *, const char *, char *, const char *, int, int *);
