@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 1996/08/09 09:19:33 thorpej Exp $
-#	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
+#	$NetBSD: Makefile,v 1.14 1996/12/28 04:30:02 tls Exp $
+#	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
+
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
@@ -25,6 +26,9 @@ MLINKS=	passwd.1 yppasswd.1
 
 BINOWN=	root
 BINMODE=4555
+.if defined(notyet)
+INSTALLFLAGS=-fschg
+.endif
 
 .include <bsd.prog.mk>
 
