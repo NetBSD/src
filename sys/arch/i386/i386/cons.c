@@ -36,6 +36,14 @@
  * SUCH DAMAGE.
  *
  *	@(#)cons.c	7.2 (Berkeley) 5/9/91
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         1       00083
+ * --------------------         -----   ----------------------
+ *
+ * 16 Aug 92	Pace Willisson		/dev/console redirect (xterm -C, etc.)
+ * 14 Mar 93	Chris G. Demetriou	Moved pg() here from isa/pccons.c
  */
 
 
@@ -135,7 +143,10 @@ cnwrite(dev, uio, flag)
 {
 	if (cn_tab == NULL)
 		return (0);
-	dev = cn_tab->cn_dev;
+	if (constty)					/* 16 Aug 92*/
+		dev = constty->t_dev;
+	else
+		dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
 }
  
@@ -192,3 +203,11 @@ cnputc(c)
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 	}
 }
+
+pg(p,q,r,s,t,u,v,w,x,y,z) char *p; {
+	printf(p,q,r,s,t,u,v,w,x,y,z);
+	printf("\n>");
+	return(cngetc());
+}
+
+

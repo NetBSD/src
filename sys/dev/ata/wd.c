@@ -34,6 +34,21 @@
  * SUCH DAMAGE.
  *
  *	from:@(#)wd.c	7.2 (Berkeley) 5/9/91
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         4       00072
+ * --------------------         -----   ----------------------
+ *
+ * 17 Sep 92	Frank Maclachlan	Fixed I/O error reporting on raw device
+ * 31 Jul 92	Christoph Robitschko	Fixed second disk recognition,
+ *					bzero of malloced memory for warm
+ *					boot problem.
+ * 19 Aug 92    Frank Maclachlan	Fixed bug when first sector of a
+ *					multisector read is in bad144 table.
+ * 17 Jan 93	B. Evans & A.Chernov	Fixed bugs from previous patches,
+ *					driver initialization, and cylinder
+ *					boundary conditions.
  */
 
 /* TODO:peel out buffer at low ipl, speed improvement */
@@ -59,6 +74,8 @@
 #include "i386/isa/wdreg.h"
 #include "syslog.h"
 #include "vm/vm.h"
+
+#define _NWD  (NWD - 1)       /* One is for the controller XXX 31 Jul 92*/
 
 #define	RETRIES		5	/* number of retries before giving up */
 #define	MAXTRANSFER	32	/* max size of transfer in page clusters */
@@ -113,11 +130,11 @@ struct	disk {
 	struct	dkbad	dk_bad;	/* bad sector table */
 };
 
-struct	disk	*wddrives[NWD];		/* table of units */
+struct	disk	*wddrives[_NWD];		/* table of units */
 struct	buf	wdtab;
-struct	buf	wdutab[NWD];		/* head of queue per drive */
-struct	buf	rwdbuf[NWD];		/* buffers for raw IO */
-long	wdxfer[NWD];			/* count of transfers */
+struct	buf	wdutab[_NWD];		/* head of queue per drive */
+struct	buf	rwdbuf[_NWD];		/* buffers for raw IO */
+long	wdxfer[_NWD];			/* count of transfers */
 #ifdef	WDDEBUG
 int	wddebug;
 #endif
@@ -143,21 +160,21 @@ wdprobe(struct isa_device *dvp)
 	struct disk *du;
 	int wdc;
 
-	if (unit > NWD)
+	if (unit >= _NWD)				/* 31 Jul 92*/
 		return(0);
 
 	if ((du = wddrives[unit]) == 0) {
 		du = wddrives[unit] = (struct disk *)
 			malloc (sizeof(struct disk), M_TEMP, M_NOWAIT);
+		bzero (du, sizeof(struct disk));	/* 31 Jul 92*/
 		du->dk_unit = unit;
 	}
 
 	wdc = du->dk_port = dvp->id_iobase;
 	
 	/* check if we have registers that work */
-	outb(wdc+wd_error, 0x5a) ;	/* error register not writable */
-	outb(wdc+wd_cyl_lo, 0xa5) ;	/* but all of cyllo are implemented */
-	if(inb(wdc+wd_error) == 0x5a || inb(wdc+wd_cyl_lo) != 0xa5)
+	outb(wdc+wd_cyl_lo, 0xa5) ;	/* wd_cyl_lo is read/write */
+	if(inb(wdc+wd_cyl_lo) != 0xa5)
 		goto nodevice;
 
 	/* reset the device */
@@ -186,33 +203,47 @@ nodevice:
 int
 wdattach(struct isa_device *dvp)
 {
-	int unit = dvp->id_unit;
-	struct disk *du = wddrives[unit];
+	int unit;
+/*	int unit = dvp->id_unit;*/
 
-	if(wdgetctlr(unit, du) == 0)  {
-		int i, blank;
-		char c;
-
-		printf(" <");
-		for (i = blank = 0 ; i < sizeof(du->dk_params.wdp_model); i++) {
-			char c = du->dk_params.wdp_model[i];
-
-			if (blank && c == ' ') continue;
-			if (blank && c != ' ') {
-				printf(" %c", c);
-				blank = 0;
-				continue;
-			} 
-			if (c == ' ')
-				blank = 1;
-			else
-				printf("%c", c);
+	for (unit=0; unit< _NWD; unit++) {
+		struct disk *du;
+		if ((du = wddrives[unit]) == 0) {
+			du = wddrives[unit] = (struct disk *)
+				malloc (sizeof(struct disk), M_TEMP, M_NOWAIT);
+			bzero (du, sizeof(struct disk));
+			du->dk_unit = unit;
+			du->dk_port = dvp->id_iobase;
 		}
-		printf(">");
+
+		/* print out description of drive, suppressing multiple blanks*/
+		if(wdgetctlr(unit, du) == 0)  {
+			int i, blank;
+			char c;
+			printf(" %d:<", unit);
+			for (i = blank = 0 ; i < sizeof(du->dk_params.wdp_model); i++) {
+				char c = du->dk_params.wdp_model[i];
+
+				if (blank && c == ' ') continue;
+				if (blank && c != ' ') {
+					printf(" %c", c);
+					blank = 0;
+					continue;
+				}
+				if (c == ' ')
+					blank = 1;
+				else
+					printf("%c", c);
+			}
+			printf(">");
+			du->dk_unit = unit;
+		}
+		else {
+			/* old ST506 controller */
+			printf(" %d:<wdgetctlr failed, assuming OK>",
+			       unit);
+		}
 	}
-/* check for index pulses from each drive. if present, report and
-   allocate a bios drive position to it, which will be used by read disklabel */
-	du->dk_unit = unit;
 	return(1);
 }
 
@@ -233,7 +264,8 @@ wdstrategy(register struct buf *bp)
 	int	s;
 
 	/* valid unit, controller, and request?  */
-	if (unit >= NWD || bp->b_blkno < 0 || (du = wddrives[unit]) == 0) {
+	if (unit >= _NWD || bp->b_blkno < 0 || (du = wddrives[unit]) == 0) {
+
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -368,19 +400,18 @@ loop:
 	lp = &du->dk_dd;
 	secpertrk = lp->d_nsectors;
 	secpercyl = lp->d_secpercyl;
+	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && wdpart(bp->b_dev) != WDRAW)
+		blknum += lp->d_partitions[wdpart(bp->b_dev)].p_offset;
 	cylin = blknum / secpercyl;
 	head = (blknum % secpercyl) / secpertrk;
 	sector = blknum % secpertrk;
-	if ((du->dk_flags & DKFL_BSDLABEL) != 0 && wdpart(bp->b_dev) != WDRAW)
-		cylin += lp->d_partitions[wdpart(bp->b_dev)].p_offset
-				/ secpercyl;
 
 	/* 
 	 * See if the current block is in the bad block list.
 	 * (If we have one, and not formatting.)
 	 */
-	if ((du->dk_flags & (/*DKFL_SINGLE|*/DKFL_BADSECT))
-		== (/*DKFL_SINGLE|*/DKFL_BADSECT))
+	if ((du->dk_flags & (DKFL_SINGLE|DKFL_BADSECT))		/* 19 Aug 92*/
+		== (DKFL_SINGLE|DKFL_BADSECT))
 	    for (bt_ptr = du->dk_bad.bt_bad; bt_ptr->bt_cyl != -1; bt_ptr++) {
 		if (bt_ptr->bt_cyl > cylin)
 			/* Sorted list, and we passed our cylinder. quit. */
@@ -530,6 +561,7 @@ wdintr(struct intrframe wdif)
 		}
 #ifdef B_FORMAT
 		if (bp->b_flags & B_FORMAT) {
+			bp->b_error = EIO;		/* 17 Sep 92*/
 			bp->b_flags |= B_ERROR;
 			goto done;
 		}
@@ -550,6 +582,7 @@ wdintr(struct intrframe wdif)
 						inb(wdc+wd_error), WDERR_BITS);
 #endif
 				}
+				bp->b_error = EIO;	/* 17 Sep 92*/
 				bp->b_flags |= B_ERROR;	/* flag the error */
 			}
 		} else if((du->dk_flags&DKFL_QUIET) == 0) {
@@ -642,14 +675,9 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	char *msg;
 
 	unit = wdunit(dev);
-	if (unit >= NWD) return (ENXIO) ;
+	if (unit >= _NWD) return (ENXIO) ;
 
 	du = wddrives[unit];
-	if (du == 0 && (unit&1) && wddrives[unit&~1]) {			/*XXX*/
-		du = wddrives[unit] = (struct disk *)			/*XXX*/
-			malloc (sizeof(struct disk), M_TEMP, M_NOWAIT);	/*XXX*/
-		du->dk_port = wddrives[unit&~1]->dk_port;		/*XXX*/
-	}								/*XXX*/
 	if (du == 0) return (ENXIO) ;
 
 	if ((du->dk_flags & DKFL_BSDLABEL) == 0) {
@@ -777,6 +805,11 @@ wdcontrol(register struct buf *bp)
 
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 		wdtab.b_active = 1;
+
+		/* wait for drive and controller to become ready */
+		for (i = 1000000; (inb(wdc+wd_status) & (WDCS_READY|WDCS_BUSY))
+				  != WDCS_READY && i-- != 0; )
+			;
 		outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
 		du->dk_state++;
 		splx(s);
@@ -790,8 +823,10 @@ wdcontrol(register struct buf *bp)
 					stat, WDCS_BITS, inb(wdc+wd_error),
 					WDERR_BITS);
 			}
-			if (++wdtab.b_errcnt < RETRIES)
+			if (++wdtab.b_errcnt < RETRIES) {
+				du->dk_state = WANTOPEN;
 				goto tryagainrecal;
+			}
 			bp->b_error = ENXIO;	/* XXX needs translation */
 			goto badopen;
 		}
@@ -1089,7 +1124,7 @@ wdsize(dev_t dev)
 	int unit = wdunit(dev), part = wdpart(dev), val;
 	struct disk *du;
 
-	if (unit >= NWD)
+	if (unit >= _NWD)	/* 31 Jul 92*/
 		return(-1);
 
 	du = wddrives[unit];
@@ -1129,7 +1164,7 @@ wddump(dev_t dev)			/* dump core after a system crash */
 	unit = wdunit(dev);		/* eventually support floppies? */
 	part = wdpart(dev);		/* file system */
 	/* check for acceptable drive number */
-	if (unit >= NWD) return(ENXIO);
+	if (unit >= _NWD) return(ENXIO);		/* 31 Jul 92*/
 
 	du = wddrives[unit];
 	if (du == 0) return(ENXIO);

@@ -29,6 +29,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         2       00096
+ * --------------------         -----   ----------------------
+ *
+ * 29 Jun 92	Chris G. Demetriou	Fix Version number update
+ * 15 Feb 93	Julian Elischer		allow comments (leading #) in
+ *					files and files.i386
  */
 
 #ifndef lint
@@ -149,6 +158,7 @@ makefile()
 		perror(path("Makefile"));
 		exit(1);
 	}
+	fprintf(ofp, "KERN_IDENT=%s\n", raise(ident));		/* 29 Jun 92*/
 	fprintf(ofp, "IDENT=-D%s", raise(ident));
 	if (profiling)
 		fprintf(ofp, " -DGPROF");
@@ -259,6 +269,15 @@ next:
 	}
 	if (wd == 0)
 		goto next;
+	/*************************************************\
+	* If it's a comment ignore to the end of the line *
+	\*************************************************/
+	if(wd[0] == '#')
+	{
+		while( ((wd = get_word(fp)) != (char *)EOF) && wd)
+		;
+		goto next;
+	}
 	this = ns(wd);
 	next_word(fp, wd);
 	if (wd == 0) {
@@ -576,6 +595,8 @@ do_systemspec(f, fl, first)
 {
 
 	fprintf(f, "%s: ${SYSTEM_DEP} swap%s.o", fl->f_needs, fl->f_fn);
+	if (first)						/* 29 Jun 92*/
+		fprintf(f, " newvers");
 	fprintf(f, "\n\t${SYSTEM_LD_HEAD}\n");
 	fprintf(f, "\t${SYSTEM_LD} swap%s.o\n", fl->f_fn);
 	fprintf(f, "\t${SYSTEM_LD_TAIL}\n\n");
@@ -593,8 +614,8 @@ do_swapspec(f, name)
 	if (!eq(name, "generic"))
 		fprintf(f, "swap%s.o: swap%s.c\n", name, name);
 	else
-		fprintf(f, "swapgeneric.o: ../%s/swapgeneric.c\n",
-			machinename);
+/* 29 Jun 92*/	fprintf(f, "swapgeneric.o: ../../%s/%s/swapgeneric.c\n",
+			machinename, machinename);
 	fprintf(f, "\t${NORMAL_C}\n\n");
 }
 

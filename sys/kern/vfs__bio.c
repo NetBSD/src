@@ -45,8 +45,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         2       00042
+ * --------------------         -----   ----------------------
+ *
+ * 24 Apr 92	Martin Renters		Fix NFS read request hang
+ * 20 Aug 92	David Greenman		Fix getnewbuf() 2xAllocation
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/vfs__bio.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/vfs__bio.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 #include "param.h"
 #include "proc.h"
@@ -113,6 +120,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 	if ((bp->b_flags & B_CACHE) == 0 || (bp->b_flags & B_INVAL) != 0) {
 		bp->b_flags |= B_READ;
 		bp->b_flags &= ~(B_DONE|B_ERROR|B_INVAL);
+		if (cred != NOCRED) crhold(cred);		/* 25 Apr 92*/
 		bp->b_rcred = cred;
 		VOP_STRATEGY(bp);
 		rv = biowait (bp);
@@ -139,6 +147,7 @@ breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno, int rabsize,
 	if ((bp->b_flags & B_CACHE) == 0 || (bp->b_flags & B_INVAL) != 0) {
 		bp->b_flags |= B_READ;
 		bp->b_flags &= ~(B_DONE|B_ERROR|B_INVAL);
+		if (cred != NOCRED) crhold(cred);		/* 25 Apr 92*/
 		bp->b_rcred = cred;
 		VOP_STRATEGY(bp);
 		needwait++;
@@ -150,6 +159,7 @@ breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno, int rabsize,
 	if ((rabp->b_flags & B_CACHE) == 0 || (rabp->b_flags & B_INVAL) != 0) {
 		rabp->b_flags |= B_READ | B_ASYNC;
 		rabp->b_flags &= ~(B_DONE|B_ERROR|B_INVAL);
+		if (cred != NOCRED) crhold(cred);		/* 25 Apr 92*/
 		rabp->b_rcred = cred;
 		VOP_STRATEGY(rabp);
 	} else
@@ -344,6 +354,7 @@ start:
 		bp->b_flags = B_BUSY | B_INVAL;
 		bremfree(bp);
 		bp->b_un.b_addr = addr;
+		bp->b_bufsize = sz;	/* 20 Aug 92*/
 		goto fillin;
 	}
 
@@ -374,6 +385,8 @@ tryfree:
 		brelvp(bp);
 
 	/* we are not free, nor do we contain interesting data */
+	if (bp->b_rcred != NOCRED) crfree(bp->b_rcred);		/* 25 Apr 92*/
+	if (bp->b_wcred != NOCRED) crfree(bp->b_wcred);
 	bp->b_flags = B_BUSY;
 fillin:
 	bremhash(bp);

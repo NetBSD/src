@@ -45,8 +45,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         2       00065
+ * --------------------         -----   ----------------------
+ *
+ * 09 Sep 92	Paul Kranenburg		Fixed read from /dev/drum
+ * 28 Nov 92	Mark Tinguely		Fixed small leak in physio()
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/kern__physio.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/kern__physio.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -95,6 +102,7 @@ static physio(strat, dev, off, rw, base, len, p)
 
 	/* create and build a buffer header for a transfer */
 	bp = (struct buf *)malloc(sizeof(*bp), M_TEMP, M_NOWAIT);
+	bzero((char *)bp, sizeof(*bp));			/* 09 Sep 92*/
 	bp->b_flags = B_BUSY | B_PHYS | rw;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -110,17 +118,21 @@ static physio(strat, dev, off, rw, base, len, p)
 		bp->b_bcount = min (256*1024, amttodo);
 
 		/* first, check if accessible */
-		if (rw == B_READ && !useracc(base, bp->b_bcount, B_WRITE))
+		if (rw == B_READ && !useracc(base, bp->b_bcount, B_WRITE)) {
+			free(bp, M_TEMP);
 			return (EFAULT);
-		if (rw == B_WRITE && !useracc(base, bp->b_bcount, B_READ))
+		}
+		if (rw == B_WRITE && !useracc(base, bp->b_bcount, B_READ)) {
+			free(bp, M_TEMP);
 			return (EFAULT);
+		}
 
 		/* update referenced and dirty bits, handle copy objects */
 		if (rw == B_READ)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		for (adr = trunc_page(base) ; adr < base + bp->b_bcount;
+/* 09 Sep 92*/	for (adr = (caddr_t)trunc_page(base); adr < base + bp->b_bcount;
 			adr += NBPG) {
 			vm_fault(&curproc->p_vmspace->vm_map,
 				adr, ftype, FALSE);

@@ -29,6 +29,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         5       00076
+ * --------------------         -----   ----------------------
+ *
+ * 15 Aug 92	David Dawes		SIGTERM + 10 seconds before SIGKILL
+ * 24 Jul 92	Nate Williams		Fixed utmp removal, wtmp info
+ * 31 Jul 92	Christoph Robitschko	Fixed run level change code
+ * 04 Sep 92	Paul Kranenburg		Fixed kill -1 and kill -15 for
+ *					daemons started from /etc/rc.
+ * 26 Jan 93	Nate Williams		Fixed patchkit error
  */
 
 
@@ -80,7 +92,8 @@ extern int errno;
 	signal(SIGHUP, SIG_DFL); signal(SIGINT, SIG_DFL); \
 	signal(SIGTERM, SIG_DFL); signal(SIGALRM, SIG_DFL); \
 	signal(SIGTSTP, SIG_DFL); signal(SIGCHLD, SIG_DFL); \
-	signal(SIGTTIN, SIG_DFL); signal(SIGTTOU, SIG_DFL);
+	signal(SIGTTIN, SIG_DFL); signal(SIGTTOU, SIG_DFL); \
+	sigsetmask( 0);				/* 04 Sep 92*/
 
 /* SIGHUP: reread /etc/ttys */
 void
@@ -111,6 +124,10 @@ sterm(sig)
 			free(tt->tt_type);
 		}
 		ttytabend = ttytab;
+		/* give processes time to exit cleanly */	/* 15 Aug 92*/
+		kill(-1, SIGTERM);
+		sleep(10);
+		/* Now murder them */
 		kill(-1, SIGKILL);
 		kill(-1, SIGCONT);
 		signal(SIGALRM, salrm);
@@ -188,6 +205,7 @@ top:
 				execl("/bin/sh", "sh", "/etc/rc", Reboot, (char *)0);
 				_exit(127);
 			}
+			Reboot = 0;			/* 31 Jul 92*/
 			while(wait(&status) != pid);
 
 			/* if we are about to be rebooted, then wait for it */
@@ -214,7 +232,9 @@ top:
 			execl("/bin/sh", "-", (char *)0);
 			_exit(127);
 		}
-		while(wait(&status) != pid)
+		while(wait(&status) != pid);
+		while(drain)				/* 31 Jul 92*/
+			pause();
 		goto top;
 	}
 
@@ -302,6 +322,7 @@ top:
 		}
 		for(tt = ttytab; tt < ttytabend; tt++)
 			if(pid == tt->tt_pid) {
+/* 24 Jul 92*/			if (logout(tt->tt_name)) logwtmp(tt->tt_name,"","");
 				if(drain && !(tt->tt_status & TTY_LOGIN)) {
 					free(tt->tt_name);
 					free(tt->tt_getty);
@@ -396,7 +417,7 @@ char *s;
 	login_tty(open("/dev/console", 2));
 	writes(2, "init FATAL error: ");
 	perror(s);
-	exit(1);
+	_exit(1);				/* 04 Sep 92*/
 	/* panic: init died */
 }
 

@@ -31,8 +31,23 @@
  * SUCH DAMAGE.
  *
  *	@(#)tty_pty.c	7.21 (Berkeley) 5/30/91
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         5       00094
+ * --------------------         -----   ----------------------
+ *
+ * 11 Dec 92	Williams Jolitz		Fixed tty handling
+ *
+ * 28 Nov 1991	Warren Toomey		Cleaned up the use of COMPAT_43
+ *					in the 386BSD kernel.	 
+ * 6 Oct 1992	Holger Veit		Fixed 'hanging console' bug
+ * 11 Jan 93	Julian Elischer		Fixes multiple processes on one
+ *					pty bug
+ * 27 Feb 93	Charles Hannum		Proper return values for ptsclose()
+ *					and ptcclose()
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 /*
  * Pseudo-teletype Driver
@@ -66,7 +81,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.1.1.1 1993/0
 struct	tty pt_tty[NPTY];
 struct	pt_ioctl {
 	int	pt_flags;
-	struct	proc *pt_selr, *pt_selw;
+	pid_t	pt_selr, pt_selw;
 	u_char	pt_send;
 	u_char	pt_ucntl;
 } pt_ioctl[NPTY];
@@ -131,6 +146,7 @@ ptsclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
+	return(0);
 }
 
 ptsread(dev, uio, flag)
@@ -225,7 +241,7 @@ ptcwakeup(tp, flag)
 			pti->pt_selr = 0;
 			pti->pt_flags &= ~PF_RCOLL;
 		}
-		wakeup((caddr_t)&tp->t_out.rb_hd);
+		wakeup((caddr_t)&tp->t_out.rb_tl);
 	}
 	if (flag & FWRITE) {
 		if (pti->pt_selw) {
@@ -265,6 +281,7 @@ ptcopen(dev, flag, devtype, p)
 	return (0);
 }
 
+extern struct tty *constty;	/* -hv- 06.Oct.92*/
 ptcclose(dev)
 	dev_t dev;
 {
@@ -275,6 +292,12 @@ ptcclose(dev)
 	tp->t_state &= ~TS_CARR_ON;
 	tp->t_oproc = 0;		/* mark closed */
 	tp->t_session = 0;
+
+/* XXX -hv- 6.Oct.92 this prevents the "hanging console bug" with X11 */
+	if (constty==tp)
+		constty = 0;
+
+	return (0);
 }
 
 ptcread(dev, uio, flag)
@@ -320,7 +343,7 @@ ptcread(dev, uio, flag)
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
-		if (error = tsleep((caddr_t)&tp->t_out.rb_hd, TTIPRI | PCATCH,
+		if (error = tsleep((caddr_t)&tp->t_out.rb_tl, TTIPRI | PCATCH,
 		    ttyin, 0))
 			return (error);
 	}
@@ -410,10 +433,10 @@ ptcselect(dev, rw, p)
 		    (pti->pt_flags&PF_PKT && pti->pt_send ||
 		     pti->pt_flags&PF_UCNTL && pti->pt_ucntl))
 			return (1);
-		if ((prev = pti->pt_selr) && prev->p_wchan == (caddr_t)&selwait)
+		if (pti->pt_selr && (prev = pfind(pti->pt_selr)) && prev->p_wchan == (caddr_t)&selwait)
 			pti->pt_flags |= PF_RCOLL;
 		else
-			pti->pt_selr = p;
+			pti->pt_selr = p->p_pid;
 		break;
 
 
@@ -429,10 +452,10 @@ ptcselect(dev, rw, p)
 				    return (1);
 			}
 		}
-		if ((prev = pti->pt_selw) && prev->p_wchan == (caddr_t)&selwait)
+		if (pti->pt_selw && (prev = pfind(pti->pt_selw)) && prev->p_wchan == (caddr_t)&selwait)
 			pti->pt_flags |= PF_WCOLL;
 		else
-			pti->pt_selw = p;
+			pti->pt_selw = p->p_pid;
 		break;
 
 	}
@@ -607,8 +630,11 @@ ptyioctl(dev, cmd, data, flag)
 			ttyflush(tp, FREAD|FWRITE);
 			return (0);
 
+#ifdef COMPAT_43
+	/* wkt */
 		case TIOCSETP:		
 		case TIOCSETN:
+#endif
 		case TIOCSETD:
 		case TIOCSETA:
 		case TIOCSETAW:
@@ -662,9 +688,10 @@ ptyioctl(dev, cmd, data, flag)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
+#ifdef	COMPAT_43
+	/* wkt */
 		case TIOCSETP:
 		case TIOCSETN:
-#ifdef	COMPAT_43
 		case TIOCSETC:
 		case TIOCSLTC:
 		case TIOCLBIS:

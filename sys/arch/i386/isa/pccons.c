@@ -34,8 +34,24 @@
  * SUCH DAMAGE.
  *
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         5       00083
+ * --------------------         -----   ----------------------
+ *
+ * 15 Aug 92	Pace Willisson		Patches for X server
+ * 21 Aug 92	Frank Maclachlan	Fixed back-scroll system crash
+ * 28 Nov 92	Terry Lee		Fixed LED's in X mode
+ * 09 Feb 93	Rich Murphey		Added 'BELL' mode in X
+ * 14 Mar 93	Bruce Evans		Added keyboard timeout in pcprobe
+ * 					Fixed color/mono test and mono
+ *					kernel color.  Added check for
+ *					minor. 
+ * 14 Mar 93	Chris G. Demetriou	Moved pg() to i386/cons.c, code
+ *					cleanup, removed ctl-alt-del.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -58,6 +74,10 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 
 #include "i386/isa/ic/i8042.h"
 #include "i386/isa/kbd.h"
 #include "machine/pc/display.h"
+
+#ifdef XSERVER						/* 15 Aug 92*/
+int pc_xmode;
+#endif /* XSERVER */
 
 struct	tty pccons;
 
@@ -149,14 +169,49 @@ extern pcopen(dev_t, int, int, struct proc *);
 }
 
 /*
+ * Pass command to keyboard controller (8042)
+ */
+static int kbc_8042cmd(val)
+int val;
+{
+	unsigned timeo;
+
+	timeo = 100000; 	/* > 100 msec */
+	while (inb(KBSTATP) & KBS_IBF)
+		if (--timeo == 0)
+			return (-1);
+	outb(KBCMDP, val);
+	return (0);
+}
+
+/*
  * Pass command to keyboard itself
  */
-unsigned kbd_cmd(val) {
-	
-	while (inb(KBSTATP)&KBS_IBF);
-	if (val) outb(KBOUTP, val);
-	while (inb(KBSTATP)&KBS_IBF);
-	return (inb(KBDATAP));
+int kbd_cmd(val)
+int val;
+{
+	unsigned timeo;
+
+	timeo = 100000; 	/* > 100 msec */
+	while (inb(KBSTATP) & KBS_IBF)
+		if (--timeo == 0)
+			return (-1);
+	outb(KBOUTP, val);
+	return (0);
+}
+
+/*
+ * Read response from keyboard
+ */
+int kbd_response()
+{
+	unsigned timeo;
+
+	timeo = 500000; 	/* > 500 msec (KBR_RSTDONE requires 87) */
+	while (!(inb(KBSTATP) & KBS_DIB))
+		if (--timeo == 0)
+			return (-1);
+	return ((u_char) inb(KBDATAP));
 }
 
 /*
@@ -165,26 +220,59 @@ unsigned kbd_cmd(val) {
 pcprobe(dev)
 struct isa_device *dev;
 {
-	u_char c;
 	int again = 0;
+	int response;
 
-	/* Enable interrupts and keyboard controller */
-	kbc_8042cmd(K_LDCMDBYTE);
-	outb(KBOUTP, CMDBYTE);
+	/* Enable interrupts and keyboard, etc. */
+	if (kbc_8042cmd(K_LDCMDBYTE) != 0)
+		printf("Timeout specifying load of keyboard command byte\n");
+	if (kbd_cmd(CMDBYTE) != 0)
+		printf("Timeout writing keyboard command byte\n");
+	/*
+	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
+	 * very careful and sometimes leaves a KBR_RESEND.
+	 */
+	while (inb(KBSTATP) & KBS_DIB)
+		kbd_response();
 
-	/* Start keyboard stuff RESET */
-	kbd_cmd(KBC_RESET);
-	while((c = inb(KBDATAP)) != KBR_ACK) {
-		if ((c == KBR_RESEND) ||  (c == KBR_OVERRUN)) {
-			if(!again)printf("KEYBOARD disconnected: RECONNECT \n");
-			kbd_cmd(KBC_RESET);
-			again = 1;
+	/* Start keyboard reset */
+	if (kbd_cmd(KBC_RESET) != 0)
+		printf("Timeout for keyboard reset command\n");
+
+	/* Wait for the first response to reset and handle retries */
+	while ((response = kbd_response()) != KBR_ACK) {
+		if (response < 0) {
+			printf("Timeout for keyboard reset ack byte #1\n");
+			response = KBR_RESEND;
+		}
+		if (response == KBR_RESEND) {
+			if (!again) {
+				printf("KEYBOARD disconnected: RECONNECT\n");
+				again = 1;
+			}
+			if (kbd_cmd(KBC_RESET) != 0)
+				printf("Timeout for keyboard reset command\n");
+		}
+		/*
+		 * Other responses are harmless.  They may occur for new
+		 * keystrokes.
+		 */
+	}
+
+	/* Wait for the second response to reset */
+	while ((response = kbd_response()) != KBR_RSTDONE) {
+		if (response < 0) {
+			printf("Timeout for keyboard reset ack byte #2\n");
+			/*
+			 * If KBR_RSTDONE never arrives, the loop will
+			 * finish here unless the keyboard babbles or
+			 * KBS_DIB gets stuck.
+			 */
+			break;
 		}
 	}
 
-	/* pick up keyboard reset return code */
-	while((c = inb(KBDATAP)) != KBR_RSTDONE);
-	return 1;
+	return (1);
 }
 
 pcattach(dev)
@@ -211,6 +299,8 @@ pcopen(dev, flag, mode, p)
 {
 	register struct tty *tp;
 
+	if (minor(dev) != 0)
+		return (ENXIO);
 	tp = &pccons;
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
@@ -280,9 +370,21 @@ pcrint(dev, irq, cpl)
 #endif
 	if (!openf)
 		return;
+
+#ifdef XSERVER						/* 15 Aug 92*/
+	/* send at least one character, because cntl-space is a null */
+	(*linesw[pccons.t_line].l_rint)(*cp++ & 0xff, &pccons);
+#endif /* XSERVER */
+
 	while (*cp)
 		(*linesw[pccons.t_line].l_rint)(*cp++ & 0xff, &pccons);
 }
+
+#ifdef XSERVER						/* 15 Aug 92*/
+#define CONSOLE_X_MODE_ON _IO('t',121)
+#define CONSOLE_X_MODE_OFF _IO('t',122)
+#define CONSOLE_X_BELL _IOW('t',123,int[2])
+#endif /* XSERVER */
 
 pcioctl(dev, cmd, data, flag)
 	dev_t dev;
@@ -290,6 +392,27 @@ pcioctl(dev, cmd, data, flag)
 {
 	register struct tty *tp = &pccons;
 	register error;
+
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (cmd == CONSOLE_X_MODE_ON) {
+		pc_xmode_on ();
+		return (0);
+	} else if (cmd == CONSOLE_X_MODE_OFF) {
+		pc_xmode_off ();
+		return (0);
+	} else if (cmd == CONSOLE_X_BELL) {
+		/* if set, data is a pointer to a length 2 array of
+		   integers. data[0] is the pitch in Hz and data[1]
+		   is the duration in msec.  */
+		if (data) {
+			sysbeep(1187500/ ((int*)data)[0],
+				((int*)data)[1] * hz/ 3000);
+		} else {
+			sysbeep(0x31b, hz/4);
+		}
+		return (0);
+	}
+#endif /* XSERVER */
  
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
@@ -344,10 +467,11 @@ pcstart(tp)
 	if (RB_LEN(&tp->t_out) == 0)
 		goto out;
 	c = getc(&tp->t_out);
-	/*tp->t_state |= TS_BUSY;*/
+	tp->t_state |= TS_BUSY;				/* 21 Aug 92*/
 	splx(s);
 	sput(c, 0);
 	(void)spltty();
+	tp->t_state &= ~TS_BUSY;			/* 21 Aug 92*/
 	} while(1);
 out:
 	splx(s);
@@ -410,6 +534,11 @@ pccngetc(dev)
 	register int s;
 	register char *cp;
 
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (pc_xmode)
+		return (0);
+#endif /* XSERVER */
+
 	s = spltty();		/* block pcrint while we poll */
 	cp = sgetc(0);
 	splx(s);
@@ -421,6 +550,11 @@ pcgetchar(tp)
 	register struct tty *tp;
 {
 	char *cp;
+
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (pc_xmode)
+		return (0);
+#endif /* XSERVER */
 
 	cp = sgetc(0);
 	return (*cp&0xff);
@@ -466,6 +600,9 @@ static u_short *crtat = 0;
 cursor(int a)
 { 	int pos = crtat - Crtat;
 
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (!pc_xmode) {
+#endif /* XSERVER */
 	outb(addr_6845, 14);
 	outb(addr_6845+1, pos>> 8);
 	outb(addr_6845, 15);
@@ -478,6 +615,9 @@ cursor(int a)
 #endif	FAT_CURSOR
 	if (a == 0)
 		timeout(cursor, 0, hz/10);
+#ifdef XSERVER						/* 15 Aug 92*/
+	}
+#endif /* XSERVER */
 }
 
 static u_char shift_down, ctrl_down, alt_down, caps, num, scroll;
@@ -507,9 +647,15 @@ u_char ka;
 	int sc = 1;	/* do scroll check */
 	char fg_at, bg_at, at;
 
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (pc_xmode)
+		return;
+#endif /* XSERVER */
+
 	if (crtat == 0)
 	{
-		u_short *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR, was;
+		u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
+		u_short was;
 		unsigned cursorat;
 
 		/*
@@ -542,7 +688,7 @@ u_char ka;
 		vs.bg_at = BG_BLACK;
 
 		if (vs.color == 0) {
-			vs.kern_fg_at = FG_INTENSE;
+			vs.kern_fg_at = FG_UNDERLINE;
 			vs.so_at = FG_BLACK | BG_LIGHTGREY;
 		} else {
 			vs.kern_fg_at = FG_LIGHTGREY;
@@ -791,7 +937,7 @@ u_char ka;
 	}
 	if (sc && crtat >= Crtat+vs.ncol*vs.nrow) { /* scroll check */
 		if (openf) do (void)sgetc(1); while (scroll);
-		bcopyb(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
+		bcopy(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
 		fillw ((at << 8) + ' ', Crtat + vs.ncol*(vs.nrow-1),
 			vs.ncol);
 		crtat -= vs.ncol;
@@ -801,8 +947,8 @@ u_char ka;
 }
 
 
-unsigned	__debug = 0; /*0xffe */;
-static char scantokey[] {
+unsigned	__debug = 0; /*0xffe */
+static char scantokey[] = {
 0,
 120,	/* F9 */
 0,
@@ -900,7 +1046,7 @@ static char scantokey[] {
 0,
 0,
 0,
-45,	?* na*/
+45,	/* na*/
 0,
 0,
 0,
@@ -936,7 +1082,7 @@ static char scantokey[] {
 0,
 118,	/* F7 */
 };
-static char extscantokey[] {
+static char extscantokey[] = {
 0,
 120,	/* F9 */
 0,
@@ -1034,7 +1180,7 @@ static char extscantokey[] {
 0,
 0,
 0,
-45,	?* na*/
+45,	/* na*/
 0,
 0,
 0,
@@ -1226,9 +1372,25 @@ static Scan_def	scan_codes[] =
 
 update_led()
 {
-	kbd_cmd(KBC_STSIND);	/* LED Command */
-	outb(KBOUTP,scroll | 2*num | 4*caps);
-	/*kbd_cmd(scroll | 2*num | 4*caps);*/
+	int response;
+
+	if (kbd_cmd(KBC_STSIND) != 0)
+		printf("Timeout for keyboard LED command\n");
+	else if (kbd_cmd(scroll | (num << 1) | (caps << 2)) != 0)
+		printf("Timeout for keyboard LED data\n");
+#if 0
+	else if ((response = kbd_response()) < 0)
+		printf("Timeout for keyboard LED ack\n");
+	else if (response != KBR_ACK)
+		printf("Unexpected keyboard LED ack %d\n", response);
+#else
+	/*
+	 * Skip waiting for and checking the response.  The waiting
+	 * would be too long (about 3 msec) and the checking might eat
+	 * fresh keystrokes.  The waiting should be done using timeout()
+	 * and the checking should be done in the interrupt handler.
+	 */
+#endif
 }
 
 /*
@@ -1247,8 +1409,40 @@ char *sgetc(noblock)
 	 *   First see if there is something in the keyboard port
 	 */
 loop:
+#ifdef XSERVER						/* 15 Aug 92*/
+	if (inb(KBSTATP) & KBS_DIB) {
+		dt = inb(KBDATAP);
+		if (pc_xmode) {
+			capchar[0] = dt;
+			/*
+			 *   Check for locking keys
+			 */
+			if (!(dt & 0x80))
+			{
+				dt = dt & 0x7f;
+				switch (scan_codes[dt].type)
+				{
+					case NUM:
+						num ^= 1;
+						update_led();
+						break;
+					case CAPS:
+						caps ^= 1;
+						update_led();
+						break;
+					case SCROLL:
+						scroll ^= 1;
+						update_led();
+						break;
+				}
+			}
+			return (&capchar[0]);
+		}
+	}
+#else	/* !XSERVER*/
 	if (inb(KBSTATP) & KBS_DIB)
 		dt = inb(KBDATAP);
+#endif /* !XSERVER*/
 	else
 	{
 		if (noblock)
@@ -1260,25 +1454,25 @@ loop:
 	if (dt == 0xe0)
 	{
 		extended = 1;
+#ifdef XSERVER						/* 15 Aug 92*/
+		goto loop;
+#else	/* !XSERVER*/
 		if (noblock)
 			return 0;
 		else
 			goto loop;
+#endif /* !XSERVER*/
 	}
-
-	/*
-	 *   Check for cntl-alt-del
-	 */
-	if ((dt == 83) && ctrl_down && alt_down)
-		cpu_reset();
 
 #include "ddb.h"
 #if NDDB > 0
 	/*
 	 *   Check for cntl-alt-esc
 	 */
-	if ((dt == 1) && ctrl_down && alt_down)
+	if ((dt == 1) && ctrl_down && alt_down) {
 		Debugger();
+		dt |= 0x80;	/* discard esc (ddb discarded ctrl-alt) */
+	}
 #endif
 
 	/*
@@ -1340,7 +1534,36 @@ loop:
 				ctrl_down = 1;
 				break;
 			case ASCII:
+#ifdef XSERVER						/* 15 Aug 92*/
+/*
+ * 18 Sep 92	Terry Lambert	I find that this behaviour is questionable --
+ *				I believe that this should be conditional on
+ *				the value of pc_xmode rather than always
+ *				done.  In particular, "case NONE" seems to
+ *				not cause a scancode return.  This may
+ *				invalidate alt-"=" and alt-"-" as well as the
+ *				F11 and F12 keys, and some keys on lap-tops,
+ *				Especially Toshibal T1100 and Epson Equity 1
+ *				and Equity 1+ when not in pc_xmode.
+ */
+				/* control has highest priority */
+				if (ctrl_down)
+					capchar[0] = scan_codes[dt].ctrl[0];
+				else if (shift_down)
+					capchar[0] = scan_codes[dt].shift[0];
+				else
+					capchar[0] = scan_codes[dt].unshift[0];
+
+				if (caps && (capchar[0] >= 'a'
+					 && capchar[0] <= 'z')) {
+					capchar[0] = capchar[0] - ('a' - 'A');
+				}
+				capchar[0] |= alt_down;
+				extended = 0;
+				return(&capchar[0]);
+#else	/* !XSERVER*/
 			case NONE:
+#endif	/* !XSERVER*/
 			case FUNC:
 				if (shift_down)
 					more_chars = scan_codes[dt].shift;
@@ -1348,6 +1571,7 @@ loop:
 					more_chars = scan_codes[dt].ctrl;
 				else
 					more_chars = scan_codes[dt].unshift;
+#ifndef XSERVER						/* 15 Aug 92*/
 				/* XXX */
 				if (caps && more_chars[1] == 0
 					&& (more_chars[0] >= 'a'
@@ -1355,6 +1579,7 @@ loop:
 					capchar[0] = *more_chars - ('a' - 'A');
 					more_chars = capchar;
 				}
+#endif	/* !XSERVER*/
 				extended = 0;
 				return(more_chars);
 			case KP:
@@ -1364,19 +1589,21 @@ loop:
 					more_chars = scan_codes[dt].unshift;
 				extended = 0;
 				return(more_chars);
+#ifdef XSERVER						/* 15 Aug 92*/
+			case NONE:
+				break;
+#endif	/* XSERVER*/
 		}
 	}
 	extended = 0;
+#ifdef XSERVER						/* 15 Aug 92*/
+	goto loop;
+#else	/* !XSERVER*/
 	if (noblock)
 		return 0;
 	else
 		goto loop;
-}
-
-pg(p,q,r,s,t,u,v,w,x,y,z) char *p; {
-	printf(p,q,r,s,t,u,v,w,x,y,z);
-	printf("\n");
-	return(getchar());
+#endif	/* !XSERVER*/
 }
 
 /* special characters */
@@ -1463,3 +1690,38 @@ int pcmmap(dev_t dev, int offset, int nprot)
 		return -1;
 	return i386_btop((0xa0000 + offset));
 }
+
+#ifdef XSERVER						/* 15 Aug 92*/
+#include "machine/psl.h"
+#include "machine/frame.h"
+
+pc_xmode_on ()
+{
+	struct syscframe *fp;
+
+	if (pc_xmode)
+		return;
+	pc_xmode = 1;
+
+	fp = (struct syscframe *)curproc->p_regs;
+	fp->sf_eflags |= PSL_IOPL;
+}
+
+pc_xmode_off ()
+{
+	struct syscframe *fp;
+
+	if (pc_xmode == 0)
+		return;
+	pc_xmode = 0;
+
+	cursor(0);
+
+	fp = (struct syscframe *)curproc->p_regs;
+	fp->sf_eflags &= ~PSL_IOPL;
+}
+#endif	/* XSERVER*/
+
+/*
+ * EOF -- File has not been truncated
+ */

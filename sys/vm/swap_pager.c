@@ -37,9 +37,17 @@
  *
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         1       00075
+ * --------------------         -----   ----------------------
+ *
+ * 22 Jan 1993		Bruce Evans	Fixed unmatched spl calls
+ *
  *	@(#)swap_pager.c	7.4 (Berkeley) 5/7/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/swap_pager.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/swap_pager.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 /*
  * Quick hack to page to dedicated partition(s).
@@ -553,13 +561,13 @@ swap_pager_io(swp, m, flags)
 	splx(s);
 			return(VM_PAGER_FAIL);
 		}
-	splx(s);
 #ifdef DEBUG
 		if (swpagerdebug & (SDB_FULL|SDB_ALLOCBLK))
 			printf("swpg_io: %x alloc blk %x at ix %x\n",
 			       swp->sw_blocks, swb->swb_block, ix);
 #endif
 	}
+	splx(s);
 
 	/*
 	 * Allocate a kernel virtual address and initialize so that PTE

@@ -32,6 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         1       90001
+ * --------------------         -----   ----------------------
+ *
+ * 29 Sep 92	Terry Lambert		Fixed bogus "pat" on NO_REGEX
  */
 
 #ifndef lint
@@ -284,14 +291,14 @@ register char	**argv;
 {
 	register int	ignore_case;
 # ifndef NO_REGEX
-	register char	*pat;
+	register char	*pat = NULL;			/* 29 Sep 92*/
 # endif	/* NO_REGEX */
 	extern char *optarg;
 	extern int optind;
 	int ch;
 
 	ignore_case = FALSE;
-	pat = NULL;
+	/* pat = NULL;*/				/* 29 Sep 92*/
 
 # ifdef DEBUG
 	while ((ch = getopt(argc, argv, "aDefilm:osw")) != EOF)

@@ -26,9 +26,12 @@
 /*
  * HISTORY
  * $Log: db_command.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
- * initial import of 386bsd-0.1 sources
+ * Revision 1.2  1993/03/21 18:04:42  cgd
+ * after 0.2.2 "stable" patches applied
  *
+ * Revision 1.1.1.1  93/03/21  09:46:26  cgd
+ * initial import of 386bsd-0.1 sources
+ * 
  * Revision 1.1  1992/03/25  21:45:02  pace
  * Initial revision
  *
@@ -518,17 +521,3 @@ db_fncall()
 			 args[5], args[6], args[7], args[8], args[9] );
 	db_printf("%#n\n", retval);
 }
-
-int
-strcmp(s1, s2)
-	register const char *s1, *s2;
-{
-	while (*s1 == *s2++)
-		if (*s1++ == 0)
-			return (0);
-	return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-}
-
-		
-
-	

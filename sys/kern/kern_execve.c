@@ -50,6 +50,16 @@
  * Significant limitations and lack of compatiblity with POSIX are
  * present with this version, to make its basic operation more clear.
  *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         3       00069
+ * --------------------         -----   ----------------------
+ *
+ * 05 Aug 92	Paul Kranenburg		Fixed #! as a magic number
+ * 29 Jul 92	Mark Tinguely		Fixed execute permission enforcement
+ * 15 Aug 92    Terry Lambert           Fixed CMOS RAM size bug
+ * 12 Dec 92	Julians Elischer	Place argc into user address space
+ *					correctly
  */
 
 #include "param.h"
@@ -93,7 +103,6 @@ execve(p, uap, retval)
 {
 	register struct nameidata *ndp;
 	struct nameidata nd;
-	struct exec hdr;
 	char **argbuf, **argbufp, *stringbuf, *stringbufp;
 	char **vectp, *ep;
 	int needsenv, limitonargs, stringlen, addr, size, len,
@@ -101,14 +110,22 @@ execve(p, uap, retval)
 	struct vattr attr;
 	struct vmspace *vs;
 	caddr_t newframe;
+	char shellname[MAXINTERP];			/* 05 Aug 92*/
+	union {
+		char	ex_shell[MAXINTERP];	/* #! and interpreter name */
+		struct	exec ex_hdr;
+	} exdata;
+	int indir = 0;
 
 	/*
 	 * Step 1. Lookup filename to see if we have something to execute.
 	 */
 	ndp = &nd;
-	ndp->ni_nameiop = LOOKUP | LOCKLEAF | FOLLOW | SAVENAME;
 	ndp->ni_segflg = UIO_USERSPACE;
 	ndp->ni_dirp = uap->fname;
+
+again:							/* 05 Aug 92*/
+	ndp->ni_nameiop = LOOKUP | LOCKLEAF | FOLLOW | SAVENAME;
 
 	/* is it there? */
 	if (rv = namei(ndp, p))
@@ -119,8 +136,16 @@ execve(p, uap, retval)
 	if (rv)
 		goto exec_fail;
 
+	if (ndp->ni_vp->v_mount->mnt_flag & MNT_NOEXEC) { /* no exec on fs ?*/
+		rv = EACCES;
+		goto exec_fail;
+	}
+
 	/* is it executable, and a regular file? */
-	if ((attr.va_mode & VEXEC) == 0 || attr.va_type != VREG) {
+	if ((ndp->ni_vp->v_mount->mnt_flag & MNT_NOEXEC) ||	/* 29 Jul 92*/
+		(VOP_ACCESS(ndp->ni_vp, VEXEC, p->p_ucred, p)) ||
+		((attr.va_mode & 0111) == 0) ||
+		(attr.va_type != VREG)) {
 		rv = EACCES;
 		goto exec_fail;
 	}
@@ -128,40 +153,84 @@ execve(p, uap, retval)
 	/*
 	 * Step 2. Does the file contain a format we can
 	 * understand and execute
+	 *
+	 * XXX 05 Aug 92
+	 * Read in first few bytes of file for segment sizes, magic number:
+	 *      ZMAGIC = demand paged RO text
+	 * Also an ASCII line beginning with #! is
+	 * the file name of a ``shell'' and arguments may be prepended
+	 * to the argument list if given here.
 	 */
-	rv = vn_rdwr(UIO_READ, ndp->ni_vp, (caddr_t)&hdr, sizeof(hdr),
+	exdata.ex_shell[0] = '\0';	/* for zero length files */
+
+	rv = vn_rdwr(UIO_READ, ndp->ni_vp, (caddr_t)&exdata, sizeof(exdata),
 		0, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &amt, p);
 
 	/* big enough to hold a header? */
 	if (rv)
 		goto exec_fail;
-	
+
 	/* ... that we recognize? */
 	rv = ENOEXEC;
-	if (hdr.a_magic != ZMAGIC)
-		goto exec_fail;
+	if (exdata.ex_hdr.a_magic != ZMAGIC) {
+		char *cp, *sp;
+
+		if (exdata.ex_shell[0] != '#' ||
+		    exdata.ex_shell[1] != '!' || indir) {
+			rv = ENOEXEC;
+			goto exec_fail;
+		}
+		for (cp = &exdata.ex_shell[2];; ++cp) {
+			if (cp >= &exdata.ex_shell[MAXINTERP]) {
+				rv = ENOEXEC;
+				goto exec_fail;
+			}
+			if (*cp == '\n') {
+				*cp = '\0';
+				break;
+			}
+			if (*cp == '\t')
+				*cp = ' ';
+		}
+		cp = &exdata.ex_shell[2];       /* get shell interpreter name */
+		while (*cp == ' ')
+			cp++;
+
+		sp = shellname;
+		while (*cp && *cp != ' ')
+			*sp++ = *cp++;
+		*sp = '\0';
+
+		indir = 1;              /* indicate this is a script file */
+		vput(ndp->ni_vp);
+		FREE(ndp->ni_pnbuf, M_NAMEI);
+
+		ndp->ni_dirp = shellname;       /* find shell interpreter */
+		ndp->ni_segflg = UIO_SYSSPACE;
+		goto again;
+	}
 
 	/* sanity check  "ain't not such thing as a sanity clause" -groucho */
 	rv = ENOMEM;
-	if (/*hdr.a_text == 0 || */ hdr.a_text > MAXTSIZ
-		|| hdr.a_text % NBPG || hdr.a_text > attr.va_size)
+	if (/*exdata.ex_hdr.a_text == 0 || */ exdata.ex_hdr.a_text > MAXTSIZ ||
+	    exdata.ex_hdr.a_text % NBPG || exdata.ex_hdr.a_text > attr.va_size)
 		goto exec_fail;
 
-	if (hdr.a_data == 0 || hdr.a_data > DFLDSIZ
-		|| hdr.a_data > attr.va_size
-		|| hdr.a_data + hdr.a_text > attr.va_size)
+	if (exdata.ex_hdr.a_data == 0 || exdata.ex_hdr.a_data > DFLDSIZ
+		|| exdata.ex_hdr.a_data > attr.va_size
+		|| exdata.ex_hdr.a_data + exdata.ex_hdr.a_text > attr.va_size)
 		goto exec_fail;
 
-	if (hdr.a_bss > MAXDSIZ)
+	if (exdata.ex_hdr.a_bss > MAXDSIZ)
 		goto exec_fail;
 	
-	if (hdr.a_text + hdr.a_data + hdr.a_bss > MAXTSIZ + MAXDSIZ)
+	if (exdata.ex_hdr.a_text + exdata.ex_hdr.a_data + exdata.ex_hdr.a_bss > MAXTSIZ + MAXDSIZ)
 		goto exec_fail;
 
-	if (hdr.a_data + hdr.a_bss > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if (exdata.ex_hdr.a_data + exdata.ex_hdr.a_bss > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		goto exec_fail;
 
-	if (hdr.a_entry > hdr.a_text + hdr.a_data)
+	if (exdata.ex_hdr.a_entry > exdata.ex_hdr.a_text + exdata.ex_hdr.a_data)
 		goto exec_fail;
 	
 	/*
@@ -201,6 +270,41 @@ execve(p, uap, retval)
 	needsenv = 1;
 	limitonargs = ARG_MAX;
 	cnt = 0;
+
+	/* first, do (shell name if any then) args */
+	if (indir)  {
+		ep = shellname;
+twice:
+		if (ep) {
+			/* did we outgrow initial argbuf, if so, die */
+			if (argbufp >= (char **)stringbuf) {
+				rv = E2BIG;
+				goto exec_dealloc;
+			}
+
+			if (rv = copyoutstr(ep, stringbufp,
+				(u_int)limitonargs, (u_int *)&stringlen)) {
+				if (rv == ENAMETOOLONG)
+					rv = E2BIG;
+				goto exec_dealloc;
+			}
+			suword(argbufp++, (int)stringbufp);
+			cnt++;
+			stringbufp += stringlen;
+			limitonargs -= stringlen;
+		}
+
+		if (indir) {
+			indir = 0;
+			/* orginal executable is 1st argument with scripts */
+			ep = uap->fname;
+			goto twice;
+		}
+		/* terminate in case no more args to script */
+		suword(argbufp, 0);
+		if (vectp = uap->argp) vectp++; /* manually doing the first
+						   argument with scripts */
+	}
 
 do_env_as_well:
 	if(vectp == 0) goto dont_bother;
@@ -262,7 +366,8 @@ dont_bother:
 	 */
 
 	/* stuff arg count on top of "new" stack */
-	argbuf[-1] = (char *)argc;
+	/* argbuf[-1] = (char *)argc;*/
+	suword(argbuf-1,argc);
 
 	/*
 	 * Step 4. Build the new processes image.
@@ -290,17 +395,17 @@ dont_bother:
 	addr = 0;
 
 	/* screwball mode -- special case of 413 to save space for floppy */
-	if (hdr.a_text == 0) {
+	if (exdata.ex_hdr.a_text == 0) {
 		foff = tsize = 0;
-		hdr.a_data += hdr.a_text;
+		exdata.ex_hdr.a_data += exdata.ex_hdr.a_text;
 	} else {
-		tsize = roundup(hdr.a_text, NBPG);
+		tsize = roundup(exdata.ex_hdr.a_text, NBPG);
 		foff = NBPG;
 	}
 
 	/* treat text and data in terms of integral page size */
-	dsize = roundup(hdr.a_data, NBPG);
-	bsize = roundup(hdr.a_bss + dsize, NBPG);
+	dsize = roundup(exdata.ex_hdr.a_data, NBPG);
+	bsize = roundup(exdata.ex_hdr.a_bss + dsize, NBPG);
 	bsize -= dsize;
 
 	/* map text & data in file, as being "paged in" on demand */
@@ -367,7 +472,7 @@ dont_bother:
 
 	/* setup initial register state */
 	p->p_regs[SP] = (unsigned) (argbuf - 1);
-	setregs(p, hdr.a_entry);
+	setregs(p, exdata.ex_hdr.a_entry);
 
 	vput(ndp->ni_vp);
 	FREE(ndp->ni_pnbuf, M_NAMEI);
