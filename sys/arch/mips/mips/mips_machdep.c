@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.146 2002/08/19 12:03:04 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.147 2002/08/28 02:09:30 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.146 2002/08/19 12:03:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.147 2002/08/28 02:09:30 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -360,6 +360,11 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"NEC VR5400 CPU"	},
 	{ 0, MIPS_R5900, -1, -1,		CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_NO_LLSC | CPU_MIPS_R4K_MMU,	"Toshiba R5900 CPU"	},
+
+	{ 0, MIPS_TX4900, MIPS_REV_TX4927, -1,	CPU_ARCH_MIPS3, 48,
+	  CPU_MIPS_R4K_MMU,			"Toshiba TX4927 CPU"	},
+	{ 0, MIPS_TX4900, -1, -1,		CPU_ARCH_MIPS3, 48,
+	  CPU_MIPS_R4K_MMU,			"Toshiba TX4900 CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
