@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.alpha,v 1.1 2000/06/05 21:55:30 thorpej Exp $
+./usr/include/alpha/intrcnt.h
