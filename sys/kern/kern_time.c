@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.12 1994/12/11 18:06:10 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.13 1994/12/13 22:19:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -114,7 +114,9 @@ settimeofday(p, uap, retval)
 		(void) splsoftclock();
 		__timeradd(&boottime, &delta);
 		__timeradd(&runtime, &delta);
-		LEASE_UPDATETIME(delta.tv_sec);
+# 		if defined(NFSCLIENT) || defined(NFSSERVER)
+			lease_updatetime(delta.tv_sec);
+#		endif
 		splx(s);
 		resettodr();
 	}
