@@ -1,3 +1,5 @@
+/*	$NetBSD: if.h,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
@@ -39,8 +41,8 @@ int if_getflags __P((int ifindex, int oifflags));
 int lladdropt_length __P((struct sockaddr_dl *sdl));
 void lladdropt_fill __P((struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt));
 int rtbuf_len __P((void));
-int get_rtinfo __P((char *buf, int *len));
-char *get_next_msg __P((char *buf, char *lim, int ifindex, int *lenp,
+int get_rtinfo __P((char *buf, size_t *len));
+char *get_next_msg __P((char *buf, char *lim, int ifindex, size_t *lenp,
 			   int filter));
 struct in6_addr *get_addr __P((char *buf));
 int get_rtm_ifindex __P((char *buf));
