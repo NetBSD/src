@@ -72,10 +72,11 @@ struct shmid_ds	*shmsegs;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void *shmat __P((int, const void *, int));
-void  shmctl __P((int, int, struct shmid_ds *));
-void  shmdt __P((const void *));
-void  shmget __P((key_t, size_t, int));
+int shmsys __P((int, ...));
+void *shmat  __P((int, void *, int));
+int shmget __P((key_t, int, int));
+int shmctl __P((int, int, struct shmid_ds *));
+int shmdt  __P((void *));
 __END_DECLS
 
 #endif /* !KERNEL */
