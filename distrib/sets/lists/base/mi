@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.469 2004/03/24 18:48:10 garbled Exp $
+# $NetBSD: mi,v 1.470 2004/03/28 09:51:46 martti Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -958,6 +958,7 @@
 ./usr/sbin/ipftest				base-netutil-bin
 ./usr/sbin/ipmon				base-netutil-bin
 ./usr/sbin/ipnat				base-router-bin
+./usr/sbin/ippool				base-netutil-root
 ./usr/sbin/ipresend				base-netutil-bin
 ./usr/sbin/ipsend				base-netutil-bin
 ./usr/sbin/iptest				base-netutil-bin
