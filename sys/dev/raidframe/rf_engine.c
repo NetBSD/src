@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.26 2003/12/29 05:22:16 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.27 2003/12/29 05:48:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.26 2003/12/29 05:22:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.27 2003/12/29 05:48:13 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -71,15 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.26 2003/12/29 05:22:16 oster Exp $")
 static void rf_ShutdownEngine(void *);
 static void DAGExecutionThread(RF_ThreadArg_t arg);
 static void rf_RaidIOThread(RF_ThreadArg_t arg);
-
-#define DO_INIT(_l_,_r_) { \
-  int _rc; \
-  rf_mutex_init(&(_r_)->node_queue_mutex); \
-  _rc = rf_create_managed_cond(_l_,&(_r_)->node_queue_cond); \
-  if (_rc) { \
-    return(_rc); \
-  } \
-}
 
 /* synchronization primitives for this file.  DO_WAIT should be enclosed in a while loop. */
 
@@ -139,8 +130,8 @@ rf_ConfigureEngine(
 {
 	int     rc;
 
-	DO_INIT(listp, raidPtr);
-
+	rf_mutex_init(&raidPtr->node_queue_mutex);
+	raidPtr->node_queue_cond = 0;
 	raidPtr->node_queue = NULL;
 	raidPtr->dags_in_flight = 0;
 

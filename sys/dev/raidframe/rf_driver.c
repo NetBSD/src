@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.75 2003/12/29 05:22:16 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.76 2003/12/29 05:48:13 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.75 2003/12/29 05:22:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.76 2003/12/29 05:48:13 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -298,15 +298,6 @@ rf_Shutdown(raidPtr)
 	rf_mutex_init((_m_)); \
 }
 
-#define DO_RAID_COND(_c_) { \
-	rc = rf_create_managed_cond(&raidPtr->shutdownList, (_c_)); \
-	if (rc) { \
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc); \
-		DO_RAID_FAIL(); \
-		return(rc); \
-	} \
-}
-
 int 
 rf_Configure(raidPtr, cfgPtr, ac)
 	RF_Raid_t *raidPtr;
@@ -377,15 +368,15 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
 
-	DO_RAID_COND(&raidPtr->outstandingCond);
+	raidPtr->outstandingCond = 0;
 
 	raidPtr->nAccOutstanding = 0;
 	raidPtr->waitShutdown = 0;
 
 	DO_RAID_MUTEX(&raidPtr->access_suspend_mutex);
-	DO_RAID_COND(&raidPtr->quiescent_cond);
+	raidPtr->quiescent_cond = 0;
 
-	DO_RAID_COND(&raidPtr->waitForReconCond);
+	raidPtr->waitForReconCond = 0;
 
 	DO_RAID_MUTEX(&raidPtr->recon_done_proc_mutex);
 
