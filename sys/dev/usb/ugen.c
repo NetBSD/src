@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.52 2001/12/31 11:54:06 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.53 2001/12/31 11:56:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.52 2001/12/31 11:54:06 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.53 2001/12/31 11:56:37 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,19 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    USBDEVNAME(sc->sc_dev), configno, sc));
+
+	/*
+	 * We start at 1, not 0, because we don't care whether the
+	 * control endpoint is open or not. It is always present.
+	 */
+	for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++)
+		if (sc->sc_is_open[endptno]) {
+			DPRINTFN(1,
+			     ("ugen_set_config: %s - endpoint %d is open\n",
+			      USBDEVNAME(sc->sc_dev), endptno));
+			return (USBD_IN_USE);
+		}
+
 	/* Avoid setting the current value. */
 	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
 		err = usbd_set_config_no(dev, configno, 1);
@@ -1053,8 +1066,14 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		if (!(flag & FWRITE))
 			return (EPERM);
 		err = ugen_set_config(sc, *(int *)addr);
-		if (err)
+		switch (err) {
+		case USBD_NORMAL_COMPLETION:
+			break;
+		case USBD_IN_USE:
+			return (EBUSY);
+		default:
 			return (EIO);
+		}
 		break;
 	case USB_GET_ALTINTERFACE:
 		ai = (struct usb_alt_interface *)addr;
