@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isapnp_isic.c,v 1.1.1.1 2001/01/05 12:50:16 martin Exp $ 
+ *	$Id: isic_isapnp.c,v 1.1 2001/02/18 09:24:52 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -83,21 +83,24 @@
 #include "opt_isicpnp.h"
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int isapnp_isic_probe __P((struct device *, void *, void *));
+static int isic_isapnp_probe __P((struct device *, void *, void *));
 #else
-static int isapnp_isic_probe __P((struct device *, struct cfdata *, void *));
+static int isic_isapnp_probe __P((struct device *, struct cfdata *, void *));
 #endif
-static void isapnp_isic_attach __P((struct device *, struct device *, void *));
+static void isic_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach isapnp_isic_ca = {
-	sizeof(struct l1_softc), isapnp_isic_probe, isapnp_isic_attach
+struct cfattach isic_isapnp_ca = {
+	sizeof(struct l1_softc), isic_isapnp_probe, isic_isapnp_attach
 };
 
 typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct l1_softc *sc);
 typedef void (*attach_func)(struct l1_softc *sc);
 
 /* map allocators */
+#if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
 static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
+#endif
 #ifdef ISICPNP_DRN_NGO
 static void ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
 #endif
@@ -114,15 +117,15 @@ extern void isic_attach_sws __P((struct l1_softc *sc));
 extern void isic_attach_Eqs1pi __P((struct l1_softc *sc));
 extern void isic_attach_siemens_isurf __P((struct l1_softc *sc));
 
-struct isapnp_isic_card_desc {
+struct isic_isapnp_card_desc {
 	char *devlogic;			/* ISAPNP logical device ID */
 	char *name;			/* Name of the card */
 	int card_type;			/* isic card type identifier */
 	allocmaps_func allocmaps;	/* map allocator function */
 	attach_func attach;		/* card attach and init function */
 };
-static const struct isapnp_isic_card_desc
-isapnp_isic_descriptions[] =
+static const struct isic_isapnp_card_desc
+isic_isapnp_descriptions[] =
 {
 #ifdef ISICPNP_CRTX_S0_P
 	{ "CTX0000", "Creatix ISDN S0-16 P&P", CARD_TYPEP_CS0P,
@@ -153,16 +156,16 @@ isapnp_isic_descriptions[] =
 	  generic_pnp_mapalloc, isic_attach_siemens_isurf },
 #endif
 };
-#define	NUM_DESCRIPTIONS	(sizeof(isapnp_isic_descriptions)/sizeof(isapnp_isic_descriptions[0]))
+#define	NUM_DESCRIPTIONS	(sizeof(isic_isapnp_descriptions)/sizeof(isic_isapnp_descriptions[0]))
 
 /*
  * Probe card
  */
 static int
 #ifdef __BROKEN_INDIRECT_CONFIG
-isapnp_isic_probe(parent, match, aux)
+isic_isapnp_probe(parent, match, aux)
 #else
-isapnp_isic_probe(parent, cf, aux)
+isic_isapnp_probe(parent, cf, aux)
 #endif
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -173,7 +176,7 @@ isapnp_isic_probe(parent, cf, aux)
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
-	const struct isapnp_isic_card_desc *desc = isapnp_isic_descriptions;
+	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
 
 	for (i = 0; i < NUM_DESCRIPTIONS; i++, desc++)
@@ -201,7 +204,7 @@ isapnp_isic_probe(parent, cf, aux)
 #endif
 
 static void
-isapnp_isic_attach(parent, self, aux)
+isic_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -225,7 +228,7 @@ isapnp_isic_attach(parent, self, aux)
 
 	struct l1_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
-	const struct isapnp_isic_card_desc *desc = isapnp_isic_descriptions;
+	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
 
 	for (i = 0; i < NUM_DESCRIPTIONS; i++, desc++)
@@ -362,6 +365,8 @@ isapnp_isic_attach(parent, self, aux)
 	}
 }
 
+#if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
 static void
 generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 {
@@ -371,6 +376,7 @@ generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 	sc->sc_maps[0].h = ipa->ipa_io[0].h;
 	sc->sc_maps[0].size = 0;	/* foreign mapping, leave it alone */
 }
+#endif
 
 #ifdef ISICPNP_DRN_NGO
 static void

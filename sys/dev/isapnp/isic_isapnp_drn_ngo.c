@@ -27,7 +27,7 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: i4b_drn_ngo.c,v 1.1.1.1 2001/01/05 12:50:18 martin Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.1 2001/02/18 09:24:53 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
