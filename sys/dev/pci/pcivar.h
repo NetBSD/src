@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.2 1994/10/27 04:21:42 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.3 1994/11/04 09:42:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -49,6 +49,5 @@ struct pci_attach_args {
 pcitag_t pci_make_tag __P((int, int, int));
 pcireg_t pci_conf_read __P((pcitag_t, int));
 void pci_conf_write __P((pcitag_t, int, pcireg_t));
-int pci_targmatch __P((struct cfdata *, struct pci_attach_args *));
 int pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
 int pci_map_int __P((pcitag_t, struct intrhand *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.6 1994/11/03 22:15:19 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.7 1994/11/04 09:42:18 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1327,7 +1327,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.6 1994/11/03 22:15:19 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.7 1994/11/04 09:42:18 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3235,13 +3235,11 @@ ncr_probe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
-	if (!pci_targmatch(cf, pa))
-		return 0;
 	if (pa->pa_id != NCR_810_ID &&
 	    pa->pa_id != NCR_825_ID)
-  		return 0;
+  		return (0);
 
-	return 1;
+	return (1);
 }
 
 #else /* !__NetBSD__ */
@@ -3434,7 +3432,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.6 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.7 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
