@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/03/13 18:13:19 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/15 12:03:12 itojun Exp $
 
 PROG=	lmtp
 
 DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
-BINDIR=	${PFIX_SBINDIR}
+BINDIR=	${PFIX_LIBEXECDIR}
 
 SRCS=	lmtp.c lmtp_connect.c lmtp_proto.c lmtp_chat.c lmtp_session.c \
 	lmtp_addr.c lmtp_trouble.c lmtp_state.c lmtp_sasl_glue.c \

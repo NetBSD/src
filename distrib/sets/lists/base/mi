@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.235 2001/03/14 13:40:36 kleink Exp $
+# $NetBSD: mi,v 1.236 2001/03/15 12:03:11 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -506,6 +506,8 @@
 ./usr/libexec/postfix/bounce			base-postfix-bin
 ./usr/libexec/postfix/cleanup			base-postfix-bin
 ./usr/libexec/postfix/error			base-postfix-bin
+./usr/libexec/postfix/flush	base-postfix-bin
+./usr/libexec/postfix/lmtp	base-postfix-bin
 ./usr/libexec/postfix/local			base-postfix-bin
 ./usr/libexec/postfix/master			base-postfix-bin
 ./usr/libexec/postfix/pickup			base-postfix-bin
@@ -515,6 +517,7 @@
 ./usr/libexec/postfix/showq			base-postfix-bin
 ./usr/libexec/postfix/smtp			base-postfix-bin
 ./usr/libexec/postfix/smtpd			base-postfix-bin
+./usr/libexec/postfix/spawn	base-postfix-bin
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin
 ./usr/libexec/rexecd		base-netutil-bin
 ./usr/libexec/rlogind		base-netutil-bin
@@ -597,7 +600,6 @@
 ./usr/sbin/eshconfig		base-sysutil-bin
 ./usr/sbin/faithd		base-router-bin
 ./usr/sbin/fixmount		base-nfsclient-bin
-./usr/sbin/flush		base-postfix-bin
 ./usr/sbin/fsinfo		base-sysutil-bin
 ./usr/sbin/g711conv		base-isdn-bin
 ./usr/sbin/getencstat		base-sysutil-bin
@@ -634,7 +636,6 @@
 ./usr/sbin/kvm_mkdb		base-sysutil-bin
 ./usr/sbin/lastlogin		base-sysutil-bin
 ./usr/sbin/link			base-sysutil-bin
-./usr/sbin/lmtp			base-postfix-bin
 ./usr/sbin/lpc			base-lpr-bin
 ./usr/sbin/lpd			base-lpr-bin
 ./usr/sbin/lptest		base-lpr-bin
@@ -733,7 +734,6 @@
 ./usr/sbin/setobjstat		base-sysutil-bin
 ./usr/sbin/sliplogin		base-slip-bin
 ./usr/sbin/slstats		base-slip-bin
-./usr/sbin/spawn		base-postfix-bin
 ./usr/sbin/spray		base-netutil-bin
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
