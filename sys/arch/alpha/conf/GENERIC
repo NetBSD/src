@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157.2.2 2000/07/12 21:04:17 thorpej Exp $
+# $NetBSD: GENERIC,v 1.157.2.3 2000/08/11 18:23:19 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.157.2.2 $"
+#ident 		"GENERIC-$Revision: 1.157.2.3 $"
 
 maxusers 32
 
@@ -315,6 +315,8 @@ bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+le*	at	depca?
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # PCMCIA device
