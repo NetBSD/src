@@ -1,4 +1,4 @@
-.\" $NetBSD: eject.1,v 1.8 2001/02/27 19:05:56 cgd Exp $
+.\" $NetBSD: eject.1,v 1.9 2001/10/06 15:43:33 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 9, 1995
+.Dd October 6, 2001
 .Dt EJECT 1
 .Os
 .Sh NAME
@@ -42,10 +42,13 @@
 .Nd eject a floppy disk, cdrom or tape
 .Sh SYNOPSIS
 .Nm
-.Op Fl flnv
-.Op Fl d Ar raw-device
+.Op Fl fv
+.Op Fl l | L | U
 .Op Fl t Ar device-type
-.Op Ar device
+.Op Fl d
+.Ar device
+.Nm ""
+.Fl n
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,6 +74,12 @@ Deprecated.
 Force the eject operation without attempting to unmount any filesystems first.
 .It Fl l
 Load media in the drive (only supporded for the cdrom device type).
+.It Fl L
+Lock the media into the drive (but see
+.Sx BUGS
+below).
+.It Fl U
+Unlock the media from the drive.
 .It Fl n
 List the built-in nicknames on standard output.
 .It Fl t Ar device-type
@@ -88,3 +97,9 @@ knowledge is available.
 Display some of the actions taken on standard output.
 .El
 .Pp
+.Sh BUGS
+Most disk drivers automatically lock the media on the first open and
+unlock it on the last close, making
+.Ql eject -L
+almost useless, since when it closes the device, it gets unlocked
+again.
