@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.144 2005/01/26 10:30:58 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.145 2005/01/27 11:33:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.144 2005/01/26 10:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.145 2005/01/27 11:33:26 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1502,20 +1502,22 @@ done:
 }
 
 void
-nfs_invaldircache(vp, forcefree)
+nfs_invaldircache(vp, flags)
 	struct vnode *vp;
-	int forcefree;
+	int flags;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	const boolean_t forcefree = flags & NFS_INVALDIRCACHE_FORCE;
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
 		panic("nfs: invaldircache: not dir");
 #endif
 
-	np->n_flag &= ~NEOFVALID;
+	if ((flags & NFS_INVALDIRCACHE_KEEPEOF) == 0)
+		np->n_flag &= ~NEOFVALID;
 
 	if (!np->n_dircache)
 		return;
