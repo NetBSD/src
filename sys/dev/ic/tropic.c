@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.12 2000/06/15 19:55:27 soren Exp $	*/
+/*	$NetBSD: tropic.c,v 1.13 2000/10/02 03:53:07 itojun Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -56,6 +56,7 @@
 #include <net/if_media.h>
 #include <net/netisr.h>
 #include <net/route.h>
+#include <net/if_token.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -63,7 +64,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
-#include <net/if_token.h>
 #endif
 
 #ifdef NS
@@ -1572,7 +1572,7 @@ caddr_t data;
 			}
 			arp_ifinit(ifp, ifa);
 			break;
-#endif INET
+#endif /*INET*/
 		default:
 			/* XXX if not running */
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {
