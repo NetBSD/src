@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/02/10 15:42:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2002/06/01 20:13:42 itojun Exp $
 
 COMPAT_UTIL_OVERRIDE=	svr4
 .include "../Makefile.inc"
@@ -18,6 +18,7 @@ SRCS+=	svr4_machdep.c
 #SRCS+=	uipc_syscalls_43.c vfs_syscalls_43.c
 
 .if ${MACHINE} == "i386"
+AFLAGS+=	-D__ELF__ -D_KERNEL
 SRCS+=	svr4_sigcode.s svr4_syscall.c
 .endif
 
