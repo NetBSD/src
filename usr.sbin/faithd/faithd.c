@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.17 2001/02/15 17:58:55 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.35 2001/02/10 05:24:52 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.18 2001/03/20 01:13:46 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.38 2001/02/27 06:46:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -776,13 +776,25 @@ sig_terminate(int sig)
 static void
 start_daemon(void)
 {
+#ifdef SA_NOCLDWAIT
+	struct sigaction sa;
+#endif
+
 	if (daemon(0, 0) == -1)
 		exit_stderr("daemon: %s", ERRSTR);
 
+#ifdef SA_NOCLDWAIT
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = sig_child;
+	sa.sa_flags = SA_NOCLDWAIT;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGCHLD, &sa, (struct sigaction *)0);
+#else
 	if (signal(SIGCHLD, sig_child) == SIG_ERR) {
 		exit_failure("signal CHLD: %s", ERRSTR);
 		/*NOTREACHED*/
 	}
+#endif
 
 	if (signal(SIGTERM, sig_terminate) == SIG_ERR) {
 		exit_failure("signal TERM: %s", ERRSTR);
