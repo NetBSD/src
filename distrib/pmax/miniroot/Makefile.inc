@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 1998/11/17 02:38:17 jonathan Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/03/15 20:54:54 is Exp $
 
 VND=		vnd0c
 #IMAGESIZE?=	8192 # 512 byte blocks
 IMAGESIZE?=	65536 # 512 byte blocks: full 32-meg root.
-NEWFSOPTS?=	-c 64
+NEWFSOPTS?=	-c 64 -B le
 DISKTYPE?=	miniroot
 
 #
