@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.4 2003/02/01 06:50:42 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -905,7 +905,7 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 					numkeys++;
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
 					retkeys[numkeys - 1] = &sdir->com.key;
 					retkeys[numkeys] = NULL;
 					if ((flags & P1212_FIND_RETURNALL)
@@ -924,7 +924,7 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 					numkeys++;
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
 					retkeys[numkeys - 1] = &data->com.key;
 					retkeys[numkeys] = NULL;
 					if ((flags & P1212_FIND_RETURNALL)
