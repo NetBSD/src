@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/10/08 22:40:41 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1997/01/02 00:22:43 pk Exp $
 
-PROG=		rdconfig
-MAN=		rdconfig.8
+PROG=		mdconfig
+MAN=		mdconfig.8
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdconfig.c,v 1.1.1.1 1995/10/08 22:40:41 gwr Exp $	*/
+/*	$NetBSD: mdconfig.c,v 1.2 1997/01/02 00:22:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
 
 /*
  * This program exists for the sole purpose of providing
- * user-space memory for the new RAM-disk driver (rd).
+ * user-space memory for the new memory-disk driver (md).
  * The job done by this is similar to mount_mfs.
  * (But this design allows any filesystem format!)
  */
@@ -42,17 +42,17 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct rd_conf rd;
+	struct md_conf md;
 	int nblks, fd, error;
 
 	if (argc <= 2) {
-		fprintf(stderr, "usage: rdconfig <device> <%d-byte-blocks>\n",
+		fprintf(stderr, "usage: mdconfig <device> <%d-byte-blocks>\n",
 				DEV_BSIZE);
 		exit(1);
 	}
@@ -62,7 +62,7 @@ main(argc, argv)
 		fprintf(stderr, "invalid number of blocks\n");
 		exit(1);
 	}
-	rd.rd_size = nblks << DEV_BSHIFT;
+	md.md_size = nblks << DEV_BSHIFT;
 
 	fd = open(argv[1], O_RDWR, 0);
 	if (fd < 0) {
@@ -70,18 +70,18 @@ main(argc, argv)
 		exit(1);
 	}
 
-	rd.rd_addr = mmap(NULL, rd.rd_size,
+	md.md_addr = mmap(NULL, md.md_size,
 				PROT_READ | PROT_WRITE,
 				MAP_ANON | MAP_PRIVATE,
 				-1, 0);
-	if (rd.rd_addr == (caddr_t)-1) {
+	if (md.md_addr == (caddr_t)-1) {
 		perror("mmap");
 		exit(1);
 	}
 
 	/* Become server! */
-	rd.rd_type = RD_UMEM_SERVER;
-	if (ioctl(fd, RD_SETCONF, &rd)) {
+	md.md_type = MD_UMEM_SERVER;
+	if (ioctl(fd, MD_SETCONF, &md)) {
 		perror("ioctl");
 		exit(1);
 	}
