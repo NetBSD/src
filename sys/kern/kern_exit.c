@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.44 1997/04/28 04:49:27 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.45 1997/04/28 13:17:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -123,7 +123,6 @@ exit1(p, rv)
 	 * wake up the parent early to avoid deadlock.
 	 */
 	p->p_flag |= P_WEXIT;
-	p->p_flag &= ~P_TRACED;
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
@@ -223,7 +222,7 @@ exit1(p, rv)
 		 * since their existence means someone is screwing up.
 		 */
 		if (q->p_flag & P_TRACED) {
-			q->p_flag &= ~P_TRACED;
+			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 			psignal(q, SIGKILL);
 		}
 	}
@@ -316,14 +315,21 @@ loop:
 			    sizeof (struct rusage))))
 				return (error);
 			/*
-			 * If we got the child via a ptrace 'attach',
-			 * we need to give it back to the old parent.
+			 * If we got the child via ptrace(2) or procfs, and
+			 * the parent is different (meaning the process was
+			 * attached, rather than run as a child), then we need
+			 * to give it back to the old parent, and send the
+			 * parent a SIGCHLD.  The rest of the cleanup will be
+			 * done when the old parent waits on the child.
 			 */
-			if (p->p_oppid && (t = pfind(p->p_oppid))) {
+			if ((p->p_flag & P_TRACED) &&
+			    p->p_oppid != p->p_pptr->p_pid) {
+				t = pfind(p->p_oppid);
+				proc_reparent(p, t ? t : initproc);
 				p->p_oppid = 0;
-				proc_reparent(p, t);
-				psignal(t, SIGCHLD);
-				wakeup((caddr_t)t);
+				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+				psignal(p->p_pptr, SIGCHLD);
+				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
 			p->p_xstat = 0;
