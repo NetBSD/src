@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.27 2002/10/18 03:32:03 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.28 2002/10/18 03:36:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -409,6 +409,7 @@ void	yield(void);
 struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
+void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
