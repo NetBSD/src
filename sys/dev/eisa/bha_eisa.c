@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.5 1996/10/21 22:31:00 thorpej Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.6 1997/03/13 01:10:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,11 @@
 #define	BHA_EISA_SLOT_OFFSET	0xc00
 #define	BHA_EISA_IOSIZE		0x100
 
+#ifdef  __BROKEN_INDIRECT_CONFIG
 int	bha_eisa_match __P((struct device *, void *, void *));
+#else
+int	bha_eisa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	bha_eisa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach bha_eisa_ca = {
@@ -64,7 +68,12 @@ struct cfattach bha_eisa_ca = {
 int
 bha_eisa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
