@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.8 1998/07/28 09:43:30 is Exp $
+.\"	$NetBSD: recv.2,v 1.9 1998/07/29 02:11:36 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -253,6 +253,9 @@ any data were available.
 .It Bq Er EFAULT
 The receive buffer pointer(s) point outside the process's
 address space.
+.It Bq Er EINVAL
+The total length of the I/O is more than can be expressed by the ssize_t
+return value.
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
