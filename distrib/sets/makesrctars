@@ -1,15 +1,45 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.15.2.1 2004/04/21 03:20:00 jmc Exp $
+#	$NetBSD: makesrctars,v 1.15.2.2 2004/04/21 03:22:28 jmc Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
 #
 
+prog=${0##*/}
+
+# set defaults
 : ${CKSUM=cksum}
+: ${PAX=pax}
+
+xsrcdir=
 
 GZIP=-9
 export GZIP
+
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${prog} [-x xsrcdir] srcdir setdir
+	-x xsrcdir	build xsrc.tgz from xsrcdir
+	srcdir		location of sources
+	setdir		where to write the .tgz files to
+USAGE
+	exit 1
+}
+
+# handle args
+while getopts x: ch; do
+	case ${ch} in
+	x)	
+		xsrcdir=${OPTARG}
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((${OPTIND} - 1))
 
 if [ $# -ne 2 ]; then
 	echo "Usage: $0 srcdir setdir"
@@ -23,12 +53,6 @@ if [ ! -d "${setdir}" ]; then
 	exit 1
 fi
 
-if ! cd "${srcdir}"; then
-	echo "Can't chdir to ${srcdir}"
-	exit 1
-fi
-
-
 makeset()
 {
 	set=$1.tgz
@@ -38,12 +62,22 @@ makeset()
 	find -s $* \
 	    ! \( \( -name obj -o -name 'obj.*' \) \( -type l -o -type d \) \) \
 	    -print \
-	    | pax -w -d -s'|^\.|usr/src|' \
+	    | ${PAX} -w -d -s'|^\.|'${srcprefix}'|' \
 	    | gzip \
 	    > "${setdir}/${set}"
 	set +f
 }
 
+
+# create (base)src sets
+#
+
+if ! cd "${srcdir}"; then
+	echo "Can't chdir to ${srcdir}"
+	exit 1
+fi
+
+srcprefix=usr/src
 
 makeset src .						\
 		! \( \(	-path ./gnu			\
@@ -60,6 +94,19 @@ makeset syssrc ./sys ./contrib/sys ./usr.sbin/config			\
 		    ! -name CVS -prune \)
 
 makeset sharesrc ./share
+
+
+# create xsrc sets
+#
+if [ -n "${xsrcdir}" ]; then
+	if ! cd "${xsrcdir}"; then
+		echo "Can't chdir to ${xsrcdir}"
+		exit 1
+	fi
+	srcprefix=usr/xsrc
+	makeset xsrc .
+fi
+
 
 echo "Creating checksum files"
 (cd ${setdir}
