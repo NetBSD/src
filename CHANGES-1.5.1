@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.80 2001/06/12 22:01:06 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.81 2001/06/16 21:28:03 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5280,3 +5280,40 @@ sys/arch/i386/i386/locore.s			1.240
 sys/arch/vax/vax/unimpl_emul.s			1.3-1.6
 
   Add EMODD emulation, as used in e.g. modf().
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.76
+sys/dev/pcmcia/pcmciadevs			1.111 partial, via patch
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+
+  Add support for ``Kingston KNE-PC2 Ethernet'' pcmcia cards.
+
+sys/uvm/uvm_fault.c				1.65 via patch
+
+  Work around overflow problem in uvm_fault_wire().
+
+sys/arch/i386/i386/vm86.c			1.24
+
+  Rework how user-mode instruction and stack fetches are done.
+  Also fix another vm86 protocol bug.
+
+sys/compat/netbsd32/netbsd32_netbsd.c		patch
+sys/kern/exec_script.c				1.29
+sys/kern/kern_exec.c				1.141
+
+  Close a race condition between exec of a setuid binary and
+  ptrace(2): check P_TRACED right before adjusting the privilege
+  settings in the exec code.
+
+sys/arch/next86k/dev/bus_dma.c			1.24
+sys/arch/next86k/dev/mb8795.c			1.24 via patch
+sys/arch/next86k/dev/nextdma.c			1.29 via patch
+
+  Fix bugs related to calculation of transmit packet length and
+  allow unaligned pointers in bus_dmamap_sync().  Fixes problems
+  related to full-size ethernet packets, as reported in PR#13212.
+
+distrib/notes/common/main			patch
+
+  Add a ``Quick install notes for the impatient'' section at the
+  front for the i386 port.
