@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.18 1998/08/28 21:58:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.19 1998/09/24 23:04:11 thorpej Exp $	*/
 
 /*
  *
@@ -61,6 +61,7 @@
 
 #include "opt_cputype.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +254,7 @@
  * locking data structures
  */
 
-#if NCPU > 1 || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 struct lock pmap_main_lock;
 simple_lock_data_t pvalloc_lock;
 simple_lock_data_t pmaps_lock;
@@ -882,7 +883,7 @@ vaddr_t kva_start;
    * init the static-global locks and global lists.
    */
 
-#if NCPU > 1 || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
   lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
   simple_lock_init(&pvalloc_lock);
   simple_lock_init(&pmaps_lock);
