@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.2 2002/09/18 16:51:16 ad Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.3 2002/09/18 17:06:07 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
+/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. */
 
 #define	NDZLINE 	8
 
