@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17.2.3 2000/08/21 18:18:23 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.17.2.4 2001/10/08 19:13:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -761,8 +761,7 @@ sw1:	mov	#1, r1
 
 1:	mov.l	XLqs, r0
 	mov	r2, r13
-	shll	r2
-	shll	r2
+	shll2	r2
 	shll	r2
 	add	r2, r0		/* r0 = &qs[i] */
 
@@ -1030,7 +1029,7 @@ XLP_ADDR:	.long	P_ADDR
 XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
-XL_ConvVtoP:	.long	_ConvVtoP
+XL_ConvVtoP:	.long	_C_LABEL(ConvVtoP)
 XL_KernelSp:	.long	KernelSp
 XL_SHREG_TTB:	.long	SHREG_TTB
 /*
@@ -1265,7 +1264,6 @@ XL_splimit_low3:	.long	0x80000000
 	nop
 	add	#4, r15		/* pop dummy code */
 	CLI
-	ldtlb
 	INTRFASTEXIT
 
 	.align	2
@@ -1277,7 +1275,7 @@ _C_LABEL(MonTrap100):
 
 	.align	2
 1:
-	.long	_exphandler
+	.long	_C_LABEL(exphandler)
 _C_LABEL(MonTrap100_end):
 
 	.align	2
@@ -1289,8 +1287,8 @@ _C_LABEL(MonTrap600):
 
 	.align	2
 1:
-	.long	_ihandler
-_MonTrap600_end:
+	.long	_C_LABEL(ihandler)
+_C_LABEL(MonTrap600_end):
 
 /*
  * Immediate Data
@@ -1425,7 +1423,7 @@ XL_KCSAREA:	.long	0x80000000
 XXL_SHREG_TTB:	.long	SHREG_TTB
 XL_P2AREA:	.long	0xa0000000
 #ifdef SH4
-XL_cacheflush:	.long	_sh4_cache_flush
+XL_cacheflush:	.long	_C_LABEL(sh4_cache_flush)
 #endif
 
 Xrecurse:
