@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.52 1999/02/12 01:10:08 lukem Exp $
+#	$NetBSD: sys.mk,v 1.53 1999/02/24 14:42:36 drochner Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -22,7 +22,7 @@ CC?=		cc
 .if ${MACHINE_ARCH} == "arm32" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mips" || \
+    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "sparc"
 CFLAGS?=	-O2
 .else
