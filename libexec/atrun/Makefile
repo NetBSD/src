@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/22 05:31:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 1998/07/29 01:15:41 simonb Exp $
 
 PROG=	atrun
 BINDIR=	/usr/libexec
 MAN=	atrun.8
-
-BINOWN=	root
 
 CPPFLAGS+= -I${.CURDIR}/../../usr.bin/at
 
