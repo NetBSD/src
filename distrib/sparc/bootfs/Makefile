@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2002/05/14 06:21:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2002/07/29 14:23:12 mrg Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -31,7 +31,7 @@ MDSET_RELEASEDIR=	installation/bootfs
 MDSET_SUFFIXES.netbsd.ram=  aout create-aout
 
 # conjure up a magic header that is accepted by all Sun PROMS;
-# see sys/arch/sparc/stand/installboot/installboot.c for details.
+# see src/usr.sbin/installboot/arch/sparc.c for details.
 #
 SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
 
