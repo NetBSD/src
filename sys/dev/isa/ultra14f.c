@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.19 1994/03/08 12:21:29 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.20 1994/03/10 20:52:17 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -47,10 +47,6 @@
 #endif  MACH    /* end of MACH specific */
 
 #ifdef  __NetBSD__      /* NetBSD specific */
-#define isa_dev isa_device
-#define dev_unit id_unit
-#define dev_addr id_iobase
-
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <i386/isa/isa_device.h>
@@ -396,11 +392,15 @@ if ((int)cheat != PHYSTOKV(inl(port + UHA_ICM0)))
 * autoconf.c                                            *
 \*******************************************************/
 uhaprobe(dev)
-struct isa_dev *dev;
+struct isa_device *dev;
 {
-	int	unit = uha_unit;
-	dev->dev_unit = unit;
-	uha_data[unit].baseport = dev->dev_addr;
+	int	unit;
+
+	if (dev->id_masunit != -1)
+		return 1;
+
+	dev->id_unit = unit = uha_unit;
+	uha_data[unit].baseport = dev->id_iobase;
 	if(unit >= NUHA)
 	{
 		printf("uha: unit number (%d) too high\n",unit);
@@ -418,7 +418,6 @@ struct isa_dev *dev;
 	dev->id_irq = (1 << uha_data[unit].vect);
 	dev->id_drq = uha_data[unit].dma;
 
-	
 	uha_unit ++;
 	return(8);
 }
@@ -427,12 +426,15 @@ struct isa_dev *dev;
 * Attach all the sub-devices we can find        *
 \***********************************************/
 uha_attach(dev)
-struct  isa_dev *dev;
+struct  isa_device *dev;
 {
 	static int firsttime;
 	static int firstswitch[NUHA];
 	int masunit = dev->id_masunit;
 	int r;
+
+	if (masunit == -1)
+		return 1;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;
