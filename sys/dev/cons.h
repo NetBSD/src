@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.9 1995/03/26 20:28:52 jtc Exp $	*/
+/*	$NetBSD: cons.h,v 1.10 1995/04/10 00:50:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,16 @@
  */
 
 struct consdev {
-	int	(*cn_probe)();	/* probe hardware and fill in consdev info */
-	int	(*cn_init)();	/* turn on as console */
-	int	(*cn_getc)();	/* kernel getchar interface */
-	int	(*cn_putc)();	/* kernel putchar interface */
-	void	(*cn_pollc)();	/* turn on and off polling */
+	void	(*cn_probe)	/* probe hardware and fill in consdev info */
+		    __P((struct consdev *));
+	void	(*cn_init)	/* turn on as console */
+		    __P((struct consdev *));
+	int	(*cn_getc)	/* kernel getchar interface */
+		    __P((dev_t));
+	void	(*cn_putc)	/* kernel putchar interface */
+		    __P((dev_t, int));
+	void	(*cn_pollc)	/* turn on and off polling */
+		    __P((dev_t, int));
 	dev_t	cn_dev;		/* major/minor of device */
 	short	cn_pri;		/* pecking order; the higher the better */
 };
@@ -62,6 +67,7 @@ struct consdev {
 #define	CONSMAJOR	0
 
 #ifdef _KERNEL
+
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 
@@ -74,4 +80,20 @@ int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	cnselect __P((dev_t, int, struct proc *));
 int	cngetc __P((void));
 int	cnputc __P((int));
+
+/* console-specific types */
+#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
+#define	dev_type_cninit(n)	void n __P((struct consdev *))
+#define	dev_type_cngetc(n)	int n __P((dev_t))
+#define	dev_type_cnputc(n)	void n __P((dev_t, int))
+#define	dev_type_cnpollc(n)	void n __P((dev_t, int))
+
+#define	cons_decl(n) \
+	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
+	dev_decl(n,cnputc); dev_decl(n,cnpollc)
+
+#define	cons_init(n) { \
+	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
+	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
+
 #endif
