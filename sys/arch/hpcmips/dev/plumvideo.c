@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.9 2000/05/09 10:15:17 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.10 2000/05/21 11:22:25 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -252,7 +252,6 @@ plumvideo_hpcfbinit(sc)
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
 
-	fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
 	switch (sc->sc_depth) {
 	default:
 		panic("plumvideo_hpcfbinit: not supported color depth\n");
@@ -336,8 +335,15 @@ plumvideo_init(sc)
 		break;
 	}
 	sc->sc_depth = bpp;
-	sc->sc_width = bootinfo->fb_width;
-	sc->sc_height = bootinfo->fb_height;
+
+	/*
+	 * Get display size from WindowsCE setted.
+	 */
+	sc->sc_width = bootinfo->fb_width = 
+		plum_conf_read(regt, regh, PLUM_VIDEO_PLHPX_REG) + 1;
+	sc->sc_height = bootinfo->fb_height = 
+		plum_conf_read(regt, regh, PLUM_VIDEO_PLVT_REG) -
+		plum_conf_read(regt, regh, PLUM_VIDEO_PLVDS_REG);
 
 	/*
 	 * set line byte length to bootinfo and LCD controller.
@@ -558,7 +564,7 @@ plumvideo_clut_get(sc, rgb, beg, cnt)
 					      bus_space_handle_t));
 	static void __plumvideo_clut_get(iot, ioh)
 		bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+		bus_space_handle_t ioh;
 	{
 		int i;
 		
@@ -584,7 +590,7 @@ plumvideo_clut_set(sc, rgb, beg, cnt)
 					      bus_space_handle_t));
 	static void __plumvideo_clut_set(iot, ioh)
 		bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+		bus_space_handle_t ioh;
 	{
 		int i;
 		
@@ -608,7 +614,7 @@ plumvideo_clut_default(sc)
 						  bus_space_handle_t));
 	static void __plumvideo_clut_default(iot, ioh)
 		bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+		bus_space_handle_t ioh;
 	{
 		const u_int8_t compo6[6] = { 0,  51, 102, 153, 204, 255 };
 		const u_int32_t ansi_color[16] = {
