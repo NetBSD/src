@@ -1,4 +1,4 @@
-.\"	$NetBSD: getlabelsector.3,v 1.1 2002/12/12 09:45:33 scw Exp $
+.\"	$NetBSD: getlabelsector.3,v 1.2 2002/12/18 20:21:11 wiz Exp $
 .\"
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
@@ -34,11 +34,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Dec 11, 2002
+.Dd December 11, 2002
 .Dt GETLABELSECTOR 3
 .Os
 .Sh NAME
-.Nm getlabelsector
+.Nm getlabelsector ,
 .Nm getlabeloffset
 .Nd get the sector number and offset of the disklabel
 .Sh LIBRARY
@@ -56,17 +56,20 @@ and
 .Fn getlabeloffset
 functions return values which describe the exact on-disk location of the
 .Xr disklabel 5
-on the current system, or -1 on error.
-These functions supercede the hardcoded LABELSECTOR and LABELOFFSET
+on the current system, or \-1 on error.
+These functions supercede the hardcoded
+.Dv LABELSECTOR
+and
+.Dv LABELOFFSET
 definitions previously used to derive the location of the
 .Xr disklabel 5 .
 .Sh SEE ALSO
-.Xr disklabel 5 ,
-.Xr sysctl 3
+.Xr sysctl 3 ,
+.Xr disklabel 5
 .Sh HISTORY
 The
 .Fn getlabelsector
 and
 .Fn getlabeloffset
-function calls appeared in
+functions appeared in
 .Nx 1.7 .
