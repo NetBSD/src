@@ -1,4 +1,4 @@
-/*	$NetBSD: amu.h,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: amfs_linkx.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -40,41 +40,67 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amu.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * Id: amfs_linkx.c,v 5.2.2.1 1992/02/09 15:09:04 jsp beta 
  *
  */
 
-#ifndef _AMU_H
-#define _AMU_H
+/*
+ * Symbol-link file system, with test that the target of the link exists.
+ */
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
+
+/* forward declarations */
+static int amfs_linkx_mount(am_node *mp);
 
 /*
- * Decide what maximum level of NFS server to try and mount with.
+ * linkx operations
  */
-#ifdef HAVE_FS_NFS3
-# define NFS_VERS_MAX NFS_VERSION3
-#else /* not HAVE_FS_NFS3 */
-# define NFS_VERS_MAX NFS_VERSION
-#endif /* not HAVE_FS_NFS3 */
+struct am_ops amfs_linkx_ops =
+{
+  "linkx",
+  amfs_link_match,
+  0,				/* amfs_linkx_init */
+  amfs_linkx_mount,
+  0,
+  amfs_auto_fumount,
+  amfs_link_fumount,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
+  0,				/* amfs_linkx_readlink */
+  0,				/* amfs_linkx_mounted */
+  0,				/* amfs_linkx_umounted */
+  find_amfs_auto_srvr,
+  FS_MBACKGROUND
+};
 
-/* some systems like ncr2 do not define this in <rpcsvc/mount.h> */
-#ifndef MNTPATHLEN
-# define MNTPATHLEN 1024
-#endif /* not MNTPATHLEN */
-#ifndef MNTNAMLEN
-# define MNTNAMLEN 255
-#endif /* not MNTNAMLEN */
 
-/*
- * external definitions for building libamu.a
- */
-extern voidp amqproc_null_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_p *amqproc_mnttree_1(amq_string *argp, CLIENT *rqstp);
-extern voidp amqproc_umnt_1(amq_string *argp, CLIENT *rqstp);
-extern amq_mount_stats *amqproc_stats_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_list *amqproc_export_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
-extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
-extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+static int
+amfs_linkx_mount(am_node *mp)
+{
+  /*
+   * Check for existence of target.
+   */
+  struct stat stb;
+  char *ln;
 
-#endif /* not _AMU_H */
+  if (mp->am_link)
+    ln = mp->am_link;
+  else				/* should never occur */
+    ln = mp->am_mnt->mf_mount;
+
+  /*
+   * Use lstat, not stat, since we don't
+   * want to know if the ultimate target of
+   * a symlink chain exists, just the first.
+   */
+  if (lstat(ln, &stb) < 0)
+    return errno;
+
+  return 0;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: amu.h,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: amfs_union.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -40,41 +40,87 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amu.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * Id: amfs_union.c,v 1.1 1997-1998/06/30 19:22:30 ezk Exp ezk 
  *
  */
 
-#ifndef _AMU_H
-#define _AMU_H
+/*
+ * Union automounter file system
+ */
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
+
+/****************************************************************************
+ *** FORWARD DEFINITIONS                                                  ***
+ ****************************************************************************/
+static void amfs_union_mounted(mntfs *mf);
+
+
+/****************************************************************************
+ *** OPS STRUCTURES                                                       ***
+ ****************************************************************************/
+am_ops amfs_union_ops =
+{
+  "union",
+  amfs_auto_match,
+  0,				/* amfs_auto_init */
+  amfs_toplvl_mount,
+  0,
+  amfs_toplvl_umount,
+  0,
+  amfs_auto_lookuppn,
+  amfs_auto_readdir,
+  0,				/* amfs_toplvl_readlink */
+  amfs_union_mounted,
+  0,				/* amfs_toplvl_umounted */
+  find_amfs_auto_srvr,
+  FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_DIRECTORY
+};
+
 
 /*
- * Decide what maximum level of NFS server to try and mount with.
+ * Create a reference to a union'ed entry
+ * XXX: this function may not be used anywhere...
  */
-#ifdef HAVE_FS_NFS3
-# define NFS_VERS_MAX NFS_VERSION3
-#else /* not HAVE_FS_NFS3 */
-# define NFS_VERS_MAX NFS_VERSION
-#endif /* not HAVE_FS_NFS3 */
+static int
+create_amfs_union_node(char *dir, voidp arg)
+{
+  if (!STREQ(dir, "/defaults")) {
+    int error = 0;
+    (void) amfs_toplvl_ops.lookuppn(arg, dir, &error, VLOOK_CREATE);
+    if (error > 0) {
+      errno = error;		/* XXX */
+      plog(XLOG_ERROR, "Could not mount %s: %m", dir);
+    }
+    return error;
+  }
+  return 0;
+}
 
-/* some systems like ncr2 do not define this in <rpcsvc/mount.h> */
-#ifndef MNTPATHLEN
-# define MNTPATHLEN 1024
-#endif /* not MNTPATHLEN */
-#ifndef MNTNAMLEN
-# define MNTNAMLEN 255
-#endif /* not MNTNAMLEN */
 
-/*
- * external definitions for building libamu.a
- */
-extern voidp amqproc_null_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_p *amqproc_mnttree_1(amq_string *argp, CLIENT *rqstp);
-extern voidp amqproc_umnt_1(amq_string *argp, CLIENT *rqstp);
-extern amq_mount_stats *amqproc_stats_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_list *amqproc_export_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
-extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
-extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+static void
+amfs_union_mounted(mntfs *mf)
+{
+  int i;
 
-#endif /* not _AMU_H */
+  amfs_auto_mkcacheref(mf);
+
+  /*
+   * Having made the union mount point,
+   * populate all the entries...
+   */
+  for (i = 0; i <= last_used_map; i++) {
+    am_node *mp = exported_ap[i];
+    if (mp && mp->am_mnt == mf) {
+      /* return value from create_amfs_union_node is ignored by mapc_keyiter */
+      (void) mapc_keyiter((mnt_map *) mp->am_mnt->mf_private,
+			  (void (*)(char *, voidp)) create_amfs_union_node,
+			  mp);
+      break;
+    }
+  }
+}

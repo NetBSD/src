@@ -1,4 +1,4 @@
-.\" $NetBSD: wire-test.8,v 1.1.1.3 1998/08/08 22:05:39 christos Exp $
+.\" $NetBSD: pawd.1,v 1.1.1.1 1998/08/08 22:05:39 christos Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-1998 Erez Zadok
@@ -40,33 +40,35 @@
 .\"
 .\"	%W% (Berkeley) %G%
 .\"
-.\" Id: fixmount.8,v 5.2.2.1 1992/02/09 15:11:15 jsp beta 
+.\" Id: pawd.1,v 5.2.2.1 1992/02/09 15:11:15 jsp beta 
 .\"
-.TH WIRE-TEST 8L "26 Feb 1993"
+.TH PAWD 1 "6 Jan 1998"
 .SH NAME
-wire-test \- test your network interfaces and local IP address
+pawd \- print automounter working directory
 .SH SYNOPSIS
-.B wire-test
+.B pawd
 [
-.I host
+.I path ...
 ]
 .SH DESCRIPTION
 .LP
-.B wire-test
-is used to find out what amd thinks are the first two network
-interfaces and network names/numbers used, as well as the IP address
-used for amd to NFS-mount itself.
-
-If
-.I host
-is specified, then
-.B wire-test
-will test for the working combinations of NFS protocol and version from
-the current client to the NFS server
-.I host.
-If not specified,
-.I host
-defaults to "localhost".
-
+.B pawd
+is used to print the current working directory, adjusted to reflect proper
+paths that can be reused to go through the automounter for the shortest
+possible path.  In particular, the path printed back does not include any
+of
+.BR Amd 's
+local mount points.  Using them is unsafe, because
+.B Amd
+may unmount managed file systems from the mount points, and thus including
+them in paths may not always find the files within.
+.P
+Without any arguments,
+.B pawd
+will print the automounter adjusted current working directory.  With any
+number of arguments, it will print the adjusted path of each one of the
+arguments.
 .SH "SEE ALSO"
-.BR amd (8).
+.BR amd (8),
+.BR amq (8),
+.BR pwd (1).

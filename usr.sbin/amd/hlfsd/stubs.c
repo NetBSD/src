@@ -1,7 +1,7 @@
-/*	$NetBSD: stubs.c,v 1.1.1.3 1997/10/26 00:03:13 christos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.4 1998/08/08 22:05:34 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -63,7 +63,7 @@ static nfsfattr slinkfattr = {NFLNK, 0120777, 1, 0, 0, NFS_MAXPATHLEN, 512, 0,
 				/* user name file attributes */
 static nfsfattr un_fattr = {NFLNK, 0120777, 1, 0, 0, NFS_MAXPATHLEN, 512, 0,
 			    (NFS_MAXPATHLEN + 1) / 512, 0, INVALIDID};
-static int getcreds(struct svc_req *, uid_t *, int *);
+static int getcreds(struct svc_req *, uid_t *, gid_t *);
 static int started;
 static am_nfs_fh slink;
 static am_nfs_fh un_fhandle;
@@ -113,8 +113,8 @@ nfsattrstat *
 nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
   static nfsattrstat res;
-  uid_t uid = INVALIDID;
-  int gid = INVALIDID;
+  uid_t uid = (uid_t) INVALIDID;
+  gid_t gid = (gid_t) INVALIDID;
 
   if (!started) {
     started++;
@@ -194,8 +194,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 {
   static nfsdiropres res;
   int idx;
-  uid_t uid = INVALIDID;
-  int gid = INVALIDID;
+  uid_t uid = (uid_t) INVALIDID;
+  gid_t gid = (gid_t) INVALIDID;
 
   if (!started) {
     started++;
@@ -262,7 +262,7 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 }
 
 static int
-getcreds(struct svc_req *rp, uid_t *u, int *g)
+getcreds(struct svc_req *rp, uid_t *u, gid_t *g)
 {
   struct authunix_parms *aup = (struct authunix_parms *) NULL;
 #ifdef HAVE_RPC_AUTH_DES_H
@@ -300,12 +300,12 @@ nfsreadlinkres *
 nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
   static nfsreadlinkres res;
-  uid_t userid = INVALIDID;
-  int groupid = hlfs_gid + 1;	/* anything not hlfs_gid */
+  uid_t userid = (uid_t) INVALIDID;
+  gid_t groupid = hlfs_gid + 1;	/* anything not hlfs_gid */
   int retval = 0;
   char *path_val = (char *) NULL;
   char *username;
-  static uid_t last_uid = INVALIDID;
+  static uid_t last_uid = (uid_t) INVALIDID;
 
   if (eq_fh(argp, &root)) {
     res.rlr_status = NFSERR_ISDIR;
