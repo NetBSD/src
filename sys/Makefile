@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1997/11/15 01:09:15 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 1997/11/26 17:25:10 cgd Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -49,12 +49,20 @@ copies:
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' '!' -path \
 	    'netiso/xebec/*' -print` ${DESTDIR}/usr/include
+	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type f | \
+		xargs chmod a=r)
+	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type d | \
+		xargs chmod u=rwx,go=rx)
 	rm -rf ${DESTDIR}/usr/include/machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/machine
 	pax -rw -pa -s "|arch/${MACHINE}/include||" \
 	    arch/${MACHINE}/include/*.h \
 	    ${DESTDIR}/usr/include/machine   
+	(cd ${DESTDIR}/usr/include; find machine -type f | \
+		xargs chmod a=r)
+	(cd ${DESTDIR}/usr/include; find machine -type d | \
+		xargs chmod u=rwx,go=rx)
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include; then \
@@ -63,6 +71,10 @@ copies:
 		pax -rw -pa -s "|arch/${MACHINE_ARCH}/include||" \
 		    arch/${MACHINE_ARCH}/include/*.h \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
+		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type f | \
+			xargs chmod a=r); \
+		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type d | \
+			xargs chmod u=rwx,go=rx); \
 	else \
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	fi
