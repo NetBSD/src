@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.14 2003/05/14 18:28:04 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.15 2003/05/22 18:10:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -445,6 +445,21 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_service_close_reply_t;
 
+/* io_connect_add_client */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_connect;
+} mach_io_connect_add_client_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_connect_add_client_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -468,6 +483,7 @@ int mach_io_connect_set_properties(struct mach_trap_args *);
 int mach_io_connect_method_scalari_structo(struct mach_trap_args *);
 int mach_io_connect_method_structi_structo(struct mach_trap_args *);
 int mach_io_service_close(struct mach_trap_args *);
+int mach_io_connect_add_client(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
