@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 1999/04/19 21:22:59 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.14 1999/05/06 14:16:08 kleink Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@ include	<vm/vm.h>
 include <uvm/uvm_extern.h>
 
 ifdef COMPAT_SVR4
-include <compat/svr4/svr4_syscalls.h>
+include <compat/svr4/svr4_syscall.h>
 include <compat/svr4/svr4_ucontext.h>
 endif
 
