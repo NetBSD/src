@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.545 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.546 2003/12/30 03:57:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.545 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.546 2003/12/30 03:57:19 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2372,9 +2372,15 @@ cpu_initclocks()
 void
 need_resched(struct cpu_info *ci)
 {
+
+	if (ci->ci_want_resched)
+		return;
+
 	ci->ci_want_resched = 1;
 	if ((ci)->ci_curlwp != NULL)
 		aston((ci)->ci_curlwp->l_proc);
+	else if (ci != curcpu())
+		x86_send_ipi(ci, 0);
 }
 #endif
 
