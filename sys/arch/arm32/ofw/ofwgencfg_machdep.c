@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.8 1998/08/27 04:00:55 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.9 1998/08/29 03:55:57 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -98,8 +98,8 @@ static void process_kernel_args	__P((void));
  *  Exported variables
  */
 BootConfig bootconfig;
-char *boot_path;
-char *boot_args;
+char *boot_args = NULL;
+char *boot_file = NULL;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
@@ -167,7 +167,7 @@ initarm(ofw_handle)
 	consinit();
 
 	/* Get boot info and process it. */
-	ofw_getbootinfo(&boot_path, &boot_args);
+	ofw_getbootinfo(&boot_file, &boot_args);
 	process_kernel_args();
 
 	/* Configure memory. */
