@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.153 2003/09/14 17:39:03 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.154 2003/09/14 23:45:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.153 2003/09/14 17:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.154 2003/09/14 23:45:53 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -84,7 +84,7 @@ static void	proc_stop(struct proc *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_save(struct proc *, ksiginfo_t *);
-static void	ksiginfo_del(struct proc *p, ksiginfo_t *);
+static void	ksiginfo_del(struct proc *, ksiginfo_t *);
 static void	ksiginfo_put(struct proc *, ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
 
