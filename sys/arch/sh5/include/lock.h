@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2002/07/05 13:32:00 scw Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2002/12/07 22:31:33 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,5 +51,40 @@ typedef __volatile long		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+	register_t l;
+
+	do {
+		__asm __volatile("movi 1, %0; swap.q %1, r63, %0" :
+		    "=r"(l) : "r"(alp));
+	} while (l == __SIMPLELOCK_LOCKED);
+}
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	register_t l;
+
+	__asm __volatile("movi 1, %0; swap.q %1, r63, %0" : "=r"(l) : "r"(alp));
+
+	return (__SIMPLELOCK_LOCKED - (int)l);
+}
+
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
 
 #endif /* _SH5_LOCK_H_ */
