@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.33 1998/12/18 21:40:14 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.34 1999/01/09 21:54:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -63,7 +63,6 @@ struct	pool mclpool;		/* mbuf cluster pool */
 
 struct mbuf *mbutl;
 struct mbstat mbstat;
-union mcluster *mclfree;
 int	max_linkhdr;
 int	max_protohdr;
 int	max_hdr;
