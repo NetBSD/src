@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.33 2000/06/29 08:53:03 mrg Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.34 2001/02/24 20:08:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -55,7 +55,7 @@
 #include <machine/katelib.h>
 
 #include <arm32/iomd/iomdreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include "vidcaudio.h"
 
