@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsutil.c,v 1.6 1996/10/15 07:00:27 veego Exp $	*/
+/*	$NetBSD: rcsutil.c,v 1.7 1998/07/27 01:21:18 mycroft Exp $	*/
 
 /* RCS utility functions */
 
@@ -34,6 +34,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsutil.c,v $
+ * Revision 1.7  1998/07/27 01:21:18  mycroft
+ * const poisoning.
+ *
  * Revision 1.6  1996/10/15 07:00:27  veego
  * Merge rcs 5.7.
  *
@@ -374,7 +377,7 @@ getusername(suspicious)
 			    faterror("no password entry for userid %lu",
 				     (unsigned long)ruid()
 			    );
-			name = pw->pw_name;
+			name = strdup(pw->pw_name);
 #else
 #if has_setuid
 			faterror("setuid not supported");
