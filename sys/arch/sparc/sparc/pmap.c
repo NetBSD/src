@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2000/06/02 10:43:59 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.167 2000/06/05 20:38:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -570,11 +570,6 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
-#if 0
-	/* XXX - uncaching in pgt_page_alloc() below is not yet quite Okay */
-	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
-		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
-#endif
 }
 
 /* Set the page table entry for va to pte. */
@@ -613,18 +608,6 @@ setpte4m(va, pte)
 	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
-void	pcache_flush __P((caddr_t, caddr_t, int));
-void
-pcache_flush(va, pa, n)
-	caddr_t	va, pa;
-	int	n;
-{
-	void (*f)__P((int,int)) = cpuinfo.pcache_flush_line;
-
-	while ((n -= 4) >= 0)
-		(*f)((u_int)va+n, (u_int)pa+n);
-}
-
 /*
  * Page table pool back-end.
  */
@@ -634,16 +617,38 @@ pgt_page_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
-	caddr_t p;
+	int cacheit = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0;
+	struct vm_page *pg;
+	vaddr_t va;
+	paddr_t pa;
 
-	p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
-				      (vsize_t)sz, UVM_KMF_NOWAIT);
+	/* Allocate a page of physical memory */
+	if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
+		return (NULL);
 
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
-		pcache_flush(p, (caddr_t)VA2PA(p), sz);
-		kvm_uncache(p, sz/NBPG);
+	/* Allocate virtual memory */
+	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
+	if (va == 0) {
+		uvm_pagefree(pg);
+		return (NULL);
 	}
-	return (p);
+
+	/*
+	 * On systems with a physical data cache we need to flush this page
+	 * from the cache if the pagetables cannot be cached.
+	 * On systems with a virtually indexed data cache, we only need
+	 * to map it non-cacheable, since the page is not currently mapped.
+	 */
+	pa = VM_PAGE_TO_PHYS(pg);
+	if (cacheit == 0)
+		pcache_flush_page(pa, 1);
+
+	/* Map the page */
+	pmap_enter(pmap_kernel(), va, pa | (cacheit ? 0 : PMAP_NC),
+	    VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+
+	return ((void *)va);
 }       
    
 void
@@ -3066,6 +3071,7 @@ pmap_bootstrap4m(void)
 	int reg, seg;
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
+	paddr_t pagetables_start_pa;
 	extern char end[];
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
@@ -3153,7 +3159,7 @@ pmap_bootstrap4m(void)
 	get_phys_mem();
 
 	/* Allocate physical memory for pv_table[] */
-	p += pv_table_map((paddr_t)p - KERNBASE, 0);
+	p += pv_table_map((paddr_t)(p - KERNBASE), 0);
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
@@ -3162,6 +3168,7 @@ pmap_bootstrap4m(void)
 	 */
 
 	pagetables_start = p;
+	pagetables_start_pa = (paddr_t)(p - KERNBASE);
 
 	/*
 	 * Allocate context table.
@@ -3169,7 +3176,7 @@ pmap_bootstrap4m(void)
 	 */
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
-	cpuinfo.ctx_tbl_pa = (paddr_t)cpuinfo.ctx_tbl - KERNBASE;
+	cpuinfo.ctx_tbl_pa = (paddr_t)(cpuinfo.ctx_tbl - KERNBASE);
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
 
 	/*
@@ -3197,7 +3204,7 @@ pmap_bootstrap4m(void)
 	/* Round to next page and mark end of pre-wired kernel space */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
-	avail_start = (paddr_t)p - KERNBASE;
+	avail_start = (paddr_t)(p - KERNBASE);
 
 	/*
 	 * Now wire the region and segment tables of the kernel map.
@@ -3342,8 +3349,22 @@ pmap_bootstrap4m(void)
 		 * Flush it now, and don't touch it again until we
 		 * switch to our own tables (will be done immediately below).
 		 */
-		pcache_flush(pagetables_start, (caddr_t)VA2PA(pagetables_start),
-			     pagetables_end - pagetables_start);
+		int size = pagetables_end - pagetables_start;
+		if (CACHEINFO.c_vactype != VAC_NONE) {
+			int va = (vaddr_t)pagetables_start;
+			while (size != 0) {
+				cache_flush_page(va);
+				va += NBPG;
+				size -= NBPG;
+			}
+		} else if (cpuinfo.pcache_flush_page != NULL) {
+			int pa = pagetables_start_pa;
+			while (size != 0) {
+				pcache_flush_page(pa, 0);
+				pa += NBPG;
+				size -= NBPG;
+			}
+		}
 	}
 
 	/*
@@ -6396,12 +6417,17 @@ pmap_zero_page4m(pa)
 
 	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
-		 * The following might not be necessary since the page
-		 * is being cleared because it is about to be allocated,
+		 * The following VAC flush might not be necessary since the
+		 * page is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
+		 * In the case of a physical cache, a flush (or just an
+		 * invalidate, if possible) is usually necessary when using
+		 * uncached access to clear it.
 		 */
 		if (CACHEINFO.c_vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
+		else
+			pcache_flush_page(pa, 1);
 	}
 	pte = SRMMU_TEPTE | PPROT_N_RWX | (atop(pa) << SRMMU_PPNSHIFT);
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
@@ -6507,6 +6533,8 @@ pmap_copy_page4m(src, dst)
 		/* similar `might not be necessary' comment applies */
 		if (CACHEINFO.c_vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
+		else
+			pcache_flush_page(dst, 1);
 	}
 
 	dpte = SRMMU_TEPTE | PPROT_N_RWX | (atop(dst) << SRMMU_PPNSHIFT);
