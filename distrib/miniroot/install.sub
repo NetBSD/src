@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.13 1996/06/27 13:45:46 pk Exp $
+#	$NetBSD: install.sub,v 1.14 1996/07/04 06:57:21 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -766,8 +766,11 @@ __install_cdrom_2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
-install_disk() {
-	# Get the disk device info
+mount_a_disk() {
+	# Mount a disk on /mnt2. The set of disk devices to choose from
+	# is $_DKDEVS.
+	# returns 0 on failure.
+
 	local _drive
 	local _partition_range
 	local _partition
@@ -777,21 +780,11 @@ install_disk() {
 	local _md_fstype
 	local _md_fsopts
 
-	cat << \__install_disk_1
-
-The following disk devices are installed on your system; please select
-the disk device containing the partition with the installation sets:
-
-__install_disk_1
-	_DKDEVS=`md_get_diskdevs`
-	echo    "$_DKDEVS"
-	echo	""
-	echo -n	"Which is the disk with the installation sets? [abort] "
 	getresp "abort"
 	case "$resp" in
 		abort)
 			echo "Aborting."
-			return
+			return 0
 			;;
 
 		*)
@@ -801,7 +794,7 @@ __install_disk_1
 				echo ""
 				echo "The disk $resp does not exist."
 				echo "Aborting."
-				return
+				return 0
 			fi
 			;;
 	esac
@@ -825,11 +818,11 @@ __install_disk_1
 	done
 
 	# Ask for filesystem type
-	cat << \__install_disk_2
+	cat << \__mount_a_disk_2
 
 The following filesystem types are supported:
 	1) ffs
-__install_disk_2
+__mount_a_disk_2
 	_md_fstype=`md_native_fstype`
 	_md_fsopts=`md_native_fsopts`
 	if [ ! -z "$_md_fstype" ]; then
@@ -861,6 +854,26 @@ __install_disk_2
 	if ! mount -t ${_fstype} -o $_fsopts \
 	    /dev/${_drive}${_partition} /mnt2 ; then
 		echo "Cannot mount disk.  Aborting."
+		return 0
+	fi
+	return 1
+}
+
+install_disk() {
+	local _directory
+
+	cat << \__install_disk_1
+
+The following disk devices are installed on your system; please select
+the disk device containing the partition with the installation sets:
+
+__install_disk_1
+	_DKDEVS=`md_get_diskdevs`
+	echo    "$_DKDEVS"
+	echo	""
+	echo -n	"Which is the disk with the installation sets? [abort] "
+
+	if mount_a_disk ; then
 		return
 	fi
 
