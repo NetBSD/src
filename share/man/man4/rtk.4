@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtk.4,v 1.3 2000/07/31 11:45:48 ad Exp $
+.\"	$NetBSD: rtk.4,v 1.4 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer
 .\" All rights reserved.
@@ -45,18 +45,16 @@ The
 .Nm rtk
 device driver supports network adapters based on
 the RealTek 8129/8139 chips.
-.Pp
 .Sh MEDIA SELECTION
 Media selection is done using
 .Xr ifconfig 8
 using the standard
 .Xr ifmedia 4
 mechanism.  Refer to those manual pages for more information.
-.Pp
 .Sh SEE ALSO
 .Xr cardbus 4 ,
-.Xr ifconfig 8 ,
 .Xr ifmedia 4 ,
+.Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.Xr mii 4
+.Xr ifconfig 8
