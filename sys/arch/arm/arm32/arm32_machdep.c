@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.5 2001/09/10 21:19:35 chris Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6 2001/10/27 16:51:44 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -176,7 +176,7 @@ map_section(pagetable, va, pa, cacheable)
 
 	if (cacheable)
 		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), PT_C);
+		    L1_SEC((pa & PD_MASK), pte_cache_mode);
 	else
 		((u_int *)pagetable)[(va >> PDSHIFT)] =
 		    L1_SEC((pa & PD_MASK), 0);
