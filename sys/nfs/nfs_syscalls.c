@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.75 2004/05/22 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.76 2004/06/10 12:57:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.75 2004/05/22 22:52:16 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.76 2004/06/10 12:57:43 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -839,7 +839,7 @@ nfsrv_zapsock(slp)
 	int s;
 
 	simple_lock(&nfsd_slock);
-	if ((slp->ns_flag & SLP_VALID) != 0) {
+	if ((slp->ns_flag & SLP_VALID) == 0) {
 		simple_unlock(&nfsd_slock);
 		return;
 	}
