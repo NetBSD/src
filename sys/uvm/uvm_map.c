@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.140 2003/10/02 00:02:10 enami Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.141 2003/10/09 02:44:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.140 2003/10/02 00:02:10 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.141 2003/10/09 02:44:54 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -796,7 +796,7 @@ forwardmerge:
 			else if (prev_entry->next->aref.ar_amap) {
 				if (amap_extend(prev_entry->next,
 				    prev_entry->end -
-				    prev_entry->start + size,
+				    prev_entry->start,
 				    amapwaitflag | AMAP_EXTEND_BACKWARDS))
 				goto nomerge;
 			}
