@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.23 2004/08/08 23:17:12 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.24 2004/08/09 14:24:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.23 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.24 2004/08/09 14:24:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ aic_pcmcia_attach(parent, self, aux)
 			continue;
 
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &psc->sc_pcioh) == 0)
+		    cfe->iospace[0].length, cfe->iospace[0].length,
+		    &psc->sc_pcioh) == 0)
 			break;
 	}
 
