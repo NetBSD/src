@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.133 2001/05/28 02:50:53 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.134 2001/06/07 01:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1256,7 +1256,8 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 					break;
 				} else if (rlen < len) {
 					backup = len - rlen;
-					(caddr_t)uiop->uio_iov->iov_base -=
+					uiop->uio_iov->iov_base =
+					    (caddr_t)uiop->uio_iov->iov_base -
 					    backup;
 					uiop->uio_iov->iov_len += backup;
 					uiop->uio_offset -= backup;
@@ -2248,7 +2249,8 @@ nfs_readdirrpc(vp, uiop, cred)
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if (reclen > left) {
 				dp->d_reclen += left;
-				(caddr_t)uiop->uio_iov->iov_base += left;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				blksiz = 0;
@@ -2266,13 +2268,15 @@ nfs_readdirrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';	/* null terminate */
-				(caddr_t)uiop->uio_iov->iov_base += tlen;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2322,7 +2326,8 @@ nfs_readdirrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		(caddr_t)uiop->uio_iov->iov_base += left;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
@@ -2432,7 +2437,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				 * again here.
 				 */
 				dp->d_reclen += left;
-				(caddr_t)uiop->uio_iov->iov_base += left;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
@@ -2450,7 +2456,9 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base +
+				    DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				cnp->cn_nameptr = uiop->uio_iov->iov_base;
 				cnp->cn_namelen = len;
@@ -2458,7 +2466,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';
-				(caddr_t)uiop->uio_iov->iov_base += tlen;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2544,7 +2553,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		(caddr_t)uiop->uio_iov->iov_base += left;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
