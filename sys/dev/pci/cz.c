@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.19 2002/03/17 19:40:59 atatat Exp $	*/
+/*	$NetBSD: cz.c,v 1.19.4.1 2002/05/16 11:57:45 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.19 2002/03/17 19:40:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.19.4.1 2002/05/16 11:57:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,12 +182,8 @@ int	cztty_transmit(struct cztty_softc *, struct tty *);
 int	cztty_receive(struct cztty_softc *, struct tty *);
 
 struct	cztty_softc * cztty_getttysoftc(dev_t dev);
-int	cztty_findmajor(void);
-int	cztty_major;
 int	cztty_attached_ttys;
 int	cz_timeout_ticks;
-
-cdev_decl(cztty);
 
 void    czttystart(struct tty *tp);
 int	czttyparam(struct tty *tp, struct termios *t);
@@ -199,6 +195,20 @@ int	cztty_to_tiocm(struct cztty_softc *sc);
 void	cztty_diag(void *arg);
 
 extern struct cfdriver cz_cd;
+
+dev_type_open(czttyopen);
+dev_type_close(czttyclose);
+dev_type_read(czttyread);
+dev_type_write(czttywrite);
+dev_type_ioctl(czttyioctl);
+dev_type_stop(czttystop);
+dev_type_tty(czttytty);
+dev_type_poll(czttypoll);
+
+const struct cdevsw cz_cdevsw = {
+	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
+	czttystop, czttytty, czttypoll, nommap, D_TTY
+};
 
 /* Macros to clear/set/test flags. */
 #define SET(t, f)       (t) |= (f)
@@ -385,8 +395,6 @@ cz_attach(struct device *parent,
 		    cz_timeout_ticks == 1 ? "" : "s");
 	}
 
-	if (cztty_major == 0)
-		cztty_major = cztty_findmajor();
 	/*
 	 * Allocate sufficient pointers for the children and
 	 * attach them.  Set all ports to a reasonable initial
@@ -435,7 +443,7 @@ cz_attach(struct device *parent,
 		callout_init(&sc->sc_diag_ch);
 
 		tp = ttymalloc();
-		tp->t_dev = makedev(cztty_major,
+		tp->t_dev = makedev(cdevsw_lookup_major(&cz_cdevsw),
 		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
@@ -883,19 +891,6 @@ cztty_getttysoftc(dev_t dev)
 		return (NULL);
 	else
 		return (&cz->cz_ports[u - k]);
-}
-
-int
-cztty_findmajor(void)
-{
-	int	maj;
-
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == czttyopen)
-			break;
-	}
-
-	return (maj == nchrdev) ? 0 : maj;
 }
 
 /*
