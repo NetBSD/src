@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.7 1997/05/30 07:02:14 jeremy Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.8 1997/06/10 19:36:53 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ bus_peek(bustype, paddr, sz)
 		return -1;
 
 	offset = paddr & ~(MMU_PAGE_MASK);
-	paddr = _trunc_page(paddr);
+	paddr = m68k_trunc_page(paddr);
 	paddr |= bustype_to_patype[bustype];
 	paddr |= PMAP_NC;
 
