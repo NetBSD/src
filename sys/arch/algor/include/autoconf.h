@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2001/05/28 16:22:17 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2001/06/01 16:00:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,7 +37,9 @@
  */
 struct mainbus_attach_args {
 	const char *ma_name;		/* device name */
+	bus_space_tag_t ma_st;		/* the space tag to use */
 	bus_addr_t ma_addr;		/* system bus address */
+	int	   ma_irq;		/* IRQ index */
 };
 
 #ifdef _KERNEL
