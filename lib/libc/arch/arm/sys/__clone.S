@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $ */
+/* $NetBSD: __clone.S,v 1.5 2004/08/21 11:29:51 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -61,7 +61,7 @@ ENTRY(__clone)
 	teq	r1, #0x00
 
 	/* if this is the parent then just return the pid */
-	moveq	r15, r14
+	RETc(eq)
 	/*
 	 * This is the child
 	 * load the function and arg off the stack
@@ -75,7 +75,11 @@ ENTRY(__clone)
 	mov	r0, r2
 
 	/* call the function */
+#ifdef _ARM_ARCH_4T
+	bx	r1
+#else
 	mov	pc, r1
+#endif
 
 .Lreturnhere:
 	/* call _exit with the returned value */
