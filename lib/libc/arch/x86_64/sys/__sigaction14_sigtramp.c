@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.6 2004/03/23 16:19:41 drochner Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.7 2004/03/25 14:21:29 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,33 +50,20 @@
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern const int __sigtramp_sigcontext_1[];
 	extern const int __sigtramp_siginfo_2[];
-	int rv;
 
+#if 0
 	/*
 	 * If no sigaction, use the "default" trampoline since it won't
 	 * be used.
 	 */
 	if (act == NULL)
 		return  __sigaction_sigtramp(sig, act, oact, NULL, 0);
+#endif
 
 	/*
-	 * We select the non-SA_SIGINFO trampoline if SA_SIGINFO is not
-	 * set in the sigaction.
-	 */
-	if ((act->sa_flags & SA_SIGINFO) == 0) {
-		int sav = errno;
-		rv =  __sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1);
-		if (rv >= 0 || errno != EINVAL)
-			return rv;
-		errno = sav;
-	}
-
-	/*
-	 * If SA_SIGINFO was specified or the compatibility trampolines
-	 * can't be used, use the siginfo trampoline.
+	 * Don't provide sigcontext compatibility,
+	 * always use the siginfo trampoline.
 	 */
 	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
 }
