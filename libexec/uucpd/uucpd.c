@@ -1,3 +1,5 @@
+/*	$NetBSD: uucpd.c,v 1.6 1997/10/07 09:29:50 mrg Exp $	*/
+
 /*
  * Copyright (c) 1985 The Regents of the University of California.
  * All rights reserved.
@@ -34,15 +36,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1985 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.5 1996/12/01 00:44:48 thorpej Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California.\n\
+ All rights reserved.\n");
+#if 0
+static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
+#else
+__RCSID("$Id: uucpd.c,v 1.6 1997/10/07 09:29:50 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -54,6 +56,7 @@ static char rcsid[] = "$Id: uucpd.c,v 1.5 1996/12/01 00:44:48 thorpej Exp $";
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -66,6 +69,9 @@ static char rcsid[] = "$Id: uucpd.c,v 1.5 1996/12/01 00:44:48 thorpej Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utmp.h>
+#include <fcntl.h>
+
 #include "pathnames.h"
 
 struct	sockaddr_in hisctladdr;
@@ -78,18 +84,25 @@ char *nenv[] = {
 	Username,
 	NULL,
 };
+
 extern char **environ;
 
+void dologout __P((void));
+void dologin __P((struct passwd *, struct sockaddr_in *));
+void doit __P((struct sockaddr_in *));
+int readline __P((char *, int));
+int main __P((int, char **));
+
+int
 main(argc, argv)
-int argc;
-char **argv;
+	int argc;
+	char **argv;
 {
 #ifndef BSDINETD
 	register int s, tcp_socket;
 	struct servent *sp;
 #endif /* !BSDINETD */
 	extern int errno;
-	int dologout();
 
 	environ = nenv;
 #ifdef BSDINETD
@@ -154,12 +167,13 @@ char **argv;
 #endif	/* !BSDINETD */
 }
 
+void
 doit(sinp)
-struct sockaddr_in *sinp;
+	struct sockaddr_in *sinp;
 {
 	char user[64], passwd[64];
-	char *xpasswd, *crypt();
-	struct passwd *pw, *getpwnam();
+	char *xpasswd;
+	struct passwd *pw;
 
 	alarm(60);
 	printf("login: "); fflush(stdout);
@@ -196,14 +210,16 @@ struct sockaddr_in *sinp;
 	setgid(pw->pw_gid);
 	initgroups(pw->pw_name, pw->pw_gid);
 	chdir(pw->pw_dir);
+	setlogin(user);
 	setuid(pw->pw_uid);
 	execl(_PATH_UUCICO, "uucico", (char *)0);
 	perror("uucico server: execl");
 }
 
+int
 readline(p, n)
-register char *p;
-register int n;
+	char *p;
+	int n;
 {
 	char c;
 
@@ -221,13 +237,11 @@ register int n;
 	return(-1);
 }
 
-#include <utmp.h>
-#include <fcntl.h>
-
 #define	SCPYN(a, b)	strncpy(a, b, sizeof (a))
 
 struct	utmp utmp;
 
+void
 dologout()
 {
 	union wait status;
@@ -253,9 +267,10 @@ dologout()
 /*
  * Record login in wtmp file.
  */
+void
 dologin(pw, sin)
-struct passwd *pw;
-struct sockaddr_in *sin;
+	struct passwd *pw;
+	struct sockaddr_in *sin;
 {
 	char line[32];
 	char remotehost[32];
