@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.128 1999/09/29 15:46:15 jdolecek Exp $
+# $NetBSD: mi,v 1.129 1999/10/09 15:33:38 hubertf Exp $
 .
 ./altroot
 ./bin
@@ -767,6 +767,7 @@
 ./usr/share/doc/usd/31.trek
 ./usr/share/examples
 ./usr/share/examples/amd
+./usr/share/examples/dhcp
 ./usr/share/examples/emul
 ./usr/share/examples/emul/svr4
 ./usr/share/examples/emul/svr4/etc
