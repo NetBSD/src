@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/05/22 17:19:12 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/22 21:22:16 tv Exp $
 #
 
 DIST=	${.CURDIR}/../../dist
@@ -14,9 +14,12 @@ SRCS=	app.c as.c atof-generic.c bignum-copy.c cond.c expr.c \
 .PATH:	${DIST}/gas/config ${DIST}/gas ${DIST}/gas/doc
 
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${TARGET_ARCH} \
-	-I${.CURDIR}/../../lib/bfd -I${DIST}/gas -I${DIST}/gas/config \
+	-I${BFDOBJ} -I${DIST}/gas -I${DIST}/gas/config \
 	-I${DIST}/bfd -I${DIST}/include -I${DIST} \
 	-D_GNU_SOURCE
+
+BFDOBJ!=cd ${.CURDIR}/../../lib/bfd; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 
@@ -24,10 +27,10 @@ SRCS+=	${TARG_CPU_C} ${OBJ_FORMAT_C} ${ATOF_TARG_C}
 TARGET_CPU= ${GNU_ARCH.${TARGET_ARCH}}
 CPPFLAGS+= -DTARGET_ALIAS=\"${TARGET_CPU}-netbsd\"
 CPPFLAGS+= -DTARGET_CPU=\"${TARGET_CPU}\"
-CPPFLAGS+= -DTARGET_CANONICAL=\"${TARGET_CPU}-unknown-netbsd\"
+CPPFLAGS+= -DTARGET_CANONICAL=\"${TARGET_CPU}--netbsd\"
 
-LDADD+= -lbfd
-DPADD+= ${LIBBFD}
+LDADD+= -L${BFDOBJ} -lbfd
+DPADD+= ${BFDOBJ}/libbfd.a
 
 MAN=	as.1
 
