@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1998/07/19 17:47:07 drochner Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1999/02/21 21:48:07 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -98,6 +98,7 @@ void	 labelkre __P((void));
 void	 labelmbufs __P((void));
 void	 labelnetstat __P((void));
 void	 labelpigs __P((void));
+void	 labelps __P((void));
 void	 labels __P((void));
 void	 labelswap __P((void));
 void	 load __P((void));
@@ -117,5 +118,6 @@ void	 showmbufs __P((void));
 void	 shownetstat __P((void));
 void	 showpigs __P((void));
 void	 showswap __P((void));
+void	 showps __P((void));
 void	 status __P((void));
 void	 suspend __P((int));
