@@ -72,7 +72,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #undef  FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
-  fprintf (FILE, "\tmovab .LP%d,r0\n\tjsb __mcount+2\n", (LABELNO))
+  asm_fprintf (FILE, "\tmovab .LP%d,%Rr0\n\tjsb __mcount\n", (LABELNO))
 
 /* Use sjlj exceptions. */
 #undef DWARF2_UNWIND_INFO		/* just to be safe */
