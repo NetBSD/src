@@ -1,8 +1,10 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
+int	main __P((int, char *[]));
 void	die __P((void));
 
 void
@@ -16,7 +18,9 @@ die()
 }
 
 int
-main()
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	char *p, *title, *buf, *format;
 	size_t len;
@@ -68,7 +72,7 @@ main()
 			printf("%d %d %d %d %d %d %d %d\n",
 			    tm.tm_sec, tm.tm_min, tm.tm_hour, tm.tm_mday,
 			    tm.tm_mon, tm.tm_year, tm.tm_wday, tm.tm_yday);
-			printf("%s\n", p, p, p);
+			printf("%s\n", p);
 		} else {
 			printf("failed\n");
 		}
