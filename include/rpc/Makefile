@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.7 2003/01/06 00:50:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5.2.8 2003/01/17 06:08:27 thorpej Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -9,5 +9,5 @@ RPC_INCS=	rpcb_prot.h
 
 INCSDIR=	/usr/include/rpc
 
-.include <bsd.prog.mk>
 .include <bsd.rpc.mk>
+.include <bsd.prog.mk>
