@@ -8,7 +8,7 @@
     *  
     *  SB1250 specification level:  User's manual 1/02/02
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *
@@ -119,7 +119,7 @@
 #define L2C_NUM_WAYS              4
 
 
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 /*
  * L2 Read Misc. register (A_L2_READ_MISC)
  */
@@ -138,7 +138,7 @@
 #define M_L2C_MISC_SCACHE_DISABLE_B	_SB_MAKEMASK1(2)
 #define M_L2C_MISC_SCACHE_DISABLE_R	_SB_MAKEMASK1(1)
 #define M_L2C_MISC_SCACHE_DISABLE_L	_SB_MAKEMASK1(0)
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
 
 #endif

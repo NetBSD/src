@@ -8,7 +8,7 @@
     *  
     *  SB1250 specification level:  01/02/2002
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *
@@ -123,9 +123,9 @@
 
 #define A_L2_READ_TAG               0x0010040018
 #define A_L2_ECC_TAG                0x0010040038
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define A_L2_READ_MISC              0x0010040058
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 #define A_L2_WAY_DISABLE            0x0010041000
 #define A_L2_MAKEDISABLE(x)         (A_L2_WAY_DISABLE | (((~(x))&0x0F) << 8))
 #define A_L2_MGMT_TAG_BASE          0x00D0000000
@@ -211,9 +211,9 @@
 #define R_MAC_DMA_CUR_DSCRA             0x00000020
 #define R_MAC_DMA_CUR_DSCRB             0x00000028
 #define R_MAC_DMA_CUR_DSCRADDR          0x00000030
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define R_MAC_DMA_OODPKTLOST_RX         0x00000038	/* rx only */
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
 /*
  * RMON Counters
@@ -252,10 +252,10 @@
 #define R_MAC_ADFILTER_CFG              0x00000200
 #define R_MAC_ETHERNET_ADDR             0x00000208
 #define R_MAC_PKT_TYPE                  0x00000210
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define R_MAC_ADMASK0			0x00000218
 #define R_MAC_ADMASK1			0x00000220
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 #define R_MAC_HASH_BASE                 0x00000240
 #define R_MAC_ADDR_BASE                 0x00000280
 #define R_MAC_CHLO0_BASE                0x00000300
@@ -663,6 +663,7 @@
 
 #define A_SCD_SYSTEM_REVISION       0x0010020000
 #define A_SCD_SYSTEM_CFG            0x0010020008
+#define A_SCD_SYSTEM_MANUF          0x0010038000
 
 /*  ********************************************************************* 
     * System Address Trap Registers
@@ -788,16 +789,16 @@
 #define R_DM_CUR_DSCR_ADDR	    0x0000000010
 #define R_DM_DSCR_BASE_DEBUG	    0x0000000018
 
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define A_DM_PARTIAL_0		    0x0010020ba0
 #define A_DM_PARTIAL_1		    0x0010020ba8
 #define A_DM_PARTIAL_2		    0x0010020bb0
 #define A_DM_PARTIAL_3		    0x0010020bb8
 #define DM_PARTIAL_REGISTER_SPACING 0x8
 #define A_DM_PARTIAL(idx)	    (A_DM_PARTIAL_0 + ((idx) * DM_PARTIAL_REGISTER_SPACING))
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define A_DM_CRC_0		    0x0010020b80
 #define A_DM_CRC_1		    0x0010020b90
 #define DM_CRC_REGISTER_SPACING	    0x10
@@ -807,7 +808,7 @@
 
 #define R_CRC_DEF_0		    0x00
 #define R_CTCP_DEF_0		    0x08
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
 /*  *********************************************************************
     *  Physical Address Map

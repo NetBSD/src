@@ -8,7 +8,7 @@
     *  
     *  SB1250 specification level:  User's manual 1/02/02
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *
@@ -207,9 +207,9 @@
 #define G_MC_ADDR_DRIVE(x)           _SB_GETVALUE(x,S_MC_ADDR_DRIVE,M_MC_ADDR_DRIVE)
 #define V_MC_ADDR_DRIVE_DEFAULT      V_MC_ADDR_DRIVE(0x0)
 
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define M_MC_REF_DISABLE             _SB_MAKEMASK1(30)
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
 #define M_MC_DLL_BYPASS              _SB_MAKEMASK1(31)
 
@@ -311,10 +311,10 @@
 
 #define M_MC_EXTERNALDECODE	    _SB_MAKEMASK1(35)
 
-#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define M_MC_PRE_ON_A8              _SB_MAKEMASK1(36)
 #define M_MC_RAM_WITH_A13           _SB_MAKEMASK1(38)
-#endif /* 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 */
 
 
 
