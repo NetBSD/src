@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1997/04/09 23:35:08 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 1997/04/21 16:17:44 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -74,6 +74,9 @@
 #endif
 
 struct proc *fpu_proc;		/* Process owning the FPU. */
+
+/* Allow turning off if ieee_handler for debugging */
+int ieee_handler_disable = 0;
 
 static __inline void userret __P((struct proc *, int, u_quad_t));
 void trap __P((struct trapframe));
