@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2000/06/09 05:51:49 soda Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.64 2000/06/14 22:17:59 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2000/06/09 05:51:49 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2000/06/14 22:17:59 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,13 +98,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct frame *f;
 	pt_entry_t *pte;
 	int i, x;
-
-#ifdef MIPS3
-	/* ? make sense ? */
-	if (CPUISMIPS3)
-		MachHitFlushDCache((vaddr_t)p2->p_addr, USPACE);
-#endif
-
 
 #ifdef DIAGNOSTIC
 	/*
