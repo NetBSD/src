@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2002/04/23 17:14:45 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.4.1 2002/06/06 08:06:54 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -897,7 +897,7 @@ pmap_pinit(pmap_t pm)
 				entropy = (pmap_vsidcontext >> 20);
 				continue;
 			}
-			i = ffs(~pmap_vsid_bitmap[i]) - 1;
+			i = ffs(~pmap_vsid_bitmap[n]) - 1;
 			mask = 1 << i;
 			hash &= 0xfffff & ~(VSID_NBPW-1);
 			hash |= i;
