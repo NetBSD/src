@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.217 2005/01/27 17:14:04 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.218 2005/01/28 00:18:22 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.217 2005/01/27 17:14:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.218 2005/01/28 00:18:22 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -879,7 +879,7 @@ tcp_input(struct mbuf *m, ...)
 	struct tcpcb *tp = 0;
 	int tiflags;
 	struct socket *so = NULL;
-	int todrop, acked, ourfinisacked, needoutput = 0;
+	int todrop, dupseg, acked, ourfinisacked, needoutput = 0;
 #ifdef TCP_DEBUG
 	short ostate = 0;
 #endif
@@ -1815,6 +1815,7 @@ after_listen:
 	}
 
 	todrop = tp->rcv_nxt - th->th_seq;
+	dupseg = FALSE;
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
@@ -1843,6 +1844,7 @@ after_listen:
 			 */
 			tp->t_flags |= TF_ACKNOW;
 			todrop = tlen;
+			dupseg = TRUE;
 			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
 		} else if ((tiflags & TH_RST) &&
@@ -2059,7 +2061,7 @@ after_listen:
 	case TCPS_TIME_WAIT:
 
 		if (SEQ_LEQ(th->th_ack, tp->snd_una)) {
-			if (tlen == 0 && tiwin == tp->snd_wnd) {
+			if (tlen == 0 && !dupseg && tiwin == tp->snd_wnd) {
 				tcpstat.tcps_rcvdupack++;
 				/*
 				 * If we have outstanding data (other than
@@ -2127,17 +2129,20 @@ after_listen:
 					(void) tcp_output(tp);
 					goto drop;
 				}
-			} else if (tlen) {
-				tp->t_dupacks = 0;	/*XXX*/
-				/* drop very old ACKs unless th_seq matches */
-				if (th->th_seq != tp->rcv_nxt &&
+			} else {
+				/*
+				 * If the ack appears to be very old, only
+				 * allow data that is in-sequence.  This
+				 * makes it somewhat more difficult to insert
+				 * forged data by guessing sequence numbers.
+				 * Sent an ack to try to update the send
+				 * sequence number on the other side.
+				 */
+				if (tlen && th->th_seq != tp->rcv_nxt &&
 				    SEQ_LT(th->th_ack,
-				    tp->snd_una - tp->max_sndwnd)) {
-					goto drop;
-				}
-				break;
-			} else
-				tp->t_dupacks = 0;
+				    tp->snd_una - tp->max_sndwnd))
+					goto dropafterack;
+			}
 			break;
 		}
 		/*
@@ -2198,7 +2203,7 @@ after_listen:
 			u_int cw = tp->snd_cwnd;
 			u_int incr = tp->t_segsz;
 
-			if (cw > tp->snd_ssthresh)
+			if (cw >= tp->snd_ssthresh)
 				incr = incr * incr / cw;
 			tp->snd_cwnd = min(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
