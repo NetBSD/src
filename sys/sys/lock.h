@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.25 1999/10/23 23:00:06 ross Exp $	*/
+/*	$NetBSD: lock.h,v 1.26 2000/04/29 03:31:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 #endif
 
 #include <sys/queue.h>
+#include <machine/lock.h>
 
 /*
  * The simple lock.  Provides a simple spinning mutex.  Note the
@@ -106,21 +107,11 @@ struct simplelock {
 #endif
 };
 
-/*
- * Machine-dependent code may #undef and override these.
- */
-#define	SIMPLELOCK_LOCKED	1
-#define	SIMPLELOCK_UNLOCKED	0
-
-#if defined(MULTIPROCESSOR)
-#include <machine/lock.h>
-#endif
-
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED, NULL, 0, NULL, 0, \
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, 0, NULL, 0, \
 				  { NULL, NULL }, 0 }
 #else
-#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED }
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
 
 /* XXXCDC: kill typedefs later? */
@@ -307,12 +298,12 @@ void	simple_lock_init __P((struct simplelock *));
 void	simple_lock_dump __P((void));
 void	simple_lock_freecheck __P((void *, void *));
 #elif defined(MULTIPROCESSOR)
-#define	simple_lock_init(alp)	cpu_simple_lock_init((alp))
-#define	simple_lock(alp)	cpu_simple_lock((alp))
-#define	simple_lock_try(alp)	cpu_simple_lock_try((alp))
-#define	simple_unlock(alp)	cpu_simple_unlock((alp))
+#define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
+#define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
+#define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
+#define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
 #else
-#define	simple_lock_init(alp)	(alp)->lock_data = SIMPLELOCK_UNLOCKED
+#define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
 #define	simple_lock(alp)		/* nothing */
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)		/* nothing */
