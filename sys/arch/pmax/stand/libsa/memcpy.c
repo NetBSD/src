@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.c,v 1.1 1999/01/30 11:54:31 simonb Exp $	*/
+/*	$NetBSD: memcpy.c,v 1.2 1999/02/22 08:22:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,14 +38,21 @@
  *	@(#)strcat.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <machine/dec_prom.h>
-#undef memcpy
+#include <sys/types.h>
 
-char *
+void *
 memcpy(dst, src, len)
 	void *dst;
 	const void *src;
 	size_t len;
 {
-	return ((callv->_memcpy) (dst, (void *)src, len));
+	char *d;
+	const char *s;
+
+	d = dst;
+	s = src;
+	while (len--) {
+		*d++ = *s++;
+	}
+	return(dst);
 }
