@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2003/02/23 22:29:38 he Exp $
+#	$NetBSD: list,v 1.12 2004/03/30 13:38:20 he Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -7,7 +7,7 @@ PROG	sbin/dmesg
 PROG	usr/bin/basename
 PROG	usr/bin/cksum usr/bin/sum
 PROG	usr/bin/cut
-PROG	usr/bin/gawk usr/bin/awk
+PROG	usr/bin/awk
 PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
