@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.15 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.15 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.15 2003/11/17 10:07:58 keihan Exp $");
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
 
-#include <sgimips/dev/macevar.h>
-#include <sgimips/dev/macereg.h>
+#include <sgimips/mace/macevar.h>
+#include <sgimips/mace/macereg.h>
 #include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
 
@@ -111,10 +111,7 @@ static void	mace_blink(void *);
 #endif
 
 static int
-mace_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/*
@@ -127,10 +124,7 @@ mace_match(parent, match, aux)
 }
 
 static void
-mace_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mace_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mace_softc *sc = (struct mace_softc *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -222,9 +216,7 @@ mace_attach(parent, self, aux)
 
 
 static int
-mace_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mace_print(void *aux, const char *pnp)
 {
 	struct mace_attach_args *maa = aux;
 
@@ -242,10 +234,7 @@ mace_print(aux, pnp)
 }
 
 static int
-mace_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mace_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mace_softc *sc = (struct mace_softc *)parent;
 	struct mace_attach_args maa;
@@ -272,11 +261,7 @@ mace_search(parent, cf, aux)
 }
 
 void *
-mace_intr_establish(intr, level, func, arg)
-	int intr;
-	int level;
-	int (*func)(void *);
-	void *arg;
+mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2004/01/18 04:06:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2004/01/18 04:06:43 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_machtypes.h"
@@ -52,9 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2003/11/17 10:07:58 keihan Exp $")
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#include <sgimips/dev/crimereg.h>
-#include <sgimips/dev/macereg.h>
 
 struct device	*booted_device = NULL;
 static struct device *booted_controller = NULL;
