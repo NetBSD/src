@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.1 2002/03/30 19:48:56 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.2 2002/04/04 18:50:28 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.1 2002/03/30 19:48:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2 2002/04/04 18:50:28 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,8 @@ igsfb_pci_attach(parent, self, aux)
 		ioflags = sc->sc_memflags;
 	} else {
 		/* feh, 1682 denies having io space registers */
-/* XXX: ms-IIep specific !!! */
-#define IGS_IO_PADDR 0x30000000
 		sc->sc_iot = pa->pa_iot;
-		iobase = IGS_IO_PADDR;
+		iobase = 0;
 		ioflags = 0;
 	}
 
