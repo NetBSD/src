@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1989 Stephen Deering.
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992 Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Stephen Deering of Stanford University.
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_mroute.h	8.1 (Berkeley) 6/10/93
- *	$Id: ip_mroute.h,v 1.4 1994/05/13 06:06:24 mycroft Exp $
+ *	from: @(#)ip_mroute.h	7.2 (Berkeley) 7/8/92
+ *	$Id $
  */
 
 /*
@@ -91,6 +91,7 @@ struct vifctl {
 };
 
 #define	VIFF_TUNNEL	0x1		/* vif represents a tunnel end-point */
+#define	VIFF_SRCRT	0x2		/* tunnel uses IP src routing */
 
 
 /*
@@ -146,7 +147,7 @@ struct mrt {
 };
 
 
-#define	MRTHASHSIZ	64
+#define	MRTHASHSIZ	256
 #if (MRTHASHSIZ & (MRTHASHSIZ - 1)) == 0	  /* from sys:route.h */
 #define	MRTHASHMOD(h)	((h) & (MRTHASHSIZ - 1))
 #else
@@ -164,11 +165,10 @@ struct mrtstat {
 	u_long	mrts_no_route;		/* no route for packet's origin */
 	u_long	mrts_bad_tunnel;	/* malformed tunnel options */
 	u_long	mrts_cant_tunnel;	/* no room for tunnel options */
+	u_long	mrts_wrong_if;		/* arrived on wrong interface */
 };
 
-
+int	ip_mforward __P((struct mbuf *, struct ifnet *));
 int	ip_mrouter_cmd __P((int, struct socket *, struct mbuf *));
 int	ip_mrouter_done __P((void));
-
 #endif /* KERNEL */
-
