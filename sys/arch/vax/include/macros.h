@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.29 2003/08/13 11:30:50 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.30 2003/09/18 18:38:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -353,10 +353,10 @@ bbcci(int bitnr, long *addr)
 }
 
 #define setrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
 
 #define remrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
 
 #define cpu_switch(p, newp) ({ 						\
 	register int ret;						\
