@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.12 2000/12/08 20:08:43 thorpej Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.13 2001/01/11 00:34:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.12 2000/12/08 20:08:43 thorpej Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.13 2001/01/11 00:34:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -317,7 +317,7 @@ main(argc, argv)
 	if (foreground == 0 && daemon(0, 0))
 		err(1, "can't detach");
 
-	openlog(__progname, LOG_PID, LOG_DAEMON);
+	openlog("ypserv", LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting");
 	pidfile(NULL);
 
