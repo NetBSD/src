@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.14 2001/09/15 18:20:53 chs Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.15 2001/11/12 22:54:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  * Miscellaneous DDB functions that are intimate (xxx) with various
  * data structures and functions used by the kernel (proc, callout).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.15 2001/11/12 22:54:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

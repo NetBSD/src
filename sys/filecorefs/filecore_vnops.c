@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.15 2001/09/22 22:48:17 chs Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.16 2001/11/12 23:04:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -35,6 +35,9 @@
  *
  *	filecore_vnops.c	1.2	1998/8/18
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.16 2001/11/12 23:04:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
