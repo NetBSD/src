@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.25 2001/08/05 03:33:15 matt Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.26 2001/09/22 00:53:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.25 2001/08/05 03:33:15 matt Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.26 2001/09/22 00:53:01 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,10 +77,12 @@ static int cputyp = -1;
 static int pgshift;
 static int nptesg;	/* [sun4/sun4c] only */
 
+#undef VA_VPG
 #define VA_VPG(va)	((cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) \
 				? VA_SUN4C_VPG(va) \
 				: VA_SUN4_VPG(va))
 
+#undef VA_OFF
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
 int _kvm_kvatop44c __P((kvm_t *, u_long, u_long *));
