@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61 1998/03/30 14:21:39 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.62 1998/08/21 14:13:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -434,10 +434,10 @@ clock_map(bh, model)
 {
 	struct clockreg *cl;
 
-	pmap_changeprot(pmap_kernel(), (vm_offset_t)bh, VM_PROT_READ, 1);
+	pmap_changeprot(pmap_kernel(), (vaddr_t)bh, VM_PROT_READ, 1);
 	if (strcmp(model, "mk48t08") == 0) {
 		if (NBPG < 8192)
-			pmap_changeprot(pmap_kernel(), (vm_offset_t)bh + 4096,
+			pmap_changeprot(pmap_kernel(), (vaddr_t)bh + 4096,
 					VM_PROT_READ, 1);
 		cl = (struct clockreg *)((int)bh + CLK_MK48T08_OFF);
 	} else
@@ -793,7 +793,7 @@ clk_wenable(onoff)
 	splx(s);
 	if (prot)
 		pmap_changeprot(pmap_kernel(),
-				(vm_offset_t)clockreg & ~(NBPG-1),
+				(vaddr_t)clockreg & ~(NBPG-1),
 				prot, 1);
 }
 
