@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.19 2002/03/21 00:25:41 eeh Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.20 2002/03/27 16:03:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.19 2002/03/21 00:25:41 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.20 2002/03/27 16:03:52 pk Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -231,7 +231,7 @@ cs4231_sbus_regdump(label, sc)
 
 	printf("apc_dmacsr=%s\n",
 		bitmask_snprintf(
-			bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacsr,
+			bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacsr),
 				APC_BITS, bits, sizeof(bits)));
 
 	ad1848_dump_regs(&sc->sc_cs4231.sc_ad1848);
