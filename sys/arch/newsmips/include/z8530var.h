@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3 2000/12/03 01:42:30 matt Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.4 2003/04/26 18:43:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,6 +69,12 @@ u_char zs_read_data __P((struct zs_chanstate *cs));
 void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
 void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+
+int zs_print __P((void *, const char *));
+int zshard __P((void *));
+void zssoft __P((void*));
+int zs_get_speed __P((struct zs_chanstate *));
+void (*zs_delay) __P((void));
 
 /* Zilog Serial hardware interrupts (level 1) */
 #define splzs		cpu_spl1
