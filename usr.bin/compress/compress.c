@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.13 1997/09/15 10:58:38 lukem Exp $	*/
+/*	$NetBSD: compress.c,v 1.14 1997/10/18 13:04:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.13 1997/09/15 10:58:38 lukem Exp $");
+__RCSID("$NetBSD: compress.c,v 1.14 1997/10/18 13:04:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 		errx(1, "unknown program name");
 
 	bits = cat = 0;
-	while ((ch = getopt(argc, argv, "b:cdfv")) != EOF)
+	while ((ch = getopt(argc, argv, "b:cdfv")) != -1)
 		switch(ch) {
 		case 'b':
 			bits = strtol(optarg, &p, 10);
