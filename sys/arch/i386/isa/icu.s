@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.2 1993/09/24 08:49:10 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.3 1993/10/09 08:48:31 mycroft Exp $
  */
 
 /*
@@ -55,8 +55,12 @@
 #define NSIO 0
 #endif
 
-/* XXXX */
-#define	SOFTCLOCKMASK	0x8000
+/*
+ * All spl levels include ASTMASK; this forces ipl to be non-zero when
+ * splx()ing from nested spl levels, and thus soft interrupts do not
+ * get executed.  Logically, all spl levels are `above' soft interupts.
+ */
+#define	ASTMASK	0x10000
 
 	.data
 	.globl	_cpl
@@ -70,16 +74,19 @@ _imen:
 	.long	-1			# interrupt mask enable (all off)
 	.globl	_ttymask
 _ttymask:
-	.long	0
+	.long	ASTMASK
 	.globl	_biomask
 _biomask:
-	.long	0
+	.long	ASTMASK
 	.globl	_netmask
 _netmask:
-	.long	0
+	.long	ASTMASK
 	.globl	_impmask
 _impmask:
-	.long	0
+	.long	ASTMASK
+	.globl	_astmask
+_astmask:
+	.long	ASTMASK
 
 vec:
 	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
