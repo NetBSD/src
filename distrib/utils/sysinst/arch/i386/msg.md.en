@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.39 2003/07/07 12:30:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.40 2003/07/07 21:26:34 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,16 +43,6 @@ message md_hello
 
 }
 
-message Select_type
-{Select type}
-
-message Choose_an_option
-{Choose an option}
-message Use_real_geometry
-{Use real geometry}
-message Use_disklabel_geometry
-{Use disklabel geometry}
-
 message dobad144
 {Installing the bad block table ...
 }
@@ -81,13 +71,6 @@ message Use_serial_115200_bootblocks
 message dobootblks
 {Installing boot blocks on %s....
 }
-
-message Reedit_both_MBR_and_label
-{Re-edit both MBR and label}
-message Reedit_the_label
-{Re-edit the label}
-message Use_it_anyway
-{Use it anyway}
 
 message onebiosmatch
 {This disk matches the following BIOS disk:
