@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.2 1994/06/29 06:47:21 cgd Exp $	*/
+/*	$NetBSD: inode.h,v 1.3 1994/06/30 08:05:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -67,8 +67,7 @@ struct inode {
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
 	u_long	i_flag;		/* I* flags. */
-	/* XXX Should be a dev_t. */
-	u_long	i_dev;		/* Device associated with the inode. */
+	dev_t	i_dev;		/* Device associated with the inode. */
 	ino_t	i_number;	/* The identity of the inode. */
 	union {			/* Associated filesystem. */
 		struct	fs *fs;		/* FFS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.12 1994/06/29 06:45:34 cgd Exp $	*/
+/*	$NetBSD: stat.h,v 1.13 1994/06/30 08:05:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,21 +66,13 @@ struct ostat {
 #endif /* !_POSIX_SOURCE */
 
 struct stat {
-#ifdef notyet /* XXX */
 	dev_t	st_dev;			/* inode's device */
-#else
-	unsigned long	st_dev;		/* inode's device */
-#endif
 	ino_t	st_ino;			/* inode's number */
 	mode_t	st_mode;		/* inode protection mode */
 	nlink_t	st_nlink;		/* number of hard links */
 	uid_t	st_uid;			/* user ID of the file's owner */
 	gid_t	st_gid;			/* group ID of the file's group */
-#ifdef notyet /* XXX */
 	dev_t	st_rdev;		/* device type */
-#else
-	unsigned long	st_rdev;	/* device type */
-#endif
 	struct	timespec st_atimespec;	/* time of last access */
 	struct	timespec st_mtimespec;	/* time of last data modification */
 	struct	timespec st_ctimespec;	/* time of last file status change */
