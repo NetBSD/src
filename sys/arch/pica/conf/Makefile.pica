@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.11 1997/02/04 04:32:12 perry Exp $
+#	$NetBSD: Makefile.pica,v 1.12 1997/02/04 05:08:42 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -137,7 +137,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${PICA}/pica/Locore.c ${CFILES} ${PICA}/pica/swapgeneric.c \
+	    ${PICA}/pica/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
