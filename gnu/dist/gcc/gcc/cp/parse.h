@@ -1,5 +1,5 @@
-#ifndef BISON_P9195_H
-# define BISON_P9195_H
+#ifndef BISON_P5627_H
+# define BISON_P5627_H
 
 #ifndef YYSTYPE
 typedef union { GTY(())
@@ -11,7 +11,6 @@ typedef union { GTY(())
   struct unparsed_text *pi;
 } yystype;
 # define YYSTYPE yystype
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 # define	IDENTIFIER	257
 # define	tTYPENAME	258
@@ -104,5 +103,5 @@ typedef union { GTY(())
 
 extern YYSTYPE yylval;
 
-#endif /* not BISON_P9195_H */
+#endif /* not BISON_P5627_H */
 #define YYEMPTY		-2

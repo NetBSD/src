@@ -9,7 +9,6 @@ typedef union {
   const char *s;
 } yystype;
 # define YYSTYPE yystype
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 # define	ENT_TYPEDEF_STRUCT	257
 # define	ENT_STRUCT	258
