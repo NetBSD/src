@@ -1,5 +1,5 @@
 #
-# $NetBSD: fnetbsd.S,v 1.2 1996/05/15 21:16:45 is Exp $
+# $NetBSD: fnetbsd.S,v 1.3 1997/07/28 19:01:14 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -238,14 +238,14 @@ _060_real_fline:
 #
 	.global	_060_real_fpu_disabled
 _060_real_fpu_disabled:
-	movel	d0,sp@-		|# enabled the fpu
+	movel	d0,sp@-			|# enabled the fpu
 
 	.short	0x4e7a,0x0808		|* movec.l pcr,d0
 	bclr	#0x1,d0
 	.short	0x4e7b,0x0808		|* movec.l d0,pcr
 	movel	sp@+,d0
 
-	movel	sp@(0xc),sp@(0x2)		|# set "Current PC"
+	movel	sp@(0xc),sp@(0x2)	|# set "Current PC"
 	rte
 
 #
