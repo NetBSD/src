@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.488 2002/06/09 19:31:44 itojun Exp $
+# $NetBSD: mi,v 1.489 2002/06/11 13:33:48 grant Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1097,6 +1097,7 @@
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman
 ./usr/share/man/cat5/canonical.0		man-postfix-catman
+./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman
 ./usr/share/man/cat5/core.0			man-sys-catman
 ./usr/share/man/cat5/crontab.0			man-cron-catman
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman
@@ -2815,6 +2816,7 @@
 ./usr/share/man/man5/bootparams.5		man-bootserver-man
 ./usr/share/man/man5/bootptab.5			man-bootserver-man
 ./usr/share/man/man5/canonical.5		man-postfix-man
+./usr/share/man/man5/ccd.conf.5			man-sysutil-man
 ./usr/share/man/man5/core.5			man-sys-man
 ./usr/share/man/man5/crontab.5			man-cron-man
 ./usr/share/man/man5/daily.conf.5		man-sys-man
