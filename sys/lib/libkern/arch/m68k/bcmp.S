@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.5 1997/05/13 19:32:01 jtc Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.6 1997/05/15 16:20:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.5 1997/05/13 19:32:01 jtc Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.6 1997/05/15 16:20:54 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,7 +147,7 @@ Lbclong:
 Lbclloop:
 	cmpml	a0@+,a1@+		|	compare a longword
 	jne	Lbcnoteq		|	not equal, return non-zero
-	dbf	d1,Lbclloop		|	till done
+	dbf	d0,Lbclloop		|	till done
 	andl	#3,d1			|	len %= 4
 	jeq	Lbcdone 
 
