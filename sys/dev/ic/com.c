@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.142 1998/03/21 04:27:58 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.143 1998/03/22 00:55:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -198,7 +198,8 @@ int	com_kgdb_getc __P((void *));
 void	com_kgdb_putc __P((void *, int));
 #endif /* KGDB */
 
-#define	COMUNIT(x)	(minor(x))
+#define	COMUNIT(x)	(minor(x) & 0x7ffff)
+#define	COMDIALOUT(x)	(minor(x) & 0x80000)
 
 int
 comspeed(speed, frequency)
@@ -742,23 +743,12 @@ comopen(dev, flag, mode, p)
 
 		splx(s2);
 	}
-
-	/* If we're doing a blocking open... */
-	if (!ISSET(flag, O_NONBLOCK))
-		/* ...then wait for carrier. */
-		while (!ISSET(tp->t_state, TS_CARR_ON) &&
-		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
-			tp->t_wopen++;
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    ttopen, 0);
-			tp->t_wopen--;
-			if (error) {
-				splx(s);
-				goto bad;
-			}
-		}
-
+	
 	splx(s);
+
+	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	if (error)
+		goto bad;
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	if (error)
@@ -794,7 +784,14 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
-	com_shutdown(sc);
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		com_shutdown(sc);
+	}
 
 	return (0);
 }
