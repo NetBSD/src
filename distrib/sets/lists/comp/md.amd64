@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.12 2004/01/11 14:53:23 lukem Exp $
+# $NetBSD: md.amd64,v 1.13 2004/05/08 09:14:12 martin Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -60,6 +60,7 @@
 ./usr/include/amd64/varargs.h			comp-c-include
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
+./usr/include/emmintrin.h			comp-c-include
 ./usr/include/mmintrin.h			comp-c-include
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
