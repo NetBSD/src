@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2 1996/10/04 20:34:40 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.3 1996/10/04 20:35:53 thorpej Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ tcxattach(parent, self, args)
 	 * XXX For CG3 emulation to work in current (96/6) X11 servers,
 	 * XXX `fbtype' must point to an "unregocnised" entry.
 	 */
-	fb->fb_type.fb_type = FBTYPE_RESERVED1;
+	fb->fb_type.fb_type = FBTYPE_RESERVED3;
 
 	if (ca->ca_ra.ra_nreg != TCX_NREG)
 		panic("tcx: oops");
