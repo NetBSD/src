@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.23 2003/09/08 03:24:12 mycroft Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.24 2003/09/08 03:33:31 mycroft Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -104,16 +104,8 @@ struct scsipi_mode_select {
 	u_int8_t byte2;
 #define	SMS_SP	0x01		/* save page */
 #define	SMS_PF	0x10		/* page format (0 = SCSI-1, 1 = SCSI-2) */
-	u_int8_t unused;
-	union {
-		struct {
-			u_int8_t unused;
-			u_int8_t length;
-		} scsi __attribute__((packed));
-		struct {
-			u_int8_t length[2];
-		} atapi __attribute__((packed));
-	} u_len;
+	u_int8_t unused[2];
+	u_int8_t length;
 	u_int8_t control;
 } __attribute__((packed));
 
