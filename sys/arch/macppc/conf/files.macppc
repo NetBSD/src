@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.60 2003/11/19 02:54:50 matt Exp $
+#	$NetBSD: files.macppc,v 1.61 2003/12/27 02:19:34 grant Exp $
 #
 # macppc-specific configuration info
 
@@ -197,5 +197,15 @@ include "dev/cardbus/files.cardbus"
 include "dev/pcmcia/files.pcmcia"
 
 file arch/macppc/macppc/rbus_machdep.c		cardbus
+
+# Keywest I2C
+device ki2c {}
+attach ki2c at obio
+file arch/macppc/dev/ki2c.c			ki2c
+
+# snapper audio
+device snapper: audiobus, auconv, mulaw, aurateconv
+attach snapper at obio
+file arch/macppc/dev/snapper.c			snapper
 
 include "arch/macppc/conf/majors.macppc"
