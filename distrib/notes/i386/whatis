@@ -1,7 +1,8 @@
-.\"	$NetBSD: whatis,v 1.10 2000/10/02 08:01:55 lukem Exp $
+.\"	$NetBSD: whatis,v 1.11 2000/10/04 00:35:13 lukem Exp $
+.\"
 .Pp
 As is usual between releases, the i386 port has had many improvements
-made to it -- too many to detail all of them here.
+made to it - too many to detail all of them here.
 .Pp
 Numerous new drivers have been added. See the supported hardware list
 for details.
