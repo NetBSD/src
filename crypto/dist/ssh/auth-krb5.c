@@ -19,6 +19,7 @@
 krb5_context ssh_context = NULL;
 krb5_auth_context auth_context;
 krb5_ccache fwd_ccache = NULL; /* Credential cache for acquired ticket */
+const char *ssh_krb5_ccname;
 
 /* Try krb5 authentication. server_user is passed for logging purposes only,
    in auth is received ticket, in client is returned principal from the
@@ -127,6 +128,8 @@ auth_krb5_tgt(char *server_user, krb5_data *tgt, krb5_principal tkt_client)
   
   fwd_ccache = ccache;
   ccache = NULL;
+
+  ssh_krb5_ccname = krb5_cc_get_name(ssh_context, fwd_ccache);
   
   /*
   problem = krb5_cc_copy_cache(ssh_context, ccache, fwd_ccache);
