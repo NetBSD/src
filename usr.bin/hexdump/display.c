@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.15 2003/09/09 09:45:47 wiz Exp $	*/
+/*	$NetBSD: display.c,v 1.16 2003/09/12 12:59:34 cl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.15 2003/09/09 09:45:47 wiz Exp $");
+__RCSID("$NetBSD: display.c,v 1.16 2003/09/12 12:59:34 cl Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: display.c,v 1.15 2003/09/09 09:45:47 wiz Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
