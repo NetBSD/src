@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/04/15 00:52:58 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 1999/04/15 02:28:36 simonb Exp $
 
 LIB=	z
 MKPIC=	no
@@ -29,6 +29,10 @@ lib${LIB}.o:: ${OBJS}
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
 update-sources:
-	for file in ${LIBZSRCS} ${LIBZHDRS}; do \
-		cp ${.CURDIR}/../../../lib/libz/$$file ${.CURDIR}; \
+	-@for file in ${LIBZSRCS} ${LIBZHDRS}; do \
+		tail +2 ${.CURDIR}/../../../lib/libz/$$file > .tmp1.$$file ; \
+		tail +2 ${.CURDIR}/$$file > .tmp2.$$file ; \
+		cmp -s .tmp1.$$file .tmp2.$$file || ( echo Updating $$file ; \
+		  cp ${.CURDIR}/../../../lib/libz/$$file ${.CURDIR} ) ; \
+		rm .tmp1.$$file .tmp2.$$file ; \
 	done
