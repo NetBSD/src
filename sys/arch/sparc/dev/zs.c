@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.16 1994/11/02 04:54:19 deraadt Exp $
+ * $Id: zs.c,v 1.17 1994/11/03 18:57:33 pk Exp $
  */
 
 /*
@@ -605,8 +605,15 @@ zsopen(dev, flags, mode, p)
 			break;
 		tp->t_state |= TS_WOPEN;
 		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
+		    ttopen, 0)) {
+			if (!(tp->t_state & TS_ISOPEN)) {
+				zs_modem(cs, 0);
+				tp->t_state &= ~TS_WOPEN;
+				ttwakeup(tp);
+			}
+			splx(s);
+			return error;
+		}
 	}
 	splx(s);
 	if (error == 0)
