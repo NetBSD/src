@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.6 2000/03/06 03:09:43 mhitch Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.6.2.1 2000/06/22 17:02:35 minoura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.6 2000/03/06 03:09:43 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.6.2.1 2000/06/22 17:02:35 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,16 +61,18 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.6 2000/03/06 03:09:43 mhitch Exp $"
 
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	bus_space_handle_t sc_scsi_bsh;
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmamap;
+	bus_space_tag_t sc_bst;			/* bus space tag */
+	bus_space_handle_t sc_bsh;		/* bus space handle */
+	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
+	bus_dma_tag_t sc_dmat;			/* bus dma tag */
+	bus_dmamap_t sc_dmamap;			/* bus dmamap */
 	caddr_t *sc_dmaaddr;
-	size_t	*sc_dmalen;
-	size_t	sc_dmasize;
-	int	sc_active;			/* DMA active ? */
-	int	sc_ispullup;			/* DMA into main memory? */
+	size_t *sc_dmalen;
+	size_t sc_dmasize;
+	unsigned sc_flags;
+#define	ASC_ISPULLUP		0x0001
+#define	ASC_DMAACTIVE		0x0002
+#define	ASC_MAPLOADED		0x0004
 };
 
 static int  asc_ioasic_match __P((struct device *, struct cfdata *, void *));
@@ -78,13 +80,6 @@ static void asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach xasc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
-};
-
-static struct scsipi_device asc_ioasic_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
@@ -141,11 +136,15 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_glue = &asc_ioasic_glue;
 	asc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
 	asc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
-	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
-	if (bus_space_subregion(asc->sc_bst,
-			asc->sc_bsh,
+	if (bus_space_subregion(asc->sc_bst, asc->sc_bsh,
 			IOASIC_SLOT_12_START, 0x100, &asc->sc_scsi_bsh)) {
-		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		printf(": failed to map device registers\n");
+		return;
+	}
+	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
+	if (bus_dmamap_create(asc->sc_dmat, NBPG * 2,
+			2, NBPG, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap)) {
+		printf(": failed to create DMA map\n");
 		return;
 	}
 
@@ -156,7 +155,7 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_freq /= 1000000;
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
-		(int (*)(void *))ncr53c9x_intr, sc);
+		ncr53c9x_intr, sc);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -191,9 +190,7 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_ioasic_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 void
@@ -207,10 +204,114 @@ asc_ioasic_reset(sc)
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
-	asc->sc_active = 0;
+
+	if (asc->sc_flags & ASC_MAPLOADED)
+		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
 
-#define	SCRDEBUG(x)
+#define	TWOPAGE(a)	(NBPG*2 - ((a) & (NBPG-1)))
+
+int
+asc_ioasic_setup(sc, addr, len, ispullup, dmasize)
+	struct ncr53c9x_softc *sc;
+	caddr_t *addr;
+	size_t *len;
+	int ispullup;
+	size_t *dmasize;
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+	u_int32_t ssr, scr, *p;
+	size_t size;
+	vaddr_t cp;
+
+	NCR_DMA(("%s: start %d@%p,%s\n", sc->sc_dev.dv_xname,
+		*asc->sc_dmalen, *asc->sc_dmaaddr, ispullup ? "IN" : "OUT"));
+
+	/* upto two 4KB pages */
+	size = min(*dmasize, TWOPAGE((size_t)*addr));
+	asc->sc_dmaaddr = addr;
+	asc->sc_dmalen = len;
+	asc->sc_dmasize = size;
+	asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;
+	*dmasize = size; /* return trimmed transfer size */
+
+	/* stop DMA engine first */
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+
+	/* have dmamap for the transfering addresses */
+	if (bus_dmamap_load(asc->sc_dmat, asc->sc_dmamap,
+			*addr, size,
+			NULL /* kernel address */, BUS_DMA_NOWAIT))
+		panic("%s: cannot allocate DMA address", sc->sc_dev.dv_xname);
+
+	/* take care of 8B constraint on starting address */
+	cp = (vaddr_t)*addr;
+	if ((cp & 7) == 0) {
+		/* comfortably aligned to 8B boundary */
+		scr = 0;
+	}
+	else {
+		/* truncate to the boundary */
+		p = (u_int32_t *)(cp & ~7);
+		/* how many 16bit quantities in subject */
+		scr = (cp & 7) >> 1;
+		/* trim down physical address too */
+		asc->sc_dmamap->dm_segs[0].ds_addr &= ~7;
+		asc->sc_dmamap->dm_segs[0].ds_len += (cp & 6);
+		if ((asc->sc_flags & ASC_ISPULLUP) == 0) {
+			/* push down to SCSI device */
+			scr |= 4;
+			/* round up physical address in this case */
+			asc->sc_dmamap->dm_segs[0].ds_addr += 8;
+			/* don't care excess cache flush */
+		}
+		/* pack fixup data in SDR0/SDR1 pair and instruct SCR */
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+			IOASIC_SCSI_SDR0, p[0]);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+			IOASIC_SCSI_SDR1, p[1]);
+	}
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+		IOASIC_SCSI_DMAPTR,
+		IOASIC_DMA_ADDR(asc->sc_dmamap->dm_segs[0].ds_addr));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+		IOASIC_SCSI_NEXTPTR,
+		(asc->sc_dmamap->dm_nsegs == 1)
+		? ~0 : IOASIC_DMA_ADDR(asc->sc_dmamap->dm_segs[1].ds_addr));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, scr);
+
+	/* synchronize dmamap contents with memory image */
+	bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+		0, size,
+		(ispullup) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	asc->sc_flags |= ASC_MAPLOADED;
+	return 0;
+}
+
+void
+asc_ioasic_go(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+	u_int32_t ssr;
+
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	if (asc->sc_flags & ASC_ISPULLUP)
+		ssr |= IOASIC_CSR_SCSI_DIR;
+	else {
+		/* ULTRIX does in this way */
+		ssr &= ~IOASIC_CSR_SCSI_DIR;
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+		ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	}
+	ssr |= IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	asc->sc_flags |= ASC_DMAACTIVE;
+}
 
 static int
 asc_ioasic_intr(sc)
@@ -220,8 +321,8 @@ asc_ioasic_intr(sc)
 	int trans, resid;
 	u_int tcl, tcm, ssr, scr, intr;
 	
-	if (asc->sc_active == 0)
-		panic("dmaintr: DMA wasn't active");
+	if ((asc->sc_flags & ASC_DMAACTIVE) == 0)
+		panic("ioasic_intr: DMA wasn't active");
 
 #define	IOASIC_ASC_ERRORS \
     (IOASIC_INTR_SCSI_PTR_LOAD|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E)
@@ -232,15 +333,17 @@ asc_ioasic_intr(sc)
 	 * Check for these bits here, and clear them if needed.
 	 */
 	intr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR);
-	if ((intr & IOASIC_ASC_ERRORS) != 0)
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR,
-		    intr & ~IOASIC_ASC_ERRORS);
+	if ((intr & IOASIC_ASC_ERRORS) != 0) {
+		intr &= ~IOASIC_ASC_ERRORS;
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR, intr);
+	}
 
 	/* DMA has stopped */
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-	asc->sc_active = 0;	
+
+	asc->sc_flags &= ~ASC_DMAACTIVE;
 
 	if (asc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
@@ -252,7 +355,7 @@ asc_ioasic_intr(sc)
 	}
 
 	resid = 0;
-	if (!asc->sc_ispullup &&
+	if ((asc->sc_flags & ASC_ISPULLUP) == 0 &&
 	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("ioasic_intr: empty FIFO of %d ", resid));
 		DELAY(1);
@@ -270,36 +373,34 @@ asc_ioasic_intr(sc)
 	NCR_DMA(("ioasic_intr: tcl=%d, tcm=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, trans, resid));
 
+	bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+			0, asc->sc_dmasize,
+			(asc->sc_flags & ASC_ISPULLUP)
+				? BUS_DMASYNC_POSTREAD
+				: BUS_DMASYNC_POSTWRITE);
+
 	scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR);
-	if (asc->sc_ispullup && scr != 0) {
-		u_int32_t ptr;
-		u_int16_t *p;
-		union {
-			u_int32_t sdr[2];
-			u_int16_t half[4];
-		} scratch;
-		scratch.sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+	if ((asc->sc_flags & ASC_ISPULLUP) && scr != 0) {
+		u_int32_t sdr[2], ptr;
+
+		sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SDR0);
-		scratch.sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+		sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SDR1);
 		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_DMAPTR);
 		ptr = (ptr >> 3) & 0x1ffffffc;
-SCRDEBUG(("SCSI_SCR -> %x, DMAPTR: %p\n", scr, (void *)ptr));
-		p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
 		/*
-		 * scr
-		 *	1 -> half[0]
-		 *	2 -> half[0] + half[1]
-		 *	3 -> half[0] + half[1] + half[2]
+		 * scr:	1 -> short[0]
+		 *	2 -> short[0] + short[1]
+		 *	3 -> short[0] + short[1] + short[2]
 		 */
 		scr &= IOASIC_SCR_WORD;
-		p[0] = scratch.half[0];
-		if (scr > 1)
-			p[1] = scratch.half[1];
-		if (scr > 2)
-			p[2] = scratch.half[2];
+		memcpy((void *)MIPS_PHYS_TO_KSEG0(ptr), sdr, scr << 1);
 	}
+
+	bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	asc->sc_flags &= ~ASC_MAPLOADED;
 
 	*asc->sc_dmalen -= trans;
 	*asc->sc_dmaaddr += trans;
@@ -307,115 +408,23 @@ SCRDEBUG(("SCSI_SCR -> %x, DMAPTR: %p\n", scr, (void *)ptr));
 	return 0;
 }
 
-#define	TWOPAGE(a)	(NBPG*2 - ((a) & (NBPG-1)))
 
-int
-asc_ioasic_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
-{
-	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_int32_t ssr, scr;
-	size_t size;
-	vaddr_t cp;
-	paddr_t ptr0, ptr1;
-	extern paddr_t kvtophys __P((vaddr_t));
-
-	asc->sc_dmaaddr = addr;
-	asc->sc_dmalen = len;
-	asc->sc_ispullup = datain;
-
-	NCR_DMA(("ioasic_setup: start %d@%p %s\n",
-		*asc->sc_dmalen, *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
-
-	/* upto two 4KB pages */
-	size = min(*dmasize, TWOPAGE((size_t)*addr));
-	*dmasize = asc->sc_dmasize = size;
-
-	NCR_DMA(("ioasic_setup: dmasize = %d\n", asc->sc_dmasize));
-
-	/* stop DMA engine first */
-	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
-	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-
-	/* If R4K, writeback and invalidate the buffer */
-	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vaddr_t)*addr, size);
-
-	cp = (vaddr_t)*addr;
-	if ((cp & 7) == 0)
-		scr = 0;
-	else {
-		u_int32_t *p;
-
-		p = (u_int32_t *)(cp & ~7);
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-					IOASIC_SCSI_SDR0, p[0]);
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-					IOASIC_SCSI_SDR1, p[1]);
-
-		scr = (cp >> 1) & 3;
-		cp &= ~7;
-		if (asc->sc_ispullup == 0) {
-			scr |= 4;
-			cp += 8;
-		}
-SCRDEBUG(("SCSI_SCR <- %x, DMAPTR: %p\n", scr, (void *)kvtophys(cp)));
-	}
-	ptr0 = kvtophys(cp);
-	cp = mips_trunc_page(cp + NBPG);
-	ptr1 = ((vaddr_t)*addr + size > cp) ? kvtophys(cp) : ~0;
-
-	/* If not R4K, need to invalidate cache lines for physical segments */
-	if (!CPUISMIPS3 && datain) {
-		if (ptr1 == ~0)
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr0), size);
-		else {
-			int size0 = NBPG - (ptr0 & (NBPG - 1));
-			int size1 = size - size0;
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr0), size0);
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr1), size1);
-		}
-	}
-
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, scr);
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(ptr0));
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(ptr1));
-	return 0;
-}
-
-void
-asc_ioasic_go(sc)
-	struct ncr53c9x_softc *sc;
-{
-	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_int32_t ssr;
-
-	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
-	if (asc->sc_ispullup)
-		ssr |= IOASIC_CSR_SCSI_DIR;
-	else {
-		/* ULTRIX does in this way */
-		ssr &= ~IOASIC_CSR_SCSI_DIR;
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-		ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
-	}
-	ssr |= IOASIC_CSR_DMAEN_SCSI;
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-	asc->sc_active = 1;
-}
-
-/* NEVER CALLED BY MI 53C9x ENGINE INDEED */
 void
 asc_ioasic_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
+	struct asc_softc *asc = (struct asc_softc *)sc;
+
+	if (asc->sc_flags & ASC_MAPLOADED) {
+		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+				0, asc->sc_dmasize,
+				(asc->sc_flags & ASC_ISPULLUP)
+					? BUS_DMASYNC_POSTREAD
+					: BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	}
+
+	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
 
 static u_char
@@ -457,7 +466,7 @@ asc_dma_isactive(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	return asc->sc_active;
+	return !!(asc->sc_flags & ASC_DMAACTIVE);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.16 1998/05/14 00:01:30 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.16.22.1 2000/06/22 16:58:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -72,9 +72,9 @@ struct bootinfo_v1 {
 	char	booted_kernel[64];	/* 80: name of booted kernel	*/
 	void	*hwrpb;			/* 144: hwrpb pointer (BEVA)	*/
 	u_long	hwrpbsize;		/* 152: size of hwrpb data	*/
-	int	(*cngetc) __P((void));	/* 160: console getc pointer	*/
-	void	(*cnputc) __P((int));	/* 168: console putc pointer	*/
-	void	(*cnpollc) __P((int));	/* 176: console pollc pointer	*/
+	int	(*cngetc)(void);	/* 160: console getc pointer	*/
+	void	(*cnputc)(int);		/* 168: console putc pointer	*/
+	void	(*cnpollc)(int);	/* 176: console pollc pointer	*/
 	u_long	pad[9];			/* 184: rsvd for future use	*/
 					/* 256: total size		*/
 };
@@ -108,16 +108,11 @@ struct alpha_variation_table {
 };
 
 #ifdef _KERNEL
-#ifdef EVCNT_COUNTERS
-extern struct evcnt clock_intr_evcnt;
-#endif
-
-extern struct device *booted_device;
 extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
 
-const char *alpha_variation_name __P((u_int64_t,
-    const struct alpha_variation_table *));
-const char *alpha_unknown_sysname __P((void));
+const char *alpha_variation_name(u_int64_t,
+    const struct alpha_variation_table *);
+const char *alpha_unknown_sysname(void);
 #endif /* _KERNEL */

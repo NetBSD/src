@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.14 2000/03/22 22:33:47 mycroft Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.14.2.1 2000/06/22 17:07:43 minoura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  * DS cards based on the same chipset.
  */
 
+#include "opt_awi.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
@@ -122,11 +123,6 @@ struct cfattach awi_pcmcia_ca = {
 	awi_pcmcia_detach, awi_activate
 };
 
-#if __NetBSD_Version__ <= 104120000
-#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
-#define	PCMCIA_PRODUCT_BAY_STACK_650	0x804
-#endif
-
 static struct awi_pcmcia_product {
 	u_int32_t	app_vendor;	/* vendor ID */
 	u_int32_t	app_product;	/* product ID */
@@ -150,6 +146,9 @@ static struct awi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_NOKIA,		PCMCIA_PRODUCT_NOKIA_C020_WLAN,
 	  PCMCIA_CIS_NOKIA_C020_WLAN,	PCMCIA_STR_NOKIA_C020_WLAN },
+
+	{ PCMCIA_VENDOR_FARALLON,	PCMCIA_PRODUCT_FARALLON_SKYLINE,
+	  PCMCIA_CIS_FARALLON_SKYLINE,	PCMCIA_STR_FARALLON_SKYLINE },
 
 	{ 0,				0,
 	  { NULL, NULL, NULL, NULL },	NULL },
@@ -242,7 +241,6 @@ awi_pcmcia_find(psc, pa, cfe)
 {
 	struct awi_softc *sc = &psc->sc_awi;
 	int fail = 0;
-	u_int8_t version[AWI_BANNER_LEN];
 
 	/*
 	 * see if we can read the firmware version sanely
@@ -270,9 +268,9 @@ awi_pcmcia_find(psc, pa, cfe)
 
 	DELAY(1000);
 
-	awi_read_bytes(sc, AWI_BANNER, version, AWI_BANNER_LEN);
+	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);
 
-	if (memcmp(version, "PCnetMobile:", 12) == 0)
+	if (memcmp(sc->sc_banner, "PCnetMobile:", 12) == 0)
 		return (0);
 
 	fail++;
@@ -433,12 +431,6 @@ awi_pcmcia_powerhook(why, arg)
 {
 	struct awi_pcmcia_softc *psc = arg;
 	struct awi_softc *sc = &psc->sc_awi;
-	int ocansleep;
 
-	if (why == PWR_RESUME) {
-		ocansleep = sc->sc_cansleep;
-		sc->sc_cansleep = 0;
-		awi_reset(sc);
-		sc->sc_cansleep = ocansleep;
-	}
+	awi_power(sc, why);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2000/05/26 21:20:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.60.2.1 2000/06/22 17:02:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -735,7 +735,7 @@ ENTRY_NOPROFILE(idle)
 	br	0b
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.
  */
 KENTRY(cpu_switch, 4)
@@ -809,6 +809,8 @@ sw1:	/* Get the process and unlink it from the queue. */
 
 	/* Isolate process. XXX Is this necessary? */
 	movqd	0,P_BACK(r2)
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Record new process. */
 	movb	SONPROC,P_STAT(r2)	/* p->p_stat = SONPROC */

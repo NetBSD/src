@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.89 2000/05/12 15:00:33 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.89.2.1 2000/06/22 17:06:58 minoura Exp $ */
 
 
 /*
@@ -255,10 +255,10 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
-		 * sc is supposted to be 0x1 for ATAPI but in some cases we
-		 * get wrong values here, so ignore it.
+		 * sc & sn are supposted to be 0x1 for ATAPI but in some cases
+		 * we get wrong values here, so ignore it.
 		 */
-		if (sn == 0x01 && cl == 0x14 && ch == 0xeb) {
+		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
@@ -1323,6 +1323,8 @@ __wdccommand_intr(chp, xfer, irq)
 		__wdccommand_done(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 	if (wdc_c->flags & AT_READ) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
 			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,

@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.106 1999/07/29 10:37:18 augustss Exp $
+#	$NetBSD: SUN_LAMP,v 1.106.12.1 2000/06/22 17:00:19 minoura Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -90,7 +90,6 @@ eisa0	at mainbus0
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?

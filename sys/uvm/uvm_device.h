@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.8 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.8.10.1 2000/06/22 17:10:42 minoura Exp $	*/
 
 /*
  *
@@ -69,7 +69,7 @@ struct uvm_device {
  * prototypes
  */
 
-struct uvm_object *udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
+struct uvm_object *udv_attach __P((void *, vm_prot_t, voff_t, vsize_t));
 
 #endif /* _KERNEL */
 

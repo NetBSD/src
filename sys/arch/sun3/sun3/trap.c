@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2000/05/27 00:40:42 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.90.2.1 2000/06/22 17:04:49 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,6 +44,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.51 2000/05/25 11:41:05 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.51.2.1 2000/06/22 17:06:32 minoura Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -95,6 +95,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/scsiio.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -113,6 +114,8 @@
 #include <dev/microcode/aic7xxx/sequencer.h>
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 #include <dev/microcode/aic7xxx/aic7xxx_seq.h>
+
+#define XS_STS_DEBUG	0x00000002
 
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
@@ -204,6 +207,8 @@ static void	ahc_dump_targcmd(struct target_cmd *);
 #endif
 static void	ahc_shutdown(void *arg);
 static int32_t	ahc_action(struct scsipi_xfer *);
+static int	ahc_ioctl(struct scsipi_link *, u_long, caddr_t, int,
+			  struct proc *);
 static int	ahc_execute_scb(void *, bus_dma_segment_t *, int);
 static int	ahc_poll(struct ahc_softc *, int);
 static int	ahc_setup_data(struct ahc_softc *, struct scsipi_xfer *,
@@ -355,7 +360,7 @@ ahc_first_xs(struct ahc_softc *ahc)
 	while (xs != NULL) {
 		target = xs->sc_link->scsipi_scsi.target;
 		if (ahc->devqueue_blocked[target] == 0 &&
-		    (!ahc_istagged_device(ahc, xs, 0) &&
+		    (ahc_istagged_device(ahc, xs, 0) ||
 		     ahc_index_busy_tcl(ahc, XS_TCL(ahc, xs), FALSE) ==
 		    SCB_LIST_NULL))
 			break;
@@ -1409,6 +1414,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 	ahc->sc_adapter.scsipi_cmd = ahc_action;
 	ahc->sc_adapter.scsipi_minphys = ahcminphys;
+	ahc->sc_adapter.scsipi_ioctl = ahc_ioctl;
 	ahc->sc_link.type = BUS_SCSI;
 	ahc->sc_link.scsipi_scsi.adapter_target = ahc->our_id;
 	ahc->sc_link.scsipi_scsi.channel = 0;
@@ -1718,6 +1724,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		u_int  scb_index;
 		struct hardware_scb *hscb;
 		struct scsipi_xfer *xs;
+		struct scb *scbp;
+		int todo, inqueue;
 		/*
 		 * The sequencer will notify us when a command
 		 * has an error that would be of interest to
@@ -1885,11 +1893,35 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			printf("queue full\n");
 		case SCSI_STATUS_BUSY:
 			/*
-			 * Requeue any transactions that haven't been
-			 * sent yet.
+			 * XXX middle layer doesn't handle XS_BUSY well.
+			 * So, requeue this ourselves internally. It will
+			 * get its turn once all outstanding (tagged)
+			 * commands have finished.
 			 */
-			ahc_freeze_devq(ahc, xs->sc_link);
-			ahc_freeze_ccb(scb);
+			xs->error = XS_BUSY;
+			xs->xs_status |= XS_STS_DEBUG;
+			scb->flags |= SCB_REQUEUE;
+
+			/*
+			 * Walk through all pending SCBs for this target,
+			 * incrementing the freeze count for the queue.
+			 * When all of these have been completed, the
+			 * queue will be available again.
+			 */
+			inqueue = todo = 0;
+			scbp = ahc->pending_ccbs.lh_first;
+			while (scbp != NULL) {
+				inqueue++;
+				if (ahc_match_scb(scbp, SCB_TARGET(scb),
+				    SCB_CHANNEL(scb), SCB_LUN(scb), 
+				    SCB_LIST_NULL, ROLE_INITIATOR)) {
+					ahc_freeze_ccb(scbp);
+					todo++;
+				}
+				scbp = scbp->plinks.le_next;
+			}
+			scsi_print_addr(xs->sc_link);
+			printf("%d SCBs pending, %d to drain\n", inqueue, todo);
 			break;
 		}
 		break;
@@ -3423,10 +3455,21 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 */
 		int s;
 
+		if (xs->xs_status & XS_STS_DEBUG) {
+			scsi_print_addr(xs->sc_link);
+			printf("putting SCB that caused queue full back"
+			       " in queue\n");
+		}
+
 		s = splbio();
 		TAILQ_INSERT_HEAD(&ahc->sc_q, xs, adapter_q);
 		splx(s);
 	} else {
+		if (xs->xs_status & XS_STS_DEBUG) {
+			xs->xs_status &= ~XS_STS_DEBUG;
+			scsi_print_addr(xs->sc_link);
+			printf("completed SCB that caused queue full\n");
+		}
 		xs->xs_status |= XS_STS_DONE;
 		ahc_check_tags(ahc, xs);
 		scsipi_done(xs);
@@ -3840,6 +3883,29 @@ ahc_init(struct ahc_softc *ahc)
 	return (0);
 }
 
+static int
+ahc_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr, int flag,
+	  struct proc *p)
+{
+	struct ahc_softc *ahc = sc_link->adapter_softc;
+	char channel;
+	int s, ret = ENOTTY;
+
+	switch (cmd) {
+	case SCBUSIORESET:
+		channel = SIM_CHANNEL(ahc, sc_link);
+		s = splbio();
+		ahc_reset_channel(ahc, channel, TRUE);
+		splx(s);
+		ret = 0;
+		break;
+	default:
+	}
+
+	return ret;
+}
+
+
 /*
  * XXX fvdl the busy_tcl checks and settings should only be done
  * for the non-tagged queueing case, but we don't do tagged queueing
@@ -3858,6 +3924,7 @@ ahc_action(struct scsipi_xfer *xs)
 	u_int our_id;
 	int s, tcl;
 	u_int16_t mask;
+	char channel;
 	int dontqueue = 0, fromqueue = 0;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
@@ -3991,7 +4058,18 @@ get_scb:
 		ahc_busy_tcl(ahc, scb);
 
 	splx(s);
- 
+
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	if (ahc->inited_channels[channel - 'A'] == 0) {
+		if ((channel == 'A' && (ahc->flags & AHC_RESET_BUS_A)) ||
+		    (channel == 'B' && (ahc->flags & AHC_RESET_BUS_B))) {
+			s = splbio();
+			ahc_reset_channel(ahc, channel, TRUE);
+			splx(s);
+		}
+		ahc->inited_channels[channel - 'A'] = 1;
+	}
+
 	/*
 	 * Put all the arguments for the xfer in the scb
 	 */
@@ -4019,6 +4097,11 @@ get_scb:
 		
 	if ((tstate->discenable & mask) != 0)
 		hscb->control |= DISCENB;
+
+	if (xs->xs_status & XS_STS_DEBUG) {
+		scsi_print_addr(xs->sc_link);
+		printf("redoing command that caused queue full\n");
+	}
 
 	if (xs->xs_control & XS_CTL_RESET) {
 		hscb->cmdpointer = 0;

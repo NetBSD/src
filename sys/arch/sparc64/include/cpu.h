@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2000/05/26 21:20:19 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.17.2.1 2000/06/22 17:04:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,17 +74,51 @@
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/sched.h>
+/*
+ * The cpu_info structure is part of a 64KB structure mapped both the kernel
+ * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
+ * Each processor's cpu_info is accessible at CPUINFO_VA only for that
+ * processor.  Other processors can access that through an additional mapping
+ * in the kernel pmap.
+ *
+ * The 64KB page contains:
+ *
+ * cpu_info
+ * interrupt stack (all remaining space)
+ * idle PCB
+ * idle stack (STACKSPACE - sizeof(PCB))
+ * 32KB TSB
+ */
+
 struct cpu_info {
+	/* Most important fields first */
+	struct proc		*ci_curproc;
+	struct pcb		*ci_cpcb;	/* also initial stack */
+	struct cpu_info		*ci_next;
+
+	struct proc		*ci_fpproc;
+	int			ci_number;
+	int			ci_upaid;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+
+	/* DEBUG/DIAGNOSTIC stuff */
+	u_long			ci_spin_locks;	/* # of spin locks held */
+	u_long			ci_simple_locks;/* # of simple locks held */
+
+	/* Spinning up the CPU */
+	void			(*ci_spinup) __P((void)); /* spinup routine */
+	void			*ci_initstack;
+	paddr_t			ci_paddr;	/* Phys addr of this structure. */
 };
 
+extern struct cpu_info *cpus;
 extern struct cpu_info cpu_info_store;
 
+#if 1
 #define	curcpu()	(&cpu_info_store)
+#else
+#define	curcpu()	((struct cpu_info *)CPUINFO_VA)
+#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -93,7 +127,11 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	0
+#if 1
+#define cpu_number()	0
+#else
+#define	cpu_number()	(curcpu()->ci_number)
+#endif
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -111,12 +149,13 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 #define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
-				(((framep)->t.tf_kstack < (u_int)eintstack)&&\
-				((framep)->t.tf_kstack > (u_int)intstack)))
+				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\
+				((framep)->t.tf_kstack > (vaddr_t)INTSTACK)))
 
 /*
  * Software interrupt request `register'.
  */
+#ifdef DEPRECATED
 union sir {
 	int	sir_any;
 	char	sir_which[4];
@@ -124,6 +163,7 @@ union sir {
 
 #define SIR_NET		0
 #define SIR_CLOCK	1
+#endif
 
 extern struct intrhand soft01intr, soft01net, soft01clock;
 
@@ -174,19 +214,23 @@ int	foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 struct intrhand {
-	int		(*ih_fun) __P((void *));
-	void		*ih_arg;
-	short		ih_number;	/* interrupt number the H/W provides */
-	short		ih_pil;		/* interrupt priority */
-	struct intrhand	*ih_next;
-	u_int64_t	*ih_map;	/* Interrupt map register */
-	u_int64_t	*ih_clr;	/* clear interrupt register */
+	int			(*ih_fun) __P((void *));
+	void			*ih_arg;
+	short			ih_number;	/* interrupt number */
+						/* the H/W provides */
+	short			ih_pil;		/* interrupt priority */
+	struct intrhand		*ih_next;
+	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
+	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
 };
 extern struct intrhand *intrhand[15];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
 
+/* cpu.c */
+paddr_t cpu_alloc __P((void));
+u_int64_t cpu_init __P((paddr_t, int));
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));

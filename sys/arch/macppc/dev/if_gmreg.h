@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gmreg.h,v 1.2 2000/03/26 09:15:17 tsubai Exp $	*/
+/*	$NetBSD: if_gmreg.h,v 1.2.2.1 2000/06/22 17:01:21 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -41,7 +41,8 @@ struct gmac_dma {
 #define GMAC_INT_TXDONE		0x04
 #define GMAC_INT_RXDONE		0x10
 
-#define GMAC_RXMAC_PR	0x08
+#define GMAC_RXMAC_PR	0x08		/* enable promiscuous mode */
+#define GMAC_RXMAC_HEN	0x10		/* enable the hash filter */
 
 /*
  * register offset

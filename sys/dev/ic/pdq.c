@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.28 1999/12/27 22:41:04 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.28.2.1 2000/06/22 17:06:52 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1031,6 +1031,7 @@ pdq_process_transmitted_data(
     volatile const pdq_consumer_block_t *cbp = pdq->pdq_cbp;
     pdq_descriptor_block_t *dbp = pdq->pdq_dbp;
     pdq_uint32_t completion = tx->tx_completion;
+    int reclaimed = 0;
 
     while (completion != cbp->pdqcb_transmits) {
 	PDQ_OS_DATABUF_T *pdu;
@@ -1040,7 +1041,7 @@ pdq_process_transmitted_data(
 	PDQ_OS_DATABUF_DEQUEUE(&tx->tx_txq, pdu);
 	pdq_os_transmit_done(pdq, pdu);
 	tx->tx_free += descriptor_count;
-
+	reclaimed = 1;
 	PDQ_ADVANCE(completion, descriptor_count, PDQ_RING_MASK(dbp->pdqdb_transmits));
     }
     if (tx->tx_completion != completion) {
@@ -1049,7 +1050,8 @@ pdq_process_transmitted_data(
 	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
 	pdq_os_restart_transmitter(pdq);
     }
-    PDQ_DO_TYPE2_PRODUCER(pdq);
+    if (reclaimed)
+	PDQ_DO_TYPE2_PRODUCER(pdq);
 }
 
 void
@@ -1430,7 +1432,7 @@ pdq_interrupt(
 				      PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
 	    PDQ_DO_HOST_SMT_PRODUCER(pdq);
 	}
-	if (data & PDQ_PSTS_XMT_DATA_PENDING)
+	/* if (data & PDQ_PSTS_XMT_DATA_PENDING) */
 	    pdq_process_transmitted_data(pdq);
 	if (data & PDQ_PSTS_UNSOL_PENDING)
 	    pdq_process_unsolicited_events(pdq);

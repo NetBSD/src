@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.51 2000/04/30 11:46:03 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.51.2.1 2000/06/22 17:07:52 minoura Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -63,8 +63,8 @@
 
 #include "ioconf.h"
 
-static	int ubasearch __P((struct device *, struct cfdata *, void *));
-static	int ubaprint __P((void *, const char *));
+static int ubasearch (struct device *, struct cfdata *, void *);
+static int ubaprint (void *, const char *);
 
 /*
  * If we failed to allocate uba resources, put us on a queue to wait
@@ -73,8 +73,7 @@ static	int ubaprint __P((void *, const char *));
  * Unibus systems, Qbus systems have more map registers than usable.
  */
 void
-uba_enqueue(uu)
-	struct uba_unit *uu;
+uba_enqueue(struct uba_unit *uu)
 {
 	struct uba_softc *uh;
 	int s;
@@ -93,8 +92,7 @@ uba_enqueue(uu)
  * This routine must be called at splimp.
  */
 void
-uba_done(uh)
-	struct uba_softc *uh;
+uba_done(struct uba_softc *uh)
 {
 	struct uba_unit *uu;
  
@@ -155,9 +153,7 @@ ubareset(struct uba_softc *uh)
  *   Calls the scan routine to search for uba devices.
  */
 void
-uba_attach(sc, iopagephys)
-	struct uba_softc *sc;
-	paddr_t iopagephys;
+uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 {
 
 	/*
@@ -187,10 +183,7 @@ uba_attach(sc, iopagephys)
 }
 
 int
-ubasearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
@@ -222,6 +215,7 @@ ubasearch(parent, cf, aux)
 	ua.ua_br = br;
 	ua.ua_cvec = vec;
 	ua.ua_iaddr = cf->cf_loc[0];
+	ua.ua_evcnt = NULL;
 
 	config_attach(parent, cf, &ua, ubaprint);
 	return 0;
@@ -239,9 +233,7 @@ forgetit:
  * Print out some interesting info common to all unibus devices.
  */
 int
-ubaprint(aux, uba)
-	void *aux;
-	const char *uba;
+ubaprint(void *aux, const char *uba)
 {
 	struct uba_attach_args *ua = aux;
 
@@ -254,11 +246,8 @@ ubaprint(aux, uba)
  * Move to machdep eventually
  */
 void
-uba_intr_establish(icookie, vec, ifunc, iarg)
-	void *icookie;
-	int vec;
-	void (*ifunc)(void *iarg);
-	void *iarg;
+uba_intr_establish(void *icookie, int vec, void (*ifunc)(void *iarg),
+	void *iarg, struct evcnt *ev)
 {
-	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK);
+	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK, ev);
 }

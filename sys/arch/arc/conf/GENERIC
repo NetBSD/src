@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.30 2000/05/27 02:19:35 soren Exp $
+#	$NetBSD: GENERIC,v 1.30.2.1 2000/06/22 16:59:08 minoura Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.30 $"
+#ident		"GENERIC-$Revision: 1.30.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -75,19 +75,6 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -114,7 +101,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
-#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
@@ -135,8 +122,10 @@ cpu*		at mainbus0
 
 pica*		at mainbus0	# ACER Pica systems local bus.
 aclock0 	at pica?
-pc0		at pica?
-opms0		at pica?
+#pc0		at pica?
+#opms0		at pica?
+vga0		at pica?	# Jazz localbus VGA
+pckbc0		at pica?	# PC keyboard controller
 com0		at pica?
 com1		at pica?
 lpt0		at pica?
@@ -148,6 +137,9 @@ fd*		at fdc? drive ?
 asc0		at pica?
 scsibus* 	at asc?
 
+#siop0		at pica?
+#scsibus* 	at siop?
+
 #### ISA bus devices
 
 isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
@@ -157,6 +149,8 @@ isa*		at isabr?
 aclock0 	at isa? port 0x70 irq 0
 
 pc0		at isa? port 0x60 irq 1		# generic PC console device
+#vga0		at isa?
+#pckbc0		at isa?				# PC keyboard controller
 com0		at isa? port 0x3f8 irq 4
 com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 4
@@ -194,13 +188,6 @@ com*		at ast? slave ?
 # XXX - should be configured
 #atapibus*	at wdc? channel ?
 
-# ATAPI devices
-# flags have the same meaning as for IDE drives.
-# XXX - should be configured
-#cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-#sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-#uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
-
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
 
@@ -230,6 +217,9 @@ lpt0		at isa? port 0x378 irq 7
 
 #### PCI bus devices
 
+necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
+pci*		at necpb?
+
 #pbcpcibr*	at mainbus0	# Algorithmics PCI bus bridge.
 #pci*		at pbcpcibr?
 
@@ -237,6 +227,44 @@ lpt0		at isa? port 0x378 irq 7
 #siop*		at pci? dev ? function ?
 #scsibus* 	at siop?
 #de*		at pci? dev ? function ?
+
+ex*		at pci? dev ? function ?	# 3Com 90x[B]
+fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
+le*		at pci? dev ? function ?	# PCnet-PCI
+ne*		at pci? dev ? function ?	# NE2000-compatible
+tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
+
+# IDE and related devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide*		at pci ? dev ? function ? flags 0x0000
+wd*		at pciide? channel ? drive ? flags 0x0000
+atapibus*	at pciide? channel ?
+
+tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
+ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+scsibus*	at ahc?
+
+#### MII/PHY support
+
+exphy*		at mii? phy ?		# 3Com internal PHYs
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphyter*	at mii? phy ?		# NS83843 PHYs
+qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy*		at mii? phy ?		# ThunderLAN PHYs
+tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 #### SCSI bus devices
 
@@ -246,6 +274,24 @@ cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
+
+#### ATAPI bus devices
+
+# flags have the same meaning as for IDE drives.
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+#### Workstation Console attachments
+
+wsdisplay*	at vga?
+wsdisplay*	at tga?
+pckbd*		at pckbc?	# PC keyboard (kbd port)
+wskbd*		at pckbd?
+pms*		at pckbc?	# PS/2-style mouse (aux port)
+wsmouse*	at pms?
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
+#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 2000/05/26 21:20:12 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.2.1 2000/06/22 17:02:41 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/systm.h>
 
 /*
  * Put process p on the run queue indicated by its priority.

@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.45 2000/03/28 20:17:14 is Exp $
+# $NetBSD: DRACO,v 1.45.2.1 2000/06/22 16:58:54 minoura Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.45 $"
+#ident  		"GENERIC-$Revision: 1.45.2.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -21,19 +21,6 @@ options 	DRACO
 
 options 	M68060		# support for 060
 options 	M060SP		# MC68060 software support (Required for 060)
-
-#Pull in config fragments for kernel crypto.  This is required for
-#options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-#one of these, based on whether you use crypto-us or crypto-intl, and
-#adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-#Networking options
 
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6

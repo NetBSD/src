@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.11 1999/05/27 01:56:32 nisimura Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.11.10.1 2000/06/22 17:01:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,8 +91,8 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #define	MIPS1_PG_CWPAGE	0
 #define	MIPS1_PG_IOPAGE	(MIPS1_PG_D | MIPS1_PG_N)
 
-#define	mips1_pfn_to_vad(x)	((x) & MIPS1_PG_FRAME)
-#define	mips1_vad_to_pfn(x)	(x)
+#define	mips1_tlbpfn_to_paddr(x)	((x) & MIPS1_PG_FRAME)
+#define	mips1_paddr_to_tlbpfn(x)	(x)
 
 #define	MIPS1_PTE_TO_PADDR(pte) ((unsigned)(pte) & MIPS1_PG_FRAME)
-#define MIPS1_PAGE_IS_RDONLY(pte,va) ((pte) & MIPS1_PG_RO)
+#define MIPS1_PAGE_IS_RDONLY(pte,va) ((int)(pte) & MIPS1_PG_RO)

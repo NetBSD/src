@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 1999/12/07 15:14:56 danw Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3.2.1 2000/06/22 17:02:39 minoura Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ struct pcb {
 
 struct md_coredump {
 	struct trapframe frame;
-	/* Need to add FPU regs here */
+	struct fpu fpstate;
 };
 
 #ifdef	_KERNEL

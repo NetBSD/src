@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.15 2000/01/26 01:23:32 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.15.2.1 2000/06/22 17:06:51 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,9 +31,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

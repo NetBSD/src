@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.12 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.12.2.1 2000/06/22 17:06:38 minoura Exp $	*/
 
 /*
  * cy.c
@@ -418,7 +418,7 @@ cyread(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: read port %d uio 0x%x flag 0x%x\n",
+	printf("%s: read port %d uio %p flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
@@ -441,7 +441,7 @@ cywrite(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: write port %d uio 0x%x flag 0x%x\n",
+	printf("%s: write port %d uio %p flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
@@ -462,7 +462,7 @@ cytty(dev)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: tty port %d tp 0x%x\n", sc->sc_dev.dv_xname, port, tp);
+	printf("%s: tty port %d tp %p\n", sc->sc_dev.dv_xname, port, tp);
 #endif
 	return tp;
 }
@@ -486,7 +486,7 @@ cyioctl(dev, cmd, data, flag, p)
 	int error;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d ioctl cmd 0x%x data 0x%x flag 0x%x\n",
+	printf("%s: port %d ioctl cmd 0x%lx data %p flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, cmd, data, flag);
 #endif
 
@@ -571,7 +571,7 @@ cystart(tp)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d start, tty 0x%x\n", sc->sc_dev.dv_xname, port, tp);
+	printf("%s: port %d start, tty %p\n", sc->sc_dev.dv_xname, port, tp);
 #endif
 
 
@@ -615,7 +615,7 @@ cystop(tp, flag)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d stop tty 0x%x flag 0x%x\n",
+	printf("%s: port %d stop tty %p flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, tp, flag);
 #endif
 
@@ -651,7 +651,7 @@ cyparam(tp, t)
 	int s, opt;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d param tty 0x%x termios 0x%x\n",
+	printf("%s: port %d param tty %p termios %p\n",
 	    sc->sc_dev.dv_xname, port, tp, t);
 	printf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
 #endif
@@ -1121,8 +1121,8 @@ cy_intr(arg)
 				    CD1400_RDSR);
 
 #ifdef CY_DEBUG
-				printf("cy%d port %d recv exception, line_stat 0x%x, char 0x%x\n",
-				card, cy->cy_port_num, line_stat, recv_data);
+				printf("%s port %d recv exception, line_stat 0x%x, char 0x%x\n",
+				sc->sc_dev.dv_xname, cy->cy_port_num, line_stat, recv_data);
 #endif
 				if (ISSET(line_stat, CD1400_RDSR_OE))
 					cy->cy_fifo_overruns++;
@@ -1143,8 +1143,8 @@ cy_intr(arg)
 				n_chars = cd_read_reg(sc, cy->cy_chip,
 				    CD1400_RDCR);
 #ifdef CY_DEBUG
-				printf("cy%d port %d receive ok %d chars\n",
-				    card, cy->cy_port_num, n_chars);
+				printf("%s port %d receive ok %d chars\n",
+				    sc->sc_dev.dv_xname, cy->cy_port_num, n_chars);
 #endif
 				while (n_chars--) {
 					*buf_p++ = 0;	/* status: OK */
@@ -1207,8 +1207,8 @@ cy_intr(arg)
 			modem_stat = cd_read_reg(sc, cy->cy_chip, CD1400_MSVR2);
 
 #ifdef CY_DEBUG
-			printf("cy%d port %d modem line change, new stat 0x%x\n",
-			       card, cy->cy_port_num, modem_stat);
+			printf("%s port %d modem line change, new stat 0x%x\n",
+			       sc->sc_dev.dv_xname, cy->cy_port_num, modem_stat);
 #endif
 			if (ISSET((cy->cy_carrier_stat ^ modem_stat), CD1400_MSVR2_CD)) {
 				SET(cy->cy_flags, CY_F_CARRIER_CHANGED);
@@ -1238,7 +1238,7 @@ cy_intr(arg)
 			cy->cy_tx_int_count++;
 #endif
 #ifdef CY_DEBUG
-			printf("cy%d port %d tx service\n", card, 
+			printf("%s port %d tx service\n", sc->sc_dev.dv_xname,
 			    cy->cy_port_num);
 #endif
 
@@ -1359,7 +1359,7 @@ cd1400_channel_cmd(sc, cy, cmd)
 	u_int waitcnt = 5 * 8 * 1024;	/* approx 5 ms */
 
 #ifdef CY_DEBUG
-	printf("c1400_channel_cmd cy 0x%x command 0x%x\n", cy, cmd);
+	printf("c1400_channel_cmd cy %p command 0x%x\n", cy, cmd);
 #endif
 
 	/* wait until cd1400 is ready to process a new command */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.1 1999/08/25 04:47:12 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.1.10.1 2000/06/22 17:05:45 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,10 @@
 
 #include <sys/syscallargs.h>
 
-void
+static void shmid_ds14_to_native __P((struct shmid_ds14 *, struct shmid_ds *));
+static void native_to_shmid_ds14 __P((struct shmid_ds *, struct shmid_ds14 *));
+
+static void
 shmid_ds14_to_native(oshmbuf, shmbuf)
 	struct shmid_ds14 *oshmbuf;
 	struct shmid_ds *shmbuf;
@@ -67,7 +70,7 @@ shmid_ds14_to_native(oshmbuf, shmbuf)
 #undef CVT
 }
 
-void
+static void
 native_to_shmid_ds14(shmbuf, oshmbuf)
 	struct shmid_ds *shmbuf;
 	struct shmid_ds14 *oshmbuf;

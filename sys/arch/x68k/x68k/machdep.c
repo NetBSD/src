@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2000/05/26 21:20:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.2.1 2000/06/22 17:05:41 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -765,9 +765,6 @@ dumpsys()
 	seg = 0;
 	maddr = m->ram_segs[seg].start;
 	pg = 0;
-
-	/* Don't put dump messages in msgbuf. */
-	msgbufenabled = 0;
 
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2000/05/26 21:20:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32.2.1 2000/06/22 17:02:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,19 +99,10 @@
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
-#include <next68k/next68k/seglist.h>
-
-#include "nextkbd.h"
-#if (NNEXTKBD > 0)
-#include <next68k/dev/nextkbdvar.h>
-#endif
-
-#include "nextdisplay.h"
-#if (NNEXTDISPLAY > 0)
-#include <next68k/dev/nextdisplayvar.h>
-#endif
-
+#include <next68k/next68k/isr.h>
 #include <next68k/next68k/nextrom.h>
+#include <next68k/next68k/rtc.h>
+#include <next68k/next68k/seglist.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
@@ -942,6 +933,7 @@ straytrap(pc, evec)
 
 int	*nofault;
 
+#if 0
 int
 badaddr(addr, nbytes)
 	caddr_t addr;
@@ -979,6 +971,7 @@ badaddr(addr, nbytes)
 	nofault = (int *) 0;
 	return (0);
 }
+#endif
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.

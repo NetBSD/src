@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.35 2000/05/26 21:20:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.35.2.1 2000/06/22 17:10:45 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -94,7 +94,9 @@ struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
 
 /*
- * for testing the idle page zero loop.
+ * Some supported CPUs in a given architecture don't support all
+ * of the things necessary to do idle page zero'ing efficiently.
+ * We therefore provide a way to disable it from machdep code here.
  */
 
 boolean_t vm_page_zero_enable = TRUE;
@@ -619,8 +621,8 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	if (vm_nphysseg == VM_PHYSSEG_MAX) {
 		printf("vm_page_physload: unable to load physical memory "
 		    "segment\n");
-		printf("\t%d segments allocated, ignoring 0x%lx -> 0x%lx\n",
-		    VM_PHYSSEG_MAX, start, end);
+		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
+		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 		return;
 	}
 
@@ -842,9 +844,11 @@ uvm_page_physdump()
 	printf("rehash: physical memory config [segs=%d of %d]:\n",
 				 vm_nphysseg, VM_PHYSSEG_MAX);
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-		printf("0x%lx->0x%lx [0x%lx->0x%lx]\n", vm_physmem[lcv].start,
-		    vm_physmem[lcv].end, vm_physmem[lcv].avail_start,
-		    vm_physmem[lcv].avail_end);
+		printf("0x%llx->0x%llx [0x%llx->0x%llx]\n",
+		    (long long)vm_physmem[lcv].start,
+		    (long long)vm_physmem[lcv].end,
+		    (long long)vm_physmem[lcv].avail_start,
+		    (long long)vm_physmem[lcv].avail_end);
 	printf("STRATEGY = ");
 	switch (VM_PHYSSEG_STRAT) {
 	case VM_PSTRAT_RANDOM: printf("RANDOM\n"); break;

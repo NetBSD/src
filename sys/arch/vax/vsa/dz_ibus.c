@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.16 2000/01/24 02:40:35 matt Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.16.2.1 2000/06/22 17:05:32 minoura Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -144,12 +144,12 @@ dz_vsbus_attach(parent, self, aux)
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
 
-	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK);
-	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
+	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK, &sc->sc_rintrcnt);
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc);
+	dzattach(sc, NULL);
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.9 2000/03/30 09:45:37 augustss Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.9.2.1 2000/06/22 17:09:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -451,12 +451,12 @@ send:
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:

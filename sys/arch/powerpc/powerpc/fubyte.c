@@ -1,4 +1,4 @@
-/*	$NetBSD: fubyte.c,v 1.1 1996/09/30 16:34:45 ws Exp $	*/
+/*	$NetBSD: fubyte.c,v 1.1.36.1 2000/06/22 17:02:44 minoura Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -31,12 +31,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/systm.h>
+
 /*
  * Emulate fubyte.
  */
 int
 fubyte(addr)
-char *addr;
+	const void *addr;
 {
 	unsigned char c;
 	

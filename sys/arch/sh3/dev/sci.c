@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.8 2000/03/27 16:24:08 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.8.2.1 2000/06/22 17:03:47 minoura Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -418,8 +418,10 @@ GetcSci(void)
 	while (((err_c = SHREG_SCSSR)
 		& (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) == 0)
 		;
-	if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0)
+	if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
+		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER);
 		return(err_c |= 0x80);
+	}
 
 	c = SHREG_SCRDR;
 
@@ -720,10 +722,12 @@ sci_iflush(sc)
 	volatile unsigned char c;
 
 	if (((err_c = SHREG_SCSSR)
-		& (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
+	     & (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
 
-		if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0)
+		if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER);
 			return;
+		}
 
 		c = SHREG_SCRDR;
 
@@ -1317,7 +1321,8 @@ sciintr(arg)
 			put[0] = SHREG_SCRDR;
 			put[1] = SHREG_SCSSR & 0x00ff;
 
-			SHREG_SCSSR &= ~SCSSR_RDRF;
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER |
+					 SCSSR_RDRF);
 
 			put += 2;
 			if (put >= end)

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.95 2000/05/27 05:00:47 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.95.2.1 2000/06/22 17:10:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -135,6 +135,8 @@ struct	proc {
 
 	int	p_exitsig;		/* signal to sent to parent on exit */
 	int	p_flag;			/* P_* flags. */
+	struct cpu_info * __volatile p_cpu; /* CPU we're running on if
+					       SONPROC */
 	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[2];
@@ -369,6 +371,8 @@ extern struct pool rusage_pool;		/* memory pool for rusages */
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
 
+struct simplelock;
+
 int	chgproccnt __P((uid_t uid, int diff));
 int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
@@ -383,20 +387,26 @@ void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
-int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
+int	ltsleep __P((void *chan, int pri, const char *wmesg, int timo,
+	    __volatile struct simplelock *));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
 void	wakeup_one __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
-int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *,
-	    struct proc **));
+int	fork1 __P((struct proc *, int, int, void *, size_t,
+	    void (*)(void *), void *, register_t *, struct proc **));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
 void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
+void	cpu_fork __P((struct proc *, struct proc *, void *, size_t,
+	    void (*)(void *), void *));
+
+void	child_return __P((void *));
+
 int	proc_isunder __P((struct proc *, struct proc*));
 
 void	proclist_lock_read __P((void));
@@ -404,5 +414,10 @@ void	proclist_unlock_read __P((void));
 int	proclist_lock_write __P((void));
 void	proclist_unlock_write __P((int));
 void	p_sugid __P((struct proc*));
+
+/* Compatbility with old, non-interlocked tsleep call. */
+#define	tsleep(chan, pri, wmesg, timo)					\
+	ltsleep(chan, pri, wmesg, timo, NULL)
+
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.39 2000/05/15 01:27:47 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.39.2.1 2000/06/22 17:07:21 minoura Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -50,9 +50,8 @@
  *
  * Documentation links:
  * 
- * http://www.ensoniq.com/multimedia/semi_html/html/es1370.zip
+ * ftp://ftp.alsa-project.org/pub/manuals/ensoniq/
  * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
- * http://www.ensoniq.com/multimedia/semi_html/html/es1371.zip
  * ftp://download.intel.com/ial/scalableplatforms/audio/ac97r21.pdf
  */
 

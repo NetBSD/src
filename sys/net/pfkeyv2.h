@@ -1,9 +1,10 @@
-/*	$NetBSD: pfkeyv2.h,v 1.4 2000/02/09 03:27:29 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.4.2.1 2000/06/22 17:09:43 minoura Exp $	*/
+/*	$KAME: pfkeyv2.h,v 1.16 2000/06/10 06:39:54 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,8 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* KAME Id: keyv2.h,v 1.14 2000/01/29 06:21:03 itojun Exp */
 
 /*
  * This file has been derived rfc 2367,
@@ -66,16 +65,17 @@ you leave this credit intact on any copies of this file.
 #define SADB_X_PROMISC   11
 #define SADB_X_PCHANGE   12
 
-#define SADB_X_SPDUPDATE  13	/* not yet */
+#define SADB_X_SPDUPDATE  13
 #define SADB_X_SPDADD     14
-#define SADB_X_SPDDELETE  15
-#define SADB_X_SPDGET     16	/* not yet */
-#define SADB_X_SPDACQUIRE 17	/* not yet */
+#define SADB_X_SPDDELETE  15	/* by policy index */
+#define SADB_X_SPDGET     16
+#define SADB_X_SPDACQUIRE 17
 #define SADB_X_SPDDUMP    18
 #define SADB_X_SPDFLUSH   19
-#define SADB_X_SPDSETIDX  20	/* add only SPD selector */
+#define SADB_X_SPDSETIDX  20
 #define SADB_X_SPDEXPIRE  21	/* not yet */
-#define SADB_MAX          21
+#define SADB_X_SPDDELETE2 22	/* by policy id */
+#define SADB_MAX          22
 
 struct sadb_msg {
   u_int8_t sadb_msg_version;
@@ -83,13 +83,9 @@ struct sadb_msg {
   u_int8_t sadb_msg_errno;
   u_int8_t sadb_msg_satype;
   u_int16_t sadb_msg_len;
-  u_int8_t sadb_msg_mode;	/* XXX */
-  u_int8_t sadb_msg_reserved1;
+  u_int16_t sadb_msg_reserved;
   u_int32_t sadb_msg_seq;
   u_int32_t sadb_msg_pid;
-  u_int32_t sadb_msg_reqid;	/* XXX */
-  				/* when policy mng, value is zero. */
-  u_int32_t sadb_msg_reserved2;
 };
 
 struct sadb_ext {
@@ -214,14 +210,32 @@ struct sadb_x_kmprivate {
   u_int32_t sadb_x_kmprivate_reserved;
 };
 
+/*
+ * XXX Additional SA Extension.
+ * mode: tunnel or transport
+ * reqid: to make SA unique nevertheless the address pair of SA are same.
+ *        Mainly it's for VPN.
+ */
+struct sadb_x_sa2 {
+  u_int16_t sadb_x_sa2_len;
+  u_int16_t sadb_x_sa2_exttype;
+  u_int8_t sadb_x_sa2_mode;
+  u_int8_t sadb_x_sa2_reserved1;
+  u_int16_t sadb_x_sa2_reserved2;
+  u_int32_t sadb_x_sa2_reserved3;
+  u_int32_t sadb_x_sa2_reqid;
+};
+
 /* XXX Policy Extension */
-/* sizeof(struct sadb_x_policy) == 8 */
+/* sizeof(struct sadb_x_policy) == 16 */
 struct sadb_x_policy {
   u_int16_t sadb_x_policy_len;
   u_int16_t sadb_x_policy_exttype;
   u_int16_t sadb_x_policy_type;		/* See policy type of ipsec.h */
   u_int8_t sadb_x_policy_dir;		/* direction, see ipsec.h */
   u_int8_t sadb_x_policy_reserved;
+  u_int32_t sadb_x_policy_id;
+  u_int32_t sadb_x_policy_reserved2;
 };
 /*
  * When policy_type == IPSEC, it is followed by some of
@@ -271,7 +285,8 @@ struct sadb_x_ipsecrequest {
 #define SADB_EXT_SPIRANGE             16
 #define SADB_X_EXT_KMPRIVATE          17
 #define SADB_X_EXT_POLICY             18
-#define SADB_EXT_MAX                  18
+#define SADB_X_EXT_SA2                19
+#define SADB_EXT_MAX                  19
 
 #define SADB_SATYPE_UNSPEC	0
 #define SADB_SATYPE_AH		2
@@ -281,7 +296,8 @@ struct sadb_x_ipsecrequest {
 #define SADB_SATYPE_RIPV2	7
 #define SADB_SATYPE_MIP		8
 #define SADB_X_SATYPE_IPCOMP	9
-#define SADB_SATYPE_MAX		9
+#define SADB_X_SATYPE_POLICY	10
+#define SADB_SATYPE_MAX		11
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1
@@ -370,57 +386,9 @@ struct sadb_x_ipsecrequest {
 #define PFKEY_ADDR_SADDR(ext) \
 	((struct sockaddr *)((caddr_t)(ext) + sizeof(struct sadb_address)))
 
-#if 1
 /* in 64bits */
 #define	PFKEY_UNUNIT64(a)	((a) << 3)
 #define	PFKEY_UNIT64(a)		((a) >> 3)
-#else
-#define	PFKEY_UNUNIT64(a)	(a)
-#define	PFKEY_UNIT64(a)		(a)
-#endif
-
-#ifndef _KERNEL
-extern void pfkey_sadump __P((struct sadb_msg *));
-extern void pfkey_spdump __P((struct sadb_msg *));
-
-struct sockaddr;
-int ipsec_check_keylen __P((u_int, u_int, u_int));
-u_int pfkey_set_softrate __P((u_int, u_int));
-u_int pfkey_get_softrate __P((u_int));
-int pfkey_send_getspi __P((int, u_int, u_int, struct sockaddr *,
-	struct sockaddr *, u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-int pfkey_send_update __P((int, u_int, u_int, struct sockaddr *,
-	struct sockaddr *, u_int32_t, u_int32_t, u_int,
-	caddr_t, u_int, u_int, u_int, u_int, u_int, u_int32_t, u_int64_t,
-	u_int64_t, u_int64_t, u_int32_t));
-int pfkey_send_add __P((int, u_int, u_int, struct sockaddr *,
-	struct sockaddr *, u_int32_t, u_int32_t, u_int,
-	caddr_t, u_int, u_int, u_int, u_int, u_int, u_int32_t, u_int64_t,
-	u_int64_t, u_int64_t, u_int32_t));
-int pfkey_send_delete __P((int, u_int, u_int,
-	struct sockaddr *, struct sockaddr *, u_int32_t));
-int pfkey_send_get __P((int, u_int, u_int,
-	struct sockaddr *, struct sockaddr *, u_int32_t));
-int pfkey_send_register __P((int, u_int));
-int pfkey_recv_register __P((int));
-int pfkey_send_flush __P((int, u_int));
-int pfkey_send_dump __P((int, u_int));
-int pfkey_send_promisc_toggle __P((int, int));
-int pfkey_send_spdadd __P((int, struct sockaddr *, u_int,
-	struct sockaddr *, u_int, u_int, caddr_t, int, u_int32_t));
-int pfkey_send_spddelete __P((int, struct sockaddr *, u_int,
-	struct sockaddr *, u_int, u_int, u_int32_t));
-int pfkey_send_spdflush __P((int));
-int pfkey_send_spddump __P((int));
-
-int pfkey_open __P((void));
-void pfkey_close __P((int));
-struct sadb_msg *pfkey_recv __P((int));
-int pfkey_send __P((int, struct sadb_msg *, int));
-int pfkey_align __P((struct sadb_msg *, caddr_t *));
-int pfkey_check __P((caddr_t *));
-
-#endif /*!_KERNEL*/
 
 #endif /* __PFKEY_V2_H */
 

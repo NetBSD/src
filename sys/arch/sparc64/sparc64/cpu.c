@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 1999/11/06 20:18:13 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.5.2.1 2000/06/22 17:04:31 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,6 +56,7 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -68,6 +69,12 @@
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
+
+/* Our exported CPU info; we have only one for now. */  
+struct cpu_info cpu_info_store;
+
+/* Linked list of all CPUs in system. */
+struct cpu_info *cpus = NULL;
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -118,18 +125,86 @@ static char *iu_vendor[16] = {
 #endif
 
 /*
- * 4/110 comment: the 4/110 chops off the top 4 bits of an OBIO address.
- *	this confuses autoconf.  for example, if you try and map
- *	0xfe000000 in obio space on a 4/110 it actually maps 0x0e000000.
- *	this is easy to verify with the PROM.   this causes problems
- *	with devices like "esp0 at obio0 addr 0xfa000000" because the
- *	4/110 treats it as esp0 at obio0 addr 0x0a000000" which is the
- *	address of the 4/110's "sw0" scsi chip.   the same thing happens
- *	between zs1 and zs2.    since the sun4 line is "closed" and
- *	we know all the "obio" devices that will ever be on it we just
- *	put in some special case "if"'s in the match routines of esp,
- *	dma, and zs.
+ * Overhead involved in firing up a new CPU:
+ * 
+ *	Allocate a cpuinfo/interrupt stack
+ *	Map that into the kernel
+ *	Initialize the cpuinfo
+ *	Return the TLB entry for the cpuinfo.
  */
+u_int64_t
+cpu_init(pa, cpu_num)
+	paddr_t pa;
+	int cpu_num;
+{
+	struct cpu_info *ci;
+	u_int64_t pagesize;
+	u_int64_t pte;
+	vm_page_t m;
+	paddr_t pa;
+	psize_t size;
+	vaddr_t va;
+	struct pglist mlist;
+	int error;
+
+	size = NBPG; /* XXXX 8K, 64K, 512K, or 4MB */
+	TAILQ_INIT(&mlist);
+	if ((error = uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
+		(paddr_t)size, (paddr_t)0, &mlist, 1, 0)) != 0)
+		panic("cpu_start: no memory, error %d", error);
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("cpu_start: no memory");
+
+	m = TAILQ_FIRST(&mlist);
+	pa = VM_PAGE_TO_PHYS(m);
+	pte = TSB_DATA(0 /* global */,
+		pagesize,
+		pa,
+		1 /* priv */,
+		1 /* Write */,
+		1 /* Cacheable */,
+		1 /* ALIAS -- Disable D$ */,
+		1 /* valid */,
+		0 /* IE */);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_zero_page(pa);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NVC,
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		va += NBPG;
+	}
+	if (!cpus) cpus = (struct cpu_info *)va;
+	else {
+		for (ci = cpus; ci->ci_next; ci=ci->ci_next);
+		ci->ci_next = (struct cpu_info *)va;
+	}
+
+	switch (size) {
+#define K	*1024
+	case 8 K:
+		pagesize = TLB_8K;
+		break;
+	case 64 K:
+		pagesize = TLB_64K;
+		break;
+	case 512 K:
+		pagesize = TLB_512K;
+		break;
+	case 4 K K:
+		pagesize = TLB_4M;
+		break;
+	default:
+		panic("cpu_start: stack size %x not a machine page size\n",
+			size);
+	}
+	return (pte|TLB_L);
+}
+
 
 int
 cpu_match(parent, cf, aux)

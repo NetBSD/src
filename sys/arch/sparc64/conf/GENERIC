@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.33 2000/05/19 05:28:47 eeh Exp $
+# 	$NetBSD: GENERIC,v 1.33.2.1 2000/06/22 17:04:16 minoura Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.33.2.1 $"
 
 maxusers	32
 
@@ -83,7 +83,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+makeoptions 	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -93,7 +93,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
-#options 	DEBUG
+options 	DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -160,19 +160,6 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -286,8 +273,8 @@ scsibus* at isp?
 #scsibus* at fas?
 
 ## GLM support missing
-#sym*	at pci?						# 53C875 "glm" compatible
-#scsibus* at sym?
+siop*	at pci?						# 53C875 "glm" compatible
+scsibus* at siop?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.

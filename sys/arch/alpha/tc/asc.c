@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.16 1999/09/22 03:32:26 mhitch Exp $ */
+/* $NetBSD: asc.c,v 1.16.10.1 2000/06/22 16:58:46 minoura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 1999/09/22 03:32:26 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16.10.1 2000/06/22 16:58:46 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,13 +113,6 @@ void	asc_tcds_attach	__P((struct device *, struct device *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach asc_tcds_ca = {
 	sizeof(struct asc_tcds_softc), asc_tcds_match, asc_tcds_attach
-};
-
-struct scsipi_device asc_tcds_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -190,8 +183,7 @@ asc_tcds_attach(parent, self, aux)
 
 	asc->sc_dma->sc_asc = asc;			/* XXX */
 
-	tcds_intr_establish(parent, tcdsdev->tcdsda_chip,
-	    (int (*) __P((void *)))ncr53c9x_intr, sc);
+	tcds_intr_establish(parent, tcdsdev->tcdsda_chip, ncr53c9x_intr, sc);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -233,9 +225,7 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_tcds_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.9 2000/04/19 06:50:34 itojun Exp $
+#	$NetBSD: GENERIC,v 1.9.2.1 2000/06/22 17:02:09 minoura Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	8			# estimated number of users
 
@@ -41,19 +41,6 @@ options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support
 #options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # networking options
 #options 	GATEWAY			# packet forwarding

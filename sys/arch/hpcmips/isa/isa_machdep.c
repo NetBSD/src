@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2000/04/03 03:40:00 sato Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5.2.1 2000/06/22 17:00:07 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -169,6 +169,14 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

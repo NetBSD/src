@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.30 2000/05/24 02:22:36 jhawk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.30.2.1 2000/06/22 17:09:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,12 @@ splhigh()			(1)
 #define	\
 splx(s)				((void)(s))
 
+#define	\
+simple_lock_init(l)		((void)(l))
+#define	\
+simple_lock(l)			((void)(l))
+#define	\
+simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
@@ -667,7 +673,10 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				    boundary, dontcross);
 #endif
 
-				if (newend > dontcross) {
+				/* Check for overflow */
+				if (dontcross < ex->ex_start)
+					dontcross = ex->ex_end;
+				else if (newend > dontcross) {
 					/*
 					 * Candidate region crosses boundary.
 					 * Throw away the leading part and see
@@ -758,7 +767,10 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			    boundary, dontcross);
 #endif
 
-			if (newend > dontcross) {
+			/* Check for overflow */
+			if (dontcross < ex->ex_start)
+				dontcross = ex->ex_end;
+			else if (newend > dontcross) {
 				/*
 				 * Candidate region crosses boundary.
 				 * Throw away the leading part and see

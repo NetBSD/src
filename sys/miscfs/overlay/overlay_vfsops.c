@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.3 2000/03/16 18:08:25 jdolecek Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.3.2.1 2000/06/22 17:09:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -159,7 +159,7 @@ ov_mount(mp, path, data, ndp, p)
 	 * Make sure that the mount point is sufficiently initialized
 	 * that the node create call will work.
 	 */
-	vfs_getnewfsid(mp, MOUNT_OVERLAY);
+	vfs_getnewfsid(mp);
 
 	nmp->ovm_size = sizeof (struct overlay_node);
 	nmp->ovm_tag = VT_OVERLAY;

@@ -1,9 +1,10 @@
-/*	$NetBSD: key_var.h,v 1.7 2000/01/31 14:19:12 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.7.2.1 2000/06/22 17:10:11 minoura Exp $	*/
+/*	$KAME: key_var.h,v 1.8 2000/05/24 17:28:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -87,47 +88,11 @@
 }
 #endif
 
+#ifdef _KERNEL
 #define _ARRAYLEN(p) (sizeof(p)/sizeof(p[0]))
 #define _KEYLEN(key) ((u_int)((key)->sadb_key_bits >> 3))
 #define _KEYBITS(key) ((u_int)((key)->sadb_key_bits))
 #define _KEYBUF(key) ((caddr_t)((caddr_t)(key) + sizeof(struct sadb_key)))
-
-#define _INADDR(in) ((struct sockaddr_in *)(in))
-
-#ifdef INET6
-#define _IN6ADDR(in6) ((struct sockaddr_in6 *)(in6))
-#define _SALENBYAF(family) \
-	(((family) == AF_INET) ? \
-		(u_int)sizeof(struct sockaddr_in) : \
-		(u_int)sizeof(struct sockaddr_in6))
-#define _INALENBYAF(family) \
-	(((family) == AF_INET) ? \
-		(u_int)sizeof(struct in_addr) : \
-		(u_int)sizeof(struct in6_addr))
-#define _INADDRBYSA(saddr) \
-	((((struct sockaddr *)(saddr))->sa_family == AF_INET) ? \
-		(caddr_t)&((struct sockaddr_in *)(saddr))->sin_addr : \
-		(caddr_t)&((struct sockaddr_in6 *)(saddr))->sin6_addr)
-#define _INPORTBYSA(saddr) \
-	((((struct sockaddr *)(saddr))->sa_family == AF_INET) ? \
-		((struct sockaddr_in *)(saddr))->sin_port : \
-		((struct sockaddr_in6 *)(saddr))->sin6_port)
-#if 0
-#define _SADDRBYSA(saddr) \
-	((((struct sockaddr *)(saddr))->sa_family == AF_INET) ? \
-		(caddr_t)&((struct sockaddr_in *)(saddr))->sin_addr.s_addr : \
-		(caddr_t)&((struct sockaddr_in6 *)(saddr))->sin6_addr.s6_addr)
-#endif
-#else
-#define _IN6ADDR(in6) "#error"
-#define _SALENBYAF(family) sizeof(struct sockaddr_in)
-#define _INALENBYAF(family) sizeof(struct in_addr)
-#define _INADDRBYSA(saddr) ((caddr_t)&((struct sockaddr_in *)(saddr))->sin_addr)
-#define _INPORTBYSA(saddr) (((struct sockaddr_in *)(saddr))->sin_port)
-#if 0
-#define _SADDRBYSA(saddr) \
-	((caddr_t)&((struct sockaddr_in *)(saddr))->sin_addr.s_addr)
-#endif
-#endif /* defined(INET6) */
+#endif /*_KERNEL*/
 
 #endif /* _NETKEY_KEY_VAR_H_ */

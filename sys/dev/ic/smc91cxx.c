@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.24 2000/02/04 04:05:50 enami Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.24.2.1 2000/06/22 17:06:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -266,6 +266,9 @@ smc91cxx_attach(sc, myea)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
 #endif
+
+	/* The attach is successful. */
+	sc->sc_flags |= SMC_FLAGS_ATTACHED;
 }
 
 /*
@@ -294,7 +297,7 @@ smc91cxx_set_media(sc, media)
 	 * When it is enabled later, smc91cxx_init() will properly set
 	 * up the media for us.
 	 */
-	if (sc->sc_enabled == 0)
+	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0)
 		return (0);
 
 	if (IFM_TYPE(media) != IFM_ETHER)
@@ -333,7 +336,7 @@ smc91cxx_mediastatus(ifp, ifmr)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
 
-	if (sc->sc_enabled == 0) {
+	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
 		return;
@@ -661,7 +664,7 @@ smc91cxx_intr(arg)
 	u_int8_t mask, interrupts, status;
 	u_int16_t packetno, tx_status, card_stats;
 
-	if (sc->sc_enabled == 0 ||
+	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
@@ -1080,7 +1083,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (sc->sc_enabled == 0) {
+		if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0) {
 			error = EIO;
 			break;
 		}
@@ -1178,7 +1181,7 @@ smc91cxx_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 
-	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
 			    sc->sc_dev.dv_xname);
@@ -1186,7 +1189,7 @@ smc91cxx_enable(sc)
 		}
 	}
 
-	sc->sc_enabled = 1;
+	sc->sc_flags |= SMC_FLAGS_ENABLED;
 	return (0);
 }
 
@@ -1198,9 +1201,9 @@ smc91cxx_disable(sc)
 	struct smc91cxx_softc *sc;
 {
 
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+	if ((sc->sc_flags & SMC_FLAGS_ENABLED) != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
+		sc->sc_flags &= ~SMC_FLAGS_ENABLED;
 	}
 }
 
@@ -1234,7 +1237,12 @@ smc91cxx_detach(self, flags)
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
-	/* smc91cxx_disable() checks sc->sc_enabled */
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & SMC_FLAGS_ATTACHED) == 0)
+		return (0);
+
+
+	/* smc91cxx_disable() checks SMC_FLAGS_ENABLED */
 	smc91cxx_disable(sc);
 
 	/* smc91cxx_attach() never fails */

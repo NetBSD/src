@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.21 2000/04/15 21:14:52 tsarna Exp $	*/
+/*	$NetBSD: nfs.h,v 1.21.2.1 2000/06/22 17:10:14 minoura Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -380,7 +380,13 @@ struct nfsuid {
 /* Bits for nu_flag */
 #define	NU_INETADDR	0x1
 #define NU_NAM		0x2
+#ifdef INET6
+#define NU_NETFAM(u) \
+	(((u)->nu_flag & NU_INETADDR) ? \
+	(((u)->nu_flag & NU_NAM) ? AF_INET6 : AF_INET) : AF_ISO)
+#else
 #define NU_NETFAM(u)	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_ISO)
+#endif
 
 struct nfssvc_sock {
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */

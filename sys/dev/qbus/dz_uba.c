@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.10 2000/04/30 11:46:49 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.10.2.1 2000/06/22 17:07:50 minoura Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -113,7 +113,7 @@ dz_uba_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct	dz_softc *sc = (void *)self;
+	struct dz_softc *sc = (void *)self;
 	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
@@ -131,9 +131,11 @@ dz_uba_attach(parent, self, aux)
 	sc->sc_type = DZ_DZ;
 
 	/* Now register the TX & RX interrupt handlers */
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, dzxint, sc);
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dzrint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dzxint, sc, &sc->sc_tintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
+		dzrint, sc, &sc->sc_rintrcnt);
 	uba_reset_establish(dzreset, self);
 
-	dzattach(sc);
+	dzattach(sc, ua->ua_evcnt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.8 2000/01/05 02:57:28 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.8.2.1 2000/06/22 17:07:57 minoura Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -89,6 +89,11 @@ rf_RewriteParity(raidPtr)
 	for (i = 0; i < raidPtr->totalSectors && 
 		     rc <= RF_PARITY_CORRECTED; 
 	     i += layoutPtr->dataSectorsPerStripe) {
+		if (raidPtr->waitShutdown) {
+			/* Someone is pulling the plug on this set...
+			   abort the re-write */
+			return (1);
+		}
 		asm_h = rf_MapAccess(raidPtr, i, 
 				     layoutPtr->dataSectorsPerStripe, 
 				     NULL, RF_DONT_REMAP);

@@ -1,11 +1,11 @@
-/*	$NetBSD: cac_pci.c,v 1.3 2000/03/23 11:33:35 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.3.2.1 2000/06/22 17:07:16 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.3 2000/03/23 11:33:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.3.2.1 2000/06/22 17:07:16 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

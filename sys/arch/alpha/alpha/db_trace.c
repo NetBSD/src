@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.6 2000/05/26 03:34:24 jhawk Exp $ */
+/* $NetBSD: db_trace.c,v 1.6.2.1 2000/06/22 16:58:11 minoura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,12 +42,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2000/05/26 03:34:24 jhawk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6.2.1 2000/06/22 16:58:11 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+
+#include <machine/alpha.h>
 #include <machine/db_machdep.h>
 
 #include <alpha/alpha/db_instruction.h>
@@ -80,41 +82,125 @@ struct prologue_info {
  *		XentUna
  */
 
-extern void XentArith __P((void)), XentIF __P((void)), XentInt __P((void)),
-		XentMM __P((void)), XentSys __P((void)), XentUna __P((void)),
-		XentRestart __P((void));
-
 static struct special_symbol {
-	void (*ss_val) __P((void));
+	vaddr_t ss_val;
 	const char *ss_note;
 } special_symbols[] = {
-	{ &XentArith,	"arithmetic trap" },
-	{ &XentIF,	"instruction fault" },
-	{ &XentInt,	"interrupt" },
-	{ &XentMM,	"memory management fault" },
-	{ &XentSys,	"syscall" },
-	{ &XentUna,	"unaligned access fault" },
-	{ &XentRestart,	"console restart" },
+	{ (vaddr_t)&XentArith,		"arithmetic trap" },
+	{ (vaddr_t)&XentIF,		"instruction fault" },
+	{ (vaddr_t)&XentInt,		"interrupt" },
+	{ (vaddr_t)&XentMM,		"memory management fault" },
+	{ (vaddr_t)&XentSys,		"syscall" },
+	{ (vaddr_t)&XentUna,		"unaligned access fault" },
+	{ (vaddr_t)&XentRestart,	"console restart" },
 	{ NULL }
 };
 
-static void decode_prologue __P((db_addr_t, db_addr_t, struct prologue_info *,
-    void (*)(const char *, ...)));
-static void decode_syscall __P((int, struct proc *,
-    void (*)(const char *, ...)));
-static int sym_is_trapsymbol __P((void *));
+/*
+ * Decode the function prologue for the function we're in, and note
+ * which registers are stored where, and how large the stack frame is.
+ */
+static void
+decode_prologue(db_addr_t callpc, db_addr_t func,
+    struct prologue_info *pi, void (*pr)(const char *, ...))
+{
+	long signed_immediate;
+	alpha_instruction ins;
+	db_expr_t pc;
+
+	pi->pi_regmask = 0;
+	pi->pi_frame_size = 0;
+
+#define	CHECK_FRAMESIZE							\
+do {									\
+	if (pi->pi_frame_size != 0) {					\
+		(*pr)("frame size botch: adjust register offsets?\n"); \
+	}								\
+} while (0)
+
+	for (pc = func; pc < callpc; pc += sizeof(alpha_instruction)) {
+		ins.bits = *(unsigned int *)pc;
+
+		if (ins.mem_format.opcode == op_lda &&
+		    ins.mem_format.ra == 30 &&
+		    ins.mem_format.rb == 30) {
+			/*
+			 * GCC 2.7-style stack adjust:
+			 *
+			 *	lda	sp, -64(sp)
+			 */
+			signed_immediate = (long)ins.mem_format.displacement;
+#if 1
+			if (signed_immediate > 0)
+				(*pr)("prologue botch: displacement %ld\n",
+				    signed_immediate);
+#endif
+			CHECK_FRAMESIZE;
+			pi->pi_frame_size += -signed_immediate;
+		} else if (ins.operate_lit_format.opcode == op_arit &&
+			   ins.operate_lit_format.function == op_subq &&
+			   ins.operate_lit_format.ra == 30 &&
+			   ins.operate_lit_format.rc == 30) {
+			/*
+			 * EGCS-style stack adjust:
+			 *
+			 *	subq	sp, 64, sp
+			 */
+			CHECK_FRAMESIZE;
+			pi->pi_frame_size += ins.operate_lit_format.literal;
+		} else if (ins.mem_format.opcode == op_stq &&
+			   ins.mem_format.rb == 30 &&
+			   ins.mem_format.ra != 31) {
+			/* Store of (non-zero) register onto the stack. */
+			signed_immediate = (long)ins.mem_format.displacement;
+			pi->pi_regmask |= 1 << ins.mem_format.ra;
+			pi->pi_reg_offset[ins.mem_format.ra] = signed_immediate;
+		}
+	}
+}
+
+static int
+sym_is_trapsymbol(vaddr_t v)
+{
+	int i;
+
+	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+		if (v == special_symbols[i].ss_val)
+			return 1;
+	return 0;
+}
+
+static void
+decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
+{
+	db_sym_t sym;
+	db_expr_t diff;
+	char *symname, *ename;
+	int (*f) __P((struct proc *, void *, register_t *));
+
+	(*pr)(" (%d", number); /* ) */
+	if (!p)
+		goto out;
+	if (0 <= number && number < p->p_emul->e_nsysent) {
+		ename = p->p_emul->e_name;
+		f = p->p_emul->e_sysent[number].sy_call;
+		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
+		if (sym == DB_SYM_NULL || diff != 0)
+			goto out;
+		db_symbol_values(sym, &symname, NULL);
+		(*pr)(", %s.%s", ename, symname);
+	}
+out:
+	(*pr)(")");
+	return;
+}
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t addr;
-	boolean_t have_addr;
-	db_expr_t count;
-	char *modif;
-	void (*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t callpc, frame, symval;
 	struct prologue_info pi;
-	void *symval_f;
 	db_expr_t diff;
 	db_sym_t sym;
 	int i;
@@ -173,7 +259,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			break;
 
 		db_symbol_values(sym, &symname, (db_expr_t *)&symval);
-		symval_f = (void *)symval;
 
 		if (callpc < symval) {
 			(*pr)("symbol botch: callpc 0x%lx < "
@@ -216,20 +301,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * If we are in a trap vector, frame points to a
 		 * trapframe.
 		 */
-		if (sym_is_trapsymbol(symval_f)) {
+		if (sym_is_trapsymbol(symval)) {
 			tf = (struct trapframe *)frame;
 
 			for (i = 0; special_symbols[i].ss_val != NULL; ++i)
-				if (symval_f == special_symbols[i].ss_val)
+				if (symval == special_symbols[i].ss_val)
 					(*pr)("--- %s",
 					    special_symbols[i].ss_note);
 
 			tfps = tf->tf_regs[FRAME_PS];
-			if (symval_f == &XentSys)
+			if (symval == (vaddr_t)&XentSys)
 				decode_syscall(tf->tf_regs[FRAME_V0], p, pr);
 			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
 				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
-				if (symval_f != &XentSys)
+				if (symval != (vaddr_t)&XentSys)
 					(*pr)(" (from ipl %ld)", last_ipl);
 			}
 			(*pr)(" ---\n");
@@ -273,109 +358,4 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #endif
 		frame += pi.pi_frame_size;
 	}
-}
-
-/*
- * Decode the function prologue for the function we're in, and note
- * which registers are stored where, and how large the stack frame is.
- */
-static void
-decode_prologue(callpc, func, pi, pr)
-	db_addr_t callpc, func;
-	struct prologue_info *pi;
-	void (*pr) __P((const char *, ...));
-{
-	long signed_immediate;
-	alpha_instruction ins;
-	db_expr_t pc;
-
-	pi->pi_regmask = 0;
-	pi->pi_frame_size = 0;
-
-#define	CHECK_FRAMESIZE							\
-do {									\
-	if (pi->pi_frame_size != 0) {					\
-		(*pr)("frame size botch: adjust register offsets?\n"); \
-	}								\
-} while (0)
-
-	for (pc = func; pc < callpc; pc += sizeof(alpha_instruction)) {
-		ins.bits = *(unsigned int *)pc;
-
-		if (ins.mem_format.opcode == op_lda &&
-		    ins.mem_format.ra == 30 &&
-		    ins.mem_format.rb == 30) {
-			/*
-			 * GCC 2.7-style stack adjust:
-			 *
-			 *	lda	sp, -64(sp)
-			 */
-			signed_immediate = (long)ins.mem_format.displacement;
-#if 1
-			if (signed_immediate > 0)
-				(*pr)("prologue botch: displacement %ld\n",
-				    signed_immediate);
-#endif
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += -signed_immediate;
-		} else if (ins.operate_lit_format.opcode == op_arit &&
-			   ins.operate_lit_format.function == op_subq &&
-			   ins.operate_lit_format.ra == 30 &&
-			   ins.operate_lit_format.rc == 30) {
-			/*
-			 * EGCS-style stack adjust:
-			 *
-			 *	subq	sp, 64, sp
-			 */
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += ins.operate_lit_format.literal;
-		} else if (ins.mem_format.opcode == op_stq &&
-			   ins.mem_format.rb == 30 &&
-			   ins.mem_format.ra != 31) {
-			/* Store of (non-zero) register onto the stack. */
-			signed_immediate = (long)ins.mem_format.displacement;
-			pi->pi_regmask |= 1 << ins.mem_format.ra;
-			pi->pi_reg_offset[ins.mem_format.ra] = signed_immediate;
-		}
-	}
-}
-
-static int
-sym_is_trapsymbol(v)
-	void *v;
-{
-	int i;
-
-	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
-		if (v == special_symbols[i].ss_val)
-			return 1;
-	return 0;
-}
-
-static void
-decode_syscall(number, p, pr)
-	int number;
-	struct proc *p;
-	void (*pr) __P((const char *, ...));
-{
-	db_sym_t sym;
-	db_expr_t diff;
-	char *symname, *ename;
-	int (*f) __P((struct proc *, void *, register_t *));
-
-	(*pr)(" (%d", number); /* ) */
-	if (!p)
-		goto out;
-	if (0 <= number && number < p->p_emul->e_nsysent) {
-		ename = p->p_emul->e_name;
-		f = p->p_emul->e_sysent[number].sy_call;
-		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
-		if (sym == DB_SYM_NULL || diff != 0)
-			goto out;
-		db_symbol_values(sym, &symname, NULL);
-		(*pr)(", %s.%s", ename, symname);
-	}
-out:
-	(*pr)(")");
-	return;
 }

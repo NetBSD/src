@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.32 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.32.2.1 2000/06/22 17:10:36 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,9 +122,15 @@ lfs_valloc(v)
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	
 	/*
-	 * Prevent a race getting lfs_free.
+	 * Use lfs_seglock here, instead of fs->lfs_freelock, to ensure that
+	 * the free list is not changed in between the time that the ifile
+	 * blocks are written to disk and the time that the superblock is
+	 * written to disk.
+	 *
+	 * XXX this sucks.  We should instead encode the head of the free
+	 * list into the CLEANERINFO block of the Ifile.
 	 */
-	lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE, 0);
+	lfs_seglock(fs, SEGM_PROT);
 
 	/* Get the head of the freelist. */
 	new_ino = fs->lfs_free;
@@ -163,6 +169,7 @@ lfs_valloc(v)
 		blkno = lblkno(fs, ip->i_ffs_size);
 		if ((error = VOP_BALLOC(vp, ip->i_ffs_size, fs->lfs_bsize,
 		    NULL, 0, &bp)) != 0) {
+			lfs_segunlock(fs);
 			return (error);
 		}
 		ip->i_ffs_size += fs->lfs_bsize;
@@ -186,6 +193,7 @@ lfs_valloc(v)
 		ifp->if_nextfree = LFS_UNUSED_INUM;
 		VOP_UNLOCK(vp,0);
 		if ((error = VOP_BWRITE(bp)) != 0) {
+			lfs_segunlock(fs);
 			return (error);
 		}
 	}
@@ -194,7 +202,7 @@ lfs_valloc(v)
 		panic("inode 0 allocated [3]");
 #endif /* DIAGNOSTIC */
 	
-	lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
+	lfs_segunlock(fs);
 
 	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create a vnode to associate with the inode. */
@@ -312,22 +320,18 @@ lfs_vfree(v)
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
-	
-	while(WRITEINPROG(vp)
-	      || fs->lfs_seglock
-	      || lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
-	{
-		if (WRITEINPROG(vp)) {
-			tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
-		}
-		if (fs->lfs_seglock) {
-			if (fs->lfs_lockpid == curproc->p_pid) {
-				break;
-			} else {
-				tsleep(&fs->lfs_seglock, PRIBIO + 1, "lfs_vfr1", 0);
-			}
-		}
-	}
+
+#if 0
+	/*
+	 * Right now this is unnecessary since we take the seglock.
+	 * But if the seglock is no longer necessary (e.g. we put the
+	 * head of the free list into the Ifile) we will need to drain
+	 * this vnode of any pending writes.
+	 */
+	if (WRITEINPROG(vp))
+		tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
+#endif
+	lfs_seglock(fs, SEGM_PROT);
 	
 	if(vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
@@ -339,10 +343,10 @@ lfs_vfree(v)
 	if (ip->i_flag & IN_CLEANING) {
 		--fs->lfs_uinodes;
 	}
-	if (ip->i_flag & IN_MODIFIED) {
+	if (ip->i_flag & (IN_MODIFIED | IN_ACCESSED)) {
 		--fs->lfs_uinodes;
 	}
-	ip->i_flag &= ~(IN_CLEANING | IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+	ip->i_flag &= ~IN_ALLMOD;
 #ifdef DEBUG_LFS	
 	if((int32_t)fs->lfs_uinodes<0) {
 		printf("U1");
@@ -377,11 +381,11 @@ lfs_vfree(v)
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
-	lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
 	
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
 	--fs->lfs_nfiles;
 	
+	lfs_segunlock(fs);
 	return (0);
 }

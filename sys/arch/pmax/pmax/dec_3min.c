@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.40.2.1 2000/06/22 17:02:28 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.40.2.1 2000/06/22 17:02:28 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
 static void	dec_3min_cons_init __P((void));
-static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3min_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -121,8 +121,6 @@ static unsigned latched_cycle_cnt;
 void
 dec_3min_init()
 {
-	int physmem_boardmax;
-
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
@@ -321,7 +319,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
         }							\
     } while (0)
 
-static int
+static void
 dec_3min_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
@@ -446,7 +444,7 @@ done:
 	intr_depth--;
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

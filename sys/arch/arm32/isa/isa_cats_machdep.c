@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_cats_machdep.c,v 1.3 1999/03/19 04:58:45 cgd Exp $	*/
+/*	$NetBSD: isa_cats_machdep.c,v 1.3.16.1 2000/06/22 16:59:31 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -358,6 +358,14 @@ isa_intr_alloc(ic, mask, type, irq)
 	*irq = bestirq;
 
 	return (0);
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

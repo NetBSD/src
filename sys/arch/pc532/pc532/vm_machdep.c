@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2000/03/26 20:42:35 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41.2.1 2000/06/22 17:02:14 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -77,17 +77,20 @@ void	setredzone __P((u_short *, caddr_t));
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct syscframe *tf;
@@ -111,8 +114,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	pmap_activate(p2);
 
 	/*
-	 * Copy the syscframe, and arrange for the child to return directly
-	 * through rei().  Note the in-line cpu_set_kpc().
+	 * Copy the syscframe.
 	 */
 	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
 
@@ -127,37 +129,11 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf->sf_p  = p2;
 	sf->sf_pc = (long) proc_trampoline;
 	sf->sf_fp = (long) &tf->sf_regs.r_fp;
-	sf->sf_r3 = (long) child_return;
-	sf->sf_r4 = (long) p2;
+	sf->sf_r3 = (long) func;
+	sf->sf_r4 = (long) arg;
 	sf->sf_pl = imask[IPL_ZERO];
 	pcb->pcb_ksp = (long) sf;
 	pcb->pcb_kfp = (long) &sf->sf_fp;
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcbp;
-	struct switchframe *sf;
-
-	pcbp = &p->p_addr->u_pcb;
-	sf = (struct switchframe *) pcbp->pcb_ksp;
-	sf->sf_pc = (long) proc_trampoline;
-	sf->sf_r3 = (long) pc;
-	sf->sf_r4 = (long) arg;
 }
 
 /*

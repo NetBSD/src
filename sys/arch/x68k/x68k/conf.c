@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1999/04/19 21:23:02 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.18.10.1 2000/06/22 17:05:40 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -220,7 +220,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 #endif
 	cdev_tty_init(NXCOM,com),	/* 16: serial port */
-	cdev_gen_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
+	cdev_audio_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */

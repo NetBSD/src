@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.8 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.8.2.1 2000/06/22 16:59:07 minoura Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -968,11 +968,11 @@ arc_dump_tlb(int first,int last)
 		else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		printf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
+		printf("0=0x%08x ", mips_tlbpfn_to_paddr(tlb.tlb_lo0));
 		printf("%c", tlb.tlb_lo0 & MIPS3_PG_M ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo0 & MIPS3_PG_G ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
+		printf("1=0x%08x ", mips_tlbpfn_to_paddr(tlb.tlb_lo1));
 		printf("%c", tlb.tlb_lo1 & MIPS3_PG_M ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo1 & MIPS3_PG_G ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);

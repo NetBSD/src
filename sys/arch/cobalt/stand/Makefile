@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/30 21:46:16 soren Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2000/06/22 16:59:50 minoura Exp $
 
-SUBDIR=		installboot
+SUBDIR=		installkernel
 
 .include <bsd.subdir.mk>

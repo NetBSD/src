@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2000/05/22 15:03:47 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.42.2.1 2000/06/22 17:00:08 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.13.4 2000.05.20\r\n")
+	TEXT("Version 1.14.0 2000.06.04\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -400,6 +400,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	osversion = 100;
 #endif
 
+	/*
+	 * create log file for debugging
+	 */
+	for (i = 0; i < path_list_items; i++) {
+		TCHAR filenamebuf[1024];
+		if (!(path_list[i].flags & PATH_SAVE)) {
+			continue;
+		}
+		wsprintf(filenamebuf, TEXT("%s%s"),
+		    path_list[i].name, LOGNAME);
+		if (set_debug_log(filenamebuf) == 0) {
+			msg_printf(MSG_INFO,
+			    TEXT("Debug"),
+			    TEXT("%s was created"), LOGNAME);
+			break;
+		}
+	}
+
+	debug_printf(TEXT("%s"), version_string);
+	debug_printf(TEXT("Compiled for %d, Runtime OS version %d\n"),
+		     _WIN32_WCE, osversion);
+
 	wc.style          = (UINT)NULL;
 	wc.lpfnWndProc    = (WNDPROC) WndProc;
 	wc.cbClsExtra     = 0;
@@ -422,7 +444,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	 *	Main Window
          */
 #define WS_EX_CONTROLPARENT     0x00010000L
-	hWndMain = CreateWindowEx(WS_EX_CONTROLPARENT,
+	hWndMain = CreateWindowEx((osversion < 211) ? 0 : WS_EX_CONTROLPARENT,
 				  szAppName,
 				  szTitle,
 				  WS_VISIBLE,
@@ -452,15 +474,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				 CommandBar_Height(hWndCB));
 	}
 	SetFocus(GetDlgItem(hWndMain, IDC_BOOT));
+	SetForegroundWindow(hWndMain);
 
 	/*
 	 *  load preferences
 	 */
 	pref_init(&pref);
 	if (pref_load(path_list, path_list_items) == 0) {
-		TCHAR tmp[256];
-		wsprintf(tmp, TEXT("%s is loaded."), where_pref_load_from);
-		SetDlgItemText(hWndMain, IDC_STATUS, tmp);
+		stat_printf(TEXT("%s is loaded."), where_pref_load_from);
 
 		fb_settings[0].type = pref.fb_type;
 		fb_settings[0].width = pref.fb_width;
@@ -472,8 +493,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	} else {
 		TCHAR tmpbuf[PATHBUFLEN];
 		wsprintf(tmpbuf, TEXT("%s%S"), path_list[0].name, "netbsd");
-		SetDlgItemText(hWndMain, IDC_STATUS,
-			       TEXT("preferences not loaded."));
+		stat_printf(TEXT("preferences not loaded."));
 
 		pref.setting_idx = 1;
 		pref.fb_type = fb_settings[0].type;

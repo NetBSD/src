@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.27 2000/05/27 10:12:45 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.27.2.1 2000/06/22 17:05:33 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
+	struct	evcnt		ncr_intrcnt;
 	caddr_t ncr_addr;
 	int	ncr_off;
 	int	ncr_dmaaddr;
@@ -102,33 +103,30 @@ struct si_softc {
 	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
 };
 
-static	int si_match(struct device *, struct cfdata *, void *);
-static	void si_attach(struct device *, struct device *, void *);
+static	int si_vsbus_match(struct device *, struct cfdata *, void *);
+static	void si_vsbus_attach(struct device *, struct device *, void *);
 static	void si_minphys(struct buf *);
 
-static	void si_dma_alloc __P((struct ncr5380_softc *));
-static	void si_dma_free __P((struct ncr5380_softc *));
-static	void si_dma_setup __P((struct ncr5380_softc *));
-static	void si_dma_start __P((struct ncr5380_softc *));
-static	void si_dma_poll __P((struct ncr5380_softc *));
-static	void si_dma_eop __P((struct ncr5380_softc *));
-static	void si_dma_stop __P((struct ncr5380_softc *));
+static	void si_dma_alloc(struct ncr5380_softc *);
+static	void si_dma_free(struct ncr5380_softc *);
+static	void si_dma_setup(struct ncr5380_softc *);
+static	void si_dma_start(struct ncr5380_softc *);
+static	void si_dma_poll(struct ncr5380_softc *);
+static	void si_dma_eop(struct ncr5380_softc *);
+static	void si_dma_stop(struct ncr5380_softc *);
 
-
-struct cfattach ncr_ca = {
-	sizeof(struct si_softc), si_match, si_attach
+struct cfattach si_vsbus_ca = {
+	sizeof(struct si_softc), si_vsbus_match, si_vsbus_attach
 };
 
 static int
-si_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	volatile char *si_csr = (char *) va->va_addr;
 
-	if (vax_boardtype == VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
+	    || vax_boardtype == VAX_BTYP_48)
 		return 0;
 	/* This is the way Linux autoprobes the interrupt MK-990321 */
 	si_csr[12] = 0;
@@ -140,16 +138,17 @@ si_match(parent, cf, aux)
 }
 
 static void
-si_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+si_vsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	int tweak, target;
 
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
+		SCB_ISTACK, &sc->ncr_intrcnt);
+	evcnt_attach_dynamic(&sc->ncr_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
 	/*
 	 * DMA area mapin.
@@ -239,8 +238,7 @@ si_minphys(struct buf *bp)
 }
 
 void
-si_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -288,8 +286,7 @@ found:
 }
 
 void
-si_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
@@ -303,15 +300,13 @@ si_dma_free(ncr_sc)
 }
 
 void
-si_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 	/* Do nothing here */
 }
 
 void
-si_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -360,8 +355,7 @@ si_dma_start(ncr_sc)
  * When?
  */
 void
-si_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	printf("si_dma_poll\n");
 }
@@ -370,15 +364,13 @@ si_dma_poll(ncr_sc)
  * When?
  */
 void
-si_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 	printf("si_dma_eop\n");
 }
 
 void
-si_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+si_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

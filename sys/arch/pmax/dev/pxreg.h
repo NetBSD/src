@@ -1,11 +1,11 @@
-/* 	$NetBSD: pxreg.h,v 1.7 2000/01/14 02:00:46 ad Exp $	*/
+/* 	$NetBSD: pxreg.h,v 1.7.2.1 2000/06/22 17:02:19 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

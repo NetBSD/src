@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.9 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.9.2.1 2000/06/22 17:09:08 minoura Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -295,7 +295,7 @@ sys_ntp_adjtime(p, v, retval)
  */
 int
 sysctl_ntptime(where, sizep)
-	char *where;
+	void *where;
 	size_t *sizep;
 {
 	struct timeval atv;
@@ -401,7 +401,7 @@ sys_ntp_adjtime(p, v, retval)
 
 int
 sysctl_ntptime(where, sizep)
-	char *where;
+	void *where;
 	size_t *sizep;
 {
 	return (ENOSYS);

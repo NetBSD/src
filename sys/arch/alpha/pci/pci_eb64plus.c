@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.5.16.1 2000/06/22 16:58:42 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5.16.1 2000/06/22 16:58:42 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp
 
 #include <alpha/pci/pci_eb64plus.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
@@ -101,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp
 int	dec_eb64plus_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_eb64plus_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_eb64plus_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_eb64plus_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_eb64plus_intr_disestablish __P((void *, void *));
@@ -109,9 +106,6 @@ void	dec_eb64plus_intr_disestablish __P((void *, void *));
 #define	PCI_STRAY_MAX		5
 
 struct alpha_shared_intr *eb64plus_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt eb64plus_intr_evcnt;
-#endif
 
 bus_space_tag_t eb64plus_intrgate_iot;
 bus_space_handle_t eb64plus_intrgate_ioh;
@@ -126,11 +120,13 @@ pci_eb64plus_pickintr(acp)
 {
 	bus_space_tag_t iot = &acp->ac_iot;
 	pci_chipset_tag_t pc = &acp->ac_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = acp;
         pc->pc_intr_map = dec_eb64plus_intr_map;
         pc->pc_intr_string = dec_eb64plus_intr_string;
+	pc->pc_intr_evcnt = dec_eb64plus_intr_evcnt;
         pc->pc_intr_establish = dec_eb64plus_intr_establish;
         pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
 
@@ -144,10 +140,17 @@ pci_eb64plus_pickintr(acp)
 	for (i = 0; i < EB64PLUS_MAX_IRQ; i++)
 		eb64plus_intr_disable(i);	
 
-	eb64plus_pci_intr = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ);
-	for (i = 0; i < EB64PLUS_MAX_IRQ; i++)
+	eb64plus_pci_intr = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ, 8);
+	for (i = 0; i < EB64PLUS_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(eb64plus_pci_intr, i,
 			PCI_STRAY_MAX);
+		
+		cp = alpha_shared_intr_string(eb64plus_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    eb64plus_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "eb64+", cp);
+	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
@@ -209,6 +212,17 @@ dec_eb64plus_intr_string(acv, ih)
         return (irqstr);
 }
 
+const struct evcnt *
+dec_eb64plus_intr_evcnt(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+
+	if (ih > EB64PLUS_MAX_IRQ)
+		panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
+	return (alpha_shared_intr_evcnt(eb64plus_pci_intr, ih));
+}
+
 void *
 dec_eb64plus_intr_establish(acv, ih, level, func, arg)
         void *acv, *arg;
@@ -262,14 +276,6 @@ eb64plus_iointr(framep, vec)
 		if (vec >= 0x900 + (EB64PLUS_MAX_IRQ << 4))
 			panic("eb64plus_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
-
-#ifdef EVCNT_COUNTERS
-		eb64plus_intr_evcnt.ev_count++;
-#else
-		if (EB64PLUS_MAX_IRQ != INTRCNT_EB64PLUS_IRQ_LEN)
-			panic("eb64plus interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_EB64PLUS_IRQ + irq]++;
-#endif
 
 		if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
 			alpha_shared_intr_stray(eb64plus_pci_intr, irq,

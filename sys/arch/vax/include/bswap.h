@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.2 1999/08/21 05:39:55 simonb Exp $      */
+/*      $NetBSD: bswap.h,v 1.2.10.1 2000/06/22 17:05:04 minoura Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -10,7 +10,7 @@
 
 #ifdef  __GNUC__
 
-#include <vax/byte_swap.h>
+#include <machine/byte_swap.h>
 #define bswap16(x)      __byte_swap_word(x)
 #define bswap32(x)      __byte_swap_long(x)
 

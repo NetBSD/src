@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.41 2000/01/17 02:59:25 matt Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.41.2.1 2000/06/22 17:09:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,6 +41,7 @@
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
 #include "opt_compat_vax1k.h"
+#include "opt_compat_pecoff.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -74,6 +75,7 @@
 #endif
 
 #ifdef COMPAT_IBCS2
+#include <sys/exec_coff.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
 
@@ -103,6 +105,11 @@
 
 #ifdef COMPAT_AOUT
 #include <compat/aout/aout_exec.h>
+#endif
+
+#ifdef COMPAT_PECOFF
+#include <sys/exec_coff.h>
+#include <compat/pecoff/pecoff_exec.h>
 #endif
 
 struct execsw execsw[] = {
@@ -159,6 +166,9 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */
+#endif
+#ifdef COMPAT_PECOFF
+	{ sizeof(struct exec), exec_pecoff_makecmds, },	/* Win32/CE PE/COFF */
 #endif
 };
 int nexecs = (sizeof(execsw) / sizeof(*execsw));

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2000/05/26 21:05:23 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.2.1 2000/06/22 17:05:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,17 +64,29 @@
 void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
-int	mastercpu;	/* chief of the system */
-struct device *booted_from;
+int mastercpu;	/* chief of the system */
+struct device *booted_device;
+int booted_partition;	/* defaults to 0 (aka 'a' partition */
+
+struct evcnt softnet_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "net");
+struct evcnt softserial_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "serial");
+struct evcnt softclock_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "clock");
 
 #define MAINBUS	0
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
+
+	evcnt_attach_static(&softserial_intrcnt);
+	evcnt_attach_static(&softnet_intrcnt);
+	evcnt_attach_static(&softclock_intrcnt);
 
 	/*
 	 * We're ready to start up. Clear CPU cold start flag.
@@ -85,17 +97,12 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
-	struct device *booted_device = NULL;
-	int booted_partition = 0;
-
 	/*
 	 * The device we booted from are looked for during autoconfig.
-	 * There can only be one match.
+	 * If there has been a match, it's already been done.
 	 */
-	if (rpb.rpb_base != (void *)-1)
-		booted_device = booted_from;
 
 #ifdef DEBUG
 	printf("booted from type %d unit %d csr 0x%lx adapter %lx slave %d\n",
@@ -171,6 +178,7 @@ static int booted_qe(struct device *, void *);
 static int booted_le(struct device *, void *);
 static int booted_ze(struct device *, void *);
 static int booted_de(struct device *, void *);
+static int booted_ni(struct device *, void *);
 #if NSD > 0 || NCD > 0
 static int booted_sd(struct device *, void *);
 #endif
@@ -189,6 +197,7 @@ int (*devreg[])(struct device *, void *) = {
 	booted_le,
 	booted_ze,
 	booted_de,
+	booted_ni,
 #if NSD > 0 || NCD > 0
 	booted_sd,
 #endif
@@ -211,9 +220,13 @@ device_register(struct device *dev, void *aux)
 {
 	int (**dp)(struct device *, void *) = devreg;
 
+	/* If there's a synthetic RPB, we can't trust it */
+	if (rpb.rpb_base == (void *)-1)
+		return;
+
 	while (*dp) {
 		if ((*dp)(dev, aux)) {
-			booted_from = dev;
+			booted_device = dev;
 			break;
 		}
 		dp++;
@@ -242,6 +255,20 @@ ubtest(void *aux)
 		return 1;
 	return 0;
 }
+
+#if 1 /* NNI */
+#include <dev/bi/bivar.h>
+int
+booted_ni(struct device *dev, void *aux)
+{
+	struct bi_attach_args *ba = aux;
+
+	if (jmfr("ni", dev, BDEV_NI) || (kvtophys(ba->ba_ioh) != rpb.csrphy))
+		return 0;
+
+	return 1;
+}
+#endif /* NNI */
 
 #if 1 /* NDE */
 int
@@ -303,13 +330,9 @@ booted_sd(struct device *dev, void *aux)
 
 	ppdev = dev->dv_parent->dv_parent;
 
-	/* VS3100 NCR 53C80 */
-	if ((jmfr("ncr", ppdev, BDEV_SD) == 0) &&
-	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
-			return 1;
-
-	/* VS4000 NCR 53C94 */
-	if ((jmfr("asc", ppdev, BDEV_SD) == 0) &&
+	/* VS3100 NCR 53C80 (si) & VS4000 NCR 53C94 (asc) */
+	if (((jmfr("si",  ppdev, BDEV_SD) == 0) ||	/* new name */
+	     (jmfr("asc", ppdev, BDEV_SD) == 0)) &&
 	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
 			return 1;
 
@@ -343,7 +366,7 @@ booted_ra(struct device *dev, void *aux)
 	struct mscp_softc *pdev = (void *)dev->dv_parent;
 	paddr_t ioaddr;
 
-	if (jmfr("ra", dev, BDEV_UDA) && jmfr("ra", dev, BDEV_KDB))
+	if (jmfr("ra", dev, BDEV_UDA))
 		return 0;
 
 	if (da->da_mp->mscp_unit != rpb.unit)
@@ -353,8 +376,6 @@ booted_ra(struct device *dev, void *aux)
 	if (rpb.devtyp == BDEV_UDA && rpb.csrphy == ioaddr)
 		return 1; /* Did match CSR */
 
-	if (rpb.devtyp == BDEV_KDB && 0) /* XXX - fix this */
-		return 0;
 	return 0;
 }
 #endif
@@ -369,14 +390,14 @@ booted_hp(struct device *dev, void *aux)
 	if (jmfr("mba", dev, BDEV_HP) == 0) {
 		struct sbi_attach_args *sa = aux;
 
-		mbaaddr = kvtophys(sa->nexaddr);
+		mbaaddr = kvtophys(sa->sa_ioh);
 		return 0;
 	}
 
 	if (jmfr("hp", dev, BDEV_HP))
 		return 0;
 
-	if (((struct mba_attach_args *)aux)->unit != rpb.unit)
+	if (((struct mba_attach_args *)aux)->ma_unit != rpb.unit)
 		return 0;
 
 	if (mbaaddr != rpb.adpphy)

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2000/05/26 00:22:07 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.27.2.1 2000/06/22 17:01:19 minoura Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -34,10 +34,10 @@ file-system 	KERNFS		# /kern
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
 options 	NMBCLUSTERS=1024
-options 	NFS_BOOT_DHCP, NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -61,7 +61,6 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
@@ -77,6 +76,11 @@ cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 #gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
+tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
+options	TLP_MATCH_21040
+options	TLP_MATCH_21041
+options	TLP_MATCH_21140
+options	TLP_MATCH_21142
 
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
@@ -127,7 +131,7 @@ scsibus* at pcscp?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
-wdc*	at obio? flags 0x0
+wdc*	at obio? flags 0x1
 wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
@@ -143,5 +147,5 @@ wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
-pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	sl		2	# Serial Line IP
 pseudo-device	pty		16	# pseudo-terminals

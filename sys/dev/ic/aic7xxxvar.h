@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.23 2000/05/22 21:14:26 fvdl Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.23.2.1 2000/06/22 17:06:34 minoura Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -533,6 +533,7 @@ struct ahc_softc {
 #define AHC_NEG_SDTRDONE	0x02
 #define AHC_NEG_WDTRDONE	0x04
 	u_int8_t		inited_targets[16];
+	u_int8_t		inited_channels[2];
 
 	/*
 	 * SCBs that have been send to the controller

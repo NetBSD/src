@@ -1,9 +1,10 @@
-/*	$NetBSD: in6_pcb.h,v 1.10 2000/02/03 13:17:41 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.10.2.1 2000/06/22 17:09:57 minoura Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.25 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -152,7 +153,7 @@ struct	in6pcb {
 #ifdef _KERNEL
 void	in6_losing __P((struct in6pcb *));
 int	in6_pcballoc __P((struct socket *, struct in6pcb *));
-int	in6_pcbbind __P((struct in6pcb *, struct mbuf *));
+int	in6_pcbbind __P((struct in6pcb *, struct mbuf *, struct proc *));
 int	in6_pcbconnect __P((struct in6pcb *, struct mbuf *));
 void	in6_pcbdetach __P((struct in6pcb *));
 void	in6_pcbdisconnect __P((struct in6pcb *));

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.h,v 1.1 1998/04/15 00:50:15 mjacob Exp $ */
+/* $NetBSD: pci_kn300.h,v 1.1.22.1 2000/06/22 16:58:43 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -31,7 +31,3 @@
  */
 
 void	pci_kn300_pickintr __P((struct mcpcia_config *, int));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt kn300_intr_evcnt;
-#endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: dptreg.h,v 1.8 2000/03/25 13:38:35 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.8.2.1 2000/06/22 17:06:40 minoura Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

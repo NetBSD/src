@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.2 2000/03/16 02:36:59 eeh Exp $ */
+/*	$NetBSD: intreg.h,v 1.2.2.1 2000/06/22 17:04:33 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,71 +73,5 @@
 #ifndef _LOCORE
 struct intrhand;	/* This is in cpu.h if you need it. */
 void	send_softint __P((int cpu, int level, struct intrhand *ih));
-#if 0
-void	ienab_bis __P((int bis));	/* set given bits */
-void	ienab_bic __P((int bic));	/* clear given bits */
-#endif
 #endif
 
-#if 0
-#if defined(SUN4M)
-#ifdef notyet
-#define IENAB_SYS	((_MAXNBPG * _MAXNCPU) + 0xc)
-#define IENAB_P0	0x0008
-#define IENAB_P1	0x1008
-#define IENAB_P2	0x2008
-#define IENAB_P3	0x3008
-#endif /* notyet */
-#endif
-
-#if defined(SUN4M)
-/*
- * Interrupt Control Registers, located in IO space.
- * (mapped to `locore' for now..)
- * There are two sets of interrupt registers called `Processor Interrupts'
- * and `System Interrupts'. The `Processor' set corresponds to the 15
- * interrupt levels as seen by the CPU. The `System' set corresponds to
- * a set of devices supported by the implementing chip-set.
- *
- * Briefly, the ICR_PI_* are per-processor interrupts; the ICR_SI_* are
- * system-wide interrupts, and the ICR_ITR selects the processor to get
- * the system's interrupts.
- */
-#define ICR_PI_PEND		(PI_INTR_VA + 0x0)
-#define ICR_PI_CLR		(PI_INTR_VA + 0x4)
-#define ICR_PI_SET		(PI_INTR_VA + 0x8)
-#define ICR_SI_PEND		(SI_INTR_VA)
-#define ICR_SI_MASK		(SI_INTR_VA + 0x4)
-#define ICR_SI_CLR		(SI_INTR_VA + 0x8)
-#define ICR_SI_SET		(SI_INTR_VA + 0xc)
-#define ICR_ITR			(SI_INTR_VA + 0x10)
-
-/*
- * Bits in interrupt registers.  Software interrupt requests must
- * be cleared in software.  This is done in locore.s.
- * There are separate registers for reading pending interrupts and
- * setting/clearing (software) interrupts.
- */
-#define PINTR_SINTRLEV(n)	(1 << (16 + (n)))
-#define PINTR_IC		0x8000		/* Level 15 clear */
-
-#define SINTR_MA		0x80000000	/* Mask All interrupts */
-#define SINTR_ME		0x40000000	/* Module Error (async) */
-#define SINTR_I			0x20000000	/* MSI (MBus-SBus) */
-#define SINTR_M			0x10000000	/* ECC Memory controller */
-#define SINTR_RSVD2		0x0f800000
-#define SINTR_F			0x00400000	/* Floppy */
-#define SINTR_RSVD3		0x00200000
-#define SINTR_V			0x00100000	/* Video (Supersparc only) */
-#define SINTR_T			0x00080000	/* Level 10 counter */
-#define SINTR_SC		0x00040000	/* SCSI */
-#define SINTR_RSVD4		0x00020000
-#define SINTR_E			0x00010000	/* Ethernet */
-#define SINTR_S			0x00008000	/* Serial port */
-#define SINTR_K			0x00004000	/* Keyboard/mouse */
-#define SINTR_SBUSMASK		0x00003f80	/* SBus */
-#define SINTR_SBUS(n)		(((n) << 7) & 0x00003f80)
-#define SINTR_RSVD5		0x0000007f
-
-#endif
-#endif

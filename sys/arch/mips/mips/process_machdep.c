@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14.2.1 2000/06/22 17:01:37 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.2.1 2000/06/22 17:01:37 minoura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -68,19 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/vnode.h>
 #include <sys/ptrace.h>
+#include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
-#include <machine/psl.h>
-#include <machine/reg.h>
-
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-void savefpregs __P((struct proc *));
-#endif
 
 int
 process_read_regs(p, regs)
@@ -88,7 +80,7 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	memcpy(regs, p->p_md.md_regs, sizeof(struct reg));
-	return (0);
+	return 0;
 }
 
 int
@@ -98,11 +90,9 @@ process_write_regs(p, regs)
 {
 	memcpy(p->p_md.md_regs, regs, sizeof(struct reg));
 	/*
-	 * XXX: is it safe to let users set system coprocessor regs?
-	 * XXX: Clear to user set bits!!
+	 * XXX: is it safe to let users set system CP0 status reg?
 	 */
-	/*p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);*/
-	return (0);
+	return 0;
 }
 
 int
@@ -110,16 +100,9 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	if (p->p_md.md_flags & MDP_FPUSED) {
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-		if (p == fpcurproc)
-			savefpregs(p);
-#endif
-		memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs,
-			sizeof(struct fpreg));
-	}
-	else
-		memset(regs, 0, sizeof(struct fpreg));
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
+		savefpregs(p);
+	memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	return 0;
 }
 
@@ -128,16 +111,9 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
-		return EINVAL;
-
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-	if (p->p_md.md_flags & MDP_FPUSED) {
-		if (p == fpcurproc)
-			savefpregs(p);
-	}
-#endif
-
+	/* to load FPA contents next time when FP insn is executed */
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
+		fpcurproc = (struct proc *)0;
 	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }
@@ -149,7 +125,7 @@ process_sstep(p, sstep)
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if (sstep)
 		mips_singlestep(p);
-	return (0);
+	return 0;
 }
 
 int
@@ -158,5 +134,5 @@ process_set_pc(p, addr)
 	caddr_t addr;
 {
 	((struct frame *)p->p_md.md_regs)->f_regs[PC] = (int)addr;
-	return (0);
+	return 0;
 }

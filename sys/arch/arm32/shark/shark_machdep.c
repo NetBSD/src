@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.15 2000/03/24 17:05:32 ws Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.15.2.1 2000/06/22 16:59:33 minoura Exp $	*/
 
 /*
  * Copyright 1997
@@ -70,7 +70,22 @@
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
 #include <machine/isa_machdep.h>
+#include <dev/isa/isavar.h>
+#include <dev/ofisa/ofisavar.h>
 #include <arm32/shark/sequoia.h>
+
+#include "wd.h"
+#include "cd.h"
+#include "sd.h"
+
+#if NWD > 0 || NSD > 0 || NCD > 0
+#include <dev/ata/atavar.h>
+#endif
+#if NSD > 0 || NCD > 0
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+#endif
 
 /*
  *  Imported variables
@@ -104,6 +119,7 @@ void	ofbus_attach __P((struct device *, struct device *, void *));
 BootConfig bootconfig;
 char *boot_args = NULL;
 char *boot_file = NULL;
+char *boot_kernel = NULL;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
@@ -368,4 +384,96 @@ ofrootfound(void)
 	aa.oba_phandle = node;
 	if (!config_rootfound("ofbus", &aa))
 		panic("ofw root ofbus not configured");
+}
+
+void
+ofw_device_register(struct device *dev, void *aux)
+{
+	static struct device *parent;
+#if NSD > 0 || NCD > 0
+	static struct device *scsipidev;
+#endif
+	static char *boot_component;
+	struct ofbus_attach_args *oba;
+	const char *cd_name = dev->dv_cfdata->cf_driver->cd_name;
+	char name[64];
+	int i;
+
+	if (boot_component == NULL) {
+		char *cp;
+		boot_component = boot_file;
+		if (boot_component == NULL)
+			return;
+		cp = strrchr(boot_component, ':');
+		if (cp != NULL) {
+			*cp++ = '\0';
+			if (cp[0] == '\\')
+				cp++;
+			boot_kernel = cp; 
+		}
+	}
+
+	if (booted_device != NULL
+	    || boot_component == NULL
+	    || boot_component[0] == '\0')
+		return;
+
+	if (!strcmp(cd_name, "ofbus") || !strcmp(cd_name, "ofisa")) {
+		oba = aux;
+	} else if (parent == NULL) {
+		return;
+	} else if (parent == dev->dv_parent
+		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisa")) {
+		struct ofisa_attach_args *aa = aux;
+		oba = &aa->oba;
+#if NWD > 0 || NSD > 0 || NCD > 0
+	} else if (parent == dev->dv_parent
+		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "wdc")) {
+#if NSD > 0 || NCD > 0
+		if (!strcmp(cd_name, "atapibus")) {
+			scsipidev = dev;
+			return;
+		}
+#endif
+#if NWD > 0
+		if (!strcmp(cd_name, "wd")) {
+			struct ata_atapi_attach *aa = aux;
+			char *cp = strchr(boot_component, '@');
+			if (cp != NULL
+			    && aa->aa_drv_data->drive == strtoul(cp+1, NULL, 16)
+			    && aa->aa_channel == 0) {
+				booted_device = dev;
+				return;
+			}
+		}
+		return;
+#endif /* NWD > 0 */
+#if NSD > 0 || NCD > 0
+	} else if (scsipidev == dev->dv_parent
+	    && (!strcmp(cd_name, "sd") || !strcmp(cd_name, "cd"))) {
+		struct scsipibus_attach_args *sa = aux;
+		char *cp = strchr(boot_component, '@');
+		if (cp != NULL
+		    && sa->sa_sc_link->type == BUS_ATAPI
+		    && sa->sa_sc_link->scsipi_atapi.channel == 0
+		    && sa->sa_sc_link->scsipi_atapi.drive == strtoul(cp+1, NULL, 16)) {
+			booted_device = dev;
+		}
+		return;
+#endif /* NSD > 0 || NCD > 0 */
+#endif /* NWD > 0 || NSD > 0 || NCD > 0 */
+	} else {
+		return;
+	}
+	(void) of_packagename(oba->oba_phandle, name, sizeof name);
+	i = strlen(name);
+	if (!strncmp(name, &boot_component[1], i)
+	    && (boot_component[i+1] == '/' || boot_component[i+1] == '\0')) {
+		boot_component += i + 1;
+		if (boot_component[0] == '/') {
+			parent = dev;
+		} else {
+			booted_device = dev;
+		}
+	}
 }

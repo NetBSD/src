@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.21 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: ZHADUM,v 1.21.4.1 2000/06/22 17:00:20 minoura Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -467,7 +467,6 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at vt? irq 12			# PS/2 auxiliary port mouse
 
 
 # Joysticks

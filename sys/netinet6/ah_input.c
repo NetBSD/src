@@ -1,10 +1,10 @@
-/*	$NetBSD: ah_input.c,v 1.14 2000/03/26 19:11:04 mycroft Exp $	*/
-/*	$KAME: ah_input.c,v 1.22 2000/03/09 21:51:39 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.14.2.1 2000/06/22 17:09:52 minoura Exp $	*/
+/*	$KAME: ah_input.c,v 1.29 2000/05/29 08:33:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -180,11 +180,40 @@ ah4_input(m, va_alist)
 
 	sizoff = (sav->flags & SADB_X_EXT_OLD) ? 0 : 4;
 
+	/*
+	 * Here, we do not do "siz1 == siz".  This is because the way
+	 * RFC240[34] section 2 is written.  They do not require truncation
+	 * to 96 bits.
+	 * For example, Microsoft IPsec stack attaches 160 bits of
+	 * authentication data for both hmac-md5 and hmac-sha1.  For hmac-sha1,
+	 * 32 bits of padding is attached.
+	 *
+	 * There are two downsides to this specification.
+	 * They have no real harm, however, they leave us fuzzy feeling.
+	 * - if we attach more than 96 bits of authentication data onto AH,
+	 *   we will never notice about possible modification by rogue
+	 *   intermediate nodes.
+	 *   Since extra bits in AH checksum is never used, this constitutes
+	 *   no real issue, however, it is wacky.
+	 * - even if the peer attaches big authentication data, we will never
+	 *   notice the difference, since longer authentication data will just
+	 *   work.
+	 *
+	 * We may need some clarification in the spec.
+	 */
+	if (siz1 < siz) {
+		ipseclog((LOG_NOTICE, "sum length too short in IPv4 AH input "
+		    "(%lu, should be at least %lu): %s\n",
+		    (u_long)siz1, (u_long)siz,
+		    ipsec4_logpacketstr(ip, spi)));
+		ipsecstat.in_inval++;
+		goto fail;
+	}
 	if ((ah->ah_len << 2) - sizoff != siz1) {
 		ipseclog((LOG_NOTICE, "sum length mismatch in IPv4 AH input "
-			"(%d should be %u): %s\n",
-			(ah->ah_len << 2) - sizoff, (unsigned int)siz1,
-			ipsec4_logpacketstr(ip, spi)));
+		    "(%d should be %lu): %s\n",
+		    (ah->ah_len << 2) - sizoff, (u_long)siz1,
+		    ipsec4_logpacketstr(ip, spi)));
 		ipsecstat.in_inval++;
 		goto fail;
 	}
@@ -248,7 +277,7 @@ ah4_input(m, va_alist)
 	ip->ip_len = htons(ip->ip_len);
 	ip->ip_off = htons(ip->ip_off);
 #endif
-	if (ah4_calccksum(m, (caddr_t)cksum, algo, sav)) {
+	if (ah4_calccksum(m, (caddr_t)cksum, siz1, algo, sav)) {
 		free(cksum, M_TEMP);
 		ipsecstat.in_inval++;
 		goto fail;
@@ -438,8 +467,6 @@ ah4_input(m, va_alist)
 	} else {
 		/*
 		 * strip off AH.
-		 * We do deep-copy since KAME requires that
-		 * the packet is placed in a single external mbuf.
 		 */
 		size_t stripsiz = 0;
 
@@ -453,6 +480,10 @@ ah4_input(m, va_alist)
 
 		ip = mtod(m, struct ip *);
 #ifndef PULLDOWN_TEST
+		/*
+		 * We do deep-copy since KAME requires that
+		 * the packet is placed in a single external mbuf.
+		 */
 		ovbcopy((caddr_t)ip, (caddr_t)(((u_char *)ip) + stripsiz), off);
 		m->m_data += stripsiz;
 		m->m_len -= stripsiz;
@@ -468,7 +499,7 @@ ah4_input(m, va_alist)
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
 		} else {
-			/* 
+			/*
 			 * this comes with no copy if the boundary is on
 			 * cluster
 			 */
@@ -500,6 +531,7 @@ ah4_input(m, va_alist)
 		ip->ip_len = htons(ntohs(ip->ip_len) - stripsiz);
 #endif
 		ip->ip_p = nxt;
+		/* forget about IP hdr checksum, the check has already been passed */
 
 		key_sa_recordxfer(sav, m);
 
@@ -613,11 +645,23 @@ ah6_input(mp, offp, proto)
 
 	sizoff = (sav->flags & SADB_X_EXT_OLD) ? 0 : 4;
 
+	/*
+	 * Here, we do not do "siz1 == siz".  See ah4_input() for complete
+	 * description.
+	 */
+	if (siz1 < siz) {
+		ipseclog((LOG_NOTICE, "sum length too short in IPv6 AH input "
+		    "(%lu, should be at least %lu): %s\n",
+		    (u_long)siz1, (u_long)siz,
+		    ipsec6_logpacketstr(ip6, spi)));
+		ipsec6stat.in_inval++;
+		goto fail;
+	}
 	if ((ah->ah_len << 2) - sizoff != siz1) {
 		ipseclog((LOG_NOTICE, "sum length mismatch in IPv6 AH input "
-			"(%d should be %u): %s\n",
-			(ah->ah_len << 2) - sizoff, (unsigned int)siz1,
-			ipsec6_logpacketstr(ip6, spi)));
+		    "(%d should be %lu): %s\n",
+		    (ah->ah_len << 2) - sizoff, (u_long)siz1,
+		    ipsec6_logpacketstr(ip6, spi)));
 		ipsec6stat.in_inval++;
 		goto fail;
 	}
@@ -663,7 +707,7 @@ ah6_input(mp, offp, proto)
 		goto fail;
 	}
 	
-	if (ah6_calccksum(m, (caddr_t)cksum, algo, sav)) {
+	if (ah6_calccksum(m, (caddr_t)cksum, siz1, algo, sav)) {
 		free(cksum, M_TEMP);
 		ipsec6stat.in_inval++;
 		goto fail;
@@ -827,8 +871,6 @@ ah6_input(mp, offp, proto)
 	} else {
 		/*
 		 * strip off AH.
-		 * We do deep-copy since KAME requires that
-		 * the packet is placed in a single mbuf.
 		 */
 		size_t stripsiz = 0;
 		char *prvnxtp;
@@ -851,6 +893,10 @@ ah6_input(mp, offp, proto)
 
 		ip6 = mtod(m, struct ip6_hdr *);
 #ifndef PULLDOWN_TEST
+		/*
+		 * We do deep-copy since KAME requires that
+		 * the packet is placed in a single mbuf.
+		 */
 		ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
 		m->m_data += stripsiz;
 		m->m_len -= stripsiz;
@@ -866,7 +912,7 @@ ah6_input(mp, offp, proto)
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
 		} else {
-			/* 
+			/*
 			 * this comes with no copy if the boundary is on
 			 * cluster
 			 */

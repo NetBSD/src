@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24 1999/10/19 17:00:41 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.24.4.1 2000/06/22 17:01:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -111,13 +111,6 @@ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -318,9 +311,7 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

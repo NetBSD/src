@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2000/03/19 16:24:38 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.1 2000/06/22 17:01:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@
 struct device *booted_device;
 int booted_partition;
 
-void	findroot __P((struct device **, int *));
+static void findroot __P((void));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -106,7 +106,7 @@ void
 cpu_rootconf()
 {
 
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	       booted_device ? booted_device->dv_xname : "<unknown>");
@@ -120,18 +120,10 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
  * Attempt to find the device from which we were booted.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	int ctlr, unit, part, type;
 	struct device *dv;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
 
 	if (BOOTDEV_MAG(bootdev) != 5)	/* NEWS-OS's B_DEVMAGIC */
 		return;
@@ -154,8 +146,8 @@ findroot(devpp, partp)
 			if (sdv->sc_link[ctlr][0] == NULL)
 				continue;
 
-			*devpp = sdv->sc_link[ctlr][0]->device_softc;
-			*partp = part;
+			booted_device = sdv->sc_link[ctlr][0]->device_softc;
+			booted_partition = part;
 			return;
 		}
 	}

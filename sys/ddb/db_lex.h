@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.11 2000/03/30 02:01:49 simonb Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.11.2.1 2000/06/22 17:06:11 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,7 @@ int db_read_char __P((void));
 void db_unread_char __P((int));
 void db_unread_token __P((int));
 int db_read_token __P((void));
+char *db_num_to_str __P((db_expr_t));
 void db_flush_lex __P((void));
 int db_lex __P((void));
 

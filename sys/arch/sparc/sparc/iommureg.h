@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.6 1998/11/18 12:07:47 pk Exp $ */
+/*	$NetBSD: iommureg.h,v 1.6.18.1 2000/06/22 17:04:10 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -36,6 +36,7 @@
  *
  */
 
+/* IOMMU registers */
 struct iommureg {
 	u_int32_t	io_cr;		/* IOMMU control register */
 	u_int32_t	io_bar;		/* IOMMU PTE base register */
@@ -44,14 +45,16 @@ struct iommureg {
 	u_int32_t	io_flushpage;	/* Flush page from TLB */
 };
 
-#define IOMMU_CTL_IMPL		0xf0000000
-#define IOMMU_CTL_VER		0x0f000000
-#define IOMMU_CTL_RSVD1		0x00ffffe0
-#define IOMMU_CTL_RANGE		0x0000001c
-#define IOMMU_CTL_RANGESHFT	2
-#define IOMMU_CTL_RSVD2		0x00000002
-#define IOMMU_CTL_ME		0x00000001
+/* Control register bits */
+#define IOMMU_CTL_IMPL		0xf0000000	/* Hardware implementation */
+#define IOMMU_CTL_VER		0x0f000000	/* Hardware version */
+#define IOMMU_CTL_RSVD1		0x00ffffe0	/* Reserved bits */
+#define IOMMU_CTL_RANGE		0x0000001c	/* Available DVMA range */
+#define IOMMU_CTL_RANGESHFT	2		/*  == log2(range/16MB) */
+#define IOMMU_CTL_DE		0x00000002	/* Diagnostic access enable */
+#define IOMMU_CTL_ME		0x00000001	/* Enable translations */
 
+/* Base register bits */
 #define IOMMU_BAR_IBA		0xfffffc00
 #define IOMMU_BAR_IBASHFT	10
 
@@ -73,9 +76,9 @@ struct iommureg {
 	__asm("nop;nop;nop;nop;nop;nop;");			\
 } while (0)
 
-/* to pte.h ? */
 typedef u_int32_t iopte_t;
 
+/* IOMMU PTE bits */
 #define IOPTE_PPN	0xffffff00	/* PA<35:12> */
 #define IOPTE_C		0x00000080 	/* cacheable */
 #define IOPTE_W		0x00000004	/* writeable */

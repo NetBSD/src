@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.99 2000/05/26 21:20:26 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.99.2.1 2000/06/22 17:05:26 minoura Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -121,16 +121,6 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
-#if defined(MULTIPROCESSOR)
-static int dummy_cpu_number(void);
-static struct cpu_info *dummy_curcpu(void);
-
-int (*vax_cpu_number)(void) = dummy_cpu_number;
-struct cpu_info *(*vax_curcpu)(void) = dummy_curcpu;
-#else
-int		want_resched;
-struct cpu_info cpu_info_store;
-#endif
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
@@ -148,6 +138,9 @@ vm_map_t phys_map = NULL;
 #ifdef DEBUG
 int iospace_inited = 0;
 #endif
+
+struct softintr_head softnet_head = { IPL_SOFTNET };
+struct softintr_head softserial_head = { IPL_SOFTSERIAL };
 
 void
 cpu_startup()
@@ -577,7 +570,6 @@ void
 dumpsys()
 {
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -761,22 +753,35 @@ vax_unmap_physmem(addr, size)
 		rmfree(iomap, size, pageno);
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * Default functions that returns CPU numbers etc on non-MP systems
- * and for just the master CPU.
- */
-int
-dummy_cpu_number()
-{ 
-	return 0;
-}
-   
-struct cpu_info *
-dummy_curcpu()
+void *
+softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
-	extern char *scratch;
+	struct softintr_handler *sh;
+	struct softintr_head *shd;
 
-	return (struct cpu_info *)(scratch + VAX_NBPG);
+	switch (ipl) {
+	case IPL_SOFTNET: shd = &softnet_head; break;
+	case IPL_SOFTSERIAL: shd = &softserial_head; break;
+	default: panic("softintr_establish: unsupported soft IPL");
+	}
+
+	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
+	if (sh == NULL)
+		return NULL;
+
+	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
+	sh->sh_head = shd;
+	sh->sh_pending = 0;
+	sh->sh_func = func;
+	sh->sh_arg = arg;
+
+	return sh;
 }
-#endif 
+
+void
+softintr_disestablish(void *arg)
+{
+	struct softintr_handler *sh = arg;
+	LIST_REMOVE(sh, sh_link);
+	free(sh, M_SOFTINTR);
+}

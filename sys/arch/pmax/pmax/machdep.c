@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2000/05/26 21:20:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172.2.1 2000/06/22 17:02:32 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2000/05/26 21:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.1 2000/06/22 17:02:32 minoura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ void	cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
 static void	unimpl_cons_init __P((void));
-static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static void	unimpl_intr_establish __P((struct device *, void *, int,
 		    int (*)(void *), void *));
 static int	unimpl_memsize __P((caddr_t));
@@ -689,7 +689,7 @@ unimpl_cons_init()
 	panic("sysconf.init didn't set cons_init");
 }
 
-static int
+static void
 unimpl_iointr(mask, pc, statusreg, causereg)
 	u_int mask;
 	u_int pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.72 2000/05/26 20:25:57 jhawk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.72.2.1 2000/06/22 17:09:17 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -146,6 +146,7 @@ struct	tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+int	doing_shutdown;	/* set to indicate shutdown in progress */
 
 /*
  * v_putc: routine to putc on virtual console
@@ -193,11 +194,12 @@ panic(fmt, va_alist)
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
-	if (panicstr)
+	if (doing_shutdown)
 		bootopt |= RB_NOSYNC;
-	else
+	if (!panicstr)
 		panicstr = fmt;
-
+	doing_shutdown = 1;
+	
 	va_start(ap, fmt);
 	printf("panic: ");
 	vprintf(fmt, ap);
@@ -218,10 +220,18 @@ panic(fmt, va_alist)
 	if (db_onpanic)
 		Debugger();
 	else {
-		printf("Begin traceback...\n");
-		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
-		    TRUE, 65535, "", printf);
-		printf("End traceback...\n");
+		static int intrace = 0;
+
+		if (intrace==0) {
+			intrace=1;
+			printf("Begin traceback...\n");
+			db_stack_trace_print(
+			    (db_expr_t)__builtin_frame_address(0),
+			    TRUE, 65535, "", printf);
+			printf("End traceback...\n");
+			intrace=0;
+		} else
+			printf("Faulted in mid-traceback; aborting...");
 	}
 #endif
 	cpu_reboot(bootopt, NULL);

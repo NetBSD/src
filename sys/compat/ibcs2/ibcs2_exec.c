@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.26 2000/04/11 04:37:49 chs Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.26.2.1 2000/06/22 17:05:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -46,11 +46,9 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/exec_coff.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
-#ifdef IBCS2_DEBUG
-#include <sys/syslog.h>
-#endif
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -107,6 +105,12 @@ extern char *ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";
+
+#ifdef IBCS2_DEBUG
+int ibcs2_debug = 1;
+#else
+int ibcs2_debug = 0;
+#endif
 
 struct emul emul_ibcs2_coff = {
 	"ibcs2",
@@ -357,9 +361,9 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
-	epp->ep_taddr = COFF_SEGMENT_ALIGN(ap, ap->a_tstart);
+	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;
-	epp->ep_daddr = COFF_SEGMENT_ALIGN(ap, ap->a_dstart);
+	epp->ep_daddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart);
 	epp->ep_dsize = ap->a_dsize;
 	epp->ep_entry = ap->a_entry;
 
@@ -372,7 +376,7 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 	/* set up command for bss segment */
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
-			  COFF_SEGMENT_ALIGN(ap, ap->a_dstart + ap->a_dsize),
+			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 	
@@ -391,7 +395,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
-	epp->ep_taddr = COFF_SEGMENT_ALIGN(ap, ap->a_tstart);
+	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;
 	epp->ep_daddr = COFF_ROUND(ap->a_dstart, COFF_LDPGSZ);
 	epp->ep_dsize = ap->a_dsize;
@@ -410,7 +414,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	/* set up command for bss segment */
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
-			  COFF_SEGMENT_ALIGN(ap, ap->a_dstart + ap->a_dsize),
+			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
@@ -564,9 +568,18 @@ n	 */
 	if (!error) {
 		size_t resid;
 		struct coff_slhdr *slhdr;
-		char buf[128], *bufp;	/* FIXME */
+		char *buf, *bufp;
 		int len = sh.s_size, path_index, entry_len;
-		
+
+#if 0
+		if (len > COFF_SHLIBSEC_MAXSIZE) {
+			return ENOEXEC;
+		}
+#endif
+		buf = (char *) malloc(len, M_TEMP, M_WAITOK);
+		if (buf == NULL)
+			return ENOEXEC;
+
 		/* DPRINTF(("COFF shlib size %d offset %d\n",
 			 sh.s_size, sh.s_scnptr)); */
 
@@ -576,6 +589,7 @@ n	 */
 				&resid, p);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
+			free(buf, M_TEMP);
 			return ENOEXEC;
 		}
 		bufp = buf;
@@ -584,15 +598,23 @@ n	 */
 			path_index = slhdr->path_index * sizeof(long);
 			entry_len = slhdr->entry_len * sizeof(long);
 
+			if (entry_len > len) {
+				free(buf, M_TEMP);
+				return ENOEXEC;
+			}
+
 			/* DPRINTF(("path_index: %d entry_len: %d name: %s\n",
 				 path_index, entry_len, slhdr->sl_name)); */
 
 			error = coff_load_shlib(p, slhdr->sl_name, epp);
-			if (error)
+			if (error) {
+				free(buf, M_TEMP);
 				return ENOEXEC;
+			}
 			bufp += entry_len;
 			len -= entry_len;
 		}
+		free(buf, M_TEMP);
 	}
 		
 	/* set up entry point */
@@ -620,14 +642,13 @@ coff_load_shlib(p, path, epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p->p_emul);
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
+	IBCS2_CHECK_ALT_EXIST(p, NULL, path);	/* path is on kernel stack */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.66 2000/05/13 23:43:16 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.66.2.1 2000/06/22 17:10:41 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -912,9 +912,9 @@ abortit:
 	 */
 	ip->i_ffs_effnlink++;
 	ip->i_ffs_nlink++;
+	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
-	ip->i_flag |= IN_CHANGE;
 	if ((error = VOP_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;

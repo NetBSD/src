@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.68 2000/05/08 19:09:49 ragge Exp $
+#       $NetBSD: files.vax,v 1.68.2.1 2000/06/22 17:05:01 minoura Exp $
 #
 # new style config file for vax architecture
 #
@@ -16,23 +16,14 @@ device	cpu
 device	mem
 device	mba { drive = -1 }
 
-defopt	VAX780				# VAX-11/780 & 785
-defopt	VAX750				# VAX-11/750
-defopt	VAX730				# VAX-11/730
-defopt	VAX8200				# VAX 8200|8300
-defopt	VAX8500				# VAX 8500|8800|8550
-defopt	VAX8600				# VAX 8600|8650
-defopt	VAX410				# VAXstation 2000, MicroVAX 200
-defopt	VAX43				# VAXstation 3100 / MicroVAX 3100
-defopt	VAX46				# VAXstation 4000/60
-defopt	VAX48				# VAXstation 4000/VLC
-defopt	VAX49				# VAXstation 4000/90 or 4000/96
-defopt	VAX53				# VAX 4000/105A
-defopt	VAX630				# MicroVAX II or VAXstation II
-defopt	VAX650				# MicroVAX III or VAXstation III
-defopt	VAX660				# VAX 4000/200
-defopt	VAX670				# VAX 4000/300
-defopt	VAX680				# VAX 4000/500
+defopt	opt_cputype.h	VAX780 VAX750 VAX730 VAX8200 VAX8800 VAX8600
+	VAX6200 VAX6400 VAX6500 VAX6600 VAX410 VAX43 VAX46 VAX48
+	VAX49 VAX53 VAX630 VAX650 VAX660 VAX670 VAX680
+
+# NBI on KA88
+device	nmi { slot=-1 }
+attach	nmi at mainbus with nmi_mainbus
+file	arch/vax/vax/nmi.c		nmi
 
 # SBI and related devices
 device	sbi { tr=-1 }
@@ -122,10 +113,22 @@ include "dev/bi/files.bi"
 
 attach	bi at mainbus with bi_mainbus
 file	arch/vax/bi/bi_mainbus.c	bi_mainbus
+attach	bi at nmi with bi_nmi
+file	arch/vax/bi/bi_nmi.c		bi_nmi
 
 # VAX CPUs at BI, do not belong in MI code.
 attach	cpu at bi with cpu_bi
 attach	mem at bi with mem_bi
+
+# XMI bus definitions
+include	"dev/xmi/files.xmi"
+
+attach	xmi at mainbus with xmi_mainbus
+file	arch/vax/vax/xmi.c		xmi_mainbus
+
+# VAX CPUs at XMI, do not belong in MI code.
+attach	cpu at xmi with cpu_xmi
+attach	mem at xmi with mem_xmi
 
 # TS11 at UBA
 device	ts: tape
@@ -156,9 +159,9 @@ major	{ sd = 20 }
 major	{ cd = 22 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 
-device	ncr: scsi, ncr5380sbc
-attach	ncr at vsbus
-file	arch/vax/vsa/ncr.c		ncr needs-flag
+device	si: scsi, ncr5380sbc
+attach	si at vsbus with si_vsbus
+file	arch/vax/vsa/ncr.c		si_vsbus
 
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus with le_vsbus:	le24
@@ -172,7 +175,7 @@ file	arch/vax/vsa/smg.c		smg needs-flag
 # builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
-file	arch/vax/vsa/asc_vsbus.c	asc needs-flag
+file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
 device	lkc: qfont
 attach	lkc at dz
@@ -320,6 +323,8 @@ file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/crx.c		vax8200
+file	arch/vax/vax/ka88.c		vax8800
+file	arch/vax/vax/ka6400.c		vax6400
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
@@ -350,6 +355,7 @@ file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 file	arch/vax/uba/uba_dma.c		uba
+file	arch/vax/vax/multicpu.c		multiprocessor
 
 include "compat/ibcs2/files.ibcs2"
 file	arch/vax/vax/ibcs2_machdep.c	compat_ibcs2

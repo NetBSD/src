@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.19 2000/02/12 03:36:33 thorpej Exp $
+# 	$NetBSD: R4000,v 1.19.2.1 2000/06/22 17:02:16 minoura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -101,7 +101,8 @@ le0	at	ioasic? offset ?	# LANCE
 scc0	at	ioasic? offset ?	# Z85C30
 scc1	at	ioasic? offset ?	# Z85C30
 dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
-#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
+bba0	at	ioasic? offset ?	# MAXINE baseboard audio
+audio*	at	bba0
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 
 # TURBOchannel devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 2000/04/14 13:29:57 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.19.2.1 2000/06/22 17:01:24 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -120,6 +120,8 @@ cdev_decl(aed);
 cdev_decl(wd);
 cdev_decl(ofc);
 cdev_decl(nvram);
+#include "cz.h"
+cdev_decl(cztty);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -146,6 +148,8 @@ cdev_decl(ucom);
 
 #include "com.h"
 cdev_decl(com);
+#include "cy.h"
+cdev_decl(cy);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -194,6 +198,8 @@ struct cdevsw cdevsw[] = {
 	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
 	cdev_tty_init(NUCOM,ucom),	/* 44: USB tty */
 	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
+	cdev_tty_init(NCZ,cztty),	/* 46: Cyclades-Z serial port */
+	cdev_tty_init(NCY,cy),		/* 47: Cyclom-Y serial port */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -274,6 +280,8 @@ static int chrtoblktbl[] = {
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 /*

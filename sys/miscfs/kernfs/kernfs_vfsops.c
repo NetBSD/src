@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.36 2000/03/16 18:08:25 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.36.2.1 2000/06/22 17:09:32 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -154,7 +154,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	vfs_getnewfsid(mp, MOUNT_KERNFS);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);

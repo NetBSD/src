@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2000/05/06 05:19:32 nisimura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23.2.1 2000/06/22 17:01:31 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,10 +81,10 @@
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
- * 16 pte's are enough to cover 8 disks * MAXBSIZE.
+ * The default PTE number is enough to cover 8 disks * MAXBSIZE.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	32
+#define USRIOSIZE	(MAXBSIZE/NBPG * 8)
 #endif
 
 /*

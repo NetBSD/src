@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.142 2000/05/15 16:35:49 dante Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.142.2.1 2000/06/22 17:08:13 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -507,7 +507,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 
 	{{T_DIRECT, T_FIXED,
-	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, ADEV_CDROM|SDEV_NOLUNS},
+	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, SDEV_CDROM|SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	"TOSHIBA ", "CD-ROM DRIVE:XM", "1971"}, SDEV_CDROM|SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
@@ -593,6 +595,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
+
+	{{T_DIRECT, T_REMOV,
+	 "Y-E DATA", "USB-FDU",		 "3.04"}, SDEV_NOMODESENSE},
+	{{T_DIRECT, T_REMOV,
+	 "TEAC", "FD-05PUB",		 "1026"}, SDEV_NOMODESENSE},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
@@ -714,7 +721,8 @@ scsi_probedev(scsi, target, lun)
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsipi_inquire(sc_link, &inqbuf, XS_CTL_DISCOVERY) != 0)
+	if (scsipi_inquire(sc_link, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
 		goto bad;
 
 	{
@@ -770,6 +778,14 @@ scsi_probedev(scsi, target, lun)
 	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
 	sc_link->scsipi_scsi.scsi_version = inqbuf.version;
+
+	if (sc_link->quirks & SDEV_CDROM) {
+		sc_link->quirks ^= SDEV_CDROM;
+		inqbuf.dev_qual2 |= SID_REMOVABLE;
+		sa.sa_inqbuf.type = inqbuf.device = ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
+		sa.sa_inqbuf.removable = T_REMOV;
+	
+	}
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		docontinue = 1;

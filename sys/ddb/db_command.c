@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.43 2000/05/26 03:34:31 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.43.2.1 2000/06/22 17:06:11 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,6 +63,8 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
+
+#include "arp.h"
 
 /*
  * Exported global variables
@@ -210,14 +212,15 @@ db_command(last_cmdp, cmd_table)
 	    addr = (db_expr_t)db_next;
 	    if (t == tCOMMA) {
 	            if (!db_expression(&count)) {
-		    db_printf("Count missing\n");
-		    db_flush_lex();
-		    return;
-	        }
+			    db_printf("Count missing\n");
+			    db_flush_lex();
+			    return;
+		    }
 	    } else
-	        count = last_count;
+		    count = last_count;
 	    have_addr = FALSE;
 	    modif[0] = '\0';
+	    db_skip_to_eol();
 	}
 	else if (t == tEXCL) {
 	    db_fncall(0, 0, 0, NULL);
@@ -442,7 +445,7 @@ struct db_command db_show_all_cmds[] = {
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
-#ifdef INET
+#if defined(INET) && (NARP > 0)
 	{ "arptab",	db_show_arptab,		0,	NULL },
 #endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
@@ -541,10 +544,12 @@ db_command_loop()
 			db_printf("\n");
 		db_output_line = 0;
 
+
 #ifdef MULTIPROCESSOR
-		db_printf("(cpu %ld)", (long)cpu_number());
+		db_printf("db{%ld}> ", (long)cpu_number());
+#else
+		db_printf("db> ");		
 #endif
-		db_printf("db> ");
 		(void) db_read_line();
 
 		db_command(&db_last_command, db_command_table);
@@ -624,7 +629,7 @@ db_fncall(addr, have_addr, count, modif)
 
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9]);
-	db_printf("%#ln\n", retval);
+	db_printf("%s\n", db_num_to_str(retval));
 }
 
 void
@@ -643,6 +648,12 @@ db_reboot_cmd(addr, have_addr, count, modif)
 	    db_error("?\n");
 	    /*NOTREACHED*/
 	}
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
 	cpu_reboot((int)bootflags, NULL);
 }
 
@@ -700,6 +711,11 @@ db_sync_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
 	cpu_reboot(RB_DUMP, NULL);
 }

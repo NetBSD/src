@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2000/05/18 15:39:22 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73.2.1 2000/06/22 16:58:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,7 +42,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-void findroot __P((struct device **, int *));
+static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
@@ -50,6 +50,8 @@ int mbmatch __P((struct device *, struct cfdata *, void *));
 #include <sys/kernel.h>
 
 u_long boot_partition;
+struct device *booted_device;
+int booted_partition;
 
 /*
  * called at boot time, configure all devices on system
@@ -110,10 +112,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 #ifdef DEBUG_KERNEL_START
 	printf("survived findroot()\n");
 #endif
@@ -351,22 +350,12 @@ struct cfdriver *genericconf[] = {
 };
 
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-
-	/* always partition 'a' */
-	*partp = 0;
 
 #if NSD > 0
 	/*
@@ -420,16 +409,16 @@ findroot(devpp, partp)
 				    pp->p_fstype != FS_SWAP))
 					continue;
 				if (pp->p_offset == boot_partition) {
-					if (*devpp == NULL) {
-						*devpp = devs[unit];
-						*partp = i;
+					if (booted_device == NULL) {
+						booted_device = devs[unit];
+						booted_partition = i;
 					} else
 						printf("Ambiguous boot device\n");
 				}
 			}
 		}
 	}
-	if (*devpp != NULL)
+	if (booted_device != NULL)
 		return;		/* we found the boot device */
 #endif
 
@@ -468,8 +457,8 @@ findroot(devpp, partp)
 
 			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
-				*devpp = devs[unit];
-				*partp = 0;
+				booted_device = devs[unit];
+				booted_partition = 0;
 				return;
 			}
 		}

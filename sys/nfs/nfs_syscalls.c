@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.40 2000/05/07 01:38:36 tsarna Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.40.2.1 2000/06/22 17:10:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,7 @@
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
+#include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -95,6 +96,9 @@ extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
 struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+#ifdef INET6
+struct nfssvc_sock *nfs_udp6sock;
+#endif
 int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
@@ -348,6 +352,11 @@ nfssvc_addsock(fp, mynam)
 	 * Add it to the list, as required.
 	 */
 	if (so->so_proto->pr_protocol == IPPROTO_UDP) {
+#ifdef INET6
+		if (so->so_proto->pr_domain->dom_family == AF_INET6)
+			tslp = nfs_udp6sock;
+		else
+#endif
 		tslp = nfs_udpsock;
 		if (tslp->ns_flag & SLP_VALID) {
 			m_freem(mynam);
@@ -383,7 +392,11 @@ nfssvc_addsock(fp, mynam)
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
 	}
-	if (so->so_proto->pr_domain->dom_family == AF_INET &&
+	if ((so->so_proto->pr_domain->dom_family == AF_INET
+#ifdef INET6
+	    || so->so_proto->pr_domain->dom_family == AF_INET6
+#endif
+	    ) &&
 	    so->so_proto->pr_protocol == IPPROTO_TCP) {
 		MGET(m, M_WAIT, MT_SOOPTS);
 		*mtod(m, int32_t *) = 1;
@@ -838,6 +851,14 @@ nfsrv_init(terminating)
 	memset((caddr_t)nfs_udpsock, 0, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_udpsock->ns_uidlruhead);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
+
+#ifdef INET6
+	nfs_udp6sock = (struct nfssvc_sock *)
+	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
+	memset((caddr_t)nfs_udp6sock, 0, sizeof (struct nfssvc_sock));
+	TAILQ_INIT(&nfs_udp6sock->ns_uidlruhead);
+	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_udp6sock, ns_chain);
+#endif
 
 	nfs_cltpsock = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);

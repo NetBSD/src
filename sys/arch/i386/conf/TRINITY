@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.95 2000/04/19 08:44:33 haya Exp $
+#	$NetBSD: TRINITY,v 1.95.4.1 2000/06/22 17:00:19 minoura Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -230,9 +230,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -639,7 +638,6 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

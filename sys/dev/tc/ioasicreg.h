@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.2 2000/02/03 08:13:46 nisimura Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.2.2.1 2000/06/22 17:08:24 minoura Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -141,6 +141,7 @@
 #define IOASIC_CSR_DIAGDN		0x00008000	/* rw */
 #define IOASIC_CSR_TXDIS_2		0x00004000	/* rw - 3min,3max+ */
 #define IOASIC_CSR_TXDIS_1		0x00002000	/* rw - 3min,3max+ */
+#define IOASIC_CSR_ISDN_ENABLE		0x00001000	/* rw - 3000/maxine */
 #define IOASIC_CSR_SCC_ENABLE		0x00000800	/* rw */
 #define IOASIC_CSR_RTC_ENABLE		0x00000400	/* rw */
 #define IOASIC_CSR_SCSI_ENABLE		0x00000200	/* rw - DS */
@@ -156,12 +157,9 @@
 #define IOASIC_INTR_R2_HALF_PAGE	0x02000000	/* rz */
 #define IOASIC_INTR_R2_DMA_OVRUN	0x01000000	/* rz */
 #define IOASIC_INTR_FLOPPY_DMA_E	0x00800000	/* rz - maxine */
-#define IOASIC_INTR_ISDN_PTR_LOAD	0x00400000	/* rz - 3000 */
-#define IOASIC_INTR_ISDN_OVRUN		0x00200000	/* rz - 3000 */
-#define IOASIC_INTR_ISDN_READ_E		0x00100000	/* rz - 3000 */
-#define IOASIC_INTR_ISDN_DS_TXLOAD	0x00400000	/* rz - maxine */
-#define IOASIC_INTR_ISDN_DS_RXLOAD	0x00200000	/* rz - maxine */
-#define IOASIC_INTR_ISDN_DS_OVRUN	0x00100000	/* rz - maxine */
+#define IOASIC_INTR_ISDN_TXLOAD		0x00400000	/* rz - 3000/maxine */
+#define IOASIC_INTR_ISDN_RXLOAD		0x00200000	/* rz - 3000/maxine */
+#define IOASIC_INTR_ISDN_OVRUN		0x00100000	/* rz - 3000/maxine */
 #define IOASIC_INTR_SCSI_PTR_LOAD	0x00080000	/* rz - DS */
 #define IOASIC_INTR_SCSI_OVRUN		0x00040000	/* rz - DS */
 #define IOASIC_INTR_SCSI_READ_E		0x00020000	/* rz - DS */
@@ -169,7 +167,7 @@
 
 /* low 16 bits are model-dependent; see also model specific *.h */
 #define IOASIC_INTR_NVR_JUMPER		0x00004000	/* ro */
-#define IOASIC_INTR_ISDN		0x00002000	/* ro */
+#define IOASIC_INTR_ISDN		0x00002000	/* ro - 3000 */
 #define IOASIC_INTR_NRMOD_JUMPER	0x00000400	/* ro */
 #define IOASIC_INTR_SEC_CON		0x00000200	/* ro */
 #define IOASIC_INTR_SCSI		0x00000200	/* ro - DS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.15 2000/05/26 19:11:25 tsutsui Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.15.2.1 2000/06/22 17:06:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -197,6 +197,7 @@ struct fxp_softc {
 
 #define	FXPF_WANTINIT		0x01	/* want a re-init */
 #define	FXPF_MII		0x02	/* device uses MII */
+#define FXPF_ATTACHED		0x04	/* attach has succeeded */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.20 2000/01/21 13:22:55 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.20.2.1 2000/06/22 17:04:04 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
 
 static __inline int getpsr __P((void));
 static __inline void setpsr __P((int));
-static __inline int spl0 __P((void));
+static __inline void spl0 __P((void));
 static __inline int splhigh __P((void));
 static __inline void splx __P((int));
 static __inline int getmid __P((void));
@@ -115,12 +115,10 @@ static __inline void setpsr(newpsr)
 	int newpsr;
 {
 	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
+	__asm __volatile("nop; nop; nop");
 }
 
-static __inline int spl0()
+static __inline void spl0()
 {
 	int psr, oldipl;
 
@@ -138,7 +136,6 @@ static __inline int spl0()
 	 * on the bits to be changed.
 	 */
 	__asm __volatile("nop; nop; nop");
-	return (oldipl);
 }
 
 /*
@@ -146,9 +143,9 @@ static __inline int spl0()
  * (spl0 and splhigh are special since they put all 0s or all 1s
  * into the ipl field.)
  */
-#define	SPL(name, newipl) \
-static __inline int name __P((void)); \
-static __inline int name() \
+#define	_SPLSET(name, newipl) \
+static __inline void name __P((void)); \
+static __inline void name() \
 { \
 	int psr, oldipl; \
 	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
@@ -157,9 +154,9 @@ static __inline int name() \
 	__asm __volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
 	__asm __volatile("nop; nop; nop"); \
-	return (oldipl); \
 }
-/* A non-priority-decreasing version of SPL */
+
+/* Raise IPL and return previous value */
 #define	_SPLRAISE(name, newipl) \
 static __inline int name __P((void)); \
 static __inline int name() \
@@ -168,7 +165,7 @@ static __inline int name() \
 	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
 	if ((newipl << 8) <= oldipl) \
-		return oldipl; \
+		return (oldipl); \
 	psr &= ~oldipl; \
 	__asm __volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
@@ -176,7 +173,7 @@ static __inline int name() \
 	return (oldipl); \
 }
 
-SPL(spllowersoftclock, 1)
+_SPLSET(spllowersoftclock, 1)
 
 _SPLRAISE(splsoftint, 1)
 #define	splsoftclock	splsoftint

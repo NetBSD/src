@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.26 1999/09/06 21:54:17 sommerfeld Exp $ */
+/* $NetBSD: clock.c,v 1.26.10.1 2000/06/22 16:58:09 minoura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 1999/09/06 21:54:17 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26.10.1 2000/06/22 16:58:09 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,9 +99,6 @@ clockattach(dev, fns)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
-#ifdef EVCNT_COUNTERS
-	evcnt_attach(dev, "intr", &clock_intr_evcnt);
-#endif
 }
 
 /*
@@ -156,7 +153,7 @@ cpu_initclocks()
 	 * hardclock, which would then fall over because p->p_stats
 	 * isn't set at that time.
 	 */
-	platform.clockintr = (void (*) __P((void *))) hardclock;
+	platform.clockintr = hardclock;
 	schedhz = 16;
 
 	/*

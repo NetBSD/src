@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.2 1998/09/05 15:28:08 christos Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.2.20.1 2000/06/22 17:04:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,15 +37,25 @@
  */
 
 struct proc;
+#ifndef SUN4U
 struct fpstate;
 struct trapframe;
+#else /* SUN4U */
+struct fpstate64;
+struct trapframe64;
+#endif /* SUN4U */
 union instr;
 struct fpemu;
 struct fpn;
 
 /* fpu.c */
+#ifndef SUN4U
 void fpu_cleanup __P((struct proc *, struct fpstate *));
 int fpu_emulate __P((struct proc *, struct trapframe *, struct fpstate *));
+#else /* SUN4U */
+void fpu_cleanup __P((struct proc *, struct fpstate64 *));
+int fpu_emulate __P((struct proc *, struct trapframe64 *, struct fpstate64 *));
+#endif /* SUN4U */
 int fpu_execute __P((struct fpemu *, union instr));
 
 /* fpu_add.c */
@@ -59,6 +69,9 @@ struct fpn *fpu_div __P((struct fpemu *));
 
 /* fpu_explode.c */
 int fpu_itof __P((struct fpn *, u_int));
+#ifdef SUN4U
+int fpu_xitof __P((struct fpn *, u_int64_t));
+#endif /* SUN4U */
 int fpu_stof __P((struct fpn *, u_int));
 int fpu_dtof __P((struct fpn *, u_int, u_int ));
 int fpu_xtof __P((struct fpn *, u_int, u_int , u_int , u_int ));
@@ -66,6 +79,9 @@ void fpu_explode __P((struct fpemu *, struct fpn *, int, int ));
 
 /* fpu_implode.c */
 u_int fpu_ftoi __P((struct fpemu *, struct fpn *));
+#ifdef SUN4U
+u_int fpu_ftoxi __P((struct fpemu *, struct fpn *, u_int *));
+#endif /* SUN4U */
 u_int fpu_ftos __P((struct fpemu *, struct fpn *));
 u_int fpu_ftod __P((struct fpemu *, struct fpn *, u_int *));
 u_int fpu_ftox __P((struct fpemu *, struct fpn *, u_int *));

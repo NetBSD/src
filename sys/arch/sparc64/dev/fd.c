@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 2000/05/16 05:45:50 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.16.2.1 2000/06/22 17:04:20 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -442,7 +442,8 @@ fdcattach(parent, self, aux)
 			printf(" CFGLOCK: unexpected response");
 	}
 
-	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
+	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    fdc->sc_dev.dv_xname, "intr");
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 

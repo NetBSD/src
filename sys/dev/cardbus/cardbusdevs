@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.9 2000/04/13 10:12:46 joda Exp $
+$NetBSD: cardbusdevs,v 1.9.2.1 2000/06/22 17:06:20 minoura Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -57,9 +57,9 @@ vendor INVALID		0xffff	INVALID VENDOR ID
 
 /* 3COM Products */
 
-product 3COM 3C575TX	0x5057	3c575 100Base-TX
-product 3COM 3C575BTX	0x5157  3c575B 100Base-TX
-product 3COM 3CCFE575CT	0x5257	3CCFE575CT 100Base-TX
+product 3COM 3C575TX	0x5057	3c575-TX
+product 3COM 3C575BTX	0x5157  3c575B-TX
+product 3COM 3C575CTX	0x5257	3c575C-TX
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480

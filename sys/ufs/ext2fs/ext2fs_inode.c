@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.15 2000/05/13 23:43:12 perseant Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.15.2.1 2000/06/22 17:10:32 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -96,7 +96,7 @@ ext2fs_inactive(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
 	}
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
 		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);
@@ -135,6 +135,7 @@ ext2fs_update(v)
 	int error;
 	struct timespec ts;
 	caddr_t cp;
+	int flags;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -143,10 +144,11 @@ ext2fs_update(v)
 	EXT2FS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & IN_MODIFIED) == 0)
+	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	if (flags == 0)
 		return (0);
-	ip->i_flag &= ~IN_MODIFIED;
 	fs = ip->i_e2fs;
+
 	error = bread(ip->i_devvp,
 			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, NOCRED, &bp);
@@ -154,10 +156,12 @@ ext2fs_update(v)
 		brelse(bp);
 		return (error);
 	}
+	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
-	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) &&
+	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
+	    (flags & IN_MODIFIED) != 0 &&
 	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
@@ -193,9 +197,9 @@ ext2fs_truncate(v)
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, nblocks, vflags, blocksreleased = 0;
+	long count, nblocks, blocksreleased = 0;
 	int i;
-	int aflags, error, allerror;
+	int aflags, error, allerror = 0;
 	off_t osize;
 
 	if (length < 0)
@@ -307,8 +311,10 @@ ext2fs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_e2fs_blocks[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
+	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+	if (error && !allerror)
 		allerror = error;
+
 	/*
 	 * Having written the new inode to disk, save its new configuration
 	 * and put back the old block pointers long enough to process them.
@@ -318,8 +324,9 @@ ext2fs_truncate(v)
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_e2fs_size = osize;
-	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
+	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
+	if (error && !allerror)
+		allerror = error;
 
 	/*
 	 * Indirect blocks first.
@@ -331,7 +338,7 @@ ext2fs_truncate(v)
 		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
-				fsbtodb(fs, bn), lastiblock[level], level, &count);
+			    fsbtodb(fs, bn), lastiblock[level], level, &count);
 			if (error)
 				allerror = error;
 			blocksreleased += count;
@@ -362,14 +369,13 @@ ext2fs_truncate(v)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] !=
-			fs2h32(oip->i_e2fs_blocks[NDADDR + level]))
+		if (newblks[NDADDR + level] != oip->i_e2fs_blocks[NDADDR + level])
 			panic("itrunc1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != fs2h32(oip->i_e2fs_blocks[i]))
+		if (newblks[i] != oip->i_e2fs_blocks[i])
 			panic("itrunc2");
 	if (length == 0 &&
-		(ovp->v_dirtyblkhd.lh_first || ovp->v_cleanblkhd.lh_first))
+	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
 		panic("itrunc3");
 #endif /* DIAGNOSTIC */
 	/*
@@ -452,7 +458,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	}
 
 	bap = (ufs_daddr_t *)bp->b_data;
-	if (lastbn != -1) {
+	if (lastbn >= 0) {
 		MALLOC(copy, ufs_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,

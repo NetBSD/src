@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2000/05/26 21:20:21 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.62.2.1 2000/06/22 17:04:37 minoura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,8 +129,12 @@
 
 /* #include "fb.h" */
 
-/* Our exported CPU info; we have only one for now. */  
-struct cpu_info cpu_info_store;
+int bus_space_debug = 0; /* This may be used by macros elsewhere. */
+#ifdef DEBUG
+#define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -1219,26 +1223,20 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 *
 	 * Actually a #Sync is expensive.  We should optimize.
 	 */
-	switch (ops) {
-	case BUS_DMASYNC_PREREAD:
-		/* Flush any pending writes */
+	if ((ops & BUS_DMASYNC_PREREAD) || (ops & BUS_DMASYNC_PREWRITE)) {
+		/* 
+		 * Don't really need to do anything, but flush any pending
+		 * writes anyway. 
+		 */
 		__asm("membar #Sync" : );
-		break;
-	case BUS_DMASYNC_POSTREAD:
+	}
+	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */
 		blast_vcache();
-		/* Maybe we should flush the I$? */
-		break;
-	case BUS_DMASYNC_PREWRITE:
-		/* Flush any pending writes */
-		__asm("membar #Sync" : );
-		break;
-	case BUS_DMASYNC_POSTWRITE:
-		/* Nothing to do */
-		break;
-	default:
-		__asm("membar #Sync" : );
-		printf("_bus_dmamap_sync: unknown sync op\n");
+		/* Maybe we should flush the I$? When we support LKMs.... */
+	}
+	if (ops & BUS_DMASYNC_POSTWRITE) {
+		/* Nothing to do.  Handled by the bus controller. */
 	}
 }
 
@@ -1373,25 +1371,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	*kvap = (caddr_t)va;
 	mlist = segs[0]._ds_mlist;
 
-#if 0 /* The following should be done by the bus driver */
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-
-		if (size == 0)
-			panic("_bus_dmamem_map: size botch");
-
-		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-#if 0
-			if (flags & BUS_DMA_COHERENT)
-				/* XXX */;
-#endif
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-#endif
-
 	return (0);
 }
 
@@ -1407,15 +1386,12 @@ _bus_dmamem_unmap(t, kva, size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((u_long)kva & PAGE_MASK)
 		panic("_bus_dmamem_unmap");
 #endif
 
 	size = round_page(size);
 	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-#if 0
-	kmem_free(kernel_map, (vaddr_t)kva, size);
-#endif
 }
 
 /*
@@ -1481,7 +1457,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 {
 	vaddr_t v;
 	u_int64_t pa;
-	paddr_t	pm_flags;
+	paddr_t	pm_flags = 0;
 static	vaddr_t iobase = IODEV_BASE;
 
 	t->type = iospace;
@@ -1502,19 +1478,22 @@ static	vaddr_t iobase = IODEV_BASE;
 		 * out of IO mappings, config space will not be mapped in,
 		 * rather it will be accessed through MMU bypass ASI accesses.
 		 */
+		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
 		*hp = (bus_space_handle_t)addr;
 		if (!vaddr) return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
-		pm_flags = PMAP_NC|PMAP_LITTLE;
+		pm_flags = PMAP_LITTLE;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE|PMAP_NC;
+		pm_flags = PMAP_LITTLE;
 		break;
 	default:
-		pm_flags = PMAP_NC;
+		pm_flags = 0;
 		break;
 	}
+
+	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 
 	if (vaddr)
 		v = trunc_page(vaddr);
@@ -1530,15 +1509,15 @@ static	vaddr_t iobase = IODEV_BASE;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 
-#ifdef NOTDEF_DEBUG
-	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
-		       (int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
-#endif
+
+	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
+		"addr %016llx size %016llx virt %llx paddr %016llx\n",
+		(int)iospace, (int) flags, (u_int64_t)addr, (u_int64_t)size,
+		(u_int64_t)*hp, (u_int64_t)pa));
 
 	do {
-#ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", (u_int64_t)pa, (char *)v, (u_int64_t)*hp);
-#endif
+		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
+			(u_int64_t)pa, (char *)v, (u_int64_t)*hp));
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
 				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
@@ -1569,11 +1548,8 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	int		flags;
 	bus_space_handle_t *hp;
 {
-#if 0
-	*hp = (bus_space_handle_t)pmap_from_phys_address(paddr,flags);
-#else
+
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
-#endif
 	return (0);
 }
 
@@ -1600,7 +1576,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	tmp = (paddr_t)bh;
 	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
-		result = (*callback)(tmp, arg);
+		result = (*callback)((char *)(u_long)tmp, arg);
 	bus_space_unmap(tag, bh, size);
 	return (result);
 }

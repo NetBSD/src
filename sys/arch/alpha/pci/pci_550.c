@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.14.2.1 2000/06/22 16:58:40 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14.2.1 2000/06/22 16:58:40 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $")
 
 #include <alpha/pci/pci_550.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
@@ -104,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $")
 int	dec_550_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_550_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_550_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_550_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_550_intr_disestablish __P((void *, void *));
@@ -131,9 +128,6 @@ void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 #define	DEC_550_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 struct alpha_shared_intr *dec_550_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt dec_550_intr_evcnt;
-#endif
 
 void	dec_550_iointr __P((void *framep, unsigned long vec));
 void	dec_550_intr_enable __P((int irq));
@@ -145,11 +139,13 @@ pci_550_pickintr(ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_550_intr_map;
         pc->pc_intr_string = dec_550_intr_string;
+	pc->pc_intr_evcnt = dec_550_intr_evcnt;
         pc->pc_intr_establish = dec_550_intr_establish;
         pc->pc_intr_disestablish = dec_550_intr_disestablish;
 
@@ -164,11 +160,17 @@ pci_550_pickintr(ccp)
 	for (i = 0; i < DEC_550_MAX_IRQ; i++)
 		dec_550_intr_disable(i);
 
-	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ);
+	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ, 8);
 	for (i = 0; i < DEC_550_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_550_pci_intr, i,
 		    PCI_STRAY_MAX);
 		alpha_shared_intr_set_private(dec_550_pci_intr, i, ccp);
+		
+		cp = alpha_shared_intr_string(dec_550_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    dec_550_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "dec_550", cp);
 	}
 
 #if NSIO
@@ -281,6 +283,27 @@ dec_550_intr_string(ccv, ih)
 	return (irqstr);
 }
 
+const struct evcnt *
+dec_550_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
+
+#if NSIO
+	if (DEC_550_LINE_IS_ISA(ih))
+		return (sio_intr_evcnt(NULL /*XXX*/,
+		    DEC_550_LINE_ISA_IRQ(ih)));
+#endif
+
+	if (ih >= DEC_550_MAX_IRQ)
+		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx\n", ih);
+
+	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
+}
+
 void *
 dec_550_intr_establish(ccv, ih, level, func, arg)
 	void *ccv, *arg;
@@ -370,6 +393,10 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
 	    func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);
 }
@@ -386,14 +413,6 @@ dec_550_iointr(framep, vec)
 
 		if (irq >= DEC_550_MAX_IRQ)
 			panic("550_iointr: vec 0x%lx out of range\n", vec);
-
-#ifdef EVCNT_COUNTERS
-		dec_550_intr_evcnt.ev_count++;
-#else
-		if (DEC_550_MAX_IRQ != INTRCNT_DEC_550_IRQ_LEN)
-			panic("dec_550 interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_DEC_550_IRQ + irq]++;
-#endif
 
 		if (!alpha_shared_intr_dispatch(dec_550_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_550_pci_intr, irq,

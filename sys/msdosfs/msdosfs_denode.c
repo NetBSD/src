@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.43 2000/05/13 23:43:10 perseant Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.43.2.1 2000/06/22 17:09:39 minoura Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -349,10 +349,9 @@ detrunc(dep, length, flags, cred, p)
 {
 	int error;
 	int allerror;
-	int vflags;
 	u_long eofentry;
 	u_long chaintofree;
-	daddr_t bn;
+	daddr_t bn, lastblock;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
 	struct buf *bp;
@@ -380,6 +379,7 @@ detrunc(dep, length, flags, cred, p)
 
 	if (dep->de_FileSize < length)
 		return (deextend(dep, length, cred));
+	lastblock = de_clcount(pmp, length) - 1;
 
 	/*
 	 * If the desired length is 0 then remember the starting cluster of
@@ -395,8 +395,7 @@ detrunc(dep, length, flags, cred, p)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		error = pcbmap(dep, de_clcount(pmp, length) - 1, 0,
-			       &eofentry, 0);
+		error = pcbmap(dep, lastblock, 0, &eofentry, 0);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
@@ -405,7 +404,7 @@ detrunc(dep, length, flags, cred, p)
 		}
 	}
 
-	fc_purge(dep, de_clcount(pmp, length));
+	fc_purge(dep, lastblock + 1);
 
 	/*
 	 * If the new length is not a multiple of the cluster size then we
@@ -447,8 +446,7 @@ detrunc(dep, length, flags, cred, p)
 	dep->de_FileSize = length;
 	if (!isadir)
 		dep->de_flag |= DE_UPDATE|DE_MODIFIED;
-	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
-	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
+	vtruncbuf(DETOV(dep), lastblock + 1, 0, 0);
 	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %lu\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.9 2000/05/17 09:25:27 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.9.2.1 2000/06/22 17:04:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -87,7 +87,7 @@ int	ebus_match __P((struct device *, struct cfdata *, void *));
 void	ebus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ebus_ca = {
-	sizeof(struct device), ebus_match, ebus_attach
+	sizeof(struct ebus_softc), ebus_match, ebus_attach
 };
 
 int	ebus_setup_attach_args __P((struct ebus_softc *, int,
@@ -95,7 +95,7 @@ int	ebus_setup_attach_args __P((struct ebus_softc *, int,
 void	ebus_destroy_attach_args __P((struct ebus_attach_args *));
 int	ebus_print __P((void *, const char *));
 void	ebus_find_ino __P((struct ebus_softc *, struct ebus_attach_args *));
-int	ebus_find_node __P((struct ebus_softc *, struct pci_attach_args *));
+int	ebus_find_node __P((struct pci_attach_args *));
 
 /*
  * here are our bus space and bus dma routines.
@@ -130,7 +130,8 @@ ebus_match(parent, match, aux)
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
+	    ebus_find_node(pa))
 		return (1);
 
 	return (0);
@@ -163,7 +164,7 @@ ebus_attach(parent, self, aux)
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
 
-	node = ebus_find_node(sc, pa);
+	node = ebus_find_node(pa);
 	if (node == 0)
 		panic("could not find ebus node");
 
@@ -336,8 +337,7 @@ next_intr:
  * see the simba driver.
  */
 int
-ebus_find_node(sc, pa)
-	struct ebus_softc *sc;
+ebus_find_node(pa)
 	struct pci_attach_args *pa;
 {
 	int node = pa->pa_pc->node;

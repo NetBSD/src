@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.7 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.7.2.1 2000/06/22 17:01:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ vme_pcc_attach(parent, self, aux)
 	sc->sc_vct.vct_map = _vme_pcc_map;
 	sc->sc_vct.vct_unmap = _vme_pcc_unmap;
 	sc->sc_vct.vct_int_map = _vme_pcc_intmap;
+	sc->sc_vct.vct_int_evcnt = _vme_pcc_intr_evcnt;
 	sc->sc_vct.vct_int_establish = _vme_pcc_intr_establish;
 	sc->sc_vct.vct_int_disestablish = _vme_pcc_intr_disestablish;
 	sc->sc_vct.vct_dmamap_create = _vme_pcc_dmamap_create;
@@ -381,6 +382,16 @@ _vme_pcc_intmap(vsc, level, vector, handlep)
 	*handlep = (void *) (int) ((level << 8) | vector);
 
 	return (0);
+}
+
+const struct evcnt *
+_vme_pcc_intr_evcnt(vsc, handle)
+	void *vsc;
+	vme_intr_handle_t handle;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

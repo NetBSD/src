@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.21 2000/02/22 11:25:59 soda Exp $	*/
+/*	$NetBSD: asc.c,v 1.21.2.1 2000/06/22 16:59:10 minoura Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -140,6 +140,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/dev/dma.h>
 #include <arc/dev/scsi.h>
 #include <arc/dev/ascreg.h>

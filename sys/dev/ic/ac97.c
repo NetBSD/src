@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.10 2000/05/15 01:32:03 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.10.2.1 2000/06/22 17:06:25 minoura Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -500,10 +500,6 @@ ac97_attach(hostIf)
 	printf("%s: ", sc_dev->dv_xname);
 
 	for (i = 0; ; i++) {
-		if (ac97codecid[i].id == id) {
-			printf("%s", ac97codecid[i].name);
-			break;
-		}
 		if (ac97codecid[i].id == 0) {
 			char pnp[4];
 
@@ -514,7 +510,11 @@ ac97_attach(hostIf)
 				printf("%c%c%c%d", pnp[0], pnp[1], pnp[2],
 				    pnp[3]);
 			else
-				printf("unknown (0x%08x)", id);
+				printf("unknown (0x%8x)", id);
+			break;
+		}
+		if (ac97codecid[i].id == id) {
+			printf("%s", ac97codecid[i].name);
 			break;
 		}
 	}

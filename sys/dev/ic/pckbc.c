@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.2 2000/03/23 07:01:32 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.2.2.1 2000/06/22 17:06:52 minoura Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -47,6 +47,7 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
+#include "rnd.h"
 #include "locators.h"
 
 #ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbc */
@@ -56,6 +57,9 @@
 #endif
 #if (NPCKBD > 0)
 #include <dev/pckbc/pckbdvar.h>
+#endif
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 /* descriptor for one device command */
@@ -77,6 +81,9 @@ struct pckbc_slotdata {
 	TAILQ_HEAD(, pckbc_devcmd) freequeue; /* free commands */
 #define NCMD 5
 	struct pckbc_devcmd cmds[NCMD];
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
@@ -285,6 +292,11 @@ pckbc_attach_slot(sc, slot)
 					     M_DEVBUF, M_NOWAIT);
 		pckbc_init_slotdata(t->t_slotdata[slot]);
 	}
+#if NRND > 0
+	if (found && (t->t_slotdata[slot] != NULL))
+		rnd_attach_source(&t->t_slotdata[slot]->rnd_source, sc->subname[slot],
+		    RND_TYPE_TTY, 0);
+#endif
 	return (found);
 }
 
@@ -853,11 +865,12 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 }
 
 void
-pckbc_set_inputhandler(self, slot, func, arg)
+pckbc_set_inputhandler(self, slot, func, arg, name)
 	pckbc_tag_t self;
 	pckbc_slot_t slot;
 	pckbc_inputfcn func;
 	void *arg;
+	char *name;
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
@@ -869,6 +882,7 @@ pckbc_set_inputhandler(self, slot, func, arg)
 
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;
+	sc->subname[slot] = name;
 }
 
 int
@@ -907,6 +921,9 @@ pckbcintr(vsc)
 		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
+#if NRND > 0
+		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
+#endif
 		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
 			continue;
 
@@ -922,9 +939,10 @@ pckbcintr(vsc)
 }
 
 int
-pckbc_cnattach(iot, addr, slot)
+pckbc_cnattach(iot, addr, cmd_offset, slot)
 	bus_space_tag_t iot;
 	bus_addr_t addr;
+	bus_size_t cmd_offset;
 	pckbc_slot_t slot;
 {
 	bus_space_handle_t ioh_d, ioh_c;
@@ -932,7 +950,7 @@ pckbc_cnattach(iot, addr, slot)
 
 	if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
                 return (ENXIO);
-	if (bus_space_map(iot, addr + KBCMDP, 1, 0, &ioh_c)) {
+	if (bus_space_map(iot, addr + cmd_offset, 1, 0, &ioh_c)) {
 		bus_space_unmap(iot, ioh_d, 1);
                 return (ENXIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.17 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.17.2.1 2000/06/22 17:08:11 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,11 +216,12 @@ cd_scsibus_set_pa_immed(cd, flags)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
 		return (error);
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK));
 }
 
 int
@@ -233,13 +234,14 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK));
 }
 
 int
@@ -253,7 +255,7 @@ cd_scsibus_getvol(cd, arg, flags)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
 		return (error);
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
@@ -272,7 +274,7 @@ cd_scsibus_setvol(cd, arg, flags)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
@@ -280,7 +282,8 @@ cd_scsibus_setvol(cd, arg, flags)
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK));
 }
 
 int

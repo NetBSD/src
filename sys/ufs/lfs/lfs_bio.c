@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.20 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.20.2.1 2000/06/22 17:10:36 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -138,10 +138,12 @@ lfs_bwrite(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
+	struct inode *ip;
+
+	ip = VTOI(bp->b_vp);
 
 #ifdef DIAGNOSTIC
-        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0
-	   && (bp->b_flags & B_ASYNC)) {
+        if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
 		panic("bawrite LFS buffer");
 	}
 #endif /* DIAGNOSTIC */
@@ -154,7 +156,8 @@ lfs_bwrite(v)
  * inode blocks, a summary block, plus potentially the ifile inode and
  * the segment usage table, plus an ifile page.
  */
-inline static int lfs_fits(struct lfs *fs, int db)
+inline static int
+lfs_fits(struct lfs *fs, int db)
 {
 	if(((db + (fs->lfs_uinodes + INOPB((fs))) /
 	     INOPB(fs) + fsbtodb(fs, 1) + LFS_SUMMARY_SIZE / DEV_BSIZE +
@@ -250,7 +253,7 @@ lfs_bwrite_ext(bp, flags)
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CLEANING;
 		} else {
-			if(!(ip->i_flag & IN_MODIFIED))
+			if(!(ip->i_flag & (IN_MODIFIED | IN_ACCESSED)))
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
 		}

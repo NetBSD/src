@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.79 2000/05/19 18:54:30 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.79.2.1 2000/06/22 17:07:55 minoura Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -295,7 +295,6 @@ static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 			          Note that this is overridden by having
 			          RAID_AUTOCONFIG as an option in the 
 			          kernel config file.  */
-extern struct device *booted_device;
 
 void
 raidattach(num)
@@ -634,7 +633,8 @@ raidclose(dev, flags, fmt, p)
 #if 0
 		printf("Last one on raid%d.  Updating status.\n",unit);
 #endif
-		rf_final_update_component_labels( raidPtrs[unit] );
+		rf_update_component_labels(raidPtrs[unit],
+						 RF_FINAL_COMPONENT_UPDATE);
 	}
 
 	raidunlock(rs);
@@ -780,6 +780,7 @@ raidioctl(dev, cmd, data, flag, p)
 	RF_SingleComponent_t *sparePtr,*componentPtr;
 	RF_SingleComponent_t hot_spare;
 	RF_SingleComponent_t component;
+	RF_ProgressInfo_t progressInfo, **progressInfoPtr;
 	int i, j, d;
 
 	if (unit >= numraid)
@@ -817,6 +818,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_FAIL_DISK:
 	case RAIDFRAME_COPYBACK:
 	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 	case RAIDFRAME_SET_COMPONENT_LABEL:
 	case RAIDFRAME_ADD_HOT_SPARE:
@@ -825,7 +827,9 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_REBUILD_IN_PLACE:
 	case RAIDFRAME_CHECK_PARITY:
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
 	case RAIDFRAME_SET_AUTOCONFIG:
 	case RAIDFRAME_SET_ROOT:
 	case RAIDFRAME_DELETE_COMPONENT:
@@ -981,7 +985,8 @@ raidioctl(dev, cmd, data, flag, p)
 		column = clabel->column;
 
 		if ((row < 0) || (row >= raidPtr->numRow) ||
-		    (column < 0) || (column >= raidPtr->numCol)) {
+		    (column < 0) || (column >= raidPtr->numCol +
+				     raidPtr->numSpare)) {
 			RF_Free( clabel, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
@@ -1277,23 +1282,65 @@ raidioctl(dev, cmd, data, flag, p)
 		else
 			*(int *) data = raidPtr->reconControl[row]->percentComplete;
 		return (0);
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
+		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		row = 0; /* XXX we only consider a single row... */
+		if (raidPtr->status[row] != rf_rs_reconstructing) {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		} else {
+			progressInfo.total = 
+				raidPtr->reconControl[row]->numRUsTotal;
+			progressInfo.completed = 
+				raidPtr->reconControl[row]->numRUsComplete;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0 */
-			return(EINVAL);
+			/* This makes no sense on a RAID 0, so tell the
+			   user it's done. */
+			*(int *) data = 100;
+			return(0);
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
-			*(int *) data = 100 * raidPtr->parity_rewrite_stripes_done / raidPtr->Layout.numStripe;
+			*(int *) data = 100 * 
+				raidPtr->parity_rewrite_stripes_done / 
+				raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
 		}
 		return (0);
 
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
+		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		if (raidPtr->parity_rewrite_in_progress == 1) {
+			progressInfo.total = raidPtr->Layout.numStripe;
+			progressInfo.completed = 
+				raidPtr->parity_rewrite_stripes_done;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		} else {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
+
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
-			return(EINVAL);
+			*(int *) data = 100;
+			return(0);
 		}
 		if (raidPtr->copyback_in_progress == 1) {
 			*(int *) data = 100 * raidPtr->copyback_stripes_done /
@@ -1303,6 +1350,22 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 		return (0);
 
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
+		if (raidPtr->copyback_in_progress == 1) {
+			progressInfo.total = raidPtr->Layout.numStripe;
+			progressInfo.completed = 
+				raidPtr->parity_rewrite_stripes_done;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		} else {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
 
 		/* the sparetable daemon calls this to wait for the kernel to
 		 * need a spare table. this ioctl does not return until a
@@ -1525,7 +1588,8 @@ raidstart(raidPtr)
 	/* quick check to see if anything has died recently */
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	if (raidPtr->numNewFailures > 0) {
-		rf_update_component_labels(raidPtr);
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
 		raidPtr->numNewFailures--;
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -1805,7 +1869,6 @@ KernelWakeupFunc(vbp)
 			queue->raidPtr->status[queue->row] = rf_rs_degraded;
 			queue->raidPtr->numFailures++;
 			queue->raidPtr->numNewFailures++;
-			/* XXX here we should bump the version number for each component, and write that data out */
 		} else {	/* Disk is already dead... */
 			/* printf("Disk already marked as dead!\n"); */
 		}
@@ -2265,8 +2328,9 @@ rf_markalldirty(raidPtr)
 
 
 void
-rf_update_component_labels(raidPtr)
+rf_update_component_labels(raidPtr, final)
 	RF_Raid_t *raidPtr;
+	int final;
 {
 	RF_ComponentLabel_t clabel;
 	int sparecol;
@@ -2298,6 +2362,14 @@ rf_update_component_labels(raidPtr)
 					raidPtr->Disks[r][c].dev,
 					raidPtr->raid_cinfo[r][c].ci_vp,
 					&clabel);
+				if (final == RF_FINAL_COMPONENT_UPDATE) {
+					if (raidPtr->parity_good == RF_RAID_CLEAN) {
+						raidmarkclean( 
+							      raidPtr->Disks[r][c].dev, 
+							      raidPtr->raid_cinfo[r][c].ci_vp,
+							      raidPtr->mod_counter);
+					}
+				}
 			} 
 			/* else we don't touch it.. */
 		} 
@@ -2346,104 +2418,12 @@ rf_update_component_labels(raidPtr)
 				      raidPtr->Disks[0][sparecol].dev,
 				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
 				      &clabel);
-		}
-	}
-	/* 	printf("Component labels updated\n"); */
-}
-
-
-void
-rf_final_update_component_labels(raidPtr)
-	RF_Raid_t *raidPtr;
-{
-	RF_ComponentLabel_t clabel;
-	int sparecol;
-	int r,c;
-	int i,j;
-	int srow, scol;
-
-	srow = -1;
-	scol = -1;
-
-	/* XXX should do extra checks to make sure things really are clean, 
-	   rather than blindly setting the clean bit... */
-
-	raidPtr->mod_counter++;
-
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			if (raidPtr->Disks[r][c].status == rf_ds_optimal) {
-				raidread_component_label(
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&clabel);
-				/* make sure status is noted */
-				clabel.status = rf_ds_optimal;
-				/* bump the counter */
-				clabel.mod_counter = raidPtr->mod_counter;
-
-				raidwrite_component_label( 
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&clabel);
+			if (final == RF_FINAL_COMPONENT_UPDATE) {
 				if (raidPtr->parity_good == RF_RAID_CLEAN) {
-					raidmarkclean( 
-					      raidPtr->Disks[r][c].dev, 
-					      raidPtr->raid_cinfo[r][c].ci_vp,
-					      raidPtr->mod_counter);
+					raidmarkclean( raidPtr->Disks[0][sparecol].dev,
+						       raidPtr->raid_cinfo[0][sparecol].ci_vp,
+						       raidPtr->mod_counter);
 				}
-			} 
-			/* else we don't touch it.. */
-		} 
-	}
-
-	for( c = 0; c < raidPtr->numSpare ; c++) {
-		sparecol = raidPtr->numCol + c;
-		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
-			/* 
-			   
-			   we claim this disk is "optimal" if it's 
-			   rf_ds_used_spare, as that means it should be 
-			   directly substitutable for the disk it replaced. 
-			   We note that too...
-
-			 */
-
-			for(i=0;i<raidPtr->numRow;i++) {
-				for(j=0;j<raidPtr->numCol;j++) {
-					if ((raidPtr->Disks[i][j].spareRow == 
-					     0) &&
-					    (raidPtr->Disks[i][j].spareCol ==
-					     sparecol)) {
-						srow = i;
-						scol = j;
-						break;
-					}
-				}
-			}
-			
-			/* XXX shouldn't *really* need this... */
-			raidread_component_label( 
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &clabel);
-			/* make sure status is noted */
-
-			raid_init_component_label(raidPtr, &clabel);
-
-			clabel.mod_counter = raidPtr->mod_counter;
-			clabel.row = srow;
-			clabel.column = scol;
-			clabel.status = rf_ds_optimal;
-
-			raidwrite_component_label(
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &clabel);
-			if (raidPtr->parity_good == RF_RAID_CLEAN) {
-				raidmarkclean( raidPtr->Disks[0][sparecol].dev,
-			              raidPtr->raid_cinfo[0][sparecol].ci_vp,
-					       raidPtr->mod_counter);
 			}
 		}
 	}
@@ -2554,6 +2534,11 @@ rf_RewriteParityThread(raidPtr)
 		raidPtr->parity_good = RF_RAID_CLEAN;
 	}
 	raidPtr->parity_rewrite_in_progress = 0;
+
+	/* Anyone waiting for us to stop?  If so, inform them... */
+	if (raidPtr->waitShutdown) {
+		wakeup(&raidPtr->parity_rewrite_in_progress);
+	}
 
 	/* That's all... */
 	kthread_exit(0);        /* does not return */
@@ -2840,7 +2825,7 @@ rf_create_auto_sets(ac_list)
 			cset = config_sets;
 			while(cset!=NULL) {
 				if (rf_does_it_fit(cset, ac)) {
-					/* looks like it matches */
+					/* looks like it matches... */
 					ac->next = cset->ac;
 					cset->ac = ac;
 					break;
@@ -2888,6 +2873,17 @@ rf_does_it_fit(cset, ac)
 
 	    (clabel1->mod_counter == clabel2->mod_counter) &&
 
+	   The reason we don't check for this is that failed disks
+	   will have lower modification counts.  If those disks are
+	   not added to the set they used to belong to, then they will
+	   form their own set, which may result in 2 different sets,
+	   for example, competing to be configured at raid0, and
+	   perhaps competing to be the root filesystem set.  If the
+	   wrong ones get configured, or both attempt to become /,
+	   weird behaviour and or serious lossage will occur.  Thus we
+	   need to bring them into the fold here, and kick them out at
+	   a later point.
+
 	*/
 
 	clabel1 = cset->ac->clabel;
@@ -2928,28 +2924,48 @@ rf_have_enough_components(cset)
 	int num_rows;
 	int num_cols;
 	int num_missing;
+	int mod_counter;
+	int mod_counter_found;
+	int even_pair_failed;
+	char parity_type;
+	
 
 	/* check to see that we have enough 'live' components
 	   of this set.  If so, we can configure it if necessary */
 
 	num_rows = cset->ac->clabel->num_rows;
 	num_cols = cset->ac->clabel->num_columns;
+	parity_type = cset->ac->clabel->parityConfig;
 
 	/* XXX Check for duplicate components!?!?!? */
+
+	/* Determine what the mod_counter is supposed to be for this set. */
+
+	mod_counter_found = 0;
+	ac = cset->ac;
+	while(ac!=NULL) {
+		if (mod_counter_found==0) {
+			mod_counter = ac->clabel->mod_counter;
+			mod_counter_found = 1;
+		} else {
+			if (ac->clabel->mod_counter > mod_counter) {
+				mod_counter = ac->clabel->mod_counter;
+			}
+		}
+		ac = ac->next;
+	}
 
 	num_missing = 0;
 	auto_config = cset->ac;
 
 	for(r=0; r<num_rows; r++) {
+		even_pair_failed = 0;
 		for(c=0; c<num_cols; c++) {
 			ac = auto_config;
 			while(ac!=NULL) {
-				if (ac->clabel==NULL) {
-					/* big-time bad news. */
-					goto fail;
-				}
 				if ((ac->clabel->row == r) &&
-				    (ac->clabel->column == c)) {
+				    (ac->clabel->column == c) && 
+				    (ac->clabel->mod_counter == mod_counter)) {
 					/* it's this one... */
 #if DEBUG
 					printf("Found: %s at %d,%d\n",
@@ -2961,7 +2977,32 @@ rf_have_enough_components(cset)
 			}
 			if (ac==NULL) {
 				/* Didn't find one here! */
-				num_missing++;
+				/* special case for RAID 1, especially
+				   where there are more than 2
+				   components (where RAIDframe treats
+				   things a little differently :( ) */
+				if (parity_type == '1') {
+					if (c%2 == 0) { /* even component */
+						even_pair_failed = 1;
+					} else { /* odd component.  If
+                                                    we're failed, and
+                                                    so is the even
+                                                    component, it's
+                                                    "Good Night, Charlie" */
+						if (even_pair_failed == 1) {
+							return(0);
+						}
+					}
+				} else {
+					/* normal accounting */
+					num_missing++;
+				}
+			}
+			if ((parity_type == '1') && (c%2 == 1)) {
+				/* Just did an even component, and we didn't
+				   bail.. reset the even_pair_failed flag, 
+				   and go on to the next component.... */
+				even_pair_failed = 0;
 			}
 		}
 	}
@@ -2969,7 +3010,6 @@ rf_have_enough_components(cset)
 	clabel = cset->ac->clabel;
 
 	if (((clabel->parityConfig == '0') && (num_missing > 0)) ||
-	    ((clabel->parityConfig == '1') && (num_missing > 1)) ||
 	    ((clabel->parityConfig == '4') && (num_missing > 1)) ||
 	    ((clabel->parityConfig == '5') && (num_missing > 1))) {
 		/* XXX this needs to be made *much* more general */
@@ -2979,9 +3019,6 @@ rf_have_enough_components(cset)
 	/* otherwise, all is well, and we've got enough to take a kick
 	   at autoconfiguring this set */
 	return(1);
-fail:
-	return(0);
-
 }
 
 void
@@ -3034,11 +3071,14 @@ rf_set_autoconfig(raidPtr, new_value)
 	raidPtr->autoconfigure = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
-			dev = raidPtr->Disks[row][column].dev;
-			vp = raidPtr->raid_cinfo[row][column].ci_vp;
-			raidread_component_label(dev, vp, &clabel);
-			clabel.autoconfigure = new_value;
-			raidwrite_component_label(dev, vp, &clabel);
+			if (raidPtr->Disks[row][column].status == 
+			    rf_ds_optimal) {
+				dev = raidPtr->Disks[row][column].dev;
+				vp = raidPtr->raid_cinfo[row][column].ci_vp;
+				raidread_component_label(dev, vp, &clabel);
+				clabel.autoconfigure = new_value;
+				raidwrite_component_label(dev, vp, &clabel);
+			}
 		}
 	}
 	return(new_value);
@@ -3057,11 +3097,14 @@ rf_set_rootpartition(raidPtr, new_value)
 	raidPtr->root_partition = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
-			dev = raidPtr->Disks[row][column].dev;
-			vp = raidPtr->raid_cinfo[row][column].ci_vp;
-			raidread_component_label(dev, vp, &clabel);
-			clabel.root_partition = new_value;
-			raidwrite_component_label(dev, vp, &clabel);
+			if (raidPtr->Disks[row][column].status == 
+			    rf_ds_optimal) {
+				dev = raidPtr->Disks[row][column].dev;
+				vp = raidPtr->raid_cinfo[row][column].ci_vp;
+				raidread_component_label(dev, vp, &clabel);
+				clabel.root_partition = new_value;
+				raidwrite_component_label(dev, vp, &clabel);
+			}
 		}
 	}
 	return(new_value);
@@ -3079,6 +3122,7 @@ rf_release_all_vps(cset)
 		if (ac->vp) {
 			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
 			vput(ac->vp);
+			ac->vp = NULL;
 		}
 		ac = ac->next;
 	}
