@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.1 2004/03/20 02:22:49 jonathan Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.2 2004/03/20 02:57:34 snj Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.1 2004/03/20 02:22:49 jonathan Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.2 2004/03/20 02:57:34 snj Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.1 2004/03/20 02:22:49 jonathan Exp 
 MALLOC_DECLARE(M_KCONT);
 MALLOC_DEFINE(M_KCONT, "kcont", "Kernel non-process continuations");
 
-/* Accessors for struct kc_qeueue */
+/* Accessors for struct kc_queue */
 static __inline struct kc * kc_set(struct kc *,
 	void (*func) __P((void *, void *, int)),
 	void *env_arg, int ipl);
@@ -88,7 +88,7 @@ static kcq_t kcq_process_ctxt;
 /*
  * Insert/Remove a fully-formed struct kc * into the kc_queue *
  * of some kernel object (e.g., a struct buf *).
- * For fine-grained SMP, both enqueing and dequeing will
+ * For fine-grained SMP, both enqueueing and dequeueing will
  * need a locking mechanism.
  */
 static __inline void
@@ -150,7 +150,7 @@ kcont(struct kc *kc, void (*func) __P((void *, void *, int)),
 }
 
 /*
- * Request a malloc'ed/auto-freed continuation. The kcont framwork
+ * Request a malloc'ed/auto-freed continuation. The kcont framework
  * mallocs the struct kc, and initializes it with the caller-supplied args.
  * Once the asynchronous operation completes and the continuation function
  * has been called, the kcont framework will free the struct kc *
@@ -170,7 +170,7 @@ kcont_malloc(int malloc_flags,
 }
 
 /*
- * Dispatch a dequeed continuation which requested deferral
+ * Dispatch a dequeued continuation which requested deferral
  * into the appropriate lower-priority queue.
  * Public API entry to defer execution of a pre-built kcont.
  */
@@ -181,7 +181,7 @@ kcont_defer(struct kc *kc, void *obj, int status)
 	 * IPL at which to synchronize access to object is
 	 * above the continuer's requested callback IPL,
 	 * (e.g., continuer wants IPL_SOFTNET but the object
-	 * holding this contuation incurred the wakeup()able
+	 * holding this continuation incurred the wakeup()able
 	 * event whilst at IPL_BIO).
 	 * Defer this kc to a lower-priority kc queue,
 	 * to be serviced slightly later at a lower IPL.
@@ -191,7 +191,7 @@ kcont_defer(struct kc *kc, void *obj, int status)
 	 * If we already deferred this kcont,don't clobber
 	 * the previously-saved kc_object and kc_status.
 	 * (The obj/status arguments passed in by ck_run() should
-	 * be the same as kc_object/kc_status, but dont rely  on that.)
+	 * be the same as kc_object/kc_status, but don't rely  on that.)
 	 */
 	if ((kc->kc_flags & KC_DEFERRED) == 0) {
 		kc->kc_flags |= KC_DEFERRED;
@@ -268,7 +268,7 @@ kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 	struct kc *kc;
 	while ((kc = kcont_dequeue_atomic(kcq)) != NULL) {
 
-		/* If exceution of kc was already deferred, restore context. */
+		/* If execution of kc was already deferred, restore context. */
 		if (kc->kc_flags & KC_DEFERRED) {
 			KASSERT(obj == NULL);
 			obj = kc->kc_obj;
@@ -351,7 +351,7 @@ kcont_init()
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/*
 	 * Initialize kc_queue and callout for soft-int deferred
-	 * continuations. (If not avaiable, deferrals  fall back
+	 * continuations. (If not available, deferrals fall back
 	 * to deferring all the way to process context).
 	 */
 	SIMPLEQ_INIT(&kcq_softclock);
