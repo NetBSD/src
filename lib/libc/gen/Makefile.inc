@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.63 1995/02/10 17:46:48 cgd Exp $
+#	$Id: Makefile.inc,v 1.63.2.1 1995/02/17 10:48:27 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -24,10 +24,6 @@ SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
 	toupper_.c ualarm.c uname.c unvis.c usleep.c \
 	utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
-
-# indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
-	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
