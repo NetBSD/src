@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.164 2005/03/20 01:09:16 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.165 2005/03/20 01:10:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.164 2005/03/20 01:09:16 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.165 2005/03/20 01:10:51 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,10 +303,6 @@ void	print_media_word(int, const char *);
 void	process_media_commands(void);
 void	init_current_media(void);
 
-/*
- * XNS support liberally adapted from code written at the University of
- * Maryland principally by James O'Toole and Chris Torek.
- */
 void	in_alias(struct ifreq *);
 void	in_status(int);
 void 	in_getaddr(const char *, int);

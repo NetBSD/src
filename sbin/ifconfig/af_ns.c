@@ -1,4 +1,4 @@
-/*	$NetBSD: af_ns.c,v 1.1 2005/03/19 23:46:03 thorpej Exp $	*/
+/*	$NetBSD: af_ns.c,v 1.2 2005/03/20 01:10:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,8 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_ns.c,v 1.1 2005/03/19 23:46:03 thorpej Exp $");
+__RCSID("$NetBSD: af_ns.c,v 1.2 2005/03/20 01:10:51 thorpej Exp $");
 #endif /* not lint */
+
+/*
+ * XNS support liberally adapted from code written at the University of
+ * Maryland principally by James O'Toole and Chris Torek.
+ */
 
 #include <sys/param.h> 
 #include <sys/ioctl.h> 
