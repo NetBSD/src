@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.13 1997/02/03 21:18:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,21 +133,29 @@ emitopt(nv)
 	char new_contents[BUFSIZ], buf[BUFSIZ];
 	char fname[BUFSIZ], *p, c;
 	const char *n;
-	int nlines;
+	int len, nlines;
 	FILE *fp;
 
 	/*
 	 * Generate the new contents of the file.
 	 */
 	p = new_contents;
-	if ((option = ht_lookup(opttab, nv->nv_str)) == NULL)
-		p += sprintf(p, "/* option `%s' not defined */\n",
+	if ((option = ht_lookup(opttab, nv->nv_str)) == NULL) {
+		(void)sprintf(p, "/* option `%s' not defined */\n",
 		    nv->nv_str);
-	else {
-		p += sprintf(p, "#define\t%s", option->nv_name);
-		if (option->nv_str != NULL)
-			p += sprintf(p, "\t%s", option->nv_str);
-		p += sprintf(p, "\n");
+		len = strlen(p);
+		p += len;
+	} else {
+		(void)sprintf(p, "#define\t%s", option->nv_name);
+		len = strlen(p);
+		p += len;
+		if (option->nv_str != NULL) {
+			(void)sprintf(p, "\t%s", option->nv_str);
+			len = strlen(p);
+			p += len;
+		}
+		*p++ = '\n';
+		*p = '\0';
 	}
 
 	/*
