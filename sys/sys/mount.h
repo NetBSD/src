@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.54 1997/03/10 03:27:22 mikel Exp $	*/
+/*	$NetBSD: mount.h,v 1.55 1997/03/12 12:09:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -154,7 +154,7 @@ struct mount {
 /*
  * Mask of flags that are visible to statfs()
  */
-#define	MNT_VISFLAGMASK	0x0000ffff
+#define	MNT_VISFLAGMASK	0x0400ffff
 
 /*
  * filesystem control flags.
