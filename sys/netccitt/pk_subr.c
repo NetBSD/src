@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.20 2000/07/08 17:45:53 sommerfeld Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.21 2001/06/19 07:37:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -70,7 +70,7 @@ int             pk_recvspace = 1024 * 2 + 8;
 
 struct pklcd_q  pklcd_q = {&pklcd_q, &pklcd_q};
 
-struct x25bitslice x25_bitslice[] = {
+const struct x25bitslice x25_bitslice[] = {
 	/* mask, shift value */
 	{0xf0, 0x4},
 	{0xf, 0x0},

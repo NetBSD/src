@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.13 2001/05/30 11:42:13 mrg Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.14 2001/06/19 07:37:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1985 Computing Centre, University of British Columbia.
@@ -208,7 +208,7 @@ struct x25bitslice {
 #define	X25SBITS(Arg, Index, Val)	(Arg) |= (((Val) << x25_bitslice[(Index)].bs_shift) & x25_bitslice[(Index)].bs_mask)
 #define	X25CSBITS(Arg, Index, Val)	(Arg) = (((Val) << x25_bitslice[(Index)].bs_shift) & x25_bitslice[(Index)].bs_mask)
 
-extern struct x25bitslice x25_bitslice[];
+extern const struct x25bitslice x25_bitslice[];
 
 
 #define ISOFIFTTYPE(i,t) ((i)->if_type == (t))

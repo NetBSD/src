@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.15 2001/04/13 23:30:29 thorpej Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.16 2001/06/19 07:37:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -52,7 +52,7 @@
 #include <netns/ns_pcb.h>
 #include <netns/ns_var.h>
 
-struct	ns_addr zerons_addr;
+static const struct	ns_addr zerons_addr;
 
 int
 ns_pcballoc(so, head)
@@ -337,7 +337,7 @@ ns_rtchange(nsp)
 
 struct nspcb *
 ns_pcblookup(faddr, lport, wildp)
-	struct ns_addr *faddr;
+	const struct ns_addr *faddr;
 	u_int16_t lport;
 	int wildp;
 {
