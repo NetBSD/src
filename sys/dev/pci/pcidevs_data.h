@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.358 2001/09/05 13:47:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.359 2001/09/10 15:09:49 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp 
+ *	NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp 
  */
 
 /*
@@ -5030,6 +5030,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "USB controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "GEM Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
