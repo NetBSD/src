@@ -1,6 +1,6 @@
-$NetBSD: README,v 1.1 2001/10/05 22:28:00 reinoud Exp $
+$NetBSD: README,v 1.2 2002/02/11 19:00:07 reinoud Exp $
 
-Welcome to NetBSD for the Acorn RiscPC/A7000/NC and Imago !
+Welcome to NetBSD for the Acorn RiscPC/A7000/NC !
 
 To get this distribution working run `settype' the file `Settype'
 to Obey and run this file. It will set all file types in this
@@ -11,5 +11,5 @@ To read more about installing the bootloader, read the FBInstall file.
 
 Enjoy your installation !
 
-19 Februari 2001
+11 Februari 2002
 Reinoud Zandijk
