@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.4 2001/07/04 16:35:20 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.4 2001/07/04 16:35:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -108,6 +108,7 @@ oak_match(struct device *parent, struct cfdata *cf, void *aux)
 	    podloader_callloader(pa, 0, 0) == PRID_OAK_SCSI1)
 		return 1;
 
+	return 0;
 }
 
 /*
