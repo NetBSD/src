@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.97 2003/04/20 12:54:05 bjh21 Exp $
+ * $Id: aic7xxx.c,v 1.98 2003/04/20 18:31:16 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -6523,9 +6523,9 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 {
 	int	printed;
 	u_int	printed_mask;
-	char    line[2028];
+	char    line[1024];
 
-	memset(line, '\0', 2048);
+	memset(line, 0, sizeof line);
 
 	if (cur_column != NULL && *cur_column >= wrap_point) {
 		printf("\n");
@@ -6533,13 +6533,14 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 	}
 	sprintf(line+strlen(line), "%s[0x%x]", name, value);
 	if (table == NULL) {
-		sprintf(line+strlen(line), " ");
-		printed = strlen(line);
-		printf(line);
-		*cur_column += printed;
+		printed = snprintf(line, sizeof line, " ");
+		printf("%s", line);
+		if (cur_column != NULL)
+			*cur_column += printed;
 		return (printed);
 	}
 	printed_mask = 0;
+	printed = 0;
 	while (printed_mask != 0xFF) {
 		int entry;
 
@@ -6549,8 +6550,8 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 			 || ((printed_mask & table[entry].mask)
 			  == table[entry].mask))
 				continue;
-
-			sprintf(line+strlen(line), "%s%s",
+			printed += snprintf(&line[printed],
+			    (sizeof line) - printed, "%s%s", 
 				printed_mask == 0 ? ":(" : "|",
 				table[entry].name);
 			printed_mask |= table[entry].mask;
@@ -6561,13 +6562,14 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 			break;
 	}
 	if (printed_mask != 0)
-		sprintf(line+strlen(line), ") ");
+		printed += snprintf(&line[printed],
+		    (sizeof line) - printed, ") ");
 	else
-		sprintf(line+strlen(line), " ");
-	printed = strlen(line);
+		printed += snprintf(&line[printed],
+		    (sizeof line) - printed, " ");
 	if (cur_column != NULL)
 		*cur_column += printed;
-	printf(line);
+	printf("%s", line);
 
 	return (printed);
 }
