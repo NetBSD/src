@@ -10,7 +10,7 @@ It has not been possible to reproduce the pmax installation Web page
 in fixed-font hardcopy format for the _VER release.  You must either visit
 the URL above, or request a rendered version (e.g., PostScript).
 
-Please check the NetbSD/pmax _VER installation instructions at
+Please check the NetBSD/pmax _VER installation instructions at
 
     http://www.netbsd.org/Ports/pmax/pmax-install.html
 
@@ -85,11 +85,11 @@ installation/diskimage/diskimage.gz
 is shipped compressed and is around 8020 kBytes; it uncompresses to
 exactly 32Mbytes.
 
-To install the diskimage onto disk rzX  on a NetBSD/pmax system, do:
+To install the diskimage onto disk rzX on a NetBSD/pmax system, do:
 	disklabel -W /dev/rrzXc
-	gunzip -c diskimage.gz | dd of=/dev/rrzX2c bs=10240
+	gunzip -c diskimage.gz | dd of=/dev/rrzXc bs=10240
 
-Most other NetBSD ports are similar, but use  rsdXc instead of rrzXc.
+Most other NetBSD ports are similar, but use rsdXc instead of rrzXc.
 
 On NetBSD/i386, the `raw disk partition' is the 'd' parttion, so do:
 	disklabel -W /dev/rsdXd
@@ -161,7 +161,7 @@ sysinst can create temporary files, temporary disklabels, etc.
 If you booted via NFS, the diskless root should already be writable.
 If you booted from disk, type
 
-	mount /dev/rzXY
+	mount /dev/rzXY /
 
 where X is the disk unit you booted from, and Y is either a or b,
 (e.g., use /dev/rz2a for drive 2 with diskimage in the 'a' partition,
@@ -172,7 +172,7 @@ Then, start sysinst
 
 	sysinst
 
-Then, choose   'install' or 'upgrade'.
+Then, choose 'install' or 'upgrade'.
 
 When you've finished the install/upgrade, be sure to edit /etc/rc.conf
 and set "rc_configured" to YES when you are done.  If you're doing an
