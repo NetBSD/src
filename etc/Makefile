@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.148 2000/05/03 11:37:16 itojun Exp $
+#	$NetBSD: Makefile,v 1.149 2000/05/06 07:52:19 sjg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -40,7 +40,7 @@
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
-# do this before bsd.own.mk so we get correct SRCDIR
+# do this before bsd.own.mk so we get correct KERNSRCDIR
 .include "../Makefile.inc"
 
 # For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
@@ -113,6 +113,11 @@ NAMEDB=	127 root.cache named.conf localhost loopback.v6
 PCS=	pcs750.bin
 
 all clean cleandir depend distclean etc includes install lint:
+
+.include <bsd.kernobj.mk>
+
+obj:
+	mkdir -p ${KERNOBJDIR}
 
 .ifndef DESTDIR
 distribution distrib-dirs release snapshot:
@@ -258,7 +263,6 @@ snap_pre:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
 .endfor
 
-.include <bsd.kernobj.mk>
 
 # This target builds the GENERIC kernel (which must exist for all
 # ports) and puts it in binary/sets/kern.tgz, and also builds any
@@ -276,7 +280,6 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 .if !target(snap_kern)
 snap_kern:
 .ifndef KERNELS_DONE
-	mkdir -p ${KERNOBJDIR}
 .for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
