@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.26 2001/07/24 15:39:30 assar Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.27 2001/11/12 23:08:57 lukem Exp $	*/
 
 /*
  * 
@@ -52,6 +52,9 @@ symlink
  * University.  Contributers include David Steere, James Kistler, and
  * M. Satyanarayanan.  
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.27 2001/11/12 23:08:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
