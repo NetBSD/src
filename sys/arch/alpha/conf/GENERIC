@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2000/11/26 17:44:07 ad Exp $
+# $NetBSD: GENERIC,v 1.174 2000/12/14 18:28:30 mycroft Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 maxusers 32
 
@@ -74,6 +74,9 @@ options 	COMPAT_14
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
+
+# Linux binary compatibility
+options 	COMPAT_LINUX
 
 # System V-like message queues
 options 	SYSVMSG
