@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2000/06/21 06:28:17 thorpej Exp $
+# $NetBSD: mi,v 1.39 2000/07/04 12:21:04 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -416,7 +416,7 @@
 ./usr/share/sendmail/cf/chimera.mc
 ./usr/share/sendmail/cf/ihack.net.mc
 ./usr/share/sendmail/cf/minbar.mc
-./usr/share/sendmail/cf/netbsd-proto-IPv6.mc
+./usr/share/sendmail/cf/netbsd-proto-IPv4only.mc
 ./usr/share/sendmail/cf/netbsd-proto.mc
 ./usr/share/sendmail/cf/sun-lamp.mc
 ./usr/share/sendmail/cf/zhadum.mc
