@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.8 2000/08/07 00:55:08 enami Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.9 2000/08/23 19:01:06 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.8 2000/08/07 00:55:08 enami Exp $";
+	"@(#) $Id: wiconfig.c,v 1.9 2000/08/23 19:01:06 jhawk Exp $";
 #endif
 
 struct wi_table {
@@ -457,6 +457,8 @@ static struct wi_table wi_table[] = {
 	    'P', "power management enabled" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t",
 	    'S', "max sleep duration" },
+	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
+	  'M', "microwave oven robustness enabled" },
 	{ 0, WI_NONE }
 };
 
@@ -638,7 +640,8 @@ usage()
 	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-f frequency] [-P 0|1] [-S max sleep duration]\n",
+	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
+	    ,
 	    __progname);
 	exit(1);
 }
@@ -670,7 +673,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:S:P:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:M:S:P:T:")) != -1) {
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*

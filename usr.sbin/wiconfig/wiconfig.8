@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.10 2000/07/27 20:24:19 onoe Exp $
+.\"	$NetBSD: wiconfig.8,v 1.11 2000/08/23 19:01:06 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	From: wicontrol.8,v 1.6 1999/05/22 16:12:47 wpaul Exp $
 .\"
-.Dd April 21, 1999
+.Dd August 18, 2000
 .Dt WICONFIG 8
 .Os
 .Sh NAME
@@ -83,6 +83,9 @@
 .Ek
 .Bk -words
 .Op Fl f Ar frequency
+.Ek
+.Bk -words
+.Op Fl M Ar 0|1
 .Ek
 .Bk -words
 .Op Fl P Ar 0|1
@@ -275,6 +278,10 @@ channel is 11. For NICs sold in Japan, the default channel is 14, and
 it is the only available channel for pre-11Mbps NICs.
 Note that two stations must be set to the same channel in order to
 communicate.
+.It Fl M Ar 0|1
+Enable or disable
+.Dq microwave oven robustness
+on a given interface. 
 .It Fl P Ar 0|1
 Enable or disable power management on a given interface. Enabling
 power management uses an alternating sleep/wake protocol to help
