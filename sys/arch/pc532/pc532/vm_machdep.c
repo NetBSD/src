@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1996/01/31 21:34:06 phil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 1996/02/05 02:11:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -314,6 +314,7 @@ extern vm_map_t phys_map;
  * All requests are (re)mapped into kernel VA space via the useriomap
  * (a name with only slightly more meaning than "kernelmap")
  */
+void
 vmapbuf(bp, len)
 	struct buf *bp;
 	vm_size_t len;
@@ -345,6 +346,7 @@ vmapbuf(bp, len)
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
+void
 vunmapbuf(bp, len)
 	struct buf *bp;
 	vm_size_t len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1995/12/09 04:37:54 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 1996/02/05 02:10:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -303,8 +303,11 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-vmapbuf(bp)
+/*ARGSUSED*/
+void
+vmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register int npf;
 	register caddr_t addr;
@@ -337,8 +340,10 @@ vmapbuf(bp)
 /*
  * Free the io map PTEs associated with this IO operation.
  */
-vunmapbuf(bp)
+/*ARGSUSED*/
+vunmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register caddr_t addr;
 	register int npf;
