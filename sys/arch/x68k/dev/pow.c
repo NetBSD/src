@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.4 1996/10/13 03:35:04 christos Exp $	*/
+/*	$NetBSD: pow.c,v 1.5 1997/02/03 21:41:59 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -37,7 +37,6 @@
  *  2. looking at the front or external power switch.
  */
 
-#include <string.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
