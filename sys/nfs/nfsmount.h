@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.22 2002/09/21 18:08:27 christos Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.23 2003/04/09 14:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -153,7 +153,7 @@ struct	nfsmount {
 	char	*nm_authstr;		/* Authenticator string */
 	char	*nm_verfstr;		/* and the verifier */
 	int	nm_verflen;
-	u_char	nm_verf[NFSX_V3WRITEVERF]; /* V3 write verifier */
+	u_char	nm_writeverf[NFSX_V3WRITEVERF]; /* V3 write verifier */
 	NFSKERBKEY_T nm_key;		/* and the session key */
 	int	nm_numuids;		/* Number of nfsuid mappings */
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */

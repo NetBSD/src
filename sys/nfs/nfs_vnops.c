@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.161 2003/04/02 15:14:25 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.162 2003/04/09 14:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.161 2003/04/02 15:14:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.162 2003/04/09 14:21:24 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1287,13 +1287,13 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 					commit == NFSV3WRITE_UNSTABLE)
 					committed = commit;
 				if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0){
-				    memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
+				    memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
 					NFSX_V3WRITEVERF);
 				    nmp->nm_iflag |= NFSMNT_HASWRITEVERF;
 				} else if (memcmp((caddr_t)tl,
-				    (caddr_t)nmp->nm_verf, NFSX_V3WRITEVERF)) {
+				    (caddr_t)nmp->nm_writeverf, NFSX_V3WRITEVERF)) {
 				    *must_commit = 1;
-				    memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
+				    memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
 					NFSX_V3WRITEVERF);
 				}
 			}
@@ -2788,9 +2788,9 @@ nfs_commit(vp, offset, cnt, procp)
 	nfsm_wcc_data(vp, wccflag, 0);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		if (memcmp((caddr_t)nmp->nm_verf, (caddr_t)tl,
+		if (memcmp((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
 			NFSX_V3WRITEVERF)) {
-			memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
+			memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
 				NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
 		}
