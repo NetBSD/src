@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 1998/06/28 07:32:32 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 1998/07/08 00:08:39 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -337,6 +337,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				return;
 		}
 
+		/* XXX Is this only for BUS_DMASYNC_PREWRITE ? */
+		cpu_drain_writebuf();
+
 		/* Set the starting address and maximum length */
 		vaddr = seg->_ds_vaddr + offset;
 		length = seg->ds_len - offset;
@@ -492,6 +495,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 */
 			if (flags & BUS_DMA_COHERENT) {
 				cpu_cache_purgeD_rng(va, NBPG);	
+				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep = ((*ptep) & (~PT_C | PT_B));
 				tlb_flush();
