@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -40,26 +40,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ipc.h	7.2 (Berkeley) 2/5/91
- *	$Id: ipc.h,v 1.6 1994/05/17 04:25:04 cgd Exp $
+ *	from: @(#)ipc.h	8.3 (Berkeley) 1/21/94
+ *	$Id: ipc.h,v 1.7 1994/05/21 04:13:59 cgd Exp $
  */
-
-#ifndef _SYS_IPC_H_
-#define _SYS_IPC_H_
 
 /*
  * SVID compatible ipc.h file
  */
+#ifndef _SYS_IPC_H_
+#define _SYS_IPC_H_
 
 typedef	long	key_t;	/* XXX should be in types.h */
 
 struct ipc_perm {
-	u_short	cuid;	/* creator user id */
-	u_short	cgid;	/* creator group id */
-	u_short	uid;	/* user id */
-	u_short	gid;	/* group id */
-	u_short	mode;	/* r/w permission */
-	u_short	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	ushort	cuid;	/* creator user id */
+	ushort	cgid;	/* creator group id */
+	ushort	uid;	/* user id */
+	ushort	gid;	/* group id */
+	ushort	mode;	/* r/w permission */
+	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
 	key_t	key;	/* user specified msg/sem/shm key */
 };
 
@@ -80,9 +79,9 @@ struct ipc_perm {
 
 #ifdef KERNEL
 /* Macros to convert between ipc ids and array indices or sequence ids */
-#define IPCID_TO_IX(id)		((id) & 0xffff)
-#define IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
-#define IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
+#define	IPCID_TO_IX(id)		((id) & 0xffff)
+#define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
+#define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
 #endif /* KERNEL */
 
 #endif /* !_SYS_IPC_H_ */
