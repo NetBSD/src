@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 2000/08/15 04:56:47 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 2000/08/19 12:13:47 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -620,7 +620,8 @@ static int  zscngetc __P((dev_t));
 static void zscnputc __P((dev_t, int));
 static void zscnpollc __P((dev_t, int));
 
-static int   cons_port = 1;
+static int  cons_port;
+extern int  prom_getconsole __P((void));
 
 struct consdev consdev_zs = {
 	zscnprobe,
@@ -640,6 +641,7 @@ void
 zscninit(cn)
 	struct consdev *cn;
 {
+	cons_port = prom_getconsole(); 
 	cn->cn_dev = makedev(zs_major, cons_port);
 	cn->cn_pri = CN_REMOTE;
 	zs_hwflags[0][cons_port] = ZS_HWFLAG_CONSOLE;
