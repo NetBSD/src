@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 2003/10/28 01:10:50 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.154 2003/10/28 17:37:25 hannken Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2003/10/28 01:10:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2003/10/28 17:37:25 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1693,10 +1693,10 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
 		DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
-			"addr %016llx size %016llx virt %llx paddr %016llx\n",
+			"addr %016llx size %016llx virt %llx\n",
 			(int)t->type, (int) flags, (unsigned long long)addr,
-			(unsigned long long)size, (unsigned long long)hp->_ptr,
-			(unsigned long long)pa));
+			(unsigned long long)size,
+			(unsigned long long)hp->_ptr));
 		return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
