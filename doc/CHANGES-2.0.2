@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.9 2005/03/16 16:48:19 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.10 2005/03/16 19:17:25 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -133,4 +133,10 @@ distrib/notes/sparc64/install			1.24-1.25
 	Add description for Solaris 10 dual boot installation from Ben Collver
 	in PR port-sparc64/29703.
 	[martin, ticket #1322]
+
+gnu/dist/binutils/bfd/ChangeLog			1.2 via patch
+gnu/dist/binutils/bfd/elf64-sparc.c		1.4
+
+	Fix bug in "binutils" which broke Firefox under NetBSD-sparc64.
+	[skrll, ticket #1101]
 
