@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2004/08/28 17:37:02 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.12 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2004/08/28 17:37:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2005/01/02 12:03:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ static int	rtc_gettime(todr_chip_handle_t, struct timeval *);
 static int	rtc_settime(todr_chip_handle_t, struct timeval *);
 static int	rtc_getcal(todr_chip_handle_t, int *);
 static int	rtc_setcal(todr_chip_handle_t, int);
-static u_int8_t	rtc_readreg(struct rtc_softc *, int);
-static u_int8_t	rtc_writereg(struct rtc_softc *, int, u_int8_t);
+static uint8_t	rtc_readreg(struct rtc_softc *, int);
+static uint8_t	rtc_writereg(struct rtc_softc *, int, uint8_t);
 
 
 static int
@@ -162,7 +162,7 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
 	int i, read_okay, year;
 	struct clock_ymdhms dt;
-	u_int8_t rtc_registers[NUM_RTC_REGS];
+	uint8_t rtc_registers[NUM_RTC_REGS];
 
 	/* read rtc registers */
 	read_okay = 0;
@@ -206,7 +206,7 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
 	int i, year;
 	struct clock_ymdhms dt;
-	u_int8_t rtc_registers[NUM_RTC_REGS];
+	uint8_t rtc_registers[NUM_RTC_REGS];
 
 	/* Note: we ignore `tv_usec' */
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
@@ -253,12 +253,12 @@ rtc_setcal(todr_chip_handle_t handle, int v)
 	return (EOPNOTSUPP);
 }
 
-static u_int8_t
+static uint8_t
 rtc_readreg(struct rtc_softc *sc, int reg)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int8_t data;
+	uint8_t data;
 	int s = splvm();
 
 	data = reg;
@@ -269,12 +269,12 @@ rtc_readreg(struct rtc_softc *sc, int reg)
 	return (data);
 }
 
-static u_int8_t
-rtc_writereg(struct rtc_softc *sc, int reg, u_int8_t data)
+static uint8_t
+rtc_writereg(struct rtc_softc *sc, int reg, uint8_t data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int8_t tmp;
+	uint8_t tmp;
 	int s = splvm();
 
 	tmp = (data << 4) | reg;
