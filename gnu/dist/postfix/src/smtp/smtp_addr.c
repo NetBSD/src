@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.8 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.9 2004/11/13 05:45:33 heas Exp $	*/
 
 /*++
 /* NAME
@@ -264,40 +264,41 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
 {
     char   *myname = "smtp_find_self";
     INET_ADDR_LIST *self;
+    INET_ADDR_LIST *proxy;
     DNS_RR *addr;
     int     i;
 
-    /*
-     * Find the first address that lists any address that this mail system is
-     * supposed to be listening on.
-     */
 #define INADDRP(x) ((struct in_addr *) (x))
 
     self = own_inet_addr_list();
+    proxy = proxy_inet_addr_list();
+
     for (addr = addr_list; addr; addr = addr->next) {
+
+	/*
+	 * Find out if this mail system is listening on this address.
+	 */
 	for (i = 0; i < self->used; i++)
 	    if (INADDRP(addr->data)->s_addr == self->addrs[i].s_addr) {
 		if (msg_verbose)
-		    msg_info("%s: found at pref %d", myname, addr->pref);
+		    msg_info("%s: found self at pref %d", myname, addr->pref);
+		return (addr);
+	    }
+
+	/*
+	 * Find out if this mail system has a proxy listening on this
+	 * address.
+	 */
+	for (i = 0; i < proxy->used; i++)
+	    if (INADDRP(addr->data)->s_addr == proxy->addrs[i].s_addr) {
+		if (msg_verbose)
+		    msg_info("%s: found proxy at pref %d", myname, addr->pref);
 		return (addr);
 	    }
     }
 
     /*
-     * Find out if this mail system has a proxy listening on this address.
-     */
-    self = proxy_inet_addr_list();
-    for (addr = addr_list; addr; addr = addr->next) {
-	for (i = 0; i < self->used; i++)
-	    if (INADDRP(addr->data)->s_addr == self->addrs[i].s_addr) {
-		if (msg_verbose)
-		    msg_info("%s: found at pref %d", myname, addr->pref);
-		return (addr);
-	    }
-    }
-
-    /*
-     * Didn't find myself.
+     * Didn't find myself, or my proxy.
      */
     if (msg_verbose)
 	msg_info("%s: not found", myname);
