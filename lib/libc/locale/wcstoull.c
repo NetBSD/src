@@ -1,8 +1,8 @@
-/*	$NetBSD: wcstoul.c,v 1.2 2003/03/11 09:21:24 tshiozak Exp $	*/
+/*	$NetBSD: wcstoull.c,v 1.1 2003/03/11 09:21:24 tshiozak Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstoul.c,v 1.2 2003/03/11 09:21:24 tshiozak Exp $");
+__RCSID("$NetBSD: wcstoull.c,v 1.1 2003/03/11 09:21:24 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -15,8 +15,8 @@ __RCSID("$NetBSD: wcstoul.c,v 1.2 2003/03/11 09:21:24 tshiozak Exp $");
 
 #include "__wctoint.h"
 
-#define	_FUNCNAME	wcstoul
-#define	__UINT		unsigned long
-#define	__UINT_MAX	ULONG_MAX
+#define	_FUNCNAME	wcstoull
+#define	__UINT		/* LONGLONG */ unsigned long long int
+#define	__UINT_MAX	ULLONG_MAX
 
 #include "_wcstoul.h"
