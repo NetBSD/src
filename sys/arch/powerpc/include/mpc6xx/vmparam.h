@@ -124,10 +124,14 @@
  * Fixed segments
  */
 #ifdef OLDPMAP
+#ifndef USER_SR
 #define	USER_SR			13
+#endif
 #define	KERNEL_SR		14
 #else
+#ifndef USER_SR
 #define	USER_SR			12
+#endif
 #define	KERNEL_SR		13
 #define	KERNEL2_SR		14
 #define	KERNEL2_SEGMENT		VSID_MAKE(KERNEL2_SR, KERNEL_VSIDBITS)
