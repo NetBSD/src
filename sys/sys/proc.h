@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.17 2002/06/24 22:12:19 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.18 2002/07/12 01:35:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -49,6 +49,7 @@
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <sys/lock.h>
+#include <sys/lwp.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
