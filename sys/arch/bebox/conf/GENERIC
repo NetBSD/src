@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 1998/11/25 20:30:45 hwr Exp $
+#	$NetBSD: GENERIC,v 1.17 1999/01/23 16:10:48 drochner Exp $
 #
 # First try for BEBOX config file
 #
@@ -95,14 +95,14 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 pckbc0	at isa?
 pckbd*	at pckbc?
-#psm*	at pckbc?
+#pms*	at pckbc?
 #vga0	at isa?
 vga*	at pci?
 pfb*	at pci?
 wsdisplay*	at vga? console ?
 wsdisplay*	at pfb? console ?
 wskbd*		at pckbd? console ?
-#wsmouse*	at psm?
+#wsmouse*	at pms?
 
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?

@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.22 1999/01/23 15:38:11 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.23 1999/01/23 16:10:48 drochner Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -227,9 +227,9 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "psm" or "psmi"
-#psm*		at pckbc?		# PS/2 mouse for wsmouse
-#psmi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+# "opms" should not be enabled together with "pms" or "pmsi"
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci?
@@ -237,8 +237,8 @@ pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd*	at pckbd? console ?
-#wsmouse*	at psm?
-#wsmouse*	at psmi?
+#wsmouse*	at pms?
+#wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?

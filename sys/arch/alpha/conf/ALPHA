@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.91 1999/01/10 22:51:46 nathanw Exp $
+# $NetBSD: ALPHA,v 1.92 1999/01/23 16:10:47 drochner Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -223,7 +223,7 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
@@ -321,7 +321,7 @@ wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	psm?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
