@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.23 2002/03/11 04:57:56 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.24 2002/04/22 07:59:48 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.170 2002/02/28 20:46:10 stevesk Exp $
+.\" $OpenBSD: sshd.8,v 1.177 2002/04/21 16:19:27 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -333,7 +333,7 @@ keywords are case-insensitive and arguments are case-sensitive):
 .It Cm AFSTokenPassing
 Specifies whether an AFS token may be forwarded to the server.
 Default is
-.Dq yes .
+.Dq no .
 .It Cm AllowGroups
 This keyword can be followed by a list of group name patterns, separated
 by spaces.
@@ -391,6 +391,7 @@ may be relevant for getting legal protection.
 The contents of the specified file are sent to the remote user before
 authentication is allowed.
 This option is only available for protocol version 2.
+By default, no banner is displayed.
 .Pp
 .It Cm ChallengeResponseAuthentication
 Specifies whether challenge response authentication is allowed.
@@ -832,7 +833,19 @@ will be disabled because
 .Xr login 1
 does not know how to handle
 .Xr xauth 1
-cookies.
+cookies.  If
+.Cm UsePrivilegeSeparation
+is specified, it will be disabled after authentication.
+.It Cm UsePrivilegeSeparation
+Specifies whether
+.Nm
+separated privileges by creating an unprivileged child process
+to deal with incoming network traffic.  After successful authentication,
+another process will be created that has the privilege of the authenticated
+user.  The goal of privilege separation is to prevent privilege
+escalation by containing any corruption within the unprivileged processes.
+The default is
+.Dq no .
 .It Cm VerifyReverseMapping
 Specifies whether
 .Nm
@@ -1015,6 +1028,10 @@ You don't want to type them in; instead, copy the
 or the
 .Pa id_rsa.pub
 file and edit it.
+.Pp
+.Nm
+enforces a minimum RSA key modulus size for protocol 1
+and protocol 2 keys of 768 bits.
 .Pp
 The options (if present) consist of comma-separated option
 specifications.
@@ -1300,13 +1317,17 @@ only by the user; it need not be readable by anyone else.
 .It Pa $HOME/.ssh/rc
 If this file exists, it is run with /bin/sh after reading the
 environment files but before starting the user's shell or command.
-If X11 spoofing is in use, this will receive the "proto cookie" pair in
-standard input (and
+It must not produce any output on stdout; stderr must be used
+instead.
+If X11 forwarding is in use, it will receive the "proto cookie" pair in
+its standard input (and
 .Ev DISPLAY
-in environment).
-This must call
+in its environment).
+The script must call
 .Xr xauth 1
-in that case.
+because
+.Nm
+will not run xauth automatically to add X11 cookies.
 .Pp
 The primary purpose of this file is to run any initialization routines
 which may be needed before the user's home directory becomes
@@ -1315,15 +1336,22 @@ accessible; AFS is a particular example of such an environment.
 This file will probably contain some initialization code followed by
 something similar to:
 .Bd -literal
-	if read proto cookie; then
-		echo add $DISPLAY $proto $cookie | xauth -q -
+if read proto cookie && [ -n "$DISPLAY" ]; then
+	if [ `echo $DISPLAY | cut -c1-10` = 'localhost:' ]; then
+		# X11UseLocalhost=yes
+		xauth add unix:`echo $DISPLAY |
+		    cut -c11-` $proto $cookie
+	else
+		# X11UseLocalhost=no
+		xauth add $DISPLAY $proto $cookie
 	fi
+fi
 .Ed
 .Pp
 If this file does not exist,
 .Pa /etc/ssh/sshrc
 is run, and if that
-does not exist either, xauth is used to store the cookie.
+does not exist either, xauth is used to add the cookie.
 .Pp
 This file should be writable only by the user, and need not be
 readable by anyone else.
@@ -1343,6 +1371,8 @@ removed many bugs, re-added newer features and
 created OpenSSH.
 Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
+Niels Provos and Markus Friedl contributed support
+for privilege separation.
 .Sh SEE ALSO
 .Xr scp 1 ,
 .Xr sftp 1 ,
@@ -1360,8 +1390,8 @@ protocol versions 1.5 and 2.0.
 .%A T. Rinne
 .%A S. Lehtinen
 .%T "SSH Protocol Architecture"
-.%N draft-ietf-secsh-architecture-09.txt
-.%D July 2001
+.%N draft-ietf-secsh-architecture-12.txt
+.%D January 2002
 .%O work in progress material
 .Re
 .Rs
@@ -1369,7 +1399,7 @@ protocol versions 1.5 and 2.0.
 .%A N. Provos
 .%A W. A. Simpson
 .%T "Diffie-Hellman Group Exchange for the SSH Transport Layer Protocol"
-.%N draft-ietf-secsh-dh-group-exchange-01.txt
-.%D April 2001
+.%N draft-ietf-secsh-dh-group-exchange-02.txt
+.%D January 2002
 .%O work in progress material
 .Re

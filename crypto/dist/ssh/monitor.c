@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1.1.1 2002/04/22 07:38:02 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.2 2002/04/22 07:59:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -627,7 +627,7 @@ mm_answer_skeyquery(int socket, Buffer *m)
 	char challenge[1024];
 	int res;
 
-	res = skeychallenge(&skey, authctxt->user, challenge);
+	res = skeychallenge(&skey, authctxt->user, challenge, sizeof(challenge));
 
 	buffer_clear(m);
 	buffer_put_int(m, res);

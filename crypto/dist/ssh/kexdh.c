@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdh.c,v 1.6 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: kexdh.c,v 1.7 2002/04/22 07:59:40 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdh.c,v 1.17 2002/02/28 15:46:33 markus Exp $");
+RCSID("$OpenBSD: kexdh.c,v 1.18 2002/03/18 17:50:31 provos Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
@@ -38,6 +38,7 @@ RCSID("$OpenBSD: kexdh.c,v 1.17 2002/02/28 15:46:33 markus Exp $");
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
+#include "monitor_wrap.h"
 
 static u_char *
 kex_dh_hash(
@@ -276,7 +277,7 @@ kexdh_server(Kex *kex)
 
 	/* sign H */
 	/* XXX hashlen depends on KEX */
-	key_sign(server_host_key, &signature, &slen, hash, 20);
+	PRIVSEP(key_sign(server_host_key, &signature, &slen, hash, 20));
 
 	/* destroy_sensitive_data(); */
 

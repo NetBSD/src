@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.7 2002/03/08 02:00:53 itojun Exp $	*/
-/*	$OpenBSD: misc.h,v 1.11 2002/01/24 21:09:25 stevesk Exp $	*/
+/*	$NetBSD: misc.h,v 1.8 2002/04/22 07:59:40 itojun Exp $	*/
+/*	$OpenBSD: misc.h,v 1.12 2002/03/19 10:49:35 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -27,8 +27,8 @@ struct passwd *pwcopy(struct passwd *);
 
 typedef struct arglist arglist;
 struct arglist {
-        char    **list;
-        int     num;
-        int     nalloc;
+	char    **list;
+	int     num;
+	int     nalloc;
 };
 void	 addargs(arglist *, char *, ...) __attribute__((format(printf, 2, 3)));

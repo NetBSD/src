@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.7 2002/03/08 02:00:56 itojun Exp $	*/
-/*	$OpenBSD: ssh.h,v 1.64 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: ssh.h,v 1.8 2002/04/22 07:59:47 itojun Exp $	*/
+/*	$OpenBSD: ssh.h,v 1.66 2002/03/29 19:18:33 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -85,5 +85,15 @@
 
 /* Used to identify ``EscapeChar none'' */
 #define SSH_ESCAPECHAR_NONE		-2
+
+/*
+ * unprivileged user when UsePrivilegeSeparation=yes;
+ * sshd will change its pivileges to this user and its
+ * primary group.
+ */
+#define SSH_PRIVSEP_USER		"nobody"
+
+/* Minimum modulus size (n) for RSA keys. */
+#define SSH_RSA_MINIMUM_MODULUS_SIZE	768
 
 #endif				/* SSH_H */

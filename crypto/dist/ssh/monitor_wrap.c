@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.1.1.1 2002/04/22 07:38:03 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.2 2002/04/22 07:59:41 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -70,9 +70,9 @@ mm_request_send(int socket, enum monitor_reqtype type, Buffer *m)
 
 	PUT_32BIT(buf, mlen + 1);
 	buf[4] = (u_char) type;         /* 1st byte of payload is mesg-type */
-	if (atomicio(write, socket, buf, sizeof(buf)) != sizeof(buf))
+	if (atomic_write(socket, buf, sizeof(buf)) != sizeof(buf))
 		fatal("%s: write", __FUNCTION__);
-	if (atomicio(write, socket, buffer_ptr(m), mlen) != mlen)
+	if (atomic_write(socket, buffer_ptr(m), mlen) != mlen)
 		fatal("%s: write", __FUNCTION__);
 }
 
@@ -85,7 +85,7 @@ mm_request_receive(int socket, Buffer *m)
 
 	debug3("%s entering", __FUNCTION__);
 
-	res = atomicio(read, socket, buf, sizeof(buf));
+	res = atomic_read(socket, buf, sizeof(buf));
 	if (res != sizeof(buf)) {
 		if (res == 0)
 			fatal_cleanup();
@@ -96,7 +96,7 @@ mm_request_receive(int socket, Buffer *m)
 		fatal("%s: read: bad msg_len %d", __FUNCTION__, msg_len);
 	buffer_clear(m);
 	buffer_append_space(m, msg_len);
-	res = atomicio(read, socket, buffer_ptr(m), msg_len);
+	res = atomic_read(socket, buffer_ptr(m), msg_len);
 	if (res != msg_len)
 		fatal("%s: read: %ld != msg_len", __FUNCTION__, (long)res);
 }

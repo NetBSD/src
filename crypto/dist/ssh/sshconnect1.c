@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.18 2002/03/08 02:00:56 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.19 2002/04/22 07:59:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.48 2002/02/11 16:15:46 markus Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.50 2002/04/21 16:25:06 stevesk Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -460,6 +460,8 @@ try_krb4_authentication(void)
 
 		/* Get server's response. */
 		reply = packet_get_string((u_int *) &auth.length);
+		if (auth.length >= MAX_KTXT_LEN)
+			fatal("Kerberos v4: Malformed response from server");
 		memcpy(auth.dat, reply, auth.length);
 		xfree(reply);
 
@@ -844,7 +846,7 @@ try_challenge_response_authentication(void)
 			error("Permission denied, please try again.");
 		if (options.cipher == SSH_CIPHER_NONE)
 			log("WARNING: Encryption is disabled! "
-			    "Reponse will be transmitted in clear text.");
+			    "Response will be transmitted in clear text.");
 		response = read_passphrase(prompt, 0);
 		if (strcmp(response, "") == 0) {
 			xfree(response);

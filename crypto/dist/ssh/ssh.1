@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.18 2002/03/11 04:57:56 itojun Exp $
+.\"	$NetBSD: ssh.1,v 1.19 2002/04/22 07:59:46 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.148 2002/02/18 17:55:20 markus Exp $
+.\" $OpenBSD: ssh.1,v 1.150 2002/03/26 11:34:49 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -298,6 +298,12 @@ Background ssh at logout when waiting for forwarded connection / X11 sessions
 to terminate
 .It Cm ~?
 Display a list of escape characters
+.It Cm ~C
+Open command line (only useful for adding port forwardings using the
+.Fl L
+and
+.Fl R
+options)
 .It Cm ~R
 Request rekeying of the connection (only useful for SSH protocol version 2
 and if the peer supports it)
@@ -1538,7 +1544,7 @@ protocol versions 1.5 and 2.0.
 .%A T. Rinne
 .%A S. Lehtinen
 .%T "SSH Protocol Architecture"
-.%N draft-ietf-secsh-architecture-09.txt
-.%D July 2001
+.%N draft-ietf-secsh-architecture-12.txt
+.%D January 2002
 .%O work in progress material
 .Re

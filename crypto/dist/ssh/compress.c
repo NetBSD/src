@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.6 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: compress.c,v 1.7 2002/04/22 07:59:39 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,17 +13,19 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compress.c,v 1.17 2001/12/29 21:56:01 stevesk Exp $");
+RCSID("$OpenBSD: compress.c,v 1.19 2002/03/18 17:31:54 provos Exp $");
 
 #include "log.h"
 #include "buffer.h"
 #include "zlib.h"
 #include "compress.h"
 
-static z_stream incoming_stream;
-static z_stream outgoing_stream;
+z_stream incoming_stream;
+z_stream outgoing_stream;
 static int compress_init_send_called = 0;
 static int compress_init_recv_called = 0;
+static int inflate_failed = 0;
+static int deflate_failed = 0;
 
 /*
  * Initializes compression; level is compression level from 1 to 9
@@ -63,9 +65,9 @@ buffer_compress_uninit(void)
 	    incoming_stream.total_out, incoming_stream.total_in,
 	    incoming_stream.total_out == 0 ? 0.0 :
 	    (double) incoming_stream.total_in / incoming_stream.total_out);
-	if (compress_init_recv_called == 1)
+	if (compress_init_recv_called == 1 && inflate_failed == 0)
 		inflateEnd(&incoming_stream);
-	if (compress_init_send_called == 1)
+	if (compress_init_send_called == 1 && deflate_failed == 0)
 		deflateEnd(&outgoing_stream);
 }
 
@@ -107,6 +109,7 @@ buffer_compress(Buffer * input_buffer, Buffer * output_buffer)
 			    sizeof(buf) - outgoing_stream.avail_out);
 			break;
 		default:
+			deflate_failed = 1;
 			fatal("buffer_compress: deflate returned %d", status);
 			/* NOTREACHED */
 		}
@@ -150,6 +153,7 @@ buffer_uncompress(Buffer * input_buffer, Buffer * output_buffer)
 			 */
 			return;
 		default:
+			inflate_failed = 1;
 			fatal("buffer_uncompress: inflate returned %d", status);
 			/* NOTREACHED */
 		}

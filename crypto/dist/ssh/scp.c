@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.17 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: scp.c,v 1.18 2002/04/22 07:59:42 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,7 +76,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.86 2001/12/05 03:56:39 itojun Exp $");
+RCSID("$OpenBSD: scp.c,v 1.88 2002/04/06 18:24:09 mouring Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -758,7 +758,7 @@ sink(argc, argv)
 				cursize = need;
 			}
 			(void) snprintf(namebuf, need, "%s%s%s", targ,
-			    *targ ? "/" : "", cp);
+			    strcmp(targ, "/") ? "/" : "", cp);
 			np = namebuf;
 		} else
 			np = targ;
@@ -1075,7 +1075,7 @@ progressmeter(int flag)
 	off_t cursize, abbrevsize;
 	double elapsed;
 	int ratio, barlength, i, remaining;
-	char buf[256];
+	char buf[512];
 
 	if (flag == -1) {
 		(void) gettimeofday(&start, (struct timezone *) 0);
@@ -1101,10 +1101,13 @@ progressmeter(int flag)
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		    "|%.*s%*s|", i,
-		    "***************************************"
-		    "***************************************"
-		    "***************************************"
-		    "***************************************",
+		    "*******************************************************"
+		    "*******************************************************"
+		    "*******************************************************"
+		    "*******************************************************"
+		    "*******************************************************"
+		    "*******************************************************"
+		    "*******************************************************",
 		    barlength - i, "");
 	}
 	i = 0;
