@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.35 2004/02/29 20:40:29 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.36 2005/02/09 14:21:37 xtraeme Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.35 2004/02/29 20:40:29 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.36 2005/02/09 14:21:37 xtraeme Exp $");
 #endif
 
 
@@ -69,34 +69,31 @@ __RCSID("$NetBSD: raidctl.c,v 1.35 2004/02/29 20:40:29 oster Exp $");
 #include <dev/raidframe/raidframeio.h>
 #include "rf_configure.h"
 
-int     main __P((int, char *[]));
-void	do_ioctl __P((int, u_long, void *, const char *));
-static  void rf_configure __P((int, char*, int));
-static  const char *device_status __P((RF_DiskStatus_t));
-static  void rf_get_device_status __P((int));
-static	void rf_output_configuration __P((int, const char *));
-static  void get_component_number __P((int, char *, int *, int *));
-static  void rf_fail_disk __P((int, char *, int));
-static  void usage __P((void));
-static  void get_component_label __P((int, char *));
-static  void set_component_label __P((int, char *));
-static  void init_component_labels __P((int, int));
-static  void set_autoconfig __P((int, int, char *));
-static  void add_hot_spare __P((int, char *));
-static  void remove_hot_spare __P((int, char *));
-static  void rebuild_in_place __P((int, char *));
-static  void check_status __P((int,int));
-static  void check_parity __P((int,int, char *));
-static  void do_meter __P((int, u_long));
-static  void get_bar __P((char *, double, int));
-static  void get_time_string __P((char *, int));
+void	do_ioctl(int, u_long, void *, const char *);
+static  void rf_configure(int, char*, int);
+static  const char *device_status(RF_DiskStatus_t);
+static  void rf_get_device_status(int);
+static	void rf_output_configuration(int, const char *);
+static  void get_component_number(int, char *, int *, int *);
+static  void rf_fail_disk(int, char *, int);
+static  void usage(void);
+static  void get_component_label(int, char *);
+static  void set_component_label(int, char *);
+static  void init_component_labels(int, int);
+static  void set_autoconfig(int, int, char *);
+static  void add_hot_spare(int, char *);
+static  void remove_hot_spare(int, char *);
+static  void rebuild_in_place(int, char *);
+static  void check_status(int,int);
+static  void check_parity(int,int, char *);
+static  void do_meter(int, u_long);
+static  void get_bar(char *, double, int);
+static  void get_time_string(char *, int);
 
 int verbose;
 
 int
-main(argc,argv)
-	int argc;
-	char *argv[];
+main(int argc,char *argv[])
 {
 	int ch;
 	int num_options;
@@ -335,11 +332,7 @@ main(argc,argv)
 }
 
 void
-do_ioctl(fd, command, arg, ioctl_name)
-	int fd;
-	unsigned long command;
-	void *arg;
-	const char *ioctl_name;
+do_ioctl(int fd, unsigned long command, void *arg, const char *ioctl_name)
 {
 	if (ioctl(fd, command, arg) < 0) {
 		warn("ioctl (%s) failed", ioctl_name);
@@ -349,10 +342,7 @@ do_ioctl(fd, command, arg, ioctl_name)
 
 
 static void
-rf_configure(fd,config_file,force)
-	int fd;
-	char *config_file;
-	int force;
+rf_configure(int fd, char *config_file, int force)
 {
 	void *generic;
 	RF_Config_t cfg;
@@ -376,8 +366,7 @@ rf_configure(fd,config_file,force)
 }
 
 static const char *
-device_status(status)
-	RF_DiskStatus_t status;
+device_status(RF_DiskStatus_t status)
 {
 
 	switch (status) {
@@ -409,8 +398,7 @@ device_status(status)
 }
 
 static void
-rf_get_device_status(fd)
-	int fd;
+rf_get_device_status(int fd)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -473,9 +461,7 @@ rf_get_device_status(fd)
 }
 
 static void
-rf_output_configuration(fd, name)
-	int fd;
-	const char *name;
+rf_output_configuration(int fd, const char *name)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -541,11 +527,8 @@ rf_output_configuration(fd, name)
 }
 
 static void
-get_component_number(fd, component_name, component_number, num_columns)
-	int fd;
-	char *component_name;
-	int *component_number;
-	int *num_columns;
+get_component_number(int fd, char *component_name, int *component_number,
+		     int *num_columns)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -592,10 +575,7 @@ get_component_number(fd, component_name, component_number, num_columns)
 }
 
 static void
-rf_fail_disk(fd, component_to_fail, do_recon)
-	int fd;
-	char *component_to_fail;
-	int do_recon;
+rf_fail_disk(int fd, char *component_to_fail, int do_recon)
 {
 	struct rf_recon_req recon_request;
 	int component_num;
@@ -620,9 +600,7 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 }
 
 static void
-get_component_label(fd, component)
-	int fd;
-	char *component;
+get_component_label(int fd, char *component)
 {
 	RF_ComponentLabel_t component_label;
 	void *label_ptr;
@@ -665,9 +643,7 @@ get_component_label(fd, component)
 }
 
 static void
-set_component_label(fd, component)
-	int fd;
-	char *component;
+set_component_label(int fd, char *component)
 {
 	RF_ComponentLabel_t component_label;
 	int component_num;
@@ -693,9 +669,7 @@ set_component_label(fd, component)
 
 
 static void
-init_component_labels(fd, serial_number)
-	int fd;
-	int serial_number;
+init_component_labels(int fd, int serial_number)
 {
 	RF_ComponentLabel_t component_label;
 
@@ -714,10 +688,7 @@ init_component_labels(fd, serial_number)
 }
 
 static void
-set_autoconfig(fd, raidID, autoconf)
-	int fd;
-	int raidID;
-	char *autoconf;
+set_autoconfig(int fd, int raidID, char *autoconf)
 {
 	int auto_config;
 	int root_config;
@@ -750,9 +721,7 @@ set_autoconfig(fd, raidID, autoconf)
 }
 
 static void
-add_hot_spare(fd, component)
-	int fd;
-	char *component;
+add_hot_spare(int fd, char *component)
 {
 	RF_SingleComponent_t hot_spare;
 
@@ -766,9 +735,7 @@ add_hot_spare(fd, component)
 }
 
 static void
-remove_hot_spare(fd, component)
-	int fd;
-	char *component;
+remove_hot_spare(int fd, char *component)
 {
 	RF_SingleComponent_t hot_spare;
 	int component_num;
@@ -787,9 +754,7 @@ remove_hot_spare(fd, component)
 }
 
 static void
-rebuild_in_place( fd, component )
-	int fd;
-	char *component;
+rebuild_in_place(int fd, char *component)
 {
 	RF_SingleComponent_t comp;
 	int component_num;
@@ -813,10 +778,7 @@ rebuild_in_place( fd, component )
 }
 
 static void
-check_parity( fd, do_rewrite, dev_name )
-	int fd;
-	int do_rewrite;
-	char *dev_name;
+check_parity(int fd, int do_rewrite, char *dev_name)
 {
 	int is_clean;
 	int percent_done;
@@ -864,9 +826,7 @@ check_parity( fd, do_rewrite, dev_name )
 
 
 static void
-check_status( fd, meter )
-	int fd;
-	int meter;
+check_status(int fd, int meter)
 {
 	int recon_percent_done = 0;
 	int parity_percent_done = 0;
@@ -901,9 +861,7 @@ check_status( fd, meter )
 const char *tbits = "|/-\\";
 
 static void
-do_meter(fd, option)
-	int fd;
-	u_long option;
+do_meter(int fd, u_long option)
 {
 	int percent_done;
 	int last_value;
@@ -1034,10 +992,7 @@ const char stars[] = "****************************************"
                      "                                        ";
 
 static void
-get_bar(string,percent,max_strlen)
-	char *string;
-	double percent;
-	int max_strlen;
+get_bar(char *string, double percent, int max_strlen)
 {
 	int offset;
 
@@ -1052,9 +1007,7 @@ get_bar(string,percent,max_strlen)
 }
 
 static void
-get_time_string(string,simple_time)
-	char *string;
-	int simple_time;
+get_time_string(char *string, int simple_time)
 {
 	int minutes, seconds, hours;
 	char hours_buffer[5];
@@ -1085,7 +1038,7 @@ get_time_string(string,simple_time)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *progname = getprogname();
 
