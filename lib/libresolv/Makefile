@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.5 1997/09/20 04:23:18 mikel Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
-#	$Id: Makefile,v 1.4 1997/07/23 03:14:11 mrg Exp $
 
 LIB=resolv
 CFLAGS+=-DDEBUG -DLIBC_SCCS -I${.CURDIR}/../libc/include
