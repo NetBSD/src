@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.109 2002/08/23 16:29:37 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.110 2002/08/23 16:31:09 bouyer Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -35,7 +35,7 @@ CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
 .It
 Contaq Microsystems/Cypress CY82C693 IDE Controller
 .It
-HighPoint HPT366 and HPT370
+HighPoint HPT366, HPT370, HPT372 and HPT374.
 .It
 IBM ESDI Fixed Disk Controllers [m]
 .It
