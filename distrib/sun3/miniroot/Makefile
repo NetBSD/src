@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/04/18 15:36:57 bouyer Exp $
+#	$NetBSD: Makefile,v 1.25 2002/04/26 15:05:18 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -57,8 +57,7 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	@echo ""
 	-umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	gzip -9 -c ${IMAGE} > ${IMAGE}.tmp
-	-mv -f ${IMAGE}.tmp ${IMAGE}.gz
+	gzip -9f ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
