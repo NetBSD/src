@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.11 1995/01/16 02:19:09 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.12 1995/01/17 04:49:27 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -186,24 +186,18 @@ bcopy(from, to, len)
 	}
 }
 
-static int tw_on;
-static int tw_pos;
-static char tw_chars[] = "|/-\\";
+static int tw_on, tw_pos;
 
 reset_twiddle()
 {
 	if (tw_on)
 		putchar('\b');
 	tw_on = 0;
-	tw_pos = 0;
 }
 
 twiddle()
 {
-	if (tw_on)
-		putchar('\b');
-	else
-		tw_on = 1;
-	putchar(tw_chars[tw_pos++]);
-	tw_pos %= (sizeof(tw_chars) - 1);
+	reset_twiddle();
+	tw_on = 1;
+	putchar("|/-\\"[tw_pos++ & 3]);
 }
