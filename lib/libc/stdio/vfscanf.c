@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.30 2001/12/07 11:47:45 yamt Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.31 2002/05/24 22:17:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.30 2001/12/07 11:47:45 yamt Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.31 2002/05/24 22:17:20 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,6 +65,15 @@ __RCSID("$NetBSD: vfscanf.c,v 1.30 2001/12/07 11:47:45 yamt Exp $");
 
 #ifdef FLOATING_POINT
 #include "floatio.h"
+#endif
+
+/*
+ * Provide an external name for vfscanf.  Note, we don't use the normal
+ * namespace.h method; stdio routines explicitly use the internal name
+ * __svfscanf.
+ */
+#ifdef __weak_alias
+__weak_alias(vfscanf,__svfscanf)
 #endif
 
 #define	BUF		513	/* Maximum length of numeric string. */
