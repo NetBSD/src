@@ -78,6 +78,11 @@ fbioctl(dev, cmd, data, flag, p)
 	fbtty = fi->fi_glasstty;
 
 	switch (cmd) {
+
+	/*
+	 * Ultrix-compatible, pm/qvss-style ioctls(). Mostly
+	 * so that X consortium Xservers work.
+	 */
 	case QIOCGINFO:
 		return (fbmmap_fb(fi, dev, data, p));
 
@@ -156,6 +161,34 @@ fbioctl(dev, cmd, data, flag, p)
 	case QIOVIDEOOFF:
 		(*fi->fi_driver->fbd_blank) (fi);
 		break;
+
+
+	/*
+	 * Sun-style ioctls, mostly so that screenblank(1) and other
+	 * ``native'' NetBSD applications work.
+	 */
+	case FBIOGTYPE:
+		*(struct fbtype *)data = fi->fi_type;
+		break;
+
+	case FBIOGETCMAP:
+		return ((*(fi->fi_driver -> fbd_getcmap))
+			(fi, data, 0, fi->fi_type.fb_cmsize));
+
+	case FBIOPUTCMAP:
+		return ((*(fi->fi_driver -> fbd_putcmap))
+			(fi, data, 0, fi->fi_type.fb_cmsize));
+		break;
+
+	case FBIOGVIDEO:
+		*(int *)data = fi->fi_blanked;
+		break;
+
+	case FBIOSVIDEO:
+		if (*(int *)data)
+			return (*(fi->fi_driver->fbd_blank)) (fi);
+		else
+			return (*(fi->fi_driver->fbd_unblank)) (fi);
 
 	default:
 		printf("fb%d: Unknown ioctl command %x\n", minor(dev), cmd);
