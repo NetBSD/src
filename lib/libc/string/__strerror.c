@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.5 1994/12/12 22:42:20 jtc Exp $";
+static char *rcsid = "$Id: __strerror.c,v 1.6 1995/04/24 16:37:31 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -71,7 +71,8 @@ __strerror(num, buf)
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr) {
 #ifdef NLS
-		strcpy(buf, catgets(catd, 1, errnum, sys_errlist[errnum])); 
+		strcpy(buf, catgets(catd, 1, errnum,
+		    (char *)sys_errlist[errnum])); 
 #else
 		return(sys_errlist[errnum]);
 #endif
