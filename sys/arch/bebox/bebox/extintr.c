@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4 1997/12/11 09:04:23 sakamoto Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5 1998/01/12 04:57:10 sakamoto Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -55,6 +55,7 @@ int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
+void bebox_intr_mask __P((int));
 void intr_calculatemasks();
 
 int fakeintr(arg)
@@ -67,10 +68,13 @@ extern vm_offset_t bebox_mb_reg;
 
 #define	BEBOX_ISA_INTR		16
 
-#define	BEBOX_SET_MASK		0x80000000
 #define	BEBOX_INTR_MASK		0x0fffffdc
-
+#define	BEBOX_SET_MASK		0x80000000
 #define	BEBOX_INTR(x)		(0x80000000 >> x)
+
+/*
+ * BeBox interrupt list
+ */
 #define	BEBOX_INTR_SERIAL3	BEBOX_INTR(6)
 #define	BEBOX_INTR_SERIAL4	BEBOX_INTR(7)
 #define	BEBOX_INTR_MIDI1	BEBOX_INTR(8)
@@ -85,25 +89,22 @@ extern vm_offset_t bebox_mb_reg;
 #define	BEBOX_INTR_A2D		BEBOX_INTR(28)
 #define	BEBOX_INTR_GEEKPORT	BEBOX_INTR(29)
 
-static struct {
-	int intr;
-	int irq;
-} irq_map[] = {
-	{ BEBOX_INTR_SERIAL3, 	16 },
-	{ BEBOX_INTR_SERIAL4, 	17 },
-	{ BEBOX_INTR_MIDI1, 	18 },
-	{ BEBOX_INTR_MIDI2, 	19 },
-	{ BEBOX_INTR_SCSI, 	20 },
-	{ BEBOX_INTR_PCI1, 	21 },
-	{ BEBOX_INTR_PCI2, 	22 },
-	{ BEBOX_INTR_PCI3, 	23 },
-	{ BEBOX_INTR_SOUND, 	24 },
-	{ BEBOX_INTR_8259, 	25 },
-	{ BEBOX_INTR_IRDA, 	26 },
-	{ BEBOX_INTR_A2D, 	27 },
-	{ BEBOX_INTR_GEEKPORT, 	28 },
+static int bebox_intr_map[] = {
+	BEBOX_INTR_SERIAL3,
+	BEBOX_INTR_SERIAL4,
+	BEBOX_INTR_MIDI1,
+	BEBOX_INTR_MIDI2,
+	BEBOX_INTR_SCSI,
+	BEBOX_INTR_PCI1,
+	BEBOX_INTR_PCI2,
+	BEBOX_INTR_PCI3,
+	BEBOX_INTR_SOUND,
+	BEBOX_INTR_8259,
+	BEBOX_INTR_IRDA,
+	BEBOX_INTR_A2D,
+	BEBOX_INTR_GEEKPORT,
 };
-static int intr_map_len = sizeof (irq_map) / sizeof (int);
+#define	BEBOX_INTR_SIZE	(sizeof (bebox_intr_map) / sizeof (bebox_intr_map[0]))
 
 /*
  * external interrupt handler
@@ -127,9 +128,9 @@ ext_intr()
 	if (int_state & BEBOX_INTR_8259) {
 		irq = isa_intr();
 	} else if (int_state &= cpu0_int_mask) {
-		for (i = 0; i < intr_map_len; i++)
-			if (int_state & irq_map[i].intr) {
-				irq = irq_map[i].irq;
+		for (i = 0; i < BEBOX_INTR_SIZE; i++)
+			if (int_state & bebox_intr_map[i]) {
+				irq = BEBOX_ISA_INTR + i;
 				break;
 			}
 	} else {
@@ -141,11 +142,10 @@ ext_intr()
 	r_imen = 1 << irq;
 	imen |= r_imen;
 
-	if (irq < BEBOX_ISA_INTR) {
+	if (irq < BEBOX_ISA_INTR)
 		isa_intr_mask(imen);
-	} else {
-		; /* XXX BEBOX INTERRUPT MASK */
-	}
+	else
+		bebox_intr_mask(imen);
 
 	if((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
@@ -161,7 +161,7 @@ ext_intr()
 			isa_intr_clr(irq);
 			isa_intr_mask(imen);
 		} else {
-			; /* XXX BEBOX INTERRUPT MASK */
+			bebox_intr_mask(imen);
 		}
 
 		intrcnt[irq]++;
@@ -170,31 +170,20 @@ out:
 	splx(pcpl);	/* Process pendings. */
 }
 
-#if 0
 void
-ext_intr_mask(irq, set)
-	int irq;
-	int set;
+bebox_intr_mask(imen)
+	int imen;
 {
-	int i, j;
+	int i;
+	int mask = 0;
 
-	if (irq >= 16)
-		for (i = 0; i < intr_map_len; i++)
-			if (irq_map[i].irq == irq) {
-				*(volatile unsigned int *)(bebox_mb_reg +
-				    CPU0_INT_MASK)
-					= (set ? BEBOX_SET_MASK : 0) |
-						irq_map[i].intr;
-				ext_default_mask |= irq_map[i].intr;
-				break;
-			}
+	for (i = 0; i < BEBOX_INTR_SIZE; i++)
+		if (!(imen & (1 << i + BEBOX_ISA_INTR)))
+			mask |= bebox_intr_map[i];
 
-	for (i = 0; i < NIPL; i++)
-		for (j = 0; j < intr_map_len; j++)
-			if (imask[i] & (1 << irq_map[j].irq))
-				ext_imask[i] |= irq_map[j].intr;
+	*(unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) = BEBOX_INTR_MASK;
+	*(unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) = BEBOX_SET_MASK | mask;
 }
-#endif
 
 /*
  * Register an interrupt handler.
@@ -350,6 +339,7 @@ intr_calculatemasks()
 	 * network, and disk drivers, clock > imp.
 	 */
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+	imask[IPL_SERIAL] |= imask[IPL_CLOCK];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
@@ -374,7 +364,7 @@ intr_calculatemasks()
 		imen = ~irqs;
 
 		isa_intr_mask(imen);
-					/* XXX BEBOX INTERRUPT MASK */
+		bebox_intr_mask(imen);
 	}
 }
 
@@ -418,21 +408,29 @@ do_pending_int()
 	if (irq < BEBOX_ISA_INTR) {
 		isa_intr_mask(imen);
 	} else {
-		; /* XXX BEBOX INTERRUPT MASK */
+		bebox_intr_mask(imen);
 	}
 
-	if(ipending & SINT_CLOCK) {
+	if (ipending & SINT_CLOCK) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 		intrcnt[CNT_SINT_CLOCK]++;
 	}
-	if(ipending & SINT_NET) {
+	if (ipending & SINT_NET) {
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
 		ipending &= ~SINT_NET;
 		softnet(pisr);
 		intrcnt[CNT_SINT_NET]++;
+	}
+	if (ipending & SINT_SERIAL) {
+		ipending &= ~SINT_SERIAL;
+#include "com.h"
+#if NCOM > 0
+		comsoft();
+#endif
+		intrcnt[CNT_SINT_SERIAL]++;
 	}
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
