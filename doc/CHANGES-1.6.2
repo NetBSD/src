@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.74 2003/06/29 00:08:46 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.75 2003/06/30 02:14:17 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -880,3 +880,8 @@ etc/rc.subr					1.57
 	executing it, be sure to check under ${name_chroot} (if set).
 	Fix from Ed Ravin in [bin/18523]
 	[lukem, ticket #1346]
+
+usr.bin/mkdep/mkdep.c				1.16
+
+	catch SIGPIPE, too.
+	[msaitoh, ticket #1339]
