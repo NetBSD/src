@@ -68,7 +68,7 @@
 #ifdef  NETBSD_NATIVE
 #define LIBGCC_SPEC "%{!symbolic:%{!shared:%{!p:%{!pg:-lgcc}}}%{shared:-lgcc_pic}%{p:-lgcc_p}%{pg:-lgcc_p}}"
 #else
-#define LIBGCC_SPEC "%{!shared:%{!symbolic:-lgcc}}"
+#define LIBGCC_SPEC "%{!symbolic:%{!shared:-lgcc}%{shared:-lgcc_pic}}"
 #endif
 
 /* #ifdef NETBSD_AOUT */
