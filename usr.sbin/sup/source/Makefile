@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/09/05 15:02:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/08/02 05:36:05 erh Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -50,11 +50,11 @@ SITE			= NETBSD
 #SITE			= CMUCS
 
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
-SOLARIS_DEFINES		= -UMACH -DVAR_TMP -DHAS_POSIX_DIR -DNEED_VSNPRINTF
+SOLARIS_DEFINES		= -UMACH -DVAR_TMP -DHAS_POSIX_DIR -DNEED_VSNPRINTF -DNEED_READ_LINE
 AFS_DEFINES		= -DAFS -I/usr/afsws/include
-OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF -DVAR_TMP
-SUNOS_DEFINES		= -UMACH -D_BSD -DNEED_VSNPRINTF -DVAR_TMP -DHAS_POSIX_DIR -DHAS_DAEMON -DNEED_DAEMON
-CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
+OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF -DVAR_TMP -DNEED_READ_LINE
+SUNOS_DEFINES		= -UMACH -D_BSD -DNEED_VSNPRINTF -DVAR_TMP -DHAS_POSIX_DIR -DHAS_DAEMON -DNEED_DAEMON -DNEED_READ_LINE
+CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF -DNEED_READ_LINE
 NON_MACH_DEFINES	= -UMACH
 
 
@@ -66,11 +66,11 @@ NETBSD_MAN8		= /usr/local/man/man8
 CFLAGS			= ${DEFS} -O -I.
 
 SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
-			  supcmisc.o supcmeat.o read_line.o
+			  supcmisc.o supcmeat.o
 SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
 EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o \
-			  nxtarg.o path.o quit.o run.o salloc.o skipto.o \
-			  vprintf.o
+			  nxtarg.o path.o quit.o read_line.o run.o salloc.o \
+			  skipto.o vprintf.o
 
 
 PROGRAMS		= sup supscan supfilesrv
