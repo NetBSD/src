@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_nat.h,v 1.2 1997/01/05 21:32:24 veego Exp $	*/
+
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -6,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.1 1997/01/05 13:48:10 mrg Exp $
+ * Id: ip_nat.h,v 1.2.4.4 1996/11/21 12:50:33 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H_
