@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.4 1998/12/04 20:48:04 drochner Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -57,7 +57,7 @@ struct wsemul_vt100_emuldata {
 #define VTFL_DECAWM	0x020	/* auto wrap */
 #define VTFL_CURSORON	0x040
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
-	long curattr;			/* currently used attribute */
+	long curattr, bkgdattr;		/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	u_int scrreg_startrow;
 	u_int scrreg_nrows;
@@ -86,7 +86,7 @@ struct wsemul_vt100_emuldata {
 #define DCSTYPE_TABRESTORE 1 /* DCS2$t */
 
 	u_int savedcursor_row, savedcursor_col;
-	long savedattr;
+	long savedattr, savedbkgdattr;
 	int savedattrflags, savedfgcol, savedbgcol;
 	int savedchartab0, savedchartab1;
 	u_int *savedchartab_G[4];
