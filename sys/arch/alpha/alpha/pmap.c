@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.51 1998/06/11 05:08:37 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.52 1998/06/11 05:16:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 1998/06/11 05:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1998/06/11 05:16:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,48 +186,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 1998/06/11 05:08:37 thorpej Exp $");
 #include <machine/cpu.h>
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 #include <machine/rpb.h>			/* XXX */
-#endif
-
-#ifdef PMAPSTATS
-struct {
-	int kernel;	/* entering kernel mapping */
-	int user;	/* entering user mapping */
-	int ptpneeded;	/* needed to allocate a PT page */
-	int nochange;	/* no change at all */
-	int pwchange;	/* no mapping change, just wiring or protection */
-	int wchange;	/* no mapping change, just wiring */
-	int pchange;	/* no mapping change, just protection */
-	int mchange;	/* was mapped but mapping to different page */
-	int managed;	/* a managed page */
-	int firstpv;	/* first mapping for this PA */
-	int secondpv;	/* second mapping for this PA */
-	int ci;		/* cache inhibited */
-	int unmanaged;	/* not a managed page */
-	int flushes;	/* cache flushes */
-} enter_stats;
-struct {
-	int calls;
-	int removes;
-	int pvfirst;
-	int pvsearch;
-	int ptinvalid;
-	int uflushes;
-	int sflushes;
-} remove_stats;
-struct {
-	int calls;
-	int changed;
-	int alreadyro;
-	int alreadyrw;
-} protect_stats;
-struct chgstats {
-	int setcalls;
-	int sethits;
-	int setmiss;
-	int clrcalls;
-	int clrhits;
-	int clrmiss;
-} changebit_stats[16];
 #endif
 
 #ifdef DEBUG
@@ -1245,10 +1203,6 @@ pmap_remove(pmap, sva, eva)
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pmap->pm_slock);
 
-#ifdef PMAPSTATS
-	remove_stats.calls++;
-#endif
-
 	while (sva < eva) {
 		/*
 		 * If level 1 mapping is invalid, just skip it.
@@ -1423,10 +1377,6 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	protect_stats.calls++;
-#endif
-
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
@@ -1468,18 +1418,7 @@ pmap_protect(pmap, sva, eva, prot)
 			hadasm = (pmap_pte_asm(l3pte) != 0);
 			pmap_pte_set_prot(l3pte, bits);
 			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive);
-#ifdef PMAPSTATS
-			protect_stats.changed++;
-#endif
 		}
-#ifdef PMAPSTATS
-		else if (pmap_pte_v(l3pte)) {
-			if (isro)
-				protect_stats.alreadyro++;
-			else
-				protect_stats.alreadyrw++;
-		}
-#endif
 		sva += PAGE_SIZE;
 	}
 
@@ -1534,10 +1473,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	simple_lock(&pmap->pm_slock);
 
 	if (pmap == pmap_kernel()) {
-#ifdef PMAPSTATS
-		enter_stats.kernel++
-#endif
-
 #ifdef DIAGNOSTIC
 		/*
 		 * Sanity check the virtual address.
@@ -1548,10 +1483,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte = PMAP_KERNEL_PTE(va);
 	} else {
 		pt_entry_t *l1pte, *l2pte;
-
-#ifdef PMAPSTATS
-		enter_stats.user++;
-#endif
 
 #ifdef DIAGNOSTIC
 		/*
@@ -1642,9 +1573,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Mapping has not changed; must be a protection or
 		 * wiring change.
 		 */
-#ifdef PMAPSTATS
-		enter_stats.pwchange++;
-#endif
 		if (pmap_pte_w_chg(pte, wired ? PG_WIRED : 0)) {
 #ifdef DEBUG
 			if (pmapdebug & PDB_ENTER)
@@ -1669,17 +1597,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 				 * PTE bits; no TLB invalidation is necessary.
 				 */
 				tflush = FALSE;
-#ifdef PMAPSTATS
-				enter_stats.wchange++;
-#endif
 			}
 		}
-#ifdef PMAPSTATS
-		else if (pmap_pte_prot(pte) != pte_prot(pmap, prot))
-			enter_stats.pchange++;
-		else
-			enter_stats.nochange++;
-#endif
+
 		/*
 		 * Set the PTE.
 		 */
@@ -1704,9 +1624,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pmap_physpage_addref(pte);
 	}
 	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE);
-#ifdef PMAPSTATS
-	enter_stats.mchange++;
-#endif
 
  validate_enterpv:
 	/*
@@ -2556,9 +2473,6 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	isactive = active_pmap(pmap);
 	needisync = isactive /* && XXX tract execute in PTE */;
 
-#ifdef PMAPSTATS
-	remove_stats.removes++;
-#endif
 	/*
 	 * Update statistics
 	 */
@@ -2687,9 +2601,6 @@ pmap_changebit(pa, bit, setem)
 	boolean_t hadasm, isactive;
 	boolean_t needisync = FALSE;
 	int s;
-#ifdef PMAPSTATS
-	struct chgstats *chgp;
-#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2699,13 +2610,6 @@ pmap_changebit(pa, bit, setem)
 	if (!PAGE_IS_MANAGED(pa))
 		return;
 
-#ifdef PMAPSTATS
-	chgp = &changebit_stats[(bit>>2)-1];
-	if (setem)
-		chgp->setcalls++;
-	else
-		chgp->clrcalls++;
-#endif
 	pvh = pa_to_pvh(pa);
 	s = splimp();			/* XXX needed w/ PMAP_NEW? */
 	/*
@@ -2744,21 +2648,7 @@ pmap_changebit(pa, bit, setem)
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive);
 			/* XXX track execute in PTE. */
 			needisync = isactive && TRUE;
-#ifdef PMAPSTATS
-			if (setem)
-				chgp->sethits++;
-			else
-				chgp->clrhits++;
-#endif
 		}
-#ifdef PMAPSTATS
-		else {
-			if (setem)
-				chgp->setmiss++;
-			else
-				chgp->clrmiss++;
-		}
-#endif
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
 	splx(s);
@@ -3014,12 +2904,6 @@ pmap_pv_enter(pmap, pa, va, dolock)
 	/*
 	 * ...and put it in the list.
 	 */
-#ifdef PMAPSTATS
-	if (LIST_FIRST(&pvh->pvh_list) == NULL)
-		enter_stats.firstpv++;
-	else if (LIST_NEXT(LIST_FIRST(&pvh->pvh_list)) == NULL)
-		enter_stats.secondpv++;
-#endif
 	LIST_INSERT_HEAD(&pvh->pvh_list, newpv, pv_list);
 
 	if (dolock)
