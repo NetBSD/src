@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.77 2000/04/27 00:57:48 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.78 2000/05/19 04:53:25 minoura Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1065,15 +1065,15 @@ raidioctl(dev, cmd, data, flag, p)
 
 		return (retcode);
 	case RAIDFRAME_SET_AUTOCONFIG:
-		d = rf_set_autoconfig(raidPtr, *data);
+		d = rf_set_autoconfig(raidPtr, *(int *) data);
 		printf("New autoconfig value is: %d\n", d);
-		*data = d;
+		*(int *) data = d;
 		return (retcode);
 
 	case RAIDFRAME_SET_ROOT:
-		d = rf_set_rootpartition(raidPtr, *data);
+		d = rf_set_rootpartition(raidPtr, *(int *) data);
 		printf("New rootpartition value is: %d\n", d);
-		*data = d;
+		*(int *) data = d;
 		return (retcode);
 
 		/* initialize all parity */
