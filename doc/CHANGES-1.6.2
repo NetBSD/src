@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.62 2003/06/24 09:35:10 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.63 2003/06/24 09:37:20 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -801,3 +801,9 @@ sys/kern/kern_microtime.c			1.1 (new)
 	This is derived from alpha/microtime.c and i386/tsc_microtime.c,
 	and will share with both ports.
 	[nakayama, ticket #1329]
+
+sys/arch/sparc64/sparc64/locore.s		1.173
+
+	Divide `set' instruction in delay slot (from OpenBSD change to rev
+	1.30).
+	[nakayama, ticket #1330]
