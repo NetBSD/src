@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.4 1997/03/13 06:19:10 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -17,7 +19,7 @@
 
 /* config.h - configurables for Vixie Cron
  *
- * $Id: config.h,v 1.3 1995/04/14 19:49:32 mycroft Exp $
+ * Id: config.h,v 2.6 1994/01/15 20:43:43 vixie Exp
  */
 
 #if !defined(_PATH_SENDMAIL)

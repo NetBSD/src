@@ -1,3 +1,5 @@
+/*	$NetBSD: do_command.c,v 1.4 1997/03/13 06:19:16 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,8 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.3 1996/12/16 22:30:45 thorpej Exp $";
+/*static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";*/
+static char rcsid[] = "$NetBSD: do_command.c,v 1.4 1997/03/13 06:19:16 mikel Exp $";
 #endif
 
 
