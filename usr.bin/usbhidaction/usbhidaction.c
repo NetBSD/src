@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.4 2001/12/28 17:49:31 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.5 2001/12/29 22:15:32 augustss Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -67,25 +68,25 @@ struct command *commands;
 #define SIZE 4000
 
 void usage(void);
-void parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore);
-void docmd(struct command *cmd, int value, const char *hid,
-	   int argc, char **argv);
+void parse_conf(const char *, report_desc_t, int, int);
+void docmd(struct command *, int, const char *, int, char **);
 
 int
 main(int argc, char **argv)
 {
 	const char *conf = NULL;
-	const char *hid = NULL;
-	int fd, ch, sz, n, val;
+	const char *dev = NULL;
+	int fd, ch, sz, n, val, i;
 	int demon, ignore;
 	report_desc_t repd;
 	char buf[100];
+	char devnamebuf[PATH_MAX];
 	struct command *cmd;
 	int reportid;
 
 	demon = 1;
 	ignore = 0;
-	while ((ch = getopt(argc, argv, "c:dif:v")) != -1) {
+	while ((ch = getopt(argc, argv, "c:df:iv")) != -1) {
 		switch(ch) {
 		case 'c':
 			conf = optarg;
@@ -97,7 +98,7 @@ main(int argc, char **argv)
 			ignore++;
 			break;
 		case 'f':
-			hid = optarg;
+			dev = optarg;
 			break;
 		case 'v':
 			demon = 0;
@@ -111,14 +112,20 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (conf == NULL || hid == NULL)
+	if (conf == NULL || dev == NULL)
 		usage();
 
 	hid_init(NULL);
 
-	fd = open(hid, O_RDWR);
+	if (dev[0] != '/') {
+		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
+			 isdigit(dev[0]) ? "uhid" : "", dev);
+		dev = devnamebuf;
+	}
+
+	fd = open(dev, O_RDWR);
 	if (fd < 0)
-		err(1, "%s", hid);
+		err(1, "%s", dev);
 	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
 		reportid = -1;
 	repd = hid_get_report_desc(fd);
@@ -127,7 +134,7 @@ main(int argc, char **argv)
 
 	parse_conf(conf, repd, reportid, ignore);
 
-	sz = hid_report_size(repd, hid_input, NULL);
+	sz = hid_report_size(repd, hid_input, reportid);
 	hid_dispose_report_desc(repd);
 
 	if (verbose)
@@ -143,18 +150,27 @@ main(int argc, char **argv)
 
 	for(;;) {
 		n = read(fd, buf, sz);
-		if (verbose > 2)
-			printf("read %d bytes [%02x]\n", n, buf[0]);
+		if (verbose > 2) {
+			printf("read %d bytes:", n);
+			for (i = 0; i < n; i++)
+				printf(" %02x", buf[i]);
+			printf("\n");
+		}
 		if (n < 0) {
 			if (verbose)
 				err(1, "read");
 			else
 				exit(1);
 		}
+#if 0
+		if (n != sz) {
+			err(2, "read size");
+		}
+#endif
 		for (cmd = commands; cmd; cmd = cmd->next) {
 			val = hid_get_data(buf, &cmd->item);
 			if (cmd->value == val || cmd->anyvalue)
-				docmd(cmd, val, hid, argc, argv);
+				docmd(cmd, val, dev, argc, argv);
 		}
 	}
 
@@ -166,7 +182,7 @@ usage(void)
 {
 
 	fprintf(stderr, "Usage: %s -c config_file [-d] -f hid_dev "
-	    " [-v]\n", getprogname());
+		"[-i] [-v]\n", getprogname());
 	exit(1);
 }
 
