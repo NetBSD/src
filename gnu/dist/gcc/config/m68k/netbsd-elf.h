@@ -359,6 +359,19 @@ do {									 \
        fputs(" = ", FILE);		 \
        assemble_name(FILE, NAME2);	 \
        fputc('\n', FILE); } while (0)
+
+#undef ASM_OUTPUT_COMMON
+#undef ASM_OUTPUT_LOCAL
+#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)  \
+( fputs (".comm ", (FILE)),			\
+  assemble_name ((FILE), (NAME)),		\
+  fprintf ((FILE), ",%u\n", (SIZE)))
+
+#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)  \
+( fputs (".lcomm ", (FILE)),			\
+  assemble_name ((FILE), (NAME)),		\
+  fprintf ((FILE), ",%u\n", (SIZE)))
+
 /* Currently, JUMP_TABLES_IN_TEXT_SECTION must be defined in order to
    keep switch tables in the text section.  */
 
