@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2001/10/27 16:29:23 rearnsha Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2001/12/11 00:34:50 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -273,6 +273,9 @@
 #define	NWSMUX	0
 #endif
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+ 
 #include <arm/conf.h>
 
 /* Block devices */
@@ -479,6 +482,7 @@ struct cdevsw cdevsw[] = {
 	cdev__oci_init(NMLX,mlx),		/* 91: Mylex DAC960 ctl iface */
 	cdev_disk_init(NLD,ld),			/* 92: Logical disk */
 	cdev_tty_init(NPLCOM,plcom),		/* 93: IFPGA console */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 94: clockctl device */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -614,6 +618,8 @@ static int chrtoblktbl[] = {
     /* 90 */	    NODEV,
     /* 91 */	    NODEV,
     /* 92 */	    92,
+    /* 93 */	    NODEV,
+    /* 94 */	    NODEV,
 };
 
 /*
