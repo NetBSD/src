@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.25 1999/08/13 06:21:39 simonb Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.26 1999/08/16 13:11:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.25 1999/08/13 06:21:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.26 1999/08/16 13:11:45 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -504,16 +504,17 @@ dec_3maxplus_intr(mask, pc, status, cause)
 static void
 dec_3maxplus_errintr()
 {
-	u_int erradr, errsyn;
+	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
-	dec_mtasic_err(erradr, errsyn);
+	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
 }
 
 void
