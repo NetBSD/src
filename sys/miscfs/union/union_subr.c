@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.11 1995/05/30 09:07:10 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.12 1995/05/30 09:37:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -1050,6 +1050,7 @@ union_dircache(vp)
 					M_TEMP, M_WAITOK);
 		vpp = dircache;
 		union_dircache_r(vp, &vpp, &cnt);
+		VTOUNION(vp)->un_dircache = dircache;
 		*vpp = NULLVP;
 		vpp = dircache + 1;
 	} else {
@@ -1069,8 +1070,7 @@ union_dircache(vp)
 	if (error)
 		return (NULLVP);
 	VTOUNION(vp)->un_dircache = 0;
-	un = VTOUNION(nvp);
-	un->un_dircache = dircache;
+	VTOUNION(nvp)->un_dircache = dircache;
 
 	return (nvp);
 }
