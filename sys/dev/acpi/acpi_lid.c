@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ void
 acpilid_status_changed(void *arg)
 {
 	struct acpilid_softc *sc = arg;
-	int status;
+	ACPI_INTEGER status;
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_LID", &status);

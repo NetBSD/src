@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,8 @@ void
 acpiacad_get_status(void *arg)
 {
 	struct acpiacad_softc *sc = arg;
-	int status, s;
+	ACPI_INTEGER status;
+	int s;
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PSR", &status);

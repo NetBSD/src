@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.20 2003/11/12 13:59:23 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.21 2004/03/24 11:32:09 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.20 2003/11/12 13:59:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.21 2004/03/24 11:32:09 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,6 +400,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_io *io0, *io1;
 	ACPI_STATUS rv;
+	ACPI_INTEGER v;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
@@ -451,25 +452,26 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * We evaluate the _GPE method to find the GPE bit used by the
 	 * Embedded Controller to signal status (SCI).
 	 */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GPE", &sc->sc_gpebit);
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GPE", &v);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to evaluate _GPE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
+	sc->sc_gpebit = v;
 
 	/*
 	 * evaluate _GLK to see if we should acquire global lock
 	 * when accessing the EC.
 	 */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK", &sc->sc_glk);
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK", &v);
 	if (ACPI_FAILURE(rv)) {
 		if (rv != AE_NOT_FOUND)
 			printf("%s: unable to evaluate _GLK: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		sc->sc_glk = 0;
 	}
-
+	sc->sc_glk = v;
 	/*
 	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are 
 	 * treated as both edge- and level-triggered interrupts; in other words
