@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 2002/03/03 20:12:17 manu Exp $
+	$NetBSD: syscalls.master,v 1.26 2002/03/04 22:19:02 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -233,8 +233,8 @@
 120	UNIMPL		nfs_getfh
 121	UNIMPL		async_daemon
 122	UNIMPL		exportfs
-123	UNIMPL		setregid
-124	UNIMPL		setreuid
+123	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
+124	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 125	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 126	NOARGS		{ int sys_setitimer(u_int which, \
