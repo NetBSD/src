@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 1998/06/27 02:11:19 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 1998/06/27 02:13:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		}
 
 		/* Set the starting address and maximum length */
-		vaddr = seg->ds_vaddr + offset;
+		vaddr = seg->_ds_vaddr + offset;
 		length = seg->ds_len - offset;
 		do {
 			/* Limit the length if not the whole segment */
@@ -357,7 +357,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				if (loop == 0)
 					return;
 				++seg;
-				vaddr = seg->ds_vaddr;
+				vaddr = seg->_ds_vaddr;
 				length = seg->ds_len;
 			}
 		} while (len > 0);
@@ -635,7 +635,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg].ds_vaddr = vaddr;
+			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -650,7 +650,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg].ds_vaddr = vaddr;
+				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 
