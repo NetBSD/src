@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/02/07 04:46:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2004/02/08 22:28:27 lukem Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -33,10 +33,11 @@ LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.
-${GENSRCS}: postconf-hdrs
-CLEANFILES+= postconf-hdrs
-postconf-hdrs: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
+${GENSRCS}: postconf-hdrs.stamp
+CLEANFILES+= postconf-hdrs.stamp
+postconf-hdrs.stamp: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
 	${_MKMSG_CREATE} ${GENSRCS}
+	rm -f ${.TARGET}
 	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
 	touch ${.TARGET}
 
