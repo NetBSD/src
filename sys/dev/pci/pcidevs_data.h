@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.508 2003/02/26 11:51:06 salo Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.509 2003/02/28 22:06:00 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.507 2003/02/26 11:48:58 salo Exp 
+ *	NetBSD: pcidevs,v 1.508 2003/02/28 22:05:00 enami Exp 
  */
 
 /*
@@ -6242,6 +6242,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ServerWorks",
 	    "CSB5 IDE",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
+	    0,
+	    "ServerWorks",
+	    "CSB6 RAID/IDE",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_USB,
