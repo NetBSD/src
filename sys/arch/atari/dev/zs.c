@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1995/04/11 02:42:23 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1995/04/22 22:06:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -113,8 +113,6 @@ u_char zs_init_regs[16] = {
 /* 15 */	0
 };
 
-struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
-
 /* Definition of the driver for autoconfig. */
 static int	zsmatch __P((struct device *, struct cfdata *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
@@ -143,7 +141,8 @@ static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 
 int zsshortcuts;	/* number of "shortcut" software interrupts */
 
-static int zsmatch(pdp, cfp, auxp)
+static int
+zsmatch(pdp, cfp, auxp)
 struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
@@ -235,7 +234,7 @@ struct proc	*p;
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 	if(tp == NULL) {
-		cs->cs_ttyp  = tp = zs_tty[unit] = ttymalloc();
+		cs->cs_ttyp  = tp = ttymalloc();
 		tp->t_dev    = dev;
 		tp->t_oproc  = zsstart;
 		tp->t_param  = zsparam;
@@ -338,19 +337,50 @@ dev_t		dev;
 struct uio	*uio;
 int		flags;
 {
-	register struct tty *tp = zs_tty[ZS_UNIT(dev)];
+	register struct zs_chanstate	*cs;
+	register struct zs_softc	*zi;
+	register struct tty		*tp;
+		 int			unit;
+
+	unit = ZS_UNIT(dev);
+	zi   = zscd.cd_devs[unit >> 1];
+	cs   = &zi->zi_cs[unit & 1];
+	tp   = cs->cs_ttyp;
 
 	return(linesw[tp->t_line].l_read(tp, uio, flags));
 }
 
-int zswrite(dev, uio, flags)
+int
+zswrite(dev, uio, flags)
 dev_t		dev;
 struct uio	*uio;
 int		flags;
 {
-	register struct tty *tp = zs_tty[ZS_UNIT(dev)];
+	register struct zs_chanstate	*cs;
+	register struct zs_softc	*zi;
+	register struct tty		*tp;
+		 int			unit;
+
+	unit = ZS_UNIT(dev);
+	zi   = zscd.cd_devs[unit >> 1];
+	cs   = &zi->zi_cs[unit & 1];
+	tp   = cs->cs_ttyp;
 
 	return(linesw[tp->t_line].l_write(tp, uio, flags));
+}
+
+struct tty *
+zstty(dev)
+dev_t	dev;
+{
+	register struct zs_chanstate	*cs;
+	register struct zs_softc	*zi;
+		 int			unit;
+
+	unit = ZS_UNIT(dev);
+	zi   = zscd.cd_devs[unit >> 1];
+	cs   = &zi->zi_cs[unit & 1];
+	return(cs->cs_ttyp);
 }
 
 /*
