@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.55 2003/02/26 15:01:09 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.56 2003/02/26 15:04:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.55 2003/02/26 15:01:09 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.56 2003/02/26 15:04:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,7 @@ struct	entry {
 	char name[65];
 	char line[65];
 	char host[257];
+	char type[2];
 	struct timeval tv;
 	dev_t	tdev;			/* dev_t of terminal */
 	time_t	idle;			/* idle time of terminal in seconds */
@@ -228,6 +229,7 @@ main(int argc, char **argv)
 			    sizeof(utx->ut_host));
 			ep->host[sizeof(utx->ut_host)] = '\0';
 		}
+		ep->type[0] = 'x';
 		ep->tv = utx->ut_tv;
 		ep->pid = utx->ut_pid;
 		*nextp = ep;
@@ -406,8 +408,8 @@ main(int argc, char **argv)
 			p = buf;
 		}
 		if (ep->kp == NULL) {
-			warnx("Stale utmp entry: %s %s %s",
-			    ep->name, ep->line, ep->host);
+			warnx("Stale utmp%s entry: %s %s %s",
+			    ep->type, ep->name, ep->line, ep->host);
 			continue;
 		}
 		(void)printf("%-*s %-2.2s %-*.*s ",
