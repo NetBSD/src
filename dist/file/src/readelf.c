@@ -1,4 +1,5 @@
-/*	$NetBSD: readelf.c,v 1.1.1.6 2004/12/13 10:24:53 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.1.1.7 2005/02/21 14:33:39 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -42,7 +43,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.45 2004/11/24 17:38:24 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.1.1.6 2004/12/13 10:24:53 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.1.1.7 2005/02/21 14:33:39 pooka Exp $");
 #endif
 #endif
 

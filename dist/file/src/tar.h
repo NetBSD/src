@@ -1,4 +1,5 @@
-/*	$NetBSD: tar.h,v 1.1.1.3 2004/12/13 10:24:55 pooka Exp $	*/
+/*	$NetBSD: tar.h,v 1.1.1.4 2005/02/21 14:33:40 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.

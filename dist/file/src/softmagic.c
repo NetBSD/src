@@ -1,4 +1,5 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.7 2004/12/13 10:24:52 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.8 2005/02/21 14:33:41 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,7 +45,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.72 2004/11/24 17:38:25 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.7 2004/12/13 10:24:52 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.8 2005/02/21 14:33:41 pooka Exp $");
 #endif
 #endif	/* lint */
 
