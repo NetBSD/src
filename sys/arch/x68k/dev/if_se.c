@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.4 1996/10/13 03:34:52 christos Exp $	*/
+/*	$NetBSD: if_se.c,v 1.4.6.1 1997/03/04 18:50:08 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -37,7 +37,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+#include <net/if_ether.h>
 #include <sys/malloc.h>
 
 #ifdef INET
@@ -76,7 +76,7 @@ struct	se_softc {
 
 	char	sc_datalen[32];	/* additional data length on some commands */
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ethercom sc_ec;	/* ethernet common */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
@@ -137,7 +137,8 @@ struct	se_softc {
 #define	EPSETPACKETRECEPTMODE	5
 #define	EPETHERNETRECIEVE	6
 
-int seident __P((register struct se_softc *, register struct x68k_device *));
+int seident __P((register struct se_softc *, register struct x68k_device *,
+	u_int8_t *));
 int sefind __P((struct x68k_device *xd));
 void seintr __P((register int unit, int stat));
 void	se_init __P((struct se_softc *));
@@ -243,11 +244,12 @@ sefind(xd)
 {
 	register struct se_softc *sc = &se_softc[xd->x68k_unit];
 	struct buf *bp;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	int stat;
 	int s, i;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	for (bp = setab; bp < &setab[NSE]; bp++)
 		bp->b_actb = &bp->b_actf;
@@ -261,7 +263,7 @@ sefind(xd)
 	 */
 	sc->sc_xd = xd;
 	sc->sc_punit = sepunit(xd->x68k_flags);
-	sc->sc_type = seident(sc, xd);
+	sc->sc_type = seident(sc, xd, myaddr);
 	if (sc->sc_type < 0)
 		return(0);
 	sc->sc_dq.dq_ctlr = xd->x68k_ctlr;
@@ -287,7 +289,7 @@ sefind(xd)
 	 * Attach the interface
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -295,7 +297,7 @@ sefind(xd)
 	/*
 	 * Print additional info when attached
 	 */
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(" address %s\n", LLADDR(ifp->if_sadl));
 
 	stat = scsi_scsi_cmd(xd->x68k_ctlr, xd->x68k_slave, xd->x68k_unit, &se_setmcast, 
 			     mcastaddr, 8);
@@ -329,9 +331,10 @@ se_ethernet_read_setup(sc)
 }
 
 int
-seident(sc, xd)
+seident(sc, xd, ap)
 	register struct se_softc *sc;
 	register struct x68k_device *xd;
+	register u_int8_t *ap;
 {
 	int unit;
 	int ctlr, slave;
@@ -420,7 +423,7 @@ seident(sc, xd)
 
 		sc->tx_page_start = 0;
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = se_inqbuf.ep_inquiry.eaddr[i];
+			myaddr[i] = se_inqbuf.ep_inquiry.eaddr[i];
 	} else {
 		if (idstr[8] == '\0')
 			printf("se%d: No ID, assuming Archive\n", xd->x68k_unit);
@@ -647,7 +650,7 @@ se_watchdog(ifp)
 	struct se_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "se%d: device timeout\n", unit);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ec.ec_if.if_oerrors;
 
 	se_reset(sc);
 }
@@ -659,7 +662,7 @@ void
 se_init(sc)
 	struct se_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i, s;
 	u_char	command;
 	struct x68k_device *xd = sc->sc_xd;
@@ -685,7 +688,7 @@ se_init(sc)
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	sc->sc_ec.ec_if.if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_next = 0;
@@ -832,7 +835,7 @@ se_start(ifp)
 		return;
 	}
 	/* Don't transmit if interface is busy or not running */
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((sc->sc_ec.ec_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return 0;
 
 	ctlr = sc->sc_xd->x68k_ctlr;
@@ -853,7 +856,7 @@ outloop:
 			 *	header (+4 bytes)
 			 */
 			se_get_packet(sc, (caddr_t)(sc->rxbuf), pktlen - 4);
-			++sc->sc_arpcom.ac_if.if_ipackets;
+			++sc->sc_ec.ec_if.if_ipackets;
 		} else {
 			/*
 			 * Really BAD...probably indicates that the ring pointers
@@ -887,7 +890,7 @@ outloop:
 			return;
 		}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&sc->sc_ec.ec_if.if_snd, m);
 	if (m == 0) {
 	/*
 	 * The following isn't pretty; we are using the !OACTIVE flag to
@@ -1038,7 +1041,7 @@ seintr(unit, stat)
 	/*
 	 * clear watchdog timer
 	 */
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	sc->sc_ec.ec_if.if_timer = 0;
 
 #ifdef DIAGNOSTIC
 	if (bp == NULL) {
@@ -1071,8 +1074,8 @@ seintr(unit, stat)
 		if(setab[unit].b_active == 1) {
 			if ((dq->dq_cdb->cdb[0]) == 5) {
 				printf("seintr: sent\n");
-				++sc->sc_arpcom.ac_if.if_opackets;
-				sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+				++sc->sc_ec.ec_if.if_opackets;
+				sc->sc_ec.ec_if.if_flags &= ~IFF_OACTIVE;
 				--sc->txb_inuse;
 				bp->b_resid = 0;
 				
@@ -1102,7 +1105,7 @@ seintr(unit, stat)
 	/*
 	 * reset tx busy and output active flags
 	 */
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_ec.ec_if.if_flags &= ~IFF_OACTIVE;
 	--sc ->txb_inuse;
 	sefinish(unit, sc, bp);
 	if (rxmit_flag == 1)
@@ -1260,9 +1263,7 @@ se_ioctl(ifp, command, data)
 			 * conflict exists, a message is sent to the
 			 * console.
 			 */
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1275,14 +1276,13 @@ se_ioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-					*(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+					*(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
 				/* 
 				 * 
 				 */
 				bbcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->sc_arpcom.ac_enaddr,
-					sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			}
 			/*
 			 * Set new address
@@ -1329,8 +1329,8 @@ se_ioctl(ifp, command, data)
 		printf("se_ioctl:SIOC***MULTI\n");
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET) {
 			/*
@@ -1383,7 +1383,7 @@ se_get_packet(sc, buf, len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		goto bad;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = &sc->sc_ec.ec_if;
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -1458,8 +1458,8 @@ se_get_packet(sc, buf, len)
 		 *
 		 * XXX This test does not support multicasts.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-			bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		if ((sc->sc_ec.ec_if.if_flags & IFF_PROMISC) &&
+			bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 				sizeof(eh->ether_dhost)) != 0 &&
 			bcmp(eh->ether_dhost, etherbroadcastaddr,
 				sizeof(eh->ether_dhost)) != 0) {
@@ -1475,7 +1475,7 @@ se_get_packet(sc, buf, len)
 	 */
 	m_adj(head, sizeof(struct ether_header));
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, head);
+	ether_input(&sc->sc_ec.ec_if, eh, head);
 	return;
 
 bad:	if (head)
@@ -1567,10 +1567,10 @@ se_ring_to_mbuf(sc,src,dst,total_len)
  */
 void
 se_getmcaf(ac, af)
-	struct arpcom *ac;
+	struct ethercom *ac;
 	u_long *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
