@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/05/02 16:06:54 sjg Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2002/03/25 17:33:01 he Exp $
 
 BINDIR=		/installation/netboot
 
@@ -54,7 +54,7 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	make -f ${CBIN}.mk all
 
 echoimage:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:47 sjg Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2002/03/25 17:32:53 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,13 +26,13 @@ MTREE=		mtree.conf
 
 DISKTYPE=	floppy3
 
-install.sh: install.tmpl
+install.sh: install.tmpl ${VERDEP}
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
-upgrade.sh: upgrade.tmpl
+upgrade.sh: upgrade.tmpl ${VERDEP}
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
-start.sh: start.tmpl
+start.sh: start.tmpl ${VERDEP}
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
@@ -59,7 +59,7 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	make -f ${CBIN}.mk all
 
 clean cleandir:

@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/02/03 20:21:26 he Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2002/03/25 17:33:03 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
 HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
+
+VERDEP=		${SRCROOT}/sys/conf/osrelease.sh
 
 .if ${MACHINE_ARCH} == "i386"
 RAW_PART=	d
@@ -88,7 +90,7 @@ ${CBIN}.conf: ${CBIN}.m4
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${SRCROOT} -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in ramdiskbin.conf but is built here.
