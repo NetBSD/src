@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.110 2003/07/28 12:33:42 lukem Exp $
+#	$NetBSD: build.sh,v 1.111 2003/07/29 10:07:15 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -316,6 +316,12 @@ setmakeenv()
 	makeenv="${makeenv} $1"
 }
 
+unsetmakeenv()
+{
+	eval "unset $1"
+	makeenv="${makeenv} $1"
+}
+
 resolvepath()
 {
 	case "${OPTARG}" in
@@ -337,7 +343,7 @@ usage()
 
 Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
                 [-m mach] [-O obj] [-R release] [-T tools] [-V var=[value]]
-                [-w wrapper]   operation [...]
+                [-w wrapper] [-Z var]   operation [...]
 
  Build operations (all imply "obj" and "tools"):
     build               Run "make build"
@@ -366,9 +372,11 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
                 Should not be used without expert knowledge of the build system
     -j njob     Run up to njob jobs in parallel; see make(1)
     -M obj      Set obj root directory to obj (sets MAKEOBJDIRPREFIX)
+                Unsets MAKEOBJDIR.
     -m mach     Set MACHINE to mach (not required if NetBSD native)
     -n          Show commands that would be executed, but do not execute them
-    -O obj      Set obj root directory to obj (sets a MAKEOBJDIR pattern)
+    -O obj      Set obj root directory to obj (sets a MAKEOBJDIR pattern).
+                Unsets MAKEOBJDIRPREFIX.
     -o          Set MKOBJDIRS=no (do not create objdirs at start of build)
     -R release  Set RELEASEDIR to release.  (Default: releasedir)
     -r          Remove contents of TOOLDIR and DESTDIR before building
@@ -380,6 +388,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     -V v=[val]  Set variable \`v' to \`val'
     -w wrapper  Create ${toolprefix}make script as wrapper
                 (Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE})
+    -Z v        Unset ("zap") variable \`v'
 
 _usage_
 	exit 1
@@ -387,7 +396,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuV:w:'
+	opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuV:w:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -460,6 +469,7 @@ parseoptions()
 		-M)
 			eval ${optargcmd}; resolvepath
 			makeobjdir="${OPTARG}"
+			unsetmakeenv MAKEOBJDIR
 			setmakeenv MAKEOBJDIRPREFIX "${OPTARG}"
 			;;
 
@@ -477,6 +487,7 @@ parseoptions()
 		-O)
 			eval ${optargcmd}; resolvepath
 			makeobjdir="${OPTARG}"
+			unsetmakeenv MAKEOBJDIRPREFIX
 			setmakeenv MAKEOBJDIR "\${.CURDIR:C,^$TOP,$OPTARG,}"
 			;;
 
@@ -528,6 +539,12 @@ parseoptions()
 		-w)
 			eval ${optargcmd}; resolvepath
 			makewrapper="${OPTARG}"
+			;;
+
+		-Z)
+			eval ${optargcmd}
+		    # XXX: consider restricting which variables can be unset?
+			unsetmakeenv "${OPTARG}"
 			;;
 
 		--)
@@ -784,12 +801,16 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.110 2003/07/28 12:33:42 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.111 2003/07/29 10:07:15 lukem Exp $
 #
 
 EOF
 	for f in ${makeenv}; do
-		eval echo "${f}=\'\$$(echo ${f})\'\;\ export\ ${f}" ${makewrapout}
+		if eval "[ -z \"\${$f}\" -a \"\${${f}-X}\" = \"X\" ]"; then
+			eval echo "unset ${f}" ${makewrapout}
+		else
+			eval echo "${f}=\'\$$(echo ${f})\'\;\ export\ ${f}" ${makewrapout}
+		fi
 	done
 	eval echo "USETOOLS=yes\; export USETOOLS" ${makewrapout}
 
