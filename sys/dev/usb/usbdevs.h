@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.57 1999/11/10 12:31:31 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.58 1999/11/10 15:56:39 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.57 1999/11/10 12:31:01 augustss Exp 
+ *	NetBSD: usbdevs,v 1.58 1999/11/10 15:55:51 matt Exp 
  */
 
 /*
@@ -306,6 +306,7 @@
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+#define	USB_PRODUCT_ENTREGA_SERIAL_DB9	0x8093		/* DB9 Serial connector */
 
 /* Midiman products */
 #define	USB_PRODUCT_MIDIMAN_MIDISPORT2X2	0x1001		/* Midisport 2x2 */
