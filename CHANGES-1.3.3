@@ -246,3 +246,21 @@ distrib/x68k/floppies/ramdisk/upgrade.tmpl	1.2 (patch)
 
   Fix various bugs in x68k installation script and distribution
   floppy build process.
+
+sys/arch/pmax/dev/tz.c				1.16-1.18
+
+  Suport TZ30 by recognizing it and setting the TK50 flag, and
+  support a WangTek QIC-150 model by setting the Viper 150 flag.
+
+sys/vm/vm_map.h					1.21 (patch)
+sys/conf/param.c				1.25
+sys/sys/param.h					1.53
+
+  Change MAX_KMAPENT to be computed from NPROC (with a lower
+  bound), to avoid panics on heavily used servers due to
+  running out of kernel map entries (PR#6293).  (jonathan)
+
+gnu/usr.bin/gcc/arch/mips/netbsd.h		1.8
+
+  Add -D__ELF__ to CPP predefines for mips, which indirectly
+  causes PR#3539 to be fixed.
