@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.13 1997/04/01 03:07:21 scottr Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.14 1997/04/01 19:29:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,4 +136,9 @@ void	send_hildev_cmd __P((struct hil_softc *, char, char));
 
 void	polloff __P((struct hil_dev *));
 void	pollon __P((struct hil_dev *));
+
+#ifdef COMPAT_HPUX
+int	hpuxhilioctl __P((dev_t, int, caddr_t, int));
+int	hildevno __P((dev_t));
+#endif /* COMPAT_HPUX */
 #endif /* _KERNEL */
