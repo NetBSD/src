@@ -1,12 +1,12 @@
-$NetBSD: README,v 1.21 2002/03/07 14:48:23 simonb Exp $
+$NetBSD: README,v 1.22 2002/03/24 15:56:59 bjh21 Exp $
 
+acorn26:	Acorn ARM2- and ARM3-based machines (arm)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm)
 algor:		Algorithmics, Ltd. MIPS evaluation boards (mips)
 alpha:		Compaq (formerly Digital Equipment Corp.) Alpha (alpha)
 amiga:		Commodore et al. Amiga (m68k)
 amigappc:	Phase 5 Amiga (powerpc)
 arc:		MIPS Advanced Risc Computing spec machines (mips)
-arm26:		Acorn ARM2- and ARM3-based machines (arm)
 atari:		Atari TT30, Falcon, and Hades (m68k)
 bebox:		Be Inc. BeBox (powerpc)
 cats:		Chalice Technologies, CATS motherboard (arm)
