@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_proc.c,v 1.4 1997/11/18 07:01:50 lukem Exp $	*/
+/*	$NetBSD: yppush_proc.c,v 1.5 2002/07/06 00:46:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_proc.c,v 1.4 1997/11/18 07:01:50 lukem Exp $");
+__RCSID("$NetBSD: yppush_proc.c,v 1.5 2002/07/06 00:46:12 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: yppush_proc.c,v 1.4 1997/11/18 07:01:50 lukem Exp $");
 #include "yppush.h"
 
 void * 
-yppushproc_null_1_svc(argp, rqstp)
-	void *argp;
-	struct svc_req *rqstp;
+yppushproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {
 	static char result;
 
@@ -59,9 +57,7 @@ yppushproc_null_1_svc(argp, rqstp)
 }
 
 void * 
-yppushproc_xfrresp_1_svc(argp, rqstp)
-	void *argp;
-	struct svc_req *rqstp;
+yppushproc_xfrresp_1_svc(void *argp, struct svc_req *rqstp)
 {
 	struct yppushresp_xfr *resp = argp;
 	static char result;
