@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.5 1997/10/13 11:20:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/23 23:09:00 lukem Exp $
 #
 
 SRCS=miscmod.c
@@ -45,7 +45,7 @@ KOBJS=misccall.o
 MODOBJ=combined.o
 
 KMOD=miscmod
-CFLAGS= -D_KERNEL -I/sys
+CPPFLAGS+= -D_KERNEL -I/sys
 
 all:	$(MODOBJ)
 
