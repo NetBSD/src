@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 1997/07/01 21:17:44 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.13 1997/07/11 20:16:01 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.12 1997/07/01 21:17:44 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.13 1997/07/11 20:16:01 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -393,7 +393,7 @@ vsnprintf(s, n, fmt, args)
 	    fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
 #else
-	(void) sprintf(s, fmt, args);
+	(void) vsprintf(s, fmt, args);
 	return strlen(s);
 #endif
 }
