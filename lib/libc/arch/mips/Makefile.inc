@@ -1,10 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/09/29 13:19:15 takemura Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/03/05 05:41:52 shin Exp $
 
 KMINCLUDES=
 KMSRCS=
-
-.if  (${MACHINE} == "hpcmips")
-CPPFLAGS+=-DSOFTFLOAT
-
-.include <fplib/Makefile.inc>
-.endif
