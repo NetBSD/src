@@ -33,6 +33,7 @@
 #define EF_NEW_ABI         0x80
 #define EF_OLD_ABI         0x100
 #define EF_SOFT_FLOAT      0x200
+#define EF_VFP_FLOAT       0x400
 
 /* Other constants defined in the ARM ELF spec. version A-08.  */
 #define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK */
@@ -48,6 +49,7 @@
 #define F_APCS_FLOAT	   EF_APCS_FLOAT
 #define F_PIC              EF_PIC
 #define F_SOFT_FLOAT	   EF_SOFT_FLOAT
+#define F_VFP_FLOAT        EF_VFP_FLOAT
 
 /* Additional symbol types for Thumb.  */
 #define STT_ARM_TFUNC      STT_LOPROC   /* A Thumb function.  */

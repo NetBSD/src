@@ -60,6 +60,7 @@ struct external_filehdr
 #define F_APCS_26	(0x0400)
 #define F_APCS_SET	(0x0800)
 #define F_SOFT_FLOAT	(0x2000)
+#define F_VFP_FLOAT	(0x4000)
 
 /* Bits stored in flags field of the internal_f structure */
 
