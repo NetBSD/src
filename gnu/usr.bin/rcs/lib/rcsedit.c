@@ -36,7 +36,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(editId, "$Id: rcsedit.c,v 1.3 1994/06/29 05:26:36 mycroft Exp $")
+libId(editId, "$Id: rcsedit.c,v 1.3.2.1 1994/10/11 10:20:37 mycroft Exp $")
 
 static void keyreplace P((enum markers,struct hshentry const*,FILE*));
 
@@ -843,8 +843,8 @@ keyreplace(marker,delta,out)
                 break;
 	case Header:
         case Id:
-#ifdef NETBSD_DEVELOPMENT
-	case NetBSDH:
+#ifdef LOCALID
+	case LocalId:
 #endif
 		aprintf(out, "%s %s %s %s %s",
 			  marker!=Header || RCSv<VERSION(4)
