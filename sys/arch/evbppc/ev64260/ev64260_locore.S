@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.3 2003/03/18 14:56:21 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.4 2003/03/24 17:07:17 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,6 +68,12 @@ GLOBAL(endsym)
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
 
+GLOBAL(intrnames)
+GLOBAL(eintrnames)
+GLOBAL(intrcnt)
+GLOBAL(eintrcnt)
+	.long	0			/* vmstat needs these.  XXX */
+
 /*
  * File-scope for locore.S
  */
@@ -78,6 +84,7 @@ dink_return:
 dink_stack:
 	.long	0			/* fake uarea during idle after exit */
 #endif
+
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -132,6 +139,12 @@ __start:
 	sync ; isync
 
 #if 1
+	mfpvr	0
+	srwi	0,0,16
+	cmplwi	0,MPC7410
+	bne	16f
+	
+#if 0
 	/* flush and disable L2 */
 	mfspr	8,SPR_L2CR
 	lis	0,(L2CR_L2E|L2CR_L2WT)@h	/* disable the L2 mode */
@@ -147,7 +160,8 @@ __start:
 	andc	8,8,0
 	mtspr	SPR_HID0,8
 	sync
-#if 1
+#endif
+#if 0
 	/*
 	 * Flush the L1 cache
 	 */
@@ -160,6 +174,17 @@ __start:
 #if 1
 	/* disable data and instruction caches */
 	mfspr	8,SPR_HID0
+	li	0,HID0_DLOCK@l
+	andc	8,8,0
+	sync
+	mtspr	SPR_HID0,8
+	sync
+	isync
+#endif
+7:
+#if 0
+	/* disable data and instruction caches */
+	mfspr	8,SPR_HID0
 	li	0,(HID0_ICE|HID0_DCE)@l
 	andc	8,8,0
 	sync
@@ -167,25 +192,27 @@ __start:
 	sync
 	isync
 #endif
-#if 1
+7:
+#if 0
 	/* Enable and flush data and instruction caches */
-#	ori	8,8,(HID0_ICFI|HID0_ICE|HID0_DCFI|HID0_DCE)
-	ori	8,8,(HID0_ICFI|HID0_ICE)
+	ori	8,8,(HID0_ICFI|HID0_ICE|HID0_DCFI|HID0_DCE)
+#	ori	8,8,(HID0_ICFI|HID0_ICE)
 	mtspr	SPR_HID0,8
 	isync
-7:	sync
+8:	sync
 	mfspr	8,SPR_HID0
 	andi.	0,8,(HID0_ICFI|HID0_DCFI)
-	bne	7b
+	bne	8b
 #endif
 	
-#if 1
+#if 0
 	mfspr	8,SPR_L2CR
 	oris	8,8,L2CR_L2E@h
 	sync
 	mtspr	SPR_L2CR,8
 	sync
 #endif
+16:
 #endif
 
 /* compute end of kernel memory */
