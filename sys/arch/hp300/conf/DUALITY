@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.23 1996/12/09 01:53:32 thorpej Exp $
+#	$NetBSD: DUALITY,v 1.24 1996/12/11 09:10:39 thorpej Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -36,7 +36,7 @@ options		"TCP_COMPAT_42"
 #options	"COMPAT_HPUX"
 #options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 options 	EXEC_AOUT		# support for exec'ing a.out
-options 	EXEC_SCRIPT		# support for !# scripts
+options 	EXEC_SCRIPT		# support for #! scripts
 
 options		FFS,QUOTA
 options		LFS
