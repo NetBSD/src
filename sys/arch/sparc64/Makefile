@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1999/05/09 19:24:19 eeh Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/31 22:17:05 eeh Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
 TSPARC64=	../sparc64/tags
-SSPARC64=	../sparc64/dev/*.[ch] ../sparc64/fpu/*.[ch] \
+SSPARC64=	../sparc64/dev/*.[ch] ../../sparc/sparc/fpu/*.[ch] \
 	../sparc64/include/*.[ch] ../sparc64/sparc64/*.[ch]
 ASPARC64=	../sparc64/sparc64/*.s
 # CSPARC64=	../../compat/*/*.[ch]
@@ -11,7 +11,7 @@ ASPARC64=	../sparc64/sparc64/*.s
 # Directories in which to place tags links
 DSPARC64=	conf dev fpu include sparc64
 
-SYSDIR=		../../
+SYSDIR=		../..
 .include "../../kern/Make.tags.inc"
 
 tags:
@@ -25,7 +25,7 @@ tags:
 COMM!=  find ${SYSDIR} -name "arch" -prune -o -name "*.[ch]" -print 
 .endif
 
-TAGS:
+TAGS: ${SSPARC64} ${COMM} ${CSPARC64} ${ASPARC64}
 	etags  ${SSPARC64} ${COMM} ${CSPARC64} "--regex=/ENTRY(.*)/" \
 		"--regex=/FUNC(.*)/" "--regex=/SYSCALL(.*)/" ${ASPARC64}
 
