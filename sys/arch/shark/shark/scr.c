@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10.2.4 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.2.5 2005/02/15 21:32:51 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.10.2.4 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.10.2.5 2005/02/15 21:32:51 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1185,7 +1185,7 @@ struct lwp  *l;
                         restore_interrupts(savedInts);
                         // dont stop clock, done at bottom of case 
                     }
-                    masterDoneRetries ++;
+                    masterDoneRetries++;
 
                     // get done bit 
                     savedInts = disable_interrupts(I32_bit | F32_bit);
@@ -1332,7 +1332,7 @@ struct lwp  *l;
                         sc->masterDone = TRUE;
                         restore_interrupts(savedInts);
                      }
-                     masterDoneRetries ++;
+                     masterDoneRetries++;
                     
                     
                     // get done bit 

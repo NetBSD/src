@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.47.2.4 2005/02/04 11:48:04 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.47.2.5 2005/02/15 21:33:40 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.4 2005/02/04 11:48:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.5 2005/02/15 21:33:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1007,8 +1007,7 @@ TAILQ_HEAD(dadq_head, dadq);
 struct dadq {
 	TAILQ_ENTRY(dadq) dad_list;
 	struct ifaddr *dad_ifa;
-	int dad_count;		/* max NS to send, standard case */
-	int dad_maxcount;	/* max NS to send, loopback detection */
+	int dad_count;		/* max NS to send */
 	int dad_ns_tcount;	/* # of trials to send NS */
 	int dad_ns_ocount;	/* NS sent so far */
 	int dad_ns_icount;
@@ -1121,7 +1120,6 @@ nd6_dad_start(ifa, tick)
 	dp->dad_ifa = ifa;
 	IFAREF(ifa);	/* just for safety */
 	dp->dad_count = ip6_dad_count;
-	dp->dad_maxcount = 3 * ip6_dad_count; /* XXX sysctl??? */
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	if (tick == NULL) {
@@ -1213,9 +1211,7 @@ nd6_dad_timer(ifa)
 	}
 
 	/* Need more checks? */
-	if ((dp->dad_ns_ocount < dp->dad_count)
-	    || ((dp->dad_ns_ocount < dp->dad_maxcount)
-		&& (dp->dad_ns_icount == dp->dad_ns_ocount))) {
+	if (dp->dad_ns_ocount < dp->dad_count) {
 		/*
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
@@ -1239,27 +1235,9 @@ nd6_dad_timer(ifa)
 			duplicate++;
 		}
 
-		if (dp->dad_ns_icount) { /* heuristics */
-			/*
-			 * if
-			 * - we have sent many DAD NS, and
-			 * - the number of NS we sent equals to the
-			 *   number of NS we've got, and
-			 * - we've got no NA
-			 * we may have a faulty network which
-			 * loops back multicasts to myself.
-			 */
-			if (dp->dad_ns_ocount == dp->dad_maxcount
-			 && dp->dad_ns_icount == dp->dad_ns_ocount
-			 && dp->dad_na_icount == 0) {
-				log(LOG_INFO, "DAD questionable for %s(%s): "
-				    "network loops back multicast?\n",
-				    ip6_sprintf(&ia->ia_addr.sin6_addr),
-				    if_name(ifa->ifa_ifp));
-			} else {
-				/* DAD has failed. */
-				duplicate++;
-			}
+		if (dp->dad_ns_icount) {
+			/* We've seen NS, means DAD has failed. */
+			duplicate++;
 		}
 
 		if (duplicate) {
@@ -1346,7 +1324,6 @@ nd6_dad_ns_output(dp, ifa)
 		return;
 	}
 
-	dp->dad_ns_tcount = 0;
 	dp->dad_ns_ocount++;
 	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
 }

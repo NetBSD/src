@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.4.2.3 2004/09/21 13:13:42 skrll Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.4.2.4 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.4.2.3 2004/09/21 13:13:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.4.2.4 2005/02/15 21:32:32 skrll Exp $");
 
 #include "opt_perfctrs.h"
+#include "opt_i80321.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.4.2.3 2004/09/21 13:13:42 skrll E
 
 void	(*i80321_hardclock_hook)(void);
 
+#ifndef COUNTS_PER_SEC
 #define	COUNTS_PER_SEC		200000000	/* 200MHz */
+#endif
 #define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
 
 static void *clock_ih;

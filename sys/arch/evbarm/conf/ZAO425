@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.7.2.4 2004/11/14 08:15:06 skrll Exp $
+#	$NetBSD: ZAO425,v 1.7.2.5 2005/02/15 21:32:32 skrll Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -53,6 +53,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

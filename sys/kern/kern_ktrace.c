@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.12 2005/02/15 18:04:48 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.13 2005/02/15 21:33:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.12 2005/02/15 18:04:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.13 2005/02/15 21:33:29 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -899,16 +899,18 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 	if (!ret)
 		error = EPERM;
 done:
-	if (error != 0 && ktd != NULL)
-		/*
-		 * Wakup the thread so that it can be die if we
-		 * can't trace any process.
-		 */
-		ktd_wakeup(ktd);
-	if (KTROP(ops) == KTROP_SET ||
-	    KTROP(ops) == KTROP_CLEARFILE) {
-		simple_lock(&ktd->ktd_slock);
-		ktdrel(ktd);
+	if (ktd != NULL) {
+		if (error != 0) {
+			/*
+			 * Wakeup the thread so that it can be die if we
+			 * can't trace any process.
+			 */
+			ktd_wakeup(ktd);
+		}
+		if (KTROP(ops) == KTROP_SET || KTROP(ops) == KTROP_CLEARFILE) {
+			    simple_lock(&ktd->ktd_slock);
+			    ktdrel(ktd);
+		}
 	}
 	curp->p_traceflag &= ~KTRFAC_ACTIVE;
 	return (error);

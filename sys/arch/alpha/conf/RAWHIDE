@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.18.2.5 2005/02/04 11:44:14 skrll Exp $
+# $NetBSD: RAWHIDE,v 1.18.2.6 2005/02/15 21:32:31 skrll Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -28,6 +28,8 @@ file-system	PORTAL		# Portal file system
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
+
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 options 	INET
 options 	GATEWAY

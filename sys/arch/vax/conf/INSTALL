@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29.6.5 2005/02/04 11:45:08 skrll Exp $
+#	$NetBSD: INSTALL,v 1.29.6.6 2005/02/15 21:33:01 skrll Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -67,6 +67,7 @@ file-system 	CD9660
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.

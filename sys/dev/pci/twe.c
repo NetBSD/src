@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.37.2.5 2004/09/24 10:53:28 skrll Exp $	*/
+/*	$NetBSD: twe.c,v 1.37.2.6 2005/02/15 21:33:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.5 2004/09/24 10:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.6 2005/02/15 21:33:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,7 @@ const struct twe_code_table twe_table_unittype[] = {
 	{ TWE_AD_CONFIG_TwinStor,		"TwinStor" },
 	{ TWE_AD_CONFIG_RAID5,			"RAID5" },
 	{ TWE_AD_CONFIG_RAID10,			"RAID10" },
+	{ TWE_UD_CONFIG_JBOD,			"JBOD" },
 
 	{ 0,					NULL }
 };
@@ -202,6 +203,10 @@ const struct twe_code_table twe_table_stripedepth[] = {
 	{ TWE_AD_STRIPE_16k,			"16K" },
 	{ TWE_AD_STRIPE_32k,			"32K" },
 	{ TWE_AD_STRIPE_64k,			"64K" },
+	{ TWE_AD_STRIPE_128k,			"128K" },
+	{ TWE_AD_STRIPE_256k,			"256K" },
+	{ TWE_AD_STRIPE_512k,			"512K" },
+	{ TWE_AD_STRIPE_1024k,			"1024K" },
 
 	{ 0,					NULL }
 };

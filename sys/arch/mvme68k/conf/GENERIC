@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.5 2005/02/04 11:44:46 skrll Exp $
+# $NetBSD: GENERIC,v 1.42.2.6 2005/02/15 21:32:50 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.5 $"
+#ident 		"GENERIC-$Revision: 1.42.2.6 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -66,6 +66,7 @@ file-system 	CD9660
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_SNAPSHOT	# ffs snapshots
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options

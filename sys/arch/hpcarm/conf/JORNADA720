@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.30.2.5 2005/02/04 11:44:19 skrll Exp $
+#	$NetBSD: JORNADA720,v 1.30.2.6 2005/02/15 21:32:33 skrll Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.30.2.5 $"
+#ident 		"GENERIC-$Revision: 1.30.2.6 $"
 
 # estimated number of users
 maxusers	32
@@ -51,6 +51,7 @@ file-system	NULLFS		# loopback file system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 #options 	NFSSERVER
 
 # Networking options

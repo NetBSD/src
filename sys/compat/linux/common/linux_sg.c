@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.1.2.2 2005/02/04 11:45:08 skrll Exp $ */
+/* $NetBSD: linux_sg.c,v 1.1.2.3 2005/02/15 21:33:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.2 2005/02/04 11:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.3 2005/02/15 21:33:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.2 2005/02/04 11:45:08 skrll Exp $
 #include <compat/linux/common/linux_sg.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+int linux_sg_version = 30125;
 
 #ifdef LINUX_SG_DEBUG
 #define DPRINTF(a)	printf a
@@ -87,8 +89,8 @@ linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
 	DPRINTF(("Command = %lx\n", com));
 	switch (com) {
 	case LINUX_SG_GET_VERSION_NUM: {
-		short version = 30124;
-		error = copyout(&version, SCARG(uap, data), sizeof(version));
+		error = copyout(&version, SCARG(uap, data),
+		    sizeof(linux_sg_version));
 		break;
 	}
 	case LINUX_SG_IO:
@@ -147,9 +149,9 @@ linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
 #ifdef LINUX_SG_DEBUG
 		dump_scsireq(&req);
 #endif
-		(void)memset(&req, 0, sizeof(req));
-
 		if (req.senselen_used) {
+			if (req.senselen > lreq.mx_sb_len)
+				req.senselen = lreq.mx_sb_len;
 			lreq.sb_len_wr = req.senselen;
 			error = copyout(req.sense, lreq.sbp, req.senselen);
 			if (error) {

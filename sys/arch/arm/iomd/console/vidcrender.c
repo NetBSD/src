@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.11.2.4 2004/09/21 13:13:31 skrll Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.11.2.5 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.4 2004/09/21 13:13:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.5 2005/02/15 21:32:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1266,7 +1266,7 @@ vidc_cursor_init(vc)
  	cursor_transparent += 32;
 	cursor_transparent = (char *)((int)cursor_transparent & (~31) );
 
-	for ( line = 0; line<R_DATA->font->pixel_height; ++ line )
+	for ( line = 0; line<R_DATA->font->pixel_height; ++line )
 	{
 	    for ( counter=0; counter<R_DATA->font->pixel_width/4;counter++ )
 		cursor_normal[line*R_DATA->font->pixel_width + counter]=0x55;
@@ -1274,7 +1274,7 @@ vidc_cursor_init(vc)
 		cursor_normal[line*R_DATA->font->pixel_width + counter]=0;
 	}
 
-	for ( line = 0; line<R_DATA->font->pixel_height; ++ line )
+	for ( line = 0; line<R_DATA->font->pixel_height; ++line )
 	{
 	    for ( counter=0; counter<R_DATA->font->pixel_width/4;counter++ )
 		cursor_transparent[line*R_DATA->font->pixel_width + counter]=0x00;

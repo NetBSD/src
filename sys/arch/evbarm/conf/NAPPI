@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.6.2.5 2004/11/14 08:15:05 skrll Exp $
+#	$NetBSD: NAPPI,v 1.6.2.6 2005/02/15 21:32:32 skrll Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -48,6 +48,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.12.28.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.12.28.4 2005/02/15 21:33:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -258,7 +258,7 @@ typedef unsigned short RefNum;
 	(diffp)->tv_sec = time.tv_sec - (oldtvalp)->tv_sec;\
 	(diffp)->tv_usec = time.tv_usec - (oldtvalp)->tv_usec;\
 	if( (diffp)->tv_usec <0 ) {\
-		(diffp)->tv_sec --;\
+		(diffp)->tv_sec--;\
 		(diffp)->tv_usec = 1000000 - (diffp)->tv_usec;\
 	}\
 }

@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.56.2.7 2005/02/04 11:44:16 skrll Exp $
+# $NetBSD: ATARITT,v 1.56.2.8 2005/02/15 21:32:32 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -59,6 +59,7 @@ file-system LFS # log-structured file system
 options QUOTA # Disk quotas for local disks
 
 options SOFTDEP # FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 options NFSSERVER # Network File System server side code
 

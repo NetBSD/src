@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.20.2.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: key.c,v 1.20.2.5 2005/02/15 21:33:40 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.20.2.4 2004/09/21 13:37:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.20.2.5 2005/02/15 21:33:40 skrll Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -183,6 +183,11 @@ static const int minsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	sizeof(struct sadb_x_policy),	/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
+	sizeof(struct sadb_x_nat_t_oa),		/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 static const int maxsize[] = {
 	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
@@ -205,6 +210,11 @@ static const int maxsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	0,				/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
+	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
+	sizeof(struct sadb_x_nat_t_oa),		/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 
 static int ipsec_esp_keymin = 256;
@@ -6892,6 +6902,7 @@ static int (*key_typesw[]) __P((struct socket *, struct mbuf *,
 	key_spdadd,	/* SADB_X_SPDSETIDX */
 	NULL,		/* SADB_X_SPDEXPIRE */
 	key_spddelete2,	/* SADB_X_SPDDELETE2 */
+	NULL,		/* SADB_X_NAT_T_NEW_MAPPING */
 };
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.2.2.6 2005/02/04 11:44:14 skrll Exp $
+#	$NetBSD: SIMICS,v 1.2.2.7 2005/02/15 21:32:31 skrll Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -106,6 +106,7 @@ file-system 	FFS		# UFS
 #options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

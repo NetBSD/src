@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4.6.5 2005/02/04 11:44:13 skrll Exp $
+# $NetBSD: INSTALL,v 1.4.6.6 2005/02/15 21:32:31 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -51,6 +51,7 @@ file-system	KERNFS		# /kern
 options 	FFS_EI		# FFS endianness-independence support
 #options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Make a smaller NFS
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Executable format options
 options 	EXEC_ELF32

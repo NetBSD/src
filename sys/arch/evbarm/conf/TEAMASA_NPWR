@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.26.2.5 2005/02/04 11:44:17 skrll Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.26.2.6 2005/02/15 21:32:32 skrll Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -52,6 +52,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.16.22.3 2004/09/21 13:22:58 skrll Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.16.22.4 2005/02/15 21:33:01 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16.22.3 2004/09/21 13:22:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16.22.4 2005/02/15 21:33:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -822,7 +822,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 					/* Error -- ran out of storage. */
 					return (-1);
 				}
-				parent ++;
+				parent++;
 #ifdef DEBUG
 				DPRINTF(("Match! using "));
 				for (len=0; len<pintr_cells; len++)

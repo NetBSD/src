@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.16.2.5 2005/01/17 19:29:12 skrll Exp $
+#	$NetBSD: MDINSTALL,v 1.16.2.6 2005/02/15 21:32:31 skrll Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -49,6 +49,7 @@ file-system 	MSDOSFS		# MS-DOS filesystem
 file-system 	KERNFS		# kernel data-structure filesystem
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 #
 # Support for various kernel options
