@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.4 1995/08/29 21:55:50 phil Exp $	*/
+/*	$NetBSD: sd.c,v 1.1 1997/05/17 13:56:11 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,10 +46,18 @@
  * SCSI CCS disk driver
  */
 
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include "stand.h"
-#include "samachdep.h"
+
+#include <lib/libsa/stand.h>
+
+#include <pc532/stand/common/samachdep.h>
 
 struct	sd_softc {
 	int	sc_ctlr;
@@ -69,7 +77,7 @@ int debug = SD_DEBUG;
 sdinit(ctlr, unit)
 	int ctlr, unit;
 {
-	register struct sd_softc *ss = &sd_softc[ctlr][unit];
+	struct sd_softc *ss = &sd_softc[ctlr][unit];
 
 	/* HP version does test_unit_ready
  	 * followed by read_capacity to get blocksize
@@ -86,9 +94,9 @@ sdreset(ctlr, unit)
 char io_buf[MAXBSIZE];
 
 sdgetinfo(ss)
-	register struct sd_softc *ss;
+	struct sd_softc *ss;
 {
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	char *msg, *getdisklabel();
 	int sdstrategy(), i, err;
 
@@ -115,19 +123,36 @@ sdgetinfo(ss)
 	return(1);
 }
 
-sdopen(f, ctlr, unit, part)
+int
+#if __STDC__
+sdopen(struct open_file *f, ...)
+#else
+sdopen(f, va_alist)
 	struct open_file *f;
-	int ctlr, unit, part;
+	va_dcl
+#endif
 {
-	register struct sd_softc *ss;
-	register struct disklabel *lp;
+	struct sd_softc *ss;
+	struct disklabel *lp;
+	int ctlr, unit, part;
+	va_list ap;
+
+#if __STDC__
+	va_start(ap, f);
+#else
+	va_start(ap);
+#endif
+	ctlr = va_arg(ap, int);
+	unit = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 #ifdef SD_DEBUG
 	if (debug)
 	printf("sdopen: ctlr=%d unit=%d part=%d\n",
 	    ctlr, unit, part);
 #endif
-	
+
 	if (ctlr >= NSCSI || !scsialive(ctlr))
 		return (EADAPT);
 	if (unit >= NSD)
@@ -150,19 +175,35 @@ sdopen(f, ctlr, unit, part)
 	return (0);
 }
 
+sdclose(f)
+	struct open_file *f;
+{
+	struct sd_softc *ss = f->f_devdata;
+
+	/*
+	 * Mark the disk `not alive' so that the disklabel
+	 * will be re-loaded at next open.
+	 */
+	ss->sc_alive = 0;
+	f->f_devdata = NULL;
+
+	return (0);
+}
+
 int
-sdstrategy(ss, func, dblk, size, buf, rsize)
-	register struct sd_softc *ss;
+sdstrategy(ss_vp, func, dblk, size, buf, rsize)
+	void *ss_vp;
 	int func;
 	daddr_t dblk;		/* block number */
 	u_int size;		/* request size in bytes */
-	char *buf;
+	void *buf;
 	u_int *rsize;		/* out: bytes transferred */
 {
-	register int ctlr = ss->sc_ctlr;
-	register int unit = ss->sc_unit;
- 	register int part = ss->sc_part;
-	register struct partition *pp = &ss->sc_label.d_partitions[part];
+	struct sd_softc *ss = ss_vp;
+	int ctlr = ss->sc_ctlr;
+	int unit = ss->sc_unit;
+	int part = ss->sc_part;
+	struct partition *pp = &ss->sc_label.d_partitions[part];
 	u_int nblk = size >> DEV_BSHIFT;
 	u_int blk = dblk + pp->p_offset;
 	char stat;

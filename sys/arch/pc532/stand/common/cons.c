@@ -1,8 +1,13 @@
-/*	$NetBSD: prf.c,v 1.2 1994/10/26 08:25:50 cgd Exp $	*/
+/*	$NetBSD: cons.c,v 1.1 1997/05/17 13:56:03 matthias Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1990, 1993
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,48 +37,62 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)prf.c	8.1 (Berkeley) 6/10/93
+ * from: Utah Hdr: cons.c 1.7 92/02/28
+ *
+ *	@(#)cons.c	8.1 (Berkeley) 6/10/93
  */
 
-getchar()
-{
-	register int c;
+#include <sys/param.h>
+#include <dev/cons.h>
 
-	while((c = cngetc()) == 0)
-		;
-	if (c == '\r')
-		c = '\n';
-	else if (c == ('c'&037)) {
-		panic("^C");
-		/* NOTREACHED */
+#include <pc532/stand/common/consdefs.h>
+#include <pc532/stand/common/samachdep.h>
+
+struct consdev constab[] = {
+#ifdef SCNCONSOLE
+	{ scnprobe,	scninit,	scngetchar,	scnputchar },
+#endif
+	{ 0 },
+};
+
+struct consdev *cn_tab;
+int noconsole;
+
+void
+cninit()
+{
+	register struct consdev *cp;
+
+	cn_tab = NULL;
+	noconsole = 1;
+	for (cp = constab; cp->cn_probe; cp++) {
+		(*cp->cn_probe)(cp);
+		if (cp->cn_pri > CN_DEAD &&
+		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
+			cn_tab = cp;
 	}
-	if (c != '\b' && c != '\177')
-		putchar(c);
-	return(c);
+	if (cn_tab) {
+		(*cn_tab->cn_init)(cn_tab);
+		noconsole = 0;
+	}
 }
 
-tgetchar()
+int
+cngetc()
 {
-	register int c;
-
-	if ((c = cngetc()) == 0)
-		return(0);
-	
-	if (c == '\r')
-		c = '\n';
-	else if (c == ('c'&037)) {
-		panic("^C");
-		/* NOTREACHED */
-	}
-	if (c != '\b' && c != '\177')
-		putchar(c);
-	return(c);
+	/* Note: the dev_t arguments are not used! */
+	if (cn_tab)
+		return((*cn_tab->cn_getc)(0));
+	return(0);
 }
 
-putchar(c)
-	register int c;
+int
+cnputc(c)
+	int c;
 {
-	cnputc(c);
-	if (c == '\n')
-		cnputc('\r');
+	/* Note: the dev_t arguments are not used! */
+	if (cn_tab)
+		(*cn_tab->cn_putc)(0, c);
+
+	return (0);
 }

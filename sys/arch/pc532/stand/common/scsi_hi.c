@@ -1,40 +1,21 @@
-/*	$NetBSD: scsi_hi.c,v 1.3 1994/10/26 08:25:53 cgd Exp $	*/
+/*	$NetBSD: scsi_hi.c,v 1.1 1997/05/17 13:56:09 matthias Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver
  * Bruce Culbertson
  * 8 March 1990
  * (This source is public domain source)
- *
- * There are three monitor SCSI commands.  "Read" and "write" I think are
- * fairly self explanatory once you read the help messages.  They, in fact,
- * execute the "extended read", "extended write", and "request sense"
- * commands from the SCSI standard.
- * 
- * "Raw" lets you execute any SCSI command but you need a SCSI reference to
- * know what the commands are and what their formats are.  The SCSI
- * standard specifies that there are six buffers which, for example, hold a
- * SCSI command or are the source or destination for data.  You provide
- * "raw" with an array of pointers to the six buffers.  Using "edit", you
- * can enter a SCSI command somewhere in memory and you can create the
- * array of pointers.  The array must actually be eight entries long; two
- * entries are not used.  By typing "raw <array address>", the SCSI command
- * is executed.
- * 
- * By the way, "read", "write", and "raw" talk only to the DP8490 SCSI
- * controller.  I have not had time to read the Adaptec data sheet and
- * write a driver for it.
  ****************************************************************************/
-#include "so.h"
+
+#include <lib/libsa/stand.h>
+
+#include <pc532/stand/common/so.h>
 
 #define OK 			0
 #define NOT_OK			OK+1
 #define	PRIVATE
 #define PUBLIC
 #define U8			unsigned char
-
-long	scsiAdr = DEFAULT_SCSI_ADR,	/* default SCSI address */
-	scsiLun = DEFAULT_SCSI_LUN;
 
 struct cmd_desc {			/* SCSI command description */
   const U8	*cmd;			/* command string */
@@ -54,34 +35,7 @@ struct drive {				/* SCSI drive description */
 /* for drive.stat */
 #define INITIALIZED		1	/* device is initialized */
 
-#ifdef OMTI
-/* These SCSI commands initialize a OMTI 5200 SCSI controller with a 360K
- * floppy at LUN=1 and an ST-225 at LUN=0.
- */
-const U8 floppy_parms_cmd[] =	{0xc2, 0x20, 0, 0, 0, 0};
-const U8 floppy_parms_data[] =	{0, 3, 0x27, 0xa, 0, 0, 0, 0x80, 1, 0};
-const U8 floppy_format_cmd[] =	{0xc0, 0x20, 0, 0, 9, 0x8b};
-const U8 floppy_recal_cmd[] =	{1, 0x20, 0, 0, 0, 0};
-const U8 wini_parms_cmd[] =	{0xc2, 0, 0, 0, 0, 0};
-const U8 wini_parms_data[] =	{0, 0, 0, 3, 2, 0x63, 0, 1, 0x10, 0};
-const U8 wini_recal_cmd[] =	{1, 0, 0, 0, 0, 0};
-const struct cmd_desc floppy_init2 =
-	{floppy_recal_cmd, 0, 0};
-const struct cmd_desc floppy_init1 =
-	{floppy_format_cmd, 0, &floppy_init2};
-const struct cmd_desc floppy_init0 =
-	{floppy_parms_cmd, floppy_parms_data, &floppy_init1};
-const struct cmd_desc wini_init1 =
-	{wini_recal_cmd, 0, 0};
-const struct cmd_desc wini_init0 =
-	{wini_parms_cmd, wini_parms_data, &wini_init1};
-#endif
-
 PRIVATE struct drive drive_tbl[] = {
-#ifdef OMTI
-  {1, 0, 0, 0, &wini_init0},
-  {1, 1, 0, 0, &floppy_init0},
-#endif
   {0, 0, EXTENDED_RDWR | EXTENDED_SENSE, 1, 0},
 };
 #define DRV_TBL_SZ (sizeof (drive_tbl) / sizeof (struct drive))
@@ -128,7 +82,7 @@ PRIVATE struct scsi_args scsi_args;
 /* Carry out a read or write request for the SCSI disk. */
 PRIVATE int
 sc_rdwt(op, block, ram_adr, len, sc_adr, lun)
-long block, ram_adr, len, sc_adr, lun;
+int block; void *ram_adr; int len, sc_adr, lun;
 {
   int retries, ret;
   U8 *p;

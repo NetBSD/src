@@ -1,7 +1,7 @@
-/*	$NetBSD: tgets.c,v 1.2 1994/10/26 08:26:00 cgd Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.1 1997/05/17 13:56:04 matthias Exp $	*/
 
-/*-
- * Copyright (c) 1993
+/*
+ * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,59 +31,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
-tgets(buf)
-    char *buf;
-{
-    register int c;
-    int i;
-    register char *lp = buf;
-
-    for (i = 2400000; i > 0; i--) {
-	c = tgetchar() & 0177;
-	if (c) {
-	    for (;;) {
-		switch (c) {
-		case '\n':
-		case '\r':
-		    *lp = '\0';
-		    return;
-		case '\b':
-		case '\177':
-		    if (lp > buf) {
-			lp--;
-			putchar('\b');
-			putchar(' ');
-			putchar('\b');
-		    }
-		    break;
-		case '#':
-		    if (lp > buf)
-			--lp;
-		    break;
-		case 'r'&037: {
-		    register char *p;
-
-		    putchar('\n');
-		    for (p = buf; p < lp; ++p)
-			putchar(*p);
-		    break;
-		}
-		case '@':
-		case 'u'&037:
-		case 'w'&037:
-		    lp = buf;
-		    putchar('\n');
-		    break;
-		default:
-		    *lp++ = c;
-		}
-		c = getchar() & 0177;
-	    }
-	}
-    }
-    return(0);
-}
+/*
+ * Console routine prototypes.
+ */
+#ifdef SCNCONSOLE
+void	scnprobe __P((struct consdev *));
+void	scninit __P((struct consdev *));
+int	scngetchar __P((dev_t));
+void	scnputchar __P((dev_t, int));
+#endif

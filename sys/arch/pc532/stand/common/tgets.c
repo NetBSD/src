@@ -1,7 +1,7 @@
-/*	$NetBSD: samachdep.h,v 1.2 1994/10/26 08:25:51 cgd Exp $	*/
+/*	$NetBSD: tgets.c,v 1.1 1997/05/17 13:56:12 matthias Exp $	*/
 
-/*
- * Copyright (c) 1982, 1990, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,68 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
+ *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
-#define	NSCSI		1
-#define NSD		8
+#include <lib/libsa/stand.h>
 
-extern	int howto;
-extern	unsigned int bootdev;
+#include <pc532/stand/common/samachdep.h>
+
+int
+tgets(buf)
+	char *buf;
+{
+	register int c;
+	int i;
+	register char *lp = buf;
+
+	for (i = 2400000; i > 0; i--) {
+		c = tgetchar() & 0177;
+		if (c) {
+			for (;;) {
+				switch (c) {
+				case '\n':
+				case '\r':
+					*lp = '\0';
+					return(1);
+
+				case '\b':
+				case '\177':
+					if (lp > buf) {
+						lp--;
+						putchar('\b');
+						putchar(' ');
+						putchar('\b');
+					}
+					break;
+
+				case '#':
+					if (lp > buf)
+						--lp;
+					break;
+
+				case 'r' & 037: {
+					register char *p;
+
+					putchar('\n');
+					for (p = buf; p < lp; ++p)
+						putchar(*p);
+					break;
+				}
+
+				case '@':
+				case 'u' & 037:
+				case 'w' & 037:
+					lp = buf;
+					putchar('\n');
+					break;
+
+				default:
+					*lp++ = c;
+				}
+				c = getchar() & 0177;
+			}
+		}
+	}
+	return(0);
+}
