@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.10 1999/04/18 02:27:54 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.11 1999/05/03 15:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.10 1999/04/18 02:27:54 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.11 1999/05/03 15:17:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -227,6 +227,7 @@ _nsdbtput(dbt)
 
 
 int
+/*ARGSUSED*/
 #if __STDC__
 nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	    const char *method, const ns_src defaults[], ...)
