@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.1 1997/01/16 22:01:03 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.2 1997/01/22 23:51:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -63,7 +63,7 @@ isapnp_wait_status(sc)
 	for (i = 0; i < 10; i++) {
 		if (isapnp_read_reg(sc, ISAPNP_STATUS) & 1)
 			return 0;
-		DELAY(10);
+		DELAY(100);
 	}
 	return 1;
 }
