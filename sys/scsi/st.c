@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.35.2.1 1994/08/09 18:50:52 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.35.2.2 1994/10/06 05:09:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1683,9 +1683,10 @@ st_interpret_sense(xs)
 	/*
 	 * Get the sense fields and work out what code
 	 */
-	if (sense->error_code & SSD_ERRCODE_VALID)
-		info = ntohl(*((int *) sense->extended_info));
-	else
+	if (sense->error_code & SSD_ERRCODE_VALID) {
+		bcopy(&sense->extended_info, &info, sizeof info);
+		info = ntohl(info);
+	} else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */

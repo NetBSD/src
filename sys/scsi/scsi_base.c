@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.15 1994/06/29 23:32:42 deraadt Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.15.2.1 1994/10/06 05:09:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -617,9 +617,10 @@ scsi_interpret_sense(xs)
 		key = sense->extended_flags & SSD_KEY;
 		printf(" DELAYED ERROR, key = 0x%x\n", key);
 	case 0x70:
-		if (sense->error_code & SSD_ERRCODE_VALID)
-			info = ntohl(*((long *) sense->extended_info));
-		else
+		if (sense->error_code & SSD_ERRCODE_VALID) {
+			bcopy(&sense->extended_info, &info, sizeof info);
+			info = ntohl(info);
+		} else
 			info = 0;
 		key = sense->extended_flags & SSD_KEY;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.24 1994/06/29 06:48:18 cgd Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.24.2.1 1994/10/06 05:05:13 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -517,7 +517,8 @@ vm_object_deactivate_pages(object)
 	for (p = object->memq.tqh_first; p != NULL; p = next) {
 		next = p->listq.tqe_next;
 		vm_page_lock_queues();
-		vm_page_deactivate(p);
+		if (p->flags & PG_ACTIVE)
+			vm_page_deactivate(p);
 		vm_page_unlock_queues();
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.9 1994/06/29 06:44:37 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.9.2.1 1994/10/06 05:07:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -216,7 +216,7 @@ union mcluster {
 	MBUFLOCK( \
 	  if (mclfree == 0) \
 		(void)m_clalloc(1, (how)); \
-	  if ((p) = (caddr_t)mclfree) { \
+	  if (((p) = (caddr_t)mclfree) != 0) { \
 		++mclrefcnt[mtocl(p)]; \
 		mbstat.m_clfree--; \
 		mclfree = ((union mcluster *)(p))->mcl_next; \
@@ -374,6 +374,7 @@ struct	mbuf *m_prepend __P((struct mbuf *, int, int));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));
+void	m_adj __P((struct mbuf *, int));
 int	m_clalloc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_freem __P((struct mbuf *));
