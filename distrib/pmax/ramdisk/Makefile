@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/05/04 02:46:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.8 1999/05/06 20:51:22 simonb Exp $
 
 BINDIR=		/installation/netboot
 
@@ -19,8 +19,9 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
-IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
+
+CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
@@ -63,7 +64,7 @@ realinstall:
 		-m ${NONBINMODE} ${DISKIMAGE} ${RELEASEDIR}${BINDIR}
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core ${CLEANFILES} *.o *.lo *.c
 
 # XXX!
 depend:
