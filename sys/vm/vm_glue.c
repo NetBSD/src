@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.39 1994/06/29 06:47:57 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.40 1994/08/23 22:09:22 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -229,17 +229,17 @@ vm_fork(p1, p2, isvfork)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
-	addr = kmem_alloc_pageable(kernel_map, ctob(UPAGES));
+	addr = kmem_alloc_pageable(kernel_map, USPACE);
 	if (addr == 0)
 		panic("vm_fork: no more kernel virtual memory");
-	vm_map_pageable(kernel_map, addr, addr + ctob(UPAGES), FALSE);
+	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
 #else
 	/*
 	 * XXX somehow, on 386, ocassionally pageout removes active, wired down
 	 * kstack and pagetables, WITHOUT going thru vm_page_unwire! Why this
 	 * appears to work is not yet clear, yet it does...
 	 */
-	addr = kmem_alloc(kernel_map, ctob(UPAGES));
+	addr = kmem_alloc(kernel_map, USPACE);
 	if (addr == 0)
 		panic("vm_fork: no more kernel virtual memory");
 #endif
@@ -366,7 +366,7 @@ noswap:
 	 * This part is really bogus cuz we could deadlock on memory
 	 * despite our feeble check.
 	 */
-	size = round_page(ctob(UPAGES));
+	size = round_page(USPACE);
 	addr = (vm_offset_t) p->p_addr;
 	if (cnt.v_free_count > atop(size)) {
 #ifdef DEBUG
@@ -463,10 +463,10 @@ swapout_threads()
 	 * If we didn't get rid of any real duds, toss out the next most
 	 * likely sleeping/stopped or running candidate.  We only do this
 	 * if we are real low on memory since we don't gain much by doing
-	 * it (UPAGES pages).
+	 * it (USPACE bytes).
 	 */
 	if (didswap == 0 &&
-	    cnt.v_free_count <= atop(round_page(ctob(UPAGES)))) {
+	    cnt.v_free_count <= atop(round_page(USPACE))) {
 		if ((p = outp) == 0)
 			p = outp2;
 #ifdef DEBUG
@@ -491,7 +491,7 @@ swapout(p)
 		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
 		       p->p_slptime, cnt.v_free_count);
 #endif
-	size = round_page(ctob(UPAGES));
+	size = round_page(USPACE);
 	addr = (vm_offset_t) p->p_addr;
 #ifdef notyet	/* XXX GC -- enable swapping! */
 #ifdef m68k
