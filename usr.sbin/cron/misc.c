@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1998/01/31 14:40:37 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1998/02/04 15:27:19 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1998/01/31 14:40:37 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1998/02/04 15:27:19 christos Exp $");
 #endif
 #endif
 
@@ -640,26 +640,25 @@ mkprints(src, len)
 
 
 #ifdef MAIL_DATE
-/* Sat, 27 Feb 93 11:44:51 CST
- * 123456789012345678901234567
+/* Sat, 27 Feb 1993 11:44:51 -0800 (CST)
+ * 1234567890123456789012345678901234567
  */
 char *
 arpadate(clock)
 	time_t *clock;
 {
-	time_t t = clock ?*clock :time(0L);
+	static char ret[64];	/* zone name might be >3 chars */
+	time_t t = clock ? *clock : time(NULL);
 	struct tm *tm = localtime(&t);
-	static char ret[30];	/* zone name might be >3 chars */
+	int hours = tm->tm_gmtoff / 3600;
+	int minutes = (tp->tm_gmtoff - (hours * 3600)) / 60;
+
+	if (minutes < 0)
+		minutes = -minutes;
 	
-	(void) snprintf(ret, sizeof(ret), "%s, %2d %s %2d %02d:%02d:%02d %s",
-		       DowNames[tm->tm_wday],
-		       tm->tm_mday,
-		       MonthNames[tm->tm_mon],
-		       tm->tm_year,
-		       tm->tm_hour,
-		       tm->tm_min,
-		       tm->tm_sec,
-		       TZONE(*tm));
+	(void)strftime(ret, sizeof(ret), "%a, %e %b %Y %T ????? (%Z)", &tm);
+	(void)snprintf(strchr(ret, '?'), "% .2d%.2d", hours, minutes);
+	ret[sizeof(ret) - 1] = '\0';
 	return ret;
 }
 #endif /*MAIL_DATE*/
