@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.51 2002/05/02 13:53:10 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.52 2002/05/25 14:21:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.51 2002/05/02 13:53:10 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.52 2002/05/25 14:21:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,7 +550,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-"usage: %s [-ds] [-f conffile] [-m markinterval] [-P logpathfile] [-p logpath1] [-p logpath2 ..]\n",
+"usage: %s [-dns] [-f config_file] [-g group] [-m mark_interval]\n\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n\t[-t chroot_dir] [-u user]\n",
 	    getprogname());
 	exit(1);
 }
