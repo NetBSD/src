@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.49 2000/02/02 07:45:13 enami Exp $	*/
+/*	$NetBSD: bpf.c,v 1.50 2000/02/02 08:36:02 enami Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -946,8 +946,6 @@ bpf_setf(d, fp)
 
 	size = flen * sizeof(*fp->bf_insns);
 	fcode = (struct bpf_insn *)malloc(size, M_DEVBUF, M_WAITOK);
-	if (fcode == 0)
-		return (ENOMEM);
 	if (copyin((caddr_t)fp->bf_insns, (caddr_t)fcode, size) == 0 &&
 	    bpf_validate(fcode, (int)flen)) {
 		s = splimp();
@@ -1250,15 +1248,9 @@ static int
 bpf_allocbufs(d)
 	register struct bpf_d *d;
 {
-	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
-	if (d->bd_fbuf == 0)
-		return (ENOBUFS);
 
+	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
 	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
-	if (d->bd_sbuf == 0) {
-		free(d->bd_fbuf, M_DEVBUF);
-		return (ENOBUFS);
-	}
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
 	return (0);
