@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.43 2002/02/02 20:58:53 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.44 2002/02/14 13:42:05 ross Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -15,8 +15,8 @@
 #	local	configuration specific devices
 #	all	create a reasonable amount of all files
 # Tapes:
-#	ht*	massbus tm03 & tu??
-#	tm*	unibus tm11 & te10 emulations (e.g. Emulex tc-11)
+#	ht*	massbus tm03 and tu??
+#	tm*	unibus tm11 and te10 emulations (e.g. Emulex tc-11)
 #	mt*	MSCP tapes (e.g. TU81, TK50)
 #	ts*	unibus ts11
 #	ut*	unibus tu45 emulations (e.g.si 9700)
@@ -57,7 +57,7 @@
 # Special purpose devices:
 #       clockctl clock control for non root users
 #	ik*	unibus interface to ikonas frame buffer
-#	ps*	unibus interface to e&s picture system 2
+#	ps*	unibus interface to picture system 2
 #	ad*	unibus interface to data translation a/d converter
 #	np*	unibus ethernet co-processor interface, for downloading.
 #	qv*	qvss (microvax) display
