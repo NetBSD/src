@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.12 1997/10/10 03:24:49 jonathan Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.13 1997/10/15 00:59:01 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -46,7 +46,7 @@
 #include <mips/cpu.h>		/* mips CPU architecture levels */
 #define _MIPS3_OK() CPUISMIPS3
 #else
-#define _MISP3_OK() 1
+#define _MIPS3_OK() 1
 #endif
 
 	
