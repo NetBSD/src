@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.7 1998/04/09 00:23:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.8 1998/04/09 00:24:05 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -282,7 +282,7 @@ uvm_fork(p1, p2, shared)
 	rv = uvm_fault_wire(kernel_map, (vm_offset_t)up,
 	    (vm_offset_t)up + USPACE);
 	if (rv != KERN_SUCCESS)
-		panic("uvm_forl: uvm_fault_wire failed: %d", rv);
+		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
 	 * p_stats and p_sigacts currently point at fields in the user
