@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.12 2000/02/08 12:51:31 enami Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.13 2000/10/17 10:13:47 haya Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -105,6 +105,22 @@ struct pcmcia_config_entry {
 	SIMPLEQ_ENTRY(pcmcia_config_entry) cfe_list;
 };
 
+
+struct pcmcia_funce_disk {
+	int pfd_interface;
+};
+
+struct pcmcia_funce_lan {
+	int pfl_nidlen;
+	u_int8_t pfl_nid[8];
+};
+
+union pcmcia_funce {
+	struct pcmcia_funce_disk pfv_disk;
+	struct pcmcia_funce_lan pfv_lan;
+};
+
+
 struct pcmcia_function {
 	/* read off the card */
 	int		number;
@@ -131,6 +147,11 @@ struct pcmcia_function {
 	void		*ih_arg;
 	int		ih_ipl;
 	int		pf_flags;
+
+	union pcmcia_funce pf_funce; /* CISTPL_FUNCE */
+#define pf_funce_disk_interface pf_funce.pfv_disk.pfd_interface
+#define pf_funce_lan_nid pf_funce.pfv_lan.pfl_nid
+#define pf_funce_lan_nidlen pf_funce.pfv_lan.pfl_nidlen
 };
 
 /* pf_flags */
