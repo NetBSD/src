@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.1.4.3 1999/01/14 06:57:37 lukem Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.1.4.4 1999/01/15 12:40:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 
 %}
 
+%option yylineno
+
 BLANK		[ \t]
 CR		\n
 STRING		[a-zA-Z][a-zA-Z0-9_]*
@@ -75,8 +77,6 @@ STRING		[a-zA-Z][a-zA-Z0-9_]*
 			char *p;
 			int i;
 
-			if (yyleng > NS_MAXSTR)
-				yytext[NS_MAXSTR] = '\0';
 			if ((p = strdup(yytext)) == NULL)
 				err(1, "nsdispatch: memory allocation failure");
 
@@ -103,9 +103,8 @@ _nsyywrap()
 
 void
 _nsyyerror(msg)
-	char *msg;
+	const char *msg;
 {
 
-		/* XXX: syslog the following */
-	 warnx("%s: %s at '%s'", _PATH_NS_CONF, msg, yytext);
+	 warnx("%s line %d: %s at '%s'", _PATH_NS_CONF, yylineno, msg, yytext);
 } /* _nsyyerror */
