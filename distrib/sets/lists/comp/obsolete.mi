@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.85 2003/01/28 14:43:18 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.86 2003/02/04 01:23:53 thorpej Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -782,6 +782,8 @@
 ./usr/share/man/cat3/vlimit.0
 ./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat8/config.new.0
+./usr/share/man/cat9/callout_active.0
+./usr/share/man/cat9/callout_deactivate.0
 ./usr/share/man/cat9/disk_detatch.0
 ./usr/share/man/cat9/pfil_get_head.0
 ./usr/share/man/cat9/simple_lock_unlock.0
@@ -867,6 +869,8 @@
 ./usr/share/man/man3/usb.3
 ./usr/share/man/man3/vlimit.3
 ./usr/share/man/man3/vtimes.3
+./usr/share/man/man9/callout_active.9
+./usr/share/man/man9/callout_deactivate.9
 ./usr/share/man/man9/disk_detatch.9
 ./usr/share/man/man9/pfil_get_head.9
 ./usr/share/man/man9/simple_lock_unlock.9
