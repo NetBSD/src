@@ -1,4 +1,4 @@
-/*	$NetBSD: eisareg.h,v 1.2 1996/02/27 00:21:02 cgd Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.3 1996/04/09 22:46:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -40,11 +40,6 @@
  * Mostly culled from EISA chipset descriptions in:
  *	Intel Peripheral Components Databook (1992)
  */
-
-/*
- * Max number of EISA slots in a machine.  64K I/O space total.
- */
-#define	EISA_MAX_SLOT		16	/* number of slots.  0 -> 0xf */
 
 /*
  * Slot I/O space size, and I/O address of a given slot.
