@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.23 2002/08/10 21:38:06 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.24 2002/08/11 13:33:00 simonb Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -43,7 +43,7 @@
 #define	SPR_SRR0		0x01a	/* 468 Save/Restore Register 0 */
 #define	SPR_SRR1		0x01b	/* 468 Save/Restore Register 1 */
 #define	SPR_USPRG0		0x100	/* 4.. User SPR General 0 */
-#define SPR_VRSAVE		0x100	/* .6. AltiVec VRSAVE */
+#define	SPR_VRSAVE		0x100	/* .6. AltiVec VRSAVE */
 #define	SPR_SPRG0		0x110	/* 468 SPR General 0 */
 #define	SPR_SPRG1		0x111	/* 468 SPR General 1 */
 #define	SPR_SPRG2		0x112	/* 468 SPR General 2 */
@@ -57,26 +57,35 @@
 #define	SPR_TBL			0x11c	/* 468 Time Base Lower */
 #define	SPR_TBU			0x11d	/* 468 Time Base Upper */
 #define	SPR_PVR			0x11f	/* 468 Processor Version Register */
-#define   MPC601		  0x0001
-#define   MPC603		  0x0003
-#define   MPC604		  0x0004
-#define   MPC602		  0x0005
-#define   MPC603e		  0x0006
-#define   MPC603ev		  0x0007
-#define   MPC750		  0x0008
-#define   MPC604ev		  0x0009
-#define   MPC7400		  0x000c
-#define   MPC620		  0x0014
-#define   IBMPOWER3		  0x0041
-#define   MPC860		  0x0050
-#define   MPC8240		  0x0081
-#define   IBM750FX		  0x7000
-#define   MPC7450		  0x8000
-#define   MPC7455		  0x8001
-#define   MPC7410		  0x800c
-#define   MPC8245		  0x8081
-#define   IBM405GP		  0x4011
-#define   IBM405L		  0x4161
+#define	  MPC601		  0x0001
+#define	  MPC603		  0x0003
+#define	  MPC604		  0x0004
+#define	  MPC602		  0x0005
+#define	  MPC603e		  0x0006
+#define	  MPC603ev		  0x0007
+#define	  MPC750		  0x0008
+#define	  MPC604ev		  0x0009
+#define	  MPC7400		  0x000c
+#define	  MPC620		  0x0014
+#define	  IBM403		  0x0020
+#define	  IBM401A1		  0x0021
+#define	  IBM401B2		  0x0022
+#define	  IBM401C2		  0x0023
+#define	  IBM401D2		  0x0024
+#define	  IBM401E2		  0x0025
+#define	  IBM401F2		  0x0026
+#define	  IBM401G2		  0x0027
+#define	  IBMPOWER3		  0x0041
+#define	  MPC860		  0x0050
+#define	  MPC8240		  0x0081
+#define	  IBM405GP		  0x4011
+#define	  IBM405L		  0x4161
+#define	  IBM750FX		  0x7000
+#define	  MPC7450		  0x8000
+#define	  MPC7455		  0x8001
+#define	  MPC7410		  0x800c
+#define	  MPC8245		  0x8081
+
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .68 Instruction BAT Reg 0 Lower */
 #define	SPR_IBAT1U		0x212	/* .68 Instruction BAT Reg 1 Upper */
@@ -261,60 +270,60 @@
 #define	SPR_IAC2		0x3f5	/* 4.. Instruction Address Compare 2 */
 #define	SPR_DABR		0x3f5	/* .6. Data Address Breakpoint Register */
 #define	SPR_DAC1		0x3f6	/* 4.. Data Address Compare 1 */
-#define SPR_MSSCR0		0x3f6	/* .6. Memory SubSystem Control Register */
-#define   MSSCR0_SHDEN		  0x80000000 /* 0: Shared-state enable */
-#define   MSSCR0_SHDPEN3	  0x40000000 /* 1: ~SHD[01] signal enable in MEI mode */
-#define   MSSCR0_L1INTVEN	  0x38000000 /* 2-4: L1 data cache ~HIT intervention enable */
-#define   MSSCR0_L2INTVEN	  0x07000000 /* 5-7: L2 data cache ~HIT intervention enable*/
-#define   MSSCR0_DL1HWF		  0x00800000 /* 8: L1 data cache hardware flush */
-#define   MSSCR0_MBO		  0x00400000 /* 9: must be one */
-#define   MSSCR0_EMODE		  0x00200000 /* 10: MPX bus mode (read-only) */
-#define   MSSCR0_ABD		  0x00100000 /* 11: address bus driven (read-only) */
-#define   MSSCR0_MBZ		  0x000fffff /* 12-31: must be zero */
+#define	SPR_MSSCR0		0x3f6	/* .6. Memory SubSystem Control Register */
+#define	  MSSCR0_SHDEN		  0x80000000 /* 0: Shared-state enable */
+#define	  MSSCR0_SHDPEN3	  0x40000000 /* 1: ~SHD[01] signal enable in MEI mode */
+#define	  MSSCR0_L1INTVEN	  0x38000000 /* 2-4: L1 data cache ~HIT intervention enable */
+#define	  MSSCR0_L2INTVEN	  0x07000000 /* 5-7: L2 data cache ~HIT intervention enable*/
+#define	  MSSCR0_DL1HWF		  0x00800000 /* 8: L1 data cache hardware flush */
+#define	  MSSCR0_MBO		  0x00400000 /* 9: must be one */
+#define	  MSSCR0_EMODE		  0x00200000 /* 10: MPX bus mode (read-only) */
+#define	  MSSCR0_ABD		  0x00100000 /* 11: address bus driven (read-only) */
+#define	  MSSCR0_MBZ		  0x000fffff /* 12-31: must be zero */
 #define	SPR_DAC2		0x3f7	/* 4.. Data Address Compare 2 */
 #define	SPR_L2PM		0x3f8	/* .6. L2 Private Memory Control Register */
 #define	SPR_L2CR		0x3f9	/* .6. L2 Control Register */
-#define   L2CR_L2E		  0x80000000 /* 0: L2 enable */
-#define   L2CR_L2PE		  0x40000000 /* 1: L2 data parity enable */
-#define   L2CR_L2SIZ		  0x30000000 /* 2-3: L2 size */
-#define    L2SIZ_2M		  0x00000000
-#define    L2SIZ_256K		  0x10000000
-#define    L2SIZ_512K		  0x20000000
-#define    L2SIZ_1M		  0x30000000
-#define   L2CR_L2CLK		  0x0e000000 /* 4-6: L2 clock ratio */
-#define    L2CLK_DIS		  0x00000000 /* disable L2 clock */
-#define    L2CLK_10		  0x02000000 /* core clock / 1   */
-#define    L2CLK_15		  0x04000000 /*            / 1.5 */
-#define    L2CLK_20		  0x08000000 /*            / 2   */
-#define    L2CLK_25		  0x0a000000 /*            / 2.5 */
-#define    L2CLK_30		  0x0c000000 /*            / 3   */
-#define   L2CR_L2RAM		  0x01800000 /* 7-8: L2 RAM type */
-#define    L2RAM_FLOWTHRU_BURST	  0x00000000
-#define    L2RAM_PIPELINE_BURST	  0x01000000
-#define    L2RAM_PIPELINE_LATE	  0x01800000
-#define   L2CR_L2DO		  0x00400000 /* 9: L2 data-only.
+#define	  L2CR_L2E		  0x80000000 /* 0: L2 enable */
+#define	  L2CR_L2PE		  0x40000000 /* 1: L2 data parity enable */
+#define	  L2CR_L2SIZ		  0x30000000 /* 2-3: L2 size */
+#define	   L2SIZ_2M		  0x00000000
+#define	   L2SIZ_256K		  0x10000000
+#define	   L2SIZ_512K		  0x20000000
+#define	   L2SIZ_1M		  0x30000000
+#define	  L2CR_L2CLK		  0x0e000000 /* 4-6: L2 clock ratio */
+#define	   L2CLK_DIS		  0x00000000 /* disable L2 clock */
+#define	   L2CLK_10		  0x02000000 /* core clock / 1   */
+#define	   L2CLK_15		  0x04000000 /*            / 1.5 */
+#define	   L2CLK_20		  0x08000000 /*            / 2   */
+#define	   L2CLK_25		  0x0a000000 /*            / 2.5 */
+#define	   L2CLK_30		  0x0c000000 /*            / 3   */
+#define	  L2CR_L2RAM		  0x01800000 /* 7-8: L2 RAM type */
+#define	   L2RAM_FLOWTHRU_BURST	  0x00000000
+#define	   L2RAM_PIPELINE_BURST	  0x01000000
+#define	   L2RAM_PIPELINE_LATE	  0x01800000
+#define	  L2CR_L2DO		  0x00400000 /* 9: L2 data-only.
 				      Setting this bit disables instruction
 				      caching. */
-#define   L2CR_L2I		  0x00200000 /* 10: L2 global invalidate. */
-#define   L2CR_L2CTL		  0x00100000 /* 11: L2 RAM control (ZZ enable).
+#define	  L2CR_L2I		  0x00200000 /* 10: L2 global invalidate. */
+#define	  L2CR_L2CTL		  0x00100000 /* 11: L2 RAM control (ZZ enable).
 				      Enables automatic operation of the
 				      L2ZZ (low-power mode) signal. */
-#define   L2CR_L2WT		  0x00080000 /* 12: L2 write-through. */
-#define   L2CR_L2TS		  0x00040000 /* 13: L2 test support. */
-#define   L2CR_L2OH		  0x00030000 /* 14-15: L2 output hold. */
-#define   L2CR_L2SL		  0x00008000 /* 16: L2 DLL slow. */
-#define   L2CR_L2DF		  0x00004000 /* 17: L2 differential clock. */
-#define   L2CR_L2BYP		  0x00002000 /* 18: L2 DLL bypass. */
-#define   L2CR_L2FA		  0x00001000 /* 19: L2 flush assist (for software flush). */
-#define   L2CR_L2HWF		  0x00000800 /* 20: L2 hardware flush. */
-#define   L2CR_L2IO		  0x00000400 /* 21: L2 instruction-only. */
-#define   L2CR_L2CLKSTP		  0x00000200 /* 22: L2 clock stop. */
-#define   L2CR_L2DRO		  0x00000100 /* 23: L2DLL rollover checkstop enable. */
-#define   L2CR_L2IP		  0x00000001 /* 31: L2 global invalidate in */
+#define	  L2CR_L2WT		  0x00080000 /* 12: L2 write-through. */
+#define	  L2CR_L2TS		  0x00040000 /* 13: L2 test support. */
+#define	  L2CR_L2OH		  0x00030000 /* 14-15: L2 output hold. */
+#define	  L2CR_L2SL		  0x00008000 /* 16: L2 DLL slow. */
+#define	  L2CR_L2DF		  0x00004000 /* 17: L2 differential clock. */
+#define	  L2CR_L2BYP		  0x00002000 /* 18: L2 DLL bypass. */
+#define	  L2CR_L2FA		  0x00001000 /* 19: L2 flush assist (for software flush). */
+#define	  L2CR_L2HWF		  0x00000800 /* 20: L2 hardware flush. */
+#define	  L2CR_L2IO		  0x00000400 /* 21: L2 instruction-only. */
+#define	  L2CR_L2CLKSTP		  0x00000200 /* 22: L2 clock stop. */
+#define	  L2CR_L2DRO		  0x00000100 /* 23: L2DLL rollover checkstop enable. */
+#define	  L2CR_L2IP		  0x00000001 /* 31: L2 global invalidate in */
 					     /*     progress (read only). */
 #define	SPR_L3CR		0x3fa	/* .6. L3 Control Register */
-#define   L3CR_L3E		  0x80000000 /*  0: L3 enable */
-#define   L3CR_L3SIZ		  0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
+#define	  L3CR_L3E		  0x80000000 /*  0: L3 enable */
+#define	  L3CR_L3SIZ		  0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
 #define	SPR_DCCR		0x3fa	/* 4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* 4.. Instruction Cache Cachability Register */
 #define	SPR_THRM1		0x3fc	/* .6. Thermal Management Register */
