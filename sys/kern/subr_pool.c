@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.64 2001/11/12 15:25:20 lukem Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.65 2001/11/20 06:57:04 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.64 2001/11/12 15:25:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.65 2001/11/20 06:57:04 enami Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -777,9 +777,13 @@ pool_get(struct pool *pp, int flags)
 		    pp->pr_wchan, pp->pr_nitems);
 		panic("pool_get: nitems inconsistent\n");
 	}
+#endif
 
+#ifdef POOL_DIAGNOSTIC
 	pr_log(pp, v, PRLOG_GET, file, line);
+#endif
 
+#ifdef DIAGNOSTIC
 	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
