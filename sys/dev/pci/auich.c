@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.1 2000/11/28 05:12:29 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.2 2000/11/28 16:57:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@
 
 #include <machine/bus.h>
 
+#include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
 struct auich_dma {
@@ -623,14 +624,15 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		auich_read_codec(sc, ICH_PM, &val);
-		auich_write_codec(sc, ICH_PM, val | inout);
+		auich_read_codec(sc, AC97_REG_POWER, &val);
+		auich_write_codec(sc, AC97_REG_POWER, val | inout);
 
-		auich_write_codec(sc, ICH_PCMRATE, p->sample_rate);
-		auich_read_codec(sc, ICH_PCMRATE, &rate);
+		auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+		    p->sample_rate);
+		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
 		p->sample_rate = rate;
 
-		auich_write_codec(sc, ICH_PM, val);
+		auich_write_codec(sc, AC97_REG_POWER, val);
 	}
 
 	return (0);
