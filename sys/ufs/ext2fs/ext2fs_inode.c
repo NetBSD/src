@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.34.2.5 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.34.2.6 2004/10/27 06:48:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.5 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.6 2004/10/27 06:48:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ ext2fs_truncate(v)
 		off_t a_length;
 		int a_flags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
 	daddr_t lastblock;

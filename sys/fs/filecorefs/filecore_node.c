@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.1.4.5 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.1.4.6 2004/10/27 06:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1.4.5 2004/09/21 13:34:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1.4.6 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ filecore_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct lwp *l = ap->a_l;
@@ -258,7 +258,7 @@ filecore_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);

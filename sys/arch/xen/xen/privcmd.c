@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.1.4.4 2004/09/21 13:24:45 skrll Exp $ */
+/* $NetBSD: privcmd.c,v 1.1.4.5 2004/10/27 06:48:23 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.4.4 2004/09/21 13:24:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.4.5 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ privcmd_ioctl(void *v)
 		void *a_data;
 		int a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0;
 
