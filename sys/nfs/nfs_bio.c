@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.93 2003/04/12 14:41:28 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.94 2003/04/15 13:48:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.93 2003/04/12 14:41:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.94 2003/04/15 13:48:40 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -976,10 +976,8 @@ nfs_doio_write(bp, uiop)
 	}
 
 	for (i = 0; i < npages; i++) {
-		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data +
-				       (i << PAGE_SHIFT));
-		KASSERT((pgs[i]->flags & PG_BUSY) ||
-		    pgs[i]->uobject != uobj);
+		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
+		KASSERT((pgs[i]->flags & PG_BUSY) || pgs[i]->uobject != uobj);
 		if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0) {
 			needcommit = FALSE;
 		}
