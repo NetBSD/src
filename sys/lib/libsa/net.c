@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.19 1997/09/17 16:30:51 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.20 1997/12/26 22:41:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -277,7 +277,8 @@ readudp(d, pkt, len, tleft)
 /*
  * Send a packet and wait for a reply, with exponential backoff.
  *
- * The send routine must return the actual number of bytes written.
+ * The send routine must return the actual number of bytes written,
+ * or -1 on error.
  *
  * The receive routine can indicate success by returning the number of
  * bytes read; it can return 0 to indicate EOF; it can return -1 with a
@@ -313,7 +314,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 				return -1;
 			}
 			cc = (*sproc)(d, sbuf, ssize);
-			if (cc == -1 || cc < ssize)
+			if (cc != -1 && cc < ssize)
 				panic("sendrecv: short write! (%d < %d)",
 				    cc, ssize);
 
@@ -321,6 +322,14 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 			tmo <<= 1;
 			if (tmo > MAXTMO)
 				tmo = MAXTMO;
+
+			if (cc == -1) {
+				/* Error on transmit; wait before retrying */
+				while ((getsecs() - t) < tmo);
+				tleft = 0;
+				continue;
+			}
+
 			tlast = t;
 		}
 
