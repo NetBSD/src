@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 2000/06/29 08:04:05 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 2000/07/27 14:25:14 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,8 +95,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	extern struct pcb *curpcb;
 	extern void proc_trampoline __P((void));
 	extern void savectx __P((struct pcb *));
-
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
 	/* Copy pcb from proc p1 to p2. */
 	if (p1 == curproc) {
