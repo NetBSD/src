@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.11 2003/08/09 13:44:39 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.12 2003/08/09 14:17:28 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.11 2003/08/09 13:44:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.12 2003/08/09 14:17:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 			break;
 		}
 	}
-	if (strcmp(p->p_emul->e_name, "linux") == 0)
+	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
+	    LINUX_USRSTACK < USRSTACK)
 		sstack = LINUX_USRSTACK;
 	else
 		sstack = USRSTACK;
@@ -256,7 +257,6 @@ procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
-/*###251 [cc] unterminated string or character constant%%%*/
 	len = sprintf(buf, "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
 		      runtime.tv_sec, runtime.tv_usec / 10000,
 		      idle / hz, (((idle % hz) * 100) / hz) % 100);
