@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.10 1999/09/10 16:23:55 drochner Exp $	 */
+/*	$NetBSD: pcio.c,v 1.11 2002/02/19 20:18:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -115,7 +115,7 @@ initio(dev)
 #endif
 			   )
 				goto ok;
-#else
+#else /* ! DIRECT_SERIAL */
 			/*
 			 * serial console must have hardware handshake!
 			 * check:
@@ -131,7 +131,7 @@ initio(dev)
 #endif
 			    )
 				goto ok;
-#endif
+#endif /* DIRECT_SERIAL */
 		}
 		iodev = CONSDEV_PC;
 ok:
@@ -168,7 +168,7 @@ ok:
 #endif
 			   )
 				break;
-#else
+#else /* ! DIRECT_SERIAL */
 			/*
 			 * serial console must have hardware handshake!
 			 * check:
@@ -184,7 +184,7 @@ ok:
 #endif
 			    )
 				break;
-#endif
+#endif /* DIRECT_SERIAL */
 	    default:
 nocom:
 		iodev = CONSDEV_PC;
