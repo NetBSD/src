@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.71 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -190,7 +190,7 @@ MainParseArgs(argc, argv)
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
 		case 'D':
-			Var_Set(optarg, "1", VAR_GLOBAL);
+			Var_Set(optarg, "1", VAR_GLOBAL, 0);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -612,13 +612,13 @@ main(argc, argv)
 	 */
 	Var_Init();		/* Initialize the lists of variables for
 				 * parsing arguments */
-	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
-	Var_Set("MACHINE", machine, VAR_GLOBAL);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
+	Var_Set(".CURDIR", curdir, VAR_GLOBAL, 0);
+	Var_Set("MACHINE", machine, VAR_GLOBAL, 0);
+	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL, 0);
 #ifdef MAKE_VERSION
-	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL);
+	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL, 0);
 #endif
-	Var_Set(".newline", "\n", VAR_GLOBAL); /* handy for :@ loops */
+	Var_Set(".newline", "\n", VAR_GLOBAL, 0); /* handy for :@ loops */
 
 	/*
 	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -699,7 +699,7 @@ main(argc, argv)
 	Dir_Init(curdir != objdir ? curdir : NULL);
 	Parse_Init();		/* Need to initialize the paths of #include
 				 * directories */
-	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
+	Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 
 	/*
 	 * Initialize various variables.
@@ -707,11 +707,11 @@ main(argc, argv)
 	 *	.MAKEFLAGS gets set to the empty string just in case.
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
-	Var_Set("MAKE", argv[0], VAR_GLOBAL);
-	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
-	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
-	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
-	Var_Set("MFLAGS", "", VAR_GLOBAL);
+	Var_Set("MAKE", argv[0], VAR_GLOBAL, 0);
+	Var_Set(".MAKE", argv[0], VAR_GLOBAL, 0);
+	Var_Set(MAKEFLAGS, "", VAR_GLOBAL, 0);
+	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
+	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
@@ -763,7 +763,7 @@ main(argc, argv)
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
 		}
 	} else
-		Var_Set(".TARGETS", "", VAR_GLOBAL);
+		Var_Set(".TARGETS", "", VAR_GLOBAL, 0);
 
 
 	/*
@@ -983,7 +983,7 @@ ReadMakefile(p, q)
 
 	if (!strcmp(fname, "-")) {
 		Parse_File("(stdin)", stdin);
-		Var_Set("MAKEFILE", "", VAR_GLOBAL);
+		Var_Set("MAKEFILE", "", VAR_GLOBAL, 0);
 	} else {
 		setMAKEFILE = strcmp(fname, ".depend");
 
@@ -1016,7 +1016,7 @@ ReadMakefile(p, q)
 		 */
 found:
 		if (setMAKEFILE)
-			Var_Set("MAKEFILE", fname, VAR_GLOBAL);
+			Var_Set("MAKEFILE", fname, VAR_GLOBAL, 0);
 		Parse_File(fname, stream);
 		(void)fclose(stream);
 	}
