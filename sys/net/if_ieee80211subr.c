@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.30 2003/05/13 09:53:07 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.31 2003/05/13 10:05:05 dyoung Exp $	*/
+/*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.30 2003/05/13 09:53:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.31 2003/05/13 10:05:05 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -171,7 +172,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	if (ic->ic_max_aid == 0)
 		ic->ic_max_aid = IEEE80211_MAX_AID;
 
-	/* initialize management frame handler */
+	/* initialize management frame handlers */
 	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_RESP
 	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = ieee80211_recv_beacon;
 	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_BEACON
@@ -410,8 +411,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			} else
 				goto out;
 		}
-#if NBPFILTER > 0
 		/* copy to listener after decrypt */
+#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
 #endif
@@ -713,12 +714,13 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
-		int off;
+		int off, pktlen;
 
 		n0 = NULL;
 		np = &n0;
 		off = 0;
-		while (m->m_pkthdr.len > off) {
+		pktlen = m->m_pkthdr.len;
+		while (pktlen > off) {
 			if (n0 == NULL) {
 				MGETHDR(n, M_DONTWAIT, MT_DATA);
 				if (n == NULL) {
@@ -736,7 +738,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 				}
 				n->m_len = MLEN;
 			}
-			if (m->m_pkthdr.len - off >= MINCLSIZE) {
+			if (pktlen - off >= MINCLSIZE) {
 				MCLGET(n, M_DONTWAIT);
 				if (n->m_flags & M_EXT)
 					n->m_len = n->m_ext.ext_size;
@@ -748,8 +750,8 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 				n->m_len -= newdata - n->m_data;
 				n->m_data = newdata;
 			}
-			if (n->m_len > m->m_pkthdr.len - off)
-				n->m_len = m->m_pkthdr.len - off;
+			if (n->m_len > pktlen - off)
+				n->m_len = pktlen - off;
 			m_copydata(m, off, n->m_len, mtod(n, caddr_t));
 			off += n->m_len;
 			*np = n;
