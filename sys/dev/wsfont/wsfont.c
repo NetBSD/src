@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.34 2003/07/14 18:30:41 uwe Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.35 2003/12/15 15:13:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.34 2003/07/14 18:30:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.35 2003/12/15 15:13:55 tsutsui Exp $");
 
 #include "opt_wsfont.h"
 
@@ -461,10 +461,11 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr)
 			neu = wsfont_add0(ent->font, 1);
 			neu->flags |= WSFONT_COPY;
 
-			aprint_normal("wsfont: font '%s' bito %d byteo %d copied to bito %d byteo %d\n",
-				ent->font->name,
-				ent->font->bitorder, ent->font->byteorder,
-				bito, byteo);
+			aprint_debug("wsfont: font '%s' bito %d byteo %d "
+			    "copied to bito %d byteo %d\n",
+			    ent->font->name,
+			    ent->font->bitorder, ent->font->byteorder,
+			    bito, byteo);
 
 			ent = neu;
 		}
