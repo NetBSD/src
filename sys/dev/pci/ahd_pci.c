@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.2 2003/05/14 12:57:46 wiz Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.3 2003/07/14 15:47:23 lukem Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -47,6 +47,9 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.3 2003/07/14 15:47:23 lukem Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */

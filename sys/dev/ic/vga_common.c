@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.3 2003/01/27 15:16:11 tsutsui Exp $ */
+/* $NetBSD: vga_common.c,v 1.4 2003/07/14 15:47:12 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.4 2003/07/14 15:47:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

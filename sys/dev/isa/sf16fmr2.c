@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.8 2002/10/02 03:10:50 thorpej Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -34,6 +34,9 @@
  * Philips TEA5757H AM/FM Self Tuned Radio:
  *	http://www.semiconductors.philips.com/pip/TEA5757H
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.1 2003/01/27 18:21:27 thorpej Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.2 2003/07/14 15:47:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -33,6 +33,9 @@
  *
  * Adapted to NetBSD by Jason R. Thorpe of Wasabi Systems, Inc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.2 2003/07/14 15:47:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.26 2003/06/29 22:30:19 fvdl Exp $	*/
+/*	$NetBSD: irframe.c,v 1.27 2003/07/14 15:47:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.27 2003/07/14 15:47:14 lukem Exp $");
 
 #include "irframe.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.42 2003/06/30 13:20:21 ragge Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.43 2003/07/14 15:47:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -77,6 +77,9 @@
  * result, this driver does not implement any support for the mini RX
  * ring.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.43 2003/07/14 15:47:24 lukem Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"

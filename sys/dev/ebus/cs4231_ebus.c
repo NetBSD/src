@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.11 2003/05/03 18:11:09 wiz Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.12 2003/07/14 15:47:05 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.12 2003/07/14 15:47:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

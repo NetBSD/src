@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.6 2003/07/14 15:47:29 lukem Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,6 +61,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.6 2003/07/14 15:47:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.13 2003/06/29 22:29:59 fvdl Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.14 2003/07/14 15:47:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,6 +62,9 @@
  *	   scheduling model, kttcp provides a benchmark model where
  *	   preemption of the benchmark program is not an issue.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.14 2003/07/14 15:47:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.5 2003/02/02 10:24:41 wiz Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.6 2003/07/14 15:47:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.6 2003/07/14 15:47:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
