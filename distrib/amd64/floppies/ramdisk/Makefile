@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:44 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2003/05/15 14:02:37 fvdl Exp $
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	2560k
+IMAGESIZE=	2496k
 IMAGEDEPENDS= 	disktab.preinstall \
 		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script \
 		${DESTDIR}/usr/mdec/biosboot_com0.sym
