@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.94 2003/03/27 15:34:36 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.95 2003/04/11 16:11:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.94 2003/03/27 15:34:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.95 2003/04/11 16:11:49 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -170,12 +170,14 @@ int numvnd = 0;
 void	vndattach __P((int));
 int	vnddetach __P((void));
 
-void	vndclear __P((struct vnd_softc *));
+void	vndclear __P((struct vnd_softc *, int));
 void	vndstart __P((struct vnd_softc *));
 int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
+#if 0
 void	vndshutdown __P((void));
+#endif
 
 void	vndgetdefaultlabel __P((struct vnd_softc *, struct disklabel *));
 void	vndgetdisklabel __P((dev_t));
@@ -224,9 +226,11 @@ vndattach(num)
 	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
 
-	for (i = 0; i < numvnd; i++)
+	for (i = 0; i < numvnd; i++) {
+		vnd_softc[i].sc_unit = i;
 		bufq_alloc(&vnd_softc[i].sc_tab,
 		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	}
 }
 
 int
@@ -919,14 +923,20 @@ unlock_and_exit:
 		 */
 		part = DISKPART(dev);
 		pmask = (1 << part);
-		if ((vnd->sc_dkdev.dk_openmask & ~pmask) ||
+		if (((vnd->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
-		    (vnd->sc_dkdev.dk_copenmask & pmask))) {
+		    (vnd->sc_dkdev.dk_copenmask & pmask))) &&
+			!(vio->vnd_flags & VNDIOF_FORCE)) {
 			vndunlock(vnd);
 			return (EBUSY);
 		}
 
-		vndclear(vnd);
+		/*
+		 * XXX vndclear() might call vndclose() implicitely;
+		 * release lock to avoid recursion
+		 */
+		vndunlock(vnd);
+		vndclear(vnd, minor(dev));
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: CLRed\n");
@@ -938,8 +948,6 @@ unlock_and_exit:
 
 		/* Detatch the disk. */
 		disk_detach(&vnd->sc_dkdev);
-
-		vndunlock(vnd);
 
 		break;
 
@@ -1133,6 +1141,7 @@ vndthrottle(vnd, vp)
 		vnd->sc_maxactive = 1;
 }
 
+#if 0
 void
 vndshutdown()
 {
@@ -1142,19 +1151,34 @@ vndshutdown()
 		if (vnd->sc_flags & VNF_INITED)
 			vndclear(vnd);
 }
+#endif
 
 void
-vndclear(vnd)
+vndclear(vnd, myminor)
 	struct vnd_softc *vnd;
+	int myminor;
 {
 	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 	int fflags = FREAD;
+	int bmaj, cmaj, i, mn;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclear(%p): vp %p\n", vnd, vp);
 #endif
+	/* locate the major number */
+	bmaj = bdevsw_lookup_major(&vnd_bdevsw);
+	cmaj = cdevsw_lookup_major(&vnd_cdevsw);
+
+	/* Nuke the vnodes for any open instances */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = DISKMINOR(vnd->sc_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		if (mn != myminor) /* XXX avoid to kill own vnode */
+			vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	if ((vnd->sc_flags & VNF_READONLY) == 0)
 		fflags |= FWRITE;
 	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY);

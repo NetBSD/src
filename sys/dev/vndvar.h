@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.9 2003/03/27 15:34:36 yamt Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.10 2003/04/11 16:11:49 drochner Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct vnd_ioctl {
 /* vnd_flags */
 #define	VNDIOF_HASGEOM	0x01		/* use specified geometry */
 #define	VNDIOF_READONLY	0x02		/* as read-only device */
+#define	VNDIOF_FORCE	0x04		/* force close */
 
 #ifdef _KERNEL
 
