@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.2 2000/03/29 23:09:19 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.3 2000/04/02 19:37:49 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -56,3 +56,23 @@ lib/libc/sys/intro.2				1.20-1.21
 
   Note that EFAULT can't be guaranteed in e.g. pipe(2); fixes PR#7720.
   Update the description of errno.  Fixes PR#9496.
+
+etc/etc.i386/MAKEDEV				1.85
+
+  Create wd2 and wd3 device nodes also on the floppy images, to allow
+  installation on those drives too.
+
+sys/dev/pci/ncr.c				1.87, 1.96-1.97
+
+  Fix script bug in processing QUEUE FULL response (would always
+  trigger an assertion failure), and add Quantum Atlas IV drives
+  to the quirk table so that they don't use tagged queueing.
+  Fixes problems reported in PR#7694.
+
+distrib/notes/common/sysinst			patch
+
+  Clarify the PCMCIA IRQ allocation workaround.  Fixes PR#9568.
+
+usr.bin/du/du.c					1.15
+
+  Include -r flag in usage message.
