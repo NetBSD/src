@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.9 1996/05/03 21:43:57 cgd Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-static char rcsid[] = "$NetBSD: hsearch.c,v 1.9 1996/05/03 21:43:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ hcreate(nel)
 	info.hash = NULL;
 	info.lorder = 0;
 	dbp = (DB *)__hash_open(NULL, O_CREAT | O_RDWR, 0600, &info, 0);
-	return ((int)dbp);
+	return (dbp != NULL);
 }
 
 extern ENTRY *
