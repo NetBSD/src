@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2004/08/19 22:21:51 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2005/01/10 10:59:49 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	init
@@ -13,6 +13,10 @@ CPPFLAGS+=	-DLETS_GET_SMALL
 CPPFLAGS+=	-DALTSHELL -DSECURE
 DPADD+=		${LIBCRYPT}
 LDADD+=		-lcrypt
+.endif
+
+.if defined(RESCUEDIR)
+CPPFLAGS+= -DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
 
 .include <bsd.prog.mk>
