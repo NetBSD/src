@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.117 1998/12/08 00:18:46 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.118 1999/01/04 15:32:08 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ int	cd_pause __P((struct cd_softc *, int));
 int	cd_reset __P((struct cd_softc *));
 int	cd_read_subchannel __P((struct cd_softc *, int, int, int,
 	    struct cd_sub_channel_info *, int));
-int	cd_read_toc __P((struct cd_softc *, int, int, void *, int));
+int	cd_read_toc __P((struct cd_softc *, int, int, void *, int, int));
 int	cd_get_parms __P((struct cd_softc *, int));
 int	cd_load_toc __P((struct cd_softc *, struct cd_toc *));
 
@@ -788,7 +788,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOREADTOCHEADER: {
 		struct ioc_toc_header th;
 
-		if ((error = cd_read_toc(cd, 0, 0, &th, sizeof(th))) != 0)
+		if ((error = cd_read_toc(cd, 0, 0, &th, sizeof(th), 0)) != 0)
 			return (error);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -814,7 +814,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		    len < sizeof(struct cd_toc_entry))
 			return (EINVAL);
 		error = cd_read_toc(cd, te->address_format, te->starting_track,
-		    &toc, len + sizeof(struct ioc_toc_header));
+		    &toc, len + sizeof(struct ioc_toc_header), 0);
 		if (error)
 			return (error);
 		if (te->address_format == CD_LBA_FORMAT)
@@ -840,6 +840,39 @@ cdioctl(dev, cmd, addr, flag, p)
 		len = min(len, th->len - (sizeof(th->starting_track) +
 		    sizeof(th->ending_track)));
 		return (copyout(toc.entries, te->data, len));
+	}
+	case CDIOREADMSADDR: {
+		struct cd_toc toc;
+		int sessno = *(int*)addr;
+		struct cd_toc_entry *cte;
+
+		if (sessno != 0)
+			return (EINVAL);
+
+		error = cd_read_toc(cd, 0, 0, &toc,
+		  sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
+		  0x40 /* control word for "get MS info" */);
+
+		if (error)
+			return (error);
+
+		cte = &toc.entries[0];
+		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
+#if BYTE_ORDER == BIG_ENDIAN
+			bswap((u_int8_t*)&cte->addr, sizeof(cte->addr));
+#endif
+		} else
+			cte->addr.lba = ntohl(cte->addr.lba);
+		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
+#if BYTE_ORDER == BIG_ENDIAN
+			bswap((u_int8_t*)&toc.header.len, sizeof(toc.header.len));
+#endif
+		} else
+			toc.header.len = ntohs(toc.header.len);
+
+		*(int*)addr = (toc.header.len >= 10 && cte->track > 1) ?
+			cte->addr.lba : 0;
+		return 0;
 	}
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
@@ -1180,9 +1213,9 @@ cd_read_subchannel(cd, mode, format, track, data, len)
  * Read table of contents
  */
 int
-cd_read_toc(cd, mode, start, data, len)
+cd_read_toc(cd, mode, start, data, len, control)
 	struct cd_softc *cd;
-	int mode, start, len;
+	int mode, start, len, control;
 	void *data;
 {
 	struct scsipi_read_toc scsipi_cmd;
@@ -1201,6 +1234,7 @@ cd_read_toc(cd, mode, start, data, len)
 		scsipi_cmd.byte2 |= CD_MSF;
 	scsipi_cmd.from_track = start;
 	_lto2b(ntoc, scsipi_cmd.data_len);
+	scsipi_cmd.control = control;
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
@@ -1214,13 +1248,13 @@ cd_load_toc(cd, toc)
 {
 	int ntracks, len, error;
 
-	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header))) != 0)
+	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header), 0)) != 0)
 		return (error);
 
 	ntracks = toc->header.ending_track - toc->header.starting_track + 1;
 	len = (ntracks + 1) * sizeof(struct cd_toc_entry) +
 	    sizeof(toc->header);
-	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len)) != 0)
+	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len, 0)) != 0)
 		return (error);
 	return (0);
 }
