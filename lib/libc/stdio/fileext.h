@@ -1,4 +1,4 @@
-/* $NetBSD: fileext.h,v 1.1.2.3 2002/02/06 23:07:41 nathanw Exp $ */
+/* $NetBSD: fileext.h,v 1.1.2.4 2002/02/07 20:40:33 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -44,8 +44,18 @@ struct __sfileext {
 
 #define _EXT(fp) ((struct __sfileext *)(void *)((fp)->_ext._base))
 #define _UB(fp) _EXT(fp)->_ub
-#define _FILEEXT_SETUP(f, fext) /* LINTED */(f)->_ext._base = (unsigned char *)(fext)
+#ifdef _REENTRANT
 #define _LOCK(fp) (_EXT(fp)->_lock)
 #define _LOCKCOND(fp) (_EXT(fp)->_lockcond)
 #define _LOCKOWNER(fp) (_EXT(fp)->_lockowner)
 #define _LOCKCOUNT(fp) (_EXT(fp)->_lockcount)
+#define _FILEEXT_SETUP(f, fext) do { \
+	/* LINTED */(f)->_ext._base = (unsigned char *)(fext); \
+	mutex_init(&_LOCK(f), NULL); \
+	cond_init(&_LOCKCOND(f), 0, NULL); \
+	_LOCKOWNER(f) = NULL; \
+	_LOCKCOUNT(f) = 0; \
+	} while (/* LINTED */ 0)
+#else
+#define _FILEEXT_SETUP(f, fext) /* LINTED */(f)->_ext._base = (unsigned char *)(fext)
+#endif
