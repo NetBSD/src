@@ -1,39 +1,46 @@
-#	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.12 1997/03/21 00:53:02 cgd Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
 .MAIN: all
 .endif
 
-_SUBDIRUSE: .USE
-.if defined(SUBDIR)
-	@for entry in ${SUBDIR}; do \
-		(set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
-			_newdir_="$${entry}.${MACHINE}"; \
-		else \
-			_newdir_="$${entry}"; \
-		fi; \
-		if test X"${_THISDIR_}" = X""; then \
-			_nextdir_="$${_newdir_}"; \
-		else \
-			_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
-		fi; \
-		echo "===> $${_nextdir_}"; \
-		cd ${.CURDIR}/$${_newdir_}; \
-		${MAKE} _THISDIR_="$${_nextdir_}" \
-		    ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
-	done
+_SUBDIRUSE: .USE ${SUBDIR:S/^/${.TARGET}-/}
 
-${SUBDIR}::
-	@set -e; if test -d ${.CURDIR}/${.TARGET}.${MACHINE}; then \
-		_newdir_=${.TARGET}.${MACHINE}; \
+__SUBDIRINTERNALUSE: .USE
+	@(_maketarget_="${.TARGET:S/realinstall/install/}"; \
+	entry="$${_maketarget_#*-}";\
+	target="$${_maketarget_%%-*}";\
+	set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
+		_newdir_="$${entry}.${MACHINE}"; \
 	else \
-		_newdir_=${.TARGET}; \
+		_newdir_="$${entry}"; \
 	fi; \
-	echo "===> $${_newdir_}"; \
+	if test X"${_THISDIR_}" = X""; then \
+		_nextdir_="$${_newdir_}"; \
+	else \
+		_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
+	fi; \
+	echo "===> $${_nextdir_}"; \
 	cd ${.CURDIR}/$${_newdir_}; \
-	${MAKE} _THISDIR_="$${_newdir_}" all
-.endif
+	${MAKE} _THISDIR_="$${_nextdir_}" $${target});
+
+.for dir in ${SUBDIR}
+all-${dir}: __SUBDIRINTERNALUSE
+install-${dir}: __SUBDIRINTERNALUSE
+realinstall-${dir}: __SUBDIRINTERNALUSE
+clean-${dir}: __SUBDIRINTERNALUSE
+cleandir-${dir}: __SUBDIRINTERNALUSE
+includes-${dir}: __SUBDIRINTERNALUSE
+depend-${dir}: __SUBDIRINTERNALUSE
+lint-${dir}: __SUBDIRINTERNALUSE
+obj-${dir}: __SUBDIRINTERNALUSE
+tags-${dir}: __SUBDIRINTERNALUSE
+
+# Backward-compatibility with the old rules.  If this went away,
+# 'xlint' could become 'lint', 'xinstall' could become 'install', etc.
+${dir}: all-${dir}
+.endfor
 
 .if !target(install)
 .if !target(beforeinstall)
