@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.65 1997/02/15 10:02:25 mikel Exp $
+#	$NetBSD: rc,v 1.66 1997/03/10 06:32:37 scottr Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -144,6 +144,16 @@ if [ "X$nfs_client" = XYES ]; then
 		nfsiod_flags="-n 4"
 	fi
         echo -n ' nfsiod';              nfsiod $nfsiod_flags
+fi
+
+if [ "X$nfs_server" = XYES -a -r /etc/exports -o "X$nfs_client" = XYES ]; then
+	if [ "X$statd_flags" != XNO ]; then
+		echo ' statd';		rpc.statd $statd_flags
+	fi
+
+	if [ "X$lockd_flags" != XNO ]; then
+		echo ' lockd';		rpc.lockd $lockd_flags
+	fi
 fi
 
 if [ "X$amd" = XYES -a -d "$amd_dir" -a -r "$amd_master" ]; then
