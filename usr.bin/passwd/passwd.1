@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.10 1997/11/11 14:40:17 mrg Exp $
+.\"	$NetBSD: passwd.1,v 1.11 1997/11/21 20:28:33 tv Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,8 +82,8 @@ flag.
 .El
 .Pp
 This is the behavior if no flags are specified:
-If the password is not in the local password database, then
-an attempt is made to use the YP database.
+If the password is not in the YP database, then
+an attempt is made to use the local password database.
 The super-user is not required to provide a user's current password
 if only the local password is modified.
 .Sh FILES
