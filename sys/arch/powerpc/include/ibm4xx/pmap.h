@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2003/07/25 10:12:45 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2003/08/17 18:07:11 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -168,7 +168,6 @@ void pmap_unwire(struct pmap *pm, vaddr_t va);
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 boolean_t pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 boolean_t check_attr(struct vm_page *, u_int, int);
-int ptereadonly(struct vm_page *);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 
