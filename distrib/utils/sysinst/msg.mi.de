@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.2 2004/02/29 23:25:09 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.3 2004/03/04 23:44:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* MI Message catalog -- German, machine independent */
 
 message usage
-{Benutzung: sysinst [-r Release] [-f Definitionsdatei]
+{Aufruf: sysinst [-r Release] [-f Definitionsdatei]
 }
 
 message sysinst_message_language
@@ -64,13 +64,13 @@ message reinstall
 {Sets erneut installieren für}
 
 message upgrade
-{upgrade (aufrüsten)}
+{upgrade}
 
 message hello
-{Willkommen zu Sysinst, dem Installationswerkzeug von NetBSD-@@VERSION@@.
-Dieses menübasierte Programm ist dazu konzipiert Ihnen dabei zu helfen NetBSD
+{Willkommen bei Sysinst, dem Installationsprogramm von NetBSD-@@VERSION@@.
+Dieses menübasierte Programm wird Ihnen dabei helfen NetBSD
 auf eine Festplatte zu installieren oder aber eine bereits bestehende
-Installation von NetBSD upzugraden (aufzurüsten) - mit minimalem Aufwand. 
+Installation von NetBSD upzugraden - mit minimalem Aufwand. 
 In den folgenden Menüs können Sie mit Hilfe von Buchstaben (a, b, c, ...)
 die verschiedenen Menüeinträge anwählen.
 Alternativ können Sie durch Drücken von CTRL+N/CTRL+P den
@@ -88,47 +88,48 @@ message thanks
 
 message installusure
 {Sie haben sich dazu entschieden NetBSD auf Ihre Festplatte zu installieren.
-Diese Prozedur verändert Informationen auf Ihrer Festplatte. Hier angekommen
-sollten Sie bereits eine vollständige Datensicherung gemacht haben! 
-Dieser Vorgang wird die folgenden Schritte durchführen:
+Dieser Vorgang verändert Informationen auf Ihrer Festplatte. Sie sollten
+jetzt bereits eine vollständige Datensicherung gemacht haben! 
+Die Installation wird in den folgenden Schritte geschehen:
 	a) Partitionieren Ihrer Disk
 	b) Erstellen eines neuen BSD Dateisystems
-	c) Laden und Installieren der Distributionssets (Kernel+Basissystem)
+	c) Laden und Installieren der Distribution (Kernel+Basissystem)
 	d) Grundlegendes Konfigurieren des Systems
 
-(Nachdem Sie Angaben zur Partitionierung ihrer Disk gemacht haben - doch bevor
-diese verändert wird - erhalten Sie die Möglichkeit diese Prozedur
-abzubrechen.)
+(Nachdem Sie Angaben zur Partitionierung ihrer Disk gemacht haben - aber
+noch bevor die Festplatte verändert wird - erhalten Sie die Möglichkeit
+die Installation abzubrechen.)
 
-Wollen Sie weiterfahren?
+Wollen Sie fortfahren?
 }
 
 message upgradeusure
-{Ok, gehen wir zum Upgraden (Aufrüsten) Ihres auf der Festplatte befindlichen
-NetBSD Systems über. Hier angekommen sollten Sie bereits eine vollständige 
-Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich upgraden (aufrüsten)?
-(Dies ist die letzte Warnung bevor diese Prozedur damit beginnt Ihre
-Festplatte(n) zu modifizieren.)
+{Sie möchten das auf der Festplatte befindliche NetBSD System upgraden.
+Zu diesem Zeitpunkt sollten Sie bereits eine vollständige 
+Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich upgraden?
+(Dies ist die letzte Warnung bevor Ihre Festplatte(n) modifiziert werden.)
 }
 
 message reinstallusure
-{Ok, packen wir die NetBSD Distributionssets (Kernel + Basissystem) auf eine
-bootfähige Festplatte aus. Diese Prozedur lädt und entpackt die Sets auf
-eine im Vorfeld partitionierte und bootfähige Disk aus. Es werden weder
-Disks gelabelt, Bootblöcke upgegraded (aufgerüstet) noch bestehende
-Konfigurationen gesichert. (Beenden Sie und wählen Sie 'Installation' oder
-'Upgrade' im Falle, dass Sie diese Optionen wünschen.) Hier angekommen sollten
-Sie bereits eine 'Installation' oder ein 'Upgrade' gemacht haben. 
+{Im folgenden werden die NetBSD Distributionssets (Kernel + Basissystem) 
+auf eine vorbereitete Festplatte ausgepackt. Diese Prozedur lädt und entpackt
+die Sets auf eine im Vorfeld partitionierte und bootfähige Disk aus. Es werden
+weder Disks gelabelt, Bootblöcke upgegraded noch bestehende
+Konfigurationen gesichert.
+
+Beenden Sie jetzt und wählen Sie 'Installation' oder 'Upgrade', falls Ihre
+Festplatte nicht entsprechend vorbereitet ist oder Sie ein bestehendes
+System upgraden möchten!
 
 Wollen Sie die NetBSD Distributionssets wirklich erneut installieren?
-(Dies ist die letzte Warnung bevor diese Prozedur damit beginnt Ihre
-Festplatte(n) zu modifizieren.)
+(Dies ist die letzte Warnung bevor der Inhalte Ihres Dateisystems
+überschrieben wird!)
 }
 
 
 message nodisk
-{Ich kann keine für NetBSD nutzbare Festplatten finden. Sie werden zum
-Hauptmenü zurückbefördert.
+{Ich kann keine für NetBSD nutzbare Festplatten finden.
+Zurück zum Hauptmenü...
 }
 
 message onedisk
@@ -140,7 +141,7 @@ message ask_disk
 {Auf welche Disk möchten Sie NetBSD installieren? }
 
 message Available_disks
-{Verfügbare Disks}
+{Verfügbare Festplatten}
 
 message cylinders
 {Zylinder}
@@ -167,26 +168,24 @@ message megname
 {MB}
 
 message layout
-{NetBSD benutzt einen BSD Disklabel, um den NetBSD Teil der Disk in
-mehrere BSD Partitionen zu zerlegen. Sie müssen jetzt Ihren BSD Disklabel
-aufsetzen.
+{NetBSD benutzt ein BSD Disklabel, um den NetBSD Teil der Disk in
+mehrere BSD Partitionen zu unterteilen. Sie müssen jetzt das BSD Disklabel
+erstellen.
 
-Sie können einen simplen Texteditor verwenden, um die Grösse der NetBSD
+Sie können einen Texteditor verwenden, um die Grösse der NetBSD
 Partitionen zu definieren, oder aber die bestehenden Partitionen mit Grösse
 und Inhalt belassen.
 
-Ihnen wird folglich die Möglichkeit gegeben alle Felder des Disklabels zu
+Ihnen wird gleich die Möglichkeit gegeben, alle Felder des Disklabels zu
 verändern.
 
 Der NetBSD Teil Ihrer Disk ist %d Megabytes gross.
 Eine volle Installation benötigt mindestens %d Megabytes - ohne X Sets 
-(grafische Schnittstelle zum Benutzer) - und %d Megabytes falls diese auch
-miteinbezogen werden.
+(grafische Oberfläche) - und %d Megabytes wenn Sie X ebenfalls installieren.
 }
 
 message sizechoice
-{Sie haben gewählt Partitionsgrössen festzulegen (entweder für den BSD
-Disklabel, oder bei anderen Plattformen, für MBR Slices (MBR Partitionen)).
+{Sie haben manuelle Partitionierung gewählt.
 Zunächst müssen Sie eine Grösseneinheit auswählen. Wählen Sie Megabytes, so
 werden effektive Partitionsgrössen festgesetzt, die nahe Ihrer Grössenangabe
 liegen - ausgerichtet nach Zylindergrenzen. Bei modernen ZBR Disks variieren
@@ -199,18 +198,18 @@ der aktuellen Zylindergrösse ausmachen.
 message defaultunit
 {Solange Sie nicht 'M' (Megabytes), 'G' (Gigabytes), 'c' (Zylinder) oder
 's' (Sektoren) ihrer Zahleneingabe anhängen, wird sowohl bei Grössen als auch
-Offsets (Versatz) von %s ausgegangen.
+Offsets von %s ausgegangen.
 }
 
 message ptnsizes
-{Sie können jetzt die Grössen der Systempartitionen verändern. Per Vorgabe
-wird der ganze Speicherplatz der Rootpartition gutgeschrieben; allerdings
-mögen Sie separate Partitionen definieren wollen, so z.B. /usr (zusätzliche
+{Sie können jetzt die Grössen der Systempartitionen verändern. Standardmäßig
+wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie 
+wollen, können Sie separate Partitionen definieren, z.B. /usr (zusätzliche
 Systemdateien), /var (Log- bzw. Protokolldateien und anderes) oder /home
 (der Anwender persönliche Verzeichnisse).
 
-Verbleibender freier Speicherplatz wird jener Partition angehängt, die
-mit einem '+' markiert ist.
+Verbleibender freier Speicherplatz wird der mit '+' markierten Partition
+hinzugefügt.
 }
 
 message ptnheaders
@@ -219,7 +218,7 @@ message ptnheaders
 }
 
 message askfsmount
-{Mountpount?}
+{Mount Verzeichnis?}
 
 message askfssize
 {Grösse für %s in %s?}
@@ -247,12 +246,12 @@ message fssizesbad
 {Reduzieren der Partitionsgrössen um %d %s (%d Sektoren).}
 
 message startoutsidedisk
-{Der Startwert, den Sie angegeben haben, liegt nach dem Ende des Disk. 
+{Der Startwert, den Sie angegeben haben, liegt jenseits des Endes der Disk. 
 }
 
 message endoutsidedisk
-{Mit diesem Wert liegt das Ende der Partition nach dem Ende der Disk. 
-Die Grösse ihrer Partition wurde auf %d %s runtergesetzt.
+{Mit diesem Wert liegt das Ende der Partition jenseits des Endes der Disk. 
+Die Grösse ihrer Partition wurde auf %d %s veringert.
 
 Drücken Sie die Eingabetaste um fortzufahren.
 }
@@ -263,23 +262,22 @@ message fspart
 
 }
 
-/* XXX translate + align */
 message fspart_header
-{   Start %3s   End %3s  Size %3s FS type    Newfs Mount Mount point
-   --------- --------- --------- ---------- ----- ----- -----------
+{   Start %3s  Ende %3s Grösse %3s FS Typ     Newfs Mount Mount Verz.
+   --------- --------- ---------- ---------- ----- ----- -----------
 }
 
 message fspart_row
-{%9d %9d %9d %-10s %-5s %-5s %s}
+{%9d %9d %10d %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions
-{Anzeigen aller unbenutzten Partitionen}
+{Alle unbenutzten Partitionen anzeigen}
 
 message partition_sizes_ok
 {Partitionsgrössen OK}
 
 message edfspart
-{Die gegenwärtigen Werte für die Partition '%c' sind unten angezeigt.
+{Die gegenwärtigen Werte für die Partition '%c' werden unten angezeigt.
 Wählen Sie das Feld, dass Sie ändern möchten: 
 
                           MB  Zylinder  Sektoren
@@ -304,9 +302,8 @@ message bsize_fmt
 message fsize_fmt
 {Fragmentgrösse: %9d bytes}
 
-/* XXX Inodes - translate */
 message isize_fmt
-{ Durschschnittliche Dateigrösse: %d Bytes (Als Anzahl der Inodes)}
+{ Durschschnittliche Dateigrösse: %d Bytes (zur Inode Bestimmung)
 message isize_fmt_dflt
 {  Durchschnittliche Dateigrösse:  4 Fragmente}
 
@@ -314,16 +311,16 @@ message newfs_fmt
 {Neues Dateisystem (newfs): %8s}
 
 message mount_fmt
-{         Mount: %9s} /* XXX translate */
+{         Mount: %9s}
 
 message mount_options_fmt
-{ Mountoptionen: } /* XXX translate */
+{ Mountoptionen: }
 
 message mountpt_fmt
-{    Mountpoint: %9s} /* XXX translate */
+{   Mount Verz.: %9s}
 
 message toggle
-{Wählen sie}	/* XXX translate */
+{Wählen sie}
 
 message restore
 {Ursprüngliche Werte wiederherstellen}
@@ -338,20 +335,20 @@ message label_size
 {%s
 Spezielle Werte, die für die Grössenangaben eingegeben werden können:
     -1:   bis zum Ende des NetBSD Teils der Disk gehen
-   a-%c:   das Ende für diese Partition da ansetzen, wo Partition X beginnt
+   a-%c:   bis zum Anfang von Partition X gehen
 
 Grösse (%s)}
 
 message label_offset
 {%s
-Spezielle Werte, die für den Offsetwert (Versatz) angegeben werden können:
-    -1:   dort ansetzen, wo der NetBSD Teil der Disk beginnt 
-   a-%c:   am Ende der vorhergehenden Partition starten (a, b, ..., %c) 
+Spezielle Werte, die für den Start angegeben werden können:
+    -1:   dort anfangen, wo der NetBSD Teil der Disk beginnt 
+   a-%c:   direkt hinter der angegebenen Partition starten (a, b, ..., %c) 
 
 start (%s)}
 
 message invalid_sector_number
-{Ungültige Sektorennummer
+{Ungültige Sektornummer
 }
 
 message Select_file_system_block_size
@@ -364,33 +361,31 @@ message packname
 {Bitte geben Sie Ihrer NetBSD Disk einen Namen}
 
 message lastchance
-{Ok, wir sind nun bereit NetBSD auf ihre Festplatte (%s) zu installieren. Noch
-wurde nichts geschrieben. Dies ist Ihre letzte Chance diesen Prozess zu beenden.
+{NetBSD wird nun auf der Festplatte (%s) installiert. Noch wurde nichts
+geschrieben. Dies ist Ihre letzte Chance diesen Prozess abzubrechen.
 
-Sollen Sie weiterfahren?
+Möchten Sie fortfahren?
 
 }
 
 message disksetupdone
-{Ok, der erste Teil der Prozedur ist fertiggestellt. Sysinst hat auf das
-Ziellaufwerk einen Disklabel geschrieben, es weiter formatiert (newfs'ed) und
-auf Fehler überprüft (fsck'ed), dies entsprechend für jede Partition, die Sie
-definiert haben. 
+{Der erste Teil der Installation ist nun abgeschlossen. Sysinst hat auf das
+Ziellaufwerk ein Disklabel geschrieben und alle von Ihnen definierten
+Partitionen formatiert (newfs'ed) sowie auf Fehler überprüft (fsck'ed).
 
-Der nächste Schritt besteht darin die Distributionssets (Basissystem + Kernel)
-zu laden und dann zu entpacken.
+Im nächste Schritt werden nun die Distributionssets (Basissystem + Kernel)
+geladen und auf die Festplatte kopiert.
 
 Drücken Sie die Eingabetaste um fortzufahren.
 }
 
 message disksetupdoneupdate
-{Ok, der erste Teil der Prozedur ist fertiggestellt. Sysinst hat auf das
-Ziellaufwerk einen Disklabel geschrieben, es weiter formatiert (newfs'ed) und
-auf Fehler überprüft (fsck'ed), dies entsprechend für jede Partition, die Sie
-definiert haben. 
+{Der erste Teil des Updates ist nun abgeschlossen. Sysinst hat auf das
+Ziellaufwerk einen Disklabel geschrieben, und alle von Ihnen definierten
+Partition auf Fehler überprüft (fsck'ed).
 
-Der nächste Schritt besteht darin die Distributionssets (Basissystem + Kernel)
-zu laden und dann zu entpacken.
+Im nächste Schritt werden nun die Distributionssets (Basissystem + Kernel)
+geladen und auf die Festplatte kopiert.
 
 Drücken Sie die Eingabetaste um fortzufahren.
 }
@@ -399,7 +394,7 @@ message openfail
 {Konnte %s nicht öffnen, die Fehlermeldung lautet: %s.
 }
 
-/* XXX translate */
+
 message statfail
 {Kann Eigenschaften von %s nicht lesen, die Fehlermeldung lautet: %s.
 }
@@ -413,77 +408,73 @@ message rename_fail
 }
 
 message deleting_files
-{Es gehört zur Prozedur dieses Upgrades (Aufrüstens) folgendes zu löschen:
+{Folgende Dateien werden im Rahmen dieses Upgrades gelöscht:
 }
 
 message deleting_dirs
-{Es gehört zur Prozedur dieses Upgrades (Aufrüstens) folgende Verzeichnisse
-zu löschen (ich werde solche, die noch Dateien enthalten, umbenennen):
+{Im Rahmen dieses Upgrades werden folgende Verzeichnisse gelöscht
+(ich werde Verzeichnisse die noch Dateien enthalten umbenennen):
 }
 
 message renamed_dir
 {Das Verzeichnis %s wurde zu %s umbenannt, weil es nicht leer war.
 }
 
-/* XXX translate */
 message cleanup_warn
-{Das 'Cleanup' (Säubern: Löschen nicht weiter benötigter Dateien) der bestehenden
-Installation ist fehlgeschlagen. Dadurch mag das Extrahieren des Sets ebenfalls
-fehlschlagen.
+{Das Löschen nicht mehr benötigter Dateien der bestehenden
+Installation ist fehlgeschlagen. Dadurch kann das Extrahieren der
+Distribution ebenfalls fehlschlagen.
 }
 
-/* XXX translate */
 message nomount
 {Bei der Partition %c handelt es sich nicht um ein 4.2BSD oder msdos
-Dateisystem, so dass diese keinen Mountpoint hat.
+Dateisystem, so dass diese Partition kein Mountverzeichnis hat.
 }
 
-/* XXX translate */
 message mountfail
-{Das Mounten der Gerätedatei /dev/%s%c auf %s ist fehlgeschlagen.
+{Das Mounten des Gerätes /dev/%s%c auf %s ist fehlgeschlagen.
 }
 
 message extractcomplete
 {Das Extrahieren der ausgewählten Sets für NetBSD-@@VERSION@@ ist abgeschlossen.
-Das System ist somit fähig von der ausgewählten Partition aufzustarten. Um die
+Das System ist somit fähig von der ausgewählten Partition zu starten. Um die
 Installation zu vervollständigen gibt Ihnen sysinst die Möglichkeit eine
 grundlegende Konfiguration vorzunehmen. 
 }
 
 message instcomplete
 {Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Das System
-sollte via Festplatte aufstarten können. Beachten Sie die INSTALL Anleitung, um 
-über weiteres Konfigurieren zu erfahren. Auch die afterboot(8) Manpage ist
-weiterzuempfehlen; diese enthält eine Liste mit Punkten, die nach dem ersten
-vollständigen Boot geprüft werden sollten.
+sollte von der Festplatte starten können. Beachten Sie die INSTALL Anleitung,
+um sich über die weitere Konfiguration zu informieren.
+Auch die afterboot(8) Manpage ist weiterzuempfehlen; sie enthält eine Liste
+mit Punkten, die nach dem ersten vollständigen Start geprüft werden sollten.
 
 Zumindest aber sollten Sie die /etc/rc.conf entsprechend Ihren Bedürfnissen
 konfigurieren. Werfen Sie einen Blick in /etc/defaults/rc.conf rein, wo Sie
-die Standardwerte (Vorgaben) für diese Datei finden.
+die Vorgaben für diese Datei finden.
 }
 
-/* XXX translate */
 message upgrcomplete
 {Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Sie müssen
 nun die Anweisungen im INSTALL Dokument beachten, damit Ihr System -
 entsprechend Ihrer Situation - neu konfiguriert werden kann.
 Lesen Sie (erneut) die afterboot(8) Manpage, da diese seit ihrem letzten
-Upgrade (Aufrüstung) bzw. Installation zusätzliche Angaben enthalten mag. Ihr
-altes /etc wurde als /etc.old gesichert.
+Upgrade (Aufrüstung) bzw. Installation zusätzliche Angaben enthalten kann.
+Ihr altes /etc Verzeichnis wurde als /etc.old gesichert.
 
 Sie sollten wenigstens rc.conf ändern; dort gilt es rc_configured=NO auf
 rc_configured=YES umzustellen, da das System sonst nur bis zum Single User
-Modus (Einbenutzermodus) aufstartet.
+Modus (Einbenutzermodus) startet.
 }
 
 
 message unpackcomplete
 {Das Entpacken der zusätzlichen Releasesets von NetBSD-@@VERSION@@ ist nun
 beendet. Das Entpacken der Sets hat /etc verändert. Bestehende /etc.old
-Verzeichnisse - erstellt von Upgrade (Aufrüstung) Prozeduren - wurden nicht
+Verzeichnisse - erstellt von Upgrade Prozeduren - wurden nicht
 modifiziert. Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
-Manpage mag ebenfalls nützlich sein.
+Manpage kann ebenfalls nützlich sein.
   
 Zumindest müssen sie die rc.conf editieren, so dass die gewünschten Dienste
 gestartet werden. Vergessen sie nicht rc_configured=NO auf rc_configured=YES
