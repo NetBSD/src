@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.5 2002/05/02 14:48:27 nonaka Exp $	*/
+/*	$NetBSD: platform.c,v 1.6 2002/05/02 14:58:37 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/residual.h>
 
 static struct platform platform_unknown = {
-	NULL,					/* model */
+	"",					/* model */
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
 	pci_intr_nofixup,			/* pci_intr_fixup */
@@ -64,7 +64,7 @@ struct platform *platform = &platform_unknown;
 int
 ident_platform(void)
 {
-	struct plattab *p;
+	struct plattab *p = &plattab_unknown;
 	int matched = -1, match = 0;
 	int i, rv;
 
@@ -80,8 +80,6 @@ ident_platform(void)
 	else if (strncmp(res->VitalProductData.PrintableModel,
 	    "BULL ESTRELLA (e0)         (e0)", 31) == 0) /* XXX */
 		p = &plattab_mot;
-	else
-		p = &plattab_unknown;
 
 	for (i = 0; i < p->num; i++) {
 		rv = (*p->platform[i]->match)(p->platform[i]);
@@ -99,13 +97,12 @@ int
 platform_generic_match(struct platform *p)
 {
 
-	if (p->model == NULL)
+	if (p == NULL || p->model == NULL)
 		return 0;
-	if (strcmp(res->VitalProductData.PrintableModel, p->model) == 0)
-    		return 1;
-	return 0;
+	if (strcmp(res->VitalProductData.PrintableModel, p->model) != 0)
+    		return 0;
+	return 1;
 }
-
 
 /* ARGUSED */
 void

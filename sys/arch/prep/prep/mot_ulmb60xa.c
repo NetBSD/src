@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.2 2002/05/02 14:48:27 nonaka Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.3 2002/05/02 14:58:37 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ mot_ulmb60xa_match(struct platform *p)
 {
 	uint8_t cputype;
 
-	if (p->model == NULL)
+	if (p == NULL || p->model == NULL)
 		return 0;
 	if (strcmp(res->VitalProductData.PrintableModel, p->model) != 0)
 		return 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 2002/04/25 15:06:36 atatat Exp $
+#	$NetBSD: INSTALL,v 1.18 2002/05/02 14:58:36 nonaka Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -15,6 +15,11 @@ options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 
 maxusers	8
+
+# Platform support
+options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
+options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
+options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
 # Compatibility options
 #options 	COMPAT_13	# NetBSD 1.3,

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.17 2002/04/25 15:06:36 atatat Exp $
+#	$NetBSD: NATSUMI,v 1.18 2002/05/02 14:58:36 nonaka Exp $
 #
 #	for development
 #
@@ -7,9 +7,13 @@ include "arch/prep/conf/std.prep"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
+makeoptions	COPTS="-O2 -pipe"
+
 maxusers	32
 
-makeoptions	COPTS="-O2 -pipe"
+# Platform support
+options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
+options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
 
 # Standard system options
 
