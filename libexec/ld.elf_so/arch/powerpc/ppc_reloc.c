@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.17 2002/09/06 03:05:37 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.18 2002/09/06 03:12:07 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -72,7 +72,7 @@ _rtld_bind_powerpc(obj, reloff)
 
 int
 _rtld_relocate_plt_object(
-	Obj_Entry *obj,
+	const Obj_Entry *obj,
 	const Elf_Rela *rela,
 	caddr_t *addrp,
 	bool dodebug)
@@ -158,7 +158,7 @@ _rtld_setup_pltgot(obj)
 
 int
 _rtld_relocate_nonplt_objects(obj, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
@@ -234,7 +234,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 
 int
 _rtld_relocate_plt_lazy(obj, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	bool dodebug;
 {
 	const Elf_Rela *rela;

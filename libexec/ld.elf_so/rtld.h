@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.41 2002/09/06 03:05:35 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.42 2002/09/06 03:12:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -268,10 +268,10 @@ void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *,
 int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
 caddr_t _rtld_bind __P((Obj_Entry *, Elf_Word));
 int _rtld_relocate_objects __P((Obj_Entry *, bool, bool));
-int _rtld_relocate_nonplt_objects __P((Obj_Entry *, bool));
-int _rtld_relocate_plt_lazy __P((Obj_Entry *, bool));
-int _rtld_relocate_plt_object __P((Obj_Entry *, const Elf_Rela *, caddr_t *,
-    bool));
+int _rtld_relocate_nonplt_objects __P((const Obj_Entry *, bool));
+int _rtld_relocate_plt_lazy __P((const Obj_Entry *, bool));
+int _rtld_relocate_plt_object __P((const Obj_Entry *, const Elf_Rela *,
+    caddr_t *, bool));
 
 /* search.c */
 char *_rtld_find_library __P((const char *, const Obj_Entry *));
@@ -280,7 +280,7 @@ char *_rtld_find_library __P((const char *, const Obj_Entry *));
 unsigned long _rtld_elf_hash __P((const char *));
 const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
     const Obj_Entry *, bool));
-const Elf_Sym *_rtld_find_symdef __P((unsigned long, Obj_Entry *,
+const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool));
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
   Objlist *, const Obj_Entry **, bool in_plt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.16 2002/09/05 21:57:09 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.17 2002/09/06 03:12:05 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -153,7 +153,7 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 const Elf_Sym *
 _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	unsigned long symnum;
-	Obj_Entry *refobj;
+	const Obj_Entry *refobj;
 	const Obj_Entry **defobj_out;
 	bool in_plt;
 {
