@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.73 2004/08/17 22:38:50 drochner Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.74 2004/08/19 15:12:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.73 2004/08/17 22:38:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.74 2004/08/19 15:12:36 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.73 2004/08/17 22:38:50 drochner Exp $
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
