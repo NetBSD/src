@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.25 1995/05/12 13:09:22 chopps Exp $
+#	$NetBSD: files.amiga,v 1.26 1995/08/18 15:56:57 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -96,6 +96,9 @@ file	arch/amiga/dev/if_bah.c		bah needs-flag
 
 device	es at zbus:	ifnet, ether
 file	arch/amiga/dev/if_es.c		es needs-count
+
+device	ae at zbus:	ifnet, ether
+file	arch/amiga/dev/if_ae.c		ae needs-count
 
 # Alf Data MultiFaceCard 3
 #device	mfch at zbus: tty
