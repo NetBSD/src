@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.165 2000/10/16 13:18:36 simonb Exp $
+#	$NetBSD: Makefile,v 1.166 2000/10/19 17:53:41 garbled Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -317,7 +317,7 @@ snap_kern:
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
+	cd ${KERNOBJDIR}/${configfile} && ${MAKE} distclean 
 .endif
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # kernels
