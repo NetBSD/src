@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.1 1996/06/23 14:04:43 pk Exp $
+.\"	$NetBSD: sleep.9,v 1.2 1996/10/30 05:32:10 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,9 @@
 .Nd put current process to sleep
 .Sh SYNOPSIS
 .Ft int
-.Fn "tsleep" "void *indent" "int priority" "int timo" "char *wmesg"
+.Fn "tsleep" "void *ident" "int priority" "int timo" "char *wmesg"
 .Ft void
-.Fn "sleep" "void *indent" "int priority"
+.Fn "sleep" "void *ident" "int priority"
 .Ft void
 .Fn "wakeup" "void *ident"
 .Sh DESCRIPTION
@@ -79,7 +79,7 @@ The
 .Fn tsleep
 function takes the following arguments:
 .Bl -tag -width priority
-.It Fa indent
+.It Fa ident
 An identifier of the
 .Dq wait channel
 representing the resource that the current process needs wait for. This
