@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.22 1996/03/17 13:21:25 cgd Exp $
+#	$NetBSD: files.sun3,v 1.23 1996/03/26 15:15:59 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -19,56 +19,54 @@ file arch/sun3/sun3/dvma.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c  		ddb | kgdb
 file arch/sun3/sun3/disksubr.c	
+file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/kgdb_stub.c 		kgdb
 file arch/sun3/sun3/machdep.c	
 file arch/sun3/sun3/mem.c		
 file arch/sun3/sun3/pmap.c		
-#file arch/sun3/sun3/stub.c		
+file arch/sun3/sun3/stub.c		
 file arch/sun3/sun3/sun3_startup.c	
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c		
 file arch/sun3/sun3/vector.c		
 file arch/sun3/sun3/vm_machdep.c	
 
+file arch/sun3/dev/idprom.c
+
 include "../../m68k/fpe/files.fpe"
 
 file arch/m68k/m68k/copy.s
 file dev/cons.c
 
-# Declare our "catch-all" root node.
-device mainbus {}
-attach mainbus at root
-# Misc. mainbus things (catch-all)
-# Control space hack
-device obctl {addr = -1, [level = -1]}
-attach obctl at mainbus
-# Floating Point Unit
-device fpu {}
-attach fpu at mainbus
-file arch/sun3/sun3/fpu.c		fpu
-
+#
 # Bus types
 #
 # The implementation of the bus_* functions in autoconfig.c
 # requires these all to agree with <autoconf.h> struct bus_loc
 
-# On-board MEMory space
-device obmem {addr = -1, [level = -1]}
-attach obmem at mainbus
+device mainbus {}
+attach mainbus at root
+file	arch/sun3/sun3/mainbus.c	mainbus
+
 # On-board I/O space
 device obio {addr = -1, [level = -1]}
 attach obio at mainbus
+file arch/sun3/dev/obio.c		obio
+
+# On-board MEMory space
+device obmem {addr = -1, [level = -1]}
+attach obmem at mainbus
+file arch/sun3/dev/obmem.c		obmem
+
 # VME Short space (D16)
 device vmes {addr = -1, [level = -1], [vect = -1]}
 attach vmes at mainbus
+
 # VME Long space (D32)
 device vmel {addr = -1, [level = -1], [vect = -1]}
 attach vmel at mainbus
 
-file arch/sun3/dev/obctl.c		obctl
-file arch/sun3/dev/obio.c		obio
-file arch/sun3/dev/obmem.c		obmem
 file arch/sun3/dev/vme.c		vmes | vmel
 
 #
@@ -79,6 +77,10 @@ include "../../../scsi/files.scsi"
 #
 # On-Board I/O (OBIO)
 #
+device zsc {channel = -1}
+attach zsc at obio
+file arch/sun3/dev/zs.c 		zsc needs-flag
+file dev/ic/z8530sc.c			zsc
 
 device eeprom
 attach eeprom at obio
@@ -88,29 +90,37 @@ device clock
 attach clock at obio
 file arch/sun3/sun3/clock.c		clock
 
+device memerr
+attach memerr at obio
+file arch/sun3/dev/memerr.c		memerr
+
+device intreg
+attach intreg at obio
+file arch/sun3/sun3/intreg.c		intreg
+
 device ie: ifnet, ether
-attach ie at obio, vmes
+attach ie at obio with ie_obio
+attach ie at vmes with ie_vmes
+file arch/sun3/dev/if_ie_obio.c		ie_obio
+file arch/sun3/dev/if_ie_vmes.c		ie_vmes
 file arch/sun3/dev/if_ie.c		ie
-file arch/sun3/dev/if_ie_subr.c		ie
 
 device le: ifnet, ether
 attach le at obio
 file arch/sun3/dev/if_le.c		le
-file arch/sun3/dev/if_le_subr.c		le
 
-device si: scsi
-attach si at obio, vmes
+device si: scsi, ncr5380sbc
 file	arch/sun3/dev/si.c		si
-
-device ncr_si: scsi, ncr5380sbc
-attach ncr_si at obio, vmes
-file	arch/sun3/dev/ncr_si.c  	ncr_si
+attach si at obio with si_obio
+file	arch/sun3/dev/si_obio.c		si_obio
+attach si at vmes with si_vmes
+file	arch/sun3/dev/si_vme.c		si_vmes
 
 #
 # Sun-compatible Frame Buffers (?)
 #
 define sunfb
-file arch/sun3/dev/fb.c			sunfb
+file arch/sun3/dev/fb.c			# sunfb needs-flag
 
 #
 # On-Board MEMory (OBMEM)
@@ -145,20 +155,10 @@ attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy needs-flag
 
 
-#
-# On-Board Control (OBCTL)
-#
-device idprom
-attach idprom at obctl
-file arch/sun3/dev/idprom.c		idprom needs-count
 
 #
 # Console (zs) related stuff
 #
-device zsc {channel = -1}
-attach zsc at obio
-file arch/sun3/dev/zs.c 		zsc needs-flag
-file dev/ic/z8530sc.c			zsc
 
 device zstty: tty
 attach zstty at zsc
@@ -180,9 +180,8 @@ file dev/sun/ms.c			ms needs-flag
 
 
 # RAM Disk for boot tape
-device	rd
-attach	rd at mainbus
-file dev/ramdisk.c			rd needs-count
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
 file arch/sun3/dev/rd_root.c		ramdisk_hooks
 
 # Major numbers for root/swap device configuration
