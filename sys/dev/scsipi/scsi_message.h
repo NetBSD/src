@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.10 2002/12/06 23:04:16 fvdl Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.11 2003/04/19 19:11:13 fvdl Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -24,6 +24,7 @@
 #define MSG_INIT_RECOVERY	0x0f /* O/O */ /* Deprecated in SPI3 */
 #define MSG_REL_RECOVERY	0x10 /* O/O */ /* Deprecated in SPI3 */
 #define MSG_TERM_IO_PROC	0x11 /* O/O */ /* Deprecated in SPI3 */
+#define MSG_QAS_REQUEST		0x55 /* O/O */ /* SPI3 */
 
 /* Messages (2 byte) */
 #define MSG_SIMPLE_Q_TAG	0x20 /* O/O */
