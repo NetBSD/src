@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.18 1998/03/22 07:26:33 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.19 1998/07/08 00:39:02 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -40,6 +40,7 @@
  *	Processor Status Register
  *	Machine Check Error Summary Register
  *	Machine Check Logout Area
+ *	Per CPU state Management of Machine Check Handling
  *	Virtual Memory Management
  *	Kernel Entry Vectors
  *	MMCSR Fault Type Codes
@@ -144,6 +145,9 @@ struct alpha_pcb {
 
 /*
  * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
+ *
+ * Note that these are *generic* OSF/1 PALcode specific defines. There are
+ * platform variations to these entities.
  */
 
 struct alpha_logout_area {
@@ -172,7 +176,23 @@ struct alpha_logout_area {
     (unsigned long *)((unsigned char *)(lap) + (lap)->la_system_offset)
 #define	ALPHA_LOGOUT_SYSTEM_SIZE(lap)					\
     ((lap)->la_frame_size - (lap)->la_system_offset)
-	
+
+/* types of machine checks */
+#define	ALPHA_SYS_ERROR		0x620	/* System correctable error	*/
+#define	ALPHA_PROC_ERROR	0x630	/* Processor correctable error	*/
+#define	ALPHA_SYS_MCHECK	0x660	/* System machine check		*/
+#define	ALPHA_PROC_MCHECK	0x670	/* Processor machine check	*/
+
+/* Per-CPU info for handling machine checks, an array of which		*/
+/* is allocated early in startup					*/
+struct mchkinfo {
+	volatile u_int		mc_expected;	/* machine check expected */
+	volatile u_int		mc_received;	/* machine check received */
+	/*
+	 * We don't really need more info at this time.
+	 */
+};
+
 /*
  * Virtual Memory Management definitions [OSF/1 PALcode Specific]
  *
