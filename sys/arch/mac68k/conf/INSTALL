@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 2002/04/28 06:19:45 wormey Exp $
+#	$NetBSD: INSTALL,v 1.18.4.1 2002/07/05 14:00:42 lukem Exp $
 #
 # INSTALL
 
@@ -191,4 +191,5 @@ pseudo-device	ppp		1 	# Point-to-Point Protocol
 pseudo-device	sl		1 	# Serial Line IP
 
 # miscellaneous pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
