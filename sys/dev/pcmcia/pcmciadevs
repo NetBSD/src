@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.145 2001/11/08 17:05:42 christos Exp $
+$NetBSD: pcmciadevs,v 1.146 2001/11/18 04:25:43 mrg Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -92,6 +92,7 @@ vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
 vendor EMTAC			0xc250	EMTAC Technology Corporation
+vendor LINKSYS2			0x0274  The Linksys Group
 vendor ELSA			0xd601  Elsa 
 
 /*
@@ -306,6 +307,9 @@ product XIRCOM CEM56		0x110b Xircom CreditCard Ethernet + Modem 56
 /* ZONET */
 product ZONET ZEN		0x0100	Zonet Zen 10/10
 
+/* Linksys */
+product LINKSYS2 IWN		0x1612	Instant Wireless Network PC Card
+
 
 /*
  * Cards we know only by their cis, sorted by name.
@@ -393,4 +397,3 @@ product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" } Synergy 2
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
-
