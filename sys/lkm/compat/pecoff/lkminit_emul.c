@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2002/03/27 20:54:29 kent Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3 2005/01/22 01:38:38 oki Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2 2002/03/27 20:54:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.3 2005/01/22 01:38:38 oki Exp $");
 
 #include <sys/param.h>
 #include <sys/syscall.h>
@@ -52,7 +52,7 @@ extern struct sysent sysent[];	/* sys/kern/init_sysent.c */
 extern struct sysent pecoff_sysent[];	/* sys/compat/pecoff/pecoff_sysent.c*/
 
 int compat_pecoff_lkmload(struct lkm_table *lkmtp, int cmd);
-int compat_pecoff_lkmentry __P((struct lkm_table *, int, int));
+int compat_pecoff_lkmentry (struct lkm_table *, int, int);
 
 /*
  * declare the emulation
