@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.29 1999/05/06 19:12:23 thorpej Exp $        */
+/*      $NetBSD: ukbd.c,v 1.30 1999/05/09 15:10:30 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -460,6 +460,7 @@ ukbd_intr(reqh, addr, status)
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int mod, omod;
 	u_int16_t ibuf[MAXKEYS];	/* chars events */
+	int s;
 	int nkeys, i, j;
 	int key;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
@@ -556,7 +557,9 @@ ukbd_intr(reqh, addr, status)
 				    cbuf[j]));
 			j++;
 		}
+		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
 		untimeout(ukbd_rawrepeat, sc);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
@@ -566,12 +569,14 @@ ukbd_intr(reqh, addr, status)
 	}
 #endif
 
+	s = spltty();
 	for (i = 0; i < nkeys; i++) {
 		key = ibuf[i];
 		wskbd_input(sc->sc_wskbddev, 
 		    key&RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
 		    key&CODEMASK);
 	}
+	splx(s);
 
 #elif defined(__FreeBSD__)
 	/* XXX shouldn't the keys be used? */
@@ -624,8 +629,11 @@ ukbd_rawrepeat(v)
 	void *v;
 {
 	struct ukbd_softc *sc = v;
+	int s;
 
+	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
+	splx(s);
 	timeout(ukbd_rawrepeat, sc, hz * REP_DELAYN / 1000);
 }
 #endif
