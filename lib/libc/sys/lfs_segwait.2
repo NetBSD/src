@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_segwait.2,v 1.6 2003/04/16 13:34:53 wiz Exp $
+.\"	$NetBSD: lfs_segwait.2,v 1.7 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ specified by
 .Fa *fsidp
 or if
 .Fa *fsidp
-is -1, until a segment is acquired for writing by any LFS filesystem.
+is \-1, until a segment is acquired for writing by any LFS filesystem.
 .Pp
 If
 .Fa timeout
@@ -65,7 +65,7 @@ milliseconds regardless of whether a new segment has been designated for
 writing or not.
 .Sh RETURN VALUES
 .Fn lfs_segwait
-returns 0 if a new segment was acquired; 1 if it timed out; or -1 on error.
+returns 0 if a new segment was acquired; 1 if it timed out; or \-1 on error.
 .Sh ERRORS
 An error return from
 .Fn lfs_segwait

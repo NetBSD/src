@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlockall.2,v 1.11 2003/04/16 13:34:54 wiz Exp $
+.\"	$NetBSD: mlockall.2,v 1.12 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,7 @@ call will not be locked.
 .Sh RETURN VALUES
 A return value of 0 indicates that the call
 succeeded and all pages in the range have either been locked or unlocked.
-A return value of -1 indicates an error occurred and the locked
+A return value of \-1 indicates an error occurred and the locked
 status of all pages in the range remains unchanged.
 In this case, the global location
 .Va errno

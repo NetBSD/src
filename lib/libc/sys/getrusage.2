@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrusage.2,v 1.17 2003/08/07 16:43:59 agc Exp $
+.\"	$NetBSD: getrusage.2,v 1.18 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .In sys/resource.h
 .Fd #define	RUSAGE_SELF	 0
-.Fd #define	RUSAGE_CHILDREN	-1
+.Fd #define	RUSAGE_CHILDREN	\-1
 .Ft int
 .Fn getrusage "int who" "struct rusage *rusage"
 .Sh DESCRIPTION
@@ -139,7 +139,7 @@ I/O; data supplied by the caching mechanism is charged only
 to the first process to read or write the data.
 .Sh ERRORS
 .Fn getrusage
-returns -1 on error.
+returns \-1 on error.
 The possible errors are:
 .Bl -tag -width Er
 .It Bq Er EINVAL

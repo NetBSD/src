@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.18 2003/08/07 16:43:57 agc Exp $
+.\"	$NetBSD: flock.2,v 1.19 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,7 @@ lose its lock.
 Processes blocked awaiting a lock may be awakened by signals.
 .Sh RETURN VALUES
 Zero is returned if the operation was successful;
-on an error a -1 is returned and an error code is left in
+on an error a \-1 is returned and an error code is left in
 the global location
 .Va errno .
 .Sh ERRORS

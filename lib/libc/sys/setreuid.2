@@ -1,4 +1,4 @@
-.\"	$NetBSD: setreuid.2,v 1.21 2003/08/07 16:44:06 agc Exp $
+.\"	$NetBSD: setreuid.2,v 1.22 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ If
 .Fa ruid
 or
 .Fa euid
-is -1, the current uid is filled in by the system.
+is \-1, the current uid is filled in by the system.
 Unprivileged users may change the real user
 ID to the effective user ID, and may change the effective user ID to the
 real user ID or the saved user ID; only the super-user may
@@ -119,7 +119,7 @@ the
 function.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

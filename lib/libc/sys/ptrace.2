@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.24 2003/06/26 09:50:49 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.25 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -238,7 +238,7 @@ bytes transferred.
 If the requested I/O could not be successfully performed,
 .Fn ptrace
 will return
-.Li -1
+.Li \-1
 and set
 .Va errno .
 .El
@@ -338,7 +338,7 @@ pointed to by
 .\" .Li syscall_num
 .\" is
 .\" .Eo \&
-.\" .Li -1
+.\" .Li \-1
 .\" .Ec ,
 .\" .Li syscall_err
 .\" holds the error number
@@ -390,7 +390,7 @@ pointed to by
 Some requests can cause
 .Fn ptrace
 to return
-.Li -1
+.Li \-1
 as a non-error value; to disambiguate,
 .Va errno
 can be set to 0 before the call and checked afterwards.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.16 2003/04/16 13:34:54 wiz Exp $
+.\"	$NetBSD: msgrcv.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -113,7 +113,7 @@ If
 .Dv IPC_NOWAIT
 is set, then
 .Fn msgrcv
-will immediately return a value of -1 and set
+will immediately return a value of \-1 and set
 .Va errno
 to
 .Er EAGAIN .
@@ -124,13 +124,13 @@ is not set, the calling process will block until:
 .It
 A message of the requested type becomes available on the message queue.
 .It
-The message queue is removed, in which case -1 will be returned and
+The message queue is removed, in which case \-1 will be returned and
 .Va errno
 set to
 .Er EIDRM .
 .It
 A signal is received and caught.
--1 is returned and
+\-1 is returned and
 .Va errno
 is set to
 .Er EINTR .
@@ -157,7 +157,7 @@ returns the number of bytes received into the
 .Va mtext
 field of the structure pointed to by
 .Fa msgp .
-Otherwise, -1 is returned, and
+Otherwise, \-1 is returned, and
 .Va errno
 set to indicate the error.
 .Sh ERRORS
