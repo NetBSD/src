@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.38 2000/03/23 07:01:44 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.39 2000/03/30 00:00:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -491,7 +491,7 @@ static __inline u_int32_t
 _2btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 8) |
 	     bytes[1];
@@ -502,7 +502,7 @@ static __inline u_int32_t
 _3btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 16) |
 	     (bytes[1] << 8) |
@@ -514,7 +514,7 @@ static __inline u_int32_t
 _4btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 24) |
 	     (bytes[1] << 16) |
@@ -560,7 +560,7 @@ static __inline u_int32_t
 _2ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8);
@@ -571,7 +571,7 @@ static __inline u_int32_t
 _3ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |
@@ -583,7 +583,7 @@ static __inline u_int32_t
 _4ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |
