@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.7 1999/11/19 22:29:26 kristerw Exp $
+.\"	$NetBSD: man.conf.5,v 1.8 2000/05/27 21:33:26 jdolecek Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,10 +66,15 @@ precede it with a backslash (``\e'').
 Lines in this format specify that manual pages for the section
 may be found in the following directories.
 .Pp
-Directories named with a trailing slash character (``/'') are expected
-to contain subdirectories of manual pages, (see the keyword ``_subdir''
-below) instead of manual pages.
-These subdirectories are searched instead of the directory.
+Section lines may contain either absolute directory paths or relative
+directory paths (but not both).  Relative directory paths are treated
+as a list of subdirectories to append to the current directory search
+path.  Section lines with absolute directory paths (starting with
+``/'') completely replace the current directory search path with their
+content.  Absolute directory paths named with a trailing slash
+character are expected to contain subdirectories of manual pages, (see
+the keyword ``_subdir'' below) instead of man pages.  These
+subdirectories are searched instead of the directory.
 .Pp
 Before searching any directory for a manual page, the
 .Xr man 1

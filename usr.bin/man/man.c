@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.22 2000/01/09 04:54:54 tsutsui Exp $	*/
+/*	$NetBSD: man.c,v 1.23 2000/05/27 21:33:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.22 2000/01/09 04:54:54 tsutsui Exp $");
+__RCSID("$NetBSD: man.c,v 1.23 2000/05/27 21:33:26 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,11 @@ int f_all, f_where;
 int		 main __P((int, char **));
 static void	 build_page __P((char *, char **));
 static void	 cat __P((char *));
-static char	*check_pager __P((char *));
+static const char	*check_pager __P((const char *));
 static int	 cleanup __P((void));
 static void	 how __P((char *));
 static void	 jump __P((char **, char *, char *));
-static int	 manual __P((char *, TAG *, glob_t *));
+static int	 manual __P((char *, TAG *, glob_t *, const char *));
 static void	 onsig __P((int));
 static void	 usage __P((void));
 
@@ -85,13 +85,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	TAG *defp, *defnewp, *section, *sectnewp, *subp;
-	ENTRY *e_defp, *e_sectp, *e_subp, *ep;
+	TAG *defp, *section, *newpathp, *subp;
+	ENTRY *e_defp, *e_subp;
 	glob_t pg;
 	size_t len;
-	int ch, f_cat, f_how, found;
-	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *slashp;
-	char *conffile, buf[MAXPATHLEN * 2];
+	int ch, f_cat, f_how, found, abs_section;
+	char **ap, *cmd, *p, *p_add, *p_path;
+	const char *machine, *pager, *conffile, *pathsearch;
+	char buf[MAXPATHLEN * 2];
 
 #ifdef __GNUC__
 	pager = NULL;		/* XXX gcc -Wuninitialized */
@@ -99,7 +100,8 @@ main(argc, argv)
 
 	f_cat = f_how = 0;
 	conffile = p_add = p_path = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:w")) != -1)
+	pathsearch = NULL;
+	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:S:w")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;
@@ -119,7 +121,7 @@ main(argc, argv)
 			break;
 		case 'M':
 		case 'P':		/* Backward compatibility. */
-			p_path = optarg;
+			p_path = strdup(optarg);
 			break;
 		/*
 		 * The -f and -k options are backward compatible,
@@ -131,6 +133,9 @@ main(argc, argv)
 		case 'k':
 			jump(argv, "-k", "apropos");
 			/* NOTREACHED */
+		case 'S':
+			pathsearch = optarg;
+			break;
 		case 'w':
 			f_all = f_where = 1;
 			break;
@@ -141,7 +146,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!*argv)
+	if (!argc)
 		usage();
 
 	if (!f_cat && !f_how && !f_where) {
@@ -155,6 +160,7 @@ main(argc, argv)
 				pager = _PATH_PAGER;
 		}
 	}
+
 	/* Read the configuration file. */
 	config(conffile);
 
@@ -169,130 +175,126 @@ main(argc, argv)
 		machine = utsname.machine;
 	}
 
-	/* If there's no _default list, create an empty one. */
+	/* create an empty _default list if the config file didn't have one */
 	if ((defp = getlist("_default")) == NULL)
 		defp = addlist("_default");
 
-	/*
-	 * 1: If the user specified a MANPATH variable, or set the -M
-	 *    option, we replace the _default list with the user's list,
-	 *    appending the entries in the _subdir list and the machine.
-	 */
+	/* if -M wasn't specified, check for MANPATH */
 	if (p_path == NULL)
 		p_path = getenv("MANPATH");
-	if (p_path != NULL) {
-		while ((e_defp = defp->list.tqh_first) != NULL) {
-			free(e_defp->s);
-			TAILQ_REMOVE(&defp->list, e_defp, q);
-		}
-		for (p = strtok(p_path, ":");
-		    p != NULL; p = strtok(NULL, ":")) {
-			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&defp->list, ep, q);
-			}
-		}
-	}
 
 	/*
-	 * 2: If the user did not specify MANPATH, -M or a section, rewrite
-	 *    the _default list to include the _subdir list and the machine.
+	 * get section.  abs_section will be non-zero iff the user
+	 * specified a section and it had absolute (rather than
+	 * relative) paths in the man.conf file.
 	 */
-	if (argv[1] == NULL)
+	if (argc > 1 && (section = getlist(*argv)) != NULL) {
+		argv++;
+		argc--;
+		abs_section = (TAILQ_FIRST(&section->list) != NULL &&
+			       *(TAILQ_FIRST(&section->list)->s) == '/');
+	} else {
 		section = NULL;
-	else if ((section = getlist(*argv)) != NULL)
-		++argv;
-	if (p_path == NULL && section == NULL) {
-		defnewp = addlist("_default_new");
-		e_defp =
-		    defp->list.tqh_first == NULL ? NULL : defp->list.tqh_first;
-		for (; e_defp != NULL; e_defp = e_defp->q.tqe_next) {
-			slashp =
-			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				e_defp->s, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&defnewp->list, ep, q);
-			}
-		}
-		defp = getlist("_default");
-		while ((e_defp = defp->list.tqh_first) != NULL) {
-			free(e_defp->s);
-			TAILQ_REMOVE(&defp->list, e_defp, q);
-		}
-		free(defp->s);
-		TAILQ_REMOVE(&head, defp, q);
-		defnewp = getlist("_default_new");
-		free(defnewp->s);
-		defnewp->s = "_default";
-		defp = defnewp;
+		abs_section = 0;
 	}
 
-	/*
-	 * 3: If the user set the -m option, insert the user's list before
-	 *    whatever list we have, again appending the _subdir list and
-	 *    the machine.
-	 */
-	if (p_add != NULL)
-		for (p = strtok(p_add, ":"); p != NULL; p = strtok(NULL, ":")) {
-			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_HEAD(&defp->list, ep, q);
-			}
-		}
+	/* get subdir list */
+	subp = getlist("_subdir");
+	if (!subp)
+		subp = addlist("_subdir");
 
 	/*
-	 * 4: If no -m was specified, and a section was, rewrite the section's
-	 *    paths (if they have a trailing slash) to append the _subdir list
-	 *    and the machine.  This then becomes the _default list.
+	 * now that we have all the inputs we must generate a search path.
 	 */
-	if (p_add == NULL && section != NULL) {
-		sectnewp = addlist("_section_new");
-		for (e_sectp = section->list.tqh_first;
-		    e_sectp != NULL; e_sectp = e_sectp->q.tqe_next) {
-			if (e_sectp->s[strlen(e_sectp->s) - 1] != '/') {
+
+	/*
+	 * 1: If user specified a section and it has absolute paths
+	 * in the config file, then that overrides _default, MANPATH and
+	 * path passed via -M.
+	 */
+	if (abs_section) {
+		p_path = NULL;		/* zap -M/MANPATH */
+		defp = section;		/* zap _default */
+		section = NULL;		/* promoted to defp */
+	}
+
+
+	/*
+	 * 2: Section can be non-null only if a section was specified
+	 * and the config file has relative paths - the section list
+	 * overrides _subdir in this case.
+	 */
+	if (section)
+		subp = section;
+
+
+	/*
+	 * 3: now we either have text string path (p_path) or a tag
+	 * based path (defp).   we need to append subp and machine
+	 * to each element in the path.
+	 *
+	 * for backward compat, we do not append subp if abs_section
+	 * and the path does not end in "/".
+	 */
+	newpathp = addlist("_new_path");
+	if (p_path) {
+		/* use p_path */
+		for (; (p = strtok(p_path, ":")) != NULL; p_path = NULL) {
+			for ( e_subp = TAILQ_FIRST(&subp->list) ;
+			      e_subp != NULL ;
+			      e_subp = TAILQ_NEXT(e_subp, q)) {
+				snprintf(buf, sizeof(buf), "%s/%s{/%s,}",
+					 p, e_subp->s, machine);
+				addentry(newpathp, buf, 0);
+			}
+		}
+	} else {
+		/* use defp rather than p_path */
+		for (e_defp = TAILQ_FIRST(&defp->list) ;
+		     e_defp != NULL ;
+		     e_defp = TAILQ_NEXT(e_defp, q)) {
+
+			/* handle trailing "/" magic here ... */
+		  	if (abs_section &&
+			    e_defp->s[strlen(e_defp->s) - 1] != '/') {
+
 				(void)snprintf(buf, sizeof(buf),
-				    "%s{/%s,}", e_sectp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
+				    "%s{/%s,}", e_defp->s, machine);
+				addentry(newpathp, buf, 0);
 				continue;
 			}
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
-				(void)snprintf(buf, sizeof(buf), "%s%s{/%s,}",
-				    e_sectp->s, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
+
+			for ( e_subp = TAILQ_FIRST(&subp->list) ;
+			      e_subp != NULL ;
+			      e_subp = TAILQ_NEXT(e_subp, q)) {
+				snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
+					 e_defp->s, (abs_section) ? "" : "/",
+					 e_subp->s, machine);
+				addentry(newpathp, buf, 0);
 			}
 		}
-		sectnewp->s = section->s;
-		defp = sectnewp;
-		TAILQ_REMOVE(&head, section, q);
+	}				/* using defp ... */
+
+	/* now replace the current path with the new one */
+	defp = newpathp;
+
+	/*
+	 * 4: prepend the "-m" path, if specified.   we always add
+	 * subp and machine to this part of the path.
+	 */
+
+	if (p_add) {
+		for (p = strtok(p_add, ":") ; p ; p = strtok(NULL, ":")) {
+			for ( e_subp = TAILQ_FIRST(&subp->list) ;
+			      e_subp != NULL ;
+			      e_subp = TAILQ_NEXT(e_subp, q)) {
+				snprintf(buf, sizeof(buf), "%s/%s{/%s,}",
+					 p, e_subp->s, machine);
+				addentry(newpathp, buf, 1);
+			}
+		}
 	}
+
 
 	/*
 	 * 5: Search for the files.  Set up an interrupt handler, so the
@@ -304,7 +306,7 @@ main(argc, argv)
 
 	memset(&pg, 0, sizeof(pg));
 	for (found = 0; *argv; ++argv)
-		if (manual(*argv, defp, &pg))
+		if (manual(*argv, defp, &pg, pathsearch))
 			found = 1;
 
 	/* 6: If nothing found, we're done. */
@@ -379,10 +381,11 @@ main(argc, argv)
  *	Search the manuals for the pages.
  */
 static int
-manual(page, tag, pg)
+manual(page, tag, pg, pathsearch)
 	char *page;
 	TAG *tag;
 	glob_t *pg;
+	const char *pathsearch;
 {
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
@@ -412,6 +415,14 @@ manual(page, tag, pg)
 		/* Find out if it's really a man page. */
 		for (cnt = pg->gl_pathc - pg->gl_matchc;
 		    cnt < pg->gl_pathc; ++cnt) {
+
+			if (pathsearch) {
+				p = strstr(pg->gl_pathv[cnt], pathsearch);
+				if (!p || strchr(p, '/') == NULL) {
+					pg->gl_pathv[cnt] = "";
+					continue;
+				}
+			}
 
 			/*
 			 * Try the _suffix key words first.
@@ -662,11 +673,11 @@ cat(fname)
  * check_pager --
  *	check the user supplied page information
  */
-static char *
+static const char *
 check_pager(name)
-	char *name;
+	const char *name;
 {
-	char *p, *save;
+	const char *p, *save;
 
 	/*
 	 * if the user uses "more", we make it "more -s"; watch out for
@@ -680,14 +691,12 @@ check_pager(name)
 
 	/* make sure it's "more", not "morex" */
 	if (!strncmp(p, "more", 4) && (!p[4] || isspace((unsigned char)p[4]))){
-		save = name;
-		/* allocate space to add the "-s" */
-		if (!(name =
-		    malloc((u_int)(strlen(save) + sizeof("-s") + 1))))
-			err(1, "malloc");
-		(void)sprintf(name, "%s %s", save, "-s");
+		char *newname;
+		(void)asprintf(&newname, "%s %s", save, "-s");
+		name = newname;
 	}
-	return(name);
+
+	return (name);
 }
 
 /*
@@ -772,7 +781,7 @@ usage()
 {
 	extern char *__progname;
 	(void)fprintf(stderr,
-    "Usage: %s [-achw] [-C file] [-M path] [-m path] [section] title ...\n",
+    "Usage: %s [-achw] [-C file] [-M path] [-m path] [-S srch] [section] title ...\n",
 	    __progname);
 	exit(1);
 }

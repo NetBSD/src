@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.1,v 1.9 1999/09/08 20:32:03 fredb Exp $
+.\"	$NetBSD: man.1,v 1.10 2000/05/27 21:33:26 jdolecek Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,7 @@
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
+.Op Fl S Ar srch
 .Op Ar section
 .Ar name Ar ...
 .Nm ""
@@ -126,6 +127,11 @@ The subdirectories to be searched, and their search order,
 is specified by the ``_subdir'' line in the
 .Nm
 configuration file.
+.It Fl S
+Display only man pages that have the specified string in their
+filenames.  This allows the man page search process criteria to be
+narrowed without having to change the MANPATH or ``_default''
+variables.
 .It Fl w
 List the pathnames of the man pages which
 .Nm
