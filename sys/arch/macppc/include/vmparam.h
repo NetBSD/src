@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1998/08/21 16:13:28 tsubai Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 1999/01/16 20:31:50 chuck Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,8 +92,6 @@
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
-
-#define MACHINE_NEW_NONCONTIG
 
 struct pmap_physseg {
 	struct pv_entry *pvent;
