@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.7 1999/09/27 23:59:51 ad Exp $
+#	$NetBSD: UNDERWORLD,v 1.8 1999/12/12 11:53:42 soren Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -249,7 +249,7 @@ sysbeep0	at pcppi?
 # Serial Devices
 
 # PCI serial interfaces
-#@ com*	at puc? port ?			# 16x450s on "universal" comm boards
+#@ com*	at puc? port ?			# 16x50s on "universal" comm boards
 #@ cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces

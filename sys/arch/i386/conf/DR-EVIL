@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.4 1999/12/07 19:38:36 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.5 1999/12/12 11:53:41 soren Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -292,7 +292,7 @@ sysbeep0	at pcppi?
 # Serial Devices
 
 # PCI serial interfaces
-#com*	at puc? port ?			# 16x450s on "universal" comm boards
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces

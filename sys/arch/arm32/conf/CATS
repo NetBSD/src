@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.19 1999/11/28 00:34:17 mark Exp $
+#	$NetBSD: CATS,v 1.20 1999/12/12 11:51:29 soren Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -195,7 +195,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # PCI serial interfaces
-#com*	at puc? port ?			# 16x450s on "universal" comm boards
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # PCI parallel printer interfaces

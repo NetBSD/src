@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.132 1999/12/07 19:38:55 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.133 1999/12/12 11:53:41 soren Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -241,7 +241,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # Serial Devices
 
 # PCI serial interfaces
-com*	at puc? port ?			# 16x450s on "universal" comm boards
+com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces
