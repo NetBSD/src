@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1997/01/27 07:57:12 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1997/01/27 10:18:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -109,6 +109,7 @@ bus_space_read_multi_2(t, h, o, a, c)
 {
 	for (; c; a += 2, c--)
 		*(u_int16_t *)a = bus_space_read_2(t, h, o);
+}
 
 extern __inline__ void
 bus_space_read_multi_4(t, h, o, a, c)
@@ -119,6 +120,7 @@ bus_space_read_multi_4(t, h, o, a, c)
 {
 	for (; c; a += 4, c--)
 		*(u_int32_t *)a = bus_space_read_4(t, h, o);
+}
 
 extern __inline__ void
 bus_space_read_multi_8(t, h, o, a, c)
@@ -172,6 +174,6 @@ bus_space_write_multi_8(t, h, o, a, c)
 	caddr_t			a;
 {
 	for (; c; a += 8, c--)
-		bus_space_write_8(t, h, o, *(u_int32_t *)a);
+		bus_space_write_8(t, h, o, *(u_int64_t *)a);
 }
 #endif /* _ATARI_BUS_H_ */
