@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.60 2001/06/26 16:02:27 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.61 2001/06/26 17:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map_intrsafe kmem_map_store;
+static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"
@@ -702,7 +702,7 @@ kmeminit()
 		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
-			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
+			VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)

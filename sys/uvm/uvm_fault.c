@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.66 2001/06/26 17:27:31 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.67 2001/06/26 17:55:14 thorpej Exp $	*/
 
 /*
  *
@@ -594,20 +594,6 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 					 * pages on wire */
 	else
 		narrow = FALSE;		/* normal fault */
-
-	/*
-	 * before we do anything else, if this is a fault on a kernel
-	 * address, check to see if the address is managed by an
-	 * interrupt-safe map.  If it is, we fail immediately.  Intrsafe
-	 * maps are never pageable, and this approach avoids an evil
-	 * locking mess.
-	 */
-
-	if (orig_map == kernel_map && uvmfault_check_intrsafe(&ufi)) {
-		UVMHIST_LOG(maphist, "<- VA 0x%lx in intrsafe map %p",
-		    ufi.orig_rvaddr, ufi.map, 0, 0);
-		return EFAULT;
-	}
 
 	/*
 	 * "goto ReFault" means restart the page fault from ground zero.
