@@ -34,7 +34,7 @@
 #include <krb5_locl.h>
 
 __RCSID("$Heimdal: changepw.c,v 1.37 2002/09/03 16:14:34 nectar Exp $"
-        "$NetBSD: changepw.c,v 1.8 2002/09/20 22:05:59 mycroft Exp $");
+        "$NetBSD: changepw.c,v 1.9 2003/01/27 03:33:36 elric Exp $");
 
 static krb5_error_code
 send_request (krb5_context context,
@@ -176,7 +176,7 @@ process_reply (krb5_context context,
     ap_rep_data.length  = (reply[4] << 8) | (reply[5]);
     priv_data.data   = (u_char*)ap_rep_data.data + ap_rep_data.length;
     priv_data.length = len - ap_rep_data.length - 6;
-    if ((u_char *)priv_data.data + priv_data.length >= reply + len)
+    if ((u_char *)priv_data.data + priv_data.length > reply + len)
 	return KRB5_KPASSWD_MALFORMED;
   
     if (ap_rep_data.length) {
