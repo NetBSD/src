@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.40 2001/12/17 20:17:34 fredette Exp $
+#	$NetBSD: install.sub,v 1.41 2002/04/18 21:41:38 fredette Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -343,7 +343,7 @@ configurenetwork() {
 	cat << \__configurenetwork_1
 
 You may configure the following network interfaces (the interfaces
-marked with [X] have been succesfully configured):
+marked with [X] have been successfully configured):
 
 __configurenetwork_1
 
