@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.44 2001/03/30 13:57:07 kleink Exp $
+.\"	$NetBSD: pci.4,v 1.45 2001/03/30 14:34:27 minoura Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -234,6 +234,8 @@ Forte Media FM801 audio device.
 NeoMagic MagicMedia 256 audio device.
 .It sv
 S3 SonicVibes audio device.
+.It yds
+Yamaha YMF724/740/744/754-based audio device.
 .El
 .Pp
 .Ss Bridges
@@ -333,7 +335,8 @@ VGA graphics boards.
 .Xr vga 4 ,
 .Xr viapm 4 ,
 .Xr vr 4 ,
-.Xr wscons 4
+.Xr wscons 4 ,
+.Xr yds 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI
