@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.30 1997/04/28 17:04:05 mycroft Exp $	*/
+/*	$NetBSD: elink3.c,v 1.31 1997/05/11 05:47:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -499,6 +499,7 @@ ep_vortex_probemedia(sc)
 		: ep_vortex_media[default_media].epm_name;
 	printf(" default %s%s\n",
 	       medium_name,  (autoselect)? ", autoselect" : "" );
+
 #ifdef notyet	
 	/*
 	 * Set default: either the active interface the card
@@ -560,6 +561,10 @@ epinit(sc)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
 		bus_space_read_1(iot, ioh, EP_W1_TX_STATUS);
+
+	/* Set threshhold for for Tx-space avaiable interrupt. */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
 	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE |
