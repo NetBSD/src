@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.114 2001/04/12 18:04:24 kawamoto Exp $
+.\"	$NetBSD: main,v 1.115 2001/04/13 00:13:12 kanaoka Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1150,6 +1150,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Chris Jones Ta Mt cjones@netbsd.org
 .It Ta Takahiro Kambe Ta Mt taca@netbsd.org
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
+.It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@netbsd.org
