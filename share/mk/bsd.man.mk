@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.16 1994/12/23 11:19:21 cgd Exp $
+#	$NetBSD: bsd.man.mk,v 1.17 1994/12/28 21:34:23 mycroft Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 .if !target(.MAIN)
@@ -31,10 +31,7 @@ maninstall:
 		${MINSTALL} $$page $$dir/$$instpage; \
 	done
 .endif
-
 .if defined(MLINKS) && !empty(MLINKS)
-maninstall: manlinkinstall
-manlinkinstall:
 	@set ${MLINKS}; \
 	while test $$# -ge 2; do \
 		name=$$1; \
