@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.21 1995/07/04 07:18:57 mycroft Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.22 1995/07/24 07:45:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -69,11 +69,11 @@ void putphysbuf __P((struct buf *bp));
  */
 int
 physio(strategy, bp, dev, flags, minphys, uio)
-	int (*strategy)(); 
+	void (*strategy) __P((struct buf *)); 
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	u_int (*minphys)();
+	u_int (*minphys) __P((struct buf *));
 	struct uio *uio;
 {
 	struct iovec *iovp;
@@ -150,8 +150,11 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */
-			(*minphys)(bp);
-			todo = bp->b_bcount;
+			todo = (*minphys)(bp);
+#ifdef DIAGNOSTIC
+			if (todo > MAXPHYS)
+				panic("todo > MAXPHYS; minphys broken");
+#endif
 
 			/*
 			 * [lock the part of the user address space involved
