@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 1997/04/27 20:43:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -324,8 +324,8 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Validate PTEs for kernel text (RO).  The first page
 	 * of kernel text remains invalid; see locore.s
 	 */
-	pte = &((u_int *)kptpa)[hp300_btop(KERNBASE + NBPG)];
-	epte = &pte[hp300_btop(hp300_trunc_page(&etext))];
+	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE + NBPG)];
+	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
 	protopte = (firstpa + NBPG) | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -336,7 +336,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[hp300_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -380,22 +380,22 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
-		(pt_entry_t *)hp300_ptob(nptpages * NPTEPG);
+		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
 	RELOC(intiobase, char *) =
-		(char *)hp300_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
+		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
 	RELOC(intiolimit, char *) =
-		(char *)hp300_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
 	 */
 	RELOC(extiobase, char *) =
-		(char *)hp300_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * CLKbase, MMUbase: important registers in internal IO space
 	 * accessed from assembly language.
@@ -436,9 +436,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * page so the msgbuf can be preserved.
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) = hp300_ptob(RELOC(maxmem, int)) -
-	    (hp300_round_page(sizeof(struct msgbuf)) + hp300_ptob(1));
-	RELOC(mem_size, vm_size_t) = hp300_ptob(RELOC(physmem, int));
+	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int)) -
+	    (m68k_round_page(sizeof(struct msgbuf)) + m68k_ptob(1));
+	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
