@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.4 2003/10/25 16:15:07 chs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.5 2003/10/30 04:11:36 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1183,18 +1183,16 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc_if->sk_ethercom.ec_if;
 	ifp->if_softc = sc_if;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sk_ioctl;
 	ifp->if_start = sk_start;
 	ifp->if_stop = sk_stop;
 	ifp->if_init = sk_init;
 	ifp->if_watchdog = sk_watchdog;
-	ifp->if_baudrate = 1000000000;
 	ifp->if_capabilities |= ETHERCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc_if->sk_dev.dv_xname);
 
 	/*
 	 * Do miibus setup.
@@ -1764,7 +1762,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
-	u_int32_t		idx, nsegs;
+	u_int32_t		idx;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(3, ("sk_txeof\n"));
@@ -1775,12 +1773,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	 */
 	idx = sc_if->sk_cdata.sk_tx_cons;
 	while(idx != sc_if->sk_cdata.sk_tx_prod) {
-		entry = sc_if->sk_cdata.sk_tx_map[idx];
-		if (!entry)
-			break;
-
-		nsegs = entry->dmamap->dm_nsegs;
-		SK_CDTXSYNC(sc_if, idx, nsegs,
+		SK_CDTXSYNC(sc_if, idx, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
@@ -1789,12 +1782,14 @@ sk_txeof(struct sk_if_softc *sc_if)
 			sk_dump_txdesc(cur_tx, idx);
 #endif
 		if (cur_tx->sk_ctl & SK_TXCTL_OWN) {
-			SK_CDTXSYNC(sc_if, idx, nsegs, BUS_DMASYNC_PREREAD);
+			SK_CDTXSYNC(sc_if, idx, 1, BUS_DMASYNC_PREREAD);
 			break;
 		}
 		if (cur_tx->sk_ctl & SK_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
+			entry = sc_if->sk_cdata.sk_tx_map[idx];
+
 			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
 
@@ -1808,8 +1803,9 @@ sk_txeof(struct sk_if_softc *sc_if)
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, SK_TX_RING_CNT);
-		ifp->if_timer = 0;
 	}
+	if (sc_if->sk_cdata.sk_tx_cnt == 0)
+		ifp->if_timer = 0;
 
 	sc_if->sk_cdata.sk_tx_cons = idx;
 
