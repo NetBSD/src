@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.24 1997/06/03 17:38:50 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.25 1997/07/24 23:55:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 1997/06/03 17:38:50 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 1997/07/24 23:55:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 1997/06/03 17:38:50 cgd Exp $");
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_syscall.h>
@@ -249,8 +252,26 @@ trap(a0, a1, a2, entry, framep)
 		 * These are always fatal in kernel, and should never
 		 * happen.
 		 */
-		if (!user)
+		if (!user) {
+#ifdef DDB
+			/*
+			 * ...unless, of course, DDB is configured; BUGCHK
+			 * is used to invoke the kernel debugger, and we
+			 * might have set a breakpoint.
+			 */
+			if (a0 == ALPHA_IF_CODE_BUGCHK ||
+			    a0 == ALPHA_IF_CODE_BPT) {
+				if (ddb_trap(a0, a1, a2, entry, framep))
+					goto out;
+			}
+
+			/*
+			 * If we get here, DDB did _not_ handle the
+			 * trap, and we need to PANIC!
+			 */
+#endif
 			goto dopanic;
+		}
 		i = 0;
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
@@ -483,7 +504,23 @@ dopanic:
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 
 	/* XXX dump registers */
-	/* XXX kernel debugger */
+
+#ifdef DDB
+	/* XXX
+	 * Really would like to be able to indicate that the
+	 * kernel should _not_ panic, here.  However, two problems
+	 * exist:
+	 *
+	 *	(a) There is not currently a way for DDB to distinguish
+	 *	    between "continue and panic" and "continue, and
+	 *	    don't panic".
+	 *
+	 *	(b) panic() will again invoke the debugger, so calling
+	 *	    it here is silly.
+	 *
+	 * For now, we just do nothing.
+	 */
+#endif
 
 	panic("trap");
 }
