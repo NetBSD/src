@@ -1,8 +1,15 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.29 1999/04/26 04:46:46 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.30 1999/09/18 00:23:39 hubertf Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 
 # Device "make" file.  Valid arguments:
@@ -22,8 +29,6 @@
 #	scc*	82530 serial interface
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
-# Printers:
-# Call units:
 # Special purpose devices:
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface    (unsupported in 1.3_ALPHA)
@@ -40,7 +45,12 @@
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
-#	scsibus*, sd*, st*, cd*, ss*, uk*  -- MI scsi devices
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	sd*	MI SCSI disks
+#	st*	MI SCSI tape drives
+#	cd*	MI SCSI cdroms
+#	ss*	MI scsi scanners
+#	uk*	MI unknown scsi devices
 #	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
 #	audio*	phone-quality audio on Personal  DECstations
 #

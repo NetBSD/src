@@ -1,7 +1,14 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.25 1999/06/27 20:06:48 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1999/09/18 00:23:40 hubertf Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -56,7 +63,7 @@
 #	lkm	loadable kernel modules
 #	bpf*	berkeley packet filter
 #	tun*	network tunnel device
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
