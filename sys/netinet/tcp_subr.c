@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.167 2004/04/26 03:54:29 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.168 2004/04/26 05:05:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.167 2004/04/26 03:54:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.168 2004/04/26 05:05:49 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1631,7 +1631,9 @@ tcp_signature_apply(void *fstate, caddr_t data, u_int len)
  *
  * Parameters:
  * m		pointer to head of mbuf chain
- * off0		offset to TCP header within the mbuf chain
+ * th		pointer to tcp header
+ * thoff	offset to TCP header within the mbuf chain
+ *		(if you don't know the value, set to -1)
  * len		length of TCP segment data, excluding options
  * optlen	length of TCP segment options
  * buf		pointer to storage for computed MD5 digest
@@ -1640,9 +1642,6 @@ tcp_signature_apply(void *fstate, caddr_t data, u_int len)
  * We do this over ip, tcphdr, segment data, and the key in the SADB.
  * When called from tcp_input(), we can be sure that th_sum has been
  * zeroed out and verified already.
- *
- * This function is for IPv4 use only. Calling this function with an
- * IPv6 packet in the mbuf chain will yield undefined results.
  *
  * Return 0 if successful, otherwise return -1.
  *
