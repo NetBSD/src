@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.19 1997/03/22 19:17:07 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.20 1997/05/24 20:16:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,8 +112,7 @@ memregattach(parent, self, aux)
 		ra->ra_vaddr = (caddr_t)par_err_reg;
 	} else {
 		par_err_reg = ra->ra_vaddr ? (volatile u_int *)ra->ra_vaddr :
-		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int),
-					     ca->ca_bustype);
+		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int));
 	}
 	printf("\n");
 }
