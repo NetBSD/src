@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.221 1999/03/16 16:31:54 drochner Exp $
+#	$NetBSD: GENERIC,v 1.222 1999/03/22 23:43:30 bad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -440,6 +440,7 @@ fea*	at eisa? slot ?			# DEC DEFEA FDDI
 # ISA Plug-and-Play network interfaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
+tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
@@ -469,6 +470,9 @@ le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
+tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
+tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
