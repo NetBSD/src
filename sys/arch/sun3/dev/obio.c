@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.29 1997/01/27 21:57:45 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.30 1997/04/28 22:02:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,10 +42,10 @@
 
 #include <machine/autoconf.h>
 #include <machine/control.h>
-#include <machine/pte.h>
 #include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/pte.h>
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
@@ -89,12 +89,11 @@ obio_attach(parent, self, aux)
 
 	/* Configure these in order of address. */
 	for (addr = 0; addr < OBIO_END; addr += OBIO_INCR) {
-
-		/* We know ca_bustype == BUS_OBIO */
+		/* Our parent set ca->ca_bustype already. */
 		ca->ca_paddr = addr;
+		/* These are filled-in by obio_submatch. */
 		ca->ca_intpri = -1;
 		ca->ca_intvec = -1;
-
 		(void) config_found_sm(self, ca, obio_print, obio_submatch);
 	}
 }
@@ -108,18 +107,13 @@ obio_print(args, name)
 	void *args;
 	const char *name;
 {
-	struct confargs *ca = args;
 
 	/* Be quiet about empty OBIO locations. */
 	if (name)
 		return(QUIET);
 
-	if (ca->ca_paddr != -1)
-		printf(" addr 0x%x", ca->ca_paddr);
-	if (ca->ca_intpri != -1)
-		printf(" level %d", ca->ca_intpri);
-
-	return(UNCONF);
+	/* Otherwise do the usual. */
+	return(bus_print(args, name));
 }
 
 int
@@ -132,17 +126,34 @@ obio_submatch(parent, cf, aux)
 	cfmatch_t submatch;
 
 	/*
-	 * Default addresses are mostly useless for OBIO.
-	 * The address assignments are fixed for all time,
-	 * so our config files might as well reflect that.
+	 * Note that a defaulted address locator can never match
+	 * the value of ca->ca_paddr set by the obio_attach loop.
+	 * Without this diagnostic, any device with a defaulted
+	 * address locator would always be silently unmatched.
+	 * Therefore, just disallow default addresses on OBIO.
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
 		panic("obio_submatch: invalid address for: %s%d\n",
 			cf->cf_driver->cd_name, cf->cf_unit);
 #endif
+
+	/*
+	 * Note that obio_attach calls config_found_sm() with
+	 * this function as the "submatch" and ca->ca_paddr
+	 * set to each of the possible OBIO locations, so we
+	 * want to reject any unmatched address here.
+	 */
 	if (cf->cf_paddr != ca->ca_paddr)
 		return 0;
+
+	/*
+	 * Copy the locators into our confargs for the child.
+	 * Note: ca->ca_bustype was set by our parent driver
+	 * (mainbus) and ca->ca_paddr was set by obio_attach.
+	 */
+	ca->ca_intpri = cf->cf_intpri;
+	ca->ca_intvec = -1;
 
 	/* Now call the match function of the potential child. */
 	submatch = cf->cf_attach->ca_match;
@@ -290,7 +301,8 @@ make_required_mappings __P((void))
  * Find mappings for devices that are needed before autoconfiguration.
  * We first look for and record any useful PROM mappings, then call
  * the "init" functions for drivers that we need to use before the
- * normal autoconfiguration calls configure().
+ * normal autoconfiguration calls configure().  Warning: this is
+ * called before pmap_bootstrap, so no allocation allowed!
  */
 void
 obio_init()
@@ -298,21 +310,33 @@ obio_init()
 	save_prom_mappings();
 	make_required_mappings();
 
-	/* Init drivers that use the required OBIO mappings. */
-	zs_init();
-	eeprom_init();
+	/*
+	 * Find the interrupt reg mapping and turn off the
+	 * interrupts, otherwise the PROM clock interrupt
+	 * would poll the zs and toggle some LEDs...
+	 */
 	intreg_init();
-	clock_init();
+
+	/* Make the zs driver ready for console duty. */
+	zs_init();
+	cninit();
 }
 
+/*
+ * This function is used by some OBIO drivers to conserve
+ * kernel virtual space by sharing mappings made by the
+ * PROM monitor.  If we could not find any mapping made by
+ * the PROM monitor, then make our own as usual.
+ */
 caddr_t
-obio_alloc(obio_addr, obio_size)
+obio_mapin(obio_addr, obio_size)
 	int obio_addr, obio_size;
 {
 	caddr_t cp;
 
 	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
-	if (cp) return (cp);
+	if (cp)
+		return (cp);
 
 	cp = bus_mapin(BUS_OBIO, obio_addr, obio_size);
 	return (cp);
