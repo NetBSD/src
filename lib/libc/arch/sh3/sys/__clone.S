@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2003/07/01 14:35:45 marcus Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2003/10/24 04:41:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -59,7 +59,7 @@ ENTRY(__clone)
 
 	mov.l	L__exit, r1
 #ifdef PIC
-	bsrf	r1
+	braf	r1
 #else
 	jsr	@r1
 #endif
