@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.10 2003/04/10 22:07:02 christos Exp $
+#	$NetBSD: BRIQ,v 1.10.4.1 2004/07/15 20:19:34 he Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.10.4.1 $"
 
 maxusers	32
 
@@ -36,6 +36,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks

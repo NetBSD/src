@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.10 2004/03/08 05:52:56 jmc Exp $
+#	$NetBSD: INSTALL,v 1.10.2.1 2004/07/15 20:19:34 he Exp $
 #
 #	INSTALL
 #
@@ -34,6 +34,7 @@ options 	SYSVSHM		# System V shared memory
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
