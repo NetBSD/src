@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.3 1998/05/23 12:49:31 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.4 1998/06/04 15:51:12 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,9 +54,11 @@
 #include <vax/uba/dzvar.h>
 
 #include "ioconf.h"
+#include "lkc.h"
 
 static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
 static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
+static	int	dz_print __P((void *, const char *));
 static  void    txon __P((void));
 static  void    rxon __P((void));
 
@@ -74,6 +76,16 @@ static void
 txon()
 {
         vsbus_intr_enable(INR_ST);
+}
+
+int
+dz_print(aux, name)
+	void *aux;
+	const char *name;
+{
+	if (name)
+		printf ("lkc at %s", name);
+	return (UNCONF);
 }
 
 static int
@@ -114,6 +126,9 @@ dz_vsbus_attach(parent, self, aux)
         printf(": DC367");
 
         dzattach(sc);
+
+	if ((vax_confdata & 0x80) == 0) /* workstation, have lkc */
+		config_found(self, 0, dz_print);
 }
 
 /*----------------------------------------------------------------------*/
@@ -188,10 +203,6 @@ dzcninit(cndev)
 	dz = (void*)dz_regs;
 
 	dz->csr = 0;    /* Disable scanning until initting is done */
-	dz->rbuf = 0;   /* Turn off line 0's receiver */
-	dz->rbuf = 1;   /* Turn off line 1's receiver */
-	dz->rbuf = 2;   /* Turn off line 2's receiver */
-	                /* Leave line 3 alone */
 	dz->tcr = 8;    /* Turn off all but line 3's xmitter */
 	dz->csr = 0x20; /* Turn scanning back on */
 }
@@ -229,3 +240,44 @@ dzcnpollc(dev, pollflag)
 	int pollflag;
 {
 }
+
+#if NLKC
+cons_decl(lkc);
+
+void
+lkccninit(cndev)
+	struct	consdev *cndev;
+{
+	dz = (void*)dz_regs;
+
+	dz->csr = 0;    /* Disable scanning until initting is done */
+	dz->tcr = 1;    /* Turn off all but line 0's xmitter */
+	dz->rbuf = 0x1c18; /* XXX */
+	dz->csr = 0x20; /* Turn scanning back on */
+}
+
+int
+lkccngetc(dev) 
+	dev_t dev;
+{
+	int c;
+	u_char mask;
+	extern unsigned short q_key[];
+
+	mask = vs_cpu->vc_intmsk;	/* save old state */
+	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
+
+loop:
+	while ((dz->csr & 0x80) == 0)
+		; /* Wait for char */
+
+	c = q_key[dz->rbuf & 255];
+	if (c == 0)
+		goto loop;
+
+	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
+	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
+
+	return (c);
+}
+#endif
