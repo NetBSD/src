@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.2 1996/09/13 00:30:02 cgd Exp $	*/
+/*	$NetBSD: deflate.h,v 1.3 1997/05/13 23:06:31 gwr Exp $	*/
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-1996 Jean-loup Gailly
@@ -9,6 +9,8 @@
    part of the implementation of the compression library and is
    subject to change. Applications should only use zlib.h.
  */
+
+/* from: Id: deflate.h,v 1.10 1996/07/02 12:41:00 me Exp */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
