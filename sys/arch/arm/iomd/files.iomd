@@ -1,10 +1,10 @@
-#	$NetBSD: files.iomd,v 1.2 2002/06/16 13:20:14 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.3 2003/10/06 16:11:19 thorpej Exp $
 #
 # IOMD-specific configuration data
 #
 
 # IOMD device
-# parent to kbd, qms, opms, iic
+# parent to kbd, qms, opms, iomdiic
 # also provides irq and timer services
 device	iomd {}
 attach	iomd at mainbus
@@ -16,23 +16,10 @@ file	arch/arm/iomd/iomd_irqhandler.c		iomd
 file	arch/arm/iomd/iomd_fiq.S		iomd
 file	arch/arm/iomd/iomd_dma.c		iomd
 
-# IIC device
-device	iic { addr = -1 }
-file	arch/arm/iomd/iic.c			iic		needs-flag
-
-attach	iic at iomd with iic_iomd
-file	arch/arm/iomd/iic_iomd.c		iic_iomd
-file	arch/arm/iomd/iomd_iic.S		iic_iomd
-
-# IIC based RTC
-define	todservice {}
-device	rtc : todservice
-attach	rtc at iic
-file	arch/arm/iomd/rtc.c			rtc		needs-flag
-
-device	todclock
-attach	todclock at todservice
-file	arch/arm/iomd/todclock.c		todclock	needs-count
+# I^2C bus (bit-banged through IOMD control register)
+device	iomdiic: i2cbus, i2c_bitbang
+attach	iomdiic at iomd
+file	arch/arm/iomd/iomdiic.c			iomdiic
 
 # IOMD mouse devices
 # clock device
