@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.34 2003/08/14 10:03:03 itojun Exp $
+#	$NetBSD: files.isapnp,v 1.35 2004/01/28 19:31:07 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -112,3 +112,7 @@ file dev/isapnp/isic_isapnp_itkix.c		isic_isapnp
 # Game adapter (joystick)
 attach	joy at isapnp with joy_isapnp
 file	dev/isapnp/joy_isapnp.c		joy_isapnp
+
+# AT-style Parallel Port
+attach	atppc at isapnp with atppc_isapnp
+file	dev/isapnp/atppc_isapnp.c	atppc_isapnp
