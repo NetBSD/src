@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6 1999/11/03 13:48:07 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.7 1999/11/14 12:33:11 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.6 1999/11/03 13:48:07 takemura Exp $";
+    "$Id: fb.c,v 1.7 1999/11/14 12:33:11 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -312,7 +312,7 @@ fb_getdevconfig(dc)
 {
 	int i;
 	int32_t fg, bg;
-	int depth;
+	int depth, reverse;
 #ifdef USE_RASTERCONS
 	struct rcons *rcp;
 #else
@@ -333,9 +333,11 @@ fb_getdevconfig(dc)
 	dc->dc_rowbytes = bootinfo->fb_line_bytes;
 	dc->dc_fbaddr = (vaddr_t)bootinfo->fb_addr;
 
+	reverse = 0;
 	switch (bootinfo->fb_type) {
 	case BIFB_D2_M2L_0:
 	case BIFB_D2_M2L_0x2:
+		reverse = 1;
 		depth = 2;
 		break;
 	case BIFB_D2_M2L_3:
@@ -343,12 +345,14 @@ fb_getdevconfig(dc)
 		depth = 2;
 		break;
 	case BIFB_D8_00:
+		reverse = 1;
 		depth = 8;
 		break;
 	case BIFB_D8_FF:
 		depth = 8;
 		break;
 	case BIFB_D16_0000:
+		reverse = 1;
 		depth = 16;
 		break;
 	case BIFB_D16_FFFF:
@@ -360,11 +364,19 @@ fb_getdevconfig(dc)
 		break;
 	}
 
+	if (!reverse) {
+		bg = 0;
+		fg = ~0;
+	} else {
+		bg = ~0;
+		fg = 0;
+	}
+
 	/* clear the screen */
 	for (i = 0;
 	     i < dc->dc_height * dc->dc_rowbytes;
 	     i += sizeof(u_int32_t)) {
-		*(u_int32_t *)(dc->dc_fbaddr + i) = 0;
+		*(u_int32_t *)(dc->dc_fbaddr + i) = bg;
 	}
 
 #ifdef USE_RASTERCONS
@@ -405,9 +417,9 @@ fb_getdevconfig(dc)
 	 *  setup color map
 	 *  overriding rasops.c: rasops_init_devcmap().
 	 */
-	ri->ri_devcmap[0] = 0;
+	ri->ri_devcmap[0] = bg;
 	for (i = 1; i < 16; i++) {
-		ri->ri_devcmap[1] = ~0;
+		ri->ri_devcmap[1] = fg;
 	}
 #endif /* USE_RASTERCONS */
 	return (0);
