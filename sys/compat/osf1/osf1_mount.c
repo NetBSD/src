@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.8 1998/08/09 20:37:54 perry Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.9 1999/04/24 07:09:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -270,7 +270,7 @@ osf1_sys_getfsstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_getfsstat_args /* {
+	struct osf1_sys_getfsstat_args /* {
 		syscallarg(struct osf1_statfs *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;

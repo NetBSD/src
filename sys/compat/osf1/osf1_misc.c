@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.17 1999/04/24 07:06:35 cgd Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.18 1999/04/24 07:09:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -286,7 +286,7 @@ osf1_sys_stat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_stat_args *uap = v;
+	struct osf1_sys_stat_args *uap = v;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -315,7 +315,7 @@ osf1_sys_lstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_lstat_args *uap = v;
+	struct osf1_sys_lstat_args *uap = v;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -343,9 +343,9 @@ osf1_sys_fstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_fstat_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct osf1_sys_fstat_args *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct stat ub;
 	struct osf1_stat oub;
 	int error;
@@ -505,7 +505,7 @@ osf1_sys_socket(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_socket_args *uap = v;
+	struct osf1_sys_socket_args *uap = v;
 	struct sys_socket_args a;
 
 	if (SCARG(uap, type) > AF_LINK)
@@ -524,7 +524,7 @@ osf1_sys_sendto(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_sendto_args *uap = v;
+	struct osf1_sys_sendto_args *uap = v;
 	struct sys_sendto_args a;
 
 	if (SCARG(uap, flags) & ~0x7f)		/* unsupported flags */
@@ -619,7 +619,7 @@ osf1_sys_setuid(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setuid_args *uap = v;
-	register struct pcred *pc = p->p_cred;
+	struct pcred *pc = p->p_cred;
 	uid_t uid = SCARG(uap, uid);
 	int error;
 
@@ -653,7 +653,7 @@ osf1_sys_setgid(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setgid_args *uap = v;
-	register struct pcred *pc = p->p_cred;
+	struct pcred *pc = p->p_cred;
 	gid_t gid = SCARG(uap, gid);
 	int error;
 
