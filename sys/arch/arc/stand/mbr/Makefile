@@ -7,3 +7,5 @@ realinstall: ${UUDECODE_FILES}
 		${UUDECODE_FILES} ${DESTDIR}/usr/mdec
 
 .include <bsd.files.mk>
+.include <bsd.obj.mk>
+.include <bsd.inc.mk>
