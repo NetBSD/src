@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.11 2002/08/06 00:00:21 soren Exp $
+.\"	$NetBSD: atactl.8,v 1.12 2002/08/06 00:44:36 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,7 @@ probability of a degrading or faulty condition.
 .Pp
 Each attribute value has a corresponding threshold limit which is used for
 direct comparison to the attribute value to indicate the existence of a
-degrading or faulty conditon.  The numerical value of the attribute
+degrading or faulty condition.  The numerical value of the attribute
 thresholds are determined by the device manufacturer through design and
 reliability testing and analysis.  Each attribute threshold represents the
 lowest limit to which its corresponding attribute value can equal while
@@ -154,7 +154,6 @@ intended design life period of usage or age has been exceeded.
 The collect field indicates whether this attribute is updated while the
 device is online.  The reliability field indicates whether the attribute
 value is within the acceptable threshold.
-.Pp
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
