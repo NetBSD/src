@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpcgen.1,v 1.18 2004/05/12 15:58:12 christos Exp $
+.\"	$NetBSD: rpcgen.1,v 1.19 2004/05/12 18:49:30 wiz Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
 .Dd May 12, 2004
@@ -10,13 +10,13 @@
 .Nm
 .Ar infile
 .Nm
-.Op Fl a
 .Op Fl A
+.Op Fl a
 .Op Fl b
 .Op Fl C
 .Op Fl D Ar name Op =value
-.Op Fl i Ar size
 .Op Fl I
+.Op Fl i Ar size
 .Op Fl K Ar secs
 .Op Fl L
 .Op Fl M
@@ -372,11 +372,11 @@ standard output is used
 modes only
 .Pc
 .It Fl n Ar netid
-Specify the transport for the server-side stubs. 
+Specify the transport for the server-side stubs.
 .Ar netid
 should be defined in
 .Xr netconfig 5 .
-This option can be repeated in order to support more than one transports.
+This option can be repeated in order to support more than one transport.
 .It Fl s Ar nettype
 Compile into server-side stubs for all the
 transports belonging to the class
