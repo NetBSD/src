@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$NetBSD: chown.c,v 1.8 1997/03/06 06:26:10 mikel Exp $";
+static char *rcsid = "$NetBSD: chown.c,v 1.9 1997/05/02 01:36:18 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -230,7 +230,7 @@ id(name, type)
 	if (errno)
 		err(1, "%s", name);
 	if (*ep != '\0')
-		errx(1, "%s: illegal %s name", name, type);
+		errx(1, "%s: invalid %s name", name, type);
 	return (val);
 }
 
