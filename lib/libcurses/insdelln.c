@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.8 2001/04/20 12:56:08 jdc Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.9 2003/02/17 11:07:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.8 2001/04/20 12:56:08 jdc Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.9 2003/02/17 11:07:20 dsl Exp $");
 #endif				/* not lint */
 
 /* 
@@ -77,7 +77,7 @@ winsdelln(WINDOW *win, int lines)
 	__LINE *temp;
 
 #ifdef DEBUG
-	__CTRACE("winsdelln: (%0.2o) cury=%d lines=%d\n", win, win->cury,
+	__CTRACE("winsdelln: (%p) cury=%d lines=%d\n", win, win->cury,
 	    lines);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.28 2003/01/27 21:09:20 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.29 2003/02/17 11:07:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -99,7 +99,8 @@ struct __window {		/* Window structure. */
 	int begy, begx;			/* Window home. */
 	int cury, curx;			/* Current x, y coordinates. */
 	int maxy, maxx;			/* Maximum values for curx, cury. */
-	short ch_off;			/* x offset for firstch/lastch. */
+	int reqy, reqx;			/* Size requested when created */
+	int ch_off;			/* x offset for firstch/lastch. */
 	__LINE **lines;			/* Array of pointers to the lines */
 	__LINE  *lspace;		/* line space (for cleanup) */
 	__LDATA *wspace;		/* window space (for cleanup) */
@@ -164,7 +165,7 @@ struct __screen {
 	WINDOW	*stdscr;	/* Standard screen. */
 	WINDOW	*__virtscr;	/* Virtual screen (for doupdate()). */
 	int      curwin;        /* current window for refresh */
-	short    lx, ly;        /* loop parameters for refresh */
+	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
 	int	 COLORS;	/* Maximum colors on the screen */
@@ -254,7 +255,7 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 
 /* Private functions. */
 #ifdef DEBUG
-void	 __CTRACE(const char *, ...);
+void	 __CTRACE(const char *, ...) __attribute__((__format__(__printf__, 1, 0)));
 #endif
 void     __cputchar_args(char, void *);
 void     _cursesi_free_keymap(keymap_t *);

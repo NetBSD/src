@@ -1,4 +1,4 @@
-/*	$NetBSD: toucholap.c,v 1.12 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: toucholap.c,v 1.13 2003/02/17 11:07:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)toucholap.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: toucholap.c,v 1.12 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: toucholap.c,v 1.13 2003/02/17 11:07:21 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ touchoverlap(WINDOW *win1, WINDOW *win2)
 	int     y, endy, endx, starty, startx;
 
 #ifdef DEBUG
-	__CTRACE("touchoverlap: (%0.2o, %0.2o);\n", win1, win2);
+	__CTRACE("touchoverlap: (%p, %p);\n", win1, win2);
 #endif
 	starty = max(win1->begy, win2->begy);
 	startx = max(win1->begx, win2->begx);
