@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.10 1994/03/31 14:17:39 pk Exp $
+ *	$Id: rrs.c,v 1.11 1994/04/07 19:41:23 pk Exp $
  */
 
 #include <sys/param.h>
@@ -45,7 +45,6 @@
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
-#include <strings.h>
 
 #include "ld.h"
 

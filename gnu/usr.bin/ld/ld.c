@@ -32,27 +32,27 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.21 1994/03/31 14:17:29 pk Exp $
+ *	$Id: ld.c,v 1.22 1994/04/07 19:41:17 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <ar.h>
 #include <ranlib.h>
 #include <a.out.h>
 #include <stab.h>
-#include <string.h>
-#include <strings.h>
 
 #include "ld.h"
 
@@ -116,7 +116,7 @@ int	rrs_data_start;		/* Location of above */
 int	set_sect_start;		/* start of set element vectors */
 int	set_sect_size;		/* size of above */
 
-int	link_mode;	/* Current link mode */
+int	link_mode;		/* Current link mode */
 
 /*
  * When loading the text and data, we can avoid doing a close
@@ -138,14 +138,16 @@ int		magic;			/* Output file magic. */
 int		oldmagic;
 int		relocatable_output;	/* `-r'-ed output */
 
-symbol		*entry_symbol;
-int		entry_offset;
+symbol		*entry_symbol;		/* specified by `-e' */
+int		entry_offset;		/* program entry if no `-e' given */
 
 int		page_size;		/* Size of a page (machine dependent) */
 
-/* Keep a list of any symbols referenced from the command line (so
-   that error messages for these guys can be generated). This list is
-   zero terminated. */
+/*
+ * Keep a list of any symbols referenced from the command line (so
+ * that error messages for these guys can be generated). This list is
+ * zero terminated.
+ */
 struct glosym	**cmdline_references;
 int		cl_refs_allocated;
 
@@ -756,10 +758,16 @@ decode_option(swt, arg)
 	case 'z':
 		magic = ZMAGIC;
 		oldmagic = 0;
+#ifdef FreeBSD
+		netzmagic = 1;
+#endif
 		return;
 
 	case 'Z':
 		magic = oldmagic = ZMAGIC;
+#ifdef FreeBSD
+		netzmagic = 0;
+#endif
 		return;
 
 	default:
@@ -1935,7 +1943,7 @@ consider_relocation (entry, dataseg)
 			 * Prepare an RRS relocation as these are load
 			 * address dependent.
 			 */
-			if (building_shared_object) {
+			if (building_shared_object && !RELOC_PCREL_P(reloc)) {
 				alloc_rrs_segment_reloc(entry, reloc);
 			}
 		}
@@ -2624,32 +2632,17 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				 * run-time. The r_address field is updated
 				 * to reflect the changed position in the
 				 * output file.
-				 *
-				 * In case the symbol is defined in a shared
-				 * object as N_TEXT or N_DATA, an appropriate
-				 * jmpslot or copy relocation is generated.
 				 */
-				switch (sp->so_defined) {
-
-				case N_TEXT+N_EXT:
+				if (sp->jmpslot_offset != -1) {
 					/*
 					 * Claim a jmpslot if one was
 					 * allocated (dependent on
 					 * `force_alias_flag').
 					 */
-
-					if (sp->jmpslot_offset == -1)
-						goto undefined;
-
 					relocation = addend +
 						claim_rrs_jmpslot(entry, r,
 								sp, addend);
-					break;
-
-				case N_DATA+N_EXT:
-					/*FALLTHROUGH*/
-				case 0:
-				undefined:
+				} else {
 					r->r_address += dataseg?
 						entry->data_start_address:
 						entry->text_start_address;
@@ -2657,15 +2650,6 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					if (claim_rrs_reloc(entry, r,
 							sp, &relocation))
 						continue;
-					break;
-
-				case N_BSS+N_EXT:
-printf("%s: BSS found in so_defined\n", sp->name);
-					/*break;*/
-
-				default:
-					fatal("%s: shobj symbol with unknown type %#x", sp->name, sp->so_defined);
-					break;
 				}
 			}
 
@@ -2717,7 +2701,7 @@ printf("%s: BSS found in so_defined\n", sp->name);
 			 * relocations need a "load address relative"
 			 * RRS fixup.
 			 */
-			if (building_shared_object) {
+			if (building_shared_object && !RELOC_PCREL_P(r)) {
 				r->r_address += dataseg?
 					entry->data_start_address:
 					entry->text_start_address;
@@ -3391,7 +3375,7 @@ mywrite (buf, count, eltsize, desc)
 	while (bytes > 0) {
 		val = write (desc, buf, bytes);
 		if (val <= 0)
-			perror(output_filename);
+			fatal("%s: %s", output_filename, strerror(errno));
 		buf += val;
 		bytes -= val;
 	}
