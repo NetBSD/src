@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.24 1997/01/22 07:09:24 mikel Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.25 1997/10/09 12:59:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -202,7 +202,7 @@ u_long	sb_max;
 struct	socket *sonewconn1 __P((struct socket *head, int connstatus));
 
 /* strings for sleep message: */
-extern	char netio[], netcon[], netcls[];
+extern	const char netio[], netcon[], netcls[];
 
 struct mbuf;
 struct sockaddr;
