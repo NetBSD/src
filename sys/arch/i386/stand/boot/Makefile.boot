@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.16 2004/08/15 22:10:50 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.17 2004/09/03 18:25:04 thorpej Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -35,6 +35,7 @@ CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
 
 # Make sure we override any optimization options specified by the user
+CPUFLAGS=	# nothing
 COPTS=  -Os
 
 .if ${MACHINE} == "amd64"
