@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.1 2003/04/20 00:09:42 manu Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.2 2003/04/20 00:32:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,13 +38,14 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.1 2003/04/20 00:09:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.2 2003/04/20 00:32:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
+#include <sys/endian.h>
 #include <sys/syscallargs.h>
 
 #include <compat/mach/mach_types.h>
@@ -60,6 +61,10 @@ darwin_sys_lseek(l, v, retval)
 {
 	struct darwin_sys_lseek_args *uap = v;
 	struct sys_lseek_args cup;
+	union {
+		off_t o;
+		u_long l[2];
+	} off;
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, whence) = SCARG(uap, whence);
@@ -70,9 +75,9 @@ darwin_sys_lseek(l, v, retval)
 	 * argument going through our syscall machinery, we declare
 	 * it as two long arguments, and we reassemble them here.
 	 */
-	SCARG(&cup, offset) = (off_t)(u_long)SCARG(uap, off1);
-	SCARG(&cup, offset) <<= 32;
-	SCARG(&cup, offset) += (off_t)(u_long)SCARG(uap, off2);
+	off.l[_QUAD_LOWWORD] = (u_long)SCARG(uap, off1);
+	off.l[_QUAD_HIGHWORD] = (u_long)SCARG(uap, off2);
+	SCARG(&cup, offset) = off.o;
 
 	return sys_lseek(l, &cup, retval);
 }
