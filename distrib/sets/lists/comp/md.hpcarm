@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.5 2003/01/18 17:50:24 thorpej Exp $
+# $NetBSD: md.hpcarm,v 1.6 2003/09/21 20:16:11 matt Exp $
 ./usr/include/hpcarm	comp-c-include
 ./usr/include/hpcarm/ansi.h	comp-c-include
 ./usr/include/hpcarm/aout_machdep.h	comp-c-include
@@ -45,4 +45,3 @@
 ./usr/include/hpcarm/types.h	comp-c-include
 ./usr/include/hpcarm/varargs.h	comp-c-include
 ./usr/include/hpcarm/vmparam.h	comp-c-include
-./usr/include/hpcarm/_G_config.h	comp-c-include

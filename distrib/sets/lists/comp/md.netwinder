@@ -1,6 +1,5 @@
-# $NetBSD: md.netwinder,v 1.5 2003/01/18 17:50:27 thorpej Exp $
+# $NetBSD: md.netwinder,v 1.6 2003/09/21 20:16:12 matt Exp $
 ./usr/include/netwinder			comp-c-include
-./usr/include/netwinder/_G_config.h	comp-c-include
 ./usr/include/netwinder/ansi.h		comp-c-include
 ./usr/include/netwinder/aout_machdep.h	comp-c-include
 ./usr/include/netwinder/asm.h		comp-c-include
