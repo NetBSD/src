@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.667 2004/03/20 17:09:04 bjh21 Exp $
+# $NetBSD: mi,v 1.668 2004/03/22 00:48:04 groo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -279,6 +279,7 @@
 ./usr/share/man/cat1/openssl_rsautl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_s_client.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_s_server.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_s_time.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_sess_id.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_smime.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_speed.0		man-crypto-catman	crypto,.cat
@@ -2342,6 +2343,7 @@
 ./usr/share/man/man1/openssl_rsautl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_s_client.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_s_server.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_s_time.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_sess_id.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_smime.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_speed.1		man-crypto-man		crypto,.man
