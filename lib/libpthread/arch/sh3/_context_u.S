@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1 2003/06/23 19:34:43 uwe Exp $ */
+/*	$NetBSD: _context_u.S,v 1.2 2003/07/05 22:50:09 marcus Exp $ */
 
 /*
  * Copyright (c) 2003 Christian P. Groessler
@@ -72,7 +72,7 @@
 	mov.l	@(UC_FLAGS, uc), r1					; \
 	mov.l	.L_uc_user, r0						; \
 	tst	r0, r1		/* ands and sets T if zero(!) */	; \
-	bt/s	1f							; \
+	bt	1f							; \
 	 /* .empty */							  \
 									  \
 	/* a _UC_USER context */					  \
@@ -105,14 +105,41 @@
 	/* NOTREACHED */						  \
 									  \
 1:	/* not a _UC_USER context, pass to setcontext(2) */		  \
+	CALL_SETCONTEXT(uc)						  \
+	/* NOTREACHED */
+
+#ifdef PIC
+/*
+ * For PIC code we need a per-call offset to the setcontext.
+ * Fortunately, since setcontext(2) does not return, we can
+ * put the offset right after the call.
+ */
+#define CALL_SETCONTEXT(uc)						  \
+	mov.l	2f, r1							; \
+1:	bsrf	r1							; \
+	 MAYBE_MOV_UC_R4(uc)						; \
+	/* NOTREACHED */						  \
+	.align 2							; \
+2: .long _C_LABEL(setcontext)-(1b+4)
+#else /* !PIC */
+/*
+ * For static code all calls to setcontext can share single locations
+ * with the address of setcontext (see below).
+ */
+#define CALL_SETCONTEXT(uc)						  \
 	mov.l	.L_setcontext, r1					; \
 	jsr	@r1							; \
+	 MAYBE_MOV_UC_R4(uc)						  \
+	/* NOTREACHED */
+#endif
+
+#define MAYBE_MOV_UC_R4(uc)						  \
 .ifc "uc","r4"								; \
 	 nop								; \
 .else									; \
 	 mov	uc, r4							; \
-.endif									; \
-	/* NOTREACHED */
+.endif
+
 
 
 /*
@@ -144,8 +171,10 @@ NENTRY(_setcontext_u)
 	SETC(r4)		/* r4 - ctx */
 	/* NOTREACHED */
 
-	.align	4
+	.align	2
 .L_uc_gregs_offset:	.long	UC_REGS
 .L_uc_flags:		.long	_UC_USER | _UC_CPU
 .L_uc_user:		.long	_UC_USER
+#ifndef PIC
 .L_setcontext:		.long	_C_LABEL(setcontext)
+#endif
