@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.1 2002/01/06 16:06:14 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.2 2002/01/07 07:33:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -49,6 +49,7 @@ struct esa_dma {
 
 struct esa_channel {
 	int			active;
+	int			data_offset;
 	size_t			bufsize;
 	int			blksize;
 	int			pos;
@@ -56,6 +57,9 @@ struct esa_channel {
 	u_int32_t		start;
 	u_int32_t		count;
 	struct esa_dma		*dma;
+	
+	void			(*intr)(void *);
+	void			*arg;
 };
 
 struct esa_softc
@@ -77,12 +81,10 @@ struct esa_softc
 	struct ac97_host_if	host_if;
 	enum ac97_host_flags	codec_flags;
 
-	void			(*intr)(void *);
-	void			*arg;
-
 	struct device		*sc_audiodev;
 
 	struct esa_channel	play;
+	struct esa_channel	rec;
 	struct esa_dma		*sc_dmas;
 
 	int			type;		/* Allegro-1 or Maestro 3? */
