@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.1 2000/03/22 20:58:27 ws Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.2 2001/06/17 21:01:33 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -99,8 +99,8 @@ ipkdb_trap_glue(frame)
 	ipkdbregs[SS] = 0x10;
 	ipkdbregs[DS] = frame.tf_ds;
 	ipkdbregs[ES] = frame.tf_es;
-	__asm ("movl %%fs,%0; movl %%gs,%1"
-	       : "=r"(ipkdbregs[FS]), "=r"(ipkdbregs[GS]));
+	ipkdbregs[FS] = frame.tf_fs;
+	ipkdbregs[GS] = frame.tf_gs;
 
 	switch ((ipkdb_mode = ipkdbcmds())) {
 	case IPKDB_CMD_EXIT:
@@ -123,8 +123,8 @@ ipkdb_trap_glue(frame)
 	frame.tf_cs = ipkdbregs[CS];
 	frame.tf_ds = ipkdbregs[DS];
 	frame.tf_es = ipkdbregs[ES];
-	__asm __volatile ("movl %0,%%fs; movl %1,%%gs"
-			  :: "r"(ipkdbregs[FS]), "r"(ipkdbregs[GS]));
+	frame.tf_fs = ipkdbregs[FS];
+	frame.tf_gs = ipkdbregs[GS];
 
 	return 1;
 }
