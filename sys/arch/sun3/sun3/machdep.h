@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.18 1999/02/26 22:03:29 is Exp $	*/
+/*	$NetBSD: machdep.h,v 1.19 1999/02/27 19:31:58 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -75,7 +75,7 @@ void	DCIA __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
 
-int 	cachectl1 __P((unsigned long, vaddr_t, int, struct proc *));
+int 	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 void	child_return __P((void *));
 
