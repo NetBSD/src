@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2000/11/24 09:36:41 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2001/05/30 12:28:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  * Exported definitions unique to mvme68k/68k cpu support.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

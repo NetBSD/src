@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.32 1999/01/10 12:56:25 tron Exp $	*/
+/*	$NetBSD: if_le.c,v 1.33 2001/05/30 12:28:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct cfattach le_zbus_ca = {
 	sizeof(struct le_softc), le_zbus_match, le_zbus_attach
 };
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

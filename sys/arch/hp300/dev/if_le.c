@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.47 1998/08/15 10:51:16 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.48 2001/05/30 12:28:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ struct cfattach le_ca = {
 
 int	leintr __P((void *));
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

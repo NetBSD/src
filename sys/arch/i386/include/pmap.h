@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57 2001/05/26 16:32:42 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.58 2001/05/30 12:28:44 mrg Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
 #ifndef	_I386_PMAP_H_
 #define	_I386_PMAP_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #endif

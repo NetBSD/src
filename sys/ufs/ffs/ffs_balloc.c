@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.23 2000/11/27 08:39:54 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.24 2001/05/30 11:57:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.68 2001/04/10 22:58:55 enami Exp $	*/
+/*	$NetBSD: if.h,v 1.69 2001/05/30 12:04:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 /*  XXX fast fix for SNMP, going away soon */
 #include <sys/time.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
