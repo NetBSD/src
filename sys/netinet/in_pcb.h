@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.15 1996/05/22 13:55:27 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.16 1996/09/09 14:51:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@ struct inpcbtable {
 #define	INPLOOKUP_WILDCARD	1
 #define	INPLOOKUP_SETLOCAL	2
 
-#define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
+#define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
 void	 in_losing __P((struct inpcb *));
@@ -88,16 +88,16 @@ int	 in_pcbconnect __P((void *, struct mbuf *));
 void	 in_pcbdetach __P((void *));
 void	 in_pcbdisconnect __P((void *));
 struct inpcb *
-	 in_pcbhashlookup __P((struct inpcbtable *, struct in_addr,
-			       u_int, struct in_addr, u_int));
+	 in_pcbhashlookup __P((struct inpcbtable *,
+	    struct in_addr, u_int, struct in_addr, u_int));
 void	 in_pcbinit __P((struct inpcbtable *, int));
 struct inpcb *
 	 in_pcblookup __P((struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int, int));
-void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
-	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
-void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
-	    int, void (*)(struct inpcb *, int)));
+void	 in_pcbnotify __P((struct inpcbtable *, struct in_addr, u_int,
+	    struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
+void	 in_pcbnotifyall __P((struct inpcbtable *, struct in_addr, int,
+	    void (*)(struct inpcb *, int)));
 void	 in_pcbrehash __P((struct inpcb *));
 void	 in_rtchange __P((struct inpcb *, int));
 void	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));

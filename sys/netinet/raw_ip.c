@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.31 1996/06/23 12:12:49 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.32 1996/09/09 14:51:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -84,7 +84,6 @@ rip_init()
 	in_pcbinit(&rawcbtable, 1);
 }
 
-struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -102,18 +101,22 @@ rip_input(m, va_alist)
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct inpcb *inp;
 	struct socket *last = 0;
+	struct sockaddr_in ripsrc;
 
+	ripsrc.sin_family = AF_INET;
+	ripsrc.sin_len = sizeof(struct sockaddr_in);
 	ripsrc.sin_addr = ip->ip_src;
+
 	for (inp = rawcbtable.inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_next) {
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
-		if (inp->inp_laddr.s_addr != INADDR_ANY &&
-		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
+		if (!in_nullhost(inp->inp_laddr) &&
+		    !in_hosteq(inp->inp_laddr, ip->ip_dst))
 			continue;
-		if (inp->inp_faddr.s_addr != INADDR_ANY &&
-		    inp->inp_faddr.s_addr != ip->ip_src.s_addr)
+		if (!in_nullhost(inp->inp_faddr) &&
+		    !in_hosteq(inp->inp_faddr, ip->ip_src))
 			continue;
 		if (last) {
 			struct mbuf *n;
@@ -285,7 +288,7 @@ rip_bind(inp, nam)
 	if (addr->sin_family != AF_INET &&
 	    addr->sin_family != AF_IMPLINK)
 		return (EAFNOSUPPORT);
-	if (addr->sin_addr.s_addr != INADDR_ANY &&
+	if (!in_nullhost(addr->sin_addr) &&
 	    ifa_ifwithaddr(sintosa(addr)) == 0)
 		return (EADDRNOTAVAIL);
 	inp->inp_laddr = addr->sin_addr;
@@ -315,7 +318,7 @@ rip_disconnect(inp)
 	struct inpcb *inp;
 {
 
-	inp->inp_faddr.s_addr = INADDR_ANY;
+	inp->inp_faddr = zeroin_addr;
 }
 
 u_long	rip_sendspace = RIPSNDQ;

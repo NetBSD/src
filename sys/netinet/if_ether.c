@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.32 1996/09/09 14:51:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -81,11 +81,11 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-static	void arprequest
-	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_int8_t *));
+static	void arprequest __P((struct arpcom *,
+	    struct in_addr *, struct in_addr *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
 static	void arptimer __P((void *));
-static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
+static	struct llinfo_arp *arplookup __P((struct in_addr *, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
 extern	struct ifnet loif;
@@ -102,12 +102,6 @@ static int	myip_initialized = 0;
 static int	revarp_in_progress = 0;
 static struct	ifnet *myip_ifp = NULL;
 
-static void arptimer __P((void *));
-static void arprequest __P((struct arpcom *, u_int32_t *, u_int32_t *,
-			    u_int8_t *));
-static void in_arpinput __P((struct mbuf *));
-static void arptfree __P((struct llinfo_arp *));
-static struct llinfo_arp *arplookup __P((u_int32_t, int, int ));
 #ifdef DDB
 static void db_print_sa __P((struct sockaddr *));
 static void db_print_ifa __P((struct ifaddr *));
@@ -195,8 +189,8 @@ arp_rtrequest(req, rt, sa)
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			arprequest((struct arpcom *)rt->rt_ifp,
-			    &SIN(rt_key(rt))->sin_addr.s_addr,
-			    &SIN(rt_key(rt))->sin_addr.s_addr,
+			    &SIN(rt_key(rt))->sin_addr,
+			    &SIN(rt_key(rt))->sin_addr,
 			    (u_char *)LLADDR(SDL(gate)));
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
@@ -224,8 +218,8 @@ arp_rtrequest(req, rt, sa)
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
-		if (SIN(rt_key(rt))->sin_addr.s_addr ==
-		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
+		if (in_hosteq(SIN(rt_key(rt))->sin_addr,
+		    (IA_SIN(rt->rt_ifa))->sin_addr)) {
 			/*
 			 * This test used to be
 			 *	if (loif.if_flags & IFF_UP)
@@ -268,7 +262,7 @@ arp_rtrequest(req, rt, sa)
 static void
 arprequest(ac, sip, tip, enaddr)
 	register struct arpcom *ac;
-	register u_int32_t *sip, *tip;
+	register struct in_addr *sip, *tip;
 	register u_int8_t *enaddr;
 {
 	register struct mbuf *m;
@@ -333,7 +327,7 @@ arpresolve(ac, rt, m, dst, desten)
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
-		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0)) != NULL)
+		if ((la = arplookup(&SIN(dst)->sin_addr, 1, 0)) != NULL)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
@@ -376,8 +370,8 @@ arpresolve(ac, rt, m, dst, desten)
 			rt->rt_expire = time.tv_sec;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ac,
-				    &(SIN(rt->rt_ifa->ifa_addr)->sin_addr.s_addr),
-				    &(SIN(dst)->sin_addr.s_addr),
+				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
+				    &SIN(dst)->sin_addr,
 				    ac->ac_enaddr);
 			else {
 				rt->rt_flags |= RTF_REJECT;
@@ -458,8 +452,8 @@ in_arpinput(m)
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 		if (ia->ia_ifp == &ac->ac_if) {
 			maybe_ia = ia;
-			if (itaddr.s_addr == ia->ia_addr.sin_addr.s_addr ||
-			    isaddr.s_addr == ia->ia_addr.sin_addr.s_addr)
+			if (in_hosteq(itaddr, ia->ia_addr.sin_addr) ||
+			    in_hosteq(isaddr, ia->ia_addr.sin_addr))
 				break;
 		}
 	if (maybe_ia == 0)
@@ -475,14 +469,14 @@ in_arpinput(m)
 		    ntohl(isaddr.s_addr));
 		goto out;
 	}
-	if (isaddr.s_addr == myaddr.s_addr) {
+	if (in_hosteq(isaddr, myaddr)) {
 		log(LOG_ERR,
 		   "duplicate IP address %08x sent from ethernet address %s\n",
 		   ntohl(isaddr.s_addr), ether_sprintf(ea->arp_sha));
 		itaddr = myaddr;
 		goto reply;
 	}
-	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0);
+	la = arplookup(&isaddr, in_hosteq(itaddr, myaddr), 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen))
@@ -506,14 +500,14 @@ reply:
 		m_freem(m);
 		return;
 	}
-	if (itaddr.s_addr == myaddr.s_addr) {
+	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
 		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
 		    sizeof(ea->arp_sha));
 		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
 		    sizeof(ea->arp_sha));
 	} else {
-		la = arplookup(itaddr.s_addr, 0, SIN_PROXY);
+		la = arplookup(&itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
@@ -565,7 +559,7 @@ arptfree(la)
  */
 static struct llinfo_arp *
 arplookup(addr, create, proxy)
-	u_int32_t addr;
+	struct in_addr *addr;
 	int create, proxy;
 {
 	register struct rtentry *rt;
@@ -573,7 +567,7 @@ arplookup(addr, create, proxy)
 
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = addr;
+	sin.sin_addr = *addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
 	rt = rtalloc1(sintosa(&sin), create);
 	if (rt == 0)
@@ -582,7 +576,8 @@ arplookup(addr, create, proxy)
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		if (create)
-			log(LOG_DEBUG, "arplookup: unable to enter address for %x\n", ntohl(addr));
+			log(LOG_DEBUG, "arplookup: unable to enter address for %x\n",
+			    ntohl(addr->s_addr));
 		return (0);
 	}
 	return ((struct llinfo_arp *)rt->rt_llinfo);
@@ -605,8 +600,8 @@ arp_ifinit(ac, ifa)
 
 	/* Warn the user if another station has this IP address. */
 	arprequest(ac,
-	    &(IA_SIN(ifa)->sin_addr.s_addr),
-	    &(IA_SIN(ifa)->sin_addr.s_addr),
+	    &IA_SIN(ifa)->sin_addr,
+	    &IA_SIN(ifa)->sin_addr,
 	    ac->ac_enaddr);
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CLONING;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.33 1996/05/23 17:05:45 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.34 1996/09/09 14:51:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -74,8 +74,6 @@ int	udpcksum = 1;
 int	udpcksum = 0;		/* XXX */
 #endif
 
-struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
-
 static	void udp_notify __P((struct inpcb *, int));
 static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 
@@ -108,6 +106,7 @@ udp_input(m, va_alist)
 	struct ip save_ip;
 	int iphlen;
 	va_list ap;
+	struct sockaddr_in udpsrc;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -194,8 +193,11 @@ udp_input(m, va_alist)
 		/*
 		 * Construct sockaddr format source address.
 		 */
-		udp_in.sin_port = uh->uh_sport;
-		udp_in.sin_addr = ip->ip_src;
+		udpsrc.sin_family = AF_INET;
+		udpsrc.sin_len = sizeof(struct sockaddr_in);
+		udpsrc.sin_port = uh->uh_sport;
+		udpsrc.sin_addr = ip->ip_src;
+
 		m->m_len -= sizeof (struct udpiphdr);
 		m->m_data += sizeof (struct udpiphdr);
 		/*
@@ -208,14 +210,12 @@ udp_input(m, va_alist)
 		    inp = inp->inp_queue.cqe_next) {
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
-			if (inp->inp_laddr.s_addr != INADDR_ANY) {
-				if (inp->inp_laddr.s_addr !=
-				    ip->ip_dst.s_addr)
+			if (!in_nullhost(inp->inp_laddr)) {
+				if (!in_hosteq(inp->inp_laddr, ip->ip_dst))
 					continue;
 			}
-			if (inp->inp_faddr.s_addr != INADDR_ANY) {
-				if (inp->inp_faddr.s_addr !=
-				    ip->ip_src.s_addr ||
+			if (!in_nullhost(inp->inp_faddr)) {
+				if (!in_hosteq(inp->inp_faddr, ip->ip_src) ||
 				    inp->inp_fport != uh->uh_sport)
 					continue;
 			}
@@ -225,7 +225,7 @@ udp_input(m, va_alist)
 
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
 					if (sbappendaddr(&last->so_rcv,
-						sintosa(&udp_in), n,
+						sintosa(&udpsrc), n,
 						(struct mbuf *)0) == 0) {
 						m_freem(n);
 						udpstat.udps_fullsock++;
@@ -255,7 +255,7 @@ udp_input(m, va_alist)
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
-		if (sbappendaddr(&last->so_rcv, sintosa(&udp_in), m,
+		if (sbappendaddr(&last->so_rcv, sintosa(&udpsrc), m,
 		    (struct mbuf *)0) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
@@ -289,8 +289,11 @@ udp_input(m, va_alist)
 	 * Construct sockaddr format source address.
 	 * Stuff source address and datagram in user buffer.
 	 */
-	udp_in.sin_port = uh->uh_sport;
-	udp_in.sin_addr = ip->ip_src;
+	udpsrc.sin_family = AF_INET;
+	udpsrc.sin_len = sizeof(struct sockaddr_in);
+	udpsrc.sin_port = uh->uh_sport;
+	udpsrc.sin_addr = ip->ip_src;
+
 	if (inp->inp_flags & INP_CONTROLOPTS) {
 		struct mbuf **mp = &opts;
 
@@ -321,7 +324,7 @@ udp_input(m, va_alist)
 	m->m_len -= iphlen;
 	m->m_pkthdr.len -= iphlen;
 	m->m_data += iphlen;
-	if (sbappendaddr(&inp->inp_socket->so_rcv, sintosa(&udp_in), m,
+	if (sbappendaddr(&inp->inp_socket->so_rcv, sintosa(&udpsrc), m,
 	    opts) == 0) {
 		udpstat.udps_fullsock++;
 		goto bad;
@@ -368,6 +371,7 @@ udp_notify(inp, errno)
 	register struct inpcb *inp;
 	int errno;
 {
+
 	inp->inp_socket->so_error = errno;
 	sorwakeup(inp->inp_socket);
 	sowwakeup(inp->inp_socket);
@@ -396,10 +400,11 @@ udp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udbtable, sa, uh->uh_dport, ip->ip_src,
-		    uh->uh_sport, errno, notify);
+		in_pcbnotify(&udbtable, satosin(sa)->sin_addr, uh->uh_dport,
+		    ip->ip_src, uh->uh_sport, errno, notify);
 	} else
-		in_pcbnotifyall(&udbtable, sa, errno, notify);
+		in_pcbnotifyall(&udbtable, satosin(sa)->sin_addr, errno,
+		    notify);
 	return NULL;
 }
 
@@ -548,7 +553,7 @@ udp_usrreq(so, req, m, nam, control, p)
 		/*soisdisconnected(so);*/
 		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		in_pcbdisconnect(inp);
-		inp->inp_laddr.s_addr = INADDR_ANY;	/* XXX */
+		inp->inp_laddr = zeroin_addr;		/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
