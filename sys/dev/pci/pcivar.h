@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.10 1996/01/22 21:08:16 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.11 1996/02/28 01:44:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -49,11 +49,24 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #include <i386/pci/pci_machdep.h>
 #endif
 
+/*
+ * PCI bus attach arguments.
+ */
+struct pcibus_attach_args {
+	char		*pba_busname;	/* XXX should be common */
+
+	int		pba_bus;	/* PCI bus number */
+	int		pba_maxndevs;	/* max # of devs on bus [0..n-1] */
+};
+
+/*
+ * PCI device attach arguments.
+ */
 struct pci_attach_args {
-	int pa_bus;
-	int pa_device;
-	pcitag_t pa_tag;
-	pcireg_t pa_id, pa_class;
+	int		pa_device;
+	int		pa_function;
+	pcitag_t	pa_tag;
+	pcireg_t	pa_id, pa_class;
 };
 
 pcireg_t pci_conf_read __P((pcitag_t, int));
@@ -62,5 +75,3 @@ void	 pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 pcitag_t pci_make_tag __P((int, int, int));
 void	*pci_map_int __P((pcitag_t, int, int (*)(void *), void *));
 int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
-
-int	 pci_attach_subdev __P((struct device *, int, int));
