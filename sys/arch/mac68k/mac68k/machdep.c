@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1995/08/04 03:21:46 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1995/08/06 04:39:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1766,18 +1766,6 @@ get_machine_info()
 	if (cpu_models[i].model_major == NULL)
 		i--;
 
-	switch (mac68k_machine.mach_processor) {
-	case MACH_68040:
-		cpu040 = 1;
-		break;
-	case MACH_68020:
-	case MACH_68030:
-	case MACH_PENTIUM:
-	default:
-		cpu040 = 0;
-		break;
-	}
-
 	mac68k_machine.cpu_model_index = i;
 }
 
@@ -1924,7 +1912,7 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi96 = 1;
-		mac68k_machine.sccClkConst = 249600;
+		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		break;
@@ -1934,14 +1922,6 @@ setmachdep()
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.sccClkConst = 122400;
-		/*
-		 * LAK: Find out if internal video is on.  If yes, then
-		 * we loaded in bank B.  We need a better way to
-		 * determine this, like use the TT0 register.
-		 */
-		if (rbv_vidstatus()) {
-			load_addr = 0x04000000;
-		}
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1951,14 +1931,6 @@ setmachdep()
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.sccClkConst = 122400;
-		/*
-		 * LAK: Find out if internal video is on.  If yes, then
-		 * we loaded in bank B.  We need a better way to
-		 * determine this, like use the TT0 register.
-		 */
-		if (rbv_vidstatus()) {
-			load_addr = 0x04000000;
-		}
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1967,15 +1939,7 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.sccClkConst = 122400;
-		/*
-		 * LAK: Find out if internal video is on.  If yes, then
-		 * we loaded in bank B.  We need a better way to
-		 * determine this, like use the TT0 register.
-		 */
-		if (rbv_vidstatus()) {
-			load_addr = 0x04000000;
-		}
+		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
