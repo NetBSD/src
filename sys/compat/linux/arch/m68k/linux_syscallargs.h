@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.37 2001/11/13 02:08:42 lukem Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.38 2002/02/15 16:48:01 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -488,6 +488,15 @@ struct linux_sys_sigaltstack_args {
 	syscallarg(struct linux_sigaltstack *) oss;
 };
 
+struct linux_sys_mmap2_args {
+	syscallarg(void *) addr;
+	syscallarg(size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(off_t) offset;
+};
+
 struct linux_sys_truncate64_args {
 	syscallarg(const char *) path;
 	syscallarg(off_t) length;
@@ -713,6 +722,7 @@ int	linux_sys_lchown16(struct proc *, void *, register_t *);
 int	sys___getcwd(struct proc *, void *, register_t *);
 int	linux_sys_sigaltstack(struct proc *, void *, register_t *);
 int	sys___vfork14(struct proc *, void *, register_t *);
+int	linux_sys_mmap2(struct proc *, void *, register_t *);
 int	linux_sys_truncate64(struct proc *, void *, register_t *);
 int	sys_ftruncate(struct proc *, void *, register_t *);
 int	linux_sys_stat64(struct proc *, void *, register_t *);
