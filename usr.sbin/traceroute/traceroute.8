@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.19 2003/02/04 23:07:38 perry Exp $
+.\" $NetBSD: traceroute.8,v 1.20 2003/03/30 21:23:43 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -335,7 +335,7 @@ ICMP's) until we probe with a ttl that's at least twice the path
 length.  I.e., rip is really only 7 hops away.  A reply that
 returns with a ttl of 1 is a clue this problem exists.
 Traceroute prints a "!" after the time if the ttl is \*[Le] 1.
-Since vendors ship a lot of obsolete (DEC's Ultrix, Sun 3.x) or
+Since vendors ship a lot of obsolete (DEC's ULTRIX, Sun 3.x) or
 non-standard (HPUX) software, expect to see this problem
 frequently and/or take care picking the target host of your
 probes.

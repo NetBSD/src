@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.17 2003/03/30 21:03:45 wiz Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.18 2003/03/30 21:21:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm compat_ultrix
-.Nd "setup procedure for Ultrix compatibility on mips and VAX architectures"
+.Nd "setup procedure for ULTRIX compatibility on mips and VAX architectures"
 .Sh DESCRIPTION
 .Nx Ns Tn /mips
 and
@@ -46,18 +46,18 @@ the legal issues of ensuring that you have a right to use any ULTRIX
 binaries on your machine.
 .Pp
 Most executables will work.  The exceptions include programs that use
-proprietary, Ultrix-specific features (LAT, CI support, DECnet
+proprietary, ULTRIX-specific features (LAT, CI support, DECnet
 support) and various system calls,
 .Fn ioctl Ns 's ,
-or Ultrix kernel
-semantics that are difficult to emulate (e.g. Ultrix packetfilter) or
-buggy (e.g. Ultrix
+or ULTRIX kernel
+semantics that are difficult to emulate (e.g. ULTRIX packetfilter) or
+buggy (e.g. ULTRIX
 .Tn NIS ) .
 .Pp
-All Ultrix executables are static, so no shared libraries are required
-for Ultrix compatibility. However, Ultrix is based on a
+All ULTRIX executables are static, so no shared libraries are required
+for ULTRIX compatibility. However, ULTRIX is based on a
 .Bx 4.3
-alpha release.  Ultrix commands and libraries are often much older
+alpha release.  ULTRIX commands and libraries are often much older
 than their
 .Nx
 or even
@@ -81,7 +81,7 @@ as below:
 .It # cp -p /usr/share/examples/emul/ultrix/etc/*	./
 .El
 .Ss /etc/resolv.conf
-The Ultrix resolver library only understands
+The ULTRIX resolver library only understands
 .Sy domain
 and
 .Sy nameserver
@@ -92,10 +92,10 @@ You should create a copy of
 containing only those commands and put it in
 .Pa /emul/ultrix/etc/resolv.conf .
 Note that the
-domain search order used by Ultrix executables may not be the same as
+domain search order used by ULTRIX executables may not be the same as
 native binaries; there is no good way around this.
 .Ss /etc/svc.conf
-Ultrix uses
+ULTRIX uses
 .Pa /etc/svc.conf
 to select an ordered search of
 .Tn NIS ,
@@ -103,15 +103,15 @@ Hesiod,
 or local flat-file mappings.  You should create an
 .Pa /emul/ultrix/etc/svc.conf
 specifying either local files or bind (DNS)
-lookups for all Ultrix name services.
+lookups for all ULTRIX name services.
 .Sh SEE ALSO
 .Xr resolv.conf 5
 .Sh BUGS
-RISC Ultrix
+RISC ULTRIX
 .Tn NIS
-(YP) is known to not work.  The Ultrix
+(YP) is known to not work.  The ULTRIX
 .Tn NIS
-libraries have a consistent endian-ness bug. Ultrix
+libraries have a consistent endian-ness bug. ULTRIX
 .Tn NIS
 client will not inter-operate with the
 .Nx
@@ -122,19 +122,19 @@ to disable
 .Tn NIS
 (YP).
 .Pp
-The ndbm hashed-password file used by Ultrix are incompatible with the
+The ndbm hashed-password file used by ULTRIX are incompatible with the
 db hashed-password file used by
 .Nx .
 There is no good solution for
 this.
 .Tn NIS
-would be a good one, if Ultrix
+would be a good one, if ULTRIX
 .Tn NIS
 worked.
 .Pp
 The API used by Xservers to talk to the kernel is currently compatible
-with Ultrix 4.1.  An implementation of the Ultrix 4.2 Xws interface
+with ULTRIX 4.1.  An implementation of the ULTRIX 4.2 Xws interface
 (used by X11R6) is in progress.
 .Pp
-A complete list of things which fail to work in Ultrix compatibility
+A complete list of things which fail to work in ULTRIX compatibility
 mode should be added here.
