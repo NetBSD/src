@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.3 1995/12/24 02:29:35 mycroft Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.4 1996/03/17 01:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -84,9 +84,12 @@ int pckbdprobe __P((struct device *, void *, void *));
 void pckbdattach __P((struct device *, struct device *, void *));
 int pckbdintr __P((void *));
 
-struct cfdriver pckbdcd = {
-	NULL, "pckbd", pckbdprobe, pckbdattach, DV_DULL,
-	    sizeof(struct pckbd_softc)
+struct cfattach pckbd_ca = {
+	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach
+};
+
+struct cfdriver pckbd_cd = {
+	NULL, "pckbd", DV_DULL
 };
 
 char *sget __P((void));

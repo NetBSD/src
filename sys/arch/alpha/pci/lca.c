@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.1 1995/11/23 02:37:38 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.2 1996/03/17 01:06:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -48,9 +48,12 @@
 int	lcamatch __P((struct device *, void *, void *));
 void	lcaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver lcacd = {
-	NULL, "lca", lcamatch, lcaattach, DV_DULL,
-	    sizeof(struct lca_softc)
+struct cfattach lca_ca = {
+	sizeof(struct lca_softc), lcamatch, lcaattach
+};
+
+struct cfdriver lca_cd = {
+	NULL, "lca", DV_DULL
 };
 
 static int	lcaprint __P((void *, char *pnp));
@@ -68,7 +71,7 @@ lcamatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a LCA. */
-	if (strcmp(ca->ca_name, lcacd.cd_name) != 0)
+	if (strcmp(ca->ca_name, lca_cd.cd_name) != 0)
 		return (0);
 
 	if (lcafound)
