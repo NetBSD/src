@@ -15,5 +15,4 @@ beforeinstall:
 	${INSTALL} -c -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
 	${.CURDIR}/${KEYCAPSRC} ${DESTDIR}${CAPPATH}
 
-
 .include <bsd.lib.mk>
