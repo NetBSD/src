@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.35 2002/09/27 20:41:22 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.36 2002/09/30 23:07:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.35 2002/09/27 20:41:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.36 2002/09/30 23:07:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -216,9 +216,8 @@ void	be_intphy_status __P((struct be_softc *));
 int	be_intphy_service __P((struct be_softc *, struct mii_data *, int));
 
 
-const struct cfattach be_ca = {
-	sizeof(struct be_softc), bematch, beattach
-};
+CFATTACH_DECL(be, sizeof(struct be_softc),
+    bematch, beattach, NULL, NULL)
 
 int
 bematch(parent, cf, aux)
