@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 1997/07/22 17:41:05 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.3 1998/02/22 07:42:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
