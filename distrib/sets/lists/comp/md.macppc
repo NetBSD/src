@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.25 2003/10/20 16:18:03 matt Exp $
+# $NetBSD: md.macppc,v 1.26 2003/10/21 17:32:35 matt Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
 ./usr/include/macppc/ansi.h	comp-c-include
@@ -8,7 +8,6 @@
 ./usr/include/macppc/atomic.h	comp-c-include
 ./usr/include/macppc/autoconf.h	comp-c-include
 ./usr/include/macppc/bswap.h	comp-c-include
-./usr/include/macppc/bus.h	comp-c-include
 ./usr/include/macppc/cdefs.h	comp-c-include
 ./usr/include/macppc/cpu.h	comp-c-include
 ./usr/include/macppc/disklabel.h	comp-c-include
