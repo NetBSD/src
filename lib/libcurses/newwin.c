@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.33 2002/12/23 12:17:03 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.34 2003/02/17 11:07:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.33 2002/12/23 12:17:03 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.34 2003/02/17 11:07:20 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -93,8 +93,8 @@ dupwin(WINDOW *win)
 {
 	WINDOW *new_one;
 
-	if ((new_one =
-	     newwin(win->maxy, win->maxx, win->begy, win->begx)) == NULL)
+	if ((new_one = __newwin(_cursesi_screen, win->maxy, win->maxx,
+				win->begy, win->begx, FALSE)) == NULL)
 		return NULL;
 
 	overwrite(win, new_one);
@@ -129,28 +129,29 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 	WINDOW *win;
 	__LINE *lp;
 	int     i, j;
+	int	maxy, maxx;
 	__LDATA *sp;
 
-	if (nlines == 0)
-		nlines = LINES - by;
-	if (ncols == 0)
-		ncols = COLS - bx;
+	maxy = nlines > 0 ? nlines : LINES - by + nlines;
+	maxx = ncols > 0 ? ncols : COLS - bx + ncols;
 
-	if ((win = __makenew(screen, nlines, ncols, by, bx, 0, ispad)) == NULL)
+	if ((win = __makenew(screen, maxy, maxx, by, bx, 0, ispad)) == NULL)
 		return (NULL);
 
 	win->nextp = win;
 	win->ch_off = 0;
 	win->orig = NULL;
+	win->reqy = nlines;
+	win->reqx = ncols;
 
 #ifdef DEBUG
 	__CTRACE("newwin: win->ch_off = %d\n", win->ch_off);
 #endif
 
-	for (i = 0; i < nlines; i++) {
+	for (i = 0; i < maxy; i++) {
 		lp = win->lines[i];
 		lp->flags = 0;
-		for (sp = lp->line, j = 0; j < ncols; j++, sp++) {
+		for (sp = lp->line, j = 0; j < maxx; j++, sp++) {
 			sp->ch = ' ';
 			sp->bch = ' ';
 			sp->attr = 0;
@@ -168,11 +169,10 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 WINDOW *
 subwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
-	if (orig == NULL)
+	if (orig == NULL || orig->orig != NULL)
 		return NULL;
 
-	return __subwin(orig, nlines, ncols, orig->begy + by, orig->begx + bx,
-	    TRUE);
+	return __subwin(orig, nlines, ncols, by, bx, TRUE);
 }
 
 WINDOW *
@@ -181,23 +181,24 @@ __subwin(WINDOW *orig, int nlines, int ncols, int by, int bx, int ispad)
 	int     i;
 	__LINE *lp;
 	WINDOW *win;
+	int	maxy, maxx;
 
 	/* Make sure window fits inside the original one. */
 #ifdef	DEBUG
-	__CTRACE("subwin: (%0.2o, %d, %d, %d, %d, %d)\n", orig, nlines, ncols,
+	__CTRACE("subwin: (%p, %d, %d, %d, %d, %d)\n", orig, nlines, ncols,
 	    by, bx, ispad);
 #endif
+	maxy = nlines > 0 ? nlines : orig->maxy + orig->begy - by + nlines;
+	maxx = ncols > 0 ? ncols : orig->maxx + orig->begx - bx + ncols;
 	if (by < orig->begy || bx < orig->begx
-	    || by + nlines > orig->maxy + orig->begy
-	    || bx + ncols > orig->maxx + orig->begx)
+	    || by + maxy > orig->maxy + orig->begy
+	    || bx + maxx > orig->maxx + orig->begx)
 		return (NULL);
-	if (nlines == 0)
-		nlines = orig->maxy + orig->begy - by;
-	if (ncols == 0)
-		ncols = orig->maxx + orig->begx - bx;
-	if ((win = __makenew(_cursesi_screen, nlines, ncols,
+	if ((win = __makenew(_cursesi_screen, maxy, maxx,
 			     by, bx, 1, ispad)) == NULL)
 		return (NULL);
+	win->reqy = nlines;
+	win->reqx = ncols;
 	win->nextp = orig->nextp;
 	orig->nextp = win;
 	win->orig = orig;
@@ -253,11 +254,13 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 #ifdef	DEBUG
 	__CTRACE("makenew: (%d, %d, %d, %d)\n", nlines, ncols, by, bx);
 #endif
+	if (nlines <= 0 || ncols <= 0)
+		return NULL;
+
 	if ((win = malloc(sizeof(WINDOW))) == NULL)
 		return (NULL);
 #ifdef DEBUG
-	__CTRACE("makenew: win = %0.2o\n", win);
-	__CTRACE("makenew: nlines = %d\n", nlines);
+	__CTRACE("makenew: win = %p\n", win);
 #endif
 
 	/* Set up line pointer array and line space. */
@@ -324,6 +327,8 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 	win->cury = win->curx = 0;
 	win->maxy = nlines;
 	win->maxx = ncols;
+	win->reqy = nlines;
+	win->reqx = ncols;
 
 	win->begy = by;
 	win->begx = bx;
@@ -343,7 +348,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		__swflags(win);
 #ifdef DEBUG
 	__CTRACE("makenew: win->wattr = %08x\n", win->wattr);
-	__CTRACE("makenew: win->flags = %0.2o\n", win->flags);
+	__CTRACE("makenew: win->flags = %#.4x\n", win->flags);
 	__CTRACE("makenew: win->maxy = %d\n", win->maxy);
 	__CTRACE("makenew: win->maxx = %d\n", win->maxx);
 	__CTRACE("makenew: win->begy = %d\n", win->begy);

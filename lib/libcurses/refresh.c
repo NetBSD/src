@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.52 2003/01/27 21:11:12 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.53 2003/02/17 11:07:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.52 2003/01/27 21:11:12 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.53 2003/02/17 11:07:20 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -76,7 +76,7 @@ int
 wnoutrefresh(WINDOW *win)
 {
 #ifdef DEBUG
-	__CTRACE("wnoutrefresh: win %0.2o\n", win);
+	__CTRACE("wnoutrefresh: win %p\n", win);
 #endif
 
 	return _cursesi_wnoutrefresh(_cursesi_screen, win, 0, 0, win->begy,
@@ -94,7 +94,7 @@ pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	int pmaxy, pmaxx;
 
 #ifdef DEBUG
-	__CTRACE("pnoutrefresh: pad %0.2o, flags 0x%08x\n", pad, pad->flags);
+	__CTRACE("pnoutrefresh: pad %p, flags 0x%08x\n", pad, pad->flags);
 	__CTRACE("pnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n", pbegy, pbegx,
 	    sbegy, sbegx, smaxy, smaxx);
 #endif
@@ -142,7 +142,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 	__LINE	*wlp, *vlp;
 
 #ifdef DEBUG
-	__CTRACE("wnoutrefresh: win %0.2o, flags 0x%08x\n", win, win->flags);
+	__CTRACE("wnoutrefresh: win %p, flags 0x%08x\n", win, win->flags);
 	__CTRACE("wnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n", begy, begx,
 		wbegy, wbegx, maxy, maxx);
 #endif
@@ -268,7 +268,7 @@ wrefresh(WINDOW *win)
 	int retval;
 
 #ifdef DEBUG
-	__CTRACE("wrefresh: win %0.2o\n", win);
+	__CTRACE("wrefresh: win %p\n", win);
 #endif
 
 	_cursesi_screen->curwin = (win == _cursesi_screen->curscr);
@@ -300,7 +300,7 @@ prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	int retval;
 
 #ifdef DEBUG
-	__CTRACE("prefresh: pad %0.2o, flags 0x%08x\n", pad, pad->flags);
+	__CTRACE("prefresh: pad %p, flags 0x%08x\n", pad, pad->flags);
 #endif
 
 	/* Use pnoutrefresh() to avoid duplicating code here */
@@ -372,7 +372,7 @@ doupdate(void)
 			werase(curscr);
 	}
 #ifdef DEBUG
-	__CTRACE("doupdate: (%0.2o): curwin = %d\n", win,
+	__CTRACE("doupdate: (%p): curwin = %d\n", win,
 		 _cursesi_screen->curwin);
 	__CTRACE("doupdate: \tfirstch\tlastch\n");
 #endif

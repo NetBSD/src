@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.22 2003/01/27 21:06:16 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.23 2003/02/17 11:07:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.22 2003/01/27 21:06:16 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.23 2003/02/17 11:07:19 dsl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -546,7 +546,7 @@ __change_pair(short pair)
 
 	for (wlp = __winlistp; wlp != NULL; wlp = wlp->nextp) {
 #ifdef DEBUG
-		__CTRACE("__change_pair: win = %0.2o\n", wlp->winp);
+		__CTRACE("__change_pair: win = %p\n", wlp->winp);
 #endif
 		win = wlp->winp;
 		if (win == curscr) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.11 2003/02/02 17:52:29 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.12 2003/02/17 11:07:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.11 2003/02/02 17:52:29 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.12 2003/02/17 11:07:21 dsl Exp $");
 #endif
 #endif					/* not lint */
 
@@ -151,20 +151,20 @@ newterm(char *type, FILE *outfd, FILE *infd)
 
 	new_screen->winlistp = NULL;
 
-	if ((new_screen->curscr = __newwin(new_screen, new_screen->LINES,
-	    new_screen->COLS, 0, 0, FALSE)) == ERR)
+	if ((new_screen->curscr = __newwin(new_screen, 0,
+	    0, 0, 0, FALSE)) == ERR)
 		goto error_exit;
 
-	if ((new_screen->stdscr = __newwin(new_screen, new_screen->LINES,
-	    new_screen->COLS, 0, 0, FALSE)) == ERR) {
+	if ((new_screen->stdscr = __newwin(new_screen, 0,
+	    0, 0, 0, FALSE)) == ERR) {
 		delwin(new_screen->curscr);
 		goto error_exit;
 	}
 
 	clearok(new_screen->stdscr, 1);
 
-	if ((new_screen->__virtscr = __newwin(new_screen, new_screen->LINES,
-	    new_screen->COLS, 0, 0, FALSE)) == ERR) {
+	if ((new_screen->__virtscr = __newwin(new_screen, 0,
+	    0, 0, 0, FALSE)) == ERR) {
 		delwin(new_screen->curscr);
 		delwin(new_screen->stdscr);
 		goto error_exit;
