@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/10/08 05:26:38 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/10/08 05:44:44 cgd Exp $
 
 RPCDIR=		${.CURDIR}/../src
 .PATH:		${RPCDIR}
@@ -13,6 +13,13 @@ CLEANFILES+=	${SRCS}
 
 NOMAN=		noman
 NOPIC=
+
+beforedepend:	bootparam_prot.h yp.h
+CLEANFILES+=	bootparam_prot.h yp.h
+
+# BECAUSE:
+bootparam_prot.o: bootparam_prot.h
+yp.o: yp.h
 
 # new suffixes have to go afterwards, because bsd.lib.mk clears them
 .include <bsd.lib.mk>
