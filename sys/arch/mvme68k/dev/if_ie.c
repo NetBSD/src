@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.4 2000/03/18 22:33:02 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.4.4.1 2000/10/17 19:52:52 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static void ie_write_16 __P((struct ie_softc *, int, u_int16_t));
 static void ie_write_24 __P((struct ie_softc *, int, int));
 
 /*
- * i82596 Support Routines for MVME1[67]7 Boards
+ * i82596 Support Routines for MVME1[67][27] Boards
  */
 static void
 ie_reset(sc, why)
@@ -269,15 +269,12 @@ ie_pcctwo_attach(parent, self, args)
 	struct pcctwo_attach_args *pa;
 	struct ie_pcctwo_softc *ps;
 	struct ie_softc *sc;
-	u_int8_t ethaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	int rseg;
 
 	pa = (struct pcctwo_attach_args *) args;
 	ps = (struct ie_pcctwo_softc *) self;
 	sc = (struct ie_softc *) self;
-
-	myetheraddr(ethaddr);
 
 	/* Map the MPU controller registers in PCCTWO space */
 	ps->ps_bust = pa->pa_bust;
@@ -336,15 +333,12 @@ ie_pcctwo_attach(parent, self, args)
 	i82586_proberam(sc);
 
 	/* Attach the MI back-end */
-	i82586_attach(sc, "onboard", ethaddr, NULL, 0, 0);
+	i82586_attach(sc, "onboard", mvme_ea, NULL, 0, 0);
 
 	/* Are we the boot device? */
 	if (PCCTWO_PADDR(pa->pa_offset) == bootaddr)
 		booted_device = self;
 
 	/* Finally, hook the hardware interrupt */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR,
-	    pa->pa_ipl | PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 }
