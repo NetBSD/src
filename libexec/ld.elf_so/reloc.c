@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.23 1999/11/07 00:21:13 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.24 1999/12/08 08:47:10 itohy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -171,7 +171,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	case R_TYPE(NONE):
 		break;
 
-#if defined(__i386__) || defined(__m68k__)
+#if defined(__i386__)
 	case R_TYPE(GOT32):
 
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -217,7 +217,54 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
 		break;
-#endif /* __i386__ || __m68k__ */
+#endif /* __i386__ */
+
+#if defined(__m68k__)
+	case R_TYPE(GOT32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
+		if (*where != tmp)
+			*where = tmp;
+		rdbg(dodebug, ("GOT32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(PC32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend) - (Elf_Addr)where;
+		if (*where != tmp)
+			*where = tmp;
+		rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
+		if (*where != tmp)
+			*where = tmp;
+		rdbg(dodebug, ("32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+#endif /* __m68k__ */
 
 #if defined(__alpha__)
 	case R_TYPE(REFQUAD):
