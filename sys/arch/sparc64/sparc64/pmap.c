@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2000/06/30 22:17:53 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2000/07/14 00:02:35 pk Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -220,7 +220,7 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 
 struct pmap kernel_pmap_;
 
-int physmem;
+u_int physmem;
 /*
  * Virtual and physical addresses of the start and end of kernel text
  * and data segments.
