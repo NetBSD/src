@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.18 2000/11/11 22:18:58 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.19 2001/01/10 07:45:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.18 2000/11/11 22:18:58 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.19 2001/01/10 07:45:41 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -334,16 +334,21 @@ el_gets(EditLine *el, int *nread)
 
 	if (el->el_flags & NO_TTY) {
 		char *cp = el->el_line.buffer;
+		size_t idx;
 
 		while (read_char(el, cp) == 1) {
-			cp++;
-			if (cp == el->el_line.limit) {
-				--cp;
-				break;
+			/* make sure there is space for next character */
+			if (cp + 1 >= el->el_line.limit) {
+				idx = (cp - el->el_line.buffer);
+				if (!ch_enlargebufs(el, 2))
+					break;
+				cp = &el->el_line.buffer[idx];
 			}
+			cp++;
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
 		}
+
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
 		if (nread)
@@ -372,19 +377,23 @@ el_gets(EditLine *el, int *nread)
 
 	if (el->el_flags & EDIT_DISABLED) {
 		char *cp = el->el_line.buffer;
+		size_t idx;
 
 		term__flush();
 
 		while (read_char(el, cp) == 1) {
-			cp++;
-			if (cp == el->el_line.limit) {
-				--cp;
-				break;
+			/* make sure there is space next character */
+			if (cp + 1 >= el->el_line.limit) {
+				idx = (cp - el->el_line.buffer);
+				if (!ch_enlargebufs(el, 2))
+					break;
+				cp = &el->el_line.buffer[idx];
 			}
+			cp++;
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
-
 		}
+
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
 		if (nread)
