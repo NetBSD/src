@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_addrs.c,v 1.1.1.2 2000/08/02 19:59:27 assar Exp $");
+RCSID("$Id: get_addrs.c,v 1.2 2000/12/03 20:21:03 thorpej Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -51,6 +51,10 @@ struct mbuf;
 #ifdef HAVE_NETINET_IN6_VAR_H
 #include <netinet/in6_var.h>
 #endif /* HAVE_NETINET_IN6_VAR_H */
+
+#ifdef HAVE_GETIFADDRS
+#include <ifaddrs.h>
+#endif
 
 static krb5_error_code
 gethostname_fallback (krb5_addresses *res)
@@ -99,6 +103,96 @@ find_all_addresses (krb5_context context,
 		    int af, int siocgifconf, int siocgifflags,
 		    size_t ifreq_sz)
 {
+#ifdef HAVE_GETIFADDRS
+     struct sockaddr sa_zero;
+     struct ifaddrs *ifa0, *ifa;
+     krb5_error_code ret; 
+     int num, idx;
+
+     res->val = NULL;
+
+     if (getifaddrs(&ifa0) == -1)
+	 return (errno);
+
+     memset(&sa_zero, 0, sizeof(sa_zero));
+
+     /* First, count all the ifaddrs. */
+     for (ifa = ifa0, num = 0; ifa != NULL; ifa = ifa->ifa_next, num++)
+	 /* nothing */;
+
+     if (num == 0) {
+	 freeifaddrs(ifa0);
+	 return (ENXIO);
+     }
+
+     /* Allocate storage for them. */
+     res->val = calloc(num, sizeof(*res->val));
+     if (res->val == NULL) {
+	 freeifaddrs(ifa0);
+	 return (ENOMEM);
+     }
+
+     /* Now traverse the list. */
+     for (ifa = ifa0, idx = 0; ifa != NULL; ifa = ifa->ifa_next) {
+	 if ((ifa->ifa_flags & IFF_UP) == 0)
+	     continue;
+	 if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+	     continue;
+	 if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+	     continue;
+
+	 if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) {
+	     /* We'll deal with the LOOP_IF_NONE case later. */
+	     if ((flags & LOOP) == 0)
+		 continue;
+	 }
+
+	 ret = krb5_sockaddr2address(ifa->ifa_addr, &res->val[idx]);
+	 if (ret) {
+	     /*
+	      * The most likely error here is going to be "Program
+	      * lacks support for address type".  This is no big
+	      * deal -- just continue, and we'll listen on the
+	      * addresses who's type we *do* support.
+	      */
+	     continue;
+	 }
+	 idx++;
+     }
+
+     /*
+      * If no addresses were found, and LOOP_IF_NONE is set, then find
+      * the loopback addresses and add them to our list.
+      */
+     if ((flags & LOOP_IF_NONE) != 0 && idx == 0) {
+	 for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
+	     if ((ifa->ifa_flags & IFF_UP) == 0)
+		 continue;
+	     if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+		 continue;
+	     if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+		 continue;
+
+	     if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) {
+		 ret = krb5_sockaddr2address(ifa->ifa_addr, &res->val[idx]);
+		 if (ret) {
+		     /*
+		      * See comment above.
+		      */
+		     continue;
+		 }
+		 idx++;
+	     }
+	 }
+     }
+
+     freeifaddrs(ifa0);
+     if (ret)
+	 free(res->val);
+     else
+         res->len = idx;	/* Now a count. */
+     return (ret);
+#else /* ! HAVE_GETIFADDRS */
      krb5_error_code ret;
      int fd;
      size_t buf_size;
@@ -235,6 +329,7 @@ cleanup:
      close (fd);
      free (buf);
      return ret;
+#endif /* HAVE_GETIFADDRS */
 }
 
 static krb5_error_code
