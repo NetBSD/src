@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.153 1999/07/06 21:44:10 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.154 1999/07/22 21:08:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -225,7 +225,10 @@ main()
 	/*
 	 * Create process 0 (the swapper).
 	 */
+	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
+	proclist_unlock_write(s);
+
 	p->p_pgrp = &pgrp0;
 	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
 	LIST_INIT(&pgrp0.pg_members);

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.79 1999/07/22 18:13:36 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.80 1999/07/22 21:08:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -317,6 +317,9 @@ extern struct proc *curproc;		/* Current running proc. */
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
+/* Process list lock; see kern_proc.c for locking protocol details. */
+extern struct lock proclist_lock;
+
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
 
@@ -371,5 +374,10 @@ void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
 int	proc_isunder __P((struct proc *, struct proc*));
+
+void	proclist_lock_read __P((int));
+void	proclist_unlock_read __P((void));
+int	proclist_lock_write __P((void));
+void	proclist_unlock_write __P((int));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

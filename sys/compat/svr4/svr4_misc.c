@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.78 1999/07/20 21:54:06 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.79 1999/07/22 21:08:30 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -891,18 +891,22 @@ static struct proc *
 svr4_pfind(pid)
 	pid_t pid;
 {
-	struct proc *p;
+	struct proc *p = NULL;
+
+	proclist_lock_read(0);
 
 	/* look in the live processes */
 	if ((p = pfind(pid)) != NULL)
-		return p;
+		goto out;
 
 	/* look in the zombies */
 	for (p = zombproc.lh_first; p != 0; p = p->p_list.le_next)
 		if (p->p_pid == pid)
-			return p;
+			goto out;
 
-	return NULL;
+ out:
+	proclist_unlock_read();
+	return p;
 }
 
 
@@ -1117,8 +1121,7 @@ svr4_sys_waitsys(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_waitsys_args *uap = v;
-	int nfound;
-	int error;
+	int nfound, error, s;
 	struct proc *q, *t;
 
 
@@ -1195,7 +1198,9 @@ loop:
 			 */
 			leavepgrp(q);
 
+			s = proclist_lock_write();
 			LIST_REMOVE(q, p_list);	/* off zombproc */
+			proclist_unlock_write(s);
 
 			LIST_REMOVE(q, p_sibling);
 
