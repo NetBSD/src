@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1997/10/18 23:18:40 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.2.1 1998/02/07 05:38:21 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -710,24 +710,6 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
-			    p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 	kfp = malloc(sizeof(struct sigframe), M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
@@ -745,9 +727,10 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
+	if (ft >= FMT4) {
 #ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
+		if (ft != FMT4 && ft != FMT7 && ft != FMT9 &&
+		    ft != FMTA && ft != FMTB)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
@@ -794,7 +777,20 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, sizeof(struct sigframe));
+	if (copyout((caddr_t)kfp, (caddr_t)fp, sizeof(struct sigframe))) {
+		free((caddr_t)kfp, M_TEMP);
+#ifdef DEBUG
+               if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+                       printf("sendsig(%d): copyout failed on sig %d\n",
+                              p->p_pid, sig);
+#endif
+               /*
+                * Process has trashed its stack; give it an illegal
+                * instruction to halt it in its tracks.
+                */
+               sigexit(p, SIGILL);
+               /* NOTREACHED */
+	}
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -852,31 +848,23 @@ sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
-	    copyin(scp, &context, sizeof(context)))
+	if (copyin(scp, &context, sizeof(context)))
 		return(EINVAL);
 	scp = &context;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return(EINVAL);
+
 	/*
-	 * Restore the user supplied information
+	 * We'll restore infomation in this structure.
 	 */
-	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else 
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
-	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
+
 	/*
 	 * Grab pointer to hardware state information.
 	 * If zero, the user is probably doing a longjmp.
 	 */
 	if ((rf = scp->sc_ap) == 0)
-		return (EJUSTRETURN);
+		goto restore;
 	/*
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
@@ -893,20 +881,13 @@ sys_sigreturn(p, v, retval)
 	if (flags == -1)
 		return (EINVAL);
 	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
-		return (EJUSTRETURN);
+		goto restore;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		    (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
-	/*
-	 * Restore most of the users registers except for A6 and SP
-	 * which were handled above.
-	 */
-	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
 	/*
 	 * Restore long stack frames.  Note that we do not copy
 	 * back the saved SR or PC, they were picked up above from
@@ -917,7 +898,8 @@ sys_sigreturn(p, v, retval)
 		
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
-		if (sz > 15 || (sz = exframesize[sz]) < 0)
+		if (sz > 15 || (sz = exframesize[sz]) < 0
+				|| frame->f_stackadj < sz)
 			return (EINVAL);
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
@@ -931,10 +913,35 @@ sys_sigreturn(p, v, retval)
 	}
 
 	/*
-	 * Finally we restore the original FP context
+	 * Restore most of the users registers except for A6 and SP
+	 * which will be handled below.
+	 */
+	if (flags & SS_USERREGS)
+		bcopy((caddr_t)tstate.ss_frame.f_regs,
+		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+	/*
+	 * Restore the original FP context
 	 */
 	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
+
+	/*
+	 * Restore the user supplied information.
+	 * This should be at the last so that the error (EINVAL)
+	 * is reported to the sigreturn caller, not to the
+	 * jump destination.
+	 */
+restore:
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+	frame->f_regs[SP] = scp->sc_sp;
+	frame->f_regs[A6] = scp->sc_fp;
+	frame->f_pc = scp->sc_pc;
+	frame->f_sr = scp->sc_ps;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
@@ -2063,14 +2070,6 @@ cpu_exec_aout_makecmds(p, epp)
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
 		return(exec_aout_prep_zmagic(p, epp));
-#endif
-#ifdef COMPAT_SUNOS
-	{
-		extern sunos_exec_aout_makecmds
-		    __P((struct proc *, struct exec_package *));
-		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return(0);
-	}
 #endif
 	return(error);
 }
