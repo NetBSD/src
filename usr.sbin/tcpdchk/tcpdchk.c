@@ -1,3 +1,5 @@
+/*	$NetBSD: tcpdchk.c,v 1.2 1997/10/11 21:41:46 christos Exp $	*/
+
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
   * 
@@ -14,8 +16,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
+#else
+__RCSID("$NetBSD: tcpdchk.c,v 1.2 1997/10/11 21:41:46 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -30,11 +37,8 @@ static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
-
-extern int errno;
-extern void exit();
-extern int optind;
-extern char *optarg;
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef INADDR_NONE
 #define INADDR_NONE     (-1)		/* XXX should be 0xffffffff */
@@ -66,15 +70,17 @@ extern jmp_buf tcpd_buf;
  /*
   * Local stuff.
   */
-static void usage();
-static void parse_table();
-static void print_list();
-static void check_daemon_list();
-static void check_client_list();
-static void check_daemon();
-static void check_user();
-static int check_host();
-static int reserved_name();
+static void usage __P((void));
+static void parse_table __P((char *, struct request_info *));
+static void print_list __P((char *, char *));
+static void check_daemon_list __P((char *));
+static void check_client_list __P((char *));
+static void check_daemon __P((char *));
+static void check_user __P((char *));
+static int check_host __P((char *));
+static int reserved_name __P((char *));
+
+int main __P((int, char **));
 
 #define PERMIT	1
 #define DENY	0
@@ -199,13 +205,15 @@ struct request_info *request;
     char    sv_list[BUFLEN];		/* becomes list of daemons */
     char   *cl_list;			/* becomes list of requests */
     char   *sh_cmd;			/* becomes optional shell command */
-    char    buf[BUFSIZ];
     int     verdict;
     struct tcpd_context saved_context;
+#ifdef __GNUC__
+    (void) &real_verdict;
+#endif
 
     saved_context = tcpd_context;		/* stupid compilers */
 
-    if (fp = fopen(table, "r")) {
+    if ((fp = fopen(table, "r")) != NULL) {
 	tcpd_context.file = table;
 	tcpd_context.line = 0;
 	while (xgets(sv_list, sizeof(sv_list), fp)) {
@@ -330,7 +338,7 @@ char   *list;
 	    clients = 0;
 	} else {
 	    clients++;
-	    if (host = split_at(cp + 1, '@')) {	/* user@host */
+	    if ((host = split_at(cp + 1, '@')) != NULL) {	/* user@host */
 		check_user(cp);
 		check_host(host);
 	    } else {
@@ -421,7 +429,7 @@ char   *pat;
 	tcpd_warn("netgroup support disabled");
 #endif
 #endif
-    } else if (mask = split_at(pat, '/')) {	/* network/netmask */
+    } else if ((mask = split_at(pat, '/')) != NULL) {	/* network/netmask */
 	if (dot_quad_addr(pat) == INADDR_NONE
 	    || dot_quad_addr(mask) == INADDR_NONE)
 	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
