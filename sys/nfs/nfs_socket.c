@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.87 2003/05/22 14:11:50 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.88 2003/05/22 14:16:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.87 2003/05/22 14:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.88 2003/05/22 14:16:23 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2174,15 +2174,14 @@ nfsrv_dorec(slp, nfsd, ndp)
 		nam->m_next = NULL;
 	} else
 		nam = NULL;
-	MALLOC(nd, struct nfsrv_descript *, sizeof (struct nfsrv_descript),
-		M_NFSRVDESC, M_WAITOK);
+	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
 	nd->nd_dpos = mtod(m, caddr_t);
 	error = nfs_getreq(nd, nfsd, TRUE);
 	if (error) {
 		m_freem(nam);
-		FREE(nd, M_NFSRVDESC);
+		pool_put(&nfs_srvdesc_pool, nd);
 		return (error);
 	}
 	*ndp = nd;
