@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/03/22 12:35:04 pk Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 18:47:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -65,31 +65,23 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_link = 0;
 
 	/*
-	 * Set _UC_SIGMASK, _UC_CPU. No FPU data saved, so we can't restore
-	 * that. Set _UC_{SET,CLR}STACK according to SS_ONSTACK
+	 * Set _UC_{SET,CLR}STACK according to SS_ONSTACK.
+	 *
+	 * Restore the signal mask with sigprocmask() instead of _UC_SIGMASK,
+	 * since libpthread may want to interpose on signal handling.
 	 */
 	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
 
-	/*
-	 * Set the signal mask - this is a weak symbol, so don't use
-	 * _UC_SIGMASK in the mcontext, libpthread might override sigprocmask.
-	 */
 	sigprocmask(SIG_SETMASK, &sc->sc_mask, NULL);
 
-	/* Fill other registers */
+	/* Extract PSR, PC, NPC and SP from jmp_buf */
 	uc.uc_mcontext.__gregs[_REG_PSR] = sc->sc_psr;
 	uc.uc_mcontext.__gregs[_REG_PC] = sc->sc_pc;
 	uc.uc_mcontext.__gregs[_REG_nPC] = sc->sc_npc;
-	uc.uc_mcontext.__gregs[_REG_G1] = sc->sc_g1;
-	uc.uc_mcontext.__gregs[_REG_G2] = sc->sc_o0;
 	uc.uc_mcontext.__gregs[_REG_O6] = sc->sc_sp;
 
-	/* Make return value non-zero */
-	if (val == 0)
-		val = 1;
-
-	/* Save return value in context */
-	uc.uc_mcontext.__gregs[_REG_O0] = val;
+	/* Set the return value; make sure it's non-zero */
+	uc.uc_mcontext.__gregs[_REG_O0] = (val != 0 ? val : 1);
 
 	setcontext(&uc);
 
