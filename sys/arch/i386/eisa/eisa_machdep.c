@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.9 1998/04/26 22:37:20 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10 1998/06/03 06:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
  * of these funcions.
  */
 struct i386_bus_dma_tag eisa_bus_dma_tag = {
+	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
