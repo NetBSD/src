@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              xRevision: 4 $
+ *              $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.1.1.1 2003/03/04 16:43:14 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
