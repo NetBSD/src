@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.15 1996/06/02 21:09:33 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.15 1996/06/02 21:09:33 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -546,7 +546,7 @@ ArchStatMember (archive, member, hash)
     }
 
     ar = (Arch *)emalloc (sizeof (Arch));
-    ar->name = strdup (archive);
+    ar->name = estrdup (archive);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
     Hash_InitTable (&ar->members, -1);
