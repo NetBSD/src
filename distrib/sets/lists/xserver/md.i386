@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.28 2004/11/14 19:53:59 nathanw Exp $
+# $NetBSD: md.i386,v 1.29 2005/01/21 08:33:11 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xvfb
@@ -130,6 +130,7 @@
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/rendition_drv.o
+./usr/X11R6/lib/modules/drivers/riva128.o
 ./usr/X11R6/lib/modules/drivers/s3_drv.o
 ./usr/X11R6/lib/modules/drivers/s3virge_drv.o
 ./usr/X11R6/lib/modules/drivers/savage_drv.o
