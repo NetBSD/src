@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.21 1995/01/30 20:14:10 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.22 1995/02/10 23:24:19 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -457,11 +457,10 @@ writelabel(f, boot, lp)
 		writeable = 0;
 		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 			perror("ioctl DIOCWLABEL");
-	} else {
-		if (ioctl(f, DIOCWDINFO, lp) < 0) {
-			l_perror("ioctl DIOCWDINFO");
-			return (1);
-		}
+	}
+	if (ioctl(f, DIOCWDINFO, lp) < 0) {
+		l_perror("ioctl DIOCWDINFO");
+		return (1);
 	}
 #ifdef vax
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
