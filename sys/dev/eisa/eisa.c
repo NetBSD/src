@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.19 1998/01/12 08:51:11 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.20 1998/01/12 08:57:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -60,8 +60,6 @@ void	eisaattach __P((struct device *, struct device *, void *));
 struct cfattach eisa_ca = {
 	sizeof(struct device), eisamatch, eisaattach
 };
-
-extern struct cfdriver eisa_cd;
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	eisasubmatch __P((struct device *, void *, void *));
