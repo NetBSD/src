@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.91 2002/04/28 22:35:19 enami Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.92 2002/05/09 17:57:07 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.91 2002/04/28 22:35:19 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.92 2002/05/09 17:57:07 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1381,6 +1381,7 @@ fdcloseexec(struct proc *p)
  * descriptor referencing /dev/null for each of stdin, stdout, and
  * stderr that is not already open.
  */
+#define CHECK_UPTO 3
 int
 fdcheckstd(p)
 	struct proc *p;
@@ -1391,22 +1392,17 @@ fdcheckstd(p)
 	struct file *devnullfp;
 	struct proc *pp;
 	register_t retval;
-	int fd, i, error, flags = FREAD|FWRITE, devnull = -1, logged = 0;
+	int fd, i, error, flags = FREAD|FWRITE, devnull = -1;
+	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
 
+	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
 		return (0);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < CHECK_UPTO; i++) {
 		if (fdp->fd_ofiles[i] != NULL)
 			continue;
-		if (!logged) {
-			pp = p->p_pptr;
-			log(LOG_WARNING, "set{u,g}id pid %d (%s) "
-			    "was invoked by uid %d ppid %d (%s) "
-			    "with fd 0, 1, or 2 closed\n",
-			    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
-			    pp->p_pid, pp->p_comm);
-			logged++;
-		}
+		snprintf(which, sizeof(which), ",%d", i);
+		strcat(closed, which);
 		if (devnull < 0) {
 			if ((error = falloc(p, &fp, &fd)) != 0)
 				return (error);
@@ -1443,5 +1439,14 @@ restart:
 				return (error);
 		}
 	}
+	if (closed[0] != '\0') {
+		pp = p->p_pptr;
+		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
+		    "was invoked by uid %d ppid %d (%s) "
+		    "with fd %s closed\n",
+		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    pp->p_pid, pp->p_comm, &closed[1]);
+	}
 	return (0);
 }
+#undef CHECK_UPTO
