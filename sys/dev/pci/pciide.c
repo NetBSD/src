@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.73 2000/06/28 16:08:49 mrg Exp $	*/
+/*	$NetBSD: pciide.c,v 1.74 2000/07/04 16:34:33 enami Exp $	*/
 
 
 /*
@@ -361,6 +361,11 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra66/ATA Bus Master IDE Accelerator",
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_ULTRA100,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ 0,
