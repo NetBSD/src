@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.12 2003/04/16 18:59:12 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.13 2003/04/18 21:36:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.12 2003/04/16 18:59:12 nathanw Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.13 2003/04/18 21:36:38 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -98,11 +98,8 @@ pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 	struct mutexattr_private *map;
 	struct mutex_private *mp;
 
-#ifdef ERRORCHECK
-	if ((mutex == NULL) || 
-	    (attr && (attr->ptma_magic != _PT_MUTEXATTR_MAGIC)))
-		return EINVAL;
-#endif
+	pthread__assert((attr == NULL) ||
+	    (attr->ptma_magic == _PT_MUTEXATTR_MAGIC));
 
 	if (attr != NULL && (map = attr->ptma_private) != NULL &&
 	    memcmp(map, &mutexattr_private_default, sizeof(*map)) != 0) {
@@ -132,12 +129,8 @@ int
 pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
 
-#ifdef ERRORCHECK
-	if ((mutex == NULL) ||
-	    (mutex->ptm_magic != _PT_MUTEX_MAGIC) ||
-	    (mutex->ptm_lock != __SIMPLELOCK_UNLOCKED))
-		return EINVAL;
-#endif
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__assert(mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
 
 	mutex->ptm_magic = _PT_MUTEX_DEAD;
 	if (mutex->ptm_private != NULL &&
@@ -164,11 +157,6 @@ int
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
 	int error;
-
-#ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
-		return EINVAL;
-#endif
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
 	/*
@@ -199,6 +187,8 @@ static int
 pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 {
 	pthread_t self;
+
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	self = pthread__self();
 
@@ -276,14 +266,10 @@ int
 pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
 
-#ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
-		return EINVAL;
-#endif
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
-		pthread_t self;
 		struct mutex_private *mp;
 
 		GET_MUTEX_PRIVATE(mutex, mp);
@@ -293,15 +279,12 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		 * interlock because these fields are only modified
 		 * if we know we own the mutex.
 		 */
-		self = pthread__self();
-		if (pthread__id(mutex->ptm_owner) == self) {
-			switch (mp->type) {
-			case PTHREAD_MUTEX_RECURSIVE:
-				if (mp->recursecount == INT_MAX)
-					return EAGAIN;
-				mp->recursecount++;
-				return 0;
-			}
+		if ((mp->type == PTHREAD_MUTEX_RECURSIVE) &&
+		    (pthread__id(mutex->ptm_owner) == pthread__self())) {
+			if (mp->recursecount == INT_MAX)
+				return EAGAIN;
+			mp->recursecount++;
+			return 0;
 		}
 
 		return EBUSY;
@@ -319,14 +302,10 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	struct mutex_private *mp;
 	pthread_t self, blocked; 
+	int weown;
 
-#ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
-		return EINVAL;
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
-	if (mutex->ptm_lock != __SIMPLELOCK_LOCKED)
-		return EPERM; /* Not exactly the right error. */
-#endif
 	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
 	GET_MUTEX_PRIVATE(mutex, mp);
@@ -336,19 +315,21 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * interlock because these fields are only modified
 	 * if we know we own the mutex.
 	 */
+	weown = (pthread__id(mutex->ptm_owner) == pthread__self());
 	switch (mp->type) {
-	case PTHREAD_MUTEX_ERRORCHECK:
-		if (pthread__id(mutex->ptm_owner) != pthread__self())
-			return EPERM;
-		break;
-
 	case PTHREAD_MUTEX_RECURSIVE:
-		if (pthread__id(mutex->ptm_owner) != pthread__self())
+		if (!weown)
 			return EPERM;
 		if (mp->recursecount != 0) {
 			mp->recursecount--;
 			return 0;
 		}
+		break;
+	case PTHREAD_MUTEX_ERRORCHECK:
+		if (!weown)
+			return EPERM;
+	default:
+		pthread__assert(weown);
 		break;
 	}
 
@@ -386,11 +367,6 @@ pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
 	struct mutexattr_private *map;
 
-#ifdef ERRORCHECK
-	if (attr == NULL)
-		return EINVAL;
-#endif
-
 	map = malloc(sizeof(*map));
 	if (map == NULL)
 		return ENOMEM;
@@ -408,11 +384,7 @@ int
 pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if ((attr == NULL) ||
-	    (attr->ptma_magic != _PT_MUTEXATTR_MAGIC))
-		return EINVAL;
-#endif
+	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
 	if (attr->ptma_private != NULL)
@@ -427,12 +399,7 @@ pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 {
 	struct mutexattr_private *map;
 
-#ifdef ERRORCHECK
-	if ((attr == NULL) ||
-	    (attr->ptma_magic != _PT_MUTEXATTR_MAGIC) ||
-	    (typep == NULL))
-		return EINVAL;
-#endif
+	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	map = attr->ptma_private;
 
@@ -447,11 +414,8 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
 	struct mutexattr_private *map;
 
-#ifdef ERRORCHECK
-	if ((attr == NULL) ||
-	    (attr->ptma_magic != _PT_MUTEXATTR_MAGIC))
-		return EINVAL;
-#endif
+	pthread__assert(attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+
 	map = attr->ptma_private;
 
 	switch (type) {

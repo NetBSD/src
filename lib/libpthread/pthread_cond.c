@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.9 2003/04/16 18:30:44 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.10 2003/04/18 21:36:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.9 2003/04/16 18:30:44 nathanw Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.10 2003/04/18 21:36:38 nathanw Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -71,11 +71,8 @@ int
 pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if ((cond == NULL) ||
-	    (attr && (attr->ptca_magic != _PT_CONDATTR_MAGIC)))
-		return EINVAL;
-#endif
+	pthread__assert((attr == NULL) ||
+	    (attr->ptca_magic == _PT_CONDATTR_MAGIC));
 
 	cond->ptc_magic = _PT_COND_MAGIC;
 	pthread_lockinit(&cond->ptc_lock);
@@ -90,12 +87,8 @@ int
 pthread_cond_destroy(pthread_cond_t *cond)
 {
 
-#ifdef ERRORCHECK
-	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
-	    (cond->ptc_mutex != NULL) ||
-	    (cond->ptc_lock != __SIMPLELOCK_UNLOCKED))
-		return EINVAL;
-#endif
+	pthread__assert(cond->ptc_magic == _PT_COND_MAGIC);
+	pthread__assert(cond->ptc_mutex == NULL);
 
 	cond->ptc_magic = _PT_COND_DEAD;
 
@@ -107,11 +100,11 @@ int
 pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
 	pthread_t self;
-#ifdef ERRORCHECK
-	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
-	    (mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
-		return EINVAL;
-#endif
+
+	pthread__assert(cond->ptc_magic == _PT_COND_MAGIC);
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__assert(mutex->ptm_lock == __SIMPLELOCK_LOCKED);
+
 	self = pthread__self();
 	PTHREADD_ADD(PTHREADD_COND_WAIT);
 
@@ -123,18 +116,10 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else {
-		if (cond->ptc_mutex != mutex) {
-			pthread_spinunlock(self, &cond->ptc_lock);
-			return EINVAL;
-		}
-		/* Check the mutex is actually locked */
-	        if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
-			pthread_spinunlock(self, &cond->ptc_lock);
-			return EPERM;
-		}
-	}
+	else
+		pthread__assert(cond->ptc_mutex == mutex);
 #endif
+
 	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
 	    self, cond, mutex));
 	pthread_spinlock(self, &self->pt_statelock);
@@ -177,14 +162,12 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	struct pt_alarm_t alarm;
 	int retval;
 
-#ifdef ERRORCHECK
-	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
-	    (mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
-		return EINVAL;
-	if ((abstime == NULL) || (abstime->tv_sec < 0 ||
-	    abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000))
-		return EINVAL;
-#endif
+	pthread__assert(cond->ptc_magic == _PT_COND_MAGIC);
+	pthread__assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	pthread__assert(mutex->ptm_lock == __SIMPLELOCK_LOCKED);
+	pthread__assert((abstime->tv_sec >= 0) &&
+	    (abstime->tv_nsec >= 0) && (abstime->tv_nsec < 1000000000));
+
 	self = pthread__self();
 	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
 
@@ -196,17 +179,8 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else {
-		if (cond->ptc_mutex != mutex) {
-			pthread_spinunlock(self, &cond->ptc_lock);
-			return EINVAL;
-		}
-		/* Check the mutex is actually locked */
-	        if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
-			pthread_spinunlock(self, &cond->ptc_lock);
-			return EPERM;
-		}
-	}
+	else
+		pthread__assert(cond->ptc_mutex == mutex);
 #endif
 	
 	wait.ptw_thread = self;
@@ -278,10 +252,8 @@ int
 pthread_cond_signal(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
-#ifdef ERRORCHECK
-	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
-		return EINVAL;
-#endif
+
+	pthread__assert(cond->ptc_magic == _PT_COND_MAGIC);
 	PTHREADD_ADD(PTHREADD_COND_SIGNAL);
 
 	SDPRINTF(("(cond signal %p) Signaling %p\n",
@@ -313,10 +285,8 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 {
 	pthread_t self;
 	struct pthread_queue_t blockedq;
-#ifdef ERRORCHECK
-	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
-		return EINVAL;
-#endif
+
+	pthread__assert(cond->ptc_magic == _PT_COND_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
 	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
@@ -344,11 +314,6 @@ int
 pthread_condattr_init(pthread_condattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if (attr == NULL)
-		return EINVAL;
-#endif
-
 	attr->ptca_magic = _PT_CONDATTR_MAGIC;
 
 	return 0;
@@ -359,11 +324,7 @@ int
 pthread_condattr_destroy(pthread_condattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if ((attr == NULL) ||
-	    (attr->ptca_magic != _PT_CONDATTR_MAGIC))
-		return EINVAL;
-#endif
+	pthread__assert(attr->ptca_magic == _PT_CONDATTR_MAGIC);
 
 	attr->ptca_magic = _PT_CONDATTR_DEAD;
 
