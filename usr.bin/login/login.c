@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.75 2003/10/16 05:31:47 itojun Exp $       */
+/*     $NetBSD: login.c,v 1.76 2004/01/01 00:00:05 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.75 2003/10/16 05:31:47 itojun Exp $");
+__RCSID("$NetBSD: login.c,v 1.76 2004/01/01 00:00:05 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -173,7 +173,7 @@ struct timeval now;
 struct sockaddr_storage ss;
 
 static const char copyrightstr[] = "\
-Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003\n\
+Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004\n\
 \tThe NetBSD Foundation, Inc.  All rights reserved.\n\
 Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994\n\
 \tThe Regents of the University of California.  All rights reserved.\n\n";
