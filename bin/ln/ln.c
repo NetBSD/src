@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ln.c	4.15 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: ln.c,v 1.5 1993/08/17 01:03:51 jtc Exp $";
+static char rcsid[] = "$Id: ln.c,v 1.6 1994/01/27 01:44:15 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,15 +54,17 @@ static int	forceflag,		/* force link by removing target */
 		dirflag,		/* allow hard links to directories */
 		sflag,			/* symbolic, not hard, link */
 		(*linkf)();		/* system link call */
-static linkit(), usage();
+static int	linkit();
+static void	usage();
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	extern int optind;
 	struct stat buf;
-	int ch, exitval, link(), symlink();
+	int ch, exitval;
 	char *sourcedir;
 
 	while ((ch = getopt(argc, argv, "fFs")) != EOF)
@@ -89,10 +91,13 @@ main(argc, argv)
 	switch(argc) {
 	case 0:
 		usage();
+		/* NOTREACHED */
 	case 1:				/* ln target */
 		exit(linkit(argv[0], ".", 1));
+		/* NOTREACHED */
 	case 2:				/* ln target source */
 		exit(linkit(argv[0], argv[1], 0));
+		/* NOTREACHED */
 	default:			/* ln target1 target2 directory */
 		sourcedir = argv[argc - 1];
 		if (stat(sourcedir, &buf)) {
@@ -109,7 +114,7 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-static
+static int
 linkit(source, target, isdir)
 	char *source, *target;
 	int isdir;
@@ -154,7 +159,7 @@ linkit(source, target, isdir)
 	return(0);
 }
 
-static
+static void
 usage()
 {
 	(void)fprintf(stderr,
