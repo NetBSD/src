@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.18 2002/10/22 01:28:21 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.19 2002/10/27 23:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 #include <sys/syscall.h>
 
-#include "sched.h"
+#include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
 

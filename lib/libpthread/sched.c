@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.1.2.2 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: sched.c,v 1.1.2.3 2002/10/27 23:32:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,8 +38,7 @@
 
 
 #include <errno.h>
-
-#include "sched.h"
+#include <sched.h>
 
 /* ARGSUSED */
 int
@@ -90,6 +89,3 @@ sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
 	return ENOSYS;
 }
-
-
-
