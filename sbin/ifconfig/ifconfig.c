@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.94 2001/01/08 14:06:12 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.95 2001/01/17 06:07:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.94 2001/01/08 14:06:12 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.95 2001/01/17 06:07:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,6 +320,7 @@ void	init_current_media __P((void));
 void	in_alias __P((struct ifreq *));
 void	in_status __P((int));
 void 	in_getaddr __P((const char *, int));
+void 	in_getprefix __P((const char *, int));
 #ifdef INET6
 void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
 void	in6_alias __P((struct in6_ifreq *));
@@ -352,7 +353,7 @@ struct afswtch {
 	caddr_t af_addreq;
 } afs[] = {
 #define C(x) ((caddr_t) &x)
-	{ "inet", AF_INET, in_status, in_getaddr, NULL,
+	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
 	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(ridreq), C(addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
@@ -2562,23 +2563,8 @@ in_getaddr(s, which)
 
 	if (which == ADDR) {
 		char *p = NULL;
-	    
-		if((p = strrchr(s, '/')) != NULL) {
-			/* address is `name/masklen' */
-			int masklen;
-			int ret;
-			struct sockaddr_in *min = sintab[MASK];
-			*p = '\0';
-			ret = sscanf(p+1, "%u", &masklen);
-			if(ret != 1 || (masklen < 0 || masklen > 32)) {
-				*p = '/';
-				errx(1, "%s: bad value", s);
-			}
-			min->sin_len = sizeof(*min);
-			min->sin_addr.s_addr = 
-				htonl(~((1LL << (32 - masklen)) - 1) & 
-				      0xffffffff);
-		}
+		if ((p = strrchr(s, '/')) != NULL)
+			in6_getprefix(p + 1, MASK);
 	}
 
 	if (inet_aton(s, &sin->sin_addr) == 0) {
@@ -2589,6 +2575,30 @@ in_getaddr(s, which)
 		else
 			errx(1, "%s: bad value", s);
 	}
+}
+
+void
+in_getprefix(plen, which)
+	const char *plen;
+	int which;
+{
+	register struct sockaddr_in *sin = sintab[which];
+	register u_char *cp;
+	int len = strtol(plen, (char **)NULL, 10);
+
+	if ((len < 0) || (len > 32))
+		errx(1, "%s: bad value", plen);
+	sin->sin_len = sizeof(*sin);
+	if (which != MASK)
+		sin->sin_family = AF_INET;
+	if ((len == 0) || (len == 32)) {
+		memset(&sin->sin_addr, 0xff, sizeof(struct in_addr));
+		return;
+	}
+	memset((void *)&sin->sin_addr, 0x00, sizeof(sin->sin_addr));
+	for (cp = (u_char *)&sin->sin_addr; len > 7; len -= 8)
+		*cp++ = 0xff;
+	*cp = 0xff << (8 - len);
 }
 
 /*
