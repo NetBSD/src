@@ -96,7 +96,7 @@ fetch_regs (int tid)
 {
   struct reg regs;
 
-  if (ptrace (PT_GETREGS, tid, (caddr_t)&regs, 0) < 0)
+  if (ptrace (PT_GETREGS, PIDGET (tid), (caddr_t)&regs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't get registers");
 
   supply_gregset (&regs);
@@ -110,12 +110,12 @@ store_regs (int tid, int regno)
 {
   struct reg regs;
 
-  if (ptrace (PT_GETREGS, tid, (caddr_t) &regs, 0) < 0)
+  if (ptrace (PT_GETREGS, PIDGET (tid), (caddr_t) &regs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't get registers");
 
   fill_gregset (&regs, regno);
 
-  if (ptrace (PT_SETREGS, tid, (caddr_t) &regs, 0) < 0)
+  if (ptrace (PT_SETREGS, PIDGET (tid), (caddr_t) &regs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't write registers");
 }
 
@@ -183,7 +183,7 @@ fetch_fpregs (int tid)
 {
   struct fpreg fpregs;
 
-  if (ptrace (PT_GETFPREGS, tid, (caddr_t) &fpregs, 0) < 0)
+  if (ptrace (PT_GETFPREGS, PIDGET (tid), (caddr_t) &fpregs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't get floating point status");
 
   supply_fpregset (&fpregs);
@@ -197,12 +197,12 @@ store_fpregs (int tid, int regno)
 {
   struct fpreg fpregs;
 
-  if (ptrace (PT_GETFPREGS, tid, (caddr_t) &fpregs, 0) < 0)
+  if (ptrace (PT_GETFPREGS, PIDGET (tid), (caddr_t) &fpregs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't get floating point status");
 
   fill_fpregset (&fpregs, regno);
 
-  if (ptrace (PT_SETFPREGS, tid, (caddr_t) &fpregs, 0) < 0)
+  if (ptrace (PT_SETFPREGS, PIDGET (tid), (caddr_t) &fpregs, TIDGET (tid)) < 0)
     perror_with_name ("Couldn't write floating point status");
 }
 
