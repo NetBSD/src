@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 1999/07/29 19:36:59 augustss Exp $
+#	$NetBSD: GENERIC,v 1.20 1999/11/15 19:10:46 fvdl Exp $
 #
 # First try for BEBOX config file
 #
@@ -44,6 +44,7 @@ file-system 	UMAPFS
 file-system 	UNION
 
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 #options 	NFSSERVER
 
 options 	INET
