@@ -1,26 +1,29 @@
 /*
- *	$Id: isofs_util.c,v 1.8 1993/11/12 05:55:10 cgd Exp $
+ *	$Id: isofs_util.c,v 1.9 1993/12/18 04:31:57 mycroft Exp $
  */
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "resourcevar.h"
-#include "kernel.h"
-#include "file.h"
-#include "stat.h"
-#include "buf.h"
-#include "proc.h"
-#include "conf.h"
-#include "mount.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "miscfs/fifofs/fifo.h" /* XXX */
-#include "malloc.h"
-#include "dir.h"
 
-#include "iso.h"
-#include "dirent.h"
-#include "machine/endian.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/resourcevar.h>
+#include <sys/kernel.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
+#include <sys/malloc.h>
+#include <sys/dir.h>
+#include <sys/dirent.h>
+
+#include <miscfs/specfs/specdev.h> /* XXX */
+#include <miscfs/fifofs/fifo.h> /* XXX */
+
+#include <isofs/iso.h>
+
+#include <machine/endian.h>
 
 #ifdef	__notanymore__
 int
