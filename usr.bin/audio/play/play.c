@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.30 2002/01/15 15:18:11 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.31 2002/01/15 17:00:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -276,7 +276,7 @@ play(file)
 	filesize -= hdrlen;
 	addr = (char *)addr + hdrlen;
 	if (filesize < datasize || datasize == 0) {
-		warn("bogus datasize: %lu", (long)datasize);
+		warnx("bogus datasize: %lu", (long)datasize);
 		datasize = filesize;
 	}
 
@@ -320,7 +320,7 @@ play_fd(file, fd)
 	if (nr == 0) {
 		if (fflag)
 			return;
-		else errx(1, "unexpected EOF");
+		err(1, "unexpected EOF");
 	}
 	hdrlen = audioctl_write_fromhdr(buffer, nr, ctlfd, &datasize);
 	if (hdrlen < 0) {
