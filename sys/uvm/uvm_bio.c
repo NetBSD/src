@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.28 2003/05/03 18:05:16 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.29 2004/01/07 12:18:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28 2003/05/03 18:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.29 2004/01/07 12:18:16 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -589,6 +589,7 @@ ubc_release(va, flags)
 }
 
 
+#if 0 /* notused */
 /*
  * removing a range of mappings from the ubc mapping cache.
  */
@@ -633,3 +634,4 @@ ubc_flush(uobj, start, end)
 	pmap_update(pmap_kernel());
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 }
+#endif /* notused */
