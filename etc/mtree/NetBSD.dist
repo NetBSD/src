@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.83 1999/07/19 02:30:43 abs Exp $
+#	$NetBSD: NetBSD.dist,v 1.84 1999/07/23 01:04:02 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -47,6 +47,32 @@ mtree
 # ./etc/namedb
 namedb
 # ./etc/namedb
+..
+
+# ./etc/openssl
+openssl
+
+# ./etc/openssl/cert.pem
+cert.pem
+# ./etc/openssl/cert.pem
+..
+
+# ./etc/openssl/certs
+certs
+# ./etc/openssl/certs
+..
+
+# ./etc/openssl/misc
+misc
+# ./etc/openssl/misc
+..
+
+# ./etc/openssl/private
+private
+# ./etc/openssl/private
+..
+
+# ./etc/openssl
 ..
 
 # ./etc/postfix
@@ -143,6 +169,11 @@ objc
 # ./usr/include/kerberosIV
 kerberosIV
 # ./usr/include/kerberosIV
+..
+
+# ./usr/include/openssl
+openssl
+# ./usr/include/openssl
 ..
 
 # ./usr/include/protocols
@@ -812,6 +843,11 @@ ipf
 # ./usr/share/examples/named
 named
 # ./usr/share/examples/named
+..
+
+# ./usr/share/examples/openssl
+openssl
+# ./usr/share/examples/openssl
 ..
 
 # ./usr/share/examples/supfiles
