@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1997/05/24 08:19:46 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1997/05/25 10:07:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
 #endif
 
 #include <vm/vm_kern.h>
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -99,8 +100,8 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
 #include <pmax/pmax/cons.h>
-
 
 #include "pm.h"
 #include "cfb.h"
@@ -112,12 +113,6 @@
 #include "le_ioasic.h"
 #include "asc.h"
 
-#if NDTOP > 0
-#include <pmax/dev/dtopvar.h>
-#endif
-
-
-extern void fbPutc();
 
 /* Will scan from max to min, inclusive */
 static int tc_max_slot = KN02_TC_MAX;
@@ -166,12 +161,7 @@ extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
 void	(*tc_enable_interrupt) __P ((u_int slotno,
 				     int (*handler) __P ((void *sc)),
 				     void *sc, int onoff));
-extern	int (*mips_hardware_intr)();
-
-int	kn02_intr(), kmin_intr(), xine_intr();
-
 #ifdef DS3100
-extern int	kn01_intr();
 void	kn01_enable_intr  __P ((u_int slotno,
 				int (*handler) __P ((intr_arg_t sc)),
 				intr_arg_t sc, int onoff));
@@ -181,29 +171,58 @@ void	kn01_enable_intr  __P ((u_int slotno,
 # include <pmax/pmax/kn230var.h>   /* kn230_establish_intr(), kn230_intr() */
 #endif
 
-#ifdef DS5000_240
-int	kn03_intr();
-#endif
+/*
+ * Interrupt-blocking functions defined in locore. These names aren't used
+ * directly except here and in interrupt handlers.
+ */
 
-extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
-extern	int cpu_spl0(), cpu_spl1(), cpu_spl2(), cpu_spl3(), splhigh();
-int	(*Mach_splbio)() = splhigh;
-int	(*Mach_splnet)() = splhigh;
-int	(*Mach_spltty)() = splhigh;
-int	(*Mach_splimp)() = splhigh;
-int	(*Mach_splclock)() = splhigh;
-int	(*Mach_splstatclock)() = splhigh;
+/* Block out one hardware interrupt-enable bit. */
+extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
+extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
+
+/* Block out nested interrupt-enable bits. */
+extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
+extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
+extern int	splhigh __P((void));
+
+/*
+ * Instead, we declare the standard splXXX names as function pointers,
+ * and initialie them to point to the above functions to match
+ * the way a specific motherboard is  wired up.
+ */
+int	(*Mach_splbio) __P((void)) = splhigh;
+int	(*Mach_splnet)__P((void)) = splhigh;
+int	(*Mach_spltty)__P((void)) = splhigh;
+int	(*Mach_splimp)__P((void)) = splhigh;
+int	(*Mach_splclock)__P((void)) = splhigh;
+int	(*Mach_splstatclock)__P((void)) = splhigh;
+
 extern	volatile struct chiptime *Mach_clock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 
+int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
+
+
 #ifdef DS5000_240
-u_long	kn03_tc3_imask;
-extern u_long latched_cycle_cnt;
 #endif
 
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-static	void asic_init();
-extern	void RemconsInit();
+
+
+/*
+ *  Local functions.
+ */
+static	void asic_init __P((int is_a_maxine));
+extern	int	atoi __P((const char *cp));
+int	initcpu __P((void));
+static	u_long	clkread __P((void));	/* get usec-resolution clock */
+void	dumpsys __P((void));		/* do a dump */
+
+/* initialize bss, etc. from kernel start, before main() is called. */
+extern	void
+mach_init __P((int argc, char *argv[], u_int code,
+    const struct callback *cv));
+
 
 #ifdef DS5000_200
 void	kn02_enable_intr __P ((u_int slotno,
@@ -222,6 +241,9 @@ void	xine_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 #endif /*DS5000_25*/
 
 #ifdef DS5000_240
+u_long	kn03_tc3_imask;
+extern	u_long latched_cycle_cnt;
+void	kn03_tc_reset __P((void));		/* XXX unused? */
 void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			       intr_arg_t sc, int onoff));
 #endif /*DS5000_240*/
@@ -244,6 +266,15 @@ int	safepri = PSL_LOWIPL;
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by swtch_exit() */
 
+
+/*
+ * XXX locore callback-vector setup should be done via mips_vector_init()
+ * using CPU-family information, but that doesn't work yet, so for now we
+ * explicitly call the mips1 setup function.
+ */
+extern void mips1_vector_init __P((void));
+
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the prom monitor.
@@ -262,8 +293,6 @@ mach_init(argc, argv, code, cv)
 	register caddr_t v;
 	caddr_t start;
 	extern char edata[], end[];
-	extern char MachUTLBMiss[], MachUTLBMissEnd[];
-	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment */
 	v = (caddr_t)mips_round_page(end);
@@ -382,7 +411,8 @@ mach_init(argc, argv, code, cv)
 		i = (*cv->_getsysid)();
 		cp = "";
 	} else {
-		if (cp = (*callv->_getenv)("systype"))
+		cp = (*callv->_getenv)("systype");
+		if (cp)
 			i = atoi(cp);
 		else {
 			cp = "";
@@ -765,7 +795,6 @@ mach_init(argc, argv, code, cv)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap((vm_offset_t)v);
-
 }
 
 
@@ -778,7 +807,6 @@ void
 cpu_startup()
 {
 	register unsigned i;
-	register caddr_t v;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -873,9 +901,11 @@ cpu_startup()
 	configure();
 }
 
+
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -900,6 +930,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+
 /*
  * Set registers on exec.
  * Clear all registers except sp, pc, and t9.
@@ -921,7 +952,7 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
         p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
-	p->p_md.md_flags & ~MDP_FPUSED;
+	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
 }
@@ -1115,7 +1146,7 @@ sys_sigreturn(p, v, retval)
 }
 
 int	waittime = -1;
-struct pcb dumppcb;
+struct user dumppcb;	/* Actually, struct pcb would do. */
 
 
 /*
@@ -1157,7 +1188,7 @@ dumpsys()
 	int error;
 
 	/* Save registers. */
-	savectx(&dumppcb, 0);
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -1222,11 +1253,13 @@ prom_halt(howto, bootstr)
 			(*callv->_rex)('b');
 		}
 	} else if (howto & RB_HALT) {
-		volatile void (*f)() = (volatile void (*)())DEC_PROM_REINIT;
+		volatile void (*f) __P((void)) = 
+		    (volatile void (*) __P((void))) DEC_PROM_REINIT;
 
 		(*f)();	/* jump back to prom monitor */
 	} else {
-		volatile void (*f)() = (volatile void (*)())DEC_PROM_AUTOBOOT;
+		volatile void (*f) __P((void)) = 
+		    (volatile void (*) __P((void)))DEC_PROM_AUTOBOOT;
 		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
 	}
 
@@ -1236,14 +1269,14 @@ prom_halt(howto, bootstr)
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	/*register*/ int howto;
 	char *bootstr;
 {
 	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr, 0);
+		savectx(curproc->p_addr);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -1286,10 +1319,11 @@ cpu_reboot(howto, bootstr)
 #endif
 		dumpsys();
 
+haltsys:
+
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
-haltsys:
 
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
@@ -1385,8 +1419,6 @@ microtime(tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
-	register long usec;
-
 
 	*tvp = time;
 	tvp->tv_usec += clkread();
@@ -1409,7 +1441,7 @@ int
 initcpu()
 {
 	register volatile struct chiptime *c;
-	int i;
+	int i = 0;
 
 #if defined(DS5000_200) || defined(DS5000_25) || defined(DS5000_100) || \
     defined(DS5000_240)
@@ -1458,7 +1490,7 @@ initcpu()
  */
 int
 atoi(s)
-	char *s;
+	const char *s;
 {
 	int c;
 	unsigned base = 10, d;
