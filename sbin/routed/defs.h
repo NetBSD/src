@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	5.10 (Berkeley) 2/28/91
- *	$Id: defs.h,v 1.4 1993/08/01 18:24:36 mycroft Exp $
+ *	$Id: defs.h,v 1.5 1994/04/13 04:29:54 cgd Exp $
  */
 
 /*
@@ -73,7 +73,7 @@ int	kmem;
 int	supplier;		/* process should supply updates */
 int	install;		/* if 1 call kernel */
 int	lookforinterfaces;	/* if 1 probe kernel for new up interfaces */
-int	performnlist;		/* if 1 check if /vmunix has changed */
+int	performnlist;		/* if 1 check if /netbsd has changed */
 int	externalinterfaces;	/* # of remote and local interfaces */
 struct	timeval now;		/* current idea of time */
 struct	timeval lastbcast;	/* last time all/changes broadcast */
