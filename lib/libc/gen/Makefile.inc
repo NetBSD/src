@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.36 1994/04/09 01:26:25 mycroft Exp $
+#	$Id: Makefile.inc,v 1.37 1994/04/09 01:31:24 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -110,4 +110,4 @@ MLINKS+=tcsetattr.3 cfgetispeed.3 tcsetattr.3 cfsetispeed.3 \
 	tcsetattr.3 tcgetattr.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=tzset.3 tzsetwall.3
-MLINKS+=vis.3 strvis.3 vis.3 strvisx.3
+MLINKS+=vis.3 strvis.3 vis.3 strvisx.3 unvis.3 strunvis.3
