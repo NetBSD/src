@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuwrap,v 1.4 2001/11/13 04:37:00 tv Exp $
+#	$NetBSD: Makefile.gnuwrap,v 1.5 2001/11/13 04:38:13 tv Exp $
 #
 # Wrapper for GNU Makefiles.
 
@@ -10,9 +10,6 @@
 
 _srcdir:=	${srcdir}
 .MADE:		${.ALLTARGETS:M${_srcdir}/*} Makefile
-
-.BEGIN:
-	@echo hi
 
 # Don't rebuild .gmo files, or lex/yacc (which GNU puts in the source tree).
 .po.gmo .l.c .y.c .y.h:
