@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.2 2001/11/15 08:16:28 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.38.4.3 2001/11/17 20:19:59 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.2 2001/11/15 08:16:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.3 2001/11/17 20:19:59 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -97,9 +97,9 @@ userret(struct lwp *l)
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret) 
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
