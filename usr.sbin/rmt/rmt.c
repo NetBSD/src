@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.9 1997/10/17 13:03:25 lukem Exp $	*/
+/*	$NetBSD: rmt.c,v 1.10 2000/02/08 18:00:05 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rmt.c,v 1.9 1997/10/17 13:03:25 lukem Exp $");
+__RCSID("$NetBSD: rmt.c,v 1.10 2000/02/08 18:00:05 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,10 +189,12 @@ top:
 			if (ioctl(tape, MTIOCGET, (char *)&mtget) < 0)
 				goto ioerror;
 			rval = sizeof (mtget);
+			/* limit size to 'original' mtget size */
+			if (rval > 24)
+				rval = 24;
 			(void)sprintf(resp, "A%d\n", rval);
 			(void)write(STDOUT_FILENO, resp, strlen(resp));
-			(void)write(STDOUT_FILENO, (char *)&mtget,
-			    sizeof (mtget));
+			(void)write(STDOUT_FILENO, (char *)&mtget, rval);
 			goto top;
 		}
 
