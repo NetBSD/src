@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 2003/10/18 18:34:09 briggs Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 2003/11/25 23:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -59,28 +59,6 @@ struct sigcontext {
 	sigset_t	sc_mask;
 	mcontext_t	sc_mcontext;
 };
-
-#define _MCONTEXT_TO_SIGCONTEXT(uc, sc) 				\
-do {									\
-	memcpy(&(sc)->sc_mcontext.__gregs, &(uc)->uc_mcontext.__gregs,	\
-	    sizeof ((uc)->uc_mcontext.__gregs));			\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy(&(sc)->sc_mcontext.__fpregs,			\
-		    &(uc)->uc_mcontext.__fpregs,			\
-		    sizeof ((uc)->uc_mcontext.__fpregs));		\
-	}								\
-} while (/*CONSTCOND*/0)
-
-#define _SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_mcontext.__gregs,	\
-	    sizeof ((uc)->uc_mcontext.__gregs));			\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy(&(uc)->uc_mcontext.__fpregs,			\
-		    &(sc)->sc_mcontext.__fpregs,			\
-		    sizeof ((uc)->uc_mcontext.__fpregs));		\
-	}								\
-} while (/*CONSTCOND*/0)
 
 #ifdef COMPAT_16
 #define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
