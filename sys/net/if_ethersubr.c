@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.108 2003/05/16 04:54:55 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.109 2003/05/23 10:06:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.108 2003/05/16 04:54:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.109 2003/05/23 10:06:17 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1131,7 +1131,9 @@ ether_ifdetach(struct ifnet *ifp)
 	}
 	splx(s);
 
+#if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
+#endif
 
 	MOWNER_DETACH(&ec->ec_rx_mowner);
 	MOWNER_DETACH(&ec->ec_tx_mowner);
