@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.7 2003/07/10 01:09:46 lukem Exp $	*/
+/*	$NetBSD: scard.c,v 1.8 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,8 +25,8 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.26 2002/06/23 03:30:17 deraadt Exp $");
-__RCSID("$NetBSD: scard.c,v 1.7 2003/07/10 01:09:46 lukem Exp $");
+RCSID("$OpenBSD: scard.c,v 1.29 2004/05/08 00:21:31 djm Exp $");
+__RCSID("$NetBSD: scard.c,v 1.8 2005/02/13 05:57:26 christos Exp $");
 
 #include <openssl/evp.h>
 #include <sectok.h>
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: scard.c,v 1.7 2003/07/10 01:09:46 lukem Exp $");
 #include "key.h"
 #include "log.h"
 #include "xmalloc.h"
-#include "readpass.h"
+#include "misc.h"
 #include "scard.h"
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
@@ -556,4 +556,11 @@ done:
 		sectok_close(fd);
 	return (status);
 }
+
+char *
+sc_get_key_label(Key *key)
+{
+	return xstrdup("smartcard key");
+}
+
 #endif /* SMARTCARD */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.12 2003/09/08 21:00:41 itojun Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.13 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2-chall.c,v 1.20 2002/06/30 21:59:45 deraadt Exp $");
-__RCSID("$NetBSD: auth2-chall.c,v 1.12 2003/09/08 21:00:41 itojun Exp $");
+RCSID("$OpenBSD: auth2-chall.c,v 1.21 2004/06/01 14:20:45 dtucker Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
 
 #include "ssh2.h"
 #include "auth.h"
@@ -33,7 +33,6 @@ __RCSID("$NetBSD: auth2-chall.c,v 1.12 2003/09/08 21:00:41 itojun Exp $");
 #include "packet.h"
 #include "xmalloc.h"
 #include "dispatch.h"
-#include "auth.h"
 #include "log.h"
 
 static int auth2_challenge_start(Authctxt *);
@@ -325,7 +324,7 @@ privsep_challenge_enable(void)
 #ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
 #endif
-#if !defined(BSD_AUTH) && defined(SKEY)
+#ifdef SKEY
 	extern KbdintDevice mm_skey_device;
 #endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.6 2003/07/10 01:09:41 lukem Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.7 2005/02/13 05:57:25 christos Exp $	*/
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.
@@ -25,40 +25,26 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: atomicio.c,v 1.10 2001/05/08 22:48:07 markus Exp $");
-__RCSID("$NetBSD: atomicio.c,v 1.6 2003/07/10 01:09:41 lukem Exp $");
+RCSID("$OpenBSD: atomicio.c,v 1.12 2003/07/31 15:50:16 avsm Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.7 2005/02/13 05:57:25 christos Exp $");
 
 #include "atomicio.h"
 
+/*
+ * ensure all of data on socket comes through. f==read || f==vwrite
+ */
 ssize_t
-atomic_read(int fd, void *v, size_t n)
+atomicio(f, fd, _s, n)
+	ssize_t (*f) (int, void *, size_t);
+	int fd;
+	void *_s;
+	size_t n;
 {
-	char *s = v;
+	char *s = _s;
 	ssize_t res, pos = 0;
 
 	while (n > pos) {
-		res = read(fd, s + pos, n - pos);
-		switch (res) {
-		case -1:
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-		case 0:
-			return (res);
-		default:
-			pos += res;
-		}
-	}
-	return (pos);
-}
-
-ssize_t
-atomic_write(int fd, const void *v, size_t n)
-{
-	const char *s = v;
-	ssize_t res, pos = 0;
-
-	while (n > pos) {
-		res = write(fd, s + pos, n - pos);
+		res = (f) (fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)

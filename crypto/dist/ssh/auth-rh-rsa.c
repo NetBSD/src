@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.3 2003/07/10 01:09:41 lukem Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,8 +14,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rh-rsa.c,v 1.34 2002/03/25 09:25:06 markus Exp $");
-__RCSID("$NetBSD: auth-rh-rsa.c,v 1.3 2003/07/10 01:09:41 lukem Exp $");
+RCSID("$OpenBSD: auth-rh-rsa.c,v 1.37 2003/11/04 08:54:09 djm Exp $");
+__RCSID("$NetBSD: auth-rh-rsa.c,v 1.4 2005/02/13 05:57:26 christos Exp $");
 
 #include "packet.h"
 #include "uidswap.h"
@@ -54,18 +54,19 @@ auth_rhosts_rsa_key_allowed(struct passwd *pw, char *cuser, char *chost,
  * its host key.  Returns true if authentication succeeds.
  */
 int
-auth_rhosts_rsa(struct passwd *pw, char *cuser, Key *client_host_key)
+auth_rhosts_rsa(Authctxt *authctxt, char *cuser, Key *client_host_key)
 {
 	char *chost;
+	struct passwd *pw = authctxt->pw;
 
 	debug("Trying rhosts with RSA host authentication for client user %.100s",
 	    cuser);
 
-	if (pw == NULL || client_host_key == NULL ||
+	if (!authctxt->valid || client_host_key == NULL ||
 	    client_host_key->rsa == NULL)
 		return 0;
 
-	chost = (char *)get_canonical_hostname(options.verify_reverse_mapping);
+	chost = (char *)get_canonical_hostname(options.use_dns);
 	debug("Rhosts RSA authentication: canonical host %.900s", chost);
 
 	if (!PRIVSEP(auth_rhosts_rsa_key_allowed(pw, cuser, chost, client_host_key))) {

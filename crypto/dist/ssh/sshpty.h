@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.h,v 1.3 2002/03/08 02:00:57 itojun Exp $	*/
-/*	$OpenBSD: sshpty.h,v 1.4 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: sshpty.h,v 1.4 2005/02/13 05:57:27 christos Exp $	*/
+/*	$OpenBSD: sshpty.h,v 1.5 2004/05/08 00:01:37 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,6 +17,10 @@
 
 #ifndef SSHPTY_H
 #define SSHPTY_H
+
+struct termios get_saved_tio(void);
+void	 leave_raw_mode(void);
+void	 enter_raw_mode(void);
 
 int	 pty_allocate(int *, int *, char *, int);
 void	 pty_release(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.11 2003/07/10 01:09:44 lukem Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.12 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,8 +37,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.30 2002/07/24 16:11:18 markus Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.11 2003/07/10 01:09:44 lukem Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.32 2003/11/10 16:23:41 jakob Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.12 2005/02/13 05:57:26 christos Exp $");
 
 #include "packet.h"
 #include "match.h"
@@ -74,7 +74,7 @@ hostfile_read_key(char **cpp, u_int *bitsp, Key *ret)
 }
 
 static int
-hostfile_check_key(int bits, Key *key, const char *host, const char *filename, int linenum)
+hostfile_check_key(int bits, const Key *key, const char *host, const char *filename, int linenum)
 {
 	if (key == NULL || key->type != KEY_RSA1 || key->rsa == NULL)
 		return 1;
@@ -100,7 +100,7 @@ hostfile_check_key(int bits, Key *key, const char *host, const char *filename, i
 
 static HostStatus
 check_host_in_hostfile_by_key_or_type(const char *filename,
-    const char *host, Key *key, int keytype, Key *found, int *numret)
+    const char *host, const Key *key, int keytype, Key *found, int *numret)
 {
 	FILE *f;
 	char line[8192];
@@ -190,7 +190,7 @@ check_host_in_hostfile_by_key_or_type(const char *filename,
 }
 
 HostStatus
-check_host_in_hostfile(const char *filename, const char *host, Key *key,
+check_host_in_hostfile(const char *filename, const char *host, const Key *key,
     Key *found, int *numret)
 {
 	if (key == NULL)
@@ -213,7 +213,7 @@ lookup_key_in_hostfile_by_type(const char *filename, const char *host,
  */
 
 int
-add_host_to_hostfile(const char *filename, const char *host, Key *key)
+add_host_to_hostfile(const char *filename, const char *host, const Key *key)
 {
 	FILE *f;
 	int success = 0;

@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.16 2003/07/24 15:31:54 itojun Exp $	*/
-/*	$OpenBSD: servconf.h,v 1.59 2002/07/30 17:03:55 markus Exp $	*/
+/*	$NetBSD: servconf.h,v 1.17 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: servconf.h,v 1.70 2004/06/24 19:30:54 djm Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,6 +17,8 @@
 #ifndef SERVCONF_H
 #define SERVCONF_H
 
+#include "buffer.h"
+
 #define MAX_PORTS		256	/* Max # ports. */
 
 #define MAX_ALLOW_USERS		256	/* Max # users on allow list. */
@@ -25,6 +27,7 @@
 #define MAX_DENY_GROUPS		256	/* Max # groups on deny list. */
 #define MAX_SUBSYSTEMS		256	/* Max # subsystems. */
 #define MAX_HOSTKEYS		256	/* Max # hostkeys. */
+#define MAX_ACCEPT_ENV		256	/* Max # of env vars. */
 
 /* permit_root_login */
 #define	PERMIT_NOT_SET		-1
@@ -33,6 +36,7 @@
 #define	PERMIT_NO_PASSWD	2
 #define	PERMIT_YES		3
 
+#define DEFAULT_AUTH_FAIL_MAX	6	/* Default for MaxAuthTries */
 
 typedef struct {
 	u_int num_ports;
@@ -62,22 +66,19 @@ typedef struct {
 	int     x11_use_localhost;	/* If true, use localhost for fake X11 server. */
 	char   *xauth_location;	/* Location of xauth program */
 	int     strict_modes;	/* If true, require string home dir modes. */
-	int     keepalives;	/* If true, set SO_KEEPALIVE. */
+	int     tcp_keep_alive;	/* If true, set SO_KEEPALIVE. */
 	char   *ciphers;	/* Supported SSH2 ciphers. */
 	char   *macs;		/* Supported SSH2 macs. */
 	int	protocol;	/* Supported protocol versions. */
 	int     gateway_ports;	/* If true, allow remote connects to forwarded ports. */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for system logging. */
-	int     rhosts_authentication;	/* If true, permit rhosts
-					 * authentication. */
 	int     rhosts_rsa_authentication;	/* If true, permit rhosts RSA
 						 * authentication. */
 	int     hostbased_authentication;	/* If true, permit ssh2 hostbased auth */
 	int     hostbased_uses_name_from_packet_only; /* experimental */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
-#if defined(KRB4) || defined(KRB5)
 	int     kerberos_authentication;	/* If true, permit Kerberos
 						 * authentication. */
 	int     kerberos_or_local_passwd;	/* If true, permit kerberos
@@ -87,14 +88,10 @@ typedef struct {
 						 * /etc/passwd */
 	int     kerberos_ticket_cleanup;	/* If true, destroy ticket
 						 * file on logout. */
-#endif
-#if defined(AFS) || defined(KRB5)
-	int     kerberos_tgt_passing;	/* If true, permit Kerberos TGT
-					 * passing. */
-#endif
-#ifdef AFS
-	int     afs_token_passing;	/* If true, permit AFS token passing. */
-#endif
+	int     kerberos_get_afs_token;		/* If true, try to get AFS token if
+						 * authenticated with Kerberos. */
+	int     gss_authentication;	/* If true, permit GSSAPI authentication */
+	int     gss_cleanup_creds;	/* If true, destroy cred cache on logout */
 	int     password_authentication;	/* If true, permit password
 						 * authentication. */
 	int     kbd_interactive_authentication;	/* If true, permit */
@@ -118,11 +115,15 @@ typedef struct {
 	char   *subsystem_name[MAX_SUBSYSTEMS];
 	char   *subsystem_command[MAX_SUBSYSTEMS];
 
+	u_int num_accept_env;
+	char   *accept_env[MAX_ACCEPT_ENV];
+
 	int	max_startups_begin;
 	int	max_startups_rate;
 	int	max_startups;
+	int	max_authtries;
 	char   *banner;			/* SSH-2 banner message */
-	int	verify_reverse_mapping;	/* cross-check ip and dns */
+	int	use_dns;
 	int	client_alive_interval;	/*
 					 * poke the client this often to
 					 * see if it's still there
@@ -138,9 +139,9 @@ typedef struct {
 }       ServerOptions;
 
 void	 initialize_server_options(ServerOptions *);
-void	 read_server_config(ServerOptions *, const char *);
 void	 fill_default_server_options(ServerOptions *);
 int	 process_server_config_line(ServerOptions *, char *, const char *, int);
-
+void	 load_server_config(const char *, Buffer *);
+void	 parse_server_config(ServerOptions *, const char *, Buffer *);
 
 #endif				/* SERVCONF_H */

@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-agent.1,v 1.14 2003/05/14 13:10:57 wiz Exp $
-.\" $OpenBSD: ssh-agent.1,v 1.37 2003/03/28 10:11:43 jmc Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.15 2005/02/13 05:57:27 christos Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.41 2004/07/11 17:48:47 deraadt Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -135,13 +135,25 @@ remote logins, and the user can thus use the privileges given by the
 identities anywhere in the network in a secure way.
 .Pp
 There are two main ways to get an agent set up:
-Either the agent starts a new subcommand into which some environment
-variables are exported, or the agent prints the needed shell commands
-(either
+The first is that the agent starts a new subcommand into which some environment
+variables are exported, eg
+.Cm ssh-agent xterm & .
+The second is that the agent prints the needed shell commands (either
 .Xr sh 1
 or
 .Xr csh 1
-syntax can be generated) which can be evalled in the calling shell.
+syntax can be generated) which can be evalled in the calling shell, eg
+.Cm eval `ssh-agent -s`
+for Bourne-type shells such as
+.Xr sh 1
+or
+.Xr ksh 1
+and
+.Cm eval `ssh-agent -c`
+for
+.Xr csh 1
+and derivatives.
+.Pp
 Later
 .Xr ssh 1
 looks at these variables and uses them to establish a connection to the agent.
@@ -180,6 +192,11 @@ authentication agent.
 These sockets should only be readable by the owner.
 The sockets should get automatically removed when the agent exits.
 .El
+.Sh SEE ALSO
+.Xr ssh 1 ,
+.Xr ssh-add 1 ,
+.Xr ssh-keygen 1 ,
+.Xr sshd 8
 .Sh AUTHORS
 OpenSSH is a derivative of the original and free
 ssh 1.2.12 release by Tatu Ylonen.
@@ -189,8 +206,3 @@ removed many bugs, re-added newer features and
 created OpenSSH.
 Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
-.Sh SEE ALSO
-.Xr ssh 1 ,
-.Xr ssh-add 1 ,
-.Xr ssh-keygen 1 ,
-.Xr sshd 8

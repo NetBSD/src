@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.c,v 1.7 2003/07/10 01:09:49 lukem Exp $	*/
+/*	$NetBSD: tildexpand.c,v 1.8 2005/02/13 05:57:27 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,12 +12,12 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: tildexpand.c,v 1.13 2002/06/23 03:25:50 deraadt Exp $");
-__RCSID("$NetBSD: tildexpand.c,v 1.7 2003/07/10 01:09:49 lukem Exp $");
+RCSID("$OpenBSD: tildexpand.c,v 1.15 2004/05/21 08:43:03 markus Exp $");
+__RCSID("$NetBSD: tildexpand.c,v 1.8 2005/02/13 05:57:27 christos Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
-#include "tildexpand.h"
+#include "misc.h"
 
 /*
  * Expands tildes in the file name.  Returns data allocated by xmalloc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.23 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth2.c,v 1.24 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.98 2003/05/14 02:15:47 markus Exp $");
-__RCSID("$NetBSD: auth2.c,v 1.23 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.107 2004/07/28 09:40:29 markus Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.24 2005/02/13 05:57:26 christos Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -38,12 +38,14 @@ __RCSID("$NetBSD: auth2.c,v 1.23 2003/07/10 01:09:42 lukem Exp $");
 #include "pathnames.h"
 #include "monitor_wrap.h"
 
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
+
 /* import */
 extern ServerOptions options;
 extern u_char *session_id2;
-extern int session_id2_len;
-
-Authctxt *x_authctxt = NULL;
+extern u_int session_id2_len;
 
 /* methods */
 
@@ -55,10 +57,16 @@ extern Authmethod method_hostbased;
 #ifdef KRB5
 extern Authmethod method_kerberos;
 #endif
+#ifdef GSSAPI
+extern Authmethod method_gssapi;
+#endif
 
 Authmethod *authmethods[] = {
 	&method_none,
 	&method_pubkey,
+#ifdef GSSAPI
+	&method_gssapi,
+#endif
 	&method_passwd,
 	&method_kbdint,
 	&method_hostbased,
@@ -77,19 +85,14 @@ static void input_userauth_request(int, u_int32_t, void *);
 static Authmethod *authmethod_lookup(const char *);
 static char *authmethods_get(void);
 int user_key_allowed(struct passwd *, Key *);
-int hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 
 /*
  * loop until authctxt->success == TRUE
  */
 
-Authctxt *
-do_authentication2(void)
+void
+do_authentication2(Authctxt *authctxt)
 {
-	Authctxt *authctxt = authctxt_new();
-
-	x_authctxt = authctxt;		/*XXX*/
-
 	/* challenge-response is implemented via keyboard interactive */
 	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
@@ -97,8 +100,6 @@ do_authentication2(void)
 	dispatch_init(&dispatch_protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
 	dispatch_run(DISPATCH_BLOCK, &authctxt->success, authctxt);
-
-	return (authctxt);
 }
 
 static void
@@ -161,9 +162,10 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 			authctxt->valid = 1;
 			debug2("input_userauth_request: setting up authctxt for %s", user);
 		} else {
-			logit("input_userauth_request: illegal user %s", user);
+			logit("input_userauth_request: invalid user %s", user);
+			authctxt->pw = fakepw();
 		}
-		setproctitle("%s%s", authctxt->pw ? user : "unknown",
+		setproctitle("%s%s", authctxt->valid ? user : "unknown",
 		    use_privsep ? " [net]" : "");
 		authctxt->user = xstrdup(user);
 		authctxt->service = xstrdup(service);
@@ -178,6 +180,12 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	}
 	/* reset state */
 	auth2_challenge_stop(authctxt);
+
+#ifdef GSSAPI
+	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
+	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
+#endif
+
 	authctxt->postponed = 0;
 
 	/* try to authenticate user */
@@ -223,7 +231,7 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 		/* now we can break out */
 		authctxt->success = 1;
 	} else {
-		if (authctxt->failures++ > AUTH_FAIL_MAX)
+		if (authctxt->failures++ > options.max_authtries)
 			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
 		methods = authmethods_get();
 		packet_start(SSH2_MSG_USERAUTH_FAILURE);
@@ -233,14 +241,6 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 		packet_write_wait();
 		xfree(methods);
 	}
-}
-
-/* get current user */
-
-struct passwd*
-auth_get_user(void)
-{
-	return (x_authctxt != NULL && x_authctxt->valid) ? x_authctxt->pw : NULL;
 }
 
 #define	DELIM	","

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-none.c,v 1.4 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.5 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-none.c,v 1.4 2002/06/27 10:35:47 deraadt Exp $");
-__RCSID("$NetBSD: auth2-none.c,v 1.4 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth2-none.c,v 1.7 2004/05/11 19:01:43 deraadt Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.5 2005/02/13 05:57:26 christos Exp $");
 
 #include "auth.h"
 #include "xmalloc.h"
@@ -48,7 +48,7 @@ auth2_read_banner(void)
 {
 	struct stat st;
 	char *banner = NULL;
-	off_t len, n;
+	size_t len, n;
 	int fd;
 
 	if ((fd = open(options.banner, O_RDONLY)) == -1)
@@ -57,9 +57,14 @@ auth2_read_banner(void)
 		close(fd);
 		return (NULL);
 	}
-	len = st.st_size;
+	if (st.st_size > 1*1024*1024) {
+		close(fd);
+		return (NULL);
+	}
+
+	len = (size_t)st.st_size;		/* truncate */
 	banner = xmalloc(len + 1);
-	n = atomic_read(fd, banner, len);
+	n = atomicio(read, fd, banner, len);
 	close(fd);
 
 	if (n != len) {
@@ -98,7 +103,9 @@ userauth_none(Authctxt *authctxt)
 	none_enabled = 0;
 	packet_check_eom();
 	userauth_banner();
-	return (authctxt->valid ? PRIVSEP(auth_password(authctxt, "")) : 0);
+	if (options.password_authentication)
+		return (PRIVSEP(auth_password(authctxt, "")));
+	return (0);
 }
 
 Authmethod method_none = {

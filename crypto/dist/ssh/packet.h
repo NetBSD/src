@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.3 2003/04/03 06:21:34 itojun Exp $	*/
-/*	$OpenBSD: packet.h,v 1.38 2003/04/02 09:48:07 markus Exp $	*/
+/*	$NetBSD: packet.h,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: packet.h,v 1.41 2004/05/11 19:01:43 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -82,8 +82,8 @@ void	 packet_add_padding(u_char);
 void	 tty_make_modes(int, struct termios *);
 void	 tty_parse_modes(int, int *);
 
-extern int max_packet_size;
-int      packet_set_maxsize(int);
+extern u_int max_packet_size;
+int	 packet_set_maxsize(u_int);
 #define  packet_get_maxsize() max_packet_size
 
 /* don't allow remaining bytes after the end of the message */

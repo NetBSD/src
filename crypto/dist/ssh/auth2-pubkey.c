@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.3 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-pubkey.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.3 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth2-pubkey.c,v 1.7 2004/06/21 17:36:31 avsm Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.4 2005/02/13 05:57:26 christos Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.3 2003/07/10 01:09:42 lukem Exp $");
 /* import */
 extern ServerOptions options;
 extern u_char *session_id2;
-extern int session_id2_len;
+extern u_int session_id2_len;
 
 static int
 userauth_pubkey(Authctxt *authctxt)
@@ -125,9 +125,9 @@ userauth_pubkey(Authctxt *authctxt)
 		authenticated = 0;
 		if (PRIVSEP(user_key_allowed(authctxt->pw, key)) &&
 		    PRIVSEP(key_verify(key, sig, slen, buffer_ptr(&b),
-				buffer_len(&b))) == 1)
+		    buffer_len(&b))) == 1)
 			authenticated = 1;
-		buffer_clear(&b);
+		buffer_free(&b);
 		xfree(sig);
 	} else {
 		debug("test whether pkalg/pkblob are acceptable");
@@ -173,9 +173,6 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 	Key *found;
 	char *fp;
 
-	if (pw == NULL)
-		return 0;
-
 	/* Temporarily use the user's uid. */
 	temporarily_use_uid(pw);
 
@@ -206,7 +203,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 	found = key_new(key->type);
 
 	while (fgets(line, sizeof(line), f)) {
-		char *cp, *options = NULL;
+		char *cp, *key_options = NULL;
 		linenum++;
 		/* Skip leading whitespace, empty and comment lines. */
 		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
@@ -218,7 +215,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 			/* no key?  check if there are options for this key */
 			int quoted = 0;
 			debug2("user_key_allowed: check options: '%s'", cp);
-			options = cp;
+			key_options = cp;
 			for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
 				if (*cp == '\\' && cp[1] == '"')
 					cp++;	/* Skip both */
@@ -235,7 +232,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 			}
 		}
 		if (key_equal(found, key) &&
-		    auth_parse_options(pw, options, file, linenum) == 1) {
+		    auth_parse_options(pw, key_options, file, linenum) == 1) {
 			found_key = 1;
 			debug("matching key found: file %s, line %lu",
 			    file, linenum);

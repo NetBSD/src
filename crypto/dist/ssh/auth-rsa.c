@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.3 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,8 +15,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.56 2002/06/10 16:53:06 stevesk Exp $");
-__RCSID("$NetBSD: auth-rsa.c,v 1.3 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.60 2004/06/21 17:36:31 avsm Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.4 2005/02/13 05:57:26 christos Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -25,7 +25,6 @@ __RCSID("$NetBSD: auth-rsa.c,v 1.3 2003/07/10 01:09:42 lukem Exp $");
 #include "packet.h"
 #include "xmalloc.h"
 #include "ssh1.h"
-#include "mpaux.h"
 #include "uidswap.h"
 #include "match.h"
 #include "auth-options.h"
@@ -206,7 +205,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	 */
 	while (fgets(line, sizeof(line), f)) {
 		char *cp;
-		char *options;
+		char *key_options;
 
 		linenum++;
 
@@ -224,7 +223,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 		 */
 		if (*cp < '0' || *cp > '9') {
 			int quoted = 0;
-			options = cp;
+			key_options = cp;
 			for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
 				if (*cp == '\\' && cp[1] == '"')
 					cp++;	/* Skip both */
@@ -232,7 +231,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 					quoted = !quoted;
 			}
 		} else
-			options = NULL;
+			key_options = NULL;
 
 		/* Parse the key from the line. */
 		if (hostfile_read_key(&cp, &bits, key) == 0) {
@@ -257,7 +256,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 		 * If our options do not allow this key to be used,
 		 * do not send challenge.
 		 */
-		if (!auth_parse_options(pw, options, file, linenum))
+		if (!auth_parse_options(pw, key_options, file, linenum))
 			continue;
 
 		/* break out, this key is allowed */
@@ -286,13 +285,14 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
  * successful.  This may exit if there is a serious protocol violation.
  */
 int
-auth_rsa(struct passwd *pw, BIGNUM *client_n)
+auth_rsa(Authctxt *authctxt, BIGNUM *client_n)
 {
 	Key *key;
 	char *fp;
+	struct passwd *pw = authctxt->pw;
 
 	/* no user given */
-	if (pw == NULL)
+	if (!authctxt->valid)
 		return 0;
 
 	if (!PRIVSEP(auth_rsa_key_allowed(pw, client_n, &key))) {

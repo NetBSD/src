@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.14 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.15 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,8 +15,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.28 2002/05/13 21:26:49 markus Exp $");
-__RCSID("$NetBSD: auth-rhosts.c,v 1.14 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.32 2003/11/04 08:54:09 djm Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.15 2005/02/13 05:57:26 christos Exp $");
 
 #include "packet.h"
 #include "uidswap.h"
@@ -158,7 +158,7 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 {
 	const char *hostname, *ipaddr;
 
-	hostname = get_canonical_hostname(options.verify_reverse_mapping);
+	hostname = get_canonical_hostname(options.use_dns);
 	ipaddr = get_remote_ipaddr();
 	return auth_rhosts2(pw, client_user, hostname, ipaddr);
 }
@@ -174,10 +174,6 @@ auth_rhosts2_raw(struct passwd *pw, const char *client_user, const char *hostnam
 
 	debug2("auth_rhosts2: clientuser %s hostname %s ipaddr %s",
 	    client_user, hostname, ipaddr);
-
-	/* no user given */
-	if (pw == NULL)
-		return 0;
 
 	/* Switch to the user's uid. */
 	temporarily_use_uid(pw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fatal.c,v 1.2 2003/07/10 01:09:44 lukem Exp $	*/
+/*	$NetBSD: fatal.c,v 1.3 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: fatal.c,v 1.1 2002/02/22 12:20:34 markus Exp $");
-__RCSID("$NetBSD: fatal.c,v 1.2 2003/07/10 01:09:44 lukem Exp $");
+RCSID("$OpenBSD: fatal.c,v 1.2 2003/09/23 20:17:11 markus Exp $");
+__RCSID("$NetBSD: fatal.c,v 1.3 2005/02/13 05:57:26 christos Exp $");
 
 #include "log.h"
 
@@ -38,5 +38,5 @@ fatal(const char *fmt,...)
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
 	va_end(args);
-	fatal_cleanup();
+	cleanup_exit(255);
 }

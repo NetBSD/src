@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.20 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth.c,v 1.21 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.46 2002/11/04 10:07:53 markus Exp $");
-__RCSID("$NetBSD: auth.c,v 1.20 2003/07/10 01:09:42 lukem Exp $");
+RCSID("$OpenBSD: auth.c,v 1.56 2004/07/28 09:40:29 markus Exp $");
+__RCSID("$NetBSD: auth.c,v 1.21 2005/02/13 05:57:26 christos Exp $");
 
 #include <libgen.h>
 
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: auth.c,v 1.20 2003/07/10 01:09:42 lukem Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "uidswap.h"
-#include "tildexpand.h"
 #include "misc.h"
 #include "bufaux.h"
 #include "packet.h"
@@ -214,7 +213,7 @@ allowed_user(struct passwd * pw)
 	 */
 
 	if (options.num_deny_users > 0 || options.num_allow_users > 0) {
-		hostname = get_canonical_hostname(options.verify_reverse_mapping);
+		hostname = get_canonical_hostname(options.use_dns);
 		ipaddr = get_remote_ipaddr();
 	}
 
@@ -276,14 +275,6 @@ allowed_user(struct passwd * pw)
 	return 1;
 }
 
-Authctxt *
-authctxt_new(void)
-{
-	Authctxt *authctxt = xmalloc(sizeof(*authctxt));
-	memset(authctxt, 0, sizeof(*authctxt));
-	return authctxt;
-}
-
 void
 auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 {
@@ -293,7 +284,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	/* Raise logging level */
 	if (authenticated == 1 ||
 	    !authctxt->valid ||
-	    authctxt->failures >= AUTH_FAIL_LOG ||
+	    authctxt->failures >= options.max_authtries / 2 ||
 	    strcmp(method, "password") == 0)
 		authlog = logit;
 
@@ -305,7 +296,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	authlog("%s %s for %s%.100s from %.200s port %d%s",
 	    authmsg,
 	    method,
-	    authctxt->valid ? "" : "illegal user ",
+	    authctxt->valid ? "" : "invalid user ",
 	    authctxt->user,
 	    get_remote_ipaddr(),
 	    get_remote_port(),
@@ -534,7 +525,7 @@ getpwnamallow(const char *user)
 
 	pw = getpwnam(user);
 	if (pw == NULL) {
-		logit("Illegal user %.100s from %.100s",
+		logit("Invalid user %.100s from %.100s",
 		    user, get_remote_ipaddr());
 		return (NULL);
 	}
@@ -598,4 +589,23 @@ auth_debug_reset(void)
 		buffer_init(&auth_debug);
 		auth_debug_init = 1;
 	}
+}
+
+struct passwd *
+fakepw(void)
+{
+	static struct passwd fake;
+
+	memset(&fake, 0, sizeof(fake));
+	fake.pw_name = "NOUSER";
+	fake.pw_passwd =
+	    "$2a$06$r3.juUaHZDlIbQaO2dS9FuYxL1W9M81R1Tc92PoSNmzvpEqLkLGrK";
+	fake.pw_gecos = "NOUSER";
+	fake.pw_uid = (uid_t)-1;
+	fake.pw_gid = (gid_t)-1;
+	fake.pw_class = "";
+	fake.pw_dir = "/nonexist";
+	fake.pw_shell = "/nonexist";
+
+	return (&fake);
 }
