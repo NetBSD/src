@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: getch.c,v 1.11 1999/06/06 20:43:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: getch.c,v 1.11 1999/06/06 20:43:00 pk Exp $");
 #endif
 #endif					/* not lint */
 
@@ -178,7 +178,8 @@ __init_getch(sp)
 {
 	int     i, j, length;
 	keymap_t *current;
-	char    termcap[1024], entry[1024], termname[1024], *p;
+static	char    termcap[1024];
+	char    entry[1024], termname[1024], *p;
 	key_entry_t *the_key;
 
 	/* init the inkey state variable */
