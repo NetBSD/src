@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.44 2003/04/02 10:39:35 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.45 2003/05/26 21:22:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.44 2003/04/02 10:39:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.45 2003/05/26 21:22:19 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1443,6 +1443,9 @@ ext2fs_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
+
+	if (ip->i_din.e2fs_din != NULL)
+		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);
 
 	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
