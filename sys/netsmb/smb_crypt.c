@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.5 2003/02/19 08:33:08 jdolecek Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.6 2003/02/25 09:12:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,6 +33,10 @@
  *
  * FreeBSD: src/sys/netsmb/smb_crypt.c,v 1.3 2001/08/21 08:07:18 bp Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.6 2003/02/25 09:12:11 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>

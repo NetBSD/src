@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.12 2003/02/24 09:55:38 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.13 2003/02/25 09:12:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -33,6 +33,10 @@
  *
  * FreeBSD: src/sys/netsmb/smb_dev.c,v 1.4 2001/12/02 08:47:29 bp Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.13 2003/02/25 09:12:11 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
