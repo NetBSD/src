@@ -18,7 +18,7 @@
    Written July 1992 by Mike Haertel.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: grep.c,v 1.3 1993/08/02 17:41:29 mycroft Exp $";
+static char rcsid[] = "$Id: grep.c,v 1.4 1995/02/27 16:48:13 cgd Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -623,7 +623,7 @@ main(argc, argv)
   suppress_errors = 0;
   matcher = NULL;
 
-  while ((opt = getopt(argc, argv, "0123456789A:B:CEFGVX:bce:f:hiLlnqsvwxy"))
+  while ((opt = getopt(argc, argv, "0123456789A:B:CEFGVX:bce:f:hiLlnoqsvwxy"))
 	 != EOF)
     switch (opt)
       {
@@ -735,6 +735,9 @@ main(argc, argv)
 	break;
       case 'n':
 	out_line = 1;
+	break;
+      case 'o':
+	out_file = 1;
 	break;
       case 'q':
 	out_quiet = 1;

@@ -1,4 +1,4 @@
-.\"	$Id: grep.1,v 1.3 1993/08/02 17:41:27 mycroft Exp $	-*- nroff -*-
+.\"	$Id: grep.1,v 1.4 1995/02/27 16:48:07 cgd Exp $	-*- nroff -*-
 .TH GREP 1 "1992 September 10" "GNU Project"
 .SH NAME
 grep, egrep, fgrep \- print lines matching a pattern
@@ -146,6 +146,9 @@ would normally have been printed.
 .B \-n
 Prefix each line of output with the line number
 within its input file.
+.TP
+.B \-o
+Always print filenames with output lines.
 .TP
 .B \-q
 Quiet; suppress normal output.
