@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 1995/04/30 12:06:01 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 1995/05/05 16:38:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -404,7 +404,7 @@ struct proc	*proc;
 		/*
 		 * Go get write protect + loaded status
 		 */
-		sc->flags = FLPF_INOPEN|FLPF_GETSTAT;
+		sc->flags |= FLPF_INOPEN|FLPF_GETSTAT;
 		sps = splbio();
 		st_dmagrab(fdcint, fdstatus, sc, &lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
@@ -420,7 +420,8 @@ struct proc	*proc;
 			sc->flags = 0;
 			return(ENXIO);
 		}
-		sc->flags = FLPF_ISOPEN;
+		sc->flags &= ~(FLPF_INOPEN|FLPF_GETSTAT);
+		sc->flags |= FLPF_ISOPEN;
 	}
 	else {
 		/*
