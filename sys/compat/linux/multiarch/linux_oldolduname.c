@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.17 1995/08/23 20:17:28 fvdl Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.18 1995/09/07 21:49:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -126,6 +126,8 @@ linux_waitpid(p, uap, retval)
 	if ((error = wait4(p, &w4a, retval)))
 		return error;
 
+	p->p_siglist &= ~sigmask(SIGCHLD);
+
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))
 			return error;
@@ -169,6 +171,8 @@ linux_wait4(p, uap, retval)
 
 	if ((error = wait4(p, &w4a, retval)))
 		return error;
+
+	p->p_siglist &= ~sigmask(SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))
@@ -1009,7 +1013,7 @@ linux_getpgid(p, uap, retval)
 int
 linux_personality(p, uap, retval)
 	struct proc *p;
-	struct linux_personality_args /* P
+	struct linux_personality_args /* {
 		syscallarg(int) per;
 	} */ *uap;
 	register_t *retval;
@@ -1018,4 +1022,45 @@ linux_personality(p, uap, retval)
 		return EINVAL;
 	retval[0] = 0;
 	return 0;
+}
+
+/*
+ * The calls are here because of type conversions.
+ */
+int
+linux_setreuid(p, uap, retval)
+	struct proc *p;
+	struct linux_setreuid_args /* {
+		syscallarg(int) ruid;
+		syscallarg(int) euid;
+	} */ *uap;
+	register_t *retval;
+{
+	struct compat_43_setreuid_args bsa;
+	
+	SCARG(&bsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, ruid);
+	SCARG(&bsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, euid);
+
+	return compat_43_setreuid(p, &bsa, retval);
+}
+
+int
+linux_setregid(p, uap, retval)
+	struct proc *p;
+	struct linux_setregid_args /* {
+		syscallarg(int) rgid;
+		syscallarg(int) egid;
+	} */ *uap;
+	register_t *retval;
+{
+	struct compat_43_setregid_args bsa;
+	
+	SCARG(&bsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, rgid);
+	SCARG(&bsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, egid);
+
+	return compat_43_setregid(p, &bsa, retval);
 }

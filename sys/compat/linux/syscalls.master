@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 1995/08/27 20:51:53 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.12 1995/09/07 21:49:02 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -87,7 +87,7 @@
 43	STD		{ int linux_times(struct times *tms); }
 44	UNIMPL		linux_prof
 45	STD		{ int linux_brk(char *nsize); }
-46	NOARGS		{ int setgid(uid_t gid); }
+46	NOARGS		{ int setgid(gid_t gid); }
 47	NOARGS		{ gid_t getgid(void); }
 48	STD		{ int linux_signal(int sig, linux_handler_t handler); }
 49	NOARGS		{ uid_t geteuid(void); }
@@ -113,8 +113,8 @@
 				struct linux_sigaction *osa); }
 68	STD		{ int linux_siggetmask(void); }
 69	STD		{ int linux_sigsetmask(linux_sigset_t mask); }
-70	NOARGS		{ int compat_43_setreuid(int ruid, int euid); }
-71	NOARGS		{ int compat_43_setregid(int rgid, int egid); }
+70	STD		{ int linux_setreuid(int ruid, int euid); }
+71	STD		{ int linux_setregid(int rgid, int egid); }
 72	STD		{ int linux_sigsuspend(caddr_t restart, int oldmask, \
 				int mask); }
 73	STD		{ int linux_sigpending(linux_sigset_t *mask); }
@@ -144,7 +144,7 @@
 92	STD		{ int linux_truncate(char *path, long length); }
 93	NOARGS		{ int compat_43_ftruncate(int fd, long length); }
 94	NOARGS		{ int fchmod(int fd, int mode); }
-95	NOARGS		{ int fchown(int fd, int uid, int gid); }
+95	STD		{ int linux_fchown(int fd, int uid, int gid); }
 96	NOARGS		{ int getpriority(int which, int who); }
 97	NOARGS		{ int setpriority(int which, int who, int prio); }
 98	NOARGS		{ int profil(caddr_t samples, u_int size, \
