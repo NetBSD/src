@@ -1,4 +1,4 @@
-/*	$NetBSD: panic_putstr.c,v 1.1 2002/05/15 04:07:42 lukem Exp $	*/
+/*	$NetBSD: panic_putstr.c,v 1.2 2002/06/03 00:18:26 fredette Exp $	*/
 
 
 #include <machine/stdarg.h>
@@ -14,5 +14,5 @@ panic(const char *fmt, ...)
 	putchar('\n');
 
 	breakpoint();
-	exit();
+	exit(0);
 }
