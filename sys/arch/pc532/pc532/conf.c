@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1995/07/04 07:16:51 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1995/08/17 17:40:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -65,6 +65,8 @@ bdev_decl(rd);
 bdev_decl(cd);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -74,6 +76,7 @@ struct bdevsw	bdevsw[] =
 	bdev_rd_init(NRD,rd),		/* 3: ram disk */
 	bdev_disk_init(NCD,cd),		/* 4: SCSI CD-ROM */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
+	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -105,6 +108,7 @@ cdev_decl(st);
 cdev_decl(fd);
 cdev_decl(cd);
 cdev_decl(vnd);
+cdev_decl(ccd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "tun.h"
@@ -132,6 +136,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 15: network tunnel */
 	cdev_notdef(),			/* 16 */
 	cdev_lpt_init(NLPT, lpt),	/* 17: Centronix */
+	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -188,7 +193,8 @@ static int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	NODEV
+	/* 17 */	NODEV,
+	/* 18 */	6,
 };
 
 /*
