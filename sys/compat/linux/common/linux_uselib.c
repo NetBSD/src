@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.9 2003/01/18 21:21:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.9 2003/01/18 21:21:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $")
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -88,14 +89,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $")
  */
 
 int
-linux_sys_uselib(p, v, retval)
-	struct proc *p;
+linux_sys_uselib(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
