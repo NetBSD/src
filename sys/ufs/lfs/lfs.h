@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.26 2000/06/27 20:57:11 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.27 2000/07/03 01:45:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  * Parameters and generic definitions
  */
 #define BW_CLEAN	1
-#define MIN_FREE_SEGS	4
+#define MIN_FREE_SEGS	2
 #define LFS_MAX_ACTIVE	10
 #define LFS_MAXDIROP	(desiredvnodes>>2)
 
@@ -221,7 +221,8 @@ struct dlfs {
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
 	u_int32_t dlfs_dmeta;     /* 324: total number of dirty summaries */
-        int8_t    dlfs_pad[180];  /* 328: round to 512 bytes */
+	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+        int8_t    dlfs_pad[176];  /* 332: round to 512 bytes */
 /* Checksum -- last valid disk field. */
         u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
 };
@@ -281,6 +282,7 @@ struct lfs {
 #define lfs_fsmnt lfs_dlfs.dlfs_fsmnt
 #define lfs_nclean lfs_dlfs.dlfs_nclean
 #define lfs_dmeta lfs_dlfs.dlfs_dmeta
+#define lfs_minfreeseg lfs_dlfs.dlfs_minfreeseg
 
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
@@ -498,7 +500,7 @@ struct segment {
 };
 
 /*
- * Mecros for determining free space on the disk, with the variable metadata
+ * Macros for determining free space on the disk, with the variable metadata
  * of segment summaries and inode blocks taken into account.
  */
 /* Estimate number of clean blocks not available for writing */
@@ -507,7 +509,7 @@ struct segment {
 				      ((F)->lfs_nseg - (F)->lfs_nclean)))
 
 /* Estimate total size of the disk not including metadata */
-#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - fsbtodb((F), MIN_FREE_SEGS *   \
+#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - fsbtodb((F), (F)->lfs_minfreeseg *\
 						     (F)->lfs_ssize) -      \
 			    (F)->lfs_dmeta - LFS_EST_CMETA(F))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.55 2000/06/30 20:45:40 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.56 2000/07/03 01:45:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ void
 lfs_init()
 {
 	ufs_init();
-	
+
 	/*
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
@@ -429,6 +429,8 @@ lfs_mountfs(devvp, mp, p)
 	for (i=0;i<LFS_THROTTLE;i++)
 		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
 #endif
+	if (fs->lfs_minfreeseg == 0)
+		fs->lfs_minfreeseg = MIN_FREE_SEGS;
 
 	/* Set up the ifile and lock aflags */
 	fs->lfs_doifile = 0;
@@ -617,6 +619,8 @@ lfs_sync(mp, waitfor, cred, p)
 	struct lfs *fs;
 
 	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	if (fs->lfs_ronly)
+		return 0;
 	while(fs->lfs_dirops)
 		error = tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirops", 0);
 	fs->lfs_writer++;
@@ -729,6 +733,7 @@ lfs_vget(mp, ino, vpp)
 	}
 	ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs_blocks;
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;
