@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.11 1998/07/03 11:48:58 mrg Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.12 1998/08/10 02:57:23 perry Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.11 1998/07/03 11:48:58 mrg Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.12 1998/08/10 02:57:23 perry Exp $");
 #endif
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ sendquota(request, transp)
 	struct dqblk dqblk;
 	struct timeval timev;
 
-	bzero((char *)&getq_args, sizeof(getq_args));
+	memset((char *)&getq_args, 0, sizeof(getq_args));
 	if (!svc_getargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
 		svcerr_decode(transp);
 		return;
@@ -303,7 +303,7 @@ getfsquota(id, path, dqblk)
                          * Convert implicit 0 quota (EOF)
                          * into an explicit one (zero'ed dqblk)
                          */
-			bzero((caddr_t) dqblk, sizeof(struct dqblk));
+			memset((caddr_t) dqblk, 0, sizeof(struct dqblk));
 			ret = 1;
 			break;
 		case sizeof(struct dqblk):	/* OK */
