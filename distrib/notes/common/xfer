@@ -1,6 +1,6 @@
-.\"	$NetBSD: xfer,v 1.44 2004/08/21 00:36:29 jdolecek Exp $
+.\"	$NetBSD: xfer,v 1.45 2004/08/21 10:37:29 hubertf Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -426,7 +426,8 @@ utility, provided in the
 .Pa x68k/installation/misc
 directory of the
 .Nx
-distribution, PC versions can be found in
+distribution.
+PC versions can be found in
 .Pa i386/installation/misc .
 It will write the file system images (.fs files) to disks.
 .Pp
@@ -453,7 +454,7 @@ file needs to be uncompressed from
 .Pa inst.fs.gz
 using the provided
 .Ic gzip.x
-program using the
+program with the
 .Fl d
 switch. 
 See above how to write the images to floppies.
@@ -500,7 +501,7 @@ Installation is supported from several media types, including:
 .It
 .\} \" \n[amiga]
 .
-CD-ROM
+CD-ROM / DVD
 .
 .if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It
@@ -518,7 +519,7 @@ Magneto-Optical (M-O) or other removable SCSI disk
 .It
 Remote NFS partition
 .
-.if !\n[macppc]:\n[news68k]:\n[sgimips] \{\
+.if !\n[macppc]:\n[news68k]:\n[sgimips]:\n[i386] \{\
 .It
 Tape
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
@@ -567,7 +568,7 @@ Once you have done this, you can proceed to the next
 step in the installation process, preparing your hard disk.
 .\} \" \n[amiga]
 .
-.It Em CD-ROM
+.It Em CD-ROM / DVD
 .if \n[amiga] \{\
 To install
 .Nx
@@ -586,7 +587,7 @@ or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE
 connector, simply put the CD into the drive before installation.
 .Pp
 .\} \" \n[amiga]
-Find out where the distribution set files are on the CD-ROM.
+Find out where the distribution set files are on the CD-ROM or DVD.
 Likely locations are
 .Pa binary/sets
 and
