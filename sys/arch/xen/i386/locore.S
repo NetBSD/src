@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2004/09/23 02:24:22 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.4.1 2004/12/13 17:52:21 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*-
@@ -177,12 +177,24 @@
 
 
 /*
+ * Xen guest identifier and loader selection
+ */
+.section __xen_guest
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+	.ascii	",LOADER=generic"
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+	.ascii	",BSD_SYMTAB"
+#endif
+	.byte	0
+
+
+/*
  * Initialization
  */
 	.data
 
 	.globl	_C_LABEL(cpu)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
@@ -221,7 +233,6 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
 _C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
@@ -259,22 +270,14 @@ start:
 
 	movl	%esi,%ebx		# save start_info pointer
 
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	/* Save the symbol locations. */
-/* XXX assym.h */
-#define MOD_START   20
-#define MOD_LEN     24
-	movl	MOD_START(%ebx),%esi
-	addl	MOD_LEN(%ebx),%esi
-	movl	%esi,RELOC(esym)
-#endif
-
         /* Clear BSS first so that there are no surprises... */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
 	subl	%edi,%ecx
 	rep stosb
+
+	movl	%ebx,RELOC(avail_start)
 
 	/* Copy the necessary stuff from start_info structure. */
         /* We need to copy shared_info early, so that sti/cli work */
@@ -319,19 +322,9 @@ start:
 #define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkpde * PAGE_SIZE */
 
 	/* Find end of kernel image. */
-	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	/* Save the symbols (if loaded). */
-	movl	RELOC(esym),%eax
-	testl	%eax,%eax
-	jz	1f
-	movl	%eax,%edi
-1:
-#endif
+	movl	RELOC(avail_start),%edi
 	/* Calculate where to start the bootstrap tables. */
-	movl	%edi,%esi			# edi = esym ? esym : end
-	addl	$PGOFSET,%esi			# page align up
-	andl	$~PGOFSET,%esi
+	movl	%edi,%esi
 
 	/*
 	 * Calculate the size of the kernel page table directory, and
@@ -353,7 +346,7 @@ start:
 	addl	%esi,%ecx			# end of tables
 	movl	%ecx,RELOC(gdt)
 	addl	$PAGE_SIZE,%ecx
-	movl	%ecx,RELOC(xpmap_phys_to_machine_mapping)
+	movl	%ecx,RELOC(avail_start)
 	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
 	xorl	%eax,%eax
@@ -394,16 +387,8 @@ start:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-/* XXX assym.h */
-#define NR_PAGES 0
 	/* Map the data, BSS, and bootstrap tables read-write. */
-	movl	$RELOC(start_info_union),%eax
-	movl	NR_PAGES(%eax),%eax
-	shll	$2,%eax
-	movl	RELOC(xpmap_phys_to_machine_mapping),%ecx
-	addl	%eax,%ecx
-	addl	$PGOFSET,%ecx			# page align up
-	andl	$~PGOFSET,%ecx
+	movl	RELOC(avail_start),%ecx
 						    # end of tables
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
@@ -434,13 +419,7 @@ start:
 	/* cr0 is 0x8005003b */
 
 	/* Relocate atdevbase. */
-	movl	$_C_LABEL(start_info_union),%edx
-	movl	NR_PAGES(%edx),%edx
-	shll	$2,%edx
-	movl	_C_LABEL(xpmap_phys_to_machine_mapping),%eax
-	addl	%eax,%edx
-	addl	$PGOFSET,%edx			# page align up
-	andl	$~PGOFSET,%edx
+	movl	_C_LABEL(avail_start),%edx
 	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
 	addl	$PAGE_SIZE,%edx			# shared_inf
 	movl	%edx,_C_LABEL(atdevbase)
@@ -1599,6 +1578,9 @@ idle_loop:
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
 	testl	%ecx,%ecx
 	jnz	idle_zero
+	call	_C_LABEL(idle_block)
+	cmpl	$0,_C_LABEL(sched_whichqs)
+	jnz	idle_exit
 	STIC(%eax)
     	jz	4f
 	call	_C_LABEL(stipending)

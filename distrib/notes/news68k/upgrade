@@ -1,3 +1,0 @@
-.\"	$NetBSD: upgrade,v 1.1 2000/06/14 10:34:32 tsutsui Exp $
-.
-.so ../common/upgrade
