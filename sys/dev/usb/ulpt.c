@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.2 1998/07/25 15:19:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ ulpt_attach(parent, self, aux)
 	usbd_status r;
 	
 	DPRINTFN(2,("ulpt_attach: sc=%p\n", sc));
-	usbd_devinfo(dev, 1, devinfo);
+	usbd_devinfo(dev, 0, devinfo);
 	printf(": %s (interface class %d/%d)\n", devinfo,
 	       id->bInterfaceClass, id->bInterfaceSubClass);
 
