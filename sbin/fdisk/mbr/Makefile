@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/09/22 02:01:13 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2002/06/17 15:25:45 itojun Exp $
 
 MAN=	mbr.8
 MLINKS=	mbr.8 bootselect.8
@@ -19,6 +19,15 @@ LDFLAGS+= -e _start -N
 .if ${MACHINE} == "i386"
 PROG=	mbr
 SRCS=	mbr.S
+
+${PROG}: ${OBJS}
+	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
+	${STRIP} ${PROG}.tmp
+	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
+	rm -f ${PROG}.tmp
+.elif ${MACHINE} == "macppc"
+PROG=	mbr
+SRCS=	mbr_macppc.S
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
