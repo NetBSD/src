@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.3 1995/02/25 03:02:00 cgd Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.4 1995/04/14 19:48:28 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_simple.c,v 1.3 1995/02/25 03:02:00 cgd Exp $";
+static char *rcsid = "$NetBSD: svc_simple.c,v 1.4 1995/04/14 19:48:28 jtc Exp $";
 #endif
 
 /* 
@@ -44,6 +44,7 @@ static char *rcsid = "$NetBSD: svc_simple.c,v 1.3 1995/02/25 03:02:00 cgd Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -123,7 +124,7 @@ universal(rqstp, transp)
 	for (pl = proglst; pl != NULL; pl = pl->p_nxt)
 		if (pl->p_prognum == prog && pl->p_procnum == proc) {
 			/* decode arguments into a CLEAN buffer */
-			bzero(xdrbuf, sizeof(xdrbuf)); /* required ! */
+			memset(xdrbuf, 0, sizeof(xdrbuf)); /* required ! */
 			if (!svc_getargs(transp, pl->p_inproc, xdrbuf)) {
 				svcerr_decode(transp);
 				return;
