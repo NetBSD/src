@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -308,6 +308,9 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 static int JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
 static void JobIgnoreSig __P((int));
+#ifdef USE_PGRP
+static void JobContinueSig __P((int));
+#endif
 static int JobCmpPid __P((ClientData, ClientData));
 static int JobPrintCommand __P((ClientData, ClientData));
 static int JobSaveCommand __P((ClientData, ClientData));
@@ -398,6 +401,30 @@ JobIgnoreSig(signo)
 }
 
 
+#ifdef USE_PGRP
+/*-
+ *-----------------------------------------------------------------------
+ * JobContinueSig --
+ *	Resume all stopped jobs.
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	Jobs start running again.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+JobContinueSig(signo)
+    int	    signo;	/* The signal number we've received */
+{
+    if (signal(SIGTSTP, SIG_IGN) != SIG_IGN) {
+	(void) signal(SIGTSTP, JobPassSig);
+    }
+    JobRestartJobs();
+}
+#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -445,6 +472,9 @@ JobPassSig(signo)
 	Finish(0);
     }
 
+    if (signo == SIGTSTP) {
+	Job_CatchChildren(FALSE);
+    }
     /*
      * Send ourselves the signal now we've given the message to everyone else.
      * Note we block everything else possible while we're getting the signal.
@@ -460,8 +490,7 @@ JobPassSig(signo)
 
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout,
-		       "JobPassSig passing signal to self, mask = %x.\n",
-		       ~0 & ~(1 << (signo-1)));
+		       "JobPassSig passing signal %d to self.\n", signo);
 	(void) fflush(stdout);
     }
 
@@ -2561,6 +2590,9 @@ Job_Init(maxproc, maxlocal)
     }
     if (signal(SIGWINCH, SIG_IGN) != SIG_IGN) {
 	(void) signal(SIGWINCH, JobPassSig);
+    }
+    if (signal(SIGCONT, SIG_IGN) != SIG_IGN) {
+	(void) signal(SIGCONT, JobContinueSig);
     }
 #endif
 
