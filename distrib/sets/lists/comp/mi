@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.636 2003/10/22 07:04:32 agc Exp $
+#	$NetBSD: mi,v 1.637 2003/10/26 20:51:10 kleink Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -785,6 +785,7 @@
 ./usr/include/sys/float_ieee754.h	comp-c-include
 ./usr/include/sys/gmon.h		comp-c-include
 ./usr/include/sys/hash.h		comp-c-include
+./usr/include/sys/ieee754.h		comp-c-include
 ./usr/include/sys/inttypes.h		comp-c-include
 ./usr/include/sys/ioccom.h		comp-c-include
 ./usr/include/sys/ioctl.h		comp-c-include
