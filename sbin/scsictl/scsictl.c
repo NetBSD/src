@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.7 1999/08/13 21:12:18 mjl Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.8 1999/09/28 23:32:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ usage()
 	for (i=0; bus_commands[i].cmd_name != NULL; i++)
 		fprintf(stderr, "\t%s %s\n", bus_commands[i].cmd_name,
 					    bus_commands[i].arg_names);
-	fprintf(stderr, "   Use `any' to wildcard target or lun\n");
+	fprintf(stderr, "   Use `any' or `all' to wildcard target or lun\n");
 	
 	exit(1);
 }
@@ -388,7 +388,7 @@ bus_scan(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (strcmp(argv[0], "any") == 0)
+	if (strcmp(argv[0], "any") == 0 || strcmp(argv[0], "all") == 0)
 		args.sa_target = -1;
 	else {
 		args.sa_target = strtol(argv[0], &cp, 10);
@@ -396,7 +396,7 @@ bus_scan(argc, argv)
 			errx(1, "invalid target: %s\n", argv[0]);
 	}
 
-	if (strcmp(argv[1], "any") == 0)
+	if (strcmp(argv[1], "any") == 0 || strcmp(argv[1], "all") == 0)
 		args.sa_lun = -1;
 	else {
 		args.sa_lun = strtol(argv[1], &cp, 10);
