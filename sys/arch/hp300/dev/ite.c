@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.12 1993/08/29 13:46:34 deraadt Exp $
+ *	$Id: ite.c,v 1.13 1993/12/06 13:15:44 mycroft Exp $
  */
 
 /*
@@ -325,7 +325,7 @@ itestart(tp)
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
+			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -356,7 +356,7 @@ itestart(tp)
 	}
 	if (hiwat) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
 	}
 	tp->t_state &= ~TS_BUSY;
 	splx(s);
@@ -893,7 +893,6 @@ itecnputc(dev, c)
 {
 	static int paniced = 0;
 	struct ite_softc *ip = &ite_softc[UNIT(dev)];
-	extern char *panicstr;
 
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE) {
