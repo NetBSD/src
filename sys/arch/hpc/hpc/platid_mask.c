@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.11 2001/07/11 09:57:29 ichiro Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.12 2001/07/11 10:00:08 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -557,17 +557,17 @@ platid_t platid_mask_MACH_COMPAQ_IPAQ = {{
 	PLATID_WILD,
 	PLATID_MACH_COMPAQ_IPAQ
 }};
-platid_t platid_mask_MACH_COMPAQ_IPAQ_31XX = {{
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H31XX = {{
 	PLATID_WILD,
-	PLATID_MACH_COMPAQ_IPAQ_31XX
+	PLATID_MACH_COMPAQ_IPAQ_H31XX
 }};
 platid_t platid_mask_MACH_COMPAQ_IPAQ_H3100 = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
 	PLATID_MACH_COMPAQ_IPAQ_H3100
 }};
-platid_t platid_mask_MACH_COMPAQ_IPAQ_36XX = {{
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H36XX = {{
 	PLATID_WILD,
-	PLATID_MACH_COMPAQ_IPAQ_36XX
+	PLATID_MACH_COMPAQ_IPAQ_H36XX
 }};
 platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600 = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
