@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.270 2002/02/15 21:28:04 is Exp $
+#	$NetBSD: bsd.own.mk,v 1.271 2002/03/05 03:51:23 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -395,6 +395,29 @@ MKNLS:=		no
 MKBFD:=	no
 MKGDB:=	no
 MKGCC:=	no
+.endif
+
+
+# Helper targets
+#
+.if !target(check_DESTDIR)
+check_DESTDIR: .PHONY .NOTMAIN
+.if !defined(DESTDIR)
+	@echo "setenv DESTDIR before doing that!"
+	@false
+.else
+	@true
+.endif
+.endif
+
+.if !target(check_RELEASEDIR)
+check_RELEASEDIR: .PHONY .NOTMAIN
+.if !defined(RELEASEDIR)
+	@echo "setenv RELEASEDIR before doing that!"
+	@false
+.else
+	@true
+.endif
 .endif
 
 .endif		# _BSD_OWN_MK_
