@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.13 1994/06/10 14:33:11 pk Exp $
+ * $Id: pmap.c,v 1.13.2.1 1994/08/11 22:38:53 mycroft Exp $
  */
 
 /*
@@ -773,16 +773,6 @@ mmu_pagein(pm, va, bits)
 	return (1);
 }
 
-PMPID(pm)
-struct pmap *pm;
-{
-	struct proc *p;
-
-	for (p = allproc; p; p = p->p_next)
-		if (&p->p_vmspace->vm_pmap == pm)
-			return p->p_pid;
-	return -1;
-}
 /*
  * Allocate a context.  If necessary, steal one from someone else.
  * Changes hardware context number and loads segment map.
@@ -813,11 +803,6 @@ ctx_alloc(pm)
 		ctx_freelist = c->c_nextfree;
 		cnum = c - ctxinfo;
 		setcontext(cnum);
-#if 0
-		for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
-			if (getsegmap(va) != seginval)
-			 printf("free ctx %d: segmap(%x) = %x\n", cnum, va, getsegmap(va));
-#endif
 	} else {
 		if ((ctx_kick += ctx_kickdir) >= ncontext) {
 			ctx_kick = ncontext - 1;
@@ -849,16 +834,6 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-#if 0
-	/*
-	 * XXX	loop below makes 3584 iterations ... could reduce
-	 *	by remembering valid ranges per context: two ranges
-	 *	should suffice (for text/data/bss and for stack).
-	 */
-	segp = pm->pm_segmap;
-	for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
-		setsegmap(va, *segp++);
-#else
 	/*
 	 * Write pmap's segment table into the MMU.
 	 *
@@ -888,7 +863,6 @@ ctx_alloc(pm)
 		}
 		setsegmap(va, *segp++);
 	}
-#endif
 }
 
 /*
@@ -1845,8 +1819,12 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 			}
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
 				i = ptoa(HWTOSW(tpte & PG_PFNUM));
-				if (managed(i))
+				if (managed(i)) {
+					if (tpte & PG_W)
+						pm->pm_stats.wired_count--;
+					pm->pm_stats.resident_count--;
 					pv_unlink(pvhead(i), pm, va);
+				}
 			}
 			nleft--;
 			*pte = 0;
@@ -1899,9 +1877,10 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 			continue;
 		pv = NULL;
 		/* if cacheable, flush page as needed */
-		if (doflush && (tpte & PG_NC) == 0) {
+		if ((tpte & PG_NC) == 0) {
 #ifdef perftest
-			nvalid++;
+			if (doflush)
+				nvalid++;
 #endif
 			if (perpage)
 				cache_flush_page(va);
@@ -2477,6 +2456,10 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				splx(s);
 				/* caller should call this directly: */
 				pmap_changeprot(pm, va, prot, wired);
+				if (wired)
+					pm->pm_stats.wired_count++;
+				else
+					pm->pm_stats.wired_count--;
 				return;
 			}
 			/*
@@ -2498,6 +2481,13 @@ curproc->p_comm, curproc->p_pid, va);*/
 		} else {
 			/* adding new entry */
 			pm->pm_npte[vseg]++;
+
+			/*
+			 * Increment counters
+			 */
+			pm->pm_stats.resident_count++;
+			if (wired)
+				pm->pm_stats.wired_count++;
 		}
 	}
 
