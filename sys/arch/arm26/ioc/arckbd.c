@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.6 2001/01/07 15:00:02 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.7 2001/01/07 15:36:35 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.6 2001/01/07 15:00:02 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.7 2001/01/07 15:36:35 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -203,13 +203,11 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
-	sc->sc_rirq = ioc_irq_establish(sc->sc_dev.dv_parent, IOC_IRQ_SRX,
-					IPL_TTY, arckbd_rint, self);
+	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self);
 	if (bootverbose)
 		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
 		    irq_string(sc->sc_rirq));
-	sc->sc_xirq = ioc_irq_establish(sc->sc_dev.dv_parent, IOC_IRQ_STX,
-					IPL_TTY, arckbd_xint, self);
+	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self);
 	irq_disable(sc->sc_xirq);
 	if (bootverbose)
 		printf(" and %s (tx)", irq_string(sc->sc_xirq));

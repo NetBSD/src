@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.2 2001/01/07 13:48:24 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.3 2001/01/07 15:36:34 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -56,8 +56,6 @@ struct ioc_attach_args {
 extern u_int ioc_ctl_read(struct device *);
 extern void ioc_ctl_write(struct device *, u_int, u_int);
 
-extern struct irq_handler *ioc_irq_establish(struct device *, int, int,
-    int(*)(void *), void *);
 extern int ioc_irq_status(struct device *, int);
 extern void ioc_irq_waitfor(struct device *, int);
 extern void ioc_irq_clear(struct device *, int);
