@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.21 1998/10/28 05:01:11 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.22 1998/12/22 02:27:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -101,6 +102,9 @@
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
+struct pool rtentry_pool;	/* pool for rtentry structures */
+struct pool rttimer_pool;	/* pool for rttimer structures */
+
 void
 rtable_init(table)
 	void **table;
@@ -115,6 +119,10 @@ rtable_init(table)
 void
 route_init()
 {
+
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
+	    0, NULL, NULL, M_RTABLE);
+
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
 }
@@ -193,7 +201,7 @@ rtfree(rt)
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
-		Free(rt);
+		pool_put(&rtentry_pool, rt);
 	}
 }
 
@@ -216,7 +224,6 @@ ifafree(ifa)
  * message from the network layer.
  *
  * N.B.: must be called at splsoftnet
- *
  */
 void
 rtredirect(dst, gateway, netmask, flags, src, rtp)
@@ -307,8 +314,8 @@ out:
 }
 
 /*
-* Routing table ioctl interface.
-*/
+ * Routing table ioctl interface.
+ */
 int
 rtioctl(req, data, p)
 	u_long req;
@@ -421,14 +428,14 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		if ((ifa = ifa_ifwithroute(flags, dst, gateway)) == 0)
 			senderr(ENETUNREACH);
 	makeroute:
-		R_Malloc(rt, struct rtentry *, sizeof(*rt));
+		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == 0)
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, dst, gateway)) {
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
 		ndst = rt_key(rt);
@@ -442,7 +449,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
 			Free(rt_key(rt));
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
 		ifa->ifa_refcnt++;
@@ -615,6 +622,9 @@ rt_timer_init()
 {
 	assert(rt_init_done == 0);
 
+	pool_init(&rtentry_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
+	    0, NULL, NULL, M_RTABLE);
+
 	LIST_INIT(&rttimer_queue_head);
 	timeout(rt_timer_timer, NULL, hz);  /* every second */
 	rt_init_done = 1;
@@ -665,11 +675,15 @@ rt_timer_queue_destroy(rtq, destroy)
 		LIST_REMOVE(r, rtt_link);
 		if (destroy != 0)
 			RTTIMER_CALLOUT(r);
-		Free(r);
+		pool_put(&rttimer_pool, r);
 		r = r0;
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
+
+	/*
+	 * Caller is responsible for freeing the rttimer_queue structure.
+	 */
 }
 
 
@@ -684,7 +698,7 @@ rt_timer_remove_all(rt)
 		r0 = LIST_NEXT(r, rtt_link);
 		LIST_REMOVE(r, rtt_link);
 		CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-		Free(r);
+		pool_put(&rttimer_pool, r);
 		r = r0;
 	}
 }
@@ -708,12 +722,12 @@ rt_timer_add(rt, func, queue)
 		if (r->rtt_func == func) {
 			LIST_REMOVE(r, rtt_link);
 			CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-			Free(r);
+			pool_put(&rttimer_pool, r);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
-	R_Malloc(rttimer, struct rttimer *, sizeof *rttimer);
+	rttimer = pool_get(&rttimer_pool, PR_NOWAIT);
 	if (rttimer == NULL)
 		return ENOBUFS;
 
@@ -760,7 +774,7 @@ rt_timer_timer(arg)
 			CIRCLEQ_REMOVE(&rtq->rtq_head, rttimer, rtt_next);
 			LIST_REMOVE(rttimer, rtt_link);
 			RTTIMER_CALLOUT(rttimer);
-			Free(rttimer);
+			pool_put(&rttimer_pool, rttimer);
 			rttimer = r;
 		}
 	}
