@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.59 2003/10/10 22:47:12 jdolecek Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2003/10/24 08:41:11 jdolecek Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -215,7 +215,7 @@ opty)
 	;;
 
 pty*)
-	class=${i#pty}
+	class=${arg#pty}
 	set -- p q r s t u v w x y z P Q R S T
 	if [ "$class" -ge $# ]; then
 		echo "$MAKEDEV: $i: pty unit must be between 0 and 15"
