@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.97 2002/11/24 11:37:54 scw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.98 2003/01/06 13:19:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.97 2002/11/24 11:37:54 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.98 2003/01/06 13:19:53 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,7 @@ finit(void)
 
 /*
  * Create a new open file structure and allocate
- * a file decriptor for the process that refers to it.
+ * a file descriptor for the process that refers to it.
  */
 int
 falloc(struct proc *p, struct file **resultfp, int *resultfd)
