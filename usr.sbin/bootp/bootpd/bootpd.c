@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.14 2002/07/13 23:56:39 wiz Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.15 2002/09/18 23:13:39 mycroft Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: bootpd.c,v 1.14 2002/07/13 23:56:39 wiz Exp $");
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -143,11 +144,7 @@ struct sockaddr_in send_addr;	/*  destination */
  * option defaults
  */
 int debug = 0;					/* Debugging flag (level) */
-struct timeval actualtimeout =
-{								/* fifteen minutes */
-	15 * 60L,					/* tv_sec */
-	0							/* tv_usec */
-};
+int actualtimeout = 15 * 60000;			/* fifteen minutes */
 
 /*
  * General
@@ -182,13 +179,14 @@ char *bootpd_dump = DUMPTAB_FILE;
 int
 main(int argc, char **argv)
 {
-	struct timeval *timeout;
+	int timeout;
 	struct bootp *bp;
 	struct servent *servp;
 	struct hostent *hep;
 	char *stmp;
 	int n, ba_len, ra_len;
-	int nfound, readfds;
+	int nfound;
+	struct pollfd set[1];
 	int standalone;
 
 	progname = strrchr(argv[0], '/');
@@ -247,7 +245,7 @@ main(int argc, char **argv)
 	 * Set defaults that might be changed by option switches.
 	 */
 	stmp = NULL;
-	timeout = &actualtimeout;
+	timeout = actualtimeout;
 
 	/*
 	 * Read switches.
@@ -333,13 +331,13 @@ main(int argc, char **argv)
 						"%s: invalid timeout specification\n", progname);
 				break;
 			}
-			actualtimeout.tv_sec = (int32) (60 * n);
+			actualtimeout = n * 60000;
 			/*
-			 * If the actual timeout is zero, pass a NULL pointer
-			 * to select so it blocks indefinitely, otherwise,
-			 * point to the actual timeout value.
+			 * If the actual timeout is zero, pass INFTIM
+			 * to poll so it blocks indefinitely, otherwise,
+			 * use the actual timeout value.
 			 */
-			timeout = (n > 0) ? &actualtimeout : NULL;
+			timeout = (n > 0) ? actualtimeout : INFTIM;
 			break;
 
 		default:
@@ -402,7 +400,7 @@ main(int argc, char **argv)
 		/*
 		 * Nuke any timeout value
 		 */
-		timeout = NULL;
+		timeout = INFTIM;
 
 	} /* if standalone (1st) */
 
@@ -488,12 +486,13 @@ main(int argc, char **argv)
 	/*
 	 * Process incoming requests.
 	 */
+	set[0].fd = s;
+	set[0].events = POLLIN;
 	for (;;) {
-		readfds = 1 << s;
-		nfound = select(s + 1, (fd_set *)&readfds, NULL, NULL, timeout);
+		nfound = poll(set, 1, timeout);
 		if (nfound < 0) {
 			if (errno != EINTR) {
-				report(LOG_ERR, "select: %s", get_errmsg());
+				report(LOG_ERR, "poll: %s", get_errmsg());
 			}
 			/*
 			 * Call readtab() or dumptab() here to avoid the
@@ -509,10 +508,10 @@ main(int argc, char **argv)
 			}
 			continue;
 		}
-		if (!(readfds & (1 << s))) {
+		if (nfound == 0) {
 			if (debug > 1)
-				report(LOG_INFO, "exiting after %ld minutes of inactivity",
-					   actualtimeout.tv_sec / 60);
+				report(LOG_INFO, "exiting after %d minutes of inactivity",
+					   actualtimeout / 60000);
 			exit(0);
 		}
 		ra_len = sizeof(recv_addr);
