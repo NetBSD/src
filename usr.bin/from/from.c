@@ -39,13 +39,15 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)from.c	5.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: from.c,v 1.2 1993/08/01 18:15:43 mycroft Exp $";
+static char rcsid[] = "$Id: from.c,v 1.3 1994/01/25 08:44:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <ctype.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <paths.h>
 
 main(argc, argv)
@@ -82,20 +84,30 @@ main(argc, argv)
 		}
 	argv += optind;
 
+	/*
+	 * We find the mailbox by:
+	 *	1 -f flag
+	 *	2 user
+	 *	2 MAIL environment variable
+	 *	3 _PATH_MAILDIR/file
+	 */
 	if (!file) {
 		if (!(file = *argv)) {
-			if (!(pwd = getpwuid(getuid()))) {
-				fprintf(stderr,
-				    "from: no password file entry for you.\n");
-				exit(1);
+			if (!(file = getenv("MAIL"))) {
+				if (!(pwd = getpwuid(getuid()))) {
+					(void)fprintf(stderr,
+				"from: no password file entry for you.\n");
+					exit(1);
+				}
+				(void)sprintf(file = buf, "%s/%s",
+					      _PATH_MAILDIR, pwd->pw_name);
 			}
-			file = pwd->pw_name;
 		}
-		(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, file);
-		file = buf;
+		else
+			(void)sprintf(file = buf, "%s/%s", _PATH_MAILDIR, file);
 	}
 	if (!freopen(file, "r", stdin)) {
-		fprintf(stderr, "from: can't read %s.\n", file);
+		(void)fprintf(stderr, "from: can't read %s.\n", file);
 		exit(1);
 	}
 	for (newline = 1; fgets(buf, sizeof(buf), stdin);) {

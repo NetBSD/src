@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)v7.local.c	5.12 (Berkeley) 2/3/91";*/
-static char rcsid[] = "$Id: v7.local.c,v 1.4 1993/08/01 18:12:50 mycroft Exp $";
+static char rcsid[] = "$Id: v7.local.c,v 1.5 1994/01/25 08:43:38 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,7 @@ static char rcsid[] = "$Id: v7.local.c,v 1.4 1993/08/01 18:12:50 mycroft Exp $";
  */
 
 #include "rcv.h"
+#include <stdlib.h>
 
 /*
  * Locate the user's mailbox file (ie, the place where new, unread
@@ -53,7 +54,12 @@ static char rcsid[] = "$Id: v7.local.c,v 1.4 1993/08/01 18:12:50 mycroft Exp $";
 findmail(user, buf)
 	char *user, *buf;
 {
-	(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, user);
+	char *mbox;
+
+	if (!(mbox = getenv("MAIL")))
+		(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, user);
+	else
+		(void)strcpy(buf, mbox);
 }
 
 /*
