@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.1 2001/04/24 02:55:34 thorpej Exp $
+.\"	$NetBSD: pmap.9,v 1.2 2001/04/24 04:29:33 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -331,13 +331,13 @@ A
 page is one for which a wired mapping exists.  This statistic is used to
 enforce resource limits.
 .Pp
-Note that is is recommended (though not required) that the
+Note that it is recommended (though not required) that the
 .Nm
 implementation utilize the
 .Dv pmap_statistics
 structure in the tracking of
 .Nm
-statistics by placing it inside of the the
+statistics by placing it inside the
 .Dv pmap
 structure and adjusting the counts when mappings are established, changed,
 or removed.  This avoids potentially expensive data structure traversals
@@ -441,7 +441,7 @@ argument contains protection bits (the same bits as used in the
 .Fa prot
 argument) indicating the type of access that caused the mapping to
 be created.  This information may be used to seed modified/referenced 
-nformation for the page being mapped, possibly avoiding redundant faults
+information for the page being mapped, possibly avoiding redundant faults
 on platforms that track modified/referenced information in software.
 Other information provided by
 .Fa flags :
@@ -694,7 +694,7 @@ The
 .Nm
 implementation must take whatever steps are necessary to map the
 source and destination pages to a kernel-accessible address and
-perform the copy.  It is suggested that implementations used an
+perform the copy.  It is suggested that implementations use an
 optimized copy algorithm, as the performance of this function
 directly impacts page fault performance.  The implementation may
 assume that both regions are PAGE_SIZE aligned and exactly PAGE_SIZE
@@ -783,7 +783,7 @@ This function is a bootstrap memory allocator, which may be provided
 as an alternative to the bootstrap memory allocator used within
 .Xr uvm 9
 itself.  It is particularly useful on systems which provide e.g.
-a direct-mapped memory segment.  This functions works by stealing
+a direct-mapped memory segment.  This function works by stealing
 pages from the (to be) managed memory pool, which has already been
 provided to
 .Xr uvm 9
@@ -805,7 +805,8 @@ allocation routine.  It is intended to be used only by the
 .Fn uvm_pageboot_alloc
 routine and its supporting routines.  If you need to allocate
 memory before the virtual memory system is initialized, use
-.Fn uvm_pageboot_alloc .  See
+.Fn uvm_pageboot_alloc .
+See
 .Xr uvm 9
 for more information.
 .Pp
@@ -847,7 +848,7 @@ The
 interface is designed to help alleviate this problem.  The virtual
 memory startup code may choose to allocate an initial set of mapping
 resources (e.g. page tables) and set an internal variable indicating
-how much kernel virtual address space an be mapped using those initial
+how much kernel virtual address space can be mapped using those initial
 resources.  Then, when the virtual memory system wishes to map something
 at an address beyond that initial limit, it calls
 .Fn pmap_growkernel
@@ -881,7 +882,7 @@ logically associated with the virtual memory state of the process).
 .Pp
 The
 .Fn pmap_fork
-function is provided as a way associate information from
+function is provided as a way to associate information from
 .Fa src_map
 with
 .Fa dst_map
@@ -940,7 +941,7 @@ provided kernel-accessible address.
 .Pp
 The use of
 .Fn PMAP_UNMAP_POOLPAGE
-is enabled by defining it as a C pre-processor maco in
+is enabled by defining it as a C pre-processor macro in
 .Fa <machine/pmap.h> .
 If
 .Fn PMAP_UNMAP_POOLPAGE
@@ -963,7 +964,7 @@ and returns the physical address of that page on a MIPS processor.
 The
 .Nm
 module was originally part of the design of the virtual memory system
-in the Mach Operationg System.  The goal was to provide a clean separation
+in the Mach Operating System.  The goal was to provide a clean separation
 between the machine-independent and the machine-dependent portions of
 the virtual memory system, in stark contrast to the original
 .Bx 3
@@ -997,8 +998,6 @@ API.  Since the introduction of
 the
 .Nm
 API has evolved further.
-.Sh SEE ALSO
-.Xr uvm 9
 .Sh BUGS
 The use and definition of
 .Fn pmap_activate
@@ -1031,7 +1030,7 @@ and
 .An Michael Wayne Young .
 .Pp
 .An Mike Hibler
-did the intergration of the Mach virtual memory system into
+did the integration of the Mach virtual memory system into
 .Bx 4.4
 and implemented a
 .Nm
