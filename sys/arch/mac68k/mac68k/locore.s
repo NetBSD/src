@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.88 1997/09/10 04:22:35 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.89 1997/09/10 04:38:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -319,7 +319,7 @@ Lloaddone:
 Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
-	jbsr	_C_LABEL(VIA_initialize) | Initialize VIA hardware
+	jbsr	_C_LABEL(via_init)	| Initialize VIA hardware
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*

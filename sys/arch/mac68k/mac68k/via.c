@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.61 1997/09/09 17:37:10 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -112,7 +112,7 @@ void *slotptab[7] = {
 };
 
 void
-VIA_initialize()
+via_init()
 {
 	/* Initialize VIA1 */
 	/* set all timers to 0 */

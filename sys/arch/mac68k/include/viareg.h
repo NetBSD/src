@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.7 1997/09/10 04:38:47 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -190,8 +190,8 @@ extern int VIA2;
 
 #define vDirA_ADBState	0x30
 
-void	VIA_initialize   __P((void));
-int	rbv_vidstatus    __P((void));
+void	via_init __P((void));
+int	rbv_vidstatus __P((void));
 void	via_shutdown __P((void));
 void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
