@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.281 2000/12/05 18:11:02 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.282 2000/12/14 04:06:05 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.275 2000/12/05 18:10:19 drochner Exp 
+ *	NetBSD: pcidevs,v 1.276 2000/12/14 04:05:38 onoe Exp 
  */
 
 /*
@@ -532,6 +532,7 @@
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
+#define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -691,6 +692,11 @@
 #define	PCI_PRODUCT_ADVSYS_WIDE	0x2300		/* ABP-940UW */
 #define	PCI_PRODUCT_ADVSYS_U2W	0x2500		/* ASB-3940U2W */
 #define	PCI_PRODUCT_ADVSYS_U3W	0x2700		/* ASB-3940U3W */
+
+/* Aironet Wireless Communicasions products */
+#define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* Aironet PC4500/PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* Aironet PC4500 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* Aironet PC4800 Wireless LAN Adapter */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
