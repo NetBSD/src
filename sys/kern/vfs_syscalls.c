@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.179 2003/01/18 10:06:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.180 2003/01/21 00:00:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.179 2003/01/18 10:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.180 2003/01/21 00:00:10 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -575,7 +575,7 @@ sys_sync(l, v, retval)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
-	struct proc *p = l->l_proc;
+	struct proc *p = l == NULL ? &proc0 : l->l_proc;
 
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
