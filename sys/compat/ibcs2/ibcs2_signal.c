@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.4 1995/08/14 00:44:12 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.5 1995/08/14 01:11:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -42,13 +42,9 @@
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
+#include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
-#include <compat/ibcs2/ibcs2_signal.h>
-
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <compat/ibcs2/ibcs2_fcntl.h>
 
 #define sigemptyset(s)		bzero((s), sizeof(*(s)))
 #define sigismember(s, n)	(*(s) & sigmask(n))
@@ -59,7 +55,7 @@
 #define ibcs2_sigismember(s, n)	(*(s) & ibcs2_sigmask(n))
 #define ibcs2_sigaddset(s, n)	(*(s) |= ibcs2_sigmask(n))
 
-int bcd_to_ibcs2_sig[] = {
+int bsd_to_ibcs2_sig[] = {
 	0,			/* 0 */
 	IBCS2_SIGHUP,		/* 1 */
 	IBCS2_SIGINT,		/* 2 */

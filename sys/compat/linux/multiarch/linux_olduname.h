@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.h,v 1.2 1995/03/05 23:23:48 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.h,v 1.3 1995/08/14 01:12:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -48,8 +48,6 @@ typedef long linux_time_t;
 typedef long linux_clock_t;
 typedef long linux_off_t;
 typedef int linux_pid_t;
-typedef unsigned long linux_sigset_t;
-typedef void (*linux_handler_t)(int);
 
 struct linux_statfs {
 	long		l_ftype;
@@ -74,13 +72,6 @@ struct linux_utsname {
 	char l_version[65];
 	char l_machine[65];
 	char l_domainname[65];
-};
-
-struct linux_sigaction {
-	void (*sa_handler)(int);
-	linux_sigset_t sa_mask;
-	unsigned long sa_flags;
-	void (*sa_restorer)(void);
 };
 
 /*

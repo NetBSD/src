@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.1 1995/02/28 23:26:01 fvdl Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.2 1995/08/14 01:12:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,55 +34,59 @@
 #ifndef _LINUX_SIGNAL_H
 #define _LINUX_SIGNAL_H
 
-#define LINUX_NSIG 32
+#define LINUX_SIGHUP	 1
+#define LINUX_SIGINT	 2
+#define LINUX_SIGQUIT	 3
+#define LINUX_SIGILL	 4
+#define LINUX_SIGTRAP	 5
+#define LINUX_SIGABRT	 6
+#define LINUX_SIGIOT	 6
+#define LINUX_SIGBUS	 7
+#define LINUX_SIGFPE	 8
+#define LINUX_SIGKILL	 9
+#define LINUX_SIGUSR1	10
+#define LINUX_SIGSEGV	11
+#define LINUX_SIGUSR2	12
+#define LINUX_SIGPIPE	13
+#define LINUX_SIGALRM	14
+#define LINUX_SIGTERM	15
+#define LINUX_SIGSTKFLT	16
+#define LINUX_SIGCHLD	17
+#define LINUX_SIGCONT	18
+#define LINUX_SIGSTOP	19
+#define LINUX_SIGTSTP	20
+#define LINUX_SIGTTIN	21
+#define LINUX_SIGTTOU	22
+#define LINUX_SIGURG	23
+#define LINUX_SIGXCPU	24
+#define LINUX_SIGXFSZ	25
+#define LINUX_SIGVTALRM	26
+#define LINUX_SIGPROF	27
+#define LINUX_SIGWINCH	28
+#define LINUX_SIGIO	29
+#define LINUX_SIGPWR	30
+#define LINUX_NSIG	32
 
-/* sigaction flags */
+#define LINUX_SIG_BLOCK		0
+#define LINUX_SIG_UNBLOCK	1
+#define LINUX_SIG_SETMASK	2
 
+typedef u_long	linux_sigset_t;
+typedef void	(*linux_handler_t) __P((int));
+
+struct linux_sigaction {
+	linux_handler_t	sa_handler;
+	linux_sigset_t	sa_mask;
+	u_long		sa_flags;
+	void		(*sa_restorer) __P((void));
+};
+
+/* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
-
-/* sigprocmask actions */
-
-#define LINUX_SIG_BLOCK		0
-#define LINUX_SIG_UNBLOCK	1
-#define LINUX_SIG_SETMASK	2
-
-/* signal numbers */
-
-#define LINUX_SIGHUP		 1
-#define LINUX_SIGINT		 2
-#define LINUX_SIGQUIT		 3
-#define LINUX_SIGILL		 4
-#define LINUX_SIGTRAP		 5
-#define LINUX_SIGABRT		 6
-#define LINUX_SIGIOT		 6
-#define LINUX_SIGBUS		 7
-#define LINUX_SIGFPE		 8
-#define LINUX_SIGKILL		 9
-#define LINUX_SIGUSR1		10
-#define LINUX_SIGSEGV		11
-#define LINUX_SIGUSR2		12
-#define LINUX_SIGPIPE		13
-#define LINUX_SIGALRM		14
-#define LINUX_SIGTERM		15
-#define LINUX_SIGSTKFLT		16
-#define LINUX_SIGCHLD		17
-#define LINUX_SIGCONT		18
-#define LINUX_SIGSTOP		19
-#define LINUX_SIGTSTP		20
-#define LINUX_SIGTTIN		21
-#define LINUX_SIGTTOU		22
-#define LINUX_SIGURG		23
-#define LINUX_SIGXCPU		24
-#define LINUX_SIGXFSZ		25
-#define LINUX_SIGVTALRM		26
-#define LINUX_SIGPROF		27
-#define LINUX_SIGWINCH		28
-#define LINUX_SIGIO		29
-#define LINUX_SIGPWR		30
 
 #endif /* !_LINUX_SIGNAL_H */

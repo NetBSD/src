@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.6 1995/08/13 22:55:28 mycroft Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.7 1995/08/14 01:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -48,9 +48,9 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
-#include <compat/linux/linux_signal.h>
 
 #define	sigemptyset(s)		bzero((s), sizeof(*(s)))
 #define	sigismember(s, n)	(*(s) & sigmask(n))
