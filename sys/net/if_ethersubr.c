@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.47 1999/09/13 12:15:54 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.48 1999/09/15 20:48:19 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -779,8 +779,10 @@ ether_ifattach(ifp, lla)
 #endif
 }
 
+#ifdef INET
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
 u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
+#endif
 #ifdef INET6
 u_char	ether_ip6multicast_min[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x00 };
 u_char	ether_ip6multicast_max[6] = { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
