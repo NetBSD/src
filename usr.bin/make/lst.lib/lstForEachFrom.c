@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEachFrom.c,v 1.7 1997/09/28 03:31:26 lukem Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.7 1997/09/28 03:31:26 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEachFrom.c,v 1.7 1997/09/28 03:31:26 lukem Exp $");
+__RCSID("$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -98,20 +98,28 @@ Lst_ForEachFrom (l, ln, proc, d)
 
 	next = tln->nextPtr;
 
+	/*
+	 * We're done with the traversal if
+	 *  - the next node to examine is the first in the queue or
+	 *    doesn't exist and
+	 *  - nothing's been added after the current node (check this
+	 *    after proc() has been called).
+	 */
+	done = (next == NilListNode || next == list->firstPtr);
+
 	(void) tln->useCount++;
 	result = (*proc) (tln->datum, d);
 	(void) tln->useCount--;
 
 	/*
-	 * We're done with the traversal if
-	 *  - nothing's been added after the current node and
-	 *  - the next node to examine is the first in the queue or
-	 *    doesn't exist.
+	 * Now check whether a node has been added.
+	 * Note: this doesn't work if this node was deleted before
+	 *       the new node was added.
 	 */
-	done = (next == tln->nextPtr &&
-		(next == NilListNode || next == list->firstPtr));
-
-	next = tln->nextPtr;
+	if (next != tln->nextPtr) {
+		next = tln->nextPtr;
+		done = 0;
+	}
 
 	if (tln->flags & LN_DELETED) {
 	    free((char *)tln);
