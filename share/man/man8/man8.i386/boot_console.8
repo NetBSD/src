@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_console.8,v 1.4 1999/02/21 15:59:18 drochner Exp $
+.\"	$NetBSD: boot_console.8,v 1.4.2.1 2000/04/30 11:49:18 he Exp $
 .\"
 .Dd December 31, 1998
 .Os
@@ -68,11 +68,8 @@ succeeds (and if
 .Dq Dv DIRECT_SERIAL
 is defined the RS-232
 .Dq "modem ready"
-status is on after the character is output), and the conditions
-described under
-.Dq Dv COMCONS_KEYPRESS
-above are fulfilled, the port is used as console.  If the port is not
-known to the BIOS, it falls back to
+status is on after the character is output), the port is used as
+console.  If the port is not known to the BIOS, it falls back to
 .Dq Dv CONSDEV_PC .
 .It Dv Em CONSDEV_AUTO
 Auto-select the console.  All serial ports known to the BIOS are probed
@@ -80,11 +77,8 @@ in sequence.  If output of a character to the port succeeds (and if
 .Dq Dv DIRECT_SERIAL
 is defined the RS-232
 .Dq "modem ready"
-status is on after the character is output), and the conditions
-described under
-.Dq Dv COMCONS_KEYPRESS
-above are fulfilled, the port is used as console.  If no serial port
-passes the check,
+status is on after the character is output), the port is used as console.  
+If no serial port passes the check,
 .Dq Dv CONSDEV_PC
 is used.  The progress of the selection process is shown at the PC
 display as digits corresponding to the serial port number currently
