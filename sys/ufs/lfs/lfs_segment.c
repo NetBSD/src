@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.26 1999/04/12 00:25:13 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.27 1999/06/15 22:25:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -640,7 +640,7 @@ lfs_writeinode(fs, sp, ip)
 		return(0);
 	
 	/* Allocate a new inode block if necessary. */
-	if (sp->ibp == NULL) {
+	if ((ip->i_number != LFS_IFILE_INUM || sp->idp==NULL) && sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
 		if (sp->seg_bytes_left < fs->lfs_bsize ||
 		    sp->sum_bytes_left < sizeof(ufs_daddr_t))
@@ -666,7 +666,7 @@ lfs_writeinode(fs, sp, ip)
 			sp->ninodes / INOPB(fs) - 1;
 		((ufs_daddr_t *)(sp->segsum))[ndx] = daddr;
 	}
-	
+
 	/* Update the inode times and copy the inode onto the inode page. */
 	if (ip->i_flag & (IN_CLEANING|IN_MODIFIED))
 		--fs->lfs_uinodes;
@@ -678,9 +678,25 @@ lfs_writeinode(fs, sp, ip)
 	else
 		ip->i_flag &= ~(IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE);
 
+	/*
+	 * If this is the Ifile, and we've already written the Ifile in this
+	 * partial segment, just overwrite it (it's not on disk yet) and
+	 * continue.
+	 *
+	 * XXX we know that the bp that we get the second time around has
+	 * already been gathered.
+	 */
+	if(ip->i_number == LFS_IFILE_INUM && sp->idp) {
+		*(sp->idp) = ip->i_din.ffs_din;
+		return 0;
+	}
+
 	bp = sp->ibp;
 	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] =
 		ip->i_din.ffs_din;
+	
+	if(ip->i_number == LFS_IFILE_INUM) /* We know sp->idp == NULL */
+		sp->idp = ((struct dinode *)bp->b_data)+(sp->ninodes % INOPB(fs));
 	if(gotblk) {
 		bp->b_flags |= B_LOCKED;
 		brelse(bp);
@@ -709,18 +725,19 @@ lfs_writeinode(fs, sp, ip)
 	}
 	
 	/*
-	 * No need to update segment usage if there was no former inode address
+	 * No need to update segment usage if there was no former inode address 
 	 * or if the last inode address is in the current partial segment.
 	 */
-	if (daddr != LFS_UNUSED_DADDR && 
+	if (daddr != LFS_UNUSED_DADDR &&
 	    !(daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
 			/* XXX -- Change to a panic. */
-			printf("lfs_writeinode: negative bytes (segment %d)\n",
-			       datosn(fs, daddr));
-			panic("negative bytes");
+			printf("lfs_writeinode: negative bytes (segment %d short by %d)\n",
+			       datosn(fs, daddr), DINODE_SIZE - sup->su_nbytes);
+			panic("lfs_writeinode: negative bytes");
+			sup->su_nbytes = DINODE_SIZE;
 		}
 #endif
 		sup->su_nbytes -= DINODE_SIZE;
@@ -887,7 +904,6 @@ lfs_updatemeta(sp)
 		}
 		fs->lfs_offset +=
 			fragstodb(fs, numfrags(fs, (*sp->start_bpp)->b_bcount));
-
 		error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL);
 		if (error)
 			panic("lfs_updatemeta: ufs_bmaparray %d", error);
@@ -917,17 +933,17 @@ lfs_updatemeta(sp)
 			VOP_BWRITE(bp);
 		}
 		/* Update segment usage information. */
-		if (daddr != UNASSIGNED &&
-		    !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
+		if (daddr != UNASSIGNED && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
 			LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes < (*sp->start_bpp)->b_bcount) {
 				/* XXX -- Change to a panic. */
-				printf("lfs_updatemeta: negative bytes (segment %d)\n",
-				       datosn(fs, daddr));
-				printf("lfs_updatemeta: bp = 0x%p, addr = 0x%p\n",
-				       bp, bp->b_un.b_addr);
-				/* panic ("Negative Bytes"); */
+				printf("lfs_updatemeta: negative bytes (segment %d short by %ld)\n",
+				       datosn(fs, daddr), (*sp->start_bpp)->b_bcount - sup->su_nbytes);
+				printf("lfs_updatemeta: ino %d, lbn %d, addr = %x\n",
+				       VTOI(sp->vp)->i_number, (*sp->start_bpp)->b_lblkno, daddr);
+				panic("lfs_updatemeta: negative bytes");
+				sup->su_nbytes = (*sp->start_bpp)->b_bcount;
 			}
 #endif
 			sup->su_nbytes -= (*sp->start_bpp)->b_bcount;
@@ -981,6 +997,7 @@ lfs_initseg(fs)
 	
 	sp->fs = fs;
 	sp->ibp = NULL;
+	sp->idp = NULL;
 	sp->ninodes = 0;
 	
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
@@ -1098,19 +1115,23 @@ lfs_writeseg(fs, sp)
 #ifdef DEBUG_LFS
 	lfs_check_bpp(fs,sp,__FILE__,__LINE__);
 #endif
-	
+	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
+	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
+
 	/* Update the segment usage information. */
 	LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
 	
 	/* Loop through all blocks, except the segment summary. */
-	for (bpp = sp->bpp; ++bpp < sp->cbpp; )
-		sup->su_nbytes += (*bpp)->b_bcount;
+	for (bpp = sp->bpp; ++bpp < sp->cbpp; ) {
+		if((*bpp)->b_vp != devvp)
+			sup->su_nbytes += (*bpp)->b_bcount;
+	}
 	
 	ssp = (SEGSUM *)sp->segsum;
 	
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-	/* sup->su_nbytes += ssp->ss_ninos * DINODE_SIZE; */
-	sup->su_nbytes += LFS_SUMMARY_SIZE;
+	sup->su_nbytes += ssp->ss_ninos * DINODE_SIZE;
+	/* sup->su_nbytes += LFS_SUMMARY_SIZE; */
 	sup->su_lastmod = time.tv_sec;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
@@ -1170,8 +1191,6 @@ lfs_writeseg(fs, sp)
 #endif
 	fs->lfs_bfree -= (fsbtodb(fs, ninos) + LFS_SUMMARY_SIZE / DEV_BSIZE);
 
-	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
-	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	strategy = devvp->v_op[VOFFSET(vop_strategy)];
 
 	/*
