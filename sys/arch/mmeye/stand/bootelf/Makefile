@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/31 01:51:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/31 21:39:03 thorpej Exp $
 
 PROG= bootelf
-SRCS= boot.c loadfile.c loadfile_elf32.c
+SRCS= boot.c byteorder.c loadfile.c loadfile_elf32.c
 NOMAN=
 
 LIBSA=${.CURDIR}/../../../../lib/libsa
