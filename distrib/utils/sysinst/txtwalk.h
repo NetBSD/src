@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.3 1998/09/17 05:57:28 phil Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.4 1998/10/25 19:15:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,8 @@ struct lookfor {
 	char *fmt;	/* Expected format. */
 	char *todo;	/* What to do ... */
 	void *var;	/* Possible var */
+	int  nument;    /* Number of entries in the "array" */
+	int  size;	/* size of string variables */
 	void (*func) __P((struct data *list, int num));	/* function to call */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.31 1998/10/06 01:37:17 mark Exp $	*/
+/*	$NetBSD: defs.h,v 1.32 1998/10/25 19:15:04 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,6 +156,7 @@ EXTERN int  got_dist;
 EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");  
 EXTERN int  clean_dist_dir INIT(0);
 /* Absolute path name where the distribution should be extracted from. */
+
 EXTERN char ext_dir[STRSIZE] INIT("");
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
 EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
