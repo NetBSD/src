@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 1999/04/26 22:46:47 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.146 1999/05/03 16:17:57 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -166,8 +166,6 @@ int	bufpages = 0;
 #endif
 
 int	physmem;
-
-extern	caddr_t msgbufaddr;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
