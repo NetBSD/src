@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.10 2002/09/14 17:53:57 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.11 2003/04/09 00:28:28 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -41,7 +41,8 @@
 
 /* error reporting and handling */
 
-#include<sys/systm.h>		/* printf, sprintf, and friends */
+#include <sys/systm.h>		/* printf, sprintf, and friends */
+#include <uvm/uvm_extern.h>	/* PAGE_SIZE, PAGE_MASK */
 
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
@@ -89,8 +90,8 @@ extern char rf_panicbuf[];
 
 
 #define RF_UL(x)           ((unsigned long) (x))
-#define RF_PGMASK          RF_UL(NBPG-1)
-#define RF_BLIP(x)         (NBPG - (RF_UL(x) & RF_PGMASK))	/* bytes left in page */
+#define RF_PGMASK          PAGE_MASK
+#define RF_BLIP(x)         (PAGE_SIZE - (RF_UL(x) & RF_PGMASK))	/* bytes left in page */
 #define RF_PAGE_ALIGNED(x) ((RF_UL(x) & RF_PGMASK) == 0)
 
 #ifdef __STDC__

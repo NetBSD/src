@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.23 2003/02/21 17:14:05 tsutsui Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.24 2003/04/09 00:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -45,7 +45,7 @@ typedef struct scr_table {
 } scr_table_t __attribute__((__packed__));
 
 /* Number of scatter/gather entries */
-#define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
+#define SIOP_NSG	(MAXPHYS/PAGE_SIZE + 1)	/* XXX PAGE_SIZE */
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
