@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.57 2001/10/16 16:31:34 uch Exp $ */
+/* $NetBSD: locore.h,v 1.57.2.1 2001/10/24 17:38:08 thorpej Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -17,15 +17,6 @@
  * Jump table for MIPS cpu locore functions that are implemented
  * differently on different generations, or instruction-level
  * archtecture (ISA) level, the Mips family.
- * The following functions must be provided for each mips ISA level:
- *
- *
- *	MachFlushCache
- *	MachFlushDCache
- *	MachFlushICache
- *	wbflush
- *	proc_trampoline()
- *	cpu_switch_resume()
  *
  * We currently provide support for MIPS I and MIPS III.
  */
@@ -50,12 +41,6 @@ void	mips_cp0_cause_write(u_int32_t);
 u_int32_t mips_cp0_status_read(void);
 void	mips_cp0_status_write(u_int32_t);
 
-int	mips1_icsize(void);
-int	mips1_dcsize(void);
-void	mips1_FlushCache(void);
-void	mips1_FlushDCache(vaddr_t, vsize_t);
-void	mips1_FlushICache(vaddr_t, vsize_t);
-
 void	mips1_SetPID(int);
 void	mips1_TBIA(int);
 void	mips1_TBIAP(int);
@@ -65,11 +50,7 @@ void	mips1_wbflush(void);
 void	mips1_proc_trampoline(void);
 void	mips1_cpu_switch_resume(void);
 
-void	mips3_ConfigCache(int);
-void	mips3_FlushCache(void);
-void	mips3_FlushDCache(vaddr_t, vsize_t);
-void	mips3_FlushICache(vaddr_t, vsize_t);
-void	mips3_HitFlushDCache(vaddr_t, vsize_t);
+uint32_t tx3900_cp0_config_read(void);
 
 void	mips3_SetPID(int);
 void	mips3_TBIA(int);
@@ -80,11 +61,6 @@ void	mips3_TLBRead(int, struct tlb *);
 void	mips3_wbflush(void);
 void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
-
-void	mips3_FlushCache_2way(void);
-void	mips3_FlushDCache_2way(vaddr_t, vaddr_t);
-void	mips3_FlushICache_2way(vaddr_t, vaddr_t);
-void	mips3_HitFlushDCache_2way(vaddr_t, vsize_t);
 
 u_int32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(u_int32_t);
@@ -102,16 +78,13 @@ u_int64_t mips3_ld(u_int64_t *);
 void	mips3_sd(u_int64_t *, u_int64_t);
 
 /*
- *  A vector with an entry for each mips-ISA-level dependent
+ * A vector with an entry for each mips-ISA-level dependent
  * locore function, and macros which jump through it.
+ *
  * XXX the macro names are chosen to be compatible with the old
- * Sprite  coding-convention names used in 4.4bsd/pmax.
+ * XXX Sprite coding-convention names used in 4.4bsd/pmax.
  */
 typedef struct  {
-	void (*flushCache)(void);
-	void (*flushDCache)(vaddr_t addr, vsize_t len);
-	void (*flushICache)(vaddr_t addr, vsize_t len);
-	void (*hitflushDCache)(vaddr_t, vsize_t);
 	void (*setTLBpid)(int pid);
 	void (*TBIAP)(int);
 	void (*TBIS)(vaddr_t);
@@ -121,7 +94,6 @@ typedef struct  {
 
 /* Override writebuffer-drain method. */
 void	mips_set_wbflush(void (*)(void));
-
 
 /* stacktrace() -- print a stack backtrace to the console */
 void	stacktrace(void);
@@ -135,15 +107,6 @@ extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern mips_locore_jumpvec_t r2000_locore_vec;
 extern mips_locore_jumpvec_t r4000_locore_vec;
 extern long *mips_locoresw[];
-
-/*
- * Always indirect to get the cache ops.  There are just too many
- * combinations to try and worry about.
- */
-#define MachFlushCache		(*(mips_locore_jumpvec.flushCache))
-#define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
-#define MachFlushICache		(*(mips_locore_jumpvec.flushICache))
-#define	MachHitFlushDCache	(*(mips_locore_jumpvec.hitflushDCache))
 
 #if defined(MIPS3) && !defined(MIPS1)
 #define MachSetPID		mips3_SetPID
@@ -206,21 +169,6 @@ typedef int mips_prid_t;
 extern mips_prid_t cpu_id;
 extern mips_prid_t fpu_id;
 extern int	mips_num_tlb_entries;
-extern u_int	mips_L1DCacheSize;
-extern u_int	mips_L1ICacheSize;
-extern u_int	mips_L1DCacheLSize;
-extern u_int	mips_L1ICacheLSize;
-extern int	mips_L2CachePresent;
-extern u_int	mips_L2CacheLSize;
-extern u_int	mips_CacheAliasMask;
-extern u_int	mips_CachePreferMask;
-
-#define mips_indexof(addr)	(((int)(addr)) & mips_CacheAliasMask)
-
-#ifdef MIPS3
-extern int	mips3_L1TwoWayCache;
-extern int	mips3_cacheflush_bug;
-#endif /* MIPS3 */
 
 void mips_pagecopy(caddr_t dst, caddr_t src);
 void mips_pagezero(caddr_t dst);

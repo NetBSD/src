@@ -1,7 +1,7 @@
-/*	$NetBSD: mips_machdep.c,v 1.119 2001/10/16 16:31:38 uch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.119.2.1 2001/10/24 17:38:10 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119 2001/10/16 16:31:38 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119.2.1 2001/10/24 17:38:10 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119 2001/10/16 16:31:38 uch Exp $
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/cache.h>
 #include <mips/regnum.h>		/* symbolic register indices */
 #include <mips/locore.h>
 #include <mips/psl.h>
@@ -98,7 +99,7 @@ static void	mips1_vector_init __P((void));
 #endif
 
 #if defined(MIPS3) && !defined(MIPS3_5900)
-static void	mips3_vector_init __P((int));
+static void	mips3_vector_init __P((void));
 #endif
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
@@ -110,12 +111,6 @@ extern long *mips3_locoresw[];	/* locore_mips3.S */
 int cpu_arch;
 int cpu_mhz;
 int mips_num_tlb_entries;
-
-#ifdef MIPS3
-u_int	mips_L2CacheSize;
-int	mips_L2CacheIsSnooping;	/* Set if L2 cache snoops uncached writes */
-int	mips_L2CacheMixed;
-#endif
 
 struct	user *proc0paddr;
 struct	proc *fpcurproc;
@@ -133,15 +128,12 @@ int	default_pg_mask = 0x00001800;
 #ifdef ENABLE_MIPS_TX3900
 int	r3900_icache_direct;
 #endif
+
 /*
  * MIPS-I locore function vector
  */
 mips_locore_jumpvec_t mips1_locore_vec =
 {
-	mips1_FlushCache,
-	mips1_FlushDCache,
-	mips1_FlushICache,
-	NULL,
 	mips1_SetPID,
 	mips1_TBIAP,
 	mips1_TBIS,
@@ -174,7 +166,8 @@ mips1_vector_init()
 	/*
 	 * Clear out the I and D caches.
 	 */
-	mips1_FlushCache();
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
 }
 #endif /* MIPS1 */
 
@@ -184,10 +177,6 @@ mips1_vector_init()
  */
 mips_locore_jumpvec_t mips3_locore_vec =
 {
-	mips3_FlushCache,
-	mips3_FlushDCache,
-	mips3_FlushICache,
-	mips3_HitFlushDCache,
 	mips3_SetPID,
 	mips3_TBIAP,
 	mips3_TBIS,
@@ -195,71 +184,8 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_wbflush,
 };
 
-/*----------------------------------------------------------------------------
- *
- * mips3_ConfigCache --
- *
- *	Size the caches.
- *	NOTE: should only be called from mach_init().
- *
- * Results:
- *     	None.
- *
- * Side effects:
- *	The size of the data cache is stored into mips_L1DCacheSize.
- *	The size of instruction cache is stored into mips_L1ICacheSize.
- *	Alignment mask for cache aliasing test is stored in mips_CacheAliasMask.
- *
- * XXX: method to retrieve mips_L2CacheSize is port dependent.
- *
- *----------------------------------------------------------------------------
- */
-void
-mips3_ConfigCache(mips3_csizebase)
-	int mips3_csizebase;
-{
-	u_int32_t config = mips3_cp0_config_read();
-	static int snoop_check = 0;
-	int i;
-
-	mips_L1ICacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
-	    MIPS3_CONFIG_IC_MASK, mips3_csizebase, MIPS3_CONFIG_IC_SHIFT);
-	mips_L1ICacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
-	    MIPS3_CONFIG_IB);
-	mips_L1DCacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
-	    MIPS3_CONFIG_DC_MASK, mips3_csizebase, MIPS3_CONFIG_DC_SHIFT);
-	mips_L1DCacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
-	    MIPS3_CONFIG_DB);
-
-	mips_CacheAliasMask = (mips_L1DCacheSize - 1) & ~(NBPG - 1);
-	mips_CachePreferMask = max(mips_L1DCacheSize,mips_L1ICacheSize) - 1;
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	mips_L2CacheSize = 0; /* kluge to skip L2 cache flush */
-	MachFlushCache();
-
-	i = *(volatile int *)&snoop_check;	/* Read and cache */
-	MachFlushCache();			/* Flush */
-	*(volatile int *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&snoop_check))
-	    = ~i;				/* Write uncached */
-	mips_L2CacheIsSnooping = *(volatile int *)&snoop_check == ~i;
-	*(volatile int *)&snoop_check = i;	/* Write uncached */
-	MachFlushCache();			/* Flush */
-
-
-	mips_L2CachePresent = (config & MIPS3_CONFIG_SC) == 0;
-	mips_L2CacheLSize = MIPS3_CONFIG_CACHE_L2_LSIZE(config);
-	if (!mips_L2CachePresent) {
-		mips_L2CacheSize = 0;
-	}
-	mips_L2CacheMixed = (config & MIPS3_CONFIG_SS) == 0;
-}
-
 static void
-mips3_vector_init(mips3_csizebase)
-	int mips3_csizebase;
+mips3_vector_init(void)
 {
 
 	/* r4000 exception handler address and end */
@@ -302,33 +228,13 @@ mips3_vector_init(mips3_csizebase)
 	memcpy(&mips_locore_jumpvec, &mips3_locore_vec,
 	      sizeof(mips_locore_jumpvec_t));
 
-	/*
-	 * Clear out the I and D caches.
-	 */
-	mips3_ConfigCache(mips3_csizebase);
-
-#ifdef pmax		/* XXX */
-	mips_L2CachePresent = 1;
-	mips_L2CacheSize = 1024 * 1024;
-#endif
-#ifdef arc		/* XXX */
-	{
-		void machine_ConfigCache __P((void));
-
-		machine_ConfigCache();
-	}
-#endif
-#ifdef newsmips		/* XXX */
-	mips_L2CacheSize = 1024 * 1024;
-#endif
-
-	MachFlushCache();
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
 }
 #endif	/* MIPS3 && !MIPS3_5900 */
-
 
 /*
  * Do all the stuff that locore normally does before calling main(),
@@ -353,46 +259,35 @@ mips3_vector_init(mips3_csizebase)
 void
 mips_vector_init()
 {
-#if defined(MIPS3) && !defined(MIPS3_5900)
-	int mips3_csizebase = MIPS3_CONFIG_C_DEFBASE;
-#endif
 
 	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
+	 * First, determine some basic characteristics of the
+	 * processor -- it's ISA level, the number of TLB entries,
+	 * etc.
 	 */
-
 	switch (MIPS_PRID_IMPL(cpu_id)) {
 #ifdef MIPS1
 	case MIPS_R2000:
 	case MIPS_R3000:
 		cpu_arch = CPU_ARCH_MIPS1;
 		mips_num_tlb_entries = MIPS1_TLB_NUM_TLB_ENTRIES;
-		mips_L1ICacheSize = mips1_icsize();
-		mips_L1DCacheSize = mips1_dcsize();
 		break;
 #ifdef ENABLE_MIPS_TX3900
 	case MIPS_TX3900:
 		cpu_arch = CPU_ARCH_MIPS1;
 		switch (MIPS_PRID_REV_MAJ(cpu_id)) {
-		default:
-			panic("not supported revision");
-		case 1: /* TX3912 */
+		case 1:		/* TX3912 */
 			mips_num_tlb_entries = R3900_TLB_NUM_TLB_ENTRIES;
-			r3900_icache_direct = 1;
-			mips_L1ICacheLSize = 16;
-			mips_L1DCacheLSize = 4;
 			break;
-		case 3: /* TX3922 */
+
+		case 3:		/* TX3922 */
 			mips_num_tlb_entries = R3920_TLB_NUM_TLB_ENTRIES;
-			r3900_icache_direct = 0;
-			mips_L1ICacheLSize = 16;
-			mips_L1DCacheLSize = 16;
 			break;
+
+		default:
+			panic("Unsupported TX3900 revision: 0x%x",
+			    MIPS_PRID_REV_MAJ(cpu_id));
 		}
-		mips_L1ICacheSize = mips1_icsize();
-		mips_L1DCacheSize = mips1_dcsize();
 		break;
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
@@ -401,29 +296,23 @@ mips_vector_init()
 	case MIPS_R4000:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4100:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = 32;
-		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4300:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS_R4300_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4600:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 1;
-		/* disable interrupt while cacheflush to workaround the bug */
 		break;
 #ifdef ENABLE_MIPS_R4700 /* ID conflict */
 	case MIPS_R4700:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 1;
 		break;
 #endif
 #ifndef ENABLE_MIPS_R3NKK /* ID conflict */
@@ -432,8 +321,9 @@ mips_vector_init()
 	case MIPS_RM5200:
 		cpu_arch = CPU_ARCH_MIPS4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 1;
 		break;
+
+#if 0	/* not ready yet */
 #ifdef MIPS3_5900
 	case MIPS_R5900:
 		cpu_arch = CPU_ARCH_MIPS3;
@@ -448,7 +338,7 @@ mips_vector_init()
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
 		break;
-#if 0	/* not ready yet */
+
 	case MIPS_RC32364:
 	case MIPS_RC32300:
 		/* 
@@ -473,64 +363,56 @@ mips_vector_init()
 		cpu_reboot(RB_HALT, NULL);
 	}
 
+#ifdef MIPS3	/* XXX XXX XXX */
+	if (CPUISMIPS3) {
+#ifdef pmax
+		mips_sdcache_size = 1024 * 1024;
+#endif
+#ifdef arc
+		{
+			void machine_ConfigCache __P((void));
+
+			machine_ConfigCache();
+		}
+#endif
+#ifdef newsmips
+		mips_sdcache_size = 1024 * 1024;
+#endif
+	}
+#endif /* MIPS3 */
+
+	/*
+	 * Determine cache configuration and initialize our cache
+	 * frobbing routine function pointers.
+	 */
+	mips_config_cache();
+
+	/*
+	 * Now initialize our ISA-dependent function vector.
+	 */
+	switch (cpu_arch) {
 #ifdef MIPS1
-	if (!CPUISMIPS3) {
+	case CPU_ARCH_MIPS1:
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
 		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
-		
-		/*
-		 * Set the initial number of page colors based on
-		 * the L1 cache size.  We can re-size it later when
-		 * we find the L2 cache size, if there is one.
-		 *
-		 * Note that all MIPS1 caches are direct-mapped.
-		 */
-		uvmexp.ncolors = atop(mips_L1DCacheSize);
-	} else
+		break;
 #endif
 #ifdef MIPS3
-	if (CPUISMIPS3) {
+	case CPU_ARCH_MIPS3:
+	case CPU_ARCH_MIPS4:
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
-
 #ifdef MIPS3_5900
 		r5900_init();
-#else /* MIPS3_5900 */
-		if (mips3_L1TwoWayCache) {
-			mips3_locore_vec.flushCache = mips3_FlushCache_2way;
-			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
-			mips3_locore_vec.flushICache = mips3_FlushICache_2way;
-			/*
-			 * XXX 2-way version does not yet handle L2 cache.
-			 */
-			if (mips_L2CachePresent == 0)
-				mips3_locore_vec.hitflushDCache =
-				    mips3_HitFlushDCache_2way;
-		}
-		mips3_vector_init(mips3_csizebase);
-#endif	/* MIPS3_5900 */
+#else
+		mips3_vector_init();
+#endif /* MIPS3_5900 */
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
-
-		/*
-		 * Set the initial number of page colors based on
-		 * the L1 cache size.  We can re-size it later when
-		 * we find the L2 cache size, if there is one.
-		 *
-		 * Note if we have a 2-way cache, we need 1/2 the
-		 * number of colors.
-		 *
-		 * XXX This is somewhat useless for virtually-indexed
-		 * caches, but it doesn't hurt anything.
-		 */
-		uvmexp.ncolors = atop(mips_L1DCacheSize);
-		if (mips3_L1TwoWayCache)
-			uvmexp.ncolors >>= 1;
-	} else
-
-#endif /* MIPS3 */
-	{
+		break;
+#endif
+	default:
 		printf("cpu_arch 0x%x: not supported\n", cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
 	}
@@ -605,8 +487,21 @@ struct pridtab fputab[] = {
 void
 cpu_identify()
 {
-	int i;
+	static const char *waynames[] = {
+		"fully set-associative",	/* 0 */
+		"direct-mapped",		/* 1 */
+		"2-way set-associative",	/* 2 */
+		NULL,				/* 3 */
+		"4-way set-associative",	/* 4 */
+	};
+#define	nwaynames (sizeof(waynames) / sizeof(waynames[0]))
+	static const char *wtnames[] = {
+		"write-back",
+		"write-through",
+	};
+	static const char *label = "cpu0";	/* XXX */
 	char *cpuname, *fpuname;
+	int i;
 
 	cpuname = NULL;
 	for (i = 0; i < sizeof(cputab)/sizeof(cputab[0]); i++) {
@@ -615,7 +510,7 @@ cpu_identify()
 			break;
 		}
 	}
-	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4000 && mips_L1ICacheSize == 16384)
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4000 && mips_picache_size == 16384)
 		cpuname = "MIPS R4400 CPU";
 
 	fpuname = NULL;
@@ -648,99 +543,50 @@ cpu_identify()
 	printf("\n");
 
 	if (MIPS_PRID_RSVD(cpu_id) != 0) {
-		printf("cpu0: NOTE: top 16 bits of PRID not 0!\n");
-		printf("cpu0: Please mail port-mips@netbsd.org with cpu0 dmesg lines.\n");
+		printf("%s: NOTE: top 16 bits of PRID not 0!\n", label);
+		printf("%s: Please mail port-mips@netbsd.org with cpu0 "
+		    "dmesg lines.\n", label);
 	}
 
-	printf("cpu0: ");
+	KASSERT(mips_picache_ways < nwaynames);
+	KASSERT(mips_pdcache_ways < nwaynames);
+	KASSERT(mips_sicache_ways < nwaynames);
+	KASSERT(mips_sdcache_ways < nwaynames);
+
+	switch (cpu_arch) {
 #ifdef MIPS1
-	if (!CPUISMIPS3) {
-#ifdef ENABLE_MIPS_TX3900
-		printf("%dKB/%dB Instruction %s, %dKB/%dB Data 2-way set associative, %d TLB entries",
-		       mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
-		       r3900_icache_direct ? "direct mapped" : "2-way set associative",
-		       mips_L1DCacheSize / 1024, mips_L1DCacheLSize,
-		       mips_num_tlb_entries);
-#else /* ENABLE_MIPS_TX3900 */
-		printf("%dKB Instruction, %dKB Data, direct mapped cache",
-		    mips_L1ICacheSize / 1024, mips_L1DCacheSize / 1024);
-#endif /* ENABLE_MIPS_TX3900 */
-	}
-#endif
+	case CPU_ARCH_MIPS1:
+		printf("%s: %dKB/%dB %s Instruction cache, %d TLB entries\n",
+		    label, mips_picache_size / 1024, mips_picache_line_size,
+		    waynames[mips_picache_ways], mips_num_tlb_entries);
+		printf("%s: %dKB/%dB %s %s Data cache\n",
+		    label, mips_pdcache_size / 1024, mips_pdcache_line_size,
+		    waynames[mips_pdcache_ways],
+		    wtnames[mips_pdcache_write_through]);
+		break;
+#endif /* MIPS1 */
 #ifdef MIPS3
-	if (CPUISMIPS3) {
-		printf("L1 cache: %dKB/%dB instruction, %dKB/%dB data",
-		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
-		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
-		if (mips3_L1TwoWayCache) {
-			printf(", two way set associative");
-			/* One less alias bit with 2 way cache. */
-			mips_CacheAliasMask =
-				((mips_L1DCacheSize/2) - 1) & ~(NBPG - 1);
-			mips_CachePreferMask >>= 1;
-		}
-		else
-			printf(", direct mapped");
-		printf("\n");
-		printf("cpu0: ");
-		if (!mips_L2CachePresent) {
-			printf("No L2 cache");
-		}
-		else {
-			printf("L2 cache: ");
-			if (mips_L2CacheSize)
-				printf("%dKB", mips_L2CacheSize / 1024);
-			else
-				printf("unknown size");
-			printf("/%dB %s, %s",
-			    mips_L2CacheLSize,
-			    mips_L2CacheMixed ? "mixed" : "separated",
-			    mips_L2CacheIsSnooping? "snooping" : "no snooping");
-		}
+	case CPU_ARCH_MIPS3:
+	case CPU_ARCH_MIPS4:
+		printf("%s: %dKB/%dB %s L1 Instruction cache, %d TLB entries\n",
+		    label, mips_picache_size / 1024, mips_picache_line_size,
+		    waynames[mips_picache_ways], mips_num_tlb_entries);
+		printf("%s: %dKB/%dB %s %s L1 Data cache\n",
+		    label, mips_pdcache_size / 1024, mips_pdcache_line_size,
+		    waynames[mips_pdcache_ways],
+		    wtnames[mips_pdcache_write_through]);
+		if (mips_sdcache_line_size)
+			printf("%s: %dKB/%dB %s %s L2 %s cache\n",
+			    label, mips_sdcache_size / 1024,
+			    mips_sdcache_line_size,
+			    waynames[mips_sdcache_ways],
+			    wtnames[mips_sdcache_write_through],
+			    mips_scache_unified ? "Unified" : "Data");
+		break;
+#endif /* MIPS3 */
+	default:
+		panic("cpu_identify: impossible");
 	}
-#endif
-	printf("\n");
-
-#ifdef MIPS3
-	/*
-	 * sanity check.
-	 * good place to do this is mips_vector_init(),
-	 * but printf() doesn't work in it.
-	 */
-#if !defined(MIPS3_L2CACHE_ABSENT)
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		printf("This kernel doesn't work without L2 cache.\n"
-		    "Please add \"options MIPS3_L2CACHE_ABSENT\" "
-		    "to the kernel config file.\n");
-		cpu_reboot(RB_HALT, NULL);
-	}
-#endif
-	if (mips3_L1TwoWayCache &&
-	    (mips_L1ICacheLSize < 32 || mips_L1DCacheLSize < 32)) {
-		/*
-		 * current implementation of mips3_FlushCache(),
-		 * mips3_FlushICache(), mips3_FlushDCache() and
-		 * mips3_HitFlushDCache() assume that
-		 * if the CPU has two way L1 cache, line size >= 32.
-		 */
-		printf("L1 cache: two way, but Inst/Data line size = %d/%d\n",
-		    mips_L1ICacheLSize, mips_L1DCacheLSize);
-		printf("Please fix implementation of mips3_*Flush*Cache\n");
-		cpu_reboot(RB_HALT, NULL);
-	}
-	if (mips_L2CachePresent && mips_L2CacheLSize < 32) {
-		/*
-		 * current implementation of mips3_FlushCache(),
-		 * mips3_FlushDCache() and mips3_HitFlushDCache() assume
-		 * that if the CPU has L2 cache, line size >= 32.
-		 */
-		printf("L2 cache line size = %d\n", mips_L2CacheLSize);
-		printf("Please fix implementation of mips3_*Flush*Cache\n");
-		cpu_reboot(RB_HALT, NULL);
-	}
-#endif
-	/* XXX cache sizes for MIPS1? */
-	/* XXX hardware mcclock CPU-speed computation */
 
 	/*
 	 * Install power-saving idle routines.
