@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.136 2003/10/03 15:35:54 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.137 2003/10/08 15:07:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.136 2003/10/03 15:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.137 2003/10/08 15:07:25 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1965,10 +1965,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			} else
 #endif /* LFS_USE_B_INVAL */
 			if (cl->flags & LFS_CL_MALLOC) {
-				bcopy(bp->b_data, p, bp->b_bcount);
+				/* copy data into our cluster. */
+				memcpy(p, bp->b_data, bp->b_bcount);
+				p += bp->b_bcount;
 			}
   
-			p += bp->b_bcount;
 			cbp->b_bcount += bp->b_bcount;
 			cl->bufsize += bp->b_bcount;
 
