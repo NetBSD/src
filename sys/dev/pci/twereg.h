@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.1 2000/10/19 14:11:31 ad Exp $	*/
+/*	$NetBSD: twereg.h,v 1.2 2000/10/26 14:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@
 #define	TWE_INIT_MESSAGE_CREDITS	0x100
 #define	TWE_INIT_CMD_PACKET_SIZE	0x3
 #define	TWE_SG_SIZE			62
-#define	TWE_MAX_CMDS			256
+#define	TWE_MAX_CMDS			255
 #define	TWE_Q_START			0
 #define	TWE_UNIT_INFORMATION_TABLE_BASE	0x300
 #define	TWE_IOCTL			0x80
