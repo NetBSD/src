@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.11 2001/08/21 22:47:18 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.12 2001/08/25 17:55:24 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.11 2001/08/21 22:47:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.12 2001/08/25 17:55:24 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -197,6 +197,7 @@ start(initbootconfig)
 	undefined_init();
 
 	splhigh();
+	fiq_off();
 
 	/*
 	 * Locate process 0's user structure, in the bottom of its kernel
