@@ -1,3 +1,5 @@
+.\"	$NetBSD: vtimes.3,v 1.4 1997/10/18 06:43:40 mikel Exp $
+.\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -29,8 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)vtimes.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: vtimes.3,v 1.3 1997/10/09 10:20:30 lukem Exp $
+.\"     @(#)vtimes.3	8.1 (Berkeley) 6/4/93
 .\"
 .Dd June 4, 1993
 .Dt VTIMES 3
@@ -62,7 +63,7 @@ which are non-zero is returned.
 .Pp
 After the call, each buffer contains information as defined by the
 contents of the include file
-.Pa /usr/include/sys/vtimes.h :
+.Pa Aq sys/vtimes.h :
 .Bd -literal -offset indent
 struct vtimes {
 	int	vm_utime;	/* user time (*HZ) */
@@ -102,14 +103,14 @@ would have the value 5*60, where
 .Fa vm_utime+vm_stime
 would be the 60.  
 The
-.Fa Vm_idsrss
+.Fa vm_idsrss
 argument
 integrates data and stack segment
 usage, while
 .Fa vm_ixrss
 integrates text segment usage.
 The
-.Fa Vm_maxrss
+.Fa vm_maxrss
 function
 reports the maximum instantaneous sum of the
 text+data+stack core-resident page count.
@@ -133,11 +134,11 @@ These numbers account only for real
 data supplied by the caching mechanism is charged only
 to the first process to read or write the data.
 .Sh SEE ALSO
-.Xr time 2 ,
 .Xr wait3 2 ,
-.Xr getrusage 2
+.Xr getrusage 2 ,
+.Xr time 3 .
 .Sh HISTORY
 The
-.Fn vlimit
+.Fn vtimes
 function appeared in 
 .Bx 4.2 .
