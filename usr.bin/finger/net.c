@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: net.c,v 1.5 1995/05/21 15:03:24 mycroft Exp $";
+static char rcsid[] = "$Id: net.c,v 1.6 1995/05/21 15:06:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ netfinger(name)
 		return;
 	}
 	sin.sin_port = sp->s_port;
-	if ((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) {
+	if ((s = socket(sin.sin_family, SOCK_STREAM, 0)) < 0) {
 		perror("finger: socket");
 		return;
 	}
