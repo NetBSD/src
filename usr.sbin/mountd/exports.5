@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.11 1997/03/30 20:53:31 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.12 1997/06/24 23:53:20 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,6 +177,40 @@ option specifies that mount RPC requests for the filesystem do not have
 to come from reserved ports. Normally, clients are required to use reserved
 ports for mount requests. Using this option decreases the security of
 your system.
+.Pp
+WebNFS exports strictly according to the spec (RFC 2054 and RFC 2055) can
+be done with the
+.Fl public
+flag. However, this flag in itself allows r/w access to all files in
+the filesystem, not requiring reserved ports and not remapping uids. It
+is only provided to conform to the spec, and should normally not be used.
+For a WebNFS export,
+use the
+.Fl webnfs
+flag, which implies
+.Fl public ,
+.Sm off
+.Fl mapall No = Sy nobody
+.Sm on
+and
+.Fl ro .
+.Pp
+A
+.Sm off
+.Fl index No = Sy file
+.Sm off
+option can be used to specify a file whose handle will be returned if
+a directory is looked up using the public filehandle (WebNFS). This
+is to mimic the behavior of URLs. If no
+.Fl index
+option is specified, a directory filehandle will be returned as usual.
+The
+.Fl index
+option only makes sense in combination with the
+.Fl public
+or
+.Fl webnfs
+flags.
 .Pp
 The third component of a line specifies the host set to which the line applies.
 The set may be specified in three ways.
