@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.4 1996/09/25 00:53:49 jtc Exp $	*/
+/*	$NetBSD: apmd.c,v 1.5 1997/03/01 19:10:49 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -397,6 +397,7 @@ main(int argc, char *argv[])
     (void) signal(SIGTERM, sigexit);
     (void) signal(SIGHUP, sigexit);
     (void) signal(SIGINT, sigexit);
+    (void) signal(SIGPIPE, SIG_IGN);
 
     sock_fd = bind_socket(sockname, mode, uid, gid);
 
