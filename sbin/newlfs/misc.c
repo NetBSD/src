@@ -1,11 +1,6 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,11 +29,56 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)pathnames.h	8.2 (Berkeley) 1/21/94
- *	$Id: pathnames.h,v 1.5 1994/06/08 19:33:38 mycroft Exp $
  */
 
-#include <paths.h>
+#ifndef lint
+/*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: misc.c,v 1.1 1994/06/08 19:31:21 mycroft Exp $";
+#endif /* not lint */
 
-#define	_PATH_DEFTAPE	"/dev/rmt8"
+#include <sys/types.h>
+#include <sys/types.h>
+#include <sys/disklabel.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "extern.h"
+
+u_int
+log2(num)
+        u_int num;
+{
+        register u_int i, limit;
+
+        limit = 1;
+        for (i = 0; limit < num; limit = limit << 1, i++);
+        return (i);
+}
+
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#if __STDC__
+fatal(const char *fmt, ...)
+#else
+fatal(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "%s: ", progname);
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	exit(1);
+	/* NOTREACHED */
+}

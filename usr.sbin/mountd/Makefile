@@ -1,9 +1,8 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 6/29/90
-#	$Id: Makefile,v 1.8 1994/01/28 00:36:28 cgd Exp $
+#	from: @(#)Makefile	8.3 (Berkeley) 1/25/94
+#	$Id: Makefile,v 1.9 1994/06/08 19:29:38 mycroft Exp $
 
 PROG=	mountd
-CFLAGS+=-DNFS -DNFSSERVER
-MAN5=	exports.0
+MAN5=	exports.0 netgroup.0
 MAN8=	mountd.0
 
 .include <bsd.prog.mk>

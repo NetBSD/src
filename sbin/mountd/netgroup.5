@@ -1,4 +1,4 @@
-.\" Copyright (c) 1989, 1991, 1993
+.\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,73 +29,64 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)mountd.8	8.1 (Berkeley) 6/9/93
-.\"	$Id: mountd.8,v 1.6 1994/06/08 19:29:43 mycroft Exp $
+.\"     from: @(#)netgroup.5	8.2 (Berkeley) 12/11/93
+.\"	$Id: netgroup.5,v 1.1 1994/06/08 19:29:48 mycroft Exp $
 .\"
-.Dd June 9, 1993
-.Dt MOUNTD 8
+.Dd December 11, 1993
+.Dt NETGROUP 5
 .Os
 .Sh NAME
-.Nm mountd
-.Nd service remote
-.Tn NFS
-mount requests
+.Nm netgroup
+.Nd defines network groups
 .Sh SYNOPSIS
-.Nm /sbin/mountd
-.Op Fl n
-.Op Ar exportsfile
+.Nm netgroup
 .Sh DESCRIPTION
-.Xr Mountd
-is the server for
-.Tn NFS
-mount requests from other client machines.
-.Xr Mountd
-listens for service requests at the port indicated in the
-.Tn NFS
-server specification; see
-.%T "Network File System Protocol Specification" ,
-RFC1094.
-.Pp
-Options and operands available for
-.Nm mountd :
-.Bl -tag -width Ds
-.It Fl n
 The
-.Fl n
-option allows non-root mount requests to be served.
-This should only be specified if there are clients such as PC's,
-that require it.
-.It Ar exportsfile
-The
-.Ar exportsfile
-argument specifies an alternate location
-for the exports file.
-.El
+.Nm netgroup
+file
+specifies ``netgroups'', which are sets of
+.Sy (host, user, domain)
+tuples that are to be given similar network access.
 .Pp
-When mountd is started,
-it loads the export host addresses and options into the kernel
-using the mount(2) system call.
-After changing the exports file,
-a hangup signal should be sent to the mountd daemon
-to get it to reload the export information.
-After sending the SIGHUP
-(kill -HUP `cat /var/run/mountd.pid`),
-check the syslog output to see if mountd logged any parsing
-errors in the exports file.
+Each line in the file
+consists of a netgroup name followed by a list of the members of the
+netgroup.
+Each member can be either the name of another netgroup or a specification
+of a tuple as follows:
+.Bd -literal -offset indent
+(host, user, domain)
+.Ed
+where the
+.Sy host ,
+.Sy user ,
+and
+.Sy domain
+are character string names for the corresponding component.
+Any of the comma separated fields may be empty to specify a ``wildcard'' value
+or may consist of the string ``-'' to specify ``no valid value''.
+The members of the list may be separated by whitespace and/or commas;
+the ``\e'' character may be used at the end of a line to specify
+line continuation.
+The functions specified in
+.Xr getnetgrent 3
+should normally be used to access the
+.Nm netgroup
+database.
+.Pp
+Lines that begin with a # are treated as comments.
 .Sh FILES
-.Bl -tag -width /var/run/mountd.pid -compact
-.It Pa /etc/exports
-the list of exported filesystems
-.It Pa /var/run/mountd.pid
-the pid of the currently running mountd
+.Bl -tag -width /etc/netgroup -compact
+.It Pa /etc/netgroup
+the netgroup database.
 .El
 .Sh SEE ALSO
-.Xr nfsstat 1 ,
-.Xr exports 5 ,
-.Xr nfsd 8 ,
-.Xr portmap 8 ,
-.Xr showmount 8
-.Sh HISTORY
-The
-.Nm mountd
-utility first appeared in 4.4BSD.
+.Xr getnetgrent 3 ,
+.Xr exports 5
+.Sh COMPATIBILITY
+The file format is compatible with that of various vendors, however it
+appears that not all vendors use an identical format.
+.Sh BUGS
+The interpretation of access restrictions based on the member tuples of a
+netgroup is left up to the various network applications.
+Also, it is not obvious how the domain specification
+applies to the BSD environment.

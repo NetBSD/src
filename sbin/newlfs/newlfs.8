@@ -1,4 +1,4 @@
-.\" Copyright (c) 1989, 1991, 1993
+.\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,73 +29,68 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)mountd.8	8.1 (Berkeley) 6/9/93
-.\"	$Id: mountd.8,v 1.6 1994/06/08 19:29:43 mycroft Exp $
+.\"     from: @(#)newlfs.8	8.1 (Berkeley) 6/19/93
+.\"	$Id: newlfs.8,v 1.1 1994/06/08 19:31:25 mycroft Exp $
 .\"
-.Dd June 9, 1993
-.Dt MOUNTD 8
-.Os
+.Dd June 19, 1993
+.Dt NEWLFS 8
+.Os BSD 4.4
 .Sh NAME
-.Nm mountd
-.Nd service remote
-.Tn NFS
-mount requests
+.Nm newlfs
+.Nd construct a new LFS file system
 .Sh SYNOPSIS
-.Nm /sbin/mountd
-.Op Fl n
-.Op Ar exportsfile
+.Nm newlfs
+.Fl L
+.Op Ar newlfs-options
+.Ar special
 .Sh DESCRIPTION
-.Xr Mountd
-is the server for
-.Tn NFS
-mount requests from other client machines.
-.Xr Mountd
-listens for service requests at the port indicated in the
-.Tn NFS
-server specification; see
-.%T "Network File System Protocol Specification" ,
-RFC1094.
+.Nm Newlfs
+builds a log-structured file system on the specified special
+device basing its defaults on the information in the disk label.
+(Before running 
+.Nm newlfs
+the disk must be labeled using 
+.Xr disklabel 8 .)
 .Pp
-Options and operands available for
-.Nm mountd :
-.Bl -tag -width Ds
-.It Fl n
-The
-.Fl n
-option allows non-root mount requests to be served.
-This should only be specified if there are clients such as PC's,
-that require it.
-.It Ar exportsfile
-The
-.Ar exportsfile
-argument specifies an alternate location
-for the exports file.
-.El
-.Pp
-When mountd is started,
-it loads the export host addresses and options into the kernel
-using the mount(2) system call.
-After changing the exports file,
-a hangup signal should be sent to the mountd daemon
-to get it to reload the export information.
-After sending the SIGHUP
-(kill -HUP `cat /var/run/mountd.pid`),
-check the syslog output to see if mountd logged any parsing
-errors in the exports file.
-.Sh FILES
-.Bl -tag -width /var/run/mountd.pid -compact
-.It Pa /etc/exports
-the list of exported filesystems
-.It Pa /var/run/mountd.pid
-the pid of the currently running mountd
+The following options define the general layout policies.
+.Bl -tag -width Fl
+.It Fl B
+The logical segment size of the file system in bytes.
+.It Fl b Ar block-size
+The block size of the file system in bytes.
+.It Fl L
+Create a log-structured file system (LFS).
+This flag is currently required.
+.It Fl m Ar free space \&%
+The percentage of space reserved from normal users; the minimum
+free space threshold.  The default value used is 10%.
+See
+.Xr tunefs 8
+for more details on how to set this option.
+.It Fl s Ar size
+The size of the file system in sectors.
 .El
 .Sh SEE ALSO
-.Xr nfsstat 1 ,
-.Xr exports 5 ,
-.Xr nfsd 8 ,
-.Xr portmap 8 ,
-.Xr showmount 8
+.Xr disktab 5 ,
+.Xr fs 5 ,
+.Xr dumplfs 8 ,
+.Xr disklabel 8 ,
+.Xr diskpart 8 ,
+.Xr tunefs 8
+.Rs
+.%A M. McKusick
+.%A W. Joy
+.%A S. Leffler
+.%A R. Fabry
+.%T A Fast File System for UNIX ,
+.%J ACM Transactions on Computer Systems 2
+.%V 3
+.%P pp 181-197
+.%D August 1984
+.%O (reprinted in the BSD System Manager's Manual)
+.Re
 .Sh HISTORY
 The
-.Nm mountd
-utility first appeared in 4.4BSD.
+.Nm
+command appeared in
+.Bx 4.4 .
