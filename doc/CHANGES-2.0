@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.402 2004/08/15 14:28:39 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.403 2004/08/15 14:54:27 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6663,4 +6663,31 @@ sys/compat/linux/common/linux_file.c		1.63
 	rather than EPERM; to emulate this properly, translate the error to
 	EISDIR if the target patch exists and points to a directory
 	[jdolecek, ticket #764]
+
+regress/sys/kern/Makefile			1.25 via patch
+regress/sys/kern/ipf/Makefile			1.7
+regress/sys/kern/ipf/bpftest			1.2
+regress/sys/kern/ipf/dotest			1.3
+regress/sys/kern/ipf/dotest6			1.3
+regress/sys/kern/ipf/expected/i12		1.2
+regress/sys/kern/ipf/expected/in1		1.3
+regress/sys/kern/ipf/expected/ni3		1.2
+regress/sys/kern/ipf/expected/ni5		1.3
+regress/sys/kern/ipf/hextest			1.3
+regress/sys/kern/ipf/input/ipv6.1		1.2
+regress/sys/kern/ipf/input/ni3			1.2
+regress/sys/kern/ipf/intest			1.3
+regress/sys/kern/ipf/iptest			1.2
+regress/sys/kern/ipf/itest			1.3
+regress/sys/kern/ipf/logtest			1.3
+regress/sys/kern/ipf/mhtest			1.3
+regress/sys/kern/ipf/mtest			1.3
+regress/sys/kern/ipf/natipftest			1.3
+regress/sys/kern/ipf/nattest			1.3
+regress/sys/kern/ipf/ptest			1.2
+regress/sys/kern/ipf/regress/i12		1.2
+regress/sys/kern/ipf/regress/ipv6.1		1.2
+
+	Upgraded regression tests for IPFilter to version 4.1.3.
+	[martti, ticket #763]
 
