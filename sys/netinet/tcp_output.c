@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.109 2004/03/30 19:58:14 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.110 2004/04/25 22:25:03 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.109 2004/03/30 19:58:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.110 2004/04/25 22:25:03 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -547,6 +547,9 @@ tcp_output(tp)
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
+#ifdef TCP_SIGNATURE
+	int sigoff = 0;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -898,6 +901,33 @@ send:
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}
 
+#ifdef TCP_SIGNATURE
+#ifdef INET6
+	/* XXX: FreeBSD uses ((tp->t_inpcb->inp_vflag & INP_IPV6) == 0) */
+	if (tp->t_family == AF_INET) 
+#endif
+	if (tp->t_flags & TF_SIGNATURE) {
+		int i;
+		u_char *bp;
+		/*
+		 * Initialize TCP-MD5 option (RFC2385)
+		 */
+		bp = (u_char *)opt + optlen;
+		*bp++ = TCPOPT_SIGNATURE;
+		*bp++ = TCPOLEN_SIGNATURE;
+		sigoff = optlen + 2;
+		for (i = 0; i < TCP_SIGLEN; i++)
+			*bp++ = 0;
+		optlen += TCPOLEN_SIGNATURE;
+		/*
+		 * Terminate options list and maintain 32-bit alignment.
+ 		 */
+		*bp++ = TCPOPT_NOP;
+		*bp++ = TCPOPT_EOL;
+ 		optlen += 2;
+ 	}
+#endif /* TCP_SIGNATURE */
+
 	hdrlen += optlen;
 
 #ifdef DIAGNOSTIC
@@ -1031,6 +1061,16 @@ send:
 		 * number wraparound.
 		 */
 		tp->snd_up = tp->snd_una;		/* drag it along */
+
+#ifdef TCP_SIGNATURE
+#ifdef INET6
+	/* XXX: FreeBSD uses ((tp->t_inpcb->inp_vflag & INP_IPV6) == 0) */
+	if (tp->t_family == AF_INET) /* XXX */
+#endif
+	if (tp->t_flags & TF_SIGNATURE)
+		tcp_signature_compute(m, sizeof(struct ip), len, optlen,
+		    (u_char *)(th + 1) + sigoff, IPSEC_DIR_OUTBOUND);
+#endif
 
 	/*
 	 * Set ourselves up to be checksummed just before the packet
