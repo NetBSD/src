@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/09/22 01:08:42 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1998/09/25 00:34:37 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,16 +63,12 @@ unconfig:
 ${CRUNCHFILES}:	${CRUNCHCONF}
 	if ${CRUNCHCMD}; then exit 0; else rm -f ${CRUNCHFILES}; exit 1; fi
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk	\
 		${CBIN}.cache *.o *.lo *.c .tmp_md_install*
-
-# libhack is listed in rd_bin.conf but is built here.
-HACKSRC=${TOP}/../../utils/libhack
-.include "${HACKSRC}/Makefile.inc"
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
