@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.33 1996/09/30 08:11:23 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.34 1996/10/11 19:58:43 mhitch Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -103,7 +103,7 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dc
-file	arch/pmax/dev/dc.c		dc
+file	arch/pmax/dev/dc.c		dc needs-flag
 attach dc at ioasic with dc_ioasic
 file	arch/pmax/dev/dc_ioasic.c	dc_ioasic
 attach dc at mainbus with dc_ds
