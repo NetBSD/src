@@ -1,15 +1,15 @@
-# $NetBSD: mi,v 1.59 2001/01/24 08:22:13 jwise Exp $
+# $NetBSD: mi,v 1.60 2001/01/24 08:47:06 jwise Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
 ./usr/share/dict/web2				misc-reference-share
 ./usr/share/dict/web2a				misc-reference-share
 ./usr/share/dict/words				misc-reference-share
-./usr/share/doc/html/bzip2/manual_1.html	misc-utils-htmldoc
-./usr/share/doc/html/bzip2/manual_2.html	misc-utils-htmldoc
-./usr/share/doc/html/bzip2/manual_3.html	misc-utils-htmldoc
-./usr/share/doc/html/bzip2/manual_4.html	misc-utils-htmldoc
-./usr/share/doc/html/bzip2/manual_toc.html	misc-utils-htmldoc
+./usr/share/doc/html/bzip2/manual_1.html	misc-util-htmldoc
+./usr/share/doc/html/bzip2/manual_2.html	misc-util-htmldoc
+./usr/share/doc/html/bzip2/manual_3.html	misc-util-htmldoc
+./usr/share/doc/html/bzip2/manual_4.html	misc-util-htmldoc
+./usr/share/doc/html/bzip2/manual_toc.html	misc-util-htmldoc
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/accopt.htm		misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/assoc.htm		misc-ntp-htmldoc
@@ -405,16 +405,16 @@
 ./usr/share/examples/postfix/sample-virtual.cf		misc-postfix-examples
 ./usr/share/examples/postfix/transport			misc-postfix-examples
 ./usr/share/examples/postfix/virtual			misc-postfix-examples
-./usr/share/examples/racoon/psk.txt.sample		misc-ipsec-examples
-./usr/share/examples/racoon/racoon.conf.sample		misc-ipsec-examples
-./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-ipsec-examples
+./usr/share/examples/racoon/psk.txt.sample		misc-netutil-examples
+./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples
+./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples
 ./usr/share/examples/rtadvd/rtadvd.conf			misc-router-examples
 ./usr/share/examples/supfiles/ftp.cs.umn.edu		misc-sup-examples
 ./usr/share/examples/supfiles/sup.au.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.jp.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.uk.netbsd.org		misc-sup-examples
-./usr/share/examples/syslogd/all.debug			misc-utils-examples
+./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
 ./usr/share/sendmail/cf/Makefile			misc-sendmail-share
