@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.45 2002/06/07 22:06:48 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.46 2002/06/07 22:07:38 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.45 2002/06/07 22:06:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.46 2002/06/07 22:07:38 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -609,7 +609,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
-				    (struct ifnet *)control, p));
+		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
 		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
@@ -714,8 +714,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		if (ia &&
-		    ((struct in6_ifaddr *)ia)->ia6_flags &
+		if (ia && ((struct in6_ifaddr *)ia)->ia6_flags &
 		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
 		     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
 			error = EADDRNOTAVAIL;
@@ -753,7 +752,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			sin6 = *addr;
 			addr = &sin6;
 			addr->sin6_scope_id =
-				scope6_addr2default(&addr->sin6_addr);
+			    scope6_addr2default(&addr->sin6_addr);
 		}
 #endif
 
@@ -802,7 +801,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			tmp.sin6_family = AF_INET6;
 			tmp.sin6_len = sizeof(struct sockaddr_in6);
 			bcopy(&in6p->in6p_faddr, &tmp.sin6_addr,
-				sizeof(struct in6_addr));
+			    sizeof(struct in6_addr));
 			dst = &tmp;
 		} else {
 			if (nam == NULL) {
