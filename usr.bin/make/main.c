@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2001/12/11 20:50:58 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.81 2001/12/11 20:50:58 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.81 2001/12/11 20:50:58 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -835,7 +835,7 @@ main(argc, argv)
 	 * <directory>:<directory>:<directory>...
 	 */
 	if (Var_Exists("VPATH", VAR_CMD)) {
-		char *vpath, *path, *cp, savec;
+		char *vpath, savec;
 		/*
 		 * GCC stores string constants in read-only memory, but
 		 * Var_Subst will want to write this thing, so store it
@@ -1046,7 +1046,7 @@ Check_Cwd_av(ac, av, copy)
      int copy;
 {
     static char *make[4];
-    static char *curdir = NULL;
+    static char *cur_dir = NULL;
     char *cp, **mp;
     int is_cmd, next_cmd;
     int i;
@@ -1068,7 +1068,7 @@ Check_Cwd_av(ac, av, copy)
         } else
             ++make[0];
         make[2] = NULL;
-        curdir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
+        cur_dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
     }
     if (ac == 0 || av == NULL)
         return NULL;			/* initialization only */
@@ -1135,9 +1135,9 @@ Check_Cwd_av(ac, av, copy)
 		if (strcmp(cp, *mp) == 0) {
 #ifdef check_cwd_debug
 		    fprintf(stderr, " %s == '%s', chdir(%s)\n",
-			    cp, *mp, curdir);
+			    cp, *mp, cur_dir);
 #endif
-		    return curdir;
+		    return cur_dir;
 		}
 	    }
 	}
