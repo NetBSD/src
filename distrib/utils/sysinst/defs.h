@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.120 2004/11/11 21:24:40 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.121 2005/01/20 21:59:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -301,7 +301,7 @@ int	getpartoff(int);
 int	getpartsize(int, int);
 void	set_bsize(partinfo *, int);
 void	set_fsize(partinfo *, int);
-void	set_ptype(partinfo *, int, int, int);
+void	set_ptype(partinfo *, int, int);
 
 /* from install.c */
 void	do_install(void);
