@@ -80,10 +80,10 @@
 	pushl	%ecx ; \
 	pushl	%edx ; \
 	pushl	%ds ; \
-	pushl	%es ; \
+	/* pushl	%es ; know compiler doesn't do string insns */ \
 	movl	$KDSEL,%eax ; \
 	movl	%ax,%ds ; \
-	movl	%ax,%es ; \
+	/* movl	%ax,%es ; */ \
 	SHOW_CLI ;		/* although it interferes with "ASAP" */ \
 	pushl	$unit ; \
 	call	handler ;	/* do the work ASAP */ \
@@ -92,7 +92,7 @@
 	incl	_cnt+V_INTR ;	/* book-keeping can wait */ \
 	COUNT_EVENT(_intrcnt_actv, id_num) ; \
 	SHOW_STI ; \
-	popl	%es ; \
+	/* popl	%es ; */ \
 	popl	%ds ; \
 	popl	%edx; \
 	popl	%ecx; \
