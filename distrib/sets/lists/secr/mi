@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2000/04/14 23:00:26 thorpej Exp $
+# $NetBSD: mi,v 1.22 2000/05/02 12:46:07 simonb Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./sbin/init
@@ -165,8 +165,6 @@
 ./usr/lib/libkrb5_p.a
 ./usr/lib/libkstream.a
 ./usr/lib/libkstream_p.a
-./usr/lib/libntp.a
-./usr/lib/libntp_p.a
 ./usr/lib/libprofile.a
 ./usr/lib/libprofile_p.a
 ./usr/lib/libss.a
@@ -193,7 +191,6 @@
 ./usr/libdata/lint/llib-lkrb.ln
 ./usr/libdata/lint/llib-lkrb5.ln
 ./usr/libdata/lint/llib-lkstream.ln
-./usr/libdata/lint/llib-lntp.ln
 ./usr/libdata/lint/llib-lprofile.ln
 ./usr/libdata/lint/llib-lss.ln
 ./usr/libdata/lint/llib-lssl.ln
