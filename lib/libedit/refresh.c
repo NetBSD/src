@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.13 2000/02/19 09:08:16 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.14 2000/03/13 22:59:22 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.13 2000/02/19 09:08:16 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.14 2000/03/13 22:59:22 soren Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -643,7 +643,7 @@ re_update_line(el, old, new, i)
      * ^.....................^     ^..................^       ^........^
      * \new                  \nfd  \nsb               \nse     \nls    \ne
      *
-     * fx is the difference in length between the the chars between nfd and
+     * fx is the difference in length between the chars between nfd and
      * nsb, and the chars between ofd and osb, and is thus the number of
      * characters to delete if < 0 (new is shorter than old, as above),
      * or insert (new is longer than short).

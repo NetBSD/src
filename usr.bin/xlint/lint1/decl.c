@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.15 1998/07/27 13:50:46 mycroft Exp $	*/
+/*	$NetBSD: decl.c,v 1.16 2000/03/13 23:22:53 soren Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -1769,7 +1769,7 @@ compltag(tp, fmem)
  *
  * sym points to the enumerator
  * val is the value of the enumerator
- * impl is 1 if the the value of the enumerator was not explicit specified.
+ * impl is 1 if the value of the enumerator was not explicit specified.
  */
 sym_t *
 ename(sym, val, impl)

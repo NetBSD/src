@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.9 2000/01/11 20:33:21 is Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.10 2000/03/13 23:22:50 soren Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -322,7 +322,7 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 	/* Initialize the table pointer... */
 	nsp = newstrings;
 
-	/* Go the the start of the ELF symbol table... */
+	/* Go the start of the ELF symbol table... */
 	if (lseek(in, symoff, SEEK_SET) < 0) {
 		perror("translate_syms: lseek");
 		exit(1);

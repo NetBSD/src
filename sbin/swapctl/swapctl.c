@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.12 2000/03/05 11:35:22 lukem Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.13 2000/03/13 22:59:22 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -31,7 +31,7 @@
 /*
  * swapctl command:
  *	-A		add all devices listed as `sw' in /etc/fstab (also
- *			(sets the the dump device, if listed in fstab)
+ *			(sets the dump device, if listed in fstab)
  *	-D <dev>	set dumpdev to <dev>
  *	-U		remove all devices listed as `sw' in /etc/fstab.
  *	-t [blk|noblk]	if -A or -U , add (remove) either all block device
