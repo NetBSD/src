@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.8 1994/07/10 16:55:57 briggs Exp $
+ * $Id: ser.c,v 1.9 1994/07/21 00:52:47 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -196,42 +196,65 @@ static unsigned char ser_1_init_bytes[]={
 
 extern int matchbyname();
 
+extern void
+serinit(void)
+{
+static	int initted=0;
+	int bcount;
+	int i, s, spd;
+
+	/*
+	 * Should not be called twice, but we are paranoid.
+	 */
+	if (initted++)
+		return;
+
+	sccA = IOBase + sccA;
+
+	spd = SERBRD(19200);
+
+	s = splhigh();
+
+	/*
+	 * initialize port 0, substituting proper speed.
+	 */
+	bcount = sizeof(ser_0_init_bytes);
+	for(i = 0; i < bcount; i += 2){
+		if (ser_0_init_bytes[i] == 12)	/* baud rate low byte */
+			ser_0_init_bytes[i+1] = (spd & 0xff);
+		if (ser_0_init_bytes[i] == 13)	/* baud rate high byte */
+			ser_0_init_bytes[i+1] = ((spd>>8) & 0xff);
+		SER_DOCNTL(0, ser_0_init_bytes[i], ser_0_init_bytes[i + 1]);
+	}
+
+	/*
+	 * initialize port 1, substituting proper speed.
+	 */
+	bcount = sizeof(ser_1_init_bytes);
+	for(i = 0; i < bcount; i += 2){
+		if (ser_1_init_bytes[i] == 12)	/* baud rate low byte */
+			ser_1_init_bytes[i+1] = (spd & 0xff);
+		if (ser_1_init_bytes[i] == 13)	/* baud rate high byte */
+			ser_1_init_bytes[i+1] = ((spd>>8) & 0xff);
+		SER_DOCNTL(1, ser_1_init_bytes[i], ser_1_init_bytes[i + 1]);
+	}
+
+	splx(s);
+}
+
 static void
 serattach(parent, dev, aux)
 	struct device	*parent, *dev;
 	void		*aux;
 {
 extern	int serial_boot_echo;
-static	int initted=0;
-	int bcount;
-	int i, s;
 
 	printf("\n");
 	if (serial_boot_echo) {
 		printf("(serial boot echo is on)\n");
 	}
 
-	if (!initted++) {
-		sccA = IOBase + sccA;
-	}
-
-	SER_DOCNTL(0, 9, 0xc0);	/* force hardware reset */
-
-	s = splhigh();
-
-	/* initialize port 0 */
-	bcount = sizeof(ser_0_init_bytes);
-	for(i = 0; i < bcount; i += 2){
-		SER_DOCNTL(0, ser_0_init_bytes[i], ser_0_init_bytes[i + 1]);
-	}
-
-	/* initialize port 1 */
-	bcount = sizeof(ser_1_init_bytes);
-	for(i = 0; i < bcount; i += 2){
-		SER_DOCNTL(1, ser_1_init_bytes[i], ser_1_init_bytes[i + 1]);
-	}
-
-	splx(s);
+	serinit();
 }
 
 struct cfdriver sercd =
