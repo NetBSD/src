@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.39 2003/08/03 18:45:46 jdolecek Exp $	*/
+/*	$NetBSD: twe.c,v 1.40 2003/09/21 18:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.39 2003/08/03 18:45:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.40 2003/09/21 18:35:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,83 @@ extern struct	cfdriver twe_cd;
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
+
+/*
+ * Tables to convert numeric codes to strings.
+ */
+const struct twe_code_table twe_table_status[] = {
+	{ 0x00,	"successful completion" },
+
+	/* info */
+	{ 0x42,	"command in progress" },
+	{ 0x6c,	"retrying interface CRC error from UDMA command" },
+
+	/* warning */
+	{ 0x81,	"redundant/inconsequential request ignored" },
+	{ 0x8e,	"failed to write zeroes to LBA 0" },
+	{ 0x8f,	"failed to profile TwinStor zones" },
+
+	/* fatal */
+	{ 0xc1,	"aborted due to system command or reconfiguration" },
+	{ 0xc4,	"aborted" },
+	{ 0xc5,	"access error" },
+	{ 0xc6,	"access violation" },
+	{ 0xc7,	"device failure" },	/* high byte may be port # */
+	{ 0xc8,	"controller error" },
+	{ 0xc9,	"timed out" },
+	{ 0xcb,	"invalid unit number" },
+	{ 0xcf,	"unit not available" },
+	{ 0xd2,	"undefined opcode" },
+	{ 0xdb,	"request incompatible with unit" },
+	{ 0xdc,	"invalid request" },
+	{ 0xff,	"firmware error, reset requested" },
+
+	{ 0,	NULL }
+};
+
+const struct twe_code_table twe_table_unitstate[] = {
+	{ TWE_PARAM_UNITSTATUS_Normal,		"Normal" },
+	{ TWE_PARAM_UNITSTATUS_Initialising,	"Initializing" },
+	{ TWE_PARAM_UNITSTATUS_Degraded,	"Degraded" },
+	{ TWE_PARAM_UNITSTATUS_Rebuilding,	"Rebuilding" },
+	{ TWE_PARAM_UNITSTATUS_Verifying,	"Verifying" },
+	{ TWE_PARAM_UNITSTATUS_Corrupt,		"Corrupt" },
+	{ TWE_PARAM_UNITSTATUS_Missing,		"Missing" },
+
+	{ 0,					NULL }
+};
+
+const struct twe_code_table twe_table_unittype[] = {
+	/* array descriptor configuration */
+	{ TWE_AD_CONFIG_RAID0,			"RAID0" },
+	{ TWE_AD_CONFIG_RAID1,			"RAID1" },
+	{ TWE_AD_CONFIG_TwinStor,		"TwinStor" },
+	{ TWE_AD_CONFIG_RAID5,			"RAID5" },
+	{ TWE_AD_CONFIG_RAID10,			"RAID10" },
+
+	{ 0,					NULL }
+};
+
+const struct twe_code_table twe_table_stripedepth[] = {
+	{ TWE_AD_STRIPE_4k,			"4K" },
+	{ TWE_AD_STRIPE_8k,			"8K" },
+	{ TWE_AD_STRIPE_16k,			"16K" },
+	{ TWE_AD_STRIPE_32k,			"32K" },
+	{ TWE_AD_STRIPE_64k,			"64K" },
+
+	{ 0,					NULL }
+};
+
+const char *
+twe_describe_code(const struct twe_code_table *table, uint32_t code)
+{
+
+	for (; table->string != NULL; table++) {
+		if (table->code == code)
+			return (table->string);
+	}
+	return (NULL);
+}
 
 struct {
 	const u_int	aen;	/* High byte indicates type of message */
@@ -242,6 +319,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
 	SLIST_INIT(&sc->sc_ccb_freelist);
 
+	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Escalade\n");
 
 	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
