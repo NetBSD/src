@@ -1,4 +1,4 @@
-/*	$NetBSD: cchar.c,v 1.12 1998/07/28 11:40:57 mycroft Exp $	*/
+/*	$NetBSD: cchar.c,v 1.13 1998/07/28 11:51:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cchar.c,v 1.12 1998/07/28 11:40:57 mycroft Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.13 1998/07/28 11:51:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,9 +112,10 @@ csearch(argvp, ip)
 
 	tmp.name = name;
 	if (!(cp = (struct cchar *)bsearch(&tmp, cchars1,
-	    sizeof(cchars1)/sizeof(struct cchar) - 1, sizeof(struct cchar),
-	    c_cchar)) && !(cp = (struct cchar *)bsearch(&tmp, cchars1,
-	    sizeof(cchars1)/sizeof(struct cchar) - 1, sizeof(struct cchar),
+	    sizeof(cchars1)/sizeof(cchars1[0]) - 1, sizeof(cchars1[0]),
+	    c_cchar)) &&
+	    !(cp = (struct cchar *)bsearch(&tmp, cchars2,
+	    sizeof(cchars2)/sizeof(cchars2[0]) - 1, sizeof(cchars2[0]),
 	    c_cchar)))
 		return (0);
 
