@@ -1,4 +1,6 @@
-/* $Id: oakley.c,v 1.1.1.1 2005/02/12 11:12:42 manu Exp $ */
+/*	$NetBSD: oakley.c,v 1.1.1.2 2005/02/23 14:54:23 manu Exp $	*/
+
+/* Id: oakley.c,v 1.17 2005/01/30 20:34:05 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
