@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.2 1999/06/21 01:47:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.3 1999/07/04 02:00:33 chs Exp $	*/
 
 /*
  *
@@ -883,7 +883,7 @@ ReFault:
 		/* locked: maps(read), amap (if there), uobj */
 		result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
 				    centeridx, fault_type, access_type,
-				    PGO_LOCKED);
+				    PGO_LOCKED|PGO_SYNCIO);
 
 		/* locked: nothing, pgo_fault has unlocked everything */
 		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
@@ -1341,7 +1341,8 @@ Case2:
 		gotpages = 1;
 		uoff = (ufi.orig_rvaddr - ufi.entry->start) + ufi.entry->offset;
 		result = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
-		    0, access_type & MASK(ufi.entry), ufi.entry->advice, 0);
+		    0, access_type & MASK(ufi.entry), ufi.entry->advice,
+		    PGO_SYNCIO);
 
 		/* locked: uobjpage(if result OK) */
 		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
