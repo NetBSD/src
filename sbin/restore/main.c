@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1997/07/06 08:51:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.14 1997/07/06 08:51:30 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $";
 #include "restore.h"
 #include "extern.h"
 
+extern char *__progname;	/* from crt0.o */
+
 int	bflag = 0, cvtflag = 0, dflag = 0, vflag = 0, yflag = 0;
 int	hflag = 1, mflag = 1, Nflag = 0;
 char	command = '\0';
@@ -78,8 +80,6 @@ time_t	dumptime;
 time_t	dumpdate;
 FILE 	*terminal;
 char	*tmpdir;
-uid_t	uid;		/* real uid */
-uid_t	euid;		/* effective uid */
 
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
@@ -94,10 +94,6 @@ main(argc, argv)
 	char *inputdev;
 	char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
-
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
 
 	if (argc < 2)
 		usage();
@@ -291,11 +287,21 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: restore -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n");
-	(void)fprintf(stderr, "       restore -R [-cvy] [-b blocksize] [-f file] [-s fileno]\n");
-	(void)fprintf(stderr, "       restore -r [-cvy] [-b blocksize] [-f file] [-s fileno]\n");
-	(void)fprintf(stderr, "       restore -t [-chvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n");
-	(void)fprintf(stderr, "       restore -x [-chmvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n");
+	(void)fprintf(stderr,
+	    "usage: %s -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    __progname);
+	(void)fprintf(stderr,
+	    "\t%s -R [-cvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    __progname);
+	(void)fprintf(stderr,
+	    "\t%s -r [-cvy] [-b blocksize] [-f file] [-s fileno]\n",
+	    __progname);
+	(void)fprintf(stderr,
+	    "\t%s -t [-chvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
+	    __progname);
+	(void)fprintf(stderr,
+	    "\t%s -x [-chmvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -363,7 +369,8 @@ obsolete(argcp, argvp)
 	}
 
 	/* Copy remaining arguments. */
-	while (*nargv++ = *argv++);
+	while ((*nargv++ = *argv++) != NULL)
+		;
 
 	/* Update argument count. */
 	*argcp = nargv - *argvp - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.10 1997/07/04 21:48:39 pk Exp $	*/
+/*	$NetBSD: restore.c,v 1.11 1997/07/06 08:51:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.10 1997/07/04 21:48:39 pk Exp $";
+static char rcsid[] = "$NetBSD: restore.c,v 1.11 1997/07/06 08:51:31 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ removeoldleaves()
 	ino_t i, mydirino;
 
 	vprintf(stdout, "Mark entries to be removed.\n");
-	if (ep = lookupino(WINO)) {
+	if ((ep = lookupino(WINO)) != NULL) {
 		vprintf(stdout, "Delete whiteouts\n");
 		for ( ; ep != NULL; ep = nextep) {
 			nextep = ep->e_links;
@@ -779,7 +779,7 @@ createlinks()
 	ino_t i;
 	char name[BUFSIZ];
 
-	if (ep = lookupino(WINO)) {
+	if ((ep = lookupino(WINO)) != NULL) {
 		vprintf(stdout, "Add whiteouts\n");
 		for ( ; ep != NULL; ep = ep->e_links) {
 			if ((ep->e_flags & NEW) == 0)

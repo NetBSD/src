@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.27 1997/07/06 08:51:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.27 1997/07/06 08:51:28 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $";
 #include <ufs/ufs/dir.h>
 #include <protocols/dumprestore.h>
 
+#include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>
@@ -152,10 +153,10 @@ extractdirs(genmode)
 
 	vprintf(stdout, "Extract directories from tape\n");
 	(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d",
-	    tmpdir, dumpdate);
+	    tmpdir, (int)dumpdate);
 	if (command != 'r' && command != 'R') {
 		(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d-XXXXXX",
-		    tmpdir, dumpdate);
+		    tmpdir, (int)dumpdate);
 		if ((dfd = mkstemp(dirfile)) == -1)
 			err(1, "cannot mkstemp temporary file %s", dirfile);
 		df = fdopen(dfd, "w");
@@ -167,10 +168,10 @@ extractdirs(genmode)
 
 	if (genmode != 0) {
 		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    tmpdir, dumpdate);
+		    tmpdir, (int)dumpdate);
 		if (command != 'r' && command != 'R') {
 			(void) snprintf(modefile, sizeof(modefile),
-			    "%s/rstmode%d-XXXXXX", tmpdir, dumpdate);
+			    "%s/rstmode%d-XXXXXX", tmpdir, (int)dumpdate);
 			if ((mfd = mkstemp(modefile)) == -1)
 				err(1, "cannot mkstemp temporary file %s",
 				    modefile);
@@ -475,7 +476,8 @@ rst_seekdir(dirp, loc, base)
 		return;
 	loc -= base;
 	if (loc < 0)
-		fprintf(stderr, "bad seek pointer to rst_seekdir %d\n", loc);
+		fprintf(stderr, "bad seek pointer to rst_seekdir %d\n",
+		    (int)loc);
 	(void) lseek(dirp->dd_fd, base + (loc & ~(DIRBLKSIZ - 1)), SEEK_SET);
 	dirp->dd_loc = loc & (DIRBLKSIZ - 1);
 	if (dirp->dd_loc != 0)
@@ -603,7 +605,7 @@ setdirmodes(flags)
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
 		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    tmpdir, dumpdate);
+		    tmpdir, (int)dumpdate);
 	if (modefile[0] == '#') {
 		panic("modefile not defined\n");
 		fprintf(stderr, "directory mode, owner, and times not set\n");

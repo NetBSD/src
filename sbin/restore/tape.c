@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.27 1997/07/06 08:51:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.27 1997/07/06 08:51:32 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,6 @@ static int	pathlen;
 int		oldinofmt;	/* old inode format conversion required */
 int		Bcvt;		/* Swap Bytes (for CCI or sun) */
 static int	Qcvt;		/* Swap quads (for sun) */
-
-extern	uid_t uid;		/* real uid */
-extern	uid_t euid;		/* effective uid */
 
 #define	FLUSHTAPEBUF()	blkcnt = ntrec + 1
 
@@ -154,7 +151,6 @@ setinput(source)
 		}
 		pipein++;
 	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 	(void) strcpy(magtape, source);
 }
 
