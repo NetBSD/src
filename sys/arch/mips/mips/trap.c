@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.2.5 1998/11/16 10:41:34 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.6 1998/11/20 15:02:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.5 1998/11/16 10:41:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.6 1998/11/20 15:02:06 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -851,7 +851,7 @@ interrupt(status, cause, pc)
 	/* simulated interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
 		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
-		register isr, sisr;
+		register int isr, sisr;
 		isr = netisr; netisr = 0;
 		sisr = softisr; softisr = 0;
 		clearsoftnet();
