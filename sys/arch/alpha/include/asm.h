@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.15 1997/04/14 07:31:03 cgd Exp $ */
+/* $NetBSD: asm.h,v 1.15.4.1 1997/09/01 20:00:19 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -549,9 +549,11 @@ label:	ASCIZ msg;						\
 
 /* Common PAL function codes. */
 #define	PAL_halt		0x0000			/* P */
+#define	PAL_cflush		0x0001			/* P */
 #define	PAL_draina		0x0002			/* P */
 #define	PAL_cserve		0x0009			/* P */
 #define	PAL_swppal		0x000a			/* P */
+#define	PAL_ipir		0x000d			/* P */
 #define	PAL_bpt			0x0080			/* U */
 #define	PAL_bugchk		0x0081			/* U */
 #define	PAL_imb			0x0086			/* U */
@@ -596,6 +598,7 @@ label:	ASCIZ msg;						\
 #define	PAL_OSF1_rdps		0x0036			/* P */
 #define	PAL_OSF1_wrkgp		0x0037			/* P */
 #define	PAL_OSF1_wrusp		0x0038			/* P */
+#define	PAL_OSF1_wrperfmon	0x0039			/* P */
 #define	PAL_OSF1_rdusp		0x003a			/* P */
 #define	PAL_OSF1_whami		0x003c			/* P */
 #define	PAL_OSF1_retsys		0x003d			/* P */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.17 1997/04/07 23:40:02 cgd Exp $ */
+/* $NetBSD: pmap.old.c,v 1.17.2.1 1997/09/01 20:00:16 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -99,7 +99,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.17 1997/04/07 23:40:02 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.17.2.1 1997/09/01 20:00:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
