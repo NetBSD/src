@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/04 04:57:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.10 2001/10/05 01:19:43 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -29,7 +29,7 @@ CRUNCHGEN?=	crunchgen
 RAMDISKSPC=	165
 RAMDISKCYLS=	16
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
-DBG=-Os
+DBG?=-Os
 
 realall: ${IMAGE}
 
