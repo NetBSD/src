@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.40 2001/12/05 00:58:06 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.41 2001/12/06 00:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2001/12/05 00:58:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2001/12/06 00:01:36 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -99,6 +99,41 @@ process_fpframe(struct proc *p)
 	return (&p->p_addr->u_pcb.pcb_savefpu);
 }
 
+static int
+xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
+{
+	static const uint8_t empty_significand[8] = { 0 };
+	int tag;
+	uint16_t exponent;
+
+	if (tw & (1U << regno)) {
+		exponent = fpac[8] | (fpac[9] << 8);
+		switch (exponent) {
+		case 0x7fff:
+			tag = 2;
+			break;
+
+		case 0x0000:
+			if (memcmp(empty_significand, fpac,
+				   sizeof(empty_significand)) == 0)
+				tag = 1;
+			else
+				tag = 2;
+			break;
+
+		default:
+			if ((fpac[7] & 0x80) == 0)
+				tag = 2;
+			else
+				tag = 0;
+			break;
+		}
+	} else
+		tag = 3;
+
+	return (tag);
+}
+
 void
 process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
 {
@@ -115,16 +150,16 @@ process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
 	s87->sv_env.en_fos = sxmm->sv_env.en_fos;
 
 	/* Tag word and registers. */
+	s87->sv_env.en_tw = 0;
+	s87->sv_ex_tw = 0;
 	for (i = 0; i < 8; i++) {
-		if (sxmm->sv_env.en_tw & (1U << i))
-			s87->sv_env.en_tw &= ~(3U << (i * 2));
-		else
-			s87->sv_env.en_tw |= (3U << (i * 2));
+		s87->sv_env.en_tw |=
+		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
+		     sxmm->sv_env.en_tw) << (i * 2));
 
-		if (sxmm->sv_ex_tw & (1U << i))
-			s87->sv_ex_tw &= ~(3U << (i * 2));
-		else
-			s87->sv_ex_tw |= (3U << (i * 2));
+		s87->sv_ex_tw |=
+		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
+		     sxmm->sv_ex_tw) << (i * 2));
 
 		memcpy(&s87->sv_ac[i].fp_bytes, &sxmm->sv_ac[i].fp_bytes,
 		    sizeof(s87->sv_ac[i].fp_bytes));
@@ -155,10 +190,16 @@ process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
 		else
 			sxmm->sv_env.en_tw |= (1U << i);
 
+#if 0
+		/*
+		 * Software-only word not provided by the userland fpreg
+		 * structure.
+		 */
 		if (((s87->sv_ex_tw >> (i * 2)) & 3) == 3)
 			sxmm->sv_ex_tw &= ~(1U << i);
 		else
 			sxmm->sv_ex_tw |= (1U << i);
+#endif
 
 		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
 		    sizeof(sxmm->sv_ac[i].fp_bytes));
