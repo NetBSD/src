@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.9 1997/07/13 20:26:51 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.10 1997/09/05 02:11:57 jtc Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -29,7 +29,7 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	privatehid[] = "@(#)private.h	7.45";
+static char	privatehid[] = "@(#)private.h	7.46";
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -191,7 +191,7 @@ char *	imalloc P((int n));
 void *	irealloc P((void * pointer, int size));
 void	icfree P((char * pointer));
 void	ifree P((char * pointer));
-char *  scheck P((const char *string, char *format));
+char *	scheck P((const char *string, const char *format));
 
 
 /*
