@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.14 1997/03/10 06:18:28 mycroft Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.15 1997/06/11 10:09:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -127,7 +127,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		ip->i_blocks += btodb(size);
+		ip->i_ffs_blocks += btodb(size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);
@@ -181,7 +181,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 #endif /* DIAGNOSTIC */
 	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
-	if ((bprev = ip->i_db[lbprev]) == 0) {
+	if ((bprev = ip->i_ffs_db[lbprev]) == 0) {
 		printf("dev = 0x%x, bsize = %d, bprev = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
@@ -206,7 +206,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	if ((bno = ffs_fragextend(ip, cg, (long)bprev, osize, nsize)) != 0) {
 		if (bp->b_blkno != fsbtodb(fs, bno))
 			panic("bad blockno");
-		ip->i_blocks += btodb(nsize - osize);
+		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		allocbuf(bp, nsize);
 		bp->b_flags |= B_DONE;
@@ -271,7 +271,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		if (nsize < request)
 			ffs_blkfree(ip, bno + numfrags(fs, nsize),
 			    (long)(request - nsize));
-		ip->i_blocks += btodb(nsize - osize);
+		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		allocbuf(bp, nsize);
 		bp->b_flags |= B_DONE;
@@ -367,7 +367,7 @@ ffs_reallocblks(v)
 	 * Get the starting offset and block map for the first block.
 	 */
 	if (start_lvl == 0) {
-		sbap = &ip->i_db[0];
+		sbap = &ip->i_ffs_db[0];
 		soff = start_lbn;
 	} else {
 		idp = &start_ap[start_lvl - 1];
@@ -443,7 +443,7 @@ ffs_reallocblks(v)
 	 * We can then check below to see if it is set, and do the
 	 * synchronous write only when it has been cleared.
 	 */
-	if (sbap != &ip->i_db[0]) {
+	if (sbap != &ip->i_ffs_db[0]) {
 		if (doasyncfree)
 			bdwrite(sbp);
 		else
@@ -487,7 +487,7 @@ ffs_reallocblks(v)
 fail:
 	if (ssize < len)
 		brelse(ebp);
-	if (sbap != &ip->i_db[0])
+	if (sbap != &ip->i_ffs_db[0])
 		brelse(sbp);
 	return (ENOSPC);
 }
@@ -547,21 +547,21 @@ ffs_valloc(v)
 		return (error);
 	}
 	ip = VTOI(*ap->a_vpp);
-	if (ip->i_mode) {
+	if (ip->i_ffs_mode) {
 		printf("mode = 0%o, inum = %d, fs = %s\n",
-		    ip->i_mode, ip->i_number, fs->fs_fsmnt);
+		    ip->i_ffs_mode, ip->i_number, fs->fs_fsmnt);
 		panic("ffs_valloc: dup alloc");
 	}
-	if (ip->i_blocks) {				/* XXX */
+	if (ip->i_ffs_blocks) {				/* XXX */
 		printf("free inode %s/%d had %d blocks\n",
-		    fs->fs_fsmnt, ino, ip->i_blocks);
-		ip->i_blocks = 0;
+		    fs->fs_fsmnt, ino, ip->i_ffs_blocks);
+		ip->i_ffs_blocks = 0;
 	}
-	ip->i_flags = 0;
+	ip->i_ffs_flags = 0;
 	/*
 	 * Set up a new generation number for this inode.
 	 */
-	ip->i_gen++;
+	ip->i_ffs_gen++;
 	return (0);
 noinodes:
 	ffs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");
@@ -1227,7 +1227,7 @@ ffs_blkfree(ip, bno, size)
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
 		printf("bad block %d, ino %d\n", bno, ip->i_number);
-		ffs_fserr(fs, ip->i_uid, "bad block");
+		ffs_fserr(fs, ip->i_ffs_uid, "bad block");
 		return;
 	}
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
