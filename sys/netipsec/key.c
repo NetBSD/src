@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.10 2004/03/17 00:17:45 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.10 2004/03/17 00:17:45 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3752,7 +3752,15 @@ key_ismyaddr6(sin6)
 		 * XXX scope
 		 */
 		in6m = NULL;
+#ifdef __FreeBSD__
 		IN6_LOOKUP_MULTI(sin6->sin6_addr, ia->ia_ifp, in6m);
+#else
+		for ((in6m) = ia->ia6_multiaddrs.lh_first;
+		     (in6m) != NULL &&
+		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &sin6->sin6_addr);
+		     (in6m) = in6m->in6m_entry.le_next)
+			continue;
+#endif
 		if (in6m)
 			return 1;
 	}
