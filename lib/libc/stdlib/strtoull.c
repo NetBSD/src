@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoull.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
+/*	$NetBSD: strtoull.c,v 1.3 2000/05/02 12:39:03 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoull.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.3 2000/05/02 12:39:03 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,6 +74,11 @@ strtoull(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
+
+#ifdef __GNUC__
+	/* This outrageous construct works around an arm32 compiler bug. */
+	(void) &acc;
+#endif
 
 	/*
 	 * See strtol for comments as to the logic used.
