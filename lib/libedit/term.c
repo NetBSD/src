@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $	*/
+/*	$NetBSD: term.c,v 1.18 1999/10/04 23:24:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $");
+__RCSID("$NetBSD: term.c,v 1.18 1999/10/04 23:24:04 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1142,11 +1142,11 @@ term_bind_arrow(el)
 /* term__putc():
  *	Add a character
  */
-protected void
+protected int
 term__putc(c)
     int c;
 {
-    (void) fputc(c, term_outfile);
+    return fputc(c, term_outfile);
 } /* end term__putc */
 
 
