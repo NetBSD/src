@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.39 2003/09/06 23:52:25 mbw Exp $
+.\"	$NetBSD: xfer,v 1.39.2.1 2004/06/15 22:49:15 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -492,10 +492,10 @@ Installation is supported from several media types, including:
 .
 CD-ROM
 .
-.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[vax]:\n[x68k] \{\
+.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It
 .Tn MS-DOS No floppy
-.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
+.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k]
 .
 .It
 FTP
@@ -580,7 +580,7 @@ Find out where the distribution set files are on the CD-ROM.
 .Pp
 Proceed to the instruction on installation.
 .
-.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[vax]:\n[x68k] \{\
+.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It Em MS-DOS floppy
 Count the number of
 .Pa set_name. Ns Ar xx
@@ -628,7 +628,7 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
-.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[vax]:\n[x68k]
+.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k]
 .
 .It Em FTP
 The preparations for this installation/upgrade method are
@@ -649,11 +649,13 @@ Finally, you need to know the numeric IP address of the
 .Nx
 machine itself.
 If you don't have access to a functioning nameserver during
-installation, the IP address of
+installation, the IPv4 address of
 .Sy ftp.NetBSD.org
 is
 .Li 204.152.184.75
-(as of June, 2002).
+and the IPv6 address is
+.Li 2001:4f8:4:7:2e0:81ff:fe21:6563
+(as of June, 2004).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
@@ -818,7 +820,7 @@ To do that, you must do the following:
 .Pp
 Place the distribution sets you wish to upgrade somewhere in
 your current file system tree.
-.if !\n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.if !\n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 Please note that the
 .Pa /dev
 on the floppy used for upgrades only knows about
@@ -830,7 +832,7 @@ and
 .Li sd2 .
 If you have more than two IDE drives or more than three SCSI drives, you
 should take care not to place the sets on the high-numbered drives.
-.\} \" ! \n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]
+.\} \" ! \n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]
 .Pp
 At a bare minimum, you must upgrade the
 .Sy base
