@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.4 1998/07/23 09:59:44 drochner Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.5 1998/10/15 15:28:22 ws Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -45,8 +45,13 @@
 #include "biosdisk_ll.h"
 #include "diskbuf.h"
 
+extern long ourseg;
+
 extern int get_diskinfo __P((int));
+extern int int13_extension __P((int));
 extern int biosread __P((int, int, int, int, int, char *));
+extern int biosextread __P((int, void *));
+static int do_read __P((struct biosdisk_ll *, int, int, char *));
 
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
@@ -62,6 +67,10 @@ set_geometry(d)
 	int             diskinfo;
 
 	diskinfo = get_diskinfo(d->dev);
+
+	d->flags = 0;
+	if ((d->dev&0x80) && int13_extension(d->dev))
+		d->flags |= BIOSDISK_EXT13;
 
 	d->spc = (d->spt = SPT(diskinfo)) * HEADS(diskinfo);
 
@@ -82,6 +91,51 @@ static int      ra_dev;
 static int      ra_end;
 static int      ra_first;
 
+static int
+do_read(d, dblk, num, buf)
+	struct		biosdisk_ll *d;
+	int		dblk, num;
+	char	       *buf;
+{
+	int		cyl, head, sec, nsec;
+	struct {
+		int8_t	size;
+		int8_t	resvd;
+		int16_t	cnt;
+		int16_t	off;
+		int16_t	seg;
+		int64_t	sec;
+	}		ext;
+
+	if (d->flags & BIOSDISK_EXT13) {
+		ext.size = sizeof(ext);
+		ext.resvd = 0;
+		ext.cnt = num;
+		ext.off = (int32_t)buf;
+		ext.seg = ourseg;
+		ext.sec = dblk;
+
+		if (biosextread(d->dev, &ext))
+			return -1;
+
+		return ext.cnt;
+	} else {
+
+		cyl = dblk / d->spc;
+		head = (dblk % d->spc) / d->spt;
+		sec = dblk % d->spt;
+		nsec = d->spt - sec;
+
+		if (nsec > num)
+			nsec = num;
+
+		if (biosread(d->dev, cyl, head, sec, nsec, buf))
+			return -1;
+
+		return nsec;
+	}
+}
+
 int 
 readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 	struct biosdisk_ll *d;
@@ -98,44 +152,40 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 		    || dblk < ra_first || dblk >= ra_end) {
 
 			/* no, read from disk */
-			int             cyl, head, sec;
 			char           *trbuf;
 			int retries = BIOSDISK_RETRIES;
 
-			cyl = dblk / d->spc;
-			head = (dblk % d->spc) / d->spt;
-			sec = dblk % d->spt;
-			nsec = d->spt - sec;
+			nsec = num;
 
 			if (cold) {
 				/* transfer directly to buffer */
 				trbuf = buf;
-				if (nsec > num)
-					nsec = num;
 			} else {
 				/* fill read-ahead buffer */
 				trbuf = diskbuf;
 				if (nsec > RA_SECTORS)
 					nsec = RA_SECTORS;
 
-				ra_dev = d->dev;
-				ra_first = dblk;
-				ra_end = dblk + nsec;
-				diskbuf_user = &ra_dev;
 			}
 
-			while (biosread(d->dev, cyl, head, sec, nsec, trbuf)) {
+			while ((nsec = do_read(d, dblk, nsec, trbuf)) < 0) {
 #ifdef DISK_DEBUG
 				if (!cold)
 					printf("read error C:%d H:%d S:%d-%d\n",
 					       cyl, head, sec, sec + nsec - 1);
 #endif
-				if (retries-- > 0)
+				if (--retries >= 0)
 					continue;
 				if (!cold)
 					diskbuf_user = 0; /* mark invalid */
 				return (-1);	/* XXX cannot output here if
 						 * (cold) */
+			}
+			if (!cold) {
+				ra_dev = d->dev;
+				ra_first = dblk;
+				ra_end = dblk + nsec;
+				diskbuf_user = &ra_dev;
 			}
 		} else		/* can take blocks from end of read-ahead
 				 * buffer */

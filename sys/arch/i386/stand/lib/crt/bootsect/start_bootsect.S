@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.5 1998/10/08 14:25:42 ws Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.6 1998/10/15 15:28:22 ws Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -183,6 +183,79 @@ again1:
 	jmp	err_stop
 
 
+found:
+/*
+# First we check for int13 extensions.
+# If they work, let's use them.
+# If not, revert to the traditional way of doing things.
+*/
+
+/*
+# BIOS call "INT 0x13 Function 0x41" to check for int13 extensions.
+#	Call with	%ah = 0x41
+#			%bx = 0x55aa
+#			%dl = drive (0x80 for hard disk)
+#	Return:
+#			%cf = clear on success, set on error
+#			%bx = 0xaa55
+#			%cx = API subset bitmap, &1 -> extended disk access
+*/
+	pushl	%ebx		/* save partition entry */
+	pushl	%edx		/* save drive number */
+	movb	$0x41, %ah
+	data32
+	movl	$0x55aa, %bx
+	int	$0x13
+	popl	%edx
+	movl	%ebx, %eax
+	popl	%ebx
+	data32
+	jb	tradint13
+	data32
+	movl	$0xaa55, %edi
+	cmpl	%edi, %eax
+	jnz	tradint13
+	testb	$1, %cl
+	data32
+	jz	tradint13
+
+/*
+# BIOS call "INT 0x13 Function 0x42", extended read
+#	Call with	%ah = 0x42
+#			%dl = drive (0x80 for hard disk)
+#			%ds:%si = parameter:
+#				0: 0x10 (size of packet)
+#				1: 0
+#				2: number of sectors
+#				4: segment:offset of buffer
+#				8: block number (8 bytes)
+*/
+	pushl	%ss
+	popl	%ds
+	data32
+	pushl	$0		/* high 4 bytes of sector = 0 */
+	data32
+	addr32
+	movl	%es:8(%ebx), %eax	/* low 4 bytes of sector */
+	data32
+	pushl	%eax
+	movl	%es, %ax
+	data32
+	shll	$16, %eax	/* shifts 0 from right */
+	data32
+	pushl	%eax		/* so we get address 0 in BOOTSEG */
+	data32
+	pushl	$0x10+LOADSZ*0x10000
+	movl	%esp, %esi
+	movb	$0x42, %ah
+	int	$0x13
+	pushl	%cs		/* don't bother adjustin %esp, */
+	popl	%ds		/* but reestablish %ds */
+	data32
+	jb	read_error
+	data32
+	jmp	to_boot2
+
 /*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #       Call with       %ah = 0x2
@@ -195,8 +268,8 @@ again1:
 #       Return:
 #                       %al = 0x0 on success; err code on failure
 */
+tradint13:
 
-found:
 	addr32
 	movb	%es:1(%ebx), %dh /* head: dp_sdh */
 	addr32
@@ -210,6 +283,7 @@ load:
 	data32
 	jb	read_error
 
+to_boot2:
 	# ljmp to the second stage boot loader (boot2).
 	# After ljmp, %cs is BOOTSEG and boot1 (512 bytes) will be used
 	# as an internal buffer "intbuf".
@@ -227,8 +301,8 @@ read_error:
 err_stop:
 	data32
 	call	message
-	data32
-	jmp	stop
+	cli
+	hlt
 
 #
 #	message: write the error message in %ds:%esi to console
@@ -274,7 +348,29 @@ done:
 	data32
 	ret
 
-_ourseg:
+eread:	.asciz		"Read error\r\n"
+enoboot: .asciz		"No bootable partition\r\n"
+
+/* throw in a partition in case we are block0 as well */
+/* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
+	. = _C_LABEL(boot1) + PARTSTART
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
+	.byte	BOOTABLE,0,1,0,NETBSDPART,0,16,0
+	.long	0,16
+/* the last 2 bytes in the sector 0 contain the signature */
+	. = _C_LABEL(boot1) + 0x1fe
+	.short	SIGNATURE
+	. = _C_LABEL(boot1) + 0x200
+	.globl	_disklabel
+_disklabel:
+	. = _C_LABEL(boot1) + 0x400
+
+ENTRY(ourseg)
 	.long	0
 
 /**************************************************************************
@@ -364,32 +460,8 @@ _boot2:
 	pushl	%edx
 	call	_C_LABEL(bootsectmain)
 ENTRY(exit)
-stop:
 	cli
 	hlt
-
-eread:	.asciz		"Read error\r\n"
-enoboot: .asciz		"No bootable partition\r\n"
-endofcode:
-/* throw in a partition in case we are block0 as well */
-/* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
-	. = _C_LABEL(boot1) + PARTSTART
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	BOOTABLE,0,1,0,NETBSDPART,0,16,0
-	.long	0,16
-/* the last 2 bytes in the sector 0 contain the signature */
-	. = _C_LABEL(boot1) + 0x1fe
-	.short	SIGNATURE
-	. = _C_LABEL(boot1) + 0x200
-	.globl	_disklabel
-_disklabel:
-	. = _C_LABEL(boot1) + 0x400
-
 
 CR0_PE		=	0x1
 
@@ -439,7 +511,7 @@ ENTRY(prot_to_real)
 	# This is self-modifying code, but we need a writable
 	# code segment, and an intersegment return does not give us that.
 
-	movl	_ourseg, %eax
+	movl	_C_LABEL(ourseg), %eax
 	movw	%ax, xreal-2
 
 	# Change to use16 mode.
@@ -557,7 +629,7 @@ ENTRY(pvbcopy)
 	ret
 
 ENTRY(vtophys)
-	movl _ourseg, %eax
+	movl _C_LABEL(ourseg), %eax
 	shll	$4, %eax
 	addl 4(%esp), %eax
 	ret
