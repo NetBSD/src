@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.663 2004/01/13 09:19:42 lukem Exp $
+#	$NetBSD: mi,v 1.664 2004/01/15 19:50:02 kleink Exp $
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
@@ -2901,6 +2901,7 @@
 ./usr/share/man/cat3/form_win.0			comp-c-catman		.cat
 ./usr/share/man/cat3/forms.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fparseln.0			comp-c-catman		.cat
+./usr/share/man/cat3/fpclassify.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetmask.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetround.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetsticky.0		comp-c-catman		.cat
@@ -3213,12 +3214,14 @@
 ./usr/share/man/cat3/iscntrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isdigit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isendwin.0			comp-c-catman		.cat
+./usr/share/man/cat3/isfinite.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isgraph.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isinf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isinff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/islower.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isnan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isnanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/isnormal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iso_addr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isprint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ispunct.0			comp-c-catman		.cat
@@ -4043,6 +4046,7 @@
 ./usr/share/man/cat3/signal_initialized.0	comp-c-catman		.cat
 ./usr/share/man/cat3/signal_pending.0		comp-c-catman		.cat
 ./usr/share/man/cat3/signal_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/signbit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/significand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/significandf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sigpause.0			comp-c-catman		.cat
@@ -6492,6 +6496,7 @@
 ./usr/share/man/man3/form_win.3			comp-c-man		.man
 ./usr/share/man/man3/forms.3			comp-c-man		.man
 ./usr/share/man/man3/fparseln.3			comp-c-man		.man
+./usr/share/man/man3/fpclassify.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetmask.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetround.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetsticky.3		comp-c-man		.man
@@ -6804,12 +6809,14 @@
 ./usr/share/man/man3/iscntrl.3			comp-c-man		.man
 ./usr/share/man/man3/isdigit.3			comp-c-man		.man
 ./usr/share/man/man3/isendwin.3			comp-c-man		.man
+./usr/share/man/man3/isfinite.3			comp-c-man		.man
 ./usr/share/man/man3/isgraph.3			comp-c-man		.man
 ./usr/share/man/man3/isinf.3			comp-c-man		.man
 ./usr/share/man/man3/isinff.3			comp-c-man		.man
 ./usr/share/man/man3/islower.3			comp-c-man		.man
 ./usr/share/man/man3/isnan.3			comp-c-man		.man
 ./usr/share/man/man3/isnanf.3			comp-c-man		.man
+./usr/share/man/man3/isnormal.3			comp-c-man		.man
 ./usr/share/man/man3/iso_addr.3			comp-c-man		.man
 ./usr/share/man/man3/isprint.3			comp-c-man		.man
 ./usr/share/man/man3/ispunct.3			comp-c-man		.man
@@ -7630,6 +7637,7 @@
 ./usr/share/man/man3/signal_initialized.3	comp-c-man		.man
 ./usr/share/man/man3/signal_pending.3		comp-c-man		.man
 ./usr/share/man/man3/signal_set.3		comp-c-man		.man
+./usr/share/man/man3/signbit.3			comp-c-man		.man
 ./usr/share/man/man3/significand.3		comp-c-man		.man
 ./usr/share/man/man3/significandf.3		comp-c-man		.man
 ./usr/share/man/man3/sigpause.3			comp-c-man		.man
