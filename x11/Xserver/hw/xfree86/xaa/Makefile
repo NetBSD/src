@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2003/12/22 13:16:07 rtr Exp $
+# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:21 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -8,6 +8,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 
 LIB=	xaa
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
+
 SRCS=	lsb_fixed_xaaBitmap.c lsb_fixed_xaaBitmap3.c lsb_fixed_xaaStipple.c \
 	lsb_fixed_xaaStipple3.c lsb_fixed_xaaTEGlyph.c lsb_xaaBitmap.c \
 	lsb_xaaBitmap3.c lsb_xaaStipple.c lsb_xaaStipple3.c lsb_xaaTEGlyph.c \
@@ -37,8 +38,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${XSERVERINCDIR}
-
-CPPFLAGS+=	${X11FLAGS.LOADABLE}
 
 CPPFLAGS.lsb_fixed_xaaBitmap.c=		-DLSBFIRST -DFIXEDBASE
 CPPFLAGS.lsb_fixed_xaaBitmap3.c=	-DLSBFIRST -DFIXEDBASE -DTRIPLE_BITS

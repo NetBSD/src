@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 13:44:57 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -28,8 +28,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/rac \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci \
 		-I${XSERVERINCDIR}
-
-CPPFLAGS+=	${X11FLAGS.LOADABLE}
 
 CPPFLAGS.xf86PciData.c+=	-DPCIDATA
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 13:13:53 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -9,11 +9,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 LIB=	i2c
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
-SRCS=	xf86i2c.c
-
-.if defined(X11FLAGS.LOADABLE)
-SRCS+=		xf86i2cmodule.c
-.endif
+SRCS=	xf86i2c.c xf86i2cmodule.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
