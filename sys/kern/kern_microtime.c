@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.9 2004/06/27 01:36:04 fredb Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.10 2004/06/27 15:21:30 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.9 2004/06/27 01:36:04 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.10 2004/06/27 15:21:30 fredb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,7 +109,7 @@ cc_microtime(struct timeval *tvp)
 		cc = cpu_counter32() - ci->ci_cc_cc;
 		if (cc < 0)
 			cc += 0x100000000LL;
-		t.tv_usec += (cc / (ci->ci_cc_denom / ci->ci_cc_ms_delta));
+		t.tv_usec += (cc * ci->ci_cc_ms_delta) / ci->ci_cc_denom;
 		while (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
 			t.tv_sec++;
