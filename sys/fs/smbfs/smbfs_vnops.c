@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.31 2004/02/22 11:14:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.32 2004/02/28 09:04:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.31 2004/02/22 11:14:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.32 2004/02/28 09:04:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,9 +729,11 @@ smbfs_rename(v)
 			cache_purge(tdvp);
 		cache_purge(fdvp);
 	}
-out:
+
 	smbfs_attr_cacheremove(fdvp);
 	smbfs_attr_cacheremove(tdvp);
+
+out:
 
 	if (tdvp == tvp)
 		vrele(tdvp);
