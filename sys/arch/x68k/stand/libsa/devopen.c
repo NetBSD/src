@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2001/09/29 03:50:13 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -33,6 +33,7 @@
 #include "libx68k.h"
 
 extern struct devspec devspec[]; /* defined in conf.c */
+int devopen_open_dir = 0;
 
 /*
  * Parse a device spec.
@@ -71,8 +72,11 @@ devparse(const char *fname, int *dev, int *unit, int *part, char **file)
 	if (*s++ != ':')
 		return (ENODEV);
 
-	if (*s == '/')
+	if (*s == '/') {
 		s++;
+		if (devopen_open_dir && *s == 0)
+			s--;
+	}
 	(const char*) *file = s;
 
 	return 0;
