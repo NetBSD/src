@@ -1,4 +1,4 @@
-/* $NetBSD: OSFpal.c,v 1.4 1998/01/29 22:09:37 ross Exp $ */
+/* $NetBSD: OSFpal.c,v 1.5 1998/06/24 01:33:19 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -43,7 +43,6 @@ OSFpal()
 {
 	struct rpb *r;
 	struct pcs *p;
-	int offset;
 
 	r = (struct rpb *)HWRPB_ADDR;
 	/*
@@ -52,8 +51,7 @@ OSFpal()
 	 * We might not be rpb_primary_cpu_id, but it is supposed to go
 	 * first so the answer should apply to everyone.
 	 */
-	offset = r->rpb_pcs_size * r->rpb_primary_cpu_id;
-	p = (struct pcs *)((u_int8_t *)r + r->rpb_pcs_off + offset);
+	p = LOCATE_PCS(r, r->rpb_primary_cpu_id);
 
 	printf("VMS PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OpenVMS]);
 	printf("OSF PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OSF1]);
