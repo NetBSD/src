@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.14 1993/11/01 08:36:52 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.15 1993/11/11 01:45:31 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -113,19 +113,13 @@
  */
 IDTVEC(wild)
 	sti
-	pushl	%ds
-	pushl	%es
-	pushal
-	movl	$KDSEL,%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	pushl	$0	/* fake interrupt frame */
+	pushl	$0
+	INTRENTRY
 	pushl	$-1
 	call	_isa_strayintr
 	addl	$4,%esp
-	popal
-	popl	%es
-	popl	%ds
-	iret
+	INTRFASTEXIT
 
 /*
  * Fast vectors.
@@ -197,12 +191,7 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
 IDTVEC(intr/**/irq_num) ; \
 	pushl	$0 ;		/* dummy error code */ \
 	pushl	$T_ASTFLT ; \
-	pushl	%ds ; 		/* save our data and extra segments ... */ \
-	pushl	%es ; \
-	pushal ; \
-	movl	$KDSEL,%eax ;	/* ... and reload with kernel's own ... */ \
-	movl	%ax,%ds ; \
-	movl	%ax,%es ; \
+	INTRENTRY ; \
 	enable_icus(irq_num) ;	/* reenable hw interrupts */ \
 	MASK(irq_num,icu) ; \
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
@@ -237,7 +226,7 @@ _Xresume/**/irq_num: ; \
 	jz	6f ; \
 5: ; \
 	UNMASK(irq_num,icu) ; \
-	jmp	doreti ; 	/* finish up */ \
+	INTREXIT ; \
 	ALIGN_TEXT ; \
 6: ; \
 	pushl	$irq_num ; \
@@ -248,11 +237,7 @@ _Xresume/**/irq_num: ; \
 2: ; \
 	incl	_intrcnt_pend + 4*irq_num ; \
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
-	popal ; \
-	popl	%es ; \
-	popl	%ds ; \
-	addl	$8,%esp ; \
-	iret
+	INTRFASTEXIT
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
 INTR(1, IO_ICU1, ENABLE_ICU1)

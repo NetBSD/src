@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.14 1993/10/31 23:52:32 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.15 1993/11/11 01:45:14 mycroft Exp $
  */
 
 /*
@@ -133,11 +133,7 @@ doreti:
 INTRLOCAL(none_to_unpend):
 	testl	%edx,%edx		# returning to zero priority?
 	jz	2f
-	popal				# nope, going to non-zero priority
-	popl	%es
-	popl	%ds
-	addl	$8,%esp
-	iret
+	INTRFASTEXIT
 
 
 	.globl	_netisr
@@ -192,11 +188,7 @@ test_ast:
 	call	_trap
 2:
 	COUNT_EVENT(_intrcnt_spl, 11)
-	popal
-	popl	%es
-	popl	%ds
-	addl	$8,%esp
-	iret
+	INTRFASTEXIT
 
 /*
  * Interrupt priority mechanism
