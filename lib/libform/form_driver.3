@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_driver.3,v 1.6 2002/10/01 19:15:15 wiz Exp $
+.\"	$NetBSD: form_driver.3,v 1.7 2003/03/31 18:44:09 perry Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -56,7 +56,7 @@ printable then the driver attempts to process it as a driver request.
 If the character passed is not a valid request then the driver will
 return an unknown command error.
 .Sh PARAMETERS
-The forms driver recognises the following requests:
+The forms driver recognizes the following requests:
 .Pp
 .Bl -tag -width REQ_SFIRST_FIELD -compact
 .It REQ_NEXT_PAGE
@@ -126,7 +126,7 @@ Insert a blank character at the current cursor position
 .It REQ_INS_LINE
 Open a blank line at the current cursor position.
 .It REQ_DEL_CHAR
-Delete the character at the currrent cursor position.
+Delete the character at the current cursor position.
 .It REQ_DEL_PREV
 Delete the character to the left of the current cursor position.
 .It REQ_DEL_LINE
@@ -147,7 +147,7 @@ ones already there.
 Enter insert mode, characters will be inserted at the current cursor
 position.
 Any characters to the right of the cursor will be moved
-right to accomodate the new characters.
+right to accommodate the new characters.
 .It REQ_SCR_FLINE
 Scroll the field forward one line.
 .It REQ_SCR_BLINE
