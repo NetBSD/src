@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.14 1999/12/30 16:19:00 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.15 2000/01/19 14:45:12 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,6 @@ STRIP?=	strip
 SIZE?=	size
 COPTS?= 	-O2
 #### Stuff for cross compiling
-STRIPFLAGS=	-S
 NM?=nm
 LORDER?=lorder
 TSORT?=tsort
@@ -66,7 +65,7 @@ CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
-#STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

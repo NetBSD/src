@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.63 1999/07/26 05:20:48 cgd Exp $
+# 	$NetBSD: Makefile.sparc,v 1.64 2000/01/19 14:45:07 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -60,7 +60,7 @@ LINKFLAGS+=	-N -p
 .else
 LINKFLAGS+=	-n
 .endif
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
