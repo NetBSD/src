@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.10 2003/02/02 19:07:17 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.11 2003/11/11 17:31:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -157,10 +157,12 @@ typedef struct {
 } mach_host_get_io_master_reply_t;
 
 int mach_host_info(struct mach_trap_args *);
-void mach_host_basic_info(struct mach_host_basic_info *);
-void mach_host_priority_info(struct mach_host_priority_info *);
 int mach_host_page_size(struct mach_trap_args *);
 int mach_host_get_clock_service(struct mach_trap_args *);
 int mach_host_get_io_master(struct mach_trap_args *);
+
+/* Theses are machine dependent functions */
+void mach_host_basic_info(struct mach_host_basic_info *);
+void mach_host_priority_info(struct mach_host_priority_info *);
 
 #endif /* _MACH_HOST_H_ */
