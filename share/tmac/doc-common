@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.23 1999/02/09 18:11:36 ross Exp $
+.\"	$NetBSD: doc-common,v 1.24 1999/02/10 23:16:07 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,11 +266,9 @@
 .de hM
 .ev 1
 .pL
-.if !\\n(cR \{\
-'	sp \\n(Hmu
-.	tl @\\*(Hs\\*(hT\fP@\\*(Vs\\*(vT\fP@\\*(Hs\\*(hT\fP@
-'	sp \\n(Hmu
-.\}
+.if !\\n(cR 'sp \\n(Hmu
+.tl @\\*(Hs\\*(hT\fP@\\*(Vs\\*(vT\fP@\\*(Hs\\*(hT\fP@
+'sp \\n(Hmu
 .ev
 ..
 .de fM
