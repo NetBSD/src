@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.203 2002/08/24 00:47:17 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.204 2002/08/25 19:15:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.203 2002/08/24 00:47:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.204 2002/08/25 19:15:55 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -170,7 +170,8 @@ main(void)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
-	int i, s, error;
+	int s, error;
+	u_int i;
 	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
