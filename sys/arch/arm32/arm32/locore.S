@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.6 1996/03/13 21:34:17 mark Exp $ */
+/* $NetBSD: locore.S,v 1.7 1996/03/16 00:13:11 thorpej Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: locore.S,v 1.6 1996/03/13 21:34:17 mark Exp $
  */
 
 #include "assym.h"

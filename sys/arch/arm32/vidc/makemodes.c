@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.2 1996/03/13 21:47:15 mark Exp $ */
+/* $NetBSD: makemodes.c,v 1.3 1996/03/16 00:13:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -44,8 +44,6 @@
  *
  * Created      : 17/05/95
  * Last updated : 17/05/95
- *
- *    $Id: makemodes.c,v 1.2 1996/03/13 21:47:15 mark Exp $
  */
 
 #include <stdio.h>
