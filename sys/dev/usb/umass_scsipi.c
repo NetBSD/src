@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.15 2003/09/12 19:02:30 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.16 2003/09/13 03:16:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.15 2003/09/12 19:02:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.16 2003/09/13 03:16:49 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -91,9 +91,6 @@ struct umass_scsipi_softc {
 
 #define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
-#define UMASS_SCSIID_HOST	0x00
-#define UMASS_SCSIID_DEVICE	0x01
-
 #define UMASS_ATAPI_DRIVE	0
 
 Static void umass_scsipi_request(struct scsipi_channel *,
@@ -135,9 +132,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus = umass_scsipi_setup(sc);
 
 	scbus->sc_channel.chan_bustype = &scsi_bustype;
-	scbus->sc_channel.chan_ntargets = UMASS_SCSIID_DEVICE + 1;
+	scbus->sc_channel.chan_ntargets = 2;
 	scbus->sc_channel.chan_nluns = sc->maxlun + 1;
-	scbus->sc_channel.chan_id = UMASS_SCSIID_HOST;
+	scbus->sc_channel.chan_id = scbus->sc_channel.chan_ntargets - 1;
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
 			     USBDEVNAME(sc->sc_dev)));
 
@@ -276,7 +273,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 #ifdef UMASS_DEBUG
 		if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI ?
 		    periph->periph_target != UMASS_ATAPI_DRIVE :
-		    periph->periph_target != UMASS_SCSIID_DEVICE) {
+		    periph->periph_target == chan->chan_id) {
 			DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
 			    USBDEVNAME(sc->sc_dev),
 			    periph->periph_target));
