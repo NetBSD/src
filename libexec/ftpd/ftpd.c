@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.104 2000/09/15 14:55:16 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.105 2000/09/28 17:49:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.104 2000/09/15 14:55:16 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.105 2000/09/28 17:49:06 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -1041,6 +1041,7 @@ pass(const char *passwd)
 		}
 		break;
 	}
+	setlogin(pw->pw_name);
 	if (dropprivs ||
 	    (curclass.type != CLASS_REAL && 
 	    ntohs(ctrl_addr.su_port) > IPPORT_RESERVED + 1)) {
