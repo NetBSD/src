@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2002/05/07 14:41:37 lukem Exp $
+# $NetBSD: dot.profile,v 1.2 2002/10/08 20:26:38 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -56,6 +56,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
+	echo 'If you are using a SUN type 4 keyboard, please enter "sun-type4".'
 	echo -n "Terminal type (just hit ENTER for '$TERM'): "
 	read ans
 	if [ -n "$ans" ];then
