@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.33 2003/06/23 11:53:40 agc Exp $   */
+/*      $NetBSD: raidctl.c,v 1.34 2003/10/21 02:31:43 fvdl Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.33 2003/06/23 11:53:40 agc Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.34 2003/10/21 02:31:43 fvdl Exp $");
 #endif
 
 
@@ -241,7 +241,7 @@ main(argc,argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((num_options > 1) || (argc == NULL)) 
+	if ((num_options > 1) || (argc == 0)) 
 		usage();
 
 	strlcpy(name, argv[0], sizeof(name));
