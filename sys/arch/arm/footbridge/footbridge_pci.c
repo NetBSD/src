@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.2 2001/06/12 17:10:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,6 @@
  */
 
 #include "opt_ebsa285.h"
-#include "opt_netwinder.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +57,7 @@
 #include <dev/isa/isavar.h>
 #endif
 
-#ifdef NETWINDER
+#ifdef netwinder
 void		netwinder_pci_attach_hook __P((struct device *,
 		    struct device *, struct pcibus_attach_args *));
 #endif
@@ -82,7 +81,7 @@ void		footbridge_pci_intr_disestablish __P((void *, void *));
 
 struct arm32_pci_chipset footbridge_pci_chipset = {
 	NULL,	/* conf_v */
-#ifdef NETWINDER
+#ifdef netwinder
 	netwinder_pci_attach_hook,
 #else
 	footbridge_pci_attach_hook,

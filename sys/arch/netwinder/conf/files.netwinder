@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.10 2001/06/11 22:25:11 chris Exp $
+#	$NetBSD: files.netwinder,v 1.11 2001/06/12 17:10:25 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -75,6 +75,8 @@ major   {cd = 26}
 
 file	arch/netwinder/netwinder/autoconf.c
 file	arch/netwinder/netwinder/conf.c
+file	arch/netwinder/netwinder/netwinder_machdep.c
+
 
 # Generic MD files
 file	arch/arm32/arm32/bus_dma.c
