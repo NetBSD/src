@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.8 1999/01/22 02:38:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.8 1999/01/22 02:38:05 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $");
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
@@ -57,7 +58,6 @@ __RCSID("$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $");
 #include <rpcsvc/ypclnt.h>
 
 #include "yplib_host.h"
-#include "yplog.h"
 #include "ypdb.h"
 #include "ypdef.h"
 
@@ -161,19 +161,21 @@ main(argc, argv)
 		goto punt;
 	}
 
-	ypopenlog();
+#ifdef DEBUG
+	openlog(__progname, LOG_PID, LOG_DAEMON);
 
-	yplog("ypxfr: Arguments:");
-	yplog("YP clear to local: %s", (cflag) ? "no" : "yes");
-	yplog("   Force transfer: %s", (fflag) ? "yes" : "no");
-	yplog("           domain: %s", domain); 
-	yplog("             host: %s", host);
-	yplog("    source domain: %s", srcdomain);
-	yplog("          transid: %s", tid);
-	yplog("             prog: %s", prog);
-	yplog("             port: %s", port);
-	yplog("            ipadd: %s", ipadd);
-	yplog("              map: %s", map);
+	syslog(LOG_DEBUG, "ypxfr: Arguments:");
+	syslog(LOG_DEBUG, "YP clear to local: %s", (cflag) ? "no" : "yes");
+	syslog(LOG_DEBUG, "   Force transfer: %s", (fflag) ? "yes" : "no");
+	syslog(LOG_DEBUG, "           domain: %s", domain); 
+	syslog(LOG_DEBUG, "             host: %s", host);
+	syslog(LOG_DEBUG, "    source domain: %s", srcdomain);
+	syslog(LOG_DEBUG, "          transid: %s", tid);
+	syslog(LOG_DEBUG, "             prog: %s", prog);
+	syslog(LOG_DEBUG, "             port: %s", port);
+	syslog(LOG_DEBUG, "            ipadd: %s", ipadd);
+	syslog(LOG_DEBUG, "              map: %s", map);
+#endif
 
 	if (fflag != 0)
 		ordernum = 0;
@@ -183,7 +185,7 @@ main(argc, argv)
 			goto punt;
 	}
 
-        yplog("Get Master");
+        syslog(LOG_DEBUG, "Get Master");
 
 	if (host == NULL) {
 		if (srcdomain == NULL)
@@ -199,7 +201,7 @@ main(argc, argv)
 		}
 	}
 
-        yplog("Connect host: %s", host); 
+        syslog(LOG_DEBUG, "Connect host: %s", host); 
 
 	client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
