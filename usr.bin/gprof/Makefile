@@ -3,7 +3,7 @@
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \
 	printgprof.c printlist.c
-CFLAGS+=-I${.CURDIR}/../../lib/csu.${MACHINE}
+CFLAGS+=-I${.CURDIR}/../../lib/csu/${MACHINE}
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}/usr/share/misc ]; then \
