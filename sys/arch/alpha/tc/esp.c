@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.16 1996/09/27 21:37:17 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.17 1996/09/28 02:10:55 mycroft Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -82,6 +82,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
+/*static*/ int esp_reselect	__P((struct esp_softc *, int));
 /*static*/ void	esp_scsi_reset	__P((struct esp_softc *));
 /*static*/ void	esp_reset	__P((struct esp_softc *));
 /*static*/ void	esp_init	__P((struct esp_softc *, int));
@@ -537,25 +538,24 @@ esp_init(sc, doreset)
 
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
 	for (r = 0; r < 8; r++) {
-		struct esp_tinfo *tp = &sc->sc_tinfo[r];
+		struct esp_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 		int fl = sc->sc_dev.dv_cfdata->cf_flags;
 
-		tp->flags = ((sc->sc_minsync && !(fl & (1<<(r+8))))
+		ti->flags = ((sc->sc_minsync && !(fl & (1<<(r+8))))
 				? T_NEGOTIATE : 0) |
 				((fl & (1<<r)) ? T_RSELECTOFF : 0) |
 				T_NEED_TO_RESET;
-		tp->period = sc->sc_minsync;
-		tp->offset = 0;
+		ti->period = sc->sc_minsync;
+		ti->offset = 0;
 	}
 
 	if (doreset) {
 		sc->sc_state = ESP_SBR;
 		ESPCMD(sc, ESPCMD_RSTSCSI);
-		return;
+	} else {
+		sc->sc_state = ESP_IDLE;
 	}
-
-	sc->sc_state = ESP_IDLE;
 }
 
 /*
@@ -864,13 +864,6 @@ esp_sched(sc)
 		if ((ti->lubusy & (1 << sc_link->lun)) == 0) {
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 			sc->sc_nexus = ecb;
-#if 0
-			sc->sc_flags = 0;
-			sc->sc_prevphase = INVALID_PHASE;
-			sc->sc_dp = ecb->daddr;
-			sc->sc_dleft = ecb->dleft;
-			ti->lubusy |= (1<<sc_link->lun);
-#endif
 			esp_select(sc, ecb);
 			break;
 		} else
@@ -936,7 +929,7 @@ esp_done(sc, ecb)
 	 */
 	if (xs->error == XS_NOERROR) {
 		if ((ecb->flags & ECB_ABORT) != 0) {
-			xs->error = XS_TIMEOUT;
+			xs->error = XS_DRIVER_STUFFUP;
 		} else if ((ecb->flags & ECB_SENSE) != 0) {
 			xs->error = XS_SENSE;
 		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
@@ -975,13 +968,9 @@ esp_done(sc, ecb)
 	} else
 		esp_dequeue(sc, ecb);
 		
-	/* Put it on the free list, and clear flags. */
-	TAILQ_INSERT_HEAD(&sc->free_list, ecb, chain);
-	ecb->flags = 0;
-
+	esp_free_ecb(sc, ecb, xs->flags);
 	ti->cmds++;
 	scsi_done(xs);
-	return;
 }
 
 void
@@ -1013,6 +1002,76 @@ esp_dequeue(sc, ecb)
 		sc->sc_flags |= ESP_ATN;		\
 		sc->sc_msgpriq |= (m);			\
 	} while (0)
+
+int
+esp_reselect(sc, message)
+	struct esp_softc *sc;
+	int message;
+{
+	u_char selid, target, lun;
+	struct esp_ecb *ecb;
+	struct scsi_link *sc_link;
+	struct esp_tinfo *ti;
+
+	/*
+	 * The SCSI chip made a snapshot of the data bus while the reselection
+	 * was being negotiated.  This enables us to determine which target did
+	 * the reselect.
+	 */
+	selid = sc->sc_selid & ~(1 << sc->sc_id);
+	if (selid & (selid - 1)) {
+		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		    sc->sc_dev.dv_xname, selid);
+		goto reset;
+	}
+
+	/*
+	 * Search wait queue for disconnected cmd
+	 * The list should be short, so I haven't bothered with
+	 * any more sophisticated structures than a simple
+	 * singly linked list.
+	 */
+	target = ffs(selid) - 1;
+	lun = message & 0x07;
+	for (ecb = sc->nexus_list.tqh_first; ecb != NULL;
+	     ecb = ecb->chain.tqe_next) {
+		sc_link = ecb->xs->sc_link;
+		if (sc_link->target == target && sc_link->lun == lun)
+			break;
+	}
+	if (ecb == NULL) {
+		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		    sc->sc_dev.dv_xname, target, lun);
+		goto abort;
+	}
+
+	/* Make this nexus active again. */
+	TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
+	sc->sc_state = ESP_CONNECTED;
+	sc->sc_nexus = ecb;
+	ti = &sc->sc_tinfo[target];
+	ti->lubusy |= (1 << lun);
+	esp_setsync(sc, ti);
+
+	if (ecb->flags & ECB_RESET)
+		esp_sched_msgout(SEND_DEV_RESET);
+	else if (ecb->flags & ECB_ABORT)
+		esp_sched_msgout(SEND_ABORT);
+
+	/* Do an implicit RESTORE POINTERS. */
+	sc->sc_dp = ecb->daddr;
+	sc->sc_dleft = ecb->dleft;
+
+	return (0);
+
+reset:
+	esp_sched_msgout(SEND_DEV_RESET);
+	return (1);
+
+abort:
+	esp_sched_msgout(SEND_ABORT);
+	return (1);
+}
 
 #define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
 #define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
@@ -1058,7 +1117,6 @@ esp_msgin(sc)
 		 * Which target is reselecting us? (The ID bit really)
 		 */
 		sc->sc_selid = v;
-		sc->sc_selid &= ~(1<<sc->sc_id);
 		ESP_MISC(("selid=0x%2x ", sc->sc_selid));
 		return;
 	}
@@ -1109,9 +1167,14 @@ gotit:
 	 * extended messages which total length is shorter than
 	 * ESP_MAX_MSG_LEN.  Longer messages will be amputated.
 	 */
-	if (sc->sc_state == ESP_CONNECTED) {
-		struct esp_ecb *ecb = sc->sc_nexus;
-		struct esp_tinfo *ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+	switch (sc->sc_state) {
+		struct esp_ecb *ecb;
+		struct scsi_link *sc_link;
+		struct esp_tinfo *ti;
+
+	case ESP_CONNECTED:
+		ecb = sc->sc_nexus;
+		ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
@@ -1131,21 +1194,21 @@ gotit:
 			if (esp_debug & ESP_SHOWMSGS)
 				printf("%s: our msg rejected by target\n",
 				    sc->sc_dev.dv_xname);
-#if 1 /* XXX - must remember last message */
-sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
-#endif
-			if (sc->sc_msgout == SEND_SDTR) {
+			switch (sc->sc_msgout) {
+			case SEND_SDTR:
 				sc->sc_flags &= ~ESP_SYNCHNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
 				esp_setsync(sc, ti);
+				break;
+			case SEND_INIT_DET_ERR:
+				goto abort;
 			}
-			/* Not all targets understand INITIATOR_DETECTED_ERR */
-			if (sc->sc_msgout == SEND_INIT_DET_ERR)
-				esp_sched_msgout(SEND_ABORT);
 			break;
+
 		case MSG_NOOP:
 			ESP_MSGS(("noop "));
 			break;
+
 		case MSG_DISCONNECT:
 			ESP_MSGS(("disconnect "));
 			ti->dconns++;
@@ -1153,163 +1216,110 @@ sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
 				break;
 			/*FALLTHROUGH*/
+
 		case MSG_SAVEDATAPOINTER:
 			ESP_MSGS(("save datapointer "));
-			ecb->dleft = sc->sc_dleft;
 			ecb->daddr = sc->sc_dp;
+			ecb->dleft = sc->sc_dleft;
 			break;
+
 		case MSG_RESTOREPOINTERS:
 			ESP_MSGS(("restore datapointer "));
-			if (!ecb) {
-				esp_sched_msgout(SEND_ABORT);
-				printf("%s: no DATAPOINTERs to restore\n",
-				    sc->sc_dev.dv_xname);
-				break;
-			}
 			sc->sc_dp = ecb->daddr;
 			sc->sc_dleft = ecb->dleft;
 			break;
-		case MSG_PARITY_ERROR:
-			printf("%s:target%d: MSG_PARITY_ERROR\n",
-				sc->sc_dev.dv_xname,
-				ecb->xs->sc_link->target);
-			break;
+
 		case MSG_EXTENDED:
 			ESP_MSGS(("extended(%x) ", sc->sc_imess[2]));
 			switch (sc->sc_imess[2]) {
 			case MSG_EXT_SDTR:
 				ESP_MSGS(("SDTR period %d, offset %d ",
 					sc->sc_imess[3], sc->sc_imess[4]));
+				if (sc->sc_imess[1] != 3)
+					goto reject;
 				ti->period = sc->sc_imess[3];
 				ti->offset = sc->sc_imess[4];
+				ti->flags &= ~T_NEGOTIATE;
 				if (sc->sc_minsync == 0 ||
 				    ti->offset == 0 ||
 				    ti->period > 124) {
 					printf("%s:%d: async\n", "esp",
 						ecb->xs->sc_link->target);
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
-						/* Target initiated negotiation */
-						if (ti->flags & T_SYNCMODE) {
-#ifdef ESP_DEBUG
-							printf("renegotiated ");
-#endif
-							ti->flags &= ~T_SYNCMODE;
-							esp_setsync(sc, ti);
-						}
+						/* target initiated negotiation */
 						ti->offset = 0;
+						ti->flags &= ~T_SYNCMODE;
 						esp_sched_msgout(SEND_SDTR);
 					} else {
-						/* we are sync */
-						sc->sc_flags &= ~ESP_SYNCHNEGO;
+						/* we are async */
 						ti->flags &= ~T_SYNCMODE;
-						esp_setsync(sc, ti);
 					}
 				} else {
 					int r = 250/ti->period;
 					int s = (100*250)/ti->period - 100*r;
 					int p;
+
 					p =  esp_stp2cpb(sc, ti->period);
 					ti->period = esp_cpb2stp(sc, p);
 #ifdef ESP_DEBUG
 					sc_print_addr(ecb->xs->sc_link);
+					printf("max sync rate %d.%02dMb/s\n",
+						r, s);
 #endif
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
-						/* Target initiated negotiation */
-						if (ti->flags & T_SYNCMODE) {
-#ifdef ESP_DEBUG
-							printf("renegotiated ");
-#endif
-							ti->flags &= ~T_SYNCMODE;
-							esp_setsync(sc, ti);
-						}
-						/* Clamp to our maxima */
+						/* target initiated negotiation */
 						if (ti->period < sc->sc_minsync)
 							ti->period = sc->sc_minsync;
 						if (ti->offset > 15)
 							ti->offset = 15;
+						ti->flags &= ~T_SYNCMODE;
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
-						sc->sc_flags &= ~ESP_SYNCHNEGO;
 						ti->flags |= T_SYNCMODE;
-						esp_setsync(sc, ti);
 					}
-#ifdef ESP_DEBUG
-					printf("max sync rate %d.%02dMb/s\n",
-						r, s);
-#endif
 				}
-				ti->flags &= ~T_NEGOTIATE;
+				sc->sc_flags &= ~ESP_SYNCHNEGO;
+				esp_setsync(sc, ti);
 				break;
-			default: /* Extended messages we don't handle */
-				esp_sched_msgout(SEND_REJECT);
-				break;
+
+			default:
+				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				    sc->sc_dev.dv_xname);
+				goto reject;
 			}
 			break;
+
 		default:
 			ESP_MSGS(("ident "));
-			/* thanks for that ident... */
-			if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-				ESP_MISC(("unknown "));
-printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
-				esp_sched_msgout(SEND_REJECT);
-			}
+			printf("%s: unrecognized MESSAGE; sending REJECT\n",
+			    sc->sc_dev.dv_xname);
+		reject:
+			esp_sched_msgout(SEND_REJECT);
 			break;
 		}
-	} else if (sc->sc_state == ESP_RESELECTED) {
-		struct scsi_link *sc_link = NULL;
-		struct esp_ecb *ecb;
-		struct esp_tinfo *ti;
-		u_char lunit;
+		break;
 
-		if (MSG_ISIDENTIFY(sc->sc_imess[0])) { 	/* Identify? */
-			ESP_MISC(("searching "));
-			/*
-			 * Search wait queue for disconnected cmd
-			 * The list should be short, so I haven't bothered with
-			 * any more sophisticated structures than a simple
-			 * singly linked list.
-			 */
-			lunit = sc->sc_imess[0] & 0x07;
-			for (ecb = sc->nexus_list.tqh_first; ecb;
-			     ecb = ecb->chain.tqe_next) {
-				sc_link = ecb->xs->sc_link;
-				if (sc_link->lun == lunit &&
-				    sc->sc_selid == (1<<sc_link->target)) {
-					TAILQ_REMOVE(&sc->nexus_list, ecb,
-					    chain);
-					break;
-				}
-			}
-
-			if (!ecb) {		/* Invalid reselection! */
-				esp_sched_msgout(SEND_ABORT);
-				printf("esp: invalid reselect (idbit=0x%2x)\n",
-				    sc->sc_selid);
-			} else {		/* Reestablish nexus */
-				/*
-				 * Setup driver data structures and
-				 * do an implicit RESTORE POINTERS
-				 */
-				ti = &sc->sc_tinfo[sc_link->target];
-				sc->sc_nexus = ecb;
-				sc->sc_dp = ecb->daddr;
-				sc->sc_dleft = ecb->dleft;
-				sc->sc_tinfo[sc_link->target].lubusy
-					|= (1<<sc_link->lun);
-				esp_setsync(sc, ti);
-				ESP_MISC(("... found ecb"));
-				sc->sc_state = ESP_CONNECTED;
-			}
-		} else {
-			printf("%s: bogus reselect (no IDENTIFY) %0x2x\n",
-			    sc->sc_dev.dv_xname, sc->sc_selid);
-			esp_sched_msgout(SEND_DEV_RESET);
+	case ESP_RESELECTED:
+		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
+			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			    sc->sc_dev.dv_xname);
+			goto reset;
 		}
-	} else { /* Neither ESP_CONNECTED nor ESP_RESELECTED! */
-		printf("%s: unexpected message in; will send DEV_RESET\n",
+
+		(void) esp_reselect(sc, sc->sc_imess[0]);
+		break;
+
+	default:
+		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname);
+	reset:
 		esp_sched_msgout(SEND_DEV_RESET);
+		break;
+
+	abort:
+		esp_sched_msgout(SEND_ABORT);
+		break;
 	}
 
 	/* Ack last message byte */
@@ -1744,7 +1754,6 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					return 1;
 				}
 				sc->sc_selid = ESP_READ_REG(sc, ESP_FIFO);
-				sc->sc_selid &= ~(1<<sc->sc_id);
 				ESP_MISC(("selid=0x%2x ", sc->sc_selid));
 				esp_msgin(sc);	/* Handle identify message */
 				if (sc->sc_state != ESP_CONNECTED) {
@@ -1836,6 +1845,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				ti->lubusy |= (1 << sc_link->lun);
 
 				sc->sc_prevphase = INVALID_PHASE; /* ?? */
+				/* Do an implicit RESTORE POINTERS. */
 				sc->sc_dp = ecb->daddr;
 				sc->sc_dleft = ecb->dleft;
 
@@ -1863,7 +1873,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 
 		case ESP_CONNECTED:
 			if (sc->sc_flags & ESP_ICCS) {
-				unsigned char msg;
+				u_char msg;
 
 				sc->sc_flags &= ~ESP_ICCS;
 
