@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.19 1996/11/15 22:48:23 jtc Exp $	*/
+/*	$NetBSD: time.h,v 1.20 1996/11/20 00:30:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -101,6 +101,32 @@ struct timezone {
 		if ((vvp)->tv_usec < 0) {				\
 			(vvp)->tv_sec--;				\
 			(vvp)->tv_usec += 1000000;			\
+		}							\
+	} while (0)
+
+/* Operations on timespecs. */
+#define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
+#define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
+#define	timespeccmp(tsp, usp, cmp)					\
+	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
+	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\
+	    ((tsp)->tv_sec cmp (usp)->tv_sec))
+#define	timespecadd(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec >= 1000000000L) {			\
+			(vsp)->tv_sec++;				\
+			(vsp)->tv_nsec -= 1000000000L;			\
+		}							\
+	} while (0)
+#define	timespecsub(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec < 0) {				\
+			(vsp)->tv_sec--;				\
+			(vsp)->tv_nsec += 1000000000L;			\
 		}							\
 	} while (0)
 
