@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.48 2001/01/31 00:15:40 bjh21 Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.49 2001/10/23 18:56:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,7 +221,7 @@ emitdefs(FILE *fp)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
-	if (fprintf(fp, "TARGET_MACHINE=%s\n", machine) < 0)
+	if (fprintf(fp, "MACHINE=%s\n", machine) < 0)
 		return (1);
 	if (*srcdir == '/' || *srcdir == '.') {
 		if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
