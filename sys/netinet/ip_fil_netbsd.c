@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.7 2004/05/09 04:17:34 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.8 2004/05/09 08:29:30 taca Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1460,7 +1460,7 @@ fr_info_t *fin;
 	mb_t *m;
 
 	if ((fin->fin_flx & FI_NOCKSUM) != 0)
-		return 0;
+		return;
 
 	manual = 0;
 	m = fin->fin_m;
@@ -1525,7 +1525,7 @@ fr_info_t *fin;
 	mb_t *m;
 
 	if ((fin->fin_flx & FI_NOCKSUM) != 0)
-		return 0;
+		return;
 
 	manual = 0;
 	m = fin->fin_m;
