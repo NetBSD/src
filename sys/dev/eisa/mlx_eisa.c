@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.6 2001/12/18 13:38:48 ad Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.6.10.1 2003/07/28 18:06:19 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.6 2001/12/18 13:38:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.6.10.1 2003/07/28 18:06:19 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,15 +77,18 @@ struct cfattach mlx_eisa_ca = {
 	sizeof(struct mlx_softc), mlx_eisa_match, mlx_eisa_attach
 };
 
-static const char * const mlx_eisa_prod[] = {
-	"MLX0070",
-	"MLX0071",
-	"MLX0072",
-	"MLX0073",
-	"MLX0074",
-	"MLX0075",
-	"MLX0076",
-	"MLX0077",
+struct mlx_eisa_prod {
+	const char	*mp_idstr;
+	int		mp_nchan;
+} static const mlx_eisa_prod[] = {
+	{ "MLX0070", 1 },
+	{ "MLX0071", 3 },
+	{ "MLX0072", 3 },
+	{ "MLX0073", 2 },
+	{ "MLX0074", 1 },
+	{ "MLX0075", 3 },
+	{ "MLX0076", 2 },
+	{ "MLX0077", 1 },
 };
 
 static int
@@ -97,7 +100,7 @@ mlx_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 	ea = aux;
 
 	for (i = 0; i < sizeof(mlx_eisa_prod) / sizeof(mlx_eisa_prod[0]); i++)
-		if (strcmp(ea->ea_idstring, mlx_eisa_prod[i]) == 0)
+		if (strcmp(ea->ea_idstring, mlx_eisa_prod[i].mp_idstr) == 0)
 			return (1);
 
 	return (0);
@@ -113,7 +116,7 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	struct mlx_softc *mlx;
 	bus_space_tag_t iot;
 	const char *intrstr;
-	int irq, le;
+	int irq, le, i;
 	
 	ea = aux;
 	mlx = (struct mlx_softc *)self;
@@ -171,7 +174,12 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	mlx->mlx_flags = MLXF_EISA;
+	for (i = 0; i < sizeof(mlx_eisa_prod) / sizeof(mlx_eisa_prod[0]); i++)
+		if (strcmp(ea->ea_idstring, mlx_eisa_prod[i].mp_idstr) == 0) {
+			mlx->mlx_ci.ci_nchan = mlx_eisa_prod[i].mp_nchan;
+			break;
+		}
+	mlx->mlx_ci.ci_iftype = 1;
 
 	mlx->mlx_submit = mlx_v1_submit;
 	mlx->mlx_findcomplete = mlx_v1_findcomplete;
@@ -203,13 +211,13 @@ mlx_v1_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inb(mlx, MLX_V1REG_IDB) & MLX_V1_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V1REG_MAILBOX, mc->mc_mbox, MLX_V1_MAILBOX_LEN);
+		    MLX_V1REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V1REG_MAILBOX, MLX_V1_MAILBOX_LEN,
+		    MLX_V1REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
-		mlx_outb(mlx, MLX_V1REG_IDB, MLX_V3_IDB_FULL);
+		mlx_outb(mlx, MLX_V1REG_IDB, MLX_V1_IDB_FULL);
 		return (1);
 	}
 
@@ -227,7 +235,7 @@ mlx_v1_findcomplete(struct mlx_softc *mlx, u_int *slot, u_int *status)
 {
 
 	/* Status available? */
-	if ((mlx_inb(mlx, MLX_V3REG_ODB) & MLX_V3_ODB_SAVAIL) != 0) {
+	if ((mlx_inb(mlx, MLX_V1REG_ODB) & MLX_V1_ODB_SAVAIL) != 0) {
 		*slot = mlx_inb(mlx, MLX_V1REG_MAILBOX + 0x0d);
 		*status = mlx_inw(mlx, MLX_V1REG_MAILBOX + 0x0e);
 
