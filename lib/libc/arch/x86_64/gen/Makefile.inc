@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/10/25 22:31:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/10/28 01:24:06 matt Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S bswap64.S byte_swap_2.S byte_swap_4.S fabs.S modf.S \
@@ -15,7 +15,7 @@ SRCS+=	resumecontext.S swapcontext.S
 SRCS+=	ldexp.c _lwp.c makecontext.c
 
 # Common ieee754 constants and functions
-SRCS+=	infinityf_ieee854.c infinity_ieee754.c
+SRCS+=	infinityf_ieee754.c infinity_ieee754.c
 SRCS+=	nanf_ieee754.c
 SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c
 
