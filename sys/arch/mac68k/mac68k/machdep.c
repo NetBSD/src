@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 1996/08/04 03:53:15 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 1996/08/04 04:08:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1888,6 +1888,35 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
+
+	/*
+	 * Vectors verified for Quadra 630
+	 */
+	{			/* 13 */
+		"Quadra630 ROMs",
+		(caddr_t) 0x408a9bd2,	/* ADB int */
+		(caddr_t) 0x0,		/* PM intr */
+ 		(caddr_t) 0x408b2f94,	/* ADBBase + 130 */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b190,	/* Wild guess at WriteXPRam */
+		(caddr_t) 0x408b39f4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408a99c0,	/* Egret */
+		(caddr_t) 0x408147c8,	/* InitEgret */
+		(caddr_t) 0x408a7ef8,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1917,7 +1946,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[13]},
 	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSAV, &romvecs[7]},
 	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSAV, &romvecs[7]},
 
@@ -1973,7 +2002,6 @@ struct cpu_model_info cpu_models[] = {
  *	PowerBook 520
  *	PowerBook 150
  *	Duo 280
- *	Quadra	630
  *	Performa 6000s
  * 	...?
  */
