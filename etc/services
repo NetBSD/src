@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.53 2002/04/30 13:10:43 martti Exp $
+#	$NetBSD: services,v 1.54 2002/05/23 04:34:39 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -73,6 +73,7 @@ auth		113/tcp		authentication tap ident
 sftp		115/tcp
 uucp-path	117/tcp
 nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
+erpc		121/udp			# Encore Expedited Remote Pro.Call
 ntp		123/tcp
 ntp		123/udp				# Network Time Protocol
 netbios-ns	137/tcp				# NETBIOS Name Service
