@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/09/01 19:51:07 itohy Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/17 14:52:39 minoura Exp $
 
 PROG=	aout2hux
-MAN=	aout2hux.1
+MKMAN=	no			# See share/man/man1/man1.x68k/aout2hux.1
 
 # only needed during build
 proginstall::
