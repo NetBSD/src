@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.111 1999/04/05 19:19:34 mycroft Exp $ */
+/*	$NetBSD: st.c,v 1.112 1999/06/17 04:20:55 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "STK",      "9490",             ""},    
-				{ST_Q_FORCE_BLKSIZE|ST_Q_IGNORE_LOADS, 0, {
+				{ST_Q_FORCE_BLKSIZE, 0, {
 		{0, 0, 0},				/* minor 0-3 */
 		{0, 0, 0},				/* minor 4-7 */
 		{0, 0, 0},				/* minor 8-11 */
@@ -251,7 +251,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "STK",      "SD-3",             ""},
-				{ST_Q_FORCE_BLKSIZE|ST_Q_IGNORE_LOADS, 0, {
+				{ST_Q_FORCE_BLKSIZE, 0, {
 		{0, 0, 0},				/* minor 0-3 */
 		{0, 0, 0},				/* minor 4-7 */
 		{0, 0, 0},				/* minor 8-11 */
@@ -2014,15 +2014,18 @@ st_load(st, type, flags)
 	u_int type;
 	int flags;
 {
+	int error;
 	struct scsi_load cmd;
 
 	if (type != LD_LOAD) {
-		int error;
 		int nmarks;
 
 		error = st_check_eod(st, FALSE, &nmarks, flags);
-		if (error)
+		if (error) {
+			printf("%s: failed to write closing filemarks at "
+			    "unload, errno=%d\n", st->sc_dev.dv_xname, error);
 			return (error);
+		}
 	}
 	if (st->quirks & ST_Q_IGNORE_LOADS) {
 		if (type == LD_LOAD) {
@@ -2031,16 +2034,21 @@ st_load(st, type, flags)
 			 */
 			return st_rewind(st, 0, flags);
 		}
-		return (0);
+		/* otherwise, we should do what's asked of us */
 	}
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = LOAD;
 	cmd.how = type;
 
-	return (scsipi_command(st->sc_link,
+	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags));
+	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
+	if (error) {
+		printf("%s: error %d in st_load (op %d)\n",
+		    st->sc_dev.dv_xname, error, type);
+	}
+	return (error);
 }
 
 /*
@@ -2057,17 +2065,25 @@ st_rewind(st, immediate, flags)
 	int nmarks;
 
 	error = st_check_eod(st, FALSE, &nmarks, flags);
-	if (error)
+	if (error) {
+		printf("%s: failed to write closing filemarks at "
+		    "rewind, errno=%d\n", st->sc_dev.dv_xname, error);
 		return (error);
+	}
 	st->flags &= ~ST_PER_ACTION;
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	return (scsipi_command(st->sc_link,
+	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), 0, 0, ST_RETRIES,
-	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags));
+	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+	if (error) {
+		printf("%s: error %d trying to rewind\n",
+		    st->sc_dev.dv_xname, error);
+	}
+	return (error);
 }
 
 int
