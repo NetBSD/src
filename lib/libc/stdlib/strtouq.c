@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.13 1999/09/20 04:39:42 lukem Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.14 2000/03/08 20:17:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.13 1999/09/20 04:39:42 lukem Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.14 2000/03/08 20:17:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #include <sys/types.h>
 
 #include <assert.h>
@@ -51,10 +50,6 @@ __RCSID("$NetBSD: strtouq.c,v 1.13 1999/09/20 04:39:42 lukem Exp $");
 #include <limits.h>
 #include <stdlib.h>
 
-#ifdef __weak_alias
-__weak_alias(strtouq, _strtouq)
-#endif
-
 /*
  * Convert a string to an unsigned quad integer.
  *
@@ -62,7 +57,7 @@ __weak_alias(strtouq, _strtouq)
  * alphabets and digits are each contiguous.
  */
 u_quad_t
-_strtouq(nptr, endptr, base)
+strtouq(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
 	int base;
