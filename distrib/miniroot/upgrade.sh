@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.13 1997/11/03 10:15:23 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.14 1997/11/12 01:30:30 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/nfsd /usr/sbin/nfsd"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/nfsiod /usr/sbin/nfsiod"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/mountd /usr/sbin/mountd"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/quotacheck /usr/sbin/quotacheck"
-RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/rtquey /usr/sbin/rtquery"
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/rtquery /usr/sbin/rtquery"
 
 rm_relocated_files()
 {
