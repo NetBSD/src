@@ -61,8 +61,8 @@
 #define LINE_COMMENT_CHARS "#"
 #endif
 
-char comment_chars[] = "#";
-char line_comment_chars[] = LINE_COMMENT_CHARS;
+const char comment_chars[] = "#";
+const char line_comment_chars[] = LINE_COMMENT_CHARS;
 #if !defined(ABSOLUTE_PREFIX) && !defined(IMMEDIATE_PREFIX)
 #define ABSOLUTE_PREFIX '@'	/* One or the other MUST be defined */
 #endif
