@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.13 2001/01/06 02:11:19 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.14 2001/01/19 09:02:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.13 2001/01/06 02:11:19 christos Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.14 2001/01/19 09:02:40 kleink Exp $");
 #endif
 #endif
 
@@ -187,6 +187,7 @@ icmp		return ICMP;
 igmp		return IGMP;
 igrp		return IGRP;
 pim		return PIM;
+vrrp		return VRRP;
 
 ip6		return IPV6;
 icmp6		return ICMPV6;

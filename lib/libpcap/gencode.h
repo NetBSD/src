@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.10 2001/01/06 02:11:18 christos Exp $	*/
+/*	$NetBSD: gencode.h,v 1.11 2001/01/19 09:02:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -62,6 +62,7 @@
 #define Q_ESP		19
 
 #define Q_PIM		20
+#define Q_VRRP		21
 
 /* Directional qualifiers. */
 
