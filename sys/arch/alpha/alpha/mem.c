@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.33 2002/10/23 09:10:28 jdolecek Exp $ */
+/* $NetBSD: mem.c,v 1.34 2003/04/01 02:18:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33 2002/10/23 09:10:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2003/04/01 02:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -117,7 +117,7 @@ kmemphys:
 			}
 
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error =
 			    uiomove((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
 			break;
@@ -153,10 +153,10 @@ kmemphys:
 			 */
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 
