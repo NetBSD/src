@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/16 17:40:53 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/17 23:15:30 perry Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -80,6 +80,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/font/FreeType/module \
 CPPFLAGS+=	-DXFREE86_FT2
 
 .include <bsd.x11.mk>
+
+.if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
+CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
+.endif
 
 .if !empty(X11FLAGS.LOADABLE)
 CPPFLAGS+=	-DFONTMODULE
