@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.21 1996/01/30 18:31:05 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.22 1996/02/10 18:37:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1426,7 +1426,7 @@ fdcretry(fdc)
 	case 0:
 		/* try again */
 		fdc->sc_state =
-			(fdc->sc_flags & FDC_EIS) ? DOIO : SEEKCOMPLETE;
+			(fdc->sc_flags & FDC_EIS) ? DOIO : DOSEEK;
 		break;
 
 	case 1: case 2: case 3:
