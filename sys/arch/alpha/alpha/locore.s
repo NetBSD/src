@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.98.8.1 2002/03/10 21:41:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98.8.1 2002/03/10 21:41:32 thorpej Exp $");
 
 #include "assym.h"
 
@@ -260,6 +260,13 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
  */
 #include <alpha/alpha/debug.s>
 #endif /* DDB || KGDB */
+
+/**************************************************************************/
+
+/*
+ * Pull in the locking primitives.
+ */
+#include <alpha/alpha/lock_stubs.s>
 
 /**************************************************************************/
 
