@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.4 2001/02/25 15:51:24 msaitoh Exp $ */
+/* $NetBSD: crt0.c,v 1.5 2002/02/03 23:57:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -35,17 +35,27 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-#undef DYNAMIC	/* XXX */
-
 #include "common.h"
 
 void _start __P((int, char **, char **, void (*cleanup) __P((void)),
 			const Obj_Entry *, struct ps_strings *));
 
 #ifdef __LEADING_UNDERSCORE
-__asm (".globl start; start = __start");
+__asm(	"	.text			\n"
+	"	.align 2		\n"
+	"	.globl start		\n"
+	"start:				\n"
+	"	mov.l	r9,@-r15	\n"
+	"	bra __start		\n"
+	"	mov.l	r8,@-r15");
 #else
-__asm (".globl __start; __start = _start");
+__asm(	"	.text			\n"
+	"	.align 2		\n"
+	"	.globl __start		\n"
+	"__start:			\n"
+	"	mov.l	r9,@-r15	\n"
+	"	bra _start		\n"
+	"	mov.l	r8,@-r15");
 #endif
 
 void
@@ -89,7 +99,7 @@ _start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 2001/02/25 15:51:24 msaitoh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 2002/02/03 23:57:19 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
