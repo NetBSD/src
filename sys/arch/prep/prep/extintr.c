@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2000/05/01 10:52:29 kleink Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2000/06/29 07:47:53 mrg Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/psl.h>

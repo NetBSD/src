@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2000/06/26 04:56:02 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2000/06/29 07:44:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,6 @@
 #include <machine/cpu.h>
 #include <machine/conf.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 extern char *vmmap;            /* poor name! */

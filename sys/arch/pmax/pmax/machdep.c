@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2000/06/28 11:03:25 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.176 2000/06/29 07:51:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2000/06/28 11:03:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2000/06/29 07:51:08 mrg Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -57,11 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2000/06/28 11:03:25 ad Exp $");
 #include <sys/mount.h>
 #include <sys/kcore.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>			/* XXX after <vm/vm.h> */
+#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 

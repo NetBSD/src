@@ -1,4 +1,4 @@
-/*	$NetBSD: isabeep.c,v 1.1 2000/02/29 15:21:43 nonaka Exp $	*/
+/*	$NetBSD: isabeep.c,v 1.2 2000/06/29 07:47:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isavar.h>
 

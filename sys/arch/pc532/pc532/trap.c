@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2000/06/06 18:52:44 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 2000/06/29 07:51:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -62,8 +62,6 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.8 2000/04/13 15:45:11 msaitoh Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.9 2000/06/29 07:44:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -42,7 +42,7 @@
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
 #include <sys/namei.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/exec_coff.h>
 

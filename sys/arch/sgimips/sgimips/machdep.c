@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2000/06/26 14:20:56 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2000/06/29 07:44:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -50,13 +50,12 @@
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.3 2000/04/20 11:51:27 tsubai Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.4 2000/06/29 07:44:02 mrg Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -40,7 +40,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

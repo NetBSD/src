@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 1998/09/02 19:17:13 matthias Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 2000/06/29 07:51:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -49,7 +49,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>

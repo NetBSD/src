@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 2000/06/07 11:34:17 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 2000/06/29 07:44:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -63,7 +63,7 @@
 #endif
 #include <sys/syscall.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sh3/trapreg.h>
 #include <machine/cpu.h>

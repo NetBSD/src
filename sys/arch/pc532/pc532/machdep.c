@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2000/06/26 14:20:53 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2000/06/29 07:51:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -74,8 +74,6 @@
 #include <sys/kcore.h>
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

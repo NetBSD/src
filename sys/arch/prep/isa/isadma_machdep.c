@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.1 2000/02/29 15:21:43 nonaka Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.2 2000/06/29 07:47:52 mrg Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -55,7 +55,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern paddr_t avail_end;		/* XXX temporary */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2000/06/26 14:20:57 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 2000/06/29 07:44:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -55,7 +55,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
