@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.33 1998/01/08 11:36:25 mrg Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.34 1998/01/08 23:03:24 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -134,12 +134,15 @@ static int vm_page_lost_count = 0; /* XXXCDC: DEBUG DEBUG */
 #if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 /*
  *	These variables record the values returned by vm_page_bootstrap,
- *	for debugging purposes.  The implementation of pmap_steal_memory
- *	and pmap_startup here also uses them internally.
+ *	for debugging purposes.
+ *
+ *	The implementation of vm_bootstrap_steal_memory here also uses
+ *	them internally.
  */
 static vm_offset_t	virtual_space_start;
 static vm_offset_t	virtual_space_end;
 
+vm_offset_t	vm_bootstrap_steal_memory __P((vm_size_t));
 #endif
 
 /*
@@ -298,7 +301,7 @@ vm_page_bootstrap(startp, endp)
 	pagecount = (PAGE_SIZE * (freepages + 1)) / 
 		    (PAGE_SIZE + sizeof(struct vm_page));
 	pagearray = (vm_page_t)
-	    pmap_steal_memory(pagecount * sizeof(struct vm_page));
+	    vm_bootstrap_steal_memory(pagecount * sizeof(struct vm_page));
 	bzero(pagearray, pagecount * sizeof(struct vm_page));
 
 	/*
@@ -332,7 +335,8 @@ vm_page_bootstrap(startp, endp)
 
 	/*
 	 * pass up the values of virtual_space_start and virtual_space_end
-	 * (obtained by pmap_steal_memory) to the upper layers of the VM.
+	 * (obtained by vm_bootstrap_steal_memory) to the upper layers of
+	 * the VM.
 	 */
 	*startp = round_page(virtual_space_start);
 	*endp = trunc_page(virtual_space_end);
@@ -344,9 +348,10 @@ vm_page_bootstrap(startp, endp)
 }
 
 /*
- * pmap_steal_memory: steal memory from physmem for bootstrapping
+ * vm_bootstrap_steal_memory: steal memory from physmem for bootstrapping
  */
-vm_offset_t pmap_steal_memory(size)
+vm_offset_t
+vm_bootstrap_steal_memory(size)
 	vm_size_t size;
 {
 	vm_offset_t addr, vaddr, paddr;
@@ -356,7 +361,8 @@ vm_offset_t pmap_steal_memory(size)
 
 	/*
 	 * on first call to this function init ourselves.   we detect this
-	 * by checking virtual_space_start/end which are in the zero'd BSS area.
+	 * by checking virtual_space_start/end which are in the zero'd BSS
+	 * area.
 	 */
 	if (virtual_space_start == virtual_space_end) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
@@ -378,7 +384,7 @@ vm_offset_t pmap_steal_memory(size)
 	for (vaddr = round_page(addr); vaddr < addr + size;
 	    vaddr += PAGE_SIZE) {
 		if (!vm_page_physget(&paddr))
-			panic("pmap_steal_memory: out of memory");
+			panic("vm_bootstrap_steal_memory: out of memory");
 
 		/* XXX: should be wired, but some pmaps don't like that ... */
 		pmap_enter(pmap_kernel(), vaddr, paddr,
@@ -737,6 +743,13 @@ vm_page_physdump()
 /* OLD NONCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
 
 /*
+ *	We implement vm_page_bootstrap and vm_bootstrap_steal_memory with
+ *	the help of two simpler functions:
+ *
+ *		pmap_virtual_space and pmap_next_page
+ */
+
+/*
  *	vm_page_bootstrap:
  *
  *	Initializes the resident memory module.
@@ -751,9 +764,10 @@ vm_page_bootstrap(startp, endp)
 	vm_offset_t	*startp;
 	vm_offset_t	*endp;
 {
-	int			i;
+	unsigned int		i, freepages;
 	register struct pglist	*bucket;
-	
+	vm_offset_t		paddr;
+
 	extern	vm_offset_t	kentry_data;
 	extern	vm_size_t	kentry_data_size;
 
@@ -785,8 +799,8 @@ vm_page_bootstrap(startp, endp)
 	 */
 
 	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
-				      MAX_KMAPENT*sizeof(struct vm_map_entry));
-	kentry_data = (vm_offset_t) pmap_steal_memory(kentry_data_size);
+	    MAX_KMAPENT*sizeof(struct vm_map_entry));
+	kentry_data = vm_bootstrap_steal_memory(kentry_data_size);
 	
 	/*
 	 *	Validate these zone addresses.
@@ -815,7 +829,8 @@ vm_page_bootstrap(startp, endp)
 	vm_page_hash_mask = vm_page_bucket_count - 1;
 
 	vm_page_buckets = (struct pglist *)
-	    pmap_steal_memory(vm_page_bucket_count * sizeof(*vm_page_buckets));
+	    vm_bootstrap_steal_memory(vm_page_bucket_count *
+	    sizeof(*vm_page_buckets));
         bucket = vm_page_buckets;
          
 	for (i = vm_page_bucket_count; i--;) {
@@ -826,13 +841,83 @@ vm_page_bootstrap(startp, endp)
 	simple_lock_init(&bucket_lock);
 
 	/*
-	 *	Machine-dependent code allocates the resident page table.
-	 *	It uses VM_PAGE_INIT to initialize the page frames.
-	 *	The code also returns to us the virtual space available
-	 *	to the kernel.  We don't trust the pmap module
-	 *	to get the alignment right.
+	 *	We calculate how many page frames we will have and
+	 *	then allocate the page structures in one chunk.
+	 *	The calculation is non-trivial.  We want:
+	 *
+	 *	vmpages > (freepages - (vmpages / sizeof(vm_page_t)))
+	 *
+	 *	...which, with some algebra, becomes:
+	 *
+	 *	vmpages > (freepages * sizeof(...) / (1 + sizeof(...)))
+	 *
+	 *	The value of vm_page_count need not be exact, but must
+	 *	be large enough so vm_page_array handles the index range.
 	 */
-	pmap_startup(&virtual_space_start, &virtual_space_end);
+
+	freepages = pmap_free_pages();
+	/* Fudge slightly to deal with truncation error. */
+	freepages += 1;	/* fudge */
+
+	vm_page_count = (PAGE_SIZE * freepages) /
+	    (PAGE_SIZE + sizeof(*vm_page_array));
+
+	vm_page_array = (vm_page_t)
+	    vm_bootstrap_steal_memory(vm_page_count * sizeof(*vm_page_array));
+	bzero(vm_page_array, vm_page_count * sizeof(*vm_page_array));
+
+#ifdef DIAGNOSTIC
+	/*
+	 *	Initialize everything in case the holes are stepped in,
+	 *	and set PA to something that will cause a panic...
+	 */
+	for (i = 0; i < vm_page_count; i++)
+		vm_page_array[i].phys_addr = 0xdeadbeef;
+#endif
+
+	/*
+	 *	Initialize the page frames.  Note that some page
+	 *	indices may not be usable when pmap_free_pages()
+	 *	counts pages in a hole.
+	 */
+
+	if (!pmap_next_page(&paddr))
+		panic("vm_page_bootstrap: can't get first page");
+
+	first_page = pmap_page_index(paddr);
+	for (i = 0;;) {
+		/*
+		 *	Initialize a page array element.
+		 */
+
+		VM_PAGE_INIT(&vm_page_array[i], NULL, NULL);
+		vm_page_array[i].phys_addr = paddr;
+		vm_page_free(&vm_page_array[i]);
+
+		/*
+		 *	Are there any more physical pages?
+		 */
+
+		if (!pmap_next_page(&paddr))
+			break;
+		i = pmap_page_index(paddr) - first_page;
+
+		/*
+		 *	Don't trust pmap_page_index()...
+		 */
+
+		if (
+#if 0
+		    i < 0 || /* can't happen, i is unsigned */
+#endif
+		    i >= vm_page_count)
+			panic("vm_page_bootstrap: bad i = 0x%x", i);
+	}
+
+	/*
+	 *	Make sure we have nice, round values.
+	 */
+
 	virtual_space_start = round_page(virtual_space_start);
 	virtual_space_end = trunc_page(virtual_space_end);
 	
@@ -842,7 +927,66 @@ vm_page_bootstrap(startp, endp)
 	simple_lock_init(&vm_pages_needed_lock);
 }
 
+vm_offset_t
+vm_bootstrap_steal_memory(size)
+	vm_size_t	size;
+{
+	vm_offset_t	addr, vaddr, paddr;
+
+	/*
+	 *	We round the size to an integer multiple.
+	 */
+	
+	size = (size + 3) &~ 3; /* XXX */
+	
+	/*
+	 *	If this is the first call to vm_bootstrap_steal_memory,
+	 *	we have to initialize ourself.
+	 */
+	
+	if (virtual_space_start == virtual_space_end) {
+		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
+		
+		/*
+		 *	The initial values must be aligned properly, and
+		 *	we don't trust the pmap module to do it right.
+		 */
+		
+		virtual_space_start = round_page(virtual_space_start);
+		virtual_space_end = trunc_page(virtual_space_end);
+	}
+	
+	/*
+	 *	Allocate virtual memory for this request.
+	 */
+	
+	addr = virtual_space_start;
+	virtual_space_start += size;
+	
+	/*
+	 *	Allocate and map physical pages to back new virtual pages.
+	 */
+	
+	for (vaddr = round_page(addr);
+	     vaddr < addr + size;
+	     vaddr += PAGE_SIZE) {
+		if (!pmap_next_page(&paddr))
+			panic("vm_bootstrap_steal_memory");
+		
+		/*
+		 *	XXX Logically, these mappings should be wired,
+		 *	but some pmap modules barf if they are.
+		 */
+		
+		pmap_enter(pmap_kernel(), vaddr, paddr,
+			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
+	}
+	
+	return addr;
+}
+
 #else	/* MACHINE_NONCONTIG */
+
 /* OLD CONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
 /*
  *	vm_page_startup:
@@ -986,147 +1130,6 @@ vm_page_startup(start, end)
 	vm_page_startup_initialized = TRUE;
 }
 #endif /* MACHINE_NONCONTIG */
-
-#if	defined(MACHINE_NONCONTIG) && !defined(MACHINE_PAGES)
-/*
- *	We implement pmap_steal_memory and pmap_startup with the help
- *	of two simpler functions, pmap_virtual_space and pmap_next_page.
- */
-vm_offset_t
-pmap_steal_memory(size)
-	vm_size_t	size;
-{
-	vm_offset_t	addr, vaddr, paddr;
-
-	/*
-	 *	We round the size to an integer multiple.
-	 */
-	
-	size = (size + 3) &~ 3; /* XXX */
-	
-	/*
-	 *	If this is the first call to pmap_steal_memory,
-	 *	we have to initialize ourself.
-	 */
-	
-	if (virtual_space_start == virtual_space_end) {
-		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
-		
-		/*
-		 *	The initial values must be aligned properly, and
-		 *	we don't trust the pmap module to do it right.
-		 */
-		
-		virtual_space_start = round_page(virtual_space_start);
-		virtual_space_end = trunc_page(virtual_space_end);
-	}
-	
-	/*
-	 *	Allocate virtual memory for this request.
-	 */
-	
-	addr = virtual_space_start;
-	virtual_space_start += size;
-	
-	/*
-	 *	Allocate and map physical pages to back new virtual pages.
-	 */
-	
-	for (vaddr = round_page(addr);
-	     vaddr < addr + size;
-	     vaddr += PAGE_SIZE) {
-		if (!pmap_next_page(&paddr))
-			panic("pmap_steal_memory");
-		
-		/*
-		 *	XXX Logically, these mappings should be wired,
-		 *	but some pmap modules barf if they are.
-		 */
-		
-		pmap_enter(pmap_kernel(), vaddr, paddr,
-			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
-	}
-	
-	return addr;
-}
-
-void
-pmap_startup(startp, endp)
-	vm_offset_t	*startp;
-	vm_offset_t	*endp;
-{
-	unsigned int	i, freepages;
-	vm_offset_t	paddr;
-	
-	/*
-	 * We calculate how many page frames we will have
-	 * and then allocate the page structures in one chunk.
-	 * The calculation is non-trivial.  We want:
-	 *
-	 *	vmpages > (freepages - (vmpages / sizeof(vm_page_t)))
-	 *
-	 * which, with some algebra, becomes:
-	 *
-	 *	vmpages > (freepages * sizeof(...) / (1 + sizeof(...)))
-	 *
-	 * The value of vm_page_count need not be exact, but must be
-	 * large enough so vm_page_array handles the index range.
-	 */
-
-	freepages = pmap_free_pages();
-	/* Fudge slightly to deal with truncation error. */
-	freepages += 1;	/* fudge */
-
-	vm_page_count = (PAGE_SIZE * freepages) /
-		(PAGE_SIZE + sizeof(*vm_page_array));
-
-	vm_page_array = (vm_page_t)
-		pmap_steal_memory(vm_page_count * sizeof(*vm_page_array));
-	bzero(vm_page_array, vm_page_count * sizeof(*vm_page_array));
-
-#ifdef	DIAGNOSTIC
-	/*
-	 * Initialize everyting in case the holes are stepped in,
-	 * and set PA to something that will cause a panic...
-	 */
-	for (i = 0; i < vm_page_count; i++)
-		vm_page_array[i].phys_addr = 0xdeadbeef;
-#endif
-
-	/*
-	 *	Initialize the page frames.
-	 *	Note that some page indices may not be usable
-	 *	when pmap_free_pages() counts pages in a hole.
-	 */
-	if (!pmap_next_page(&paddr))
-		panic("pmap_startup: can't get first page");
-	first_page = pmap_page_index(paddr);
-	i = 0;
-	for (;;) {
-		/* Initialize a page array element. */
-		VM_PAGE_INIT(&vm_page_array[i], NULL, NULL);
-		vm_page_array[i].phys_addr = paddr;
-		vm_page_free(&vm_page_array[i]);
-
-		/* Are there more physical pages? */
-		if (!pmap_next_page(&paddr))
-			break;
-		i = pmap_page_index(paddr) - first_page;
-
-		/* Don't trust pmap_page_index()... */
-		if (
-#if 0
-		    /* Cannot happen; i is unsigned */
-		    i < 0 ||
-#endif
-			    i >= vm_page_count)
-			panic("pmap_startup: bad i=0x%x", i);
-	}
-
-	*startp = virtual_space_start;
-	*endp = virtual_space_end;
-}
-#endif /* MACHINE_NONCONTIG && !MACHINE_PAGES */
 
 /*
  *	vm_page_insert:		[ internal use only ]
