@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2000/12/30 17:21:44 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.10 2001/06/20 02:01:18 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ asn1_err.h asn1_err.c: asn1_err.et
 
 DPSRCS=	asn1_err.h
 
-INCS=	asn1.h asn1_err.h
+INCS=	krb5_asn1.h asn1_err.h
 
 INCSDIR= /usr/include/krb5
 
@@ -36,6 +36,7 @@ gen_files =				\
 	asn1_AuthorizationData.x	\
 	asn1_CKSUMTYPE.x		\
 	asn1_Checksum.x			\
+	asn1_ENCTYPE.x			\
 	asn1_ETYPE_INFO.x		\
 	asn1_ETYPE_INFO_ENTRY.x		\
 	asn1_EncAPRepPart.x		\
@@ -61,6 +62,7 @@ gen_files =				\
 	asn1_KerberosTime.x		\
 	asn1_KrbCredInfo.x		\
 	asn1_LastReq.x			\
+	asn1_LR_TYPE.x			\
 	asn1_MESSAGE_TYPE.x		\
 	asn1_METHOD_DATA.x		\
 	asn1_NAME_TYPE.x		\
@@ -93,17 +95,17 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -DHAVE_CONFIG_H
 
-${gen_files} asn1.hx: asn1_files
+${gen_files} krb5_asn1.hx: asn1_files
 
 ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
 ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
 
 asn1_files: k5.asn1 all-asn1_compile
-	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1
+	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1 krb5_asn1
 
-${SRCS}: asn1.h
+${SRCS}: krb5_asn1.h
 
-CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files asn1.h asn1.hx
+CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
 
 SUBDIR=	asn1_compile
 
