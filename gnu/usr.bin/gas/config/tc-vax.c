@@ -239,6 +239,13 @@ const pseudo_typeS md_pseudo_table[] = {
 #define STATE_LONG			(2)
 #define STATE_UNDF			(3)	/* Symbol undefined in pass1 */
 
+/* Handle the extra arg for fix_new when doing PIC */
+#ifdef	PIC
+#define	FIX_NO_RELOC	NO_RELOC, NULL
+#else
+#define	FIX_NO_RELOC	NO_RELOC
+#endif  /* PIC */
+
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
 
@@ -657,7 +664,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 				if (nbytes) {
 					p = frag_more(nbytes);
 					fix_new(frag_now, p - frag_now->fr_literal, nbytes,
-						 this_add_symbol, 0, this_add_number, 1, NO_RELOC);
+						 this_add_symbol, 0, this_add_number, 1, FIX_NO_RELOC);
 				} else {		/* to_seg == now_seg || to_seg == SEG_UNKNOWN */
 					/* nbytes == 0 */
 					length_code = is_undefined ? STATE_UNDF : STATE_BYTE;
@@ -702,7 +709,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 						p = frag_more (nbytes);
 						/* Conventional relocation. */
 						fix_new(frag_now, p - frag_now->fr_literal,
-							nbytes, &abs_symbol, 0, this_add_number, 1, NO_RELOC);
+							nbytes, &abs_symbol, 0, this_add_number, 1, FIX_NO_RELOC);
 					} else {
 						know(opcode_as_number & VIT_OPCODE_SYNTHETIC);
 						if (opcode_as_number & VIT_OPCODE_SPECIAL) {
@@ -770,7 +777,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 						know(!(opcode_as_number & VIT_OPCODE_SYNTHETIC));
 						p = frag_more (nbytes);
 						fix_new(frag_now, p - frag_now->fr_literal,
-							 nbytes, &abs_symbol, 0, this_add_number, 1, NO_RELOC);
+							 nbytes, &abs_symbol, 0, this_add_number, 1, FIX_NO_RELOC);
 					} else {
 						know(opcode_as_number & VIT_OPCODE_SYNTHETIC);
 						if (opcode_as_number & VIT_OPCODE_SPECIAL) {
@@ -783,7 +790,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 								fix_new(frag_now,
 									 p + 1 - frag_now->fr_literal, 4,
 									 this_add_symbol, 0,
-									 this_add_number, 1, NO_RELOC);
+									 this_add_number, 1, FIX_NO_RELOC);
 								/* Now eg JMP foo or JSB foo. */
 							} else {
 								if (operandP->vop_width == VAX_WIDTH_WORD_JUMP) {
@@ -797,7 +804,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 									fix_new(frag_now,
 										 p + 6 - frag_now->fr_literal, 4,
 										 this_add_symbol, 0,
-										 this_add_number, 1, NO_RELOC);
+										 this_add_number, 1, FIX_NO_RELOC);
 									/*
 									 * Now (eg)	ACBx	1f
 									 *		BRB	2f
@@ -815,7 +822,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 									fix_new(frag_now,
 										 p + 5 - frag_now->fr_literal,
 										 4, this_add_symbol, 0,
-										 this_add_number, 1, NO_RELOC);
+										 this_add_number, 1, FIX_NO_RELOC);
 									/*
 									 * Now (eg)	xOBxxx	1f
 									 *		BRB	2f
@@ -833,7 +840,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 							p[2] = VAX_PC_RELATIVE_MODE;
 							fix_new(frag_now, p + 3 - frag_now->fr_literal,
 								 4, this_add_symbol, 0,
-								 this_add_number, 1, NO_RELOC);
+								 this_add_number, 1, FIX_NO_RELOC);
 						}
 					}
 				}
@@ -892,7 +899,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 							p[0] = 0xF | ((at + "?\12\14?\16"[length]) << 4);
 							fix_new(frag_now, p + 1 - frag_now->fr_literal,
 								 length, this_add_symbol, 0,
-								 this_add_number, 1, NO_RELOC);
+								 this_add_number, 1, FIX_NO_RELOC);
 						}
 					} else {	/* to_seg != now_seg */
 						if (this_add_symbol == NULL) {
@@ -931,7 +938,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 								fix_new(frag_now,
 									 p + 1 - frag_now->fr_literal,
 									 length, this_add_symbol, 0,
-									 this_add_number, 1, NO_RELOC);
+									 this_add_number, 1, FIX_NO_RELOC);
 							}
 						}
 					}
@@ -987,7 +994,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 								} else {
 									fix_new(frag_now, p + 1 - frag_now->fr_literal,
 										 nbytes, this_add_symbol, 0,
-										 this_add_number, 0, NO_RELOC);
+										 this_add_number, 0, FIX_NO_RELOC);
 								}
 							}
 						}
@@ -1019,7 +1026,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 						} else {
 							fix_new(frag_now, p + 1 - frag_now->fr_literal,
 								 length, this_add_symbol, 0,
-								 this_add_number, 0, NO_RELOC);
+								 this_add_number, 0, FIX_NO_RELOC);
 						}
 					}
 				}
@@ -1058,7 +1065,7 @@ register segT segment;
 		    p[0] |= VAX_PC_RELATIVE_MODE;	/* Preserve @ bit. */
 		    fragP->fr_fix += 1 + 4;
 		    fix_new(fragP, old_fr_fix + 1, 4, fragP->fr_symbol, 0,
-			    fragP->fr_offset, 1, NO_RELOC);
+			    fragP->fr_offset, 1, FIX_NO_RELOC);
 		    frag_wane(fragP);
 	    }
 	    break;
@@ -1074,7 +1081,7 @@ register segT segment;
 		p[2] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
 		fragP->fr_fix += 1 + 1 + 1 + 4;
 		fix_new(fragP, old_fr_fix + 3, 4, fragP->fr_symbol, 0,
-			fragP->fr_offset, 1, NO_RELOC);
+			fragP->fr_offset, 1, FIX_NO_RELOC);
 		frag_wane(fragP);
 	}
 	    break;
@@ -1092,7 +1099,7 @@ register segT segment;
 		p[5] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
 		fragP->fr_fix += 2 + 2 + 1 + 1 + 4;
 		fix_new(fragP, old_fr_fix + 6, 4, fragP->fr_symbol, 0,
-			fragP->fr_offset, 1, NO_RELOC);
+			fragP->fr_offset, 1, FIX_NO_RELOC);
 		frag_wane(fragP);
 	}
 	    break;
@@ -1109,7 +1116,7 @@ register segT segment;
 		p[4] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
 		fragP->fr_fix += 1 + 2 + 1 + 1 + 4;
 		fix_new(fragP, old_fr_fix + 5, 4, fragP->fr_symbol, 0,
-			fragP->fr_offset, 1, NO_RELOC);
+			fragP->fr_offset, 1, FIX_NO_RELOC);
 		frag_wane(fragP);
 	}
 	    break;
@@ -1123,7 +1130,7 @@ register segT segment;
 		p[0] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
 		fragP->fr_fix += 1 + 4;
 		fix_new(fragP, old_fr_fix + 1, 4, fragP->fr_symbol, 0,
-			fragP->fr_offset, 1, NO_RELOC);
+			fragP->fr_offset, 1, FIX_NO_RELOC);
 		frag_wane(fragP);
 	}
 	    break;
@@ -2948,7 +2955,7 @@ symbolS *to_symbol;
 	*ptr++ = 0x17;
 	*ptr++ = 0x9F;
 	md_number_to_chars(ptr, offset, 4);
-	fix_new(frag, ptr - frag->fr_literal, 4, to_symbol, (symbolS *) 0, (long) 0, 0, NO_RELOC);
+	fix_new(frag, ptr - frag->fr_literal, 4, to_symbol, (symbolS *) 0, (long) 0, 0, FIX_NO_RELOC);
 }
 
 #ifdef OBJ_VMS
@@ -3022,7 +3029,11 @@ char ***vecP;
 	case 'H':	/* Show new symbol after hash truncation */
 		break;
 #endif
-		
+#ifdef	PIC
+	case 'k':	/* PIC mode */
+	case 'K':
+		break;
+#endif
 	default:
 		return 0;
 		
