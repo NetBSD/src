@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_gr.c,v 1.1.1.2 2002/06/20 10:30:30 itojun Exp $	*/
+/*	$NetBSD: lcl_gr.c,v 1.2 2002/06/20 11:43:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995

@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.1.1.2 2002/06/20 10:30:11 itojun Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.2 2002/06/20 11:43:01 itojun Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_lexer.h,v 1.3 2001/01/27 07:21:59 itojun Exp $	*/
+/*	$NetBSD: ns_lexer.h,v 1.4 2002/06/20 11:42:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 by Internet Software Consortium.
@@ -32,10 +32,8 @@
 #define SYM_LOGGING	0x04
 #define SYM_SYSLOG	0x08
 
-int	parser_warning(int, const char *, ...)
-     __attribute__((__format__(__printf__, 2, 3)));
-int	parser_error(int, const char *, ...)
-     __attribute__((__format__(__printf__, 2, 3)));
+int	parser_warning(int, const char *, ...) ISC_FORMAT_PRINTF(2, 3);
+int	parser_error(int, const char *, ...) ISC_FORMAT_PRINTF(2, 3);
 void	yyerror(const char *);
 void	lexer_begin_file(const char *, FILE *);
 void	lexer_end_file(void);

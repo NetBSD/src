@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent_r.c,v 1.1.1.2 2002/06/20 10:30:26 itojun Exp $	*/
+/*	$NetBSD: getnetgrent_r.c,v 1.2 2002/06/20 11:43:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_ho.c,v 1.1.1.2 2002/06/20 10:30:22 itojun Exp $	*/
+/*	$NetBSD: gen_ho.c,v 1.2 2002/06/20 11:43:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.

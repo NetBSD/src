@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_init.c,v 1.3 2001/05/17 22:59:39 itojun Exp $	*/
+/*	$NetBSD: ns_init.c,v 1.4 2002/06/20 11:42:57 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: ns_init.c,v 8.73 2001/04/20 00:21:40 vixie Exp";
+static const char rcsid[] = "Id: ns_init.c,v 8.76 2001/12/19 01:41:51 marka Exp";
 #endif /* not lint */
 
 /*
@@ -296,7 +296,10 @@ do_reload(const char *domain, int type, int class, int mark) {
 	 * Clean up any leftover data.
 	 */
 	ns_stopxfrs(zp);
-	purge_zone(domain, hashtab, class);
+	if (type == z_hint || (type == z_stub && *domain == 0))
+		purge_zone(domain, fcachetab, class);
+	else
+		purge_zone(domain, hashtab, class);
 
 	/*
 	 * Reload
@@ -536,9 +539,9 @@ ns_nameok(const struct qinfo *qry, const char *name, int class,
 		if (severity == warn)
 			ok = 1;
 		if (s != NULL)
-			freestr(s);
+			(void)freestr(s);
 		if (o != NULL)
-			freestr(o);
+			(void)freestr(o);
 	}
 	return (ok);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.1.1.2 2002/06/20 10:30:42 itojun Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.2 2002/06/20 11:43:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993

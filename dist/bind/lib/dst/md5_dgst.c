@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_dgst.c,v 1.3 2001/01/27 07:58:25 itojun Exp $	*/
+/*	$NetBSD: md5_dgst.c,v 1.4 2002/06/20 11:43:02 itojun Exp $	*/
 
 /* crypto/md/md5_dgst.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -58,11 +58,13 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #ifdef USE_MD5 /* Added by ogud@tis.com 1998/1/26 */
+#include <port_before.h>
+#include <stdio.h>
 #include "md5_locl.h"
+#include <port_after.h>
 
-char *MD5_version="MD5 part of SSLeay 0.8.1 19-Jul-1997";
+const char *MD5_version="MD5 part of SSLeay 0.8.1 19-Jul-1997";
 
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
@@ -92,7 +94,7 @@ MD5_CTX *c;
 
 void MD5_Update(c, data, len)
 MD5_CTX *c;
-register unsigned char *data;
+register const unsigned char *data;
 unsigned long len;
 	{
 	register ULONG *p;

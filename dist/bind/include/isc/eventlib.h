@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.h,v 1.1.1.2 2002/06/20 10:30:11 itojun Exp $	*/
+/*	$NetBSD: eventlib.h,v 1.2 2002/06/20 11:43:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium

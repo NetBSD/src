@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.2 2002/06/20 10:30:22 itojun Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.2 2002/06/20 11:43:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 by Internet Software Consortium.
