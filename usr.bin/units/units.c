@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
+/*	$NetBSD: units.c,v 1.7 1997/10/20 02:36:41 lukem Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -18,6 +18,7 @@
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -62,16 +63,36 @@ int unitcount;
 int prefixcount;
 
 
+int	addsubunit __P((char *[], char *));
+int	addunit __P((struct unittype *, char *, int));
+void	cancelunit __P((struct unittype *));
+int	compare __P((const void *, const void *));
+int	compareproducts __P((char **, char **));
+int	compareunits __P((struct unittype *, struct unittype *));
+int	completereduce __P((struct unittype *));
+void	initializeunit __P((struct unittype *));
+int	main __P((int, char **));
+void	readerror __P((int));
+void	readunits __P((char *));
+int	reduceproduct __P((struct unittype *, int));
+int	reduceunit __P((struct unittype *));
+void	showanswer __P((struct unittype *, struct unittype *));
+void	showunit __P((struct unittype *));
+void	sortunit __P((struct unittype *));
+void	usage __P((void));
+void	zeroerror __P((void));
+char   *dupstr __P((char *));
+char   *lookupunit __P((char *));
+
+
 char *
 dupstr(char *str)
 {
 	char *ret;
 
 	ret = malloc(strlen(str) + 1);
-	if (!ret) {
-		fprintf(stderr, "Memory allocation error\n");
-		exit(3);
-	}
+	if (!ret)
+		err(3, "Memory allocation error");
 	strcpy(ret, str);
 	return (ret);
 }
@@ -80,8 +101,7 @@ dupstr(char *str)
 void 
 readerror(int linenum)
 {
-	fprintf(stderr, "Error in units file '%s' line %d\n", UNITSFILE,
-	    linenum);
+	warnx("Error in units file '%s' line %d", UNITSFILE, linenum);
 }
 
 
@@ -97,11 +117,8 @@ readunits(char *userfile)
 
 	if (userfile) {
 		unitfile = fopen(userfile, "rt");
-		if (!unitfile) {
-			fprintf(stderr, "Unable to open units file '%s'\n",
-			    userfile);
-			exit(1);
-		}
+		if (!unitfile)
+			err(1, "Unable to open units file '%s'", userfile);
 	}
 	else {
 		unitfile = fopen(UNITSFILE, "rt");
@@ -130,11 +147,9 @@ readunits(char *userfile)
 					direc = strtok(NULL, separator);
 				}
 			}
-			if (!unitfile) {
-				fprintf(stderr, "Can't find units file '%s'\n",
+			if (!unitfile)
+				errx(1, "Can't find units file '%s'",
 				    UNITSFILE);
-				exit(1);
-			}
 		}
 	}
 	while (!feof(unitfile)) {
@@ -151,7 +166,7 @@ readunits(char *userfile)
 			continue;
 		if (lineptr[strlen(lineptr) - 1] == '-') { /* it's a prefix */
 			if (prefixcount == MAXPREFIXES) {
-				fprintf(stderr, "Memory for prefixes exceeded in line %d\n",
+				warnx("Memory for prefixes exceeded in line %d",
 				    linenum);
 				continue;
 			}
@@ -159,7 +174,8 @@ readunits(char *userfile)
 			prefixtable[prefixcount].prefixname = dupstr(lineptr);
 			for (i = 0; i < prefixcount; i++)
 				if (!strcmp(prefixtable[i].prefixname, lineptr)) {
-					fprintf(stderr, "Redefinition of prefix '%s' on line %d ignored\n",
+					warnx(
+			"Redefinition of prefix '%s' on line %d ignored",
 					    lineptr, linenum);
 					continue;
 				}
@@ -175,14 +191,15 @@ readunits(char *userfile)
 		}
 		else {		/* it's not a prefix */
 			if (unitcount == MAXUNITS) {
-				fprintf(stderr, "Memory for units exceeded in line %d\n",
+				warnx("Memory for units exceeded in line %d",
 				    linenum);
 				continue;
 			}
 			unittable[unitcount].uname = dupstr(lineptr);
 			for (i = 0; i < unitcount; i++)
 				if (!strcmp(unittable[i].uname, lineptr)) {
-					fprintf(stderr, "Redefinition of unit '%s' on line %d ignored\n",
+					warnx(
+				"Redefinition of unit '%s' on line %d ignored",
 					    lineptr, linenum);
 					continue;
 				}
@@ -215,7 +232,7 @@ addsubunit(char *product[], char *toadd)
 
 	for (ptr = product; *ptr && *ptr != NULLUNIT; ptr++);
 	if (ptr >= product + MAXSUBUNITS) {
-		fprintf(stderr, "Memory overflow in unit reduction\n");
+		warnx("Memory overflow in unit reduction");
 		return 1;
 	}
 	if (!*ptr)
@@ -274,7 +291,7 @@ showunit(struct unittype * theunit)
 void 
 zeroerror()
 {
-	fprintf(stderr, "Unit reduces to zero\n");
+	warnx("Unit reduces to zero");
 }
 
 /*
@@ -617,7 +634,8 @@ showanswer(struct unittype * have, struct unittype * want)
 void 
 usage()
 {
-	fprintf(stderr, "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
+	fprintf(stderr,
+	    "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
 	fprintf(stderr, "\n    -f specify units file\n");
 	fprintf(stderr, "    -q supress prompting (quiet)\n");
 	fprintf(stderr, "    -v print version number\n");
@@ -703,4 +721,5 @@ main(int argc, char **argv)
 			showanswer(&have, &want);
 		}
 	}
+	return (0);
 }
