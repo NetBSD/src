@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.299 2001/01/05 20:16:39 martin Exp $
+# $NetBSD: mi,v 1.300 2001/01/07 13:05:28 martin Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -87,6 +87,7 @@
 ./usr/share/man/cat1/ctags.0
 ./usr/share/man/cat1/cu.0
 ./usr/share/man/cat1/cut.0
+./usr/share/man/cat1/daicctl.0
 ./usr/share/man/cat1/date.0
 ./usr/share/man/cat1/dc.0
 ./usr/share/man/cat1/dd.0
@@ -99,6 +100,7 @@
 ./usr/share/man/cat1/dnskeygen.0
 ./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
+./usr/share/man/cat1/dtmfdecode.0
 ./usr/share/man/cat1/du.0
 ./usr/share/man/cat1/echo.0
 ./usr/share/man/cat1/ed.0
@@ -123,6 +125,7 @@
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
+./usr/share/man/cat1/g711conv.0
 ./usr/share/man/cat1/gcpp.0
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getconf.0
@@ -963,6 +966,9 @@
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipnat.conf.0
 ./usr/share/man/cat5/ipsend.0
+./usr/share/man/cat5/isdnd.acct.0
+./usr/share/man/cat5/isdnd.rates.0
+./usr/share/man/cat5/isdnd.rc.0
 ./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/ld.so.conf.0
@@ -1183,6 +1189,12 @@
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
 ./usr/share/man/cat8/ipnat.0
+./usr/share/man/cat8/isdnd.0
+./usr/share/man/cat8/isdnmonitor.0
+./usr/share/man/cat8/isdntel.0
+./usr/share/man/cat8/isdntelctl.0
+./usr/share/man/cat8/isdntrace.0
+./usr/share/man/cat8/ispppcontrol.0
 ./usr/share/man/cat8/iteconfig.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
@@ -1537,6 +1549,7 @@
 ./usr/share/man/man1/ctags.1
 ./usr/share/man/man1/cu.1
 ./usr/share/man/man1/cut.1
+./usr/share/man/man1/daicctl.1
 ./usr/share/man/man1/date.1
 ./usr/share/man/man1/dc.1
 ./usr/share/man/man1/dd.1
@@ -1549,6 +1562,7 @@
 ./usr/share/man/man1/dnskeygen.1
 ./usr/share/man/man1/dnsquery.1
 ./usr/share/man/man1/domainname.1
+./usr/share/man/man1/dtmfdecode.1
 ./usr/share/man/man1/du.1
 ./usr/share/man/man1/echo.1
 ./usr/share/man/man1/ed.1
@@ -1573,6 +1587,7 @@
 ./usr/share/man/man1/fsplit.1
 ./usr/share/man/man1/fstat.1
 ./usr/share/man/man1/ftp.1
+./usr/share/man/man1/g711conv.1
 ./usr/share/man/man1/gcpp.1
 ./usr/share/man/man1/gencat.1
 ./usr/share/man/man1/getconf.1
@@ -2413,6 +2428,9 @@
 ./usr/share/man/man5/ipnat.5
 ./usr/share/man/man5/ipnat.conf.5
 ./usr/share/man/man5/ipsend.5
+./usr/share/man/man5/isdnd.acct.5
+./usr/share/man/man5/isdnd.rates.5
+./usr/share/man/man5/isdnd.rc.5
 ./usr/share/man/man5/krb5.conf.5
 ./usr/share/man/man5/lastlog.5
 ./usr/share/man/man5/ld.so.conf.5
@@ -2633,6 +2651,12 @@
 ./usr/share/man/man8/ipfstat.8
 ./usr/share/man/man8/ipmon.8
 ./usr/share/man/man8/ipnat.8
+./usr/share/man/man8/isdnd.8
+./usr/share/man/man8/isdnmonitor.8
+./usr/share/man/man8/isdntel.8
+./usr/share/man/man8/isdntelctl.8
+./usr/share/man/man8/isdntrace.8
+./usr/share/man/man8/ispppcontrol.8
 ./usr/share/man/man8/iteconfig.8
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
