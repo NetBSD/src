@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.23 2000/07/07 10:32:48 ad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.24 2000/07/11 06:07:27 itohy Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.23 2000/07/07 10:32:48 ad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.24 2000/07/11 06:07:27 itohy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -338,13 +338,13 @@ trim_whitespace(char *line)
 
 	/* Remove leading spaces */
 	p = line;
-	while (isspace(*p))
+	while (isspace((unsigned char) *p))
 		p++;
 	memmove(line, p, strlen(p) + 1);
 
 	/* Remove trailing spaces */
 	p = line + strlen(line) - 1;
-	while (isspace(*p))
+	while (isspace((unsigned char) *p))
 		p--;
 	*(p + 1) = '\0';
 }

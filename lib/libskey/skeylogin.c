@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.14 2000/07/06 22:30:19 mjl Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.15 2000/07/11 06:07:27 itohy Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -146,7 +146,7 @@ int skeylookup(struct skey *mp, const char *name)
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
 		/* Save hash type if specified, else use md4 */
-		if (isalpha(*cp)) {
+		if (isalpha((u_char) *cp)) {
 			ht = cp;
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
@@ -208,7 +208,7 @@ int skeygetnext(struct skey *mp)
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
 		/* Save hash type if specified, else use md4 */
-		if (isalpha(*cp)) {
+		if (isalpha((u_char) *cp)) {
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
 		}
@@ -295,7 +295,7 @@ int skeyverify(struct skey *mp, char *response)
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf, " \t");
 	cp = strtok(NULL, " \t") ;
-	if (isalpha(*cp))
+	if (isalpha((u_char) *cp))
 		cp = strtok(NULL, " \t") ;
 	mp->seed = strtok(NULL, " \t");
 	mp->val = strtok(NULL, " \t");
@@ -453,9 +453,9 @@ int skey_authenticate(const char *username)
 		if (gethostname(pbuf, sizeof(pbuf)) == -1)
 			*(p = pbuf) = '.';
 		else
-			for (p = pbuf; *p && isalnum(*p); p++)
-				if (isalpha(*p) && isupper(*p))
-					*p = tolower(*p);
+			for (p = pbuf; *p && isalnum((u_char) *p); p++)
+				if (isalpha((u_char)*p) && isupper((u_char)*p))
+					*p = tolower((u_char)*p);
 		if (*p && pbuf - p < 4)
 			(void)strncpy(p, "asjd", 4 - (pbuf - p));
 		pbuf[4] = '\0';
