@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.120 2000/10/19 20:22:59 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.121 2000/12/10 23:39:36 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -2931,15 +2931,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET6
 	case AF_INET6:
 		in6p = sotoin6pcb(so);
-#if 0 /*def INET6*/
-		inp->inp_flags |= (parentinpcb->inp_flags &
-			(INP_IPV6 | INP_IPV6_UNDEC | INP_IPV6_MAPPED));
-		if ((inp->inp_flags & INP_IPV6) &&
-		   !(inp->inp_flags & INP_IPV6_MAPPED)) {
-			inp->inp_ipv6.ip6_hlim = parentinpcb->inp_ipv6.ip6_hlim;
-			inp->inp_ipv6.ip6_vfc = parentinpcb->inp_ipv6.ip6_vfc;
-		}
-#endif
 		break;
 #endif
 	}
