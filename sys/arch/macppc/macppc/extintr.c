@@ -1,6 +1,7 @@
-/*	$NetBSD: extintr.c,v 1.42 2004/03/24 19:42:53 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.43 2004/05/12 00:34:25 wiz Exp $	*/
 
 /*-
+ * Copyright (c) 2000, 2001 Tsubai Masanari.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +36,6 @@
  */
 
 /*-
- * Copyright (c) 2000, 2001 Tsubai Masanari.
  * Copyright (c) 1995 Per Fogelstrom
  * Copyright (c) 1993, 1994 Charles M. Hannum.
  *
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.42 2004/03/24 19:42:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.43 2004/05/12 00:34:25 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 
