@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.5 2004/12/30 16:02:27 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.6 2005/01/01 17:35:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.5 2004/12/30 16:02:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.6 2005/01/01 17:35:27 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -597,6 +597,7 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 {
 	audio_params_t work;
 	const struct conv_table *table;
+	stream_filter_factory_t *conv;
 	int enc;
 	int i, j;
 
@@ -669,12 +670,9 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 		work.validbits = table[j].validbits;
 		i = auconv_exact_match(formats, nformats, mode, &work);
 		if (i >= 0) {
-			if (mode == AUMODE_PLAY)
-				stream_filter_list_append
-					(list, table[j].play_conv, &work);
-			else
-				stream_filter_list_prepend
-					(list, table[j].rec_conv, &work);
+			conv = mode == AUMODE_PLAY
+				? table[j].play_conv : table[j].rec_conv;
+			stream_filter_list_append(list, conv, &work);
 			return i;
 		}
 	}
@@ -696,13 +694,11 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 		i = auconv_rateconv_check_channels(formats, nformats,
 						   mode, &work, list);
 		if (i >= 0) {
-			/* work=>hw conversion is already registered */
-			if (mode == AUMODE_PLAY)
-				stream_filter_list_prepend
-					(list, table[j].play_conv, &work);
-			else
-				stream_filter_list_append
-					(list, table[j].rec_conv, &work);
+			/* work<=>hw conversion is already registered */
+			conv = mode == AUMODE_PLAY
+				? table[j].play_conv : table[j].rec_conv;
+			/* register userland<=>work conversion */
+			stream_filter_list_append(list, conv, &work);
 			return i;
 		}
 	}
@@ -828,10 +824,7 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 	return -1;
 
  found:
-	if (mode == AUMODE_PLAY)
-		stream_filter_list_append(list, aurateconv, hw_param);
-	else
-		stream_filter_list_prepend(list, aurateconv, hw_param);
+	stream_filter_list_append(list, aurateconv, hw_param);
 	return ind;
 }
 #endif /* NAURATECONV */
