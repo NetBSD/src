@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.82 2004/02/14 18:23:45 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.83 2004/03/16 07:46:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -277,7 +277,7 @@ extern chtype _acs_char[NUM_ACS];
 #define	_acs_map	_acs_char
 
 /*
- * Colour definitions (ANSI colour numbers)
+ * Color definitions (ANSI color numbers)
  */
 
 #define	COLOR_BLACK	0x00
@@ -300,8 +300,8 @@ extern int	__tcaction;		/* If terminal hardware set. */
 
 extern int	 COLS;			/* Columns on the screen. */
 extern int	 LINES;			/* Lines on the screen. */
-extern int	 COLORS;		/* Max colours on the screen. */
-extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
+extern int	 COLORS;		/* Max colors on the screen. */
+extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 
