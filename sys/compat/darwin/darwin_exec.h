@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.6 2003/06/29 22:29:15 fvdl Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.7 2003/08/29 23:11:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 struct darwin_emuldata {
 	struct mach_emuldata ded_mach_emuldata;
 	pid_t ded_fakepid;
+	dev_t ded_wsdev;	/* display to restore on exit */
 };
 
 int exec_darwin_copyargs(struct proc *, struct exec_package *, 
