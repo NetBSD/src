@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 1996/05/15 22:56:13 phil Exp $
+#	$NetBSD: Makefile,v 1.18 1996/05/16 21:03:24 phil Exp $
 
-SUBDIR= libg++ libstdc++ libio libiostream
+SUBDIR= libg++ libstdc++ # libio libiostream
 
 HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
          csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
