@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.6 2002/12/28 02:47:35 mrg Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.7 2003/01/01 07:46:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.6 2002/12/28 02:47:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.7 2003/01/01 07:46:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -210,8 +210,8 @@ cd18xx_wait_ccr(sc)
 	int i = 100000;
 
 	while (--i &&
-	    bus_space_read_1(sc->sc_tag, sc->sc_handle, CD18xx_CCR) == 0)
-		break;
+	    bus_space_read_1(sc->sc_tag, sc->sc_handle, CD18xx_CCR) != 0)
+		;
 	return (i == 0);
 }
 
