@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.38 1998/08/04 04:03:17 perry Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.39 1998/09/25 23:32:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -81,6 +81,7 @@ socreate(dom, aso, type, proto)
 	register struct protosw *prp;
 	register struct socket *so;
 	register int error;
+	int s;
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);
@@ -90,6 +91,7 @@ socreate(dom, aso, type, proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
+	s = splsoftnet();
 	so = pool_get(&socket_pool, PR_WAITOK);
 	memset((caddr_t)so, 0, sizeof(*so));
 	TAILQ_INIT(&so->so_q0);
@@ -103,6 +105,7 @@ socreate(dom, aso, type, proto)
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
+		splx(s);
 		return (error);
 	}
 #ifdef COMPAT_SUNOS
@@ -112,6 +115,7 @@ socreate(dom, aso, type, proto)
 			so->so_options |= SO_BROADCAST;
 	}
 #endif
+	splx(s);
 	*aso = so;
 	return (0);
 }
