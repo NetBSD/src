@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.28 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.29 2002/11/07 08:13:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.28 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2002/11/07 08:13:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ cd9660_reinit()
 	struct idvhashhead *oldhash2, *hash2;
 	u_long oldmask2, mask2;
 #endif
-	int i;
+	u_int i;
 
 	hash1 = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &mask1);
