@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.1 2003/12/15 13:02:28 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.2 2003/12/30 23:56:19 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.1 2003/12/15 13:02:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.2 2003/12/30 23:56:19 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -84,6 +84,9 @@ ip2x_init(void)
 	{
 		mach_type = MACH_SGI_IP20;
 		int23addr = 0x1fb801c0;
+
+		sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
+		mach_boardrev = (sysid & 0x7000) >> 12;
 	}
 	else
 	{
