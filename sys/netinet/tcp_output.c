@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.95 2003/07/02 19:33:20 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.95 2003/07/02 19:33:20 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -397,7 +397,7 @@ int
 tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
     long len, int hdrlen, struct mbuf **mp)
 {
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 
 	if (tp->t_force && len == 1)
 		tcpstat.tcps_sndprobe++;
@@ -440,49 +440,44 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 
 	m->m_data += max_linkhdr;
 	m->m_len = hdrlen;
+
+	/*
+	 * To avoid traversing the whole sb_mb chain for correct
+	 * data to send, remember last sent mbuf,  its offset and
+	 * the sent size. When called the next time, see if the
+	 * data to send is the directly following the previous
+	 * transfer.  This is important for large TCP windows.
+	 */
+	if (off == 0 || (tp->t_lastoff + tp->t_lastlen) != off) {
+		/*
+		 * Either a new packet or a retransmit.
+		 * Start from the beginning.
+		 */
+		tp->t_lastm = so->so_snd.sb_mb;
+		tp->t_inoff = off;
+	} else
+		tp->t_inoff += tp->t_lastlen;
+
+	/* Traverse forward to next packet */
+	while (tp->t_inoff > 0) {
+		if (tp->t_lastm == NULL)
+			panic("tp->t_lastm == NULL");
+		if (tp->t_inoff < tp->t_lastm->m_len)
+			break;
+		tp->t_inoff -= tp->t_lastm->m_len;
+		tp->t_lastm = tp->t_lastm->m_next;
+	}
+
+	tp->t_lastoff = off;
+	tp->t_lastlen = len;
+	m0 = tp->t_lastm;
+	off = tp->t_inoff;
+
 	if (len <= M_TRAILINGSPACE(m)) {
-		m_copydata(so->so_snd.sb_mb, off, (int) len,
-		    mtod(m, caddr_t) + hdrlen);
+		m_copydata(m0, off, (int) len, mtod(m, caddr_t) + hdrlen);
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		struct mbuf *m0;
-
-		/*
-		 * To avoid traversing the whole sb_mb chain for correct
-		 * data to send, remember last sent mbuf,  its offset and
-		 * the sent size. When called the next time, see if the
-		 * data to send is the directly following the previous
-		 * transfer.  This is important for large TCP windows.
-		 */
-		if (0 && off > 8*1024) { /* Only for long chains */
-			if (tp->t_lastm == NULL ||
-			    (tp->t_lastoff + tp->t_lastlen) != off) {
-				/* Prediction failed */
-				tp->t_lastm = so->so_snd.sb_mb;
-				tp->t_inoff = off;
-			} else {
-				tp->t_inoff += tp->t_lastlen;
-				tp->t_lastoff = off - tp->t_lastoff;
-			}
-
-			/* Traverse forward to next packet */
-			while (tp->t_inoff > 0) {
-				if (tp->t_lastm == NULL)
-					panic("tp->t_lastm == NULL");
-				if (tp->t_inoff < tp->t_lastm->m_len)
-					break;
-				tp->t_inoff -= tp->t_lastm->m_len;
-				tp->t_lastm = tp->t_lastm->m_next;
-			}
-
-			tp->t_lastoff = off;
-			tp->t_lastlen = len;
-			m0 = tp->t_lastm;
-			off = tp->t_inoff;
-		} else
-			m0 = so->so_snd.sb_mb;
-
 		m->m_next = m_copy(m0, off, (int) len);
 		if (m->m_next == NULL) {
 			m_freem(m);
