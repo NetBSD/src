@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.38 1997/11/03 15:35:42 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.39 1997/11/03 16:15:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -820,6 +820,7 @@ zsparam(tp, t)
 
 	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
 	tmp15 = cs->cs_preg[15];
+#if 0
 	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD))
 		SET(tmp15, ZSWR15_DCD_IE);
 	else
@@ -828,6 +829,9 @@ zsparam(tp, t)
 		SET(tmp15, ZSWR15_CTS_IE);
 	else
 		CLR(tmp15, ZSWR15_CTS_IE);
+#else
+	SET(tmp15, ZSWR15_DCD_IE | ZSWR15_CTS_IE);
+#endif
 	cs->cs_preg[15] = tmp15;
 
 	/* Recompute character size bits. */
