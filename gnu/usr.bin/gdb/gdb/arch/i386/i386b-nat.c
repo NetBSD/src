@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.5 1994/12/06 03:41:39 mycroft Exp $
+	$Id: i386b-nat.c,v 1.6 1994/12/06 03:53:41 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -295,10 +295,10 @@ i386_float_info ()
 }
 
 void
-fetch_kcore_registers (pcb)
-struct pcb *pcb;
+fetch_kcore_registers(pcb)
+	struct pcb *pcb;
 {
-	int	i, regno, regs[3];
+	int i, regno, regs[4];
 
         /*
          * get the register values out of the sys pcb and
@@ -313,7 +313,8 @@ struct pcb *pcb;
 	supply_register(5, &pcb->pcb_tss.tss_ebp);
 	supply_register(6, &regs[1]);
 	supply_register(7, &regs[0]);
-	for (i = 0, regno = 8; regno < 10; regno++)
+	supply_register(8, &regs[3]);
+	for (i = 0, regno = 9; regno < 10; regno++)
 		supply_register(regno, &i);
 #if 0
 	i = 0x08;
