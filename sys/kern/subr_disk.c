@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.65 2004/11/25 04:52:24 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.66 2005/02/06 23:57:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.65 2004/11/25 04:52:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.66 2005/02/06 23:57:29 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -515,18 +515,17 @@ bufq_alloc(struct bufq_state *bufq, int flags)
 			bsp = *it;
 	}
 
-	if (bsp) {
-#if defined(DEBUG)
-		/* XXX aprint? */
-		if (bsp->bs_id != methodid && methodid != _BUFQ_DEFAULT)
-			printf("bufq_alloc: method 0x%04x is not available.\n",
-			    methodid);
-		printf("bufq_alloc: using %s\n", bsp->bs_name);
+	KASSERT(bsp != NULL);
+#ifdef DEBUG
+	if (bsp->bs_id != methodid && methodid != _BUFQ_DEFAULT)
+		printf("bufq_alloc: method 0x%04x is not available.\n",
+		    methodid);
 #endif
-		(*bsp->bs_initfn)(bufq);
-	} else {
-		panic("bufq_alloc: no method");
-	}
+#ifdef BUFQ_DEBUG
+	/* XXX aprint? */
+	printf("bufq_alloc: using %s\n", bsp->bs_name);
+#endif
+	(*bsp->bs_initfn)(bufq);
 }
 
 /*
