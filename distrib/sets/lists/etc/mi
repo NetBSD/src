@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.135 2004/01/11 09:59:49 lukem Exp $
+# $NetBSD: mi,v 1.136 2004/01/12 06:42:39 lukem Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -52,8 +52,8 @@
 ./etc/mail/aliases				etc-sendmail-etc
 ./etc/mail/helpfile				etc-sendmail-etc	sendmail
 ./etc/mail/local-host-names			etc-sendmail-etc
-./etc/mail/sendmail.cf				etc-sendmail-etc
-./etc/mail/submit.cf				etc-sendmail-etc
+./etc/mail/sendmail.cf				etc-sendmail-etc	sendmail
+./etc/mail/submit.cf				etc-sendmail-etc	sendmail
 ./etc/mailer.conf				etc-mailwrapper-etc
 ./etc/man.conf					etc-man-etc
 ./etc/master.passwd				etc-sys-etc
