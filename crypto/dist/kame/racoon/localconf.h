@@ -1,4 +1,4 @@
-/*	$KAME: localconf.h,v 1.22 2001/01/10 02:08:33 sakane Exp $	*/
+/*	$KAME: localconf.h,v 1.25 2001/02/21 05:20:44 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,7 +38,8 @@
 #define LC_PATHTYPE_INCLUDE	0
 #define LC_PATHTYPE_PSK		1
 #define LC_PATHTYPE_CERT	2
-#define LC_PATHTYPE_MAX		3
+#define LC_PATHTYPE_BACKUPSA	3
+#define LC_PATHTYPE_MAX		4
 
 #define LC_DEFAULT_PAD_MAXSIZE		20
 #define LC_DEFAULT_PAD_RANDOM		TRUE
@@ -95,6 +96,17 @@ struct localconf {
 		/*
 		 * There is a different both of the number and the kind of
 		 * algorithms between oakley's and ipsec_doi's.
+		 */
+
+	int complex_bundle;
+		/*
+		 * If we want to make a packet "IP2 AH ESP IP1 ULP",
+		 * the SPD in KAME expresses AH transport + ESP tunnel.
+		 * So racoon sent the proposal contained such the order.
+		 * But lots of implementation interprets AH tunnel + ESP
+		 * tunnel in this case.  racoon has changed the format,
+		 * usually uses this format.  If the option, 'complex_bundle'
+		 * is enable, racoon uses old format.
 		 */
 };
 
