@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82 1997/06/25 04:41:16 mellon Exp $
+#	$NetBSD: GENERIC,v 1.83 1997/07/02 02:44:10 cjs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -199,7 +199,7 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
-ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
