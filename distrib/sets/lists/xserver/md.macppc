@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.8 2004/01/09 12:34:58 rtr Exp $
+# $NetBSD: md.macppc,v 1.9 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -41,8 +41,6 @@
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/libxf86config.a
-./usr/X11R6/lib/modules
-./usr/X11R6/lib/modules/codeconv
 ./usr/X11R6/lib/modules/codeconv/libARABIC.a
 ./usr/X11R6/lib/modules/codeconv/libARMSCII8.a
 ./usr/X11R6/lib/modules/codeconv/libBIG5.a
@@ -73,7 +71,6 @@
 ./usr/X11R6/lib/modules/codeconv/libMULEENCODING.a
 ./usr/X11R6/lib/modules/codeconv/libTCVN.a
 ./usr/X11R6/lib/modules/codeconv/libVISCII.a
-./usr/X11R6/lib/modules/drivers
 ./usr/X11R6/lib/modules/drivers/ati_drv.o
 ./usr/X11R6/lib/modules/drivers/atimisc_drv.o
 ./usr/X11R6/lib/modules/drivers/chips_drv.o
@@ -92,20 +89,17 @@
 ./usr/X11R6/lib/modules/drivers/tdfx_drv.o
 ./usr/X11R6/lib/modules/drivers/trident_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
-./usr/X11R6/lib/modules/extensions
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
 ./usr/X11R6/lib/modules/extensions/libglx.a
 ./usr/X11R6/lib/modules/extensions/librecord.a
 ./usr/X11R6/lib/modules/extensions/libxtrap.a
-./usr/X11R6/lib/modules/fonts
 ./usr/X11R6/lib/modules/fonts/libbitmap.a
 ./usr/X11R6/lib/modules/fonts/libfreetype.a
 ./usr/X11R6/lib/modules/fonts/libspeedo.a
 ./usr/X11R6/lib/modules/fonts/libtype1.a
 ./usr/X11R6/lib/modules/fonts/libxtt.a
-./usr/X11R6/lib/modules/input
 ./usr/X11R6/lib/modules/input/calcomp_drv.o
 ./usr/X11R6/lib/modules/input/citron_drv.o
 ./usr/X11R6/lib/modules/input/digitaledge_drv.o
@@ -149,65 +143,65 @@
 ./usr/X11R6/lib/modules/libxf4bpp.a
 ./usr/X11R6/lib/modules/libxf8_16bpp.a
 ./usr/X11R6/lib/modules/libxf8_32bpp.a
-./usr/X11R6/man/cat1/Xnest.0
-./usr/X11R6/man/cat1/Xvfb.0
-./usr/X11R6/man/cat1/xf86cfg.0
-./usr/X11R6/man/cat4/ati.0
-./usr/X11R6/man/cat4/chips.0
-./usr/X11R6/man/cat4/citron.0
-./usr/X11R6/man/cat4/dmc.0
-./usr/X11R6/man/cat4/dynapro.0
-./usr/X11R6/man/cat4/elographics.0
-./usr/X11R6/man/cat4/fbdev.0
-./usr/X11R6/man/cat4/fbdevhw.0
-./usr/X11R6/man/cat4/glint.0
-./usr/X11R6/man/cat4/imstt.0
-./usr/X11R6/man/cat4/keyboard.0
-./usr/X11R6/man/cat4/mga.0
-./usr/X11R6/man/cat4/microtouch.0
-./usr/X11R6/man/cat4/mouse.0
-./usr/X11R6/man/cat4/mutouch.0
-./usr/X11R6/man/cat4/newport.0
-./usr/X11R6/man/cat4/nv.0
-./usr/X11R6/man/cat4/penmount.0
-./usr/X11R6/man/cat4/r128.0
-./usr/X11R6/man/cat4/s3virge.0
-./usr/X11R6/man/cat4/savage.0
-./usr/X11R6/man/cat4/sis.0
-./usr/X11R6/man/cat4/tdfx.0
-./usr/X11R6/man/cat4/trident.0
-./usr/X11R6/man/cat4/vga.0
-./usr/X11R6/man/cat4/void.0
-./usr/X11R6/man/cat4/wacom.0
-./usr/X11R6/man/cat5/XF86Config.0
-./usr/X11R6/man/man1/Xnest.1
-./usr/X11R6/man/man1/Xvfb.1
-./usr/X11R6/man/man1/xf86cfg.1
-./usr/X11R6/man/man4/ati.4
-./usr/X11R6/man/man4/chips.4
-./usr/X11R6/man/man4/citron.4
-./usr/X11R6/man/man4/dmc.4
-./usr/X11R6/man/man4/dynapro.4
-./usr/X11R6/man/man4/elographics.4
-./usr/X11R6/man/man4/fbdev.4
-./usr/X11R6/man/man4/fbdevhw.4
-./usr/X11R6/man/man4/glint.4
-./usr/X11R6/man/man4/imstt.4
-./usr/X11R6/man/man4/keyboard.4
-./usr/X11R6/man/man4/mga.4
-./usr/X11R6/man/man4/microtouch.4
-./usr/X11R6/man/man4/mouse.4
-./usr/X11R6/man/man4/mutouch.4
-./usr/X11R6/man/man4/newport.4
-./usr/X11R6/man/man4/nv.4
-./usr/X11R6/man/man4/penmount.4
-./usr/X11R6/man/man4/r128.4
-./usr/X11R6/man/man4/s3virge.4
-./usr/X11R6/man/man4/savage.4
-./usr/X11R6/man/man4/sis.4
-./usr/X11R6/man/man4/tdfx.4
-./usr/X11R6/man/man4/trident.4
-./usr/X11R6/man/man4/vga.4
-./usr/X11R6/man/man4/void.4
-./usr/X11R6/man/man4/wacom.4
-./usr/X11R6/man/man5/XF86Config.5
+./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
+./usr/X11R6/man/cat4/ati.0			-unknown-		.cat
+./usr/X11R6/man/cat4/chips.0			-unknown-		.cat
+./usr/X11R6/man/cat4/citron.0			-unknown-		.cat
+./usr/X11R6/man/cat4/dmc.0			-unknown-		.cat
+./usr/X11R6/man/cat4/dynapro.0			-unknown-		.cat
+./usr/X11R6/man/cat4/elographics.0		-unknown-		.cat
+./usr/X11R6/man/cat4/fbdev.0			-unknown-		.cat
+./usr/X11R6/man/cat4/fbdevhw.0			-unknown-		.cat
+./usr/X11R6/man/cat4/glint.0			-unknown-		.cat
+./usr/X11R6/man/cat4/imstt.0			-unknown-		.cat
+./usr/X11R6/man/cat4/keyboard.0			-unknown-		.cat
+./usr/X11R6/man/cat4/mga.0			-unknown-		.cat
+./usr/X11R6/man/cat4/microtouch.0		-unknown-		.cat
+./usr/X11R6/man/cat4/mouse.0			-unknown-		.cat
+./usr/X11R6/man/cat4/mutouch.0			-unknown-		.cat
+./usr/X11R6/man/cat4/newport.0			-unknown-		.cat
+./usr/X11R6/man/cat4/nv.0			-unknown-		.cat
+./usr/X11R6/man/cat4/penmount.0			-unknown-		.cat
+./usr/X11R6/man/cat4/r128.0			-unknown-		.cat
+./usr/X11R6/man/cat4/s3virge.0			-unknown-		.cat
+./usr/X11R6/man/cat4/savage.0			-unknown-		.cat
+./usr/X11R6/man/cat4/sis.0			-unknown-		.cat
+./usr/X11R6/man/cat4/tdfx.0			-unknown-		.cat
+./usr/X11R6/man/cat4/trident.0			-unknown-		.cat
+./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
+./usr/X11R6/man/cat4/void.0			-unknown-		.cat
+./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
+./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
+./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
+./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
+./usr/X11R6/man/man4/ati.4			-unknown-		.man
+./usr/X11R6/man/man4/chips.4			-unknown-		.man
+./usr/X11R6/man/man4/citron.4			-unknown-		.man
+./usr/X11R6/man/man4/dmc.4			-unknown-		.man
+./usr/X11R6/man/man4/dynapro.4			-unknown-		.man
+./usr/X11R6/man/man4/elographics.4		-unknown-		.man
+./usr/X11R6/man/man4/fbdev.4			-unknown-		.man
+./usr/X11R6/man/man4/fbdevhw.4			-unknown-		.man
+./usr/X11R6/man/man4/glint.4			-unknown-		.man
+./usr/X11R6/man/man4/imstt.4			-unknown-		.man
+./usr/X11R6/man/man4/keyboard.4			-unknown-		.man
+./usr/X11R6/man/man4/mga.4			-unknown-		.man
+./usr/X11R6/man/man4/microtouch.4		-unknown-		.man
+./usr/X11R6/man/man4/mouse.4			-unknown-		.man
+./usr/X11R6/man/man4/mutouch.4			-unknown-		.man
+./usr/X11R6/man/man4/newport.4			-unknown-		.man
+./usr/X11R6/man/man4/nv.4			-unknown-		.man
+./usr/X11R6/man/man4/penmount.4			-unknown-		.man
+./usr/X11R6/man/man4/r128.4			-unknown-		.man
+./usr/X11R6/man/man4/s3virge.4			-unknown-		.man
+./usr/X11R6/man/man4/savage.4			-unknown-		.man
+./usr/X11R6/man/man4/sis.4			-unknown-		.man
+./usr/X11R6/man/man4/tdfx.4			-unknown-		.man
+./usr/X11R6/man/man4/trident.4			-unknown-		.man
+./usr/X11R6/man/man4/vga.4			-unknown-		.man
+./usr/X11R6/man/man4/void.4			-unknown-		.man
+./usr/X11R6/man/man4/wacom.4			-unknown-		.man
+./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man

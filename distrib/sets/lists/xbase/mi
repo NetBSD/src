@@ -1,10 +1,6 @@
-# $NetBSD: mi,v 1.27 2004/01/08 05:12:32 rtr Exp $
-./etc/X11
-./etc/fonts
+# $NetBSD: mi,v 1.28 2004/01/11 15:12:46 lukem Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
-./usr/X11R6
-./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
 ./usr/X11R6/bin/atobm
@@ -109,14 +105,6 @@
 ./usr/X11R6/bin/xwd
 ./usr/X11R6/bin/xwininfo
 ./usr/X11R6/bin/xwud
-./usr/X11R6/include
-./usr/X11R6/include/X11
-./usr/X11R6/include/X11/ICE
-./usr/X11R6/include/X11/PM
-./usr/X11R6/include/X11/SM
-./usr/X11R6/include/X11/Xaw
-./usr/X11R6/include/X11/Xmu
-./usr/X11R6/include/X11/bitmaps
 ./usr/X11R6/include/X11/bitmaps/1x1
 ./usr/X11R6/include/X11/bitmaps/2x2
 ./usr/X11R6/include/X11/bitmaps/Dashes
@@ -201,22 +189,16 @@
 ./usr/X11R6/include/X11/bitmaps/xlogo32
 ./usr/X11R6/include/X11/bitmaps/xlogo64
 ./usr/X11R6/include/X11/bitmaps/xsnow
-./usr/X11R6/include/X11/extensions
-./usr/X11R6/include/X11/fonts
-./usr/X11R6/include/X11/pixmaps
 ./usr/X11R6/include/X11/pixmaps/deny-always.xpm
 ./usr/X11R6/include/X11/pixmaps/deny.xpm
 ./usr/X11R6/include/X11/pixmaps/logo.xpm
 ./usr/X11R6/include/X11/pixmaps/permit-always.xpm
 ./usr/X11R6/include/X11/pixmaps/permit.xpm
 ./usr/X11R6/include/X11/pixmaps/skull.xpm
-./usr/X11R6/lib
-./usr/X11R6/lib/X11
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/Xcms.txt
 ./usr/X11R6/lib/X11/XftConfig		xbase-obsolete	obsolete
-./usr/X11R6/lib/X11/app-defaults
 ./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/Bitmap
 ./usr/X11R6/lib/X11/app-defaults/Bitmap-color
@@ -239,26 +221,12 @@
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
 ./usr/X11R6/lib/X11/app-defaults/Xmh
 ./usr/X11R6/lib/X11/app-defaults/Xsystrace
-./usr/X11R6/lib/X11/config
-./usr/X11R6/lib/X11/doc
-./usr/X11R6/lib/X11/etc
 ./usr/X11R6/lib/X11/etc/xterm.termcap
 ./usr/X11R6/lib/X11/etc/xterm.terminfo
-./usr/X11R6/lib/X11/fonts
-./usr/X11R6/lib/X11/fonts/100dpi
-./usr/X11R6/lib/X11/fonts/75dpi
-./usr/X11R6/lib/X11/fonts/Speedo
-./usr/X11R6/lib/X11/fonts/Type1
-./usr/X11R6/lib/X11/fonts/misc
-./usr/X11R6/lib/X11/fs
 ./usr/X11R6/lib/X11/fs/config
-./usr/X11R6/lib/X11/lbxproxy
 ./usr/X11R6/lib/X11/lbxproxy/AtomControl
-./usr/X11R6/lib/X11/locale
-./usr/X11R6/lib/X11/locale/C
 ./usr/X11R6/lib/X11/locale/C/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/C/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/armscii-8
 ./usr/X11R6/lib/X11/locale/armscii-8/Compose
 ./usr/X11R6/lib/X11/locale/armscii-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/armscii-8/XLC_LOCALE
@@ -270,191 +238,139 @@
 ./usr/X11R6/lib/X11/locale/common/xlocale.so.2	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/locale/common/xomGeneric.so.2	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/locale/compose.dir
-./usr/X11R6/lib/X11/locale/el_GR.UTF-8
 ./usr/X11R6/lib/X11/locale/el_GR.UTF-8/Compose
-./usr/X11R6/lib/X11/locale/en_US.UTF-8
 ./usr/X11R6/lib/X11/locale/en_US.UTF-8/Compose
 ./usr/X11R6/lib/X11/locale/en_US.UTF-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/en_US.UTF-8/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/georgian-academy
 ./usr/X11R6/lib/X11/locale/georgian-academy/Compose
 ./usr/X11R6/lib/X11/locale/georgian-academy/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/georgian-academy/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/georgian-ps
 ./usr/X11R6/lib/X11/locale/georgian-ps/Compose
 ./usr/X11R6/lib/X11/locale/georgian-ps/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/georgian-ps/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ibm-cp1133
 ./usr/X11R6/lib/X11/locale/ibm-cp1133/Compose
 ./usr/X11R6/lib/X11/locale/ibm-cp1133/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ibm-cp1133/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iscii-dev
 ./usr/X11R6/lib/X11/locale/iscii-dev/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iscii-dev/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/isiri-3342
 ./usr/X11R6/lib/X11/locale/isiri-3342/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/isiri-3342/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-1
 ./usr/X11R6/lib/X11/locale/iso8859-1/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-1/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-1/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-10
 ./usr/X11R6/lib/X11/locale/iso8859-10/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-10/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-10/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-11
 ./usr/X11R6/lib/X11/locale/iso8859-11/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-11/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-13
 ./usr/X11R6/lib/X11/locale/iso8859-13/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-13/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-13/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-14
 ./usr/X11R6/lib/X11/locale/iso8859-14/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-14/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-14/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-15
 ./usr/X11R6/lib/X11/locale/iso8859-15/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-15/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-15/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-2
 ./usr/X11R6/lib/X11/locale/iso8859-2/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-2/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-2/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-3
 ./usr/X11R6/lib/X11/locale/iso8859-3/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-3/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-3/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-4
 ./usr/X11R6/lib/X11/locale/iso8859-4/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-4/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-4/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-5
 ./usr/X11R6/lib/X11/locale/iso8859-5/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-5/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-5/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-6
 ./usr/X11R6/lib/X11/locale/iso8859-6/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-6/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-6/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-7
 ./usr/X11R6/lib/X11/locale/iso8859-7/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-7/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-7/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-8
 ./usr/X11R6/lib/X11/locale/iso8859-8/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-8/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-9
 ./usr/X11R6/lib/X11/locale/iso8859-9/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-9/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-9/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/iso8859-9e
 ./usr/X11R6/lib/X11/locale/iso8859-9e/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-9e/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/iso8859-9e/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ja
-./usr/X11R6/lib/X11/locale/ja.JIS
 ./usr/X11R6/lib/X11/locale/ja.JIS/Compose
 ./usr/X11R6/lib/X11/locale/ja.JIS/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ja.JIS/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ja.SJIS
 ./usr/X11R6/lib/X11/locale/ja.SJIS/Compose
 ./usr/X11R6/lib/X11/locale/ja.SJIS/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ja.SJIS/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/ja/Compose
 ./usr/X11R6/lib/X11/locale/ja/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ja/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ja_JP.UTF-8
 ./usr/X11R6/lib/X11/locale/ja_JP.UTF-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ja_JP.UTF-8/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ko
 ./usr/X11R6/lib/X11/locale/ko/Compose
 ./usr/X11R6/lib/X11/locale/ko/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ko/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/ko_KR.UTF-8
 ./usr/X11R6/lib/X11/locale/ko_KR.UTF-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/ko_KR.UTF-8/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/koi8-c
 ./usr/X11R6/lib/X11/locale/koi8-c/Compose
 ./usr/X11R6/lib/X11/locale/koi8-c/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/koi8-c/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/koi8-r
 ./usr/X11R6/lib/X11/locale/koi8-r/Compose
 ./usr/X11R6/lib/X11/locale/koi8-r/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/koi8-r/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/koi8-u
 ./usr/X11R6/lib/X11/locale/koi8-u/Compose
 ./usr/X11R6/lib/X11/locale/koi8-u/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/koi8-u/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/locale.alias
 ./usr/X11R6/lib/X11/locale/locale.dir
-./usr/X11R6/lib/X11/locale/microsoft-cp1251
 ./usr/X11R6/lib/X11/locale/microsoft-cp1251/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/microsoft-cp1251/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/microsoft-cp1255
 ./usr/X11R6/lib/X11/locale/microsoft-cp1255/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/microsoft-cp1255/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/microsoft-cp1256
 ./usr/X11R6/lib/X11/locale/microsoft-cp1256/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/microsoft-cp1256/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/mulelao-1
 ./usr/X11R6/lib/X11/locale/mulelao-1/Compose
 ./usr/X11R6/lib/X11/locale/mulelao-1/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/mulelao-1/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/nokhchi-1
 ./usr/X11R6/lib/X11/locale/nokhchi-1/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/nokhchi-1/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/tatar-cyr
 ./usr/X11R6/lib/X11/locale/tatar-cyr/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/tatar-cyr/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/tbl_data/tabkoi8-r	xbase-obsolete	obsolete
-./usr/X11R6/lib/X11/locale/th_TH
-./usr/X11R6/lib/X11/locale/th_TH.UTF-8
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/th_TH/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/th_TH/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/tscii-0
 ./usr/X11R6/lib/X11/locale/tscii-0/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/tscii-0/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/vi_VN.tcvn
 ./usr/X11R6/lib/X11/locale/vi_VN.tcvn/Compose
 ./usr/X11R6/lib/X11/locale/vi_VN.tcvn/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/vi_VN.tcvn/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/vi_VN.viscii
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/Compose
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_CN
-./usr/X11R6/lib/X11/locale/zh_CN.gbk
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/Compose
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh_CN/Compose
 ./usr/X11R6/lib/X11/locale/zh_CN/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_CN/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_HK.big5
 ./usr/X11R6/lib/X11/locale/zh_HK.big5/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_TW
-./usr/X11R6/lib/X11/locale/zh_TW.UTF-8
 ./usr/X11R6/lib/X11/locale/zh_TW.UTF-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_TW.UTF-8/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_TW.big5
 ./usr/X11R6/lib/X11/locale/zh_TW.big5/Compose
 ./usr/X11R6/lib/X11/locale/zh_TW.big5/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_TW.big5/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh_TW/Compose
 ./usr/X11R6/lib/X11/locale/zh_TW/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE
-./usr/X11R6/lib/X11/proxymngr
 ./usr/X11R6/lib/X11/proxymngr/pmconfig
 ./usr/X11R6/lib/X11/rgb.txt
-./usr/X11R6/lib/X11/rstart
-./usr/X11R6/lib/X11/rstart/commands
 ./usr/X11R6/lib/X11/rstart/commands/@List
 ./usr/X11R6/lib/X11/rstart/commands/ListContexts
 ./usr/X11R6/lib/X11/rstart/commands/ListGenericCommands
@@ -465,19 +381,15 @@
 ./usr/X11R6/lib/X11/rstart/commands/x11r6/LoadMonitor
 ./usr/X11R6/lib/X11/rstart/commands/x11r6/Terminal
 ./usr/X11R6/lib/X11/rstart/config
-./usr/X11R6/lib/X11/rstart/contexts
 ./usr/X11R6/lib/X11/rstart/contexts/@List
 ./usr/X11R6/lib/X11/rstart/contexts/default
 ./usr/X11R6/lib/X11/rstart/contexts/x
 ./usr/X11R6/lib/X11/rstart/contexts/x11
 ./usr/X11R6/lib/X11/rstart/contexts/x11r6
-./usr/X11R6/lib/X11/twm
 ./usr/X11R6/lib/X11/twm/system.twmrc
-./usr/X11R6/lib/X11/x11perfcomp
 ./usr/X11R6/lib/X11/x11perfcomp/fillblnk
 ./usr/X11R6/lib/X11/x11perfcomp/perfboth
 ./usr/X11R6/lib/X11/x11perfcomp/perfratio
-./usr/X11R6/lib/X11/xdm
 ./usr/X11R6/lib/X11/xdm/GiveConsole
 ./usr/X11R6/lib/X11/xdm/TakeConsole
 ./usr/X11R6/lib/X11/xdm/Xaccess
@@ -493,8 +405,6 @@
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86bw.xpm
 ./usr/X11R6/lib/X11/xdm/xdm-config
-./usr/X11R6/lib/X11/xedit
-./usr/X11R6/lib/X11/xedit/lisp
 ./usr/X11R6/lib/X11/xedit/lisp/fun.lsp	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xedit/lisp/indent.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/lisp.lsp
@@ -513,13 +423,10 @@
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/xrdb.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/syntax.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/xedit.lsp
-./usr/X11R6/lib/X11/xinit
 ./usr/X11R6/lib/X11/xinit/xinitrc
-./usr/X11R6/lib/X11/xkb
 ./usr/X11R6/lib/X11/xkb/README
 ./usr/X11R6/lib/X11/xkb/README.config
 ./usr/X11R6/lib/X11/xkb/README.enhancing
-./usr/X11R6/lib/X11/xkb/compat
 ./usr/X11R6/lib/X11/xkb/compat.dir
 ./usr/X11R6/lib/X11/xkb/compat/README
 ./usr/X11R6/lib/X11/xkb/compat/accessx
@@ -538,15 +445,12 @@
 ./usr/X11R6/lib/X11/xkb/compat/pc98
 ./usr/X11R6/lib/X11/xkb/compat/xfree86
 ./usr/X11R6/lib/X11/xkb/compat/xtest
-./usr/X11R6/lib/X11/xkb/compiled
 ./usr/X11R6/lib/X11/xkb/compiled/README
-./usr/X11R6/lib/X11/xkb/geometry
 ./usr/X11R6/lib/X11/xkb/geometry.dir
 ./usr/X11R6/lib/X11/xkb/geometry/README
 ./usr/X11R6/lib/X11/xkb/geometry/amiga
 ./usr/X11R6/lib/X11/xkb/geometry/ataritt
 ./usr/X11R6/lib/X11/xkb/geometry/dell
-./usr/X11R6/lib/X11/xkb/geometry/digital
 ./usr/X11R6/lib/X11/xkb/geometry/digital/lk
 ./usr/X11R6/lib/X11/xkb/geometry/digital/pc
 ./usr/X11R6/lib/X11/xkb/geometry/digital/unix
@@ -560,20 +464,17 @@
 ./usr/X11R6/lib/X11/xkb/geometry/nec
 ./usr/X11R6/lib/X11/xkb/geometry/northgate
 ./usr/X11R6/lib/X11/xkb/geometry/pc
-./usr/X11R6/lib/X11/xkb/geometry/sgi
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/O2
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indigo
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indy
 ./usr/X11R6/lib/X11/xkb/geometry/sony
 ./usr/X11R6/lib/X11/xkb/geometry/sun
 ./usr/X11R6/lib/X11/xkb/geometry/winbook
-./usr/X11R6/lib/X11/xkb/keycodes
 ./usr/X11R6/lib/X11/xkb/keycodes.dir
 ./usr/X11R6/lib/X11/xkb/keycodes/README
 ./usr/X11R6/lib/X11/xkb/keycodes/aliases
 ./usr/X11R6/lib/X11/xkb/keycodes/amiga
 ./usr/X11R6/lib/X11/xkb/keycodes/ataritt
-./usr/X11R6/lib/X11/xkb/keycodes/digital
 ./usr/X11R6/lib/X11/xkb/keycodes/digital/lk
 ./usr/X11R6/lib/X11/xkb/keycodes/digital/pc
 ./usr/X11R6/lib/X11/xkb/keycodes/fujitsu
@@ -581,7 +482,6 @@
 ./usr/X11R6/lib/X11/xkb/keycodes/ibm
 ./usr/X11R6/lib/X11/xkb/keycodes/macintosh
 ./usr/X11R6/lib/X11/xkb/keycodes/powerpcps2
-./usr/X11R6/lib/X11/xkb/keycodes/sgi
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/indigo
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/indy
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/iris
@@ -589,15 +489,12 @@
 ./usr/X11R6/lib/X11/xkb/keycodes/sun
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree86
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree98
-./usr/X11R6/lib/X11/xkb/keymap
 ./usr/X11R6/lib/X11/xkb/keymap.dir
 ./usr/X11R6/lib/X11/xkb/keymap/README
 ./usr/X11R6/lib/X11/xkb/keymap/amiga
 ./usr/X11R6/lib/X11/xkb/keymap/ataritt
-./usr/X11R6/lib/X11/xkb/keymap/digital
 ./usr/X11R6/lib/X11/xkb/keymap/digital/us
 ./usr/X11R6/lib/X11/xkb/keymap/macintosh
-./usr/X11R6/lib/X11/xkb/keymap/sgi
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/be
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/bg
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/ca
@@ -626,7 +523,6 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/th
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/us
 ./usr/X11R6/lib/X11/xkb/keymap/sony
-./usr/X11R6/lib/X11/xkb/keymap/sun
 ./usr/X11R6/lib/X11/xkb/keymap/sun/de
 ./usr/X11R6/lib/X11/xkb/keymap/sun/es
 ./usr/X11R6/lib/X11/xkb/keymap/sun/fi
@@ -639,7 +535,6 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sun/us
 ./usr/X11R6/lib/X11/xkb/keymap/xfree86
 ./usr/X11R6/lib/X11/xkb/keymap/xfree98
-./usr/X11R6/lib/X11/xkb/rules
 ./usr/X11R6/lib/X11/xkb/rules/README
 ./usr/X11R6/lib/X11/xkb/rules/sgi
 ./usr/X11R6/lib/X11/xkb/rules/sgi.lst
@@ -649,12 +544,10 @@
 ./usr/X11R6/lib/X11/xkb/rules/xfree86-it.lst
 ./usr/X11R6/lib/X11/xkb/rules/xfree86.lst
 ./usr/X11R6/lib/X11/xkb/rules/xfree86.xml
-./usr/X11R6/lib/X11/xkb/semantics
 ./usr/X11R6/lib/X11/xkb/semantics/basic
 ./usr/X11R6/lib/X11/xkb/semantics/complete
 ./usr/X11R6/lib/X11/xkb/semantics/default
 ./usr/X11R6/lib/X11/xkb/semantics/xtest
-./usr/X11R6/lib/X11/xkb/symbols
 ./usr/X11R6/lib/X11/xkb/symbols.dir
 ./usr/X11R6/lib/X11/xkb/symbols/README
 ./usr/X11R6/lib/X11/xkb/symbols/al
@@ -678,7 +571,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/de
 ./usr/X11R6/lib/X11/xkb/symbols/de_CH
 ./usr/X11R6/lib/X11/xkb/symbols/dev
-./usr/X11R6/lib/X11/xkb/symbols/digital
 ./usr/X11R6/lib/X11/xkb/symbols/digital/lk
 ./usr/X11R6/lib/X11/xkb/symbols/digital/pc
 ./usr/X11R6/lib/X11/xkb/symbols/digital/us
@@ -692,7 +584,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/fi
 ./usr/X11R6/lib/X11/xkb/symbols/fr
 ./usr/X11R6/lib/X11/xkb/symbols/fr_CH
-./usr/X11R6/lib/X11/xkb/symbols/fujitsu
 ./usr/X11R6/lib/X11/xkb/symbols/fujitsu/jp
 ./usr/X11R6/lib/X11/xkb/symbols/fujitsu/us
 ./usr/X11R6/lib/X11/xkb/symbols/gb
@@ -726,7 +617,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/lt
 ./usr/X11R6/lib/X11/xkb/symbols/lt_std
 ./usr/X11R6/lib/X11/xkb/symbols/lv
-./usr/X11R6/lib/X11/xkb/symbols/macintosh
 ./usr/X11R6/lib/X11/xkb/symbols/macintosh/de
 ./usr/X11R6/lib/X11/xkb/symbols/macintosh/de_CH
 ./usr/X11R6/lib/X11/xkb/symbols/macintosh/dk
@@ -752,7 +642,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/no
 ./usr/X11R6/lib/X11/xkb/symbols/ogham
 ./usr/X11R6/lib/X11/xkb/symbols/ori
-./usr/X11R6/lib/X11/xkb/symbols/pc
 ./usr/X11R6/lib/X11/xkb/symbols/pc/al
 ./usr/X11R6/lib/X11/xkb/symbols/pc/am
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ar
@@ -837,16 +726,13 @@
 ./usr/X11R6/lib/X11/xkb/symbols/se_FI
 ./usr/X11R6/lib/X11/xkb/symbols/se_NO
 ./usr/X11R6/lib/X11/xkb/symbols/se_SE
-./usr/X11R6/lib/X11/xkb/symbols/sgi
 ./usr/X11R6/lib/X11/xkb/symbols/sgi/jp
 ./usr/X11R6/lib/X11/xkb/symbols/si
 ./usr/X11R6/lib/X11/xkb/symbols/sk
 ./usr/X11R6/lib/X11/xkb/symbols/sk_qwerty
-./usr/X11R6/lib/X11/xkb/symbols/sony
 ./usr/X11R6/lib/X11/xkb/symbols/sony/us
 ./usr/X11R6/lib/X11/xkb/symbols/sr
 ./usr/X11R6/lib/X11/xkb/symbols/srvr_ctrl
-./usr/X11R6/lib/X11/xkb/symbols/sun
 ./usr/X11R6/lib/X11/xkb/symbols/sun/se
 ./usr/X11R6/lib/X11/xkb/symbols/sun/us
 ./usr/X11R6/lib/X11/xkb/symbols/syr
@@ -863,11 +749,9 @@
 ./usr/X11R6/lib/X11/xkb/symbols/us_group3
 ./usr/X11R6/lib/X11/xkb/symbols/us_intl
 ./usr/X11R6/lib/X11/xkb/symbols/vn
-./usr/X11R6/lib/X11/xkb/symbols/xfree68
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68/amiga
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68/ataritt
 ./usr/X11R6/lib/X11/xkb/symbols/yu
-./usr/X11R6/lib/X11/xkb/types
 ./usr/X11R6/lib/X11/xkb/types.dir
 ./usr/X11R6/lib/X11/xkb/types/README
 ./usr/X11R6/lib/X11/xkb/types/basic
@@ -881,234 +765,214 @@
 ./usr/X11R6/lib/X11/xkb/types/nocancel	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
-./usr/X11R6/lib/X11/xsm
 ./usr/X11R6/lib/X11/xsm/system.xsm
-./usr/X11R6/lib/modules
-./usr/X11R6/lib/modules/codeconv
-./usr/X11R6/lib/modules/drivers
-./usr/X11R6/lib/modules/extensions
-./usr/X11R6/lib/modules/fonts
-./usr/X11R6/lib/modules/input
-./usr/X11R6/libexec
 ./usr/X11R6/libexec/chooser
 ./usr/X11R6/libexec/rstartd.real
-./usr/X11R6/man
-./usr/X11R6/man
-./usr/X11R6/man/cat1
-./usr/X11R6/man/cat1/Xmark.0
-./usr/X11R6/man/cat1/appres.0
-./usr/X11R6/man/cat1/atobm.0
-./usr/X11R6/man/cat1/bdftopcf.0
-./usr/X11R6/man/cat1/bdftruncate.0
-./usr/X11R6/man/cat1/beforelight.0
-./usr/X11R6/man/cat1/bitmap.0
-./usr/X11R6/man/cat1/bmtoa.0
-./usr/X11R6/man/cat1/cxpm.0
-./usr/X11R6/man/cat1/dga.0
-./usr/X11R6/man/cat1/dpsexec.0
-./usr/X11R6/man/cat1/dpsinfo.0
-./usr/X11R6/man/cat1/editres.0
-./usr/X11R6/man/cat1/fc-cache.0
-./usr/X11R6/man/cat1/fc-list.0
-./usr/X11R6/man/cat1/fslsfonts.0
-./usr/X11R6/man/cat1/fstobdf.0
-./usr/X11R6/man/cat1/glxgears.0
-./usr/X11R6/man/cat1/glxinfo.0
-./usr/X11R6/man/cat1/iceauth.0
-./usr/X11R6/man/cat1/lbxproxy.0
-./usr/X11R6/man/cat1/luit.0
-./usr/X11R6/man/cat1/makepsres.0
-./usr/X11R6/man/cat1/mkcfm.0
-./usr/X11R6/man/cat1/mkfontdir.0
-./usr/X11R6/man/cat1/mkfontscale.0
-./usr/X11R6/man/cat1/oclock.0
-./usr/X11R6/man/cat1/proxymngr.0
-./usr/X11R6/man/cat1/pswrap.0
-./usr/X11R6/man/cat1/resize.0
-./usr/X11R6/man/cat1/revpath.0
-./usr/X11R6/man/cat1/rman.0
-./usr/X11R6/man/cat1/rstart.0
-./usr/X11R6/man/cat1/rstartd.0
-./usr/X11R6/man/cat1/sessreg.0
-./usr/X11R6/man/cat1/setxkbmap.0
-./usr/X11R6/man/cat1/showrgb.0
-./usr/X11R6/man/cat1/smproxy.0
-./usr/X11R6/man/cat1/startx.0
-./usr/X11R6/man/cat1/sxpm.0
-./usr/X11R6/man/cat1/texteroids.0
-./usr/X11R6/man/cat1/twm.0
-./usr/X11R6/man/cat1/ucs2any.0
-./usr/X11R6/man/cat1/x11perf.0
-./usr/X11R6/man/cat1/x11perfcomp.0
-./usr/X11R6/man/cat1/xauth.0
-./usr/X11R6/man/cat1/xclipboard.0
-./usr/X11R6/man/cat1/xclock.0
-./usr/X11R6/man/cat1/xcmsdb.0
-./usr/X11R6/man/cat1/xconsole.0
-./usr/X11R6/man/cat1/xcutsel.0
-./usr/X11R6/man/cat1/xdm.0
-./usr/X11R6/man/cat1/xdpyinfo.0
-./usr/X11R6/man/cat1/xfd.0
-./usr/X11R6/man/cat1/xfindproxy.0
-./usr/X11R6/man/cat1/xfs.0
-./usr/X11R6/man/cat1/xfsinfo.0
-./usr/X11R6/man/cat1/xftcache.0		xbase-obsolete	obsolete
-./usr/X11R6/man/cat1/xfwp.0
-./usr/X11R6/man/cat1/xgamma.0
-./usr/X11R6/man/cat1/xhost.0
-./usr/X11R6/man/cat1/xinit.0
-./usr/X11R6/man/cat1/xkbcomp.0
-./usr/X11R6/man/cat1/xkbevd.0
-./usr/X11R6/man/cat1/xkbprint.0
-./usr/X11R6/man/cat1/xkill.0
-./usr/X11R6/man/cat1/xlogo.0
-./usr/X11R6/man/cat1/xlsatoms.0
-./usr/X11R6/man/cat1/xlsclients.0
-./usr/X11R6/man/cat1/xlsfonts.0
-./usr/X11R6/man/cat1/xmag.0
-./usr/X11R6/man/cat1/xmh.0
-./usr/X11R6/man/cat1/xmodmap.0
-./usr/X11R6/man/cat1/xon.0
-./usr/X11R6/man/cat1/xprop.0
-./usr/X11R6/man/cat1/xrandr.0
-./usr/X11R6/man/cat1/xrdb.0
-./usr/X11R6/man/cat1/xrefresh.0
-./usr/X11R6/man/cat1/xset.0
-./usr/X11R6/man/cat1/xsetmode.0
-./usr/X11R6/man/cat1/xsetpointer.0
-./usr/X11R6/man/cat1/xsetroot.0
-./usr/X11R6/man/cat1/xsm.0
-./usr/X11R6/man/cat1/xstdcmap.0
-./usr/X11R6/man/cat1/xsystrace.0
-./usr/X11R6/man/cat1/xterm.0
-./usr/X11R6/man/cat1/xtrap.0
-./usr/X11R6/man/cat1/xtrapchar.0
-./usr/X11R6/man/cat1/xtrapin.0
-./usr/X11R6/man/cat1/xtrapinfo.0
-./usr/X11R6/man/cat1/xtrapout.0
-./usr/X11R6/man/cat1/xtrapproto.0
-./usr/X11R6/man/cat1/xtrapreset.0
-./usr/X11R6/man/cat1/xtrapstats.0
-./usr/X11R6/man/cat1/xvinfo.0
-./usr/X11R6/man/cat1/xwd.0
-./usr/X11R6/man/cat1/xwininfo.0
-./usr/X11R6/man/cat1/xwud.0
-./usr/X11R6/man/cat3
-./usr/X11R6/man/cat4
-./usr/X11R6/man/cat5
-./usr/X11R6/man/cat7
-./usr/X11R6/man/cat7/X.0
-./usr/X11R6/man/cat7/X.Org.0
-./usr/X11R6/man/cat7/XConsortium.0
-./usr/X11R6/man/cat7/XProjectTeam.0
-./usr/X11R6/man/cat7/XStandards.0
-./usr/X11R6/man/cat7/Xsecurity.0
-./usr/X11R6/man/man1
-./usr/X11R6/man/man1/Xmark.1
-./usr/X11R6/man/man1/appres.1
-./usr/X11R6/man/man1/atobm.1
-./usr/X11R6/man/man1/bdftopcf.1
-./usr/X11R6/man/man1/bdftruncate.1
-./usr/X11R6/man/man1/beforelight.1
-./usr/X11R6/man/man1/bitmap.1
-./usr/X11R6/man/man1/bmtoa.1
-./usr/X11R6/man/man1/cxpm.1
-./usr/X11R6/man/man1/dga.1
-./usr/X11R6/man/man1/dpsexec.1
-./usr/X11R6/man/man1/dpsinfo.1
-./usr/X11R6/man/man1/editres.1
-./usr/X11R6/man/man1/fc-cache.1
-./usr/X11R6/man/man1/fc-list.1
-./usr/X11R6/man/man1/fslsfonts.1
-./usr/X11R6/man/man1/fstobdf.1
-./usr/X11R6/man/man1/glxgears.1
-./usr/X11R6/man/man1/glxinfo.1
-./usr/X11R6/man/man1/iceauth.1
-./usr/X11R6/man/man1/lbxproxy.1
-./usr/X11R6/man/man1/luit.1
-./usr/X11R6/man/man1/makepsres.1
-./usr/X11R6/man/man1/mkcfm.1
-./usr/X11R6/man/man1/mkfontdir.1
-./usr/X11R6/man/man1/mkfontscale.1
-./usr/X11R6/man/man1/oclock.1
-./usr/X11R6/man/man1/proxymngr.1
-./usr/X11R6/man/man1/pswrap.1
-./usr/X11R6/man/man1/resize.1
-./usr/X11R6/man/man1/revpath.1
-./usr/X11R6/man/man1/rman.1
-./usr/X11R6/man/man1/rstart.1
-./usr/X11R6/man/man1/rstartd.1
-./usr/X11R6/man/man1/sessreg.1
-./usr/X11R6/man/man1/setxkbmap.1
-./usr/X11R6/man/man1/showrgb.1
-./usr/X11R6/man/man1/smproxy.1
-./usr/X11R6/man/man1/startx.1
-./usr/X11R6/man/man1/sxpm.1
-./usr/X11R6/man/man1/texteroids.1
-./usr/X11R6/man/man1/twm.1
-./usr/X11R6/man/man1/ucs2any.1
-./usr/X11R6/man/man1/x11perf.1
-./usr/X11R6/man/man1/x11perfcomp.1
-./usr/X11R6/man/man1/xauth.1
-./usr/X11R6/man/man1/xclipboard.1
-./usr/X11R6/man/man1/xclock.1
-./usr/X11R6/man/man1/xcmsdb.1
-./usr/X11R6/man/man1/xconsole.1
-./usr/X11R6/man/man1/xcutsel.1
-./usr/X11R6/man/man1/xdm.1
-./usr/X11R6/man/man1/xdpyinfo.1
-./usr/X11R6/man/man1/xfd.1
-./usr/X11R6/man/man1/xfindproxy.1
-./usr/X11R6/man/man1/xfs.1
-./usr/X11R6/man/man1/xfsinfo.1
-./usr/X11R6/man/man1/xftcache.1		xbase-obsolete	obsolete
-./usr/X11R6/man/man1/xfwp.1
-./usr/X11R6/man/man1/xgamma.1
-./usr/X11R6/man/man1/xhost.1
-./usr/X11R6/man/man1/xinit.1
-./usr/X11R6/man/man1/xkbcomp.1
-./usr/X11R6/man/man1/xkbevd.1
-./usr/X11R6/man/man1/xkbprint.1
-./usr/X11R6/man/man1/xkill.1
-./usr/X11R6/man/man1/xlogo.1
-./usr/X11R6/man/man1/xlsatoms.1
-./usr/X11R6/man/man1/xlsclients.1
-./usr/X11R6/man/man1/xlsfonts.1
-./usr/X11R6/man/man1/xmag.1
-./usr/X11R6/man/man1/xmh.1
-./usr/X11R6/man/man1/xmodmap.1
-./usr/X11R6/man/man1/xon.1
-./usr/X11R6/man/man1/xprop.1
-./usr/X11R6/man/man1/xrandr.1
-./usr/X11R6/man/man1/xrdb.1
-./usr/X11R6/man/man1/xrefresh.1
-./usr/X11R6/man/man1/xset.1
-./usr/X11R6/man/man1/xsetmode.1
-./usr/X11R6/man/man1/xsetpointer.1
-./usr/X11R6/man/man1/xsetroot.1
-./usr/X11R6/man/man1/xsm.1
-./usr/X11R6/man/man1/xstdcmap.1
-./usr/X11R6/man/man1/xsystrace.1
-./usr/X11R6/man/man1/xterm.1
-./usr/X11R6/man/man1/xtrap.1
-./usr/X11R6/man/man1/xtrapchar.1
-./usr/X11R6/man/man1/xtrapin.1
-./usr/X11R6/man/man1/xtrapinfo.1
-./usr/X11R6/man/man1/xtrapout.1
-./usr/X11R6/man/man1/xtrapproto.1
-./usr/X11R6/man/man1/xtrapreset.1
-./usr/X11R6/man/man1/xtrapstats.1
-./usr/X11R6/man/man1/xvinfo.1
-./usr/X11R6/man/man1/xwd.1
-./usr/X11R6/man/man1/xwininfo.1
-./usr/X11R6/man/man1/xwud.1
-./usr/X11R6/man/man3
-./usr/X11R6/man/man4
-./usr/X11R6/man/man5
-./usr/X11R6/man/man7
-./usr/X11R6/man/man7/X.7
-./usr/X11R6/man/man7/X.Org.7
-./usr/X11R6/man/man7/XConsortium.7
-./usr/X11R6/man/man7/XProjectTeam.7
-./usr/X11R6/man/man7/XStandards.7
-./usr/X11R6/man/man7/Xsecurity.7
+./usr/X11R6/man/cat1/Xmark.0			-unknown-		.cat
+./usr/X11R6/man/cat1/appres.0			-unknown-		.cat
+./usr/X11R6/man/cat1/atobm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/bdftopcf.0			-unknown-		.cat
+./usr/X11R6/man/cat1/bdftruncate.0		-unknown-		.cat
+./usr/X11R6/man/cat1/beforelight.0		-unknown-		.cat
+./usr/X11R6/man/cat1/bitmap.0			-unknown-		.cat
+./usr/X11R6/man/cat1/bmtoa.0			-unknown-		.cat
+./usr/X11R6/man/cat1/cxpm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/dga.0			-unknown-		.cat
+./usr/X11R6/man/cat1/dpsexec.0			-unknown-		.cat
+./usr/X11R6/man/cat1/dpsinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/editres.0			-unknown-		.cat
+./usr/X11R6/man/cat1/fc-cache.0			-unknown-		.cat
+./usr/X11R6/man/cat1/fc-list.0			-unknown-		.cat
+./usr/X11R6/man/cat1/fslsfonts.0		-unknown-		.cat
+./usr/X11R6/man/cat1/fstobdf.0			-unknown-		.cat
+./usr/X11R6/man/cat1/glxgears.0			-unknown-		.cat
+./usr/X11R6/man/cat1/glxinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/iceauth.0			-unknown-		.cat
+./usr/X11R6/man/cat1/lbxproxy.0			-unknown-		.cat
+./usr/X11R6/man/cat1/luit.0			-unknown-		.cat
+./usr/X11R6/man/cat1/makepsres.0		-unknown-		.cat
+./usr/X11R6/man/cat1/mkcfm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/mkfontdir.0		-unknown-		.cat
+./usr/X11R6/man/cat1/mkfontscale.0		-unknown-		.cat
+./usr/X11R6/man/cat1/oclock.0			-unknown-		.cat
+./usr/X11R6/man/cat1/proxymngr.0		-unknown-		.cat
+./usr/X11R6/man/cat1/pswrap.0			-unknown-		.cat
+./usr/X11R6/man/cat1/resize.0			-unknown-		.cat
+./usr/X11R6/man/cat1/revpath.0			-unknown-		.cat
+./usr/X11R6/man/cat1/rman.0			-unknown-		.cat
+./usr/X11R6/man/cat1/rstart.0			-unknown-		.cat
+./usr/X11R6/man/cat1/rstartd.0			-unknown-		.cat
+./usr/X11R6/man/cat1/sessreg.0			-unknown-		.cat
+./usr/X11R6/man/cat1/setxkbmap.0		-unknown-		.cat
+./usr/X11R6/man/cat1/showrgb.0			-unknown-		.cat
+./usr/X11R6/man/cat1/smproxy.0			-unknown-		.cat
+./usr/X11R6/man/cat1/startx.0			-unknown-		.cat
+./usr/X11R6/man/cat1/sxpm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/texteroids.0		-unknown-		.cat
+./usr/X11R6/man/cat1/twm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/ucs2any.0			-unknown-		.cat
+./usr/X11R6/man/cat1/x11perf.0			-unknown-		.cat
+./usr/X11R6/man/cat1/x11perfcomp.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xauth.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xclipboard.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xclock.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xcmsdb.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xconsole.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xcutsel.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xdm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xdpyinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xfd.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xfindproxy.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xfs.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xfsinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xftcache.0			xbase-obsolete		obsolete
+./usr/X11R6/man/cat1/xfwp.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xgamma.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xhost.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xinit.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xkbcomp.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xkbevd.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xkbprint.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xkill.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xlogo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xlsatoms.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xlsclients.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xlsfonts.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xmag.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xmh.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xmodmap.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xon.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xprop.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xrandr.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xrdb.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xrefresh.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xset.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xsetmode.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xsetpointer.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xsetroot.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xsm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xstdcmap.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xsystrace.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xterm.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xtrap.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapchar.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapin.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapinfo.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapout.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapproto.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapreset.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xtrapstats.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xvinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xwd.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xwininfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xwud.0			-unknown-		.cat
+./usr/X11R6/man/cat7/X.0			-unknown-		.cat
+./usr/X11R6/man/cat7/X.Org.0			-unknown-		.cat
+./usr/X11R6/man/cat7/XConsortium.0		-unknown-		.cat
+./usr/X11R6/man/cat7/XProjectTeam.0		-unknown-		.cat
+./usr/X11R6/man/cat7/XStandards.0		-unknown-		.cat
+./usr/X11R6/man/cat7/Xsecurity.0		-unknown-		.cat
+./usr/X11R6/man/man1/Xmark.1			-unknown-		.man
+./usr/X11R6/man/man1/appres.1			-unknown-		.man
+./usr/X11R6/man/man1/atobm.1			-unknown-		.man
+./usr/X11R6/man/man1/bdftopcf.1			-unknown-		.man
+./usr/X11R6/man/man1/bdftruncate.1		-unknown-		.man
+./usr/X11R6/man/man1/beforelight.1		-unknown-		.man
+./usr/X11R6/man/man1/bitmap.1			-unknown-		.man
+./usr/X11R6/man/man1/bmtoa.1			-unknown-		.man
+./usr/X11R6/man/man1/cxpm.1			-unknown-		.man
+./usr/X11R6/man/man1/dga.1			-unknown-		.man
+./usr/X11R6/man/man1/dpsexec.1			-unknown-		.man
+./usr/X11R6/man/man1/dpsinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/editres.1			-unknown-		.man
+./usr/X11R6/man/man1/fc-cache.1			-unknown-		.man
+./usr/X11R6/man/man1/fc-list.1			-unknown-		.man
+./usr/X11R6/man/man1/fslsfonts.1		-unknown-		.man
+./usr/X11R6/man/man1/fstobdf.1			-unknown-		.man
+./usr/X11R6/man/man1/glxgears.1			-unknown-		.man
+./usr/X11R6/man/man1/glxinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/iceauth.1			-unknown-		.man
+./usr/X11R6/man/man1/lbxproxy.1			-unknown-		.man
+./usr/X11R6/man/man1/luit.1			-unknown-		.man
+./usr/X11R6/man/man1/makepsres.1		-unknown-		.man
+./usr/X11R6/man/man1/mkcfm.1			-unknown-		.man
+./usr/X11R6/man/man1/mkfontdir.1		-unknown-		.man
+./usr/X11R6/man/man1/mkfontscale.1		-unknown-		.man
+./usr/X11R6/man/man1/oclock.1			-unknown-		.man
+./usr/X11R6/man/man1/proxymngr.1		-unknown-		.man
+./usr/X11R6/man/man1/pswrap.1			-unknown-		.man
+./usr/X11R6/man/man1/resize.1			-unknown-		.man
+./usr/X11R6/man/man1/revpath.1			-unknown-		.man
+./usr/X11R6/man/man1/rman.1			-unknown-		.man
+./usr/X11R6/man/man1/rstart.1			-unknown-		.man
+./usr/X11R6/man/man1/rstartd.1			-unknown-		.man
+./usr/X11R6/man/man1/sessreg.1			-unknown-		.man
+./usr/X11R6/man/man1/setxkbmap.1		-unknown-		.man
+./usr/X11R6/man/man1/showrgb.1			-unknown-		.man
+./usr/X11R6/man/man1/smproxy.1			-unknown-		.man
+./usr/X11R6/man/man1/startx.1			-unknown-		.man
+./usr/X11R6/man/man1/sxpm.1			-unknown-		.man
+./usr/X11R6/man/man1/texteroids.1		-unknown-		.man
+./usr/X11R6/man/man1/twm.1			-unknown-		.man
+./usr/X11R6/man/man1/ucs2any.1			-unknown-		.man
+./usr/X11R6/man/man1/x11perf.1			-unknown-		.man
+./usr/X11R6/man/man1/x11perfcomp.1		-unknown-		.man
+./usr/X11R6/man/man1/xauth.1			-unknown-		.man
+./usr/X11R6/man/man1/xclipboard.1		-unknown-		.man
+./usr/X11R6/man/man1/xclock.1			-unknown-		.man
+./usr/X11R6/man/man1/xcmsdb.1			-unknown-		.man
+./usr/X11R6/man/man1/xconsole.1			-unknown-		.man
+./usr/X11R6/man/man1/xcutsel.1			-unknown-		.man
+./usr/X11R6/man/man1/xdm.1			-unknown-		.man
+./usr/X11R6/man/man1/xdpyinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/xfd.1			-unknown-		.man
+./usr/X11R6/man/man1/xfindproxy.1		-unknown-		.man
+./usr/X11R6/man/man1/xfs.1			-unknown-		.man
+./usr/X11R6/man/man1/xfsinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/xftcache.1			xbase-obsolete		obsolete
+./usr/X11R6/man/man1/xfwp.1			-unknown-		.man
+./usr/X11R6/man/man1/xgamma.1			-unknown-		.man
+./usr/X11R6/man/man1/xhost.1			-unknown-		.man
+./usr/X11R6/man/man1/xinit.1			-unknown-		.man
+./usr/X11R6/man/man1/xkbcomp.1			-unknown-		.man
+./usr/X11R6/man/man1/xkbevd.1			-unknown-		.man
+./usr/X11R6/man/man1/xkbprint.1			-unknown-		.man
+./usr/X11R6/man/man1/xkill.1			-unknown-		.man
+./usr/X11R6/man/man1/xlogo.1			-unknown-		.man
+./usr/X11R6/man/man1/xlsatoms.1			-unknown-		.man
+./usr/X11R6/man/man1/xlsclients.1		-unknown-		.man
+./usr/X11R6/man/man1/xlsfonts.1			-unknown-		.man
+./usr/X11R6/man/man1/xmag.1			-unknown-		.man
+./usr/X11R6/man/man1/xmh.1			-unknown-		.man
+./usr/X11R6/man/man1/xmodmap.1			-unknown-		.man
+./usr/X11R6/man/man1/xon.1			-unknown-		.man
+./usr/X11R6/man/man1/xprop.1			-unknown-		.man
+./usr/X11R6/man/man1/xrandr.1			-unknown-		.man
+./usr/X11R6/man/man1/xrdb.1			-unknown-		.man
+./usr/X11R6/man/man1/xrefresh.1			-unknown-		.man
+./usr/X11R6/man/man1/xset.1			-unknown-		.man
+./usr/X11R6/man/man1/xsetmode.1			-unknown-		.man
+./usr/X11R6/man/man1/xsetpointer.1		-unknown-		.man
+./usr/X11R6/man/man1/xsetroot.1			-unknown-		.man
+./usr/X11R6/man/man1/xsm.1			-unknown-		.man
+./usr/X11R6/man/man1/xstdcmap.1			-unknown-		.man
+./usr/X11R6/man/man1/xsystrace.1		-unknown-		.man
+./usr/X11R6/man/man1/xterm.1			-unknown-		.man
+./usr/X11R6/man/man1/xtrap.1			-unknown-		.man
+./usr/X11R6/man/man1/xtrapchar.1		-unknown-		.man
+./usr/X11R6/man/man1/xtrapin.1			-unknown-		.man
+./usr/X11R6/man/man1/xtrapinfo.1		-unknown-		.man
+./usr/X11R6/man/man1/xtrapout.1			-unknown-		.man
+./usr/X11R6/man/man1/xtrapproto.1		-unknown-		.man
+./usr/X11R6/man/man1/xtrapreset.1		-unknown-		.man
+./usr/X11R6/man/man1/xtrapstats.1		-unknown-		.man
+./usr/X11R6/man/man1/xvinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/xwd.1			-unknown-		.man
+./usr/X11R6/man/man1/xwininfo.1			-unknown-		.man
+./usr/X11R6/man/man1/xwud.1			-unknown-		.man
+./usr/X11R6/man/man7/X.7			-unknown-		.man
+./usr/X11R6/man/man7/X.Org.7			-unknown-		.man
+./usr/X11R6/man/man7/XConsortium.7		-unknown-		.man
+./usr/X11R6/man/man7/XProjectTeam.7		-unknown-		.man
+./usr/X11R6/man/man7/XStandards.7		-unknown-		.man
+./usr/X11R6/man/man7/Xsecurity.7		-unknown-		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2004/01/08 05:12:33 rtr Exp $
+# $NetBSD: mi,v 1.5 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/ico
 ./usr/X11R6/bin/listres
 ./usr/X11R6/bin/showfont
@@ -28,33 +28,33 @@
 ./usr/X11R6/lib/X11/app-defaults/Xman
 ./usr/X11R6/lib/X11/app-defaults/Xmessage
 ./usr/X11R6/lib/X11/xman.help
-./usr/X11R6/man/cat1/ico.0
-./usr/X11R6/man/cat1/listres.0
-./usr/X11R6/man/cat1/showfont.0
-./usr/X11R6/man/cat1/viewres.0
-./usr/X11R6/man/cat1/xbiff.0
-./usr/X11R6/man/cat1/xcalc.0
-./usr/X11R6/man/cat1/xditview.0
-./usr/X11R6/man/cat1/xedit.0
-./usr/X11R6/man/cat1/xev.0
-./usr/X11R6/man/cat1/xeyes.0
-./usr/X11R6/man/cat1/xfontsel.0
-./usr/X11R6/man/cat1/xgc.0
-./usr/X11R6/man/cat1/xload.0
-./usr/X11R6/man/cat1/xman.0
-./usr/X11R6/man/cat1/xmessage.0
-./usr/X11R6/man/man1/ico.1
-./usr/X11R6/man/man1/listres.1
-./usr/X11R6/man/man1/showfont.1
-./usr/X11R6/man/man1/viewres.1
-./usr/X11R6/man/man1/xbiff.1
-./usr/X11R6/man/man1/xcalc.1
-./usr/X11R6/man/man1/xditview.1
-./usr/X11R6/man/man1/xedit.1
-./usr/X11R6/man/man1/xev.1
-./usr/X11R6/man/man1/xeyes.1
-./usr/X11R6/man/man1/xfontsel.1
-./usr/X11R6/man/man1/xgc.1
-./usr/X11R6/man/man1/xload.1
-./usr/X11R6/man/man1/xman.1
-./usr/X11R6/man/man1/xmessage.1
+./usr/X11R6/man/cat1/ico.0			-unknown-		.cat
+./usr/X11R6/man/cat1/listres.0			-unknown-		.cat
+./usr/X11R6/man/cat1/showfont.0			-unknown-		.cat
+./usr/X11R6/man/cat1/viewres.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xbiff.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xcalc.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xditview.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xedit.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xev.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xeyes.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xfontsel.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xgc.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xload.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xman.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xmessage.0			-unknown-		.cat
+./usr/X11R6/man/man1/ico.1			-unknown-		.man
+./usr/X11R6/man/man1/listres.1			-unknown-		.man
+./usr/X11R6/man/man1/showfont.1			-unknown-		.man
+./usr/X11R6/man/man1/viewres.1			-unknown-		.man
+./usr/X11R6/man/man1/xbiff.1			-unknown-		.man
+./usr/X11R6/man/man1/xcalc.1			-unknown-		.man
+./usr/X11R6/man/man1/xditview.1			-unknown-		.man
+./usr/X11R6/man/man1/xedit.1			-unknown-		.man
+./usr/X11R6/man/man1/xev.1			-unknown-		.man
+./usr/X11R6/man/man1/xeyes.1			-unknown-		.man
+./usr/X11R6/man/man1/xfontsel.1			-unknown-		.man
+./usr/X11R6/man/man1/xgc.1			-unknown-		.man
+./usr/X11R6/man/man1/xload.1			-unknown-		.man
+./usr/X11R6/man/man1/xman.1			-unknown-		.man
+./usr/X11R6/man/man1/xmessage.1			-unknown-		.man
