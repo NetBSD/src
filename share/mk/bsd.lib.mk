@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.197 2002/02/11 21:15:00 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.198 2002/03/19 14:39:22 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -345,9 +345,8 @@ __archivebuild: .USE
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
-	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m 600 ${.ALLSRC} ${.TARGET}
-	${RANLIB} -t ${.TARGET}
-	chmod ${LIBMODE} ${.TARGET}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    ${UPDATE:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
 
 __archivesymlinkpic: .USE
 	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
