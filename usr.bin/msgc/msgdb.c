@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.2 1997/10/03 16:37:25 enami Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.3 1999/04/25 09:10:07 veego Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,7 +146,7 @@ write_msg_file ()
 		"#include <curses.h>\n"
 		"\n"
 		"/* Prototypes */\n"
-		"void beep(void);\n"
+		"void msg_beep(void);\n"
 		"void msg_window(WINDOW *window);\n"
 		"char *msg_string (int msg_no);\n"
 		"void msg_clear(void);\n"
