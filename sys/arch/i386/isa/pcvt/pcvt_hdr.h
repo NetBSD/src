@@ -92,7 +92,6 @@
 
 #include "opt_xserver.h"
 
-#include <i386/isa/isa_machdep.h>
 #include <dev/isa/isavar.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
